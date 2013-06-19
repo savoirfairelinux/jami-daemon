@@ -49,7 +49,6 @@
 
 namespace sfl {
 class AudioCodec;
-class Codec;
 }
 
 class SdpException : public std::runtime_error {
@@ -293,7 +292,7 @@ class Sdp {
         /**
          * Codec Map used for offer
          */
-        std::vector<sfl::Codec *> audio_codec_list_;
+        std::vector<sfl::AudioCodec *> audio_codec_list_;
         std::vector<std::map<std::string, std::string> > video_codec_list_;
 
         /**
@@ -323,7 +322,7 @@ class Sdp {
          * Build the sdp media section
          * Add rtpmap field if necessary
          */
-        pjmedia_sdp_media *setMediaDescriptorLine(bool audio);
+        pjmedia_sdp_media *setMediaDescriptorLines(bool audio);
 
         void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
 
@@ -357,6 +356,8 @@ class Sdp {
          * @throw SdpException
          */
         void addZrtpAttribute(pjmedia_sdp_media* media, std::string hash);
+
+        void addRTCPAttribute(pjmedia_sdp_media *med);
 };
 
 

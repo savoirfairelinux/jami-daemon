@@ -33,12 +33,14 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
-//#include "cc_config.h"
-#include "codec.h"
+
+#include "cc_config.h"
+#include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
+
 
 /* bump when codec binary interface changes */
-#define CODEC_ENTRY create_1_2_0
-#define CODEC_ENTRY_SYMBOL "create_1_2_0"
+#define AUDIO_CODEC_ENTRY create_1_2_2
+#define AUDIO_CODEC_ENTRY_SYMBOL "create_1_2_2"
 
 // We assume all decoders will be fed 20ms of audio or less
 // And we'll resample them to 44.1kHz or less
@@ -47,7 +49,7 @@
 
 namespace sfl {
 
-class AudioCodec : public Codec {
+class AudioCodec {
     public:
         AudioCodec(uint8 payload, const std::string &codecName, int clockRate,
                    int frameSize, int channel);
@@ -59,9 +61,6 @@ class AudioCodec : public Codec {
 
         virtual ~AudioCodec() {};
 
-        /**
-         * @Override
-         */
         std::string getMimeSubtype() const;
 
         /**
@@ -78,14 +77,8 @@ class AudioCodec : public Codec {
          */
         virtual int encode(unsigned char *dst, short *src, size_t buffer_size) = 0;
 
-        /**
-         * @Override
-         */
-        uint8 getPayloadType() const ;
+        uint8 getPayloadType() const;
 
-        /**
-         * @Override
-         */
         void setPayloadType(uint8 pt) {
             payload_ = pt;
         }
@@ -95,14 +88,8 @@ class AudioCodec : public Codec {
          */
         bool hasDynamicPayload() const;
 
-        /**
-         * @Override
-         */
         uint32 getClockRate() const;
 
-        /**
-         * @Override
-         */
         double getBitRate() const;
 
         /**
@@ -134,5 +121,9 @@ protected:
         bool hasDynamicPayload_;
 };
 } // end namespace sfl
+
+
+typedef sfl::AudioCodec* create_t();
+typedef void destroy_t(sfl::AudioCodec* codec);
 
 #endif

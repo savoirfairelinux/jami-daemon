@@ -42,10 +42,10 @@ class G729 : public sfl::AudioCodec {
 public:
    G729();
    ~G729();
+private:
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
 
-private:
    NON_COPYABLE(G729);
    //Attributes
    bcg729DecoderChannelContextStruct* decoderContext_;

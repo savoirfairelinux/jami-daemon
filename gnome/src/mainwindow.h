@@ -47,14 +47,13 @@ GtkAccelGroup * get_accel_group();
  * Display the main window
  * @return GtkWidget* The main window
  */
-GtkWidget * get_main_window();
-
 GtkWidget *waitingLayer;
 
 /**
  * Build the main window
  */
-void create_main_window (GSettings *settings);
+void
+create_main_window(SFLPhoneClient *client);
 
 /**
  * Display a dialog window
@@ -62,12 +61,12 @@ void create_main_window (GSettings *settings);
  * @return gboolean TRUE if the user wants to hang up
  *		    FALSE otherwise
  */
-gboolean main_window_ask_quit() ;
+gboolean main_window_ask_quit(SFLPhoneClient *client);
 
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_dialpad (gboolean state, GSettings *settings);
+void main_window_dialpad (gboolean state, SFLPhoneClient *client);
 
 /**
   * Shows/Hides the dialpad on the mainwindow
@@ -94,11 +93,11 @@ void statusbar_pop_message (guint id);
  */
 void statusbar_update_clock (const gchar * time);
 
-void main_window_zrtp_not_supported (callable_obj_t * c, GSettings *settings);
+void main_window_zrtp_not_supported(callable_obj_t * c, SFLPhoneClient *client);
 
-void main_window_zrtp_negotiation_failed (const gchar* callID, const gchar* reason, const gchar* severity, GSettings *settings);
+void main_window_zrtp_negotiation_failed(const gchar* callID, const gchar* reason, const gchar* severity, SFLPhoneClient *client);
 
-void main_window_confirm_go_clear (callable_obj_t * c, GSettings *settings);
+void main_window_confirm_go_clear(callable_obj_t * c, SFLPhoneClient *client);
 
 void focus_on_searchbar_out();
 void focus_on_searchbar_in();

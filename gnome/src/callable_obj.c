@@ -40,7 +40,6 @@
 #include <glib/gi18n.h>
 #include "contacts/calltab.h"
 #include "contacts/calltree.h"
-#include "logger.h"
 #include "dbus.h"
 #include <unistd.h>
 
@@ -319,11 +318,11 @@ gboolean call_was_outgoing(callable_obj_t * obj)
 
 void restore_call(const gchar *id)
 {
-    DEBUG("Restoring call %s", id);
+    g_debug("Restoring call %s", id);
     // We fetch the details associated to the specified call
     GHashTable *call_details = dbus_get_call_details(id);
     if (!call_details) {
-        ERROR("Invalid call ID");
+        g_warning("Invalid call ID");
         return;
     }
     callable_obj_t *new_call = create_new_call_from_details(id, call_details);

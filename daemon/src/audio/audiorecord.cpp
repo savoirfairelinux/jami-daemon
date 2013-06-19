@@ -130,12 +130,11 @@ void AudioRecord::setSndSamplingRate(int smplRate)
 
 void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path)
 {
-    std::stringstream s;
     std::string filePath;
 
     // use HOME directory if path is empty, or if path does not exist
     if (path.empty() or not fileutils::check_dir(path.c_str())) {
-        filePath = HOMEDIR;
+        filePath = fileutils::get_home_dir();
     } else {
         filePath = path;
     }
@@ -143,7 +142,7 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std:
     fileType_ = type;
     channels_ = 1;
     sndSmplRate_ = sndSmplRate;
-    savePath_ = (*filePath.rbegin() == '/') ? filePath : filePath + "/";
+    savePath_ = (*filePath.rbegin() == DIR_SEPARATOR_CH) ? filePath : filePath + DIR_SEPARATOR_STR;
 }
 
 namespace {
@@ -387,7 +386,9 @@ void AudioRecord::closeWavFile()
 
     SINT32 bytes = byteCounter_ * channels_;
 
-    fseek(fileHandle_, 40, SEEK_SET);  // jump to data length
+    // jump to data length
+    if (fseek(fileHandle_, 40, SEEK_SET) != 0)
+        WARN("Could not seek in file");
 
     if (ferror(fileHandle_))
         WARN("Can't reach offset 40 while closing");
@@ -399,7 +400,9 @@ void AudioRecord::closeWavFile()
 
     bytes = byteCounter_ * channels_ + 44; // + 44 for the wave header
 
-    fseek(fileHandle_, 4, SEEK_SET);  // jump to file size
+    // jump to file size
+    if (fseek(fileHandle_, 4, SEEK_SET) != 0)
+        WARN("Could not seek in file");
 
     if (ferror(fileHandle_))
         WARN("Can't reach offset 4");

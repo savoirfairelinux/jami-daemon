@@ -167,6 +167,9 @@ sip_utils::getIPList(const std::string &name)
                 addrstr.resize(AF_INET6_STRLEN);
                 ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
                 break;
+            default:
+                ERROR("Unexpected address family type, skipping.");
+                continue;
         }
         inet_ntop(res->ai_family, ptr, &(*addrstr.begin()), addrstr.size());
         // don't add duplicates, and don't use an std::set because

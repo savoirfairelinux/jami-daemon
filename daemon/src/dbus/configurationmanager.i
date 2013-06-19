@@ -88,7 +88,6 @@ public:
     std::string addAccount(const std::map<std::string, std::string>& details);
     void removeAccount(const std::string& accoundID);
     std::vector<std::string> getAccountList();
-    std::vector<int32_t> getAudioCodecList();
     std::vector<std::string> getSupportedTlsMethod();
     std::vector<std::string> getAudioCodecDetails(const int32_t& payload);
     std::vector<int32_t> getActiveAudioCodecList(const std::string& accountID);
@@ -108,10 +107,6 @@ public:
     std::string getEchoCancelState();
     std::map<std::string, std::string> getRingtoneList();
     void setEchoCancelState(const std::string& state);
-    int getEchoCancelTailLength();
-    void setEchoCancelTailLength(const int32_t& length);
-    int getEchoCancelDelay();
-    void setEchoCancelDelay(const int32_t& delay);
     int32_t isIax2Enabled();
 
     std::string getRecordPath();

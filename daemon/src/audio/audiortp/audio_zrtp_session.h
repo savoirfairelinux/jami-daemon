@@ -30,6 +30,7 @@
 #ifndef __AUDIO_ZRTP_SESSION_H__
 #define __AUDIO_ZRTP_SESSION_H__
 
+#pragma GCC diagnostic ignored "-Weffc++"
 #include <cstddef>
 #include <stdexcept>
 
@@ -41,7 +42,6 @@ using std::ptrdiff_t;
 
 #include "global.h"
 #include "audio_rtp_session.h"
-// #include <commoncpp/numbers.h> // OST::Time
 
 class SIPCall;
 class AudioCodec;
@@ -50,8 +50,8 @@ namespace sfl {
 
 class ZrtpZidException : public std::runtime_error {
     public:
-        ZrtpZidException(const std::string& str = "") :
-            std::runtime_error("ZRTP ZID initialization failed." + str) {}
+        ZrtpZidException(const char *str):
+            std::runtime_error(str) {}
 };
 
 class AudioZrtpSession :
@@ -59,12 +59,6 @@ class AudioZrtpSession :
     public AudioRtpSession {
     public:
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
-        ~AudioZrtpSession();
-
-        int startZrtpThread() {
-            rtpThread_.start();
-            return 0;
-        }
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
@@ -74,32 +68,18 @@ class AudioZrtpSession :
 
         virtual std::vector<uint8> getLocalMasterSalt() const { std::vector<uint8> vec; return vec; }
 
-        virtual void setLocalMasterKey(const std::vector<unsigned char>& vec UNUSED) const {}
+        virtual void setLocalMasterKey(const std::vector<unsigned char>& vec UNUSED) {}
 
-        virtual void setLocalMasterSalt(const std::vector<unsigned char>& vec UNUSED) const {}
+        virtual void setLocalMasterSalt(const std::vector<unsigned char>& vec UNUSED) {}
 
     private:
         NON_COPYABLE(AudioZrtpSession);
 
-        class AudioZrtpThread : public ost::Thread, public ost::TimerPort {
-            public:
-                AudioZrtpThread(AudioZrtpSession &session);
-
-                virtual void run();
-
-                bool running_;
-
-            private:
-                NON_COPYABLE(AudioZrtpThread);
-                AudioZrtpSession &zrtpSession_;
-        };
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
-        int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
+        void startReceiveThread();
         virtual int getIncrementForDTMF() const;
-
-        AudioZrtpThread rtpThread_;
 };
 
 }

@@ -31,7 +31,6 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
-#include "cc_thread.h"
 #include <map>
 #include <string>
 #include <climits>
@@ -39,6 +38,7 @@
 #include <tr1/memory>
 #include "shm_sink.h"
 #include "noncopyable.h"
+#include "video_provider.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -51,7 +51,7 @@ class AVFormatContext;
 class AVFrame;
 namespace sfl_video {
 
-class VideoReceiveThread : public ost::Thread {
+class VideoReceiveThread : public VideoProvider {
     private:
         NON_COPYABLE(VideoReceiveThread);
         std::map<std::string, std::string> args_;
@@ -72,11 +72,7 @@ class VideoReceiveThread : public ost::Thread {
         int dstHeight_;
 
         SHMSink sink_;
-#ifdef CCPP_PREFIX
-        ost::AtomicCounter threadRunning_;
-#else
-        ucommon::atomic::counter threadRunning_;
-#endif
+        bool threadRunning_;
         size_t bufferSize_;
         const std::string id_;
         AVIOInterruptCB interruptCb_;
@@ -88,16 +84,20 @@ class VideoReceiveThread : public ost::Thread {
         void setup();
         void openDecoder();
         void createScalingContext();
-        void fill_buffer(void *data);
+        void fillBuffer(void *data);
         static int interruptCb(void *ctx);
+        friend struct VideoRxContextHandle;
+        static void *runCallback(void *);
+        pthread_t thread_;
+        void run();
+        bool decodeFrame();
+        void renderFrame();
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
         void addDetails(std::map<std::string, std::string> &details);
-        virtual ~VideoReceiveThread();
-        // overrides of ost::Thread()
-        virtual void start();
-        virtual void run();
+        ~VideoReceiveThread();
+        void start();
         void setRequestKeyFrameCallback(void (*)(const std::string &));
 };
 }

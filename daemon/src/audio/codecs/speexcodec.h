@@ -37,7 +37,7 @@
 #include <cassert>
 
 class Speex : public sfl::AudioCodec {
-    public:
+public:
         Speex(int payload, unsigned clockRate, unsigned frameSize,
               unsigned bitRate, bool dynamicPayload, const SpeexMode *mode) :
             sfl::AudioCodec(payload, "speex", clockRate, frameSize, 1),
@@ -66,9 +66,8 @@ class Speex : public sfl::AudioCodec {
                 speex_decoder_ctl(speex_dec_state_, SPEEX_GET_FRAME_SIZE, &speex_frame_size_);
         }
 
-        NON_COPYABLE(Speex);
-
-        ~Speex() {
+        ~Speex()
+        {
             // Destroy the decoder struct
             speex_bits_destroy(&speex_dec_bits_);
             speex_decoder_destroy(speex_dec_state_);
@@ -79,6 +78,10 @@ class Speex : public sfl::AudioCodec {
             speex_encoder_destroy(speex_enc_state_);
             speex_enc_state_ = 0;
         }
+
+private:
+
+        NON_COPYABLE(Speex);
 
         virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
             speex_bits_read_from(&speex_dec_bits_, (char*) src, buf_size);
@@ -92,7 +95,6 @@ class Speex : public sfl::AudioCodec {
             return speex_bits_write(&speex_enc_bits_, (char*) dst, buf_size);
         }
 
-    private:
         SpeexBits speex_dec_bits_;
         SpeexBits speex_enc_bits_;
         void *speex_dec_state_;

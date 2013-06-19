@@ -37,29 +37,6 @@ sflphoned_CXXFLAGS = \
 sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto $(YAML_LIBS)
 noinst_LTLIBRARIES = libsflphone.la
 
-noinst_HEADERS = \
-		global.h \
-		codec.h \
-		conference.h \
-		voiplink.h \
-		preferences.h \
-		managerimpl.h \
-		manager.h \
-		global.h \
-		eventthread.h \
-		account.h \
-		call.h \
-		logger.h \
-		numbercleaner.h \
-		fileutils.h \
-		noncopyable.h \
-		cc_thread.h \
-		cc_config.h \
-		sfl_types.h \
-		array_size.h \
-		account_schema.h \
-		registration_states.h
-
 libsflphone_la_LIBADD = \
 	$(IAX_LIB) \
 	./sip/libsiplink.la \
@@ -105,4 +82,24 @@ libsflphone_la_SOURCES = conference.cpp \
 		account.cpp \
 		logger.cpp \
 		numbercleaner.cpp \
-		fileutils.cpp
+		fileutils.cpp \
+		scoped_lock.cpp \
+		scoped_lock.h \
+		conference.h \
+		voiplink.h \
+		preferences.h \
+		managerimpl.h \
+		manager.h \
+		global.h \
+		eventthread.h \
+		account.h \
+		call.h \
+		logger.h \
+		numbercleaner.h \
+		fileutils.h \
+		noncopyable.h \
+		cc_config.h \
+		sfl_types.h \
+		array_size.h \
+		account_schema.h \
+		registration_states.h

@@ -29,6 +29,11 @@
 
 #ifndef AUDIO_RTP_RECORD_HANDLER_H__
 #define AUDIO_RTP_RECORD_HANDLER_H__
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cstddef>
 
 using std::ptrdiff_t;
@@ -36,13 +41,15 @@ using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <tr1/array>
 #include <list>
+#include <pthread.h>
 
-class SIPCall;
 #include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 #include "audio/noisesuppress.h"
 #include "audio/gaincontrol.h"
+
+class SIPCall;
 
 namespace sfl {
 
@@ -81,7 +88,7 @@ class AudioRtpRecord {
 
     private:
         std::vector<AudioCodec*> audioCodecs_;
-        ost::Mutex audioCodecMutex_;
+        pthread_mutex_t audioCodecMutex_;
         // these will have the same value unless we are sending
         // a different codec than we are receiving (asymmetric RTP)
         int encoderPayloadType_;
@@ -100,7 +107,7 @@ class AudioRtpRecord {
 #if HAVE_SPEEXDSP
         NoiseSuppress *noiseSuppressEncode_;
         NoiseSuppress *noiseSuppressDecode_;
-        ost::Mutex audioProcessMutex_;
+        pthread_mutex_t audioProcessMutex_;
 #endif
 
         unsigned int dtmfPayloadType_;
@@ -184,6 +191,8 @@ class AudioRtpRecordHandler {
         }
 
         void putDtmfEvent(char digit);
+
+        std::string getCurrentAudioCodecNames();
 
     protected:
         bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;

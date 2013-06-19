@@ -57,7 +57,7 @@ class Account : public Serializable {
 
     public:
 
-        Account(const std::string& accountID, const std::string &type);
+        Account(const std::string& accountID);
 
         /**
          * Virtual destructor
@@ -251,12 +251,6 @@ class Account : public Serializable {
 
         /* If true, automatically answer calls to this account */
         bool autoAnswerEnabled_;
-
-        /*
-         * The account type
-         * IAX2 or SIP
-         */
-        std::string type_;
 
         /*
          * The general, protocol neutral registration

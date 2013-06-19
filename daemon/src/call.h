@@ -34,7 +34,7 @@
 
 #include <sstream>
 #include <map>
-#include "cc_thread.h"
+#include <pthread.h>
 #include "audio/recordable.h"
 
 /*
@@ -229,7 +229,7 @@ class Call : public Recordable {
     private:
         std::string getTypeStr() const;
         /** Protect every attribute that can be changed by two threads */
-        ost::Mutex callMutex_;
+        pthread_mutex_t callMutex_;
 
         // Informations about call socket / audio
 

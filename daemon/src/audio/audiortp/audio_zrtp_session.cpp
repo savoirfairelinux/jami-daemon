@@ -48,9 +48,8 @@ namespace sfl {
 
 AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename) :
     ost::SymmetricZRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
-    , AudioRtpSession(call, *this, *this)
+    , AudioRtpSession(call, *this)
     , zidFilename_(zidFilename)
-    , rtpThread_(*this)
 {
     initializeZid();
     DEBUG("Setting new RTP session with destination %s:%d",
@@ -58,33 +57,21 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
     audioRtpRecord_.callId_ = call_.getCallId();
 }
 
-AudioZrtpSession::~AudioZrtpSession()
-{
-    if (rtpThread_.running_) {
-        rtpThread_.running_ = false;
-        rtpThread_.join();
-    }
-}
-
-
 void AudioZrtpSession::initializeZid()
 {
     if (zidFilename_.empty())
         throw ZrtpZidException("zid filename empty");
 
+    const std::string cache_home(XDG_CACHE_HOME);
     std::string zidCompleteFilename;
 
-    std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + zidFilename_;
-
-    DEBUG("xdg_config %s", xdg_config.c_str());
-
-    if (XDG_CACHE_HOME != NULL) {
-        std::string xdg_env = std::string(XDG_CACHE_HOME) + zidFilename_;
-        DEBUG("xdg_env %s", xdg_env.c_str());
-        (xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
-    } else
-        zidCompleteFilename = xdg_config;
-
+    if (not cache_home.empty()) {
+        zidCompleteFilename = cache_home + DIR_SEPARATOR_STR + zidFilename_;
+    } else {
+        zidCompleteFilename = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
+                              ".cache" + DIR_SEPARATOR_STR + PACKAGE +
+                              DIR_SEPARATOR_STR + zidFilename_;
+    }
 
     if (initialize(zidCompleteFilename.c_str()) >= 0) {
         setEnableZrtp(true);
@@ -121,46 +108,14 @@ void AudioZrtpSession::sendMicData()
     queue_.sendImmediate(timestamp_, getMicDataEncoded(), compSize);
 }
 
-AudioZrtpSession::AudioZrtpThread::AudioZrtpThread(AudioZrtpSession &session) : running_(true), zrtpSession_(session)
-{}
-
-void AudioZrtpSession::AudioZrtpThread::run()
-{
-    DEBUG("Entering Audio zrtp thread main loop %s", running_ ? "running" : "not running");
-
-    TimerPort::setTimer(zrtpSession_.transportRate_);
-
-    while (running_) {
-        // Send session
-        if (zrtpSession_.hasDTMFPending())
-            zrtpSession_.sendDtmfEvent();
-        else
-            zrtpSession_.sendMicData();
-
-#ifdef ANDROID
-        usleep(20000);
-#else
-        Thread::sleep(TimerPort::getTimer());
-#endif
-
-        TimerPort::incTimer(zrtpSession_.transportRate_);
-    }
-
-    DEBUG("Leaving audio rtp thread loop");
-}
-
 int AudioZrtpSession::getIncrementForDTMF() const
 {
     return 160;
 }
 
-int AudioZrtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
+void AudioZrtpSession::startReceiveThread()
 {
-    if(isStarted_)
-        return 0;
-
-    AudioRtpSession::startRtpThread(audioCodecs);
-    return startZrtpThread();
+    ost::SymmetricZRTPSession::start();
 }
 
 }

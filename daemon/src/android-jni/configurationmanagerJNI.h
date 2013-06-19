@@ -65,8 +65,7 @@ class ConfigurationManagerJNI {
         void registerAllAccounts(void);
 
         std::map< std::string, std::string > getTlsSettingsDefault();
-
-        std::vector< int32_t > getAudioCodecList();
+        
         std::vector< std::string > getSupportedTlsMethod();
         std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
         std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
@@ -87,10 +86,6 @@ class ConfigurationManagerJNI {
         void setNoiseSuppressState(const std::string& state);
         std::string getEchoCancelState();
         void setEchoCancelState(const std::string& state);
-        void setEchoCancelTailLength(const int32_t& length);
-        int getEchoCancelTailLength();
-        void setEchoCancelDelay(const int32_t& length);
-        int getEchoCancelDelay();
 
         std::map<std::string, std::string> getRingtoneList();
 

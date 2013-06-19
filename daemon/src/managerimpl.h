@@ -44,8 +44,8 @@
 #include <set>
 #include <map>
 #include <tr1/memory>
+#include <pthread.h>
 
-#include "cc_thread.h"
 #if HAVE_DBUS
 #include "dbus/dbusmanager.h"
 #endif
@@ -102,6 +102,7 @@ static const char * const default_conf = "conf";
 class ManagerImpl {
     public:
         ManagerImpl();
+        ~ManagerImpl();
 
         /**
          * General preferences configuration
@@ -134,6 +135,8 @@ class ManagerImpl {
          */
         void init(const std::string &config_file);
 
+        void setPath(const std::string &path);
+
 #ifdef HAVE_DBUS
         /**
          * Enter Dbus mainloop
@@ -155,9 +158,7 @@ class ManagerImpl {
             return audiodriver_;
         }
 
-		void setPath(const std::string &path);
-
-		int getSipLogLevel();
+        void startAudioDriverStream();
 
         /**
          * Functions which occur with a user's action
@@ -586,14 +587,6 @@ class ManagerImpl {
          */
         void setEchoCancelState(const std::string &state);
 
-        int getEchoCancelTailLength() const;
-
-        void setEchoCancelTailLength(int);
-
-        int getEchoCancelDelay() const;
-
-        void setEchoCancelDelay(int);
-
         /**
          * Convert a list of payload in a special format, readable by the server.
          * Required format: payloads separated with one slash.
@@ -822,14 +815,6 @@ class ManagerImpl {
 
         void initAudioDriver();
 
-        void audioLayerMutexLock() {
-            audioLayerMutex_.enterMutex();
-        }
-
-        void audioLayerMutexUnlock() {
-            audioLayerMutex_.leaveMutex();
-        }
-
         /**
          * Load the accounts order set by the user from the sflphonedrc config file
          * @return std::vector<std::string> A vector containing the account ID's
@@ -896,7 +881,7 @@ class ManagerImpl {
         std::string currentCallId_;
 
         /** Protected current call access */
-        ost::Mutex currentCallMutex_;
+        pthread_mutex_t currentCallMutex_;
 
         /** Audio layer */
         AudioLayer* audiodriver_;
@@ -907,7 +892,7 @@ class ManagerImpl {
         /////////////////////
         // Protected by Mutex
         /////////////////////
-        ost::Mutex toneMutex_;
+        pthread_mutex_t toneMutex_;
         std::tr1::shared_ptr<TelephoneTone> telephoneTone_;
         std::tr1::shared_ptr<AudioFile> audiofile_;
 
@@ -919,7 +904,7 @@ class ManagerImpl {
         /**
          * Mutex used to protect audio layer
          */
-        ost::Mutex audioLayerMutex_;
+        pthread_mutex_t audioLayerMutex_;
 
         /**
          * Waiting Call Vectors
@@ -929,7 +914,7 @@ class ManagerImpl {
         /**
          * Protect waiting call list, access by many voip/audio threads
          */
-        ost::Mutex waitingCallMutex_;
+        pthread_mutex_t waitingCallMutex_;
 
         /**
          * Number of waiting call, synchronize with waitingcall callidvector
@@ -969,7 +954,7 @@ class ManagerImpl {
         CallAccountMap callAccountMap_;
 
         /** Mutex to lock the call account map (main thread + voiplink thread) */
-        ost::Mutex callAccountMapMutex_;
+        pthread_mutex_t callAccountMapMutex_;
 
         std::map<std::string, bool> IPToIPMap_;
 
@@ -978,7 +963,7 @@ class ManagerImpl {
         /**
          * Load the account map from configuration
          */
-        void loadAccountMap(Conf::YamlParser &parser);
+        int loadAccountMap(Conf::YamlParser &parser);
         /**
          * Load default account map (no configuration)
          */
@@ -1115,7 +1100,7 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        History history_;
+        sfl::History history_;
         bool finished_;
 };
 #endif // MANAGER_IMPL_H_

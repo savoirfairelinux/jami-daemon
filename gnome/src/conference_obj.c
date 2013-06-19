@@ -34,7 +34,6 @@
 #include "str_utils.h"
 #include "dbus.h"
 #include "sflphone_const.h"
-#include "logger.h"
 #include "calltab.h"
 #include "calllist.h"
 
@@ -42,11 +41,11 @@ conference_obj_t *
 create_new_conference(conference_state_t state, const gchar* const confID)
 {
     if (confID == NULL) {
-        ERROR("Conference ID is NULL while creating new conference");
+        g_warning("Conference ID is NULL while creating new conference");
         return NULL;
     }
 
-    DEBUG("Create new conference %s", confID);
+    g_debug("Create new conference %s", confID);
 
     // Allocate memory
     conference_obj_t *new_conf = g_new0(conference_obj_t, 1);
@@ -110,7 +109,7 @@ void conference_add_participant_number(const gchar *call_id, conference_obj_t *c
     callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
     if (!call) {
-        ERROR("Could not find %s", call_id);
+        g_warning("Could not find %s", call_id);
         return;
     }
 
@@ -120,7 +119,7 @@ void conference_add_participant_number(const gchar *call_id, conference_obj_t *c
 
 void conference_add_participant(const gchar* call_id, conference_obj_t* conf)
 {
-    DEBUG("Conference %s, adding participant %s", conf->_confID, call_id);
+    g_debug("Conference %s, adding participant %s", conf->_confID, call_id);
 
     // store the new participant list after appending participant id
     conf->participant_list = g_slist_append(conf->participant_list, (gpointer) g_strdup(call_id));
@@ -139,7 +138,7 @@ void conference_remove_participant(const gchar* call_id, conference_obj_t* conf)
 void conference_participant_list_update(gchar** participants, conference_obj_t* conf)
 {
     if (!conf) {
-        ERROR("Conference is NULL");
+        g_warning("Conference is NULL");
         return;
     }
 
@@ -151,10 +150,9 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
     for (gchar **part = participants; part && *part; ++part) {
         gchar *call_id = (gchar *) (*part);
         callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
-        if (!call) {
+        if (!call)
             restore_call(call_id);
-            call = calllist_get_call(current_calls_tab, call_id);
-        }
+
         conference_add_participant(call_id, conf);
     }
 }

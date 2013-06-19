@@ -39,45 +39,43 @@
 #ifndef __SEARCH_FILTER_H__
 #define __SEARCH_FILTER_H__
 
-#include <calllist.h>
 #include <gtk/gtk.h>
-#include <mainwindow.h>
-
-#include <addressbook.h>
-#include <history.h>
-
-GdkPixbuf *waitingPixOff;
-
-SearchType HistorySearchType;
+#include "history.h"
 
 /**
  * Create a new search bar for call hostory
  */
-GtkWidget* history_searchbar_new (void);
+GtkWidget*
+history_searchbar_new();
 
 /**
  * Create a new search bar for addressbook
  */
-GtkWidget* contacts_searchbar_new (void);
+GtkWidget*
+contacts_searchbar_new();
 
 /**
  * Get type of call to be search from call history
  */
-SearchType get_current_history_search_type (void);
+SearchType
+get_current_history_search_type();
 
 /**
  * Set focus on addressbook search bar
  */
-void set_focus_on_addressbook_searchbar (void);
+void
+set_focus_on_addressbook_searchbar();
 
 /**
  * Reload combo box to update list of active addressbook
  */
-void update_searchbar_addressbook_list (void);
+void
+update_searchbar_addressbook_list();
 
 /**
  * Create a new menu listing all system addressbooks
  */
-GtkWidget *addressbook_menu_new (void);
+GtkWidget *
+addressbook_menu_new();
 
 #endif

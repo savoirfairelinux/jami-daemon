@@ -40,18 +40,18 @@
 #include "manager.h"
 
 namespace sfl {
-AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue, ost::Thread &thread) :
+AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     AudioRtpRecordHandler(call)
+    , isStarted_(false)
+    , queue_(queue)
     , call_(call)
     , timestamp_(0)
     , timestampIncrement_(0)
     , transportRate_(20)
-    , queue_(queue)
-    , isStarted_(false)
     , remote_ip_()
     , remote_port_(0)
     , timestampCount_(0)
-    , thread_(thread)
+    , rtpSendThread_(*this)
 {
     queue_.setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
@@ -223,7 +223,7 @@ void AudioRtpSession::updateDestinationIpAddress()
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
 
-    if (!queue_.forgetDestination(remote_ip_, remote_port_, remote_port_ + 1))
+    if (!queue_.forgetDestination(remote_ip_, remote_port_))
         DEBUG("Did not remove previous destination");
 
     // new destination is stored in call
@@ -232,13 +232,9 @@ void AudioRtpSession::updateDestinationIpAddress()
 }
 
 
-int AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
+void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &audioCodecs)
 {
-    if (isStarted_)
-        return 0;
-
-    DEBUG("Starting main thread");
-
+    DEBUG("Preparing receiving thread");
     isStarted_ = true;
     setSessionTimeouts();
     setSessionMedia(audioCodecs);
@@ -248,8 +244,6 @@ int AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 #endif
 
     queue_.enableStack();
-    thread_.start();
-    return 0;
 }
 
 
@@ -264,4 +258,63 @@ int AudioRtpSession::getIncrementForDTMF() const
     return timestampIncrement_;
 }
 
+void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodecs)
+{
+    if (isStarted_)
+        return;
+
+    prepareRtpReceiveThread(audioCodecs);
+    // implemented in subclasses
+    startReceiveThread();
+    startSendThread();
+}
+
+AudioRtpSession::AudioRtpSendThread::AudioRtpSendThread(AudioRtpSession &session) :
+    running_(false), rtpSession_(session), thread_(0), timer_()
+{}
+
+AudioRtpSession::AudioRtpSendThread::~AudioRtpSendThread()
+{
+    running_ = false;
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void AudioRtpSession::AudioRtpSendThread::start()
+{
+    running_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+void *
+AudioRtpSession::AudioRtpSendThread::runCallback(void *data)
+{
+    AudioRtpSession::AudioRtpSendThread *context = static_cast<AudioRtpSession::AudioRtpSendThread*>(data);
+    context->run();
+    return NULL;
+}
+
+void AudioRtpSession::AudioRtpSendThread::run()
+{
+    timer_.setTimer(rtpSession_.transportRate_);
+    const int MS_TO_USEC = 1000;
+
+    while (running_) {
+        // Send session
+        if (rtpSession_.hasDTMFPending())
+            rtpSession_.sendDtmfEvent();
+        else
+            rtpSession_.sendMicData();
+
+        usleep(timer_.getTimer() * MS_TO_USEC);
+
+        timer_.incTimer(rtpSession_.transportRate_);
+    }
+}
+
+
+void AudioRtpSession::startSendThread()
+{
+    rtpSendThread_.start();
+}
 }

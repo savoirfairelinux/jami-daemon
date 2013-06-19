@@ -2,11 +2,13 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([sflphone],[1.2.0],[sflphoneteam@savoirfairelinux.com],[sflphone])
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012]])
+AC_INIT([sflphone],[1.2.2],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013]])
 AC_REVISION([$Revision$])
 
-AM_INIT_AUTOMAKE
+AC_CONFIG_AUX_DIR([build-aux])
+AM_INIT_AUTOMAKE([-Wno-portability])
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR]) # required by automake 1.12
 AC_CONFIG_HEADERS([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
@@ -101,6 +103,12 @@ dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
 
+dnl Coverage is default-disabled
+AC_ARG_ENABLE([coverage], AS_HELP_STRING([--enable-coverage], [Enable coverage]))
+
+AS_IF([test "x$enable_coverage" = "xyes"], [
+        CXXFLAGS="${CXXFLAGS} --coverage"
+        LDFLAGS="${LDFLAGS} --coverage"])
 
 dnl Video is default-disabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
@@ -281,10 +289,26 @@ AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then ec
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
 
 
-dnl iLBC is default-enabled, since it's included
-AC_ARG_ENABLE([ilbc], AS_HELP_STRING([--disable-ilbc], [Disable iLBC codec]))
-AM_CONDITIONAL(BUILD_ILBC, test "x$enable_ilbc" != "xno")
+dnl iLBC is enabled if it's installed
+AC_ARG_WITH([with-libilbc],
+  [AS_HELP_STRING([--with-libilbc],
+    [support ilbc audio @<:@default=check@:>@])],
+  [],
+  [with_libilbc=check])
+AS_CASE(["$with_libilbc"],
+  [yes], [PKG_CHECK_MODULES([libilbc], [libilbc], [HAVE_LIBILBC=1])],
+  [no], [],
+  [PKG_CHECK_MODULES([libilbc], [libilbc], [HAVE_LIBILBC=1], [HAVE_LIBILBC=0])])
+AM_CONDITIONAL([BUILD_ILBC], [test "$with_libilbc" != no -a "$HAVE_LIBILBC" -eq 1])
 
+dnl opus is enabled if it's installed
+AC_ARG_WITH([with-opus],
+  [AS_HELP_STRING([--with-opus], [support opus audio @<:@default=check@:>@])], [], [with_opus=check])
+AS_CASE(["$with_opus"],
+  [yes], [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1])],
+  [no], [],
+  [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1], [HAVE_OPUS=0])])
+AM_CONDITIONAL([BUILD_OPUS], [test "$with_opus" != no -a "$HAVE_OPUS" -eq 1])
 
 # IAX
 # required dependency(ies): libiax2 (static)
@@ -364,5 +388,5 @@ AC_CONFIG_FILES([Makefile \
 # Go!
 AC_OUTPUT
 
-AC_CONFIG_SUBDIRS([libs/pjproject])
-AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
+AC_CONFIG_SUBDIRS([libs/pjproject-2.0.1])
+AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-2.0.1) has already been compiled. Run `make' to build the software.]])

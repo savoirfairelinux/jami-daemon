@@ -50,7 +50,7 @@
  * Try to connect to DBus services
  * @return TRUE if connection succeeded, FALSE otherwise
  */
-gboolean dbus_connect(GError **error, GSettings *settings);
+gboolean dbus_connect(GError **error, SFLPhoneClient *client);
 
 /**
  * Unreferences the proxies
@@ -500,6 +500,8 @@ gboolean dbus_get_is_recording(const callable_obj_t *);
 
 GHashTable *dbus_get_call_details(const gchar *callID);
 
+gboolean dbus_is_valid_call(const gchar *callID);
+
 gchar **dbus_get_call_list(void);
 
 GHashTable* dbus_get_conference_details(const gchar *confID);
@@ -573,9 +575,6 @@ dbus_detach_participant(const gchar *callID);
 
 void
 dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID);
-
-void
-dbus_create_conf_from_participant_list(const gchar **list);
 
 void
 dbus_join_conference(const gchar *sel_confID, const gchar *drag_confID);

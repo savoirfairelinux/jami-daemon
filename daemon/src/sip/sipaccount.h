@@ -104,6 +104,7 @@ class SIPAccount : public Account {
         static const char * const IP2IP_PROFILE;
         static const char * const OVERRTP_STR;
         static const char * const SIPINFO_STR;
+        static const char * const ACCOUNT_TYPE;
 
         /**
          * Constructor
@@ -441,15 +442,6 @@ class SIPAccount : public Account {
             return publishedIpAddress_;
         }
 
-        /**
-         * Set the public IP address to be used in Contact header.
-         * @param The public IPV4 address in the standard dot notation.
-         * @return void
-         */
-        void setPublishedAddress(const std::string &publishedIpAddress) {
-            publishedIpAddress_ = publishedIpAddress;
-        }
-
         std::string getServiceRoute() const {
             return serviceRoute_;
         }
@@ -478,10 +470,17 @@ class SIPAccount : public Account {
 
         void setReceivedParameter(const std::string &received) {
             receivedParameter_ = received;
+            via_addr_.host.ptr = (char *) receivedParameter_.c_str();
+            via_addr_.host.slen = receivedParameter_.size();
         }
 
         std::string getReceivedParameter() const {
             return receivedParameter_;
+        }
+
+        pjsip_host_port *
+        getViaAddr() {
+            return &via_addr_;
         }
 
         int getRPort() const {
@@ -491,7 +490,10 @@ class SIPAccount : public Account {
                 return rPort_;
         }
 
-        void setRPort(int rPort) { rPort_ = rPort; }
+        void setRPort(int rPort) {
+            rPort_ = rPort;
+            via_addr_.port = rPort;
+        }
 
         /**
          * Timer used to periodically send re-register request based
@@ -750,6 +752,11 @@ class SIPAccount : public Account {
          * Optional: "rport" parameter from VIA header
          */
         int rPort_;
+
+        /**
+         * Optional: via_addr construct from received parameters
+         */
+        pjsip_host_port via_addr_;
 };
 
 #endif

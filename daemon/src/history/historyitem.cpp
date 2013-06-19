@@ -35,6 +35,8 @@
 #include <cstdlib>
 #include <istream>
 
+namespace sfl {
+
 const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
 const char * const HistoryItem::CALLID_KEY =            "callid";
 const char * const HistoryItem::CONFID_KEY =            "confid";
@@ -115,4 +117,6 @@ std::ostream& operator << (std::ostream& o, const HistoryItem& item)
 {
     item.print(o);
     return o;
+}
+
 }

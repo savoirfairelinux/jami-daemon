@@ -36,6 +36,8 @@
 #include "config.h"
 #endif
 
+#include "icons/icon_factory.h"
+
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -43,9 +45,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "gtk2_wrappers.h"
 #include "dbus.h"
-#include "logger.h"
 #include "statusicon.h"
 #include "addrbookfactory.h"
 #include "preferencesdialog.h"
@@ -57,7 +57,6 @@
 #include "videoconf.h"
 #endif
 #include "uimanager.h"
-#include "unused.h"
 #include "mainwindow.h"
 
 /**
@@ -85,19 +84,19 @@ static gboolean history_enabled = TRUE;
 static gboolean instant_messaging_enabled = TRUE;
 
 static void
-set_popup_mode(GtkToggleButton *widget, GSettings *settings)
+set_popup_mode(GtkToggleButton *widget, SFLPhoneClient *client)
 {
-    const gboolean currentstate = g_settings_get_boolean(settings, "popup-main-window");
+    const gboolean currentstate = g_settings_get_boolean(client->settings, "popup-main-window");
 
     if (currentstate || gtk_toggle_button_get_active(widget))
-        g_settings_set_boolean(settings, "popup-main-window", !currentstate);
+        g_settings_set_boolean(client->settings, "popup-main-window", !currentstate);
 }
 
 void
-set_notif_level(GtkWidget *widget UNUSED, GSettings *settings)
+set_notif_level(G_GNUC_UNUSED GtkWidget *widget, SFLPhoneClient *client)
 {
-    const gboolean current_state = g_settings_get_boolean(settings, "notify-all");
-    g_settings_set_boolean(settings, "notify-all", !current_state);
+    const gboolean current_state = g_settings_get_boolean(client->settings, "notify-all");
+    g_settings_set_boolean(client->settings, "notify-all", !current_state);
 }
 
 static void
@@ -107,23 +106,23 @@ history_limit_cb(GtkSpinButton *button)
 }
 
 static void
-history_enabled_cb(GtkWidget *widget, GSettings *settings)
+history_enabled_cb(GtkWidget *widget, SFLPhoneClient *client)
 {
     history_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
     gtk_widget_set_sensitive(GTK_WIDGET(history_value), history_enabled);
 
     // Toggle it through D-Bus
-    g_settings_set_boolean(settings, "history-enabled", history_enabled);
+    g_settings_set_boolean(client->settings, "history-enabled", history_enabled);
 }
 
 static void
-instant_messaging_enabled_cb(GtkToggleButton *widget, GSettings *settings)
+instant_messaging_enabled_cb(GtkToggleButton *widget, SFLPhoneClient *client)
 {
     instant_messaging_enabled = gtk_toggle_button_get_active(widget);
-    g_settings_set_boolean(settings, "instant-messaging-enabled", instant_messaging_enabled);
+    g_settings_set_boolean(client->settings, "instant-messaging-enabled", instant_messaging_enabled);
 }
 
-void showstatusicon_cb(GtkToggleButton *widget, GSettings *settings)
+void showstatusicon_cb(GtkToggleButton *widget, SFLPhoneClient *client)
 {
     // data contains the previous value of dbus_is_status_icon_enabled () - ie before the click.
     gboolean currentstatus = gtk_toggle_button_get_active(widget);
@@ -132,81 +131,76 @@ void showstatusicon_cb(GtkToggleButton *widget, GSettings *settings)
     gtk_widget_set_sensitive(GTK_WIDGET(popupwindow), currentstatus);
     gtk_widget_set_sensitive(GTK_WIDGET(neverpopupwindow), currentstatus);
 
-    currentstatus ? show_status_icon(settings) : hide_status_icon();
+    currentstatus ? show_status_icon(client) : hide_status_icon();
 
     // Update through D-Bus
-    g_settings_set_boolean(settings, "show-status-icon", currentstatus);
+    g_settings_set_boolean(client->settings, "show-status-icon", currentstatus);
 }
 
 static void
-history_load_configuration(GSettings *settings)
+history_load_configuration(SFLPhoneClient *client)
 {
     history_limit = dbus_get_history_limit();
-    history_enabled = g_settings_get_boolean(settings, "history-enabled");
+    history_enabled = g_settings_get_boolean(client->settings, "history-enabled");
 }
 
 static void
-instant_messaging_load_configuration(GSettings *settings)
+instant_messaging_load_configuration(SFLPhoneClient *client)
 {
-    instant_messaging_enabled = g_settings_get_boolean(settings, "instant-messaging-enabled");
+    instant_messaging_enabled = g_settings_get_boolean(client->settings, "instant-messaging-enabled");
 }
 
 GtkWidget*
-create_general_settings(GSettings *settings)
+create_general_settings(SFLPhoneClient *client)
 {
-    GtkWidget *ret, *notifAll, *frame, *checkBoxWidget, *label, *table, *showstatusicon;
+    GtkWidget *ret, *notifAll, *frame, *checkBoxWidget, *label, *showstatusicon;
     gboolean statusicon;
 
     // Load history configuration
-    history_load_configuration(settings);
+    history_load_configuration(client);
 
     // Load instant messaging configuration
-    instant_messaging_load_configuration(settings);
+    instant_messaging_load_configuration(client);
 
     // Main widget
     ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Notifications Frame
-    gnome_main_section_new_with_table(_("Desktop Notifications"), &frame,
-                                      &table, 2, 1);
+    GtkWidget *grid;
+    gnome_main_section_new_with_grid(_("Desktop Notifications"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     // Notification All
     notifAll = gtk_check_button_new_with_mnemonic(_("_Enable notifications"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(notifAll), g_settings_get_boolean(settings, "notify-all"));
-    g_signal_connect(G_OBJECT(notifAll), "clicked", G_CALLBACK(set_notif_level), settings);
-    gtk_table_attach(GTK_TABLE(table), notifAll, 0, 1, 0, 1, GTK_EXPAND
-                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(notifAll), g_settings_get_boolean(client->settings, "notify-all"));
+    g_signal_connect(G_OBJECT(notifAll), "clicked", G_CALLBACK(set_notif_level), client);
+    gtk_grid_attach(GTK_GRID(grid), notifAll, 0, 0, 1, 1);
 
     // System Tray option frame
-    gnome_main_section_new_with_table(_("System Tray Icon"), &frame, &table, 4,
-                                      1);
+    gnome_main_section_new_with_grid(_("System Tray Icon"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     // Whether or not displaying an icon in the system tray
-    statusicon = g_settings_get_boolean(settings, "show-status-icon");
+    statusicon = g_settings_get_boolean(client->settings, "show-status-icon");
 
     showstatusicon = gtk_check_button_new_with_mnemonic(
                          _("Show SFLphone in the system tray"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(showstatusicon), statusicon);
-    g_signal_connect(G_OBJECT(showstatusicon) , "clicked" , G_CALLBACK(showstatusicon_cb), settings);
-    gtk_table_attach(GTK_TABLE(table), showstatusicon, 0, 1, 0, 1, GTK_EXPAND
-                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    g_signal_connect(G_OBJECT(showstatusicon), "clicked", G_CALLBACK(showstatusicon_cb), client);
+    gtk_grid_attach(GTK_GRID(grid), showstatusicon, 0, 0, 1, 1);
 
     popupwindow = gtk_radio_button_new_with_mnemonic(NULL,
                   _("_Popup main window on incoming call"));
-    g_signal_connect(G_OBJECT(popupwindow), "toggled", G_CALLBACK(set_popup_mode), settings);
-    gtk_table_attach(GTK_TABLE(table), popupwindow, 0, 1, 1, 2, GTK_EXPAND
-                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    g_signal_connect(G_OBJECT(popupwindow), "toggled", G_CALLBACK(set_popup_mode), client);
+    gtk_grid_attach(GTK_GRID(grid), popupwindow, 0, 1, 1, 1);
 
     neverpopupwindow = gtk_radio_button_new_with_mnemonic_from_widget(
                            GTK_RADIO_BUTTON(popupwindow), _("Ne_ver popup main window"));
-    gtk_table_attach(GTK_TABLE(table), neverpopupwindow, 0, 1, 2, 3, GTK_EXPAND
-                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_grid_attach(GTK_GRID(grid), neverpopupwindow, 0, 2, 1, 1);
 
     // Toggle according to the user configuration
-    g_settings_get_boolean(settings, "popup-main-window") ? gtk_toggle_button_set_active(
+    g_settings_get_boolean(client->settings, "popup-main-window") ? gtk_toggle_button_set_active(
         GTK_TOGGLE_BUTTON(popupwindow),
         TRUE) :
     gtk_toggle_button_set_active(
@@ -218,40 +212,36 @@ create_general_settings(GSettings *settings)
     gtk_widget_set_sensitive(GTK_WIDGET(neverpopupwindow),statusicon);
 
     // HISTORY CONFIGURATION
-    gnome_main_section_new_with_table(_("Calls History"), &frame, &table, 3, 1);
+    gnome_main_section_new_with_grid(_("Calls History"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     checkBoxWidget = gtk_check_button_new_with_mnemonic(
                          _("_Keep my history for at least"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkBoxWidget),
                                  history_enabled);
-    g_signal_connect(G_OBJECT(checkBoxWidget) , "clicked" , G_CALLBACK(history_enabled_cb) , settings);
-    gtk_table_attach(GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND
-                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    g_signal_connect(G_OBJECT(checkBoxWidget), "clicked", G_CALLBACK(history_enabled_cb), client);
+    gtk_grid_attach(GTK_GRID(grid), checkBoxWidget, 0, 0, 1, 1);
 
     history_value = gtk_spin_button_new_with_range(1, 99, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(history_value), history_limit);
-    g_signal_connect(G_OBJECT(history_value) , "value-changed" , G_CALLBACK(history_limit_cb), NULL);
+    g_signal_connect(G_OBJECT(history_value), "value-changed", G_CALLBACK(history_limit_cb), NULL);
     gtk_widget_set_sensitive(GTK_WIDGET(history_value),
                              gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkBoxWidget)));
-    gtk_table_attach(GTK_TABLE(table), history_value, 1, 2, 0, 1, GTK_EXPAND
-                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_grid_attach(GTK_GRID(grid), history_value, 1, 0, 1, 1);
 
     label = gtk_label_new(_("days"));
-    gtk_table_attach(GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL,
-                     GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_grid_attach(GTK_GRID(grid), label, 2, 0, 1, 1);
 
     // INSTANT MESSAGING CONFIGURATION
-    gnome_main_section_new_with_table(_("Instant Messaging"), &frame, &table, 1, 1);
+    gnome_main_section_new_with_grid(_("Instant Messaging"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     checkBoxWidget = gtk_check_button_new_with_mnemonic(
                          _("Enable instant messaging"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkBoxWidget),
                                  instant_messaging_enabled);
-    g_signal_connect(G_OBJECT(checkBoxWidget) , "clicked" , G_CALLBACK(instant_messaging_enabled_cb), settings);
-    gtk_table_attach(GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND
-                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    g_signal_connect(G_OBJECT(checkBoxWidget), "clicked", G_CALLBACK(instant_messaging_enabled_cb), client);
+    gtk_grid_attach(GTK_GRID(grid), checkBoxWidget, 0, 0, 1, 1);
 
     gtk_widget_show_all(ret);
 
@@ -259,18 +249,18 @@ create_general_settings(GSettings *settings)
 }
 
 void
-save_configuration_parameters(GSettings *settings)
+save_configuration_parameters(SFLPhoneClient *client)
 {
     if (addrbook)
         addressbook_config_save_parameters();
 
-    hooks_save_parameters(settings);
+    hooks_save_parameters(client);
 
     dbus_set_history_limit(history_limit);
 }
 
 void
-selection_changed_cb(GtkIconView *view, gpointer user_data UNUSED)
+selection_changed_cb(GtkIconView *view, G_GNUC_UNUSED gpointer user_data)
 {
     GtkTreeModel *model;
     GtkTreeIter iter;
@@ -356,10 +346,10 @@ static GtkTreeModel* create_model(GtkWidget *widget)
  * Show configuration window with tabs
  */
 guint
-show_preferences_dialog(GSettings *settings)
+show_preferences_dialog(SFLPhoneClient *client)
 {
     GtkDialog *dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Preferences"),
-                                   GTK_WINDOW(get_main_window()),
+                                   GTK_WINDOW(client->win),
                                    GTK_DIALOG_DESTROY_WITH_PARENT,
                                    GTK_STOCK_CLOSE,
                                    GTK_RESPONSE_ACCEPT,
@@ -396,12 +386,12 @@ show_preferences_dialog(GSettings *settings)
     gtk_widget_show(notebook);
 
     // General settings tab
-    GtkWidget *tab = create_general_settings(settings);
+    GtkWidget *tab = create_general_settings(client);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Audio tab
-    tab = create_audio_configuration(settings);
+    tab = create_audio_configuration(client);
 
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
@@ -414,7 +404,7 @@ show_preferences_dialog(GSettings *settings)
 #endif
 
     // Hooks tab
-    tab = create_hooks_settings(settings);
+    tab = create_hooks_settings(client);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
@@ -425,7 +415,7 @@ show_preferences_dialog(GSettings *settings)
 
     if (addrbook) {
         // Addressbook tab
-        tab = create_addressbook_settings();
+        tab = create_addressbook_settings(client);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
     }
@@ -442,8 +432,8 @@ show_preferences_dialog(GSettings *settings)
         dbus_stop_video_preview();
 #endif
 
-    save_configuration_parameters(settings);
-    update_actions(settings);
+    save_configuration_parameters(client);
+    update_actions(client);
 
     gtk_widget_destroy(GTK_WIDGET(dialog));
     return result;

@@ -358,29 +358,9 @@
                </arg>
        </method>
 
-       <method name="setEchoCancelTailLength" tp:name-for-bindings="setEchoCancelTailLength">
-           <arg type="i" name="index" direction="in">
-           </arg>
-       </method>
-
-       <method name="getEchoCancelTailLength" tp:name-for-bindings="getEchoCancelTailLength">
-           <arg type="i" name="index" direction="out">
-           </arg>
-       </method>
-
-       <method name="setEchoCancelDelay" tp:name-for-bindings="setEchoCancelDelay">
-           <arg type="i" name="index" direction="in">
-           </arg>
-       </method>
-
-       <method name="getEchoCancelDelay" tp:name-for-bindings="getEchoCancelDelay">
-           <arg type="i" name="index" direction="out">
-           </arg>
-       </method>
-
        <!--    General Settings Panel         -->
 
-       <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
+       <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
            <arg type="s" name="state" direction="out">
            </arg>
        </method>

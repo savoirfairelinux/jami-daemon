@@ -58,6 +58,7 @@ static const char *const CONFIG_KEEP_ALIVE_ENABLED              = "Account.keepA
 
 
 static const char *const CONFIG_DEFAULT_REGISTRATION_EXPIRE     = "60";
+static const char *const CONFIG_DEFAULT_RINGTONE_ENABLED        = "true";
 
 static const char *const CONFIG_ACCOUNT_HOSTNAME                = "Account.hostname";
 static const char *const CONFIG_ACCOUNT_USERNAME                = "Account.username";

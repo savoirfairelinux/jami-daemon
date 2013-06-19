@@ -29,6 +29,7 @@
  */
 
 #include "video_send_thread.h"
+#include "dbus/video_controls.h"
 #include "packet_handle.h"
 #include "check.h"
 
@@ -45,6 +46,11 @@ extern "C" {
 
 #include <map>
 #include "manager.h"
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
+// fallback to av_freep for older libavcodec
+#define avcodec_free_frame av_freep
+#endif
 
 namespace sfl_video {
 
@@ -108,6 +114,7 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     // emit one intra frame every gop_size frames
     encoderCtx_->max_b_frames = 0;
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
+
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
     // This is to place global headers in extradata instead of every keyframe.
@@ -190,8 +197,7 @@ void VideoSendThread::setup()
     if (ret < 0) {
         if (options)
             av_dict_free(&options);
-        ERROR("Could not open input file %s", args_["input"].c_str());
-        ost::Thread::exit();
+        EXIT_IF_FAIL(false, "Could not open input file %s", args_["input"].c_str());
     }
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
@@ -225,6 +231,13 @@ void VideoSendThread::setup()
 #endif
     EXIT_IF_FAIL(ret >= 0, "Could not open codec");
 
+    // determine required buffer size and allocate buffer
+    bufferSize_ = avpicture_get_size(PIX_FMT_BGRA, inputDecoderCtx_->width, inputDecoderCtx_->height);
+
+    EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+    Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), inputDecoderCtx_->width, inputDecoderCtx_->height);
+    DEBUG("shm sink started with size %d, width %d and height %d", bufferSize_, inputDecoderCtx_->width, inputDecoderCtx_->height);
+
     outputCtx_ = avformat_alloc_context();
     outputCtx_->interrupt_callback = interruptCb_;
 
@@ -251,7 +264,7 @@ void VideoSendThread::setup()
         forcePresetX264();
     }
 
-    scaledPicture_ = avcodec_alloc_frame();
+    scaledInput_ = avcodec_alloc_frame();
 
     // open encoder
 
@@ -285,7 +298,6 @@ void VideoSendThread::setup()
         av_dict_set(&outOptions, "payload_type", args_["payload_type"].c_str(), 0);
     }
 
-
     ret = avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL);
     if (outOptions)
         av_dict_free(&outOptions);
@@ -294,35 +306,19 @@ void VideoSendThread::setup()
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
     print_sdp();
 
-    // allocate video frame
-    rawFrame_ = avcodec_alloc_frame();
 
-    // alloc image and output buffer
-    outbufSize_ = encoderCtx_->width * encoderCtx_->height;
-    outbuf_ = reinterpret_cast<uint8_t*>(av_malloc(outbufSize_));
-    // allocate buffer that fits YUV 420
-    scaledPictureBuf_ = reinterpret_cast<uint8_t*>(av_malloc((outbufSize_ * 3) / 2));
-
-    scaledPicture_->data[0] = reinterpret_cast<uint8_t*>(scaledPictureBuf_);
-    scaledPicture_->data[1] = scaledPicture_->data[0] + outbufSize_;
-    scaledPicture_->data[2] = scaledPicture_->data[1] + outbufSize_ / 4;
-    scaledPicture_->linesize[0] = encoderCtx_->width;
-    scaledPicture_->linesize[1] = encoderCtx_->width / 2;
-    scaledPicture_->linesize[2] = encoderCtx_->width / 2;
-}
-
-void VideoSendThread::createScalingContext()
-{
-    // Create scaling context
-    imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_,
-                                          inputDecoderCtx_->width,
-                                          inputDecoderCtx_->height,
-                                          inputDecoderCtx_->pix_fmt,
-                                          encoderCtx_->width,
-                                          encoderCtx_->height,
-                                          encoderCtx_->pix_fmt, SWS_BICUBIC,
-                                          NULL, NULL, NULL);
-    EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context");
+    // allocate buffers for both scaled (pre-encoder) and encoded frames
+    encoderBufferSize_ = avpicture_get_size(encoderCtx_->pix_fmt, encoderCtx_->width,
+                                            encoderCtx_->height);
+    EXIT_IF_FAIL(encoderBufferSize_ > FF_MIN_BUFFER_SIZE, "Encoder buffer too small");
+    encoderBuffer_ = reinterpret_cast<uint8_t*>(av_malloc(encoderBufferSize_));
+    const int scaledInputSize = avpicture_get_size(encoderCtx_->pix_fmt, encoderCtx_->width, encoderCtx_->height);
+    scaledInputBuffer_ = reinterpret_cast<uint8_t*>(av_malloc(scaledInputSize));
+    avpicture_fill(reinterpret_cast<AVPicture *>(scaledInput_),
+                   static_cast<uint8_t *>(scaledInputBuffer_),
+                   encoderCtx_->pix_fmt,
+                   encoderCtx_->width,
+                   encoderCtx_->height);
 }
 
 // This callback is used by libav internally to break out of blocking calls
@@ -332,161 +328,266 @@ int VideoSendThread::interruptCb(void *ctx)
     return not context->threadRunning_;
 }
 
-VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
-    args_(args), scaledPictureBuf_(0), outbuf_(0),
-    inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
-    streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
-    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
-    threadRunning_(false), forceKeyFrame_(0)
+VideoSendThread::VideoSendThread(const std::string &id, const std::map<string, string> &args) :
+    args_(args),
+    scaledInputBuffer_(0),
+    encoderBuffer_(0),
+    inputDecoderCtx_(0),
+    rawFrame_(0),
+    scaledInput_(0),
+    streamIndex_(-1),
+    encoderBufferSize_(0),
+    encoderCtx_(0),
+    stream_(0),
+    inputCtx_(0),
+    outputCtx_(0),
+    previewConvertCtx_(0),
+    encoderConvertCtx_(0),
+    sdp_(),
+    sink_(),
+    bufferSize_(0),
+    id_(id),
+    interruptCb_(),
+    threadRunning_(false),
+    forceKeyFrame_(0),
+    thread_(0),
+    frameNumber_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
 }
 
-void VideoSendThread::run()
+struct VideoTxContextHandle {
+    VideoTxContextHandle(VideoSendThread &tx) : tx_(tx) {}
+
+    ~VideoTxContextHandle()
+    {
+        if (tx_.encoderConvertCtx_)
+            sws_freeContext(tx_.encoderConvertCtx_);
+        if (tx_.previewConvertCtx_)
+            sws_freeContext(tx_.previewConvertCtx_);
+
+        // write the trailer, if any.  the trailer must be written
+        // before you close the CodecContexts open when you wrote the
+        // header; otherwise write_trailer may try to use memory that
+        // was freed on av_codec_close()
+        if (tx_.outputCtx_ and tx_.outputCtx_->priv_data) {
+            av_write_trailer(tx_.outputCtx_);
+            if (tx_.outputCtx_->pb)
+                avio_close(tx_.outputCtx_->pb);
+        }
+
+        if (tx_.scaledInputBuffer_)
+            av_free(tx_.scaledInputBuffer_);
+
+        if (tx_.encoderBuffer_)
+            av_free(tx_.encoderBuffer_);
+
+        // free the scaled frame
+        if (tx_.scaledInput_)
+            av_free(tx_.scaledInput_);
+
+        // free the YUV frame
+        if (tx_.rawFrame_)
+            avcodec_free_frame(&tx_.rawFrame_);
+
+        // close the codecs
+        if (tx_.encoderCtx_) {
+            avcodec_close(tx_.encoderCtx_);
+            av_freep(&tx_.encoderCtx_);
+        }
+
+        // doesn't need to be freed, we didn't use avcodec_alloc_context
+        if (tx_.inputDecoderCtx_)
+            avcodec_close(tx_.inputDecoderCtx_);
+
+        // close the video file
+        if (tx_.inputCtx_)
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+            av_close_input_file(tx_.inputCtx_);
+#else
+        avformat_close_input(&tx_.inputCtx_);
+#endif
+    }
+    VideoSendThread &tx_;
+};
+
+
+void VideoSendThread::start()
 {
     threadRunning_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+
+void *VideoSendThread::runCallback(void *data)
+{
+    VideoSendThread *context = static_cast<VideoSendThread*>(data);
+    context->run();
+    return NULL;
+}
+
+
+void VideoSendThread::run()
+{
     // We don't want setup() called in the main thread in case it exits or blocks
+    VideoTxContextHandle handle(*this);
     setup();
-    createScalingContext();
 
-    int frameNumber = 0;
-    while (threadRunning_) {
-        AVPacket inpacket;
-        {
-            int ret = av_read_frame(inputCtx_, &inpacket);
-            if (ret == AVERROR(EAGAIN))
-                continue;
-            else
-                EXIT_IF_FAIL(ret >= 0, "Could not read frame");
+    while (threadRunning_)
+        if (captureFrame()) {
+            renderFrame();
+            encodeAndSendVideo();
         }
+}
 
-        /* Guarantees that we free the packet allocated by av_read_frame */
-        PacketHandle inpacket_handle(inpacket);
+/// Copies and scales our rendered frame to the buffer pointed to by data
+void VideoSendThread::fillBuffer(void *data)
+{
+    AVFrame preview;
+    avpicture_fill(reinterpret_cast<AVPicture *>(&preview),
+                   static_cast<uint8_t *>(data),
+                   PIX_FMT_BGRA,
+                   inputDecoderCtx_->width,
+                   inputDecoderCtx_->height);
+    // Just need to convert colour space to BGRA
+    previewConvertCtx_ = sws_getCachedContext(previewConvertCtx_,
+                                              inputDecoderCtx_->width,
+                                              inputDecoderCtx_->height,
+                                              inputDecoderCtx_->pix_fmt,
+                                              inputDecoderCtx_->width,
+                                              inputDecoderCtx_->height,
+                                              PIX_FMT_BGRA, SWS_BICUBIC,
+                                              NULL, NULL, NULL);
+    EXIT_IF_FAIL(previewConvertCtx_, "Could not get preview context");
+    sws_scale(previewConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
+              inputDecoderCtx_->height, preview.data,
+              preview.linesize);
+}
 
-        // is this a packet from the video stream?
-        if (inpacket.stream_index != streamIndex_)
-            continue;
 
-        // decode video frame from camera
-        int frameFinished = 0;
-        avcodec_decode_video2(inputDecoderCtx_, rawFrame_, &frameFinished,
-                              &inpacket);
-        if (!frameFinished)
-            continue;
+void VideoSendThread::renderFrame()
+{
+    // we want our rendering code to be called by the shm_sink,
+    // because it manages the shared memory synchronization
+    sink_.render_callback(*this, bufferSize_);
+}
 
-        createScalingContext();
-        sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
-                  inputDecoderCtx_->height, scaledPicture_->data,
-                  scaledPicture_->linesize);
 
-        // Set presentation timestamp on our scaled frame before encoding it
-        scaledPicture_->pts = frameNumber++;
+bool VideoSendThread::captureFrame()
+{
+    AVPacket inpacket;
+    int ret = av_read_frame(inputCtx_, &inpacket);
 
-#ifdef CCPP_PREFIX
-        if ((int) forceKeyFrame_ > 0) {
-#else
-        if (*forceKeyFrame_ > 0) {
-#endif
-#if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
-            scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
-#else
-            scaledPicture_->pict_type = FF_I_TYPE;
-#endif
-            --forceKeyFrame_;
-        }
-        const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
-                                                     outbufSize_, scaledPicture_);
+    if (ret == AVERROR(EAGAIN))
+        return false;
+    else if (ret < 0)
+        EXIT_IF_FAIL(false, "Could not read frame");
 
-        if (encodedSize <= 0)
-            continue;
+    // Guarantees that we free the packet allocated by av_read_frame
+    PacketHandle inpacket_handle(inpacket);
 
-        AVPacket opkt;
-        av_init_packet(&opkt);
-        PacketHandle opkt_handle(opkt);
-
-        opkt.data = outbuf_;
-        opkt.size = encodedSize;
-
-        // rescale pts from encoded video framerate to rtp
-        // clock rate
-        if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE)) {
-            opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
-                                    encoderCtx_->time_base,
-                                    stream_->time_base);
-        } else {
-            opkt.pts = 0;
-        }
-
-        // is it a key frame?
-        if (encoderCtx_->coded_frame->key_frame)
-            opkt.flags |= AV_PKT_FLAG_KEY;
-        opkt.stream_index = stream_->index;
-
-        // write the compressed frame in the media file
-        {
-            int ret = av_interleaved_write_frame(outputCtx_, &opkt);
-            EXIT_IF_FAIL(ret >= 0, "av_interleaved_write_frame() error");
-        }
-        yield();
+    if (!rawFrame_ and not (rawFrame_ = avcodec_alloc_frame())) {
+        ERROR("Could not allocate video frame");
+        threadRunning_ = false;
+        return false;
+    } else {
+        avcodec_get_frame_defaults(rawFrame_);
     }
+
+    // is this a packet from the video stream?
+    if (inpacket.stream_index != streamIndex_)
+        return false;
+
+    // decode video frame from camera
+    int frameFinished = 0;
+    avcodec_decode_video2(inputDecoderCtx_, rawFrame_, &frameFinished,
+                          &inpacket);
+    if (!frameFinished)
+        return false;
+
+    encoderConvertCtx_ = sws_getCachedContext(encoderConvertCtx_,
+                                              inputDecoderCtx_->width,
+                                              inputDecoderCtx_->height,
+                                              inputDecoderCtx_->pix_fmt,
+                                              encoderCtx_->width,
+                                              encoderCtx_->height,
+                                              encoderCtx_->pix_fmt, SWS_BICUBIC,
+                                              NULL, NULL, NULL);
+    EXIT_IF_FAIL(encoderConvertCtx_, "Could not get encoder convert context");
+    sws_scale(encoderConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
+              inputDecoderCtx_->height, scaledInput_->data,
+              scaledInput_->linesize);
+
+    // Set presentation timestamp on our scaled frame before encoding it
+    scaledInput_->pts = frameNumber_++;
+
+    return true;
+}
+
+
+void VideoSendThread::encodeAndSendVideo()
+{
+#if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
+    if (forceKeyFrame_ > 0) {
+        scaledInput_->pict_type = AV_PICTURE_TYPE_I;
+        atomic_decrement(&forceKeyFrame_);
+    } else if (scaledInput_->pict_type == AV_PICTURE_TYPE_I) {
+        /* FIXME: Should be AV_PICTURE_TYPE_NONE for newer libavutil */
+        scaledInput_->pict_type = (AVPictureType) 0;
+    }
+#else
+    if (forceKeyFrame_ > 0) {
+        scaledInput_->pict_type = FF_I_TYPE;
+        atomic_decrement(&forceKeyFrame_);
+    } else if (scaledInput_->pict_type == FF_I_TYPE) {
+        scaledInput_->pict_type = (AVPictureType) 0;
+    }
+#endif
+
+    const int encodedSize = avcodec_encode_video(encoderCtx_, encoderBuffer_,
+                                                 encoderBufferSize_, scaledInput_);
+
+    if (encodedSize <= 0)
+        return;
+
+    AVPacket opkt;
+    av_init_packet(&opkt);
+    PacketHandle opkt_handle(opkt);
+
+    opkt.data = encoderBuffer_;
+    opkt.size = encodedSize;
+
+    // rescale pts from encoded video framerate to rtp
+    // clock rate
+    if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE))
+        opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
+                encoderCtx_->time_base,
+                stream_->time_base);
+    else
+        opkt.pts = 0;
+
+    // is it a key frame?
+    if (encoderCtx_->coded_frame->key_frame)
+        opkt.flags |= AV_PKT_FLAG_KEY;
+    opkt.stream_index = stream_->index;
+
+    // write the compressed frame to the output
+    EXIT_IF_FAIL(av_interleaved_write_frame(outputCtx_, &opkt) >= 0,
+                 "interleaved_write_frame failed");
 }
 
 VideoSendThread::~VideoSendThread()
 {
-    // FIXME
-    threadRunning_ = false;
-    ost::Thread::terminate();
-
-    sws_freeContext(imgConvertCtx_);
-    imgConvertCtx_ = 0;
-
-    // write the trailer, if any.  the trailer must be written
-    // before you close the CodecContexts open when you wrote the
-    // header; otherwise write_trailer may try to use memory that
-    // was freed on av_codec_close()
-    if (outputCtx_ and outputCtx_->priv_data) {
-        av_write_trailer(outputCtx_);
-        if (outputCtx_->pb)
-            avio_close(outputCtx_->pb);
-    }
-
-    if (scaledPictureBuf_)
-        av_free(scaledPictureBuf_);
-
-    if (outbuf_)
-        av_free(outbuf_);
-
-    // free the scaled frame
-    if (scaledPicture_)
-        av_free(scaledPicture_);
-
-    // free the YUV frame
-    if (rawFrame_)
-        av_free(rawFrame_);
-
-    // close the codecs
-    if (encoderCtx_) {
-        avcodec_close(encoderCtx_);
-        av_freep(&encoderCtx_);
-    }
-
-    // doesn't need to be freed, we didn't use avcodec_alloc_context
-    if (inputDecoderCtx_)
-        avcodec_close(inputDecoderCtx_);
-
-    // close the video file
-    if (inputCtx_)
-#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-        av_close_input_file(inputCtx_);
-#else
-        avformat_close_input(&inputCtx_);
-#endif
+    set_false_atomic(&threadRunning_);
+    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+    if (thread_)
+        pthread_join(thread_, NULL);
 }
 
 void VideoSendThread::forceKeyFrame()
 {
-    ++forceKeyFrame_;
+    atomic_increment(&forceKeyFrame_);
 }
 
 } // end namespace sfl_video

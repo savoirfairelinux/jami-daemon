@@ -36,20 +36,28 @@
 #include <fstream>
 #include <sys/stat.h> // for mkdir
 #include <ctime>
+#include "scoped_lock.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "call.h"
-
-#include <string.h>
-#include <stdio.h>
 #include <jni.h>
+
+namespace sfl {
+
 
 using std::map;
 using std::string;
 using std::vector;
 
 History::History() : historyItemsMutex_(), items_(), path_("")
-{}
+{
+    pthread_mutex_init(&historyItemsMutex_, NULL);
+}
+
+History::~History()
+{
+    pthread_mutex_destroy(&historyItemsMutex_);
+}
 
 JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getJniString(JNIEnv* env, jclass obj){
 
@@ -96,7 +104,7 @@ bool History::load(int limit)
 
 bool History::save()
 {
-    ost::MutexLock lock(historyItemsMutex_);
+    sfl::ScopedLock lock(historyItemsMutex_);
     DEBUG("Saving history in XDG directory: %s", path_.c_str());
     ensurePath();
     std::sort(items_.begin(), items_.end());
@@ -111,26 +119,20 @@ bool History::save()
 
 void History::addEntry(const HistoryItem &item, int oldest)
 {
-    ost::MutexLock lock(historyItemsMutex_);
+    sfl::ScopedLock lock(historyItemsMutex_);
     if (item.hasPeerNumber() and item.youngerThan(oldest))
         items_.push_back(item);
 }
 
 void History::ensurePath()
 {
-
-#ifdef __ANDROID__
-        string xdg_data = path_;
-        DEBUG("xdg_data: %s!", xdg_data.c_str());
-#else
-        string xdg_data = string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
-#endif
-
-        string userdata;
+    if (path_.empty()) {
+        const string xdg_data = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
+                                ".local/share/sflphone";
         // If the environment variable is set (not null and not empty), we'll use it to save the history
-        // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
+        // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOME/.local/share/sflphone
         string xdg_env(XDG_DATA_HOME);
-        (not xdg_env.empty()) ? userdata = xdg_env : userdata = xdg_data;
+        const string userdata = not xdg_env.empty() ? xdg_env : xdg_data;
 
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
@@ -142,13 +144,12 @@ void History::ensurePath()
         // Load user's history
         path_ = userdata + DIR_SEPARATOR_STR + "history";
         DEBUG("path_: %s!", path_.c_str());
-    
-
+    }
 }
 
 vector<map<string, string> > History::getSerialized()
 {
-    ost::MutexLock lock(historyItemsMutex_);
+    sfl::ScopedLock lock(historyItemsMutex_);
     vector<map<string, string> > result;
     for (vector<HistoryItem>::const_iterator iter = items_.begin();
          iter != items_.end(); ++iter)
@@ -175,19 +176,21 @@ void History::addCall(Call *call, int limit)
 
 void History::clear()
 {
-    ost::MutexLock lock(historyItemsMutex_);
+    sfl::ScopedLock lock(historyItemsMutex_);
     items_.clear();
 }
 
 bool History::empty()
 {
-    ost::MutexLock lock(historyItemsMutex_);
+    sfl::ScopedLock lock(historyItemsMutex_);
     return items_.empty();
 }
 
 
 size_t History::numberOfItems()
 {
-    ost::MutexLock lock(historyItemsMutex_);
+    sfl::ScopedLock lock(historyItemsMutex_);
     return items_.size();
+}
+
 }

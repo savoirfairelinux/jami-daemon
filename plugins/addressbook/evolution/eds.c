@@ -153,14 +153,35 @@ create_query(const char* s, EBookQueryTest test, AddressBook_Config *conf)
 
     queries[cpt++] = e_book_query_field_test(E_CONTACT_FULL_NAME, test, s);
 
-    if (conf->search_phone_home)
+    if (!conf || conf->search_phone_home)
         queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_HOME, test, s);
 
-    if (conf->search_phone_business)
+    if (!conf || conf->search_phone_business)
         queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_BUSINESS, test, s);
 
-    if (conf->search_phone_mobile)
+    if (!conf || conf->search_phone_mobile)
         queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_MOBILE, test, s);
+
+    return e_book_query_or(cpt, queries, TRUE);
+}
+
+/**
+ * Create a query which looks any contact with a phone number
+ */
+static EBookQuery*
+create_query_all_phones(AddressBook_Config *conf)
+{
+    EBookQuery *queries[3];
+    int cpt = 0;
+
+    if (!conf || conf->search_phone_home)
+        queries[cpt++] = e_book_query_field_exists(E_CONTACT_PHONE_HOME);
+
+    if (!conf || conf->search_phone_business)
+        queries[cpt++] = e_book_query_field_exists(E_CONTACT_PHONE_BUSINESS);
+
+    if (!conf || conf->search_phone_mobile)
+        queries[cpt++] = e_book_query_field_exists(E_CONTACT_PHONE_MOBILE);
 
     return e_book_query_or(cpt, queries, TRUE);
 }
@@ -189,8 +210,9 @@ pixbuf_from_contact(EContact *contact)
 
     e_contact_photo_free(photo);
 
-    if (!pixbuf)
+    if (!pixbuf) {
         return NULL;
+    }
 
     // check size and resize if needed
     gint width = gdk_pixbuf_get_width(pixbuf);
@@ -454,11 +476,6 @@ determine_default_addressbook()
 void
 search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data)
 {
-    if (!*query) {
-        handler(NULL, user_data);
-        return;
-    }
-
     Search_Handler_And_Data *had = g_new0(Search_Handler_And_Data, 1);
 
     // initialize search data
@@ -466,7 +483,11 @@ search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler 
     had->user_data = user_data;
     had->hits = NULL;
     had->max_results_remaining = max_results;
-    had->equery = create_query(query, current_test, (AddressBook_Config *) (user_data));
+    if (!g_strcmp0(query, ""))
+        had->equery = create_query_all_phones(user_data);
+    else
+        had->equery = create_query(query, current_test, user_data);
+
 
 #if EDS_CHECK_VERSION(3,5,3)
     ESourceRegistry *registry = get_registry();

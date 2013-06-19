@@ -1,7 +1,7 @@
 include ../globals.mak
 
 TESTS = check_global check_contacts check_config check_dbus
-TESTS_ENVIRONMENT=GSETTINGS_SCHEMA_DIR="$(top_builddir)/data:${XDG_DATA_DIRS}"
+TESTS_ENVIRONMENT = GSETTINGS_SCHEMA_DIR=../data
 check_PROGRAMS = check_global check_contacts check_config check_dbus
 
 SFLPHONE_LIBS= $(top_builddir)/src/libsflphone_client.la \
@@ -34,7 +34,9 @@ endif
 check_dbus_LDADD = $(SFLPHONE_LIBS) @CHECK_LIBS@ \
                    $(top_builddir)/src/widget/libwidget.la \
                    $(top_builddir)/src/icons/libicons.la @X11_LIBS@ \
-                   @JAVASCRIPT_CORE_GTK_LIBS@ -ldl
+                   -ldl
 
 clean-local:
 	rm -rf *.xml
+
+-include $(top_srcdir)/git.mk

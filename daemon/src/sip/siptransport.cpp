@@ -59,9 +59,11 @@
 #include "pjsip/sip_transport_tls.h"
 #endif
 
+#if HAVE_DBUS
 #include "dbus/dbusmanager.h"
 #include "dbus/configurationmanager.h"
-
+#endif
+ 
 static const char * const DEFAULT_INTERFACE = "default";
 static const char * const ANY_HOSTS = "0.0.0.0";
 
@@ -109,7 +111,10 @@ std::string SipTransport::getInterfaceAddrFromName(const std::string &ifaceName)
     RETURN_IF_FAIL(fd >= 0, "", "Could not open socket: %m");
 
     ifreq ifr;
-    strcpy(ifr.ifr_name, ifaceName.c_str());
+    strncpy(ifr.ifr_name, ifaceName.c_str(), sizeof ifr.ifr_name);
+    // guarantee that ifr_name is NULL-terminated
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+
     memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
     ifr.ifr_addr.sa_family = AF_INET;
 
@@ -313,9 +318,10 @@ SipTransport::createTlsTransport(SIPAccount &account)
 
     DEBUG("Get new tls transport from transport manager");
     pjsip_transport *transport = NULL;
-    pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
+    pj_status_t status = pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
                                   sizeof rem_addr, NULL, &transport);
-    RETURN_IF_FAIL(transport != NULL, NULL, "Could not create new TLS transport");
+    RETURN_IF_FAIL(transport != NULL and status == PJ_SUCCESS, NULL,
+                   "Could not create new TLS transport");
     return transport;
 }
 #endif
@@ -514,14 +520,18 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 #undef RETURN_IF_STUN_FAIL
 }
 
-void SipTransport::shutdownSipTransport(SIPAccount &account)
+void SipTransport::shutdownSTUNResolver(SIPAccount &account)
 {
     if (account.isStunEnabled()) {
         pj_str_t stunServerName = account.getStunServerName();
         std::string server(stunServerName.ptr, stunServerName.slen);
         destroyStunResolver(server);
     }
+}
 
+void SipTransport::shutdownSipTransport(SIPAccount &account)
+{
+    shutdownSTUNResolver(account);
     if (account.transport_) {
         pjsip_transport_dec_ref(account.transport_);
         account.transport_ = NULL;

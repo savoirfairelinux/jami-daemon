@@ -35,9 +35,11 @@
   */
 
 #include "accountlist.h"
+#include "sflphone_client.h"
+
 /**
  * Display the advanced options window for zrtp
  */
-void show_advanced_tls_options(account_t *account);
+void show_advanced_tls_options(account_t *account, SFLPhoneClient *client);
 
 #endif

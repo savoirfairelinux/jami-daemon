@@ -294,6 +294,12 @@ CallManager::getCallList()
     return Manager::instance().getCallList();
 }
 
+bool
+CallManager::isValidCall(const std::string &callID)
+{
+    return Manager::instance().isValidCall(callID);
+}
+
 void
 CallManager::playDTMF(const std::string& key)
 {
@@ -326,13 +332,9 @@ CallManager::getAudioZrtpSession(const std::string& callID)
     if (!link)
         throw CallManagerException("Failed to get sip link");
 
-    SIPCall *call;
-
-    try {
-        call = link->getSIPCall(callID);
-    } catch (const VoipLinkException &e) {
+    SIPCall *call = link->getSipCall(callID);
+    if (!call)
         throw CallManagerException("Call id " + callID + " is not valid");
-    }
 
     sfl::AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
 

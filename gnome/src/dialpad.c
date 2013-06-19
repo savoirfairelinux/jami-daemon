@@ -31,7 +31,6 @@
 #include "dialpad.h"
 #include "actions.h"
 #include "calltab.h"
-#include "unused.h"
 
 /**
  * button pressed event
@@ -40,24 +39,24 @@
 typedef struct
 {
     const gchar *number;
-    GSettings *settings;
+    SFLPhoneClient *client;
 } DialpadData;
 
 static void
-dialpad_pressed(GtkWidget * widget UNUSED, DialpadData *data)
+dialpad_pressed(G_GNUC_UNUSED GtkWidget * widget, DialpadData *data)
 {
     gtk_widget_grab_focus(GTK_WIDGET(current_calls_tab->view));
-    sflphone_keypad(0, data->number, data->settings);
+    sflphone_keypad(0, data->number, data->client);
 }
 
 static void
-dialpad_cleanup(GtkWidget * widget UNUSED, DialpadData *data)
+dialpad_cleanup(G_GNUC_UNUSED GtkWidget * widget, DialpadData *data)
 {
     g_free(data);
 }
 
 GtkWidget *
-get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters, GSettings *settings)
+get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters, SFLPhoneClient *client)
 {
     GtkWidget *button = gtk_button_new();
     GtkWidget *label = gtk_label_new("1");
@@ -68,7 +67,7 @@ get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters,
     gtk_container_add(GTK_CONTAINER(button), label);
     DialpadData * dialpad_data = g_new0(DialpadData, 1);
     dialpad_data->number = number;
-    dialpad_data->settings = settings;
+    dialpad_data->client = client;
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(dialpad_pressed), dialpad_data);
     g_signal_connect(G_OBJECT(button), "destroy",
@@ -79,7 +78,7 @@ get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters,
 }
 
 GtkWidget *
-create_dialpad(GSettings *settings)
+create_dialpad(SFLPhoneClient *client)
 {
     static const gchar * const key_strings[] = {
         "1", "",
@@ -96,17 +95,18 @@ create_dialpad(GSettings *settings)
         "#", ""
     };
     enum {ROWS = 4, COLS = 3};
-    GtkWidget *table = gtk_table_new(ROWS, COLS, TRUE /* homogeneous */);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 5);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 5);
+    GtkWidget *grid = gtk_grid_new();
+    g_object_set(G_OBJECT(grid), "column-homogeneous", TRUE, "row-homogeneous", TRUE, NULL);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 5);
 
     for (int row = 0, entry = 0; row != ROWS; ++row)
         for (int col = 0; col != COLS; ++col) {
-            GtkWidget *button = get_numpad_button(key_strings[entry], TRUE, key_strings[entry + 1], settings);
-            gtk_table_attach(GTK_TABLE(table), button, col, col + 1, row, row + 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+            GtkWidget *button = get_numpad_button(key_strings[entry], TRUE, key_strings[entry + 1], client);
+            gtk_grid_attach(GTK_GRID(grid), button, col, row, 1, 1);
             entry += 2;
         }
 
-    return table;
+    return grid;
 }

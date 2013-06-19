@@ -1,0 +1,27 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+[encoding: UTF-8]
+src/accountlist.c
+src/actions.c
+src/callable_obj.c
+src/config/accountconfigdialog.c
+src/config/accountlistconfigdialog.c
+src/config/addressbook-config.c
+src/config/assistant.c
+src/config/audioconf.c
+src/config/hooks-config.c
+src/config/preferencesdialog.c
+src/config/shortcuts-config.c
+src/config/tlsadvanceddialog.c
+src/config/videoconf.c
+src/config/zrtpadvanceddialog.c
+src/contacts/searchbar.c
+src/dbus/dbus.c
+src/main.c
+src/mainwindow.c
+src/sflphone_client.c
+src/sflphone_options.c
+src/sflnotify.c
+src/sliders.c
+src/statusicon.c
+src/uimanager.c

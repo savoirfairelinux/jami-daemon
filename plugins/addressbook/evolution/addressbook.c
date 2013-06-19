@@ -27,8 +27,6 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <string.h>
-#include <stdio.h>
 
 #include "eds.h"
 #include "addressbook.h"
@@ -39,8 +37,9 @@
 void
 addressbook_search (void (*search_cb)(GList *, gpointer), GtkEntry* entry, AddressBook_Config *addressbook_config)
 {
+    const gint max_results = addressbook_config ? addressbook_config->max_results : 10;
     search_async_by_contacts (gtk_entry_get_text(entry),
-        addressbook_config->max_results,
+        max_results,
         search_cb,
         addressbook_config);
 }
@@ -107,6 +106,6 @@ void addressbook_set_search_type(AddrbookSearchType searchType) {
     set_current_addressbook_test(map[searchType]);
 }
 
-void addressbook_set_current_book(gchar *current) {
+void addressbook_set_current_book(const gchar *current) {
     set_current_addressbook(current);
 }

@@ -37,22 +37,21 @@
 
 #include "accountlist.h"
 #include "calllist.h"
-
-G_BEGIN_DECLS
+#include "sflphone_client.h"
 
 /**
  * Notify an incoming call
  * A dialog box is attached to the status icon
  * @param c The incoming call
  */
-void notify_incoming_call (callable_obj_t* c, GSettings *settings);
+void notify_incoming_call(callable_obj_t* c, SFLPhoneClient *client);
 
 /**
  * Notify an incoming text message
  * A dialog box is attached to the status icon
  * @param c The incoming message
  */
-void notify_incoming_message (const gchar *callID, const gchar *msg, GSettings *settings);
+void notify_incoming_message(const gchar *callID, const gchar *msg, SFLPhoneClient *client);
 
 /**
  * Notify voice mails count
@@ -60,45 +59,43 @@ void notify_incoming_message (const gchar *callID, const gchar *msg, GSettings *
  * @param count The number of voice mails
  * @param acc The account that received the notification
  */
-void notify_voice_mails (guint count , account_t* acc, GSettings *settings);
+void notify_voice_mails(guint count , account_t* acc, SFLPhoneClient *client);
 
 /**
  * Notify the current account used to make calls with
  * @param acc The current account
  */
-void notify_current_account (account_t* acc, GSettings *settings);
+void notify_current_account(account_t* acc, SFLPhoneClient *client);
 
 /**
  * Notify that no accounts have been setup
  */
-void notify_no_accounts(GSettings *settings);
+void notify_no_accounts(SFLPhoneClient *client);
 
 /**
  * Notify that there is no registered account
  */
-void notify_no_registered_accounts(GSettings *settings);
+void notify_no_registered_accounts(SFLPhoneClient *client);
 
 /**
  * Notify that the RTP session is secured
  */
-void notify_secure_on (callable_obj_t* c, GSettings *settings);
+void notify_secure_on(callable_obj_t* c, SFLPhoneClient *client);
 
 /**
  * Notify that the RTP session is now more secured
  */
-void notify_secure_off (callable_obj_t* c, GSettings *settings);
+void notify_secure_off(callable_obj_t* c, SFLPhoneClient *client);
 
 /**
  * Notify that the ZRTP negotiation failed
  */
 
-void notify_zrtp_negotiation_failed (callable_obj_t* c, GSettings *settings);
+void notify_zrtp_negotiation_failed(callable_obj_t* c, SFLPhoneClient *client);
 
 /**
  * Notify that the RTP session is now more secured
  */
-void notify_zrtp_not_supported (callable_obj_t* c, GSettings *settings);
-
-G_END_DECLS
+void notify_zrtp_not_supported(callable_obj_t* c, SFLPhoneClient *client);
 
 #endif

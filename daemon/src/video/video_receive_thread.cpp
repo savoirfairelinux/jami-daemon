@@ -31,61 +31,30 @@
 
 #include "video_receive_thread.h"
 #include "dbus/video_controls.h"
-#include "packet_handle.h"
 #include "check.h"
+#include "packet_handle.h"
 
 // libav includes
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libavutil/opt.h>
-#include <libavutil/pixdesc.h>
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
-
-#include <stdexcept>
 #include <map>
-#include <ctime>
-#include <cstdlib>
-#include <fstream>
 
 #include "manager.h"
 
-static const enum PixelFormat VIDEO_RGB_FORMAT = PIX_FMT_BGRA;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
+// fallback to av_freep for older libavcodec
+#define avcodec_free_frame av_freep
+#endif
 
 namespace sfl_video {
 
 using std::string;
 
 namespace { // anonymous namespace
-
-int getBufferSize(int width, int height, int format)
-{
-    enum PixelFormat fmt = (enum PixelFormat) format;
-    // determine required buffer size and allocate buffer
-    return avpicture_get_size(fmt, width, height);
-}
-
-string openTemp(string path, std::ofstream& os)
-{
-    path += "/";
-    // POSIX the mktemp family of functions requires names to end with 6 x's
-    const char * const X_SUFFIX = "XXXXXX";
-
-    path += X_SUFFIX;
-    std::vector<char> dst_path(path.begin(), path.end());
-    dst_path.push_back('\0');
-    for (int fd = -1; fd == -1; ) {
-        fd = mkstemp(&dst_path[0]);
-        if (fd != -1) {
-            path.assign(dst_path.begin(), dst_path.end() - 1);
-            os.open(path.c_str(), std::ios_base::trunc | std::ios_base::out);
-            close(fd);
-        }
-    }
-    return path;
-}
 
 int readFunction(void *opaque, uint8_t *buf, int buf_size)
 {
@@ -157,8 +126,7 @@ void VideoReceiveThread::setup()
     if (ret < 0) {
         if (options)
             av_dict_free(&options);
-        ERROR("Could not open input \"%s\"", input.c_str());
-        ost::Thread::exit();
+        EXIT_IF_FAIL(false, "Could not open input \"%s\"", input.c_str());
     }
 
     DEBUG("Finding stream info");
@@ -181,8 +149,8 @@ void VideoReceiveThread::setup()
         // print nothing for unknown errors
         if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
             errBuf[0] = '\0';
-        ERROR("Could not find stream info: %s", errBuf);
-        ost::Thread::exit();
+        // always fail here
+        EXIT_IF_FAIL(false, "Could not find stream info: %s", errBuf);
     }
 
     // find the first video stream from the input
@@ -210,7 +178,7 @@ void VideoReceiveThread::setup()
     }
 
     // determine required buffer size and allocate buffer
-    bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
+    bufferSize_ = avpicture_get_size(PIX_FMT_BGRA, dstWidth_, dstHeight_);
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
@@ -223,9 +191,12 @@ void VideoReceiveThread::createScalingContext()
     imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_, decoderCtx_->width,
                                           decoderCtx_->height,
                                           decoderCtx_->pix_fmt, dstWidth_,
-                                          dstHeight_, VIDEO_RGB_FORMAT,
+                                          dstHeight_, PIX_FMT_BGRA,
                                           SWS_BICUBIC, NULL, NULL, NULL);
-    EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context!");
+    if (!imgConvertCtx_) {
+        ERROR("Cannot init the conversion context!");
+        pthread_exit(NULL);
+    }
 }
 
 // This callback is used by libav internally to break out of blocking calls
@@ -236,15 +207,28 @@ int VideoReceiveThread::interruptCb(void *ctx)
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<string, string> &args) :
-    args_(args), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
-    scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
-    dstWidth_(0), dstHeight_(0), sink_(), threadRunning_(false),
-    bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0),
+    args_(args),
+    inputDecoder_(0),
+    decoderCtx_(0),
+    rawFrame_(0),
+    scaledPicture_(0),
+    streamIndex_(-1),
+    inputCtx_(0),
+    imgConvertCtx_(0),
+    dstWidth_(0),
+    dstHeight_(0),
+    sink_(),
+    threadRunning_(false),
+    bufferSize_(0),
+    id_(id),
+    interruptCb_(),
+    requestKeyFrameCallback_(0),
     sdpBuffer_(reinterpret_cast<unsigned char*>(av_malloc(SDP_BUFFER_SIZE)), &av_free),
     stream_(args_["receiving_sdp"]),
     avioContext_(avio_alloc_context(sdpBuffer_.get(), SDP_BUFFER_SIZE, 0,
                                     reinterpret_cast<void*>(static_cast<std::istream*>(&stream_)),
-                                    &readFunction, 0, 0), &av_free)
+                                    &readFunction, 0, 0), &av_free),
+    thread_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -253,15 +237,23 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
 void VideoReceiveThread::start()
 {
     threadRunning_ = true;
-    ost::Thread::start();
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+
+void *VideoReceiveThread::runCallback(void *data)
+{
+    VideoReceiveThread *context = static_cast<VideoReceiveThread*>(data);
+    context->run();
+    return NULL;
 }
 
 /// Copies and scales our rendered frame to the buffer pointed to by data
-void VideoReceiveThread::fill_buffer(void *data)
+void VideoReceiveThread::fillBuffer(void *data)
 {
     avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                    static_cast<uint8_t *>(data),
-                   VIDEO_RGB_FORMAT,
+                   PIX_FMT_BGRA,
                    dstWidth_,
                    dstHeight_);
 
@@ -276,70 +268,99 @@ void VideoReceiveThread::fill_buffer(void *data)
             scaledPicture_->linesize);
 }
 
+struct VideoRxContextHandle {
+    VideoRxContextHandle(VideoReceiveThread &rx) : rx_(rx) {}
+
+    ~VideoRxContextHandle()
+    {
+        if (rx_.rawFrame_)
+            avcodec_free_frame(&rx_.rawFrame_);
+
+        if (rx_.imgConvertCtx_)
+            sws_freeContext(rx_.imgConvertCtx_);
+
+        if (rx_.scaledPicture_)
+            av_free(rx_.scaledPicture_);
+
+        if (rx_.decoderCtx_)
+            avcodec_close(rx_.decoderCtx_);
+
+        if (rx_.inputCtx_ and rx_.inputCtx_->nb_streams > 0) {
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+            av_close_input_file(rx_.inputCtx_);
+#else
+            avformat_close_input(&rx_.inputCtx_);
+#endif
+        }
+    }
+    VideoReceiveThread &rx_;
+};
+
 void VideoReceiveThread::run()
 {
+    VideoRxContextHandle handle(*this);
     setup();
-
     createScalingContext();
-    const Callback cb(&VideoReceiveThread::fill_buffer);
-    AVFrame rawFrame;
-    rawFrame_ = &rawFrame;
 
-    while (threadRunning_) {
-        AVPacket inpacket;
-
-        int ret = 0;
-        if ((ret = av_read_frame(inputCtx_, &inpacket)) < 0) {
-            ERROR("Couldn't read frame: %s\n", strerror(ret));
-            break;
-        }
-        // Guarantee that we free the packet every iteration
-        PacketHandle inpacket_handle(inpacket);
-        avcodec_get_frame_defaults(rawFrame_);
-
-        // is this a packet from the video stream?
-        if (inpacket.stream_index == streamIndex_) {
-            int frameFinished = 0;
-            const int len = avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
-                                                  &inpacket);
-            if (len <= 0 and requestKeyFrameCallback_) {
-                openDecoder();
-                requestKeyFrameCallback_(id_);
-                ost::Thread::sleep(25 /* ms */);
-            }
-
-            // we want our rendering code to be called by the shm_sink,
-            // because it manages the shared memory synchronization
-            if (frameFinished)
-                sink_.render_callback(this, cb, bufferSize_);
-        }
-        yield();
-    }
+    while (threadRunning_)
+        if (decodeFrame())
+            renderFrame();
 }
+
+
+bool VideoReceiveThread::decodeFrame()
+{
+    AVPacket inpacket;
+
+    int ret = 0;
+    if ((ret = av_read_frame(inputCtx_, &inpacket)) < 0) {
+        ERROR("Couldn't read frame: %s\n", strerror(ret));
+        threadRunning_ = false;
+        return false;
+    }
+
+    // Guarantee that we free the packet every iteration
+    PacketHandle inpacket_handle(inpacket);
+
+    if (!rawFrame_ and not (rawFrame_ = avcodec_alloc_frame())) {
+        ERROR("Could not allocate video frame");
+        threadRunning_ = false;
+        return false;
+    } else {
+        avcodec_get_frame_defaults(rawFrame_);
+    }
+
+    // is this a packet from the video stream?
+    if (inpacket.stream_index != streamIndex_)
+        return false;
+
+    int frameFinished = 0;
+    const int len = avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
+                                          &inpacket);
+    if (len <= 0 and requestKeyFrameCallback_) {
+        openDecoder();
+        requestKeyFrameCallback_(id_);
+    }
+
+    return frameFinished;
+}
+
+
+void VideoReceiveThread::renderFrame()
+{
+    // we want our rendering code to be called by the shm_sink,
+    // because it manages the shared memory synchronization
+    sink_.render_callback(*this, bufferSize_);
+}
+
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    threadRunning_ = false;
+    set_false_atomic(&threadRunning_);
     Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
-    // this calls join, which waits for the run() method (in separate thread) to return
-    ost::Thread::terminate();
-
-    if (imgConvertCtx_)
-        sws_freeContext(imgConvertCtx_);
-
-    if (scaledPicture_)
-        av_free(scaledPicture_);
-
-    if (decoderCtx_)
-        avcodec_close(decoderCtx_);
-
-    if (streamIndex_ != -1 and inputCtx_) {
-#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-        av_close_input_file(inputCtx_);
-#else
-        avformat_close_input(&inputCtx_);
-#endif
-    }
+    // waits for the run() method (in separate thread) to return
+    if (thread_)
+        pthread_join(thread_, NULL);
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string &))

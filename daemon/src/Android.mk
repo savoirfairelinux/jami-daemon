@@ -87,7 +87,8 @@ LOCAL_SRC_FILES := \
 		sip/sipcall.cpp \
 		sip/sipvoiplink.cpp \
 		sip/siptransport.cpp \
-		sip/sip_utils.cpp
+		sip/sip_utils.cpp \
+		scoped_lock.cpp
 
 
 

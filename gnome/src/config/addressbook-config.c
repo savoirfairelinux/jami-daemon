@@ -29,13 +29,11 @@
  */
 
 #include "addressbook-config.h"
-#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "dbus.h"
-#include "unused.h"
-#include "logger.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
+#include "sflphone_client.h"
 #include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
@@ -102,7 +100,7 @@ enable_options()
 {
 
     if (!addressbook_config->enable) {
-        DEBUG("Disable addressbook options\n");
+        g_debug("Disable addressbook options\n");
         gtk_widget_set_sensitive(photo, FALSE);
         gtk_widget_set_sensitive(scrolled_label, FALSE);
         gtk_widget_set_sensitive(cards_label, FALSE);
@@ -116,7 +114,7 @@ enable_options()
 
 
     } else {
-        DEBUG("Enable addressbook options\n");
+        g_debug("Enable addressbook options\n");
         gtk_widget_set_sensitive(photo, TRUE);
         gtk_widget_set_sensitive(scrolled_label, TRUE);
         gtk_widget_set_sensitive(cards_label, TRUE);
@@ -131,15 +129,12 @@ enable_options()
 }
 
 static void
-enable_cb(GtkWidget *widget)
+enable_cb(GtkWidget *widget, SFLPhoneClient *client)
 {
 
-    addressbook_config->enable
-    = (guint) gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
+    addressbook_config->enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    g_settings_set_boolean(client->settings, "use-evolution-addressbook", addressbook_config->enable);
     enable_options();
-
-
 }
 
 static void
@@ -186,7 +181,7 @@ search_phone_mobile_cb(GtkWidget *widget)
  */
 static void
 addressbook_config_book_active_toggled(
-    GtkCellRendererToggle *renderer UNUSED, gchar *path, gpointer data)
+    G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path, gpointer data)
 {
     GtkTreeIter iter;
     GtkTreePath *treePath;
@@ -203,7 +198,7 @@ addressbook_config_book_active_toggled(
     treePath = gtk_tree_path_new_from_string(path);
 
     if (!(model = gtk_tree_view_get_model(GTK_TREE_VIEW(data)))) {
-        DEBUG("No valid model (%s:%d)", __FILE__, __LINE__);
+        g_debug("No valid model (%s:%d)", __FILE__, __LINE__);
         return;
     }
 
@@ -225,7 +220,7 @@ addressbook_config_book_active_toggled(
     book_data = addrbook->get_book_data_by_uid(uid);
 
     if (book_data == NULL) {
-        ERROR("Could not find addressbook %s", uid);
+        g_warning("Could not find addressbook %s", uid);
         return;
     }
 
@@ -276,11 +271,11 @@ addressbook_config_fill_book_list()
     GSList *books_data = addrbook->get_books_data();
 
     if (!books_data)
-        DEBUG("No valid books data");
+        g_debug("No valid books data");
 
     // Get model of view and clear it
     if (!(store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view))))) {
-        DEBUG("Could not find model from treeview");
+        g_debug("Could not find model from treeview");
         return;
     }
 
@@ -291,38 +286,37 @@ addressbook_config_fill_book_list()
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
         gtk_list_store_append(store, &list_store_iterator);
-        DEBUG("-----------------------------------: %s, %s", book_data->name, book_data->active ? "active" : "not-active");
+        g_debug("-----------------------------------: %s, %s", book_data->name, book_data->active ? "active" : "not-active");
         gtk_list_store_set(store, &list_store_iterator, COLUMN_BOOK_ACTIVE,
                            book_data->active, COLUMN_BOOK_UID, book_data->uid, COLUMN_BOOK_NAME,
                            book_data->name, -1);
     }
-
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
 }
 
 GtkWidget*
-create_addressbook_settings()
+create_addressbook_settings(SFLPhoneClient *client)
 {
-    GtkWidget *result_frame, *table, *value, *item;
+    GtkWidget *result_frame, *value, *item;
 
     GtkListStore *store;
     GtkCellRenderer *renderer;
     GtkTreeViewColumn *tree_view_column;
 
-    // Load the user value
+    // Load the default values
     addressbook_config = addressbook_config_load_parameters();
 
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    gnome_main_section_new_with_table(_("General"), &result_frame, &table, 3, 3);
+    GtkWidget *grid;
+    gnome_main_section_new_with_grid(_("General"), &result_frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
 
     // PHOTO DISPLAY
     item = gtk_check_button_new_with_mnemonic(_("_Use Evolution address books"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), addressbook_config->enable);
-    g_signal_connect(G_OBJECT(item) , "clicked" , G_CALLBACK(enable_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 1, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(enable_cb), client);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), item, 1, 0, 2, 1);
 
     // SCALE BUTTON - NUMBER OF RESULTS
     scale_button = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -333,54 +327,57 @@ create_addressbook_settings()
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(value) , addressbook_config->max_results);
     g_signal_connect(G_OBJECT(value) , "value-changed" , G_CALLBACK(max_results_cb), NULL);
     gtk_box_pack_start(GTK_BOX(scale_button),value,TRUE,TRUE,10);
-    gtk_table_attach(GTK_TABLE(table), scale_button, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND |GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), scale_button, 1, 1, 1, 1);
     cards_label = gtk_label_new(_("cards"));
-    gtk_table_attach(GTK_TABLE(table), cards_label, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), cards_label, 2, 1, 1, 1);
     gtk_widget_show_all(scale_button);
 
     // PHOTO DISPLAY
     photo = gtk_check_button_new_with_mnemonic(_("_Display contact photo if available"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(photo), addressbook_config->display_contact_photo);
     g_signal_connect(G_OBJECT(photo) , "clicked" , G_CALLBACK(display_contact_photo_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), photo, 1, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), photo, 1, 2, 2, 1);
 
     // Fields
-    gnome_main_section_new_with_table(_("Fields from Evolution's address books"), &result_frame, &table, 1, 3);
+    gnome_main_section_new_with_grid(_("Fields from Evolution's address books"), &result_frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
 
     business = gtk_check_button_new_with_mnemonic(_("_Work"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(business), addressbook_config->search_phone_business);
     g_signal_connect(G_OBJECT(business) , "clicked" , G_CALLBACK(search_phone_business_cb) , NULL);
-    gtk_table_attach(GTK_TABLE(table), business, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), business, 0, 0, 1, 1);
     gtk_widget_set_sensitive(business, FALSE);
 
     home = gtk_check_button_new_with_mnemonic(_("_Home"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(home), addressbook_config->search_phone_home);
     g_signal_connect(G_OBJECT(home) , "clicked" , G_CALLBACK(search_phone_home_cb) , NULL);
-    gtk_table_attach(GTK_TABLE(table), home, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), home, 0, 1, 1, 1);
     gtk_widget_set_sensitive(home, FALSE);
 
     mobile = gtk_check_button_new_with_mnemonic(_("_Mobile"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mobile), addressbook_config->search_phone_mobile);
     g_signal_connect(G_OBJECT(mobile) , "clicked" , G_CALLBACK(search_phone_mobile_cb) , NULL);
-    gtk_table_attach(GTK_TABLE(table), mobile, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), mobile, 0, 2, 1, 1);
 
     // Address Book
-    gnome_main_section_new_with_table(_("Address Books"), &result_frame, &table, 2, 3);
+    gnome_main_section_new_with_grid(_("Address Books"), &result_frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, TRUE, TRUE, 0);
     gtk_widget_show(result_frame);
 
     scrolled_label = gtk_label_new(_("Select which Evolution address books to use"));
     gtk_misc_set_alignment(GTK_MISC(scrolled_label), 0.00, 0.2);
 
-    gtk_table_attach(GTK_TABLE(table), scrolled_label, 1, 4, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    /* 3x1 */
+    gtk_grid_attach(GTK_GRID(grid), scrolled_label, 1, 1, 3, 1);
     gtk_widget_set_sensitive(scrolled_label, FALSE);
 
     scrolled_window = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_IN);
 
-    gtk_table_attach(GTK_TABLE(table), scrolled_window, 1, 4, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    /* 3x1 */
+    gtk_grid_attach(GTK_GRID(grid), scrolled_window, 1, 2, 3, 1);
 
     store = gtk_list_store_new(3,
                                G_TYPE_BOOLEAN,             // Active
@@ -410,6 +407,10 @@ create_addressbook_settings()
     addressbook_config_fill_book_list();
 
     gtk_widget_show_all(ret);
+
+    const gboolean enabled = g_settings_get_boolean(client->settings, "use-evolution-addressbook");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), enabled);
+    addressbook_config->enable = enabled;
 
     enable_options();
 

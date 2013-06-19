@@ -45,9 +45,6 @@
  * @brief Handle audio codecs, load them in memory
  */
 
-/** Maps a pointer on an audiocodec object to a payload */
-typedef std::map<int, sfl::Codec*> CodecsMap;
-
 class AudioCodecFactory {
     public:
         AudioCodecFactory();
@@ -62,7 +59,7 @@ class AudioCodecFactory {
          */
         std::string getCodecName(int payload) const;
 
-        std::vector<int32_t > getAudioCodecList() const;
+        std::vector<int32_t > getCodecList() const;
         /**
          * Get the codec object associated with the payload
          * @param payload The payload looked for
@@ -119,16 +116,18 @@ class AudioCodecFactory {
         bool isCodecLoaded(int payload) const;
 
     private:
-        /** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */
-        typedef std::pair<sfl::Codec* , void*> CodecHandlePointer;
+        /** Maps a pointer on an audiocodec object to a payload */
+        typedef std::map<int, sfl::AudioCodec*> AudioCodecsMap;
 
+        /** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */
+        typedef std::pair<sfl::AudioCodec*, void*> AudioCodecHandlePointer;
 
         /**
          * Scan the installation directory ( --prefix configure option )
          * And load the dynamic library
          * @return std::vector<AudioCodec*> The list of the codec object successfully loaded in memory
          */
-        std::vector<sfl::Codec *> scanCodecDirectory();
+        std::vector<sfl::AudioCodec *> scanCodecDirectory();
 
         /**
          * Load a codec
@@ -139,9 +138,9 @@ class AudioCodecFactory {
 
         /**
          * Unload a codec
-         * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
+         * @param AudioCodecHandlePointer The map containing the pointer on the object and the pointer on the handle function
          */
-        void unloadCodec(CodecHandlePointer);
+        void unloadCodec(AudioCodecHandlePointer &ptr);
 
         /**
          * Check if the files found in searched directories seems valid
@@ -163,7 +162,7 @@ class AudioCodecFactory {
         /**
          * Map the payload of a codec and the object associated ( AudioCodec * )
          */
-        CodecsMap codecsMap_;
+        AudioCodecsMap codecsMap_;
 
         /**
          * Vector containing a default order for the codecs
@@ -179,7 +178,7 @@ class AudioCodecFactory {
          * Vector containing pairs
          * Pair between pointer on function handle and pointer on audiocodec object
          */
-        std::vector< CodecHandlePointer > codecInMemory_;
+        std::vector<AudioCodecHandlePointer> codecInMemory_;
 };
 
 #endif // __CODEC_DESCRIPTOR_H__

@@ -30,10 +30,7 @@
 
 #include <string.h>
 #include <glib/gi18n.h>
-#include "gtk2_wrappers.h"
-#include "unused.h"
 #include "assistant.h"
-#include "logger.h"
 #include "dbus.h"
 #include "reqaccount.h"
 #include "account_schema.h"
@@ -56,7 +53,7 @@ static gint forward_page_func(gint current_page, gpointer data);
 static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
 void prefill_sip(void);
 
-void set_account_type(GtkWidget* widget, gpointer data UNUSED)
+void set_account_type(GtkWidget* widget, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))
         account_type = _SIP;
@@ -64,7 +61,7 @@ void set_account_type(GtkWidget* widget, gpointer data UNUSED)
         account_type = _IAX;
 }
 
-static void show_password_cb(GtkWidget *widget UNUSED, gpointer data)
+static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
 {
     gtk_entry_set_visibility(GTK_ENTRY(data), !gtk_entry_get_visibility(GTK_ENTRY(data)));
 }
@@ -94,7 +91,7 @@ void getMessageSummary(const gchar * alias, const gchar * server, const gchar * 
     g_free(tmp);
 }
 
-void set_sflphone_org(GtkWidget* widget, gpointer data UNUSED)
+void set_sflphone_org(GtkWidget* widget, G_GNUC_UNUSED gpointer data)
 {
     use_sflphone_org = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
@@ -163,7 +160,7 @@ static void sip_apply_callback(void)
 
         // select the first interface available
         iface = iface_list;
-        DEBUG("Selected interface %s", *iface);
+        g_debug("Selected interface %s", *iface);
 
         account_insert(current, CONFIG_LOCAL_INTERFACE, *iface);
         account_insert(current, CONFIG_PUBLISHED_ADDRESS, *iface);
@@ -220,7 +217,7 @@ void build_wizard(void)
     current = create_default_account();
 
     if (current->properties == NULL) {
-        DEBUG("Failed to get default values. Creating from scratch");
+        g_debug("Failed to get default values. Creating from scratch");
         current->properties = g_hash_table_new(NULL, g_str_equal);
     }
 
@@ -294,69 +291,68 @@ GtkWidget* build_sfl_or_account()
 
 GtkWidget* build_sip_account_configuration(void)
 {
-    GtkWidget* table;
     GtkWidget* label;
     GtkWidget * clearTextCheckbox;
 
     wiz->sip_account = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("SIP account settings"), _("Please fill the following information"));
-    // table
-    table = gtk_table_new(7, 2,  FALSE/* homogeneous */);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->sip_account), table, TRUE, TRUE, 0);
+    // grid
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_box_pack_start(GTK_BOX(wiz->sip_account), grid, TRUE, TRUE, 0);
 
     // alias field
     label = gtk_label_new_with_mnemonic(_("_Alias"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->sip_alias = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->sip_alias);
-    gtk_table_attach(GTK_TABLE(table), wiz->sip_alias, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->sip_alias, 1, 0, 1, 1);
 
     // server field
     label = gtk_label_new_with_mnemonic(_("_Host name"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->sip_server = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->sip_server);
-    gtk_table_attach(GTK_TABLE(table), wiz->sip_server, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->sip_server, 1, 1, 1, 1);
 
     // username field
     label = gtk_label_new_with_mnemonic(_("_User name"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->sip_username = gtk_entry_new();
     gtk_entry_set_icon_from_pixbuf(GTK_ENTRY(wiz->sip_username), GTK_ENTRY_ICON_PRIMARY, gdk_pixbuf_new_from_file(ICONS_DIR "/stock_person.svg", NULL));
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->sip_username);
-    gtk_table_attach(GTK_TABLE(table), wiz->sip_username, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->sip_username, 1, 2, 1, 1);
 
     // password field
 
     label = gtk_label_new_with_mnemonic(_("_Password"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->sip_password = gtk_entry_new();
     gtk_entry_set_icon_from_stock(GTK_ENTRY(wiz->sip_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->sip_password);
     gtk_entry_set_visibility(GTK_ENTRY(wiz->sip_password), FALSE);
-    gtk_table_attach(GTK_TABLE(table), wiz->sip_password, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->sip_password, 1, 3, 1, 1);
 
     clearTextCheckbox = gtk_check_button_new_with_mnemonic(_("Show password"));
     g_signal_connect(clearTextCheckbox, "toggled", G_CALLBACK(show_password_cb), wiz->sip_password);
-    gtk_table_attach(GTK_TABLE(table), clearTextCheckbox, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), clearTextCheckbox, 1, 4, 1, 1);
 
     // voicemail number field
     label = gtk_label_new_with_mnemonic(_("_Voicemail number"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->sip_voicemail = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->sip_voicemail);
-    gtk_table_attach(GTK_TABLE(table), wiz->sip_voicemail, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->sip_voicemail, 1, 5, 1, 1);
 
     // Security options
     wiz->zrtp_enable = gtk_check_button_new_with_mnemonic(_("Secure communications with _ZRTP"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable), FALSE);
-    gtk_table_attach(GTK_TABLE(table), wiz->zrtp_enable, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->zrtp_enable, 0, 6, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->zrtp_enable), TRUE);
 
     //gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->sip_account, TRUE);
@@ -366,27 +362,26 @@ GtkWidget* build_sip_account_configuration(void)
 GtkWidget* build_email_configuration(void)
 {
     GtkWidget* label;
-    GtkWidget*  table;
 
     wiz->email = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("Optional email address"), _("This email address will be used to send your voicemail messages."));
 
-    table = gtk_table_new(4, 2,  FALSE/* homogeneous */);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->email), table, TRUE, TRUE, 0);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_box_pack_start(GTK_BOX(wiz->email), grid, TRUE, TRUE, 0);
 
     // email field
     label = gtk_label_new_with_mnemonic(_("_Email address"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->mailbox = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->mailbox);
-    gtk_table_attach(GTK_TABLE(table), wiz->mailbox, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->mailbox, 1, 0, 1, 1);
 
     // Security options
     wiz->zrtp_enable = gtk_check_button_new_with_mnemonic(_("Secure communications with _ZRTP"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable), FALSE);
-    gtk_table_attach(GTK_TABLE(table), wiz->zrtp_enable, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->zrtp_enable, 0, 5, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->zrtp_enable), TRUE);
 
     return wiz->email;
@@ -395,62 +390,61 @@ GtkWidget* build_email_configuration(void)
 GtkWidget* build_iax_account_configuration(void)
 {
     GtkWidget* label;
-    GtkWidget*  table;
     GtkWidget * clearTextCheckbox;
 
     wiz->iax_account = create_vbox(GTK_ASSISTANT_PAGE_CONFIRM, _("IAX2 account settings"), _("Please fill the following information"));
 
-    table = gtk_table_new(6, 2,  FALSE/* homogeneous */);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->iax_account), table, TRUE, TRUE, 0);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_box_pack_start(GTK_BOX(wiz->iax_account), grid, TRUE, TRUE, 0);
 
     // alias field
     label = gtk_label_new_with_mnemonic(_("_Alias"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->iax_alias = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_alias);
-    gtk_table_attach(GTK_TABLE(table), wiz->iax_alias, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->iax_alias, 1, 0, 1, 1);
 
     // server field
     label = gtk_label_new_with_mnemonic(_("_Host name"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->iax_server = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_server);
-    gtk_table_attach(GTK_TABLE(table), wiz->iax_server, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->iax_server, 1, 1, 1, 1);
 
     // username field
     label = gtk_label_new_with_mnemonic(_("_User name"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->iax_username = gtk_entry_new();
     gtk_entry_set_icon_from_pixbuf(GTK_ENTRY(wiz->iax_username), GTK_ENTRY_ICON_PRIMARY, gdk_pixbuf_new_from_file(ICONS_DIR "/stock_person.svg", NULL));
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_username);
-    gtk_table_attach(GTK_TABLE(table), wiz->iax_username, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->iax_username, 1, 2, 1, 1);
 
     // password field
     label = gtk_label_new_with_mnemonic(_("_Password"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->iax_password = gtk_entry_new();
     gtk_entry_set_icon_from_stock(GTK_ENTRY(wiz->iax_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_password);
     gtk_entry_set_visibility(GTK_ENTRY(wiz->iax_password), FALSE);
-    gtk_table_attach(GTK_TABLE(table), wiz->iax_password, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->iax_password, 1, 3, 1, 1);
 
     clearTextCheckbox = gtk_check_button_new_with_mnemonic(_("Show password"));
     g_signal_connect(clearTextCheckbox, "toggled", G_CALLBACK(show_password_cb), wiz->iax_password);
-    gtk_table_attach(GTK_TABLE(table), clearTextCheckbox, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), clearTextCheckbox, 1, 4, 1, 1);
 
     // voicemail number field
     label = gtk_label_new_with_mnemonic(_("_Voicemail number"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->iax_voicemail = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_voicemail);
-    gtk_table_attach(GTK_TABLE(table), wiz->iax_voicemail, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->iax_voicemail, 1, 5, 1, 1);
 
     current->state = ACCOUNT_STATE_UNREGISTERED;
 
@@ -462,30 +456,29 @@ GtkWidget* build_iax_account_configuration(void)
 GtkWidget* build_nat_settings(void)
 {
     GtkWidget* label;
-    GtkWidget* table;
 
     wiz->nat = create_vbox(GTK_ASSISTANT_PAGE_CONFIRM, _("Network Address Translation (NAT)"), _("You should probably enable this if you are behind a firewall."));
 
-    // table
-    table = gtk_table_new(2, 2, FALSE/* homogeneous */);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->nat), table, TRUE, TRUE, 0);
+    // grid
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_box_pack_start(GTK_BOX(wiz->nat), grid, TRUE, TRUE, 0);
 
     // enable
     wiz->enable = gtk_check_button_new_with_mnemonic(_("E_nable STUN"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->enable), FALSE);
-    gtk_table_attach(GTK_TABLE(table), wiz->enable, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->enable, 0, 0, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->enable), TRUE);
     g_signal_connect(G_OBJECT(GTK_TOGGLE_BUTTON(wiz->enable)), "toggled", G_CALLBACK(enable_stun), NULL);
 
     // server address
     label = gtk_label_new_with_mnemonic(_("_STUN server"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->addr = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->addr);
-    gtk_table_attach(GTK_TABLE(table), wiz->addr, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), wiz->addr, 1, 1, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->addr), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)));
 
     g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(sip_apply_callback), NULL);
@@ -563,7 +556,7 @@ typedef enum {
     PAGE_SUMMARY
 } assistant_state;
 
-static gint forward_page_func(gint current_page, gpointer data UNUSED)
+static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
 {
     gint next_page = 0;
 

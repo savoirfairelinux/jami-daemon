@@ -31,7 +31,8 @@
 #ifndef __CONFIGWINDOW_H__
 #define __CONFIGWINDOW_H__
 
-#include <calllist.h>
+#include "calllist.h"
+#include "sflphone_client.h"
 
 /**
  * @file preferencesdialog.h
@@ -102,10 +103,10 @@ GtkWidget * create_recording_settings();
 /**
  * Display the main configuration window
  */
-guint show_preferences_dialog(GSettings *settings);
+guint show_preferences_dialog(SFLPhoneClient *client);
 
 void preferences_dialog_set_stun_visible();
 
-void save_configuration_parameters (GSettings *settings);
+void save_configuration_parameters(SFLPhoneClient *client);
 
 #endif

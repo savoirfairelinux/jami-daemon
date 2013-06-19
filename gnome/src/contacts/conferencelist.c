@@ -33,7 +33,6 @@
 #include "callable_obj.h"
 #include "calltree.h"
 #include "conferencelist.h"
-#include "logger.h"
 
 static gint is_confID_confstruct(gconstpointer a, gconstpointer b)
 {
@@ -44,7 +43,7 @@ static gint is_confID_confstruct(gconstpointer a, gconstpointer b)
 void conferencelist_init(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("Call tab is NULL");
+        g_warning("Call tab is NULL");
         return;
     }
 
@@ -55,7 +54,7 @@ void conferencelist_init(calltab_t *tab)
 void conferencelist_clean(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("Calltab tab is NULL");
+        g_warning("Calltab tab is NULL");
         return;
     }
 
@@ -65,7 +64,7 @@ void conferencelist_clean(calltab_t *tab)
 void conferencelist_reset(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("Calltab tab is NULL");
+        g_warning("Calltab tab is NULL");
         return;
     }
 
@@ -77,12 +76,12 @@ void conferencelist_reset(calltab_t *tab)
 void conferencelist_add(calltab_t *tab, const conference_obj_t* conf)
 {
     if (conf == NULL) {
-        ERROR("Conference is NULL");
+        g_warning("Conference is NULL");
         return;
     }
 
     if (tab == NULL) {
-        ERROR("Tab is NULL");
+        g_warning("Tab is NULL");
         return;
     }
 
@@ -96,15 +95,15 @@ void conferencelist_add(calltab_t *tab, const conference_obj_t* conf)
 
 void conferencelist_remove(calltab_t *tab, const gchar* const conf_id)
 {
-    DEBUG("Remove conference %s", conf_id);
+    g_debug("Remove conference %s", conf_id);
 
     if (conf_id == NULL) {
-        ERROR("Conf id is NULL");
+        g_warning("Conf id is NULL");
         return;
     }
 
     if (tab == NULL) {
-        ERROR("Calltab is NULL");
+        g_warning("Calltab is NULL");
         return;
     }
 
@@ -118,10 +117,10 @@ void conferencelist_remove(calltab_t *tab, const gchar* const conf_id)
 
 conference_obj_t* conferencelist_get(calltab_t *tab, const gchar* const conf_id)
 {
-    DEBUG("Conference list get %s", conf_id);
+    g_debug("Conference list get %s", conf_id);
 
     if (tab == NULL) {
-        ERROR("Calltab is NULL");
+        g_warning("Calltab is NULL");
         return NULL;
     }
 
@@ -136,14 +135,14 @@ conference_obj_t* conferencelist_get(calltab_t *tab, const gchar* const conf_id)
 conference_obj_t* conferencelist_get_nth(calltab_t *tab, guint n)
 {
     if (tab == NULL) {
-        ERROR("Calltab is NULL");
+        g_warning("Calltab is NULL");
         return NULL;
     }
 
     conference_obj_t *c = g_queue_peek_nth(tab->conferenceQueue, n);
 
     if (c == NULL) {
-        ERROR("Could not fetch conference %d", n);
+        g_warning("Could not fetch conference %d", n);
         return NULL;
     }
 
@@ -153,7 +152,7 @@ conference_obj_t* conferencelist_get_nth(calltab_t *tab, guint n)
 conference_obj_t *conferencelist_pop_head(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("Tab is NULL");
+        g_warning("Tab is NULL");
         return NULL;
     }
 
@@ -163,7 +162,7 @@ conference_obj_t *conferencelist_pop_head(calltab_t *tab)
 guint conferencelist_get_size(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("Calltab is NULL");
+        g_warning("Calltab is NULL");
         return 0;
     }
 

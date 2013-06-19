@@ -33,6 +33,7 @@
 
 #include "calllist.h"
 #include "conferencelist.h"
+#include "sflphone_client.h"
 #include <gtk/gtk.h>
 
 calltab_t* active_calltree_tab;
@@ -40,33 +41,33 @@ calltab_t* current_calls_tab;
 calltab_t* history_tab;
 calltab_t* contacts_tab;
 
-calltab_t* calltab_init (gboolean, const gchar * const, GSettings *settings);
+calltab_t* calltab_init(gboolean, const gchar * const, SFLPhoneClient *client);
 
 /** Mark a call as selected.  There can be only one selected call.  This call
   * is the currently highlighted one in the list.
   * @param c The call */
 void
-calltab_select_call (calltab_t *, callable_obj_t *);
+calltab_select_call(calltab_t *, callable_obj_t *);
 
 void
-calltab_select_conf (calltab_t *, conference_obj_t *);
+calltab_select_conf(calltab_t *, conference_obj_t *);
 
 gint
-calltab_get_selected_type (calltab_t *);
+calltab_get_selected_type(calltab_t *);
 
 /** Return the selected call.
   * @return The number of the caller */
 callable_obj_t *
-calltab_get_selected_call (calltab_t *);
+calltab_get_selected_call(calltab_t *);
 
 void
-calltab_set_selected_call (calltab_t *, callable_obj_t *call);
+calltab_set_selected_call(calltab_t *, callable_obj_t *call);
 
 conference_obj_t *
-calltab_get_selected_conf (calltab_t *);
+calltab_get_selected_conf(calltab_t *);
 
 void
-calltab_create_searchbar (calltab_t *);
+calltab_create_searchbar(calltab_t *);
 
 gboolean
 calltab_has_name(calltab_t *tab, const gchar *name);

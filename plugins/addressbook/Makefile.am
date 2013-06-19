@@ -1,1 +1,1 @@
-SUBDIRS=evolution
+SUBDIRS=evolution test

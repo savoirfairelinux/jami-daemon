@@ -40,9 +40,6 @@
 #include "noncopyable.h"
 
 class SIPCall;
-namespace ost {
-    class Thread;
-}
 
 namespace sfl {
 
@@ -54,12 +51,12 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         * Constructor
         * @param sipcall The pointer on the SIP call
         */
-        AudioRtpSession(SIPCall &sipcall, ost::RTPDataQueue &queue, ost::Thread &thread);
+        AudioRtpSession(SIPCall &sipcall, ost::RTPDataQueue &queue);
         virtual ~AudioRtpSession();
 
         void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
 
-        virtual int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
+        void startRtpThreads(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Used mostly when receiving a reinvite
@@ -68,36 +65,27 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 
         virtual int getIncrementForDTMF() const;
 
-        virtual void setLocalMasterKey(const std::vector<uint8>& key) const = 0;
+        virtual void setLocalMasterKey(const std::vector<uint8>& key) = 0;
 
-        virtual void setLocalMasterSalt(const std::vector<uint8>& key) const = 0;
+        virtual void setLocalMasterSalt(const std::vector<uint8>& key) = 0;
 
         virtual std::vector<uint8> getLocalMasterKey() const = 0;
 
         virtual std::vector<uint8> getLocalMasterSalt() const = 0;
 
-    protected:
+    private:
+        bool isStarted_;
+
+        void prepareRtpReceiveThread(const std::vector<AudioCodec*> &audioCodecs);
         /**
          * Set the audio codec for this RTP session
          */
         void setSessionMedia(const std::vector<AudioCodec*> &codec);
 
-
+    protected:
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);
 
-        /**
-         * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
-         * incremented as if it was microphone audio. This function change the payload type of the rtp session,
-         * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
-         * back the codec payload for further audio processing.
-         */
-        void sendDtmfEvent();
-
-        /**
-         * Send encoded data to peer
-         */
-        virtual void sendMicData();
-
+        ost::RTPDataQueue &queue_;
         SIPCall &call_;
 
         /**
@@ -117,11 +105,41 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         unsigned int transportRate_;
 
-        ost::RTPDataQueue &queue_;
-
-        bool isStarted_;
     private:
+
         NON_COPYABLE(AudioRtpSession);
+        virtual void startReceiveThread() = 0;
+        void startSendThread();
+
+        /**
+         * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
+         * incremented as if it was microphone audio. This function change the payload type of the rtp session,
+         * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
+         * back the codec payload for further audio processing.
+         */
+        void sendDtmfEvent();
+
+        /**
+         * Send encoded data to peer
+         */
+        virtual void sendMicData();
+
+
+        class AudioRtpSendThread {
+            public:
+                AudioRtpSendThread(AudioRtpSession &session);
+                ~AudioRtpSendThread();
+                void start();
+                bool running_;
+
+            private:
+                static void *runCallback(void *data);
+                void run();
+                NON_COPYABLE(AudioRtpSendThread);
+                AudioRtpSession &rtpSession_;
+                pthread_t thread_;
+                ost::TimerPort timer_;
+        };
 
         /**
          * Set RTP Sockets send/receive timeouts
@@ -153,7 +171,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         short timestampCount_;
 
-        ost::Thread &thread_;
+        AudioRtpSendThread rtpSendThread_;
 };
 
 }

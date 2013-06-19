@@ -34,15 +34,18 @@
 #define HISTORY_
 
 #include "historyitem.h"
-#include "cc_thread.h" // for ost::Mutex
+#include <pthread.h>
 #include <vector>
 
 class Call;
+
+namespace sfl {
 
 class History {
 
     public:
         History();
+        ~History();
 
         /** Load history from file */
         bool load(int limit);
@@ -65,8 +68,8 @@ class History {
         void clear();
         void setPath(const std::string &path);
     private:
-        /* Mutex to protext the history items */
-        ost::Mutex historyItemsMutex_;
+        /* Mutex to protect the history items */
+        pthread_mutex_t historyItemsMutex_;
 
         /* If no path has been set, this will initialize path to a
          * system-dependent location */
@@ -86,5 +89,7 @@ class History {
 
         friend class HistoryTest;
 };
+
+}
 
 #endif // HISTORY_

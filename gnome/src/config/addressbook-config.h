@@ -35,10 +35,9 @@
 #include <glib.h>
 
 #include "addressbook.h"
+#include "sflphone_client.h"
 #include "actions.h"
 #include "utils.h"
-
-G_BEGIN_DECLS
 
 #define ADDRESSBOOK_ENABLE                  "ADDRESSBOOK_ENABLE"
 #define ADDRESSBOOK_MAX_RESULTS             "ADDRESSBOOK_MAX_RESULTS"
@@ -62,8 +61,6 @@ gboolean
 addressbook_display (AddressBook_Config *settings, const gchar *field);
 
 GtkWidget*
-create_addressbook_settings();
-
-G_END_DECLS
+create_addressbook_settings(SFLPhoneClient *client);
 
 #endif // _ADDRESS_BOOK_CONFIG

@@ -32,13 +32,14 @@
 #include "mainbuffer.h"
 #include "logger.h"
 #include <sstream>
+#include <unistd.h>
 #include <cassert>
 #include <tr1/array>
 
 int AudioRecorder::count_ = 0;
 
-AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : ost::Thread(),
-    recorderId_(), mbuffer_(mb), arecord_(arec), running_(true)
+AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) :
+    recorderId_(), mbuffer_(mb), arecord_(arec), running_(false), thread_(0)
 {
     assert(mb);
 
@@ -53,6 +54,26 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : ost::Thread()
     s = out.str();
 
     recorderId_ = id.append(s);
+}
+
+AudioRecorder::~AudioRecorder() {
+    running_ = false;
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void AudioRecorder::start()
+{
+    running_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+void *
+AudioRecorder::runCallback(void *data)
+{
+    AudioRecorder *context = static_cast<AudioRecorder*>(data);
+    context->run();
+    return NULL;
 }
 
 /**
@@ -71,6 +92,6 @@ void AudioRecorder::run()
         if (availableBytes > 0)
             arecord_->recData(buffer.data(), availableBytes / sizeof(SFLDataFormat));
 
-        Thread::sleep(20);
+        usleep(20000); // 20 ms
     }
 }

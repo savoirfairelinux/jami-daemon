@@ -31,8 +31,6 @@
 
 #include "../dbus/dbus.h"
 #include <glib.h>
-#include "gtk2_wrappers.h"
-#include "logger.h"
 #include "../mainwindow.h"
 #include <string.h>
 
@@ -69,11 +67,9 @@ disable_conference_calls(conference_obj_t *call)
         guint size = g_slist_length(call->participant_list);
         for (guint i = 0; i < size;i++) {
                const gchar* id = (gchar*)g_slist_nth(call->participant_list,i)->data;
-               message_tab *tab = g_hash_table_lookup(tabs,id);
-               tab = force_lookup(id);
-               if (tab) {
+               message_tab *tab = force_lookup(id);
+               if (tab)
                    gtk_widget_hide(tab->entry);
-               }
         }
     }
 }
@@ -167,7 +163,7 @@ on_enter(GtkEntry *entry, gpointer user_data)
 }
 
 static void
-on_close(GtkWidget *button UNUSED, gpointer data)
+on_close(G_GNUC_UNUSED GtkWidget *button, gpointer data)
 {
     message_tab *tab = (message_tab*)data;
     gtk_widget_destroy(tab->widget);
@@ -178,26 +174,26 @@ on_close(GtkWidget *button UNUSED, gpointer data)
 }
 
 static void
-on_focus_in(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
+on_focus_in(G_GNUC_UNUSED GtkEntry *entry, G_GNUC_UNUSED gpointer user_data)
 {
     main_window_pause_keygrabber(TRUE);
 }
 
 static void
-on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
+on_focus_out(G_GNUC_UNUSED GtkEntry *entry, G_GNUC_UNUSED gpointer user_data)
 {
     main_window_pause_keygrabber(FALSE);
 }
 
 static void
-on_clicked(GtkTextBuffer *textbuffer, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, GSettings *settings)
+on_clicked(GtkTextBuffer *textbuffer, G_GNUC_UNUSED GtkTextIter *location, G_GNUC_UNUSED GtkTextMark *mark, SFLPhoneClient *client)
 {
    if (start_link && end_link && gtk_text_iter_compare(start_link,location) <= 0 && gtk_text_iter_compare(location,end_link) <= 0) {
        gchar* text = gtk_text_buffer_get_text(textbuffer,start_link,end_link,FALSE);
        start_link = NULL;
        end_link = NULL;
        if (strlen(text)) {
-           gchar* url_command = g_settings_get_string(settings, "messaging-url-command");
+           gchar* url_command = g_settings_get_string(client->settings, "messaging-url-command");
            if (!url_command || !strlen(url_command))
                url_command = g_strdup("xdg-open");
 
@@ -212,7 +208,7 @@ on_clicked(GtkTextBuffer *textbuffer, GtkTextIter *location UNUSED, GtkTextMark 
 }
 
 static void
-on_cursor_motion(GtkTextView *view UNUSED, GdkEvent  *event, gpointer data)
+on_cursor_motion(G_GNUC_UNUSED GtkTextView *view, GdkEvent *event, gpointer data)
 {
    /* Convert mouse position into text iterators*/
    gint x,y;
@@ -289,7 +285,7 @@ disable_messaging_tab(const gchar * id)
 }
 
 static message_tab *
-create_messaging_tab_common(const gchar* call_id, const gchar *label, GSettings *settings)
+create_messaging_tab_common(const gchar* call_id, const gchar *label, SFLPhoneClient *client)
 {
     show_messaging();
     /* Do not create a new tab if it already exist */
@@ -326,7 +322,7 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label, GSettings 
     gtk_container_add(GTK_CONTAINER(scoll_area), text_box_widget);
 
     g_signal_connect(G_OBJECT(text_box_widget), "motion-notify-event" , G_CALLBACK(on_cursor_motion), self);
-    g_signal_connect(G_OBJECT(text_buffer    ), "mark-set"            , G_CALLBACK(on_clicked      ), settings);
+    g_signal_connect(G_OBJECT(text_buffer    ), "mark-set"            , G_CALLBACK(on_clicked      ), client);
 
     GtkWidget *line_edit    = gtk_entry_new (                               );
     GtkWidget *hbox         = gtk_box_new   ( GTK_ORIENTATION_HORIZONTAL, 1 );
@@ -394,44 +390,45 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label, GSettings 
 }
 
 static message_tab *
-new_text_message_common(const gchar* id, const gchar* message, const gchar *name, GSettings *settings)
+new_text_message_common(const gchar* id, const gchar* message, const gchar *name, SFLPhoneClient *client)
 {
     gtk_widget_show(get_tab_box());
     message_tab *tab = NULL;
     if (tabs)
         tab = g_hash_table_lookup(tabs, id);
     if (!tab)
-        tab = create_messaging_tab_common(id, name, settings);
+        tab = create_messaging_tab_common(id, name, client);
     append_message(tab, name, message);
     return tab;
 }
 
 void
-new_text_message(callable_obj_t* call, const gchar* message, GSettings *settings)
+new_text_message(callable_obj_t* call, const gchar* message, SFLPhoneClient *client)
 {
     gchar* label_text;
     if (g_strcmp0(call->_display_name, "") == 0)
        label_text = call->_display_name;
     else
        label_text = "Peer";
-    message_tab *tab = new_text_message_common(call->_callID, message, label_text, settings);
+    message_tab *tab = new_text_message_common(call->_callID, message, label_text, client);
     tab->call = call;
 }
 
 void
-new_text_message_conf(conference_obj_t* conf, const gchar* message,const gchar* from, GSettings *settings)
+new_text_message_conf(conference_obj_t* conf, const gchar* message,const gchar* from, SFLPhoneClient *client)
 {
     disable_conference_calls(conf);
-    message_tab *tab = new_text_message_common(conf->_confID,message,strlen(from)?from:"Conference", settings);
+    message_tab *tab = new_text_message_common(conf->_confID, message,
+                                               strlen(from) ? from : "Conference", client);
     tab->conf = conf;
 }
 
 message_tab *
-create_messaging_tab(callable_obj_t* call, GSettings *settings)
+create_messaging_tab(callable_obj_t* call, SFLPhoneClient *client)
 {
     const gchar *confID = dbus_get_conference_id(call->_callID);
     if (strlen(confID) > 0 && ((tabs && force_lookup(confID) == NULL) || !tabs)) {
-        return create_messaging_tab_common(confID, "Conference", settings);
+        return create_messaging_tab_common(confID, "Conference", client);
     }
     else if (strlen(confID) > 0 && tabs) {
         return force_lookup(confID);
@@ -441,20 +438,20 @@ create_messaging_tab(callable_obj_t* call, GSettings *settings)
        label_text = call->_display_name;
     else
        label_text = call->_peer_number ;
-    message_tab* self = create_messaging_tab_common(call->_callID, label_text, settings);
+    message_tab* self = create_messaging_tab_common(call->_callID, label_text, client);
 
-    self->call   = call;
-    self->conf   = NULL;
+    self->call = call;
+    self->conf = NULL;
     return self;
 }
 
 message_tab *
-create_messaging_tab_conf(conference_obj_t* call, GSettings *settings)
+create_messaging_tab_conf(conference_obj_t* call, SFLPhoneClient *client)
 {
     if (call->_confID && strlen(call->_confID)) {
-        message_tab* self = create_messaging_tab_common(call->_confID, "Conference", settings);
-        self->conf   = call;
-        self->call   = NULL;
+        message_tab* self = create_messaging_tab_common(call->_confID, "Conference", client);
+        self->conf = call;
+        self->call = NULL;
         disable_conference_calls(call);
         return self;
     }

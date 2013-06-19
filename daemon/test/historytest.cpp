@@ -49,6 +49,8 @@ void backup()
 }
 }
 
+namespace sfl {
+
 void HistoryTest::setUp()
 {
     backup();
@@ -99,4 +101,6 @@ void HistoryTest::tearDown()
 {
     delete history_;
     restore();
+}
+
 }

@@ -149,8 +149,12 @@ int main(int argc, char *argv [])
     if (parse_args(argc, argv))
         return 0;
 
-    if (!fileutils::create_pidfile())
+    fileutils::FileHandle f(fileutils::create_pidfile());
+    if (f.fd == -1) {
+        std::cerr << "An " PACKAGE_NAME <<
+            " instance is already running, quitting..." << std::endl;
         return 1;
+    }
 
     try {
         Manager::instance().init("");

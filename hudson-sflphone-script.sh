@@ -111,7 +111,7 @@ function build_daemon {
 	make distclean
 	./autogen.sh
 	# Compile pjproject first
-	pushd libs/pjproject
+	pushd libs/pjproject-2.0.1
 	./autogen.sh
 	CFLAGS=-fPIC ./configure
 	make && make dep
@@ -134,7 +134,7 @@ function build_gnome {
 	make distclean
 	./autogen.sh
   # Compile pjproject first
-	pushd libs/pjproject
+	pushd libs/pjproject-2.0.1
 	./autogen.sh
 	CFLAGS=-fPIC ./configure
 	make && make dep

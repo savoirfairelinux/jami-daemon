@@ -31,13 +31,35 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
-EventThread::EventThread(VoIPLink *link) : ost::Thread(), link_(link)
+ #ifdef __ANDROID__
+ #include <sched.h>
+ #define pthread_yield sched_yield
+ #endif
+
+EventThread::EventThread(VoIPLink *link) : link_(link), thread_(0)
 {}
+
+EventThread::~EventThread()
+{
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void EventThread::start()
+{
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+void *
+EventThread::runCallback(void *data)
+{
+    EventThread *context = static_cast<EventThread*>(data);
+    context->run();
+    return NULL;
+}
 
 void EventThread::run()
 {
     while (link_->getEvent())
-        yield();  // noop
-    ost::Thread::exit();
+        pthread_yield();
 }
-

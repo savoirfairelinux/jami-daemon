@@ -37,7 +37,10 @@
 // Application import
 #include "noncopyable.h"
 
+namespace sfl {
+
 class History;
+
 /*
  * @file historyTest.h
  * @brief       Regroups unitary tests related to the phone number cleanup function.
@@ -85,11 +88,13 @@ class HistoryTest : public CppUnit::TestCase {
 
     private:
         NON_COPYABLE(HistoryTest);
-        History *history_;
+        sfl::History *history_;
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HistoryTest, "HistoryTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(HistoryTest);
+
+}
 
 #endif // HISTORY_TEST_

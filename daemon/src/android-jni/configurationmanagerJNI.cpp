@@ -176,20 +176,6 @@ std::vector<std::string> ConfigurationManagerJNI::getAccountList()
     return Manager::instance().getAccountList();
 }
 
-/**
- * Send the list of all codecs loaded to the client through DBus.
- * Can stay global, as only the active codecs will be set per accounts
- */
-std::vector<int32_t> ConfigurationManagerJNI::getAudioCodecList()
-{
-    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
-
-    // if (list.empty())
-    //     errorAlert(CODECS_NOT_LOADED);
-
-    return list;
-}
-
 std::vector<std::string> ConfigurationManagerJNI::getSupportedTlsMethod()
 {
     std::vector<std::string> method;
@@ -337,26 +323,6 @@ std::map<std::string, std::string> ConfigurationManagerJNI::getRingtoneList()
 void ConfigurationManagerJNI::setEchoCancelState(const std::string& state)
 {
     Manager::instance().setEchoCancelState(state);
-}
-
-int ConfigurationManagerJNI::getEchoCancelTailLength()
-{
-    return Manager::instance().getEchoCancelTailLength();
-}
-
-void ConfigurationManagerJNI::setEchoCancelTailLength(const int32_t& length)
-{
-    Manager::instance().setEchoCancelTailLength(length);
-}
-
-int ConfigurationManagerJNI::getEchoCancelDelay()
-{
-    return Manager::instance().getEchoCancelDelay();
-}
-
-void ConfigurationManagerJNI::setEchoCancelDelay(const int32_t& delay)
-{
-    Manager::instance().setEchoCancelDelay(delay);
 }
 
 int32_t ConfigurationManagerJNI::isIax2Enabled()

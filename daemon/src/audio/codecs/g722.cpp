@@ -50,12 +50,12 @@ class G722 : public sfl::AudioCodec {
         }
 
     private:
-        virtual int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
+        int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
         {
             return g722_decode(dst, src, buf_size);
         }
 
-        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
+        int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
         {
             int out = g722_encode(dst, src, frameSize_);
             return out;
@@ -758,13 +758,13 @@ class G722 : public sfl::AudioCodec {
 
 // the class factories
 // cppcheck-suppress unusedFunction
-extern "C" sfl::Codec* CODEC_ENTRY()
+extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
 {
     return new G722;
 }
 
 // cppcheck-suppress unusedFunction
-extern "C" void destroy(sfl::Codec* a)
+extern "C" void destroy(sfl::AudioCodec* a)
 {
     delete a;
 }

@@ -111,7 +111,7 @@ GSList *addressbook_get_books_data();
 
 book_data_t *addressbook_get_book_data_by_uid(gchar *);
 
-void addressbook_set_current_book(gchar *);
+void addressbook_set_current_book(const gchar *);
 
 void addressbook_set_search_type(AddrbookSearchType);
 

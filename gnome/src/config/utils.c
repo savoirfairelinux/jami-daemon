@@ -31,7 +31,7 @@
 #include "utils.h"
 #include "sflphone_const.h"
 
-void gnome_main_section_new_with_table(gchar *title, GtkWidget **frame, GtkWidget **table, gint nb_col, gint nb_row)
+void gnome_main_section_new_with_grid(gchar *title, GtkWidget **frame, GtkWidget **grid)
 {
     PangoAttrList *attrs = pango_attr_list_new();
     PangoAttribute *attr = pango_attr_weight_new(PANGO_WEIGHT_BOLD);
@@ -50,11 +50,11 @@ void gnome_main_section_new_with_table(gchar *title, GtkWidget **frame, GtkWidge
     GtkWidget *align = gtk_alignment_new(0.08, 0.2, 0.1, 0.1);
     gtk_container_add(GTK_CONTAINER(*frame), align);
 
-    *table = gtk_table_new(nb_col, nb_row, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(*table), 2);
-    gtk_table_set_col_spacings(GTK_TABLE(*table), 2);
-    gtk_widget_show(*table);
-    gtk_container_add(GTK_CONTAINER(align), *table);
+    *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(*grid), 2);
+    gtk_grid_set_column_spacing(GTK_GRID(*grid), 2);
+    gtk_widget_show(*grid);
+    gtk_container_add(GTK_CONTAINER(align), *grid);
 }
 
 

@@ -35,9 +35,7 @@
 #include <clutter-gtk/clutter-gtk.h>
 
 #include <string.h>
-#include "logger.h"
 #include "config/videoconf.h"
-#include "unused.h"
 
 typedef struct {
     gchar *id;
@@ -71,7 +69,7 @@ cleanup_handle(gpointer data)
 }
 
 static void
-video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
     if (dbus_has_video_preview_started())
         dbus_stop_video_preview();
@@ -82,7 +80,7 @@ video_window_button_cb(GtkWindow *win, GdkEventButton *event, gpointer data)
 {
     VideoHandle *handle = (VideoHandle *) data;
     if (event->type == GDK_2BUTTON_PRESS) {
-        DEBUG("TOGGLING FULL SCREEEN!");
+        g_debug("TOGGLING FULL SCREEEN!");
         handle->fullscreen = !handle->fullscreen;
         if (handle->fullscreen)
             gtk_window_fullscreen(win);
@@ -98,7 +96,7 @@ add_handle(const gchar *id)
     if (!video_handles)
         video_handles = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, cleanup_handle);
     if (g_hash_table_lookup(video_handles, id)) {
-        ERROR("Already created handle for video with id %s", id);
+        g_warning("Already created handle for video with id %s", id);
         return NULL;
     }
 
@@ -132,7 +130,7 @@ try_clutter_init()
 {
 #define PRINT_ERR(X) \
     case (X): \
-    ERROR("%s", #X); \
+    g_warning("%s", #X); \
     break;
 
     switch (gtk_clutter_init(NULL, NULL)) {
@@ -147,9 +145,9 @@ try_clutter_init()
 #undef PRINT_ERR
 }
 
-void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
+void started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
         gchar *id, gchar *shm_path, gint width, gint height,
-        GError *error UNUSED, gpointer userdata UNUSED)
+        G_GNUC_UNUSED GError *error, G_GNUC_UNUSED gpointer userdata)
 {
     if (!id || !*id || !shm_path || !*shm_path)
         return;
@@ -178,24 +176,24 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
         gtk_widget_show_all(handle->window);
     }
 
-    DEBUG("Video started for id: %s shm-path:%s width:%d height:%d",
+    g_debug("Video started for id: %s shm-path:%s width:%d height:%d",
            id, shm_path, width, height);
 
     VideoRenderer *renderer = video_renderer_new(video_area, width, height, shm_path);
     if (!video_renderer_run(renderer)) {
         g_object_unref(renderer);
-        ERROR("Could not run video renderer");
+        g_warning("Could not run video renderer");
         g_hash_table_remove(video_handles, id);
         return;
     }
 }
 
 void
-stopped_decoding_video_cb(DBusGProxy *proxy UNUSED,
+stopped_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
                           gchar *id,
-                          gchar *shm_path UNUSED,
-                          GError *error UNUSED,
-                          gpointer userdata UNUSED)
+                          G_GNUC_UNUSED gchar *shm_path,
+                          G_GNUC_UNUSED GError *error,
+                          G_GNUC_UNUSED gpointer userdata)
 {
     if (video_handles)
         g_hash_table_remove(video_handles, id);

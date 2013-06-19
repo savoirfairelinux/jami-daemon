@@ -53,27 +53,21 @@ class SIPCall;
 
 namespace sfl {
 
-class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpSession {
+class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRtpSession {
     public:
         /**
         * Constructor
         * @param call The SIP call
         */
         AudioSymmetricRtpSession(SIPCall &call);
-        ~AudioSymmetricRtpSession();
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
 
-        int startSymmetricRtpThread() {
-            rtpThread_.start();
-            return 0;
-        }
+        virtual void setLocalMasterKey(const std::vector<uint8>& key UNUSED) {}
 
-        virtual void setLocalMasterKey(const std::vector<uint8>& key UNUSED) const {}
-
-        virtual void setLocalMasterSalt(const std::vector<uint8>& key UNUSED) const {};
+        virtual void setLocalMasterSalt(const std::vector<uint8>& key UNUSED) {};
 
         /** Not used for symmetric rtp session, return an empty vector */
         virtual std::vector<uint8> getLocalMasterKey() const { std::vector<uint8> vec; return vec; }
@@ -84,22 +78,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
     private:
         NON_COPYABLE(AudioSymmetricRtpSession);
 
-        class AudioRtpThread : public ost::Thread, public ost::TimerPort {
-            public:
-                AudioRtpThread(AudioSymmetricRtpSession &session);
-
-                virtual void run();
-
-                bool running_;
-
-            private:
-                NON_COPYABLE(AudioRtpThread);
-                AudioSymmetricRtpSession &rtpSession_;
-        };
-        int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
-
-        AudioRtpThread   rtpThread_ ;
-        std::vector<sfl::AudioCodec*> audioCodecs_;
+        void startReceiveThread();
 };
 
 }

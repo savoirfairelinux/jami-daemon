@@ -41,6 +41,7 @@ int main()
     using namespace std;
 
     VideoV4l2ListThread worker;
+    worker.start();
     vector<string> devs(worker.getDeviceList());
 
     for (size_t i = 0; i < devs.size(); ++i) {

@@ -1,7 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 MY_COMMONCPP=commoncpp2-1.8.1-android
-
+MY_CCRTP=ccrtp-1.8.0-android
 
 ############# ulaw ###############
 
@@ -13,6 +13,7 @@ LOCAL_SRC_FILES := ulaw.cpp \
 # FIXME
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
+			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc 
 
 LOCAL_MODULE := libcodec_ulaw
@@ -37,6 +38,7 @@ LOCAL_SRC_FILES := alaw.cpp \
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
+			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc \
 
 LOCAL_MODULE := libcodec_alaw
@@ -62,6 +64,7 @@ LOCAL_SRC_FILES := g722.cpp \
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
 			$(LOCAL_PATH)/../../.. \
+			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc 
 
 LOCAL_MODULE := libcodec_g722
@@ -88,6 +91,7 @@ LOCAL_SRC_FILES := opus.cpp \
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
 			$(LOCAL_PATH)/../../.. \
+			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc 
 
 LOCAL_MODULE := libcodec_opus
@@ -115,6 +119,7 @@ LOCAL_SRC_FILES := speexcodec_nb.cpp \
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
 			$(LOCAL_PATH)/../../.. \
+			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc 
 
 LOCAL_MODULE := libcodec_speex_nb
@@ -141,6 +146,7 @@ LOCAL_SRC_FILES := speexcodec_ub.cpp \
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
 			$(LOCAL_PATH)/../../.. \
+			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc 
 
 LOCAL_MODULE := libcodec_speex_ub
@@ -165,6 +171,7 @@ LOCAL_SRC_FILES := speexcodec_wb.cpp \
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
 			$(LOCAL_PATH)/../../.. \
+			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc 
 
 LOCAL_MODULE := libcodec_speex_wb
@@ -189,6 +196,7 @@ LOCAL_SRC_FILES := audiocodecfactory.cpp
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
 			$(LOCAL_PATH)/../../.. \
+			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc 
 
 LOCAL_MODULE := libcodecfactory

@@ -42,20 +42,20 @@ class Alaw : public sfl::AudioCodec {
         }
 
     private:
-        virtual int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
+        int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
         {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ALawDecode(*src);
 
-            return frameSize_;
+            return buf_size;
         }
 
-        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
+        int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size)
         {
-            for (unsigned char *end = dst + frameSize_; dst < end; ++src, ++dst)
+            for (unsigned char *end = dst + buf_size; dst < end; ++src, ++dst)
                 *dst = ALawEncode(*src);
 
-            return frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);
+            return buf_size;
         }
 
         int ALawDecode(uint8 alaw)
@@ -123,13 +123,13 @@ class Alaw : public sfl::AudioCodec {
 
 // the class factories
 // cppcheck-suppress unusedFunction
-extern "C" sfl::Codec* CODEC_ENTRY()
+extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
 {
     return new Alaw;
 }
 
 // cppcheck-suppress unusedFunction
-extern "C" void destroy(sfl::Codec* a)
+extern "C" void destroy(sfl::AudioCodec* a)
 {
     delete a;
 }

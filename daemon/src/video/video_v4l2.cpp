@@ -29,7 +29,6 @@
  */
 
 #include <string>
-#include <cstring> // for memset
 #include <algorithm>
 #include <vector>
 #include <climits>
@@ -149,8 +148,7 @@ vector<string> VideoV4l2Size::getRateList()
 
 void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
 {
-    v4l2_frmivalenum frmival;
-    memset(&frmival, 0x0, sizeof frmival);
+    v4l2_frmivalenum frmival = {0};
     frmival.pixel_format = pixel_format;
     frmival.width = width;
     frmival.height = height;
@@ -215,8 +213,7 @@ vector<string> VideoV4l2Channel::getSizeList() const
 unsigned int
 VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
 {
-    v4l2_frmsizeenum frmsize;
-    memset(&frmsize, 0x0, sizeof frmsize);
+    v4l2_frmsizeenum frmsize = {0};
     frmsize.index = 0;
     frmsize.pixel_format = pixelformat;
     if (!ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize)) {
@@ -244,8 +241,7 @@ VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
         }
     }
 
-    v4l2_format fmt;
-    memset(&fmt, 0x0, sizeof fmt);
+    v4l2_format fmt = {(v4l2_buf_type) 0};
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
         throw std::runtime_error("Could not get format");
@@ -280,8 +276,7 @@ void VideoV4l2Channel::getFormat(int fd)
     if (ioctl(fd, VIDIOC_S_INPUT, &idx))
         throw std::runtime_error("VIDIOC_S_INPUT failed");
 
-    v4l2_fmtdesc fmt;
-    memset(&fmt, 0x0, sizeof fmt);
+    v4l2_fmtdesc fmt = {0};
     unsigned fmt_index;
     fmt.index = fmt_index = 0;
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -338,8 +333,7 @@ VideoV4l2Device::VideoV4l2Device(int fd, const string &device) :
 
     name = string(reinterpret_cast<const char*>(cap.card));
 
-    v4l2_input input;
-    memset(&input, 0x0, sizeof input);
+    v4l2_input input = {0};
     unsigned idx;
     input.index = idx = 0;
     while (!ioctl(fd, VIDIOC_ENUMINPUT, &input)) {

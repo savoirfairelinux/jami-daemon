@@ -44,24 +44,53 @@
 #define SFL_ALSA_NB_PERIOD 8
 #define SFL_ALSA_BUFFER_SIZE SFL_ALSA_PERIOD_SIZE*SFL_ALSA_NB_PERIOD
 
-class AlsaThread : public ost::Thread {
+class AlsaThread {
     public:
         AlsaThread(AlsaLayer *alsa);
-
-        ~AlsaThread() { ost::Thread::terminate(); }
-
+        ~AlsaThread();
         void initAudioLayer();
-
-        virtual void run();
+        void start();
+        bool isRunning() const;
 
     private:
+        void run();
+        static void *runCallback(void *context);
+
         NON_COPYABLE(AlsaThread);
+        pthread_t thread_;
         AlsaLayer* alsa_;
+        bool running_;
 };
 
 AlsaThread::AlsaThread(AlsaLayer *alsa)
-    : ost::Thread(), alsa_(alsa)
+    : thread_(0), alsa_(alsa), running_(false)
 {}
+
+bool AlsaThread::isRunning() const
+{
+    return running_;
+}
+
+AlsaThread::~AlsaThread()
+{
+    running_ = false;
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void AlsaThread::start()
+{
+    running_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+void *
+AlsaThread::runCallback(void *data)
+{
+    AlsaThread *context = static_cast<AlsaThread*>(data);
+    context->run();
+    return NULL;
+}
 
 void AlsaThread::initAudioLayer(void)
 {
@@ -116,7 +145,7 @@ void AlsaThread::run()
 
     while (alsa_->isStarted_) {
         alsa_->audioCallback();
-        ost::Thread::sleep(20 /* ms */);
+        usleep(20000); // 20 ms
     }
 }
 
@@ -192,9 +221,8 @@ AlsaLayer::startStream()
     if (audioThread_ == NULL) {
         audioThread_ = new AlsaThread(this);
         audioThread_->start();
-    }
-    else if (!audioThread_->isRunning()) {
-      audioThread_->start();
+    } else if (!audioThread_->isRunning()) {
+        audioThread_->start();
     }
 
     isStarted_ = true;
@@ -483,7 +511,7 @@ AlsaLayer::read(void* buffer, int toCopy)
             break;
         }
 
-        case EPERM:
+        case -EPERM:
             ERROR("Can't capture, EPERM (%s)", snd_strerror(err));
             prepareCaptureStream();
             startCaptureStream();

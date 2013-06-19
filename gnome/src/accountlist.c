@@ -34,9 +34,7 @@
 #include "dbus.h"
 #include "accountlist.h"
 #include "account_schema.h"
-#include "logger.h"
 #include "actions.h"
-#include "unused.h"
 
 static GQueue * accountQueue;
 
@@ -102,7 +100,7 @@ account_t *
 account_list_get_by_id(const gchar * const accountID)
 {
     if (!accountID) {
-        DEBUG("AccountID is NULL");
+        g_debug("AccountID is NULL");
         return NULL;
     }
 
@@ -167,6 +165,8 @@ const gchar * account_state_name(account_state_t s)
             return _("Network unreachable");
         case ACCOUNT_STATE_ERROR_HOST:
             return _("Host unreachable");
+        case ACCOUNT_STATE_ERROR_SERVICE_UNAVAILABLE:
+            return _("Service unavailable");
         case ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE:
             return _("Not acceptable");
         case ACCOUNT_STATE_ERROR_EXIST_STUN:
@@ -178,7 +178,7 @@ const gchar * account_state_name(account_state_t s)
     }
 }
 
-void account_list_free_elm(gpointer elm, gpointer data UNUSED)
+void account_list_free_elm(gpointer elm, G_GNUC_UNUSED gpointer data)
 {
     account_t *a = elm;
     g_free(a->accountID);
@@ -241,7 +241,7 @@ void account_list_remove(const gchar *accountID)
     if (target) {
 #if GLIB_CHECK_VERSION(2, 30, 0)
         if (!g_queue_remove(accountQueue, target))
-            ERROR("Could not remove account with ID %s", accountID);
+            g_warning("Could not remove account with ID %s", accountID);
 #else
         g_queue_remove(accountQueue, target);
 #endif

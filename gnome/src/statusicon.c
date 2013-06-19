@@ -35,8 +35,6 @@
 #include "mainwindow.h"
 #include "accountlist.h"
 #include "statusicon.h"
-#include "logger.h"
-#include "unused.h"
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
@@ -48,20 +46,20 @@ set_minimized(gboolean state)
 }
 
 void
-popup_main_window()
+popup_main_window(SFLPhoneClient *client)
 {
-    gtk_widget_show(get_main_window());
+    gtk_widget_show(client->win);
     set_minimized(FALSE);
 }
 
 void
-show_status_hangup_icon(GSettings *settings)
+show_status_hangup_icon(SFLPhoneClient *client)
 {
-    if (g_settings_get_boolean(settings, "popup-main-window")) {
-        gtk_widget_show(get_main_window());
-        gtk_window_move(GTK_WINDOW(get_main_window()),
-                        g_settings_get_int(settings, "window-position-x"),
-                        g_settings_get_int(settings, "window-position-y"));
+    if (g_settings_get_boolean(client->settings, "popup-main-window")) {
+        gtk_widget_show(client->win);
+        gtk_window_move(GTK_WINDOW(client->win),
+                        g_settings_get_int(client->settings, "window-position-x"),
+                        g_settings_get_int(client->settings, "window-position-y"));
         set_minimized(FALSE);
     }
 }
@@ -70,21 +68,21 @@ void
 hide_status_hangup_icon()
 {
     if (status) {
-        DEBUG("Hide Hangup in Systray");
+        g_debug("Hide Hangup in Systray");
         gtk_widget_hide(GTK_WIDGET(hangup_menu_item));
     }
 }
 
 void
-status_quit(void * foo UNUSED)
+status_quit(SFLPhoneClient *client)
 {
-    sflphone_quit(FALSE);
+    sflphone_quit(FALSE, client);
 }
 
 static void
-status_hangup(GtkWidget *widget UNUSED, GSettings *settings)
+status_hangup(G_GNUC_UNUSED GtkWidget *widget, SFLPhoneClient *client)
 {
-    sflphone_hang_up(settings);
+    sflphone_hang_up(client);
 }
 
 void
@@ -94,22 +92,22 @@ status_icon_unminimize()
 }
 
 void
-show_hide(GSettings *settings)
+show_hide(SFLPhoneClient *client)
 {
     if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item))) {
-        gtk_widget_show(GTK_WIDGET(get_main_window()));
-        gtk_window_move(GTK_WINDOW(get_main_window()),
-                        g_settings_get_int(settings, "window-position-x"),
-                        g_settings_get_int(settings, "window-position-y"));
+        gtk_widget_show(client->win);
+        gtk_window_move(GTK_WINDOW(client->win),
+                        g_settings_get_int(client->settings, "window-position-x"),
+                        g_settings_get_int(client->settings, "window-position-y"));
         set_minimized(FALSE);
     } else {
-        gtk_widget_hide(GTK_WIDGET(get_main_window()));
+        gtk_widget_hide(client->win);
         set_minimized(TRUE);
     }
 }
 
 void
-status_click(GtkStatusIcon *status_icon UNUSED, void * foo UNUSED)
+status_click(G_GNUC_UNUSED GtkStatusIcon *status_icon, G_GNUC_UNUSED gpointer foo)
 {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item),
                                    !gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)));
@@ -122,7 +120,7 @@ static void menu(GtkStatusIcon *status_icon, guint button, guint activate_time, 
 }
 
 static GtkWidget*
-create_menu(GSettings *settings)
+create_menu(SFLPhoneClient *client)
 {
     GtkWidget * menu_widget;
     GtkWidget * menu_items;
@@ -135,7 +133,7 @@ create_menu(GSettings *settings)
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), show_menu_item);
     g_signal_connect(G_OBJECT(show_menu_item), "toggled",
                      G_CALLBACK(show_hide),
-                     settings);
+                     client);
 
     hangup_menu_item = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
     image = gtk_image_new_from_file(ICONS_DIR "/icon_hangup.svg");
@@ -143,7 +141,7 @@ create_menu(GSettings *settings)
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), hangup_menu_item);
     g_signal_connect(G_OBJECT(hangup_menu_item), "activate",
                      G_CALLBACK(status_hangup),
-                     settings);
+                     client);
 
     menu_items = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), menu_items);
@@ -152,7 +150,7 @@ create_menu(GSettings *settings)
                  get_accel_group());
     g_signal_connect_swapped(G_OBJECT(menu_items), "activate",
                              G_CALLBACK(status_quit),
-                             NULL);
+                             client);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), menu_items);
 
     gtk_widget_show_all(menu_widget);
@@ -161,7 +159,7 @@ create_menu(GSettings *settings)
 }
 
 void
-show_status_icon(GSettings *settings)
+show_status_icon(SFLPhoneClient *client)
 {
     status = gtk_status_icon_new_from_file(LOGO);
     g_signal_connect(G_OBJECT(status), "activate",
@@ -169,7 +167,7 @@ show_status_icon(GSettings *settings)
                      NULL);
     g_signal_connect(G_OBJECT(status), "popup-menu",
                      G_CALLBACK(menu),
-                     create_menu(settings));
+                     create_menu(client));
 
     statusicon_set_tooltip();
 }

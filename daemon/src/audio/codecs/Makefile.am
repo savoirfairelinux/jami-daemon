@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libcodecdescriptor.la
 
-libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp
+libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp audiocodec.h audiocodecfactory.h
 libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 
 if BUILD_GSM
@@ -16,42 +16,47 @@ endif
 
 if BUILD_SPEEX
 SPEEX_NB_LIB = libcodec_speex_nb.so
-libcodec_speex_nb_so_SOURCES = speexcodec_nb.cpp
+libcodec_speex_nb_so_SOURCES = speexcodec_nb.cpp speexcodec.h
 libcodec_speex_nb_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
 libcodec_speex_nb_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_nb_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_NB_RULE = install-libcodec_speex_nb_so
 
 SPEEX_WB_LIB = libcodec_speex_wb.so
-libcodec_speex_wb_so_SOURCES = speexcodec_wb.cpp
+libcodec_speex_wb_so_SOURCES = speexcodec_wb.cpp speexcodec.h
 libcodec_speex_wb_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
 libcodec_speex_wb_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_wb_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_WB_RULE = install-libcodec_speex_wb_so
 
 SPEEX_UB_LIB = libcodec_speex_ub.so
-libcodec_speex_ub_so_SOURCES = speexcodec_ub.cpp
+libcodec_speex_ub_so_SOURCES = speexcodec_ub.cpp speexcodec.h
 libcodec_speex_ub_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
 libcodec_speex_ub_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_ub_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_UB_RULE = install-libcodec_speex_ub_so
 endif
 
-if BUILD_ILBC
-include $(src)/libs/pjproject/build.mak
+if BUILD_OPUS
+OPUS_LIB = libcodec_opus.so
+libcodec_opus_so_SOURCES  = opus.cpp opus.h
+libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall $(opus_CFLAGS)
+libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++ $(opus_LIBS)
+libcodec_opus_so_LDADD    = libcodecdescriptor.la
+INSTALL_OPUS_RULE = install-libcodec_opus_so
+endif
 
+if BUILD_ILBC
 ILBC_LIB = libcodec_ilbc.so
 libcodecdescriptor_la_CXXFLAGS = -DBUILD_ILBC
 libcodec_ilbc_so_SOURCES = ilbc.cpp
-libcodec_ilbc_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_ilbc_so_LDFLAGS = --shared -lc $(top_builddir)/libs/pjproject/third_party/lib/libilbccodec-$(TARGET_NAME).a
+libcodec_ilbc_so_CXXFLAGS = -fPIC -g -Wall $(libilbc_CFLAGS)
+libcodec_ilbc_so_LDFLAGS = --shared -lc $(libilbc_LIBS)
 libcodec_ilbc_so_LDADD = libcodecdescriptor.la
 INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so libcodec_opus.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
-
-noinst_HEADERS = audiocodec.h audiocodecfactory.h speexcodec.h g722.h g729.h opus.h
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so $(OPUS_LIB) $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
 
 libcodec_ulaw_so_SOURCES = ulaw.cpp
 libcodec_ulaw_so_CXXFLAGS = -fPIC -g -Wall
@@ -63,22 +68,17 @@ libcodec_alaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_LDADD = libcodecdescriptor.la
 libcodec_alaw_so_LDFLAGS = --shared -lc
 
-libcodec_g722_so_SOURCES = g722.cpp
+libcodec_g722_so_SOURCES = g722.cpp g722.h
 libcodec_g722_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g722_so_LDADD = libcodecdescriptor.la
 libcodec_g722_so_LDFLAGS = --shared -lc
 
-libcodec_g729_so_SOURCES = g729.cpp
+libcodec_g729_so_SOURCES = g729.cpp g729.h
 libcodec_g729_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g729_so_LDADD = libcodecdescriptor.la
 libcodec_g729_so_LDFLAGS = --shared -lc -ldl -lstdc++
 
-libcodec_opus_so_SOURCES  = opus.cpp
-libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_opus_so_LDADD    = libcodecdescriptor.la
-libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++
-
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so install-libcodec_opus_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so $(INSTALL_OPUS_RULE) $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
 uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_g729_so uninstall-libcodec_opus_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so uninstall-libcodec_ilbc_so
 
 install-libcodec_ulaw_so: libcodec_ulaw.so

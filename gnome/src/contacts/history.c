@@ -30,9 +30,9 @@
 
 #include <string.h>
 #include "history.h"
+#include "calltree.h"
 #include "searchbar.h"
 #include "calltab.h"
-#include "unused.h"
 
 static GtkTreeModel *history_filter;
 static GtkEntry *history_searchbar_widget;
@@ -53,7 +53,7 @@ search_type_matches_state(SearchType type, const gchar *state)
 }
 
 static gboolean
-history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
+history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, G_GNUC_UNUSED gpointer data)
 {
     gboolean visible = TRUE;
     // Fetch the call description

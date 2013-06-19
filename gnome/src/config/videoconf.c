@@ -31,9 +31,7 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include "videoconf.h"
-#include "logger.h"
 #include "utils.h"
-#include "unused.h"
 #include "dbus.h"
 #include "codeclist.h"
 
@@ -101,7 +99,7 @@ static const gchar *const PREVIEW_START_STR = "_Start";
 static const gchar *const PREVIEW_STOP_STR = "_Stop";
 
 static void
-preview_button_toggled(GtkButton *button, gpointer data UNUSED)
+preview_button_toggled(GtkButton *button, G_GNUC_UNUSED gpointer data)
 {
     preview_button = GTK_WIDGET(button);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)))
@@ -117,7 +115,7 @@ set_preview_button_sensitivity(gboolean sensitive)
 {
     if (!preview_button || !GTK_IS_WIDGET(preview_button))
         return;
-    DEBUG("%ssetting preview button", sensitive ? "" : "Un");
+    g_debug("%ssetting preview button", sensitive ? "" : "Un");
     gtk_widget_set_sensitive(GTK_WIDGET(preview_button), sensitive);
 }
 
@@ -145,7 +143,7 @@ static void
 preferences_dialog_fill_codec_list(account_t *acc)
 {
     if (!acc) {
-        ERROR("Account is NULL");
+        g_warning("Account is NULL");
         return;
     }
     // Get model of view and clear it
@@ -218,13 +216,13 @@ video_codec_list_get_by_name(GPtrArray *vcodecs, const gchar *name)
 }
 
 static void
-codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
+codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
                      gpointer data)
 {
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("No account selected");
+        g_warning("No account selected");
         return;
     }
 
@@ -241,12 +239,12 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
     gtk_tree_model_get(model, &iter, COLUMN_CODEC_ACTIVE, &active,
                        COLUMN_CODEC_NAME, &name, -1);
 
-    DEBUG("%s", name);
+    g_debug("%s", name);
     GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
     if (!vcodecs)
         return;
 
-    DEBUG("video codecs length %i", vcodecs->len);
+    g_debug("video codecs length %i", vcodecs->len);
 
     // Toggle active value
     active = !active;
@@ -346,7 +344,7 @@ codec_move(gboolean move_up, gpointer data)
  * Called from move up codec button signal
  */
 static void
-codec_move_up(GtkButton *button UNUSED, gpointer data)
+codec_move_up(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     codec_move(TRUE, data);
 }
@@ -355,31 +353,31 @@ codec_move_up(GtkButton *button UNUSED, gpointer data)
  * Called from move down codec button signal
  */
 static void
-codec_move_down(GtkButton *button UNUSED, gpointer data)
+codec_move_down(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     codec_move(FALSE, data);
 }
 
 static void
-bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text, gpointer data)
+bitrate_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *new_text, gpointer data)
 {
     // Retrieve userdata
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("No account selected");
+        g_warning("No account selected");
         return;
     }
-    DEBUG("updating bitrate for %s", acc->accountID);
+    g_debug("updating bitrate for %s", acc->accountID);
     // Get active value and name at iteration
     const gint base = 10;
     gchar *endptr;
     const long long val = strtoll(new_text, &endptr, base);
     /* Ignore if it's not a number */
     if (*endptr != '\0') {
-        WARN("Ignoring characters %s\n", val, endptr);
+        g_warning("Ignoring %lld characters %s\n", val, endptr);
     } else if (val < 0) {
-        WARN("Ignoring negative bitrate value");
+        g_warning("Ignoring negative bitrate value");
     } else {
         // Get path of edited codec
         GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
@@ -399,11 +397,11 @@ bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text
 
         GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
         if (codec) {
-            DEBUG("Setting new bitrate %s for %s", bitrate, name);
+            g_debug("Setting new bitrate %s for %s", bitrate, name);
             video_codec_set_bitrate(codec, bitrate);
             dbus_set_video_codecs(acc->accountID, vcodecs);
         } else {
-            ERROR("Could not find codec %s", name);
+            g_warning("Could not find codec %s", name);
         }
         g_free(bitrate);
         g_ptr_array_free(vcodecs, TRUE);
@@ -412,12 +410,12 @@ bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text
 
 
 static void
-parameters_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text, gpointer data)
+parameters_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *new_text, gpointer data)
 {
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("No account selected");
+        g_warning("No account selected");
         return;
     }
 
@@ -441,11 +439,11 @@ parameters_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_t
 
     GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
     if (codec) {
-        DEBUG("Setting new parameters \"%s\" for %s", new_text, name);
+        g_debug("Setting new parameters \"%s\" for %s", new_text, name);
         video_codec_set_parameters(codec, new_text);
         dbus_set_video_codecs(acc->accountID, vcodecs);
     } else {
-        ERROR("Could not find codec %s", name);
+        g_warning("Could not find codec %s", name);
     }
     g_ptr_array_free(vcodecs, TRUE);
 }
@@ -611,7 +609,7 @@ preferences_dialog_fill_video_input_device_rate_list()
         }
         g_free(rate);
     } else
-        ERROR("No video rate list found for device");
+        g_warning("No video rate list found for device");
 }
 
 
@@ -619,7 +617,7 @@ preferences_dialog_fill_video_input_device_rate_list()
  * Set the video input device rate on the server
  */
 static void
-select_video_input_device_rate_cb(GtkComboBox* comboBox, gpointer data UNUSED)
+select_video_input_device_rate_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str)
@@ -664,14 +662,14 @@ preferences_dialog_fill_video_input_device_size_list()
         }
         g_free(size);
     } else
-        ERROR("No device size list found");
+        g_warning("No device size list found");
 }
 
 /**
  * Set the video input device size on the server
  */
 static void
-select_video_input_device_size_cb(GtkComboBox* comboBox, gpointer data UNUSED)
+select_video_input_device_size_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
@@ -716,14 +714,14 @@ preferences_dialog_fill_video_input_device_channel_list()
         }
         g_free(channel);
     } else
-        ERROR("No channel list found");
+        g_warning("No channel list found");
 }
 
 /**
  * Set the video input device input on the server
  */
 static void
-select_video_input_device_channel_cb(GtkComboBox* comboBox, gpointer data UNUSED)
+select_video_input_device_channel_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
@@ -744,7 +742,7 @@ preferences_dialog_fill_video_input_device_list()
     // Call dbus to retrieve list
     gchar **list = dbus_get_video_device_list();
     if (!list || !*list) {
-        ERROR("No device list found");
+        g_warning("No device list found");
         return FALSE;
     } else {
         // For each device name included in list
@@ -770,11 +768,11 @@ preferences_dialog_fill_video_input_device_list()
  * Set the video input device on the server
  */
 static void
-select_video_input_device_cb(GtkComboBox* comboBox, gpointer data UNUSED)
+select_video_input_device_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
-        DEBUG("Setting video input device to %s", str);
+        g_debug("Setting video input device to %s", str);
         dbus_set_active_video_device(str);
         preferences_dialog_fill_video_input_device_channel_list();
         g_free(str);
@@ -796,7 +794,7 @@ fill_devices()
 }
 
 void
-video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo UNUSED)
+video_device_event_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED gpointer foo)
 {
     fill_devices();
 }
@@ -813,9 +811,9 @@ v4l2_box()
     gtk_box_pack_start(GTK_BOX(ret), v4l2_hbox , TRUE , TRUE , 0);
     gtk_box_pack_start(GTK_BOX(ret), v4l2_nodev, TRUE , TRUE , 0);
 
-    GtkWidget *table = gtk_table_new(6, 3, FALSE);
-    gtk_table_set_col_spacing(GTK_TABLE(table), 0, 40);
-    gtk_box_pack_start(GTK_BOX(v4l2_hbox) , table , TRUE , TRUE , 1);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 40);
+    gtk_box_pack_start(GTK_BOX(v4l2_hbox), grid, TRUE, TRUE, 1);
 
     // Set choices of input devices
     GtkWidget *item = gtk_label_new(_("Device"));
@@ -824,13 +822,13 @@ v4l2_box()
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Device);
 
     g_signal_connect(G_OBJECT(v4l2Device), "changed", G_CALLBACK(select_video_input_device_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), item, 0, 0, 1, 1);
 
     // Set rendering
     GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(v4l2Device), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(v4l2Device), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), v4l2Device, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), v4l2Device, 1, 0, 1, 1);
 
     // Set choices of input
     item = gtk_label_new(_("Channel"));
@@ -838,13 +836,13 @@ v4l2_box()
     v4l2Channel = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2ChannelList));
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Channel);
     g_signal_connect(G_OBJECT(v4l2Channel), "changed", G_CALLBACK(select_video_input_device_channel_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 0, 1, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), item, 0, 1, 1, 1);
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(v4l2Channel), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(v4l2Channel), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), v4l2Channel, 1, 2, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), v4l2Channel, 1, 1, 1, 1);
 
     // Set choices of sizes
     item = gtk_label_new(_("Size"));
@@ -852,13 +850,13 @@ v4l2_box()
     v4l2Size = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2SizeList));
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Size);
     g_signal_connect(G_OBJECT(v4l2Size), "changed", G_CALLBACK(select_video_input_device_size_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 0, 1, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), item, 0, 2, 1, 1);
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(v4l2Size), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(v4l2Size), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), v4l2Size, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), v4l2Size, 1, 2, 1, 1);
 
     // Set choices of rates
     item = gtk_label_new(_("Rate"));
@@ -866,13 +864,13 @@ v4l2_box()
     v4l2Rate = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2RateList));
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Rate);
     g_signal_connect(G_OBJECT(v4l2Rate), "changed", G_CALLBACK(select_video_input_device_rate_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 0, 1, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), item, 0, 3, 1, 1);
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(v4l2Rate), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(v4l2Rate), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), v4l2Rate, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), v4l2Rate, 1, 3, 1, 1);
 
     return ret;
 }
@@ -886,33 +884,33 @@ create_video_configuration()
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     // Sub boxes
-    GtkWidget *frame, *table;
-    gnome_main_section_new_with_table(_("Video Manager"), &frame, &table, 1, 5);
+    GtkWidget *frame, *grid;
+    gnome_main_section_new_with_grid(_("Video Manager"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-    gnome_main_section_new_with_table(_("Video4Linux2"), &frame, &table, 1, 4);
+    gnome_main_section_new_with_grid(_("Video4Linux2"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     GtkWidget *v4l2box = v4l2_box();
-    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_grid_attach(GTK_GRID(grid), v4l2box, 0, 1, 1, 1);
 
-    gnome_main_section_new_with_table(_("Preview"), &frame, &table, 1, 2);
+    gnome_main_section_new_with_grid(_("Preview"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     const gboolean started = dbus_has_video_preview_started();
 
     preview_button = gtk_toggle_button_new_with_mnemonic(started ? _(PREVIEW_STOP_STR) : _(PREVIEW_START_STR));
     gtk_widget_set_size_request(preview_button, 80, 30);
-    gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
+    gtk_grid_attach(GTK_GRID(grid), preview_button, 0, 0, 1, 1);
     gtk_widget_show(GTK_WIDGET(preview_button));
     if (started)
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preview_button), TRUE);
     g_signal_connect(G_OBJECT(preview_button), "toggled",
                      G_CALLBACK(preview_button_toggled), NULL);
 
+    gboolean active_call = FALSE;
     gchar **list = dbus_get_call_list();
-    gboolean active_call;
+
     if (list && *list) {
         active_call = TRUE;
         g_strfreev(list);

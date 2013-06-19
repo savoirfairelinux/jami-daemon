@@ -1,5 +1,8 @@
 /*
  *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2010 Michael Kerrisk
+ *  Copyright (C) 2007-2009 Rémi Denis-Courmont
+ *
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,6 +31,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <libgen.h>
@@ -40,7 +47,12 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
+#include <cstring>
+#include <fcntl.h>
+#include <pwd.h>
+#include <cerrno>
 #include "fileutils.h"
+#include "logger.h"
 
 namespace fileutils {
 // returns true if directory exists
@@ -75,73 +87,120 @@ const char *get_program_dir()
     return program_dir;
 }
 
-//TODO it is faking this, implement proper system 
-const char *get_data_dir()
+// FIXME: This should use our real DATADIR
+std::string
+get_data_dir()
 {
-    std::string path = std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
-    return path.c_str();
+    return std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
 }
 
-std::string get_path_for_cache(void) {
-    std::string xdg_env(XDG_CACHE_HOME);
-    std::string path = (not xdg_env.empty()) ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
-    return path;
-}
+namespace {
 
-std::string get_path_for_cache_android(void) {
-    std::string path = std::string(get_program_dir()) + "/cache";
-    return path;
-}
-
-bool create_pidfile()
+/* Lock a file region */
+int
+lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
 {
+    struct flock fl;
 
-#ifdef __ANDROID__
-    std::string path = get_path_for_cache_android();
-#else
-    std::string path = get_path_for_cache();
-#endif
+    fl.l_type = type;
+    fl.l_whence = whence;
+    fl.l_start = start;
+    fl.l_len = len;
 
-    if (not check_dir(path.c_str()))
-        return false;
+    return fcntl(fd, cmd, &fl);
+}
 
-    //path += "sflphone";
+int /* Lock a file region using nonblocking F_SETLK */
+lockRegion(int fd, int type, int whence, int start, int len)
+{
+    return lockReg(fd, F_SETLK, type, whence, start, len);
+}
+}
 
-    if (not check_dir(path.c_str()))
-        return false;
-
-    std::string pidfile = path + "/" PIDFILE;
-    std::ifstream is(pidfile.c_str());
-
-    if (is) {
-        // PID file exists. Check if the former process is still alive or
-        // not. If alive, give user a hint.
-        int oldPid;
-        is >> oldPid;
-
-        if (kill(oldPid, 0) == 0) {
-            // Use cerr because logging has not been initialized
-            std::cerr << "There is already a sflphoned daemon running in " <<
-                "the system. Starting Failed." << std::endl;
-            return false;
-        }
+FileHandle
+create_pidfile()
+{
+    const std::string name(get_home_dir() + DIR_SEPARATOR_STR PIDFILE);
+    FileHandle f(name);
+    char buf[100];
+    f.fd = open(f.name.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (f.fd == -1) {
+        ERROR("Could not open PID file %s", f.name.c_str());
+        return f;
     }
 
-    // write pid file
-    std::ofstream os(pidfile.c_str());
-
-    if (!os) {
-        perror(pidfile.c_str());
-        return false;
-    } else {
-        os << getpid();
+    if (lockRegion(f.fd, F_WRLCK, SEEK_SET, 0, 0) == -1) {
+        if (errno  == EAGAIN or errno == EACCES)
+            ERROR("PID file '%s' is locked; probably "
+                    "'%s' is already running", f.name.c_str(), PACKAGE_NAME);
+        else
+            ERROR("Unable to lock PID file '%s'", f.name.c_str());
+        close(f.fd);
+        f.fd = -1;
+        return f;
     }
 
-    return true;
+    if (ftruncate(f.fd, 0) == -1) {
+        ERROR("Could not truncate PID file '%s'", f.name.c_str());
+        close(f.fd);
+        f.fd = -1;
+        return f;
+    }
+
+    snprintf(buf, sizeof(buf), "%ld\n", (long) getpid());
+
+    const int buf_strlen = strlen(buf);
+    if (write(f.fd, buf, buf_strlen) != buf_strlen) {
+        ERROR("Problem writing to PID file '%s'", f.name.c_str());
+        close(f.fd);
+        f.fd = -1;
+        return f;
+    }
+
+    return f;
 }
 
 bool isDirectoryWritable(const std::string &directory)
 {
     return access(directory.c_str(), W_OK) == 0;
+}
+
+FileHandle::FileHandle(const std::string &n) : fd(-1), name(n)
+{}
+
+FileHandle::~FileHandle()
+{
+    // we will only delete the file if it was created by this process
+    if (fd != -1) {
+        close(fd);
+        if (unlink(name.c_str()) == -1)
+            ERROR("%s", strerror(errno));
+    }
+}
+
+
+std::string
+get_home_dir()
+{
+#ifdef __ANDROID__
+    return get_program_dir();
+#else
+
+    // 1) try getting user's home directory from the environment
+    const std::string home(PROTECTED_GETENV("HOME"));
+    if (not home.empty())
+        return home;
+
+    // 2) try getting it from getpwuid_r (i.e. /etc/passwd)
+    const long max = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (max != -1) {
+        char buf[max];
+        struct passwd pwbuf, *pw;
+        if (getpwuid_r(getuid(), &pwbuf, buf, sizeof(buf), &pw) == 0 and pw != NULL)
+            return pw->pw_dir;
+    }
+
+    return "";
+#endif
 }
 }

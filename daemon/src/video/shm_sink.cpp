@@ -40,6 +40,7 @@
 #include "shm_sink.h"
 #include "shm_header.h"
 #include "logger.h"
+#include "video_provider.h"
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <cstdio>
@@ -53,8 +54,7 @@ SHMSink::SHMSink(const std::string &shm_name) :
     fd_(-1),
     shm_area_(static_cast<SHMHeader*>(MAP_FAILED)),
     shm_area_len_(0),
-    opened_name_(),
-    perms_(S_IRUSR | S_IWUSR | S_IRGRP)
+    opened_name_()
     {}
 
 SHMSink::~SHMSink()
@@ -71,8 +71,10 @@ SHMSink::start()
     }
 
     const int flags = O_RDWR | O_CREAT | O_TRUNC | O_EXCL;
+    const int perms = S_IRUSR | S_IWUSR;
+
     if (not shm_name_.empty()) {
-        fd_ = shm_open(shm_name_.c_str(), flags, perms_);
+        fd_ = shm_open(shm_name_.c_str(), flags, perms);
         if (fd_ < 0) {
             ERROR("could not open shm area \"%s\", shm_open failed:%s", shm_name_.c_str(), strerror(errno));
             perror(strerror(errno));
@@ -83,7 +85,7 @@ SHMSink::start()
             std::ostringstream name;
             name << PACKAGE_NAME << "_shm_" << getpid() << "_" << i;
             shm_name_ = name.str();
-            fd_ = shm_open(shm_name_.c_str(), flags, perms_);
+            fd_ = shm_open(shm_name_.c_str(), flags, perms);
             if (fd_ < 0 and errno != EEXIST) {
                 ERROR("%s", strerror(errno));
                 return false;
@@ -188,8 +190,7 @@ void SHMSink::render(const std::vector<unsigned char> &data)
     shm_unlock();
 }
 
-// Note: this doesn't depend on VideoReceiveThread's implementation since it's forward declared.
-void SHMSink::render_callback(sfl_video::VideoReceiveThread * const th, const Callback &callback, size_t bytes)
+void SHMSink::render_callback(sfl_video::VideoProvider &provider, size_t bytes)
 {
     shm_lock();
 
@@ -198,7 +199,7 @@ void SHMSink::render_callback(sfl_video::VideoReceiveThread * const th, const Ca
         return;
     }
 
-    callback(th, static_cast<void*>(shm_area_->data));
+    provider.fillBuffer(static_cast<void*>(shm_area_->data));
     shm_area_->buffer_size = bytes;
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);

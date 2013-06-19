@@ -40,13 +40,11 @@
 
 #include "shortcuts.h"
 #include "mainwindow.h"
-#include "logger.h"
 #include "callable_obj.h"
 #include "contacts/calltab.h"
 #include "sflphone_const.h"
 #include "dbus.h"
 #include "actions.h"
-#include "unused.h"
 
 static void
 ungrab_key(guint key, GdkModifierType mask, GdkWindow *root);
@@ -69,7 +67,7 @@ static GHashTable* shortcutsMap;
  * filter used when an event is catched
  */
 static GdkFilterReturn
-filter_keys(const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer data UNUSED)
+filter_keys(const GdkXEvent *xevent, G_GNUC_UNUSED const GdkEvent *event, G_GNUC_UNUSED gpointer data)
 {
     if (((XEvent *) xevent)->type != KeyPress)
         return GDK_FILTER_CONTINUE;
@@ -90,24 +88,24 @@ filter_keys(const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer data
  * Callbacks
  */
 static void
-toggle_pick_up_hang_up_callback(GSettings *settings)
+toggle_pick_up_hang_up_callback(SFLPhoneClient *client)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
-    DEBUG("Shortcuts: Toggle pickup/hangup callback");
+    g_debug("Shortcuts: Toggle pickup/hangup callback");
 
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_INCOMING:
             case CALL_STATE_TRANSFER:
-                sflphone_pick_up(settings);
+                sflphone_pick_up(client);
                 break;
             case CALL_STATE_DIALING:
             case CALL_STATE_HOLD:
             case CALL_STATE_CURRENT:
             case CALL_STATE_RINGING:
-                sflphone_hang_up(settings);
+                sflphone_hang_up(client);
                 break;
             default:
                 break;
@@ -115,7 +113,7 @@ toggle_pick_up_hang_up_callback(GSettings *settings)
     } else if (selectedConf) {
         dbus_hang_up_conference(selectedConf);
     } else
-        sflphone_pick_up(settings);
+        sflphone_pick_up(client);
 }
 
 static void
@@ -131,7 +129,7 @@ hang_up_callback(gpointer data)
 }
 
 static void
-toggle_hold_callback(gpointer data UNUSED)
+toggle_hold_callback(G_GNUC_UNUSED gpointer data)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
@@ -150,21 +148,21 @@ toggle_hold_callback(gpointer data UNUSED)
     } else if (selectedConf)
         dbus_hold_conference(selectedConf);
     else {
-        ERROR("Shortcuts: Error: No callable object selected");
+        g_warning("Shortcuts: Error: No callable object selected");
     }
 }
 
 static void
-popup_window_callback(gpointer data UNUSED)
+popup_window_callback(SFLPhoneClient *client)
 {
-    gtk_widget_hide(GTK_WIDGET(get_main_window()));
-    gtk_widget_show(GTK_WIDGET(get_main_window()));
+    gtk_widget_hide(client->win);
+    gtk_widget_show(client->win);
 }
 
 static void
-default_callback(gpointer data UNUSED)
+default_callback(G_GNUC_UNUSED gpointer data)
 {
-    ERROR("Shortcuts: Error: Missing shortcut callback");
+    g_warning("Shortcuts: Error: Missing shortcut callback");
 }
 
 /*
@@ -201,6 +199,9 @@ get_action_callback(const gchar* action)
 static void
 remove_bindings()
 {
+    if (!accelerators_list)
+        return;
+
     GdkDisplay *display = NULL;
     GdkScreen *screen = NULL;
     GdkWindow *root = NULL;
@@ -284,7 +285,7 @@ initialize_binding(const gchar* action, guint key, GdkModifierType mask)
     }
 
     if (accelerators_list[i].action == NULL) {
-        ERROR("Shortcut: Error: Cannot find corresponding action");
+        g_warning("Shortcut: Error: Cannot find corresponding action");
         return;
     }
 
@@ -300,7 +301,7 @@ initialize_binding(const gchar* action, guint key, GdkModifierType mask)
  * Prepare accelerators list
  */
 static void
-initialize_accelerators_list(GSettings *settings)
+initialize_accelerators_list(SFLPhoneClient *client)
 {
     GList* shortcutsKeysElement, *shortcutsKeys;
     int i = 0;
@@ -316,7 +317,7 @@ initialize_accelerators_list(GSettings *settings)
 
         accelerators_list[i].action = g_strdup(action);
         accelerators_list[i].callback = get_action_callback(action);
-        accelerators_list[i].data = settings;
+        accelerators_list[i].data = client;
         accelerators_list[i].mask = 0;
         accelerators_list[i].key = 0;
 
@@ -350,7 +351,7 @@ update_bindings_data(guint accel_index, guint key, GdkModifierType mask)
     while (accelerators_list[i].action != NULL) {
         if (accelerators_list[i].key == key && accelerators_list[i].mask == mask
                 && accelerators_list[i].key != 0) {
-            DEBUG("Shortcuts: Existing mapping found %d+%d", mask, key);
+            g_debug("Shortcuts: Existing mapping found %d+%d", mask, key);
 
             // disable old binding
             accelerators_list[i].key = 0;
@@ -400,19 +401,19 @@ shortcuts_update_bindings(guint shortcut_index, guint key, GdkModifierType mask)
  * Initialize bindings with configuration retrieved from dbus
  */
 void
-shortcuts_initialize_bindings(GSettings *settings)
+shortcuts_initialize_bindings(SFLPhoneClient *client)
 {
     GList* shortcutsKeys, *shortcutsKeysElement = NULL;
     gchar* action, *maskAndKey, *token1, *token2 = NULL;
     guint mask, key = 0;
 
-    DEBUG("Shortcuts: Initialize bindings");
+    g_debug("Shortcuts: Initialize bindings");
 
     // get shortcuts stored in config through dbus
     shortcutsMap = dbus_get_shortcuts();
 
     // initialize list of keys
-    initialize_accelerators_list(settings);
+    initialize_accelerators_list(client);
 
     // iterate through keys to initialize bindings
     shortcutsKeys = g_hash_table_get_keys(shortcutsMap);
@@ -430,7 +431,7 @@ shortcuts_initialize_bindings(GSettings *settings)
 
         // Value not setted
         if (token1 && token2) {
-            DEBUG("Shortcuts: token1 %s, token2 %s", token1, token2);
+            g_debug("Shortcuts: token1 %s, token2 %s", token1, token2);
 
             mask = atoi(token1);
             key = atoi(token2);
@@ -448,6 +449,8 @@ void
 shortcuts_destroy_bindings()
 {
     int i = 0;
+    if (!accelerators_list)
+        return;
 
     // remove bindings
     remove_bindings();
@@ -473,7 +476,7 @@ shortcuts_get_list()
 static void
 ungrab_key(guint key, GdkModifierType mask, GdkWindow *root)
 {
-    DEBUG("Shortcuts: Ungrabbing key %d+%d", mask, key);
+    g_debug("Shortcuts: Ungrabbing key %d+%d", mask, key);
 
     gdk_error_trap_push();
     Display *d = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
@@ -492,7 +495,7 @@ ungrab_key(guint key, GdkModifierType mask, GdkWindow *root)
     gdk_flush();
 
     if (gdk_error_trap_pop())
-        ERROR("Shortcuts: Error: Ungrabbing key %d+%d", mask, key);
+        g_warning("Shortcuts: Error: Ungrabbing key %d+%d", mask, key);
 }
 
 /*
@@ -503,7 +506,7 @@ grab_key(guint key, GdkModifierType mask, GdkWindow *root)
 {
     gdk_error_trap_push();
 
-    DEBUG("Shortcuts: Grabbing key %d+%d", mask, key);
+    g_debug("Shortcuts: Grabbing key %d+%d", mask, key);
 
     Display *d = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
     XID x = GDK_WINDOW_XID(root);
@@ -520,5 +523,5 @@ grab_key(guint key, GdkModifierType mask, GdkWindow *root)
     gdk_flush();
 
     if (gdk_error_trap_pop())
-        ERROR("Shortcuts: Error: Grabbing key %d+%d", mask, key);
+        g_warning("Shortcuts: Error: Grabbing key %d+%d", mask, key);
 }

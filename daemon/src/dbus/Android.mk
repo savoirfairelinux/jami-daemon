@@ -34,7 +34,7 @@ LOCAL_SRC_FILES := $(video_SOURCES) $(network_SOURCES) \
 	callmanager.cpp \
     configurationmanager.cpp  \
     instance.cpp  \
-    dbusmanager.cpp \
+#    dbusmanager.cpp \
 #    callmanager-glue.h              \
 #    configurationmanager-glue.h     \
     instance-glue.h

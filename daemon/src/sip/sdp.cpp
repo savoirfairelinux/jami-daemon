@@ -199,7 +199,7 @@ void Sdp::getSessionAudioMedia(std::vector<sfl::AudioCodec*> &codecs) const
 
 
 pjmedia_sdp_media *
-Sdp::setMediaDescriptorLine(bool audio)
+Sdp::setMediaDescriptorLines(bool audio)
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_media);
 
@@ -218,7 +218,7 @@ Sdp::setMediaDescriptorLine(bool audio)
         int payload;
 
         if (audio) {
-            sfl::Codec *codec = audio_codec_list_[i];
+            sfl::AudioCodec *codec = audio_codec_list_[i];
             payload = codec->getPayloadType();
             enc_name = codec->getMimeSubtype();
             clock_rate = codec->getClockRate();
@@ -272,11 +272,34 @@ Sdp::setMediaDescriptorLine(bool audio)
     if (!zrtpHelloHash_.empty())
         addZrtpAttribute(med, zrtpHelloHash_);
 
-    if (audio)
+    if (audio) {
         setTelephoneEventRtpmap(med);
+        addRTCPAttribute(med); // video has its own RTCP
+    }
 
     return med;
 }
+
+
+void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
+{
+    // FIXME: get this from CCRTP directly, don't just assume that the RTCP port is
+    // RTP + 1
+    std::ostringstream os;
+    os << localIpAddr_ << ":" << (localAudioPort_ + 1);
+    const std::string str(os.str());
+    pj_str_t input_str = pj_str((char*) str.c_str());
+    pj_sockaddr outputAddr;
+    pj_status_t status = pj_sockaddr_parse(PJ_AF_UNSPEC, 0, &input_str, &outputAddr);
+    if (status != PJ_SUCCESS) {
+        ERROR("Could not parse address %s", str.c_str());
+        return;
+    }
+    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create_rtcp(memPool_, &outputAddr);
+    if (attr)
+        pjmedia_sdp_attr_add(&med->attr_count, med->attr, attr);
+}
+
 
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {
@@ -313,7 +336,7 @@ void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
 
     audio_codec_list_.clear();
     for (vector<int>::const_iterator i = selectedCodecs.begin(); i != selectedCodecs.end(); ++i) {
-        sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(*i);
+        sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(*i);
 
         if (codec)
             audio_codec_list_.push_back(codec);
@@ -367,9 +390,9 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     // For DTMF RTP events
     const bool audio = true;
     localSession_->media_count = 1;
-    localSession_->media[0] = setMediaDescriptorLine(audio);
+    localSession_->media[0] = setMediaDescriptorLines(audio);
     if (not selectedVideoCodecs.empty()) {
-        localSession_->media[1] = setMediaDescriptorLine(!audio);
+        localSession_->media[1] = setMediaDescriptorLines(!audio);
         ++localSession_->media_count;
     }
 

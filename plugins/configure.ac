@@ -1,4 +1,4 @@
-AC_INIT([sflphone],[1.2.0],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
+AC_INIT([sflphone],[1.2.2],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -48,6 +48,7 @@ AC_CONFIG_FILES([
 Makefile
 addressbook/evolution/Makefile
 addressbook/Makefile
+addressbook/test/Makefile
 ])
 AC_OUTPUT
 

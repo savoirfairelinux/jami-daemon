@@ -54,6 +54,7 @@
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
+const char * const SIPAccount::ACCOUNT_TYPE = "SIP";
 
 namespace {
     const int MIN_REGISTRATION_TIME = 60;
@@ -63,7 +64,7 @@ namespace {
 }
 
 SIPAccount::SIPAccount(const std::string& accountID)
-    : Account(accountID, "SIP")
+    : Account(accountID)
     , transport_(NULL)
     , credentials_()
     , regc_(NULL)
@@ -112,7 +113,12 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , link_(SIPVoIPLink::instance())
     , receivedParameter_("")
     , rPort_(-1)
+    , via_addr_()
 {
+    via_addr_.host.ptr = 0;
+    via_addr_.host.slen = 0;
+    via_addr_.port = 0;
+
     if (isIP2IP())
         alias_ = IP2IP_PROFILE;
 }
@@ -134,7 +140,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode hostname(Account::hostname_);
     ScalarNode enable(enabled_);
     ScalarNode autoAnswer(autoAnswerEnabled_);
-    ScalarNode type(Account::type_);
+    ScalarNode type(ACCOUNT_TYPE);
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
     ScalarNode expire(registrationExpireStr.str());
@@ -305,7 +311,6 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     using std::string;
 
     mapNode.getValue(ALIAS_KEY, &alias_);
-    mapNode.getValue(TYPE_KEY, &type_);
     mapNode.getValue(USERNAME_KEY, &username_);
     if (not isIP2IP()) mapNode.getValue(HOSTNAME_KEY, &hostname_);
     mapNode.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
@@ -464,7 +469,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 {
     // Account setting common to SIP and IAX
     alias_ = details[CONFIG_ACCOUNT_ALIAS];
-    type_ = details[CONFIG_ACCOUNT_TYPE];
     username_ = details[CONFIG_ACCOUNT_USERNAME];
     hostname_ = details[CONFIG_ACCOUNT_HOSTNAME];
     enabled_ = details[CONFIG_ACCOUNT_ENABLE] == TRUE_STR;
@@ -561,7 +565,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_ACCOUNT_AUTOANSWER]= autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ACCOUNT_TYPE] = type_;
+    a[CONFIG_ACCOUNT_TYPE] = ACCOUNT_TYPE;
     a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
     a[CONFIG_ACCOUNT_USERNAME] = username_;
     // get password for this username
@@ -995,12 +999,12 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 {
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
-    ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
-
     if (sipAccount == NULL) {
         ERROR("SIP account is NULL while registering a new keep alive timer");
         return;
     }
+
+    ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
 
     // IP2IP default does not require keep-alive
     if (sipAccount->isIP2IP())

@@ -34,14 +34,14 @@
 #include "str_utils.h"
 #include "calltree.h"
 #include "contacts/searchbar.h"
-#include "logger.h"
 
-calltab_t* calltab_init(gboolean has_searchbar, const gchar * const name, GSettings *settings)
+calltab_t*
+calltab_init(gboolean has_searchbar, const gchar * const name, SFLPhoneClient *client)
 {
     calltab_t* ret = g_new0(calltab_t, 1);
     ret->name = g_strdup(name);
 
-    calltree_create(ret, has_searchbar, settings);
+    calltree_create(ret, has_searchbar, client);
 
     ret->callQueue = g_queue_new();
     ret->selectedCall = NULL;
@@ -54,7 +54,7 @@ void
 calltab_select_call(calltab_t* tab, callable_obj_t * c)
 {
     g_assert(tab);
-    DEBUG("Select call %s", c ? c->_callID : "");
+    g_debug("Select call %s", c ? c->_callID : "");
 
     tab->selectedType = A_CALL;
     tab->selectedCall = c;
@@ -66,7 +66,7 @@ void
 calltab_select_conf(calltab_t *tab, conference_obj_t * c)
 {
     g_assert(tab);
-    DEBUG("Selected conf %s", c ? c->_confID : "");
+    g_debug("Selected conf %s", c ? c->_confID : "");
 
     tab->selectedType = A_CONFERENCE;
     tab->selectedConf = c;
@@ -111,7 +111,7 @@ calltab_create_searchbar(calltab_t* tab)
     else if (calltab_has_name(tab, CONTACTS))
         tab->searchbar = contacts_searchbar_new();
     else
-        ERROR("Current calls tab does not need a searchbar\n");
+        g_warning("Current calls tab does not need a searchbar\n");
 }
 
 gboolean

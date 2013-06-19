@@ -48,7 +48,7 @@ pushd daemon
 ./autogen.sh
 popd
 
-pushd daemon/libs/pjproject
+pushd daemon/libs/pjproject-2.0.1
 find -name os-auto.mak -type f -exec rm {} \;
 
 # Remove pre-built binaries
@@ -83,9 +83,7 @@ sed -e 's/ -lmilenage-$(TARGET_NAME) / /' build.mak.in > build.mak.in.new
 mv build.mak.in.new build.mak.in
 sed -e 's/ $(PJ_DIR)\/third_party\/lib\/libmilenage-$(LIB_SUFFIX) / /' build.mak.in > build.mak.in.new
 mv build.mak.in.new build.mak.in
-rm -rf third_party/build/ilbc/
 rm -rf third_party/build/milenage/
-rm -rf third_party/ilbc/
 rm -rf third_party/milenage/
 
 aclocal --force

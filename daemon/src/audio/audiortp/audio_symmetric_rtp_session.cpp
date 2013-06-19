@@ -39,57 +39,16 @@
 namespace sfl {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
-    ost::TimerPort()
-    , ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
-    , AudioRtpSession(call, *this, *this)
-    , rtpThread_(*this)
-    , audioCodecs_()
+    ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
+    , AudioRtpSession(call, *this)
 {
     DEBUG("Setting new RTP session with destination %s:%d",
             call_.getLocalIp().c_str(), call_.getLocalAudioPort());
     audioRtpRecord_.callId_ = call_.getCallId();
 }
 
-AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
+void AudioSymmetricRtpSession::startReceiveThread()
 {
-    if (rtpThread_.running_) {
-        rtpThread_.running_ = false;
-        rtpThread_.join();
-    }
-}
-
-AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread(AudioSymmetricRtpSession &session) : running_(true), rtpSession_(session)
-{}
-
-void AudioSymmetricRtpSession::AudioRtpThread::run()
-{
-    TimerPort::setTimer(rtpSession_.transportRate_);
-
-    while (running_) {
-        // Send session
-        if (rtpSession_.hasDTMFPending())
-            rtpSession_.sendDtmfEvent();
-        else
-            rtpSession_.sendMicData();
-
-#ifdef ANDROID
-        usleep(20000);
-#else
-        Thread::sleep(TimerPort::getTimer());
-#endif
-
-        TimerPort::incTimer(rtpSession_.transportRate_);
-    }
-}
-
-int AudioSymmetricRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
-{
-    DEBUG("Starting main thread");
-    if (isStarted_)
-        return 0;
-
-    audioCodecs_ = audioCodecs;
-    AudioRtpSession::startRtpThread(audioCodecs);
-    return startSymmetricRtpThread();
+    ost::SymmetricRTPSession::start();
 }
 }

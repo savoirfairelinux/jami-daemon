@@ -81,6 +81,7 @@
 #endif
 
 #include "conference.h"
+#include "scoped_lock.h"
 
 #include <cerrno>
 #include <algorithm>
@@ -115,182 +116,35 @@ ManagerImpl::ManagerImpl() :
     callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(),
     mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
-	DEBUG("ManagerImpl() constructor");
 
+    pthread_mutex_init(&currentCallMutex_, NULL);
+    pthread_mutex_init(&toneMutex_, NULL);
+    pthread_mutex_init(&audioLayerMutex_, NULL);
+    pthread_mutex_init(&waitingCallMutex_, NULL);
     // initialize random generator for call id
     srand(time(NULL));
 }
 
-static void incoming_call(const std::string& accountID, const std::string& callID, const std::string& from) {
-	int status;
-	JNIEnv *env;
-	bool isAttached = false;
-	jstring jaccountID, jcallID, jfrom;
-	jclass managerImplClass;
-	jmethodID method;
-
-	INFO("incoming_call");
-
-    /* if cannot get env, then
-     *    we have a native caller
-     * else it's a java caller, then
-     *    VM environment must be available */
-	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
-	if (status < 0) {
-		WARN("incoming_call: failed to get JNI environment, assuming native thread");
-		status = gJavaVM->AttachCurrentThread(&env, NULL);
-		if (status < 0) {
-			ERROR("incoming_call: failed to attach current thread");
-			return;
-		}
-		isAttached = true;
-	}
-
-	INFO("incoming_call: constructing jstring");
-	/* construct java strings */
-	jaccountID = env->NewStringUTF(accountID.c_str());
-	jcallID = env->NewStringUTF(callID.c_str());
-	jfrom = env->NewStringUTF(from.c_str());
-
-	managerImplClass = env->GetObjectClass(gManagerObject);
-	if (!managerImplClass) {
-		ERROR("incoming_call: failed to get ManagerImpl class reference");
-		goto end;
-	}
-
-	/* Find the callBack method ID: void incomingCall(String, String, String) */
-	method = env->GetStaticMethodID(managerImplClass, "incomingCall",
-			"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-	if (!method) {
-		ERROR("incoming_call: failed to get incomingCall method ID");
-		goto end;
-	}
-
-	/* native calling java function:
-     * ManagerImpl.incomingCall(jaccountID, jcallID, jfrom); */
-	env->CallStaticVoidMethod(managerImplClass, method, jaccountID, jcallID, jfrom);
-
-end:
-	if(isAttached) {
-		gJavaVM->DetachCurrentThread();
-		isAttached = false;
-	}
-	return;
+ManagerImpl::~ManagerImpl()
+{
+    // destroy in reverse order of initialization
+    pthread_mutex_destroy(&waitingCallMutex_);
+    pthread_mutex_destroy(&audioLayerMutex_);
+    pthread_mutex_destroy(&toneMutex_);
+    pthread_mutex_destroy(&currentCallMutex_);
 }
 
-static void callback_handler(char *s) {
-	int status;
-	JNIEnv *env;
-	bool isAttached = false;
-
-	//INFO("callback_handler");
-
-	// FIXME
-	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
-	if (status < 0) {
-		WARN("callback_handler: failed to get JNI environment, assuming native thread");
-		status = gJavaVM->AttachCurrentThread(&env, NULL);
-		if (status < 0) {
-			ERROR("callback_handler: failed to attach current thread");
-			return;
-		}
-		isAttached = true;
-	}
-
-	/* construct a java struct */
-	jstring js = env->NewStringUTF(s);
-	jclass managerImplClass = env->GetObjectClass(gManagerObject);
-	if (!managerImplClass) {
-		ERROR("callback_handler: failed to get class reference");
-		if(isAttached)
-			gJavaVM->DetachCurrentThread();
-		return;
-	}
-
-	/* Find the callBack method ID */
-	jmethodID method = env->GetStaticMethodID(managerImplClass, "callBack", "(Ljava/lang/String;)V");
-	if (!method) {
-		ERROR("callback_handler: failed to get callBack method ID");
-		if(isAttached)
-			gJavaVM->DetachCurrentThread();
-		return;
-	}
-
-	env->CallStaticVoidMethod(managerImplClass, method, js);
-	if (isAttached) {
-		gJavaVM->DetachCurrentThread();
-		isAttached = false;
-	}
-}
-
-void *native_thread_start(void *arg) {
-	sleep(1);
-	INFO("native_thread");
-	callback_handler((char *) "Called from native thread");
-}
-
-JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_callVoid
-  (JNIEnv *env, jclass cls) {
-	pthread_t native_thread;
-
-	INFO("callVoid");
-
-	callback_handler((char *) "Called from Java thread");
-	if (pthread_create(&native_thread, NULL, native_thread_start, NULL)) {
-		ERROR("callVoid: failed to create a native thread");
-	}
-}
-
-JNIEXPORT jobject JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getNewData
-(JNIEnv *env, jclass cls, jint i, jstring s) {
-	INFO("getNewData");
-
-	jclass dataCachedClass = env->GetObjectClass(gDataObject);
-	if(!dataCachedClass) {
-		ERROR("getNewData: failed to get cached Data Class");
-		return  NULL;
-	}
-	INFO("getNewData: cached Data Class found");
-
-	jmethodID dataConstructor = env->GetMethodID(dataCachedClass, "<init>", "(ILjava/lang/String;)V");
-	if (!dataConstructor) {
-		ERROR("getNewData: failed to get constructor");
-	}
-	INFO("getNewData: Data constructor found");
-
-	jobject dataObject = env->NewObject(dataCachedClass, dataConstructor, i, s);
-	if (!dataObject) {
-		ERROR("getNewData: failed to create object");
-		return NULL;
-	}
-	return dataObject;
-}
-
-/*
- * Class: org_wooyd_android_JNIExample_JNIExampleInterface
- * Method: getDataString
- * Signature: (Lcom/savoirfairelinux/sflphone/client/Data;)Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString
-(JNIEnv *env, jclass cls, jobject dataObject) {
-	INFO("getDataString");
-
-	jclass dataCachedClass = env->GetObjectClass(gDataObject);
-	if(!dataCachedClass) {
-		ERROR("getDataString: failed to get class reference");
-		return NULL;
-	}
-	INFO("getDataString: ObjectClass Data found");
-
-	jfieldID dataStringField = env->GetFieldID(dataCachedClass, "s", "Ljava/lang/String;");
-	if(!dataStringField) {
-		ERROR("getDataString: failed to get field ID");
-		return NULL;
-	}
-	INFO("getDataString: FieldID s found");
-
-	jstring dataStringValue = (jstring) env->GetObjectField(dataObject, dataStringField);
-	return dataStringValue;
+namespace {
+    // Creates a backup of the file at "path" with a .bak suffix appended
+    void make_backup(const std::string &path)
+    {
+        const std::string backup_path(path + ".bak");
+        std::ifstream src(path.c_str());
+        std::ofstream dest(backup_path.c_str());
+        dest << src.rdbuf();
+        src.close();
+        dest.close();
+    }
 }
 
 void ManagerImpl::init(const std::string &config_file)
@@ -306,8 +160,12 @@ void ManagerImpl::init(const std::string &config_file)
             parser.serializeEvents();
             parser.composeEvents();
             parser.constructNativeData();
-            loadAccountMap(parser);
+            const int error_count = loadAccountMap(parser);
             fclose(file);
+            if (error_count > 0) {
+                WARN("Errors while parsing %s, making backup", path_.c_str());
+                make_backup(path_);
+            }
         } else {
             WARN("Config file not found: creating default account map");
             loadDefaultAccountMap();
@@ -319,10 +177,10 @@ void ManagerImpl::init(const std::string &config_file)
     initAudioDriver();
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         if (audiodriver_) {
             {
-                ost::MutexLock toneLock(toneMutex_);
+                sfl::ScopedLock toneLock(toneMutex_);
                 telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
             }
             dtmfKey_.reset(new DTMF(getMainBuffer().getInternalSamplingRate()));
@@ -374,7 +232,7 @@ void ManagerImpl::finish()
 #endif
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         delete audiodriver_;
         audiodriver_ = NULL;
@@ -408,7 +266,7 @@ void ManagerImpl::unsetCurrentCall()
 
 void ManagerImpl::switchCall(const std::string& id)
 {
-    ost::MutexLock m(currentCallMutex_);
+    sfl::ScopedLock m(currentCallMutex_);
     DEBUG("----- Switch current call id to %s -----", id.c_str());
     currentCallId_ = id;
 }
@@ -498,7 +356,12 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 //THREAD=Main : for outgoing Call
 bool ManagerImpl::answerCall(const std::string& call_id)
 {
-    DEBUG("Answer call %s", call_id.c_str());
+    Call *call = getCallFromCallID(call_id);
+
+    if (call == NULL) {
+        ERROR("Call %s is NULL", call_id.c_str());
+        return false;
+    }
 
     // If sflphone is ringing
     stopTone();
@@ -509,11 +372,6 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     // store the current call id
     std::string current_call_id(getCurrentCallId());
-
-    Call *call = getCallFromCallID(call_id);
-
-    if (call == NULL)
-        ERROR("Call is NULL");
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
@@ -532,7 +390,9 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     try {
         const std::string account_id = getAccountFromCall(call_id);
-        getAccountLink(account_id)->answer(call);
+        VoIPLink *link = getAccountLink(account_id);
+        if (link)
+            link->answer(call);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }
@@ -568,8 +428,6 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 //THREAD=Main
 void ManagerImpl::hangupCall(const std::string& callId)
 {
-    DEBUG("Hangup call %s", callId.c_str());
-
     // store the current call id
     std::string currentCallId(getCurrentCallId());
 
@@ -587,8 +445,9 @@ void ManagerImpl::hangupCall(const std::string& callId)
     on_call_state_changed_wrapper(callId, "HUNGUP");
 #endif
 
+    /* We often get here when the call was hungup before being created */
     if (not isValidCall(callId) and not isIPToIP(callId)) {
-        ERROR("Could not hang up call, call not valid");
+        DEBUG("Could not hang up call %s, call not valid", callId.c_str());
         return;
     }
 
@@ -609,7 +468,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
             Call * call = SIPVoIPLink::instance()->getSipCall(callId);
             if (call) {
                 history_.addCall(call, preferences.getHistoryLimit());
-                SIPVoIPLink::instance()->hangup(callId);
+                SIPVoIPLink::instance()->hangup(callId, 0);
                 saveHistory();
             }
         } catch (const VoipLinkException &e) {
@@ -621,7 +480,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
         if (call) {
             history_.addCall(call, preferences.getHistoryLimit());
             VoIPLink *link = getAccountLink(accountId);
-            link->hangup(callId);
+            link->hangup(callId, 0);
             removeCallAccount(callId);
             saveHistory();
         }
@@ -829,7 +688,7 @@ void ManagerImpl::refuseCall(const std::string& id)
     stopTone();
 
     if (getCallList().size() <= 1) {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->stopStream();
     }
 
@@ -1102,7 +961,7 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
     }
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         ConferenceMap::const_iterator iter = conferenceMap_.find(conference_id);
 
@@ -1244,7 +1103,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
 
     // set recording sampling rate
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         if (audiodriver_)
             conf->setRecordingSmplRate(audiodriver_->getSampleRate());
     }
@@ -1301,7 +1160,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 #endif
 
         {
-            ost::MutexLock lock(audioLayerMutex_);
+            sfl::ScopedLock lock(audioLayerMutex_);
 
             if (audiodriver_)
                 conf->setRecordingSmplRate(audiodriver_->getSampleRate());
@@ -1514,7 +1373,7 @@ void ManagerImpl::addStream(const std::string& call_id)
         // bind to main
         getMainBuffer().bindCallID(call_id, MainBuffer::DEFAULT_ID);
 
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->flushUrgent();
         audiodriver_->flushMain();
     }
@@ -1569,8 +1428,13 @@ void ManagerImpl::saveConfig()
 //THREAD=Main
 void ManagerImpl::sendDtmf(const std::string& id, char code)
 {
-    std::string accountid(getAccountFromCall(id));
     playDtmf(code);
+
+    // return if we're not "in" a call
+    if (id.empty())
+        return;
+
+    std::string accountid(getAccountFromCall(id));
     getAccountLink(accountid)->carryingDTMFdigits(id, code);
 }
 
@@ -1592,7 +1456,7 @@ void ManagerImpl::playDtmf(char code)
         return;
     }
 
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     // numbers of int = length in milliseconds / 1000 (number of seconds)
     //                = number of seconds * SAMPLING_RATE by SECONDS
@@ -1637,14 +1501,14 @@ bool ManagerImpl::incomingCallWaiting() const
 
 void ManagerImpl::addWaitingCall(const std::string& id)
 {
-    ost::MutexLock m(waitingCallMutex_);
+    sfl::ScopedLock m(waitingCallMutex_);
     waitingCall_.insert(id);
     nbIncomingWaitingCall_++;
 }
 
 void ManagerImpl::removeWaitingCall(const std::string& id)
 {
-    ost::MutexLock m(waitingCallMutex_);
+    sfl::ScopedLock m(waitingCallMutex_);
 
     if (waitingCall_.erase(id))
         nbIncomingWaitingCall_--;
@@ -1837,7 +1701,7 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     addStream(id);
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->flushMain();
         audiodriver_->flushUrgent();
     }
@@ -1887,7 +1751,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     if (isIPToIP(call_id)) {
         Call * call = SIPVoIPLink::instance()->getSipCall(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
-        SIPVoIPLink::instance()->hangup(call_id);
+        SIPVoIPLink::instance()->hangup(call_id, 0);
         saveHistory();
     } else {
         const std::string account_id(getAccountFromCall(call_id));
@@ -1911,7 +1775,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     if (getCallList().empty()) {
         DEBUG("Stop audio stream, there are no calls remaining");
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->stopStream();
     }
 }
@@ -1977,7 +1841,7 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
         return;
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (audiodriver_ == NULL) {
             ERROR("Audio layer not initialized");
@@ -1989,7 +1853,7 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
     }
 
     {
-        ost::MutexLock lock(toneMutex_);
+        sfl::ScopedLock lock(toneMutex_);
         if (telephoneTone_.get() != 0)
             telephoneTone_->setCurrentTone(toneId);
     }
@@ -2003,7 +1867,7 @@ void ManagerImpl::stopTone()
     if (not voipPreferences.getPlayTones())
         return;
 
-    ost::MutexLock lock(toneMutex_);
+    sfl::ScopedLock lock(toneMutex_);
     if (telephoneTone_.get() != NULL)
         telephoneTone_->setCurrentTone(Tone::TONE_NULL);
 
@@ -2076,7 +1940,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
 
     int audioLayerSmplr = 8000;
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (!audiodriver_) {
             ERROR("no audio layer in ringtone");
@@ -2087,7 +1951,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
     }
 
     {
-        ost::MutexLock m(toneMutex_);
+        sfl::ScopedLock m(toneMutex_);
 
         if (audiofile_.get()) {
 #if HAVE_DBUS
@@ -2100,7 +1964,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
             if (ringchoice.find(".wav") != std::string::npos)
                 audiofile_.reset(new WaveFile(ringchoice, audioLayerSmplr));
             else {
-                sfl::Codec *codec;
+                sfl::AudioCodec *codec;
                 if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
                     codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
                 else
@@ -2113,14 +1977,14 @@ void ManagerImpl::ringtone(const std::string& accountID)
         }
     } // leave mutex
 
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     // start audio if not started AND flush all buffers (main and urgent)
     audiodriver_->startStream();
 }
 
 AudioLoop* ManagerImpl::getTelephoneTone()
 {
-    ost::MutexLock m(toneMutex_);
+    sfl::ScopedLock m(toneMutex_);
     if (telephoneTone_.get())
         return telephoneTone_->getCurrentTone();
     else
@@ -2130,7 +1994,7 @@ AudioLoop* ManagerImpl::getTelephoneTone()
 AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
-    ost::MutexLock m(toneMutex_);
+    sfl::ScopedLock m(toneMutex_);
     return audiofile_.get();
 }
 
@@ -2145,8 +2009,8 @@ std::string ManagerImpl::retrieveConfigPath() const
 #ifdef __ANDROID__
     std::string configdir = "/data/data/com.savoirfairelinux.sflphone";
 #else
-    std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
-                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
+    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
+                            ".config" + DIR_SEPARATOR_STR + PACKAGE;
 #endif
 
     const std::string xdg_env(XDG_CONFIG_HOME);
@@ -2219,7 +2083,7 @@ ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
  */
 void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     audioPreference.setAlsaPlugin(audioPlugin);
 
@@ -2238,7 +2102,7 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
  */
 void ManagerImpl::setAudioDevice(int index, AudioLayer::PCMType type)
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     if (!audiodriver_) {
         ERROR("Audio driver not initialized");
@@ -2261,7 +2125,7 @@ void ManagerImpl::setAudioDevice(int index, AudioLayer::PCMType type)
  */
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     return audiodriver_->getPlaybackDeviceList();
 }
 
@@ -2271,7 +2135,7 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
  */
 std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     return audiodriver_->getCaptureDeviceList();
 }
 
@@ -2280,7 +2144,7 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
  */
 std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     std::vector<std::string> v;
 
@@ -2374,7 +2238,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 
     int sampleRate;
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (!audiodriver_) {
             ERROR("No audio layer in start recorded file playback");
@@ -2385,7 +2249,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     }
 
     {
-        ost::MutexLock m(toneMutex_);
+        sfl::ScopedLock m(toneMutex_);
 
         if (audiofile_.get()) {
 #if HAVE_DBUS
@@ -2402,7 +2266,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         }
     } // release toneMutex
 
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     audiodriver_->startStream();
 
     return true;
@@ -2410,7 +2274,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 
 void ManagerImpl::recordingPlaybackSeek(const double value)
 {
-    ost::MutexLock m(toneMutex_);
+    sfl::ScopedLock m(toneMutex_);
     if (audiofile_.get())
         audiofile_.get()->seek(value);
 }
@@ -2421,12 +2285,12 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
     DEBUG("Stop recorded file playback %s", filepath.c_str());
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->stopStream();
     }
 
     {
-        ost::MutexLock m(toneMutex_);
+        sfl::ScopedLock m(toneMutex_);
         audiofile_.reset();
     }
 }
@@ -2446,7 +2310,7 @@ int ManagerImpl::getHistoryLimit() const
 void ManagerImpl::setAudioManager(const std::string &api)
 {
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (!audiodriver_)
             return;
@@ -2472,7 +2336,7 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
 {
     int soundCardIndex = 0;
 
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     if (audiodriver_ == NULL) {
         ERROR("Audio layer not initialized");
@@ -2508,38 +2372,18 @@ void ManagerImpl::setEchoCancelState(const std::string &state)
     audioPreference.setEchoCancel(state == "enabled");
 }
 
-int ManagerImpl::getEchoCancelTailLength() const
-{
-    return audioPreference.getEchoCancelTailLength();
-}
-
-void ManagerImpl::setEchoCancelTailLength(int length)
-{
-    audioPreference.setEchoCancelTailLength(length);
-}
-
-int ManagerImpl::getEchoCancelDelay() const
-{
-    return audioPreference.getEchoCancelDelay();
-}
-
-void ManagerImpl::setEchoCancelDelay(int delay)
-{
-    audioPreference.setEchoCancelDelay(delay);
-}
-
 /**
  * Initialization: Main Thread
  */
 void ManagerImpl::initAudioDriver()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     audiodriver_ = audioPreference.createAudioLayer();
 }
 
 void ManagerImpl::switchAudioManager()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     bool wasStarted = audiodriver_->isStarted();
     delete audiodriver_;
@@ -2551,7 +2395,7 @@ void ManagerImpl::switchAudioManager()
 
 void ManagerImpl::audioSamplingRateChanged(int samplerate)
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     if (!audiodriver_) {
         DEBUG("No Audio driver initialized");
@@ -2577,7 +2421,7 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
     unsigned int sampleRate = audiodriver_->getSampleRate();
 
     {
-        ost::MutexLock toneLock(toneMutex_);
+        sfl::ScopedLock toneLock(toneMutex_);
         telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), sampleRate));
     }
     dtmfKey_.reset(new DTMF(sampleRate));
@@ -2817,14 +2661,14 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 void ManagerImpl::associateCallToAccount(const std::string& callID,
         const std::string& accountID)
 {
-    ost::MutexLock m(callAccountMapMutex_);
+    sfl::ScopedLock m(callAccountMapMutex_);
     callAccountMap_[callID] = accountID;
     DEBUG("Associate Call %s with Account %s", callID.data(), accountID.data());
 }
 
 std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 {
-    ost::MutexLock m(callAccountMapMutex_);
+    sfl::ScopedLock m(callAccountMapMutex_);
     CallAccountMap::iterator iter = callAccountMap_.find(callID);
 
     return (iter == callAccountMap_.end()) ? "" : iter->second;
@@ -2832,12 +2676,12 @@ std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 
 void ManagerImpl::removeCallAccount(const std::string& callID)
 {
-    ost::MutexLock m(callAccountMapMutex_);
+    sfl::ScopedLock m(callAccountMapMutex_);
     callAccountMap_.erase(callID);
 
     // Stop audio layer if there is no call anymore
     if (callAccountMap_.empty()) {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (audiodriver_)
             audiodriver_->stopStream();
@@ -2847,7 +2691,7 @@ void ManagerImpl::removeCallAccount(const std::string& callID)
 
 bool ManagerImpl::isValidCall(const std::string& callID)
 {
-    ost::MutexLock m(callAccountMapMutex_);
+    sfl::ScopedLock m(callAccountMapMutex_);
     return callAccountMap_.find(callID) != callAccountMap_.end();
 }
 
@@ -2885,13 +2729,14 @@ namespace {
     }
 
 #if HAVE_IAX
-    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, AccountMap &iaxAccountMap)
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, AccountMap &iaxAccountMap, int &errorCount)
 #else
-    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap)
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, int &errorCount)
 #endif
     {
         if (!item) {
             ERROR("Could not load account");
+            ++errorCount;
             return;
         }
 
@@ -2905,21 +2750,23 @@ namespace {
         item->getValue("alias", &accountAlias);
 
         if (!accountid.empty() and !accountAlias.empty() and accountid != SIPAccount::IP2IP_PROFILE) {
-            Account *a;
-#if HAVE_IAX
-            if (accountType == "IAX") {
-                a = new IAXAccount(accountid);
-                iaxAccountMap[accountid] = a;
-            }
-            else { // assume SIP
-#endif
-                a = new SIPAccount(accountid);
+            if (accountType == "SIP") {
+                Account *a = new SIPAccount(accountid);
                 sipAccountMap[accountid] = a;
+                a->unserialize(*item);
+            } else if (accountType == "IAX") {
 #if HAVE_IAX
-            }
+                Account *a = new IAXAccount(accountid);
+                iaxAccountMap[accountid] = a;
+                a->unserialize(*item);
+#else
+                ERROR("Ignoring IAX account");
+                ++errorCount;
 #endif
-
-            a->unserialize(*item);
+            } else {
+                ERROR("Ignoring unknown account type \"%s\"", accountType.c_str());
+                ++errorCount;
+            }
         }
     }
 
@@ -2943,7 +2790,6 @@ namespace {
         }
         return ip2ip;
     }
-
 } // end anonymous namespace
 
 void ManagerImpl::loadDefaultAccountMap()
@@ -2956,7 +2802,7 @@ void ManagerImpl::loadDefaultAccountMap()
     SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 }
 
-void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
+int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
     // build a default IP2IP account with default parameters
@@ -2982,6 +2828,8 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     hookPreference.unserialize(*parser.getHookNode());
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
+
+    int errorCount = 0;
 #ifdef SFL_VIDEO
     VideoControls *controls(getVideoControls());
     try {
@@ -2990,20 +2838,25 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
             controls->getVideoPreferences().unserialize(*videoNode);
     } catch (const YamlParserException &e) {
         ERROR("No video node in config file");
+        ++errorCount;
     }
 #endif
 
     using std::tr1::placeholders::_1;
-    // Each valid account element in sequence is a new account to load
-    // std::for_each(seq->begin(), seq->end(),
-    //        std::tr1::bind(loadAccount, _1, std::tr1::ref(accountMap_)));
 #if HAVE_IAX
     std::for_each(seq->begin(), seq->end(),
-            std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::instance()->getAccounts()), std::tr1::ref(IAXVoIPLink::getAccounts())));
+            std::tr1::bind(loadAccount, _1,
+                std::tr1::ref(SIPVoIPLink::instance()->getAccounts()),
+                std::tr1::ref(IAXVoIPLink::getAccounts()),
+                std::tr1::ref(errorCount)));
 #else
     std::for_each(seq->begin(), seq->end(),
-            std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::instance()->getAccounts())));
+            std::tr1::bind(loadAccount, _1,
+                std::tr1::ref(SIPVoIPLink::instance()->getAccounts()),
+                std::tr1::ref(errorCount)));
 #endif
+
+    return errorCount;
 }
 
 void ManagerImpl::registerAllAccounts()
@@ -3214,4 +3067,10 @@ void ManagerImpl::saveHistory()
 void ManagerImpl::clearHistory()
 {
     history_.clear();
+}
+
+void ManagerImpl::startAudioDriverStream()
+{
+    sfl::ScopedLock lock(audioLayerMutex_);
+    audiodriver_->startStream();
 }

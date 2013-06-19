@@ -9,6 +9,7 @@ SFLPHONE_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
               ./messaging/libmessaging.la
 
 DL_LIBS = -ldl
+RT_LIBS = -lrt
 
 if SFL_VIDEO
 SFLPHONE_LIBS+=./video/libvideo.la
@@ -17,7 +18,6 @@ endif
 noinst_LTLIBRARIES = libsflphone_client.la
 
 libsflphone_client_la_SOURCES = \
-  logger.c \
   uimanager.c \
   sflnotify.c \
   mainwindow.c \
@@ -32,7 +32,6 @@ libsflphone_client_la_SOURCES = \
   shortcuts.c \
   str_utils.c \
   seekslider.c \
-  gtk2_wrappers.c \
   actions.h \
   sflnotify.h \
   mainwindow.h \
@@ -46,33 +45,31 @@ libsflphone_client_la_SOURCES = \
   callable_obj.h \
   conference_obj.h \
   shortcuts.h \
-  logger.h \
-  unused.h \
   str_utils.h \
-  gtk2_wrappers.h \
   seekslider.h \
   account_schema.h \
   history_loader.c \
-  history_loader.h
-
+  history_loader.h \
+  sflphone_client.h \
+  sflphone_client.c \
+  sflphone_options.c \
+  sflphone_options.h
 
 libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)
 libsflphone_client_la_LDFLAGS = @CLUTTER_LDFLAGS@ @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
                                 @X11_LIBS@ @GTK_LIBS@ @GLIB_LIBS@ \
-                                $(DL_LIBS) @JAVASCRIPT_CORE_GTK_LIBS@ \
-                                @GTHREAD_LIBS@ @CLUTTERGTK_LDFLAGS@
+                                $(DL_LIBS) $(RT_LIBS) \
+                                @CLUTTERGTK_LDFLAGS@
 
 libsflphone_client_la_CFLAGS = @CLUTTER_CFLAGS@ @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ \
-                               @JAVASCRIPT_CORE_GTK_CFLAGS@ \
-                               @GTHREAD_CFLAGS@ @CLUTTERGTK_CFLAGS@
+                               @CLUTTERGTK_CFLAGS@
 
 
 sflphone_client_gnome_SOURCES = main.c
 sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
-                               @GTK_CFLAGS@ \
-                               @JAVASCRIPT_CORE_GTK_CFLAGS@ \
-                               @GTHREAD_CFLAGS@
+                               @GTK_CFLAGS@
+
 sflphone_client_gnome_LDADD = libsflphone_client.la
 
 # add symbolic link
@@ -82,3 +79,5 @@ install-exec-local:
 
 uninstall-local:
 	-test -h $(DESTDIR)$(bindir)/sflphone && rm $(DESTDIR)$(bindir)/sflphone
+
+-include $(top_srcdir)/git.mk

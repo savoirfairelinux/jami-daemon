@@ -67,6 +67,7 @@ class IAXAccount : public Account {
         std::string password_;
         IAXVoIPLink link_;
         virtual VoIPLink* getVoIPLink();
+        static const char * const ACCOUNT_TYPE;
 };
 
 #endif

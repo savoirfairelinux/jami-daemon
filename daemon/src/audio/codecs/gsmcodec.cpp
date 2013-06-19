@@ -34,6 +34,7 @@
 #include "sfl_types.h"
 #include "noncopyable.h"
 #include <stdexcept>
+#include <iostream>
 
 extern "C" {
 #include <gsm/gsm.h>
@@ -45,7 +46,7 @@ extern "C" {
 
 class Gsm : public sfl::AudioCodec {
 
-    public:
+public:
         // _payload should be 3
         Gsm() : sfl::AudioCodec(3, "GSM", 8000, 160, 1),
         decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
@@ -59,13 +60,13 @@ class Gsm : public sfl::AudioCodec {
                 throw std::runtime_error("ERROR: encode_gsm_create\n");
         }
 
-        virtual ~Gsm()
+        ~Gsm()
         {
             gsm_destroy(decode_gsmhandle_);
             gsm_destroy(encode_gsmhandle_);
         }
-
-        virtual int decode(SFLDataFormat * dst, unsigned char * src, size_t /*buf_size*/)
+private:
+        int decode(SFLDataFormat * dst, unsigned char * src, size_t /*buf_size*/)
         {
             if (gsm_decode(decode_gsmhandle_, (gsm_byte*) src, (gsm_signal*) dst) < 0)
                 throw std::runtime_error("ERROR: gsm_decode\n");
@@ -73,26 +74,30 @@ class Gsm : public sfl::AudioCodec {
             return frameSize_;
         }
 
-        virtual int encode(unsigned char * dst, SFLDataFormat * src, size_t /*buf_size*/)
+        int encode(unsigned char * dst, SFLDataFormat * src, size_t /*buf_size*/)
         {
             gsm_encode(encode_gsmhandle_, (gsm_signal*) src, (gsm_byte*) dst);
-            return 33;
+            return sizeof(gsm_frame);
         }
 
-    private:
         NON_COPYABLE(Gsm);
         gsm decode_gsmhandle_;
         gsm encode_gsmhandle_;
 };
 
 // cppcheck-suppress unusedFunction
-extern "C" sfl::Codec* CODEC_ENTRY()
+extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
 {
-    return new Gsm;
+    try {
+        return new Gsm;
+    } catch (const std::runtime_error &e) {
+        std::cerr << e.what() << std::endl;
+        return 0;
+    }
 }
 
 // cppcheck-suppress unusedFunction
-extern "C" void destroy(sfl::Codec* a)
+extern "C" void destroy(sfl::AudioCodec* a)
 {
     delete a;
 }

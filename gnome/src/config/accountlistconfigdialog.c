@@ -38,9 +38,6 @@
 #include "actions.h"
 #include "mainwindow.h"
 #include "utils.h"
-#include "unused.h"
-#include "logger.h"
-#include "gtk2_wrappers.h"
 #include <glib/gi18n.h>
 #include <string.h>
 
@@ -104,10 +101,10 @@ find_account_in_account_store(const gchar *accountID, GtkTreeModel *model,
 }
 
 
-static void delete_account_cb(GtkButton *button UNUSED, gpointer data)
+static void delete_account_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     gchar *selected_accountID = get_selected_accountID(data);
-    RETURN_IF_NULL(selected_accountID, "No selected account in delete action");
+    g_return_if_fail(selected_accountID != NULL);
     GtkTreeModel *model = GTK_TREE_MODEL(account_store);
     GtkTreeIter iter;
     if (find_account_in_account_store(selected_accountID, model, &iter))
@@ -117,30 +114,38 @@ static void delete_account_cb(GtkButton *button UNUSED, gpointer data)
     g_free(selected_accountID);
 }
 
+static void account_store_fill();
+
 static void
-run_account_dialog(const gchar *selected_accountID)
+run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client, gboolean is_new)
 {
     account_t *account = account_list_get_by_id(selected_accountID);
-    GtkWidget *dialog = show_account_window(account);
+    GtkWidget *dialog = show_account_window(account, client, is_new);
     update_account_from_dialog(dialog, account);
+    account_store_fill();
 }
 
 static void row_activated_cb(GtkTreeView *view,
-                             GtkTreePath *path UNUSED,
-                             GtkTreeViewColumn *col UNUSED,
-                             gpointer user_data UNUSED)
+                             G_GNUC_UNUSED GtkTreePath *path,
+                             G_GNUC_UNUSED GtkTreeViewColumn *col,
+                             SFLPhoneClient *client)
 {
     gchar *selected_accountID = get_selected_accountID(view);
-    RETURN_IF_NULL(selected_accountID, "No selected account ID");
-    run_account_dialog(selected_accountID);
+    g_return_if_fail(selected_accountID != NULL);
+    run_account_dialog(selected_accountID, client, FALSE);
     g_free(selected_accountID);
 }
 
-static void edit_account_cb(GtkButton *button UNUSED, gpointer data)
+typedef struct EditData {
+    GtkTreeView *view;
+    SFLPhoneClient *client;
+} EditData;
+
+static void edit_account_cb(G_GNUC_UNUSED GtkButton *button, EditData *data)
 {
-    gchar *selected_accountID = get_selected_accountID(data);
-    RETURN_IF_NULL(selected_accountID, "No selected account ID");
-    run_account_dialog(selected_accountID);
+    gchar *selected_accountID = get_selected_accountID(GTK_TREE_VIEW(data->view));
+    g_return_if_fail(selected_accountID != NULL);
+    run_account_dialog(selected_accountID, data->client, FALSE);
     g_free(selected_accountID);
 }
 
@@ -148,7 +153,7 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
 {
     const gchar *enabled = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
     const gchar *type = account_lookup(account, CONFIG_ACCOUNT_TYPE);
-    DEBUG("Account is enabled :%s", enabled);
+    g_debug("Account is enabled :%s", enabled);
     const gchar *state_name = account_state_name(account->state);
 
     gtk_list_store_set(account_store, iter,
@@ -165,13 +170,13 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
  */
 static void account_store_fill()
 {
-    RETURN_IF_NULL(account_list_dialog, "No account dialog");
+    g_return_if_fail(account_list_dialog != NULL);
     gtk_list_store_clear(account_store);
 
     // IP2IP account must be first
     account_t *ip2ip = account_list_get_by_id(IP2IP_PROFILE);
+    g_return_if_fail(ip2ip != NULL);
     ip2ip->state = ACCOUNT_STATE_IP2IP_READY;
-    RETURN_IF_NULL(ip2ip, "Could not find IP2IP account");
 
     GtkTreeIter iter;
     gtk_list_store_append(account_store, &iter);
@@ -180,7 +185,7 @@ static void account_store_fill()
 
     for (size_t i = 0; i < account_list_get_size(); ++i) {
         account_t *a = account_list_get_nth(i);
-        RETURN_IF_NULL(a, "Account %d is NULL", i);
+        g_return_if_fail(a != NULL);
 
         // we don't want to process the IP2IP twice
         if (a != ip2ip) {
@@ -190,12 +195,11 @@ static void account_store_fill()
     }
 }
 
-static void add_account_cb(void)
+static void add_account_cb(SFLPhoneClient *client)
 {
     account_t *new_account = create_default_account();
     account_list_add(new_account);
-    run_account_dialog(new_account->accountID);
-    account_store_fill();
+    run_account_dialog(new_account->accountID, client, TRUE);
 }
 
 /**
@@ -221,9 +225,9 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
     gchar *selected_accountID = g_value_dup_string(&val);
     g_value_unset(&val);
 
-    DEBUG("Selected account has accountID %s", selected_accountID);
+    g_debug("Selected account has accountID %s", selected_accountID);
     account_t *selected_account = account_list_get_by_id(selected_accountID);
-    RETURN_IF_NULL(selected_account, "Selected account is NULL");
+    g_return_if_fail(selected_account != NULL);
 
     gtk_widget_set_sensitive(edit_button, TRUE);
 
@@ -243,7 +247,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
 }
 
 static void
-enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
+enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
                   gpointer data)
 {
     // The IP2IP profile can't be disabled
@@ -270,7 +274,7 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
 
     // Modify account state
     const gchar * enabled_str = enable ? "true" : "false";
-    DEBUG("Account is enabled: %s", enabled_str);
+    g_debug("Account is enabled: %s", enabled_str);
 
     account_replace(account, CONFIG_ACCOUNT_ENABLE, enabled_str);
     dbus_send_register(account->accountID, enable);
@@ -341,7 +345,7 @@ account_move(gboolean move_up, gpointer data)
  * Called from move up account button signal
  */
 static void
-move_up_cb(GtkButton *button UNUSED, gpointer data)
+move_up_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     // Change tree view ordering and get index changed
     account_move(TRUE, data);
@@ -351,15 +355,15 @@ move_up_cb(GtkButton *button UNUSED, gpointer data)
  * Called from move down account button signal
  */
 static void
-move_down_cb(GtkButton *button UNUSED, gpointer data)
+move_down_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     // Change tree view ordering and get index changed
     account_move(FALSE, data);
 }
 
 static void
-help_contents_cb(GtkWidget * widget UNUSED,
-                 gpointer data UNUSED)
+help_contents_cb(G_GNUC_UNUSED GtkWidget * widget,
+                 G_GNUC_UNUSED gpointer data)
 {
     GError *error = NULL;
     gtk_show_uri(NULL, "ghelp:sflphone?accounts", GDK_CURRENT_TIME, &error);
@@ -370,15 +374,15 @@ help_contents_cb(GtkWidget * widget UNUSED,
 }
 
 static void
-close_dialog_cb(GtkWidget * widget UNUSED, gpointer data UNUSED)
+close_dialog_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED gpointer data)
 {
     gtk_dialog_response(GTK_DIALOG(account_list_dialog), GTK_RESPONSE_ACCEPT);
 }
 
 static void
-highlight_ip_profile(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
+highlight_ip_profile(G_GNUC_UNUSED GtkTreeViewColumn *col, GtkCellRenderer *rend,
                      GtkTreeModel *tree_model, GtkTreeIter *iter,
-                     gpointer data UNUSED)
+                     G_GNUC_UNUSED gpointer data)
 {
     GValue val;
     memset(&val, 0, sizeof(val));
@@ -413,9 +417,9 @@ state_color(account_t *a)
 }
 
 static void
-highlight_registration(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
+highlight_registration(G_GNUC_UNUSED GtkTreeViewColumn *col, GtkCellRenderer *rend,
                        GtkTreeModel *tree_model, GtkTreeIter *iter,
-                       gpointer data UNUSED)
+                       G_GNUC_UNUSED gpointer data)
 {
     GValue val;
     memset(&val, 0, sizeof(val));
@@ -431,19 +435,18 @@ highlight_registration(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
  * Account settings tab
  */
 static GtkWidget*
-create_account_list()
+create_account_list(SFLPhoneClient *client)
 {
-    GtkWidget *table = gtk_table_new(1, 2, FALSE /* homogeneous */);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 10);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
 
     GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window),
                                         GTK_SHADOW_IN);
-    gtk_table_attach(GTK_TABLE(table), scrolled_window, 0, 1, 0, 1,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), scrolled_window, 0, 0, 1, 1);
 
     account_store = gtk_list_store_new(COLUMN_ACCOUNT_COUNT,
                                        G_TYPE_STRING,  // Name
@@ -476,7 +479,7 @@ create_account_list()
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), tree_view_column);
 
     // A double click on the account line opens the window to edit the account
-    g_signal_connect(G_OBJECT(tree_view), "row-activated", G_CALLBACK(row_activated_cb), NULL);
+    g_signal_connect(G_OBJECT(tree_view), "row-activated", G_CALLBACK(row_activated_cb), client);
     gtk_tree_view_column_set_cell_data_func(tree_view_column, renderer,
                                             highlight_ip_profile, NULL, NULL);
 
@@ -511,8 +514,7 @@ create_account_list()
     GtkWidget *button_box = gtk_button_box_new(GTK_ORIENTATION_VERTICAL);
     gtk_box_set_spacing(GTK_BOX(button_box), 10);
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), GTK_BUTTONBOX_START);
-    gtk_table_attach(GTK_TABLE(table), button_box, 1, 2, 0, 1,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), button_box, 1, 0, 1, 1);
 
     move_up_button = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
     gtk_widget_set_sensitive(move_up_button, FALSE);
@@ -528,12 +530,15 @@ create_account_list()
 
     GtkWidget *add_button = gtk_button_new_from_stock(GTK_STOCK_ADD);
     g_signal_connect_swapped(G_OBJECT(add_button), "clicked",
-                             G_CALLBACK(add_account_cb), NULL);
+                             G_CALLBACK(add_account_cb), client);
     gtk_box_pack_start(GTK_BOX(button_box), add_button, FALSE, FALSE, 0);
 
     edit_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_widget_set_sensitive(edit_button, FALSE);
-    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), tree_view);
+    EditData *edit_data = g_new0(EditData, 1);
+    edit_data->view = GTK_TREE_VIEW(tree_view);
+    edit_data->client = client;
+    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), edit_data);
     gtk_box_pack_start(GTK_BOX(button_box), edit_button, FALSE, FALSE, 0);
 
     delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
@@ -544,8 +549,8 @@ create_account_list()
 
     /* help and close buttons */
     GtkWidget * buttonHbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-    gtk_table_attach(GTK_TABLE(table), buttonHbox, 0, 2, 1, 2,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+    /* this element will be 2x1 cells */
+    gtk_grid_attach(GTK_GRID(grid), buttonHbox, 0, 1, 2, 1);
 
     GtkWidget * helpButton = gtk_button_new_from_stock(GTK_STOCK_HELP);
     g_signal_connect_swapped(G_OBJECT(helpButton), "clicked",
@@ -557,7 +562,7 @@ create_account_list()
                              G_CALLBACK(close_dialog_cb), NULL);
     gtk_box_pack_start(GTK_BOX(buttonHbox), closeButton, FALSE, FALSE, 0);
 
-    gtk_widget_show_all(table);
+    gtk_widget_show_all(grid);
 
     /* Resize the scrolled window for a better view */
     GtkRequisition requisition;
@@ -569,9 +574,9 @@ create_account_list()
     gtk_widget_set_size_request(closeButton, requisitionButton.width, -1);
     gtk_widget_set_size_request(helpButton, requisitionButton.width, -1);
 
-    gtk_widget_show_all(table);
+    gtk_widget_show_all(grid);
 
-    return table;
+    return grid;
 }
 
 void update_account_list_status_bar(account_t *account)
@@ -607,10 +612,10 @@ void update_account_list_status_bar(account_t *account)
         gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS, state_name, -1);
 }
 
-void show_account_list_config_dialog(GSettings *settings)
+void show_account_list_config_dialog(SFLPhoneClient *client)
 {
     account_list_dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Accounts"),
-                                     GTK_WINDOW(get_main_window()),
+                                     GTK_WINDOW(client->win),
                                      GTK_DIALOG_DESTROY_WITH_PARENT, NULL,
                                      NULL));
 
@@ -624,7 +629,7 @@ void show_account_list_config_dialog(GSettings *settings)
     gtk_widget_show(accountFrame);
 
     /* Accounts tab */
-    GtkWidget *tab = create_account_list();
+    GtkWidget *tab = create_account_list(client);
     gtk_widget_show(tab);
     gtk_container_add(GTK_CONTAINER(accountFrame), tab);
 
@@ -662,6 +667,6 @@ void show_account_list_config_dialog(GSettings *settings)
     move_up_button = NULL;
     account_store = NULL;
 
-    update_actions(settings);
+    update_actions(client);
 }
 

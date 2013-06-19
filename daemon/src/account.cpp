@@ -69,14 +69,13 @@ using std::string;
 using std::vector;
 
 
-Account::Account(const string &accountID, const string &type) :
+Account::Account(const string &accountID) :
     accountID_(accountID)
     , username_()
     , hostname_()
     , alias_()
     , enabled_(true)
     , autoAnswerEnabled_(false)
-    , type_(type)
     , registrationState_(UNREGISTERED)
     , audioCodecList_()
     , videoCodecList_()
@@ -221,7 +220,7 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
 
 string Account::mapStateNumberToString(RegistrationState state)
 {
-    static const char * mapStateToChar[] = {
+    static const char * mapStateToChar[NUMBER_OF_STATES] = {
         "UNREGISTERED",
         "TRYING",
         "REGISTERED",
@@ -229,11 +228,12 @@ string Account::mapStateNumberToString(RegistrationState state)
         "ERRORAUTH",
         "ERRORNETWORK",
         "ERRORHOST",
+        "ERRORSERVICEUNAVAILABLE",
         "ERROREXISTSTUN",
-        "ERRORCONFSTUN"
+        "ERRORNOTACCEPTABLE",
     };
 
-    if (state > NUMBER_OF_STATES)
+    if (state >= NUMBER_OF_STATES)
         return "ERROR";
 
     return mapStateToChar[state];

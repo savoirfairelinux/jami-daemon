@@ -1,5 +1,3 @@
-include $(top_srcdir)/gnome-doc-utils.make
-dist-hook: doc-dist-hook
 DOC_MODULE = sflphone
 DOC_ENTITIES = legal.xml
 DOC_INCLUDES =
@@ -32,3 +30,5 @@ DOC_FIGURES =	figures/addressbook-button.png \
 				figures/srtp_enabled.png				\
 				figures/zrtp_options.png	
 DOC_LINGUAS = fr es
+
+-include $(top_srcdir)/git.mk

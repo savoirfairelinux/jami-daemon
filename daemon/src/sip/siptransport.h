@@ -108,6 +108,11 @@ class SipTransport {
         createTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const;
 
         /**
+         * This function unset the STUN resolver for a given account.
+         */
+        void shutdownSTUNResolver(SIPAccount &account);
+
+        /**
          * This function unset the transport for a given account.
          */
         void shutdownSipTransport(SIPAccount &account);

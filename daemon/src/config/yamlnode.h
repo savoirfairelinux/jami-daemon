@@ -147,8 +147,10 @@ class MappingNode : public YamlNode {
 
 class ScalarNode : public YamlNode {
     public:
-        ScalarNode(std::string s="", YamlNode *top=NULL) : YamlNode(SCALAR, top), str_(s) {}
-        ScalarNode(bool b, YamlNode *top=NULL) : YamlNode(SCALAR, top), str_(b ? "true" : "false") {}
+        ScalarNode(const std::string &s, YamlNode *top = NULL) : YamlNode(SCALAR, top), str_(s) {}
+        /* This avoids const char * arguments calling the constructor, see #20793 */
+        ScalarNode(const char *s, YamlNode *top = NULL) : YamlNode(SCALAR, top), str_(s) {}
+        ScalarNode(bool b, YamlNode *top = NULL) : YamlNode(SCALAR, top), str_(b ? "true" : "false") {}
 
         virtual void addNode(YamlNode *node UNUSED) {}
 

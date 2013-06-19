@@ -33,8 +33,6 @@
 #include <string.h>
 #include "calltab.h"
 #include "calltree.h"
-#include "unused.h"
-#include "logger.h"
 
 // Must return 0 when a match is found
 static gint
@@ -44,7 +42,7 @@ is_callID_callstruct(gconstpointer a, gconstpointer b)
 
     // if it's null or not a call it's not the call we're looking for
     if (c == NULL) {
-        ERROR("NULL element in list");
+        g_warning("NULL element in list");
         return 1;
     }
 
@@ -92,7 +90,7 @@ void calllist_add_contact(gchar *contact_name, gchar *contact_phone, contact_typ
  * Function passed to calllist_clean to free every callable_obj_t.
  */
 static void
-calllist_free_element(gpointer data, gpointer user_data UNUSED)
+calllist_free_element(gpointer data, G_GNUC_UNUSED gpointer user_data)
 {
     callable_obj_t *call = data;
     free_callable_obj_t(call);
@@ -101,6 +99,7 @@ calllist_free_element(gpointer data, gpointer user_data UNUSED)
 void
 calllist_clean(calltab_t* tab)
 {
+    g_return_if_fail(tab != NULL && tab->callQueue != NULL);
     g_queue_foreach(tab->callQueue, calllist_free_element, NULL);
     g_queue_free(tab->callQueue);
     tab->callQueue = 0;
@@ -109,6 +108,7 @@ calllist_clean(calltab_t* tab)
 void
 calllist_reset(calltab_t* tab)
 {
+    g_return_if_fail(tab != NULL);
     calllist_clean(tab);
     tab->callQueue = g_queue_new();
 }
@@ -116,14 +116,15 @@ calllist_reset(calltab_t* tab)
 void
 calllist_add_call(calltab_t* tab, callable_obj_t * c)
 {
-    DEBUG("Adding call with callID %s to tab %s", c->_callID, tab->name);
+    g_debug("Adding call with callID %s to tab %s", c->_callID, tab->name);
     g_queue_push_tail(tab->callQueue, c);
-    DEBUG("Tab %s has %d calls", tab->name, calllist_get_size(tab));
+    g_debug("Tab %s has %d calls", tab->name, calllist_get_size(tab));
 }
 
 void
 calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c)
 {
+    g_return_if_fail(tab != NULL && tab->callQueue != NULL);
     g_queue_push_head(tab->callQueue, c);
 }
 
@@ -142,15 +143,16 @@ calllist_clean_history()
 }
 
 void
-calllist_remove_from_history(callable_obj_t* c, GSettings *settings)
+calllist_remove_from_history(callable_obj_t* c, SFLPhoneClient *client)
 {
-    calllist_remove_call(history_tab, c->_callID, settings);
+    calllist_remove_call(history_tab, c->_callID, client);
     calltree_remove_call(history_tab, c->_callID);
 }
 
 void
-calllist_remove_call(calltab_t* tab, const gchar * callID, GSettings *settings)
+calllist_remove_call(calltab_t* tab, const gchar * callID, SFLPhoneClient *client)
 {
+    g_return_if_fail(tab != NULL && tab->callQueue != NULL);
     GList *c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL)
@@ -158,13 +160,15 @@ calllist_remove_call(calltab_t* tab, const gchar * callID, GSettings *settings)
 
     callable_obj_t *call = c->data;
 
-    DEBUG("Removing call %s from tab %s", callID, tab->name);
-    g_queue_remove(tab->callQueue, call);
+    if (!g_queue_is_empty(tab->callQueue)) {
+        g_debug("Removing call %s from tab %s", callID, tab->name);
+        g_queue_remove(tab->callQueue, call);
+    }
 
     /* Don't save empty (i.e. started dialing, then deleted) calls */
     if (call->_peer_number && strlen(call->_peer_number) > 0) {
         calllist_add_call(history_tab, call);
-        if (g_settings_get_boolean(settings, "history-enabled"))
+        if (g_settings_get_boolean(client->settings, "history-enabled"))
             calltree_add_history_entry(call);
     }
 }
@@ -194,7 +198,7 @@ calllist_get_call(calltab_t* tab, const gchar * callID)
     GList * c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL) {
-        ERROR("Could not find call %s in tab %s", callID, tab->name);
+        g_warning("Could not find call %s in tab %s", callID, tab->name);
         return NULL;
     }
 

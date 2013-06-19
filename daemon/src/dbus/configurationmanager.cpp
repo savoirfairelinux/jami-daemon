@@ -58,20 +58,13 @@ ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
 
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
-    std::map<std::string, std::string> ip2ipAccountDetails;
     SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
         ERROR("Could not find IP2IP account");
-        return ip2ipAccountDetails;
+        return std::map<std::string, std::string>();
     } else
         return sipaccount->getIp2IpDetails();
-
-    std::map<std::string, std::string> tlsSettings(getTlsSettings());
-    std::copy(tlsSettings.begin(), tlsSettings.end(),
-              std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
-
-    return ip2ipAccountDetails;
 }
 
 
@@ -159,6 +152,7 @@ std::map<std::string, std::string> ConfigurationManager::getAccountTemplate()
    accTemplate[ CONFIG_PUBLISHED_SAMEAS_LOCAL      ] = CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL;
    accTemplate[ CONFIG_INTERFACE                   ] = CONFIG_DEFAULT_INTERFACE;
    accTemplate[ CONFIG_ACCOUNT_REGISTRATION_EXPIRE ] = CONFIG_DEFAULT_REGISTRATION_EXPIRE;
+   accTemplate[ CONFIG_RINGTONE_ENABLED            ] = CONFIG_DEFAULT_RINGTONE_ENABLED;
    return accTemplate;
 }
 
@@ -183,7 +177,7 @@ std::vector<std::string> ConfigurationManager::getAccountList()
  */
 std::vector<int32_t> ConfigurationManager::getAudioCodecList()
 {
-    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
+    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getCodecList());
 
     if (list.empty())
         errorAlert(CODECS_NOT_LOADED);
@@ -338,26 +332,6 @@ std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 void ConfigurationManager::setEchoCancelState(const std::string& state)
 {
     Manager::instance().setEchoCancelState(state);
-}
-
-int ConfigurationManager::getEchoCancelTailLength()
-{
-    return Manager::instance().getEchoCancelTailLength();
-}
-
-void ConfigurationManager::setEchoCancelTailLength(const int32_t& length)
-{
-    Manager::instance().setEchoCancelTailLength(length);
-}
-
-int ConfigurationManager::getEchoCancelDelay()
-{
-    return Manager::instance().getEchoCancelDelay();
-}
-
-void ConfigurationManager::setEchoCancelDelay(const int32_t& delay)
-{
-    Manager::instance().setEchoCancelDelay(delay);
 }
 
 int32_t ConfigurationManager::isIax2Enabled()

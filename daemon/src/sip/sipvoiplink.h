@@ -41,13 +41,14 @@
 #endif
 
 #include <map>
+#include <pthread.h>
 
-#include <pjsip.h>
-#include <pjlib.h>
-#include <pjsip_ua.h>
-#include <pjlib-util.h>
-#include <pjnath.h>
-#include <pjnath/stun_config.h>
+#include "pjsip.h"
+#include "pjlib.h"
+#include "pjsip_ua.h"
+#include "pjlib-util.h"
+#include "pjnath.h"
+#include "pjnath/stun_config.h"
 #ifdef SFL_VIDEO
 #include <queue>
 #endif
@@ -157,7 +158,7 @@ class SIPVoIPLink : public VoIPLink {
          * Hang up the call
          * @param id The call identifier
          */
-        virtual void hangup(const std::string& id);
+        virtual void hangup(const std::string& id, int reason);
 
         /**
          * Hang up the call
@@ -236,12 +237,6 @@ class SIPVoIPLink : public VoIPLink {
         pj_caching_pool *getMemoryPoolFactory();
 
         /**
-         * SIPCall accessor
-         * @param id  The call identifier
-         * @return SIPCall*	  A pointer on SIPCall object
-         */
-        SIPCall* getSIPCall(const std::string& id);
-        /**
          * A non-blocking SIPCall accessor
          *
          * Will return NULL if the callMapMutex could not be locked
@@ -311,7 +306,7 @@ class SIPVoIPLink : public VoIPLink {
          */
         AccountMap sipAccountMap_;
 
-        ost::Mutex sipCallMapMutex_;
+        pthread_mutex_t sipCallMapMutex_;
         SipCallMap sipCallMap_;
 
         /**
@@ -329,7 +324,7 @@ class SIPVoIPLink : public VoIPLink {
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
-        ost::Mutex keyframeRequestsMutex_;
+        pthread_mutex_t keyframeRequestsMutex_;
         std::queue<std::string> keyframeRequests_;
 #endif
 

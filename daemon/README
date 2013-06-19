@@ -72,9 +72,8 @@ How to compile
 --------------
 
 # Compile the PJSIP library
-cd libs/pjproject
-
-CFLAGS=-fPIC ./configure && make dep && make -j1
+cd libs
+./compile_pjsip.sh
 
 If you already have installed a different version of
 pjsip on your system, you will most likely have some errors

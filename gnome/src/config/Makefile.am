@@ -54,3 +54,5 @@ endif
 libconfig_la_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) \
 					  $(GTK_CFLAGS) $(GLIB_CFLAGS) \
 					  $(SFL_VIDEO_CFLAGS)
+
+-include $(top_srcdir)/git.mk

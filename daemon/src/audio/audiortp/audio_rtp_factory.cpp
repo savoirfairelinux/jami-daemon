@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "audio_rtp_factory.h"
 #if HAVE_ZRTP
 #include "audio_zrtp_session.h"
@@ -38,8 +42,8 @@
 #include "sip/sipcall.h"
 #include "sip/sipaccount.h"
 #include "sip/sdes_negotiator.h"
+#include "scoped_lock.h"
 #include "logger.h"
-#include "config.h"
 
 namespace sfl {
 
@@ -51,11 +55,14 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
     cachedRemoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
     remoteOfferIsSet_(false), ca_(ca),
     keyExchangeProtocol_(NONE)
-{}
+{
+    pthread_mutex_init(&audioRtpThreadMutex_, NULL);
+}
 
 AudioRtpFactory::~AudioRtpFactory()
 {
     delete rtpSession_;
+    pthread_mutex_destroy(&audioRtpThreadMutex_);
 }
 
 void AudioRtpFactory::initConfig()
@@ -94,7 +101,7 @@ void AudioRtpFactory::initConfig()
 void AudioRtpFactory::initSession()
 {
     DEBUG("AudioRtpFactory: init session2");
-    ost::MutexLock m(audioRtpThreadMutex_);
+    ScopedLock m(audioRtpThreadMutex_);
 
     if (srtpEnabled_) {
         const std::string zidFilename(Manager::instance().voipPreferences.getZidFile());
@@ -120,18 +127,17 @@ void AudioRtpFactory::initSession()
         rtpSession_ = new AudioSymmetricRtpSession(*ca_);
 }
 
-void sfl::AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
+void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
 
-    if (rtpSession_->startRtpThread(audioCodecs) != 0)
-        throw AudioRtpFactoryException("Failed to start AudioRtpSession thread");
+    rtpSession_->startRtpThreads(audioCodecs);
 }
 
 void AudioRtpFactory::stop()
 {
-    ost::MutexLock mutex(audioRtpThreadMutex_);
+    ScopedLock mutex(audioRtpThreadMutex_);
 
     delete rtpSession_;
     rtpSession_ = NULL;
@@ -143,6 +149,15 @@ int AudioRtpFactory::getSessionMedia()
         throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
     return rtpSession_->getEncoderPayloadType();
+}
+
+std::string
+AudioRtpFactory::getCurrentAudioCodecNames() const
+{
+    if (rtpSession_ == NULL)
+        throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
+
+    return rtpSession_->getCurrentAudioCodecNames();
 }
 
 void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
@@ -160,7 +175,7 @@ void AudioRtpFactory::updateDestinationIpAddress()
 }
 
 #if HAVE_ZRTP
-sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
+AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
     if (keyExchangeProtocol_ == ZRTP)
         return static_cast<AudioZrtpSession *>(rtpSession_);
@@ -169,7 +184,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 }
 #endif
 
-void sfl::AudioRtpFactory::initLocalCryptoInfo()
+void AudioRtpFactory::initLocalCryptoInfo()
 {
     DEBUG("AudioRtpFactory: Init local crypto info");
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
@@ -180,7 +195,7 @@ void sfl::AudioRtpFactory::initLocalCryptoInfo()
     }
 }
 
-void sfl::AudioRtpFactory::initLocalCryptoInfoOnOffHold()
+void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 {
     DEBUG("AudioRtpFactory: Init local crypto info");
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
@@ -192,7 +207,7 @@ void sfl::AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 }
 
 
-void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
+void AudioRtpFactory::setRemoteCryptoInfo(SdesNegotiator& nego)
 {
     if (rtpSession_ ) {
         if (keyExchangeProtocol_ == SDES) {
@@ -217,7 +232,7 @@ void AudioRtpFactory::sendDtmfDigit(int digit)
         rtpSession_->putDtmfEvent(digit);
 }
 
-void sfl::AudioRtpFactory::saveLocalContext()
+void AudioRtpFactory::saveLocalContext()
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
         cachedLocalMasterKey_ = rtpSession_->getLocalMasterKey();
@@ -225,7 +240,7 @@ void sfl::AudioRtpFactory::saveLocalContext()
     }
 }
 
-void sfl::AudioRtpFactory::restoreLocalContext()
+void AudioRtpFactory::restoreLocalContext()
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
         rtpSession_->setLocalMasterKey(cachedLocalMasterKey_);

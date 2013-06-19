@@ -31,10 +31,11 @@
 #ifndef _VIDEO_SEND_THREAD_H_
 #define _VIDEO_SEND_THREAD_H_
 
-#include "cc_thread.h"
 #include <map>
 #include <string>
 #include "noncopyable.h"
+#include "shm_sink.h"
+#include "video_provider.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -49,44 +50,55 @@ class AVCodec;
 
 namespace sfl_video {
 
-class VideoSendThread : public ost::Thread {
+class VideoSendThread : public VideoProvider {
     private:
         NON_COPYABLE(VideoSendThread);
         void forcePresetX264();
         void print_sdp();
         void setup();
         void prepareEncoderContext(AVCodec *encoder);
-        void createScalingContext();
+        void fillBuffer(void *data);
         static int interruptCb(void *ctx);
 
         std::map<std::string, std::string> args_;
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
-        uint8_t *scaledPictureBuf_;
-        uint8_t *outbuf_;
+        uint8_t *scaledInputBuffer_;
+        uint8_t *encoderBuffer_;
         AVCodecContext *inputDecoderCtx_;
         AVFrame *rawFrame_;
-        AVFrame *scaledPicture_;
+        AVFrame *scaledInput_;
         int streamIndex_;
-        int outbufSize_;
+        int encoderBufferSize_;
         AVCodecContext *encoderCtx_;
         AVStream *stream_;
         AVFormatContext *inputCtx_;
         AVFormatContext *outputCtx_;
-        SwsContext *imgConvertCtx_;
+        SwsContext *previewConvertCtx_;
+        SwsContext *encoderConvertCtx_;
         std::string sdp_;
+
+        SHMSink sink_;
+        size_t bufferSize_;
+        const std::string id_;
+
         AVIOInterruptCB interruptCb_;
         bool threadRunning_;
-#ifdef CCPP_PREFIX
-        ost::AtomicCounter forceKeyFrame_;
-#else
-        ucommon::atomic::counter forceKeyFrame_;
-#endif
+        int forceKeyFrame_;
+        static void *runCallback(void *);
+        pthread_t thread_;
+        int frameNumber_;
+        void run();
+        bool captureFrame();
+        void renderFrame();
+        void encodeAndSendVideo();
+        friend struct VideoTxContextHandle;
+
     public:
-        explicit VideoSendThread(const std::map<std::string, std::string> &args);
-        virtual ~VideoSendThread();
-        virtual void run();
+        VideoSendThread(const std::string &id, const std::map<std::string, std::string> &args);
+        ~VideoSendThread();
+        void start();
         std::string getSDP() const { return sdp_; }
         void forceKeyFrame();
 };

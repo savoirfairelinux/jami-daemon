@@ -21,7 +21,7 @@ doc/spec/index.html: $(XMLS) tools/doc-generator.py tools/specparser.py $(TEMPLA
 
 doc:	$(GENERATED_FILES)
 
-clean:	
+clean-local:
 	rm -rf $(GENERATED_FILES)
 	rm -rf doc/spec
 	rm -rf tmp
