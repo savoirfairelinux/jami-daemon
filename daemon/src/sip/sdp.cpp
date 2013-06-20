@@ -110,7 +110,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 
             if (!pj_stricmp2(&current->desc.media, "audio")) {
                 const unsigned long pt = pj_strtoul(&current->desc.fmt[fmt]);
-                if (not hasPayload(sessionAudioMedia_, pt)) {
+                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMedia_, pt)) {
                     sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
                     if (codec)
                         sessionAudioMedia_.push_back(codec);
@@ -214,6 +214,7 @@ Sdp::setMediaDescriptorLines(bool audio)
     int dynamic_payload = 96;
 
     med->desc.fmt_count = audio ? audio_codec_list_.size() : video_codec_list_.size();
+
     for (unsigned i = 0; i < med->desc.fmt_count; ++i) {
         unsigned clock_rate;
         string enc_name;
@@ -312,6 +313,11 @@ Sdp::updatePorts(const std::vector<pj_sockaddr_in> &sockets)
 
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {
+    std::ostringstream s;
+    s << telephoneEventPayload_;
+    ++med->desc.fmt_count;
+    pj_strdup2(memPool_, &med->desc.fmt[med->desc.fmt_count - 1], s.str().c_str());
+
     pjmedia_sdp_attr *attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
     attr_rtpmap->name = pj_str((char *) "rtpmap");
     attr_rtpmap->value = pj_str((char *) "101 telephone-event/8000");
