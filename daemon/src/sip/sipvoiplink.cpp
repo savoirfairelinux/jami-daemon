@@ -678,14 +678,16 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string contact = account->getContactHeader();
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
-    if (account->isStunEnabled()) {
-        DEBUG("Setting VIA sent-by to %s:%u", account->transport_->local_name.host.ptr, account->transport_->local_name.port);
-        if (pjsip_regc_set_via_sent_by(regc, &account->transport_->local_name, account->transport_) != PJ_SUCCESS)
-            throw VoipLinkException("Unable to set the \"sent-by\" field");
-    } else if (not received.empty() and received != account->getPublishedAddress()) {
-        DEBUG("Setting VIA sent-by to %s:%d", received.c_str(), account->getRPort());
-        if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
-            throw VoipLinkException("Unable to set the \"sent-by\" field");
+    if (account->transport_) {
+        if (account->isStunEnabled()) {
+            DEBUG("Setting VIA sent-by to %s:%u", account->transport_->local_name.host.ptr, account->transport_->local_name.port);
+            if (pjsip_regc_set_via_sent_by(regc, &account->transport_->local_name, account->transport_) != PJ_SUCCESS)
+                throw VoipLinkException("Unable to set the \"sent-by\" field");
+        } else if (not received.empty() and received != account->getPublishedAddress()) {
+            DEBUG("Setting VIA sent-by to %s:%d", received.c_str(), account->getRPort());
+            if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
+                throw VoipLinkException("Unable to set the \"sent-by\" field");
+        }
     }
 
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
