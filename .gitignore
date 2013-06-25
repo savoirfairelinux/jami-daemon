@@ -20,7 +20,6 @@ Makefile
 autom4te.cache
 config.guess
 config.*
-configure
 depcomp
 install-sh
 INSTALL

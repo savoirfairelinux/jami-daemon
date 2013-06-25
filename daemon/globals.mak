@@ -9,14 +9,14 @@ ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
 
 # for pjsip
-include $(src)/libs/pjproject-2.0.1/build.mak
+include $(src)/libs/pjproject-2.1.0/build.mak
 PJSIP_LIBS=$(APP_LDFLAGS) $(APP_LDLIBS)
 
-SIP_CFLAGS=-I$(src)/libs/pjproject-2.0.1/pjsip/include \
-		   -I$(src)/libs/pjproject-2.0.1/pjlib/include \
-		   -I$(src)/libs/pjproject-2.0.1/pjlib-util/include \
-		   -I$(src)/libs/pjproject-2.0.1/pjmedia/include \
-		   -I$(src)/libs/pjproject-2.0.1/pjnath/include
+SIP_CFLAGS=-I$(src)/libs/pjproject-2.1.0/pjsip/include \
+		   -I$(src)/libs/pjproject-2.1.0/pjlib/include \
+		   -I$(src)/libs/pjproject-2.1.0/pjlib-util/include \
+		   -I$(src)/libs/pjproject-2.1.0/pjmedia/include \
+		   -I$(src)/libs/pjproject-2.1.0/pjnath/include
 
 if BUILD_SPEEX
 SPEEXCODEC=-DHAVE_SPEEX_CODEC
@@ -34,7 +34,7 @@ endif
 AM_CPPFLAGS = \
 	-I$(src)/libs \
 	-I$(src)/libs/iax2 \
-	-I$(src)/libs/pjproject-2.0.1 \
+	-I$(src)/libs/pjproject-2.1.0 \
 	-I$(src)/src \
 	-I$(src)/src/config \
 	-I$(src)/test \

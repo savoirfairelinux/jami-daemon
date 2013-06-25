@@ -32,10 +32,6 @@ else
     CFLAGS="$CFLAGS -g -Wall -Wextra -Wshadow $MIGRATION_FLAGS"
 fi
 
-
-dnl GCONF utilities
-AM_GCONF_SOURCE_2
-
 PKG_CHECK_MODULES(GTK, gtk+-3.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.2)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2 >= 1.4)
