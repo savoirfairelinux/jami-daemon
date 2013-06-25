@@ -178,6 +178,7 @@ public:
     void createConfFromParticipantList(const std::vector< std::string >& participants);
     void createConference(const std::string& id1, const std::string& id2);
     void addParticipant(const std::string& callID, const std::string& confID);
+    std::vector<std::string> getParticipantList(const std::string& confID);
     void addMainParticipant(const std::string& confID);
     void detachParticipant(const std::string& callID);
     void joinConference(const std::string& sel_confID, const std::string& drag_confID);
