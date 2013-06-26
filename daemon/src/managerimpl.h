@@ -890,12 +890,6 @@ class ManagerImpl {
          */
         void removeWaitingCall(const std::string& id);
 
-        /** Remove a CallID/std::string association
-         * Protected by mutex
-         * @param callID the CallID to remove
-         */
-        void removeCallAccount(const std::string& callID);
-
         /**
          * Path of the ConfigFile
          */
