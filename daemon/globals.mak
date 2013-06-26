@@ -16,7 +16,8 @@ SIP_CFLAGS=-I$(src)/libs/pjproject-2.1.0/pjsip/include \
 		   -I$(src)/libs/pjproject-2.1.0/pjlib/include \
 		   -I$(src)/libs/pjproject-2.1.0/pjlib-util/include \
 		   -I$(src)/libs/pjproject-2.1.0/pjmedia/include \
-		   -I$(src)/libs/pjproject-2.1.0/pjnath/include
+		   -I$(src)/libs/pjproject-2.1.0/pjnath/include \
+		   -DPJ_AUTOCONF=1
 
 if BUILD_SPEEX
 SPEEXCODEC=-DHAVE_SPEEX_CODEC
