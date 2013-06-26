@@ -528,6 +528,7 @@ class SIPAccount : public Account {
          */
         std::vector< std::map<std::string, std::string > > credentials_;
 
+#if HAVE_TLS
         /**
          * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
@@ -545,6 +546,7 @@ class SIPAccount : public Account {
          * Display the list of ciphers currently supported on the
          */
         void displayCipherSuite();
+#endif
 
         /**
          * Initializes STUN config from the config file

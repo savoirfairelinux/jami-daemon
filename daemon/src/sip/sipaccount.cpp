@@ -631,12 +631,14 @@ void SIPAccount::registerVoIPLink()
     if (hostname_.length() >= PJ_MAX_HOSTNAME)
         return;
 
+#if HAVE_TLS
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == TRUE_STR) {
         DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
+#endif
 
     // Init STUN settings for this account if the user selected it
     if (stunEnabled_) {
@@ -716,6 +718,7 @@ void SIPAccount::stopKeepAliveTimer()
     }
 }
 
+#if HAVE_TLS
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 {
     if (method == "Default")
@@ -775,6 +778,7 @@ void SIPAccount::initTlsConfiguration()
     tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
     tlsSetting_.qos_ignore_error = PJ_TRUE;
 }
+#endif
 
 void SIPAccount::initStunConfiguration()
 {
@@ -803,10 +807,12 @@ void SIPAccount::loadConfig()
     if (registrationExpire_ == 0)
         registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
+#if HAVE_TLS
     if (tlsEnable_ == TRUE_STR) {
         initTlsConfiguration();
         transportType_ = PJSIP_TRANSPORT_TLS;
     } else
+#endif
         transportType_ = PJSIP_TRANSPORT_UDP;
 }
 
