@@ -91,13 +91,13 @@ ManagerImpl::ManagerImpl() :
     hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(),
     currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
-    waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
+    waitingCalls_(), waitingCallsMutex_(), path_(),
     IPToIPMap_(), mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
     pthread_mutex_init(&currentCallMutex_, NULL);
     pthread_mutex_init(&toneMutex_, NULL);
     pthread_mutex_init(&audioLayerMutex_, NULL);
-    pthread_mutex_init(&waitingCallMutex_, NULL);
+    pthread_mutex_init(&waitingCallsMutex_, NULL);
     // initialize random generator for call id
     srand(time(NULL));
 }
@@ -105,7 +105,7 @@ ManagerImpl::ManagerImpl() :
 ManagerImpl::~ManagerImpl()
 {
     // destroy in reverse order of initialization
-    pthread_mutex_destroy(&waitingCallMutex_);
+    pthread_mutex_destroy(&waitingCallsMutex_);
     pthread_mutex_destroy(&audioLayerMutex_);
     pthread_mutex_destroy(&toneMutex_);
     pthread_mutex_destroy(&currentCallMutex_);
@@ -1440,24 +1440,22 @@ void ManagerImpl::playDtmf(char code)
 }
 
 // Multi-thread
-bool ManagerImpl::incomingCallWaiting() const
+bool ManagerImpl::incomingCallsWaiting()
 {
-    return nbIncomingWaitingCall_ > 0;
+    sfl::ScopedLock m(waitingCallsMutex_);
+    return not waitingCalls_.empty();
 }
 
 void ManagerImpl::addWaitingCall(const std::string& id)
 {
-    sfl::ScopedLock m(waitingCallMutex_);
-    waitingCall_.insert(id);
-    nbIncomingWaitingCall_++;
+    sfl::ScopedLock m(waitingCallsMutex_);
+    waitingCalls_.insert(id);
 }
 
 void ManagerImpl::removeWaitingCall(const std::string& id)
 {
-    sfl::ScopedLock m(waitingCallMutex_);
-
-    if (waitingCall_.erase(id))
-        nbIncomingWaitingCall_--;
+    sfl::ScopedLock m(waitingCallsMutex_);
+    waitingCalls_.erase(id);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1685,6 +1683,9 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     dbus_.getCallManager()->callStateChanged(call_id, "HUNGUP");
 
     removeWaitingCall(call_id);
+    if (not incomingCallsWaiting())
+        stopTone();
+
     checkAudio();
     removeStream(call_id);
 }

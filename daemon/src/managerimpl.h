@@ -754,7 +754,7 @@ class ManagerImpl {
          * @return true is there is one or many incoming call waiting
          * new call, not anwsered or refused
          */
-        bool incomingCallWaiting() const;
+        bool incomingCallsWaiting();
 
         /**
          * Return a new random callid that is not present in the list
@@ -871,17 +871,12 @@ class ManagerImpl {
         /**
          * Waiting Call Vectors
          */
-        CallIDSet waitingCall_;
+        CallIDSet waitingCalls_;
 
         /**
          * Protect waiting call list, access by many voip/audio threads
          */
-        pthread_mutex_t waitingCallMutex_;
-
-        /**
-         * Number of waiting call, synchronize with waitingcall callidvector
-         */
-        unsigned int nbIncomingWaitingCall_;
+        pthread_mutex_t waitingCallsMutex_;
 
         /**
          * Add incoming callid to the waiting list
