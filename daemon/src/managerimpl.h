@@ -1040,6 +1040,12 @@ class ManagerImpl {
          */
         AccountMap getAllAccounts() const;
 
+        /**
+         * Suspends SFLphone's audio processing if no calls remain, allowing
+         * other applications to resume audio.
+         * See:
+         * https://projects.savoirfairelinux.com/issues/7037
+        */
         void
         checkAudio();
 
