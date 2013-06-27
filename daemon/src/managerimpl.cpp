@@ -1687,7 +1687,6 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     if (not incomingCallsWaiting())
         stopTone();
 
-    checkAudio();
     removeStream(call_id);
 }
 

@@ -1032,14 +1032,6 @@ class ManagerImpl {
         void registerAccounts();
         void saveHistory();
 
-    private:
-        NON_COPYABLE(ManagerImpl);
-
-        /**
-         * Get a map with all the current SIP and IAX accounts
-         */
-        AccountMap getAllAccounts() const;
-
         /**
          * Suspends SFLphone's audio processing if no calls remain, allowing
          * other applications to resume audio.
@@ -1048,6 +1040,14 @@ class ManagerImpl {
         */
         void
         checkAudio();
+
+    private:
+        NON_COPYABLE(ManagerImpl);
+
+        /**
+         * Get a map with all the current SIP and IAX accounts
+         */
+        AccountMap getAllAccounts() const;
 
         /**
           * To handle the persistent history

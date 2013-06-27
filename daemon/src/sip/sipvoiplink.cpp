@@ -1598,6 +1598,7 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
 
     Manager::instance().peerHungupCall(id);
     removeSipCall(id);
+    Manager::instance().checkAudio();
 }
 
 void
