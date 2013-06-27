@@ -423,6 +423,7 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     /* We often get here when the call was hungup before being created */
     if (not isValidCall(callId) and not isIPToIP(callId)) {
         DEBUG("Could not hang up call %s, call not valid", callId.c_str());
+        checkAudio();
         return false;
     }
 
