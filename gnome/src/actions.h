@@ -187,7 +187,7 @@ void sflphone_fill_codec_list_per_account(account_t *);
 
 void sflphone_add_participant();
 
-void sflphone_rec_call(SFLPhoneClient *client);
+gboolean sflphone_rec_call(SFLPhoneClient *client);
 
 void sflphone_mute_call(void);
 

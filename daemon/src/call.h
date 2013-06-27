@@ -228,7 +228,7 @@ class Call : public Recordable {
         virtual std::map<std::string, std::string>
         createHistoryEntry() const;
 
-        virtual bool setRecording();
+        virtual bool toggleRecording();
 
     private:
         std::string getTypeStr() const;

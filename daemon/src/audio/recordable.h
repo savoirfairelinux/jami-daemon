@@ -51,7 +51,7 @@ class Recordable {
          * This method must be implemented for this interface as calls and conferences
          * have different behavior.
          */
-        virtual bool setRecording() = 0;
+        virtual bool toggleRecording() = 0;
 
         /**
          * Stop recording

@@ -388,7 +388,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
-        setRecordingCall(call_id);
+        toggleRecordingCall(call_id);
 
     // update call state on client side
     dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
@@ -1630,7 +1630,7 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     }
 
     if (audioPreference.getIsAlwaysRecording())
-        setRecordingCall(id);
+        toggleRecordingCall(id);
 
     dbus_.getCallManager()->callStateChanged(id, "CURRENT");
 }
@@ -2064,16 +2064,16 @@ void ManagerImpl::setIsAlwaysRecording(bool isAlwaysRec)
     return audioPreference.setIsAlwaysRecording(isAlwaysRec);
 }
 
-void ManagerImpl::setRecordingCall(const std::string& id)
+bool ManagerImpl::toggleRecordingCall(const std::string& id)
 {
     Recordable* rec = NULL;
 
     ConferenceMap::const_iterator it(conferenceMap_.find(id));
     if (it == conferenceMap_.end()) {
-        DEBUG("Set recording for call %s", id.c_str());
+        DEBUG("toggle recording for call %s", id.c_str());
         rec = getCallFromCallID(id);
     } else {
-        DEBUG("Set recording for conference %s", id.c_str());
+        DEBUG("toggle recording for conference %s", id.c_str());
         Conference *conf = it->second;
 
         if (conf) {
@@ -2087,11 +2087,12 @@ void ManagerImpl::setRecordingCall(const std::string& id)
 
     if (rec == NULL) {
         ERROR("Could not find recordable instance %s", id.c_str());
-        return;
+        return false;
     }
 
-    rec->setRecording();
+    const bool result = rec->toggleRecording();
     dbus_.getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
+    return result;
 }
 
 bool ManagerImpl::isRecording(const std::string& id)

@@ -606,8 +606,9 @@ class ManagerImpl {
          * Set recording on / off
          * Start recording
          * @param id  The call identifier
+         * Returns true if the call was set to record
          */
-        void setRecordingCall(const std::string& id);
+        bool toggleRecordingCall(const std::string& id);
 
         /**
          * Return true if the call is currently recorded

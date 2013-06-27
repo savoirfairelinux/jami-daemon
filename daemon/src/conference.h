@@ -89,7 +89,7 @@ class Conference : public Recordable {
         /**
          * Start/stop recording toggle
          */
-        virtual bool setRecording();
+        virtual bool toggleRecording();
     private:
         std::string id_;
         ConferenceState confState_;

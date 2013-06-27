@@ -748,7 +748,10 @@ static void
 call_record(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     g_debug("Record button pressed");
-    sflphone_rec_call(client);
+    /* Ensure that button is set to correct state, but suppress signal */
+    g_signal_handler_block(recordWidget_, recordButtonConnId_);
+    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), sflphone_rec_call(client));
+    g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
 }
 
 static void

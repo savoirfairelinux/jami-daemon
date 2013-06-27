@@ -148,15 +148,13 @@ Call::getLocalVideoPort()
 }
 
 bool
-Call::setRecording()
+Call::toggleRecording()
 {
-    bool recordStatus = Recordable::recAudio_.isRecording();
-
-    Recordable::recAudio_.setRecording();
+    const bool startRecording = Recordable::recAudio_.toggleRecording();
     MainBuffer &mbuffer = Manager::instance().getMainBuffer();
     std::string process_id = Recordable::recorder_.getRecorderID();
 
-    if (!recordStatus) {
+    if (startRecording) {
         mbuffer.bindHalfDuplexOut(process_id, id_);
         mbuffer.bindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
 
@@ -168,7 +166,7 @@ Call::setRecording()
 
     Manager::instance().getMainBuffer().dumpInfo();
 
-    return recordStatus;
+    return startRecording;
 }
 
 void Call::time_stop()
