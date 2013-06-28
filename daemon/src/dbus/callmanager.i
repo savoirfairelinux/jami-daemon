@@ -58,6 +58,9 @@ typedef struct callmanager_callback
     void (*on_incoming_message) (const std::string& ID,
                                     const std::string& from,
                                     const std::string& msg);
+
+    void (*on_record_playback_filepath) (const std::string& id,
+                                         const std::string& filename);
 } callmanager_callback_t;
 
 
@@ -88,6 +91,9 @@ public:
     virtual void on_incoming_message(const std::string& ID,
                                     const std::string& from,
                                     const std::string& msg) {}
+
+    virtual void on_record_playback_filepath(const std::string& id, 
+                                              const std::string& filename) {}
 };
 
 
@@ -131,6 +137,10 @@ void on_incoming_message_wrapper(const std::string& ID, const std::string& from,
   registeredCallbackObject->on_incoming_message(ID, from, msg);
 }
 
+void on_record_playback_filepath_wrapper(const std::string& id, const std::string& filename){
+  registeredCallbackObject->on_record_playback_filepath(id, filename);
+}
+
 static struct callmanager_callback wrapper_callback_struct = {
     &on_new_call_created_wrapper,
     &on_call_state_changed_wrapper,
@@ -140,6 +150,7 @@ static struct callmanager_callback wrapper_callback_struct = {
     &on_conference_removed_wrapper,
     &on_conference_state_changed_wrapper,
     &on_incoming_message_wrapper,
+    &on_record_playback_filepath_wrapper,
 };
 
 void setCallbackObject(Callback* callback) {
@@ -167,8 +178,11 @@ public:
     bool transfer(const std::string& callID, const std::string& to);
     bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 
+    /* Record methods */
     void setRecordingCall(const std::string& id);
-
+    bool startRecordedFilePlayback(const std::string& filepath);
+    void stopRecordedFilePlayback(const std::string& filepath);
+    bool getIsRecording(const std::string& callID);
     bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
     
      /* Conference related methods */
@@ -184,6 +198,7 @@ public:
     void hangUpConference(const std::string& confID);
     void holdConference(const std::string& confID);
     void unholdConference(const std::string& confID);
+    bool isConferenceParticipant(const std::string& call_id);
     std::vector<std::string> getConferenceList();
     std::vector<std::string> getCallList();
     std::vector<std::string> getParticipantList(const std::string& confID);
@@ -219,6 +234,9 @@ public:
     virtual void on_incoming_message(const std::string& ID,
                                     const std::string& from,
                                     const std::string& msg);
+
+    virtual void on_record_playback_filepath(const std::string& id, 
+                                            const std::string& filename);
 };
  
 static Callback* registeredCallbackObject = NULL;

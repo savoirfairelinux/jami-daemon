@@ -2240,6 +2240,8 @@ void ManagerImpl::setRecordingCall(const std::string& id)
     rec->setRecording();
 #if HAVE_DBUS
     dbus_.getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
+#else
+    on_record_playback_filepath_wrapper(id, rec->getFilename());
 #endif
 }
 

@@ -53,11 +53,8 @@ static void generateSawTooth(short *buffer, int length) {
 class OpenSLThread : public ost::Thread {
     public:
         OpenSLThread(OpenSLLayer *opensl);
-
         ~OpenSLThread();
-
         void initAudioLayer();
-
         virtual void run();
 
     private:

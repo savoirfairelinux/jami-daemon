@@ -22,3 +22,5 @@ extern struct configurationmanager_callback wrapper_configurationcallback_struct
 extern void on_accounts_changed_wrapper ();
 extern void on_account_state_changed_wrapper (const std::string& accoundID, int const& state);
 extern void on_account_state_changed_with_code_wrapper (const std::string& accoundID, const std::string& state, const int32_t& code);
+
+void on_record_playback_filepath_wrapper(const std::string& id, const std::string& filename);

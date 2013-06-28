@@ -91,6 +91,7 @@ class CallManagerJNI {
         void hangUpConference(const std::string& confID);
         void holdConference(const std::string& confID);
         void unholdConference(const std::string& confID);
+        bool isConferenceParticipant(const std::string& call_id);
         std::vector<std::string> getConferenceList();
         std::vector<std::string> getParticipantList(const std::string& confID);
         std::string getConferenceId(const std::string& callID);

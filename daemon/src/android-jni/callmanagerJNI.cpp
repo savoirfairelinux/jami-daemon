@@ -239,6 +239,12 @@ CallManagerJNI::unholdConference(const std::string& confID)
     Manager::instance().unHoldConference(confID);
 }
 
+bool 
+CallManagerJNI::isConferenceParticipant(const std::string& call_id)
+{
+    return Manager::instance().isConferenceParticipant(call_id);
+}
+
 std::map<std::string, std::string>
 CallManagerJNI::getConferenceDetails(const std::string& callID)
 {
