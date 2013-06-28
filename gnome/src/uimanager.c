@@ -760,20 +760,21 @@ call_configuration_assistant(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpoi
     build_wizard();
 }
 
-static void
-remove_from_history(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+typedef struct
 {
-    callable_obj_t* call = calltab_get_selected_call(history_tab);
+    callable_obj_t *call;
+    SFLPhoneClient *client;
+} EditNumberData;
 
-    g_debug("Remove the call from the history");
-
-    if (call == NULL) {
+static void
+remove_from_history(G_GNUC_UNUSED GtkAction *action, EditNumberData *data)
+{
+    if (data->call == NULL) {
         g_warning("Call is NULL");
         return;
     }
 
-    calllist_remove_from_history(call, client);
-    update_actions(client);
+    calllist_remove_from_history(data->call, data->client);
 }
 
 static void
@@ -1186,12 +1187,6 @@ fail:
     g_free(path);
     return NULL;
 }
-
-typedef struct
-{
-    callable_obj_t *call;
-    SFLPhoneClient *client;
-} EditNumberData;
 
 static void
 edit_number_cb(G_GNUC_UNUSED GtkWidget *widget, EditNumberData *data)
