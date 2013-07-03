@@ -78,6 +78,8 @@
 #include <istream>
 #include <utility> // for std::pair
 #include <algorithm>
+#include "sipvoip_pres.h"
+#include"pjsip-simple/presence.h"
 
 using namespace sfl;
 
@@ -442,6 +444,13 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 } // end anonymous namespace
 
 /*************************************************************************************************/
+pjsip_endpoint * SIPVoIPLink::getEndpoint() {
+    return endpt_;
+}
+
+pjsip_module * SIPVoIPLink::getMod() {
+    return &mod_ua_;
+}
 
 SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     sipCallMapMutex_(), sipCallMap_(), evThread_(this)
@@ -499,6 +508,11 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 
     TRY(pjsip_evsub_init_module(endpt_));
     TRY(pjsip_xfer_init_module(endpt_));
+
+// aol changes
+    TRY(pjsip_pres_init_module(endpt_, pjsip_evsub_instance()));
+    TRY(pjsip_endpt_register_module(endpt_, &my_mod_pres));
+// aol changes end
 
     static const pjsip_inv_callback inv_cb = {
         invite_session_state_changed_cb,
@@ -1539,6 +1553,12 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
               "calling %s", toUri.c_str());
         return false;
     }
+// aol
+    pj_str_t subj_hdr_name = pj_str("Subject");
+    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, "Phone call", 10, NULL);
+
+    pj_list_push_back(&dialog->inv_hdr, subj_hdr);
+// aol
 
     if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
         ERROR("Unable to create invite session for user agent client");
@@ -2315,3 +2335,6 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 #endif
 }
 } // end anonymous namespace
+int SIPVoIPLink::getModId() {
+      return mod_ua_.id;
+}

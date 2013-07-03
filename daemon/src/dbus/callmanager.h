@@ -127,6 +127,9 @@ class CallManager
         /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
 
+        /* Presence subscription */
+        void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
+
     private:
 
 #if HAVE_ZRTP

@@ -814,5 +814,11 @@
             <arg type="b" name="accepted" direction="in"/>
         </method>
 
+        <method name="subscribePresence" tp:name-for-bindings="subscribePresence">
+          <tp:added version="0.9.7"/>
+          <arg type="s" name="accountID" direction="in"/>
+          <arg type="s" name="buddySipUri" direction="in"/>
+        </method>
+
     </interface>
 </node>

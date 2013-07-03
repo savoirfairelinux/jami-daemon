@@ -1041,6 +1041,11 @@ class ManagerImpl {
         void
         checkAudio();
 
+        /**
+         * Subscribe to buddySipUri for an accountID
+         */
+       void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
+
     private:
         NON_COPYABLE(ManagerImpl);
 

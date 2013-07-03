@@ -85,6 +85,8 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 
+#include "sip/sipbuddy.h"
+
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
@@ -2892,4 +2894,12 @@ void ManagerImpl::startAudioDriverStream()
 {
     sfl::ScopedLock lock(audioLayerMutex_);
     audiodriver_->startStream();
+}
+
+void ManagerImpl::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
+{
+    DEBUG("SubscribePresence ");
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
+    SIPBuddy *b = new SIPBuddy(buddySipUri, account);
+    b->subscribe();
 }
