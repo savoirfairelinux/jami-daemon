@@ -736,26 +736,36 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
-void SIPAccount::displayCipherSuite()
+void SIPAccount::trimCiphers()
 {
+    int sum = 0;
+    int count = 0;
+    // PJSIP aborts if our cipher list exceeds 1010 characters
+    static const int MAX_CIPHERS_STRLEN = 1010;
+
     CipherArray::const_iterator iter;
-    for (iter = ciphers.begin(); iter != ciphers.end(); ++iter)
-        DEBUG("Cipher: %s", pj_ssl_cipher_name(*iter));
+    for (iter = ciphers.begin(); iter != ciphers.end(); ++iter) {
+        sum += strlen(pj_ssl_cipher_name(*iter));
+        if (sum > MAX_CIPHERS_STRLEN)
+            break;
+        ++count;
+    }
+    ciphers.resize(count);
+    DEBUG("Using %d ciphers", ciphers.size());
 }
 
 void SIPAccount::initTlsConfiguration()
 {
-    pj_status_t status;
     unsigned cipherNum;
 
     // Determine the cipher list supported on this machine
     cipherNum = ciphers.size();
-    status = pj_ssl_cipher_get_availables(&ciphers.front(), &cipherNum);
-    if (status != PJ_SUCCESS) {
+    if (pj_ssl_cipher_get_availables(&ciphers.front(), &cipherNum) != PJ_SUCCESS)
         ERROR("Could not determine cipher list on this system");
-    }
 
     ciphers.resize(cipherNum);
+
+    trimCiphers();
 
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     pjsip_tls_setting_default(&tlsSetting_);

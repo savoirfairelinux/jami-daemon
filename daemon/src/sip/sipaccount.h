@@ -543,9 +543,10 @@ class SIPAccount : public Account {
         void initTlsConfiguration();
 
         /**
-         * Display the list of ciphers currently supported on the
+         * PJSIP aborts if the string length of our cipher list is too
+         * great, so this function forces our cipher list to fit this constraint.
          */
-        void displayCipherSuite();
+        void trimCiphers();
 #endif
 
         /**
