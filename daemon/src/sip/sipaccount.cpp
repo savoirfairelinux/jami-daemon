@@ -80,7 +80,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , transportType_(PJSIP_TRANSPORT_UNSPECIFIED)
     , cred_()
     , tlsSetting_()
-    , ciphers(100)
+    , ciphers_(100)
     , stunServerName_()
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
@@ -744,14 +744,14 @@ void SIPAccount::trimCiphers()
     static const int MAX_CIPHERS_STRLEN = 1010;
 
     CipherArray::const_iterator iter;
-    for (iter = ciphers.begin(); iter != ciphers.end(); ++iter) {
+    for (iter = ciphers_.begin(); iter != ciphers_.end(); ++iter) {
         sum += strlen(pj_ssl_cipher_name(*iter));
         if (sum > MAX_CIPHERS_STRLEN)
             break;
         ++count;
     }
-    ciphers.resize(count);
-    DEBUG("Using %d ciphers", ciphers.size());
+    ciphers_.resize(count);
+    DEBUG("Using %u ciphers", ciphers_.size());
 }
 
 void SIPAccount::initTlsConfiguration()
@@ -759,11 +759,11 @@ void SIPAccount::initTlsConfiguration()
     unsigned cipherNum;
 
     // Determine the cipher list supported on this machine
-    cipherNum = ciphers.size();
-    if (pj_ssl_cipher_get_availables(&ciphers.front(), &cipherNum) != PJ_SUCCESS)
+    cipherNum = ciphers_.size();
+    if (pj_ssl_cipher_get_availables(&ciphers_.front(), &cipherNum) != PJ_SUCCESS)
         ERROR("Could not determine cipher list on this system");
 
-    ciphers.resize(cipherNum);
+    ciphers_.resize(cipherNum);
 
     trimCiphers();
 
@@ -775,12 +775,12 @@ void SIPAccount::initTlsConfiguration()
     pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
     pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
     tlsSetting_.method = sslMethodStringToPjEnum(tlsMethod_);
-    tlsSetting_.ciphers_num = ciphers.size();
-    tlsSetting_.ciphers = &ciphers.front();
+    tlsSetting_.ciphers_num = ciphers_.size();
+    tlsSetting_.ciphers = &ciphers_.front();
 
-    tlsSetting_.verify_server = tlsVerifyServer_ ? PJ_TRUE: PJ_FALSE;
-    tlsSetting_.verify_client = tlsVerifyClient_ ? PJ_TRUE: PJ_FALSE;
-    tlsSetting_.require_client_cert = tlsRequireClientCertificate_ ? PJ_TRUE: PJ_FALSE;
+    tlsSetting_.verify_server = tlsVerifyServer_;
+    tlsSetting_.verify_client = tlsVerifyClient_;
+    tlsSetting_.require_client_cert = tlsRequireClientCertificate_;
 
     tlsSetting_.timeout.sec = atol(tlsNegotiationTimeoutSec_.c_str());
     tlsSetting_.timeout.msec = atol(tlsNegotiationTimeoutMsec_.c_str());

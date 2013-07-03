@@ -633,9 +633,9 @@ class SIPAccount : public Account {
         pjsip_tls_setting tlsSetting_;
 
         /**
-         * Allocate a static array to be used by pjsip to store the supported ciphers on this system.
+         * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
          */
-        CipherArray ciphers;
+        CipherArray ciphers_;
 
         /**
          * The STUN server name (hostname)
