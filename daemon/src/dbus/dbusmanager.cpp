@@ -93,6 +93,7 @@ DBusManager::DBusManager() : callManager_(0)
     }
 
     DEBUG("DBUS registration done");
+    instanceManager_->started();
 }
 
 DBusManager::~DBusManager()

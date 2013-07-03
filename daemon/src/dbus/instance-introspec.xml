@@ -29,5 +29,8 @@
 				</tp:docstring>
 			</arg>
 		</method>
+        <signal name="started" tp:name-for-bindings="started">
+            <tp:docstring>Notify clients that daemon has started</tp:docstring>
+        </signal>
     </interface>
 </node>
