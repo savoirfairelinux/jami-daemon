@@ -2159,6 +2159,7 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
         sfl::ScopedLock m(toneMutex_);
         audiofile_.reset();
     }
+    dbus_.getCallManager()->recordPlaybackStopped(filepath);
 }
 
 void ManagerImpl::setHistoryLimit(int days)
