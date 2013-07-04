@@ -171,7 +171,6 @@ select_dtmf_type(void)
 
 static GPtrArray* get_new_credential(void)
 {
-    gint row_count = 0;
     GPtrArray *credential_array = g_ptr_array_new();
 
     GtkTreeIter iter;
@@ -187,8 +186,6 @@ static GPtrArray* get_new_credential(void)
                            COLUMN_CREDENTIAL_USERNAME, &username,
                            COLUMN_CREDENTIAL_PASSWORD, &password,
                            -1);
-
-        g_debug("Row %d: %s %s %s", row_count++, username, password, realm);
 
         GHashTable * new_table = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                        g_free, g_free);
