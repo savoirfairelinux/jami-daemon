@@ -814,5 +814,25 @@
             <arg type="b" name="accepted" direction="in"/>
         </method>
 
+        <method name="subscribePresence" tp:name-for-bindings="subscribePresence">
+          <tp:added version="0.9.7"/>
+          <arg type="s" name="accountID" direction="in"/>
+          <arg type="s" name="buddySipUri" direction="in"/>
+        </method>
+        <method name="setPresenceOnline" tp:name-for-bindings="setPresenceOnline">
+          <tp:added version="0.9.7"/>
+          <arg type="s" name="accountID" direction="in"/>
+        </method>
+        <method name="setPresenceOffline" tp:name-for-bindings="setPresenceOffline">
+          <tp:added version="0.9.7"/>
+          <arg type="s" name="accountID" direction="in"/>
+        </method>
+        <signal name="newPresenceNotification" tp:name-for-bindings="newPresenceNotification">
+          <arg type="s" name="buddyUri"/>
+          <arg type="s" name="status"/>
+          <arg type="s" name="lineStatus"/>
+        </signal>
+
+
     </interface>
 </node>
