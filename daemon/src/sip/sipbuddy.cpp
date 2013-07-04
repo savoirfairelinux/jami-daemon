@@ -50,6 +50,9 @@
 #define PJSUA_BUDDY_SUB_TERM_REASON_LEN 32
 #define PJSUA_PRES_TIMER 300
 #define THIS_FILE "sipbuddy.cpp"
+#include "manager.h"
+#include "dbus/dbusmanager.h"
+#include "dbus/callmanager.h"
 
 #include "logger.h"
 //extern pjsip_module mod_ua_;
@@ -255,11 +258,12 @@ static void sflphoned_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata,
     buddy->incLock();
     /* Update our info. */
     pjsip_pres_get_status(sub, &buddy->status);
-    if (buddy->status.info[0] != NULL ) {
-      std::string basic(buddy->status.info[0].basic_open ? "open" : "closed");
-      //ebail : TODO Call here the callback for presence changement
-      ERROR("\n-----------------\n presenceStateChange for %s status=%s note=%s \n-----------------\n", buddy->getURI().c_str(),basic.c_str(),buddy->status.info[0].rpid.note.ptr);
-    }
+    std::string basic(buddy->status.info[0].basic_open ? "open" : "closed");
+    //ebail : TODO Call here the callback for presence changement
+    ERROR("\n-----------------\n presenceStateChange for %s status=%s note=%s \n-----------------\n", buddy->getURI().c_str(),basic.c_str(),buddy->status.info[0].rpid.note.ptr);
+    //ebail: edmit signal
+    Manager::instance().getDbusManager()->getCallManager()->newPresenceNotification(buddy->getURI().c_str(),basic.c_str(),buddy->status.info[0].rpid.note.ptr);
+
 
     /* The default is to send 200 response to NOTIFY.
      * Just leave it there..
