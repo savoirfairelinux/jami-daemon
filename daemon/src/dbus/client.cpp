@@ -39,6 +39,8 @@
 #include "logger.h"
 #include "instance.h"
 
+#include "dbus_cpp.h"
+
 #include "callmanager.h"
 #include "configurationmanager.h"
 #include "networkmanager.h"
@@ -50,7 +52,7 @@
 Client::Client() : callManager_(0)
     , configurationManager_(0)
     , instanceManager_(0)
-    , dispatcher_()
+    , dispatcher_(new DBus::BusDispatcher)
 #ifdef SFL_VIDEO
     , videoControls_(0)
 #endif
@@ -62,7 +64,7 @@ Client::Client() : callManager_(0)
         DEBUG("DBUS init threading");
         DBus::_init_threading();
         DEBUG("DBUS instantiate default dispatcher");
-        DBus::default_dispatcher = &dispatcher_;
+        DBus::default_dispatcher = dispatcher_;
 
         DEBUG("DBUS session connection to session bus");
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
@@ -107,12 +109,13 @@ Client::~Client()
     delete instanceManager_;
     delete configurationManager_;
     delete callManager_;
+    delete dispatcher_;
 }
 
 void Client::event_loop()
 {
     try {
-        dispatcher_.enter();
+        dispatcher_->enter();
     } catch (const DBus::Error &err) {
         ERROR("%s: %s, quitting\n", err.name(), err.what());
         return;
@@ -125,7 +128,7 @@ void Client::event_loop()
 void Client::exit()
 {
     try {
-        dispatcher_.leave();
+        dispatcher_->leave();
     } catch (const DBus::Error &err) {
         ERROR("%s: %s, quitting\n", err.name(), err.what());
         return;

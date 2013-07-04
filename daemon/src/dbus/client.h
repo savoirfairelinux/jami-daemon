@@ -34,7 +34,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "dbus_cpp.h"
 #include "noncopyable.h"
 
 class ConfigurationManager;
@@ -42,6 +41,10 @@ class CallManager;
 class NetworkManager;
 class Instance;
 class VideoControls;
+
+namespace DBus {
+    class BusDispatcher;
+}
 
 class Client {
     public:
@@ -68,7 +71,7 @@ class Client {
         CallManager*          callManager_;
         ConfigurationManager* configurationManager_;
         Instance*             instanceManager_;
-        DBus::BusDispatcher   dispatcher_;
+        DBus::BusDispatcher*  dispatcher_;
 #ifdef SFL_VIDEO
         VideoControls *videoControls_;
 #endif
