@@ -85,12 +85,15 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , enumeratingSources_(false)
     , preference_(pref)
 {
-    setenv("PULSE_PROP_media.role", "phone", 1);
-
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
 
-    context_ = pa_context_new(pa_threaded_mainloop_get_api(mainloop_) , "SFLphone");
+    pa_proplist *pl = pa_proplist_new();
+    pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "phone");
+
+    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_), "SFLphone", pl);
+    if (pl)
+        pa_proplist_free(pl);
 
     if (!context_)
         throw std::runtime_error("Couldn't create pulseaudio context");
