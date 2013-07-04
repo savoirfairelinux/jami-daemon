@@ -47,7 +47,7 @@
 #include "dbus/video_controls.h"
 #endif
 
-DBusManager::DBusManager() : callManager_(0)
+Client::Client() : callManager_(0)
     , configurationManager_(0)
     , instanceManager_(0)
     , dispatcher_()
@@ -96,7 +96,7 @@ DBusManager::DBusManager() : callManager_(0)
     instanceManager_->started();
 }
 
-DBusManager::~DBusManager()
+Client::~Client()
 {
 #ifdef USE_NETWORKMANAGER
     delete networkManager_;
@@ -109,7 +109,7 @@ DBusManager::~DBusManager()
     delete callManager_;
 }
 
-void DBusManager::event_loop()
+void Client::event_loop()
 {
     try {
         dispatcher_.enter();
@@ -122,7 +122,7 @@ void DBusManager::event_loop()
     }
 }
 
-void DBusManager::exit()
+void Client::exit()
 {
     try {
         dispatcher_.leave();

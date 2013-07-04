@@ -835,7 +835,7 @@ class ManagerImpl {
          */
         void playATone(Tone::TONEID toneId);
 
-        DBusManager client_;
+        Client client_;
 
         /** The configuration tree. It contains accounts parameters, general user settings ,audio settings, ... */
         Conf::ConfigTree config_;
@@ -950,10 +950,10 @@ class ManagerImpl {
         bool hasCurrentCall() const;
 
         /**
-         * Return the current DBusManager
-         * @return A pointer to the DBusManager instance
+         * Return the current Client
+         * @return A pointer to the Client instance
          */
-        DBusManager * getDbusManager() {
+        Client* getClient() {
             return &client_;
         }
 

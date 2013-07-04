@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#ifndef __CLIENT_H__
+#define __CLIENT_H__
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -43,10 +43,10 @@ class NetworkManager;
 class Instance;
 class VideoControls;
 
-class DBusManager {
+class Client {
     public:
-        DBusManager();
-        ~DBusManager();
+        Client();
+        ~Client();
 
         CallManager * getCallManager() {
             return callManager_;
@@ -64,7 +64,7 @@ class DBusManager {
         void exit();
 
     private:
-        NON_COPYABLE(DBusManager);
+        NON_COPYABLE(Client);
         CallManager*          callManager_;
         ConfigurationManager* configurationManager_;
         Instance*             instanceManager_;

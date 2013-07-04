@@ -1650,7 +1650,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         if (statusCode) {
             const pj_str_t * description = pjsip_get_status_text(statusCode);
             std::string desc(description->ptr, description->slen);
-            CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
+            CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->sipCallStateChanged(call->getCallId(), desc, statusCode);
         }
     }
@@ -1846,10 +1846,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
                 call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
             } catch (...) {}
 
-            Manager::instance().getDbusManager()->getCallManager()->secureSdesOn(call->getCallId());
+            Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
         } else {
             ERROR("SDES negotiation failure");
-            Manager::instance().getDbusManager()->getCallManager()->secureSdesOff(call->getCallId());
+            Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
         }
     }
     else {
@@ -2104,7 +2104,7 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
-        Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged(accountID, state, param->code);
+        Manager::instance().getClient()->getCallManager()->registrationStateChanged(accountID, state, param->code);
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);

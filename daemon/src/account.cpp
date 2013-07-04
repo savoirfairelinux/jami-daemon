@@ -99,7 +99,7 @@ void Account::setRegistrationState(const RegistrationState &state)
         registrationState_ = state;
 
         // Notify the client
-        ConfigurationManager *c(Manager::instance().getDbusManager()->getConfigurationManager());
+        ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
         c->registrationStateChanged(accountID_, registrationState_);
     }
 }
