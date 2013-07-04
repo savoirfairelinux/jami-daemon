@@ -109,7 +109,7 @@ DBusManager::~DBusManager()
     delete callManager_;
 }
 
-void DBusManager::exec()
+void DBusManager::event_loop()
 {
     try {
         dispatcher_.enter();

@@ -835,7 +835,7 @@ class ManagerImpl {
          */
         void playATone(Tone::TONEID toneId);
 
-        DBusManager dbus_;
+        DBusManager client_;
 
         /** The configuration tree. It contains accounts parameters, general user settings ,audio settings, ... */
         Conf::ConfigTree config_;
@@ -954,12 +954,12 @@ class ManagerImpl {
          * @return A pointer to the DBusManager instance
          */
         DBusManager * getDbusManager() {
-            return &dbus_;
+            return &client_;
         }
 
 #ifdef SFL_VIDEO
         VideoControls * getVideoControls() {
-            return dbus_.getVideoControls();
+            return client_.getVideoControls();
         }
 #endif
 

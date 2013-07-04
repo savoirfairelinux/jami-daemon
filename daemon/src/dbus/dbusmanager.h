@@ -60,7 +60,7 @@ class DBusManager {
         }
 #endif
 
-        void exec();
+        void event_loop();
         void exit();
 
     private:
