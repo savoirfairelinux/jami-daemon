@@ -2898,8 +2898,17 @@ void ManagerImpl::startAudioDriverStream()
 
 void ManagerImpl::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
-    DEBUG("SubscribePresence ");
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
     SIPBuddy *b = new SIPBuddy(buddySipUri, account);
     b->subscribe();
+}
+void ManagerImpl::setPresenceOnline(const std::string& accountID)
+{
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
+    account->notifyServers("open","");
+}
+void ManagerImpl::setPresenceOffline(const std::string& accountID)
+{
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
+    account->notifyServers("close","");
 }

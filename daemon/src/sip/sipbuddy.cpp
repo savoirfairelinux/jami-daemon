@@ -255,14 +255,11 @@ static void sflphoned_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata,
     buddy->incLock();
     /* Update our info. */
     pjsip_pres_get_status(sub, &buddy->status);
-//    if (buddy->status.info[0] != NULL ) {
-#if 0 // ELOI no existing chanState element in info
-    std::string chanState(buddy->status.info[0].chanState.ptr, buddy->status.info[0].chanState.slen);
-#endif
-    std::string basic(buddy->status.info[0].basic_open ? "open" : "closed");
-//ELOI Call here the callback for presence changement
-    ERROR("\n-----------------\n presenceStateChange for %s to %s \n-----------------\n", buddy->getURI().c_str(),basic.c_str());
-//    }
+    if (buddy->status.info[0] != NULL ) {
+      std::string basic(buddy->status.info[0].basic_open ? "open" : "closed");
+      //ebail : TODO Call here the callback for presence changement
+      ERROR("\n-----------------\n presenceStateChange for %s status=%s note=%s \n-----------------\n", buddy->getURI().c_str(),basic.c_str(),buddy->status.info[0].rpid.note.ptr);
+    }
 
     /* The default is to send 200 response to NOTIFY.
      * Just leave it there..
@@ -441,7 +438,6 @@ pj_status_t SIPBuddy::updatePresence() {
     /* Create UAC dialog */
     pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
     status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from, &contact, &uri, NULL, &dlg);
-#if 1
     if (status != PJ_SUCCESS) {
         //pjsua_perror(THIS_FILE, "Unable to create dialog",
          //       status);
@@ -450,7 +446,6 @@ pj_status_t SIPBuddy::updatePresence() {
         //pj_log_pop_indent();
         return PJ_FALSE;
     }
-#endif
     //ELOI add credential for auth - otherwise subscription was failing
     if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
       ERROR("Could not initialize credentials for invite session authentication");
@@ -461,11 +456,9 @@ pj_status_t SIPBuddy::updatePresence() {
      * fails the dialog will be destroyed prematurely.
      */
     pjsip_dlg_inc_lock(dlg);
-    DEBUG("ELOI > pjsip_pres_create_uac ");
 
     status = pjsip_pres_create_uac(dlg, &pres_callback, PJSIP_EVSUB_NO_EVENT_ID, &sub);
     if (status != PJ_SUCCESS) {
-        DEBUG("ELOI > pjsip_pres_create_uac : KO");
         pjsip_evsub_terminate(sub, PJ_FALSE); // = NULL;
         PJ_LOG(4, (THIS_FILE, "Unable to create presence client", status));
         /* This should destroy the dialog since there's no session
@@ -478,7 +471,6 @@ pj_status_t SIPBuddy::updatePresence() {
 //        pj_log_pop_indent();
         return PJ_SUCCESS;
     }
-    DEBUG("ELOI > pjsip_pres_create_uac : OK");
 #if 0
     /* If account is locked to specific transport, then lock dialog
      * to this transport too.

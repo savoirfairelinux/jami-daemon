@@ -458,6 +458,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     , keyframeRequestsMutex_()
     , keyframeRequests_()
 #endif
+  , presenceState()
 {
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -2334,6 +2335,20 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     }
 #endif
 }
+} // end anonymous namespace
+void SIPVoIPLink::setPresenceState(const std::string &accId, const std::string& state) {
+    this->presenceState = state;
+#if 0 // ELOI : modify account management
+    SIPAccount *acc = dynamic_cast<SIPAccount*>(Phone::instance().getAccountById(accId));
+    acc->notifyServers(presenceState, channelState);
+#else
+    SIPAccount *acc = Manager::instance().getSipAccount(accId);
+    /*no need of channelStatte. We put it to NULL */
+    acc->notifyServers(presenceState, NULL);
+#endif
+}
+std::string SIPVoIPLink::getPresenceState() {
+    return this->presenceState;
 } // end anonymous namespace
 int SIPVoIPLink::getModId() {
       return mod_ua_.id;

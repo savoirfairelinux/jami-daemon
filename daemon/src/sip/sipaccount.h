@@ -43,6 +43,7 @@
 #include "pjsip-ua/sip_regc.h"
 #include "noncopyable.h"
 
+#include "ServerPresenceSub.h"
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
 namespace Conf {
@@ -515,6 +516,11 @@ class SIPAccount : public Account {
         /* Returns true if the username and/or hostname match this account */
         bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
+        //void addBuddy(const std::string &uri, bool subscribe);
+        //void removeBuddy(const std::string &uri);
+        void addServerSubscription(ServerPresenceSub *s);
+        void removerServerSubscription(ServerPresenceSub *s);
+        void notifyServers(const std::string &newPresenceStatus, const std::string &newChannelStatus);
     private:
         NON_COPYABLE(SIPAccount);
 
@@ -761,6 +767,13 @@ class SIPAccount : public Account {
          * Optional: via_addr construct from received parameters
          */
         pjsip_host_port via_addr_;
+
+
+        /**
+         * Server subscription (added by ELOI)
+         */
+        std::list< ServerPresenceSub *> serverSubscriptions;
+
 };
 
 #endif

@@ -60,28 +60,17 @@
 
 /* Callback called when *server* subscription state has changed. */
 void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
-    /*****************/
-#if 0 // ELOI : useless code ?
     pjsip_rx_data *rdata = event->body.rx_msg.rdata;
     if(!rdata) {
         PJ_LOG(4, (THIS_FILE, "no rdata in presence"));
         ERROR("no rdata in presence");
         return;
     }
-//    std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
-//    std::string servername(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
-#if 0 //ELOI modify account management
-    std::string accountId = "IP2IP"; //Manager::instance().getAccountIdFromNameAndServer(name, servername);
-    SIPAccount *acc = (SIPAccount *) Phone::instance().getAccountById(accountId);
-#else
-    std::string accountId = "IP2IP";//ELOI TODO is it proper accountId ?
+    std::string accountId = "IP2IP";/* ebail : this code is only used for IP2IP accounts */
     SIPAccount *acc = Manager::instance().getSipAccount(accountId);
-#endif
-    /******************/
     PJ_UNUSED_ARG(event);
-//#if 0
     ServerPresenceSub *server;
-//    PJSUA_LOCK();
+//    PJSUA_LOCK(); /* ebail : FIXME figure out if locking is necessary or not */
     server = (ServerPresenceSub *) pjsip_evsub_get_mod_data(sub,
             ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId() /*my_mod_pres.id*/);
     PJ_LOG(4, (THIS_FILE, "Server subscription to %s is %s", server->remote, pjsip_evsub_get_state_name(sub)));
@@ -93,6 +82,7 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
 
         state = pjsip_evsub_get_state(sub);
 
+        /*  ebail : FIXME check if ths code is usefull */
 #if 0
         if (false pjsua_var.ua_cfg.cb.on_srv_subscribe_state) {
             pj_str_t from;
@@ -107,27 +97,17 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
         if (state == PJSIP_EVSUB_STATE_TERMINATED) {
             pjsip_evsub_set_mod_data(sub, ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId(), NULL);
 //	    pj_list_erase(uapres);
-#if 0 //ELOI modify account management
-            ((SIPAccount*) (Phone::instance().getAccountById(server->accId)))->removerServerSubscription(server);
-#else
-            // ELOI ((SIPAccount*) (Manager::instance().getSipAccount(server->accId)))->removerServerSubscription(server);
-#endif
         }
     }
-//    PJSUA_UNLOCK();
-#endif
+//    PJSUA_UNLOCK(); /* ebail : FIXME figure out if unlocking is necessary or not */
 }
 
 pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
-  return PJ_FALSE;
 
-#if 0 // ELOI useless code ?
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
     pj_str_t *str = &method->name;
     std::string request(str->ptr, str->slen);
-    DEBUG("MY PRESENCE: %s ", request.c_str());
-    DEBUG("\n----------------------BUFFER--------------- \n %s \n ------------------------------------- ",rdata->msg_info.msg_buf);
-    PJ_LOG(1, (THIS_FILE, "> my_pres_on_rx_request" ));
+    DEBUG("my_pres_on_rx_request for %s ", request.c_str());
     pj_str_t contact;
     pj_status_t status;
     pjsip_dialog *dlg;
@@ -142,23 +122,16 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
     pjsua_msg_data msg_data;
     pjsip_evsub_state ev_state;
 
+    /* ebail this code only hande incoming subscribe messages. Otherwise we return FALSE to let other modules handle it */
     if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method, pjsip_get_subscribe_method()) != 0){
-        ERROR("pjsip_method_cmp(&rdata->msg_info.msg->line.req.method, pjsip_get_subscribe_method()) != 0)" );
-        ERROR("Method id = %d",rdata->msg_info.msg->line.req.method.id);
-        ERROR("Method name = %s",rdata->msg_info.msg->line.req.method.name);
         return PJ_FALSE;
     }
 
     std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
     std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
 
-    //std::string accountId = "IP2IP"; //Manager::instance().getAccountIdFromNameAndServer(name, server);
-    std::string accountId = "Account:1371589892"; //Manager::instance().getAccountIdFromNameAndServer(name, server);
-#if 0 //ELOI modify  account management
-    SIPAccount *acc = (SIPAccount *) Phone::instance().getAccountById(accountId);
-#else
+    std::string accountId = "IP2IP"; /* ebail : this code is only used for IP2IP accounts */
     SIPAccount *acc = (SIPAccount *) Manager::instance().getSipAccount(accountId);
-#endif
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
 
     contact = pj_str(strdup(acc->getContactHeader().c_str()));
@@ -171,7 +144,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
 
         pj_strerror(status, errmsg, sizeof(errmsg));
         PJ_LOG(1, (THIS_FILE, "Unable to create UAS dialog for subscription: %s [status=%d]", errmsg, status));
-        //	PJSUA_UNLOCK();
+        //	PJSUA_UNLOCK(); /* ebail : FIXME figure out if unlocking is necessary or not */
         pjsip_endpt_respond_stateless(endpt, rdata, 400, NULL, NULL, NULL);
         return PJ_TRUE;
     }
@@ -197,21 +170,21 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
             status = pjsip_dlg_send_response(dlg, pjsip_rdata_get_tsx(rdata), tdata);
         }
 
-//	PJSUA_UNLOCK();
+//	PJSUA_UNLOCK(); /* ebail : FIXME figure out if unlocking is necessary or not */
         return PJ_TRUE;
     }
 
     /* Attach our data to the subscription: */
-
+/*  ebail : FIXME check if ths code is useful */
 //    uapres = PJ_POOL_ALLOC_T(dlg->pool, pjsua_srv_pres);
 //    uapres->sub = sub;
 //    uapres->
     char* remote = (char*) pj_pool_alloc(dlg->pool, PJSIP_MAX_URL_SIZE);
+/*  ebail : FIXME check if ths code is useful */
 //    uapres->acc_id = acc_id;
 //    uapres->dlg = dlg;
     status = pjsip_uri_print(PJSIP_URI_IN_REQ_URI, dlg->remote.info->uri, remote, PJSIP_MAX_URL_SIZE);
 
-    //ACHTUNG !!
     pjsip_uri_print(PJSIP_URI_IN_CONTACT_HDR, dlg->local.info->uri, contact.ptr, PJSIP_MAX_URL_SIZE);
     ServerPresenceSub *serverSub = new ServerPresenceSub(sub, remote, accountId, dlg);
 
@@ -223,8 +196,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
 //    pjsip_evsub_add_header(sub, &acc->cfg.sub_hdr_list);
     int modId = ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId();
     pjsip_evsub_set_mod_data(sub, modId/*my_mod_pres.id*/, serverSub);
-    PJ_LOG(1, (THIS_FILE, "addServerSubscription" ));
-    // ELOI acc->addServerSubscription(serverSub);
+    acc->addServerSubscription(serverSub);
     /* Add server subscription to the list: */
 //    pj_list_push_back(&pjsua_var.acc[acc_id].pres_srv_list, uapres);
     /* Capture the value of Expires header. */
@@ -236,7 +208,6 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
 
     st_code = (pjsip_status_code) 200;
     reason = pj_str("OK");
-//    pjsua_msg_data_init(&msg_data);
     pj_bzero(&msg_data, sizeof(msg_data));
     pj_list_init(&msg_data.hdr_list);
     pjsip_media_type_init(&msg_data.multipart_ctype, NULL, NULL);
@@ -337,5 +308,4 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
     }
 
     return PJ_TRUE;
-#endif
 }

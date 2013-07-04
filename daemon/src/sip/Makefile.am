@@ -18,7 +18,8 @@ libsiplink_la_SOURCES = \
 		sipbuddy.cpp \
 		sipbuddy.h \
 		sipvoip_pres.cpp \
-		sipvoip_pres.h
+		sipvoip_pres.h \
+		ServerPresenceSub.h
 
 if BUILD_SDES
 libsiplink_la_SOURCES+= sdes_negotiator.cpp \

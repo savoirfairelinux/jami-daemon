@@ -409,3 +409,15 @@ CallManager::subscribePresence(const std::string& accountID, const std::string& 
   DEBUG("subscribePresence");
   Manager::instance().subscribePresence(accountID,buddySipUri);
 }
+void
+CallManager::setPresenceOnline(const std::string& accountID)
+{
+  DEBUG("setPresenceOnline");
+  Manager::instance().setPresenceOnline(accountID);
+}
+void
+CallManager::setPresenceOffline(const std::string& accountID)
+{
+  DEBUG("setPresenceOffline");
+  Manager::instance().setPresenceOffline(accountID);
+}

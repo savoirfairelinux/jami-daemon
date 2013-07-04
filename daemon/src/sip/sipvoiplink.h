@@ -294,9 +294,16 @@ class SIPVoIPLink : public VoIPLink {
         std::string
         getAccountIdFromNameAndServer(const std::string &userName,
                                       const std::string &server) const;
+        // ELOI add of variables
+        std::string presenceState;
+        //---
+        // ELOI add of those prototypes
+        void setPresenceState(const std::string &accId, const std::string& state);
+        std::string getPresenceState();
         int getModId();
         pjsip_endpoint * getEndpoint();
         pjsip_module * getMod();
+        //---
     private:
 
         NON_COPYABLE(SIPVoIPLink);

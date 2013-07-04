@@ -32,12 +32,11 @@
 #ifndef SIPBUDDY_H
 #define	SIPBUDDY_H
 
-//#define THIS_FILE sipbuddy.cpp
+#define THIS_FILE sipbuddy.cpp
 #include <pjsip-simple/presence.h>
 #include <pj/timer.h>
 #include <pj/pool.h>
 #include <string>
-// ELOI #include "misc/noncopyable.h"
 
 #include <pjsip-simple/evsub.h>
 #include <pjsip-simple/evsub_msg.h>
@@ -87,7 +86,6 @@ public:
     }
 
 private:
-    //ELOI FIXME NON_COPYABLE(SIPBuddy);
 
     void rescheduleTimer(bool reschedule, unsigned msec);
 

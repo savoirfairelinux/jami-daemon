@@ -1046,6 +1046,13 @@ class ManagerImpl {
          */
        void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
 
+        /**
+         * push a presence for a account
+         * only used for IP2IP accounts
+         */
+        void setPresenceOnline(const std::string& accountID);
+        void setPresenceOffline(const std::string& accountID);
+
     private:
         NON_COPYABLE(ManagerImpl);
 
