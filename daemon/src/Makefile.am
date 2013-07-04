@@ -76,7 +76,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		preferences.cpp \
 		managerimpl.cpp \
 		manager.cpp \
-		managerimpl_registration.cpp \
 		eventthread.cpp \
 		call.cpp \
 		account.cpp \

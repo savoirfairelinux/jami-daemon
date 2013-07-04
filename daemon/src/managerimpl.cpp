@@ -2894,3 +2894,57 @@ void ManagerImpl::startAudioDriverStream()
     sfl::ScopedLock lock(audioLayerMutex_);
     audiodriver_->startStream();
 }
+
+void
+ManagerImpl::registerAccounts()
+{
+    AccountMap allAccounts(getAllAccounts());
+
+    for (AccountMap::iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
+        Account *a = iter->second;
+
+        if (!a)
+            continue;
+
+        a->loadConfig();
+
+        if (a->isEnabled())
+            a->registerVoIPLink();
+    }
+}
+
+
+VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID)
+{
+    Account *account = getAccount(accountID);
+    if (account == NULL) {
+        DEBUG("Could not find account for account %s, returning sip voip", accountID.c_str());
+        return SIPVoIPLink::instance();
+    }
+
+    if (not accountID.empty())
+        return account->getVoIPLink();
+    else {
+        DEBUG("Account id is empty for voip link, returning sip voip");
+        return SIPVoIPLink::instance();
+    }
+}
+
+
+void
+ManagerImpl::sendRegister(const std::string& accountID, bool enable)
+{
+    Account* acc = getAccount(accountID);
+    if (!acc)
+        return;
+
+    acc->setEnabled(enable);
+    acc->loadConfig();
+
+    Manager::instance().saveConfig();
+
+    if (acc->isEnabled())
+        acc->registerVoIPLink();
+    else
+        acc->unregisterVoIPLink();
+}
