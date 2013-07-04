@@ -59,7 +59,7 @@
 #include "pjsip/sip_transport_tls.h"
 #endif
 
-#include "dbus/dbusmanager.h"
+#include "dbus/client.h"
 #include "dbus/configurationmanager.h"
 
 static const char * const DEFAULT_INTERFACE = "default";

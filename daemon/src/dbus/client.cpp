@@ -33,7 +33,7 @@
 #endif
 
 #include <cstdlib>
-#include "dbusmanager.h"
+#include "client.h"
 #include "global.h"
 #include "manager.h"
 #include "logger.h"

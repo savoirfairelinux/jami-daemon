@@ -52,7 +52,7 @@
 #endif
 #include "array_size.h"
 
-#include "dbus/dbusmanager.h"
+#include "dbus/client.h"
 #include "dbus/callmanager.h"
 #include "dbus/configurationmanager.h"
 

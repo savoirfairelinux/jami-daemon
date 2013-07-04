@@ -29,7 +29,7 @@ libdbus_la_SOURCES = \
     callmanager.cpp \
     configurationmanager.cpp  \
     instance.cpp  \
-    dbusmanager.cpp
+    client.cpp
 
 if SFL_VIDEO
 libdbus_la_SOURCES+=video_controls.cpp
@@ -52,7 +52,7 @@ noinst_HEADERS =            \
     callmanager.h           \
     configurationmanager.h  \
     instance.h              \
-    dbusmanager.h           \
+    client.h                \
     networkmanager_proxy.h  \
     networkmanager.h        \
     dbus_cpp.h        		\
