@@ -46,7 +46,7 @@
 #include "networkmanager.h"
 
 #ifdef SFL_VIDEO
-#include "dbus/video_controls.h"
+#include "video_controls.h"
 #endif
 
 Client::Client() : callManager_(0)

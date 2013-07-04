@@ -52,9 +52,9 @@
 #endif
 #include "array_size.h"
 
-#include "dbus/client.h"
-#include "dbus/callmanager.h"
-#include "dbus/configurationmanager.h"
+#include "client/client.h"
+#include "client/callmanager.h"
+#include "client/configurationmanager.h"
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -64,7 +64,7 @@
 
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
-#include "dbus/video_controls.h"
+#include "client/video_controls.h"
 #endif
 
 #include "pjsip/sip_endpoint.h"

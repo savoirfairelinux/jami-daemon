@@ -59,8 +59,8 @@
 #include "pjsip/sip_transport_tls.h"
 #endif
 
-#include "dbus/client.h"
-#include "dbus/configurationmanager.h"
+#include "client/client.h"
+#include "client/configurationmanager.h"
 
 static const char * const DEFAULT_INTERFACE = "default";
 static const char * const ANY_HOSTS = "0.0.0.0";

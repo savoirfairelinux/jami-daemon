@@ -40,7 +40,7 @@
 #include "managerimpl.h"
 #include "account_schema.h"
 
-#include "dbus/callmanager.h"
+#include "client/callmanager.h"
 #include "global.h"
 #include "fileutils.h"
 #include "map_utils.h"
@@ -65,9 +65,9 @@
 #include "history/historynamecache.h"
 #include "manager.h"
 
-#include "dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 #ifdef SFL_VIDEO
-#include "dbus/video_controls.h"
+#include "client/video_controls.h"
 #endif
 
 #include "conference.h"
@@ -178,7 +178,7 @@ void ManagerImpl::init(const std::string &config_file)
 
 void ManagerImpl::run()
 {
-    DEBUG("Starting DBus event loop");
+    DEBUG("Starting client event loop");
     client_.event_loop();
 }
 
@@ -416,8 +416,7 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     AudioLayer *al = getAudioDriver();
     if(al) al->setPlaybackMode(AudioLayer::NONE);
 
-    /* Broadcast a signal over DBus */
-    DEBUG("Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
+    DEBUG("Send call state change (HUNGUP) for id %s", callId.c_str());
     client_.getCallManager()->callStateChanged(callId, "HUNGUP");
 
     /* We often get here when the call was hungup before being created */
@@ -695,7 +694,6 @@ ManagerImpl::createConference(const std::string& id1, const std::string& id2)
     // Add conference to map
     conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
 
-    // broadcast a signal over dbus
     client_.getCallManager()->conferenceCreated(conf->getConfID());
 
     return conf;
@@ -717,7 +715,6 @@ void ManagerImpl::removeConference(const std::string& conference_id)
         return;
     }
 
-    // broadcast a signal over dbus
     client_.getCallManager()->conferenceRemoved(conference_id);
 
     // We now need to bind the audio to the remain participant
@@ -1680,7 +1677,6 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         }
     }
 
-    /* Broadcast a signal over DBus */
     client_.getCallManager()->callStateChanged(call_id, "HUNGUP");
 
     removeWaitingCall(call_id);

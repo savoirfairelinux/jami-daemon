@@ -46,7 +46,7 @@
 #include <tr1/memory>
 
 #include <pthread.h>
-#include "dbus/client.h"
+#include "client/client.h"
 
 #include "config/sfl_config.h"
 

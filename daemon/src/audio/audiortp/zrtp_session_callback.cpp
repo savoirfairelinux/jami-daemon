@@ -30,8 +30,8 @@
 #include "zrtp_session_callback.h"
 #include "logger.h"
 #include "sip/sipcall.h"
-#include "dbus/client.h"
-#include "dbus/callmanager.h"
+#include "client/client.h"
+#include "client/callmanager.h"
 #include "manager.h"
 
 #include <cstdlib>

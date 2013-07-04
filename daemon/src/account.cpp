@@ -42,7 +42,7 @@
 
 #include "logger.h"
 #include "manager.h"
-#include "dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 
 const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY =      "videoCodecs";

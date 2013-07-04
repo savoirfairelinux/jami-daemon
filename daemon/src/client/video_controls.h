@@ -122,4 +122,3 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
 };
 
 #endif // VIDEO_CONTROLS_H_
-

@@ -47,4 +47,3 @@ class NetworkManager : public org::freedesktop::NetworkManager_proxy,
         void PropertiesChanged(const std::map<std::string, ::DBus::Variant> &argin0);
 };
 #endif
-
