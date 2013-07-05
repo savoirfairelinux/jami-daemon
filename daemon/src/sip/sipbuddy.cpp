@@ -260,17 +260,17 @@ static void sflphoned_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata,
     pjsip_pres_get_status(sub, &buddy->status);
     const std::string basic(buddy->status.info[0].basic_open ? "open" : "closed");
 
-    if (buddy->status.info[0].rpid.note.ptr) {
-        //ebail : TODO Call here the callback for presence changement
-        ERROR("\n-----------------\n"
-              "presenceStateChange for %s status=%s note=%s \n-----------------\n",
-              buddy->getURI().c_str(),
-              basic.c_str(),
-              buddy->status.info[0].rpid.note.ptr);
-        //ebail: edmit signal
-        Manager::instance().getDbusManager()->getCallManager()->newPresenceNotification(buddy->getURI().c_str(),
-                basic.c_str(), buddy->status.info[0].rpid.note.ptr);
-    }
+    //ebail : TODO Call here the callback for presence changement
+    const std::string note(buddy->status.info[0].rpid.note.ptr ? buddy->status.info[0].rpid.note.ptr : "");
+
+    ERROR("\n-----------------\n"
+            "presenceStateChange for %s status=%s note=%s \n-----------------\n",
+            buddy->getURI().c_str(),
+            basic.c_str(),
+            note.c_str());
+
+    //ebail: edmit signal
+    Manager::instance().getDbusManager()->getCallManager()->newPresenceNotification(buddy->getURI(), basic, note);
 
     /* The default is to send 200 response to NOTIFY.
      * Just leave it there..
