@@ -37,7 +37,6 @@
 #include <bits/stringfwd.h>
 #include <bits/basic_string.h>
 
-#define THIS_FILE "sipvoip_pres.cpp"
 #include "pjsip/sip_dialog.h"
 #include "pjsip/sip_msg.h"
 #include "pjsip/sip_ua_layer.h"
@@ -62,7 +61,6 @@
 void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
     pjsip_rx_data *rdata = event->body.rx_msg.rdata;
     if(!rdata) {
-        PJ_LOG(4, (THIS_FILE, "no rdata in presence"));
         ERROR("no rdata in presence");
         return;
     }
@@ -73,12 +71,12 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
 //    PJSUA_LOCK(); /* ebail : FIXME figure out if locking is necessary or not */
     server = (ServerPresenceSub *) pjsip_evsub_get_mod_data(sub,
             ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId() /*my_mod_pres.id*/);
-    PJ_LOG(4, (THIS_FILE, "Server subscription to %s is %s", server->remote, pjsip_evsub_get_state_name(sub)));
+    WARN("Server subscription to %s is %s", server->remote, pjsip_evsub_get_state_name(sub));
 
     if (server) {
         pjsip_evsub_state state;
 
-        PJ_LOG(4, (THIS_FILE, "Server subscription to %s is %s", server->remote, pjsip_evsub_get_state_name(sub)));
+        WARN("Server subscription to %s is %s", server->remote, pjsip_evsub_get_state_name(sub));
 
         state = pjsip_evsub_get_state(sub);
 
@@ -143,7 +141,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
         char errmsg[PJ_ERR_MSG_SIZE];
 
         pj_strerror(status, errmsg, sizeof(errmsg));
-        PJ_LOG(1, (THIS_FILE, "Unable to create UAS dialog for subscription: %s [status=%d]", errmsg, status));
+        WARN("Unable to create UAS dialog for subscription: %s [status=%d]", errmsg, status);
         //	PJSUA_UNLOCK(); /* ebail : FIXME figure out if unlocking is necessary or not */
         pjsip_endpt_respond_stateless(endpt, rdata, 400, NULL, NULL, NULL);
         return PJ_TRUE;
@@ -159,7 +157,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
         int code = PJSIP_ERRNO_TO_SIP_STATUS(status);
         pjsip_tx_data *tdata;
 
-        PJ_LOG(1, (THIS_FILE, "Unable to create server subscription %d", status));
+        WARN("Unable to create server subscription %d", status);
 
         if (code == 599 || code > 699 || code < 300) {
             code = 400;
@@ -216,7 +214,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
     /* Create and send 2xx response to the SUBSCRIBE request: */
     status = pjsip_pres_accept(sub, rdata, st_code, &msg_data.hdr_list);
     if (status != PJ_SUCCESS) {
-        PJ_LOG(1, (THIS_FILE, "Unable to accept presence subscription %d", status));
+        WARN("Unable to accept presence subscription %d", status);
 //	pj_list_erase(uapres);
         pjsip_pres_terminate(sub, PJ_FALSE);
 //	PJSUA_UNLOCK();
@@ -279,7 +277,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
             pjsip_hdr *new_hdr;
 
             new_hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, hdr);
-            PJ_LOG(1, ("adding header", new_hdr->name.ptr));
+            WARN("adding header", new_hdr->name.ptr);
             pjsip_msg_add_hdr(tdata->msg, new_hdr);
 
             hdr = hdr->next;
@@ -300,7 +298,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
     }
 
     if (status != PJ_SUCCESS) {
-        PJ_LOG(1, (THIS_FILE, "Unable to create/send NOTIFY %d", status));
+        WARN("Unable to create/send NOTIFY %d", status);
 //	pj_list_erase(srv_pres);
         pjsip_pres_terminate(sub, PJ_FALSE);
 //	PJSUA_UNLOCK();

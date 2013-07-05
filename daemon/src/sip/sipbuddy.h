@@ -32,7 +32,6 @@
 #ifndef SIPBUDDY_H
 #define	SIPBUDDY_H
 
-#define THIS_FILE sipbuddy.cpp
 #include <pjsip-simple/presence.h>
 #include <pj/timer.h>
 #include <pj/pool.h>

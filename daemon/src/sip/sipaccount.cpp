@@ -1220,24 +1220,22 @@ bool SIPAccount::isIP2IP() const
 
 /* Presence : Method used to add serverSubscription to ServerPresenceSub list in case of IP2IP accounts */
 void SIPAccount::addServerSubscription(ServerPresenceSub *s) {
-    this->serverSubscriptions.push_back(s);
-     PJ_LOG(4, ("sipaccount.cpp", "server subscription added"));
+    serverSubscriptions.push_back(s);
+    DEBUG("server subscription added");
 }
 
 /* Presence : Method used to remove serverSubscription to ServerPresenceSub list in case of IP2IP accounts */
 void SIPAccount::removerServerSubscription(ServerPresenceSub *s) {
-    this->serverSubscriptions.remove(s);
-     PJ_LOG(4, ("sipaccount.cpp", "server subscription removed"));
+    serverSubscriptions.remove(s);
+    DEBUG("server subscription removed");
 }
 
 /* Presence : Method used to notify each serverSubscription of a new presencein case of IP2IP accounts */
 void SIPAccount::notifyServers(const std::string &newPresenceStatus, const std::string &newChannelStatus) {
     std::list< ServerPresenceSub *>::iterator serverIt;
-    PJ_LOG(4, ("sipaccount.cpp", "iterating through servers"));
-    for( serverIt = serverSubscriptions.begin(); serverIt != serverSubscriptions.end(); serverIt++) {
-       (*serverIt)->notify(newPresenceStatus, newChannelStatus);
-       PJ_LOG(4, ("sipaccount.cpp", "."));
-    }
+    DEBUG("iterating through servers");
+    for (serverIt = serverSubscriptions.begin(); serverIt != serverSubscriptions.end(); serverIt++)
+        (*serverIt)->notify(newPresenceStatus, newChannelStatus);
 }
 /*
  * Presence Management for IP2IP accounts

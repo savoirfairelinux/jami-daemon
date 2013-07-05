@@ -8,7 +8,7 @@
 #ifndef SERVERPRESENCESUB_H
 #define	SERVERPRESENCESUB_H
 
-#include <pj/log.h>
+#include "logger.h"
 #include <pjsip-simple/evsub.h>
 #include"pjsip-simple/presence.h"
 
@@ -27,7 +27,7 @@ public:
     }
 
     inline void notify(const std::string &newPresenceState, const std::string &newChannelState) {
-        PJ_LOG(4, ("ServerPresence.h", "notifying %s", remote));
+        DEBUG("notifying %s", remote);
 
         pjsip_pres_status pres_status;
         pjsip_tx_data *tdata;

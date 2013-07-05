@@ -49,7 +49,6 @@
 
 #define PJSUA_BUDDY_SUB_TERM_REASON_LEN 32
 #define PJSUA_PRES_TIMER 300
-#define THIS_FILE "sipbuddy.cpp"
 #include "manager.h"
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
@@ -79,8 +78,8 @@ static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
     buddy = (SIPBuddy *) pjsip_evsub_get_mod_data(sub, modId);
     if (buddy) {
         buddy->incLock();
-        PJ_LOG(4,
-                (THIS_FILE, "Presence subscription to '%s' is '%s'", buddy->getURI().c_str(), pjsip_evsub_get_state_name(sub)?pjsip_evsub_get_state_name(sub):"null"));
+        DEBUG("Presence subscription to '%s' is '%s'", buddy->getURI().c_str(),
+            pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 //	pj_log_push_indent();
 
         if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
@@ -312,7 +311,7 @@ SIPBuddy::~SIPBuddy() {
     while(lock_count >0) {
         usleep(200);
     }
-    PJ_LOG(4, ("Destroying buddy object with uri %s", uri.ptr));
+    DEBUG("Destroying buddy object with uri %s", uri.ptr);
     monitor = false;
     rescheduleTimer(PJ_FALSE, 0);
     updatePresence();
@@ -344,8 +343,8 @@ void SIPBuddy::rescheduleTimer(bool reschedule, unsigned msec) {
     if (reschedule) {
         pj_time_val delay;
 
-        PJ_LOG(4,
-                (THIS_FILE, "Resubscribing buddy  %.*s in %u ms (reason: %.*s)", uri.slen, uri.ptr, msec, (int) term_reason.slen, term_reason.ptr));
+        DEBUG("Resubscribing buddy  %.*s in %u ms (reason: %.*s)",
+              uri.slen, uri.ptr, msec, (int) term_reason.slen, term_reason.ptr);
         monitor = PJ_TRUE;
         pj_timer_entry_init(&timer, 0, this, &buddy_timer_cb);
         delay.sec = 0;
@@ -376,7 +375,7 @@ pj_status_t SIPBuddy::updatePresence() {
             return PJ_SUCCESS;
         }
 
-        PJ_LOG(5, (THIS_FILE, "Buddy %s: unsubscribing..", uri.ptr));
+        DEBUG("Buddy %s: unsubscribing..", uri.ptr);
 
         retStatus = pjsip_pres_initiate(sub, 300, &tdata);
         if (retStatus == PJ_SUCCESS) {
@@ -397,7 +396,7 @@ pj_status_t SIPBuddy::updatePresence() {
         if (retStatus != PJ_SUCCESS && sub) {
             pjsip_pres_terminate(sub, PJ_FALSE);
             pjsip_evsub_terminate(sub, PJ_FALSE); // = NULL;
-            PJ_LOG(4, (THIS_FILE, "Unable to unsubscribe presence", status));
+            WARN("Unable to unsubscribe presence", status);
         }
 //        pjsip_evsub_set_mod_data(sub, modId, NULL);
         return PJ_SUCCESS;
@@ -405,7 +404,6 @@ pj_status_t SIPBuddy::updatePresence() {
 
 #if 0
     if (sub && sub->dlg) { //do not bother if already subscribed
-//        PJ_LOG(4, (THIS_FILE, "Buddy %s: already subscribed", uri.ptr));
 //        return PJ_SUCCESS;
         pjsip_evsub_terminate(sub, PJ_FALSE);
     }
@@ -424,7 +422,8 @@ pj_status_t SIPBuddy::updatePresence() {
     pres_callback.on_tsx_state = &sflphoned_evsub_on_tsx_state;
     pres_callback.on_rx_notify = &sflphoned_evsub_on_rx_notify;
 
-    PJ_LOG(4, (THIS_FILE, "Buddy %s: subscribing presence,using account %s..", uri.ptr, acc->getAccountID().c_str()));
+    DEBUG("Buddy %s: subscribing presence,using account %s..",
+          uri.ptr, acc->getAccountID().c_str());
 
     /* Generate suitable Contact header unless one is already set in
      * the account
@@ -471,7 +470,7 @@ pj_status_t SIPBuddy::updatePresence() {
     status = pjsip_pres_create_uac(dlg, &pres_callback, PJSIP_EVSUB_NO_EVENT_ID, &sub);
     if (status != PJ_SUCCESS) {
         pjsip_evsub_terminate(sub, PJ_FALSE); // = NULL;
-        PJ_LOG(4, (THIS_FILE, "Unable to create presence client", status));
+        WARN("Unable to create presence client", status);
         /* This should destroy the dialog since there's no session
          * referencing it
          */
@@ -518,7 +517,7 @@ pj_status_t SIPBuddy::updatePresence() {
             pjsip_pres_terminate(sub, PJ_FALSE);
         }
         pjsip_evsub_terminate(sub, PJ_FALSE); // = NULL;
-        PJ_LOG(4, (THIS_FILE, "Unable to create initial SUBSCRIBE", status));
+        WARN("Unable to create initial SUBSCRIBE", status);
 //        if (tmp_pool) pj_pool_release(tmp_pool);
 //        pj_log_pop_indent();
         return PJ_SUCCESS;
@@ -535,7 +534,7 @@ pj_status_t SIPBuddy::updatePresence() {
             sub = NULL;
         }
 
-        PJ_LOG(4, (THIS_FILE, "Unable to send initial SUBSCRIBE", status));
+        WARN("Unable to send initial SUBSCRIBE", status);
 //        if (tmp_pool) pj_pool_release(tmp_pool);
 //        pj_log_pop_indent();
         return PJ_SUCCESS;
