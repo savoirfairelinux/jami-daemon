@@ -1,5 +1,5 @@
 /*
- * File:   ServerPresenceSub.h
+ * File: PresenceSubscription.h
  * Author: aol
  *
  * Created on April 24, 2012, 10:13 AM
@@ -13,9 +13,9 @@
 #include"pjsip-simple/presence.h"
 
 
-class ServerPresenceSub {
+class PresenceSubscription {
 public:
-    ServerPresenceSub(pjsip_evsub *evsub, char *r, std::string acc_Id, pjsip_dialog *d):
+    PresenceSubscription(pjsip_evsub *evsub, char *r, std::string acc_Id, pjsip_dialog *d):
         sub(evsub)
         , remote(r)
         , accId(acc_Id)
@@ -65,7 +65,7 @@ public:
     friend pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata);
 
 private:
-    NON_COPYABLE(ServerPresenceSub);
+    NON_COPYABLE(PresenceSubscription);
     pjsip_evsub	    *sub;	    /**< The evsub.			    */
     char            *remote;	    /**< Remote URI.			    */
     std::string	    accId;	    /**< Account ID.			    */

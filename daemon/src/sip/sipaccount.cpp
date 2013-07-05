@@ -1214,25 +1214,25 @@ bool SIPAccount::isIP2IP() const
  * Presence Management for IP2IP accounts
  *
  * when the account receive a SUBSCRIBE from an IP account,
- * a new ServerPresenceSub of this account is added to ServerPresenceSub list.
+ * a new PresenceSubscription of this account is added to PresenceSubscription list.
  * Then notifications can be send to each serverSubscriptions element
  */
 
-/* Presence : Method used to add serverSubscription to ServerPresenceSub list in case of IP2IP accounts */
-void SIPAccount::addServerSubscription(ServerPresenceSub *s) {
+/* Presence : Method used to add serverSubscription to PresenceSubscription list in case of IP2IP accounts */
+void SIPAccount::addServerSubscription(PresenceSubscription *s) {
     serverSubscriptions.push_back(s);
     DEBUG("server subscription added");
 }
 
-/* Presence : Method used to remove serverSubscription to ServerPresenceSub list in case of IP2IP accounts */
-void SIPAccount::removerServerSubscription(ServerPresenceSub *s) {
+/* Presence : Method used to remove serverSubscription to PresenceSubscription list in case of IP2IP accounts */
+void SIPAccount::removerServerSubscription(PresenceSubscription *s) {
     serverSubscriptions.remove(s);
     DEBUG("server subscription removed");
 }
 
 /* Presence : Method used to notify each serverSubscription of a new presencein case of IP2IP accounts */
 void SIPAccount::notifyServers(const std::string &newPresenceStatus, const std::string &newChannelStatus) {
-    std::list< ServerPresenceSub *>::iterator serverIt;
+    std::list< PresenceSubscription *>::iterator serverIt;
     DEBUG("iterating through servers");
     for (serverIt = serverSubscriptions.begin(); serverIt != serverSubscriptions.end(); serverIt++)
         (*serverIt)->notify(newPresenceStatus, newChannelStatus);

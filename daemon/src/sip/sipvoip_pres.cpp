@@ -67,16 +67,16 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
     std::string accountId = "IP2IP";/* ebail : this code is only used for IP2IP accounts */
     SIPAccount *acc = Manager::instance().getSipAccount(accountId);
     PJ_UNUSED_ARG(event);
-    ServerPresenceSub *server;
+    PresenceSubscription *presenceSub;
 //    PJSUA_LOCK(); /* ebail : FIXME figure out if locking is necessary or not */
-    server = (ServerPresenceSub *) pjsip_evsub_get_mod_data(sub,
+    presenceSub = (PresenceSubscription *) pjsip_evsub_get_mod_data(sub,
             ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId() /*my_mod_pres.id*/);
-    WARN("Server subscription to %s is %s", server->remote, pjsip_evsub_get_state_name(sub));
+    WARN("Presence subscription to %s is %s", presenceSub->remote, pjsip_evsub_get_state_name(sub));
 
-    if (server) {
+    if (presenceSub) {
         pjsip_evsub_state state;
 
-        WARN("Server subscription to %s is %s", server->remote, pjsip_evsub_get_state_name(sub));
+        WARN("Server subscription to %s is %s", presenceSub->remote, pjsip_evsub_get_state_name(sub));
 
         state = pjsip_evsub_get_state(sub);
 
@@ -184,7 +184,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
     status = pjsip_uri_print(PJSIP_URI_IN_REQ_URI, dlg->remote.info->uri, remote, PJSIP_MAX_URL_SIZE);
 
     pjsip_uri_print(PJSIP_URI_IN_CONTACT_HDR, dlg->local.info->uri, contact.ptr, PJSIP_MAX_URL_SIZE);
-    ServerPresenceSub *serverSub = new ServerPresenceSub(sub, remote, accountId, dlg);
+    PresenceSubscription *presenceSub = new PresenceSubscription(sub, remote, accountId, dlg);
 
     if (status < 1)
         pj_ansi_strcpy(remote, "<-- url is too long-->");
@@ -193,16 +193,16 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
 
 //    pjsip_evsub_add_header(sub, &acc->cfg.sub_hdr_list);
     int modId = ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId();
-    pjsip_evsub_set_mod_data(sub, modId/*my_mod_pres.id*/, serverSub);
-    acc->addServerSubscription(serverSub);
+    pjsip_evsub_set_mod_data(sub, modId/*my_mod_pres.id*/, presenceSub);
+    acc->addServerSubscription(presenceSub);
     /* Add server subscription to the list: */
 //    pj_list_push_back(&pjsua_var.acc[acc_id].pres_srv_list, uapres);
     /* Capture the value of Expires header. */
     expires_hdr = (pjsip_expires_hdr*) pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_EXPIRES, NULL);
     if (expires_hdr)
-        serverSub->setExpires(expires_hdr->ivalue);
+        presenceSub->setExpires(expires_hdr->ivalue);
     else
-        serverSub->setExpires(-1);
+        presenceSub->setExpires(-1);
 
     st_code = (pjsip_status_code) 200;
     reason = pj_str("OK");
@@ -250,7 +250,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
     pjsip_pres_set_status(sub, &pres_status);
 
     ev_state = PJSIP_EVSUB_STATE_ACTIVE;
-    if (serverSub->expires == 0)
+    if (presenceSub->expires == 0)
         ev_state = PJSIP_EVSUB_STATE_TERMINATED;
 
     /* Create and send the NOTIFY to active subscription: */
