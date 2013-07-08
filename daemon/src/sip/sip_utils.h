@@ -37,7 +37,7 @@
 
 #include <pjsip/sip_msg.h>
 
-class pjsip_msg;
+struct pjsip_msg;
 
 namespace sip_utils {
     /**

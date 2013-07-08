@@ -45,7 +45,9 @@ if [ ! -e ${LAUNCHPAD_PO_ARCHIVE} ]; then
     exit
 fi
 
-tar -zxvf $LAUNCHPAD_PO_ARCHIVE
+mkdir -p launchpad-import
+
+tar -zxvf $LAUNCHPAD_PO_ARCHIVE -C launchpad-import
 
 if [ ! -d ${LAUNCHPAD_PATH} ]; then
     echo "Error, directory "$LAUNCHPAD_PATH" does not exist"

@@ -36,7 +36,7 @@
 #include "sdp.h"
 #include "manager.h"
 #ifdef SFL_VIDEO
-#include "dbus/video_controls.h"
+#include "client/video_controls.h"
 #endif
 
 namespace {
@@ -45,12 +45,13 @@ namespace {
 }
 
 SIPCall::SIPCall(const std::string& id, Call::CallType type,
-                 pj_caching_pool *caching_pool) : Call(id, type)
+        pj_caching_pool *caching_pool, const std::string &account_id) :
+    Call(id, type, account_id)
     , inv(NULL)
     , audiortp_(this)
 #ifdef SFL_VIDEO
     // The ID is used to associate video streams to calls
-    , videortp_(id, Manager::instance().getDbusManager()->getVideoControls()->getSettings())
+    , videortp_(id, Manager::instance().getClient()->getVideoControls()->getSettings())
 #endif
     , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))

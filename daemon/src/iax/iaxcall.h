@@ -47,7 +47,7 @@ class IAXCall : public Call {
          * @param id  The unique ID of the call
          * @param type  The type of the call
          */
-        IAXCall(const std::string& id, Call::CallType type);
+        IAXCall(const std::string& id, Call::CallType type, const std::string &account_id);
 
         /**
          * @return int  The bitwise list of supported formats

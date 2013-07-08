@@ -35,4 +35,5 @@ typedef struct {
     char passwd[200];
 } rest_account;
 
-rest_account get_rest_account (char *host, char *email);
+rest_account
+get_rest_account(const char *host, const char *email);

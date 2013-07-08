@@ -34,13 +34,15 @@
 #endif
 #include "account.h"
 #include <algorithm>
+#include <iterator>
+
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
 #endif
 
 #include "logger.h"
 #include "manager.h"
-#include "dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 
 const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY =      "videoCodecs";
@@ -97,7 +99,7 @@ void Account::setRegistrationState(const RegistrationState &state)
         registrationState_ = state;
 
         // Notify the client
-        ConfigurationManager *c(Manager::instance().getDbusManager()->getConfigurationManager());
+        ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
         c->registrationStateChanged(accountID_, registrationState_);
     }
 }
@@ -195,6 +197,37 @@ void Account::setVideoCodecs(const vector<map<string, string> > &list)
 #endif
 }
 
+namespace {
+
+// Convert a list of payloads in a special format, readable by the server.
+// Required format: payloads separated by slashes.
+// @return std::string The serializable string
+
+std::string join_string(const std::vector<std::string> &v)
+{
+    std::ostringstream os;
+    std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
+    return os.str();
+}
+}
+
+std::vector<std::string>
+Account::split_string(std::string s)
+{
+    std::vector<std::string> list;
+    std::string temp;
+
+    while (s.find("/", 0) != std::string::npos) {
+        size_t pos = s.find("/", 0);
+        temp = s.substr(0, pos);
+        s.erase(0, pos + 1);
+        list.push_back(temp);
+    }
+
+    return list;
+}
+
+
 void Account::setActiveAudioCodecs(const vector<string> &list)
 {
     // first clear the previously stored codecs
@@ -208,7 +241,7 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
     }
 
     // update the codec string according to new codec selection
-    audioCodecStr_ = ManagerImpl::join_string(list);
+    audioCodecStr_ = join_string(list);
 }
 
 string Account::mapStateNumberToString(RegistrationState state)

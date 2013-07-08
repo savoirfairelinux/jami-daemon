@@ -59,8 +59,8 @@
 #include "pjsip/sip_transport_tls.h"
 #endif
 
-#include "dbus/dbusmanager.h"
-#include "dbus/configurationmanager.h"
+#include "client/client.h"
+#include "client/configurationmanager.h"
 
 static const char * const DEFAULT_INTERFACE = "default";
 static const char * const ANY_HOSTS = "0.0.0.0";
@@ -461,18 +461,38 @@ pjsip_tpselector *SipTransport::createTransportSelector(pjsip_transport *transpo
     return tp;
 }
 
+std::vector<pj_sockaddr_in>
+SipTransport::getSTUNAddresses(const SIPAccount &account,
+        std::vector<long> &socketDescriptors) const
+{
+    const pj_str_t serverName = account.getStunServerName();
+    const pj_uint16_t port = account.getStunPort();
+
+    std::vector<pj_sockaddr_in> result(socketDescriptors.size());
+
+    if (pjstun_get_mapped_addr(&cp_->factory, socketDescriptors.size(), &socketDescriptors[0],
+                &serverName, port, &serverName, port, &result[0]) != PJ_SUCCESS)
+        throw std::runtime_error("Can't contact STUN server");
+
+    for (std::vector<pj_sockaddr_in>::const_iterator it = result.begin();
+            it != result.end(); ++it)
+        WARN("STUN PORTS: %ld", pj_ntohs(it->sin_port));
+
+    return result;
+}
+
+
 pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 {
 #define RETURN_IF_STUN_FAIL(A, M, ...) \
     if (!(A)) { \
         ERROR(M, ##__VA_ARGS__); \
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
+        Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
         return NULL; }
 
     pj_str_t serverName = account.getStunServerName();
     pj_uint16_t port = account.getStunPort();
 
-    DEBUG("Create STUN transport  server name: %s, port: %d", serverName, port);
     RETURN_IF_STUN_FAIL(createStunResolver(serverName, port) == PJ_SUCCESS, "Can't resolve STUN server");
 
     pj_sock_t sock = PJ_INVALID_SOCKET;
@@ -491,7 +511,7 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
         ERROR("Can't contact STUN server");
         pj_sock_close(sock);
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
+        Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
         return NULL;
     }
 

@@ -35,6 +35,7 @@
 #include "addressbook.h"
 
 void abook_init();
+void free_addressbook();
 
 extern AddrBookHandle *addrbook;
 

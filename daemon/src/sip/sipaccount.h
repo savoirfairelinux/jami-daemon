@@ -316,9 +316,6 @@ class SIPAccount : public Account {
         pj_uint16_t getStunPort() const {
             return stunPort_;
         }
-        void setStunPort(pj_uint16_t port) {
-            stunPort_ = port;
-        }
 
         /**
          * @return bool Tells if current transport for that
@@ -442,6 +439,11 @@ class SIPAccount : public Account {
             return publishedIpAddress_;
         }
 
+        void setPublishedAddress(const std::string &ip_addr) {
+            publishedIpAddress_ = ip_addr;
+        }
+
+
         std::string getServiceRoute() const {
             return serviceRoute_;
         }
@@ -526,6 +528,7 @@ class SIPAccount : public Account {
          */
         std::vector< std::map<std::string, std::string > > credentials_;
 
+#if HAVE_TLS
         /**
          * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
@@ -540,9 +543,11 @@ class SIPAccount : public Account {
         void initTlsConfiguration();
 
         /**
-         * Display the list of ciphers currently supported on the
+         * PJSIP aborts if the string length of our cipher list is too
+         * great, so this function forces our cipher list to fit this constraint.
          */
-        void displayCipherSuite();
+        void trimCiphers();
+#endif
 
         /**
          * Initializes STUN config from the config file
@@ -628,9 +633,9 @@ class SIPAccount : public Account {
         pjsip_tls_setting tlsSetting_;
 
         /**
-         * Allocate a static array to be used by pjsip to store the supported ciphers on this system.
+         * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
          */
-        CipherArray ciphers;
+        CipherArray ciphers_;
 
         /**
          * The STUN server name (hostname)

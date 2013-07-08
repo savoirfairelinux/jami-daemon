@@ -86,7 +86,7 @@ int avcodecManageMutex(void **data, enum AVLockOp op)
     switch (op) {
         case AV_LOCK_CREATE:
             *mutex = static_cast<pthread_mutex_t*>(av_malloc(sizeof(pthread_mutex_t)));
-            if (!mutex)
+            if (!*mutex)
                 return AVERROR(ENOMEM);
             ret = pthread_mutex_init(*mutex, NULL);
             break;

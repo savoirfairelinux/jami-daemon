@@ -99,17 +99,15 @@ ParticipantSet Conference::getParticipantList() const
     return participants_;
 }
 
-bool Conference::setRecording()
+bool Conference::toggleRecording()
 {
-    bool recordStatus = Recordable::recAudio_.isRecording();
-
-    Recordable::recAudio_.setRecording();
+    const bool startRecording = Recordable::recAudio_.toggleRecording();
     MainBuffer &mbuffer = Manager::instance().getMainBuffer();
 
     std::string process_id(Recordable::recorder_.getRecorderID());
 
     // start recording
-    if (!recordStatus) {
+    if (startRecording) {
         for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
             mbuffer.bindHalfDuplexOut(process_id, *iter);
 
@@ -123,7 +121,7 @@ bool Conference::setRecording()
         mbuffer.unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
     }
 
-    return recordStatus;
+    return startRecording;
 }
 
 std::string Conference::getConfID() const {

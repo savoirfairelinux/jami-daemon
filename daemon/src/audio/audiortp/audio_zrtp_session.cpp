@@ -57,6 +57,15 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
     audioRtpRecord_.callId_ = call_.getCallId();
 }
 
+std::vector<long>
+AudioZrtpSession::getSocketDescriptors() const
+{
+    std::vector<long> result;
+    result.push_back(dso->getRecvSocket());
+    result.push_back(cso->getRecvSocket());
+    return result;
+}
+
 void AudioZrtpSession::initializeZid()
 {
     if (zidFilename_.empty())

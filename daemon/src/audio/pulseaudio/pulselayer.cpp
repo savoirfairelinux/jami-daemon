@@ -86,12 +86,15 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , enumeratingSources_(false)
     , preference_(pref)
 {
-    setenv("PULSE_PROP_media.role", "phone", 1);
-
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
 
-    context_ = pa_context_new(pa_threaded_mainloop_get_api(mainloop_) , "SFLphone");
+    pa_proplist *pl = pa_proplist_new();
+    pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "phone");
+
+    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_), "SFLphone", pl);
+    if (pl)
+        pa_proplist_free(pl);
 
     if (!context_)
         throw std::runtime_error("Couldn't create pulseaudio context");
@@ -641,8 +644,10 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
            i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
            i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
-    PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
-    context->sourceList_.push_back(ep_infos);
+    if (not context->inSourceList(i->name)) {
+        PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
+        context->sourceList_.push_back(ep_infos);
+    }
 }
 
 void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata)
@@ -680,8 +685,10 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
           i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
           i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
-    PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
-    context->sinkList_.push_back(ep_infos);
+    if (not context->inSinkList(i->name)) {
+        PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
+        context->sinkList_.push_back(ep_infos);
+    }
 }
 
 void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMType type)

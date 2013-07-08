@@ -66,8 +66,10 @@ Sdp::Sdp(pj_pool_t *pool)
     , sessionVideoMedia_()
     , localIpAddr_()
     , remoteIpAddr_()
-    , localAudioPort_(0)
-    , localVideoPort_(0)
+    , localAudioDataPort_(0)
+    , localAudioControlPort_(0)
+    , localVideoDataPort_(0)
+    , localVideoControlPort_(0)
     , remoteAudioPort_(0)
     , remoteVideoPort_(0)
     , zrtpHelloHash_()
@@ -112,7 +114,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 
             if (!pj_stricmp2(&current->desc.media, "audio")) {
                 const unsigned long pt = pj_strtoul(&current->desc.fmt[fmt]);
-                if (not hasPayload(sessionAudioMedia_, pt)) {
+                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMedia_, pt)) {
                     sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
                     if (codec)
                         sessionAudioMedia_.push_back(codec);
@@ -209,13 +211,14 @@ Sdp::setMediaDescriptorLines(bool audio)
 
     med->desc.media = audio ? pj_str((char*) "audio") : pj_str((char*) "video");
     med->desc.port_count = 1;
-    med->desc.port = audio ? localAudioPort_ : localVideoPort_;
+    med->desc.port = audio ? localAudioDataPort_ : localVideoDataPort_;
     // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
     med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*) "RTP/AVP" : (char*) "RTP/SAVP");
 
     int dynamic_payload = 96;
 
     med->desc.fmt_count = audio ? audio_codec_list_.size() : video_codec_list_.size();
+
     for (unsigned i = 0; i < med->desc.fmt_count; ++i) {
         unsigned clock_rate;
         string enc_name;
@@ -310,10 +313,8 @@ Sdp::setMediaDescriptorLines(bool audio)
 
 void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 {
-    // FIXME: get this from CCRTP directly, don't just assume that the RTCP port is
-    // RTP + 1
     std::ostringstream os;
-    os << localIpAddr_ << ":" << (localAudioPort_ + 1);
+    os << localIpAddr_ << ":" << localAudioControlPort_;
     const std::string str(os.str());
     pj_str_t input_str = pj_str((char*) str.c_str());
     pj_sockaddr outputAddr;
@@ -327,9 +328,23 @@ void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
         pjmedia_sdp_attr_add(&med->attr_count, med->attr, attr);
 }
 
+void
+Sdp::updatePorts(const std::vector<pj_sockaddr_in> &sockets)
+{
+    localAudioDataPort_     = pj_ntohs(sockets[0].sin_port);
+    localAudioControlPort_  = pj_ntohs(sockets[1].sin_port);
+    localVideoDataPort_     = pj_ntohs(sockets[2].sin_port);
+    localVideoControlPort_  = pj_ntohs(sockets[3].sin_port);
+}
+
 
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {
+    std::ostringstream s;
+    s << telephoneEventPayload_;
+    ++med->desc.fmt_count;
+    pj_strdup2(memPool_, &med->desc.fmt[med->desc.fmt_count - 1], s.str().c_str());
+
     pjmedia_sdp_attr *attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
     attr_rtpmap->name = pj_str((char *) "rtpmap");
     attr_rtpmap->value = pj_str((char *) "101 telephone-event/8000");

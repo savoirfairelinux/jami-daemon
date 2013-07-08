@@ -1,4 +1,4 @@
-AC_INIT([sflphone],[1.2.2],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
+AC_INIT([sflphone],[1.2.3],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -31,10 +31,6 @@ if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
 else
     CFLAGS="$CFLAGS -g -Wall -Wextra -Wshadow $MIGRATION_FLAGS"
 fi
-
-
-dnl GCONF utilities
-AM_GCONF_SOURCE_2
 
 PKG_CHECK_MODULES(GTK, gtk+-3.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.2)

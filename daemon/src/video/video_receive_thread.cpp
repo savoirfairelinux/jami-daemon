@@ -30,7 +30,8 @@
  */
 
 #include "video_receive_thread.h"
-#include "dbus/video_controls.h"
+#include "socket_pair.h"
+#include "client/video_controls.h"
 #include "check.h"
 #include "packet_handle.h"
 
@@ -69,8 +70,7 @@ const int SDP_BUFFER_SIZE = 8192;
 
 void VideoReceiveThread::openDecoder()
 {
-    if (decoderCtx_)
-        avcodec_close(decoderCtx_);
+    avcodec_close(decoderCtx_);
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
     decoderCtx_->thread_count = 1;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
@@ -114,12 +114,19 @@ void VideoReceiveThread::setup()
     if (!args_["channel"].empty())
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
-    // Open video file
+    // Open Camera or SDP Demuxer
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
     if (input == SDP_FILENAME) {
+#if HAVE_SDP_CUSTOM_IO
+        // custom_io so the SDP demuxer will not open any UDP connections
+        av_dict_set(&options, "sdp_flags", "custom_io", 0);
+#else
+        WARN("libavformat too old for custom SDP demuxing");
+#endif
+
         EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
-        inputCtx_->pb = avioContext_.get();
+        inputCtx_->pb = sdpContext_.get();
     }
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
 
@@ -129,6 +136,18 @@ void VideoReceiveThread::setup()
         EXIT_IF_FAIL(false, "Could not open input \"%s\"", input.c_str());
     }
 
+    if (input == SDP_FILENAME) {
+#if HAVE_SDP_CUSTOM_IO
+        // Now replace our custom AVIOContext with one that will read
+        // packets
+        inputCtx_->pb = demuxContext_.get();
+#endif
+    }
+
+    // FIXME: this is a hack because our peer sends us RTP before
+    // we're ready for it, and we miss the SPS/PPS. We should be
+    // ready earlier.
+    sleep(1);
     DEBUG("Finding stream info");
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
@@ -162,6 +181,7 @@ void VideoReceiveThread::setup()
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
+    EXIT_IF_FAIL(decoderCtx_ != 0, "Decoder context is NULL");
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
@@ -225,13 +245,24 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
     requestKeyFrameCallback_(0),
     sdpBuffer_(reinterpret_cast<unsigned char*>(av_malloc(SDP_BUFFER_SIZE)), &av_free),
     stream_(args_["receiving_sdp"]),
-    avioContext_(avio_alloc_context(sdpBuffer_.get(), SDP_BUFFER_SIZE, 0,
+    sdpContext_(avio_alloc_context(sdpBuffer_.get(), SDP_BUFFER_SIZE, 0,
                                     reinterpret_cast<void*>(static_cast<std::istream*>(&stream_)),
                                     &readFunction, 0, 0), &av_free),
+    demuxContext_(),
     thread_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
+}
+
+void
+VideoReceiveThread::addIOContext(SocketPair &socketPair)
+{
+#if HAVE_SDP_CUSTOM_IO
+    demuxContext_.reset(socketPair.createAVIOContext(), &av_free);
+#else
+    (void) socketPair;
+#endif
 }
 
 void VideoReceiveThread::start()
@@ -285,8 +316,11 @@ struct VideoRxContextHandle {
         if (rx_.decoderCtx_)
             avcodec_close(rx_.decoderCtx_);
 
+        if (rx_.demuxContext_ and rx_.demuxContext_->buffer)
+            av_free(rx_.demuxContext_->buffer);
+
         if (rx_.inputCtx_ and rx_.inputCtx_->nb_streams > 0) {
-#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+#if LIBAVFORMAT_VERSION_MAJOR < 55
             av_close_input_file(rx_.inputCtx_);
 #else
             avformat_close_input(&rx_.inputCtx_);

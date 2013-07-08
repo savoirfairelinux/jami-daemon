@@ -102,14 +102,14 @@ calltab_get_selected_conf(calltab_t *tab)
 }
 
 void
-calltab_create_searchbar(calltab_t* tab)
+calltab_create_searchbar(calltab_t* tab, SFLPhoneClient *client)
 {
     g_assert(tab);
 
     if (calltab_has_name(tab, HISTORY))
         tab->searchbar = history_searchbar_new();
     else if (calltab_has_name(tab, CONTACTS))
-        tab->searchbar = contacts_searchbar_new();
+        tab->searchbar = contacts_searchbar_new(client->settings);
     else
         g_warning("Current calls tab does not need a searchbar\n");
 }

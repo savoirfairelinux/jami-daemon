@@ -439,7 +439,7 @@ gchar *dbus_get_conference_id(const gchar *callID);
 /**
  * Toggle recording for this instance, may be call or conference
  */
-void dbus_set_record(const gchar *id);
+gboolean dbus_toggle_recording(const gchar *id);
 
 /**
  * Set the path where the recorded audio files will be stored
@@ -499,8 +499,6 @@ void dbus_set_hook_settings(GHashTable *);
 gboolean dbus_get_is_recording(const callable_obj_t *);
 
 GHashTable *dbus_get_call_details(const gchar *callID);
-
-gboolean dbus_is_valid_call(const gchar *callID);
 
 gchar **dbus_get_call_list(void);
 
@@ -575,9 +573,6 @@ dbus_detach_participant(const gchar *callID);
 
 void
 dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID);
-
-void
-dbus_create_conf_from_participant_list(const gchar **list);
 
 void
 dbus_join_conference(const gchar *sel_confID, const gchar *drag_confID);

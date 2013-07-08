@@ -233,16 +233,13 @@ pixbuf_from_contact(EContact *contact)
  * Final callback after all books have been processed.
  */
 static void
-view_finish_callback(EBookClientView *book_client_view, Search_Handler_And_Data *had)
+view_finish_callback(Search_Handler_And_Data *had)
 {
     SearchAsyncHandler had_handler = had->search_handler;
     GList *had_hits = had->hits;
     gpointer had_user_data = had->user_data;
 
     g_free(had);
-
-    if (book_client_view != NULL)
-        g_object_unref(book_client_view);
 
     // Call display callback
     had_handler(had_hits, had_user_data);
@@ -284,7 +281,7 @@ eds_query_result_cb(GObject *object, GAsyncResult *result, gpointer user_data)
     g_slist_foreach(contacts, (GFunc) g_object_unref, NULL);
     g_slist_free(contacts);
 
-    view_finish_callback(NULL, had);
+    view_finish_callback(had);
 
     g_object_unref(object);
 }

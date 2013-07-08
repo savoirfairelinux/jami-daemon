@@ -200,7 +200,7 @@ class AudioRtpRecordHandler {
 
     private:
         const std::string id_;
-        GainControl gainController;
+        GainControl gainController_;
         int warningInterval_;
 };
 }

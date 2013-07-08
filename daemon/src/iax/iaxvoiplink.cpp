@@ -44,6 +44,7 @@
 #include "audio/samplerateconverter.h"
 #include "array_size.h"
 #include "scoped_lock.h"
+#include "map_utils.h"
 
 AccountMap IAXVoIPLink::iaxAccountMap_;
 IAXCallMap IAXVoIPLink::iaxCallMap_;
@@ -168,6 +169,16 @@ IAXVoIPLink::getEvent()
     return handlingEvents_;
 }
 
+std::vector<std::string>
+IAXVoIPLink::getCallIDs()
+{
+    std::vector<std::string> v;
+    sfl::ScopedLock m(iaxCallMapMutex_);
+
+    map_utils::vectorFromMapKeys(iaxCallMap_, v);
+    return v;
+}
+
 void
 IAXVoIPLink::sendAudioFromMic()
 {
@@ -272,9 +283,9 @@ IAXVoIPLink::sendUnregister(Account *a)
 }
 
 Call*
-IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
+IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id)
 {
-    IAXCall* call = new IAXCall(id, Call::OUTGOING);
+    IAXCall* call = new IAXCall(id, Call::OUTGOING, account_id);
 
     call->setPeerNumber(toUrl);
     call->initRecFilename(toUrl);
@@ -697,7 +708,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
         case IAX_EVENT_CONNECT:
             id = Manager::instance().getNewCallID();
 
-            call = new IAXCall(id, Call::INCOMING);
+            call = new IAXCall(id, Call::INCOMING, accountID_);
             call->session = event->session;
             call->setConnectionState(Call::PROGRESSING);
 
@@ -725,9 +736,13 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             break;
 
         case IAX_EVENT_HANGUP:
-            id = iaxFindCallBySession(event->session)->getCallId();
-            Manager::instance().peerHungupCall(id);
-            removeIaxCall(id);
+            call = iaxFindCallBySession(event->session);
+
+            if (call) {
+                id = call->getCallId();
+                Manager::instance().peerHungupCall(id);
+                removeIaxCall(id);
+            }
             break;
 
         case IAX_EVENT_TIMEOUT: // timeout for an unknown session

@@ -44,10 +44,10 @@
 
 #include "noncopyable.h"
 
-class pjsip_evsub;
-class pj_caching_pool;
-class pj_pool_t;
-class pjsip_inv_session;
+struct pjsip_evsub;
+struct pj_caching_pool;
+struct pj_pool_t;
+struct pjsip_inv_session;
 class Sdp;
 
 /**
@@ -63,7 +63,8 @@ class SIPCall : public Call {
          * @param type  The type of the call. Could be Incoming
          *						 Outgoing
          */
-        SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool);
+        SIPCall(const std::string& id, Call::CallType type,
+                pj_caching_pool *caching_pool, const std::string &account_id);
 
         /**
          * Destructor

@@ -126,12 +126,21 @@ sip_utils::stripSipUriPrefix(std::string& sipUri)
     size_t found = sipUri.find(SIP_PREFIX);
 
     if (found != std::string::npos)
-        sipUri.erase(found, found + (sizeof SIP_PREFIX) - 1);
+        sipUri.erase(found, (sizeof SIP_PREFIX) - 1);
+
+    // URI may or may not be between brackets
+    found = sipUri.find("<");
+    if (found != std::string::npos)
+        sipUri.erase(found, 1);
 
     found = sipUri.find("@");
 
     if (found != std::string::npos)
         sipUri.erase(found);
+
+    found = sipUri.find(">");
+    if (found != std::string::npos)
+        sipUri.erase(found, 1);
 }
 
 std::vector<std::string>

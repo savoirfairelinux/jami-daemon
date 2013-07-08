@@ -408,7 +408,8 @@ void sfl_seekslider_reset(SFLSeekSlider *seekslider)
     seekslider->priv->can_update_scale = FALSE;
     gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), 0.0);
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
-    sfl_seekslider_stop_playback_record_cb(NULL, seekslider);
+    if (seekslider->priv->is_playing)
+        sfl_seekslider_stop_playback_record_cb(NULL, seekslider);
     gtk_label_set_text(GTK_LABEL(seekslider->priv->timeLabel), "");
     seekslider->priv->current = 0;
     seekslider->priv->size = 0;

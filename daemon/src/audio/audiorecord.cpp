@@ -234,14 +234,15 @@ bool AudioRecord::isRecording() const
     return recordingEnabled_;
 }
 
-void AudioRecord::setRecording()
+bool AudioRecord::toggleRecording()
 {
     if (isOpenFile()) {
         recordingEnabled_ = !recordingEnabled_;
     } else {
         openFile();
-        recordingEnabled_ = true; // once opend file, start recording
+        recordingEnabled_ = true;
     }
+    return recordingEnabled_;
 }
 
 void AudioRecord::stopRecording()

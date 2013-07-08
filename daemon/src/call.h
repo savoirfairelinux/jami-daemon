@@ -72,7 +72,7 @@ class Call : public Recordable {
          * @param id Unique identifier of the call
          * @param type set definitely this call as incoming/outgoing
          */
-        Call(const std::string& id, Call::CallType type);
+        Call(const std::string& id, Call::CallType type, const std::string &accountID);
         virtual ~Call();
 
         /**
@@ -93,6 +93,10 @@ class Call : public Recordable {
 
         void setConfId(const std::string &id) {
             confID_ = id;
+        }
+
+        std::string getAccountId() const {
+            return accountID_;
         }
 
         CallType getCallType() const {
@@ -224,7 +228,7 @@ class Call : public Recordable {
         virtual std::map<std::string, std::string>
         createHistoryEntry() const;
 
-        virtual bool setRecording();
+        virtual bool toggleRecording();
 
     private:
         std::string getTypeStr() const;
@@ -250,6 +254,9 @@ class Call : public Recordable {
 
         /** Type of the call */
         CallType type_;
+
+        /** Associate account ID */
+        std::string accountID_;
 
         /** Disconnected/Progressing/Trying/Ringing/Connected */
         ConnectionState connectionState_;

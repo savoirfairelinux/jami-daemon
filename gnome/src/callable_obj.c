@@ -88,6 +88,12 @@ gchar* call_get_audio_codec(callable_obj_t *obj)
     if (!audio_codec)
         goto out;
 
+    /* Codec may contain multiple codecs depending on the call */
+    gchar **split_codecs = g_strsplit(audio_codec, " ", 0);
+    if (g_strv_length(split_codecs) >= 1)
+        ret = g_strdup(split_codecs[0]);
+    g_strfreev(split_codecs);
+
     account_t *acc = account_list_get_by_id(obj->_accountID);
 
     if (!acc)
@@ -97,6 +103,9 @@ gchar* call_get_audio_codec(callable_obj_t *obj)
 
     if (!codec)
         goto out;
+
+    if (ret)
+        g_free(ret);
 
     ret = g_strdup_printf("%s/%i", audio_codec, codec->sample_rate);
 

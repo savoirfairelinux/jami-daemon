@@ -34,7 +34,7 @@
 
 #include "audioloop.h"
 #include "manager.h"
-#include "dbus/callmanager.h"
+#include "client/callmanager.h"
 #include <cmath>
 #include <numeric>
 #include <cstring>
@@ -107,7 +107,7 @@ AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
 
     if(isRecording_) {
         if((updatePlaybackScale % 5) == 0) {
-            CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
+            CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->updatePlaybackScale(pos_ / divisor, buf_samples / divisor);
         }
         updatePlaybackScale++;

@@ -198,7 +198,7 @@ AudioRtpRecord::~AudioRtpRecord()
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
     id_(call.getCallId()),
-    gainController(8000, -10.0),
+    gainController_(8000, -10.0),
     warningInterval_(0)
 {}
 
@@ -373,7 +373,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     audioRtpRecord_.fadeInDecodedData();
 
     // Normalize incomming signal
-    gainController.process(audioRtpRecord_.decData_);
+    gainController_.process(audioRtpRecord_.decData_);
 
     AudioBuffer *out = &(audioRtpRecord_.decData_);
     int outSamples = inSamples;
