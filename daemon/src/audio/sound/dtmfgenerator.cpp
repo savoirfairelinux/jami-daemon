@@ -111,6 +111,7 @@ void DTMFGenerator::getSamples(vector<SFLDataFormat> &buffer, unsigned char code
 
     size_t i;
     const size_t n = buffer.size();
+
     for (i = 0; i < n; ++i)
         buffer[i] = state.sample[i % sampleRate_];
 
@@ -128,6 +129,7 @@ void DTMFGenerator::getNextSamples(vector<SFLDataFormat> &buffer)
 
     size_t i;
     const size_t n = buffer.size();
+
     for (i = 0; i < n; i++)
         buffer[i] = state.sample[(state.offset + i) % sampleRate_];
 

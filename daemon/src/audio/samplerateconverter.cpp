@@ -100,5 +100,6 @@ void SamplerateConverter::resample(SFLDataFormat *dataIn,
         ERROR("Outsamples exceeds output buffer size, clamping to %u", dataOutSize);
         outSamples = dataOutSize;
     }
+
     src_float_to_short_array(floatBufferOut_, dataOut, outSamples);
 }

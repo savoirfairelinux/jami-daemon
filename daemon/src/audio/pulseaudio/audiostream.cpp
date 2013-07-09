@@ -71,7 +71,7 @@ AudioStream::AudioStream(pa_context *c,
 
     pa_threaded_mainloop_lock(mainloop_);
     const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(PA_STREAM_ADJUST_LATENCY |
-                                                                   PA_STREAM_AUTO_TIMING_UPDATE);
+                                    PA_STREAM_AUTO_TIMING_UPDATE);
 
     if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM) {
         pa_stream_connect_playback(audiostream_,

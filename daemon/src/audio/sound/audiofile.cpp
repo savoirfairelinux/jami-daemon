@@ -180,7 +180,7 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     // Get length of data from the header.
     SINT32 bytes;
     fileStream.read(reinterpret_cast<char *>(&bytes), sizeof bytes);
-    
+
     // sample frames, should not be longer than a minute
     int nbSamples = std::min(60 * fileRate, 8 * bytes / dt / chan);
 
@@ -198,6 +198,7 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     if (chan == 2) {
         for (int i = 0, j = 0; i < nbSamples - 1; i += 2, ++j)
             tempBuffer[j] = (tempBuffer[i] + tempBuffer[i + 1]) * 0.5;
+
         nbSamples *= 0.5;
     }
 

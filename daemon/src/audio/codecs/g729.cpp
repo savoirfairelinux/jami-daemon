@@ -47,22 +47,23 @@ G729::G729() : sfl::AudioCodec(G729_PAYLOAD_TYPE, "G729", 8000, 160, 1),
     encoder_(0),
     decoder_(0)
 {
-   handler_ = dlopen("libbcg729.so.0", RTLD_NOW);
-   if (!handler_)
-       throw std::runtime_error("g729: did not open shared lib");
+    handler_ = dlopen("libbcg729.so.0", RTLD_NOW);
 
-   encoder_ = G729_TYPE_ENCODER dlsym(handler_, "bcg729Encoder");
-   loadError(dlerror());
-   decoder_ = G729_TYPE_DECODER dlsym(handler_, "bcg729Decoder");
-   loadError(dlerror());
+    if (!handler_)
+        throw std::runtime_error("g729: did not open shared lib");
 
-   bcg729DecoderChannelContextStruct*(*decInit)() = G729_TYPE_DECODER_INIT dlsym(handler_, "initBcg729DecoderChannel");
-   loadError(dlerror());
-   bcg729EncoderChannelContextStruct*(*encInit)() = G729_TYPE_ENCODER_INIT dlsym(handler_, "initBcg729EncoderChannel");
-   loadError(dlerror());
+    encoder_ = G729_TYPE_ENCODER dlsym(handler_, "bcg729Encoder");
+    loadError(dlerror());
+    decoder_ = G729_TYPE_DECODER dlsym(handler_, "bcg729Decoder");
+    loadError(dlerror());
 
-   decoderContext_ = (*decInit)();
-   encoderContext_ = (*encInit)();
+    bcg729DecoderChannelContextStruct*(*decInit)() = G729_TYPE_DECODER_INIT dlsym(handler_, "initBcg729DecoderChannel");
+    loadError(dlerror());
+    bcg729EncoderChannelContextStruct*(*encInit)() = G729_TYPE_ENCODER_INIT dlsym(handler_, "initBcg729EncoderChannel");
+    loadError(dlerror());
+
+    decoderContext_ = (*decInit)();
+    encoderContext_ = (*encInit)();
 }
 
 G729::~G729()
@@ -73,22 +74,22 @@ G729::~G729()
 
 int G729::decode(short *dst, unsigned char *buf, size_t buffer_size)
 {
-   decoder_(decoderContext_, buf, false, dst);
-   decoder_(decoderContext_, buf + (buffer_size / 2), false, dst + 80);
-   return 160;
+    decoder_(decoderContext_, buf, false, dst);
+    decoder_(decoderContext_, buf + (buffer_size / 2), false, dst + 80);
+    return 160;
 }
 
 int G729::encode(unsigned char *dst, short *src, size_t buffer_size)
 {
-   encoder_(encoderContext_, src, dst);
-   encoder_(encoderContext_, src + (buffer_size / 2), dst + 10);
-   return 20;
+    encoder_(encoderContext_, src, dst);
+    encoder_(encoderContext_, src + (buffer_size / 2), dst + 10);
+    return 20;
 }
 
 void G729::loadError(const char *error)
 {
-   if (error != NULL)
-      throw std::runtime_error("G729 failed to load");
+    if (error != NULL)
+        throw std::runtime_error("G729 failed to load");
 }
 
 // cppcheck-suppress unusedFunction

@@ -42,24 +42,21 @@ class Alaw : public sfl::AudioCodec {
         }
 
     private:
-        int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
-        {
+        int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size) {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ALawDecode(*src);
 
             return buf_size;
         }
 
-        int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size)
-        {
+        int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size) {
             for (unsigned char *end = dst + buf_size; dst < end; ++src, ++dst)
                 *dst = ALawEncode(*src);
 
             return buf_size;
         }
 
-        int ALawDecode(uint8 alaw)
-        {
+        int ALawDecode(uint8 alaw) {
             alaw ^= 0x55;  // A-law has alternate bits inverted for transmission
             uint sign = alaw & 0x80;
             int linear = alaw & 0x1f;
@@ -80,8 +77,7 @@ class Alaw : public sfl::AudioCodec {
                 return linear;
         }
 
-        uint8 ALawEncode(SFLDataFormat pcm16)
-        {
+        uint8 ALawEncode(SFLDataFormat pcm16) {
             int p = pcm16;
             uint a;  // u-law value we are forming
 

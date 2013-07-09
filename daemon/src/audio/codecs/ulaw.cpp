@@ -55,8 +55,7 @@ class Ulaw : public sfl::AudioCodec {
             return buf_size;
         }
 
-        SFLDataFormat ULawDecode(uint8 ulaw)
-        {
+        SFLDataFormat ULawDecode(uint8 ulaw) {
             ulaw ^= 0xff;  // u-law has all bits inverted for transmission
             int linear = ulaw & 0x0f;
             linear <<= 3;
@@ -73,8 +72,7 @@ class Ulaw : public sfl::AudioCodec {
                 return linear;
         }
 
-        uint8 ULawEncode(SFLDataFormat pcm16)
-        {
+        uint8 ULawEncode(SFLDataFormat pcm16) {
             int p = pcm16;
             uint u;  // u-law value we are forming
 

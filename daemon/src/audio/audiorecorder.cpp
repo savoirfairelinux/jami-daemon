@@ -56,8 +56,10 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) :
     recorderId_ = id.append(s);
 }
 
-AudioRecorder::~AudioRecorder() {
+AudioRecorder::~AudioRecorder()
+{
     running_ = false;
+
     if (thread_)
         pthread_join(thread_, NULL);
 }
