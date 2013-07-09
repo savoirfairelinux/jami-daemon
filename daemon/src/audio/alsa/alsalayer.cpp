@@ -42,7 +42,7 @@
 
 #define SFL_ALSA_PERIOD_SIZE 160
 #define SFL_ALSA_NB_PERIOD 8
-#define SFL_ALSA_BUFFER_SIZE SFL_ALSA_PERIOD_SIZE*SFL_ALSA_NB_PERIOD
+#define SFL_ALSA_BUFFER_SIZE SFL_ALSA_PERIOD_SIZE * SFL_ALSA_NB_PERIOD
 
 class AlsaThread {
     public:
@@ -150,7 +150,6 @@ void AlsaThread::run()
     }
 }
 
-// Constructor
 AlsaLayer::AlsaLayer(const AudioPreference &pref)
     : indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
@@ -173,7 +172,6 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     setPlaybackGain(pref.getVolumespkr());
 }
 
-// Destructor
 AlsaLayer::~AlsaLayer()
 {
     isStarted_ = false;
@@ -248,10 +246,6 @@ AlsaLayer::stopStream()
     flushUrgent();
     flushMain();
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
  * GCC extension : statement expression
@@ -410,11 +404,12 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 #undef TRY
 }
 
-//TODO first frame causes broken pipe (underrun) because not enough data are send --> make the handle wait to be ready
+// TODO first frame causes broken pipe (underrun) because not enough data is sent
+// we should wait until the handle is ready
 void
 AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
 {
-    //Do not waste CPU cycle to handle void
+    // Skip empty buffers
     if (!length)
         return;
 
@@ -473,8 +468,9 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
             break;
     }
 
-    //Detect when something is going wrong. This can be caused by alsa bugs or faulty encoder on the other side
-    //TODO do something useful instead of just warning and flushing buffers
+    // Detect when something is going wrong. This can be caused by alsa bugs or
+    // faulty encoder on the other side
+    // TODO do something useful instead of just warning and flushing buffers
     if (watchdogTotalErr_ > 0 && watchdogTotalCount_ / watchdogTotalErr_ >=4 && watchdogTotalCount_ > 50) {
         ERROR("Alsa: too many errors (%d error on %d frame)",watchdogTotalErr_,watchdogTotalCount_);
         flushUrgent();
