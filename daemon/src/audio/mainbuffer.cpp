@@ -49,6 +49,7 @@ MainBuffer::~MainBuffer()
     // delete any ring buffers that didn't get removed
     for (RingBufferMap::iterator iter = ringBufferMap_.begin(); iter != ringBufferMap_.end(); ++iter)
         delete iter->second;
+
     pthread_mutex_destroy(&mutex_);
 }
 
@@ -88,6 +89,7 @@ void MainBuffer::removeCallIDSet(const std::string &set_id)
 void MainBuffer::addCallIDtoSet(const std::string &set_id, const std::string &call_id)
 {
     CallIDSet* callid_set = getCallIDSet(set_id);
+
     if (callid_set)
         callid_set->insert(call_id);
     else
@@ -229,7 +231,7 @@ void MainBuffer::unBindAll(const std::string & call_id)
     CallIDSet temp_set(*callid_set);
 
     for (CallIDSet::iterator iter_set = temp_set.begin();
-         iter_set != temp_set.end(); ++iter_set) {
+            iter_set != temp_set.end(); ++iter_set) {
         std::string call_id_in_set(*iter_set);
         unBindCallID(call_id, call_id_in_set);
     }
@@ -323,6 +325,7 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
     } else {
 
         size_t availableSamples = INT_MAX;
+
         for (CallIDSet::iterator i = callid_set->begin(); i != callid_set->end(); ++i) {
             const size_t nbSamples = availableForGetByID(*i, call_id);
 
@@ -335,7 +338,7 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
 }
 
 size_t MainBuffer::availableForGetByID(const std::string &call_id,
-                                const std::string &reader_id) const
+                                       const std::string &reader_id) const
 {
     if (call_id != DEFAULT_ID and reader_id == call_id)
         ERROR("RingBuffer has a readpointer on itself");
@@ -405,6 +408,7 @@ void MainBuffer::flushAllBuffers()
 void MainBuffer::dumpInfo()
 {
     sfl::ScopedLock guard(mutex_);
+
     // print each call and bound call ids
     for (CallIDMap::const_iterator iter_call = callIDMap_.begin(); iter_call != callIDMap_.end(); ++iter_call) {
         std::string dbg_str("    Call: \t");
@@ -429,6 +433,7 @@ void MainBuffer::dumpInfo()
         dbg_str.append("   as read pointer: \t");
 
         RingBuffer* rbuffer = iter_buffer->second;
+
         if (rbuffer) {
             ReadPointer* rpointer = rbuffer->getReadPointerList();
 
@@ -439,6 +444,7 @@ void MainBuffer::dumpInfo()
                 }
             }
         }
+
         DEBUG("%s", dbg_str.c_str());
     }
 }

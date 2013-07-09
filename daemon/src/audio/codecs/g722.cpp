@@ -41,7 +41,7 @@ class G722 : public sfl::AudioCodec {
 
     public:
         G722() : sfl::AudioCodec(9, "G722", 16000, 320, 1), decode_state_(),
-        encode_state_() {
+            encode_state_() {
             bitrate_ = 64;
             hasDynamicPayload_ = false;
 
@@ -61,8 +61,7 @@ class G722 : public sfl::AudioCodec {
             return out;
         }
 
-        static void g722_state_init(g722_state_t &state)
-        {
+        static void g722_state_init(g722_state_t &state) {
             state.itu_test_mode = false;
 
             // 8 => 64 kbps;  7 => 56 kbps;  6 => 48 kbps
@@ -102,8 +101,7 @@ class G722 : public sfl::AudioCodec {
             return INT16_MIN;
         }
 
-        void block4_encode(int band, int d)
-        {
+        void block4_encode(int band, int d) {
             int wd1 = 0;
             int wd2 = 0;
             int wd3 = 0;
@@ -207,8 +205,7 @@ class G722 : public sfl::AudioCodec {
 
         }
 
-        void block4_decode(int band, int d)
-        {
+        void block4_decode(int band, int d) {
             int wd1 = 0;
             int wd2 = 0;
             int wd3 = 0;

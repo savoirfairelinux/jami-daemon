@@ -67,6 +67,7 @@ void
 AudioCodecFactory::setDefaultOrder()
 {
     defaultCodecList_.clear();
+
     for (AudioCodecsMap::const_iterator i = codecsMap_.begin(); i != codecsMap_.end(); ++i)
         defaultCodecList_.push_back(i->first);
 }
@@ -86,6 +87,7 @@ std::vector<int32_t>
 AudioCodecFactory::getCodecList() const
 {
     std::vector<int32_t> list;
+
     for (AudioCodecsMap::const_iterator iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
         if (iter->second)
             list.push_back((int32_t) iter->first);
@@ -159,7 +161,7 @@ AudioCodecFactory::saveActiveCodecs(const std::vector<std::string>& list)
 AudioCodecFactory::~AudioCodecFactory()
 {
     for (std::vector<AudioCodecHandlePointer>::iterator iter =
-         codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter)
+                codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter)
         unloadCodec(*iter);
 }
 
@@ -237,6 +239,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
     }
 
     sfl::AudioCodec *a = static_cast<sfl::AudioCodec *>(createCodec());
+
     if (a)
         codecInMemory_.push_back(AudioCodecHandlePointer(a, codecHandle));
     else
@@ -250,6 +253,7 @@ void
 AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
 {
     destroy_t *destroyCodec = 0;
+
     if (ptr.second)
         destroyCodec = (destroy_t*) dlsym(ptr.second, "destroy");
 
@@ -273,6 +277,7 @@ AudioCodecFactory::instantiateCodec(int payload) const
     std::vector<AudioCodecHandlePointer>::const_iterator iter;
 
     sfl::AudioCodec *result = NULL;
+
     for (iter = codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter) {
         if (iter->first->getPayloadType() == payload) {
             create_t* createCodec = (create_t*) dlsym(iter->second , AUDIO_CODEC_ENTRY_SYMBOL);
@@ -308,26 +313,27 @@ AudioCodecFactory::seemsValid(const std::string &lib)
         return false;
 
     static const std::string validCodecs[] = {
-    "ulaw",
-    "alaw",
-    "g722",
-    "g729", //G729 have to be loaded first, if it is valid or not is checked later
-    "opus", //Opus have to be loaded first, if it is valid or not is checked later
-    "opus_stereo",
+        "ulaw",
+        "alaw",
+        "g722",
+        "g729", //G729 have to be loaded first, if it is valid or not is checked later
+        "opus", //Opus have to be loaded first, if it is valid or not is checked later
+        "opus_stereo",
 #ifdef HAVE_SPEEX_CODEC
-    "speex_nb",
-    "speex_wb",
-    "speex_ub",
+        "speex_nb",
+        "speex_wb",
+        "speex_ub",
 #endif
 
 #ifdef HAVE_GSM_CODEC
-    "gsm",
+        "gsm",
 #endif
 
 #ifdef BUILD_ILBC
-    "ilbc",
+        "ilbc",
 #endif
-    ""};
+        ""
+    };
 
     const std::string name(lib.substr(prefix.length(), len));
     const std::string *end = validCodecs + ARRAYSIZE(validCodecs);

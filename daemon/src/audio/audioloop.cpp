@@ -100,16 +100,17 @@ AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
 
     // We want to send values in milisecond
     int divisor = buffer_->getSampleRate() / 1000;
-    if(divisor == 0) {
+    if (divisor == 0) {
         ERROR("Error cannot update playback slider, sampling rate is 0");
         return;
     }
 
-    if(isRecording_) {
-        if((updatePlaybackScale % 5) == 0) {
+    if (isRecording_) {
+        if ((updatePlaybackScale % 5) == 0) {
             CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->updatePlaybackScale(pos_ / divisor, buf_samples / divisor);
         }
+
         updatePlaybackScale++;
     }
 }

@@ -69,7 +69,7 @@ void stream_moved_callback(pa_stream *s, void *userdata UNUSED)
 } // end anonymous namespace
 
 #ifdef RECTODISK
-std::ofstream outfileResampled ("testMicOuputResampled.raw", std::ifstream::binary);
+std::ofstream outfileResampled("testMicOuputResampled.raw", std::ifstream::binary);
 std::ofstream outfile("testMicOuput.raw", std::ifstream::binary);
 #endif
 
@@ -94,8 +94,10 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "phone");
 
     context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_), "SFLphone", pl);
+
     if (pl)
         pa_proplist_free(pl);
+
 #else
     setenv("PULSE_PROP_media.role", "phone", 1);
     context_ = pa_context_new(pa_threaded_mainloop_get_api(mainloop_), "SFLphone");
@@ -150,7 +152,7 @@ void PulseLayer::context_state_callback(pa_context* c, void *user_data)
     PulseLayer *pulse = static_cast<PulseLayer*>(user_data);
     assert(c and pulse and pulse->mainloop_);
     const pa_subscription_mask_t mask = (pa_subscription_mask_t)
-        (PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SOURCE);
+                                        (PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SOURCE);
 
     switch (pa_context_get_state(c)) {
         case PA_CONTEXT_CONNECTING:
@@ -186,6 +188,7 @@ void PulseLayer::updateSinkList()
     sinkList_.clear();
     enumeratingSinks_ = true;
     pa_operation *op = pa_context_get_sink_info_list(context_, sink_input_info_callback, this);
+
     if (op != NULL)
         pa_operation_unref(op);
 }
@@ -195,6 +198,7 @@ void PulseLayer::updateSourceList()
     sourceList_.clear();
     enumeratingSources_ = true;
     pa_operation *op = pa_context_get_source_info_list(context_, source_input_info_callback, this);
+
     if (op != NULL)
         pa_operation_unref(op);
 }
@@ -236,9 +240,11 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
 int PulseLayer::getAudioDeviceIndex(const std::string& name) const
 {
     int index = std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::nameComparator(name)));
+
     if (index == std::distance(sourceList_.begin(), sourceList_.end())) {
         index = std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::nameComparator(name)));
     }
+
     return index;
 }
 
@@ -260,12 +266,14 @@ std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
                 return "";
             }
             return sinkList_[index].name;
+
         case SFL_PCM_CAPTURE:
             if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
                 ERROR("Index %d out of range", index);
                 return "";
             }
             return sourceList_[index].name;
+
         default:
             return "";
     }
@@ -324,13 +332,13 @@ void PulseLayer::createStreams(pa_context* c)
 }
 
 namespace {
-    // Delete stream and zero out its pointer
-    void
-    cleanupStream(AudioStream *&stream)
-    {
-        delete stream;
-        stream = 0;
-    }
+// Delete stream and zero out its pointer
+void
+cleanupStream(AudioStream *&stream)
+{
+    delete stream;
+    stream = 0;
+}
 }
 
 
@@ -403,6 +411,7 @@ void PulseLayer::writeToSpeaker()
     }
 
     SFLAudioSample *data = 0;
+
     if (urgentBytes) {
         AudioBuffer linearbuff(urgentSamples, n_channels);
         pa_stream_begin_write(s, (void**)&data, &urgentBytes);
@@ -449,6 +458,7 @@ void PulseLayer::writeToSpeaker()
 
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
+
     if (resample) {
         resampleFactor = (double) sampleRate_ / mainBufferSampleRate;
         readableSamples = (double) readableSamples / resampleFactor;
@@ -564,9 +574,9 @@ void PulseLayer::ringtoneToSpeaker()
         //applyGain(static_cast<SFLAudioSample *>(data), bytes / sizeof(SFLAudioSample), getPlaybackGain());
         fileToPlay->getNext(tmp, getPlaybackGain());
         tmp.interleave((SFLAudioSample*)data);
-    }
-    else
+    } else {
         memset(data, 0, bytes);
+    }
 
     pa_stream_write(s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
 }
@@ -577,8 +587,9 @@ PulseLayer::context_changed_callback(pa_context* c,
                                      uint32_t idx UNUSED, void *userdata)
 {
     PulseLayer *context = static_cast<PulseLayer*>(userdata);
+
     switch (type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK) {
-        pa_operation *op;
+            pa_operation *op;
 
         case PA_SUBSCRIPTION_EVENT_SINK:
             switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
@@ -587,11 +598,14 @@ PulseLayer::context_changed_callback(pa_context* c,
                     DEBUG("Updating sink list");
                     context->sinkList_.clear();
                     op = pa_context_get_sink_info_list(c, sink_input_info_callback, userdata);
+
                     if (op != NULL)
                         pa_operation_unref(op);
+
                 default:
                     break;
             }
+
             break;
 
         case PA_SUBSCRIPTION_EVENT_SOURCE:
@@ -601,12 +615,16 @@ PulseLayer::context_changed_callback(pa_context* c,
                     DEBUG("Updating source list");
                     context->sourceList_.clear();
                     op = pa_context_get_source_info_list(c, source_input_info_callback, userdata);
+
                     if (op != NULL)
                         pa_operation_unref(op);
+
                 default:
                     break;
             }
+
             break;
+
         default:
             DEBUG("Unhandled event type 0x%x", type);
             break;
@@ -625,29 +643,29 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
     }
 
     DEBUG("Source %u\n"
-           "    Name: %s\n"
-           "    Driver: %s\n"
-           "    Description: %s\n"
-           "    Sample Specification: %s\n"
-           "    Channel Map: %s\n"
-           "    Owner Module: %u\n"
-           "    Volume: %s\n"
-           "    Monitor if Sink: %u\n"
-           "    Latency: %0.0f usec\n"
-           "    Flags: %s%s%s\n",
-           i->index,
-           i->name,
-           i->driver,
-           i->description,
-           pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
-           pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
-           i->owner_module,
-           i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
-           i->monitor_of_sink,
-           (double) i->latency,
-           i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-           i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
-           i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
+          "    Name: %s\n"
+          "    Driver: %s\n"
+          "    Description: %s\n"
+          "    Sample Specification: %s\n"
+          "    Channel Map: %s\n"
+          "    Owner Module: %u\n"
+          "    Volume: %s\n"
+          "    Monitor if Sink: %u\n"
+          "    Latency: %0.0f usec\n"
+          "    Flags: %s%s%s\n",
+          i->index,
+          i->name,
+          i->driver,
+          i->description,
+          pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+          pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+          i->owner_module,
+          i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+          i->monitor_of_sink,
+          (double) i->latency,
+          i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+          i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
+          i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
     if (not context->inSourceList(i->name)) {
         PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
@@ -699,19 +717,23 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
 void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
 {
     const std::string devName(getAudioDeviceName(index, type));
+
     switch (type) {
         case SFL_PCM_PLAYBACK:
             DEBUG("setting %s for playback", devName.c_str());
             preference.setPulseDevicePlayback(devName);
             break;
+
         case SFL_PCM_CAPTURE:
             DEBUG("setting %s for capture", devName.c_str());
             preference.setPulseDeviceRecord(devName);
             break;
+
         case SFL_PCM_RINGTONE:
             DEBUG("setting %s for ringer", devName.c_str());
             preference.setPulseDeviceRingtone(devName);
             break;
+
         default:
             break;
     }

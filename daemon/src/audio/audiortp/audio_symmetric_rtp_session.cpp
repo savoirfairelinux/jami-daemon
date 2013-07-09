@@ -43,7 +43,7 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     , AudioRtpSession(call, *this)
 {
     DEBUG("Setting new RTP session with destination %s:%d",
-            call_.getLocalIp().c_str(), call_.getLocalAudioPort());
+          call_.getLocalIp().c_str(), call_.getLocalAudioPort());
     audioRtpRecord_.callId_ = call_.getCallId();
 }
 

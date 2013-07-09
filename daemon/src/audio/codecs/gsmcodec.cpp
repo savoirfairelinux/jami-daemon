@@ -46,10 +46,10 @@ extern "C" {
 
 class Gsm : public sfl::AudioCodec {
 
-public:
+    public:
         // _payload should be 3
         Gsm() : sfl::AudioCodec(3, "GSM", 8000, 160, 1),
-        decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
+            decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
             bitrate_ = 13.3;
             hasDynamicPayload_ = false;
 
@@ -60,8 +60,7 @@ public:
                 throw std::runtime_error("ERROR: encode_gsm_create\n");
         }
 
-        ~Gsm()
-        {
+        ~Gsm() {
             gsm_destroy(decode_gsmhandle_);
             gsm_destroy(encode_gsmhandle_);
         }

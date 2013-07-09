@@ -151,12 +151,14 @@ ZrtpSessionCallback::zrtpNegotiationFailed(MessageSeverity severity, int subCode
             DEBUG("Sent error packet: ");
 
         std::map<int32, std::string>::const_iterator iter = zrtpMap_.find(subCode);
+
         if (iter != zrtpMap_.end()) {
             DEBUG("%s", iter->second.c_str());
             Manager::instance().getClient()->getCallManager()->zrtpNegotiationFailed(call_.getCallId(), iter->second, "ZRTP");
         }
     } else {
         std::map<int32, std::string>::const_iterator iter = severeMap_.find(subCode);
+
         if (iter != severeMap_.end()) {
             DEBUG("%s", iter->second.c_str());
             Manager::instance().getClient()->getCallManager()->zrtpNegotiationFailed(call_.getCallId(), iter->second, "severe");

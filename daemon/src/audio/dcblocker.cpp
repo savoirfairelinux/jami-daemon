@@ -44,6 +44,7 @@ void DcBlocker::doProcess(SFLAudioSample *out, SFLAudioSample *in, int samples, 
     for (unsigned i = 0; i < samples; ++i) {
         state->x_ = in[i];
 
+
         state->y_ = (SFLAudioSample) ((float) state->x_ - (float) state->xm1_ + 0.9999 * (float) state->y_);
         state->xm1_ = state->x_;
         state->ym1_ = state->y_;

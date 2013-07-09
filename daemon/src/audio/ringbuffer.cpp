@@ -41,8 +41,8 @@
 #include "ringbuffer.h"
 
 namespace {
-    // corresponds to 160 ms (about 5 rtp packets)
-    const size_t MIN_BUFFER_SIZE = 1280;
+// corresponds to 160 ms (about 5 rtp packets)
+const size_t MIN_BUFFER_SIZE = 1280;
 }
 
 // Create  a ring buffer with 'size' bytes
@@ -192,6 +192,7 @@ void RingBuffer::put(AudioBuffer& buf)
         pos = (pos + block) % buffer_size;
         toCopy -= block;
     }
+
     endPos_ = pos;
 }
 

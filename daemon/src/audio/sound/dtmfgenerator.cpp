@@ -111,6 +111,7 @@ void DTMFGenerator::getSamples(vector<SFLAudioSample> &buffer, unsigned char cod
 
     size_t i;
     const size_t n = buffer.size();
+
     for (i = 0; i < n; ++i)
         buffer[i] = state.sample[i % sampleRate_];
 
@@ -128,6 +129,7 @@ void DTMFGenerator::getNextSamples(vector<SFLAudioSample> &buffer)
 
     size_t i;
     const size_t n = buffer.size();
+
     for (i = 0; i < n; i++)
         buffer[i] = state.sample[(state.offset + i) % sampleRate_];
 

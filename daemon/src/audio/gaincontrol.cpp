@@ -111,6 +111,7 @@ double GainControl::DetectionAverage::getAverage(double in)
         previous_y_ = ((1.0 - g_a_) * in) + (g_a_ * previous_y_);
     else
         previous_y_ = ((1.0 - g_r_) * in) + (g_r_ * previous_y_);
+
     return previous_y_;
 }
 
@@ -120,7 +121,7 @@ GainControl::Limiter::Limiter(double r, double thresh) : ratio_(r), threshold_(t
 double GainControl::Limiter::limit(double in) const
 {
     double out = (in > threshold_ ? (ratio_ * (in - threshold_)) + threshold_ :
-           in < -threshold_ ? (ratio_ * (in + threshold_)) - threshold_ : in);
+                  in < -threshold_ ? (ratio_ * (in + threshold_)) - threshold_ : in);
 
     return out;
 }
