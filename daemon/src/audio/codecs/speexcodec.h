@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "global.h"
+#include "sfl_types.h"
 #include "audiocodec.h"
 #include "noncopyable.h"
 #include "array_size.h"
@@ -83,13 +83,13 @@ private:
 
         NON_COPYABLE(Speex);
 
-        virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
+        virtual int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size) {
             speex_bits_read_from(&speex_dec_bits_, (char*) src, buf_size);
             speex_decode_int(speex_dec_state_, &speex_dec_bits_, dst);
             return frameSize_;
         }
 
-        virtual int encode(unsigned char *dst, short *src, size_t buf_size) {
+        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size) {
             speex_bits_reset(&speex_enc_bits_);
             speex_encode_int(speex_enc_state_, src, &speex_enc_bits_);
             return speex_bits_write(&speex_enc_bits_, (char*) dst, buf_size);

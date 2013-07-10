@@ -29,6 +29,7 @@
  */
 
 #include "samplerateconverter.h"
+#include "sfl_types.h"
 #include "manager.h"
 #include <cassert>
 #include "logger.h"
@@ -54,7 +55,7 @@ SamplerateConverter::~SamplerateConverter()
 }
 
 void
-SamplerateConverter::Short2FloatArray(const short *in, float *out, int len)
+SamplerateConverter::Short2FloatArray(const SFLDataFormat *in, float *out, int len)
 {
     // factor is 1/(2^15), used to rescale the short int range to the
     // [-1.0 - 1.0] float range.

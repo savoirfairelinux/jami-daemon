@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 #include "opus.h"
+#include "sfl_types.h"
 #include <stdexcept>
 #include <iostream>
 
@@ -60,12 +61,12 @@ Opus::~Opus()
         opus_decoder_destroy(decoder_);
 }
 
-int Opus::decode(short *dst, unsigned char *buf, size_t buffer_size)
+int Opus::decode(SFLDataFormat *dst, unsigned char *buf, size_t buffer_size)
 {
     return opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);
 }
 
-int Opus::encode(unsigned char *dst, short *src, size_t buffer_size)
+int Opus::encode(unsigned char *dst, SFLDataFormat *src, size_t buffer_size)
 {
     return opus_encode(encoder_, src, FRAME_SIZE, dst, buffer_size * 2);
 }

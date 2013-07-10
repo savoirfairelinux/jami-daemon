@@ -28,12 +28,13 @@
  *  as that of the covered work.
  */
 #include "g729.h"
+#include "sfl_types.h"
 #include <iostream>
 #include <dlfcn.h>
 #include <stdexcept>
 
-#define G729_TYPE_ENCODER        (void (*)(bcg729EncoderChannelContextStruct*, int16_t[], uint8_t[]))
-#define G729_TYPE_DECODER        (void (*)(bcg729DecoderChannelContextStruct*, uint8_t[], uint8_t, int16_t[]))
+#define G729_TYPE_ENCODER        (void (*)(bcg729EncoderChannelContextStruct*, SFLDataFormat[], uint8_t[]))
+#define G729_TYPE_DECODER        (void (*)(bcg729DecoderChannelContextStruct*, uint8_t[], uint8_t, SFLDataFormat[]))
 
 #define G729_TYPE_DECODER_INIT   (bcg729DecoderChannelContextStruct*(*)())
 #define G729_TYPE_ENCODER_INIT   (bcg729EncoderChannelContextStruct*(*)())
@@ -72,14 +73,14 @@ G729::~G729()
         dlclose(handler_);
 }
 
-int G729::decode(short *dst, unsigned char *buf, size_t buffer_size)
+int G729::decode(SFLDataFormat *dst, unsigned char *buf, size_t buffer_size)
 {
     decoder_(decoderContext_, buf, false, dst);
     decoder_(decoderContext_, buf + (buffer_size / 2), false, dst + 80);
     return 160;
 }
 
-int G729::encode(unsigned char *dst, short *src, size_t buffer_size)
+int G729::encode(unsigned char *dst, SFLDataFormat *src, size_t buffer_size)
 {
     encoder_(encoderContext_, src, dst);
     encoder_(encoderContext_, src + (buffer_size / 2), dst + 10);

@@ -34,6 +34,7 @@
 
 #include <string>
 #include "cc_config.h"
+#include "sfl_types.h"
 #include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
 
 #define XSTR(s) STR(s)
@@ -69,14 +70,14 @@ class AudioCodec {
          * @param buffer_size : the size of the input buffer
          * @return the number of samples decoded
          */
-        virtual int decode(short *dst, unsigned char *buf, size_t buffer_size) = 0;
+        virtual int decode(SFLDataFormat *dst, unsigned char *buf, size_t buffer_size) = 0;
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
          * @param buffer_size : the maximum size of encoded data buffer (dst)
          * @return the number of bytes encoded
          */
-        virtual int encode(unsigned char *dst, short *src, size_t buffer_size) = 0;
+        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buffer_size) = 0;
 
         uint8 getPayloadType() const;
 

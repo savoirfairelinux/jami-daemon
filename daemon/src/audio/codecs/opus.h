@@ -31,6 +31,7 @@
 #define OPUS_H_
 
 #include "noncopyable.h"
+#include "sfl_types.h"
 
 #include "audiocodec.h"
 
@@ -41,8 +42,8 @@ public:
    Opus();
    ~Opus();
 private:
-   virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
-   virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
+   virtual int decode(SFLDataFormat *dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buffer_size);
 
    NON_COPYABLE(Opus);
    //Attributes

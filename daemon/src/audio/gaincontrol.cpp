@@ -64,7 +64,7 @@ void GainControl::process(SFLDataFormat *buf, int samples)
 
     for (int i = 0; i < samples; i++) {
         // linear conversion
-        in = (double)buf[i] / (double)SHRT_MAX;
+        in = (double) buf[i] / (double) SFL_DATA_FORMAT_MAX;
 
         out = currentGain_ * in;
 
@@ -76,7 +76,7 @@ void GainControl::process(SFLDataFormat *buf, int samples)
 
         out = limiter_.limit(out);
 
-        buf[i] = (short)(out * (double)SHRT_MAX);
+        buf[i] = (SFLDataFormat) (out * (double) SFL_DATA_FORMAT_MAX);
     }
 
     diffRms = maxRms - targetLevelLinear_;

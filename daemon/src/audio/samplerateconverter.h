@@ -67,7 +67,7 @@ class SamplerateConverter {
          * @param out The resulting (float) array
          * @param len The number of elements in both tables
          */
-        void Short2FloatArray(const short *in, float *out, int len);
+        void Short2FloatArray(const SFLDataFormat *in, float *out, int len);
 
 
     private:
