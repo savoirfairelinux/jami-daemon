@@ -116,7 +116,7 @@ void IAX_MD5Update(struct IAX_MD5Context *ctx, uint8_t const *buf, unsigned int 
 	}
 	memcpy(p, buf, t);
 	IAX_byteReverse(ctx->in, 16);
-	IAX_MD5Transform(ctx->buf, (uint32_t *) ctx->in);
+	IAX_MD5Transform(ctx->buf, ctx->in_32);
 	buf += t;
 	len -= t;
     }
@@ -171,10 +171,10 @@ void IAX_MD5Final(uint8_t digest[16], struct IAX_MD5Context *ctx)
     IAX_byteReverse(ctx->in, 14);
 
     /* Append length in bits and transform */
-    ((uint32_t *) ctx->in)[14] = ctx->bits[0];
-    ((uint32_t *) ctx->in)[15] = ctx->bits[1];
+    ctx->in_32[14] = ctx->bits[0];
+    ctx->in_32[15] = ctx->bits[1];
 
-    IAX_MD5Transform(ctx->buf, (uint32_t *) ctx->in);
+    IAX_MD5Transform(ctx->buf, ctx->in_32);
     IAX_byteReverse((uint8_t *) ctx->buf, 4);
     memcpy(digest, ctx->buf, 16);
     memset(ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
