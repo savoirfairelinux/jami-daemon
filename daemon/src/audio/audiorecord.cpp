@@ -420,7 +420,7 @@ void AudioRecord::closeWavFile()
         WARN("Can't close file");
 }
 
-//void AudioRecord::recData(SFLDataFormat* buffer, size_t nSamples)
+//void AudioRecord::recData(SFLAudioSample* buffer, size_t nSamples)
 void AudioRecord::recData(AudioBuffer& buffer)
 {
     if (recordingEnabled_) {

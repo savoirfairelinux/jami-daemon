@@ -60,7 +60,7 @@ class SamplerateConverter {
          * @param SamplerateConverter2 The desired sample rate
          * @param nbSamples	  The number of samples to process
          */
-        //void resample(SFLDataFormat* dataIn, SFLDataFormat* dataOut, size_t dataOutSize, int oldrate, int newrate, size_t nbSamples);
+        //void resample(SFLAudioSample* dataIn, SFLAudioSample* dataOut, size_t dataOutSize, int oldrate, int newrate, size_t nbSamples);
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
         /**
@@ -69,7 +69,7 @@ class SamplerateConverter {
          * @param out The resulting (float) array
          * @param len The number of elements in both tables
          */
-        void Short2FloatArray(const short *in, float *out, int len);
+        void Short2FloatArray(const SFLAudioSample *in, float *out, int len);
 
 
     private:

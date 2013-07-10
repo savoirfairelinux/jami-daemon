@@ -52,7 +52,7 @@ class DcBlocker {
             SFLAudioSample y_, x_, xm1_, ym1_;
         };
 
-        void doProcess(SFLAudioSample *out, SFLAudioSample *in, int samples, struct StreamState * state);
+        void doProcess(SFLAudioSample *out, SFLAudioSample *in, unsigned samples, struct StreamState * state);
 
         std::vector<StreamState> states;
 };

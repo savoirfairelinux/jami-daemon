@@ -32,12 +32,13 @@
 #define SFL_TYPES_H_
 
 #include <cstddef> // for size_t
+#include <stdint.h>
 
-typedef short SFLAudioSample;
-//typedef size_t AudioChannel;
+typedef int16_t SFLAudioSample;
 
-typedef signed short SINT16;
-typedef signed int SINT32;
+typedef int16_t SINT16;
+typedef int32_t SINT32;
+#define SFL_DATA_FORMAT_MAX SHRT_MAX
 
 /*
 typedef struct {

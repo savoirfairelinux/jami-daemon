@@ -29,6 +29,7 @@
  */
 
 #include "samplerateconverter.h"
+#include "sfl_types.h"
 #include "manager.h"
 #include <cassert>
 #include "logger.h"
@@ -54,7 +55,7 @@ SamplerateConverter::~SamplerateConverter()
 }
 
 void
-SamplerateConverter::Short2FloatArray(const short *in, float *out, int len)
+SamplerateConverter::Short2FloatArray(const SFLAudioSample *in, float *out, int len)
 {
     // factor is 1/(2^15), used to rescale the short int range to the
     // [-1.0 - 1.0] float range.
@@ -64,8 +65,8 @@ SamplerateConverter::Short2FloatArray(const short *in, float *out, int len)
 }
 
 void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
-/*void SamplerateConverter::resample(SFLDataFormat *dataIn,
-                                   SFLDataFormat *dataOut,
+/*void SamplerateConverter::resample(SFLAudioSample *dataIn,
+                                   SFLAudioSample *dataOut,
                                    size_t dataOutSize,
                                    int inputFreq,
                                    int outputFreq,

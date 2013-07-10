@@ -39,7 +39,7 @@ void DcBlocker::reset()
     states.assign(states.size(), (struct StreamState){0, 0, 0, 0});
 }
 
-void DcBlocker::doProcess(SFLAudioSample *out, SFLAudioSample *in, int samples, struct StreamState * state)
+void DcBlocker::doProcess(SFLAudioSample *out, SFLAudioSample *in, unsigned samples, struct StreamState * state)
 {
     for (unsigned i = 0; i < samples; ++i) {
         state->x_ = in[i];

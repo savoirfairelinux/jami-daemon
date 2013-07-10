@@ -32,6 +32,7 @@
 #define OPUS_H_
 
 #include "noncopyable.h"
+#include "sfl_types.h"
 
 #include "audiocodec.h"
 
@@ -45,8 +46,8 @@ public:
    static const uint8 PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
 
 private:
-   virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
-   virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
+   virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
 
    //multichannel version
    virtual int decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);

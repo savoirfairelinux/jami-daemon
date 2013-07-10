@@ -101,7 +101,7 @@ class DTMFGenerator {
 
         /*
          * Get n samples of the signal of code code
-         * @param buffer a SFLDataFormat vector
+         * @param buffer a SFLAudioSample vector
          * @param code   dtmf code to get sound
          */
         void getSamples(std::vector<SFLAudioSample> &buffer, unsigned char code);
@@ -109,7 +109,7 @@ class DTMFGenerator {
         /*
          * Get next n samples (continues where previous call to
          * genSample or genNextSamples stopped
-         * @param buffer a SFLDataFormat vector
+         * @param buffer a SFLAudioSample vector
          */
         void getNextSamples(std::vector<SFLAudioSample> &buffer);
 
@@ -118,7 +118,7 @@ class DTMFGenerator {
         /**
          * Fill tone buffer for a given index of the array of tones.
          * @param index of the tone in the array tones_
-         * @return SFLDataFormat* The generated data
+         * @return SFLAudioSample* The generated data
          */
         SFLAudioSample* fillToneBuffer(int index);
 };

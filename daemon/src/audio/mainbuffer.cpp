@@ -275,14 +275,14 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
 
         for (CallIDSet::iterator iter_id = callid_set->begin();
              iter_id != callid_set->end(); ++iter_id) {
-            /*size_t nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
-            SFLDataFormat mixBuffer[nbSmplToCopy];
+            /*size_t nbSmplToCopy = toCopy / sizeof(SFLAudioSample);
+            SFLAudioSample mixBuffer[nbSmplToCopy];
             memset(mixBuffer, 0, toCopy);
             size = getDataByID(mixBuffer, toCopy, *iter_id, call_id);*/
             size = getDataByID(mixBuffer, *iter_id, call_id);
 
             if (size > 0) {
-                /*SFLDataFormat *dest = static_cast<SFLDataFormat*>(buffer);
+                /*SFLAudioSample *dest = static_cast<SFLAudioSample*>(buffer);
                 for (size_t k = 0; k < nbSmplToCopy; ++k)
                     dest[k] += mixBuffer[k];*/
                 buffer.mix(mixBuffer);
