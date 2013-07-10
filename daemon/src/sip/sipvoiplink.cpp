@@ -1233,7 +1233,7 @@ SIPVoIPLink::getSipCall(const std::string& id)
     if (iter != sipCallMap_.end())
         return iter->second;
     else {
-        ERROR("No SIP call with ID %s", id.c_str());
+        DEBUG("No SIP call with ID %s", id.c_str());
         return NULL;
     }
 }
