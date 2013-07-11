@@ -293,8 +293,9 @@ int AudioRtpRecordHandler::processDataEncode()
 
     double resampleFactor = (double) mainBufferSampleRate / codecSampleRate;
 
-    // compute nb of byte to get coresponding to 1 audio frame
-    int samplesToGet = resampleFactor * getCodecFrameSize();
+    // compute nb of byte to get corresponding to 1 audio frame
+    const size_t samplesToGet = resampleFactor * getCodecFrameSize();
+
     if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
         return 0;
 
@@ -310,6 +311,7 @@ int AudioRtpRecordHandler::processDataEncode()
         ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samps);
         return 0;
     }
+
     audioRtpRecord_.fadeInDecodedData();
 
     AudioBuffer *out = &micData;
@@ -338,7 +340,8 @@ int AudioRtpRecordHandler::processDataEncode()
 
 #endif
 
-    {   ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+    {
+        ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
         return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out->getData(), getCodecFrameSize());
@@ -367,13 +370,13 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         }
     }
 
-    int inSamples = 0;
     size = std::min(size, audioRtpRecord_.decData_.samples());
 
-    {   ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+    {
+        ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         // Return the size of data in samples
-        inSamples = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
+        audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
     }
 
 #if HAVE_SPEEXDSP
@@ -388,13 +391,12 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
     audioRtpRecord_.fadeInDecodedData();
 
-    // Normalize incomming signal
+    // Normalize incoming signal
     gainController_.process(audioRtpRecord_.decData_);
 
     AudioBuffer *out = &(audioRtpRecord_.decData_);
-    int outSamples = inSamples;
 
-    int codecSampleRate = out->getSampleRate();//getCodecSampleRate();
+    int codecSampleRate = out->getSampleRate();
     int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
 
     // test if resampling is required
@@ -409,10 +411,10 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 }
 #undef RETURN_IF_NULL
 
-void AudioRtpRecord::fadeInDecodedData() //size_t size)
+void AudioRtpRecord::fadeInDecodedData()
 {
     // if factor reaches 1, this function should have no effect
-    if (fadeFactor_ >= 1.0)// or size > decData_.size())
+    if (fadeFactor_ >= 1.0)
         return;
 
     decData_.applyGain(fadeFactor_);
