@@ -68,15 +68,11 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
     const unsigned int encFrameSize = frameSize * bitrate / audioRate;
     const unsigned int decodedSize = length * (frameSize / encFrameSize);
 
-    /*SFLAudioSample *monoBuffer = new SFLAudioSample[decodedSize];
-    SFLAudioSample *bufpos = monoBuffer;*/
     AudioBuffer * buffer = new AudioBuffer(decodedSize);
     unsigned bufpos = 0;
     unsigned char *filepos = reinterpret_cast<unsigned char *>(&fileBuffer[0]);
-    //size_ = decodedSize;
 
     while (length >= encFrameSize) {
-        //bufpos += audioCodec_->decode(bufpos, filepos, encFrameSize);
         bufpos += audioCodec_->decode(buffer->getData(), filepos, encFrameSize, bufpos);
         filepos += encFrameSize;
         length -= encFrameSize;
@@ -89,6 +85,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
 
         const size_t channels = buffer->getChannelNum();
 
+        // FIXME: it looks like buffer and buffer_ are leaked in this case
         if (channels > 2)
             throw AudioFileException("WaveFile: unsupported number of channels");
 
@@ -98,14 +95,9 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
         buffer->interleaveFloat(floatBufferIn);
 
         int samplesOut = ceil(factord * samples);
-        int sizeOut = samplesOut*channels;
+        int sizeOut = samplesOut * channels;
 
-        //src_short_to_float_array(monoBuffer, floatBufferIn, size_);
-        //delete [] monoBuffer;
-        //delete [] buffer_;
-        //delete buffer;
         delete buffer_;
-        //buffer_ = new SFLAudioSample[sizeOut];
 
         SRC_DATA src_data;
         src_data.data_in = floatBufferIn;
@@ -118,7 +110,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
 
         src_simple(&src_data, SRC_SINC_BEST_QUALITY, channels);
         samplesOut = src_data.output_frames_gen;
-        sizeOut = samplesOut*channels;
+        sizeOut = samplesOut * channels;
 
         SFLAudioSample *scratch = new SFLAudioSample[sizeOut];
         src_float_to_short_array(floatBufferOut, scratch, src_data.output_frames_gen);
@@ -143,16 +135,16 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     fileStream.open(fileName.c_str(), std::ios::in | std::ios::binary);
 
     char riff[4] = { 0, 0, 0, 0 };
-    fileStream.read(riff, sizeof riff / sizeof *riff);
+    fileStream.read(riff, sizeof riff / sizeof * riff);
 
-    if (strncmp("RIFF", riff, sizeof riff / sizeof *riff) != 0)
+    if (strncmp("RIFF", riff, sizeof riff / sizeof * riff) != 0)
         throw AudioFileException("File is not of RIFF format");
 
     char fmt[4] = { 0, 0, 0, 0 };
     int maxIteration = 10;
 
-    while (maxIteration-- and strncmp("fmt ", fmt, sizeof fmt / sizeof *fmt))
-        fileStream.read(fmt, sizeof fmt / sizeof *fmt);
+    while (maxIteration-- and strncmp("fmt ", fmt, sizeof fmt / sizeof * fmt))
+        fileStream.read(fmt, sizeof fmt / sizeof * fmt);
 
     if (maxIteration == 0)
         throw AudioFileException("Could not find \"fmt \" chunk");
@@ -193,8 +185,8 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     char data[4] = { 0, 0, 0, 0 };
     maxIteration = 10;
 
-    while (maxIteration-- && strncmp("data", data, sizeof data / sizeof *data))
-        fileStream.read(data, sizeof data / sizeof *data);
+    while (maxIteration-- && strncmp("data", data, sizeof data / sizeof * data))
+        fileStream.read(data, sizeof data / sizeof * data);
 
     // Samplerate converter initialized with 88200 sample long
     const int rate = static_cast<SINT32>(sampleRate);
@@ -211,11 +203,10 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
           "chunk size %d dt %d", nbSamples, bytes, blockal, fileRate, avgb,
           chunkSize, dt);
 
-    //size_ = nbSamples;
-    SFLAudioSample * tempBuffer = new SFLAudioSample[nbSamples*chan];
+    SFLAudioSample * tempBuffer = new SFLAudioSample[nbSamples * chan];
 
     fileStream.read(reinterpret_cast<char *>(tempBuffer),
-                    nbSamples*chan * sizeof(SFLAudioSample));
+                    nbSamples * chan * sizeof(SFLAudioSample));
 
     AudioBuffer * buffer = new AudioBuffer(nbSamples, chan, fileRate);
     buffer->fromInterleaved(tempBuffer, nbSamples, chan);
