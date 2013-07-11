@@ -54,7 +54,7 @@ typedef struct PaDeviceInfos {
         pa_sample_spec sample_spec;
         pa_channel_map channel_map;
 
-        PaDeviceInfos(unsigned idx, const char* ep_name, pa_sample_spec samp_spec, pa_channel_map chan_map)
+        PaDeviceInfos(unsigned idx, const char* ep_name, const pa_sample_spec &samp_spec, const pa_channel_map &chan_map)
             : index(idx), name(ep_name), sample_spec(samp_spec), channel_map(chan_map) {}
         virtual ~PaDeviceInfos() {}
 
