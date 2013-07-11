@@ -36,7 +36,8 @@
 
 Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "Opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
     encoder_(0),
-    decoder_(0)
+    decoder_(0),
+    interleaved_()
 {
     hasDynamicPayload_ = true;
 
@@ -73,16 +74,17 @@ int Opus::encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size)
 
 int Opus::decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset /* = 0 */)
 {
-    if(dst == NULL || buf == NULL || dst->size()<2) return 0;
-    interleaved_.resize(4*FRAME_SIZE);
-    unsigned samples = opus_decode(decoder_, buf, buffer_size, interleaved_.data(), 2*FRAME_SIZE, 0);
+    if (dst == NULL || buf == NULL || dst->size() < 2) return 0;
 
-    std::vector<short>::iterator left_it = dst->at(0).begin()+dst_offset;
-    std::vector<short>::iterator right_it = dst->at(1).begin()+dst_offset;
+    interleaved_.resize(4 * FRAME_SIZE);
+    unsigned samples = opus_decode(decoder_, buf, buffer_size, interleaved_.data(), 2 * FRAME_SIZE, 0);
+
+    std::vector<short>::iterator left_it = dst->at(0).begin() + dst_offset;
+    std::vector<short>::iterator right_it = dst->at(1).begin() + dst_offset;
     std::vector<opus_int16>::iterator it = interleaved_.begin();
 
     // hard-coded 2-channels as it is the stereo version
-    for(unsigned i=0; i<samples; i++) {
+    for (unsigned i = 0; i < samples; i++) {
         *left_it++ = *it++;
         *right_it++ = *it++;
     }
@@ -92,13 +94,14 @@ int Opus::decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size
 
 int Opus::encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size)
 {
-    if(dst == NULL || src == NULL || src->size()<2) return 0;
+    if (dst == NULL || src == NULL || src->size() < 2) return 0;
+
     const unsigned samples = src->at(0).size();
-    interleaved_.resize(2*samples);
+    interleaved_.resize(2 * samples);
     std::vector<opus_int16>::iterator it = interleaved_.begin();
 
     // hard-coded 2-channels as it is the stereo version
-    for(unsigned i=0; i<samples; i++) {
+    for (unsigned i = 0; i < samples; i++) {
         *it++ = src->at(0)[i];
         *it++ = src->at(1)[i];
     }
