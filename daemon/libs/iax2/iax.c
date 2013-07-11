@@ -876,7 +876,7 @@ int iax_init(int preferredportno)
 
 	if (iax_recvfrom == (iax_recvfrom_t)recvfrom)
 	{
-		struct sockaddr_in sin;
+		struct sockaddr_in sin = {};
 		socklen_t sinlen;
 		int flags;
 		int bufsize = 256 * 1024;
