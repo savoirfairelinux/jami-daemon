@@ -218,4 +218,6 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
         buffer_ = resampled;
     } else
         buffer_ = buffer;
+
+    delete tempBuffer;
 }
