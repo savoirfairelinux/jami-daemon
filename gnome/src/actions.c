@@ -130,12 +130,17 @@ status_bar_display_account()
     account_t *acc = account_list_get_current();
     status_tray_icon_online(acc != NULL);
 
+    static const char * const account_types[] = {
+        N_("(SIP)"),
+        N_("(IAX)")
+    };
+
     gchar* msg;
     if (acc) {
-        msg = g_markup_printf_escaped("%s %s (%s)" ,
-                                      _("Using account"),
+        const guint type_idx = account_is_IAX(acc);
+        msg = g_markup_printf_escaped(_("Using account %s %s"),
                                       (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
-                                      (gchar*) account_lookup(acc, CONFIG_ACCOUNT_TYPE));
+                                      _(account_types[type_idx]));
     } else {
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
