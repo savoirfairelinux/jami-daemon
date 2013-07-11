@@ -848,6 +848,7 @@ static int iax_reliable_xmit(struct iax_frame *f)
 			if (!fc->data) {
 				DEBU(G "Out of memory\n");
 				IAXERROR "Out of memory\n");
+				free(fc);
 				return -1;
 			}
 			memcpy(fc->data, f->data, f->datalen);
