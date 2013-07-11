@@ -79,8 +79,6 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     size_t nbSamples = dataIn.samples();
     size_t nbChans = dataIn.channels();
 
-    unsigned i, j;
-
     if (sampleFactor == 1.0)
         return;
 
