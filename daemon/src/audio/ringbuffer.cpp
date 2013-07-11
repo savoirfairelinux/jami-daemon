@@ -47,7 +47,7 @@ const size_t MIN_BUFFER_SIZE = 1280;
 
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer(size_t size, const std::string &call_id) :
-      endPos_(0)
+    endPos_(0)
     , buffer_(std::max(size, MIN_BUFFER_SIZE), 1)
     , readpointers_()
     , buffer_id_(call_id)
@@ -171,7 +171,7 @@ void RingBuffer::put(AudioBuffer& buf)
     size_t toCopy = sample_num;
 
     // Add more channels if the input buffer holds more channels than the ring.
-    if(buffer_.channels() < buf.channels())
+    if (buffer_.channels() < buf.channels())
         buffer_.setChannelNum(buf.channels());
 
     if (toCopy > buffer_size - len)
