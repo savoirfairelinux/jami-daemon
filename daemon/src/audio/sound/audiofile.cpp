@@ -221,8 +221,6 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     buffer->fromInterleaved(tempBuffer, nbSamples, chan);
 
     if (fileRate != rate) {
-        const float ratio = sampleRate / (float) fileRate;
-        const int outSamples = ceil(nbSamples * ratio);
         AudioBuffer * resampled = new AudioBuffer(nbSamples, chan, rate);
         converter.resample(*buffer, *resampled);
         delete [] buffer;
