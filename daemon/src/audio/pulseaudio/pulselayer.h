@@ -49,7 +49,7 @@ class AudioStream;
  * Convenience structure to hold PulseAudio device propreties such as supported channel number etc.
  */
 typedef struct PaDeviceInfos {
-        unsigned index; // TODO: should use uint32_t (with C++11) since it's the PA type for indexes
+        uint32_t index;
         std::string name;
         pa_sample_spec sample_spec;
         pa_channel_map channel_map;
