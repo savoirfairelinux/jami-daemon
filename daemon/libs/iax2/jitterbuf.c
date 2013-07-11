@@ -237,8 +237,10 @@ static void history_calc_maxbuf(jitterbuf *jb)
 			for (j=0;j<JB_HISTORY_MAXBUF_SZ;j++) {
 				/* found where it fits */
 				if (toins > jb->hist_maxbuf[j]) {
-					/* move over */
-					memmove(jb->hist_maxbuf + j + 1, jb->hist_maxbuf + j, (JB_HISTORY_MAXBUF_SZ - (j + 1)) * sizeof(jb->hist_maxbuf[0]));
+					/* move over if there's space */
+                    const size_t slide = (JB_HISTORY_MAXBUF_SZ - (j + 1)) * sizeof(jb->hist_maxbuf[0]);
+					if (slide > 0)
+						memmove(jb->hist_maxbuf + j + 1, jb->hist_maxbuf + j, slide);
 					/* insert */
 					jb->hist_maxbuf[j] = toins;
 
