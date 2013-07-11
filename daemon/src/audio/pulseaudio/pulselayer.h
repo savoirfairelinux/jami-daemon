@@ -61,13 +61,15 @@ typedef struct PaDeviceInfos {
     /**
      * Unary function to search for a device by name in a list using std functions.
      */
-    struct nameComparator : public std::unary_function<const PaDeviceInfos, bool>
+    class nameComparator
     {
-        explicit nameComparator(const std::string &ref) : baseline(ref) {}
-        bool operator() (const PaDeviceInfos &arg) {
-            return arg.name == baseline;
-        }
-        const std::string &baseline;
+        public:
+            explicit nameComparator(const std::string &ref) : baseline(ref) {}
+            bool operator() (const PaDeviceInfos &arg) {
+                return arg.name == baseline;
+            }
+        private:
+            const std::string &baseline;
     };
 } PaDeviceInfos;
 
