@@ -205,8 +205,8 @@ class AudioBuffer {
 
     private:
         int sampleRate_;
-        unsigned channels_; // should allways be the same as samples_.size()
         size_t sampleNum_;
+        unsigned channels_; // should allways be the same as samples_.size()
 
         // main buffers holding data for each channels
         std::vector<std::vector<SFLAudioSample> > samples_;
