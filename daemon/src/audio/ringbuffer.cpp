@@ -182,7 +182,6 @@ void RingBuffer::put(AudioBuffer& buf)
 
     while (toCopy) {
         size_t block = toCopy;
-        size_t i;
 
         if (block > buffer_size - pos) // Wrap block around ring ?
             block = buffer_size - pos; // Fill in to the end of the buffer
@@ -228,7 +227,6 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 
     while (toCopy > 0) {
         size_t block = toCopy;
-        unsigned i;
 
         if (block > buffer_size - startPos)
             block = buffer_size - startPos;
