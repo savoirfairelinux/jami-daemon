@@ -661,8 +661,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     if (size > max)
         size = max;
 
-    int samples = audioCodec->decode(decData_.getData(), data , size);
-    int outSize = samples * sizeof(SFLAudioSample);
+    audioCodec->decode(decData_.getData(), data , size);
     AudioBuffer *out = &decData_;
     unsigned int audioRate = audioCodec->getClockRate();
 
