@@ -49,28 +49,27 @@ class AudioStream;
  * Convenience structure to hold PulseAudio device propreties such as supported channel number etc.
  */
 typedef struct PaDeviceInfos {
-    unsigned index; // TODO: should use uint32_t (with C++11) since it's the PA type for indexes
-    std::string name;
-    pa_sample_spec sample_spec;
-    pa_channel_map channel_map;
+        unsigned index; // TODO: should use uint32_t (with C++11) since it's the PA type for indexes
+        std::string name;
+        pa_sample_spec sample_spec;
+        pa_channel_map channel_map;
 
-    PaDeviceInfos(unsigned idx, const char* ep_name, pa_sample_spec samp_spec, pa_channel_map chan_map)
-        : index(idx), name(ep_name), sample_spec(samp_spec), channel_map(chan_map) {}
-    virtual ~PaDeviceInfos() {}
+        PaDeviceInfos(unsigned idx, const char* ep_name, pa_sample_spec samp_spec, pa_channel_map chan_map)
+            : index(idx), name(ep_name), sample_spec(samp_spec), channel_map(chan_map) {}
+        virtual ~PaDeviceInfos() {}
 
-    /**
-     * Unary function to search for a device by name in a list using std functions.
-     */
-    class nameComparator
-    {
-        public:
-            explicit nameComparator(const std::string &ref) : baseline(ref) {}
-            bool operator() (const PaDeviceInfos &arg) {
-                return arg.name == baseline;
-            }
-        private:
-            const std::string &baseline;
-    };
+        /**
+         * Unary function to search for a device by name in a list using std functions.
+         */
+        class nameComparator {
+            public:
+                explicit nameComparator(const std::string &ref) : baseline(ref) {}
+                bool operator()(const PaDeviceInfos &arg) {
+                    return arg.name == baseline;
+                }
+            private:
+                const std::string &baseline;
+        };
 } PaDeviceInfos;
 
 class PulseLayer : public AudioLayer {
