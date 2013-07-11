@@ -792,6 +792,8 @@ bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
         }
         return true;
     }
+#else
+    (void) args;
 #endif
     return false;
 }
