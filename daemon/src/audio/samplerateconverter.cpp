@@ -82,7 +82,7 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     if (sampleFactor == 1.0)
         return;
 
-    if(nbChans != channels_) {
+    if (nbChans != channels_) {
         // change channel num if needed
         int err;
         src_delete(src_state_);
