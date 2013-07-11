@@ -42,7 +42,7 @@
 
 #include "logger.h"
 #include "manager.h"
-#include "dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 
  #include "dbus/jni_callbacks.h"
 
@@ -98,16 +98,11 @@ Account::~Account()
 void Account::setRegistrationState(const RegistrationState &state)
 {
     if (state != registrationState_) {
+        
         registrationState_ = state;
-
-    #if HAVE_DBUS
-            // Notify the client
-            ConfigurationManager *c(Manager::instance().getDbusManager()->getConfigurationManager());
-            c->registrationStateChanged(accountID_, registrationState_);
-    #else
-        DEBUG("Notify the client on account state changed ===========");
-        on_account_state_changed_wrapper(accountID_.c_str(), registrationState_);
-    #endif
+        // Notify the client
+        ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
+        c->registrationStateChanged(accountID_, registrationState_);
     }
 }
 

@@ -191,4 +191,3 @@ VideoControls::getCurrentCodecName(const std::string &callID)
 {
     return Manager::instance().getCurrentVideoCodecName(callID);
 }
-

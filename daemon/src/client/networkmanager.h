@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,53 +28,22 @@
  *  as that of the covered work.
  */
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#ifndef NETWORKMANAGER_H_
+#define NETWORKMANAGER_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "dbus_cpp.h"
-#include "noncopyable.h"
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "networkmanager_proxy.h"
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
 
-class ConfigurationManager;
-class CallManager;
-class NetworkManager;
-class Instance;
-class VideoControls;
-
-class DBusManager {
+class NetworkManager : public org::freedesktop::NetworkManager_proxy,
+                       public DBus::IntrospectableProxy,
+                       // cppcheck-suppress unusedFunction
+                       public DBus::ObjectProxy {
     public:
-        DBusManager();
-        ~DBusManager();
-
-        CallManager * getCallManager() {
-            return callManager_;
-        }
-        ConfigurationManager * getConfigurationManager() {
-            return configurationManager_;
-        }
-#ifdef SFL_VIDEO
-        VideoControls* getVideoControls() {
-            return videoControls_;
-        }
-#endif
-
-        void exec();
-        void exit();
-
-    private:
-        NON_COPYABLE(DBusManager);
-        CallManager*          callManager_;
-        ConfigurationManager* configurationManager_;
-        Instance*             instanceManager_;
-        DBus::BusDispatcher   dispatcher_;
-#ifdef SFL_VIDEO
-        VideoControls *videoControls_;
-#endif
-#if USE_NETWORKMANAGER
-        NetworkManager* networkManager_;
-#endif
+        NetworkManager(DBus::Connection &, const DBus::Path &, const char*);
+        void StateChanged(const uint32_t &state);
+        void PropertiesChanged(const std::map<std::string, ::DBus::Variant> &argin0);
 };
-
 #endif

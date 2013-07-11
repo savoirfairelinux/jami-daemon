@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -31,7 +32,6 @@
 #ifndef __SFL_CALLMANAGER_H__
 #define __SFL_CALLMANAGER_H__
 
-#include "dbus_cpp.h"
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 /* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
@@ -39,7 +39,7 @@
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "callmanager-glue.h"
+/* placeholder for the jni-glue */
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
@@ -48,61 +48,59 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-#include <stdexcept>
-
-class CallManagerException: public std::runtime_error {
-    public:
-        CallManagerException(const std::string& str="") :
-            std::runtime_error("A CallManagerException occured: " + str) {}
-};
+#include <vector>
+#include <map>
 
 namespace sfl {
     class AudioZrtpSession;
 }
 
-class CallManager
-    : public org::sflphone::SFLphone::CallManager_adaptor,
-  public DBus::IntrospectableAdaptor,
-      public DBus::ObjectAdaptor {
+class CallManager {
     public:
 
-        CallManager(DBus::Connection& connection);
+        CallManager();
 
         /* methods exported by this interface,
-         * you will have to implement them in your ObjectAdaptor
+         * you will have to implement them
          */
 
         /* Call related methods */
-        bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
+        void placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
+        void placeCallFirstAccount(const std::string& callID, const std::string& to);
 
-        bool refuse(const std::string& callID);
-        bool accept(const std::string& callID);
-        bool hangUp(const std::string& callID);
-        bool hold(const std::string& callID);
-        bool unhold(const std::string& callID);
+        void refuse(const std::string& callID);
+        void accept(const std::string& callID);
+        void hangUp(const std::string& callID);
+        void hold(const std::string& callID);
+        void unhold(const std::string& callID);
         bool transfer(const std::string& callID, const std::string& to);
         bool attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails(const std::string& callID);
         std::vector< std::string > getCallList();
 
+
         /* Conference related methods */
-        bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
+        void removeConference(const std::string& conference_id);
+        void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);
-
-        bool addParticipant(const std::string& callID, const std::string& confID);
-        bool addMainParticipant(const std::string& confID);
-        bool detachParticipant(const std::string& callID);
-        bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
-        bool hangUpConference(const std::string& confID);
-        bool holdConference(const std::string& confID);
-        bool unholdConference(const std::string& confID);
-
+        void createConference(const std::string& id1, const std::string& id2);
+        void addParticipant(const std::string& callID, const std::string& confID);
+        void addMainParticipant(const std::string& confID);
+        void detachParticipant(const std::string& callID);
+        void joinConference(const std::string& sel_confID, const std::string& drag_confID);
+        void hangUpConference(const std::string& confID);
+        void holdConference(const std::string& confID);
+        void unholdConference(const std::string& confID);
+        bool isConferenceParticipant(const std::string& call_id);
         std::vector<std::string> getConferenceList();
         std::vector<std::string> getParticipantList(const std::string& confID);
         std::string getConferenceId(const std::string& callID);
         std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
+        bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+
         /* File Playback methods */
+        void setRecordingCall(const std::string& id);
         bool startRecordedFilePlayback(const std::string& filepath);
         void stopRecordedFilePlayback(const std::string& filepath);
 
@@ -133,4 +131,4 @@ class CallManager
 #endif
 };
 
-#endif//CALLMANAGER_H
+#endif//CALLMANAGER_H__

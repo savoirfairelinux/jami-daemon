@@ -374,7 +374,7 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/sound/Makefile \
                  src/audio/codecs/Makefile \
                  src/config/Makefile \
-                 src/dbus/Makefile \
+                 src/client/Makefile \
                  src/hooks/Makefile \
                  src/history/Makefile \
                  src/video/Makefile \

@@ -36,7 +36,6 @@
 
 START_TEST(test_dbus_connect)
 {
-    g_type_init();
     GError *error = NULL;
     SFLPhoneClient *client = sflphone_client_new();
     fail_unless(dbus_connect(&error, client) == TRUE, "dbus_connect () returns FALSE");

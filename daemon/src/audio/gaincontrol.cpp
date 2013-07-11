@@ -64,7 +64,7 @@ void GainControl::process(SFLDataFormat *buf, int samples)
 
     for (int i = 0; i < samples; i++) {
         // linear conversion
-        in = (double)buf[i] / (double)SHRT_MAX;
+        in = (double) buf[i] / (double) SFL_DATA_FORMAT_MAX;
 
         out = currentGain_ * in;
 
@@ -76,7 +76,7 @@ void GainControl::process(SFLDataFormat *buf, int samples)
 
         out = limiter_.limit(out);
 
-        buf[i] = (short)(out * (double)SHRT_MAX);
+        buf[i] = (SFLDataFormat) (out * (double) SFL_DATA_FORMAT_MAX);
     }
 
     diffRms = maxRms - targetLevelLinear_;
@@ -106,6 +106,7 @@ double GainControl::DetectionAverage::getAverage(double in)
         previous_y_ = ((1.0 - g_a_) * in) + (g_a_ * previous_y_);
     else
         previous_y_ = ((1.0 - g_r_) * in) + (g_r_ * previous_y_);
+
     return previous_y_;
 }
 
@@ -115,7 +116,7 @@ GainControl::Limiter::Limiter(double r, double thresh) : ratio_(r), threshold_(t
 double GainControl::Limiter::limit(double in) const
 {
     double out = (in > threshold_ ? (ratio_ * (in - threshold_)) + threshold_ :
-           in < -threshold_ ? (ratio_ * (in + threshold_)) - threshold_ : in);
+                  in < -threshold_ ? (ratio_ * (in + threshold_)) - threshold_ : in);
 
     return out;
 }

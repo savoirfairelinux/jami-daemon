@@ -71,8 +71,7 @@ bool DTMF::generateDTMF(vector<SFLDataFormat> &buffer)
                 dtmfgenerator_.getSamples(buffer, newTone_);
                 currentTone_ = newTone_;
                 return true;
-            }
-            else
+            } else
                 return false;
         }
     } catch (const DTMFException &e) {

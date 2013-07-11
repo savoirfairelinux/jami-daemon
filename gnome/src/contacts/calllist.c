@@ -165,6 +165,10 @@ calllist_remove_call(calltab_t* tab, const gchar * callID, SFLPhoneClient *clien
         g_queue_remove(tab->callQueue, call);
     }
 
+    /* If removing a call from the history, don't add it back to the history! */
+    if (calltab_has_name(tab, HISTORY))
+        return;
+
     /* Don't save empty (i.e. started dialing, then deleted) calls */
     if (call->_peer_number && strlen(call->_peer_number) > 0) {
         calllist_add_call(history_tab, call);

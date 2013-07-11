@@ -325,7 +325,24 @@
             </arg>
         </method>
 
+        <method name="toggleRecording" tp:name-for-bindings="toggleRecording">
+            <tp:docstring>
+              Toggle recording for a call.
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in">
+              <tp:docstring>
+                The ID of the call to start/stop recording.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="isRecording" direction="out">
+              <tp:docstring>
+                Returns true is the call is being recorded. False otherwise.
+              </tp:docstring>
+            </arg>
+        </method>
+
         <method name="setRecording" tp:name-for-bindings="setRecording">
+        <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
             <tp:docstring>
               Start recording a call.
             </tp:docstring>

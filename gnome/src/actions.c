@@ -130,12 +130,17 @@ status_bar_display_account()
     account_t *acc = account_list_get_current();
     status_tray_icon_online(acc != NULL);
 
+    static const char * const account_types[] = {
+        N_("(SIP)"),
+        N_("(IAX)")
+    };
+
     gchar* msg;
     if (acc) {
-        msg = g_markup_printf_escaped("%s %s (%s)" ,
-                                      _("Using account"),
+        const guint type_idx = account_is_IAX(acc);
+        msg = g_markup_printf_escaped(_("Using account %s %s"),
                                       (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
-                                      (gchar*) account_lookup(acc, CONFIG_ACCOUNT_TYPE));
+                                      _(account_types[type_idx]));
     } else {
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
@@ -812,19 +817,19 @@ sflphone_add_main_participant(const conference_obj_t * c)
     dbus_add_main_participant(c->_confID);
 }
 
-void
+
+gboolean
 sflphone_rec_call(SFLPhoneClient *client)
 {
+    gboolean result = FALSE;
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
     if (selectedCall) {
-        g_debug("Set record for selected call");
-        dbus_set_record(selectedCall->_callID);
+        result = dbus_toggle_recording(selectedCall->_callID);
         calltree_update_call(current_calls_tab, selectedCall, client, TRUE);
     } else if (selectedConf) {
-        g_debug("Set record for selected conf");
-        dbus_set_record(selectedConf->_confID);
+        result = dbus_toggle_recording(selectedConf->_confID);
 
         switch (selectedConf->_state) {
             case CONFERENCE_STATE_ACTIVE_ATTACHED:
@@ -851,6 +856,7 @@ sflphone_rec_call(SFLPhoneClient *client)
     } else {
         update_actions(client);
     }
+    return result;
 }
 
 void

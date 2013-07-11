@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 #include "opus.h"
+#include "sfl_types.h"
 #include <stdexcept>
 #include <iostream>
 
@@ -37,34 +38,37 @@ Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "OPUS", CLOCK_RATE, FRAME_SIZE
     encoder_(0),
     decoder_(0)
 {
-   hasDynamicPayload_ = true;
+    hasDynamicPayload_ = true;
 
-   int err = 0;
-   encoder_ = opus_encoder_create(CLOCK_RATE, CHANNELS, OPUS_APPLICATION_VOIP, &err);
-   if (err)
-       throw std::runtime_error("opus: could not create encoder");
+    int err = 0;
+    encoder_ = opus_encoder_create(CLOCK_RATE, CHANNELS, OPUS_APPLICATION_VOIP, &err);
 
-   decoder_ = opus_decoder_create(CLOCK_RATE, CHANNELS, &err);
-   if (err)
-       throw std::runtime_error("opus: could not create decoder");
+    if (err)
+        throw std::runtime_error("opus: could not create encoder");
+
+    decoder_ = opus_decoder_create(CLOCK_RATE, CHANNELS, &err);
+
+    if (err)
+        throw std::runtime_error("opus: could not create decoder");
 }
 
 Opus::~Opus()
 {
     if (encoder_)
         opus_encoder_destroy(encoder_);
+
     if (decoder_)
         opus_decoder_destroy(decoder_);
 }
 
-int Opus::decode(short *dst, unsigned char *buf, size_t buffer_size)
+int Opus::decode(SFLDataFormat *dst, unsigned char *buf, size_t buffer_size)
 {
-   return opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);
+    return opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);
 }
 
-int Opus::encode(unsigned char *dst, short *src, size_t buffer_size)
+int Opus::encode(unsigned char *dst, SFLDataFormat *src, size_t buffer_size)
 {
-   return opus_encode(encoder_, src, FRAME_SIZE, dst, buffer_size * 2);
+    return opus_encode(encoder_, src, FRAME_SIZE, dst, buffer_size * 2);
 }
 
 // cppcheck-suppress unusedFunction

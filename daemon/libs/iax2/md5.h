@@ -11,7 +11,10 @@ typedef unsigned char uint8_t;
 struct IAX_MD5Context {
 	uint32_t buf[4];
 	uint32_t bits[2];
-	uint8_t in[64];
+	union {
+	    uint8_t in[64];
+	    uint32_t in_32[16];
+	};
 };
 
 void IAX_MD5Init(struct IAX_MD5Context *context);

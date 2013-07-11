@@ -59,11 +59,12 @@
 #include "pjsip/sip_transport_tls.h"
 #endif
 
-#if HAVE_DBUS
-#include "dbus/dbusmanager.h"
-#include "dbus/configurationmanager.h"
+#ifndef __ANDROID__
+#include "client/configurationmanager.h"
+#else
+#include "client/android/configuration.h"
 #endif
- 
+
 static const char * const DEFAULT_INTERFACE = "default";
 static const char * const ANY_HOSTS = "0.0.0.0";
 
@@ -492,7 +493,7 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 #define RETURN_IF_STUN_FAIL(A, M, ...) \
     if (!(A)) { \
         ERROR(M, ##__VA_ARGS__); \
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
+        Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
         return NULL; }
 #else /* HAVE_DBUS */
 #define RETURN_IF_STUN_FAIL(A, M, ...)
@@ -519,9 +520,8 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
         ERROR("Can't contact STUN server");
         pj_sock_close(sock);
-#if HAVE_DBUS
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
-#endif
+
+        Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
         return NULL;
     }
 

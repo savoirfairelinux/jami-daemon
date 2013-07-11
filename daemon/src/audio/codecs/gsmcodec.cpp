@@ -46,10 +46,10 @@ extern "C" {
 
 class Gsm : public sfl::AudioCodec {
 
-public:
+    public:
         // _payload should be 3
         Gsm() : sfl::AudioCodec(3, "GSM", 8000, 160, 1),
-        decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
+            decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
             bitrate_ = 13.3;
             hasDynamicPayload_ = false;
 
@@ -60,22 +60,19 @@ public:
                 throw std::runtime_error("ERROR: encode_gsm_create\n");
         }
 
-        ~Gsm()
-        {
+        ~Gsm() {
             gsm_destroy(decode_gsmhandle_);
             gsm_destroy(encode_gsmhandle_);
         }
-private:
-        int decode(SFLDataFormat * dst, unsigned char * src, size_t /*buf_size*/)
-        {
+    private:
+        int decode(SFLDataFormat * dst, unsigned char * src, size_t /*buf_size*/) {
             if (gsm_decode(decode_gsmhandle_, (gsm_byte*) src, (gsm_signal*) dst) < 0)
                 throw std::runtime_error("ERROR: gsm_decode\n");
 
             return frameSize_;
         }
 
-        int encode(unsigned char * dst, SFLDataFormat * src, size_t /*buf_size*/)
-        {
+        int encode(unsigned char * dst, SFLDataFormat * src, size_t /*buf_size*/) {
             gsm_encode(encode_gsmhandle_, (gsm_signal*) src, (gsm_byte*) dst);
             return sizeof(gsm_frame);
         }

@@ -86,7 +86,7 @@ void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)
 // Notify (with a beep) an incoming call when there is already a call in progress
 void AudioLayer::notifyIncomingCall()
 {
-    if (!Manager::instance().incomingCallWaiting())
+    if (!Manager::instance().incomingCallsWaiting())
         return;
 
     time_t now = time(NULL);

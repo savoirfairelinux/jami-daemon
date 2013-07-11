@@ -46,7 +46,7 @@ void DcBlocker::process(SFLDataFormat *out, SFLDataFormat *in, int samples)
     for (int i = 0; i < samples; ++i) {
         x_ = in[i];
 
-        y_ = (SFLDataFormat) ((float) x_ - (float) xm1_ + 0.9999 * (float) y_);
+        y_ = (SFLDataFormat)((float) x_ - (float) xm1_ + 0.9999 * (float) y_);
         xm1_ = x_;
         ym1_ = y_;
 

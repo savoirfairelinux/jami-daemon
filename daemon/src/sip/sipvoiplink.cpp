@@ -52,11 +52,17 @@
 #endif
 #include "array_size.h"
 
-#if HAVE_DBUS
-#include "dbus/dbusmanager.h"
-#include "dbus/callmanager.h"
-#include "dbus/configurationmanager.h"
+#ifndef __ANDROID__
+#include "client/client.h"
+#include "client/callmanager.h"
+#include "client/configurationmanager.h"
+#else
+#include "client/android/configuration.h"
+#include "client/android/client.h"
+#include "client/android/callmanager.h"
 #endif
+
+>>>>>>> master
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -66,7 +72,7 @@
 
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
-#include "dbus/video_controls.h"
+#include "client/video_controls.h"
 #endif
 
 #ifdef __ANDROID__
@@ -1303,7 +1309,7 @@ SIPVoIPLink::getSipCall(const std::string& id)
     if (iter != sipCallMap_.end())
         return iter->second;
     else {
-        ERROR("No SIP call with ID %s", id.c_str());
+        DEBUG("No SIP call with ID %s", id.c_str());
         return NULL;
     }
 }
@@ -1668,6 +1674,7 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
 
     Manager::instance().peerHungupCall(id);
     removeSipCall(id);
+    Manager::instance().checkAudio();
 }
 
 void
@@ -1719,8 +1726,8 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         if (statusCode) {
             const pj_str_t * description = pjsip_get_status_text(statusCode);
             std::string desc(description->ptr, description->slen);
-#if HAVE_DBUS
-            CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
+
+            CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->sipCallStateChanged(call->getCallId(), desc, statusCode);
 #endif
         }
@@ -1917,10 +1924,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
                 call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
             } catch (...) {}
 
-            Manager::instance().getDbusManager()->getCallManager()->secureSdesOn(call->getCallId());
+            Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
         } else {
             ERROR("SDES negotiation failure");
-            Manager::instance().getDbusManager()->getCallManager()->secureSdesOff(call->getCallId());
+            Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
         }
     }
     else {
@@ -2175,13 +2182,8 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
-#if HAVE_DBUS
-        Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged(accountID, state, param->code);
-#else 
-        DEBUG("Notify the client on account state changed =========== %d", param->code);
 
-        on_account_state_changed_with_code_wrapper(accountID.c_str(), state, param->code);
-#endif
+        Manager::instance().getClient()->getCallManager()->registrationStateChanged(accountID, state, param->code);
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);

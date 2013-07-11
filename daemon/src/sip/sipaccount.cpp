@@ -80,7 +80,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , transportType_(PJSIP_TRANSPORT_UNSPECIFIED)
     , cred_()
     , tlsSetting_()
-    , ciphers(100)
+    , ciphers_(100)
     , stunServerName_()
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
@@ -659,12 +659,14 @@ void SIPAccount::registerVoIPLink()
     if (hostname_.length() >= PJ_MAX_HOSTNAME)
         return;
 
+#if HAVE_TLS
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == TRUE_STR) {
         DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
+#endif
 
     // Init STUN settings for this account if the user selected it
     if (stunEnabled_) {
@@ -744,6 +746,7 @@ void SIPAccount::stopKeepAliveTimer()
     }
 }
 
+#if HAVE_TLS
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 {
     if (method == "Default")
@@ -761,27 +764,36 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
-#if HAVE_TLS
-void SIPAccount::displayCipherSuite()
+void SIPAccount::trimCiphers()
 {
+    int sum = 0;
+    int count = 0;
+    // PJSIP aborts if our cipher list exceeds 1010 characters
+    static const int MAX_CIPHERS_STRLEN = 1010;
+
     CipherArray::const_iterator iter;
-    for (iter = ciphers.begin(); iter != ciphers.end(); ++iter)
-        DEBUG("Cipher: %s", pj_ssl_cipher_name(*iter));
+    for (iter = ciphers_.begin(); iter != ciphers_.end(); ++iter) {
+        sum += strlen(pj_ssl_cipher_name(*iter));
+        if (sum > MAX_CIPHERS_STRLEN)
+            break;
+        ++count;
+    }
+    ciphers_.resize(count);
+    DEBUG("Using %u ciphers", ciphers_.size());
 }
 
 void SIPAccount::initTlsConfiguration()
 {
-    pj_status_t status;
     unsigned cipherNum;
 
     // Determine the cipher list supported on this machine
-    cipherNum = ciphers.size();
-    status = pj_ssl_cipher_get_availables(&ciphers.front(), &cipherNum);
-    if (status != PJ_SUCCESS) {
+    cipherNum = ciphers_.size();
+    if (pj_ssl_cipher_get_availables(&ciphers_.front(), &cipherNum) != PJ_SUCCESS)
         ERROR("Could not determine cipher list on this system");
-    }
 
-    ciphers.resize(cipherNum);
+    ciphers_.resize(cipherNum);
+
+    trimCiphers();
 
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     pjsip_tls_setting_default(&tlsSetting_);
@@ -791,12 +803,12 @@ void SIPAccount::initTlsConfiguration()
     pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
     pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
     tlsSetting_.method = sslMethodStringToPjEnum(tlsMethod_);
-    tlsSetting_.ciphers_num = ciphers.size();
-    tlsSetting_.ciphers = &ciphers.front();
+    tlsSetting_.ciphers_num = ciphers_.size();
+    tlsSetting_.ciphers = &ciphers_.front();
 
-    tlsSetting_.verify_server = tlsVerifyServer_ ? PJ_TRUE: PJ_FALSE;
-    tlsSetting_.verify_client = tlsVerifyClient_ ? PJ_TRUE: PJ_FALSE;
-    tlsSetting_.require_client_cert = tlsRequireClientCertificate_ ? PJ_TRUE: PJ_FALSE;
+    tlsSetting_.verify_server = tlsVerifyServer_;
+    tlsSetting_.verify_client = tlsVerifyClient_;
+    tlsSetting_.require_client_cert = tlsRequireClientCertificate_;
 
     tlsSetting_.timeout.sec = atol(tlsNegotiationTimeoutSec_.c_str());
     tlsSetting_.timeout.msec = atol(tlsNegotiationTimeoutMsec_.c_str());
@@ -804,11 +816,14 @@ void SIPAccount::initTlsConfiguration()
     tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
     tlsSetting_.qos_ignore_error = PJ_TRUE;
 }
+<<<<<<< HEAD
 #else
 void SIPAccount::initTlsConfiguration()
 {
 	return;
 }
+=======
+>>>>>>> master
 #endif
 
 void SIPAccount::initStunConfiguration()
@@ -838,10 +853,12 @@ void SIPAccount::loadConfig()
     if (registrationExpire_ == 0)
         registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
+#if HAVE_TLS
     if (tlsEnable_ == TRUE_STR) {
         initTlsConfiguration();
         transportType_ = PJSIP_TRANSPORT_TLS;
     } else
+#endif
         transportType_ = PJSIP_TRANSPORT_UDP;
 }
 

@@ -88,9 +88,9 @@ class AudioRecord {
         bool isRecording() const;
 
         /**
-         * Set recording flag
+         * Toggle recording state
          */
-        void setRecording();
+        bool toggleRecording();
 
         /**
          * Stop recording flag

@@ -34,7 +34,7 @@
 
 #include "audioloop.h"
 #include "manager.h"
-#include "dbus/callmanager.h"
+#include "client/callmanager.h"
 #include <cmath>
 #include <numeric>
 #include <cstring>
@@ -99,18 +99,17 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
 
     // We want to send values in milisecond
     int divisor = sampleRate_ / 1000;
-    if(divisor == 0) {
+
+    if (divisor == 0) {
         ERROR("Error cannot update playback slider, sampling rate is 0");
         return;
     }
 
-    if(isRecording_) {
-#if HAVE_DBUS
-        if((updatePlaybackScale % 5) == 0) {
-            CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
+    if (isRecording_) {
+        if ((updatePlaybackScale % 5) == 0) {
+            CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->updatePlaybackScale(pos_ / divisor, size_ / divisor);
         }
-#endif
         updatePlaybackScale++;
     }
 }

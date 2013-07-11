@@ -642,8 +642,6 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     const char *configurationmanager_object_instance = "/org/sflphone/SFLphone/ConfigurationManager";
     const char *configurationmanager_interface = "org.sflphone.SFLphone.ConfigurationManager";
 
-    g_type_init();
-
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
     if (connection == NULL) {
         g_warning("could not establish connection with session bus");
@@ -1533,12 +1531,14 @@ dbus_join_conference(const gchar *sel_confID, const gchar *drag_confID)
     check_error(error);
 }
 
-void
-dbus_set_record(const gchar *id)
+gboolean
+dbus_toggle_recording(const gchar *id)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_set_recording(call_proxy, id, &error);
+    gboolean isRecording;
+    org_sflphone_SFLphone_CallManager_toggle_recording(call_proxy, id, &isRecording, &error);
     check_error(error);
+    return isRecording;
 }
 
 gboolean

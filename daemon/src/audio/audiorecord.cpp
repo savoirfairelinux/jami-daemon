@@ -149,7 +149,7 @@ namespace {
 bool
 nonFilenameCharacter(char c)
 {
-    return not (std::isalnum(c) or c == '_' or c == '.');
+    return not(std::isalnum(c) or c == '_' or c == '.');
 }
 
 // Replace any character that is inappropriate for a filename with '_'
@@ -200,6 +200,7 @@ bool AudioRecord::openFile()
             result = setWavFile();
     } else {
         DEBUG("Filename already exists, opening it");
+
         if (fileType_ == FILE_RAW)
             result = openExistingRawFile();
         else if (fileType_ == FILE_WAV)
@@ -234,14 +235,16 @@ bool AudioRecord::isRecording() const
     return recordingEnabled_;
 }
 
-void AudioRecord::setRecording()
+bool AudioRecord::toggleRecording()
 {
     if (isOpenFile()) {
         recordingEnabled_ = !recordingEnabled_;
     } else {
         openFile();
-        recordingEnabled_ = true; // once opend file, start recording
+        recordingEnabled_ = true;
     }
+
+    return recordingEnabled_;
 }
 
 void AudioRecord::stopRecording()
@@ -265,24 +268,24 @@ bool AudioRecord::setRawFile()
 }
 
 namespace {
-    std::string header_to_string(const wavhdr &hdr)
-    {
-        std::stringstream ss;
-        ss << hdr.riff << "\0 "
-           << hdr.file_size << " "
-           << hdr.wave << "\0 "
-           << hdr.fmt << "\0 "
-           << hdr.chunk_size << " "
-           << hdr.format_tag << " "
-           << hdr.num_chans << " "
-           << hdr.sample_rate << " "
-           << hdr.bytes_per_sec << " "
-           << hdr.bytes_per_samp << " "
-           << hdr.bits_per_samp << " "
-           << hdr.data << "\0 "
-           << hdr.data_length;
-        return ss.str();
-    }
+std::string header_to_string(const wavhdr &hdr)
+{
+    std::stringstream ss;
+    ss << hdr.riff << "\0 "
+       << hdr.file_size << " "
+       << hdr.wave << "\0 "
+       << hdr.fmt << "\0 "
+       << hdr.chunk_size << " "
+       << hdr.format_tag << " "
+       << hdr.num_chans << " "
+       << hdr.sample_rate << " "
+       << hdr.bytes_per_sec << " "
+       << hdr.bytes_per_samp << " "
+       << hdr.bits_per_samp << " "
+       << hdr.data << "\0 "
+       << hdr.data_length;
+    return ss.str();
+}
 }
 
 bool AudioRecord::setWavFile()
@@ -300,18 +303,19 @@ bool AudioRecord::setWavFile()
      * write them as arrays since strings enclosed in quotes include a
      * null character */
     wavhdr hdr = {{'R', 'I', 'F', 'F'},
-                  44,
-                  {'W', 'A', 'V', 'E'},
-                  {'f','m', 't', ' '},
-                  16,
-                  1,
-                  channels_,
-                  sndSmplRate_,
-                  -1, /* initialized below */
-                  -1, /* initialized below */
-                  16,
-                  {'d', 'a', 't', 'a'},
-                  0};
+        44,
+        {'W', 'A', 'V', 'E'},
+        {'f','m', 't', ' '},
+        16,
+        1,
+        channels_,
+        sndSmplRate_,
+        -1, /* initialized below */
+        -1, /* initialized below */
+        16,
+        {'d', 'a', 't', 'a'},
+        0
+    };
 
     hdr.bytes_per_samp = channels_ * hdr.bits_per_samp / 8;
     hdr.bytes_per_sec = hdr.sample_rate * hdr.bytes_per_samp;

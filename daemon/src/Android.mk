@@ -102,7 +102,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 			$(LOCAL_PATH)/audio/codecs \
 			$(LOCAL_PATH)/audio/audiortp \
 			$(LOCAL_PATH)/config \
-			$(LOCAL_PATH)/dbus \
+			$(LOCAL_PATH)/client/android \
 			$(LOCAL_PATH)/history \
 			$(LOCAL_PATH)/hooks \
 			$(LOCAL_PATH)/im \

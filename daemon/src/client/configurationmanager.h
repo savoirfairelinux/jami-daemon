@@ -132,4 +132,3 @@ class ConfigurationManager
 };
 
 #endif //CONFIGURATIONMANAGER_H
-

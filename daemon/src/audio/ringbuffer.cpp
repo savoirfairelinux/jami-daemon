@@ -40,13 +40,13 @@
 #include "ringbuffer.h"
 
 namespace {
-    // corresponds to 106 ms (about 5 rtp packets)
-    const size_t MIN_BUFFER_SIZE = 1280;
+// corresponds to 106 ms (about 5 rtp packets)
+const size_t MIN_BUFFER_SIZE = 1280;
 }
 
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer(size_t size, const std::string &call_id) :
-      endPos_(0)
+    endPos_(0)
     , bufferSize_(size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
     , buffer_(bufferSize_)
     , readpointers_()
@@ -183,6 +183,7 @@ RingBuffer::put(void* buffer, size_t toCopy)
         pos = (pos + block) % bufferSize_;
         toCopy -= block;
     }
+
     endPos_ = pos;
 }
 

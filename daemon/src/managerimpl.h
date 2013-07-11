@@ -46,9 +46,7 @@
 #include <tr1/memory>
 #include <pthread.h>
 
-#if HAVE_DBUS
-#include "dbus/dbusmanager.h"
-#endif
+#include "client/client.h"
 
 #include "config/sfl_config.h"
 
@@ -612,8 +610,9 @@ class ManagerImpl {
          * Set recording on / off
          * Start recording
          * @param id  The call identifier
+         * Returns true if the call was set to record
          */
-        void setRecordingCall(const std::string& id);
+        bool toggleRecordingCall(const std::string& id);
 
         /**
          * Return true if the call is currently recorded
@@ -779,7 +778,7 @@ class ManagerImpl {
          * @return true is there is one or many incoming call waiting
          * new call, not anwsered or refused
          */
-        bool incomingCallWaiting() const;
+        bool incomingCallsWaiting();
 
         /**
          * Return a new random callid that is not present in the list
@@ -858,9 +857,9 @@ class ManagerImpl {
          * @return false if the driver is uninitialize
          */
         void playATone(Tone::TONEID toneId);
-#if HAVE_DBUS
-        DBusManager dbus_;
-#endif
+
+        Client client_;
+
         /** The configuration tree. It contains accounts parameters, general user settings ,audio settings, ... */
         Conf::ConfigTree config_;
 
@@ -896,17 +895,12 @@ class ManagerImpl {
         /**
          * Waiting Call Vectors
          */
-        CallIDSet waitingCall_;
+        CallIDSet waitingCalls_;
 
         /**
          * Protect waiting call list, access by many voip/audio threads
          */
-        pthread_mutex_t waitingCallMutex_;
-
-        /**
-         * Number of waiting call, synchronize with waitingcall callidvector
-         */
-        unsigned int nbIncomingWaitingCall_;
+        pthread_mutex_t waitingCallsMutex_;
 
         /**
          * Add incoming callid to the waiting list
@@ -919,12 +913,6 @@ class ManagerImpl {
          * @param id std::string to remove
          */
         void removeWaitingCall(const std::string& id);
-
-        /** Remove a CallID/std::string association
-         * Protected by mutex
-         * @param callID the CallID to remove
-         */
-        void removeCallAccount(const std::string& callID);
 
         /**
          * Path of the ConfigFile
@@ -985,15 +973,15 @@ class ManagerImpl {
         bool hasCurrentCall() const;
 #if HAVE_DBUS
         /**
-         * Return the current DBusManager
-         * @return A pointer to the DBusManager instance
+         * Return the current Client
+         * @return A pointer to the Client instance
          */
-        DBusManager * getDbusManager() {
-            return &dbus_;
+        Client* getClient() {
+            return &client_;
         }
 #ifdef SFL_VIDEO
         VideoControls * getVideoControls() {
-            return dbus_.getVideoControls();
+            return client_.getVideoControls();
         }
 #endif
 #endif /* HAVE_DBUS */
@@ -1061,6 +1049,15 @@ class ManagerImpl {
         void registerAccounts();
         void saveHistory();
 
+        /**
+         * Suspends SFLphone's audio processing if no calls remain, allowing
+         * other applications to resume audio.
+         * See:
+         * https://projects.savoirfairelinux.com/issues/7037
+        */
+        void
+        checkAudio();
+
     private:
         NON_COPYABLE(ManagerImpl);
 
@@ -1068,9 +1065,6 @@ class ManagerImpl {
          * Get a map with all the current SIP and IAX accounts
          */
         AccountMap getAllAccounts() const;
-
-        void
-        checkAudio();
 
         /**
           * To handle the persistent history

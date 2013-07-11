@@ -232,10 +232,16 @@ CallManager::stopRecordedFilePlayback(const std::string& filepath)
     Manager::instance().stopRecordedFilePlayback(filepath);
 }
 
+bool
+CallManager::toggleRecording(const std::string& callID)
+{
+    return Manager::instance().toggleRecordingCall(callID);
+}
+
 void
 CallManager::setRecording(const std::string& callID)
 {
-    Manager::instance().setRecordingCall(callID);
+    toggleRecording(callID);
 }
 
 void

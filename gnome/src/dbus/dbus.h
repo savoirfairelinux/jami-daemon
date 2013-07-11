@@ -439,7 +439,7 @@ gchar *dbus_get_conference_id(const gchar *callID);
 /**
  * Toggle recording for this instance, may be call or conference
  */
-void dbus_set_record(const gchar *id);
+gboolean dbus_toggle_recording(const gchar *id);
 
 /**
  * Set the path where the recorded audio files will be stored

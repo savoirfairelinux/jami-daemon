@@ -68,6 +68,7 @@ AudioRtpFactory::~AudioRtpFactory()
 void AudioRtpFactory::initConfig()
 {
     DEBUG("AudioRtpFactory: init config");
+
     if (rtpSession_ != NULL)
         stop();
 
@@ -78,18 +79,22 @@ void AudioRtpFactory::initConfig()
     if (account) {
         srtpEnabled_ = account->getSrtpEnabled();
         std::string key(account->getSrtpKeyExchange());
+
         if (srtpEnabled_) {
 #if HAVE_ZRTP
+
             if (key == "sdes")
                 keyExchangeProtocol_ = SDES;
             else if (key == "zrtp")
                 keyExchangeProtocol_ = ZRTP;
+
 #else
-                keyExchangeProtocol_ = SDES;
+            keyExchangeProtocol_ = SDES;
 #endif
         } else {
             keyExchangeProtocol_ = NONE;
         }
+
         helloHashEnabled_ = account->getZrtpHelloHash();
     } else {
         srtpEnabled_ = false;
@@ -107,14 +112,18 @@ void AudioRtpFactory::initSession()
 
         switch (keyExchangeProtocol_) {
 #if HAVE_ZRTP
+
             case ZRTP:
                 rtpSession_ = new AudioZrtpSession(*ca_, zidFilename);
+
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                 // not even available at that point.
                 if (helloHashEnabled_)
                     ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_)->getHelloHash());
+
                 break;
 #endif
+
             case SDES:
                 rtpSession_ = new AudioSrtpSession(*ca_);
                 break;
@@ -192,6 +201,7 @@ AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 void AudioRtpFactory::initLocalCryptoInfo()
 {
     DEBUG("AudioRtpFactory: Init local crypto info");
+
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_);
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
@@ -203,6 +213,7 @@ void AudioRtpFactory::initLocalCryptoInfo()
 void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 {
     DEBUG("AudioRtpFactory: Init local crypto info");
+
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_);
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
@@ -214,7 +225,7 @@ void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 
 void AudioRtpFactory::setRemoteCryptoInfo(SdesNegotiator& nego)
 {
-    if (rtpSession_ ) {
+    if (rtpSession_) {
         if (keyExchangeProtocol_ == SDES) {
             AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
             srtp->setRemoteCryptoInfo(nego);
