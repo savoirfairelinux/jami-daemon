@@ -214,7 +214,7 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     if (fileRate != rate) {
         AudioBuffer * resampled = new AudioBuffer(nbSamples, chan, rate);
         converter.resample(*buffer, *resampled);
-        delete [] buffer;
+        delete buffer;
         buffer_ = resampled;
     } else
         buffer_ = buffer;
