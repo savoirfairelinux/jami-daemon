@@ -79,8 +79,8 @@ class SamplerateConverter {
         float * floatBufferIn_;
         float * floatBufferOut_;
 
-        size_t channels_; // number of channels configured
         size_t samples_; // size in samples of temporary buffers
+        size_t channels_; // number of channels configured
         int maxFreq_; // maximal output frequency
 
         SRC_STATE* src_state_;
