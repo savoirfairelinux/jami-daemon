@@ -3131,7 +3131,7 @@ struct iax_event *iax_net_process(unsigned char *buf, int len, struct sockaddr_i
 
 static struct iax_sched *iax_get_sched(struct timeval tv)
 {
-	struct iax_sched *cur, *prev=NULL;
+	struct iax_sched *cur;
 	cur = schedq;
 	/* Check the event schedule first. */
 	while(cur) {
@@ -3139,11 +3139,7 @@ static struct iax_sched *iax_get_sched(struct timeval tv)
 		    ((tv.tv_sec == cur->when.tv_sec) &&
 			(tv.tv_usec >= cur->when.tv_usec))) {
 				/* Take it out of the event queue */
-				if (prev) {
-					prev->next = cur->next;
-				} else {
-					schedq = cur->next;
-				}
+				schedq = cur->next;
 				return cur;
 		}
 		cur = cur->next;
