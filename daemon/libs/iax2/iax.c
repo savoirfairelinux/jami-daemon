@@ -1990,6 +1990,7 @@ void iax_pref_codec_del(struct iax_session *session, unsigned int format)
 	char remove = which_bit(format) + diff;
 
 	strncpy(old, session->codec_order, sizeof(old));
+    old[sizeof(old) - 1] = '\0';
 	session->codec_order_len = 0;
 
 	for (x = 0;  x < (int) strlen(old);  x++) {
