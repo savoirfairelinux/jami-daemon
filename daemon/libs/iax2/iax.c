@@ -2646,6 +2646,7 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 					strncpy(session->codec_order,
 							e->ies.codec_prefs,
 							sizeof(session->codec_order));
+					session->codec_order[sizeof(session->codec_order) - 1] = '\0';
 					session->codec_order_len =
 						(int)strlen(session->codec_order);
 				}
