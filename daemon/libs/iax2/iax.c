@@ -564,7 +564,7 @@ static int calc_timestamp(struct iax_session *session, unsigned int ts, struct a
 	   special cases.  */
 	if (ts)
 	{
-		if ( f && session )
+		if ( f )
 			session->lastsent = ts;
 		return ts;
 	}
@@ -842,12 +842,14 @@ static int iax_reliable_xmit(struct iax_frame *f)
 		if (!fc->data || !fc->datalen) {
 			IAXERROR "No frame data?");
 			DEBU(G "No frame data?\n");
+            free(fc);
 			return -1;
 		} else {
 			fc->data = (char *)malloc(fc->datalen);
 			if (!fc->data) {
 				DEBU(G "Out of memory\n");
 				IAXERROR "Out of memory\n");
+				free(fc);
 				return -1;
 			}
 			memcpy(fc->data, f->data, f->datalen);
@@ -876,7 +878,7 @@ int iax_init(int preferredportno)
 
 	if (iax_recvfrom == (iax_recvfrom_t)recvfrom)
 	{
-		struct sockaddr_in sin;
+		struct sockaddr_in sin = {};
 		socklen_t sinlen;
 		int flags;
 		int bufsize = 256 * 1024;
@@ -1198,7 +1200,7 @@ static int iax_send(struct iax_session *pvt, struct ast_frame *f, unsigned int t
 			res = iax_xmit_frame(fr);
 		}
 	}
-	if( !now && fr!=NULL )
+	if( !now )
 		iax_frame_free( fr );
 	return res;
 }
@@ -1989,6 +1991,7 @@ void iax_pref_codec_del(struct iax_session *session, unsigned int format)
 	char remove = which_bit(format) + diff;
 
 	strncpy(old, session->codec_order, sizeof(old));
+    old[sizeof(old) - 1] = '\0';
 	session->codec_order_len = 0;
 
 	for (x = 0;  x < (int) strlen(old);  x++) {
@@ -2644,6 +2647,7 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 					strncpy(session->codec_order,
 							e->ies.codec_prefs,
 							sizeof(session->codec_order));
+					session->codec_order[sizeof(session->codec_order) - 1] = '\0';
 					session->codec_order_len =
 						(int)strlen(session->codec_order);
 				}
@@ -3128,7 +3132,7 @@ struct iax_event *iax_net_process(unsigned char *buf, int len, struct sockaddr_i
 
 static struct iax_sched *iax_get_sched(struct timeval tv)
 {
-	struct iax_sched *cur, *prev=NULL;
+	struct iax_sched *cur;
 	cur = schedq;
 	/* Check the event schedule first. */
 	while(cur) {
@@ -3136,11 +3140,7 @@ static struct iax_sched *iax_get_sched(struct timeval tv)
 		    ((tv.tv_sec == cur->when.tv_sec) &&
 			(tv.tv_usec >= cur->when.tv_usec))) {
 				/* Take it out of the event queue */
-				if (prev) {
-					prev->next = cur->next;
-				} else {
-					schedq = cur->next;
-				}
+				schedq = cur->next;
 				return cur;
 		}
 		cur = cur->next;
