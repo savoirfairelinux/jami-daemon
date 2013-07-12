@@ -842,6 +842,7 @@ static int iax_reliable_xmit(struct iax_frame *f)
 		if (!fc->data || !fc->datalen) {
 			IAXERROR "No frame data?");
 			DEBU(G "No frame data?\n");
+            free(fc);
 			return -1;
 		} else {
 			fc->data = (char *)malloc(fc->datalen);
