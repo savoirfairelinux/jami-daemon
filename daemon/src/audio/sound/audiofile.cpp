@@ -219,5 +219,5 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     } else
         buffer_ = buffer;
 
-    delete tempBuffer;
+    delete [] tempBuffer;
 }
