@@ -564,7 +564,7 @@ static int calc_timestamp(struct iax_session *session, unsigned int ts, struct a
 	   special cases.  */
 	if (ts)
 	{
-		if ( f && session )
+		if ( f )
 			session->lastsent = ts;
 		return ts;
 	}
