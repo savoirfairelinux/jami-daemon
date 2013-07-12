@@ -1199,7 +1199,7 @@ static int iax_send(struct iax_session *pvt, struct ast_frame *f, unsigned int t
 			res = iax_xmit_frame(fr);
 		}
 	}
-	if( !now && fr!=NULL )
+	if( !now )
 		iax_frame_free( fr );
 	return res;
 }
