@@ -100,13 +100,6 @@
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
-#include <jni.h>
-
-
-extern JavaVM *gJavaVM;
-static jobject gManagerObject, gDataObject;
-
-
 
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),

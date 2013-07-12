@@ -47,6 +47,10 @@
 
 #include "config.h"
 
+#if HAVE_IAX
+#include <iax-client.h>
+#endif
+
 #define EMPTY_MESSAGE   pj_str((char*)"")
 #define MAXIMUM_MESSAGE_LENGTH		1560			/* PJSIP's sip message limit */
 
