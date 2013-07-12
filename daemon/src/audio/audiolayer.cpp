@@ -142,7 +142,7 @@ bool AudioLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesTo
     bytesToGet = std::min(bytesToGet, buffer.size());
     const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
     urgentRingBuffer_.get(buffer.data(), bytesToGet, MainBuffer::DEFAULT_ID);
-    // AudioLayer::applyGain(buffer.size, samplesToGet, getPlaybackGain());
+    AudioLayer::applyGain(buffer.data(), samplesToGet, getPlaybackGain());
 
     // Consume the regular one as well (same amount of bytes)
     Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
@@ -182,7 +182,6 @@ bool AudioLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAva
     if (resample) {
         SFLDataFormat * const rsmpl_out_ptr = buffer.data();
         const size_t outSamples = samplesToGet * resampleFactor;
-        const size_t outBytes = outSamples * sizeof(SFLDataFormat);
         converter_.resample(out_ptr, rsmpl_out_ptr, outSamples,
                 mainBufferSampleRate, sampleRate_, samplesToGet);
     }
@@ -236,14 +235,15 @@ bool AudioLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
 std::ofstream opensl_tomainbuffer("/data/data/com.savoirfairelinux.sflphone/opensl_tomain.raw", std::ofstream::out | std::ofstream::binary);
 #endif
 
-void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
+void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
+{
     const int toGetBytes = buffer.size();
     const int toGetSamples = buffer.length();
 
     MainBuffer &mbuffer = Manager::instance().getMainBuffer();
 
-    const int mainBufferSampleRate = mbuffer.getInternalSamplingRate();
-    const bool resample = mbuffer.getInternalSamplingRate() != sampleRate_;
+    const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
+    const bool resample = mainBufferSampleRate != sampleRate_;
 
     SFLDataFormat *in_ptr = buffer.data();
     AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
