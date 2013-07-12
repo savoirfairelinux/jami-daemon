@@ -47,6 +47,8 @@
 #pragma GCC diagnostic warning "-Wunused-parameter"
 #pragma GCC diagnostic warning "-Weffc++"
 
+ #include "client/android/jni_callbacks.h"
+
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
@@ -94,13 +96,13 @@ class ConfigurationManager {
 
         int32_t isIax2Enabled();
 
-        /* Recording */
+        /* Recording 
         std::string getRecordPath();
         void setRecordPath(const std::string& recPath);
         bool getIsAlwaysRecording();
         void setIsAlwaysRecording(const bool& rec);
         void setRecordingCall(const std::string& id);
-
+        */
         /* History */
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
@@ -135,6 +137,11 @@ class ConfigurationManager {
 
         std::map<std::string, std::string> getShortcuts();
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
+
+        void accountsChanged();
+        void historyChanged();
+        void stunStatusFailure(const std::string& accoundID);
+        void registrationStateChanged(const std::string& accoundID, int const& state);
 };
 
 #endif //CONFIGURATIONMANAGER_H

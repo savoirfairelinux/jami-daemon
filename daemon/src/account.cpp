@@ -42,9 +42,13 @@
 
 #include "logger.h"
 #include "manager.h"
-#include "client/configurationmanager.h"
 
- #include "dbus/jni_callbacks.h"
+#ifndef __ANDROID__
+#include "client/configurationmanager.h"
+#else
+#include "client/android/configurationmanager.h"
+#include "client/android/jni_callbacks.h"
+#endif
 
 const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY =      "videoCodecs";

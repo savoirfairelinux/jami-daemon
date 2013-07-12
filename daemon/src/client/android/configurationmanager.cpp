@@ -329,7 +329,7 @@ int32_t ConfigurationManager::isIax2Enabled()
 {
     return HAVE_IAX;
 }
-
+/*
 std::string ConfigurationManager::getRecordPath()
 {
     return Manager::instance().audioPreference.getRecordPath();
@@ -354,7 +354,7 @@ void ConfigurationManager::setRecordingCall(const std::string& id)
 {
     Manager::instance().setRecordingCall(id);
 }
-
+*/
 int32_t ConfigurationManager::getHistoryLimit()
 {
     return Manager::instance().getHistoryLimit();
@@ -479,4 +479,26 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
     if (account)
         account->setCredentials(details);
+}
+
+
+
+void ConfigurationManager::accountsChanged()
+{
+    on_accounts_changed_wrapper();
+}
+
+void ConfigurationManager::historyChanged()
+{
+
+}
+
+void ConfigurationManager::stunStatusFailure(const std::string& accoundID)
+{
+    
+}
+
+void ConfigurationManager::registrationStateChanged(const std::string& accoundID, int const& state)
+{
+    on_account_state_changed_wrapper(accoundID, state);
 }

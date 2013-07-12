@@ -52,17 +52,6 @@
 #endif
 #include "array_size.h"
 
-#ifndef __ANDROID__
-#include "client/client.h"
-#include "client/callmanager.h"
-#include "client/configurationmanager.h"
-#else
-#include "client/android/configuration.h"
-#include "client/android/client.h"
-#include "client/android/callmanager.h"
-#endif
-
->>>>>>> master
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -78,7 +67,14 @@
 #ifdef __ANDROID__
 #include <pjsua-lib/pjsua.h>
 #include <android/log.h>
-#include "dbus/jni_callbacks.h"
+#include "client/android/jni_callbacks.h"
+#include "client/android/configurationmanager.h"
+#include "client/client.h"
+#include "client/android/callmanager.h"
+#else
+#include "client/client.h"
+#include "client/callmanager.h"
+#include "client/configurationmanager.h"
 #endif
 
 #include "pjsip/sip_endpoint.h"
@@ -1729,7 +1725,6 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 
             CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->sipCallStateChanged(call->getCallId(), desc, statusCode);
-#endif
         }
     }
 

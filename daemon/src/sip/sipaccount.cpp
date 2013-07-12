@@ -816,14 +816,7 @@ void SIPAccount::initTlsConfiguration()
     tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
     tlsSetting_.qos_ignore_error = PJ_TRUE;
 }
-<<<<<<< HEAD
-#else
-void SIPAccount::initTlsConfiguration()
-{
-	return;
-}
-=======
->>>>>>> master
+
 #endif
 
 void SIPAccount::initStunConfiguration()

@@ -51,6 +51,8 @@
 #include <vector>
 #include <map>
 
+ #include "client/android/jni_callbacks.h"
+
 namespace sfl {
     class AudioZrtpSession;
 }
@@ -100,14 +102,13 @@ class CallManager {
         bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 
         /* File Playback methods */
-        void setRecordingCall(const std::string& id);
+        bool toggleRecordingCall(const std::string& id);
         bool startRecordedFilePlayback(const std::string& filepath);
         void stopRecordedFilePlayback(const std::string& filepath);
 
         /* General audio methods */
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
-        void setRecording(const std::string& callID);
         void recordPlaybackSeek(const double& value);
         bool getIsRecording(const std::string& callID);
         std::string getCurrentAudioCodecName(const std::string& callID);
@@ -124,6 +125,22 @@ class CallManager {
         /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
 
+        void callStateChanged(const std::string& callID, const std::string& state);
+        void transferFailed();
+        void transferSucceeded();
+        void recordPlaybackStopped(const std::string& path);
+        void recordPlaybackFilepath(const std::string& id, const std::string& filename);
+        void voiceMailNotify(const std::string& callID, const std::string& nd_msg);
+        void incomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
+        void incomingCall(const std::string& accountID, const std::string& callID, const std::string& from);
+        void conferenceCreated(const std::string& confID);
+        void conferenceChanged(const std::string& confID,const std::string& state);
+        void conferenceRemoved(const std::string& confID);
+        void newCallCreated(const std::string& accountID, const std::string& callID, const std::string& to);
+        void registrationStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code);
+        void sipCallStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code);
+        
+        
     private:
 
 #if HAVE_ZRTP

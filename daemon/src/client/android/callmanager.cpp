@@ -174,9 +174,9 @@ bool CallManager::sendTextMessage(const std::string& callID, const std::string& 
     return Manager::instance().sendTextMessage(callID,message,from);
 }
 
-void CallManager::setRecordingCall(const std::string& id)
+bool CallManager::toggleRecordingCall(const std::string& id)
 {
-    Manager::instance().setRecordingCall(id);
+    Manager::instance().toggleRecordingCall(id);
 }
 
 void
@@ -279,12 +279,6 @@ void
 CallManager::stopRecordedFilePlayback(const std::string& filepath)
 {
     Manager::instance().stopRecordedFilePlayback(filepath);
-}
-
-void
-CallManager::setRecording(const std::string& callID)
-{
-    Manager::instance().setRecordingCall(callID);
 }
 
 void
@@ -453,4 +447,75 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
 #else
     ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
 #endif
+}
+
+
+void CallManager::callStateChanged(const std::string& callID, const std::string& state)
+{
+    on_call_state_changed_wrapper(callID, state);
+}
+
+void CallManager::transferFailed()
+{
+
+}
+
+void CallManager::transferSucceeded()
+{
+
+}
+
+void CallManager::recordPlaybackStopped(const std::string& path)
+{
+
+}
+
+void CallManager::voiceMailNotify(const std::string& callID, const std::string& nd_msg)
+{
+
+}
+
+void CallManager::incomingMessage(const std::string& ID, const std::string& from, const std::string& msg)
+{
+    on_incoming_message_wrapper(ID, from, msg);
+}
+
+void CallManager::incomingCall(const std::string& accountID, const std::string& callID, const std::string& from)
+{
+    on_incoming_call_wrapper(accountID, callID, from);
+}
+
+void CallManager::recordPlaybackFilepath(const std::string& id, const std::string& filename)
+{
+    on_record_playback_filepath_wrapper(id, filename);
+}
+
+void CallManager::conferenceCreated(const std::string& confID)
+{
+    on_conference_created_wrapper(confID);
+}
+
+void CallManager::conferenceChanged(const std::string& confID,const std::string& state)
+{
+    on_conference_state_changed_wrapper(confID, state);
+}
+
+void CallManager::conferenceRemoved(const std::string& confID)
+{
+    on_conference_removed_wrapper(confID);
+}
+
+void CallManager::newCallCreated(const std::string& accountID, const std::string& callID, const std::string& to)
+{
+    on_new_call_created_wrapper(accountID, callID, to);
+}
+
+void CallManager::registrationStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code)
+{
+    on_account_state_changed_with_code_wrapper(accoundID, state, code);
+}
+
+void CallManager::sipCallStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code)
+{
+    
 }

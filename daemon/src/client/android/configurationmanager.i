@@ -28,7 +28,7 @@
  */
 
 %header %{
-#include <android-jni/configurationmanagerJNI.h>
+#include "configurationmanager.h"
 
 typedef struct configurationmanager_callback
 {
@@ -74,7 +74,7 @@ void setConfigurationCallbackObject(ConfigurationCallback *callback) {
 
 %feature("director") ConfigurationCallback;
 
-class ConfigurationManagerJNI {
+class ConfigurationManager {
 public:
     std::map<std::string, std::string> getIp2IpDetails();
     std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
@@ -108,12 +108,6 @@ public:
     std::map<std::string, std::string> getRingtoneList();
     void setEchoCancelState(const std::string& state);
     int32_t isIax2Enabled();
-
-    std::string getRecordPath();
-    void setRecordPath(const std::string& recPath);
-    bool getIsAlwaysRecording();
-    void setIsAlwaysRecording(const bool& rec);
-    void setRecordingCall(const std::string& id);
 
     int32_t getHistoryLimit();
     void clearHistory();

@@ -62,7 +62,7 @@
 #ifndef __ANDROID__
 #include "client/configurationmanager.h"
 #else
-#include "client/android/configuration.h"
+#include "client/android/configurationmanager.h"
 #endif
 
 static const char * const DEFAULT_INTERFACE = "default";

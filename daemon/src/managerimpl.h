@@ -971,7 +971,7 @@ class ManagerImpl {
          * @return bool True if there is a current call
          */
         bool hasCurrentCall() const;
-#if HAVE_DBUS
+
         /**
          * Return the current Client
          * @return A pointer to the Client instance
@@ -984,7 +984,7 @@ class ManagerImpl {
             return client_.getVideoControls();
         }
 #endif
-#endif /* HAVE_DBUS */
+
 
         /**
         * Tell if an account exists

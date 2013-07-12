@@ -40,7 +40,7 @@
 #include "managerimpl.h"
 #include "account_schema.h"
 
-#include "client/callmanager.h"
+
 #include "global.h"
 #include "fileutils.h"
 #include "map_utils.h"
@@ -50,9 +50,6 @@
 
 
 #include "im/instant_messaging.h"
-
-#include "dbus/jni_callbacks.h"
-
 
 #if HAVE_IAX
 #include "iax/iaxaccount.h"
@@ -78,8 +75,10 @@
 
 #ifndef __ANDROID__
 #include "client/configurationmanager.h"
+#include "client/callmanager.h"
 #else
-#include "client/android/configuration.h"
+#include "client/android/configurationmanager.h"
+#include "client/android/callmanager.h"
 #endif
 
 

@@ -12,7 +12,7 @@ MY_PREFIX=/sdcard
 MY_DATADIR=/data/data
 TARGET_NAME=arm-unknown-linux-androideabi
 
-MY_PJPROJECT=pjproject-android/android
+MY_PJPROJECT=pjproject-android
 MY_COMMONCPP=commoncpp2-1.8.1-android
 MY_CCRTP=ccrtp-1.8.0-android
 MY_LIBSAMPLE=libsamplerate-0.1.8
@@ -36,7 +36,6 @@ LOCAL_SRC_FILES := \
 		preferences.cpp \
 		managerimpl.cpp \
 		manager.cpp \
-		managerimpl_registration.cpp \
 		eventthread.cpp \
 		call.cpp \
 		account.cpp \
@@ -70,13 +69,10 @@ LOCAL_SRC_FILES := \
 		config/yamlemitter.cpp \
 		config/yamlparser.cpp \
 		config/yamlnode.cpp \
-		dbus/callmanager.cpp \
-    		dbus/configurationmanager.cpp  \
-		dbus/callmanager_wrap.cpp \
-    		dbus/instance.cpp  \
-    		dbus/dbusmanager.cpp \
-		android-jni/callmanagerJNI.cpp \
-		android-jni/configurationmanagerJNI.cpp \
+		client/android/client.cpp \
+		client/android/callmanager.cpp \
+    	client/android/configurationmanager.cpp  \
+		client/android/callmanager_wrap.cpp \
 		history/historyitem.cpp \
 		history/history.cpp \
 		history/historynamecache.cpp \

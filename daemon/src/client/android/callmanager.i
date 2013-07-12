@@ -30,7 +30,7 @@
 
 %header %{
 
-#include <android-jni/callmanagerJNI.h>
+#include "callmanager.h"
 
 
 typedef struct callmanager_callback
@@ -161,7 +161,7 @@ void setCallbackObject(Callback* callback) {
 
 %feature("director") Callback;
 
-class CallManagerJNI {
+class CallManager {
 public:
     /* Manager::instance().outgoingCall */
     void placeCall(const std::string& accountID,
@@ -179,7 +179,7 @@ public:
     bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 
     /* Record methods */
-    void setRecordingCall(const std::string& id);
+    bool toggleRecordingCall(const std::string& id);
     bool startRecordedFilePlayback(const std::string& filepath);
     void stopRecordedFilePlayback(const std::string& filepath);
     bool getIsRecording(const std::string& callID);

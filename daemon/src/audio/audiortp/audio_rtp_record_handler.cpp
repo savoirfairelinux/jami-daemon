@@ -327,13 +327,9 @@ int AudioRtpRecordHandler::processDataEncode()
                 mainBufferSampleRate, codecSampleRate,
                 samplesToGet);
 
-<<<<<<< HEAD
-=======
 #ifdef RECTODISK
         rtpResampled.write((const char *)audioRtpRecord_.resampledData_.data(), samplesToGet*sizeof(SFLDataFormat)/2);
 #endif
-
->>>>>>> master
         out = audioRtpRecord_.resampledData_.data();
     }
 

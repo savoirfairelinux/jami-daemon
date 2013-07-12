@@ -5,7 +5,7 @@ $(warning Android.mk -> $(LOCAL_PATH))
 # FIXME
 MY_PREFIX=/sdcard
 MY_DATADIR=
-MY_PJPROJECT="pjproject-android/android"
+MY_PJPROJECT="pjproject-android"
 MY_PJDIR=
 MY_COMMONCPP=commoncpp2-1.8.1-android
 MY_CCRTP=ccrtp-1.8.0-android
