@@ -190,9 +190,8 @@ dnl DBus-C++ detection
 dnl pkg-config doesn't like 0.6.0-pre1 version number, it assumes that it is
 dnl more recent than (unreleased) 0.6.0
 DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
-PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
+PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1, AC_DEFINE_UNQUOTED(HAVE_DBUS, 1, [D-Bus support enabled]),
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
-
 
 # Instant Messaging
 # required dependency(ies): libxpat
