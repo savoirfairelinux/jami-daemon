@@ -188,7 +188,7 @@ void ManagerImpl::init(const std::string &config_file)
         }
     }
 
-    //history_.load(preferences.getHistoryLimit());
+    history_.load(preferences.getHistoryLimit());
     registerAccounts();
     INFO("init ended");
 }
