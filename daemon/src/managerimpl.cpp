@@ -40,15 +40,12 @@
 #include "managerimpl.h"
 #include "account_schema.h"
 
-
 #include "global.h"
 #include "fileutils.h"
 #include "map_utils.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
 #include "sip/sipcall.h"
-
-
 #include "im/instant_messaging.h"
 
 #if HAVE_IAX
@@ -56,7 +53,6 @@
 #include "iax/iaxcall.h"
 #include "iax/iaxvoiplink.h"
 #endif
-
 
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
@@ -80,7 +76,6 @@
 #include "client/android/configurationmanager.h"
 #include "client/android/callmanager.h"
 #endif
-
 
 #ifdef SFL_VIDEO
 #include "client/video_controls.h"
@@ -110,7 +105,6 @@ ManagerImpl::ManagerImpl() :
     waitingCalls_(), waitingCallsMutex_(), path_(),
     IPToIPMap_(), mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
-
     pthread_mutex_init(&currentCallMutex_, NULL);
     pthread_mutex_init(&toneMutex_, NULL);
     pthread_mutex_init(&audioLayerMutex_, NULL);
@@ -1493,14 +1487,6 @@ void ManagerImpl::removeWaitingCall(const std::string& id)
 // SipEvent Thread
 void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 {
-#if 0
-    DEBUG("================= INCOMING FROM MANAGER ==================");
-    const std::string callID(call.getCallId());
-    std::string number(call.getPeerNumber());
-    std::string from("<" + number + ">");
-    on_incoming_call_wrapper(accountId, callID, call.getDisplayName() + " " + from);
-#endif
-
     stopTone();
     const std::string callID(call.getCallId());
 
@@ -1729,8 +1715,6 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 //THREAD=VoIP
 void ManagerImpl::callBusy(const std::string& id)
 {
-    DEBUG("Call %s busy", id.c_str());
-
     client_.getCallManager()->callStateChanged(id, "BUSY");
 
     if (isCurrentCall(id)) {
