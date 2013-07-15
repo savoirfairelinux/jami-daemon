@@ -42,6 +42,7 @@
 #include "config/yamlemitter.h"
 #include "logger.h"
 #include "manager.h"
+#include <unistd.h>
 #include <pwd.h>
 #include <sstream>
 #include <algorithm>

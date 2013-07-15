@@ -39,6 +39,7 @@
 #include "logger.h"
 #include "manager.h"
 
+#include <unistd.h>
 #include <cstdlib>
 #include <fstream>
 

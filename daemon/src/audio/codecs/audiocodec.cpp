@@ -35,7 +35,7 @@ using std::ptrdiff_t;
 
 namespace sfl {
 
-AudioCodec::AudioCodec(uint8 payload, const std::string &codecName,
+AudioCodec::AudioCodec(uint8_t payload, const std::string &codecName,
                        int clockRate, int frameSize, int channel) :
     codecName_(codecName),
     clockRate_(clockRate),
@@ -61,7 +61,7 @@ std::string AudioCodec::getMimeSubtype() const
     return codecName_;
 }
 
-uint8 AudioCodec::getPayloadType() const
+uint8_t AudioCodec::getPayloadType() const
 {
     return payload_;
 }
@@ -71,7 +71,7 @@ bool AudioCodec::hasDynamicPayload() const
     return hasDynamicPayload_;
 }
 
-uint32 AudioCodec::getClockRate() const
+uint32_t AudioCodec::getClockRate() const
 {
     return clockRate_;
 }

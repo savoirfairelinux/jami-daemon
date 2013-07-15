@@ -35,6 +35,7 @@
 #endif
 
 #include <iostream>
+#include <signal.h>
 #include <getopt.h>
 #include "fileutils.h"
 #include "logger.h"
