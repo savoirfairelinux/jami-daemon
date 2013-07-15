@@ -114,7 +114,6 @@ void History::ensurePath()
         }
         // Load user's history
         path_ = userdata + DIR_SEPARATOR_STR + "history";
-        DEBUG("path_: %s!", path_.c_str());
     }
 }
 
