@@ -219,7 +219,7 @@ class AudioLayer {
         /**
          * Set capture stream gain (microphone)
          */
-        unsigned int getCaptureGain(void) {
+        unsigned int getCaptureGain() const {
             return captureGain_;
         }
 
@@ -233,7 +233,7 @@ class AudioLayer {
         /**
          * Get playback stream gain (speaker)
          */
-        unsigned int getPlaybackGain(void) {
+        unsigned int getPlaybackGain() const {
             return playbackGain_;
         }
 
