@@ -207,7 +207,7 @@ AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
 {}
 
 
-AudioRtpRecordHandler::~AudioRtpRecordHandler() 
+AudioRtpRecordHandler::~AudioRtpRecordHandler()
 {
 }
 
@@ -304,7 +304,7 @@ int AudioRtpRecordHandler::processDataEncode()
     const size_t bytes = Manager::instance().getMainBuffer().getData(micData, bytesToGet, id_);
 
 #ifdef RTP_ENCODE_RECTODISK
-    beforeencode.write((const char *)micData, bytesToGet); 
+    beforeencode.write((const char *)micData, bytesToGet);
 #endif
 
     if (bytes != bytesToGet) {
@@ -328,7 +328,7 @@ int AudioRtpRecordHandler::processDataEncode()
                 samplesToGet);
 
 #ifdef RECTODISK
-        rtpResampled.write((const char *)audioRtpRecord_.resampledData_.data(), samplesToGet*sizeof(SFLDataFormat)/2);
+        rtpResampled.write((const char *)audioRtpRecord_.resampledData_.data(), samplesToGet * sizeof(SFLDataFormat) / 2);
 #endif
         out = audioRtpRecord_.resampledData_.data();
     }
@@ -344,7 +344,7 @@ int AudioRtpRecordHandler::processDataEncode()
 #endif
 
 #ifdef RTP_ENCODE_RECTODISK
-    beforesend.write((const char *)(micData), getCodecFrameSize()*2);
+    beforesend.write((const char *)(micData), getCodecFrameSize() * 2);
 #endif
 
     {
@@ -392,7 +392,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     }
 
 #ifdef RTP_DECODE_RECTODISK
-    afterdecode.write((const char *)spkrDataDecoded, inSamples*sizeof(SFLDataFormat));
+    afterdecode.write((const char *)spkrDataDecoded, inSamples * sizeof(SFLDataFormat));
 #endif
 #undef RTP_DECODE_RECTODISK
 
