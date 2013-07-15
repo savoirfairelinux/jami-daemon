@@ -83,6 +83,8 @@ AS_IF([test "x$with_alsa" = "xyes"], [
 	]);
 
 AC_DEFINE_UNQUOTED([HAVE_ALSA], `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have alsa])
+AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
+
 
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
