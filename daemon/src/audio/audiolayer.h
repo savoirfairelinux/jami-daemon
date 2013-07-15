@@ -51,46 +51,56 @@ class MainBuffer;
 class AudioPreference;
 
 class AudioBuffer {
-public:
-    AudioBuffer(int len = 160) : length_(len)
-                         , channels_(1)
-                         , buffer_(length_ * channels_, 0)
-                         , size_(length_ * channels_ * sizeof(SFLDataFormat))
-                         , data_(&(*buffer_.begin()))
-    {}
+    public:
+        AudioBuffer(int len = 160) : length_(len)
+            , channels_(1)
+            , buffer_(length_ * channels_, 0)
+            , size_(length_ * channels_ * sizeof(SFLDataFormat))
+            , data_(&(*buffer_.begin()))
+        {}
 
-    AudioBuffer(SFLDataFormat *ptr, int len, int chan) : length_(len)
-                                                        , channels_(chan)
-                                                        , buffer_()
-                                                        , size_(length_ * channels_ * sizeof(SFLDataFormat))
-                                                        , data_(ptr)
-    {}
+        AudioBuffer(SFLDataFormat *ptr, int len, int chan) : length_(len)
+            , channels_(chan)
+            , buffer_()
+            , size_(length_ * channels_ * sizeof(SFLDataFormat))
+            , data_(ptr)
+        {}
 
-    AudioBuffer(AudioBuffer& buf) : length_(buf.length())
-                             , channels_(buf.channels())
-                             , buffer_(buf.buffer_)
-                             , size_(length_ * channels_ * sizeof(SFLDataFormat))
-                             , data_(&(*buffer_.begin()))
-    {}
+        AudioBuffer(AudioBuffer& buf) : length_(buf.length())
+            , channels_(buf.channels())
+            , buffer_(buf.buffer_)
+            , size_(length_ * channels_ * sizeof(SFLDataFormat))
+            , data_(&(*buffer_.begin()))
+        {}
 
-    void reset() { std::fill(buffer_.begin(), buffer_.end(), 0); }
+        void reset() {
+            std::fill(buffer_.begin(), buffer_.end(), 0);
+        }
 
-    unsigned int length() const { return length_; }
+        unsigned int length() const {
+            return length_;
+        }
 
-    unsigned int channels() const { return channels_; }
+        unsigned int channels() const {
+            return channels_;
+        }
 
-    size_t size() const { return size_; }
+        size_t size() const {
+            return size_;
+        }
 
-    SFLDataFormat *data() { return data_; }
+        SFLDataFormat *data() {
+            return data_;
+        }
 
-private:
-    NON_COPYABLE(AudioBuffer);
+    private:
+        NON_COPYABLE(AudioBuffer);
 
-    unsigned int length_;    // in samples
-    unsigned int channels_;  // number of channels
-    std::vector<SFLDataFormat> buffer_;
-    size_t size_;            // size in bytes
-    SFLDataFormat *data_;
+        unsigned int length_;    // in samples
+        unsigned int channels_;  // number of channels
+        std::vector<SFLDataFormat> buffer_;
+        size_t size_;            // size in bytes
+        SFLDataFormat *data_;
 };
 
 typedef std::vector<AudioBuffer> AudioBufferStack;
@@ -209,7 +219,7 @@ class AudioLayer {
         /**
          * Set capture stream gain (microphone)
          */
-       unsigned int getCaptureGain(void) {
+        unsigned int getCaptureGain(void) {
             return captureGain_;
         }
 
