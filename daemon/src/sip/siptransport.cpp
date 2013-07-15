@@ -405,8 +405,6 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     pj_status_t status;
     pjsip_transport *transport = NULL;
 
-    DEBUG("Try to create Transport for %s:%d", interface.c_str(), port);
-
     if (boundAddr.addr.sa_family == pj_AF_INET()) {
         status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
         RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "UDP IPV4 Transport did not start");
