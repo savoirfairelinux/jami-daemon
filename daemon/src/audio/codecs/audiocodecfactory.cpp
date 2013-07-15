@@ -171,7 +171,7 @@ AudioCodecFactory::scanCodecDirectory()
     const char *progDir = fileutils::get_program_dir();
 
     if (progDir) {
-#if defined(__ANDROID__)
+#ifdef __ANDROID__
         dirToScan.push_back(std::string(progDir) + DIR_SEPARATOR_STR + "lib/");
 #else
         dirToScan.push_back(std::string(progDir) + DIR_SEPARATOR_STR + "audio/codecs/");
