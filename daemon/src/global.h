@@ -33,16 +33,17 @@
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cstdio>
-//#include <libintl.h>
 #include <locale.h>
 #include <string>
 #include <cstdlib>
 #include <sstream>
 #include <map>
 #include <vector>
-
-#include "config.h"
 
 const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 
