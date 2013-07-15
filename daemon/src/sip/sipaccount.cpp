@@ -58,10 +58,10 @@ const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 const char * const SIPAccount::ACCOUNT_TYPE = "SIP";
 
 namespace {
-    const int MIN_REGISTRATION_TIME = 60;
-    const int DEFAULT_REGISTRATION_TIME = 3600;
-    const char *const TRUE_STR = "true";
-    const char *const FALSE_STR = "false";
+const int MIN_REGISTRATION_TIME = 60;
+const int DEFAULT_REGISTRATION_TIME = 3600;
+const char *const TRUE_STR = "true";
+const char *const FALSE_STR = "false";
 }
 
 SIPAccount::SIPAccount(const std::string& accountID)
@@ -164,6 +164,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 #ifdef SFL_VIDEO
     SequenceNode videoCodecs(NULL);
     accountmap.setKeyValue(VIDEO_CODECS_KEY, &videoCodecs);
+
     for (vector<map<string, string> >::iterator i = videoCodecList_.begin(); i != videoCodecList_.end(); ++i) {
         map<string, string> &codec = *i;
         MappingNode *mapNode = new MappingNode(NULL);
@@ -173,6 +174,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
         mapNode->setKeyValue(VIDEO_CODEC_PARAMETERS, new ScalarNode(codec[VIDEO_CODEC_PARAMETERS]));
         videoCodecs.addNode(mapNode);
     }
+
 #endif
 
     ScalarNode ringtonePath(ringtonePath_);
@@ -283,6 +285,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 
     // Cleanup
     Sequence *credSeq = credentialseq.getSequence();
+
     for (Sequence::iterator seqit = credSeq->begin(); seqit != credSeq->end(); ++seqit) {
         MappingNode *node = static_cast<MappingNode*>(*seqit);
         delete node->getValue(CONFIG_ACCOUNT_USERNAME);
@@ -293,6 +296,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 
 #ifdef SFL_VIDEO
     Sequence *videoCodecSeq = videoCodecs.getSequence();
+
     for (Sequence::iterator i = videoCodecSeq->begin(); i != videoCodecSeq->end(); ++i) {
         MappingNode *node = static_cast<MappingNode*>(*i);
         delete node->getValue(VIDEO_CODEC_NAME);
@@ -301,6 +305,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
         delete node->getValue(VIDEO_CODEC_PARAMETERS);
         delete node;
     }
+
 #endif
 }
 
@@ -313,10 +318,14 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 
     mapNode.getValue(ALIAS_KEY, &alias_);
     mapNode.getValue(USERNAME_KEY, &username_);
+
     if (not isIP2IP()) mapNode.getValue(HOSTNAME_KEY, &hostname_);
+
     mapNode.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
     mapNode.getValue(ACCOUNT_AUTOANSWER_KEY, &autoAnswerEnabled_);
+
     if (not isIP2IP()) mapNode.getValue(MAILBOX_KEY, &mailBox_);
+
     mapNode.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
     // Update codec list which one is used for SDP offer
     setActiveAudioCodecs(split_string(audioCodecStr_));
@@ -326,12 +335,14 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     if (videoCodecsNode and videoCodecsNode->getType() == SEQUENCE) {
         SequenceNode *videoCodecs = static_cast<SequenceNode *>(videoCodecsNode);
         Sequence *seq = videoCodecs->getSequence();
+
         if (seq->empty()) {
             // Video codecs are an empty list
             WARN("Loading default video codecs");
             videoCodecList_ = libav_utils::getDefaultCodecs();
         } else {
             vector<map<string, string> > videoCodecDetails;
+
             for (Sequence::iterator it = seq->begin(); it != seq->end(); ++it) {
                 MappingNode *codec = static_cast<MappingNode *>(*it);
                 map<string, string> codecMap;
@@ -341,6 +352,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
                 codec->getValue(VIDEO_CODEC_PARAMETERS, &codecMap[VIDEO_CODEC_PARAMETERS]);
                 videoCodecDetails.push_back(codecMap);
             }
+
             // these must be validated
             setVideoCodecs(videoCodecDetails);
         }
@@ -350,11 +362,14 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         WARN("Loading default video codecs");
         videoCodecList_ = libav_utils::getDefaultCodecs();
     }
+
 #endif
 
     mapNode.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
     mapNode.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
+
     if (not isIP2IP()) mapNode.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
+
     mapNode.getValue(INTERFACE_KEY, &interface_);
     int port = DEFAULT_SIP_PORT;
     mapNode.getValue(PORT_KEY, &port);
@@ -363,6 +378,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     mapNode.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
     mapNode.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
+
     if (not isIP2IP()) mapNode.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string dtmfType;
@@ -373,6 +389,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 
     // stun enabled
     if (not isIP2IP()) mapNode.getValue(STUN_ENABLED_KEY, &stunEnabled_);
+
     if (not isIP2IP()) mapNode.getValue(STUN_SERVER_KEY, &stunServer_);
 
     // Init stun server name with default server name
@@ -413,6 +430,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         // migration from old file format
         std::map<std::string, std::string> credmap;
         std::string password;
+
         if (not isIP2IP()) mapNode.getValue(PASSWORD_KEY, &password);
 
         credmap[CONFIG_ACCOUNT_USERNAME] = username_;
@@ -488,15 +506,18 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     publishedIpAddress_ = details[CONFIG_PUBLISHED_ADDRESS];
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
+
     if (stunServer_ != details[CONFIG_STUN_SERVER]) {
         link_->sipTransport.destroyStunResolver(stunServer_);
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
     }
+
     stunServer_ = details[CONFIG_STUN_SERVER];
     stunEnabled_ = details[CONFIG_STUN_ENABLE] == TRUE_STR;
     dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
     registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
-    if(registrationExpire_ < MIN_REGISTRATION_TIME)
+
+    if (registrationExpire_ < MIN_REGISTRATION_TIME)
         registrationExpire_ = MIN_REGISTRATION_TIME;
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
@@ -543,10 +564,12 @@ static std::string retrievePassword(const std::map<std::string, std::string>& ma
     std::map<std::string, std::string>::const_iterator map_iter_username;
     std::map<std::string, std::string>::const_iterator map_iter_password;
     map_iter_username = map.find(CONFIG_ACCOUNT_USERNAME);
-    if(map_iter_username != map.end()) {
-        if(map_iter_username->second == username) {
+
+    if (map_iter_username != map.end()) {
+        if (map_iter_username->second == username) {
             map_iter_password = map.find(CONFIG_ACCOUNT_PASSWORD);
-            if(map_iter_password != map.end()) {
+
+            if (map_iter_password != map.end()) {
                 return map_iter_password->second;
             }
         }
@@ -557,7 +580,6 @@ static std::string retrievePassword(const std::map<std::string, std::string>& ma
 
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
-    ERROR("GET ACCOUNT DETAIL");
     std::map<std::string, std::string> a;
 
     a[CONFIG_ACCOUNT_ID] = accountID_;
@@ -565,18 +587,21 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_ACCOUNT_ALIAS] = alias_;
 
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ACCOUNT_AUTOANSWER]= autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ACCOUNT_AUTOANSWER] = autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_ACCOUNT_TYPE] = ACCOUNT_TYPE;
     a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
     a[CONFIG_ACCOUNT_USERNAME] = username_;
     // get password for this username
     a[CONFIG_ACCOUNT_PASSWORD] = "";
-    if(hasCredentials()) {
+
+    if (hasCredentials()) {
         std::vector<std::map<std::string, std::string> >::const_iterator vect_iter;
-        for(vect_iter = credentials_.begin(); vect_iter != credentials_.end(); vect_iter++) {
-            std::string passwrd = retrievePassword(*vect_iter, username_);
-            if(passwrd != "")
-                a[CONFIG_ACCOUNT_PASSWORD] = passwrd;
+
+        for (vect_iter = credentials_.begin(); vect_iter != credentials_.end(); vect_iter++) {
+            const std::string password = retrievePassword(*vect_iter, username_);
+
+            if (not password.empty())
+                a[CONFIG_ACCOUNT_PASSWORD] = password;
         }
     }
 
@@ -599,7 +624,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateDescription = registrationStateDetailed_.second;
     }
 
-    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY": mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(state);
     a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
     a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
 
@@ -661,12 +686,14 @@ void SIPAccount::registerVoIPLink()
         return;
 
 #if HAVE_TLS
+
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == TRUE_STR) {
         DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
+
 #endif
 
     // Init STUN settings for this account if the user selected it
@@ -701,7 +728,8 @@ void SIPAccount::unregisterVoIPLink()
     }
 }
 
-void SIPAccount::startKeepAliveTimer() {
+void SIPAccount::startKeepAliveTimer()
+{
 
     if (isTlsEnabled())
         return;
@@ -773,12 +801,16 @@ void SIPAccount::trimCiphers()
     static const int MAX_CIPHERS_STRLEN = 1010;
 
     CipherArray::const_iterator iter;
+
     for (iter = ciphers_.begin(); iter != ciphers_.end(); ++iter) {
         sum += strlen(pj_ssl_cipher_name(*iter));
+
         if (sum > MAX_CIPHERS_STRLEN)
             break;
+
         ++count;
     }
+
     ciphers_.resize(count);
     DEBUG("Using %u ciphers", ciphers_.size());
 }
@@ -789,6 +821,7 @@ void SIPAccount::initTlsConfiguration()
 
     // Determine the cipher list supported on this machine
     cipherNum = ciphers_.size();
+
     if (pj_ssl_cipher_get_availables(&ciphers_.front(), &cipherNum) != PJ_SUCCESS)
         ERROR("Could not determine cipher list on this system");
 
@@ -848,6 +881,7 @@ void SIPAccount::loadConfig()
         registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
 #if HAVE_TLS
+
     if (tlsEnable_ == TRUE_STR) {
         initTlsConfiguration();
         transportType_ = PJSIP_TRANSPORT_TLS;
@@ -867,19 +901,21 @@ bool SIPAccount::userMatch(const std::string& username) const
 }
 
 namespace {
-    bool haveValueInCommon(const std::vector<std::string> &a, const std::vector<std::string> &b)
-    {
-        for (std::vector<std::string>::const_iterator i = a.begin(); i != a.end(); ++i)
-            if (std::find(b.begin(), b.end(), *i) != b.end())
-                return true;
-        return false;
-    }
+bool haveValueInCommon(const std::vector<std::string> &a, const std::vector<std::string> &b)
+{
+    for (std::vector<std::string>::const_iterator i = a.begin(); i != a.end(); ++i)
+        if (std::find(b.begin(), b.end(), *i) != b.end())
+            return true;
+
+    return false;
+}
 }
 
 bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
 {
     if (hostname == hostname_)
         return true;
+
     const std::vector<std::string> a(sip_utils::getIPList(hostname));
     const std::vector<std::string> b(sip_utils::getIPList(hostname_));
     return haveValueInCommon(a, b);
@@ -889,6 +925,7 @@ bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endp
 {
     if (hostname == serviceRoute_)
         return true;
+
     const std::vector<std::string> a(sip_utils::getIPList(hostname));
     const std::vector<std::string> b(sip_utils::getIPList(serviceRoute_));
     return haveValueInCommon(a, b);
@@ -974,6 +1011,7 @@ std::string SIPAccount::getContactHeader() const
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
+
     if (transportType == PJSIP_TRANSPORT_START_OTHER)
         transportType = PJSIP_TRANSPORT_UDP;
 
@@ -984,7 +1022,7 @@ std::string SIPAccount::getContactHeader() const
     link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
 
     if (!receivedParameter_.empty())
-       address = receivedParameter_;
+        address = receivedParameter_;
 
     if (rPort_ != -1) {
         portstr << rPort_;
@@ -994,6 +1032,7 @@ std::string SIPAccount::getContactHeader() const
     // UDP does not require the transport specification
     std::string scheme;
     std::string transport;
+
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
         transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType));
@@ -1033,8 +1072,8 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 
 namespace {
 std::string computeMd5HashFromCredential(const std::string& username,
-                                         const std::string& password,
-                                         const std::string& realm)
+        const std::string& password,
+        const std::string& realm)
 {
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
@@ -1055,7 +1094,7 @@ std::string computeMd5HashFromCredential(const std::string& username,
     char hash[32];
 
     for (int i = 0; i < 16; ++i)
-        pj_val_to_hex_digit(digest[i], &hash[2*i]);
+        pj_val_to_hex_digit(digest[i], &hash[2 * i]);
 
     return std::string(hash, 32);
 }
@@ -1105,6 +1144,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     cred_.resize(credentials_.size());
 
     size_t i = 0;
+
     for (vector<map<string, string > >::const_iterator iter = credentials_.begin();
             iter != credentials_.end(); ++iter) {
         map<string, string>::const_iterator val = (*iter).find(CONFIG_ACCOUNT_PASSWORD);
