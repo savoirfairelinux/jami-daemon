@@ -128,8 +128,11 @@ void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx
 void registration_cb(pjsip_regc_cbparam *param);
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata) ;
+
+#ifdef __ANDROID__
 void showLog(int level, const char *data, int len);
 void showMsg(const char *format, ...);
+#endif
 
 void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
@@ -469,14 +472,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         SIPVoIPLink::instance()->addSipCall(call);
     }
     return PJ_FALSE;
-
-#if 0
-    DEBUG("================== INCOMING FROM SIP ======================");
-    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_);
-    std::string account_id = "dsfjds";
-    Manager::instance().incomingCall(*call, account_id);
-    return PJ_FALSE;
-#endif
 }
 } // end anonymous namespace
 
@@ -489,11 +484,11 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     , keyframeRequests_()
 #endif
 {
+
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
     throw VoipLinkException(#ret " failed"); \
 } while (0)
-	DEBUG("SIP constructor");
 
     pthread_mutex_init(&sipCallMapMutex_, NULL);
 
@@ -508,7 +503,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     TRY(pjlib_util_init());
 
 #ifdef __ANDROID__
-	setSipLogger();
+    setSipLogger();
 #endif
     setSipLogLevel();
     TRY(pjnath_init());
@@ -620,9 +615,9 @@ SIPVoIPLink* SIPVoIPLink::instance()
 {
     assert(!destroyed_);
     if (!instance_) {
-		DEBUG("creating SIPVoIPLink instance");
+        DEBUG("creating SIPVoIPLink instance");
         instance_ = new SIPVoIPLink;
-	}
+    }
     return instance_;
 }
 
@@ -675,7 +670,7 @@ void SIPVoIPLink::setSipLogLevel()
 #ifdef __ANDROID__
 void SIPVoIPLink::setSipLogger()
 {
-	static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();
+    static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();
     pj_log_set_log_func(&showLog);
 }
 #endif
@@ -701,8 +696,6 @@ bool SIPVoIPLink::getEvent()
 
 void SIPVoIPLink::sendRegister(Account *a)
 {
-	DEBUG("registering account in SIP");
-
     SIPAccount *account = static_cast<SIPAccount*>(a);
 
     if (!account)
@@ -740,7 +733,7 @@ void SIPVoIPLink::sendRegister(Account *a)
 
 
 #ifndef __ANDROID__
-  
+
     if (account->transport_) {
         if (account->isStunEnabled()) {
             DEBUG("Setting VIA sent-by to %s:%u", account->transport_->local_name.host.ptr, account->transport_->local_name.port);
@@ -752,7 +745,7 @@ void SIPVoIPLink::sendRegister(Account *a)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
         }
     }
-    
+
 #else
 #warning update pj_sip
 #endif
