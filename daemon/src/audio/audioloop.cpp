@@ -110,6 +110,7 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
             CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->updatePlaybackScale(pos_ / divisor, size_ / divisor);
         }
+
         updatePlaybackScale++;
     }
 }
