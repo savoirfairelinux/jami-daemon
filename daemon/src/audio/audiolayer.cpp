@@ -111,14 +111,6 @@ void AudioLayer::notifyIncomingCall()
     putUrgent(buf, sizeof buf);
 }
 
-bool AudioLayer::audioBufferFillWithZeros(AudioBuffer &buffer)
-{
-
-    memset(buffer.data(), 0, buffer.size());
-
-    return true;
-}
-
 bool AudioLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
 {
     AudioLoop *tone = Manager::instance().getTelephoneTone();
@@ -131,7 +123,7 @@ bool AudioLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
     } else if (file_tone) {
         file_tone->getNext(buffer.data(), buffer.length(), getPlaybackGain());
     } else {
-        audioBufferFillWithZeros(buffer);
+        buffer.reset();
     }
 
     return true;
@@ -220,14 +212,18 @@ bool AudioLayer::audioPlaybackFillBuffer(AudioBuffer &buffer)
         case VOICE: {
             if (bytesToGet > 0)
                 bufferFilled = audioPlaybackFillWithVoice(buffer, bytesToGet);
-            else
-                bufferFilled = audioBufferFillWithZeros(buffer);
+            else {
+                buffer.reset();
+                bufferFilled = true;
+            }
         }
         break;
 
         case ZEROS:
-        default:
-            bufferFilled = audioBufferFillWithZeros(buffer);
+        default: {
+            buffer.reset();
+            bufferFilled = true;
+        }
     }
 
     if (!bufferFilled)

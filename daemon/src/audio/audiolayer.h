@@ -75,6 +75,7 @@ public:
         buffer_ = buf.buffer_;
     }
 
+    void reset() { std::fill(buffer_.begin(), buffer_.end(), 0); }
 
     unsigned int length() { return length_; }
 
