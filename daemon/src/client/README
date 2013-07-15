@@ -9,16 +9,16 @@ dbusxx-xml2cpp callmanager-introspec.xml --adaptor=callmanager-glue.h
 dbusxx-xml2cpp configurationmanager-introspec.xml --adaptor=configurationmanager-glue.h
 dbusxx-xml2cpp contactmanager-introspec.xml --adaptor=contactmanager-glue.h
 
-dbusxx-xml2cpp instance-introspec.xml --adaptor=instance-glue.h 
+dbusxx-xml2cpp instance-introspec.xml --adaptor=instance-glue.h
 
 Warning : depending on the dbusxx-xml2cpp version used, it can generate buggy code
 
 code generated
 
-::DBus::IntrospectedInterface *const introspect() const 
+::DBus::IntrospectedInterface *const introspect() const
 
-instead of 
+instead of
 
-::DBus::IntrospectedInterface *introspect() const 
+::DBus::IntrospectedInterface *introspect() const
 
 This issue is dealt with in make-swig.sh
