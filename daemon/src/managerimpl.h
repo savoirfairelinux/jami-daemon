@@ -959,7 +959,6 @@ class ManagerImpl {
         }
 #endif
 
-
         /**
         * Tell if an account exists
         * @param accountID account ID check
