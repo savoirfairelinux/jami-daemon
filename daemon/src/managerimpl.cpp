@@ -190,7 +190,6 @@ void ManagerImpl::init(const std::string &config_file)
 
     history_.load(preferences.getHistoryLimit());
     registerAccounts();
-    INFO("init ended");
 }
 
 void ManagerImpl::setPath(const std::string &path) {
@@ -616,7 +615,6 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
 //THREAD=Main
 bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 {
-    DEBUG("transferCall");
     if (isConferenceParticipant(callId)) {
         removeParticipant(callId);
     } else if (not isConference(getCurrentCallId()))
@@ -2924,9 +2922,8 @@ void ManagerImpl::saveHistory()
 {
     if (!history_.save())
         ERROR("Could not save history!");
-
-    client_.getConfigurationManager()->historyChanged();
-
+    else
+        client_.getConfigurationManager()->historyChanged();
 }
 
 void ManagerImpl::clearHistory()

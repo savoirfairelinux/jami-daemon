@@ -380,38 +380,6 @@ std::string ConfigurationManager::getAudioManager()
     return Manager::instance().getAudioManager();
 }
 
-/*
-void ConfigurationManager::setMailNotify()
-{
-    Manager::instance().setMailNotify();
-}
-
-int32_t ConfigurationManager::getMailNotify()
-{
-    return Manager::instance().getMailNotify();
-}
-
-std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings()
-{
-    return Manager::instance().getAddressbookSettings();
-}
-
-void ConfigurationManager::setAddressbookSettings(const std::map<std::string, int32_t>& settings)
-{
-    Manager::instance().setAddressbookSettings(settings);
-}
-
-std::vector<std::string> ConfigurationManager::getAddressbookList()
-{
-    return Manager::instance().getAddressbookList();
-}
-
-void ConfigurationManager::setAddressbookList(const std::vector<std::string>& list)
-{
-    Manager::instance().setAddressbookList(list);
-}
-*/
-
 std::map<std::string, std::string> ConfigurationManager::getHookSettings()
 {
     return Manager::instance().hookPreference.toMap();

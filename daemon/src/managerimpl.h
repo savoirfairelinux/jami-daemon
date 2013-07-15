@@ -646,32 +646,6 @@ class ManagerImpl {
         int getHistoryLimit() const;
 
         /**
-         * Set the desktop mail notification level
-         */
-        void setMailNotify();
-
-
-        /**
-         * Addressbook configuration
-         */
-        std::map<std::string, int32_t> getAddressbookSettings() const;
-
-        /**
-         * Addressbook configuration
-         */
-        void setAddressbookSettings(const std::map<std::string, int32_t>& settings);
-
-        /**
-         * Addressbook list
-         */
-        void setAddressbookList(const std::vector<  std::string >& list);
-
-        /**
-         * Addressbook list
-         */
-        std::vector <std::string> getAddressbookList() const;
-
-        /**
          * Configure the start-up option
          * @return int	1 if SFLphone should start in the system tray
          *	        0 otherwise
