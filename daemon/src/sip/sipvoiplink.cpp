@@ -508,7 +508,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     TRY(pjlib_util_init());
 
 #ifdef __ANDROID__
-	setSipLogFunc();
+	setSipLogger();
 #endif
     setSipLogLevel();
     TRY(pjnath_init());
@@ -653,9 +653,9 @@ SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
 void SIPVoIPLink::setSipLogLevel()
 {
     char *envvar = getenv(SIPLOGLEVEL);
-    int level = 0, result;
+    int level = 0;
 
-    if(envvar != NULL) {
+    if (envvar != NULL) {
         std::string loglevel = envvar;
 
         if ( ! (std::istringstream(loglevel) >> level) ) level = 0;
@@ -665,22 +665,17 @@ void SIPVoIPLink::setSipLogLevel()
     }
 
 #ifdef __ANDROID__
-	/* level = Manager::instance().getSipLogLevel(); */
     level = 6;
 #endif
 
     // From 0 (min) to 6 (max)
     pj_log_set_level(level);
-	DEBUG("SIP log level set to %d", level);
 }
 
 #ifdef __ANDROID__
-void SIPVoIPLink::setSipLogFunc()
+void SIPVoIPLink::setSipLogger()
 {
 	static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();
-
-	DEBUG("setting SIP log func");
-
     pj_log_set_log_func(&showLog);
 }
 #endif
