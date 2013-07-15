@@ -322,7 +322,8 @@ AudioLayer* AudioPreference::createAudioLayer()
 {
 #ifdef __ANDROID__
     return new OpenSLLayer();
-#else
+#endif
+
 #if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR) {
         if (system("pactl info > /dev/null") == 0)
@@ -330,7 +331,9 @@ AudioLayer* AudioPreference::createAudioLayer()
         else
             WARN("pulseaudio daemon not running, falling back to ALSA");
     }
-#elif HAVE_ALSA
+#endif
+
+#if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
     checkSoundCard(alsaCardin_, AudioLayer::SFL_PCM_CAPTURE);
@@ -339,8 +342,7 @@ AudioLayer* AudioPreference::createAudioLayer()
 
     return new AlsaLayer(*this);
 #else
-	return NULL;
-#endif
+    return NULL;
 #endif
 }
 
