@@ -68,20 +68,18 @@ public:
 
     AudioBuffer(AudioBuffer& buf) : length_(buf.length())
                              , channels_(buf.channels())
-                             , buffer_()
+                             , buffer_(buf.buffer_)
                              , size_(length_ * channels_ * sizeof(SFLDataFormat))
                              , data_(&(*buffer_.begin()))
-    {
-        buffer_ = buf.buffer_;
-    }
+    {}
 
     void reset() { std::fill(buffer_.begin(), buffer_.end(), 0); }
 
-    unsigned int length() { return length_; }
+    unsigned int length() const { return length_; }
 
-    unsigned int channels() { return channels_; }
+    unsigned int channels() const { return channels_; }
 
-    size_t size() { return size_; }
+    size_t size() const { return size_; }
 
     SFLDataFormat *data() { return data_; }
 
