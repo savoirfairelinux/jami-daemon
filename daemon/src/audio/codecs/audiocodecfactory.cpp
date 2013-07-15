@@ -53,8 +53,6 @@ AudioCodecFactory::AudioCodecFactory() :
     typedef std::vector<sfl::AudioCodec*> AudioCodecVector;
     AudioCodecVector codecDynamicList(scanCodecDirectory());
 
-    DEBUG("AudioCodecFactory constructor");
-
     if (codecDynamicList.empty())
         ERROR("No codecs available");
     else {
@@ -193,14 +191,14 @@ AudioCodecFactory::scanCodecDirectory()
 
         while ((dirStruct = readdir(dir))) {
             std::string file = dirStruct->d_name ;
-            DEBUG("Trying %s",  file.c_str());
+
             if (file == "." or file == "..")
                 continue;
 
             if (seemsValid(file) && !alreadyInCache(file)) {
                 sfl::AudioCodec *audioCodec(loadCodec(dirStr + file));
+
                 if (audioCodec) {
-                    DEBUG("Codec OK %s",  file.c_str());
                     codecs.push_back(audioCodec);
                     libCache_.push_back(file);
                 }
@@ -222,7 +220,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
     void * codecHandle = dlopen(path.c_str(), RTLD_NOW);
 
     if (!codecHandle) {
-        ERROR("Error %s", dlerror());
+        ERROR("%s", dlerror());
         return NULL;
     }
 
@@ -281,13 +279,8 @@ AudioCodecFactory::instantiateCodec(int payload) const
 
             const char *error = dlerror();
 
-#if defined(__ANDROID__)
-            if (createCodec == NULL)
-                ERROR("Could not instantiate codec");
-#else
             if (error)
                 ERROR("%s", error);
-#endif
             else
                 result = static_cast<sfl::AudioCodec *>(createCodec());
         }
