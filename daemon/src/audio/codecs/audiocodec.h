@@ -36,7 +36,6 @@
 
 #include "cc_config.h"
 #include "sfl_types.h"
-#include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
 
 #define XSTR(s) STR(s)
 #define STR(s) #s
