@@ -102,7 +102,6 @@ Account::~Account()
 void Account::setRegistrationState(const RegistrationState &state)
 {
     if (state != registrationState_) {
-        
         registrationState_ = state;
         // Notify the client
         ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
