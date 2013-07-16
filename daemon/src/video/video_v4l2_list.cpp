@@ -52,7 +52,7 @@ extern "C" {
 
 #include "video_v4l2_list.h"
 #include "manager.h"
-#include "client/dbus/video_controls.h"
+#include "client/video_controls.h"
 
 namespace sfl_video {
 

@@ -59,7 +59,7 @@ noinst_HEADERS =            \
     $(BUILT_SOURCES)
 
 if SFL_VIDEO
-noinst_HEADERS+=video_controls.h
+noinst_HEADERS+=../video_controls.h
 endif
 
 # Dbus service file

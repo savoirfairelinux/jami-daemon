@@ -61,7 +61,7 @@
 
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
-#include "client/dbus/video_controls.h"
+#include "client/video_controls.h"
 #endif
 
 #ifdef __ANDROID__

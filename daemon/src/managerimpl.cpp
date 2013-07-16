@@ -78,7 +78,7 @@
 #endif
 
 #ifdef SFL_VIDEO
-#include "client/dbus/video_controls.h"
+#include "client/video_controls.h"
 #endif
 
 #include "conference.h"

@@ -30,7 +30,7 @@
 
 #include "video_send_thread.h"
 #include "socket_pair.h"
-#include "client/dbus/video_controls.h"
+#include "client/video_controls.h"
 #include "packet_handle.h"
 #include "check.h"
 

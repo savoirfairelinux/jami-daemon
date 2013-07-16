@@ -31,7 +31,7 @@
 
 #include "video_receive_thread.h"
 #include "socket_pair.h"
-#include "client/dbus/video_controls.h"
+#include "client/video_controls.h"
 #include "check.h"
 #include "packet_handle.h"
 

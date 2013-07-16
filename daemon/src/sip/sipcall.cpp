@@ -36,7 +36,7 @@
 #include "sdp.h"
 #include "manager.h"
 #ifdef SFL_VIDEO
-#include "client/dbus/video_controls.h"
+#include "client/video_controls.h"
 #endif
 
 namespace {
