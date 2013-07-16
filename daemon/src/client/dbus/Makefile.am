@@ -49,7 +49,7 @@ libclient_la_CXXFLAGS = -I../ \
 
 
 noinst_HEADERS =            \
-    callmanager.h           \
+    ../callmanager.h        \
     configurationmanager.h  \
     instance.h              \
     ../client.h             \

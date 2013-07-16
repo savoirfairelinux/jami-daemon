@@ -31,7 +31,7 @@
 #include "logger.h"
 #include "sip/sipcall.h"
 #include "client/client.h"
-#include "client/dbus/callmanager.h"
+#include "client/callmanager.h"
 #include "manager.h"
 
 #include <cstdlib>

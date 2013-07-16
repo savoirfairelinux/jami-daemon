@@ -34,7 +34,7 @@
 
 #include "audioloop.h"
 #include "manager.h"
-#include "client/dbus/callmanager.h"
+#include "client/callmanager.h"
 #include <cmath>
 #include <numeric>
 #include <cstring>

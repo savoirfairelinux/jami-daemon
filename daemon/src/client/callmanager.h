@@ -31,7 +31,14 @@
 #ifndef __SFL_CALLMANAGER_H__
 #define __SFL_CALLMANAGER_H__
 
-#include "dbus_cpp.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if HAVE_DBUS
+
+#include "dbus/dbus_cpp.h"
+
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 /* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
@@ -39,7 +46,7 @@
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "callmanager-glue.h"
+#include "dbus/callmanager-glue.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
@@ -48,25 +55,34 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
+#endif  // HAVE_DBUS
+
 #include <stdexcept>
 
 class CallManagerException: public std::runtime_error {
     public:
-        CallManagerException(const std::string& str="") :
+        CallManagerException(const std::string& str = "") :
             std::runtime_error("A CallManagerException occured: " + str) {}
 };
 
 namespace sfl {
-    class AudioZrtpSession;
+class AudioZrtpSession;
 }
 
 class CallManager
+#if HAVE_DBUS
     : public org::sflphone::SFLphone::CallManager_adaptor,
   public DBus::IntrospectableAdaptor,
-      public DBus::ObjectAdaptor {
+  public DBus::ObjectAdaptor
+#endif
+{
     public:
 
+#if HAVE_DBUS
         CallManager(DBus::Connection& connection);
+#else
+        CallManager();
+#endif
 
         /* methods exported by this interface,
          * you will have to implement them in your ObjectAdaptor
