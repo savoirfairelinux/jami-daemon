@@ -61,7 +61,7 @@
 
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
-#include "client/video_controls.h"
+#include "client/dbus/video_controls.h"
 #endif
 
 #ifdef __ANDROID__
@@ -73,8 +73,8 @@
 #include "client/android/callmanager.h"
 #else
 #include "client/client.h"
-#include "client/callmanager.h"
-#include "client/configurationmanager.h"
+#include "client/dbus/callmanager.h"
+#include "client/dbus/configurationmanager.h"
 #endif
 
 #include "pjsip/sip_endpoint.h"
