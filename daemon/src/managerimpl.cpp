@@ -70,7 +70,7 @@
 #include "manager.h"
 
 #ifndef __ANDROID__
-#include "client/dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 #include "client/callmanager.h"
 #else
 #include "client/android/configurationmanager.h"

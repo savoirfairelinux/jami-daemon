@@ -50,7 +50,7 @@ libclient_la_CXXFLAGS = -I../ \
 
 noinst_HEADERS =            \
     ../callmanager.h        \
-    configurationmanager.h  \
+    ../configurationmanager.h  \
     instance.h              \
     ../client.h             \
     networkmanager_proxy.h  \

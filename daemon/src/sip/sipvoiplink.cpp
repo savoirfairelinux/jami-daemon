@@ -74,7 +74,7 @@
 #else
 #include "client/client.h"
 #include "client/callmanager.h"
-#include "client/dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 #endif
 
 #include "pjsip/sip_endpoint.h"

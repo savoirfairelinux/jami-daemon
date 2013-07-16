@@ -37,7 +37,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "noncopyable.h"
-#include "client/dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 #include <ctime>
 
 #define SFL_ALSA_PERIOD_SIZE 160

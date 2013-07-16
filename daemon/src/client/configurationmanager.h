@@ -34,6 +34,14 @@
 #ifndef CONFIGURATIONMANAGER_H
 #define CONFIGURATIONMANAGER_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if HAVE_DBUS
+
+#include "dbus/dbus_cpp.h"
+
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
@@ -41,7 +49,7 @@
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Weffc++"
-#include "configurationmanager-glue.h"
+#include "dbus/configurationmanager-glue.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 #pragma GCC diagnostic warning "-Weffc++"
@@ -50,15 +58,21 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-#include "dbus_cpp.h"
+#endif // HAVE_DBUS
 
 class ConfigurationManager
+#if HAVE_DBUS
     : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor {
-
+    public DBus::ObjectAdaptor
+#endif
+{
     public:
+#if HAVE_DBUS
         ConfigurationManager(DBus::Connection& connection);
+#else
+        ConfigurationManager();
+#endif
         std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
         void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
         std::map<std::string, std::string> getAccountTemplate();

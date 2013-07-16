@@ -65,7 +65,7 @@
 #endif
 
 #ifndef __ANDROID__
-#include "client/dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 #else
 #include "client/android/configurationmanager.h"
 #endif
