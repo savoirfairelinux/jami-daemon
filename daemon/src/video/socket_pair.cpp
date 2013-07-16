@@ -181,7 +181,6 @@ void
 SocketPair::openSockets(const char *uri, int local_rtp_port)
 {
     char hostname[256];
-    char buf[1024];
     char path[1024];
 
     int rtp_port;
