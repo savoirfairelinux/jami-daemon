@@ -38,7 +38,8 @@
 #include <cerrno>
 #include <sstream>
 
-#include "configurationmanager.h"
+#include "client/configurationmanager.h"
+#include "jni_callbacks.h"
 #include "account_schema.h"
 #include "manager.h"
 #include "sip/sipvoiplink.h"
@@ -169,6 +170,20 @@ std::string ConfigurationManager::addAccount(const std::map<std::string, std::st
 void ConfigurationManager::removeAccount(const std::string& accoundID)
 {
     return Manager::instance().removeAccount(accoundID);
+}
+
+/**
+ * Send the list of all codecs loaded to the client through DBus.
+ * Can stay global, as only the active codecs will be set per accounts
+ */
+std::vector<int32_t> ConfigurationManager::getAudioCodecList()
+{
+    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getCodecList());
+
+    // if (list.empty())
+    //     errorAlert(CODECS_NOT_LOADED);
+
+    return list;
 }
 
 std::vector<std::string> ConfigurationManager::getAccountList()
@@ -329,7 +344,7 @@ int32_t ConfigurationManager::isIax2Enabled()
 {
     return HAVE_IAX;
 }
-/*
+
 std::string ConfigurationManager::getRecordPath()
 {
     return Manager::instance().audioPreference.getRecordPath();
@@ -350,6 +365,7 @@ void ConfigurationManager::setIsAlwaysRecording(const bool& rec)
     Manager::instance().setIsAlwaysRecording(rec);
 }
 
+/*
 void ConfigurationManager::setRecordingCall(const std::string& id)
 {
     Manager::instance().setRecordingCall(id);

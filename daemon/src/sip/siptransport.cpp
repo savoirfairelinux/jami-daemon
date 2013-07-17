@@ -64,11 +64,7 @@
 #include "pjsip/sip_transport_tls.h"
 #endif
 
-#ifndef __ANDROID__
 #include "client/configurationmanager.h"
-#else
-#include "client/android/configurationmanager.h"
-#endif
 
 static const char * const DEFAULT_INTERFACE = "default";
 static const char * const ANY_HOSTS = "0.0.0.0";

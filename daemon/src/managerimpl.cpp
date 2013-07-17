@@ -69,13 +69,8 @@
 #include "history/history.h"
 #include "manager.h"
 
-#ifndef __ANDROID__
 #include "client/configurationmanager.h"
 #include "client/callmanager.h"
-#else
-#include "client/android/configurationmanager.h"
-#include "client/android/callmanager.h"
-#endif
 
 #ifdef SFL_VIDEO
 #include "client/video_controls.h"

@@ -64,18 +64,9 @@
 #include "client/video_controls.h"
 #endif
 
-#ifdef __ANDROID__
-#include <pjsua-lib/pjsua.h>
-#include <android/log.h>
-#include "client/android/jni_callbacks.h"
-#include "client/android/configurationmanager.h"
-#include "client/client.h"
-#include "client/android/callmanager.h"
-#else
 #include "client/client.h"
 #include "client/callmanager.h"
 #include "client/configurationmanager.h"
-#endif
 
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_uri.h"

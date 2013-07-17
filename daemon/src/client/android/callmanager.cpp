@@ -32,7 +32,8 @@
 #include <vector>
 
 #include "global.h"
-#include "callmanager.h"
+#include "client/callmanager.h"
+#include "jni_callbacks.h"
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
@@ -48,76 +49,53 @@
 CallManager::CallManager()
 {}
 
-void CallManager::placeCall(const std::string& accountID,
+bool CallManager::placeCall(const std::string& accountID,
                             const std::string& callID,
                             const std::string& to)
 {
     // Check if a destination number is available
-    if (to.empty())
-        DEBUG("No number entered - Call stopped");
-    else
-        Manager::instance().outgoingCall(accountID, callID, to);
-}
-
-void CallManager::placeCallFirstAccount(const std::string& callID,
-                                        const std::string& to)
-{
-    using std::vector;
-    using std::string;
-
     if (to.empty()) {
-        WARN("CallManager: Warning: No number entered, call stopped");
-        return;
-    }
-
-    vector<string> accountList(Manager::instance().loadAccountOrder());
-
-    if (accountList.empty())
-        accountList = Manager::instance().getAccountList();
-
-    for (vector<string>::const_iterator iter = accountList.begin(); iter != accountList.end(); ++iter) {
-        Account *account = Manager::instance().getAccount(*iter);
-        if (account && (*iter != SIPAccount::IP2IP_PROFILE) && account->isEnabled()) {
-            Manager::instance().outgoingCall(*iter, callID, to);
-            return;
-        }
+        DEBUG("No number entered - Call stopped");
+        return false;
+    } else {
+        return Manager::instance().outgoingCall(accountID, callID, to);
     }
 }
 
-void
+bool
 CallManager::refuse(const std::string& callID)
 {
-    Manager::instance().refuseCall(callID);
+    return Manager::instance().refuseCall(callID);
 }
 
-void
+bool
 CallManager::accept(const std::string& callID)
 {
-    Manager::instance().answerCall(callID);
+    return Manager::instance().answerCall(callID);
 }
 
-void
+bool
 CallManager::hangUp(const std::string& callID)
 {
-    Manager::instance().hangupCall(callID);
+    return Manager::instance().hangupCall(callID);
 }
 
-void
+bool
 CallManager::hangUpConference(const std::string& confID)
 {
-    Manager::instance().hangupConference(confID);
+    return Manager::instance().hangupConference(confID);
 }
 
-void
+bool
 CallManager::hold(const std::string& callID)
 {
-    Manager::instance().onHoldCall(callID);
+    return Manager::instance().onHoldCall(callID);
 }
 
-void
+bool
 CallManager::unhold(const std::string& callID)
 {
-    Manager::instance().offHoldCall(callID);
+    return Manager::instance().offHoldCall(callID);
 }
 
 bool
@@ -169,20 +147,39 @@ CallManager::getVolume(const std::string& device)
     return 0;
 }
 
-bool CallManager::sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
+void
+CallManager::sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
 {
-    return Manager::instance().sendTextMessage(callID,message,from);
-}
-
-bool CallManager::toggleRecordingCall(const std::string& id)
-{
-    Manager::instance().toggleRecordingCall(id);
+#if HAVE_INSTANT_MESSAGING
+    Manager::instance().sendTextMessage(callID, message, from);
+#endif
 }
 
 void
+CallManager::sendTextMessage(const std::string& callID, const std::string& message)
+{
+#if HAVE_INSTANT_MESSAGING
+    try{
+        Manager::instance().sendTextMessage(callID, message, "Me");
+    }catch(...){
+        ERROR("Could not send \"%s\" text message to %s", message.c_str(), callID.c_str());
+    }
+
+#else
+    ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
+#endif
+}
+
+
+bool CallManager::toggleRecording(const std::string& id)
+{
+    return Manager::instance().toggleRecordingCall(id);
+}
+
+bool
 CallManager::joinParticipant(const std::string& sel_callID, const std::string& drag_callID)
 {
-    Manager::instance().joinParticipant(sel_callID, drag_callID);
+    return Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
@@ -192,54 +189,48 @@ CallManager::createConfFromParticipantList(const std::vector<std::string>& parti
 }
 
 void
-CallManager::createConference(const std::string& id1, const std::string& id2)
-{
-    Manager::instance().createConference(id1,id2);
-}
-
-void
 CallManager::removeConference(const std::string& conference_id)
 {
     Manager::instance().removeConference(conference_id);
 }
 
-void
+bool
 CallManager::addParticipant(const std::string& callID, const std::string& confID)
 {
-    Manager::instance().addParticipant(callID, confID);
+    return Manager::instance().addParticipant(callID, confID);
 }
 
-void
+bool
 CallManager::addMainParticipant(const std::string& confID)
 {
-    Manager::instance().addMainParticipant(confID);
+    return Manager::instance().addMainParticipant(confID);
 }
 
-void
+bool
 CallManager::detachParticipant(const std::string& callID)
 {
-    Manager::instance().detachParticipant(callID);
+    return Manager::instance().detachParticipant(callID);
 }
 
-void
+bool
 CallManager::joinConference(const std::string& sel_confID, const std::string& drag_confID)
 {
-    Manager::instance().joinConference(sel_confID, drag_confID);
+    return Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
-void
+bool
 CallManager::holdConference(const std::string& confID)
 {
-    Manager::instance().holdConference(confID);
+    return Manager::instance().holdConference(confID);
 }
 
-void
+bool
 CallManager::unholdConference(const std::string& confID)
 {
-    Manager::instance().unHoldConference(confID);
+    return Manager::instance().unHoldConference(confID);
 }
 
-bool 
+bool
 CallManager::isConferenceParticipant(const std::string& call_id)
 {
     return Manager::instance().isConferenceParticipant(call_id);
@@ -434,22 +425,6 @@ CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
 #endif
 }
 
-void
-CallManager::sendTextMessage(const std::string& callID, const std::string& message)
-{
-#if HAVE_INSTANT_MESSAGING
-    try{
-        Manager::instance().sendTextMessage(callID, message, "Me");
-    }catch(...){
-        ERROR("Could not send \"%s\" text message to %s", message.c_str(), callID.c_str());
-    }
-        
-#else
-    ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
-#endif
-}
-
-
 void CallManager::callStateChanged(const std::string& callID, const std::string& state)
 {
     on_call_state_changed_wrapper(callID, state);
@@ -517,7 +492,7 @@ void CallManager::registrationStateChanged(const std::string& accoundID, const s
 
 void CallManager::sipCallStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code)
 {
-    
+
 }
 
 void CallManager::updatePlaybackScale(const int32_t&, const int32_t&)

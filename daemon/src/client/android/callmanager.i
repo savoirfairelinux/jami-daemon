@@ -30,7 +30,7 @@
 
 %header %{
 
-#include "callmanager.h"
+#include "client/callmanager.h"
 
 
 typedef struct callmanager_callback
@@ -163,48 +163,57 @@ void setCallbackObject(Callback* callback) {
 
 class CallManager {
 public:
-    /* Manager::instance().outgoingCall */
-    void placeCall(const std::string& accountID,
-                   const std::string& callID,
-                   const std::string& to);
-    /* Manager::instance().refuseCall */
-    void refuse(const std::string& callID);
-    /* Manager::instance().answerCall */
-    void accept(const std::string& callID);
-    /* Manager::instance().hangupCall */
-    void hangUp(const std::string& callID);
-    void hold(const std::string& callID);
-    void unhold(const std::string& callID);
+    bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
+
+    bool refuse(const std::string& callID);
+    bool accept(const std::string& callID);
+    bool hangUp(const std::string& callID);
+    bool hold(const std::string& callID);
+    bool unhold(const std::string& callID);
     bool transfer(const std::string& callID, const std::string& to);
     bool attendedTransfer(const std::string& transferID, const std::string& targetID);
+    std::map< std::string, std::string > getCallDetails(const std::string& callID);
+    std::vector< std::string > getCallList();
 
-    /* Record methods */
-    bool toggleRecordingCall(const std::string& id);
-    bool startRecordedFilePlayback(const std::string& filepath);
-    void stopRecordedFilePlayback(const std::string& filepath);
-    bool getIsRecording(const std::string& callID);
-    bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
-    
-     /* Conference related methods */
-
+    /* Conference related methods */
     void removeConference(const std::string& conference_id);
-    void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
+    bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
     void createConfFromParticipantList(const std::vector< std::string >& participants);
-    void createConference(const std::string& id1, const std::string& id2);
-    void addParticipant(const std::string& callID, const std::string& confID);
-    std::vector<std::string> getParticipantList(const std::string& confID);
-    void addMainParticipant(const std::string& confID);
-    void detachParticipant(const std::string& callID);
-    void joinConference(const std::string& sel_confID, const std::string& drag_confID);
-    void hangUpConference(const std::string& confID);
-    void holdConference(const std::string& confID);
-    void unholdConference(const std::string& confID);
-    bool isConferenceParticipant(const std::string& call_id);
+    bool addParticipant(const std::string& callID, const std::string& confID);
+    bool addMainParticipant(const std::string& confID);
+    bool detachParticipant(const std::string& callID);
+    bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
+    bool hangUpConference(const std::string& confID);
+    bool holdConference(const std::string& confID);
+    bool unholdConference(const std::string& confID);
     std::vector<std::string> getConferenceList();
-    std::vector<std::string> getCallList();
+    std::vector<std::string> getParticipantList(const std::string& confID);
     std::string getConferenceId(const std::string& callID);
     std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
+    /* File Playback methods */
+    bool startRecordedFilePlayback(const std::string& filepath);
+    void stopRecordedFilePlayback(const std::string& filepath);
+
+    /* General audio methods */
+    void setVolume(const std::string& device, const double& value);
+    double getVolume(const std::string& device);
+    bool toggleRecording(const std::string& callID);
+    void recordPlaybackSeek(const double& value);
+    bool getIsRecording(const std::string& callID);
+    std::string getCurrentAudioCodecName(const std::string& callID);
+    void playDTMF(const std::string& key);
+    void startTone(const int32_t& start, const int32_t& type);
+
+    /* Security related methods */
+    void setSASVerified(const std::string& callID);
+    void resetSASVerified(const std::string& callID);
+    void setConfirmGoClear(const std::string& callID);
+    void requestGoClear(const std::string& callID);
+    void acceptEnrollment(const std::string& callID, const bool& accepted);
+
+    /* Instant messaging */
+    void sendTextMessage(const std::string& callID, const std::string& message);
 };
 
 class Callback {

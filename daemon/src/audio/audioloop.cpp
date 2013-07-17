@@ -39,11 +39,7 @@
 #include "audioloop.h"
 #include "manager.h"
 
-#if HAVE_DBUS
 #include "client/callmanager.h"
-#else
-#include "client/android/callmanager.h"
-#endif
 
 #include <cmath>
 #include <numeric>

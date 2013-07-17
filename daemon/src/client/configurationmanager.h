@@ -58,6 +58,11 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
+#else
+// these includes normally come with DBus C++
+#include <vector>
+#include <map>
+#include <string>
 #endif // HAVE_DBUS
 
 class ConfigurationManager
@@ -78,7 +83,6 @@ class ConfigurationManager
         std::map<std::string, std::string> getAccountTemplate();
         std::string addAccount(const std::map< std::string, std::string >& details);
         void removeAccount(const std::string& accoundID);
-        void deleteAllCredential(const std::string& accountID);
         std::vector< std::string > getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
@@ -143,6 +147,17 @@ class ConfigurationManager
 
         std::map<std::string, std::string> getShortcuts();
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
+
+#ifdef __ANDROID__
+        // signals must be implemented manually for Android
+        void accountsChanged();
+
+        void historyChanged();
+
+        void stunStatusFailure(const std::string& accoundID);
+
+        void registrationStateChanged(const std::string& accoundID, int const& state);
+#endif  // __ANDROID__
 };
 
 #endif //CONFIGURATIONMANAGER_H

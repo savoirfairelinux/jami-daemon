@@ -55,6 +55,11 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
+#else
+// these includes normally come with DBus C++
+#include <vector>
+#include <map>
+#include <string>
 #endif  // HAVE_DBUS
 
 #include <stdexcept>
@@ -102,8 +107,10 @@ class CallManager
         std::vector< std::string > getCallList();
 
         /* Conference related methods */
+        void removeConference(const std::string& conference_id);
         bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);
+        bool isConferenceParticipant(const std::string& call_id);
         bool addParticipant(const std::string& callID, const std::string& confID);
         bool addMainParticipant(const std::string& confID);
         bool detachParticipant(const std::string& callID);
@@ -142,6 +149,36 @@ class CallManager
 
         /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
+        void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+
+#ifdef __ANDROID__
+        // signals must be implemented manually for Android
+        void callStateChanged(const std::string& callID, const std::string& state);
+
+        void transferFailed();
+
+        void transferSucceeded();
+
+        void recordPlaybackStopped(const std::string& path);
+
+        void voiceMailNotify(const std::string& callID, const std::string& nd_msg);
+
+        void incomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
+
+        void incomingCall(const std::string& accountID, const std::string& callID, const std::string& from);
+
+        void recordPlaybackFilepath(const std::string& id, const std::string& filename);
+
+        void conferenceCreated(const std::string& confID);
+
+        void conferenceChanged(const std::string& confID,const std::string& state);
+
+        void updatePlaybackScale(const int32_t&, const int32_t&);
+        void conferenceRemoved(const std::string&);
+        void newCallCreated(const std::string&, const std::string&, const std::string&);
+        void registrationStateChanged(const std::string&, const std::string&, const int32_t&);
+        void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
+#endif // __ANDROID__
 
     private:
 

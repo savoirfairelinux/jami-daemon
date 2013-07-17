@@ -41,8 +41,8 @@
 
 
 
-#include "callmanager.h"
-#include "configurationmanager.h"
+#include "client/callmanager.h"
+#include "client/configurationmanager.h"
 
 #if HAVE_DBUS
 #include "client/networkmanager.h"
