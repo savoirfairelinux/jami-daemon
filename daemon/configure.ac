@@ -183,15 +183,18 @@ AS_IF([test "x$with_zrtp" = "xyes"], [
 AC_DEFINE_UNQUOTED([HAVE_ZRTP], `if test "x$with_zrtp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp support])
 AM_CONDITIONAL(BUILD_ZRTP, test "x$with_zrtp" = "xyes" )
 
+# DBUSCPP
+dnl Check for dbuscpp, the C++ bindings for D-Bus
+DBUS_CPP_MIN_VERSION=0.0.0-pre1
+AC_ARG_WITH([dbus],
+    [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
+    [],
+    [with_dbus=yes])
+AS_IF([test "x$with_dbus" = "xyes"], [
+    PKG_CHECK_MODULES(DBUSCPP, dbus-++-1 >= DBUS_CPP_MIN_VERSION,, AC_MSG_WARN([Missing dbus development package: libdbuscpp-dev]))
+    ]);
 
-# DBUS
-# required dependency(ies): libdbus-c++
-dnl DBus-C++ detection
-dnl pkg-config doesn't like 0.6.0-pre1 version number, it assumes that it is
-dnl more recent than (unreleased) 0.6.0
-DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
-PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1, AC_DEFINE_UNQUOTED(HAVE_DBUS, 1, [D-Bus support enabled]),
-AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
+AC_DEFINE_UNQUOTED([HAVE_DBUS], `if test "x$with_dbus" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have dbus support])
 
 # Instant Messaging
 # required dependency(ies): libxpat
