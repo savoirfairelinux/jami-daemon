@@ -43,7 +43,10 @@
 
 #include "callmanager.h"
 #include "configurationmanager.h"
+
+#if HAVE_DBUS
 #include "client/networkmanager.h"
+#endif
 
 #ifdef SFL_VIDEO
 #include "video_controls.h"
