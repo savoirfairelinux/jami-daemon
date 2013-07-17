@@ -1,4 +1,5 @@
 aclocal.m4
+build-aux
 
 configure
 src/dbus/org.sflphone.SFLphone.service
