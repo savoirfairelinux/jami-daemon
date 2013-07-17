@@ -179,6 +179,7 @@ public:
     void removeConference(const std::string& conference_id);
     bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
     void createConfFromParticipantList(const std::vector< std::string >& participants);
+    bool isConferenceParticipant(const std::string& call_id);
     bool addParticipant(const std::string& callID, const std::string& confID);
     bool addMainParticipant(const std::string& confID);
     bool detachParticipant(const std::string& callID);
