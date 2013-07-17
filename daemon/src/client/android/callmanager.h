@@ -139,6 +139,7 @@ class CallManager {
         void newCallCreated(const std::string& accountID, const std::string& callID, const std::string& to);
         void registrationStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code);
         void sipCallStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code);
+        void updatePlaybackScale(const int32_t&, const int32_t&);
         
         
     private:
