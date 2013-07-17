@@ -55,6 +55,7 @@ doc/*.html
 *x86_64-unknown-*
 sip_autoconf.h
 os-auto.mak
+cc-auto.mak
 build.mak
 config.log
 config.status
