@@ -32,57 +32,21 @@
 #include "config.h"
 #endif
 
-#include <cstdlib>
 #include "client/client.h"
-#include "global.h"
-#include "manager.h"
-#include "logger.h"
-#include "instance-glue.h"
-
-
-
 #include "client/callmanager.h"
 #include "client/configurationmanager.h"
 
-#if HAVE_DBUS
-#include "client/networkmanager.h"
-#endif
-
-#ifdef SFL_VIDEO
-#include "video_controls.h"
-#endif
-
-Client::Client() : callManager_(0)
-    , configurationManager_(0)
+Client::Client() : callManager_(new CallManager)
+    , configurationManager_(new ConfigurationManager)
+    , instanceManager_(0)
+    , dispatcher_(0)
 #ifdef SFL_VIDEO
     , videoControls_(0)
 #endif
 #ifdef USE_NETWORKMANAGER
     , networkManager_(0)
 #endif
-{
-    try {
-
-        callManager_ = new CallManager();
-        configurationManager_ = new ConfigurationManager();
-
-#ifdef SFL_VIDEO
-        videoControls_ = new VideoControls(sessionConnection);
-#endif
-
-#ifdef USE_NETWORKMANAGER
-        DEBUG("DBUS system connection to system bus");
-        DBus::Connection systemConnection(DBus::Connection::SystemBus());
-        DEBUG("DBUS create the network manager from the system bus");
-        networkManager_ = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
-#endif
-
-    } catch (const DBus::Error &err) {
-        ERROR("%s: %s, exiting\n", err.name(), err.what());
-        ::exit(EXIT_FAILURE);
-    }
-
-}
+{}
 
 Client::~Client()
 {
@@ -92,34 +56,14 @@ Client::~Client()
 #ifdef SFL_VIDEO
     delete videoControls_;
 #endif
+    delete dispatcher_;
     delete instanceManager_;
     delete configurationManager_;
     delete callManager_;
-    delete dispatcher_;
 }
 
 void Client::event_loop()
-{
-    try {
-        dispatcher_->enter();
-    } catch (const DBus::Error &err) {
-        ERROR("%s: %s, quitting\n", err.name(), err.what());
-        return;
-    } catch (const std::exception &err) {
-        ERROR("%s: quitting\n", err.what());
-        return;
-    }
-}
+{}
 
 void Client::exit()
-{
-    try {
-        dispatcher_->leave();
-    } catch (const DBus::Error &err) {
-        ERROR("%s: %s, quitting\n", err.name(), err.what());
-        return;
-    } catch (const std::exception &err) {
-        ERROR("%s: quitting\n", err.what());
-        return;
-    }
-}
+{}
