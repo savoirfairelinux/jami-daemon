@@ -9,20 +9,20 @@ BUILT_SOURCES=                      \
 
 if SFL_VIDEO
 BUILT_SOURCES+=video_controls-glue.h
-video_controls-glue.h: video_controls-introspec.xml Makefile.am
+video_controls-glue.h: ../video_controls-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 endif
 
 # Rule to generate the binding headers
-callmanager-glue.h: callmanager-introspec.xml Makefile.am
+callmanager-glue.h: ../callmanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 # Rule to generate the binding headers
-configurationmanager-glue.h: configurationmanager-introspec.xml Makefile.am
+configurationmanager-glue.h: ../configurationmanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 # Rule to generate the binding headers
-instance-glue.h: instance-introspec.xml Makefile.am
+instance-glue.h: ../instance-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 libclient_la_SOURCES = \
@@ -72,13 +72,13 @@ $(service_DATA): $(service_in_files) Makefile
 	sed -e "s|libexec|$(libdir)/sflphone|" $<> $@
 
 EXTRA_DIST = README $(service_in_files) \
-			 callmanager-introspec.xml \
-			 configurationmanager-introspec.xml \
-			 instance-introspec.xml \
-			 org.freedesktop.NetworkManager.xml
+			 ../callmanager-introspec.xml \
+			 ../configurationmanager-introspec.xml \
+			 ../instance-introspec.xml \
+			 ../org.freedesktop.NetworkManager.xml
 
 if SFL_VIDEO
-EXTRA_DIST += video_controls-introspec.xml
+EXTRA_DIST += ../video_controls-introspec.xml
 endif
 
 CLEANFILES= \
