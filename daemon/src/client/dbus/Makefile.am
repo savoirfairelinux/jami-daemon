@@ -45,8 +45,8 @@ endif
 libclient_la_CXXFLAGS = -I../ \
             -DPREFIX=\"$(prefix)\" \
             -DPROGSHAREDIR=\"${datadir}/sflphone\" \
-            $(NETWORKMANAGER)
-
+            $(NETWORKMANAGER) \
+            $(DBUSCPP_CFLAGS)
 
 noinst_HEADERS =            \
     ../callmanager.h        \

@@ -69,7 +69,8 @@ libsflphone_la_CFLAGS = \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
 		@libssl_CFLAGS@ \
-		@UUID_CFLAGS@
+		@UUID_CFLAGS@ \
+		@DBUSCPP_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
 		voiplink.cpp \
