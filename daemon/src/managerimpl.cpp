@@ -353,8 +353,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     stopTone();
 
     // set playback mode to VOICE
-    AudioLayer *al = getAudioDriver();
-    if(al) al->setPlaybackMode(AudioLayer::VOICE);
+    if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::VOICE);
 
     // store the current call id
     std::string current_call_id(getCurrentCallId());
@@ -425,8 +424,7 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     stopTone();
 
     // set playback mode to NONE
-    AudioLayer *al = getAudioDriver();
-    if(al) al->setPlaybackMode(AudioLayer::NONE);
+    if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::NONE);
 
     DEBUG("Send call state change (HUNGUP) for id %s", callId.c_str());
     client_.getCallManager()->callStateChanged(callId, "HUNGUP");
@@ -1356,10 +1354,9 @@ void ManagerImpl::removeStream(const std::string& call_id)
 void ManagerImpl::saveConfig()
 {
     DEBUG("Saving Configuration to XDG directory %s", path_.c_str());
-    AudioLayer *audiolayer = getAudioDriver();
-    if (audiolayer != NULL) {
-        audioPreference.setVolumemic(audiolayer->getCaptureGain());
-        audioPreference.setVolumespkr(audiolayer->getPlaybackGain());
+    if (audiodriver_ != NULL) {
+        audioPreference.setVolumemic(audiodriver_->getCaptureGain());
+        audioPreference.setVolumespkr(audiodriver_->getPlaybackGain());
     }
 
     try {
@@ -1634,8 +1631,7 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
         stopTone();
 
         // set playback mode to VOICE
-        AudioLayer *al = getAudioDriver();
-        if(al) al->setPlaybackMode(AudioLayer::VOICE);
+        if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::VOICE);
     }
 
     // Connect audio streams
@@ -1676,8 +1672,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         unsetCurrentCall();
 
         // set playback mode to NONE
-        AudioLayer *al = getAudioDriver();
-        if(al) al->setPlaybackMode(AudioLayer::NONE);
+        if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::NONE);
     }
 
     /* Direct IP to IP call */
