@@ -66,9 +66,12 @@ bool History::load(int limit)
         DEBUG("No history file to load");
         return false;
     }
-    while (!infile.eof()) {
+
+    int counter = 0;
+    while (!infile.eof() and counter < limit) {
         HistoryItem item(infile);
         addEntry(item, limit);
+        ++counter;
     }
     return true;
 }
