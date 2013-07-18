@@ -264,17 +264,34 @@ OpenSLLayer::initAudioPlayback()
     SLDataLocator_OutputMix mixerLocation = {SL_DATALOCATOR_OUTPUTMIX, outputMixer};
     SLDataSink audioSink = {&mixerLocation, NULL};
 
-    const SLInterfaceID ids[2] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, 
-                                  SL_IID_VOLUME};
-    const SLboolean req[2] = {SL_BOOLEAN_TRUE, 
-                              SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[3] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
+                                  SL_IID_VOLUME,
+				  SL_IID_ANDROIDCONFIGURATION};
+    const SLboolean req[3] = {SL_BOOLEAN_TRUE,
+                              SL_BOOLEAN_TRUE,
+			      SL_BOOLEAN_TRUE};
 
-    int nbInterface = 2;
+    int nbInterface = 3;
+
+    SLAndroidConfigurationItf playerConfig;
+    SLint32 streamType = SL_ANDROID_STREAM_VOICE;
 
     // create audio player
     DEBUG("Create audio player\n");
     result = (*engineInterface)->CreateAudioPlayer(engineInterface, &playerObject, &audioSource, &audioSink, nbInterface, ids, req);
     assert(SL_RESULT_SUCCESS == result);
+
+    result = (*playerObject)->GetInterface(playerObject,
+	                                    SL_IID_ANDROIDCONFIGURATION,
+	                                    &playerConfig);
+    if (result == SL_RESULT_SUCCESS && playerConfig) {
+        result = (*playerConfig)->SetConfiguration(
+	         playerConfig, SL_ANDROID_KEY_STREAM_TYPE,
+	         &streamType, sizeof(SLint32));
+    }
+    if (result != SL_RESULT_SUCCESS) {
+        ERROR("Unable to set android player configuration");
+    }
 
     DEBUG("Realize audio player\n");
     result = (*playerObject)->Realize(playerObject, SL_BOOLEAN_FALSE);
