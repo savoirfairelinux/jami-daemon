@@ -82,6 +82,7 @@ namespace std {
 
 //%constant struct callmanager_callback* WRAPPER_CALLBACK_STRUCT = &wrapper_callback_struct;
 
+%include "managerimpl.i"
 %include "callmanager.i"
 %include "configurationmanager.i"
 
