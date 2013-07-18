@@ -36,6 +36,7 @@
 #include <fstream>
 #include <sys/stat.h> // for mkdir
 #include <ctime>
+#include <cstring>
 #include "scoped_lock.h"
 #include "fileutils.h"
 #include "logger.h"
