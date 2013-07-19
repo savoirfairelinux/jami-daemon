@@ -556,33 +556,34 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
     static_cast<OpenSLLayer*>(context)->playback(queue);
 }
 
-void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
+void OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(NULL != queue);
-    assert(NULL != context);
 
-    OpenSLLayer *opensl = (OpenSLLayer *)context;
-
-    AudioBuffer &buffer = opensl->getNextRecordBuffer();
-    opensl->incrementRecordIndex();
+    AudioBuffer &buffer = getNextRecordBuffer();
+    incrementRecordIndex();
 
     SLresult result;
 
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
-    result = (*opensl->recorderBufferQueue_)->Enqueue(opensl->recorderBufferQueue_, buffer.data(), buffer.size());
+    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.data(), buffer.size());
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);
 
-    // AudioBuffer &previousbuffer = opensl->getNextRecordBuffer();
-
-    opensl->audioCaptureFillBuffer(buffer);
+    audioCaptureFillBuffer(buffer);
 #ifdef RECORD_AUDIO_TODISK
     opensl_infile.write((char const *)(buffer.data()), buffer.size());
 #endif
-    // opensl->audioCaptureFillBuffer(previousbuffer);
 }
+
+void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
+{
+    assert(NULL != context);
+    static_cast<OpenSLLayer*>(context)->capture(queue);
+}
+
 
 void OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
 {
