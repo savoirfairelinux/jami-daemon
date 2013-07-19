@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#include <stdio.h>
-#include <assert.h>
+#include <cstdio>
+#include <cassert>
 
 #include "logger.h"
 #include "array_size.h"
@@ -404,7 +404,6 @@ OpenSLLayer::initAudioCapture()
 }
 
 
-
 void
 OpenSLLayer::startAudioPlayback()
 {
@@ -533,7 +532,7 @@ void OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 
     buffer.reset();
 
-    bool bufferFilled = audioPlaybackFillBuffer(buffer);
+    const bool bufferFilled = audioPlaybackFillBuffer(buffer);
 
     if (bufferFilled) {
 #ifdef RECORD_AUDIO_TODISK
