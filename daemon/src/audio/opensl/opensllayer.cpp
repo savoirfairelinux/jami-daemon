@@ -67,9 +67,7 @@ class OpenSLThread : public ost::Thread {
 
 OpenSLThread::OpenSLThread(OpenSLLayer *opensl)
     : ost::Thread(), opensl_(opensl)
-{
-    MainBuffer &buffer = Manager::instance().getMainBuffer();
-}
+{}
 
 OpenSLThread::~OpenSLThread()
 {
