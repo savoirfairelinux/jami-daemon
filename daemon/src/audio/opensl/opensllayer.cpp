@@ -418,8 +418,7 @@ OpenSLLayer::startAudioPlayback()
         AudioBuffer &buffer = getNextPlaybackBuffer();
         incrementPlaybackIndex();
 
-        // generateSawTooth(&(*buffer.begin()), buffer.size());
-        memset(buffer.data(), 0, buffer.size());
+        buffer.reset();
 
         result = (*playbackBufferQueue_)->Enqueue(playbackBufferQueue_, buffer.data(), buffer.size());
 
@@ -460,7 +459,7 @@ OpenSLLayer::startAudioCapture()
     AudioBuffer &buffer = getNextRecordBuffer();
     incrementRecordIndex();
 
-    memset(buffer.data(), 0, buffer.size());
+    buffer.reset();
 
     DEBUG("Enqueue record buffer\n");
     result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.data(), buffer.size());
@@ -532,7 +531,7 @@ void OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 
     AudioBuffer &buffer = getNextPlaybackBuffer();
 
-    memset(buffer.data(), 0, buffer.size());
+    buffer.reset();
 
     bool bufferFilled = audioPlaybackFillBuffer(buffer);
 
