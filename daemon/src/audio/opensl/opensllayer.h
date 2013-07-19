@@ -181,6 +181,7 @@ class OpenSLLayer : public AudioLayer {
         }
 
     private:
+        void playback(SLAndroidSimpleBufferQueueItf queue);
         friend class OpenSLThread;
 
         static const int NB_BUFFER_PLAYBACK_QUEUE;

@@ -524,20 +524,17 @@ OpenSLLayer::getPlaybackDeviceList() const
     return playbackDeviceList;
 }
 
-void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
+void OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(NULL != queue);
-    assert(NULL != context);
 
     usleep(20000);
 
-    OpenSLLayer *opensl = (OpenSLLayer *)context;
-
-    AudioBuffer &buffer = opensl->getNextPlaybackBuffer();
+    AudioBuffer &buffer = getNextPlaybackBuffer();
 
     memset(buffer.data(), 0, buffer.size());
 
-    bool bufferFilled = opensl->audioPlaybackFillBuffer(buffer);
+    bool bufferFilled = audioPlaybackFillBuffer(buffer);
 
     if (bufferFilled) {
 #ifdef RECORD_AUDIO_TODISK
@@ -549,8 +546,14 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
             DEBUG("Error could not enqueue buffers in playback callback\n");
         }
 
-        opensl->incrementPlaybackIndex();
+        incrementPlaybackIndex();
     }
+}
+
+void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
+{
+    assert(NULL != context);
+    static_cast<OpenSLLayer*>(context)->playback(queue);
 }
 
 void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
