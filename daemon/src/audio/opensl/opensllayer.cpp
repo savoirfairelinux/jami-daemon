@@ -32,6 +32,7 @@
 #include <assert.h>
 
 #include "logger.h"
+#include "array_size.h"
 #include "manager.h"
 #include "mainbuffer.h"
 #include "opensllayer.h"
@@ -264,14 +265,11 @@ OpenSLLayer::initAudioPlayback()
     SLDataLocator_OutputMix mixerLocation = {SL_DATALOCATOR_OUTPUTMIX, outputMixer_};
     SLDataSink audioSink = {&mixerLocation, NULL};
 
-    const SLInterfaceID ids[3] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-                                  SL_IID_VOLUME,
-				  SL_IID_ANDROIDCONFIGURATION};
-    const SLboolean req[3] = {SL_BOOLEAN_TRUE,
-                              SL_BOOLEAN_TRUE,
-			      SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
+        SL_IID_VOLUME, SL_IID_ANDROIDCONFIGURATION};
+    const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
-    int nbInterface = 3;
+    const unsigned nbInterface = ARRAYSIZE(ids);
 
     SLAndroidConfigurationItf playerConfig;
     SLint32 streamType = SL_ANDROID_STREAM_VOICE;
@@ -349,8 +347,8 @@ OpenSLLayer::initAudioCapture()
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
     DEBUG("Create audio recorder\n");
-    const SLInterfaceID id[1] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
+    const SLInterfaceID id[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
+    const SLboolean req[] = {SL_BOOLEAN_TRUE};
     if (engineInterface_ != NULL) {
         result = (*engineInterface_)->CreateAudioRecorder(engineInterface_,
                 &recorderObject_, &audioSource, &audioSink, 1, id, req);
