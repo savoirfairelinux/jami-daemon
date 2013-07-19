@@ -99,39 +99,6 @@ class OpenSLLayer : public AudioLayer {
          */
         virtual std::vector<std::string> getPlaybackDeviceList() const;
 
-        /**
-         * OpenSL standard object interface
-         */
-        SLObjectItf getEngineObject(void) { return engineObject; }
-
-        /**
-         * OpenSL sound engine interface
-         */
-        SLEngineItf getEngineInterface(void) { return engineInterface; }
-
-        /**
-         * Output mix interface
-         */
-        SLObjectItf getOutputMixer(void) { return outputMixer; }
-
-        SLObjectItf getPlayerObject(void) { return playerObject; }
-
-        SLObjectItf getRecorderObject(void) { return recorderObject; }
-
-        /**
-         *   
-         */
-        SLPlayItf getPlayerInterface(void) { return playerInterface; }
-
-        SLRecordItf getRecorderInterface(void) { return recorderInterface; }
-
-        /**
-         * OpenSL playback buffer
-         */
-        SLAndroidSimpleBufferQueueItf getPLaybackBufferQueue(void) { return playbackBufferQueue; }
-
-        SLAndroidSimpleBufferQueueItf getRecorderBufferQueue(void) { return recorderBufferQueue; }
-
         void initAudioEngine();
 
         void shutdownAudioEngine();
@@ -196,15 +163,15 @@ class OpenSLLayer : public AudioLayer {
             return indexRing_;
         }
 
-        AudioBuffer &getNextPlaybackBuffer(void) { return playbackBufferStack[playbackBufferIndex]; }
+        AudioBuffer &getNextPlaybackBuffer(void) { return playbackBufferStack_[playbackBufferIndex_]; }
 	
-        AudioBuffer &getNextRecordBuffer(void) { return recordBufferStack[recordBufferIndex]; }
+        AudioBuffer &getNextRecordBuffer(void) { return recordBufferStack_[recordBufferIndex_]; }
 
-        int getCurrentPlaybackIndex(void) { return playbackBufferIndex; }
+        int getCurrentPlaybackIndex(void) { return playbackBufferIndex_; }
 
-        void incrementPlaybackIndex(void) { playbackBufferIndex = ++playbackBufferIndex % NB_BUFFER_PLAYBACK_QUEUE; }
+        void incrementPlaybackIndex(void) { playbackBufferIndex_ = ++playbackBufferIndex_ % NB_BUFFER_PLAYBACK_QUEUE; }
 
-        void incrementRecordIndex(void) { recordBufferIndex = ++recordBufferIndex % NB_BUFFER_CAPTURE_QUEUE; }
+        void incrementRecordIndex(void) { recordBufferIndex_ = ++recordBufferIndex_ % NB_BUFFER_CAPTURE_QUEUE; }
 
     private:
         friend class OpenSLThread;
@@ -239,42 +206,42 @@ class OpenSLLayer : public AudioLayer {
         /**
          * OpenSL standard object interface
          */
-        SLObjectItf engineObject;
+        SLObjectItf engineObject_;
 
         /**
          * OpenSL sound engine interface
          */
-        SLEngineItf engineInterface;
+        SLEngineItf engineInterface_;
 
         /**
          * Output mix interface
          */
-        SLObjectItf outputMixer;
+        SLObjectItf outputMixer_;
 
-        SLObjectItf playerObject;
+        SLObjectItf playerObject_;
 
-        SLObjectItf recorderObject;
+        SLObjectItf recorderObject_;
 
         /**
          *   
          */
-        SLPlayItf playerInterface;
+        SLPlayItf playerInterface_;
 
-        SLRecordItf recorderInterface;
+        SLRecordItf recorderInterface_;
 
         /**
          * OpenSL playback buffer
          */
-        SLAndroidSimpleBufferQueueItf playbackBufferQueue;
+        SLAndroidSimpleBufferQueueItf playbackBufferQueue_;
 
-        SLAndroidSimpleBufferQueueItf recorderBufferQueue;
+        SLAndroidSimpleBufferQueueItf recorderBufferQueue_;
 
-        int playbackBufferIndex;
+        int playbackBufferIndex_;
 
-        int recordBufferIndex; 
+        int recordBufferIndex_;
 
-        AudioBufferStack playbackBufferStack;
-        AudioBufferStack recordBufferStack;
+        AudioBufferStack playbackBufferStack_;
+        AudioBufferStack recordBufferStack_;
 };
 
 #endif // _OPENSL_LAYER_H_
