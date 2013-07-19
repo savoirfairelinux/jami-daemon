@@ -173,11 +173,11 @@ class OpenSLLayer : public AudioLayer {
         }
 
         void incrementPlaybackIndex(void) {
-            playbackBufferIndex_ = ++playbackBufferIndex_ % NB_BUFFER_PLAYBACK_QUEUE;
+            playbackBufferIndex_ = (playbackBufferIndex_ + 1) % NB_BUFFER_PLAYBACK_QUEUE;
         }
 
         void incrementRecordIndex(void) {
-            recordBufferIndex_ = ++recordBufferIndex_ % NB_BUFFER_CAPTURE_QUEUE;
+            recordBufferIndex_ = (recordBufferIndex_ + 1) % NB_BUFFER_CAPTURE_QUEUE;
         }
 
     private:
