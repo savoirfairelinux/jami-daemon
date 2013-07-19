@@ -506,10 +506,6 @@ OpenSLLayer::getPlaybackDeviceList() const
     return playbackDeviceList;
 }
 
-bool OpenSLLayer::audioCallback()
-{
-}
-
 void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
     assert(NULL != queue);

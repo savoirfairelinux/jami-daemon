@@ -119,13 +119,6 @@ class OpenSLLayer : public AudioLayer {
 
         virtual std::string getAudioDeviceName(int, AudioLayer::PCMType) const { return ""; }
 
-
-        /**
-         * Main audio callback method, all data transfer between application and hardware is preformed
-         * inside this method.
-         */
-        bool audioCallback();
-
         /**
          * This is the main audio playabck callback called by the OpenSL layer
          */
