@@ -123,6 +123,8 @@ class OpenSLLayer : public AudioLayer {
             return "";
         }
 
+    private:
+
         /**
          * This is the main audio playabck callback called by the OpenSL layer
          */
@@ -168,10 +170,6 @@ class OpenSLLayer : public AudioLayer {
             return recordBufferStack_[recordBufferIndex_];
         }
 
-        int getCurrentPlaybackIndex(void) {
-            return playbackBufferIndex_;
-        }
-
         void incrementPlaybackIndex(void) {
             playbackBufferIndex_ = (playbackBufferIndex_ + 1) % NB_BUFFER_PLAYBACK_QUEUE;
         }
@@ -180,7 +178,6 @@ class OpenSLLayer : public AudioLayer {
             recordBufferIndex_ = (recordBufferIndex_ + 1) % NB_BUFFER_CAPTURE_QUEUE;
         }
 
-    private:
         void playback(SLAndroidSimpleBufferQueueItf queue);
         void capture(SLAndroidSimpleBufferQueueItf queue);
         friend class OpenSLThread;
