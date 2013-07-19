@@ -113,11 +113,15 @@ class OpenSLLayer : public AudioLayer {
 
         void stopAudioPlayback();
 
-        void stopAudioCapture(); 
+        void stopAudioCapture();
 
-        virtual int getAudioDeviceIndex(const std::string&) const { return 0; }
+        virtual int getAudioDeviceIndex(const std::string&) const {
+            return 0;
+        }
 
-        virtual std::string getAudioDeviceName(int, AudioLayer::PCMType) const { return ""; }
+        virtual std::string getAudioDeviceName(int, AudioLayer::PCMType) const {
+            return "";
+        }
 
         /**
          * This is the main audio playabck callback called by the OpenSL layer
@@ -156,15 +160,25 @@ class OpenSLLayer : public AudioLayer {
             return indexRing_;
         }
 
-        AudioBuffer &getNextPlaybackBuffer(void) { return playbackBufferStack_[playbackBufferIndex_]; }
-	
-        AudioBuffer &getNextRecordBuffer(void) { return recordBufferStack_[recordBufferIndex_]; }
+        AudioBuffer &getNextPlaybackBuffer(void) {
+            return playbackBufferStack_[playbackBufferIndex_];
+        }
 
-        int getCurrentPlaybackIndex(void) { return playbackBufferIndex_; }
+        AudioBuffer &getNextRecordBuffer(void) {
+            return recordBufferStack_[recordBufferIndex_];
+        }
 
-        void incrementPlaybackIndex(void) { playbackBufferIndex_ = ++playbackBufferIndex_ % NB_BUFFER_PLAYBACK_QUEUE; }
+        int getCurrentPlaybackIndex(void) {
+            return playbackBufferIndex_;
+        }
 
-        void incrementRecordIndex(void) { recordBufferIndex_ = ++recordBufferIndex_ % NB_BUFFER_CAPTURE_QUEUE; }
+        void incrementPlaybackIndex(void) {
+            playbackBufferIndex_ = ++playbackBufferIndex_ % NB_BUFFER_PLAYBACK_QUEUE;
+        }
+
+        void incrementRecordIndex(void) {
+            recordBufferIndex_ = ++recordBufferIndex_ % NB_BUFFER_CAPTURE_QUEUE;
+        }
 
     private:
         friend class OpenSLThread;
@@ -216,7 +230,7 @@ class OpenSLLayer : public AudioLayer {
         SLObjectItf recorderObject_;
 
         /**
-         *   
+         *
          */
         SLPlayItf playerInterface_;
 
