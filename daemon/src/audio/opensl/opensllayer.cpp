@@ -308,13 +308,13 @@ OpenSLLayer::initAudioPlayback()
 
     const unsigned nbInterface = ARRAYSIZE(ids);
 
-    SLAndroidConfigurationItf playerConfig;
-    SLint32 streamType = SL_ANDROID_STREAM_VOICE;
-
     // create audio player
     DEBUG("Create audio player\n");
     result = (*engineInterface_)->CreateAudioPlayer(engineInterface_, &playerObject_, &audioSource, &audioSink, nbInterface, ids, req);
     assert(SL_RESULT_SUCCESS == result);
+
+    SLAndroidConfigurationItf playerConfig;
+    SLint32 streamType = SL_ANDROID_STREAM_VOICE;
 
     result = (*playerObject_)->GetInterface(playerObject_,
                                             SL_IID_ANDROIDCONFIGURATION,
