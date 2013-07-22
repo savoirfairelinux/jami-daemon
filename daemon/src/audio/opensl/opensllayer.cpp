@@ -85,7 +85,8 @@ OpenSLThread::~OpenSLThread()
         pthread_join(thread_, NULL);
 }
 
-void OpenSLThread::start()
+void
+OpenSLThread::start()
 {
     running_ = true;
     pthread_create(&thread_, NULL, &runCallback, this);
@@ -99,12 +100,14 @@ OpenSLThread::runCallback(void *data)
     return NULL;
 }
 
-bool OpenSLThread::isRunning() const
+bool
+OpenSLThread::isRunning() const
 {
     return running_;
 }
 
-void OpenSLThread::initAudioLayer(void)
+void
+OpenSLThread::initAudioLayer()
 {
     opensl_->initAudioEngine();
     opensl_->initAudioPlayback();
@@ -114,7 +117,8 @@ void OpenSLThread::initAudioLayer(void)
 /**
  * Reimplementation of run()
  */
-void OpenSLThread::run()
+void
+OpenSLThread::run()
 {
     initAudioLayer();
 
@@ -574,13 +578,15 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
     }
 }
 
-void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
+void
+OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
     assert(NULL != context);
     static_cast<OpenSLLayer*>(context)->playback(queue);
 }
 
-void OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
+void
+OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(NULL != queue);
 
@@ -602,14 +608,16 @@ void OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
 #endif
 }
 
-void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
+void
+OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
     assert(NULL != context);
     static_cast<OpenSLLayer*>(context)->capture(queue);
 }
 
 
-void OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
+void
+OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
 {
 #ifdef OUTSIDE_TESTING
 
