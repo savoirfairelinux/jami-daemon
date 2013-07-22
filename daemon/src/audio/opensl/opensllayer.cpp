@@ -35,7 +35,6 @@
 #include "array_size.h"
 #include "manager.h"
 #include "mainbuffer.h"
-#include "cc++/thread.h"
 
 #include "opensllayer.h"
 
@@ -55,27 +54,54 @@ static void generateSawTooth(short *buffer, int length)
     }
 }
 
-class OpenSLThread : public ost::Thread {
+class OpenSLThread {
     public:
         OpenSLThread(OpenSLLayer *opensl);
         ~OpenSLThread();
         void initAudioLayer();
-        virtual void run();
+        void start();
+        bool isRunning() const;
 
     private:
+        void run();
+        static void *runCallback(void *context);
+
         NON_COPYABLE(OpenSLThread);
+        pthread_t thread_;
         OpenSLLayer* opensl_;
+        bool running_;
 };
 
 OpenSLThread::OpenSLThread(OpenSLLayer *opensl)
-    : ost::Thread(), opensl_(opensl)
+    : thread_(0), opensl_(opensl), running_(false)
 {}
 
 OpenSLThread::~OpenSLThread()
 {
+    running_ = false;
     opensl_->shutdownAudioEngine();
 
-    ost::Thread::terminate();
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void OpenSLThread::start()
+{
+    running_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+void *
+OpenSLThread::runCallback(void *data)
+{
+    OpenSLThread *context = static_cast<OpenSLThread*>(data);
+    context->run();
+    return NULL;
+}
+
+bool OpenSLThread::isRunning() const
+{
+    return running_;
 }
 
 void OpenSLThread::initAudioLayer(void)
@@ -95,9 +121,8 @@ void OpenSLThread::run()
     opensl_->startAudioPlayback();
     opensl_->startAudioCapture();
 
-    while (opensl_->isStarted_) {
-        ost::Thread::sleep(20 /* ms */);
-    }
+    while (opensl_->isStarted_)
+        usleep(20000); // 20 ms
 }
 
 // Constructor
@@ -522,7 +547,8 @@ OpenSLLayer::getPlaybackDeviceList() const
     return playbackDeviceList;
 }
 
-void OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
+void
+OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(NULL != queue);
 
