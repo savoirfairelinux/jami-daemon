@@ -135,7 +135,7 @@ bool AudioLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesTo
     bytesToGet = std::min(bytesToGet, buffer.size());
     const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
     urgentRingBuffer_.get(buffer.data(), bytesToGet, MainBuffer::DEFAULT_ID);
-    AudioLayer::applyGain(buffer.data(), samplesToGet, getPlaybackGain());
+    applyGain(buffer.data(), samplesToGet, getPlaybackGain());
 
     // Consume the regular one as well (same amount of bytes)
     Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
@@ -249,7 +249,7 @@ void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     const bool resample = mainBufferSampleRate != sampleRate_;
 
     SFLDataFormat *in_ptr = buffer.data();
-    AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
+    applyGain(in_ptr, toGetSamples, getCaptureGain());
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
