@@ -35,6 +35,8 @@
 #include "array_size.h"
 #include "manager.h"
 #include "mainbuffer.h"
+#include "cc++/thread.h"
+
 #include "opensllayer.h"
 
 const int OpenSLLayer::NB_BUFFER_PLAYBACK_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;

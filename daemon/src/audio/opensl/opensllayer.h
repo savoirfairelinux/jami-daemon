@@ -33,11 +33,7 @@
 
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
-// #define OUTSIDE_TESTING 1
 #include <vector>
-#include <list>
-
-#include "cc++/thread.h"
 
 #include "../audiolayer.h"
 
