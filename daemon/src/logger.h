@@ -47,7 +47,7 @@ void setDebugMode(bool);
 bool getDebugMode();
 };
 
-#define LOG_FORMAT(M) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, (unsigned long) pthread_self() & 0xffff
+#define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, (unsigned long) pthread_self() & 0xffff, ##__VA_ARGS__
 
 #ifndef __ANDROID__
 
@@ -56,7 +56,7 @@ bool getDebugMode();
 #define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
 #define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
 #define DEBUG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
-#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, LOG_FORMAT(M), ##__VA_ARGS__)
+#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
 
 #else /* ANDROID */
 
@@ -71,7 +71,7 @@ bool getDebugMode();
 #define WARN(M, ...)    LOGGER(M, ANDROID_LOG_WARN, ##__VA_ARGS__)
 #define INFO(M, ...)    LOGGER(M, ANDROID_LOG_INFO, ##__VA_ARGS__)
 #define DEBUG(M, ...)   LOGGER(M, ANDROID_LOG_DEBUG, ##__VA_ARGS__)
-#define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, LOG_FORMAT(M), ##__VA_ARGS__)
+#define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, LOG_FORMAT(M, ##__VA_ARGS__))
 #endif /* ANDROID */
 
 #define BLACK "\033[22;30m"
