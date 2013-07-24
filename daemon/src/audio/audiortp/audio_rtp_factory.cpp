@@ -184,8 +184,10 @@ void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
 
 void AudioRtpFactory::updateDestinationIpAddress()
 {
-    if (rtpSession_)
-        rtpSession_->updateDestinationIpAddress();
+    if (rtpSession_ == NULL)
+        throw AudioRtpFactoryException("RTP session was null when trying to update IP address");
+
+    rtpSession_->updateDestinationIpAddress();
 }
 
 #if HAVE_ZRTP

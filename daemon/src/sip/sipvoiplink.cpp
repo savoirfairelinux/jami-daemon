@@ -1861,7 +1861,12 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update internal field for
     sdpSession->setMediaTransportInfoFromRemoteSdp();
 
-    call->getAudioRtp().updateDestinationIpAddress();
+    try {
+        call->getAudioRtp().updateDestinationIpAddress();
+    } catch (const AudioRtpFactoryException &e) {
+        ERROR("%s", e.what());
+    }
+
     call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
 #ifdef SFL_VIDEO
     Manager::instance().getVideoControls()->stopPreview();
