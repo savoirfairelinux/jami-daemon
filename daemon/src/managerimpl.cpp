@@ -85,8 +85,6 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 
-#include "sip/sipbuddy.h"
-
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
@@ -2899,16 +2897,23 @@ void ManagerImpl::startAudioDriverStream()
 void ManagerImpl::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    SIPBuddy *b = new SIPBuddy(buddySipUri, account);
-    b->subscribe();
+    account->addBuddy(buddySipUri);
 }
+
+void ManagerImpl::unsubscribePresence(const std::string& accountID, const std::string& buddySipUri)
+{
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
+    account->removeBuddy(buddySipUri);
+}
+
 void ManagerImpl::setPresenceOnline(const std::string& accountID)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->notifyServers("open","");
+    account->notifyServerSubscription("open","");
 }
+
 void ManagerImpl::setPresenceOffline(const std::string& accountID)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->notifyServers("close","");
+    account->notifyServerSubscription ("close","");
 }

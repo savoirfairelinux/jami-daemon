@@ -8,6 +8,7 @@
 #ifndef SERVERPRESENCESUB_H
 #define	SERVERPRESENCESUB_H
 
+#include <string>
 #include "logger.h"
 #include <pjsip-simple/evsub.h>
 #include"pjsip-simple/presence.h"
@@ -22,17 +23,25 @@ public:
         , dlg(d)
         , expires (-1) {};
 
+    char            *remote;    /**< Remote URI.			    */
+    std::string	    accId;	    /**< Account ID.			    */
+
     void setExpires(int ms) {
         expires = ms;
     }
 
+    /*bool operator==(const PresenceSubscription & s) const {
+        return (!(strcmp(remote,s.remote)));
+    }*/
+    bool match(PresenceSubscription * s){
+        // servers match if they have the same remote uri and the account ID.
+      return ((!(strcmp(remote,s->remote))) && (accId==s->accId));
+    }
+
+
     inline void notify(const std::string &newPresenceState, const std::string &newChannelState) {
-        DEBUG("notifying %s", remote);
+        DEBUG("################################################notifying %s", remote);
 
-        pjsip_pres_status pres_status;
-        pjsip_tx_data *tdata;
-
-        pjsip_pres_get_status(sub, &pres_status);
 
         /* Only send NOTIFY once subscription is active. Some subscriptions
          * may still be in NULL (when app is adding a new buddy while in the
@@ -42,6 +51,11 @@ public:
          */
         if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_ACTIVE
                 /* && (pres_status.info[0].basic_open != getStatus()) */) {
+            DEBUG("Active");
+
+            pjsip_tx_data *tdata;
+            pjsip_pres_status pres_status;
+            pjsip_pres_get_status(sub, &pres_status);
 
             pres_status.info[0].basic_open = newPresenceState == "open"? true: false;
 
@@ -59,6 +73,10 @@ public:
                 pjsip_pres_send_request(sub, tdata);
             }
         }
+        else{
+           DEBUG("Inactive");
+
+        }
     }
 
     friend void pres_evsub_on_srv_state( pjsip_evsub *sub, pjsip_event *event);
@@ -67,10 +85,9 @@ public:
 private:
     NON_COPYABLE(PresenceSubscription);
     pjsip_evsub	    *sub;	    /**< The evsub.			    */
-    char            *remote;	    /**< Remote URI.			    */
-    std::string	    accId;	    /**< Account ID.			    */
     pjsip_dialog    *dlg;	    /**< Dialog.			    */
     int		     expires;	    /**< "expires" value in the request.    */
 };
+
 
 #endif	/* SERVERPRESENCESUB_H */

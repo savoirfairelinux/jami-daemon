@@ -43,6 +43,7 @@
 #include "pjsip-ua/sip_regc.h"
 #include "noncopyable.h"
 
+#include "sipbuddy.h"
 #include "presence_subscription.h"
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
@@ -516,12 +517,14 @@ class SIPAccount : public Account {
         /* Returns true if the username and/or hostname match this account */
         bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
-        //void addBuddy(const std::string &uri, bool subscribe);
-        //void removeBuddy(const std::string &uri);
+        //int getBuddy(const std::string& buddySipUri, SIPBuddy *b);
+        void addBuddy(const std::string& buddySipUri);
+        void removeBuddy(const std::string& buddySipUri);
         void addServerSubscription(PresenceSubscription *s);
-        void removerServerSubscription(PresenceSubscription *s);
-        void notifyServers(const std::string &newPresenceStatus, const std::string &newChannelStatus);
-    private:
+        void removeServerSubscription(PresenceSubscription *s);
+        void notifyServerSubscription(const std::string &newPresenceStatus, const std::string &newChannelStatus);
+        bool compareServerSubscription(PresenceSubscription *first, PresenceSubscription *second);
+private:
         NON_COPYABLE(SIPAccount);
 
         bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
@@ -768,11 +771,15 @@ class SIPAccount : public Account {
          */
         pjsip_host_port via_addr_;
 
+         /**
+         * server subscription
+         */
+        std::list< PresenceSubscription *> serverSubscriptions_;
 
         /**
-         * Server subscription (added by ELOI)
+         * buddies
          */
-        std::list< PresenceSubscription *> serverSubscriptions;
+        std::list< SIPBuddy *> buddies_;
 
 };
 

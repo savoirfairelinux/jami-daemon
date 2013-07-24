@@ -47,9 +47,11 @@
 #include <algorithm>
 #include <cstdlib>
 
+
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
 #endif
+
 
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
@@ -111,7 +113,8 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , keepAliveTimer_()
     , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
-    , serverSubscriptions ()
+    , serverSubscriptions_ ()
+    , buddies_ ()
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
@@ -1206,6 +1209,39 @@ VoIPLink* SIPAccount::getVoIPLink()
     return link_;
 }
 
+
+/*
+ * Buddy list management
+ *
+ */
+void SIPAccount::addBuddy(const std::string& buddySipUri){
+    std::list< SIPBuddy *>::iterator buddyIt;
+
+    for (buddyIt = buddies_.begin(); buddyIt != buddies_.end(); buddyIt++)
+        if((*buddyIt)->getURI()==buddySipUri){
+            DEBUG("Buddy:%s exist in the list, Resubscribe.",buddySipUri.c_str());
+            (*buddyIt)->subscribe(); // The buddy won't add the subscription if it allready exists.
+            return;
+        }
+
+    DEBUG("New buddy subscription added.");
+    SIPBuddy *b = new SIPBuddy(buddySipUri, this);
+    b->subscribe();
+    buddies_.push_back(b);
+}
+
+void SIPAccount::removeBuddy(const std::string& buddySipUri){
+    std::list< SIPBuddy *>::iterator buddyIt;
+
+    for (buddyIt = buddies_.begin(); buddyIt != buddies_.end(); buddyIt++)
+        if((*buddyIt)->getURI()==buddySipUri){
+            DEBUG("Found buddy:%s in list. Unsubscribe.",buddySipUri.c_str());
+            (*buddyIt)->unsubscribe();
+            return;
+        }
+}
+
+
 bool SIPAccount::isIP2IP() const
 {
     return accountID_ == IP2IP_PROFILE;
@@ -1220,23 +1256,32 @@ bool SIPAccount::isIP2IP() const
 
 /* Presence : Method used to add serverSubscription to PresenceSubscription list in case of IP2IP accounts */
 void SIPAccount::addServerSubscription(PresenceSubscription *s) {
-    serverSubscriptions.push_back(s);
-    DEBUG("server subscription added");
+    std::list< PresenceSubscription *>::iterator serverIt;
+    for (serverIt = serverSubscriptions_.begin(); serverIt != serverSubscriptions_.end(); serverIt++)
+        if((*serverIt)->match(s)){
+            DEBUG("Server already subscribed. Replace it with a new fresh uas.");
+            serverSubscriptions_.remove(*serverIt);
+        }
+    DEBUG("Server subscription added.");
+    serverSubscriptions_.push_back(s);
 }
 
-/* Presence : Method used to remove serverSubscription to PresenceSubscription list in case of IP2IP accounts */
-void SIPAccount::removerServerSubscription(PresenceSubscription *s) {
-    serverSubscriptions.remove(s);
+/* Presence : Method used to remove serverSubscription to PresenceSubscription list in: case of IP2IP accounts */
+void SIPAccount::removeServerSubscription(PresenceSubscription *s) {
+    serverSubscriptions_.remove(s);
+    delete s;
     DEBUG("server subscription removed");
 }
 
 /* Presence : Method used to notify each serverSubscription of a new presencein case of IP2IP accounts */
-void SIPAccount::notifyServers(const std::string &newPresenceStatus, const std::string &newChannelStatus) {
+void SIPAccount::notifyServerSubscription(const std::string &newPresenceStatus, const std::string &newChannelStatus) {
     std::list< PresenceSubscription *>::iterator serverIt;
     DEBUG("iterating through servers");
-    for (serverIt = serverSubscriptions.begin(); serverIt != serverSubscriptions.end(); serverIt++)
+    for (serverIt = serverSubscriptions_.begin(); serverIt != serverSubscriptions_.end(); serverIt++)
         (*serverIt)->notify(newPresenceStatus, newChannelStatus);
 }
+
+
 /*
  * Presence Management for IP2IP accounts
  *

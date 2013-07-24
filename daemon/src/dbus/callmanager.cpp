@@ -403,18 +403,28 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
     ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
 #endif
 }
+
 void
 CallManager::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
   DEBUG("subscribePresence");
   Manager::instance().subscribePresence(accountID,buddySipUri);
 }
+
+void
+CallManager::unsubscribePresence(const std::string& accountID, const std::string& buddySipUri)
+{
+  DEBUG("unsubscribePresence");
+  Manager::instance().unsubscribePresence(accountID,buddySipUri);
+}
+
 void
 CallManager::setPresenceOnline(const std::string& accountID)
 {
   DEBUG("setPresenceOnline");
   Manager::instance().setPresenceOnline(accountID);
 }
+
 void
 CallManager::setPresenceOffline(const std::string& accountID)
 {

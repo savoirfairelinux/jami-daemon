@@ -61,6 +61,7 @@ class SIPBuddy {
 public:
     SIPBuddy(const std::string &uri, SIPAccount *acc);
     ~SIPBuddy();
+    bool match(SIPBuddy *b);
     void subscribe();
     void unsubscribe();
     bool isSubscribed();

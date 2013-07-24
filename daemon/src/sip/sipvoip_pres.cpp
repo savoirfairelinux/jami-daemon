@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifdef HAVE_CONFIG_H
+#ifdef have_config_h
 #include "config.h"
 #endif
 
@@ -71,12 +71,10 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
 //    PJSUA_LOCK(); /* ebail : FIXME figure out if locking is necessary or not */
     presenceSub = (PresenceSubscription *) pjsip_evsub_get_mod_data(sub,
             ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId() /*my_mod_pres.id*/);
-    WARN("Presence subscription to %s is %s", presenceSub->remote, pjsip_evsub_get_state_name(sub));
+    WARN("Presence server subscription to %s is %s", presenceSub->remote, pjsip_evsub_get_state_name(sub));
 
     if (presenceSub) {
         pjsip_evsub_state state;
-
-        WARN("Server subscription to %s is %s", presenceSub->remote, pjsip_evsub_get_state_name(sub));
 
         state = pjsip_evsub_get_state(sub);
 
@@ -95,6 +93,7 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
         if (state == PJSIP_EVSUB_STATE_TERMINATED) {
             pjsip_evsub_set_mod_data(sub, ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId(), NULL);
 //	    pj_list_erase(uapres);
+            acc->removeServerSubscription(presenceSub);
         }
     }
 //    PJSUA_UNLOCK(); /* ebail : FIXME figure out if unlocking is necessary or not */
@@ -194,6 +193,7 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
 //    pjsip_evsub_add_header(sub, &acc->cfg.sub_hdr_list);
     int modId = ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId();
     pjsip_evsub_set_mod_data(sub, modId/*my_mod_pres.id*/, presenceSub);
+    //DEBUG("***************** presenceSub.name:%s",sub->mod_name);
     acc->addServerSubscription(presenceSub);
     /* Add server subscription to the list: */
 //    pj_list_push_back(&pjsua_var.acc[acc_id].pres_srv_list, uapres);
@@ -293,7 +293,6 @@ pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata) {
             tdata->msg->body = body;
         }
         // process_msg_data
-
         status = pjsip_pres_send_request(sub, tdata);
     }
 

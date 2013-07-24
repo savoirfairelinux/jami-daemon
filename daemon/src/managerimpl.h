@@ -1045,8 +1045,9 @@ class ManagerImpl {
          * Subscribe to buddySipUri for an accountID
          */
        void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
+       void unsubscribePresence(const std::string& accountID, const std::string& buddySipUri);
 
-        /**
+       /**
          * push a presence for a account
          * only used for IP2IP accounts
          */

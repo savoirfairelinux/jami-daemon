@@ -367,16 +367,17 @@ pj_status_t SIPBuddy::updatePresence() {
         pj_status_t retStatus;
 
         if (sub == NULL) {
+            DEBUG("Buddy already unsubscribed sub=NULL.");
             return PJ_SUCCESS;
         }
 
         if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+            DEBUG("Buddy already unsubscribed sub=TERMINATED.");
             pjsip_evsub_terminate(sub, PJ_FALSE); // = NULL;
             return PJ_SUCCESS;
         }
 
         DEBUG("Buddy %s: unsubscribing..", uri.ptr);
-
         retStatus = pjsip_pres_initiate(sub, 300, &tdata);
         if (retStatus == PJ_SUCCESS) {
             //	pjsua_process_msg_data(tdata, NULL);
@@ -553,4 +554,9 @@ void SIPBuddy::subscribe() {
 void SIPBuddy::unsubscribe() {
     monitor = false;
     updatePresence();
+}
+
+bool SIPBuddy::match(SIPBuddy *b){
+    //return !(strcmp(b->getURI(),getURI()));
+    return (b->getURI()==getURI());
 }

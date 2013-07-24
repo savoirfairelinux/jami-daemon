@@ -2313,7 +2313,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
         return;
 
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
-    // We only want to set ports to new values if they haven't been set
+      // We only want to set ports to new values if they haven't been set
     if (call->getLocalAudioPort() == 0) {
         const unsigned callLocalAudioPort = getRandomEvenNumber(16384, 32766);
         call->setLocalAudioPort(callLocalAudioPort);
@@ -2344,7 +2344,7 @@ void SIPVoIPLink::setPresenceState(const std::string &accId, const std::string& 
 #else
     SIPAccount *acc = Manager::instance().getSipAccount(accId);
     /*no need of channelStatte. We put it to NULL */
-    acc->notifyServers(presenceState, NULL);
+    acc->notifyServerSubscription(presenceState, NULL);
 #endif
 }
 std::string SIPVoIPLink::getPresenceState() {

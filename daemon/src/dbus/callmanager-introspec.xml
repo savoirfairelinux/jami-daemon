@@ -819,14 +819,23 @@
           <arg type="s" name="accountID" direction="in"/>
           <arg type="s" name="buddySipUri" direction="in"/>
         </method>
-        <method name="setPresenceOnline" tp:name-for-bindings="setPresenceOnline">
+
+        <method name="unsubscribePresence" tp:name-for-bindings="unsubscribePresence">
+          <tp:added version="0.9.7"/>
+          <arg type="s" name="accountID" direction="in"/>
+          <arg type="s" name="buddySipUri" direction="in"/>
+        </method>
+
+       <method name="setPresenceOnline" tp:name-for-bindings="setPresenceOnline">
           <tp:added version="0.9.7"/>
           <arg type="s" name="accountID" direction="in"/>
         </method>
+
         <method name="setPresenceOffline" tp:name-for-bindings="setPresenceOffline">
           <tp:added version="0.9.7"/>
           <arg type="s" name="accountID" direction="in"/>
         </method>
+
         <signal name="newPresenceNotification" tp:name-for-bindings="newPresenceNotification">
           <arg type="s" name="buddyUri"/>
           <arg type="s" name="status"/>

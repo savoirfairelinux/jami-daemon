@@ -129,6 +129,7 @@ class CallManager
 
         /* Presence subscription */
         void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
+        void unsubscribePresence(const std::string& accountID, const std::string& buddySipUri);
         /* Presence Publication for IP2IP */
         void setPresenceOnline(const std::string& accountID);
         void setPresenceOffline(const std::string& accountID);
