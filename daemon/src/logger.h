@@ -52,7 +52,7 @@ bool getDebugMode();
 #ifndef __ANDROID__
 
 #define FILE_NAME __FILE__
-#define ERROR(M, ...)   LOGGER(M, LOG_ERR, #__VA_ARGS__)
+#define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
 #define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
 #define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
 #define DEBUG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
