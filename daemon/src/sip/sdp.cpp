@@ -455,8 +455,9 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
 
     remoteSession_ = pjmedia_sdp_session_clone(memPool_, remote);
 
-    pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
-                                          remoteSession_, &negotiator_);
+    if (pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
+            remoteSession_, &negotiator_) != PJ_SUCCESS)
+        ERROR("Failed to initialize negotiator");
 }
 
 void Sdp::startNegotiation()
