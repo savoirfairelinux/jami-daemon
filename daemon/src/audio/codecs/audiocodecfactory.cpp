@@ -248,6 +248,8 @@ void
 AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
 {
     destroy_t *destroyCodec = 0;
+    // flush last error
+    dlerror();
 
     if (ptr.second)
         destroyCodec = (destroy_t*) dlsym(ptr.second, "destroy");
@@ -269,20 +271,25 @@ AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
 sfl::AudioCodec*
 AudioCodecFactory::instantiateCodec(int payload) const
 {
+    // flush last error
+    dlerror();
     std::vector<AudioCodecHandlePointer>::const_iterator iter;
 
     sfl::AudioCodec *result = NULL;
 
     for (iter = codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter) {
         if (iter->first->getPayloadType() == payload) {
+
             create_t* createCodec = (create_t*) dlsym(iter->second , AUDIO_CODEC_ENTRY_SYMBOL);
 
             const char *error = dlerror();
 
-            if (error)
+            if (error) {
                 ERROR("%s", error);
-            else
+                dlerror();
+            } else {
                 result = static_cast<sfl::AudioCodec *>(createCodec());
+            }
         }
     }
 
