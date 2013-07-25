@@ -42,6 +42,7 @@ accounts:
     verifyClient: true
     verifyServer: true
   type: SIP
+  useragent: SFLphone-test
   username: sfltest
   videoCodecs:
   zrtp:
@@ -90,6 +91,7 @@ accounts:
     verifyClient: true
     verifyServer: true
   type: SIP
+  useragent: SFLphone-test
   username:
   videoCodecs:
   - bitrate: 400

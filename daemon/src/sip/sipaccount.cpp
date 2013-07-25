@@ -277,6 +277,9 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     tlsmap.setKeyValue(VERIFY_CLIENT_KEY, &verifyclient);
     tlsmap.setKeyValue(VERIFY_SERVER_KEY, &verifyserver);
 
+    ScalarNode userAgent(userAgent_);
+    accountmap.setKeyValue(USER_AGENT_KEY, &userAgent);
+
     try {
         emitter.serializeAccount(&accountmap);
     } catch (const YamlEmitterException &e) {
@@ -482,6 +485,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutSec_);
         tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutMsec_);
     }
+    mapNode.getValue(USER_AGENT_KEY, &userAgent_);
 }
 
 void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)

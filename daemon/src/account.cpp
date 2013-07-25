@@ -65,6 +65,7 @@ const char * const Account::ACCOUNT_ENABLE_KEY =    "enable";
 const char * const Account::ACCOUNT_AUTOANSWER_KEY =    "autoAnswer";
 const char * const Account::MAILBOX_KEY =           "mailbox";
 const char * const Account::DEFAULT_USER_AGENT =    "SFLphone/" PACKAGE_VERSION;
+const char * const Account::USER_AGENT_KEY =        "useragent";
 
 using std::map;
 using std::string;
