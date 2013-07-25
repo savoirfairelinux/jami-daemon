@@ -64,6 +64,7 @@ const char * const Account::HOSTNAME_KEY =          "hostname";
 const char * const Account::ACCOUNT_ENABLE_KEY =    "enable";
 const char * const Account::ACCOUNT_AUTOANSWER_KEY =    "autoAnswer";
 const char * const Account::MAILBOX_KEY =           "mailbox";
+const char * const Account::DEFAULT_USER_AGENT =    "SFLphone/" PACKAGE_VERSION;
 
 using std::map;
 using std::string;
@@ -84,7 +85,7 @@ Account::Account(const string &accountID) :
     , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
     , ringtoneEnabled_(true)
     , displayName_("")
-    , userAgent_("SFLphone")
+    , userAgent_(DEFAULT_USER_AGENT)
     , mailBox_()
 {
     // Initialize the codec order, used when creating a new account

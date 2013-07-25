@@ -1179,12 +1179,7 @@ SIPAccount::getCredentials() const
 
 std::string SIPAccount::getUserAgentName() const
 {
-    std::string result(userAgent_);
-
-    if (result == "sflphone" or result.empty())
-        result += "/" PACKAGE_VERSION;
-
-    return result;
+    return userAgent_.empty() ? DEFAULT_USER_AGENT : userAgent_;
 }
 
 std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const

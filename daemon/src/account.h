@@ -222,6 +222,7 @@ class Account : public Serializable {
         static const char * const ACCOUNT_ENABLE_KEY;
         static const char * const ACCOUNT_AUTOANSWER_KEY;
         static const char * const MAILBOX_KEY;
+        static const char * const DEFAULT_USER_AGENT;
 
         static std::string mapStateNumberToString(RegistrationState state);
 
