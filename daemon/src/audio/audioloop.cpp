@@ -49,7 +49,7 @@
 
 AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(), pos_(0), isRecording_(false)
 {
-    buffer_ = new AudioBuffer();
+    buffer_ = new AudioBuffer;
     buffer_->setSampleRate(sampleRate);
 }
 
@@ -61,9 +61,7 @@ AudioLoop::~AudioLoop()
 void
 AudioLoop::seek(double relative_position)
 {
-    size_t new_pos = (size_t)((double)buffer_->samples() * (relative_position * 0.01));
-
-    pos_ = new_pos;
+    pos_ = (double) (buffer_->samples() * (relative_position * 0.01));
 }
 
 static unsigned int updatePlaybackScale = 0;
@@ -71,8 +69,8 @@ static unsigned int updatePlaybackScale = 0;
 void
 AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
 {
-    if(!buffer_) {
-        ERROR("AudioLoop::buffer_ is not set (NULL pointer)");
+    if (!buffer_) {
+        ERROR("buffer is NULL");
         return;
     }
 
@@ -111,13 +109,14 @@ AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
         return;
     }
 
-    if (isRecording_) {
-        if ((updatePlaybackScale % 5) == 0) {
-            CallManager *cm = Manager::instance().getClient()->getCallManager();
-            cm->updatePlaybackScale(pos_ / divisor, buf_samples / divisor);
-        }
+    if (not isRecording_)
+        return;
 
-        updatePlaybackScale++;
+    if ((updatePlaybackScale % 5) == 0) {
+        CallManager *cm = Manager::instance().getClient()->getCallManager();
+        cm->updatePlaybackScale(pos_ / divisor, buf_samples / divisor);
     }
+
+    updatePlaybackScale++;
 }
 
