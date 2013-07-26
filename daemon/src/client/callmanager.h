@@ -31,7 +31,14 @@
 #ifndef __SFL_CALLMANAGER_H__
 #define __SFL_CALLMANAGER_H__
 
-#include "dbus_cpp.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if HAVE_DBUS
+
+#include "dbus/dbus_cpp.h"
+
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 /* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
@@ -39,7 +46,7 @@
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "callmanager-glue.h"
+#include "dbus/callmanager-glue.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
@@ -48,25 +55,39 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
+#else
+// these includes normally come with DBus C++
+#include <vector>
+#include <map>
+#include <string>
+#endif  // HAVE_DBUS
+
 #include <stdexcept>
 
 class CallManagerException: public std::runtime_error {
     public:
-        CallManagerException(const std::string& str="") :
+        CallManagerException(const std::string& str = "") :
             std::runtime_error("A CallManagerException occured: " + str) {}
 };
 
 namespace sfl {
-    class AudioZrtpSession;
+class AudioZrtpSession;
 }
 
 class CallManager
+#if HAVE_DBUS
     : public org::sflphone::SFLphone::CallManager_adaptor,
   public DBus::IntrospectableAdaptor,
-      public DBus::ObjectAdaptor {
+  public DBus::ObjectAdaptor
+#endif
+{
     public:
 
+#if HAVE_DBUS
         CallManager(DBus::Connection& connection);
+#else
+        CallManager();
+#endif
 
         /* methods exported by this interface,
          * you will have to implement them in your ObjectAdaptor
@@ -86,8 +107,10 @@ class CallManager
         std::vector< std::string > getCallList();
 
         /* Conference related methods */
+        void removeConference(const std::string& conference_id);
         bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);
+        bool isConferenceParticipant(const std::string& call_id);
         bool addParticipant(const std::string& callID, const std::string& confID);
         bool addMainParticipant(const std::string& confID);
         bool detachParticipant(const std::string& callID);
@@ -126,6 +149,36 @@ class CallManager
 
         /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
+        void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+
+#ifdef __ANDROID__
+        // signals must be implemented manually for Android
+        void callStateChanged(const std::string& callID, const std::string& state);
+
+        void transferFailed();
+
+        void transferSucceeded();
+
+        void recordPlaybackStopped(const std::string& path);
+
+        void voiceMailNotify(const std::string& callID, const std::string& nd_msg);
+
+        void incomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
+
+        void incomingCall(const std::string& accountID, const std::string& callID, const std::string& from);
+
+        void recordPlaybackFilepath(const std::string& id, const std::string& filename);
+
+        void conferenceCreated(const std::string& confID);
+
+        void conferenceChanged(const std::string& confID,const std::string& state);
+
+        void updatePlaybackScale(const int32_t&, const int32_t&);
+        void conferenceRemoved(const std::string&);
+        void newCallCreated(const std::string&, const std::string&, const std::string&);
+        void registrationStateChanged(const std::string&, const std::string&, const int32_t&);
+        void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
+#endif // __ANDROID__
 
     private:
 

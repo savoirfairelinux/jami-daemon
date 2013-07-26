@@ -34,6 +34,7 @@
 #include <stdexcept> // for std::runtime_error
 #include <sstream>
 #include <algorithm>
+#include <unistd.h>
 
 #include "logger.h"
 #include "scoped_lock.h"

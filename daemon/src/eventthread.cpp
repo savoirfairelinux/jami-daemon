@@ -31,6 +31,11 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
+ #ifdef __ANDROID__
+ #include <sched.h>
+ #define pthread_yield sched_yield
+ #endif
+
 EventThread::EventThread(VoIPLink *link) : link_(link), thread_(0)
 {}
 

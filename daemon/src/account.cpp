@@ -42,6 +42,7 @@
 
 #include "logger.h"
 #include "manager.h"
+
 #include "client/configurationmanager.h"
 
 const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/111/112/
@@ -63,6 +64,8 @@ const char * const Account::HOSTNAME_KEY =          "hostname";
 const char * const Account::ACCOUNT_ENABLE_KEY =    "enable";
 const char * const Account::ACCOUNT_AUTOANSWER_KEY =    "autoAnswer";
 const char * const Account::MAILBOX_KEY =           "mailbox";
+const char * const Account::DEFAULT_USER_AGENT =    "SFLphone/" PACKAGE_VERSION;
+const char * const Account::USER_AGENT_KEY =        "useragent";
 
 using std::map;
 using std::string;
@@ -83,7 +86,7 @@ Account::Account(const string &accountID) :
     , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
     , ringtoneEnabled_(true)
     , displayName_("")
-    , userAgent_("SFLphone")
+    , userAgent_(DEFAULT_USER_AGENT)
     , mailBox_()
 {
     // Initialize the codec order, used when creating a new account
@@ -97,7 +100,6 @@ void Account::setRegistrationState(const RegistrationState &state)
 {
     if (state != registrationState_) {
         registrationState_ = state;
-
         // Notify the client
         ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
         c->registrationStateChanged(accountID_, registrationState_);

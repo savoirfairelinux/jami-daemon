@@ -52,9 +52,6 @@
 #endif
 #include "array_size.h"
 
-#include "client/client.h"
-#include "client/callmanager.h"
-#include "client/configurationmanager.h"
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -66,6 +63,10 @@
 #include "video/video_rtp_session.h"
 #include "client/video_controls.h"
 #endif
+
+#include "client/client.h"
+#include "client/callmanager.h"
+#include "client/configurationmanager.h"
 
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_uri.h"
@@ -118,6 +119,11 @@ void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx
 void registration_cb(pjsip_regc_cbparam *param);
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata) ;
+
+#ifdef __ANDROID__
+void showLog(int level, const char *data, int len);
+void showMsg(const char *format, ...);
+#endif
 
 void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
@@ -189,6 +195,26 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
+#ifdef __ANDROID__
+void showMsg(const char *format, ...)
+{
+    va_list arg;
+
+    va_start(arg, format);
+    __android_log_vprint(ANDROID_LOG_INFO, "apjsua", format, arg);
+    //vsnprintf(app_var.out_buf, sizeof(app_var.out_buf), format, arg);
+    va_end(arg);
+
+    /* pj_sem_post(app_var.output_sem);
+    pj_sem_wait(app_var.out_print_sem); */
+}
+
+void showLog(int level, const char *data, int len)
+{
+    showMsg("%s", data);
+}
+#endif
+
 void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
 {
     std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
@@ -206,9 +232,9 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
     }
 }
 
-
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
+
     if (!rdata or !rdata->msg_info.msg) {
         ERROR("rx_data is NULL");
         return PJ_FALSE;
@@ -436,7 +462,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         Manager::instance().incomingCall(*call, account_id);
         SIPVoIPLink::instance()->addSipCall(call);
     }
-
     return PJ_FALSE;
 }
 } // end anonymous namespace
@@ -450,6 +475,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     , keyframeRequests_()
 #endif
 {
+
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
     throw VoipLinkException(#ret " failed"); \
@@ -464,8 +490,12 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     srand(time(NULL)); // to get random number for RANDOM_PORT
 
     TRY(pj_init());
+
     TRY(pjlib_util_init());
 
+#ifdef __ANDROID__
+    setSipLogger();
+#endif
     setSipLogLevel();
     TRY(pjnath_init());
 
@@ -575,8 +605,10 @@ SIPVoIPLink::~SIPVoIPLink()
 SIPVoIPLink* SIPVoIPLink::instance()
 {
     assert(!destroyed_);
-    if (!instance_)
+    if (!instance_) {
+        DEBUG("creating SIPVoIPLink instance");
         instance_ = new SIPVoIPLink;
+    }
     return instance_;
 }
 
@@ -609,7 +641,7 @@ void SIPVoIPLink::setSipLogLevel()
     char *envvar = getenv(SIPLOGLEVEL);
     int level = 0;
 
-    if(envvar != NULL) {
+    if (envvar != NULL) {
         std::string loglevel = envvar;
 
         if ( ! (std::istringstream(loglevel) >> level) ) level = 0;
@@ -618,9 +650,21 @@ void SIPVoIPLink::setSipLogLevel()
         level = level < 0 ? 0 : level;
     }
 
+#ifdef __ANDROID__
+    level = 6;
+#endif
+
     // From 0 (min) to 6 (max)
     pj_log_set_level(level);
 }
+
+#ifdef __ANDROID__
+void SIPVoIPLink::setSipLogger()
+{
+    static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();
+    pj_log_set_log_func(&showLog);
+}
+#endif
 
 // Called from EventThread::run (not main thread)
 bool SIPVoIPLink::getEvent()
@@ -677,6 +721,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     // Get the contact header
     std::string contact = account->getContactHeader();
     pj_str_t pjContact = pj_str((char*) contact.c_str());
+
 
     if (account->transport_) {
         if (account->isStunEnabled()) {
@@ -1650,6 +1695,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         if (statusCode) {
             const pj_str_t * description = pjsip_get_status_text(statusCode);
             std::string desc(description->ptr, description->slen);
+
             CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->sipCallStateChanged(call->getCallId(), desc, statusCode);
         }
@@ -1815,7 +1861,12 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update internal field for
     sdpSession->setMediaTransportInfoFromRemoteSdp();
 
-    call->getAudioRtp().updateDestinationIpAddress();
+    try {
+        call->getAudioRtp().updateDestinationIpAddress();
+    } catch (const AudioRtpFactoryException &e) {
+        ERROR("%s", e.what());
+    }
+
     call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
 #ifdef SFL_VIDEO
     Manager::instance().getVideoControls()->stopPreview();
@@ -2104,6 +2155,7 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
+
         Manager::instance().getClient()->getCallManager()->registrationStateChanged(accountID, state, param->code);
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application

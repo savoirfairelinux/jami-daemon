@@ -34,10 +34,7 @@
 
 #include <string>
 #include <vector>
-
-#include "cc_config.h"
 #include "sfl_types.h"
-#include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
 
 #define XSTR(s) STR(s)
 #define STR(s) #s
@@ -55,7 +52,7 @@ namespace sfl {
 
 class AudioCodec {
     public:
-        AudioCodec(uint8 payload, const std::string &codecName, int clockRate, int frameSize, unsigned channels);
+        AudioCodec(uint8_t payload, const std::string &codecName, int clockRate, int frameSize, unsigned channels);
 
         /**
          * Copy constructor.
@@ -92,9 +89,9 @@ class AudioCodec {
          */
         virtual int encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size);
 
-        uint8 getPayloadType() const;
+        uint8_t getPayloadType() const;
 
-        void setPayloadType(uint8 pt) {
+        void setPayloadType(uint8_t pt) {
             payload_ = pt;
         }
 
@@ -103,7 +100,7 @@ class AudioCodec {
          */
         bool hasDynamicPayload() const;
 
-        uint32 getClockRate() const;
+        uint32_t getClockRate() const;
 
         double getBitRate() const;
 
@@ -119,10 +116,10 @@ class AudioCodec {
         std::string codecName_; // what we put inside sdp
 
         /** Clock rate or sample rate of the codec, in Hz */
-        uint32 clockRate_;
+        uint32_t clockRate_;
 
         /** Number of channel 1 = mono, 2 = stereo */
-        uint8 channel_;
+        uint8_t channel_;
 
         /** codec frame size in samples*/
         unsigned frameSize_;
@@ -132,9 +129,7 @@ class AudioCodec {
 
     private:
         AudioCodec& operator=(const AudioCodec&);
-        uint8 payload_;
-
-        ost::DynamicPayloadFormat payloadFormat_;
+        uint8_t payload_;
 
 protected:
         bool hasDynamicPayload_;

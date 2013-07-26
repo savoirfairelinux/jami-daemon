@@ -71,7 +71,11 @@ bool check_dir(const char *path)
     return true;
 }
 
+#ifdef __ANDROID__
+static char *program_dir = "/data/data/com.savoirfairelinux.sflphone";
+#else
 static char *program_dir = NULL;
+#endif
 
 void set_program_dir(char *program_path)
 {
@@ -174,9 +178,14 @@ FileHandle::~FileHandle()
     }
 }
 
+
 std::string
 get_home_dir()
 {
+#ifdef __ANDROID__
+    return get_program_dir();
+#else
+
     // 1) try getting user's home directory from the environment
     const std::string home(PROTECTED_GETENV("HOME"));
     if (not home.empty())
@@ -192,5 +201,6 @@ get_home_dir()
     }
 
     return "";
+#endif
 }
 }

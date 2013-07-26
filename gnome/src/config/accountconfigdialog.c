@@ -1205,9 +1205,6 @@ static void update_account_from_basic_tab(account_t *account)
             account_replace(account, CONFIG_ACCOUNT_ROUTESET,
                             gtk_entry_get_text(GTK_ENTRY(entry_route_set)));
 
-            account_replace(account, CONFIG_ACCOUNT_USERAGENT,
-                            gtk_entry_get_text(GTK_ENTRY(entry_user_agent)));
-
             gboolean v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_stun_check_box));
             account_replace(account, CONFIG_STUN_ENABLE,
                             bool_to_string(v));
@@ -1276,6 +1273,8 @@ static void update_account_from_basic_tab(account_t *account)
                         gtk_entry_get_text(GTK_ENTRY(local_port_spin_box)));
     }
 
+    account_replace(account, CONFIG_ACCOUNT_USERAGENT,
+                    gtk_entry_get_text(GTK_ENTRY(entry_user_agent)));
     account_replace(account, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(entry_alias)));
     account_replace(account, CONFIG_ACCOUNT_TYPE, proto);
     account_replace(account, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(entry_hostname)));

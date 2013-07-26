@@ -171,9 +171,9 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
 AudioRtpRecord::~AudioRtpRecord()
 {
     dead_ = true;
-#ifdef RECTODISK
-    rtpResampled.close();
-    rtpNotResampled.close();
+#ifdef RTP_DECODE_RECTODISK
+    beforedecode.close();
+    afterdecode.close();
 #endif
 
     delete converterEncode_;
@@ -200,7 +200,6 @@ AudioRtpRecord::~AudioRtpRecord()
 #endif
 }
 
-
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
     id_(call.getCallId()),
@@ -209,7 +208,9 @@ AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
 {}
 
 
-AudioRtpRecordHandler::~AudioRtpRecordHandler() {}
+AudioRtpRecordHandler::~AudioRtpRecordHandler()
+{
+}
 
 std::string
 AudioRtpRecordHandler::getCurrentAudioCodecNames()
@@ -340,6 +341,10 @@ int AudioRtpRecordHandler::processDataEncode()
 
 #endif
 
+#ifdef RTP_ENCODE_RECTODISK
+    beforesend.write((const char *)(micData), getCodecFrameSize() * 2);
+#endif
+
     {
         ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
@@ -378,6 +383,11 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         // Return the size of data in samples
         audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
     }
+
+#ifdef RTP_DECODE_RECTODISK
+    afterdecode.write((const char *)spkrDataDecoded, inSamples * sizeof(SFLDataFormat));
+#endif
+#undef RTP_DECODE_RECTODISK
 
 #if HAVE_SPEEXDSP
 

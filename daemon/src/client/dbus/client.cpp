@@ -33,7 +33,7 @@
 #endif
 
 #include <cstdlib>
-#include "client.h"
+#include "client/client.h"
 #include "global.h"
 #include "manager.h"
 #include "logger.h"

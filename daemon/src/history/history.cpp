@@ -36,12 +36,14 @@
 #include <fstream>
 #include <sys/stat.h> // for mkdir
 #include <ctime>
+#include <cstring>
 #include "scoped_lock.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "call.h"
 
 namespace sfl {
+
 
 using std::map;
 using std::string;
@@ -65,9 +67,12 @@ bool History::load(int limit)
         DEBUG("No history file to load");
         return false;
     }
-    while (!infile.eof()) {
+
+    int counter = 0;
+    while (!infile.eof() and counter < limit) {
         HistoryItem item(infile);
         addEntry(item, limit);
+        ++counter;
     }
     return true;
 }
@@ -97,9 +102,11 @@ void History::addEntry(const HistoryItem &item, int oldest)
 void History::ensurePath()
 {
     if (path_.empty()) {
+#ifdef __ANDROID__
+		path_ = fileutils::get_home_dir() + DIR_SEPARATOR_STR "history";
+#else
         const string xdg_data = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                                 ".local/share/sflphone";
-
         // If the environment variable is set (not null and not empty), we'll use it to save the history
         // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOME/.local/share/sflphone
         string xdg_env(XDG_DATA_HOME);
@@ -108,12 +115,13 @@ void History::ensurePath()
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                DEBUG("Cannot create directory: %m");
+                DEBUG("Cannot create directory: %s!: %s", userdata.c_str(), strerror(errno));
                 return;
             }
         }
         // Load user's history
         path_ = userdata + DIR_SEPARATOR_STR + "history";
+#endif
     }
 }
 

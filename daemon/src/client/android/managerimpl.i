@@ -1,8 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
- *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
- *
+ *  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -15,7 +13,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,40 +26,35 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef OPUS_H_
-#define OPUS_H_
 
-#include "noncopyable.h"
-#include "sfl_types.h"
+/* %nodefaultctor ManagerImpl;
+%nodefaultdtor ManagerImpl; */
+%header %{
+#include <managerimpl.h>
+namespace Manager {
+extern ManagerImpl& instance();
+}
+%}
 
-#include "audiocodec.h"
-
-#include <opus/opus.h>
-
-class Opus : public sfl::AudioCodec {
+class ManagerImpl {
 public:
-   Opus();
-   ~Opus();
-
-   static const uint8_t PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
-
-private:
-   virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
-   virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
-
-   //multichannel version
-   virtual int decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);
-   virtual int encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size);
-
-   NON_COPYABLE(Opus);
-   //Attributes
-   OpusEncoder *encoder_;
-   OpusDecoder *decoder_;
-   std::vector<opus_int16> interleaved_;
-
-   static const int FRAME_SIZE = 160;
-   static const int CLOCK_RATE = 16000;
-   static const int CHANNELS   = 2;
+    void init(const std::string &config_file);
+    void setPath(const std::string &path);
+    bool outgoingCall(const std::string&, const std::string&, const std::string&, const std::string& = "");
+    void refuseCall(const std::string& id);
+    bool answerCall(const std::string& id);
+    void hangupCall(const std::string& id);
 };
 
-#endif
+//%rename(Manager_instance) Manager::instance;
+
+namespace Manager {
+
+ManagerImpl& Manager::instance()
+{
+    // Meyers singleton
+    static ManagerImpl instance_;
+    return instance_;
+}
+
+}

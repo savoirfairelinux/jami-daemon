@@ -40,7 +40,6 @@
 #include "managerimpl.h"
 #include "account_schema.h"
 
-#include "client/callmanager.h"
 #include "global.h"
 #include "fileutils.h"
 #include "map_utils.h"
@@ -58,14 +57,21 @@
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
+
+#ifndef __ANDROID__
 #include "audio/alsa/alsalayer.h"
+#endif
+
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
 #include "history/historynamecache.h"
+#include "history/history.h"
 #include "manager.h"
 
 #include "client/configurationmanager.h"
+#include "client/callmanager.h"
+
 #ifdef SFL_VIDEO
 #include "client/video_controls.h"
 #endif
@@ -124,10 +130,9 @@ namespace {
     }
 }
 
-
 void ManagerImpl::init(const std::string &config_file)
 {
-    path_ = config_file.empty() ? createConfigFile() : config_file;
+    path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
 
     bool no_errors = true;
@@ -176,11 +181,17 @@ void ManagerImpl::init(const std::string &config_file)
     registerAccounts();
 }
 
+void ManagerImpl::setPath(const std::string &path) {
+	history_.setPath(path);
+}
+
+#if HAVE_DBUS
 void ManagerImpl::run()
 {
     DEBUG("Starting client event loop");
     client_.event_loop();
 }
+#endif
 
 void ManagerImpl::finish()
 {
@@ -342,8 +353,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     stopTone();
 
     // set playback mode to VOICE
-    AudioLayer *al = getAudioDriver();
-    if(al) al->setPlaybackMode(AudioLayer::VOICE);
+    if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::VOICE);
 
     // store the current call id
     std::string current_call_id(getCurrentCallId());
@@ -390,8 +400,8 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
 
-    // update call state on client side
     client_.getCallManager()->callStateChanged(call_id, "CURRENT");
+
     return result;
 }
 
@@ -402,6 +412,7 @@ void ManagerImpl::checkAudio()
         if (audiodriver_)
             audiodriver_->stopStream();
     }
+
 }
 
 //THREAD=Main
@@ -413,8 +424,7 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     stopTone();
 
     // set playback mode to NONE
-    AudioLayer *al = getAudioDriver();
-    if(al) al->setPlaybackMode(AudioLayer::NONE);
+    if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::NONE);
 
     DEBUG("Send call state change (HUNGUP) for id %s", callId.c_str());
     client_.getCallManager()->callStateChanged(callId, "HUNGUP");
@@ -672,6 +682,7 @@ bool ManagerImpl::refuseCall(const std::string& id)
     }
 
     removeWaitingCall(id);
+
     client_.getCallManager()->callStateChanged(id, "HUNGUP");
 
     // Disconnect streams
@@ -777,7 +788,9 @@ ManagerImpl::holdConference(const std::string& id)
     }
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
+
     client_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+
     return true;
 }
 
@@ -809,7 +822,9 @@ ManagerImpl::unHoldConference(const std::string& id)
     }
 
     conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
+
     client_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+
     return true;
 }
 
@@ -1217,8 +1232,11 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     call->setConfId("");
 
     removeStream(call_id);
+
     getMainBuffer().dumpInfo();
+
     client_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+
     processRemainingParticipants(*conf);
 }
 
@@ -1336,10 +1354,9 @@ void ManagerImpl::removeStream(const std::string& call_id)
 void ManagerImpl::saveConfig()
 {
     DEBUG("Saving Configuration to XDG directory %s", path_.c_str());
-    AudioLayer *audiolayer = getAudioDriver();
-    if (audiolayer != NULL) {
-        audioPreference.setVolumemic(audiolayer->getCaptureGain());
-        audioPreference.setVolumespkr(audiolayer->getPlaybackGain());
+    if (audiodriver_ != NULL) {
+        audioPreference.setVolumemic(audiodriver_->getCaptureGain());
+        audioPreference.setVolumespkr(audiodriver_->getPlaybackGain());
     }
 
     try {
@@ -1490,6 +1507,7 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
     std::string number(call.getPeerNumber());
 
     std::string from("<" + number + ">");
+
     client_.getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
 }
 
@@ -1614,8 +1632,7 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
         stopTone();
 
         // set playback mode to VOICE
-        AudioLayer *al = getAudioDriver();
-        if(al) al->setPlaybackMode(AudioLayer::VOICE);
+        if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::VOICE);
     }
 
     // Connect audio streams
@@ -1656,8 +1673,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         unsetCurrentCall();
 
         // set playback mode to NONE
-        AudioLayer *al = getAudioDriver();
-        if(al) al->setPlaybackMode(AudioLayer::NONE);
+        if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::NONE);
     }
 
     /* Direct IP to IP call */
@@ -1690,7 +1706,6 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 //THREAD=VoIP
 void ManagerImpl::callBusy(const std::string& id)
 {
-    DEBUG("Call %s busy", id.c_str());
     client_.getCallManager()->callStateChanged(id, "BUSY");
 
     if (isCurrentCall(id)) {
@@ -1770,6 +1785,7 @@ void ManagerImpl::stopTone()
 
     if (audiofile_.get()) {
         std::string filepath(audiofile_->getFilePath());
+
         client_.getCallManager()->recordPlaybackStopped(filepath);
         audiofile_.reset();
     }
@@ -1897,10 +1913,14 @@ ManagerImpl::getTelephoneFile()
 /**
  * Initialization: Main Thread
  */
-std::string ManagerImpl::createConfigFile() const
+std::string ManagerImpl::retrieveConfigPath() const
 {
+#ifdef __ANDROID__
+    std::string configdir = "/data/data/com.savoirfairelinux.sflphone";
+#else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
+#endif
 
     const std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty())
@@ -1909,7 +1929,7 @@ std::string ManagerImpl::createConfigFile() const
     if (mkdir(configdir.data(), 0700) != 0) {
         // If directory creation failed
         if (errno != EEXIST)
-           DEBUG("Cannot create directory: %m");
+           DEBUG("Cannot create directory: %s!", configdir.c_str());
     }
 
     static const char * const PROGNAME = "sflphoned";

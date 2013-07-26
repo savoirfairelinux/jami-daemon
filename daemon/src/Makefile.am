@@ -41,7 +41,7 @@ libsflphone_la_LIBADD = \
 	$(IAX_LIB) \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
-	./client/libclient.la \
+	./client/dbus/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la $(SFL_VIDEO_LIB) $(IM_LIB)
@@ -69,7 +69,8 @@ libsflphone_la_CFLAGS = \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
 		@libssl_CFLAGS@ \
-		@UUID_CFLAGS@
+		@UUID_CFLAGS@ \
+		@DBUSCPP_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
 		voiplink.cpp \

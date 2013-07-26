@@ -55,6 +55,11 @@ class AudioBuffer {
          */
         AudioBuffer(const AudioBuffer& other, bool copy_content = false);
 
+        void reset() {
+            for (std::vector<std::vector<SFLAudioSample> >::iterator i = samples_.begin(); i != samples_.end(); ++i)
+                std::fill(i->begin(), i->end(), 0);
+        }
+
         /**
          * Returns the sample rate (in samples/sec) associated to this buffer.
          */
@@ -88,9 +93,6 @@ class AudioBuffer {
          * Returns the number of (multichannel) samples in this buffer.
          */
         inline size_t samples() const {
-            return sampleNum_;
-        }
-        inline size_t size() const {
             return sampleNum_;
         }
 

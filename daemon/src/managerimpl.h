@@ -44,8 +44,8 @@
 #include <set>
 #include <map>
 #include <tr1/memory>
-
 #include <pthread.h>
+
 #include "client/client.h"
 
 #include "config/sfl_config.h"
@@ -129,10 +129,14 @@ class ManagerImpl {
          */
         void init(const std::string &config_file);
 
+        void setPath(const std::string &path);
+
+#ifdef HAVE_DBUS
         /**
          * Enter Dbus mainloop
          */
         void run();
+#endif
 
         /*
          * Terminate all threads and exit DBus loop
@@ -707,13 +711,6 @@ class ManagerImpl {
         std::string getConfigString(const std::string& section, const std::string& name) const;
 
         /**
-         * Retrieve the soundcards index in the user config file and try to open audio devices
-         * with a specific alsa plugin.
-         * Set the audio layer sample rate
-         */
-        void selectAudioDriver();
-
-        /**
          * Handle audio sounds heard by a caller while they wait for their
          * connection to a called party to be completed.
          */
@@ -811,7 +808,7 @@ class ManagerImpl {
         /**
          * Create config directory in home user and return configuration file path
          */
-        std::string createConfigFile() const;
+        std::string retrieveConfigPath() const;
 
         /*
          * Initialize zeroconf module and scanning
@@ -956,7 +953,6 @@ class ManagerImpl {
         Client* getClient() {
             return &client_;
         }
-
 #ifdef SFL_VIDEO
         VideoControls * getVideoControls() {
             return client_.getVideoControls();
@@ -1016,12 +1012,6 @@ class ManagerImpl {
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
         VoIPLink* getAccountLink(const std::string& accountID);
-
-        std::string getStunServer() const;
-        void setStunServer(const std::string &server);
-
-        int isStunEnabled();
-        void enableStun();
 
         // Map containing conference pointers
         ConferenceMap conferenceMap_;

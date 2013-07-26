@@ -161,6 +161,18 @@ CallManager::createConfFromParticipantList(const std::vector<std::string>& parti
 }
 
 bool
+CallManager::isConferenceParticipant(const std::string& callID)
+{
+    return  Manager::instance().isConferenceParticipant(callID);
+}
+
+void
+CallManager::removeConference(const std::string& conference_id)
+{
+    Manager::instance().removeConference(conference_id);
+}
+
+bool
 CallManager::addParticipant(const std::string& callID, const std::string& confID)
 {
     return  Manager::instance().addParticipant(callID, confID);
@@ -390,6 +402,13 @@ CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
     }
 #else
     ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
+}
+
+void CallManager::sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
+{
+#if HAVE_INSTANT_MESSAGING
+    Manager::instance().sendTextMessage(callID, message, from);
 #endif
 }
 

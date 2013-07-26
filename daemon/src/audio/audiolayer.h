@@ -50,6 +50,9 @@
 class MainBuffer;
 class AudioPreference;
 
+
+typedef std::vector<AudioBuffer> AudioBufferStack;
+
 namespace ost {
 class Time;
 }
@@ -158,7 +161,7 @@ class AudioLayer {
         /**
          * Set capture stream gain (microphone)
          */
-       unsigned int getCaptureGain(void) {
+        unsigned int getCaptureGain() const {
             return captureGain_;
         }
 
@@ -172,7 +175,7 @@ class AudioLayer {
         /**
          * Get playback stream gain (speaker)
          */
-        unsigned int getPlaybackGain(void) {
+        unsigned int getPlaybackGain() const {
             return playbackGain_;
         }
 
@@ -201,6 +204,24 @@ class AudioLayer {
         static unsigned int playbackGain_;
 
         virtual void updatePreference(AudioPreference &pref, int index, PCMType type) = 0;
+
+        bool audioBufferFillWithZeros(AudioBuffer &buffer);
+
+        /**
+         * Here fill the input buffer with tone or ringtone samples
+         */
+        bool audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer);
+
+        bool audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesAvail);
+
+        bool audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
+
+        /**
+         * The main logic to determine what should be played is determined here
+         */
+        bool audioPlaybackFillBuffer(AudioBuffer &buffer);
+
+        void audioCaptureFillBuffer(AudioBuffer &buffer);
 
     protected:
         /**
@@ -237,6 +258,7 @@ class AudioLayer {
         SamplerateConverter converter_;
 
     private:
+
         /**
          * Time of the last incoming call notification
          */

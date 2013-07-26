@@ -1,7 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
- *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,40 +27,43 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef OPUS_H_
-#define OPUS_H_
 
-#include "noncopyable.h"
-#include "sfl_types.h"
-
-#include "audiocodec.h"
-
-#include <opus/opus.h>
-
-class Opus : public sfl::AudioCodec {
-public:
-   Opus();
-   ~Opus();
-
-   static const uint8_t PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
-
-private:
-   virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
-   virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
-
-   //multichannel version
-   virtual int decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);
-   virtual int encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size);
-
-   NON_COPYABLE(Opus);
-   //Attributes
-   OpusEncoder *encoder_;
-   OpusDecoder *decoder_;
-   std::vector<opus_int16> interleaved_;
-
-   static const int FRAME_SIZE = 160;
-   static const int CLOCK_RATE = 16000;
-   static const int CHANNELS   = 2;
-};
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+#include "client/client.h"
+#include "client/callmanager.h"
+#include "client/configurationmanager.h"
+
+Client::Client() : callManager_(new CallManager)
+    , configurationManager_(new ConfigurationManager)
+    , instanceManager_(0)
+    , dispatcher_(0)
+#ifdef SFL_VIDEO
+    , videoControls_(0)
+#endif
+#ifdef USE_NETWORKMANAGER
+    , networkManager_(0)
+#endif
+{}
+
+Client::~Client()
+{
+#ifdef USE_NETWORKMANAGER
+    delete networkManager_;
+#endif
+#ifdef SFL_VIDEO
+    delete videoControls_;
+#endif
+    delete dispatcher_;
+    delete instanceManager_;
+    delete configurationManager_;
+    delete callManager_;
+}
+
+void Client::event_loop()
+{}
+
+void Client::exit()
+{}

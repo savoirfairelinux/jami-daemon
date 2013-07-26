@@ -44,6 +44,7 @@ accounts:
     verifyClient: true
     verifyServer: true
   type: SIP
+  useragent: SFLphone-test
   username: sfltest
   zrtp:
     displaySas: true
@@ -94,6 +95,7 @@ accounts:
     verifyClient: true
     verifyServer: true
   type: SIP
+  useragent: SFLphone-test
   username:
   zrtp:
     displaySas: true

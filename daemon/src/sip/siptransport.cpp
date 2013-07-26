@@ -29,6 +29,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <map>
 
 #include <pjsip.h>
@@ -40,6 +44,7 @@
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -59,7 +64,6 @@
 #include "pjsip/sip_transport_tls.h"
 #endif
 
-#include "client/client.h"
 #include "client/configurationmanager.h"
 
 static const char * const DEFAULT_INTERFACE = "default";
@@ -484,11 +488,15 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
 
 pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 {
+#if HAVE_DBUS
 #define RETURN_IF_STUN_FAIL(A, M, ...) \
     if (!(A)) { \
         ERROR(M, ##__VA_ARGS__); \
         Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
         return NULL; }
+#else /* HAVE_DBUS */
+#define RETURN_IF_STUN_FAIL(A, M, ...)
+#endif /* HAVE_DBUS */
 
     pj_str_t serverName = account.getStunServerName();
     pj_uint16_t port = account.getStunPort();
@@ -511,6 +519,7 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
         ERROR("Can't contact STUN server");
         pj_sock_close(sock);
+
         Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
         return NULL;
     }

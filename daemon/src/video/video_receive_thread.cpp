@@ -42,6 +42,7 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
+#include <unistd.h>
 #include <map>
 
 #include "manager.h"
