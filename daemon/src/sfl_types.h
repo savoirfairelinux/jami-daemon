@@ -36,8 +36,6 @@
 
 typedef int16_t SFLDataFormat;
 #define SFL_DATA_FORMAT_MAX SHRT_MAX
-typedef int16_t SINT16;
-typedef int32_t SINT32;
 
 static const size_t SIZEBUF = 400000; /** About 12 sec of buffering at 8000 Hz*/
 

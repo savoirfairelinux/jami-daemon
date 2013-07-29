@@ -134,7 +134,7 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     if (maxIteration == 0)
         throw AudioFileException("Could not find \"fmt \" chunk");
 
-    SINT32 chunkSize; // fmt chunk size
+    int32_t chunkSize; // fmt chunk size
     fileStream.read(reinterpret_cast<char *>(&chunkSize), sizeof chunkSize); // Read fmt chunk size.
     unsigned short formatTag; // data compression tag
     fileStream.read(reinterpret_cast<char *>(&formatTag), sizeof formatTag);
@@ -143,24 +143,24 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
         throw AudioFileException("File contains an unsupported data format type");
 
     // Get number of channels from the header.
-    SINT16 chan;
+    int16_t chan;
     fileStream.read(reinterpret_cast<char *>(&chan), sizeof chan);
 
     if (chan > 2)
         throw AudioFileException("WaveFile: unsupported number of channels");
 
     // Get file sample rate from the header.
-    SINT32 fileRate;
+    int32_t fileRate;
     fileStream.read(reinterpret_cast<char *>(&fileRate), sizeof fileRate);
 
-    SINT32 avgb;
+    int32_t avgb;
     fileStream.read(reinterpret_cast<char *>(&avgb), sizeof avgb);
 
-    SINT16 blockal;
+    int16_t blockal;
     fileStream.read(reinterpret_cast<char *>(&blockal), sizeof blockal);
 
     // Determine the data type
-    SINT16 dt;
+    int16_t dt;
     fileStream.read(reinterpret_cast<char *>(&dt), sizeof dt);
 
     if (dt != 8 && dt != 16 && dt != 32)
@@ -174,11 +174,11 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
         fileStream.read(data, sizeof data / sizeof *data);
 
     // Samplerate converter initialized with 88200 sample long
-    const int rate = static_cast<SINT32>(sampleRate_);
+    const int rate = static_cast<int32_t>(sampleRate_);
     SamplerateConverter converter(std::max(fileRate, rate));
 
     // Get length of data from the header.
-    SINT32 bytes;
+    int32_t bytes;
     fileStream.read(reinterpret_cast<char *>(&bytes), sizeof bytes);
 
     // sample frames, should not be longer than a minute
