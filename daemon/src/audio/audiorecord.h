@@ -147,7 +147,7 @@ class AudioRecord {
         /**
          * Number of channels
          */
-        SINT16 channels_;
+        int16_t channels_;
 
         /**
          * Number of byte recorded

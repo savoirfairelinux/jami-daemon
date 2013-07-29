@@ -35,19 +35,7 @@
 #include <stdint.h>
 
 typedef int16_t SFLAudioSample;
-
-typedef int16_t SINT16;
-typedef int32_t SINT32;
 #define SFL_DATA_FORMAT_MAX SHRT_MAX
-
-/*
-typedef struct {
-	int sample_rate;
-	size_t channels;
-	size_t sample_num; // number of multichannel samples
-	SFLAudioSample *samples; // buffer, must be able to hold at least channels*sample_num SFLAudioSamples
-} SFLAudioBuffer;
-*/
 
 static const size_t SIZEBUF = 400000; /** About 12 sec of buffering at 8000 Hz*/
 

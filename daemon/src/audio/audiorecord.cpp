@@ -44,18 +44,18 @@
 
 struct wavhdr {
     char riff[4];           // "RIFF"
-    SINT32 file_size;       // in bytes
+    int32_t file_size;       // in bytes
     char wave[4];           // "WAVE"
     char fmt[4];            // "fmt "
-    SINT32 chunk_size;      // in bytes (16 for PCM)
-    SINT16 format_tag;      // 1=PCM, 2=ADPCM, 3=IEEE float, 6=A-Law, 7=Mu-Law
-    SINT16 num_chans;       // 1=mono, 2=stereo
-    SINT32 sample_rate;
-    SINT32 bytes_per_sec;
-    SINT16 bytes_per_samp;  // 2=16-bit mono, 4=16-bit stereo
-    SINT16 bits_per_samp;
+    int32_t chunk_size;      // in bytes (16 for PCM)
+    int16_t format_tag;      // 1=PCM, 2=ADPCM, 3=IEEE float, 6=A-Law, 7=Mu-Law
+    int16_t num_chans;       // 1=mono, 2=stereo
+    int32_t sample_rate;
+    int32_t bytes_per_sec;
+    int16_t bytes_per_samp;  // 2=16-bit mono, 4=16-bit stereo
+    int16_t bits_per_samp;
     char data[4];           // "data"
-    SINT32 data_length;     // in bytes
+    int32_t data_length;     // in bytes
 };
 
 namespace {
@@ -388,7 +388,7 @@ void AudioRecord::closeWavFile()
 
     DEBUG("Close wave file");
 
-    SINT32 bytes = byteCounter_ * channels_;
+    int32_t bytes = byteCounter_ * channels_;
 
     // jump to data length
     if (fseek(fileHandle_, 40, SEEK_SET) != 0)
@@ -397,7 +397,7 @@ void AudioRecord::closeWavFile()
     if (ferror(fileHandle_))
         WARN("Can't reach offset 40 while closing");
 
-    fwrite(&bytes, sizeof(SINT32), 1, fileHandle_);
+    fwrite(&bytes, sizeof(int32_t), 1, fileHandle_);
 
     if (ferror(fileHandle_))
         WARN("Can't write bytes for data length ");
