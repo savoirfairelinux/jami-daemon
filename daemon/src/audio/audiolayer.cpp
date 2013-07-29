@@ -35,11 +35,10 @@
 #include "manager.h"
 #include "scoped_lock.h"
 
-unsigned int AudioLayer::captureGain_ = 100;
-unsigned int AudioLayer::playbackGain_ = 100;
-
 AudioLayer::AudioLayer()
-    : isStarted_(false)
+    : captureGain_(100)
+    , playbackGain_(100)
+    , isStarted_(false)
     , playbackMode_(NONE)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
     , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())
@@ -112,9 +111,9 @@ bool AudioLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
     // In case of a dtmf, the pointers will be set to NULL once the dtmf length is
     // reached. For this reason we need to fill audio buffer with zeros if pointer is NULL
     if (tone) {
-        tone->getNext(buffer, getPlaybackGain());
+        tone->getNext(buffer, playbackGain_);
     } else if (file_tone) {
-        file_tone->getNext(buffer, getPlaybackGain());
+        file_tone->getNext(buffer, playbackGain_);
     } else {
         buffer.reset();
     }
@@ -127,7 +126,7 @@ bool AudioLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesTo
     // Urgent data (dtmf, incoming call signal) come first.
     bytesToGet = std::min(bytesToGet, buffer.capacity());
     urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
-    buffer.applyGain(getPlaybackGain());
+    buffer.applyGain(playbackGain_);
 
     // Consume the regular one as well (same amount of bytes)
     Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
@@ -217,7 +216,7 @@ void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
     const bool resample = mainBufferSampleRate != sampleRate_;
 
-    buffer.applyGain(getCaptureGain());
+    buffer.applyGain(captureGain_);
 
     if (resample) {
         AudioBuffer out(buffer);

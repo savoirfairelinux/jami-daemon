@@ -714,7 +714,7 @@ void AlsaLayer::capture()
         return;
     }
 
-    in.applyGain(getCaptureGain());
+    in.applyGain(captureGain_);
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
@@ -744,9 +744,9 @@ void AlsaLayer::playback(int maxSamples)
         AudioBuffer out(maxSamples, 1, sampleRate_);
 
         if (tone)
-            tone->getNext(out, getPlaybackGain());
+            tone->getNext(out, playbackGain_);
         else if (file_tone && !ringtoneHandle_)
-            file_tone->getNext(out, getPlaybackGain());
+            file_tone->getNext(out, playbackGain_);
 
         write(out.getChannel()->data(), bytesToPut, playbackHandle_);
     } else {
@@ -771,8 +771,7 @@ void AlsaLayer::playback(int maxSamples)
 
         //SFLAudioSample * const out_ptr = &(*out.getChannel()->begin());
         Manager::instance().getMainBuffer().getData(out, MainBuffer::DEFAULT_ID);
-        //AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
-        out.applyGain(getPlaybackGain());
+        out.applyGain(playbackGain_);
 
         if (resample) {
             const size_t outSamples = samplesToGet * resampleFactor;
@@ -810,7 +809,7 @@ void AlsaLayer::audioCallback()
         samplesToGet = std::min(samplesToGet, (unsigned)playbackAvailSmpl);
         AudioBuffer out(samplesToGet);
         urgentRingBuffer_.get(out, MainBuffer::DEFAULT_ID);
-        out.applyGain(getPlaybackGain());
+        out.applyGain(playbackGain_);
 
         write(out.getChannel()->data(), samplesToGet*sizeof(SFLAudioSample), playbackHandle_);
         // Consume the regular one as well (same amount of bytes)
@@ -831,8 +830,8 @@ void AlsaLayer::audioCallback()
         AudioBuffer out(ringtoneAvailSmpl);
 
         if (file_tone) {
-            DEBUG("playback gain %d", getPlaybackGain());
-            file_tone->getNext(out, getPlaybackGain());
+            DEBUG("playback gain %d", playbackGain_);
+            file_tone->getNext(out, playbackGain_);
         }
 
         write(out.getChannel()->data(), ringtoneAvailBytes, ringtoneHandle_);

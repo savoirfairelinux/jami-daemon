@@ -417,7 +417,7 @@ void PulseLayer::writeToSpeaker()
         AudioBuffer linearbuff(urgentSamples, n_channels);
         pa_stream_begin_write(s, (void**)&data, &urgentBytes);
         urgentRingBuffer_.get(linearbuff, MainBuffer::DEFAULT_ID); // retrive only the first sample_spec->channels channels
-        linearbuff.applyGain(getPlaybackGain());
+        linearbuff.applyGain(playbackGain_);
         linearbuff.interleave(data);
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of samples)
@@ -433,7 +433,7 @@ void PulseLayer::writeToSpeaker()
         if (playback_->isReady()) {
             pa_stream_begin_write(s, (void**)&data, &writableBytes);
             AudioBuffer linearbuff(writableSamples, n_channels);
-            toneToPlay->getNext(linearbuff, getPlaybackGain()); // retrive only n_channels
+            toneToPlay->getNext(linearbuff, playbackGain_); // retrive only n_channels
             linearbuff.interleave(data);
             pa_stream_write(s, data, writableBytes, NULL, 0, PA_SEEK_RELATIVE);
         }
@@ -477,11 +477,11 @@ void PulseLayer::writeToSpeaker()
     if (resample) {
         AudioBuffer rsmpl_out(nResampled, 1, sampleRate_);
         converter_.resample(linearbuff, rsmpl_out);
-        rsmpl_out.applyGain(getPlaybackGain());
+        rsmpl_out.applyGain(playbackGain_);
         rsmpl_out.interleave(data);
         pa_stream_write(s, data, resampledBytes, NULL, 0, PA_SEEK_RELATIVE);
     } else {
-        linearbuff.applyGain(getPlaybackGain());
+        linearbuff.applyGain(playbackGain_);
         linearbuff.interleave(data);
         pa_stream_write(s, data, resampledBytes, NULL, 0, PA_SEEK_RELATIVE);
     }
@@ -534,7 +534,7 @@ void PulseLayer::readFromMic()
     }
 
     dcblocker_.process(*out);
-    out->applyGain(getCaptureGain());
+    out->applyGain(playbackGain_);
     Manager::instance().getMainBuffer().putData(*out, MainBuffer::DEFAULT_ID);
 
 #ifdef RECTODISK
@@ -573,7 +573,7 @@ void PulseLayer::ringtoneToSpeaker()
         AudioBuffer tmp(samples, ringtone_->channels());
         //fileToPlay->getNext((SFLAudioSample *) data, bytes / sizeof(SFLAudioSample), 100);
         //applyGain(static_cast<SFLAudioSample *>(data), bytes / sizeof(SFLAudioSample), getPlaybackGain());
-        fileToPlay->getNext(tmp, getPlaybackGain());
+        fileToPlay->getNext(tmp, playbackGain_);
         tmp.interleave((SFLAudioSample*)data);
     } else {
         memset(data, 0, bytes);

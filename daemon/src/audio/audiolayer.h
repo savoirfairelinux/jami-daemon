@@ -193,16 +193,6 @@ class AudioLayer {
          */
         void notifyIncomingCall();
 
-        /**
-         * Gain applied to mic signal
-         */
-        static unsigned int captureGain_;
-
-        /**
-         * Gain applied to playback signal
-         */
-        static unsigned int playbackGain_;
-
         virtual void updatePreference(AudioPreference &pref, int index, PCMType type) = 0;
 
         bool audioBufferFillWithZeros(AudioBuffer &buffer);
@@ -224,6 +214,17 @@ class AudioLayer {
         void audioCaptureFillBuffer(AudioBuffer &buffer);
 
     protected:
+
+        /**
+         * Gain applied to mic signal
+         */
+        unsigned int captureGain_;
+
+        /**
+         * Gain applied to playback signal
+         */
+        unsigned int playbackGain_;
+
         /**
          * Whether or not the audio layer stream is started
          */
