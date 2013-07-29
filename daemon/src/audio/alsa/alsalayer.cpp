@@ -713,7 +713,7 @@ void AlsaLayer::capture()
         return;
     }
 
-    AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
+    AudioLayer::applyGain(in_ptr, toGetSamples, captureGain_);
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
@@ -749,9 +749,9 @@ void AlsaLayer::playback(int maxSamples)
         SFLDataFormat * const out_ptr = &(*out.begin());
 
         if (tone)
-            tone->getNext(out_ptr, out.size(), getPlaybackGain());
+            tone->getNext(out_ptr, out.size(), playbackGain_);
         else if (file_tone && !ringtoneHandle_)
-            file_tone->getNext(out_ptr, out.size(), getPlaybackGain());
+            file_tone->getNext(out_ptr, out.size(), playbackGain_);
 
         write(out_ptr, bytesToPut, playbackHandle_);
     } else {
@@ -774,7 +774,7 @@ void AlsaLayer::playback(int maxSamples)
         std::vector<SFLDataFormat> out(samplesToGet, 0);
         SFLDataFormat * const out_ptr = &(*out.begin());
         Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-        AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+        AudioLayer::applyGain(out_ptr, samplesToGet, playbackGain_);
 
         if (resample) {
             const size_t outSamples = samplesToGet * resampleFactor;
@@ -815,7 +815,7 @@ void AlsaLayer::audioCallback()
         std::vector<SFLDataFormat> out(samplesToGet);
         SFLDataFormat * const out_ptr = &(*out.begin());
         urgentRingBuffer_.get(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-        AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+        AudioLayer::applyGain(out_ptr, samplesToGet, playbackGain_);
 
         write(out_ptr, bytesToGet, playbackHandle_);
         // Consume the regular one as well (same amount of bytes)
@@ -838,9 +838,9 @@ void AlsaLayer::audioCallback()
         SFLDataFormat * const out_ptr = &(*out.begin());
 
         if (file_tone) {
-            DEBUG("playback gain %d", getPlaybackGain());
+            DEBUG("playback gain %d", playbackGain_);
             file_tone->getNext(out_ptr, ringtoneAvailSmpl,
-                               getPlaybackGain());
+                               playbackGain_);
         }
 
         write(out_ptr, ringtoneAvailBytes, ringtoneHandle_);

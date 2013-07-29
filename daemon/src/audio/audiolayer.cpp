@@ -35,11 +35,10 @@
 #include "manager.h"
 #include "scoped_lock.h"
 
-unsigned int AudioLayer::captureGain_ = 100;
-unsigned int AudioLayer::playbackGain_ = 100;
-
 AudioLayer::AudioLayer()
-    : isStarted_(false)
+    : captureGain_(100)
+    , playbackGain_(100)
+    , isStarted_(false)
     , playbackMode_(NONE)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
     , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())
@@ -119,9 +118,9 @@ bool AudioLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
     // In case of a dtmf, the pointers will be set to NULL once the dtmf length is
     // reached. For this reason we need to fill audio buffer with zeros if pointer is NULL
     if (tone) {
-        tone->getNext(buffer.data(), buffer.length(), getPlaybackGain());
+        tone->getNext(buffer.data(), buffer.length(), playbackGain_);
     } else if (file_tone) {
-        file_tone->getNext(buffer.data(), buffer.length(), getPlaybackGain());
+        file_tone->getNext(buffer.data(), buffer.length(), playbackGain_);
     } else {
         buffer.reset();
     }
@@ -135,7 +134,7 @@ bool AudioLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesTo
     bytesToGet = std::min(bytesToGet, buffer.size());
     const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
     urgentRingBuffer_.get(buffer.data(), bytesToGet, MainBuffer::DEFAULT_ID);
-    applyGain(buffer.data(), samplesToGet, getPlaybackGain());
+    applyGain(buffer.data(), samplesToGet, playbackGain_);
 
     // Consume the regular one as well (same amount of bytes)
     Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
@@ -173,7 +172,7 @@ bool AudioLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAva
         out_ptr = &(*buffer.data());
 
     Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-    // AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+    AudioLayer::applyGain(out_ptr, samplesToGet, playbackGain_);
 
     if (resample) {
         SFLDataFormat * const rsmpl_out_ptr = buffer.data();
@@ -249,7 +248,7 @@ void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     const bool resample = mainBufferSampleRate != sampleRate_;
 
     SFLDataFormat *in_ptr = buffer.data();
-    applyGain(in_ptr, toGetSamples, getCaptureGain());
+    applyGain(in_ptr, toGetSamples, captureGain_);
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);

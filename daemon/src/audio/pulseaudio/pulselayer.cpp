@@ -381,7 +381,7 @@ void PulseLayer::writeToSpeaker()
     if (urgentBytes) {
         pa_stream_begin_write(s, &data, &urgentBytes);
         urgentRingBuffer_.get(data, urgentBytes, MainBuffer::DEFAULT_ID);
-        applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());
+        applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), playbackGain_);
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
         Manager::instance().getMainBuffer().discard(urgentBytes, MainBuffer::DEFAULT_ID);
@@ -396,7 +396,7 @@ void PulseLayer::writeToSpeaker()
         if (playback_->isReady()) {
             pa_stream_begin_write(s, &data, &writableBytes);
             toneToPlay->getNext((SFLDataFormat*)data, writableBytes / sizeof(SFLDataFormat), 100);
-            applyGain(static_cast<SFLDataFormat *>(data), writableBytes / sizeof(SFLDataFormat), getPlaybackGain());
+            applyGain(static_cast<SFLDataFormat *>(data), writableBytes / sizeof(SFLDataFormat), playbackGain_);
             pa_stream_write(s, data, writableBytes, NULL, 0, PA_SEEK_RELATIVE);
         }
 
@@ -443,11 +443,11 @@ void PulseLayer::writeToSpeaker()
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc(resampledBytes);
         converter_.resample((SFLDataFormat*)data, rsmpl_out, nResampled,
                             mainBufferSampleRate, sampleRate_, readableSamples);
-        applyGain(rsmpl_out, nResampled, getPlaybackGain());
+        applyGain(rsmpl_out, nResampled, playbackGain_);
         pa_stream_write(s, rsmpl_out, resampledBytes, NULL, 0, PA_SEEK_RELATIVE);
         pa_xfree(rsmpl_out);
     } else {
-        applyGain(static_cast<SFLDataFormat *>(data), readableSamples, getPlaybackGain());
+        applyGain(static_cast<SFLDataFormat *>(data), readableSamples, playbackGain_);
         pa_stream_write(s, data, readableBytes, NULL, 0, PA_SEEK_RELATIVE);
     }
 }
@@ -488,7 +488,7 @@ void PulseLayer::readFromMic()
     }
 
     dcblocker_.process(mic_buffer_, (SFLDataFormat*)data, samples);
-    applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());
+    applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), captureGain_);
     Manager::instance().getMainBuffer().putData(mic_buffer_, bytes, MainBuffer::DEFAULT_ID);
 #ifdef RECTODISK
     outfileResampled.write((const char *)mic_buffer_, bytes);
@@ -522,7 +522,7 @@ void PulseLayer::ringtoneToSpeaker()
 
     if (fileToPlay) {
         fileToPlay->getNext((SFLDataFormat *) data, bytes / sizeof(SFLDataFormat), 100);
-        applyGain(static_cast<SFLDataFormat *>(data), bytes / sizeof(SFLDataFormat), getPlaybackGain());
+        applyGain(static_cast<SFLDataFormat *>(data), bytes / sizeof(SFLDataFormat), playbackGain_);
     } else
         memset(data, 0, bytes);
 
