@@ -93,12 +93,6 @@ void AudioBuffer::resize(size_t sample_num)
     }
 }
 
-void AudioBuffer::clear()
-{
-    for (unsigned i = 0; i < channels_; i++)
-        samples_[i].assign(sampleNum_, 0);
-}
-
 void AudioBuffer::empty()
 {
     for (unsigned i = 0; i < channels_; i++)

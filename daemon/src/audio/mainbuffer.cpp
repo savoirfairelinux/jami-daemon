@@ -267,7 +267,7 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
         else
             return 0;
     } else {
-        buffer.clear();
+        buffer.reset();
         buffer.setSampleRate(internalSamplingRate_);
 
         size_t size = 0;
