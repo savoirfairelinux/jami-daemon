@@ -38,11 +38,9 @@
 
 int AudioRecorder::count_ = 0;
 
-AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) :
+AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer &mb) :
     recorderId_(), mbuffer_(mb), arecord_(arec), running_(false), thread_(0)
 {
-    assert(mb);
-
     ++count_;
 
     std::string id("processid_");
@@ -87,9 +85,9 @@ void AudioRecorder::run()
     AudioBuffer buffer(BUFFER_LENGTH);
 
     while (running_) {
-        const size_t availableSamples = mbuffer_->availableForGet(recorderId_);
+        const size_t availableSamples = mbuffer_.availableForGet(recorderId_);
         buffer.resize(std::min(availableSamples, BUFFER_LENGTH));
-        mbuffer_->getData(buffer, recorderId_);
+        mbuffer_.getData(buffer, recorderId_);
 
         if (availableSamples > 0)
             arecord_->recData(buffer);

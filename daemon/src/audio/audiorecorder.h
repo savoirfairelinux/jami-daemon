@@ -41,7 +41,7 @@ class MainBuffer;
 class AudioRecorder {
 
     public:
-        AudioRecorder(AudioRecord  *arec, MainBuffer *mb);
+        AudioRecorder(AudioRecord  *arec, MainBuffer &mb);
         ~AudioRecorder();
         std::string getRecorderID() const {
             return recorderId_;
@@ -56,7 +56,7 @@ class AudioRecorder {
 
         static int count_;
         std::string recorderId_;
-        MainBuffer *mbuffer_;
+        MainBuffer &mbuffer_;
         AudioRecord *arecord_;
         bool running_;
         pthread_t thread_;
