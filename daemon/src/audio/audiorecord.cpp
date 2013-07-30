@@ -420,22 +420,22 @@ void AudioRecord::closeWavFile()
         WARN("Can't close file");
 }
 
-//void AudioRecord::recData(SFLAudioSample* buffer, size_t nSamples)
 void AudioRecord::recData(AudioBuffer& buffer)
 {
-    if (recordingEnabled_) {
-        if (fileHandle_ == 0) {
-            DEBUG("Can't record data, a file has not yet been opened!");
-            return;
-        }
+    if (not recordingEnabled_)
+        return;
 
-        size_t nSamples = buffer.samples();
+    if (fileHandle_ == 0) {
+        DEBUG("Can't record data, a file has not yet been opened!");
+        return;
+    }
 
-        if (fwrite(buffer.getChannel(), sizeof(SFLAudioSample), nSamples, fileHandle_) != nSamples)
-            WARN("Could not record data! ");
-        else {
-            fflush(fileHandle_);
-            byteCounter_ += nSamples * sizeof(SFLAudioSample);
-        }
+    const size_t nSamples = buffer.samples();
+
+    if (fwrite(buffer.getChannel(0), sizeof(SFLAudioSample), nSamples, fileHandle_) != nSamples) {
+        WARN("Could not record data! ");
+    } else {
+        fflush(fileHandle_);
+        byteCounter_ += nSamples * sizeof(SFLAudioSample);
     }
 }

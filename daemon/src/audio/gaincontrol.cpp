@@ -58,7 +58,7 @@ GainControl::GainControl(double sr, double target) : averager_(sr, SFL_GAIN_ATTA
 
 void GainControl::process(AudioBuffer& buf)
 {
-    process(buf.getChannel()->data(), buf.samples());
+    process(buf.getChannel(0)->data(), buf.samples());
 }
 
 void GainControl::process(SFLAudioSample *buf, int samples)

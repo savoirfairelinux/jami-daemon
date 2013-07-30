@@ -707,7 +707,7 @@ void AlsaLayer::capture()
 
     // TODO: handle ALSA multichannel capture
     const int toGetBytes = in.samples() * sizeof(SFLAudioSample);
-    SFLAudioSample * const in_ptr = &(*in.getChannel()->begin());
+    SFLAudioSample * const in_ptr = &(*in.getChannel(0)->begin());
 
     if (read(in_ptr, toGetBytes) != toGetBytes) {
         ERROR("ALSA MIC : Couldn't read!");
@@ -748,7 +748,7 @@ void AlsaLayer::playback(int maxSamples)
         else if (file_tone && !ringtoneHandle_)
             file_tone->getNext(out, playbackGain_);
 
-        write(out.getChannel()->data(), bytesToPut, playbackHandle_);
+        write(out.getChannel(0)->data(), bytesToPut, playbackHandle_);
     } else {
         // play the regular sound samples
 
@@ -781,9 +781,9 @@ void AlsaLayer::playback(int maxSamples)
             //SFLAudioSample * const rsmpl_out_ptr = &(*rsmpl_out.begin());
             //converter_.resample(out_ptr, rsmpl_out_ptr, rsmpl_out.size(), mainBufferSampleRate, sampleRate_, samplesToGet);
             converter_.resample(out, rsmpl_out);
-            write(rsmpl_out.getChannel()->data(), outBytes, playbackHandle_);
+            write(rsmpl_out.getChannel(0)->data(), outBytes, playbackHandle_);
         } else {
-            write(out.getChannel()->data(), bytesToGet, playbackHandle_);
+            write(out.getChannel(0)->data(), bytesToGet, playbackHandle_);
         }
     }
 }
@@ -811,7 +811,7 @@ void AlsaLayer::audioCallback()
         urgentRingBuffer_.get(out, MainBuffer::DEFAULT_ID);
         out.applyGain(playbackGain_);
 
-        write(out.getChannel()->data(), samplesToGet*sizeof(SFLAudioSample), playbackHandle_);
+        write(out.getChannel(0)->data(), samplesToGet * sizeof(SFLAudioSample), playbackHandle_);
         // Consume the regular one as well (same amount of bytes)
         Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
     } else {
@@ -834,7 +834,7 @@ void AlsaLayer::audioCallback()
             file_tone->getNext(out, playbackGain_);
         }
 
-        write(out.getChannel()->data(), ringtoneAvailBytes, ringtoneHandle_);
+        write(out.getChannel(0)->data(), ringtoneAvailBytes, ringtoneHandle_);
     }
 
     // Additionally handle the mic's audio stream

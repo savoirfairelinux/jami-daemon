@@ -1443,7 +1443,7 @@ void ManagerImpl::playDtmf(char code)
     dtmfKey_->startTone(code);
 
     // copy the sound
-    if (dtmfKey_->generateDTMF(*buf.getChannel())) {
+    if (dtmfKey_->generateDTMF(*buf.getChannel(0))) {
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)

@@ -122,7 +122,7 @@ class AudioBuffer {
          * Return the data (audio samples) for a given channel number.
          * Channel data can be modified but size of individual channel vectors should not be changed manually.
          */
-        std::vector<SFLAudioSample> *getChannel(unsigned chan = 0);
+        std::vector<SFLAudioSample> *getChannel(unsigned chan);
 
         /**
          * Return a pointer to the raw data in this buffer.
