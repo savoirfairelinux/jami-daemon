@@ -87,11 +87,11 @@ void AudioRecorder::run()
     AudioBuffer buffer(BUFFER_LENGTH);
 
     while (running_) {
-        const size_t availableBytes = mbuffer_->availableForGet(recorderId_);
-        buffer.resize(std::min(availableBytes, BUFFER_LENGTH));
+        const size_t availableSamples = mbuffer_->availableForGet(recorderId_);
+        buffer.resize(std::min(availableSamples, BUFFER_LENGTH));
         mbuffer_->getData(buffer, recorderId_);
 
-        if (availableBytes > 0)
+        if (availableSamples > 0)
             arecord_->recData(buffer);
 
         usleep(20000); // 20 ms
