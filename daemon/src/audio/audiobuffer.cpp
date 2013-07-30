@@ -67,17 +67,20 @@ void AudioBuffer::setChannelNum(unsigned n, bool copy_content /* = false */)
 {
     n = std::max(1U, n);
 
+    if (channels_ == n)
+        return;
+
     size_t start_size = 0;
+
     if (not samples_.empty())
         start_size = samples_[0].size();
 
-    if (channels_ != n) {
-        channels_ = n;
-        if (copy_content and not samples_.empty())
-            samples_.resize(n, samples_[0]);
-        else
-            samples_.resize(n, std::vector<SFLAudioSample>(start_size, 0));
-    }
+    channels_ = n;
+
+    if (copy_content and not samples_.empty())
+        samples_.resize(n, samples_[0]);
+    else
+        samples_.resize(n, std::vector<SFLAudioSample>(start_size, 0));
 }
 
 void AudioBuffer::resize(size_t sample_num)
