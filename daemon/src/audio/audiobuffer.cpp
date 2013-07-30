@@ -33,7 +33,6 @@
 
 AudioBuffer::AudioBuffer(size_t sample_num /* = 0 */, unsigned channel_num /* = 1 */, int sample_rate /* = 8000 */)
     :  sampleRate_(sample_rate),
-       sampleNum_(sample_num),
        channels_(std::max(1U, channel_num)),
        samples_(channels_, std::vector<SFLAudioSample>(sample_num, 0))
 {
@@ -41,7 +40,6 @@ AudioBuffer::AudioBuffer(size_t sample_num /* = 0 */, unsigned channel_num /* = 
 
 AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, unsigned channel_num /* = 1 */, int sample_rate /* = 8000 */)
     :  sampleRate_(sample_rate),
-       sampleNum_(sample_num),
        channels_(std::max(1U, channel_num)),
        samples_(channels_, std::vector<SFLAudioSample>(sample_num, 0))
 {
@@ -50,7 +48,6 @@ AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, unsigned c
 
 AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false */)
     :  sampleRate_(other.sampleRate_),
-       sampleNum_(other.sampleNum_),
        channels_(other.channels_),
        samples_(channels_, std::vector<SFLAudioSample>())
 {
@@ -59,7 +56,7 @@ AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false 
             samples_[i] = other.samples_[i]; // std::vector copy
     } else {
         for (unsigned i = 0; i < channels_; i++)
-            samples_[i].resize(sampleNum_, 0);
+            samples_[i].resize(samples_[0].size(), 0);
     }
 }
 
@@ -85,25 +82,22 @@ void AudioBuffer::setChannelNum(unsigned n, bool copy_content /* = false */)
 
 void AudioBuffer::resize(size_t sample_num)
 {
-    if (sampleNum_ != sample_num) {
-        sampleNum_ = sample_num;
+    if (samples_[0].size() == sample_num)
+        return;
 
-        for (unsigned i = 0; i < channels_; i++)
-            samples_[i].resize(sample_num);
-    }
+    for (unsigned i = 0; i < channels_; i++)
+        samples_[i].resize(sample_num);
 }
 
 void AudioBuffer::empty()
 {
     for (unsigned i = 0; i < channels_; i++)
         samples_[i].clear();
-
-    sampleNum_ = 0;
 }
 
 std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
 {
-    if (chan < channels_)
+    if (chan < samples_.size())
         return &samples_[chan];
 
     return NULL;
@@ -120,26 +114,26 @@ void AudioBuffer::applyGain(double gain)
     if (gain == 1.0) return;
 
     for (unsigned i = 0; i < channels_; i++)
-        for (unsigned j = 0; j < sampleNum_; j++)
+        for (unsigned j = 0; j < samples_[0].size(); j++)
             samples_[i][j] *= gain;
 }
 
 size_t AudioBuffer::interleave(SFLAudioSample* out) const
 {
-    for (unsigned i = 0; i < sampleNum_; i++)
+    for (unsigned i = 0; i < samples_[0].size(); i++)
         for (unsigned j = 0; j < channels_; j++)
             *out++ = samples_[j][i];
 
-    return sampleNum_ * channels_;
+    return samples_[0].size() * channels_;
 }
 
 size_t AudioBuffer::interleaveFloat(float* out) const
 {
-    for (unsigned i = 0; i < sampleNum_; i++)
+    for (unsigned i = 0; i < samples_[0].size(); i++)
         for (unsigned j = 0; j < channels_; j++)
             *out++ = (float) samples_[j][i] * .000030517578125f;
 
-    return sampleNum_ * channels_;
+    return samples_[0].size() * channels_;
 }
 
 void AudioBuffer::fromInterleaved(const SFLAudioSample* in, size_t sample_num, unsigned channel_num)
@@ -151,7 +145,7 @@ void AudioBuffer::fromInterleaved(const SFLAudioSample* in, size_t sample_num, u
     setChannelNum(channel_num);
     resize(sample_num);
 
-    for (unsigned i = 0; i < sampleNum_; i++) {
+    for (unsigned i = 0; i < samples_[0].size(); i++) {
         for (unsigned j = 0; j < channels_; j++)
             samples_[j][i] = *in++;
     }
@@ -160,7 +154,7 @@ void AudioBuffer::fromInterleaved(const SFLAudioSample* in, size_t sample_num, u
 size_t AudioBuffer::mix(const AudioBuffer& other, bool up /* = true */)
 {
     const bool upmix = up && (other.channels_ < channels_);
-    const size_t samp_num = std::min(sampleNum_, other.sampleNum_);
+    const size_t samp_num = std::min(samples_[0].size(), other.samples_[0].size());
     const unsigned chan_num = upmix ? channels_ : std::min(channels_, other.channels_);
 
     for (unsigned i = 0; i < chan_num; i++) {
@@ -185,7 +179,7 @@ size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_
     const bool upmix = up && (in.channels_ < channels_);
     const size_t chan_num = upmix ? channels_ : std::min(in.channels_, channels_);
 
-    if (pos_out + to_copy > sampleNum_)
+    if ((pos_out + to_copy) > samples_[0].size())
         resize(pos_out + to_copy);
 
     sampleRate_ = in.sampleRate_;
@@ -203,7 +197,7 @@ size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /
 {
     if (in == NULL) return 0;
 
-    if (pos_out + sample_num > sampleNum_)
+    if ((pos_out + sample_num) > samples_[0].size())
         resize(pos_out + sample_num);
 
     const size_t chan_num = channels_;
@@ -218,7 +212,7 @@ size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /
 
 std::ostream& operator<<(std::ostream& os, const AudioBuffer& buf)
 {
-    for (unsigned i = 0; i < buf.sampleNum_; i++) {
+    for (unsigned i = 0; i < buf.samples_[0].size(); i++) {
         for (unsigned j = 0; j < buf.channels_; j++)
             os << buf.samples_[j][i];
     }
