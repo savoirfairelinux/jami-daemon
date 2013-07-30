@@ -84,9 +84,7 @@ AudioRecorder::runCallback(void *data)
 void AudioRecorder::run()
 {
     static const size_t BUFFER_LENGTH = 10000;
-    //std::tr1::array<SFLAudioSample, BUFFER_LENGTH> buffer;
     AudioBuffer buffer(BUFFER_LENGTH);
-    //buffer.assign(0);
 
     while (running_) {
         const size_t availableBytes = mbuffer_->availableForGet(recorderId_);
