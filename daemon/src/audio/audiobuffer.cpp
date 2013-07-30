@@ -49,16 +49,9 @@ AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, unsigned c
 AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false */)
     :  sampleRate_(other.sampleRate_),
        channels_(other.channels_),
-       samples_(channels_, std::vector<SFLAudioSample>())
-{
-    if (copy_content) {
-        for (unsigned i = 0; i < channels_; i++)
-            samples_[i] = other.samples_[i]; // std::vector copy
-    } else {
-        for (unsigned i = 0; i < channels_; i++)
-            samples_[i].resize(samples_[0].size(), 0);
-    }
-}
+       samples_(copy_content ? other.samples_ :
+                std::vector<std::vector<SFLAudioSample> >(other.channels_, std::vector<SFLAudioSample>(other.samples_[0].size())))
+{}
 
 int AudioBuffer::getSampleRate() const
 {
