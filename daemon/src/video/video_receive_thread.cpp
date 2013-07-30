@@ -35,6 +35,7 @@
 #include "check.h"
 #include "video_decoder.h"
 
+#include <unistd.h>
 #include <map>
 
 #include "manager.h"
