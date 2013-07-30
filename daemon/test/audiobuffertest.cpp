@@ -45,7 +45,7 @@ void AudioBufferTest::testAudioBufferConstructors()
     AudioBuffer empty_buf;
     CPPUNIT_ASSERT(empty_buf.samples() == 0);
     CPPUNIT_ASSERT(empty_buf.channels() == 1);
-    CPPUNIT_ASSERT(empty_buf.getChannel()->size() == 0);
+    CPPUNIT_ASSERT(empty_buf.getChannel(0)->size() == 0);
 
     AudioBuffer test_buf1(8, 2);
     CPPUNIT_ASSERT(test_buf1.samples() == 8);
@@ -57,12 +57,12 @@ void AudioBufferTest::testAudioBufferConstructors()
     AudioBuffer test_buf2(test_samples1, 0, 0);
     CPPUNIT_ASSERT(test_buf2.samples() == 0);
     CPPUNIT_ASSERT(test_buf2.channels() == 1);
-    CPPUNIT_ASSERT(test_buf2.getChannel()->size() == 0);
+    CPPUNIT_ASSERT(test_buf2.getChannel(0)->size() == 0);
 
     AudioBuffer test_buf3(test_samples2, 4, 2);
     CPPUNIT_ASSERT(test_buf3.samples() == 4);
     CPPUNIT_ASSERT(test_buf3.channels() == 2);
-    CPPUNIT_ASSERT(test_buf3.getChannel()->size() == 4);
+    CPPUNIT_ASSERT(test_buf3.getChannel(0)->size() == 4);
 }
 
 void AudioBufferTest::testAudioBufferMix()

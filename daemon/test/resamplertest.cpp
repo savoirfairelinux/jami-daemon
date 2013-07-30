@@ -74,11 +74,11 @@ void ResamplerTest::testUpsamplingRamp()
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(*tmpInputBuffer.getChannel());
+    print_buffer(*tmpInputBuffer.getChannel(0));
 
     tmpOutputBuffer.copy(outputBuffer);
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(*tmpOutputBuffer.getChannel());
+    print_buffer(*tmpOutputBuffer.getChannel(0));
 }
 
 void ResamplerTest::testDownsamplingRamp()
@@ -95,11 +95,11 @@ void ResamplerTest::testDownsamplingRamp()
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(*tmpInputBuffer.getChannel());
+    print_buffer(*tmpInputBuffer.getChannel(0));
 
     tmpOutputBuffer.copy(outputBuffer);
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(*tmpOutputBuffer.getChannel());
+    print_buffer(*tmpOutputBuffer.getChannel(0));
 }
 
 void ResamplerTest::testUpsamplingTriangle()
@@ -116,11 +116,11 @@ void ResamplerTest::testUpsamplingTriangle()
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(*tmpInputBuffer.getChannel());
+    print_buffer(*tmpInputBuffer.getChannel(0));
 
     tmpOutputBuffer.copy(outputBuffer);
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(*tmpOutputBuffer.getChannel());
+    print_buffer(*tmpOutputBuffer.getChannel(0));
 }
 
 void ResamplerTest::testDownsamplingTriangle()
@@ -137,11 +137,11 @@ void ResamplerTest::testDownsamplingTriangle()
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(*tmpInputBuffer.getChannel());
+    print_buffer(*tmpInputBuffer.getChannel(0));
 
     tmpOutputBuffer.copy(outputBuffer);
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(*tmpOutputBuffer.getChannel());
+    print_buffer(*tmpOutputBuffer.getChannel(0));
 }
 void ResamplerTest::testUpsamplingSine()
 {
@@ -158,11 +158,11 @@ void ResamplerTest::testUpsamplingSine()
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(*tmpInputBuffer.getChannel());
+    print_buffer(*tmpInputBuffer.getChannel(0));
 
     tmpOutputBuffer.copy(outputBuffer);
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(*tmpOutputBuffer.getChannel());
+    print_buffer(*tmpOutputBuffer.getChannel(0));
 }
 
 void ResamplerTest::testDownsamplingSine()
@@ -180,30 +180,30 @@ void ResamplerTest::testDownsamplingSine()
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(*tmpInputBuffer.getChannel());
+    print_buffer(*tmpInputBuffer.getChannel(0));
 
     tmpOutputBuffer.copy(outputBuffer);
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(*tmpOutputBuffer.getChannel());
+    print_buffer(*tmpOutputBuffer.getChannel(0));
 }
 
 void ResamplerTest::generateRamp()
 {
-    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel();
+    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel(0);
     for (size_t i = 0; i < buf->size(); ++i)
         (*buf)[i] = i;
 }
 
 void ResamplerTest::generateTriangularSignal()
 {
-    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel();
+    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel(0);
     for (size_t i = 0; i < buf->size(); ++i)
         (*buf)[i] = i * 10;
 }
 
 void ResamplerTest::generateSineSignal()
 {
-    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel();
+    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel(0);
     for (size_t i = 0; i < buf->size(); ++i)
         (*buf)[i] = (SFLAudioSample) (1000.0 * sin(i));
 }

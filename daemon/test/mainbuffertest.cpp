@@ -249,7 +249,7 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->get(testget, MainBuffer::DEFAULT_ID) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(MainBuffer::DEFAULT_ID) == 4);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(MainBuffer::DEFAULT_ID) == 4);
-    CPPUNIT_ASSERT((*testget.getChannel())[0] == testsample1);
+    CPPUNIT_ASSERT((*testget.getChannel(0))[0] == testsample1);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
 
     // get some data (with a read pointer)
@@ -332,11 +332,11 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->get(testget, test_id) == 1);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 3);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 3);
-    CPPUNIT_ASSERT((*testget.getChannel())[0] == testsample1);
+    CPPUNIT_ASSERT((*testget.getChannel(0))[0] == testsample1);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 1);
 
     CPPUNIT_ASSERT(test_ring_buffer->get(testgetlarge, test_id) == 3);
-    CPPUNIT_ASSERT((*testgetlarge.getChannel())[1] == testsample2[2]);
+    CPPUNIT_ASSERT((*testgetlarge.getChannel(0))[1] == testsample2[2]);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 4);
@@ -422,7 +422,7 @@ void MainBufferTest::testTwoPointer()
 
     input_buffer->put(test_input);
     CPPUNIT_ASSERT(output_buffer->get(test_output, MainBuffer::DEFAULT_ID) == 1);
-    CPPUNIT_ASSERT(test_sample == (*test_output.getChannel())[0]);
+    CPPUNIT_ASSERT(test_sample == (*test_output.getChannel(0))[0]);
 
 }
 
@@ -858,7 +858,7 @@ void MainBufferTest::testGetPutDataByID()
     CPPUNIT_ASSERT(mainbuffer_->availableForGetByID(test_id, MainBuffer::DEFAULT_ID) == 1);
     CPPUNIT_ASSERT(mainbuffer_->getDataByID(test_output_large, test_id, MainBuffer::DEFAULT_ID) == 1);
     CPPUNIT_ASSERT(mainbuffer_->availableForGetByID(test_id, MainBuffer::DEFAULT_ID) == 0);
-    CPPUNIT_ASSERT((*test_output_large.getChannel())[0] == test_sample2);
+    CPPUNIT_ASSERT((*test_output_large.getChannel(0))[0] == test_sample2);
 
     // put/get by false id
     mainbuffer_->putData(test_input2, false_id);
@@ -894,7 +894,7 @@ void MainBufferTest::testGetPutData()
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 1);
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output, test_id) == 1);
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 0);
-    CPPUNIT_ASSERT(test_sample1 == (*test_output.getChannel())[0]);
+    CPPUNIT_ASSERT(test_sample1 == (*test_output.getChannel(0))[0]);
 
     // get by MainBuffer::DEFAULT_ID without preleminary put
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(MainBuffer::DEFAULT_ID) == 0);
@@ -905,7 +905,7 @@ void MainBufferTest::testGetPutData()
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(MainBuffer::DEFAULT_ID) == 1);
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output, MainBuffer::DEFAULT_ID) == 1);
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(MainBuffer::DEFAULT_ID) == 0);
-    CPPUNIT_ASSERT(test_sample2 == (*test_output.getChannel())[0]);
+    CPPUNIT_ASSERT(test_sample2 == (*test_output.getChannel(0))[0]);
 
     mainbuffer_->unBindCallID(test_id, MainBuffer::DEFAULT_ID);
 
@@ -1027,12 +1027,12 @@ void MainBufferTest::testRingBufferSeveralPointers()
 
 
     CPPUNIT_ASSERT(test_ring_buffer->get(test_output, test_pointer1) == 1);
-    CPPUNIT_ASSERT((*test_output.getChannel())[0] == testint1);
+    CPPUNIT_ASSERT((*test_output.getChannel(0))[0] == testint1);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer1) == 3);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer2) == 4);
 
     CPPUNIT_ASSERT(test_ring_buffer->get(test_output, test_pointer2) == 1);
-    CPPUNIT_ASSERT((*test_output.getChannel())[0] == testint1);
+    CPPUNIT_ASSERT((*test_output.getChannel(0))[0] == testint1);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer1) == 3);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer2) == 3);
 
