@@ -73,9 +73,6 @@ class AudioBuffer {
         /**
          * Returns the number of channels in this buffer.
          */
-        inline unsigned getChannelNum() const {
-            return channels_;
-        }
         inline unsigned channels() const {
             return channels_;
         }

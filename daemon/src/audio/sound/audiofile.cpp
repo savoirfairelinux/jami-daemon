@@ -83,7 +83,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
     else {
         double factord = (double) sampleRate / audioRate;
 
-        const size_t channels = buffer->getChannelNum();
+        const size_t channels = buffer->channels();
 
         // FIXME: it looks like buffer and buffer_ are leaked in this case
         if (channels > 2)
