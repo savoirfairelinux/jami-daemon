@@ -158,16 +158,6 @@ class AudioRecord {
         int sndSmplRate_;
 
         /**
-         * number of samples recorded for mic buffer
-         */
-        int nbSamplesMic_;
-
-        /**
-         * number of samples recorded for speaker buffer
-         */
-        int nbSamplesSpk_;
-
-        /**
          * Maximum number of samples
          */
         static const int NB_SAMPLES_MAX = 3000;
@@ -176,21 +166,6 @@ class AudioRecord {
          * Recording flage
          */
         bool recordingEnabled_;
-
-        /**
-         * Buffer used for mixing two channels
-         */
-        SFLAudioSample mixBuffer_[NB_SAMPLES_MAX];
-
-        /**
-         * Buffer used to copy mic info
-         */
-        SFLAudioSample micBuffer_[NB_SAMPLES_MAX];
-
-        /**
-         * Buffer used to copy spkr info
-         */
-        SFLAudioSample spkBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Filename for this recording
