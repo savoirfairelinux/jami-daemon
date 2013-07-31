@@ -55,6 +55,7 @@ libsflphone_la_LDFLAGS = \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ \
+		@SNDFILE_LIBS@ \
 		@libssl_LIBS@ \
 		@UUID_LIBS@ \
 		@DBUSCPP_LIBS@

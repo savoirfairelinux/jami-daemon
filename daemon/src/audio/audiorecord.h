@@ -39,12 +39,15 @@
 #include "noncopyable.h"
 #include "audiobuffer.h"
 
+class SndfileHandle;
+
 class AudioRecord {
 
     public:
         enum FILE_TYPE { FILE_RAW, FILE_WAV, FILE_INVALID };
 
         AudioRecord();
+        ~AudioRecord();
 
         void setSndSamplingRate(int smplRate);
         void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
@@ -137,7 +140,7 @@ class AudioRecord {
         /**
          * Pointer to the recorded file
          */
-        FILE *fileHandle_;
+        SndfileHandle *fileHandle_;
 
         /**
          * File format (RAW / WAVE)
@@ -148,11 +151,6 @@ class AudioRecord {
          * Number of channels
          */
         int16_t channels_;
-
-        /**
-         * Number of byte recorded
-         */
-        unsigned long byteCounter_;
 
         /**
          * Sampling rate
