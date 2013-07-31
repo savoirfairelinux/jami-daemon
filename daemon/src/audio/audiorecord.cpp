@@ -432,8 +432,9 @@ void AudioRecord::recData(AudioBuffer& buffer)
 
     const size_t nSamples = buffer.samples();
 
-    if (fwrite(buffer.getChannel(0), sizeof(SFLAudioSample), nSamples, fileHandle_) != nSamples) {
-        WARN("Could not record data! ");
+    // FIXME: mono only
+    if (fwrite(buffer.getChannel(0)->data(), sizeof(SFLAudioSample), nSamples, fileHandle_) != nSamples) {
+        WARN("Could not record data!");
     } else {
         fflush(fileHandle_);
         byteCounter_ += nSamples * sizeof(SFLAudioSample);
