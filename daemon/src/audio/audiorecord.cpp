@@ -90,7 +90,6 @@ createFilename()
 
 
 AudioRecord::AudioRecord() : fileHandle_(0)
-    , fileType_(FILE_INVALID)
     , channels_(1)
     , sndSmplRate_(8000)
     , recordingEnabled_(false)
@@ -110,7 +109,7 @@ void AudioRecord::setSndSamplingRate(int smplRate)
     sndSmplRate_ = smplRate;
 }
 
-void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path)
+void AudioRecord::setRecordingOptions(int sndSmplRate, const std::string &path)
 {
     std::string filePath;
 
@@ -121,7 +120,6 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std:
         filePath = path;
     }
 
-    fileType_ = type;
     channels_ = 1;
     sndSmplRate_ = sndSmplRate;
     savePath_ = (*filePath.rbegin() == DIR_SEPARATOR_CH) ? filePath : filePath + DIR_SEPARATOR_STR;
@@ -148,16 +146,9 @@ void AudioRecord::initFilename(const std::string &peerNumber)
     std::string fName(filename_);
     fName.append("-" + sanitize(peerNumber) + "-" PACKAGE);
 
-    if (fileType_ == FILE_RAW) {
-        if (filename_.find(".raw") == std::string::npos) {
-            DEBUG("Concatenate .raw file extension: name : %s", filename_.c_str());
-            fName.append(".raw");
-        }
-    } else if (fileType_ == FILE_WAV) {
-        if (filename_.find(".wav") == std::string::npos) {
-            DEBUG("Concatenate .wav file extension: name : %s", filename_.c_str());
-            fName.append(".wav");
-        }
+    if (filename_.find(".wav") == std::string::npos) {
+        DEBUG("Concatenate .wav file extension: name : %s", filename_.c_str());
+        fName.append(".wav");
     }
 
     savePath_.append(fName);
@@ -171,22 +162,22 @@ std::string AudioRecord::getFilename() const
 bool AudioRecord::openFile()
 {
     bool result = false;
+    delete fileHandle_;
+    const bool doAppend = fileExists();
+    const int access = doAppend ? SFM_RDWR : SFM_WRITE;
 
-    if (not fileExists()) {
-        DEBUG("Filename does not exist, creating one");
+    fileHandle_ = new SndfileHandle(savePath_.c_str(), access, SF_FORMAT_WAV | SF_FORMAT_PCM_16, channels_, sndSmplRate_);
 
-        if (fileType_ == FILE_RAW)
-            result = setRawFile();
-        else if (fileType_ == FILE_WAV)
-            result = setWavFile();
-    } else {
-        DEBUG("Filename already exists, opening it");
-
-        if (fileType_ == FILE_RAW)
-            result = openExistingRawFile();
-        else if (fileType_ == FILE_WAV)
-            result = openExistingWavFile();
+    // check overloaded boolean operator
+    if (!*fileHandle_) {
+        WARN("Could not open WAV file!");
+        delete fileHandle_;
+        fileHandle_ = 0;
+        return false;
     }
+
+    if (doAppend and fileHandle_->seek(0, SEEK_END) < 0)
+        WARN("Couldn't seek to the end of the file ");
 
     return result;
 }
@@ -230,68 +221,6 @@ void AudioRecord::stopRecording()
     recordingEnabled_ = false;
 }
 
-bool AudioRecord::setRawFile()
-{
-    delete fileHandle_;
-    fileHandle_ = new SndfileHandle(savePath_.c_str(), SFM_WRITE, SF_FORMAT_RAW | SF_FORMAT_PCM_16, channels_, sndSmplRate_);
-
-    if (!fileHandle_) {
-        WARN("Could not create RAW file!");
-        return false;
-    }
-
-    DEBUG("created RAW file.");
-
-    return true;
-}
-
-bool AudioRecord::setWavFile()
-{
-    DEBUG("Create new wave file %s, sampling rate: %d", savePath_.c_str(), sndSmplRate_);
-
-    delete fileHandle_;
-    fileHandle_ = new SndfileHandle(savePath_.c_str(), SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, channels_, sndSmplRate_);
-
-    if (!fileHandle_) {
-        WARN("Could not create WAV file.");
-        return false;
-    }
-
-    return true;
-}
-
-bool AudioRecord::openExistingRawFile()
-{
-    fileHandle_ = new SndfileHandle(savePath_.c_str(), SFM_RDWR, SF_FORMAT_RAW | SF_FORMAT_PCM_16, channels_, sndSmplRate_);
-
-    if (!fileHandle_) {
-        WARN("could not create RAW file!");
-        return false;
-    }
-
-    if (fileHandle_->seek(0, SEEK_END) < 0)
-        WARN("Couldn't seek to the end of the file ");
-
-    return true;
-}
-
-bool AudioRecord::openExistingWavFile()
-{
-    DEBUG("Opening %s", filename_.c_str());
-
-    fileHandle_ = new SndfileHandle(filename_.c_str(), SFM_RDWR, SF_FORMAT_WAV | SF_FORMAT_PCM_16, channels_, sndSmplRate_);
-
-    if (!fileHandle_) {
-        WARN("Could not open WAV file!");
-        return false;
-    }
-
-    if (fileHandle_->seek(0, SEEK_END) < 0)
-        WARN("Couldn't seek to the end of the file ");
-
-    return true;
-}
-
 void AudioRecord::recData(AudioBuffer& buffer)
 {
     if (not recordingEnabled_)
@@ -307,6 +236,7 @@ void AudioRecord::recData(AudioBuffer& buffer)
     // FIXME: mono only
     if (fileHandle_->write(buffer.getChannel(0)->data(), nSamples) != nSamples) {
         WARN("Could not record data!");
-    } else
+    } else {
         fileHandle_->writeSync();
+    }
 }

@@ -44,13 +44,11 @@ class SndfileHandle;
 class AudioRecord {
 
     public:
-        enum FILE_TYPE { FILE_RAW, FILE_WAV, FILE_INVALID };
-
         AudioRecord();
         ~AudioRecord();
 
         void setSndSamplingRate(int smplRate);
-        void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
+        void setRecordingOptions(int sndSmplRate, const std::string &path);
 
         /**
          * Init recording file path
@@ -141,11 +139,6 @@ class AudioRecord {
          * Pointer to the recorded file
          */
         SndfileHandle *fileHandle_;
-
-        /**
-         * File format (RAW / WAVE)
-         */
-        FILE_TYPE fileType_;
 
         /**
          * Number of channels
