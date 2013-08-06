@@ -1499,7 +1499,7 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 
     if (not hasCurrentCall()) {
         call.setConnectionState(Call::RINGING);
-        ringtone(accountId);
+        playRingtone(accountId);
     }
 
     addWaitingCall(callID);
@@ -1826,7 +1826,7 @@ void ManagerImpl::ringback()
 /**
  * Multi Thread
  */
-void ManagerImpl::ringtone(const std::string& accountID)
+void ManagerImpl::playRingtone(const std::string& accountID)
 {
     Account *account = getAccount(accountID);
 
@@ -1890,6 +1890,20 @@ void ManagerImpl::ringtone(const std::string& accountID)
     // start audio if not started AND flush all buffers (main and urgent)
     audiodriver_->startStream();
 }
+
+void ManagerImpl::stopRingtone()
+{
+    {
+        sfl::ScopedLock lock(audioLayerMutex_);
+        audiodriver_->stopStream();
+    }
+
+    {
+        sfl::ScopedLock m(toneMutex_);
+        audiofile_.reset();
+    }
+}
+
 
 AudioLoop* ManagerImpl::getTelephoneTone()
 {

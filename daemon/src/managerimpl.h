@@ -719,7 +719,9 @@ class ManagerImpl {
         /**
          * Handle played music when an incoming call occurs
          */
-        void ringtone(const std::string& accountID);
+        void playRingtone(const std::string& accountID);
+
+        void stopRingtone();
 
         /**
          * Handle played music when a congestion occurs

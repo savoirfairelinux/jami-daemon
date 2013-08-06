@@ -112,6 +112,8 @@ class ConfigurationManager
         void setEchoCancelState(const std::string& state);
 
         std::map<std::string, std::string> getRingtoneList();
+        void playRingtone(const std::string &accountID);
+        void stopRingtone();
 
         std::string getAudioManager();
         void setAudioManager(const std::string& api);
