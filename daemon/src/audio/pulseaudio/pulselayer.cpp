@@ -571,10 +571,8 @@ void PulseLayer::ringtoneToSpeaker()
     if (fileToPlay) {
         unsigned samples = (bytes / sample_size) / ringtone_->channels();
         AudioBuffer tmp(samples, ringtone_->channels());
-        //fileToPlay->getNext((SFLAudioSample *) data, bytes / sizeof(SFLAudioSample), 100);
-        //applyGain(static_cast<SFLAudioSample *>(data), bytes / sizeof(SFLAudioSample), getPlaybackGain());
         fileToPlay->getNext(tmp, playbackGain_);
-        tmp.interleave((SFLAudioSample*)data);
+        tmp.interleave((SFLAudioSample*) data);
     } else {
         memset(data, 0, bytes);
     }
