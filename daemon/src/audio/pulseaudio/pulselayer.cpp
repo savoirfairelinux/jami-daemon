@@ -569,7 +569,7 @@ void PulseLayer::ringtoneToSpeaker()
     AudioLoop *fileToPlay = Manager::instance().getTelephoneFile();
 
     if (fileToPlay) {
-        unsigned samples = bytes / sample_size;
+        unsigned samples = (bytes / sample_size) / ringtone_->channels();
         AudioBuffer tmp(samples, ringtone_->channels());
         //fileToPlay->getNext((SFLAudioSample *) data, bytes / sizeof(SFLAudioSample), 100);
         //applyGain(static_cast<SFLAudioSample *>(data), bytes / sizeof(SFLAudioSample), getPlaybackGain());
