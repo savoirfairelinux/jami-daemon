@@ -148,9 +148,9 @@ void AudioBuffer::fromInterleaved(const SFLAudioSample* in, size_t sample_num, u
     setChannelNum(channel_num);
     resize(sample_num);
 
-    for (unsigned i = 0; i < samples_[0].size(); i++) {
-        for (unsigned j = 0; j < channels_; j++)
-            samples_[j][i] = *in++;
+    for (unsigned i = 0; i < samples_.size(); ++i) {
+        for (unsigned j = 0; j < samples_[i].size(); ++j)
+            samples_[i][j] = *in++;
     }
 }
 
