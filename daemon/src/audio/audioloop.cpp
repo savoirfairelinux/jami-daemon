@@ -47,7 +47,7 @@
 #include <cassert>
 #include "logger.h"
 
-AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(), pos_(0), isRecording_(false)
+AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0), isRecording_(false)
 {
     buffer_ = new AudioBuffer;
     buffer_->setSampleRate(sampleRate);
