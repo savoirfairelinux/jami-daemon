@@ -118,10 +118,10 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     //src_float_to_short_array(floatBufferOut_, dataOut, outSamples);
 
     /*
-    TODO: one-shot desinterleave and float-to-short conversion
+    TODO: one-shot deinterleave and float-to-short conversion
     currently using floatBufferIn_ as scratch
     */
     short* scratch_buff = (short*)floatBufferIn_;
     src_float_to_short_array(floatBufferOut_, scratch_buff, outSamples);
-    dataOut.fromInterleaved(scratch_buff, outSamples, nbChans);
+    dataOut.deinterleave(scratch_buff, outSamples, nbChans);
 }

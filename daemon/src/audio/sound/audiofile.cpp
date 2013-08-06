@@ -114,7 +114,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
 
         SFLAudioSample *scratch = new SFLAudioSample[sizeOut];
         src_float_to_short_array(floatBufferOut, scratch, src_data.output_frames_gen);
-        buffer->fromInterleaved(scratch, samplesOut, channels);
+        buffer->deinterleave(scratch, samplesOut, channels);
         delete buffer_;
         buffer_ = buffer;
 
@@ -142,7 +142,7 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
     fileHandle.read(tempBuffer, nbFrames);
 
     AudioBuffer * buffer = new AudioBuffer(nbFrames, fileHandle.channels(), fileHandle.samplerate());
-    buffer->fromInterleaved(tempBuffer, nbFrames, fileHandle.channels());
+    buffer->deinterleave(tempBuffer, nbFrames, fileHandle.channels());
 
     const int rate = static_cast<int32_t>(sampleRate);
     if (fileHandle.samplerate() != rate) {

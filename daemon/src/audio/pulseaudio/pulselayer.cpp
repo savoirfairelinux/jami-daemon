@@ -508,7 +508,7 @@ void PulseLayer::readFromMic()
     size_t samples = bytes / sample_size;
 
     AudioBuffer in(samples, channels, sampleRate_);
-    in.fromInterleaved((SFLAudioSample*)data, samples, channels);
+    in.deinterleave((SFLAudioSample*)data, samples, channels);
 
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;

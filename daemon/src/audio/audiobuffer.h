@@ -147,7 +147,7 @@ class AudioBuffer {
         /**
          * Import interleaved multichannel data. Internal buffer is resized as needed. Function will read sample_num*channel_num elements of the in buffer.
          */
-        void fromInterleaved(const SFLAudioSample* in, size_t sample_num, unsigned channel_num = 1);
+        void deinterleave(const SFLAudioSample* in, size_t sample_num, unsigned channel_num = 1);
 
         /**
          * In-place gain transformation with integer parameter.

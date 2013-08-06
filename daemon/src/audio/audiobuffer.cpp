@@ -43,7 +43,7 @@ AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, unsigned c
        channels_(std::max(1U, channel_num)),
        samples_(channels_, std::vector<SFLAudioSample>(sample_num, 0))
 {
-    fromInterleaved(in, sample_num, channel_num);
+    deinterleave(in, sample_num, channel_num);
 }
 
 AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false */)
@@ -139,7 +139,7 @@ size_t AudioBuffer::interleaveFloat(float* out) const
     return samples_[0].size() * channels_;
 }
 
-void AudioBuffer::fromInterleaved(const SFLAudioSample* in, size_t sample_num, unsigned channel_num)
+void AudioBuffer::deinterleave(const SFLAudioSample* in, size_t sample_num, unsigned channel_num)
 {
     if (in == NULL)
         return;
