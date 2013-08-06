@@ -36,6 +36,7 @@
 #include <cstring>
 #include <vector>
 #include <climits>
+#include <sndfile.hh>
 
 #include "audiofile.h"
 #include "audio/codecs/audiocodec.h"
@@ -126,93 +127,27 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
 
 WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : AudioFile(fileName, sampleRate)
 {
-    const std::fstream fs(fileName.c_str(), std::ios_base::in);
+    SndfileHandle fileHandle(fileName.c_str(), SFM_READ);
 
-    if (!fs)
+    if (!fileHandle)
         throw AudioFileException("File " + fileName + " doesn't exist");
 
-    std::fstream fileStream;
-    fileStream.open(fileName.c_str(), std::ios::in | std::ios::binary);
+    if (fileHandle.channels() > 2)
+        throw AudioFileException("Unsupported number of channels");
 
-    char riff[4] = { 0, 0, 0, 0 };
-    fileStream.read(riff, sizeof riff / sizeof * riff);
+    const sf_count_t nbFrames = fileHandle.frames();
 
-    if (strncmp("RIFF", riff, sizeof riff / sizeof * riff) != 0)
-        throw AudioFileException("File is not of RIFF format");
+    SFLAudioSample * tempBuffer = new SFLAudioSample[nbFrames * fileHandle.channels()];
 
-    char fmt[4] = { 0, 0, 0, 0 };
-    int maxIteration = 10;
+    fileHandle.read(tempBuffer, nbFrames);
 
-    while (maxIteration-- and strncmp("fmt ", fmt, sizeof fmt / sizeof * fmt))
-        fileStream.read(fmt, sizeof fmt / sizeof * fmt);
+    AudioBuffer * buffer = new AudioBuffer(nbFrames, fileHandle.channels(), fileHandle.samplerate());
+    buffer->fromInterleaved(tempBuffer, nbFrames, fileHandle.channels());
 
-    if (maxIteration == 0)
-        throw AudioFileException("Could not find \"fmt \" chunk");
-
-    int32_t chunkSize; // fmt chunk size
-    fileStream.read(reinterpret_cast<char *>(&chunkSize), sizeof chunkSize); // Read fmt chunk size.
-    unsigned short formatTag; // data compression tag
-    fileStream.read(reinterpret_cast<char *>(&formatTag), sizeof formatTag);
-
-    if (formatTag != 1) // PCM = 1, FLOAT = 3
-        throw AudioFileException("File contains an unsupported data format type");
-
-    // Get number of channels from the header.
-    int16_t chan;
-    fileStream.read(reinterpret_cast<char *>(&chan), sizeof chan);
-
-    if (chan > 2)
-        throw AudioFileException("WaveFile: unsupported number of channels");
-
-    // Get file sample rate from the header.
-    int32_t fileRate;
-    fileStream.read(reinterpret_cast<char *>(&fileRate), sizeof fileRate);
-
-    int32_t avgb;
-    fileStream.read(reinterpret_cast<char *>(&avgb), sizeof avgb);
-
-    int16_t blockal;
-    fileStream.read(reinterpret_cast<char *>(&blockal), sizeof blockal);
-
-    // Determine the data type
-    int16_t dt;
-    fileStream.read(reinterpret_cast<char *>(&dt), sizeof dt);
-
-    if (dt != 8 && dt != 16 && dt != 32)
-        throw AudioFileException("File's bits per sample with is not supported");
-
-    // Find the "data" chunk
-    char data[4] = { 0, 0, 0, 0 };
-    maxIteration = 10;
-
-    while (maxIteration-- && strncmp("data", data, sizeof data / sizeof * data))
-        fileStream.read(data, sizeof data / sizeof * data);
-
-    // Samplerate converter initialized with 88200 sample long
     const int rate = static_cast<int32_t>(sampleRate);
-    SamplerateConverter converter(std::max(fileRate, rate), chan);
-
-    // Get length of data from the header.
-    int32_t bytes;
-    fileStream.read(reinterpret_cast<char *>(&bytes), sizeof bytes);
-
-    // sample frames, should not be longer than a minute
-    int nbSamples = std::min(60 * fileRate, 8 * bytes / dt / chan);
-
-    DEBUG("Frame size %ld, data size %d align %d rate %d avgbyte %d "
-          "chunk size %d dt %d", nbSamples, bytes, blockal, fileRate, avgb,
-          chunkSize, dt);
-
-    SFLAudioSample * tempBuffer = new SFLAudioSample[nbSamples * chan];
-
-    fileStream.read(reinterpret_cast<char *>(tempBuffer),
-                    nbSamples * chan * sizeof(SFLAudioSample));
-
-    AudioBuffer * buffer = new AudioBuffer(nbSamples, chan, fileRate);
-    buffer->fromInterleaved(tempBuffer, nbSamples, chan);
-
-    if (fileRate != rate) {
-        AudioBuffer * resampled = new AudioBuffer(nbSamples, chan, rate);
+    if (fileHandle.samplerate() != rate) {
+        SamplerateConverter converter(std::max(fileHandle.samplerate(), rate), fileHandle.channels());
+        AudioBuffer * resampled = new AudioBuffer(nbFrames, fileHandle.channels(), rate);
         converter.resample(*buffer, *resampled);
         delete buffer;
         buffer_ = resampled;
