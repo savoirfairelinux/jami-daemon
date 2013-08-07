@@ -1109,13 +1109,13 @@ create_audiocodecs_configuration(const account_t *account)
     enable_tone = gtk_check_button_new_with_mnemonic(_("_Enable ringtones"));
     const gboolean ringtone_enabled = g_strcmp0(ptr, "true") == 0;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enable_tone), ringtone_enabled);
-    g_signal_connect(G_OBJECT(enable_tone) , "clicked", G_CALLBACK(ringtone_enabled_cb), file_chooser);
+    g_signal_connect(G_OBJECT(enable_tone), "clicked", G_CALLBACK(ringtone_enabled_cb), file_chooser);
     gtk_grid_attach(GTK_GRID(grid), enable_tone, 0, 0, 1, 1);
 
     // file chooser button
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(file_chooser) , g_get_home_dir());
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(file_chooser), g_get_home_dir());
     ptr = account_lookup(account, CONFIG_RINGTONE_PATH);
-    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_chooser) , ptr);
+    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_chooser), ptr);
     gtk_widget_set_sensitive(file_chooser, ringtone_enabled);
 
     GtkFileFilter *filter = gtk_file_filter_new();
@@ -1147,7 +1147,7 @@ create_videocodecs_configuration(const account_t *a)
     gtk_box_pack_start(GTK_BOX (vbox), videocodecs, FALSE, FALSE, 0);
     gtk_widget_set_size_request(GTK_WIDGET (videocodecs), -1, 200);
     gtk_widget_show(videocodecs);
-    gtk_container_add(GTK_CONTAINER (videocodecs) , box);
+    gtk_container_add(GTK_CONTAINER (videocodecs), box);
 
     gtk_widget_show_all(vbox);
 
