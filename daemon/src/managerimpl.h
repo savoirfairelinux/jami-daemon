@@ -788,6 +788,9 @@ class ManagerImpl {
 
     private:
 
+        // Set the ringtone or recorded call to be played
+        void updateAudioFile(const std::string &file, int sampleRate);
+
         /**
          * Get the Call referred to by callID. If the Call does not exist, return NULL
          */

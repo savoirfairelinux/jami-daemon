@@ -1823,6 +1823,26 @@ void ManagerImpl::ringback()
     playATone(Tone::TONE_RINGTONE);
 }
 
+void
+ManagerImpl::updateAudioFile(const std::string &file, int sampleRate)
+{
+    try {
+        if (file.find(".wav") != std::string::npos)
+            audiofile_.reset(new WaveFile(file, sampleRate));
+        else {
+            sfl::AudioCodec *codec;
+            if (file.find(".ul") != std::string::npos or file.find(".au") != std::string::npos)
+                codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
+            else
+                throw AudioFileException("Couldn't guess an appropriate decoder");
+
+            audiofile_.reset(new RawFile(file, static_cast<sfl::AudioCodec *>(codec), sampleRate));
+        }
+    } catch (const AudioFileException &e) {
+        ERROR("Exception: %s", e.what());
+    }
+}
+
 /**
  * Multi Thread
  */
@@ -1869,21 +1889,7 @@ void ManagerImpl::playRingtone(const std::string& accountID)
             audiofile_.reset();
         }
 
-        try {
-            if (ringchoice.find(".wav") != std::string::npos)
-                audiofile_.reset(new WaveFile(ringchoice, audioLayerSmplr));
-            else {
-                sfl::AudioCodec *codec;
-                if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
-                    codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
-                else
-                    throw AudioFileException("Couldn't guess an appropriate decoder");
-
-                audiofile_.reset(new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), audioLayerSmplr));
-            }
-        } catch (const AudioFileException &e) {
-            ERROR("Exception: %s", e.what());
-        }
+        updateAudioFile(ringchoice, audioLayerSmplr);
     } // leave mutex
 
     sfl::ScopedLock lock(audioLayerMutex_);
@@ -2155,12 +2161,11 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
             audiofile_.reset();
         }
 
-        try {
-            audiofile_.reset(new WaveFile(filepath, sampleRate));
+        updateAudioFile(filepath, sampleRate);
+        if (audiofile_)
             audiofile_->setIsRecording(true);
-        } catch (const AudioFileException &e) {
-            ERROR("Exception: %s", e.what());
-        }
+        else
+            return false;
     } // release toneMutex
 
     sfl::ScopedLock lock(audioLayerMutex_);
