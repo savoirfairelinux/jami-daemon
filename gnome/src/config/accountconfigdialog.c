@@ -56,6 +56,7 @@
 #include "tlsadvanceddialog.h"
 #include "dbus/dbus.h"
 #include "utils.h"
+#include "seekslider.h"
 
 /**
  * TODO: tidy this up
@@ -1060,6 +1061,12 @@ static void ringtone_enabled_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data, 
     gtk_widget_set_sensitive(data, !gtk_widget_is_sensitive(data));
 }
 
+static void ringtone_changed_cb(GtkWidget *widget, gpointer data)
+{
+    GtkFileChooser *chooser = GTK_FILE_CHOOSER(widget);
+    SFLSeekSlider *seekslider = data;
+    g_object_set(seekslider, "file-path", gtk_file_chooser_get_filename(chooser), NULL);
+}
 
 static GtkWidget*
 create_audiocodecs_configuration(const account_t *account)
@@ -1118,6 +1125,11 @@ create_audiocodecs_configuration(const account_t *account)
     gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_chooser), ptr);
     gtk_widget_set_sensitive(file_chooser, ringtone_enabled);
 
+    // button to preview ringtones
+    GtkWidget *ringtone_seekslider = GTK_WIDGET(sfl_seekslider_new());
+    g_object_set(G_OBJECT(ringtone_seekslider), "file-path", ptr, NULL);
+    g_signal_connect(G_OBJECT(file_chooser), "selection-changed", G_CALLBACK(ringtone_changed_cb), ringtone_seekslider);
+
     GtkFileFilter *filter = gtk_file_filter_new();
     gtk_file_filter_set_name(filter, _("Audio Files"));
     gtk_file_filter_add_pattern(filter, "*.wav");
@@ -1126,6 +1138,7 @@ create_audiocodecs_configuration(const account_t *account)
 
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(file_chooser), filter);
     gtk_grid_attach(GTK_GRID(grid), file_chooser, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), ringtone_seekslider, 1, 1, 1, 1);
 
     gtk_widget_show_all(vbox);
 
