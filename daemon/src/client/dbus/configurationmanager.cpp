@@ -329,16 +329,6 @@ std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
     return ringToneList;
 }
 
-void ConfigurationManager::playRingtone(const std::string &accountID)
-{
-    Manager::instance().playRingtone(accountID);
-}
-
-void ConfigurationManager::stopRingtone()
-{
-    Manager::instance().stopRingtone();
-}
-
 void ConfigurationManager::setEchoCancelState(const std::string& state)
 {
     Manager::instance().setEchoCancelState(state);

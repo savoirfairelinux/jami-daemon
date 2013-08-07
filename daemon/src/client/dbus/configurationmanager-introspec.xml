@@ -353,15 +353,6 @@
            </arg>
        </method>
 
-       <method name="playRingtone" tp:name-for-bindings="playRingtone">
-           <tp:added version="1.2.4"/>
-           <arg type="s" name="accountID" direction="in"/>
-       </method>
-
-       <method name="stopRingtone" tp:name-for-bindings="stopRingtone">
-           <tp:added version="1.2.4"/>
-       </method>
-
        <method name="setEchoCancelState" tp:name-for-bindings="setEchoCancelState">
                <arg type="s" name="state" direction="in">
                </arg>

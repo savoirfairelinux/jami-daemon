@@ -721,8 +721,6 @@ class ManagerImpl {
          */
         void playRingtone(const std::string& accountID);
 
-        void stopRingtone();
-
         /**
          * Handle played music when a congestion occurs
          */

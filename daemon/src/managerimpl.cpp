@@ -1823,6 +1823,7 @@ void ManagerImpl::ringback()
     playATone(Tone::TONE_RINGTONE);
 }
 
+// Caller must hold toneMutex
 void
 ManagerImpl::updateAudioFile(const std::string &file, int sampleRate)
 {
@@ -1896,20 +1897,6 @@ void ManagerImpl::playRingtone(const std::string& accountID)
     // start audio if not started AND flush all buffers (main and urgent)
     audiodriver_->startStream();
 }
-
-void ManagerImpl::stopRingtone()
-{
-    {
-        sfl::ScopedLock lock(audioLayerMutex_);
-        audiodriver_->stopStream();
-    }
-
-    {
-        sfl::ScopedLock m(toneMutex_);
-        audiofile_.reset();
-    }
-}
-
 
 AudioLoop* ManagerImpl::getTelephoneTone()
 {
