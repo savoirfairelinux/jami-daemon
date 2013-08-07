@@ -1138,7 +1138,11 @@ create_audiocodecs_configuration(const account_t *account)
 
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(file_chooser), filter);
     gtk_grid_attach(GTK_GRID(grid), file_chooser, 0, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), ringtone_seekslider, 1, 1, 1, 1);
+
+    GtkWidget *alignment =  gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
+    gtk_alignment_set_padding(GTK_ALIGNMENT(alignment), 0, 0, 6, 6);
+    gtk_container_add(GTK_CONTAINER(alignment), ringtone_seekslider);
+    gtk_box_pack_start(GTK_BOX(vbox), alignment, FALSE, FALSE, 0);
 
     gtk_widget_show_all(vbox);
 
