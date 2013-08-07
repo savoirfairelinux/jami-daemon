@@ -101,6 +101,12 @@ is_conference(GtkTreeModel *model, GtkTreeIter *iter)
     return result;
 }
 
+static void
+update_ringtone_seekslider_path(callable_obj_t *call)
+{
+    main_window_update_seekslider(call->_recordfile);
+}
+
 /* Call back when the user click on a call in the list */
 static void
 call_selected_cb(GtkTreeSelection *sel, SFLPhoneClient *client)
@@ -132,8 +138,11 @@ call_selected_cb(GtkTreeSelection *sel, SFLPhoneClient *client)
         callable_obj_t *selected_call = calllist_get_call(active_calltree_tab, id);
         g_free(id);
 
-        if (selected_call)
+        if (selected_call) {
             calltab_select_call(active_calltree_tab, selected_call);
+            if (calltab_has_name(active_calltree_tab, HISTORY))
+                update_ringtone_seekslider_path(selected_call);
+        }
     }
 
     update_actions(client);

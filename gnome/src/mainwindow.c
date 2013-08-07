@@ -589,3 +589,9 @@ main_window_pause_keygrabber(gboolean value)
 {
     pause_grabber = value;
 }
+
+void
+main_window_update_seekslider(const gchar *recordfile)
+{
+    g_object_set(G_OBJECT(seekslider), "file-path", recordfile, NULL);
+}

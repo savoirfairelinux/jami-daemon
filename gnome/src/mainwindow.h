@@ -131,4 +131,7 @@ void main_window_pause_keygrabber(gboolean value);
 void main_window_reset_playback_scale();
 
 void main_window_bring_to_front(SFLPhoneClient *client, guint32 timestamp);
+
+void main_window_update_seekslider(const gchar *recordfile);
+
 #endif

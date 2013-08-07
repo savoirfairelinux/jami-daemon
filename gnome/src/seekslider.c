@@ -36,7 +36,6 @@
 #include <string.h>
 #include "seekslider.h"
 #include "dbus.h"
-#include "calltab.h"
 
 /**
  * SECTION:sfl-seekslider
@@ -89,12 +88,17 @@ struct SFLSeekSliderPrivate
     gboolean is_dragging;
     gboolean can_update_scale;
     gboolean is_playing;
+    gchar *file_path;
 };
 
 enum
 {
     PROP_0,
+    PROP_FILE_PATH,
+    N_PROPERTIES
 };
+
+static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 G_DEFINE_TYPE(SFLSeekSlider, sfl_seekslider, GTK_TYPE_HBOX)
 
@@ -108,6 +112,10 @@ sfl_seekslider_class_init(SFLSeekSliderClass *klass)
     object_class->set_property = sfl_seekslider_set_property;
     object_class->get_property = sfl_seekslider_get_property;
 
+    obj_properties[PROP_FILE_PATH] = g_param_spec_string("file-path", "File path",
+            "Set file path for playback", "" /* default value */, G_PARAM_READWRITE);
+
+    g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
     g_type_class_add_private(klass, sizeof(SFLSeekSliderPrivate));
 }
 
@@ -186,6 +194,7 @@ sfl_seekslider_init(SFLSeekSlider *seekslider)
     seekslider->priv->current = 0;
     seekslider->priv->size = 0;
     seekslider->priv->is_playing = FALSE;
+    seekslider->priv->file_path = NULL;
 }
 
 static void
@@ -206,14 +215,41 @@ sfl_seekslider_finalize(GObject *object)
 static void
 sfl_seekslider_set_property (GObject *object, guint prop_id, const GValue *value G_GNUC_UNUSED, GParamSpec *pspec)
 {
-    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    SFLSeekSlider *self = SFL_SEEKSLIDER(object);
+
+    switch (prop_id)
+    {
+        case PROP_FILE_PATH:
+            g_free(self->priv->file_path);
+            self->priv->file_path = g_value_dup_string(value);
+            g_debug("filepath: %s\n", self->priv->file_path);
+            break;
+
+        default:
+            /* We don't have any other property... */
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+            break;
+    }
 }
 
 static void
 sfl_seekslider_get_property (GObject *object, guint prop_id, GValue *value G_GNUC_UNUSED, GParamSpec *pspec)
 {
-    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    SFLSeekSlider *self = SFL_SEEKSLIDER(object);
+
+    switch (prop_id)
+    {
+        case PROP_FILE_PATH:
+            g_value_set_string(value, self->priv->file_path);
+            break;
+
+        default:
+            /* We don't have any other property... */
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+            break;
+    }
 }
+
 
 /**
  * sfl_seekslider_new:
@@ -298,37 +334,30 @@ on_playback_scale_scrolled_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G
 
 static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
 {
-    SFLSeekSlider *seekslider = SFL_SEEKSLIDER(user_data);
+    SFLSeekSlider *self = SFL_SEEKSLIDER(user_data);
 
-    callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-    if (selectedCall == NULL)
+    if (self->priv->file_path == NULL || (*self->priv->file_path == 0))
         return;
 
-    g_debug("Start selected call file playback %s", selectedCall->_recordfile);
-    seekslider->priv->is_playing = selectedCall->_record_is_playing =
-        dbus_start_recorded_file_playback(selectedCall->_recordfile);
+    g_debug("Start file playback %s", self->priv->file_path);
+    self->priv->is_playing = dbus_start_recorded_file_playback(self->priv->file_path);
 
-    if (seekslider->priv->is_playing)
-        sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PAUSE);
+    if (self->priv->is_playing)
+        sfl_seekslider_set_display(self, SFL_SEEKSLIDER_DISPLAY_PAUSE);
 }
 
 static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
 {
-    SFLSeekSlider *seekslider = SFL_SEEKSLIDER(user_data);
+    SFLSeekSlider *self = SFL_SEEKSLIDER(user_data);
 
-    callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-    if (selectedCall == NULL)
+    if (self->priv->file_path == NULL || (*self->priv->file_path == 0))
         return;
 
-    if (selectedCall->_recordfile == NULL ||
-        strlen(selectedCall->_recordfile) == 0)
-        return;
+    dbus_stop_recorded_file_playback(self->priv->file_path);
+    g_debug("Stop file playback %s", self->priv->file_path);
+    self->priv->is_playing = FALSE;
 
-    dbus_stop_recorded_file_playback(selectedCall->_recordfile);
-    g_debug("Stop selected call file playback %s", selectedCall->_recordfile);
-    seekslider->priv->is_playing = selectedCall->_record_is_playing = FALSE;
-
-    sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
+    sfl_seekslider_set_display(self, SFL_SEEKSLIDER_DISPLAY_PLAY);
 }
 
 void sfl_seekslider_update_timelabel(SFLSeekSlider *seekslider, guint current, guint size)
