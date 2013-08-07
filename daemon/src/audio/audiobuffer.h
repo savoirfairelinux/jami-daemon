@@ -74,7 +74,7 @@ class AudioBuffer {
          * Returns the number of channels in this buffer.
          */
         inline unsigned channels() const {
-            return channels_;
+            return samples_.size();
         }
 
         /**
@@ -204,7 +204,6 @@ class AudioBuffer {
 
     private:
         int sampleRate_;
-        unsigned channels_; // should allways be the same as samples_.size()
 
         // main buffers holding data for each channels
         std::vector<std::vector<SFLAudioSample> > samples_;
