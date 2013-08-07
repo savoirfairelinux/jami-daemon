@@ -85,7 +85,7 @@ void AudioBufferTest::testAudioBufferMix()
     CPPUNIT_ASSERT((*test_buf1.getChannel(1))[0] == test_samples1[0]);
 
     AudioBuffer test_buf2;
-    test_buf2.fromInterleaved(test_samples2, 3, 3);
+    test_buf2.deinterleave(test_samples2, 3, 3);
     CPPUNIT_ASSERT((*test_buf2.getChannel(0))[2] == test_samples2[6]);
     CPPUNIT_ASSERT((*test_buf2.getChannel(1))[1] == test_samples2[4]);
     CPPUNIT_ASSERT((*test_buf2.getChannel(2))[0] == test_samples2[2]);
