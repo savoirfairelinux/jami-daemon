@@ -50,7 +50,7 @@ void
 AudioFile::onBufferFinish()
 {
     // We want to send values in milisecond
-    const int divisor = buffer_.getSampleRate() / 1000;
+    const int divisor = buffer_->getSampleRate() / 1000;
     if (divisor == 0) {
         ERROR("Error cannot update playback slider, sampling rate is 0");
         return;
@@ -58,7 +58,7 @@ AudioFile::onBufferFinish()
 
     if ((updatePlaybackScale_ % 5) == 0) {
         CallManager *cm = Manager::instance().getClient()->getCallManager();
-        cm->updatePlaybackScale(filepath_, pos_ / divisor, buffer_.samples() / divisor);
+        cm->updatePlaybackScale(filepath_, pos_ / divisor, buffer_->samples() / divisor);
     }
 
     updatePlaybackScale_++;
@@ -101,7 +101,8 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
     }
 
     if (sampleRate == audioRate) {
-        buffer_ = *buffer;
+        delete buffer_;
+        buffer_ = buffer;
     } else {
         double factord = (double) sampleRate / audioRate;
 
@@ -135,7 +136,8 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
         SFLAudioSample *scratch = new SFLAudioSample[sizeOut];
         src_float_to_short_array(floatBufferOut, scratch, src_data.output_frames_gen);
         buffer->deinterleave(scratch, samplesOut, channels);
-        buffer_ = *buffer;
+        delete buffer_;
+        buffer_ = buffer;
 
         delete [] floatBufferOut;
         delete [] floatBufferIn;
@@ -169,9 +171,11 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
         AudioBuffer * resampled = new AudioBuffer(nbFrames, fileHandle.channels(), rate);
         converter.resample(*buffer, *resampled);
         delete buffer;
-        buffer_ = *resampled;
+        delete buffer_;
+        buffer_ = resampled;
     } else {
-        buffer_ = *buffer;
+        delete buffer_;
+        buffer_ = buffer;
     }
 
     delete [] tempBuffer;

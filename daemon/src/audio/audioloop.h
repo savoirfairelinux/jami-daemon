@@ -71,13 +71,13 @@ class AudioLoop {
          * Accessor to the size of the buffer
          * @return unsigned int The size
          */
-        size_t getSize() const {
-            return buffer_.samples();
+        size_t getSize() {
+            return buffer_->samples();
         }
 
     protected:
         /** The data buffer */
-        AudioBuffer buffer_;
+        AudioBuffer * buffer_;
 
         /** current position, set to 0, when initialize */
         size_t pos_;
