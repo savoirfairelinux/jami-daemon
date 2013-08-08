@@ -44,32 +44,22 @@
 #include <cassert>
 #include "logger.h"
 
-AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0)
-{
-    buffer_ = new AudioBuffer;
-    buffer_->setSampleRate(sampleRate);
-}
+AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0, 1, sampleRate), pos_(0)
+{}
 
 AudioLoop::~AudioLoop()
-{
-    delete buffer_;
-}
+{}
 
 void
 AudioLoop::seek(double relative_position)
 {
-    pos_ = (double) (buffer_->samples() * (relative_position * 0.01));
+    pos_ = (double) (buffer_.samples() * (relative_position * 0.01));
 }
 
 void
 AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
 {
-    if (!buffer_) {
-        ERROR("buffer is NULL");
-        return;
-    }
-
-    const size_t buf_samples = buffer_->samples();
+    const size_t buf_samples = buffer_.samples();
     size_t pos = pos_;
     size_t total_samples = output.samples();
     size_t output_pos = 0;
@@ -85,7 +75,7 @@ AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
     while (total_samples > 0) {
         size_t samples = std::min(total_samples, buf_samples - pos);
 
-        output.copy(*buffer_, samples, pos, output_pos);
+        output.copy(buffer_, samples, pos, output_pos);
 
         output_pos += samples;
         pos = (pos + samples) % buf_samples;

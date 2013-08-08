@@ -47,8 +47,6 @@ Tone::Tone(const std::string& definition, unsigned int sampleRate) :
     AudioLoop(sampleRate), xhigher_(0.0), xlower_(0.0)
 {
     fillWavetable();
-    buffer_ = new AudioBuffer();
-    buffer_->setSampleRate(sampleRate);
     genBuffer(definition); // allocate memory with definition parameter
 }
 
@@ -59,7 +57,7 @@ Tone::genBuffer(const std::string& definition)
         return;
 
     size_t size = 0;
-    const int sampleRate = buffer_->getSampleRate();
+    const int sampleRate = buffer_.getSampleRate();
 
     std::vector<SFLAudioSample> buffer(SIZEBUF); // 1kb
     SFLAudioSample* bufferPos = &(*buffer.begin());
@@ -125,7 +123,7 @@ Tone::genBuffer(const std::string& definition)
         posStart = posEnd + 1;
     } while (posStart < deflen);
 
-    buffer_->copy(buffer.data(), size); // fill the buffer
+    buffer_.copy(buffer.data(), size); // fill the buffer
 }
 
 void
@@ -159,7 +157,7 @@ Tone::genSin(SFLAudioSample* buffer, int frequency1, int frequency2, int nb)
     xhigher_ = 0.0;
     xlower_ = 0.0;
 
-    const double sr = (double)buffer_->getSampleRate();
+    const double sr = (double)buffer_.getSampleRate();
     static const double tableSize = TABLE_LENGTH;
 
     double N_h = sr / frequency1;
