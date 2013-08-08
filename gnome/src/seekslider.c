@@ -223,9 +223,21 @@ sfl_seekslider_set_property (GObject *object, guint prop_id, const GValue *value
     switch (prop_id)
     {
         case PROP_FILE_PATH:
+            /* no change */
+            if (g_strcmp0(self->priv->file_path, g_value_get_string(value)) == 0)
+                break;
+
+            /* cache is_playing as it will be modified */
+            const gboolean resume_playing = self->priv->is_playing;
+            if (resume_playing)
+                sfl_seekslider_stop_playback_record_cb(NULL, self);
+
             g_free(self->priv->file_path);
             self->priv->file_path = g_value_dup_string(value);
             g_debug("filepath: %s\n", self->priv->file_path);
+
+            if (resume_playing)
+                sfl_seekslider_play_playback_record_cb(NULL, self);
             break;
 
         default:
