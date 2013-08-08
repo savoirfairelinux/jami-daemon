@@ -208,6 +208,9 @@ sfl_seekslider_finalize(GObject *object)
     seekslider = SFL_SEEKSLIDER(object);
     g_return_if_fail(seekslider->priv != NULL);
 
+    /* Ensure that we've stopped playback */
+    sfl_seekslider_stop_playback_record_cb(NULL, seekslider);
+
     G_OBJECT_CLASS(sfl_seekslider_parent_class)->finalize(object);
 }
 

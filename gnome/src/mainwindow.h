@@ -107,7 +107,7 @@ void focus_on_searchbar_in();
  * if the size is 0 or if the current value is larger than the size, the cursor position
  * is moved at the end of the scale.
  */
-void main_window_update_playback_scale(const gchar *file_path, guint current, guint size);
+gboolean main_window_update_playback_scale(const gchar *file_path, guint current, guint size);
 
 void main_window_set_playback_scale_sensitive();
 

@@ -96,6 +96,7 @@ static GtkWidget *file_chooser;
 static GtkWidget *security_tab;
 static GtkWidget *advanced_tab;
 static GtkWidget *overrtp;
+static GtkWidget *ringtone_seekslider;
 
 typedef struct OptionsData {
     account_t *account;
@@ -1061,6 +1062,12 @@ static void ringtone_enabled_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data, 
     gtk_widget_set_sensitive(data, !gtk_widget_is_sensitive(data));
 }
 
+void update_ringtone_slider(guint position, guint size)
+{
+    if (ringtone_seekslider)
+        sfl_seekslider_update_scale(SFL_SEEKSLIDER(ringtone_seekslider), position, size);
+}
+
 static void ringtone_changed_cb(GtkWidget *widget, gpointer data)
 {
     GtkFileChooser *chooser = GTK_FILE_CHOOSER(widget);
@@ -1126,7 +1133,7 @@ create_audiocodecs_configuration(const account_t *account)
     gtk_widget_set_sensitive(file_chooser, ringtone_enabled);
 
     // button to preview ringtones
-    GtkWidget *ringtone_seekslider = GTK_WIDGET(sfl_seekslider_new());
+    ringtone_seekslider = GTK_WIDGET(sfl_seekslider_new());
     g_object_set(G_OBJECT(ringtone_seekslider), "file-path", ptr, NULL);
     g_signal_connect(G_OBJECT(file_chooser), "selection-changed", G_CALLBACK(ringtone_changed_cb), ringtone_seekslider);
 

@@ -50,6 +50,7 @@
 #include "assistant.h"
 #include "accountlist.h"
 #include "accountlistconfigdialog.h"
+#include "accountconfigdialog.h"
 #include "messaging/message_tab.h"
 
 #include "sflphone_client.h"
@@ -415,7 +416,8 @@ static void
 update_playback_scale_cb(G_GNUC_UNUSED DBusGProxy *proxy,
         const gchar *file_path, guint position, guint size)
 {
-    main_window_update_playback_scale(file_path, position, size);
+    if (!main_window_update_playback_scale(file_path, position, size))
+        update_ringtone_slider(position, size);
 }
 
 static void

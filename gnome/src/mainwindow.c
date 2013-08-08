@@ -546,11 +546,14 @@ main_window_confirm_go_clear(callable_obj_t * c, SFLPhoneClient *client)
     add_error_dialog(GTK_WIDGET(mini_dialog));
 }
 
-void
+gboolean
 main_window_update_playback_scale(const gchar *file_path, guint current, guint size)
 {
-    if (sfl_seekslider_has_path(SFL_SEEKSLIDER(seekslider), file_path))
+    if (sfl_seekslider_has_path(SFL_SEEKSLIDER(seekslider), file_path)) {
         sfl_seekslider_update_scale(SFL_SEEKSLIDER(seekslider), current, size);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 void
