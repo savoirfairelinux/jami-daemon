@@ -785,6 +785,7 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+        bool parseConfiguration();
 
         /**
          * Get the Call referred to by callID. If the Call does not exist, return NULL

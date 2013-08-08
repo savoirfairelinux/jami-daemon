@@ -118,16 +118,58 @@ ManagerImpl::~ManagerImpl()
 }
 
 namespace {
-    // Creates a backup of the file at "path" with a .bak suffix appended
-    void make_backup(const std::string &path)
+
+    void copy_over(const std::string &srcPath, const std::string &destPath)
     {
-        const std::string backup_path(path + ".bak");
-        std::ifstream src(path.c_str());
-        std::ofstream dest(backup_path.c_str());
+        std::ifstream src(srcPath.c_str());
+        std::ofstream dest(destPath.c_str());
         dest << src.rdbuf();
         src.close();
         dest.close();
     }
+    // Creates a backup of the file at "path" with a .bak suffix appended
+    void make_backup(const std::string &path)
+    {
+        const std::string backup_path(path + ".bak");
+        copy_over(path, backup_path);
+    }
+    // Restore last backup of the configuration file
+    void restore_backup(const std::string &path)
+    {
+        const std::string backup_path(path + ".bak");
+        copy_over(backup_path, path);
+    }
+}
+
+bool ManagerImpl::parseConfiguration()
+{
+    bool result = true;
+
+    FILE *file = fopen(path_.c_str(), "rb");
+
+    try {
+        if (file) {
+            Conf::YamlParser parser(file);
+            parser.serializeEvents();
+            parser.composeEvents();
+            parser.constructNativeData();
+            const int error_count = loadAccountMap(parser);
+            fclose(file);
+            if (error_count > 0) {
+                WARN("Errors while parsing %s", path_.c_str());
+                result = false;
+            }
+        } else {
+            WARN("Config file not found: creating default account map");
+            loadDefaultAccountMap();
+        }
+    } catch (const Conf::YamlParserException &e) {
+        // we only want to close the local file here and then rethrow the exception
+        fclose(file);
+        throw;
+    }
+
+    return result;
 }
 
 void ManagerImpl::init(const std::string &config_file)
@@ -138,31 +180,27 @@ void ManagerImpl::init(const std::string &config_file)
     bool no_errors = true;
 
     try {
-        FILE *file = fopen(path_.c_str(), "rb");
-
-        if (file) {
-            Conf::YamlParser parser(file);
-            parser.serializeEvents();
-            parser.composeEvents();
-            parser.constructNativeData();
-            const int error_count = loadAccountMap(parser);
-            fclose(file);
-            if (error_count > 0) {
-                WARN("Errors while parsing %s", path_.c_str());
-                no_errors = false;
-            }
-        } else {
-            WARN("Config file not found: creating default account map");
-            loadDefaultAccountMap();
-        }
+        no_errors = parseConfiguration();
     } catch (const Conf::YamlParserException &e) {
         ERROR("%s", e.what());
         no_errors = false;
     }
 
     // always back up last error-free configuration
-    if (no_errors)
+    if (no_errors) {
         make_backup(path_);
+    } else {
+        // restore previous configuration
+        WARN("Restoring last working configuration");
+        try {
+            restore_backup(path_);
+            parseConfiguration();
+        } catch (const Conf::YamlParserException &e) {
+            ERROR("%s", e.what());
+            WARN("Restoring backup failed, creating default account map");
+            loadDefaultAccountMap();
+        }
+    }
 
     initAudioDriver();
 
