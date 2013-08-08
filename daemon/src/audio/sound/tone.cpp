@@ -81,7 +81,7 @@ Tone::genBuffer(const std::string& definition)
         {
             // Sample string: "350+440" or "350+440/2000,244+655/2000"
             int freq1, freq2, time;
-            s = definition.substr(posStart, posEnd-posStart);
+            s = definition.substr(posStart, posEnd - posStart);
 
             // The 1st frequency is before the first + or the /
             size_t pos_plus = s.find('+');

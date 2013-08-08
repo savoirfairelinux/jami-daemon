@@ -53,7 +53,7 @@ AudioLoop::~AudioLoop()
 void
 AudioLoop::seek(double relative_position)
 {
-    pos_ = (double) (buffer_.samples() * (relative_position * 0.01));
+    pos_ = static_cast<double>(buffer_.samples() * relative_position * 0.01);
 }
 
 void
