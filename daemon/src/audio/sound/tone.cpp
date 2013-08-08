@@ -47,6 +47,7 @@ Tone::Tone(const std::string& definition, unsigned int sampleRate) :
     AudioLoop(sampleRate), xhigher_(0.0), xlower_(0.0)
 {
     fillWavetable();
+    delete buffer_;
     buffer_ = new AudioBuffer();
     buffer_->setSampleRate(sampleRate);
     genBuffer(definition); // allocate memory with definition parameter
