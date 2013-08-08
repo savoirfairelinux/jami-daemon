@@ -785,6 +785,7 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+        bool parseConfiguration();
 
         // Set the ringtone or recorded call to be played
         void updateAudioFile(const std::string &file, int sampleRate);
