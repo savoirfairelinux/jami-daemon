@@ -52,7 +52,7 @@ class AudioFileException : public std::runtime_error {
  */
 class AudioFile : public AudioLoop {
     public:
-        AudioFile(const std::string &filepath, unsigned int sampleRate) : AudioLoop(sampleRate), filepath_(filepath)
+        AudioFile(const std::string &filepath, unsigned int sampleRate) : AudioLoop(sampleRate), filepath_(filepath), updatePlaybackScale_(0)
         {}
 
         std::string getFilePath() const {
@@ -62,6 +62,11 @@ class AudioFile : public AudioLoop {
     protected:
         /** The absolute path to the sound file */
         std::string filepath_;
+
+    private:
+        // override
+        void onBufferFinish();
+        unsigned updatePlaybackScale_;
 };
 
 class RawFile : public AudioFile {

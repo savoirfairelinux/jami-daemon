@@ -75,14 +75,6 @@ class AudioLoop {
             return buffer_->samples();
         }
 
-        /**
-         * This should be set to true for recording playback
-         */
-        void setIsRecording(bool isRec) {
-           isRecording_ = isRec;
-        }
-
-
     protected:
         /** The data buffer */
         AudioBuffer * buffer_;
@@ -90,11 +82,9 @@ class AudioLoop {
         /** current position, set to 0, when initialize */
         size_t pos_;
 
-        /** Is a playback recording */
-        bool isRecording_;
-
     private:
         NON_COPYABLE(AudioLoop);
+        virtual void onBufferFinish();
 };
 
 #endif // __AUDIOLOOP_H__

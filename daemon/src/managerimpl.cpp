@@ -2149,9 +2149,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         }
 
         updateAudioFile(filepath, sampleRate);
-        if (audiofile_)
-            audiofile_->setIsRecording(true);
-        else
+        if (not audiofile_)
             return false;
     } // release toneMutex
 

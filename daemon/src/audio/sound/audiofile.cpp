@@ -41,7 +41,28 @@
 #include "audiofile.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
+#include "client/callmanager.h"
+#include "manager.h"
+
 #include "logger.h"
+
+void
+AudioFile::onBufferFinish()
+{
+    // We want to send values in milisecond
+    const int divisor = buffer_->getSampleRate() / 1000;
+    if (divisor == 0) {
+        ERROR("Error cannot update playback slider, sampling rate is 0");
+        return;
+    }
+
+    if ((updatePlaybackScale_ % 5) == 0) {
+        CallManager *cm = Manager::instance().getClient()->getCallManager();
+        cm->updatePlaybackScale(filepath_, pos_ / divisor, buffer_->samples() / divisor);
+    }
+
+    updatePlaybackScale_++;
+}
 
 RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int sampleRate)
     : AudioFile(name, sampleRate), audioCodec_(codec)

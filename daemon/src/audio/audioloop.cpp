@@ -37,9 +37,6 @@
 #endif
 
 #include "audioloop.h"
-#include "manager.h"
-
-#include "client/callmanager.h"
 
 #include <cmath>
 #include <numeric>
@@ -47,7 +44,7 @@
 #include <cassert>
 #include "logger.h"
 
-AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0), isRecording_(false)
+AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0)
 {
     buffer_ = new AudioBuffer;
     buffer_->setSampleRate(sampleRate);
@@ -63,8 +60,6 @@ AudioLoop::seek(double relative_position)
 {
     pos_ = (double) (buffer_->samples() * (relative_position * 0.01));
 }
-
-static unsigned int updatePlaybackScale = 0;
 
 void
 AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
@@ -102,21 +97,7 @@ AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
 
     pos_ = pos;
 
-    // We want to send values in milisecond
-    int divisor = buffer_->getSampleRate() / 1000;
-    if (divisor == 0) {
-        ERROR("Error cannot update playback slider, sampling rate is 0");
-        return;
-    }
-
-    if (not isRecording_)
-        return;
-
-    if ((updatePlaybackScale % 5) == 0) {
-        CallManager *cm = Manager::instance().getClient()->getCallManager();
-        cm->updatePlaybackScale(pos_ / divisor, buf_samples / divisor);
-    }
-
-    updatePlaybackScale++;
+    onBufferFinish();
 }
 
+void AudioLoop::onBufferFinish() {}

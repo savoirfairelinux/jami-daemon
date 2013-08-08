@@ -547,9 +547,10 @@ main_window_confirm_go_clear(callable_obj_t * c, SFLPhoneClient *client)
 }
 
 void
-main_window_update_playback_scale(guint current, guint size)
+main_window_update_playback_scale(const gchar *file_path, guint current, guint size)
 {
-     sfl_seekslider_update_scale(SFL_SEEKSLIDER(seekslider), current, size);
+    if (sfl_seekslider_has_path(SFL_SEEKSLIDER(seekslider), file_path))
+        sfl_seekslider_update_scale(SFL_SEEKSLIDER(seekslider), current, size);
 }
 
 void

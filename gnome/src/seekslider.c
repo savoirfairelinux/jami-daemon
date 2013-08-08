@@ -445,3 +445,9 @@ void sfl_seekslider_reset(SFLSeekSlider *seekslider)
     seekslider->priv->is_playing = FALSE;
     seekslider->priv->can_update_scale = TRUE;
 }
+
+gboolean
+sfl_seekslider_has_path(SFLSeekSlider *seekslider, const gchar *file_path)
+{
+    return g_strcmp0(seekslider->priv->file_path, file_path) == 0;
+}

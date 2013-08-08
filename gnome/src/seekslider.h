@@ -68,6 +68,8 @@ void sfl_seekslider_update_timelabel(SFLSeekSlider *seekslider, guint current, g
 
 void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay display);
 
+gboolean sfl_seekslider_has_path(SFLSeekSlider *seekslider, const gchar *file_path);
+
 void sfl_seekslider_reset(SFLSeekSlider *seekslider);
 
 #endif /* __RB_SEEKSLIDER_H */
