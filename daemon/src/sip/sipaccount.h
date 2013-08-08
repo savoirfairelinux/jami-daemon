@@ -45,6 +45,8 @@
 
 #include "sipbuddy.h"
 #include "presence_subscription.h"
+#include "sippublish.h"
+
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
 namespace Conf {
@@ -517,13 +519,27 @@ class SIPAccount : public Account {
         /* Returns true if the username and/or hostname match this account */
         bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
-        //int getBuddy(const std::string& buddySipUri, SIPBuddy *b);
-        void addBuddy(const std::string& buddySipUri);
-        void removeBuddy(const std::string& buddySipUri);
+        /**
+         * Presence management
+         */
+        void sendPresence(const std::string &status, const std::string &note);
+        void subscribeBuddy(const std::string& buddySipUri);
+        void unsubscribeBuddy(const std::string& buddySipUri);
+        void addBuddy(SIPBuddy *b);
+        void removeBuddy(SIPBuddy *b);
         void addServerSubscription(PresenceSubscription *s);
         void removeServerSubscription(PresenceSubscription *s);
-        void notifyServerSubscription(const std::string &newPresenceStatus, const std::string &newChannelStatus);
-        bool compareServerSubscription(PresenceSubscription *first, PresenceSubscription *second);
+        void notifyServerSubscription();
+        //void notifyServerSubscription(const std::string &newPresenceStatus, const std::string &newChannelStatus);
+        //bool compareServerSubscription(PresenceSubscription *first, PresenceSubscription *second);
+
+
+        pj_bool_t       online_status; /**< Our online status.	*/
+        pjrpid_element  rpid;	    /**< RPID element information.*/
+        pjsip_publishc  *publish_sess;  /**< Client publication session.*/
+        pj_bool_t   publish_state; /**< Last published online status.*/
+        pj_bool_t   publish_enabled; /**< Allow for status publish,*/
+
 private:
         NON_COPYABLE(SIPAccount);
 

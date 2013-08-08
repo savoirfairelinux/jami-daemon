@@ -90,22 +90,19 @@ private:
     void rescheduleTimer(bool reschedule, unsigned msec);
 
     pj_status_t updatePresence();
-
+    pj_status_t updateSubscription();
     bool isTermReason(std::string);
     unsigned getTermCode();
 
     SIPAccount          *acc;
     pj_str_t		 uri;	    /**< Buddy URI.			*/
-//    unsigned		 buddy_id;	    /**< Buddy index.			*/
     pj_str_t		 contact;   /**< Contact learned from subscrp.	*/
     pj_str_t		 display;   /**< Buddy display name.		*/
     pjsip_dialog	*dlg;	    /**< The underlying dialog.		*/
-//    pj_str_t		 host;	    /**< Buddy host.			*/
     pj_bool_t		 monitor;   /**< Should we monitor?		*/
     pj_str_t		 name;	    /**< Buddy name.			*/
     pj_caching_pool      cp_;
     pj_pool_t		*pool;	    /**< Pool for this buddy.		*/
-//    unsigned		 port;	    /**< Buddy port.			*/
     pjsip_pres_status	 status;    /**< Buddy presence status.		*/
     pjsip_evsub		*sub;	    /**< Buddy presence subscription	*/
     unsigned		 term_code; /**< Subscription termination code	*/

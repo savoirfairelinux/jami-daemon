@@ -39,9 +39,9 @@
 //PJ_BEGIN_DECL
 
 
- extern pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata);
+extern pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
 
- static pjsip_module my_mod_pres = {
+static pjsip_module my_mod_pres = {
     NULL, NULL, /* prev, next.		*/
     { "mod-lotes-presence", 18}, /* Name.		*/
     -1, /* Id			*/
@@ -51,7 +51,7 @@
     NULL, /* start()		*/
     NULL, /* stop()		*/
     NULL, /* unload()		*/
-    &my_pres_on_rx_request, /* on_rx_request()	*/
+    &pres_on_rx_subscribe_request, /* on_rx_request()	*/
     NULL, /* on_rx_response()	*/
     NULL, /* on_tx_request.	*/
     NULL, /* on_tx_response()	*/
@@ -59,7 +59,7 @@
 
 };
 
- struct pjsua_msg_data
+struct pres_msg_data
 {
     /**
      * Additional message headers as linked list. Application can add
@@ -96,6 +96,11 @@
      */
     pjsip_multipart_part multipart_parts;
 };
+
+//pjsip_pres_status pres_status_data;
+pjsip_pres_status *  pres_get_data();
+extern void pres_update(const std::string &status, const std::string &note);
+extern void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
 
 //PJ_END_DECL
 #endif	/* SIPVOIP_PRES_H */

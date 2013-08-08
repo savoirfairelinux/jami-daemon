@@ -419,15 +419,9 @@ CallManager::unsubscribePresence(const std::string& accountID, const std::string
 }
 
 void
-CallManager::setPresenceOnline(const std::string& accountID)
-{
-  DEBUG("setPresenceOnline");
-  Manager::instance().setPresenceOnline(accountID);
-}
 
-void
-CallManager::setPresenceOffline(const std::string& accountID)
+CallManager::sendPresence(const std::string& accountID, const std::string& status, const std::string& note)
 {
-  DEBUG("setPresenceOffline");
-  Manager::instance().setPresenceOffline(accountID);
+  DEBUG("sendPresence");
+  Manager::instance().sendPresence(accountID,status,note);
 }

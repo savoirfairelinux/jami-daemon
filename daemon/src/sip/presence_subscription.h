@@ -13,6 +13,9 @@
 #include <pjsip-simple/evsub.h>
 #include"pjsip-simple/presence.h"
 
+#include "manager.h"
+#include "sipvoip_pres.h"
+
 
 class PresenceSubscription {
 public:
@@ -24,63 +27,83 @@ public:
         , expires (-1) {};
 
     char            *remote;    /**< Remote URI.			    */
-    std::string	    accId;	    /**< Account ID.			    */
+    std::string	    accId;	/**< Account ID.			    */
 
     void setExpires(int ms) {
         expires = ms;
     }
 
-    /*bool operator==(const PresenceSubscription & s) const {
-        return (!(strcmp(remote,s.remote)));
-    }*/
-    bool match(PresenceSubscription * s){
+    int getExpires(){
+        return expires;
+    }
+
+    bool matches(PresenceSubscription * s){
         // servers match if they have the same remote uri and the account ID.
       return ((!(strcmp(remote,s->remote))) && (accId==s->accId));
     }
 
+    bool isActive(){
+        if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_ACTIVE )
+            return true;
+        return false;
+    }
 
-    inline void notify(const std::string &newPresenceState, const std::string &newChannelState) {
-        DEBUG("################################################notifying %s", remote);
+    /**
+     * Send the tirst notification.
+     * FIXME : pjsip_pres_notify crash because the header can't be cloned
+     * So far, the first notify is sent in sipvoip_pres.c instead.
+     */
+    void init(){
+        pjsip_tx_data *tdata = NULL;
+        pres_msg_data msg_data;
+        pj_str_t reason = pj_str("OK");
+        pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
 
+        pjsip_pres_set_status(sub, pres_get_data());
+        if (expires == 0)
+            ev_state = PJSIP_EVSUB_STATE_TERMINATED;
 
-        /* Only send NOTIFY once subscription is active. Some subscriptions
+        /* Create and send the the first NOTIFY to active subscription: */
+        pj_str_t stateStr = pj_str("");
+        pj_status_t status = pjsip_pres_notify(sub, ev_state, &stateStr, &reason, &tdata);
+        if (status == PJ_SUCCESS) {
+            pres_process_msg_data(tdata, &msg_data);
+            status = pjsip_pres_send_request(sub, tdata);
+        }
+
+        if (status != PJ_SUCCESS) {
+            WARN("Unable to create/send NOTIFY %d", status);
+            pjsip_pres_terminate(sub, PJ_FALSE);
+        }
+    }
+
+    void notify() {
+         /* Only send NOTIFY once subscription is active. Some subscriptions
          * may still be in NULL (when app is adding a new buddy while in the
          * on_incoming_subscribe() callback) or PENDING (when user approval is
          * being requested) state and we don't send NOTIFY to these subs until
          * the user accepted the request.
          */
-        if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_ACTIVE
-                /* && (pres_status.info[0].basic_open != getStatus()) */) {
-            DEBUG("Active");
+        if (isActive()) {
+            WARN("Notifying %s.", remote);
 
             pjsip_tx_data *tdata;
-            pjsip_pres_status pres_status;
-            pjsip_pres_get_status(sub, &pres_status);
-
-            pres_status.info[0].basic_open = newPresenceState == "open"? true: false;
-
-            pjsip_pres_set_status(sub, &pres_status);
+            pjsip_pres_set_status(sub, pres_get_data());
 
             if (pjsip_pres_current_notify(sub, &tdata) == PJ_SUCCESS) {
-                if (tdata->msg->type == PJSIP_REQUEST_MSG) {
-                    const pj_str_t STR_USER_AGENT = {"User-Agent", 10};
-                    pjsip_hdr *h;
-                    pj_str_t ua = pj_str("SFLphone");
-                    h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool,
-                            &STR_USER_AGENT, &ua);
-                    pjsip_msg_add_hdr(tdata->msg, h);
-                }
+                // add msg header and send
+                pres_process_msg_data(tdata, NULL);
                 pjsip_pres_send_request(sub, tdata);
             }
-        }
-        else{
-           DEBUG("Inactive");
-
+            else{
+                WARN("Unable to create/send NOTIFY");
+                pjsip_pres_terminate(sub, PJ_FALSE);
+            }
         }
     }
 
     friend void pres_evsub_on_srv_state( pjsip_evsub *sub, pjsip_event *event);
-    friend pj_bool_t my_pres_on_rx_request(pjsip_rx_data *rdata);
+    friend pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
 
 private:
     NON_COPYABLE(PresenceSubscription);

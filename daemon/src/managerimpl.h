@@ -1049,10 +1049,9 @@ class ManagerImpl {
 
        /**
          * push a presence for a account
-         * only used for IP2IP accounts
+         * Notify for IP2IP accounts and publish for PBX account
          */
-        void setPresenceOnline(const std::string& accountID);
-        void setPresenceOffline(const std::string& accountID);
+        void sendPresence(const std::string& accountID, const std::string& status, const std::string& note);
 
     private:
         NON_COPYABLE(ManagerImpl);

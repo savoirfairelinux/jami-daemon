@@ -80,7 +80,6 @@ static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
         buddy->incLock();
         DEBUG("Presence subscription to '%s' is '%s'", buddy->getURI().c_str(),
             pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
-//	pj_log_push_indent();
 
         if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
             int resub_delay = -1;
@@ -148,9 +147,7 @@ static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
                          * into pending state.
                          */
                         const pjsip_sub_state_hdr *sub_hdr;
-                        pj_str_t sub_state = {
-                                "Subscription-State",
-                                18 };
+                        pj_str_t sub_state = {"Subscription-State", 18 };
                         const pjsip_msg *msg;
 
                         msg = event->body.tsx_state.src.rdata->msg_info.msg;
@@ -251,25 +248,11 @@ static void sflphoned_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata,
      *   lock, which we are currently holding!
      */
     buddy = (SIPBuddy *) pjsip_evsub_get_mod_data(sub, modId);
-    if (!buddy) {
+    if (!buddy)
         return;
-    }
-    buddy->incLock();
-    /* Update our info. */
+
     pjsip_pres_get_status(sub, &buddy->status);
-    const std::string basic(buddy->status.info[0].basic_open ? "open" : "closed");
-
-    //ebail : TODO Call here the callback for presence changement
-    const std::string note(buddy->status.info[0].rpid.note.ptr ? buddy->status.info[0].rpid.note.ptr : "");
-
-    ERROR("\n-----------------\n"
-            "presenceStateChange for %s status=%s note=%s \n-----------------\n",
-            buddy->getURI().c_str(),
-            basic.c_str(),
-            note.c_str());
-
-    //ebail: edmit signal
-    Manager::instance().getDbusManager()->getCallManager()->newPresenceNotification(buddy->getURI(), basic, note);
+    buddy->updatePresence();
 
     /* The default is to send 200 response to NOTIFY.
      * Just leave it there..
@@ -286,16 +269,13 @@ static void sflphoned_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata,
 SIPBuddy::SIPBuddy(const std::string& uri_, SIPAccount *acc_) :
         acc(acc_),
         uri(pj_str(strdup(uri_.c_str()))),
-        //buddy_id(-1)
         contact(pj_str(strdup(acc->getFromUri().c_str()))),
         display(),
         dlg(NULL),
-//        host ()
         monitor(false),
         name(),
         cp_(),
         pool(0),
-//        port(0)
         status(),
         sub(NULL),
         term_code(0),
@@ -312,9 +292,8 @@ SIPBuddy::~SIPBuddy() {
         usleep(200);
     }
     DEBUG("Destroying buddy object with uri %s", uri.ptr);
-    monitor = false;
     rescheduleTimer(PJ_FALSE, 0);
-    updatePresence();
+    unsubscribe();
 
     pj_pool_release(pool);
 }
@@ -343,7 +322,7 @@ void SIPBuddy::rescheduleTimer(bool reschedule, unsigned msec) {
     if (reschedule) {
         pj_time_val delay;
 
-        DEBUG("Resubscribing buddy  %.*s in %u ms (reason: %.*s)",
+        WARN("Resubscribing buddy  %.*s in %u ms (reason: %.*s)",
               uri.slen, uri.ptr, msec, (int) term_reason.slen, term_reason.ptr);
         monitor = PJ_TRUE;
         pj_timer_entry_init(&timer, 0, this, &buddy_timer_cb);
@@ -361,36 +340,49 @@ void SIPBuddy::rescheduleTimer(bool reschedule, unsigned msec) {
 
 pj_status_t SIPBuddy::updatePresence() {
 
+    incLock();
+
+    /* Update our info. See pjsua_buddy_get_info() for additionnal idea*/
+    const std::string basic(status.info[0].basic_open ? "open" : "closed");
+    const std::string note(status.info[0].rpid.note.ptr,status.info[0].rpid.note.slen);
+    DEBUG(" Received presenceStateChange for %s status=%s note=%s",getURI().c_str(),basic.c_str(),note.c_str());
+    /* Transmit dbus signal */
+    Manager::instance().getDbusManager()->getCallManager()->newPresenceNotification(getURI(), basic, note);
+
+    decLock();
+}
+
+
+pj_status_t SIPBuddy::updateSubscription() {
+
     if (!monitor) {
         /* unsubscribe */
         pjsip_tx_data *tdata;
         pj_status_t retStatus;
 
         if (sub == NULL) {
-            DEBUG("Buddy already unsubscribed sub=NULL.");
+            WARN("Buddy already unsubscribed sub=NULL.");
             return PJ_SUCCESS;
         }
 
         if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
-            DEBUG("Buddy already unsubscribed sub=TERMINATED.");
-            pjsip_evsub_terminate(sub, PJ_FALSE); // = NULL;
+            WARN("Buddy already unsubscribed sub=TERMINATED.");
+            //pjsip_evsub_terminate(sub, PJ_FALSE); //
+            sub = NULL;
             return PJ_SUCCESS;
         }
 
-        DEBUG("Buddy %s: unsubscribing..", uri.ptr);
-        retStatus = pjsip_pres_initiate(sub, 300, &tdata);
+        WARN("Buddy %s: unsubscribing..", uri.ptr);
+        retStatus = pjsip_pres_initiate(sub, 0, &tdata);
         if (retStatus == PJ_SUCCESS) {
-            //	pjsua_process_msg_data(tdata, NULL);
-            if (/*pjsua_var.ua_cfg.user_agent.slen &&*/
-            tdata->msg->type == PJSIP_REQUEST_MSG) {
-                const pj_str_t STR_USER_AGENT = {
-                        "User-Agent",
-                        10 };
+            pres_process_msg_data(tdata, NULL);
+            /*if (tdata->msg->type == PJSIP_REQUEST_MSG) {
+                const pj_str_t STR_USER_AGENT = {"User-Agent", 10};
                 pj_str_t ua = pj_str(strdup(acc->getUserAgentName().c_str()));
                 pjsip_hdr *h;
                 h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool, &STR_USER_AGENT, &ua);
                 pjsip_msg_add_hdr(tdata->msg, h);
-            }
+            }*/
             retStatus = pjsip_pres_send_request(sub, tdata);
         }
 
@@ -399,16 +391,19 @@ pj_status_t SIPBuddy::updatePresence() {
             pjsip_evsub_terminate(sub, PJ_FALSE); // = NULL;
             WARN("Unable to unsubscribe presence", status);
         }
-//        pjsip_evsub_set_mod_data(sub, modId, NULL);
+
+        pjsip_evsub_set_mod_data(sub, modId, NULL);   // Not interested with further events
+
         return PJ_SUCCESS;
     }
 
-#if 0
-    if (sub && sub->dlg) { //do not bother if already subscribed
+//#if 0
+    if (sub && dlg) { //do not bother if already subscribed
 //        return PJ_SUCCESS;
         pjsip_evsub_terminate(sub, PJ_FALSE);
+        DEBUG("Terminate existing sub.");
     }
-#endif
+//#endif
 
     //subscribe
     pjsip_evsub_user pres_callback;
@@ -450,18 +445,13 @@ pj_status_t SIPBuddy::updatePresence() {
     pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
     status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from, &contact, &uri, NULL, &dlg);
     if (status != PJ_SUCCESS) {
-        //pjsua_perror(THIS_FILE, "Unable to create dialog",
-         //       status);
         ERROR("Unable to create dialog \n");
-        //if (tmp_pool) pj_pool_release(tmp_pool);
-        //pj_log_pop_indent();
         return PJ_FALSE;
     }
-    //ELOI add credential for auth - otherwise subscription was failing
+    // Add credential for auth.
     if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
-      ERROR("Could not initialize credentials for invite session authentication");
+      ERROR("Could not initialize credentials for subscribe session authentication");
     }
-    // E.B add credential for auth
 
     /* Increment the dialog's lock otherwise when presence session creation
      * fails the dialog will be destroyed prematurely.
@@ -548,12 +538,12 @@ pj_status_t SIPBuddy::updatePresence() {
 
 void SIPBuddy::subscribe() {
     monitor = true;
-    updatePresence();
+    updateSubscription();
 }
 
 void SIPBuddy::unsubscribe() {
     monitor = false;
-    updatePresence();
+    updateSubscription();
 }
 
 bool SIPBuddy::match(SIPBuddy *b){

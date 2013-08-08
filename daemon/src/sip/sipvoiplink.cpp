@@ -80,6 +80,7 @@
 #include <algorithm>
 #include "sipvoip_pres.h"
 #include"pjsip-simple/presence.h"
+#include"pjsip-simple/publish.h"
 
 using namespace sfl;
 
@@ -510,10 +511,9 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     TRY(pjsip_evsub_init_module(endpt_));
     TRY(pjsip_xfer_init_module(endpt_));
 
-// aol changes
+    // presence/publish management
     TRY(pjsip_pres_init_module(endpt_, pjsip_evsub_instance()));
     TRY(pjsip_endpt_register_module(endpt_, &my_mod_pres));
-// aol changes end
 
     static const pjsip_inv_callback inv_cb = {
         invite_session_state_changed_cb,
@@ -535,6 +535,8 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
         {(char *) "INVITE", 6},
         {(char *) "ACK", 3},
         {(char *) "BYE", 3},
+        {(char *) "NOTIFY",6},
+        {(char *) "PUBLISH",7},
         {(char *) "CANCEL",6}};
 
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
@@ -2336,6 +2338,9 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 #endif
 }
 } // end anonymous namespace
+
+/*
+// pkeroulas : is this usefull
 void SIPVoIPLink::setPresenceState(const std::string &accId, const std::string& state) {
     this->presenceState = state;
 #if 0 // ELOI : modify account management
@@ -2343,13 +2348,15 @@ void SIPVoIPLink::setPresenceState(const std::string &accId, const std::string& 
     acc->notifyServers(presenceState, channelState);
 #else
     SIPAccount *acc = Manager::instance().getSipAccount(accId);
-    /*no need of channelStatte. We put it to NULL */
+    //no need of channelStatte. We put it to NULL
     acc->notifyServerSubscription(presenceState, NULL);
 #endif
 }
 std::string SIPVoIPLink::getPresenceState() {
     return this->presenceState;
 } // end anonymous namespace
+*/
+
 int SIPVoIPLink::getModId() {
       return mod_ua_.id;
 }

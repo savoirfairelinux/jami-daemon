@@ -2897,23 +2897,17 @@ void ManagerImpl::startAudioDriverStream()
 void ManagerImpl::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->addBuddy(buddySipUri);
+    account->subscribeBuddy(buddySipUri);
 }
 
 void ManagerImpl::unsubscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->removeBuddy(buddySipUri);
+    account->unsubscribeBuddy(buddySipUri);
 }
 
-void ManagerImpl::setPresenceOnline(const std::string& accountID)
+void ManagerImpl::sendPresence(const std::string& accountID, const std::string& status, const std::string& note)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->notifyServerSubscription("open","");
-}
-
-void ManagerImpl::setPresenceOffline(const std::string& accountID)
-{
-    SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->notifyServerSubscription ("close","");
+    account->sendPresence(status,note);
 }
