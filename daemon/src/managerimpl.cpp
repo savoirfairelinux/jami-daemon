@@ -1866,11 +1866,7 @@ void
 ManagerImpl::updateAudioFile(const std::string &file, int sampleRate)
 {
     try {
-        if (file.find(".wav") != std::string::npos) {
-            audiofile_.reset(new WaveFile(file, sampleRate));
-        } else {
-            audiofile_.reset(new RawFile(file, sampleRate));
-        }
+        audiofile_.reset(new AudioFile(file, sampleRate));
     } catch (const AudioFileException &e) {
         ERROR("Exception: %s", e.what());
     }

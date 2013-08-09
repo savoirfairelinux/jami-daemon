@@ -110,16 +110,6 @@ class AudioRecord {
     protected:
 
         /**
-         * Set the header for raw files
-         */
-        bool setRawFile();
-
-        /**
-         * Set the header for wave files
-         */
-        bool setWavFile();
-
-        /**
          * Open an existing raw file, used when the call is set on hold
          */
         bool openExistingRawFile();

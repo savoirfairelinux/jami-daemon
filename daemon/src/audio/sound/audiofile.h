@@ -48,8 +48,7 @@ class AudioFileException : public std::runtime_error {
  */
 class AudioFile : public AudioLoop {
     public:
-        AudioFile(const std::string &filepath, unsigned int sampleRate) : AudioLoop(sampleRate), filepath_(filepath), updatePlaybackScale_(0)
-        {}
+        AudioFile(const std::string &filepath, unsigned int sampleRate);
 
         std::string getFilePath() const {
             return filepath_;
@@ -63,21 +62,6 @@ class AudioFile : public AudioLoop {
         // override
         void onBufferFinish();
         unsigned updatePlaybackScale_;
-};
-
-class RawFile : public AudioFile {
-    public:
-        RawFile(const std::string& name, unsigned int sampleRate = 8000);
-};
-
-class WaveFile : public AudioFile {
-    public:
-        /**
-         * Load a sound file in memory
-         * @param filename      The absolute path to the file
-         * @param sampleRate    The sample rate to read it
-         */
-        WaveFile(const std::string&, unsigned int sampleRate);
 };
 
 #endif // __AUDIOFILE_H__
