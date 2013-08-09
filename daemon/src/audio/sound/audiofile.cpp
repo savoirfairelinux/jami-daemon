@@ -109,7 +109,8 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
 
     SFLAudioSample * interleaved = new SFLAudioSample[nbFrames * fileHandle.channels()];
 
-    fileHandle.read(interleaved, nbFrames);
+    // get n "items", aka samples (not frames)
+    fileHandle.read(interleaved, nbFrames * fileHandle.channels());
 
     AudioBuffer * buffer = new AudioBuffer(nbFrames, fileHandle.channels(), fileHandle.samplerate());
     buffer->deinterleave(interleaved, nbFrames, fileHandle.channels());
