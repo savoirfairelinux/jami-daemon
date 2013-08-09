@@ -446,11 +446,26 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
             pjsip_inv_send_msg(replaced_inv, tdata);
     } else { // Proceed with normal call flow
-        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             ERROR("Could not answer invite");
             delete call;
             return PJ_FALSE;
         }
+
+        if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+            ERROR("Could not send msg for invite");
+            delete call;
+            return PJ_FALSE;
+        }
+
+        call->setConnectionState(Call::TRYING);
+
+        if (pjsip_inv_answer(call->inv, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+            ERROR("Could not answer invite");
+            delete call;
+            return PJ_FALSE;
+        }
+
         if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
             delete call;
