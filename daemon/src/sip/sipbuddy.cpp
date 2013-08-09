@@ -31,7 +31,6 @@
 
 #include <pj/log.h>
 #include <pj/rand.h>
-#include <pj/log.h>
 #include <pjsip/sip_module.h>
 #include <pjsip/sip_types.h>
 #include <pjsip/sip_event.h>
@@ -45,19 +44,18 @@
 
 #include "sipbuddy.h"
 #include "sipaccount.h"
+#include "sippresence.h"
 #include "sipvoiplink.h"
 
-#define PJSUA_BUDDY_SUB_TERM_REASON_LEN 32
-#define PJSUA_PRES_TIMER 300
 #include "manager.h"
-#include "dbus/dbusmanager.h"
-#include "dbus/callmanager.h"
 
 #include "logger.h"
-//extern pjsip_module mod_ua_;
-//extern pjsip_endpoint *endpt_;
+
+#define BUDDY_SUB_TERM_REASON_LEN 32
+#define PRES_TIMER 300
 
 int modId;
+
 static void buddy_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry) {
     (void) th;
     SIPBuddy *b = (SIPBuddy *) entry->user_data;
@@ -65,7 +63,7 @@ static void buddy_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry) {
 }
 
 /* Callback called when *client* subscription state has changed. */
-static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
+static void buddy_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
     SIPBuddy *buddy;
 
     PJ_UNUSED_ARG(event);
@@ -81,13 +79,18 @@ static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
         DEBUG("Presence subscription to '%s' is '%s'", buddy->getURI().c_str(),
             pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
-        if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+        pjsip_evsub_state state = pjsip_evsub_get_state(sub);
+        if(state == PJSIP_EVSUB_STATE_ACCEPTED){
+            DEBUG("Accept buddy.");
+            buddy->accept();
+        }
+        else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
             int resub_delay = -1;
 
 //            const pj_str_t *pjTermReason = pjsip_evsub_get_termination_reason(sub);
 //            std::string termReason(pjTermReason->ptr,
-//                    pjTermReason->slen > PJSUA_BUDDY_SUB_TERM_REASON_LEN?
-//                        PJSUA_BUDDY_SUB_TERM_REASON_LEN:
+//                    pjTermReason->slen > BUDDY_SUB_TERM_REASON_LEN?
+//                        BUDDY_SUB_TERM_REASON_LEN:
 //                        pjTermReason->slen
 //            );
             pj_strdup_with_null(buddy->pool, &buddy->term_reason, pjsip_evsub_get_termination_reason(sub));
@@ -118,7 +121,7 @@ static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
                     }
                 } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
                     if (buddy->isTermReason("deactivated") || buddy->isTermReason("timeout")) {
-                        /* deactivated: The subscription has been terminated,
+                     /* deactivated: The subscription has been terminated,
                          * but the subscriber SHOULD retry immediately with
                          * a new subscription.
                          */
@@ -164,8 +167,8 @@ static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
              * some random value, to avoid sending SUBSCRIBEs all at once)
              */
             if (resub_delay == -1) {
-//		pj_assert(PJSUA_PRES_TIMER >= 3);
-                resub_delay = PJSUA_PRES_TIMER * 1000;// - 2500 + (pj_rand() % 5000);
+//		pj_assert(PRES_TIMER >= 3);
+                resub_delay = PRES_TIMER * 1000;// - 2500 + (pj_rand() % 5000);
             }
             buddy->sub = sub;
             buddy->rescheduleTimer(PJ_TRUE, resub_delay);
@@ -190,7 +193,7 @@ static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
 }
 
 /* Callback when transaction state has changed. */
-static void sflphoned_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pjsip_event *event) {
+static void buddy_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pjsip_event *event) {
 
     SIPBuddy *buddy;
     pjsip_contact_hdr *contact_hdr;
@@ -239,7 +242,7 @@ static void sflphoned_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *ts
 }
 
 /* Callback called when we receive NOTIFY */
-static void sflphoned_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata, int *p_st_code, pj_str_t **p_st_text,
+static void buddy_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata, int *p_st_code, pj_str_t **p_st_text,
         pjsip_hdr *res_hdr, pjsip_msg_body **p_body) {
     SIPBuddy *buddy;
 
@@ -338,18 +341,16 @@ void SIPBuddy::rescheduleTimer(bool reschedule, unsigned msec) {
     }
 }
 
+void SIPBuddy::accept() {
+    acc->getPresence()->addBuddy(this);
+}
+
 pj_status_t SIPBuddy::updatePresence() {
 
-    incLock();
-
-    /* Update our info. See pjsua_buddy_get_info() for additionnal idea*/
-    const std::string basic(status.info[0].basic_open ? "open" : "closed");
-    const std::string note(status.info[0].rpid.note.ptr,status.info[0].rpid.note.slen);
-    DEBUG(" Received presenceStateChange for %s status=%s note=%s",getURI().c_str(),basic.c_str(),note.c_str());
-    /* Transmit dbus signal */
-    Manager::instance().getDbusManager()->getCallManager()->newPresenceNotification(getURI(), basic, note);
-
-    decLock();
+    //incLock();
+    /* callback*/
+    acc->getPresence()->reportBuddy(getURI(),&status);
+    //decLock();
 }
 
 
@@ -414,9 +415,9 @@ pj_status_t SIPBuddy::updateSubscription() {
 
     /* Event subscription callback. */
     pj_bzero(&pres_callback, sizeof(pres_callback));
-    pres_callback.on_evsub_state = &sflphoned_evsub_on_state;
-    pres_callback.on_tsx_state = &sflphoned_evsub_on_tsx_state;
-    pres_callback.on_rx_notify = &sflphoned_evsub_on_rx_notify;
+    pres_callback.on_evsub_state = &buddy_evsub_on_state;
+    pres_callback.on_tsx_state = &buddy_evsub_on_tsx_state;
+    pres_callback.on_rx_notify = &buddy_evsub_on_rx_notify;
 
     DEBUG("Buddy %s: subscribing presence,using account %s..",
           uri.ptr, acc->getAccountID().c_str());
@@ -510,7 +511,6 @@ pj_status_t SIPBuddy::updateSubscription() {
         pjsip_evsub_terminate(sub, PJ_FALSE); // = NULL;
         WARN("Unable to create initial SUBSCRIBE", status);
 //        if (tmp_pool) pj_pool_release(tmp_pool);
-//        pj_log_pop_indent();
         return PJ_SUCCESS;
     }
 
@@ -527,7 +527,6 @@ pj_status_t SIPBuddy::updateSubscription() {
 
         WARN("Unable to send initial SUBSCRIBE", status);
 //        if (tmp_pool) pj_pool_release(tmp_pool);
-//        pj_log_pop_indent();
         return PJ_SUCCESS;
     }
 
@@ -536,14 +535,14 @@ pj_status_t SIPBuddy::updateSubscription() {
     return PJ_SUCCESS;
 }
 
-void SIPBuddy::subscribe() {
+bool SIPBuddy::subscribe() {
     monitor = true;
-    updateSubscription();
+    return ((updateSubscription() == PJ_SUCCESS))? true : false;
 }
 
-void SIPBuddy::unsubscribe() {
+bool SIPBuddy::unsubscribe() {
     monitor = false;
-    updateSubscription();
+    return ((updateSubscription() == PJ_SUCCESS))? true : false;
 }
 
 bool SIPBuddy::match(SIPBuddy *b){

@@ -36,6 +36,7 @@
 
 #include "account_schema.h"
 #include "sipaccount.h"
+#include "sippresence.h"
 #include "sip_utils.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
@@ -112,20 +113,10 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , keepAliveEnabled_(false)
     , keepAliveTimer_()
     , link_(SIPVoIPLink::instance())
-    , serverSubscriptions_ ()
-    , buddies_ ()
+    , presence_(new SIPPresence(this))
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
-
-    , online_status()
-    , rpid({PJRPID_ELEMENT_TYPE_PERSON,
-            pj_str("20"),
-            PJRPID_ACTIVITY_BUSY,
-            pj_str("bla")})
-    , publish_sess()
-    , publish_state()
-    , publish_enabled(true)
 {
     via_addr_.host.ptr = 0;
     via_addr_.host.slen = 0;
@@ -133,6 +124,11 @@ SIPAccount::SIPAccount(const std::string& accountID)
 
     if (isIP2IP())
         alias_ = IP2IP_PROFILE;
+}
+
+SIPAccount::~SIPAccount()
+{
+    delete presence_;
 }
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
@@ -1218,7 +1214,15 @@ VoIPLink* SIPAccount::getVoIPLink()
     return link_;
 }
 
+bool SIPAccount::isIP2IP() const{
+    return accountID_ == IP2IP_PROFILE;
+}
 
+SIPPresence * SIPAccount::getPresence(){
+    return presence_;
+}
+
+/*
 void SIPAccount::sendPresence(const std::string &status, const std::string &note){
     pres_update(status,note);
     if (isIP2IP())
@@ -1227,11 +1231,6 @@ void SIPAccount::sendPresence(const std::string &status, const std::string &note
         pres_publish(this);
 }
 
-
-/*
- * Buddy list management
- *
- */
 void SIPAccount::subscribeBuddy(const std::string& buddySipUri){
     std::list< SIPBuddy *>::iterator buddyIt;
     for (buddyIt = buddies_.begin(); buddyIt != buddies_.end(); buddyIt++)
@@ -1265,11 +1264,7 @@ void SIPAccount::addBuddy(SIPBuddy *b){
 void SIPAccount::removeBuddy(SIPBuddy *b){
     DEBUG("-Buddy subscription removed from the buddy list.");
     buddies_.remove(b);
-}
-
-bool SIPAccount::isIP2IP() const{
-    return accountID_ == IP2IP_PROFILE;
-}
+}*/
 
 /*
  * Presence Management for IP2IP accounts
@@ -1280,30 +1275,26 @@ bool SIPAccount::isIP2IP() const{
  */
 
 /* Presence : Method used to add serverSubscription to PresenceSubscription list in case of IP2IP accounts */
-void SIPAccount::addServerSubscription(PresenceSubscription *s) {
+/*void SIPAccount::addServerSubscription(PresenceSubscription *s) {
     DEBUG("-PresenceServer subscription added.");
     serverSubscriptions_.push_back(s);
-}
+}*/
 
 /* Presence : Method used to remove serverSubscription to PresenceSubscription list in: case of IP2IP accounts */
-void SIPAccount::removeServerSubscription(PresenceSubscription *s) {
+/*void SIPAccount::removeServerSubscription(PresenceSubscription *s) {
     serverSubscriptions_.remove(s);
     DEBUG("-PresenceServer removed");
-}
+}*/
 
 /* Presence : Method used to notify each serverSubscription of a new presencein case of IP2IP accounts */
-void SIPAccount::notifyServerSubscription() {
+/*void SIPAccount::notifyServerSubscription() {
     std::list< PresenceSubscription *>::iterator serverIt;
     DEBUG("-Iterating through PresenceServers:");
     for (serverIt = serverSubscriptions_.begin(); serverIt != serverSubscriptions_.end(); serverIt++)
         (*serverIt)->notify();
-}
+}*/
 
 
-/*
- * Presence Management for IP2IP accounts
- *
- */
 
 bool SIPAccount::matches(const std::string &userName, const std::string &server,
                          pjsip_endpoint *endpt, pj_pool_t *pool) const

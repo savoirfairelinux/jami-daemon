@@ -15,10 +15,11 @@ libsiplink_la_SOURCES = \
 		siptransport.h \
 		sip_utils.cpp \
 		sip_utils.h \
+		sippresence.cpp \
+		sippresence.h \
 		sipbuddy.cpp \
 		sipbuddy.h \
-		sipvoip_pres.cpp \
-		sipvoip_pres.h \
+		presence_subscription.cpp\
 		presence_subscription.h\
 		sippublish.cpp\
 		sippublish.h

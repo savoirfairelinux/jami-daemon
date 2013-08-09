@@ -45,11 +45,11 @@
 
 class SIPAccount;
 
-static void sflphoned_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
-static void sflphoned_evsub_on_tsx_state(pjsip_evsub *sub,
+static void buddy_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
+static void buddy_evsub_on_tsx_state(pjsip_evsub *sub,
         pjsip_transaction *tsx,
         pjsip_event *event);
-static void sflphoned_evsub_on_rx_notify(pjsip_evsub *sub,
+static void buddy_evsub_on_rx_notify(pjsip_evsub *sub,
         pjsip_rx_data *rdata,
         int *p_st_code,
         pj_str_t **p_st_text,
@@ -62,16 +62,17 @@ public:
     SIPBuddy(const std::string &uri, SIPAccount *acc);
     ~SIPBuddy();
     bool match(SIPBuddy *b);
-    void subscribe();
-    void unsubscribe();
+    void accept();
+    bool subscribe();
+    bool unsubscribe();
     bool isSubscribed();
     std::string getURI();
 
-    friend void sflphoned_evsub_on_state( pjsip_evsub *sub, pjsip_event *event);
-    friend void sflphoned_evsub_on_tsx_state(pjsip_evsub *sub,
+    friend void buddy_evsub_on_state( pjsip_evsub *sub, pjsip_event *event);
+    friend void buddy_evsub_on_tsx_state(pjsip_evsub *sub,
 				     pjsip_transaction *tsx,
 				     pjsip_event *event);
-    friend void sflphoned_evsub_on_rx_notify(pjsip_evsub *sub,
+    friend void buddy_evsub_on_rx_notify(pjsip_evsub *sub,
 				     pjsip_rx_data *rdata,
 				     int *p_st_code,
 				     pj_str_t **p_st_text,

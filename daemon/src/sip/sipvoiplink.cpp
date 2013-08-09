@@ -78,7 +78,8 @@
 #include <istream>
 #include <utility> // for std::pair
 #include <algorithm>
-#include "sipvoip_pres.h"
+
+#include "presence_subscription.h"
 #include"pjsip-simple/presence.h"
 #include"pjsip-simple/publish.h"
 
@@ -513,7 +514,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 
     // presence/publish management
     TRY(pjsip_pres_init_module(endpt_, pjsip_evsub_instance()));
-    TRY(pjsip_endpt_register_module(endpt_, &my_mod_pres));
+    TRY(pjsip_endpt_register_module(endpt_, &mod_presence_server));
 
     static const pjsip_inv_callback inv_cb = {
         invite_session_state_changed_cb,

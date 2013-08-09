@@ -1,112 +1,97 @@
 /*
- * File: PresenceSubscription.h
- * Author: aol
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
- * Created on April 24, 2012, 10:13 AM
+ *  Author: Patrick Keroulas  <patrick.keroulas@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
+
 
 #ifndef SERVERPRESENCESUB_H
 #define	SERVERPRESENCESUB_H
 
-#include <string>
-#include "logger.h"
+#include <pj/string.h>
+#include <pjsip/sip_types.h>
 #include <pjsip-simple/evsub.h>
-#include"pjsip-simple/presence.h"
+#include <pjsip-simple/presence.h>
+#include <pjsip/sip_module.h>
 
-#include "manager.h"
-#include "sipvoip_pres.h"
+#include "src/noncopyable.h"
 
+extern pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
+
+static pjsip_module mod_presence_server = {
+    NULL, NULL, /* prev, next.		*/
+    pj_str("mod-presence-server"), //{ "mod-lotes-presence", 18}, /* Name.		*/
+    -1, /* Id			*/
+    PJSIP_MOD_PRIORITY_DIALOG_USAGE,
+    NULL, /* load()		*/
+    NULL, /* start()		*/
+    NULL, /* stop()		*/
+    NULL, /* unload()		*/
+    &pres_on_rx_subscribe_request, /* on_rx_request()	*/
+    NULL, /* on_rx_response()	*/
+    NULL, /* on_tx_request.	*/
+    NULL, /* on_tx_response()	*/
+    NULL, /* on_tsx_state()	*/
+
+};
+
+
+class SIPpresence;
 
 class PresenceSubscription {
+
 public:
-    PresenceSubscription(pjsip_evsub *evsub, char *r, std::string acc_Id, pjsip_dialog *d):
-        sub(evsub)
-        , remote(r)
-        , accId(acc_Id)
-        , dlg(d)
-        , expires (-1) {};
+
+    PresenceSubscription(SIPPresence * pres, pjsip_evsub *evsub, char *r,pjsip_dialog *d);
 
     char            *remote;    /**< Remote URI.			    */
-    std::string	    accId;	/**< Account ID.			    */
 
-    void setExpires(int ms) {
-        expires = ms;
-    }
-
-    int getExpires(){
-        return expires;
-    }
-
-    bool matches(PresenceSubscription * s){
-        // servers match if they have the same remote uri and the account ID.
-      return ((!(strcmp(remote,s->remote))) && (accId==s->accId));
-    }
-
-    bool isActive(){
-        if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_ACTIVE )
-            return true;
-        return false;
-    }
+    void setExpires(int ms);
+    int getExpires();
+    bool matches(PresenceSubscription * s);
+    bool isActive();
+    //SIPPresence * getPresence();
 
     /**
      * Send the tirst notification.
      * FIXME : pjsip_pres_notify crash because the header can't be cloned
      * So far, the first notify is sent in sipvoip_pres.c instead.
      */
-    void init(){
-        pjsip_tx_data *tdata = NULL;
-        pres_msg_data msg_data;
-        pj_str_t reason = pj_str("OK");
-        pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
-
-        pjsip_pres_set_status(sub, pres_get_data());
-        if (expires == 0)
-            ev_state = PJSIP_EVSUB_STATE_TERMINATED;
-
-        /* Create and send the the first NOTIFY to active subscription: */
-        pj_str_t stateStr = pj_str("");
-        pj_status_t status = pjsip_pres_notify(sub, ev_state, &stateStr, &reason, &tdata);
-        if (status == PJ_SUCCESS) {
-            pres_process_msg_data(tdata, &msg_data);
-            status = pjsip_pres_send_request(sub, tdata);
-        }
-
-        if (status != PJ_SUCCESS) {
-            WARN("Unable to create/send NOTIFY %d", status);
-            pjsip_pres_terminate(sub, PJ_FALSE);
-        }
-    }
-
-    void notify() {
-         /* Only send NOTIFY once subscription is active. Some subscriptions
-         * may still be in NULL (when app is adding a new buddy while in the
-         * on_incoming_subscribe() callback) or PENDING (when user approval is
-         * being requested) state and we don't send NOTIFY to these subs until
-         * the user accepted the request.
-         */
-        if (isActive()) {
-            WARN("Notifying %s.", remote);
-
-            pjsip_tx_data *tdata;
-            pjsip_pres_set_status(sub, pres_get_data());
-
-            if (pjsip_pres_current_notify(sub, &tdata) == PJ_SUCCESS) {
-                // add msg header and send
-                pres_process_msg_data(tdata, NULL);
-                pjsip_pres_send_request(sub, tdata);
-            }
-            else{
-                WARN("Unable to create/send NOTIFY");
-                pjsip_pres_terminate(sub, PJ_FALSE);
-            }
-        }
-    }
+    void init();
+    void notify();
 
     friend void pres_evsub_on_srv_state( pjsip_evsub *sub, pjsip_event *event);
     friend pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
 
 private:
+
     NON_COPYABLE(PresenceSubscription);
+    SIPPresence     *pres_;
     pjsip_evsub	    *sub;	    /**< The evsub.			    */
     pjsip_dialog    *dlg;	    /**< Dialog.			    */
     int		     expires;	    /**< "expires" value in the request.    */

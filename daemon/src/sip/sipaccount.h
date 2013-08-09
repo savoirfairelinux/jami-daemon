@@ -37,15 +37,13 @@
 
 #include <vector>
 #include <map>
-#include "account.h"
+
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
 #include "pjsip-ua/sip_regc.h"
-#include "noncopyable.h"
 
-#include "sipbuddy.h"
-#include "presence_subscription.h"
-#include "sippublish.h"
+#include "noncopyable.h"
+#include "account.h"
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
@@ -97,6 +95,8 @@ namespace Conf {
 }
 
 class SIPVoIPLink;
+class SIPPresence;
+
 
 /**
  * @file sipaccount.h
@@ -115,6 +115,7 @@ class SIPAccount : public Account {
          * @param accountID The account identifier
          */
         SIPAccount(const std::string& accountID);
+        ~SIPAccount();
 
         virtual VoIPLink* getVoIPLink();
 
@@ -522,23 +523,7 @@ class SIPAccount : public Account {
         /**
          * Presence management
          */
-        void sendPresence(const std::string &status, const std::string &note);
-        void subscribeBuddy(const std::string& buddySipUri);
-        void unsubscribeBuddy(const std::string& buddySipUri);
-        void addBuddy(SIPBuddy *b);
-        void removeBuddy(SIPBuddy *b);
-        void addServerSubscription(PresenceSubscription *s);
-        void removeServerSubscription(PresenceSubscription *s);
-        void notifyServerSubscription();
-        //void notifyServerSubscription(const std::string &newPresenceStatus, const std::string &newChannelStatus);
-        //bool compareServerSubscription(PresenceSubscription *first, PresenceSubscription *second);
-
-
-        pj_bool_t       online_status; /**< Our online status.	*/
-        pjrpid_element  rpid;	    /**< RPID element information.*/
-        pjsip_publishc  *publish_sess;  /**< Client publication session.*/
-        pj_bool_t   publish_state; /**< Last published online status.*/
-        pj_bool_t   publish_enabled; /**< Allow for status publish,*/
+        SIPPresence * getPresence();
 
 private:
         NON_COPYABLE(SIPAccount);
@@ -787,15 +772,10 @@ private:
          */
         pjsip_host_port via_addr_;
 
-         /**
-         * server subscription
-         */
-        std::list< PresenceSubscription *> serverSubscriptions_;
-
         /**
-         * buddies
+         * Presence data structure
          */
-        std::list< SIPBuddy *> buddies_;
+        SIPPresence * presence_;
 
 };
 

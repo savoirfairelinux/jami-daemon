@@ -36,10 +36,10 @@
 
 #include <pjsip_simple.h>
 
-#include "sipaccount.h"
+#include "sippresence.h"
 
-class SIPAcount;
+class SIPPresence;
 
-pj_status_t pres_publish(SIPAccount *acc);
+pj_status_t pres_publish(SIPPresence *pres);
 
 #endif

@@ -1,0 +1,155 @@
+/*
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *
+ *  Author: Patrick Keroulas  <patrick.keroulas@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
+ */
+
+#ifndef SIPPRESENCE_H
+#define SIPPRESENCE_H
+
+#include <vector>
+#include <string>
+#include <list>
+
+#include "pjsip/sip_types.h"
+#include "pjsip/sip_msg.h"
+#include "pjsip/sip_multipart.h"
+#include "pjsip-simple/publish.h"
+#include "pjsip-simple/presence.h"
+#include "pjsip-simple/rpid.h"
+
+
+struct pres_msg_data
+{
+    /**
+     * Additional message headers as linked list. Application can add
+     * headers to the list by creating the header, either from the heap/pool
+     * or from temporary local variable, and add the header using
+     * linked list operation. See pjsip_apps.c for some sample codes.
+     */
+    pjsip_hdr	hdr_list;
+
+    /**
+     * MIME type of optional message body.
+     */
+    pj_str_t	content_type;
+
+    /**
+     * Optional message body to be added to the message, only when the
+     * message doesn't have a body.
+     */
+    pj_str_t	msg_body;
+
+    /**
+     * Content type of the multipart body. If application wants to send
+     * multipart message bodies, it puts the parts in \a parts and set
+     * the content type in \a multipart_ctype. If the message already
+     * contains a body, the body will be added to the multipart bodies.
+     */
+    pjsip_media_type  multipart_ctype;
+
+    /**
+     * List of multipart parts. If application wants to send multipart
+     * message bodies, it puts the parts in \a parts and set the content
+     * type in \a multipart_ctype. If the message already contains a body,
+     * the body will be added to the multipart bodies.
+     */
+    pjsip_multipart_part multipart_parts;
+};
+
+
+extern void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
+
+
+
+
+
+class SIPAccount;
+class SIPBuddy;
+class PresenceSubscription;
+
+/**
+ * @file sippresence.h
+ * @brief A SIP Presence manages buddy subscription in both PBX and IP2IP contexts.
+ */
+
+class SIPPresence {
+
+public:
+    /**
+     * Constructor
+     * @param acc the associated sipaccount
+     */
+    SIPPresence(SIPAccount * acc);
+
+    /**
+     * Destructor
+     */
+    ~SIPPresence();
+
+        SIPAccount * getAccount();
+        pjsip_pres_status * getStatus();
+        int getModId();
+        void updateStatus(const std::string &status, const std::string &note);
+        void sendPresence(const std::string &status, const std::string &note);
+        void reportBuddy(const std::string& buddySipUri, pjsip_pres_status * status);
+        void subscribeBuddy(const std::string& buddySipUri);
+        void unsubscribeBuddy(const std::string& buddySipUri);
+
+        /*TODO : is that supposed to be private ?*/
+        void addBuddy(SIPBuddy *b);
+        void removeBuddy(SIPBuddy *b);
+        /**
+         * IP2IP context:
+         * remote subscriber management
+         */
+        void addServerSubscription(PresenceSubscription *s);
+        void removeServerSubscription(PresenceSubscription *s);
+        void notifyServerSubscription();
+
+        pjsip_pres_status pres_status_data;
+        pj_bool_t       online_status; /**< Our online status.	*/
+        pjrpid_element  rpid;	    /**< RPID element information.*/
+        pjsip_publishc  *publish_sess;  /**< Client publication session.*/
+        pj_bool_t   publish_state; /**< Last published online status.*/
+        pj_bool_t   publish_enabled; /**< Allow for status publish,*/
+
+private:
+    SIPAccount * acc_;
+    /**
+     * server subscription
+     */
+    std::list< PresenceSubscription *> serverSubscriptions_;
+    /**
+     * buddies
+     */
+    std::list< SIPBuddy *> buddies_;
+
+};
+
+#endif

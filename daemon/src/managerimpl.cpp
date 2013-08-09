@@ -48,6 +48,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sipcall.h"
 #include "im/instant_messaging.h"
+#include "sip/sippresence.h"
 
 #if HAVE_IAX
 #include "iax/iaxaccount.h"
@@ -2897,17 +2898,17 @@ void ManagerImpl::startAudioDriverStream()
 void ManagerImpl::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->subscribeBuddy(buddySipUri);
+    account->getPresence()->subscribeBuddy(buddySipUri);
 }
 
 void ManagerImpl::unsubscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->unsubscribeBuddy(buddySipUri);
+    account->getPresence()->unsubscribeBuddy(buddySipUri);
 }
 
 void ManagerImpl::sendPresence(const std::string& accountID, const std::string& status, const std::string& note)
 {
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    account->sendPresence(status,note);
+    account->getPresence()->sendPresence(status,note);
 }

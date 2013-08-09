@@ -55,34 +55,34 @@
 #include "sipcall.h"
 #include "sipvoiplink.h"
 #include "manager.h"
+#include "sippresence.h"
+#include "presence_subscription.h"
 
+/*
 pjsip_pres_status pres_status_data;
 
 pjsip_pres_status * pres_get_data(){
     return &pres_status_data;
 }
 
-
 void pres_update(const std::string &status, const std::string &note){
-    pjrpid_element rpid = {PJRPID_ELEMENT_TYPE_PERSON,
+    pjrpid_element rpid = {pjrpid_element_type_person,
             pj_str("20"),
-            PJRPID_ACTIVITY_UNKNOWN,
+            pjrpid_activity_unknown,
             pj_str(strdup(note.c_str()))};
 
-    /* fill activity if user not available. */
-    if(note=="Away")
-        rpid.activity = PJRPID_ACTIVITY_AWAY;
-    else if (note=="Busy")
-        rpid.activity = PJRPID_ACTIVITY_BUSY;
+    if(note=="away")
+        rpid.activity = pjrpid_activity_away;
+    else if (note=="busy")
+        rpid.activity = pjrpid_activity_busy;
     else
-        WARN("Presence : unkown activity");
+        warn("presence : unkown activity");
 
     pj_bzero(&pres_status_data, sizeof(pres_status_data));
     pres_status_data.info_cnt = 1;
     pres_status_data.info[0].basic_open = (status == "open")? true: false;
-    pres_status_data.info[0].id = pj_str("0"); /* TODO: tuplie_id*/
+    pres_status_data.info[0].id = pj_str("0");
     pj_memcpy(&pres_status_data.info[0].rpid, &rpid,sizeof(pjrpid_element));
-    /* "contact" field is optionnal */
 }
 
 void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data){
@@ -115,7 +115,7 @@ void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data){
         tdata->msg->body = body;
     }
 }
-
+*/
 
 /* Callback called when *server* subscription state has changed. */
 void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
@@ -151,7 +151,7 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
 
         if (state == PJSIP_EVSUB_STATE_TERMINATED) {
             pjsip_evsub_set_mod_data(sub, ((SIPVoIPLink*) (acc->getVoIPLink()))->getModId(), NULL);
-            acc->removeServerSubscription(presenceSub);
+            acc->getPresence()->removeServerSubscription(presenceSub);
         }
     }
 }
@@ -226,7 +226,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     char* remote = (char*) pj_pool_alloc(dlg->pool, PJSIP_MAX_URL_SIZE);
     status = pjsip_uri_print(PJSIP_URI_IN_REQ_URI, dlg->remote.info->uri, remote, PJSIP_MAX_URL_SIZE);
     pjsip_uri_print(PJSIP_URI_IN_CONTACT_HDR, dlg->local.info->uri, contact.ptr, PJSIP_MAX_URL_SIZE);
-    PresenceSubscription *presenceSub = new PresenceSubscription(sub, remote, accountId, dlg);
+    PresenceSubscription *presenceSub = new PresenceSubscription(acc->getPresence(), sub, remote, dlg);
 
     if (status < 1)
         pj_ansi_strcpy(remote, "<-- url is too long-->");
@@ -237,7 +237,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     pjsip_evsub_set_mod_data(sub, modId/*my_mod_pres.id*/, presenceSub);
 
     /* Add server subscription to the list: */
-    acc->addServerSubscription(presenceSub);
+    acc->getPresence()->addServerSubscription(presenceSub);
 
     /* Capture the value of Expires header. */
     expires_hdr = (pjsip_expires_hdr*) pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_EXPIRES, NULL);
@@ -268,7 +268,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
 //    return PJ_TRUE;
    /*Send notify immediatly*/
 
-    pjsip_pres_set_status(sub, &pres_status_data);
+    pjsip_pres_set_status(sub, acc->getPresence()->getStatus());
 
     ev_state = PJSIP_EVSUB_STATE_ACTIVE;
     if (presenceSub->getExpires() == 0)

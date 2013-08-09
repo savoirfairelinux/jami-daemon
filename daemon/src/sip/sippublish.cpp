@@ -31,16 +31,14 @@
 
 #include <pjsip/sip_endpoint.h>
 
+#include "sippresence.h"
 #include "sippublish.h"
 #include "sipvoip_pres.h"
 #include "logger.h"
 #include "sipvoiplink.h"
 
-
-
-
 void pres_publish_cb(struct pjsip_publishc_cbparam *param);
-pj_status_t pres_send_publish(SIPAccount * acc, pj_bool_t active);
+pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active);
 const pjsip_publishc_opt  my_publish_opt = {true}; // this is queue_request
 
 
@@ -49,12 +47,12 @@ const pjsip_publishc_opt  my_publish_opt = {true}; // this is queue_request
  */
 void pres_publish_cb(struct pjsip_publishc_cbparam *param)
 {
-    SIPAccount *acc = (SIPAccount*) param->token;
+    SIPPresence *pres = (SIPPresence*) param->token;
 
     if (param->code/100 != 2 || param->status != PJ_SUCCESS) {
 
 	pjsip_publishc_destroy(param->pubc);
-	acc->publish_sess = NULL;
+	pres->publish_sess = NULL;
 
 	if (param->status != PJ_SUCCESS) {
 	    char errmsg[PJ_ERR_MSG_SIZE];
@@ -66,7 +64,7 @@ void pres_publish_cb(struct pjsip_publishc_cbparam *param)
 	     * The PUBLISH refresh has failed, retry with new one.
 	     */
             WARN("Publish retry.");
-	    pres_publish(acc);
+	    pres_publish(pres);
 	} else {
 	    ERROR("Client publication (PUBLISH) failed (%d/%.*s)",
                     param->code,(int)param->reason.slen,param->reason.ptr);
@@ -78,7 +76,7 @@ void pres_publish_cb(struct pjsip_publishc_cbparam *param)
 	     * in the response. We will not renew, so destroy the pubc.
 	     */
 	    pjsip_publishc_destroy(param->pubc);
-	    acc->publish_sess = NULL;
+	    pres->publish_sess = NULL;
 	}
     }
 }
@@ -86,13 +84,14 @@ void pres_publish_cb(struct pjsip_publishc_cbparam *param)
 /*
  * Send PUBLISH request.
  */
-pj_status_t pres_send_publish(SIPAccount * acc, pj_bool_t active)
+pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
 {
     pjsip_tx_data *tdata;
     pj_status_t status;
 
     DEBUG("Send presence %sPUBLISH..", (active ? "" : "un-"));
 
+    SIPAccount * acc = pres->getAccount();
     std::string contactWithAngles =  acc->getFromUri();
     contactWithAngles.erase(contactWithAngles.find('>'));
     int semicolon = contactWithAngles.find_first_of(":");
@@ -105,7 +104,7 @@ pj_status_t pres_send_publish(SIPAccount * acc, pj_bool_t active)
 	char *bpos;
 	pj_str_t entity;
 
-	status = pjsip_publishc_publish(acc->publish_sess, PJ_TRUE, &tdata);
+	status = pjsip_publishc_publish(pres->publish_sess, PJ_TRUE, &tdata);
 	if (status != PJ_SUCCESS) {
 	    ERROR("Error creating PUBLISH request", status);
 	    goto on_error;
@@ -126,8 +125,8 @@ pj_status_t pres_send_publish(SIPAccount * acc, pj_bool_t active)
 	}
 
 	/* Create and add PIDF message body */
-	status = pjsip_pres_create_pidf(tdata->pool, pres_get_data(),
-					&entity, &tdata->msg->body);
+	status = pjsip_pres_create_pidf(tdata->pool, acc->getPresence()->getStatus(),
+                &entity, &tdata->msg->body);
 	if (status != PJ_SUCCESS) {
 	    ERROR("Error creating PIDF for PUBLISH request");
 	    pjsip_tx_data_dec_ref(tdata);
@@ -135,7 +134,7 @@ pj_status_t pres_send_publish(SIPAccount * acc, pj_bool_t active)
 	}
 
     } else {
-	//status = pjsip_publishc_unpublish(acc->publish_sess, &tdata);
+	//status = pjsip_publishc_unpublish(pres->publish_sess, &tdata);
 	//if (status != PJ_SUCCESS) {
 	//    pjsua_perror(THIS_FILE, "Error creating PUBLISH request", status);
 	//    goto on_error;
@@ -172,7 +171,7 @@ pj_status_t pres_send_publish(SIPAccount * acc, pj_bool_t active)
     }*/
 
     /* Send the PUBLISH request */
-    status = pjsip_publishc_send(acc->publish_sess, tdata);
+    status = pjsip_publishc_send(pres->publish_sess, tdata);
     if (status == PJ_EPENDING) {
 	WARN("Previous request is in progress, ");
     } else if (status != PJ_SUCCESS) {
@@ -180,65 +179,66 @@ pj_status_t pres_send_publish(SIPAccount * acc, pj_bool_t active)
 	goto on_error;
     }
 
-    acc->publish_state = acc->online_status;
+    pres->publish_state = pres->online_status;
     return PJ_SUCCESS;
 
 on_error:
-    if (acc->publish_sess) {
-	pjsip_publishc_destroy(acc->publish_sess);
-	acc->publish_sess = NULL;
+    if (pres->publish_sess) {
+	pjsip_publishc_destroy(pres->publish_sess);
+	pres->publish_sess = NULL;
     }
     return status;
 }
 
 
 /* Create client publish session */
-pj_status_t pres_publish(SIPAccount *acc)
+pj_status_t pres_publish(SIPPresence *pres)
 {
     pj_status_t status;
     const pj_str_t STR_PRESENCE = { "presence", 8 };
+    SIPAccount * acc = pres->getAccount();
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
 
     /* Create and init client publication session */
-    if (acc->publish_enabled) {
+    if (pres->publish_enabled) {
 
 	/* Create client publication */
 	status = pjsip_publishc_create(endpt,&my_publish_opt,
-				       acc, &pres_publish_cb,
-				       &acc->publish_sess);
+				       pres, &pres_publish_cb,
+				       &pres->publish_sess);
 	if (status != PJ_SUCCESS) {
-	    acc->publish_sess = NULL;
+	    pres->publish_sess = NULL;
             ERROR("Failed to create a publish seesion.");
             return status;
 	}
 
 	/* Initialize client publication */
         pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
-	status = pjsip_publishc_init(acc->publish_sess, &STR_PRESENCE,&from, &from, &from, 0xFFFF);
+	status = pjsip_publishc_init(pres->publish_sess, &STR_PRESENCE,&from, &from, &from, 0xFFFF);
 	if (status != PJ_SUCCESS) {
             ERROR("Failed to init a publish session");
-	    acc->publish_sess = NULL;
+	    pres->publish_sess = NULL;
 	    return status;
 	}
 
 	/* Add credential for authentication */
-        if (acc->hasCredentials() and pjsip_publishc_set_credentials(acc->publish_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
+        if (acc->hasCredentials() and pjsip_publishc_set_credentials(pres->publish_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
             ERROR("Could not initialize credentials for invite session authentication");
             return status;
         }
 
 	/* Set route-set */
-	//pjsip_publishc_set_route_set(acc->publish_sess, &acc->route_set);
+	//pjsip_publishc_set_route_set(pres->publish_sess, &acc->route_set);
         //if (acc->hasServiceRoute())
         //    pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(acc->getServiceRoute(), pool_));
 
 	/* Send initial PUBLISH request */
-        status = pres_send_publish(acc, PJ_TRUE);
+        status = pres_send_publish(pres, PJ_TRUE);
         if (status != PJ_SUCCESS)
             return status;
 
     } else {
-        acc->publish_sess = NULL;
+        pres->publish_sess = NULL;
     }
 
     return PJ_SUCCESS;
