@@ -39,7 +39,6 @@
 #include <sndfile.hh>
 
 #include "audiofile.h"
-#include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 #include "client/callmanager.h"
 #include "manager.h"
@@ -64,61 +63,49 @@ AudioFile::onBufferFinish()
     updatePlaybackScale_++;
 }
 
-RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int sampleRate)
-    : AudioFile(name, sampleRate), audioCodec_(codec)
+RawFile::RawFile(const std::string& name, unsigned int sampleRate)
+    : AudioFile(name, sampleRate)
 {
-    if (filepath_.empty())
-        throw AudioFileException("Unable to open audio file: filename is empty");
+    bool hasHeader = false;
+    const unsigned fileSampleRate = 8000;
+    int format = SF_FORMAT_RAW | SF_FORMAT_ULAW;
 
-    std::fstream file;
-    file.open(filepath_.c_str(), std::fstream::in);
-
-    if (!file.is_open())
-        throw AudioFileException("Unable to open audio file");
-
-    file.seekg(0, std::ios::end);
-    size_t length = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::vector<char> fileBuffer(length);
-    file.read(&fileBuffer[0], length);
-    file.close();
-
-    const unsigned int frameSize = audioCodec_->getFrameSize();
-    const unsigned int bitrate   = audioCodec_->getBitRate() * 1000 / 8;
-    const unsigned int audioRate = audioCodec_->getClockRate();
-    const unsigned int encFrameSize = frameSize * bitrate / audioRate;
-    const unsigned int decodedSize = length * (frameSize / encFrameSize);
-
-    AudioBuffer * buffer = new AudioBuffer(decodedSize);
-    unsigned bufpos = 0;
-    unsigned char *filepos = reinterpret_cast<unsigned char *>(&fileBuffer[0]);
-
-    while (length >= encFrameSize) {
-        bufpos += audioCodec_->decode(buffer->getData(), filepos, encFrameSize, bufpos);
-        filepos += encFrameSize;
-        length -= encFrameSize;
+    if (filepath_.find(".al") != std::string::npos)
+        format = SF_FORMAT_RAW | SF_FORMAT_ALAW;
+    else if (filepath_.find(".au") != std::string::npos) {
+        format = SF_FORMAT_AU;
+        hasHeader = true;
     }
 
-    if (sampleRate == audioRate) {
+    SndfileHandle fileHandle(filepath_.c_str(), SFM_READ, format, hasHeader ? 0 : 1, hasHeader ? 0 : 8000);
+
+    if (!fileHandle)
+        throw AudioFileException("Unable to open audio file");
+
+    // get # of bytes in file
+    const size_t fileSize = fileHandle.seek(0, SEEK_END);
+    fileHandle.seek(0, SEEK_SET);
+
+    const size_t nbFrames = hasHeader ? fileHandle.frames() : fileSize * fileHandle.channels();
+    std::vector<SFLAudioSample> temp(nbFrames);
+    fileHandle.read(&*temp.begin(), nbFrames);
+
+    AudioBuffer * buffer = new AudioBuffer(nbFrames, fileHandle.channels(), fileSampleRate);
+    buffer->deinterleave(&*temp.begin(), nbFrames, fileHandle.channels());
+
+    if (sampleRate == fileHandle.samplerate()) {
         delete buffer_;
         buffer_ = buffer;
     } else {
-        double factord = (double) sampleRate / audioRate;
-
-        const size_t channels = buffer->channels();
-
-        // FIXME: it looks like buffer and buffer_ are leaked in this case
-        if (channels > 2)
-            throw AudioFileException("WaveFile: unsupported number of channels");
+        double factord = (double) sampleRate / fileHandle.samplerate();
 
         size_t samples = buffer->samples();
-        size_t size = channels * samples;
+        size_t size = fileHandle.channels() * samples;
         float* floatBufferIn = new float[size];
         buffer->interleaveFloat(floatBufferIn);
 
         int samplesOut = ceil(factord * samples);
-        int sizeOut = samplesOut * channels;
+        int sizeOut = samplesOut * fileHandle.channels();
 
         SRC_DATA src_data;
         src_data.data_in = floatBufferIn;
@@ -129,13 +116,13 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
         float* floatBufferOut = new float[sizeOut];
         src_data.data_out = floatBufferOut;
 
-        src_simple(&src_data, SRC_SINC_BEST_QUALITY, channels);
+        src_simple(&src_data, SRC_SINC_BEST_QUALITY, fileHandle.channels());
         samplesOut = src_data.output_frames_gen;
-        sizeOut = samplesOut * channels;
+        sizeOut = samplesOut * fileHandle.channels();
 
         SFLAudioSample *scratch = new SFLAudioSample[sizeOut];
         src_float_to_short_array(floatBufferOut, scratch, src_data.output_frames_gen);
-        buffer->deinterleave(scratch, samplesOut, channels);
+        buffer->deinterleave(scratch, samplesOut, fileHandle.channels());
         delete buffer_;
         buffer_ = buffer;
 

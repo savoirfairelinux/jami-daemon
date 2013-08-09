@@ -37,10 +37,6 @@
 #include <stdexcept>
 #include "audio/audioloop.h"
 
-namespace sfl {
-class AudioCodec;
-}
-
 class AudioFileException : public std::runtime_error {
     public:
         AudioFileException(const std::string &str) :
@@ -71,16 +67,7 @@ class AudioFile : public AudioLoop {
 
 class RawFile : public AudioFile {
     public:
-        /**
-         * Constructor
-         */
-        RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000);
-
-    private:
-        NON_COPYABLE(RawFile);
-
-        /** Your preferred codec */
-        sfl::AudioCodec* audioCodec_;
+        RawFile(const std::string& name, unsigned int sampleRate = 8000);
 };
 
 class WaveFile : public AudioFile {

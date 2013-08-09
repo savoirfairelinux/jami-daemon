@@ -1866,16 +1866,10 @@ void
 ManagerImpl::updateAudioFile(const std::string &file, int sampleRate)
 {
     try {
-        if (file.find(".wav") != std::string::npos)
+        if (file.find(".wav") != std::string::npos) {
             audiofile_.reset(new WaveFile(file, sampleRate));
-        else {
-            sfl::AudioCodec *codec;
-            if (file.find(".ul") != std::string::npos or file.find(".au") != std::string::npos)
-                codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
-            else
-                throw AudioFileException("Couldn't guess an appropriate decoder");
-
-            audiofile_.reset(new RawFile(file, static_cast<sfl::AudioCodec *>(codec), sampleRate));
+        } else {
+            audiofile_.reset(new RawFile(file, sampleRate));
         }
     } catch (const AudioFileException &e) {
         ERROR("Exception: %s", e.what());
