@@ -107,12 +107,13 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
 
     const sf_count_t nbFrames = hasHeader ? fileHandle.frames() : fileSize / fileHandle.channels();
 
-    SFLAudioSample * deinterleaved = new SFLAudioSample[nbFrames * fileHandle.channels()];
+    SFLAudioSample * interleaved = new SFLAudioSample[nbFrames * fileHandle.channels()];
 
-    fileHandle.read(deinterleaved, nbFrames);
+    fileHandle.read(interleaved, nbFrames);
 
     AudioBuffer * buffer = new AudioBuffer(nbFrames, fileHandle.channels(), fileHandle.samplerate());
-    buffer->deinterleave(deinterleaved, nbFrames, fileHandle.channels());
+    buffer->deinterleave(interleaved, nbFrames, fileHandle.channels());
+    delete [] interleaved;
 
     const int rate = static_cast<int32_t>(sampleRate);
 
@@ -127,6 +128,4 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         delete buffer_;
         buffer_ = buffer;
     }
-
-    delete [] deinterleaved;
 }
