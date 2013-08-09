@@ -144,10 +144,9 @@ void AudioBuffer::deinterleave(const SFLAudioSample* in, size_t sample_num, unsi
     setChannelNum(channel_num);
     resize(sample_num);
 
-    for (unsigned i = 0; i < samples_[0].size(); i++) {
+    for (unsigned i = 0; i < samples_[0].size(); i++)
         for (unsigned j = 0; j < samples_.size(); j++)
             samples_[j][i] = *in++;
-    }
 }
 
 size_t AudioBuffer::mix(const AudioBuffer& other, bool up /* = true */)
