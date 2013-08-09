@@ -30,9 +30,6 @@
 
 #include "samplerateconverter.h"
 #include "sfl_types.h"
-#include "manager.h"
-#include <cassert>
-#include "logger.h"
 
 SamplerateConverter::SamplerateConverter(int freq, size_t channels /* = 1 */) : floatBufferIn_(0),
     floatBufferOut_(0), samples_(0), channels_(channels), maxFreq_(freq), src_state_(0)
@@ -59,18 +56,13 @@ SamplerateConverter::Short2FloatArray(const SFLAudioSample *in, float *out, int 
 {
     // factor is 1/(2^15), used to rescale the short int range to the
     // [-1.0 - 1.0] float range.
+    static const float FACTOR = 1.0f / (1 << 15);
 
     while (len--)
-        out[len] = (float) in[len] * .000030517578125f;
+        out[len] = (float) in[len] * FACTOR;
 }
 
 void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
-/*void SamplerateConverter::resample(SFLAudioSample *dataIn,
-                                   SFLAudioSample *dataOut,
-                                   size_t dataOutSize,
-                                   int inputFreq,
-                                   int outputFreq,
-                                   size_t nbSamples)*/
 {
     double inputFreq = dataIn.getSampleRate();
     double outputFreq = dataOut.getSampleRate();
@@ -111,17 +103,15 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     src_data.src_ratio = sampleFactor;
     src_data.end_of_input = 0; // More data will come
 
-    //Short2FloatArray(dataIn, floatBufferIn_, nbSamples);
     dataIn.interleaveFloat(floatBufferIn_);
 
     src_process(src_state_, &src_data);
-    //src_float_to_short_array(floatBufferOut_, dataOut, outSamples);
 
     /*
     TODO: one-shot deinterleave and float-to-short conversion
     currently using floatBufferIn_ as scratch
     */
-    short* scratch_buff = (short*)floatBufferIn_;
+    SFLAudioSample *scratch_buff = (SFLAudioSample *) floatBufferIn_;
     src_float_to_short_array(floatBufferOut_, scratch_buff, outSamples);
     dataOut.deinterleave(scratch_buff, outSamples, nbChans);
 }
