@@ -35,6 +35,9 @@ LT_INIT
 dnl Define C++ as default language
 AC_LANG(C++)
 
+dnl Check for C++11 support
+AX_CXX_COMPILE_STDCXX_11
+
 dnl Check for header files
 AC_FUNC_ALLOCA
 AC_HEADER_STDC
