@@ -50,7 +50,7 @@ private:
    virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
 
    //multichannel version
-   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);
+   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size);
 
    NON_COPYABLE(Opus);

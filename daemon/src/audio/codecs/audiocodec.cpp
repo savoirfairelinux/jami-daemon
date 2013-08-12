@@ -56,11 +56,13 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     hasDynamicPayload_(c.hasDynamicPayload_)
 {}
 
-int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size, size_t dst_offset /* = 0 */)
+// Mono only, subclasses must implement multichannel support
+int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size)
 {
-    return decode(&(*(dst[0].begin() + dst_offset)), buf, buffer_size);
+    return decode(dst[0].data(), buf, buffer_size);
 }
 
+// Mono only, subclasses must implement multichannel support
 int AudioCodec::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size)
 {
     return encode(dst, src[0].data(), buffer_size);
