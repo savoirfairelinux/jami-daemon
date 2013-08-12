@@ -81,6 +81,9 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     } else if (filepath_.find(".au") != std::string::npos) {
         format = SF_FORMAT_AU;
         hasHeader = true;
+    } else if (filepath_.find(".flac") != std::string::npos) {
+        format = SF_FORMAT_FLAC;
+        hasHeader = true;
     } else {
         WARN("No file extension, guessing WAV");
         format = SF_FORMAT_WAV;
