@@ -776,9 +776,6 @@ void AlsaLayer::playback(int maxSamples)
             const size_t outSamples = samplesToGet * resampleFactor;
             const size_t outBytes = outSamples * sizeof(SFLAudioSample);
             AudioBuffer rsmpl_out(outSamples, 1, sampleRate_);
-            //std::vector<SFLAudioSample> rsmpl_out(outSamples);
-            //SFLAudioSample * const rsmpl_out_ptr = &(*rsmpl_out.begin());
-            //converter_.resample(out_ptr, rsmpl_out_ptr, rsmpl_out.size(), mainBufferSampleRate, sampleRate_, samplesToGet);
             converter_.resample(out, rsmpl_out);
             write(rsmpl_out.getChannel(0)->data(), outBytes, playbackHandle_);
         } else {
