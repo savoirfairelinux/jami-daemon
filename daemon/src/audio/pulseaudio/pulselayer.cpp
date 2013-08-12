@@ -224,8 +224,10 @@ std::vector<std::string> PulseLayer::getCaptureDeviceList() const
 {
     const unsigned n = sourceList_.size();
     std::vector<std::string> names(n);
-    for(unsigned i=0; i<n; i++)
+
+    for (unsigned i = 0; i < n; i++)
         names[i] = sourceList_[i].name;
+
     return names;
 }
 
@@ -233,8 +235,10 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
 {
     const unsigned n = sinkList_.size();
     std::vector<std::string> names(n);
-    for(unsigned i=0; i<n; i++)
+
+    for (unsigned i = 0; i < n; i++)
         names[i] = sinkList_[i].name;
+
     return names;
 }
 
@@ -252,7 +256,9 @@ int PulseLayer::getAudioDeviceIndex(const std::string& name) const
 const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::string& name) const
 {
     std::vector<PaDeviceInfos>::const_iterator dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::nameComparator(name));
-    if(dev_info == list.end()) return NULL;
+
+    if (dev_info == list.end()) return NULL;
+
     return &(*dev_info);
 }
 
@@ -266,6 +272,7 @@ std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
                 ERROR("Index %d out of range", index);
                 return "";
             }
+
             return sinkList_[index].name;
 
         case SFL_PCM_CAPTURE:
@@ -273,6 +280,7 @@ std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
                 ERROR("Index %d out of range", index);
                 return "";
             }
+
             return sourceList_[index].name;
 
         default:
@@ -291,14 +299,16 @@ void PulseLayer::createStreams(pa_context* c)
     std::string defaultDevice = "";
 
     DEBUG("Devices: playback: %s record: %s ringtone: %s",
-           playbackDevice.c_str(), captureDevice.c_str(), ringtoneDevice.c_str());
+          playbackDevice.c_str(), captureDevice.c_str(), ringtoneDevice.c_str());
 
     // Create playback stream
     const PaDeviceInfos* dev_infos = getDeviceInfos(sinkList_, playbackDevice);
-    if(dev_infos == NULL) {
+
+    if (dev_infos == NULL) {
         dev_infos = &sinkList_[0];
         DEBUG("Prefered playback device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
+
     playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, sampleRate_, dev_infos);
 
     pa_stream_set_write_callback(playback_->pulseStream(), playback_callback, this);
@@ -306,10 +316,12 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create capture stream
     dev_infos = getDeviceInfos(sourceList_, captureDevice);
-    if(dev_infos == NULL) {
+
+    if (dev_infos == NULL) {
         dev_infos = &sourceList_[0];
         DEBUG("Prefered capture device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
+
     record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, sampleRate_, dev_infos);
 
     pa_stream_set_read_callback(record_->pulseStream() , capture_callback, this);
@@ -317,10 +329,12 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create ringtone stream
     dev_infos = getDeviceInfos(sinkList_, ringtoneDevice);
-    if(dev_infos == NULL) {
+
+    if (dev_infos == NULL) {
         dev_infos = &sinkList_[0];
         DEBUG("Prefered ringtone device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
+
     ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, sampleRate_, dev_infos);
 
     pa_stream_set_write_callback(ringtone_->pulseStream(), ringtone_callback, this);
@@ -399,16 +413,16 @@ void PulseLayer::writeToSpeaker()
         return;
 
     size_t writableBytes = ret;
-    size_t writableSamples = writableBytes/sample_size;
+    const size_t writableSamples = writableBytes / sample_size;
 
     notifyIncomingCall();
 
     size_t urgentSamples = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
-    size_t urgentBytes = urgentSamples*sample_size;
+    size_t urgentBytes = urgentSamples * sample_size;
 
     if (urgentSamples > writableSamples) {
         urgentSamples = writableSamples;
-        urgentBytes = urgentSamples*sample_size;
+        urgentBytes = urgentSamples * sample_size;
     }
 
     SFLAudioSample *data = 0;
