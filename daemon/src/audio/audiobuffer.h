@@ -124,8 +124,8 @@ class AudioBuffer {
         /**
          * Return a pointer to the raw data in this buffer.
          */
-        inline std::vector<std::vector<SFLAudioSample> > *getData() {
-            return &samples_;
+        inline std::vector<std::vector<SFLAudioSample> > &getData() {
+            return samples_;
         }
 
         /**
