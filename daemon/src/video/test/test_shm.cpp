@@ -80,12 +80,12 @@ void run_client()
         return;
 
     // initialize destination string to 0's
-    std::string dest(sizeof(test_data), 0);
-    const std::string test_data_str(test_data, sizeof(test_data));
+    std::vector<char> dest(sizeof(test_data), 0);
+    const std::vector<char> test_data_str(test_data, test_data + sizeof(test_data));
     assert(test_data_str.size() == 27);
     assert(dest.size() == test_data_str.size());
     while (not done and dest != test_data_str) {
-        src.render(&(*dest.begin()), dest.size());
+        src.render(dest.data(), dest.size());
         usleep(1000);
     }
     src.stop();
