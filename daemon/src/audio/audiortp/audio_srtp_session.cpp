@@ -89,7 +89,7 @@ std::vector<char> decodeBase64(unsigned char *input, int length)
     bmem = BIO_push(b64, bmem);
 
     std::vector<char> buffer(length, 0);
-    BIO_read(bmem, &(*buffer.begin()), length);
+    BIO_read(bmem, buffer.data(), length);
 
     BIO_free_all(bmem);
 
@@ -105,7 +105,7 @@ void bufferFillMasterKey(std::vector<uint8>& dest)
     std::vector<unsigned char> random_key(dest.size());
 
     // Generate ryptographically strong pseudo-random bytes
-    if (RAND_bytes(&(*random_key.begin()), dest.size()) != 1)
+    if (RAND_bytes(random_key.data(), dest.size()) != 1)
         DEBUG("Error occured while generating cryptographically strong pseudo-random key");
 
     std::copy(random_key.begin(), random_key.end(), dest.begin());
@@ -120,7 +120,7 @@ void bufferFillMasterSalt(std::vector<uint8>& dest)
     std::vector<unsigned char> random_key(dest.size());
 
     // Generate ryptographically strong pseudo-random bytes
-    if (RAND_bytes(&(*random_key.begin()), dest.size()) != 1)
+    if (RAND_bytes(random_key.data(), dest.size()) != 1)
         DEBUG("Error occured while generating cryptographically strong pseudo-random key");
 
     std::copy(random_key.begin(), random_key.end(), dest.begin());
@@ -251,7 +251,7 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
     concatKeys.insert(concatKeys.end(), localMasterSalt_.begin(), localMasterSalt_.end());
 
     // encode concatenated keys in base64
-    return encodeBase64(&(*concatKeys.begin()), concatKeys.size());
+    return encodeBase64(concatKeys.data(), concatKeys.size());
 }
 
 void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
@@ -282,9 +282,9 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
             0L,   // keydr,
             SrtpEncryptionAESCM,
             SrtpAuthenticationSha1Hmac,
-            &(*remoteMasterKey_.begin()),
+            remoteMasterKey_.data(),
             remoteMasterKey_.size(),
-            &(*remoteMasterSalt_.begin()),
+            remoteMasterSalt_.data(),
             remoteMasterSalt_.size(),
             crypto.encryptionKeyLength / BITS_PER_BYTE,
             crypto.srtpAuthKeyLength / BITS_PER_BYTE,
@@ -304,9 +304,9 @@ void AudioSrtpSession::initializeLocalCryptoContext()
             0L,    // keydr,
             SrtpEncryptionAESCM,
             SrtpAuthenticationSha1Hmac,
-            &(*localMasterKey_.begin()),
+            localMasterKey_.data(),
             localMasterKey_.size(),
-            &(*localMasterSalt_.begin()),
+            localMasterSalt_.data(),
             localMasterSalt_.size(),
             crypto.encryptionKeyLength / BITS_PER_BYTE,
             crypto.srtpAuthKeyLength / BITS_PER_BYTE,
