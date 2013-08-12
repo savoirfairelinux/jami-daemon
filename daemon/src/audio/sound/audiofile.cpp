@@ -80,13 +80,10 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         hasHeader = false;
     } else if (filepath_.find(".au") != std::string::npos) {
         format = SF_FORMAT_AU;
-        hasHeader = true;
     } else if (filepath_.find(".flac") != std::string::npos) {
         format = SF_FORMAT_FLAC;
-        hasHeader = true;
     } else if (filepath_.find(".ogg") != std::string::npos) {
         format = SF_FORMAT_OGG;
-        hasHeader = true;
     } else {
         WARN("No file extension, guessing WAV");
         format = SF_FORMAT_WAV;
@@ -102,7 +99,6 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         case 1:
         case 2:
             break;
-
         default:
             throw AudioFileException("Unsupported number of channels");
     }
