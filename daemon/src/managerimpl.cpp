@@ -245,9 +245,8 @@ void ManagerImpl::finish()
     std::vector<std::string> callList(getCallList());
     DEBUG("Hangup %zu remaining call(s)", callList.size());
 
-    for (std::vector<std::string>::iterator iter = callList.begin();
-            iter != callList.end(); ++iter)
-        hangupCall(*iter);
+    for (const auto &iter : callList)
+        hangupCall(iter);
 
     saveConfig();
 
@@ -526,9 +525,8 @@ bool ManagerImpl::hangupConference(const std::string& id)
         if (conf) {
             ParticipantSet participants(conf->getParticipantList());
 
-            for (ParticipantSet::const_iterator iter = participants.begin();
-                    iter != participants.end(); ++iter)
-                hangupCall(*iter);
+            for (const auto &iter : participants)
+                hangupCall(iter);
         } else {
             ERROR("No such conference %s", id.c_str());
             return false;
@@ -819,10 +817,9 @@ ManagerImpl::holdConference(const std::string& id)
 
     ParticipantSet participants(conf->getParticipantList());
 
-    for (ParticipantSet::const_iterator iter = participants.begin();
-            iter != participants.end(); ++iter) {
-        switchCall(*iter);
-        onHoldCall(*iter);
+    for (const auto &iter : participants) {
+        switchCall(iter);
+        onHoldCall(iter);
     }
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
@@ -848,14 +845,14 @@ ManagerImpl::unHoldConference(const std::string& id)
 
     ParticipantSet participants(conf->getParticipantList());
 
-    for (ParticipantSet::const_iterator iter = participants.begin(); iter!= participants.end(); ++iter) {
-        Call *call = getCallFromCallID(*iter);
+    for (const auto &iter : participants) {
+        Call *call = getCallFromCallID(iter);
         if (call) {
             // if one call is currently recording, the conference is in state recording
             isRec |= call->isRecording();
 
-            switchCall(*iter);
-            offHoldCall(*iter);
+            switchCall(iter);
+            offHoldCall(iter);
         }
     }
 
@@ -946,9 +943,8 @@ ManagerImpl::addParticipant(const std::string& callId, const std::string& confer
 
     // reset ring buffer for all conference participant
     // flush conference participants only
-    for (ParticipantSet::const_iterator p = participants.begin();
-            p != participants.end(); ++p)
-        getMainBuffer().flush(*p);
+    for (const auto &p : participants)
+        getMainBuffer().flush(p);
 
     getMainBuffer().flush(MainBuffer::DEFAULT_ID);
 
@@ -981,11 +977,10 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
-            getMainBuffer().bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
+        for (const auto &iter_p : participants) {
+            getMainBuffer().bindCallID(iter_p, MainBuffer::DEFAULT_ID);
             // Reset ringbuffer's readpointers
-            getMainBuffer().flush(*iter_p);
+            getMainBuffer().flush(iter_p);
         }
 
         getMainBuffer().flush(MainBuffer::DEFAULT_ID);
@@ -1137,9 +1132,8 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 
     int successCounter = 0;
 
-    for (std::vector<std::string>::const_iterator p = participantList.begin();
-         p != participantList.end(); ++p) {
-        std::string numberaccount(*p);
+    for (const auto &p : participantList) {
+        std::string numberaccount(p);
         std::string tostr(numberaccount.substr(0, numberaccount.find(",")));
         std::string account(numberaccount.substr(numberaccount.find(",") + 1, numberaccount.size()));
 
@@ -1288,9 +1282,8 @@ void ManagerImpl::processRemainingParticipants(Conference &conf)
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
-        for (ParticipantSet::const_iterator p = participants.begin();
-             p != participants.end(); ++p)
-            getMainBuffer().flush(*p);
+        for (const auto &p : participants)
+            getMainBuffer().flush(p);
 
         getMainBuffer().flush(MainBuffer::DEFAULT_ID);
     } else if (n == 1) {
@@ -1334,9 +1327,8 @@ ManagerImpl::joinConference(const std::string& conf_id1,
     Conference *conf = conferenceMap_.find(conf_id1)->second;
     ParticipantSet participants(conf->getParticipantList());
 
-    for (ParticipantSet::const_iterator p = participants.begin();
-            p != participants.end(); ++p)
-        addParticipant(*p, conf_id2);
+    for (const auto &p : participants)
+        addParticipant(p, conf_id2);
 
     return true;
 }
@@ -1360,9 +1352,8 @@ void ManagerImpl::addStream(const std::string& call_id)
             ParticipantSet participants(conf->getParticipantList());
 
             // reset ring buffer for all conference participant
-            for (ParticipantSet::const_iterator iter_p = participants.begin();
-                    iter_p != participants.end(); ++iter_p)
-                getMainBuffer().flush(*iter_p);
+            for (const auto &iter_p : participants)
+                getMainBuffer().flush(iter_p);
 
             getMainBuffer().flush(MainBuffer::DEFAULT_ID);
         }
@@ -1400,13 +1391,12 @@ void ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (AccountMap::iterator iter = SIPVoIPLink::instance()->getAccounts().begin();
-             iter != SIPVoIPLink::instance()->getAccounts().end(); ++iter)
-            iter->second->serialize(emitter);
+        for (auto &iter : SIPVoIPLink::instance()->getAccounts())
+            iter.second->serialize(emitter);
 
 #if HAVE_IAX
-        for (AccountMap::iterator iter = IAXVoIPLink::getAccounts().begin(); iter != IAXVoIPLink::getAccounts().end(); ++iter)
-            iter->second->serialize(emitter);
+        for (auto &iter : IAXVoIPLink::getAccounts())
+            iter.second->serialize(emitter);
 #endif
 
         preferences.serialize(emitter);
@@ -1561,15 +1551,14 @@ void ManagerImpl::incomingMessage(const std::string& callID,
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
+        for (const auto &iter_p : participants) {
 
-            if (*iter_p == callID)
+            if (iter_p == callID)
                 continue;
 
-            std::string accountId(getAccountFromCall(*iter_p));
+            std::string accountId(getAccountFromCall(iter_p));
 
-            DEBUG("Send message to %s, (%s)", (*iter_p).c_str(), accountId.c_str());
+            DEBUG("Send message to %s, (%s)", iter_p.c_str(), accountId.c_str());
 
             Account *account = getAccount(accountId);
 
@@ -1632,10 +1621,9 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
+        for (const auto &iter_p : participants) {
 
-            const std::string accountId(getAccountFromCall(*iter_p));
+            const std::string accountId(getAccountFromCall(iter_p));
 
             Account *account = getAccount(accountId);
 
@@ -1644,7 +1632,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(*iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(iter_p, message, from);
         }
     } else {
         Account *account = getAccount(getAccountFromCall(callID));
@@ -2399,20 +2387,20 @@ std::vector<std::string> ManagerImpl::getAccountList() const
 
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        for (AccountMap::const_iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
-            if (iter->first == SIPAccount::IP2IP_PROFILE || iter->first.empty())
+        for (const auto &iter : allAccounts) {
+            if (iter.first == SIPAccount::IP2IP_PROFILE || iter.first.empty())
                 continue;
 
-            if (iter->second)
-                v.push_back(iter->second->getAccountID());
+            if (iter.second)
+                v.push_back(iter.second->getAccountID());
         }
     }
     else {
-        for (vector<string>::const_iterator iter = account_order.begin(); iter != account_order.end(); ++iter) {
-            if (*iter == SIPAccount::IP2IP_PROFILE or iter->empty())
+        for (const auto &iter : account_order) {
+            if (iter == SIPAccount::IP2IP_PROFILE or iter.empty())
                 continue;
 
-            AccountMap::const_iterator account_iter = allAccounts.find(*iter);
+            AccountMap::const_iterator account_iter = allAccounts.find(iter);
 
             if (account_iter != allAccounts.end() and account_iter->second)
                 v.push_back(account_iter->second->getAccountID());
@@ -2949,8 +2937,8 @@ ManagerImpl::registerAccounts()
 {
     AccountMap allAccounts(getAllAccounts());
 
-    for (AccountMap::iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
-        Account *a = iter->second;
+    for (auto &iter : allAccounts) {
+        Account *a = iter.second;
 
         if (!a)
             continue;
