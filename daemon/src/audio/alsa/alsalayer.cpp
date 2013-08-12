@@ -707,7 +707,7 @@ void AlsaLayer::capture()
 
     // TODO: handle ALSA multichannel capture
     const int toGetBytes = in.samples() * sizeof(SFLAudioSample);
-    SFLAudioSample * const in_ptr = &(*in.getChannel(0)->begin());
+    SFLAudioSample * const in_ptr = in.getChannel(0)->data();
 
     if (read(in_ptr, toGetBytes) != toGetBytes) {
         ERROR("ALSA MIC : Couldn't read!");
