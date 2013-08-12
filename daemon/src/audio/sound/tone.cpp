@@ -63,7 +63,7 @@ Tone::genBuffer(const std::string& definition)
     const int sampleRate = buffer_->getSampleRate();
 
     std::vector<SFLAudioSample> buffer(SIZEBUF); // 1kb
-    SFLAudioSample* bufferPos = &(*buffer.begin());
+    SFLAudioSample* bufferPos = buffer.data();
 
     // Number of format sections
     std::string::size_type posStart = 0; // position of precedent comma
