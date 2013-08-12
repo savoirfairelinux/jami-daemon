@@ -62,7 +62,7 @@ void VideoSendThread::print_sdp()
     /* theora sdp can be huge */
     const size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
     std::string sdp(sdp_size, 0);
-    av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
+    av_sdp_create(&outputCtx_, 1, &sdp[0], sdp_size);
     std::istringstream iss(sdp);
     string line;
     sdp_ = "";
