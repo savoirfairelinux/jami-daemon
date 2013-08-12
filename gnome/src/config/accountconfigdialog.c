@@ -1143,6 +1143,7 @@ create_audiocodecs_configuration(const account_t *account)
     gtk_file_filter_add_pattern(filter, "*.ul");
     gtk_file_filter_add_pattern(filter, "*.au");
     gtk_file_filter_add_pattern(filter, "*.flac");
+    gtk_file_filter_add_pattern(filter, "*.ogg");
 
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(file_chooser), filter);
     gtk_grid_attach(GTK_GRID(grid), file_chooser, 0, 1, 1, 1);

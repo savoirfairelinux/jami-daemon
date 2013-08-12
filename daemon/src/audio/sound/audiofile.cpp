@@ -84,6 +84,9 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     } else if (filepath_.find(".flac") != std::string::npos) {
         format = SF_FORMAT_FLAC;
         hasHeader = true;
+    } else if (filepath_.find(".ogg") != std::string::npos) {
+        format = SF_FORMAT_OGG;
+        hasHeader = true;
     } else {
         WARN("No file extension, guessing WAV");
         format = SF_FORMAT_WAV;
