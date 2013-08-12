@@ -76,8 +76,8 @@ class SamplerateConverter {
         NON_COPYABLE(SamplerateConverter);
 
         /* temporary buffers */
-        float * floatBufferIn_;
-        float * floatBufferOut_;
+        std::vector<float> floatBufferIn_;
+        std::vector<float> floatBufferOut_;
 
         size_t samples_; // size in samples of temporary buffers
         size_t channels_; // number of channels configured
