@@ -80,8 +80,8 @@ Sdp::Sdp(pj_pool_t *pool)
 namespace {
     bool hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)
     {
-        for (std::vector<sfl::AudioCodec*>::const_iterator i = codecs.begin(); i != codecs.end(); ++i)
-            if (*i and (*i)->getPayloadType() == pt)
+        for (const auto &i : codecs)
+            if (i and i->getPayloadType() == pt)
                 return true;
         return false;
     }
@@ -377,8 +377,8 @@ void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
         WARN("No selected codec while building local SDP offer");
 
     audio_codec_list_.clear();
-    for (vector<int>::const_iterator i = selectedCodecs.begin(); i != selectedCodecs.end(); ++i) {
-        sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(*i);
+    for (const auto &i : selectedCodecs) {
+        sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(i);
 
         if (codec)
             audio_codec_list_.push_back(codec);
@@ -533,9 +533,9 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
     int size = pjmedia_sdp_print(sess, buffer, sizeof buffer);
     string sdp(buffer, size);
     const vector<string> tokens(split(sdp, '\n'));
-    for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
-        if ((*iter).find(keyword) != string::npos)
-            return *iter;
+    for (const auto &iter : tokens)
+        if (iter.find(keyword) != string::npos)
+            return iter;
     return "";
 }
 
@@ -647,9 +647,8 @@ Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
 
 void Sdp::addSdesAttribute(const vector<std::string>& crypto)
 {
-    for (vector<std::string>::const_iterator iter = crypto.begin();
-            iter != crypto.end(); ++iter) {
-        pj_str_t val = { (char*)(*iter).c_str(), static_cast<pj_ssize_t>((*iter).size()) };
+    for (const auto &iter : crypto) {
+        pj_str_t val = { (char*) iter.c_str(), static_cast<pj_ssize_t>(iter.size()) };
         pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "crypto", &val);
 
         for (unsigned i = 0; i < localSession_->media_count; i++)
