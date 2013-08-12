@@ -641,10 +641,10 @@ SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
-    for (AccountMap::const_iterator iter = sipAccountMap_.begin(); iter != sipAccountMap_.end(); ++iter) {
-        SIPAccount *account = static_cast<SIPAccount*>(iter->second);
+    for (const auto &iter : sipAccountMap_) {
+        SIPAccount *account = static_cast<SIPAccount*>(iter.second);
         if (account and account->matches(userName, server, endpt_, pool_))
-            return iter->first;
+            return iter.first;
     }
 
     DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
@@ -1167,14 +1167,13 @@ SIPVoIPLink::offhold(const std::string& id)
         std::vector<sfl::AudioCodec*> sessionMedia;
         sdpSession->getSessionAudioMedia(sessionMedia);
         std::vector<sfl::AudioCodec*> audioCodecs;
-        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin();
-             i != sessionMedia.end(); ++i) {
+        for (auto &i : sessionMedia) {
 
-            if (!*i)
+            if (!i)
                 continue;
 
             // Create a new instance for this codec
-            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec((*i)->getPayloadType());
+            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
             if (ac == NULL)
                 throw VoipLinkException("Could not instantiate codec");
@@ -1241,9 +1240,8 @@ SIPVoIPLink::clearSipCallMap()
 {
     sfl::ScopedLock m(sipCallMapMutex_);
 
-    for (SipCallMap::const_iterator iter = sipCallMap_.begin();
-            iter != sipCallMap_.end(); ++iter)
-        delete iter->second;
+    for (const auto &iter : sipCallMap_)
+        delete iter.second;
 
     sipCallMap_.clear();
 }
@@ -1949,10 +1947,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         Manager::instance().startAudioDriverStream();
 
         std::vector<AudioCodec*> audioCodecs;
-        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin(); i != sessionMedia.end(); ++i) {
-            if (!*i)
+        for (const auto &i : sessionMedia) {
+            if (!i)
                 continue;
-            const int pl = (*i)->getPayloadType();
+            const int pl = i->getPayloadType();
 
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
             if (!ac)
