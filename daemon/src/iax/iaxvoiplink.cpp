@@ -105,8 +105,8 @@ IAXVoIPLink::terminate()
 
     sfl::ScopedLock m(iaxCallMapMutex_);
 
-    for (IAXCallMap::iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end(); ++iter) {
-        IAXCall *call = static_cast<IAXCall*>(iter->second);
+    for (auto &iter : iaxCallMap_) {
+        IAXCall *call = static_cast<IAXCall*>(iter.second);
 
         if (call) {
             sfl::ScopedLock lock(mutexIAX_);
@@ -182,8 +182,8 @@ IAXVoIPLink::getCallIDs()
 void
 IAXVoIPLink::sendAudioFromMic()
 {
-    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end() ; ++iter) {
-        IAXCall *currentCall = static_cast<IAXCall*>(iter->second);
+    for (const auto &iter : iaxCallMap_) {
+        IAXCall *currentCall = static_cast<IAXCall*>(iter.second);
 
         if (!currentCall or currentCall->getState() != Call::ACTIVE)
             continue;
@@ -460,9 +460,8 @@ IAXVoIPLink::clearIaxCallMap()
 {
     sfl::ScopedLock m(iaxCallMapMutex_);
 
-    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin();
-            iter != iaxCallMap_.end(); ++iter)
-        delete iter->second;
+    for (const auto &iter : iaxCallMap_)
+        delete iter.second;
 
     iaxCallMap_.clear();
 
@@ -540,8 +539,8 @@ IAXVoIPLink::iaxFindCallBySession(iax_session* session)
 {
     sfl::ScopedLock m(iaxCallMapMutex_);
 
-    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end(); ++iter) {
-        IAXCall* call = static_cast<IAXCall*>(iter->second);
+    for (const auto &iter : iaxCallMap_) {
+        IAXCall* call = static_cast<IAXCall*>(iter.second);
 
         if (call and call->session == session)
             return call;
