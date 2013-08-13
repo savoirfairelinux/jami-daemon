@@ -165,8 +165,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     SequenceNode videoCodecs(NULL);
     accountmap.setKeyValue(VIDEO_CODECS_KEY, &videoCodecs);
 
-    for (vector<map<string, string> >::iterator i = videoCodecList_.begin(); i != videoCodecList_.end(); ++i) {
-        map<string, string> &codec = *i;
+    for (auto &codec : videoCodecList_) {
         MappingNode *mapNode = new MappingNode(NULL);
         mapNode->setKeyValue(VIDEO_CODEC_NAME, new ScalarNode(codec[VIDEO_CODEC_NAME]));
         mapNode->setKeyValue(VIDEO_CODEC_BITRATE, new ScalarNode(codec[VIDEO_CODEC_BITRATE]));
@@ -251,10 +250,8 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     SequenceNode credentialseq(NULL);
     accountmap.setKeyValue(CRED_KEY, &credentialseq);
 
-    std::vector<std::map<std::string, std::string> >::const_iterator it;
-
-    for (it = credentials_.begin(); it != credentials_.end(); ++it) {
-        std::map<std::string, std::string> cred = *it;
+    for (const auto &it : credentials_) {
+        std::map<std::string, std::string> cred = it;
         MappingNode *map = new MappingNode(NULL);
         map->setKeyValue(CONFIG_ACCOUNT_USERNAME, new ScalarNode(cred[CONFIG_ACCOUNT_USERNAME]));
         map->setKeyValue(CONFIG_ACCOUNT_PASSWORD, new ScalarNode(cred[CONFIG_ACCOUNT_PASSWORD]));
@@ -289,8 +286,8 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     // Cleanup
     Sequence *credSeq = credentialseq.getSequence();
 
-    for (Sequence::iterator seqit = credSeq->begin(); seqit != credSeq->end(); ++seqit) {
-        MappingNode *node = static_cast<MappingNode*>(*seqit);
+    for (const auto &seqit : *credSeq) {
+        MappingNode *node = static_cast<MappingNode*>(seqit);
         delete node->getValue(CONFIG_ACCOUNT_USERNAME);
         delete node->getValue(CONFIG_ACCOUNT_PASSWORD);
         delete node->getValue(CONFIG_ACCOUNT_REALM);
@@ -300,8 +297,8 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 #ifdef SFL_VIDEO
     Sequence *videoCodecSeq = videoCodecs.getSequence();
 
-    for (Sequence::iterator i = videoCodecSeq->begin(); i != videoCodecSeq->end(); ++i) {
-        MappingNode *node = static_cast<MappingNode*>(*i);
+    for (auto &i : *videoCodecSeq) {
+        MappingNode *node = static_cast<MappingNode*>(i);
         delete node->getValue(VIDEO_CODEC_NAME);
         delete node->getValue(VIDEO_CODEC_BITRATE);
         delete node->getValue(VIDEO_CODEC_ENABLED);
@@ -346,8 +343,8 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         } else {
             vector<map<string, string> > videoCodecDetails;
 
-            for (Sequence::iterator it = seq->begin(); it != seq->end(); ++it) {
-                MappingNode *codec = static_cast<MappingNode *>(*it);
+            for (auto it : *seq) {
+                MappingNode *codec = static_cast<MappingNode *>(it);
                 map<string, string> codecMap;
                 codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
                 codec->getValue(VIDEO_CODEC_BITRATE, &codecMap[VIDEO_CODEC_BITRATE]);
@@ -410,11 +407,10 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
      */
     if (credNode && credNode->getType() == SEQUENCE) {
         SequenceNode *credSeq = static_cast<SequenceNode *>(credNode);
-        Sequence::iterator it;
         Sequence *seq = credSeq->getSequence();
 
-        for (it = seq->begin(); it != seq->end(); ++it) {
-            MappingNode *cred = static_cast<MappingNode *>(*it);
+        for (auto it : *seq) {
+            MappingNode *cred = static_cast<MappingNode *>(it);
             std::string user;
             std::string pass;
             std::string realm;
@@ -599,10 +595,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_ACCOUNT_PASSWORD] = "";
 
     if (hasCredentials()) {
-        std::vector<std::map<std::string, std::string> >::const_iterator vect_iter;
 
-        for (vect_iter = credentials_.begin(); vect_iter != credentials_.end(); vect_iter++) {
-            const std::string password = retrievePassword(*vect_iter, username_);
+        for (const auto &vect_iter : credentials_) {
+            const std::string password = retrievePassword(vect_iter, username_);
 
             if (not password.empty())
                 a[CONFIG_ACCOUNT_PASSWORD] = password;
@@ -804,10 +799,8 @@ void SIPAccount::trimCiphers()
     // PJSIP aborts if our cipher list exceeds 1010 characters
     static const int MAX_CIPHERS_STRLEN = 1010;
 
-    CipherArray::const_iterator iter;
-
-    for (iter = ciphers_.begin(); iter != ciphers_.end(); ++iter) {
-        sum += strlen(pj_ssl_cipher_name(*iter));
+    for (const auto &iter : ciphers_) {
+        sum += strlen(pj_ssl_cipher_name(iter));
 
         if (sum > MAX_CIPHERS_STRLEN)
             break;
@@ -907,8 +900,8 @@ bool SIPAccount::userMatch(const std::string& username) const
 namespace {
 bool haveValueInCommon(const std::vector<std::string> &a, const std::vector<std::string> &b)
 {
-    for (std::vector<std::string>::const_iterator i = a.begin(); i != a.end(); ++i)
-        if (std::find(b.begin(), b.end(), *i) != b.end())
+    for (const auto &i : a)
+        if (std::find(b.begin(), b.end(), i) != b.end())
             return true;
 
     return false;
@@ -1121,13 +1114,13 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     credentials_ = creds;
 
     /* md5 hashing */
-    for (vector<map<string, string> >::iterator it = credentials_.begin(); it != credentials_.end(); ++it) {
-        map<string, string>::const_iterator val = (*it).find(CONFIG_ACCOUNT_USERNAME);
-        const std::string username = val != (*it).end() ? val->second : "";
-        val = (*it).find(CONFIG_ACCOUNT_REALM);
-        const std::string realm(val != (*it).end() ? val->second : "");
-        val = (*it).find(CONFIG_ACCOUNT_PASSWORD);
-        const std::string password(val != (*it).end() ? val->second : "");
+    for (auto &it : credentials_) {
+        map<string, string>::const_iterator val = it.find(CONFIG_ACCOUNT_USERNAME);
+        const std::string username = val != it.end() ? val->second : "";
+        val = it.find(CONFIG_ACCOUNT_REALM);
+        const std::string realm(val != it.end() ? val->second : "");
+        val = it.find(CONFIG_ACCOUNT_PASSWORD);
+        const std::string password(val != it.end() ? val->second : "");
 
         if (md5HashingEnabled) {
             // TODO: Fix this.
@@ -1140,7 +1133,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
             // re-hash a hashed password.
 
             if (password.length() != 32)
-                (*it)[CONFIG_ACCOUNT_PASSWORD] = computeMd5HashFromCredential(username, password, realm);
+                it[CONFIG_ACCOUNT_PASSWORD] = computeMd5HashFromCredential(username, password, realm);
         }
     }
 
@@ -1149,24 +1142,23 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
 
     size_t i = 0;
 
-    for (vector<map<string, string > >::const_iterator iter = credentials_.begin();
-            iter != credentials_.end(); ++iter) {
-        map<string, string>::const_iterator val = (*iter).find(CONFIG_ACCOUNT_PASSWORD);
-        const std::string password = val != (*iter).end() ? val->second : "";
+    for (const auto &iter : credentials_) {
+        map<string, string>::const_iterator val = iter.find(CONFIG_ACCOUNT_PASSWORD);
+        const std::string password = val != iter.end() ? val->second : "";
         int dataType = (md5HashingEnabled and password.length() == 32)
                        ? PJSIP_CRED_DATA_DIGEST
                        : PJSIP_CRED_DATA_PLAIN_PASSWD;
 
-        val = (*iter).find(CONFIG_ACCOUNT_USERNAME);
+        val = iter.find(CONFIG_ACCOUNT_USERNAME);
 
-        if (val != (*iter).end())
+        if (val != iter.end())
             cred_[i].username = pj_str((char*) val->second.c_str());
 
         cred_[i].data = pj_str((char*) password.c_str());
 
-        val = (*iter).find(CONFIG_ACCOUNT_REALM);
+        val = iter.find(CONFIG_ACCOUNT_REALM);
 
-        if (val != (*iter).end())
+        if (val != iter.end())
             cred_[i].realm = pj_str((char*) val->second.c_str());
 
         cred_[i].data_type = dataType;
