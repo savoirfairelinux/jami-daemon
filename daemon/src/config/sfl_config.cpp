@@ -91,8 +91,8 @@ ConfigTree::getSections() const
 {
     std::list<std::string> sections;
 
-    for (SectionMap::const_iterator iter = sections_.begin(); iter != sections_.end(); ++iter)
-        sections.push_back(iter->first);
+    for (const auto &iter : sections_)
+        sections.push_back(iter.first);
 
     return sections;
 }
