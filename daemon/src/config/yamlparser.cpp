@@ -380,8 +380,8 @@ void YamlParser::constructNativeData()
 {
     Sequence *seq = doc_.getSequence();
 
-    for (Sequence::iterator iter = seq->begin(); iter != seq->end(); ++iter) {
-        YamlNode *yamlNode = static_cast<YamlNode *>(*iter);
+    for (const auto &iter : *seq) {
+        YamlNode *yamlNode = static_cast<YamlNode *>(iter);
         if (yamlNode == NULL) {
             ERROR("Could not retrieve yaml node from document sequence");
             continue;
