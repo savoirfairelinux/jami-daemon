@@ -144,8 +144,8 @@ void YamlEmitter::serializePreference(MappingNode *map, const char *preference_s
 
 void YamlEmitter::addMappingItems(int mappingID, YamlNodeMap &iMap)
 {
-    for (YamlNodeMap::const_iterator i = iMap.begin(); i != iMap.end(); ++i)
-        addMappingItem(mappingID, i->first, i->second);
+    for (const auto &i : iMap)
+        addMappingItem(mappingID, i.first, i.second);
 }
 
 void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode *node)
@@ -195,8 +195,8 @@ void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode
             throw YamlEmitterException("Could not append mapping pair to mapping");
 
         Sequence *seq = seqnode->getSequence();
-        for (Sequence::const_iterator it = seq->begin(); it != seq->end(); ++it) {
-            YamlNode *yamlNode = *it;
+        for (const auto &it : *seq) {
+            YamlNode *yamlNode = it;
             int id;
             if ((id = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
                 throw YamlEmitterException("Could not add account mapping to document");
