@@ -195,8 +195,8 @@ namespace {
     void giveUniqueName(VideoV4l2Device &dev, const vector<VideoV4l2Device> &devices)
     {
 start:
-        for (size_t i = 0; i < devices.size(); ++i) {
-            if (dev.name == devices[i].name) {
+        for (auto &iter : devices) {
+            if (dev.name == iter.name) {
                 size_t sharp;
                 int num = getNumber(dev.name, &sharp);
                 if (num < 0) // not numbered
@@ -288,7 +288,7 @@ void VideoV4l2ListThread::delDevice(const string &node)
 {
     ScopedLock lock(mutex_);
 
-    for (std::vector<VideoV4l2Device>::iterator itr = devices_.begin(); itr != devices_.end(); ++itr) {
+    for (auto itr = devices_.begin(); itr != devices_.end(); ++itr) {
         if (itr->device == node) {
             devices_.erase(itr);
             Manager::instance().getVideoControls()->deviceEvent();
@@ -352,8 +352,8 @@ vector<string> VideoV4l2ListThread::getDeviceList()
     ScopedLock lock(mutex_);
     vector<string> v;
 
-    for (std::vector<VideoV4l2Device>::iterator itr = devices_.begin(); itr != devices_.end(); ++itr)
-       v.push_back(itr->name.empty() ? itr->device : itr->name);
+    for (const auto &itr : devices_)
+       v.push_back(itr.name.empty() ? itr.device : itr.name);
 
     return v;
 }
