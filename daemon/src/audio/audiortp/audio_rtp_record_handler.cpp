@@ -145,8 +145,8 @@ AudioRtpRecord::getCurrentCodec() const
 void
 AudioRtpRecord::deleteCodecs()
 {
-    for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
-        delete *i;
+    for (auto &i : audioCodecs_)
+        delete i;
 
     audioCodecs_.clear();
 }
@@ -220,10 +220,9 @@ AudioRtpRecordHandler::getCurrentAudioCodecNames()
     {
         std::string sep = "";
 
-        for (std::vector<AudioCodec*>::const_iterator i = audioRtpRecord_.audioCodecs_.begin();
-                i != audioRtpRecord_.audioCodecs_.end(); ++i) {
-            if (*i)
-                result += sep + (*i)->getMimeSubtype();
+        for (auto &i : audioRtpRecord_.audioCodecs_) {
+            if (i)
+                result += sep + i->getMimeSubtype();
 
             sep = " ";
         }
@@ -442,16 +441,18 @@ AudioRtpRecordHandler::codecsDiffer(const std::vector<AudioCodec*> &codecs) cons
     if (codecs.size() != current.size())
         return true;
 
-    for (std::vector<AudioCodec*>::const_iterator i = codecs.begin(); i != codecs.end(); ++i) {
-        if (*i) {
-            bool matched = false;
+    for (const auto &i : codecs) {
+        if (!i)
+            continue;
 
-            for (std::vector<AudioCodec*>::const_iterator j = current.begin(); !matched and j != current.end(); ++j)
-                matched = (*i)->getPayloadType() == (*j)->getPayloadType();
+        bool matched = false;
 
-            if (not matched)
-                return true;
-        }
+        for (const auto &j : current)
+            if ((matched = i->getPayloadType() == j->getPayloadType()))
+                break;
+
+        if (not matched)
+            return true;
     }
 
     return false;
