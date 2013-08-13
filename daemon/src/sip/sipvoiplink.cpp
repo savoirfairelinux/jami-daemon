@@ -1034,6 +1034,17 @@ void stopRtpIfCurrent(const std::string &id, SIPCall &call)
 #endif
     }
 }
+
+void addContactHeader(const SIPAccount &account, pjsip_tx_data *tdata)
+{
+    const std::string contactStr(account.getContactHeader());
+    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
+
+    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
+    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
+                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+}
 }
 
 void
@@ -1077,14 +1088,7 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
     if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
-    // add contact header
-    const std::string contactStr(account->getContactHeader());
-    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
-
-    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
-                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
-    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+    addContactHeader(*account, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
