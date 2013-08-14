@@ -32,7 +32,7 @@
 #include "pattern.h"
 
 #include <cstdio>
-#include <tr1/memory>
+#include <memory>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -61,7 +61,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
     // syntax :
     //a=crypto:tag 1*WSP crypto-suite 1*WSP key-params *(1*WSP session-param)
 
-    std::tr1::shared_ptr<Pattern> generalSyntaxPattern, tagPattern, cryptoSuitePattern,
+    std::unique_ptr<Pattern> generalSyntaxPattern, tagPattern, cryptoSuitePattern,
         keyParamsPattern;
 
     try {
