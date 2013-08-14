@@ -478,9 +478,8 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
                 &serverName, port, &serverName, port, &result[0]) != PJ_SUCCESS)
         throw std::runtime_error("Can't contact STUN server");
 
-    for (std::vector<pj_sockaddr_in>::const_iterator it = result.begin();
-            it != result.end(); ++it)
-        WARN("STUN PORTS: %ld", pj_ntohs(it->sin_port));
+    for (const auto & it : result)
+        WARN("STUN PORTS: %ld", pj_ntohs(it.sin_port));
 
     return result;
 }
