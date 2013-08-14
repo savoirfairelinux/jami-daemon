@@ -47,6 +47,8 @@ typedef struct {
     gint sample_rate;
     /** Bitrate */
     gchar * bitrate;
+    /** Channel number */
+    gint channels;
 } codec_t;
 
 /** @struct codec_t

@@ -50,58 +50,6 @@
 class MainBuffer;
 class AudioPreference;
 
-class AudioBuffer {
-    public:
-        AudioBuffer(int len = 160) : length_(len)
-            , channels_(1)
-            , buffer_(length_ * channels_, 0)
-            , size_(length_ * channels_ * sizeof(SFLDataFormat))
-            , data_(&(*buffer_.begin()))
-        {}
-
-        AudioBuffer(SFLDataFormat *ptr, int len, int chan) : length_(len)
-            , channels_(chan)
-            , buffer_()
-            , size_(length_ * channels_ * sizeof(SFLDataFormat))
-            , data_(ptr)
-        {}
-
-        AudioBuffer(AudioBuffer& buf) : length_(buf.length())
-            , channels_(buf.channels())
-            , buffer_(buf.buffer_)
-            , size_(length_ * channels_ * sizeof(SFLDataFormat))
-            , data_(&(*buffer_.begin()))
-        {}
-
-        void reset() {
-            std::fill(buffer_.begin(), buffer_.end(), 0);
-        }
-
-        unsigned int length() const {
-            return length_;
-        }
-
-        unsigned int channels() const {
-            return channels_;
-        }
-
-        size_t size() const {
-            return size_;
-        }
-
-        SFLDataFormat *data() {
-            return data_;
-        }
-
-    private:
-        NON_COPYABLE(AudioBuffer);
-
-        unsigned int length_;    // in samples
-        unsigned int channels_;  // number of channels
-        std::vector<SFLDataFormat> buffer_;
-        size_t size_;            // size in bytes
-        SFLDataFormat *data_;
-};
 
 typedef std::vector<AudioBuffer> AudioBufferStack;
 
@@ -176,9 +124,8 @@ class AudioLayer {
          * Send a chunk of data to the hardware buffer to start the playback
          * Copy data in the urgent buffer.
          * @param buffer The buffer containing the data to be played ( ringtones )
-         * @param toCopy The size of the buffer
          */
-        void putUrgent(void* buffer, int toCopy);
+        void putUrgent(AudioBuffer& buffer);
 
         /**
          * Flush main buffer
@@ -189,11 +136,6 @@ class AudioLayer {
          * Flush urgent buffer
          */
         void flushUrgent();
-
-        /**
-         * Apply gain to audio frame
-         */
-        static void applyGain(SFLDataFormat *src , int samples, int gain);
 
         /**
          * Convert audio amplitude value from linear value to dB
@@ -252,24 +194,6 @@ class AudioLayer {
         void notifyIncomingCall();
 
         virtual void updatePreference(AudioPreference &pref, int index, PCMType type) = 0;
-
-        bool audioBufferFillWithZeros(AudioBuffer &buffer);
-
-        /**
-         * Here fill the input buffer with tone or ringtone samples
-         */
-        bool audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer);
-
-        bool audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesAvail);
-
-        bool audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
-
-        /**
-         * The main logic to determine what should be played is determined here
-         */
-        bool audioPlaybackFillBuffer(AudioBuffer &buffer);
-
-        void audioCaptureFillBuffer(AudioBuffer &buffer);
 
     protected:
 

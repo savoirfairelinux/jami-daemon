@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrienberaud@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,38 +28,43 @@
  *  as that of the covered work.
  */
 
-#ifndef AUDIORECORDER_H_
-#define AUDIORECORDER_H_
+#ifndef AUDIOBUFFER_TEST_
+#define AUDIOBUFFER_TEST_
 
-#include <string>
-#include <pthread.h>
-#include "audiorecord.h"
-#include "noncopyable.h"
+// Cppunit import
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/TestCaller.h>
+#include <cppunit/TestCase.h>
+#include <cppunit/TestSuite.h>
 
-class MainBuffer;
+#include <tr1/memory>
 
-class AudioRecorder {
+/*
+ * @file audiobuffertest.cpp
+ * @brief       Regroups unit tests related to an audio buffer.
+ */
+
+class AudioBufferTest : public CppUnit::TestCase {
+
+        /*
+         * Use cppunit library macros to add unit test the factory
+         */
+        CPPUNIT_TEST_SUITE(AudioBufferTest);
+        CPPUNIT_TEST(testAudioBufferConstructors);
+        CPPUNIT_TEST(testAudioBufferMix);
+        CPPUNIT_TEST_SUITE_END();
 
     public:
-        AudioRecorder(AudioRecord  *arec, MainBuffer &mb);
-        ~AudioRecorder();
-        std::string getRecorderID() const {
-            return recorderId_;
-        }
 
-        void start();
+        AudioBufferTest();
 
-    private:
-        NON_COPYABLE(AudioRecorder);
-        void run();
-        static void * runCallback(void *data);
+        void testAudioBufferConstructors();
 
-        static int count_;
-        std::string recorderId_;
-        MainBuffer &mbuffer_;
-        AudioRecord *arecord_;
-        bool running_;
-        pthread_t thread_;
+        void testAudioBufferMix();
 };
 
-#endif
+/* Register our test module */
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioBufferTest, "AudioBufferTest");
+CPPUNIT_TEST_SUITE_REGISTRATION(AudioBufferTest);
+
+#endif  // AUDIOBUFFER_TEST_

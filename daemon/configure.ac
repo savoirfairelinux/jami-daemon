@@ -35,6 +35,9 @@ LT_INIT
 dnl Define C++ as default language
 AC_LANG(C++)
 
+dnl Check for C++11 support
+AX_CXX_COMPILE_STDCXX_11
+
 dnl Check for header files
 AC_FUNC_ALLOCA
 AC_HEADER_STDC
@@ -103,6 +106,9 @@ AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes")
 dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
+
+dnl Check for the sndfile development package - name: libsndfile-dev
+PKG_CHECK_MODULES(SNDFILE, sndfile,, AC_MSG_ERROR([Missing sndfile development package: libsndfile-dev]))
 
 dnl Coverage is default-disabled
 AC_ARG_ENABLE([coverage], AS_HELP_STRING([--enable-coverage], [Enable coverage]))

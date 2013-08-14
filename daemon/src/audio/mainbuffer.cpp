@@ -47,8 +47,8 @@ MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSam
 MainBuffer::~MainBuffer()
 {
     // delete any ring buffers that didn't get removed
-    for (RingBufferMap::iterator iter = ringBufferMap_.begin(); iter != ringBufferMap_.end(); ++iter)
-        delete iter->second;
+    for (auto &item : ringBufferMap_)
+        delete item.second;
 
     pthread_mutex_destroy(&mutex_);
 }
@@ -230,24 +230,23 @@ void MainBuffer::unBindAll(const std::string & call_id)
 
     CallIDSet temp_set(*callid_set);
 
-    for (CallIDSet::iterator iter_set = temp_set.begin();
-            iter_set != temp_set.end(); ++iter_set) {
-        std::string call_id_in_set(*iter_set);
-        unBindCallID(call_id, call_id_in_set);
-    }
+    for (const auto &item_set : temp_set)
+        unBindCallID(call_id, item_set);
 }
 
-void MainBuffer::putData(void *buffer, size_t toCopy, const std::string &call_id)
+//void MainBuffer::putData(void *buffer, size_t toCopy, const std::string &call_id)
+void MainBuffer::putData(AudioBuffer& buffer, const std::string &call_id)
 {
     sfl::ScopedLock guard(mutex_);
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
 
     if (ring_buffer)
-        ring_buffer->put(buffer, toCopy);
+        ring_buffer->put(buffer);
 }
 
-size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_id)
+//size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_id)
+size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
 {
     sfl::ScopedLock guard(mutex_);
 
@@ -261,26 +260,21 @@ size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if (iter_id != callid_set->end())
-            return getDataByID(buffer, toCopy, *iter_id, call_id);
+            return getDataByID(buffer, *iter_id, call_id); //return getDataByID(buffer, toCopy, *iter_id, call_id);
         else
             return 0;
     } else {
-        memset(buffer, 0, toCopy);
+        buffer.reset();
+        buffer.setSampleRate(internalSamplingRate_);
 
         size_t size = 0;
+        AudioBuffer mixBuffer(buffer);
 
-        for (CallIDSet::iterator iter_id = callid_set->begin();
-                iter_id != callid_set->end(); ++iter_id) {
-            size_t nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
-            SFLDataFormat mixBuffer[nbSmplToCopy];
-            memset(mixBuffer, 0, toCopy);
-            size = getDataByID(mixBuffer, toCopy, *iter_id, call_id);
+        for (const auto &item_id : *callid_set) {
+            size = getDataByID(mixBuffer, item_id, call_id);
 
             if (size > 0) {
-                SFLDataFormat *dest = static_cast<SFLDataFormat*>(buffer);
-
-                for (size_t k = 0; k < nbSmplToCopy; ++k)
-                    dest[k] += mixBuffer[k];
+                buffer.mix(mixBuffer);
             }
         }
 
@@ -288,11 +282,17 @@ size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_
     }
 }
 
-size_t MainBuffer::getDataByID(void *buffer, size_t toCopy, const std::string & call_id, const std::string & reader_id)
+size_t MainBuffer::getDataByID(AudioBuffer& buffer, const std::string & call_id, const std::string & reader_id)
+{
+    RingBuffer* ring_buffer = getRingBuffer(call_id);
+    return ring_buffer ? ring_buffer->get(buffer, reader_id) : 0;
+}
+
+/*size_t MainBuffer::getDataByID(void *buffer, size_t toCopy, const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ring_buffer = getRingBuffer(call_id);
     return ring_buffer ? ring_buffer->get(buffer, toCopy, reader_id) : 0;
-}
+}*/
 
 size_t MainBuffer::availableForGet(const std::string &call_id)
 {
@@ -313,16 +313,16 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
 
     } else {
 
-        size_t availableBytes = INT_MAX;
+        size_t availableSamples = INT_MAX;
 
-        for (CallIDSet::iterator i = callid_set->begin(); i != callid_set->end(); ++i) {
-            const size_t nbBytes = availableForGetByID(*i, call_id);
+        for (auto &i : *callid_set) {
+            const size_t nbSamples = availableForGetByID(i, call_id);
 
-            if (nbBytes != 0)
-                availableBytes = std::min(availableBytes, nbBytes);
+            if (nbSamples != 0)
+                availableSamples = std::min(availableSamples, nbSamples);
         }
 
-        return availableBytes != INT_MAX ? availableBytes : 0;
+        return availableSamples != INT_MAX ? availableSamples : 0;
     }
 }
 
@@ -351,8 +351,8 @@ size_t MainBuffer::discard(size_t toDiscard, const std::string &call_id)
     if (!callid_set or callid_set->empty())
         return 0;
 
-    for (CallIDSet::iterator iter = callid_set->begin(); iter != callid_set->end(); ++iter)
-        discardByID(toDiscard, *iter, call_id);
+    for (auto &item : *callid_set)
+        discardByID(toDiscard, item, call_id);
 
     return toDiscard;
 }
@@ -374,9 +374,8 @@ void MainBuffer::flush(const std::string & call_id)
     if (callid_set == NULL)
         return;
 
-    for (CallIDSet::iterator iter = callid_set->begin(); iter != callid_set->end(); ++iter)
-        flushByID(*iter, call_id);
-
+    for (auto &item : *callid_set)
+        flushByID(item, call_id);
 }
 
 void MainBuffer::flushByID(const std::string & call_id, const std::string & reader_id)
@@ -390,8 +389,8 @@ void MainBuffer::flushByID(const std::string & call_id, const std::string & read
 
 void MainBuffer::flushAllBuffers()
 {
-    for (RingBufferMap::iterator iter = ringBufferMap_.begin(); iter != ringBufferMap_.end(); ++iter)
-        iter->second->flushAll();
+    for (auto &item : ringBufferMap_)
+        item.second->flushAll();
 }
 
 void MainBuffer::dumpInfo()
@@ -399,15 +398,15 @@ void MainBuffer::dumpInfo()
     sfl::ScopedLock guard(mutex_);
 
     // print each call and bound call ids
-    for (CallIDMap::const_iterator iter_call = callIDMap_.begin(); iter_call != callIDMap_.end(); ++iter_call) {
+    for (const auto &item_call : callIDMap_) {
         std::string dbg_str("    Call: \t");
-        dbg_str.append(iter_call->first);
+        dbg_str.append(item_call.first);
         dbg_str.append("   is bound to: \t");
 
-        CallIDSet *call_id_set = iter_call->second;
+        CallIDSet *call_id_set = item_call.second;
 
-        for (CallIDSet::iterator iter = call_id_set->begin(); iter != call_id_set->end(); ++iter) {
-            dbg_str.append(*iter);
+        for (const auto &item : *call_id_set) {
+            dbg_str.append(item);
             dbg_str.append(", ");
         }
 
@@ -415,20 +414,20 @@ void MainBuffer::dumpInfo()
     }
 
     // Print ringbuffers ids and readpointers
-    for (RingBufferMap::const_iterator iter_buffer = ringBufferMap_.begin(); iter_buffer != ringBufferMap_.end(); ++iter_buffer) {
+    for (const auto &item_buffer : ringBufferMap_) {
         std::string dbg_str("    Buffer: \t");
 
-        dbg_str.append(iter_buffer->first);
+        dbg_str.append(item_buffer.first);
         dbg_str.append("   as read pointer: \t");
 
-        RingBuffer* rbuffer = iter_buffer->second;
+        RingBuffer* rbuffer = item_buffer.second;
 
         if (rbuffer) {
             ReadPointer* rpointer = rbuffer->getReadPointerList();
 
             if (rpointer) {
-                for (ReadPointer::iterator iter = rpointer->begin(); iter != rpointer->end(); ++iter) {
-                    dbg_str.append(iter->first);
+                for (const auto &item : *rpointer) {
+                    dbg_str.append(item.first);
                     dbg_str.append(", ");
                 }
             }

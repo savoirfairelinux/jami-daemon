@@ -159,8 +159,8 @@ namespace {
         }
 
         // check that it's in the list of valid codecs and that it has all the required fields
-        for (vector<map<string, string> >::const_iterator i = defaults.begin(); i != defaults.end(); ++i) {
-            const map<string, string>::const_iterator defaultName = i->find(Account::VIDEO_CODEC_NAME);
+        for (const auto &i : defaults) {
+            const auto defaultName = i.find(Account::VIDEO_CODEC_NAME);
             if (defaultName->second == name->second) {
                 return isFieldValid(codec, Account::VIDEO_CODEC_BITRATE, isPositiveInteger)
                     and isFieldValid(codec, Account::VIDEO_CODEC_ENABLED, isBoolean);
@@ -172,16 +172,15 @@ namespace {
 
     bool isCodecListValid(const vector<map<string, string> > &list)
     {
-        const vector<map<string, string> > defaults(libav_utils::getDefaultCodecs());
+        const auto defaults(libav_utils::getDefaultCodecs());
         if (list.size() != defaults.size()) {
             ERROR("New codec list has a different length than the list of supported codecs");
             return false;
         }
 
         // make sure that all codecs are present
-        for (vector<map<string, string> >::const_iterator i = list.begin();
-             i != list.end(); ++i) {
-            if (not isCodecValid(*i, defaults))
+        for (const auto &i : list) {
+            if (not isCodecValid(i, defaults))
                 return false;
         }
         return true;
@@ -237,8 +236,8 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
-    for (vector<string>::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
-        int payload = std::atoi(iter->c_str());
+    for (const auto &item : list) {
+        int payload = std::atoi(item.c_str());
         audioCodecList_.push_back(payload);
     }
 

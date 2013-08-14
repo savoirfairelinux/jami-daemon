@@ -66,10 +66,9 @@ void Conference::remove(const std::string &participant_id)
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-    for (ParticipantSet::const_iterator iter = participants_.begin();
-            iter != participants_.end(); ++iter)
-        if (participant_id != *iter)
-            Manager::instance().getMainBuffer().bindCallID(participant_id, *iter);
+    for (const auto &item : participants_)
+        if (participant_id != item)
+            Manager::instance().getMainBuffer().bindCallID(participant_id, item);
 
     Manager::instance().getMainBuffer().bindCallID(participant_id, MainBuffer::DEFAULT_ID);
 }
@@ -108,15 +107,15 @@ bool Conference::toggleRecording()
 
     // start recording
     if (startRecording) {
-        for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
-            mbuffer.bindHalfDuplexOut(process_id, *iter);
+        for (const auto &item : participants_)
+            mbuffer.bindHalfDuplexOut(process_id, item);
 
         mbuffer.bindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
-        for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
-            mbuffer.unBindHalfDuplexOut(process_id, *iter);
+        for (const auto &item : participants_)
+            mbuffer.unBindHalfDuplexOut(process_id, item);
 
         mbuffer.unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
     }

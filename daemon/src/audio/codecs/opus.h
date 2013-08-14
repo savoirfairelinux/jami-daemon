@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,17 +42,26 @@ class Opus : public sfl::AudioCodec {
 public:
    Opus();
    ~Opus();
+
+   static const uint8_t PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
+
 private:
-   virtual int decode(SFLDataFormat *dst, unsigned char *buf, size_t buffer_size);
-   virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buffer_size);
+   virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
+
+   //multichannel version
+   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size);
 
    NON_COPYABLE(Opus);
    //Attributes
    OpusEncoder *encoder_;
    OpusDecoder *decoder_;
+   std::vector<opus_int16> interleaved_;
+
    static const int FRAME_SIZE = 160;
    static const int CLOCK_RATE = 16000;
-   static const int CHANNELS   = 1;
+   static const int CHANNELS   = 2;
 };
 
 #endif

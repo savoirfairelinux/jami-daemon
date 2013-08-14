@@ -53,4 +53,10 @@ show_account_window(account_t *a, SFLPhoneClient *client, gboolean is_new);
  */
 void update_account_from_dialog(GtkWidget *dialog, account_t *a);
 
+/*
+ * @param position The position of the slider
+ * @param size The size of the slider
+ */
+void update_ringtone_slider(guint position, guint size);
+
 #endif

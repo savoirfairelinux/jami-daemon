@@ -52,8 +52,8 @@ YamlNode *YamlDocument::popNode()
 
 void YamlDocument::deleteChildNodes()
 {
-    for (Sequence::iterator it = doc_.begin(); it != doc_.end(); ++it) {
-        YamlNode *yamlNode = static_cast<YamlNode *>(*it);
+    for (auto &it : doc_) {
+        YamlNode *yamlNode = static_cast<YamlNode *>(it);
 
         yamlNode->deleteChildNodes();
         delete yamlNode;
@@ -124,8 +124,8 @@ void MappingNode::getValue(const std::string &key, std::string *v) const
 
 void MappingNode::deleteChildNodes()
 {
-    for (YamlNodeMap::iterator it = map_.begin(); it != map_.end(); ++it) {
-        YamlNode *yamlNode = static_cast<YamlNode *>(it->second);
+    for (auto &it : map_) {
+        YamlNode *yamlNode = static_cast<YamlNode *>(it.second);
 
         if (!yamlNode)
             continue;
@@ -144,8 +144,8 @@ void SequenceNode::addNode(YamlNode *node)
 
 void SequenceNode::deleteChildNodes()
 {
-    for (Sequence::iterator it = seq_.begin(); it != seq_.end(); ++it) {
-        YamlNode *yamlNode = static_cast<YamlNode *>(*it);
+    for (auto &it : seq_) {
+        YamlNode *yamlNode = static_cast<YamlNode *>(it);
 
         yamlNode->deleteChildNodes();
         delete yamlNode;

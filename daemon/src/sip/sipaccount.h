@@ -194,7 +194,7 @@ class SIPAccount : public Account {
 
 
         const pjsip_cred_info* getCredInfo() const {
-            return &(*cred_.begin());
+            return cred_.data();
         }
 
         /**

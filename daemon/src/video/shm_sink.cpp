@@ -183,7 +183,7 @@ void SHMSink::render(const std::vector<unsigned char> &data)
     if (!resize_area(sizeof(SHMHeader) + data.size()))
         return;
 
-    memcpy(shm_area_->data, &(*data.begin()), data.size());
+    memcpy(shm_area_->data, data.data(), data.size());
     shm_area_->buffer_size = data.size();
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);

@@ -121,10 +121,9 @@ static const unsigned pixelformats_supported[] = {
 namespace {
 unsigned int pixelformat_score(unsigned pixelformat)
 {
-    size_t n = sizeof pixelformats_supported / sizeof *pixelformats_supported;
-    for (unsigned int i = 0; i < n ; ++i)
-        if (pixelformats_supported[i] == pixelformat)
-            return i;
+    for (const auto &item : pixelformats_supported)
+        if (item == pixelformat)
+            return item;
 
     return UINT_MAX - 1;
 }
@@ -137,9 +136,9 @@ vector<string> VideoV4l2Size::getRateList()
 {
     vector<string> v;
 
-    for (vector<float>::const_iterator i = rates_.begin() ; i != rates_.end(); ++i) {
+    for (const auto &item : rates_) {
         std::stringstream ss;
-        ss << *i;
+        ss << item;
         v.push_back(ss.str());
     }
 
@@ -201,9 +200,9 @@ vector<string> VideoV4l2Channel::getSizeList() const
 {
     vector<string> v;
 
-    for (vector<VideoV4l2Size>::const_iterator itr = sizes_.begin(); itr != sizes_.end(); ++itr) {
+    for (const auto &item : sizes_) {
         std::stringstream ss;
-        ss << itr->width << "x" << itr->height;
+        ss << item.width << "x" << item.height;
         v.push_back(ss.str());
     }
 
@@ -309,11 +308,11 @@ void VideoV4l2Channel::getFormat(int fd)
 
 VideoV4l2Size VideoV4l2Channel::getSize(const string &name) const
 {
-    for (vector<VideoV4l2Size>::const_iterator i = sizes_.begin(); i != sizes_.end(); ++i) {
+    for (const auto &item : sizes_) {
         std::stringstream ss;
-        ss << i->width << "x" << i->height;
+        ss << item.width << "x" << item.height;
         if (ss.str() == name)
-            return *i;
+            return item;
     }
 
     // fallback to last size
@@ -354,8 +353,8 @@ vector<string> VideoV4l2Device::getChannelList() const
 {
     vector<string> v;
 
-    for (vector<VideoV4l2Channel>::const_iterator itr = channels_.begin(); itr != channels_.end(); ++itr)
-        v.push_back(itr->name);
+    for (const auto &itr : channels_)
+        v.push_back(itr.name);
 
     return v;
 }
@@ -363,9 +362,9 @@ vector<string> VideoV4l2Device::getChannelList() const
 const VideoV4l2Channel &
 VideoV4l2Device::getChannel(const string &name) const
 {
-    for (vector<VideoV4l2Channel>::const_iterator itr = channels_.begin(); itr != channels_.end(); ++itr)
-        if (itr->name == name)
-            return *itr;
+    for (const auto &item : channels_)
+        if (item.name == name)
+            return item;
 
     return channels_.back();
 }

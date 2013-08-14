@@ -232,6 +232,17 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
     }
 }
 
+void
+addContactHeader(const std::string &contactStr, pjsip_tx_data *tdata)
+{
+    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
+
+    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
+    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
+                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+}
+
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
 
@@ -446,11 +457,30 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
             pjsip_inv_send_msg(replaced_inv, tdata);
     } else { // Proceed with normal call flow
-        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             ERROR("Could not answer invite");
             delete call;
             return PJ_FALSE;
         }
+
+        if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+            ERROR("Could not send msg for invite");
+            delete call;
+            return PJ_FALSE;
+        }
+
+        call->setConnectionState(Call::TRYING);
+
+        if (pjsip_inv_answer(call->inv, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+            ERROR("Could not answer invite");
+            delete call;
+            return PJ_FALSE;
+        }
+
+        // contactStr must stay in scope as long as tdata
+        const std::string contactStr(account->getContactHeader());
+        addContactHeader(contactStr, tdata);
+
         if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
             delete call;
@@ -626,10 +656,10 @@ SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
-    for (AccountMap::const_iterator iter = sipAccountMap_.begin(); iter != sipAccountMap_.end(); ++iter) {
-        SIPAccount *account = static_cast<SIPAccount*>(iter->second);
+    for (const auto &item : sipAccountMap_) {
+        SIPAccount *account = static_cast<SIPAccount*>(item.second);
         if (account and account->matches(userName, server, endpt_, pool_))
-            return iter->first;
+            return item.first;
     }
 
     DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
@@ -1062,14 +1092,9 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
     if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
-    // add contact header
+    // contactStr must stay in scope as long as tdata
     const std::string contactStr(account->getContactHeader());
-    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
-
-    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
-                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
-    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+    addContactHeader(contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
@@ -1152,14 +1177,13 @@ SIPVoIPLink::offhold(const std::string& id)
         std::vector<sfl::AudioCodec*> sessionMedia;
         sdpSession->getSessionAudioMedia(sessionMedia);
         std::vector<sfl::AudioCodec*> audioCodecs;
-        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin();
-             i != sessionMedia.end(); ++i) {
+        for (auto &i : sessionMedia) {
 
-            if (!*i)
+            if (!i)
                 continue;
 
             // Create a new instance for this codec
-            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec((*i)->getPayloadType());
+            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
             if (ac == NULL)
                 throw VoipLinkException("Could not instantiate codec");
@@ -1226,9 +1250,8 @@ SIPVoIPLink::clearSipCallMap()
 {
     sfl::ScopedLock m(sipCallMapMutex_);
 
-    for (SipCallMap::const_iterator iter = sipCallMap_.begin();
-            iter != sipCallMap_.end(); ++iter)
-        delete iter->second;
+    for (const auto &item : sipCallMap_)
+        delete item.second;
 
     sipCallMap_.clear();
 }
@@ -1933,10 +1956,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         Manager::instance().startAudioDriverStream();
 
         std::vector<AudioCodec*> audioCodecs;
-        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin(); i != sessionMedia.end(); ++i) {
-            if (!*i)
+        for (const auto &i : sessionMedia) {
+            if (!i)
                 continue;
-            const int pl = (*i)->getPayloadType();
+            const int pl = i->getPayloadType();
 
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
             if (!ac)

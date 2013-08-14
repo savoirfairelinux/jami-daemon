@@ -35,7 +35,9 @@ test_SOURCES = constants.h \
 			   resamplertest.h \
 			   resamplertest.cpp \
 			   hooktest.h \
-			   hooktest.cpp
+			   hooktest.cpp \
+			   audiobuffertest.h \
+			   audiobuffertest.cpp
 
 if BUILD_SDES
 test_SOURCES+=sdesnegotiatortest.h \

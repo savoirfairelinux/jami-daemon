@@ -40,6 +40,10 @@
 
 #include <algorithm>
 
+#ifdef HAVE_OPUS
+#include "audio/codecs/opus.h"
+#endif
+
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
 #endif
@@ -76,8 +80,8 @@ Sdp::Sdp(pj_pool_t *pool)
 namespace {
     bool hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)
     {
-        for (std::vector<sfl::AudioCodec*>::const_iterator i = codecs.begin(); i != codecs.end(); ++i)
-            if (*i and (*i)->getPayloadType() == pt)
+        for (const auto &i : codecs)
+            if (i and i->getPayloadType() == pt)
                 return true;
         return false;
     }
@@ -219,12 +223,14 @@ Sdp::setMediaDescriptorLines(bool audio)
         unsigned clock_rate;
         string enc_name;
         int payload;
+        unsigned channels;
 
         if (audio) {
             sfl::AudioCodec *codec = audio_codec_list_[i];
             payload = codec->getPayloadType();
             enc_name = codec->getMimeSubtype();
             clock_rate = codec->getClockRate();
+            channels = codec->getChannels();
             // G722 require G722/8000 media description even if it is 16000 codec
             if (codec->getPayloadType () == 9)
                 clock_rate = 8000;
@@ -248,13 +254,34 @@ Sdp::setMediaDescriptorLines(bool audio)
         rtpmap.pt = med->desc.fmt[i];
         rtpmap.enc_name = pj_str((char*) enc_name.c_str());
         rtpmap.clock_rate = clock_rate;
-        rtpmap.param.ptr = ((char* const)"");
-        rtpmap.param.slen = 0;
+
+#ifdef HAVE_OPUS
+        // Opus sample rate is allways declared as 48000 and channel num is allways 2 in rtpmap as per
+        // http://tools.ietf.org/html/draft-spittka-payload-rtp-opus-03#section-6.2
+        if(payload == Opus::PAYLOAD_TYPE) {
+            rtpmap.clock_rate = 48000;
+            rtpmap.param.ptr = ((char* const)"2");
+            rtpmap.param.slen = 1;
+        } else
+#endif
+        {
+            rtpmap.param.ptr = ((char* const)"");
+            rtpmap.param.slen = 0;
+        }
 
         pjmedia_sdp_attr *attr;
         pjmedia_sdp_rtpmap_to_attr(memPool_, &rtpmap, &attr);
 
         med->attr[med->attr_count++] = attr;
+
+#ifdef HAVE_OPUS
+        // Declare stereo support for opus
+        if(payload == Opus::PAYLOAD_TYPE) {
+            std::ostringstream os;
+            os << "fmtp:" << payload << " stereo=1; sprop-stereo=" << (channels>1 ? 1 : 0);
+            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
+        }
+#endif
 #ifdef SFL_VIDEO
         if (enc_name == "H264") {
             std::ostringstream os;
@@ -350,8 +377,8 @@ void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
         WARN("No selected codec while building local SDP offer");
 
     audio_codec_list_.clear();
-    for (vector<int>::const_iterator i = selectedCodecs.begin(); i != selectedCodecs.end(); ++i) {
-        sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(*i);
+    for (const auto &i : selectedCodecs) {
+        sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(i);
 
         if (codec)
             audio_codec_list_.push_back(codec);
@@ -506,9 +533,9 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
     int size = pjmedia_sdp_print(sess, buffer, sizeof buffer);
     string sdp(buffer, size);
     const vector<string> tokens(split(sdp, '\n'));
-    for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
-        if ((*iter).find(keyword) != string::npos)
-            return *iter;
+    for (const auto &item : tokens)
+        if (item.find(keyword) != string::npos)
+            return item;
     return "";
 }
 
@@ -620,9 +647,8 @@ Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
 
 void Sdp::addSdesAttribute(const vector<std::string>& crypto)
 {
-    for (vector<std::string>::const_iterator iter = crypto.begin();
-            iter != crypto.end(); ++iter) {
-        pj_str_t val = { (char*)(*iter).c_str(), static_cast<pj_ssize_t>((*iter).size()) };
+    for (const auto &item : crypto) {
+        pj_str_t val = { (char*) item.c_str(), static_cast<pj_ssize_t>(item.size()) };
         pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "crypto", &val);
 
         for (unsigned i = 0; i < localSession_->media_count; i++)

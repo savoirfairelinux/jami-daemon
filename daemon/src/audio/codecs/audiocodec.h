@@ -33,7 +33,7 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
-
+#include <vector>
 #include "sfl_types.h"
 
 #define XSTR(s) STR(s)
@@ -52,8 +52,7 @@ namespace sfl {
 
 class AudioCodec {
     public:
-        AudioCodec(uint8_t payload, const std::string &codecName, int clockRate,
-                   int frameSize, int channel);
+        AudioCodec(uint8_t payload, const std::string &codecName, int clockRate, int frameSize, unsigned channels);
 
         /**
          * Copy constructor.
@@ -69,14 +68,26 @@ class AudioCodec {
          * @param buffer_size : the size of the input buffer
          * @return the number of samples decoded
          */
-        virtual int decode(SFLDataFormat *dst, unsigned char *buf, size_t buffer_size) = 0;
+        virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size) = 0;
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
          * @param buffer_size : the maximum size of encoded data buffer (dst)
          * @return the number of bytes encoded
          */
-        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buffer_size) = 0;
+        virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size) = 0;
+
+        /**
+         * Multichannel version of decode().
+         * Default implementation decode(short *, unsigned char *, size_t) to the first channel (assume 1 channel).
+         */
+        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size);
+
+        /**
+         * Multichannel version of encode().
+         * Default implementation calls encode() on the first channel (assume 1 channel).
+         */
+        virtual int encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size);
 
         uint8_t getPayloadType() const;
 
@@ -92,6 +103,8 @@ class AudioCodec {
         uint32_t getClockRate() const;
 
         double getBitRate() const;
+
+        unsigned getChannels() const;
 
         /**
          * @return the framing size for this codec.

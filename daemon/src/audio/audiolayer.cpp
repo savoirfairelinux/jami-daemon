@@ -69,17 +69,10 @@ void AudioLayer::flushUrgent()
     urgentRingBuffer_.flushAll();
 }
 
-void AudioLayer::putUrgent(void* buffer, int toCopy)
+void AudioLayer::putUrgent(AudioBuffer& buffer)
 {
     sfl::ScopedLock guard(mutex_);
-    urgentRingBuffer_.put(buffer, toCopy);
-}
-
-void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)
-{
-    if (gain != 100)
-        for (int i = 0 ; i < samples; i++)
-            src[i] = src[i] * gain * 0.01;
+    urgentRingBuffer_.put(buffer);
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress
@@ -102,168 +95,10 @@ void AudioLayer::notifyIncomingCall()
 
     Tone tone("440/160", getSampleRate());
     unsigned int nbSample = tone.getSize();
-    SFLDataFormat buf[nbSample];
-    tone.getNext(buf, nbSample);
+    AudioBuffer buf(nbSample);
+    tone.getNext(buf);
 
     /* Put the data in the urgent ring buffer */
     flushUrgent();
-    putUrgent(buf, sizeof buf);
-}
-
-bool AudioLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
-{
-    AudioLoop *tone = Manager::instance().getTelephoneTone();
-    AudioLoop *file_tone = Manager::instance().getTelephoneFile();
-
-    // In case of a dtmf, the pointers will be set to NULL once the dtmf length is
-    // reached. For this reason we need to fill audio buffer with zeros if pointer is NULL
-    if (tone) {
-        tone->getNext(buffer.data(), buffer.length(), playbackGain_);
-    } else if (file_tone) {
-        file_tone->getNext(buffer.data(), buffer.length(), playbackGain_);
-    } else {
-        buffer.reset();
-    }
-
-    return true;
-}
-
-bool AudioLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesToGet)
-{
-    // Urgent data (dtmf, incoming call signal) come first.
-    bytesToGet = std::min(bytesToGet, buffer.size());
-    const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
-    urgentRingBuffer_.get(buffer.data(), bytesToGet, MainBuffer::DEFAULT_ID);
-    applyGain(buffer.data(), samplesToGet, playbackGain_);
-
-    // Consume the regular one as well (same amount of bytes)
-    Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
-
-    return true;
-}
-
-bool AudioLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail)
-{
-    const size_t bytesToCpy = buffer.size();
-
-    const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
-    const bool resample = sampleRate_ != mainBufferSampleRate;
-
-    if (bytesAvail == 0)
-        return false;
-
-    double resampleFactor = 1.0;
-    size_t maxNbBytesToGet = bytesToCpy;
-
-    if (resample) {
-        resampleFactor = mainBufferSampleRate / static_cast<double>(sampleRate_);
-        maxNbBytesToGet = bytesToCpy * resampleFactor;
-    }
-
-    size_t bytesToGet = std::min(maxNbBytesToGet, bytesAvail);
-
-    const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
-    AudioBuffer out(samplesToGet);
-    SFLDataFormat * out_ptr = NULL;
-
-    if (resample)
-        out_ptr = &(*out.data());
-    else
-        out_ptr = &(*buffer.data());
-
-    Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-    AudioLayer::applyGain(out_ptr, samplesToGet, playbackGain_);
-
-    if (resample) {
-        SFLDataFormat * const rsmpl_out_ptr = buffer.data();
-        const size_t outSamples = samplesToGet * resampleFactor;
-        converter_.resample(out_ptr, rsmpl_out_ptr, outSamples,
-                            mainBufferSampleRate, sampleRate_, samplesToGet);
-    }
-
-    return true;
-}
-
-bool AudioLayer::audioPlaybackFillBuffer(AudioBuffer &buffer)
-{
-    // Looks if there's any voice audio from rtp to be played
-    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
-    size_t bytesToGet = mbuffer.availableForGet(MainBuffer::DEFAULT_ID);
-    size_t urgentBytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
-
-
-    PlaybackMode mode = getPlaybackMode();
-
-    bool bufferFilled = false;
-
-    switch (mode) {
-        case NONE:
-        case TONE:
-        case RINGTONE:
-        case URGENT: {
-            if (urgentBytesToGet > 0)
-                bufferFilled = audioPlaybackFillWithUrgent(buffer, urgentBytesToGet);
-            else
-                bufferFilled = audioPlaybackFillWithToneOrRingtone(buffer);
-        }
-        break;
-
-        case VOICE: {
-            if (bytesToGet > 0)
-                bufferFilled = audioPlaybackFillWithVoice(buffer, bytesToGet);
-            else {
-                buffer.reset();
-                bufferFilled = true;
-            }
-        }
-        break;
-
-        case ZEROS:
-        default: {
-            buffer.reset();
-            bufferFilled = true;
-        }
-    }
-
-    if (!bufferFilled)
-        printf("Error buffer not filled in audio playback\n");
-
-    return bufferFilled;
-}
-
-// #define RECORD_TOMAIN_TODISK
-#ifdef RECORD_TOMAIN_TODISK
-#include <fstream>
-std::ofstream opensl_tomainbuffer("/data/data/com.savoirfairelinux.sflphone/opensl_tomain.raw", std::ofstream::out | std::ofstream::binary);
-#endif
-
-void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
-{
-    const int toGetBytes = buffer.size();
-    const int toGetSamples = buffer.length();
-
-    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
-
-    const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
-    const bool resample = mainBufferSampleRate != sampleRate_;
-
-    SFLDataFormat *in_ptr = buffer.data();
-    applyGain(in_ptr, toGetSamples, captureGain_);
-
-    if (resample) {
-        int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
-        AudioBuffer rsmpl_out(outSamples);
-        SFLDataFormat * const rsmpl_out_ptr = rsmpl_out.data();
-        converter_.resample(in_ptr, rsmpl_out_ptr,
-                            rsmpl_out.length(), mainBufferSampleRate, sampleRate_,
-                            toGetSamples);
-        dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
-        mbuffer.putData(rsmpl_out_ptr, rsmpl_out.size(), MainBuffer::DEFAULT_ID);
-    } else {
-        dcblocker_.process(in_ptr, in_ptr, toGetSamples);
-#ifdef RECORD_TOMAIN_TODISK
-        opensl_tomainbuffer.write((char const *)in_ptr, toGetBytes /);
-#endif
-        mbuffer.putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
-    }
+    putUrgent(buf);
 }

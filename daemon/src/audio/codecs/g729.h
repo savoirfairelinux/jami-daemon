@@ -44,8 +44,8 @@ public:
    G729();
    ~G729();
 private:
-   virtual int decode(SFLDataFormat *dst, unsigned char *buf, size_t buffer_size);
-   virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buffer_size);
+   virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
 
    NON_COPYABLE(G729);
    //Attributes
@@ -54,8 +54,8 @@ private:
    void* handler_;
 
    //Extern functions
-   void (*encoder_) (bcg729EncoderChannelContextStruct *encoderChannelContext, SFLDataFormat inputFrame[], uint8_t bitStream[]);
-   void (*decoder_) (bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, SFLDataFormat signal[]);
+   void (*encoder_) (bcg729EncoderChannelContextStruct *encoderChannelContext, SFLAudioSample inputFrame[], uint8_t bitStream[]);
+   void (*decoder_) (bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, SFLAudioSample signal[]);
 
    static void loadError(const char *error);
 };

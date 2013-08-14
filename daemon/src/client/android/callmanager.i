@@ -92,7 +92,7 @@ public:
                                     const std::string& from,
                                     const std::string& msg) {}
 
-    virtual void on_record_playback_filepath(const std::string& id, 
+    virtual void on_record_playback_filepath(const std::string& id,
                                               const std::string& filename) {}
 };
 
@@ -245,13 +245,12 @@ public:
                                     const std::string& from,
                                     const std::string& msg);
 
-    virtual void on_record_playback_filepath(const std::string& id, 
+    virtual void on_record_playback_filepath(const std::string& id,
                                             const std::string& filename);
 };
- 
+
 static Callback* registeredCallbackObject = NULL;
 
 void setCallbackObject(Callback* callback) {
     registeredCallbackObject = callback;
 }
-

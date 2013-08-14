@@ -36,179 +36,99 @@
 #include <cstring>
 #include <vector>
 #include <climits>
+#include <sndfile.hh>
 
 #include "audiofile.h"
-#include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
+#include "client/callmanager.h"
+#include "manager.h"
+
 #include "logger.h"
 
-RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int sampleRate)
-    : AudioFile(name, sampleRate), audioCodec_(codec)
+void
+AudioFile::onBufferFinish()
 {
-    if (filepath_.empty())
-        throw AudioFileException("Unable to open audio file: filename is empty");
+    // We want to send values in milisecond
+    const int divisor = buffer_->getSampleRate() / 1000;
 
-    std::fstream file;
-    file.open(filepath_.c_str(), std::fstream::in);
-
-    if (!file.is_open())
-        throw AudioFileException("Unable to open audio file");
-
-    file.seekg(0, std::ios::end);
-    size_t length = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::vector<char> fileBuffer(length);
-    file.read(&fileBuffer[0], length);
-    file.close();
-
-    const unsigned int frameSize = audioCodec_->getFrameSize();
-    const unsigned int bitrate   = audioCodec_->getBitRate() * 1000 / 8;
-    const unsigned int audioRate = audioCodec_->getClockRate();
-    const unsigned int encFrameSize = frameSize * bitrate / audioRate;
-    const unsigned int decodedSize = length * (frameSize / encFrameSize);
-
-    SFLDataFormat *monoBuffer = new SFLDataFormat[decodedSize];
-    SFLDataFormat *bufpos = monoBuffer;
-    unsigned char *filepos = reinterpret_cast<unsigned char *>(&fileBuffer[0]);
-    size_ = decodedSize;
-
-    while (length >= encFrameSize) {
-        bufpos += audioCodec_->decode(bufpos, filepos, encFrameSize);
-        filepos += encFrameSize;
-        length -= encFrameSize;
+    if (divisor == 0) {
+        ERROR("Error cannot update playback slider, sampling rate is 0");
+        return;
     }
 
-    if (sampleRate == audioRate)
-        buffer_ = monoBuffer;
-    else {
-        double factord = (double) sampleRate / audioRate;
-        float* floatBufferIn = new float[size_];
-        int    sizeOut  = ceil(factord * size_);
-        src_short_to_float_array(monoBuffer, floatBufferIn, size_);
-        delete [] monoBuffer;
-        delete [] buffer_;
-        buffer_ = new SFLDataFormat[sizeOut];
-
-        SRC_DATA src_data;
-        src_data.data_in = floatBufferIn;
-        src_data.input_frames = size_;
-        src_data.output_frames = sizeOut;
-        src_data.src_ratio = factord;
-
-        float* floatBufferOut = new float[sizeOut];
-        src_data.data_out = floatBufferOut;
-
-        src_simple(&src_data, SRC_SINC_BEST_QUALITY, 1);
-        src_float_to_short_array(floatBufferOut, buffer_, src_data.output_frames_gen);
-
-        delete [] floatBufferOut;
-        delete [] floatBufferIn;
-        size_ = src_data.output_frames_gen;
+    if ((updatePlaybackScale_ % 5) == 0) {
+        CallManager *cm = Manager::instance().getClient()->getCallManager();
+        cm->updatePlaybackScale(filepath_, pos_ / divisor, buffer_->samples() / divisor);
     }
+
+    updatePlaybackScale_++;
 }
 
-
-WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : AudioFile(fileName, sampleRate)
+AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
+    AudioLoop(sampleRate), filepath_(fileName), updatePlaybackScale_(0)
 {
-    const std::fstream fs(fileName.c_str(), std::ios_base::in);
+    int format;
+    bool hasHeader = true;
 
-    if (!fs)
-        throw AudioFileException("File " + fileName + " doesn't exist");
-
-    std::fstream fileStream;
-    fileStream.open(fileName.c_str(), std::ios::in | std::ios::binary);
-
-    char riff[4] = { 0, 0, 0, 0 };
-    fileStream.read(riff, sizeof riff / sizeof *riff);
-
-    if (strncmp("RIFF", riff, sizeof riff / sizeof *riff) != 0)
-        throw AudioFileException("File is not of RIFF format");
-
-    char fmt[4] = { 0, 0, 0, 0 };
-    int maxIteration = 10;
-
-    while (maxIteration-- and strncmp("fmt ", fmt, sizeof fmt / sizeof *fmt))
-        fileStream.read(fmt, sizeof fmt / sizeof *fmt);
-
-    if (maxIteration == 0)
-        throw AudioFileException("Could not find \"fmt \" chunk");
-
-    int32_t chunkSize; // fmt chunk size
-    fileStream.read(reinterpret_cast<char *>(&chunkSize), sizeof chunkSize); // Read fmt chunk size.
-    unsigned short formatTag; // data compression tag
-    fileStream.read(reinterpret_cast<char *>(&formatTag), sizeof formatTag);
-
-    if (formatTag != 1) // PCM = 1, FLOAT = 3
-        throw AudioFileException("File contains an unsupported data format type");
-
-    // Get number of channels from the header.
-    int16_t chan;
-    fileStream.read(reinterpret_cast<char *>(&chan), sizeof chan);
-
-    if (chan > 2)
-        throw AudioFileException("WaveFile: unsupported number of channels");
-
-    // Get file sample rate from the header.
-    int32_t fileRate;
-    fileStream.read(reinterpret_cast<char *>(&fileRate), sizeof fileRate);
-
-    int32_t avgb;
-    fileStream.read(reinterpret_cast<char *>(&avgb), sizeof avgb);
-
-    int16_t blockal;
-    fileStream.read(reinterpret_cast<char *>(&blockal), sizeof blockal);
-
-    // Determine the data type
-    int16_t dt;
-    fileStream.read(reinterpret_cast<char *>(&dt), sizeof dt);
-
-    if (dt != 8 && dt != 16 && dt != 32)
-        throw AudioFileException("File's bits per sample with is not supported");
-
-    // Find the "data" chunk
-    char data[4] = { 0, 0, 0, 0 };
-    maxIteration = 10;
-
-    while (maxIteration-- && strncmp("data", data, sizeof data / sizeof *data))
-        fileStream.read(data, sizeof data / sizeof *data);
-
-    // Samplerate converter initialized with 88200 sample long
-    const int rate = static_cast<int32_t>(sampleRate_);
-    SamplerateConverter converter(std::max(fileRate, rate));
-
-    // Get length of data from the header.
-    int32_t bytes;
-    fileStream.read(reinterpret_cast<char *>(&bytes), sizeof bytes);
-
-    // sample frames, should not be longer than a minute
-    int nbSamples = std::min(60 * fileRate, 8 * bytes / dt / chan);
-
-    DEBUG("Frame size %ld, data size %d align %d rate %d avgbyte %d "
-          "chunk size %d dt %d", nbSamples, bytes, blockal, fileRate, avgb,
-          chunkSize, dt);
-
-    size_ = nbSamples;
-    SFLDataFormat *tempBuffer = new SFLDataFormat[size_];
-
-    fileStream.read(reinterpret_cast<char *>(tempBuffer),
-                    nbSamples * sizeof(SFLDataFormat));
-
-    // mix two channels together if stereo
-    if (chan == 2) {
-        for (int i = 0, j = 0; i < nbSamples - 1; i += 2, ++j)
-            tempBuffer[j] = (tempBuffer[i] + tempBuffer[i + 1]) * 0.5;
-
-        nbSamples *= 0.5;
+    if (filepath_.find(".wav") != std::string::npos) {
+        format = SF_FORMAT_WAV;
+    } else if (filepath_.find(".ul") != std::string::npos) {
+        format = SF_FORMAT_RAW | SF_FORMAT_ULAW;
+        hasHeader = false;
+    } else if (filepath_.find(".al") != std::string::npos) {
+        format = SF_FORMAT_RAW | SF_FORMAT_ALAW;
+        hasHeader = false;
+    } else if (filepath_.find(".au") != std::string::npos) {
+        format = SF_FORMAT_AU;
+    } else if (filepath_.find(".flac") != std::string::npos) {
+        format = SF_FORMAT_FLAC;
+    } else if (filepath_.find(".ogg") != std::string::npos) {
+        format = SF_FORMAT_OGG;
+    } else {
+        WARN("No file extension, guessing WAV");
+        format = SF_FORMAT_WAV;
     }
 
-    if (fileRate != rate) {
-        const float ratio = sampleRate_ / (float) fileRate;
-        const int outSamples = ceil(nbSamples * ratio);
-        size_ = outSamples;
-        buffer_ = new SFLDataFormat[size_];
-        converter.resample(tempBuffer, buffer_, size_, fileRate, sampleRate_, nbSamples);
-        delete [] tempBuffer;
-    } else
-        buffer_ = tempBuffer;
+    SndfileHandle fileHandle(fileName.c_str(), SFM_READ, format, hasHeader ? 0 : 1,
+                             hasHeader ? 0 : 8000);
+
+    if (!fileHandle)
+        throw AudioFileException("File " + fileName + " doesn't exist");
+
+    switch (fileHandle.channels()) {
+        case 1:
+        case 2:
+            break;
+        default:
+            throw AudioFileException("Unsupported number of channels");
+    }
+
+    // get # of bytes in file
+    const size_t fileSize = fileHandle.seek(0, SEEK_END);
+    fileHandle.seek(0, SEEK_SET);
+
+    const sf_count_t nbFrames = hasHeader ? fileHandle.frames() : fileSize / fileHandle.channels();
+
+    SFLAudioSample * interleaved = new SFLAudioSample[nbFrames * fileHandle.channels()];
+
+    // get n "items", aka samples (not frames)
+    fileHandle.read(interleaved, nbFrames * fileHandle.channels());
+
+    AudioBuffer * buffer = new AudioBuffer(nbFrames, fileHandle.channels(), fileHandle.samplerate());
+    buffer->deinterleave(interleaved, nbFrames, fileHandle.channels());
+    delete [] interleaved;
+
+    const int rate = static_cast<int32_t>(sampleRate);
+
+    if (fileHandle.samplerate() != rate) {
+        SamplerateConverter converter(std::max(fileHandle.samplerate(), rate), fileHandle.channels());
+        AudioBuffer * resampled = new AudioBuffer(nbFrames, fileHandle.channels(), rate);
+        converter.resample(*buffer, *resampled);
+        delete buffer;
+        delete buffer_;
+        buffer_ = resampled;
+    } else {
+        delete buffer_;
+        buffer_ = buffer;
+    }
 }

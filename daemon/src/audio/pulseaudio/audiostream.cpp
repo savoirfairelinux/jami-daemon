@@ -38,19 +38,18 @@ AudioStream::AudioStream(pa_context *c,
                          const char *desc,
                          int type,
                          unsigned samplrate,
-                         const std::string &deviceName)
+                         const PaDeviceInfos* infos)
     : audiostream_(0), mainloop_(m)
 {
-    static const pa_channel_map channel_map = {
-        1,
-        { PA_CHANNEL_POSITION_MONO },
-    };
+    const pa_channel_map channel_map = infos->channel_map;
 
     pa_sample_spec sample_spec = {
         PA_SAMPLE_S16LE, // PA_SAMPLE_FLOAT32LE,
         samplrate,
-        1
+        channel_map.channels
     };
+
+    DEBUG("%s: trying to create stream with device %s (%dHz, %d channels)", desc, infos->name.c_str(), samplrate, channel_map.channels);
 
     assert(pa_sample_spec_valid(&sample_spec));
     assert(pa_channel_map_valid(&channel_map));
@@ -70,18 +69,17 @@ AudioStream::AudioStream(pa_context *c,
     attributes.minreq = (uint32_t) -1;
 
     pa_threaded_mainloop_lock(mainloop_);
-    const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(PA_STREAM_ADJUST_LATENCY |
-                                    PA_STREAM_AUTO_TIMING_UPDATE);
+    const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE);
 
     if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM) {
         pa_stream_connect_playback(audiostream_,
-                                   deviceName.empty() ? NULL : deviceName.c_str(),
+                                   infos->name.empty() ? NULL : infos->name.c_str(),
                                    &attributes,
                                    flags,
                                    NULL, NULL);
     } else if (type == CAPTURE_STREAM) {
         pa_stream_connect_record(audiostream_,
-                                 deviceName.empty() ? NULL : deviceName.c_str(),
+                                 infos->name.empty() ? NULL : infos->name.c_str(),
                                  &attributes,
                                  flags);
     }

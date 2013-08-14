@@ -99,20 +99,17 @@ void InstantMessaging::sip_send(pjsip_inv_session *session, const std::string& i
 void InstantMessaging::send_sip_message(pjsip_inv_session *session, const std::string &id, const std::string &message)
 {
     std::vector<std::string> msgs(split_message(message));
-    std::vector<std::string>::const_iterator iter;
-
-    for (iter = msgs.begin(); iter != msgs.end(); ++iter)
-        sip_send(session, id, *iter);
+    for (const auto &item : msgs)
+        sip_send(session, id, item);
 }
 
 #if HAVE_IAX
 void InstantMessaging::send_iax_message(iax_session *session, const std::string &/* id */, const std::string &message)
 {
     std::vector<std::string> msgs(split_message(message));
-    std::vector<std::string>::const_iterator iter;
 
-    for (iter = msgs.begin(); iter != msgs.end(); ++iter)
-        iax_send_text(session, (*iter).c_str());
+    for (const auto &item : msgs)
+        iax_send_text(session, item.c_str());
 }
 #endif
 
@@ -138,8 +135,8 @@ std::string InstantMessaging::generateXmlUriList(UriList &list)
                                   "<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">"
                                   "<list>";
 
-    for (UriList::iterator iter = list.begin(); iter != list.end(); ++iter)
-        xmlbuffer += "<entry uri=" + (*iter)[sfl::IM_XML_URI] + " cp:copyControl=\"to\" />";
+    for (auto &item : list)
+        xmlbuffer += "<entry uri=" + item[sfl::IM_XML_URI] + " cp:copyControl=\"to\" />";
 
     return xmlbuffer + "</list></resource-lists>";
 }

@@ -479,7 +479,7 @@ void ConfigurationManager::historyChanged()
 
 void ConfigurationManager::stunStatusFailure(const std::string& accoundID)
 {
-    
+
 }
 
 void ConfigurationManager::registrationStateChanged(const std::string& accoundID, int const& state)

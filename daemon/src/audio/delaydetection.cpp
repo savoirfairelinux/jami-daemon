@@ -116,7 +116,7 @@ DelayDetection::DelayDetection() :
 
 }
 
-void DelayDetection::putData(SFLDataFormat *inputData, int nbSamples)
+void DelayDetection::putData(SFLAudioSample *inputData, int nbSamples)
 {
     // Machine may already got a spkr and is waiting for mic or computing correlation
     if (nbSpkrSampleStored_ == WINDOW_SIZE)
@@ -144,7 +144,7 @@ void DelayDetection::putData(SFLDataFormat *inputData, int nbSamples)
     internalState_ = WaitForMic;
 }
 
-void DelayDetection::process(SFLDataFormat *inputData, int nbSamples)
+void DelayDetection::process(SFLAudioSample *inputData, int nbSamples)
 {
 
     if (internalState_ != WaitForMic)
@@ -233,7 +233,7 @@ double DelayDetection::correlate(float *sig1, float *sig2, short size)
 }
 
 
-void DelayDetection::convertInt16ToFloat32(SFLDataFormat *input, float *output, int nbSamples)
+void DelayDetection::convertInt16ToFloat32(SFLAudioSample *input, float *output, int nbSamples)
 {
     static const float S2F_FACTOR = .000030517578125f;
     int len = nbSamples;

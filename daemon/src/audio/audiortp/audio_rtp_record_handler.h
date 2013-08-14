@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -94,9 +95,8 @@ class AudioRtpRecord {
         int encoderPayloadType_;
         int decoderPayloadType_;
         bool hasDynamicPayloadType_;
-        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> decData_;
-// FIXME: resampledData should be resized as needed
-        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE * 4> resampledData_;
+        AudioBuffer decData_;
+        AudioBuffer resampledData_;
         std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
@@ -117,7 +117,7 @@ class AudioRtpRecord {
         /**
         * Ramp In audio data to avoid audio click from peer
         */
-        void fadeInDecodedData(size_t size);
+        void fadeInDecodedData();//size_t size);
         NON_COPYABLE(AudioRtpRecord);
 #ifdef CCPP_PREFIX
         ost::AtomicCounter dead_;

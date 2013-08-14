@@ -25,6 +25,12 @@ else
 SPEEXCODEC=
 endif
 
+if BUILD_OPUS
+OPUSCODEC=-DHAVE_OPUS
+else
+OPUSCODEC=
+endif
+
 if BUILD_GSM
 GSMCODEC=-DHAVE_GSM_CODEC
 else
@@ -46,8 +52,9 @@ AM_CPPFLAGS = \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \
 	-DPLUGINS_DIR=\""$(sflplugindir)"\" \
 	-DENABLE_TRACE \
-         $(SPEEXCODEC) \
-         $(GSMCODEC)
+	$(SPEEXCODEC) \
+	$(GSMCODEC) \
+	$(OPUSCODEC)
 
 
 indent:

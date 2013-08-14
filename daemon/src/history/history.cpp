@@ -86,9 +86,8 @@ bool History::save()
     std::ofstream outfile(path_.c_str());
     if (outfile.fail())
         return false;
-    for (vector<HistoryItem>::const_iterator iter = items_.begin();
-         iter != items_.end(); ++iter)
-        outfile << *iter << std::endl;
+    for (const auto &item : items_)
+        outfile << item << std::endl;
     return true;
 }
 
@@ -129,9 +128,8 @@ vector<map<string, string> > History::getSerialized()
 {
     sfl::ScopedLock lock(historyItemsMutex_);
     vector<map<string, string> > result;
-    for (vector<HistoryItem>::const_iterator iter = items_.begin();
-         iter != items_.end(); ++iter)
-        result.push_back(iter->toMap());
+    for (const auto &item : items_)
+        result.push_back(item.toMap());
 
     return result;
 }

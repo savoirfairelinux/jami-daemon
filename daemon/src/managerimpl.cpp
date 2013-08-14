@@ -119,16 +119,58 @@ ManagerImpl::~ManagerImpl()
 }
 
 namespace {
-    // Creates a backup of the file at "path" with a .bak suffix appended
-    void make_backup(const std::string &path)
+
+    void copy_over(const std::string &srcPath, const std::string &destPath)
     {
-        const std::string backup_path(path + ".bak");
-        std::ifstream src(path.c_str());
-        std::ofstream dest(backup_path.c_str());
+        std::ifstream src(srcPath.c_str());
+        std::ofstream dest(destPath.c_str());
         dest << src.rdbuf();
         src.close();
         dest.close();
     }
+    // Creates a backup of the file at "path" with a .bak suffix appended
+    void make_backup(const std::string &path)
+    {
+        const std::string backup_path(path + ".bak");
+        copy_over(path, backup_path);
+    }
+    // Restore last backup of the configuration file
+    void restore_backup(const std::string &path)
+    {
+        const std::string backup_path(path + ".bak");
+        copy_over(backup_path, path);
+    }
+}
+
+bool ManagerImpl::parseConfiguration()
+{
+    bool result = true;
+
+    FILE *file = fopen(path_.c_str(), "rb");
+
+    try {
+        if (file) {
+            Conf::YamlParser parser(file);
+            parser.serializeEvents();
+            parser.composeEvents();
+            parser.constructNativeData();
+            const int error_count = loadAccountMap(parser);
+            fclose(file);
+            if (error_count > 0) {
+                WARN("Errors while parsing %s", path_.c_str());
+                result = false;
+            }
+        } else {
+            WARN("Config file not found: creating default account map");
+            loadDefaultAccountMap();
+        }
+    } catch (const Conf::YamlParserException &e) {
+        // we only want to close the local file here and then rethrow the exception
+        fclose(file);
+        throw;
+    }
+
+    return result;
 }
 
 void ManagerImpl::init(const std::string &config_file)
@@ -139,31 +181,27 @@ void ManagerImpl::init(const std::string &config_file)
     bool no_errors = true;
 
     try {
-        FILE *file = fopen(path_.c_str(), "rb");
-
-        if (file) {
-            Conf::YamlParser parser(file);
-            parser.serializeEvents();
-            parser.composeEvents();
-            parser.constructNativeData();
-            const int error_count = loadAccountMap(parser);
-            fclose(file);
-            if (error_count > 0) {
-                WARN("Errors while parsing %s", path_.c_str());
-                no_errors = false;
-            }
-        } else {
-            WARN("Config file not found: creating default account map");
-            loadDefaultAccountMap();
-        }
+        no_errors = parseConfiguration();
     } catch (const Conf::YamlParserException &e) {
         ERROR("%s", e.what());
         no_errors = false;
     }
 
     // always back up last error-free configuration
-    if (no_errors)
+    if (no_errors) {
         make_backup(path_);
+    } else {
+        // restore previous configuration
+        WARN("Restoring last working configuration");
+        try {
+            restore_backup(path_);
+            parseConfiguration();
+        } catch (const Conf::YamlParserException &e) {
+            ERROR("%s", e.what());
+            WARN("Restoring backup failed, creating default account map");
+            loadDefaultAccountMap();
+        }
+    }
 
     initAudioDriver();
 
@@ -208,9 +246,8 @@ void ManagerImpl::finish()
     std::vector<std::string> callList(getCallList());
     DEBUG("Hangup %zu remaining call(s)", callList.size());
 
-    for (std::vector<std::string>::iterator iter = callList.begin();
-            iter != callList.end(); ++iter)
-        hangupCall(*iter);
+    for (const auto &item : callList)
+        hangupCall(item);
 
     saveConfig();
 
@@ -489,9 +526,8 @@ bool ManagerImpl::hangupConference(const std::string& id)
         if (conf) {
             ParticipantSet participants(conf->getParticipantList());
 
-            for (ParticipantSet::const_iterator iter = participants.begin();
-                    iter != participants.end(); ++iter)
-                hangupCall(*iter);
+            for (const auto &item : participants)
+                hangupCall(item);
         } else {
             ERROR("No such conference %s", id.c_str());
             return false;
@@ -782,10 +818,9 @@ ManagerImpl::holdConference(const std::string& id)
 
     ParticipantSet participants(conf->getParticipantList());
 
-    for (ParticipantSet::const_iterator iter = participants.begin();
-            iter != participants.end(); ++iter) {
-        switchCall(*iter);
-        onHoldCall(*iter);
+    for (const auto &item : participants) {
+        switchCall(item);
+        onHoldCall(item);
     }
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
@@ -811,14 +846,14 @@ ManagerImpl::unHoldConference(const std::string& id)
 
     ParticipantSet participants(conf->getParticipantList());
 
-    for (ParticipantSet::const_iterator iter = participants.begin(); iter!= participants.end(); ++iter) {
-        Call *call = getCallFromCallID(*iter);
+    for (const auto &item : participants) {
+        Call *call = getCallFromCallID(item);
         if (call) {
             // if one call is currently recording, the conference is in state recording
             isRec |= call->isRecording();
 
-            switchCall(*iter);
-            offHoldCall(*iter);
+            switchCall(item);
+            offHoldCall(item);
         }
     }
 
@@ -909,9 +944,8 @@ ManagerImpl::addParticipant(const std::string& callId, const std::string& confer
 
     // reset ring buffer for all conference participant
     // flush conference participants only
-    for (ParticipantSet::const_iterator p = participants.begin();
-            p != participants.end(); ++p)
-        getMainBuffer().flush(*p);
+    for (const auto &p : participants)
+        getMainBuffer().flush(p);
 
     getMainBuffer().flush(MainBuffer::DEFAULT_ID);
 
@@ -944,11 +978,10 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
-            getMainBuffer().bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
+        for (const auto &item_p : participants) {
+            getMainBuffer().bindCallID(item_p, MainBuffer::DEFAULT_ID);
             // Reset ringbuffer's readpointers
-            getMainBuffer().flush(*iter_p);
+            getMainBuffer().flush(item_p);
         }
 
         getMainBuffer().flush(MainBuffer::DEFAULT_ID);
@@ -1100,9 +1133,8 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 
     int successCounter = 0;
 
-    for (std::vector<std::string>::const_iterator p = participantList.begin();
-         p != participantList.end(); ++p) {
-        std::string numberaccount(*p);
+    for (const auto &p : participantList) {
+        std::string numberaccount(p);
         std::string tostr(numberaccount.substr(0, numberaccount.find(",")));
         std::string account(numberaccount.substr(numberaccount.find(",") + 1, numberaccount.size()));
 
@@ -1251,9 +1283,8 @@ void ManagerImpl::processRemainingParticipants(Conference &conf)
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
-        for (ParticipantSet::const_iterator p = participants.begin();
-             p != participants.end(); ++p)
-            getMainBuffer().flush(*p);
+        for (const auto &p : participants)
+            getMainBuffer().flush(p);
 
         getMainBuffer().flush(MainBuffer::DEFAULT_ID);
     } else if (n == 1) {
@@ -1297,9 +1328,8 @@ ManagerImpl::joinConference(const std::string& conf_id1,
     Conference *conf = conferenceMap_.find(conf_id1)->second;
     ParticipantSet participants(conf->getParticipantList());
 
-    for (ParticipantSet::const_iterator p = participants.begin();
-            p != participants.end(); ++p)
-        addParticipant(*p, conf_id2);
+    for (const auto &p : participants)
+        addParticipant(p, conf_id2);
 
     return true;
 }
@@ -1323,9 +1353,8 @@ void ManagerImpl::addStream(const std::string& call_id)
             ParticipantSet participants(conf->getParticipantList());
 
             // reset ring buffer for all conference participant
-            for (ParticipantSet::const_iterator iter_p = participants.begin();
-                    iter_p != participants.end(); ++iter_p)
-                getMainBuffer().flush(*iter_p);
+            for (const auto &participant : participants)
+                getMainBuffer().flush(participant);
 
             getMainBuffer().flush(MainBuffer::DEFAULT_ID);
         }
@@ -1363,13 +1392,12 @@ void ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (AccountMap::iterator iter = SIPVoIPLink::instance()->getAccounts().begin();
-             iter != SIPVoIPLink::instance()->getAccounts().end(); ++iter)
-            iter->second->serialize(emitter);
+        for (auto &item : SIPVoIPLink::instance()->getAccounts())
+            item.second->serialize(emitter);
 
 #if HAVE_IAX
-        for (AccountMap::iterator iter = IAXVoIPLink::getAccounts().begin(); iter != IAXVoIPLink::getAccounts().end(); ++iter)
-            iter->second->serialize(emitter);
+        for (auto &item : IAXVoIPLink::getAccounts())
+            item.second->serialize(emitter);
 #endif
 
         preferences.serialize(emitter);
@@ -1437,19 +1465,20 @@ void ManagerImpl::playDtmf(char code)
 
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
-    std::vector<SFLDataFormat> buf(size);
+    //std::vector<SFLAudioSample> buf(size);
+    AudioBuffer buf(size);
 
     // Handle dtmf
     dtmfKey_->startTone(code);
 
     // copy the sound
-    if (dtmfKey_->generateDTMF(buf)) {
+    if (dtmfKey_->generateDTMF(*buf.getChannel(0))) {
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
         audiodriver_->startStream();
-        audiodriver_->putUrgent(&(*buf.begin()), size * sizeof(SFLDataFormat));
+        audiodriver_->putUrgent(buf);
     }
 
     // TODO Cache the DTMF
@@ -1499,7 +1528,7 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 
     if (not hasCurrentCall()) {
         call.setConnectionState(Call::RINGING);
-        ringtone(accountId);
+        playRingtone(accountId);
     }
 
     addWaitingCall(callID);
@@ -1523,15 +1552,14 @@ void ManagerImpl::incomingMessage(const std::string& callID,
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
+        for (const auto &item_p : participants) {
 
-            if (*iter_p == callID)
+            if (item_p == callID)
                 continue;
 
-            std::string accountId(getAccountFromCall(*iter_p));
+            std::string accountId(getAccountFromCall(item_p));
 
-            DEBUG("Send message to %s, (%s)", (*iter_p).c_str(), accountId.c_str());
+            DEBUG("Send message to %s, (%s)", item_p.c_str(), accountId.c_str());
 
             Account *account = getAccount(accountId);
 
@@ -1567,10 +1595,9 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
+        for (const auto &participant : participants) {
 
-            std::string accountId = getAccountFromCall(*iter_p);
+            std::string accountId = getAccountFromCall(participant);
 
             Account *account = getAccount(accountId);
 
@@ -1579,7 +1606,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(*iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(participant, message, from);
         }
 
         return true;
@@ -1594,10 +1621,9 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
+        for (const auto &item_p : participants) {
 
-            const std::string accountId(getAccountFromCall(*iter_p));
+            const std::string accountId(getAccountFromCall(item_p));
 
             Account *account = getAccount(accountId);
 
@@ -1606,7 +1632,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(*iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(item_p, message, from);
         }
     } else {
         Account *account = getAccount(getAccountFromCall(callID));
@@ -1823,10 +1849,21 @@ void ManagerImpl::ringback()
     playATone(Tone::TONE_RINGTONE);
 }
 
+// Caller must hold toneMutex
+void
+ManagerImpl::updateAudioFile(const std::string &file, int sampleRate)
+{
+    try {
+        audiofile_.reset(new AudioFile(file, sampleRate));
+    } catch (const AudioFileException &e) {
+        ERROR("Exception: %s", e.what());
+    }
+}
+
 /**
  * Multi Thread
  */
-void ManagerImpl::ringtone(const std::string& accountID)
+void ManagerImpl::playRingtone(const std::string& accountID)
 {
     Account *account = getAccount(accountID);
 
@@ -1869,21 +1906,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
             audiofile_.reset();
         }
 
-        try {
-            if (ringchoice.find(".wav") != std::string::npos)
-                audiofile_.reset(new WaveFile(ringchoice, audioLayerSmplr));
-            else {
-                sfl::AudioCodec *codec;
-                if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
-                    codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
-                else
-                    throw AudioFileException("Couldn't guess an appropriate decoder");
-
-                audiofile_.reset(new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), audioLayerSmplr));
-            }
-        } catch (const AudioFileException &e) {
-            ERROR("Exception: %s", e.what());
-        }
+        updateAudioFile(ringchoice, audioLayerSmplr);
     } // leave mutex
 
     sfl::ScopedLock lock(audioLayerMutex_);
@@ -2141,12 +2164,9 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
             audiofile_.reset();
         }
 
-        try {
-            audiofile_.reset(new WaveFile(filepath, sampleRate));
-            audiofile_->setIsRecording(true);
-        } catch (const AudioFileException &e) {
-            ERROR("Exception: %s", e.what());
-        }
+        updateAudioFile(filepath, sampleRate);
+        if (not audiofile_)
+            return false;
     } // release toneMutex
 
     sfl::ScopedLock lock(audioLayerMutex_);
@@ -2367,20 +2387,20 @@ std::vector<std::string> ManagerImpl::getAccountList() const
 
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        for (AccountMap::const_iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
-            if (iter->first == SIPAccount::IP2IP_PROFILE || iter->first.empty())
+        for (const auto &item : allAccounts) {
+            if (item.first == SIPAccount::IP2IP_PROFILE || item.first.empty())
                 continue;
 
-            if (iter->second)
-                v.push_back(iter->second->getAccountID());
+            if (item.second)
+                v.push_back(item.second->getAccountID());
         }
     }
     else {
-        for (vector<string>::const_iterator iter = account_order.begin(); iter != account_order.end(); ++iter) {
-            if (*iter == SIPAccount::IP2IP_PROFILE or iter->empty())
+        for (const auto &item : account_order) {
+            if (item == SIPAccount::IP2IP_PROFILE or item.empty())
                 continue;
 
-            AccountMap::const_iterator account_iter = allAccounts.find(*iter);
+            AccountMap::const_iterator account_iter = allAccounts.find(item);
 
             if (account_iter != allAccounts.end() and account_iter->second)
                 v.push_back(account_iter->second->getAccountID());
@@ -2917,8 +2937,8 @@ ManagerImpl::registerAccounts()
 {
     AccountMap allAccounts(getAllAccounts());
 
-    for (AccountMap::iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
-        Account *a = iter->second;
+    for (auto &item : allAccounts) {
+        Account *a = item.second;
 
         if (!a)
             continue;

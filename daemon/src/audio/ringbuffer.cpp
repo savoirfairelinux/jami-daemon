@@ -3,6 +3,7 @@
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@gmail.com>
  *
  *  Portions (c) Dominic Mazzoni (Audacity)
  *
@@ -40,18 +41,18 @@
 #include "ringbuffer.h"
 
 namespace {
-// corresponds to 106 ms (about 5 rtp packets)
+// corresponds to 160 ms (about 5 rtp packets)
 const size_t MIN_BUFFER_SIZE = 1280;
 }
 
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer(size_t size, const std::string &call_id) :
     endPos_(0)
-    , bufferSize_(size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
-    , buffer_(bufferSize_)
+    , buffer_(std::max(size, MIN_BUFFER_SIZE), 1)
     , readpointers_()
     , buffer_id_(call_id)
-{}
+{
+}
 
 void
 RingBuffer::flush(const std::string &call_id)
@@ -72,19 +73,21 @@ RingBuffer::flushAll()
 size_t
 RingBuffer::putLength() const
 {
+    const size_t buffer_size = buffer_.samples();
     const size_t startPos = (not readpointers_.empty()) ? getSmallestReadPointer() : 0;
-    return (endPos_ + bufferSize_ - startPos) % bufferSize_;
+    return (endPos_ + buffer_size - startPos) % buffer_size;
 }
 
 size_t RingBuffer::getLength(const std::string &call_id) const
 {
-    return (endPos_ + bufferSize_ - getReadPointer(call_id)) % bufferSize_;
+    const size_t buffer_size = buffer_.samples();
+    return (endPos_ + buffer_size - getReadPointer(call_id)) % buffer_size;
 }
 
 void
 RingBuffer::debug()
 {
-    DEBUG("Start=%d; End=%d; BufferSize=%d", getSmallestReadPointer(), endPos_, bufferSize_);
+    DEBUG("Start=%d; End=%d; BufferSize=%d", getSmallestReadPointer(), endPos_, buffer_.samples());
 }
 
 size_t RingBuffer::getReadPointer(const std::string &call_id) const
@@ -102,7 +105,7 @@ RingBuffer::getSmallestReadPointer() const
     if (hasNoReadPointers())
         return 0;
 
-    size_t smallest = bufferSize_;
+    size_t smallest = buffer_.samples();
 
     ReadPointer::const_iterator iter;
 
@@ -160,27 +163,32 @@ bool RingBuffer::hasNoReadPointers() const
 //
 
 // This one puts some data inside the ring buffer.
-void
-RingBuffer::put(void* buffer, size_t toCopy)
+void RingBuffer::put(AudioBuffer& buf)
 {
     const size_t len = putLength();
+    const size_t sample_num = buf.samples();
+    const size_t buffer_size = buffer_.samples();
+    size_t toCopy = sample_num;
 
-    if (toCopy > bufferSize_ - len)
-        toCopy = bufferSize_ - len;
+    // Add more channels if the input buffer holds more channels than the ring.
+    if (buffer_.channels() < buf.channels())
+        buffer_.setChannelNum(buf.channels());
 
-    unsigned char *src = static_cast<unsigned char *>(buffer);
+    if (toCopy > buffer_size - len)
+        toCopy = buffer_size - len;
 
+    size_t in_pos = 0;
     size_t pos = endPos_;
 
     while (toCopy) {
         size_t block = toCopy;
 
-        if (block > bufferSize_ - pos) // Wrap block around ring ?
-            block = bufferSize_ - pos; // Fill in to the end of the buffer
+        if (block > buffer_size - pos) // Wrap block around ring ?
+            block = buffer_size - pos; // Fill in to the end of the buffer
 
-        memcpy(&(*buffer_.begin()) + pos, src, block);
-        src += block;
-        pos = (pos + block) % bufferSize_;
+        buffer_.copy(buf, block, in_pos, pos);
+        in_pos += block;
+        pos = (pos + block) % buffer_size;
         toCopy -= block;
     }
 
@@ -199,8 +207,7 @@ RingBuffer::availableForGet(const std::string &call_id) const
 }
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
-size_t
-RingBuffer::get(void *buffer, size_t toCopy, const std::string &call_id)
+size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 {
     if (hasNoReadPointers())
         return 0;
@@ -209,24 +216,25 @@ RingBuffer::get(void *buffer, size_t toCopy, const std::string &call_id)
         return 0;
 
     const size_t len = getLength(call_id);
-
-    if (toCopy > len)
-        toCopy = len;
+    const size_t sample_num = buf.samples();
+    const size_t buffer_size = buffer_.samples();
+    size_t toCopy = std::min(sample_num, len);
 
     const size_t copied = toCopy;
 
-    unsigned char *dest = (unsigned char *) buffer;
+    size_t dest = 0;
     size_t startPos = getReadPointer(call_id);
 
     while (toCopy > 0) {
         size_t block = toCopy;
 
-        if (block > bufferSize_ - startPos)
-            block = bufferSize_ - startPos;
+        if (block > buffer_size - startPos)
+            block = buffer_size - startPos;
 
-        memcpy(dest, &(*buffer_.begin()) + startPos, block);
+        buf.copy(buffer_, block, startPos, dest);
+
         dest += block;
-        startPos = (startPos + block) % bufferSize_;
+        startPos = (startPos + block) % buffer_size;
         toCopy -= block;
     }
 
@@ -242,7 +250,8 @@ RingBuffer::discard(size_t toDiscard, const std::string &call_id)
     if (toDiscard > len)
         toDiscard = len;
 
-    size_t startPos = (getReadPointer(call_id) + toDiscard) % bufferSize_;
+    size_t buffer_size = buffer_.samples();
+    size_t startPos = (getReadPointer(call_id) + toDiscard) % buffer_size;
 
     storeReadPointer(startPos, call_id);
 

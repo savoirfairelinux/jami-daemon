@@ -36,10 +36,10 @@ using std::ptrdiff_t;
 namespace sfl {
 
 AudioCodec::AudioCodec(uint8_t payload, const std::string &codecName,
-                       int clockRate, int frameSize, int channel) :
+                       int clockRate, int frameSize, unsigned channels) :
     codecName_(codecName),
     clockRate_(clockRate),
-    channel_(channel),
+    channel_(channels),
     frameSize_(frameSize),
     bitrate_(0.0),
     payload_(payload),
@@ -55,6 +55,18 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     payload_(c.payload_),
     hasDynamicPayload_(c.hasDynamicPayload_)
 {}
+
+// Mono only, subclasses must implement multichannel support
+int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size)
+{
+    return decode(dst[0].data(), buf, buffer_size);
+}
+
+// Mono only, subclasses must implement multichannel support
+int AudioCodec::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size)
+{
+    return encode(dst, src[0].data(), buffer_size);
+}
 
 std::string AudioCodec::getMimeSubtype() const
 {
@@ -84,6 +96,11 @@ unsigned AudioCodec::getFrameSize() const
 double AudioCodec::getBitRate() const
 {
     return bitrate_;
+}
+
+unsigned AudioCodec::getChannels() const
+{
+    return channel_;
 }
 
 } // end namespace sfl

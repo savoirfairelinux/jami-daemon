@@ -18,6 +18,7 @@ SFL_SPEEXDSP_HEAD=noisesuppress.h
 endif
 
 libaudio_la_SOURCES = \
+		audiobuffer.cpp \
 		audioloop.cpp \
 		ringbuffer.cpp \
 		mainbuffer.cpp \
@@ -32,6 +33,7 @@ libaudio_la_SOURCES = \
 		dcblocker.cpp
 
 noinst_HEADERS = \
+		audiobuffer.h \
 		audioloop.h \
 		ringbuffer.h \
 		mainbuffer.h \

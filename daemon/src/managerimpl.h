@@ -719,7 +719,7 @@ class ManagerImpl {
         /**
          * Handle played music when an incoming call occurs
          */
-        void ringtone(const std::string& accountID);
+        void playRingtone(const std::string& accountID);
 
         /**
          * Handle played music when a congestion occurs
@@ -785,6 +785,10 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+        bool parseConfiguration();
+
+        // Set the ringtone or recorded call to be played
+        void updateAudioFile(const std::string &file, int sampleRate);
 
         /**
          * Get the Call referred to by callID. If the Call does not exist, return NULL

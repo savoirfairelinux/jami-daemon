@@ -39,10 +39,10 @@ HistoryNameCache::HistoryNameCache() : hNameCache_()
 
     typedef vector<map<string, string> > HistoryList;
     HistoryList history(Manager::instance().getHistory());
-    for (HistoryList::iterator i = history.begin(); i != history.end(); ++i) {
-        string name((*i)["display_name"]);
-        string account((*i)["accountid"]);
-        string number((*i)["peer_number"]);
+    for (auto &i : history) {
+        string name(i["display_name"]);
+        string account(i["accountid"]);
+        string number(i["peer_number"]);
         if (hNameCache_[account][number].empty() and not name.empty() and not number.empty())
             hNameCache_[account][number] = name;
     }
