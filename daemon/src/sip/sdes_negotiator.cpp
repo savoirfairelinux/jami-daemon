@@ -93,14 +93,13 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
 
     std::vector<CryptoAttribute *> cryptoAttributeVector;
 
-    for (std::vector<std::string>::iterator iter = remoteAttribute_.begin();
-            iter != remoteAttribute_.end(); ++iter) {
+    for (const auto &iter : remoteAttribute_) {
 
         // Split the line into its component
         // that we will analyze further down.
         std::vector<std::string> sdesLine;
 
-        *generalSyntaxPattern << (*iter);
+        *generalSyntaxPattern << iter;
 
         try {
             sdesLine = generalSyntaxPattern->split();
