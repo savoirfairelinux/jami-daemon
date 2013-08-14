@@ -37,7 +37,7 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <tr1/memory>
+#include <memory>
 
 class MainBuffer;
 /*
@@ -103,7 +103,7 @@ class MainBufferTest : public CppUnit::TestCase {
 
     private:
 
-        std::tr1::shared_ptr<MainBuffer> mainbuffer_;
+        std::unique_ptr<MainBuffer> mainbuffer_;
 };
 
 /* Register our test module */
