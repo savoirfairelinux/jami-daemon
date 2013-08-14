@@ -1594,10 +1594,9 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
+        for (const auto &participant : participants) {
 
-            std::string accountId = getAccountFromCall(*iter_p);
+            std::string accountId = getAccountFromCall(participant);
 
             Account *account = getAccount(accountId);
 
@@ -1606,7 +1605,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(*iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(participant, message, from);
         }
 
         return true;
