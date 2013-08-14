@@ -1352,8 +1352,8 @@ void ManagerImpl::addStream(const std::string& call_id)
             ParticipantSet participants(conf->getParticipantList());
 
             // reset ring buffer for all conference participant
-            for (const auto &iter_p : participants)
-                getMainBuffer().flush(iter_p);
+            for (const auto &participant : participants)
+                getMainBuffer().flush(participant);
 
             getMainBuffer().flush(MainBuffer::DEFAULT_ID);
         }
@@ -2936,8 +2936,8 @@ ManagerImpl::registerAccounts()
 {
     AccountMap allAccounts(getAllAccounts());
 
-    for (auto &iter : allAccounts) {
-        Account *a = iter.second;
+    for (auto &item : allAccounts) {
+        Account *a = item.second;
 
         if (!a)
             continue;
