@@ -351,8 +351,8 @@ size_t MainBuffer::discard(size_t toDiscard, const std::string &call_id)
     if (!callid_set or callid_set->empty())
         return 0;
 
-    for (CallIDSet::iterator iter = callid_set->begin(); iter != callid_set->end(); ++iter)
-        discardByID(toDiscard, *iter, call_id);
+    for (auto &item : *callid_set)
+        discardByID(toDiscard, item, call_id);
 
     return toDiscard;
 }
@@ -374,9 +374,8 @@ void MainBuffer::flush(const std::string & call_id)
     if (callid_set == NULL)
         return;
 
-    for (CallIDSet::iterator iter = callid_set->begin(); iter != callid_set->end(); ++iter)
-        flushByID(*iter, call_id);
-
+    for (auto &item : *callid_set)
+        flushByID(item, call_id);
 }
 
 void MainBuffer::flushByID(const std::string & call_id, const std::string & reader_id)
@@ -390,8 +389,8 @@ void MainBuffer::flushByID(const std::string & call_id, const std::string & read
 
 void MainBuffer::flushAllBuffers()
 {
-    for (RingBufferMap::iterator iter = ringBufferMap_.begin(); iter != ringBufferMap_.end(); ++iter)
-        iter->second->flushAll();
+    for (auto &item : ringBufferMap_)
+        item.second->flushAll();
 }
 
 void MainBuffer::dumpInfo()
