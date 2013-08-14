@@ -126,6 +126,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         void startPreview();
         void stopPreview();
         bool hasPreviewStarted();
+		sfl_video::VideoPreview *getVideoPreview();
 };
 
 #endif // VIDEO_CONTROLS_H_

@@ -35,6 +35,7 @@
 #include "video_base.h"
 #include "noncopyable.h"
 
+#include <pthread.h>
 #include <string>
 
 class SwsContext;
@@ -60,9 +61,10 @@ namespace sfl_video {
 		int decode();
 		int flush();
 		void setScaleDest(void *data, int width, int height, int pix_fmt);
-		void scale(int flags);
+		void *scale(SwsContext *ctx, int flags);
+		VideoFrame *lockFrame();
+		void unlockFrame();
 
-		AVFrame *getDecodedFrame() { return rawFrame_; }
 		int getWidth() const { return dstWidth_; }
 		int getHeight() const { return dstHeight_; }
 
@@ -70,13 +72,17 @@ namespace sfl_video {
 		NON_COPYABLE(VideoDecoder);
 
 		AVCodec *inputDecoder_;
-        AVCodecContext *decoderCtx_;
-        AVFrame *rawFrame_;
-        AVFormatContext *inputCtx_;
-        SwsContext *imgConvertCtx_;
+		AVCodecContext *decoderCtx_;
+		VideoFrame rawFrames_[2];
+		int lockedFrame_;
+		int lockedFrameCnt_;
+		int lastFrame_;
+		AVFormatContext *inputCtx_;
+		SwsContext *imgConvertCtx_;
 		AVIOInterruptCB interruptCb_;
 		SwsContext *scalerCtx_;
 		VideoFrame scaledPicture_;
+		pthread_mutex_t accessMutex_;
 
 		int streamIndex_;
 		int dstWidth_;

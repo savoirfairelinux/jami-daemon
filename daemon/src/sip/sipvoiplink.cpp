@@ -1869,7 +1869,6 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
 #ifdef SFL_VIDEO
-    Manager::instance().getVideoControls()->stopPreview();
     call->getVideoRtp().updateSDP(*call->getLocalSDP());
     call->getVideoRtp().updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
     call->getVideoRtp().start(call->getLocalSDP()->getLocalVideoPort());

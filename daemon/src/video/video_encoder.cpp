@@ -312,8 +312,10 @@ namespace sfl_video {
 		scaledPicture_->height = height;
 	}
 
-	void VideoEncoder::scale(AVFrame *src_frame, int flags)
+	void VideoEncoder::scale(VideoFrame *frame_, int flags)
 	{
+		AVFrame *src_frame = frame_->get();
+
 		scalerCtx_ = sws_getCachedContext(scalerCtx_,
 										  src_frame->width,
 										  src_frame->height,

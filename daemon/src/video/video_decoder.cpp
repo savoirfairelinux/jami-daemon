@@ -54,16 +54,22 @@ namespace sfl_video {
 	VideoDecoder::VideoDecoder() :
 		inputDecoder_(0),
 		decoderCtx_(0),
-		rawFrame_(0),
+		rawFrames_(),
+		lockedFrame_(-1),
+		lockedFrameCnt_(0),
+		lastFrame_(1),
 		inputCtx_(avformat_alloc_context()),
 		imgConvertCtx_(0),
 		interruptCb_(),
 		scalerCtx_(0),
 		scaledPicture_(),
+		accessMutex_(),
 		streamIndex_(-1),
 		dstWidth_(0),
 		dstHeight_(0)
-	{ }
+	{
+		pthread_mutex_init(&accessMutex_, NULL);
+	}
 
 	VideoDecoder::~VideoDecoder()
 	{
@@ -79,7 +85,8 @@ namespace sfl_video {
 		}
 
 		sws_freeContext(scalerCtx_);
-		avcodec_free_frame(&rawFrame_);
+
+		pthread_mutex_destroy(&accessMutex_);
 	}
 
 	int VideoDecoder::openInput(const std::string &source_str,
@@ -89,12 +96,6 @@ namespace sfl_video {
 
 		if (!iformat) {
 			ERROR("Cannot find format \"%s\"", format_str.c_str());
-			return -1;
-		}
-
-		rawFrame_ = avcodec_alloc_frame();
-		if (!rawFrame_){
-			ERROR("avcodec_alloc_frame failed");
 			return -1;
 		}
 
@@ -198,7 +199,6 @@ namespace sfl_video {
 		// Guarantee that we free the packet every iteration
 		VideoPacket video_packet;
 		AVPacket *inpacket = video_packet.get();
-
 		ret = av_read_frame(inputCtx_, inpacket);
 		if (ret == AVERROR(EAGAIN))
 			return 0;
@@ -207,17 +207,32 @@ namespace sfl_video {
 			return -1;
 		}
 
-		avcodec_get_frame_defaults(rawFrame_);
+		int idx;
+		pthread_mutex_lock(&accessMutex_);
+		if (lockedFrame_ >= 0)
+			idx = !lockedFrame_;
+		else
+			idx = !lastFrame_;
+		pthread_mutex_unlock(&accessMutex_);
+
+		AVFrame *frame = rawFrames_[idx].get();
+		avcodec_get_frame_defaults(frame);
 
 		// is this a packet from the video stream?
 		if (inpacket->stream_index != streamIndex_)
 			return 0;
 
 		int frameFinished = 0;
-		const int len = avcodec_decode_video2(decoderCtx_, rawFrame_,
+		const int len = avcodec_decode_video2(decoderCtx_, frame,
 											  &frameFinished, inpacket);
 		if (len <= 0)
 			return -2;
+
+		if (frameFinished) {
+			pthread_mutex_lock(&accessMutex_);
+			lastFrame_ = idx;
+			pthread_mutex_unlock(&accessMutex_);
+		}
 
 		return frameFinished;
 	}
@@ -230,13 +245,28 @@ namespace sfl_video {
 		inpacket.data = NULL;
 		inpacket.size = 0;
 
-		avcodec_get_frame_defaults(rawFrame_);
+		int idx;
+		pthread_mutex_lock(&accessMutex_);
+		if (lockedFrame_ >= 0)
+			idx = !lockedFrame_;
+		else
+			idx = !lastFrame_;
+		pthread_mutex_unlock(&accessMutex_);
+
+		AVFrame *frame = rawFrames_[idx].get();
+		avcodec_get_frame_defaults(frame);
 
 		int frameFinished = 0;
-		const int len = avcodec_decode_video2(decoderCtx_, rawFrame_,
+		const int len = avcodec_decode_video2(decoderCtx_, frame,
 											  &frameFinished, &inpacket);
 		if (len <= 0)
 		  return -2;
+
+		if (frameFinished) {
+			pthread_mutex_lock(&accessMutex_);
+			lastFrame_ = idx;
+			pthread_mutex_unlock(&accessMutex_);
+		}
 
 		return frameFinished;
 	}
@@ -252,26 +282,60 @@ namespace sfl_video {
 		output_frame->height = height;
 	}
 
-	void VideoDecoder::scale(int flags)
+	void* VideoDecoder::scale(SwsContext *ctx, int flags)
 	{
 		AVFrame *output_frame = scaledPicture_.get();
-		scalerCtx_ = sws_getCachedContext(scalerCtx_,
-										  decoderCtx_->width,
-										  decoderCtx_->height,
-										  decoderCtx_->pix_fmt,
-										  output_frame->width,
-										  output_frame->height,
-										  (PixelFormat) output_frame->format,
-										  SWS_BICUBIC, /* FIXME: option? */
-										  NULL, NULL, NULL);
 
-		if (!scalerCtx_) {
+		ctx = sws_getCachedContext(ctx,
+								   decoderCtx_->width,
+								   decoderCtx_->height,
+								   decoderCtx_->pix_fmt,
+								   output_frame->width,
+								   output_frame->height,
+								   (PixelFormat) output_frame->format,
+								   SWS_BICUBIC, /* FIXME: option? */
+								   NULL, NULL, NULL);
+		if (ctx) {
+			VideoFrame *frame = lockFrame();
+			if (frame) {
+				AVFrame *frame_ = frame->get();
+				sws_scale(ctx, frame_->data, frame_->linesize, 0,
+						  decoderCtx_->height, output_frame->data,
+						  output_frame->linesize);
+				unlockFrame();
+			}
+		} else {
 			ERROR("Unable to create a scaler context");
-			return;
 		}
 
-		sws_scale(scalerCtx_,
-				  rawFrame_->data, rawFrame_->linesize, 0, decoderCtx_->height,
-				  output_frame->data, output_frame->linesize);
+		return ctx;
+	}
+
+	VideoFrame *VideoDecoder::lockFrame()
+	{
+		VideoFrame *frame;
+
+		pthread_mutex_lock(&accessMutex_);
+		if (lockedFrame_ >= 0) {
+			lockedFrameCnt_++;
+		} else {
+			lockedFrame_ = lastFrame_;
+			lockedFrameCnt_ = 0;
+		}
+		pthread_mutex_unlock(&accessMutex_);
+
+		if (lockedFrame_ >= 0)
+			return &rawFrames_[lockedFrame_];
+		return NULL;
+	}
+
+	void VideoDecoder::unlockFrame()
+	{
+		pthread_mutex_lock(&accessMutex_);
+		if (lockedFrameCnt_ > 0)
+			lockedFrameCnt_--;
+		else
+			lockedFrame_ = -1;
+		pthread_mutex_unlock(&accessMutex_);
 	}
 }

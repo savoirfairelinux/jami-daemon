@@ -35,37 +35,30 @@
 #include <string>
 #include <tr1/memory>
 #include "noncopyable.h"
-#include "shm_sink.h"
-#include "video_provider.h"
 #include "video_encoder.h"
-#include "video_decoder.h"
+#include "video_preview.h"
+
 
 namespace sfl_video {
 
 	class SocketPair;
 
-	class VideoSendThread : public VideoProvider {
+	class VideoSendThread {
 	private:
 		NON_COPYABLE(VideoSendThread);
 		void setup();
-		void fillBuffer(void *data);
 		static int interruptCb(void *ctx);
 
 		std::map<std::string, std::string> args_;
 		/*-------------------------------------------------------------*/
 		/* These variables should be used in thread (i.e. run()) only! */
 		/*-------------------------------------------------------------*/
-		VideoDecoder *videoDecoder_;
+		VideoPreview *videoPreview_;
 		VideoEncoder *videoEncoder_;
 
-		uint8_t *scaledInputBuffer_;
-		uint8_t *encoderBuffer_;
-		int encoderBufferSize_;
 		std::string sdp_;
-
-		SHMSink sink_;
-		size_t bufferSize_;
-		const std::string id_;
+		int outputWidth_;
+		int outputHeight_;
 
 		AVIOInterruptCB interruptCb_;
 		bool threadRunning_;
@@ -75,12 +68,10 @@ namespace sfl_video {
 		int frameNumber_;
 		VideoIOHandle* muxContext_;
 		void run();
-		bool captureFrame();
-		void renderFrame();
 		void encodeAndSendVideo();
 
 	public:
-		VideoSendThread(const std::string &id, const std::map<std::string, std::string> &args);
+		VideoSendThread(const std::map<std::string, std::string> &args);
 		~VideoSendThread();
 		void addIOContext(SocketPair &sock);
 		void start();

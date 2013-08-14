@@ -59,7 +59,7 @@ namespace sfl_video {
 		int startIO();
 		int encode(bool is_keyframe, int frame_number);
 		int flush();
-		void scale(AVFrame *src_frame, int flags);
+		void scale(VideoFrame *src_frame, int flags);
 		void print_sdp(std::string &sdp_);
 
 		/* getWidth and getHeight return size of the encoded frame.

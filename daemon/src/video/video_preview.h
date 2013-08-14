@@ -31,23 +31,54 @@
 #ifndef __VIDEO_PREVIEW_H__
 #define __VIDEO_PREVIEW_H__
 
+#include "noncopyable.h"
+#include "shm_sink.h"
+#include "video_provider.h"
+
 #include <tr1/memory>
+#include <pthread.h>
 #include <string>
 #include <map>
 
 namespace sfl_video {
+	using std::string;
 
-class VideoReceiveThread;
+	class VideoDecoder;
+	class VideoFrame;
 
-class VideoPreview {
-    public:
-        VideoPreview(const std::map<std::string, std::string> &args);
-        ~VideoPreview();
+	class VideoPreview : public VideoProvider
+	{
+	public:
+		VideoPreview(const std::map<string, string> &args);
+		~VideoPreview();
+		int getWidth() const;
+		int getHeight() const;
+		void fill(void *data, int width, int height);
+		VideoFrame *lockFrame();
+		void unlockFrame();
 
-    private:
-        std::map<std::string, std::string> args_;
-        std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
-};
+	private:
+		NON_COPYABLE(VideoPreview);
+
+		std::string id_;
+		std::map<string, string> args_;
+		VideoDecoder *decoder_;
+		bool threadRunning_;
+		pthread_t thread_;
+		pthread_mutex_t accessMutex_;
+		SHMSink sink_;
+		size_t bufferSize_;
+		int previewWidth_;
+		int previewHeight_;
+
+		static int interruptCb(void *ctx);
+		static void *runCallback(void *);
+		void fillBuffer(void *data);
+		void run();
+		bool captureFrame();
+		void setup();
+		void renderFrame();
+	};
 }
 
 #endif // __VIDEO_PREVIEW_H__

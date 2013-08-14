@@ -192,7 +192,7 @@ namespace sfl_video {
 	void VideoReceiveThread::fillBuffer(void *data)
 	{
 		videoDecoder_->setScaleDest(data, dstWidth_, dstHeight_, PIX_FMT_BGRA);
-		videoDecoder_->scale(0);
+		videoDecoder_->scale(NULL, 0);
 	}
 
 	void VideoReceiveThread::run()

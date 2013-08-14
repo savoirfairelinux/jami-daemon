@@ -126,6 +126,14 @@ void VideoRtpSession::updateDestination(const string &destination,
 
 void VideoRtpSession::start(int localPort)
 {
+	std::string curcid = Manager::instance().getCurrentCallId();
+
+	ERROR("CallID = %s", callID_.c_str());
+	DEBUG("current? %u", Manager::instance().isCurrentCall(callID_));
+	DEBUG("conf? %d", Manager::instance().isConference(callID_));
+	DEBUG("conf_part? %d", Manager::instance().isConferenceParticipant(callID_));
+	DEBUG("current is conf? %d", Manager::instance().isConference(curcid));
+
     if (not sending_ and not receiving_)
         return;
 
@@ -134,17 +142,6 @@ void VideoRtpSession::start(int localPort)
     } catch (const std::runtime_error &e) {
         ERROR("Socket creation failed: %s", e.what());
         return;
-    }
-
-    if (sending_) {
-        if (sendThread_.get())
-            WARN("Restarting video sender");
-        sendThread_.reset(new VideoSendThread("local", txArgs_));
-        sendThread_->addIOContext(*socketPair_);
-        sendThread_->start();
-    } else {
-        DEBUG("Video sending disabled");
-        sendThread_.reset();
     }
 
     if (receiving_) {
@@ -157,6 +154,17 @@ void VideoRtpSession::start(int localPort)
     } else {
         DEBUG("Video receiving disabled");
         receiveThread_.reset();
+    }
+
+	if (sending_) {
+        if (sendThread_.get())
+            WARN("Restarting video sender");
+        sendThread_.reset(new VideoSendThread(txArgs_));
+        sendThread_->addIOContext(*socketPair_);
+        sendThread_->start();
+    } else {
+        DEBUG("Video sending disabled");
+        sendThread_.reset();
     }
 }
 

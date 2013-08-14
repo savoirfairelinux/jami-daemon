@@ -14,7 +14,7 @@ libvideo_la_SOURCES = \
 	shm_sink.cpp shm_sink.h video_provider.h \
 	socket_pair.cpp socket_pair.h \
 	video_decoder.cpp video_decoder.h \
-	video_encoder.cpp video_encoder.h
+	video_encoder.cpp video_encoder.h \
 	video_codec.h
 
 libvideo_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@ @UDEV_LIBS@

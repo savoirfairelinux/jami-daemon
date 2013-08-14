@@ -32,9 +32,10 @@
 #include "socket_pair.h"
 #include "client/video_controls.h"
 #include "check.h"
+#include "manager.h"
 
 #include <map>
-#include "manager.h"
+
 
 namespace sfl_video {
 
@@ -43,69 +44,40 @@ using std::string;
 void VideoSendThread::setup()
 {
     const char *enc_name = args_["codec"].c_str();
-    // it's a v4l device if starting with /dev/video
-    static const char * const V4L_PATH = "/dev/video";
+	int width, height;
 
-	std::string format_str;
-	std::string input = args_["input"];
+	videoPreview_ = Manager::instance().getVideoControls()->getVideoPreview();
+	EXIT_IF_FAIL(videoPreview_, "No previewing!");
 
-	/* Decoder setup */
-
-    if (args_["input"].find(V4L_PATH) != std::string::npos) {
-        DEBUG("Using v4l2 format");
-        format_str = "video4linux2";
-    }
-
-	if (!args_["framerate"].empty())
-		videoDecoder_->setOption("framerate", args_["framerate"].c_str());
-    if (!args_["video_size"].empty())
-		videoDecoder_->setOption("video_size", args_["video_size"].c_str());
-    if (!args_["channel"].empty())
-		videoDecoder_->setOption("channel", args_["channel"].c_str());
-
-	videoDecoder_->setInterruptCallback(interruptCb, this);
-
-	/* Open the decoder and start the stream */
-
-	EXIT_IF_FAIL(videoDecoder_->openInput(input, format_str) >= 0,
-				 "Could not open input \"%s\"", input.c_str());
-    EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
-
-	/* Data available, finish the decoding */
-	EXIT_IF_FAIL(!videoDecoder_->setupFromVideoData(),
-				 "decoder IO startup failed");
-	bufferSize_ = VideoDecoder::getBufferSize(PIX_FMT_BGRA,
-											  videoDecoder_->getWidth(),
-											  videoDecoder_->getHeight());
-	EXIT_IF_FAIL(bufferSize_ > 0, "Incorrect buffer size for decoding");
-
-    Manager::instance().getVideoControls()->startedDecoding(id_,
-															sink_.openedName(),
-															videoDecoder_->getWidth(),
-															videoDecoder_->getHeight());
-    DEBUG("TX: shm sink started with size %d, width %d and height %d", bufferSize_,
-		  videoDecoder_->getWidth(), videoDecoder_->getHeight());
+	width = videoPreview_->getWidth();
+	height = videoPreview_->getHeight();
 
 	/* Encoder setup */
-
-	videoEncoder_->setInterruptCallback(interruptCb, this);
-
-	videoEncoder_->setOption("bitrate", args_["bitrate"].c_str());
 	if (!args_["width"].empty()) {
-		videoEncoder_->setOption("width", args_["width"].c_str());
+		const char *s = args_["width"].c_str();
+		videoEncoder_->setOption("width", s);
+		width = outputWidth_ = atoi(s);
 	} else {
 		char buf[11];
-		sprintf(buf, "%10d", videoDecoder_->getWidth());
+		outputWidth_ = width;
+		sprintf(buf, "%10d", width);
 		videoEncoder_->setOption("width", buf);
 	}
 
 	if (!args_["height"].empty()) {
-		videoEncoder_->setOption("height", args_["height"].c_str());
+		const char *s = args_["height"].c_str();
+		videoEncoder_->setOption("height", s);
+		height = outputHeight_ = atoi(s);
 	} else {
 		char buf[11];
-		sprintf(buf, "%10d", videoDecoder_->getHeight());
+		outputHeight_ = height;
+		sprintf(buf, "%10d", height);
 		videoEncoder_->setOption("height", buf);
 	}
+
+	videoEncoder_->setInterruptCallback(interruptCb, this);
+
+	videoEncoder_->setOption("bitrate", args_["bitrate"].c_str());
 
 	if (!args_["framerate"].empty())
 		videoEncoder_->setOption("framerate", args_["framerate"].c_str());
@@ -121,12 +93,11 @@ void VideoSendThread::setup()
     }
 
 	EXIT_IF_FAIL(!videoEncoder_->openOutput(enc_name, "rtp",
-										   args_["destination"].c_str(), NULL),
-				 "encoder openOutput() failed with input \"%s\"",
-				 input.c_str());
-
+											args_["destination"].c_str(), NULL),
+				 "encoder openOutput() failed");
 	videoEncoder_->setIOContext(muxContext_);
 	EXIT_IF_FAIL(!videoEncoder_->startIO(), "encoder start failed");
+
 	videoEncoder_->print_sdp(sdp_);
 }
 
@@ -137,22 +108,18 @@ int VideoSendThread::interruptCb(void *ctx)
     return not context->threadRunning_;
 }
 
-VideoSendThread::VideoSendThread(const std::string &id, const std::map<string, string> &args) :
+VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     args_(args),
-	videoDecoder_(0),
+	videoPreview_(0),
 	videoEncoder_(0),
-	scaledInputBuffer_(0),
-    encoderBuffer_(0),
-    encoderBufferSize_(0),
     sdp_(),
-    sink_(),
-    bufferSize_(0),
-    id_(id),
+	outputWidth_(0),
+	outputHeight_(0),
     interruptCb_(),
     threadRunning_(false),
     forceKeyFrame_(0),
     thread_(0),
-    frameNumber_(0),
+	frameNumber_(0),
     muxContext_(0)
 {
     interruptCb_.callback = interruptCb;
@@ -179,53 +146,18 @@ void *VideoSendThread::runCallback(void *data)
 
 void VideoSendThread::run()
 {
-	videoDecoder_ = new VideoDecoder();
 	videoEncoder_ = new VideoEncoder();
 
 	setup();
 
     while (threadRunning_) {
-        if (captureFrame()) {
-            renderFrame();
-            encodeAndSendVideo();
-        }
+		encodeAndSendVideo();
 	}
+
+	delete videoEncoder_;
 
 	if (muxContext_)
 		delete muxContext_;
-
-	delete videoDecoder_;
-	delete videoEncoder_;
-}
-
-/// Copies and scales our rendered frame to the buffer pointed to by data
-void VideoSendThread::fillBuffer(void *data)
-{
-	videoDecoder_->setScaleDest(data, videoDecoder_->getWidth(),
-								videoDecoder_->getHeight(), PIX_FMT_BGRA);
-	videoDecoder_->scale(0);
-}
-
-void VideoSendThread::renderFrame()
-{
-    // we want our rendering code to be called by the shm_sink,
-    // because it manages the shared memory synchronization
-    sink_.render_callback(*this, bufferSize_);
-}
-
-bool VideoSendThread::captureFrame()
-{
-	int ret = videoDecoder_->decode();
-
-	if (ret <= 0) {
-		if (ret < 0)
-			threadRunning_ = false;
-		return false;
-	}
-
-	videoEncoder_->scale(videoDecoder_->getDecodedFrame(), 0);
-
-    return true;
 }
 
 void VideoSendThread::encodeAndSendVideo()
@@ -235,6 +167,12 @@ void VideoSendThread::encodeAndSendVideo()
 	if (is_keyframe)
 		atomic_decrement(&forceKeyFrame_);
 
+	VideoFrame *inputframe = videoPreview_->lockFrame();
+	if (inputframe) {
+		videoEncoder_->scale(inputframe, 0);
+		videoPreview_->unlockFrame();
+	}
+
 	EXIT_IF_FAIL(videoEncoder_->encode(is_keyframe, frameNumber_++) >= 0,
 				 "encoding failed");
 }
@@ -242,7 +180,6 @@ void VideoSendThread::encodeAndSendVideo()
 VideoSendThread::~VideoSendThread()
 {
     set_false_atomic(&threadRunning_);
-    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     if (thread_)
         pthread_join(thread_, NULL);
 }

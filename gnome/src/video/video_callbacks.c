@@ -71,8 +71,8 @@ cleanup_handle(gpointer data)
 static void
 video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
-    if (dbus_has_video_preview_started())
-        dbus_stop_video_preview();
+	if (dbus_has_video_preview_started())
+		dbus_stop_video_preview();
 }
 
 static void

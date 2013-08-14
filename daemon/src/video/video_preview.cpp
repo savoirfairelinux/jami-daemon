@@ -29,27 +29,167 @@
  */
 
 #include "video_preview.h"
-#include "logger.h"
+#include "video_decoder.h"
+#include "check.h"
+
+#include "manager.h"
+#include "client/video_controls.h"
+
 #include <map>
 #include <string>
-#include "video_receive_thread.h"
-
-class VideoControls;
 
 namespace sfl_video {
 
-VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
-    args_(args), receiveThread_()
-{
-    const char * const LOCAL_ID = "local";
-    receiveThread_.reset(new VideoReceiveThread(LOCAL_ID, args_));
-    receiveThread_->start();
-}
+	using std::string;
 
-VideoPreview::~VideoPreview()
-{
-    // explicitly destroy the thread object
-    receiveThread_.reset();
-}
+	AVIOInterruptCB interruptCb_;
+
+	VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
+		id_("local"),
+		args_(args),
+		decoder_(0),
+		threadRunning_(false),
+		thread_(0),
+		accessMutex_(),
+		sink_(),
+		bufferSize_(0),
+		previewWidth_(0),
+		previewHeight_(0)
+	{
+		pthread_mutex_init(&accessMutex_, NULL);
+		interruptCb_.callback = interruptCb;
+		interruptCb_.opaque = this;
+		pthread_create(&thread_, NULL, &runCallback, this);
+	}
+
+	VideoPreview::~VideoPreview()
+	{
+		set_false_atomic(&threadRunning_);
+		string name = sink_.openedName();
+		Manager::instance().getVideoControls()->stoppedDecoding(id_, name);
+		if (thread_)
+			pthread_join(thread_, NULL);
+		pthread_mutex_destroy(&accessMutex_);
+	}
+
+	int VideoPreview::interruptCb(void *ctx)
+	{
+		VideoPreview *context = static_cast<VideoPreview*>(ctx);
+		return not context->threadRunning_;
+	}
+
+	void *VideoPreview::runCallback(void *data)
+	{
+		VideoPreview *context = static_cast<VideoPreview*>(data);
+		context->run();
+		return NULL;
+	}
+
+	void VideoPreview::run()
+	{
+		set_true_atomic(&threadRunning_);
+		decoder_ = new VideoDecoder();
+		setup();
+
+		while (threadRunning_) {
+			if (captureFrame())
+				renderFrame();
+		}
+
+		delete decoder_;
+	}
+
+	void VideoPreview::setup()
+	{
+		// it's a v4l device if starting with /dev/video
+		static const char * const V4L_PATH = "/dev/video";
+
+		string format_str;
+		string input = args_["input"];
+
+		if (args_["input"].find(V4L_PATH) != std::string::npos) {
+			DEBUG("Using v4l2 format");
+			format_str = "video4linux2";
+		}
+		if (!args_["framerate"].empty())
+			decoder_->setOption("framerate", args_["framerate"].c_str());
+		if (!args_["video_size"].empty())
+			decoder_->setOption("video_size", args_["video_size"].c_str());
+		if (!args_["channel"].empty())
+			decoder_->setOption("channel", args_["channel"].c_str());
+
+		decoder_->setInterruptCallback(interruptCb, this);
+
+		EXIT_IF_FAIL(decoder_->openInput(input, format_str) >= 0,
+					 "Could not open input \"%s\"", input.c_str());
+
+		/* Data available, finish the decoding */
+		EXIT_IF_FAIL(!decoder_->setupFromVideoData(),
+					 "decoder IO startup failed");
+
+		/* Preview frame size? (defaults from decoder) */
+		if (!args_["width"].empty())
+			previewWidth_ = atoi(args_["width"].c_str());
+		else
+			previewWidth_ = decoder_->getWidth();
+		if (!args_["height"].empty())
+			previewHeight_ = atoi(args_["height"].c_str());
+		else
+			previewHeight_ = decoder_->getHeight();
+
+		/* Previewing setup */
+		EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+
+		bufferSize_ = VideoDecoder::getBufferSize(PIX_FMT_BGRA, previewWidth_,
+												  previewHeight_);
+		EXIT_IF_FAIL(bufferSize_ > 0, "Incorrect buffer size for decoding");
+
+		string name = sink_.openedName();
+		Manager::instance().getVideoControls()->startedDecoding(id_, name,
+																previewWidth_,
+																previewHeight_);
+		DEBUG("TX: shm sink started with size %d, width %d and height %d",
+			  bufferSize_, previewWidth_, previewHeight_);
+	}
+
+	bool VideoPreview::captureFrame()
+	{
+		int ret = decoder_->decode();
+
+		if (ret <= 0) {
+			if (ret < 0)
+				threadRunning_ = false;
+			return false;
+		}
+
+		return true;
+	}
+
+	void VideoPreview::renderFrame()
+	{
+		// we want our rendering code to be called by the shm_sink,
+		// because it manages the shared memory synchronization
+		sink_.render_callback(*this, bufferSize_);
+	}
+
+	// This function is called by sink
+	void VideoPreview::fillBuffer(void *data)
+	{
+		fill(data, previewWidth_, previewHeight_);
+	}
+
+	void VideoPreview::fill(void *data, int width, int height)
+	{
+		pthread_mutex_lock(&accessMutex_);
+		decoder_->setScaleDest(data, width, height, PIX_FMT_BGRA);
+		decoder_->scale(NULL, 0);
+		pthread_mutex_unlock(&accessMutex_);
+	}
+
+	VideoFrame *VideoPreview::lockFrame() { return decoder_->lockFrame(); }
+	void VideoPreview::unlockFrame() { decoder_->unlockFrame(); }
+
+	int VideoPreview::getWidth() const { return decoder_->getWidth(); }
+	int VideoPreview::getHeight() const { return decoder_->getHeight(); }
 
 } // end namspace sfl_video
