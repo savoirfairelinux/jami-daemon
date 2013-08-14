@@ -65,7 +65,7 @@ Sdp::Sdp(pj_pool_t *pool)
     , video_codec_list_()
     , sessionAudioMedia_()
     , sessionVideoMedia_()
-    , localIpAddr_()
+    , publishedIpAddr_()
     , remoteIpAddr_()
     , localAudioDataPort_(0)
     , localAudioControlPort_(0)
@@ -323,7 +323,7 @@ Sdp::setMediaDescriptorLines(bool audio)
 void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 {
     std::ostringstream os;
-    os << localIpAddr_ << ":" << localAudioControlPort_;
+    os << publishedIpAddr_ << ":" << localAudioControlPort_;
     const std::string str(os.str());
     pj_str_t input_str = pj_str((char*) str.c_str());
     pj_sockaddr outputAddr;
@@ -424,7 +424,7 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     localSession_->origin.id = tv.sec + 2208988800UL;
     localSession_->origin.net_type = pj_str((char*) "IN");
     localSession_->origin.addr_type = pj_str((char*) "IP4");
-    localSession_->origin.addr = pj_str((char*) localIpAddr_.c_str());
+    localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
 
     localSession_->name = pj_str((char*) PACKAGE);
 
