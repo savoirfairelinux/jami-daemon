@@ -245,8 +245,8 @@ void ManagerImpl::finish()
     std::vector<std::string> callList(getCallList());
     DEBUG("Hangup %zu remaining call(s)", callList.size());
 
-    for (const auto &iter : callList)
-        hangupCall(iter);
+    for (const auto &item : callList)
+        hangupCall(item);
 
     saveConfig();
 
@@ -525,8 +525,8 @@ bool ManagerImpl::hangupConference(const std::string& id)
         if (conf) {
             ParticipantSet participants(conf->getParticipantList());
 
-            for (const auto &iter : participants)
-                hangupCall(iter);
+            for (const auto &item : participants)
+                hangupCall(item);
         } else {
             ERROR("No such conference %s", id.c_str());
             return false;
@@ -817,9 +817,9 @@ ManagerImpl::holdConference(const std::string& id)
 
     ParticipantSet participants(conf->getParticipantList());
 
-    for (const auto &iter : participants) {
-        switchCall(iter);
-        onHoldCall(iter);
+    for (const auto &item : participants) {
+        switchCall(item);
+        onHoldCall(item);
     }
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
@@ -845,14 +845,14 @@ ManagerImpl::unHoldConference(const std::string& id)
 
     ParticipantSet participants(conf->getParticipantList());
 
-    for (const auto &iter : participants) {
-        Call *call = getCallFromCallID(iter);
+    for (const auto &item : participants) {
+        Call *call = getCallFromCallID(item);
         if (call) {
             // if one call is currently recording, the conference is in state recording
             isRec |= call->isRecording();
 
-            switchCall(iter);
-            offHoldCall(iter);
+            switchCall(item);
+            offHoldCall(item);
         }
     }
 
@@ -977,10 +977,10 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (const auto &iter_p : participants) {
-            getMainBuffer().bindCallID(iter_p, MainBuffer::DEFAULT_ID);
+        for (const auto &item_p : participants) {
+            getMainBuffer().bindCallID(item_p, MainBuffer::DEFAULT_ID);
             // Reset ringbuffer's readpointers
-            getMainBuffer().flush(iter_p);
+            getMainBuffer().flush(item_p);
         }
 
         getMainBuffer().flush(MainBuffer::DEFAULT_ID);
@@ -1391,12 +1391,12 @@ void ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (auto &iter : SIPVoIPLink::instance()->getAccounts())
-            iter.second->serialize(emitter);
+        for (auto &item : SIPVoIPLink::instance()->getAccounts())
+            item.second->serialize(emitter);
 
 #if HAVE_IAX
-        for (auto &iter : IAXVoIPLink::getAccounts())
-            iter.second->serialize(emitter);
+        for (auto &item : IAXVoIPLink::getAccounts())
+            item.second->serialize(emitter);
 #endif
 
         preferences.serialize(emitter);
@@ -1551,14 +1551,14 @@ void ManagerImpl::incomingMessage(const std::string& callID,
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (const auto &iter_p : participants) {
+        for (const auto &item_p : participants) {
 
-            if (iter_p == callID)
+            if (item_p == callID)
                 continue;
 
-            std::string accountId(getAccountFromCall(iter_p));
+            std::string accountId(getAccountFromCall(item_p));
 
-            DEBUG("Send message to %s, (%s)", iter_p.c_str(), accountId.c_str());
+            DEBUG("Send message to %s, (%s)", item_p.c_str(), accountId.c_str());
 
             Account *account = getAccount(accountId);
 
@@ -1621,9 +1621,9 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (const auto &iter_p : participants) {
+        for (const auto &item_p : participants) {
 
-            const std::string accountId(getAccountFromCall(iter_p));
+            const std::string accountId(getAccountFromCall(item_p));
 
             Account *account = getAccount(accountId);
 
@@ -1632,7 +1632,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(item_p, message, from);
         }
     } else {
         Account *account = getAccount(getAccountFromCall(callID));
@@ -2387,20 +2387,20 @@ std::vector<std::string> ManagerImpl::getAccountList() const
 
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        for (const auto &iter : allAccounts) {
-            if (iter.first == SIPAccount::IP2IP_PROFILE || iter.first.empty())
+        for (const auto &item : allAccounts) {
+            if (item.first == SIPAccount::IP2IP_PROFILE || item.first.empty())
                 continue;
 
-            if (iter.second)
-                v.push_back(iter.second->getAccountID());
+            if (item.second)
+                v.push_back(item.second->getAccountID());
         }
     }
     else {
-        for (const auto &iter : account_order) {
-            if (iter == SIPAccount::IP2IP_PROFILE or iter.empty())
+        for (const auto &item : account_order) {
+            if (item == SIPAccount::IP2IP_PROFILE or item.empty())
                 continue;
 
-            AccountMap::const_iterator account_iter = allAccounts.find(iter);
+            AccountMap::const_iterator account_iter = allAccounts.find(item);
 
             if (account_iter != allAccounts.end() and account_iter->second)
                 v.push_back(account_iter->second->getAccountID());

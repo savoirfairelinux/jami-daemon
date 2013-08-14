@@ -47,8 +47,8 @@ MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSam
 MainBuffer::~MainBuffer()
 {
     // delete any ring buffers that didn't get removed
-    for (auto &iter : ringBufferMap_)
-        delete iter.second;
+    for (auto &item : ringBufferMap_)
+        delete item.second;
 
     pthread_mutex_destroy(&mutex_);
 }
@@ -230,8 +230,8 @@ void MainBuffer::unBindAll(const std::string & call_id)
 
     CallIDSet temp_set(*callid_set);
 
-    for (const auto &iter_set : temp_set)
-        unBindCallID(call_id, iter_set);
+    for (const auto &item_set : temp_set)
+        unBindCallID(call_id, item_set);
 }
 
 //void MainBuffer::putData(void *buffer, size_t toCopy, const std::string &call_id)
@@ -270,8 +270,8 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
         size_t size = 0;
         AudioBuffer mixBuffer(buffer);
 
-        for (const auto &iter_id : *callid_set) {
-            size = getDataByID(mixBuffer, iter_id, call_id);
+        for (const auto &item_id : *callid_set) {
+            size = getDataByID(mixBuffer, item_id, call_id);
 
             if (size > 0) {
                 buffer.mix(mixBuffer);
@@ -399,15 +399,15 @@ void MainBuffer::dumpInfo()
     sfl::ScopedLock guard(mutex_);
 
     // print each call and bound call ids
-    for (const auto &iter_call : callIDMap_) {
+    for (const auto &item_call : callIDMap_) {
         std::string dbg_str("    Call: \t");
-        dbg_str.append(iter_call.first);
+        dbg_str.append(item_call.first);
         dbg_str.append("   is bound to: \t");
 
-        CallIDSet *call_id_set = iter_call.second;
+        CallIDSet *call_id_set = item_call.second;
 
-        for (const auto &iter : *call_id_set) {
-            dbg_str.append(iter);
+        for (const auto &item : *call_id_set) {
+            dbg_str.append(item);
             dbg_str.append(", ");
         }
 
@@ -415,20 +415,20 @@ void MainBuffer::dumpInfo()
     }
 
     // Print ringbuffers ids and readpointers
-    for (const auto &iter_buffer : ringBufferMap_) {
+    for (const auto &item_buffer : ringBufferMap_) {
         std::string dbg_str("    Buffer: \t");
 
-        dbg_str.append(iter_buffer.first);
+        dbg_str.append(item_buffer.first);
         dbg_str.append("   as read pointer: \t");
 
-        RingBuffer* rbuffer = iter_buffer.second;
+        RingBuffer* rbuffer = item_buffer.second;
 
         if (rbuffer) {
             ReadPointer* rpointer = rbuffer->getReadPointerList();
 
             if (rpointer) {
-                for (const auto &iter : *rpointer) {
-                    dbg_str.append(iter.first);
+                for (const auto &item : *rpointer) {
+                    dbg_str.append(item.first);
                     dbg_str.append(", ");
                 }
             }

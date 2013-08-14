@@ -160,14 +160,14 @@ getDefaultCodecs()
     const char * const DEFAULT_BITRATE = "400";
     sfl_avcodec_init();
     std::vector<std::map<std::string, std::string> > result;
-    for (const auto &iter : installed_video_codecs_) {
+    for (const auto &item : installed_video_codecs_) {
         std::map<std::string, std::string> codec;
         // FIXME: get these keys from proper place
-        codec["name"] = iter;
+        codec["name"] = item;
         codec["bitrate"] = DEFAULT_BITRATE;
         codec["enabled"] = "true";
         // FIXME: make a nicer version of this
-        if (iter == "H264")
+        if (item == "H264")
             codec["parameters"] = DEFAULT_H264_PROFILE_LEVEL_ID;
         result.push_back(codec);
     }

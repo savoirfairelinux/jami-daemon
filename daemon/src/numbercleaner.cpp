@@ -37,8 +37,8 @@
 namespace {
 void strip_chars(const std::string &to_strip, std::string &num)
 {
-    for (const auto &iter : to_strip)
-        num.erase(std::remove(num.begin(), num.end(), iter), num.end());
+    for (const auto &item : to_strip)
+        num.erase(std::remove(num.begin(), num.end(), item), num.end());
 }
 }
 

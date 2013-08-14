@@ -656,10 +656,10 @@ SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
-    for (const auto &iter : sipAccountMap_) {
-        SIPAccount *account = static_cast<SIPAccount*>(iter.second);
+    for (const auto &item : sipAccountMap_) {
+        SIPAccount *account = static_cast<SIPAccount*>(item.second);
         if (account and account->matches(userName, server, endpt_, pool_))
-            return iter.first;
+            return item.first;
     }
 
     DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
@@ -1250,8 +1250,8 @@ SIPVoIPLink::clearSipCallMap()
 {
     sfl::ScopedLock m(sipCallMapMutex_);
 
-    for (const auto &iter : sipCallMap_)
-        delete iter.second;
+    for (const auto &item : sipCallMap_)
+        delete item.second;
 
     sipCallMap_.clear();
 }

@@ -596,8 +596,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     if (hasCredentials()) {
 
-        for (const auto &vect_iter : credentials_) {
-            const std::string password = retrievePassword(vect_iter, username_);
+        for (const auto &vect_item : credentials_) {
+            const std::string password = retrievePassword(vect_item, username_);
 
             if (not password.empty())
                 a[CONFIG_ACCOUNT_PASSWORD] = password;
@@ -799,8 +799,8 @@ void SIPAccount::trimCiphers()
     // PJSIP aborts if our cipher list exceeds 1010 characters
     static const int MAX_CIPHERS_STRLEN = 1010;
 
-    for (const auto &iter : ciphers_) {
-        sum += strlen(pj_ssl_cipher_name(iter));
+    for (const auto &item : ciphers_) {
+        sum += strlen(pj_ssl_cipher_name(item));
 
         if (sum > MAX_CIPHERS_STRLEN)
             break;
@@ -1142,23 +1142,23 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
 
     size_t i = 0;
 
-    for (const auto &iter : credentials_) {
-        map<string, string>::const_iterator val = iter.find(CONFIG_ACCOUNT_PASSWORD);
-        const std::string password = val != iter.end() ? val->second : "";
+    for (const auto &item : credentials_) {
+        map<string, string>::const_iterator val = item.find(CONFIG_ACCOUNT_PASSWORD);
+        const std::string password = val != item.end() ? val->second : "";
         int dataType = (md5HashingEnabled and password.length() == 32)
                        ? PJSIP_CRED_DATA_DIGEST
                        : PJSIP_CRED_DATA_PLAIN_PASSWD;
 
-        val = iter.find(CONFIG_ACCOUNT_USERNAME);
+        val = item.find(CONFIG_ACCOUNT_USERNAME);
 
-        if (val != iter.end())
+        if (val != item.end())
             cred_[i].username = pj_str((char*) val->second.c_str());
 
         cred_[i].data = pj_str((char*) password.c_str());
 
-        val = iter.find(CONFIG_ACCOUNT_REALM);
+        val = item.find(CONFIG_ACCOUNT_REALM);
 
-        if (val != iter.end())
+        if (val != item.end())
             cred_[i].realm = pj_str((char*) val->second.c_str());
 
         cred_[i].data_type = dataType;

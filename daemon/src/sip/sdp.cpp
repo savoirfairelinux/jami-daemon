@@ -533,9 +533,9 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
     int size = pjmedia_sdp_print(sess, buffer, sizeof buffer);
     string sdp(buffer, size);
     const vector<string> tokens(split(sdp, '\n'));
-    for (const auto &iter : tokens)
-        if (iter.find(keyword) != string::npos)
-            return iter;
+    for (const auto &item : tokens)
+        if (item.find(keyword) != string::npos)
+            return item;
     return "";
 }
 
@@ -647,8 +647,8 @@ Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
 
 void Sdp::addSdesAttribute(const vector<std::string>& crypto)
 {
-    for (const auto &iter : crypto) {
-        pj_str_t val = { (char*) iter.c_str(), static_cast<pj_ssize_t>(iter.size()) };
+    for (const auto &item : crypto) {
+        pj_str_t val = { (char*) item.c_str(), static_cast<pj_ssize_t>(item.size()) };
         pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "crypto", &val);
 
         for (unsigned i = 0; i < localSession_->media_count; i++)

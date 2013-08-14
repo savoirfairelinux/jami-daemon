@@ -236,8 +236,8 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
-    for (const auto &iter : list) {
-        int payload = std::atoi(iter.c_str());
+    for (const auto &item : list) {
+        int payload = std::atoi(item.c_str());
         audioCodecList_.push_back(payload);
     }
 

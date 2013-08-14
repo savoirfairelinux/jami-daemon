@@ -195,8 +195,8 @@ namespace {
     void giveUniqueName(VideoV4l2Device &dev, const vector<VideoV4l2Device> &devices)
     {
 start:
-        for (auto &iter : devices) {
-            if (dev.name == iter.name) {
+        for (auto &item : devices) {
+            if (dev.name == item.name) {
                 size_t sharp;
                 int num = getNumber(dev.name, &sharp);
                 if (num < 0) // not numbered
