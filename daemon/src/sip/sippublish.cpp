@@ -33,7 +33,6 @@
 
 #include "sippresence.h"
 #include "sippublish.h"
-#include "sipvoip_pres.h"
 #include "logger.h"
 #include "sipvoiplink.h"
 
@@ -195,7 +194,7 @@ on_error:
 pj_status_t pres_publish(SIPPresence *pres)
 {
     pj_status_t status;
-    const pj_str_t STR_PRESENCE = { "presence", 8 };
+    const pj_str_t STR_PRESENCE = pj_str("presence");
     SIPAccount * acc = pres->getAccount();
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
 

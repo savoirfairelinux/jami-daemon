@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2012, 2013 LOTES TM LLC
  *  Author : Andrey Loukhnov <aol.nnov@gmail.com>
- *
+ *  Author : Patrick Keroulas <patrick.keroulas@savoirfairelinux.com>
  *  This file is a part of pult5-voip
  *
  *  pult5-voip is free software; you can redistribute it and/or modify
@@ -43,8 +43,11 @@
 #include <pjsip/sip_transport.h>
 
 
-class SIPAccount;
+class SIPAccount; // dummy prototype
 
+/**
+ * Transaction functions of event subscription client side.
+ */
 static void buddy_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
 static void buddy_evsub_on_tsx_state(pjsip_evsub *sub,
         pjsip_transaction *tsx,
@@ -57,16 +60,47 @@ static void buddy_evsub_on_rx_notify(pjsip_evsub *sub,
         pjsip_msg_body **p_body);
 static void buddy_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry);
 
+
 class SIPBuddy {
+
 public:
+    /**
+     * Constructor
+     * @param uri   SIP uri of remote user that we want to subscribe,
+     */
     SIPBuddy(const std::string &uri, SIPAccount *acc);
+    /**
+     * Destructor.
+     * Process the the unsubscription before the destruction.
+     */
     ~SIPBuddy();
+    /**
+     * Compare with another buddy's uris.
+     * @param b     Other buddy pointer
+     */
     bool match(SIPBuddy *b);
+    /**
+     * The PBX must approve the subrciption before the buddy is added in the buddy list.
+     */
     void accept();
+    /**
+     * Send a SUBCRIBE to the PXB or directly to a buddy in the IP2IP context.
+     */
     bool subscribe();
+    /**
+     * Send a SUBCRIBE to the PXB or directly to a buddy in the IP2IP context but
+     * the 0s timeout make the dialog expire immediatly.
+     */
     bool unsubscribe();
+    /**
+     * Return  the monitor variable.
+     */
     bool isSubscribed();
+    /**
+     * Return the buddy URI
+     */
     std::string getURI();
+
 
     friend void buddy_evsub_on_state( pjsip_evsub *sub, pjsip_event *event);
     friend void buddy_evsub_on_tsx_state(pjsip_evsub *sub,
@@ -88,14 +122,31 @@ public:
 
 private:
 
+    /**
+     * Plan a retry or a renew a subscription.
+     * @param reschedule    Allow for reschedule.
+     * @param msec          Delay value in milliseconds.
+     */
     void rescheduleTimer(bool reschedule, unsigned msec);
-
-    pj_status_t updatePresence();
+    /**
+     * Callback after a presence notification was received.
+     * Tranfert info to the SIP account.
+     */
+    pj_status_t reportPresence();
+    /**
+     * Process the un/subscribe request transmission.
+     */
     pj_status_t updateSubscription();
+    /*
+     * Compare the reason of a transaction end with the given string.
+     */
     bool isTermReason(std::string);
+    /**
+     * return the code after a transaction is terminated.
+     */
     unsigned getTermCode();
 
-    SIPAccount          *acc;
+    SIPAccount          *acc;       /**< Associated SIP account pointer */
     pj_str_t		 uri;	    /**< Buddy URI.			*/
     pj_str_t		 contact;   /**< Contact learned from subscrp.	*/
     pj_str_t		 display;   /**< Buddy display name.		*/

@@ -59,7 +59,7 @@ int modId;
 static void buddy_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry) {
     (void) th;
     SIPBuddy *b = (SIPBuddy *) entry->user_data;
-    b->updatePresence();
+    b->reportPresence();
 }
 
 /* Callback called when *client* subscription state has changed. */
@@ -255,7 +255,7 @@ static void buddy_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata, int
         return;
 
     pjsip_pres_get_status(sub, &buddy->status);
-    buddy->updatePresence();
+    buddy->reportPresence();
 
     /* The default is to send 200 response to NOTIFY.
      * Just leave it there..
@@ -345,7 +345,7 @@ void SIPBuddy::accept() {
     acc->getPresence()->addBuddy(this);
 }
 
-pj_status_t SIPBuddy::updatePresence() {
+pj_status_t SIPBuddy::reportPresence() {
 
     //incLock();
     /* callback*/

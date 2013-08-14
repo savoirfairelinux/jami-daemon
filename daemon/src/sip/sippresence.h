@@ -101,54 +101,98 @@ class PresenceSubscription;
 class SIPPresence {
 
 public:
+
     /**
      * Constructor
      * @param acc the associated sipaccount
      */
     SIPPresence(SIPAccount * acc);
-
     /**
      * Destructor
      */
     ~SIPPresence();
 
-        SIPAccount * getAccount();
-        pjsip_pres_status * getStatus();
-        int getModId();
-        void updateStatus(const std::string &status, const std::string &note);
-        void sendPresence(const std::string &status, const std::string &note);
-        void reportBuddy(const std::string& buddySipUri, pjsip_pres_status * status);
-        void subscribeBuddy(const std::string& buddySipUri);
-        void unsubscribeBuddy(const std::string& buddySipUri);
+    /**
+     * Return associated sipaccount
+     */
+    SIPAccount * getAccount();
+    /**
+     * Return presence data.
+     */
+    pjsip_pres_status * getStatus();
+    /**
+     * Return presence module ID which is actually the same as the VOIP link
+     */
+    int getModId();
+    /**
+     * Modify the presence data
+     * @param status is basically "open" or "close"
+     */
+    void updateStatus(const std::string &status, const std::string &note);
+    /**
+     * Send the presence data in a PUBLISH to the PBX or in a NOTIFY
+     * to a remote subscriber (IP2IP)
+     */
+    void sendPresence(const std::string &status, const std::string &note);
+    /**
+     * Send a signal to the client on DBus. The signal contain the status
+     * of a remote user.
+     */
+    void reportBuddy(const std::string& buddySipUri, pjsip_pres_status * status);
+    /**
+     * Send a SUBSCRIBE request to PBX/IP2IP
+     * @param buddyUri  Remote user that we want to subscribe
+     */
+    void subscribeBuddy(const std::string& buddySipUri);
+    /**
+     * Send a SUBSCRIBE request to PBX/IP2IP but the the 0s timeout makes
+     * the dialog expire immediatly.
+     * @param buddyUri  Remote user that we want to unsubscribe
+     */
+    void unsubscribeBuddy(const std::string& buddySipUri);
 
-        /*TODO : is that supposed to be private ?*/
-        void addBuddy(SIPBuddy *b);
-        void removeBuddy(SIPBuddy *b);
-        /**
-         * IP2IP context:
-         * remote subscriber management
-         */
-        void addServerSubscription(PresenceSubscription *s);
-        void removeServerSubscription(PresenceSubscription *s);
-        void notifyServerSubscription();
+    /**
+     * Add a buddy in the buddy list.
+     * @param b     Buddy pointer
+     */
+    void addBuddy(SIPBuddy *b);
+    /**
+     * Remove a buddy from the list.
+     * @param b     Buddy pointer
+     */
+    void removeBuddy(SIPBuddy *b);
 
-        pjsip_pres_status pres_status_data;
-        pj_bool_t       online_status; /**< Our online status.	*/
-        pjrpid_element  rpid;	    /**< RPID element information.*/
-        pjsip_publishc  *publish_sess;  /**< Client publication session.*/
-        pj_bool_t   publish_state; /**< Last published online status.*/
-        pj_bool_t   publish_enabled; /**< Allow for status publish,*/
+    /**
+     * IP2IP context.
+     * Add a server associated to a subscriber in the list.
+     * @param s     PresenceSubcription pointer.
+     */
+    void addServerSubscription(PresenceSubscription *s);
+    /**
+     * IP2IP context.
+     * Remove a server associated to a subscriber from the list.
+     * @param s     PresenceSubcription pointer.
+     */
+    void removeServerSubscription(PresenceSubscription *s);
+    /**
+     * IP2IP context.
+     * Iterate through the subscriber list and send NOTIFY to each.
+     */
+    void notifyServerSubscription();
+
+
+    pjsip_pres_status pres_status_data; /**< Presence Data.*/
+    pj_bool_t       online_status; /**< Our online status.	*/
+    pjrpid_element  rpid;	    /**< RPID element information.*/
+    pjsip_publishc  *publish_sess;  /**< Client publication session.*/
+    pj_bool_t   publish_state; /**< Last published online status.*/
+    pj_bool_t   publish_enabled; /**< Allow for status publish,*/
+
 
 private:
-    SIPAccount * acc_;
-    /**
-     * server subscription
-     */
-    std::list< PresenceSubscription *> serverSubscriptions_;
-    /**
-     * buddies
-     */
-    std::list< SIPBuddy *> buddies_;
+    SIPAccount * acc_; /**<  Associated SIP account. */
+    std::list< PresenceSubscription *> serverSubscriptions_; /**< Subscribers list.*/
+    std::list< SIPBuddy *> buddies_; /**< Subcribed buddy list.*/
 
 };
 
