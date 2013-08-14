@@ -43,7 +43,7 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <tr1/memory>
+#include <memory>
 #include <pthread.h>
 
 #include "client/client.h"
@@ -851,14 +851,14 @@ class ManagerImpl {
         AudioLayer* audiodriver_;
 
         // Main thread
-        std::tr1::shared_ptr<DTMF> dtmfKey_;
+        std::unique_ptr<DTMF> dtmfKey_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         pthread_mutex_t toneMutex_;
-        std::tr1::shared_ptr<TelephoneTone> telephoneTone_;
-        std::tr1::shared_ptr<AudioFile> audiofile_;
+        std::unique_ptr<TelephoneTone> telephoneTone_;
+        std::unique_ptr<AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
