@@ -557,9 +557,8 @@ getValues(const std::vector<HwIDPair> &deviceMap)
 {
     std::vector<std::string> audioDeviceList;
 
-    for (std::vector<HwIDPair>::const_iterator iter = deviceMap.begin();
-            iter != deviceMap.end(); ++iter)
-        audioDeviceList.push_back(iter->second);
+    for (const auto &dev : deviceMap)
+        audioDeviceList.push_back(dev.second);
 
     return audioDeviceList;
 }
@@ -659,9 +658,9 @@ AlsaLayer::getAudioDeviceIndex(const std::string &description) const
     audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), captureDevice.begin(), captureDevice.end());
     audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), playbackDevice.begin(), playbackDevice.end());
 
-    for (std::vector<HwIDPair>::const_iterator iter = audioDeviceIndexMap.begin(); iter != audioDeviceIndexMap.end(); ++iter)
-        if (iter->second == description)
-            return iter->first;
+    for (const auto &dev : audioDeviceIndexMap)
+        if (dev.second == description)
+            return dev.first;
 
     // else return the default one
     return 0;
