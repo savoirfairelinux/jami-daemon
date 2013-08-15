@@ -2349,16 +2349,6 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
     }
 }
 
-namespace {
-    // returns even number in range [lower, upper]
-    unsigned int getRandomEvenNumber(int lower, int upper)
-    {
-        const unsigned halfUpper = upper * 0.5;
-        const unsigned halfLower = lower * 0.5;
-        return 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
-    }
-}
-
 void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 {
     std::string account_id(call->getAccountId());
@@ -2369,7 +2359,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set
     if (call->getLocalAudioPort() == 0) {
-        const unsigned callLocalAudioPort = getRandomEvenNumber(16384, 32766);
+        const unsigned callLocalAudioPort = account->generateAudioPort();
         call->setLocalAudioPort(callLocalAudioPort);
         call->getLocalSDP()->setLocalPublishedAudioPort(callLocalAudioPort);
     }
@@ -2381,7 +2371,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
         // https://projects.savoirfairelinux.com/issues/17498
         unsigned int callLocalVideoPort;
         do
-            callLocalVideoPort = getRandomEvenNumber(49152, 65534);
+            callLocalVideoPort = account->generateVideoPort();
         while (call->getLocalAudioPort() == callLocalVideoPort);
 
         call->setLocalVideoPort(callLocalVideoPort);

@@ -115,6 +115,8 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
+    , audioPortRange_(16384, 32766)
+    , videoPortRange_(49152, 65534)
 {
     via_addr_.host.ptr = 0;
     via_addr_.host.slen = 0;
@@ -1299,3 +1301,27 @@ bool SIPAccount::matches(const std::string &userName, const std::string &server,
     } else
         return false;
 }
+
+namespace {
+    // returns even number in range [lower, upper]
+    unsigned int getRandomEvenNumber(const std::pair<unsigned, unsigned> &range)
+    {
+        const unsigned halfUpper = range.second * 0.5;
+        const unsigned halfLower = range.first * 0.5;
+        return 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
+    }
+}
+
+unsigned
+SIPAccount::generateAudioPort() const
+{
+    return getRandomEvenNumber(audioPortRange_);
+}
+
+#ifdef SFL_VIDEO
+unsigned
+SIPAccount::generateVideoPort() const
+{
+    return getRandomEvenNumber(videoPortRange_);
+}
+#endif
