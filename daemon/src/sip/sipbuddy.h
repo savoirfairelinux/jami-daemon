@@ -41,7 +41,7 @@
 #include <pjsip-simple/evsub_msg.h>
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_transport.h>
-
+#include "noncopyable.h"
 
 class SIPAccount;
 
@@ -122,6 +122,7 @@ class SIPBuddy {
 
     private:
 
+        NON_COPYABLE(SIPBuddy);
         /**
          * Plan a retry or a renew a subscription.
          * @param reschedule    Allow for reschedule.
