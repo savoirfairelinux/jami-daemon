@@ -37,7 +37,6 @@
 
 #include <vector>
 #include <map>
-#include <cstdint>
 #include "account.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
@@ -789,7 +788,7 @@ class SIPAccount : public Account {
          */
         std::pair<uint16_t, uint16_t> videoPortRange_;
 #endif
-        static bool portsInUse_[UINT16_MAX];
+        static bool portsInUse_[1 << 16];
         static uint16_t getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range);
 
 };

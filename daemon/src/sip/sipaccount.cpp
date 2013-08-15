@@ -47,6 +47,8 @@
 #include <sstream>
 #include <algorithm>
 #include <cstdlib>
+#include <array>
+#include <memory>
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
@@ -64,7 +66,7 @@ const char *const TRUE_STR = "true";
 const char *const FALSE_STR = "false";
 }
 
-bool SIPAccount::portsInUse_[UINT16_MAX];
+bool SIPAccount::portsInUse_[1 << 16];
 
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID)
@@ -119,7 +121,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , via_addr_()
     , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
-    , videoPortRange_({49152, UINT16_MAX - 2})
+    , videoPortRange_({49152, (1 << 16) - 2})
 #endif
 {
     via_addr_.host.ptr = 0;
