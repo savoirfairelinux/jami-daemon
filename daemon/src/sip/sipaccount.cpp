@@ -117,9 +117,9 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
-    , audioPortRange_(16384, 32766)
+    , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
-    , videoPortRange_(49152, 65534)
+    , videoPortRange_({49152, UINT16_MAX - 2})
 #endif
 {
     via_addr_.host.ptr = 0;
@@ -129,6 +129,44 @@ SIPAccount::SIPAccount(const std::string& accountID)
     if (isIP2IP())
         alias_ = IP2IP_PROFILE;
 }
+
+namespace {
+std::array<std::unique_ptr<Conf::ScalarNode>, 2>
+serializeRange(Conf::MappingNode &accountMap, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
+{
+    using namespace Conf;
+    std::array<std::unique_ptr<ScalarNode>, 2> result;
+
+    std::ostringstream os;
+    os << range.first;
+    result[0].reset(new ScalarNode(os.str()));
+    os.str("");
+    accountMap.setKeyValue(minKey, result[0].get());
+
+    os << range.second;
+    ScalarNode portMax(os.str());
+    result[1].reset(new ScalarNode(os.str()));
+    accountMap.setKeyValue(maxKey, result[1].get());
+    return result;
+}
+
+void
+unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *maxKey, std::pair<uint16_t, uint16_t> &range)
+{
+    std::stringstream ss;
+    ss << mapNode.getValue(minKey);
+    uint16_t tmp;
+    ss >> tmp;
+    if (tmp)
+        range.first = tmp;
+    ss.str("");
+    ss << mapNode.getValue(maxKey);
+    ss >> tmp;
+    if (tmp)
+        range.second = tmp;
+}
+}
+
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
@@ -282,6 +320,11 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 
     ScalarNode userAgent(userAgent_);
     accountmap.setKeyValue(USER_AGENT_KEY, &userAgent);
+
+    std::array<std::unique_ptr<ScalarNode>, 2> audioPortNodes(serializeRange(accountmap, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_));
+#ifdef SFL_VIDEO
+    std::array<std::unique_ptr<ScalarNode>, 2> videoPortNodes(serializeRange(accountmap, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_));
+#endif
 
     try {
         emitter.serializeAccount(&accountmap);
@@ -488,6 +531,11 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutMsec_);
     }
     mapNode.getValue(USER_AGENT_KEY, &userAgent_);
+
+    unserializeRange(mapNode, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
+#ifdef SFL_VIDEO
+    unserializeRange(mapNode, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_);
+#endif
 }
 
 void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)

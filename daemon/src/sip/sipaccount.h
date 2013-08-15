@@ -36,7 +36,6 @@
 #define SIPACCOUNT_H
 
 #include <vector>
-#include  <set>
 #include <map>
 #include "account.h"
 #include "pjsip/sip_transport_tls.h"
@@ -91,6 +90,12 @@ namespace Conf {
     const char *const STUN_ENABLED_KEY = "stunEnabled";
     const char *const STUN_SERVER_KEY = "stunServer";
     const char *const CRED_KEY = "credential";
+    const char *const AUDIO_PORT_MIN_KEY = "audioPortMin";
+    const char *const AUDIO_PORT_MAX_KEY = "audioPortMax";
+#ifdef SFL_VIDEO
+    const char *const VIDEO_PORT_MIN_KEY = "videoPortMin";
+    const char *const VIDEO_PORT_MAX_KEY = "videoPortMax";
+#endif
 }
 
 class SIPVoIPLink;
