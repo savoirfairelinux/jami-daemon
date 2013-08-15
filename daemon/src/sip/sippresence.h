@@ -36,6 +36,7 @@
 #include <string>
 #include <list>
 
+#include "noncopyable.h"
 #include "pjsip/sip_types.h"
 #include "pjsip/sip_msg.h"
 #include "pjsip/sip_multipart.h"
@@ -180,7 +181,6 @@ public:
      */
     void notifyServerSubscription();
 
-
     pjsip_pres_status pres_status_data; /**< Presence Data.*/
     pj_bool_t       online_status; /**< Our online status.	*/
     pjrpid_element  rpid;	    /**< RPID element information.*/
@@ -188,12 +188,11 @@ public:
     pj_bool_t   publish_state; /**< Last published online status.*/
     pj_bool_t   publish_enabled; /**< Allow for status publish,*/
 
-
 private:
+    NON_COPYABLE(SIPPresence);
     SIPAccount * acc_; /**<  Associated SIP account. */
     std::list< PresenceSubscription *> serverSubscriptions_; /**< Subscribers list.*/
     std::list< SIPBuddy *> buddies_; /**< Subcribed buddy list.*/
-
 };
 
 #endif
