@@ -41,6 +41,7 @@
 #include <pj/pool.h>
 #include <pjsip/sip_ua_layer.h>
 #include <pjsip-simple/evsub.h>
+#include <unistd.h>
 
 #include "sipbuddy.h"
 #include "sipaccount.h"
