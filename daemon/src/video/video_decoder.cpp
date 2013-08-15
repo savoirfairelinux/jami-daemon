@@ -49,293 +49,293 @@ extern "C" {
 
 namespace sfl_video {
 
-	using std::string;
+using std::string;
 
-	VideoDecoder::VideoDecoder() :
-		inputDecoder_(0),
-		decoderCtx_(0),
-		rawFrames_(),
-		lockedFrame_(-1),
-		lockedFrameCnt_(0),
-		lastFrame_(1),
-		inputCtx_(avformat_alloc_context()),
-		imgConvertCtx_(0),
-		interruptCb_(),
-		scalerCtx_(0),
-		scaledPicture_(),
-		accessMutex_(),
-		streamIndex_(-1),
-		dstWidth_(0),
-		dstHeight_(0)
-	{
-		pthread_mutex_init(&accessMutex_, NULL);
-	}
+VideoDecoder::VideoDecoder() :
+    inputDecoder_(0),
+    decoderCtx_(0),
+    rawFrames_(),
+    lockedFrame_(-1),
+    lockedFrameCnt_(0),
+    lastFrame_(1),
+    inputCtx_(avformat_alloc_context()),
+    imgConvertCtx_(0),
+    interruptCb_(),
+    scalerCtx_(0),
+    scaledPicture_(),
+    accessMutex_(),
+    streamIndex_(-1),
+    dstWidth_(0),
+    dstHeight_(0)
+{
+    pthread_mutex_init(&accessMutex_, NULL);
+}
 
-	VideoDecoder::~VideoDecoder()
-	{
-		if (decoderCtx_)
-			avcodec_close(decoderCtx_);
+VideoDecoder::~VideoDecoder()
+{
+    if (decoderCtx_)
+        avcodec_close(decoderCtx_);
 
-		if (inputCtx_ and inputCtx_->nb_streams > 0) {
+    if (inputCtx_ and inputCtx_->nb_streams > 0) {
 #if LIBAVFORMAT_VERSION_MAJOR < 54
-			av_close_input_file(inputCtx_);
+        av_close_input_file(inputCtx_);
 #else
-			avformat_close_input(&inputCtx_);
+        avformat_close_input(&inputCtx_);
 #endif
-		}
+    }
 
-		sws_freeContext(scalerCtx_);
+    sws_freeContext(scalerCtx_);
 
-		pthread_mutex_destroy(&accessMutex_);
-	}
+    pthread_mutex_destroy(&accessMutex_);
+}
 
-	int VideoDecoder::openInput(const std::string &source_str,
-								const std::string &format_str)
-	{
-		AVInputFormat *iformat = av_find_input_format(format_str.c_str());
+int VideoDecoder::openInput(const std::string &source_str,
+                            const std::string &format_str)
+{
+    AVInputFormat *iformat = av_find_input_format(format_str.c_str());
 
-		if (!iformat) {
-			ERROR("Cannot find format \"%s\"", format_str.c_str());
-			return -1;
-		}
+    if (!iformat) {
+        ERROR("Cannot find format \"%s\"", format_str.c_str());
+        return -1;
+    }
 
-		int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
-									  NULL);
-		if (ret)
-			ERROR("avformat_open_input failed (%d)", ret);
-		return ret;
-	}
+    int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
+                                  NULL);
+    if (ret)
+        ERROR("avformat_open_input failed (%d)", ret);
+    return ret;
+}
 
-	void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
-	{
-		if (cb) {
-			interruptCb_.callback = cb;
-			interruptCb_.opaque = opaque;
-			inputCtx_->interrupt_callback = interruptCb_;
-		} else {
-			inputCtx_->interrupt_callback.callback = 0;
-		}
-	}
+void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
+{
+    if (cb) {
+        interruptCb_.callback = cb;
+        interruptCb_.opaque = opaque;
+        inputCtx_->interrupt_callback = interruptCb_;
+    } else {
+        inputCtx_->interrupt_callback.callback = 0;
+    }
+}
 
-	void VideoDecoder::setIOContext(VideoIOHandle *ioctx)
-	{
-		inputCtx_->pb = ioctx->get();
-	}
+void VideoDecoder::setIOContext(VideoIOHandle *ioctx)
+{
+    inputCtx_->pb = ioctx->get();
+}
 
-	int VideoDecoder::setupFromVideoData()
-	{
-		int ret;
+int VideoDecoder::setupFromVideoData()
+{
+    int ret;
 
-		if (decoderCtx_)
-			avcodec_close(decoderCtx_);
+    if (decoderCtx_)
+        avcodec_close(decoderCtx_);
 
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-		ret = av_find_stream_info(inputCtx_);
+    ret = av_find_stream_info(inputCtx_);
 #else
-		ret = avformat_find_stream_info(inputCtx_, options_ ? &options_ : NULL);
+    ret = avformat_find_stream_info(inputCtx_, options_ ? &options_ : NULL);
 #endif
 
-		if (ret < 0) {
-			// workaround for this bug:
-			// http://patches.libav.org/patch/22541/
-			if (ret == -1)
-				ret = AVERROR_INVALIDDATA;
-			char errBuf[64] = {0};
-			// print nothing for unknown errors
-			if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
-				errBuf[0] = '\0';
+    if (ret < 0) {
+        // workaround for this bug:
+        // http://patches.libav.org/patch/22541/
+        if (ret == -1)
+            ret = AVERROR_INVALIDDATA;
+        char errBuf[64] = {0};
+        // print nothing for unknown errors
+        if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
+            errBuf[0] = '\0';
 
-			// always fail here
-			ERROR("Could not find stream info: %s", errBuf);
-			return -1;
-		}
+        // always fail here
+        ERROR("Could not find stream info: %s", errBuf);
+        return -1;
+    }
 
-		// find the first video stream from the input
-		for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-			if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
-				streamIndex_ = i;
+    // find the first video stream from the input
+    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
+        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+            streamIndex_ = i;
 
-		if (streamIndex_ == -1) {
-			ERROR("Could not find video stream");
-			return -1;
-		}
+    if (streamIndex_ == -1) {
+        ERROR("Could not find video stream");
+        return -1;
+    }
 
-		// Get a pointer to the codec context for the video stream
-		decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
-		if (decoderCtx_ == 0) {
-			ERROR("Decoder context is NULL");
-			return -1;
-		}
+    // Get a pointer to the codec context for the video stream
+    decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
+    if (decoderCtx_ == 0) {
+        ERROR("Decoder context is NULL");
+        return -1;
+    }
 
-		// find the decoder for the video stream
-		inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
-		if (!inputDecoder_) {
-			ERROR("Unsupported codec");
-			return -1;
-		}
+    // find the decoder for the video stream
+    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
+    if (!inputDecoder_) {
+        ERROR("Unsupported codec");
+        return -1;
+    }
 
-		decoderCtx_->thread_count = 1;
+    decoderCtx_->thread_count = 1;
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
-		ret = avcodec_open(decoderCtx_, inputDecoder_);
+    ret = avcodec_open(decoderCtx_, inputDecoder_);
 #else
-		ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
+    ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
 #endif
-		if (ret) {
-			ERROR("Could not open codec");
-			return -1;
-		}
+    if (ret) {
+        ERROR("Could not open codec");
+        return -1;
+    }
 
-		dstWidth_ = decoderCtx_->width;
-		dstHeight_ = decoderCtx_->height;
+    dstWidth_ = decoderCtx_->width;
+    dstHeight_ = decoderCtx_->height;
 
-		return 0;
-	}
+    return 0;
+}
 
-	int VideoDecoder::decode()
-	{
-		int ret = 0;
+int VideoDecoder::decode()
+{
+    int ret = 0;
 
-		// Guarantee that we free the packet every iteration
-		VideoPacket video_packet;
-		AVPacket *inpacket = video_packet.get();
-		ret = av_read_frame(inputCtx_, inpacket);
-		if (ret == AVERROR(EAGAIN))
-			return 0;
-		else if (ret < 0) {
-			ERROR("Couldn't read frame: %s\n", strerror(ret));
-			return -1;
-		}
+    // Guarantee that we free the packet every iteration
+    VideoPacket video_packet;
+    AVPacket *inpacket = video_packet.get();
+    ret = av_read_frame(inputCtx_, inpacket);
+    if (ret == AVERROR(EAGAIN))
+        return 0;
+    else if (ret < 0) {
+        ERROR("Couldn't read frame: %s\n", strerror(ret));
+        return -1;
+    }
 
-		int idx;
-		pthread_mutex_lock(&accessMutex_);
-		if (lockedFrame_ >= 0)
-			idx = !lockedFrame_;
-		else
-			idx = !lastFrame_;
-		pthread_mutex_unlock(&accessMutex_);
+    int idx;
+    pthread_mutex_lock(&accessMutex_);
+    if (lockedFrame_ >= 0)
+        idx = !lockedFrame_;
+    else
+        idx = !lastFrame_;
+    pthread_mutex_unlock(&accessMutex_);
 
-		AVFrame *frame = rawFrames_[idx].get();
-		avcodec_get_frame_defaults(frame);
+    AVFrame *frame = rawFrames_[idx].get();
+    avcodec_get_frame_defaults(frame);
 
-		// is this a packet from the video stream?
-		if (inpacket->stream_index != streamIndex_)
-			return 0;
+    // is this a packet from the video stream?
+    if (inpacket->stream_index != streamIndex_)
+        return 0;
 
-		int frameFinished = 0;
-		const int len = avcodec_decode_video2(decoderCtx_, frame,
-											  &frameFinished, inpacket);
-		if (len <= 0)
-			return -2;
+    int frameFinished = 0;
+    const int len = avcodec_decode_video2(decoderCtx_, frame,
+                                          &frameFinished, inpacket);
+    if (len <= 0)
+        return -2;
 
-		if (frameFinished) {
-			pthread_mutex_lock(&accessMutex_);
-			lastFrame_ = idx;
-			pthread_mutex_unlock(&accessMutex_);
-		}
+    if (frameFinished) {
+        pthread_mutex_lock(&accessMutex_);
+        lastFrame_ = idx;
+        pthread_mutex_unlock(&accessMutex_);
+    }
 
-		return frameFinished;
-	}
+    return frameFinished;
+}
 
-	int VideoDecoder::flush()
-	{
-		AVPacket inpacket;
+int VideoDecoder::flush()
+{
+    AVPacket inpacket;
 
-		av_init_packet(&inpacket);
-		inpacket.data = NULL;
-		inpacket.size = 0;
+    av_init_packet(&inpacket);
+    inpacket.data = NULL;
+    inpacket.size = 0;
 
-		int idx;
-		pthread_mutex_lock(&accessMutex_);
-		if (lockedFrame_ >= 0)
-			idx = !lockedFrame_;
-		else
-			idx = !lastFrame_;
-		pthread_mutex_unlock(&accessMutex_);
+    int idx;
+    pthread_mutex_lock(&accessMutex_);
+    if (lockedFrame_ >= 0)
+        idx = !lockedFrame_;
+    else
+        idx = !lastFrame_;
+    pthread_mutex_unlock(&accessMutex_);
 
-		AVFrame *frame = rawFrames_[idx].get();
-		avcodec_get_frame_defaults(frame);
+    AVFrame *frame = rawFrames_[idx].get();
+    avcodec_get_frame_defaults(frame);
 
-		int frameFinished = 0;
-		const int len = avcodec_decode_video2(decoderCtx_, frame,
-											  &frameFinished, &inpacket);
-		if (len <= 0)
-		  return -2;
+    int frameFinished = 0;
+    const int len = avcodec_decode_video2(decoderCtx_, frame,
+                                          &frameFinished, &inpacket);
+    if (len <= 0)
+        return -2;
 
-		if (frameFinished) {
-			pthread_mutex_lock(&accessMutex_);
-			lastFrame_ = idx;
-			pthread_mutex_unlock(&accessMutex_);
-		}
+    if (frameFinished) {
+        pthread_mutex_lock(&accessMutex_);
+        lastFrame_ = idx;
+        pthread_mutex_unlock(&accessMutex_);
+    }
 
-		return frameFinished;
-	}
+    return frameFinished;
+}
 
-	void VideoDecoder::setScaleDest(void *data, int width, int height,
-									int pix_fmt)
-	{
-		AVFrame *output_frame = scaledPicture_.get();
-		avpicture_fill((AVPicture *) output_frame, (uint8_t *) data,
-					   (PixelFormat) pix_fmt, width, height);
-		output_frame->format = pix_fmt;
-		output_frame->width = width;
-		output_frame->height = height;
-	}
+void VideoDecoder::setScaleDest(void *data, int width, int height,
+                                int pix_fmt)
+{
+    AVFrame *output_frame = scaledPicture_.get();
+    avpicture_fill((AVPicture *) output_frame, (uint8_t *) data,
+                   (PixelFormat) pix_fmt, width, height);
+    output_frame->format = pix_fmt;
+    output_frame->width = width;
+    output_frame->height = height;
+}
 
-	void* VideoDecoder::scale(SwsContext *ctx, int flags)
-	{
-		AVFrame *output_frame = scaledPicture_.get();
+void* VideoDecoder::scale(SwsContext *ctx, int flags)
+{
+    AVFrame *output_frame = scaledPicture_.get();
 
-		ctx = sws_getCachedContext(ctx,
-								   decoderCtx_->width,
-								   decoderCtx_->height,
-								   decoderCtx_->pix_fmt,
-								   output_frame->width,
-								   output_frame->height,
-								   (PixelFormat) output_frame->format,
-								   SWS_BICUBIC, /* FIXME: option? */
-								   NULL, NULL, NULL);
-		if (ctx) {
-			VideoFrame *frame = lockFrame();
-			if (frame) {
-				AVFrame *frame_ = frame->get();
-				sws_scale(ctx, frame_->data, frame_->linesize, 0,
-						  decoderCtx_->height, output_frame->data,
-						  output_frame->linesize);
-				unlockFrame();
-			}
-		} else {
-			ERROR("Unable to create a scaler context");
-		}
+    ctx = sws_getCachedContext(ctx,
+                               decoderCtx_->width,
+                               decoderCtx_->height,
+                               decoderCtx_->pix_fmt,
+                               output_frame->width,
+                               output_frame->height,
+                               (PixelFormat) output_frame->format,
+                               SWS_BICUBIC, /* FIXME: option? */
+                               NULL, NULL, NULL);
+    if (ctx) {
+        VideoFrame *frame = lockFrame();
+        if (frame) {
+            AVFrame *frame_ = frame->get();
+            sws_scale(ctx, frame_->data, frame_->linesize, 0,
+                      decoderCtx_->height, output_frame->data,
+                      output_frame->linesize);
+            unlockFrame();
+        }
+    } else {
+        ERROR("Unable to create a scaler context");
+    }
 
-		return ctx;
-	}
+    return ctx;
+}
 
-	VideoFrame *VideoDecoder::lockFrame()
-	{
-		VideoFrame *frame;
+VideoFrame *VideoDecoder::lockFrame()
+{
+    VideoFrame *frame;
 
-		pthread_mutex_lock(&accessMutex_);
-		if (lockedFrame_ >= 0) {
-			lockedFrameCnt_++;
-		} else {
-			lockedFrame_ = lastFrame_;
-			lockedFrameCnt_ = 0;
-		}
-		pthread_mutex_unlock(&accessMutex_);
+    pthread_mutex_lock(&accessMutex_);
+    if (lockedFrame_ >= 0) {
+        lockedFrameCnt_++;
+    } else {
+        lockedFrame_ = lastFrame_;
+        lockedFrameCnt_ = 0;
+    }
+    pthread_mutex_unlock(&accessMutex_);
 
-		if (lockedFrame_ >= 0)
-			return &rawFrames_[lockedFrame_];
-		return NULL;
-	}
+    if (lockedFrame_ >= 0)
+        return &rawFrames_[lockedFrame_];
+    return NULL;
+}
 
-	void VideoDecoder::unlockFrame()
-	{
-		pthread_mutex_lock(&accessMutex_);
-		if (lockedFrameCnt_ > 0)
-			lockedFrameCnt_--;
-		else
-			lockedFrame_ = -1;
-		pthread_mutex_unlock(&accessMutex_);
-	}
+void VideoDecoder::unlockFrame()
+{
+    pthread_mutex_lock(&accessMutex_);
+    if (lockedFrameCnt_ > 0)
+        lockedFrameCnt_--;
+    else
+        lockedFrame_ = -1;
+    pthread_mutex_unlock(&accessMutex_);
+}
 }

@@ -43,9 +43,9 @@
 
 namespace sfl_video {
 
-class SocketPair;
+    class SocketPair;
 
-class VideoReceiveThread : public VideoProvider {
+    class VideoReceiveThread : public VideoProvider {
     private:
         NON_COPYABLE(VideoReceiveThread);
         std::map<std::string, std::string> args_;
@@ -87,7 +87,7 @@ class VideoReceiveThread : public VideoProvider {
         ~VideoReceiveThread();
         void start();
         void setRequestKeyFrameCallback(void (*)(const std::string &));
-};
+    };
 }
 
 #endif // _VIDEO_RECEIVE_THREAD_H_

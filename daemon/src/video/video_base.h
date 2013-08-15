@@ -43,7 +43,7 @@ extern "C" {
  * a is the major version
  * b and c the minor and micro versions of libav
  * d and e the minor and micro versions of FFmpeg */
-#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
+#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e )                      \
     ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
       (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
 

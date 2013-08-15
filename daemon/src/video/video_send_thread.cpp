@@ -41,6 +41,31 @@ namespace sfl_video {
 
 using std::string;
 
+VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
+    args_(args),
+	videoPreview_(0),
+	videoEncoder_(0),
+    sdp_(),
+	outputWidth_(0),
+	outputHeight_(0),
+    interruptCb_(),
+    threadRunning_(false),
+    forceKeyFrame_(0),
+    thread_(0),
+	frameNumber_(0),
+    muxContext_(0)
+{
+    interruptCb_.callback = interruptCb;
+    interruptCb_.opaque = this;
+}
+
+VideoSendThread::~VideoSendThread()
+{
+    set_false_atomic(&threadRunning_);
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
 void VideoSendThread::setup()
 {
     const char *enc_name = args_["codec"].c_str();
@@ -108,24 +133,6 @@ int VideoSendThread::interruptCb(void *ctx)
     return not context->threadRunning_;
 }
 
-VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
-    args_(args),
-	videoPreview_(0),
-	videoEncoder_(0),
-    sdp_(),
-	outputWidth_(0),
-	outputHeight_(0),
-    interruptCb_(),
-    threadRunning_(false),
-    forceKeyFrame_(0),
-    thread_(0),
-	frameNumber_(0),
-    muxContext_(0)
-{
-    interruptCb_.callback = interruptCb;
-    interruptCb_.opaque = this;
-}
-
 void VideoSendThread::addIOContext(SocketPair &socketPair)
 {
 	muxContext_ = socketPair.getIOContext();
@@ -175,13 +182,6 @@ void VideoSendThread::encodeAndSendVideo()
 
 	EXIT_IF_FAIL(videoEncoder_->encode(is_keyframe, frameNumber_++) >= 0,
 				 "encoding failed");
-}
-
-VideoSendThread::~VideoSendThread()
-{
-    set_false_atomic(&threadRunning_);
-    if (thread_)
-        pthread_join(thread_, NULL);
 }
 
 void VideoSendThread::forceKeyFrame()
