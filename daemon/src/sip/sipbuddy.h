@@ -43,7 +43,7 @@
 #include <pjsip/sip_transport.h>
 
 
-class SIPAccount; // dummy prototype
+class SIPAccount;
 
 /**
  * Transaction functions of event subscription client side.
