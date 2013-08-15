@@ -577,6 +577,21 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
     keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == TRUE_STR;
 
+    int tmp = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
+    if (tmp > 0)
+        audioPortRange_.first = tmp;
+    tmp = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
+    if (tmp > 0)
+        audioPortRange_.second = tmp;
+#ifdef SFL_VIDEO
+    tmp = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MIN].c_str());
+    if (tmp > 0)
+        videoPortRange_.first = tmp;
+    tmp = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MAX].c_str());
+    if (tmp > 0)
+        videoPortRange_.second = tmp;
+#endif
+
     // srtp settings
     srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == TRUE_STR;
     srtpFallback_ = details[CONFIG_SRTP_RTP_FALLBACK] == TRUE_STR;
@@ -632,6 +647,17 @@ static std::string retrievePassword(const std::map<std::string, std::string>& ma
     return "";
 }
 
+void
+addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
+{
+    std::ostringstream os;
+    os << range.first;
+    a[minKey] = os.str();
+    os.str("");
+    os << range.second;
+    a[maxKey] = os.str();
+}
+
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
@@ -684,6 +710,11 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     // Add sip specific details
     a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
     a[CONFIG_ACCOUNT_USERAGENT] = userAgent_;
+
+    addRangeToDetails(a, CONFIG_ACCOUNT_AUDIO_PORT_MIN, CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
+#ifdef SFL_VIDEO
+    addRangeToDetails(a, CONFIG_ACCOUNT_VIDEO_PORT_MIN, CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
+#endif
 
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
