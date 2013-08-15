@@ -515,6 +515,11 @@ class SIPAccount : public Account {
         /* Returns true if the username and/or hostname match this account */
         bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
+        unsigned generateAudioPort() const;
+#ifdef SFL_VIDEO
+        unsigned generateVideoPort() const;
+#endif
+
     private:
         NON_COPYABLE(SIPAccount);
 
@@ -762,6 +767,18 @@ class SIPAccount : public Account {
          * Optional: via_addr construct from received parameters
          */
         pjsip_host_port via_addr_;
+
+        /**
+         * Port range for audio RTP ports
+         */
+        std::pair<unsigned, unsigned> audioPortRange_;
+
+#ifdef SFL_VIDEO
+        /**
+         * Port range for video RTP ports
+         */
+        std::pair<unsigned, unsigned> videoPortRange_;
+#endif
 };
 
 #endif
