@@ -116,7 +116,9 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , rPort_(-1)
     , via_addr_()
     , audioPortRange_(16384, 32766)
+#ifdef SFL_VIDEO
     , videoPortRange_(49152, 65534)
+#endif
 {
     via_addr_.host.ptr = 0;
     via_addr_.host.slen = 0;
