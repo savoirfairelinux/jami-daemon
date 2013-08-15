@@ -42,7 +42,7 @@ class Alaw : public sfl::AudioCodec {
         }
 
     private:
-        int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
+        int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size)
         {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ALawDecode(*src);
@@ -50,7 +50,7 @@ class Alaw : public sfl::AudioCodec {
             return buf_size;
         }
 
-        int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size)
+        int encode(unsigned char *dst, SFLAudioSample *src, size_t buf_size)
         {
             for (unsigned char *end = dst + buf_size; dst < end; ++src, ++dst)
                 *dst = ALawEncode(*src);
@@ -58,10 +58,9 @@ class Alaw : public sfl::AudioCodec {
             return buf_size;
         }
 
-        int ALawDecode(uint8 alaw)
-        {
+        int ALawDecode(uint8_t alaw) {
             alaw ^= 0x55;  // A-law has alternate bits inverted for transmission
-            uint sign = alaw & 0x80;
+            uint8_t sign = alaw & 0x80;
             int linear = alaw & 0x1f;
             linear <<= 4;
             linear += 8;  // Add a 'half' bit (0x08) to place PCM value in middle of range
@@ -70,7 +69,7 @@ class Alaw : public sfl::AudioCodec {
 
             if (alaw >= 0x20) {
                 linear |= 0x100;  // Put in MSB
-                uint shift = (alaw >> 4) - 1;
+                uint8_t shift = (alaw >> 4) - 1;
                 linear <<= shift;
             }
 
@@ -80,10 +79,9 @@ class Alaw : public sfl::AudioCodec {
                 return linear;
         }
 
-        uint8 ALawEncode(SFLDataFormat pcm16)
-        {
+        uint8_t ALawEncode(SFLAudioSample pcm16) {
             int p = pcm16;
-            uint a;  // u-law value we are forming
+            uint8_t a;  // u-law value we are forming
 
             if (p < 0) {
                 p = ~p;

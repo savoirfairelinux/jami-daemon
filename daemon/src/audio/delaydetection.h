@@ -84,9 +84,9 @@ class DelayDetection {
 
         ~DelayDetection();
 
-        void putData(SFLDataFormat *inputData, int samples);
+        void putData(SFLAudioSample *inputData, int samples);
 
-        void process(SFLDataFormat *inputData, int samples);
+        void process(SFLAudioSample *inputData, int samples);
 
     private:
 
@@ -107,7 +107,7 @@ class DelayDetection {
          */
         double correlate(float *sig1, float *sig2, short size);
 
-        void convertInt16ToFloat32(SFLDataFormat *input, float *ouput, int nbSamples);
+        void convertInt16ToFloat32(SFLAudioSample *input, float *ouput, int nbSamples);
 
         void downsampleData(float *input, float *output, int nbSamples, int factor);
 

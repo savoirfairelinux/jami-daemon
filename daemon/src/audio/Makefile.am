@@ -2,7 +2,11 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libaudio.la
 
-SUBDIRS = codecs audiortp sound alsa
+SUBDIRS = codecs audiortp sound
+
+if BUILD_ALSA
+SUBDIRS += alsa
+endif
 
 if BUILD_PULSE
 SUBDIRS += pulseaudio
@@ -14,6 +18,7 @@ SFL_SPEEXDSP_HEAD=noisesuppress.h
 endif
 
 libaudio_la_SOURCES = \
+		audiobuffer.cpp \
 		audioloop.cpp \
 		ringbuffer.cpp \
 		mainbuffer.cpp \
@@ -28,6 +33,7 @@ libaudio_la_SOURCES = \
 		dcblocker.cpp
 
 noinst_HEADERS = \
+		audiobuffer.h \
 		audioloop.h \
 		ringbuffer.h \
 		mainbuffer.h \
@@ -44,9 +50,12 @@ noinst_HEADERS = \
 libaudio_la_LIBADD = \
 	./audiortp/libaudiortp.la \
 	./codecs/libcodecdescriptor.la \
-	./alsa/libalsalayer.la \
 	./sound/libsound.la
 
 if BUILD_PULSE
 libaudio_la_LIBADD += ./pulseaudio/libpulselayer.la
+endif
+
+if BUILD_ALSA
+libaudio_la_LIBADD += ./alsa/libalsalayer.la
 endif

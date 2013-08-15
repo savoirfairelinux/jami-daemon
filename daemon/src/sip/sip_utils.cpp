@@ -165,7 +165,7 @@ sip_utils::getIPList(const std::string &name)
     for (struct addrinfo *res = result; res != NULL; res = res->ai_next) {
 
         void *ptr = 0;
-        std::string addrstr;
+        std::vector<char> addrstr;
         static const int AF_INET_STRLEN = 16, AF_INET6_STRLEN = 40;
         switch (res->ai_family) {
             case AF_INET:
@@ -180,11 +180,12 @@ sip_utils::getIPList(const std::string &name)
                 ERROR("Unexpected address family type, skipping.");
                 continue;
         }
-        inet_ntop(res->ai_family, ptr, &(*addrstr.begin()), addrstr.size());
+        inet_ntop(res->ai_family, ptr, addrstr.data(), addrstr.size());
         // don't add duplicates, and don't use an std::set because
         // we want this order preserved.
-        if (std::find(ipList.begin(), ipList.end(), addrstr) == ipList.end())
-            ipList.push_back(addrstr);
+        const std::string tmp(addrstr.begin(), addrstr.end());
+        if (std::find(ipList.begin(), ipList.end(), tmp) == ipList.end())
+            ipList.push_back(tmp);
     }
 
     freeaddrinfo(result);

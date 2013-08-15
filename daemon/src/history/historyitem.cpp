@@ -103,13 +103,12 @@ bool HistoryItem::hasPeerNumber() const
 void HistoryItem::print(std::ostream &o) const
 {
     // every entry starts with "[" + random integer = "]"
-    for (map<string, string>::const_iterator iter = entryMap_.begin();
-         iter != entryMap_.end(); ++iter) {
+    for (const auto &item : entryMap_) {
         // if the file does not exist anymore, we do not save it
-        if (iter->first == RECORDING_PATH_KEY and not file_exists(iter->second))
-            o << iter->first << "=" << "" << std::endl;
+        if (item.first == RECORDING_PATH_KEY and not file_exists(item.second))
+            o << item.first << "=" << "" << std::endl;
         else
-            o << iter->first << "=" << iter->second << std::endl;
+            o << item.first << "=" << item.second << std::endl;
     }
 }
 

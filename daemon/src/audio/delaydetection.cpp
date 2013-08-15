@@ -38,26 +38,26 @@
 namespace {
 // decimation filter coefficient
 const float decimationCoefs[] = {-0.09870257, 0.07473655, 0.05616626, 0.04448337, 0.03630817, 0.02944626,
-                           0.02244098, 0.01463477, 0.00610982, -0.00266367, -0.01120109, -0.01873722,
-                           -0.02373243, -0.02602213, -0.02437806, -0.01869834, -0.00875287, 0.00500204,
-                           0.02183252, 0.04065763, 0.06015944, 0.0788299, 0.09518543, 0.10799179,
-                           0.1160644,  0.12889288, 0.1160644, 0.10799179, 0.09518543, 0.0788299,
-                           0.06015944, 0.04065763, 0.02183252, 0.00500204, -0.00875287, -0.01869834,
-                           -0.02437806, -0.02602213, -0.02373243, -0.01873722, -0.01120109, -0.00266367,
-                           0.00610982, 0.01463477, 0.02244098, 0.02944626, 0.03630817, 0.04448337,
-                           0.05616626,  0.07473655, -0.09870257
-                          };
+                                 0.02244098, 0.01463477, 0.00610982, -0.00266367, -0.01120109, -0.01873722,
+                                 -0.02373243, -0.02602213, -0.02437806, -0.01869834, -0.00875287, 0.00500204,
+                                 0.02183252, 0.04065763, 0.06015944, 0.0788299, 0.09518543, 0.10799179,
+                                 0.1160644,  0.12889288, 0.1160644, 0.10799179, 0.09518543, 0.0788299,
+                                 0.06015944, 0.04065763, 0.02183252, 0.00500204, -0.00875287, -0.01869834,
+                                 -0.02437806, -0.02602213, -0.02373243, -0.01873722, -0.01120109, -0.00266367,
+                                 0.00610982, 0.01463477, 0.02244098, 0.02944626, 0.03630817, 0.04448337,
+                                 0.05616626,  0.07473655, -0.09870257
+                                };
 std::vector<double> ird(decimationCoefs, decimationCoefs + sizeof(decimationCoefs) /sizeof(float));
 
 
 // decimation filter coefficient
 const float bandpassCoefs[] = {0.06278034, -0.0758545, -0.02274943, -0.0084497, 0.0702427, 0.05986113,
-                         0.06436469, -0.02412049, -0.03433526, -0.07568665, -0.03214543, -0.07236507,
-                         -0.06979052, -0.12446371, -0.05530828, 0.00947243, 0.15294699, 0.17735563,
-                         0.15294699, 0.00947243, -0.05530828, -0.12446371, -0.06979052, -0.07236507,
-                         -0.03214543, -0.07568665, -0.03433526, -0.02412049,  0.06436469, 0.05986113,
-                         0.0702427, -0.0084497, -0.02274943, -0.0758545, 0.06278034
-                        };
+                               0.06436469, -0.02412049, -0.03433526, -0.07568665, -0.03214543, -0.07236507,
+                               -0.06979052, -0.12446371, -0.05530828, 0.00947243, 0.15294699, 0.17735563,
+                               0.15294699, 0.00947243, -0.05530828, -0.12446371, -0.06979052, -0.07236507,
+                               -0.03214543, -0.07568665, -0.03433526, -0.02412049,  0.06436469, 0.05986113,
+                               0.0702427, -0.0084497, -0.02274943, -0.0758545, 0.06278034
+                              };
 std::vector<double> irb(bandpassCoefs, bandpassCoefs + sizeof(bandpassCoefs) / sizeof(float));
 } // end anonymous namespace
 
@@ -116,7 +116,7 @@ DelayDetection::DelayDetection() :
 
 }
 
-void DelayDetection::putData(SFLDataFormat *inputData, int nbSamples)
+void DelayDetection::putData(SFLAudioSample *inputData, int nbSamples)
 {
     // Machine may already got a spkr and is waiting for mic or computing correlation
     if (nbSpkrSampleStored_ == WINDOW_SIZE)
@@ -144,7 +144,7 @@ void DelayDetection::putData(SFLDataFormat *inputData, int nbSamples)
     internalState_ = WaitForMic;
 }
 
-void DelayDetection::process(SFLDataFormat *inputData, int nbSamples)
+void DelayDetection::process(SFLAudioSample *inputData, int nbSamples)
 {
 
     if (internalState_ != WaitForMic)
@@ -233,7 +233,7 @@ double DelayDetection::correlate(float *sig1, float *sig2, short size)
 }
 
 
-void DelayDetection::convertInt16ToFloat32(SFLDataFormat *input, float *output, int nbSamples)
+void DelayDetection::convertInt16ToFloat32(SFLAudioSample *input, float *output, int nbSamples)
 {
     static const float S2F_FACTOR = .000030517578125f;
     int len = nbSamples;

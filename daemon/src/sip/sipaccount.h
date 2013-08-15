@@ -199,7 +199,7 @@ class SIPAccount : public Account {
 
 
         const pjsip_cred_info* getCredInfo() const {
-            return &(*cred_.begin());
+            return cred_.data();
         }
 
         /**
@@ -525,7 +525,12 @@ class SIPAccount : public Account {
          */
         SIPPresence * getPresence();
 
-private:
+        unsigned generateAudioPort() const;
+#ifdef SFL_VIDEO
+        unsigned generateVideoPort() const;
+#endif
+
+    private:
         NON_COPYABLE(SIPAccount);
 
         bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
@@ -553,9 +558,10 @@ private:
         void initTlsConfiguration();
 
         /**
-         * Display the list of ciphers currently supported on the
+         * PJSIP aborts if the string length of our cipher list is too
+         * great, so this function forces our cipher list to fit this constraint.
          */
-        void displayCipherSuite();
+        void trimCiphers();
 #endif
 
         /**
@@ -642,9 +648,9 @@ private:
         pjsip_tls_setting tlsSetting_;
 
         /**
-         * Allocate a static array to be used by pjsip to store the supported ciphers on this system.
+         * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
          */
-        CipherArray ciphers;
+        CipherArray ciphers_;
 
         /**
          * The STUN server name (hostname)
@@ -777,6 +783,17 @@ private:
          */
         SIPPresence * presence_;
 
+        /*
+         * Port range for audio RTP ports
+         */
+        std::pair<unsigned, unsigned> audioPortRange_;
+
+#ifdef SFL_VIDEO
+        /**
+         * Port range for video RTP ports
+         */
+        std::pair<unsigned, unsigned> videoPortRange_;
+#endif
 };
 
 #endif

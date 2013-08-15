@@ -56,8 +56,8 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     regSession_(NULL)
     , nextRefreshStamp_(0)
     , mutexIAX_()
-    , decData_()
-    , resampledData_()
+    , decData_(DEC_BUFFER_SIZE)
+    , resampledData_(DEC_BUFFER_SIZE*4)
     , encodedData_()
     , converter_(44100)
     , initDone_(false)
@@ -105,8 +105,8 @@ IAXVoIPLink::terminate()
 
     sfl::ScopedLock m(iaxCallMapMutex_);
 
-    for (IAXCallMap::iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end(); ++iter) {
-        IAXCall *call = static_cast<IAXCall*>(iter->second);
+    for (auto &item : iaxCallMap_) {
+        IAXCall *call = static_cast<IAXCall*>(item.second);
 
         if (call) {
             sfl::ScopedLock lock(mutexIAX_);
@@ -182,8 +182,8 @@ IAXVoIPLink::getCallIDs()
 void
 IAXVoIPLink::sendAudioFromMic()
 {
-    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end() ; ++iter) {
-        IAXCall *currentCall = static_cast<IAXCall*>(iter->second);
+    for (const auto &item : iaxCallMap_) {
+        IAXCall *currentCall = static_cast<IAXCall*>(item.second);
 
         if (!currentCall or currentCall->getState() != Call::ACTIVE)
             continue;
@@ -200,33 +200,34 @@ IAXVoIPLink::sendAudioFromMic()
 
         // we have to get 20ms of data from the mic *20/1000 = /50
         // rate/50 shall be lower than IAX__20S_48KHZ_MAX
-        const size_t bytesNeeded = mainBufferSampleRate * 20 / 1000 * sizeof(SFLDataFormat);
+        size_t samples = mainBufferSampleRate * 20 / 1000;
 
-        if (Manager::instance().getMainBuffer().availableForGet(currentCall->getCallId()) < bytesNeeded)
+        if (Manager::instance().getMainBuffer().availableForGet(currentCall->getCallId()) < samples)
             continue;
 
         // Get bytes from micRingBuffer to data_from_mic
-        int bytes = Manager::instance().getMainBuffer().getData(decData_, bytesNeeded, currentCall->getCallId());
-        int samples = bytes / sizeof(SFLDataFormat);
+        decData_.resize(samples);
+        samples = Manager::instance().getMainBuffer().getData(decData_, currentCall->getCallId());
 
         int compSize;
         unsigned int audioRate = audioCodec->getClockRate();
         int outSamples;
-        SFLDataFormat *in;
+        AudioBuffer *in;
 
         if (audioRate != mainBufferSampleRate) {
-            converter_.resample(decData_, resampledData_, ARRAYSIZE(resampledData_),
-                                audioRate, mainBufferSampleRate, samples);
-            in = resampledData_;
+            decData_.setSampleRate(audioRate);
+            resampledData_.setSampleRate(mainBufferSampleRate);
+            converter_.resample(decData_, resampledData_);
+            in = &resampledData_;
             outSamples = 0;
         } else {
             outSamples = samples;
-            in = decData_;
+            in = &decData_;
         }
 
-        compSize = audioCodec->encode(encodedData_, in, DEC_BUFFER_SIZE);
+        compSize = audioCodec->encode(encodedData_, in->getData(), DEC_BUFFER_SIZE);
 
-        if (currentCall->session and bytes > 0) {
+        if (currentCall->session and samples > 0) {
             sfl::ScopedLock m(mutexIAX_);
 
             if (iax_send_voice(currentCall->session, currentCall->format, encodedData_, compSize, outSamples) == -1)
@@ -459,9 +460,8 @@ IAXVoIPLink::clearIaxCallMap()
 {
     sfl::ScopedLock m(iaxCallMapMutex_);
 
-    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin();
-            iter != iaxCallMap_.end(); ++iter)
-        delete iter->second;
+    for (const auto &item : iaxCallMap_)
+        delete item.second;
 
     iaxCallMap_.clear();
 
@@ -539,8 +539,8 @@ IAXVoIPLink::iaxFindCallBySession(iax_session* session)
 {
     sfl::ScopedLock m(iaxCallMapMutex_);
 
-    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end(); ++iter) {
-        IAXCall* call = static_cast<IAXCall*>(iter->second);
+    for (const auto &item : iaxCallMap_) {
+        IAXCall* call = static_cast<IAXCall*>(item.second);
 
         if (call and call->session == session)
             return call;
@@ -660,19 +660,18 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     if (size > max)
         size = max;
 
-    int samples = audioCodec->decode(decData_, data , size);
-    int outSize = samples * sizeof(SFLDataFormat);
-    SFLDataFormat *out = decData_;
+    audioCodec->decode(decData_.getData(), data , size);
+    AudioBuffer *out = &decData_;
     unsigned int audioRate = audioCodec->getClockRate();
 
     if (audioRate != mainBufferSampleRate) {
-        outSize = (double)outSize * (mainBufferSampleRate / audioRate);
-        converter_.resample(decData_, resampledData_, ARRAYSIZE(resampledData_),
-                            mainBufferSampleRate, audioRate, samples);
-        out = resampledData_;
+        decData_.setSampleRate(mainBufferSampleRate);
+        resampledData_.setSampleRate(audioRate);
+        converter_.resample(decData_, resampledData_);
+        out = &resampledData_;
     }
 
-    Manager::instance().getMainBuffer().putData(out, outSize, call->getCallId());
+    Manager::instance().getMainBuffer().putData(*out, call->getCallId());
 }
 
 /**

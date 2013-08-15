@@ -28,8 +28,9 @@
  *  as that of the covered work.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <unistd.h>
+#include <cstdlib>
+#include <cstdio>
 #include <iostream>
 #include <fstream>
 

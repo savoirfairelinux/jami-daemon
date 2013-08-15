@@ -32,84 +32,72 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "audioloop.h"
-#include "manager.h"
-#include "dbus/callmanager.h"
+
 #include <cmath>
 #include <numeric>
 #include <cstring>
 #include <cassert>
 #include "logger.h"
 
-AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0),  size_(0), pos_(0), sampleRate_(sampleRate), isRecording_(false)
-{}
+AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0)
+{
+    buffer_ = new AudioBuffer;
+    buffer_->setSampleRate(sampleRate);
+}
 
 AudioLoop::~AudioLoop()
 {
-    delete [] buffer_;
+    delete buffer_;
 }
 
 void
 AudioLoop::seek(double relative_position)
 {
-    size_t new_pos = (size_t)((double)size_ * (relative_position * 0.01));
-
-    pos_ = new_pos;
+    pos_ = static_cast<double>(buffer_->samples() * relative_position * 0.01);
 }
 
-static unsigned int updatePlaybackScale = 0;
-
 void
-AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
+AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
 {
-    size_t pos = pos_;
+    if (!buffer_) {
+        ERROR("buffer is NULL");
+        return;
+    }
 
-    if (size_ == 0) {
+    const size_t buf_samples = buffer_->samples();
+    size_t pos = pos_;
+    size_t total_samples = output.samples();
+    size_t output_pos = 0;
+
+    if (buf_samples == 0) {
         ERROR("Audio loop size is 0");
         return;
-    } else if (pos >= size_) {
+    } else if (pos >= buf_samples) {
         ERROR("Invalid loop position %d", pos);
         return;
     }
 
     while (total_samples > 0) {
-        size_t samples = total_samples;
+        size_t samples = std::min(total_samples, buf_samples - pos);
 
-        if (samples > (size_ - pos))
-            samples = size_ - pos;
+        output.copy(*buffer_, samples, pos, output_pos);
 
-        // short->char conversion
-        memcpy(output, buffer_ + pos, samples * sizeof(SFLDataFormat));
-
-        // Scaling needed
-        if (volume != 100) {
-            const double gain = volume * 0.01;
-
-            for (size_t i = 0; i < samples; ++i, ++output)
-                *output *= gain;
-        } else
-            output += samples; // this is the destination...
-
-        pos = (pos + samples) % size_;
+        output_pos += samples;
+        pos = (pos + samples) % buf_samples;
 
         total_samples -= samples;
     }
 
+    output.applyGain(volume); // apply volume
+
     pos_ = pos;
 
-    // We want to send values in milisecond
-    int divisor = sampleRate_ / 1000;
-    if(divisor == 0) {
-        ERROR("Error cannot update playback slider, sampling rate is 0");
-        return;
-    }
-
-    if(isRecording_) {
-        if((updatePlaybackScale % 5) == 0) {
-            CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
-            cm->updatePlaybackScale(pos_ / divisor, size_ / divisor);
-        }
-        updatePlaybackScale++;
-    }
+    onBufferFinish();
 }
 
+void AudioLoop::onBufferFinish() {}

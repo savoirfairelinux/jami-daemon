@@ -192,9 +192,7 @@ void InstantMessagingTest::testXmlUriListParsing()
     sfl::InstantMessaging::UriEntry::iterator iterAttr;
 
     // An iterator over list entries
-    for (sfl::InstantMessaging::UriList::iterator iterEntry = list.begin();
-            iterEntry != list.end(); ++iterEntry) {
-        sfl::InstantMessaging::UriEntry entry = static_cast<sfl::InstantMessaging::UriEntry>(*iterEntry);
+    for (auto &entry : list) {
         iterAttr = entry.find(sfl::IM_XML_URI);
 
         CPPUNIT_ASSERT((iterAttr->second == std::string("sip:alex@example.com")) or

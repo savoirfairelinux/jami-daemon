@@ -41,28 +41,27 @@ class Ulaw : public sfl::AudioCodec {
         }
 
     private:
-        int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size) {
+        int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size) {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ULawDecode(*src);
 
             return buf_size;
         }
 
-        int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size) {
+        int encode(unsigned char *dst, SFLAudioSample *src, size_t buf_size) {
             for (unsigned char * end = dst + buf_size; dst < end; ++src, ++dst)
                 *dst = ULawEncode(*src);
 
             return buf_size;
         }
 
-        SFLDataFormat ULawDecode(uint8 ulaw)
-        {
+        SFLAudioSample ULawDecode(uint8_t ulaw) {
             ulaw ^= 0xff;  // u-law has all bits inverted for transmission
             int linear = ulaw & 0x0f;
             linear <<= 3;
             linear |= 0x84;  // Set MSB (0x80) and a 'half' bit (0x04) to place PCM value in middle of range
 
-            uint shift = ulaw >> 4;
+            uint8_t shift = ulaw >> 4;
             shift &= 7;
             linear <<= shift;
             linear -= 0x84; // Subract uLaw bias
@@ -73,10 +72,9 @@ class Ulaw : public sfl::AudioCodec {
                 return linear;
         }
 
-        uint8 ULawEncode(SFLDataFormat pcm16)
-        {
+        uint8_t ULawEncode(SFLAudioSample pcm16) {
             int p = pcm16;
-            uint u;  // u-law value we are forming
+            uint8_t u;  // u-law value we are forming
 
             if (p < 0) {
                 p = ~p;

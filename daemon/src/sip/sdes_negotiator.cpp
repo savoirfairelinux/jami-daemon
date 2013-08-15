@@ -32,7 +32,7 @@
 #include "pattern.h"
 
 #include <cstdio>
-#include <tr1/memory>
+#include <memory>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -61,7 +61,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
     // syntax :
     //a=crypto:tag 1*WSP crypto-suite 1*WSP key-params *(1*WSP session-param)
 
-    std::tr1::shared_ptr<Pattern> generalSyntaxPattern, tagPattern, cryptoSuitePattern,
+    std::unique_ptr<Pattern> generalSyntaxPattern, tagPattern, cryptoSuitePattern,
         keyParamsPattern;
 
     try {
@@ -93,14 +93,13 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
 
     std::vector<CryptoAttribute *> cryptoAttributeVector;
 
-    for (std::vector<std::string>::iterator iter = remoteAttribute_.begin();
-            iter != remoteAttribute_.end(); ++iter) {
+    for (const auto &item : remoteAttribute_) {
 
         // Split the line into its component
         // that we will analyze further down.
         std::vector<std::string> sdesLine;
 
-        *generalSyntaxPattern << (*iter);
+        *generalSyntaxPattern << item;
 
         try {
             sdesLine = generalSyntaxPattern->split();

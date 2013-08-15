@@ -55,6 +55,7 @@ doc/*.html
 *x86_64-unknown-*
 sip_autoconf.h
 os-auto.mak
+cc-auto.mak
 build.mak
 config.log
 config.status
@@ -69,6 +70,13 @@ config_auto.h
 # Cscope/Ctags files
 cscope.*
 tags
+TAGS.LST
+ID
 
 # IDE stuffs
 nbproject
+
+# JNI generated files
+*_wrap.cpp
+*_wrap.h
+*_loader.c

@@ -33,8 +33,8 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
-#include "cc_config.h"
-#include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
+#include <vector>
+#include "sfl_types.h"
 
 #define XSTR(s) STR(s)
 #define STR(s) #s
@@ -52,8 +52,7 @@ namespace sfl {
 
 class AudioCodec {
     public:
-        AudioCodec(uint8 payload, const std::string &codecName, int clockRate,
-                   int frameSize, int channel);
+        AudioCodec(uint8_t payload, const std::string &codecName, int clockRate, int frameSize, unsigned channels);
 
         /**
          * Copy constructor.
@@ -69,18 +68,30 @@ class AudioCodec {
          * @param buffer_size : the size of the input buffer
          * @return the number of samples decoded
          */
-        virtual int decode(short *dst, unsigned char *buf, size_t buffer_size) = 0;
+        virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size) = 0;
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
          * @param buffer_size : the maximum size of encoded data buffer (dst)
          * @return the number of bytes encoded
          */
-        virtual int encode(unsigned char *dst, short *src, size_t buffer_size) = 0;
+        virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size) = 0;
 
-        uint8 getPayloadType() const;
+        /**
+         * Multichannel version of decode().
+         * Default implementation decode(short *, unsigned char *, size_t) to the first channel (assume 1 channel).
+         */
+        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size);
 
-        void setPayloadType(uint8 pt) {
+        /**
+         * Multichannel version of encode().
+         * Default implementation calls encode() on the first channel (assume 1 channel).
+         */
+        virtual int encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size);
+
+        uint8_t getPayloadType() const;
+
+        void setPayloadType(uint8_t pt) {
             payload_ = pt;
         }
 
@@ -89,9 +100,11 @@ class AudioCodec {
          */
         bool hasDynamicPayload() const;
 
-        uint32 getClockRate() const;
+        uint32_t getClockRate() const;
 
         double getBitRate() const;
+
+        unsigned getChannels() const;
 
         /**
          * @return the framing size for this codec.
@@ -103,10 +116,10 @@ class AudioCodec {
         std::string codecName_; // what we put inside sdp
 
         /** Clock rate or sample rate of the codec, in Hz */
-        uint32 clockRate_;
+        uint32_t clockRate_;
 
         /** Number of channel 1 = mono, 2 = stereo */
-        uint8 channel_;
+        uint8_t channel_;
 
         /** codec frame size in samples*/
         unsigned frameSize_;
@@ -116,9 +129,7 @@ class AudioCodec {
 
     private:
         AudioCodec& operator=(const AudioCodec&);
-        uint8 payload_;
-
-        ost::DynamicPayloadFormat payloadFormat_;
+        uint8_t payload_;
 
 protected:
         bool hasDynamicPayload_;

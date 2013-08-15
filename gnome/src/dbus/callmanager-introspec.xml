@@ -211,6 +211,11 @@
             <arg type="as" name="participants" direction="in"/>
         </method>
 
+        <method name="isConferenceParticipant" tp:name-for-bindings="isConferenceParticipant">
+            <arg type="s" name="callID" direction="in"/>
+            <arg type="b" name="isParticipant" direction="out"/>
+        </method>
+
         <method name="addParticipant" tp:name-for-bindings="addParticipant">
             <tp:added version="0.9.7"/>
             <tp:docstring>
@@ -392,6 +397,7 @@
 
         <signal name="updatePlaybackScale" tp:name-for-bindings="updatePlaybackScale">
             <tp:docstring/>
+            <arg type="s" name="filepath" />
             <arg type="i" name="position" />
             <arg type="i" name="size" />
         </signal>

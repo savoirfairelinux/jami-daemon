@@ -37,10 +37,6 @@
 #include <stdexcept>
 #include "audio/audioloop.h"
 
-namespace sfl {
-class AudioCodec;
-}
-
 class AudioFileException : public std::runtime_error {
     public:
         AudioFileException(const std::string &str) :
@@ -52,8 +48,7 @@ class AudioFileException : public std::runtime_error {
  */
 class AudioFile : public AudioLoop {
     public:
-        AudioFile(const std::string &filepath, unsigned int sampleRate) : AudioLoop(sampleRate), filepath_(filepath)
-        {}
+        AudioFile(const std::string &filepath, unsigned int sampleRate);
 
         std::string getFilePath() const {
             return filepath_;
@@ -62,30 +57,11 @@ class AudioFile : public AudioLoop {
     protected:
         /** The absolute path to the sound file */
         std::string filepath_;
-};
-
-class RawFile : public AudioFile {
-    public:
-        /**
-         * Constructor
-         */
-        RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000);
 
     private:
-        NON_COPYABLE(RawFile);
-
-        /** Your preferred codec */
-        sfl::AudioCodec* audioCodec_;
-};
-
-class WaveFile : public AudioFile {
-    public:
-        /**
-         * Load a sound file in memory
-         * @param filename      The absolute path to the file
-         * @param sampleRate    The sample rate to read it
-         */
-        WaveFile(const std::string&, unsigned int sampleRate);
+        // override
+        void onBufferFinish();
+        unsigned updatePlaybackScale_;
 };
 
 #endif // __AUDIOFILE_H__

@@ -35,6 +35,9 @@ LT_INIT
 dnl Define C++ as default language
 AC_LANG(C++)
 
+dnl Check for C++11 support
+AX_CXX_COMPILE_STDCXX_11
+
 dnl Check for header files
 AC_FUNC_ALLOCA
 AC_HEADER_STDC
@@ -74,7 +77,16 @@ PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYP
 
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
-PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development package: libasound2-dev or alsa-lib-devel]))
+AC_ARG_WITH([alsa],
+	[ AS_HELP_STRING([--without-alsa], [disable support for alsa]) ],
+	[],
+	[with_alsa=yes])
+AS_IF([test "x$with_alsa" = "xyes"], [
+       PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development files]))
+	]);
+
+AC_DEFINE_UNQUOTED([HAVE_ALSA], `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have alsa])
+AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
 
 
 dnl Check for pulseaudio development package - name: libpulse-dev
@@ -85,15 +97,18 @@ AC_ARG_WITH([pulse],
     [with_pulse=yes])
 
 AS_IF([test "x$with_pulse" = "xyes"], [
-    PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development package: libpulse-dev]))
+       PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development files]))
       ]);
 
 AC_DEFINE_UNQUOTED([HAVE_PULSE], `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have pulseaudio])
-AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes" )
+AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes")
 
 dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
-PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
+PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development files]))
+
+dnl Check for the sndfile development package - name: libsndfile-dev
+PKG_CHECK_MODULES(SNDFILE, sndfile,, AC_MSG_ERROR([Missing sndfile development files]))
 
 dnl Coverage is default-disabled
 AC_ARG_ENABLE([coverage], AS_HELP_STRING([--enable-coverage], [Enable coverage]))
@@ -112,22 +127,22 @@ AS_IF([test "x$enable_video" = "xyes"],
 
         dnl The libav versions correspond to the last libav release: 0.7
         dnl Check for libavcodec development package - name: libavcodec-dev
-        PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec package: libavcodec-dev]))
+        PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
         LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
 
         dnl Check for libavformat development package - name: libavformat-dev
-        PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat package: libavformat-dev]))
+        PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat development files]))
 
         dnl Check for libswscale development package - name: libswcale-dev
-        PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale package: libswscale-dev]))
+        PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale development files]))
 
         dnl Check for libavdevice development package - name: libavdevice-dev
-        PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice package: libavdevice-dev]))
+        PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice development files]))
 
         dnl Check for libavutil development package - name: libavutil-dev
-        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil package: libavutil-dev]))
+        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil development files]))
 
-        PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev package: libudev-dev]))
+        PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
     ],
     [AM_CONDITIONAL(SFL_VIDEO, false)]);
 
@@ -135,12 +150,12 @@ AS_IF([test "x$enable_video" = "xyes"],
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([COMMONCPP_PREFIX], [1], [Use commoncpp include prefix]), [
         PKG_CHECK_MODULES([CCGNU2], [libccgnu2] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([CCPP_PREFIX], [1], [Use cc++ include prefix]),
-            AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))
+        AC_MSG_ERROR([Missing commoncpp development files]))
         ])
 
 LIBCCRTP_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
-        PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development package: libccrtp-dev]))
+                   PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development files]))
         ])
 
 
@@ -152,7 +167,7 @@ AC_ARG_WITH([tls],
     [],
     [with_tls=yes])
 AS_IF([test "x$with_tls" = "xyes"], [
-    PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
+       PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development files]))
     ]);
 
 AC_DEFINE_UNQUOTED([HAVE_TLS], `if test "x$with_tls" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have tls support])
@@ -168,22 +183,23 @@ AC_ARG_WITH([zrtp],
     [],
     [with_zrtp=yes])
 AS_IF([test "x$with_zrtp" = "xyes"], [
-    PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
+       PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development files]))
     ]);
 
 AC_DEFINE_UNQUOTED([HAVE_ZRTP], `if test "x$with_zrtp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp support])
 AM_CONDITIONAL(BUILD_ZRTP, test "x$with_zrtp" = "xyes" )
 
+# DBUSCPP
+dnl Check for dbuscpp, the C++ bindings for D-Bus
+AC_ARG_WITH([dbus],
+    [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
+    [],
+    [with_dbus=yes])
+AS_IF([test "x$with_dbus" = "xyes"], [
+       PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
+    ]);
 
-# DBUS
-# required dependency(ies): libdbus-c++
-dnl DBus-C++ detection
-dnl pkg-config doesn't like 0.6.0-pre1 version number, it assumes that it is
-dnl more recent than (unreleased) 0.6.0
-DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
-PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
-AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
-
+AC_DEFINE_UNQUOTED([HAVE_DBUS], `if test "x$with_dbus" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have dbus support])
 
 # Instant Messaging
 # required dependency(ies): libxpat
@@ -193,7 +209,7 @@ AC_ARG_WITH([instant_messaging],
     [with_instant_messaging=yes])
 AS_IF([test "x$with_instant_messaging" = "xyes"], [
     AX_LIB_EXPAT([1.95.0])
-    AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
+    AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([Missing libexpat development files])], [])
     ]);
 
 AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
@@ -253,7 +269,7 @@ AC_ARG_WITH([speex],
         [with_speex=yes])
 
 AS_IF([test "x$with_speex" != xno],
-        [AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Unable to find the libspeex headers (you may need to install the dev package).  You may use --without-speex to compile without speex codec support.]))]
+      [AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Missing speex development files. You may use --without-speex to compile without speex codec support.]))]
         [AC_CHECK_LIB([speex], [speex_decode_int],
         [],
         [AC_MSG_FAILURE([libspeex link test failed.   You may use --without-speex to compile without speex codec support.])])
@@ -273,7 +289,7 @@ AC_ARG_WITH([speexdsp],
     [with_speexdsp=yes])
 
 AS_IF([test "x$with_speexdsp" != xno],
-    AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
+      AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Missing libspeexdsp development files used for Noise Suppression and Automatic Gain Control.]))
     AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp], [], [AC_MSG_ERROR([Unable to find speexdsp development files])])
     )
 
@@ -365,7 +381,8 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/sound/Makefile \
                  src/audio/codecs/Makefile \
                  src/config/Makefile \
-                 src/dbus/Makefile \
+                 src/client/Makefile \
+                 src/client/dbus/Makefile \
                  src/hooks/Makefile \
                  src/history/Makefile \
                  src/video/Makefile \

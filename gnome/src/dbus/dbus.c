@@ -50,6 +50,7 @@
 #include "assistant.h"
 #include "accountlist.h"
 #include "accountlistconfigdialog.h"
+#include "accountconfigdialog.h"
 #include "messaging/message_tab.h"
 
 #include "sflphone_client.h"
@@ -412,9 +413,11 @@ record_playback_stopped_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *filepat
 }
 
 static void
-update_playback_scale_cb(G_GNUC_UNUSED DBusGProxy *proxy, guint position, guint size)
+update_playback_scale_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+        const gchar *file_path, guint position, guint size)
 {
-    main_window_update_playback_scale(position, size);
+    if (!main_window_update_playback_scale(file_path, position, size))
+        update_ringtone_slider(position, size);
 }
 
 static void
@@ -648,8 +651,6 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     const char *configurationmanager_object_instance = "/org/sflphone/SFLphone/ConfigurationManager";
     const char *configurationmanager_interface = "org.sflphone.SFLphone.ConfigurationManager";
 
-    g_type_init();
-
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
     if (connection == NULL) {
         g_warning("could not establish connection with session bus");
@@ -810,7 +811,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     dbus_g_proxy_connect_signal(call_proxy, "recordPlaybackStopped",
                                 G_CALLBACK(record_playback_stopped_cb), client, NULL);
 
-    dbus_g_proxy_add_signal(call_proxy, "updatePlaybackScale", G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal(call_proxy, "updatePlaybackScale", G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "updatePlaybackScale",
                                 G_CALLBACK(update_playback_scale_cb), NULL, NULL);
 

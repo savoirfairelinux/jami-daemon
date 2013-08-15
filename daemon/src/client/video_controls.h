@@ -30,7 +30,13 @@
 #ifndef VIDEO_CONTROLS_H_
 #define VIDEO_CONTROLS_H_
 
-#include "dbus_cpp.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if HAVE_DBUS
+#include "dbus/dbus_cpp.h"
+
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 /* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
@@ -38,7 +44,7 @@
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "video_controls-glue.h"
+#include "dbus/video_controls-glue.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
@@ -47,6 +53,7 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
+#endif // HAVE_DBUS
 
 #include <tr1/memory> // for shared_ptr
 #include "video/video_preferences.h"
@@ -122,4 +129,3 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
 };
 
 #endif // VIDEO_CONTROLS_H_
-

@@ -31,6 +31,7 @@
 #define G729_H_
 
 #include <cstdlib>
+#include "sfl_types.h"
 #include "noncopyable.h"
 
 #include "audiocodec.h"
@@ -43,8 +44,8 @@ public:
    G729();
    ~G729();
 private:
-   virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
-   virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
+   virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
 
    NON_COPYABLE(G729);
    //Attributes
@@ -53,8 +54,8 @@ private:
    void* handler_;
 
    //Extern functions
-   void (*encoder_) (bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[]);
-   void (*decoder_) (bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, int16_t signal[]);
+   void (*encoder_) (bcg729EncoderChannelContextStruct *encoderChannelContext, SFLAudioSample inputFrame[], uint8_t bitStream[]);
+   void (*decoder_) (bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, SFLAudioSample signal[]);
 
    static void loadError(const char *error);
 };

@@ -1,6 +1,6 @@
 include $(top_srcdir)/globals.mak
 
-noinst_LTLIBRARIES = libdbus.la
+noinst_LTLIBRARIES = libclient.la
 
 BUILT_SOURCES=                      \
     callmanager-glue.h              \
@@ -25,41 +25,41 @@ configurationmanager-glue.h: configurationmanager-introspec.xml Makefile.am
 instance-glue.h: instance-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
-libdbus_la_SOURCES = \
+libclient_la_SOURCES = \
     callmanager.cpp \
     configurationmanager.cpp  \
     instance.cpp  \
-    dbusmanager.cpp
+    client.cpp
 
 if SFL_VIDEO
-libdbus_la_SOURCES+=video_controls.cpp
+libclient_la_SOURCES+=video_controls.cpp
 endif
 
 if USE_NETWORKMANAGER
-libdbus_la_SOURCES += networkmanager.cpp
+libclient_la_SOURCES += networkmanager.cpp
 NETWORKMANAGER=-DUSE_NETWORKMANAGER
 else
 NETWORKMANAGER=
 endif
 
-libdbus_la_CXXFLAGS = \
+libclient_la_CXXFLAGS = -I../ \
             -DPREFIX=\"$(prefix)\" \
             -DPROGSHAREDIR=\"${datadir}/sflphone\" \
-            $(NETWORKMANAGER)
-
+            $(NETWORKMANAGER) \
+            $(DBUSCPP_CFLAGS)
 
 noinst_HEADERS =            \
-    callmanager.h           \
-    configurationmanager.h  \
+    ../callmanager.h        \
+    ../configurationmanager.h  \
     instance.h              \
-    dbusmanager.h           \
+    ../client.h             \
     networkmanager_proxy.h  \
     networkmanager.h        \
     dbus_cpp.h        		\
     $(BUILT_SOURCES)
 
 if SFL_VIDEO
-noinst_HEADERS+=video_controls.h
+noinst_HEADERS+=../video_controls.h
 endif
 
 # Dbus service file

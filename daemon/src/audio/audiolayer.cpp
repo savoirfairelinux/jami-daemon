@@ -35,11 +35,10 @@
 #include "manager.h"
 #include "scoped_lock.h"
 
-unsigned int AudioLayer::captureGain_ = 100;
-unsigned int AudioLayer::playbackGain_ = 100;
-
 AudioLayer::AudioLayer()
-    : isStarted_(false)
+    : captureGain_(100)
+    , playbackGain_(100)
+    , isStarted_(false)
     , playbackMode_(NONE)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
     , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())
@@ -70,17 +69,10 @@ void AudioLayer::flushUrgent()
     urgentRingBuffer_.flushAll();
 }
 
-void AudioLayer::putUrgent(void* buffer, int toCopy)
+void AudioLayer::putUrgent(AudioBuffer& buffer)
 {
     sfl::ScopedLock guard(mutex_);
-    urgentRingBuffer_.put(buffer, toCopy);
-}
-
-void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)
-{
-    if (gain != 100)
-        for (int i = 0 ; i < samples; i++)
-            src[i] = src[i] * gain* 0.01;
+    urgentRingBuffer_.put(buffer);
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress
@@ -103,11 +95,10 @@ void AudioLayer::notifyIncomingCall()
 
     Tone tone("440/160", getSampleRate());
     unsigned int nbSample = tone.getSize();
-    SFLDataFormat buf[nbSample];
-    tone.getNext(buf, nbSample);
+    AudioBuffer buf(nbSample);
+    tone.getNext(buf);
 
     /* Put the data in the urgent ring buffer */
     flushUrgent();
-    putUrgent(buf, sizeof buf);
+    putUrgent(buf);
 }
-

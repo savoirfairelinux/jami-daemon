@@ -29,6 +29,7 @@
  */
 
 #include "audiocodec.h"
+#include "sfl_types.h"
 #include <tr1/array>
 #include <algorithm>
 
@@ -41,8 +42,7 @@ class Ilbc: public sfl::AudioCodec {
         Ilbc() :
             sfl::AudioCodec(ILBC_PAYLOAD, "iLBC", 8000, ILBC_FRAME_SIZE, 1),
             ilbc_dec_(),
-            ilbc_enc_()
-        {
+            ilbc_enc_() {
             bitrate_ = 13.3;
 
             initDecode(&ilbc_dec_, 20, 1);
@@ -51,13 +51,13 @@ class Ilbc: public sfl::AudioCodec {
 
     private:
         // iLBC expects floating point data, so we have to convert
-        int decode(short *dst, unsigned char *src, size_t /*buf_size*/) {
+        int decode(SFLAudioSample *dst, unsigned char *src, size_t /*buf_size*/) {
             const int NORMAL_MODE = 1;
             iLBC_decode(dst, reinterpret_cast<WebRtc_UWord16*>(src), &ilbc_dec_, NORMAL_MODE);
             return frameSize_;
         }
 
-        int encode(unsigned char *dst, short* src, size_t /*buf_size*/) {
+        int encode(unsigned char *dst, SFLAudioSample * src, size_t /*buf_size*/) {
             iLBC_encode(reinterpret_cast<WebRtc_UWord16*>(dst), src, &ilbc_enc_);
             return frameSize_;
         }

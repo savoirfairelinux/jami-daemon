@@ -31,7 +31,7 @@
 
 #include "video_receive_thread.h"
 #include "socket_pair.h"
-#include "dbus/video_controls.h"
+#include "client/video_controls.h"
 #include "check.h"
 #include "packet_handle.h"
 
@@ -42,6 +42,7 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
+#include <unistd.h>
 #include <map>
 
 #include "manager.h"

@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,38 +28,56 @@
  *  as that of the covered work.
  */
 
-#include "networkmanager.h"
-#include "../manager.h"
-#include "array_size.h"
-#include "logger.h"
+#ifndef __CLIENT_H__
+#define __CLIENT_H__
 
-namespace {
-    const char *stateAsString(uint32_t state)
-    {
-        static const char * STATES[] = {"unknown", "asleep", "connecting",
-            "connected", "disconnected"};
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include "noncopyable.h"
 
-        const size_t idx = state < ARRAYSIZE(STATES) ? state : 0;
-        return STATES[idx];
-    }
+class ConfigurationManager;
+class CallManager;
+class NetworkManager;
+class Instance;
+class VideoControls;
+
+namespace DBus {
+    class BusDispatcher;
 }
 
-void NetworkManager::StateChanged(const uint32_t &state)
-{
-    WARN("Network state changed: %s", stateAsString(state));
-}
+class Client {
+    public:
+        Client();
+        ~Client();
 
-void NetworkManager::PropertiesChanged(const std::map<std::string, ::DBus::Variant> &argin0)
-{
-    WARN("Properties changed: ");
-    for (std::map<std::string, ::DBus::Variant>::const_iterator iter = argin0.begin();
-            iter != argin0.end(); ++iter)
-        WARN("%s", iter->first.c_str());
-    Manager::instance().registerAccounts();
-}
+        CallManager * getCallManager() {
+            return callManager_;
+        }
+        ConfigurationManager * getConfigurationManager() {
+            return configurationManager_;
+        }
+#ifdef SFL_VIDEO
+        VideoControls* getVideoControls() {
+            return videoControls_;
+        }
+#endif
 
-NetworkManager::NetworkManager(DBus::Connection &connection,
-                               const DBus::Path &dbus_path,
-                               const char *destination) :
-    DBus::ObjectProxy(connection, dbus_path, destination)
-{}
+        void event_loop();
+        void exit();
+
+    private:
+        NON_COPYABLE(Client);
+        CallManager*          callManager_;
+        ConfigurationManager* configurationManager_;
+        Instance*             instanceManager_;
+        DBus::BusDispatcher*  dispatcher_;
+#ifdef SFL_VIDEO
+        VideoControls *videoControls_;
+#endif
+#if USE_NETWORKMANAGER
+        NetworkManager* networkManager_;
+#endif
+};
+
+#endif

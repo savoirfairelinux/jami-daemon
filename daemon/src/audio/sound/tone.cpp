@@ -47,6 +47,9 @@ Tone::Tone(const std::string& definition, unsigned int sampleRate) :
     AudioLoop(sampleRate), xhigher_(0.0), xlower_(0.0)
 {
     fillWavetable();
+    delete buffer_;
+    buffer_ = new AudioBuffer();
+    buffer_->setSampleRate(sampleRate);
     genBuffer(definition); // allocate memory with definition parameter
 }
 
@@ -56,10 +59,11 @@ Tone::genBuffer(const std::string& definition)
     if (definition.empty())
         return;
 
-    size_ = 0;
+    size_t size = 0;
+    const int sampleRate = buffer_->getSampleRate();
 
-    std::vector<SFLDataFormat> buffer(SIZEBUF); // 1kb
-    SFLDataFormat* bufferPos = &(*buffer.begin());
+    std::vector<SFLAudioSample> buffer(SIZEBUF); // 1kb
+    SFLAudioSample* bufferPos = buffer.data();
 
     // Number of format sections
     std::string::size_type posStart = 0; // position of precedent comma
@@ -80,7 +84,7 @@ Tone::genBuffer(const std::string& definition)
         {
             // Sample string: "350+440" or "350+440/2000,244+655/2000"
             int freq1, freq2, time;
-            s = definition.substr(posStart, posEnd-posStart);
+            s = definition.substr(posStart, posEnd - posStart);
 
             // The 1st frequency is before the first + or the /
             size_t pos_plus = s.find('+');
@@ -107,25 +111,22 @@ Tone::genBuffer(const std::string& definition)
 
             // If there is time or if it's unlimited
             if (time == 0)
-                count = sampleRate_;
+                count = sampleRate;
             else
-                count = (sampleRate_ * time) / 1000;
+                count = (sampleRate * time) / 1000;
 
             // Generate SAMPLING_RATE samples of sinus, buffer is the result
             genSin(bufferPos, freq1, freq2, count);
 
             // To concatenate the different buffers for each section.
-            size_ += count;
+            size += count;
             bufferPos += count;
         } /* end scope */
 
         posStart = posEnd + 1;
     } while (posStart < deflen);
 
-    assert(!buffer_);
-    buffer_ = new SFLDataFormat[size_];
-
-    memcpy(buffer_, &(*buffer.begin()), size_ * sizeof(SFLDataFormat)); // copy char, not SFLDataFormat.
+    buffer_->copy(buffer.data(), size); // fill the buffer
 }
 
 void
@@ -154,13 +155,13 @@ Tone::interpolate(double x) const
 }
 
 void
-Tone::genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
+Tone::genSin(SFLAudioSample* buffer, int frequency1, int frequency2, int nb)
 {
     xhigher_ = 0.0;
     xlower_ = 0.0;
 
-    double sr = sampleRate_;
-    double tableSize = TABLE_LENGTH;
+    const double sr = (double)buffer_->getSampleRate();
+    static const double tableSize = TABLE_LENGTH;
 
     double N_h = sr / frequency1;
     double N_l = sr / frequency2;

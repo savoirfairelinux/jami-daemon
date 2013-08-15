@@ -42,7 +42,8 @@
 
 #include "logger.h"
 #include "manager.h"
-#include "dbus/configurationmanager.h"
+
+#include "client/configurationmanager.h"
 
 const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY =      "videoCodecs";
@@ -63,6 +64,8 @@ const char * const Account::HOSTNAME_KEY =          "hostname";
 const char * const Account::ACCOUNT_ENABLE_KEY =    "enable";
 const char * const Account::ACCOUNT_AUTOANSWER_KEY =    "autoAnswer";
 const char * const Account::MAILBOX_KEY =           "mailbox";
+const char * const Account::DEFAULT_USER_AGENT =    "SFLphone/" PACKAGE_VERSION;
+const char * const Account::USER_AGENT_KEY =        "useragent";
 
 using std::map;
 using std::string;
@@ -83,7 +86,7 @@ Account::Account(const string &accountID) :
     , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
     , ringtoneEnabled_(true)
     , displayName_("")
-    , userAgent_("SFLphone")
+    , userAgent_(DEFAULT_USER_AGENT)
     , mailBox_()
 {
     // Initialize the codec order, used when creating a new account
@@ -97,9 +100,8 @@ void Account::setRegistrationState(const RegistrationState &state)
 {
     if (state != registrationState_) {
         registrationState_ = state;
-
         // Notify the client
-        ConfigurationManager *c(Manager::instance().getDbusManager()->getConfigurationManager());
+        ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
         c->registrationStateChanged(accountID_, registrationState_);
     }
 }
@@ -157,8 +159,8 @@ namespace {
         }
 
         // check that it's in the list of valid codecs and that it has all the required fields
-        for (vector<map<string, string> >::const_iterator i = defaults.begin(); i != defaults.end(); ++i) {
-            const map<string, string>::const_iterator defaultName = i->find(Account::VIDEO_CODEC_NAME);
+        for (const auto &i : defaults) {
+            const auto defaultName = i.find(Account::VIDEO_CODEC_NAME);
             if (defaultName->second == name->second) {
                 return isFieldValid(codec, Account::VIDEO_CODEC_BITRATE, isPositiveInteger)
                     and isFieldValid(codec, Account::VIDEO_CODEC_ENABLED, isBoolean);
@@ -170,16 +172,15 @@ namespace {
 
     bool isCodecListValid(const vector<map<string, string> > &list)
     {
-        const vector<map<string, string> > defaults(libav_utils::getDefaultCodecs());
+        const auto defaults(libav_utils::getDefaultCodecs());
         if (list.size() != defaults.size()) {
             ERROR("New codec list has a different length than the list of supported codecs");
             return false;
         }
 
         // make sure that all codecs are present
-        for (vector<map<string, string> >::const_iterator i = list.begin();
-             i != list.end(); ++i) {
-            if (not isCodecValid(*i, defaults))
+        for (const auto &i : list) {
+            if (not isCodecValid(i, defaults))
                 return false;
         }
         return true;
@@ -235,8 +236,8 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
-    for (vector<string>::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
-        int payload = std::atoi(iter->c_str());
+    for (const auto &item : list) {
+        int payload = std::atoi(item.c_str());
         audioCodecList_.push_back(payload);
     }
 

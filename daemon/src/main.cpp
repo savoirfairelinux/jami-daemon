@@ -35,6 +35,7 @@
 #endif
 
 #include <iostream>
+#include <signal.h>
 #include <getopt.h>
 #include "fileutils.h"
 #include "logger.h"
@@ -143,7 +144,7 @@ int main(int argc, char *argv [])
     std::vector<char> writable(programName.size() + 1);
     std::copy(programName.begin(), programName.end(), writable.begin());
 
-    fileutils::set_program_dir(&*writable.begin());
+    fileutils::set_program_dir(writable.data());
 
     print_title();
     if (parse_args(argc, argv))
@@ -170,8 +171,9 @@ int main(int argc, char *argv [])
 #ifdef SFL_VIDEO
     WARN("Built with video support");
 #endif
-
+#if HAVE_DBUS
     Manager::instance().run();
+#endif
     Manager::instance().saveHistory();
 
     return 0;

@@ -32,10 +32,10 @@
 #define SFL_TYPES_H_
 
 #include <cstddef> // for size_t
+#include <stdint.h>
 
-typedef short SFLDataFormat;
-typedef signed short SINT16;
-typedef signed int SINT32;
+typedef int16_t SFLAudioSample;
+#define SFL_DATA_FORMAT_MAX SHRT_MAX
 
 static const size_t SIZEBUF = 400000; /** About 12 sec of buffering at 8000 Hz*/
 

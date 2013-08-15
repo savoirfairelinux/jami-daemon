@@ -33,24 +33,26 @@
 #endif
 
 #include <cstdlib>
-#include "dbusmanager.h"
+#include "client/client.h"
 #include "global.h"
 #include "manager.h"
 #include "logger.h"
 #include "instance.h"
+
+#include "dbus_cpp.h"
 
 #include "callmanager.h"
 #include "configurationmanager.h"
 #include "networkmanager.h"
 
 #ifdef SFL_VIDEO
-#include "dbus/video_controls.h"
+#include "video_controls.h"
 #endif
 
-DBusManager::DBusManager() : callManager_(0)
+Client::Client() : callManager_(0)
     , configurationManager_(0)
     , instanceManager_(0)
-    , dispatcher_()
+    , dispatcher_(new DBus::BusDispatcher)
 #ifdef SFL_VIDEO
     , videoControls_(0)
 #endif
@@ -62,7 +64,7 @@ DBusManager::DBusManager() : callManager_(0)
         DEBUG("DBUS init threading");
         DBus::_init_threading();
         DEBUG("DBUS instantiate default dispatcher");
-        DBus::default_dispatcher = &dispatcher_;
+        DBus::default_dispatcher = dispatcher_;
 
         DEBUG("DBUS session connection to session bus");
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
@@ -93,9 +95,10 @@ DBusManager::DBusManager() : callManager_(0)
     }
 
     DEBUG("DBUS registration done");
+    instanceManager_->started();
 }
 
-DBusManager::~DBusManager()
+Client::~Client()
 {
 #ifdef USE_NETWORKMANAGER
     delete networkManager_;
@@ -106,12 +109,13 @@ DBusManager::~DBusManager()
     delete instanceManager_;
     delete configurationManager_;
     delete callManager_;
+    delete dispatcher_;
 }
 
-void DBusManager::exec()
+void Client::event_loop()
 {
     try {
-        dispatcher_.enter();
+        dispatcher_->enter();
     } catch (const DBus::Error &err) {
         ERROR("%s: %s, quitting\n", err.name(), err.what());
         return;
@@ -121,10 +125,10 @@ void DBusManager::exec()
     }
 }
 
-void DBusManager::exit()
+void Client::exit()
 {
     try {
-        dispatcher_.leave();
+        dispatcher_->leave();
     } catch (const DBus::Error &err) {
         ERROR("%s: %s, quitting\n", err.name(), err.what());
         return;

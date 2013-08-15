@@ -35,6 +35,7 @@
 #include <cmath>
 #include <cstring>
 
+#include "audiobuffer.h"
 #include "sfl_types.h"
 #include "noncopyable.h"
 
@@ -47,7 +48,7 @@ class SamplerateConverter {
         * internal buffer size. Converter must be reinitialized
         * every time these parameters change
         */
-        SamplerateConverter(int freq);
+        SamplerateConverter(int freq, size_t channels = 1);
 
         /** Destructor */
         ~SamplerateConverter();
@@ -59,7 +60,8 @@ class SamplerateConverter {
          * @param SamplerateConverter2 The desired sample rate
          * @param nbSamples	  The number of samples to process
          */
-        void resample(SFLDataFormat* dataIn, SFLDataFormat* dataOut, size_t dataOutSize, int oldrate, int newrate, size_t nbSamples);
+        //void resample(SFLAudioSample* dataIn, SFLAudioSample* dataOut, size_t dataOutSize, int oldrate, int newrate, size_t nbSamples);
+        void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
         /**
          * Convert short table to floats for audio processing
@@ -67,16 +69,18 @@ class SamplerateConverter {
          * @param out The resulting (float) array
          * @param len The number of elements in both tables
          */
-        void Short2FloatArray(const short *in, float *out, int len);
+        void Short2FloatArray(const SFLAudioSample *in, float *out, int len);
 
 
     private:
         NON_COPYABLE(SamplerateConverter);
 
         /* temporary buffers */
-        float * floatBufferIn_;
-        float * floatBufferOut_;
+        std::vector<float> floatBufferIn_;
+        std::vector<float> floatBufferOut_;
+
         size_t samples_; // size in samples of temporary buffers
+        size_t channels_; // number of channels configured
         int maxFreq_; // maximal output frequency
 
         SRC_STATE* src_state_;

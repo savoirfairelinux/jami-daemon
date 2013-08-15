@@ -1,7 +1,8 @@
 aclocal.m4
+build-aux
 
 configure
-src/dbus/org.sflphone.SFLphone.service
+src/client/dbus/org.sflphone.SFLphone.service
 src/sflphoned
 
 # Ignore sub-modules stuff

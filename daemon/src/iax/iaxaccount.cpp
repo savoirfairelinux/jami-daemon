@@ -77,6 +77,9 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
     accountmap.setKeyValue(AUDIO_CODECS_KEY, &codecs);
 
+    Conf::ScalarNode userAgent(userAgent_);
+    accountmap.setKeyValue(USER_AGENT_KEY, &userAgent);
+
     try {
         emitter.serializeAccount(&accountmap);
     } catch (const Conf::YamlEmitterException &e) {
@@ -97,6 +100,8 @@ void IAXAccount::unserialize(const Conf::YamlNode &map)
     // Update codec list which one is used for SDP offer
     setActiveAudioCodecs(split_string(audioCodecStr_));
     map.getValue(DISPLAY_NAME_KEY, &displayName_);
+
+    map.getValue(USER_AGENT_KEY, &userAgent_);
 }
 
 void IAXAccount::setAccountDetails(std::map<std::string, std::string> details)

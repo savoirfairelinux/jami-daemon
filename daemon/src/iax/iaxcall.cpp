@@ -74,8 +74,8 @@ int IAXCall::getSupportedFormat(const std::string &accountID) const
     if (account) {
         vector<int> codecs(account->getActiveAudioCodecs());
 
-        for (vector<int>::const_iterator i = codecs.begin(); i != codecs.end(); ++i)
-            format_mask |= codecToASTFormat(*i);
+        for (const auto &i : codecs)
+            format_mask |= codecToASTFormat(i);
     } else
         ERROR("No IAx account could be found");
 
@@ -90,8 +90,8 @@ int IAXCall::getFirstMatchingFormat(int needles, const std::string &accountID) c
     if (account != NULL) {
         vector<int> codecs(account->getActiveAudioCodecs());
 
-        for (vector<int>::const_iterator i = codecs.begin(); i != codecs.end(); ++i) {
-            int format_mask = codecToASTFormat(*i);
+        for (const auto &i : codecs) {
+            int format_mask = codecToASTFormat(i);
 
             // Return the first that matches
             if (format_mask & needles)

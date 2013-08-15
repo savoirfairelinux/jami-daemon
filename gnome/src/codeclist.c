@@ -58,6 +58,7 @@ static codec_t *codec_create(gint payload, gchar **specs)
         codec->bitrate = g_strdup(specs[2]);
         codec->sample_rate = atoi(specs[1]);
     }
+    codec->channels = specs[3]?atoi(specs[3]):1;
     codec->is_active = TRUE;
 
     g_strfreev(specs);
@@ -131,6 +132,7 @@ codec_t *codec_create_new_from_caps(codec_t *original)
         codec->name = g_strdup(original->name);
         codec->sample_rate = original->sample_rate;
         codec->bitrate = g_strdup(original->bitrate);
+        codec->channels = original->channels;
     }
 
     return codec;

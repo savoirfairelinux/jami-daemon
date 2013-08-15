@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,16 +33,28 @@
 #define DCBLOCKER_H
 
 #include "sfl_types.h"
+#include "audiobuffer.h"
 
 class DcBlocker {
     public:
-        DcBlocker();
+        DcBlocker(unsigned channels = 1);
         void reset();
-        void process(SFLDataFormat *out, SFLDataFormat *in, int samples);
+
+        void process(SFLAudioSample *out, SFLAudioSample *in, int samples);
+
+        /**
+         * In-place processing of all samples in buf (each channel treated independently)
+         */
+        void process(AudioBuffer& buf);
 
     private:
+        struct StreamState {
+            SFLAudioSample y_, x_, xm1_, ym1_;
+        };
 
-        SFLDataFormat y_, x_, xm1_, ym1_;
+        void doProcess(SFLAudioSample *out, SFLAudioSample *in, unsigned samples, struct StreamState * state);
+
+        std::vector<StreamState> states;
 };
 
 #endif

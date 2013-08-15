@@ -38,11 +38,9 @@
 
 int AudioRecorder::count_ = 0;
 
-AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) :
+AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer &mb) :
     recorderId_(), mbuffer_(mb), arecord_(arec), running_(false), thread_(0)
 {
-    assert(mb);
-
     ++count_;
 
     std::string id("processid_");
@@ -56,8 +54,10 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) :
     recorderId_ = id.append(s);
 }
 
-AudioRecorder::~AudioRecorder() {
+AudioRecorder::~AudioRecorder()
+{
     running_ = false;
+
     if (thread_)
         pthread_join(thread_, NULL);
 }
@@ -81,16 +81,16 @@ AudioRecorder::runCallback(void *data)
  */
 void AudioRecorder::run()
 {
-    const size_t BUFFER_LENGTH = 10000;
-    std::tr1::array<SFLDataFormat, BUFFER_LENGTH> buffer;
-    buffer.assign(0);
+    static const size_t BUFFER_LENGTH = 10000;
+    AudioBuffer buffer(BUFFER_LENGTH);
 
     while (running_) {
-        const size_t availableBytes = mbuffer_->availableForGet(recorderId_);
-        mbuffer_->getData(buffer.data(), std::min(availableBytes, buffer.size()), recorderId_);
+        const size_t availableSamples = mbuffer_.availableForGet(recorderId_);
+        buffer.resize(std::min(availableSamples, BUFFER_LENGTH));
+        mbuffer_.getData(buffer, recorderId_);
 
-        if (availableBytes > 0)
-            arecord_->recData(buffer.data(), availableBytes / sizeof(SFLDataFormat));
+        if (availableSamples > 0)
+            arecord_->recData(buffer);
 
         usleep(20000); // 20 ms
     }

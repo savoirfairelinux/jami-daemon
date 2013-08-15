@@ -50,6 +50,9 @@
 class MainBuffer;
 class AudioPreference;
 
+
+typedef std::vector<AudioBuffer> AudioBufferStack;
+
 namespace ost {
 class Time;
 }
@@ -121,9 +124,8 @@ class AudioLayer {
          * Send a chunk of data to the hardware buffer to start the playback
          * Copy data in the urgent buffer.
          * @param buffer The buffer containing the data to be played ( ringtones )
-         * @param toCopy The size of the buffer
          */
-        void putUrgent(void* buffer, int toCopy);
+        void putUrgent(AudioBuffer& buffer);
 
         /**
          * Flush main buffer
@@ -134,11 +136,6 @@ class AudioLayer {
          * Flush urgent buffer
          */
         void flushUrgent();
-
-        /**
-         * Apply gain to audio frame
-         */
-        static void applyGain(SFLDataFormat *src , int samples, int gain);
 
         /**
          * Convert audio amplitude value from linear value to dB
@@ -164,7 +161,7 @@ class AudioLayer {
         /**
          * Set capture stream gain (microphone)
          */
-       unsigned int getCaptureGain(void) {
+        unsigned int getCaptureGain() const {
             return captureGain_;
         }
 
@@ -178,7 +175,7 @@ class AudioLayer {
         /**
          * Get playback stream gain (speaker)
          */
-        unsigned int getPlaybackGain(void) {
+        unsigned int getPlaybackGain() const {
             return playbackGain_;
         }
 
@@ -196,19 +193,20 @@ class AudioLayer {
          */
         void notifyIncomingCall();
 
+        virtual void updatePreference(AudioPreference &pref, int index, PCMType type) = 0;
+
+    protected:
+
         /**
          * Gain applied to mic signal
          */
-        static unsigned int captureGain_;
+        unsigned int captureGain_;
 
         /**
          * Gain applied to playback signal
          */
-        static unsigned int playbackGain_;
+        unsigned int playbackGain_;
 
-        virtual void updatePreference(AudioPreference &pref, int index, PCMType type) = 0;
-
-    protected:
         /**
          * Whether or not the audio layer stream is started
          */
@@ -243,6 +241,7 @@ class AudioLayer {
         SamplerateConverter converter_;
 
     private:
+
         /**
          * Time of the last incoming call notification
          */

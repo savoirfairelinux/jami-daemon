@@ -37,12 +37,12 @@
 #include "logger.h"
 #include "manager.h"
 #include "noncopyable.h"
-#include "dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 #include <ctime>
 
 #define SFL_ALSA_PERIOD_SIZE 160
 #define SFL_ALSA_NB_PERIOD 8
-#define SFL_ALSA_BUFFER_SIZE SFL_ALSA_PERIOD_SIZE*SFL_ALSA_NB_PERIOD
+#define SFL_ALSA_BUFFER_SIZE SFL_ALSA_PERIOD_SIZE * SFL_ALSA_NB_PERIOD
 
 class AlsaThread {
     public:
@@ -74,6 +74,7 @@ bool AlsaThread::isRunning() const
 AlsaThread::~AlsaThread()
 {
     running_ = false;
+
     if (thread_)
         pthread_join(thread_, NULL);
 }
@@ -112,18 +113,18 @@ void AlsaThread::initAudioLayer(void)
         alsa_->is_capture_open_ = alsa_->openDevice(&alsa_->captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE);
 
         if (not alsa_->is_capture_open_)
-            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
+            Manager::instance().getClient()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
     }
 
     if (not alsa_->is_playback_open_) {
         alsa_->is_playback_open_ = alsa_->openDevice(&alsa_->playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK);
 
         if (not alsa_->is_playback_open_)
-            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
+            Manager::instance().getClient()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
 
         if (alsa_->getIndexPlayback() != alsa_->getIndexRingtone())
             if (!alsa_->openDevice(&alsa_->ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK))
-                Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
+                Manager::instance().getClient()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
     }
 
     alsa_->prepareCaptureStream();
@@ -149,7 +150,6 @@ void AlsaThread::run()
     }
 }
 
-// Constructor
 AlsaLayer::AlsaLayer(const AudioPreference &pref)
     : indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
@@ -172,7 +172,6 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     setPlaybackGain(pref.getVolumespkr());
 }
 
-// Destructor
 AlsaLayer::~AlsaLayer()
 {
     isStarted_ = false;
@@ -198,7 +197,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 
     if (err < 0) {
         ERROR("Alsa: couldn't open device %s : %s",  dev.c_str(),
-               snd_strerror(err));
+              snd_strerror(err));
         return false;
     }
 
@@ -247,10 +246,6 @@ AlsaLayer::stopStream()
     flushUrgent();
     flushMain();
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
  * GCC extension : statement expression
@@ -388,11 +383,12 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
         ERROR("buffer to small, could not use");
         return false;
     }
+
 #undef HW
 
     DEBUG("%s using sampling rate %dHz",
-           (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
-           sampleRate_);
+          (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
+          sampleRate_);
 
     snd_pcm_sw_params_t *swparams = NULL;
     snd_pcm_sw_params_alloca(&swparams);
@@ -408,13 +404,14 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 #undef TRY
 }
 
-//TODO first frame causes broken pipe (underrun) because not enough data are send --> make the handle wait to be ready
+// TODO first frame causes broken pipe (underrun) because not enough data is sent
+// we should wait until the handle is ready
 void
 AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
 {
-    //Do not waste CPU cycle to handle void
+    // Skip empty buffers
     if (!length)
-       return;
+        return;
 
     snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames(handle, length);
     watchdogTotalCount_++;
@@ -454,12 +451,14 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
                     ERROR("Writing in state SND_PCM_STATE_SETUP, should be "
                           "SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
                     int error = snd_pcm_prepare(handle);
+
                     if (error < 0) {
                         ERROR("Failed to prepare handle: %s", snd_strerror(error));
                         stopPlaybackStream();
                     }
                 }
             }
+
             break;
         }
 
@@ -469,8 +468,9 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
             break;
     }
 
-    //Detect when something is going wrong. This can be caused by alsa bugs or faulty encoder on the other side
-    //TODO do something useful instead of just warning and flushing buffers
+    // Detect when something is going wrong. This can be caused by alsa bugs or
+    // faulty encoder on the other side
+    // TODO do something useful instead of just warning and flushing buffers
     if (watchdogTotalErr_ > 0 && watchdogTotalCount_ / watchdogTotalErr_ >=4 && watchdogTotalCount_ > 50) {
         ERROR("Alsa: too many errors (%d error on %d frame)",watchdogTotalErr_,watchdogTotalCount_);
         flushUrgent();
@@ -539,13 +539,16 @@ namespace {
 bool safeUpdate(snd_pcm_t *handle, int &samples)
 {
     samples = snd_pcm_avail_update(handle);
+
     if (samples < 0) {
         samples = snd_pcm_recover(handle, samples, 0);
+
         if (samples < 0) {
             ERROR("Got unrecoverable error from snd_pcm_avail_update: %s", snd_strerror(samples));
             return false;
         }
     }
+
     return true;
 }
 
@@ -553,9 +556,10 @@ std::vector<std::string>
 getValues(const std::vector<HwIDPair> &deviceMap)
 {
     std::vector<std::string> audioDeviceList;
-    for (std::vector<HwIDPair>::const_iterator iter = deviceMap.begin();
-            iter != deviceMap.end(); ++iter)
-        audioDeviceList.push_back(iter->second);
+
+    for (const auto &dev : deviceMap)
+        audioDeviceList.push_back(dev.second);
+
     return audioDeviceList;
 }
 }
@@ -600,12 +604,11 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
                 if (snd_ctl_pcm_info(handle ,pcminfo) < 0) {
                     DEBUG(" Cannot get info");
-                }
-                else {
+                } else {
                     DEBUG("card %i : %s [%s]",
-                           numCard,
-                           snd_ctl_card_info_get_id(info),
-                           snd_ctl_card_info_get_name(info));
+                          numCard,
+                          snd_ctl_card_info_get_id(info),
+                          snd_ctl_card_info_get_name(info));
                     std::string description = snd_ctl_card_info_get_name(info);
                     description.append(" - ");
                     description.append(snd_pcm_info_get_name(pcminfo));
@@ -635,6 +638,7 @@ AlsaLayer::soundCardIndexExists(int card, PCMType stream)
     name.append(ss.str());
 
     snd_ctl_t* handle;
+
     if (snd_ctl_open(&handle, name.c_str(), 0) != 0)
         return false;
 
@@ -654,9 +658,9 @@ AlsaLayer::getAudioDeviceIndex(const std::string &description) const
     audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), captureDevice.begin(), captureDevice.end());
     audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), playbackDevice.begin(), playbackDevice.end());
 
-    for (std::vector<HwIDPair>::const_iterator iter = audioDeviceIndexMap.begin(); iter != audioDeviceIndexMap.end(); ++iter)
-        if (iter->second == description)
-            return iter->first;
+    for (const auto &dev : audioDeviceIndexMap)
+        if (dev.second == description)
+            return dev.first;
 
     // else return the default one
     return 0;
@@ -672,8 +676,10 @@ AlsaLayer::getAudioDeviceName(int index, PCMType type) const
         case SFL_PCM_PLAYBACK:
         case SFL_PCM_RINGTONE:
             return getPlaybackDeviceList().at(index);
+
         case SFL_PCM_CAPTURE:
             return getCaptureDeviceList().at(index);
+
         default:
             ERROR("Unexpected type %d", type);
             return "";
@@ -696,31 +702,28 @@ void AlsaLayer::capture()
     const int framesPerBufferAlsa = 2048;
     toGetSamples = std::min(framesPerBufferAlsa, toGetSamples);
 
-    std::vector<SFLDataFormat> in(toGetSamples);
-    SFLDataFormat * const in_ptr = &(*in.begin());
+    AudioBuffer in(toGetSamples, 1, sampleRate_);
 
-    const int toGetBytes = in.size() * sizeof(in[0]);
+    // TODO: handle ALSA multichannel capture
+    const int toGetBytes = in.samples() * sizeof(SFLAudioSample);
+    SFLAudioSample * const in_ptr = in.getChannel(0)->data();
+
     if (read(in_ptr, toGetBytes) != toGetBytes) {
         ERROR("ALSA MIC : Couldn't read!");
         return;
     }
 
-    AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
+    in.applyGain(captureGain_);
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
-        std::vector<SFLDataFormat> rsmpl_out(outSamples);
-        SFLDataFormat * const rsmpl_out_ptr = &(*rsmpl_out.begin());
-        converter_.resample(in_ptr, rsmpl_out_ptr,
-                rsmpl_out.size(), mainBufferSampleRate, sampleRate_,
-                toGetSamples);
-        dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
-        Manager::instance().getMainBuffer().putData(rsmpl_out_ptr,
-                rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
+        AudioBuffer rsmpl_out(outSamples, 1, mainBufferSampleRate);
+        converter_.resample(in, rsmpl_out);
+        dcblocker_.process(rsmpl_out);
+        Manager::instance().getMainBuffer().putData(rsmpl_out, MainBuffer::DEFAULT_ID);
     } else {
-        dcblocker_.process(in_ptr, in_ptr, toGetSamples);
-        Manager::instance().getMainBuffer().putData(in_ptr, toGetBytes,
-                                                     MainBuffer::DEFAULT_ID);
+        dcblocker_.process(in);
+        Manager::instance().getMainBuffer().putData(in, MainBuffer::DEFAULT_ID);
     }
 }
 
@@ -728,7 +731,8 @@ void AlsaLayer::playback(int maxSamples)
 {
     size_t bytesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
 
-    const size_t bytesToPut = maxSamples * sizeof(SFLDataFormat);
+    const size_t bytesToPut = maxSamples * sizeof(SFLAudioSample);
+
     // no audio available, play tone or silence
     if (bytesToGet <= 0) {
         // FIXME: not thread safe! we only lock the mutex when we get the
@@ -736,14 +740,14 @@ void AlsaLayer::playback(int maxSamples)
         AudioLoop *tone = Manager::instance().getTelephoneTone();
         AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
-        std::vector<SFLDataFormat> out(maxSamples, 0);
-        SFLDataFormat * const out_ptr = &(*out.begin());
-        if (tone)
-            tone->getNext(out_ptr, out.size(), getPlaybackGain());
-        else if (file_tone && !ringtoneHandle_)
-            file_tone->getNext(out_ptr, out.size(), getPlaybackGain());
+        AudioBuffer out(maxSamples, 1, sampleRate_);
 
-        write(out_ptr, bytesToPut, playbackHandle_);
+        if (tone)
+            tone->getNext(out, playbackGain_);
+        else if (file_tone && !ringtoneHandle_)
+            file_tone->getNext(out, playbackGain_);
+
+        write(out.getChannel(0)->data(), bytesToPut, playbackHandle_);
     } else {
         // play the regular sound samples
 
@@ -752,6 +756,7 @@ void AlsaLayer::playback(int maxSamples)
 
         double resampleFactor = 1.0;
         size_t maxNbBytesToGet = bytesToPut;
+
         if (resample) {
             resampleFactor = static_cast<double>(sampleRate_) / mainBufferSampleRate;
             maxNbBytesToGet = bytesToGet / resampleFactor;
@@ -759,22 +764,21 @@ void AlsaLayer::playback(int maxSamples)
 
         bytesToGet = std::min(maxNbBytesToGet, bytesToGet);
 
-        const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
-        std::vector<SFLDataFormat> out(samplesToGet, 0);
-        SFLDataFormat * const out_ptr = &(*out.begin());
-        Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-        AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+        const size_t samplesToGet = bytesToGet / sizeof(SFLAudioSample);
+        //std::vector<SFLAudioSample> out(samplesToGet, 0);
+        AudioBuffer out(samplesToGet, 1, mainBufferSampleRate);
+
+        Manager::instance().getMainBuffer().getData(out, MainBuffer::DEFAULT_ID);
+        out.applyGain(playbackGain_);
 
         if (resample) {
             const size_t outSamples = samplesToGet * resampleFactor;
-            const size_t outBytes = outSamples * sizeof(SFLDataFormat);
-            std::vector<SFLDataFormat> rsmpl_out(outSamples);
-            SFLDataFormat * const rsmpl_out_ptr = &(*rsmpl_out.begin());
-            converter_.resample(out_ptr, rsmpl_out_ptr, rsmpl_out.size(),
-                    mainBufferSampleRate, sampleRate_, samplesToGet);
-            write(rsmpl_out_ptr, outBytes, playbackHandle_);
+            const size_t outBytes = outSamples * sizeof(SFLAudioSample);
+            AudioBuffer rsmpl_out(outSamples, 1, sampleRate_);
+            converter_.resample(out, rsmpl_out);
+            write(rsmpl_out.getChannel(0)->data(), outBytes, playbackHandle_);
         } else {
-            write(out_ptr, bytesToGet, playbackHandle_);
+            write(out.getChannel(0)->data(), bytesToGet, playbackHandle_);
         }
     }
 }
@@ -789,24 +793,22 @@ void AlsaLayer::audioCallback()
     snd_pcm_wait(playbackHandle_, 20);
 
     int playbackAvailSmpl = 0;
+
     if (not safeUpdate(playbackHandle_, playbackAvailSmpl))
         return;
-    const size_t playbackAvailBytes = playbackAvailSmpl * sizeof(SFLDataFormat);
 
-    size_t bytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+    unsigned samplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
-    if (bytesToGet > 0) {
+    if (samplesToGet > 0) {
         // Urgent data (dtmf, incoming call signal) come first.
-        bytesToGet = std::min(bytesToGet, playbackAvailBytes);
-        const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
-        std::vector<SFLDataFormat> out(samplesToGet);
-        SFLDataFormat * const out_ptr = &(*out.begin());
-        urgentRingBuffer_.get(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-        AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+        samplesToGet = std::min(samplesToGet, (unsigned)playbackAvailSmpl);
+        AudioBuffer out(samplesToGet);
+        urgentRingBuffer_.get(out, MainBuffer::DEFAULT_ID);
+        out.applyGain(playbackGain_);
 
-        write(out_ptr, bytesToGet, playbackHandle_);
+        write(out.getChannel(0)->data(), samplesToGet * sizeof(SFLAudioSample), playbackHandle_);
         // Consume the regular one as well (same amount of bytes)
-        Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
+        Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
     } else {
         // regular audio data
         playback(playbackAvailSmpl);
@@ -815,20 +817,19 @@ void AlsaLayer::audioCallback()
     if (ringtoneHandle_) {
         AudioLoop *file_tone = Manager::instance().getTelephoneFile();
         int ringtoneAvailSmpl = 0;
+
         if (not safeUpdate(ringtoneHandle_, ringtoneAvailSmpl))
             return;
-        int ringtoneAvailBytes = ringtoneAvailSmpl * sizeof(SFLDataFormat);
+        int ringtoneAvailBytes = ringtoneAvailSmpl * sizeof(SFLAudioSample);
 
-        std::vector<SFLDataFormat> out(ringtoneAvailSmpl, 0);
-        SFLDataFormat * const out_ptr = &(*out.begin());
+        AudioBuffer out(ringtoneAvailSmpl);
 
         if (file_tone) {
-            DEBUG("playback gain %d", getPlaybackGain());
-            file_tone->getNext(out_ptr, ringtoneAvailSmpl,
-                               getPlaybackGain());
+            DEBUG("playback gain %d", playbackGain_);
+            file_tone->getNext(out, playbackGain_);
         }
 
-        write(out_ptr, ringtoneAvailBytes, ringtoneHandle_);
+        write(out.getChannel(0)->data(), ringtoneAvailBytes, ringtoneHandle_);
     }
 
     // Additionally handle the mic's audio stream
@@ -842,12 +843,15 @@ void AlsaLayer::updatePreference(AudioPreference &preference, int index, PCMType
         case SFL_PCM_PLAYBACK:
             preference.setAlsaCardout(index);
             break;
+
         case AudioLayer::SFL_PCM_CAPTURE:
             preference.setAlsaCardin(index);
             break;
+
         case AudioLayer::SFL_PCM_RINGTONE:
             preference.setAlsaCardring(index);
             break;
+
         default:
             break;
     }

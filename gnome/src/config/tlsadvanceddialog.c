@@ -189,34 +189,27 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_grid_attach(GTK_GRID(grid), privateKeyPasswordEntry, 1, 6, 1, 1);
 
     /* TLS protocol methods */
-    GtkTreeIter iter;
 
-    GtkListStore * tlsProtocolMethodListStore =  gtk_list_store_new(1, G_TYPE_STRING);
     label = gtk_label_new_with_mnemonic(_("TLS protocol method"));
     gtk_grid_attach(GTK_GRID(grid), label, 0, 7, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 
+    GtkWidget *tlsProtocolMethodCombo = gtk_combo_box_text_new();
     gchar** supported_tls_method = dbus_get_supported_tls_method();
 
-    GtkTreeIter supported_tls_method_iter;
+    gint supported_tls_method_idx = 0;
+    gint idx = 0;
     for (char **supported_tls_method_ptr = supported_tls_method; supported_tls_method_ptr && *supported_tls_method_ptr; supported_tls_method_ptr++) {
-        gtk_list_store_append(tlsProtocolMethodListStore, &iter);
-        gtk_list_store_set(tlsProtocolMethodListStore, &iter, 0, *supported_tls_method_ptr, -1);
-
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(tlsProtocolMethodCombo), NULL, *supported_tls_method_ptr);
+        /* make sure current TLS method from is active */
         if (g_strcmp0(*supported_tls_method_ptr, tls_method) == 0)
-            supported_tls_method_iter = iter;
+            supported_tls_method_idx = idx;
+        ++idx;
     }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(tlsProtocolMethodCombo), supported_tls_method_idx);
 
-    GtkWidget *tlsProtocolMethodCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(tlsProtocolMethodListStore));
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), tlsProtocolMethodCombo);
     gtk_grid_attach(GTK_GRID(grid), tlsProtocolMethodCombo, 1, 7, 1, 1);
-    g_object_unref(G_OBJECT(tlsProtocolMethodListStore));
-
-    GtkCellRenderer *tlsProtocolMethodCellRenderer;
-    tlsProtocolMethodCellRenderer = gtk_cell_renderer_text_new();
-    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(tlsProtocolMethodCombo), tlsProtocolMethodCellRenderer, TRUE);
-    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(tlsProtocolMethodCombo), tlsProtocolMethodCellRenderer, "text", 0, NULL);
-    gtk_combo_box_set_active_iter(GTK_COMBO_BOX(tlsProtocolMethodCombo), &supported_tls_method_iter);
 
     /* Cipher list */
     GtkWidget * cipherListEntry;

@@ -29,76 +29,81 @@
  */
 
 #include "samplerateconverter.h"
-#include "manager.h"
-#include <cassert>
-#include "logger.h"
+#include "sfl_types.h"
 
-SamplerateConverter::SamplerateConverter(int freq) : floatBufferIn_(0),
-    floatBufferOut_(0), samples_(0), maxFreq_(freq), src_state_(0)
+SamplerateConverter::SamplerateConverter(int freq, size_t channels /* = 1 */) : floatBufferIn_(),
+    floatBufferOut_(), samples_(0), channels_(channels), maxFreq_(freq), src_state_(0)
 {
     int err;
-    src_state_ = src_new(SRC_LINEAR, 1, &err);
+    src_state_ = src_new(SRC_LINEAR, channels_, &err);
 
     samples_ = (freq * 20) / 1000; // start with 20 ms buffers
 
-    floatBufferIn_ = new float[samples_];
-    floatBufferOut_ = new float[samples_];
+    floatBufferIn_.resize(samples_);
+    floatBufferOut_.resize(samples_);
 }
 
 SamplerateConverter::~SamplerateConverter()
 {
-    delete [] floatBufferIn_;
-    delete [] floatBufferOut_;
-
     src_delete(src_state_);
 }
 
 void
-SamplerateConverter::Short2FloatArray(const short *in, float *out, int len)
+SamplerateConverter::Short2FloatArray(const SFLAudioSample *in, float *out, int len)
 {
     // factor is 1/(2^15), used to rescale the short int range to the
     // [-1.0 - 1.0] float range.
+    static const float FACTOR = 1.0f / (1 << 15);
 
     while (len--)
-        out[len] = (float) in[len] * .000030517578125f;
+        out[len] = (float) in[len] * FACTOR;
 }
 
-void SamplerateConverter::resample(SFLDataFormat *dataIn,
-                                   SFLDataFormat *dataOut,
-                                   size_t dataOutSize, int inputFreq,
-                                   int outputFreq, size_t nbSamples)
+void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
 {
-    double sampleFactor = (double) outputFreq / inputFreq;
+    const double inputFreq = dataIn.getSampleRate();
+    const double outputFreq = dataOut.getSampleRate();
+    const double sampleFactor = outputFreq / inputFreq;
 
     if (sampleFactor == 1.0)
         return;
 
-    size_t outSamples = nbSamples * sampleFactor;
-    const unsigned int maxSamples = std::max(outSamples, nbSamples);
+    const size_t nbFrames = dataIn.samples();
+    const size_t nbChans = dataIn.channels();
 
-    if (maxSamples > samples_) {
-        /* grow buffer if needed */
-        samples_ = maxSamples;
-        delete [] floatBufferIn_;
-        delete [] floatBufferOut_;
-        floatBufferIn_ = new float[samples_];
-        floatBufferOut_ = new float[samples_];
+    if (nbChans != channels_) {
+        // change channel num if needed
+        int err;
+        src_delete(src_state_);
+        src_state_ = src_new(SRC_LINEAR, nbChans, &err);
+        channels_ = nbChans;
     }
 
+    size_t inSamples = nbChans * nbFrames;
+    size_t outSamples = inSamples * sampleFactor;
+
+    // grow buffer if needed
+    samples_ = std::max(inSamples, outSamples);
+    floatBufferIn_.resize(inSamples);
+    floatBufferOut_.resize(outSamples);
+
     SRC_DATA src_data;
-    src_data.data_in = floatBufferIn_;
-    src_data.data_out = floatBufferOut_;
-    src_data.input_frames = nbSamples;
-    src_data.output_frames = outSamples;
+    src_data.data_in = floatBufferIn_.data();
+    src_data.data_out = floatBufferOut_.data();
+    src_data.input_frames = nbFrames;
+    src_data.output_frames = nbFrames * sampleFactor;
     src_data.src_ratio = sampleFactor;
     src_data.end_of_input = 0; // More data will come
 
-    Short2FloatArray(dataIn, floatBufferIn_, nbSamples);
+    dataIn.interleaveFloat(floatBufferIn_.data());
+
     src_process(src_state_, &src_data);
 
-    if (outSamples > dataOutSize) {
-        ERROR("Outsamples exceeds output buffer size, clamping to %u", dataOutSize);
-        outSamples = dataOutSize;
-    }
-    src_float_to_short_array(floatBufferOut_, dataOut, outSamples);
+    /*
+    TODO: one-shot deinterleave and float-to-short conversion
+    currently using floatBufferIn_ as scratch
+    */
+    SFLAudioSample *scratch_buff = reinterpret_cast<SFLAudioSample *>(floatBufferIn_.data());
+    src_float_to_short_array(floatBufferOut_.data(), scratch_buff, outSamples);
+    dataOut.deinterleave(scratch_buff, src_data.output_frames, nbChans);
 }

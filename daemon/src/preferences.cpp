@@ -34,9 +34,16 @@
 
 #include "preferences.h"
 #include "logger.h"
+#include "audio/audiolayer.h"
+#ifdef __ANDROID__
+#include "audio/opensl/opensllayer.h"
+#else
+#if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
+#endif
 #if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
+#endif
 #endif
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
@@ -77,7 +84,9 @@ static const char * const URL_COMMAND_KEY = "urlCommand";
 static const char * const URL_SIP_FIELD_KEY = "urlSipField";
 
 // audio preferences
+#if HAVE_ALSA
 static const char * const ALSAMAP_KEY = "alsa";
+#endif
 #if HAVE_PULSE
 static const char * const PULSEMAP_KEY = "pulse";
 #endif
@@ -103,11 +112,11 @@ static const char * const POPUP_SHORT_KEY = "popupWindow";
 static const char * const TOGGLE_HOLD_SHORT_KEY = "toggleHold";
 static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 
-static const char * const DFT_PULSE_LENGTH_STR ="250";  /** Default DTMF lenght */
+static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
 static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
-static const char * const ALSA_DFT_CARD	= "0";          /** Default sound card index */
+static const char * const ALSA_DFT_CARD    = "0";          /** Default sound card index */
 static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volume */
-static const char * const DFT_VOL_MICRO_STR	= "100";    /** Default mic volume */
+static const char * const DFT_VOL_MICRO_STR    = "100";    /** Default mic volume */
 } // end anonymous namespace
 
 Preferences::Preferences() :
@@ -297,25 +306,37 @@ AudioPreference::AudioPreference() :
 {}
 
 namespace {
+#if HAVE_ALSA
 void checkSoundCard(int &card, AudioLayer::PCMType stream)
 {
     if (not AlsaLayer::soundCardIndexExists(card, stream)) {
         WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
+
+    card = ALSA_DFT_CARD_ID;
 }
+#endif
 }
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
+#ifdef __ANDROID__
+    return new OpenSLLayer();
+#endif
+
 #if HAVE_PULSE
+
     if (audioApi_ == PULSEAUDIO_API_STR) {
         if (system("pactl info > /dev/null") == 0)
             return new PulseLayer(*this);
         else
             WARN("pulseaudio daemon not running, falling back to ALSA");
     }
+
 #endif
+
+#if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
     checkSoundCard(alsaCardin_, AudioLayer::SFL_PCM_CAPTURE);
@@ -323,6 +344,9 @@ AudioLayer* AudioPreference::createAudioLayer()
     checkSoundCard(alsaCardring_, AudioLayer::SFL_PCM_RINGTONE);
 
     return new AlsaLayer(*this);
+#else
+    return NULL;
+#endif
 }
 
 AudioLayer* AudioPreference::switchAndCreateAudioLayer()
@@ -379,12 +403,14 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(VOLUMESPKR_KEY, &volumespkr);
 
     Conf::MappingNode alsapreferencemap(NULL);
+#if HAVE_ALSA
     preferencemap.setKeyValue(ALSAMAP_KEY, &alsapreferencemap);
     alsapreferencemap.setKeyValue(CARDIN_KEY, &cardin);
     alsapreferencemap.setKeyValue(CARDOUT_KEY, &cardout);
     alsapreferencemap.setKeyValue(CARDRING_KEY, &cardring);
     alsapreferencemap.setKeyValue(PLUGIN_KEY, &plugin);
     alsapreferencemap.setKeyValue(SMPLRATE_KEY, &alsaSmplrate);
+#endif
 
 #if HAVE_PULSE
     Conf::MappingNode pulsepreferencemap(NULL);
@@ -417,6 +443,7 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     map.getValue(AUDIO_API_KEY, &audioApi_);
     std::string tmpRecordPath;
     map.getValue(RECORDPATH_KEY, &tmpRecordPath);
+
     if (not setRecordPath(tmpRecordPath))
         setRecordPath(fileutils::get_home_dir());
 
@@ -426,7 +453,7 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     map.getValue(NOISE_REDUCE_KEY, &noisereduce_);
     map.getValue(ECHO_CANCEL_KEY, &echocancel_);
 
-    Conf::MappingNode *alsamap =(Conf::MappingNode *) map.getValue("alsa");
+    Conf::MappingNode *alsamap = (Conf::MappingNode *) map.getValue("alsa");
 
     if (alsamap) {
         alsamap->getValue(CARDIN_KEY, &alsaCardin_);
@@ -437,13 +464,14 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     }
 
 #if HAVE_PULSE
-    Conf::MappingNode *pulsemap =(Conf::MappingNode *)(map.getValue("pulse"));
+    Conf::MappingNode *pulsemap = (Conf::MappingNode *)(map.getValue("pulse"));
 
     if (pulsemap) {
         pulsemap->getValue(DEVICE_PLAYBACK_KEY, &pulseDevicePlayback_);
         pulsemap->getValue(DEVICE_RECORD_KEY, &pulseDeviceRecord_);
         pulsemap->getValue(DEVICE_RINGTONE_KEY, &pulseDeviceRingtone_);
     }
+
 #endif
 }
 

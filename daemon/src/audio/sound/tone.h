@@ -66,7 +66,7 @@ class Tone : public AudioLoop {
          * @param nb are the number of int16 (mono) to generate
          * by example nb=5 generate 10 int16, 5 for the left, 5 for the right
          */
-        void genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb);
+        void genSin(SFLAudioSample* buffer, int frequency1, int frequency2, int nb);
 
         /**
          *

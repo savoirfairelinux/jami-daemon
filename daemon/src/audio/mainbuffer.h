@@ -36,6 +36,8 @@
 #include <string>
 #include <pthread.h>
 
+#include "audiobuffer.h"
+
 class RingBuffer;
 
 typedef std::set<std::string> CallIDSet;
@@ -80,9 +82,11 @@ class MainBuffer {
 
         void unBindAll(const std::string &call_id);
 
-        void putData(void *buffer, size_t toCopy, const std::string &call_id);
+        //void putData(void *buffer, size_t toCopy, const std::string &call_id);
+        void putData(AudioBuffer& buffer, const std::string &call_id);
 
-        size_t getData(void *buffer, size_t toCopy, const std::string &call_id);
+        //size_t getData(void *buffer, size_t toCopy, const std::string &call_id);
+        size_t getData(AudioBuffer& buffer, const std::string &call_id);
 
         size_t availableForGet(const std::string &call_id);
 
@@ -119,7 +123,8 @@ class MainBuffer {
         RingBuffer* getRingBuffer(const std::string &call_id);
         const RingBuffer* getRingBuffer(const std::string & call_id) const;
 
-        size_t getDataByID(void *buffer, size_t toCopy, const std::string &call_id, const std::string &reader_id);
+        //size_t getDataByID(void *buffer, size_t toCopy, const std::string &call_id, const std::string &reader_id);
+        size_t getDataByID(AudioBuffer& buffer, const std::string &call_id, const std::string &reader_id);
 
         size_t availableForGetByID(const std::string &call_id, const std::string &reader_id) const;
 

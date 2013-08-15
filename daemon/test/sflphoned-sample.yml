@@ -2,17 +2,19 @@
 accounts:
 - alias: SFL test
   audioCodecs: 0/3/8/9/110/111/112/
+  autoAnswer: false
   credential:
   - Account.password: 1234
-    Account.realm:
+    Account.realm: 
     Account.username: sfltest
-  displayName:
+  displayName: 
   dtmfType: overrtp
   enable: false
   hostname: localhost
   id: Account:1334389473
   interface: default
-  mailbox:
+  keepAlive: false
+  mailbox: 
   port: 5060
   publishAddr: 0.0.0.0
   publishPort: 5060
@@ -20,55 +22,75 @@ accounts:
   ringtoneEnabled: true
   ringtonePath: /usr/share/sflphone/ringtones/konga.ul
   sameasLocal: true
-  serviceRoute:
+  serviceRoute: 
   srtp:
     enable: false
-    keyExchange:
+    keyExchange: 
     rtpFallback: false
   stunEnabled: false
   stunServer: stun.sflphone.org
   tls:
-    calist:
-    certificate:
-    ciphers:
+    calist: 
+    certificate: 
+    ciphers: 
     enable: false
     method: TLSv1
-    password:
-    privateKey:
+    password: 
+    privateKey: 
     requireCertif: true
-    server:
+    server: 
     timeout: 2
     tlsPort: 5061
     verifyClient: true
     verifyServer: true
   type: SIP
+  useragent: SFLphone-test
   username: sfltest
   videoCodecs:
+  - bitrate: 400
+    enabled: true
+    name: H263-2000
+    parameters: 
+  - bitrate: 400
+    enabled: true
+    name: H264
+    parameters: profile-level-id=428014
+  - bitrate: 400
+    enabled: true
+    name: MP4V-ES
+    parameters: 
+  - bitrate: 400
+    enabled: true
+    name: VP8
+    parameters: 
   zrtp:
     displaySas: true
     displaySasOnce: false
     helloHashEnabled: true
     notSuppWarning: true
 - alias: IP2IP
-  codecs: 0/
+  audioCodecs: 0/3/8/9/110/111/112/
+  autoAnswer: false
   credential:
-  - password:
-    realm: '*'
-    username:
-  displayName:
+  - Account.password: 
+    Account.realm: 
+    Account.username: 
+  displayName: 
   dtmfType: true
   enable: true
-  hostname:
+  hostname: 
   id: IP2IP
   interface: default
-  mailbox:
+  keepAlive: false
+  mailbox: 
   port: 5060
-  publishAddr:
+  publishAddr: 
   publishPort: 5060
+  registrationexpire: 60
   ringtoneEnabled: true
   ringtonePath: /usr/share/sflphone/ringtones/konga.ul
   sameasLocal: true
-  serviceRoute:
+  serviceRoute: 
   srtp:
     enable: false
     keyExchange: sdes
@@ -76,28 +98,39 @@ accounts:
   stunEnabled: false
   stunServer: stun.sflphone.org
   tls:
-    calist:
-    certificate:
-    ciphers:
+    calist: 
+    certificate: 
+    ciphers: 
     enable: false
     method: TLSv1
-    password:
-    privateKey:
+    password: 
+    privateKey: 
     requireCertif: true
-    server:
+    server: 
     timeout: 2
     tlsPort: 5061
     verifyClient: true
     verifyServer: true
   type: SIP
-  username:
+  useragent: SFLphone-test
+  username: 
   videoCodecs:
   - bitrate: 400
     enabled: true
     name: H263-2000
+    parameters: 
   - bitrate: 400
     enabled: true
     name: H264
+    parameters: profile-level-id=428014
+  - bitrate: 400
+    enabled: true
+    name: MP4V-ES
+    parameters: 
+  - bitrate: 400
+    enabled: true
+    name: VP8
+    parameters: 
   zrtp:
     displaySas: true
     displaySasOnce: false
@@ -107,9 +140,9 @@ preferences:
   historyLimit: 30
   historyMaxCalls: 20
   md5Hash: false
-  notifyMails: false
-  order: Account:1328115463/Account:1328115393/Account:1328115062/Account:1316122317/Account:1316122284/Account:1316121900/Account:1316121889/Account:1316121691/Account:1316121662/Account:1316121661/Account:1316121654/Account:1316121611/Account:1316121607/Account:1316121605/Account:1316121602/Account:1312584532/Account:1312398082/Account:1312398066/Account:1309188361/Account:1309187807/Account:1309187723/Account:1309187670/Account:1309187609/Account:1309187081/Account:1308839853/Account:1308839662/Account:1308839447/Account:1308839359/Account:1308839335/Account:1308838875/Account:1308838713/Account:1308838236/Account:1307975440/Account:1307975347/Account:1307974800/Account:1307974672/Account:1307974527/Account:1303487773/Account:1303247743/Account:1302895321/Account:1302892836/Account:1302891834/Account:1302882519/Account:1302207377/Account:1302207262/Account:1302204136/Account:1302204108/Account:1294850905/Account:1294850775/Account:1294850618/Account:1294849651/Account:1294849602/Account:1294849310/Account:1288964768/Account:1288964603/Account:1288964434/Account:1288964141/Account:1288964134/
+  order: Account:1375906657/Account:1328115463/Account:1328115393/Account:1328115062/Account:1316122317/Account:1316122284/Account:1316121900/Account:1316121889/Account:1316121691/Account:1316121662/Account:1316121661/Account:1316121654/Account:1316121611/Account:1316121607/Account:1316121605/Account:1316121602/Account:1312584532/Account:1312398082/Account:1312398066/Account:1309188361/Account:1309187807/Account:1309187723/Account:1309187670/Account:1309187609/Account:1309187081/Account:1308839853/Account:1308839662/Account:1308839447/Account:1308839359/Account:1308839335/Account:1308838875/Account:1308838713/Account:1308838236/Account:1307975440/Account:1307975347/Account:1307974800/Account:1307974672/Account:1307974527/Account:1303487773/Account:1303247743/Account:1302895321/Account:1302892836/Account:1302891834/Account:1302882519/Account:1302207377/Account:1302207262/Account:1302204136/Account:1302204108/Account:1294850905/Account:1294850775/Account:1294850618/Account:1294849651/Account:1294849602/Account:1294849310/Account:1288964768/Account:1288964603/Account:1288964434/Account:1288964141/Account:1288964134/
   portNum: 5060
+  registrationexpire: 180
   searchBarDisplay: true
   zeroConfenable: false
   zoneToneChoice: North America
@@ -121,7 +154,7 @@ voipPreferences:
   zidFile: true
 hooks:
   iax2Enabled: false
-  numberAddPrefix:
+  numberAddPrefix: 
   numberEnabled: false
   sipEnabled: false
   urlCommand: x-www-browser
@@ -136,25 +169,23 @@ audio:
   alwaysRecording: false
   audioApi: pulseaudio
   echoCancel: false
-  echoDelayLength: 0
-  echoTailLength: 100
   noiseReduce: true
   pulse:
     devicePlayback: alsa_output.pci-0000_00_1b.0.analog-stereo
     deviceRecord: alsa_input.pci-0000_00_1b.0.analog-stereo
     deviceRingtone: alsa_output.pci-0000_00_1b.0.analog-stereo
-  recordPath:
+  recordPath: /home/tristan
   volumeMic: 100
   volumeSpkr: 100
 video:
-  v4l2Channel:
-  v4l2Dev:
-  v4l2Rate:
-  v4l2Size:
+  v4l2Channel: 
+  v4l2Dev: 
+  v4l2Rate: 
+  v4l2Size: 
 shortcuts:
-  hangUp:
-  pickUp:
-  popupWindow:
-  toggleHold:
-  togglePickupHangup:
+  hangUp: 
+  pickUp: 
+  popupWindow: 
+  toggleHold: 
+  togglePickupHangup: 
 ...

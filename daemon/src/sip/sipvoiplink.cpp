@@ -52,9 +52,6 @@
 #endif
 #include "array_size.h"
 
-#include "dbus/dbusmanager.h"
-#include "dbus/callmanager.h"
-#include "dbus/configurationmanager.h"
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -64,8 +61,12 @@
 
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
-#include "dbus/video_controls.h"
+#include "client/video_controls.h"
 #endif
+
+#include "client/client.h"
+#include "client/callmanager.h"
+#include "client/configurationmanager.h"
 
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_uri.h"
@@ -122,6 +123,11 @@ void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx
 void registration_cb(pjsip_regc_cbparam *param);
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata) ;
+
+#ifdef __ANDROID__
+void showLog(int level, const char *data, int len);
+void showMsg(const char *format, ...);
+#endif
 
 void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
@@ -193,6 +199,26 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
+#ifdef __ANDROID__
+void showMsg(const char *format, ...)
+{
+    va_list arg;
+
+    va_start(arg, format);
+    __android_log_vprint(ANDROID_LOG_INFO, "apjsua", format, arg);
+    //vsnprintf(app_var.out_buf, sizeof(app_var.out_buf), format, arg);
+    va_end(arg);
+
+    /* pj_sem_post(app_var.output_sem);
+    pj_sem_wait(app_var.out_print_sem); */
+}
+
+void showLog(int level, const char *data, int len)
+{
+    showMsg("%s", data);
+}
+#endif
+
 void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
 {
     std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
@@ -210,9 +236,20 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
     }
 }
 
+void
+addContactHeader(const std::string &contactStr, pjsip_tx_data *tdata)
+{
+    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
+
+    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
+    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
+                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+}
 
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
+
     if (!rdata or !rdata->msg_info.msg) {
         ERROR("rx_data is NULL");
         return PJ_FALSE;
@@ -424,11 +461,30 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
             pjsip_inv_send_msg(replaced_inv, tdata);
     } else { // Proceed with normal call flow
-        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             ERROR("Could not answer invite");
             delete call;
             return PJ_FALSE;
         }
+
+        if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+            ERROR("Could not send msg for invite");
+            delete call;
+            return PJ_FALSE;
+        }
+
+        call->setConnectionState(Call::TRYING);
+
+        if (pjsip_inv_answer(call->inv, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+            ERROR("Could not answer invite");
+            delete call;
+            return PJ_FALSE;
+        }
+
+        // contactStr must stay in scope as long as tdata
+        const std::string contactStr(account->getContactHeader());
+        addContactHeader(contactStr, tdata);
+
         if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
             delete call;
@@ -440,7 +496,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         Manager::instance().incomingCall(*call, account_id);
         SIPVoIPLink::instance()->addSipCall(call);
     }
-
     return PJ_FALSE;
 }
 } // end anonymous namespace
@@ -462,6 +517,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 #endif
   , presenceState()
 {
+
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
     throw VoipLinkException(#ret " failed"); \
@@ -476,8 +532,12 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     srand(time(NULL)); // to get random number for RANDOM_PORT
 
     TRY(pj_init());
+
     TRY(pjlib_util_init());
 
+#ifdef __ANDROID__
+    setSipLogger();
+#endif
     setSipLogLevel();
     TRY(pjnath_init());
 
@@ -593,8 +653,10 @@ SIPVoIPLink::~SIPVoIPLink()
 SIPVoIPLink* SIPVoIPLink::instance()
 {
     assert(!destroyed_);
-    if (!instance_)
+    if (!instance_) {
+        DEBUG("creating SIPVoIPLink instance");
         instance_ = new SIPVoIPLink;
+    }
     return instance_;
 }
 
@@ -612,10 +674,10 @@ SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
-    for (AccountMap::const_iterator iter = sipAccountMap_.begin(); iter != sipAccountMap_.end(); ++iter) {
-        SIPAccount *account = static_cast<SIPAccount*>(iter->second);
+    for (const auto &item : sipAccountMap_) {
+        SIPAccount *account = static_cast<SIPAccount*>(item.second);
         if (account and account->matches(userName, server, endpt_, pool_))
-            return iter->first;
+            return item.first;
     }
 
     DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
@@ -627,7 +689,7 @@ void SIPVoIPLink::setSipLogLevel()
     char *envvar = getenv(SIPLOGLEVEL);
     int level = 0;
 
-    if(envvar != NULL) {
+    if (envvar != NULL) {
         std::string loglevel = envvar;
 
         if ( ! (std::istringstream(loglevel) >> level) ) level = 0;
@@ -636,9 +698,21 @@ void SIPVoIPLink::setSipLogLevel()
         level = level < 0 ? 0 : level;
     }
 
+#ifdef __ANDROID__
+    level = 6;
+#endif
+
     // From 0 (min) to 6 (max)
     pj_log_set_level(level);
 }
+
+#ifdef __ANDROID__
+void SIPVoIPLink::setSipLogger()
+{
+    static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();
+    pj_log_set_log_func(&showLog);
+}
+#endif
 
 // Called from EventThread::run (not main thread)
 bool SIPVoIPLink::getEvent()
@@ -695,6 +769,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     // Get the contact header
     std::string contact = account->getContactHeader();
     pj_str_t pjContact = pj_str((char*) contact.c_str());
+
 
     if (account->transport_) {
         if (account->isStunEnabled()) {
@@ -1035,14 +1110,9 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
     if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
-    // add contact header
+    // contactStr must stay in scope as long as tdata
     const std::string contactStr(account->getContactHeader());
-    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
-
-    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
-                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
-    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+    addContactHeader(contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
@@ -1125,14 +1195,13 @@ SIPVoIPLink::offhold(const std::string& id)
         std::vector<sfl::AudioCodec*> sessionMedia;
         sdpSession->getSessionAudioMedia(sessionMedia);
         std::vector<sfl::AudioCodec*> audioCodecs;
-        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin();
-             i != sessionMedia.end(); ++i) {
+        for (auto &i : sessionMedia) {
 
-            if (!*i)
+            if (!i)
                 continue;
 
             // Create a new instance for this codec
-            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec((*i)->getPayloadType());
+            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
             if (ac == NULL)
                 throw VoipLinkException("Could not instantiate codec");
@@ -1199,9 +1268,8 @@ SIPVoIPLink::clearSipCallMap()
 {
     sfl::ScopedLock m(sipCallMapMutex_);
 
-    for (SipCallMap::const_iterator iter = sipCallMap_.begin();
-            iter != sipCallMap_.end(); ++iter)
-        delete iter->second;
+    for (const auto &item : sipCallMap_)
+        delete item.second;
 
     sipCallMap_.clear();
 }
@@ -1251,7 +1319,7 @@ SIPVoIPLink::getSipCall(const std::string& id)
     if (iter != sipCallMap_.end())
         return iter->second;
     else {
-        ERROR("No SIP call with ID %s", id.c_str());
+        DEBUG("No SIP call with ID %s", id.c_str());
         return NULL;
     }
 }
@@ -1674,7 +1742,8 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         if (statusCode) {
             const pj_str_t * description = pjsip_get_status_text(statusCode);
             std::string desc(description->ptr, description->slen);
-            CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
+
+            CallManager *cm = Manager::instance().getClient()->getCallManager();
             cm->sipCallStateChanged(call->getCallId(), desc, statusCode);
         }
     }
@@ -1839,7 +1908,12 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update internal field for
     sdpSession->setMediaTransportInfoFromRemoteSdp();
 
-    call->getAudioRtp().updateDestinationIpAddress();
+    try {
+        call->getAudioRtp().updateDestinationIpAddress();
+    } catch (const AudioRtpFactoryException &e) {
+        ERROR("%s", e.what());
+    }
+
     call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
 #ifdef SFL_VIDEO
     Manager::instance().getVideoControls()->stopPreview();
@@ -1870,10 +1944,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
                 call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
             } catch (...) {}
 
-            Manager::instance().getDbusManager()->getCallManager()->secureSdesOn(call->getCallId());
+            Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
         } else {
             ERROR("SDES negotiation failure");
-            Manager::instance().getDbusManager()->getCallManager()->secureSdesOff(call->getCallId());
+            Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
         }
     }
     else {
@@ -1907,10 +1981,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         Manager::instance().startAudioDriverStream();
 
         std::vector<AudioCodec*> audioCodecs;
-        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin(); i != sessionMedia.end(); ++i) {
-            if (!*i)
+        for (const auto &i : sessionMedia) {
+            if (!i)
                 continue;
-            const int pl = (*i)->getPayloadType();
+            const int pl = i->getPayloadType();
 
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
             if (!ac)
@@ -2128,7 +2202,8 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
-        Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged(accountID, state, param->code);
+
+        Manager::instance().getClient()->getCallManager()->registrationStateChanged(accountID, state, param->code);
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);
@@ -2298,16 +2373,6 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
     }
 }
 
-namespace {
-    // returns even number in range [lower, upper]
-    unsigned int getRandomEvenNumber(int lower, int upper)
-    {
-        const unsigned halfUpper = upper * 0.5;
-        const unsigned halfLower = lower * 0.5;
-        return 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
-    }
-}
-
 void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 {
     std::string account_id(call->getAccountId());
@@ -2318,7 +2383,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
       // We only want to set ports to new values if they haven't been set
     if (call->getLocalAudioPort() == 0) {
-        const unsigned callLocalAudioPort = getRandomEvenNumber(16384, 32766);
+        const unsigned callLocalAudioPort = account->generateAudioPort();
         call->setLocalAudioPort(callLocalAudioPort);
         call->getLocalSDP()->setLocalPublishedAudioPort(callLocalAudioPort);
     }
@@ -2330,7 +2395,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
         // https://projects.savoirfairelinux.com/issues/17498
         unsigned int callLocalVideoPort;
         do
-            callLocalVideoPort = getRandomEvenNumber(49152, 65534);
+            callLocalVideoPort = account->generateVideoPort();
         while (call->getLocalAudioPort() == callLocalVideoPort);
 
         call->setLocalVideoPort(callLocalVideoPort);

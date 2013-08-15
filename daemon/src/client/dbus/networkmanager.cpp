@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,53 +28,37 @@
  *  as that of the covered work.
  */
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#include "networkmanager.h"
+#include "../manager.h"
+#include "array_size.h"
+#include "logger.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "dbus_cpp.h"
-#include "noncopyable.h"
+namespace {
+    const char *stateAsString(uint32_t state)
+    {
+        static const char * STATES[] = {"unknown", "asleep", "connecting",
+            "connected", "disconnected"};
 
-class ConfigurationManager;
-class CallManager;
-class NetworkManager;
-class Instance;
-class VideoControls;
+        const size_t idx = state < ARRAYSIZE(STATES) ? state : 0;
+        return STATES[idx];
+    }
+}
 
-class DBusManager {
-    public:
-        DBusManager();
-        ~DBusManager();
+void NetworkManager::StateChanged(const uint32_t &state)
+{
+    WARN("Network state changed: %s", stateAsString(state));
+}
 
-        CallManager * getCallManager() {
-            return callManager_;
-        }
-        ConfigurationManager * getConfigurationManager() {
-            return configurationManager_;
-        }
-#ifdef SFL_VIDEO
-        VideoControls* getVideoControls() {
-            return videoControls_;
-        }
-#endif
+void NetworkManager::PropertiesChanged(const std::map<std::string, ::DBus::Variant> &argin0)
+{
+    WARN("Properties changed: ");
+    for (const auto &item : argin0)
+        WARN("%s", item.first.c_str());
+    Manager::instance().registerAccounts();
+}
 
-        void exec();
-        void exit();
-
-    private:
-        NON_COPYABLE(DBusManager);
-        CallManager*          callManager_;
-        ConfigurationManager* configurationManager_;
-        Instance*             instanceManager_;
-        DBus::BusDispatcher   dispatcher_;
-#ifdef SFL_VIDEO
-        VideoControls *videoControls_;
-#endif
-#if USE_NETWORKMANAGER
-        NetworkManager* networkManager_;
-#endif
-};
-
-#endif
+NetworkManager::NetworkManager(DBus::Connection &connection,
+                               const DBus::Path &dbus_path,
+                               const char *destination) :
+    DBus::ObjectProxy(connection, dbus_path, destination)
+{}

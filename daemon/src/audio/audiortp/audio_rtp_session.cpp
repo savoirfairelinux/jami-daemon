@@ -71,11 +71,13 @@ void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
     Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
 
 #if HAVE_SPEEXDSP
+
     if (lastSamplingRate != audioRtpRecord_.codecSampleRate_) {
         DEBUG("Update noise suppressor with sampling rate %d and frame size %d",
               getCodecSampleRate(), getCodecFrameSize());
         initNoiseSuppress();
     }
+
 #endif
 }
 
@@ -85,6 +87,7 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
 
     // G722 requires timestamp to be incremented at 8kHz
     const ost::PayloadType payloadType = getEncoderPayloadType();
+
     if (payloadType == ost::sptG722) {
         const int G722_RTP_TIME_INCREMENT = 160;
         timestampIncrement_ = G722_RTP_TIME_INCREMENT;
@@ -93,7 +96,7 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
 
     if (payloadType == ost::sptG722) {
         const int G722_RTP_CLOCK_RATE = 8000;
-        queue_.setPayloadFormat(ost::DynamicPayloadFormat( payloadType, G722_RTP_CLOCK_RATE));
+        queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, G722_RTP_CLOCK_RATE));
     } else {
         if (getHasDynamicPayload())
             queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, getCodecSampleRate()));
@@ -125,7 +128,8 @@ void AudioRtpSession::sendDtmfEvent()
     // Set marker in case this is a new Event
     if (dtmf.newevent)
         queue_.setMark(true);
-    queue_.sendImmediate(timestamp_, (const unsigned char *) (& (dtmf.payload)), sizeof (ost::RTPPacket::RFC2833Payload));
+
+    queue_.sendImmediate(timestamp_, (const unsigned char *)(& (dtmf.payload)), sizeof(ost::RTPPacket::RFC2833Payload));
 
     // This is no longer a new event
     if (dtmf.newevent) {
@@ -140,9 +144,11 @@ void AudioRtpSession::sendDtmfEvent()
     // decrease length remaining to process for this event
     dtmf.length -= increment;
     dtmf.payload.duration++;
+
     // next packet is going to be the last one
     if ((dtmf.length - increment) < increment)
         dtmf.payload.ebit = true;
+
     if (dtmf.length < increment)
         audioRtpRecord_.dtmfQueue_.pop_front();
 }
@@ -200,7 +206,7 @@ void AudioRtpSession::setDestinationIpAddress()
 
     if (!remote_ip_) {
         WARN("Target IP address (%s) is not correct!",
-              call_.getLocalSDP()->getRemoteIP().data());
+             call_.getLocalSDP()->getRemoteIP().data());
         return;
     }
 
@@ -276,6 +282,7 @@ AudioRtpSession::AudioRtpSendThread::AudioRtpSendThread(AudioRtpSession &session
 AudioRtpSession::AudioRtpSendThread::~AudioRtpSendThread()
 {
     running_ = false;
+
     if (thread_)
         pthread_join(thread_, NULL);
 }

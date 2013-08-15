@@ -24,7 +24,7 @@ if USE_NETWORKMANAGER
 NETWORKMANAGER=-DUSE_NETWORKMANAGER
 endif
 
-SUBDIRS = dbus audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
+SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
 
 sflphoned_SOURCES = main.cpp
 
@@ -41,7 +41,7 @@ libsflphone_la_LIBADD = \
 	$(IAX_LIB) \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
-	./dbus/libdbus.la \
+	./client/dbus/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la $(SFL_VIDEO_LIB) $(IM_LIB)
@@ -55,6 +55,7 @@ libsflphone_la_LDFLAGS = \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ \
+		@SNDFILE_LIBS@ \
 		@libssl_LIBS@ \
 		@UUID_LIBS@ \
 		@DBUSCPP_LIBS@
@@ -69,14 +70,14 @@ libsflphone_la_CFLAGS = \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
 		@libssl_CFLAGS@ \
-		@UUID_CFLAGS@
+		@UUID_CFLAGS@ \
+		@DBUSCPP_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
 		voiplink.cpp \
 		preferences.cpp \
 		managerimpl.cpp \
 		manager.cpp \
-		managerimpl_registration.cpp \
 		eventthread.cpp \
 		call.cpp \
 		account.cpp \

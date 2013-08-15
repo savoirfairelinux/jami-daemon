@@ -29,6 +29,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <map>
 
 #include <pjsip.h>
@@ -40,6 +44,7 @@
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -59,8 +64,7 @@
 #include "pjsip/sip_transport_tls.h"
 #endif
 
-#include "dbus/dbusmanager.h"
-#include "dbus/configurationmanager.h"
+#include "client/configurationmanager.h"
 
 static const char * const DEFAULT_INTERFACE = "default";
 static const char * const ANY_HOSTS = "0.0.0.0";
@@ -474,9 +478,8 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
                 &serverName, port, &serverName, port, &result[0]) != PJ_SUCCESS)
         throw std::runtime_error("Can't contact STUN server");
 
-    for (std::vector<pj_sockaddr_in>::const_iterator it = result.begin();
-            it != result.end(); ++it)
-        WARN("STUN PORTS: %ld", pj_ntohs(it->sin_port));
+    for (const auto & it : result)
+        WARN("STUN PORTS: %ld", pj_ntohs(it.sin_port));
 
     return result;
 }
@@ -484,11 +487,15 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
 
 pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 {
+#if HAVE_DBUS
 #define RETURN_IF_STUN_FAIL(A, M, ...) \
     if (!(A)) { \
         ERROR(M, ##__VA_ARGS__); \
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
+        Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
         return NULL; }
+#else /* HAVE_DBUS */
+#define RETURN_IF_STUN_FAIL(A, M, ...)
+#endif /* HAVE_DBUS */
 
     pj_str_t serverName = account.getStunServerName();
     pj_uint16_t port = account.getStunPort();
@@ -511,7 +518,8 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
         ERROR("Can't contact STUN server");
         pj_sock_close(sock);
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
+
+        Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
         return NULL;
     }
 

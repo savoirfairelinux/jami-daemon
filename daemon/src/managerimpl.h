@@ -43,10 +43,10 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <tr1/memory>
-
+#include <memory>
 #include <pthread.h>
-#include "dbus/dbusmanager.h"
+
+#include "client/client.h"
 
 #include "config/sfl_config.h"
 
@@ -129,10 +129,14 @@ class ManagerImpl {
          */
         void init(const std::string &config_file);
 
+        void setPath(const std::string &path);
+
+#ifdef HAVE_DBUS
         /**
          * Enter Dbus mainloop
          */
         void run();
+#endif
 
         /*
          * Terminate all threads and exit DBus loop
@@ -707,13 +711,6 @@ class ManagerImpl {
         std::string getConfigString(const std::string& section, const std::string& name) const;
 
         /**
-         * Retrieve the soundcards index in the user config file and try to open audio devices
-         * with a specific alsa plugin.
-         * Set the audio layer sample rate
-         */
-        void selectAudioDriver();
-
-        /**
          * Handle audio sounds heard by a caller while they wait for their
          * connection to a called party to be completed.
          */
@@ -722,7 +719,7 @@ class ManagerImpl {
         /**
          * Handle played music when an incoming call occurs
          */
-        void ringtone(const std::string& accountID);
+        void playRingtone(const std::string& accountID);
 
         /**
          * Handle played music when a congestion occurs
@@ -788,6 +785,10 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+        bool parseConfiguration();
+
+        // Set the ringtone or recorded call to be played
+        void updateAudioFile(const std::string &file, int sampleRate);
 
         /**
          * Get the Call referred to by callID. If the Call does not exist, return NULL
@@ -811,7 +812,7 @@ class ManagerImpl {
         /**
          * Create config directory in home user and return configuration file path
          */
-        std::string createConfigFile() const;
+        std::string retrieveConfigPath() const;
 
         /*
          * Initialize zeroconf module and scanning
@@ -835,7 +836,7 @@ class ManagerImpl {
          */
         void playATone(Tone::TONEID toneId);
 
-        DBusManager dbus_;
+        Client client_;
 
         /** The configuration tree. It contains accounts parameters, general user settings ,audio settings, ... */
         Conf::ConfigTree config_;
@@ -850,14 +851,14 @@ class ManagerImpl {
         AudioLayer* audiodriver_;
 
         // Main thread
-        std::tr1::shared_ptr<DTMF> dtmfKey_;
+        std::unique_ptr<DTMF> dtmfKey_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         pthread_mutex_t toneMutex_;
-        std::tr1::shared_ptr<TelephoneTone> telephoneTone_;
-        std::tr1::shared_ptr<AudioFile> audiofile_;
+        std::unique_ptr<TelephoneTone> telephoneTone_;
+        std::unique_ptr<AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
@@ -950,16 +951,15 @@ class ManagerImpl {
         bool hasCurrentCall() const;
 
         /**
-         * Return the current DBusManager
-         * @return A pointer to the DBusManager instance
+         * Return the current Client
+         * @return A pointer to the Client instance
          */
-        DBusManager * getDbusManager() {
-            return &dbus_;
+        Client* getClient() {
+            return &client_;
         }
-
 #ifdef SFL_VIDEO
         VideoControls * getVideoControls() {
-            return dbus_.getVideoControls();
+            return client_.getVideoControls();
         }
 #endif
 
@@ -1016,12 +1016,6 @@ class ManagerImpl {
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
         VoIPLink* getAccountLink(const std::string& accountID);
-
-        std::string getStunServer() const;
-        void setStunServer(const std::string &server);
-
-        int isStunEnabled();
-        void enableStun();
 
         // Map containing conference pointers
         ConferenceMap conferenceMap_;

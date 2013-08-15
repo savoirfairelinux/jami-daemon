@@ -37,16 +37,18 @@
 
 #include "sfl_types.h"
 #include "noncopyable.h"
+#include "audiobuffer.h"
+
+class SndfileHandle;
 
 class AudioRecord {
 
     public:
-        enum FILE_TYPE { FILE_RAW, FILE_WAV, FILE_INVALID };
-
         AudioRecord();
+        ~AudioRecord();
 
         void setSndSamplingRate(int smplRate);
-        void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
+        void setRecordingOptions(int sndSmplRate, const std::string &path);
 
         /**
          * Init recording file path
@@ -102,19 +104,10 @@ class AudioRecord {
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recData(SFLDataFormat* buffer, size_t nSamples);
+        //void recData(SFLDataFormat* buffer, size_t nSamples);
+        void recData(AudioBuffer& buffer);
 
     protected:
-
-        /**
-         * Set the header for raw files
-         */
-        bool setRawFile();
-
-        /**
-         * Set the header for wave files
-         */
-        bool setWavFile();
 
         /**
          * Open an existing raw file, used when the call is set on hold
@@ -135,37 +128,17 @@ class AudioRecord {
         /**
          * Pointer to the recorded file
          */
-        FILE *fileHandle_;
-
-        /**
-         * File format (RAW / WAVE)
-         */
-        FILE_TYPE fileType_;
+        SndfileHandle *fileHandle_;
 
         /**
          * Number of channels
          */
-        SINT16 channels_;
-
-        /**
-         * Number of byte recorded
-         */
-        unsigned long byteCounter_;
+        int16_t channels_;
 
         /**
          * Sampling rate
          */
         int sndSmplRate_;
-
-        /**
-         * number of samples recorded for mic buffer
-         */
-        int nbSamplesMic_;
-
-        /**
-         * number of samples recorded for speaker buffer
-         */
-        int nbSamplesSpk_;
 
         /**
          * Maximum number of samples
@@ -176,21 +149,6 @@ class AudioRecord {
          * Recording flage
          */
         bool recordingEnabled_;
-
-        /**
-         * Buffer used for mixing two channels
-         */
-        SFLDataFormat mixBuffer_[NB_SAMPLES_MAX];
-
-        /**
-         * Buffer used to copy mic info
-         */
-        SFLDataFormat micBuffer_[NB_SAMPLES_MAX];
-
-        /**
-         * Buffer used to copy spkr info
-         */
-        SFLDataFormat spkBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Filename for this recording

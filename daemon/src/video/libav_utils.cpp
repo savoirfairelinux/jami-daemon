@@ -58,11 +58,11 @@ void findInstalledVideoCodecs()
         if (p->type == AVMEDIA_TYPE_VIDEO)
             libav_codecs.push_back(p->name);
 
-    for (map<string, string>::const_iterator it = encoders_.begin(); it != encoders_.end(); ++it) {
-        if (std::find(libav_codecs.begin(), libav_codecs.end(), it->second) != libav_codecs.end())
-            installed_video_codecs_.push_back(it->first);
+    for (const auto &it : encoders_) {
+        if (std::find(libav_codecs.begin(), libav_codecs.end(), it.second) != libav_codecs.end())
+            installed_video_codecs_.push_back(it.first);
         else
-            ERROR("Didn't find \"%s\" encoder", it->second.c_str());
+            ERROR("Didn't find \"%s\" encoder", it.second.c_str());
     }
 }
 
@@ -160,15 +160,14 @@ getDefaultCodecs()
     const char * const DEFAULT_BITRATE = "400";
     sfl_avcodec_init();
     std::vector<std::map<std::string, std::string> > result;
-    for (std::vector<std::string>::const_iterator iter = installed_video_codecs_.begin();
-         iter != installed_video_codecs_.end(); ++iter) {
+    for (const auto &item : installed_video_codecs_) {
         std::map<std::string, std::string> codec;
         // FIXME: get these keys from proper place
-        codec["name"] = *iter;
+        codec["name"] = item;
         codec["bitrate"] = DEFAULT_BITRATE;
         codec["enabled"] = "true";
         // FIXME: make a nicer version of this
-        if (*iter == "H264")
+        if (item == "H264")
             codec["parameters"] = DEFAULT_H264_PROFILE_LEVEL_ID;
         result.push_back(codec);
     }
