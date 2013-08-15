@@ -15,7 +15,6 @@ BuildRequires:      gsm-devel speex-devel expat-devel libsamplerate-devel
 BuildRequires:      gnome-doc-utils libtool libsexy-devel intltool yelp-tools
 BuildRequires:      libnotify-devel check-devel rarian-compat ilbc-devel
 BuildRequires:      evolution-data-server-devel gnome-common libsndfile-devel
-BuildRequires:      libsndfile-devel
 # KDE requires
 BuildRequires:      cmake kdepimlibs-devel
 %if 0%{?fedora} > 18
