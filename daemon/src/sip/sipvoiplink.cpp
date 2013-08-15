@@ -2369,10 +2369,9 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 #ifdef SFL_VIDEO
     if (call->getLocalVideoPort() == 0) {
         // https://projects.savoirfairelinux.com/issues/17498
-        unsigned int callLocalVideoPort;
-        do
-            callLocalVideoPort = account->generateVideoPort();
-        while (call->getLocalAudioPort() == callLocalVideoPort);
+        const unsigned int callLocalVideoPort = account->generateVideoPort();
+        // this should already be guaranteed by SIPAccount
+        assert(call->getLocalAudioPort() != callLocalVideoPort);
 
         call->setLocalVideoPort(callLocalVideoPort);
         call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);

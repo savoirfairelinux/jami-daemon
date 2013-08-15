@@ -64,6 +64,8 @@ const char *const TRUE_STR = "true";
 const char *const FALSE_STR = "false";
 }
 
+bool SIPAccount::portsInUse_[UINT16_MAX];
+
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID)
     , transport_(NULL)
@@ -1304,24 +1306,35 @@ bool SIPAccount::matches(const std::string &userName, const std::string &server,
         return false;
 }
 
-namespace {
-    // returns even number in range [lower, upper]
-    unsigned int getRandomEvenNumber(const std::pair<unsigned, unsigned> &range)
-    {
-        const unsigned halfUpper = range.second * 0.5;
-        const unsigned halfLower = range.first * 0.5;
-        return 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
-    }
+// returns even number in range [lower, upper]
+uint16_t
+SIPAccount::getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range)
+{
+    const uint16_t halfUpper = range.second * 0.5;
+    const uint16_t halfLower = range.first * 0.5;
+    uint16_t result;
+    do {
+        result = 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
+    } while (portsInUse_[result]);
+
+    portsInUse_[result] = true;
+    return result;
 }
 
-unsigned
+void
+SIPAccount::releasePort(uint16_t port)
+{
+    portsInUse_[port] = false;
+}
+
+uint16_t
 SIPAccount::generateAudioPort() const
 {
     return getRandomEvenNumber(audioPortRange_);
 }
 
 #ifdef SFL_VIDEO
-unsigned
+uint16_t
 SIPAccount::generateVideoPort() const
 {
     return getRandomEvenNumber(videoPortRange_);

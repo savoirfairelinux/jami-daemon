@@ -39,6 +39,7 @@
 #include "manager.h"
 
 #include <algorithm>
+#include "sipaccount.h"
 
 #ifdef HAVE_OPUS
 #include "audio/codecs/opus.h"
@@ -76,6 +77,14 @@ Sdp::Sdp(pj_pool_t *pool)
     , srtpCrypto_()
     , telephoneEventPayload_(101) // same as asterisk
 {}
+
+Sdp::~Sdp()
+{
+    SIPAccount::releasePort(localAudioDataPort_);
+#ifdef SFL_VIDEO
+    SIPAccount::releasePort(localVideoDataPort_);
+#endif
+}
 
 namespace {
     bool hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)

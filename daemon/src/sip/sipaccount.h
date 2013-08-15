@@ -36,6 +36,7 @@
 #define SIPACCOUNT_H
 
 #include <vector>
+#include  <set>
 #include <map>
 #include "account.h"
 #include "pjsip/sip_transport_tls.h"
@@ -123,6 +124,9 @@ class SIPAccount : public Account {
          * Returns true if this is the IP2IP account
          */
         bool isIP2IP() const;
+
+        static void
+        releasePort(uint16_t port);
 
         /**
          * Serialize internal state of this account for configuration
@@ -515,9 +519,9 @@ class SIPAccount : public Account {
         /* Returns true if the username and/or hostname match this account */
         bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
-        unsigned generateAudioPort() const;
+        uint16_t generateAudioPort() const;
 #ifdef SFL_VIDEO
-        unsigned generateVideoPort() const;
+        uint16_t generateVideoPort() const;
 #endif
 
     private:
@@ -771,14 +775,17 @@ class SIPAccount : public Account {
         /**
          * Port range for audio RTP ports
          */
-        std::pair<unsigned, unsigned> audioPortRange_;
+        std::pair<uint16_t, uint16_t> audioPortRange_;
 
 #ifdef SFL_VIDEO
         /**
          * Port range for video RTP ports
          */
-        std::pair<unsigned, unsigned> videoPortRange_;
+        std::pair<uint16_t, uint16_t> videoPortRange_;
 #endif
+        static bool portsInUse_[UINT16_MAX];
+        static uint16_t getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range);
+
 };
 
 #endif
