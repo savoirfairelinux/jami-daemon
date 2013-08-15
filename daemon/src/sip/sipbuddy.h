@@ -30,7 +30,7 @@
  */
 
 #ifndef SIPBUDDY_H
-#define    SIPBUDDY_H
+#define SIPBUDDY_H
 
 #include <pjsip-simple/presence.h>
 #include <pj/timer.h>
