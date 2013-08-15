@@ -37,7 +37,7 @@
 
 #include <vector>
 #include <map>
-#include <climits>
+#include <cstdint>
 #include "account.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
