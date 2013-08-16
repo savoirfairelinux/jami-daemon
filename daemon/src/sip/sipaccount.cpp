@@ -155,15 +155,13 @@ serializeRange(Conf::MappingNode &accountMap, const char *minKey, const char *ma
 void
 unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *maxKey, std::pair<uint16_t, uint16_t> &range)
 {
-    std::stringstream ss;
-    ss << mapNode.getValue(minKey);
-    uint16_t tmp;
-    ss >> tmp;
+    int tmp = 0;
+    mapNode.getValue(minKey, &tmp);
+
     if (tmp)
         range.first = tmp;
-    ss.str("");
-    ss << mapNode.getValue(maxKey);
-    ss >> tmp;
+
+    mapNode.getValue(maxKey, &tmp);
     if (tmp)
         range.second = tmp;
 }
@@ -323,9 +321,9 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode userAgent(userAgent_);
     accountmap.setKeyValue(USER_AGENT_KEY, &userAgent);
 
-    std::array<std::unique_ptr<ScalarNode>, 2> audioPortNodes(serializeRange(accountmap, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_));
+    auto audioPortNodes(serializeRange(accountmap, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_));
 #ifdef SFL_VIDEO
-    std::array<std::unique_ptr<ScalarNode>, 2> videoPortNodes(serializeRange(accountmap, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_));
+    auto videoPortNodes(serializeRange(accountmap, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_));
 #endif
 
     try {
