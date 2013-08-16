@@ -100,7 +100,7 @@ int VideoDecoder::openInput(const std::string &source_str,
     }
 
     int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
-                                  NULL);
+                                  options_ ? &options_ : NULL);
     if (ret)
         ERROR("avformat_open_input failed (%d)", ret);
     return ret;
@@ -129,6 +129,7 @@ int VideoDecoder::setupFromVideoData()
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
+    DEBUG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else

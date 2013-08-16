@@ -33,6 +33,7 @@
 #define _VIDEO_BASE_H_
 
 #include "noncopyable.h"
+#include "logger.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -73,12 +74,12 @@ namespace sfl_video {
 				  io_readcallback read_cb,
 				  io_writecallback write_cb,
 				  io_seekcallback seek_cb,
-				  void *opaque) : ctx_(0), buf_(0)
+				  void *opaque, int writable) : ctx_(0), buf_(0)
 
 		{
 			buf_ = static_cast<unsigned char *>(av_malloc(buffer_size));
-			ctx_ = avio_alloc_context(buf_, buffer_size, 1, opaque, read_cb,
-									  write_cb, seek_cb);
+			ctx_ = avio_alloc_context(buf_, buffer_size, writable, opaque,
+                                      read_cb, write_cb, seek_cb);
 			ctx_->max_packet_size = buffer_size;
 		}
 

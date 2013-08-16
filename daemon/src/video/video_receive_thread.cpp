@@ -58,7 +58,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id,
     id_(id),
     requestKeyFrameCallback_(0),
     stream_(args_["receiving_sdp"]),
-    sdpContext_(SDP_BUFFER_SIZE, &readFunction, 0, 0, this),
+    sdpContext_(SDP_BUFFER_SIZE, &readFunction, 0, 0, this, 0),
     demuxContext_(0),
     thread_(0)
 {
@@ -118,9 +118,9 @@ void VideoReceiveThread::setupDecoder(VideoDecoder *decoder)
         decoder->setIOContext(&sdpContext_);
     }
 
-    ERROR("input='%s', format='%s'", input.c_str(), format_str.c_str());
-    if (decoder->openInput(input, format_str))
-        EXIT_IF_FAIL(false, "Could not open input \"%s\"", input.c_str());
+    DEBUG("input='%s', format='%s'", input.c_str(), format_str.c_str());
+    EXIT_IF_FAIL(!decoder->openInput(input, format_str),
+                 "Could not open input \"%s\"", input.c_str());
 
     if (input == SDP_FILENAME) {
 #if HAVE_SDP_CUSTOM_IO
@@ -134,7 +134,6 @@ void VideoReceiveThread::setupDecoder(VideoDecoder *decoder)
     // we're ready for it, and we miss the SPS/PPS. We should be
     // ready earlier.
     sleep(1);
-    DEBUG("Finding stream info");
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
 
