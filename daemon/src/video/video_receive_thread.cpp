@@ -152,7 +152,7 @@ namespace sfl_video {
 		id_(id),
 		requestKeyFrameCallback_(0),
 		stream_(args_["receiving_sdp"]),
-		sdpContext_(SDP_BUFFER_SIZE, &readFunction, 0, 0, this),
+		sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this),
 		demuxContext_(0),
 		thread_(0)
 	{

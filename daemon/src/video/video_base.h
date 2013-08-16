@@ -70,6 +70,7 @@ namespace sfl_video {
 	class VideoIOHandle {
 	public:
 	VideoIOHandle(ssize_t buffer_size,
+                  bool writeable,
 				  io_readcallback read_cb,
 				  io_writecallback write_cb,
 				  io_seekcallback seek_cb,
@@ -77,7 +78,7 @@ namespace sfl_video {
 
 		{
 			buf_ = static_cast<unsigned char *>(av_malloc(buffer_size));
-			ctx_ = avio_alloc_context(buf_, buffer_size, 1, opaque, read_cb,
+			ctx_ = avio_alloc_context(buf_, buffer_size, writeable, opaque, read_cb,
 									  write_cb, seek_cb);
 			ctx_->max_packet_size = buffer_size;
 		}
