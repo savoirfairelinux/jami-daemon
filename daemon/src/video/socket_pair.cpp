@@ -211,7 +211,7 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
 VideoIOHandle* SocketPair::getIOContext()
 {
 	if (!ioHandle_)
-		ioHandle_ = new VideoIOHandle(RTP_BUFFER_SIZE,
+		ioHandle_ = new VideoIOHandle(RTP_BUFFER_SIZE, true,
 									  &readCallback, &writeCallback, 0,
 									  reinterpret_cast<void*>(this), 1);
 	return ioHandle_;

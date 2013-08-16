@@ -33,7 +33,6 @@
 #define _VIDEO_BASE_H_
 
 #include "noncopyable.h"
-#include "logger.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -44,7 +43,7 @@ extern "C" {
  * a is the major version
  * b and c the minor and micro versions of libav
  * d and e the minor and micro versions of FFmpeg */
-#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e )                      \
+#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
     ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
       (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
 
@@ -58,77 +57,78 @@ class AVPacket;
 class AVDictionary;
 
 namespace sfl_video {
-	class VideoPacket {
-	public:
+    class VideoPacket {
+    public:
         ~VideoPacket() { av_free_packet(&inpacket_); };
 
-		AVPacket* get() const { return (AVPacket*)(&inpacket_); }
+        AVPacket* get() const { return (AVPacket*)(&inpacket_); }
 
-	private:
-		AVPacket inpacket_;
-	};
+    private:
+        AVPacket inpacket_;
+    };
 
-	class VideoIOHandle {
-	public:
-	VideoIOHandle(ssize_t buffer_size,
-				  io_readcallback read_cb,
-				  io_writecallback write_cb,
-				  io_seekcallback seek_cb,
-				  void *opaque, int writable) : ctx_(0), buf_(0)
+    class VideoIOHandle {
+    public:
+    VideoIOHandle(ssize_t buffer_size,
+                  bool writeable,
+                  io_readcallback read_cb,
+                  io_writecallback write_cb,
+                  io_seekcallback seek_cb,
+                  void *opaque) : ctx_(0), buf_(0)
 
-		{
-			buf_ = static_cast<unsigned char *>(av_malloc(buffer_size));
-			ctx_ = avio_alloc_context(buf_, buffer_size, writable, opaque,
-                                      read_cb, write_cb, seek_cb);
-			ctx_->max_packet_size = buffer_size;
-		}
+        {
+            buf_ = static_cast<unsigned char *>(av_malloc(buffer_size));
+            ctx_ = avio_alloc_context(buf_, buffer_size, writeable, opaque, read_cb,
+                                      write_cb, seek_cb);
+            ctx_->max_packet_size = buffer_size;
+        }
 
-		~VideoIOHandle() { av_free(ctx_); av_free(buf_); }
+        ~VideoIOHandle() { av_free(ctx_); av_free(buf_); }
 
-		AVIOContext *get() { return ctx_; }
+        AVIOContext *get() { return ctx_; }
 
-	private:
-		NON_COPYABLE(VideoIOHandle);
+    private:
+        NON_COPYABLE(VideoIOHandle);
 
-		AVIOContext *ctx_;
-		unsigned char *buf_;
-	};
+        AVIOContext *ctx_;
+        unsigned char *buf_;
+    };
 
-	class VideoFrame {
-	public:
-	VideoFrame() : frame_(avcodec_alloc_frame()) {}
+    class VideoFrame {
+    public:
+    VideoFrame() : frame_(avcodec_alloc_frame()) {}
 
-		~VideoFrame() { avcodec_free_frame(&frame_); };
+        ~VideoFrame() { avcodec_free_frame(&frame_); };
 
-		AVFrame *get() { return frame_; }
+        AVFrame *get() { return frame_; }
 
-	private:
-		NON_COPYABLE(VideoFrame);
+    private:
+        NON_COPYABLE(VideoFrame);
 
-		AVFrame *frame_;
-	};
+        AVFrame *frame_;
+    };
 
-	class VideoCodec {
-	public:
-	VideoCodec() : options_(0) {};
-		virtual ~VideoCodec() {};
+    class VideoCodec {
+    public:
+    VideoCodec() : options_(0) {};
+        virtual ~VideoCodec() {};
 
-		static size_t getBufferSize(PixelFormat pix_fmt, int width, int height)
-		{
-			return avpicture_get_size(pix_fmt, width, height);
-		}
+        static size_t getBufferSize(PixelFormat pix_fmt, int width, int height)
+        {
+            return avpicture_get_size(pix_fmt, width, height);
+        }
 
-		void setOption(const char *name, const char *value)
-		{
-			av_dict_set(&options_, name, value, 0);
-		}
+        void setOption(const char *name, const char *value)
+        {
+            av_dict_set(&options_, name, value, 0);
+        }
 
-	private:
-		NON_COPYABLE(VideoCodec);
+    private:
+        NON_COPYABLE(VideoCodec);
 
-	protected:
-		AVDictionary *options_;
-	};
+    protected:
+        AVDictionary *options_;
+    };
 }
 
 #endif // _VIDEO_BASE_H_
