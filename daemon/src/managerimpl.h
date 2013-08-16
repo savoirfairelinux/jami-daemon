@@ -1041,11 +1041,15 @@ class ManagerImpl {
        void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
        void unsubscribePresence(const std::string& accountID, const std::string& buddySipUri);
 
-       /**
+        /**
          * push a presence for a account
-         * Notify for IP2IP accounts and publish for PBX account
+         * Notify for IP2IP account and publish for PBX account
          */
         void sendPresence(const std::string& accountID, const std::string& status, const std::string& note);
+        /**
+         * Accept or not a PresenceSubscription request for IP2IP account
+         */
+        void confirmPresenceSubscription(const bool& confirm);
 
     private:
         NON_COPYABLE(ManagerImpl);

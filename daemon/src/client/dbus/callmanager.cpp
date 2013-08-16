@@ -426,14 +426,14 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
 void
 CallManager::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
-  DEBUG("subscribePresence");
+  DEBUG("subscribePresence (acc:%s, buddy:%)",accountID.c_str(), buddySipUri.c_str());
   Manager::instance().subscribePresence(accountID,buddySipUri);
 }
 
 void
 CallManager::unsubscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
-  DEBUG("unsubscribePresence");
+  DEBUG("unsubscribePresence (acc:%s, buddy:%)",accountID.c_str(), buddySipUri.c_str());
   Manager::instance().unsubscribePresence(accountID,buddySipUri);
 }
 
@@ -441,6 +441,14 @@ void
 
 CallManager::sendPresence(const std::string& accountID, const std::string& status, const std::string& note)
 {
-  DEBUG("sendPresence");
+  DEBUG("sendPresence (acc:%s, status:%s).",accountID.c_str(),status.c_str());
   Manager::instance().sendPresence(accountID,status,note);
+}
+
+void
+
+CallManager::confirmPresenceSubscription(const bool& confirm)
+{
+  DEBUG("confirmPresenceSubscription : %s",confirm);
+  Manager::instance().confirmPresenceSubscription(confirm);
 }

@@ -184,6 +184,7 @@ class CallManager
         void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
         void unsubscribePresence(const std::string& accountID, const std::string& buddySipUri);
         void sendPresence(const std::string& accountID, const std::string& status, const std::string& note);
+        void confirmPresenceSubscription(const bool& confirm);
     private:
 
 #if HAVE_ZRTP

@@ -76,6 +76,7 @@ void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data){
     }
 }
 
+static pj_caching_pool cp;
 
 SIPPresence::SIPPresence(SIPAccount *acc)
     : acc_(acc)
@@ -88,11 +89,24 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     , publish_sess()
     , publish_state()
     , publish_enabled(true)
+    , newPresenceSubscription_(NULL)
     , serverSubscriptions_ ()
     , buddies_ ()
+    , mutex_()
+    , mutex_nesting_level_()
+    , mutex_owner_()
+    , pool_()
+    , cp_()
 {
     // init default status
     updateStatus("open","Available");
+
+    cp_ = &cp;
+    pj_caching_pool_init(cp_, NULL, 0);
+    pool_ = pj_pool_create(&(cp_->factory), "pres", 1000, 1000, NULL);
+    /* Create mutex */
+    if(pj_mutex_create_recursive(pool_, "pres",&mutex_) != PJ_SUCCESS)
+	ERROR("Unable to create mutex");
 }
 
 
@@ -186,6 +200,27 @@ void SIPPresence::removeBuddy(SIPBuddy *b){
     buddies_.remove(b);
 }
 
+
+void SIPPresence::reportNewServerSubscription(PresenceSubscription *s){
+    newPresenceSubscription_ = s;
+    Manager::instance().getClient()->getCallManager()->newPresenceSubscription(s->remote);
+}
+
+void SIPPresence::confirmNewServerSubscription(const bool& confirm){
+    if(newPresenceSubscription_!=NULL)
+        return;
+
+    if(confirm){
+        DEBUG("-Confirm new PresenceSubscription for %s",newPresenceSubscription_->remote);
+        addServerSubscription(newPresenceSubscription_);
+    }
+    else{
+        DEBUG("-Refused new PresenceSubscription for %s",newPresenceSubscription_->remote);
+        newPresenceSubscription_ = NULL;
+    }
+}
+
+
 void SIPPresence::addServerSubscription(PresenceSubscription *s) {
     DEBUG("-PresenceServer subscription added.");
     serverSubscriptions_.push_back(s);
@@ -201,4 +236,35 @@ void SIPPresence::notifyServerSubscription() {
     DEBUG("-Iterating through PresenceServers:");
     for (serverIt = serverSubscriptions_.begin(); serverIt != serverSubscriptions_.end(); serverIt++)
         (*serverIt)->notify();
+}
+
+
+void SIPPresence::lock()
+{
+    pj_mutex_lock(mutex_);
+    mutex_owner_ = pj_thread_this();
+    ++mutex_nesting_level_;
+}
+
+void SIPPresence::unlock()
+{
+    if (--mutex_nesting_level_ == 0)
+	mutex_owner_ = NULL;
+    pj_mutex_unlock(mutex_);
+}
+
+bool SIPPresence::tryLock()
+{
+    pj_status_t status;
+    status = pj_mutex_trylock(mutex_);
+    if (status == PJ_SUCCESS) {
+	mutex_owner_ = pj_thread_this();
+	++mutex_nesting_level_;
+    }
+    return status;
+}
+
+bool SIPPresence::isLocked()
+{
+    return mutex_owner_ == pj_thread_this();
 }

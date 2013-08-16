@@ -87,12 +87,14 @@ struct pres_msg_data
 extern void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
 
 
-
-
-
 class SIPAccount;
 class SIPBuddy;
 class PresenceSubscription;
+/**
+ * TODO Clean this:
+ */
+struct pj_caching_pool;
+
 
 /**
  * @file sippresence.h
@@ -165,6 +167,18 @@ public:
 
     /**
      * IP2IP context.
+     * Report new Subscription to the client, waiting for approval.
+     * @param s     PresenceSubcription pointer.
+     */
+    void reportNewServerSubscription(PresenceSubscription *s);
+     /**
+     * IP2IP context.
+     * Process new subscription based on client decision.
+     * @param s     PresenceSubcription pointer.
+     */
+    void confirmNewServerSubscription(const bool& confirm);
+    /**
+     * IP2IP context.
      * Add a server associated to a subscriber in the list.
      * @param s     PresenceSubcription pointer.
      */
@@ -181,6 +195,14 @@ public:
      */
     void notifyServerSubscription();
 
+    /**
+     * Lock methods
+     */
+    void lock();
+    void unlock();
+    bool tryLock();
+    bool isLocked();
+
     pjsip_pres_status pres_status_data; /**< Presence Data.*/
     pj_bool_t       online_status; /**< Our online status.	*/
     pjrpid_element  rpid;	    /**< RPID element information.*/
@@ -190,7 +212,15 @@ public:
 
 private:
     NON_COPYABLE(SIPPresence);
+
+    pj_mutex_t	*mutex_;	    /**< Mutex protection for this data	*/
+    unsigned	mutex_nesting_level_; /**< Mutex nesting level.	*/
+    pj_thread_t	*mutex_owner_; /**< Mutex owner.			*/
+    pj_caching_pool *cp_;	    /**< Global pool factory.		*/
+    pj_pool_t	*pool_;	    /**< pjsua's private pool.		*/
+
     SIPAccount * acc_; /**<  Associated SIP account. */
+    PresenceSubscription *newPresenceSubscription_; /**< Latest Subscribers waiting for approval */
     std::list< PresenceSubscription *> serverSubscriptions_; /**< Subscribers list.*/
     std::list< SIPBuddy *> buddies_; /**< Subcribed buddy list.*/
 };

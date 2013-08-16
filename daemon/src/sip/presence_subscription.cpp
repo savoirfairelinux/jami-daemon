@@ -42,14 +42,13 @@
 void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
     pjsip_rx_data *rdata = event->body.rx_msg.rdata;
     if(!rdata) {
-        DEBUG("no rdata in presence");
+        DEBUG("Presence server state has changed but no rdata.");
         return;
     }
-    /*std::string accountId = "IP2IP";
-    SIPAccount *acc = Manager::instance().getSipAccount(accountId);*/
+
     PJ_UNUSED_ARG(event);
     SIPPresence * pres = Manager::instance().getSipAccount("IP2IP")->getPresence();
-
+    pres->lock();
     PresenceSubscription *presenceSub = (PresenceSubscription *) pjsip_evsub_get_mod_data(sub,pres->getModId());
     WARN("Presence server subscription to %s is %s", presenceSub->remote, pjsip_evsub_get_state_name(sub));
 
@@ -58,23 +57,13 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
 
         state = pjsip_evsub_get_state(sub);
 
-        /*  ebail : FIXME check if ths code is usefull */
-#if 0
-        if (false pjsua_var.ua_cfg.cb.on_srv_subscribe_state) {
-            pj_str_t from;
-
-            from = server->dlg->remote.info_str;
-            (*pjsua_var.ua_cfg.cb.on_srv_subscribe_state)(uapres->acc_id,
-                    uapres, &from,
-                    state, event);
-        }
-#endif
-
         if (state == PJSIP_EVSUB_STATE_TERMINATED) {
             pjsip_evsub_set_mod_data(sub, pres->getModId(), NULL);
             pres->removeServerSubscription(presenceSub);
         }
+        /* TODO check if other cases should be handled*/
     }
+    pres->unlock();
 }
 
 pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
@@ -82,7 +71,6 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
     pj_str_t *str = &method->name;
     std::string request(str->ptr, str->slen);
-    DEBUG("pres_on_rx_subscribe_request for %s.", request.c_str());
     pj_str_t contact;
     pj_status_t status;
     pjsip_dialog *dlg;
@@ -95,27 +83,32 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     pres_msg_data msg_data;
     pjsip_evsub_state ev_state;
 
-    /* ebail this code only hande incoming subscribe messages. Otherwise we return FALSE to let other modules handle it */
-    if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method, pjsip_get_subscribe_method()) != 0){
+
+    /* Only hande incoming subscribe messages should be processed here.
+     * Otherwise we return FALSE to let other modules handle it */
+    if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method, pjsip_get_subscribe_method()) != 0)
         return PJ_FALSE;
-    }
 
-    std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
-    std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
+    DEBUG("Incomming pres_on_rx_subscribe_request for %s.", request.c_str());
 
-    std::string accountId = "IP2IP"; /* ebail : this code is only used for IP2IP accounts */
+    //std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
+    //std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
+
+    std::string accountId = "IP2IP"; /* this code is only used for IP2IP accounts */
     SIPAccount *acc = (SIPAccount *) Manager::instance().getSipAccount(accountId);
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
     SIPPresence * pres = acc->getPresence();
+    pres->lock();
 
-    contact = pj_str(strdup(acc->getContactHeader().c_str()));
 
     /* Create UAS dialog: */
+    contact = pj_str(strdup(acc->getContactHeader().c_str()));
     status = pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, &contact, &dlg);
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
         WARN("Unable to create UAS dialog for subscription: %s [status=%d]", errmsg, status);
+        pres->unlock();
         pjsip_endpt_respond_stateless(endpt, rdata, 400, NULL, NULL, NULL);
         return PJ_TRUE;
     }
@@ -141,6 +134,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
             status = pjsip_dlg_send_response(dlg, pjsip_rdata_get_tsx(rdata), tdata);
         }
 
+        pres->unlock();
         return PJ_FALSE;
     }
 
@@ -157,8 +151,8 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
 
     pjsip_evsub_set_mod_data(sub, pres->getModId(), presenceSub);
 
-    /* Add server subscription to the list: */
-    pres->addServerSubscription(presenceSub);
+    /* Need client approvement.*/
+    pres->reportNewServerSubscription(presenceSub);
 
     /* Capture the value of Expires header. */
     expires_hdr = (pjsip_expires_hdr*) pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_EXPIRES, NULL);
@@ -179,6 +173,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     if (status != PJ_SUCCESS) {
         WARN("Unable to accept presence subscription %d", status);
         pjsip_pres_terminate(sub, PJ_FALSE);
+        pres->unlock();
         return PJ_FALSE;
     }
 //TODO: handle rejection case pjsua_pers.c:956
@@ -207,8 +202,10 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     if (status != PJ_SUCCESS) {
         WARN("Unable to create/send NOTIFY %d", status);
         pjsip_pres_terminate(sub, PJ_FALSE);
+        pres->unlock();
         return status;
     }
+    pres->unlock();
     return PJ_TRUE;
 }
 

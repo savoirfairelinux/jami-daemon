@@ -113,6 +113,10 @@ class SIPBuddy {
                                              pjsip_hdr *res_hdr,
                                              pjsip_msg_body **p_body);
         friend void buddy_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry);
+
+        /**
+         * TODO: explain this:
+         */
         void incLock() {
             lock_count++;
         }

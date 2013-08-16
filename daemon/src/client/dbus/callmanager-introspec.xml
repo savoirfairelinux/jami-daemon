@@ -832,18 +832,26 @@
           <arg type="s" name="buddySipUri" direction="in"/>
         </method>
 
-       <method name="sendPresence" tp:name-for-bindings="sendPresence">
+        <method name="sendPresence" tp:name-for-bindings="sendPresence">
           <tp:added version="0.9.7"/>
           <arg type="s" name="accountID" direction="in"/>
           <arg type="s" name="status" direction="in"/>
           <arg type="s" name="note" direction="in"/>
         </method>
 
+        <method name="confirmPresenceSubscription" tp:name-for-bindings="confirmPresenceSubscription">
+          <arg type="b" name="confirm"/>
+        </method>
+
         <signal name="newPresenceNotification" tp:name-for-bindings="newPresenceNotification">
           <arg type="s" name="buddyUri"/>
           <arg type="s" name="status"/>
           <arg type="s" name="lineStatus"/>
-        </signal>D
+        </signal>
+
+        <signal name="newPresenceSubscription" tp:name-for-bindings="newPresenceSubscription">
+          <arg type="s" name="buddyUri"/>
+        </signal>
 
     </interface>
 </node>
