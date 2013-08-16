@@ -240,6 +240,8 @@ addContactHeader(const std::string &contactStr, pjsip_tx_data *tdata)
     pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
     contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
                                    pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    // remove old contact header (if present)
+    pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
     pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
 }
 
