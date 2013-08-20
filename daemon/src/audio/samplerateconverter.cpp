@@ -32,7 +32,7 @@
 #include "sfl_types.h"
 
 SamplerateConverter::SamplerateConverter(int freq, size_t channels /* = 1 */) : floatBufferIn_(),
-    floatBufferOut_(), samples_(0), channels_(channels), maxFreq_(freq), src_state_(0)
+    floatBufferOut_(), scratchBuffer_(), samples_(0), channels_(channels), maxFreq_(freq), src_state_(0)
 {
     int err;
     src_state_ = src_new(SRC_LINEAR, channels_, &err);
@@ -41,6 +41,7 @@ SamplerateConverter::SamplerateConverter(int freq, size_t channels /* = 1 */) : 
 
     floatBufferIn_.resize(samples_);
     floatBufferOut_.resize(samples_);
+    scratchBuffer_.resize(samples_);
 }
 
 SamplerateConverter::~SamplerateConverter()
@@ -86,6 +87,7 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     samples_ = std::max(inSamples, outSamples);
     floatBufferIn_.resize(inSamples);
     floatBufferOut_.resize(outSamples);
+    scratchBuffer_.resize(outSamples);
 
     SRC_DATA src_data;
     src_data.data_in = floatBufferIn_.data();
@@ -102,7 +104,6 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     /*
     TODO: one-shot deinterleave and float-to-short conversion
     */
-    std::vector<SFLAudioSample> scratch_buff(outSamples);
-    src_float_to_short_array(floatBufferOut_.data(), scratch_buff.data(), outSamples);
-    dataOut.deinterleave(scratch_buff.data(), src_data.output_frames, nbChans);
+    src_float_to_short_array(floatBufferOut_.data(), scratchBuffer_.data(), outSamples);
+    dataOut.deinterleave(scratchBuffer_.data(), src_data.output_frames, nbChans);
 }
