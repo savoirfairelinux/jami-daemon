@@ -101,9 +101,8 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
 
     /*
     TODO: one-shot deinterleave and float-to-short conversion
-    currently using floatBufferIn_ as scratch
     */
-    SFLAudioSample *scratch_buff = reinterpret_cast<SFLAudioSample *>(floatBufferIn_.data());
-    src_float_to_short_array(floatBufferOut_.data(), scratch_buff, outSamples);
-    dataOut.deinterleave(scratch_buff, src_data.output_frames, nbChans);
+    std::vector<SFLAudioSample> scratch_buff(outSamples);
+    src_float_to_short_array(floatBufferOut_.data(), scratch_buff.data(), outSamples);
+    dataOut.deinterleave(scratch_buff.data(), src_data.output_frames, nbChans);
 }
