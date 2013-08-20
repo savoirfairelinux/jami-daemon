@@ -213,7 +213,7 @@ VideoIOHandle* SocketPair::getIOContext()
 	if (!ioHandle_)
 		ioHandle_ = new VideoIOHandle(RTP_BUFFER_SIZE, true,
 									  &readCallback, &writeCallback, 0,
-									  reinterpret_cast<void*>(this), 1);
+									  reinterpret_cast<void*>(this));
 	return ioHandle_;
 }
 
