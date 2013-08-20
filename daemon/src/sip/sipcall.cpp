@@ -32,6 +32,8 @@
  */
 
 #include "sipcall.h"
+#include "sip_utils.h"
+#include "sipaccount.h"
 #include "logger.h" // for _debug
 #include "sdp.h"
 #include "manager.h"
@@ -72,6 +74,14 @@ void SIPCall::answer()
     // answer with SDP if no SDP was given in initial invite (i.e. inv->neg is NULL)
     if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, !inv->neg ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
+
+    SIPAccount *account = Manager::instance().getSipAccount(accountID_);
+
+    if (account == NULL)
+        throw std::runtime_error("Could not find account for this call");
+    // contactStr must stay in scope as long as tdata
+    const std::string contactStr(account->getContactHeader());
+    sip_utils::addContactHeader(contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not send invite request answer (200 OK)");

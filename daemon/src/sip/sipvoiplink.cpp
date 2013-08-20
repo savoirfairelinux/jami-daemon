@@ -232,19 +232,6 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
     }
 }
 
-void
-addContactHeader(const std::string &contactStr, pjsip_tx_data *tdata)
-{
-    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
-
-    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
-                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
-    // remove old contact header (if present)
-    pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
-    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
-}
-
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
 
@@ -481,7 +468,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
         // contactStr must stay in scope as long as tdata
         const std::string contactStr(account->getContactHeader());
-        addContactHeader(contactStr, tdata);
+        sip_utils::addContactHeader(contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
@@ -1096,7 +1083,7 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
 
     // contactStr must stay in scope as long as tdata
     const std::string contactStr(account->getContactHeader());
-    addContactHeader(contactStr, tdata);
+    sip_utils::addContactHeader(contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;

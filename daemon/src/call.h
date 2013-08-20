@@ -230,6 +230,10 @@ class Call : public Recordable {
 
         virtual bool toggleRecording();
 
+    protected:
+        /** Associate account ID */
+        std::string accountID_;
+
     private:
         std::string getTypeStr() const;
         /** Protect every attribute that can be changed by two threads */
@@ -254,9 +258,6 @@ class Call : public Recordable {
 
         /** Type of the call */
         CallType type_;
-
-        /** Associate account ID */
-        std::string accountID_;
 
         /** Disconnected/Progressing/Trying/Ringing/Connected */
         ConnectionState connectionState_;

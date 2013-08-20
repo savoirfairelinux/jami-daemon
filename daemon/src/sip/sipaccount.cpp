@@ -1103,12 +1103,15 @@ std::string SIPAccount::getContactHeader() const
 
     link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
 
-    if (!receivedParameter_.empty())
+    if (!receivedParameter_.empty()) {
         address = receivedParameter_;
+        DEBUG("Using received address %s", address.c_str());
+    }
 
     if (rPort_ != -1) {
         portstr << rPort_;
         port = portstr.str();
+        DEBUG("Using received port %s", port.c_str());
     }
 
     // UDP does not require the transport specification
