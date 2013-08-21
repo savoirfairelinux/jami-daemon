@@ -509,8 +509,8 @@ void PulseLayer::readFromMic()
     const char *data = NULL;
     size_t bytes;
 
-    size_t sample_size = record_->sampleSize();
-    uint8_t channels = record_->channels();
+    const size_t sample_size = record_->sampleSize();
+    const uint8_t channels = record_->channels();
 
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data)
         return;
@@ -519,7 +519,9 @@ void PulseLayer::readFromMic()
     outfile.write((const char *)data, bytes);
 #endif
 
-    size_t samples = bytes / sample_size;
+    assert(channels);
+    assert(sample_size);
+    const size_t samples = bytes / sample_size / channels;
 
     AudioBuffer in(samples, channels, sampleRate_);
     in.deinterleave((SFLAudioSample*)data, samples, channels);
