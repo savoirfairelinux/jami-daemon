@@ -41,54 +41,22 @@
 #include "presence_subscription.h"
 #include "sipvoiplink.h"
 
-/**
- * Generic function.
- * Fill the header.
- */
-void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data){
-    if (tdata->msg->type == PJSIP_REQUEST_MSG) {
-        const pj_str_t STR_USER_AGENT = pj_str("User-Agent");
-        pjsip_hdr *h;
-        pj_str_t ua = pj_str("SFLPhone");
-        h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool, &STR_USER_AGENT, &ua);
-        pjsip_msg_add_hdr(tdata->msg, h);
-    }
 
-    if(msg_data == NULL)
-        return;
 
-    const pjsip_hdr *hdr;
-    hdr = msg_data->hdr_list.next;
-    while (hdr && hdr != &msg_data->hdr_list) {
-        pjsip_hdr *new_hdr;
-        new_hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, hdr);
-        DEBUG("adding header", new_hdr->name.ptr);
-        pjsip_msg_add_hdr(tdata->msg, new_hdr);
-        hdr = hdr->next;
-    }
-
-    if (msg_data->content_type.slen && msg_data->msg_body.slen) {
-        pjsip_msg_body *body;
-        pj_str_t type = pj_str("application");
-        pj_str_t subtype = pj_str("pidf+xml");
-        body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
-        tdata->msg->body = body;
-    }
-}
-
+/*TODO : clean this*/
 static pj_caching_pool cp;
 
 SIPPresence::SIPPresence(SIPAccount *acc)
-    : acc_(acc)
-    , pres_status_data()
+    : pres_status_data()
     , online_status()
     , rpid({PJRPID_ELEMENT_TYPE_PERSON,
-            pj_str("20"),
+            pj_str("20"),/*TODO : unhardcode this*/
             PJRPID_ACTIVITY_BUSY,
             pj_str("")})
     , publish_sess()
     , publish_state()
     , publish_enabled(true)
+    , acc_(acc)
     , newPresenceSubscription_(NULL)
     , serverSubscriptions_ ()
     , buddies_ ()
@@ -110,7 +78,10 @@ SIPPresence::SIPPresence(SIPAccount *acc)
 }
 
 
-SIPPresence::~SIPPresence(){}
+SIPPresence::~SIPPresence(){
+    /*TODO free buddy/subcriber lists and the pool*/
+
+}
 
 SIPAccount * SIPPresence::getAccount(){
     return acc_;
@@ -124,11 +95,15 @@ int SIPPresence::getModId(){
     return  ((SIPVoIPLink*) (acc_->getVoIPLink()))->getModId();
 }
 
+pj_pool_t*  SIPPresence::getPool(){
+    return pool_;
+}
+
 void SIPPresence::updateStatus(const std::string &status, const std::string &note){
     pjrpid_element rpid = {PJRPID_ELEMENT_TYPE_PERSON,
             pj_str("20"),
             PJRPID_ACTIVITY_UNKNOWN,
-            pj_str(strdup(note.c_str()))};
+            pj_str(strdup(note.c_str()))}; /*TODO : del strdup*/
 
     /* fill activity if user not available. */
     if(note=="away")
@@ -207,7 +182,7 @@ void SIPPresence::reportNewServerSubscription(PresenceSubscription *s){
 }
 
 void SIPPresence::confirmNewServerSubscription(const bool& confirm){
-    if(newPresenceSubscription_!=NULL)
+    if(newPresenceSubscription_=NULL)
         return;
 
     if(confirm){
@@ -267,4 +242,45 @@ bool SIPPresence::tryLock()
 bool SIPPresence::isLocked()
 {
     return mutex_owner_ == pj_thread_this();
+}
+
+void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
+{
+
+    if (tdata->msg->type == PJSIP_REQUEST_MSG) {
+        const pj_str_t STR_USER_AGENT = pj_str("User-Agent");
+        std::string useragent(acc_->getUserAgentName());
+        pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
+        pjsip_hdr *h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent);
+        pjsip_msg_add_hdr(tdata->msg, h);
+
+    /*pjsip_hdr hdr_list;
+    pj_list_init(&hdr_list);
+    std::string useragent(account->getUserAgentName());
+    pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
+    const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
+    pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(pool_, &STR_USER_AGENT, &pJuseragent);
+    */
+    }
+
+    if(msg_data == NULL)
+        return;
+
+    const pjsip_hdr *hdr;
+    hdr = msg_data->hdr_list.next;
+    while (hdr && hdr != &msg_data->hdr_list) {
+        pjsip_hdr *new_hdr;
+        new_hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, hdr);
+        DEBUG("adding header", new_hdr->name.ptr);
+        pjsip_msg_add_hdr(tdata->msg, new_hdr);
+        hdr = hdr->next;
+    }
+
+    if (msg_data->content_type.slen && msg_data->msg_body.slen) {
+        pjsip_msg_body *body;
+        pj_str_t type = pj_str("application");
+        pj_str_t subtype = pj_str("pidf+xml");
+        body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
+        tdata->msg->body = body;
+    }
 }

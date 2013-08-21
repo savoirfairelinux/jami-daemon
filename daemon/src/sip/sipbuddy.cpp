@@ -57,14 +57,14 @@
 
 int modId;
 
-static void buddy_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry) {
+void buddy_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry) {
     (void) th;
     SIPBuddy *b = (SIPBuddy *) entry->user_data;
     b->reportPresence();
 }
 
 /* Callback called when *client* subscription state has changed. */
-static void buddy_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
+void buddy_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
     SIPBuddy *buddy;
 
     PJ_UNUSED_ARG(event);
@@ -194,7 +194,7 @@ static void buddy_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
 }
 
 /* Callback when transaction state has changed. */
-static void buddy_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pjsip_event *event) {
+void buddy_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pjsip_event *event) {
 
     SIPBuddy *buddy;
     pjsip_contact_hdr *contact_hdr;
@@ -346,7 +346,7 @@ void SIPBuddy::accept() {
     acc->getPresence()->addBuddy(this);
 }
 
-pj_status_t SIPBuddy::reportPresence() {
+void SIPBuddy::reportPresence() {
 
     //incLock();
     /* callback*/
@@ -377,7 +377,7 @@ pj_status_t SIPBuddy::updateSubscription() {
         WARN("Buddy %s: unsubscribing..", uri.ptr);
         retStatus = pjsip_pres_initiate(sub, 0, &tdata);
         if (retStatus == PJ_SUCCESS) {
-            pres_process_msg_data(tdata, NULL);
+            acc->getPresence()->fillDoc(tdata, NULL);
             /*if (tdata->msg->type == PJSIP_REQUEST_MSG) {
                 const pj_str_t STR_USER_AGENT = {"User-Agent", 10};
                 pj_str_t ua = pj_str(strdup(acc->getUserAgentName().c_str()));
@@ -409,7 +409,7 @@ pj_status_t SIPBuddy::updateSubscription() {
 
     //subscribe
     pjsip_evsub_user pres_callback;
-//    pj_pool_t *tmp_pool = NULL;
+//    pj_pool_t *tmp_pool = NULL; // related to "contact field. TODO: check if this is necessary"
 
     pjsip_tx_data *tdata;
     pj_status_t status;
@@ -480,7 +480,6 @@ pj_status_t SIPBuddy::updateSubscription() {
      */
     if (acc->cfg.transport_id != PJSUA_INVALID_ID) {
         pjsip_tpselector tp_sel;
-
         pjsua_init_tpselector(acc->cfg.transport_id, &tp_sel);
         pjsip_dlg_set_transport(buddy->dlg, &tp_sel);
     }
@@ -492,7 +491,7 @@ pj_status_t SIPBuddy::updateSubscription() {
 
     /* Set credentials */
     if (acc->cred_cnt) {
-        pjsip_auth_clt_set_credentials(&buddy->dlg->auth_sess,
+        pjsip_auth_clt_set_credentials(&buddy->dlg->auth_sess
                 acc->cred_cnt, acc->cred);
     }
 

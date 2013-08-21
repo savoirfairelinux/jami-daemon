@@ -32,6 +32,7 @@
 #include <pjsip/sip_endpoint.h>
 
 #include "sippresence.h"
+#include "sip_utils.h"
 #include "sippublish.h"
 #include "logger.h"
 #include "sipvoiplink.h"
@@ -95,7 +96,7 @@ pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
     contactWithAngles.erase(contactWithAngles.find('>'));
     int semicolon = contactWithAngles.find_first_of(":");
     std::string contactWithoutAngles = contactWithAngles.substr(semicolon + 1);
-    pj_str_t contt = pj_str(strdup(contactWithoutAngles.c_str()));
+//    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
 //    pj_memcpy(&pres_status_data.info[0].contact, &contt, sizeof(pj_str_t));;
 
     /* Create PUBLISH request */
@@ -148,7 +149,7 @@ pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
     pjsip_media_type_init(&msg_data.multipart_ctype, NULL, NULL);
     pj_list_init(&msg_data.multipart_parts);
 
-    pres_process_msg_data(tdata, &msg_data);
+    pres->fillDoc(tdata, &msg_data);
 
 
     /* Set Via sent-by */
@@ -227,9 +228,8 @@ pj_status_t pres_publish(SIPPresence *pres)
         }
 
 	/* Set route-set */
-	//pjsip_publishc_set_route_set(pres->publish_sess, &acc->route_set);
-        //if (acc->hasServiceRoute())
-        //    pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(acc->getServiceRoute(), pool_));
+        if (acc->hasServiceRoute())
+            pjsip_regc_set_route_set(acc->getRegistrationInfo(), sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
 
 	/* Send initial PUBLISH request */
         status = pres_send_publish(pres, PJ_TRUE);

@@ -438,7 +438,6 @@ CallManager::unsubscribePresence(const std::string& accountID, const std::string
 }
 
 void
-
 CallManager::sendPresence(const std::string& accountID, const std::string& status, const std::string& note)
 {
   DEBUG("sendPresence (acc:%s, status:%s).",accountID.c_str(),status.c_str());
@@ -446,9 +445,8 @@ CallManager::sendPresence(const std::string& accountID, const std::string& statu
 }
 
 void
-
 CallManager::confirmPresenceSubscription(const bool& confirm)
 {
-  DEBUG("confirmPresenceSubscription : %s",confirm);
+  DEBUG("confirmPresenceSubscription :");
   Manager::instance().confirmPresenceSubscription(confirm);
 }

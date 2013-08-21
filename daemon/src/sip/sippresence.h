@@ -84,7 +84,7 @@ struct pres_msg_data
 };
 
 
-extern void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
+//extern void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
 
 
 class SIPAccount;
@@ -127,6 +127,14 @@ public:
      * Return presence module ID which is actually the same as the VOIP link
      */
     int getModId();
+    /**
+     *  Return a pool for generic functions.
+     */
+    pj_pool_t*  getPool();
+    /**
+     * Fill xml document, the header and the body
+     */
+    void fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
     /**
      * Modify the presence data
      * @param status is basically "open" or "close"

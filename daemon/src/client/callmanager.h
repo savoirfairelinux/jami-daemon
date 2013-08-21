@@ -180,7 +180,7 @@ class CallManager
         void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
 #endif // __ANDROID__
 
-        /* Presence subscription */
+        /* Presence subscription/Notification. */
         void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
         void unsubscribePresence(const std::string& accountID, const std::string& buddySipUri);
         void sendPresence(const std::string& accountID, const std::string& status, const std::string& note);

@@ -840,7 +840,7 @@
         </method>
 
         <method name="confirmPresenceSubscription" tp:name-for-bindings="confirmPresenceSubscription">
-          <arg type="b" name="confirm"/>
+          <arg type="b" name="confirm" direction="in"/>
         </method>
 
         <signal name="newPresenceNotification" tp:name-for-bindings="newPresenceNotification">

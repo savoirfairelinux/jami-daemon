@@ -137,7 +137,7 @@ class SIPBuddy {
          * Callback after a presence notification was received.
          * Tranfert info to the SIP account.
          */
-        pj_status_t reportPresence();
+        void reportPresence();
         /**
          * Process the un/subscribe request transmission.
          */

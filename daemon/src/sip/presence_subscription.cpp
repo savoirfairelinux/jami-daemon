@@ -50,7 +50,7 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event) {
     SIPPresence * pres = Manager::instance().getSipAccount("IP2IP")->getPresence();
     pres->lock();
     PresenceSubscription *presenceSub = (PresenceSubscription *) pjsip_evsub_get_mod_data(sub,pres->getModId());
-    WARN("Presence server subscription to %s is %s", presenceSub->remote, pjsip_evsub_get_state_name(sub));
+    DEBUG("Presence server subscription to %s is %s", presenceSub->remote, pjsip_evsub_get_state_name(sub));
 
     if (presenceSub) {
         pjsip_evsub_state state;
@@ -152,7 +152,9 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     pjsip_evsub_set_mod_data(sub, pres->getModId(), presenceSub);
 
     /* Need client approvement.*/
-    pres->reportNewServerSubscription(presenceSub);
+    //pres->reportNewServerSubscription(presenceSub);
+    pres->addServerSubscription(presenceSub);
+
 
     /* Capture the value of Expires header. */
     expires_hdr = (pjsip_expires_hdr*) pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_EXPIRES, NULL);
@@ -195,7 +197,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     tdata = NULL;
     status = pjsip_pres_notify(sub, ev_state, &stateStr, &reason, &tdata);
     if (status == PJ_SUCCESS) {
-        pres_process_msg_data(tdata, &msg_data);
+        pres->fillDoc(tdata, &msg_data);
         status = pjsip_pres_send_request(sub, tdata);
     }
 
@@ -211,24 +213,13 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
 
 
 
-
-
-
-
-
-
-
-
-
-PresenceSubscription::PresenceSubscription(SIPPresence * pres, pjsip_evsub *evsub, char *r,pjsip_dialog *d)
-    :sub(evsub)
-    , pres_(pres)
+PresenceSubscription::PresenceSubscription(SIPPresence * pres, pjsip_evsub *evsub, char *r, pjsip_dialog *d)
+    : pres_(pres)
+    , sub(evsub)
     , remote(r)
     , dlg(d)
     , expires (-1)
-{
-
-}
+{}
 
 
 void PresenceSubscription::setExpires(int ms) {
@@ -273,7 +264,7 @@ void PresenceSubscription::init(){
     pj_str_t stateStr = pj_str("");
     pj_status_t status = pjsip_pres_notify(sub, ev_state, &stateStr, &reason, &tdata);
     if (status == PJ_SUCCESS) {
-        pres_process_msg_data(tdata, &msg_data);
+        pres_->fillDoc(tdata, &msg_data);
         status = pjsip_pres_send_request(sub, tdata);
     }
 
@@ -298,7 +289,7 @@ void PresenceSubscription::notify() {
 
         if (pjsip_pres_current_notify(sub, &tdata) == PJ_SUCCESS) {
             // add msg header and send
-            pres_process_msg_data(tdata, NULL);
+            pres_->fillDoc(tdata, NULL);
             pjsip_pres_send_request(sub, tdata);
         }
         else{

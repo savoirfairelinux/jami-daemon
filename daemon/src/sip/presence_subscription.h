@@ -75,7 +75,6 @@ public:
     int getExpires();
     bool matches(PresenceSubscription * s);
     bool isActive();
-    //SIPPresence * getPresence();
 
     /**
      * Send the tirst notification.
