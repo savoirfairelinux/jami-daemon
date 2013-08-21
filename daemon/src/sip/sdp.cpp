@@ -267,7 +267,7 @@ Sdp::setMediaDescriptorLines(bool audio)
 #ifdef HAVE_OPUS
         // Opus sample rate is allways declared as 48000 and channel num is allways 2 in rtpmap as per
         // http://tools.ietf.org/html/draft-spittka-payload-rtp-opus-03#section-6.2
-        if(payload == Opus::PAYLOAD_TYPE) {
+        if (payload == Opus::PAYLOAD_TYPE) {
             rtpmap.clock_rate = 48000;
             rtpmap.param.ptr = ((char* const)"2");
             rtpmap.param.slen = 1;
@@ -285,9 +285,9 @@ Sdp::setMediaDescriptorLines(bool audio)
 
 #ifdef HAVE_OPUS
         // Declare stereo support for opus
-        if(payload == Opus::PAYLOAD_TYPE) {
+        if (payload == Opus::PAYLOAD_TYPE) {
             std::ostringstream os;
-            os << "fmtp:" << payload << " stereo=1; sprop-stereo=" << (channels>1 ? 1 : 0);
+            os << "fmtp:" << payload << " stereo=1; sprop-stereo=" << (channels > 1);
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
         }
 #endif
