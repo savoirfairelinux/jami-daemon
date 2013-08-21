@@ -157,8 +157,7 @@ SocketPair::~SocketPair()
     // destroy in reverse order
     pthread_mutex_destroy(&rtcpWriteMutex_);
 
-	if (!ioHandle_)
-		delete ioHandle_;
+    delete ioHandle_;
 }
 
 void SocketPair::interrupt()
@@ -210,15 +209,12 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
 
 VideoIOHandle* SocketPair::getIOContext()
 {
-	if (!ioHandle_)
-		ioHandle_ = new VideoIOHandle(RTP_BUFFER_SIZE, true,
-									  &readCallback, &writeCallback, 0,
-									  reinterpret_cast<void*>(this));
-	return ioHandle_;
+    return new VideoIOHandle(RTP_BUFFER_SIZE, true,
+                             &readCallback, &writeCallback, 0,
+                             reinterpret_cast<void*>(this));
 }
 
-int
-SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
+int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 {
     SocketPair *context = static_cast<SocketPair*>(opaque);
 
