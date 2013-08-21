@@ -529,22 +529,10 @@ void PulseLayer::readFromMic()
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
-    /*if (resample) {
-        double resampleFactor = (double) sampleRate_ / mainBufferSampleRate;
-        //bytes = (double) bytes * resampleFactor;
-    }*/
-
-    /*if (bytes > mic_buf_size_) {
-        mic_buf_size_ = bytes;
-        delete [] mic_buffer_;
-        mic_buffer_ = new SFLAudioSample[samples];
-    }*/
-
     AudioBuffer * out = &in;
 
     if (resample) {
         mic_buffer_.setSampleRate(mainBufferSampleRate);
-        //converter_.resample((SFLAudioSample*)data, mic_buffer_, samples, mainBufferSampleRate, sampleRate_, samples);
         converter_.resample(in, mic_buffer_);
         out = &mic_buffer_;
     }
