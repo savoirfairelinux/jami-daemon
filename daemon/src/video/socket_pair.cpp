@@ -211,7 +211,8 @@ VideoIOHandle* SocketPair::getIOContext()
                              reinterpret_cast<void*>(this));
 }
 
-int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
+int
+SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 {
     SocketPair *context = static_cast<SocketPair*>(opaque);
 
