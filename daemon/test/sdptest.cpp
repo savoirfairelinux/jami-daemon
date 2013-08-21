@@ -141,7 +141,7 @@ void SDPTest::testInitialOfferFirstCodec()
 {
     std::cout << "------------ SDPTest::testInitialOfferFirstCodec --------------" << std::endl;
 
-    CPPUNIT_ASSERT(session_->getLocalIP().empty());
+    CPPUNIT_ASSERT(session_->getPublishedIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
     std::vector<int> codecSelection;
@@ -152,7 +152,7 @@ void SDPTest::testInitialOfferFirstCodec()
 
     std::vector<std::map<std::string, std::string> > videoCodecs(createVideoCodecs());
 
-    session_->setLocalIP(LOCALHOST);
+    session_->setPublishedIP(LOCALHOST);
     session_->setLocalPublishedAudioPort(49567);
 
     session_->createOffer(codecSelection, videoCodecs);
@@ -165,7 +165,7 @@ void SDPTest::testInitialOfferFirstCodec()
 
     session_->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(session_->getLocalIP() == LOCALHOST);
+    CPPUNIT_ASSERT(session_->getPublishedIP() == LOCALHOST);
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
 }
 
@@ -173,7 +173,7 @@ void SDPTest::testInitialAnswerFirstCodec()
 {
     std::cout << "------------ SDPTest::testInitialAnswerFirstCodec -------------" << std::endl;
 
-    CPPUNIT_ASSERT(session_->getLocalIP().empty());
+    CPPUNIT_ASSERT(session_->getPublishedIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
     std::vector<int> codecSelection;
@@ -185,7 +185,7 @@ void SDPTest::testInitialAnswerFirstCodec()
 
     pjmedia_sdp_parse(testPool_, (char*) sdp_offer1, strlen(sdp_offer1), &remoteOffer);
 
-    session_->setLocalIP(LOCALHOST);
+    session_->setPublishedIP(LOCALHOST);
     session_->setLocalPublishedAudioPort(49567);
 
     session_->receiveOffer(remoteOffer, codecSelection, createVideoCodecs());
@@ -194,7 +194,7 @@ void SDPTest::testInitialAnswerFirstCodec()
 
     session_->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(session_->getLocalIP() == LOCALHOST);
+    CPPUNIT_ASSERT(session_->getPublishedIP() == LOCALHOST);
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
 }
 
@@ -202,7 +202,7 @@ void SDPTest::testInitialOfferLastCodec()
 {
     std::cout << "------------ SDPTest::testInitialOfferLastCodec --------------------" << std::endl;
 
-    CPPUNIT_ASSERT(session_->getLocalIP().empty());
+    CPPUNIT_ASSERT(session_->getPublishedIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
     std::vector<int> codecSelection;
@@ -211,7 +211,7 @@ void SDPTest::testInitialOfferLastCodec()
     codecSelection.push_back(PAYLOAD_CODEC_ALAW);
     codecSelection.push_back(PAYLOAD_CODEC_G722);
 
-    session_->setLocalIP(LOCALHOST);
+    session_->setPublishedIP(LOCALHOST);
     session_->setLocalPublishedAudioPort(49567);
 
     session_->createOffer(codecSelection, createVideoCodecs());
@@ -224,7 +224,7 @@ void SDPTest::testInitialOfferLastCodec()
 
     session_->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(session_->getLocalIP() == LOCALHOST);
+    CPPUNIT_ASSERT(session_->getPublishedIP() == LOCALHOST);
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
 }
 
@@ -232,7 +232,7 @@ void SDPTest::testInitialAnswerLastCodec()
 {
     std::cout << "------------ SDPTest::testInitialAnswerLastCodec ------------" << std::endl;
 
-    CPPUNIT_ASSERT(session_->getLocalIP().empty());
+    CPPUNIT_ASSERT(session_->getPublishedIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
     std::vector<int> codecSelection;
@@ -244,7 +244,7 @@ void SDPTest::testInitialAnswerLastCodec()
 
     pjmedia_sdp_parse(testPool_, (char*)sdp_offer2, strlen(sdp_offer2), &remoteOffer);
 
-    session_->setLocalIP(LOCALHOST);
+    session_->setPublishedIP(LOCALHOST);
     session_->setLocalPublishedAudioPort(49567);
 
     session_->receiveOffer(remoteOffer, codecSelection, createVideoCodecs());
@@ -253,7 +253,7 @@ void SDPTest::testInitialAnswerLastCodec()
 
     session_->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(session_->getLocalIP() == LOCALHOST);
+    CPPUNIT_ASSERT(session_->getPublishedIP() == LOCALHOST);
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
 }
 
@@ -262,7 +262,7 @@ void SDPTest::testReinvite()
 {
     std::cout << "------------ SDPTest::testReinvite --------------------" << std::endl;
 
-    CPPUNIT_ASSERT(session_->getLocalIP().empty());
+    CPPUNIT_ASSERT(session_->getPublishedIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
     std::vector<int> codecSelection;
@@ -270,7 +270,7 @@ void SDPTest::testReinvite()
     codecSelection.push_back(PAYLOAD_CODEC_ALAW);
     codecSelection.push_back(PAYLOAD_CODEC_G722);
 
-    session_->setLocalIP(LOCALHOST);
+    session_->setPublishedIP(LOCALHOST);
     session_->setLocalPublishedAudioPort(49567);
 
     std::vector<std::map<std::string, std::string> > videoCodecs(createVideoCodecs());
@@ -285,7 +285,7 @@ void SDPTest::testReinvite()
 
     session_->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(session_->getLocalIP() == LOCALHOST);
+    CPPUNIT_ASSERT(session_->getPublishedIP() == LOCALHOST);
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
     std::vector<sfl::AudioCodec*> codecs;
     session_->getSessionAudioMedia(codecs);
