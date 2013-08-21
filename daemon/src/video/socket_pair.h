@@ -64,7 +64,6 @@ namespace sfl_video {
         sockaddr_storage rtcpDestAddr_;
         socklen_t rtcpDestAddrLen_;
         bool interrupted_;
-		VideoIOHandle *ioHandle_;
 
 	private:
 		NON_COPYABLE(SocketPair);
