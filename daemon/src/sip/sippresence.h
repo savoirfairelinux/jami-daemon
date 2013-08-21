@@ -43,7 +43,7 @@
 #include "pjsip-simple/publish.h"
 #include "pjsip-simple/presence.h"
 #include "pjsip-simple/rpid.h"
-
+#include <pj/pool.h>
 
 struct pres_msg_data
 {
@@ -182,9 +182,10 @@ public:
      /**
      * IP2IP context.
      * Process new subscription based on client decision.
-     * @param s     PresenceSubcription pointer.
+     * @param flag     client decision.
+     * @param uri       uri of the remote subscriber
      */
-    void confirmNewServerSubscription(const bool& confirm);
+    void approveServerSubscription(const bool& flag, const std::string& uri);
     /**
      * IP2IP context.
      * Add a server associated to a subscriber in the list.
@@ -213,7 +214,6 @@ public:
 
     pjsip_pres_status pres_status_data; /**< Presence Data.*/
     pj_bool_t       online_status; /**< Our online status.	*/
-    pjrpid_element  rpid;	    /**< RPID element information.*/
     pjsip_publishc  *publish_sess;  /**< Client publication session.*/
     pj_bool_t   publish_state; /**< Last published online status.*/
     pj_bool_t   publish_enabled; /**< Allow for status publish,*/
@@ -221,16 +221,17 @@ public:
 private:
     NON_COPYABLE(SIPPresence);
 
+    SIPAccount * acc_; /**<  Associated SIP account. */
+    std::list< PresenceSubscription *> serverSubscriptions_; /**< Subscribers list.*/
+    std::list< SIPBuddy *> buddies_; /**< Subcribed buddy list.*/
+
     pj_mutex_t	*mutex_;	    /**< Mutex protection for this data	*/
     unsigned	mutex_nesting_level_; /**< Mutex nesting level.	*/
     pj_thread_t	*mutex_owner_; /**< Mutex owner.			*/
-    pj_caching_pool *cp_;	    /**< Global pool factory.		*/
+    pj_caching_pool     cp_;	    /**< Global pool factory.		*/
     pj_pool_t	*pool_;	    /**< pjsua's private pool.		*/
 
-    SIPAccount * acc_; /**<  Associated SIP account. */
-    PresenceSubscription *newPresenceSubscription_; /**< Latest Subscribers waiting for approval */
-    std::list< PresenceSubscription *> serverSubscriptions_; /**< Subscribers list.*/
-    std::list< SIPBuddy *> buddies_; /**< Subcribed buddy list.*/
+
 };
 
 #endif

@@ -69,17 +69,16 @@ public:
 
     PresenceSubscription(SIPPresence * pres, pjsip_evsub *evsub, char *r,pjsip_dialog *d);
 
-    char            *remote;    /**< Remote URI.			    */
+    char *remote;    /**< Remote URI.			    */
 
     void setExpires(int ms);
     int getExpires();
-    bool matches(PresenceSubscription * s);
-    bool isActive();
-
+    bool matches(char *s);
+    void approve(const bool& flag);
     /**
      * Send the tirst notification.
      * FIXME : pjsip_pres_notify crash because the header can't be cloned
-     * So far, the first notify is sent in sipvoip_pres.c instead.
+     * So far, the first notify is sent in pres_on_rx_subscribe_request() instead.
      */
     void init();
     void notify();
@@ -93,7 +92,8 @@ private:
     SIPPresence     *pres_;
     pjsip_evsub	    *sub;	    /**< The evsub.			    */
     pjsip_dialog    *dlg;	    /**< Dialog.			    */
-    int		     expires;	    /**< "expires" value in the request.    */
+    int		    expires;	    /**< "expires" value in the request.    */
+    bool            approved;        /**< The client approved this subscription*/
 };
 
 

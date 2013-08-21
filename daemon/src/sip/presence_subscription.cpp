@@ -71,7 +71,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
     pj_str_t *str = &method->name;
     std::string request(str->ptr, str->slen);
-    pj_str_t contact;
+//    pj_str_t contact;
     pj_status_t status;
     pjsip_dialog *dlg;
     pjsip_evsub *sub;
@@ -89,20 +89,24 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method, pjsip_get_subscribe_method()) != 0)
         return PJ_FALSE;
 
-    DEBUG("Incomming pres_on_rx_subscribe_request for %s.", request.c_str());
+    /* debug msg */
+    std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
+    std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
+    DEBUG("Incomming pres_on_rx_subscribe_request for %s, name:%s, server:%s."
+            , request.c_str()
+            , name.c_str()
+            , server.c_str());
 
-    //std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
-    //std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
-
+    /* get parents*/
     std::string accountId = "IP2IP"; /* this code is only used for IP2IP accounts */
     SIPAccount *acc = (SIPAccount *) Manager::instance().getSipAccount(accountId);
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
     SIPPresence * pres = acc->getPresence();
     pres->lock();
 
-
     /* Create UAS dialog: */
-    contact = pj_str(strdup(acc->getContactHeader().c_str()));
+    std::string c(acc->getContactHeader());
+    const pj_str_t contact = pj_str((char*) c.c_str());
     status = pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, &contact, &dlg);
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
@@ -141,20 +145,17 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     /* Attach our data to the subscription: */
     char* remote = (char*) pj_pool_alloc(dlg->pool, PJSIP_MAX_URL_SIZE);
     status = pjsip_uri_print(PJSIP_URI_IN_REQ_URI, dlg->remote.info->uri, remote, PJSIP_MAX_URL_SIZE);
-    pjsip_uri_print(PJSIP_URI_IN_CONTACT_HDR, dlg->local.info->uri, contact.ptr, PJSIP_MAX_URL_SIZE);
-    PresenceSubscription *presenceSub = new PresenceSubscription(pres, sub, remote, dlg);
-
     if (status < 1)
         pj_ansi_strcpy(remote, "<-- url is too long-->");
     else
         remote[status] = '\0';
+    //pjsip_uri_print(PJSIP_URI_IN_CONTACT_HDR, dlg->local.info->uri, contact.ptr, PJSIP_MAX_URL_SIZE);
 
+    /* Create a new PresenceSubription server and wait for client approve */
+    PresenceSubscription *presenceSub = new PresenceSubscription(pres, sub, remote, dlg);
     pjsip_evsub_set_mod_data(sub, pres->getModId(), presenceSub);
-
-    /* Need client approvement.*/
-    //pres->reportNewServerSubscription(presenceSub);
+    pres->reportNewServerSubscription(presenceSub); /* Notify the client.*/
     pres->addServerSubscription(presenceSub);
-
 
     /* Capture the value of Expires header. */
     expires_hdr = (pjsip_expires_hdr*) pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_EXPIRES, NULL);
@@ -218,7 +219,8 @@ PresenceSubscription::PresenceSubscription(SIPPresence * pres, pjsip_evsub *evsu
     , sub(evsub)
     , remote(r)
     , dlg(d)
-    , expires (-1)
+    , expires(-1)
+    , approved(false)
 {}
 
 
@@ -234,15 +236,13 @@ int PresenceSubscription::getExpires(){
     return pres_;
 }*/
 
-bool PresenceSubscription::matches(PresenceSubscription * s){
+bool PresenceSubscription::matches(char *s){
     // servers match if they have the same remote uri and the account ID.
-  return (!(strcmp(remote,s->remote))) ;
+  return (!(strcmp(remote,s))) ;
 }
 
-bool PresenceSubscription::isActive(){
-    if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_ACTIVE )
-        return true;
-    return false;
+void PresenceSubscription::approve(const bool& flag){
+    approved = flag;
 }
 
 /**
@@ -281,7 +281,7 @@ void PresenceSubscription::notify() {
      * being requested) state and we don't send NOTIFY to these subs until
      * the user accepted the request.
      */
-    if (isActive()) {
+    if ((pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_ACTIVE) && (approved)) {
         DEBUG("Notifying %s.", remote);
 
         pjsip_tx_data *tdata;

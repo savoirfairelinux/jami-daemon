@@ -23,7 +23,6 @@
  *  combining it with the OpenSSL project's OpenSSL library (or a
  *  modified version of that library), containing parts covered by the
  *  terms of the OpenSSL or SSLeay licenses, LOTES-TM LLC
- *  grants you additional permission to convey the resulting work.
  *  Corresponding Source for a non-source form of such a combination
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.

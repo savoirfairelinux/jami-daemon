@@ -82,7 +82,7 @@ void buddy_evsub_on_state(pjsip_evsub *sub, pjsip_event *event) {
 
         pjsip_evsub_state state = pjsip_evsub_get_state(sub);
         if(state == PJSIP_EVSUB_STATE_ACCEPTED){
-            DEBUG("Accept buddy.");
+            DEBUG("Buddy accepted.");
             buddy->accept();
         }
         else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
@@ -286,7 +286,8 @@ SIPBuddy::SIPBuddy(const std::string& uri_, SIPAccount *acc_) :
         term_reason(),
         timer(),
         user_data(NULL),
-        lock_count(0) {
+        lock_count(0)
+{
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool = pj_pool_create(&cp_.factory, "buddy", 512, 512, NULL);
 }

@@ -839,11 +839,14 @@
           <arg type="s" name="note" direction="in"/>
         </method>
 
-        <method name="confirmPresenceSubscription" tp:name-for-bindings="confirmPresenceSubscription">
-          <arg type="b" name="confirm" direction="in"/>
+        <method name="approvePresenceSubscription" tp:name-for-bindings="approvePresenceSubscription">
+          <tp:added version="0.9.7"/>
+          <arg type="b" name="flag" direction="in"/>
+          <arg type="s" name="uri" direction="in"/>
         </method>
 
         <signal name="newPresenceNotification" tp:name-for-bindings="newPresenceNotification">
+          <tp:added version="0.9.7"/>
           <arg type="s" name="buddyUri"/>
           <arg type="s" name="status"/>
           <arg type="s" name="lineStatus"/>

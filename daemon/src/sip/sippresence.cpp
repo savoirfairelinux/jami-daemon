@@ -43,21 +43,13 @@
 
 
 
-/*TODO : clean this*/
-static pj_caching_pool cp;
-
 SIPPresence::SIPPresence(SIPAccount *acc)
     : pres_status_data()
     , online_status()
-    , rpid({PJRPID_ELEMENT_TYPE_PERSON,
-            pj_str("20"),/*TODO : unhardcode this*/
-            PJRPID_ACTIVITY_BUSY,
-            pj_str("")})
     , publish_sess()
     , publish_state()
     , publish_enabled(true)
     , acc_(acc)
-    , newPresenceSubscription_(NULL)
     , serverSubscriptions_ ()
     , buddies_ ()
     , mutex_()
@@ -66,12 +58,13 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     , pool_()
     , cp_()
 {
-    // init default status
+    /* init default status */
     updateStatus("open","Available");
 
-    cp_ = &cp;
-    pj_caching_pool_init(cp_, NULL, 0);
-    pool_ = pj_pool_create(&(cp_->factory), "pres", 1000, 1000, NULL);
+    /* init pool */
+    pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
+    pool_ = pj_pool_create(&cp_.factory, "pres", 1000, 1000, NULL);
+
     /* Create mutex */
     if(pj_mutex_create_recursive(pool_, "pres",&mutex_) != PJ_SUCCESS)
 	ERROR("Unable to create mutex");
@@ -79,8 +72,13 @@ SIPPresence::SIPPresence(SIPAccount *acc)
 
 
 SIPPresence::~SIPPresence(){
-    /*TODO free buddy/subcriber lists and the pool*/
-
+    /* Flush the lists */
+    std::list< PresenceSubscription *>::iterator serverIt;
+    std::list< SIPBuddy *>::iterator buddyIt;
+       for (buddyIt = buddies_.begin(); buddyIt != buddies_.end(); buddyIt++)
+        delete *buddyIt;
+    for (serverIt = serverSubscriptions_.begin(); serverIt != serverSubscriptions_.end(); serverIt++)
+        delete *serverIt;
 }
 
 SIPAccount * SIPPresence::getAccount(){
@@ -100,10 +98,13 @@ pj_pool_t*  SIPPresence::getPool(){
 }
 
 void SIPPresence::updateStatus(const std::string &status, const std::string &note){
+    //char* pj_note  = (char*) pj_pool_alloc(pool_, "50");
+
     pjrpid_element rpid = {PJRPID_ELEMENT_TYPE_PERSON,
             pj_str("20"),
             PJRPID_ACTIVITY_UNKNOWN,
-            pj_str(strdup(note.c_str()))}; /*TODO : del strdup*/
+            pj_str((char *) note.c_str())};
+            //pj_str(strdup(note.c_str()))}; /*TODO : del strdup*/
 
     /* fill activity if user not available. */
     if(note=="away")
@@ -124,9 +125,9 @@ void SIPPresence::updateStatus(const std::string &status, const std::string &not
 void SIPPresence::sendPresence(const std::string &status, const std::string &note){
     updateStatus(status,note);
     if (acc_->isIP2IP())
-        notifyServerSubscription();
+        notifyServerSubscription(); // to each subscribers
     else
-        pres_publish(this);
+        pres_publish(this); // to sipvoip server
 }
 
 
@@ -177,27 +178,24 @@ void SIPPresence::removeBuddy(SIPBuddy *b){
 
 
 void SIPPresence::reportNewServerSubscription(PresenceSubscription *s){
-    newPresenceSubscription_ = s;
+    //newPresenceSubscription_ = s;
     Manager::instance().getClient()->getCallManager()->newPresenceSubscription(s->remote);
 }
 
-void SIPPresence::confirmNewServerSubscription(const bool& confirm){
-    if(newPresenceSubscription_=NULL)
-        return;
-
-    if(confirm){
-        DEBUG("-Confirm new PresenceSubscription for %s",newPresenceSubscription_->remote);
-        addServerSubscription(newPresenceSubscription_);
-    }
-    else{
-        DEBUG("-Refused new PresenceSubscription for %s",newPresenceSubscription_->remote);
-        newPresenceSubscription_ = NULL;
+void SIPPresence::approveServerSubscription(const bool& flag, const std::string& uri){
+    std::list< PresenceSubscription *>::iterator serverIt;
+    for (serverIt = serverSubscriptions_.begin(); serverIt != serverSubscriptions_.end(); serverIt++){
+         if((*serverIt)->matches((char *) uri.c_str())){
+             DEBUG("-Approve subscription for %s.",(*serverIt)->remote);
+             (*serverIt)->approve(flag);
+             // return; // 'return' would prevent multiple-time subscribers from spam
+         }
     }
 }
 
 
 void SIPPresence::addServerSubscription(PresenceSubscription *s) {
-    DEBUG("-PresenceServer subscription added.");
+    DEBUG("-PresenceServer subscription added: %s.",s->remote);
     serverSubscriptions_.push_back(s);
 }
 

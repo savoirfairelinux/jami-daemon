@@ -426,14 +426,14 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
 void
 CallManager::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
-  DEBUG("subscribePresence (acc:%s, buddy:%)",accountID.c_str(), buddySipUri.c_str());
+  DEBUG("subscribePresence (acc:%s, buddy:%s)",accountID.c_str(), buddySipUri.c_str());
   Manager::instance().subscribePresence(accountID,buddySipUri);
 }
 
 void
 CallManager::unsubscribePresence(const std::string& accountID, const std::string& buddySipUri)
 {
-  DEBUG("unsubscribePresence (acc:%s, buddy:%)",accountID.c_str(), buddySipUri.c_str());
+  DEBUG("unsubscribePresence (acc:%s, buddy:%s)",accountID.c_str(), buddySipUri.c_str());
   Manager::instance().unsubscribePresence(accountID,buddySipUri);
 }
 
@@ -445,8 +445,8 @@ CallManager::sendPresence(const std::string& accountID, const std::string& statu
 }
 
 void
-CallManager::confirmPresenceSubscription(const bool& confirm)
+CallManager::approvePresenceSubscription(const bool& flag, const std::string& uri)
 {
-  DEBUG("confirmPresenceSubscription :");
-  Manager::instance().confirmPresenceSubscription(confirm);
+  DEBUG("approvePresenceSubscription %s : %s.",uri.c_str(), flag? "yes":"no");
+  Manager::instance().approvePresenceSubscription(flag, uri);
 }

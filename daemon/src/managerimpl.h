@@ -1049,7 +1049,7 @@ class ManagerImpl {
         /**
          * Accept or not a PresenceSubscription request for IP2IP account
          */
-        void confirmPresenceSubscription(const bool& confirm);
+        void approvePresenceSubscription(const bool& flag, const std::string& uri);
 
     private:
         NON_COPYABLE(ManagerImpl);

@@ -2950,13 +2950,13 @@ void ManagerImpl::sendPresence(const std::string& accountID, const std::string& 
     account->getPresence()->sendPresence(status,note);
 }
 
-void ManagerImpl::confirmPresenceSubscription(const bool& confirm)
+void ManagerImpl::approvePresenceSubscription(const bool& flag, const std::string& uri)
 {
     SIPAccount *account = Manager::instance().getSipAccount("IP2IP");
-    account->getPresence()->confirmNewServerSubscription(confirm);
+    account->getPresence()->approveServerSubscription(flag, uri);
 }
 
-    void
+void
 ManagerImpl::registerAccounts()
 {
     AccountMap allAccounts(getAllAccounts());
