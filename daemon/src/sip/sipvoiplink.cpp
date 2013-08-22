@@ -1020,16 +1020,22 @@ SIPVoIPLink::answer(Call *call)
         return;
 
     SIPCall *sipCall = static_cast<SIPCall*>(call);
+    SIPAccount *account = Manager::instance().getSipAccount(sipCall->getAccountId());
+    if (!account) {
+        ERROR("Could not find account %s", sipCall->getAccountId().c_str());
+        return;
+    }
+
     if (!sipCall->inv->neg) {
         WARN("Negotiator is NULL, we've received an INVITE without an SDP");
         pjmedia_sdp_session *dummy = 0;
         sdp_create_offer_cb(sipCall->inv, &dummy);
-        SIPAccount *account = Manager::instance().getSipAccount(sipCall->getAccountId());
-        if (account and account->isStunEnabled())
+        if (account->isStunEnabled())
             updateSDPFromSTUN(*sipCall, *account, SIPVoIPLink::instance()->sipTransport);
     }
 
-    call->answer();
+    sipCall->setContactHeader(account->getContactHeader());
+    sipCall->answer();
 }
 
 namespace {
