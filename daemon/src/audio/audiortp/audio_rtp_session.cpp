@@ -129,7 +129,11 @@ void AudioRtpSession::sendDtmfEvent()
     if (dtmf.newevent)
         queue_.setMark(true);
 
-    queue_.sendImmediate(timestamp_, (const unsigned char *)(& (dtmf.payload)), sizeof(ost::RTPPacket::RFC2833Payload));
+    // Send end packet three times (without changing it). Sequence number is
+    // incremented automatically by ccrtp, which is the correct behaviour.
+    const unsigned repetitions = dtmf.payload.ebit ? 3 : 1;
+    for (unsigned i = 0; i < repetitions; ++i)
+        queue_.sendImmediate(timestamp_, (const unsigned char *)(& (dtmf.payload)), sizeof(ost::RTPPacket::RFC2833Payload));
 
     // This is no longer a new event
     if (dtmf.newevent) {
@@ -145,7 +149,7 @@ void AudioRtpSession::sendDtmfEvent()
     dtmf.length -= increment;
     dtmf.payload.duration++;
 
-    // next packet is going to be the last one
+    // next packet is going to be the end packet (transmitted 3 times)
     if ((dtmf.length - increment) < increment)
         dtmf.payload.ebit = true;
 
