@@ -29,105 +29,88 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_BASE_H_
-#define _VIDEO_BASE_H_
+#ifndef _VIDEO_FRAME_H_
+#define _VIDEO_FRAME_H_
 
 #include "noncopyable.h"
 
-extern "C" {
-#include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
-}
+#include <cstdlib>
+#include <cstdint>
 
-/* LIBAVFORMAT_VERSION_CHECK checks for the right version of libav and FFmpeg
- * a is the major version
- * b and c the minor and micro versions of libav
- * d and e the minor and micro versions of FFmpeg */
-#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
-    ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
-      (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
 
-#define HAVE_SDP_CUSTOM_IO LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
-
-typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
-
+class AVFrame;
 class AVPacket;
 class AVDictionary;
 
+#ifndef AVFORMAT_AVIO_H
+class AVIOContext;
+#endif
+
+enum VideoPixelFormat {
+    VIDEO_PIXFMT_BGRA = -1,
+};
+
 namespace sfl_video {
+    typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
+    typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
+    typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
+
     class VideoPacket {
     public:
-        ~VideoPacket() { av_free_packet(&inpacket_); };
-
-        AVPacket* get() const { return (AVPacket*)(&inpacket_); }
+        VideoPacket();
+        ~VideoPacket();
+        AVPacket* get() { return packet_; };
 
     private:
-        AVPacket inpacket_;
+        NON_COPYABLE(VideoPacket);
+        AVPacket *packet_;
     };
 
     class VideoIOHandle {
     public:
-    VideoIOHandle(ssize_t buffer_size,
-                  bool writeable,
-                  io_readcallback read_cb,
-                  io_writecallback write_cb,
-                  io_seekcallback seek_cb,
-                  void *opaque) : ctx_(0), buf_(0)
+        VideoIOHandle(ssize_t buffer_size,
+                      bool writeable,
+                      io_readcallback read_cb,
+                      io_writecallback write_cb,
+                      io_seekcallback seek_cb,
+                      void *opaque);
+        ~VideoIOHandle();
 
-        {
-            buf_ = static_cast<unsigned char *>(av_malloc(buffer_size));
-            ctx_ = avio_alloc_context(buf_, buffer_size, writeable, opaque, read_cb,
-                                      write_cb, seek_cb);
-            ctx_->max_packet_size = buffer_size;
-        }
-
-        ~VideoIOHandle() { av_free(ctx_); av_free(buf_); }
-
-        AVIOContext *get() { return ctx_; }
+        AVIOContext* get() { return ctx_; }
 
     private:
         NON_COPYABLE(VideoIOHandle);
-
         AVIOContext *ctx_;
         unsigned char *buf_;
     };
 
-    class VideoFrame {
-    public:
-    VideoFrame() : frame_(avcodec_alloc_frame()) {}
-
-        ~VideoFrame() { avcodec_free_frame(&frame_); };
-
-        AVFrame *get() { return frame_; }
-
-    private:
-        NON_COPYABLE(VideoFrame);
-
-        AVFrame *frame_;
-    };
-
     class VideoCodec {
     public:
-    VideoCodec() : options_(0) {};
+        VideoCodec();
         virtual ~VideoCodec() {};
 
-        static size_t getBufferSize(PixelFormat pix_fmt, int width, int height)
-        {
-            return avpicture_get_size(pix_fmt, width, height);
-        }
-
-        void setOption(const char *name, const char *value)
-        {
-            av_dict_set(&options_, name, value, 0);
-        }
+        void setOption(const char *name, const char *value);
 
     private:
         NON_COPYABLE(VideoCodec);
 
     protected:
         AVDictionary *options_;
+    };
+
+    class VideoFrame {
+    public:
+        VideoFrame();
+        ~VideoFrame();
+
+        AVFrame* get() { return frame_; };
+        void setGeometry(int width, int height, int pix_fmt);
+        void setDestination(void *data);
+        size_t getSize();
+
+    private:
+        NON_COPYABLE(VideoFrame);
+        AVFrame *frame_;
     };
 }
 

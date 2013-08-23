@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +30,7 @@
  *  as that of the covered work.
  */
 
+#include "libav_deps.h"
 #include "video_receive_thread.h"
 #include "socket_pair.h"
 #include "client/video_controls.h"
@@ -60,6 +62,8 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id,
     stream_(args_["receiving_sdp"]),
     sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this),
     demuxContext_(0),
+    scaler_(),
+    previewFrame_(),
     thread_(0)
 {
 }
@@ -118,7 +122,6 @@ void VideoReceiveThread::setupDecoder(VideoDecoder *decoder)
         decoder->setIOContext(&sdpContext_);
     }
 
-    DEBUG("input='%s', format='%s'", input.c_str(), format_str.c_str());
     EXIT_IF_FAIL(!decoder->openInput(input, format_str),
                  "Could not open input \"%s\"", input.c_str());
 
@@ -146,9 +149,9 @@ void VideoReceiveThread::setupDecoder(VideoDecoder *decoder)
         dstHeight_ = decoder->getHeight();
     }
 
-    // determine required buffer size and allocate buffer
-    bufferSize_ = VideoDecoder::getBufferSize(PIX_FMT_BGRA,
-                                              dstWidth_, dstHeight_);
+    // allocate our preview frame and shared sink
+    previewFrame_.setGeometry(dstWidth_, dstHeight_, VIDEO_PIXFMT_BGRA);
+    bufferSize_ = previewFrame_.getSize();
     EXIT_IF_FAIL(bufferSize_ > 0, "Incorrect buffer size for decoding");
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
@@ -200,8 +203,8 @@ void *VideoReceiveThread::runCallback(void *data)
 /// Copies and scales our rendered frame to the buffer pointed to by data
 void VideoReceiveThread::fillBuffer(void *data)
 {
-    videoDecoder_->setScaleDest(data, dstWidth_, dstHeight_, PIX_FMT_BGRA);
-    videoDecoder_->scale(NULL, 0);
+    previewFrame_.setDestination(data);
+    videoDecoder_->scale(scaler_, previewFrame_);
 }
 
 void VideoReceiveThread::run()
@@ -216,6 +219,7 @@ void VideoReceiveThread::run()
 
     if (demuxContext_)
         delete demuxContext_;
+
     delete videoDecoder;
 }
 

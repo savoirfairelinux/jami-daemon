@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,55 +28,27 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_SEND_THREAD_H_
-#define _VIDEO_SEND_THREAD_H_
+#ifndef __LIBAV_DEPS_H__
+#define __LIBAV_DEPS_H__
 
-#include <map>
-#include <string>
-#include <tr1/memory>
-#include "noncopyable.h"
-#include "video_encoder.h"
-#include "video_preview.h"
-
-
-namespace sfl_video {
-
-	class SocketPair;
-
-	class VideoSendThread {
-	private:
-		NON_COPYABLE(VideoSendThread);
-		void setup();
-		static int interruptCb(void *ctx);
-
-		std::map<std::string, std::string> args_;
-		/*-------------------------------------------------------------*/
-		/* These variables should be used in thread (i.e. run()) only! */
-		/*-------------------------------------------------------------*/
-		VideoPreview *videoPreview_;
-		VideoEncoder *videoEncoder_;
-
-		std::string sdp_;
-		int outputWidth_;
-		int outputHeight_;
-
-		bool threadRunning_;
-		int forceKeyFrame_;
-		static void *runCallback(void *);
-		pthread_t thread_;
-		int frameNumber_;
-		VideoIOHandle* muxContext_;
-		void run();
-		void encodeAndSendVideo();
-
-	public:
-		VideoSendThread(const std::map<std::string, std::string> &args);
-		~VideoSendThread();
-		void addIOContext(SocketPair &sock);
-		void start();
-		std::string getSDP() const { return sdp_; }
-		void forceKeyFrame();
-	};
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavdevice/avdevice.h>
+#include <libswscale/swscale.h>
+#include <libavutil/opt.h>
 }
 
-#endif // _VIDEO_SEND_THREAD_H_
+#include "libav_utils.h"
+
+/* LIBAVFORMAT_VERSION_CHECK checks for the right version of libav and FFmpeg
+ * a is the major version
+ * b and c the minor and micro versions of libav
+ * d and e the minor and micro versions of FFmpeg */
+#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
+    ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
+      (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
+
+#define HAVE_SDP_CUSTOM_IO LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
+
+#endif // __LIBAV_DEPS_H__

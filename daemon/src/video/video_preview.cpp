@@ -42,8 +42,6 @@ namespace sfl_video {
 
 using std::string;
 
-AVIOInterruptCB interruptCb_;
-
 VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
     id_("local"),
     args_(args),
@@ -54,11 +52,16 @@ VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
     sink_(),
     bufferSize_(0),
     previewWidth_(0),
-    previewHeight_(0)
+    previewHeight_(0),
+    scaler_(),
+    frame_(),
+    frameReady_(false),
+    frameMutex_(),
+    frameCondition_()
 {
     pthread_mutex_init(&accessMutex_, NULL);
-    interruptCb_.callback = interruptCb;
-    interruptCb_.opaque = this;
+    pthread_mutex_init(&frameMutex_, NULL);
+    pthread_cond_init(&frameCondition_, NULL);
     pthread_create(&thread_, NULL, &runCallback, this);
 }
 
@@ -140,8 +143,8 @@ void VideoPreview::setup()
     /* Previewing setup */
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
 
-    bufferSize_ = VideoDecoder::getBufferSize(PIX_FMT_BGRA, previewWidth_,
-                                              previewHeight_);
+    frame_.setGeometry(previewWidth_, previewHeight_, VIDEO_PIXFMT_BGRA);
+    bufferSize_ = frame_.getSize();
     EXIT_IF_FAIL(bufferSize_ > 0, "Incorrect buffer size for decoding");
 
     string name = sink_.openedName();
@@ -154,6 +157,10 @@ void VideoPreview::setup()
 
 bool VideoPreview::captureFrame()
 {
+    pthread_mutex_lock(&frameMutex_);
+    frameReady_ = false;
+    pthread_mutex_unlock(&frameMutex_);
+
     int ret = decoder_->decode();
 
     if (ret <= 0) {
@@ -161,6 +168,12 @@ bool VideoPreview::captureFrame()
             threadRunning_ = false;
         return false;
     }
+
+    // Signal threads waiting in waitFrame()
+    pthread_mutex_lock(&frameMutex_);
+    frameReady_ = true;
+    pthread_cond_signal(&frameCondition_);
+    pthread_mutex_unlock(&frameMutex_);
 
     return true;
 }
@@ -175,21 +188,21 @@ void VideoPreview::renderFrame()
 // This function is called by sink
 void VideoPreview::fillBuffer(void *data)
 {
-    fill(data, previewWidth_, previewHeight_);
+    frame_.setDestination(data);
+    decoder_->scale(scaler_, frame_);
 }
-
-void VideoPreview::fill(void *data, int width, int height)
-{
-    pthread_mutex_lock(&accessMutex_);
-    decoder_->setScaleDest(data, width, height, PIX_FMT_BGRA);
-    decoder_->scale(NULL, 0);
-    pthread_mutex_unlock(&accessMutex_);
-}
-
-VideoFrame *VideoPreview::lockFrame() { return decoder_->lockFrame(); }
-void VideoPreview::unlockFrame() { decoder_->unlockFrame(); }
 
 int VideoPreview::getWidth() const { return decoder_->getWidth(); }
 int VideoPreview::getHeight() const { return decoder_->getHeight(); }
+VideoFrame *VideoPreview::lockFrame() {return decoder_->lockFrame();}
+void VideoPreview::unlockFrame() {decoder_->unlockFrame();}
+
+void VideoPreview::waitFrame()
+{
+    pthread_mutex_lock(&frameMutex_);
+    if (!frameReady_)
+        pthread_cond_wait(&frameCondition_, &frameMutex_);
+    pthread_mutex_unlock(&frameMutex_);
+}
 
 } // end namspace sfl_video

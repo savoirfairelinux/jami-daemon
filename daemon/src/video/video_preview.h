@@ -1,6 +1,8 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
+ *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,11 +36,12 @@
 #include "noncopyable.h"
 #include "shm_sink.h"
 #include "video_provider.h"
+#include "video_scaler.h"
 
-#include <tr1/memory>
 #include <pthread.h>
 #include <string>
 #include <map>
+
 
 namespace sfl_video {
 	using std::string;
@@ -53,9 +56,9 @@ namespace sfl_video {
 		~VideoPreview();
 		int getWidth() const;
 		int getHeight() const;
-		void fill(void *data, int width, int height);
 		VideoFrame *lockFrame();
 		void unlockFrame();
+        void waitFrame();
 
 	private:
 		NON_COPYABLE(VideoPreview);
@@ -70,6 +73,11 @@ namespace sfl_video {
 		size_t bufferSize_;
 		int previewWidth_;
 		int previewHeight_;
+        VideoScaler scaler_;
+        VideoFrame frame_;
+        bool frameReady_;
+        pthread_mutex_t frameMutex_;
+        pthread_cond_t frameCondition_;
 
 		static int interruptCb(void *ctx);
 		static void *runCallback(void *);

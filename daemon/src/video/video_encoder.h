@@ -33,21 +33,18 @@
 #define _VIDEO_ENCODER_H_
 
 #include "video_base.h"
+#include "video_scaler.h"
 #include "noncopyable.h"
 
 #include <string>
 
-class SwsContext;
 class AVCodecContext;
 class AVStream;
 class AVFormatContext;
-class AVFrame;
 class AVCodec;
 
 namespace sfl_video {
-
-	class VideoEncoder : public VideoCodec
-	{
+	class VideoEncoder : public VideoCodec {
 	public:
 		VideoEncoder();
 		~VideoEncoder();
@@ -57,9 +54,8 @@ namespace sfl_video {
 		int openOutput(const char *enc_name, const char *short_name,
 					   const char *filename, const char *mime_type);
 		int startIO();
-		int encode(bool is_keyframe, int frame_number);
+		int encode(VideoFrame &input, bool is_keyframe, int frame_number);
 		int flush();
-		void scale(VideoFrame *src_frame, int flags);
 		void print_sdp(std::string &sdp_);
 
 		/* getWidth and getHeight return size of the encoded frame.
@@ -78,11 +74,9 @@ namespace sfl_video {
 		AVCodec *outputEncoder_;
         AVCodecContext *encoderCtx_;
         AVFormatContext *outputCtx_;
-        SwsContext *imgConvertCtx_;
-		AVIOInterruptCB interruptCb_;
-		SwsContext *scalerCtx_;
-		AVFrame *scaledPicture_;
 		AVStream *stream_;
+        VideoScaler scaler_;
+        VideoFrame scaledFrame_;
 
 		uint8_t *encoderBuffer_;
 		int encoderBufferSize_;

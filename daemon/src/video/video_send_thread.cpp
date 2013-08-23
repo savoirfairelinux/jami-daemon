@@ -1,6 +1,8 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,16 +50,12 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     sdp_(),
 	outputWidth_(0),
 	outputHeight_(0),
-    interruptCb_(),
     threadRunning_(false),
     forceKeyFrame_(0),
     thread_(0),
 	frameNumber_(0),
     muxContext_(0)
-{
-    interruptCb_.callback = interruptCb;
-    interruptCb_.opaque = this;
-}
+{}
 
 VideoSendThread::~VideoSendThread()
 {
@@ -176,12 +174,10 @@ void VideoSendThread::encodeAndSendVideo()
 
 	VideoFrame *inputframe = videoPreview_->lockFrame();
 	if (inputframe) {
-		videoEncoder_->scale(inputframe, 0);
-		videoPreview_->unlockFrame();
-	}
+        EXIT_IF_FAIL(videoEncoder_->encode(*inputframe, is_keyframe, frameNumber_++) >= 0,
+                     "encoding failed");
 
-	EXIT_IF_FAIL(videoEncoder_->encode(is_keyframe, frameNumber_++) >= 0,
-				 "encoding failed");
+    }
 }
 
 void VideoSendThread::forceKeyFrame()

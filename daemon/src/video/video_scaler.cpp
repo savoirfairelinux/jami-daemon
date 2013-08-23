@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Copyright (C) 2012 VLC authors and VideoLAN
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -29,46 +29,37 @@
  *  as that of the covered work.
  */
 
-#ifndef SOCKET_PAIR_H_
-#define SOCKET_PAIR_H_
-
-#include "video_base.h"
-
-#include <sys/socket.h>
-#include <pthread.h>
-#include <stdint.h>
+#include "libav_deps.h"
+#include "video_scaler.h"
+#include "check.h"
 
 namespace sfl_video {
 
-	class VideoSendThread;
-	class VideoReceiveThread;
+VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_BICUBIC) {}
 
-	class SocketPair {
-	public:
-        SocketPair(const char *uri, int localPort);
-        ~SocketPair();
+VideoScaler::~VideoScaler() { sws_freeContext(ctx_); }
 
-        void interrupt();
-        VideoIOHandle* getIOContext();
-        void openSockets(const char *uri, int localPort);
-        void closeSockets();
-        static int readCallback(void *opaque, uint8_t *buf, int buf_size);
-        static int writeCallback(void *opaque, uint8_t *buf, int buf_size);
+void VideoScaler::scale(VideoFrame &input, VideoFrame &output)
+{
+    AVFrame *input_frame = input.get();
+    AVFrame *output_frame = output.get();
 
-	private:
-		NON_COPYABLE(SocketPair);
+    ctx_ = sws_getCachedContext(ctx_,
+                                input_frame->width,
+                                input_frame->height,
+                                (PixelFormat) input_frame->format,
+                                output_frame->width,
+                                output_frame->height,
+                                (PixelFormat) output_frame->format,
+                                mode_,
+                                NULL, NULL, NULL);
+    if (!ctx_) {
+        ERROR("Unable to create a scaler context");
+        return;
+    }
 
-        pthread_mutex_t rtcpWriteMutex_;
-
-        int rtpHandle_;
-        int rtcpHandle_;
-        sockaddr_storage rtpDestAddr_;
-        socklen_t rtpDestAddrLen_;
-        sockaddr_storage rtcpDestAddr_;
-        socklen_t rtcpDestAddrLen_;
-        bool interrupted_;
-	};
-
+    sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
+              input_frame->height, output_frame->data, output_frame->linesize);
 }
 
-#endif  // SOCKET_PAIR_H_
+}

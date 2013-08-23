@@ -29,25 +29,12 @@
  *  as that of the covered work.
  */
 
+#include "libav_deps.h"
 #include "video_encoder.h"
 #include "check.h"
 
 #include <iostream>
 #include <sstream>
-
-// libav includes
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavdevice/avdevice.h>
-#include <libswscale/swscale.h>
-#include <libavutil/opt.h>
-}
-
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
-// fallback to av_freep for older libavcodec
-#define avcodec_free_frame av_freep
-#endif
 
 
 namespace sfl_video {
@@ -58,11 +45,9 @@ VideoEncoder::VideoEncoder() :
     outputEncoder_(0),
     encoderCtx_(0),
     outputCtx_(avformat_alloc_context()),
-    imgConvertCtx_(0),
-    interruptCb_(),
-    scalerCtx_(0),
-    scaledPicture_(avcodec_alloc_frame()),
     stream_(0),
+    scaler_(),
+    scaledFrame_(),
     encoderBuffer_(0),
     encoderBufferSize_(0),
     streamIndex_(-1),
@@ -78,8 +63,6 @@ VideoEncoder::~VideoEncoder()
     if (encoderCtx_)
         avcodec_close(encoderCtx_);
 
-    sws_freeContext(scalerCtx_);
-    avcodec_free_frame(&scaledPicture_);
     av_free(encoderBuffer_);
 }
 
@@ -143,20 +126,17 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     stream_->codec = encoderCtx_;
 
     // allocate buffers for both scaled (pre-encoder) and encoded frames
-    encoderBufferSize_ = getBufferSize(encoderCtx_->pix_fmt,
-                                       encoderCtx_->width,
-                                       encoderCtx_->height);
+    scaledFrame_.setGeometry(encoderCtx_->width, encoderCtx_->height,
+                             libav_utils::sfl_pixel_format((int)encoderCtx_->pix_fmt));
+    encoderBufferSize_ = scaledFrame_.getSize();
     if (encoderBufferSize_ <= FF_MIN_BUFFER_SIZE) {
         ERROR("Encoder buffer too small");
         return -1;
     }
+    DEBUG("TX: encoding buffer size: %u", encoderBufferSize_);
 
     encoderBuffer_ = (uint8_t*) av_malloc(encoderBufferSize_);
-
-    setScaleDest(encoderBuffer_,
-                 encoderCtx_->width,
-                 encoderCtx_->height,
-                 encoderCtx_->pix_fmt);
+    scaledFrame_.setDestination(encoderBuffer_);
 
     return 0;
 }
@@ -164,9 +144,8 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
 void VideoEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 {
     if (cb) {
-        interruptCb_.callback = cb;
-        interruptCb_.opaque = opaque;
-        outputCtx_->interrupt_callback = interruptCb_;
+        outputCtx_->interrupt_callback.callback = cb;
+        outputCtx_->interrupt_callback.opaque = opaque;
     } else {
         outputCtx_->interrupt_callback.callback = 0;
     }
@@ -193,25 +172,29 @@ int VideoEncoder::startIO()
     return 0;
 }
 
-int VideoEncoder::encode(bool is_keyframe, int frame_number)
+int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int frame_number)
 {
     int ret;
+    AVFrame *picture = scaledFrame_.get();
+
+    // Prepare the input frame to the encoding geometry
+    scaler_.scale(input, scaledFrame_);
 
     if (frame_number > 0)
-        scaledPicture_->pts = frame_number;
+        picture->pts = frame_number;
 
     if (is_keyframe) {
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
-        scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
+        picture->pict_type = AV_PICTURE_TYPE_I;
 #else
-        scaledPicture_->pict_type = FF_I_TYPE;
+        picture->pict_type = FF_I_TYPE;
 #endif
     } else {
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
         /* FIXME: Should be AV_PICTURE_TYPE_NONE for newer libavutil */
-        scaledPicture_->pict_type = (AVPictureType) 0;
+        picture->pict_type = (AVPictureType) 0;
 #else
-        scaledPicture_->pict_type = (AVPictureType) 0;
+        picture->pict_type = (AVPictureType) 0;
 #endif
     }
 
@@ -223,7 +206,7 @@ int VideoEncoder::encode(bool is_keyframe, int frame_number)
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(54, 0, 0)
     int got_packet = 0;
     opkt.size = encoderBufferSize_;
-    ret = avcodec_encode_video2(encoderCtx_, &opkt, scaledPicture_,
+    ret = avcodec_encode_video2(encoderCtx_, &opkt, picture,
                                 &got_packet);
     if (ret < 0) {
         ERROR("avcodec_encode_video failed");
@@ -236,7 +219,7 @@ int VideoEncoder::encode(bool is_keyframe, int frame_number)
     opkt.pts = frame_number;
 #else
     ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
-                               encoderBufferSize_, scaledPicture_);
+                               encoderBufferSize_, picture);
     if (ret <= 0) {
         ERROR("avcodec_encode_video failed");
         return -1;
@@ -299,41 +282,6 @@ int VideoEncoder::flush()
         ERROR("interleaved_write_frame failed");
 
     return ret;
-}
-
-void VideoEncoder::setScaleDest(void *data, int width, int height,
-                                int pix_fmt)
-{
-    avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                   static_cast<uint8_t *>(data),
-                   (PixelFormat)(pix_fmt), width, height);
-    scaledPicture_->format = pix_fmt;
-    scaledPicture_->width = width;
-    scaledPicture_->height = height;
-}
-
-void VideoEncoder::scale(VideoFrame *frame_, int flags)
-{
-    AVFrame *src_frame = frame_->get();
-
-    scalerCtx_ = sws_getCachedContext(scalerCtx_,
-                                      src_frame->width,
-                                      src_frame->height,
-                                      (PixelFormat)(scaledPicture_->format),
-                                      encoderCtx_->width,
-                                      encoderCtx_->height,
-                                      encoderCtx_->pix_fmt,
-                                      SWS_BICUBIC, /* FIXME: option? */
-                                      NULL, NULL, NULL);
-
-    if (!scalerCtx_) {
-        ERROR("Unable to create a scaler context");
-        return;
-    }
-
-    sws_scale(scalerCtx_, src_frame->data, src_frame->linesize,
-              0, src_frame->height,
-              scaledPicture_->data, scaledPicture_->linesize);
 }
 
 void VideoEncoder::print_sdp(std::string &sdp_)
@@ -448,4 +396,5 @@ void VideoEncoder::extractProfileLevelID(const std::string &parameters,
     }
     DEBUG("Using profile %x and level %d", ctx->profile, ctx->level);
 }
+
 }

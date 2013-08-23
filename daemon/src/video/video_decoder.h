@@ -33,22 +33,20 @@
 #define _VIDEO_DECODER_H_
 
 #include "video_base.h"
+#include "video_scaler.h"
 #include "noncopyable.h"
 
 #include <pthread.h>
 #include <string>
 
-class SwsContext;
 class AVCodecContext;
 class AVStream;
 class AVFormatContext;
-class AVFrame;
 class AVCodec;
 
 namespace sfl_video {
 
-	class VideoDecoder : public VideoCodec
-	{
+	class VideoDecoder : public VideoCodec {
 	public:
 		VideoDecoder();
 		~VideoDecoder();
@@ -60,8 +58,7 @@ namespace sfl_video {
 		int setupFromVideoData();
 		int decode();
 		int flush();
-		void setScaleDest(void *data, int width, int height, int pix_fmt);
-		void *scale(SwsContext *ctx, int flags);
+		void scale(VideoScaler &ctx, VideoFrame &output);
 		VideoFrame *lockFrame();
 		void unlockFrame();
 
@@ -78,9 +75,6 @@ namespace sfl_video {
 		int lockedFrameCnt_;
 		int lastFrame_;
 		AVFormatContext *inputCtx_;
-		SwsContext *imgConvertCtx_;
-		AVIOInterruptCB interruptCb_;
-		SwsContext *scalerCtx_;
 		VideoFrame scaledPicture_;
 		pthread_mutex_t accessMutex_;
 

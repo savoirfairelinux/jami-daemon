@@ -29,23 +29,12 @@
  *  as that of the covered work.
  */
 
+#include "libav_deps.h"
 #include "video_decoder.h"
 #include "check.h"
 
 #include <iostream>
 
-// libav includes
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavdevice/avdevice.h>
-#include <libswscale/swscale.h>
-}
-
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
-// fallback to av_freep for older libavcodec
-#define avcodec_free_frame av_freep
-#endif
 
 namespace sfl_video {
 
@@ -59,9 +48,6 @@ VideoDecoder::VideoDecoder() :
     lockedFrameCnt_(0),
     lastFrame_(-1),
     inputCtx_(avformat_alloc_context()),
-    imgConvertCtx_(0),
-    interruptCb_(),
-    scalerCtx_(0),
     scaledPicture_(),
     accessMutex_(),
     streamIndex_(-1),
@@ -84,8 +70,6 @@ VideoDecoder::~VideoDecoder()
 #endif
     }
 
-    sws_freeContext(scalerCtx_);
-
     pthread_mutex_destroy(&accessMutex_);
 }
 
@@ -103,15 +87,16 @@ int VideoDecoder::openInput(const std::string &source_str,
                                   options_ ? &options_ : NULL);
     if (ret)
         ERROR("avformat_open_input failed (%d)", ret);
+
+    DEBUG("Using format %s", format_str.c_str());
     return ret;
 }
 
 void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 {
     if (cb) {
-        interruptCb_.callback = cb;
-        interruptCb_.opaque = opaque;
-        inputCtx_->interrupt_callback = interruptCb_;
+        inputCtx_->interrupt_callback.callback = cb;
+        inputCtx_->interrupt_callback.opaque = opaque;
     } else {
         inputCtx_->interrupt_callback.callback = 0;
     }
@@ -201,9 +186,10 @@ int VideoDecoder::decode()
     VideoPacket video_packet;
     AVPacket *inpacket = video_packet.get();
     ret = av_read_frame(inputCtx_, inpacket);
-    if (ret == AVERROR(EAGAIN))
+    if (ret == AVERROR(EAGAIN)) {
+        DEBUG("Again");
         return 0;
-    else if (ret < 0) {
+    } else if (ret < 0) {
         ERROR("Couldn't read frame: %s\n", strerror(ret));
         return -1;
     }
@@ -274,44 +260,14 @@ int VideoDecoder::flush()
     return frameFinished;
 }
 
-void VideoDecoder::setScaleDest(void *data, int width, int height,
-                                int pix_fmt)
+void VideoDecoder::scale(VideoScaler &scaler, VideoFrame &output)
 {
-    AVFrame *output_frame = scaledPicture_.get();
-    avpicture_fill((AVPicture *) output_frame, (uint8_t *) data,
-                   (PixelFormat) pix_fmt, width, height);
-    output_frame->format = pix_fmt;
-    output_frame->width = width;
-    output_frame->height = height;
-}
+    VideoFrame *frame = lockFrame();
 
-void* VideoDecoder::scale(SwsContext *ctx, int flags)
-{
-    AVFrame *output_frame = scaledPicture_.get();
-
-    ctx = sws_getCachedContext(ctx,
-                               decoderCtx_->width,
-                               decoderCtx_->height,
-                               decoderCtx_->pix_fmt,
-                               output_frame->width,
-                               output_frame->height,
-                               (PixelFormat) output_frame->format,
-                               SWS_BICUBIC, /* FIXME: option? */
-                               NULL, NULL, NULL);
-    if (ctx) {
-        VideoFrame *frame = lockFrame();
-        if (frame) {
-            AVFrame *frame_ = frame->get();
-            sws_scale(ctx, frame_->data, frame_->linesize, 0,
-                      decoderCtx_->height, output_frame->data,
-                      output_frame->linesize);
-            unlockFrame();
-        }
-    } else {
-        ERROR("Unable to create a scaler context");
+    if (frame) {
+        scaler.scale(*frame, output);
+        unlockFrame();
     }
-
-    return ctx;
 }
 
 VideoFrame *VideoDecoder::lockFrame()
@@ -341,4 +297,5 @@ void VideoDecoder::unlockFrame()
         lockedFrame_ = -1;
     pthread_mutex_unlock(&accessMutex_);
 }
+
 }

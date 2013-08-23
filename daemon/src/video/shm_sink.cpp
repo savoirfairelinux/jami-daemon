@@ -62,8 +62,7 @@ SHMSink::~SHMSink()
     stop();
 }
 
-bool
-SHMSink::start()
+bool SHMSink::start()
 {
     if (fd_ != -1) {
         ERROR("fd must be -1");
@@ -123,8 +122,7 @@ SHMSink::start()
     return true;
 }
 
-bool
-SHMSink::stop()
+bool SHMSink::stop()
 {
     if (fd_ >= 0)
         close(fd_);
@@ -143,8 +141,7 @@ SHMSink::stop()
     return true;
 }
 
-bool
-SHMSink::resize_area(size_t desired_length)
+bool SHMSink::resize_area(size_t desired_length)
 {
     if (desired_length < shm_area_len_)
         return true;

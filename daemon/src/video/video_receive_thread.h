@@ -40,6 +40,8 @@
 #include "noncopyable.h"
 #include "video_provider.h"
 #include "video_decoder.h"
+#include "video_scaler.h"
+
 
 namespace sfl_video {
 
@@ -66,6 +68,9 @@ namespace sfl_video {
         std::istringstream stream_;
         VideoIOHandle sdpContext_;
         VideoIOHandle *demuxContext_;
+        VideoScaler scaler_;
+        VideoFrame previewFrame_;
+        pthread_t thread_;
 
         void setupDecoder(VideoDecoder *decoder);
         void openDecoder();
@@ -73,7 +78,6 @@ namespace sfl_video {
         static int interruptCb(void *ctx);
         friend struct VideoRxContextHandle;
         static void *runCallback(void *);
-        pthread_t thread_;
         void run();
         bool decodeFrame();
         void renderFrame();
