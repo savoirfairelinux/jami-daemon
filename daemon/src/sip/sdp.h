@@ -153,9 +153,7 @@ class Sdp {
         /*
          * Write accessor. Set the local IP address that will be used in the sdp session
          */
-        void setPublishedIP(const std::string &ip_addr) {
-            publishedIpAddr_ = ip_addr;
-        }
+        void setPublishedIP(const std::string &ip_addr);
 
         /*
          * Read accessor. Get the local IP address

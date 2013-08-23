@@ -226,8 +226,9 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
         stunPorts.resize(4);
 
         account.setPublishedAddress(pj_inet_ntoa(stunPorts[0].sin_addr));
-        call.getLocalSDP()->updatePorts(stunPorts);
+        // published IP MUST be updated first, since RTCP depends on it
         call.getLocalSDP()->setPublishedIP(account.getPublishedAddress());
+        call.getLocalSDP()->updatePorts(stunPorts);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }

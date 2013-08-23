@@ -338,12 +338,38 @@ void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 }
 
 void
+Sdp::setPublishedIP(const std::string &ip_addr)
+{
+    publishedIpAddr_ = ip_addr;
+    if (localSession_) {
+        localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
+        localSession_->conn->addr = localSession_->origin.addr;
+        if (not pjmedia_sdp_validate(localSession_))
+            ERROR("Could not validate SDP");
+    }
+}
+
+void
 Sdp::updatePorts(const std::vector<pj_sockaddr_in> &sockets)
 {
     localAudioDataPort_     = pj_ntohs(sockets[0].sin_port);
     localAudioControlPort_  = pj_ntohs(sockets[1].sin_port);
     localVideoDataPort_     = pj_ntohs(sockets[2].sin_port);
     localVideoControlPort_  = pj_ntohs(sockets[3].sin_port);
+
+    if (localSession_) {
+        if (localSession_->media[0]) {
+            localSession_->media[0]->desc.port = localAudioDataPort_;
+            // update RTCP attribute
+            if (pjmedia_sdp_media_remove_all_attr(localSession_->media[0], "rtcp"))
+                addRTCPAttribute(localSession_->media[0]);
+        }
+        if (localSession_->media[1])
+            localSession_->media[1]->desc.port = localVideoDataPort_;
+
+        if (not pjmedia_sdp_validate(localSession_))
+            ERROR("Could not validate SDP");
+    }
 }
 
 
