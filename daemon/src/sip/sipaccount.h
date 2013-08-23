@@ -105,6 +105,7 @@ class SIPVoIPLink;
  * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
  */
 enum {MAX_PORT = 65536};
+enum {HALF_MAX_PORT = MAX_PORT / 2};
 
 class SIPAccount : public Account {
     public:
@@ -789,7 +790,7 @@ class SIPAccount : public Account {
          */
         std::pair<uint16_t, uint16_t> videoPortRange_;
 #endif
-        static bool portsInUse_[MAX_PORT];
+        static bool portsInUse_[HALF_MAX_PORT];
         static uint16_t getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range);
 
 };

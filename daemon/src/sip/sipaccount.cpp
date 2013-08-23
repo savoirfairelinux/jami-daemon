@@ -66,7 +66,8 @@ const char *const TRUE_STR = "true";
 const char *const FALSE_STR = "false";
 }
 
-bool SIPAccount::portsInUse_[MAX_PORT];
+// we force RTP ports to be even, so we only need HALF_MAX_PORT booleans
+bool SIPAccount::portsInUse_[HALF_MAX_PORT];
 
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID)
@@ -1396,16 +1397,16 @@ SIPAccount::getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range)
     uint16_t result;
     do {
         result = 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
-    } while (portsInUse_[result]);
+    } while (portsInUse_[result / 2]);
 
-    portsInUse_[result] = true;
+    portsInUse_[result / 2] = true;
     return result;
 }
 
 void
 SIPAccount::releasePort(uint16_t port)
 {
-    portsInUse_[port] = false;
+    portsInUse_[port / 2] = false;
 }
 
 uint16_t
