@@ -117,7 +117,8 @@ void AudioRtpSession::sendDtmfEvent()
     DEBUG("Send RTP Dtmf (%d)", dtmf.payload.event);
 
     const int increment = getIncrementForDTMF();
-    timestamp_ += increment;
+    if (dtmf.newevent)
+        timestamp_ += increment;
 
     // discard equivalent size of audio
     processDataEncode();
