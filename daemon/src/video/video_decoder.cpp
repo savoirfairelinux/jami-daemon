@@ -57,7 +57,7 @@ VideoDecoder::VideoDecoder() :
     rawFrames_(),
     lockedFrame_(-1),
     lockedFrameCnt_(0),
-    lastFrame_(1),
+    lastFrame_(-1),
     inputCtx_(avformat_alloc_context()),
     imgConvertCtx_(0),
     interruptCb_(),
@@ -212,8 +212,10 @@ int VideoDecoder::decode()
     pthread_mutex_lock(&accessMutex_);
     if (lockedFrame_ >= 0)
         idx = !lockedFrame_;
-    else
+    else if (lastFrame_ >= 0)
         idx = !lastFrame_;
+    else
+        idx = 0;
     pthread_mutex_unlock(&accessMutex_);
 
     AVFrame *frame = rawFrames_[idx].get();
@@ -314,7 +316,7 @@ void* VideoDecoder::scale(SwsContext *ctx, int flags)
 
 VideoFrame *VideoDecoder::lockFrame()
 {
-    VideoFrame *frame;
+    VideoFrame *frame = NULL;
 
     pthread_mutex_lock(&accessMutex_);
     if (lockedFrame_ >= 0) {
@@ -323,11 +325,11 @@ VideoFrame *VideoDecoder::lockFrame()
         lockedFrame_ = lastFrame_;
         lockedFrameCnt_ = 0;
     }
+    if (lockedFrame_ >= 0)
+        frame = &rawFrames_[lockedFrame_];
     pthread_mutex_unlock(&accessMutex_);
 
-    if (lockedFrame_ >= 0)
-        return &rawFrames_[lockedFrame_];
-    return NULL;
+    return frame;
 }
 
 void VideoDecoder::unlockFrame()
