@@ -131,7 +131,7 @@ void VideoRtpSession::start(int localPort)
     try {
         socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
     } catch (const std::runtime_error &e) {
-        ERROR("Socket creation failed: %s", e.what());
+        ERROR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
     }
 
