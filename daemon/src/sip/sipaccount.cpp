@@ -66,7 +66,7 @@ const char *const TRUE_STR = "true";
 const char *const FALSE_STR = "false";
 }
 
-bool SIPAccount::portsInUse_[1 << 16];
+bool SIPAccount::portsInUse_[MAX_PORT];
 
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID)
@@ -121,7 +121,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , via_addr_()
     , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
-    , videoPortRange_({49152, (1 << 16) - 2})
+    , videoPortRange_({49152, (MAX_PORT) - 2})
 #endif
 {
     via_addr_.host.ptr = 0;
@@ -152,18 +152,23 @@ serializeRange(Conf::MappingNode &accountMap, const char *minKey, const char *ma
     return result;
 }
 
+
+void updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
+{
+    if (min > 0 and (max > min) and max <= MAX_PORT - 2) {
+        range.first = min;
+        range.second = max;
+    }
+}
+
 void
 unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *maxKey, std::pair<uint16_t, uint16_t> &range)
 {
-    int tmp = 0;
-    mapNode.getValue(minKey, &tmp);
-
-    if (tmp)
-        range.first = tmp;
-
-    mapNode.getValue(maxKey, &tmp);
-    if (tmp)
-        range.second = tmp;
+    int tmpMin = 0;
+    int tmpMax = 0;
+    mapNode.getValue(minKey, &tmpMin);
+    mapNode.getValue(maxKey, &tmpMax);
+    updateRange(tmpMin, tmpMax, range);
 }
 }
 
@@ -577,19 +582,13 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
     keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == TRUE_STR;
 
-    int tmp = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
-    if (tmp > 0)
-        audioPortRange_.first = tmp;
-    tmp = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
-    if (tmp > 0)
-        audioPortRange_.second = tmp;
+    int tmpMin = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
+    int tmpMax = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
+    updateRange(tmpMin, tmpMax, audioPortRange_);
 #ifdef SFL_VIDEO
-    tmp = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MIN].c_str());
-    if (tmp > 0)
-        videoPortRange_.first = tmp;
-    tmp = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MAX].c_str());
-    if (tmp > 0)
-        videoPortRange_.second = tmp;
+    tmpMin = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MIN].c_str());
+    tmpMax = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MAX].c_str());
+    updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
 
     // srtp settings
