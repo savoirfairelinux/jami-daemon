@@ -260,7 +260,7 @@ int VideoEncoder::flush()
     opkt.size = encoderBufferSize_;
     ret = avcodec_encode_video2(encoderCtx_, &opkt, NULL, &got_packet);
     if (ret < 0) {
-        ERROR("avcodec_encode_video failed");
+        ERROR("avcodec_encode_video2 failed");
         return -1;
     }
 

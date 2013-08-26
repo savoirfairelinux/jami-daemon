@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_DECODER_H_
-#define _VIDEO_DECODER_H_
+#ifndef __VIDEO_DECODER_H__
+#define __VIDEO_DECODER_H__
 
 #include "video_base.h"
 #include "video_scaler.h"
@@ -46,7 +46,7 @@ class AVCodec;
 
 namespace sfl_video {
 
-	class VideoDecoder : public VideoCodec {
+	class VideoDecoder : public VideoCodec, public VideoGenerator {
 	public:
 		VideoDecoder();
 		~VideoDecoder();
@@ -59,8 +59,6 @@ namespace sfl_video {
 		int decode();
 		int flush();
 		void scale(VideoScaler &ctx, VideoFrame &output);
-		VideoFrame *lockFrame();
-		void unlockFrame();
 
 		int getWidth() const { return dstWidth_; }
 		int getHeight() const { return dstHeight_; }
@@ -70,13 +68,8 @@ namespace sfl_video {
 
 		AVCodec *inputDecoder_;
 		AVCodecContext *decoderCtx_;
-		VideoFrame rawFrames_[2];
-		int lockedFrame_;
-		int lockedFrameCnt_;
-		int lastFrame_;
 		AVFormatContext *inputCtx_;
 		VideoFrame scaledPicture_;
-		pthread_mutex_t accessMutex_;
 
 		int streamIndex_;
 		int dstWidth_;
@@ -84,4 +77,4 @@ namespace sfl_video {
 	};
 }
 
-#endif // _VIDEO_DECODER_H_
+#endif // __VIDEO_DECODER_H__

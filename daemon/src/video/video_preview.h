@@ -35,8 +35,10 @@
 
 #include "noncopyable.h"
 #include "shm_sink.h"
+#include "video_base.h"
 #include "video_provider.h"
 #include "video_scaler.h"
+#include "video_decoder.h"
 
 #include <pthread.h>
 #include <string>
@@ -44,49 +46,45 @@
 
 
 namespace sfl_video {
-	using std::string;
+using std::string;
 
-	class VideoDecoder;
-	class VideoFrame;
+class VideoPreview : public VideoProvider, public VideoSource
+{
+public:
+    VideoPreview(const std::map<string, string> &args);
+    ~VideoPreview();
+    int getWidth() const;
+    int getHeight() const;
+    VideoFrame *lockFrame();
+    void unlockFrame();
+    void waitFrame();
 
-	class VideoPreview : public VideoProvider
-	{
-	public:
-		VideoPreview(const std::map<string, string> &args);
-		~VideoPreview();
-		int getWidth() const;
-		int getHeight() const;
-		VideoFrame *lockFrame();
-		void unlockFrame();
-        void waitFrame();
+    std::shared_ptr<VideoFrame> waitNewFrame();
+    std::shared_ptr<VideoFrame> obtainLastFrame();
 
-	private:
-		NON_COPYABLE(VideoPreview);
+private:
+    NON_COPYABLE(VideoPreview);
 
-		std::string id_;
-		std::map<string, string> args_;
-		VideoDecoder *decoder_;
-		bool threadRunning_;
-		pthread_t thread_;
-		pthread_mutex_t accessMutex_;
-		SHMSink sink_;
-		size_t bufferSize_;
-		int previewWidth_;
-		int previewHeight_;
-        VideoScaler scaler_;
-        VideoFrame frame_;
-        bool frameReady_;
-        pthread_mutex_t frameMutex_;
-        pthread_cond_t frameCondition_;
+    std::string id_;
+    std::map<string, string> args_;
+    VideoDecoder *decoder_;
+    bool threadRunning_;
+    pthread_t thread_;
+    SHMSink sink_;
+    size_t bufferSize_;
+    int previewWidth_;
+    int previewHeight_;
+    VideoScaler scaler_;
+    VideoFrame frame_;
 
-		static int interruptCb(void *ctx);
-		static void *runCallback(void *);
-		void fillBuffer(void *data);
-		void run();
-		bool captureFrame();
-		void setup();
-		void renderFrame();
-	};
+    static int interruptCb(void *ctx);
+    static void *runCallback(void *);
+    void fillBuffer(void *data);
+    void run();
+    bool captureFrame();
+    void setup();
+    void renderFrame();
+};
 }
 
 #endif // __VIDEO_PREVIEW_H__

@@ -29,13 +29,15 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_FRAME_H_
-#define _VIDEO_FRAME_H_
+#ifndef __VIDEO_FRAME_H__
+#define __VIDEO_FRAME_H__
 
 #include "noncopyable.h"
 
 #include <cstdlib>
 #include <cstdint>
+#include <memory>
+#include <forward_list>
 
 
 class AVFrame;
@@ -51,67 +53,110 @@ enum VideoPixelFormat {
 };
 
 namespace sfl_video {
-    typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
-    typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
-    typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
 
-    class VideoPacket {
-    public:
-        VideoPacket();
-        ~VideoPacket();
-        AVPacket* get() { return packet_; };
+typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
+typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
+typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
 
-    private:
-        NON_COPYABLE(VideoPacket);
-        AVPacket *packet_;
-    };
+/*=== VideoPacket  ===========================================================*/
 
-    class VideoIOHandle {
-    public:
-        VideoIOHandle(ssize_t buffer_size,
-                      bool writeable,
-                      io_readcallback read_cb,
-                      io_writecallback write_cb,
-                      io_seekcallback seek_cb,
-                      void *opaque);
-        ~VideoIOHandle();
+class VideoPacket {
 
-        AVIOContext* get() { return ctx_; }
+public:
+    VideoPacket();
+    ~VideoPacket();
+    AVPacket* get() { return packet_; };
 
-    private:
-        NON_COPYABLE(VideoIOHandle);
-        AVIOContext *ctx_;
-        unsigned char *buf_;
-    };
+private:
+    NON_COPYABLE(VideoPacket);
+    AVPacket *packet_;
+};
 
-    class VideoCodec {
-    public:
-        VideoCodec();
-        virtual ~VideoCodec() {};
+/*=== VideoIOHandle  =========================================================*/
 
-        void setOption(const char *name, const char *value);
+class VideoIOHandle {
+public:
+    VideoIOHandle(ssize_t buffer_size,
+                  bool writeable,
+                  io_readcallback read_cb,
+                  io_writecallback write_cb,
+                  io_seekcallback seek_cb,
+                  void *opaque);
+    ~VideoIOHandle();
 
-    private:
-        NON_COPYABLE(VideoCodec);
+    AVIOContext* get() { return ctx_; }
 
-    protected:
-        AVDictionary *options_;
-    };
+private:
+    NON_COPYABLE(VideoIOHandle);
+    AVIOContext *ctx_;
+    unsigned char *buf_;
+};
 
-    class VideoFrame {
-    public:
-        VideoFrame();
-        ~VideoFrame();
+class VideoCodec {
+public:
+    VideoCodec();
+    virtual ~VideoCodec() {}
 
-        AVFrame* get() { return frame_; };
-        void setGeometry(int width, int height, int pix_fmt);
-        void setDestination(void *data);
-        size_t getSize();
+    void setOption(const char *name, const char *value);
 
-    private:
-        NON_COPYABLE(VideoFrame);
-        AVFrame *frame_;
-    };
+private:
+    NON_COPYABLE(VideoCodec);
+
+protected:
+    AVDictionary *options_;
+};
+
+/*=== VideoFrame =============================================================*/
+
+class VideoFrame {
+public:
+    VideoFrame();
+    ~VideoFrame();
+
+    AVFrame* get() { return frame_; };
+    void setGeometry(int width, int height, int pix_fmt);
+    void setDestination(void *data);
+    size_t getSize();
+    void setdefaults();
+
+private:
+    NON_COPYABLE(VideoFrame);
+    AVFrame *frame_;
+};
+
+/*=== VideoSource ============================================================*/
+
+class VideoSource {
+public:
+    virtual ~VideoSource() {}
+    virtual std::shared_ptr<VideoFrame> waitNewFrame() = 0;
+    virtual std::shared_ptr<VideoFrame> obtainLastFrame() = 0;
+    virtual int getWidth() const = 0;
+    virtual int getHeight() const = 0;
+};
+
+/*=== VideoGenerator ============================================================*/
+
+class VideoGenerator : public VideoSource {
+public:
+    VideoGenerator();
+    virtual ~VideoGenerator();
+
+    std::shared_ptr<VideoFrame> waitNewFrame();
+    std::shared_ptr<VideoFrame> obtainLastFrame();
+
+protected:
+    void publishFrame();
+    VideoFrame& getNewFrame();
+
+private:
+    pthread_mutex_t mutex_;
+    pthread_cond_t condition_;
+    std::unique_ptr<VideoFrame> writableFrame_;
+    std::unique_ptr<VideoFrame> writtenFrame_;
+    std::forward_list<std::shared_ptr<VideoFrame>> readList_;
+};
+
 }
 
-#endif // _VIDEO_BASE_H_
+#endif // __VIDEO_BASE_H__

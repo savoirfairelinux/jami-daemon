@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,8 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -29,27 +29,56 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_SCALER_H__
-#define __VIDEO_SCALER_H__
+#ifndef __VIDEO_MIXER_H__
+#define __VIDEO_MIXER_H__
 
-#include "video_base.h"
 #include "noncopyable.h"
+#include "video_base.h"
 
-
-class SwsContext;
+#include <pthread.h>
+#include <forward_list>
 
 namespace sfl_video {
-    class VideoScaler {
-    public:
-        VideoScaler();
-        ~VideoScaler();
-        void scale(VideoFrame &input, VideoFrame &output);
+    using std::forward_list;
 
-    private:
-        NON_COPYABLE(VideoScaler);
-        SwsContext *ctx_;
-        int mode_;
-    };
+	class VideoMixer : public VideoSource
+	{
+	public:
+		VideoMixer();
+		~VideoMixer();
+
+        void addVideoSource(VideoSource &source);
+        void removeVideoSource(VideoSource &source);
+
+        std::shared_ptr<VideoFrame> waitNewFrame();
+        std::shared_ptr<VideoFrame> obtainLastFrame();
+        int getWidth() const;
+        int getHeight() const;
+
+	private:
+		NON_COPYABLE(VideoMixer);
+
+		static int interruptCb(void *ctx);
+		static void *runCallback(void *);
+		void run();
+		void setup();
+
+        void waitForUpdate();
+        void updated();
+        void render();
+        void encode();
+
+        pthread_t thread_;
+        bool threadRunning_;
+
+        pthread_mutex_t updateMutex_;
+        pthread_cond_t updateCondition_;
+        bool updated_;
+
+        forward_list<VideoSource*> sourceList_;
+        int width;
+        int height;
+	};
 }
 
-#endif // __VIDEO_SCALER_H__
+#endif // __VIDEO_MIXER_H__

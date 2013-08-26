@@ -41,20 +41,15 @@ namespace sfl_video {
 using std::string;
 
 VideoDecoder::VideoDecoder() :
-    inputDecoder_(0),
-    decoderCtx_(0),
-    rawFrames_(),
-    lockedFrame_(-1),
-    lockedFrameCnt_(0),
-    lastFrame_(-1),
-    inputCtx_(avformat_alloc_context()),
-    scaledPicture_(),
-    accessMutex_(),
-    streamIndex_(-1),
-    dstWidth_(0),
-    dstHeight_(0)
+    VideoGenerator::VideoGenerator()
+    , inputDecoder_(0)
+    , decoderCtx_(0)
+    , inputCtx_(avformat_alloc_context())
+    , scaledPicture_()
+    , streamIndex_(-1)
+    , dstWidth_(0)
+    , dstHeight_(0)
 {
-    pthread_mutex_init(&accessMutex_, NULL);
 }
 
 VideoDecoder::~VideoDecoder()
@@ -69,8 +64,6 @@ VideoDecoder::~VideoDecoder()
         avformat_close_input(&inputCtx_);
 #endif
     }
-
-    pthread_mutex_destroy(&accessMutex_);
 }
 
 int VideoDecoder::openInput(const std::string &source_str,
@@ -180,122 +173,64 @@ int VideoDecoder::setupFromVideoData()
 
 int VideoDecoder::decode()
 {
-    int ret = 0;
-
     // Guarantee that we free the packet every iteration
     VideoPacket video_packet;
     AVPacket *inpacket = video_packet.get();
-    ret = av_read_frame(inputCtx_, inpacket);
+    int ret = av_read_frame(inputCtx_, inpacket);
     if (ret == AVERROR(EAGAIN)) {
-        DEBUG("Again");
         return 0;
     } else if (ret < 0) {
         ERROR("Couldn't read frame: %s\n", strerror(ret));
         return -1;
     }
 
-    int idx;
-    pthread_mutex_lock(&accessMutex_);
-    if (lockedFrame_ >= 0)
-        idx = !lockedFrame_;
-    else if (lastFrame_ >= 0)
-        idx = !lastFrame_;
-    else
-        idx = 0;
-    pthread_mutex_unlock(&accessMutex_);
-
-    AVFrame *frame = rawFrames_[idx].get();
-    avcodec_get_frame_defaults(frame);
-
     // is this a packet from the video stream?
     if (inpacket->stream_index != streamIndex_)
         return 0;
 
+    VideoFrame &frame = getNewFrame();
     int frameFinished = 0;
-    const int len = avcodec_decode_video2(decoderCtx_, frame,
-                                          &frameFinished, inpacket);
+    int len = avcodec_decode_video2(decoderCtx_, frame.get(),
+                                    &frameFinished, inpacket);
     if (len <= 0)
         return -2;
 
     if (frameFinished) {
-        pthread_mutex_lock(&accessMutex_);
-        lastFrame_ = idx;
-        pthread_mutex_unlock(&accessMutex_);
+        publishFrame();
+        return 1;
     }
 
-    return frameFinished;
+    return 0;
 }
 
 int VideoDecoder::flush()
 {
     AVPacket inpacket;
-
     av_init_packet(&inpacket);
     inpacket.data = NULL;
     inpacket.size = 0;
 
-    int idx;
-    pthread_mutex_lock(&accessMutex_);
-    if (lockedFrame_ >= 0)
-        idx = !lockedFrame_;
-    else
-        idx = !lastFrame_;
-    pthread_mutex_unlock(&accessMutex_);
-
-    AVFrame *frame = rawFrames_[idx].get();
-    avcodec_get_frame_defaults(frame);
-
+    VideoFrame &frame = getNewFrame();
     int frameFinished = 0;
-    const int len = avcodec_decode_video2(decoderCtx_, frame,
-                                          &frameFinished, &inpacket);
+    int len = avcodec_decode_video2(decoderCtx_, frame.get(),
+                                    &frameFinished, &inpacket);
     if (len <= 0)
         return -2;
 
     if (frameFinished) {
-        pthread_mutex_lock(&accessMutex_);
-        lastFrame_ = idx;
-        pthread_mutex_unlock(&accessMutex_);
+        publishFrame();
+        return 1;
     }
 
-    return frameFinished;
+    return 0;
 }
 
 void VideoDecoder::scale(VideoScaler &scaler, VideoFrame &output)
 {
-    VideoFrame *frame = lockFrame();
+    VideoFrame* frame = obtainLastFrame().get();
 
-    if (frame) {
+    if (frame)
         scaler.scale(*frame, output);
-        unlockFrame();
-    }
-}
-
-VideoFrame *VideoDecoder::lockFrame()
-{
-    VideoFrame *frame = NULL;
-
-    pthread_mutex_lock(&accessMutex_);
-    if (lockedFrame_ >= 0) {
-        lockedFrameCnt_++;
-    } else {
-        lockedFrame_ = lastFrame_;
-        lockedFrameCnt_ = 0;
-    }
-    if (lockedFrame_ >= 0)
-        frame = &rawFrames_[lockedFrame_];
-    pthread_mutex_unlock(&accessMutex_);
-
-    return frame;
-}
-
-void VideoDecoder::unlockFrame()
-{
-    pthread_mutex_lock(&accessMutex_);
-    if (lockedFrameCnt_ > 0)
-        lockedFrameCnt_--;
-    else
-        lockedFrame_ = -1;
-    pthread_mutex_unlock(&accessMutex_);
 }
 
 }

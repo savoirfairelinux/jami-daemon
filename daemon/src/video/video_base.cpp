@@ -35,12 +35,16 @@
 
 namespace sfl_video {
 
+/*=== VideoPacket  ===========================================================*/
+
 VideoPacket::VideoPacket() : packet_(0)
 {
     packet_ = static_cast<AVPacket *>(av_malloc(sizeof(AVPacket)));
 }
 
 VideoPacket::~VideoPacket() { av_free_packet(packet_); }
+
+/*=== VideoIOHandle  =========================================================*/
 
 VideoIOHandle::VideoIOHandle(ssize_t buffer_size,
                              bool writeable,
@@ -65,9 +69,16 @@ void VideoCodec::setOption(const char *name, const char *value)
     av_dict_set(&options_, name, value, 0);
 }
 
+/*=== VideoFrame =============================================================*/
+
 VideoFrame::VideoFrame() : frame_(avcodec_alloc_frame()) {}
 
 VideoFrame::~VideoFrame() { avcodec_free_frame(&frame_); }
+
+void VideoFrame::setdefaults()
+{
+    avcodec_get_frame_defaults(frame_);
+}
 
 void VideoFrame::setGeometry(int width, int height, int pix_fmt)
 {
@@ -88,6 +99,87 @@ size_t VideoFrame::getSize()
     return avpicture_get_size((PixelFormat) frame_->format,
                               frame_->width,
                               frame_->height);
+}
+
+/*=== VideoGenerator ============================================================*/
+
+VideoGenerator::VideoGenerator() :
+    VideoSource::VideoSource()
+    , mutex_()
+    , condition_()
+    , writableFrame_()
+    , writtenFrame_()
+    , readList_()
+
+{
+    pthread_mutex_init(&mutex_, NULL);
+    pthread_cond_init(&condition_, NULL);
+}
+
+VideoGenerator::~VideoGenerator()
+{
+    pthread_cond_destroy(&condition_);
+    pthread_mutex_destroy(&mutex_);
+}
+
+void VideoGenerator::publishFrame()
+{
+    pthread_mutex_lock(&mutex_);
+    {
+        writtenFrame_ = std::move(writableFrame_); // we owns it now
+        pthread_cond_signal(&condition_);
+    }
+    pthread_mutex_unlock(&mutex_);
+}
+
+std::shared_ptr<VideoFrame> VideoGenerator::waitNewFrame()
+{
+    pthread_mutex_lock(&mutex_);
+    {
+        if (writtenFrame_)
+            pthread_cond_wait(&condition_, &mutex_);
+    }
+    pthread_mutex_unlock(&mutex_);
+
+    return obtainLastFrame();
+}
+
+std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
+{
+    std::shared_ptr<VideoFrame> frame;
+
+    pthread_mutex_lock(&mutex_);
+    {
+        if (writtenFrame_) {
+            frame  = std::move(writtenFrame_);
+            readList_.push_front(frame);
+        } else if (!readList_.empty())
+            frame = readList_.front();
+        else
+            frame = nullptr;
+    }
+    pthread_mutex_unlock(&mutex_);
+
+    return frame;
+}
+
+VideoFrame& VideoGenerator::getNewFrame()
+{
+    VideoFrame* frame;
+
+    pthread_mutex_lock(&mutex_);
+    {
+        if (writableFrame_) {
+            frame = writableFrame_.get();
+            frame->setdefaults();
+        } else {
+            frame = new VideoFrame();
+            writableFrame_.reset(frame);
+        }
+    }
+    pthread_mutex_unlock(&mutex_);
+
+    return *frame;
 }
 
 }

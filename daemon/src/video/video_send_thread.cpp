@@ -44,17 +44,18 @@ namespace sfl_video {
 using std::string;
 
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
-    args_(args),
-	videoPreview_(0),
-	videoEncoder_(0),
-    sdp_(),
-	outputWidth_(0),
-	outputHeight_(0),
-    threadRunning_(false),
-    forceKeyFrame_(0),
-    thread_(0),
-	frameNumber_(0),
-    muxContext_(0)
+    args_(args)
+	, videoEncoder_(nullptr)
+    , videoSource_(nullptr)
+    , sdp_()
+	, outputWidth_(0)
+	, outputHeight_(0)
+    , threadRunning_(false)
+    , forceKeyFrame_(0)
+    , thread_(0)
+	, frameNumber_(0)
+    , muxContext_(0)
+    , fromMixer_(false)
 {}
 
 VideoSendThread::~VideoSendThread()
@@ -69,11 +70,14 @@ void VideoSendThread::setup()
     const char *enc_name = args_["codec"].c_str();
 	int width, height;
 
-	videoPreview_ = Manager::instance().getVideoControls()->getVideoPreview();
-	EXIT_IF_FAIL(videoPreview_, "No previewing!");
+    if (fromMixer_)
+        videoSource_ = nullptr; // FIXEME: todo
+    else
+        videoSource_ = Manager::instance().getVideoControls()->getVideoPreview();
+	EXIT_IF_FAIL(videoSource_, "No source!");
 
-	width = videoPreview_->getWidth();
-	height = videoPreview_->getHeight();
+    width = videoSource_->getWidth();
+    height = videoSource_->getHeight();
 
 	/* Encoder setup */
 	if (!args_["width"].empty()) {
@@ -172,11 +176,11 @@ void VideoSendThread::encodeAndSendVideo()
 	if (is_keyframe)
 		atomic_decrement(&forceKeyFrame_);
 
-	VideoFrame *inputframe = videoPreview_->lockFrame();
+    // Select frame source to encode
+    VideoFrame *inputframe = videoSource_->waitNewFrame().get();
 	if (inputframe) {
         EXIT_IF_FAIL(videoEncoder_->encode(*inputframe, is_keyframe, frameNumber_++) >= 0,
                      "encoding failed");
-
     }
 }
 

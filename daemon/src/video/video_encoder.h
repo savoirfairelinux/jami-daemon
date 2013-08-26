@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_ENCODER_H_
-#define _VIDEO_ENCODER_H_
+#ifndef __VIDEO_ENCODER_H__
+#define __VIDEO_ENCODER_H__
 
 #include "video_base.h"
 #include "video_scaler.h"
@@ -86,4 +86,4 @@ namespace sfl_video {
 	};
 }
 
-#endif // _VIDEO_ENCODER_H_
+#endif // __VIDEO_ENCODER_H__

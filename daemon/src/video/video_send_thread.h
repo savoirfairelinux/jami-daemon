@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_SEND_THREAD_H_
-#define _VIDEO_SEND_THREAD_H_
+#ifndef __VIDEO_SEND_THREAD_H__
+#define __VIDEO_SEND_THREAD_H__
 
 #include <map>
 #include <string>
@@ -37,46 +37,48 @@
 #include "noncopyable.h"
 #include "video_encoder.h"
 #include "video_preview.h"
+#include "video_mixer.h"
 
 
 namespace sfl_video {
 
-	class SocketPair;
+class SocketPair;
 
-	class VideoSendThread {
-	private:
-		NON_COPYABLE(VideoSendThread);
-		void setup();
-		static int interruptCb(void *ctx);
+class VideoSendThread {
+private:
+    NON_COPYABLE(VideoSendThread);
+    void setup();
+    static int interruptCb(void *ctx);
+    static void *runCallback(void *);
+    void run();
+    void encodeAndSendVideo();
 
-		std::map<std::string, std::string> args_;
-		/*-------------------------------------------------------------*/
-		/* These variables should be used in thread (i.e. run()) only! */
-		/*-------------------------------------------------------------*/
-		VideoPreview *videoPreview_;
-		VideoEncoder *videoEncoder_;
+    std::map<std::string, std::string> args_;
+    /*-------------------------------------------------------------*/
+    /* These variables should be used in thread (i.e. run()) only! */
+    /*-------------------------------------------------------------*/
+    VideoEncoder *videoEncoder_;
+    VideoSource *videoSource_;
 
-		std::string sdp_;
-		int outputWidth_;
-		int outputHeight_;
+    std::string sdp_;
+    int outputWidth_;
+    int outputHeight_;
 
-		bool threadRunning_;
-		int forceKeyFrame_;
-		static void *runCallback(void *);
-		pthread_t thread_;
-		int frameNumber_;
-		VideoIOHandle* muxContext_;
-		void run();
-		void encodeAndSendVideo();
+    bool threadRunning_;
+    int forceKeyFrame_;
+    pthread_t thread_;
+    int frameNumber_;
+    bool fromMixer_;
+    VideoIOHandle* muxContext_;
 
-	public:
-		VideoSendThread(const std::map<std::string, std::string> &args);
-		~VideoSendThread();
-		void addIOContext(SocketPair &sock);
-		void start();
-		std::string getSDP() const { return sdp_; }
-		void forceKeyFrame();
-	};
+public:
+    VideoSendThread(const std::map<std::string, std::string> &args);
+    ~VideoSendThread();
+    void addIOContext(SocketPair &sock);
+    void start();
+    std::string getSDP() const { return sdp_; }
+    void forceKeyFrame();
+};
 }
 
-#endif // _VIDEO_SEND_THREAD_H_
+#endif // __VIDEO_SEND_THREAD_H__

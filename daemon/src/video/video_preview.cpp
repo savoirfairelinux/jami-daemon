@@ -43,25 +43,19 @@ namespace sfl_video {
 using std::string;
 
 VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
-    id_("local"),
-    args_(args),
-    decoder_(0),
-    threadRunning_(false),
-    thread_(0),
-    accessMutex_(),
-    sink_(),
-    bufferSize_(0),
-    previewWidth_(0),
-    previewHeight_(0),
-    scaler_(),
-    frame_(),
-    frameReady_(false),
-    frameMutex_(),
-    frameCondition_()
+    VideoSource::VideoSource()
+    , id_("local")
+    , args_(args)
+    , decoder_(0)
+    , threadRunning_(false)
+    , thread_(0)
+    , sink_()
+    , bufferSize_(0)
+    , previewWidth_(0)
+    , previewHeight_(0)
+    , scaler_()
+    , frame_()
 {
-    pthread_mutex_init(&accessMutex_, NULL);
-    pthread_mutex_init(&frameMutex_, NULL);
-    pthread_cond_init(&frameCondition_, NULL);
     pthread_create(&thread_, NULL, &runCallback, this);
 }
 
@@ -72,7 +66,6 @@ VideoPreview::~VideoPreview()
     Manager::instance().getVideoControls()->stoppedDecoding(id_, name);
     if (thread_)
         pthread_join(thread_, NULL);
-    pthread_mutex_destroy(&accessMutex_);
 }
 
 int VideoPreview::interruptCb(void *ctx)
@@ -157,10 +150,6 @@ void VideoPreview::setup()
 
 bool VideoPreview::captureFrame()
 {
-    pthread_mutex_lock(&frameMutex_);
-    frameReady_ = false;
-    pthread_mutex_unlock(&frameMutex_);
-
     int ret = decoder_->decode();
 
     if (ret <= 0) {
@@ -168,12 +157,6 @@ bool VideoPreview::captureFrame()
             threadRunning_ = false;
         return false;
     }
-
-    // Signal threads waiting in waitFrame()
-    pthread_mutex_lock(&frameMutex_);
-    frameReady_ = true;
-    pthread_cond_signal(&frameCondition_);
-    pthread_mutex_unlock(&frameMutex_);
 
     return true;
 }
@@ -194,15 +177,8 @@ void VideoPreview::fillBuffer(void *data)
 
 int VideoPreview::getWidth() const { return decoder_->getWidth(); }
 int VideoPreview::getHeight() const { return decoder_->getHeight(); }
-VideoFrame *VideoPreview::lockFrame() {return decoder_->lockFrame();}
-void VideoPreview::unlockFrame() {decoder_->unlockFrame();}
 
-void VideoPreview::waitFrame()
-{
-    pthread_mutex_lock(&frameMutex_);
-    if (!frameReady_)
-        pthread_cond_wait(&frameCondition_, &frameMutex_);
-    pthread_mutex_unlock(&frameMutex_);
-}
+std::shared_ptr<VideoFrame> VideoPreview::waitNewFrame() { return decoder_->waitNewFrame(); }
+std::shared_ptr<VideoFrame> VideoPreview::obtainLastFrame() { return decoder_->obtainLastFrame(); }
 
 } // end namspace sfl_video
