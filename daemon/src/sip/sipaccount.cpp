@@ -881,8 +881,8 @@ void SIPAccount::trimCiphers()
 {
     int sum = 0;
     int count = 0;
-    // PJSIP aborts if our cipher list exceeds 1010 characters
-    static const int MAX_CIPHERS_STRLEN = 1010;
+    // PJSIP aborts if our cipher list exceeds 1000 characters
+    static const int MAX_CIPHERS_STRLEN = 1000;
 
     for (const auto &item : ciphers_) {
         sum += strlen(pj_ssl_cipher_name(item));
