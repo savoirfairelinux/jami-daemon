@@ -204,6 +204,12 @@ pj_status_t SipTransport::createStunResolver(pj_str_t serverName, pj_uint16_t po
     pj_stun_config_init(&stunCfg, &cp_->factory, 0,
             pjsip_endpt_get_ioqueue(endpt_), pjsip_endpt_get_timer_heap(endpt_));
 
+    pj_status_t status = pj_stun_config_check_valid(&stunCfg);
+    if (status != PJ_SUCCESS) {
+        ERROR("STUN config is not valid");
+        return status;
+    }
+
     static const pj_stun_sock_cb stun_sock_cb = {
         stun_sock_on_rx_data_cb,
         NULL,
@@ -211,7 +217,7 @@ pj_status_t SipTransport::createStunResolver(pj_str_t serverName, pj_uint16_t po
     };
 
     pj_stun_sock *stun_sock = NULL;
-    pj_status_t status = pj_stun_sock_create(&stunCfg,
+    status = pj_stun_sock_create(&stunCfg,
             stunResolverName.c_str(), pj_AF_INET(), &stun_sock_cb, NULL, NULL,
             &stun_sock);
 
