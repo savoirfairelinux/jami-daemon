@@ -45,6 +45,7 @@ static const char *const CONFIG_ACCOUNT_TYPE                    = "Account.type"
 static const char *const CONFIG_ACCOUNT_ALIAS                   = "Account.alias";
 static const char *const CONFIG_ACCOUNT_MAILBOX                 = "Account.mailbox";
 static const char *const CONFIG_ACCOUNT_ENABLE                  = "Account.enable";
+static const char *const CONFIG_ACCOUNT_AUTOANSWER              = "Account.autoAnswer";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE     = "Account.registrationExpire";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS     = "Account.registrationStatus";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
@@ -57,6 +58,7 @@ static const char *const CONFIG_KEEP_ALIVE_ENABLED              = "Account.keepA
 
 
 static const char *const CONFIG_DEFAULT_REGISTRATION_EXPIRE     = "60";
+static const char *const CONFIG_DEFAULT_RINGTONE_ENABLED        = "true";
 
 static const char *const CONFIG_ACCOUNT_HOSTNAME                = "Account.hostname";
 static const char *const CONFIG_ACCOUNT_USERNAME                = "Account.username";
@@ -65,7 +67,10 @@ static const char *const CONFIG_ACCOUNT_PASSWORD                = "Account.passw
 static const char *const CONFIG_ACCOUNT_REALM                   = "Account.realm";
 static const char *const CONFIG_ACCOUNT_DEFAULT_REALM           = "*";
 static const char *const CONFIG_ACCOUNT_USERAGENT               = "Account.useragent";
-static const char *const CONFIG_ACCOUNT_AUTOANSWER              = "Account.autoAnswer";
+static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MIN          = "Account.audioPortMin";
+static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MAX          = "Account.audioPortMax";
+static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MIN          = "Account.videoPortMin";
+static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MAX          = "Account.videoPortMax";
 
 static const char *const CONFIG_LOCAL_INTERFACE                 = "Account.localInterface";
 static const char *const CONFIG_INTERFACE                       = "Account.interface";

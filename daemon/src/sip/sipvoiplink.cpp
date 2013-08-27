@@ -226,21 +226,12 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
         stunPorts.resize(4);
 
         account.setPublishedAddress(pj_inet_ntoa(stunPorts[0].sin_addr));
+        // published IP MUST be updated first, since RTCP depends on it
+        call.getLocalSDP()->setPublishedIP(account.getPublishedAddress());
         call.getLocalSDP()->updatePorts(stunPorts);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }
-}
-
-void
-addContactHeader(const std::string &contactStr, pjsip_tx_data *tdata)
-{
-    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
-
-    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
-                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
-    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
 }
 
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
@@ -354,7 +345,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     setCallMediaLocal(call, addrToUse);
 
-    call->getLocalSDP()->setLocalIP(addrSdp);
+    call->getLocalSDP()->setPublishedIP(addrSdp);
 
     call->getAudioRtp().initConfig();
     try {
@@ -479,7 +470,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
         // contactStr must stay in scope as long as tdata
         const std::string contactStr(account->getContactHeader());
-        addContactHeader(contactStr, tdata);
+        sip_utils::addContactHeader(contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
@@ -943,7 +934,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
     // Building the local SDP offer
     Sdp *localSDP = call->getLocalSDP();
-    localSDP->setLocalIP(localAddress);
+    localSDP->setPublishedIP(localAddress);
     const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
     if (not created or not SIPStartCall(call)) {
@@ -1012,7 +1003,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     call->initRecFilename(toUrl);
 
     Sdp *localSDP = call->getLocalSDP();
-    localSDP->setLocalIP(addrSdp);
+    localSDP->setPublishedIP(addrSdp);
     const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
     if (not created or not SIPStartCall(call)) {
@@ -1030,13 +1021,22 @@ SIPVoIPLink::answer(Call *call)
         return;
 
     SIPCall *sipCall = static_cast<SIPCall*>(call);
-    if (!sipCall->inv->neg) {
-        WARN("Negotiator is NULL, we've received an INVITE without an SDP");
-        pjmedia_sdp_session *dummy;
-        sdp_create_offer_cb(sipCall->inv, &dummy);
+    SIPAccount *account = Manager::instance().getSipAccount(sipCall->getAccountId());
+    if (!account) {
+        ERROR("Could not find account %s", sipCall->getAccountId().c_str());
+        return;
     }
 
-    call->answer();
+    if (!sipCall->inv->neg) {
+        WARN("Negotiator is NULL, we've received an INVITE without an SDP");
+        pjmedia_sdp_session *dummy = 0;
+        sdp_create_offer_cb(sipCall->inv, &dummy);
+        if (account->isStunEnabled())
+            updateSDPFromSTUN(*sipCall, *account, SIPVoIPLink::instance()->sipTransport);
+    }
+
+    sipCall->setContactHeader(account->getContactHeader());
+    sipCall->answer();
 }
 
 namespace {
@@ -1094,7 +1094,7 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
 
     // contactStr must stay in scope as long as tdata
     const std::string contactStr(account->getContactHeader());
-    addContactHeader(contactStr, tdata);
+    sip_utils::addContactHeader(contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
@@ -1799,7 +1799,7 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     setCallMediaLocal(call, localAddress);
 
     Sdp *localSDP = call->getLocalSDP();
-    localSDP->setLocalIP(addrSdp);
+    localSDP->setPublishedIP(addrSdp);
     const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
     if (created)
         *p_offer = localSDP->getLocalSdpSession();
@@ -2368,10 +2368,9 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 #ifdef SFL_VIDEO
     if (call->getLocalVideoPort() == 0) {
         // https://projects.savoirfairelinux.com/issues/17498
-        unsigned int callLocalVideoPort;
-        do
-            callLocalVideoPort = account->generateVideoPort();
-        while (call->getLocalAudioPort() == callLocalVideoPort);
+        const unsigned int callLocalVideoPort = account->generateVideoPort();
+        // this should already be guaranteed by SIPAccount
+        assert(call->getLocalAudioPort() != callLocalVideoPort);
 
         call->setLocalVideoPort(callLocalVideoPort);
         call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);

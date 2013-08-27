@@ -39,6 +39,7 @@
 #include "manager.h"
 
 #include <algorithm>
+#include "sipaccount.h"
 
 #ifdef HAVE_OPUS
 #include "audio/codecs/opus.h"
@@ -64,7 +65,7 @@ Sdp::Sdp(pj_pool_t *pool)
     , video_codec_list_()
     , sessionAudioMedia_()
     , sessionVideoMedia_()
-    , localIpAddr_()
+    , publishedIpAddr_()
     , remoteIpAddr_()
     , localAudioDataPort_(0)
     , localAudioControlPort_(0)
@@ -76,6 +77,14 @@ Sdp::Sdp(pj_pool_t *pool)
     , srtpCrypto_()
     , telephoneEventPayload_(101) // same as asterisk
 {}
+
+Sdp::~Sdp()
+{
+    SIPAccount::releasePort(localAudioDataPort_);
+#ifdef SFL_VIDEO
+    SIPAccount::releasePort(localVideoDataPort_);
+#endif
+}
 
 namespace {
     bool hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)
@@ -258,7 +267,7 @@ Sdp::setMediaDescriptorLines(bool audio)
 #ifdef HAVE_OPUS
         // Opus sample rate is allways declared as 48000 and channel num is allways 2 in rtpmap as per
         // http://tools.ietf.org/html/draft-spittka-payload-rtp-opus-03#section-6.2
-        if(payload == Opus::PAYLOAD_TYPE) {
+        if (payload == Opus::PAYLOAD_TYPE) {
             rtpmap.clock_rate = 48000;
             rtpmap.param.ptr = ((char* const)"2");
             rtpmap.param.slen = 1;
@@ -276,9 +285,9 @@ Sdp::setMediaDescriptorLines(bool audio)
 
 #ifdef HAVE_OPUS
         // Declare stereo support for opus
-        if(payload == Opus::PAYLOAD_TYPE) {
+        if (payload == Opus::PAYLOAD_TYPE) {
             std::ostringstream os;
-            os << "fmtp:" << payload << " stereo=1; sprop-stereo=" << (channels>1 ? 1 : 0);
+            os << "fmtp:" << payload << " stereo=1; sprop-stereo=" << (channels > 1);
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
         }
 #endif
@@ -314,7 +323,7 @@ Sdp::setMediaDescriptorLines(bool audio)
 void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 {
     std::ostringstream os;
-    os << localIpAddr_ << ":" << localAudioControlPort_;
+    os << publishedIpAddr_ << ":" << localAudioControlPort_;
     const std::string str(os.str());
     pj_str_t input_str = pj_str((char*) str.c_str());
     pj_sockaddr outputAddr;
@@ -329,12 +338,38 @@ void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 }
 
 void
+Sdp::setPublishedIP(const std::string &ip_addr)
+{
+    publishedIpAddr_ = ip_addr;
+    if (localSession_) {
+        localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
+        localSession_->conn->addr = localSession_->origin.addr;
+        if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
+            ERROR("Could not validate SDP");
+    }
+}
+
+void
 Sdp::updatePorts(const std::vector<pj_sockaddr_in> &sockets)
 {
     localAudioDataPort_     = pj_ntohs(sockets[0].sin_port);
     localAudioControlPort_  = pj_ntohs(sockets[1].sin_port);
     localVideoDataPort_     = pj_ntohs(sockets[2].sin_port);
     localVideoControlPort_  = pj_ntohs(sockets[3].sin_port);
+
+    if (localSession_) {
+        if (localSession_->media[0]) {
+            localSession_->media[0]->desc.port = localAudioDataPort_;
+            // update RTCP attribute
+            if (pjmedia_sdp_media_remove_all_attr(localSession_->media[0], "rtcp"))
+                addRTCPAttribute(localSession_->media[0]);
+        }
+        if (localSession_->media[1])
+            localSession_->media[1]->desc.port = localVideoDataPort_;
+
+        if (not pjmedia_sdp_validate(localSession_))
+            ERROR("Could not validate SDP");
+    }
 }
 
 
@@ -415,7 +450,7 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     localSession_->origin.id = tv.sec + 2208988800UL;
     localSession_->origin.net_type = pj_str((char*) "IN");
     localSession_->origin.addr_type = pj_str((char*) "IP4");
-    localSession_->origin.addr = pj_str((char*) localIpAddr_.c_str());
+    localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
 
     localSession_->name = pj_str((char*) PACKAGE);
 

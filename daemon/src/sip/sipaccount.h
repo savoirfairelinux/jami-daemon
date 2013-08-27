@@ -90,6 +90,12 @@ namespace Conf {
     const char *const STUN_ENABLED_KEY = "stunEnabled";
     const char *const STUN_SERVER_KEY = "stunServer";
     const char *const CRED_KEY = "credential";
+    const char *const AUDIO_PORT_MIN_KEY = "audioPortMin";
+    const char *const AUDIO_PORT_MAX_KEY = "audioPortMax";
+#ifdef SFL_VIDEO
+    const char *const VIDEO_PORT_MIN_KEY = "videoPortMin";
+    const char *const VIDEO_PORT_MAX_KEY = "videoPortMax";
+#endif
 }
 
 class SIPVoIPLink;
@@ -98,6 +104,8 @@ class SIPVoIPLink;
  * @file sipaccount.h
  * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
  */
+enum {MAX_PORT = 65536};
+enum {HALF_MAX_PORT = MAX_PORT / 2};
 
 class SIPAccount : public Account {
     public:
@@ -123,6 +131,9 @@ class SIPAccount : public Account {
          * Returns true if this is the IP2IP account
          */
         bool isIP2IP() const;
+
+        static void
+        releasePort(uint16_t port);
 
         /**
          * Serialize internal state of this account for configuration
@@ -515,9 +526,9 @@ class SIPAccount : public Account {
         /* Returns true if the username and/or hostname match this account */
         bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
-        unsigned generateAudioPort() const;
+        uint16_t generateAudioPort() const;
 #ifdef SFL_VIDEO
-        unsigned generateVideoPort() const;
+        uint16_t generateVideoPort() const;
 #endif
 
     private:
@@ -771,14 +782,17 @@ class SIPAccount : public Account {
         /**
          * Port range for audio RTP ports
          */
-        std::pair<unsigned, unsigned> audioPortRange_;
+        std::pair<uint16_t, uint16_t> audioPortRange_;
 
 #ifdef SFL_VIDEO
         /**
          * Port range for video RTP ports
          */
-        std::pair<unsigned, unsigned> videoPortRange_;
+        std::pair<uint16_t, uint16_t> videoPortRange_;
 #endif
+        static bool portsInUse_[HALF_MAX_PORT];
+        static uint16_t getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range);
+
 };
 
 #endif

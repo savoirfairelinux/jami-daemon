@@ -67,6 +67,10 @@ static const char *const CONFIG_ACCOUNT_PASSWORD                = "Account.passw
 static const char *const CONFIG_ACCOUNT_REALM                   = "Account.realm";
 static const char *const CONFIG_ACCOUNT_DEFAULT_REALM           = "*";
 static const char *const CONFIG_ACCOUNT_USERAGENT               = "Account.useragent";
+static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MIN          = "Account.audioPortMin";
+static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MAX          = "Account.audioPortMax";
+static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MIN          = "Account.videoPortMin";
+static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MAX          = "Account.videoPortMax";
 
 static const char *const CONFIG_LOCAL_INTERFACE                 = "Account.localInterface";
 static const char *const CONFIG_INTERFACE                       = "Account.interface";

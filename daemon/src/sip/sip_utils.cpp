@@ -191,3 +191,16 @@ sip_utils::getIPList(const std::string &name)
     freeaddrinfo(result);
     return ipList;
 }
+
+void
+sip_utils::addContactHeader(const std::string &contactStr, pjsip_tx_data *tdata)
+{
+    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
+
+    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
+    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
+                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    // remove old contact header (if present)
+    pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
+    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+}

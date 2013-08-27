@@ -97,6 +97,12 @@ static GtkWidget *security_tab;
 static GtkWidget *advanced_tab;
 static GtkWidget *overrtp;
 static GtkWidget *ringtone_seekslider;
+static GtkWidget *audio_port_min_spin_box;
+static GtkWidget *audio_port_max_spin_box;
+#ifdef SFL_VIDEO
+static GtkWidget *video_port_min_spin_box;
+static GtkWidget *video_port_max_spin_box;
+#endif
 
 typedef struct OptionsData {
     account_t *account;
@@ -1029,6 +1035,40 @@ GtkWidget* create_published_address(const account_t *account)
     return frame;
 }
 
+static void
+add_port_spin_button(const account_t *account, GtkWidget *grid, GtkWidget **spin,
+                 const gchar *key, const gchar *label_text, int left, int top)
+{
+    gchar *value = NULL;
+
+    if (account)
+        value = account_lookup(account, key);
+
+    *spin = gtk_spin_button_new_with_range(1024, 65535, 1);
+    GtkWidget *label = gtk_label_new_with_mnemonic(label_text);
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), *spin);
+    gtk_grid_attach(GTK_GRID(grid), label, left, top, 1, 1);
+    if (value)
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(*spin), g_ascii_strtod(value, NULL));
+    gtk_grid_attach(GTK_GRID(grid), *spin, left + 1, top, 1, 1);
+}
+
+static GtkWidget*
+create_port_ranges(const account_t *account, const gchar * title,
+                   GtkWidget **min, GtkWidget **max,
+                   const gchar *key_min, const gchar *key_max, int top)
+{
+    GtkWidget *grid, *frame;
+    gnome_main_section_new_with_grid(title, &frame, &grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+
+    add_port_spin_button(account, grid, min, key_min, _("Min"), 0, top);
+    add_port_spin_button(account, grid, max, key_max, _("Max"), 2, top);
+
+    return frame;
+}
+
 GtkWidget* create_advanced_tab(const account_t *account)
 {
     // Build the advanced tab, to appear on the account configuration panel
@@ -1046,6 +1086,18 @@ GtkWidget* create_advanced_tab(const account_t *account)
 
     frame = create_published_address(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+
+    frame = create_port_ranges(account, _("Audio RTP Port Range"),
+            &audio_port_min_spin_box, &audio_port_max_spin_box,
+            CONFIG_ACCOUNT_AUDIO_PORT_MIN, CONFIG_ACCOUNT_AUDIO_PORT_MAX, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+
+#ifdef SFL_VIDEO
+    frame = create_port_ranges(account, _("Video RTP Port Range"),
+            &video_port_min_spin_box, &video_port_max_spin_box,
+            CONFIG_ACCOUNT_VIDEO_PORT_MIN, CONFIG_ACCOUNT_VIDEO_PORT_MAX, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+#endif
 
     gtk_widget_show_all(vbox);
 
@@ -1257,6 +1309,17 @@ static void update_account_from_basic_tab(account_t *account)
 
                 account_replace(account, CONFIG_PUBLISHED_ADDRESS, published_address);
             }
+
+            account_replace(account, CONFIG_ACCOUNT_AUDIO_PORT_MIN,
+                            gtk_entry_get_text(GTK_ENTRY(audio_port_min_spin_box)));
+            account_replace(account, CONFIG_ACCOUNT_AUDIO_PORT_MAX,
+                            gtk_entry_get_text(GTK_ENTRY(audio_port_max_spin_box)));
+#ifdef SFL_VIDEO
+            account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MIN,
+                            gtk_entry_get_text(GTK_ENTRY(video_port_min_spin_box)));
+            account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MAX,
+                            gtk_entry_get_text(GTK_ENTRY(video_port_max_spin_box)));
+#endif
         }
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
