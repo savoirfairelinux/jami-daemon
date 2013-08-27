@@ -344,7 +344,7 @@ Sdp::setPublishedIP(const std::string &ip_addr)
     if (localSession_) {
         localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
         localSession_->conn->addr = localSession_->origin.addr;
-        if (not pjmedia_sdp_validate(localSession_))
+        if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
             ERROR("Could not validate SDP");
     }
 }
