@@ -81,8 +81,10 @@ void SIPCall::answer()
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     // contactStr must stay in scope as long as tdata
-    if (not contactHeader_.empty())
+    if (not contactHeader_.empty()) {
+        DEBUG("Answering with contact header: %s", contactHeader_.c_str());
         sip_utils::addContactHeader(contactHeader_, tdata);
+    }
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not send invite request answer (200 OK)");
