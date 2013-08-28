@@ -2507,13 +2507,12 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
 
     // Add the newly created account in the account order list
-    newAccountID += "/";
     if (not accountList.empty()) {
         // Prepend the new account
-        accountList.insert(0, newAccountID);
+        accountList.insert(0, newAccountID + "/");
         preferences.setAccountOrder(accountList);
     } else {
-        accountList = newAccountID;
+        accountList = newAccountID + "/";
         preferences.setAccountOrder(accountList);
     }
 
