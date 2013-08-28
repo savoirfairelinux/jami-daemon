@@ -35,6 +35,8 @@
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
+#include "sip/sipaccount.h"
+#include "sip/sippresence.h"
 #include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h"
 #if HAVE_ZRTP
@@ -423,30 +425,64 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
 #endif
 }
 
+
+/**
+ * Un/subscribe to buddySipUri for an accountID
+ */
 void
-CallManager::subscribePresence(const std::string& accountID, const std::string& buddySipUri)
+CallManager::subscribePresSubClient(const std::string& accountID, const std::string& uri, const bool& flag)
 {
-  DEBUG("subscribePresence (acc:%s, buddy:%s)",accountID.c_str(), buddySipUri.c_str());
-  Manager::instance().subscribePresence(accountID,buddySipUri);
+
+    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    if (!sipaccount)
+        ERROR("Could not find account %s",accountID.c_str());
+    else{
+        DEBUG("%subscribePresence (acc:%s, buddy:%s)",flag? "S":"Uns", accountID.c_str(), uri.c_str());
+        sipaccount->getPresence()->subscribePresSubClient(uri,flag);
+    }
 }
 
+/**
+ *  Enable the presence module (PUBLISH/SUBSCRIBE)
+ */
 void
-CallManager::unsubscribePresence(const std::string& accountID, const std::string& buddySipUri)
-{
-  DEBUG("unsubscribePresence (acc:%s, buddy:%s)",accountID.c_str(), buddySipUri.c_str());
-  Manager::instance().unsubscribePresence(accountID,buddySipUri);
+CallManager::enablePresence(const std::string& accountID, const bool& flag){
+    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    if (!sipaccount)
+        ERROR("Could not find account %s",accountID.c_str());
+    else{
+        DEBUG("Enable Presence (acc:%s : %s)",accountID.c_str(), flag? "yes":"no");
+        sipaccount->getPresence()->enable(flag);
+    }
 }
 
+/**
+ * push a presence for a account
+ * Notify for IP2IP account and publish for PBX account
+ */
 void
 CallManager::sendPresence(const std::string& accountID, const std::string& status, const std::string& note)
 {
-  DEBUG("sendPresence (acc:%s, status:%s).",accountID.c_str(),status.c_str());
-  Manager::instance().sendPresence(accountID,status,note);
+    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    if (!sipaccount)
+        ERROR("Could not find account %s",accountID.c_str());
+    else{
+        DEBUG("Send Presence (acc:%s)",accountID.c_str());
+        sipaccount->getPresence()->sendPresence(status,note);
+    }
 }
 
+/**
+ * Accept or not a PresSubServer request for IP2IP account
+ */
 void
-CallManager::approvePresenceSubscription(const bool& flag, const std::string& uri)
+CallManager::approvePresSubServer(const bool& flag, const std::string& buddySipUri)
 {
-  DEBUG("approvePresenceSubscription %s : %s.",uri.c_str(), flag? "yes":"no");
-  Manager::instance().approvePresenceSubscription(flag, uri);
+    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
+    if (!sipaccount)
+        ERROR("Could not find account IP2IP");
+    else{
+        DEBUG("Approve presence (acc:IP2IP, buddy:%s)", buddySipUri.c_str());
+        sipaccount->getPresence()->approvePresSubServer(flag, buddySipUri);
+    }
 }

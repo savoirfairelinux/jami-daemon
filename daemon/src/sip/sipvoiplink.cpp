@@ -80,9 +80,9 @@
 #include <utility> // for std::pair
 #include <algorithm>
 
-#include "presence_subscription.h"
-#include"pjsip-simple/presence.h"
-#include"pjsip-simple/publish.h"
+#include "pjsip-simple/presence.h"
+#include "pjsip-simple/publish.h"
+#include "pres_sub_server.h"
 
 using namespace sfl;
 
@@ -171,7 +171,6 @@ void handleIncomingOptions(pjsip_rx_data *rdata)
 
 // return PJ_FALSE so that eventuall other modules will handle these requests
 // TODO: move Voicemail to separate module
-// TODO: add Buddy presence in separate module
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 {
     pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
@@ -515,7 +514,6 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     , keyframeRequestsMutex_()
     , keyframeRequests_()
 #endif
-  , presenceState()
 {
 
 #define TRY(ret) do { \
@@ -2404,24 +2402,6 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 #endif
 }
 } // end anonymous namespace
-
-/*
-// pkeroulas : is this usefull
-void SIPVoIPLink::setPresenceState(const std::string &accId, const std::string& state) {
-    this->presenceState = state;
-#if 0 // ELOI : modify account management
-    SIPAccount *acc = dynamic_cast<SIPAccount*>(Phone::instance().getAccountById(accId));
-    acc->notifyServers(presenceState, channelState);
-#else
-    SIPAccount *acc = Manager::instance().getSipAccount(accId);
-    //no need of channelStatte. We put it to NULL
-    acc->notifyServerSubscription(presenceState, NULL);
-#endif
-}
-std::string SIPVoIPLink::getPresenceState() {
-    return this->presenceState;
-} // end anonymous namespace
-*/
 
 int SIPVoIPLink::getModId() {
       return mod_ua_.id;

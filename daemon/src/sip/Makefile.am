@@ -17,10 +17,10 @@ libsiplink_la_SOURCES = \
 		sip_utils.h \
 		sippresence.cpp \
 		sippresence.h \
-		sipbuddy.cpp \
-		sipbuddy.h \
-		presence_subscription.cpp\
-		presence_subscription.h\
+		pres_sub_server.cpp\
+		pres_sub_server.h\
+		pres_sub_client.cpp\
+		pres_sub_client.h\
 		sippublish.cpp\
 		sippublish.h
 if BUILD_SDES

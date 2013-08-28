@@ -820,16 +820,17 @@
             <arg type="b" name="accepted" direction="in"/>
         </method>
 
-        <method name="subscribePresence" tp:name-for-bindings="subscribePresence">
+        <method name="subscribePresSubClient" tp:name-for-bindings="subscribePresSubClient">
           <tp:added version="0.9.7"/>
           <arg type="s" name="accountID" direction="in"/>
-          <arg type="s" name="buddySipUri" direction="in"/>
+          <arg type="s" name="uri" direction="in"/>
+          <arg type="b" name="flag" direction="in"/>
         </method>
 
-        <method name="unsubscribePresence" tp:name-for-bindings="unsubscribePresence">
+        <method name="enablePresence" tp:name-for-bindings="enablePresence">
           <tp:added version="0.9.7"/>
           <arg type="s" name="accountID" direction="in"/>
-          <arg type="s" name="buddySipUri" direction="in"/>
+          <arg type="b" name="flag" direction="in"/>
         </method>
 
         <method name="sendPresence" tp:name-for-bindings="sendPresence">
@@ -839,20 +840,20 @@
           <arg type="s" name="note" direction="in"/>
         </method>
 
-        <method name="approvePresenceSubscription" tp:name-for-bindings="approvePresenceSubscription">
+        <method name="approvePresSubServer" tp:name-for-bindings="approvePresSubServer">
           <tp:added version="0.9.7"/>
           <arg type="b" name="flag" direction="in"/>
           <arg type="s" name="uri" direction="in"/>
         </method>
 
-        <signal name="newPresenceNotification" tp:name-for-bindings="newPresenceNotification">
+        <signal name="newPresSubClientNotification" tp:name-for-bindings="newPresSubClientNotification">
           <tp:added version="0.9.7"/>
           <arg type="s" name="buddyUri"/>
           <arg type="s" name="status"/>
           <arg type="s" name="lineStatus"/>
         </signal>
 
-        <signal name="newPresenceSubscription" tp:name-for-bindings="newPresenceSubscription">
+        <signal name="newPresSubServerRequest" tp:name-for-bindings="newPresSubServerRequest">
           <arg type="s" name="buddyUri"/>
         </signal>
 

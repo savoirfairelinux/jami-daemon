@@ -200,45 +200,40 @@ pj_status_t pres_publish(SIPPresence *pres)
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
 
     /* Create and init client publication session */
-    if (pres->publish_enabled) {
 
-	/* Create client publication */
-	status = pjsip_publishc_create(endpt,&my_publish_opt,
-				       pres, &pres_publish_cb,
-				       &pres->publish_sess);
-	if (status != PJ_SUCCESS) {
-	    pres->publish_sess = NULL;
-            ERROR("Failed to create a publish seesion.");
-            return status;
-	}
-
-	/* Initialize client publication */
-        pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
-	status = pjsip_publishc_init(pres->publish_sess, &STR_PRESENCE,&from, &from, &from, 0xFFFF);
-	if (status != PJ_SUCCESS) {
-            ERROR("Failed to init a publish session");
-	    pres->publish_sess = NULL;
-	    return status;
-	}
-
-	/* Add credential for authentication */
-        if (acc->hasCredentials() and pjsip_publishc_set_credentials(pres->publish_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
-            ERROR("Could not initialize credentials for invite session authentication");
-            return status;
-        }
-
-	/* Set route-set */
-        if (acc->hasServiceRoute())
-            pjsip_regc_set_route_set(acc->getRegistrationInfo(), sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
-
-	/* Send initial PUBLISH request */
-        status = pres_send_publish(pres, PJ_TRUE);
-        if (status != PJ_SUCCESS)
-            return status;
-
-    } else {
+    /* Create client publication */
+    status = pjsip_publishc_create(endpt,&my_publish_opt,
+                                   pres, &pres_publish_cb,
+                                   &pres->publish_sess);
+    if (status != PJ_SUCCESS) {
         pres->publish_sess = NULL;
+        ERROR("Failed to create a publish seesion.");
+        return status;
     }
+
+    /* Initialize client publication */
+    pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
+    status = pjsip_publishc_init(pres->publish_sess, &STR_PRESENCE,&from, &from, &from, 0xFFFF);
+    if (status != PJ_SUCCESS) {
+        ERROR("Failed to init a publish session");
+        pres->publish_sess = NULL;
+        return status;
+    }
+
+    /* Add credential for authentication */
+    if (acc->hasCredentials() and pjsip_publishc_set_credentials(pres->publish_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
+        ERROR("Could not initialize credentials for invite session authentication");
+        return status;
+    }
+
+    /* Set route-set */
+    if (acc->hasServiceRoute())
+        pjsip_regc_set_route_set(acc->getRegistrationInfo(), sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
+
+    /* Send initial PUBLISH request */
+    status = pres_send_publish(pres, PJ_TRUE);
+    if (status != PJ_SUCCESS)
+        return status;
 
     return PJ_SUCCESS;
 }

@@ -88,8 +88,8 @@ struct pres_msg_data
 
 
 class SIPAccount;
-class SIPBuddy;
-class PresenceSubscription;
+class PresSubClient;
+class PresSubServer;
 /**
  * TODO Clean this:
  */
@@ -132,6 +132,10 @@ public:
      */
     pj_pool_t*  getPool();
     /**
+     * Activate the module (PUBLISH/SUBSCRIBE)
+     */
+    void enable(const bool& flag);
+     /**
      * Fill xml document, the header and the body
      */
     void fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
@@ -149,60 +153,53 @@ public:
      * Send a signal to the client on DBus. The signal contain the status
      * of a remote user.
      */
-    void reportBuddy(const std::string& buddySipUri, pjsip_pres_status * status);
+    void reportPresSubClientNotification(const std::string& uri, pjsip_pres_status * status);
     /**
      * Send a SUBSCRIBE request to PBX/IP2IP
      * @param buddyUri  Remote user that we want to subscribe
      */
-    void subscribeBuddy(const std::string& buddySipUri);
-    /**
-     * Send a SUBSCRIBE request to PBX/IP2IP but the the 0s timeout makes
-     * the dialog expire immediatly.
-     * @param buddyUri  Remote user that we want to unsubscribe
-     */
-    void unsubscribeBuddy(const std::string& buddySipUri);
-
+    void subscribePresSubClient(const std::string& uri, const bool& flag);
     /**
      * Add a buddy in the buddy list.
-     * @param b     Buddy pointer
+     * @param b     PresSubClient pointer
      */
-    void addBuddy(SIPBuddy *b);
+    void addPresSubClient(PresSubClient *b);
     /**
      * Remove a buddy from the list.
-     * @param b     Buddy pointer
+     * @param b     PresSubClient pointer
      */
-    void removeBuddy(SIPBuddy *b);
+    void removePresSubClient(PresSubClient *b);
 
     /**
      * IP2IP context.
      * Report new Subscription to the client, waiting for approval.
      * @param s     PresenceSubcription pointer.
      */
-    void reportNewServerSubscription(PresenceSubscription *s);
+    void reportNewPresSubServerRequest(PresSubServer *s);
      /**
      * IP2IP context.
      * Process new subscription based on client decision.
      * @param flag     client decision.
      * @param uri       uri of the remote subscriber
      */
-    void approveServerSubscription(const bool& flag, const std::string& uri);
+    void approvePresSubServer(const bool& flag, const std::string& uri);
     /**
      * IP2IP context.
      * Add a server associated to a subscriber in the list.
      * @param s     PresenceSubcription pointer.
      */
-    void addServerSubscription(PresenceSubscription *s);
+    void addPresSubServer(PresSubServer *s);
     /**
      * IP2IP context.
      * Remove a server associated to a subscriber from the list.
      * @param s     PresenceSubcription pointer.
      */
-    void removeServerSubscription(PresenceSubscription *s);
+    void removePresSubServer(PresSubServer *s);
     /**
      * IP2IP context.
      * Iterate through the subscriber list and send NOTIFY to each.
      */
-    void notifyServerSubscription();
+    void notifyPresSubServer();
 
     /**
      * Lock methods
@@ -216,14 +213,14 @@ public:
     pj_bool_t       online_status; /**< Our online status.	*/
     pjsip_publishc  *publish_sess;  /**< Client publication session.*/
     pj_bool_t   publish_state; /**< Last published online status.*/
-    pj_bool_t   publish_enabled; /**< Allow for status publish,*/
+    pj_bool_t   enabled; /**< Allow for status publish,*/
 
 private:
     NON_COPYABLE(SIPPresence);
 
     SIPAccount * acc_; /**<  Associated SIP account. */
-    std::list< PresenceSubscription *> serverSubscriptions_; /**< Subscribers list.*/
-    std::list< SIPBuddy *> buddies_; /**< Subcribed buddy list.*/
+    std::list< PresSubServer *> pres_sub_server_list_; /**< Subscribers list.*/
+    std::list< PresSubClient *> pres_sub_client_list_; /**< Subcribed buddy list.*/
 
     pj_mutex_t	*mutex_;	    /**< Mutex protection for this data	*/
     unsigned	mutex_nesting_level_; /**< Mutex nesting level.	*/

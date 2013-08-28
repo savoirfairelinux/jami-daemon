@@ -181,10 +181,10 @@ class CallManager
 #endif // __ANDROID__
 
         /* Presence subscription/Notification. */
-        void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
-        void unsubscribePresence(const std::string& accountID, const std::string& buddySipUri);
+        void enablePresence(const std::string& accountID, const bool& flag);
         void sendPresence(const std::string& accountID, const std::string& status, const std::string& note);
-        void approvePresenceSubscription(const bool& flag, const std::string& uri);
+        void approvePresSubServer(const bool& flag, const std::string& uri);
+        void subscribePresSubClient(const std::string& accountID, const std::string& uri, const bool& flag);
 private:
 
 #if HAVE_ZRTP

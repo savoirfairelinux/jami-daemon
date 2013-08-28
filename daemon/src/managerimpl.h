@@ -1035,22 +1035,6 @@ class ManagerImpl {
         void
         checkAudio();
 
-        /**
-         * Subscribe to buddySipUri for an accountID
-         */
-       void subscribePresence(const std::string& accountID, const std::string& buddySipUri);
-       void unsubscribePresence(const std::string& accountID, const std::string& buddySipUri);
-
-        /**
-         * push a presence for a account
-         * Notify for IP2IP account and publish for PBX account
-         */
-        void sendPresence(const std::string& accountID, const std::string& status, const std::string& note);
-        /**
-         * Accept or not a PresenceSubscription request for IP2IP account
-         */
-        void approvePresenceSubscription(const bool& flag, const std::string& uri);
-
     private:
         NON_COPYABLE(ManagerImpl);
 
