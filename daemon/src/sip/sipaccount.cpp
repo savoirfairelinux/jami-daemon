@@ -48,6 +48,8 @@
 #include <sstream>
 #include <algorithm>
 #include <cstdlib>
+#include <array>
+#include <memory>
 
 
 #ifdef SFL_VIDEO
@@ -66,6 +68,9 @@ const int DEFAULT_REGISTRATION_TIME = 3600;
 const char *const TRUE_STR = "true";
 const char *const FALSE_STR = "false";
 }
+
+// we force RTP ports to be even, so we only need HALF_MAX_PORT booleans
+bool SIPAccount::portsInUse_[HALF_MAX_PORT];
 
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID)
@@ -118,9 +123,9 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
-    , audioPortRange_(16384, 32766)
+    , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
-    , videoPortRange_(49152, 65534)
+    , videoPortRange_({49152, (MAX_PORT) - 2})
 #endif
 {
     via_addr_.host.ptr = 0;
@@ -131,10 +136,54 @@ SIPAccount::SIPAccount(const std::string& accountID)
         alias_ = IP2IP_PROFILE;
 }
 
+
 SIPAccount::~SIPAccount()
 {
     delete presence_;
 }
+
+
+namespace {
+std::array<std::unique_ptr<Conf::ScalarNode>, 2>
+serializeRange(Conf::MappingNode &accountMap, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
+{
+    using namespace Conf;
+    std::array<std::unique_ptr<ScalarNode>, 2> result;
+
+    std::ostringstream os;
+    os << range.first;
+    result[0].reset(new ScalarNode(os.str()));
+    os.str("");
+    accountMap.setKeyValue(minKey, result[0].get());
+
+    os << range.second;
+    ScalarNode portMax(os.str());
+    result[1].reset(new ScalarNode(os.str()));
+    accountMap.setKeyValue(maxKey, result[1].get());
+    return result;
+}
+
+
+void updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
+{
+    if (min > 0 and (max > min) and max <= MAX_PORT - 2) {
+        range.first = min;
+        range.second = max;
+    }
+}
+
+void
+unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *maxKey, std::pair<uint16_t, uint16_t> &range)
+{
+    int tmpMin = 0;
+    int tmpMax = 0;
+    mapNode.getValue(minKey, &tmpMin);
+    mapNode.getValue(maxKey, &tmpMax);
+    updateRange(tmpMin, tmpMax, range);
+}
+}
+
+
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
@@ -288,6 +337,11 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 
     ScalarNode userAgent(userAgent_);
     accountmap.setKeyValue(USER_AGENT_KEY, &userAgent);
+
+    auto audioPortNodes(serializeRange(accountmap, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_));
+#ifdef SFL_VIDEO
+    auto videoPortNodes(serializeRange(accountmap, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_));
+#endif
 
     try {
         emitter.serializeAccount(&accountmap);
@@ -494,6 +548,11 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutMsec_);
     }
     mapNode.getValue(USER_AGENT_KEY, &userAgent_);
+
+    unserializeRange(mapNode, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
+#ifdef SFL_VIDEO
+    unserializeRange(mapNode, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_);
+#endif
 }
 
 void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
@@ -534,6 +593,15 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
     keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == TRUE_STR;
+
+    int tmpMin = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
+    int tmpMax = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
+    updateRange(tmpMin, tmpMax, audioPortRange_);
+#ifdef SFL_VIDEO
+    tmpMin = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MIN].c_str());
+    tmpMax = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MAX].c_str());
+    updateRange(tmpMin, tmpMax, videoPortRange_);
+#endif
 
     // srtp settings
     srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == TRUE_STR;
@@ -590,6 +658,17 @@ static std::string retrievePassword(const std::map<std::string, std::string>& ma
     return "";
 }
 
+void
+addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
+{
+    std::ostringstream os;
+    os << range.first;
+    a[minKey] = os.str();
+    os.str("");
+    os << range.second;
+    a[maxKey] = os.str();
+}
+
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
@@ -642,6 +721,11 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     // Add sip specific details
     a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
     a[CONFIG_ACCOUNT_USERAGENT] = userAgent_;
+
+    addRangeToDetails(a, CONFIG_ACCOUNT_AUDIO_PORT_MIN, CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
+#ifdef SFL_VIDEO
+    addRangeToDetails(a, CONFIG_ACCOUNT_VIDEO_PORT_MIN, CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
+#endif
 
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
@@ -809,7 +893,8 @@ void SIPAccount::trimCiphers()
 {
     int sum = 0;
     int count = 0;
-    // PJSIP aborts if our cipher list exceeds 1010 characters
+
+    // PJSIP aborts if our cipher list exceeds 1000 characters
     static const int MAX_CIPHERS_STRLEN = 1000;
 
     for (const auto &item : ciphers_) {
@@ -1031,12 +1116,15 @@ std::string SIPAccount::getContactHeader() const
 
     link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
 
-    if (!receivedParameter_.empty())
+    if (!receivedParameter_.empty()) {
         address = receivedParameter_;
+        DEBUG("Using received address %s", address.c_str());
+    }
 
-    if (rPort_ != -1) {
+    if (rPort_ != -1 and rPort_ != 0) {
         portstr << rPort_;
         port = portstr.str();
+        DEBUG("Using received port %s", port.c_str());
     }
 
     // UDP does not require the transport specification
@@ -1316,24 +1404,39 @@ bool SIPAccount::matches(const std::string &userName, const std::string &server,
         return false;
 }
 
-namespace {
-    // returns even number in range [lower, upper]
-    unsigned int getRandomEvenNumber(const std::pair<unsigned, unsigned> &range)
-    {
-        const unsigned halfUpper = range.second * 0.5;
-        const unsigned halfLower = range.first * 0.5;
-        return 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
-    }
+SIPPresence * SIPAccount::getPresence(){
+    return presence_;
 }
 
-unsigned
+// returns even number in range [lower, upper]
+uint16_t
+SIPAccount::getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range)
+{
+    const uint16_t halfUpper = range.second * 0.5;
+    const uint16_t halfLower = range.first * 0.5;
+    uint16_t result;
+    do {
+        result = 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
+    } while (portsInUse_[result / 2]);
+
+    portsInUse_[result / 2] = true;
+    return result;
+}
+
+void
+SIPAccount::releasePort(uint16_t port)
+{
+    portsInUse_[port / 2] = false;
+}
+
+uint16_t
 SIPAccount::generateAudioPort() const
 {
     return getRandomEvenNumber(audioPortRange_);
 }
 
 #ifdef SFL_VIDEO
-unsigned
+uint16_t
 SIPAccount::generateVideoPort() const
 {
     return getRandomEvenNumber(videoPortRange_);

@@ -31,7 +31,7 @@
 #include "utils.h"
 #include "sflphone_const.h"
 
-void gnome_main_section_new_with_grid(gchar *title, GtkWidget **frame, GtkWidget **grid)
+void gnome_main_section_new_with_grid(const gchar *title, GtkWidget **frame, GtkWidget **grid)
 {
     PangoAttrList *attrs = pango_attr_list_new();
     PangoAttribute *attr = pango_attr_weight_new(PANGO_WEIGHT_BOLD);

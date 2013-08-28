@@ -69,6 +69,8 @@ class Sdp {
          */
         Sdp(pj_pool_t *pool);
 
+        ~Sdp();
+
         /**
          * Accessor for the internal memory pool
          */
@@ -151,15 +153,13 @@ class Sdp {
         /*
          * Write accessor. Set the local IP address that will be used in the sdp session
          */
-        void setLocalIP(const std::string &ip_addr) {
-            localIpAddr_ = ip_addr;
-        }
+        void setPublishedIP(const std::string &ip_addr);
 
         /*
          * Read accessor. Get the local IP address
          */
-        std::string getLocalIP() const {
-            return localIpAddr_;
+        std::string getPublishedIP() const {
+            return publishedIpAddr_;
         }
 
         void setLocalPublishedAudioPort(int port) {
@@ -309,7 +309,7 @@ class Sdp {
         std::vector<sfl::AudioCodec *> sessionAudioMedia_;
         std::vector<std::string> sessionVideoMedia_;
 
-        std::string localIpAddr_;
+        std::string publishedIpAddr_;
         std::string remoteIpAddr_;
 
         int localAudioDataPort_;

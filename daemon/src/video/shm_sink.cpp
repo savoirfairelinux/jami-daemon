@@ -146,7 +146,7 @@ SHMSink::stop()
 bool
 SHMSink::resize_area(size_t desired_length)
 {
-    if (desired_length < shm_area_len_)
+    if (desired_length <= shm_area_len_)
         return true;
 
     shm_unlock();

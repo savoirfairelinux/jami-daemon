@@ -15,5 +15,4 @@ unpad-paren         # Remove unwanted space around parentheses
 pad-header          # Insert space padding after paren headers only (e.g. 'if', 'for', 'while'...)
 pad-oper            # Insert space padding around operator
 formatted           # only display files that have changed
-recursive           # recursively enter subdirs
 suffix=none         # don't create backup files (that's what version control is for)

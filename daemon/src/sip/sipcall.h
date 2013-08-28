@@ -108,6 +108,8 @@ class SIPCall : public Call {
          */
         pjsip_inv_session *inv;
 
+        void setContactHeader(const std::string &contact);
+
     private:
         // override of Call::getDetails
         std::map<std::string, std::string>
@@ -140,6 +142,8 @@ class SIPCall : public Call {
          * The SDP session
          */
         Sdp *local_sdp_;
+
+        std::string contactHeader_;
 };
 
 #endif // __SIPCALL_H__

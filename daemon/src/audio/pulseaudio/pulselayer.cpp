@@ -509,8 +509,8 @@ void PulseLayer::readFromMic()
     const char *data = NULL;
     size_t bytes;
 
-    size_t sample_size = record_->sampleSize();
-    uint8_t channels = record_->channels();
+    const size_t sample_size = record_->sampleSize();
+    const uint8_t channels = record_->channels();
 
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data)
         return;
@@ -519,7 +519,9 @@ void PulseLayer::readFromMic()
     outfile.write((const char *)data, bytes);
 #endif
 
-    size_t samples = bytes / sample_size;
+    assert(channels);
+    assert(sample_size);
+    const size_t samples = bytes / sample_size / channels;
 
     AudioBuffer in(samples, channels, sampleRate_);
     in.deinterleave((SFLAudioSample*)data, samples, channels);
@@ -527,22 +529,10 @@ void PulseLayer::readFromMic()
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
-    /*if (resample) {
-        double resampleFactor = (double) sampleRate_ / mainBufferSampleRate;
-        //bytes = (double) bytes * resampleFactor;
-    }*/
-
-    /*if (bytes > mic_buf_size_) {
-        mic_buf_size_ = bytes;
-        delete [] mic_buffer_;
-        mic_buffer_ = new SFLAudioSample[samples];
-    }*/
-
     AudioBuffer * out = &in;
 
     if (resample) {
         mic_buffer_.setSampleRate(mainBufferSampleRate);
-        //converter_.resample((SFLAudioSample*)data, mic_buffer_, samples, mainBufferSampleRate, sampleRate_, samples);
         converter_.resample(in, mic_buffer_);
         out = &mic_buffer_;
     }

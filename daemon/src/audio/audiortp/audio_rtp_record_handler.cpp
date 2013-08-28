@@ -87,6 +87,7 @@ DTMFEvent::DTMFEvent(char digit) : payload(), newevent(true), length(1000)
     payload.ebit = false; // end of event bit
     payload.rbit = false; // reserved bit
     payload.duration = 1; // duration for this event
+    payload.vol = 10;
 }
 
 AudioRtpRecord::AudioRtpRecord() :
