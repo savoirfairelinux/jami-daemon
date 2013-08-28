@@ -2465,8 +2465,13 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     /** @todo Deal with both the accountMap_ and the Configuration */
     std::stringstream accountID;
 
+    std::string accountList(preferences.getAccountOrder());
     accountID << "Account:" << time(NULL);
     std::string newAccountID(accountID.str());
+
+    while (accountList.find(newAccountID) != std::string::npos) {
+       newAccountID += "1";
+    }
 
     // Get the type
 
@@ -2500,9 +2505,8 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     newAccount->setAccountDetails(details);
 
-    // Add the newly created account in the account order list
-    std::string accountList(preferences.getAccountOrder());
 
+    // Add the newly created account in the account order list
     newAccountID += "/";
     if (not accountList.empty()) {
         // Prepend the new account
@@ -2521,7 +2525,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     client_.getConfigurationManager()->accountsChanged();
 
-    return accountID.str();
+    return newAccountID;
 }
 
 void ManagerImpl::removeAccount(const std::string& accountID)
