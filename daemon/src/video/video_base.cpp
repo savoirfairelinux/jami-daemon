@@ -136,7 +136,7 @@ std::shared_ptr<VideoFrame> VideoGenerator::waitNewFrame()
 {
     pthread_mutex_lock(&mutex_);
     {
-        if (writtenFrame_)
+        if (!writtenFrame_)
             pthread_cond_wait(&condition_, &mutex_);
     }
     pthread_mutex_unlock(&mutex_);

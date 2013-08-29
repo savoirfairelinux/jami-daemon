@@ -44,46 +44,50 @@ class AVFormatContext;
 class AVCodec;
 
 namespace sfl_video {
-	class VideoEncoder : public VideoCodec {
-	public:
-		VideoEncoder();
-		~VideoEncoder();
 
-		void setInterruptCallback(int (*cb)(void*), void *opaque);
-		void setIOContext(VideoIOHandle *ioctx);
-		int openOutput(const char *enc_name, const char *short_name,
-					   const char *filename, const char *mime_type);
-		int startIO();
-		int encode(VideoFrame &input, bool is_keyframe, int frame_number);
-		int flush();
-		void print_sdp(std::string &sdp_);
+class VideoEncoder : public VideoCodec {
+public:
+    VideoEncoder();
+    ~VideoEncoder();
 
-		/* getWidth and getHeight return size of the encoded frame.
-		 * Values have meaning only after openOutput call.
-		 */
-		int getWidth() const { return dstWidth_; }
-		int getHeight() const { return dstHeight_; }
+    void setInterruptCallback(int (*cb)(void*), void *opaque);
+    void setIOContext(VideoIOHandle *ioctx);
+    int openOutput(const char *enc_name, const char *short_name,
+                   const char *filename, const char *mime_type);
+    int startIO();
+    int encode(VideoFrame &input, bool is_keyframe, int frame_number);
+    int flush();
+    void print_sdp(std::string &sdp_);
 
-	private:
-		NON_COPYABLE(VideoEncoder);
-		void setScaleDest(void *data, int width, int height, int pix_fmt);
-		void prepareEncoderContext();
-		void forcePresetX264();
-		void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
+    /* getWidth and getHeight return size of the encoded frame.
+     * Values have meaning only after openOutput call.
+     */
+    int getWidth() const { return dstWidth_; }
+    int getHeight() const { return dstHeight_; }
 
-		AVCodec *outputEncoder_;
-        AVCodecContext *encoderCtx_;
-        AVFormatContext *outputCtx_;
-		AVStream *stream_;
-        VideoScaler scaler_;
-        VideoFrame scaledFrame_;
+private:
+    NON_COPYABLE(VideoEncoder);
+    void setScaleDest(void *data, int width, int height, int pix_fmt);
+    void prepareEncoderContext();
+    void forcePresetX264();
+    void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
 
-		uint8_t *encoderBuffer_;
-		int encoderBufferSize_;
-		int streamIndex_;
-		int dstWidth_;
-        int dstHeight_;
-	};
+    AVCodec *outputEncoder_;
+    AVCodecContext *encoderCtx_;
+    AVFormatContext *outputCtx_;
+    AVStream *stream_;
+    VideoScaler scaler_;
+    VideoFrame scaledFrame_;
+
+    uint8_t *scaledFrameBuffer_;
+    int scaledFrameBufferSize_;
+    uint8_t *encoderBuffer_;
+    int encoderBufferSize_;
+    int streamIndex_;
+    int dstWidth_;
+    int dstHeight_;
+};
+
 }
 
 #endif // __VIDEO_ENCODER_H__
