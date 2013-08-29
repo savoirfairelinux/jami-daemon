@@ -51,7 +51,7 @@ private:
     static int interruptCb(void *ctx);
     static void *runCallback(void *);
     void run();
-    void encodeAndSendVideo();
+    void encodeAndSendVideo(VideoFrame *);
 
     std::map<std::string, std::string> args_;
     /*-------------------------------------------------------------*/

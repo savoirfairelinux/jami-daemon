@@ -54,8 +54,8 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     , forceKeyFrame_(0)
     , thread_(0)
 	, frameNumber_(0)
-    , muxContext_(0)
     , fromMixer_(false)
+    , muxContext_(0)
 {}
 
 VideoSendThread::~VideoSendThread()
@@ -120,7 +120,7 @@ void VideoSendThread::setup()
     }
 
 	EXIT_IF_FAIL(!videoEncoder_->openOutput(enc_name, "rtp",
-											args_["destination"].c_str(), NULL),
+                                            args_["destination"].c_str(), NULL),
 				 "encoder openOutput() failed");
 	videoEncoder_->setIOContext(muxContext_);
 	EXIT_IF_FAIL(!videoEncoder_->startIO(), "encoder start failed");
@@ -160,28 +160,27 @@ void VideoSendThread::run()
 	setup();
 
     while (threadRunning_) {
-		encodeAndSendVideo();
+        VideoFrame *frame = videoSource_->waitNewFrame().get();
+        if (frame)
+            encodeAndSendVideo(frame);
 	}
 
 	delete videoEncoder_;
 
 	if (muxContext_)
 		delete muxContext_;
+    muxContext_ = nullptr;
 }
 
-void VideoSendThread::encodeAndSendVideo()
+void VideoSendThread::encodeAndSendVideo(VideoFrame *input_frame)
 {
 	bool is_keyframe = forceKeyFrame_ > 0;
 
 	if (is_keyframe)
 		atomic_decrement(&forceKeyFrame_);
 
-    // Select frame source to encode
-    VideoFrame *inputframe = videoSource_->waitNewFrame().get();
-	if (inputframe) {
-        EXIT_IF_FAIL(videoEncoder_->encode(*inputframe, is_keyframe, frameNumber_++) >= 0,
-                     "encoding failed");
-    }
+    EXIT_IF_FAIL(videoEncoder_->encode(*input_frame, is_keyframe, frameNumber_++) >= 0,
+                 "encoding failed");
 }
 
 void VideoSendThread::forceKeyFrame()

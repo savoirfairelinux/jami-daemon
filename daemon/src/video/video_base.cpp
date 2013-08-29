@@ -40,9 +40,10 @@ namespace sfl_video {
 VideoPacket::VideoPacket() : packet_(0)
 {
     packet_ = static_cast<AVPacket *>(av_malloc(sizeof(AVPacket)));
+    av_init_packet(packet_);
 }
 
-VideoPacket::~VideoPacket() { av_free_packet(packet_); }
+VideoPacket::~VideoPacket() { av_free_packet(packet_); av_free(packet_); }
 
 /*=== VideoIOHandle  =========================================================*/
 
@@ -57,7 +58,7 @@ VideoIOHandle::VideoIOHandle(ssize_t buffer_size,
     buf_ = static_cast<unsigned char *>(av_malloc(buffer_size));
     ctx_ = avio_alloc_context(buf_, buffer_size, writeable, opaque, read_cb,
                               write_cb, seek_cb);
-    //ctx_->max_packet_size = buffer_size;
+    ctx_->max_packet_size = buffer_size;
 }
 
 VideoIOHandle::~VideoIOHandle() { av_free(ctx_); av_free(buf_); }

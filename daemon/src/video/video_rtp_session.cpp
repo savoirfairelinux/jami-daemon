@@ -181,8 +181,6 @@ void VideoRtpSession::forceKeyFrame()
 {
     if (sendThread_.get())
         sendThread_->forceKeyFrame();
-    else
-        ERROR("Video sending thread is NULL");
 }
 
 void
