@@ -1404,10 +1404,6 @@ bool SIPAccount::matches(const std::string &userName, const std::string &server,
         return false;
 }
 
-SIPPresence * SIPAccount::getPresence(){
-    return presence_;
-}
-
 // returns even number in range [lower, upper]
 uint16_t
 SIPAccount::getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range)

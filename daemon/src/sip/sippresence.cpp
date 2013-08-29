@@ -154,30 +154,35 @@ void SIPPresence::subscribePresSubClient(const std::string& uri, const bool& fla
             break;
         }
 
+    if(pres_sub_client_list_.size() >= MAX_N_PRES_SUB_CLIENT){
+        WARN("Can't add PresSubClient, max number reached.");
+        return;
+    }
+
     if(flag){
-        PresSubClient *b = new PresSubClient(uri, acc_);
-        if(!(b->subscribe())){
+        PresSubClient *c = new PresSubClient(uri, acc_);
+        if(!(c->subscribe())){
             WARN("Failed send subscribe.");
-            delete b;
+            delete c;
         }
         // the buddy has to be accepted before being added in the list
     }
 }
 
-void SIPPresence::addPresSubClient(PresSubClient *b){
+void SIPPresence::addPresSubClient(PresSubClient *c){
     if(pres_sub_client_list_.size() < MAX_N_PRES_SUB_CLIENT){
-        pres_sub_client_list_.push_back(b);
+        pres_sub_client_list_.push_back(c);
         DEBUG("-New Presence_subscription_client client added in the list[l=%i].",pres_sub_client_list_.size());
     }
     else{
         WARN("-Max Presence_subscription_client is reach.");
-        delete b;
+        // let the client alive //delete c;
     }
 }
 
-void SIPPresence::removePresSubClient(PresSubClient *b){
+void SIPPresence::removePresSubClient(PresSubClient *c){
     DEBUG("-Presence_subscription_client removed from the buddy list.");
-    pres_sub_client_list_.remove(b);
+    pres_sub_client_list_.remove(c);
 }
 
 
@@ -202,7 +207,7 @@ void SIPPresence::addPresSubServer(PresSubServer *s) {
     }
     else{
         WARN("-Max Presence_subscription_server is reach.");
-        delete s;
+        // let de server alive // delete s;
     }
 }
 

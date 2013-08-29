@@ -536,7 +536,7 @@ class SIPAccount : public Account {
          */
         SIPPresence * getPresence();
 
-        unsigned generateAudioPort() const;
+//        unsigned generateAudioPort() const;
         uint16_t generateAudioPort() const;
 #ifdef SFL_VIDEO
         uint16_t generateVideoPort() const;
