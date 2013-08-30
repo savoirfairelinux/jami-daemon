@@ -7,7 +7,7 @@ print "\
 # author:      Patrick keroulas <patrick.keroulas@savoirfairelinux.com>     #\n\
 # description: This script sends a sequence of methods to the daemon        #\n\
 #              through the dbus to test the presence feature of SFLPhone.   #\n\
-#              SET THE PARAMS IS THE 'data' SECTION OF THIS SCRIPT BEFORE   #\n\
+#              SET THE PARAMS IN THE 'data' SECTION OF THIS SCRIPT BEFORE   #\n\
 #              YOU EXECUTE IT. 'The normal mode process the tasks           #\n\
 #              in order while the random mode generates a random sequence   #\n\
 #              A Freeswitch server must be setup since it supports PUBLISH  #\n\
@@ -125,11 +125,11 @@ task_list = [
     (presSubscribe, {'acc':first_account,'buddy':buddy_uri,'flag':True}),
     (presSend, {'acc':first_account,'status':randbool,'note':'Oh yeah!'}),
     (presSubscribe, {'acc':first_account,'buddy':buddy_uri,'flag':False}),
-    (presSend, {'acc':first_account,'status':randbool,'note':'This notify should not be recieved'})
+    (presSend, {'acc':first_account,'status':randbool,'note':'This notify should not be recieved'}),
 
     # IP2IP
     (presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':True}),
-    (presSend, {'acc': IP2IP,'status':randbool(),'note':'This notify should not be recieved'})
+    (presSend, {'acc': IP2IP,'status':False,'note':'Wait for approval'}),
     (presSubApprove, {'uri':subscriber_uri,'flag':randbool}),
     (presSend, {'acc': IP2IP,'status':randbool(),'note':'Oh yeah!'}),
     (presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':False}),

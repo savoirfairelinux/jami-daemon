@@ -850,7 +850,7 @@
           <tp:added version="0.9.7"/>
           <arg type="s" name="buddyUri"/>
           <arg type="s" name="status"/>
-          <arg type="s" name="lineStatus"/>
+          <arg type="s" name="note"/>
         </signal>
 
         <signal name="newPresSubServerRequest" tp:name-for-bindings="newPresSubServerRequest">
