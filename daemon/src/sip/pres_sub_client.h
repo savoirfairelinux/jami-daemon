@@ -42,7 +42,7 @@
 #include <pjsip/sip_transport.h>
 #include "noncopyable.h"
 
-class SIPAccount;
+class SIPPresence;
 
 /**
  * Transaction functions of event subscription client side.
@@ -57,7 +57,8 @@ static void pres_client_evsub_on_rx_notify(pjsip_evsub *sub,
                                      pj_str_t **p_st_text,
                                      pjsip_hdr *res_hdr,
                                      pjsip_msg_body **p_body);
-static void pres_client_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry);
+static void pres_client_timer_cb(pj_timer_heap_t *th,
+                                     pj_timer_entry *entry);
 
 
 class PresSubClient {
@@ -67,7 +68,7 @@ class PresSubClient {
          * Constructor
          * @param uri   SIP uri of remote user that we want to subscribe,
          */
-        PresSubClient(const std::string &uri, SIPAccount *acc);
+        PresSubClient(const std::string &uri, SIPPresence *pres_);
         /**
          * Destructor.
          * Process the the unsubscription before the destruction.
@@ -150,7 +151,7 @@ class PresSubClient {
          */
         unsigned getTermCode();
 
-        SIPAccount      *acc;       /**< Associated SIP account pointer */
+        SIPPresence      *pres;       /**< Associated SIPPresence pointer */
         pj_str_t         uri;        /**< pres_client URI.            */
         pj_str_t         contact;   /**< Contact learned from subscrp.    */
         pj_str_t         display;   /**< pres_client display name.        */

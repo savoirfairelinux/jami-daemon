@@ -46,9 +46,7 @@
 
 SIPPresence::SIPPresence(SIPAccount *acc)
     : pres_status_data()
-    , online_status()
     , publish_sess()
-    , publish_state()
     , enabled(true)
     , acc_(acc)
     , pres_sub_server_list_ () //IP2IP context
@@ -56,11 +54,11 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     , mutex_()
     , mutex_nesting_level_()
     , mutex_owner_()
-    , pool_()
     , cp_()
+    , pool_()
 {
     /* init default status */
-    updateStatus("open","Available");
+    updateStatus(true,"Available");
 
     /* init pool */
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
@@ -100,10 +98,11 @@ void SIPPresence::enable(const bool& flag){
     enabled = flag;
 }
 
-void SIPPresence::updateStatus(const std::string &status, const std::string &note){
+void SIPPresence::updateStatus(const bool& status, const std::string &note){
     //char* pj_note  = (char*) pj_pool_alloc(pool_, "50");
 
-    pjrpid_element rpid = {PJRPID_ELEMENT_TYPE_PERSON,
+    pjrpid_element rpid = {
+            PJRPID_ELEMENT_TYPE_PERSON,
             pj_str("20"),
             PJRPID_ACTIVITY_UNKNOWN,
             pj_str((char *) note.c_str())};
@@ -118,13 +117,13 @@ void SIPPresence::updateStatus(const std::string &status, const std::string &not
 
     pj_bzero(&pres_status_data, sizeof(pres_status_data));
     pres_status_data.info_cnt = 1;
-    pres_status_data.info[0].basic_open = (status == "open")? true: false;
+    pres_status_data.info[0].basic_open = status;
     pres_status_data.info[0].id = pj_str("0"); /* todo: tuplie_id*/
     pj_memcpy(&pres_status_data.info[0].rpid, &rpid,sizeof(pjrpid_element));
     /* "contact" field is optionnal */
 }
 
-void SIPPresence::sendPresence(const std::string &status, const std::string &note){
+void SIPPresence::sendPresence(const bool& status, const std::string &note){
     updateStatus(status,note);
     if(enabled){
         if (acc_->isIP2IP())
@@ -139,7 +138,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     /* Update our info. See pjsua_buddy_get_info() for additionnal ideas*/
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
     const std::string note(status->info[0].rpid.note.ptr,status->info[0].rpid.note.slen);
-    DEBUG(" Received presenceStateChange for %s status=%s note=%s",uri.c_str(),basic.c_str(),note.c_str());
+    DEBUG(" Received status of PresSubClient  %s: status=%s note=%s",uri.c_str(),basic.c_str(),note.c_str());
     /* report status to client signal */
     Manager::instance().getClient()->getCallManager()->newPresSubClientNotification(uri, basic, note);
 }
@@ -160,7 +159,7 @@ void SIPPresence::subscribePresSubClient(const std::string& uri, const bool& fla
     }
 
     if(flag){
-        PresSubClient *c = new PresSubClient(uri, acc_);
+        PresSubClient *c = new PresSubClient(uri,this);
         if(!(c->subscribe())){
             WARN("Failed send subscribe.");
             delete c;
@@ -172,16 +171,16 @@ void SIPPresence::subscribePresSubClient(const std::string& uri, const bool& fla
 void SIPPresence::addPresSubClient(PresSubClient *c){
     if(pres_sub_client_list_.size() < MAX_N_PRES_SUB_CLIENT){
         pres_sub_client_list_.push_back(c);
-        DEBUG("-New Presence_subscription_client client added in the list[l=%i].",pres_sub_client_list_.size());
+        DEBUG("New Presence_subscription_client client added in the list[l=%i].",pres_sub_client_list_.size());
     }
     else{
-        WARN("-Max Presence_subscription_client is reach.");
+        WARN("Max Presence_subscription_client is reach.");
         // let the client alive //delete c;
     }
 }
 
 void SIPPresence::removePresSubClient(PresSubClient *c){
-    DEBUG("-Presence_subscription_client removed from the buddy list.");
+    DEBUG("Presence_subscription_client removed from the buddy list.");
     pres_sub_client_list_.remove(c);
 }
 
@@ -190,10 +189,10 @@ void SIPPresence::reportNewPresSubServerRequest(PresSubServer *s){
     Manager::instance().getClient()->getCallManager()->newPresSubServerRequest(s->remote);
 }
 
-void SIPPresence::approvePresSubServer(const bool& flag, const std::string& uri){
+void SIPPresence::approvePresSubServer(const std::string& uri, const bool& flag){
     for (auto s : pres_sub_server_list_)
          if(s->matches((char *) uri.c_str())){
-             DEBUG("-Approve Presence_subscription_server for %s.",s->remote);
+             DEBUG("Approve Presence_subscription_server for %s: %s.",s->remote,flag? "true":"false");
              s->approve(flag);
              // return; // 'return' would prevent multiple-time subscribers from spam
          }
@@ -202,22 +201,22 @@ void SIPPresence::approvePresSubServer(const bool& flag, const std::string& uri)
 
 void SIPPresence::addPresSubServer(PresSubServer *s) {
     if(pres_sub_server_list_.size() < MAX_N_PRES_SUB_SERVER){
-        DEBUG("-Presence_subscription_server added: %s.",s->remote);
+        DEBUG("Presence_subscription_server added: %s.",s->remote);
         pres_sub_server_list_.push_back(s);
     }
     else{
-        WARN("-Max Presence_subscription_server is reach.");
+        WARN("Max Presence_subscription_server is reach.");
         // let de server alive // delete s;
     }
 }
 
 void SIPPresence::removePresSubServer(PresSubServer *s) {
     pres_sub_server_list_.remove(s);
-    DEBUG("-Presence_subscription_server removed");
+    DEBUG("Presence_subscription_server removed");
 }
 
 void SIPPresence::notifyPresSubServer() {
-    DEBUG("-Iterating through Presence_subscription_server:");
+    DEBUG("Iterating through Presence_subscription_server:");
     for (auto s : pres_sub_server_list_)
         s->notify();
 }

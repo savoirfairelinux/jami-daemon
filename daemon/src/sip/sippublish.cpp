@@ -125,7 +125,7 @@ pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
 	}
 
 	/* Create and add PIDF message body */
-	status = pjsip_pres_create_pidf(tdata->pool, acc->getPresence()->getStatus(),
+	status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(),
                 &entity, &tdata->msg->body);
 	if (status != PJ_SUCCESS) {
 	    ERROR("Error creating PIDF for PUBLISH request");
@@ -134,12 +134,7 @@ pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
 	}
 
     } else {
-	//status = pjsip_publishc_unpublish(pres->publish_sess, &tdata);
-	//if (status != PJ_SUCCESS) {
-	//    pjsua_perror(THIS_FILE, "Error creating PUBLISH request", status);
-	//    goto on_error;
-	//}
-        WARN("SHOULD UNPUBLISH");
+        WARN("Unpublish is not implemented.");
     }
 
 
@@ -151,25 +146,6 @@ pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
 
     pres->fillDoc(tdata, &msg_data);
 
-
-    /* Set Via sent-by */
-    /*if (acc->cfg.allow_via_rewrite && acc->via_addr.host.slen > 0) {
-        pjsip_publishc_set_via_sent_by(acc->publish_sess, &acc->via_addr,
-                                       acc->via_tp);
-    } else if (!pjsua_sip_acc_is_using_stun(acc_id)) {
-	// Choose local interface to use in Via if acc is not using STUN. See https://trac.pjsip.org/repos/ticket/1412
-	pjsip_host_port via_addr;
-	const void *via_tp;
-
-	if (pjsua_acc_get_uac_addr(acc_id, acc->pool, &acc_cfg->id,
-				   &via_addr, NULL, NULL,
-				   &via_tp) == PJ_SUCCESS)
-        {
-	    pjsip_publishc_set_via_sent_by(acc->publish_sess, &via_addr,
-	                                   (pjsip_transport*)via_tp);
-        }
-    }*/
-
     /* Send the PUBLISH request */
     status = pjsip_publishc_send(pres->publish_sess, tdata);
     if (status == PJ_EPENDING) {
@@ -179,7 +155,6 @@ pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
 	goto on_error;
     }
 
-    pres->publish_state = pres->online_status;
     return PJ_SUCCESS;
 
 on_error:

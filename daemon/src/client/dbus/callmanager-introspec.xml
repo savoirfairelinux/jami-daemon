@@ -836,14 +836,14 @@
         <method name="sendPresence" tp:name-for-bindings="sendPresence">
           <tp:added version="0.9.7"/>
           <arg type="s" name="accountID" direction="in"/>
-          <arg type="s" name="status" direction="in"/>
+          <arg type="b" name="status" direction="in"/>
           <arg type="s" name="note" direction="in"/>
         </method>
 
         <method name="approvePresSubServer" tp:name-for-bindings="approvePresSubServer">
           <tp:added version="0.9.7"/>
-          <arg type="b" name="flag" direction="in"/>
           <arg type="s" name="uri" direction="in"/>
+          <arg type="b" name="flag" direction="in"/>
         </method>
 
         <signal name="newPresSubClientNotification" tp:name-for-bindings="newPresSubClientNotification">

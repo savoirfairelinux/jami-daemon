@@ -182,8 +182,8 @@ class CallManager
 
         /* Presence subscription/Notification. */
         void enablePresence(const std::string& accountID, const bool& flag);
-        void sendPresence(const std::string& accountID, const std::string& status, const std::string& note);
-        void approvePresSubServer(const bool& flag, const std::string& uri);
+        void sendPresence(const std::string& accountID, const bool& status, const std::string& note);
+        void approvePresSubServer(const std::string& uri, const bool& flag);
         void subscribePresSubClient(const std::string& accountID, const std::string& uri, const bool& flag);
 private:
 

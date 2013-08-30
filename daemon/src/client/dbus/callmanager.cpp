@@ -461,14 +461,14 @@ CallManager::enablePresence(const std::string& accountID, const bool& flag){
  * Notify for IP2IP account and publish for PBX account
  */
 void
-CallManager::sendPresence(const std::string& accountID, const std::string& status, const std::string& note)
+CallManager::sendPresence(const std::string& accountID, const bool& status, const std::string& note)
 {
     SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
     if (!sipaccount)
-        ERROR("Could not find account %s",accountID.c_str());
+        ERROR("Could not find account %s.",accountID.c_str());
     else{
-        DEBUG("Send Presence (acc:%s)",accountID.c_str());
-        sipaccount->getPresence()->sendPresence(status,note);
+        DEBUG("Send Presence (acc:%s, status %s).",accountID.c_str(),status? "online":"offline");
+        sipaccount->getPresence()->sendPresence(status, note);
     }
 }
 
@@ -476,13 +476,13 @@ CallManager::sendPresence(const std::string& accountID, const std::string& statu
  * Accept or not a PresSubServer request for IP2IP account
  */
 void
-CallManager::approvePresSubServer(const bool& flag, const std::string& buddySipUri)
+CallManager::approvePresSubServer(const std::string& uri, const bool& flag)
 {
     SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
     if (!sipaccount)
         ERROR("Could not find account IP2IP");
     else{
-        DEBUG("Approve presence (acc:IP2IP, buddy:%s)", buddySipUri.c_str());
-        sipaccount->getPresence()->approvePresSubServer(flag, buddySipUri);
+        DEBUG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(), flag? "true":"false");
+        sipaccount->getPresence()->approvePresSubServer(uri, flag);
     }
 }
