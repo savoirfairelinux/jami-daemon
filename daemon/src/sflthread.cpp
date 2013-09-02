@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,8 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -29,42 +29,65 @@
  *  as that of the covered work.
  */
 
-#include "libav_deps.h"
-#include "video_scaler.h"
-#include "check.h"
+#include "sflthread.h"
+#include "logger.h"
 
-namespace sfl_video {
+#define set_false_atomic(x) static_cast<void>(__sync_fetch_and_and(x, false))
 
-VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_BICUBIC) {}
-
-VideoScaler::~VideoScaler() { sws_freeContext(ctx_); }
-
-void VideoScaler::scale(VideoFrame &input, VideoFrame &output)
+void* SFLThread::run_(void* data)
 {
-    AVFrame *input_frame = input.get();
-    AVFrame *output_frame = output.get();
+    SFLThread *obj = static_cast<SFLThread*>(data);
+    obj->mainloop_();
+    return nullptr;
+}
 
-    ctx_ = sws_getCachedContext(ctx_,
-                                input_frame->width,
-                                input_frame->height,
-                                (PixelFormat) input_frame->format,
-                                output_frame->width,
-                                output_frame->height,
-                                (PixelFormat) output_frame->format,
-                                mode_,
-                                NULL, NULL, NULL);
-    if (!ctx_) {
-        ERROR("Unable to create a scaler context");
-        return;
+void SFLThread::mainloop_()
+{
+    if (setup()) {
+        while (running_)
+            process();
+        cleanup();
+    } else
+        ERROR("setup failed");
+}
+
+SFLThread::SFLThread() : thread_(), running_(false)
+{}
+
+SFLThread::~SFLThread()
+{
+    if (isRunning()) {
+        stop();
+        join();
     }
-
-    sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
-              input_frame->height, output_frame->data, output_frame->linesize);
 }
 
-void VideoScaler::reset()
+void SFLThread::start()
 {
-    ctx_ = nullptr;
+    if (!running_) {
+        running_ = true;
+        pthread_create(&thread_, NULL, &run_, this);
+    }
 }
 
+void SFLThread::stop()
+{
+    set_false_atomic(&running_);
+}
+
+void SFLThread::join()
+{
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void SFLThread::exit()
+{
+    stop();
+    pthread_exit(NULL);
+}
+
+bool SFLThread::isRunning()
+{
+    return running_;
 }

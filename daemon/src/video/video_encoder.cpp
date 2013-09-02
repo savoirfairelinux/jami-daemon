@@ -227,10 +227,8 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int frame_number)
             return -1;
         }
 
-        if (ret || !got_packet || !opkt.size) {
-            DEBUG("ret=%d, got_packet=%d, opkt.size=%u", ret, got_packet, opkt.size);
+        if (ret || !got_packet || !opkt.size)
             return 0;
-        }
     }
     opkt.pts = frame_number;
 #else
@@ -325,7 +323,7 @@ void VideoEncoder::print_sdp(std::string &sdp_)
         line = line.substr(0, line.length() - 1);
         sdp_ += line + "\n";
     }
-    DEBUG("sending\n%s", sdp_.c_str());
+    DEBUG("Sending SDP: \n%s", sdp_.c_str());
 }
 
 void VideoEncoder::prepareEncoderContext()

@@ -35,12 +35,12 @@
 
 #include "noncopyable.h"
 #include "shm_sink.h"
-#include "video_base.h"
 #include "video_provider.h"
 #include "video_scaler.h"
 #include "video_decoder.h"
+#include "video_mixer.h"
+#include "sflthread.h"
 
-#include <pthread.h>
 #include <string>
 #include <map>
 
@@ -48,7 +48,7 @@
 namespace sfl_video {
 using std::string;
 
-class VideoPreview : public VideoProvider, public VideoSource
+class VideoPreview : public VideoProvider, public VideoSource, public SFLThread
 {
 public:
     VideoPreview(const std::map<string, string> &args);
@@ -58,9 +58,16 @@ public:
     VideoFrame *lockFrame();
     void unlockFrame();
     void waitFrame();
+    void setMixer(VideoMixer* mixer);
 
     std::shared_ptr<VideoFrame> waitNewFrame();
     std::shared_ptr<VideoFrame> obtainLastFrame();
+
+protected:
+    // threading
+    bool setup();
+    void process();
+    void cleanup();
 
 private:
     NON_COPYABLE(VideoPreview);
@@ -68,23 +75,20 @@ private:
     std::string id_;
     std::map<string, string> args_;
     VideoDecoder *decoder_;
-    bool threadRunning_;
-    pthread_t thread_;
     SHMSink sink_;
     size_t bufferSize_;
     int previewWidth_;
     int previewHeight_;
     VideoScaler scaler_;
     VideoFrame frame_;
+    VideoMixer* mixer_;
 
     static int interruptCb(void *ctx);
-    static void *runCallback(void *);
     void fillBuffer(void *data);
-    void run();
     bool captureFrame();
-    void setup();
     void renderFrame();
 };
+
 }
 
 #endif // __VIDEO_PREVIEW_H__

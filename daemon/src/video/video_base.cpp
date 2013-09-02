@@ -31,6 +31,7 @@
 
 #include "libav_deps.h"
 #include "video_base.h"
+#include "logger.h"
 
 
 namespace sfl_video {
@@ -72,9 +73,29 @@ void VideoCodec::setOption(const char *name, const char *value)
 
 /*=== VideoFrame =============================================================*/
 
-VideoFrame::VideoFrame() : frame_(avcodec_alloc_frame()) {}
+VideoFrame::VideoFrame() : frame_(avcodec_alloc_frame()), allocated_(false) {}
 
 VideoFrame::~VideoFrame() { avcodec_free_frame(&frame_); }
+
+int VideoFrame::getFormat() const { return libav_utils::sfl_pixel_format(frame_->format); }
+int VideoFrame::getWidth() const { return frame_->width; }
+int VideoFrame::getHeight() const { return frame_->height; }
+
+bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
+{
+    AVPixelFormat libav_pix_fmt = (AVPixelFormat) libav_utils::libav_pixel_format(pix_fmt);
+    if (allocated_ and (width != frame_->width ||
+                        height != frame_->height ||
+                        libav_pix_fmt != frame_->format))
+        avpicture_free((AVPicture *) frame_);
+
+    allocated_ = not avpicture_alloc((AVPicture *) frame_,
+                                     libav_pix_fmt, width, height);
+    if (allocated_)
+        setGeometry(width, height, pix_fmt);
+
+    return allocated_;
+}
 
 void VideoFrame::setdefaults()
 {
@@ -90,6 +111,9 @@ void VideoFrame::setGeometry(int width, int height, int pix_fmt)
 
 void VideoFrame::setDestination(void *data)
 {
+    if (allocated_)
+        avpicture_free((AVPicture *) frame_);
+
     avpicture_fill((AVPicture *) frame_, (uint8_t *) data,
                    (PixelFormat) frame_->format, frame_->width,
                    frame_->height);
@@ -102,16 +126,73 @@ size_t VideoFrame::getSize()
                               frame_->height);
 }
 
-/*=== VideoGenerator ============================================================*/
+int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
+{
+    const AVFrame *src_frame = src.get();
+
+    if (src_frame->format != PIX_FMT_YUV420P
+        || frame_->format != PIX_FMT_YUV420P) {
+        ERROR("Unsupported pixel format");
+        return -1;
+    }
+
+    uint8_t *src_data, *dst_data;
+	ssize_t dst_stride;
+
+    // Y
+    dst_stride = frame_->linesize[0];
+	src_data = src_frame->data[0];
+	dst_data = frame_->data[0] + yoff * frame_->height * dst_stride + xoff;
+	for (int i = 0; i < src_frame->height; i++) {
+		memcpy(dst_data, src_data, src_frame->linesize[0]);
+		src_data += src_frame->linesize[0];
+		dst_data += dst_stride;
+	}
+
+    // U
+	dst_stride = frame_->linesize[1];
+	src_data = src_frame->data[1];
+	dst_data = frame_->data[1] + yoff * frame_->height / 2 * dst_stride + xoff / 2;
+	for (int i = 0; i < src_frame->height / 2; i++) {
+		memcpy(dst_data, src_data, src_frame->linesize[1]);
+		src_data += src_frame->linesize[1];
+		dst_data += dst_stride;
+	}
+
+    // V
+	dst_stride = frame_->linesize[2];
+	src_data = src_frame->data[2];
+	dst_data = frame_->data[2] + yoff * frame_->height / 2 * dst_stride + xoff / 2;
+	for (int i = 0; i < src_frame->height / 2; i++) {
+		memcpy(dst_data, src_data, src_frame->linesize[2]);
+		src_data += src_frame->linesize[2];
+		dst_data += dst_stride;
+	}
+
+    return 0;
+}
+
+void VideoFrame::copy(VideoFrame &src)
+{
+    const AVFrame *src_frame = src.get();
+    av_picture_copy((AVPicture *)frame_, (AVPicture *)src_frame,
+                    (AVPixelFormat)frame_->format, src_frame->width,
+                    src_frame->height);
+}
+
+void VideoFrame::test()
+{
+    memset(frame_->data[0], 0xaa, frame_->linesize[0]*frame_->height/2);
+}
+
+/*=== VideoGenerator =========================================================*/
 
 VideoGenerator::VideoGenerator() :
     VideoSource::VideoSource()
     , mutex_()
     , condition_()
     , writableFrame_()
-    , writtenFrame_()
-    , readList_()
-
+    , lastFrame_()
 {
     pthread_mutex_init(&mutex_, NULL);
     pthread_cond_init(&condition_, NULL);
@@ -127,7 +208,7 @@ void VideoGenerator::publishFrame()
 {
     pthread_mutex_lock(&mutex_);
     {
-        writtenFrame_ = std::move(writableFrame_); // we owns it now
+        lastFrame_ = std::move(writableFrame_); // we owns it now
         pthread_cond_signal(&condition_);
     }
     pthread_mutex_unlock(&mutex_);
@@ -136,10 +217,7 @@ void VideoGenerator::publishFrame()
 std::shared_ptr<VideoFrame> VideoGenerator::waitNewFrame()
 {
     pthread_mutex_lock(&mutex_);
-    {
-        if (!writtenFrame_)
-            pthread_cond_wait(&condition_, &mutex_);
-    }
+    pthread_cond_wait(&condition_, &mutex_);
     pthread_mutex_unlock(&mutex_);
 
     return obtainLastFrame();
@@ -150,15 +228,7 @@ std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
     std::shared_ptr<VideoFrame> frame;
 
     pthread_mutex_lock(&mutex_);
-    {
-        if (writtenFrame_) {
-            frame  = std::move(writtenFrame_);
-            readList_.push_front(frame);
-        } else if (!readList_.empty())
-            frame = readList_.front();
-        else
-            frame = nullptr;
-    }
+    frame = lastFrame_;
     pthread_mutex_unlock(&mutex_);
 
     return frame;

@@ -30,10 +30,18 @@
 #ifndef CONFERENCE_H
 #define CONFERENCE_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <set>
 #include <string>
 
 #include "audio/recordable.h"
+
+#ifdef SFL_VIDEO
+#include "video/video_mixer.h"
+#endif
 
 typedef std::set<std::string> ParticipantSet;
 
@@ -90,10 +98,19 @@ class Conference : public Recordable {
          * Start/stop recording toggle
          */
         virtual bool toggleRecording();
+
+#ifdef SFL_VIDEO
+        sfl_video::VideoMixer* getVideoMixer();
+#endif
+
     private:
         std::string id_;
         ConferenceState confState_;
         ParticipantSet participants_;
+
+#ifdef SFL_VIDEO
+        sfl_video::VideoMixer videoMixer_;
+#endif
 };
 
 #endif

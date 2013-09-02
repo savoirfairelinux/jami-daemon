@@ -38,47 +38,49 @@
 #include "video_encoder.h"
 #include "video_preview.h"
 #include "video_mixer.h"
-
+#include "sflthread.h"
 
 namespace sfl_video {
 
 class SocketPair;
 
-class VideoSendThread {
+class VideoSendThread : public SFLThread {
+public:
+    VideoSendThread(const std::string &id,
+                    const std::map<std::string, std::string> &args);
+    ~VideoSendThread();
+    void addIOContext(SocketPair &sock);
+    std::string getSDP() const { return sdp_; }
+    void forceKeyFrame();
+
+protected:
+    // threading
+    bool setup();
+    void process();
+    void cleanup();
+
 private:
     NON_COPYABLE(VideoSendThread);
-    void setup();
+
     static int interruptCb(void *ctx);
-    static void *runCallback(void *);
-    void run();
     void encodeAndSendVideo(VideoFrame *);
+    void checkVideoSource();
 
     std::map<std::string, std::string> args_;
+    const std::string &id_;
     /*-------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. run()) only! */
     /*-------------------------------------------------------------*/
     VideoEncoder *videoEncoder_;
     VideoSource *videoSource_;
+    VideoMixer *mixer_;
 
-    std::string sdp_;
-    int outputWidth_;
-    int outputHeight_;
-
-    bool threadRunning_;
     int forceKeyFrame_;
-    pthread_t thread_;
     int frameNumber_;
-    bool fromMixer_;
     VideoIOHandle* muxContext_;
-
-public:
-    VideoSendThread(const std::map<std::string, std::string> &args);
-    ~VideoSendThread();
-    void addIOContext(SocketPair &sock);
-    void start();
-    std::string getSDP() const { return sdp_; }
-    void forceKeyFrame();
+    std::string sdp_;
 };
+
 }
 
 #endif // __VIDEO_SEND_THREAD_H__

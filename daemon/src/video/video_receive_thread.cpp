@@ -41,6 +41,7 @@
 #include <map>
 
 #include "manager.h"
+#include "conference.h"
 
 
 namespace sfl_video {
@@ -50,38 +51,37 @@ const int SDP_BUFFER_SIZE = 8192;
 
 VideoReceiveThread::VideoReceiveThread(const std::string &id,
                                        const std::map<string, string> &args) :
-    args_(args),
-    videoDecoder_(0),
-    dstWidth_(0),
-    dstHeight_(0),
-    sink_(),
-    threadRunning_(false),
-    bufferSize_(0),
-    id_(id),
-    requestKeyFrameCallback_(0),
-    stream_(args_["receiving_sdp"]),
-    sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this),
-    demuxContext_(0),
-    scaler_(),
-    previewFrame_(),
-    thread_(0)
+    args_(args)
+    , videoDecoder_(nullptr)
+    , mixer_(nullptr)
+    , dstWidth_(0)
+    , dstHeight_(0)
+    , sink_()
+    , bufferSize_(0)
+    , id_(id)
+    , stream_(args_["receiving_sdp"])
+    , sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this)
+    , demuxContext_(nullptr)
+    , scaler_()
+    , previewFrame_()
+    , requestKeyFrameCallback_(0)
 {
+    Conference *conf = Manager::instance().getConferenceFromCallID(id);
+    if (conf)
+        mixer_ = conf->getVideoMixer();
 }
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    set_false_atomic(&threadRunning_);
-    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
-    // waits for the run() method (in separate thread) to return
-    if (thread_)
-        pthread_join(thread_, NULL);
+    stop();
+    join();
 }
 
 // We do this setup here instead of the constructor because we don't want the
 // main thread to block while this executes, so it happens in the video thread.
-void VideoReceiveThread::setupDecoder(VideoDecoder *decoder)
+bool VideoReceiveThread::setup()
 {
-    videoDecoder_ = decoder;
+    videoDecoder_ = new VideoDecoder();
 
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
@@ -102,34 +102,34 @@ void VideoReceiveThread::setupDecoder(VideoDecoder *decoder)
     }
 
     if (!args_["framerate"].empty())
-        decoder->setOption("framerate", args_["framerate"].c_str());
+        videoDecoder_->setOption("framerate", args_["framerate"].c_str());
     if (!args_["video_size"].empty())
-        decoder->setOption("video_size", args_["video_size"].c_str());
+        videoDecoder_->setOption("video_size", args_["video_size"].c_str());
     if (!args_["channel"].empty())
-        decoder->setOption("channel", args_["channel"].c_str());
+        videoDecoder_->setOption("channel", args_["channel"].c_str());
 
-    decoder->setInterruptCallback(interruptCb, this);
+    videoDecoder_->setInterruptCallback(interruptCb, this);
 
     if (input == SDP_FILENAME) {
 #if HAVE_SDP_CUSTOM_IO
         // custom_io so the SDP demuxer will not open any UDP connections
-        decoder->setOption("sdp_flags", "custom_io");
+        videoDecoder_->setOption("sdp_flags", "custom_io");
 #else
         WARN("libavformat too old for custom SDP demuxing");
 #endif
 
         EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
-        decoder->setIOContext(&sdpContext_);
+        videoDecoder_->setIOContext(&sdpContext_);
     }
 
-    EXIT_IF_FAIL(!decoder->openInput(input, format_str),
+    EXIT_IF_FAIL(!videoDecoder_->openInput(input, format_str),
                  "Could not open input \"%s\"", input.c_str());
 
     if (input == SDP_FILENAME) {
 #if HAVE_SDP_CUSTOM_IO
         // Now replace our custom AVIOContext with one that will read
         // packets
-        decoder->setIOContext(demuxContext_);
+        videoDecoder_->setIOContext(demuxContext_);
 #endif
     }
 
@@ -140,13 +140,13 @@ void VideoReceiveThread::setupDecoder(VideoDecoder *decoder)
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
 
-    EXIT_IF_FAIL(!decoder->setupFromVideoData(),
+    EXIT_IF_FAIL(!videoDecoder_->setupFromVideoData(),
                  "decoder IO startup failed");
 
     // Default size from input video
     if (dstWidth_ == 0 and dstHeight_ == 0) {
-        dstWidth_ = decoder->getWidth();
-        dstHeight_ = decoder->getHeight();
+        dstWidth_ = videoDecoder_->getWidth();
+        dstHeight_ = videoDecoder_->getHeight();
     }
 
     // allocate our preview frame and shared sink
@@ -154,24 +154,51 @@ void VideoReceiveThread::setupDecoder(VideoDecoder *decoder)
     bufferSize_ = previewFrame_.getSize();
     EXIT_IF_FAIL(bufferSize_ > 0, "Incorrect buffer size for decoding");
 
-    EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
-    Manager::instance().getVideoControls()->startedDecoding(id_,
-                                                            sink_.openedName(),
-                                                            dstWidth_,
-                                                            dstHeight_);
-    DEBUG("RX: shm sink started with size %d, width %d and height %d", bufferSize_,
-          dstWidth_, dstHeight_);
+    // Choose between direct rendering (sink) or mixing class.
+    if (mixer_) {
+        mixer_->addSource(videoDecoder_);
+    } else {
+        EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+        Manager::instance().getVideoControls()->startedDecoding(id_,
+                                                                sink_.openedName(),
+                                                                dstWidth_,
+                                                                dstHeight_);
+        DEBUG("RX: shm sink started with size %d, width %d and height %d",
+              bufferSize_, dstWidth_, dstHeight_);
+    }
+
+    return true;
+}
+
+void VideoReceiveThread::process()
+{
+    if (decodeFrame())
+        renderFrame();
+}
+
+void VideoReceiveThread::cleanup()
+{
+    if (mixer_)
+        mixer_->removeSource(videoDecoder_);
+    else
+        Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+
+    if (videoDecoder_)
+        delete videoDecoder_;
+
+    if (demuxContext_)
+        delete demuxContext_;
+
 }
 
 // This callback is used by libav internally to break out of blocking calls
-int VideoReceiveThread::interruptCb(void *ctx)
+int VideoReceiveThread::interruptCb(void *data)
 {
-    VideoReceiveThread *context = static_cast<VideoReceiveThread*>(ctx);
-    return not context->threadRunning_;
+    VideoReceiveThread *context = static_cast<VideoReceiveThread*>(data);
+    return not context->isRunning();
 }
 
-int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf,
-                                     int buf_size)
+int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
 {
     std::istream &is = static_cast<VideoReceiveThread*>(opaque)->stream_;
     is.read(reinterpret_cast<char*>(buf), buf_size);
@@ -182,22 +209,7 @@ void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 {
 #if HAVE_SDP_CUSTOM_IO
     demuxContext_ = socketPair.getIOContext();
-#else
-    (void) socketPair;
 #endif
-}
-
-void VideoReceiveThread::start()
-{
-    threadRunning_ = true;
-    pthread_create(&thread_, NULL, &runCallback, this);
-}
-
-void *VideoReceiveThread::runCallback(void *data)
-{
-    VideoReceiveThread *context = static_cast<VideoReceiveThread*>(data);
-    context->run();
-    return NULL;
 }
 
 /// Copies and scales our rendered frame to the buffer pointed to by data
@@ -207,29 +219,13 @@ void VideoReceiveThread::fillBuffer(void *data)
     videoDecoder_->scale(scaler_, previewFrame_);
 }
 
-void VideoReceiveThread::run()
-{
-    VideoDecoder *videoDecoder = new VideoDecoder();
-    setupDecoder(videoDecoder);
-
-    while (threadRunning_) {
-        if (decodeFrame())
-            renderFrame();
-    }
-
-    if (demuxContext_)
-        delete demuxContext_;
-
-    delete videoDecoder;
-}
-
 bool VideoReceiveThread::decodeFrame()
 {
     int ret = videoDecoder_->decode();
 
     // fatal error?
     if (ret == -1) {
-        threadRunning_ = false;
+        stop();
         return false;
     }
 
@@ -244,9 +240,22 @@ bool VideoReceiveThread::decodeFrame()
 
 void VideoReceiveThread::renderFrame()
 {
-    // we want our rendering code to be called by the shm_sink,
-    // because it manages the shared memory synchronization
-    sink_.render_callback(*this, bufferSize_);
+    // FIXME: current design doesn't permit to be acknowledged
+    // when the current call enter in conference.
+    // So we always check the conference status here.
+    Conference *conf = Manager::instance().getConferenceFromCallID(id_);
+    if (conf and !mixer_) {
+        mixer_ = conf->getVideoMixer();
+        mixer_->addSource(videoDecoder_);
+    } else if (mixer_) {
+        mixer_->removeSource(videoDecoder_);
+        mixer_ = nullptr;
+    }
+
+    if (mixer_)
+        mixer_->render();
+    else
+        sink_.render_callback(*this, bufferSize_);
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(
@@ -258,7 +267,7 @@ void VideoReceiveThread::setRequestKeyFrameCallback(
 void VideoReceiveThread::addDetails(
     std::map<std::string, std::string> &details)
 {
-    if (threadRunning_ and dstWidth_ > 0 and dstHeight_ > 0) {
+    if (isRunning() and dstWidth_ > 0 and dstHeight_ > 0) {
         details["VIDEO_SHM_PATH"] = sink_.openedName();
         std::ostringstream os;
         os << dstWidth_;

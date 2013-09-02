@@ -180,8 +180,7 @@ VideoControls::stopPreview()
     }
 }
 
-sfl_video::VideoPreview *
-VideoControls::getVideoPreview()
+sfl_video::VideoPreview* VideoControls::getVideoPreview()
 {
     return preview_.get();
 }

@@ -32,6 +32,7 @@
 #define CHECK_H_
 
 #include "logger.h"
+#include "sflthread.h"
 
 // cast to void to avoid compiler warnings about unused return values
 #define set_false_atomic(x) static_cast<void>(__sync_fetch_and_and(x, false))
@@ -40,6 +41,7 @@
 #define atomic_decrement(x) static_cast<void>(__sync_fetch_and_sub(x, 1))
 
 // If condition A is false, print the error message in M and exit thread
-#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); set_false_atomic(&threadRunning_); pthread_exit(NULL); }
+#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { \
+        ERROR(M, ##__VA_ARGS__); this->exit(); }
 
 #endif // CHECK_H_

@@ -47,61 +47,32 @@ VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
     , id_("local")
     , args_(args)
     , decoder_(0)
-    , threadRunning_(false)
-    , thread_(0)
     , sink_()
     , bufferSize_(0)
     , previewWidth_(0)
     , previewHeight_(0)
     , scaler_()
     , frame_()
+    , mixer_()
 {
-    pthread_create(&thread_, NULL, &runCallback, this);
+    start();
 }
 
 VideoPreview::~VideoPreview()
 {
-    set_false_atomic(&threadRunning_);
-    string name = sink_.openedName();
-    Manager::instance().getVideoControls()->stoppedDecoding(id_, name);
-    if (thread_)
-        pthread_join(thread_, NULL);
+    stop();
+    join();
 }
 
-int VideoPreview::interruptCb(void *ctx)
-{
-    VideoPreview *context = static_cast<VideoPreview*>(ctx);
-    return not context->threadRunning_;
-}
-
-void *VideoPreview::runCallback(void *data)
-{
-    VideoPreview *context = static_cast<VideoPreview*>(data);
-    context->run();
-    return NULL;
-}
-
-void VideoPreview::run()
-{
-    set_true_atomic(&threadRunning_);
-    decoder_ = new VideoDecoder();
-    setup();
-
-    while (threadRunning_) {
-        if (captureFrame())
-            renderFrame();
-    }
-
-    delete decoder_;
-}
-
-void VideoPreview::setup()
+bool VideoPreview::setup()
 {
     // it's a v4l device if starting with /dev/video
     static const char * const V4L_PATH = "/dev/video";
 
     string format_str;
     string input = args_["input"];
+
+    decoder_ = new VideoDecoder();
 
     if (args_["input"].find(V4L_PATH) != std::string::npos) {
         DEBUG("Using v4l2 format");
@@ -146,6 +117,26 @@ void VideoPreview::setup()
                                                             previewHeight_);
     DEBUG("TX: shm sink started with size %d, width %d and height %d",
           bufferSize_, previewWidth_, previewHeight_);
+    return true;
+}
+
+void VideoPreview::process()
+{
+    if (captureFrame() and isRunning())
+        renderFrame();
+}
+
+void VideoPreview::cleanup()
+{
+    delete decoder_;
+    Manager::instance().getVideoControls()->stoppedDecoding(id_,
+                                                            sink_.openedName());
+}
+
+int VideoPreview::interruptCb(void *data)
+{
+    VideoPreview *context = static_cast<VideoPreview*>(data);
+    return not context->isRunning();
 }
 
 bool VideoPreview::captureFrame()
@@ -154,7 +145,7 @@ bool VideoPreview::captureFrame()
 
     if (ret <= 0) {
         if (ret < 0)
-            threadRunning_ = false;
+            stop();
         return false;
     }
 
@@ -166,6 +157,9 @@ void VideoPreview::renderFrame()
     // we want our rendering code to be called by the shm_sink,
     // because it manages the shared memory synchronization
     sink_.render_callback(*this, bufferSize_);
+
+    if (mixer_)
+        mixer_->render();
 }
 
 // This function is called by sink
@@ -173,6 +167,11 @@ void VideoPreview::fillBuffer(void *data)
 {
     frame_.setDestination(data);
     decoder_->scale(scaler_, frame_);
+}
+
+void VideoPreview::setMixer(VideoMixer* mixer)
+{
+    mixer_ = mixer;
 }
 
 int VideoPreview::getWidth() const { return decoder_->getWidth(); }

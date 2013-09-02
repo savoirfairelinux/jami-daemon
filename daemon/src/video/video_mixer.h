@@ -33,52 +33,50 @@
 #define __VIDEO_MIXER_H__
 
 #include "noncopyable.h"
-#include "video_base.h"
+#include "video_scaler.h"
+#include "sflthread.h"
 
 #include <pthread.h>
-#include <forward_list>
+#include <list>
 
 namespace sfl_video {
-    using std::forward_list;
+using std::forward_list;
 
-	class VideoMixer : public VideoSource
-	{
-	public:
-		VideoMixer();
-		~VideoMixer();
+class VideoMixer : public VideoGenerator, public SFLThread
+{
+public:
+    VideoMixer();
+    ~VideoMixer();
 
-        void addVideoSource(VideoSource &source);
-        void removeVideoSource(VideoSource &source);
+    void setDimensions(int width, int height);
+    void addSource(VideoSource *source);
+    void removeSource(VideoSource *source);
+    void clearSources();
+    void render();
 
-        std::shared_ptr<VideoFrame> waitNewFrame();
-        std::shared_ptr<VideoFrame> obtainLastFrame();
-        int getWidth() const;
-        int getHeight() const;
+    int getWidth() const;
+    int getHeight() const;
 
-	private:
-		NON_COPYABLE(VideoMixer);
+    // threading
+    void process();
 
-		static int interruptCb(void *ctx);
-		static void *runCallback(void *);
-		void run();
-		void setup();
+private:
+    NON_COPYABLE(VideoMixer);
 
-        void waitForUpdate();
-        void updated();
-        void render();
-        void encode();
+    void waitForUpdate();
+    void encode();
+    void rendering();
 
-        pthread_t thread_;
-        bool threadRunning_;
+    pthread_mutex_t updateMutex_;
+    pthread_cond_t updateCondition_;
+    VideoScaler sourceScaler_;
+    VideoFrame scaledFrame_;
 
-        pthread_mutex_t updateMutex_;
-        pthread_cond_t updateCondition_;
-        bool updated_;
+    std::list<VideoSource*> sourceList_;
+    int width_;
+    int height_;
+};
 
-        forward_list<VideoSource*> sourceList_;
-        int width;
-        int height;
-	};
 }
 
 #endif // __VIDEO_MIXER_H__

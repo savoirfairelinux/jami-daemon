@@ -39,17 +39,20 @@
 class SwsContext;
 
 namespace sfl_video {
-    class VideoScaler {
-    public:
-        VideoScaler();
-        ~VideoScaler();
-        void scale(VideoFrame &input, VideoFrame &output);
 
-    private:
-        NON_COPYABLE(VideoScaler);
-        SwsContext *ctx_;
-        int mode_;
-    };
+class VideoScaler {
+public:
+    VideoScaler();
+    ~VideoScaler();
+    void scale(VideoFrame &input, VideoFrame &output);
+    void reset();
+
+private:
+    NON_COPYABLE(VideoScaler);
+    SwsContext *ctx_;
+    int mode_;
+};
+
 }
 
 #endif // __VIDEO_SCALER_H__

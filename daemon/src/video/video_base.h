@@ -50,6 +50,7 @@ class AVIOContext;
 
 enum VideoPixelFormat {
     VIDEO_PIXFMT_BGRA = -1,
+    VIDEO_PIXFMT_YUV420P = -2,
 };
 
 namespace sfl_video {
@@ -114,14 +115,22 @@ public:
     ~VideoFrame();
 
     AVFrame* get() { return frame_; };
+    int getFormat() const;
+    int getWidth() const;
+    int getHeight() const;
     void setGeometry(int width, int height, int pix_fmt);
     void setDestination(void *data);
     size_t getSize();
     void setdefaults();
+    bool allocBuffer(int width, int height, int pix_fmt);
+    int blit(VideoFrame& src, int xoff, int yoff);
+    void copy(VideoFrame &src);
+    void test();
 
 private:
     NON_COPYABLE(VideoFrame);
     AVFrame *frame_;
+    bool allocated_;
 };
 
 /*=== VideoSource ============================================================*/
@@ -135,7 +144,7 @@ public:
     virtual int getHeight() const = 0;
 };
 
-/*=== VideoGenerator ============================================================*/
+/*=== VideoGenerator =========================================================*/
 
 class VideoGenerator : public VideoSource {
 public:
@@ -153,8 +162,7 @@ private:
     pthread_mutex_t mutex_;
     pthread_cond_t condition_;
     std::unique_ptr<VideoFrame> writableFrame_;
-    std::unique_ptr<VideoFrame> writtenFrame_;
-    std::forward_list<std::shared_ptr<VideoFrame>> readList_;
+    std::shared_ptr<VideoFrame> lastFrame_;
 };
 
 }

@@ -128,12 +128,6 @@ void VideoRtpSession::start(int localPort)
 {
 	std::string curcid = Manager::instance().getCurrentCallId();
 
-	ERROR("CallID = %s", callID_.c_str());
-	DEBUG("current? %u", Manager::instance().isCurrentCall(callID_));
-	DEBUG("conf? %d", Manager::instance().isConference(callID_));
-	DEBUG("conf_part? %d", Manager::instance().isConferenceParticipant(callID_));
-	DEBUG("current is conf? %d", Manager::instance().isConference(curcid));
-
     if (not sending_ and not receiving_)
         return;
 
@@ -159,7 +153,7 @@ void VideoRtpSession::start(int localPort)
 	if (sending_) {
         if (sendThread_.get())
             WARN("Restarting video sender");
-        sendThread_.reset(new VideoSendThread(txArgs_));
+        sendThread_.reset(new VideoSendThread(callID_, txArgs_));
         sendThread_->addIOContext(*socketPair_);
         sendThread_->start();
     } else {

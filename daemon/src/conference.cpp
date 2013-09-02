@@ -40,6 +40,9 @@ Conference::Conference()
     : id_(Manager::instance().getNewCallID())
     , confState_(ACTIVE_ATTACHED)
     , participants_()
+#ifdef SFL_VIDEO
+    , videoMixer_()
+#endif
 {
     Recordable::initRecFilename(id_);
 }
@@ -127,3 +130,9 @@ std::string Conference::getConfID() const {
     return id_;
 }
 
+#ifdef SFL_VIDEO
+sfl_video::VideoMixer* Conference::getVideoMixer()
+{
+    return &videoMixer_;
+}
+#endif
