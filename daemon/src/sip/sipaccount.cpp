@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
 *
 *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -36,6 +36,7 @@
 
 #include "account_schema.h"
 #include "sipaccount.h"
+#include "sippresence.h"
 #include "sip_utils.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
@@ -50,9 +51,11 @@
 #include <array>
 #include <memory>
 
+
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
 #endif
+
 
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
@@ -115,8 +118,8 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , registrationStateDetailed_()
     , keepAliveEnabled_(false)
     , keepAliveTimer_()
-    , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
+    , presence_(new SIPPresence(this))
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
@@ -132,6 +135,13 @@ SIPAccount::SIPAccount(const std::string& accountID)
     if (isIP2IP())
         alias_ = IP2IP_PROFILE;
 }
+
+
+SIPAccount::~SIPAccount()
+{
+    delete presence_;
+}
+
 
 namespace {
 std::array<std::unique_ptr<Conf::ScalarNode>, 2>
@@ -172,6 +182,7 @@ unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *
     updateRange(tmpMin, tmpMax, range);
 }
 }
+
 
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
@@ -798,6 +809,7 @@ void SIPAccount::registerVoIPLink()
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
     }
+
 }
 
 void SIPAccount::unregisterVoIPLink()
@@ -881,6 +893,7 @@ void SIPAccount::trimCiphers()
 {
     int sum = 0;
     int count = 0;
+
     // PJSIP aborts if our cipher list exceeds 1000 characters
     static const int MAX_CIPHERS_STRLEN = 1000;
 
@@ -1364,9 +1377,12 @@ VoIPLink* SIPAccount::getVoIPLink()
     return link_;
 }
 
-bool SIPAccount::isIP2IP() const
-{
+bool SIPAccount::isIP2IP() const{
     return accountID_ == IP2IP_PROFILE;
+}
+
+SIPPresence * SIPAccount::getPresence(){
+    return presence_;
 }
 
 bool SIPAccount::matches(const std::string &userName, const std::string &server,

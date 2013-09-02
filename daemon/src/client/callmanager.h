@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -180,7 +180,12 @@ class CallManager
         void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
 #endif // __ANDROID__
 
-    private:
+        /* Presence subscription/Notification. */
+        void enablePresence(const std::string& accountID, const bool& flag);
+        void sendPresence(const std::string& accountID, const bool& status, const std::string& note);
+        void approvePresSubServer(const std::string& uri, const bool& flag);
+        void subscribePresSubClient(const std::string& accountID, const std::string& uri, const bool& flag);
+private:
 
 #if HAVE_ZRTP
         sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);

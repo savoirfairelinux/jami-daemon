@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+#  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
 #
 #  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 #

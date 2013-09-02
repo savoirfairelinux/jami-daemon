@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -602,6 +602,12 @@ screensaver_dbus_proxy_new_cb (G_GNUC_UNUSED GObject * source, GAsyncResult *res
     if (session_manager_proxy == NULL)
         g_warning("could not initialize gnome session manager");
 }
+static void
+sip_presence_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *buddyUri,
+                  const gchar *status,const gchar *lineStatus)
+{
+    g_debug("Sip presence state changed for %s status=%s lineStatus=%s", buddyUri, status, lineStatus);
+}
 
 #define GS_SERVICE   "org.gnome.SessionManager"
 #define GS_PATH      "/org/gnome/SessionManager"
@@ -851,6 +857,11 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     dbus_g_proxy_connect_signal(call_proxy, "sipCallStateChanged",
                                 G_CALLBACK(sip_call_state_cb), client, NULL);
 
+    /* Presence related callbacks */
+    dbus_g_proxy_add_signal(call_proxy, "newPresenceNotification", G_TYPE_STRING,
+                            G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(call_proxy, "newPresenceNotification",
+                                G_CALLBACK(sip_presence_state_cb), client, NULL);
 
     g_debug("Adding configurationmanager Dbus signals");
 
@@ -2081,6 +2092,8 @@ static void screensaver_uninhibit_cb(GObject * source_object,
     cookie = 0;
     g_variant_unref(value);
 }
+
+
 
 void dbus_screensaver_inhibit(void)
 {

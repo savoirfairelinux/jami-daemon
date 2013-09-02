@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *
@@ -35,6 +35,8 @@
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
+#include "sip/sipaccount.h"
+#include "sip/sippresence.h"
 #include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h"
 #if HAVE_ZRTP
@@ -421,4 +423,66 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
 #else
     ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
 #endif
+}
+
+
+/**
+ * Un/subscribe to buddySipUri for an accountID
+ */
+void
+CallManager::subscribePresSubClient(const std::string& accountID, const std::string& uri, const bool& flag)
+{
+
+    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    if (!sipaccount)
+        ERROR("Could not find account %s",accountID.c_str());
+    else{
+        DEBUG("%subscribePresence (acc:%s, buddy:%s)",flag? "S":"Uns", accountID.c_str(), uri.c_str());
+        sipaccount->getPresence()->subscribePresSubClient(uri,flag);
+    }
+}
+
+/**
+ *  Enable the presence module (PUBLISH/SUBSCRIBE)
+ */
+void
+CallManager::enablePresence(const std::string& accountID, const bool& flag){
+    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    if (!sipaccount)
+        ERROR("Could not find account %s",accountID.c_str());
+    else{
+        DEBUG("Enable Presence (acc:%s : %s)",accountID.c_str(), flag? "yes":"no");
+        sipaccount->getPresence()->enable(flag);
+    }
+}
+
+/**
+ * push a presence for a account
+ * Notify for IP2IP account and publish for PBX account
+ */
+void
+CallManager::sendPresence(const std::string& accountID, const bool& status, const std::string& note)
+{
+    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    if (!sipaccount)
+        ERROR("Could not find account %s.",accountID.c_str());
+    else{
+        DEBUG("Send Presence (acc:%s, status %s).",accountID.c_str(),status? "online":"offline");
+        sipaccount->getPresence()->sendPresence(status, note);
+    }
+}
+
+/**
+ * Accept or not a PresSubServer request for IP2IP account
+ */
+void
+CallManager::approvePresSubServer(const std::string& uri, const bool& flag)
+{
+    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
+    if (!sipaccount)
+        ERROR("Could not find account IP2IP");
+    else{
+        DEBUG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(), flag? "true":"false");
+        sipaccount->getPresence()->approvePresSubServer(uri, flag);
+    }
 }

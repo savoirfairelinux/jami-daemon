@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -47,6 +47,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sipcall.h"
 #include "im/instant_messaging.h"
+#include "sip/sippresence.h"
 
 #if HAVE_IAX
 #include "iax/iaxaccount.h"

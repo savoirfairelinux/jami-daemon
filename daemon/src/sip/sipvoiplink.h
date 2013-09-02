@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
@@ -298,7 +298,9 @@ class SIPVoIPLink : public VoIPLink {
         std::string
         getAccountIdFromNameAndServer(const std::string &userName,
                                       const std::string &server) const;
-
+        int getModId();
+        pjsip_endpoint * getEndpoint();
+        pjsip_module * getMod();
     private:
 
         NON_COPYABLE(SIPVoIPLink);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
  *  Copyright (C) 2001-2007 Bastien Nocera <hadess@hadess.net>
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *

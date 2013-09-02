@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -37,11 +37,13 @@
 
 #include <vector>
 #include <map>
-#include "account.h"
+
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
 #include "pjsip-ua/sip_regc.h"
+
 #include "noncopyable.h"
+#include "account.h"
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
@@ -99,6 +101,8 @@ namespace Conf {
 }
 
 class SIPVoIPLink;
+class SIPPresence;
+
 
 /**
  * @file sipaccount.h
@@ -119,6 +123,7 @@ class SIPAccount : public Account {
          * @param accountID The account identifier
          */
         SIPAccount(const std::string& accountID);
+        ~SIPAccount();
 
         virtual VoIPLink* getVoIPLink();
 
@@ -526,6 +531,12 @@ class SIPAccount : public Account {
         /* Returns true if the username and/or hostname match this account */
         bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
+        /**
+         * Presence management
+         */
+        SIPPresence * getPresence();
+
+//        unsigned generateAudioPort() const;
         uint16_t generateAudioPort() const;
 #ifdef SFL_VIDEO
         uint16_t generateVideoPort() const;
@@ -780,6 +791,11 @@ class SIPAccount : public Account {
         pjsip_host_port via_addr_;
 
         /**
+         * Presence data structure
+         */
+        SIPPresence * presence_;
+
+        /*
          * Port range for audio RTP ports
          */
         std::pair<uint16_t, uint16_t> audioPortRange_;

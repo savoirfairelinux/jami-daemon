@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -79,6 +79,10 @@
 #include <istream>
 #include <utility> // for std::pair
 #include <algorithm>
+
+#include "pjsip-simple/presence.h"
+#include "pjsip-simple/publish.h"
+#include "pres_sub_server.h"
 
 using namespace sfl;
 
@@ -167,7 +171,6 @@ void handleIncomingOptions(pjsip_rx_data *rdata)
 
 // return PJ_FALSE so that eventuall other modules will handle these requests
 // TODO: move Voicemail to separate module
-// TODO: add Buddy presence in separate module
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 {
     pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
@@ -488,6 +491,13 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 } // end anonymous namespace
 
 /*************************************************************************************************/
+pjsip_endpoint * SIPVoIPLink::getEndpoint() {
+    return endpt_;
+}
+
+pjsip_module * SIPVoIPLink::getMod() {
+    return &mod_ua_;
+}
 
 SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     sipCallMapMutex_(), sipCallMap_(), evThread_(this)
@@ -551,6 +561,10 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     TRY(pjsip_evsub_init_module(endpt_));
     TRY(pjsip_xfer_init_module(endpt_));
 
+    // presence/publish management
+    TRY(pjsip_pres_init_module(endpt_, pjsip_evsub_instance()));
+    TRY(pjsip_endpt_register_module(endpt_, &mod_presence_server));
+
     static const pjsip_inv_callback inv_cb = {
         invite_session_state_changed_cb,
         outgoing_request_forked_cb,
@@ -571,6 +585,8 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
         {(char *) "INVITE", 6},
         {(char *) "ACK", 3},
         {(char *) "BYE", 3},
+        {(char *) "NOTIFY",6},
+        {(char *) "PUBLISH",7},
         {(char *) "CANCEL",6}};
 
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
@@ -1607,6 +1623,12 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
               "calling %s", toUri.c_str());
         return false;
     }
+// aol
+    pj_str_t subj_hdr_name = pj_str("Subject");
+    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, "Phone call", 10, NULL);
+
+    pj_list_push_back(&dialog->inv_hdr, subj_hdr);
+// aol
 
     if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
         ERROR("Unable to create invite session for user agent client");
@@ -2356,7 +2378,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
         return;
 
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
-    // We only want to set ports to new values if they haven't been set
+      // We only want to set ports to new values if they haven't been set
     if (call->getLocalAudioPort() == 0) {
         const unsigned callLocalAudioPort = account->generateAudioPort();
         call->setLocalAudioPort(callLocalAudioPort);
@@ -2378,3 +2400,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 #endif
 }
 } // end anonymous namespace
+
+int SIPVoIPLink::getModId() {
+      return mod_ua_.id;
+}
