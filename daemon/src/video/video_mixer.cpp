@@ -91,6 +91,9 @@ void VideoMixer::process()
 
 void VideoMixer::rendering()
 {
+    if (!width_ or !height_)
+        return;
+
     // For all sources:
     //   - take source frame
     //   - scale it down and layout it

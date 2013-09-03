@@ -247,7 +247,7 @@ void VideoReceiveThread::renderFrame()
     if (conf and !mixer_) {
         mixer_ = conf->getVideoMixer();
         mixer_->addSource(videoDecoder_);
-    } else if (mixer_) {
+    } else if (!conf and mixer_) {
         mixer_->removeSource(videoDecoder_);
         mixer_ = nullptr;
     }

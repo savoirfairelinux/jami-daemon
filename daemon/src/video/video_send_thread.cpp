@@ -37,6 +37,7 @@
 #include "manager.h"
 
 #include <map>
+#include <unistd.h>
 
 
 namespace sfl_video {
@@ -64,8 +65,8 @@ VideoSendThread::~VideoSendThread()
 bool VideoSendThread::setup()
 {
     // Use local camera as default video source for setup
-    videoSource_ = Manager::instance().getVideoControls()->getVideoPreview();
-    EXIT_IF_FAIL(videoSource_, "No source!");
+    if (!videoSource_)
+        WARN("No video source started");
 
     const char *enc_name = args_["codec"].c_str();
 
@@ -76,7 +77,7 @@ bool VideoSendThread::setup()
 	if (!args_["width"].empty()) {
 		const char *s = args_["width"].c_str();
 		videoEncoder_->setOption("width", s);
-	} else {
+	} else if (videoSource_) {
 		char buf[11];
 		sprintf(buf, "%10d", videoSource_->getWidth());
 		videoEncoder_->setOption("width", buf);
@@ -85,7 +86,7 @@ bool VideoSendThread::setup()
 	if (!args_["height"].empty()) {
 		const char *s = args_["height"].c_str();
 		videoEncoder_->setOption("height", s);
-	} else {
+	} else if (videoSource_) {
 		char buf[11];
 		sprintf(buf, "%10d", videoSource_->getHeight());
 		videoEncoder_->setOption("height", buf);
@@ -118,9 +119,13 @@ bool VideoSendThread::setup()
 void VideoSendThread::process()
 {
     checkVideoSource();
-    VideoFrame *frame = videoSource_->waitNewFrame().get();
-    if (frame)
-        encodeAndSendVideo(frame);
+    if (videoSource_) {
+        VideoFrame *frame = videoSource_->waitNewFrame().get();
+        if (frame)
+            encodeAndSendVideo(frame);
+    } else {
+        WARN("No video source!");
+    }
 }
 
 void VideoSendThread::cleanup()
@@ -139,7 +144,7 @@ void VideoSendThread::checkVideoSource()
         videoSource_ = mixer_ = conf->getVideoMixer();
         mixer_->setDimensions(videoEncoder_->getWidth(),
                               videoEncoder_->getHeight());
-    } else if (mixer_) {
+    } else if (!conf and mixer_) {
         mixer_ = nullptr;
         videoSource_ = Manager::instance().getVideoControls()->getVideoPreview();
     }
@@ -148,6 +153,7 @@ void VideoSendThread::checkVideoSource()
     if (!videoSource_) {
         VideoControls *vctl = Manager::instance().getVideoControls();
         vctl->startPreview();
+        sleep(1); // let the camera startup
         videoSource_ = vctl->getVideoPreview();
     }
 }
