@@ -110,6 +110,7 @@ void VideoMixer::rendering()
     // Blit frame function support only YUV420P pixel format
     if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P))
         WARN("VideoFrame::allocBuffer() failed");
+
     if (!scaledFrame_.allocBuffer(cell_width, cell_height, VIDEO_PIXFMT_YUV420P))
         WARN("VideoFrame::allocBuffer() failed");
 

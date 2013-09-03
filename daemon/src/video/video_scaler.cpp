@@ -64,7 +64,10 @@ void VideoScaler::scale(VideoFrame &input, VideoFrame &output)
 
 void VideoScaler::reset()
 {
-    ctx_ = nullptr;
+    if (ctx_) {
+        sws_freeContext(ctx_);
+        ctx_ = nullptr;
+    }
 }
 
 }

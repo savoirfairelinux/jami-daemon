@@ -75,7 +75,12 @@ void VideoCodec::setOption(const char *name, const char *value)
 
 VideoFrame::VideoFrame() : frame_(avcodec_alloc_frame()), allocated_(false) {}
 
-VideoFrame::~VideoFrame() { avcodec_free_frame(&frame_); }
+VideoFrame::~VideoFrame()
+{
+    if (allocated_)
+        avpicture_free((AVPicture *) frame_);
+    avcodec_free_frame(&frame_);
+}
 
 int VideoFrame::getFormat() const { return libav_utils::sfl_pixel_format(frame_->format); }
 int VideoFrame::getWidth() const { return frame_->width; }
@@ -84,10 +89,14 @@ int VideoFrame::getHeight() const { return frame_->height; }
 bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
 {
     AVPixelFormat libav_pix_fmt = (AVPixelFormat) libav_utils::libav_pixel_format(pix_fmt);
-    if (allocated_ and (width != frame_->width ||
-                        height != frame_->height ||
-                        libav_pix_fmt != frame_->format))
+    if (allocated_) {
+        // nothing to do if same properties
+        if (width == frame_->width
+            and height == frame_->height
+            and libav_pix_fmt == frame_->format)
+            return true;
         avpicture_free((AVPicture *) frame_);
+    }
 
     allocated_ = not avpicture_alloc((AVPicture *) frame_,
                                      libav_pix_fmt, width, height);
@@ -111,8 +120,10 @@ void VideoFrame::setGeometry(int width, int height, int pix_fmt)
 
 void VideoFrame::setDestination(void *data)
 {
-    if (allocated_)
+    if (allocated_) {
         avpicture_free((AVPicture *) frame_);
+        allocated_ = false;
+    }
 
     avpicture_fill((AVPicture *) frame_, (uint8_t *) data,
                    (PixelFormat) frame_->format, frame_->width,
