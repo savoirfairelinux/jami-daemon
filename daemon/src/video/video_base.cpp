@@ -142,7 +142,7 @@ int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
     // Y
     dst_stride = frame_->linesize[0];
 	src_data = src_frame->data[0];
-	dst_data = frame_->data[0] + yoff * frame_->height * dst_stride + xoff;
+	dst_data = frame_->data[0] + yoff * dst_stride + xoff;
 	for (int i = 0; i < src_frame->height; i++) {
 		memcpy(dst_data, src_data, src_frame->linesize[0]);
 		src_data += src_frame->linesize[0];
@@ -152,7 +152,7 @@ int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
     // U
 	dst_stride = frame_->linesize[1];
 	src_data = src_frame->data[1];
-	dst_data = frame_->data[1] + yoff * frame_->height / 2 * dst_stride + xoff / 2;
+	dst_data = frame_->data[1] + yoff / 2 * dst_stride + xoff / 2;
 	for (int i = 0; i < src_frame->height / 2; i++) {
 		memcpy(dst_data, src_data, src_frame->linesize[1]);
 		src_data += src_frame->linesize[1];
@@ -162,7 +162,7 @@ int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
     // V
 	dst_stride = frame_->linesize[2];
 	src_data = src_frame->data[2];
-	dst_data = frame_->data[2] + yoff * frame_->height / 2 * dst_stride + xoff / 2;
+	dst_data = frame_->data[2] + yoff / 2 * dst_stride + xoff / 2;
 	for (int i = 0; i < src_frame->height / 2; i++) {
 		memcpy(dst_data, src_data, src_frame->linesize[2]);
 		src_data += src_frame->linesize[2];
