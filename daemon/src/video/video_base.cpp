@@ -82,7 +82,10 @@ VideoFrame::~VideoFrame()
     avcodec_free_frame(&frame_);
 }
 
-int VideoFrame::getFormat() const { return libav_utils::sfl_pixel_format(frame_->format); }
+int VideoFrame::getFormat() const
+{
+    return libav_utils::sfl_pixel_format(frame_->format);
+}
 int VideoFrame::getWidth() const { return frame_->width; }
 int VideoFrame::getHeight() const { return frame_->height; }
 
@@ -137,6 +140,12 @@ size_t VideoFrame::getSize()
                               frame_->height);
 }
 
+size_t VideoFrame::getSize(int width, int height, int format)
+{
+    return avpicture_get_size(
+        (PixelFormat) libav_utils::libav_pixel_format(format), width, height);
+}
+
 int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
 {
     const AVFrame *src_frame = src.get();
@@ -183,12 +192,12 @@ int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
     return 0;
 }
 
-void VideoFrame::copy(VideoFrame &src)
+void VideoFrame::copy(VideoFrame &dst)
 {
-    const AVFrame *src_frame = src.get();
-    av_picture_copy((AVPicture *)frame_, (AVPicture *)src_frame,
-                    (AVPixelFormat)frame_->format, src_frame->width,
-                    src_frame->height);
+    const AVFrame *dst_frame = dst.get();
+    av_picture_copy((AVPicture *)dst_frame, (AVPicture *)frame_,
+                    (AVPixelFormat)frame_->format, frame_->width,
+                    frame_->height);
 }
 
 void VideoFrame::test()

@@ -121,6 +121,7 @@ public:
     void setGeometry(int width, int height, int pix_fmt);
     void setDestination(void *data);
     size_t getSize();
+    static size_t getSize(int width, int height, int format);
     void setdefaults();
     bool allocBuffer(int width, int height, int pix_fmt);
     int blit(VideoFrame& src, int xoff, int yoff);
