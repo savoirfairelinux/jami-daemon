@@ -32,7 +32,7 @@
 
 #include "video_controls.h"
 #include "video/libav_utils.h"
-#include "video/video_preview.h"
+#include "video/video_camera.h"
 #include "account.h"
 #include "logger.h"
 #include "manager.h"
@@ -166,7 +166,7 @@ VideoControls::startPreview()
     using std::string;
 
     map<string, string> args(videoPreference_.getSettings());
-    preview_.reset(new sfl_video::VideoPreview(args));
+    preview_.reset(new sfl_video::VideoCamera(args));
 }
 
 void
@@ -180,7 +180,7 @@ VideoControls::stopPreview()
     }
 }
 
-sfl_video::VideoPreview* VideoControls::getVideoPreview()
+sfl_video::VideoSource* VideoControls::getVideoPreview()
 {
     return preview_.get();
 }

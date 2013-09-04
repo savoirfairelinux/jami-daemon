@@ -31,7 +31,7 @@
 
 #include "libav_deps.h"
 #include "video_mixer.h"
-#include "video_preview.h"
+#include "video_camera.h"
 #include "client/video_controls.h"
 #include "manager.h"
 #include "check.h"
@@ -50,14 +50,14 @@ VideoMixer::VideoMixer() :
     , width_(0)
     , height_(0)
 {
-    VideoPreview* vpreview;
+    VideoCamera* camera;
     pthread_mutex_init(&updateMutex_, NULL);
     pthread_cond_init(&updateCondition_, NULL);
     start();
 
-    vpreview = Manager::instance().getVideoControls()->getVideoPreview();
-    sourceList_.push_front(vpreview);
-    vpreview->setMixer(this);
+    camera = dynamic_cast<VideoCamera*>(Manager::instance().getVideoControls()->getVideoPreview());
+    sourceList_.push_front(camera);
+    camera->setMixer(this);
 }
 
 VideoMixer::~VideoMixer()

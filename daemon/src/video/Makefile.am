@@ -14,7 +14,7 @@ libvideo_la_SOURCES = \
 	video_mixer.cpp video_mixer.h \
 	socket_pair.cpp socket_pair.h \
 	shm_sink.cpp shm_sink.h \
-	video_preview.cpp video_preview.h \
+	video_camera.cpp video_camera.h \
 	video_receive_thread.cpp video_receive_thread.h \
 	video_send_thread.cpp video_send_thread.h \
 	video_rtp_session.cpp video_rtp_session.h \

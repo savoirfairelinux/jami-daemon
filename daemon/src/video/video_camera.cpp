@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 
-#include "video_preview.h"
+#include "video_camera.h"
 #include "video_decoder.h"
 #include "check.h"
 
@@ -42,7 +42,7 @@ namespace sfl_video {
 
 using std::string;
 
-VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
+VideoCamera::VideoCamera(const std::map<std::string, std::string> &args) :
     VideoSource::VideoSource()
     , id_("local")
     , args_(args)
@@ -58,13 +58,13 @@ VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
     start();
 }
 
-VideoPreview::~VideoPreview()
+VideoCamera::~VideoCamera()
 {
     stop();
     join();
 }
 
-bool VideoPreview::setup()
+bool VideoCamera::setup()
 {
     // it's a v4l device if starting with /dev/video
     static const char * const V4L_PATH = "/dev/video";
@@ -120,26 +120,26 @@ bool VideoPreview::setup()
     return true;
 }
 
-void VideoPreview::process()
+void VideoCamera::process()
 {
     if (captureFrame() and isRunning())
         renderFrame();
 }
 
-void VideoPreview::cleanup()
+void VideoCamera::cleanup()
 {
     delete decoder_;
     Manager::instance().getVideoControls()->stoppedDecoding(id_,
                                                             sink_.openedName());
 }
 
-int VideoPreview::interruptCb(void *data)
+int VideoCamera::interruptCb(void *data)
 {
-    VideoPreview *context = static_cast<VideoPreview*>(data);
+    VideoCamera *context = static_cast<VideoCamera*>(data);
     return not context->isRunning();
 }
 
-bool VideoPreview::captureFrame()
+bool VideoCamera::captureFrame()
 {
     int ret = decoder_->decode();
 
@@ -152,7 +152,7 @@ bool VideoPreview::captureFrame()
     return true;
 }
 
-void VideoPreview::renderFrame()
+void VideoCamera::renderFrame()
 {
     // we want our rendering code to be called by the shm_sink,
     // because it manages the shared memory synchronization
@@ -163,21 +163,21 @@ void VideoPreview::renderFrame()
 }
 
 // This function is called by sink
-void VideoPreview::fillBuffer(void *data)
+void VideoCamera::fillBuffer(void *data)
 {
     frame_.setDestination(data);
     decoder_->scale(scaler_, frame_);
 }
 
-void VideoPreview::setMixer(VideoMixer* mixer)
+void VideoCamera::setMixer(VideoMixer* mixer)
 {
     mixer_ = mixer;
 }
 
-int VideoPreview::getWidth() const { return decoder_->getWidth(); }
-int VideoPreview::getHeight() const { return decoder_->getHeight(); }
+int VideoCamera::getWidth() const { return decoder_->getWidth(); }
+int VideoCamera::getHeight() const { return decoder_->getHeight(); }
 
-std::shared_ptr<VideoFrame> VideoPreview::waitNewFrame() { return decoder_->waitNewFrame(); }
-std::shared_ptr<VideoFrame> VideoPreview::obtainLastFrame() { return decoder_->obtainLastFrame(); }
+std::shared_ptr<VideoFrame> VideoCamera::waitNewFrame() { return decoder_->waitNewFrame(); }
+std::shared_ptr<VideoFrame> VideoCamera::obtainLastFrame() { return decoder_->obtainLastFrame(); }
 
 } // end namspace sfl_video

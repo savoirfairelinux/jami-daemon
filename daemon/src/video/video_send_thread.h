@@ -36,7 +36,6 @@
 #include <tr1/memory>
 #include "noncopyable.h"
 #include "video_encoder.h"
-#include "video_preview.h"
 #include "video_mixer.h"
 #include "sflthread.h"
 
