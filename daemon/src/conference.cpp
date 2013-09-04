@@ -36,6 +36,12 @@
 #include "audio/audiolayer.h"
 #include "audio/mainbuffer.h"
 
+#ifdef SFL_VIDEO
+#include "client/video_controls.h"
+#include "video/video_camera.h"
+#endif
+
+
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
     , confState_(ACTIVE_ATTACHED)
@@ -45,6 +51,15 @@ Conference::Conference()
 #endif
 {
     Recordable::initRecFilename(id_);
+
+#ifdef SFL_VIDEO
+    sfl_video::VideoCamera *camera = static_cast<sfl_video::VideoCamera*>(Manager::instance().getVideoControls()->getVideoPreview());
+    if (camera) {
+        videoMixer_.addSource(camera);
+        camera->setMixer(&videoMixer_);
+    }
+#endif
+
 }
 
 Conference::ConferenceState Conference::getState() const

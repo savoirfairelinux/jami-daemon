@@ -50,14 +50,9 @@ VideoMixer::VideoMixer() :
     , width_(0)
     , height_(0)
 {
-    VideoCamera* camera;
     pthread_mutex_init(&updateMutex_, NULL);
     pthread_cond_init(&updateCondition_, NULL);
     start();
-
-    camera = dynamic_cast<VideoCamera*>(Manager::instance().getVideoControls()->getVideoPreview());
-    sourceList_.push_front(camera);
-    camera->setMixer(this);
 }
 
 VideoMixer::~VideoMixer()

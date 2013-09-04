@@ -66,7 +66,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
-        std::shared_ptr<sfl_video::VideoSource> preview_;
+        std::shared_ptr<sfl_video::VideoSource> videoPreview_;
         VideoPreference videoPreference_;
 
     public:
@@ -126,7 +126,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         void startPreview();
         void stopPreview();
         bool hasPreviewStarted();
-		sfl_video::VideoSource *getVideoPreview();
+		sfl_video::VideoSource* getVideoPreview();
 };
 
 #endif // VIDEO_CONTROLS_H_

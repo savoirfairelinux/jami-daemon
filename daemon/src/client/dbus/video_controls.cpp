@@ -42,7 +42,9 @@ const char * const SERVER_PATH = "/org/sflphone/SFLphone/VideoControls";
 }
 
 VideoControls::VideoControls(DBus::Connection& connection) :
-    DBus::ObjectAdaptor(connection, SERVER_PATH), preview_(), videoPreference_()
+    DBus::ObjectAdaptor(connection, SERVER_PATH)
+    , videoPreview_()
+    , videoPreference_()
 {
     // initialize libav libraries
     libav_utils::sfl_avcodec_init();
@@ -157,7 +159,7 @@ VideoControls::getSettings() {
 void
 VideoControls::startPreview()
 {
-    if (preview_.get()) {
+    if (videoPreview_.get()) {
         ERROR("Video preview was already started!");
         return;
     }
@@ -166,15 +168,15 @@ VideoControls::startPreview()
     using std::string;
 
     map<string, string> args(videoPreference_.getSettings());
-    preview_.reset(new sfl_video::VideoCamera(args));
+    videoPreview_.reset(new sfl_video::VideoCamera(args));
 }
 
 void
 VideoControls::stopPreview()
 {
-    if (preview_.get()) {
+    if (videoPreview_.get()) {
         DEBUG("Stopping video preview");
-        preview_.reset();
+        videoPreview_.reset();
     } else {
         WARN("Video preview was already stopped");
     }
@@ -182,13 +184,13 @@ VideoControls::stopPreview()
 
 sfl_video::VideoSource* VideoControls::getVideoPreview()
 {
-    return preview_.get();
+    return videoPreview_.get();
 }
 
 bool
 VideoControls::hasPreviewStarted()
 {
-    return preview_.get() != 0;
+    return videoPreview_.get() != 0;
 }
 
 std::string
