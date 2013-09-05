@@ -505,6 +505,6 @@ void CallManager::sipCallStateChanged(const std::string& accoundID, const std::s
 
 }
 
-void CallManager::updatePlaybackScale(const int32_t&, const int32_t&)
+void CallManager::updatePlaybackScale(const std::string&, const int32_t&, const int32_t&)
 {
 }
