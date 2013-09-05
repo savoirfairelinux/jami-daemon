@@ -178,6 +178,10 @@ class CallManager
         void newCallCreated(const std::string&, const std::string&, const std::string&);
         void registrationStateChanged(const std::string&, const std::string&, const int32_t&);
         void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
+
+		void newPresSubClientNotification(const std::string& uri, const std::string& basic,	const std::string& note);
+		void newPresSubServerRequest(const std::string& remote);
+
 #endif // __ANDROID__
 
         /* Presence subscription/Notification. */

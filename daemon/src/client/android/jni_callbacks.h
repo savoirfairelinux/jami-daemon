@@ -17,6 +17,8 @@ void on_conference_created_wrapper (const std::string& confID);
 void on_conference_removed_wrapper (const std::string& confID);
 void on_conference_state_changed_wrapper(const std::string& confID,const std::string& state);
 void on_incoming_message_wrapper(const std::string& ID, const std::string& from, const std::string& msg);
+void on_newPresSubClientNotification_wrapper(const std::string& uri, const std::string& basic, const std::string& note);
+void on_newPresSubServerRequest_wrapper(const std::string& remote);
 
 extern struct configurationmanager_callback wrapper_configurationcallback_struct;
 extern void on_accounts_changed_wrapper ();

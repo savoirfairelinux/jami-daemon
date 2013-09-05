@@ -490,6 +490,16 @@ void CallManager::registrationStateChanged(const std::string& accoundID, const s
     on_account_state_changed_with_code_wrapper(accoundID, state, code);
 }
 
+void CallManager::newPresSubClientNotification(const std::string& uri, const std::string& basic,	const std::string& note)
+{
+
+}
+
+void CallManager::newPresSubServerRequest(const std::string& remote)
+{
+
+}
+
 void CallManager::sipCallStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code)
 {
 

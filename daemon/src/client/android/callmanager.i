@@ -61,6 +61,13 @@ typedef struct callmanager_callback
 
     void (*on_record_playback_filepath) (const std::string& id,
                                          const std::string& filename);
+
+    void (*newPresSubClientNotification) (const std::string& uri,
+											const std::string& basic,
+											const std::string& note);
+
+	void (*newPresSubServerRequest) (const std::string& remote);
+
 } callmanager_callback_t;
 
 
@@ -94,6 +101,12 @@ public:
 
     virtual void on_record_playback_filepath(const std::string& id,
                                               const std::string& filename) {}
+
+    virtual void newPresSubClientNotification(const std::string& uri,
+											const std::string& basic,
+											const std::string& note) {}
+
+	virtual void newPresSubServerRequest(const std::string& remote) {}
 };
 
 
@@ -137,8 +150,16 @@ void on_incoming_message_wrapper(const std::string& ID, const std::string& from,
   registeredCallbackObject->on_incoming_message(ID, from, msg);
 }
 
-void on_record_playback_filepath_wrapper(const std::string& id, const std::string& filename){
+void on_record_playback_filepath_wrapper(const std::string& id, const std::string& filename) {
   registeredCallbackObject->on_record_playback_filepath(id, filename);
+}
+
+void on_newPresSubClientNotification_wrapper(const std::string& uri, const std::string& basic, const std::string& note) {
+	registeredCallbackObject->newPresSubClientNotification(uri, basic, note);
+}
+
+void on_newPresSubServerRequest_wrapper(const std::string& remote) {
+	registeredCallbackObject->newPresSubServerRequest(remote);
 }
 
 static struct callmanager_callback wrapper_callback_struct = {
@@ -151,6 +172,8 @@ static struct callmanager_callback wrapper_callback_struct = {
     &on_conference_state_changed_wrapper,
     &on_incoming_message_wrapper,
     &on_record_playback_filepath_wrapper,
+	&on_newPresSubClientNotification_wrapper,
+	&on_newPresSubServerRequest_wrapper,
 };
 
 void setCallbackObject(Callback* callback) {
@@ -247,6 +270,12 @@ public:
 
     virtual void on_record_playback_filepath(const std::string& id,
                                             const std::string& filename);
+
+    virtual void newPresSubClientNotification(const std::string& uri,
+											const std::string& basic,
+											const std::string& note);
+
+	virtual void newPresSubServerRequest(const std::string& remote);
 };
 
 static Callback* registeredCallbackObject = NULL;
