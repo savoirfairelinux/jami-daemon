@@ -173,7 +173,7 @@ class CallManager
 
         void conferenceChanged(const std::string& confID,const std::string& state);
 
-        void updatePlaybackScale(const int32_t&, const int32_t&);
+        void updatePlaybackScale(const std::string&, const int32_t&, const int32_t&);
         void conferenceRemoved(const std::string&);
         void newCallCreated(const std::string&, const std::string&, const std::string&);
         void registrationStateChanged(const std::string&, const std::string&, const int32_t&);
