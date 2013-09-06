@@ -118,7 +118,7 @@ public:
     /**
      * Return associated sipaccount
      */
-    SIPAccount * getAccount();
+    SIPAccount * getAccount() const;
     /**
      * Return presence data.
      */
@@ -126,11 +126,11 @@ public:
     /**
      * Return presence module ID which is actually the same as the VOIP link
      */
-    int getModId();
+    int getModId() const;
     /**
      *  Return a pool for generic functions.
      */
-    pj_pool_t*  getPool();
+    pj_pool_t*  getPool() const;
     /**
      * Activate the module (PUBLISH/SUBSCRIBE)
      */
@@ -200,6 +200,10 @@ public:
      * Iterate through the subscriber list and send NOTIFY to each.
      */
     void notifyPresSubServer();
+    
+    bool isEnabled() const {
+        return enabled;
+    }
 
     /**
      * Lock methods

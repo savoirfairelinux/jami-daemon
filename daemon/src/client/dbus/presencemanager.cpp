@@ -67,20 +67,6 @@ PresenceManager::subscribePresSubClient(const std::string& accountID, const std:
 }
 
 /**
- *  Enable the presence module (PUBLISH/SUBSCRIBE)
- */
-void
-PresenceManager::enablePresence(const std::string& accountID, const bool& flag){
-    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
-    if (!sipaccount)
-        ERROR("Could not find account %s",accountID.c_str());
-    else{
-        DEBUG("Enable Presence (acc:%s : %s)",accountID.c_str(), flag? "yes":"no");
-        sipaccount->getPresence()->enable(flag);
-    }
-}
-
-/**
  * push a presence for a account
  * Notify for IP2IP account and publish for PBX account
  */

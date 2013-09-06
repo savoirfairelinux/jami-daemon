@@ -79,19 +79,19 @@ SIPPresence::~SIPPresence(){
         removePresSubServer(s);
 }
 
-SIPAccount * SIPPresence::getAccount(){
+SIPAccount * SIPPresence::getAccount() const {
     return acc_;
 }
 
-pjsip_pres_status * SIPPresence::getStatus(){
+pjsip_pres_status * SIPPresence::getStatus() {
     return &pres_status_data;
 }
 
-int SIPPresence::getModId(){
+int SIPPresence::getModId() const {
     return  ((SIPVoIPLink*) (acc_->getVoIPLink()))->getModId();
 }
 
-pj_pool_t*  SIPPresence::getPool(){
+pj_pool_t*  SIPPresence::getPool() const {
     return pool_;
 }
 

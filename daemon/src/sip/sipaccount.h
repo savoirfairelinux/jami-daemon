@@ -534,7 +534,9 @@ class SIPAccount : public Account {
         /**
          * Presence management
          */
-        SIPPresence * getPresence();
+        SIPPresence * getPresence() const;
+
+        void enablePresence(const bool& flag);
 
 //        unsigned generateAudioPort() const;
         uint16_t generateAudioPort() const;

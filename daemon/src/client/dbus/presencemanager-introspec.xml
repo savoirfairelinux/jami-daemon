@@ -3,11 +3,6 @@
 <node name="/presencemanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
     <interface name="org.sflphone.SFLphone.PresenceManager">
         <!-- METHODS !-->
-        <method name="enablePresence" tp:name-for-bindings="enablePresence">
-          <tp:added version="1.3.0"/>
-          <arg type="s" name="accountID" direction="in"/>
-          <arg type="b" name="flag" direction="in"/>
-        </method>
         <method name="sendPresence" tp:name-for-bindings="sendPresence">
           <tp:added version="1.3.0"/>
           <arg type="s" name="accountID" direction="in"/>
