@@ -5,36 +5,91 @@
         <!-- METHODS !-->
         <method name="sendPresence" tp:name-for-bindings="sendPresence">
           <tp:added version="1.3.0"/>
-          <arg type="s" name="accountID" direction="in"/>
-          <arg type="b" name="status" direction="in"/>
-          <arg type="s" name="note" direction="in"/>
+          <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                   The account from which the presence will be emitted
+               </tp:docstring>
+          </arg>
+          <arg type="b" name="status" direction="in">
+               <tp:docstring>
+                   Is this account present or not
+               </tp:docstring>
+          </arg>
+          <arg type="s" name="note" direction="in">
+               <tp:docstring>
+                   A message transmitted by the server to other users
+               </tp:docstring>
+          </arg>
         </method>
 
         <method name="approvePresSubServer" tp:name-for-bindings="approvePresSubServer">
+          <tp:docstring>
+              Answer a presence request from the server
+          </tp:docstring>
           <tp:added version="1.3.0"/>
-          <arg type="s" name="uri" direction="in"/>
-          <arg type="b" name="flag" direction="in"/>
+          <arg type="s" name="uri" direction="in">
+               <tp:docstring>
+               </tp:docstring>
+          </arg>
+          <arg type="b" name="flag" direction="in">
+               <tp:docstring>
+                   Is the request granted or denied
+               </tp:docstring>
+          </arg>
         </method>
 
         <method name="subscribePresSubClient" tp:name-for-bindings="subscribePresSubClient">
+          <tp:docstring>
+              Ask be be notified when 'uri' presence change
+          </tp:docstring>
           <tp:added version="1.3.0"/>
-          <arg type="s" name="accountID" direction="in"/>
-          <arg type="s" name="uri" direction="in"/>
-          <arg type="b" name="flag" direction="in"/>
+          <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                   An account from which get request presence informations
+               </tp:docstring>
+          </arg>
+          <arg type="s" name="uri" direction="in">
+               <tp:docstring>
+                   A SIP uri to watch
+               </tp:docstring>
+          </arg>
+          <arg type="b" name="flag" direction="in">
+               <tp:docstring>
+               </tp:docstring>
+          </arg>
         </method>
 
         <!-- SIGNALS !-->
 
         <signal name="newPresSubClientNotification" tp:name-for-bindings="newPresSubClientNotification">
           <tp:added version="1.3.0"/>
-          <arg type="s" name="buddyUri"/>
-          <arg type="s" name="status"/>
-          <arg type="s" name="lineStatus"/>
+          <tp:docstring>
+              Notify when a registered presence uri presence informations changes
+          </tp:docstring>
+          <arg type="s" name="buddyUri">
+               <tp:docstring>
+                   The registered URI
+               </tp:docstring>
+          </arg>
+          <arg type="s" name="status">
+               <tp:docstring>
+                   Is the URI present or not
+               </tp:docstring>
+          </arg>
+          <arg type="s" name="lineStatus">
+               <tp:docstring>
+                   A string containing informations from the user (human readable)
+               </tp:docstring>
+          </arg>
         </signal>
 
         <signal name="newPresSubServerRequest" tp:name-for-bindings="newPresSubServerRequest">
           <tp:added version="1.3.0"/>
-          <arg type="s" name="buddyUri"/>
+          <arg type="s" name="buddyUri">
+               <tp:docstring>
+                   Notify when an other user (or the server) request your presence informations
+               </tp:docstring>
+          </arg>
         </signal>
     </interface>
 </node>
