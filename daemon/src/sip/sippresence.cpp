@@ -34,6 +34,7 @@
 #include "manager.h"
 #include "client/client.h"
 #include "client/callmanager.h"
+#include "client/presencemanager.h"
 #include "sipaccount.h"
 #include "sippublish.h"
 #include "sippresence.h"
@@ -140,7 +141,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     const std::string note(status->info[0].rpid.note.ptr,status->info[0].rpid.note.slen);
     DEBUG(" Received status of PresSubClient  %s: status=%s note=%s",uri.c_str(),basic.c_str(),note.c_str());
     /* report status to client signal */
-    Manager::instance().getClient()->getCallManager()->newPresSubClientNotification(uri, basic, note);
+    Manager::instance().getClient()->getPresenceManager()->newPresSubClientNotification(uri, basic, note);
 }
 
 void SIPPresence::subscribePresSubClient(const std::string& uri, const bool& flag){
@@ -186,7 +187,7 @@ void SIPPresence::removePresSubClient(PresSubClient *c){
 
 
 void SIPPresence::reportNewPresSubServerRequest(PresSubServer *s){
-    Manager::instance().getClient()->getCallManager()->newPresSubServerRequest(s->remote);
+    Manager::instance().getClient()->getPresenceManager()->newPresSubServerRequest(s->remote);
 }
 
 void SIPPresence::approvePresSubServer(const std::string& uri, const bool& flag){

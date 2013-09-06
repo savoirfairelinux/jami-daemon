@@ -819,43 +819,5 @@
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="accepted" direction="in"/>
         </method>
-
-        <method name="subscribePresSubClient" tp:name-for-bindings="subscribePresSubClient">
-          <tp:added version="0.9.7"/>
-          <arg type="s" name="accountID" direction="in"/>
-          <arg type="s" name="uri" direction="in"/>
-          <arg type="b" name="flag" direction="in"/>
-        </method>
-
-        <method name="enablePresence" tp:name-for-bindings="enablePresence">
-          <tp:added version="0.9.7"/>
-          <arg type="s" name="accountID" direction="in"/>
-          <arg type="b" name="flag" direction="in"/>
-        </method>
-
-        <method name="sendPresence" tp:name-for-bindings="sendPresence">
-          <tp:added version="0.9.7"/>
-          <arg type="s" name="accountID" direction="in"/>
-          <arg type="b" name="status" direction="in"/>
-          <arg type="s" name="note" direction="in"/>
-        </method>
-
-        <method name="approvePresSubServer" tp:name-for-bindings="approvePresSubServer">
-          <tp:added version="0.9.7"/>
-          <arg type="s" name="uri" direction="in"/>
-          <arg type="b" name="flag" direction="in"/>
-        </method>
-
-        <signal name="newPresSubClientNotification" tp:name-for-bindings="newPresSubClientNotification">
-          <tp:added version="0.9.7"/>
-          <arg type="s" name="buddyUri"/>
-          <arg type="s" name="status"/>
-          <arg type="s" name="lineStatus"/>
-        </signal>
-
-        <signal name="newPresSubServerRequest" tp:name-for-bindings="newPresSubServerRequest">
-          <arg type="s" name="buddyUri"/>
-        </signal>
-
     </interface>
 </node>
