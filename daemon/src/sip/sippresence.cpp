@@ -139,9 +139,9 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     /* Update our info. See pjsua_buddy_get_info() for additionnal ideas*/
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
     const std::string note(status->info[0].rpid.note.ptr,status->info[0].rpid.note.slen);
-    DEBUG(" Received status of PresSubClient  %s: status=%s note=%s",uri.c_str(),basic.c_str(),note.c_str());
+    DEBUG(" Received status of PresSubClient  %s: status=%s note=%s",uri.c_str(),(status->info[0].basic_open?"open":"closed"),note.c_str());
     /* report status to client signal */
-    Manager::instance().getClient()->getPresenceManager()->newPresSubClientNotification(uri, basic, note);
+    Manager::instance().getClient()->getPresenceManager()->newPresSubClientNotification(uri, status->info[0].basic_open, note);
 }
 
 void SIPPresence::subscribePresSubClient(const std::string& uri, const bool& flag){
