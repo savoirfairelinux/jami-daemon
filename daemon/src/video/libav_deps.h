@@ -37,6 +37,7 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 #include <libavutil/opt.h>
+#include <libavutil/mathematics.h> // for av_rescale_q (old libav support)
 }
 
 #include "libav_utils.h"
