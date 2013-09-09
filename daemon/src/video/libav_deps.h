@@ -55,4 +55,9 @@ extern "C" {
 #define AVPixelFormat PixelFormat
 #endif
 
+#if (LIBAVCODEC_VERSION_MAJOR < 54) \
+    || ((LIBAVCODEC_VERSION_MAJOR == 54) && (LIBAVCODEC_VERSION_MINOR < 28))
+#define avcodec_free_frame(x) av_freep(x)
+#endif
+
 #endif // __LIBAV_DEPS_H__
