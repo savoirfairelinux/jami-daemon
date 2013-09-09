@@ -1017,9 +1017,6 @@ class ManagerImpl {
          */
         VoIPLink* getAccountLink(const std::string& accountID);
 
-        // Map containing conference pointers
-        ConferenceMap conferenceMap_;
-
         /**
          * Send registration to all enabled accounts
          */
@@ -1037,6 +1034,9 @@ class ManagerImpl {
 
     private:
         NON_COPYABLE(ManagerImpl);
+
+        // Map containing conference pointers
+        ConferenceMap conferenceMap_;
 
         /**
          * Get a map with all the current SIP and IAX accounts
