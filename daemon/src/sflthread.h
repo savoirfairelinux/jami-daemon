@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,20 +29,34 @@
  *  as that of the covered work.
  */
 
-#ifndef CHECK_H_
-#define CHECK_H_
+#ifndef __SFLTHREAD_H__
+#define __SFLTHREAD_H__
 
-#include "logger.h"
-#include "sflthread.h"
+#include <pthread.h>
 
-// cast to void to avoid compiler warnings about unused return values
-#define set_false_atomic(x) static_cast<void>(__sync_fetch_and_and(x, false))
-#define set_true_atomic(x) static_cast<void>(__sync_fetch_and_or(x, true))
-#define atomic_increment(x) static_cast<void>(__sync_fetch_and_add(x, 1))
-#define atomic_decrement(x) static_cast<void>(__sync_fetch_and_sub(x, 1))
+class SFLThread {
+public:
+    SFLThread();
+    virtual ~SFLThread();
 
-// If condition A is false, print the error message in M and exit thread
-#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { \
-        ERROR(M, ##__VA_ARGS__); this->exit(); }
+    void start();
+    void stop();
+    void join();
+    bool isRunning();
 
-#endif // CHECK_H_
+protected:
+    virtual bool setup() { return true; };
+    virtual void process() {};
+    virtual void cleanup() {};
+
+    void exit();
+
+private:
+    static void* run_(void*);
+    void mainloop_();
+    pthread_t thread_;
+
+    bool running_;
+};
+
+#endif // __SFLTHREAD_H__

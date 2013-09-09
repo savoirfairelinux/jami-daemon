@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,26 +28,36 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_PREVIEW_H__
-#define __VIDEO_PREVIEW_H__
+#ifndef __LIBAV_DEPS_H__
+#define __LIBAV_DEPS_H__
 
-#include <tr1/memory>
-#include <string>
-#include <map>
-
-namespace sfl_video {
-
-class VideoReceiveThread;
-
-class VideoPreview {
-    public:
-        VideoPreview(const std::map<std::string, std::string> &args);
-        ~VideoPreview();
-
-    private:
-        std::map<std::string, std::string> args_;
-        std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
-};
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavdevice/avdevice.h>
+#include <libswscale/swscale.h>
+#include <libavutil/opt.h>
 }
 
-#endif // __VIDEO_PREVIEW_H__
+#include "libav_utils.h"
+
+/* LIBAVFORMAT_VERSION_CHECK checks for the right version of libav and FFmpeg
+ * a is the major version
+ * b and c the minor and micro versions of libav
+ * d and e the minor and micro versions of FFmpeg */
+#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
+    ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
+      (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
+
+#define HAVE_SDP_CUSTOM_IO LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
+
+#if (LIBAVUTIL_VERSION_MAJOR < 53) && !defined(FF_API_PIX_FMT)
+#define AVPixelFormat PixelFormat
+#endif
+
+#if (LIBAVCODEC_VERSION_MAJOR < 54) \
+    || ((LIBAVCODEC_VERSION_MAJOR == 54) && (LIBAVCODEC_VERSION_MINOR < 28))
+#define avcodec_free_frame(x) av_freep(x)
+#endif
+
+#endif // __LIBAV_DEPS_H__

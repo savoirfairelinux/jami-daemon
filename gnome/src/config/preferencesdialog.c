@@ -448,11 +448,6 @@ show_preferences_dialog(SFLPhoneClient *client)
     gtk_icon_view_select_path(GTK_ICON_VIEW(iconview), gtk_tree_path_new_first());
 
     guint result = gtk_dialog_run(dialog);
-#ifdef SFL_VIDEO
-    // stop video preview if it's running
-    if (dbus_has_video_preview_started())
-        dbus_stop_video_preview();
-#endif
 
     save_configuration_parameters(client);
     update_actions(client);

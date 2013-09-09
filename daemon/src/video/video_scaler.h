@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
+ *
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,20 +29,30 @@
  *  as that of the covered work.
  */
 
-#ifndef CHECK_H_
-#define CHECK_H_
+#ifndef __VIDEO_SCALER_H__
+#define __VIDEO_SCALER_H__
 
-#include "logger.h"
-#include "sflthread.h"
+#include "video_base.h"
+#include "noncopyable.h"
 
-// cast to void to avoid compiler warnings about unused return values
-#define set_false_atomic(x) static_cast<void>(__sync_fetch_and_and(x, false))
-#define set_true_atomic(x) static_cast<void>(__sync_fetch_and_or(x, true))
-#define atomic_increment(x) static_cast<void>(__sync_fetch_and_add(x, 1))
-#define atomic_decrement(x) static_cast<void>(__sync_fetch_and_sub(x, 1))
 
-// If condition A is false, print the error message in M and exit thread
-#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { \
-        ERROR(M, ##__VA_ARGS__); this->exit(); }
+class SwsContext;
 
-#endif // CHECK_H_
+namespace sfl_video {
+
+class VideoScaler {
+public:
+    VideoScaler();
+    ~VideoScaler();
+    void scale(VideoFrame &input, VideoFrame &output);
+    void reset();
+
+private:
+    NON_COPYABLE(VideoScaler);
+    SwsContext *ctx_;
+    int mode_;
+};
+
+}
+
+#endif // __VIDEO_SCALER_H__

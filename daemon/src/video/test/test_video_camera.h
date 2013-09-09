@@ -28,15 +28,12 @@
  *  as that of the covered work.
  */
 
-#include "packet_handle.h"
-// libav includes
-extern "C" {
-#include <libavformat/avformat.h>
-}
+#ifndef _VIDEO_CAMERA_TEST_
+#define _VIDEO_CAMERA_TEST_
 
-PacketHandle::PacketHandle(AVPacket &inpacket) : inpacket_(inpacket) {}
+class VideoCameraTest {
+public:
+    void testCamera();
+};
 
-PacketHandle::~PacketHandle()
-{
-    av_free_packet(&inpacket_);
-}
+#endif // _VIDEO_CAMERA_TEST_
