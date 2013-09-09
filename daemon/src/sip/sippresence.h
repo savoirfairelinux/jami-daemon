@@ -158,7 +158,7 @@ public:
      * Send a SUBSCRIBE request to PBX/IP2IP
      * @param buddyUri  Remote user that we want to subscribe
      */
-    void subscribePresSubClient(const std::string& uri, const bool& flag);
+    void subscribeClient(const std::string& uri, const bool& flag);
     /**
      * Add a buddy in the buddy list.
      * @param b     PresSubClient pointer
@@ -200,9 +200,13 @@ public:
      * Iterate through the subscriber list and send NOTIFY to each.
      */
     void notifyPresSubServer();
-    
+
     bool isEnabled() const {
         return enabled;
+    }
+
+    const std::list< PresSubClient *> getClientSubscriptions() {
+        return pres_sub_client_list_;
     }
 
     /**

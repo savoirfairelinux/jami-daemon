@@ -4,92 +4,133 @@
     <interface name="org.sflphone.SFLphone.PresenceManager">
         <!-- METHODS !-->
         <method name="sendPresence" tp:name-for-bindings="sendPresence">
-          <tp:added version="1.3.0"/>
-          <arg type="s" name="accountID" direction="in">
-               <tp:docstring>
-                   The account from which the presence will be emitted
-               </tp:docstring>
-          </arg>
-          <arg type="b" name="status" direction="in">
-               <tp:docstring>
-                   Is this account present or not
-               </tp:docstring>
-          </arg>
-          <arg type="s" name="note" direction="in">
-               <tp:docstring>
-                   A message transmitted by the server to other users
-               </tp:docstring>
-          </arg>
+            <tp:added version="1.3.0"/>
+            <arg type="s" name="accountID" direction="in">
+                <tp:docstring>
+                    The account from which the presence will be emitted
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="status" direction="in">
+                <tp:docstring>
+                    Is this account present or not
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="note" direction="in">
+                <tp:docstring>
+                    A message transmitted by the server to other users
+                </tp:docstring>
+            </arg>
         </method>
 
         <method name="approvePresSubServer" tp:name-for-bindings="approvePresSubServer">
-          <tp:docstring>
-              Answer a presence request from the server
-          </tp:docstring>
-          <tp:added version="1.3.0"/>
-          <arg type="s" name="uri" direction="in">
-               <tp:docstring>
-               </tp:docstring>
-          </arg>
-          <arg type="b" name="flag" direction="in">
-               <tp:docstring>
-                   Is the request granted or denied
-               </tp:docstring>
-          </arg>
+            <tp:docstring>
+                Answer a presence request from the server
+            </tp:docstring>
+            <tp:added version="1.3.0"/>
+            <arg type="s" name="uri" direction="in">
+                <tp:docstring>
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="flag" direction="in">
+                <tp:docstring>
+                    Is the request granted or denied
+                </tp:docstring>
+            </arg>
         </method>
 
-        <method name="subscribePresSubClient" tp:name-for-bindings="subscribePresSubClient">
-          <tp:docstring>
-              Ask be be notified when 'uri' presence change
-          </tp:docstring>
-          <tp:added version="1.3.0"/>
-          <arg type="s" name="accountID" direction="in">
-               <tp:docstring>
-                   An account from which get request presence informations
+        <method name="subscribeClient" tp:name-for-bindings="subscribeClient">
+            <tp:docstring>
+                Ask be be notified when 'uri' presence change
+            </tp:docstring>
+            <tp:added version="1.3.0"/>
+            <arg type="s" name="accountID" direction="in">
+                <tp:docstring>
+                    An account from which get request presence informations
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="uri" direction="in">
+                <tp:docstring>
+                    A SIP uri to watch
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="flag" direction="in">
+                <tp:docstring>
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getSubscriptions" tp:name-for-bindings="getSubscriptions">
+            <tp:added version="1.3.0"/>
+            <tp:rationale>
+                New clients connecting to existing daemon need to be aware of active
+                subscriptions.
+            </tp:rationale>
+            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString"/>
+            <annotation>
+                While there is more status than "Online" or "Offline", only those
+            </annotation>
+            <arg type="s" name="accountID" direction="in">
+            </arg>
+            <arg type="aa{ss}" name="credentialInformation" direction="out" tp:type="String_String_Map">
+                <tp:docstring>
+                   List of hashes map with the following key-value pairs:
+                    * Status:     "Online" or "Offline"
+                    * LineStatus: String
                </tp:docstring>
-          </arg>
-          <arg type="s" name="uri" direction="in">
-               <tp:docstring>
-                   A SIP uri to watch
+            </arg>
+        </method>
+
+        <method name="setSubscriptions" tp:name-for-bindings="setSubscriptions">
+            <tp:added version="1.3.0"/>
+            <tp:rationale>Calling "subscribeClient" in a loop is too slow</tp:rationale>
+            <arg type="s" name="accountID" direction="in">
+            </arg>
+            <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorString"/>
+            <arg type="as" name="uriList" direction="in">
+                <tp:docstring>
+                   A list of SIP URIs
                </tp:docstring>
-          </arg>
-          <arg type="b" name="flag" direction="in">
-               <tp:docstring>
+           </arg>
+            <!--TODO<annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <arg type="as" name="invalidUris" direction="out">
+                <tp:docstring>
+                   List of invalid URIs. An URI must be a valid SIP URI. Clients should purge
+                   the list from all invalid URIs
                </tp:docstring>
-          </arg>
+            </arg>-->
         </method>
 
         <!-- SIGNALS !-->
 
         <signal name="newPresSubClientNotification" tp:name-for-bindings="newPresSubClientNotification">
-          <tp:added version="1.3.0"/>
-          <tp:docstring>
-              Notify when a registered presence uri presence informations changes
-          </tp:docstring>
-          <arg type="s" name="buddyUri">
-               <tp:docstring>
-                   The registered URI
-               </tp:docstring>
-          </arg>
-          <arg type="b" name="status">
-               <tp:docstring>
-                   Is the URI present or not
-               </tp:docstring>
-          </arg>
-          <arg type="s" name="lineStatus">
-               <tp:docstring>
-                   A string containing informations from the user (human readable)
-               </tp:docstring>
-          </arg>
+            <tp:added version="1.3.0"/>
+            <tp:docstring>
+                Notify when a registered presence uri presence informations changes
+            </tp:docstring>
+            <arg type="s" name="buddyUri">
+                <tp:docstring>
+                    The registered URI
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="status">
+                <tp:docstring>
+                    Is the URI present or not
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="lineStatus">
+                <tp:docstring>
+                    A string containing informations from the user (human readable)
+                </tp:docstring>
+            </arg>
         </signal>
 
         <signal name="newPresSubServerRequest" tp:name-for-bindings="newPresSubServerRequest">
-          <tp:added version="1.3.0"/>
-          <arg type="s" name="buddyUri">
-               <tp:docstring>
-                   Notify when an other user (or the server) request your presence informations
-               </tp:docstring>
-          </arg>
+            <tp:added version="1.3.0"/>
+            <arg type="s" name="buddyUri">
+                <tp:docstring>
+                    Notify when an other user (or the server) request your presence informations
+                </tp:docstring>
+            </arg>
         </signal>
     </interface>
 </node>

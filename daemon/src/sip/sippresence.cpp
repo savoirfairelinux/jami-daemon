@@ -144,7 +144,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     Manager::instance().getClient()->getPresenceManager()->newPresSubClientNotification(uri, status->info[0].basic_open, note);
 }
 
-void SIPPresence::subscribePresSubClient(const std::string& uri, const bool& flag){
+void SIPPresence::subscribeClient(const std::string& uri, const bool& flag){
     /* Check if the buddy was already subscribed */
     for(auto  c : pres_sub_client_list_)
         if(c->getURI()==uri){

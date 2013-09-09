@@ -84,7 +84,9 @@ class PresenceManager
     /* Presence subscription/Notification. */
     void sendPresence(const std::string& accountID, const bool& status, const std::string& note);
     void approvePresSubServer(const std::string& uri, const bool& flag);
-    void subscribePresSubClient(const std::string& accountID, const std::string& uri, const bool& flag);
+    void subscribeClient(const std::string& accountID, const std::string& uri, const bool& flag);
+    std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
+    void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 
 };
 
