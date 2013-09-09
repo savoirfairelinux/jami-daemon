@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,28 +29,52 @@
  *  as that of the covered work.
  */
 
-#include "video_preview.h"
-#include "logger.h"
-#include <map>
-#include <string>
-#include "video_receive_thread.h"
+#ifndef __VIDEO_DECODER_H__
+#define __VIDEO_DECODER_H__
 
-class VideoControls;
+#include "video_base.h"
+#include "video_scaler.h"
+#include "noncopyable.h"
+
+#include <pthread.h>
+#include <string>
+
+class AVCodecContext;
+class AVStream;
+class AVFormatContext;
+class AVCodec;
 
 namespace sfl_video {
 
-VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
-    args_(args), receiveThread_()
-{
-    const char * const LOCAL_ID = "local";
-    receiveThread_.reset(new VideoReceiveThread(LOCAL_ID, args_));
-    receiveThread_->start();
+	class VideoDecoder : public VideoCodec, public VideoGenerator {
+	public:
+		VideoDecoder();
+		~VideoDecoder();
+
+		void setInterruptCallback(int (*cb)(void*), void *opaque);
+		void setIOContext(VideoIOHandle *ioctx);
+		int openInput(const std::string &source_str,
+					  const std::string &format_str);
+		int setupFromVideoData();
+		int decode();
+		int flush();
+		void scale(VideoScaler &ctx, VideoFrame &output);
+
+		int getWidth() const { return dstWidth_; }
+		int getHeight() const { return dstHeight_; }
+
+	private:
+		NON_COPYABLE(VideoDecoder);
+
+		AVCodec *inputDecoder_;
+		AVCodecContext *decoderCtx_;
+		AVFormatContext *inputCtx_;
+		VideoFrame scaledPicture_;
+
+		int streamIndex_;
+		int dstWidth_;
+        int dstHeight_;
+	};
 }
 
-VideoPreview::~VideoPreview()
-{
-    // explicitly destroy the thread object
-    receiveThread_.reset();
-}
-
-} // end namspace sfl_video
+#endif // __VIDEO_DECODER_H__

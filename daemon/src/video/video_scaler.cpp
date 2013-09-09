@@ -1,0 +1,73 @@
+/*
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
+ */
+
+#include "libav_deps.h"
+#include "video_scaler.h"
+#include "check.h"
+
+namespace sfl_video {
+
+VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_BICUBIC) {}
+
+VideoScaler::~VideoScaler() { sws_freeContext(ctx_); }
+
+void VideoScaler::scale(VideoFrame &input, VideoFrame &output)
+{
+    AVFrame *input_frame = input.get();
+    AVFrame *output_frame = output.get();
+
+    ctx_ = sws_getCachedContext(ctx_,
+                                input_frame->width,
+                                input_frame->height,
+                                (AVPixelFormat) input_frame->format,
+                                output_frame->width,
+                                output_frame->height,
+                                (AVPixelFormat) output_frame->format,
+                                mode_,
+                                NULL, NULL, NULL);
+    if (!ctx_) {
+        ERROR("Unable to create a scaler context");
+        return;
+    }
+
+    sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
+              input_frame->height, output_frame->data, output_frame->linesize);
+}
+
+void VideoScaler::reset()
+{
+    if (ctx_) {
+        sws_freeContext(ctx_);
+        ctx_ = nullptr;
+    }
+}
+
+}

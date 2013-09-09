@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Luca Barbato <lu_zero@gentoo.org>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,18 +30,15 @@
  *  as that of the covered work.
  */
 
-#include "libav_utils.h"
+#include "libav_deps.h"
+#include "video_base.h"
+#include "logger.h"
+
 #include <vector>
 #include <algorithm>
 #include <string>
 #include <iostream>
-#include "logger.h"
 
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavdevice/avdevice.h>
-}
 
 namespace {
 using std::string;
@@ -172,6 +170,31 @@ getDefaultCodecs()
         result.push_back(codec);
     }
     return result;
+}
+
+int libav_pixel_format(int fmt)
+{
+    switch (fmt) {
+        case VIDEO_PIXFMT_BGRA: return PIX_FMT_BGRA;
+        case VIDEO_PIXFMT_YUV420P: return PIX_FMT_YUV420P;
+    }
+    return fmt;
+}
+
+int sfl_pixel_format(int fmt)
+{
+    switch (fmt) {
+        case PIX_FMT_YUV420P: return VIDEO_PIXFMT_YUV420P;
+    }
+    return fmt;
+}
+
+void sfl_url_split(const char *url,
+                   char *hostname, size_t hostname_size, int *port,
+                   char *path, size_t path_size)
+{
+    av_url_split(NULL, 0, NULL, 0, hostname, hostname_size, port,
+                 path, path_size, url);
 }
 
 } // end namespace libav_utils

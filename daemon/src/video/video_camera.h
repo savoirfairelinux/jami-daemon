@@ -1,6 +1,8 @@
 /*
  *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
+ *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,12 +30,68 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_PREVIEW_TEST_
-#define _VIDEO_PREVIEW_TEST_
+#ifndef __VIDEO_CAMERA_H__
+#define __VIDEO_CAMERA_H__
 
-class VideoPreviewTest {
+#include "noncopyable.h"
+#include "shm_sink.h"
+#include "video_provider.h"
+#include "video_scaler.h"
+#include "video_decoder.h"
+#include "video_mixer.h"
+#include "sflthread.h"
+
+#include <string>
+#include <map>
+
+
+namespace sfl_video {
+using std::string;
+
+class VideoCamera :
+    public VideoProvider,
+    public VideoSource,
+    public SFLThread
+{
 public:
-    void testPreview();
+    VideoCamera(const std::map<string, string> &args);
+    ~VideoCamera();
+    int getWidth() const;
+    int getHeight() const;
+    VideoFrame *lockFrame();
+    void unlockFrame();
+    void waitFrame();
+    void setMixer(VideoMixer* mixer);
+
+    std::shared_ptr<VideoFrame> waitNewFrame();
+    std::shared_ptr<VideoFrame> obtainLastFrame();
+
+protected:
+    // threading
+    bool setup();
+    void process();
+    void cleanup();
+
+private:
+    NON_COPYABLE(VideoCamera);
+
+    std::string id_;
+    std::map<string, string> args_;
+    VideoDecoder *decoder_;
+    SHMSink sink_;
+    size_t bufferSize_;
+    int previewWidth_;
+    int previewHeight_;
+    VideoScaler scaler_;
+    VideoFrame frame_;
+    VideoMixer* mixer_;
+
+    static int interruptCb(void *ctx);
+    void fillBuffer(void *data);
+    bool captureFrame();
+    void renderFrame();
 };
 
-#endif // _VIDEO_PREVIEW_TEST_
+}
+
+#endif // __VIDEO_CAMERA_H__

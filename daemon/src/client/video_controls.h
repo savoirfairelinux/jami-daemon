@@ -55,18 +55,18 @@
 
 #endif // HAVE_DBUS
 
-#include <tr1/memory> // for shared_ptr
+#include <memory> // for shared_ptr
 #include "video/video_preferences.h"
 
 namespace sfl_video {
-    class VideoPreview;
+    class VideoSource;
 }
 
 class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
-        std::tr1::shared_ptr<sfl_video::VideoPreview> preview_;
+        std::shared_ptr<sfl_video::VideoSource> videoPreview_;
         VideoPreference videoPreference_;
 
     public:
@@ -126,6 +126,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         void startPreview();
         void stopPreview();
         bool hasPreviewStarted();
+		sfl_video::VideoSource* getVideoPreview();
 };
 
 #endif // VIDEO_CONTROLS_H_

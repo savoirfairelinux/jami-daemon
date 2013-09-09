@@ -86,6 +86,8 @@ libsflphone_la_SOURCES = conference.cpp \
 		fileutils.cpp \
 		scoped_lock.cpp \
 		scoped_lock.h \
+		sflthread.cpp \
+		sflthread.h \
 		conference.h \
 		voiplink.h \
 		preferences.h \

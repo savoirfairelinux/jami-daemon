@@ -45,7 +45,8 @@ namespace sfl_video {
 using std::map;
 using std::string;
 
-VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string> &txArgs) :
+VideoRtpSession::VideoRtpSession(const string &callID,
+								 const map<string, string> &txArgs) :
     socketPair_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
     rxArgs_(), sending_(false), receiving_(false), callID_(callID)
 {}
@@ -125,6 +126,8 @@ void VideoRtpSession::updateDestination(const string &destination,
 
 void VideoRtpSession::start(int localPort)
 {
+	std::string curcid = Manager::instance().getCurrentCallId();
+
     if (not sending_ and not receiving_)
         return;
 
@@ -133,17 +136,6 @@ void VideoRtpSession::start(int localPort)
     } catch (const std::runtime_error &e) {
         ERROR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
-    }
-
-    if (sending_) {
-        if (sendThread_.get())
-            WARN("Restarting video sender");
-        sendThread_.reset(new VideoSendThread("local", txArgs_));
-        sendThread_->addIOContext(*socketPair_);
-        sendThread_->start();
-    } else {
-        DEBUG("Video sending disabled");
-        sendThread_.reset();
     }
 
     if (receiving_) {
@@ -156,6 +148,17 @@ void VideoRtpSession::start(int localPort)
     } else {
         DEBUG("Video receiving disabled");
         receiveThread_.reset();
+    }
+
+	if (sending_) {
+        if (sendThread_.get())
+            WARN("Restarting video sender");
+        sendThread_.reset(new VideoSendThread(callID_, txArgs_));
+        sendThread_->addIOContext(*socketPair_);
+        sendThread_->start();
+    } else {
+        DEBUG("Video sending disabled");
+        sendThread_.reset();
     }
 }
 
@@ -172,8 +175,6 @@ void VideoRtpSession::forceKeyFrame()
 {
     if (sendThread_.get())
         sendThread_->forceKeyFrame();
-    else
-        ERROR("Video sending thread is NULL");
 }
 
 void

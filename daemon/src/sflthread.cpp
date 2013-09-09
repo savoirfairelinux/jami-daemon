@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,17 +29,65 @@
  *  as that of the covered work.
  */
 
-#ifndef PACKET_HANDLE_H_
-#define PACKET_HANDLE_H_
+#include "sflthread.h"
+#include "logger.h"
 
-class AVPacket;
+#define set_false_atomic(x) static_cast<void>(__sync_fetch_and_and(x, false))
 
-class PacketHandle {
-    private:
-        AVPacket &inpacket_;
-    public:
-        PacketHandle(AVPacket &inpacket);
-        ~PacketHandle();
-};
+void* SFLThread::run_(void* data)
+{
+    SFLThread *obj = static_cast<SFLThread*>(data);
+    obj->mainloop_();
+    return nullptr;
+}
 
-#endif // PACKET_HANDLE_H_
+void SFLThread::mainloop_()
+{
+    if (setup()) {
+        while (running_)
+            process();
+        cleanup();
+    } else
+        ERROR("setup failed");
+}
+
+SFLThread::SFLThread() : thread_(), running_(false)
+{}
+
+SFLThread::~SFLThread()
+{
+    if (isRunning()) {
+        stop();
+        join();
+    }
+}
+
+void SFLThread::start()
+{
+    if (!running_) {
+        running_ = true;
+        pthread_create(&thread_, NULL, &run_, this);
+    }
+}
+
+void SFLThread::stop()
+{
+    set_false_atomic(&running_);
+}
+
+void SFLThread::join()
+{
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void SFLThread::exit()
+{
+    stop();
+    pthread_exit(NULL);
+}
+
+bool SFLThread::isRunning()
+{
+    return running_;
+}
