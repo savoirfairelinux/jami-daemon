@@ -47,10 +47,10 @@ void VideoScaler::scale(VideoFrame &input, VideoFrame &output)
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
                                 input_frame->height,
-                                (PixelFormat) input_frame->format,
+                                (AVPixelFormat) input_frame->format,
                                 output_frame->width,
                                 output_frame->height,
-                                (PixelFormat) output_frame->format,
+                                (AVPixelFormat) output_frame->format,
                                 mode_,
                                 NULL, NULL, NULL);
     if (!ctx_) {

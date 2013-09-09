@@ -129,13 +129,13 @@ void VideoFrame::setDestination(void *data)
     }
 
     avpicture_fill((AVPicture *) frame_, (uint8_t *) data,
-                   (PixelFormat) frame_->format, frame_->width,
+                   (AVPixelFormat) frame_->format, frame_->width,
                    frame_->height);
 }
 
 size_t VideoFrame::getSize()
 {
-    return avpicture_get_size((PixelFormat) frame_->format,
+    return avpicture_get_size((AVPixelFormat) frame_->format,
                               frame_->width,
                               frame_->height);
 }
@@ -143,7 +143,7 @@ size_t VideoFrame::getSize()
 size_t VideoFrame::getSize(int width, int height, int format)
 {
     return avpicture_get_size(
-        (PixelFormat) libav_utils::libav_pixel_format(format), width, height);
+        (AVPixelFormat) libav_utils::libav_pixel_format(format), width, height);
 }
 
 int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)

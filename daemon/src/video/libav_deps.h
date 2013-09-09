@@ -51,4 +51,8 @@ extern "C" {
 
 #define HAVE_SDP_CUSTOM_IO LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
 
+#if (LIBAVUTIL_VERSION_MAJOR < 53) && !defined(FF_API_PIX_FMT)
+#define AVPixelFormat PixelFormat
+#endif
+
 #endif // __LIBAV_DEPS_H__
