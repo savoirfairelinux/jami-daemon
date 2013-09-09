@@ -77,8 +77,8 @@ class PresenceManager
 #endif
 
 #ifdef __ANDROID__
-    void newPresSubClientNotification(const std::string& uri, const std::string& basic,     const std::string& note);
-    void newPresSubServerRequest(const std::string& remote);
+    void newClientSubscription(const std::string& uri, const std::string& basic,     const std::string& note);
+    void newServerSubscriptionRequest(const std::string& remote);
 #endif //__ANDROID__
 
     /* Presence subscription/Notification. */

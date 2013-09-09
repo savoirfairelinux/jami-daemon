@@ -141,7 +141,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     const std::string note(status->info[0].rpid.note.ptr,status->info[0].rpid.note.slen);
     DEBUG(" Received status of PresSubClient  %s: status=%s note=%s",uri.c_str(),(status->info[0].basic_open?"open":"closed"),note.c_str());
     /* report status to client signal */
-    Manager::instance().getClient()->getPresenceManager()->newPresSubClientNotification(uri, status->info[0].basic_open, note);
+    Manager::instance().getClient()->getPresenceManager()->newClientSubscription(uri, status->info[0].basic_open, note);
 }
 
 void SIPPresence::subscribeClient(const std::string& uri, const bool& flag){
@@ -186,8 +186,8 @@ void SIPPresence::removePresSubClient(PresSubClient *c){
 }
 
 
-void SIPPresence::reportNewPresSubServerRequest(PresSubServer *s){
-    Manager::instance().getClient()->getPresenceManager()->newPresSubServerRequest(s->remote);
+void SIPPresence::reportnewServerSubscriptionRequest(PresSubServer *s){
+    Manager::instance().getClient()->getPresenceManager()->newServerSubscriptionRequest(s->remote);
 }
 
 void SIPPresence::approvePresSubServer(const std::string& uri, const bool& flag){

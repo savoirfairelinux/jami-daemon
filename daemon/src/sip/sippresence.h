@@ -175,7 +175,7 @@ public:
      * Report new Subscription to the client, waiting for approval.
      * @param s     PresenceSubcription pointer.
      */
-    void reportNewPresSubServerRequest(PresSubServer *s);
+    void reportnewServerSubscriptionRequest(PresSubServer *s);
      /**
      * IP2IP context.
      * Process new subscription based on client decision.
