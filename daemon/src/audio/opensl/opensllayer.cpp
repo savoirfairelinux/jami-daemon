@@ -147,8 +147,8 @@ OpenSLLayer::OpenSLLayer()
     , recorderBufferQueue_(0)
     , playbackBufferIndex_(0)
     , recordBufferIndex_(0)
-    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(0))
-    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(0))
+    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(3000))
+    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(3000))
 {
 }
 
@@ -490,7 +490,6 @@ OpenSLLayer::startAudioCapture()
     buffer.reset();
 
     DEBUG("Enqueue record buffer\n");
-	DEBUG("buffer.getData()[0].size():%d", buffer.getData()[0].size());
     result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getData()[0].data(), buffer.getData()[0].size());
 
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,

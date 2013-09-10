@@ -31,7 +31,7 @@
 #include <iostream>
 #include "audiobuffer.h"
 
-AudioBuffer::AudioBuffer(size_t sample_num /* = 0 */, unsigned channel_num /* = 1 */, int sample_rate /* = 8000 */)
+AudioBuffer::AudioBuffer(size_t sample_num, unsigned channel_num /* = 1 */, int sample_rate /* = 8000 */)
     :  sampleRate_(sample_rate),
        samples_(std::max(1U, channel_num),
                 std::vector<SFLAudioSample>(sample_num, 0))
