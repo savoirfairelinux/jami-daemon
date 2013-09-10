@@ -35,9 +35,11 @@
 #include "client/client.h"
 #include "client/callmanager.h"
 #include "client/configurationmanager.h"
+#include "client/presencemanager.h"
 
 Client::Client() : callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
+	, presenceManager_(new PresenceManager)
     , instanceManager_(0)
     , dispatcher_(0)
 #ifdef SFL_VIDEO
@@ -59,6 +61,7 @@ Client::~Client()
     delete dispatcher_;
     delete instanceManager_;
     delete configurationManager_;
+	delete presenceManager_;
     delete callManager_;
 }
 

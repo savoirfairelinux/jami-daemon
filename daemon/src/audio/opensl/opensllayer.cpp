@@ -147,8 +147,8 @@ OpenSLLayer::OpenSLLayer()
     , recorderBufferQueue_(0)
     , playbackBufferIndex_(0)
     , recordBufferIndex_(0)
-    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH)
-    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH)
+    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(0))
+    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(0))
 {
 }
 
@@ -448,7 +448,7 @@ OpenSLLayer::startAudioPlayback()
 
         buffer.reset();
 
-        result = (*playbackBufferQueue_)->Enqueue(playbackBufferQueue_, buffer.getData()[0].data(), buffer.size());
+        result = (*playbackBufferQueue_)->Enqueue(playbackBufferQueue_, buffer.getData()[0].data(), buffer.getData()[0].size());
 
         if (SL_RESULT_SUCCESS != result) {
             DEBUG("Error could not enqueue initial buffers\n");
@@ -490,7 +490,8 @@ OpenSLLayer::startAudioCapture()
     buffer.reset();
 
     DEBUG("Enqueue record buffer\n");
-    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getData()[0].data(), buffer.size());
+	DEBUG("buffer.getData()[0].size():%d", buffer.getData()[0].size());
+    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getData()[0].data(), buffer.getData()[0].size());
 
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
@@ -566,9 +567,9 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 
     if (bufferFilled) {
 #ifdef RECORD_AUDIO_TODISK
-        opensl_outfile.write((char const *)(&buffer.getData()), buffer.size());
+        opensl_outfile.write((char const *)(buffer.getData()[0].data()), buffer.getData()[0].size());
 #endif
-        SLresult result = (*queue)->Enqueue(queue, &buffer.getData(), buffer.size());
+        SLresult result = (*queue)->Enqueue(queue, buffer.getData()[0].data(), buffer.getData()[0].size());
 
         if (SL_RESULT_SUCCESS != result) {
             DEBUG("Error could not enqueue buffers in playback callback\n");
@@ -597,14 +598,14 @@ OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
 
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
-    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, &buffer.getData(), buffer.size());
+    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getData()[0].data(), buffer.getData()[0].size());
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);
 
     audioCaptureFillBuffer(buffer);
 #ifdef RECORD_AUDIO_TODISK
-    opensl_infile.write((char const *)(&buffer.getData()), buffer.size());
+    opensl_infile.write((char const *)(buffer.getData()[0].data()), buffer.getData()[0].size());
 #endif
 }
 

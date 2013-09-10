@@ -77,7 +77,7 @@ class PresenceManager
 #endif
 
 #ifdef __ANDROID__
-    void newBuddySubscription(const std::string& uri, const std::string& basic,     const std::string& note);
+    void newBuddySubscription(const std::string& uri, const std::string& basic, const std::string& note);
     void newServerSubscriptionRequest(const std::string& remote);
 #endif //__ANDROID__
 
