@@ -100,7 +100,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , decoderPayloadType_(0)
     , hasDynamicPayloadType_(false)
     , decData_(DEC_BUFFER_SIZE)     // std::tr1::arrays will be 0-initialized
-    , resampledData_()
+    , resampledData_(0)
     , encodedData_()
     , converterEncode_(0)
     , converterDecode_(0)

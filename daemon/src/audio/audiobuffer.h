@@ -42,7 +42,7 @@ class AudioBuffer {
         /**
          * Default constructor.
          */
-        AudioBuffer(size_t sample_num = 0, unsigned channel_num = 1, int sample_rate = 8000);
+        AudioBuffer(size_t sample_num, unsigned channel_num = 1, int sample_rate = 8000);
 
         /**
          * Construtor from existing interleaved data (copied into the buffer).
