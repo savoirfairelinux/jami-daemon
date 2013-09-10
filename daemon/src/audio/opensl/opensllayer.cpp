@@ -448,7 +448,7 @@ OpenSLLayer::startAudioPlayback()
 
         buffer.reset();
 
-        result = (*playbackBufferQueue_)->Enqueue(playbackBufferQueue_, &buffer.getData(), buffer.size());
+        result = (*playbackBufferQueue_)->Enqueue(playbackBufferQueue_, buffer.getData()[0].data(), buffer.size());
 
         if (SL_RESULT_SUCCESS != result) {
             DEBUG("Error could not enqueue initial buffers\n");
@@ -490,7 +490,7 @@ OpenSLLayer::startAudioCapture()
     buffer.reset();
 
     DEBUG("Enqueue record buffer\n");
-    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, &buffer.getData(), buffer.size());
+    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getData()[0].data(), buffer.size());
 
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
