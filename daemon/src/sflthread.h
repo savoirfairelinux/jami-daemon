@@ -40,18 +40,18 @@ public:
     virtual ~SFLThread();
 
     void start();
+
+protected:
+    void exit();
     void stop();
     void join();
     bool isRunning();
 
-protected:
+private:
     virtual bool setup() { return true; };
     virtual void process() {};
     virtual void cleanup() {};
 
-    void exit();
-
-private:
     static void* run_(void*);
     void mainloop_();
     pthread_t thread_;

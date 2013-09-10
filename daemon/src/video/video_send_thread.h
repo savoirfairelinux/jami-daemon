@@ -52,13 +52,12 @@ public:
     std::string getSDP() const { return sdp_; }
     void forceKeyFrame();
 
-protected:
+private:
     // threading
     bool setup();
     void process();
     void cleanup();
 
-private:
     NON_COPYABLE(VideoSendThread);
 
     static int interruptCb(void *ctx);

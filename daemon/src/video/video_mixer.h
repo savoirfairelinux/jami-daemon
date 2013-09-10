@@ -57,10 +57,10 @@ public:
     int getWidth() const;
     int getHeight() const;
 
+private:
     // threading
     void process();
 
-private:
     NON_COPYABLE(VideoMixer);
 
     void waitForUpdate();

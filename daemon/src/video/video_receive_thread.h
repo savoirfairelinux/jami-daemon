@@ -82,7 +82,6 @@ private:
     void renderFrame();
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
 
-protected:
     // threading
     bool setup();
     void process();
