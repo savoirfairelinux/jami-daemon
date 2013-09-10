@@ -77,14 +77,14 @@ class PresenceManager
 #endif
 
 #ifdef __ANDROID__
-    void newClientSubscription(const std::string& uri, const std::string& basic,     const std::string& note);
+    void newBuddySubscription(const std::string& uri, const std::string& basic,     const std::string& note);
     void newServerSubscriptionRequest(const std::string& remote);
 #endif //__ANDROID__
 
     /* Presence subscription/Notification. */
-    void sendPresence(const std::string& accountID, const bool& status, const std::string& note);
-    void approvePresSubServer(const std::string& uri, const bool& flag);
-    void subscribeClient(const std::string& accountID, const std::string& uri, const bool& flag);
+    void publish(const std::string& accountID, const bool& status, const std::string& note);
+    void answerServerRequest(const std::string& uri, const bool& flag);
+    void subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag);
     std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
     void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 

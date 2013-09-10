@@ -59,7 +59,7 @@ PresenceManager::PresenceManager(DBus::Connection& connection) :
  * Un/subscribe to buddySipUri for an accountID
  */
 void
-PresenceManager::subscribeClient(const std::string& accountID, const std::string& uri, const bool& flag)
+PresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
 {
 
     SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
@@ -76,7 +76,7 @@ PresenceManager::subscribeClient(const std::string& accountID, const std::string
  * Notify for IP2IP account and publish for PBX account
  */
 void
-PresenceManager::sendPresence(const std::string& accountID, const bool& status, const std::string& note)
+PresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
 {
     SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
     if (!sipaccount)
@@ -91,7 +91,7 @@ PresenceManager::sendPresence(const std::string& accountID, const bool& status, 
  * Accept or not a PresSubServer request for IP2IP account
  */
 void
-PresenceManager::approvePresSubServer(const std::string& uri, const bool& flag)
+PresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
 {
     SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
     if (!sipaccount)

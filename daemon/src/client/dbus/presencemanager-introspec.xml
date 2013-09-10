@@ -3,7 +3,7 @@
 <node name="/presencemanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
     <interface name="org.sflphone.SFLphone.PresenceManager">
         <!-- METHODS !-->
-        <method name="sendPresence" tp:name-for-bindings="sendPresence">
+        <method name="publish" tp:name-for-bindings="publish">
             <tp:added version="1.3.0"/>
             <arg type="s" name="accountID" direction="in">
                 <tp:docstring>
@@ -22,7 +22,7 @@
             </arg>
         </method>
 
-        <method name="approvePresSubServer" tp:name-for-bindings="approvePresSubServer">
+        <method name="answerServerRequest" tp:name-for-bindings="answerServerRequest">
             <tp:docstring>
                 Answer a presence request from the server
             </tp:docstring>
@@ -38,7 +38,7 @@
             </arg>
         </method>
 
-        <method name="subscribeClient" tp:name-for-bindings="subscribeClient">
+        <method name="subscribeBuddy" tp:name-for-bindings="subscribeBuddy">
             <tp:docstring>
                 Ask be be notified when 'uri' presence change
             </tp:docstring>
@@ -103,7 +103,7 @@
 
         <!-- SIGNALS !-->
 
-        <signal name="newClientSubscription" tp:name-for-bindings="newClientSubscription">
+        <signal name="newBuddySubscription" tp:name-for-bindings="newBuddySubscription">
             <tp:added version="1.3.0"/>
             <tp:docstring>
                 Notify when a registered presence uri presence informations changes
