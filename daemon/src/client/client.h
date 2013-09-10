@@ -38,6 +38,7 @@
 
 class ConfigurationManager;
 class CallManager;
+class PresenceManager;
 class NetworkManager;
 class Instance;
 class VideoControls;
@@ -57,6 +58,10 @@ class Client {
         ConfigurationManager * getConfigurationManager() {
             return configurationManager_;
         }
+
+        PresenceManager * getPresenceManager() {
+            return presenceManager_;
+        }
 #ifdef SFL_VIDEO
         VideoControls* getVideoControls() {
             return videoControls_;
@@ -70,6 +75,7 @@ class Client {
         NON_COPYABLE(Client);
         CallManager*          callManager_;
         ConfigurationManager* configurationManager_;
+        PresenceManager*      presenceManager_;
         Instance*             instanceManager_;
         DBus::BusDispatcher*  dispatcher_;
 #ifdef SFL_VIDEO

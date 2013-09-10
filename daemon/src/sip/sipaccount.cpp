@@ -603,6 +603,8 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
 
+    enablePresence(details[CONFIG_PRESENCE_ENABLED] == TRUE_STR);
+
     // srtp settings
     srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == TRUE_STR;
     srtpFallback_ = details[CONFIG_SRTP_RTP_FALLBACK] == TRUE_STR;
@@ -698,6 +700,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
+    a[CONFIG_PRESENCE_ENABLED] = getPresence()->isEnabled()? TRUE_STR : FALSE_STR;
 
     RegistrationState state = UNREGISTERED;
     std::string registrationStateCode;
@@ -1381,8 +1384,17 @@ bool SIPAccount::isIP2IP() const{
     return accountID_ == IP2IP_PROFILE;
 }
 
-SIPPresence * SIPAccount::getPresence(){
+SIPPresence * SIPAccount::getPresence() const {
     return presence_;
+}
+
+/**
+ *  Enable the presence module (PUBLISH/SUBSCRIBE)
+ */
+void
+SIPAccount::enablePresence(const bool& flag){
+    DEBUG("Enable Presence (acc:%s : %s)",accountID_.c_str(), flag? "yes":"no");
+    getPresence()->enable(flag);
 }
 
 bool SIPAccount::matches(const std::string &userName, const std::string &server,

@@ -179,16 +179,7 @@ class CallManager
         void registrationStateChanged(const std::string&, const std::string&, const int32_t&);
         void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
 
-		void newPresSubClientNotification(const std::string& uri, const std::string& basic,	const std::string& note);
-		void newPresSubServerRequest(const std::string& remote);
-
 #endif // __ANDROID__
-
-        /* Presence subscription/Notification. */
-        void enablePresence(const std::string& accountID, const bool& flag);
-        void sendPresence(const std::string& accountID, const bool& status, const std::string& note);
-        void approvePresSubServer(const std::string& uri, const bool& flag);
-        void subscribePresSubClient(const std::string& accountID, const std::string& uri, const bool& flag);
 private:
 
 #if HAVE_ZRTP

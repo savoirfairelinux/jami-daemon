@@ -34,6 +34,7 @@
 #include "manager.h"
 #include "client/client.h"
 #include "client/callmanager.h"
+#include "client/presencemanager.h"
 #include "sipaccount.h"
 #include "sippublish.h"
 #include "sippresence.h"
@@ -78,19 +79,19 @@ SIPPresence::~SIPPresence(){
         removePresSubServer(s);
 }
 
-SIPAccount * SIPPresence::getAccount(){
+SIPAccount * SIPPresence::getAccount() const {
     return acc_;
 }
 
-pjsip_pres_status * SIPPresence::getStatus(){
+pjsip_pres_status * SIPPresence::getStatus() {
     return &pres_status_data;
 }
 
-int SIPPresence::getModId(){
+int SIPPresence::getModId() const {
     return  ((SIPVoIPLink*) (acc_->getVoIPLink()))->getModId();
 }
 
-pj_pool_t*  SIPPresence::getPool(){
+pj_pool_t*  SIPPresence::getPool() const {
     return pool_;
 }
 
@@ -138,12 +139,12 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     /* Update our info. See pjsua_buddy_get_info() for additionnal ideas*/
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
     const std::string note(status->info[0].rpid.note.ptr,status->info[0].rpid.note.slen);
-    DEBUG(" Received status of PresSubClient  %s: status=%s note=%s",uri.c_str(),basic.c_str(),note.c_str());
+    DEBUG(" Received status of PresSubClient  %s: status=%s note=%s",uri.c_str(),(status->info[0].basic_open?"open":"closed"),note.c_str());
     /* report status to client signal */
-    Manager::instance().getClient()->getCallManager()->newPresSubClientNotification(uri, basic, note);
+    Manager::instance().getClient()->getPresenceManager()->newBuddySubscription(uri, status->info[0].basic_open, note);
 }
 
-void SIPPresence::subscribePresSubClient(const std::string& uri, const bool& flag){
+void SIPPresence::subscribeClient(const std::string& uri, const bool& flag){
     /* Check if the buddy was already subscribed */
     for(auto  c : pres_sub_client_list_)
         if(c->getURI()==uri){
@@ -185,8 +186,8 @@ void SIPPresence::removePresSubClient(PresSubClient *c){
 }
 
 
-void SIPPresence::reportNewPresSubServerRequest(PresSubServer *s){
-    Manager::instance().getClient()->getCallManager()->newPresSubServerRequest(s->remote);
+void SIPPresence::reportnewServerSubscriptionRequest(PresSubServer *s){
+    Manager::instance().getClient()->getPresenceManager()->newServerSubscriptionRequest(s->remote);
 }
 
 void SIPPresence::approvePresSubServer(const std::string& uri, const bool& flag){

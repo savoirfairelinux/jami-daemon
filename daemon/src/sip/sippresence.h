@@ -118,7 +118,7 @@ public:
     /**
      * Return associated sipaccount
      */
-    SIPAccount * getAccount();
+    SIPAccount * getAccount() const;
     /**
      * Return presence data.
      */
@@ -126,11 +126,11 @@ public:
     /**
      * Return presence module ID which is actually the same as the VOIP link
      */
-    int getModId();
+    int getModId() const;
     /**
      *  Return a pool for generic functions.
      */
-    pj_pool_t*  getPool();
+    pj_pool_t*  getPool() const;
     /**
      * Activate the module (PUBLISH/SUBSCRIBE)
      */
@@ -158,7 +158,7 @@ public:
      * Send a SUBSCRIBE request to PBX/IP2IP
      * @param buddyUri  Remote user that we want to subscribe
      */
-    void subscribePresSubClient(const std::string& uri, const bool& flag);
+    void subscribeClient(const std::string& uri, const bool& flag);
     /**
      * Add a buddy in the buddy list.
      * @param b     PresSubClient pointer
@@ -175,7 +175,7 @@ public:
      * Report new Subscription to the client, waiting for approval.
      * @param s     PresenceSubcription pointer.
      */
-    void reportNewPresSubServerRequest(PresSubServer *s);
+    void reportnewServerSubscriptionRequest(PresSubServer *s);
      /**
      * IP2IP context.
      * Process new subscription based on client decision.
@@ -200,6 +200,14 @@ public:
      * Iterate through the subscriber list and send NOTIFY to each.
      */
     void notifyPresSubServer();
+
+    bool isEnabled() const {
+        return enabled;
+    }
+
+    const std::list< PresSubClient *> getClientSubscriptions() {
+        return pres_sub_client_list_;
+    }
 
     /**
      * Lock methods

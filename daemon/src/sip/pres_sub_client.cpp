@@ -298,6 +298,14 @@ std::string PresSubClient::getURI() {
     return res;
 }
 
+bool PresSubClient::isPresent() {
+    return status.info[0].basic_open;
+}
+
+std::string PresSubClient::getLineStatus() {
+    return std::string(status.info[0].rpid.note.ptr,status.info[0].rpid.note.slen);
+}
+
 bool PresSubClient::isTermReason(std::string reason) {
     std::string myReason(term_reason.ptr, term_reason.slen);
     return !myReason.compare(reason);

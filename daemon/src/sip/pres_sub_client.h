@@ -101,6 +101,16 @@ class PresSubClient {
          */
         std::string getURI();
 
+        /**
+         * Is the URI present
+         */
+        bool isPresent();
+
+        /**
+         * A message from the URIs
+         */
+        std::string getLineStatus();
+
 
         friend void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
         friend void pres_client_evsub_on_tsx_state(pjsip_evsub *sub,

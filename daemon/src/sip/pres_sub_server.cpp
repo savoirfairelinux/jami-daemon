@@ -154,7 +154,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata) {
     /* Create a new PresSubServer server and wait for client approve */
     PresSubServer *presSubServer = new PresSubServer(pres, sub, remote, dlg);
     pjsip_evsub_set_mod_data(sub, pres->getModId(), presSubServer);
-    pres->reportNewPresSubServerRequest(presSubServer); // Notify the client.
+    pres->reportnewServerSubscriptionRequest(presSubServer); // Notify the client.
     pres->addPresSubServer(presSubServer);
 
     /* Capture the value of Expires header. */

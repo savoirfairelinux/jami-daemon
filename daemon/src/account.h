@@ -224,6 +224,7 @@ class Account : public Serializable {
         static const char * const MAILBOX_KEY;
         static const char * const USER_AGENT_KEY;
         static const char * const DEFAULT_USER_AGENT;
+        static const char * const PRESENCE_MODULE_ENABLED_KEY;
 
         static std::string mapStateNumberToString(RegistrationState state);
 
