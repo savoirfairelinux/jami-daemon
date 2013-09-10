@@ -36,8 +36,8 @@
 #include "scoped_lock.h"
 
 AudioLayer::AudioLayer()
-    : captureGain_(100)
-    , playbackGain_(100)
+    : captureGain_(1.0)
+    , playbackGain_(1.0)
     , isStarted_(false)
     , playbackMode_(NONE)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
@@ -96,7 +96,7 @@ void AudioLayer::notifyIncomingCall()
     Tone tone("440/160", getSampleRate());
     unsigned int nbSample = tone.getSize();
     AudioBuffer buf(nbSample);
-    tone.getNext(buf);
+    tone.getNext(buf, 1.0);
 
     /* Put the data in the urgent ring buffer */
     flushUrgent();

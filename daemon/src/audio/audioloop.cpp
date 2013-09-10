@@ -62,7 +62,7 @@ AudioLoop::seek(double relative_position)
 }
 
 void
-AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
+AudioLoop::getNext(AudioBuffer& output, double gain)
 {
     if (!buffer_) {
         ERROR("buffer is NULL");
@@ -93,7 +93,7 @@ AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
         total_samples -= samples;
     }
 
-    output.applyGain(volume); // apply volume
+    output.applyGain(gain);
 
     pos_ = pos;
 

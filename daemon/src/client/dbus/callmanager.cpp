@@ -123,9 +123,9 @@ void CallManager::setVolume(const std::string& device, const double& value)
     DEBUG("DBUS set volume for %s: %f", device.c_str(), value);
 
     if (device == "speaker") {
-        audiolayer->setPlaybackGain((int)(value * 100.0));
+        audiolayer->setPlaybackGain(value);
     } else if (device == "mic") {
-        audiolayer->setCaptureGain((int)(value * 100.0));
+        audiolayer->setCaptureGain(value);
     }
 
     volumeChanged(device, value);
@@ -142,9 +142,9 @@ CallManager::getVolume(const std::string& device)
     }
 
     if (device == "speaker")
-        return audiolayer->getPlaybackGain() / 100.0;
+        return audiolayer->getPlaybackGain();
     else if (device == "mic")
-        return audiolayer->getCaptureGain() / 100.0;
+        return audiolayer->getCaptureGain();
 
     return 0;
 }

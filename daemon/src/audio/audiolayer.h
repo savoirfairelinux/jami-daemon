@@ -138,44 +138,32 @@ class AudioLayer {
         void flushUrgent();
 
         /**
-         * Convert audio amplitude value from linear value to dB
-         */
-        static double amplitudeLinearToDB(double value) {
-            return 20.0 * log10(value);
-        }
-
-        /**
-         * Convert audio amplitude from dB to Linear value
-         */
-        static double ampluitudeDBToLinear(double value) {
-            return pow(10.0, value / 20.0);
-        }
-
-        /**
          * Set capture stream gain (microphone)
+         * Range should be [-1.0, 1.0]
          */
-        void setCaptureGain(unsigned int gain) {
+        void setCaptureGain(double gain) {
             captureGain_ = gain;
         }
 
         /**
          * Set capture stream gain (microphone)
          */
-        unsigned int getCaptureGain() const {
+        double getCaptureGain() const {
             return captureGain_;
         }
 
         /**
          * Set playback stream gain (speaker)
+         * Range should be [-1.0, 1.0]
          */
-        void setPlaybackGain(unsigned int gain) {
+        void setPlaybackGain(double gain) {
             playbackGain_ = gain;
         }
 
         /**
          * Get playback stream gain (speaker)
          */
-        unsigned int getPlaybackGain() const {
+        double getPlaybackGain() const {
             return playbackGain_;
         }
 
@@ -200,12 +188,12 @@ class AudioLayer {
         /**
          * Gain applied to mic signal
          */
-        unsigned int captureGain_;
+        double captureGain_;
 
         /**
          * Gain applied to playback signal
          */
-        unsigned int playbackGain_;
+        double playbackGain_;
 
         /**
          * Whether or not the audio layer stream is started

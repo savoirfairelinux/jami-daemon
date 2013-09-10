@@ -308,17 +308,17 @@ class AudioPreference : public Serializable {
             alwaysRecording_ = rec;
         }
 
-        int getVolumemic() const {
+        double getVolumemic() const {
             return volumemic_;
         }
-        void setVolumemic(int m) {
+        void setVolumemic(double m) {
             volumemic_ = m;
         }
 
-        int getVolumespkr() const {
+        double getVolumespkr() const {
             return volumespkr_;
         }
-        void setVolumespkr(int s) {
+        void setVolumespkr(double s) {
             volumespkr_ = s;
         }
 

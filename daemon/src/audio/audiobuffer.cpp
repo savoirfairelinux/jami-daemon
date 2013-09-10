@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#include <iostream>
 #include "audiobuffer.h"
+#include "logger.h"
 
 AudioBuffer::AudioBuffer(size_t sample_num, unsigned channel_num /* = 1 */, int sample_rate /* = 8000 */)
     :  sampleRate_(sample_rate),
@@ -102,19 +102,17 @@ std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
     return NULL;
 }
 
-void AudioBuffer::applyGain(unsigned int gain)
-{
-    if (gain != 100)
-        applyGain(gain * 0.01);
-}
-
 void AudioBuffer::applyGain(double gain)
 {
     if (gain == 1.0) return;
 
-    for (unsigned i = 0; i < samples_.size(); i++)
-        for (unsigned j = 0; j < samples_[0].size(); j++)
-            samples_[i][j] *= gain;
+    const double g = std::max(std::min(1.0, gain), -1.0);
+    if (g != gain)
+        WARN("Normalizing %f to [-1.0, 1.0]", gain);
+
+    for (auto &channel : samples_)
+        for (auto &sample : channel)
+            sample *= g;
 }
 
 size_t AudioBuffer::interleave(SFLAudioSample* out) const

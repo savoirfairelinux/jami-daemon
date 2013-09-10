@@ -54,9 +54,9 @@ class AudioLoop {
          * the function change the intern position, and will loop
          * @param output  The data buffer
          * @param nb of int16 to send
-         * @param volume  The volume
+         * @param gain The gain [-1.0, 1.0]
          */
-        void getNext(AudioBuffer& output, unsigned int volume=100);
+        void getNext(AudioBuffer& output, double gain);
 
         void seek(double relative_position);
 

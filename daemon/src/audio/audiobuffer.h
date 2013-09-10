@@ -154,13 +154,6 @@ class AudioBuffer {
         void deinterleave(const SFLAudioSample* in, size_t sample_num, unsigned channel_num = 1);
 
         /**
-         * In-place gain transformation with integer parameter.
-         *
-         * @param gain: 0 -> 100 scale
-         */
-        void applyGain(unsigned int gain);
-
-        /**
          * In-place gain transformation.
          *
          * @param gain: 0.0 -> 1.0 scale
