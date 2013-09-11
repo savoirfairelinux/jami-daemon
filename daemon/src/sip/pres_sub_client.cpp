@@ -54,7 +54,7 @@
 
 #define PRES_TIMER 300 // 5min
 
-int modId; // used to extract data structure from event_subscription
+static int modId; // used to extract data structure from event_subscription
 
 void pres_client_timer_cb(pj_timer_heap_t * /*th*/, pj_timer_entry *entry)
 {
