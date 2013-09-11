@@ -938,9 +938,7 @@ class ManagerImpl {
         /**
          * Return a pointer to the  instance of the mainbuffer
          */
-        MainBuffer &getMainBuffer() {
-            return mainBuffer_;
-        }
+        MainBuffer &getMainBuffer();
 
         /**
          * Tell if there is a current call processed
@@ -952,13 +950,9 @@ class ManagerImpl {
          * Return the current Client
          * @return A pointer to the Client instance
          */
-        Client* getClient() {
-            return &client_;
-        }
+        Client* getClient();
 #ifdef SFL_VIDEO
-        VideoControls * getVideoControls() {
-            return client_.getVideoControls();
-        }
+        VideoControls * getVideoControls();
 #endif
 
         /**

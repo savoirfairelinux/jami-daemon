@@ -395,6 +395,7 @@ void MainBuffer::flushAllBuffers()
 
 void MainBuffer::dumpInfo()
 {
+#if 0
     sfl::ScopedLock guard(mutex_);
 
     // print each call and bound call ids
@@ -435,4 +436,5 @@ void MainBuffer::dumpInfo()
 
         DEBUG("%s", dbg_str.c_str());
     }
+#endif
 }

@@ -2996,3 +2996,24 @@ ManagerImpl::getAudioDriver()
 {
     return audiodriver_;
 }
+
+
+MainBuffer &
+ManagerImpl::getMainBuffer()
+{
+    return mainBuffer_;
+}
+
+Client*
+ManagerImpl::getClient()
+{
+    return &client_;
+}
+
+#ifdef SFL_VIDEO
+VideoControls *
+ManagerImpl::getVideoControls()
+{
+    return client_.getVideoControls();
+}
+#endif
