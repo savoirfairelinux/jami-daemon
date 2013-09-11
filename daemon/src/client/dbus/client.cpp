@@ -111,6 +111,7 @@ Client::~Client()
     delete videoControls_;
 #endif
     delete instanceManager_;
+    delete presenceManager_;
     delete configurationManager_;
     delete callManager_;
     delete dispatcher_;
