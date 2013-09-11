@@ -202,7 +202,7 @@ public:
     void notifyPresSubServer();
 
     bool isEnabled() const {
-        return enabled;
+        return enabled_;
     }
 
     const std::list< PresSubClient *> getClientSubscriptions() {
@@ -214,7 +214,7 @@ public:
 
     pjsip_pres_status pres_status_data; /**< Presence Data.*/
     pjsip_publishc  *publish_sess;  /**< Client publication session.*/
-    pj_bool_t   enabled; /**< Allow for status publish,*/
+    pj_bool_t enabled_; /**< Allow for status publish,*/
 
 private:
     NON_COPYABLE(SIPPresence);
