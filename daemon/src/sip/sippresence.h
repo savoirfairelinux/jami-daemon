@@ -209,13 +209,8 @@ public:
         return pres_sub_client_list_;
     }
 
-    /**
-     * Lock methods
-     */
     void lock();
     void unlock();
-    bool tryLock();
-    bool isLocked();
 
     pjsip_pres_status pres_status_data; /**< Presence Data.*/
     pjsip_publishc  *publish_sess;  /**< Client publication session.*/

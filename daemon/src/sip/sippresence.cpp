@@ -222,7 +222,6 @@ void SIPPresence::notifyPresSubServer() {
         s->notify();
 }
 
-
 void SIPPresence::lock()
 {
     pj_mutex_lock(mutex_);
@@ -235,22 +234,6 @@ void SIPPresence::unlock()
     if (--mutex_nesting_level_ == 0)
 	mutex_owner_ = NULL;
     pj_mutex_unlock(mutex_);
-}
-
-bool SIPPresence::tryLock()
-{
-    pj_status_t status;
-    status = pj_mutex_trylock(mutex_);
-    if (status == PJ_SUCCESS) {
-	mutex_owner_ = pj_thread_this();
-	++mutex_nesting_level_;
-    }
-    return status;
-}
-
-bool SIPPresence::isLocked()
-{
-    return mutex_owner_ == pj_thread_this();
 }
 
 void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
