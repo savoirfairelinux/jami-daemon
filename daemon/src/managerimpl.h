@@ -148,9 +148,7 @@ class ManagerImpl {
          * it's multi-thread and use mutex internally
          * @return AudioLayer*  The audio layer object
          */
-        AudioLayer* getAudioDriver() {
-            return audiodriver_;
-        }
+        AudioLayer* getAudioDriver();
 
         void startAudioDriverStream();
 

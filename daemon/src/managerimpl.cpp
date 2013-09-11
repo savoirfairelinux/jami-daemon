@@ -2989,3 +2989,10 @@ ManagerImpl::sendRegister(const std::string& accountID, bool enable)
     else
         acc->unregisterVoIPLink();
 }
+
+
+AudioLayer*
+ManagerImpl::getAudioDriver()
+{
+    return audiodriver_;
+}
