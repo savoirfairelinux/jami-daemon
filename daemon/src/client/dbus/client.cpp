@@ -142,3 +142,29 @@ void Client::exit()
         return;
     }
 }
+
+CallManager *
+Client::getCallManager()
+{
+    return callManager_;
+}
+
+ConfigurationManager *
+Client::getConfigurationManager()
+{
+    return configurationManager_;
+}
+
+PresenceManager *
+Client::getPresenceManager()
+{
+    return presenceManager_;
+}
+
+#ifdef SFL_VIDEO
+VideoControls*
+Client::getVideoControls()
+{
+    return videoControls_;
+}
+#endif

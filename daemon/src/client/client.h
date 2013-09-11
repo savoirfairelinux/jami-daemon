@@ -52,20 +52,14 @@ class Client {
         Client();
         ~Client();
 
-        CallManager * getCallManager() {
-            return callManager_;
-        }
-        ConfigurationManager * getConfigurationManager() {
-            return configurationManager_;
-        }
+        CallManager * getCallManager();
 
-        PresenceManager * getPresenceManager() {
-            return presenceManager_;
-        }
+        ConfigurationManager * getConfigurationManager();
+
+        PresenceManager * getPresenceManager();
+
 #ifdef SFL_VIDEO
-        VideoControls* getVideoControls() {
-            return videoControls_;
-        }
+        VideoControls* getVideoControls();
 #endif
 
         void event_loop();
