@@ -108,7 +108,7 @@ void AudioBuffer::applyGain(double gain)
 
     const double g = std::max(std::min(1.0, gain), -1.0);
     if (g != gain)
-        WARN("Normalizing %f to [-1.0, 1.0]", gain);
+        DEBUG("Normalizing %f to [-1.0, 1.0]", gain);
 
     for (auto &channel : samples_)
         for (auto &sample : channel)
