@@ -74,10 +74,10 @@ SIPPresence::SIPPresence(SIPAccount *acc)
 SIPPresence::~SIPPresence()
 {
     /* Flush the lists */
-    for (auto c : pres_sub_client_list_)
+    for (const auto &c : pres_sub_client_list_)
         removePresSubClient(c) ;
 
-    for (auto s : pres_sub_server_list_)
+    for (const auto &s : pres_sub_server_list_)
         removePresSubServer(s);
 }
 
@@ -160,7 +160,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
 void SIPPresence::subscribeClient(const std::string& uri, const bool& flag)
 {
     /* Check if the buddy was already subscribed */
-    for (auto  c : pres_sub_client_list_)
+    for (const auto &c : pres_sub_client_list_)
         if (c->getURI() == uri) {
             DEBUG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
             delete c;
@@ -210,7 +210,7 @@ void SIPPresence::reportnewServerSubscriptionRequest(PresSubServer *s)
 
 void SIPPresence::approvePresSubServer(const std::string& uri, const bool& flag)
 {
-    for (auto s : pres_sub_server_list_)
+    for (const auto &s : pres_sub_server_list_)
         if (s->matches((char *) uri.c_str())) {
             DEBUG("Approve Presence_subscription_server for %s: %s.", s->remote, flag ? "true" : "false");
             s->approve(flag);
@@ -240,7 +240,7 @@ void SIPPresence::notifyPresSubServer()
 {
     DEBUG("Iterating through Presence_subscription_server:");
 
-    for (auto s : pres_sub_server_list_)
+    for (const auto &s : pres_sub_server_list_)
         s->notify();
 }
 
