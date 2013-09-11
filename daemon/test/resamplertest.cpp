@@ -53,9 +53,11 @@ namespace {
     template <typename T>
     void print_buffer(T &buffer)
     {
+#ifdef VERBOSE
         std::copy(buffer.begin(), buffer.end(),
                 std::ostream_iterator<SFLAudioSample>(std::cout, ", "));
         std::cout << std::endl;
+#endif
     }
 }
 

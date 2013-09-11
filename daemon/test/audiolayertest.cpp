@@ -57,8 +57,8 @@ void AudioLayerTest::testAudioLayerConfig()
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getPulseDeviceRecord() == "alsa_input.pci-0000_00_1b.0.analog-stereo");
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getPulseDeviceRingtone() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
 
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumemic() == 100);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumespkr() == 100);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumemic() == 1.0);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumespkr() == 1.0);
 
     // TODO: Fix tests
     //CPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);
