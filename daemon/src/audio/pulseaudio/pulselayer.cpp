@@ -529,6 +529,8 @@ void PulseLayer::readFromMic()
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
+    in.applyGain(captureGain_);
+
     AudioBuffer * out = &in;
 
     if (resample) {

@@ -777,7 +777,13 @@ select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
         gtk_container_add(GTK_CONTAINER(alsa_conf), alsabox);
         gtk_widget_show(alsa_conf);
         gtk_widget_set_sensitive(alsa_conf, TRUE);
-        gtk_action_set_sensitive(volumeToggle_, TRUE);
+
+        if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
+            main_window_volume_controls(FALSE);
+            g_settings_set_boolean(client->settings, "show-volume-controls", FALSE);
+            gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
+        }
+
     } else if (must_show_alsa_conf() && !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(alsa_button))) {
         dbus_set_audio_manager(PULSEAUDIO_API_STR);
         gtk_container_remove(GTK_CONTAINER(alsa_conf), alsabox);
@@ -787,7 +793,6 @@ select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
         gtk_container_add(GTK_CONTAINER(pulse_conf), pulsebox);
         gtk_widget_show(pulse_conf);
         gtk_widget_set_sensitive(pulse_conf, TRUE);
-        gtk_action_set_sensitive(volumeToggle_, TRUE);
 
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
             main_window_volume_controls(FALSE);
@@ -795,7 +800,6 @@ select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
             gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
         }
 
-        gtk_action_set_sensitive(volumeToggle_, FALSE);
     } else
         g_warning("Unexpected audio API state");
 }
@@ -973,5 +977,5 @@ gboolean must_show_alsa_conf()
 gboolean
 must_show_volume(SFLPhoneClient *client)
 {
-    return g_settings_get_boolean(client->settings, "show-volume-controls") && must_show_alsa_conf();
+    return g_settings_get_boolean(client->settings, "show-volume-controls");
 }
