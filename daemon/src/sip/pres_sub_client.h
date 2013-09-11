@@ -49,16 +49,16 @@ class SIPPresence;
  */
 static void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
 static void pres_client_evsub_on_tsx_state(pjsip_evsub *sub,
-                                     pjsip_transaction *tsx,
-                                     pjsip_event *event);
+        pjsip_transaction *tsx,
+        pjsip_event *event);
 static void pres_client_evsub_on_rx_notify(pjsip_evsub *sub,
-                                     pjsip_rx_data *rdata,
-                                     int *p_st_code,
-                                     pj_str_t **p_st_text,
-                                     pjsip_hdr *res_hdr,
-                                     pjsip_msg_body **p_body);
+        pjsip_rx_data *rdata,
+        int *p_st_code,
+        pj_str_t **p_st_text,
+        pjsip_hdr *res_hdr,
+        pjsip_msg_body **p_body);
 static void pres_client_timer_cb(pj_timer_heap_t *th,
-                                     pj_timer_entry *entry);
+                                 pj_timer_entry *entry);
 
 
 class PresSubClient {
@@ -114,24 +114,24 @@ class PresSubClient {
 
         friend void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
         friend void pres_client_evsub_on_tsx_state(pjsip_evsub *sub,
-                                             pjsip_transaction *tsx,
-                                             pjsip_event *event);
+                pjsip_transaction *tsx,
+                pjsip_event *event);
         friend void pres_client_evsub_on_rx_notify(pjsip_evsub *sub,
-                                             pjsip_rx_data *rdata,
-                                             int *p_st_code,
-                                             pj_str_t **p_st_text,
-                                             pjsip_hdr *res_hdr,
-                                             pjsip_msg_body **p_body);
+                pjsip_rx_data *rdata,
+                int *p_st_code,
+                pj_str_t **p_st_text,
+                pjsip_hdr *res_hdr,
+                pjsip_msg_body **p_body);
         friend void pres_client_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry);
 
         /**
          * TODO: explain this:
          */
         void incLock() {
-            lock_count++;
+            lock_count_++;
         }
         void decLock() {
-            lock_count--;
+            lock_count_--;
         }
 
     private:
@@ -161,22 +161,22 @@ class PresSubClient {
          */
         unsigned getTermCode();
 
-        SIPPresence      *pres;       /**< Associated SIPPresence pointer */
-        pj_str_t         uri;        /**< pres_client URI.            */
-        pj_str_t         contact;   /**< Contact learned from subscrp.    */
-        pj_str_t         display;   /**< pres_client display name.        */
-        pjsip_dialog    *dlg;        /**< The underlying dialog.        */
-        pj_bool_t        monitor;   /**< Should we monitor?        */
-        pj_str_t         name;        /**< pres_client name.            */
+        SIPPresence      *pres_;        /**< Associated SIPPresence pointer */
+        pj_str_t         uri_;          /**< pres_client URI. */
+        pj_str_t         contact_;      /**< Contact learned from subscrp. */
+        pj_str_t         display_;      /**< pres_client display name. */
+        pjsip_dialog    *dlg_;          /**< The underlying dialog. */
+        pj_bool_t        monitor_;      /**< Should we monitor? */
+        pj_str_t         name_;         /**< pres_client name. */
         pj_caching_pool  cp_;
-        pj_pool_t       *pool;        /**< Pool for this pres_client.        */
-        pjsip_pres_status     status;    /**< pres_client presence status.        */
-        pjsip_evsub     *sub;        /**< pres_client presence subscription    */
-        unsigned         term_code; /**< Subscription termination code    */
-        pj_str_t         term_reason;/**< Subscription termination reason */
-        pj_timer_entry   timer;        /**< Resubscription timer        */
-        void        *user_data; /**< Application data. */
-        int lock_count;
+        pj_pool_t       *pool_;         /**< Pool for this pres_client. */
+        pjsip_pres_status status_;  /**< pres_client presence status. */
+        pjsip_evsub     *sub_;          /**< pres_client presence subscription */
+        unsigned         term_code_;    /**< Subscription termination code */
+        pj_str_t         term_reason_;  /**< Subscription termination reason */
+        pj_timer_entry   timer_;        /**< Resubscription timer */
+        void            *user_data_;        /**< Application data. */
+        int lock_count_;
 };
 
 #endif    /*  PRES_SUB_CLIENT_H */
