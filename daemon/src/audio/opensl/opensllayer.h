@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "../audiolayer.h"
+#include "logger.h"
 
 
 enum PCMType {
@@ -52,6 +53,7 @@ class AudioPreference;
 class OpenSLThread;
 
 #define ANDROID_BUFFER_QUEUE_LENGTH 2
+#define BUFFER_SIZE 5000
 
 
 /**
@@ -238,9 +240,7 @@ class OpenSLLayer : public AudioLayer {
          * Output mix interface
          */
         SLObjectItf outputMixer_;
-
         SLObjectItf playerObject_;
-
         SLObjectItf recorderObject_;
 
         /**

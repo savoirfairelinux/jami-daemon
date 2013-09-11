@@ -147,8 +147,8 @@ OpenSLLayer::OpenSLLayer()
     , recorderBufferQueue_(0)
     , playbackBufferIndex_(0)
     , recordBufferIndex_(0)
-    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(3000))
-    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(3000))
+    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE))
+    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE))
 {
 }
 
@@ -257,9 +257,15 @@ OpenSLLayer::shutdownAudioEngine()
         outputMixer_ = NULL;
     }
 
+	if(recorderObject_ != NULL){
+		(*recorderObject_)->Destroy(recorderObject_);
+		recorderObject_ = NULL;
+		recorderInterface_ = NULL;
+		recorderBufferQueue_ = NULL;
+	}
+
     // destroy engine object, and invalidate all associated interfaces
     DEBUG("Shutdown audio engine\n");
-
     if (engineObject_ != NULL) {
         (*engineObject_)->Destroy(engineObject_);
         engineObject_ = NULL;
