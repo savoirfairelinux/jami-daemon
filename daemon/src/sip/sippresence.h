@@ -133,7 +133,7 @@ public:
     /**
      * Activate the module (PUBLISH/SUBSCRIBE)
      */
-    void enable(const bool& flag);
+    void enable(bool flag);
      /**
      * Fill xml document, the header and the body
      */
@@ -142,12 +142,12 @@ public:
      * Modify the presence data
      * @param status is basically "open" or "close"
      */
-    void updateStatus(const  bool& status, const std::string &note);
+    void updateStatus(bool status, const std::string &note);
     /**
      * Send the presence data in a PUBLISH to the PBX or in a NOTIFY
      * to a remote subscriber (IP2IP)
      */
-    void sendPresence(const bool& status, const std::string &note);
+    void sendPresence(bool status, const std::string &note);
     /**
      * Send a signal to the client on DBus. The signal contain the status
      * of a remote user.
@@ -157,7 +157,7 @@ public:
      * Send a SUBSCRIBE request to PBX/IP2IP
      * @param buddyUri  Remote user that we want to subscribe
      */
-    void subscribeClient(const std::string& uri, const bool& flag);
+    void subscribeClient(const std::string& uri, bool flag);
     /**
      * Add a buddy in the buddy list.
      * @param b     PresSubClient pointer
@@ -181,7 +181,7 @@ public:
      * @param flag     client decision.
      * @param uri       uri of the remote subscriber
      */
-    void approvePresSubServer(const std::string& uri, const bool& flag);
+    void approvePresSubServer(const std::string& uri, bool flag);
     /**
      * IP2IP context.
      * Add a server associated to a subscriber in the list.

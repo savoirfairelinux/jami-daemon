@@ -85,7 +85,7 @@ class PresSubServer {
         /*
          * Allow the subscriber for being notified.
          */
-        void approve(const bool& flag);
+        void approve(bool flag);
         /*
          * Notify subscriber with the pres_status_date of the account
          */

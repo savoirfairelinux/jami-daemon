@@ -101,12 +101,12 @@ pj_pool_t*  SIPPresence::getPool() const
     return pool_;
 }
 
-void SIPPresence::enable(const bool& flag)
+void SIPPresence::enable(bool flag)
 {
     enabled_ = flag;
 }
 
-void SIPPresence::updateStatus(const bool& status, const std::string &note)
+void SIPPresence::updateStatus(bool status, const std::string &note)
 {
     //char* pj_note  = (char*) pj_pool_alloc(pool_, "50");
 
@@ -133,7 +133,7 @@ void SIPPresence::updateStatus(const bool& status, const std::string &note)
     /* "contact" field is optionnal */
 }
 
-void SIPPresence::sendPresence(const bool& status, const std::string &note)
+void SIPPresence::sendPresence(bool status, const std::string &note)
 {
     updateStatus(status, note);
 
@@ -157,7 +157,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     Manager::instance().getClient()->getPresenceManager()->newBuddySubscription(uri, status->info[0].basic_open, note);
 }
 
-void SIPPresence::subscribeClient(const std::string& uri, const bool& flag)
+void SIPPresence::subscribeClient(const std::string& uri, bool flag)
 {
     /* Check if the buddy was already subscribed */
     for (const auto &c : pres_sub_client_list_)
@@ -208,7 +208,7 @@ void SIPPresence::reportnewServerSubscriptionRequest(PresSubServer *s)
     Manager::instance().getClient()->getPresenceManager()->newServerSubscriptionRequest(s->remote);
 }
 
-void SIPPresence::approvePresSubServer(const std::string& uri, const bool& flag)
+void SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
 {
     for (const auto &s : pres_sub_server_list_)
         if (s->matches((char *) uri.c_str())) {

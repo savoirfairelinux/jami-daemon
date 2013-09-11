@@ -273,7 +273,7 @@ bool PresSubServer::matches(char *s)
     return (!(strcmp(remote, s))) ;
 }
 
-void PresSubServer::approve(const bool& flag)
+void PresSubServer::approve(bool flag)
 {
     approved_ = flag;
     // attach the real status data
