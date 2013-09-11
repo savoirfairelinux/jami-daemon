@@ -56,8 +56,8 @@
 
 int modId; // used to extract data structure from event_subscription
 
-void pres_client_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry) {
-    //(void) th;
+void pres_client_timer_cb(pj_timer_heap_t * /*th*/, pj_timer_entry *entry)
+{
     /* TODO : clean*/
     PresSubClient *c = (PresSubClient *) entry->user_data;
     DEBUG("timout for %s",c->getURI().c_str());

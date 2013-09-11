@@ -32,7 +32,6 @@
 #ifndef SIPPRESENCE_H
 #define SIPPRESENCE_H
 
-#include <vector>
 #include <string>
 #include <list>
 
@@ -214,9 +213,9 @@ public:
 
     pjsip_pres_status pres_status_data; /**< Presence Data.*/
     pjsip_publishc  *publish_sess;  /**< Client publication session.*/
-    pj_bool_t enabled_; /**< Allow for status publish,*/
-
 private:
+
+    pj_bool_t enabled_; /**< Allow for status publish,*/
     NON_COPYABLE(SIPPresence);
 
     SIPAccount * acc_; /**<  Associated SIP account. */
