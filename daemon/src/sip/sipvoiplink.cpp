@@ -542,6 +542,9 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
         outgoing_request_forked_cb,
         transaction_state_changed_cb,
         sdp_request_offer_cb,
+#ifdef __ANDROID__ // FIXME depends on pjsip
+		NULL,
+#endif
         sdp_create_offer_cb,
         sdp_media_update_cb,
         NULL,
