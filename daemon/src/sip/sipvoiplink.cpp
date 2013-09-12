@@ -124,11 +124,6 @@ void registration_cb(pjsip_regc_cbparam *param);
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata) ;
 
-#ifdef __ANDROID__
-void showLog(int level, const char *data, int len);
-void showMsg(const char *format, ...);
-#endif
-
 void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
 /**
@@ -197,26 +192,6 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 
     return PJ_FALSE;
 }
-
-#ifdef __ANDROID__
-void showMsg(const char *format, ...)
-{
-    va_list arg;
-
-    va_start(arg, format);
-    __android_log_vprint(ANDROID_LOG_INFO, "apjsua", format, arg);
-    //vsnprintf(app_var.out_buf, sizeof(app_var.out_buf), format, arg);
-    va_end(arg);
-
-    /* pj_sem_post(app_var.output_sem);
-    pj_sem_wait(app_var.out_print_sem); */
-}
-
-void showLog(int level, const char *data, int len)
-{
-    showMsg("%s", data);
-}
-#endif
 
 void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
 {
@@ -524,9 +499,6 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 
     TRY(pjlib_util_init());
 
-#ifdef __ANDROID__
-    setSipLogger();
-#endif
     setSipLogLevel();
     TRY(pjnath_init());
 
@@ -686,22 +658,9 @@ void SIPVoIPLink::setSipLogLevel()
         level = level > 6 ? 6 : level;
         level = level < 0 ? 0 : level;
     }
-
-#ifdef __ANDROID__
-    level = 6;
-#endif
-
     // From 0 (min) to 6 (max)
     pj_log_set_level(level);
 }
-
-#ifdef __ANDROID__
-void SIPVoIPLink::setSipLogger()
-{
-    static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();
-    pj_log_set_log_func(&showLog);
-}
-#endif
 
 // Called from EventThread::run (not main thread)
 bool SIPVoIPLink::getEvent()
