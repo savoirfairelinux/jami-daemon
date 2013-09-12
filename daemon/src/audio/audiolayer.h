@@ -146,7 +146,7 @@ class AudioLayer {
         }
 
         /**
-         * Set capture stream gain (microphone)
+         * Get capture stream gain (microphone)
          */
         double getCaptureGain() const {
             return captureGain_;
