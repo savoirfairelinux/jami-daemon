@@ -70,3 +70,21 @@ void Client::event_loop()
 
 void Client::exit()
 {}
+
+CallManager *
+Client::getCallManager()
+{
+    return callManager_;
+}
+
+ConfigurationManager *
+Client::getConfigurationManager()
+{
+    return configurationManager_;
+}
+
+PresenceManager *
+Client::getPresenceManager()
+{
+    return presenceManager_;
+}
