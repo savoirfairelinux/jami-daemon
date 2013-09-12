@@ -39,7 +39,7 @@
 
 void pres_publish_cb(struct pjsip_publishc_cbparam *param);
 pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active);
-const pjsip_publishc_opt  my_publish_opt = {true}; // this is queue_request
+const pjsip_publishc_opt my_publish_opt = {true}; // this is queue_request
 
 
 /*
@@ -49,35 +49,35 @@ void pres_publish_cb(struct pjsip_publishc_cbparam *param)
 {
     SIPPresence *pres = (SIPPresence*) param->token;
 
-    if (param->code/100 != 2 || param->status != PJ_SUCCESS) {
+    if (param->code / 100 != 2 || param->status != PJ_SUCCESS) {
 
-	pjsip_publishc_destroy(param->pubc);
-	pres->publish_sess = NULL;
+        pjsip_publishc_destroy(param->pubc);
+        pres->publish_sess = NULL;
 
-	if (param->status != PJ_SUCCESS) {
-	    char errmsg[PJ_ERR_MSG_SIZE];
+        if (param->status != PJ_SUCCESS) {
+            char errmsg[PJ_ERR_MSG_SIZE];
 
-	    pj_strerror(param->status, errmsg, sizeof(errmsg));
-	    ERROR("Client publication (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
-	} else if (param->code == 412) {
-	    /* 412 (Conditional Request Failed)
-	     * The PUBLISH refresh has failed, retry with new one.
-	     */
+            pj_strerror(param->status, errmsg, sizeof(errmsg));
+            ERROR("Client publication (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
+        } else if (param->code == 412) {
+            /* 412 (Conditional Request Failed)
+             * The PUBLISH refresh has failed, retry with new one.
+             */
             WARN("Publish retry.");
-	    pres_publish(pres);
-	} else {
-	    ERROR("Client publication (PUBLISH) failed (%d/%.*s)",
-                    param->code,(int)param->reason.slen,param->reason.ptr);
-	}
+            pres_publish(pres);
+        } else {
+            ERROR("Client publication (PUBLISH) failed (%u/%.*s)",
+                  param->code, param->reason.slen, param->reason.ptr);
+        }
 
     } else {
-	if (param->expiration < 1) {
-	    /* Could happen if server "forgot" to include Expires header
-	     * in the response. We will not renew, so destroy the pubc.
-	     */
-	    pjsip_publishc_destroy(param->pubc);
-	    pres->publish_sess = NULL;
-	}
+        if (param->expiration < 1) {
+            /* Could happen if server "forgot" to include Expires header
+             * in the response. We will not renew, so destroy the pubc.
+             */
+            pjsip_publishc_destroy(param->pubc);
+            pres->publish_sess = NULL;
+        }
     }
 }
 
@@ -101,37 +101,42 @@ pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
 
     /* Create PUBLISH request */
     if (active) {
-	char *bpos;
-	pj_str_t entity;
+        char *bpos;
+        pj_str_t entity;
 
-	status = pjsip_publishc_publish(pres->publish_sess, PJ_TRUE, &tdata);
-	if (status != PJ_SUCCESS) {
-	    ERROR("Error creating PUBLISH request", status);
-	    goto on_error;
-	}
+        status = pjsip_publishc_publish(pres->publish_sess, PJ_TRUE, &tdata);
+
+        if (status != PJ_SUCCESS) {
+            ERROR("Error creating PUBLISH request", status);
+            goto on_error;
+        }
 
         pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
-	if ((bpos=pj_strchr(&from, '<')) != NULL) {
-	    char *epos = pj_strchr(&from, '>');
-	    if (epos - bpos < 2) {
-		pj_assert(!"Unexpected invalid URI");
-		status = PJSIP_EINVALIDURI;
-		goto on_error;
-	    }
-	    entity.ptr = bpos+1;
-	    entity.slen = epos - bpos - 1;
-	} else {
-	    entity = from;
-	}
 
-	/* Create and add PIDF message body */
-	status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(),
-                &entity, &tdata->msg->body);
-	if (status != PJ_SUCCESS) {
-	    ERROR("Error creating PIDF for PUBLISH request");
-	    pjsip_tx_data_dec_ref(tdata);
-	    goto on_error;
-	}
+        if ((bpos = pj_strchr(&from, '<')) != NULL) {
+            char *epos = pj_strchr(&from, '>');
+
+            if (epos - bpos < 2) {
+                pj_assert(!"Unexpected invalid URI");
+                status = PJSIP_EINVALIDURI;
+                goto on_error;
+            }
+
+            entity.ptr = bpos + 1;
+            entity.slen = epos - bpos - 1;
+        } else {
+            entity = from;
+        }
+
+        /* Create and add PIDF message body */
+        status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(),
+                                        &entity, &tdata->msg->body);
+
+        if (status != PJ_SUCCESS) {
+            ERROR("Error creating PIDF for PUBLISH request");
+            pjsip_tx_data_dec_ref(tdata);
+            goto on_error;
+        }
 
     } else {
         WARN("Unpublish is not implemented.");
@@ -148,20 +153,23 @@ pj_status_t pres_send_publish(SIPPresence * pres, pj_bool_t active)
 
     /* Send the PUBLISH request */
     status = pjsip_publishc_send(pres->publish_sess, tdata);
+
     if (status == PJ_EPENDING) {
-	WARN("Previous request is in progress, ");
+        WARN("Previous request is in progress, ");
     } else if (status != PJ_SUCCESS) {
-	ERROR("Error sending PUBLISH request");
-	goto on_error;
+        ERROR("Error sending PUBLISH request");
+        goto on_error;
     }
 
     return PJ_SUCCESS;
 
 on_error:
+
     if (pres->publish_sess) {
-	pjsip_publishc_destroy(pres->publish_sess);
-	pres->publish_sess = NULL;
+        pjsip_publishc_destroy(pres->publish_sess);
+        pres->publish_sess = NULL;
     }
+
     return status;
 }
 
@@ -177,9 +185,10 @@ pj_status_t pres_publish(SIPPresence *pres)
     /* Create and init client publication session */
 
     /* Create client publication */
-    status = pjsip_publishc_create(endpt,&my_publish_opt,
+    status = pjsip_publishc_create(endpt, &my_publish_opt,
                                    pres, &pres_publish_cb,
                                    &pres->publish_sess);
+
     if (status != PJ_SUCCESS) {
         pres->publish_sess = NULL;
         ERROR("Failed to create a publish seesion.");
@@ -188,7 +197,8 @@ pj_status_t pres_publish(SIPPresence *pres)
 
     /* Initialize client publication */
     pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
-    status = pjsip_publishc_init(pres->publish_sess, &STR_PRESENCE,&from, &from, &from, 0xFFFF);
+    status = pjsip_publishc_init(pres->publish_sess, &STR_PRESENCE, &from, &from, &from, 0xFFFF);
+
     if (status != PJ_SUCCESS) {
         ERROR("Failed to init a publish session");
         pres->publish_sess = NULL;
@@ -207,6 +217,7 @@ pj_status_t pres_publish(SIPPresence *pres)
 
     /* Send initial PUBLISH request */
     status = pres_send_publish(pres, PJ_TRUE);
+
     if (status != PJ_SUCCESS)
         return status;
 
