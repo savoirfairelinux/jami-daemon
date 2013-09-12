@@ -327,10 +327,10 @@ std::string PresSubClient::getLineStatus()
     return std::string(status_.info[0].rpid.note.ptr, status_.info[0].rpid.note.slen);
 }
 
-bool PresSubClient::isTermReason(std::string reason)
+bool PresSubClient::isTermReason(const std::string &reason)
 {
-    std::string myReason(term_reason_.ptr, term_reason_.slen);
-    return !myReason.compare(reason);
+    const std::string myReason(term_reason_.ptr, term_reason_.slen);
+    return not myReason.compare(reason);
 }
 
 void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)

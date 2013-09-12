@@ -155,7 +155,7 @@ class PresSubClient {
         /*
          * Compare the reason of a transaction end with the given string.
          */
-        bool isTermReason(std::string);
+        bool isTermReason(const std::string &);
         /**
          * return the code after a transaction is terminated.
          */
