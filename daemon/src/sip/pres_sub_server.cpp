@@ -241,6 +241,23 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     return PJ_TRUE;
 }
 
+pjsip_module PresSubServer::mod_presence_server = {
+    NULL, NULL, /* prev, next.        */
+    CONST_PJ_STR("mod-presence-server"), /* Name.        */
+    -1, /* Id            */
+    PJSIP_MOD_PRIORITY_DIALOG_USAGE,
+    NULL, /* load()        */
+    NULL, /* start()        */
+    NULL, /* stop()        */
+    NULL, /* unload()        */
+    &pres_on_rx_subscribe_request, /* on_rx_request()    */
+    NULL, /* on_rx_response()    */
+    NULL, /* on_tx_request.    */
+    NULL, /* on_tx_response()    */
+    NULL, /* on_tsx_state()    */
+
+};
+
 
 
 PresSubServer::PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, char *r, pjsip_dialog *d)

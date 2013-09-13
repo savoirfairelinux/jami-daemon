@@ -535,7 +535,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 
     // presence/publish management
     TRY(pjsip_pres_init_module(endpt_, pjsip_evsub_instance()));
-    TRY(pjsip_endpt_register_module(endpt_, &mod_presence_server));
+    TRY(pjsip_endpt_register_module(endpt_, &PresSubServer::mod_presence_server));
 
     static const pjsip_inv_callback inv_cb = {
         invite_session_state_changed_cb,

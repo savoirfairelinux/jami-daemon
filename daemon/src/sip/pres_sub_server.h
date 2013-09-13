@@ -44,30 +44,11 @@
 
 extern pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
 
-static pjsip_module mod_presence_server = {
-    NULL, NULL, /* prev, next.        */
-    CONST_PJ_STR("mod-presence-server"), /* Name.        */
-    -1, /* Id            */
-    PJSIP_MOD_PRIORITY_DIALOG_USAGE,
-    NULL, /* load()        */
-    NULL, /* start()        */
-    NULL, /* stop()        */
-    NULL, /* unload()        */
-    &pres_on_rx_subscribe_request, /* on_rx_request()    */
-    NULL, /* on_rx_response()    */
-    NULL, /* on_tx_request.    */
-    NULL, /* on_tx_response()    */
-    NULL, /* on_tsx_state()    */
-
-};
-
-
 class SIPpresence;
 
 class PresSubServer {
 
     public:
-
         PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, char *r, pjsip_dialog *d);
         ~PresSubServer();
         /* TODO: add '< >' to URI for consistance*/
@@ -94,6 +75,8 @@ class PresSubServer {
 
         friend void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event);
         friend pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
+
+        static pjsip_module mod_presence_server;
 
     private:
 
