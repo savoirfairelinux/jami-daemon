@@ -44,23 +44,6 @@
 
 class SIPPresence;
 
-/**
- * Transaction functions of event subscription client side.
- */
-static void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
-static void pres_client_evsub_on_tsx_state(pjsip_evsub *sub,
-        pjsip_transaction *tsx,
-        pjsip_event *event);
-static void pres_client_evsub_on_rx_notify(pjsip_evsub *sub,
-        pjsip_rx_data *rdata,
-        int *p_st_code,
-        pj_str_t **p_st_text,
-        pjsip_hdr *res_hdr,
-        pjsip_msg_body **p_body);
-static void pres_client_timer_cb(pj_timer_heap_t *th,
-                                 pj_timer_entry *entry);
-
-
 class PresSubClient {
 
     public:
@@ -112,18 +95,6 @@ class PresSubClient {
         std::string getLineStatus();
 
 
-        friend void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
-        friend void pres_client_evsub_on_tsx_state(pjsip_evsub *sub,
-                pjsip_transaction *tsx,
-                pjsip_event *event);
-        friend void pres_client_evsub_on_rx_notify(pjsip_evsub *sub,
-                pjsip_rx_data *rdata,
-                int *p_st_code,
-                pj_str_t **p_st_text,
-                pjsip_hdr *res_hdr,
-                pjsip_msg_body **p_body);
-        friend void pres_client_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry);
-
         /**
          * TODO: explain this:
          */
@@ -137,6 +108,22 @@ class PresSubClient {
     private:
 
         NON_COPYABLE(PresSubClient);
+
+        /**
+         * Transaction functions of event subscription client side.
+         */
+        static void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event);
+        static void pres_client_evsub_on_tsx_state(pjsip_evsub *sub,
+                pjsip_transaction *tsx,
+                pjsip_event *event);
+        static void pres_client_evsub_on_rx_notify(pjsip_evsub *sub,
+                pjsip_rx_data *rdata,
+                int *p_st_code,
+                pj_str_t **p_st_text,
+                pjsip_hdr *res_hdr,
+                pjsip_msg_body **p_body);
+        static void pres_client_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry);
+
         /**
          * Plan a retry or a renew a subscription.
          * @param reschedule    Allow for reschedule.
@@ -177,6 +164,7 @@ class PresSubClient {
         pj_timer_entry   timer_;        /**< Resubscription timer */
         void            *user_data_;        /**< Application data. */
         int lock_count_;
+        static int modId_; // used to extract data structure from event_subscription
 };
 
 #endif    /*  PRES_SUB_CLIENT_H */

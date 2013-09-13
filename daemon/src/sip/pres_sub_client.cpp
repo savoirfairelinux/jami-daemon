@@ -43,6 +43,7 @@
 #include <pjsip-simple/evsub.h>
 #include <unistd.h>
 
+#include "array_size.h"
 #include "pres_sub_client.h"
 #include "sipaccount.h"
 #include "sippresence.h"
@@ -54,9 +55,10 @@
 
 #define PRES_TIMER 300 // 5min
 
-static int modId; // used to extract data structure from event_subscription
+int PresSubClient::modId_ = 0; // used to extract data structure from event_subscription
 
-void pres_client_timer_cb(pj_timer_heap_t * /*th*/, pj_timer_entry *entry)
+void
+PresSubClient::pres_client_timer_cb(pj_timer_heap_t * /*th*/, pj_timer_entry *entry)
 {
     /* TODO : clean*/
     PresSubClient *c = (PresSubClient *) entry->user_data;
@@ -65,7 +67,8 @@ void pres_client_timer_cb(pj_timer_heap_t * /*th*/, pj_timer_entry *entry)
 }
 
 /* Callback called when *client* subscription state has changed. */
-void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
+void
+PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 {
     PJ_UNUSED_ARG(event);
 
@@ -74,7 +77,7 @@ void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
      *   lock, which we are currently holding!
      */
 
-    PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId);
+    PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
 
     if (pres_client) {
         pres_client->incLock();
@@ -146,7 +149,7 @@ void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                          * into pending state.
                          */
                         const pjsip_sub_state_hdr *sub_hdr;
-                        pj_str_t sub_state = {(char *) "Subscription-State", 18 };
+                        pj_str_t sub_state = CONST_PJ_STR("Subscription-State");
                         const pjsip_msg *msg;
 
                         msg = event->body.tsx_state.src.rdata->msg_info.msg;
@@ -181,7 +184,7 @@ void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
             pres_client->status_.info_cnt = 0;
             pres_client->dlg_ = NULL;
             pres_client->rescheduleTimer(PJ_FALSE, 0);
-            pjsip_evsub_set_mod_data(sub, modId, NULL);
+            pjsip_evsub_set_mod_data(sub, modId_, NULL);
         }
 
         pres_client->decLock();
@@ -189,7 +192,8 @@ void pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 }
 
 /* Callback when transaction state has changed. */
-void pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pjsip_event *event)
+void
+PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pjsip_event *event)
 {
 
     PresSubClient *pres_client;
@@ -199,7 +203,7 @@ void pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pj
      *   a dialog attached to it, lock_pres_client() will use the dialog
      *   lock, which we are currently holding!
      */
-    pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId);
+    pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
 
     if (!pres_client) {
         return;
@@ -243,14 +247,15 @@ void pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pj
 }
 
 /* Callback called when we receive NOTIFY */
-static void pres_client_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata, int *p_st_code, pj_str_t **p_st_text, pjsip_hdr *res_hdr, pjsip_msg_body **p_body)
+void
+PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata, int *p_st_code, pj_str_t **p_st_text, pjsip_hdr *res_hdr, pjsip_msg_body **p_body)
 {
 
     /* Note: #937: no need to acuire PJSUA_LOCK here. Since the pres_client has
      *   a dialog attached to it, lock_pres_client() will use the dialog
      *   lock, which we are currently holding!
      */
-    PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId);
+    PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
 
     if (!pres_client) {
         WARN("Couldn't extract pres_client from ev_sub.");
@@ -371,7 +376,8 @@ void PresSubClient::reportPresence()
 }
 
 
-pj_status_t PresSubClient::updateSubscription()
+pj_status_t
+PresSubClient::updateSubscription()
 {
 
     if (!monitor_) {
@@ -405,7 +411,7 @@ pj_status_t PresSubClient::updateSubscription()
             WARN("Unable to unsubscribe presence", retStatus);
         }
 
-        pjsip_evsub_set_mod_data(sub_, modId, NULL);   // Not interested with further events
+        pjsip_evsub_set_mod_data(sub_, modId_, NULL);   // Not interested with further events
 
         return PJ_SUCCESS;
     }
@@ -481,8 +487,7 @@ pj_status_t PresSubClient::updateSubscription()
 
 
     /* FIXME : not sure this is acceptable */
-    modId = pres_->getModId();
-    pjsip_evsub_set_mod_data(sub_, modId, this);
+    pjsip_evsub_set_mod_data(sub_, modId_, this);
 
     status = pjsip_pres_initiate(sub_, -1, &tdata);
 

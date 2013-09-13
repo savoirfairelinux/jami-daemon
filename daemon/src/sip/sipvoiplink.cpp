@@ -1581,12 +1581,11 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
               "calling %s", toUri.c_str());
         return false;
     }
-// aol
+
     pj_str_t subj_hdr_name = CONST_PJ_STR("Subject");
     pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
 
     pj_list_push_back(&dialog->inv_hdr, subj_hdr);
-// aol
 
     if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
         ERROR("Unable to create invite session for user agent client");
