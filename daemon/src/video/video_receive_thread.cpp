@@ -47,18 +47,17 @@ using std::string;
 const int SDP_BUFFER_SIZE = 8192;
 
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
-                                       const std::map<string, string>& args,
-                                       const std::shared_ptr<SHMSink>& sink) :
+                                       const std::map<string, string>& args) :
     VideoGenerator::VideoGenerator()
     , args_(args)
     , videoDecoder_()
-    , sink_(sink)
     , dstWidth_(0)
     , dstHeight_(0)
     , id_(id)
     , stream_(args_["receiving_sdp"])
     , sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this)
     , demuxContext_()
+    , sink_()
     , requestKeyFrameCallback_(0)
 {}
 
@@ -140,32 +139,19 @@ bool VideoReceiveThread::setup()
         dstHeight_ = videoDecoder_->getHeight();
     }
 
-    // Sink startup
-    if (sink_) {
-        EXIT_IF_FAIL(sink_->start(), "RX: sink startup failed");
-        Manager::instance().getVideoControls()->startedDecoding(id_,
-                                                                sink_->openedName(),
-                                                                dstWidth_,
-                                                                dstHeight_);
-        DEBUG("RX: shm sink <%s> started: size = %dx%d",
-              sink_->openedName().c_str(), dstWidth_, dstHeight_);
-        attach(sink_.get());
-    }
+    auto conf = Manager::instance().getConferenceFromCallID(id_);
+    if (!conf)
+        exitConference();
 
     return true;
 }
 
 void VideoReceiveThread::process()
-{
-    decodeFrame();
-}
+{ decodeFrame(); }
 
 void VideoReceiveThread::cleanup()
 {
-    if (sink_) {
-        detach(sink_.get());
-        sink_->stop();
-    }
+    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
 
     if (videoDecoder_)
         delete videoDecoder_;
@@ -218,11 +204,50 @@ bool VideoReceiveThread::decodeFrame()
     return false;
 }
 
+void VideoReceiveThread::addReceivingDetails(
+    std::map<std::string, std::string> &details)
+{
+    if (isRunning() and dstWidth_ > 0 and dstHeight_ > 0) {
+        details["VIDEO_SHM_PATH"] = sink_.openedName();
+        std::ostringstream os;
+        os << dstWidth_;
+        details["VIDEO_WIDTH"] = os.str();
+        os.str("");
+        os << dstHeight_;
+        details["VIDEO_HEIGHT"] = os.str();
+    }
+}
+
+void VideoReceiveThread::enterConference()
+{
+    if (!isRunning())
+        return;
+
+    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+    detach(&sink_);
+    sink_.stop();
+}
+
+void VideoReceiveThread::exitConference()
+{
+    if (!isRunning())
+        return;
+
+    // Sink startup
+    EXIT_IF_FAIL(sink_.start(), "RX: sink startup failed");
+    Manager::instance().getVideoControls()->startedDecoding(id_,
+                                                            sink_.openedName(),
+                                                            dstWidth_,
+                                                            dstHeight_);
+    DEBUG("RX: shm sink <%s> started: size = %dx%d",
+          sink_.openedName().c_str(), dstWidth_, dstHeight_);
+
+    attach(&sink_);
+}
+
 void VideoReceiveThread::setRequestKeyFrameCallback(
     void (*cb)(const std::string &))
-{
-    requestKeyFrameCallback_ = cb;
-}
+{ requestKeyFrameCallback_ = cb; }
 
 int VideoReceiveThread::getWidth() const
 { return dstWidth_; }

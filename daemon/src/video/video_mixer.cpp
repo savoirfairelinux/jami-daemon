@@ -45,9 +45,7 @@ VideoMixer::VideoMixer() :
     , height_(0)
     , renderMutex_()
     , renderCv_()
-{
-    start();
-}
+{ start(); }
 
 VideoMixer::~VideoMixer()
 {

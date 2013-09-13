@@ -34,7 +34,7 @@
 
 #include "video_base.h"
 #include "video_mixer.h"
-#include "shm_sink.h"
+#include "conference.h"
 #include "noncopyable.h"
 
 #include <string>
@@ -64,6 +64,8 @@ public:
     void addReceivingDetails(std::map<std::string, std::string> &details);
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
+    void enterConference(Conference *conf);
+    void exitConference();
 
 private:
     NON_COPYABLE(VideoRtpSession);
@@ -78,7 +80,6 @@ private:
     const std::string callID_;
     VideoMixer* videoMixer_;
     VideoFrameActiveWriter *videoLocal_;
-    std::shared_ptr<SHMSink> sink_;
 };
 
 }

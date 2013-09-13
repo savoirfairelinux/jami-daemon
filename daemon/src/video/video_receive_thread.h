@@ -49,12 +49,14 @@ class SocketPair;
 class VideoReceiveThread : public VideoGenerator, public SFLThread  {
 public:
     VideoReceiveThread(const std::string &id,
-                       const std::map<std::string, std::string> &args,
-                       const std::shared_ptr<SHMSink>& sink);
+                       const std::map<std::string, std::string> &args);
     ~VideoReceiveThread();
 
     void addIOContext(SocketPair &socketPair);
     void setRequestKeyFrameCallback(void (*)(const std::string &));
+    void addReceivingDetails(std::map<std::string, std::string> &details);
+    void enterConference();
+    void exitConference();
 
     // as VideoGenerator
     int getWidth() const;
@@ -70,19 +72,20 @@ private:
     /* These variables should be used in thread (i.e. run()) only! */
     /*-------------------------------------------------------------*/
     VideoDecoder *videoDecoder_;
-    const std::shared_ptr<SHMSink> sink_;
     int dstWidth_;
     int dstHeight_;
     const std::string id_;
     std::istringstream stream_;
     VideoIOHandle sdpContext_;
     VideoIOHandle *demuxContext_;
+    SHMSink sink_;
 
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
     bool decodeFrame();
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
+
 
     // as SFLThread
     bool setup();

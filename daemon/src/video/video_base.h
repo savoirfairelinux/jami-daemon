@@ -79,12 +79,14 @@ public:
 
     void attach(Observer<T>* o) {
         std::unique_lock<std::mutex> lk(mutex_);
-        observers_.insert(o);
+        if (o)
+            observers_.insert(o);
     }
 
     void detach(Observer<T>* o) {
         std::unique_lock<std::mutex> lk(mutex_);
-        observers_.erase(o);
+        if (o)
+            observers_.erase(o);
     }
 
     void notify(T& data) {

@@ -49,10 +49,7 @@ class VideoSendThread : public VideoFramePassiveReader
 public:
     VideoSendThread(const std::string &id,
                     const std::map<std::string, std::string> &args,
-                    SocketPair& socketPair,
-                    VideoFrameActiveWriter *local_video,
-                    VideoFrameActiveWriter *mixer);
-    virtual ~VideoSendThread();
+                    SocketPair& socketPair);
     std::string getSDP() const { return sdp_; }
     void forceKeyFrame();
 
@@ -69,7 +66,6 @@ private:
     const std::string &id_;
 
     VideoEncoder *videoEncoder_;
-    VideoFrameActiveWriter *videoSource_;
 
     int forceKeyFrame_;
     int frameNumber_;

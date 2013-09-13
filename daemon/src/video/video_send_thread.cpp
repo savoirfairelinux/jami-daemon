@@ -46,35 +46,16 @@ using std::string;
 
 VideoSendThread::VideoSendThread(const std::string &id,
                                  const std::map<string, string> &args,
-                                 SocketPair& socketPair,
-                                 VideoFrameActiveWriter *local_video,
-                                 VideoFrameActiveWriter *mixer) :
+                                 SocketPair& socketPair) :
     args_(args)
     , id_(id)
 	, videoEncoder_()
-    , videoSource_(local_video)
     , forceKeyFrame_(0)
 	, frameNumber_(0)
     , muxContext_(socketPair.getIOContext())
     , sdp_()
 {
-    if (setup()) {
-        // do video pipeline
-        if (mixer) {
-            videoSource_ = mixer;
-            static_cast<VideoMixer*>(mixer)->setDimensions(
-                videoEncoder_->getWidth(),
-                videoEncoder_->getHeight());
-        }
-        if (videoSource_)
-            videoSource_->attach(this);
-    }
-}
-
-VideoSendThread::~VideoSendThread()
-{
-    if (videoSource_)
-        videoSource_->detach(this);
+    setup();
 }
 
 bool VideoSendThread::setup()
@@ -142,7 +123,9 @@ void VideoSendThread::encodeAndSendVideo(VideoFrame& input_frame)
 }
 
 void VideoSendThread::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
-{ encodeAndSendVideo(*frame_p); }
+{
+    encodeAndSendVideo(*frame_p);
+}
 
 void VideoSendThread::forceKeyFrame()
 { atomic_increment(&forceKeyFrame_); }

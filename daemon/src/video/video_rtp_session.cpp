@@ -55,7 +55,7 @@ VideoRtpSession::VideoRtpSession(const string &callID,
 								 const map<string, string> &txArgs) :
     socketPair_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
     rxArgs_(), sending_(false), receiving_(false), callID_(callID),
-    videoMixer_(), videoLocal_(), sink_(new SHMSink())
+    videoMixer_(), videoLocal_()
 {}
 
 VideoRtpSession::~VideoRtpSession()
@@ -131,11 +131,6 @@ void VideoRtpSession::updateDestination(const string &destination,
 
 void VideoRtpSession::start(int localPort)
 {
-	std::string curcid = Manager::instance().getCurrentCallId();
-
-    videoMixer_ = nullptr;
-    videoLocal_ = nullptr;
-
     if (not sending_ and not receiving_)
         return;
 
@@ -154,28 +149,11 @@ void VideoRtpSession::start(int localPort)
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
 
-        // Check for video conference mode
-        auto conf = Manager::instance().getConferenceFromCallID(callID_);
         videoLocal_ = videoCtrl->getVideoPreview();
-        if (not conf and not videoLocal_) {
-            ERROR("Sending disabled, no local video");
-            sending_ = false;
-            sendThread_.reset();
-        } else {
-            if (conf) {
-                // setup mixer pipeline
-                videoMixer_ = conf->getVideoMixer();
-                if (videoLocal_)
-                    videoLocal_->attach(videoMixer_);
-            }
+        if (sendThread_.get())
+            WARN("Restarting video sender");
 
-            if (sendThread_.get())
-                WARN("Restarting video sender");
-
-            sendThread_.reset(new VideoSendThread(callID_, txArgs_,
-                                                  *socketPair_, videoLocal_,
-                                                  videoMixer_));
-        }
+        sendThread_.reset(new VideoSendThread(callID_, txArgs_, *socketPair_));
     } else {
         DEBUG("Video sending disabled");
         sendThread_.reset();
@@ -184,8 +162,7 @@ void VideoRtpSession::start(int localPort)
     if (receiving_) {
         if (receiveThread_.get())
             WARN("restarting video receiver");
-        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_,
-                                                    !videoMixer_?sink_:nullptr));
+        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->start();
@@ -193,22 +170,35 @@ void VideoRtpSession::start(int localPort)
         DEBUG("Video receiving disabled");
         receiveThread_.reset();
     }
+
+    // Setup pipeline
+    if (videoMixer_) {
+        // We are in conference mode
+
+        if (sendThread_) {
+            videoLocal_->detach(sendThread_.get());
+            videoMixer_->attach(sendThread_.get());
+        }
+
+        if (receiveThread_) {
+            receiveThread_->enterConference();
+            receiveThread_->attach(videoMixer_);
+        }
+    } else {
+        if (sendThread_)
+            videoLocal_->attach(sendThread_.get());
+    }
 }
 
 void VideoRtpSession::stop()
 {
-    Manager::instance().getVideoControls()->stoppedDecoding(callID_,
-                                                            sink_->openedName());
-    if (videoLocal_ and videoMixer_) {
-        videoLocal_->detach(videoMixer_);
-        videoMixer_->detach(sink_.get());
-    } else if (videoLocal_)
-        videoLocal_->detach(sink_.get());
-    else if (videoMixer_)
-        videoMixer_->detach(sink_.get());
+    if (videoLocal_)
+        videoLocal_->detach(sendThread_.get());
 
-    videoLocal_ = nullptr;
-    videoMixer_ = nullptr;
+    if (videoMixer_) {
+        videoMixer_->detach(sendThread_.get());
+        receiveThread_->detach(videoMixer_);
+    }
 
     if (socketPair_.get())
         socketPair_->interrupt();
@@ -226,15 +216,40 @@ void VideoRtpSession::forceKeyFrame()
 
 void VideoRtpSession::addReceivingDetails(std::map<std::string, std::string> &details)
 {
-    if (receiveThread_.get()) {
-        details["VIDEO_SHM_PATH"] = sink_->openedName();
-        std::ostringstream os;
-        os << receiveThread_->getWidth();
-        details["VIDEO_WIDTH"] = os.str();
-        os.str("");
-        os << receiveThread_->getHeight();
-        details["VIDEO_HEIGHT"] = os.str();
+    if (receiveThread_)
+        receiveThread_->addReceivingDetails(details);
+}
+
+void VideoRtpSession::enterConference(Conference *conf)
+{
+    auto mixer = conf->getVideoMixer();
+    if (!mixer) {
+        ERROR("No conference mixer!");
+        return;
     }
+
+    /* Detach from a possible previous conference */
+    exitConference();
+
+    videoMixer_ = mixer; // catched during start()
+}
+
+void VideoRtpSession::exitConference()
+{
+    if (videoMixer_) {
+        if (sendThread_)
+            videoMixer_->detach(sendThread_.get());
+
+        if (receiveThread_) {
+            receiveThread_->detach(videoMixer_);
+            receiveThread_->exitConference();
+        }
+
+        videoMixer_ = nullptr;
+    }
+
+    if (videoLocal_)
+        videoLocal_->attach(sendThread_.get());
 }
 
 } // end namespace sfl_video
