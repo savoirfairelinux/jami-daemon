@@ -436,13 +436,6 @@ AudioPreference::setRecordPath(const std::string &r)
     }
 }
 
-namespace {
-    double clamp(double min, double max, double val)
-    {
-        return std::min(max, std::max(min, val));
-    }
-}
-
 void AudioPreference::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(AUDIO_API_KEY, &audioApi_);
@@ -454,6 +447,11 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
 
     map.getValue(ALWAYS_RECORDING_KEY, &alwaysRecording_);
     map.getValue(VOLUMEMIC_KEY, &volumemic_);
+
+    const auto clamp = [] (double min, double max, double val) {
+        return std::min(max, std::max(min, val));
+    };
+
     volumemic_ = clamp(-1.0, 1.0, volumemic_);
     map.getValue(VOLUMESPKR_KEY, &volumespkr_);
     volumespkr_ = clamp(-1.0, 1.0, volumespkr_);
