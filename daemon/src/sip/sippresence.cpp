@@ -112,7 +112,7 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
 
     pjrpid_element rpid = {
         PJRPID_ELEMENT_TYPE_PERSON,
-        pj_str("20"),
+        CONST_PJ_STR("20"),
         PJRPID_ACTIVITY_UNKNOWN,
         pj_str((char *) note.c_str())
     };
@@ -128,7 +128,7 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
     pj_bzero(&pres_status_data_, sizeof(pres_status_data_));
     pres_status_data_.info_cnt = 1;
     pres_status_data_.info[0].basic_open = status;
-    pres_status_data_.info[0].id = pj_str("0"); /* todo: tuplie_id*/
+    pres_status_data_.info[0].id = CONST_PJ_STR("0"); /* todo: tuplie_id*/
     pj_memcpy(&pres_status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
     /* "contact" field is optionnal */
 }
@@ -265,7 +265,7 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
 {
 
     if (tdata->msg->type == PJSIP_REQUEST_MSG) {
-        const pj_str_t STR_USER_AGENT = pj_str("User-Agent");
+        const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
         std::string useragent(acc_->getUserAgentName());
         pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
         pjsip_hdr *h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent);
@@ -288,8 +288,8 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
 
     if (msg_data->content_type.slen && msg_data->msg_body.slen) {
         pjsip_msg_body *body;
-        pj_str_t type = pj_str("application");
-        pj_str_t subtype = pj_str("pidf+xml");
+        const pj_str_t type = CONST_PJ_STR("application");
+        const pj_str_t subtype = CONST_PJ_STR("pidf+xml");
         body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
         tdata->msg->body = body;
     }
@@ -436,7 +436,7 @@ pj_status_t
 SIPPresence::pres_publish(SIPPresence *pres)
 {
     pj_status_t status;
-    const pj_str_t STR_PRESENCE = pj_str("presence");
+    const pj_str_t STR_PRESENCE = CONST_PJ_STR("presence");
     SIPAccount * acc = pres->getAccount();
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
 

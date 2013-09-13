@@ -553,23 +553,23 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
     static const pj_str_t allowed[] = {
-        {(char *) "INFO", 4},
-        {(char *) "REGISTER", 8},
-        {(char *) "OPTIONS", 7},
-        {(char *) "MESSAGE", 7},
-        {(char *) "INVITE", 6},
-        {(char *) "ACK", 3},
-        {(char *) "BYE", 3},
-        {(char *) "NOTIFY",6},
-        {(char *) "PUBLISH",7},
-        {(char *) "CANCEL",6}};
+        CONST_PJ_STR("INFO"),
+        CONST_PJ_STR("REGISTER"),
+        CONST_PJ_STR("OPTIONS"),
+        CONST_PJ_STR("MESSAGE"),
+        CONST_PJ_STR("INVITE"),
+        CONST_PJ_STR("ACK"),
+        CONST_PJ_STR("BYE"),
+        CONST_PJ_STR("NOTIFY"),
+        CONST_PJ_STR("PUBLISH"),
+        CONST_PJ_STR("CANCEL")};
 
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
 
-    static const pj_str_t text_plain = { (char*) "text/plain", 10 };
+    static const pj_str_t text_plain = CONST_PJ_STR("text/plain");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, NULL, 1, &text_plain);
 
-    static const pj_str_t accepted = { (char*) "application/sdp", 15 };
+    static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, NULL, 1, &accepted);
 
     DEBUG("pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
@@ -746,7 +746,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     pj_list_init(&hdr_list);
     std::string useragent(account->getUserAgentName());
     pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
-    const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
+    const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(pool_, &STR_USER_AGENT, &pJuseragent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
@@ -1444,10 +1444,6 @@ SIPVoIPLink::getCurrentAudioCodecNames(Call *call) const
     }
 }
 
-/* Only use this macro with string literals or character arrays, will not work
- * as expected with char pointers */
-#define CONST_PJ_STR(X) {(char *) (X), ARRAYSIZE(X) - 1}
-
 namespace {
 void sendSIPInfo(const SIPCall &call, const char *const body, const char *const subtype)
 {
@@ -1586,8 +1582,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         return false;
     }
 // aol
-    pj_str_t subj_hdr_name = pj_str("Subject");
-    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, "Phone call", 10, NULL);
+    pj_str_t subj_hdr_name = CONST_PJ_STR("Subject");
+    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
 
     pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 // aol
@@ -2242,7 +2238,7 @@ void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     if (currentCall == NULL)
         return;
 
-    static const pj_str_t str_refer_to = { (char*) "Refer-To", 8};
+    static const pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
     pjsip_generic_string_hdr *refer_to = static_cast<pjsip_generic_string_hdr*>
                                          (pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &str_refer_to, NULL));
 

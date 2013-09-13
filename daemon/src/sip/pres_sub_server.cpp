@@ -176,7 +176,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
         presSubServer->setExpires(-1);
 
     st_code = (pjsip_status_code) 200;
-    reason = pj_str("OK");
+    reason = CONST_PJ_STR("OK");
     pj_bzero(&msg_data, sizeof(msg_data));
     pj_list_init(&msg_data.hdr_list);
     pjsip_media_type_init(&msg_data.multipart_ctype, NULL, NULL);
@@ -208,20 +208,20 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     // fake temporary status
     pjrpid_element rpid = {
         PJRPID_ELEMENT_TYPE_PERSON,
-        pj_str("20"),
+        CONST_PJ_STR("20"),
         PJRPID_ACTIVITY_UNKNOWN,
-        pj_str("Your subscription was received and waits for approval.")
+        CONST_PJ_STR("Your subscription was received and waits for approval.")
     };
     pjsip_pres_status fake_status_data;
     pj_bzero(&fake_status_data, sizeof(pjsip_pres_status));
     fake_status_data.info_cnt = 1;
     fake_status_data.info[0].basic_open = false;
-    fake_status_data.info[0].id = pj_str("0"); /* todo: tuplie_id*/
+    fake_status_data.info[0].id = CONST_PJ_STR("0"); /* todo: tuplie_id*/
     pj_memcpy(&fake_status_data.info[0].rpid, &rpid, sizeof(pjrpid_element));
     pjsip_pres_set_status(sub, &fake_status_data);
 
     /* Create and send the the first NOTIFY to active subscription: */
-    pj_str_t stateStr = pj_str("");
+    pj_str_t stateStr = CONST_PJ_STR("");
     tdata = NULL;
     status = pjsip_pres_notify(sub, ev_state, &stateStr, &reason, &tdata);
 

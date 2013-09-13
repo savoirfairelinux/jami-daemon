@@ -40,12 +40,13 @@
 #include <pjsip/sip_module.h>
 
 #include "src/noncopyable.h"
+#include "src/array_size.h"
 
 extern pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
 
 static pjsip_module mod_presence_server = {
     NULL, NULL, /* prev, next.        */
-    pj_str("mod-presence-server"), /* Name.        */
+    CONST_PJ_STR("mod-presence-server"), /* Name.        */
     -1, /* Id            */
     PJSIP_MOD_PRIORITY_DIALOG_USAGE,
     NULL, /* load()        */
