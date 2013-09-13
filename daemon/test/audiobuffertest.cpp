@@ -43,24 +43,24 @@ void AudioBufferTest::testAudioBufferConstructors()
     SFLAudioSample test_samples2[] = {10, 11, 12, 13, 14, 15, 16, 17};
 
     AudioBuffer empty_buf(0);
-    CPPUNIT_ASSERT(empty_buf.samples() == 0);
+    CPPUNIT_ASSERT(empty_buf.frames() == 0);
     CPPUNIT_ASSERT(empty_buf.channels() == 1);
     CPPUNIT_ASSERT(empty_buf.getChannel(0)->size() == 0);
 
     AudioBuffer test_buf1(8, 2);
-    CPPUNIT_ASSERT(test_buf1.samples() == 8);
+    CPPUNIT_ASSERT(test_buf1.frames() == 8);
     CPPUNIT_ASSERT(test_buf1.channels() == 2);
     CPPUNIT_ASSERT(test_buf1.getChannel(0)->size() == 8);
     CPPUNIT_ASSERT(test_buf1.getChannel(1)->size() == 8);
     CPPUNIT_ASSERT(test_buf1.getChannel(2) == NULL);
 
     AudioBuffer test_buf2(test_samples1, 0, 0);
-    CPPUNIT_ASSERT(test_buf2.samples() == 0);
+    CPPUNIT_ASSERT(test_buf2.frames() == 0);
     CPPUNIT_ASSERT(test_buf2.channels() == 1);
     CPPUNIT_ASSERT(test_buf2.getChannel(0)->size() == 0);
 
     AudioBuffer test_buf3(test_samples2, 4, 2);
-    CPPUNIT_ASSERT(test_buf3.samples() == 4);
+    CPPUNIT_ASSERT(test_buf3.frames() == 4);
     CPPUNIT_ASSERT(test_buf3.channels() == 2);
     CPPUNIT_ASSERT(test_buf3.getChannel(0)->size() == 4);
 }
@@ -98,7 +98,7 @@ void AudioBufferTest::testAudioBufferMix()
 
     test_buf1.mix(test_buf2);
     CPPUNIT_ASSERT(test_buf1.channels() == 2);
-    CPPUNIT_ASSERT(test_buf1.samples() == 4);
+    CPPUNIT_ASSERT(test_buf1.frames() == 4);
     CPPUNIT_ASSERT((*test_buf1.getChannel(0))[0] == test_samples1[0]+test_samples2[0]);
     CPPUNIT_ASSERT((*test_buf1.getChannel(1))[0] == test_samples1[0]+test_samples2[1]);
 }

@@ -231,7 +231,7 @@ void AudioRecord::recData(AudioBuffer& buffer)
         return;
     }
 
-    const int nSamples = buffer.samples();
+    const int nSamples = buffer.frames();
 
     // FIXME: mono only
     if (fileHandle_->write(buffer.getChannel(0)->data(), nSamples) != nSamples) {

@@ -69,7 +69,7 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     if (sampleFactor == 1.0)
         return;
 
-    const size_t nbFrames = dataIn.samples();
+    const size_t nbFrames = dataIn.frames();
     const size_t nbChans = dataIn.channels();
 
     if (nbChans != channels_) {

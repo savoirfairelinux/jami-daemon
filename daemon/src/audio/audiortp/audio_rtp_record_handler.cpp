@@ -375,7 +375,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         }
     }
 
-    size = std::min(size, audioRtpRecord_.decData_.samples());
+    size = std::min(size, audioRtpRecord_.decData_.frames());
 
     {
         ScopedLock lock(audioRtpRecord_.audioCodecMutex_);

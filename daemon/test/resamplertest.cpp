@@ -215,7 +215,7 @@ void ResamplerTest::performUpsampling(SamplerateConverter &converter)
     AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
     AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
 
-    for (size_t i = 0, j = 0; i < (inputBuffer.samples() / 2); i += tmpInputBuffer.samples(), j += tmpOutputBuffer.samples()) {
+    for (size_t i = 0, j = 0; i < (inputBuffer.frames() / 2); i += tmpInputBuffer.frames(), j += tmpOutputBuffer.frames()) {
         tmpInputBuffer.copy(inputBuffer, i);
         converter.resample(tmpInputBuffer, tmpOutputBuffer);
         outputBuffer.copy(tmpOutputBuffer, -1, 0, j);
@@ -227,7 +227,7 @@ void ResamplerTest::performDownsampling(SamplerateConverter &converter)
     AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
     AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
 
-    for (size_t i = 0, j = 0; i < inputBuffer.samples(); i += tmpInputBuffer.samples(), j += tmpOutputBuffer.samples()) {
+    for (size_t i = 0, j = 0; i < inputBuffer.frames(); i += tmpInputBuffer.frames(), j += tmpOutputBuffer.frames()) {
         tmpInputBuffer.copy(inputBuffer, i);
         converter.resample(tmpInputBuffer, tmpOutputBuffer);
         outputBuffer.copy(tmpOutputBuffer, -1, 0, j);

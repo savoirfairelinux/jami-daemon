@@ -706,7 +706,7 @@ void AlsaLayer::capture()
     AudioBuffer in(toGetSamples, 1, sampleRate_);
 
     // TODO: handle ALSA multichannel capture
-    const int toGetBytes = in.samples() * sizeof(SFLAudioSample);
+    const int toGetBytes = in.frames() * sizeof(SFLAudioSample);
     SFLAudioSample * const in_ptr = in.getChannel(0)->data();
 
     if (read(in_ptr, toGetBytes) != toGetBytes) {

@@ -544,7 +544,7 @@ void PulseLayer::readFromMic()
     Manager::instance().getMainBuffer().putData(*out, MainBuffer::DEFAULT_ID);
 
 #ifdef RECTODISK
-    outfileResampled.write((const char *)out->getChannel(0), out->samples() * sizeof(SFLAudioSample));
+    outfileResampled.write((const char *)out->getChannel(0), out->frames() * sizeof(SFLAudioSample));
 #endif
 
     if (pa_stream_drop(record_->pulseStream()) < 0)

@@ -61,7 +61,7 @@ class AudioBuffer {
         }
 
         inline size_t size() {
-            return samples() * channels() * sizeof(SFLAudioSample);
+            return frames() * channels() * sizeof(SFLAudioSample);
         }
 
         /**
@@ -91,9 +91,9 @@ class AudioBuffer {
         void setChannelNum(unsigned n, bool copy_first = false);
 
         /**
-         * Returns the number of (multichannel) samples in this buffer.
+         * Returns the number of (multichannel) frames in this buffer.
          */
-        inline size_t samples() const {
+        inline size_t frames() const {
             if (not samples_.empty())
                 return samples_[0].size();
             else
@@ -101,10 +101,10 @@ class AudioBuffer {
         }
 
         /**
-         * Return the total number of single samples in the buffer (same as samples()*channels()).
+         * Return the total number of single samples in the buffer
          */
         inline size_t capacity() const {
-            return samples() * channels();
+            return frames() * channels();
         }
 
         /**
@@ -145,7 +145,7 @@ class AudioBuffer {
 
         /**
          * Write interleaved multichannel data to the out buffer, while samples are converted to float.
-         * The buffer must be at least of size getChannelNum()*samples()*sizeof(float).
+         * The buffer must be at least of size getChannelNum()*frames()*sizeof(float).
          *
          * @returns Number of samples writen.
          */

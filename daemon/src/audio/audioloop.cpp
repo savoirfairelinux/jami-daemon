@@ -58,7 +58,7 @@ AudioLoop::~AudioLoop()
 void
 AudioLoop::seek(double relative_position)
 {
-    pos_ = static_cast<double>(buffer_->samples() * relative_position * 0.01);
+    pos_ = static_cast<double>(buffer_->frames() * relative_position * 0.01);
 }
 
 void
@@ -69,9 +69,9 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
         return;
     }
 
-    const size_t buf_samples = buffer_->samples();
+    const size_t buf_samples = buffer_->frames();
     size_t pos = pos_;
-    size_t total_samples = output.samples();
+    size_t total_samples = output.frames();
     size_t output_pos = 0;
 
     if (buf_samples == 0) {

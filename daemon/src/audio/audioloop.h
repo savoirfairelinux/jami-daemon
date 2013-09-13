@@ -72,7 +72,7 @@ class AudioLoop {
          * @return unsigned int The size
          */
         size_t getSize() {
-            return buffer_->samples();
+            return buffer_->frames();
         }
 
     protected:
