@@ -35,11 +35,13 @@
 #include "sipvoiplink.h"
 #include "manager.h"
 #include "sippresence.h"
+#include "client/presencemanager.h"
 #include "logger.h"
 #include "pres_sub_server.h"
 
 /* Callback called when *server* subscription state has changed. */
-void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
+void
+PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
 {
     pjsip_rx_data *rdata = event->body.rx_msg.rdata;
 
@@ -51,8 +53,8 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
     PJ_UNUSED_ARG(event);
     SIPPresence * pres = Manager::instance().getSipAccount("IP2IP")->getPresence();
     pres->lock();
-    PresSubServer *presSubServer = (PresSubServer *) pjsip_evsub_get_mod_data(sub, pres->getModId());
-    DEBUG("Presence_subscription_server to %s is %s", presSubServer->remote, pjsip_evsub_get_state_name(sub));
+    PresSubServer *presSubServer = static_cast<PresSubServer *>(pjsip_evsub_get_mod_data(sub, pres->getModId()));
+    DEBUG("Presence_subscription_server to %s is %s", presSubServer->remote_, pjsip_evsub_get_state_name(sub));
 
     if (presSubServer) {
         pjsip_evsub_state state;
@@ -70,7 +72,8 @@ void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
     pres->unlock();
 }
 
-pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
+pj_bool_t
+PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
 {
 
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
@@ -81,7 +84,6 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     pjsip_dialog *dlg;
     pjsip_evsub *sub;
     pjsip_evsub_user pres_cb;
-    pjsip_tx_data *tdata;
     pjsip_expires_hdr *expires_hdr;
     pjsip_status_code st_code;
     pj_str_t reason;
@@ -97,14 +99,14 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     /* debug msg */
     std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
     std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
-    DEBUG("Incomming pres_on_rx_subscribe_request for %s, name:%s, server:%s."
+    DEBUG("Incoming pres_on_rx_subscribe_request for %s, name:%s, server:%s."
           , request.c_str()
           , name.c_str()
           , server.c_str());
 
     /* get parents*/
     std::string accountId = "IP2IP"; /* this code is only used for IP2IP accounts */
-    SIPAccount *acc = (SIPAccount *) Manager::instance().getSipAccount(accountId);
+    SIPAccount *acc = Manager::instance().getSipAccount(accountId);
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
     SIPPresence * pres = acc->getPresence();
     pres->lock();
@@ -164,7 +166,9 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     /* Create a new PresSubServer server and wait for client approve */
     PresSubServer *presSubServer = new PresSubServer(pres, sub, remote, dlg);
     pjsip_evsub_set_mod_data(sub, pres->getModId(), presSubServer);
-    pres->reportnewServerSubscriptionRequest(presSubServer); // Notify the client.
+    // Notify the client.
+    Manager::instance().getClient()->getPresenceManager()->newServerSubscriptionRequest(presSubServer->remote_);
+
     pres->addPresSubServer(presSubServer);
 
     /* Capture the value of Expires header. */
@@ -222,7 +226,7 @@ pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
 
     /* Create and send the the first NOTIFY to active subscription: */
     pj_str_t stateStr = CONST_PJ_STR("");
-    tdata = NULL;
+    pjsip_tx_data *tdata = NULL;
     status = pjsip_pres_notify(sub, ev_state, &stateStr, &reason, &tdata);
 
     if (status == PJ_SUCCESS) {
@@ -260,8 +264,8 @@ pjsip_module PresSubServer::mod_presence_server = {
 
 
 
-PresSubServer::PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, char *r, pjsip_dialog *d)
-    : remote(r)
+PresSubServer::PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, const char *remote, pjsip_dialog *d)
+    : remote_(remote)
     , pres_(pres)
     , sub_(evsub)
     , dlg_(d)
@@ -279,20 +283,21 @@ void PresSubServer::setExpires(int ms)
     expires_ = ms;
 }
 
-int PresSubServer::getExpires()
+int PresSubServer::getExpires() const
 {
     return expires_;
 }
 
-bool PresSubServer::matches(char *s)
+bool PresSubServer::matches(const char *s) const
 {
     // servers match if they have the same remote uri and the account ID.
-    return (!(strcmp(remote, s))) ;
+    return (!(strcmp(remote_, s))) ;
 }
 
 void PresSubServer::approve(bool flag)
 {
     approved_ = flag;
+    DEBUG("Approve Presence_subscription_server for %s: %s.", remote_, flag ? "true" : "false");
     // attach the real status data
     pjsip_pres_set_status(sub_, pres_->getStatus());
 }
@@ -307,7 +312,7 @@ void PresSubServer::notify()
     * the user accepted the request.
     */
     if ((pjsip_evsub_get_state(sub_) == PJSIP_EVSUB_STATE_ACTIVE) && (approved_)) {
-        DEBUG("Notifying %s.", remote);
+        DEBUG("Notifying %s.", remote_);
 
         pjsip_tx_data *tdata;
         pjsip_pres_set_status(sub_, pres_->getStatus());

@@ -203,17 +203,10 @@ void SIPPresence::removePresSubClient(PresSubClient *c)
     pres_sub_client_list_.remove(c);
 }
 
-
-void SIPPresence::reportnewServerSubscriptionRequest(PresSubServer *s)
-{
-    Manager::instance().getClient()->getPresenceManager()->newServerSubscriptionRequest(s->remote);
-}
-
 void SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
 {
     for (const auto & s : pres_sub_server_list_) {
         if (s->matches((char *) uri.c_str())) {
-            DEBUG("Approve Presence_subscription_server for %s: %s.", s->remote, flag ? "true" : "false");
             s->approve(flag);
             // return; // 'return' would prevent multiple-time subscribers from spam
         }
@@ -224,7 +217,6 @@ void SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
 void SIPPresence::addPresSubServer(PresSubServer *s)
 {
     if (pres_sub_server_list_.size() < MAX_N_PRES_SUB_SERVER) {
-        DEBUG("Presence_subscription_server added: %s.", s->remote);
         pres_sub_server_list_.push_back(s);
     } else {
         WARN("Max Presence_subscription_server is reach.");

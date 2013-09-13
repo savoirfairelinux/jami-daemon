@@ -169,12 +169,6 @@ class SIPPresence {
         void removePresSubClient(PresSubClient *b);
 
         /**
-         * IP2IP context.
-         * Report new Subscription to the client, waiting for approval.
-         * @param s     PresenceSubcription pointer.
-         */
-        void reportnewServerSubscriptionRequest(PresSubServer *s);
-        /**
         * IP2IP context.
         * Process new subscription based on client decision.
         * @param flag     client decision.

@@ -49,21 +49,19 @@ class SIPpresence;
 class PresSubServer {
 
     public:
-        PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, char *r, pjsip_dialog *d);
+        PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, const char *remote, pjsip_dialog *d);
         ~PresSubServer();
-        /* TODO: add '< >' to URI for consistance*/
-        char *remote;    /**< Remote URI.                */
         /*
          * Acces to the evsub expire variable.
          * It was recieved in the SUBSCRIBE request.
          */
         void setExpires(int ms);
-        int getExpires();
+        int getExpires() const;
         /*
          * Match method
          * s is the URI (remote)
          */
-        bool matches(char *s);
+        bool matches(const char *s) const;
         /*
          * Allow the subscriber for being notified.
          */
@@ -73,14 +71,16 @@ class PresSubServer {
          */
         void notify();
 
-        friend void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event);
-        friend pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
-
         static pjsip_module mod_presence_server;
 
     private:
+        static pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
+        static void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event);
+
 
         NON_COPYABLE(PresSubServer);
+        /* TODO: add '< >' to URI for consistency */
+        const char *remote_;    /**< Remote URI.                */
         SIPPresence     *pres_;
         pjsip_evsub     *sub_;
         pjsip_dialog    *dlg_;
