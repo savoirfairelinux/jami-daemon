@@ -57,7 +57,7 @@ enum VideoPixelFormat {
 
 namespace sfl_video {
 
-template <typename T> class Observator;
+template <typename T> class Observer;
 template <typename T> class Observable;
 class VideoFrame;
 
@@ -74,39 +74,39 @@ template <typename T>
 class Observable
 {
 public:
-    Observable() : observators_(), mutex_() {}
+    Observable() : observers_(), mutex_() {}
     virtual ~Observable() {};
 
-    void attach(Observator<T>* o) {
+    void attach(Observer<T>* o) {
         std::unique_lock<std::mutex> lk(mutex_);
-        observators_.insert(o);
+        observers_.insert(o);
     }
 
-    void detach(Observator<T>* o) {
+    void detach(Observer<T>* o) {
         std::unique_lock<std::mutex> lk(mutex_);
-        observators_.erase(o);
+        observers_.erase(o);
     }
 
     void notify(T& data) {
         std::unique_lock<std::mutex> lk(mutex_);
-        for (auto observator : observators_)
-            observator->update(this, data);
+        for (auto observer : observers_)
+            observer->update(this, data);
     }
 
 private:
     NON_COPYABLE(Observable<T>);
 
-	std::set<Observator<T>*> observators_;
-    std::mutex mutex_; // lock observators_
+	std::set<Observer<T>*> observers_;
+    std::mutex mutex_; // lock observers_
 };
 
-/*=== Observator =============================================================*/
+/*=== Observer =============================================================*/
 
 template <typename T>
-class Observator
+class Observer
 {
 public:
-    virtual ~Observator() {};
+    virtual ~Observer() {};
 	virtual void update(Observable<T>*, T&) = 0;
 };
 
@@ -196,7 +196,7 @@ class VideoFrameActiveWriter :
 {};
 
 class VideoFramePassiveReader :
-        public Observator<VideoFrameSP>,
+        public Observer<VideoFrameSP>,
         public VideoNode
 {};
 
