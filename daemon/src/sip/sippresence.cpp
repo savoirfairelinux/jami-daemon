@@ -30,14 +30,14 @@
  */
 
 
+#include "sippresence.h"
 #include "logger.h"
 #include "manager.h"
 #include "client/client.h"
 #include "client/callmanager.h"
 #include "client/presencemanager.h"
 #include "sipaccount.h"
-#include "sippublish.h"
-#include "sippresence.h"
+#include "sip_utils.h"
 #include "pres_sub_server.h"
 #include "pres_sub_client.h"
 #include "sipvoiplink.h"
@@ -46,7 +46,7 @@
 #define MAX_N_PRES_SUB_CLIENT 20
 
 SIPPresence::SIPPresence(SIPAccount *acc)
-    : publish_sess()
+    : publish_sess_()
     , pres_status_data_()
     , enabled_(true)
     , acc_(acc)
@@ -74,10 +74,10 @@ SIPPresence::SIPPresence(SIPAccount *acc)
 SIPPresence::~SIPPresence()
 {
     /* Flush the lists */
-    for (const auto &c : pres_sub_client_list_)
+    for (const auto & c : pres_sub_client_list_)
         removePresSubClient(c) ;
 
-    for (const auto &s : pres_sub_server_list_)
+    for (const auto & s : pres_sub_server_list_)
         removePresSubServer(s);
 }
 
@@ -160,13 +160,14 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)
 {
     /* Check if the buddy was already subscribed */
-    for (const auto &c : pres_sub_client_list_)
+    for (const auto & c : pres_sub_client_list_) {
         if (c->getURI() == uri) {
             DEBUG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
             delete c;
             removePresSubClient(c);
             break;
         }
+    }
 
     if (pres_sub_client_list_.size() >= MAX_N_PRES_SUB_CLIENT) {
         WARN("Can't add PresSubClient, max number reached.");
@@ -210,12 +211,13 @@ void SIPPresence::reportnewServerSubscriptionRequest(PresSubServer *s)
 
 void SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
 {
-    for (const auto &s : pres_sub_server_list_)
+    for (const auto & s : pres_sub_server_list_) {
         if (s->matches((char *) uri.c_str())) {
             DEBUG("Approve Presence_subscription_server for %s: %s.", s->remote, flag ? "true" : "false");
             s->approve(flag);
             // return; // 'return' would prevent multiple-time subscribers from spam
         }
+    }
 }
 
 
@@ -240,7 +242,7 @@ void SIPPresence::notifyPresSubServer()
 {
     DEBUG("Iterating through Presence_subscription_server:");
 
-    for (const auto &s : pres_sub_server_list_)
+    for (const auto & s : pres_sub_server_list_)
         s->notify();
 }
 
@@ -291,4 +293,191 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
         body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
         tdata->msg->body = body;
     }
+}
+
+static const pjsip_publishc_opt my_publish_opt = {true}; // this is queue_request
+
+/*
+ * Client presence publication callback.
+ */
+void
+SIPPresence::pres_publish_cb(struct pjsip_publishc_cbparam *param)
+{
+    SIPPresence *pres = (SIPPresence*) param->token;
+
+    if (param->code / 100 != 2 || param->status != PJ_SUCCESS) {
+
+        pjsip_publishc_destroy(param->pubc);
+        pres->publish_sess_ = NULL;
+
+        if (param->status != PJ_SUCCESS) {
+            char errmsg[PJ_ERR_MSG_SIZE];
+
+            pj_strerror(param->status, errmsg, sizeof(errmsg));
+            ERROR("Client publication (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
+        } else if (param->code == 412) {
+            /* 412 (Conditional Request Failed)
+             * The PUBLISH refresh has failed, retry with new one.
+             */
+            WARN("Publish retry.");
+            pres_publish(pres);
+        } else {
+            ERROR("Client publication (PUBLISH) failed (%u/%.*s)",
+                  param->code, param->reason.slen, param->reason.ptr);
+        }
+
+    } else {
+        if (param->expiration < 1) {
+            /* Could happen if server "forgot" to include Expires header
+             * in the response. We will not renew, so destroy the pubc.
+             */
+            pjsip_publishc_destroy(param->pubc);
+            pres->publish_sess_ = NULL;
+        }
+    }
+}
+
+/*
+ * Send PUBLISH request.
+ */
+pj_status_t
+SIPPresence::pres_send_publish(SIPPresence * pres, pj_bool_t active)
+{
+    pjsip_tx_data *tdata;
+    pj_status_t status;
+
+    DEBUG("Send presence %sPUBLISH..", (active ? "" : "un-"));
+
+    SIPAccount * acc = pres->getAccount();
+    std::string contactWithAngles =  acc->getFromUri();
+    contactWithAngles.erase(contactWithAngles.find('>'));
+    int semicolon = contactWithAngles.find_first_of(":");
+    std::string contactWithoutAngles = contactWithAngles.substr(semicolon + 1);
+//    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
+//    pj_memcpy(&pres_status_data.info[0].contact, &contt, sizeof(pj_str_t));;
+
+    /* Create PUBLISH request */
+    if (active) {
+        char *bpos;
+        pj_str_t entity;
+
+        status = pjsip_publishc_publish(pres->publish_sess_, PJ_TRUE, &tdata);
+
+        if (status != PJ_SUCCESS) {
+            ERROR("Error creating PUBLISH request", status);
+            goto on_error;
+        }
+
+        pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
+
+        if ((bpos = pj_strchr(&from, '<')) != NULL) {
+            char *epos = pj_strchr(&from, '>');
+
+            if (epos - bpos < 2) {
+                pj_assert(!"Unexpected invalid URI");
+                status = PJSIP_EINVALIDURI;
+                goto on_error;
+            }
+
+            entity.ptr = bpos + 1;
+            entity.slen = epos - bpos - 1;
+        } else {
+            entity = from;
+        }
+
+        /* Create and add PIDF message body */
+        status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(),
+                                        &entity, &tdata->msg->body);
+
+        if (status != PJ_SUCCESS) {
+            ERROR("Error creating PIDF for PUBLISH request");
+            pjsip_tx_data_dec_ref(tdata);
+            goto on_error;
+        }
+
+    } else {
+        WARN("Unpublish is not implemented.");
+    }
+
+
+    pres_msg_data msg_data;
+    pj_bzero(&msg_data, sizeof(msg_data));
+    pj_list_init(&msg_data.hdr_list);
+    pjsip_media_type_init(&msg_data.multipart_ctype, NULL, NULL);
+    pj_list_init(&msg_data.multipart_parts);
+
+    pres->fillDoc(tdata, &msg_data);
+
+    /* Send the PUBLISH request */
+    status = pjsip_publishc_send(pres->publish_sess_, tdata);
+
+    if (status == PJ_EPENDING) {
+        WARN("Previous request is in progress, ");
+    } else if (status != PJ_SUCCESS) {
+        ERROR("Error sending PUBLISH request");
+        goto on_error;
+    }
+
+    return PJ_SUCCESS;
+
+on_error:
+
+    if (pres->publish_sess_) {
+        pjsip_publishc_destroy(pres->publish_sess_);
+        pres->publish_sess_ = NULL;
+    }
+
+    return status;
+}
+
+
+/* Create client publish session */
+pj_status_t
+SIPPresence::pres_publish(SIPPresence *pres)
+{
+    pj_status_t status;
+    const pj_str_t STR_PRESENCE = pj_str("presence");
+    SIPAccount * acc = pres->getAccount();
+    pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
+
+    /* Create and init client publication session */
+
+    /* Create client publication */
+    status = pjsip_publishc_create(endpt, &my_publish_opt,
+                                   pres, &pres_publish_cb,
+                                   &pres->publish_sess_);
+
+    if (status != PJ_SUCCESS) {
+        pres->publish_sess_ = NULL;
+        ERROR("Failed to create a publish seesion.");
+        return status;
+    }
+
+    /* Initialize client publication */
+    pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
+    status = pjsip_publishc_init(pres->publish_sess_, &STR_PRESENCE, &from, &from, &from, 0xFFFF);
+
+    if (status != PJ_SUCCESS) {
+        ERROR("Failed to init a publish session");
+        pres->publish_sess_ = NULL;
+        return status;
+    }
+
+    /* Add credential for authentication */
+    if (acc->hasCredentials() and pjsip_publishc_set_credentials(pres->publish_sess_, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
+        ERROR("Could not initialize credentials for invite session authentication");
+        return status;
+    }
+
+    /* Set route-set */
+    if (acc->hasServiceRoute())
+        pjsip_regc_set_route_set(acc->getRegistrationInfo(), sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
+
+    /* Send initial PUBLISH request */
+    status = pres_send_publish(pres, PJ_TRUE);
+
+    if (status != PJ_SUCCESS)
+        return status;
+
+    return PJ_SUCCESS;
 }
