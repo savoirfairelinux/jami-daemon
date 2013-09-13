@@ -102,6 +102,11 @@ int VideoDecoder::setupFromVideoData()
         avcodec_close(decoderCtx_);
 
     DEBUG("Finding stream info");
+    if (!inputCtx_->streams[0]->info)  {
+        ERROR("Stream info is NULL");
+        return -1;
+    }
+
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else

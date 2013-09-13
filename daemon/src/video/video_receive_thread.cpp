@@ -208,7 +208,7 @@ bool VideoReceiveThread::decodeFrame()
     // decoding error?
     if (ret == -2 and requestKeyFrameCallback_) {
         WARN("VideoDecoder error, restarting it...");
-        videoDecoder_->setupFromVideoData();
+        EXIT_IF_FAIL(!videoDecoder_->setupFromVideoData(), "Setup failed");
         requestKeyFrameCallback_(id_);
     } else if (ret < 0) {
         ERROR("VideoDecoder fatal error, stopping it...");
