@@ -60,9 +60,9 @@ class AudioBuffer {
                 std::fill(i->begin(), i->end(), 0);
         }
 
-		inline size_t size() {
-			return samples_[0].size() * channels() * sizeof(SFLAudioSample);
-		}
+        inline size_t size() {
+            return samples() * channels() * sizeof(SFLAudioSample);
+        }
 
         /**
          * Returns the sample rate (in samples/sec) associated to this buffer.
@@ -94,8 +94,11 @@ class AudioBuffer {
          * Returns the number of (multichannel) samples in this buffer.
          */
         inline size_t samples() const {
-			return samples_[0].size();
-		}
+            if (not samples_.empty())
+                return samples_[0].size();
+            else
+                return 0;
+        }
 
         /**
          * Return the total number of single samples in the buffer (same as samples()*channels()).
