@@ -65,6 +65,7 @@ class YamlNode {
         virtual YamlNode *getValue(const std::string &key) const = 0;
         virtual void getValue(const std::string &key UNUSED, bool *b) const = 0;
         virtual void getValue(const std::string &key UNUSED, int *i) const = 0;
+        virtual void getValue(const std::string &key UNUSED, double *d) const = 0;
         virtual void getValue(const std::string &key UNUSED, std::string *s) const = 0;
 
     private:
@@ -89,6 +90,7 @@ class YamlDocument : public YamlNode {
         virtual YamlNode *getValue(const std::string &key UNUSED) const { return NULL; }
         virtual void getValue(const std::string &key UNUSED, bool *b) const { *b = false; }
         virtual void getValue(const std::string &key UNUSED, int *i) const { *i = 0; }
+        virtual void getValue(const std::string &key UNUSED, double *d) const { *d = 0.0; }
         virtual void getValue(const std::string &key UNUSED, std::string *s) const { *s = ""; }
 
     private:
@@ -110,6 +112,7 @@ class SequenceNode : public YamlNode {
         virtual YamlNode *getValue(const std::string &key UNUSED) const { return NULL; }
         virtual void getValue(const std::string &key UNUSED, bool *b) const { *b = false; }
         virtual void getValue(const std::string &key UNUSED, int *i) const { *i = 0; }
+        virtual void getValue(const std::string &key UNUSED, double *d) const { *d = 0.0; }
         virtual void getValue(const std::string &key UNUSED, std::string *s) const { *s = ""; }
 
 
@@ -136,6 +139,7 @@ class MappingNode : public YamlNode {
         YamlNode *getValue(const std::string &key) const;
         void getValue(const std::string &key, bool *b) const;
         void getValue(const std::string &key, int *i) const;
+        void getValue(const std::string &key, double *d) const;
         void getValue(const std::string &key, std::string *s) const;
 
         virtual void deleteChildNodes();
@@ -160,6 +164,7 @@ class ScalarNode : public YamlNode {
         virtual YamlNode *getValue(const std::string &key UNUSED) const { return NULL; }
         virtual void getValue(const std::string &key UNUSED, bool *b) const { *b = false; }
         virtual void getValue(const std::string &key UNUSED, int *i) const { *i = 0; }
+        virtual void getValue(const std::string &key UNUSED, double *d) const { *d = 0.0; }
         virtual void getValue(const std::string &key UNUSED, std::string *s) const { *s = ""; }
 
         virtual void deleteChildNodes() {}

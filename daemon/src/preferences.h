@@ -356,8 +356,8 @@ class AudioPreference : public Serializable {
         // general preference
         std::string recordpath_; //: /home/msavard/Bureau
         bool alwaysRecording_;
-        int volumemic_;
-        int volumespkr_;
+        double volumemic_;
+        double volumespkr_;
 
         bool noisereduce_;
         bool echocancel_;
