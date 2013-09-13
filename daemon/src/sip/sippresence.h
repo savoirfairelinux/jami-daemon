@@ -211,9 +211,9 @@ public:
     void lock();
     void unlock();
 
-    pjsip_pres_status pres_status_data; /**< Presence Data.*/
     pjsip_publishc  *publish_sess;  /**< Client publication session.*/
 private:
+    pjsip_pres_status pres_status_data_; /**< Presence Data.*/
 
     pj_bool_t enabled_; /**< Allow for status publish,*/
     NON_COPYABLE(SIPPresence);

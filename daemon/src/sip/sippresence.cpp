@@ -46,8 +46,8 @@
 #define MAX_N_PRES_SUB_CLIENT 20
 
 SIPPresence::SIPPresence(SIPAccount *acc)
-    : pres_status_data()
-    , publish_sess()
+    : publish_sess()
+    , pres_status_data_()
     , enabled_(true)
     , acc_(acc)
     , pres_sub_server_list_()  //IP2IP context
@@ -88,7 +88,7 @@ SIPAccount * SIPPresence::getAccount() const
 
 pjsip_pres_status * SIPPresence::getStatus()
 {
-    return &pres_status_data;
+    return &pres_status_data_;
 }
 
 int SIPPresence::getModId() const
@@ -125,11 +125,11 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
     else // TODO: is there any other possibilities
         DEBUG("Presence : no activity");
 
-    pj_bzero(&pres_status_data, sizeof(pres_status_data));
-    pres_status_data.info_cnt = 1;
-    pres_status_data.info[0].basic_open = status;
-    pres_status_data.info[0].id = pj_str("0"); /* todo: tuplie_id*/
-    pj_memcpy(&pres_status_data.info[0].rpid, &rpid, sizeof(pjrpid_element));
+    pj_bzero(&pres_status_data_, sizeof(pres_status_data_));
+    pres_status_data_.info_cnt = 1;
+    pres_status_data_.info[0].basic_open = status;
+    pres_status_data_.info[0].id = pj_str("0"); /* todo: tuplie_id*/
+    pj_memcpy(&pres_status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
     /* "contact" field is optionnal */
 }
 
