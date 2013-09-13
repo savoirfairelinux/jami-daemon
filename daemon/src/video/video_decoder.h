@@ -46,7 +46,7 @@ class AVCodec;
 
 namespace sfl_video {
 
-	class VideoDecoder : public VideoCodec, public VideoGenerator {
+	class VideoDecoder : public VideoCodec {
 	public:
 		VideoDecoder();
 		~VideoDecoder();
@@ -56,12 +56,12 @@ namespace sfl_video {
 		int openInput(const std::string &source_str,
 					  const std::string &format_str);
 		int setupFromVideoData();
-		int decode();
-		int flush();
-		void scale(VideoScaler &ctx, VideoFrame &output);
+		int decode(VideoFrame&);
+		int flush(VideoFrame&);
 
-		int getWidth() const { return dstWidth_; }
-		int getHeight() const { return dstHeight_; }
+		int getWidth() const;
+		int getHeight() const;
+		int getPixelFormat() const;
 
 	private:
 		NON_COPYABLE(VideoDecoder);
@@ -69,11 +69,7 @@ namespace sfl_video {
 		AVCodec *inputDecoder_;
 		AVCodecContext *decoderCtx_;
 		AVFormatContext *inputCtx_;
-		VideoFrame scaledPicture_;
-
 		int streamIndex_;
-		int dstWidth_;
-        int dstHeight_;
 	};
 }
 

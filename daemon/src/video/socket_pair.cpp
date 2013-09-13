@@ -222,8 +222,10 @@ int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 						   {context->rtcpHandle_, POLLIN, 0}};
 
     for(;;) {
-        if (context->interrupted_)
+        if (context->interrupted_) {
+            ERROR("interrupted");
             return -EINTR;
+        }
 
         /* build fdset to listen to RTP and RTCP packets */
         n = poll(p, 2, 100);

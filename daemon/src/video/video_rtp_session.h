@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,9 +32,14 @@
 #ifndef __VIDEO_RTP_SESSION_H__
 #define __VIDEO_RTP_SESSION_H__
 
+#include "video_base.h"
+#include "video_mixer.h"
+#include "shm_sink.h"
+#include "noncopyable.h"
+
 #include <string>
 #include <map>
-#include <tr1/memory>
+#include <memory>
 
 class Sdp;
 
@@ -44,29 +50,37 @@ class VideoReceiveThread;
 class SocketPair;
 
 class VideoRtpSession {
-    public:
-        VideoRtpSession(const std::string &callID,
-                        const std::map<std::string, std::string> &txArgs);
-        ~VideoRtpSession();
+public:
+    VideoRtpSession(const std::string &callID,
+                    const std::map<std::string, std::string> &txArgs);
+    ~VideoRtpSession();
 
-        void start(int localPort);
-        void stop();
-        void updateDestination(const std::string &destination,
-                               unsigned int port);
-        void updateSDP(const Sdp &sdp);
-        void forceKeyFrame();
-        void addReceivingDetails(std::map<std::string, std::string> &details);
+    void start(int localPort);
+    void stop();
+    void updateDestination(const std::string &destination,
+                           unsigned int port);
+    void updateSDP(const Sdp &sdp);
+    void forceKeyFrame();
+    void addReceivingDetails(std::map<std::string, std::string> &details);
+    void bindMixer(VideoMixer* mixer);
+    void unbindMixer();
 
-    private:
-        std::tr1::shared_ptr<SocketPair> socketPair_;
-        std::tr1::shared_ptr<VideoSendThread> sendThread_;
-        std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
-        std::map<std::string, std::string> txArgs_;
-        std::map<std::string, std::string> rxArgs_;
-        bool sending_;
-        bool receiving_;
-        const std::string callID_;
+private:
+    NON_COPYABLE(VideoRtpSession);
+
+    std::shared_ptr<SocketPair> socketPair_;
+    std::shared_ptr<VideoSendThread> sendThread_;
+    std::shared_ptr<VideoReceiveThread> receiveThread_;
+    std::map<std::string, std::string> txArgs_;
+    std::map<std::string, std::string> rxArgs_;
+    bool sending_;
+    bool receiving_;
+    const std::string callID_;
+    VideoMixer* videoMixer_;
+    VideoFrameActiveWriter *videoLocal_;
+    std::shared_ptr<SHMSink> sink_;
 };
+
 }
 
 #endif // __VIDEO_RTP_SESSION_H__

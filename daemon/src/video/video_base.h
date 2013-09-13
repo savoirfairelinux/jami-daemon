@@ -37,7 +37,9 @@
 #include <cstdlib>
 #include <cstdint>
 #include <memory>
-#include <forward_list>
+#include <set>
+#include <mutex>
+#include <condition_variable>
 
 
 class AVFrame;
@@ -55,9 +57,58 @@ enum VideoPixelFormat {
 
 namespace sfl_video {
 
+template <typename T> class Observator;
+template <typename T> class Observable;
+class VideoFrame;
+
 typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
 typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
 typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
+
+typedef std::shared_ptr<VideoFrame> VideoFrameUP;
+typedef std::shared_ptr<VideoFrame> VideoFrameSP;
+
+/*=== Observable =============================================================*/
+
+template <typename T>
+class Observable
+{
+public:
+    Observable() : observators_(), mutex_() {}
+    virtual ~Observable() {};
+
+    void attach(Observator<T>* o) {
+        std::unique_lock<std::mutex> lk(mutex_);
+        observators_.insert(o);
+    }
+
+    void detach(Observator<T>* o) {
+        std::unique_lock<std::mutex> lk(mutex_);
+        observators_.erase(o);
+    }
+
+    void notify(T& data) {
+        std::unique_lock<std::mutex> lk(mutex_);
+        for (auto observator : observators_)
+            observator->update(this, data);
+    }
+
+private:
+    NON_COPYABLE(Observable<T>);
+
+	std::set<Observator<T>*> observators_;
+    std::mutex mutex_; // lock observators_
+};
+
+/*=== Observator =============================================================*/
+
+template <typename T>
+class Observator
+{
+public:
+    virtual ~Observator() {};
+	virtual void update(Observable<T>*, T&) = 0;
+};
 
 /*=== VideoPacket  ===========================================================*/
 
@@ -115,7 +166,7 @@ public:
     ~VideoFrame();
 
     AVFrame* get() { return frame_; };
-    int getFormat() const;
+    int getPixelFormat() const;
     int getWidth() const;
     int getHeight() const;
     void setGeometry(int width, int height, int pix_fmt);
@@ -134,36 +185,42 @@ private:
     bool allocated_;
 };
 
-/*=== VideoSource ============================================================*/
+/*=== VideoNode ============================================================*/
 
-class VideoSource {
-public:
-    virtual ~VideoSource() {}
-    virtual std::shared_ptr<VideoFrame> waitNewFrame() = 0;
-    virtual std::shared_ptr<VideoFrame> obtainLastFrame() = 0;
-    virtual int getWidth() const = 0;
-    virtual int getHeight() const = 0;
-};
+class VideoNode { public: virtual ~VideoNode() {}; };
+typedef VideoNode VideoSource;
+
+class VideoFrameActiveWriter :
+        public Observable<VideoFrameSP>,
+        public VideoNode
+{};
+
+class VideoFramePassiveReader :
+        public Observator<VideoFrameSP>,
+        public VideoNode
+{};
 
 /*=== VideoGenerator =========================================================*/
 
-class VideoGenerator : public VideoSource {
+class VideoGenerator : public VideoFrameActiveWriter
+{
 public:
-    VideoGenerator();
-    virtual ~VideoGenerator();
+    VideoGenerator() : writableFrame_(), lastFrame_() {}
 
-    std::shared_ptr<VideoFrame> waitNewFrame();
-    std::shared_ptr<VideoFrame> obtainLastFrame();
+    virtual int getWidth() const = 0;
+    virtual int getHeight() const = 0;
+    virtual int getPixelFormat() const = 0;
+
+    VideoFrameSP obtainLastFrame();
 
 protected:
-    void publishFrame();
+    // getNewFrame and publishFrame must be called by the same thread only
     VideoFrame& getNewFrame();
+    void publishFrame();
 
 private:
-    pthread_mutex_t mutex_;
-    pthread_cond_t condition_;
-    std::unique_ptr<VideoFrame> writableFrame_;
-    std::shared_ptr<VideoFrame> lastFrame_;
+    VideoFrameUP writableFrame_;
+    VideoFrameSP lastFrame_;
 };
 
 }

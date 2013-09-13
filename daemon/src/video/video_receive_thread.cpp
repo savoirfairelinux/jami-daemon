@@ -31,45 +31,36 @@
  */
 
 #include "libav_deps.h"
+
 #include "video_receive_thread.h"
 #include "socket_pair.h"
+#include "manager.h"
 #include "client/video_controls.h"
 #include "check.h"
-#include "video_decoder.h"
 
 #include <unistd.h>
 #include <map>
-
-#include "manager.h"
-#include "conference.h"
-
 
 namespace sfl_video {
 
 using std::string;
 const int SDP_BUFFER_SIZE = 8192;
 
-VideoReceiveThread::VideoReceiveThread(const std::string &id,
-                                       const std::map<string, string> &args) :
-    args_(args)
-    , videoDecoder_(nullptr)
-    , mixer_(nullptr)
+VideoReceiveThread::VideoReceiveThread(const std::string& id,
+                                       const std::map<string, string>& args,
+                                       const std::shared_ptr<SHMSink>& sink) :
+    VideoGenerator::VideoGenerator()
+    , args_(args)
+    , videoDecoder_()
+    , sink_(sink)
     , dstWidth_(0)
     , dstHeight_(0)
-    , sink_()
-    , bufferSize_(0)
     , id_(id)
     , stream_(args_["receiving_sdp"])
     , sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this)
-    , demuxContext_(nullptr)
-    , scaler_()
-    , previewFrame_()
+    , demuxContext_()
     , requestKeyFrameCallback_(0)
-{
-    Conference *conf = Manager::instance().getConferenceFromCallID(id);
-    if (conf)
-        mixer_ = conf->getVideoMixer();
-}
+{}
 
 VideoReceiveThread::~VideoReceiveThread()
 {
@@ -149,22 +140,16 @@ bool VideoReceiveThread::setup()
         dstHeight_ = videoDecoder_->getHeight();
     }
 
-    // allocate our preview frame and shared sink
-    previewFrame_.setGeometry(dstWidth_, dstHeight_, VIDEO_PIXFMT_BGRA);
-    bufferSize_ = previewFrame_.getSize();
-    EXIT_IF_FAIL(bufferSize_ > 0, "Incorrect buffer size for decoding");
-
-    // Choose between direct rendering (sink) or mixing class.
-    if (mixer_) {
-        mixer_->addSource(videoDecoder_);
-    } else {
-        EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+    // Sink startup
+    if (sink_) {
+        EXIT_IF_FAIL(sink_->start(), "RX: sink startup failed");
         Manager::instance().getVideoControls()->startedDecoding(id_,
-                                                                sink_.openedName(),
+                                                                sink_->openedName(),
                                                                 dstWidth_,
                                                                 dstHeight_);
-        DEBUG("RX: shm sink started with size %d, width %d and height %d",
-              bufferSize_, dstWidth_, dstHeight_);
+        DEBUG("RX: shm sink <%s> started: size = %dx%d",
+              sink_->openedName().c_str(), dstWidth_, dstHeight_);
+        attach(sink_.get());
     }
 
     return true;
@@ -172,16 +157,15 @@ bool VideoReceiveThread::setup()
 
 void VideoReceiveThread::process()
 {
-    if (decodeFrame())
-        renderFrame();
+    decodeFrame();
 }
 
 void VideoReceiveThread::cleanup()
 {
-    if (mixer_)
-        mixer_->removeSource(videoDecoder_);
-    else
-        Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+    if (sink_) {
+        detach(sink_.get());
+        sink_->stop();
+    }
 
     if (videoDecoder_)
         delete videoDecoder_;
@@ -212,50 +196,26 @@ void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 #endif
 }
 
-/// Copies and scales our rendered frame to the buffer pointed to by data
-void VideoReceiveThread::fillBuffer(void *data)
-{
-    previewFrame_.setDestination(data);
-    videoDecoder_->scale(scaler_, previewFrame_);
-}
-
 bool VideoReceiveThread::decodeFrame()
 {
-    int ret = videoDecoder_->decode();
+    int ret = videoDecoder_->decode(getNewFrame());
 
-    // fatal error?
-    if (ret == -1) {
-        stop();
-        return false;
+    if (ret > 0) {
+        publishFrame();
+        return true;
     }
 
     // decoding error?
     if (ret == -2 and requestKeyFrameCallback_) {
+        WARN("VideoDecoder error, restarting it...");
         videoDecoder_->setupFromVideoData();
         requestKeyFrameCallback_(id_);
+    } else if (ret < 0) {
+        ERROR("VideoDecoder fatal error, stopping it...");
+        stop();
     }
 
-    return (ret<0?0:1);
-}
-
-void VideoReceiveThread::renderFrame()
-{
-    // FIXME: current design doesn't permit to be acknowledged
-    // when the current call enter in conference.
-    // So we always check the conference status here.
-    Conference *conf = Manager::instance().getConferenceFromCallID(id_);
-    if (conf and !mixer_) {
-        mixer_ = conf->getVideoMixer();
-        mixer_->addSource(videoDecoder_);
-    } else if (!conf and mixer_) {
-        mixer_->removeSource(videoDecoder_);
-        mixer_ = nullptr;
-    }
-
-    if (mixer_)
-        mixer_->render();
-    else
-        sink_.render_callback(*this, bufferSize_);
+    return false;
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(
@@ -264,18 +224,13 @@ void VideoReceiveThread::setRequestKeyFrameCallback(
     requestKeyFrameCallback_ = cb;
 }
 
-void VideoReceiveThread::addDetails(
-    std::map<std::string, std::string> &details)
-{
-    if (isRunning() and dstWidth_ > 0 and dstHeight_ > 0) {
-        details["VIDEO_SHM_PATH"] = sink_.openedName();
-        std::ostringstream os;
-        os << dstWidth_;
-        details["VIDEO_WIDTH"] = os.str();
-        os.str("");
-        os << dstHeight_;
-        details["VIDEO_HEIGHT"] = os.str();
-    }
-}
+int VideoReceiveThread::getWidth() const
+{ return dstWidth_; }
+
+int VideoReceiveThread::getHeight() const
+{ return dstHeight_; }
+
+int VideoReceiveThread::getPixelFormat() const
+{ return videoDecoder_->getPixelFormat(); }
 
 } // end namespace sfl_video

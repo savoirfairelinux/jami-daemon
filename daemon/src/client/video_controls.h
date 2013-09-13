@@ -57,16 +57,13 @@
 
 #include <memory> // for shared_ptr
 #include "video/video_preferences.h"
-
-namespace sfl_video {
-    class VideoSource;
-}
+#include "video/video_base.h"
 
 class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
-        std::shared_ptr<sfl_video::VideoSource> videoPreview_;
+        std::unique_ptr<sfl_video::VideoFrameActiveWriter> videoPreview_;
         VideoPreference videoPreference_;
 
     public:
@@ -126,7 +123,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         void startPreview();
         void stopPreview();
         bool hasPreviewStarted();
-		sfl_video::VideoSource* getVideoPreview();
+        sfl_video::VideoFrameActiveWriter* getVideoPreview();
 };
 
 #endif // VIDEO_CONTROLS_H_

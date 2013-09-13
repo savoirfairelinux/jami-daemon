@@ -31,9 +31,6 @@
 
 #include "libav_deps.h"
 #include "video_mixer.h"
-#include "video_camera.h"
-#include "client/video_controls.h"
-#include "manager.h"
 #include "check.h"
 
 #include <cmath>
@@ -42,16 +39,13 @@ namespace sfl_video {
 
 VideoMixer::VideoMixer() :
     VideoGenerator::VideoGenerator()
-    , updateMutex_()
-    , updateCondition_()
     , sourceScaler_()
     , scaledFrame_()
-    , sourceList_()
     , width_(0)
     , height_(0)
+    , renderMutex_()
+    , renderCv_()
 {
-    pthread_mutex_init(&updateMutex_, NULL);
-    pthread_cond_init(&updateCondition_, NULL);
     start();
 }
 
@@ -59,23 +53,6 @@ VideoMixer::~VideoMixer()
 {
     stop();
     join();
-    pthread_cond_destroy(&updateCondition_);
-    pthread_mutex_destroy(&updateMutex_);
-}
-
-void VideoMixer::addSource(VideoSource *source)
-{
-    sourceList_.push_back(source);
-}
-
-void VideoMixer::removeSource(VideoSource *source)
-{
-    sourceList_.remove(source);
-}
-
-void VideoMixer::clearSources()
-{
-    sourceList_.clear();
 }
 
 void VideoMixer::process()
@@ -84,11 +61,21 @@ void VideoMixer::process()
     rendering();
 }
 
+void VideoMixer::waitForUpdate()
+{
+    std::unique_lock<std::mutex> lk(renderMutex_);
+    renderCv_.wait(lk);
+}
+
+void VideoMixer::update(Observable<VideoFrameSP>* ob, VideoFrameSP& frame_p)
+{ renderCv_.notify_one(); }
+
 void VideoMixer::rendering()
 {
     if (!width_ or !height_)
         return;
 
+#if 0
     // For all sources:
     //   - take source frame
     //   - scale it down and layout it
@@ -112,11 +99,11 @@ void VideoMixer::rendering()
     int lastInputWidth=0;
     int lastInputHeight=0;
     int i=0;
-    for (VideoSource* src : sourceList_) {
+    for (VideoNode* src : sourceList_) {
         int xoff = (i % zoom) * cell_width;
         int yoff = (i / zoom) * cell_height;
 
-        std::shared_ptr<VideoFrame> input=src->obtainLastFrame();
+        VideoFrameSP input=src->obtainLastFrame();
         if (input) {
             // scaling context allocation may be time consuming
             // so reset it only if needed
@@ -134,20 +121,7 @@ void VideoMixer::rendering()
         i++;
     }
     publishFrame();
-}
-
-void VideoMixer::render()
-{
-    pthread_mutex_lock(&updateMutex_);
-    pthread_cond_signal(&updateCondition_);
-    pthread_mutex_unlock(&updateMutex_);
-}
-
-void VideoMixer::waitForUpdate()
-{
-    pthread_mutex_lock(&updateMutex_);
-    pthread_cond_wait(&updateCondition_, &updateMutex_);
-    pthread_mutex_unlock(&updateMutex_);
+#endif
 }
 
 void VideoMixer::setDimensions(int width, int height)
@@ -159,5 +133,6 @@ void VideoMixer::setDimensions(int width, int height)
 
 int VideoMixer::getWidth() const { return width_; }
 int VideoMixer::getHeight() const { return height_; }
+int VideoMixer::getPixelFormat() const { return VIDEO_PIXFMT_YUV420P; }
 
-} // end namspace sfl_video
+} // end namespace sfl_video

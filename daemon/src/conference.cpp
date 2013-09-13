@@ -41,6 +41,8 @@
 #include "video/video_camera.h"
 #endif
 
+#include "logger.h"
+
 
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
@@ -51,15 +53,6 @@ Conference::Conference()
 #endif
 {
     Recordable::initRecFilename(id_);
-
-#ifdef SFL_VIDEO
-    sfl_video::VideoCamera *camera = static_cast<sfl_video::VideoCamera*>(Manager::instance().getVideoControls()->getVideoPreview());
-    if (camera) {
-        videoMixer_.addSource(camera);
-        camera->setMixer(&videoMixer_);
-    }
-#endif
-
 }
 
 Conference::ConferenceState Conference::getState() const
@@ -84,11 +77,16 @@ void Conference::remove(const std::string &participant_id)
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-    for (const auto &item : participants_)
-        if (participant_id != item)
-            Manager::instance().getMainBuffer().bindCallID(participant_id, item);
+    auto mainBuffer = Manager::instance().getMainBuffer();
 
-    Manager::instance().getMainBuffer().bindCallID(participant_id, MainBuffer::DEFAULT_ID);
+    for (const auto &item : participants_) {
+        if (participant_id != item)
+            mainBuffer.bindCallID(participant_id, item);
+        mainBuffer.flush(item);
+    }
+
+    mainBuffer.bindCallID(participant_id, MainBuffer::DEFAULT_ID);
+    mainBuffer.flush(MainBuffer::DEFAULT_ID);
 }
 
 std::string Conference::getStateStr() const

@@ -43,20 +43,14 @@ namespace sfl_video {
 using std::string;
 
 VideoCamera::VideoCamera(const std::map<std::string, std::string> &args) :
-    VideoSource::VideoSource()
+    VideoGenerator::VideoGenerator()
     , id_("local")
     , args_(args)
     , decoder_(0)
     , sink_()
-    , bufferSize_(0)
-    , previewWidth_(0)
-    , previewHeight_(0)
-    , scaler_()
-    , frame_()
-    , mixer_()
-{
-    start();
-}
+    , sinkWidth_(0)
+    , sinkHeight_(0)
+{ start(); }
 
 VideoCamera::~VideoCamera()
 {
@@ -96,41 +90,37 @@ bool VideoCamera::setup()
 
     /* Preview frame size? (defaults from decoder) */
     if (!args_["width"].empty())
-        previewWidth_ = atoi(args_["width"].c_str());
+        sinkWidth_ = atoi(args_["width"].c_str());
     else
-        previewWidth_ = decoder_->getWidth();
+        sinkWidth_ = decoder_->getWidth();
     if (!args_["height"].empty())
-        previewHeight_ = atoi(args_["height"].c_str());
+        sinkHeight_ = atoi(args_["height"].c_str());
     else
-        previewHeight_ = decoder_->getHeight();
+        sinkHeight_ = decoder_->getHeight();
 
-    /* Previewing setup */
+    /* Sink setup */
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+    Manager::instance().getVideoControls()->startedDecoding(id_,
+                                                            sink_.openedName(),
+                                                            sinkWidth_,
+                                                            sinkHeight_);
+    DEBUG("TX: shm sink <%s> started: size = %dx%d",
+          sink_.openedName().c_str(), sinkWidth_, sinkHeight_);
 
-    frame_.setGeometry(previewWidth_, previewHeight_, VIDEO_PIXFMT_BGRA);
-    bufferSize_ = frame_.getSize();
-    EXIT_IF_FAIL(bufferSize_ > 0, "Incorrect buffer size for decoding");
+    attach(&sink_);
 
-    string name = sink_.openedName();
-    Manager::instance().getVideoControls()->startedDecoding(id_, name,
-                                                            previewWidth_,
-                                                            previewHeight_);
-    DEBUG("TX: shm sink started with size %d, width %d and height %d",
-          bufferSize_, previewWidth_, previewHeight_);
     return true;
 }
 
 void VideoCamera::process()
-{
-    if (captureFrame() and isRunning())
-        renderFrame();
-}
+{ captureFrame(); }
 
 void VideoCamera::cleanup()
 {
-    delete decoder_;
     Manager::instance().getVideoControls()->stoppedDecoding(id_,
                                                             sink_.openedName());
+    detach(&sink_);
+    delete decoder_;
 }
 
 int VideoCamera::interruptCb(void *data)
@@ -141,7 +131,7 @@ int VideoCamera::interruptCb(void *data)
 
 bool VideoCamera::captureFrame()
 {
-    int ret = decoder_->decode();
+    int ret = decoder_->decode(getNewFrame());
 
     if (ret <= 0) {
         if (ret < 0)
@@ -149,35 +139,19 @@ bool VideoCamera::captureFrame()
         return false;
     }
 
+    publishFrame();
     return true;
 }
 
-void VideoCamera::renderFrame()
-{
-    // we want our rendering code to be called by the shm_sink,
-    // because it manages the shared memory synchronization
-    sink_.render_callback(*this, bufferSize_);
+int VideoCamera::getWidth() const
+{ return decoder_->getWidth(); }
 
-    if (mixer_)
-        mixer_->render();
-}
+int VideoCamera::getHeight() const
+{ return decoder_->getHeight(); }
 
-// This function is called by sink
-void VideoCamera::fillBuffer(void *data)
-{
-    frame_.setDestination(data);
-    decoder_->scale(scaler_, frame_);
-}
+int VideoCamera::getPixelFormat() const
+{ return decoder_->getPixelFormat(); }
 
-void VideoCamera::setMixer(VideoMixer* mixer)
-{
-    mixer_ = mixer;
-}
 
-int VideoCamera::getWidth() const { return decoder_->getWidth(); }
-int VideoCamera::getHeight() const { return decoder_->getHeight(); }
 
-std::shared_ptr<VideoFrame> VideoCamera::waitNewFrame() { return decoder_->waitNewFrame(); }
-std::shared_ptr<VideoFrame> VideoCamera::obtainLastFrame() { return decoder_->obtainLastFrame(); }
-
-} // end namspace sfl_video
+} // end namespace sfl_video

@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,47 +32,44 @@
 #ifndef __VIDEO_SEND_THREAD_H__
 #define __VIDEO_SEND_THREAD_H__
 
-#include <map>
-#include <string>
-#include <tr1/memory>
 #include "noncopyable.h"
 #include "video_encoder.h"
 #include "video_mixer.h"
-#include "sflthread.h"
+
+#include <map>
+#include <string>
+#include <memory>
 
 namespace sfl_video {
 
 class SocketPair;
 
-class VideoSendThread : public SFLThread {
+class VideoSendThread : public VideoFramePassiveReader
+{
 public:
     VideoSendThread(const std::string &id,
-                    const std::map<std::string, std::string> &args);
-    ~VideoSendThread();
-    void addIOContext(SocketPair &sock);
+                    const std::map<std::string, std::string> &args,
+                    SocketPair& socketPair,
+                    VideoFrameActiveWriter *local_video,
+                    VideoFrameActiveWriter *mixer);
+    virtual ~VideoSendThread();
     std::string getSDP() const { return sdp_; }
     void forceKeyFrame();
 
-private:
-    // threading
-    bool setup();
-    void process();
-    void cleanup();
+    // as VideoFramePassiveReader
+    void update(Observable<VideoFrameSP>*, VideoFrameSP&);
 
+private:
     NON_COPYABLE(VideoSendThread);
 
-    static int interruptCb(void *ctx);
-    void encodeAndSendVideo(VideoFrame *);
-    void checkVideoSource();
+    bool setup();
+    void encodeAndSendVideo(VideoFrame&);
 
     std::map<std::string, std::string> args_;
     const std::string &id_;
-    /*-------------------------------------------------------------*/
-    /* These variables should be used in thread (i.e. run()) only! */
-    /*-------------------------------------------------------------*/
+
     VideoEncoder *videoEncoder_;
-    VideoSource *videoSource_;
-    VideoMixer *mixer_;
+    VideoFrameActiveWriter *videoSource_;
 
     int forceKeyFrame_;
     int frameNumber_;

@@ -1,6 +1,5 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
@@ -31,6 +30,7 @@
  */
 
 #include "video_send_thread.h"
+#include "video_mixer.h"
 #include "socket_pair.h"
 #include "client/video_controls.h"
 #include "check.h"
@@ -44,53 +44,61 @@ namespace sfl_video {
 
 using std::string;
 
-VideoSendThread::VideoSendThread(const std::string &id, const std::map<string, string> &args) :
+VideoSendThread::VideoSendThread(const std::string &id,
+                                 const std::map<string, string> &args,
+                                 SocketPair& socketPair,
+                                 VideoFrameActiveWriter *local_video,
+                                 VideoFrameActiveWriter *mixer) :
     args_(args)
     , id_(id)
-	, videoEncoder_(nullptr)
-    , videoSource_(nullptr)
-    , mixer_(nullptr)
+	, videoEncoder_()
+    , videoSource_(local_video)
     , forceKeyFrame_(0)
 	, frameNumber_(0)
-    , muxContext_(nullptr)
+    , muxContext_(socketPair.getIOContext())
     , sdp_()
-{}
+{
+    if (setup()) {
+        // do video pipeline
+        if (mixer) {
+            videoSource_ = mixer;
+            static_cast<VideoMixer*>(mixer)->setDimensions(
+                videoEncoder_->getWidth(),
+                videoEncoder_->getHeight());
+        }
+        if (videoSource_)
+            videoSource_->attach(this);
+    }
+}
 
 VideoSendThread::~VideoSendThread()
 {
-    stop();
-    join();
+    if (videoSource_)
+        videoSource_->detach(this);
 }
 
 bool VideoSendThread::setup()
 {
-    // Use local camera as default video source for setup
-    if (!videoSource_)
-        WARN("No video source started");
-
     const char *enc_name = args_["codec"].c_str();
 
     videoEncoder_ = new VideoEncoder();
-	videoEncoder_->setInterruptCallback(interruptCb, this);
 
 	/* Encoder setup */
 	if (!args_["width"].empty()) {
 		const char *s = args_["width"].c_str();
 		videoEncoder_->setOption("width", s);
-	} else if (videoSource_) {
-		char buf[11];
-		sprintf(buf, "%10d", videoSource_->getWidth());
-		videoEncoder_->setOption("width", buf);
-	}
+	} else {
+        ERROR("width option not set");
+        return false;
+    }
 
 	if (!args_["height"].empty()) {
 		const char *s = args_["height"].c_str();
 		videoEncoder_->setOption("height", s);
-	} else if (videoSource_) {
-		char buf[11];
-		sprintf(buf, "%10d", videoSource_->getHeight());
-		videoEncoder_->setOption("height", buf);
-	}
+	} else {
+        ERROR("height option not set");
+        return false;
+    }
 
 	videoEncoder_->setOption("bitrate", args_["bitrate"].c_str());
 
@@ -106,84 +114,37 @@ bool VideoSendThread::setup()
         videoEncoder_->setOption("payload_type", args_["payload_type"].c_str());
     }
 
-	EXIT_IF_FAIL(!videoEncoder_->openOutput(enc_name, "rtp",
-                                            args_["destination"].c_str(), NULL),
-				 "encoder openOutput() failed");
+	if (videoEncoder_->openOutput(enc_name, "rtp", args_["destination"].c_str(),
+                                  NULL)) {
+        ERROR("encoder openOutput() failed");
+        return false;
+    }
+
 	videoEncoder_->setIOContext(muxContext_);
-	EXIT_IF_FAIL(!videoEncoder_->startIO(), "encoder start failed");
+	if (videoEncoder_->startIO()) {
+        ERROR("encoder start failed");
+        return false;
+    }
 
 	videoEncoder_->print_sdp(sdp_);
     return true;
 }
 
-void VideoSendThread::process()
-{
-    checkVideoSource();
-    if (videoSource_) {
-        VideoFrame *frame = videoSource_->waitNewFrame().get();
-        if (frame)
-            encodeAndSendVideo(frame);
-    } else {
-        WARN("No video source!");
-    }
-}
-
-void VideoSendThread::cleanup()
-{
-    if (videoEncoder_)
-        delete videoEncoder_;
-
-	if (muxContext_)
-		delete muxContext_;
-}
-
-void VideoSendThread::checkVideoSource()
-{
-    Conference *conf = Manager::instance().getConferenceFromCallID(id_);
-    if (conf and !mixer_) {
-        videoSource_ = mixer_ = conf->getVideoMixer();
-        mixer_->setDimensions(videoEncoder_->getWidth(),
-                              videoEncoder_->getHeight());
-    } else if (!conf and mixer_) {
-        mixer_ = nullptr;
-        videoSource_ = Manager::instance().getVideoControls()->getVideoPreview();
-    }
-
-    // if no video source, try to start local camera
-    if (!videoSource_) {
-        VideoControls *vctl = Manager::instance().getVideoControls();
-        vctl->startPreview();
-        sleep(1); // let the camera startup
-        videoSource_ = vctl->getVideoPreview();
-    }
-}
-
-void VideoSendThread::encodeAndSendVideo(VideoFrame *input_frame)
+void VideoSendThread::encodeAndSendVideo(VideoFrame& input_frame)
 {
 	bool is_keyframe = forceKeyFrame_ > 0;
 
 	if (is_keyframe)
 		atomic_decrement(&forceKeyFrame_);
 
-    EXIT_IF_FAIL(videoEncoder_->encode(*input_frame, is_keyframe, frameNumber_++) >= 0,
-                 "encoding failed");
+    if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
+        ERROR("encoding failed");
 }
 
-// This callback is used by libav internally to break out of blocking calls
-int VideoSendThread::interruptCb(void *data)
-{
-    VideoSendThread *context = static_cast<VideoSendThread*>(data);
-    return not context->isRunning();
-}
-
-void VideoSendThread::addIOContext(SocketPair &socketPair)
-{
-	muxContext_ = socketPair.getIOContext();
-}
+void VideoSendThread::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
+{ encodeAndSendVideo(*frame_p); }
 
 void VideoSendThread::forceKeyFrame()
-{
-    atomic_increment(&forceKeyFrame_);
-}
+{ atomic_increment(&forceKeyFrame_); }
 
 } // end namespace sfl_video

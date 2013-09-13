@@ -930,25 +930,21 @@ ManagerImpl::addParticipant(const std::string& callId, const std::string& confer
     std::string callState(callDetails.find("CALL_STATE")->second);
 
     if (callState == "HOLD") {
+        ERROR("foo1: %s", callId.c_str());
         conf->bindParticipant(callId);
         offHoldCall(callId);
     } else if (callState == "INCOMING") {
+        ERROR("foo2: %s", callId.c_str());
         conf->bindParticipant(callId);
         answerCall(callId);
     } else if (callState == "CURRENT")
+        ERROR("foo3: %s", callId.c_str());
         conf->bindParticipant(callId);
 
     ParticipantSet participants(conf->getParticipantList());
 
     if (participants.empty())
         ERROR("Participant list is empty for this conference");
-
-    // reset ring buffer for all conference participant
-    // flush conference participants only
-    for (const auto &p : participants)
-        getMainBuffer().flush(p);
-
-    getMainBuffer().flush(MainBuffer::DEFAULT_ID);
 
     // Connect stream
     addStream(callId);
@@ -1349,15 +1345,8 @@ void ManagerImpl::addStream(const std::string& call_id)
         if (iter != conferenceMap_.end() and iter->second) {
             Conference* conf = iter->second;
 
+            ERROR("bar: %s", call_id.c_str());
             conf->bindParticipant(call_id);
-
-            ParticipantSet participants(conf->getParticipantList());
-
-            // reset ring buffer for all conference participant
-            for (const auto &participant : participants)
-                getMainBuffer().flush(participant);
-
-            getMainBuffer().flush(MainBuffer::DEFAULT_ID);
         }
 
     } else {

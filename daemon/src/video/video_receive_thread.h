@@ -31,69 +31,63 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
+#include "video_decoder.h"
+#include "shm_sink.h"
+#include "sflthread.h"
+#include "noncopyable.h"
+
 #include <map>
 #include <string>
 #include <climits>
 #include <sstream>
-#include <tr1/memory>
-#include "shm_sink.h"
-#include "noncopyable.h"
-#include "video_provider.h"
-#include "video_decoder.h"
-#include "video_scaler.h"
-#include "video_mixer.h"
-#include "sflthread.h"
-
+#include <memory>
 
 namespace sfl_video {
 
 class SocketPair;
 
-class VideoReceiveThread : public VideoProvider, public SFLThread  {
+class VideoReceiveThread : public VideoGenerator, public SFLThread  {
+public:
+    VideoReceiveThread(const std::string &id,
+                       const std::map<std::string, std::string> &args,
+                       const std::shared_ptr<SHMSink>& sink);
+    ~VideoReceiveThread();
+
+    void addIOContext(SocketPair &socketPair);
+    void setRequestKeyFrameCallback(void (*)(const std::string &));
+
+    // as VideoGenerator
+    int getWidth() const;
+    int getHeight() const;
+    int getPixelFormat() const;
+
 private:
     NON_COPYABLE(VideoReceiveThread);
+
     std::map<std::string, std::string> args_;
 
     /*-------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. run()) only! */
     /*-------------------------------------------------------------*/
     VideoDecoder *videoDecoder_;
-    VideoMixer *mixer_;
-
+    const std::shared_ptr<SHMSink> sink_;
     int dstWidth_;
     int dstHeight_;
-
-    SHMSink sink_;
-    size_t bufferSize_;
     const std::string id_;
     std::istringstream stream_;
     VideoIOHandle sdpContext_;
     VideoIOHandle *demuxContext_;
-    VideoScaler scaler_;
-    VideoFrame previewFrame_;
-    void (* requestKeyFrameCallback_)(const std::string &);
 
+    void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
-    void fillBuffer(void *data);
-    static int interruptCb(void *ctx);
-    friend struct VideoRxContextHandle;
-
     bool decodeFrame();
-    void renderFrame();
+    static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
 
-    // threading
+    // as SFLThread
     bool setup();
     void process();
     void cleanup();
-
-public:
-    VideoReceiveThread(const std::string &id,
-                       const std::map<std::string, std::string> &args);
-    void addIOContext(SocketPair &socketPair);
-    void addDetails(std::map<std::string, std::string> &details);
-    ~VideoReceiveThread();
-    void setRequestKeyFrameCallback(void (*)(const std::string &));
 };
 }
 

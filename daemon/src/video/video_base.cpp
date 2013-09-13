@@ -82,12 +82,14 @@ VideoFrame::~VideoFrame()
     avcodec_free_frame(&frame_);
 }
 
-int VideoFrame::getFormat() const
-{
-    return libav_utils::sfl_pixel_format(frame_->format);
-}
-int VideoFrame::getWidth() const { return frame_->width; }
-int VideoFrame::getHeight() const { return frame_->height; }
+int VideoFrame::getPixelFormat() const
+{ return libav_utils::sfl_pixel_format(frame_->format); }
+
+int VideoFrame::getWidth() const
+{ return frame_->width; }
+
+int VideoFrame::getHeight() const
+{ return frame_->height; }
 
 bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
 {
@@ -207,70 +209,24 @@ void VideoFrame::test()
 
 /*=== VideoGenerator =========================================================*/
 
-VideoGenerator::VideoGenerator() :
-    VideoSource::VideoSource()
-    , mutex_()
-    , condition_()
-    , writableFrame_()
-    , lastFrame_()
+VideoFrame& VideoGenerator::getNewFrame()
 {
-    pthread_mutex_init(&mutex_, NULL);
-    pthread_cond_init(&condition_, NULL);
-}
-
-VideoGenerator::~VideoGenerator()
-{
-    pthread_cond_destroy(&condition_);
-    pthread_mutex_destroy(&mutex_);
+    if (writableFrame_)
+        writableFrame_->setdefaults();
+    else
+        writableFrame_.reset(new VideoFrame());
+    return *writableFrame_.get();
 }
 
 void VideoGenerator::publishFrame()
 {
-    pthread_mutex_lock(&mutex_);
-    {
-        lastFrame_ = std::move(writableFrame_); // we owns it now
-        pthread_cond_signal(&condition_);
-    }
-    pthread_mutex_unlock(&mutex_);
+    lastFrame_ = std::move(writableFrame_);
+    notify(std::ref(lastFrame_));
 }
 
-std::shared_ptr<VideoFrame> VideoGenerator::waitNewFrame()
+VideoFrameSP VideoGenerator::obtainLastFrame()
 {
-    pthread_mutex_lock(&mutex_);
-    pthread_cond_wait(&condition_, &mutex_);
-    pthread_mutex_unlock(&mutex_);
-
-    return obtainLastFrame();
-}
-
-std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
-{
-    std::shared_ptr<VideoFrame> frame;
-
-    pthread_mutex_lock(&mutex_);
-    frame = lastFrame_;
-    pthread_mutex_unlock(&mutex_);
-
-    return frame;
-}
-
-VideoFrame& VideoGenerator::getNewFrame()
-{
-    VideoFrame* frame;
-
-    pthread_mutex_lock(&mutex_);
-    {
-        if (writableFrame_) {
-            frame = writableFrame_.get();
-            frame->setdefaults();
-        } else {
-            frame = new VideoFrame();
-            writableFrame_.reset(frame);
-        }
-    }
-    pthread_mutex_unlock(&mutex_);
-
-    return *frame;
+    return lastFrame_;
 }
 
 }

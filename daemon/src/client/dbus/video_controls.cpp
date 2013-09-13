@@ -182,7 +182,7 @@ VideoControls::stopPreview()
     }
 }
 
-sfl_video::VideoSource* VideoControls::getVideoPreview()
+sfl_video::VideoFrameActiveWriter* VideoControls::getVideoPreview()
 {
     return videoPreview_.get();
 }

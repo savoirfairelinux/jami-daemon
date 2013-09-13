@@ -41,14 +41,10 @@ namespace sfl_video {
 using std::string;
 
 VideoDecoder::VideoDecoder() :
-    VideoGenerator::VideoGenerator()
-    , inputDecoder_(0)
+    inputDecoder_(0)
     , decoderCtx_(0)
     , inputCtx_(avformat_alloc_context())
-    , scaledPicture_()
     , streamIndex_(-1)
-    , dstWidth_(0)
-    , dstHeight_(0)
 {
 }
 
@@ -96,9 +92,7 @@ void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 }
 
 void VideoDecoder::setIOContext(VideoIOHandle *ioctx)
-{
-    inputCtx_->pb = ioctx->get();
-}
+{ inputCtx_->pb = ioctx->get(); }
 
 int VideoDecoder::setupFromVideoData()
 {
@@ -165,13 +159,10 @@ int VideoDecoder::setupFromVideoData()
         return -1;
     }
 
-    dstWidth_ = decoderCtx_->width;
-    dstHeight_ = decoderCtx_->height;
-
     return 0;
 }
 
-int VideoDecoder::decode()
+int VideoDecoder::decode(VideoFrame& result)
 {
     // Guarantee that we free the packet every iteration
     VideoPacket video_packet;
@@ -188,49 +179,44 @@ int VideoDecoder::decode()
     if (inpacket->stream_index != streamIndex_)
         return 0;
 
-    VideoFrame &frame = getNewFrame();
     int frameFinished = 0;
-    int len = avcodec_decode_video2(decoderCtx_, frame.get(),
+    int len = avcodec_decode_video2(decoderCtx_, result.get(),
                                     &frameFinished, inpacket);
     if (len <= 0)
         return -2;
 
-    if (frameFinished) {
-        publishFrame();
+    if (frameFinished)
         return 1;
-    }
 
     return 0;
 }
 
-int VideoDecoder::flush()
+int VideoDecoder::flush(VideoFrame& result)
 {
     AVPacket inpacket;
     av_init_packet(&inpacket);
     inpacket.data = NULL;
     inpacket.size = 0;
 
-    VideoFrame &frame = getNewFrame();
     int frameFinished = 0;
-    int len = avcodec_decode_video2(decoderCtx_, frame.get(),
+    int len = avcodec_decode_video2(decoderCtx_, result.get(),
                                     &frameFinished, &inpacket);
     if (len <= 0)
         return -2;
 
-    if (frameFinished) {
-        publishFrame();
+    if (frameFinished)
         return 1;
-    }
 
     return 0;
 }
 
-void VideoDecoder::scale(VideoScaler &scaler, VideoFrame &output)
-{
-    VideoFrame* frame = obtainLastFrame().get();
+int VideoDecoder::getWidth() const
+{ return decoderCtx_->width; }
 
-    if (frame)
-        scaler.scale(*frame, output);
-}
+int VideoDecoder::getHeight() const
+{ return decoderCtx_->height; }
+
+int VideoDecoder::getPixelFormat() const
+{ return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }
 
 }

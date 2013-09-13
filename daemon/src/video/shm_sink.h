@@ -36,39 +36,48 @@
 #ifndef SHM_SINK_H_
 #define SHM_SINK_H_
 
+#include "noncopyable.h"
+#include "video_provider.h"
+#include "video_base.h"
+
 #include <string>
 #include <vector>
-#include "noncopyable.h"
 
 class SHMHeader;
+
 namespace sfl_video {
-    class VideoProvider;
-}
 
-class SHMSink {
-    public:
-        SHMSink(const std::string &shm_name = "");
-        std::string openedName() const { return opened_name_; }
-        ~SHMSink();
+class SHMSink : public VideoFramePassiveReader
+{
+public:
+    SHMSink(const std::string &shm_name = "");
+    std::string openedName() const { return opened_name_; }
+    ~SHMSink();
 
-        bool start();
-        bool stop();
+    bool start();
+    bool stop();
 
-        bool resize_area(size_t desired_length);
+    bool resize_area(size_t desired_length);
 
-        void render(const std::vector<unsigned char> &data);
-        void render_callback(sfl_video::VideoProvider &provider, size_t bytes);
+    void render(const std::vector<unsigned char> &data);
+    void render_frame(VideoFrame& src);
+    void render_callback(VideoProvider &provider, size_t bytes);
 
-    private:
-        NON_COPYABLE(SHMSink);
+    // as VideoFramePassiveReader
+    void update(Observable<VideoFrameSP>*, VideoFrameSP&);
 
-        void shm_lock();
-        void shm_unlock();
-        std::string shm_name_;
-        int fd_;
-        SHMHeader *shm_area_;
-        size_t shm_area_len_;
-        std::string opened_name_;
+private:
+    NON_COPYABLE(SHMSink);
+
+    void shm_lock();
+    void shm_unlock();
+    std::string shm_name_;
+    int fd_;
+    SHMHeader *shm_area_;
+    size_t shm_area_len_;
+    std::string opened_name_;
 };
+
+}
 
 #endif // SHM_SINK_H_

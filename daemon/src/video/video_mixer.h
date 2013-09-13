@@ -33,48 +33,52 @@
 #define __VIDEO_MIXER_H__
 
 #include "noncopyable.h"
+#include "video_base.h"
 #include "video_scaler.h"
 #include "sflthread.h"
 
-#include <pthread.h>
-#include <list>
+#include <mutex>
+#include <condition_variable>
+
 
 namespace sfl_video {
-using std::forward_list;
 
-class VideoMixer : public VideoGenerator, public SFLThread
+class VideoMixer :
+        public VideoGenerator,
+        public VideoFramePassiveReader,
+        public SFLThread
 {
 public:
     VideoMixer();
     ~VideoMixer();
 
     void setDimensions(int width, int height);
-    void addSource(VideoSource *source);
-    void removeSource(VideoSource *source);
-    void clearSources();
     void render();
 
     int getWidth() const;
     int getHeight() const;
+    int getPixelFormat() const;
+
+    // as VideoFramePassiveReader
+    void update(Observable<VideoFrameSP>*, VideoFrameSP&);
 
 private:
-    // threading
-    void process();
-
     NON_COPYABLE(VideoMixer);
 
+	// as SFLThread
+    void process();
     void waitForUpdate();
     void encode();
     void rendering();
 
-    pthread_mutex_t updateMutex_;
-    pthread_cond_t updateCondition_;
     VideoScaler sourceScaler_;
     VideoFrame scaledFrame_;
 
-    std::list<VideoSource*> sourceList_;
     int width_;
     int height_;
+
+    std::mutex renderMutex_;
+    std::condition_variable renderCv_;
 };
 
 }
