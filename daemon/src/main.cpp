@@ -45,7 +45,7 @@ namespace {
     void print_title()
     {
         std::cout << "SFLphone Daemon " << VERSION <<
-            ", by Savoir-Faire Linux 2004-2012" << std::endl <<
+            ", by Savoir-Faire Linux 2004-2013" << std::endl <<
             "http://www.sflphone.org/" << std::endl;
     }
 
