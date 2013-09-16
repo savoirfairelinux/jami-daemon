@@ -176,8 +176,8 @@ class AlsaLayer : public AudioLayer {
          * need to be restarted to prevent permanant damage to the session
          * (every frame will now produce an error until restart)
          */
-        int watchdogTotalCount_;
-        int watchdogTotalErr_;
+        unsigned watchdogTotalCount_;
+        unsigned watchdogTotalErr_;
 
         NON_COPYABLE(AlsaLayer);
 
