@@ -379,7 +379,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     DEBUG("Was set period_size = %lu", period_size);
     DEBUG("Was set buffer_size = %lu", buffer_size);
 
-    if (2*period_size > buffer_size) {
+    if (2 * period_size > buffer_size) {
         ERROR("buffer to small, could not use");
         return false;
     }
@@ -416,7 +416,7 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
     snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames(handle, length);
     watchdogTotalCount_++;
 
-    int err = snd_pcm_writei(handle, buffer , frames);
+    int err = snd_pcm_writei(handle, buffer, frames);
 
     if (err < 0)
         snd_pcm_recover(handle, err, 0);
@@ -441,7 +441,7 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
                     startPlaybackStream();
                 }
 
-            ALSA_CALL(snd_pcm_writei(handle, buffer , frames), "XRUN handling failed");
+            ALSA_CALL(snd_pcm_writei(handle, buffer, frames), "XRUN handling failed");
             break;
         }
 
@@ -474,8 +474,8 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
     // Detect when something is going wrong. This can be caused by alsa bugs or
     // faulty encoder on the other side
     // TODO do something useful instead of just warning and flushing buffers
-    if (watchdogTotalErr_ > 0 && watchdogTotalCount_ / watchdogTotalErr_ >=4 && watchdogTotalCount_ > 50) {
-        ERROR("Alsa: too many errors (%d error on %d frame)",watchdogTotalErr_,watchdogTotalCount_);
+    if (watchdogTotalErr_ > 0 && watchdogTotalCount_ / watchdogTotalErr_ >= 4 and watchdogTotalCount_ > 50) {
+        ERROR("%d errors out of %d frames", watchdogTotalErr_, watchdogTotalCount_);
         flushUrgent();
         flushMain();
     }
@@ -560,7 +560,7 @@ getValues(const std::vector<HwIDPair> &deviceMap)
 {
     std::vector<std::string> audioDeviceList;
 
-    for (const auto &dev : deviceMap)
+    for (const auto & dev : deviceMap)
         audioDeviceList.push_back(dev.second);
 
     return audioDeviceList;
@@ -606,7 +606,8 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
                 snd_pcm_info_set_stream(pcminfo, getCapture ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
 
                 int err;
-                if ((err = snd_ctl_pcm_info(handle ,pcminfo)) < 0) {
+
+                if ((err = snd_ctl_pcm_info(handle , pcminfo)) < 0) {
                     WARN("Cannot get info: %s", snd_strerror(err));
                 } else {
                     DEBUG("card %i : %s [%s]",
@@ -662,7 +663,7 @@ AlsaLayer::getAudioDeviceIndex(const std::string &description) const
     audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), captureDevice.begin(), captureDevice.end());
     audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), playbackDevice.begin(), playbackDevice.end());
 
-    for (const auto &dev : audioDeviceIndexMap)
+    for (const auto & dev : audioDeviceIndexMap)
         if (dev.second == description)
             return dev.first;
 
@@ -824,6 +825,7 @@ void AlsaLayer::audioCallback()
 
         if (not safeUpdate(ringtoneHandle_, ringtoneAvailSmpl))
             return;
+
         int ringtoneAvailBytes = ringtoneAvailSmpl * sizeof(SFLAudioSample);
 
         AudioBuffer out(ringtoneAvailSmpl);
