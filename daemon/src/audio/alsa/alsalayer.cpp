@@ -418,6 +418,9 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
 
     int err = snd_pcm_writei(handle, buffer , frames);
 
+    if (err < 0)
+        snd_pcm_recover(handle, err, 0);
+
     if (err >= 0)
         return;
 
