@@ -547,6 +547,7 @@ class SIPAccount : public Account {
     private:
         NON_COPYABLE(SIPAccount);
 
+        void usePublishedAddressPortInVIA();
         bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool userMatch(const std::string &username) const;
         bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;

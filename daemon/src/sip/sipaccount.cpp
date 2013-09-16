@@ -376,6 +376,13 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 #endif
 }
 
+void SIPAccount::usePublishedAddressPortInVIA()
+{
+    via_addr_.host.ptr = (char *) publishedIpAddress_.c_str();
+    via_addr_.host.slen = publishedIpAddress_.size();
+    via_addr_.port = publishedPort_;
+}
+
 void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 {
     using namespace Conf;
@@ -445,6 +452,9 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     mapNode.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
     mapNode.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
+
+    if (not publishedSameasLocal_)
+        usePublishedAddressPortInVIA();
 
     if (not isIP2IP()) mapNode.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
@@ -578,6 +588,9 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     publishedIpAddress_ = details[CONFIG_PUBLISHED_ADDRESS];
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
+
+    if (not publishedSameasLocal_)
+        usePublishedAddressPortInVIA();
 
     if (stunServer_ != details[CONFIG_STUN_SERVER]) {
         link_->sipTransport.destroyStunResolver(stunServer_);
@@ -1120,15 +1133,22 @@ std::string SIPAccount::getContactHeader() const
 
     link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
 
-    if (!receivedParameter_.empty()) {
-        address = receivedParameter_;
-        DEBUG("Using received address %s", address.c_str());
-    }
-
-    if (rPort_ != -1 and rPort_ != 0) {
-        portstr << rPort_;
+    if (not publishedSameasLocal_) {
+        address = publishedIpAddress_;
+        portstr << publishedPort_;
         port = portstr.str();
-        DEBUG("Using received port %s", port.c_str());
+        DEBUG("Using published address %s and port %s", address.c_str(), port.c_str());
+    } else {
+        if (!receivedParameter_.empty()) {
+            address = receivedParameter_;
+            DEBUG("Using received address %s", address.c_str());
+        }
+
+        if (rPort_ != -1 and rPort_ != 0) {
+            portstr << rPort_;
+            port = portstr.str();
+            DEBUG("Using received port %s", port.c_str());
+        }
     }
 
     // UDP does not require the transport specification

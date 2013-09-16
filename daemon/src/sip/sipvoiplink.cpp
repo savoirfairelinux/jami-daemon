@@ -300,7 +300,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     // May use the published address as well
     std::string addrToUse = SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
-    std::string addrSdp = account->isStunEnabled()
+    std::string addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                           ? account->getPublishedAddress()
                           : addrToUse;
 
@@ -727,7 +727,7 @@ void SIPVoIPLink::sendRegister(Account *a)
             DEBUG("Setting VIA sent-by to %s:%u", account->transport_->local_name.host.ptr, account->transport_->local_name.port);
             if (pjsip_regc_set_via_sent_by(regc, &account->transport_->local_name, account->transport_) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
-        } else if (not received.empty() and received != account->getPublishedAddress()) {
+        } else if (not account->getPublishedSameasLocal() or (not received.empty() and received != account->getPublishedAddress())) {
             DEBUG("Setting VIA sent-by to %s:%d", received.c_str(), account->getRPort());
             if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
@@ -912,7 +912,10 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
     // Building the local SDP offer
     Sdp *localSDP = call->getLocalSDP();
-    localSDP->setPublishedIP(localAddress);
+    if (account->getPublishedSameasLocal())
+        localSDP->setPublishedIP(localAddress);
+    else
+        localSDP->setPublishedIP(account->getPublishedAddress());
     const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
     if (not created or not SIPStartCall(call)) {
@@ -948,7 +951,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     setCallMediaLocal(call, localAddr);
 
     // May use the published address as well
-    std::string addrSdp = account->isStunEnabled() ?
+    std::string addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal()) ?
     account->getPublishedAddress() :
     SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
 
@@ -1772,10 +1775,15 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     if (!account)
         return;
 
-    std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
-    std::string addrSdp(localAddress);
+    std::string address;
+    if (account->getPublishedSameasLocal())
+        address = SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
+    else
+        address = account->getPublishedAddress();
 
-    setCallMediaLocal(call, localAddress);
+    const std::string addrSdp(address);
+
+    setCallMediaLocal(call, address);
 
     Sdp *localSDP = call->getLocalSDP();
     localSDP->setPublishedIP(addrSdp);
