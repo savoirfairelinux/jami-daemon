@@ -136,6 +136,11 @@ void VideoMixer::setDimensions(int width, int height)
     width_ = width;
     height_ = height;
 
+    // cleanup the previous frame to have a nice copy in rendering method
+    VideoFrameSP previous_p=obtainLastFrame();
+    if (previous_p)
+        previous_p->clear();
+
     stop_sink();
     start_sink();
 }

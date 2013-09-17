@@ -203,6 +203,7 @@ public:
     bool allocBuffer(int width, int height, int pix_fmt);
     int blit(VideoFrame& src, int xoff, int yoff);
     void copy(VideoFrame &src);
+    void clear();
     void test();
 
 private:

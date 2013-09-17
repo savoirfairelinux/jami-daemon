@@ -202,6 +202,14 @@ void VideoFrame::copy(VideoFrame &dst)
                     frame_->height);
 }
 
+void VideoFrame::clear()
+{
+    // FIXME: beurk!!!!
+    memset(frame_->data[0], 0, frame_->linesize[0]*frame_->height);
+    memset(frame_->data[1], 0, frame_->linesize[1]*frame_->height/2);
+    memset(frame_->data[2], 0, frame_->linesize[2]*frame_->height/2);
+}
+
 void VideoFrame::test()
 {
     memset(frame_->data[0], 0xaa, frame_->linesize[0]*frame_->height/2);
