@@ -154,6 +154,10 @@ void VideoRtpSession::start(int localPort)
         sender_.reset(new VideoSender(callID_, txArgs_, *socketPair_));
     } else {
         DEBUG("Video sending disabled");
+        if (videoLocal_)
+            videoLocal_->detach(sender_.get());
+        if (videoMixerSP_)
+            videoMixerSP_->detach(sender_.get());
         sender_.reset();
     }
 
@@ -166,6 +170,8 @@ void VideoRtpSession::start(int localPort)
         receiveThread_->start();
     } else {
         DEBUG("Video receiving disabled");
+        if (receiveThread_)
+            receiveThread_->detach(videoMixerSP_.get());
         receiveThread_.reset();
     }
 
@@ -186,7 +192,8 @@ void VideoRtpSession::stop()
 
     if (videoMixerSP_) {
         videoMixerSP_->detach(sender_.get());
-        receiveThread_->detach(videoMixerSP_.get());
+        if (receiveThread_)
+            receiveThread_->detach(videoMixerSP_.get());
     }
 
     if (socketPair_.get())
