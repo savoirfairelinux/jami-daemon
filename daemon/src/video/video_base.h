@@ -40,8 +40,11 @@
 #include <set>
 #include <mutex>
 
-// std::this_thread::sleep_for is by default supported since 4.1
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
+// std::this_thread::sleep_for is by default supported since 4.8.1
+#define GCC_VERSION (__GNUC__ * 10000 \
+                     + __GNUC_MINOR__ * 100             \
+                     + __GNUC_PATCHLEVEL__)
+#if GCC_VERSION >= 40801
 #include <chrono>
 #include <thread>
 #define MYSLEEP(x) std::this_thread::sleep_for(std::chrono::seconds(x))
