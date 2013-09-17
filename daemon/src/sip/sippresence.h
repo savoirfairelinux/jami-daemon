@@ -197,7 +197,7 @@ class SIPPresence {
             return enabled_;
         }
 
-        const std::list< PresSubClient *> getClientSubscriptions() {
+        std::list< PresSubClient *> getClientSubscriptions() {
             return pres_sub_client_list_;
         }
 

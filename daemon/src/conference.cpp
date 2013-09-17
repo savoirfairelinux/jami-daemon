@@ -59,7 +59,7 @@ Conference::Conference()
 
 Conference::~Conference()
 {
-    for (auto participant_id : participants_)
+    for (const auto &participant_id : participants_)
         remove(participant_id);
 }
 

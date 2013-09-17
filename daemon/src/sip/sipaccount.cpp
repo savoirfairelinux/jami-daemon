@@ -417,7 +417,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         } else {
             vector<map<string, string> > videoCodecDetails;
 
-            for (auto it : *seq) {
+            for (const auto &it : *seq) {
                 MappingNode *codec = static_cast<MappingNode *>(it);
                 map<string, string> codecMap;
                 codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
@@ -486,7 +486,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         SequenceNode *credSeq = static_cast<SequenceNode *>(credNode);
         Sequence *seq = credSeq->getSequence();
 
-        for (auto it : *seq) {
+        for (const auto &it : *seq) {
             MappingNode *cred = static_cast<MappingNode *>(it);
             std::string user;
             std::string pass;
