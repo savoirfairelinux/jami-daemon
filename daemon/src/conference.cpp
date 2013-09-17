@@ -93,7 +93,7 @@ void Conference::remove(const std::string &participant_id)
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-    auto mainBuffer = Manager::instance().getMainBuffer();
+    auto &mainBuffer = Manager::instance().getMainBuffer();
 
     for (const auto &item : participants_) {
         if (participant_id != item)
