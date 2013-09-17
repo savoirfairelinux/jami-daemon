@@ -59,8 +59,10 @@ Conference::Conference()
 
 Conference::~Conference()
 {
+#ifdef SFL_VIDEO
     for (const auto &participant_id : participants_)
-        remove(participant_id);
+        SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().exitConference();
+#endif // SFL_VIDEO
 }
 
 Conference::ConferenceState Conference::getState() const
