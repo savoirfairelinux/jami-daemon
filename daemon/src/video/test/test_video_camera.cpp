@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,17 +28,30 @@
  *  as that of the covered work.
  */
 
-#ifndef PACKET_HANDLE_H_
-#define PACKET_HANDLE_H_
+#include <unistd.h> // for sleep
+#include "test_video_camera.h"
+#include "video_camera.h"
+#include <map>
+#include <string>
 
-class AVPacket;
+using namespace std;
 
-class PacketHandle {
-    private:
-        AVPacket &inpacket_;
-    public:
-        PacketHandle(AVPacket &inpacket);
-        ~PacketHandle();
-};
+void VideoCameraTest::testCamera()
+{
+    std::map<std::string, std::string> args;
+    args["input"] = "/dev/video0";
+    args["width"] = "640";
+    args["height"] = "480";
 
-#endif // PACKET_HANDLE_H_
+    sfl_video::VideoCamera camera(args);
+    sleep(1);
+}
+
+int main ()
+{
+    for (int i = 0; i < 20; ++i) {
+        VideoCameraTest test;
+        test.testCamera();
+    }
+    return 0;
+}

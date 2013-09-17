@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,28 +28,12 @@
  *  as that of the covered work.
  */
 
-#include "video_preview.h"
-#include "logger.h"
-#include <map>
-#include <string>
-#include "video_receive_thread.h"
+#ifndef _VIDEO_CAMERA_TEST_
+#define _VIDEO_CAMERA_TEST_
 
-class VideoControls;
+class VideoCameraTest {
+public:
+    void testCamera();
+};
 
-namespace sfl_video {
-
-VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
-    args_(args), receiveThread_()
-{
-    const char * const LOCAL_ID = "local";
-    receiveThread_.reset(new VideoReceiveThread(LOCAL_ID, args_));
-    receiveThread_->start();
-}
-
-VideoPreview::~VideoPreview()
-{
-    // explicitly destroy the thread object
-    receiveThread_.reset();
-}
-
-} // end namspace sfl_video
+#endif // _VIDEO_CAMERA_TEST_

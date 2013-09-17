@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -71,8 +71,8 @@ cleanup_handle(gpointer data)
 static void
 video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
-    if (dbus_has_video_preview_started())
-        dbus_stop_video_preview();
+	if (dbus_has_video_preview_started())
+		dbus_stop_video_preview();
 }
 
 static void

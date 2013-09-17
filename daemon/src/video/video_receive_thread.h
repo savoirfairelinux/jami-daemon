@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,78 +31,66 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
+#include "video_decoder.h"
+#include "shm_sink.h"
+#include "sflthread.h"
+#include "noncopyable.h"
+
 #include <map>
 #include <string>
 #include <climits>
 #include <sstream>
-#include <tr1/memory>
-#include "shm_sink.h"
-#include "noncopyable.h"
-#include "video_provider.h"
+#include <memory>
 
-extern "C" {
-#include <libavformat/avformat.h>
-}
-
-class SwsContext;
-class AVCodecContext;
-class AVStream;
-class AVFormatContext;
-class AVFrame;
 namespace sfl_video {
 
 class SocketPair;
 
-class VideoReceiveThread : public VideoProvider {
-    private:
-        NON_COPYABLE(VideoReceiveThread);
-        std::map<std::string, std::string> args_;
+class VideoReceiveThread : public VideoGenerator, public SFLThread  {
+public:
+    VideoReceiveThread(const std::string &id,
+                       const std::map<std::string, std::string> &args);
+    ~VideoReceiveThread();
 
-        /*-------------------------------------------------------------*/
-        /* These variables should be used in thread (i.e. run()) only! */
-        /*-------------------------------------------------------------*/
+    void addIOContext(SocketPair &socketPair);
+    void setRequestKeyFrameCallback(void (*)(const std::string &));
+    void addReceivingDetails(std::map<std::string, std::string> &details);
+    void enterConference();
+    void exitConference();
 
-        AVCodec *inputDecoder_;
-        AVCodecContext *decoderCtx_;
-        AVFrame *rawFrame_;
-        AVFrame *scaledPicture_;
-        int streamIndex_;
-        AVFormatContext *inputCtx_;
-        SwsContext *imgConvertCtx_;
+    // as VideoGenerator
+    int getWidth() const;
+    int getHeight() const;
+    int getPixelFormat() const;
 
-        int dstWidth_;
-        int dstHeight_;
+private:
+    NON_COPYABLE(VideoReceiveThread);
 
-        SHMSink sink_;
-        bool threadRunning_;
-        size_t bufferSize_;
-        const std::string id_;
-        AVIOInterruptCB interruptCb_;
-        void (* requestKeyFrameCallback_)(const std::string &);
-        std::tr1::shared_ptr<unsigned char> sdpBuffer_;
-        std::istringstream stream_;
-        std::tr1::shared_ptr<AVIOContext> sdpContext_;
-        std::tr1::shared_ptr<AVIOContext> demuxContext_;
+    std::map<std::string, std::string> args_;
 
-        void setup();
-        void openDecoder();
-        void createScalingContext();
-        void fillBuffer(void *data);
-        static int interruptCb(void *ctx);
-        friend struct VideoRxContextHandle;
-        static void *runCallback(void *);
-        pthread_t thread_;
-        void run();
-        bool decodeFrame();
-        void renderFrame();
+    /*-------------------------------------------------------------*/
+    /* These variables should be used in thread (i.e. run()) only! */
+    /*-------------------------------------------------------------*/
+    VideoDecoder *videoDecoder_;
+    int dstWidth_;
+    int dstHeight_;
+    const std::string id_;
+    std::istringstream stream_;
+    VideoIOHandle sdpContext_;
+    VideoIOHandle *demuxContext_;
+    SHMSink sink_;
 
-    public:
-        VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
-        void addIOContext(SocketPair &socketPair);
-        void addDetails(std::map<std::string, std::string> &details);
-        ~VideoReceiveThread();
-        void start();
-        void setRequestKeyFrameCallback(void (*)(const std::string &));
+    void (*requestKeyFrameCallback_)(const std::string &);
+    void openDecoder();
+    bool decodeFrame();
+    static int interruptCb(void *ctx);
+    static int readFunction(void *opaque, uint8_t *buf, int buf_size);
+
+
+    // as SFLThread
+    bool setup();
+    void process();
+    void cleanup();
 };
 }
 

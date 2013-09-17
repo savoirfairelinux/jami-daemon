@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,30 +29,65 @@
  *  as that of the covered work.
  */
 
-#include <unistd.h> // for sleep
-#include "test_video_preview.h"
-#include "video_preview.h"
-#include <map>
-#include <string>
+#include "sflthread.h"
+#include "logger.h"
 
-using namespace std;
+#define set_false_atomic(x) static_cast<void>(__sync_fetch_and_and(x, false))
 
-void VideoPreviewTest::testPreview()
+void* SFLThread::run_(void* data)
 {
-    std::map<std::string, std::string> args;
-    args["input"] = "/dev/video0";
-    args["width"] = "640";
-    args["height"] = "480";
-
-    sfl_video::VideoPreview preview(args);
-    sleep(1);
+    SFLThread *obj = static_cast<SFLThread*>(data);
+    obj->mainloop_();
+    return nullptr;
 }
 
-int main ()
+void SFLThread::mainloop_()
 {
-    for (int i = 0; i < 20; ++i) {
-        VideoPreviewTest test;
-        test.testPreview();
+    if (setup()) {
+        while (running_)
+            process();
+        cleanup();
+    } else
+        ERROR("setup failed");
+}
+
+SFLThread::SFLThread() : thread_(), running_(false)
+{}
+
+SFLThread::~SFLThread()
+{
+    if (isRunning()) {
+        stop();
+        join();
     }
-    return 0;
+}
+
+void SFLThread::start()
+{
+    if (!running_) {
+        running_ = true;
+        pthread_create(&thread_, NULL, &run_, this);
+    }
+}
+
+void SFLThread::stop()
+{
+    set_false_atomic(&running_);
+}
+
+void SFLThread::join()
+{
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void SFLThread::exit()
+{
+    stop();
+    pthread_exit(NULL);
+}
+
+bool SFLThread::isRunning()
+{
+    return running_;
 }

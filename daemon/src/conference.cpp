@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *
@@ -36,12 +36,31 @@
 #include "audio/audiolayer.h"
 #include "audio/mainbuffer.h"
 
+#ifdef SFL_VIDEO
+#include "sip/sipvoiplink.h"
+#include "sip/sipcall.h"
+#include "client/video_controls.h"
+#include "video/video_camera.h"
+#endif
+
+#include "logger.h"
+
+
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
     , confState_(ACTIVE_ATTACHED)
     , participants_()
+#ifdef SFL_VIDEO
+    , videoMixer_(new sfl_video::VideoMixer(id_))
+#endif
 {
     Recordable::initRecFilename(id_);
+}
+
+Conference::~Conference()
+{
+    for (const auto &participant_id : participants_)
+        remove(participant_id);
 }
 
 Conference::ConferenceState Conference::getState() const
@@ -56,21 +75,34 @@ void Conference::setState(ConferenceState state)
 
 void Conference::add(const std::string &participant_id)
 {
-    participants_.insert(participant_id);
+    if (participants_.insert(participant_id).second) {
+#ifdef SFL_VIDEO
+    SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().enterConference(this);
+#endif // SFL_VIDEO
+    }
 }
 
 void Conference::remove(const std::string &participant_id)
 {
-    participants_.erase(participant_id);
+    if (participants_.erase(participant_id)) {
+#ifdef SFL_VIDEO
+        SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().exitConference();
+#endif // SFL_VIDEO
+    }
 }
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-    for (const auto &item : participants_)
-        if (participant_id != item)
-            Manager::instance().getMainBuffer().bindCallID(participant_id, item);
+    auto &mainBuffer = Manager::instance().getMainBuffer();
 
-    Manager::instance().getMainBuffer().bindCallID(participant_id, MainBuffer::DEFAULT_ID);
+    for (const auto &item : participants_) {
+        if (participant_id != item)
+            mainBuffer.bindCallID(participant_id, item);
+        mainBuffer.flush(item);
+    }
+
+    mainBuffer.bindCallID(participant_id, MainBuffer::DEFAULT_ID);
+    mainBuffer.flush(MainBuffer::DEFAULT_ID);
 }
 
 std::string Conference::getStateStr() const
@@ -127,3 +159,9 @@ std::string Conference::getConfID() const {
     return id_;
 }
 
+#ifdef SFL_VIDEO
+std::shared_ptr<sfl_video::VideoMixer> Conference::getVideoMixer()
+{
+    return videoMixer_;
+}
+#endif

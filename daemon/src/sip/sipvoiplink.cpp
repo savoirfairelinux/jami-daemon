@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -124,11 +124,6 @@ void registration_cb(pjsip_regc_cbparam *param);
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata) ;
 
-#ifdef __ANDROID__
-void showLog(int level, const char *data, int len);
-void showMsg(const char *format, ...);
-#endif
-
 void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
 /**
@@ -197,26 +192,6 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 
     return PJ_FALSE;
 }
-
-#ifdef __ANDROID__
-void showMsg(const char *format, ...)
-{
-    va_list arg;
-
-    va_start(arg, format);
-    __android_log_vprint(ANDROID_LOG_INFO, "apjsua", format, arg);
-    //vsnprintf(app_var.out_buf, sizeof(app_var.out_buf), format, arg);
-    va_end(arg);
-
-    /* pj_sem_post(app_var.output_sem);
-    pj_sem_wait(app_var.out_print_sem); */
-}
-
-void showLog(int level, const char *data, int len)
-{
-    showMsg("%s", data);
-}
-#endif
 
 void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
 {
@@ -325,7 +300,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     // May use the published address as well
     std::string addrToUse = SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
-    std::string addrSdp = account->isStunEnabled()
+    std::string addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                           ? account->getPublishedAddress()
                           : addrToUse;
 
@@ -524,9 +499,6 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 
     TRY(pjlib_util_init());
 
-#ifdef __ANDROID__
-    setSipLogger();
-#endif
     setSipLogLevel();
     TRY(pjnath_init());
 
@@ -563,13 +535,16 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 
     // presence/publish management
     TRY(pjsip_pres_init_module(endpt_, pjsip_evsub_instance()));
-    TRY(pjsip_endpt_register_module(endpt_, &mod_presence_server));
+    TRY(pjsip_endpt_register_module(endpt_, &PresSubServer::mod_presence_server));
 
     static const pjsip_inv_callback inv_cb = {
         invite_session_state_changed_cb,
         outgoing_request_forked_cb,
         transaction_state_changed_cb,
         sdp_request_offer_cb,
+#ifdef __ANDROID__ // FIXME depends on pjsip
+        NULL,
+#endif
         sdp_create_offer_cb,
         sdp_media_update_cb,
         NULL,
@@ -578,23 +553,23 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
     static const pj_str_t allowed[] = {
-        {(char *) "INFO", 4},
-        {(char *) "REGISTER", 8},
-        {(char *) "OPTIONS", 7},
-        {(char *) "MESSAGE", 7},
-        {(char *) "INVITE", 6},
-        {(char *) "ACK", 3},
-        {(char *) "BYE", 3},
-        {(char *) "NOTIFY",6},
-        {(char *) "PUBLISH",7},
-        {(char *) "CANCEL",6}};
+        CONST_PJ_STR("INFO"),
+        CONST_PJ_STR("REGISTER"),
+        CONST_PJ_STR("OPTIONS"),
+        CONST_PJ_STR("MESSAGE"),
+        CONST_PJ_STR("INVITE"),
+        CONST_PJ_STR("ACK"),
+        CONST_PJ_STR("BYE"),
+        CONST_PJ_STR("NOTIFY"),
+        CONST_PJ_STR("PUBLISH"),
+        CONST_PJ_STR("CANCEL")};
 
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
 
-    static const pj_str_t text_plain = { (char*) "text/plain", 10 };
+    static const pj_str_t text_plain = CONST_PJ_STR("text/plain");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, NULL, 1, &text_plain);
 
-    static const pj_str_t accepted = { (char*) "application/sdp", 15 };
+    static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, NULL, 1, &accepted);
 
     DEBUG("pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
@@ -686,22 +661,9 @@ void SIPVoIPLink::setSipLogLevel()
         level = level > 6 ? 6 : level;
         level = level < 0 ? 0 : level;
     }
-
-#ifdef __ANDROID__
-    level = 6;
-#endif
-
     // From 0 (min) to 6 (max)
     pj_log_set_level(level);
 }
-
-#ifdef __ANDROID__
-void SIPVoIPLink::setSipLogger()
-{
-    static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();
-    pj_log_set_log_func(&showLog);
-}
-#endif
 
 // Called from EventThread::run (not main thread)
 bool SIPVoIPLink::getEvent()
@@ -765,7 +727,7 @@ void SIPVoIPLink::sendRegister(Account *a)
             DEBUG("Setting VIA sent-by to %s:%u", account->transport_->local_name.host.ptr, account->transport_->local_name.port);
             if (pjsip_regc_set_via_sent_by(regc, &account->transport_->local_name, account->transport_) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
-        } else if (not received.empty() and received != account->getPublishedAddress()) {
+        } else if (not account->getPublishedSameasLocal() or (not received.empty() and received != account->getPublishedAddress())) {
             DEBUG("Setting VIA sent-by to %s:%d", received.c_str(), account->getRPort());
             if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
@@ -784,7 +746,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     pj_list_init(&hdr_list);
     std::string useragent(account->getUserAgentName());
     pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
-    const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
+    const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(pool_, &STR_USER_AGENT, &pJuseragent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
@@ -950,7 +912,10 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
     // Building the local SDP offer
     Sdp *localSDP = call->getLocalSDP();
-    localSDP->setPublishedIP(localAddress);
+    if (account->getPublishedSameasLocal())
+        localSDP->setPublishedIP(localAddress);
+    else
+        localSDP->setPublishedIP(account->getPublishedAddress());
     const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
     if (not created or not SIPStartCall(call)) {
@@ -986,7 +951,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     setCallMediaLocal(call, localAddr);
 
     // May use the published address as well
-    std::string addrSdp = account->isStunEnabled() ?
+    std::string addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal()) ?
     account->getPublishedAddress() :
     SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
 
@@ -1482,10 +1447,6 @@ SIPVoIPLink::getCurrentAudioCodecNames(Call *call) const
     }
 }
 
-/* Only use this macro with string literals or character arrays, will not work
- * as expected with char pointers */
-#define CONST_PJ_STR(X) {(char *) (X), ARRAYSIZE(X) - 1}
-
 namespace {
 void sendSIPInfo(const SIPCall &call, const char *const body, const char *const subtype)
 {
@@ -1623,12 +1584,11 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
               "calling %s", toUri.c_str());
         return false;
     }
-// aol
-    pj_str_t subj_hdr_name = pj_str("Subject");
-    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, "Phone call", 10, NULL);
+
+    pj_str_t subj_hdr_name = CONST_PJ_STR("Subject");
+    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
 
     pj_list_push_back(&dialog->inv_hdr, subj_hdr);
-// aol
 
     if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
         ERROR("Unable to create invite session for user agent client");
@@ -1815,10 +1775,15 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     if (!account)
         return;
 
-    std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
-    std::string addrSdp(localAddress);
+    std::string address;
+    if (account->getPublishedSameasLocal())
+        address = SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
+    else
+        address = account->getPublishedAddress();
 
-    setCallMediaLocal(call, localAddress);
+    const std::string addrSdp(address);
+
+    setCallMediaLocal(call, address);
 
     Sdp *localSDP = call->getLocalSDP();
     localSDP->setPublishedIP(addrSdp);
@@ -1914,7 +1879,6 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
 #ifdef SFL_VIDEO
-    Manager::instance().getVideoControls()->stopPreview();
     call->getVideoRtp().updateSDP(*call->getLocalSDP());
     call->getVideoRtp().updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
     call->getVideoRtp().start(call->getLocalSDP()->getLocalVideoPort());
@@ -2281,7 +2245,7 @@ void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     if (currentCall == NULL)
         return;
 
-    static const pj_str_t str_refer_to = { (char*) "Refer-To", 8};
+    static const pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
     pjsip_generic_string_hdr *refer_to = static_cast<pjsip_generic_string_hdr*>
                                          (pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &str_refer_to, NULL));
 

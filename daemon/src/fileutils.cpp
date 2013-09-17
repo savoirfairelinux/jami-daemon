@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
  *  Copyright (C) 2010 Michael Kerrisk
  *  Copyright (C) 2007-2009 Rémi Denis-Courmont
  *

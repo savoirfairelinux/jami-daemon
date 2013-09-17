@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,26 +29,34 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_PREVIEW_H__
-#define __VIDEO_PREVIEW_H__
+#ifndef __SFLTHREAD_H__
+#define __SFLTHREAD_H__
 
-#include <tr1/memory>
-#include <string>
-#include <map>
+#include <pthread.h>
 
-namespace sfl_video {
+class SFLThread {
+public:
+    SFLThread();
+    virtual ~SFLThread();
 
-class VideoReceiveThread;
+    void start();
 
-class VideoPreview {
-    public:
-        VideoPreview(const std::map<std::string, std::string> &args);
-        ~VideoPreview();
+protected:
+    void exit();
+    void stop();
+    void join();
+    bool isRunning();
 
-    private:
-        std::map<std::string, std::string> args_;
-        std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
+private:
+    virtual bool setup() { return true; };
+    virtual void process() {};
+    virtual void cleanup() {};
+
+    static void* run_(void*);
+    void mainloop_();
+    pthread_t thread_;
+
+    bool running_;
 };
-}
 
-#endif // __VIDEO_PREVIEW_H__
+#endif // __SFLTHREAD_H__

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -95,7 +95,8 @@
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false), audioCodecFactory(), client_(), config_(),
+    hasTriedToRegister_(false), audioCodecFactory(), client_(),
+	config_(),
     currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
@@ -942,13 +943,6 @@ ManagerImpl::addParticipant(const std::string& callId, const std::string& confer
     if (participants.empty())
         ERROR("Participant list is empty for this conference");
 
-    // reset ring buffer for all conference participant
-    // flush conference participants only
-    for (const auto &p : participants)
-        getMainBuffer().flush(p);
-
-    getMainBuffer().flush(MainBuffer::DEFAULT_ID);
-
     // Connect stream
     addStream(callId);
     return true;
@@ -1349,14 +1343,6 @@ void ManagerImpl::addStream(const std::string& call_id)
             Conference* conf = iter->second;
 
             conf->bindParticipant(call_id);
-
-            ParticipantSet participants(conf->getParticipantList());
-
-            // reset ring buffer for all conference participant
-            for (const auto &participant : participants)
-                getMainBuffer().flush(participant);
-
-            getMainBuffer().flush(MainBuffer::DEFAULT_ID);
         }
 
     } else {
@@ -2988,3 +2974,31 @@ ManagerImpl::sendRegister(const std::string& accountID, bool enable)
     else
         acc->unregisterVoIPLink();
 }
+
+
+AudioLayer*
+ManagerImpl::getAudioDriver()
+{
+    return audiodriver_;
+}
+
+
+MainBuffer &
+ManagerImpl::getMainBuffer()
+{
+    return mainBuffer_;
+}
+
+Client*
+ManagerImpl::getClient()
+{
+    return &client_;
+}
+
+#ifdef SFL_VIDEO
+VideoControls *
+ManagerImpl::getVideoControls()
+{
+    return client_.getVideoControls();
+}
+#endif

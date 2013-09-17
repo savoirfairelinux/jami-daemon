@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -115,8 +115,6 @@ static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
 static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
 static const char * const ALSA_DFT_CARD    = "0";          /** Default sound card index */
-static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volume */
-static const char * const DFT_VOL_MICRO_STR    = "100";    /** Default mic volume */
 } // end anonymous namespace
 
 Preferences::Preferences() :
@@ -299,8 +297,8 @@ AudioPreference::AudioPreference() :
     , pulseDeviceRingtone_("")
     , recordpath_("")
     , alwaysRecording_(false)
-    , volumemic_(atoi(DFT_VOL_SPKR_STR))
-    , volumespkr_(atoi(DFT_VOL_MICRO_STR))
+    , volumemic_(1.0)
+    , volumespkr_(1.0)
     , noisereduce_(false)
     , echocancel_(false)
 {}
@@ -386,10 +384,10 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode audioapi(audioApi_);
     Conf::ScalarNode recordpath(recordpath_); //: /home/msavard/Bureau
     Conf::ScalarNode alwaysRecording(alwaysRecording_);
-    std::stringstream micstr;
+    std::ostringstream micstr;
     micstr << volumemic_;
     Conf::ScalarNode volumemic(micstr.str()); //:  100
-    std::stringstream spkrstr;
+    std::ostringstream spkrstr;
     spkrstr << volumespkr_;
     Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
     Conf::ScalarNode noise(noisereduce_);
@@ -449,7 +447,14 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
 
     map.getValue(ALWAYS_RECORDING_KEY, &alwaysRecording_);
     map.getValue(VOLUMEMIC_KEY, &volumemic_);
+
+    const auto clamp = [] (double min, double max, double val) {
+        return std::min(max, std::max(min, val));
+    };
+
+    volumemic_ = clamp(-1.0, 1.0, volumemic_);
     map.getValue(VOLUMESPKR_KEY, &volumespkr_);
+    volumespkr_ = clamp(-1.0, 1.0, volumespkr_);
     map.getValue(NOISE_REDUCE_KEY, &noisereduce_);
     map.getValue(ECHO_CANCEL_KEY, &echocancel_);
 

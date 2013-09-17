@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@
 
 class ConfigurationManager;
 class CallManager;
+class PresenceManager;
 class NetworkManager;
 class Instance;
 class VideoControls;
@@ -51,16 +52,14 @@ class Client {
         Client();
         ~Client();
 
-        CallManager * getCallManager() {
-            return callManager_;
-        }
-        ConfigurationManager * getConfigurationManager() {
-            return configurationManager_;
-        }
+        CallManager * getCallManager();
+
+        ConfigurationManager * getConfigurationManager();
+
+        PresenceManager * getPresenceManager();
+
 #ifdef SFL_VIDEO
-        VideoControls* getVideoControls() {
-            return videoControls_;
-        }
+        VideoControls* getVideoControls();
 #endif
 
         void event_loop();
@@ -70,6 +69,7 @@ class Client {
         NON_COPYABLE(Client);
         CallManager*          callManager_;
         ConfigurationManager* configurationManager_;
+        PresenceManager*      presenceManager_;
         Instance*             instanceManager_;
         DBus::BusDispatcher*  dispatcher_;
 #ifdef SFL_VIDEO

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -48,7 +48,7 @@ Tone::Tone(const std::string& definition, unsigned int sampleRate) :
 {
     fillWavetable();
     delete buffer_;
-    buffer_ = new AudioBuffer();
+    buffer_ = new AudioBuffer(0);
     buffer_->setSampleRate(sampleRate);
     genBuffer(definition); // allocate memory with definition parameter
 }

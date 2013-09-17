@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -69,7 +69,7 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     if (sampleFactor == 1.0)
         return;
 
-    const size_t nbFrames = dataIn.samples();
+    const size_t nbFrames = dataIn.frames();
     const size_t nbChans = dataIn.channels();
 
     if (nbChans != channels_) {

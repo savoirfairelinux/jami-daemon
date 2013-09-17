@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
@@ -176,8 +176,8 @@ class AlsaLayer : public AudioLayer {
          * need to be restarted to prevent permanant damage to the session
          * (every frame will now produce an error until restart)
          */
-        int watchdogTotalCount_;
-        int watchdogTotalErr_;
+        unsigned watchdogTotalCount_;
+        unsigned watchdogTotalErr_;
 
         NON_COPYABLE(AlsaLayer);
 

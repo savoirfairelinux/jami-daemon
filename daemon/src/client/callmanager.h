@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -173,18 +173,13 @@ class CallManager
 
         void conferenceChanged(const std::string& confID,const std::string& state);
 
-        void updatePlaybackScale(const int32_t&, const int32_t&);
+        void updatePlaybackScale(const std::string&, const int32_t&, const int32_t&);
         void conferenceRemoved(const std::string&);
         void newCallCreated(const std::string&, const std::string&, const std::string&);
         void registrationStateChanged(const std::string&, const std::string&, const int32_t&);
         void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
-#endif // __ANDROID__
 
-        /* Presence subscription/Notification. */
-        void enablePresence(const std::string& accountID, const bool& flag);
-        void sendPresence(const std::string& accountID, const bool& status, const std::string& note);
-        void approvePresSubServer(const std::string& uri, const bool& flag);
-        void subscribePresSubClient(const std::string& accountID, const std::string& uri, const bool& flag);
+#endif // __ANDROID__
 private:
 
 #if HAVE_ZRTP

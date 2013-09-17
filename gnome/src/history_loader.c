@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Derived from this example by Emmanuelle Bassi :
  *      http://blogs.gnome.org/ebassi/documentation/lazy-loading/

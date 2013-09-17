@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -534,7 +534,9 @@ class SIPAccount : public Account {
         /**
          * Presence management
          */
-        SIPPresence * getPresence();
+        SIPPresence * getPresence() const;
+
+        void enablePresence(const bool& flag);
 
 //        unsigned generateAudioPort() const;
         uint16_t generateAudioPort() const;
@@ -545,6 +547,7 @@ class SIPAccount : public Account {
     private:
         NON_COPYABLE(SIPAccount);
 
+        void usePublishedAddressPortInVIA();
         bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool userMatch(const std::string &username) const;
         bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;

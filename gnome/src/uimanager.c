@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -1673,7 +1673,7 @@ create_menus(GtkUIManager *ui, SFLPhoneClient *client)
     // Set the toggle buttons
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(get_action(ui, "/MenuBar/ViewMenu/Dialpad")), g_settings_get_boolean(client->settings, "show-dialpad"));
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), must_show_volume(client));
-    gtk_action_set_sensitive(volumeToggle_, must_show_alsa_conf());
+    gtk_action_set_sensitive(volumeToggle_, TRUE);
     gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Toolbar"), FALSE);
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */

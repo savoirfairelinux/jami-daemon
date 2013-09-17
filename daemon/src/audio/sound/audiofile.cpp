@@ -1,4 +1,4 @@
-/*  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+/*  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -58,7 +58,7 @@ AudioFile::onBufferFinish()
 
     if ((updatePlaybackScale_ % 5) == 0) {
         CallManager *cm = Manager::instance().getClient()->getCallManager();
-        cm->updatePlaybackScale(filepath_, pos_ / divisor, buffer_->samples() / divisor);
+        cm->updatePlaybackScale(filepath_, pos_ / divisor, buffer_->frames() / divisor);
     }
 
     updatePlaybackScale_++;

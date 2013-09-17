@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -308,17 +308,17 @@ class AudioPreference : public Serializable {
             alwaysRecording_ = rec;
         }
 
-        int getVolumemic() const {
+        double getVolumemic() const {
             return volumemic_;
         }
-        void setVolumemic(int m) {
+        void setVolumemic(double m) {
             volumemic_ = m;
         }
 
-        int getVolumespkr() const {
+        double getVolumespkr() const {
             return volumespkr_;
         }
-        void setVolumespkr(int s) {
+        void setVolumespkr(double s) {
             volumespkr_ = s;
         }
 
@@ -356,8 +356,8 @@ class AudioPreference : public Serializable {
         // general preference
         std::string recordpath_; //: /home/msavard/Bureau
         bool alwaysRecording_;
-        int volumemic_;
-        int volumespkr_;
+        double volumemic_;
+        double volumespkr_;
 
         bool noisereduce_;
         bool echocancel_;

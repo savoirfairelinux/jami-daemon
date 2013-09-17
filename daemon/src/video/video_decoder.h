@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,15 +29,48 @@
  *  as that of the covered work.
  */
 
-#include "packet_handle.h"
-// libav includes
-extern "C" {
-#include <libavformat/avformat.h>
+#ifndef __VIDEO_DECODER_H__
+#define __VIDEO_DECODER_H__
+
+#include "video_base.h"
+#include "video_scaler.h"
+#include "noncopyable.h"
+
+#include <pthread.h>
+#include <string>
+
+class AVCodecContext;
+class AVStream;
+class AVFormatContext;
+class AVCodec;
+
+namespace sfl_video {
+
+	class VideoDecoder : public VideoCodec {
+	public:
+		VideoDecoder();
+		~VideoDecoder();
+
+		void setInterruptCallback(int (*cb)(void*), void *opaque);
+		void setIOContext(VideoIOHandle *ioctx);
+		int openInput(const std::string &source_str,
+					  const std::string &format_str);
+		int setupFromVideoData();
+		int decode(VideoFrame&);
+		int flush(VideoFrame&);
+
+		int getWidth() const;
+		int getHeight() const;
+		int getPixelFormat() const;
+
+	private:
+		NON_COPYABLE(VideoDecoder);
+
+		AVCodec *inputDecoder_;
+		AVCodecContext *decoderCtx_;
+		AVFormatContext *inputCtx_;
+		int streamIndex_;
+	};
 }
 
-PacketHandle::PacketHandle(AVPacket &inpacket) : inpacket_(inpacket) {}
-
-PacketHandle::~PacketHandle()
-{
-    av_free_packet(&inpacket_);
-}
+#endif // __VIDEO_DECODER_H__

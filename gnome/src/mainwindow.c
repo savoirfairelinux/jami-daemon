@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -320,6 +320,12 @@ create_main_window(SFLPhoneClient *client)
     g_object_ref(speaker_control);
     g_object_ref(mic_control);
 
+    if (g_settings_get_boolean(client->settings, "show-dialpad")) {
+        dialpad = create_dialpad(client);
+        gtk_box_pack_end(GTK_BOX(subvbox), dialpad, FALSE, TRUE, 0);
+        gtk_widget_show_all(dialpad);
+    }
+
     if (must_show_volume(client)) {
         gtk_box_pack_end(GTK_BOX(subvbox), speaker_control, FALSE, TRUE, 0);
         gtk_box_pack_end(GTK_BOX(subvbox), mic_control, FALSE, TRUE, 0);
@@ -330,11 +336,6 @@ create_main_window(SFLPhoneClient *client)
         gtk_widget_hide(mic_control);
     }
 
-    if (g_settings_get_boolean(client->settings, "show-dialpad")) {
-        dialpad = create_dialpad(client);
-        gtk_box_pack_end(GTK_BOX(subvbox), dialpad, FALSE, TRUE, 0);
-        gtk_widget_show_all(dialpad);
-    }
 
     /* Status bar */
     statusBar = gtk_statusbar_new();

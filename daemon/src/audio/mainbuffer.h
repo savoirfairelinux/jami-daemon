@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,8 @@
 #include <pthread.h>
 
 #include "audiobuffer.h"
+#include "mainbuffer.h"
+#include "noncopyable.h"
 
 class RingBuffer;
 
@@ -99,6 +101,7 @@ class MainBuffer {
         void dumpInfo();
 
     private:
+        NON_COPYABLE(MainBuffer);
 
         CallIDSet* getCallIDSet(const std::string &call_id);
 

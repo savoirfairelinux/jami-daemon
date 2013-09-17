@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@
 
 #include "callmanager.h"
 #include "configurationmanager.h"
+#include "presencemanager.h"
 #include "networkmanager.h"
 
 #ifdef SFL_VIDEO
@@ -51,6 +52,7 @@
 
 Client::Client() : callManager_(0)
     , configurationManager_(0)
+    , presenceManager_(0)
     , instanceManager_(0)
     , dispatcher_(new DBus::BusDispatcher)
 #ifdef SFL_VIDEO
@@ -75,6 +77,8 @@ Client::Client() : callManager_(0)
         callManager_ = new CallManager(sessionConnection);
         DEBUG("DBUS create configuration manager from session connection");
         configurationManager_ = new ConfigurationManager(sessionConnection);
+        DEBUG("DBUS create presence manager from session connection");
+        presenceManager_ = new PresenceManager(sessionConnection);
         DEBUG("DBUS create instance manager from session connection");
         instanceManager_ = new Instance(sessionConnection);
 
@@ -107,6 +111,7 @@ Client::~Client()
     delete videoControls_;
 #endif
     delete instanceManager_;
+    delete presenceManager_;
     delete configurationManager_;
     delete callManager_;
     delete dispatcher_;
@@ -137,3 +142,29 @@ void Client::exit()
         return;
     }
 }
+
+CallManager *
+Client::getCallManager()
+{
+    return callManager_;
+}
+
+ConfigurationManager *
+Client::getConfigurationManager()
+{
+    return configurationManager_;
+}
+
+PresenceManager *
+Client::getPresenceManager()
+{
+    return presenceManager_;
+}
+
+#ifdef SFL_VIDEO
+VideoControls*
+Client::getVideoControls()
+{
+    return videoControls_;
+}
+#endif

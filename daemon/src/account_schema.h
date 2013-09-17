@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
@@ -55,10 +55,12 @@ static const char *const CONFIG_ACCOUNT_DTMF_TYPE               = "Account.dtmfT
 static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringtonePath";
 static const char *const CONFIG_RINGTONE_ENABLED                = "Account.ringtoneEnabled";
 static const char *const CONFIG_KEEP_ALIVE_ENABLED              = "Account.keepAliveEnabled";
+static const char *const CONFIG_PRESENCE_ENABLED                = "Account.presenceModuleEnabled";
 
 
 static const char *const CONFIG_DEFAULT_REGISTRATION_EXPIRE     = "60";
 static const char *const CONFIG_DEFAULT_RINGTONE_ENABLED        = "true";
+static const char *const CONFIG_DEFAULT_PRESENCE_ENABLED        = "true";
 
 static const char *const CONFIG_ACCOUNT_HOSTNAME                = "Account.hostname";
 static const char *const CONFIG_ACCOUNT_USERNAME                = "Account.username";

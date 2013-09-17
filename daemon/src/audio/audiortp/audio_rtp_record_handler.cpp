@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
@@ -100,7 +100,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , decoderPayloadType_(0)
     , hasDynamicPayloadType_(false)
     , decData_(DEC_BUFFER_SIZE)     // std::tr1::arrays will be 0-initialized
-    , resampledData_()
+    , resampledData_(0)
     , encodedData_()
     , converterEncode_(0)
     , converterDecode_(0)
@@ -375,7 +375,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         }
     }
 
-    size = std::min(size, audioRtpRecord_.decData_.samples());
+    size = std::min(size, audioRtpRecord_.decData_.frames());
 
     {
         ScopedLock lock(audioRtpRecord_.audioCodecMutex_);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -58,7 +58,7 @@ GainControl::GainControl(double sr, double target) : averager_(sr, SFL_GAIN_ATTA
 
 void GainControl::process(AudioBuffer& buf)
 {
-    process(buf.getChannel(0)->data(), buf.samples());
+    process(buf.getChannel(0)->data(), buf.frames());
 }
 
 void GainControl::process(SFLAudioSample *buf, int samples)

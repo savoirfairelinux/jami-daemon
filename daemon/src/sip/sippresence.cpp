@@ -30,13 +30,14 @@
  */
 
 
+#include "sippresence.h"
 #include "logger.h"
 #include "manager.h"
 #include "client/client.h"
 #include "client/callmanager.h"
+#include "client/presencemanager.h"
 #include "sipaccount.h"
-#include "sippublish.h"
-#include "sippresence.h"
+#include "sip_utils.h"
 #include "pres_sub_server.h"
 #include "pres_sub_client.h"
 #include "sipvoiplink.h"
@@ -45,12 +46,12 @@
 #define MAX_N_PRES_SUB_CLIENT 20
 
 SIPPresence::SIPPresence(SIPAccount *acc)
-    : pres_status_data()
-    , publish_sess()
-    , enabled(true)
+    : publish_sess_()
+    , pres_status_data_()
+    , enabled_(true)
     , acc_(acc)
-    , pres_sub_server_list_ () //IP2IP context
-    , pres_sub_client_list_ ()
+    , pres_sub_server_list_()  //IP2IP context
+    , pres_sub_client_list_()
     , mutex_()
     , mutex_nesting_level_()
     , mutex_owner_()
@@ -58,169 +59,184 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     , pool_()
 {
     /* init default status */
-    updateStatus(true,"Available");
+    updateStatus(true, "Available");
 
     /* init pool */
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_.factory, "pres", 1000, 1000, NULL);
 
     /* Create mutex */
-    if(pj_mutex_create_recursive(pool_, "pres",&mutex_) != PJ_SUCCESS)
-	ERROR("Unable to create mutex");
+    if (pj_mutex_create_recursive(pool_, "pres", &mutex_) != PJ_SUCCESS)
+        ERROR("Unable to create mutex");
 }
 
 
-SIPPresence::~SIPPresence(){
+SIPPresence::~SIPPresence()
+{
     /* Flush the lists */
-    for (auto c : pres_sub_client_list_)
+    for (const auto & c : pres_sub_client_list_)
         removePresSubClient(c) ;
-    for (auto s : pres_sub_server_list_)
+
+    for (const auto & s : pres_sub_server_list_)
         removePresSubServer(s);
 }
 
-SIPAccount * SIPPresence::getAccount(){
+SIPAccount * SIPPresence::getAccount() const
+{
     return acc_;
 }
 
-pjsip_pres_status * SIPPresence::getStatus(){
-    return &pres_status_data;
+pjsip_pres_status * SIPPresence::getStatus()
+{
+    return &pres_status_data_;
 }
 
-int SIPPresence::getModId(){
-    return  ((SIPVoIPLink*) (acc_->getVoIPLink()))->getModId();
+int SIPPresence::getModId() const
+{
+    return ((SIPVoIPLink*)(acc_->getVoIPLink()))->getModId();
 }
 
-pj_pool_t*  SIPPresence::getPool(){
+pj_pool_t*  SIPPresence::getPool() const
+{
     return pool_;
 }
 
-void SIPPresence::enable(const bool& flag){
-    enabled = flag;
+void SIPPresence::enable(bool flag)
+{
+    enabled_ = flag;
 }
 
-void SIPPresence::updateStatus(const bool& status, const std::string &note){
+void SIPPresence::updateStatus(bool status, const std::string &note)
+{
     //char* pj_note  = (char*) pj_pool_alloc(pool_, "50");
 
     pjrpid_element rpid = {
-            PJRPID_ELEMENT_TYPE_PERSON,
-            pj_str("20"),
-            PJRPID_ACTIVITY_UNKNOWN,
-            pj_str((char *) note.c_str())};
+        PJRPID_ELEMENT_TYPE_PERSON,
+        CONST_PJ_STR("20"),
+        PJRPID_ACTIVITY_UNKNOWN,
+        pj_str((char *) note.c_str())
+    };
 
     /* fill activity if user not available. */
-    if(note=="away")
+    if (note == "away")
         rpid.activity = PJRPID_ACTIVITY_AWAY;
-    else if (note=="busy")
+    else if (note == "busy")
         rpid.activity = PJRPID_ACTIVITY_BUSY;
     else // TODO: is there any other possibilities
         DEBUG("Presence : no activity");
 
-    pj_bzero(&pres_status_data, sizeof(pres_status_data));
-    pres_status_data.info_cnt = 1;
-    pres_status_data.info[0].basic_open = status;
-    pres_status_data.info[0].id = pj_str("0"); /* todo: tuplie_id*/
-    pj_memcpy(&pres_status_data.info[0].rpid, &rpid,sizeof(pjrpid_element));
+    pj_bzero(&pres_status_data_, sizeof(pres_status_data_));
+    pres_status_data_.info_cnt = 1;
+    pres_status_data_.info[0].basic_open = status;
+    pres_status_data_.info[0].id = CONST_PJ_STR("0"); /* todo: tuplie_id*/
+    pj_memcpy(&pres_status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
     /* "contact" field is optionnal */
 }
 
-void SIPPresence::sendPresence(const bool& status, const std::string &note){
-    updateStatus(status,note);
-    if(enabled){
-        if (acc_->isIP2IP())
-            notifyPresSubServer(); // to each subscribers
-        else
-            pres_publish(this); // to the PBX server
-    }
+void SIPPresence::sendPresence(bool status, const std::string &note)
+{
+    updateStatus(status, note);
+
+    if (not enabled_)
+        return;
+
+    if (acc_->isIP2IP())
+        notifyPresSubServer(); // to each subscribers
+    else
+        pres_publish(this); // to the PBX server
 }
 
 
-void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_pres_status * status){
+void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_pres_status * status)
+{
     /* Update our info. See pjsua_buddy_get_info() for additionnal ideas*/
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
-    const std::string note(status->info[0].rpid.note.ptr,status->info[0].rpid.note.slen);
-    DEBUG(" Received status of PresSubClient  %s: status=%s note=%s",uri.c_str(),basic.c_str(),note.c_str());
+    const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
+    DEBUG(" Received status of PresSubClient  %s: status=%s note=%s", uri.c_str(), (status->info[0].basic_open ? "open" : "closed"), note.c_str());
     /* report status to client signal */
-    Manager::instance().getClient()->getCallManager()->newPresSubClientNotification(uri, basic, note);
+    Manager::instance().getClient()->getPresenceManager()->newBuddySubscription(uri, status->info[0].basic_open, note);
 }
 
-void SIPPresence::subscribePresSubClient(const std::string& uri, const bool& flag){
+void SIPPresence::subscribeClient(const std::string& uri, bool flag)
+{
     /* Check if the buddy was already subscribed */
-    for(auto  c : pres_sub_client_list_)
-        if(c->getURI()==uri){
-            DEBUG("-PresSubClient:%s exists in the list. Replace it.",uri.c_str());
+    for (const auto & c : pres_sub_client_list_) {
+        if (c->getURI() == uri) {
+            DEBUG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
             delete c;
             removePresSubClient(c);
             break;
         }
+    }
 
-    if(pres_sub_client_list_.size() >= MAX_N_PRES_SUB_CLIENT){
+    if (pres_sub_client_list_.size() >= MAX_N_PRES_SUB_CLIENT) {
         WARN("Can't add PresSubClient, max number reached.");
         return;
     }
 
-    if(flag){
-        PresSubClient *c = new PresSubClient(uri,this);
-        if(!(c->subscribe())){
+    if (flag) {
+        PresSubClient *c = new PresSubClient(uri, this);
+
+        if (!(c->subscribe())) {
             WARN("Failed send subscribe.");
             delete c;
         }
+
         // the buddy has to be accepted before being added in the list
     }
 }
 
-void SIPPresence::addPresSubClient(PresSubClient *c){
-    if(pres_sub_client_list_.size() < MAX_N_PRES_SUB_CLIENT){
+void SIPPresence::addPresSubClient(PresSubClient *c)
+{
+    if (pres_sub_client_list_.size() < MAX_N_PRES_SUB_CLIENT) {
         pres_sub_client_list_.push_back(c);
-        DEBUG("New Presence_subscription_client client added in the list[l=%i].",pres_sub_client_list_.size());
-    }
-    else{
+        DEBUG("New Presence_subscription_client client added in the list[l=%i].", pres_sub_client_list_.size());
+    } else {
         WARN("Max Presence_subscription_client is reach.");
         // let the client alive //delete c;
     }
 }
 
-void SIPPresence::removePresSubClient(PresSubClient *c){
+void SIPPresence::removePresSubClient(PresSubClient *c)
+{
     DEBUG("Presence_subscription_client removed from the buddy list.");
     pres_sub_client_list_.remove(c);
 }
 
-
-void SIPPresence::reportNewPresSubServerRequest(PresSubServer *s){
-    Manager::instance().getClient()->getCallManager()->newPresSubServerRequest(s->remote);
-}
-
-void SIPPresence::approvePresSubServer(const std::string& uri, const bool& flag){
-    for (auto s : pres_sub_server_list_)
-         if(s->matches((char *) uri.c_str())){
-             DEBUG("Approve Presence_subscription_server for %s: %s.",s->remote,flag? "true":"false");
-             s->approve(flag);
-             // return; // 'return' would prevent multiple-time subscribers from spam
-         }
-}
-
-
-void SIPPresence::addPresSubServer(PresSubServer *s) {
-    if(pres_sub_server_list_.size() < MAX_N_PRES_SUB_SERVER){
-        DEBUG("Presence_subscription_server added: %s.",s->remote);
-        pres_sub_server_list_.push_back(s);
+void SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
+{
+    for (const auto & s : pres_sub_server_list_) {
+        if (s->matches((char *) uri.c_str())) {
+            s->approve(flag);
+            // return; // 'return' would prevent multiple-time subscribers from spam
+        }
     }
-    else{
+}
+
+
+void SIPPresence::addPresSubServer(PresSubServer *s)
+{
+    if (pres_sub_server_list_.size() < MAX_N_PRES_SUB_SERVER) {
+        pres_sub_server_list_.push_back(s);
+    } else {
         WARN("Max Presence_subscription_server is reach.");
         // let de server alive // delete s;
     }
 }
 
-void SIPPresence::removePresSubServer(PresSubServer *s) {
+void SIPPresence::removePresSubServer(PresSubServer *s)
+{
     pres_sub_server_list_.remove(s);
     DEBUG("Presence_subscription_server removed");
 }
 
-void SIPPresence::notifyPresSubServer() {
+void SIPPresence::notifyPresSubServer()
+{
     DEBUG("Iterating through Presence_subscription_server:");
-    for (auto s : pres_sub_server_list_)
+
+    for (const auto & s : pres_sub_server_list_)
         s->notify();
 }
-
 
 void SIPPresence::lock()
 {
@@ -232,42 +248,28 @@ void SIPPresence::lock()
 void SIPPresence::unlock()
 {
     if (--mutex_nesting_level_ == 0)
-	mutex_owner_ = NULL;
+        mutex_owner_ = NULL;
+
     pj_mutex_unlock(mutex_);
-}
-
-bool SIPPresence::tryLock()
-{
-    pj_status_t status;
-    status = pj_mutex_trylock(mutex_);
-    if (status == PJ_SUCCESS) {
-	mutex_owner_ = pj_thread_this();
-	++mutex_nesting_level_;
-    }
-    return status;
-}
-
-bool SIPPresence::isLocked()
-{
-    return mutex_owner_ == pj_thread_this();
 }
 
 void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
 {
 
     if (tdata->msg->type == PJSIP_REQUEST_MSG) {
-        const pj_str_t STR_USER_AGENT = pj_str("User-Agent");
+        const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
         std::string useragent(acc_->getUserAgentName());
         pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
         pjsip_hdr *h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent);
         pjsip_msg_add_hdr(tdata->msg, h);
     }
 
-    if(msg_data == NULL)
+    if (msg_data == NULL)
         return;
 
     const pjsip_hdr *hdr;
     hdr = msg_data->hdr_list.next;
+
     while (hdr && hdr != &msg_data->hdr_list) {
         pjsip_hdr *new_hdr;
         new_hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, hdr);
@@ -278,9 +280,196 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
 
     if (msg_data->content_type.slen && msg_data->msg_body.slen) {
         pjsip_msg_body *body;
-        pj_str_t type = pj_str("application");
-        pj_str_t subtype = pj_str("pidf+xml");
+        const pj_str_t type = CONST_PJ_STR("application");
+        const pj_str_t subtype = CONST_PJ_STR("pidf+xml");
         body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
         tdata->msg->body = body;
     }
+}
+
+static const pjsip_publishc_opt my_publish_opt = {true}; // this is queue_request
+
+/*
+ * Client presence publication callback.
+ */
+void
+SIPPresence::pres_publish_cb(struct pjsip_publishc_cbparam *param)
+{
+    SIPPresence *pres = (SIPPresence*) param->token;
+
+    if (param->code / 100 != 2 || param->status != PJ_SUCCESS) {
+
+        pjsip_publishc_destroy(param->pubc);
+        pres->publish_sess_ = NULL;
+
+        if (param->status != PJ_SUCCESS) {
+            char errmsg[PJ_ERR_MSG_SIZE];
+
+            pj_strerror(param->status, errmsg, sizeof(errmsg));
+            ERROR("Client publication (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
+        } else if (param->code == 412) {
+            /* 412 (Conditional Request Failed)
+             * The PUBLISH refresh has failed, retry with new one.
+             */
+            WARN("Publish retry.");
+            pres_publish(pres);
+        } else {
+            ERROR("Client publication (PUBLISH) failed (%u/%.*s)",
+                  param->code, param->reason.slen, param->reason.ptr);
+        }
+
+    } else {
+        if (param->expiration < 1) {
+            /* Could happen if server "forgot" to include Expires header
+             * in the response. We will not renew, so destroy the pubc.
+             */
+            pjsip_publishc_destroy(param->pubc);
+            pres->publish_sess_ = NULL;
+        }
+    }
+}
+
+/*
+ * Send PUBLISH request.
+ */
+pj_status_t
+SIPPresence::pres_send_publish(SIPPresence * pres, pj_bool_t active)
+{
+    pjsip_tx_data *tdata;
+    pj_status_t status;
+
+    DEBUG("Send presence %sPUBLISH..", (active ? "" : "un-"));
+
+    SIPAccount * acc = pres->getAccount();
+    std::string contactWithAngles =  acc->getFromUri();
+    contactWithAngles.erase(contactWithAngles.find('>'));
+    int semicolon = contactWithAngles.find_first_of(":");
+    std::string contactWithoutAngles = contactWithAngles.substr(semicolon + 1);
+//    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
+//    pj_memcpy(&pres_status_data.info[0].contact, &contt, sizeof(pj_str_t));;
+
+    /* Create PUBLISH request */
+    if (active) {
+        char *bpos;
+        pj_str_t entity;
+
+        status = pjsip_publishc_publish(pres->publish_sess_, PJ_TRUE, &tdata);
+
+        if (status != PJ_SUCCESS) {
+            ERROR("Error creating PUBLISH request", status);
+            goto on_error;
+        }
+
+        pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
+
+        if ((bpos = pj_strchr(&from, '<')) != NULL) {
+            char *epos = pj_strchr(&from, '>');
+
+            if (epos - bpos < 2) {
+                pj_assert(!"Unexpected invalid URI");
+                status = PJSIP_EINVALIDURI;
+                goto on_error;
+            }
+
+            entity.ptr = bpos + 1;
+            entity.slen = epos - bpos - 1;
+        } else {
+            entity = from;
+        }
+
+        /* Create and add PIDF message body */
+        status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(),
+                                        &entity, &tdata->msg->body);
+
+        if (status != PJ_SUCCESS) {
+            ERROR("Error creating PIDF for PUBLISH request");
+            pjsip_tx_data_dec_ref(tdata);
+            goto on_error;
+        }
+
+    } else {
+        WARN("Unpublish is not implemented.");
+    }
+
+
+    pres_msg_data msg_data;
+    pj_bzero(&msg_data, sizeof(msg_data));
+    pj_list_init(&msg_data.hdr_list);
+    pjsip_media_type_init(&msg_data.multipart_ctype, NULL, NULL);
+    pj_list_init(&msg_data.multipart_parts);
+
+    pres->fillDoc(tdata, &msg_data);
+
+    /* Send the PUBLISH request */
+    status = pjsip_publishc_send(pres->publish_sess_, tdata);
+
+    if (status == PJ_EPENDING) {
+        WARN("Previous request is in progress, ");
+    } else if (status != PJ_SUCCESS) {
+        ERROR("Error sending PUBLISH request");
+        goto on_error;
+    }
+
+    return PJ_SUCCESS;
+
+on_error:
+
+    if (pres->publish_sess_) {
+        pjsip_publishc_destroy(pres->publish_sess_);
+        pres->publish_sess_ = NULL;
+    }
+
+    return status;
+}
+
+
+/* Create client publish session */
+pj_status_t
+SIPPresence::pres_publish(SIPPresence *pres)
+{
+    pj_status_t status;
+    const pj_str_t STR_PRESENCE = CONST_PJ_STR("presence");
+    SIPAccount * acc = pres->getAccount();
+    pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
+
+    /* Create and init client publication session */
+
+    /* Create client publication */
+    status = pjsip_publishc_create(endpt, &my_publish_opt,
+                                   pres, &pres_publish_cb,
+                                   &pres->publish_sess_);
+
+    if (status != PJ_SUCCESS) {
+        pres->publish_sess_ = NULL;
+        ERROR("Failed to create a publish seesion.");
+        return status;
+    }
+
+    /* Initialize client publication */
+    pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
+    status = pjsip_publishc_init(pres->publish_sess_, &STR_PRESENCE, &from, &from, &from, 0xFFFF);
+
+    if (status != PJ_SUCCESS) {
+        ERROR("Failed to init a publish session");
+        pres->publish_sess_ = NULL;
+        return status;
+    }
+
+    /* Add credential for authentication */
+    if (acc->hasCredentials() and pjsip_publishc_set_credentials(pres->publish_sess_, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
+        ERROR("Could not initialize credentials for invite session authentication");
+        return status;
+    }
+
+    /* Set route-set */
+    if (acc->hasServiceRoute())
+        pjsip_regc_set_route_set(acc->getRegistrationInfo(), sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
+
+    /* Send initial PUBLISH request */
+    status = pres_send_publish(pres, PJ_TRUE);
+
+    if (status != PJ_SUCCESS)
+        return status;
+
+    return PJ_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -107,6 +107,17 @@ void MappingNode::getValue(const std::string &key, int *i) const
     }
 
     *i = std::atoi(node->getValue().c_str());
+}
+
+void MappingNode::getValue(const std::string &key, double *d) const
+{
+    ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
+    if (!node) {
+        ERROR("node %s not found", key.c_str());
+        return;
+    }
+
+    *d = std::atof(node->getValue().c_str());
 }
 
 void MappingNode::getValue(const std::string &key, std::string *v) const

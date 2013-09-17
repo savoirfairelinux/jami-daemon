@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -35,9 +35,11 @@
 #include "client/client.h"
 #include "client/callmanager.h"
 #include "client/configurationmanager.h"
+#include "client/presencemanager.h"
 
 Client::Client() : callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
+	, presenceManager_(new PresenceManager)
     , instanceManager_(0)
     , dispatcher_(0)
 #ifdef SFL_VIDEO
@@ -59,6 +61,7 @@ Client::~Client()
     delete dispatcher_;
     delete instanceManager_;
     delete configurationManager_;
+	delete presenceManager_;
     delete callManager_;
 }
 
@@ -67,3 +70,21 @@ void Client::event_loop()
 
 void Client::exit()
 {}
+
+CallManager *
+Client::getCallManager()
+{
+    return callManager_;
+}
+
+ConfigurationManager *
+Client::getConfigurationManager()
+{
+    return configurationManager_;
+}
+
+PresenceManager *
+Client::getPresenceManager()
+{
+    return presenceManager_;
+}

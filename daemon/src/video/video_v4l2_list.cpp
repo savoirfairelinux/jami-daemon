@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
  *  Copyright © 2009 Rémi Denis-Courmont
  *
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
@@ -288,12 +288,12 @@ void VideoV4l2ListThread::delDevice(const string &node)
 {
     ScopedLock lock(mutex_);
 
-    for (auto itr = devices_.begin(); itr != devices_.end(); ++itr) {
-        if (itr->device == node) {
-            devices_.erase(itr);
-            Manager::instance().getVideoControls()->deviceEvent();
-            return;
-        }
+    const auto itr = std::find_if(devices_.begin(), devices_.end(),
+            [&] (const VideoV4l2Device &d) { return d.device == node; });
+
+    if (itr != devices_.end()) {
+        devices_.erase(itr);
+        Manager::instance().getVideoControls()->deviceEvent();
     }
 }
 

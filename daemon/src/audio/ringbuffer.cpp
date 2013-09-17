@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -73,21 +73,21 @@ RingBuffer::flushAll()
 size_t
 RingBuffer::putLength() const
 {
-    const size_t buffer_size = buffer_.samples();
+    const size_t buffer_size = buffer_.frames();
     const size_t startPos = (not readpointers_.empty()) ? getSmallestReadPointer() : 0;
     return (endPos_ + buffer_size - startPos) % buffer_size;
 }
 
 size_t RingBuffer::getLength(const std::string &call_id) const
 {
-    const size_t buffer_size = buffer_.samples();
+    const size_t buffer_size = buffer_.frames();
     return (endPos_ + buffer_size - getReadPointer(call_id)) % buffer_size;
 }
 
 void
 RingBuffer::debug()
 {
-    DEBUG("Start=%d; End=%d; BufferSize=%d", getSmallestReadPointer(), endPos_, buffer_.samples());
+    DEBUG("Start=%d; End=%d; BufferSize=%d", getSmallestReadPointer(), endPos_, buffer_.frames());
 }
 
 size_t RingBuffer::getReadPointer(const std::string &call_id) const
@@ -105,7 +105,7 @@ RingBuffer::getSmallestReadPointer() const
     if (hasNoReadPointers())
         return 0;
 
-    size_t smallest = buffer_.samples();
+    size_t smallest = buffer_.frames();
 
     ReadPointer::const_iterator iter;
 
@@ -166,8 +166,8 @@ bool RingBuffer::hasNoReadPointers() const
 void RingBuffer::put(AudioBuffer& buf)
 {
     const size_t len = putLength();
-    const size_t sample_num = buf.samples();
-    const size_t buffer_size = buffer_.samples();
+    const size_t sample_num = buf.frames();
+    const size_t buffer_size = buffer_.frames();
     size_t toCopy = sample_num;
 
     // Add more channels if the input buffer holds more channels than the ring.
@@ -216,8 +216,8 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
         return 0;
 
     const size_t len = getLength(call_id);
-    const size_t sample_num = buf.samples();
-    const size_t buffer_size = buffer_.samples();
+    const size_t sample_num = buf.frames();
+    const size_t buffer_size = buffer_.frames();
     size_t toCopy = std::min(sample_num, len);
 
     const size_t copied = toCopy;
@@ -250,7 +250,7 @@ RingBuffer::discard(size_t toDiscard, const std::string &call_id)
     if (toDiscard > len)
         toDiscard = len;
 
-    size_t buffer_size = buffer_.samples();
+    size_t buffer_size = buffer_.frames();
     size_t startPos = (getReadPointer(call_id) + toDiscard) % buffer_size;
 
     storeReadPointer(startPos, call_id);

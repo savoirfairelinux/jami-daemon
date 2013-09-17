@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
 *
 *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -118,11 +118,12 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , registrationStateDetailed_()
     , keepAliveEnabled_(false)
     , keepAliveTimer_()
+    , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
-    , presence_(new SIPPresence(this))
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
+    , presence_(new SIPPresence(this))
     , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
     , videoPortRange_({49152, (MAX_PORT) - 2})
@@ -375,6 +376,13 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 #endif
 }
 
+void SIPAccount::usePublishedAddressPortInVIA()
+{
+    via_addr_.host.ptr = (char *) publishedIpAddress_.c_str();
+    via_addr_.host.slen = publishedIpAddress_.size();
+    via_addr_.port = publishedPort_;
+}
+
 void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 {
     using namespace Conf;
@@ -409,7 +417,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         } else {
             vector<map<string, string> > videoCodecDetails;
 
-            for (auto it : *seq) {
+            for (const auto &it : *seq) {
                 MappingNode *codec = static_cast<MappingNode *>(it);
                 map<string, string> codecMap;
                 codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
@@ -445,6 +453,9 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     publishedPort_ = port;
     mapNode.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
 
+    if (not publishedSameasLocal_)
+        usePublishedAddressPortInVIA();
+
     if (not isIP2IP()) mapNode.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string dtmfType;
@@ -475,7 +486,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         SequenceNode *credSeq = static_cast<SequenceNode *>(credNode);
         Sequence *seq = credSeq->getSequence();
 
-        for (auto it : *seq) {
+        for (const auto &it : *seq) {
             MappingNode *cred = static_cast<MappingNode *>(it);
             std::string user;
             std::string pass;
@@ -578,6 +589,9 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
 
+    if (not publishedSameasLocal_)
+        usePublishedAddressPortInVIA();
+
     if (stunServer_ != details[CONFIG_STUN_SERVER]) {
         link_->sipTransport.destroyStunResolver(stunServer_);
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
@@ -602,6 +616,8 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     tmpMax = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MAX].c_str());
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
+
+    enablePresence(details[CONFIG_PRESENCE_ENABLED] == TRUE_STR);
 
     // srtp settings
     srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == TRUE_STR;
@@ -698,6 +714,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
+    a[CONFIG_PRESENCE_ENABLED] = getPresence()->isEnabled()? TRUE_STR : FALSE_STR;
 
     RegistrationState state = UNREGISTERED;
     std::string registrationStateCode;
@@ -1116,15 +1133,22 @@ std::string SIPAccount::getContactHeader() const
 
     link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
 
-    if (!receivedParameter_.empty()) {
-        address = receivedParameter_;
-        DEBUG("Using received address %s", address.c_str());
-    }
-
-    if (rPort_ != -1 and rPort_ != 0) {
-        portstr << rPort_;
+    if (not publishedSameasLocal_) {
+        address = publishedIpAddress_;
+        portstr << publishedPort_;
         port = portstr.str();
-        DEBUG("Using received port %s", port.c_str());
+        DEBUG("Using published address %s and port %s", address.c_str(), port.c_str());
+    } else {
+        if (!receivedParameter_.empty()) {
+            address = receivedParameter_;
+            DEBUG("Using received address %s", address.c_str());
+        }
+
+        if (rPort_ != -1 and rPort_ != 0) {
+            portstr << rPort_;
+            port = portstr.str();
+            DEBUG("Using received port %s", port.c_str());
+        }
     }
 
     // UDP does not require the transport specification
@@ -1381,8 +1405,17 @@ bool SIPAccount::isIP2IP() const{
     return accountID_ == IP2IP_PROFILE;
 }
 
-SIPPresence * SIPAccount::getPresence(){
+SIPPresence * SIPAccount::getPresence() const {
     return presence_;
+}
+
+/**
+ *  Enable the presence module (PUBLISH/SUBSCRIBE)
+ */
+void
+SIPAccount::enablePresence(const bool& flag){
+    DEBUG("Enable Presence (acc:%s : %s)",accountID_.c_str(), flag? "yes":"no");
+    getPresence()->enable(flag);
 }
 
 bool SIPAccount::matches(const std::string &userName, const std::string &server,

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,18 +55,15 @@
 
 #endif // HAVE_DBUS
 
-#include <tr1/memory> // for shared_ptr
+#include <memory> // for shared_ptr
 #include "video/video_preferences.h"
-
-namespace sfl_video {
-    class VideoPreview;
-}
+#include "video/video_base.h"
 
 class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
-        std::tr1::shared_ptr<sfl_video::VideoPreview> preview_;
+        std::unique_ptr<sfl_video::VideoFrameActiveWriter> videoPreview_;
         VideoPreference videoPreference_;
 
     public:
@@ -126,6 +123,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         void startPreview();
         void stopPreview();
         bool hasPreviewStarted();
+        sfl_video::VideoFrameActiveWriter* getVideoPreview();
 };
 
 #endif // VIDEO_CONTROLS_H_

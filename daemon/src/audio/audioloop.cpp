@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -46,7 +46,7 @@
 
 AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0)
 {
-    buffer_ = new AudioBuffer;
+    buffer_ = new AudioBuffer(0);
     buffer_->setSampleRate(sampleRate);
 }
 
@@ -58,20 +58,20 @@ AudioLoop::~AudioLoop()
 void
 AudioLoop::seek(double relative_position)
 {
-    pos_ = static_cast<double>(buffer_->samples() * relative_position * 0.01);
+    pos_ = static_cast<double>(buffer_->frames() * relative_position * 0.01);
 }
 
 void
-AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
+AudioLoop::getNext(AudioBuffer& output, double gain)
 {
     if (!buffer_) {
         ERROR("buffer is NULL");
         return;
     }
 
-    const size_t buf_samples = buffer_->samples();
+    const size_t buf_samples = buffer_->frames();
     size_t pos = pos_;
-    size_t total_samples = output.samples();
+    size_t total_samples = output.frames();
     size_t output_pos = 0;
 
     if (buf_samples == 0) {
@@ -93,7 +93,7 @@ AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
         total_samples -= samples;
     }
 
-    output.applyGain(volume); // apply volume
+    output.applyGain(gain);
 
     pos_ = pos;
 

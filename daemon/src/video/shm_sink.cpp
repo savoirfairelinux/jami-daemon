@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  Portions derived from GStreamer:
@@ -37,10 +37,12 @@
 #include "config.h"
 #endif
 
+#include "video_scaler.h"
+
 #include "shm_sink.h"
 #include "shm_header.h"
 #include "logger.h"
-#include "video_provider.h"
+
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <cstdio>
@@ -49,21 +51,22 @@
 #include <cerrno>
 #include <cstring>
 
+namespace sfl_video {
+
 SHMSink::SHMSink(const std::string &shm_name) :
-    shm_name_(shm_name),
-    fd_(-1),
-    shm_area_(static_cast<SHMHeader*>(MAP_FAILED)),
-    shm_area_len_(0),
-    opened_name_()
-    {}
+    shm_name_(shm_name)
+    , fd_(-1)
+    , shm_area_(static_cast<SHMHeader*>(MAP_FAILED))
+    , shm_area_len_(0)
+    , opened_name_()
+{}
 
 SHMSink::~SHMSink()
 {
     stop();
 }
 
-bool
-SHMSink::start()
+bool SHMSink::start()
 {
     if (fd_ != -1) {
         ERROR("fd must be -1");
@@ -123,8 +126,7 @@ SHMSink::start()
     return true;
 }
 
-bool
-SHMSink::stop()
+bool SHMSink::stop()
 {
     if (fd_ >= 0)
         close(fd_);
@@ -143,8 +145,7 @@ SHMSink::stop()
     return true;
 }
 
-bool
-SHMSink::resize_area(size_t desired_length)
+bool SHMSink::resize_area(size_t desired_length)
 {
     if (desired_length <= shm_area_len_)
         return true;
@@ -190,7 +191,31 @@ void SHMSink::render(const std::vector<unsigned char> &data)
     shm_unlock();
 }
 
-void SHMSink::render_callback(sfl_video::VideoProvider &provider, size_t bytes)
+void SHMSink::render_frame(VideoFrame& src)
+{
+    VideoFrame dst;
+    VideoScaler scaler;
+
+    dst.setGeometry(src.getWidth(), src.getHeight(), VIDEO_PIXFMT_BGRA);
+    size_t bytes = dst.getSize();
+
+    shm_lock();
+
+    if (!resize_area(sizeof(SHMHeader) + bytes)) {
+        ERROR("Could not resize area");
+        return;
+    }
+
+    dst.setDestination(shm_area_->data);
+    scaler.scale(src, dst);
+
+    shm_area_->buffer_size = bytes;
+    shm_area_->buffer_gen++;
+    sem_post(&shm_area_->notification);
+    shm_unlock();
+}
+
+void SHMSink::render_callback(VideoProvider &provider, size_t bytes)
 {
     shm_lock();
 
@@ -207,11 +232,12 @@ void SHMSink::render_callback(sfl_video::VideoProvider &provider, size_t bytes)
 }
 
 void SHMSink::shm_lock()
-{
-    sem_wait(&shm_area_->mutex);
-}
+{ sem_wait(&shm_area_->mutex); }
 
 void SHMSink::shm_unlock()
-{
-    sem_post(&shm_area_->mutex);
+{ sem_post(&shm_area_->mutex); }
+
+void SHMSink::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
+{ render_frame(*frame_p); }
+
 }

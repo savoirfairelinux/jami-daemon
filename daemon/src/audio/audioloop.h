@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -54,9 +54,9 @@ class AudioLoop {
          * the function change the intern position, and will loop
          * @param output  The data buffer
          * @param nb of int16 to send
-         * @param volume  The volume
+         * @param gain The gain [-1.0, 1.0]
          */
-        void getNext(AudioBuffer& output, unsigned int volume=100);
+        void getNext(AudioBuffer& output, double gain);
 
         void seek(double relative_position);
 
@@ -72,7 +72,7 @@ class AudioLoop {
          * @return unsigned int The size
          */
         size_t getSize() {
-            return buffer_->samples();
+            return buffer_->frames();
         }
 
     protected:

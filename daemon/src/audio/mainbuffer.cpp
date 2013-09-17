@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -395,6 +395,7 @@ void MainBuffer::flushAllBuffers()
 
 void MainBuffer::dumpInfo()
 {
+#if 0
     sfl::ScopedLock guard(mutex_);
 
     // print each call and bound call ids
@@ -435,4 +436,5 @@ void MainBuffer::dumpInfo()
 
         DEBUG("%s", dbg_str.c_str());
     }
+#endif
 }

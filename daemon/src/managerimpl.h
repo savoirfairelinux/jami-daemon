@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -148,9 +148,7 @@ class ManagerImpl {
          * it's multi-thread and use mutex internally
          * @return AudioLayer*  The audio layer object
          */
-        AudioLayer* getAudioDriver() {
-            return audiodriver_;
-        }
+        AudioLayer* getAudioDriver();
 
         void startAudioDriverStream();
 
@@ -940,9 +938,7 @@ class ManagerImpl {
         /**
          * Return a pointer to the  instance of the mainbuffer
          */
-        MainBuffer &getMainBuffer() {
-            return mainBuffer_;
-        }
+        MainBuffer &getMainBuffer();
 
         /**
          * Tell if there is a current call processed
@@ -954,13 +950,9 @@ class ManagerImpl {
          * Return the current Client
          * @return A pointer to the Client instance
          */
-        Client* getClient() {
-            return &client_;
-        }
+        Client* getClient();
 #ifdef SFL_VIDEO
-        VideoControls * getVideoControls() {
-            return client_.getVideoControls();
-        }
+        VideoControls * getVideoControls();
 #endif
 
         /**
@@ -1017,9 +1009,6 @@ class ManagerImpl {
          */
         VoIPLink* getAccountLink(const std::string& accountID);
 
-        // Map containing conference pointers
-        ConferenceMap conferenceMap_;
-
         /**
          * Send registration to all enabled accounts
          */
@@ -1037,6 +1026,9 @@ class ManagerImpl {
 
     private:
         NON_COPYABLE(ManagerImpl);
+
+        // Map containing conference pointers
+        ConferenceMap conferenceMap_;
 
         /**
          * Get a map with all the current SIP and IAX accounts

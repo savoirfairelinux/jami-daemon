@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
@@ -80,7 +80,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , ringtone_(0)
     , sinkList_()
     , sourceList_()
-    , mic_buffer_()
+    , mic_buffer_(0)
     , context_(0)
     , mainloop_(pa_threaded_mainloop_new())
     , enumeratingSinks_(false)
@@ -529,6 +529,8 @@ void PulseLayer::readFromMic()
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
+    in.applyGain(captureGain_);
+
     AudioBuffer * out = &in;
 
     if (resample) {
@@ -542,7 +544,7 @@ void PulseLayer::readFromMic()
     Manager::instance().getMainBuffer().putData(*out, MainBuffer::DEFAULT_ID);
 
 #ifdef RECTODISK
-    outfileResampled.write((const char *)out->getChannel(0), out->samples() * sizeof(SFLAudioSample));
+    outfileResampled.write((const char *)out->getChannel(0), out->frames() * sizeof(SFLAudioSample));
 #endif
 
     if (pa_stream_drop(record_->pulseStream()) < 0)

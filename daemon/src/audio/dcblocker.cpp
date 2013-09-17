@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -62,7 +62,7 @@ void DcBlocker::process(SFLAudioSample *out, SFLAudioSample *in, int samples)
 void DcBlocker::process(AudioBuffer& buf)
 {
     const size_t chans = buf.channels();
-    const size_t samples = buf.samples();
+    const size_t samples = buf.frames();
     if(chans > states.size())
         states.resize(buf.channels(), (struct StreamState){0, 0, 0, 0});
 

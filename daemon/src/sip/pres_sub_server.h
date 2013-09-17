@@ -31,7 +31,7 @@
 
 
 #ifndef SERVERPRESENCESUB_H
-#define	SERVERPRESENCESUB_H
+#define    SERVERPRESENCESUB_H
 
 #include <pj/string.h>
 #include <pjsip/sip_types.h>
@@ -40,69 +40,53 @@
 #include <pjsip/sip_module.h>
 
 #include "src/noncopyable.h"
+#include "src/array_size.h"
 
 extern pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
-
-static pjsip_module mod_presence_server = {
-    NULL, NULL, /* prev, next.		*/
-    pj_str("mod-presence-server"), /* Name.		*/
-    -1, /* Id			*/
-    PJSIP_MOD_PRIORITY_DIALOG_USAGE,
-    NULL, /* load()		*/
-    NULL, /* start()		*/
-    NULL, /* stop()		*/
-    NULL, /* unload()		*/
-    &pres_on_rx_subscribe_request, /* on_rx_request()	*/
-    NULL, /* on_rx_response()	*/
-    NULL, /* on_tx_request.	*/
-    NULL, /* on_tx_response()	*/
-    NULL, /* on_tsx_state()	*/
-
-};
-
 
 class SIPpresence;
 
 class PresSubServer {
 
-public:
+    public:
+        PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, const char *remote, pjsip_dialog *d);
+        ~PresSubServer();
+        /*
+         * Acces to the evsub expire variable.
+         * It was recieved in the SUBSCRIBE request.
+         */
+        void setExpires(int ms);
+        int getExpires() const;
+        /*
+         * Match method
+         * s is the URI (remote)
+         */
+        bool matches(const char *s) const;
+        /*
+         * Allow the subscriber for being notified.
+         */
+        void approve(bool flag);
+        /*
+         * Notify subscriber with the pres_status_date of the account
+         */
+        void notify();
 
-    PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, char *r,pjsip_dialog *d);
-    ~PresSubServer();
-    /* TODO: add '< >' to URI for consistance*/
-    char *remote;    /**< Remote URI.			    */
-    /*
-     * Acces to the evsub expire variable.
-     * It was recieved in the SUBSCRIBE request.
-     */
-    void setExpires(int ms);
-    int getExpires();
-    /*
-     * Match method
-     * s is the URI (remote)
-     */
-    bool matches(char *s);
-    /*
-     * Allow the subscriber for being notified.
-     */
-    void approve(const bool& flag);
-    /*
-     * Notify subscriber with the pres_status_date of the account
-     */
-    void notify();
+        static pjsip_module mod_presence_server;
 
-    friend void pres_evsub_on_srv_state( pjsip_evsub *sub, pjsip_event *event);
-    friend pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
+    private:
+        static pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
+        static void pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event);
 
-private:
 
-    NON_COPYABLE(PresSubServer);
-    SIPPresence     *pres_;
-    pjsip_evsub	    *sub;	    /**< The evsub.			    */
-    pjsip_dialog    *dlg;	    /**< Dialog.			    */
-    int		    expires;	    /**< "expires" value in the request.    */
-    bool            approved;        /**< The client approved this subscription*/
+        NON_COPYABLE(PresSubServer);
+        /* TODO: add '< >' to URI for consistency */
+        const char *remote_;    /**< Remote URI.                */
+        SIPPresence     *pres_;
+        pjsip_evsub     *sub_;
+        pjsip_dialog    *dlg_;
+        int             expires_;
+        bool            approved_;
 };
 
 
-#endif	/* SERVERPRESENCESUB_H */
+#endif    /* SERVERPRESENCESUB_H */

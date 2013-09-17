@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
  *  Copyright (C) 2001-2007 Bastien Nocera <hadess@hadess.net>
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
@@ -102,7 +102,7 @@ sflphone_client_new()
 {
     SFLPhoneClient *client = g_object_new(sflphone_client_get_type(),
             "application-id", "org.sfl.SFLphone",
-            "flags", G_APPLICATION_HANDLES_COMMAND_LINE, NULL);
+            "flags", G_APPLICATION_HANDLES_COMMAND_LINE | G_APPLICATION_IS_SERVICE, NULL);
     return client;
 }
 

@@ -32,7 +32,6 @@
 #ifndef SIPPRESENCE_H
 #define SIPPRESENCE_H
 
-#include <vector>
 #include <string>
 #include <list>
 
@@ -45,26 +44,25 @@
 #include "pjsip-simple/rpid.h"
 #include <pj/pool.h>
 
-struct pres_msg_data
-{
+struct pres_msg_data {
     /**
      * Additional message headers as linked list. Application can add
      * headers to the list by creating the header, either from the heap/pool
      * or from temporary local variable, and add the header using
      * linked list operation. See pjsip_apps.c for some sample codes.
      */
-    pjsip_hdr	hdr_list;
+    pjsip_hdr    hdr_list;
 
     /**
      * MIME type of optional message body.
      */
-    pj_str_t	content_type;
+    pj_str_t    content_type;
 
     /**
      * Optional message body to be added to the message, only when the
      * message doesn't have a body.
      */
-    pj_str_t	msg_body;
+    pj_str_t    msg_body;
 
     /**
      * Content type of the multipart body. If application wants to send
@@ -103,130 +101,130 @@ struct pj_caching_pool;
 
 class SIPPresence {
 
-public:
+    public:
 
-    /**
-     * Constructor
-     * @param acc the associated sipaccount
-     */
-    SIPPresence(SIPAccount * acc);
-    /**
-     * Destructor
-     */
-    ~SIPPresence();
+        /**
+         * Constructor
+         * @param acc the associated sipaccount
+         */
+        SIPPresence(SIPAccount * acc);
+        /**
+         * Destructor
+         */
+        ~SIPPresence();
 
-    /**
-     * Return associated sipaccount
-     */
-    SIPAccount * getAccount();
-    /**
-     * Return presence data.
-     */
-    pjsip_pres_status * getStatus();
-    /**
-     * Return presence module ID which is actually the same as the VOIP link
-     */
-    int getModId();
-    /**
-     *  Return a pool for generic functions.
-     */
-    pj_pool_t*  getPool();
-    /**
-     * Activate the module (PUBLISH/SUBSCRIBE)
-     */
-    void enable(const bool& flag);
-     /**
-     * Fill xml document, the header and the body
-     */
-    void fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
-    /**
-     * Modify the presence data
-     * @param status is basically "open" or "close"
-     */
-    void updateStatus(const  bool& status, const std::string &note);
-    /**
-     * Send the presence data in a PUBLISH to the PBX or in a NOTIFY
-     * to a remote subscriber (IP2IP)
-     */
-    void sendPresence(const bool& status, const std::string &note);
-    /**
-     * Send a signal to the client on DBus. The signal contain the status
-     * of a remote user.
-     */
-    void reportPresSubClientNotification(const std::string& uri, pjsip_pres_status * status);
-    /**
-     * Send a SUBSCRIBE request to PBX/IP2IP
-     * @param buddyUri  Remote user that we want to subscribe
-     */
-    void subscribePresSubClient(const std::string& uri, const bool& flag);
-    /**
-     * Add a buddy in the buddy list.
-     * @param b     PresSubClient pointer
-     */
-    void addPresSubClient(PresSubClient *b);
-    /**
-     * Remove a buddy from the list.
-     * @param b     PresSubClient pointer
-     */
-    void removePresSubClient(PresSubClient *b);
+        /**
+         * Return associated sipaccount
+         */
+        SIPAccount * getAccount() const;
+        /**
+         * Return presence data.
+         */
+        pjsip_pres_status * getStatus();
+        /**
+         * Return presence module ID which is actually the same as the VOIP link
+         */
+        int getModId() const;
+        /**
+         *  Return a pool for generic functions.
+         */
+        pj_pool_t*  getPool() const;
+        /**
+         * Activate the module (PUBLISH/SUBSCRIBE)
+         */
+        void enable(bool flag);
+        /**
+        * Fill xml document, the header and the body
+        */
+        void fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
+        /**
+         * Modify the presence data
+         * @param status is basically "open" or "close"
+         */
+        void updateStatus(bool status, const std::string &note);
+        /**
+         * Send the presence data in a PUBLISH to the PBX or in a NOTIFY
+         * to a remote subscriber (IP2IP)
+         */
+        void sendPresence(bool status, const std::string &note);
+        /**
+         * Send a signal to the client on DBus. The signal contain the status
+         * of a remote user.
+         */
+        void reportPresSubClientNotification(const std::string& uri, pjsip_pres_status * status);
+        /**
+         * Send a SUBSCRIBE request to PBX/IP2IP
+         * @param buddyUri  Remote user that we want to subscribe
+         */
+        void subscribeClient(const std::string& uri, bool flag);
+        /**
+         * Add a buddy in the buddy list.
+         * @param b     PresSubClient pointer
+         */
+        void addPresSubClient(PresSubClient *b);
+        /**
+         * Remove a buddy from the list.
+         * @param b     PresSubClient pointer
+         */
+        void removePresSubClient(PresSubClient *b);
 
-    /**
-     * IP2IP context.
-     * Report new Subscription to the client, waiting for approval.
-     * @param s     PresenceSubcription pointer.
-     */
-    void reportNewPresSubServerRequest(PresSubServer *s);
-     /**
-     * IP2IP context.
-     * Process new subscription based on client decision.
-     * @param flag     client decision.
-     * @param uri       uri of the remote subscriber
-     */
-    void approvePresSubServer(const std::string& uri, const bool& flag);
-    /**
-     * IP2IP context.
-     * Add a server associated to a subscriber in the list.
-     * @param s     PresenceSubcription pointer.
-     */
-    void addPresSubServer(PresSubServer *s);
-    /**
-     * IP2IP context.
-     * Remove a server associated to a subscriber from the list.
-     * @param s     PresenceSubcription pointer.
-     */
-    void removePresSubServer(PresSubServer *s);
-    /**
-     * IP2IP context.
-     * Iterate through the subscriber list and send NOTIFY to each.
-     */
-    void notifyPresSubServer();
+        /**
+        * IP2IP context.
+        * Process new subscription based on client decision.
+        * @param flag     client decision.
+        * @param uri       uri of the remote subscriber
+        */
+        void approvePresSubServer(const std::string& uri, bool flag);
+        /**
+         * IP2IP context.
+         * Add a server associated to a subscriber in the list.
+         * @param s     PresenceSubcription pointer.
+         */
+        void addPresSubServer(PresSubServer *s);
+        /**
+         * IP2IP context.
+         * Remove a server associated to a subscriber from the list.
+         * @param s     PresenceSubcription pointer.
+         */
+        void removePresSubServer(PresSubServer *s);
+        /**
+         * IP2IP context.
+         * Iterate through the subscriber list and send NOTIFY to each.
+         */
+        void notifyPresSubServer();
 
-    /**
-     * Lock methods
-     */
-    void lock();
-    void unlock();
-    bool tryLock();
-    bool isLocked();
+        bool isEnabled() const {
+            return enabled_;
+        }
 
-    pjsip_pres_status pres_status_data; /**< Presence Data.*/
-    pjsip_publishc  *publish_sess;  /**< Client publication session.*/
-    pj_bool_t   enabled; /**< Allow for status publish,*/
+        std::list< PresSubClient *> getClientSubscriptions() {
+            return pres_sub_client_list_;
+        }
 
-private:
-    NON_COPYABLE(SIPPresence);
+        void lock();
+        void unlock();
 
-    SIPAccount * acc_; /**<  Associated SIP account. */
-    std::list< PresSubServer *> pres_sub_server_list_; /**< Subscribers list.*/
-    std::list< PresSubClient *> pres_sub_client_list_; /**< Subcribed buddy list.*/
+    private:
+        NON_COPYABLE(SIPPresence);
 
-    pj_mutex_t	*mutex_;	    /**< Mutex protection for this data	*/
-    unsigned	mutex_nesting_level_; /**< Mutex nesting level.	*/
-    pj_thread_t	*mutex_owner_; /**< Mutex owner.			*/
-    pj_caching_pool     cp_;	    /**< Global pool factory.		*/
-    pj_pool_t	*pool_;	    /**< pjsua's private pool.		*/
+        static pj_status_t pres_publish(SIPPresence *pres);
+        static void pres_publish_cb(struct pjsip_publishc_cbparam *param);
+        static pj_status_t pres_send_publish(SIPPresence *pres, pj_bool_t active);
 
+        pjsip_publishc  *publish_sess_;  /**< Client publication session.*/
+        pjsip_pres_status pres_status_data_; /**< Presence Data.*/
 
+        pj_bool_t enabled_; /**< Allow for status publish,*/
+
+        SIPAccount * acc_; /**<  Associated SIP account. */
+        std::list< PresSubServer *> pres_sub_server_list_; /**< Subscribers list.*/
+        std::list< PresSubClient *> pres_sub_client_list_; /**< Subcribed buddy list.*/
+
+        pj_mutex_t      *mutex_;
+        unsigned         mutex_nesting_level_;
+        pj_thread_t     *mutex_owner_;
+        pj_caching_pool  cp_;
+        pj_pool_t       *pool_;
 };
 
 #endif

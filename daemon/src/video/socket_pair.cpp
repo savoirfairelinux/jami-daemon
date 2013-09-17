@@ -30,9 +30,12 @@
  *  as that of the covered work.
  */
 
+#include "libav_deps.h"
 #include "socket_pair.h"
 #include "scoped_lock.h"
+#include "libav_utils.h"
 #include "logger.h"
+
 #include <cstring>
 #include <stdexcept>
 #include <unistd.h>
@@ -42,11 +45,6 @@
 #include <netdb.h>
 
 
-extern "C" {
-#include <libavutil/avstring.h>
-#include <libavformat/avformat.h>
-}
-
 namespace {
 
 int ff_network_wait_fd(int fd)
@@ -54,16 +52,16 @@ int ff_network_wait_fd(int fd)
     struct pollfd p = { fd, POLLOUT, 0 };
     int ret;
     ret = poll(&p, 1, 100);
-    return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : AVERROR(EAGAIN);
+    return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : -EAGAIN;
 }
 
-struct addrinfo*
-udp_resolve_host(const char *node, int service)
+struct addrinfo* udp_resolve_host(const char *node, int service)
 {
-    struct addrinfo hints = { 0 }, *res = 0;
+    struct addrinfo hints, *res = 0;
     int error;
     char sport[16];
 
+	memset(&hints, 0, sizeof(hints));
     snprintf(sport, sizeof(sport), "%d", service);
 
     hints.ai_socktype = SOCK_DGRAM;
@@ -77,8 +75,7 @@ udp_resolve_host(const char *node, int service)
     return res;
 }
 
-unsigned
-udp_set_url(struct sockaddr_storage *addr,
+unsigned udp_set_url(struct sockaddr_storage *addr,
             const char *hostname, int port)
 {
     struct addrinfo *res0;
@@ -93,8 +90,7 @@ udp_set_url(struct sockaddr_storage *addr,
     return addr_len;
 }
 
-int
-udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len,
+int udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len,
                   int local_port)
 {
     int udp_fd = -1;
@@ -161,14 +157,12 @@ SocketPair::~SocketPair()
     pthread_mutex_destroy(&rtcpWriteMutex_);
 }
 
-void
-SocketPair::interrupt()
+void SocketPair::interrupt()
 {
     interrupted_ = true;
 }
 
-void
-SocketPair::closeSockets()
+void SocketPair::closeSockets()
 {
     if (rtcpHandle_ > 0 and close(rtcpHandle_))
         ERROR("%s", strerror(errno));
@@ -176,16 +170,14 @@ SocketPair::closeSockets()
         ERROR("%s", strerror(errno));
 }
 
-
-void
-SocketPair::openSockets(const char *uri, int local_rtp_port)
+void SocketPair::openSockets(const char *uri, int local_rtp_port)
 {
     char hostname[256];
     char path[1024];
-
     int rtp_port;
-    av_url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &rtp_port,
-                 path, sizeof(path), uri);
+
+    libav_utils::sfl_url_split(uri, hostname, sizeof(hostname), &rtp_port, path,
+                  sizeof(path));
 
     const int rtcp_port = rtp_port + 1;
 
@@ -212,33 +204,28 @@ SocketPair::openSockets(const char *uri, int local_rtp_port)
     }
 }
 
-AVIOContext *
-SocketPair::createAVIOContext()
+VideoIOHandle* SocketPair::getIOContext()
 {
-    // FIXME: Caller must free buffer!
-    unsigned char *buffer(static_cast<unsigned char *>(av_malloc(RTP_BUFFER_SIZE)));
-
-    AVIOContext *context = avio_alloc_context(buffer,
-            RTP_BUFFER_SIZE, 1, reinterpret_cast<void*>(this),
-            &readCallback, &writeCallback, 0);
-
-    context->max_packet_size = RTP_BUFFER_SIZE;
-    return context;
+    return new VideoIOHandle(RTP_BUFFER_SIZE, true,
+                             &readCallback, &writeCallback, 0,
+                             reinterpret_cast<void*>(this));
 }
 
-int
-SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
+int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 {
     SocketPair *context = static_cast<SocketPair*>(opaque);
 
     struct sockaddr_storage from;
     socklen_t from_len;
     int len, n;
-    struct pollfd p[2] = { {context->rtpHandle_, POLLIN, 0}, {context->rtcpHandle_, POLLIN, 0}};
+    struct pollfd p[2] = { {context->rtpHandle_, POLLIN, 0},
+						   {context->rtcpHandle_, POLLIN, 0}};
 
     for(;;) {
-        if (context->interrupted_)
-            return AVERROR_EXIT;
+        if (context->interrupted_) {
+            ERROR("interrupted");
+            return -EINTR;
+        }
 
         /* build fdset to listen to RTP and RTCP packets */
         n = poll(p, 2, 100);
@@ -255,7 +242,7 @@ SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
                 if (len < 0) {
                     if (errno == EAGAIN or errno == EINTR)
                         continue;
-                    return AVERROR(EIO);
+                    return -EIO;
                 }
                 break;
             }
@@ -271,14 +258,14 @@ SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
                 if (len < 0) {
                     if (errno == EAGAIN or errno == EINTR)
                         continue;
-                    return AVERROR(EIO);
+                    return -EIO;
                 }
                 break;
             }
         } else if (n < 0) {
             if (errno == EINTR)
                 continue;
-            return AVERROR(EIO);
+            return -EIO;
         }
     }
     return len;
@@ -295,8 +282,7 @@ enum RTCPType {
 #define RTP_PT_IS_RTCP(x) (((x) >= RTCP_FIR && (x) <= RTCP_IJ) || \
                            ((x) >= RTCP_SR  && (x) <= RTCP_TOKEN))
 
-int
-SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
+int SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
 {
     SocketPair *context = static_cast<SocketPair*>(opaque);
 

@@ -46,6 +46,7 @@
                         <li>ACCOUNT_REGISTRATION_STATUS: The account registration status. Should be Registered to make calls.</li>
                         <li>ACCOUNT_REGISTRATION_STATE_CODE</li>
                         <li>ACCOUNT_REGISTRATION_STATE_DESC</li>
+                        <li>CONFIG_DEFAULT_PRESENCE_ENABLED: enable/disable presence support - true or false</li>
                         <li>SRTP_KEY_EXCHANGE</li>
                         <li>SRTP_ENABLE: Whether or not voice communication are encrypted - True or False (Default: False)</li>
                         <li>SRTP_RTP_FALLBACK</li>

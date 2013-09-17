@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -35,5 +35,9 @@
 #define ARRAYSIZE(a) \
       ((sizeof(a) / sizeof(*(a))) / \
          static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
+
+/* Only use this macro with string literals or character arrays, will not work
+ * as expected with char pointers */
+#define CONST_PJ_STR(X) {(char *) (X), ARRAYSIZE(X) - 1}
 
 #endif // ARRAY_SIZE_H_

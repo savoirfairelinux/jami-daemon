@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard  <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,10 +30,19 @@
 #ifndef CONFERENCE_H
 #define CONFERENCE_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <set>
 #include <string>
+#include <memory>
 
 #include "audio/recordable.h"
+
+#ifdef SFL_VIDEO
+#include "video/video_mixer.h"
+#endif
 
 typedef std::set<std::string> ParticipantSet;
 
@@ -45,6 +54,11 @@ class Conference : public Recordable {
          * Constructor for this class, increment static counter
          */
         Conference();
+
+        /**
+         * Destructor for this class, decrement static counter
+         */
+        ~Conference();
 
         /**
          * Return the conference id
@@ -90,10 +104,19 @@ class Conference : public Recordable {
          * Start/stop recording toggle
          */
         virtual bool toggleRecording();
+
+#ifdef SFL_VIDEO
+        std::shared_ptr<sfl_video::VideoMixer> getVideoMixer();
+#endif
+
     private:
         std::string id_;
         ConferenceState confState_;
         ParticipantSet participants_;
+
+#ifdef SFL_VIDEO
+        std::shared_ptr<sfl_video::VideoMixer> videoMixer_;
+#endif
 };
 
 #endif

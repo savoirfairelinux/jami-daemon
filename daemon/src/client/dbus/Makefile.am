@@ -5,6 +5,7 @@ noinst_LTLIBRARIES = libclient.la
 BUILT_SOURCES=                      \
     callmanager-glue.h              \
     configurationmanager-glue.h     \
+    presencemanager-glue.h     \
     instance-glue.h
 
 if SFL_VIDEO
@@ -22,6 +23,10 @@ configurationmanager-glue.h: configurationmanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 # Rule to generate the binding headers
+presencemanager-glue.h: presencemanager-introspec.xml Makefile.am
+	dbusxx-xml2cpp $< --adaptor=$@
+
+# Rule to generate the binding headers
 instance-glue.h: instance-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
@@ -29,7 +34,8 @@ libclient_la_SOURCES = \
     callmanager.cpp \
     configurationmanager.cpp  \
     instance.cpp  \
-    client.cpp
+    client.cpp \
+    presencemanager.cpp
 
 if SFL_VIDEO
 libclient_la_SOURCES+=video_controls.cpp
@@ -51,6 +57,7 @@ libclient_la_CXXFLAGS = -I../ \
 noinst_HEADERS =            \
     ../callmanager.h        \
     ../configurationmanager.h  \
+    ../presencemanager.h  \
     instance.h              \
     ../client.h             \
     networkmanager_proxy.h  \
@@ -75,7 +82,8 @@ EXTRA_DIST = README $(service_in_files) \
 			 callmanager-introspec.xml \
 			 configurationmanager-introspec.xml \
 			 instance-introspec.xml \
-			 org.freedesktop.NetworkManager.xml
+			 org.freedesktop.NetworkManager.xml \
+			 presencemanager-introspec.xml
 
 if SFL_VIDEO
 EXTRA_DIST += video_controls-introspec.xml
