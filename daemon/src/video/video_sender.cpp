@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "video_send_thread.h"
+#include "video_sender.h"
 #include "video_mixer.h"
 #include "socket_pair.h"
 #include "client/video_controls.h"
@@ -44,7 +44,7 @@ namespace sfl_video {
 
 using std::string;
 
-VideoSendThread::VideoSendThread(const std::string &id,
+VideoSender::VideoSender(const std::string &id,
                                  const std::map<string, string> &args,
                                  SocketPair& socketPair) :
     args_(args)
@@ -54,11 +54,9 @@ VideoSendThread::VideoSendThread(const std::string &id,
 	, frameNumber_(0)
     , muxContext_(socketPair.getIOContext())
     , sdp_()
-{
-    setup();
-}
+{ setup(); }
 
-bool VideoSendThread::setup()
+bool VideoSender::setup()
 {
     const char *enc_name = args_["codec"].c_str();
 
@@ -111,7 +109,7 @@ bool VideoSendThread::setup()
     return true;
 }
 
-void VideoSendThread::encodeAndSendVideo(VideoFrame& input_frame)
+void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
 	bool is_keyframe = forceKeyFrame_ > 0;
 
@@ -122,12 +120,10 @@ void VideoSendThread::encodeAndSendVideo(VideoFrame& input_frame)
         ERROR("encoding failed");
 }
 
-void VideoSendThread::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
-{
-    encodeAndSendVideo(*frame_p);
-}
+void VideoSender::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
+{ encodeAndSendVideo(*frame_p); }
 
-void VideoSendThread::forceKeyFrame()
+void VideoSender::forceKeyFrame()
 { atomic_increment(&forceKeyFrame_); }
 
 } // end namespace sfl_video

@@ -35,25 +35,24 @@
 #include "noncopyable.h"
 #include "video_base.h"
 #include "video_scaler.h"
+#include "shm_sink.h"
 #include "sflthread.h"
 
 #include <mutex>
-#include <condition_variable>
+#include <list>
 
 
 namespace sfl_video {
 
 class VideoMixer :
         public VideoGenerator,
-        public VideoFramePassiveReader,
-        public SFLThread
+        public VideoFramePassiveReader
 {
 public:
-    VideoMixer();
-    ~VideoMixer();
+    VideoMixer(const std::string id_);
+    virtual ~VideoMixer();
 
     void setDimensions(int width, int height);
-    void render();
 
     int getWidth() const;
     int getHeight() const;
@@ -61,24 +60,22 @@ public:
 
     // as VideoFramePassiveReader
     void update(Observable<VideoFrameSP>*, VideoFrameSP&);
+    void attached(Observable<VideoFrameSP>* ob);
+    void detached(Observable<VideoFrameSP>* ob);
 
 private:
     NON_COPYABLE(VideoMixer);
 
-	// as SFLThread
-    void process();
-    void waitForUpdate();
-    void encode();
-    void rendering();
+    void render_frame(VideoFrame& input, const int index);
+    void start_sink();
+    void stop_sink();
 
-    VideoScaler sourceScaler_;
-    VideoFrame scaledFrame_;
-
+    const std::string id_;
     int width_;
     int height_;
-
-    std::mutex renderMutex_;
-    std::condition_variable renderCv_;
+    std::list<Observable<VideoFrameSP>*> sources_;
+    std::mutex mutex_;
+    SHMSink sink_;
 };
 
 }

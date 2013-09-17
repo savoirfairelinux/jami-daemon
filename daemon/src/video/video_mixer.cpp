@@ -32,105 +32,141 @@
 #include "libav_deps.h"
 #include "video_mixer.h"
 #include "check.h"
+#include "client/video_controls.h"
+#include "manager.h"
+#include "logger.h"
 
 #include <cmath>
 
 namespace sfl_video {
 
-VideoMixer::VideoMixer() :
+VideoMixer::VideoMixer(const std::string id) :
     VideoGenerator::VideoGenerator()
-    , sourceScaler_()
-    , scaledFrame_()
+    , id_(id)
     , width_(0)
     , height_(0)
-    , renderMutex_()
-    , renderCv_()
-{ start(); }
+    , sources_()
+    , mutex_()
+    , sink_()
+{
+    auto videoCtrl = Manager::instance().getVideoControls();
+    if (!videoCtrl->hasPreviewStarted()) {
+        videoCtrl->startPreview();
+        MYSLEEP(1);
+    }
+
+    // Local video camera is always attached
+    videoCtrl->getVideoPreview()->attach(this);
+}
 
 VideoMixer::~VideoMixer()
 {
-    stop();
-    join();
+    stop_sink();
+
+    auto videoCtrl = Manager::instance().getVideoControls();
+    videoCtrl->getVideoPreview()->detach(this);
 }
 
-void VideoMixer::process()
+void VideoMixer::attached(Observable<VideoFrameSP>* ob)
 {
-    waitForUpdate();
-    rendering();
+    std::unique_lock<std::mutex> lk(mutex_);
+    sources_.push_back(ob);
 }
 
-void VideoMixer::waitForUpdate()
+void VideoMixer::detached(Observable<VideoFrameSP>* ob)
 {
-    std::unique_lock<std::mutex> lk(renderMutex_);
-    renderCv_.wait(lk);
+    std::unique_lock<std::mutex> lk(mutex_);
+    sources_.remove(ob);
 }
 
 void VideoMixer::update(Observable<VideoFrameSP>* ob, VideoFrameSP& frame_p)
-{ renderCv_.notify_one(); }
-
-void VideoMixer::rendering()
 {
+    std::unique_lock<std::mutex> lk(mutex_);
+    int i=0;
+    for (auto x : sources_) {
+        if (x == ob) break;
+        i++;
+    }
+    render_frame(*frame_p, i);
+}
+
+void VideoMixer::render_frame(VideoFrame& input, const int index)
+{
+    VideoScaler scaler;
+    VideoFrame scaled_input;
+
     if (!width_ or !height_)
         return;
 
-#if 0
-    // For all sources:
-    //   - take source frame
-    //   - scale it down and layout it
-    //   - publish the result frame
-    // Current layout is a squared distribution
+    VideoFrame &output = getNewFrame();
 
-    const int n=sourceList_.size();
+    if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
+        ERROR("VideoFrame::allocBuffer() failed");
+        return;
+    }
+
+    VideoFrameSP previous_p=obtainLastFrame();
+    if (previous_p)
+        previous_p->copy(output);
+    previous_p.reset();
+
+    const int n=sources_.size();
     const int zoom=ceil(sqrt(n));
     const int cell_width=width_ / zoom;
     const int cell_height=height_ / zoom;
 
-    VideoFrame &output = getNewFrame();
-
-    // Blit frame function support only YUV420P pixel format
-    if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P))
-        WARN("VideoFrame::allocBuffer() failed");
-
-    if (!scaledFrame_.allocBuffer(cell_width, cell_height, VIDEO_PIXFMT_YUV420P))
-        WARN("VideoFrame::allocBuffer() failed");
-
-    int lastInputWidth=0;
-    int lastInputHeight=0;
-    int i=0;
-    for (VideoNode* src : sourceList_) {
-        int xoff = (i % zoom) * cell_width;
-        int yoff = (i / zoom) * cell_height;
-
-        VideoFrameSP input=src->obtainLastFrame();
-        if (input) {
-            // scaling context allocation may be time consuming
-            // so reset it only if needed
-            if (input->getWidth() != lastInputWidth ||
-                input->getHeight() != lastInputHeight)
-                sourceScaler_.reset();
-
-            sourceScaler_.scale(*input, scaledFrame_);
-            output.blit(scaledFrame_, xoff, yoff);
-
-            lastInputWidth = input->getWidth();
-            lastInputHeight = input->getHeight();
-        }
-
-        i++;
+    if (!scaled_input.allocBuffer(cell_width, cell_height,
+                                  VIDEO_PIXFMT_YUV420P)) {
+        ERROR("VideoFrame::allocBuffer() failed");
+        return;
     }
+
+    int xoff = (index % zoom) * cell_width;
+    int yoff = (index / zoom) * cell_height;
+
+    scaler.scale(input, scaled_input);
+    output.blit(scaled_input, xoff, yoff);
+
     publishFrame();
-#endif
 }
 
 void VideoMixer::setDimensions(int width, int height)
 {
-    // FIXME: unprotected write (see rendering())
+    std::unique_lock<std::mutex> lk(mutex_);
     width_ = width;
     height_ = height;
+
+    stop_sink();
+    start_sink();
 }
 
-int VideoMixer::getWidth() const { return width_; }
-int VideoMixer::getHeight() const { return height_; }
-int VideoMixer::getPixelFormat() const { return VIDEO_PIXFMT_YUV420P; }
+void VideoMixer::start_sink()
+{
+    if (sink_.start()) {
+        if (this->attach(&sink_)) {
+            Manager::instance().getVideoControls()->startedDecoding(id_+"_MX", sink_.openedName(), width_, height_);
+            DEBUG("MX: shm sink <%s> started: size = %dx%d",
+                  sink_.openedName().c_str(), width_, height_);
+        }
+    } else
+        WARN("MX: sink startup failed");
+}
+
+void VideoMixer::stop_sink()
+{
+    if (this->detach(&sink_)) {
+        Manager::instance().getVideoControls()->stoppedDecoding(id_+"_MX", sink_.openedName());
+        sink_.stop();
+    }
+}
+
+int VideoMixer::getWidth() const
+{ return width_; }
+
+int VideoMixer::getHeight() const
+{ return height_; }
+
+int VideoMixer::getPixelFormat() const
+{ return VIDEO_PIXFMT_YUV420P; }
 
 } // end namespace sfl_video

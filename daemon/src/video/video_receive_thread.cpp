@@ -151,7 +151,8 @@ void VideoReceiveThread::process()
 
 void VideoReceiveThread::cleanup()
 {
-    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+    if (detach(&sink_))
+        Manager::instance().getVideoControls()->stoppedDecoding(id_+"RX", sink_.openedName());
 
     if (videoDecoder_)
         delete videoDecoder_;
@@ -223,9 +224,10 @@ void VideoReceiveThread::enterConference()
     if (!isRunning())
         return;
 
-    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
-    detach(&sink_);
-    sink_.stop();
+    if (detach(&sink_)) {
+        Manager::instance().getVideoControls()->stoppedDecoding(id_+"RX", sink_.openedName());
+        sink_.stop();
+    }
 }
 
 void VideoReceiveThread::exitConference()
@@ -233,16 +235,12 @@ void VideoReceiveThread::exitConference()
     if (!isRunning())
         return;
 
-    // Sink startup
     EXIT_IF_FAIL(sink_.start(), "RX: sink startup failed");
-    Manager::instance().getVideoControls()->startedDecoding(id_,
-                                                            sink_.openedName(),
-                                                            dstWidth_,
-                                                            dstHeight_);
-    DEBUG("RX: shm sink <%s> started: size = %dx%d",
-          sink_.openedName().c_str(), dstWidth_, dstHeight_);
-
-    attach(&sink_);
+    if (attach(&sink_)) {
+        Manager::instance().getVideoControls()->startedDecoding(id_+"RX", sink_.openedName(), dstWidth_, dstHeight_);
+        DEBUG("RX: shm sink <%s> started: size = %dx%d",
+              sink_.openedName().c_str(), dstWidth_, dstHeight_);
+    }
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(

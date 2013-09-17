@@ -38,6 +38,8 @@
 #include <map>
 #include <string>
 
+#define SINK_ID "local"
+
 namespace sfl_video {
 
 using std::string;
@@ -100,14 +102,11 @@ bool VideoCamera::setup()
 
     /* Sink setup */
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
-    Manager::instance().getVideoControls()->startedDecoding(id_,
-                                                            sink_.openedName(),
-                                                            sinkWidth_,
-                                                            sinkHeight_);
-    DEBUG("TX: shm sink <%s> started: size = %dx%d",
-          sink_.openedName().c_str(), sinkWidth_, sinkHeight_);
-
-    attach(&sink_);
+    if (attach(&sink_)) {
+        Manager::instance().getVideoControls()->startedDecoding(SINK_ID, sink_.openedName(), sinkWidth_, sinkHeight_);
+        DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
+              sink_.openedName().c_str(), sinkWidth_, sinkHeight_);
+    }
 
     return true;
 }
@@ -117,9 +116,11 @@ void VideoCamera::process()
 
 void VideoCamera::cleanup()
 {
-    Manager::instance().getVideoControls()->stoppedDecoding(id_,
-                                                            sink_.openedName());
-    detach(&sink_);
+    if (detach(&sink_)) {
+        Manager::instance().getVideoControls()->stoppedDecoding(SINK_ID, sink_.openedName());
+        sink_.stop();
+    }
+
     delete decoder_;
 }
 

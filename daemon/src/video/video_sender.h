@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_SEND_THREAD_H__
-#define __VIDEO_SEND_THREAD_H__
+#ifndef __VIDEO_SENDER_H__
+#define __VIDEO_SENDER_H__
 
 #include "noncopyable.h"
 #include "video_encoder.h"
@@ -44,12 +44,13 @@ namespace sfl_video {
 
 class SocketPair;
 
-class VideoSendThread : public VideoFramePassiveReader
+class VideoSender : public VideoFramePassiveReader
 {
 public:
-    VideoSendThread(const std::string &id,
-                    const std::map<std::string, std::string> &args,
-                    SocketPair& socketPair);
+    VideoSender(const std::string &id,
+                const std::map<std::string, std::string> &args,
+                SocketPair& socketPair);
+
     std::string getSDP() const { return sdp_; }
     void forceKeyFrame();
 
@@ -57,7 +58,7 @@ public:
     void update(Observable<VideoFrameSP>*, VideoFrameSP&);
 
 private:
-    NON_COPYABLE(VideoSendThread);
+    NON_COPYABLE(VideoSender);
 
     bool setup();
     void encodeAndSendVideo(VideoFrame&);
@@ -75,4 +76,4 @@ private:
 
 }
 
-#endif // __VIDEO_SEND_THREAD_H__
+#endif // __VIDEO_SENDER_H__

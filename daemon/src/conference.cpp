@@ -37,6 +37,8 @@
 #include "audio/mainbuffer.h"
 
 #ifdef SFL_VIDEO
+#include "sip/sipvoiplink.h"
+#include "sip/sipcall.h"
 #include "client/video_controls.h"
 #include "video/video_camera.h"
 #endif
@@ -49,10 +51,16 @@ Conference::Conference()
     , confState_(ACTIVE_ATTACHED)
     , participants_()
 #ifdef SFL_VIDEO
-    , videoMixer_()
+    , videoMixer_(new sfl_video::VideoMixer(id_))
 #endif
 {
     Recordable::initRecFilename(id_);
+}
+
+Conference::~Conference()
+{
+    for (auto participant_id : participants_)
+        remove(participant_id);
 }
 
 Conference::ConferenceState Conference::getState() const
@@ -67,12 +75,20 @@ void Conference::setState(ConferenceState state)
 
 void Conference::add(const std::string &participant_id)
 {
-    participants_.insert(participant_id);
+    if (participants_.insert(participant_id).second) {
+#ifdef SFL_VIDEO
+    SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().enterConference(this);
+#endif // SFL_VIDEO
+    }
 }
 
 void Conference::remove(const std::string &participant_id)
 {
-    participants_.erase(participant_id);
+    if (participants_.erase(participant_id)) {
+#ifdef SFL_VIDEO
+        SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().exitConference();
+#endif // SFL_VIDEO
+    }
 }
 
 void Conference::bindParticipant(const std::string &participant_id)
@@ -144,8 +160,8 @@ std::string Conference::getConfID() const {
 }
 
 #ifdef SFL_VIDEO
-sfl_video::VideoMixer* Conference::getVideoMixer()
+std::shared_ptr<sfl_video::VideoMixer> Conference::getVideoMixer()
 {
-    return &videoMixer_;
+    return videoMixer_;
 }
 #endif

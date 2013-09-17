@@ -39,8 +39,16 @@
 #include <memory>
 #include <set>
 #include <mutex>
-#include <condition_variable>
 
+// std::this_thread::sleep_for is by default supported since 4.1
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
+#include <chrono>
+#include <thread>
+#define MYSLEEP(x) std::this_thread::sleep_for(std::chrono::seconds(x))
+#else
+#include <unistd.h>
+#define MYSLEEP(x) sleep(x)
+#endif
 
 class AVFrame;
 class AVPacket;
@@ -77,22 +85,33 @@ public:
     Observable() : observers_(), mutex_() {}
     virtual ~Observable() {};
 
-    void attach(Observer<T>* o) {
+    bool attach(Observer<T>* o) {
         std::unique_lock<std::mutex> lk(mutex_);
-        if (o)
-            observers_.insert(o);
+        if (o and observers_.insert(o).second) {
+            o->attached(this);
+            return true;
+        }
+        return false;
     }
 
-    void detach(Observer<T>* o) {
+    bool detach(Observer<T>* o) {
         std::unique_lock<std::mutex> lk(mutex_);
-        if (o)
-            observers_.erase(o);
+        if (o and observers_.erase(o)) {
+            o->detached(this);
+            return true;
+        }
+        return false;
     }
 
     void notify(T& data) {
         std::unique_lock<std::mutex> lk(mutex_);
         for (auto observer : observers_)
             observer->update(this, data);
+    }
+
+    int getObserversCount() {
+        std::unique_lock<std::mutex> lk(mutex_);
+        return observers_.size();
     }
 
 private:
@@ -110,6 +129,8 @@ class Observer
 public:
     virtual ~Observer() {};
 	virtual void update(Observable<T>*, T&) = 0;
+    virtual void attached(Observable<T>*) {};
+    virtual void detached(Observable<T>*) {};
 };
 
 /*=== VideoPacket  ===========================================================*/
@@ -207,7 +228,7 @@ class VideoFramePassiveReader :
 class VideoGenerator : public VideoFrameActiveWriter
 {
 public:
-    VideoGenerator() : writableFrame_(), lastFrame_() {}
+    VideoGenerator() : writableFrame_(), lastFrame_(), mutex_() {}
 
     virtual int getWidth() const = 0;
     virtual int getHeight() const = 0;
@@ -223,6 +244,7 @@ protected:
 private:
     VideoFrameUP writableFrame_;
     VideoFrameSP lastFrame_;
+    std::mutex mutex_; // lock writableFrame_/lastFrame_ access
 };
 
 }

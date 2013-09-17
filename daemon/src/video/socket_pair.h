@@ -40,9 +40,6 @@
 
 namespace sfl_video {
 
-	class VideoSendThread;
-	class VideoReceiveThread;
-
 	class SocketPair {
 	public:
         SocketPair(const char *uri, int localPort);

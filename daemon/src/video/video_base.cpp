@@ -211,6 +211,7 @@ void VideoFrame::test()
 
 VideoFrame& VideoGenerator::getNewFrame()
 {
+    std::unique_lock<std::mutex> lk(mutex_);
     if (writableFrame_)
         writableFrame_->setdefaults();
     else
@@ -220,12 +221,14 @@ VideoFrame& VideoGenerator::getNewFrame()
 
 void VideoGenerator::publishFrame()
 {
+    std::unique_lock<std::mutex> lk(mutex_);
     lastFrame_ = std::move(writableFrame_);
-    notify(std::ref(lastFrame_));
+    notify(lastFrame_);
 }
 
 VideoFrameSP VideoGenerator::obtainLastFrame()
 {
+    std::unique_lock<std::mutex> lk(mutex_);
     return lastFrame_;
 }
 

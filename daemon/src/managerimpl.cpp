@@ -943,11 +943,6 @@ ManagerImpl::addParticipant(const std::string& callId, const std::string& confer
     if (participants.empty())
         ERROR("Participant list is empty for this conference");
 
-#ifdef SFL_VIDEO
-    // request participant video streams to be routed to video mixer
-    SIPVoIPLink::instance()->getSipCall(callId)->getVideoRtp().enterConference(conf);
-#endif // SFL_VIDEO
-
     // Connect stream
     addStream(callId);
     return true;
@@ -1115,12 +1110,6 @@ ManagerImpl::joinParticipant(const std::string& callId1, const std::string& call
         if (audiodriver_)
             conf->setRecordingSmplRate(audiodriver_->getSampleRate());
     }
-
-#ifdef SFL_VIDEO
-    // request participant video streams to be routed to video mixer
-    SIPVoIPLink::instance()->getSipCall(callId1)->getVideoRtp().enterConference(conf);
-    SIPVoIPLink::instance()->getSipCall(callId2)->getVideoRtp().enterConference(conf);
-#endif // SFL_VIDEO
 
     getMainBuffer().dumpInfo();
     return true;

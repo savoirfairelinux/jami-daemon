@@ -36,6 +36,7 @@
 
 #include <set>
 #include <string>
+#include <memory>
 
 #include "audio/recordable.h"
 
@@ -53,6 +54,11 @@ class Conference : public Recordable {
          * Constructor for this class, increment static counter
          */
         Conference();
+
+        /**
+         * Destructor for this class, decrement static counter
+         */
+        ~Conference();
 
         /**
          * Return the conference id
@@ -100,7 +106,7 @@ class Conference : public Recordable {
         virtual bool toggleRecording();
 
 #ifdef SFL_VIDEO
-        sfl_video::VideoMixer* getVideoMixer();
+        std::shared_ptr<sfl_video::VideoMixer> getVideoMixer();
 #endif
 
     private:
@@ -109,7 +115,7 @@ class Conference : public Recordable {
         ParticipantSet participants_;
 
 #ifdef SFL_VIDEO
-        sfl_video::VideoMixer videoMixer_;
+        std::shared_ptr<sfl_video::VideoMixer> videoMixer_;
 #endif
 };
 

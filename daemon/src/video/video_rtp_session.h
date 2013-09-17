@@ -45,7 +45,7 @@ class Sdp;
 
 namespace sfl_video {
 
-class VideoSendThread;
+class VideoSender;
 class VideoReceiveThread;
 class SocketPair;
 
@@ -64,6 +64,7 @@ public:
     void addReceivingDetails(std::map<std::string, std::string> &details);
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
+    void setupConferenceVideoPipeline();
     void enterConference(Conference *conf);
     void exitConference();
 
@@ -71,14 +72,14 @@ private:
     NON_COPYABLE(VideoRtpSession);
 
     std::shared_ptr<SocketPair> socketPair_;
-    std::shared_ptr<VideoSendThread> sendThread_;
+    std::shared_ptr<VideoSender> sender_;
     std::shared_ptr<VideoReceiveThread> receiveThread_;
     std::map<std::string, std::string> txArgs_;
     std::map<std::string, std::string> rxArgs_;
     bool sending_;
     bool receiving_;
     const std::string callID_;
-    VideoMixer* videoMixer_;
+    std::shared_ptr<VideoMixer> videoMixerSP_;
     VideoFrameActiveWriter *videoLocal_;
 };
 

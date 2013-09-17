@@ -16,7 +16,7 @@ libvideo_la_SOURCES = \
 	shm_sink.cpp shm_sink.h \
 	video_camera.cpp video_camera.h \
 	video_receive_thread.cpp video_receive_thread.h \
-	video_send_thread.cpp video_send_thread.h \
+	video_sender.cpp video_sender.h \
 	video_rtp_session.cpp video_rtp_session.h \
 	check.h shm_header.h video_provider.h \
 	libav_utils.cpp libav_utils.h libav_deps.h

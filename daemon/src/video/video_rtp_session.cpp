@@ -31,7 +31,7 @@
 
 #include "client/video_controls.h"
 #include "video_rtp_session.h"
-#include "video_send_thread.h"
+#include "video_sender.h"
 #include "video_receive_thread.h"
 #include "video_mixer.h"
 #include "socket_pair.h"
@@ -43,8 +43,6 @@
 #include <sstream>
 #include <map>
 #include <string>
-#include <thread>
-#include <chrono>
 
 namespace sfl_video {
 
@@ -53,9 +51,9 @@ using std::string;
 
 VideoRtpSession::VideoRtpSession(const string &callID,
 								 const map<string, string> &txArgs) :
-    socketPair_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
+    socketPair_(), sender_(), receiveThread_(), txArgs_(txArgs),
     rxArgs_(), sending_(false), receiving_(false), callID_(callID),
-    videoMixer_(), videoLocal_()
+    videoMixerSP_(), videoLocal_()
 {}
 
 VideoRtpSession::~VideoRtpSession()
@@ -115,7 +113,7 @@ void VideoRtpSession::updateDestination(const string &destination,
     tmp << "rtp://" << destination << ":" << port;
     // if destination has changed
     if (tmp.str() != txArgs_["destination"]) {
-        if (sendThread_.get() != 0) {
+        if (sender_.get() != 0) {
             ERROR("Video is already being sent");
             return;
         }
@@ -146,17 +144,17 @@ void VideoRtpSession::start(int localPort)
         auto videoCtrl = Manager::instance().getVideoControls();
         if (!videoCtrl->hasPreviewStarted()) {
             videoCtrl->startPreview();
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            MYSLEEP(1);
         }
 
         videoLocal_ = videoCtrl->getVideoPreview();
-        if (sendThread_.get())
+        if (sender_.get())
             WARN("Restarting video sender");
 
-        sendThread_.reset(new VideoSendThread(callID_, txArgs_, *socketPair_));
+        sender_.reset(new VideoSender(callID_, txArgs_, *socketPair_));
     } else {
         DEBUG("Video sending disabled");
-        sendThread_.reset();
+        sender_.reset();
     }
 
     if (receiving_) {
@@ -172,46 +170,37 @@ void VideoRtpSession::start(int localPort)
     }
 
     // Setup pipeline
-    if (videoMixer_) {
-        // We are in conference mode
-
-        if (sendThread_) {
-            videoLocal_->detach(sendThread_.get());
-            videoMixer_->attach(sendThread_.get());
-        }
-
-        if (receiveThread_) {
-            receiveThread_->enterConference();
-            receiveThread_->attach(videoMixer_);
-        }
+    if (videoMixerSP_) {
+        setupConferenceVideoPipeline();
     } else {
-        if (sendThread_)
-            videoLocal_->attach(sendThread_.get());
+        if (sender_)
+            videoLocal_->attach(sender_.get());
     }
 }
 
 void VideoRtpSession::stop()
 {
-    if (videoLocal_)
-        videoLocal_->detach(sendThread_.get());
+    if (videoLocal_) {
+        videoLocal_->detach(sender_.get());
+    }
 
-    if (videoMixer_) {
-        videoMixer_->detach(sendThread_.get());
-        receiveThread_->detach(videoMixer_);
+    if (videoMixerSP_) {
+        videoMixerSP_->detach(sender_.get());
+        receiveThread_->detach(videoMixerSP_.get());
     }
 
     if (socketPair_.get())
         socketPair_->interrupt();
 
     receiveThread_.reset();
-    sendThread_.reset();
+    sender_.reset();
     socketPair_.reset();
 }
 
 void VideoRtpSession::forceKeyFrame()
 {
-    if (sendThread_.get())
-        sendThread_->forceKeyFrame();
+    if (sender_.get())
+        sender_->forceKeyFrame();
 }
 
 void VideoRtpSession::addReceivingDetails(std::map<std::string, std::string> &details)
@@ -220,36 +209,46 @@ void VideoRtpSession::addReceivingDetails(std::map<std::string, std::string> &de
         receiveThread_->addReceivingDetails(details);
 }
 
+void VideoRtpSession::setupConferenceVideoPipeline()
+{
+    if (sender_) {
+        videoMixerSP_->setDimensions(atol(txArgs_["width"].c_str()),
+                                     atol(txArgs_["height"].c_str()));
+        videoLocal_->detach(sender_.get());
+        videoMixerSP_->attach(sender_.get());
+
+        if (receiveThread_) {
+            receiveThread_->enterConference();
+            receiveThread_->attach(videoMixerSP_.get());
+        }
+    }
+}
+
 void VideoRtpSession::enterConference(Conference *conf)
 {
-    auto mixer = conf->getVideoMixer();
-    if (!mixer) {
-        ERROR("No conference mixer!");
-        return;
-    }
-
     /* Detach from a possible previous conference */
     exitConference();
+    videoMixerSP_ = std::move(conf->getVideoMixer());
 
-    videoMixer_ = mixer; // catched during start()
+    setupConferenceVideoPipeline();
 }
 
 void VideoRtpSession::exitConference()
 {
-    if (videoMixer_) {
-        if (sendThread_)
-            videoMixer_->detach(sendThread_.get());
+    if (videoMixerSP_) {
+        if (sender_)
+            videoMixerSP_->detach(sender_.get());
 
         if (receiveThread_) {
-            receiveThread_->detach(videoMixer_);
+            receiveThread_->detach(videoMixerSP_.get());
             receiveThread_->exitConference();
         }
 
-        videoMixer_ = nullptr;
+        videoMixerSP_.reset();
     }
 
     if (videoLocal_)
-        videoLocal_->attach(sendThread_.get());
+        videoLocal_->attach(sender_.get());
 }
 
 } // end namespace sfl_video
