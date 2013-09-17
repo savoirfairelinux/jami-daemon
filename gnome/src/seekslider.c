@@ -426,7 +426,9 @@ void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint
 
 void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay display) {
 
-    if (seekslider == NULL)
+    if (seekslider == NULL || !seekslider->priv ||
+        !GTK_IS_WIDGET(seekslider->priv->playRecordWidget) ||
+        !GTK_IS_WIDGET(seekslider->priv->stopRecordWidget))
         return;
 
     switch (display) {
