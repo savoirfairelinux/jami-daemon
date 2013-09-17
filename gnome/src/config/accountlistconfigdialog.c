@@ -121,8 +121,10 @@ run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client, gboo
 {
     account_t *account = account_list_get_by_id(selected_accountID);
     GtkWidget *dialog = show_account_window(account, client, is_new);
-    update_account_from_dialog(dialog, account);
-    account_store_fill();
+    if (dialog) {
+        update_account_from_dialog(dialog, account);
+        account_store_fill();
+    }
 }
 
 static void row_activated_cb(GtkTreeView *view,
