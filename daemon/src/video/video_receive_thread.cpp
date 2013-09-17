@@ -235,11 +235,13 @@ void VideoReceiveThread::exitConference()
     if (!isRunning())
         return;
 
-    EXIT_IF_FAIL(sink_.start(), "RX: sink startup failed");
-    if (attach(&sink_)) {
-        Manager::instance().getVideoControls()->startedDecoding(id_+"RX", sink_.openedName(), dstWidth_, dstHeight_);
-        DEBUG("RX: shm sink <%s> started: size = %dx%d",
-              sink_.openedName().c_str(), dstWidth_, dstHeight_);
+    if (sink_.openedName().empty()) {
+        EXIT_IF_FAIL(sink_.start(), "RX: sink startup failed");
+        if (attach(&sink_)) {
+            Manager::instance().getVideoControls()->startedDecoding(id_+"RX", sink_.openedName(), dstWidth_, dstHeight_);
+            DEBUG("RX: shm sink <%s> started: size = %dx%d",
+                  sink_.openedName().c_str(), dstWidth_, dstHeight_);
+        }
     }
 }
 
