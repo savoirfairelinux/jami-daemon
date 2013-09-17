@@ -103,7 +103,7 @@
 
         <!-- SIGNALS !-->
 
-        <signal name="newBuddySubscription" tp:name-for-bindings="newBuddySubscription">
+        <signal name="newBuddyNotification" tp:name-for-bindings="newBuddyNotification">
             <tp:added version="1.3.0"/>
             <tp:docstring>
                 Notify when a registered presence uri presence informations changes

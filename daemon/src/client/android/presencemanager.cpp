@@ -134,7 +134,7 @@ PresenceManager::setSubscriptions(const std::string& accountID, const std::vecto
 
 
 void
-PresenceManager::newBuddySubscription(const std::string& uri, const std::string& basic, const std::string& note)
+PresenceManager::newBuddyNotification(const std::string& uri, const std::string& basic, const std::string& note)
 {
 
 }

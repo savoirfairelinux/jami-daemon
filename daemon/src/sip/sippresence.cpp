@@ -154,7 +154,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
     DEBUG(" Received status of PresSubClient  %s: status=%s note=%s", uri.c_str(), (status->info[0].basic_open ? "open" : "closed"), note.c_str());
     /* report status to client signal */
-    Manager::instance().getClient()->getPresenceManager()->newBuddySubscription(uri, status->info[0].basic_open, note);
+    Manager::instance().getClient()->getPresenceManager()->newBuddyNotification(uri, status->info[0].basic_open, note);
 }
 
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)
@@ -190,7 +190,7 @@ void SIPPresence::addPresSubClient(PresSubClient *c)
 {
     if (pres_sub_client_list_.size() < MAX_N_PRES_SUB_CLIENT) {
         pres_sub_client_list_.push_back(c);
-        DEBUG("New Presence_subscription_client client added in the list[l=%i].", pres_sub_client_list_.size());
+        DEBUG("New Presence_subscription_client added (list[%i]).", pres_sub_client_list_.size());
     } else {
         WARN("Max Presence_subscription_client is reach.");
         // let the client alive //delete c;

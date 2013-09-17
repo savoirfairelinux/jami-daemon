@@ -214,7 +214,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
         PJRPID_ELEMENT_TYPE_PERSON,
         CONST_PJ_STR("20"),
         PJRPID_ACTIVITY_UNKNOWN,
-        CONST_PJ_STR("Your subscription was received and waits for approval.")
+        CONST_PJ_STR("") // empty note by default
     };
     pjsip_pres_status fake_status_data;
     pj_bzero(&fake_status_data, sizeof(pjsip_pres_status));
