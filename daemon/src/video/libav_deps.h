@@ -36,6 +36,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
+#include <libavutil/avutil.h>
 #include <libavutil/opt.h>
 #include <libavutil/mathematics.h> // for av_rescale_q (old libav support)
 }
@@ -50,14 +51,29 @@ extern "C" {
     ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
       (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
 
+/* LIBAVCODEC_VERSION_CHECK checks for the right version of libav and FFmpeg
+ * a is the major version
+ * b and c the minor and micro versions of libav
+ * d and e the minor and micro versions of FFmpeg */
+#define LIBAVCODEC_VERSION_CHECK( a, b, c, d, e ) \
+    ( (LIBAVCODEC_VERSION_MICRO <  100 && LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
+      (LIBAVCODEC_VERSION_MICRO >= 100 && LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
+
+/* LIBAVUTIL_VERSION_CHECK checks for the right version of libav and FFmpeg
+ * a is the major version
+ * b and c the minor and micro versions of libav
+ * d and e the minor and micro versions of FFmpeg */
+#define LIBAVUTIL_VERSION_CHECK( a, b, c, d, e ) \
+    ( (LIBAVUTIL_VERSION_MICRO <  100 && LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
+      (LIBAVUTIL_VERSION_MICRO >= 100 && LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
+
 #define HAVE_SDP_CUSTOM_IO LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
 
-#if (LIBAVUTIL_VERSION_MAJOR < 53) && !defined(FF_API_PIX_FMT)
+#if !LIBAVUTIL_VERSION_CHECK(51, 42, 0, 74, 100) && !defined(FF_API_PIX_FMT)
 #define AVPixelFormat PixelFormat
 #endif
 
-#if (LIBAVCODEC_VERSION_MAJOR < 54) \
-    || ((LIBAVCODEC_VERSION_MAJOR == 54) && (LIBAVCODEC_VERSION_MINOR < 28))
+#if !LIBAVCODEC_VERSION_CHECK(54, 28, 0, 59, 100)
 #define avcodec_free_frame(x) av_freep(x)
 #endif
 
