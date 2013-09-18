@@ -63,9 +63,11 @@ class PresSubClient {
          */
         bool match(PresSubClient *b);
         /**
-         * The PBX must approve the subrciption before the pres_client is added in the pres_client list.
+         * Enable the monitoring and report signal to the client.
+         * The PBX server must approve and maintain the subrciption before the pres_client is added in the pres_client list.
+         * @param flag  State of subscription. True if active.
          */
-        void accept();
+        void enable(bool flag);
         /**
          * Send a SUBCRIBE to the PXB or directly to a pres_client in the IP2IP context.
          */

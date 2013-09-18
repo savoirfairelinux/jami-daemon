@@ -69,7 +69,7 @@ def get_account_list():
 
 def registerSend(arg):
     configurationManager.sendRegister(arg['acc'],arg['enable'])
-    logging.info('Send register : '+ str(arg))
+    logging.info('REGISTER : '+ str(arg))
 
 #-------------------------   Presence functions      ----------------------------
 
@@ -77,22 +77,25 @@ def registerSend(arg):
 
 def presSubscribe(arg):
     presenceManager.subscribeBuddy(arg['acc'],arg['buddy'],arg['flag'])
-    logging.info('Subscribe to ' + str(arg))
+    logging.info('SUBSCRIBE to ' + str(arg))
 
 def presSend(arg):
     presenceManager.publish(arg['acc'],arg['status'],arg['note'])
-    logging.info('Send to ' + str(arg))
+    logging.info('PUBLISH ' + str(arg))
 
 def presSubApprove(arg):
     presenceManager.answerServerRequest(arg['uri'],arg['flag'])
     logging.info('Approve subscription from' + str(arg))
 
-def newPresSubCientNotificationHandler(uri, status, activity):
-    logging.info("Received DBus signal : < from:"+str(uri)+" (status:" + str(status)+ ", "+ str(activity)+ ").")
+def newPresSubCientNotificationHandler(acc, uri, status, activity):
+    logging.info("Received DBus signal : acc:"+str(acc)+", from:"+str(uri)+" (status:" + str(status)+ ", "+ str(activity)+ ").")
 
 def newPresSubServerRequestHandler(uri):
     logging.info("Received a PresenceSubscription request from " +str(uri))
     subscriber_uri = uri
+
+def subcriptionStateChangedHandler(acc,uri,flag):
+    logging.info("Received a new subscriptionState request for acc:"+str(acc)+" uri " +str(uri) + " flag:" + str(flag))
 
 def randbool():
     return bool(randint(0,1))
@@ -125,30 +128,30 @@ task_N = 0
 
 SEQ_MODE_NORMAL = 0
 SEQ_MODE_RANDOM = 1
-sequence_mode = SEQ_MODE_NORMAL #SEQ_MODE_NORMAL
+sequence_mode = SEQ_MODE_NORMAL
 
 task_list = [
 
     # regular account
     (presSubscribe, {'acc':acc_1,'buddy':buddy_uri_1,'flag':True}),
-    (presSend, {'acc':acc_2,'status':randbool(),'note':'Oh yeah!'}),
+    (presSend, {'acc':acc_2,'status':randbool(),'note':'1001 is here!'}),
+    (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':True}),
+    (presSend, {'acc':acc_1,'status':randbool(),'note':'1002 is here'}),
+
     (presSubscribe, {'acc':acc_1,'buddy':buddy_uri_1,'flag':False}),
     (presSend, {'acc':acc_2,'status':randbool(),'note':'This notify should not be recieved'}),
-
-    (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':True}),
-    (presSend, {'acc':acc_1,'status':randbool(),'note':'Oh yeah!'}),
     (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':False}),
     (presSend, {'acc':acc_1,'status':randbool(),'note':'This notify should not be recieved'}),
-]
-"""
-# IP2IP
-(presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':True}),
-(presSend, {'acc': IP2IP,'status':randbool(),'note':'This notify should not be recieved'}),
-(presSubApprove, {'uri':subscriber_uri,'flag':randbool()}),
-(presSend, {'acc': IP2IP,'status':randbool(),'note':'Oh yeah!'}),
-(presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':False}),
-"""
 
+    """
+    # IP2IP
+    (presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':True}),
+    (presSend, {'acc': IP2IP,'status':randbool(),'note':'This notify should not be recieved'}),
+    (presSubApprove, {'uri':subscriber_uri,'flag':randbool()}),
+    (presSend, {'acc': IP2IP,'status':randbool(),'note':'Oh yeah!'}),
+    (presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':False}),
+    """
+]
 
 
 def run():
@@ -176,6 +179,8 @@ if __name__ == '__main__':
         # dbus signal monitor
         presenceManagerBus.connect_to_signal("newBuddyNotification", newPresSubCientNotificationHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
         presenceManagerBus.connect_to_signal("newServerSubscriptionRequest", newPresSubServerRequestHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
+        presenceManagerBus.connect_to_signal("subcriptionStateChanged", subcriptionStateChangedHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
+        presenceManagerBus.connect_to_signal("serverError", serverErrorHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
 
         registerSend({'acc':acc_1, 'enable':True})
         registerSend({'acc':acc_2, 'enable':True})

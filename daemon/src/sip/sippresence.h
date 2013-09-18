@@ -82,8 +82,6 @@ struct pres_msg_data {
 };
 
 
-//extern void pres_process_msg_data(pjsip_tx_data *tdata, const pres_msg_data *msg_data);
-
 
 class SIPAccount;
 class PresSubClient;
@@ -198,7 +196,7 @@ class SIPPresence {
         }
 
         std::list< PresSubClient *> getClientSubscriptions() {
-            return pres_sub_client_list_;
+            return sub_client_list_;
         }
 
         void lock();
@@ -207,18 +205,18 @@ class SIPPresence {
     private:
         NON_COPYABLE(SIPPresence);
 
-        static pj_status_t pres_publish(SIPPresence *pres);
-        static void pres_publish_cb(struct pjsip_publishc_cbparam *param);
-        static pj_status_t pres_send_publish(SIPPresence *pres, pj_bool_t active);
+        static pj_status_t publish(SIPPresence *pres);
+        static void publish_cb(struct pjsip_publishc_cbparam *param);
+        static pj_status_t send_publish(SIPPresence *pres, pj_bool_t active);
 
         pjsip_publishc  *publish_sess_;  /**< Client publication session.*/
-        pjsip_pres_status pres_status_data_; /**< Presence Data.*/
+        pjsip_pres_status status_data_; /**< Presence Data.*/
 
         pj_bool_t enabled_; /**< Allow for status publish,*/
 
         SIPAccount * acc_; /**<  Associated SIP account. */
-        std::list< PresSubServer *> pres_sub_server_list_; /**< Subscribers list.*/
-        std::list< PresSubClient *> pres_sub_client_list_; /**< Subcribed buddy list.*/
+        std::list< PresSubServer *> sub_server_list_; /**< Subscribers list.*/
+        std::list< PresSubClient *> sub_client_list_; /**< Subcribed buddy list.*/
 
         pj_mutex_t      *mutex_;
         unsigned         mutex_nesting_level_;

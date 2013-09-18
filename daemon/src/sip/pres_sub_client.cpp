@@ -45,6 +45,7 @@
 
 #include "array_size.h"
 #include "pres_sub_client.h"
+#include "client/presencemanager.h"
 #include "sipaccount.h"
 #include "sippresence.h"
 #include "sipvoiplink.h"
@@ -60,10 +61,8 @@ int PresSubClient::modId_ = 0; // used to extract data structure from event_subs
 void
 PresSubClient::pres_client_timer_cb(pj_timer_heap_t * /*th*/, pj_timer_entry *entry)
 {
-    /* TODO : clean*/
     PresSubClient *c = (PresSubClient *) entry->user_data;
     DEBUG("timeout for %s", c->getURI().c_str());
-    //c->reportPresence();
 }
 
 /* Callback called when *client* subscription state has changed. */
@@ -87,8 +86,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
         pjsip_evsub_state state = pjsip_evsub_get_state(sub);
 
         if (state == PJSIP_EVSUB_STATE_ACCEPTED) {
-            DEBUG("pres_client accepted.");
-            pres_client->accept();
+            pres_client->enable(true);
+
         } else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
             int resub_delay = -1;
             pj_strdup_with_null(pres_client->pool_, &pres_client->term_reason_, pjsip_evsub_get_termination_reason(sub));
@@ -172,6 +171,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 
             pres_client->sub_ = sub;
             pres_client->rescheduleTimer(PJ_TRUE, resub_delay);
+
         } else { //state==ACTIVE ......
             //This will clear the last termination code/reason
             pres_client->term_code_ = 0;
@@ -185,6 +185,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
             pres_client->dlg_ = NULL;
             pres_client->rescheduleTimer(PJ_FALSE, 0);
             pjsip_evsub_set_mod_data(sub, modId_, NULL);
+
+            pres_client->enable(false);
         }
 
         pres_client->decLock();
@@ -206,6 +208,7 @@ PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transactio
     pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
 
     if (!pres_client) {
+        WARN("Couldn't find pres_client.");
         return;
     }
 
@@ -364,9 +367,13 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
     }
 }
 
-void PresSubClient::accept()
+void PresSubClient::enable(bool flag)
 {
-    pres_->addPresSubClient(this);
+    if(flag)
+        pres_->addPresSubClient(this);
+    DEBUG("pres_client %s is %s now monitored.",getURI().c_str(), flag? "":"NOT");
+
+    Manager::instance().getClient()->getPresenceManager()->subcriptionStateChanged(pres_->getAccount()->getAccountID(),getURI(),flag);
 }
 
 void PresSubClient::reportPresence()

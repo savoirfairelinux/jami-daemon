@@ -34,7 +34,6 @@
 #include "logger.h"
 #include "manager.h"
 #include "client/client.h"
-#include "client/callmanager.h"
 #include "client/presencemanager.h"
 #include "sipaccount.h"
 #include "sip_utils.h"
@@ -42,16 +41,16 @@
 #include "pres_sub_client.h"
 #include "sipvoiplink.h"
 
-#define MAX_N_PRES_SUB_SERVER 20
-#define MAX_N_PRES_SUB_CLIENT 20
+#define MAX_N_SUB_SERVER 20
+#define MAX_N_SUB_CLIENT 20
 
 SIPPresence::SIPPresence(SIPAccount *acc)
     : publish_sess_()
-    , pres_status_data_()
+    , status_data_()
     , enabled_(true)
     , acc_(acc)
-    , pres_sub_server_list_()  //IP2IP context
-    , pres_sub_client_list_()
+    , sub_server_list_()  //IP2IP context
+    , sub_client_list_()
     , mutex_()
     , mutex_nesting_level_()
     , mutex_owner_()
@@ -74,10 +73,10 @@ SIPPresence::SIPPresence(SIPAccount *acc)
 SIPPresence::~SIPPresence()
 {
     /* Flush the lists */
-    for (const auto & c : pres_sub_client_list_)
+    for (const auto & c : sub_client_list_)
         removePresSubClient(c) ;
 
-    for (const auto & s : pres_sub_server_list_)
+    for (const auto & s : sub_server_list_)
         removePresSubServer(s);
 }
 
@@ -88,7 +87,7 @@ SIPAccount * SIPPresence::getAccount() const
 
 pjsip_pres_status * SIPPresence::getStatus()
 {
-    return &pres_status_data_;
+    return &status_data_;
 }
 
 int SIPPresence::getModId() const
@@ -125,11 +124,11 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
     else // TODO: is there any other possibilities
         DEBUG("Presence : no activity");
 
-    pj_bzero(&pres_status_data_, sizeof(pres_status_data_));
-    pres_status_data_.info_cnt = 1;
-    pres_status_data_.info[0].basic_open = status;
-    pres_status_data_.info[0].id = CONST_PJ_STR("0"); /* todo: tuplie_id*/
-    pj_memcpy(&pres_status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
+    pj_bzero(&status_data_, sizeof(status_data_));
+    status_data_.info_cnt = 1;
+    status_data_.info[0].basic_open = status;
+    status_data_.info[0].id = CONST_PJ_STR("0"); /* todo: tuplie_id*/
+    pj_memcpy(&status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
     /* "contact" field is optionnal */
 }
 
@@ -143,24 +142,25 @@ void SIPPresence::sendPresence(bool status, const std::string &note)
     if (acc_->isIP2IP())
         notifyPresSubServer(); // to each subscribers
     else
-        pres_publish(this); // to the PBX server
+        publish(this); // to the PBX server
 }
 
 
 void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_pres_status * status)
 {
     /* Update our info. See pjsua_buddy_get_info() for additionnal ideas*/
+    const std::string acc_ID = acc_->getAccountID();
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
-    DEBUG(" Received status of PresSubClient  %s: status=%s note=%s", uri.c_str(), (status->info[0].basic_open ? "open" : "closed"), note.c_str());
+    DEBUG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s", uri.c_str(), acc_ID.c_str(),(status->info[0].basic_open ? "open" : "closed"), note.c_str());
     /* report status to client signal */
-    Manager::instance().getClient()->getPresenceManager()->newBuddyNotification(uri, status->info[0].basic_open, note);
+    Manager::instance().getClient()->getPresenceManager()->newBuddyNotification(acc_ID, uri, status->info[0].basic_open, note);
 }
 
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)
 {
     /* Check if the buddy was already subscribed */
-    for (const auto & c : pres_sub_client_list_) {
+    for (const auto & c : sub_client_list_) {
         if (c->getURI() == uri) {
             DEBUG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
             delete c;
@@ -169,7 +169,7 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
         }
     }
 
-    if (pres_sub_client_list_.size() >= MAX_N_PRES_SUB_CLIENT) {
+    if (sub_client_list_.size() >= MAX_N_SUB_CLIENT) {
         WARN("Can't add PresSubClient, max number reached.");
         return;
     }
@@ -188,9 +188,9 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
 
 void SIPPresence::addPresSubClient(PresSubClient *c)
 {
-    if (pres_sub_client_list_.size() < MAX_N_PRES_SUB_CLIENT) {
-        pres_sub_client_list_.push_back(c);
-        DEBUG("New Presence_subscription_client added (list[%i]).", pres_sub_client_list_.size());
+    if (sub_client_list_.size() < MAX_N_SUB_CLIENT) {
+        sub_client_list_.push_back(c);
+        DEBUG("New Presence_subscription_client added (list[%i]).", sub_client_list_.size());
     } else {
         WARN("Max Presence_subscription_client is reach.");
         // let the client alive //delete c;
@@ -200,12 +200,12 @@ void SIPPresence::addPresSubClient(PresSubClient *c)
 void SIPPresence::removePresSubClient(PresSubClient *c)
 {
     DEBUG("Presence_subscription_client removed from the buddy list.");
-    pres_sub_client_list_.remove(c);
+    sub_client_list_.remove(c);
 }
 
 void SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
 {
-    for (const auto & s : pres_sub_server_list_) {
+    for (const auto & s : sub_server_list_) {
         if (s->matches((char *) uri.c_str())) {
             s->approve(flag);
             // return; // 'return' would prevent multiple-time subscribers from spam
@@ -216,8 +216,8 @@ void SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
 
 void SIPPresence::addPresSubServer(PresSubServer *s)
 {
-    if (pres_sub_server_list_.size() < MAX_N_PRES_SUB_SERVER) {
-        pres_sub_server_list_.push_back(s);
+    if (sub_server_list_.size() < MAX_N_SUB_SERVER) {
+        sub_server_list_.push_back(s);
     } else {
         WARN("Max Presence_subscription_server is reach.");
         // let de server alive // delete s;
@@ -226,7 +226,7 @@ void SIPPresence::addPresSubServer(PresSubServer *s)
 
 void SIPPresence::removePresSubServer(PresSubServer *s)
 {
-    pres_sub_server_list_.remove(s);
+    sub_server_list_.remove(s);
     DEBUG("Presence_subscription_server removed");
 }
 
@@ -234,7 +234,7 @@ void SIPPresence::notifyPresSubServer()
 {
     DEBUG("Iterating through Presence_subscription_server:");
 
-    for (const auto & s : pres_sub_server_list_)
+    for (const auto & s : sub_server_list_)
         s->notify();
 }
 
@@ -293,7 +293,7 @@ static const pjsip_publishc_opt my_publish_opt = {true}; // this is queue_reques
  * Client presence publication callback.
  */
 void
-SIPPresence::pres_publish_cb(struct pjsip_publishc_cbparam *param)
+SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
 {
     SIPPresence *pres = (SIPPresence*) param->token;
 
@@ -304,15 +304,16 @@ SIPPresence::pres_publish_cb(struct pjsip_publishc_cbparam *param)
 
         if (param->status != PJ_SUCCESS) {
             char errmsg[PJ_ERR_MSG_SIZE];
-
             pj_strerror(param->status, errmsg, sizeof(errmsg));
             ERROR("Client publication (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
+            Manager::instance().getClient()->getPresenceManager()->serverError(errmsg);
+
         } else if (param->code == 412) {
             /* 412 (Conditional Request Failed)
              * The PUBLISH refresh has failed, retry with new one.
              */
             WARN("Publish retry.");
-            pres_publish(pres);
+            publish(pres);
         } else {
             ERROR("Client publication (PUBLISH) failed (%u/%.*s)",
                   param->code, param->reason.slen, param->reason.ptr);
@@ -333,12 +334,12 @@ SIPPresence::pres_publish_cb(struct pjsip_publishc_cbparam *param)
  * Send PUBLISH request.
  */
 pj_status_t
-SIPPresence::pres_send_publish(SIPPresence * pres, pj_bool_t active)
+SIPPresence::send_publish(SIPPresence * pres, pj_bool_t active)
 {
     pjsip_tx_data *tdata;
     pj_status_t status;
 
-    DEBUG("Send presence %sPUBLISH..", (active ? "" : "un-"));
+    DEBUG("Send %sPUBLISH (%s).", (active ? "" : "un-"), pres->getAccount()->getAccountID().c_str());
 
     SIPAccount * acc = pres->getAccount();
     std::string contactWithAngles =  acc->getFromUri();
@@ -346,7 +347,7 @@ SIPPresence::pres_send_publish(SIPPresence * pres, pj_bool_t active)
     int semicolon = contactWithAngles.find_first_of(":");
     std::string contactWithoutAngles = contactWithAngles.substr(semicolon + 1);
 //    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
-//    pj_memcpy(&pres_status_data.info[0].contact, &contt, sizeof(pj_str_t));;
+//    pj_memcpy(&status_data.info[0].contact, &contt, sizeof(pj_str_t));;
 
     /* Create PUBLISH request */
     if (active) {
@@ -425,7 +426,7 @@ on_error:
 
 /* Create client publish session */
 pj_status_t
-SIPPresence::pres_publish(SIPPresence *pres)
+SIPPresence::publish(SIPPresence *pres)
 {
     pj_status_t status;
     const pj_str_t STR_PRESENCE = CONST_PJ_STR("presence");
@@ -436,7 +437,7 @@ SIPPresence::pres_publish(SIPPresence *pres)
 
     /* Create client publication */
     status = pjsip_publishc_create(endpt, &my_publish_opt,
-                                   pres, &pres_publish_cb,
+                                   pres, &publish_cb,
                                    &pres->publish_sess_);
 
     if (status != PJ_SUCCESS) {
@@ -466,7 +467,7 @@ SIPPresence::pres_publish(SIPPresence *pres)
         pjsip_regc_set_route_set(acc->getRegistrationInfo(), sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
 
     /* Send initial PUBLISH request */
-    status = pres_send_publish(pres, PJ_TRUE);
+    status = send_publish(pres, PJ_TRUE);
 
     if (status != PJ_SUCCESS)
         return status;
