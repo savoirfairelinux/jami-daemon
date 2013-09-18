@@ -598,21 +598,22 @@ OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(nullptr != queue);
 
-    AudioBuffer &buffer = getNextRecordBuffer();
+    AudioBuffer &old_buffer = getNextRecordBuffer();
     incrementRecordIndex();
+    AudioBuffer &buffer = getNextRecordBuffer();
 
     SLresult result;
 
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
-    //result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getData()[0].data(), buffer.getData()[0].size());
     result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
+    
+    audioCaptureFillBuffer(old_buffer);
 
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);
-
-    audioCaptureFillBuffer(buffer);
+    
 #ifdef RECORD_AUDIO_TODISK
     opensl_infile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
 #endif
@@ -624,7 +625,6 @@ OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *con
     assert(nullptr != context);
     static_cast<OpenSLLayer*>(context)->capture(queue);
 }
-
 
 void
 OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
@@ -734,13 +734,10 @@ bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
     // In case of a dtmf, the pointers will be set to nullptr once the dtmf length is
     // reached. For this reason we need to fill audio buffer with zeros if pointer is nullptr
     if (tone) {
-        DEBUG("audioPlaybackFillWithToneOrRingtone tone\n");
         tone->getNext(buffer, playbackGain_);
     } else if (file_tone) {
-        DEBUG("audioPlaybackFillWithToneOrRingtone file_tone\n");
         file_tone->getNext(buffer, playbackGain_);
     } else {
-        DEBUG("audioPlaybackFillWithToneOrRingtone reset\n");
         buffer.reset();
     }
 

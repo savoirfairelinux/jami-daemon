@@ -257,8 +257,8 @@ class OpenSLLayer : public AudioLayer {
         SLAndroidSimpleBufferQueueItf playbackBufferQueue_;
         SLAndroidSimpleBufferQueueItf recorderBufferQueue_;
 
-        std::atomic<int> playbackBufferIndex_;
-        std::atomic<int> recordBufferIndex_;
+        int playbackBufferIndex_;
+        int recordBufferIndex_;
 
         AudioBufferStack playbackBufferStack_;
         AudioBufferStack recordBufferStack_;
