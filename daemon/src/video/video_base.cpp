@@ -210,6 +210,45 @@ void VideoFrame::clear()
     memset(frame_->data[2], 0, frame_->linesize[2]*frame_->height/2);
 }
 
+int VideoFrame::mirror() {
+    if (frame_->format != PIX_FMT_YUV420P) {
+        ERROR("Unsupported pixel format");
+        return -1;
+    }
+
+    uint8_t *data;
+	ssize_t stride;
+
+    // Y
+    stride = frame_->linesize[0];
+	data = frame_->data[0];
+	for (int i = 0; i < frame_->height; i++) {
+        for (int j=0,k=stride-1; j < stride/2; j++, k--)
+            std::swap(data[j], data[k]);
+		data += stride;
+	}
+
+    // U
+	stride = frame_->linesize[1];
+	data = frame_->data[1];
+	for (int i = 0; i < frame_->height / 2; i++) {
+        for (int j=0,k=stride-1; j < stride/2; j++, k--)
+            std::swap(data[j], data[k]);
+		data += stride;
+	}
+
+    // V
+	stride = frame_->linesize[2];
+	data = frame_->data[2];
+	for (int i = 0; i < frame_->height / 2; i++) {
+        for (int j=0,k=stride-1; j < stride/2; j++, k--)
+            std::swap(data[j], data[k]);
+		data += stride;
+	}
+
+    return 0;
+}
+
 void VideoFrame::test()
 {
     memset(frame_->data[0], 0xaa, frame_->linesize[0]*frame_->height/2);
