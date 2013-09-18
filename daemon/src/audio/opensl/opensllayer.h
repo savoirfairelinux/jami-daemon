@@ -34,6 +34,7 @@
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include <vector>
+#include <atomic>
 
 #include "../audiolayer.h"
 #include "logger.h"
@@ -53,7 +54,7 @@ class AudioPreference;
 class OpenSLThread;
 
 #define ANDROID_BUFFER_QUEUE_LENGTH 2
-#define BUFFER_SIZE 5000
+#define BUFFER_SIZE 80
 
 
 /**
@@ -254,12 +255,10 @@ class OpenSLLayer : public AudioLayer {
          * OpenSL playback buffer
          */
         SLAndroidSimpleBufferQueueItf playbackBufferQueue_;
-
         SLAndroidSimpleBufferQueueItf recorderBufferQueue_;
 
-        int playbackBufferIndex_;
-
-        int recordBufferIndex_;
+        std::atomic<int> playbackBufferIndex_;
+        std::atomic<int> recordBufferIndex_;
 
         AudioBufferStack playbackBufferStack_;
         AudioBufferStack recordBufferStack_;
