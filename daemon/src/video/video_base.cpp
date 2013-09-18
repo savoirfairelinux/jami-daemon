@@ -216,35 +216,19 @@ int VideoFrame::mirror() {
         return -1;
     }
 
-    uint8_t *data;
-	ssize_t stride;
+    auto flip_lr = [&] (unsigned idx) {
+        const ssize_t stride = frame_->linesize[idx];
+        uint8_t *data = frame_->data[idx];
+        const ssize_t height = idx == 0 ? frame_->height : frame_->height / 2;
+        for (int i = 0; i < height; i++) {
+            for (int j = 0,k = stride - 1; j < stride / 2; j++, k--)
+                std::swap(data[j], data[k]);
+            data += stride;
+        }
+    };
 
-    // Y
-    stride = frame_->linesize[0];
-	data = frame_->data[0];
-	for (int i = 0; i < frame_->height; i++) {
-        for (int j=0,k=stride-1; j < stride/2; j++, k--)
-            std::swap(data[j], data[k]);
-		data += stride;
-	}
-
-    // U
-	stride = frame_->linesize[1];
-	data = frame_->data[1];
-	for (int i = 0; i < frame_->height / 2; i++) {
-        for (int j=0,k=stride-1; j < stride/2; j++, k--)
-            std::swap(data[j], data[k]);
-		data += stride;
-	}
-
-    // V
-	stride = frame_->linesize[2];
-	data = frame_->data[2];
-	for (int i = 0; i < frame_->height / 2; i++) {
-        for (int j=0,k=stride-1; j < stride/2; j++, k--)
-            std::swap(data[j], data[k]);
-		data += stride;
-	}
+    for (unsigned i = 0; i < 3; ++i)
+        flip_lr(i);
 
     return 0;
 }
