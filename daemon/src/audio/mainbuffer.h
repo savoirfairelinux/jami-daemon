@@ -37,6 +37,8 @@
 #include <pthread.h>
 
 #include "audiobuffer.h"
+#include "mainbuffer.h"
+#include "noncopyable.h"
 
 class RingBuffer;
 
@@ -99,6 +101,7 @@ class MainBuffer {
         void dumpInfo();
 
     private:
+        NON_COPYABLE(MainBuffer);
 
         CallIDSet* getCallIDSet(const std::string &call_id);
 

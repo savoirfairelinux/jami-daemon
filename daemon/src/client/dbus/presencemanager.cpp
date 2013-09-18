@@ -128,7 +128,6 @@ void
 PresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
     SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
-    for (auto u:uris) {
+    for (const auto &u : uris)
         sipaccount->getPresence()->subscribeClient(u,true);
-    }
 }

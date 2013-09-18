@@ -132,7 +132,8 @@ int VideoCamera::interruptCb(void *data)
 
 bool VideoCamera::captureFrame()
 {
-    int ret = decoder_->decode(getNewFrame());
+    VideoFrame& frame = getNewFrame();
+    int ret = decoder_->decode(frame);
 
     if (ret <= 0) {
         if (ret < 0)
@@ -140,6 +141,7 @@ bool VideoCamera::captureFrame()
         return false;
     }
 
+    frame.mirror();
     publishFrame();
     return true;
 }

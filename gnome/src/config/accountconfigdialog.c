@@ -1422,7 +1422,7 @@ show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
                         GTK_STOCK_CANCEL,
                         GTK_RESPONSE_CANCEL,
                         GTK_STOCK_APPLY,
-                        GTK_RESPONSE_ACCEPT,
+                        GTK_RESPONSE_APPLY,
                         NULL);
 
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
@@ -1438,19 +1438,16 @@ show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
         /* General Settings */
         GtkWidget *basic_tab = create_basic_tab(account, is_new);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), basic_tab, gtk_label_new(_("Basic")));
-        gtk_notebook_page_num(GTK_NOTEBOOK(notebook), basic_tab);
     }
 
     /* Audio Codecs */
     GtkWidget *audiocodecs_tab = create_audiocodecs_configuration(account);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), audiocodecs_tab, gtk_label_new(_("Audio")));
-    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), audiocodecs_tab);
 
 #ifdef SFL_VIDEO
     /* Video Codecs */
     GtkWidget *videocodecs_tab = create_videocodecs_configuration(account);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), videocodecs_tab, gtk_label_new(_("Video")));
-    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), videocodecs_tab);
 #endif
 
     // Do not need advanced or security one for the IP2IP account
@@ -1458,17 +1455,14 @@ show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
         /* Advanced */
         advanced_tab = create_advanced_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), advanced_tab, gtk_label_new(_("Advanced")));
-        gtk_notebook_page_num(GTK_NOTEBOOK(notebook), advanced_tab);
 
         /* Security */
         security_tab = create_security_tab(account, client);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
-        gtk_notebook_page_num(GTK_NOTEBOOK(notebook), security_tab);
     } else {
         /* Custom tab for the IP to IP profile */
         GtkWidget *ip_tab = create_direct_ip_calls_tab(account);
         gtk_notebook_prepend_page(GTK_NOTEBOOK(notebook), ip_tab, gtk_label_new(_("Network")));
-        gtk_notebook_page_num(GTK_NOTEBOOK(notebook), ip_tab);
     }
 
     // Emit signal to hide advanced and security tabs in case of IAX
@@ -1480,12 +1474,11 @@ show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
     /* Run dialog, this blocks */
     gint response = gtk_dialog_run(GTK_DIALOG(dialog));
 
-    // If anything but "Apply" button is pressed
-    if (response != GTK_RESPONSE_ACCEPT) {
+    if (response == GTK_RESPONSE_APPLY) {
+        return dialog;
+    } else {
         gtk_widget_destroy(dialog);
         return NULL;
-    } else {
-        return dialog;
     }
 }
 

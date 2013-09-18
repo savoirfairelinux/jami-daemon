@@ -59,8 +59,10 @@ Conference::Conference()
 
 Conference::~Conference()
 {
-    for (auto participant_id : participants_)
-        remove(participant_id);
+#ifdef SFL_VIDEO
+    for (const auto &participant_id : participants_)
+        SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().exitConference();
+#endif // SFL_VIDEO
 }
 
 Conference::ConferenceState Conference::getState() const
@@ -93,7 +95,7 @@ void Conference::remove(const std::string &participant_id)
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-    auto mainBuffer = Manager::instance().getMainBuffer();
+    auto &mainBuffer = Manager::instance().getMainBuffer();
 
     for (const auto &item : participants_) {
         if (participant_id != item)
