@@ -38,7 +38,6 @@
 #include "logger.h"
 #include "sip/sipcall.h"
 #include "audio/audiolayer.h"
-#include "scoped_lock.h"
 #include "manager.h"
 
 namespace sfl {
@@ -115,12 +114,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , dtmfPayloadType_(101) // same as Asterisk
     , dead_(false)
     , currentCodecIndex_(0)
-{
-    pthread_mutex_init(&audioCodecMutex_, NULL);
-#if HAVE_SPEEXDSP
-    pthread_mutex_init(&audioProcessMutex_, NULL);
-#endif
-}
+{}
 
 // Call from processData*
 bool AudioRtpRecord::isDead()
@@ -182,22 +176,17 @@ AudioRtpRecord::~AudioRtpRecord()
     delete converterDecode_;
     converterDecode_ = 0;
     {
-        ScopedLock lock(audioCodecMutex_);
+        std::lock_guard<std::mutex> lock(audioCodecMutex_);
         deleteCodecs();
     }
 #if HAVE_SPEEXDSP
     {
-        ScopedLock lock(audioProcessMutex_);
+        std::lock_guard<std::mutex> lock(audioProcessMutex_);
         delete noiseSuppressDecode_;
         noiseSuppressDecode_ = 0;
         delete noiseSuppressEncode_;
         noiseSuppressEncode_ = 0;
     }
-#endif
-    pthread_mutex_destroy(&audioCodecMutex_);
-
-#if HAVE_SPEEXDSP
-    pthread_mutex_destroy(&audioProcessMutex_);
 #endif
 }
 
@@ -217,7 +206,7 @@ std::string
 AudioRtpRecordHandler::getCurrentAudioCodecNames()
 {
     std::string result;
-    ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+    std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
     {
         std::string sep = "";
 
@@ -234,7 +223,7 @@ AudioRtpRecordHandler::getCurrentAudioCodecNames()
 
 void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+    std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
 
     audioRtpRecord_.deleteCodecs();
     // Set various codec info to reduce indirection
@@ -268,7 +257,7 @@ void AudioRtpRecordHandler::initBuffers()
 #if HAVE_SPEEXDSP
 void AudioRtpRecordHandler::initNoiseSuppress()
 {
-    ScopedLock lock(audioRtpRecord_.audioProcessMutex_);
+    std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
     delete audioRtpRecord_.noiseSuppressEncode_;
     audioRtpRecord_.noiseSuppressEncode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
     delete audioRtpRecord_.noiseSuppressDecode_;
@@ -334,7 +323,7 @@ int AudioRtpRecordHandler::processDataEncode()
 #if HAVE_SPEEXDSP
 
     if (Manager::instance().audioPreference.getNoiseReduce()) {
-        ScopedLock lock(audioRtpRecord_.audioProcessMutex_);
+        std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
         RETURN_IF_NULL(audioRtpRecord_.noiseSuppressEncode_, 0, "Noise suppressor already destroyed");
         audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
     }
@@ -346,7 +335,7 @@ int AudioRtpRecordHandler::processDataEncode()
 #endif
 
     {
-        ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+        std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
         return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out->getData(), getCodecFrameSize());
@@ -378,7 +367,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     size = std::min(size, audioRtpRecord_.decData_.frames());
 
     {
-        ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+        std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         // Return the size of data in samples
         audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
@@ -392,7 +381,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 #if HAVE_SPEEXDSP
 
     if (Manager::instance().audioPreference.getNoiseReduce()) {
-        ScopedLock lock(audioRtpRecord_.audioProcessMutex_);
+        std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
         RETURN_IF_NULL(audioRtpRecord_.noiseSuppressDecode_, "Noise suppressor already destroyed");
         audioRtpRecord_.noiseSuppressDecode_->process(audioRtpRecord_.decData_, getCodecFrameSize());
     }

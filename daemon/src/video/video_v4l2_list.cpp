@@ -37,7 +37,6 @@
 #include <unistd.h>
 
 #include "logger.h"
-#include "scoped_lock.h"
 
 #include <libudev.h>
 #include <cstring>
@@ -58,7 +57,6 @@ namespace sfl_video {
 
 using std::vector;
 using std::string;
-using sfl::ScopedLock;
 
 static int is_v4l2(struct udev_device *dev)
 {
@@ -71,7 +69,6 @@ VideoV4l2ListThread::VideoV4l2ListThread() : devices_(),
     thread_(0), mutex_(), udev_(0),
     udev_mon_(0), probing_(false)
 {
-    pthread_mutex_init(&mutex_, NULL);
     udev_list_entry *devlist;
     udev_enumerate *devenum;
 
@@ -221,8 +218,6 @@ VideoV4l2ListThread::~VideoV4l2ListThread()
         udev_monitor_unref(udev_mon_);
     if (udev_)
         udev_unref(udev_);
-
-    pthread_mutex_destroy(&mutex_);
 }
 
 void VideoV4l2ListThread::run()
@@ -286,7 +281,7 @@ void VideoV4l2ListThread::run()
 
 void VideoV4l2ListThread::delDevice(const string &node)
 {
-    ScopedLock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
 
     const auto itr = std::find_if(devices_.begin(), devices_.end(),
             [&] (const VideoV4l2Device &d) { return d.device == node; });
@@ -299,7 +294,7 @@ void VideoV4l2ListThread::delDevice(const string &node)
 
 bool VideoV4l2ListThread::addDevice(const string &dev)
 {
-    ScopedLock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
 
     int fd = open(dev.c_str(), O_RDWR);
     if (fd == -1)
@@ -317,7 +312,7 @@ bool VideoV4l2ListThread::addDevice(const string &dev)
 vector<string>
 VideoV4l2ListThread::getChannelList(const string &dev)
 {
-    ScopedLock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
     if (iter != devices_.end())
         return iter->getChannelList();
@@ -328,7 +323,7 @@ VideoV4l2ListThread::getChannelList(const string &dev)
 vector<string>
 VideoV4l2ListThread::getSizeList(const string &dev, const string &channel)
 {
-    ScopedLock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
     if (iter != devices_.end())
         return iter->getChannel(channel).getSizeList();
@@ -339,7 +334,7 @@ VideoV4l2ListThread::getSizeList(const string &dev, const string &channel)
 vector<string>
 VideoV4l2ListThread::getRateList(const string &dev, const string &channel, const std::string &size)
 {
-    ScopedLock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
     if (iter != devices_.end())
         return iter->getChannel(channel).getSize(size).getRateList();
@@ -349,7 +344,7 @@ VideoV4l2ListThread::getRateList(const string &dev, const string &channel, const
 
 vector<string> VideoV4l2ListThread::getDeviceList()
 {
-    ScopedLock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     vector<string> v;
 
     for (const auto &itr : devices_)
@@ -369,7 +364,7 @@ VideoV4l2ListThread::findDevice(const string &name) const
 
 unsigned VideoV4l2ListThread::getChannelNum(const string &dev, const string &name)
 {
-    ScopedLock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
     if (iter != devices_.end())
         return iter->getChannel(name).idx;
@@ -379,7 +374,7 @@ unsigned VideoV4l2ListThread::getChannelNum(const string &dev, const string &nam
 
 string VideoV4l2ListThread::getDeviceNode(const string &name)
 {
-    ScopedLock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(name));
     if (iter != devices_.end())
         return iter->device;

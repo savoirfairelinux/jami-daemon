@@ -84,8 +84,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		logger.cpp \
 		numbercleaner.cpp \
 		fileutils.cpp \
-		scoped_lock.cpp \
-		scoped_lock.h \
 		sflthread.cpp \
 		sflthread.h \
 		conference.h \
