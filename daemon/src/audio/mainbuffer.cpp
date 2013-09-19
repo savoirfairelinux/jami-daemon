@@ -34,7 +34,6 @@
 #include <limits>
 #include <cstring>
 #include <utility> // for std::pair
-//#include "scoped_lock.h"
 #include "logger.h"
 
 const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
@@ -322,7 +321,7 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
                 availableSamples = std::min(availableSamples, nbSamples);
         }
 
-        return availableSamples != INT_MAX ? availableSamples : 0;
+        return availableSamples != std::numeric_limits<int>::max() ? availableSamples : 0;
     }
 }
 
