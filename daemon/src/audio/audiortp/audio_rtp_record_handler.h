@@ -42,7 +42,7 @@ using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <tr1/array>
 #include <list>
-#include <pthread.h>
+#include <mutex>
 
 #include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
@@ -89,7 +89,7 @@ class AudioRtpRecord {
 
     private:
         std::vector<AudioCodec*> audioCodecs_;
-        pthread_mutex_t audioCodecMutex_;
+        std::mutex audioCodecMutex_;
         // these will have the same value unless we are sending
         // a different codec than we are receiving (asymmetric RTP)
         int encoderPayloadType_;
@@ -107,7 +107,7 @@ class AudioRtpRecord {
 #if HAVE_SPEEXDSP
         NoiseSuppress *noiseSuppressEncode_;
         NoiseSuppress *noiseSuppressDecode_;
-        pthread_mutex_t audioProcessMutex_;
+        std::mutex audioProcessMutex_;
 #endif
 
         unsigned int dtmfPayloadType_;
