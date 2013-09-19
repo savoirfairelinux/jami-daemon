@@ -149,10 +149,6 @@ class ConfigTree {
         friend class ConfigTreeIterator;
 
         NON_COPYABLE(ConfigTree);
-    public:
-        ConfigTreeIterator createIterator() {
-            return ConfigTreeIterator(this);
-        }
 };
 
 class ConfigTreeItem {
