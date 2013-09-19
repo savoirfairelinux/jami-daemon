@@ -80,7 +80,7 @@ class AudioLayer {
         };
 
         AudioLayer();
-        virtual ~AudioLayer() = default;
+        virtual ~AudioLayer();
 
         virtual std::vector<std::string> getCaptureDeviceList() const = 0;
         virtual std::vector<std::string> getPlaybackDeviceList() const = 0;

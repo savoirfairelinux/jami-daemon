@@ -49,6 +49,9 @@ AudioLayer::AudioLayer()
     urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
 }
 
+AudioLayer::~AudioLayer()
+{}
+
 void AudioLayer::flushMain()
 {
     std::lock_guard<std::mutex> lock(mutex_);
