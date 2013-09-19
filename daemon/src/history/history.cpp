@@ -37,27 +37,18 @@
 #include <sys/stat.h> // for mkdir
 #include <ctime>
 #include <cstring>
-#include "scoped_lock.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "call.h"
 
 namespace sfl {
 
+History::History() : historyItemsMutex_(), items_(), path_() {}
+
 
 using std::map;
 using std::string;
 using std::vector;
-
-History::History() : historyItemsMutex_(), items_(), path_("")
-{
-    pthread_mutex_init(&historyItemsMutex_, NULL);
-}
-
-History::~History()
-{
-    pthread_mutex_destroy(&historyItemsMutex_);
-}
 
 bool History::load(int limit)
 {
@@ -79,7 +70,7 @@ bool History::load(int limit)
 
 bool History::save()
 {
-    sfl::ScopedLock lock(historyItemsMutex_);
+    std::lock_guard<std::mutex> lock(historyItemsMutex_);
     DEBUG("Saving history in XDG directory: %s", path_.c_str());
     ensurePath();
     std::sort(items_.begin(), items_.end());
@@ -93,7 +84,7 @@ bool History::save()
 
 void History::addEntry(const HistoryItem &item, int oldest)
 {
-    sfl::ScopedLock lock(historyItemsMutex_);
+    std::lock_guard<std::mutex> lock(historyItemsMutex_);
     if (item.hasPeerNumber() and item.youngerThan(oldest))
         items_.push_back(item);
 }
@@ -126,7 +117,7 @@ void History::ensurePath()
 
 vector<map<string, string> > History::getSerialized()
 {
-    sfl::ScopedLock lock(historyItemsMutex_);
+    std::lock_guard<std::mutex> lock(historyItemsMutex_);
     vector<map<string, string> > result;
     for (const auto &item : items_)
         result.push_back(item.toMap());
@@ -152,20 +143,20 @@ void History::addCall(Call *call, int limit)
 
 void History::clear()
 {
-    sfl::ScopedLock lock(historyItemsMutex_);
+    std::lock_guard<std::mutex> lock(historyItemsMutex_);
     items_.clear();
 }
 
 bool History::empty()
 {
-    sfl::ScopedLock lock(historyItemsMutex_);
+    std::lock_guard<std::mutex> lock(historyItemsMutex_);
     return items_.empty();
 }
 
 
 size_t History::numberOfItems()
 {
-    sfl::ScopedLock lock(historyItemsMutex_);
+    std::lock_guard<std::mutex> lock(historyItemsMutex_);
     return items_.size();
 }
 
