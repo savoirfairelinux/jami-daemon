@@ -32,7 +32,6 @@
 #include "manager.h"
 #include "audio/mainbuffer.h"
 #include "history/historyitem.h"
-#include "scoped_lock.h"
 
 Call::Call(const std::string& id, Call::CallType type, const std::string &accountID)
     : callMutex_()
@@ -51,40 +50,37 @@ Call::Call(const std::string& id, Call::CallType type, const std::string &accoun
     , timestamp_start_(0)
     , timestamp_stop_(0)
 {
-    pthread_mutex_init(&callMutex_, NULL);
     time(&timestamp_start_);
 }
 
 Call::~Call()
-{
-    pthread_mutex_destroy(&callMutex_);
-}
+{}
 
 void
 Call::setConnectionState(ConnectionState state)
 {
-    sfl::ScopedLock m(callMutex_);
+    std::lock_guard<std::mutex> lock(callMutex_);
     connectionState_ = state;
 }
 
 Call::ConnectionState
 Call::getConnectionState()
 {
-    sfl::ScopedLock m(callMutex_);
+    std::lock_guard<std::mutex> lock(callMutex_);
     return connectionState_;
 }
 
 void
 Call::setState(CallState state)
 {
-    sfl::ScopedLock m(callMutex_);
+    std::lock_guard<std::mutex> lock(callMutex_);
     callState_ = state;
 }
 
 Call::CallState
 Call::getState()
 {
-    sfl::ScopedLock m(callMutex_);
+    std::lock_guard<std::mutex> lock(callMutex_);
     return callState_;
 }
 
@@ -129,21 +125,21 @@ Call::getStateStr()
 std::string
 Call::getLocalIp()
 {
-    sfl::ScopedLock m(callMutex_);
+    std::lock_guard<std::mutex> lock(callMutex_);
     return localIPAddress_;
 }
 
 unsigned int
 Call::getLocalAudioPort()
 {
-    sfl::ScopedLock m(callMutex_);
+    std::lock_guard<std::mutex> lock(callMutex_);
     return localAudioPort_;
 }
 
 unsigned int
 Call::getLocalVideoPort()
 {
-    sfl::ScopedLock m(callMutex_);
+    std::lock_guard<std::mutex> lock(callMutex_);
     return localVideoPort_;
 }
 
