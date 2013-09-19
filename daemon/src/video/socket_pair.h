@@ -35,7 +35,7 @@
 #include "video_base.h"
 
 #include <sys/socket.h>
-#include <pthread.h>
+#include <mutex>
 #include <stdint.h>
 
 namespace sfl_video {
@@ -55,7 +55,7 @@ namespace sfl_video {
 	private:
 		NON_COPYABLE(SocketPair);
 
-        pthread_mutex_t rtcpWriteMutex_;
+        std::mutex rtcpWriteMutex_;
 
         int rtpHandle_;
         int rtcpHandle_;

@@ -32,7 +32,6 @@
 
 #include "libav_deps.h"
 #include "socket_pair.h"
-#include "scoped_lock.h"
 #include "libav_utils.h"
 #include "logger.h"
 
@@ -144,7 +143,6 @@ SocketPair::SocketPair(const char *uri, int localPort) :
            rtcpDestAddrLen_(),
            interrupted_(false)
 {
-    pthread_mutex_init(&rtcpWriteMutex_, NULL);
     openSockets(uri, localPort);
 }
 
@@ -152,9 +150,6 @@ SocketPair::~SocketPair()
 {
     interrupted_ = true;
     closeSockets();
-
-    // destroy in reverse order
-    pthread_mutex_destroy(&rtcpWriteMutex_);
 }
 
 void SocketPair::interrupt()
@@ -290,7 +285,7 @@ int SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
 
     if (RTP_PT_IS_RTCP(buf[1])) {
         /* RTCP payload type */
-        sfl::ScopedLock lock(context->rtcpWriteMutex_);
+        std::lock_guard<std::mutex> lock(context->rtcpWriteMutex_);
         ret = ff_network_wait_fd(context->rtcpHandle_);
         if (ret < 0)
             return ret;
