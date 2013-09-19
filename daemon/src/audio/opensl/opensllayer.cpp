@@ -747,7 +747,7 @@ bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
 bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t samplesToGet)
 {
     // Urgent data (dtmf, incoming call signal) come first.
-    samplesToGet = std::min(samplesToGet, buffer.frames());
+    samplesToGet = std::min(samplesToGet, BUFFER_SIZE);
     buffer.resize(samplesToGet);
     urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
     buffer.applyGain(playbackGain_);
@@ -776,7 +776,7 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samples
         AudioBuffer out(buffer, false);
         out.setSampleRate(sampleRate_);
         converter_.resample(buffer, out);
-        buffer = std::move(out);
+        buffer = out;
     }
 
     return true;

@@ -48,7 +48,7 @@ class AudioStream;
 /**
  * Convenience structure to hold PulseAudio device propreties such as supported channel number etc.
  */
-typedef struct PaDeviceInfos {
+typedef struct {
         uint32_t index;
         std::string name;
         pa_sample_spec sample_spec;
@@ -150,17 +150,17 @@ class PulseLayer : public AudioLayer {
         AudioStream* ringtone_;
 
         /**
-         * Contain the list of playback devices
+         * Contains the list of playback devices
          */
         std::vector<PaDeviceInfos> sinkList_;
 
         /**
-         * Contain the list of capture devices
+         * Contains the list of capture devices
          */
         std::vector<PaDeviceInfos> sourceList_;
 
         /**
-         * Returns a pointer to the PaEndpointInfos with the given name in sourceList_, or NULL if not found.
+         * Returns a pointer to the PaEndpointInfos with the given name in sourceList_, or nullptr if not found.
          */
         const PaDeviceInfos* getDeviceInfos(const std::vector<PaDeviceInfos>&, const std::string& name) const;
 

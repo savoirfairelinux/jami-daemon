@@ -109,7 +109,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 
     pa_context_set_state_callback(context_, context_state_callback, this);
 
-    if (pa_context_connect(context_, NULL , PA_CONTEXT_NOAUTOSPAWN , NULL) < 0)
+    if (pa_context_connect(context_, nullptr , PA_CONTEXT_NOAUTOSPAWN , nullptr) < 0)
         throw std::runtime_error("Could not connect pulseaudio context to the server");
 
     pa_threaded_mainloop_lock(mainloop_);
@@ -165,7 +165,7 @@ void PulseLayer::context_state_callback(pa_context* c, void *user_data)
         case PA_CONTEXT_READY:
             DEBUG("Connection to PulseAudio server established");
             pa_threaded_mainloop_signal(pulse->mainloop_, 0);
-            pa_context_subscribe(c, mask, NULL, pulse);
+            pa_context_subscribe(c, mask, nullptr, pulse);
             pa_context_set_subscribe_callback(c, context_changed_callback, pulse);
             pulse->updateSinkList();
             pulse->updateSourceList();
@@ -190,7 +190,7 @@ void PulseLayer::updateSinkList()
     enumeratingSinks_ = true;
     pa_operation *op = pa_context_get_sink_info_list(context_, sink_input_info_callback, this);
 
-    if (op != NULL)
+    if (op != nullptr)
         pa_operation_unref(op);
 }
 
@@ -200,7 +200,7 @@ void PulseLayer::updateSourceList()
     enumeratingSources_ = true;
     pa_operation *op = pa_context_get_source_info_list(context_, source_input_info_callback, this);
 
-    if (op != NULL)
+    if (op != nullptr)
         pa_operation_unref(op);
 }
 
@@ -257,7 +257,7 @@ const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>
 {
     std::vector<PaDeviceInfos>::const_iterator dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::nameComparator(name));
 
-    if (dev_info == list.end()) return NULL;
+    if (dev_info == list.end()) return nullptr;
 
     return &(*dev_info);
 }
@@ -304,7 +304,7 @@ void PulseLayer::createStreams(pa_context* c)
     // Create playback stream
     const PaDeviceInfos* dev_infos = getDeviceInfos(sinkList_, playbackDevice);
 
-    if (dev_infos == NULL) {
+    if (dev_infos == nullptr) {
         dev_infos = &sinkList_[0];
         DEBUG("Prefered playback device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
@@ -317,7 +317,7 @@ void PulseLayer::createStreams(pa_context* c)
     // Create capture stream
     dev_infos = getDeviceInfos(sourceList_, captureDevice);
 
-    if (dev_infos == NULL) {
+    if (dev_infos == nullptr) {
         dev_infos = &sourceList_[0];
         DEBUG("Prefered capture device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
@@ -330,7 +330,7 @@ void PulseLayer::createStreams(pa_context* c)
     // Create ringtone stream
     dev_infos = getDeviceInfos(sinkList_, ringtoneDevice);
 
-    if (dev_infos == NULL) {
+    if (dev_infos == nullptr) {
         dev_infos = &sinkList_[0];
         DEBUG("Prefered ringtone device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
@@ -383,10 +383,10 @@ PulseLayer::stopStream()
     pa_threaded_mainloop_lock(mainloop_);
 
     if (playback_)
-        pa_stream_flush(playback_->pulseStream(), NULL, NULL);
+        pa_stream_flush(playback_->pulseStream(), nullptr, nullptr);
 
     if (record_)
-        pa_stream_flush(record_->pulseStream(), NULL, NULL);
+        pa_stream_flush(record_->pulseStream(), nullptr, nullptr);
 
     pa_threaded_mainloop_unlock(mainloop_);
 
@@ -433,7 +433,7 @@ void PulseLayer::writeToSpeaker()
         urgentRingBuffer_.get(linearbuff, MainBuffer::DEFAULT_ID); // retrive only the first sample_spec->channels channels
         linearbuff.applyGain(playbackGain_);
         linearbuff.interleave(data);
-        pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
+        pa_stream_write(s, data, urgentBytes, nullptr, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of samples)
         Manager::instance().getMainBuffer().discard(urgentSamples, MainBuffer::DEFAULT_ID);
         return;
@@ -449,7 +449,7 @@ void PulseLayer::writeToSpeaker()
             AudioBuffer linearbuff(writableSamples, n_channels);
             toneToPlay->getNext(linearbuff, playbackGain_); // retrive only n_channels
             linearbuff.interleave(data);
-            pa_stream_write(s, data, writableBytes, NULL, 0, PA_SEEK_RELATIVE);
+            pa_stream_write(s, data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
         }
 
         return;
@@ -462,7 +462,7 @@ void PulseLayer::writeToSpeaker()
     if (availSamples == 0) {
         pa_stream_begin_write(s, (void**)&data, &writableBytes);
         memset(data, 0, writableBytes);
-        pa_stream_write(s, data, writableBytes, NULL, 0, PA_SEEK_RELATIVE);
+        pa_stream_write(s, data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
         return;
     }
 
@@ -493,11 +493,11 @@ void PulseLayer::writeToSpeaker()
         converter_.resample(linearbuff, rsmpl_out);
         rsmpl_out.applyGain(playbackGain_);
         rsmpl_out.interleave(data);
-        pa_stream_write(s, data, resampledBytes, NULL, 0, PA_SEEK_RELATIVE);
+        pa_stream_write(s, data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);
     } else {
         linearbuff.applyGain(playbackGain_);
         linearbuff.interleave(data);
-        pa_stream_write(s, data, resampledBytes, NULL, 0, PA_SEEK_RELATIVE);
+        pa_stream_write(s, data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);
     }
 }
 
@@ -506,7 +506,7 @@ void PulseLayer::readFromMic()
     if (!record_ or !record_->isReady())
         return;
 
-    const char *data = NULL;
+    const char *data = nullptr;
     size_t bytes;
 
     const size_t sample_size = record_->sampleSize();
@@ -583,7 +583,7 @@ void PulseLayer::ringtoneToSpeaker()
         memset(data, 0, bytes);
     }
 
-    pa_stream_write(s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
+    pa_stream_write(s, data, bytes, nullptr, 0, PA_SEEK_RELATIVE);
 }
 
 void
@@ -604,7 +604,7 @@ PulseLayer::context_changed_callback(pa_context* c,
                     context->sinkList_.clear();
                     op = pa_context_get_sink_info_list(c, sink_input_info_callback, userdata);
 
-                    if (op != NULL)
+                    if (op != nullptr)
                         pa_operation_unref(op);
 
                 default:
@@ -621,7 +621,7 @@ PulseLayer::context_changed_callback(pa_context* c,
                     context->sourceList_.clear();
                     op = pa_context_get_source_info_list(c, source_input_info_callback, userdata);
 
-                    if (op != NULL)
+                    if (op != nullptr)
                         pa_operation_unref(op);
 
                 default:
