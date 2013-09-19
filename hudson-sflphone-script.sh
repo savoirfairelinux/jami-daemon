@@ -151,7 +151,7 @@ function build_gnome {
 
     # Compile the plugins
     pushd plugins
-    make distclean
+    #make distclean
     ./autogen.sh || exit 1
     ./configure --prefix=/usr
     make -j
@@ -159,7 +159,7 @@ function build_gnome {
 
     # Compile the client
     pushd gnome
-    make distclean
+    #make distclean
     ./autogen.sh || exit 1
     ./configure --prefix=/usr
     make clean
