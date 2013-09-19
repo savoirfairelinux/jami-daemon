@@ -34,7 +34,7 @@
 #ifndef AUDIO_LAYER_H_
 #define AUDIO_LAYER_H_
 
-#include <pthread.h>
+#include <mutex>
 #include <sys/time.h>
 #include <vector>
 #include "ringbuffer.h"
@@ -80,7 +80,7 @@ class AudioLayer {
         };
 
         AudioLayer();
-        virtual ~AudioLayer();
+        virtual ~AudioLayer() = default;
 
         virtual std::vector<std::string> getCaptureDeviceList() const = 0;
         virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
@@ -216,7 +216,7 @@ class AudioLayer {
         /**
          * Lock for the entire audio layer
          */
-        pthread_mutex_t mutex_;
+        std::mutex mutex_;
 
         /**
          * Remove audio offset that can be introduced by certain cheap audio device
