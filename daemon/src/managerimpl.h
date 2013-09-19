@@ -44,7 +44,7 @@
 #include <set>
 #include <map>
 #include <memory>
-#include <pthread.h>
+#include <mutex>
 
 #include "client/client.h"
 
@@ -843,7 +843,7 @@ class ManagerImpl {
         std::string currentCallId_;
 
         /** Protected current call access */
-        pthread_mutex_t currentCallMutex_;
+        std::mutex currentCallMutex_;
 
         /** Audio layer */
         AudioLayer* audiodriver_;
@@ -854,7 +854,7 @@ class ManagerImpl {
         /////////////////////
         // Protected by Mutex
         /////////////////////
-        pthread_mutex_t toneMutex_;
+        std::mutex toneMutex_;
         std::unique_ptr<TelephoneTone> telephoneTone_;
         std::unique_ptr<AudioFile> audiofile_;
 
@@ -866,7 +866,7 @@ class ManagerImpl {
         /**
          * Mutex used to protect audio layer
          */
-        pthread_mutex_t audioLayerMutex_;
+        std::mutex audioLayerMutex_;
 
         /**
          * Waiting Call Vectors
@@ -876,7 +876,7 @@ class ManagerImpl {
         /**
          * Protect waiting call list, access by many voip/audio threads
          */
-        pthread_mutex_t waitingCallsMutex_;
+        std::mutex waitingCallsMutex_;
 
         /**
          * Add incoming callid to the waiting list

@@ -48,7 +48,7 @@ class AudioStream;
 /**
  * Convenience structure to hold PulseAudio device propreties such as supported channel number etc.
  */
-typedef struct {
+typedef struct PaDeviceInfos {
         uint32_t index;
         std::string name;
         pa_sample_spec sample_spec;
