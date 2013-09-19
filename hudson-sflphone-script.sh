@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 #
 #  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
 #
