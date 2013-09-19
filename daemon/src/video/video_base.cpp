@@ -158,38 +158,20 @@ int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
         return -1;
     }
 
-    uint8_t *src_data, *dst_data;
-	ssize_t dst_stride;
+    auto copy_plane = [&] (unsigned idx) {
+        const unsigned divisor = idx == 0 ? 1 : 2;
+        ssize_t dst_stride = frame_->linesize[idx];
+        uint8_t *src_data = src_frame->data[idx];
+        uint8_t *dst_data = frame_->data[idx] + yoff / divisor * dst_stride + xoff / divisor;
+        for (unsigned i = 0; i < src_frame->height / divisor; i++) {
+            memcpy(dst_data, src_data, src_frame->linesize[idx]);
+            src_data += src_frame->linesize[idx];
+            dst_data += dst_stride;
+        }
+    };
 
-    // Y
-    dst_stride = frame_->linesize[0];
-	src_data = src_frame->data[0];
-	dst_data = frame_->data[0] + yoff * dst_stride + xoff;
-	for (int i = 0; i < src_frame->height; i++) {
-		memcpy(dst_data, src_data, src_frame->linesize[0]);
-		src_data += src_frame->linesize[0];
-		dst_data += dst_stride;
-	}
-
-    // U
-	dst_stride = frame_->linesize[1];
-	src_data = src_frame->data[1];
-	dst_data = frame_->data[1] + yoff / 2 * dst_stride + xoff / 2;
-	for (int i = 0; i < src_frame->height / 2; i++) {
-		memcpy(dst_data, src_data, src_frame->linesize[1]);
-		src_data += src_frame->linesize[1];
-		dst_data += dst_stride;
-	}
-
-    // V
-	dst_stride = frame_->linesize[2];
-	src_data = src_frame->data[2];
-	dst_data = frame_->data[2] + yoff / 2 * dst_stride + xoff / 2;
-	for (int i = 0; i < src_frame->height / 2; i++) {
-		memcpy(dst_data, src_data, src_frame->linesize[2]);
-		src_data += src_frame->linesize[2];
-		dst_data += dst_stride;
-	}
+    for (unsigned plane = 0; plane < 3; ++plane)
+        copy_plane(plane);
 
     return 0;
 }
