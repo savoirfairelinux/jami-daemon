@@ -138,16 +138,16 @@ function build_gnome {
     #make distclean
 
     # Compile pjproject first
-    pushd libs
-    ./compile_pjsip.sh
-    popd
+    #pushd libs
+    #./compile_pjsip.sh
+    #popd
 
     # Compile daemon
-    ./configure --prefix=/usr
-    make clean
-    make -j
-    ./src/sflphoned &
-    popd
+    #./configure --prefix=/usr
+    #make clean
+    #make -j
+    #./src/sflphoned &
+    #popd
 
     # Compile the plugins
     pushd plugins
