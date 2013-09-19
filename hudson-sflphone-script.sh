@@ -107,7 +107,6 @@ function build_daemon {
     if [ $CODE_ANALYSIS == 1 ]; then
         run_code_analysis
     fi
-    # make distclean
 
     ./autogen.sh || exit 1
     # Compile pjproject first
@@ -127,31 +126,8 @@ function build_daemon {
 }
 
 function build_gnome {
-    #pushd daemon
-    # Check if program is running
-    #if [ "$(pidof sflphoned)"]
-    #then
-    #  killall sflphoned
-    #else
-    #  echo "sflphoned not running"
-    #fi
-    #make distclean
-
-    # Compile pjproject first
-    #pushd libs
-    #./compile_pjsip.sh
-    #popd
-
-    # Compile daemon
-    #./configure --prefix=/usr
-    #make clean
-    #make -j
-    #./src/sflphoned &
-    #popd
-
     # Compile the plugins
     pushd plugins
-    #make distclean
     ./autogen.sh || exit 1
     ./configure --prefix=/usr
     make -j
@@ -159,7 +135,6 @@ function build_gnome {
 
     # Compile the client
     pushd gnome
-    #make distclean
     ./autogen.sh || exit 1
     ./configure --prefix=/usr
     make clean
