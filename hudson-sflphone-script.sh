@@ -128,8 +128,14 @@ function build_daemon {
 
 function build_gnome {
     pushd daemon
-    killall sflphoned
-    make distclean
+    # Check if program is running
+    if [ "$(pidof sflphoned)"]
+    then
+      killall sflphoned
+    else
+      echo "sflphoned not running"
+    fi
+    #make distclean
 
     # Compile pjproject first
     pushd libs
