@@ -41,7 +41,7 @@
 #endif
 
 #include <map>
-#include <pthread.h>
+#include <mutex>
 
 #include "pjsip.h"
 #include "pjlib.h"
@@ -313,7 +313,7 @@ class SIPVoIPLink : public VoIPLink {
          */
         AccountMap sipAccountMap_;
 
-        pthread_mutex_t sipCallMapMutex_;
+        std::mutex sipCallMapMutex_;
         SipCallMap sipCallMap_;
 
         /**
@@ -331,7 +331,7 @@ class SIPVoIPLink : public VoIPLink {
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
-        pthread_mutex_t keyframeRequestsMutex_;
+        std::mutex keyframeRequestsMutex_;
         std::queue<std::string> keyframeRequests_;
 #endif
 
