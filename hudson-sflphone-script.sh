@@ -107,7 +107,7 @@ function build_daemon {
     if [ $CODE_ANALYSIS == 1 ]; then
         run_code_analysis
     fi
-    make distclean
+    # make distclean
 
     ./autogen.sh || exit 1
     # Compile pjproject first
