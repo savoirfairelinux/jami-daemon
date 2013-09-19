@@ -40,7 +40,7 @@
 
 namespace sfl_video {
 
-VideoMixer::VideoMixer(const std::string id) :
+VideoMixer::VideoMixer(const std::string &id) :
     VideoGenerator::VideoGenerator()
     , id_(id)
     , width_(0)
