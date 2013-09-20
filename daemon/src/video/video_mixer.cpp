@@ -69,19 +69,19 @@ VideoMixer::~VideoMixer()
 
 void VideoMixer::attached(Observable<VideoFrameSP>* ob)
 {
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::lock_guard<std::mutex> lk(mutex_);
     sources_.push_back(ob);
 }
 
 void VideoMixer::detached(Observable<VideoFrameSP>* ob)
 {
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::lock_guard<std::mutex> lk(mutex_);
     sources_.remove(ob);
 }
 
 void VideoMixer::update(Observable<VideoFrameSP>* ob, VideoFrameSP& frame_p)
 {
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::lock_guard<std::mutex> lk(mutex_);
     int i=0;
     for (auto x : sources_) {
         if (x == ob) break;
@@ -132,7 +132,7 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
 
 void VideoMixer::setDimensions(int width, int height)
 {
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::lock_guard<std::mutex> lk(mutex_);
     width_ = width;
     height_ = height;
 
