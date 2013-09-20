@@ -36,6 +36,7 @@
 #include <libudev.h>
 
 #include "video_v4l2.h"
+#include <mutex>
 #include "noncopyable.h"
 
 namespace sfl_video {
@@ -64,7 +65,7 @@ class VideoV4l2ListThread {
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices_;
         pthread_t thread_;
-        pthread_mutex_t mutex_;
+        std::mutex mutex_;
 
         udev *udev_;
         udev_monitor *udev_mon_;

@@ -40,7 +40,7 @@
  */
 
 #define NON_COPYABLE(ClassName) \
-    ClassName(const ClassName&); \
-    ClassName& operator=(const ClassName&)
+    ClassName(const ClassName&) = delete; \
+    ClassName& operator=(const ClassName&) = delete
 
 #endif  // NON_COPYABLE_H_

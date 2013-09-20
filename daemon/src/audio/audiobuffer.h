@@ -54,10 +54,25 @@ class AudioBuffer {
          * If copy_content is set to true, the other buffer content is also copied.
          */
         AudioBuffer(const AudioBuffer& other, bool copy_content = false);
+        
+        /**
+         * Move contructor
+         */
+        AudioBuffer(AudioBuffer&& other) : sampleRate_(other.sampleRate_), samples_( std::move(other.samples_) ) {};
+        
+        /**
+         * Copy operator
+         */
+        AudioBuffer& operator=(const AudioBuffer& other);
+        
+        /**
+         * Move operator
+         */
+        AudioBuffer& operator=(AudioBuffer&& other);
 
         void reset() {
-            for (std::vector<std::vector<SFLAudioSample> >::iterator i = samples_.begin(); i != samples_.end(); ++i)
-                std::fill(i->begin(), i->end(), 0);
+            for(auto& c : samples_)
+                std::fill(c.begin(), c.end(), 0);
         }
 
         inline size_t size() {
@@ -124,7 +139,7 @@ class AudioBuffer {
 
         /**
          * Return the data (audio samples) for a given channel number.
-         * Channel data can be modified but size of individual channel vectors should not be changed manually.
+         * Channel data can be modified but size of individual channel vectors should not be changed by the user.
          */
         std::vector<SFLAudioSample> *getChannel(unsigned chan);
 
@@ -137,7 +152,7 @@ class AudioBuffer {
 
         /**
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
-         * The out buffer must be at least large by capacity()*sizeof(SFLAudioSample) bytes.
+         * The out buffer must be at least of size capacity()*sizeof(SFLAudioSample) bytes.
          *
          * @returns Number of samples writen.
          */
@@ -145,7 +160,7 @@ class AudioBuffer {
 
         /**
          * Write interleaved multichannel data to the out buffer, while samples are converted to float.
-         * The buffer must be at least of size getChannelNum()*frames()*sizeof(float).
+         * The out buffer must be at least of size capacity()*sizeof(float) bytes.
          *
          * @returns Number of samples writen.
          */
@@ -164,9 +179,9 @@ class AudioBuffer {
         void applyGain(double gain);
 
         /**
-         * Mix elements of the other buffer within this buffer (in-place simple addition).
-         * If other.channels() is higher than this.channels(), only the first this.channels() channels are imported.
-         * If other.channels() is lower than this.channels(), behavior depends on upmix.
+         * Mix samples from the other buffer within this buffer (in-place simple addition).
+         * If the other buffer has more channels than this one, only the first this.channels() channels are imported.
+         * If the other buffer has less channels than this one, behavior depends on upmix.
          * Sample rate is not considered by this function.
          *
          * TODO: some kind of check for overflow/saturation.
@@ -180,11 +195,10 @@ class AudioBuffer {
         size_t mix(const AudioBuffer& other, bool upmix = true);
 
         /**
-         * Copy sample_num samples from in (from sample pos_in) to this buffer (at sample pos_out).
+         * Copy sample_num samples from in (from sample sample pos_in) to this buffer (at sample sample pos_out).
          * If sample_num is -1 (the default), the entire in buffer is copied.
          *
-         * The number of channels is changed to match the in channel number.
-         * Buffer sample number is also increased if required to hold the new requested samples.
+         * Buffer sample number is increased if required to hold the new requested samples.
          */
         size_t copy(AudioBuffer& in, int sample_num = -1, size_t pos_in = 0, size_t pos_out = 0, bool upmix = true);
 

@@ -33,7 +33,6 @@
 #include "audiolayer.h"
 #include "audio/dcblocker.h"
 #include "manager.h"
-#include "scoped_lock.h"
 
 AudioLayer::AudioLayer()
     : captureGain_(1.0)
@@ -47,31 +46,28 @@ AudioLayer::AudioLayer()
     , converter_(sampleRate_)
     , lastNotificationTime_(0)
 {
-    pthread_mutex_init(&mutex_, NULL);
     urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
 }
 
 AudioLayer::~AudioLayer()
-{
-    pthread_mutex_destroy(&mutex_);
-}
+{}
 
 void AudioLayer::flushMain()
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     // should pass call id
     Manager::instance().getMainBuffer().flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent()
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     urgentRingBuffer_.flushAll();
 }
 
 void AudioLayer::putUrgent(AudioBuffer& buffer)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     urgentRingBuffer_.put(buffer);
 }
 

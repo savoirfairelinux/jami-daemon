@@ -49,7 +49,7 @@ class VideoMixer :
         public VideoFramePassiveReader
 {
 public:
-    VideoMixer(const std::string id_);
+    VideoMixer(const std::string &id);
     virtual ~VideoMixer();
 
     void setDimensions(int width, int height);

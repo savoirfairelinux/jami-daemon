@@ -51,6 +51,18 @@ AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false 
                 std::vector<std::vector<SFLAudioSample> >(other.samples_.size(), std::vector<SFLAudioSample>(other.frames())))
 {}
 
+AudioBuffer& AudioBuffer::operator=(const AudioBuffer& other) {
+    samples_ = other.samples_;
+    sampleRate_ = other.sampleRate_;
+    return *this;
+}
+        
+AudioBuffer& AudioBuffer::operator=(AudioBuffer&& other) {
+    samples_ = std::move( other.samples_ );
+    sampleRate_ = other.sampleRate_;
+    return *this;
+}
+
 int AudioBuffer::getSampleRate() const
 {
     return sampleRate_;
@@ -114,17 +126,17 @@ void AudioBuffer::applyGain(double gain)
 
 size_t AudioBuffer::interleave(SFLAudioSample* out) const
 {
-    for (unsigned i = 0; i < frames(); i++)
-        for (unsigned j = 0; j < samples_.size(); j++)
+    for (unsigned i=0, f=frames(), c=channels(); i < f; ++i)
+        for (unsigned j = 0; j < c; ++j)
             *out++ = samples_[j][i];
 
-    return frames() * samples_.size();
+    return frames() * channels();
 }
 
 size_t AudioBuffer::interleaveFloat(float* out) const
 {
-    for (unsigned i = 0; i < frames(); i++)
-        for (unsigned j = 0; j < samples_.size(); j++)
+    for (unsigned i=0, f=frames(), c=channels(); i < f; i++)
+        for (unsigned j = 0; j < c; j++)
             *out++ = (float) samples_[j][i] * .000030517578125f;
 
     return frames() * samples_.size();
@@ -139,8 +151,8 @@ void AudioBuffer::deinterleave(const SFLAudioSample* in, size_t sample_num, unsi
     setChannelNum(channel_num);
     resize(sample_num);
 
-    for (unsigned i = 0; i < frames(); i++)
-        for (unsigned j = 0; j < samples_.size(); j++)
+    for (unsigned i=0, f=frames(), c=channels(); i < f; i++)
+        for (unsigned j = 0; j < c; j++)
             samples_[j][i] = *in++;
 }
 

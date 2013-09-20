@@ -57,7 +57,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , stream_(args_["receiving_sdp"])
     , sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this)
     , demuxContext_()
-    , sink_()
+    , sink_(id+"_RX")
     , requestKeyFrameCallback_(0)
 {}
 
@@ -139,6 +139,8 @@ bool VideoReceiveThread::setup()
         dstHeight_ = videoDecoder_->getHeight();
     }
 
+    EXIT_IF_FAIL(sink_.start(), "RX: sink startup failed");
+
     auto conf = Manager::instance().getConferenceFromCallID(id_);
     if (!conf)
         exitConference();
@@ -153,13 +155,13 @@ void VideoReceiveThread::cleanup()
 {
     if (detach(&sink_))
         Manager::instance().getVideoControls()->stoppedDecoding(id_+"RX", sink_.openedName());
+    sink_.stop();
 
     if (videoDecoder_)
         delete videoDecoder_;
 
     if (demuxContext_)
         delete demuxContext_;
-
 }
 
 // This callback is used by libav internally to break out of blocking calls
@@ -226,7 +228,7 @@ void VideoReceiveThread::enterConference()
 
     if (detach(&sink_)) {
         Manager::instance().getVideoControls()->stoppedDecoding(id_+"RX", sink_.openedName());
-        sink_.stop();
+        DEBUG("RX: shm sink <%s> detached", sink_.openedName().c_str());
     }
 }
 
@@ -235,8 +237,7 @@ void VideoReceiveThread::exitConference()
     if (!isRunning())
         return;
 
-    if (sink_.openedName().empty()) {
-        EXIT_IF_FAIL(sink_.start(), "RX: sink startup failed");
+    if (dstWidth_ > 0 && dstHeight_ > 0) {
         if (attach(&sink_)) {
             Manager::instance().getVideoControls()->startedDecoding(id_+"RX", sink_.openedName(), dstWidth_, dstHeight_);
             DEBUG("RX: shm sink <%s> started: size = %dx%d",

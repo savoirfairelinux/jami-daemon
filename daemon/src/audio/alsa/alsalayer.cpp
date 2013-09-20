@@ -770,7 +770,6 @@ void AlsaLayer::playback(int maxSamples)
         bytesToGet = std::min(maxNbBytesToGet, bytesToGet);
 
         const size_t samplesToGet = bytesToGet / sizeof(SFLAudioSample);
-        //std::vector<SFLAudioSample> out(samplesToGet, 0);
         AudioBuffer out(samplesToGet, 1, mainBufferSampleRate);
 
         Manager::instance().getMainBuffer().getData(out, MainBuffer::DEFAULT_ID);

@@ -36,7 +36,7 @@
 #include "config.h"
 #endif
 
-#include <pthread.h>
+#include <mutex>
 #include "account.h"
 #include "voiplink.h"
 #include "audio/audiobuffer.h"
@@ -210,7 +210,7 @@ class IAXVoIPLink : public VoIPLink {
          */
         static AccountMap iaxAccountMap_;
 
-        static pthread_mutex_t iaxCallMapMutex_;
+        static std::mutex iaxCallMapMutex_;
         static IAXCallMap iaxCallMap_;
 
         /*
@@ -284,7 +284,7 @@ class IAXVoIPLink : public VoIPLink {
 
         /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
          * iax_stuff inside this class. */
-        pthread_mutex_t mutexIAX_;
+        std::mutex mutexIAX_;
 
         /** encoder/decoder/resampler buffers */
         AudioBuffer decData_;

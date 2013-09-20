@@ -34,7 +34,7 @@
 #define HISTORY_
 
 #include "historyitem.h"
-#include <pthread.h>
+#include <mutex>
 #include <vector>
 
 class Call;
@@ -45,8 +45,6 @@ class History {
 
     public:
         History();
-        ~History();
-
         /** Load history from file */
         bool load(int limit);
 
@@ -69,7 +67,7 @@ class History {
         void setPath(const std::string &path);
     private:
         /* Mutex to protect the history items */
-        pthread_mutex_t historyItemsMutex_;
+        std::mutex historyItemsMutex_;
 
         /* If no path has been set, this will initialize path to a
          * system-dependent location */

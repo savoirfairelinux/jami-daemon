@@ -1422,7 +1422,7 @@ show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
                         GTK_STOCK_CANCEL,
                         GTK_RESPONSE_CANCEL,
                         GTK_STOCK_APPLY,
-                        GTK_RESPONSE_ACCEPT,
+                        GTK_RESPONSE_APPLY,
                         NULL);
 
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
@@ -1474,12 +1474,11 @@ show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
     /* Run dialog, this blocks */
     gint response = gtk_dialog_run(GTK_DIALOG(dialog));
 
-    // If anything but "Apply" button is pressed
-    if (response != GTK_RESPONSE_ACCEPT) {
+    if (response == GTK_RESPONSE_APPLY) {
+        return dialog;
+    } else {
         gtk_widget_destroy(dialog);
         return NULL;
-    } else {
-        return dialog;
     }
 }
 

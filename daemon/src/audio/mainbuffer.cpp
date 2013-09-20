@@ -31,17 +31,16 @@
 #include "mainbuffer.h"
 #include "ringbuffer.h"
 #include "sfl_types.h" // for SIZEBUF
-#include <climits>
+#include <limits>
 #include <cstring>
 #include <utility> // for std::pair
-#include "scoped_lock.h"
 #include "logger.h"
 
 const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
 MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)
 {
-    pthread_mutex_init(&mutex_, NULL);
+    //pthread_mutex_init(&mutex_, NULL);
 }
 
 MainBuffer::~MainBuffer()
@@ -50,7 +49,7 @@ MainBuffer::~MainBuffer()
     for (auto &item : ringBufferMap_)
         delete item.second;
 
-    pthread_mutex_destroy(&mutex_);
+    //pthread_mutex_destroy(&mutex_);
 }
 
 void MainBuffer::setInternalSamplingRate(int sr)
@@ -139,7 +138,7 @@ void MainBuffer::removeRingBuffer(const std::string &call_id)
 
 void MainBuffer::bindCallID(const std::string & call_id1, const std::string & call_id2)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     createRingBuffer(call_id1);
     createCallIDSet(call_id1);
@@ -154,7 +153,7 @@ void MainBuffer::bindCallID(const std::string & call_id1, const std::string & ca
 
 void MainBuffer::bindHalfDuplexOut(const std::string & process_id, const std::string & call_id)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     // This method is used only for active calls, if this call does not exist, do nothing
     if (!getRingBuffer(call_id))
@@ -167,7 +166,7 @@ void MainBuffer::bindHalfDuplexOut(const std::string & process_id, const std::st
 
 void MainBuffer::unBindCallID(const std::string & call_id1, const std::string & call_id2)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     removeCallIDfromSet(call_id1, call_id2);
     removeCallIDfromSet(call_id2, call_id1);
@@ -197,7 +196,7 @@ void MainBuffer::unBindCallID(const std::string & call_id1, const std::string & 
 
 void MainBuffer::unBindHalfDuplexOut(const std::string & process_id, const std::string & call_id)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     removeCallIDfromSet(process_id, call_id);
 
@@ -237,7 +236,7 @@ void MainBuffer::unBindAll(const std::string & call_id)
 //void MainBuffer::putData(void *buffer, size_t toCopy, const std::string &call_id)
 void MainBuffer::putData(AudioBuffer& buffer, const std::string &call_id)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
 
@@ -248,7 +247,7 @@ void MainBuffer::putData(AudioBuffer& buffer, const std::string &call_id)
 //size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_id)
 size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -296,7 +295,7 @@ size_t MainBuffer::getDataByID(AudioBuffer& buffer, const std::string & call_id,
 
 size_t MainBuffer::availableForGet(const std::string &call_id)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -313,7 +312,7 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
 
     } else {
 
-        size_t availableSamples = INT_MAX;
+        size_t availableSamples = std::numeric_limits<int>::max();
 
         for (auto &i : *callid_set) {
             const size_t nbSamples = availableForGetByID(i, call_id);
@@ -322,7 +321,7 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
                 availableSamples = std::min(availableSamples, nbSamples);
         }
 
-        return availableSamples != INT_MAX ? availableSamples : 0;
+        return availableSamples != std::numeric_limits<int>::max() ? availableSamples : 0;
     }
 }
 
@@ -344,7 +343,7 @@ size_t MainBuffer::availableForGetByID(const std::string &call_id,
 
 size_t MainBuffer::discard(size_t toDiscard, const std::string &call_id)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -367,7 +366,7 @@ void MainBuffer::discardByID(size_t toDiscard, const std::string & call_id, cons
 
 void MainBuffer::flush(const std::string & call_id)
 {
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -396,7 +395,7 @@ void MainBuffer::flushAllBuffers()
 void MainBuffer::dumpInfo()
 {
 #if 0
-    sfl::ScopedLock guard(mutex_);
+    std::lock_guard<std::mutex> guard(mutex_);
 
     // print each call and bound call ids
     for (const auto &item_call : callIDMap_) {

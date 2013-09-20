@@ -52,8 +52,8 @@ class AudioPreference;
 
 class OpenSLThread;
 
-#define ANDROID_BUFFER_QUEUE_LENGTH 2
-#define BUFFER_SIZE 5000
+#define ANDROID_BUFFER_QUEUE_LENGTH 2U
+#define BUFFER_SIZE 80U
 
 
 /**
@@ -254,11 +254,9 @@ class OpenSLLayer : public AudioLayer {
          * OpenSL playback buffer
          */
         SLAndroidSimpleBufferQueueItf playbackBufferQueue_;
-
         SLAndroidSimpleBufferQueueItf recorderBufferQueue_;
 
         int playbackBufferIndex_;
-
         int recordBufferIndex_;
 
         AudioBufferStack playbackBufferStack_;

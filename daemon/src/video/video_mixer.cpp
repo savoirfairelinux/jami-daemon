@@ -40,7 +40,7 @@
 
 namespace sfl_video {
 
-VideoMixer::VideoMixer(const std::string id) :
+VideoMixer::VideoMixer(const std::string &id) :
     VideoGenerator::VideoGenerator()
     , id_(id)
     , width_(0)
@@ -135,6 +135,11 @@ void VideoMixer::setDimensions(int width, int height)
     std::unique_lock<std::mutex> lk(mutex_);
     width_ = width;
     height_ = height;
+
+    // cleanup the previous frame to have a nice copy in rendering method
+    VideoFrameSP previous_p=obtainLastFrame();
+    if (previous_p)
+        previous_p->clear();
 
     stop_sink();
     start_sink();
