@@ -192,27 +192,153 @@ void VideoFrame::clear()
     memset(frame_->data[2], 0, frame_->linesize[2]*frame_->height/2);
 }
 
-int VideoFrame::mirror() {
-    if (frame_->format != PIX_FMT_YUV420P) {
-        ERROR("Unsupported pixel format");
-        return -1;
+
+static int flipHorizontal(AVFrame *frame)
+{
+    if (frame->format == AV_PIX_FMT_YUYV422) {
+        uint16_t *inpixel, *outpixel;
+        inpixel = outpixel = (uint16_t *) frame->data[0];
+        const unsigned pixelsPerRow = frame->linesize[0] / sizeof(*inpixel);
+
+        for (int i = 0; i < frame->height; ++i) {
+            // swap pixels first (luma AND chroma)
+            for (int j = 0; j < frame->width / 2; ++j)
+                std::swap(outpixel[j], inpixel[frame->width - 1 - j]);
+
+            // swap Cb with Cr for each pixel
+            uint8_t *inchroma, *outchroma;
+            inchroma = outchroma = ((uint8_t *) inpixel) + 1;
+            for (int j = 0; j < frame->width * 2; j += 4)
+                std::swap(outchroma[j], inchroma[j + 2]);
+
+            inpixel += pixelsPerRow;
+            outpixel += pixelsPerRow;
+        }
+
+        return 0;
     }
 
-    auto flip_lr = [&] (unsigned idx) {
-        const ssize_t stride = frame_->linesize[idx];
-        uint8_t *data = frame_->data[idx];
-        const ssize_t height = idx == 0 ? frame_->height : frame_->height / 2;
-        for (int i = 0; i < height; i++) {
-            for (int j = 0,k = stride - 1; j < stride / 2; j++, k--)
-                std::swap(data[j], data[k]);
-            data += stride;
+    uint8_t *inrow, *outrow;
+    int step, hsub, vsub;
+    const AVPixFmtDescriptor *pix_desc = av_pix_fmt_desc_get((AVPixelFormat) libav_utils::libav_pixel_format(frame->format));
+    int max_step[4];    ///< max pixel step for each plane, expressed as a number of bytes
+    av_image_fill_max_pixsteps(max_step, NULL, pix_desc);
+
+    for (int plane = 0; plane < 4 && frame->data[plane]; plane++) {
+        step = max_step[plane];
+        hsub = (plane == 1 || plane == 2) ? pix_desc->log2_chroma_w : 0;
+        vsub = (plane == 1 || plane == 2) ? pix_desc->log2_chroma_h : 0;
+
+        outrow = frame->data[plane];
+        inrow  = frame->data[plane] + ((frame->width >> hsub) - 1) * step;
+        for (int i = 0; i < frame->height >> vsub; i++) {
+            switch (step) {
+            case 1:
+                for (int j = 0; j < ((frame->width >> hsub) / 2); j++)
+                    std::swap(outrow[j], inrow[-j]);
+            break;
+
+            case 2:
+            {
+                uint16_t *outrow16 = (uint16_t *) outrow;
+                uint16_t * inrow16 = (uint16_t *) inrow;
+                for (int j = 0; j < (frame->width >> hsub) / 2; j++)
+                    std::swap(outrow16[j], inrow16[-j]);
+            }
+            break;
+
+            case 3:
+            {
+                uint8_t *in  =  inrow;
+                uint8_t *out = outrow;
+                for (int j = 0; j < (frame->width >> hsub) / 2; j++, out += 3, in -= 3) {
+                    int32_t vl = AV_RB24(in);
+                    int32_t vr = AV_RB24(out);
+                    AV_WB24(out, vl);
+                    AV_WB24(in, vr);
+                }
+            }
+            break;
+
+            case 4:
+            {
+                uint32_t *outrow32 = (uint32_t *)outrow;
+                uint32_t * inrow32 = (uint32_t *) inrow;
+                for (int j = 0; j < (frame->width >> hsub) / 2; j++)
+                    std::swap(outrow32[j], inrow32[-j]);
+            }
+            break;
+
+            default:
+                for (int j = 0; j < (frame->width >> hsub) / 2; j++) {
+                    uint8_t tmp[j * step];
+                    memcpy(tmp, outrow + j * step, step);
+                    memcpy(outrow + j * step, inrow - j * step, step);
+                    memcpy(inrow - j * step, tmp, step);
+                }
+            }
+
+            inrow  += frame->linesize[plane];
+            outrow += frame->linesize[plane];
         }
-    };
-
-    for (unsigned i = 0; i < 3; ++i)
-        flip_lr(i);
-
+    }
     return 0;
+}
+
+int VideoFrame::mirror()
+{
+    switch (frame_->format) {
+        case AV_PIX_FMT_YUYV422:
+        case AV_PIX_FMT_RGB48BE:
+        case AV_PIX_FMT_RGB48LE:
+        case AV_PIX_FMT_BGR48BE:
+        case AV_PIX_FMT_BGR48LE:
+        case AV_PIX_FMT_ARGB:
+        case AV_PIX_FMT_RGBA:
+        case AV_PIX_FMT_ABGR:
+        case AV_PIX_FMT_BGRA:
+        case AV_PIX_FMT_RGB24:
+        case AV_PIX_FMT_BGR24:
+        case AV_PIX_FMT_RGB565BE:
+        case AV_PIX_FMT_RGB565LE:
+        case AV_PIX_FMT_RGB555BE:
+        case AV_PIX_FMT_RGB555LE:
+        case AV_PIX_FMT_BGR565BE:
+        case AV_PIX_FMT_BGR565LE:
+        case AV_PIX_FMT_BGR555BE:
+        case AV_PIX_FMT_BGR555LE:
+        case AV_PIX_FMT_GRAY16BE:
+        case AV_PIX_FMT_GRAY16LE:
+        case AV_PIX_FMT_YUV420P16LE:
+        case AV_PIX_FMT_YUV420P16BE:
+        case AV_PIX_FMT_YUV422P16LE:
+        case AV_PIX_FMT_YUV422P16BE:
+        case AV_PIX_FMT_YUV444P16LE:
+        case AV_PIX_FMT_YUV444P16BE:
+        case AV_PIX_FMT_YUV444P:
+        case AV_PIX_FMT_YUV422P:
+        case AV_PIX_FMT_YUV420P:
+        case AV_PIX_FMT_YUV411P:
+        case AV_PIX_FMT_YUV410P:
+        case AV_PIX_FMT_YUV440P:
+        case AV_PIX_FMT_YUVJ444P:
+        case AV_PIX_FMT_YUVJ422P:
+        case AV_PIX_FMT_YUVJ420P:
+        case AV_PIX_FMT_YUVJ440P:
+        case AV_PIX_FMT_YUVA420P:
+        case AV_PIX_FMT_RGB8:
+        case AV_PIX_FMT_BGR8:
+        case AV_PIX_FMT_RGB4_BYTE:
+        case AV_PIX_FMT_BGR4_BYTE:
+        case AV_PIX_FMT_PAL8:
+        case AV_PIX_FMT_GRAY8:
+        case AV_PIX_FMT_NONE:
+            break;
+        default:
+            ERROR("Unsupported pixel format");
+            return -1;
+    }
+    return flipHorizontal(frame_);
 }
 
 void VideoFrame::test()
