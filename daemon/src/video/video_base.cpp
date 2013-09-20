@@ -29,6 +29,7 @@
  *  as that of the covered work.
  */
 
+#include <cassert>
 #include "libav_deps.h"
 #include "video_base.h"
 #include "logger.h"
@@ -148,15 +149,13 @@ size_t VideoFrame::getSize(int width, int height, int format)
         (AVPixelFormat) libav_utils::libav_pixel_format(format), width, height);
 }
 
+// Only supports YUV_420P input and output
 int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
 {
     const AVFrame *src_frame = src.get();
 
-    if (src_frame->format != PIX_FMT_YUV420P
-        || frame_->format != PIX_FMT_YUV420P) {
-        ERROR("Unsupported pixel format");
-        return -1;
-    }
+    assert(src_frame->format == PIX_FMT_YUV420P and
+           frame_->format == PIX_FMT_YUV420P);
 
     auto copy_plane = [&] (unsigned idx) {
         const unsigned divisor = idx == 0 ? 1 : 2;
