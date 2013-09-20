@@ -127,7 +127,8 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
     pj_bzero(&status_data_, sizeof(status_data_));
     status_data_.info_cnt = 1;
     status_data_.info[0].basic_open = status;
-    status_data_.info[0].id = CONST_PJ_STR("0"); /* todo: tuplie_id*/
+    std::string tuple_id = std::to_string(rand()%1000);
+    status_data_.info[0].id = CONST_PJ_STR(tuple_id.c_str());
     pj_memcpy(&status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
     /* "contact" field is optionnal */
 }
@@ -301,12 +302,13 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
 
         pjsip_publishc_destroy(param->pubc);
         pres->publish_sess_ = NULL;
+        std::string error = std::to_string(param->code) +" / "+ std::string(param->reason.ptr,param->reason.slen);
 
         if (param->status != PJ_SUCCESS) {
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));
-            ERROR("Client publication (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
-            Manager::instance().getClient()->getPresenceManager()->serverError(errmsg);
+            ERROR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
+            Manager::instance().getClient()->getPresenceManager()->serverError(error,errmsg);
 
         } else if (param->code == 412) {
             /* 412 (Conditional Request Failed)
@@ -314,9 +316,9 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
              */
             WARN("Publish retry.");
             publish(pres);
-        } else {
-            ERROR("Client publication (PUBLISH) failed (%u/%.*s)",
-                  param->code, param->reason.slen, param->reason.ptr);
+        } else if ((param->code == PJSIP_SC_BAD_EVENT) || (param->code == PJSIP_SC_NOT_IMPLEMENTED)){ //489 or 501
+            ERROR("Client (PUBLISH) failed (%s)",error.c_str());
+            Manager::instance().getClient()->getPresenceManager()->serverError(error,"Publish not supported.");
         }
 
     } else {

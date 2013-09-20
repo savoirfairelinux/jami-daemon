@@ -69,33 +69,34 @@ def get_account_list():
 
 def registerSend(arg):
     configurationManager.sendRegister(arg['acc'],arg['enable'])
-    logging.info('REGISTER : '+ str(arg))
+    logging.info('> REGISTER : '+ str(arg))
 
 #-------------------------   Presence functions      ----------------------------
 
-
-
 def presSubscribe(arg):
     presenceManager.subscribeBuddy(arg['acc'],arg['buddy'],arg['flag'])
-    logging.info('SUBSCRIBE to ' + str(arg))
+    logging.info('> SUBSCRIBE to ' + str(arg))
 
 def presSend(arg):
     presenceManager.publish(arg['acc'],arg['status'],arg['note'])
-    logging.info('PUBLISH ' + str(arg))
+    logging.info('> PUBLISH ' + str(arg))
 
 def presSubApprove(arg):
     presenceManager.answerServerRequest(arg['uri'],arg['flag'])
-    logging.info('Approve subscription from' + str(arg))
+    logging.info('> APPROVE subscription from' + str(arg))
 
 def newPresSubCientNotificationHandler(acc, uri, status, activity):
-    logging.info("Received DBus signal : acc:"+str(acc)+", from:"+str(uri)+" (status:" + str(status)+ ", "+ str(activity)+ ").")
+    logging.info("< SIGNAL : acc:"+str(acc)+", from:"+str(uri)+" (status:" + str(status)+ ", "+ str(activity)+ ").")
 
 def newPresSubServerRequestHandler(uri):
-    logging.info("Received a PresenceSubscription request from " +str(uri))
+    logging.info("< SIGNAL : PresenceSubscription request from " +str(uri))
     subscriber_uri = uri
 
 def subcriptionStateChangedHandler(acc,uri,flag):
-    logging.info("Received a new subscriptionState request for acc:"+str(acc)+" uri " +str(uri) + " flag:" + str(flag))
+    logging.info("< SIGNAL : new subscriptionState request for acc:"+str(acc)+" uri " +str(uri) + " flag:" + str(flag))
+
+def serverErrorHandler(error, msg):
+    logging.info("< SIGNAL : error from server:"+str(error)+" . "+str(msg))
 
 def randbool():
     return bool(randint(0,1))
@@ -108,14 +109,14 @@ print 'acc_1 : ' + str(acc_1)
 acc_2 = get_account_list()[1]
 print 'acc_2 : ' + str(acc_2)
 IP2IP = 'IP2IP'
-server_ip = '192.168.50.124'
+server_ip = '192.95.9.63'
 
-host_user = '1001'
+host_user = '6001'
 host_ip = '192.168.50.196'
 host_uri = '<sip:'+host_user+'@'+server_ip+'>'
 
-buddy_uri_1 = '<sip:1001@'+server_ip+'>'
-buddy_uri_2 = '<sip:1002@'+server_ip+'>'
+buddy_uri_1 = '<sip:6001@'+server_ip+'>'
+buddy_uri_2 = '<sip:6002@'+server_ip+'>'
 buddy_ip = host_ip # self subscribing
 buddy_ip_uri = '<sip:'+buddy_ip+'>' # IP2IP
 subscriber_uri = ''
@@ -132,26 +133,27 @@ sequence_mode = SEQ_MODE_NORMAL
 
 task_list = [
 
-    # regular account
     (presSubscribe, {'acc':acc_1,'buddy':buddy_uri_1,'flag':True}),
-    (presSend, {'acc':acc_2,'status':randbool(),'note':'1001 is here!'}),
+    (presSend, {'acc':acc_2,'status':randbool(),'note':buddy_uri_1+'is here!'}),
     (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':True}),
-    (presSend, {'acc':acc_1,'status':randbool(),'note':'1002 is here'}),
+    (presSend, {'acc':acc_1,'status':randbool(),'note':buddy_uri_2+'is here'}),
 
     (presSubscribe, {'acc':acc_1,'buddy':buddy_uri_1,'flag':False}),
     (presSend, {'acc':acc_2,'status':randbool(),'note':'This notify should not be recieved'}),
     (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':False}),
     (presSend, {'acc':acc_1,'status':randbool(),'note':'This notify should not be recieved'}),
 
-    """
-    # IP2IP
-    (presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':True}),
-    (presSend, {'acc': IP2IP,'status':randbool(),'note':'This notify should not be recieved'}),
-    (presSubApprove, {'uri':subscriber_uri,'flag':randbool()}),
-    (presSend, {'acc': IP2IP,'status':randbool(),'note':'Oh yeah!'}),
-    (presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':False}),
-    """
+    (presSubscribe, {'acc':acc_1,'buddy':'<sip:6010@192.95.9.63>','flag':True}),
 ]
+
+"""
+# IP2IP
+(presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':True}),
+(presSend, {'acc': IP2IP,'status':randbool(),'note':'This notify should not be recieved'}),
+(presSubApprove, {'uri':subscriber_uri,'flag':randbool()}),
+(presSend, {'acc': IP2IP,'status':randbool(),'note':'Oh yeah!'}),
+(presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':False}),
+"""
 
 
 def run():
@@ -160,6 +162,9 @@ def run():
         global task_count
         task_index = task_count%task_N
         task_count += 1
+        if task_count == task_N+1: # one loop
+            return
+
     elif sequence_mode == SEQ_MODE_RANDOM:
         task_index = randint(0,task_N-1)
 
@@ -183,7 +188,9 @@ if __name__ == '__main__':
         presenceManagerBus.connect_to_signal("serverError", serverErrorHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
 
         registerSend({'acc':acc_1, 'enable':True})
+        time.sleep(1)
         registerSend({'acc':acc_2, 'enable':True})
+        time.sleep(1)
         start_time = time.time()
         task_N = len(task_list)
         #sequence_mode = SEQ_MODE_RANDOM

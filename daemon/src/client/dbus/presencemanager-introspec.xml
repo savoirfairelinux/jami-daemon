@@ -160,9 +160,14 @@
 
       <signal name="serverError" tp:name-for-bindings="serverError">
             <tp:added version="1.3.0"/>
-            <arg type="s" name="error">
+             <arg type="s" name="error">
                 <tp:docstring>
                     Code returned by the server
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="msg">
+                <tp:docstring>
+                    Error explain
                 </tp:docstring>
             </arg>
       </signal>

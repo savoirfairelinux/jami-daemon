@@ -99,10 +99,12 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 
                 if (pjsip_method_cmp(&tsx->method, &pjsip_subscribe_method) == 0) {
                     pres_client->term_code_ = tsx->status_code;
+                    std::string error = std::to_string(pres_client->term_code_) +"/"+
+                                    std::string(pres_client->term_reason_.ptr,pres_client->term_reason_.slen);
+                    std::string msg;
 
                     switch (tsx->status_code) {
                         case PJSIP_SC_CALL_TSX_DOES_NOT_EXIST:
-
                             /* 481: we refreshed too late? resubscribe
                              * immediately.
                              */
@@ -114,9 +116,19 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                              */
                             if (pres_client->dlg_->remote.contact)
                                 resub_delay = 500;
+                            msg = "Bad subscribe refresh.";
+                            break;
 
+                        case PJSIP_SC_NOT_FOUND:
+                            msg = "Subscribe context not set on server.";
+                            break;
+
+                        case PJSIP_SC_FORBIDDEN:
+                            msg = "Subscribe not allowed.";
                             break;
                     }
+                    Manager::instance().getClient()->getPresenceManager()->serverError(error,msg);
+
                 } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
                     if (pres_client->isTermReason("deactivated") || pres_client->isTermReason("timeout")) {
                         /* deactivated: The subscription has been terminated,
@@ -261,7 +273,7 @@ PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *r
     PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
 
     if (!pres_client) {
-        WARN("Couldn't extract pres_client from ev_sub.");
+        WARN("Couldn't find pres_client from ev_sub.");
         return;
     }
 
@@ -371,7 +383,7 @@ void PresSubClient::enable(bool flag)
 {
     if(flag)
         pres_->addPresSubClient(this);
-    DEBUG("pres_client %s is %s now monitored.",getURI().c_str(), flag? "":"NOT");
+    DEBUG("pres_client %s is %s monitored.",getURI().c_str(), flag? "":"NOT");
 
     Manager::instance().getClient()->getPresenceManager()->subcriptionStateChanged(pres_->getAccount()->getAccountID(),getURI(),flag);
 }
