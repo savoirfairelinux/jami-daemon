@@ -175,8 +175,8 @@ getDefaultCodecs()
 int libav_pixel_format(int fmt)
 {
     switch (fmt) {
-        case VIDEO_PIXFMT_BGRA: return PIX_FMT_BGRA;
-        case VIDEO_PIXFMT_YUV420P: return PIX_FMT_YUV420P;
+        case VIDEO_PIXFMT_BGRA: return PIXEL_FORMAT(BGRA);
+        case VIDEO_PIXFMT_YUV420P: return PIXEL_FORMAT(YUV420P);
     }
     return fmt;
 }
@@ -184,7 +184,7 @@ int libav_pixel_format(int fmt)
 int sfl_pixel_format(int fmt)
 {
     switch (fmt) {
-        case PIX_FMT_YUV420P: return VIDEO_PIXFMT_YUV420P;
+        case PIXEL_FORMAT(YUV420P): return VIDEO_PIXFMT_YUV420P;
     }
     return fmt;
 }

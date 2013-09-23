@@ -154,8 +154,8 @@ int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
 {
     const AVFrame *src_frame = src.get();
 
-    assert(src_frame->format == PIX_FMT_YUV420P and
-           frame_->format == PIX_FMT_YUV420P);
+    assert(src_frame->format == PIXEL_FORMAT(YUV420P) and
+           frame_->format == PIXEL_FORMAT(YUV420P));
 
     auto copy_plane = [&] (unsigned idx) {
         const unsigned divisor = idx == 0 ? 1 : 2;
@@ -194,7 +194,7 @@ void VideoFrame::clear()
 
 static int flipHorizontal(AVFrame *frame)
 {
-    if (frame->format == AV_PIX_FMT_YUYV422) {
+    if (frame->format == PIXEL_FORMAT(YUYV422)) {
         uint16_t *inpixel, *outpixel;
         inpixel = outpixel = (uint16_t *) frame->data[0];
         const unsigned pixelsPerRow = frame->linesize[0] / sizeof(*inpixel);
@@ -287,51 +287,51 @@ static int flipHorizontal(AVFrame *frame)
 int VideoFrame::mirror()
 {
     switch (frame_->format) {
-        case AV_PIX_FMT_YUYV422:
-        case AV_PIX_FMT_RGB48BE:
-        case AV_PIX_FMT_RGB48LE:
-        case AV_PIX_FMT_BGR48BE:
-        case AV_PIX_FMT_BGR48LE:
-        case AV_PIX_FMT_ARGB:
-        case AV_PIX_FMT_RGBA:
-        case AV_PIX_FMT_ABGR:
-        case AV_PIX_FMT_BGRA:
-        case AV_PIX_FMT_RGB24:
-        case AV_PIX_FMT_BGR24:
-        case AV_PIX_FMT_RGB565BE:
-        case AV_PIX_FMT_RGB565LE:
-        case AV_PIX_FMT_RGB555BE:
-        case AV_PIX_FMT_RGB555LE:
-        case AV_PIX_FMT_BGR565BE:
-        case AV_PIX_FMT_BGR565LE:
-        case AV_PIX_FMT_BGR555BE:
-        case AV_PIX_FMT_BGR555LE:
-        case AV_PIX_FMT_GRAY16BE:
-        case AV_PIX_FMT_GRAY16LE:
-        case AV_PIX_FMT_YUV420P16LE:
-        case AV_PIX_FMT_YUV420P16BE:
-        case AV_PIX_FMT_YUV422P16LE:
-        case AV_PIX_FMT_YUV422P16BE:
-        case AV_PIX_FMT_YUV444P16LE:
-        case AV_PIX_FMT_YUV444P16BE:
-        case AV_PIX_FMT_YUV444P:
-        case AV_PIX_FMT_YUV422P:
-        case AV_PIX_FMT_YUV420P:
-        case AV_PIX_FMT_YUV411P:
-        case AV_PIX_FMT_YUV410P:
-        case AV_PIX_FMT_YUV440P:
-        case AV_PIX_FMT_YUVJ444P:
-        case AV_PIX_FMT_YUVJ422P:
-        case AV_PIX_FMT_YUVJ420P:
-        case AV_PIX_FMT_YUVJ440P:
-        case AV_PIX_FMT_YUVA420P:
-        case AV_PIX_FMT_RGB8:
-        case AV_PIX_FMT_BGR8:
-        case AV_PIX_FMT_RGB4_BYTE:
-        case AV_PIX_FMT_BGR4_BYTE:
-        case AV_PIX_FMT_PAL8:
-        case AV_PIX_FMT_GRAY8:
-        case AV_PIX_FMT_NONE:
+        case PIXEL_FORMAT(YUYV422):
+        case PIXEL_FORMAT(RGB48BE):
+        case PIXEL_FORMAT(RGB48LE):
+        case PIXEL_FORMAT(BGR48BE):
+        case PIXEL_FORMAT(BGR48LE):
+        case PIXEL_FORMAT(ARGB):
+        case PIXEL_FORMAT(RGBA):
+        case PIXEL_FORMAT(ABGR):
+        case PIXEL_FORMAT(BGRA):
+        case PIXEL_FORMAT(RGB24):
+        case PIXEL_FORMAT(BGR24):
+        case PIXEL_FORMAT(RGB565BE):
+        case PIXEL_FORMAT(RGB565LE):
+        case PIXEL_FORMAT(RGB555BE):
+        case PIXEL_FORMAT(RGB555LE):
+        case PIXEL_FORMAT(BGR565BE):
+        case PIXEL_FORMAT(BGR565LE):
+        case PIXEL_FORMAT(BGR555BE):
+        case PIXEL_FORMAT(BGR555LE):
+        case PIXEL_FORMAT(GRAY16BE):
+        case PIXEL_FORMAT(GRAY16LE):
+        case PIXEL_FORMAT(YUV420P16LE):
+        case PIXEL_FORMAT(YUV420P16BE):
+        case PIXEL_FORMAT(YUV422P16LE):
+        case PIXEL_FORMAT(YUV422P16BE):
+        case PIXEL_FORMAT(YUV444P16LE):
+        case PIXEL_FORMAT(YUV444P16BE):
+        case PIXEL_FORMAT(YUV444P):
+        case PIXEL_FORMAT(YUV422P):
+        case PIXEL_FORMAT(YUV420P):
+        case PIXEL_FORMAT(YUV411P):
+        case PIXEL_FORMAT(YUV410P):
+        case PIXEL_FORMAT(YUV440P):
+        case PIXEL_FORMAT(YUVJ444P):
+        case PIXEL_FORMAT(YUVJ422P):
+        case PIXEL_FORMAT(YUVJ420P):
+        case PIXEL_FORMAT(YUVJ440P):
+        case PIXEL_FORMAT(YUVA420P):
+        case PIXEL_FORMAT(RGB8):
+        case PIXEL_FORMAT(BGR8):
+        case PIXEL_FORMAT(RGB4_BYTE):
+        case PIXEL_FORMAT(BGR4_BYTE):
+        case PIXEL_FORMAT(PAL8):
+        case PIXEL_FORMAT(GRAY8):
+        case PIXEL_FORMAT(NONE):
             break;
         default:
             ERROR("Unsupported pixel format");
