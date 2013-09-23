@@ -74,6 +74,9 @@ extern "C" {
 
 #if !LIBAVUTIL_VERSION_CHECK(51, 42, 0, 74, 100) && !defined(FF_API_PIX_FMT)
 #define AVPixelFormat PixelFormat
+#define PIXEL_FORMAT(FMT) PIX_FMT_ ## FMT
+#else
+#define PIXEL_FORMAT(FMT) AV_PIX_FMT_ ## FMT
 #endif
 
 #if !LIBAVCODEC_VERSION_CHECK(54, 28, 0, 59, 100)
