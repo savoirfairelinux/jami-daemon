@@ -38,6 +38,7 @@
 #include <pjsip/sip_dialog.h>
 #include <pjsip/sip_endpoint.h>
 #include <string>
+#include <sstream>
 #include <pj/pool.h>
 #include <pjsip/sip_ua_layer.h>
 #include <pjsip-simple/evsub.h>
@@ -99,8 +100,12 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 
                 if (pjsip_method_cmp(&tsx->method, &pjsip_subscribe_method) == 0) {
                     pres_client->term_code_ = tsx->status_code;
-                    std::string error = std::to_string(pres_client->term_code_) +"/"+
-                                    std::string(pres_client->term_reason_.ptr,pres_client->term_reason_.slen);
+                    std::ostringstream os;
+                    os << pres_client->term_code_;
+                    const std::string error = os.str() + "/" +
+                        std::string(pres_client->term_reason_.ptr,
+                                pres_client->term_reason_.slen);
+
                     std::string msg;
 
                     switch (tsx->status_code) {

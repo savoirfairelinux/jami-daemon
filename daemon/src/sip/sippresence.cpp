@@ -31,6 +31,8 @@
 
 
 #include "sippresence.h"
+
+#include <sstream>
 #include "logger.h"
 #include "manager.h"
 #include "client/client.h"
@@ -127,7 +129,9 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
     pj_bzero(&status_data_, sizeof(status_data_));
     status_data_.info_cnt = 1;
     status_data_.info[0].basic_open = status;
-    std::string tuple_id = std::to_string(rand()%1000);
+    std::ostringstream os;
+    os << (rand() % 1000);
+    const std::string tuple_id(os.str());
     status_data_.info[0].id = CONST_PJ_STR(tuple_id.c_str());
     pj_memcpy(&status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
     /* "contact" field is optionnal */
@@ -302,7 +306,9 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
 
         pjsip_publishc_destroy(param->pubc);
         pres->publish_sess_ = NULL;
-        std::string error = std::to_string(param->code) +" / "+ std::string(param->reason.ptr,param->reason.slen);
+        std::ostringstream os;
+        os << param->code;
+        const std::string error = os.str() + " / "+ std::string(param->reason.ptr, param->reason.slen);
 
         if (param->status != PJ_SUCCESS) {
             char errmsg[PJ_ERR_MSG_SIZE];
