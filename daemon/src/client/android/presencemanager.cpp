@@ -144,3 +144,8 @@ PresenceManager::newServerSubscriptionRequest(const std::string& remote)
 void
 PresenceManager::serverError(const std::string& error, const std::string& msg)
 {}
+
+void PresenceManager::subscriptionStateChanged(const std::string& accountID,
+                                               const std::string& buddyURI,
+                                               const bool& state)
+{}
