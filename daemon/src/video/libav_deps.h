@@ -75,6 +75,14 @@ extern "C" {
 #if !LIBAVUTIL_VERSION_CHECK(51, 42, 0, 74, 100) && !defined(FF_API_PIX_FMT)
 #define AVPixelFormat PixelFormat
 #define PIXEL_FORMAT(FMT) PIX_FMT_ ## FMT
+
+static inline const AVPixFmtDescriptor *av_pix_fmt_desc_get(enum AVPixelFormat pix_fmt)
+{
+    if (pix_fmt < 0 || pix_fmt >= PIX_FMT_NB)
+        return NULL;
+    return &av_pix_fmt_descriptors[pix_fmt];
+}
+
 #else
 #define PIXEL_FORMAT(FMT) AV_PIX_FMT_ ## FMT
 #endif
