@@ -116,10 +116,11 @@ function build_daemon {
     popd
 
     # Compile the daemon
+    # Check if video suppport should be enabled
     if [ $VIDEO == 1 ]; then
-      $ENABLE_VIDEO="--enable-video"
+      OPTS="--enable-video"
     fi
-    ./configure --prefix=/usr $ENABLE_VIDEO
+    ./configure --prefix=/usr $OPTS
     make clean
     make -j
     # Remove the previous XML test file
