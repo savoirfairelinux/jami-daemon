@@ -139,7 +139,7 @@
             </arg>
         </signal>
 
-        <signal name="subcriptionStateChanged" tp:name-for-bindings="subcriptionStateChanged">
+        <signal name="subscriptionStateChanged" tp:name-for-bindings="subscriptionStateChanged">
             <tp:added version="1.3.0"/>
             <arg type="s" name="accountID">
                 <tp:docstring>

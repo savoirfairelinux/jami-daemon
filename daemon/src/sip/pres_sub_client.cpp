@@ -390,7 +390,7 @@ void PresSubClient::enable(bool flag)
         pres_->addPresSubClient(this);
     DEBUG("pres_client %s is %s monitored.",getURI().c_str(), flag? "":"NOT");
 
-    Manager::instance().getClient()->getPresenceManager()->subcriptionStateChanged(pres_->getAccount()->getAccountID(),getURI(),flag);
+    Manager::instance().getClient()->getPresenceManager()->subscriptionStateChanged(pres_->getAccount()->getAccountID(),getURI(),flag);
 }
 
 void PresSubClient::reportPresence()
