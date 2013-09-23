@@ -46,7 +46,7 @@ using std::string;
 
 VideoCamera::VideoCamera(const std::map<std::string, std::string> &args) :
     VideoGenerator::VideoGenerator()
-    , id_("local")
+    , id_(SINK_ID)
     , args_(args)
     , decoder_(0)
     , sink_()
@@ -103,7 +103,7 @@ bool VideoCamera::setup()
     /* Sink setup */
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     if (attach(&sink_)) {
-        Manager::instance().getVideoControls()->startedDecoding(SINK_ID, sink_.openedName(), sinkWidth_, sinkHeight_);
+        Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), sinkWidth_, sinkHeight_);
         DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
               sink_.openedName().c_str(), sinkWidth_, sinkHeight_);
     }
@@ -117,7 +117,7 @@ void VideoCamera::process()
 void VideoCamera::cleanup()
 {
     if (detach(&sink_)) {
-        Manager::instance().getVideoControls()->stoppedDecoding(SINK_ID, sink_.openedName());
+        Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
         sink_.stop();
     }
 

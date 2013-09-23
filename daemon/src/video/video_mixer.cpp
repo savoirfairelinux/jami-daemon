@@ -47,7 +47,7 @@ VideoMixer::VideoMixer(const std::string &id) :
     , height_(0)
     , sources_()
     , mutex_()
-    , sink_()
+    , sink_(id+"_MX")
 {
     auto videoCtrl = Manager::instance().getVideoControls();
     if (!videoCtrl->hasPreviewStarted()) {
@@ -149,7 +149,7 @@ void VideoMixer::start_sink()
 {
     if (sink_.start()) {
         if (this->attach(&sink_)) {
-            Manager::instance().getVideoControls()->startedDecoding(id_+"_MX", sink_.openedName(), width_, height_);
+            Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), width_, height_);
             DEBUG("MX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), width_, height_);
         }
@@ -160,7 +160,7 @@ void VideoMixer::start_sink()
 void VideoMixer::stop_sink()
 {
     if (this->detach(&sink_)) {
-        Manager::instance().getVideoControls()->stoppedDecoding(id_+"_MX", sink_.openedName());
+        Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
         sink_.stop();
     }
 }
