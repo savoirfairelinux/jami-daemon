@@ -50,6 +50,7 @@ public:
     VideoSender(const std::string &id,
                 const std::map<std::string, std::string> &args,
                 SocketPair& socketPair);
+    virtual ~VideoSender();
 
     std::string getSDP() const { return sdp_; }
     void forceKeyFrame();
@@ -66,7 +67,7 @@ private:
     std::map<std::string, std::string> args_;
     const std::string &id_;
 
-    VideoEncoder *videoEncoder_;
+    VideoEncoder videoEncoder_;
 
     int forceKeyFrame_;
     int frameNumber_;
