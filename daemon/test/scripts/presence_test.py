@@ -109,7 +109,7 @@ print 'acc_1 : ' + str(acc_1)
 acc_2 = get_account_list()[1]
 print 'acc_2 : ' + str(acc_2)
 IP2IP = 'IP2IP'
-server_ip = '192.95.9.63'
+server_ip = '192.95.9.63' # asterisk test server
 
 host_user = '6001'
 host_ip = '192.168.50.196'
@@ -131,28 +131,47 @@ SEQ_MODE_NORMAL = 0
 SEQ_MODE_RANDOM = 1
 sequence_mode = SEQ_MODE_NORMAL
 
+
+# regular test
 task_list = [
 
+    (registerSend,{'acc':acc_1, 'enable':True}),
     (presSubscribe, {'acc':acc_1,'buddy':buddy_uri_1,'flag':True}),
-    (presSend, {'acc':acc_2,'status':randbool(),'note':buddy_uri_1+'is here!'}),
+
+    (registerSend,{'acc':acc_2, 'enable':True}),
     (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':True}),
+
+    (presSend, {'acc':acc_2,'status':randbool(),'note':buddy_uri_1+'is here!'}),
     (presSend, {'acc':acc_1,'status':randbool(),'note':buddy_uri_2+'is here'}),
 
-    (presSubscribe, {'acc':acc_1,'buddy':buddy_uri_1,'flag':False}),
-    (presSend, {'acc':acc_2,'status':randbool(),'note':'This notify should not be recieved'}),
-    (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':False}),
-    (presSend, {'acc':acc_1,'status':randbool(),'note':'This notify should not be recieved'}),
+    (presSubscribe, {'acc':acc_1,'buddy':'<sip:6003@192.95.9.63>','flag':True}),
 
-    (presSubscribe, {'acc':acc_1,'buddy':'<sip:6010@192.95.9.63>','flag':True}),
+    (registerSend,{'acc':acc_1, 'enable':False}),
+    (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':False}),
+
+    (registerSend,{'acc':acc_2, 'enable':False}),
+    (presSubscribe, {'acc':acc_1,'buddy':buddy_uri_1,'flag':False}),
 ]
+
+
+"""
+# simple sub
+task_list = [
+
+    (presSubscribe, {'acc':acc_2,'buddy':buddy_uri_2,'flag':True}),
+    (presSubscribe, {'acc':acc_2,'buddy':'<sip:6003@192.95.9.63>','flag':True}),
+]
+"""
 
 """
 # IP2IP
-(presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':True}),
-(presSend, {'acc': IP2IP,'status':randbool(),'note':'This notify should not be recieved'}),
-(presSubApprove, {'uri':subscriber_uri,'flag':randbool()}),
-(presSend, {'acc': IP2IP,'status':randbool(),'note':'Oh yeah!'}),
-(presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':False}),
+task_list = [
+    (presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':True}),
+    (presSend, {'acc': IP2IP,'status':randbool(),'note':'This notify should not be recieved'}),
+    (presSubApprove, {'uri':subscriber_uri,'flag':randbool()}),
+    (presSend, {'acc': IP2IP,'status':randbool(),'note':'Oh yeah!'}),
+    (presSubscribe, {'acc': IP2IP,'buddy':buddy_ip_uri,'flag':False}),
+]
 """
 
 
@@ -187,10 +206,6 @@ if __name__ == '__main__':
         presenceManagerBus.connect_to_signal("subcriptionStateChanged", subcriptionStateChangedHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
         presenceManagerBus.connect_to_signal("serverError", serverErrorHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
 
-        registerSend({'acc':acc_1, 'enable':True})
-        time.sleep(1)
-        registerSend({'acc':acc_2, 'enable':True})
-        time.sleep(1)
         start_time = time.time()
         task_N = len(task_list)
         #sequence_mode = SEQ_MODE_RANDOM
