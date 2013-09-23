@@ -220,6 +220,10 @@ static int flipHorizontal(AVFrame *frame)
     uint8_t *inrow, *outrow;
     int step, hsub, vsub;
     const AVPixFmtDescriptor *pix_desc = av_pix_fmt_desc_get((AVPixelFormat) libav_utils::libav_pixel_format(frame->format));
+    if (!pix_desc) {
+        ERROR("Could not get pixel descriptor");
+        return -1;
+    }
     int max_step[4];    ///< max pixel step for each plane, expressed as a number of bytes
     av_image_fill_max_pixsteps(max_step, NULL, pix_desc);
 
