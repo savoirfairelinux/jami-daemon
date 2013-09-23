@@ -144,3 +144,7 @@ PresenceManager::newServerSubscriptionRequest(const std::string& remote)
 {
 
 }
+
+void
+PresenceManager::serverError(const std::string& error, const std::string& msg)
+{}
