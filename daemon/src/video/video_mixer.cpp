@@ -61,8 +61,6 @@ VideoMixer::VideoMixer(const std::string &id) :
 
 VideoMixer::~VideoMixer()
 {
-    stop_sink();
-
     auto videoCtrl = Manager::instance().getVideoControls();
     videoCtrl->getVideoPreview()->detach(this);
 }
