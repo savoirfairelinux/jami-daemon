@@ -312,7 +312,7 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
 
     } else {
 
-        size_t availableSamples = std::numeric_limits<int>::max();
+        size_t availableSamples = std::numeric_limits<size_t>::max();
 
         for (auto &i : *callid_set) {
             const size_t nbSamples = availableForGetByID(i, call_id);
@@ -321,7 +321,7 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
                 availableSamples = std::min(availableSamples, nbSamples);
         }
 
-        return availableSamples != std::numeric_limits<int>::max() ? availableSamples : 0;
+        return availableSamples != std::numeric_limits<size_t>::max() ? availableSamples : 0;
     }
 }
 
