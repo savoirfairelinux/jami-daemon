@@ -194,7 +194,8 @@ void VideoFrame::clear()
 
 static int flipHorizontal(AVFrame *frame)
 {
-    if (frame->format == PIXEL_FORMAT(YUYV422)) {
+    if (frame->format == PIXEL_FORMAT(YUYV422) or
+        frame->format == PIXEL_FORMAT(UYVY422)) {
         uint16_t *inpixel, *outpixel;
         inpixel = outpixel = (uint16_t *) frame->data[0];
         const unsigned pixelsPerRow = frame->linesize[0] / sizeof(*inpixel);
@@ -206,7 +207,8 @@ static int flipHorizontal(AVFrame *frame)
 
             // swap Cb with Cr for each pixel
             uint8_t *inchroma, *outchroma;
-            inchroma = outchroma = ((uint8_t *) inpixel) + 1;
+            const size_t offset = (frame->format == PIXEL_FORMAT(YUYV422));
+            inchroma = outchroma = ((uint8_t *) inpixel) + offset;
             for (int j = 0; j < frame->width * 2; j += 4)
                 std::swap(outchroma[j], inchroma[j + 2]);
 
@@ -292,6 +294,7 @@ int VideoFrame::mirror()
 {
     switch (frame_->format) {
         case PIXEL_FORMAT(YUYV422):
+        case PIXEL_FORMAT(UYVY422):
         case PIXEL_FORMAT(RGB48BE):
         case PIXEL_FORMAT(RGB48LE):
         case PIXEL_FORMAT(BGR48BE):
