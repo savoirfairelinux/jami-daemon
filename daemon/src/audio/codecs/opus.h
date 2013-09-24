@@ -36,7 +36,7 @@
 
 #include "audiocodec.h"
 
-#include <opus/opus.h>
+#include <opus.h>
 
 class Opus : public sfl::AudioCodec {
 public:
