@@ -74,6 +74,8 @@ size_t
 RingBuffer::putLength() const
 {
     const size_t buffer_size = buffer_.frames();
+    if (buffer_size == 0)
+        return 0;
     const size_t startPos = (not readpointers_.empty()) ? getSmallestReadPointer() : 0;
     return (endPos_ + buffer_size - startPos) % buffer_size;
 }
@@ -81,6 +83,8 @@ RingBuffer::putLength() const
 size_t RingBuffer::getLength(const std::string &call_id) const
 {
     const size_t buffer_size = buffer_.frames();
+    if (buffer_size == 0)
+        return 0;
     return (endPos_ + buffer_size - getReadPointer(call_id)) % buffer_size;
 }
 
@@ -168,6 +172,9 @@ void RingBuffer::put(AudioBuffer& buf)
     const size_t len = putLength();
     const size_t sample_num = buf.frames();
     const size_t buffer_size = buffer_.frames();
+    if (buffer_size == 0)
+        return;
+
     size_t toCopy = sample_num;
 
     // Add more channels if the input buffer holds more channels than the ring.
@@ -218,6 +225,8 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
     const size_t len = getLength(call_id);
     const size_t sample_num = buf.frames();
     const size_t buffer_size = buffer_.frames();
+    if (buffer_size == 0)
+        return 0;
     size_t toCopy = std::min(sample_num, len);
 
     const size_t copied = toCopy;
@@ -251,6 +260,8 @@ RingBuffer::discard(size_t toDiscard, const std::string &call_id)
         toDiscard = len;
 
     size_t buffer_size = buffer_.frames();
+    if (buffer_size == 0)
+        return 0;
     size_t startPos = (getReadPointer(call_id) + toDiscard) % buffer_size;
 
     storeReadPointer(startPos, call_id);
