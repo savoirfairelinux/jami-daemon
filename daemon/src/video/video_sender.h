@@ -51,7 +51,6 @@ public:
     VideoSender(const std::string &id,
                 const std::map<std::string, std::string> &args,
                 SocketPair& socketPair);
-    virtual ~VideoSender();
 
     std::string getSDP() const { return sdp_; }
     void forceKeyFrame();
@@ -68,11 +67,12 @@ private:
     std::map<std::string, std::string> args_;
     const std::string &id_;
 
-    VideoEncoder videoEncoder_;
+    // encoder MUST be deleted before muxContext
+    std::unique_ptr<VideoIOHandle> muxContext_;
+    std::unique_ptr<VideoEncoder> videoEncoder_;
 
     std::atomic<int> forceKeyFrame_;
     int frameNumber_;
-    VideoIOHandle* muxContext_;
     std::string sdp_;
 };
 

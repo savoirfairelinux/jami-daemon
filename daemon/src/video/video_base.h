@@ -162,7 +162,7 @@ public:
                   void *opaque);
     ~VideoIOHandle();
 
-    AVIOContext* get() { return ctx_; }
+    AVIOContext* getContext() { return ctx_; }
 
 private:
     NON_COPYABLE(VideoIOHandle);
