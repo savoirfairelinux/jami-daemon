@@ -614,4 +614,10 @@ void dbus_screensaver_inhibit(void);
  */
 void dbus_screensaver_uninhibit(void);
 
+
+/**
+ * Presence methods
+ */
+void dbus_presence_publish(int pid);
+
 #endif

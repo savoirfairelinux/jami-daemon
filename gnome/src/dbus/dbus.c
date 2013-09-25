@@ -38,6 +38,7 @@
 #include "calltab.h"
 #include "callmanager-glue.h"
 #include "configurationmanager-glue.h"
+#include "presencemanager-glue.h"
 #ifdef SFL_VIDEO
 #include "video_controls-glue.h"
 #endif
@@ -70,7 +71,7 @@ static DBusGProxy *video_proxy;
 static DBusGProxy *call_proxy;
 static DBusGProxy *config_proxy;
 static DBusGProxy *instance_proxy;
-// static DBusGProxy *session_manager_proxy;
+static DBusGProxy *presence_proxy;
 static GDBusProxy *session_manager_proxy;
 
 /* Returns TRUE if there was an error, FALSE otherwise */
@@ -602,11 +603,24 @@ screensaver_dbus_proxy_new_cb (G_GNUC_UNUSED GObject * source, GAsyncResult *res
     if (session_manager_proxy == NULL)
         g_warning("could not initialize gnome session manager");
 }
+
 static void
-sip_presence_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *buddyUri,
-                  const gchar *status,const gchar *lineStatus)
+sip_presence_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *buddyUri,
+                  gboolean status, const gchar *lineStatus, SFLPhoneClient *client)
 {
-    g_debug("Sip presence state changed for %s status=%s lineStatus=%s", buddyUri, status, lineStatus);
+    g_debug("DBus: Sip presence state changed for %s (%s) status=%s lineStatus=%s.", buddyUri, accID, status? "online":"offline", lineStatus);
+}
+
+static void
+sip_presence_server_error_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *err, const gchar *msg)
+{
+    g_debug("DBus: Sip presence error from server : %s / %s.",err, msg);
+}
+
+static void
+sip_presence_new_subscription_request_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *uri)
+{
+    g_debug("DBus: Sip presence new subscription from %s.",uri);
 }
 
 #define GS_SERVICE   "org.gnome.SessionManager"
@@ -650,6 +664,8 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     const char *callmanager_interface = "org.sflphone.SFLphone.CallManager";
     const char *configurationmanager_object_instance = "/org/sflphone/SFLphone/ConfigurationManager";
     const char *configurationmanager_interface = "org.sflphone.SFLphone.ConfigurationManager";
+    const char *presencemanager_object_instance = "/org/sflphone/SFLphone/PresenceManager";
+    const char *presencemanager_interface = "org.sflphone.SFLphone.PresenceManager";
 
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
     if (connection == NULL) {
@@ -682,6 +698,13 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
         g_warning("Error: Failed to connect to %s", configurationmanager_object_instance);
         return FALSE;
     }
+
+    presence_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, presencemanager_object_instance, presencemanager_interface);
+    if (presence_proxy == NULL) {
+        g_warning("Error: Failed to connect to %s", presencemanager_object_instance);
+        return FALSE;
+    }
+
 
     /* Register INT Marshaller */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT,
@@ -733,6 +756,11 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     dbus_g_object_register_marshaller(
         g_cclosure_user_marshal_VOID__STRING_STRING_INT_INT, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+
+    /* Register STRING STRING BOOLEAN STRING Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_BOOLEAN_STRING, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INVALID);
 
     g_debug("Adding callmanager Dbus signals");
 
@@ -857,12 +885,6 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     dbus_g_proxy_connect_signal(call_proxy, "sipCallStateChanged",
                                 G_CALLBACK(sip_call_state_cb), client, NULL);
 
-    /* Presence related callbacks */
-    dbus_g_proxy_add_signal(call_proxy, "newPresenceNotification", G_TYPE_STRING,
-                            G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal(call_proxy, "newPresenceNotification",
-                                G_CALLBACK(sip_presence_state_cb), client, NULL);
-
     g_debug("Adding configurationmanager Dbus signals");
 
     dbus_g_proxy_add_signal(config_proxy, "accountsChanged", G_TYPE_INVALID);
@@ -880,6 +902,25 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     dbus_g_proxy_add_signal(config_proxy, "errorAlert", G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(config_proxy, "errorAlert",
                                 G_CALLBACK(error_alert), NULL, NULL);
+
+    g_debug("Adding presencemanager Dbus signals");
+
+    /* Presence related callbacks */
+    dbus_g_proxy_add_signal(presence_proxy, "newBuddyNotification", G_TYPE_STRING,
+                            G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(presence_proxy, "newBuddyNotification",
+                                G_CALLBACK(sip_presence_state_cb), client, NULL);
+
+    dbus_g_proxy_add_signal(presence_proxy, "serverError", G_TYPE_STRING,
+                            G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(presence_proxy, "serverError",
+                                G_CALLBACK(sip_presence_server_error_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal(presence_proxy, "newServerSubscriptionRequest", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(presence_proxy, "newServerSubscriptionRequest",
+                                G_CALLBACK(sip_presence_new_subscription_request_cb), NULL, NULL);
+
+
 
 #ifdef SFL_VIDEO
     const gchar *videocontrols_object_instance = "/org/sflphone/SFLphone/VideoControls";
@@ -914,6 +955,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     dbus_g_proxy_set_default_timeout(call_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(instance_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(config_proxy, DEFAULT_DBUS_TIMEOUT);
+    dbus_g_proxy_set_default_timeout(presence_proxy, DEFAULT_DBUS_TIMEOUT);
 #ifdef SFL_VIDEO
     dbus_g_proxy_set_default_timeout(video_proxy, DEFAULT_DBUS_TIMEOUT);
 #endif
@@ -936,6 +978,7 @@ void dbus_clean()
     g_object_unref(call_proxy);
     g_object_unref(config_proxy);
     g_object_unref(instance_proxy);
+    g_object_unref(presence_proxy);
 }
 
 void dbus_hold(const callable_obj_t *c)
@@ -2135,4 +2178,13 @@ dbus_screensaver_uninhibit(void)
                       g_variant_new("(u)", cookie),
                       G_DBUS_CALL_FLAGS_NO_AUTO_START, -1, NULL,
                       screensaver_uninhibit_cb, NULL);
+}
+
+void
+dbus_presence_publish(int pid)
+{
+    gboolean status =  TRUE;
+    GError *error = NULL;
+    org_sflphone_SFLphone_PresenceManager_publish(instance_proxy,"Account:1379617358",status,"Tout va bien.",NULL);
+    check_error(error);
 }

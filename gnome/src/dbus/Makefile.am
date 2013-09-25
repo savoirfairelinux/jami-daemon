@@ -7,7 +7,8 @@ BUILT_SOURCES=                      \
     configurationmanager-glue.h     \
     instance-glue.h                 \
     marshaller.c                    \
-    marshaller.h
+    marshaller.h		    \
+    presencemanager-glue.h
 
 if SFL_VIDEO
 BUILT_SOURCES+=video_controls-glue.h
@@ -26,9 +27,9 @@ marshaller.c: marshaller.list
 marshaller.h: marshaller.list
 	glib-genmarshal --header --g-fatal-warnings $< > $@
 
-libdbus_la_SOURCES=     \
-    dbus.c              \
-	dbus.h				\
+libdbus_la_SOURCES=	\
+	dbus.c		\
+	dbus.h		\
     $(BUILT_SOURCES)
 
 libdbus_la_LDFLAGS= $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \
