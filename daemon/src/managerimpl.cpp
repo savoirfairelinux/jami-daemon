@@ -1640,7 +1640,7 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     // Connect audio streams
     addStream(id);
 
-    {
+    if (audiodriver_) {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
         audiodriver_->flushMain();
         audiodriver_->flushUrgent();
