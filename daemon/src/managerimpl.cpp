@@ -1428,7 +1428,7 @@ void ManagerImpl::playDtmf(char code)
     //                = number of seconds * SAMPLING_RATE by SECONDS
 
     // fast return, no sound, so no dtmf
-    if (audiodriver_ == NULL || dtmfKey_.get() == 0) {
+    if (audiodriver_ == NULL or not dtmfKey_) {
         DEBUG("No audio layer...");
         return;
     }
@@ -1768,7 +1768,7 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
 
     {
         std::lock_guard<std::mutex> lock(toneMutex_);
-        if (telephoneTone_.get() != 0)
+        if (telephoneTone_)
             telephoneTone_->setCurrentTone(toneId);
     }
 }
@@ -1782,10 +1782,10 @@ void ManagerImpl::stopTone()
         return;
 
     std::lock_guard<std::mutex> lock(toneMutex_);
-    if (telephoneTone_.get() != NULL)
+    if (telephoneTone_)
         telephoneTone_->setCurrentTone(Tone::TONE_NULL);
 
-    if (audiofile_.get()) {
+    if (audiofile_) {
         std::string filepath(audiofile_->getFilePath());
 
         client_.getCallManager()->recordPlaybackStopped(filepath);
@@ -1877,7 +1877,7 @@ void ManagerImpl::playRingtone(const std::string& accountID)
     {
         std::lock_guard<std::mutex> m(toneMutex_);
 
-        if (audiofile_.get()) {
+        if (audiofile_) {
             client_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
             audiofile_.reset();
         }
@@ -1893,7 +1893,7 @@ void ManagerImpl::playRingtone(const std::string& accountID)
 AudioLoop* ManagerImpl::getTelephoneTone()
 {
     std::lock_guard<std::mutex> m(toneMutex_);
-    if (telephoneTone_.get())
+    if (telephoneTone_)
         return telephoneTone_->getCurrentTone();
     else
         return NULL;
@@ -2135,7 +2135,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     {
         std::lock_guard<std::mutex> m(toneMutex_);
 
-        if (audiofile_.get()) {
+        if (audiofile_) {
             client_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
             audiofile_.reset();
         }
@@ -2156,7 +2156,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 void ManagerImpl::recordingPlaybackSeek(const double value)
 {
     std::lock_guard<std::mutex> m(toneMutex_);
-    if (audiofile_.get())
+    if (audiofile_)
         audiofile_.get()->seek(value);
 }
 

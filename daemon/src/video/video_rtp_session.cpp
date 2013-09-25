@@ -113,7 +113,7 @@ void VideoRtpSession::updateDestination(const string &destination,
     tmp << "rtp://" << destination << ":" << port;
     // if destination has changed
     if (tmp.str() != txArgs_["destination"]) {
-        if (sender_.get() != 0) {
+        if (sender_) {
             ERROR("Video is already being sent");
             return;
         }
@@ -148,7 +148,7 @@ void VideoRtpSession::start(int localPort)
         }
 
         videoLocal_ = videoCtrl->getVideoPreview();
-        if (sender_.get())
+        if (sender_)
             WARN("Restarting video sender");
 
         sender_.reset(new VideoSender(callID_, txArgs_, *socketPair_));
@@ -162,7 +162,7 @@ void VideoRtpSession::start(int localPort)
     }
 
     if (receiving_) {
-        if (receiveThread_.get())
+        if (receiveThread_)
             WARN("restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
@@ -196,7 +196,7 @@ void VideoRtpSession::stop()
             receiveThread_->detach(videoMixerSP_.get());
     }
 
-    if (socketPair_.get())
+    if (socketPair_)
         socketPair_->interrupt();
 
     receiveThread_.reset();
@@ -206,7 +206,7 @@ void VideoRtpSession::stop()
 
 void VideoRtpSession::forceKeyFrame()
 {
-    if (sender_.get())
+    if (sender_)
         sender_->forceKeyFrame();
 }
 
