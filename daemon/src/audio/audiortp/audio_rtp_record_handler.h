@@ -43,6 +43,7 @@ using std::ptrdiff_t;
 #include <array>
 #include <list>
 #include <mutex>
+#include <atomic>
 
 #include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
@@ -119,11 +120,7 @@ class AudioRtpRecord {
         */
         void fadeInDecodedData();//size_t size);
         NON_COPYABLE(AudioRtpRecord);
-#ifdef CCPP_PREFIX
-        ost::AtomicCounter dead_;
-#else
-        ucommon::atomic::counter dead_;
-#endif
+        std::atomic<bool> dead_;
         size_t currentCodecIndex_;
 };
 

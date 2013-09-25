@@ -117,7 +117,7 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 	bool is_keyframe = forceKeyFrame_ > 0;
 
 	if (is_keyframe)
-		atomic_decrement(&forceKeyFrame_);
+		--forceKeyFrame_;
 
     if (videoEncoder_.encode(input_frame, is_keyframe, frameNumber_++) < 0)
         ERROR("encoding failed");
@@ -127,6 +127,6 @@ void VideoSender::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
 { encodeAndSendVideo(*frame_p); }
 
 void VideoSender::forceKeyFrame()
-{ atomic_increment(&forceKeyFrame_); }
+{ ++forceKeyFrame_; }
 
 } // end namespace sfl_video

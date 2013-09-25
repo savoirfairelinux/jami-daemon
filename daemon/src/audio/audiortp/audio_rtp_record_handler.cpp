@@ -119,11 +119,7 @@ AudioRtpRecord::AudioRtpRecord() :
 // Call from processData*
 bool AudioRtpRecord::isDead()
 {
-#ifdef CCPP_PREFIX
-    return (int) dead_;
-#else
-    return *dead_;
-#endif
+    return dead_;
 }
 
 sfl::AudioCodec *

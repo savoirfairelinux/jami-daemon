@@ -39,6 +39,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <atomic>
 
 namespace sfl_video {
 
@@ -69,7 +70,7 @@ private:
 
     VideoEncoder videoEncoder_;
 
-    int forceKeyFrame_;
+    std::atomic<int> forceKeyFrame_;
     int frameNumber_;
     VideoIOHandle* muxContext_;
     std::string sdp_;
