@@ -76,6 +76,7 @@ static GtkWidget *expire_spin_box;
 static GtkListStore *credential_store;
 static GtkWidget *delete_cred_button;
 static GtkWidget *treeview_credential;
+static GtkWidget *presence_check_box;
 static GtkWidget *zrtp_button;
 static GtkWidget *key_exchange_combo;
 static GtkWidget *use_sip_tls_check_box;
@@ -227,7 +228,7 @@ create_auto_answer_checkbox(account_t *account)
 }
 
 static GtkWidget*
-create_basic_tab(account_t *account, gboolean is_new)
+create_account_parameters(const account_t *account, gboolean is_new)
 {
     g_assert(account);
     gchar *password = NULL;
@@ -381,11 +382,74 @@ create_basic_tab(account_t *account, gboolean is_new)
     GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), auto_answer_checkbox, 0, row, 1, 1);
 
+
     gtk_widget_show_all(grid);
     gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
 
     return frame;
 }
+
+static GtkWidget*
+create_presence(const account_t *account)
+{
+    g_assert(account);
+
+    GtkWidget *frame = gnome_main_section_new(_("Presence notifications"));
+    gtk_widget_show(frame);
+
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_widget_show(grid);
+    gtk_container_add(GTK_CONTAINER(frame), grid);
+
+    /*
+    GtkWidget *grid;
+    gnome_main_section_new_with_grid(_("Published address"), &frame, &grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+
+    use_stun_check_box = gtk_check_button_new_with_mnemonic(_("Using STUN"));
+    gtk_grid_attach(GTK_GRID(grid), use_stun_check_box, 0, 0, 1, 1);
+    g_signal_connect(use_stun_check_box, "toggled", G_CALLBACK(use_stun_cb), NULL);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(use_stun_check_box),
+                                 utf8_case_equal(stun_enable, "true"));
+    gtk_widget_set_sensitive(use_stun_check_box, !utf8_case_equal(use_tls, "true"));
+    */
+
+    presence_check_box = gtk_check_button_new_with_mnemonic(_("_Enable"));
+    gchar *pres = account_lookup(account, CONFIG_PRESENCE_ENABLED);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),
+                                utf8_case_equal(pres, "true"));
+    gtk_grid_attach(GTK_GRID(grid), presence_check_box, 0, 0, 1, 1);
+
+    gtk_widget_show_all(grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+
+    return frame;
+}
+
+static GtkWidget*
+create_basic_tab(const account_t *account, gboolean is_new)
+{
+    // Build the advanced tab, to appear on the account configuration panel
+    g_debug("Build basic tab");
+
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+
+    GtkWidget *frame = create_account_parameters(account, is_new);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+
+    frame = create_presence(account);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+
+    gtk_widget_show_all(vbox);
+
+    return vbox;
+}
+
 
 static void fill_treeview_with_credential(const account_t * account)
 {
@@ -1320,6 +1384,8 @@ static void update_account_from_basic_tab(account_t *account)
             account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MAX,
                             gtk_entry_get_text(GTK_ENTRY(video_port_max_spin_box)));
 #endif
+            v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
+            account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
         }
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
