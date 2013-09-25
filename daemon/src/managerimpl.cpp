@@ -2664,9 +2664,8 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     Sequence *seq = parser.getAccountSequence()->getSequence();
 
     Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
-    if (ip2ip != seq->end()) {
+    if (ip2ip != seq->end())
         SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE]->unserialize(**ip2ip);
-    }
 
     // Force IP2IP settings to be loaded
     // No registration in the sense of the REGISTER method is performed.
@@ -2731,7 +2730,7 @@ bool ManagerImpl::accountExists(const std::string &accountID)
 
     ret = SIPVoIPLink::instance()->getAccounts().find(accountID) != SIPVoIPLink::instance()->getAccounts().end();
 #if HAVE_IAX
-    if(ret)
+    if (ret)
         return ret;
 
     ret = IAXVoIPLink::getAccounts().find(accountID) != IAXVoIPLink::getAccounts().end();
@@ -2744,7 +2743,7 @@ SIPAccount*
 ManagerImpl::getIP2IPAccount() const
 {
     AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(SIPAccount::IP2IP_PROFILE);
-    if(iter == SIPVoIPLink::instance()->getAccounts().end())
+    if (iter == SIPVoIPLink::instance()->getAccounts().end())
         return nullptr;
 
     return static_cast<SIPAccount *>(iter->second);
@@ -2756,12 +2755,12 @@ ManagerImpl::getAccount(const std::string& accountID) const
     Account *account = nullptr;
 
     account = getSipAccount(accountID);
-    if(account != nullptr)
+    if (account != nullptr)
         return account;
 
 #if HAVE_IAX
     account = getIaxAccount(accountID);
-    if(account != nullptr)
+    if (account != nullptr)
         return account;
 #endif
 
@@ -2772,7 +2771,7 @@ SIPAccount *
 ManagerImpl::getSipAccount(const std::string& accountID) const
 {
     AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(accountID);
-    if(iter != SIPVoIPLink::instance()->getAccounts().end())
+    if (iter != SIPVoIPLink::instance()->getAccounts().end())
         return static_cast<SIPAccount *>(iter->second);
 
     return nullptr;
@@ -2783,7 +2782,7 @@ IAXAccount *
 ManagerImpl::getIaxAccount(const std::string& accountID) const
 {
     AccountMap::const_iterator iter = IAXVoIPLink::getAccounts().find(accountID);
-    if(iter != IAXVoIPLink::getAccounts().end())
+    if (iter != IAXVoIPLink::getAccounts().end())
         return static_cast<IAXAccount *>(iter->second);
 
     return nullptr;
