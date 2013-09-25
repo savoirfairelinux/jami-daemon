@@ -30,7 +30,6 @@
 
 #include "audiocodec.h"
 #include "sfl_types.h"
-#include <tr1/array>
 #include <algorithm>
 
 extern "C" {

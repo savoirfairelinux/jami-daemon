@@ -33,8 +33,6 @@
 #include "logger.h"
 #include <sstream>
 #include <unistd.h>
-#include <cassert>
-#include <tr1/array>
 
 int AudioRecorder::count_ = 0;
 

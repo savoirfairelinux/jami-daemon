@@ -40,7 +40,7 @@
 using std::ptrdiff_t;
 
 #include <ccrtp/rtp.h>
-#include <tr1/array>
+#include <array>
 #include <list>
 #include <mutex>
 
@@ -97,7 +97,7 @@ class AudioRtpRecord {
         bool hasDynamicPayloadType_;
         AudioBuffer decData_;
         AudioBuffer resampledData_;
-        std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
+        std::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
         int codecFrameSize_;

@@ -37,8 +37,6 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <tr1/memory>
-
 /*
  * @file audiobuffertest.cpp
  * @brief       Regroups unit tests related to an audio buffer.
