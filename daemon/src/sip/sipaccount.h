@@ -59,6 +59,7 @@ namespace Conf {
     const char *const DTMF_TYPE_KEY = "dtmfType";
     const char *const SERVICE_ROUTE_KEY = "serviceRoute";
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
+    const char *const PRESENCE_ENABLED_KEY = "presenceEnabled";
 
     // TODO: write an object to store credential which implement serializable
     const char *const SRTP_KEY = "srtp";

@@ -213,6 +213,10 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
     ScalarNode keepAliveEnabled(keepAliveEnabled_);
+    std::string pres(getPresence()->isEnabled()? "true" : "false");
+            //FIXME this is 'ambiguous' says the compiler  TRUE_STR/FALSE_STR);
+    ScalarNode presence(pres);
+
 
     ScalarNode mailbox(mailBox_);
     ScalarNode publishAddr(publishedIpAddress_);
@@ -297,6 +301,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
     accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
     accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
+    accountmap.setKeyValue(PRESENCE_ENABLED_KEY, &presence);
 
     accountmap.setKeyValue(SRTP_KEY, &srtpmap);
     srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
@@ -458,6 +463,10 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 
     if (not isIP2IP()) mapNode.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
+    std::string pres;
+    mapNode.getValue(PRESENCE_ENABLED_KEY, & pres);
+    enablePresence((pres=="true")? true : false);
+
     std::string dtmfType;
     mapNode.getValue(DTMF_TYPE_KEY, &dtmfType);
     dtmfType_ = dtmfType;
@@ -607,6 +616,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
     keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == TRUE_STR;
+    enablePresence(details[CONFIG_PRESENCE_ENABLED] == TRUE_STR);
 
     int tmpMin = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
     int tmpMax = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
@@ -616,8 +626,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     tmpMax = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MAX].c_str());
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
-
-    enablePresence(details[CONFIG_PRESENCE_ENABLED] == TRUE_STR);
 
     // srtp settings
     srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == TRUE_STR;
@@ -1414,7 +1422,7 @@ SIPPresence * SIPAccount::getPresence() const {
  */
 void
 SIPAccount::enablePresence(const bool& flag){
-    DEBUG("Enable Presence (acc:%s : %s)",accountID_.c_str(), flag? "yes":"no");
+    DEBUG("Enable Presence (acc:%s : %s)",accountID_.c_str(), flag? TRUE_STR:FALSE_STR);
     getPresence()->enable(flag);
 }
 
