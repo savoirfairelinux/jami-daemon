@@ -178,9 +178,8 @@ void VideoRtpSession::start(int localPort)
     // Setup pipeline
     if (videoMixerSP_) {
         setupConferenceVideoPipeline();
-    } else {
-        if (sender_)
-            videoLocal_->attach(sender_.get());
+    } else if (sender_ and videoLocal_) {
+        videoLocal_->attach(sender_.get());
     }
 }
 
