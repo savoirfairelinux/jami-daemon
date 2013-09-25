@@ -99,7 +99,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		numbercleaner.h \
 		fileutils.h \
 		noncopyable.h \
-		cc_config.h \
 		sfl_types.h \
 		array_size.h \
 		account_schema.h \
