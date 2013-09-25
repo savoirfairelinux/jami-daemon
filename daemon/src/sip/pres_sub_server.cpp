@@ -105,8 +105,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
           , server.c_str());
 
     /* get parents*/
-    std::string accountId = "IP2IP"; /* this code is only used for IP2IP accounts */
-    SIPAccount *acc = Manager::instance().getSipAccount(accountId);
+    SIPAccount *acc = Manager::instance().getIP2IPAccount();
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
     SIPPresence * pres = acc->getPresence();
     pres->lock();
