@@ -297,9 +297,9 @@ PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *r
     pres_client->decLock();
 }
 
-PresSubClient::PresSubClient(const std::string& uri_, SIPPresence *pres_) :
-    pres_(pres_),
-    uri_(pj_str(strdup(uri_.c_str()))),
+PresSubClient::PresSubClient(const std::string& uri, SIPPresence *pres) :
+    pres_(pres),
+    uri_(pj_str(strdup(uri.c_str()))),
     contact_(pj_str(strdup(pres_->getAccount()->getFromUri().c_str()))),
     display_(),
     dlg_(NULL),
