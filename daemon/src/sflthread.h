@@ -32,7 +32,7 @@
 #ifndef __SFLTHREAD_H__
 #define __SFLTHREAD_H__
 
-#include <pthread.h>
+#include <thread>
 #include <atomic>
 
 class SFLThread {
@@ -53,9 +53,8 @@ private:
     virtual void process() {};
     virtual void cleanup() {};
 
-    static void* run_(void*);
     void mainloop_();
-    pthread_t thread_;
+    std::thread thread_;
 
     std::atomic<bool> running_;
 };
