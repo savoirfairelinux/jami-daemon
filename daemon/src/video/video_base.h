@@ -214,19 +214,10 @@ private:
     bool allocated_;
 };
 
-/*=== VideoNode ============================================================*/
-
-class VideoNode { public: virtual ~VideoNode() {}; };
-typedef VideoNode VideoSource;
-
-class VideoFrameActiveWriter :
-        public Observable<VideoFrameSP>,
-        public VideoNode
+class VideoFrameActiveWriter : public Observable<VideoFrameSP>
 {};
 
-class VideoFramePassiveReader :
-        public Observer<VideoFrameSP>,
-        public VideoNode
+class VideoFramePassiveReader : public Observer<VideoFrameSP>
 {};
 
 /*=== VideoGenerator =========================================================*/
