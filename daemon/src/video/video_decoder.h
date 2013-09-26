@@ -36,7 +36,6 @@
 #include "video_scaler.h"
 #include "noncopyable.h"
 
-#include <pthread.h>
 #include <string>
 
 class AVCodecContext;
