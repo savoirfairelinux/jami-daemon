@@ -33,6 +33,7 @@
 #define __SFLTHREAD_H__
 
 #include <pthread.h>
+#include <atomic>
 
 class SFLThread {
 public:
@@ -56,7 +57,7 @@ private:
     void mainloop_();
     pthread_t thread_;
 
-    bool running_;
+    std::atomic<bool> running_;
 };
 
 #endif // __SFLTHREAD_H__
