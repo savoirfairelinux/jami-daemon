@@ -66,7 +66,7 @@ static int is_v4l2(struct udev_device *dev)
 }
 
 VideoV4l2ListThread::VideoV4l2ListThread() : devices_(),
-    thread_(0), mutex_(), udev_(0),
+    thread_(), mutex_(), udev_(0),
     udev_mon_(0), probing_(false)
 {
     udev_list_entry *devlist;
@@ -147,17 +147,8 @@ udev_failed:
 void VideoV4l2ListThread::start()
 {
     probing_ = true;
-    pthread_create(&thread_, NULL, &runCallback, this);
+    thread_ = std::thread(&VideoV4l2ListThread::run, this);
 }
-
-
-void *VideoV4l2ListThread::runCallback(void *data)
-{
-    VideoV4l2ListThread *context = static_cast<VideoV4l2ListThread*>(data);
-    context->run();
-    return NULL;
-}
-
 
 namespace {
 
@@ -212,8 +203,8 @@ start:
 VideoV4l2ListThread::~VideoV4l2ListThread()
 {
     probing_ = false;
-    if (thread_)
-        pthread_join(thread_, NULL);
+    if (thread_.joinable())
+        thread_.join();
     if (udev_mon_)
         udev_monitor_unref(udev_mon_);
     if (udev_)
@@ -224,7 +215,7 @@ void VideoV4l2ListThread::run()
 {
     if (!udev_mon_) {
         probing_ = false;
-        pthread_exit(NULL);
+        return;
     }
 
     const int udev_fd = udev_monitor_get_fd(udev_mon_);
@@ -269,12 +260,12 @@ void VideoV4l2ListThread::run()
                     continue;
                 ERROR("udev monitoring thread: select failed (%m)");
                 probing_ = false;
-                pthread_exit(NULL);
+                return;
 
             default:
                 ERROR("select() returned %d (%m)", ret);
                 probing_ = false;
-                pthread_exit(NULL);
+                return;
         }
     }
 }

@@ -37,6 +37,7 @@
 
 #include "video_v4l2.h"
 #include <mutex>
+#include <thread>
 #include "noncopyable.h"
 
 namespace sfl_video {
@@ -56,7 +57,6 @@ class VideoV4l2ListThread {
         unsigned getChannelNum(const std::string &dev, const std::string &name);
 
     private:
-        static void *runCallback(void *);
         void run();
 
         std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
@@ -64,7 +64,7 @@ class VideoV4l2ListThread {
         void delDevice(const std::string &node);
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices_;
-        pthread_t thread_;
+        std::thread thread_;
         std::mutex mutex_;
 
         udev *udev_;
