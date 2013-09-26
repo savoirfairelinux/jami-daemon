@@ -618,6 +618,6 @@ void dbus_screensaver_uninhibit(void);
 /**
  * Presence methods
  */
-void dbus_presence_publish(int pid);
+void dbus_presence_publish(const gchar *accountID, gboolean status);
 
 #endif

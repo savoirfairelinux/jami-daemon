@@ -56,6 +56,8 @@ static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringt
 static const char *const CONFIG_RINGTONE_ENABLED                = "Account.ringtoneEnabled";
 static const char *const CONFIG_KEEP_ALIVE_ENABLED              = "Account.keepAliveEnabled";
 static const char *const CONFIG_PRESENCE_ENABLED                = "Account.presenceEnabled";
+static const char *const CONFIG_PRESENCE_STATUS                 = "Account.presenceStatus";
+static const char *const CONFIG_PRESENCE_NOTE                   = "Account.presenceNote";
 
 static const char *const CONFIG_DEFAULT_REGISTRATION_EXPIRE     = "60";
 static const char *const CONFIG_DEFAULT_RINGTONE_ENABLED        = "true";

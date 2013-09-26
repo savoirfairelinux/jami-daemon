@@ -2181,10 +2181,9 @@ dbus_screensaver_uninhibit(void)
 }
 
 void
-dbus_presence_publish(int pid)
+dbus_presence_publish(const gchar *accountID, gboolean status)
 {
-    gboolean status =  TRUE;
     GError *error = NULL;
-    org_sflphone_SFLphone_PresenceManager_publish(instance_proxy,"Account:1379617358",status,"Tout va bien.",NULL);
+    org_sflphone_SFLphone_PresenceManager_publish(presence_proxy,accountID,status,"Tout va bien.",NULL);
     check_error(error);
 }
