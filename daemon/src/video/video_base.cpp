@@ -192,33 +192,8 @@ void VideoFrame::clear()
 }
 
 
-static int flipHorizontal(AVFrame *frame)
+static int flipPlanarHorizontal(AVFrame *frame)
 {
-    if (frame->format == PIXEL_FORMAT(YUYV422) or
-        frame->format == PIXEL_FORMAT(UYVY422)) {
-        uint16_t *inpixel, *outpixel;
-        inpixel = outpixel = (uint16_t *) frame->data[0];
-        const unsigned pixelsPerRow = frame->linesize[0] / sizeof(*inpixel);
-
-        for (int i = 0; i < frame->height; ++i) {
-            // swap pixels first (luma AND chroma)
-            for (int j = 0; j < frame->width / 2; ++j)
-                std::swap(outpixel[j], inpixel[frame->width - 1 - j]);
-
-            // swap Cb with Cr for each pixel
-            uint8_t *inchroma, *outchroma;
-            const size_t offset = (frame->format == PIXEL_FORMAT(YUYV422));
-            inchroma = outchroma = ((uint8_t *) inpixel) + offset;
-            for (int j = 0; j < frame->width * 2; j += 4)
-                std::swap(outchroma[j], inchroma[j + 2]);
-
-            inpixel += pixelsPerRow;
-            outpixel += pixelsPerRow;
-        }
-
-        return 0;
-    }
-
     uint8_t *inrow, *outrow;
     int step, hsub, vsub;
     const AVPixFmtDescriptor *pix_desc = av_pix_fmt_desc_get((AVPixelFormat) libav_utils::libav_pixel_format(frame->format));
@@ -290,11 +265,38 @@ static int flipHorizontal(AVFrame *frame)
     return 0;
 }
 
+static int
+flipPackedHorizontal(AVFrame *frame, size_t offset)
+{
+    uint16_t *inpixel, *outpixel;
+    inpixel = outpixel = (uint16_t *) frame->data[0];
+    const unsigned pixelsPerRow = frame->linesize[0] / sizeof(*inpixel);
+
+    for (int i = 0; i < frame->height; ++i) {
+        // swap pixels first (luma AND chroma)
+        for (int j = 0; j < frame->width / 2; ++j)
+            std::swap(outpixel[j], inpixel[frame->width - 1 - j]);
+
+        // swap Cb with Cr for each pixel
+        uint8_t *inchroma, *outchroma;
+        inchroma = outchroma = ((uint8_t *) inpixel) + offset;
+        for (int j = 0; j < frame->width * 2; j += 4)
+            std::swap(outchroma[j], inchroma[j + 2]);
+
+        inpixel += pixelsPerRow;
+        outpixel += pixelsPerRow;
+    }
+
+    return 0;
+}
+
 int VideoFrame::mirror()
 {
     switch (frame_->format) {
         case PIXEL_FORMAT(YUYV422):
+            return flipPackedHorizontal(frame_, 1);
         case PIXEL_FORMAT(UYVY422):
+            return flipPackedHorizontal(frame_, 0);
         case PIXEL_FORMAT(RGB48BE):
         case PIXEL_FORMAT(RGB48LE):
         case PIXEL_FORMAT(BGR48BE):
@@ -344,7 +346,7 @@ int VideoFrame::mirror()
             ERROR("Unsupported pixel format");
             return -1;
     }
-    return flipHorizontal(frame_);
+    return flipPlanarHorizontal(frame_);
 }
 
 void VideoFrame::test()
