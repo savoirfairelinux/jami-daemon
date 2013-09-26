@@ -47,8 +47,7 @@ SFLThread::SFLThread() : thread_(), running_(false)
 
 SFLThread::~SFLThread()
 {
-    stop();
-    join();
+    SFLThread::exit();
 }
 
 void SFLThread::start()
