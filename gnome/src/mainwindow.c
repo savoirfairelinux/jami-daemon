@@ -68,6 +68,7 @@ static GtkWidget *speaker_control;
 static GtkWidget *mic_control;
 static GtkWidget *statusBar;
 static GtkWidget *seekslider = NULL;
+static GtkWidget *presence_status_combo;
 
 static gchar *status_current_message;
 
@@ -217,6 +218,60 @@ main_window_bring_to_front(SFLPhoneClient *client, guint32 timestamp)
     gtk_window_present_with_time(GTK_WINDOW(client->win), timestamp);
 }
 
+static void
+status_changed_cb(GtkComboBox *combo)
+{
+    const gchar *registered;
+    const gchar *enabled;
+    const gchar *status = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
+    gboolean b = (g_strcmp0(status, "online") == 0)? TRUE : FALSE;
+    account_t * account;
+
+    for (guint i = 0; i < account_list_get_size(); i++){
+        account = account_list_get_nth(i);
+        g_assert(account);
+        registered = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
+        enabled = account_lookup(account, CONFIG_PRESENCE_ENABLED);
+        account_replace(account, CONFIG_PRESENCE_STATUS, status);
+
+        if(g_strcmp0(enabled, "true") == 0){
+            if ((g_strcmp0(registered, "true") == 0) || (account_is_IP2IP(account))){
+                dbus_presence_publish(account->accountID,b);
+                g_debug("Update status of acc:%s, status:%s", account->accountID,status);
+            }
+        }
+        else
+            g_warning("Account not enabled/registered/IP2IP.");
+    }
+}
+
+GtkWidget*
+create_status_bar(){
+
+    GtkWidget *bar = gtk_statusbar_new();
+    GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
+    gtk_box_pack_start(GTK_BOX(bar), label, TRUE, TRUE, 0);
+    presence_status_combo = gtk_combo_box_text_new();
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), "offline");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), "online");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0); // offline by default
+    account_t *account = account_list_get_nth(0); // get the status of the first account only
+    if(account){
+        const gchar *status = account_lookup(account, CONFIG_PRESENCE_STATUS);
+        if(g_strcmp0(status,"online") == 0)
+            gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
+        const gchar *enabled = account_lookup(account, CONFIG_PRESENCE_ENABLED);
+        if(g_strcmp0(enabled,"false") != 0)
+            gtk_widget_set_sensitive(presence_status_combo, FALSE);
+    }
+
+    g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
+    gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
+
+    return bar;
+}
+
+
 void
 create_main_window(SFLPhoneClient *client)
 {
@@ -337,8 +392,8 @@ create_main_window(SFLPhoneClient *client)
     }
 
 
-    /* Status bar */
-    statusBar = gtk_statusbar_new();
+    /* Status bar, contains presence_status selector */
+    statusBar = create_status_bar();
     pack_main_window_start(GTK_BOX(vbox), statusBar, FALSE, TRUE, 0);
 
     /* Add to main window */
