@@ -37,6 +37,7 @@ TEST=0
 BUILD=
 CODE_ANALYSIS=0
 DOXYGEN=0
+VIDEO=0
 
 CONFIGDIR=~/.config
 SFLCONFDIR=${CONFIGDIR}/sflphone
@@ -115,7 +116,11 @@ function build_daemon {
     popd
 
     # Compile the daemon
-    ./configure --prefix=/usr
+    # Check if video suppport should be enabled
+    if [ $VIDEO == 1 ]; then
+      OPTS="--enable-video"
+    fi
+    ./configure --prefix=/usr $OPTS
     make clean
     make -j
     # Remove the previous XML test file
@@ -163,7 +168,7 @@ fi
 
 git clean -f -d -x
 
-while getopts ":b: t a d" opt; do
+while getopts ":b: t a v" opt; do
     case $opt in
         b)
             echo "-b was triggered. Parameter: $OPTARG" >&2
@@ -177,9 +182,10 @@ while getopts ":b: t a d" opt; do
             echo "-a was triggered. Static code analysis will be run" >&2
             CODE_ANALYSIS=1
             ;;
-        d)
-            echo "-d was triggered. Doxygen documentation will be generated" >&2
-            DOXYGEN=1
+        v)
+            # Video support
+            echo "-v was triggered. Video support enabled" >&2
+            VIDEO=1
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2

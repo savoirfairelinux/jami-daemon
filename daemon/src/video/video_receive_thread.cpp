@@ -181,7 +181,7 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
 void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 {
 #if HAVE_SDP_CUSTOM_IO
-    demuxContext_ = socketPair.getIOContext();
+    demuxContext_ = socketPair.createIOContext();
 #endif
 }
 

@@ -59,9 +59,10 @@ public:
     int getPixelFormat() const;
 
     // as VideoFramePassiveReader
-    void update(Observable<VideoFrameSP>*, VideoFrameSP&);
-    void attached(Observable<VideoFrameSP>* ob);
-    void detached(Observable<VideoFrameSP>* ob);
+    void update(Observable<std::shared_ptr<VideoFrame> >* ob,
+                std::shared_ptr<VideoFrame> &v);
+    void attached(Observable<std::shared_ptr<VideoFrame> >* ob);
+    void detached(Observable<std::shared_ptr<VideoFrame> >* ob);
 
 private:
     NON_COPYABLE(VideoMixer);
@@ -73,7 +74,7 @@ private:
     const std::string id_;
     int width_;
     int height_;
-    std::list<Observable<VideoFrameSP>*> sources_;
+    std::list<Observable<std::shared_ptr<VideoFrame> >*> sources_;
     std::mutex mutex_;
     SHMSink sink_;
 };

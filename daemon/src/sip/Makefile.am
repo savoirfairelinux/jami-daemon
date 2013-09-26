@@ -1,6 +1,7 @@
 include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libsiplink.la
+libsiplink_la_CXXFLAGS = @CXXFLAGS@
 
 libsiplink_la_SOURCES = \
 		sdp.cpp \
@@ -29,6 +30,10 @@ libsiplink_la_SOURCES+= sdes_negotiator.cpp \
 			pattern.h
 
 
-libsiplink_la_CXXFLAGS = \
-		@PCRE_CFLAGS@
+libsiplink_la_CXXFLAGS += @PCRE_CFLAGS@
+endif
+
+if BUILD_OPUS
+# FIXME
+libsiplink_la_CXXFLAGS += @opus_CFLAGS@
 endif

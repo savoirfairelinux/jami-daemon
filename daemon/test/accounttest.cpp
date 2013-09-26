@@ -35,7 +35,6 @@
 #include "accounttest.h"
 #include "manager.h"
 #include "logger.h"
-#include "validator.h"
 
 void AccountTest::TestAddRemove()
 {
@@ -48,7 +47,7 @@ void AccountTest::TestAddRemove()
     details[CONFIG_LOCAL_PORT] = "5060";
 
     std::string accountId = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(Validator::isNotNull(accountId));
+    CPPUNIT_ASSERT(not accountId.empty());
     CPPUNIT_ASSERT(Manager::instance().accountExists(accountId));
 
     Manager::instance().removeAccount(accountId);

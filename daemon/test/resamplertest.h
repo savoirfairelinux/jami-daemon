@@ -36,17 +36,12 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <tr1/array>
-
 #include "audio/samplerateconverter.h"
 #include "noncopyable.h"
 
 #define MAX_BUFFER_LENGTH 40000
 #define TMP_LOWSMPLR_BUFFER_LENGTH 160
 #define TMP_HIGHSMPLR_BUFFER_LENGTH 320
-
-//typedef std::tr1::array<SFLDataFormat, TMP_LOWSMPLR_BUFFER_LENGTH> LowSmplrBuffer;
-//typedef std::tr1::array<SFLDataFormat, TMP_HIGHSMPLR_BUFFER_LENGTH> HighSmplrBuffer;
 
 class ResamplerTest : public CppUnit::TestCase {
 
@@ -138,13 +133,11 @@ private:
     /**
      * Used to store input samples
      */
-    //std::tr1::array<SFLDataFormat, MAX_BUFFER_LENGTH> inputBuffer;
     AudioBuffer inputBuffer;
 
     /**
      * Used to receive output samples
      */
-    //std::tr1::array<SFLDataFormat, MAX_BUFFER_LENGTH> outputBuffer;
     AudioBuffer outputBuffer;
 };
 

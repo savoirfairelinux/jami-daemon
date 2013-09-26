@@ -148,10 +148,9 @@ AS_IF([test "x$enable_video" = "xyes"],
 
 
 LIBCCGNU2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([COMMONCPP_PREFIX], [1], [Use commoncpp include prefix]), [
-        PKG_CHECK_MODULES([CCGNU2], [libccgnu2] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([CCPP_PREFIX], [1], [Use cc++ include prefix]),
-        AC_MSG_ERROR([Missing commoncpp development files]))
-        ])
+PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION},,
+                  [PKG_CHECK_MODULES([CCGNU2], [libccgnu2] >= ${LIBCCGNU2_MIN_VERSION},,
+                                     AC_MSG_ERROR([Missing commoncpp development files]))])
 
 LIBCCRTP_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [

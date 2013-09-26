@@ -159,7 +159,7 @@ VideoControls::getSettings() {
 void
 VideoControls::startPreview()
 {
-    if (videoPreview_.get()) {
+    if (videoPreview_) {
         ERROR("Video preview was already started!");
         return;
     }
@@ -174,7 +174,7 @@ VideoControls::startPreview()
 void
 VideoControls::stopPreview()
 {
-    if (videoPreview_.get()) {
+    if (videoPreview_) {
         DEBUG("Stopping video preview");
         videoPreview_.reset();
     } else {
@@ -190,7 +190,8 @@ sfl_video::VideoFrameActiveWriter* VideoControls::getVideoPreview()
 bool
 VideoControls::hasPreviewStarted()
 {
-    return videoPreview_.get() != 0;
+    // see http://stackoverflow.com/a/7580064/21185
+    return static_cast<bool>(videoPreview_);
 }
 
 std::string

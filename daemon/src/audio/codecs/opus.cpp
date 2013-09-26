@@ -28,7 +28,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "opus.h"
+#include "opus_wrapper.h"
 #include "sfl_types.h"
 #include <stdexcept>
 #include <iostream>

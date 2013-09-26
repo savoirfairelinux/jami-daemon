@@ -51,7 +51,7 @@ public:
     ~VideoEncoder();
 
     void setInterruptCallback(int (*cb)(void*), void *opaque);
-    void setIOContext(VideoIOHandle *ioctx);
+    void setIOContext(const std::unique_ptr<VideoIOHandle> &ioctx);
     int openOutput(const char *enc_name, const char *short_name,
                    const char *filename, const char *mime_type);
     int startIO();

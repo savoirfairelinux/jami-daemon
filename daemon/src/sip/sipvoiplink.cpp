@@ -1601,7 +1601,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     pjsip_tpselector *tp_sel = sipTransport.createTransportSelector(account->transport_, call->inv->pool);
 
-    if (!dialog or !tp_sel or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
+    if (!tp_sel or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
         ERROR("Unable to associate transport for invite session dialog");
         return false;
     }

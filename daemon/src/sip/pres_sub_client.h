@@ -51,7 +51,7 @@ class PresSubClient {
          * Constructor
          * @param uri   SIP uri of remote user that we want to subscribe,
          */
-        PresSubClient(const std::string &uri, SIPPresence *pres_);
+        PresSubClient(const std::string &uri, SIPPresence *pres);
         /**
          * Destructor.
          * Process the the unsubscription before the destruction.

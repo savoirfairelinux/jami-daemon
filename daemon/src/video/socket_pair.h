@@ -46,7 +46,7 @@ namespace sfl_video {
         ~SocketPair();
 
         void interrupt();
-        VideoIOHandle* getIOContext();
+        VideoIOHandle* createIOContext();
         void openSockets(const char *uri, int localPort);
         void closeSockets();
         static int readCallback(void *opaque, uint8_t *buf, int buf_size);

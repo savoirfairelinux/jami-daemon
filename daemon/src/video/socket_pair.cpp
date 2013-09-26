@@ -199,7 +199,7 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
     }
 }
 
-VideoIOHandle* SocketPair::getIOContext()
+VideoIOHandle* SocketPair::createIOContext()
 {
     return new VideoIOHandle(RTP_BUFFER_SIZE, true,
                              &readCallback, &writeCallback, 0,

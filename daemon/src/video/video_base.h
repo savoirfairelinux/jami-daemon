@@ -76,9 +76,6 @@ typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
 typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
 typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
 
-typedef std::shared_ptr<VideoFrame> VideoFrameUP;
-typedef std::shared_ptr<VideoFrame> VideoFrameSP;
-
 /*=== Observable =============================================================*/
 
 template <typename T>
@@ -162,7 +159,7 @@ public:
                   void *opaque);
     ~VideoIOHandle();
 
-    AVIOContext* get() { return ctx_; }
+    AVIOContext* getContext() { return ctx_; }
 
 private:
     NON_COPYABLE(VideoIOHandle);
@@ -214,19 +211,10 @@ private:
     bool allocated_;
 };
 
-/*=== VideoNode ============================================================*/
-
-class VideoNode { public: virtual ~VideoNode() {}; };
-typedef VideoNode VideoSource;
-
-class VideoFrameActiveWriter :
-        public Observable<VideoFrameSP>,
-        public VideoNode
+class VideoFrameActiveWriter : public Observable<std::shared_ptr<VideoFrame> >
 {};
 
-class VideoFramePassiveReader :
-        public Observer<VideoFrameSP>,
-        public VideoNode
+class VideoFramePassiveReader : public Observer<std::shared_ptr<VideoFrame> >
 {};
 
 /*=== VideoGenerator =========================================================*/
@@ -240,7 +228,7 @@ public:
     virtual int getHeight() const = 0;
     virtual int getPixelFormat() const = 0;
 
-    VideoFrameSP obtainLastFrame();
+    std::shared_ptr<VideoFrame> obtainLastFrame();
 
 protected:
     // getNewFrame and publishFrame must be called by the same thread only
@@ -248,8 +236,8 @@ protected:
     void publishFrame();
 
 private:
-    VideoFrameUP writableFrame_;
-    VideoFrameSP lastFrame_;
+    std::shared_ptr<VideoFrame> writableFrame_;
+    std::shared_ptr<VideoFrame> lastFrame_;
     std::mutex mutex_; // lock writableFrame_/lastFrame_ access
 };
 

@@ -92,7 +92,7 @@ void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 }
 
 void VideoDecoder::setIOContext(VideoIOHandle *ioctx)
-{ inputCtx_->pb = ioctx->get(); }
+{ inputCtx_->pb = ioctx->getContext(); }
 
 int VideoDecoder::setupFromVideoData()
 {

@@ -207,7 +207,7 @@ class SIPPresence {
 
         static pj_status_t publish(SIPPresence *pres);
         static void publish_cb(struct pjsip_publishc_cbparam *param);
-        static pj_status_t send_publish(SIPPresence *pres, pj_bool_t active);
+        static pj_status_t send_publish(SIPPresence *pres);
 
         pjsip_publishc  *publish_sess_;  /**< Client publication session.*/
         pjsip_pres_status status_data_; /**< Presence Data.*/

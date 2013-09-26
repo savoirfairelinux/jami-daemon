@@ -37,7 +37,7 @@
 
 #include <map>
 #include <string>
-#include <tr1/memory>
+#include <memory>
 
 namespace sfl_video {
     class VideoV4l2ListThread;
@@ -104,7 +104,7 @@ class VideoPreference : public Serializable
         NON_COPYABLE(VideoPreference);
 
         // V4L2 devices
-        std::tr1::shared_ptr<sfl_video::VideoV4l2ListThread> v4l2_list_;
+        std::shared_ptr<sfl_video::VideoV4l2ListThread> v4l2_list_;
 
         std::string device_;
         std::string channel_;

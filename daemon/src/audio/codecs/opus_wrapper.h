@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,28 +28,40 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#ifndef OPUS_H_
+#define OPUS_H_
 
-#include "validator.h"
+#include "noncopyable.h"
+#include "sfl_types.h"
 
-bool Validator::isNumber(std::string str)
-{
-    unsigned int i = 0;
+#include "audiocodec.h"
 
-    if (!str.empty() && (str[i] == '-' || str[i] == '+'))
-        i++;
+#include <opus.h>
 
-    return string::npos == str.find_first_not_of(".eE0123456789", i);
-}
+class Opus : public sfl::AudioCodec {
+public:
+   Opus();
+   ~Opus();
 
-bool Validator::isNotNull(std::string str)
-{
-    if (!str.empty())
-        return true;
-    else
-        return false;
-}
+   static const uint8_t PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
 
-bool Validator::isEqual(std::string str1, std::string str2)
-{
-    return str1.compare(str2) == 0;
-}
+private:
+   virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
+
+   //multichannel version
+   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size);
+
+   NON_COPYABLE(Opus);
+   //Attributes
+   OpusEncoder *encoder_;
+   OpusDecoder *decoder_;
+   std::vector<opus_int16> interleaved_;
+
+   static const int FRAME_SIZE = 160;
+   static const int CLOCK_RATE = 16000;
+   static const int CHANNELS   = 2;
+};
+
+#endif

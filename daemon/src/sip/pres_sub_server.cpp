@@ -54,9 +54,10 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
     SIPPresence * pres = Manager::instance().getSipAccount("IP2IP")->getPresence();
     pres->lock();
     PresSubServer *presSubServer = static_cast<PresSubServer *>(pjsip_evsub_get_mod_data(sub, pres->getModId()));
-    DEBUG("Presence_subscription_server to %s is %s", presSubServer->remote_, pjsip_evsub_get_state_name(sub));
 
     if (presSubServer) {
+        DEBUG("Presence_subscription_server to %s is %s",
+              presSubServer->remote_, pjsip_evsub_get_state_name(sub));
         pjsip_evsub_state state;
 
         state = pjsip_evsub_get_state(sub);
@@ -105,8 +106,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
           , server.c_str());
 
     /* get parents*/
-    std::string accountId = "IP2IP"; /* this code is only used for IP2IP accounts */
-    SIPAccount *acc = Manager::instance().getSipAccount(accountId);
+    SIPAccount *acc = Manager::instance().getIP2IPAccount();
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
     SIPPresence * pres = acc->getPresence();
     pres->lock();

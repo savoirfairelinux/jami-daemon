@@ -49,17 +49,12 @@ VideoSender::VideoSender(const std::string &id,
                                  SocketPair& socketPair) :
     args_(args)
     , id_(id)
-	, videoEncoder_()
+    , muxContext_(socketPair.createIOContext())
+    , videoEncoder_(new VideoEncoder)
     , forceKeyFrame_(0)
-	, frameNumber_(0)
-    , muxContext_(socketPair.getIOContext())
+    , frameNumber_(0)
     , sdp_()
 { setup(); }
-
-VideoSender::~VideoSender()
-{
-    delete muxContext_;
-}
 
 bool VideoSender::setup()
 {
@@ -68,7 +63,7 @@ bool VideoSender::setup()
 	/* Encoder setup */
 	if (!args_["width"].empty()) {
 		const char *s = args_["width"].c_str();
-		videoEncoder_.setOption("width", s);
+		videoEncoder_->setOption("width", s);
 	} else {
         ERROR("width option not set");
         return false;
@@ -76,39 +71,39 @@ bool VideoSender::setup()
 
 	if (!args_["height"].empty()) {
 		const char *s = args_["height"].c_str();
-		videoEncoder_.setOption("height", s);
+		videoEncoder_->setOption("height", s);
 	} else {
         ERROR("height option not set");
         return false;
     }
 
-	videoEncoder_.setOption("bitrate", args_["bitrate"].c_str());
+	videoEncoder_->setOption("bitrate", args_["bitrate"].c_str());
 
 	if (!args_["framerate"].empty())
-		videoEncoder_.setOption("framerate", args_["framerate"].c_str());
+		videoEncoder_->setOption("framerate", args_["framerate"].c_str());
 
 	if (!args_["parameters"].empty())
-		videoEncoder_.setOption("parameters", args_["parameters"].c_str());
+		videoEncoder_->setOption("parameters", args_["parameters"].c_str());
 
     if (!args_["payload_type"].empty()) {
         DEBUG("Writing stream header for payload type %s",
 			  args_["payload_type"].c_str());
-        videoEncoder_.setOption("payload_type", args_["payload_type"].c_str());
+        videoEncoder_->setOption("payload_type", args_["payload_type"].c_str());
     }
 
-	if (videoEncoder_.openOutput(enc_name, "rtp", args_["destination"].c_str(),
+	if (videoEncoder_->openOutput(enc_name, "rtp", args_["destination"].c_str(),
                                   NULL)) {
         ERROR("encoder openOutput() failed");
         return false;
     }
 
-	videoEncoder_.setIOContext(muxContext_);
-	if (videoEncoder_.startIO()) {
+	videoEncoder_->setIOContext(muxContext_);
+	if (videoEncoder_->startIO()) {
         ERROR("encoder start failed");
         return false;
     }
 
-	videoEncoder_.print_sdp(sdp_);
+	videoEncoder_->print_sdp(sdp_);
     return true;
 }
 
@@ -117,16 +112,21 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 	bool is_keyframe = forceKeyFrame_ > 0;
 
 	if (is_keyframe)
-		atomic_decrement(&forceKeyFrame_);
+		--forceKeyFrame_;
 
-    if (videoEncoder_.encode(input_frame, is_keyframe, frameNumber_++) < 0)
+    if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
         ERROR("encoding failed");
 }
 
-void VideoSender::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
-{ encodeAndSendVideo(*frame_p); }
+void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
+                         std::shared_ptr<VideoFrame> & frame_p)
+{
+    encodeAndSendVideo(*frame_p);
+}
 
 void VideoSender::forceKeyFrame()
-{ atomic_increment(&forceKeyFrame_); }
+{
+    ++forceKeyFrame_;
+}
 
 } // end namespace sfl_video

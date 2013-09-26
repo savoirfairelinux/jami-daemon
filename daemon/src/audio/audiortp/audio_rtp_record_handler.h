@@ -40,9 +40,10 @@
 using std::ptrdiff_t;
 
 #include <ccrtp/rtp.h>
-#include <tr1/array>
+#include <array>
 #include <list>
 #include <mutex>
+#include <atomic>
 
 #include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
@@ -97,7 +98,7 @@ class AudioRtpRecord {
         bool hasDynamicPayloadType_;
         AudioBuffer decData_;
         AudioBuffer resampledData_;
-        std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
+        std::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
         int codecFrameSize_;
@@ -119,11 +120,7 @@ class AudioRtpRecord {
         */
         void fadeInDecodedData();//size_t size);
         NON_COPYABLE(AudioRtpRecord);
-#ifdef CCPP_PREFIX
-        ost::AtomicCounter dead_;
-#else
-        ucommon::atomic::counter dead_;
-#endif
+        std::atomic<bool> dead_;
         size_t currentCodecIndex_;
 };
 

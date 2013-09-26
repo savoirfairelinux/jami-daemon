@@ -61,25 +61,24 @@ VideoMixer::VideoMixer(const std::string &id) :
 
 VideoMixer::~VideoMixer()
 {
-    stop_sink();
-
     auto videoCtrl = Manager::instance().getVideoControls();
     videoCtrl->getVideoPreview()->detach(this);
 }
 
-void VideoMixer::attached(Observable<VideoFrameSP>* ob)
+void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     sources_.push_back(ob);
 }
 
-void VideoMixer::detached(Observable<VideoFrameSP>* ob)
+void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     sources_.remove(ob);
 }
 
-void VideoMixer::update(Observable<VideoFrameSP>* ob, VideoFrameSP& frame_p)
+void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
+                        std::shared_ptr<VideoFrame>& frame_p)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     int i=0;
@@ -105,7 +104,7 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
         return;
     }
 
-    VideoFrameSP previous_p=obtainLastFrame();
+    std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
     if (previous_p)
         previous_p->copy(output);
     previous_p.reset();
@@ -137,7 +136,7 @@ void VideoMixer::setDimensions(int width, int height)
     height_ = height;
 
     // cleanup the previous frame to have a nice copy in rendering method
-    VideoFrameSP previous_p=obtainLastFrame();
+    std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
     if (previous_p)
         previous_p->clear();
 

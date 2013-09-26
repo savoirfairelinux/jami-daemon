@@ -32,8 +32,6 @@
 #include "sflthread.h"
 #include "logger.h"
 
-#define set_false_atomic(x) static_cast<void>(__sync_fetch_and_and(x, false))
-
 void* SFLThread::run_(void* data)
 {
     SFLThread *obj = static_cast<SFLThread*>(data);
@@ -72,7 +70,7 @@ void SFLThread::start()
 
 void SFLThread::stop()
 {
-    set_false_atomic(&running_);
+    running_ = false;
 }
 
 void SFLThread::join()

@@ -42,7 +42,8 @@
 #include "sipaccount.h"
 
 #ifdef HAVE_OPUS
-#include "audio/codecs/opus.h"
+//FIXME: SDP should not need anything from opus
+#include "audio/codecs/opus_wrapper.h"
 #endif
 
 #ifdef SFL_VIDEO

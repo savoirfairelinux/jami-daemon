@@ -132,15 +132,20 @@ PresenceManager::setSubscriptions(const std::string& accountID, const std::vecto
 }
 
 
-
 void
-PresenceManager::newBuddyNotification(const std::string& uri, const std::string& basic, const std::string& note)
-{
-
-}
+PresenceManager::newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
+                              const bool& status, const std::string& lineStatus)
+{}
 
 void
 PresenceManager::newServerSubscriptionRequest(const std::string& remote)
-{
+{}
 
-}
+void
+PresenceManager::serverError(const std::string& error, const std::string& msg)
+{}
+
+void PresenceManager::subscriptionStateChanged(const std::string& accountID,
+                                               const std::string& buddyURI,
+                                               const bool& state)
+{}

@@ -31,6 +31,8 @@
 
 
 #include "sippresence.h"
+
+#include <sstream>
 #include "logger.h"
 #include "manager.h"
 #include "client/client.h"
@@ -127,7 +129,9 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
     pj_bzero(&status_data_, sizeof(status_data_));
     status_data_.info_cnt = 1;
     status_data_.info[0].basic_open = status;
-    std::string tuple_id = std::to_string(rand()%1000);
+    std::ostringstream os;
+    os << (rand() % 1000);
+    const std::string tuple_id(os.str());
     status_data_.info[0].id = CONST_PJ_STR(tuple_id.c_str());
     pj_memcpy(&status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
     /* "contact" field is optionnal */
@@ -302,7 +306,9 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
 
         pjsip_publishc_destroy(param->pubc);
         pres->publish_sess_ = NULL;
-        std::string error = std::to_string(param->code) +" / "+ std::string(param->reason.ptr,param->reason.slen);
+        std::ostringstream os;
+        os << param->code;
+        const std::string error = os.str() + " / "+ std::string(param->reason.ptr, param->reason.slen);
 
         if (param->status != PJ_SUCCESS) {
             char errmsg[PJ_ERR_MSG_SIZE];
@@ -342,12 +348,12 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
  * Send PUBLISH request.
  */
 pj_status_t
-SIPPresence::send_publish(SIPPresence * pres, pj_bool_t active)
+SIPPresence::send_publish(SIPPresence * pres)
 {
     pjsip_tx_data *tdata;
     pj_status_t status;
 
-    DEBUG("Send %sPUBLISH (%s).", (active ? "" : "un-"), pres->getAccount()->getAccountID().c_str());
+    DEBUG("Send PUBLISH (%s).", pres->getAccount()->getAccountID().c_str());
 
     SIPAccount * acc = pres->getAccount();
     std::string contactWithAngles =  acc->getFromUri();
@@ -358,50 +364,44 @@ SIPPresence::send_publish(SIPPresence * pres, pj_bool_t active)
 //    pj_memcpy(&status_data.info[0].contact, &contt, sizeof(pj_str_t));;
 
     /* Create PUBLISH request */
-    if (active) {
-        char *bpos;
-        pj_str_t entity;
+    char *bpos;
+    pj_str_t entity;
 
-        status = pjsip_publishc_publish(pres->publish_sess_, PJ_TRUE, &tdata);
+    status = pjsip_publishc_publish(pres->publish_sess_, PJ_TRUE, &tdata);
+    pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
 
-        if (status != PJ_SUCCESS) {
-            ERROR("Error creating PUBLISH request", status);
-            goto on_error;
-        }
-
-        pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
-
-        if ((bpos = pj_strchr(&from, '<')) != NULL) {
-            char *epos = pj_strchr(&from, '>');
-
-            if (epos - bpos < 2) {
-                pj_assert(!"Unexpected invalid URI");
-                status = PJSIP_EINVALIDURI;
-                goto on_error;
-            }
-
-            entity.ptr = bpos + 1;
-            entity.slen = epos - bpos - 1;
-        } else {
-            entity = from;
-        }
-
-        /* Create and add PIDF message body */
-        status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(),
-                                        &entity, &tdata->msg->body);
-
-        if (status != PJ_SUCCESS) {
-            ERROR("Error creating PIDF for PUBLISH request");
-            pjsip_tx_data_dec_ref(tdata);
-            goto on_error;
-        }
-
-    } else {
-        WARN("Unpublish is not implemented.");
+    if (status != PJ_SUCCESS) {
+        ERROR("Error creating PUBLISH request", status);
+        goto on_error;
     }
 
+    if ((bpos = pj_strchr(&from, '<')) != NULL) {
+        char *epos = pj_strchr(&from, '>');
+
+        if (epos - bpos < 2) {
+            pj_assert(!"Unexpected invalid URI");
+            status = PJSIP_EINVALIDURI;
+            goto on_error;
+        }
+
+        entity.ptr = bpos + 1;
+        entity.slen = epos - bpos - 1;
+    } else {
+        entity = from;
+    }
+
+    /* Create and add PIDF message body */
+    status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(),
+                                    &entity, &tdata->msg->body);
 
     pres_msg_data msg_data;
+
+    if (status != PJ_SUCCESS) {
+        ERROR("Error creating PIDF for PUBLISH request");
+        pjsip_tx_data_dec_ref(tdata);
+        goto on_error;
+    }
+
     pj_bzero(&msg_data, sizeof(msg_data));
     pj_list_init(&msg_data.hdr_list);
     pjsip_media_type_init(&msg_data.multipart_ctype, NULL, NULL);
@@ -475,7 +475,7 @@ SIPPresence::publish(SIPPresence *pres)
         pjsip_regc_set_route_set(acc->getRegistrationInfo(), sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
 
     /* Send initial PUBLISH request */
-    status = send_publish(pres, PJ_TRUE);
+    status = send_publish(pres);
 
     if (status != PJ_SUCCESS)
         return status;

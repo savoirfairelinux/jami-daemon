@@ -98,7 +98,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , encoderPayloadType_(0)
     , decoderPayloadType_(0)
     , hasDynamicPayloadType_(false)
-    , decData_(DEC_BUFFER_SIZE)     // std::tr1::arrays will be 0-initialized
+    , decData_(DEC_BUFFER_SIZE)     // std::arrays will be 0-initialized
     , resampledData_(0)
     , encodedData_()
     , converterEncode_(0)
@@ -119,11 +119,7 @@ AudioRtpRecord::AudioRtpRecord() :
 // Call from processData*
 bool AudioRtpRecord::isDead()
 {
-#ifdef CCPP_PREFIX
-    return (int) dead_;
-#else
-    return *dead_;
-#endif
+    return dead_;
 }
 
 sfl::AudioCodec *

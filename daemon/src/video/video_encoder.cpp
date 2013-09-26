@@ -167,9 +167,9 @@ void VideoEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
     }
 }
 
-void VideoEncoder::setIOContext(VideoIOHandle *ioctx)
+void VideoEncoder::setIOContext(const std::unique_ptr<VideoIOHandle> &ioctx)
 {
-    outputCtx_->pb = ioctx->get();
+    outputCtx_->pb = ioctx->getContext();
     outputCtx_->packet_size = outputCtx_->pb->buffer_size;
 }
 

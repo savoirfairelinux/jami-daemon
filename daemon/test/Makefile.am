@@ -12,8 +12,6 @@ EXTRA_DIST = sflphoned-sample.yml history-sample.tpl run_tests.sh
 test_SOURCES = constants.h \
 			   test_utils.h \
 			   main.cpp \
-			   validator.h \
-			   validator.cpp \
 			   accounttest.h \
 			   accounttest.cpp \
 			   audiolayertest.h \
