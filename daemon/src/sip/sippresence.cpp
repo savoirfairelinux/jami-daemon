@@ -308,7 +308,10 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));
             ERROR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
-            Manager::instance().getClient()->getPresenceManager()->serverError(error,errmsg);
+            Manager::instance().getClient()->getPresenceManager()->serverError(
+                    pres->getAccount()->getAccountID(),
+                    error,
+                    errmsg);
 
         } else if (param->code == 412) {
             /* 412 (Conditional Request Failed)
@@ -318,7 +321,10 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
             publish(pres);
         } else if ((param->code == PJSIP_SC_BAD_EVENT) || (param->code == PJSIP_SC_NOT_IMPLEMENTED)){ //489 or 501
             ERROR("Client (PUBLISH) failed (%s)",error.c_str());
-            Manager::instance().getClient()->getPresenceManager()->serverError(error,"Publish not supported.");
+            Manager::instance().getClient()->getPresenceManager()->serverError(
+                    pres->getAccount()->getAccountID(),
+                    error,
+                    "Publish not supported.");
         }
 
     } else {

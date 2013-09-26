@@ -69,6 +69,10 @@ class PresSubClient {
          */
         void enable(bool flag);
         /**
+         * Get associated parent presence_module
+         */
+        SIPPresence * getPresence();
+        /**
          * Send a SUBCRIBE to the PXB or directly to a pres_client in the IP2IP context.
          */
         bool subscribe();

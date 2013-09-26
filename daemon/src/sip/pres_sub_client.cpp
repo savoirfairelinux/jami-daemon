@@ -127,7 +127,10 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                             msg = "Subscribe not allowed.";
                             break;
                     }
-                    Manager::instance().getClient()->getPresenceManager()->serverError(error,msg);
+                    Manager::instance().getClient()->getPresenceManager()->serverError(
+                            pres_client->getPresence()->getAccount()->getAccountID(),
+                            error,
+                            msg);
 
                 } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
                     if (pres_client->isTermReason("deactivated") || pres_client->isTermReason("timeout")) {
@@ -337,6 +340,11 @@ std::string PresSubClient::getURI()
     return res;
 }
 
+SIPPresence * PresSubClient::getPresence()
+{
+    return pres_;
+}
+
 bool PresSubClient::isPresent()
 {
     return status_.info[0].basic_open;
@@ -384,8 +392,6 @@ void PresSubClient::enable(bool flag)
     if(flag)
         pres_->addPresSubClient(this);
     DEBUG("pres_client %s is %s monitored.",getURI().c_str(), flag? "":"NOT");
-
-    Manager::instance().getClient()->getPresenceManager()->subcriptionStateChanged(pres_->getAccount()->getAccountID(),getURI(),flag);
 }
 
 void PresSubClient::reportPresence()
