@@ -237,7 +237,7 @@ void SHMSink::shm_lock()
 void SHMSink::shm_unlock()
 { sem_post(&shm_area_->mutex); }
 
-void SHMSink::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
+void SHMSink::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/, std::shared_ptr<VideoFrame> &frame_p)
 { render_frame(*frame_p); }
 
 }

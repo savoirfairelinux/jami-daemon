@@ -118,10 +118,15 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         ERROR("encoding failed");
 }
 
-void VideoSender::update(Observable<VideoFrameSP>* obs, VideoFrameSP& frame_p)
-{ encodeAndSendVideo(*frame_p); }
+void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
+                         std::shared_ptr<VideoFrame> & frame_p)
+{
+    encodeAndSendVideo(*frame_p);
+}
 
 void VideoSender::forceKeyFrame()
-{ ++forceKeyFrame_; }
+{
+    ++forceKeyFrame_;
+}
 
 } // end namespace sfl_video

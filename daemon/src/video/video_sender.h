@@ -56,7 +56,8 @@ public:
     void forceKeyFrame();
 
     // as VideoFramePassiveReader
-    void update(Observable<VideoFrameSP>*, VideoFrameSP&);
+    void update(Observable<std::shared_ptr<VideoFrame> >* obs,
+                std::shared_ptr<VideoFrame> &);
 
 private:
     NON_COPYABLE(VideoSender);

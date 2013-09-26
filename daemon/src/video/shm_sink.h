@@ -64,7 +64,7 @@ public:
     void render_callback(VideoProvider &provider, size_t bytes);
 
     // as VideoFramePassiveReader
-    void update(Observable<VideoFrameSP>*, VideoFrameSP&);
+    void update(Observable<std::shared_ptr<VideoFrame> >*, std::shared_ptr<VideoFrame> &);
 
 private:
     NON_COPYABLE(SHMSink);
