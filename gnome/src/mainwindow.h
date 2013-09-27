@@ -81,6 +81,8 @@ void main_window_volume_controls (gboolean state);
  */
 void statusbar_push_message (const gchar * const left_hand_message, const gchar * const right_hand_message, guint id);
 
+void statusbar_enable_presence();
+
 /**
  * Pop a message from the statusbar stack
  * @param id  The identifier of the message

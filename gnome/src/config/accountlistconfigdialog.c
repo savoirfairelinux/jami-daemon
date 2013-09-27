@@ -280,6 +280,7 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
 
     account_replace(account, CONFIG_ACCOUNT_ENABLE, enabled_str);
     dbus_send_register(account->accountID, enable);
+
 }
 
 /**
@@ -614,6 +615,12 @@ void update_account_list_status_bar(account_t *account)
         gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS, state_name, -1);
 }
 
+void dialog_destroy_cb()
+{
+    // update ui
+    statusbar_enable_presence();
+}
+
 void show_account_list_config_dialog(SFLPhoneClient *client)
 {
     account_list_dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Accounts"),
@@ -629,6 +636,8 @@ void show_account_list_config_dialog(SFLPhoneClient *client)
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(account_list_dialog)),
                        accountFrame, TRUE, TRUE, 0);
     gtk_widget_show(accountFrame);
+    g_signal_connect(G_OBJECT(account_list_dialog), "destroy",
+                     G_CALLBACK(dialog_destroy_cb), NULL);
 
     /* Accounts tab */
     GtkWidget *tab = create_account_list(client);

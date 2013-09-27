@@ -403,24 +403,10 @@ create_presence(const account_t *account)
     gtk_widget_show(grid);
     gtk_container_add(GTK_CONTAINER(frame), grid);
 
-    /*
-    GtkWidget *grid;
-    gnome_main_section_new_with_grid(_("Published address"), &frame, &grid);
-    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
-
-    use_stun_check_box = gtk_check_button_new_with_mnemonic(_("Using STUN"));
-    gtk_grid_attach(GTK_GRID(grid), use_stun_check_box, 0, 0, 1, 1);
-    g_signal_connect(use_stun_check_box, "toggled", G_CALLBACK(use_stun_cb), NULL);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(use_stun_check_box),
-                                 utf8_case_equal(stun_enable, "true"));
-    gtk_widget_set_sensitive(use_stun_check_box, !utf8_case_equal(use_tls, "true"));
-    */
-
     presence_check_box = gtk_check_button_new_with_mnemonic(_("_Enable"));
     gchar *pres = account_lookup(account, CONFIG_PRESENCE_ENABLED);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),
-                                utf8_case_equal(pres, "true"));
+                                (g_strcmp0(pres, "true")==0));
     gtk_grid_attach(GTK_GRID(grid), presence_check_box, 0, 0, 1, 1);
 
     gtk_widget_show_all(grid);

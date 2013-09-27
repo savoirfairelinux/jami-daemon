@@ -245,28 +245,54 @@ status_changed_cb(GtkComboBox *combo)
     }
 }
 
-GtkWidget*
-create_status_bar(){
+void
+statusbar_enable_presence()
+{
+    const gchar *registered;
+    const gchar *enabled;
+    const gchar *status = NULL;
+    account_t * account;
 
+    /* Check if one of the registered accounts has Presence enabled */
+    for (guint i = 0; i < account_list_get_size(); i++){
+        account = account_list_get_nth(i);
+        g_assert(account);
+        registered = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
+        enabled = account_lookup(account, CONFIG_PRESENCE_ENABLED);
+
+        if(g_strcmp0(registered, "true") == 0){
+            g_debug("Presence : found registered %s, with presence enabled (status:%s).", account->accountID,status);
+            gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
+            if(g_strcmp0(enabled, "true") == 0){
+                gtk_widget_set_sensitive(presence_status_combo, TRUE);
+                status = account_lookup(account, CONFIG_PRESENCE_STATUS);
+                return;
+            }
+        }
+    }
+    // disbaled
+    gtk_widget_set_sensitive(presence_status_combo, FALSE);
+}
+
+
+GtkWidget*
+create_status_bar()
+{
     GtkWidget *bar = gtk_statusbar_new();
     GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
+
     gtk_box_pack_start(GTK_BOX(bar), label, TRUE, TRUE, 0);
+
+    /* Add presence status combo_box*/
     presence_status_combo = gtk_combo_box_text_new();
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), "offline");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), "online");
-    gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0); // offline by default
-    account_t *account = account_list_get_nth(0); // get the status of the first account only
-    if(account){
-        const gchar *status = account_lookup(account, CONFIG_PRESENCE_STATUS);
-        if(g_strcmp0(status,"online") == 0)
-            gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
-        const gchar *enabled = account_lookup(account, CONFIG_PRESENCE_ENABLED);
-        if(g_strcmp0(enabled,"false") != 0)
-            gtk_widget_set_sensitive(presence_status_combo, FALSE);
-    }
-
+//    gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0); // offline by default
+    gtk_widget_set_sensitive(presence_status_combo, FALSE);
     g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
+
+    statusbar_enable_presence();
 
     return bar;
 }

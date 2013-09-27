@@ -606,7 +606,7 @@ screensaver_dbus_proxy_new_cb (G_GNUC_UNUSED GObject * source, GAsyncResult *res
 
 static void
 sip_presence_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *buddyUri,
-                  gboolean status, const gchar *lineStatus, SFLPhoneClient *client)
+                  gboolean status, const gchar *lineStatus)
 {
     g_debug("DBus: Sip presence state changed for %s (%s) status=%s lineStatus=%s.", buddyUri, accID, status? "online":"offline", lineStatus);
 }
