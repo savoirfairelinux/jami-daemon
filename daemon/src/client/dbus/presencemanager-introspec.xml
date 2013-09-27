@@ -65,8 +65,7 @@
                 New clients connecting to existing daemon need to be aware of active
                 subscriptions.
             </tp:rationale>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString"/>
-            <annotation>
+            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString">
                 While there is more status than "Online" or "Offline", only those
             </annotation>
             <arg type="s" name="accountID" direction="in">
