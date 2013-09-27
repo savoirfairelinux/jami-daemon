@@ -45,7 +45,7 @@
 
 #include "uimanager.h"
 #include "statusicon.h"
-
+#include "buddylistwindow.h"
 #include "config/audioconf.h"
 #include "uimanager.h"
 #include "statusicon.h"
@@ -520,6 +520,19 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 }
 
 static void
+toggle_buddylist_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
+{
+    const gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
+    if toggled
+        create_buddylist_window();
+    else
+        destroy_buddylist_window();
+
+    gtk_toggle_tool_button_set_active(togglemenuitem,!toggled);
+}
+
+
+static void
 help_contents_cb(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
 {
     GError *error = NULL;
@@ -550,6 +563,7 @@ help_about(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
         "Rafaël Carré <rafael.carre@savoirfairelinux.com>",
         "Vivien Didelot <vivien.didelot@savoirfairelinux.com>",
         "Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>",
+        "Partick Keroulas <patrick.keroulas@savoirfairelinux.com>",
         NULL
     };
     static const gchar *artists[] = {
@@ -1124,13 +1138,13 @@ static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK(dialpad_bar_cb), TRUE },
     { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK(volume_bar_cb), TRUE },
     { "History", "appointment-soon", N_("_History"), NULL, N_("Calls history"), G_CALLBACK(toggle_history_cb), FALSE },
+    { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), G_CALLBACK(toggle_buddylist_cb), TRUE},
     { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK(toggle_addressbook_cb), FALSE },
 };
 
 GtkUIManager *uimanager_new(SFLPhoneClient *client)
 {
-    const gint nb_entries = addrbook ? 8 : 7;
-
+    const gint nb_entries = addrbook ? 9 : 8;
     GtkUIManager *ui = gtk_ui_manager_new();
 
     /* Register new icons as GTK_STOCK_ITEMS */
@@ -1675,6 +1689,7 @@ create_menus(GtkUIManager *ui, SFLPhoneClient *client)
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), must_show_volume(client));
     gtk_action_set_sensitive(volumeToggle_, TRUE);
     gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Toolbar"), FALSE);
+    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(get_action(ui, "/MenuBar/ViewMenu/Buddies")), TRUE);
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
     waitingLayer = create_waiting_icon();

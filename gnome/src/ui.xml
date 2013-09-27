@@ -33,6 +33,8 @@
       <menuitem action="VolumeControls"/>
       <separator/>
       <menuitem action="History"/>
+      <separator/>
+      <menuitem action="Buddies"/>
     </menu>
 
     <menu name="HelpMenu" action="Help">
