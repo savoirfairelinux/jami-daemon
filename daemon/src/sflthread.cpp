@@ -32,6 +32,13 @@
 #include "sflthread.h"
 #include "logger.h"
 
+void* SFLThread::run_(void* data)
+{
+    SFLThread *obj = static_cast<SFLThread*>(data);
+    obj->mainloop_();
+    return nullptr;
+}
+
 void SFLThread::mainloop_()
 {
     if (setup()) {
@@ -47,14 +54,17 @@ SFLThread::SFLThread() : thread_(), running_(false)
 
 SFLThread::~SFLThread()
 {
-    SFLThread::exit();
+    if (isRunning()) {
+        stop();
+        join();
+    }
 }
 
 void SFLThread::start()
 {
     if (!running_) {
         running_ = true;
-        thread_ = std::thread(&SFLThread::mainloop_, this);
+        pthread_create(&thread_, NULL, &run_, this);
     }
 }
 
@@ -65,16 +75,15 @@ void SFLThread::stop()
 
 void SFLThread::join()
 {
-    if (thread_.joinable())
-        thread_.join();
+    if (thread_)
+        pthread_join(thread_, NULL);
 }
 
 void SFLThread::exit()
 {
     stop();
-    join();
+    pthread_exit(NULL);
 }
-
 
 bool SFLThread::isRunning()
 {
