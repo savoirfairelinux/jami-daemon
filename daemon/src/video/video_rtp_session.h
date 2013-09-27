@@ -80,7 +80,7 @@ private:
     bool receiving_;
     const std::string callID_;
     std::shared_ptr<VideoMixer> videoMixerSP_;
-    VideoFrameActiveWriter *videoLocal_;
+    std::weak_ptr<VideoFrameActiveWriter> videoLocal_;
 };
 
 }

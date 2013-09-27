@@ -182,9 +182,10 @@ VideoControls::stopPreview()
     }
 }
 
-sfl_video::VideoFrameActiveWriter* VideoControls::getVideoPreview()
+std::weak_ptr<sfl_video::VideoFrameActiveWriter>
+VideoControls::getVideoPreview()
 {
-    return videoPreview_.get();
+    return videoPreview_;
 }
 
 bool

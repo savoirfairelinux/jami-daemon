@@ -154,8 +154,8 @@ void VideoRtpSession::start(int localPort)
         sender_.reset(new VideoSender(callID_, txArgs_, *socketPair_));
     } else {
         DEBUG("Video sending disabled");
-        if (videoLocal_)
-            videoLocal_->detach(sender_.get());
+        if (auto shared = videoLocal_.lock())
+            shared->detach(sender_.get());
         if (videoMixerSP_)
             videoMixerSP_->detach(sender_.get());
         sender_.reset();
@@ -178,16 +178,16 @@ void VideoRtpSession::start(int localPort)
     // Setup pipeline
     if (videoMixerSP_) {
         setupConferenceVideoPipeline();
-    } else if (sender_ and videoLocal_) {
-        videoLocal_->attach(sender_.get());
+    } else if (auto shared = videoLocal_.lock()) {
+        if (sender_)
+            shared->attach(sender_.get());
     }
 }
 
 void VideoRtpSession::stop()
 {
-    if (videoLocal_) {
-        videoLocal_->detach(sender_.get());
-    }
+    if (auto shared = videoLocal_.lock())
+        shared->detach(sender_.get());
 
     if (videoMixerSP_) {
         videoMixerSP_->detach(sender_.get());
@@ -220,7 +220,8 @@ void VideoRtpSession::setupConferenceVideoPipeline()
     if (sender_) {
         videoMixerSP_->setDimensions(atol(txArgs_["width"].c_str()),
                                      atol(txArgs_["height"].c_str()));
-        videoLocal_->detach(sender_.get());
+        if (auto shared = videoLocal_.lock())
+            shared->detach(sender_.get());
         videoMixerSP_->attach(sender_.get());
 
         if (receiveThread_) {
@@ -253,8 +254,8 @@ void VideoRtpSession::exitConference()
         videoMixerSP_.reset();
     }
 
-    if (videoLocal_)
-        videoLocal_->attach(sender_.get());
+    if (auto shared = videoLocal_.lock())
+        shared->attach(sender_.get());
 }
 
 } // end namespace sfl_video
