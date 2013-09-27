@@ -83,7 +83,11 @@ class Observable
 {
 public:
     Observable() : observers_(), mutex_() {}
-    virtual ~Observable() {};
+    virtual ~Observable() {
+        std::unique_lock<std::mutex> lk(mutex_);
+        for (auto &o : observers_)
+            o->detached(this);
+    };
 
     bool attach(Observer<T>* o) {
         std::unique_lock<std::mutex> lk(mutex_);
