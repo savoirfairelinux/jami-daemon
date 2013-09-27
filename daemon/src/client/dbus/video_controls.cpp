@@ -43,7 +43,7 @@ const char * const SERVER_PATH = "/org/sflphone/SFLphone/VideoControls";
 
 VideoControls::VideoControls(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
-    , videoPreview_()
+    , videoCamera_()
     , videoPreference_()
 {
     // initialize libav libraries
@@ -157,9 +157,9 @@ VideoControls::getSettings() {
 }
 
 void
-VideoControls::startPreview()
+VideoControls::startCamera()
 {
-    if (videoPreview_) {
+    if (videoCamera_) {
         ERROR("Video preview was already started!");
         return;
     }
@@ -168,31 +168,31 @@ VideoControls::startPreview()
     using std::string;
 
     map<string, string> args(videoPreference_.getSettings());
-    videoPreview_.reset(new sfl_video::VideoCamera(args));
+    videoCamera_.reset(new sfl_video::VideoCamera(args));
 }
 
 void
-VideoControls::stopPreview()
+VideoControls::stopCamera()
 {
-    if (videoPreview_) {
+    if (videoCamera_) {
         DEBUG("Stopping video preview");
-        videoPreview_.reset();
+        videoCamera_.reset();
     } else {
         WARN("Video preview was already stopped");
     }
 }
 
 std::weak_ptr<sfl_video::VideoFrameActiveWriter>
-VideoControls::getVideoPreview()
+VideoControls::getVideoCamera()
 {
-    return videoPreview_;
+    return videoCamera_;
 }
 
 bool
-VideoControls::hasPreviewStarted()
+VideoControls::hasCameraStarted()
 {
     // see http://stackoverflow.com/a/7580064/21185
-    return static_cast<bool>(videoPreview_);
+    return static_cast<bool>(videoCamera_);
 }
 
 std::string

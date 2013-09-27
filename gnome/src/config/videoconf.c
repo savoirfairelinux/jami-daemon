@@ -48,7 +48,7 @@ static GtkListStore *v4l2RateList;
 static GtkWidget *v4l2_hbox;
 static GtkWidget *v4l2_nodev;
 
-static GtkWidget *preview_button;
+static GtkWidget *camera_button;
 
 static GtkWidget *codecTreeView; // View used instead of store to get access to selection
 static GtkWidget *codecMoveUpButton;
@@ -95,43 +95,43 @@ void active_is_always_recording()
     dbus_set_is_always_recording(enabled);
 }
 
-static const gchar *const PREVIEW_START_STR = "_Start";
-static const gchar *const PREVIEW_STOP_STR = "_Stop";
+static const gchar *const CAMERA_START_STR = "_Start";
+static const gchar *const CAMERA_STOP_STR = "_Stop";
 
 static void
-preview_button_toggled(GtkButton *button, G_GNUC_UNUSED gpointer data)
+camera_button_toggled(GtkButton *button, G_GNUC_UNUSED gpointer data)
 {
-    preview_button = GTK_WIDGET(button);
+    camera_button = GTK_WIDGET(button);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)))
-        dbus_start_video_preview();
+        dbus_start_video_camera();
     else
-        dbus_stop_video_preview();
+        dbus_stop_video_camera();
 
-    update_preview_button_label();
+    update_camera_button_label();
 }
 
 void
-set_preview_button_sensitivity(gboolean sensitive)
+set_camera_button_sensitivity(gboolean sensitive)
 {
-    if (!preview_button || !GTK_IS_WIDGET(preview_button))
+    if (!camera_button || !GTK_IS_WIDGET(camera_button))
         return;
-    g_debug("%ssetting preview button", sensitive ? "" : "Un");
-    gtk_widget_set_sensitive(GTK_WIDGET(preview_button), sensitive);
+    g_debug("%ssetting camera button", sensitive ? "" : "Un");
+    gtk_widget_set_sensitive(GTK_WIDGET(camera_button), sensitive);
 }
 
 void
-update_preview_button_label()
+update_camera_button_label()
 {
-    if (!preview_button || !GTK_IS_WIDGET(preview_button))
+    if (!camera_button || !GTK_IS_WIDGET(camera_button))
         return;
 
-    GtkToggleButton *button = GTK_TOGGLE_BUTTON(preview_button);
-    if (dbus_has_video_preview_started()) {
+    GtkToggleButton *button = GTK_TOGGLE_BUTTON(camera_button);
+    if (dbus_has_video_camera_started()) {
         /* We call g_object_set to avoid triggering the "toggled" signal */
-        gtk_button_set_label(GTK_BUTTON(button), _(PREVIEW_STOP_STR));
+        gtk_button_set_label(GTK_BUTTON(button), _(CAMERA_STOP_STR));
         g_object_set(button, "active", TRUE, NULL);
     } else {
-        gtk_button_set_label(GTK_BUTTON(button), _(PREVIEW_START_STR));
+        gtk_button_set_label(GTK_BUTTON(button), _(CAMERA_START_STR));
         g_object_set(button, "active", FALSE, NULL);
     }
 }
@@ -785,11 +785,11 @@ fill_devices()
     if (preferences_dialog_fill_video_input_device_list()) {
         gtk_widget_show_all(v4l2_hbox);
         gtk_widget_hide(v4l2_nodev);
-        gtk_widget_set_sensitive(preview_button, TRUE);
+        gtk_widget_set_sensitive(camera_button, TRUE);
     } else if (GTK_IS_WIDGET(v4l2_hbox)) {
         gtk_widget_hide(v4l2_hbox);
         gtk_widget_show(v4l2_nodev);
-        gtk_widget_set_sensitive(preview_button, FALSE);
+        gtk_widget_set_sensitive(camera_button, FALSE);
     }
 }
 
@@ -894,19 +894,19 @@ create_video_configuration()
     GtkWidget *v4l2box = v4l2_box();
     gtk_grid_attach(GTK_GRID(grid), v4l2box, 0, 1, 1, 1);
 
-    gnome_main_section_new_with_grid(_("Preview"), &frame, &grid);
+    gnome_main_section_new_with_grid(_("Camera"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-    const gboolean started = dbus_has_video_preview_started();
+    const gboolean started = dbus_has_video_camera_started();
 
-    preview_button = gtk_toggle_button_new_with_mnemonic(started ? _(PREVIEW_STOP_STR) : _(PREVIEW_START_STR));
-    gtk_widget_set_size_request(preview_button, 80, 30);
-    gtk_grid_attach(GTK_GRID(grid), preview_button, 0, 0, 1, 1);
-    gtk_widget_show(GTK_WIDGET(preview_button));
+    camera_button = gtk_toggle_button_new_with_mnemonic(started ? _(CAMERA_STOP_STR) : _(CAMERA_START_STR));
+    gtk_widget_set_size_request(camera_button, 80, 30);
+    gtk_grid_attach(GTK_GRID(grid), camera_button, 0, 0, 1, 1);
+    gtk_widget_show(GTK_WIDGET(camera_button));
     if (started)
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preview_button), TRUE);
-    g_signal_connect(G_OBJECT(preview_button), "toggled",
-                     G_CALLBACK(preview_button_toggled), NULL);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(camera_button), TRUE);
+    g_signal_connect(G_OBJECT(camera_button), "toggled",
+                     G_CALLBACK(camera_button_toggled), NULL);
 
     gboolean active_call = FALSE;
     gchar **list = dbus_get_call_list();
@@ -917,7 +917,7 @@ create_video_configuration()
     }
 
     if (active_call)
-        gtk_widget_set_sensitive(GTK_WIDGET(preview_button), FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(camera_button), FALSE);
 
     gtk_widget_show_all(vbox);
 

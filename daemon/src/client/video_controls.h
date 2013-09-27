@@ -63,7 +63,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
-        std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoPreview_;
+        std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoCamera_;
         VideoPreference videoPreference_;
 
     public:
@@ -120,10 +120,10 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         std::string
         getCurrentCodecName(const std::string &callID);
 
-        void startPreview();
-        void stopPreview();
-        bool hasPreviewStarted();
-        std::weak_ptr<sfl_video::VideoFrameActiveWriter> getVideoPreview();
+        void startCamera();
+        void stopCamera();
+        bool hasCameraStarted();
+        std::weak_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
 };
 
 #endif // VIDEO_CONTROLS_H_

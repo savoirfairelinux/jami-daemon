@@ -600,9 +600,9 @@ gboolean dbus_start_recorded_file_playback(const gchar *);
  */
 void dbus_stop_recorded_file_playback(const gchar *);
 
-void dbus_start_video_preview();
-void dbus_stop_video_preview();
-gboolean dbus_has_video_preview_started();
+void dbus_start_video_camera();
+void dbus_stop_video_camera();
+gboolean dbus_has_video_camera_started();
 
 /**
  * Prevent Gnome Session Manager from entering in screen-saver mode

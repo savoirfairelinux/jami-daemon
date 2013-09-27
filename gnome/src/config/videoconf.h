@@ -37,7 +37,7 @@
 GtkWidget* create_video_configuration();
 GtkWidget* videocodecs_box();
 void video_device_event_cb(DBusGProxy *proxy, void * foo);
-void update_preview_button_label();
-void set_preview_button_sensitivity(gboolean sensitive);
+void update_camera_button_label();
+void set_camera_button_sensitivity(gboolean sensitive);
 
 #endif // __VIDEO_CONF_H__

@@ -2061,33 +2061,33 @@ dbus_send_text_message(const gchar *callID, const gchar *message)
 
 #ifdef SFL_VIDEO
 static void
-video_preview_async_cb(G_GNUC_UNUSED DBusGProxy *proxy, GError *error, G_GNUC_UNUSED gpointer userdata)
+video_camera_async_cb(G_GNUC_UNUSED DBusGProxy *proxy, GError *error, G_GNUC_UNUSED gpointer userdata)
 {
     check_error(error);
     // Reactivate it now that we're done, D-Bus wise
-    set_preview_button_sensitivity(TRUE);
+    set_camera_button_sensitivity(TRUE);
 }
 
 void
-dbus_start_video_preview()
+dbus_start_video_camera()
 {
-    set_preview_button_sensitivity(FALSE);
-    org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy, video_preview_async_cb, NULL);
+    set_camera_button_sensitivity(FALSE);
+    org_sflphone_SFLphone_VideoControls_start_camera_async(video_proxy, video_camera_async_cb, NULL);
 }
 
 void
-dbus_stop_video_preview()
+dbus_stop_video_camera()
 {
-    set_preview_button_sensitivity(FALSE);
-    org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy, video_preview_async_cb, NULL);
+    set_camera_button_sensitivity(FALSE);
+    org_sflphone_SFLphone_VideoControls_stop_camera_async(video_proxy, video_camera_async_cb, NULL);
 }
 
 gboolean
-dbus_has_video_preview_started()
+dbus_has_video_camera_started()
 {
     GError *error = NULL;
     gboolean started = FALSE;
-    org_sflphone_SFLphone_VideoControls_has_preview_started(video_proxy, &started, &error);
+    org_sflphone_SFLphone_VideoControls_has_camera_started(video_proxy, &started, &error);
     check_error(error);
     return started;
 }
