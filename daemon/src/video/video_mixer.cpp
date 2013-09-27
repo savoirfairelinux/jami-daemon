@@ -50,20 +50,20 @@ VideoMixer::VideoMixer(const std::string &id) :
     , sink_(id+"_MX")
 {
     auto videoCtrl = Manager::instance().getVideoControls();
-    if (!videoCtrl->hasPreviewStarted()) {
-        videoCtrl->startPreview();
+    if (!videoCtrl->hasCameraStarted()) {
+        videoCtrl->startCamera();
         MYSLEEP(1);
     }
 
     // Local video camera is always attached
-    if (auto shared = videoCtrl->getVideoPreview().lock())
+    if (auto shared = videoCtrl->getVideoCamera().lock())
         shared->attach(this);
 }
 
 VideoMixer::~VideoMixer()
 {
     auto videoCtrl = Manager::instance().getVideoControls();
-    if (auto shared = videoCtrl->getVideoPreview().lock())
+    if (auto shared = videoCtrl->getVideoCamera().lock())
         shared->detach(this);
 }
 

@@ -142,12 +142,12 @@ void VideoRtpSession::start(int localPort)
 	if (sending_) {
         // Local video startup if needed
         auto videoCtrl = Manager::instance().getVideoControls();
-        if (!videoCtrl->hasPreviewStarted()) {
-            videoCtrl->startPreview();
+        if (!videoCtrl->hasCameraStarted()) {
+            videoCtrl->startCamera();
             MYSLEEP(1);
         }
 
-        videoLocal_ = videoCtrl->getVideoPreview();
+        videoLocal_ = videoCtrl->getVideoCamera();
         if (sender_)
             WARN("Restarting video sender");
 

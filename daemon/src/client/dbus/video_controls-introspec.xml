@@ -103,17 +103,17 @@
            </arg>
         </method>
 
-        <method name="startPreview" tp:name-for-bindings="startPreview">
-            <tp:docstring> Starts the video preview, which renders the active v4l2 device's video to shared memory. Useful for testing/debugging camera settings</tp:docstring>
+        <method name="startCamera" tp:name-for-bindings="startCamera">
+            <tp:docstring> Starts the video camera, which renders the active v4l2 device's video to shared memory. Useful for testing/debugging camera settings</tp:docstring>
         </method>
 
-        <method name="stopPreview" tp:name-for-bindings="stopPreview">
+        <method name="stopCamera" tp:name-for-bindings="stopCamera">
         </method>
 
-        <method name="hasPreviewStarted" tp:name-for-bindings="hasPreviewStarted">
+        <method name="hasCameraStarted" tp:name-for-bindings="hasCameraStarted">
             <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="Bool"/>
             <arg type="b" name="started" direction="out">
-            <tp:docstring>Returns true if the preview has already started, false otherwise</tp:docstring>
+            <tp:docstring>Returns true if the camera has already started, false otherwise</tp:docstring>
             </arg>
         </method>
 

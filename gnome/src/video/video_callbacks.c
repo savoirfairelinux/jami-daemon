@@ -62,7 +62,7 @@ cleanup_handle(gpointer data)
     if (GTK_IS_WIDGET(h->window)) {
         gtk_widget_destroy(h->window);
         if (video_is_local(h->id))
-            update_preview_button_label();
+            update_camera_button_label();
         g_free(h->id);
     }
     g_free(h);
@@ -71,8 +71,8 @@ cleanup_handle(gpointer data)
 static void
 video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
-	if (dbus_has_video_preview_started())
-		dbus_stop_video_preview();
+	if (dbus_has_video_camera_started())
+		dbus_stop_video_camera();
 }
 
 static void
@@ -111,7 +111,7 @@ add_handle(const gchar *id)
             G_CALLBACK(video_window_deleted_cb),
             NULL);
     if (video_is_local(id))
-        update_preview_button_label();
+        update_camera_button_label();
 
     g_hash_table_insert(video_handles, g_strdup(id), handle);
     return handle;
