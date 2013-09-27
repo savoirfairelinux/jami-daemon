@@ -56,13 +56,15 @@ VideoMixer::VideoMixer(const std::string &id) :
     }
 
     // Local video camera is always attached
-    videoCtrl->getVideoPreview()->attach(this);
+    if (auto shared = videoCtrl->getVideoPreview().lock())
+        shared->attach(this);
 }
 
 VideoMixer::~VideoMixer()
 {
     auto videoCtrl = Manager::instance().getVideoControls();
-    videoCtrl->getVideoPreview()->detach(this);
+    if (auto shared = videoCtrl->getVideoPreview().lock())
+        shared->detach(this);
 }
 
 void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
