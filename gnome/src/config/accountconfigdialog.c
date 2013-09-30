@@ -160,9 +160,12 @@ void change_protocol_cb()
         if (utf8_case_equal(protocol, "IAX")) {
             gtk_widget_hide(security_tab);
             gtk_widget_hide(advanced_tab);
+            gtk_widget_set_sensitive(presence_check_box, FALSE);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),FALSE);
         } else {
             gtk_widget_show(security_tab);
             gtk_widget_show(advanced_tab);
+            gtk_widget_set_sensitive(presence_check_box, TRUE);
         }
     }
 
@@ -429,6 +432,7 @@ create_basic_tab(const account_t *account, gboolean is_new)
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     frame = create_presence(account);
+
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     gtk_widget_show_all(vbox);
