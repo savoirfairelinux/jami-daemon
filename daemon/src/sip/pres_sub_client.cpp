@@ -47,6 +47,7 @@
 #include "array_size.h"
 #include "pres_sub_client.h"
 #include "client/presencemanager.h"
+#include "client/configurationmanager.h"
 #include "sipaccount.h"
 #include "sippresence.h"
 #include "sipvoiplink.h"
@@ -81,7 +82,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 
     if (pres_client) {
         pres_client->incLock();
-        DEBUG("pres_client  '%s' is '%s'", pres_client->getURI().c_str(),
+        DEBUG("subription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
               pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
         pjsip_evsub_state state = pjsip_evsub_get_state(sub);
@@ -119,6 +120,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                                 pres_client->term_reason_.slen);
 
                     std::string msg;
+                    bool supported = PJ_FALSE;
 
                     switch (tsx->status_code) {
                         case PJSIP_SC_CALL_TSX_DOES_NOT_EXIST:
@@ -134,6 +136,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                             if (pres_client->dlg_->remote.contact)
                                 resub_delay = 500;
                             msg = "Bad subscribe refresh.";
+                            supported = PJ_TRUE;
                             break;
 
                         case PJSIP_SC_NOT_FOUND:
@@ -141,13 +144,24 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                             break;
 
                         case PJSIP_SC_FORBIDDEN:
-                            msg = "Subscribe not allowed.";
+                            msg = "Subscribe not allowed for this buddy.";
+                            supported = PJ_TRUE;
+                            break;
+
+                        case PJSIP_SC_PRECONDITION_FAILURE:
+                            msg = "Wrong server.";
                             break;
                     }
                     Manager::instance().getClient()->getPresenceManager()->serverError(
                             pres_client->getPresence()->getAccount()->getAccountID(),
                             error,
                             msg);
+
+                    if(!supported){
+                        pres_client->getPresence()->getAccount()->enablePresence(PJ_FALSE);
+                        Manager::instance().saveConfig();
+                        Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
+                    }
 
                 } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
                     if (pres_client->isTermReason("deactivated") || pres_client->isTermReason("timeout")) {
