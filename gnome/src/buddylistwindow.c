@@ -46,13 +46,14 @@ static GtkWidget *vbox;
 
 void
 destroy_buddylist_window()
+
 {
     g_debug("Destroy buddylist window ");
-    gtk_window_destroy(buddylistwindow);
+    gtk_widget_destroy(buddylistwindow);
 }
 
 void
-create_buddylist_window()
+create_buddylist_window(SFLPhoneClient *client)
 {
     const gchar * title = "SFLphone Buddy list";
     g_debug("Create window : %s", title);

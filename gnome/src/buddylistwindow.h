@@ -31,6 +31,7 @@
 #ifndef __BUDDYLISTWINDOW_H__
 #define __BUDDYLISTWINDOW_H__
 
+#include "sflphone_client.h"
 
 #define BUDDYLIST_WINDOW_WIDTH 280
 #define BUDDYLIST_WINDOW_HEIGHT 320
@@ -40,7 +41,7 @@
   */
 
 void destroy_buddylist_window();
-void create_buddylist_window();
+void create_buddylist_window(SFLPhoneClient *client);
 
 
 
