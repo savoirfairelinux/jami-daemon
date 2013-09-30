@@ -100,9 +100,32 @@ find_account_in_account_store(const gchar *accountID, GtkTreeModel *model,
     return found;
 }
 
-
-static void delete_account_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
+static gboolean
+confirm_account_deletion(GtkWidget *window)
 {
+   /* Create the widgets */
+   GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window),
+           GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+           GTK_MESSAGE_WARNING,
+           GTK_BUTTONS_CANCEL,
+           _("Are you sure you want to remove account?"));
+
+   gtk_dialog_add_buttons(GTK_DIALOG(dialog), _("Remove"), GTK_RESPONSE_OK, NULL);
+
+   gtk_window_set_title(GTK_WINDOW(dialog), _("Remove account"));
+   const gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+   gtk_widget_destroy(dialog);
+
+   return response == GTK_RESPONSE_OK;
+}
+
+
+static void delete_account_cb(GtkButton *button, gpointer data)
+{
+    GtkWidget *window = g_object_get_data(G_OBJECT(button), "window");
+    if (!confirm_account_deletion(window))
+        return;
+
     gchar *selected_accountID = get_selected_accountID(data);
     g_return_if_fail(selected_accountID != NULL);
     GtkTreeModel *model = GTK_TREE_MODEL(account_store);
@@ -546,6 +569,7 @@ create_account_list(SFLPhoneClient *client)
 
     delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
     gtk_widget_set_sensitive(delete_button, FALSE);
+    g_object_set_data(G_OBJECT(delete_button), "window", client->win);
     g_signal_connect(G_OBJECT(delete_button), "clicked",
                      G_CALLBACK(delete_account_cb), tree_view);
     gtk_box_pack_start(GTK_BOX(button_box), delete_button, FALSE, FALSE, 0);
