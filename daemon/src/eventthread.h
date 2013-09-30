@@ -47,6 +47,7 @@ class EventThread {
         ~EventThread();
         // spawns thread
         void start();
+        void join();
 
     private:
         NON_COPYABLE(EventThread);

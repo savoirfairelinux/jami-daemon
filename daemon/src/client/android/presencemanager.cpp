@@ -142,6 +142,11 @@ PresenceManager::subscriptionStateChanged(const std::string& accountID, const st
 {}
 
 void
+PresenceManager::subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
+                              const bool& state)
+{}
+
+void
 PresenceManager::newServerSubscriptionRequest(const std::string& remote)
 {}
 

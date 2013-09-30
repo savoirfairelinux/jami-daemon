@@ -59,9 +59,6 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     , cp_()
     , pool_()
 {
-    /* init default status */
-    updateStatus(true, "Available");
-
     /* init pool */
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_.factory, "pres", 1000, 1000, NULL);
@@ -69,6 +66,9 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     /* Create mutex */
     if (pj_mutex_create_recursive(pool_, "pres", &mutex_) != PJ_SUCCESS)
         ERROR("Unable to create mutex");
+
+    /* init default status */
+    updateStatus(true, "Available");
 }
 
 
@@ -129,10 +129,12 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
     pj_bzero(&status_data_, sizeof(status_data_));
     status_data_.info_cnt = 1;
     status_data_.info[0].basic_open = status;
-    std::ostringstream os;
-    os << (rand() % 1000);
-    const std::string tuple_id(os.str());
-    status_data_.info[0].id = CONST_PJ_STR(tuple_id.c_str());
+
+    // at most we will have 3 digits + NULL termination
+    char buf[4];
+    pj_utoa(rand() % 1000, buf);
+    status_data_.info[0].id = pj_strdup3(pool_, buf);
+
     pj_memcpy(&status_data_.info[0].rpid, &rpid, sizeof(pjrpid_element));
     /* "contact" field is optionnal */
 }
