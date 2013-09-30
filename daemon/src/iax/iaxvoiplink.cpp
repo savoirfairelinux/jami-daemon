@@ -67,7 +67,6 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
 
 IAXVoIPLink::~IAXVoIPLink()
 {
-    handlingEvents_ = false;
     regSession_ = NULL; // shall not delete it // XXX: but why?
     terminate();
 
@@ -99,6 +98,7 @@ IAXVoIPLink::terminate()
         return;
 
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+    handlingEvents_ = false;
 
     for (auto & item : iaxCallMap_) {
         IAXCall *call = static_cast<IAXCall*>(item.second);
@@ -111,6 +111,7 @@ IAXVoIPLink::terminate()
     }
 
     iaxCallMap_.clear();
+    evThread_.join();
 
     initDone_ = false;
 }

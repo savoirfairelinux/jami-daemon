@@ -41,6 +41,11 @@ EventThread::EventThread(VoIPLink *link) : link_(link), thread_(0)
 
 EventThread::~EventThread()
 {
+    join();
+}
+
+void EventThread::join()
+{
     if (thread_)
         pthread_join(thread_, NULL);
 }
