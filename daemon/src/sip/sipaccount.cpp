@@ -67,6 +67,8 @@ const int MIN_REGISTRATION_TIME = 60;
 const int DEFAULT_REGISTRATION_TIME = 3600;
 const char *const TRUE_STR = "true";
 const char *const FALSE_STR = "false";
+const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
+const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
 }
 
 // we force RTP ports to be even, so we only need HALF_MAX_PORT booleans
@@ -388,6 +390,20 @@ void SIPAccount::usePublishedAddressPortInVIA()
     via_addr_.port = publishedPort_;
 }
 
+namespace {
+template <typename T>
+void validate(std::string &member, const std::string &param,
+              const T& valid)
+{
+    const auto begin = std::begin(valid);
+    const auto end = std::end(valid);
+    if (find(begin, end, param) != end)
+        member = param;
+    else
+        ERROR("Invalid parameter \"%s\"", param.c_str());
+}
+}
+
 void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 {
     using namespace Conf;
@@ -531,7 +547,9 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 
     if (srtpMap) {
         srtpMap->getValue(SRTP_ENABLE_KEY, &srtpEnabled_);
-        srtpMap->getValue(KEY_EXCHANGE_KEY, &srtpKeyExchange_);
+        std::string tmp;
+        srtpMap->getValue(KEY_EXCHANGE_KEY, &tmp);
+        validate(srtpKeyExchange_, tmp, VALID_SRTP_KEY_EXCHANGES);
         srtpMap->getValue(RTP_FALLBACK_KEY, &srtpFallback_);
     }
 
@@ -556,7 +574,11 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         tlsMap->getValue(CERTIFICATE_KEY, &tlsCertificateFile_);
         tlsMap->getValue(CALIST_KEY, &tlsCaListFile_);
         tlsMap->getValue(CIPHERS_KEY, &tlsCiphers_);
-        tlsMap->getValue(METHOD_KEY, &tlsMethod_);
+
+        std::string tmp(tlsMethod_);
+        tlsMap->getValue(METHOD_KEY, &tmp);
+        validate(tlsMethod_, tmp, VALID_TLS_METHODS);
+
         tlsMap->getValue(TLS_PASSWORD_KEY, &tlsPassword_);
         tlsMap->getValue(PRIVATE_KEY_KEY, &tlsPrivateKeyFile_);
         tlsMap->getValue(REQUIRE_CERTIF_KEY, &tlsRequireClientCertificate_);
@@ -634,7 +656,8 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     zrtpDisplaySasOnce_ = details[CONFIG_ZRTP_DISPLAY_SAS_ONCE] == TRUE_STR;
     zrtpNotSuppWarning_ = details[CONFIG_ZRTP_NOT_SUPP_WARNING] == TRUE_STR;
     zrtpHelloHash_ = details[CONFIG_ZRTP_HELLO_HASH] == TRUE_STR;
-    srtpKeyExchange_ = details[CONFIG_SRTP_KEY_EXCHANGE];
+    validate(srtpKeyExchange_, details[CONFIG_SRTP_KEY_EXCHANGE],
+             VALID_SRTP_KEY_EXCHANGES);
 
     // TLS settings
     tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
@@ -643,7 +666,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     tlsCertificateFile_ = details[CONFIG_TLS_CERTIFICATE_FILE];
     tlsPrivateKeyFile_ = details[CONFIG_TLS_PRIVATE_KEY_FILE];
     tlsPassword_ = details[CONFIG_TLS_PASSWORD];
-    tlsMethod_ = details[CONFIG_TLS_METHOD];
+    validate(tlsMethod_, details[CONFIG_TLS_METHOD], VALID_TLS_METHODS);
     tlsCiphers_ = details[CONFIG_TLS_CIPHERS];
     tlsServerName_ = details[CONFIG_TLS_SERVER_NAME];
     tlsVerifyServer_ = details[CONFIG_TLS_VERIFY_SERVER] == TRUE_STR;
