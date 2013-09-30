@@ -81,6 +81,8 @@ class PresenceManager
     void serverError(const std::string& accountID, const std::string& error, const std::string& msg);
     void newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
                               const bool& status, const std::string& lineStatus);
+    void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
+                              const bool& state);
 #endif //__ANDROID__
 
     /* Presence subscription/Notification. */

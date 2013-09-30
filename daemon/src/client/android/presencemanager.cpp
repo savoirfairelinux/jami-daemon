@@ -137,6 +137,10 @@ PresenceManager::newBuddyNotification(const std::string& accountID, const std::s
                               const bool& status, const std::string& lineStatus)
 {}
 
+PresenceManager::subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
+                              const bool& state)
+{}
+
 void
 PresenceManager::newServerSubscriptionRequest(const std::string& remote)
 {}
