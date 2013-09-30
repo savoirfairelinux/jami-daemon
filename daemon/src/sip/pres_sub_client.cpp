@@ -86,12 +86,24 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 
         pjsip_evsub_state state = pjsip_evsub_get_state(sub);
 
+        SIPPresence * pres = pres_client->getPresence();
+
         if (state == PJSIP_EVSUB_STATE_ACCEPTED) {
             pres_client->enable(true);
+            Manager::instance().getClient()->getPresenceManager()->subscriptionStateChanged(
+                    pres->getAccount()->getAccountID(),
+                    pres_client->getURI().c_str(),
+                    PJ_TRUE);
 
         } else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
             int resub_delay = -1;
             pj_strdup_with_null(pres_client->pool_, &pres_client->term_reason_, pjsip_evsub_get_termination_reason(sub));
+
+            Manager::instance().getClient()->getPresenceManager()->subscriptionStateChanged(
+                    pres->getAccount()->getAccountID(),
+                    pres_client->getURI().c_str(),
+                    PJ_FALSE);
+
             pres_client->term_code_ = 200;
 
             /* Determine whether to resubscribe automatically */

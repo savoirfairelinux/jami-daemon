@@ -86,7 +86,7 @@ def presSubApprove(arg):
     logging.info('> APPROVE subscription from' + str(arg))
 
 def newPresSubCientNotificationHandler(acc, uri, status, activity):
-    logging.info("< SIGNAL : acc:"+str(acc)+", from:"+str(uri)+" (status:" + str(status)+ ", "+ str(activity)+ ").")
+    logging.info("< SIGNAL : Notification for  acc:"+str(acc)+", from:"+str(uri)+" (status:" + str(status)+ ", "+ str(activity)+ ").")
 
 def newPresSubServerRequestHandler(uri):
     logging.info("< SIGNAL : PresenceSubscription request from " +str(uri))
@@ -95,7 +95,7 @@ def newPresSubServerRequestHandler(uri):
 def subcriptionStateChangedHandler(acc,uri,flag):
     logging.info("< SIGNAL : new subscriptionState request for acc:"+str(acc)+" uri " +str(uri) + " flag:" + str(flag))
 
-def serverErrorHandler(error, msg):
+def serverErrorHandler(acc, error, msg):
     logging.info("< SIGNAL : error from server:"+str(error)+" . "+str(msg))
 
 def randbool():
