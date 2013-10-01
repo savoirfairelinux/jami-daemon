@@ -1,38 +1,7 @@
 #include "logger.h"
 
 JavaVM *gJavaVM;
-const char *ksflphoneservicePath = "com/savoirfairelinux/sflphone/service/SFLPhoneserviceJNI";
-//const char *kManagerPath = "com/savoirfairelinux/sflphone/client/ManagerImpl";
-//static jobject gManagerObject, gDataObject;
-
-//void initClassHelper(JNIEnv *env, const char *path, jobject *objptr) {
-//    jclass cls;
-//
-//	INFO("initClassHelper");
-//
-//	cls= env->FindClass(path);
-//	if(!cls) {
-//        ERROR("initClassHelper: failed to get %s class reference", path);
-//        return;
-//    }
-//    jmethodID constr = env->GetMethodID(cls, "<init>", "()V");
-//	INFO("initClassHelper: %s method found", path);
-//
-//    if(!constr) {
-//        ERROR("initClassHelper: failed to get %s constructor", path);
-//        return;
-//    }
-//    jobject obj = env->NewObject(cls, constr);
-//	INFO("initClassHelper: %s constructor found", path);
-//
-//    if(!obj) {
-//        ERROR("initClassHelper: failed to create a %s object", path);
-//        return;
-//    }
-//	/* protect cached object instances from Android GC */
-//    (*objptr) = env->NewGlobalRef(obj);
-//	INFO("initClassHelper: object found %x", objptr);
-//}
+const char *ksflphoneservicePath = "org/sflphone/service/SFLPhoneserviceJNI";
 
 void deinitClassHelper(JNIEnv *env, jobject obj) {
 	INFO("deinitClassHelper");

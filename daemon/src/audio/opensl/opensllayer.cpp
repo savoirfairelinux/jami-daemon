@@ -177,8 +177,8 @@ OpenSLLayer::startStream()
 
     if (audioThread_ == nullptr) {
 #ifdef RECORD_AUDIO_TODISK
-        opensl_outfile.open("/data/data/com.savoirfairelinux.sflphone/opensl_playback.raw", std::ofstream::out | std::ofstream::binary);
-        opensl_infile.open("/data/data/com.savoirfairelinux.sflphone/opensl_record.raw", std::ofstream::out | std::ofstream::binary);
+        opensl_outfile.open("/data/data/org.sflphone/opensl_playback.raw", std::ofstream::out | std::ofstream::binary);
+        opensl_infile.open("/data/data/org.sflphone/opensl_record.raw", std::ofstream::out | std::ofstream::binary);
 #endif
 
         audioThread_ = new OpenSLThread(this);
@@ -697,7 +697,7 @@ bool OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer)
 // #define RECORD_TOMAIN_TODISK
 #ifdef RECORD_TOMAIN_TODISK
 #include <fstream>
-std::ofstream opensl_tomainbuffer("/data/data/com.savoirfairelinux.sflphone/opensl_tomain.raw", std::ofstream::out | std::ofstream::binary);
+std::ofstream opensl_tomainbuffer("/data/data/org.sflphone/opensl_tomain.raw", std::ofstream::out | std::ofstream::binary);
 #endif
 
 void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)

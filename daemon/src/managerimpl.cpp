@@ -1915,7 +1915,7 @@ ManagerImpl::getTelephoneFile()
 std::string ManagerImpl::retrieveConfigPath() const
 {
 #ifdef __ANDROID__
-    std::string configdir = "/data/data/com.savoirfairelinux.sflphone";
+    std::string configdir = "/data/data/org.sflphone";
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
