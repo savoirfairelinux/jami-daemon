@@ -117,7 +117,7 @@ confirm_account_deletion(GtkWidget *window, const gchar *alias)
             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
             GTK_MESSAGE_WARNING,
             GTK_BUTTONS_CANCEL,
-            msg);
+            "%s", msg);
 
     gtk_dialog_add_buttons(GTK_DIALOG(dialog), _("Remove"), GTK_RESPONSE_OK, NULL);
 
