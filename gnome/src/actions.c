@@ -138,7 +138,7 @@ status_bar_display_account()
     gchar* msg;
     if (acc) {
         const guint type_idx = account_is_IAX(acc);
-        msg = g_markup_printf_escaped(_("Using account %s %s"),
+        msg = g_markup_printf_escaped(_("%s %s"),
                                       (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
                                       _(account_types[type_idx]));
     } else {
