@@ -60,8 +60,11 @@ Conference::Conference()
 Conference::~Conference()
 {
 #ifdef SFL_VIDEO
-    for (const auto &participant_id : participants_)
-        SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().exitConference();
+    for (const auto &participant_id : participants_) {
+        SIPCall *call = SIPVoIPLink::instance()->getSipCall(participant_id);
+        if (call)
+            call->getVideoRtp().exitConference();
+    }
 #endif // SFL_VIDEO
 }
 
@@ -79,7 +82,9 @@ void Conference::add(const std::string &participant_id)
 {
     if (participants_.insert(participant_id).second) {
 #ifdef SFL_VIDEO
-    SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().enterConference(this);
+        SIPCall *call = SIPVoIPLink::instance()->getSipCall(participant_id);
+        if (call)
+            call->getVideoRtp().enterConference(this);
 #endif // SFL_VIDEO
     }
 }
@@ -88,7 +93,9 @@ void Conference::remove(const std::string &participant_id)
 {
     if (participants_.erase(participant_id)) {
 #ifdef SFL_VIDEO
-        SIPVoIPLink::instance()->getSipCall(participant_id)->getVideoRtp().exitConference();
+        SIPCall *call = SIPVoIPLink::instance()->getSipCall(participant_id);
+        if (call)
+            call->getVideoRtp().exitConference();
 #endif // SFL_VIDEO
     }
 }
