@@ -285,8 +285,8 @@ create_status_bar()
 
     /* Add presence status combo_box*/
     presence_status_combo = gtk_combo_box_text_new();
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), "Offline");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), "Online");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _("Offline"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _("Online"));
 //    gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0); // offline by default
     gtk_widget_set_sensitive(presence_status_combo, FALSE);
     g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
