@@ -6,16 +6,17 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
-"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
-"POT-Creation-Date: 2013-06-12 16:32-0400\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-10-02 11:57-0400\n"
 "PO-Revision-Date: 2013-08-15 18:57+0000\n"
 "Last-Translator: Tho Duy Nguyen <nguyenduytho@gmail.com>\n"
 "Language-Team: Vietnamese <vi@li.org>\n"
+"Language: vi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2013-08-15 19:28+0000\n"
-"X-Generator: Launchpad (build 16723)\n"
+"X-Launchpad-Export-Date: 2013-10-02 15:52+0000\n"
+"X-Generator: Launchpad (build 16791)\n"
 
 #: ../src/accountlist.c:155
 msgid "Registered"
@@ -66,16 +67,25 @@ msgstr "Sẵn sàng"
 msgid "Invalid"
 msgstr "Không hợp lệ"
 
-#: ../src/actions.c:136
-msgid "Using account"
-msgstr "Sử dụng tài khoản"
+#: ../src/actions.c:134
+msgid "(SIP)"
+msgstr ""
 
-#: ../src/actions.c:140
+#: ../src/actions.c:135
+msgid "(IAX)"
+msgstr ""
+
+#: ../src/actions.c:141
+#, c-format
+msgid "%s %s"
+msgstr ""
+
+#: ../src/actions.c:145
 #, c-format
 msgid "No registered accounts"
 msgstr "Tài khoản chưa được đăng ký"
 
-#: ../src/actions.c:500
+#: ../src/actions.c:505
 #, c-format
 msgid "Direct SIP call"
 msgstr "Gọi trực tiếp bằng SIP"
@@ -101,241 +111,287 @@ msgstr "%A lúc %R"
 msgid "%x at %R"
 msgstr "%x lúc %R"
 
-#: ../src/config/accountconfigdialog.c:218
+#: ../src/config/accountconfigdialog.c:227
 msgid "_Auto-answer calls"
 msgstr "Tự động trả lời cuộc gọi"
 
-#: ../src/config/accountconfigdialog.c:238
+#: ../src/config/accountconfigdialog.c:247
 msgid "Account Parameters"
 msgstr "Tham số tài khoản"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:247 ../src/config/assistant.c:305
+#: ../src/config/accountconfigdialog.c:256 ../src/config/assistant.c:305
 #: ../src/config/assistant.c:403
 msgid "_Alias"
 msgstr "Bí d_anh:"
 
-#: ../src/config/accountconfigdialog.c:258
+#: ../src/config/accountconfigdialog.c:267
 msgid "_Protocol"
 msgstr "_Phương thức"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:275
+#: ../src/config/accountconfigdialog.c:284
 msgid "Unknown"
 msgstr "Không rõ"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:290 ../src/config/assistant.c:313
+#: ../src/config/accountconfigdialog.c:299 ../src/config/assistant.c:313
 #: ../src/config/assistant.c:411
 msgid "_Host name"
 msgstr "_Tên máy chủ"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:300 ../src/config/assistant.c:321
+#: ../src/config/accountconfigdialog.c:309 ../src/config/assistant.c:321
 #: ../src/config/assistant.c:419
 msgid "_User name"
 msgstr "_Tên người dùng"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:321 ../src/config/assistant.c:331
+#: ../src/config/accountconfigdialog.c:330 ../src/config/assistant.c:331
 #: ../src/config/assistant.c:428
 msgid "_Password"
 msgstr "Mật _khẩu"
 
-#: ../src/config/accountconfigdialog.c:340 ../src/config/assistant.c:340
+#: ../src/config/accountconfigdialog.c:349 ../src/config/assistant.c:340
 #: ../src/config/assistant.c:437
 msgid "Show password"
 msgstr "Hiển thị mật khẩu"
 
-#: ../src/config/accountconfigdialog.c:345
+#: ../src/config/accountconfigdialog.c:354
 msgid "_Proxy"
 msgstr "_Proxy"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:355 ../src/config/assistant.c:345
+#: ../src/config/accountconfigdialog.c:364 ../src/config/assistant.c:345
 #: ../src/config/assistant.c:442
 msgid "_Voicemail number"
 msgstr "_Số hộp thư thoại"
 
-#: ../src/config/accountconfigdialog.c:366
+#: ../src/config/accountconfigdialog.c:375
 msgid "_User-agent"
 msgstr "_User-agent"
 
-#: ../src/config/accountconfigdialog.c:419
+#: ../src/config/accountconfigdialog.c:400
+#, fuzzy
+msgid "Presence notifications"
+msgstr "_Bật thông báo"
+
+#: ../src/config/accountconfigdialog.c:409
+#, fuzzy
+msgid "_Enable"
+msgstr "Bật gỡ lỗi"
+
+#: ../src/config/accountconfigdialog.c:478
 msgid "Authentication"
 msgstr "Xác thực"
 
-#: ../src/config/accountconfigdialog.c:420
+#: ../src/config/accountconfigdialog.c:479
 msgid "Secret"
 msgstr "Bí mật"
 
-#: ../src/config/accountconfigdialog.c:669
+#: ../src/config/accountconfigdialog.c:728
 msgid "Credential"
 msgstr "Ủy nhiệm"
 
-#: ../src/config/accountconfigdialog.c:701
+#: ../src/config/accountconfigdialog.c:760
 msgid "Authentication name"
 msgstr "Tên xác thực"
 
-#: ../src/config/accountconfigdialog.c:712
+#: ../src/config/accountconfigdialog.c:771
 msgid "Password"
 msgstr "Mật khẩu"
 
-#: ../src/config/accountconfigdialog.c:764
-#: ../src/config/accountconfigdialog.c:1380
+#: ../src/config/accountconfigdialog.c:823
+#: ../src/config/accountconfigdialog.c:1517
 msgid "Security"
 msgstr "Bảo mật"
 
-#: ../src/config/accountconfigdialog.c:780
+#: ../src/config/accountconfigdialog.c:839
 msgid "Use TLS transport(sips)"
 msgstr "Dùng giao thức TLS (SIPS)"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:788
+#: ../src/config/accountconfigdialog.c:847
 msgid "SRTP key exchange"
 msgstr "Trao đổi mã SRTP"
 
-#: ../src/config/accountconfigdialog.c:794
+#: ../src/config/accountconfigdialog.c:853
 msgid "Disabled"
 msgstr "Tắt"
 
-#: ../src/config/accountconfigdialog.c:858
+#: ../src/config/accountconfigdialog.c:917
 msgid "Registration"
 msgstr "Đăng ký"
 
-#: ../src/config/accountconfigdialog.c:862
+#: ../src/config/accountconfigdialog.c:921
 msgid "Registration expire"
 msgstr "Đăng ký đã hết hạn"
 
-#: ../src/config/accountconfigdialog.c:885
+#: ../src/config/accountconfigdialog.c:944
 msgid "Network Interface"
 msgstr "Giao diện mạng"
 
-#: ../src/config/accountconfigdialog.c:895
+#: ../src/config/accountconfigdialog.c:954
 msgid "Local address"
 msgstr "Địa chỉ cục bộ"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:928
+#: ../src/config/accountconfigdialog.c:987
 msgid "Local port"
 msgstr "Cổng mạng cục bộ"
 
-#: ../src/config/accountconfigdialog.c:969
-#: ../src/config/accountconfigdialog.c:1004
+#: ../src/config/accountconfigdialog.c:1028
+#: ../src/config/accountconfigdialog.c:1063
 msgid "Published address"
 msgstr "Địa chỉ công cộng"
 
-#: ../src/config/accountconfigdialog.c:973
+#: ../src/config/accountconfigdialog.c:1032
 msgid "Using STUN"
 msgstr "Sử dụng STUN"
 
-#: ../src/config/accountconfigdialog.c:980
+#: ../src/config/accountconfigdialog.c:1039
 msgid "STUN server URL"
 msgstr "URL máy chủ STUN"
 
-#: ../src/config/accountconfigdialog.c:988
+#: ../src/config/accountconfigdialog.c:1047
 msgid "Same as local parameters"
 msgstr "Giống như tham số cục bộ"
 
-#: ../src/config/accountconfigdialog.c:992
+#: ../src/config/accountconfigdialog.c:1051
 msgid "Set published address and port:"
 msgstr "Thiết lập địa chỉ và cổng mạng công cộng"
 
-#: ../src/config/accountconfigdialog.c:1013
+#: ../src/config/accountconfigdialog.c:1072
 msgid "Published port"
 msgstr "Cổng mạng công khai"
 
+#: ../src/config/accountconfigdialog.c:1120
+msgid "Min"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1121
+msgid "Max"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1144
+msgid "Audio RTP Port Range"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1150
+#, fuzzy
+msgid "Video RTP Port Range"
+msgstr "Trình quản lý Video"
+
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1076
-#: ../src/config/accountconfigdialog.c:1361
+#: ../src/config/accountconfigdialog.c:1193
+#: ../src/config/accountconfigdialog.c:1501
 #: ../src/config/preferencesdialog.c:418
 msgid "Audio"
 msgstr "Âm thanh"
 
-#: ../src/config/accountconfigdialog.c:1088
+#: ../src/config/accountconfigdialog.c:1205
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1092
+#: ../src/config/accountconfigdialog.c:1209
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1098
+#: ../src/config/accountconfigdialog.c:1215
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1106
+#: ../src/config/accountconfigdialog.c:1223
 msgid "Ringtones"
 msgstr "Nhạc chuông"
 
-#: ../src/config/accountconfigdialog.c:1109
+#: ../src/config/accountconfigdialog.c:1226
 msgid "Choose a ringtone"
 msgstr "Chọn nhạc chuông"
 
-#: ../src/config/accountconfigdialog.c:1112
+#: ../src/config/accountconfigdialog.c:1229
 msgid "_Enable ringtones"
 msgstr "_Bật nhạc chuông"
 
-#: ../src/config/accountconfigdialog.c:1125
+#: ../src/config/accountconfigdialog.c:1247
 msgid "Audio Files"
 msgstr "Tệp âm thanh"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1149
-#: ../src/config/accountconfigdialog.c:1367
+#: ../src/config/accountconfigdialog.c:1278
+#: ../src/config/accountconfigdialog.c:1506
 #: ../src/config/preferencesdialog.c:424
 msgid "Video"
 msgstr "Phim"
 
-#: ../src/config/accountconfigdialog.c:1166
+#: ../src/config/accountconfigdialog.c:1295
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
-"Cấu hình này được dùng khi bạn muốn gọi bằng cái gõ URI sip ví dụ như "
-"<b>sip:remotepeer</b>. Các thiết lập mà bạn định ra ở đây cũng được dùng nếu "
-"như không có tài khỏan tương ứng với các cuộc gọi đi và đến."
+"Cấu hình này được dùng khi bạn muốn gọi bằng cái gõ URI sip ví dụ như <b>sip:"
+"remotepeer</b>. Các thiết lập mà bạn định ra ở đây cũng được dùng nếu như "
+"không có tài khỏan tương ứng với các cuộc gọi đi và đến."
 
-#: ../src/config/accountconfigdialog.c:1334
+#: ../src/config/accountconfigdialog.c:1475
 msgid "Account settings"
 msgstr "Các thiết lập tài khoản"
 
-#: ../src/config/accountconfigdialog.c:1355
+#: ../src/config/accountconfigdialog.c:1496
 msgid "Basic"
 msgstr "Cơ bản"
 
-#: ../src/config/accountconfigdialog.c:1375
+#: ../src/config/accountconfigdialog.c:1513
 msgid "Advanced"
 msgstr "Tiên tiến"
 
-#: ../src/config/accountconfigdialog.c:1385
+#: ../src/config/accountconfigdialog.c:1521
 msgid "Network"
 msgstr "mạng"
 
-#: ../src/config/accountlistconfigdialog.c:487
+#: ../src/config/accountlistconfigdialog.c:111
+#, c-format
+msgid "Are you sure want to delete \"%s\"?"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:113
+#, c-format
+msgid "Are you sure want to delete account?"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:122
+msgid "Remove"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:124
+#, fuzzy
+msgid "Remove account"
+msgstr "Tài khoản hiện tại"
+
+#: ../src/config/accountlistconfigdialog.c:530
 msgid "Protocol"
 msgstr "Giao thức"
 
-#: ../src/config/accountlistconfigdialog.c:497
+#: ../src/config/accountlistconfigdialog.c:540
 msgid "Status"
 msgstr "Trạng thái"
 
-#: ../src/config/accountlistconfigdialog.c:595
+#: ../src/config/accountlistconfigdialog.c:639
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr "Máy chủ trả lời \"%s\" (%d)"
 
-#: ../src/config/accountlistconfigdialog.c:617
+#: ../src/config/accountlistconfigdialog.c:667
 msgid "Accounts"
 msgstr "Các tài khoản"
 
-#: ../src/config/accountlistconfigdialog.c:626
+#: ../src/config/accountlistconfigdialog.c:676
 msgid "Configured Accounts"
 msgstr "Các tài khoản đã thiết lập"
 
-#: ../src/config/accountlistconfigdialog.c:652
+#: ../src/config/accountlistconfigdialog.c:704
 msgid "You have no active account"
 msgstr "Bạn không có tài khoản có hiệu lực"
 
@@ -388,7 +444,7 @@ msgstr "Danh bạ"
 msgid "Select which Evolution address books to use"
 msgstr "Hãy chọn trong các danh bạ Evolution"
 
-#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:538
+#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:542
 #: ../src/config/videoconf.c:492
 msgid "Name"
 msgstr "Tên:"
@@ -531,80 +587,85 @@ msgstr "Đăng ký tài khoản"
 msgid "Congratulations!"
 msgstr "Xin chúc mừng!"
 
-#: ../src/config/audioconf.c:543
+#: ../src/config/audioconf.c:547
 msgid "Frequency"
 msgstr "Tần số"
 
-#: ../src/config/audioconf.c:548
+#: ../src/config/audioconf.c:552
 msgid "Bitrate"
 msgstr "Bitrate"
 
-#: ../src/config/audioconf.c:591
+#: ../src/config/audioconf.c:557
+#, fuzzy
+msgid "Channels"
+msgstr "Kênh"
+
+#: ../src/config/audioconf.c:600
 msgid "ALSA plugin"
 msgstr "ALSA plugin"
 
-#: ../src/config/audioconf.c:612 ../src/config/audioconf.c:693
+#: ../src/config/audioconf.c:621 ../src/config/audioconf.c:702
 msgid "Output"
 msgstr "Đầu ra"
 
-#: ../src/config/audioconf.c:633 ../src/config/audioconf.c:715
+#: ../src/config/audioconf.c:642 ../src/config/audioconf.c:724
 msgid "Input"
 msgstr "Đầu vào"
 
-#: ../src/config/audioconf.c:653 ../src/config/audioconf.c:735
+#: ../src/config/audioconf.c:662 ../src/config/audioconf.c:744
 msgid "Ringtone"
 msgstr "Nhạc chuông"
 
-#: ../src/config/audioconf.c:852
+#: ../src/config/audioconf.c:865
 msgid "Sound Manager"
 msgstr "Trình quản lý âm thanh"
 
-#: ../src/config/audioconf.c:859
+#: ../src/config/audioconf.c:872
 msgid "_Pulseaudio"
 msgstr "_Pulseaudio"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:864
+#: ../src/config/audioconf.c:877
 msgid "Pulseaudio settings"
 msgstr "Thiết lập Pulseaudio"
 
-#: ../src/config/audioconf.c:868
+#: ../src/config/audioconf.c:881
 msgid "_ALSA"
 msgstr "_ALSA"
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:874
+#: ../src/config/audioconf.c:887
 msgid "ALSA settings"
 msgstr "Thiết lập ALSA"
 
-#: ../src/config/audioconf.c:889
+#: ../src/config/audioconf.c:902
 msgid "Recordings"
 msgstr "Bản thu"
 
 #. label
-#: ../src/config/audioconf.c:893
+#: ../src/config/audioconf.c:906
 msgid "Destination folder"
 msgstr "Thư mục đích"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:897
+#: ../src/config/audioconf.c:910
 msgid "Select a folder"
 msgstr "Chọn một thư mục"
 
-#: ../src/config/audioconf.c:908
+#: ../src/config/audioconf.c:921
 msgid "_Always recording"
 msgstr "_Luôn ghi âm"
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:915
+#: ../src/config/audioconf.c:928
 msgid "Voice enhancement settings"
 msgstr "Các thiết lập cải thiện âm"
 
-#: ../src/config/audioconf.c:918
+#: ../src/config/audioconf.c:931
 msgid "_Noise Reduction"
 msgstr "_Giảm nhiễu"
 
-#: ../src/config/audioconf.c:932
+#: ../src/config/audioconf.c:945
 msgid "_Echo Cancellation"
 msgstr "Giảm _Echo"
 
@@ -715,8 +776,7 @@ msgstr "Sổ danh bạ"
 
 #: ../src/config/shortcuts-config.c:119
 msgid "Be careful: these shortcuts might override system-wide shortcuts."
-msgstr ""
-"Hãy cẩn thận: các đường tắt này sẽ thay đổi các đường tắt của hệ thống"
+msgstr "Hãy cẩn thận: các đường tắt này sẽ thay đổi các đường tắt của hệ thống"
 
 #: ../src/config/tlsadvanceddialog.c:55
 msgid "Advanced options for TLS"
@@ -768,31 +828,32 @@ msgstr "Chọn một tệp khóa cá nhân"
 msgid "Password for the private key"
 msgstr "Mật mã cho khóa cá nhân"
 
-#: ../src/config/tlsadvanceddialog.c:195
+#. TLS protocol methods
+#: ../src/config/tlsadvanceddialog.c:193
 msgid "TLS protocol method"
 msgstr "Phương pháp của giao thức TLS"
 
-#: ../src/config/tlsadvanceddialog.c:223
+#: ../src/config/tlsadvanceddialog.c:216
 msgid "TLS cipher list"
 msgstr "Danh sách mật mã TLS"
 
-#: ../src/config/tlsadvanceddialog.c:232
+#: ../src/config/tlsadvanceddialog.c:225
 msgid "Server name instance for outgoing TLS connection"
 msgstr "Tên của máy chủ cá biệt cho kết nối đi ra TLS"
 
-#: ../src/config/tlsadvanceddialog.c:240
+#: ../src/config/tlsadvanceddialog.c:233
 msgid "Negotiation timeout (sec:msec)"
 msgstr "Thời hạn cho sự dàn xếp (giây:micro giây)"
 
-#: ../src/config/tlsadvanceddialog.c:257
+#: ../src/config/tlsadvanceddialog.c:250
 msgid "Verify incoming certificates, as a server"
 msgstr "Kiểm tra các certificate mới đển, với phương diện máy chủ"
 
-#: ../src/config/tlsadvanceddialog.c:263
+#: ../src/config/tlsadvanceddialog.c:256
 msgid "Verify certificates from answer, as a client"
 msgstr "Kiểm tra các certificate trả lời, với phương diện máy khách"
 
-#: ../src/config/tlsadvanceddialog.c:269
+#: ../src/config/tlsadvanceddialog.c:262
 msgid "Require certificate for incoming tls connections"
 msgstr "Cần có certificate cho các kết nối đến TLS"
 
@@ -837,8 +898,8 @@ msgid "Video4Linux2"
 msgstr "Video4Linux2"
 
 #: ../src/config/videoconf.c:897
-msgid "Preview"
-msgstr "Xem thử"
+msgid "Camera"
+msgstr ""
 
 #: ../src/config/zrtpadvanceddialog.c:52
 msgid "ZRTP Options"
@@ -889,52 +950,65 @@ msgstr "Tìm các cuộc gọi đến"
 msgid "Search by outgoing call"
 msgstr "Tìm các cuộc gọi đi"
 
-#: ../src/dbus/dbus.c:575
+#: ../src/dbus/dbus.c:579
 msgid "ALSA notification: Error while opening playback device"
 msgstr "Thông báo ALSA: Lỗi khi mở thiết bị đọc"
 
-#: ../src/dbus/dbus.c:578
+#: ../src/dbus/dbus.c:582
 msgid "ALSA notification: Error while opening capture device"
 msgstr "Thông báo ALSA: Lỗi khi mở thiết bị ghi"
 
-#: ../src/dbus/dbus.c:581
+#: ../src/dbus/dbus.c:585
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr "Thông báo Pulseaudio: Hiện thời Pulseaudio đang bị tắt"
 
-#: ../src/dbus/dbus.c:584
+#: ../src/dbus/dbus.c:588
 msgid "Codecs notification: Codecs not found"
 msgstr "Thông báo Codecs: không tìm thấy Codecs"
 
-#: ../src/mainwindow.c:138
+#: ../src/mainwindow.c:139
 msgid "There is one call in progress."
 msgstr "Đang thực hiện một cuộc gọi"
 
-#: ../src/mainwindow.c:140
+#: ../src/mainwindow.c:141
 msgid "There are calls in progress."
 msgstr "Đang thực hiện các cuộc gọi"
 
-#: ../src/mainwindow.c:145
+#: ../src/mainwindow.c:146
 msgid "Do you still want to quit?"
 msgstr "Bạn vẫn muốn thoát ra?"
 
-#: ../src/mainwindow.c:494
+#: ../src/mainwindow.c:282
+#, fuzzy
+msgid "Status:"
+msgstr "Trạng thái"
+
+#: ../src/mainwindow.c:288
+msgid "Offline"
+msgstr ""
+
+#: ../src/mainwindow.c:289
+msgid "Online"
+msgstr ""
+
+#: ../src/mainwindow.c:576
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr "Kết nối không hỗ trợ ZRTP %s\n"
 
-#: ../src/mainwindow.c:496
+#: ../src/mainwindow.c:578
 msgid "Secure Communication Unavailable"
 msgstr "Không tồn tại liên lạc an toàn"
 
-#: ../src/mainwindow.c:499 ../src/mainwindow.c:525
+#: ../src/mainwindow.c:581 ../src/mainwindow.c:607
 msgid "Continue"
 msgstr "Tiếp"
 
-#: ../src/mainwindow.c:500 ../src/mainwindow.c:526 ../src/mainwindow.c:543
+#: ../src/mainwindow.c:582 ../src/mainwindow.c:608 ../src/mainwindow.c:625
 msgid "Stop Call"
 msgstr "Ngưng cuộc gọi"
 
-#: ../src/mainwindow.c:518
+#: ../src/mainwindow.c:600
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
@@ -943,11 +1017,11 @@ msgstr ""
 "Lỗi %s bắt buộc cuộc gọi với %s chuyển về phương thức không mã hóa.\n"
 "Lý do chính xác: %s\n"
 
-#: ../src/mainwindow.c:522
+#: ../src/mainwindow.c:604
 msgid "ZRTP negotiation failed"
 msgstr "Dàn xếp ZRTP thất bại"
 
-#: ../src/mainwindow.c:536
+#: ../src/mainwindow.c:618
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
@@ -956,11 +1030,11 @@ msgstr ""
 "%s muốn ngưng sử dụng liên lạc an toàn. Hãy xác nhận việc tiếp tục đàm thoại "
 "với SRTP\n"
 
-#: ../src/mainwindow.c:538
+#: ../src/mainwindow.c:620
 msgid "Confirm Go Clear"
 msgstr "Xác nhận Go Clear"
 
-#: ../src/mainwindow.c:541
+#: ../src/mainwindow.c:623
 msgid "Confirm"
 msgstr "Xác nhận"
 
@@ -1058,8 +1132,8 @@ msgstr "Âm lượng cho micro"
 msgid "_Show main window"
 msgstr "_Hiển thị cửa sổ chính"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:994 ../src/uimanager.c:1366
-#: ../src/uimanager.c:1435
+#: ../src/statusicon.c:139 ../src/uimanager.c:1010 ../src/uimanager.c:1376
+#: ../src/uimanager.c:1445
 msgid "_Hang up"
 msgstr "_Ngừng"
 
@@ -1071,7 +1145,7 @@ msgstr "SFLphone"
 msgid "No address book selected"
 msgstr "Chưa có sổ danh bạ nào được lựa chọn"
 
-#: ../src/uimanager.c:456 ../src/uimanager.c:1123
+#: ../src/uimanager.c:456 ../src/uimanager.c:1139
 msgid "Address book"
 msgstr "Sổ danh bạ"
 
@@ -1080,236 +1154,250 @@ msgstr "Sổ danh bạ"
 msgid "Voicemail(%i)"
 msgstr "Thư thoại(%i)"
 
-#: ../src/uimanager.c:563
+#: ../src/uimanager.c:575
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
 "SFLphone là một chương trình khách VoIP tương thích với các giao thức SIP và "
 "IAX2"
 
-#: ../src/uimanager.c:566
+#: ../src/uimanager.c:578
 msgid "About SFLphone"
 msgstr "Nói về SFLphone"
 
-#: ../src/uimanager.c:935 ../src/uimanager.c:1014
+#: ../src/uimanager.c:951 ../src/uimanager.c:1030
 msgid "Voicemail"
 msgstr "Thư thoại"
 
 #. Call Menu
-#: ../src/uimanager.c:984
+#: ../src/uimanager.c:1000
 msgid "Call"
 msgstr "Gọi"
 
-#: ../src/uimanager.c:986 ../src/uimanager.c:1531
+#: ../src/uimanager.c:1002 ../src/uimanager.c:1541
 msgid "_New call"
 msgstr "Cuộc gọi _mới"
 
-#: ../src/uimanager.c:987
+#: ../src/uimanager.c:1003
 msgid "Place a new call"
 msgstr "Gọi mới"
 
-#: ../src/uimanager.c:990 ../src/uimanager.c:1355
+#: ../src/uimanager.c:1006 ../src/uimanager.c:1365
 msgid "_Pick up"
 msgstr "_Nhấc máy"
 
-#: ../src/uimanager.c:991
+#: ../src/uimanager.c:1007
 msgid "Answer the call"
 msgstr "Trả lời cuộc gọi"
 
-#: ../src/uimanager.c:995
+#: ../src/uimanager.c:1011
 msgid "Finish the call"
 msgstr "Kết thúc cuộc gọi"
 
-#: ../src/uimanager.c:998
+#: ../src/uimanager.c:1014
 msgid "O_n hold"
 msgstr "_Chờ"
 
-#: ../src/uimanager.c:999
+#: ../src/uimanager.c:1015
 msgid "Place the call on hold"
 msgstr "Chuyển cuộc gọi sang chờ"
 
-#: ../src/uimanager.c:1002
+#: ../src/uimanager.c:1018
 msgid "O_ff hold"
 msgstr "_Hết chờ"
 
-#: ../src/uimanager.c:1003
+#: ../src/uimanager.c:1019
 msgid "Place the call off hold"
 msgstr "Chuyển cuộc gọi sang không chờ"
 
-#: ../src/uimanager.c:1006 ../src/uimanager.c:1420
+#: ../src/uimanager.c:1022 ../src/uimanager.c:1430
 msgid "Send _message"
 msgstr "Gửi _thông điệp"
 
-#: ../src/uimanager.c:1007
+#: ../src/uimanager.c:1023
 msgid "Send message"
 msgstr "Gửi thông điệp"
 
-#: ../src/uimanager.c:1010
+#: ../src/uimanager.c:1026
 msgid "Configuration _Assistant"
 msgstr "Trợ lý cấu hình"
 
-#: ../src/uimanager.c:1011
+#: ../src/uimanager.c:1027
 msgid "Run the configuration assistant"
 msgstr "Chạy Trợ lý Cấu hình"
 
-#: ../src/uimanager.c:1015
+#: ../src/uimanager.c:1031
 msgid "Call your voicemail"
 msgstr "Gọi hộp thư thoại của bạn"
 
-#: ../src/uimanager.c:1018
+#: ../src/uimanager.c:1034
 msgid "_Close"
 msgstr "Đón_g"
 
-#: ../src/uimanager.c:1019
+#: ../src/uimanager.c:1035
 msgid "Minimize to system tray"
 msgstr "Thu nhỏ về khay hệ thống"
 
-#: ../src/uimanager.c:1022
+#: ../src/uimanager.c:1038
 msgid "_Quit"
 msgstr "_Thoát"
 
-#: ../src/uimanager.c:1023
+#: ../src/uimanager.c:1039
 msgid "Quit the program"
 msgstr "Thoát khỏi chương trình"
 
 #. Edit Menu
-#: ../src/uimanager.c:1027
+#: ../src/uimanager.c:1043
 msgid "_Edit"
 msgstr "_Sửa"
 
-#: ../src/uimanager.c:1029
+#: ../src/uimanager.c:1045
 msgid "_Copy"
 msgstr "_Sao chép"
 
-#: ../src/uimanager.c:1030
+#: ../src/uimanager.c:1046
 msgid "Copy the selection"
 msgstr "Sao chép vùng chọn"
 
-#: ../src/uimanager.c:1033
+#: ../src/uimanager.c:1049
 msgid "_Paste"
 msgstr "Riêng"
 
-#: ../src/uimanager.c:1034
+#: ../src/uimanager.c:1050
 msgid "Paste the clipboard"
 msgstr "Dán bảng lưu tạm"
 
-#: ../src/uimanager.c:1037
+#: ../src/uimanager.c:1053
 msgid "Clear _history"
 msgstr "_Xóa lược sử"
 
-#: ../src/uimanager.c:1038
+#: ../src/uimanager.c:1054
 msgid "Clear the call history"
 msgstr "Xóa lược sử các cuộc gọi"
 
-#: ../src/uimanager.c:1041
+#: ../src/uimanager.c:1057
 msgid "_Accounts"
 msgstr "Tài _khoản"
 
-#: ../src/uimanager.c:1042
+#: ../src/uimanager.c:1058
 msgid "Edit your accounts"
 msgstr "Sửa đổi tài khoản của bạn"
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1061
 msgid "_Preferences"
 msgstr "Tù_y thích"
 
-#: ../src/uimanager.c:1046
+#: ../src/uimanager.c:1062
 msgid "Change your preferences"
 msgstr "Thay đổi sở thích của bạn"
 
 #. View Menu
-#: ../src/uimanager.c:1050
+#: ../src/uimanager.c:1066
 msgid "_View"
 msgstr "_Xem"
 
 #. Help menu
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1069
 msgid "_Help"
 msgstr "_Trợ giúp"
 
-#: ../src/uimanager.c:1054
+#: ../src/uimanager.c:1070
 msgid "Contents"
 msgstr "Nội dung"
 
-#: ../src/uimanager.c:1055
+#: ../src/uimanager.c:1071
 msgid "Open the manual"
 msgstr "Mở sổ tay hướng dẫn"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1073
 msgid "About this application"
 msgstr "Giới thiệu về ứng dụng này"
 
-#: ../src/uimanager.c:1116
+#: ../src/uimanager.c:1132
 msgid "_Transfer"
 msgstr "_Chuyển"
 
-#: ../src/uimanager.c:1116
+#: ../src/uimanager.c:1132
 msgid "Transfer the call"
 msgstr "Chuyển cuộc gọi"
 
-#: ../src/uimanager.c:1117 ../src/uimanager.c:1388
+#: ../src/uimanager.c:1133 ../src/uimanager.c:1398
 msgid "_Record"
 msgstr "Th_u"
 
-#: ../src/uimanager.c:1117
+#: ../src/uimanager.c:1133
 msgid "Record the current conversation"
 msgstr "Thu cuộc gọi hiện tại"
 
-#: ../src/uimanager.c:1118 ../src/uimanager.c:1400
+#: ../src/uimanager.c:1134 ../src/uimanager.c:1410
 msgid "_Mute"
 msgstr "_Tắt"
 
-#: ../src/uimanager.c:1118
+#: ../src/uimanager.c:1134
 msgid "Mute microphone for this call"
 msgstr "Tắt micro cho cuộc gọi này"
 
-#: ../src/uimanager.c:1119
+#: ../src/uimanager.c:1135
 msgid "_Show toolbar"
 msgstr "_Hiện thanh công cụ"
 
-#: ../src/uimanager.c:1119
+#: ../src/uimanager.c:1135
 msgid "Show the toolbar"
 msgstr "Hiện thanh công cụ"
 
-#: ../src/uimanager.c:1120
+#: ../src/uimanager.c:1136
 msgid "_Dialpad"
 msgstr "Vùng _quay số"
 
-#: ../src/uimanager.c:1120
+#: ../src/uimanager.c:1136
 msgid "Show the dialpad"
 msgstr "Hiện thị vùng quay số"
 
-#: ../src/uimanager.c:1121
+#: ../src/uimanager.c:1137
 msgid "_Volume controls"
 msgstr "_Kiểm soát âm lượng"
 
-#: ../src/uimanager.c:1121
+#: ../src/uimanager.c:1137
 msgid "Show the volume controls"
 msgstr "Hiển thị kiểm soát âm lượng"
 
-#: ../src/uimanager.c:1122
+#: ../src/uimanager.c:1138
 msgid "_History"
 msgstr "_Lược sử"
 
-#: ../src/uimanager.c:1122
+#: ../src/uimanager.c:1138
 msgid "Calls history"
 msgstr "Lược sử cuộc gọi"
 
-#: ../src/uimanager.c:1123
+#: ../src/uimanager.c:1139
 msgid "_Address book"
 msgstr "_Danh bạ"
 
-#: ../src/uimanager.c:1377 ../src/uimanager.c:1444
+#: ../src/uimanager.c:1140
+msgid "_Buddy list"
+msgstr ""
+
+#: ../src/uimanager.c:1140
+msgid "Display the buddy list"
+msgstr ""
+
+#: ../src/uimanager.c:1387 ../src/uimanager.c:1454
 msgid "On _Hold"
 msgstr "Đang _chờ"
 
-#: ../src/uimanager.c:1481
+#: ../src/uimanager.c:1491
 msgid "_Call back"
 msgstr "_Gọi lại"
 
-#: ../src/uimanager.c:1589
+#: ../src/uimanager.c:1599
 msgid "Edit phone number"
 msgstr "Nhập số điện thoại"
 
-#: ../src/uimanager.c:1600
+#: ../src/uimanager.c:1610
 msgid "Edit the phone number before making a call"
 msgstr "Nhập số điện thoại trước khi gọi"
+
+#~ msgid "Using account"
+#~ msgstr "Sử dụng tài khoản"
+
+#~ msgid "Preview"
+#~ msgstr "Xem thử"
