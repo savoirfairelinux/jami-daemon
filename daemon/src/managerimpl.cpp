@@ -221,6 +221,11 @@ void ManagerImpl::run()
     DEBUG("Starting client event loop");
     client_.event_loop();
 }
+
+void ManagerImpl::interrupt()
+{
+    client_.exit();
+}
 #endif
 
 void ManagerImpl::finish()
@@ -229,10 +234,6 @@ void ManagerImpl::finish()
         return;
 
     finished_ = true;
-    // Unset signal handlers
-    signal(SIGHUP, SIG_DFL);
-    signal(SIGINT, SIG_DFL);
-    signal(SIGTERM, SIG_DFL);
 
     std::vector<std::string> callList(getCallList());
     DEBUG("Hangup %zu remaining call(s)", callList.size());
@@ -256,7 +257,7 @@ void ManagerImpl::finish()
         audiodriver_ = nullptr;
     }
 
-    client_.exit();
+    saveHistory();
 }
 
 bool ManagerImpl::isCurrentCall(const std::string& callId) const

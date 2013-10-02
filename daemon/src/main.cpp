@@ -125,8 +125,13 @@ namespace {
 namespace {
     void signal_handler(int code)
     {
+        // Unset signal handlers
+        signal(SIGHUP, SIG_DFL);
+        signal(SIGINT, SIG_DFL);
+        signal(SIGTERM, SIG_DFL);
+
         std::cerr << "Caught signal " << strsignal(code) << ", terminating..." << std::endl;
-        Manager::instance().finish();
+        Manager::instance().interrupt();
     }
 }
 
@@ -174,7 +179,7 @@ int main(int argc, char *argv [])
 #if HAVE_DBUS
     Manager::instance().run();
 #endif
-    Manager::instance().saveHistory();
+    Manager::instance().finish();
 
     return 0;
 }
