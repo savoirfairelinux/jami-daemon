@@ -221,12 +221,14 @@ void ManagerImpl::run()
     DEBUG("Starting client event loop");
     client_.event_loop();
 }
+#endif
 
 void ManagerImpl::interrupt()
 {
+#if HAVE_DBUS
     client_.exit();
-}
 #endif
+}
 
 void ManagerImpl::finish()
 {
