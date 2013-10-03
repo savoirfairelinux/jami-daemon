@@ -104,6 +104,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , converterEncode_(0)
     , converterDecode_(0)
     , codecFrameSize_(0)
+    , codecChannels_(0)
     , converterSamplingRate_(0)
     , fadeFactor_(1.0 / 32000.0)
 #if HAVE_SPEEXDSP
@@ -149,6 +150,7 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
             decoderPayloadType_ = (*i)->getPayloadType();
             codecSampleRate_ = (*i)->getClockRate();
             codecFrameSize_ = (*i)->getFrameSize();
+            codecChannels_ = (*i)->getChannels();
             hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
             currentCodecIndex_ = std::distance(audioCodecs_.begin(), i);
             DEBUG("Switched payload type to %d", newPt);
@@ -234,6 +236,7 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
     audioRtpRecord_.encoderPayloadType_ = audioRtpRecord_.decoderPayloadType_ = audioCodecs[0]->getPayloadType();
     audioRtpRecord_.codecSampleRate_ = audioCodecs[0]->getClockRate();
     audioRtpRecord_.codecFrameSize_ = audioCodecs[0]->getFrameSize();
+    audioRtpRecord_.codecChannels_ = audioCodecs[0]->getChannels();
     audioRtpRecord_.hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 
@@ -255,9 +258,9 @@ void AudioRtpRecordHandler::initNoiseSuppress()
 {
     std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
     delete audioRtpRecord_.noiseSuppressEncode_;
-    audioRtpRecord_.noiseSuppressEncode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
+    audioRtpRecord_.noiseSuppressEncode_ = new NoiseSuppress(getCodecFrameSize(), getCodecChannels(), getCodecSampleRate());
     delete audioRtpRecord_.noiseSuppressDecode_;
-    audioRtpRecord_.noiseSuppressDecode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
+    audioRtpRecord_.noiseSuppressDecode_ = new NoiseSuppress(getCodecFrameSize(), getCodecChannels(), getCodecSampleRate());
 }
 #endif
 

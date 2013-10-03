@@ -37,7 +37,7 @@
 
 class NoiseSuppress {
     public:
-        NoiseSuppress(int smplPerFrame, int samplingRate);
+        NoiseSuppress(int smplPerFrame, int channels, int samplingRate);
         ~NoiseSuppress();
         //void process(SFLAudioSample *data, int samples);
         void process(AudioBuffer& buf, int samples);
@@ -46,7 +46,8 @@ class NoiseSuppress {
         NON_COPYABLE(NoiseSuppress);
 
         int smplPerFrame_;
-        SpeexPreprocessState *noiseState_;
+        // one state per channel
+        std::vector<SpeexPreprocessState*> noiseStates_;
 };
 
 #endif
