@@ -106,12 +106,10 @@ static std::map<std::string, std::string> transferCallID;
  */
 void setCallMediaLocal(SIPCall* call, const std::string &localIP);
 
-
 static pj_caching_pool pool_cache, *cp_ = &pool_cache;
 static pj_pool_t *pool_;
 static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
-static pj_thread_t *thread_;
 
 void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status);
 void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
@@ -581,12 +579,7 @@ SIPVoIPLink::~SIPVoIPLink()
         sleep(1);
 
     handlingEvents_ = false;
-    if (thread_) {
-        pj_thread_join(thread_);
-        pj_thread_destroy(thread_);
-        DEBUG("PJ thread destroy finished");
-        thread_ = 0;
-    }
+    evThread_.join();
 
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
@@ -656,12 +649,12 @@ void SIPVoIPLink::setSipLogLevel()
 // Called from EventThread::run (not main thread)
 bool SIPVoIPLink::getEvent()
 {
-    static pj_thread_desc desc;
-
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {
+        static pj_thread_desc desc;
+        static pj_thread_t *this_thread;
         DEBUG("Registering thread");
-        pj_thread_register(NULL, desc, &thread_);
+        pj_thread_register(NULL, desc, &this_thread);
     }
 
     static const pj_time_val timeout = {0, 10};
