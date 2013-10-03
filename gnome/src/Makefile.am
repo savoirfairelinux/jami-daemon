@@ -54,7 +54,10 @@ libsflphone_client_la_SOURCES = \
   sflphone_client.c \
   sflphone_options.c \
   sflphone_options.h \
-  buddylistwindow.c
+  buddylistwindow.c \
+  buddylistwindow.h \
+  presence.c \
+  presence.h
 
 libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)
 libsflphone_client_la_LDFLAGS = @CLUTTER_LDFLAGS@ @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
