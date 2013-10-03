@@ -942,19 +942,6 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     g_signal_connect(G_OBJECT(enableNoiseReduction), "clicked", active_noise_suppress, NULL);
     gtk_grid_attach(GTK_GRID(grid), enableNoiseReduction, 0, 1, 1, 1);
 
-    GtkWidget *enableEchoCancel = gtk_check_button_new_with_mnemonic(_("_Echo Cancellation"));
-    state = dbus_get_echo_cancel_state();
-
-    if (g_strcmp0(state, "enabled") == 0)
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), TRUE);
-    else
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), FALSE);
-
-    g_free(state);
-
-    g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
-    gtk_grid_attach(GTK_GRID(grid), enableEchoCancel, 0, 2, 1, 1);
-
     gtk_widget_show_all(audio_vbox);
 
     if (!using_pulse)
