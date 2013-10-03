@@ -846,6 +846,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 void
 IAXVoIPLink::unloadAccountMap()
 {
-    std::for_each(iaxAccountMap_.begin(), iaxAccountMap_.end(), unloadAccount);
+    for (auto &a : iaxAccountMap_)
+        unloadAccount(a);
     iaxAccountMap_.clear();
 }

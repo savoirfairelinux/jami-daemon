@@ -591,7 +591,8 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_shutdown();
     clearSipCallMap();
 
-    std::for_each(sipAccountMap_.begin(), sipAccountMap_.end(), unloadAccount);
+    for (auto &a : sipAccountMap_)
+        unloadAccount(a);
     sipAccountMap_.clear();
 }
 
