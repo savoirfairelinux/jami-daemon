@@ -103,7 +103,6 @@ static const char * const ALWAYS_RECORDING_KEY = "alwaysRecording";
 static const char * const VOLUMEMIC_KEY = "volumeMic";
 static const char * const VOLUMESPKR_KEY = "volumeSpkr";
 static const char * const NOISE_REDUCE_KEY = "noiseReduce";
-static const char * const ECHO_CANCEL_KEY = "echoCancel";
 
 // shortcut preferences
 static const char * const HANGUP_SHORT_KEY = "hangUp";
@@ -300,7 +299,6 @@ AudioPreference::AudioPreference() :
     , volumemic_(1.0)
     , volumespkr_(1.0)
     , noisereduce_(false)
-    , echocancel_(false)
 {}
 
 namespace {
@@ -391,7 +389,6 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     spkrstr << volumespkr_;
     Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
     Conf::ScalarNode noise(noisereduce_);
-    Conf::ScalarNode echo(echocancel_);
 
     Conf::MappingNode preferencemap(NULL);
     preferencemap.setKeyValue(AUDIO_API_KEY, &audioapi);
@@ -419,8 +416,6 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
 #endif
 
     preferencemap.setKeyValue(NOISE_REDUCE_KEY, &noise);
-    preferencemap.setKeyValue(ECHO_CANCEL_KEY, &echo);
-
     emitter.serializePreference(&preferencemap, "audio");
 }
 
@@ -456,7 +451,6 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     map.getValue(VOLUMESPKR_KEY, &volumespkr_);
     volumespkr_ = clamp(-1.0, 1.0, volumespkr_);
     map.getValue(NOISE_REDUCE_KEY, &noisereduce_);
-    map.getValue(ECHO_CANCEL_KEY, &echocancel_);
 
     Conf::MappingNode *alsamap = (Conf::MappingNode *) map.getValue("alsa");
 

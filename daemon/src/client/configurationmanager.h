@@ -108,8 +108,6 @@ class ConfigurationManager
         std::string getCurrentAudioOutputPlugin();
         std::string getNoiseSuppressState();
         void setNoiseSuppressState(const std::string& state);
-        std::string getEchoCancelState();
-        void setEchoCancelState(const std::string& state);
 
         std::map<std::string, std::string> getRingtoneList();
 

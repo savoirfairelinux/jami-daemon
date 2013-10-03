@@ -2243,16 +2243,6 @@ void ManagerImpl::setNoiseSuppressState(const std::string &state)
     audioPreference.setNoiseReduce(state == "enabled");
 }
 
-bool ManagerImpl::getEchoCancelState() const
-{
-    return audioPreference.getEchoCancel();
-}
-
-void ManagerImpl::setEchoCancelState(const std::string &state)
-{
-    audioPreference.setEchoCancel(state == "enabled");
-}
-
 /**
  * Initialization: Main Thread
  */

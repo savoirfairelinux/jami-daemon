@@ -339,11 +339,6 @@
            </arg>
        </method>
 
-       <method name="getEchoCancelState" tp:name-for-bindings="getNoiseSuppressState">
-           <arg type="s" name="state" direction="out">
-           </arg>
-       </method>
-
        <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
            <tp:added version="1.1.1"/>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -352,11 +347,6 @@
            </tp:docstring>
            <arg type="a{ss}" name="list" direction="out">
            </arg>
-       </method>
-
-       <method name="setEchoCancelState" tp:name-for-bindings="setEchoCancelState">
-               <arg type="s" name="state" direction="in">
-               </arg>
        </method>
 
        <!--    General Settings Panel         -->

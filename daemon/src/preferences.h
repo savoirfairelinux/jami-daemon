@@ -330,14 +330,6 @@ class AudioPreference : public Serializable {
             noisereduce_ = noise;
         }
 
-        bool getEchoCancel() const {
-            return echocancel_;
-        }
-
-        void setEchoCancel(bool echo) {
-            echocancel_ = echo;
-        }
-
     private:
         std::string audioApi_;
 
@@ -360,7 +352,6 @@ class AudioPreference : public Serializable {
         double volumespkr_;
 
         bool noisereduce_;
-        bool echocancel_;
 };
 
 class ShortcutPreferences : public Serializable {
