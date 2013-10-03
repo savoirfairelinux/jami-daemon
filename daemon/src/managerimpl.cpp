@@ -223,9 +223,7 @@ void ManagerImpl::run()
 
 void ManagerImpl::interrupt()
 {
-#if HAVE_DBUS
     client_.exit();
-#endif
 }
 
 void ManagerImpl::finish()
