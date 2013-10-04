@@ -101,13 +101,8 @@
             <summary>Search phone mobile</summary>
             <description>Search phone mobile</description>
         </key>
-        <key name="presence-buddy" type="a{ss}">
-            <default>{"t":"d"}</default>
-            <summary>Search phone mobile</summary>
-            <description>Search phone mobile</description>
-        </key>
         <key name="presence-buddy-list" type="aa{ss}">
-            <default>[{"uri":"buddy1","acc":"acc1"}]</default>
+            <default>[{"uri":"","acc":"","alias":""}]</default>
             <summary>Search phone mobile</summary>
             <description>Search phone mobile</description>
         </key>
