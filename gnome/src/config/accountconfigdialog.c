@@ -222,11 +222,11 @@ static void update_credential_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 }
 
 static GtkWidget*
-create_auto_answer_checkbox(account_t *account)
+create_auto_answer_checkbox(const account_t *account)
 {
     GtkWidget *auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
-    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), account);
+    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
     return auto_answer_checkbox;
 }
 
