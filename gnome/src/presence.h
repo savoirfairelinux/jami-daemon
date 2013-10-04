@@ -42,6 +42,7 @@ typedef struct prout
     gchar * uri;    // persistent
     gchar * acc;    //persistent
     gboolean subscribed; // is subscription active
+    gchar * note;   // more detailed status
     gboolean status;    // Online/Offline
 }buddy_t;
 
@@ -54,6 +55,8 @@ void presence_remove_buddy(GList * list, buddy_t * buddy);
 guint presence_list_get_size(GList * list);
 GList * presence_get_list();
 buddy_t * presence_list_get_nth(GList * list, guint n);
+void presence_view_set(GtkWidget * view);
+GtkWidget * presence_view_get();
 buddy_t * presence_buddy_get_by_string(GList * list, const gchar *accID, const gchar *uri);
 GList * presence_get_buddy(GList * list, buddy_t * buddy);
 

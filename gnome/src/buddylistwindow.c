@@ -45,15 +45,20 @@
 static GtkWidget *buddylistwindow;
 static GtkWidget *vbox;
 
+static GtkTreeModel *create_and_fill_model (void);
+static GtkWidget * create_view (void);
+gboolean selection_changed(GtkTreeSelection *selection);
+
 enum
 {
-    BUDDIES_COLUMN,
-    STATUS_COLUMN,
-    SUBSCRIBED_COLUMN
+    COLUMN_BUDDIES,
+    COLUMN_STATUS,
+    COLUMN_NOTE,
+    COLUMN_SUBSCRIBED
  // NUM_COLS = 2
 };
 
-//#define STATUS_COLUMN 1
+#define N_COLUMN 4
 
 
 static GtkTreeModel *
@@ -61,7 +66,10 @@ create_and_fill_model (void)
 {
     GtkTreeStore *treestore;
     GtkTreeIter toplevel, child;
-    treestore = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+    treestore = gtk_tree_store_new(N_COLUMN, G_TYPE_STRING, // Alias
+                                             G_TYPE_STRING, // Status
+                                             G_TYPE_STRING, // Note
+                                             G_TYPE_STRING);// (temp) subscribed
 
     GList * buddy_list = presence_get_list();
     buddy_t * buddy;
@@ -73,8 +81,10 @@ create_and_fill_model (void)
         {
             gtk_tree_store_append(treestore, &toplevel, NULL);
             gtk_tree_store_set(treestore, &toplevel,
-                    BUDDIES_COLUMN, (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
-                    STATUS_COLUMN, "",
+                    COLUMN_BUDDIES, (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
+                    COLUMN_STATUS, "",
+                    COLUMN_NOTE, "",
+                    COLUMN_SUBSCRIBED, "",
                     -1);
             for (guint j =  1; j < presence_list_get_size(buddy_list); j++)
             {
@@ -83,9 +93,10 @@ create_and_fill_model (void)
                 {
                     gtk_tree_store_append(treestore, &child, &toplevel);
                     gtk_tree_store_set(treestore, &child,
-                        BUDDIES_COLUMN, buddy->uri,
-                        STATUS_COLUMN, buddy->status? "Online":"Offline",
-                        SUBSCRIBED_COLUMN, buddy->subscribed? "Active":"Inactive",
+                        COLUMN_BUDDIES, buddy->uri,
+                        COLUMN_STATUS, (buddy->status)? "Online":"Offline",
+                        COLUMN_NOTE,  buddy->note,
+                        COLUMN_SUBSCRIBED, (buddy->subscribed)? "Active":"Inactive",
                         -1);
                 }
             }
@@ -95,14 +106,29 @@ create_and_fill_model (void)
 }
 
 
+gboolean
+selection_changed(GtkTreeSelection *selection) {
+    GtkTreeView *treeView;
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gchar *active;
+
+    treeView = gtk_tree_selection_get_tree_view(selection);
+    model = gtk_tree_view_get_model(treeView);
+    gtk_tree_selection_get_selected(selection, &model, &iter);
+    gtk_tree_model_get(model, &iter, 1, &active, -1);
+    g_print("***********************************wetoiquwerklfhnknk,nlkjl;k;k");
+
+ //  gtk_label_set_text(label, active);
+}
+
 
 static GtkWidget *
-create_view_and_model (void)
+create_view (void)
 {
     GtkTreeViewColumn *col;
     GtkCellRenderer *renderer;
     GtkWidget *view;
-    GtkTreeModel *model;
 
     view = gtk_tree_view_new();
 
@@ -111,7 +137,7 @@ create_view_and_model (void)
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", BUDDIES_COLUMN);
+    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_BUDDIES);
 
 
     col = gtk_tree_view_column_new();
@@ -119,28 +145,44 @@ create_view_and_model (void)
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", STATUS_COLUMN);
+    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_STATUS);
+
+    col = gtk_tree_view_column_new();
+    gtk_tree_view_column_set_title(col, "Note");
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    renderer = gtk_cell_renderer_text_new();
+    gtk_tree_view_column_pack_start(col, renderer, TRUE);
+    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_NOTE);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Suscribed");
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", STATUS_COLUMN);
-
-    model = create_and_fill_model();
-    gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
-    g_object_unref(model);
+    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_SUBSCRIBED);
 
     return view;
 }
 
+void
+update_buddylist_view(GtkWidget * view)
+{
+    if(!view)
+        return; // Buddylist window not opend
+
+    GtkTreeModel * model = create_and_fill_model();
+    gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
+    g_object_unref(model);
+    g_debug("BuddyList updated.");
+}
+
+
 
 void
 destroy_buddylist_window()
-
 {
     g_debug("Destroy buddylist window ");
+    presence_view_set(NULL);
     gtk_widget_destroy(buddylistwindow);
 }
 
@@ -162,11 +204,14 @@ create_buddylist_window(SFLPhoneClient *client)
     gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
     gtk_container_add(GTK_CONTAINER(buddylistwindow), vbox);
 
+    /* Create the tree view*/
+    GtkWidget *buddy_list_tree_view = create_view();
+    gtk_box_pack_start(GTK_BOX(vbox), buddy_list_tree_view, TRUE, TRUE, 5);
+    update_buddylist_view(buddy_list_tree_view);
+    presence_view_set(buddy_list_tree_view);
 
-
-
-    GtkWidget *list = create_view_and_model();//gtk_tree_view_new();
-    gtk_box_pack_start(GTK_BOX(vbox), list, TRUE, TRUE, 5);
+    GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(buddy_list_tree_view));
+    g_signal_connect(G_OBJECT(selection), "changed", G_CALLBACK(selection_changed), NULL);
 
     /* make sure that everything, window and label, are visible */
     gtk_widget_show_all(buddylistwindow);

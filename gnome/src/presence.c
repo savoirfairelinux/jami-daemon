@@ -54,7 +54,8 @@
 void presence_print_list(GList * list);
 void presence_test(SFLPhoneClient *client);
 
-GList * presence_buddy_list;
+static GList * presence_buddy_list = NULL;
+static GtkWidget * presence_view = NULL;
 
 void
 presence_init(SFLPhoneClient *client)
@@ -65,9 +66,15 @@ presence_init(SFLPhoneClient *client)
     presence_print_list(presence_buddy_list);
 
     buddy_t * b;
-    for (guint i =  1; i < presence_list_get_size(presence_buddy_list); i++){
+    for (guint i =  1; i < presence_list_get_size(presence_buddy_list); i++)
+    {
         b = presence_list_get_nth(presence_buddy_list, i);
-        dbus_presence_subscribe(b->acc, b->uri, TRUE);
+        account_t * acc = account_list_get_by_id(b->acc);
+        if(acc)
+        {
+            if (acc->state == (ACCOUNT_STATE_REGISTERED))
+                dbus_presence_subscribe(b->acc, b->uri, TRUE);
+        }
     }
 }
 
@@ -77,9 +84,9 @@ presence_test(SFLPhoneClient *client)
     GList * buddy_list = g_list_alloc();
     presence_load_list(client, buddy_list);
     presence_print_list(buddy_list);
-    buddy_t b1 = {g_strdup("acc1"), g_strdup("alias1"), g_strdup("uri1"), FALSE, FALSE};
-    buddy_t b2 = {g_strdup("acc2"), g_strdup("alias2"), g_strdup("uri2"), FALSE, FALSE};
-    buddy_t b3 = {g_strdup("acc3"), g_strdup("alias3"), g_strdup("uri3"), FALSE, FALSE};
+    buddy_t b1 = {g_strdup("acc1"), g_strdup("alias1"), g_strdup("uri1"), FALSE, FALSE, g_strdup("")};
+    buddy_t b2 = {g_strdup("acc2"), g_strdup("alias2"), g_strdup("uri2"), FALSE, FALSE, g_strdup("")};
+    buddy_t b3 = {g_strdup("acc3"), g_strdup("alias3"), g_strdup("uri3"), FALSE, FALSE, g_strdup("")};
 
     presence_add_buddy(buddy_list,&b1);
     presence_add_buddy(buddy_list,&b3);
@@ -113,6 +120,9 @@ presence_load_list(SFLPhoneClient *client, GList * list)
         buddy->acc = g_strdup(g_variant_get_data(v_acc));
         buddy->alias = g_strdup(g_variant_get_data(v_alias));
         buddy->uri = g_strdup(g_variant_get_data(v_uri));
+        buddy->status = FALSE;
+        buddy->note = g_strdup("Unkonw");
+        buddy->subscribed = FALSE;
         g_debug("Presence : found buddy:(acc:%s, bud: %s).", buddy->acc, buddy->uri);
         list = g_list_append(list, (gpointer)buddy);
     }
@@ -248,7 +258,7 @@ presence_print_list(GList * list)
     while (tmp)
     {
         buddy = (buddy_t *)(tmp->data);
-        g_print ("buddy:(%s,%s).\n",buddy->uri,buddy->acc);
+        g_print ("buddy:(%s,%s,%s).\n", buddy->acc, buddy->alias, buddy->uri);
         tmp = g_list_next (tmp);
     }
 }
@@ -283,4 +293,14 @@ presence_flush_list(GList *list)
     g_debug("Presence : flush the buddy list.");
     g_list_foreach(list, (GFunc) g_free, NULL);
     g_list_free(list);
+}
+
+void presence_view_set(GtkWidget * view)
+{
+    presence_view = view;
+}
+
+GtkWidget * presence_view_get()
+{
+    return presence_view;
 }

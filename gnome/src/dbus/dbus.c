@@ -57,6 +57,7 @@
 #include "dbus.h"
 #include "actions.h"
 #include "presence.h"
+#include "buddylistwindow.h"
 
 #ifdef SFL_VIDEO
 #include "config/videoconf.h"
@@ -611,27 +612,33 @@ presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gc
     g_debug("DBus: Presence subscription state changed to %s for account %s, buddy:%s",
           state? "active":"inactive", accID, uri);
     account_t *acc = account_list_get_by_id(accID);
-    if (acc) {
+    if (acc)
+    {
         GList * buddy_list = presence_get_list();
         buddy_t * b = presence_buddy_get_by_string(buddy_list, accID, uri);
         if(b)
+        {
             b->subscribed = state;
-        // TODO update ui
+            update_buddylist_view(presence_view_get());
+        }
     }
 }
 static void
-presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *buddyUri,
-                  gboolean status, const gchar *lineStatus)
+presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *uri,
+                  gboolean status, const gchar * note)
 {
-    g_debug("DBus: Presence notification (%s) for %s status=%s lineStatus=%s.", accID,  buddyUri, status? "Online":"Offline", lineStatus);
+    g_debug("DBus: Presence notification (%s) for %s status=%s lineStatus=%s.", accID, uri, status? "Online":"Offline", note);
 
     account_t *acc = account_list_get_by_id(accID);
     if (acc) {
         GList * buddy_list = presence_get_list();
         buddy_t * b = presence_buddy_get_by_string(buddy_list, accID, uri);
         if(b)
+        {
             b->status = status;
-        // TODO update ui
+            b->note = g_strdup(note); // TODO: mem free before?
+            update_buddylist_view(presence_view_get());
+        }
     }
 }
 
