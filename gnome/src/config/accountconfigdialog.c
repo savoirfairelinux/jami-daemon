@@ -1170,7 +1170,7 @@ static void ringtone_enabled_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data, 
 
 void update_ringtone_slider(guint position, guint size)
 {
-    if (ringtone_seekslider)
+    if (ringtone_seekslider && GTK_IS_WIDGET(ringtone_seekslider))
         sfl_seekslider_update_scale(SFL_SEEKSLIDER(ringtone_seekslider), position, size);
 }
 
