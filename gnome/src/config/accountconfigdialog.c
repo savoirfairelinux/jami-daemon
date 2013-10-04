@@ -1401,13 +1401,6 @@ static void update_account_from_basic_tab(account_t *account)
         const gboolean tls_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_sip_tls_check_box));
         account_replace(account, CONFIG_TLS_ENABLE, bool_to_string(tls_enabled));
 
-        const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
-        account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
-
-        gchar *ringtone_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser));
-        account_replace(account, CONFIG_RINGTONE_PATH, ringtone_path);
-        g_free(ringtone_path);
-
         gchar *address_combo_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
         account_replace(account, CONFIG_LOCAL_INTERFACE, address_combo_text);
         g_free(address_combo_text);
@@ -1435,6 +1428,13 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
     const gboolean IS_IP2IP = account_is_IP2IP(account);
     if (!IS_IP2IP)
         update_account_from_basic_tab(account);
+
+    const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
+    account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
+
+    gchar *ringtone_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser));
+    account_replace(account, CONFIG_RINGTONE_PATH, ringtone_path);
+    g_free(ringtone_path);
 
     // Get current protocol for this account
     gchar *current_protocol;
