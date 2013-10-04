@@ -1,8 +1,8 @@
 include ../globals.mak
 
-TESTS = check_global check_contacts check_config check_dbus
+TESTS = check_global check_contacts check_config
 TESTS_ENVIRONMENT = GSETTINGS_SCHEMA_DIR=../data
-check_PROGRAMS = check_global check_contacts check_config check_dbus
+check_PROGRAMS = check_global check_contacts check_config
 
 SFLPHONE_LIBS= $(top_builddir)/src/libsflphone_client.la \
                $(top_builddir)/src/contacts/libcontacts.la \
