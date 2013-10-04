@@ -77,9 +77,9 @@ presence_test(SFLPhoneClient *client)
     GList * buddy_list = g_list_alloc();
     presence_load_list(client, buddy_list);
     presence_print_list(buddy_list);
-    buddy_t b1 = {g_strdup("acc1"), g_strdup("alias1"), g_strdup("uri1"), g_strdup(""), FALSE, FALSE};
-    buddy_t b2 = {g_strdup("acc2"), g_strdup("alias2"), g_strdup("uri2"), g_strdup(""), FALSE, FALSE};
-    buddy_t b3 = {g_strdup("acc3"), g_strdup("alias3"), g_strdup("uri3"), g_strdup(""), FALSE, FALSE};
+    buddy_t b1 = {g_strdup("acc1"), g_strdup("alias1"), g_strdup("uri1"), FALSE, FALSE};
+    buddy_t b2 = {g_strdup("acc2"), g_strdup("alias2"), g_strdup("uri2"), FALSE, FALSE};
+    buddy_t b3 = {g_strdup("acc3"), g_strdup("alias3"), g_strdup("uri3"), FALSE, FALSE};
 
     presence_add_buddy(buddy_list,&b1);
     presence_add_buddy(buddy_list,&b3);
@@ -177,6 +177,31 @@ presence_get_buddy(GList * list, buddy_t * buddy)
         {
             g_debug ("Found buddy:(%s,%s).", b->uri, b->acc);
             return tmp;
+        }
+        tmp = g_list_next (tmp);
+    }
+    return NULL;
+}
+
+buddy_t *
+presence_buddy_get_by_string(GList * list, const gchar *accID, const gchar *uri){
+    GList *tmp = g_list_nth(list,1);
+    buddy_t *b;
+
+    if(list == NULL){
+        g_warning("Uninitialized buddy list.");
+        return FALSE;
+    }
+
+    while (tmp)
+    {
+        b = (buddy_t *)(tmp->data);
+        //g_print ("Compare buddy:(%s,%s) to b(%s,%s)\n", accID, uri, b->uri, b->acc);
+        if((g_strcmp0(uri, b->uri)==0) &&
+                    (g_strcmp0(accID, b->acc)==0))
+        {
+            g_debug ("Found buddy:(%s,%s).", b->acc, b->uri);
+            return b;
         }
         tmp = g_list_next (tmp);
     }

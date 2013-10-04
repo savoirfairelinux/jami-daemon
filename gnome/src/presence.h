@@ -54,6 +54,7 @@ void presence_remove_buddy(GList * list, buddy_t * buddy);
 guint presence_list_get_size(GList * list);
 GList * presence_get_list();
 buddy_t * presence_list_get_nth(GList * list, guint n);
+buddy_t * presence_buddy_get_by_string(GList * list, const gchar *accID, const gchar *uri);
 GList * presence_get_buddy(GList * list, buddy_t * buddy);
 
 
