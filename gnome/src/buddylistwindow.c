@@ -112,14 +112,13 @@ selection_changed(GtkTreeSelection *selection) {
     GtkTreeModel *model;
     GtkTreeIter iter;
     gchar *active;
-
+/*
     treeView = gtk_tree_selection_get_tree_view(selection);
     model = gtk_tree_view_get_model(treeView);
     gtk_tree_selection_get_selected(selection, &model, &iter);
     gtk_tree_model_get(model, &iter, 1, &active, -1);
     g_print("***********************************wetoiquwerklfhnknk,nlkjl;k;k");
-
- //  gtk_label_set_text(label, active);
+*/
 }
 
 

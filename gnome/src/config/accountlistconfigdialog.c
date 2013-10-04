@@ -38,6 +38,7 @@
 #include "actions.h"
 #include "mainwindow.h"
 #include "utils.h"
+#include "presence.h"
 #include <glib/gi18n.h>
 #include <string.h>
 
@@ -274,6 +275,11 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_ACCOUNT_ACTIVE,
                        enable, -1);
 
+    // unsubscribe before unregister
+    if(!enable)
+        if(account_lookup(account, CONFIG_PRESENCE_ENABLED))
+            presence_send_subscribes(account->accountID, enable);
+
     // Modify account state
     const gchar * enabled_str = enable ? "true" : "false";
     g_debug("Account is enabled: %s", enabled_str);
@@ -281,6 +287,10 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
     account_replace(account, CONFIG_ACCOUNT_ENABLE, enabled_str);
     dbus_send_register(account->accountID, enable);
 
+    // subscribe to buddy after register
+    if(enable)
+        if(account_lookup(account, CONFIG_PRESENCE_ENABLED))
+            presence_send_subscribes(account->accountID, enable);
 }
 
 /**

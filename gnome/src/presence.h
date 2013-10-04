@@ -40,10 +40,10 @@ typedef struct prout
 {
     gchar * alias;  // persistent
     gchar * uri;    // persistent
-    gchar * acc;    //persistent
+    gchar * acc;    // persistent
     gboolean subscribed; // is subscription active
-    gchar * note;   // more detailed status
     gboolean status;    // Online/Offline
+    gchar * note;   // more detailed status
 }buddy_t;
 
 void presence_init(SFLPhoneClient *client);
@@ -59,6 +59,6 @@ void presence_view_set(GtkWidget * view);
 GtkWidget * presence_view_get();
 buddy_t * presence_buddy_get_by_string(GList * list, const gchar *accID, const gchar *uri);
 GList * presence_get_buddy(GList * list, buddy_t * buddy);
-
+void presence_send_subscribes(const gchar *accID, gboolean flag);
 
 #endif

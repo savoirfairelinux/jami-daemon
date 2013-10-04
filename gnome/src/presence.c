@@ -65,6 +65,7 @@ presence_init(SFLPhoneClient *client)
     presence_load_list(client, presence_buddy_list);
     presence_print_list(presence_buddy_list);
 
+    /*
     buddy_t * b;
     for (guint i =  1; i < presence_list_get_size(presence_buddy_list); i++)
     {
@@ -76,6 +77,7 @@ presence_init(SFLPhoneClient *client)
                 dbus_presence_subscribe(b->acc, b->uri, TRUE);
         }
     }
+    */
 }
 
 void
@@ -282,7 +284,6 @@ presence_list_get_size(GList * list)
     return g_list_length(list);
 }
 
-
 void
 presence_flush_list(GList *list)
 {
@@ -295,12 +296,30 @@ presence_flush_list(GList *list)
     g_list_free(list);
 }
 
-void presence_view_set(GtkWidget * view)
+void
+presence_view_set(GtkWidget * view)
 {
     presence_view = view;
 }
 
-GtkWidget * presence_view_get()
+GtkWidget *
+presence_view_get()
 {
     return presence_view;
+}
+
+void
+presence_send_subscribes(const gchar *accID, gboolean flag)
+{
+    buddy_t * b;
+    for (guint i =  1; i < presence_list_get_size(presence_buddy_list); i++)
+    {
+        b = presence_list_get_nth(presence_buddy_list, i);
+        account_t * acc = account_list_get_by_id(b->acc);
+        if(acc)
+        {
+            if (acc->state == (ACCOUNT_STATE_REGISTERED))
+                dbus_presence_subscribe(b->acc, b->uri, flag);
+        }
+    }
 }
