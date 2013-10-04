@@ -36,13 +36,25 @@
 #include "sflphone_client.h"
 
 
-void presence_init(SFLPhoneClient *client);
-GList * presence_new_list();
-
 typedef struct prout
 {
-    gchar * uri;
-    gchar * acc;
+    gchar * alias;  // persistent
+    gchar * uri;    // persistent
+    gchar * acc;    //persistent
+    gboolean subscribed; // is subscription active
+    gboolean status;    // Online/Offline
 }buddy_t;
+
+void presence_init(SFLPhoneClient *client);
+void presence_load_list(SFLPhoneClient *client, GList *list);
+void presence_save_list(SFLPhoneClient *client, GList * list);
+void presence_flush_list(GList * list);
+void presence_add_buddy(GList * list, buddy_t * buddy);
+void presence_remove_buddy(GList * list, buddy_t * buddy);
+guint presence_list_get_size(GList * list);
+GList * presence_get_list();
+buddy_t * presence_list_get_nth(GList * list, guint n);
+GList * presence_get_buddy(GList * list, buddy_t * buddy);
+
 
 #endif

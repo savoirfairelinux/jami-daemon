@@ -43,6 +43,4 @@
 void destroy_buddylist_window();
 void create_buddylist_window(SFLPhoneClient *client);
 
-
-
 #endif

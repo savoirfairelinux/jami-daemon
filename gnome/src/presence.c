@@ -52,35 +52,34 @@
 
 
 void presence_print_list(GList * list);
-void presence_load_list(SFLPhoneClient *client, GList *list);
-void presence_save_list(SFLPhoneClient *client, GList * list);
-void presence_flush_list(GList * list);
-void presence_add_buddy(GList * list, buddy_t * buddy);
-void presence_remove_buddy(GList * list, buddy_t * buddy);
-GList * presence_get_buddy(GList * list, buddy_t * buddy);
 void presence_test(SFLPhoneClient *client);
+
+GList * presence_buddy_list;
 
 void
 presence_init(SFLPhoneClient *client)
 {
-    presence_test(client);
-}
+//    presence_test(client);
+    presence_buddy_list = g_list_alloc();
+    presence_load_list(client, presence_buddy_list);
+    presence_print_list(presence_buddy_list);
 
-GList *
-presence_new_list(){
-    GList * list = g_list_alloc();
-    return list;
+    buddy_t * b;
+    for (guint i =  1; i < presence_list_get_size(presence_buddy_list); i++){
+        b = presence_list_get_nth(presence_buddy_list, i);
+        dbus_presence_subscribe(b->acc, b->uri, TRUE);
+    }
 }
 
 void
 presence_test(SFLPhoneClient *client)
 {
-    GList * buddy_list = presence_new_list();
+    GList * buddy_list = g_list_alloc();
     presence_load_list(client, buddy_list);
     presence_print_list(buddy_list);
-    buddy_t b1 = {g_strdup("uri1"), g_strdup("acc1")};
-    buddy_t b2 = {g_strdup("uri2"), g_strdup("acc2")};
-    buddy_t b3 = {g_strdup("uri3"), g_strdup("acc3")};
+    buddy_t b1 = {g_strdup("acc1"), g_strdup("alias1"), g_strdup("uri1"), g_strdup(""), FALSE, FALSE};
+    buddy_t b2 = {g_strdup("acc2"), g_strdup("alias2"), g_strdup("uri2"), g_strdup(""), FALSE, FALSE};
+    buddy_t b3 = {g_strdup("acc3"), g_strdup("alias3"), g_strdup("uri3"), g_strdup(""), FALSE, FALSE};
 
     presence_add_buddy(buddy_list,&b1);
     presence_add_buddy(buddy_list,&b3);
@@ -102,18 +101,19 @@ presence_load_list(SFLPhoneClient *client, GList * list)
         g_print("Buddy isn't correctly formed.\n");
 
     GVariantIter v_iter;
-    GVariant *v_buddy;
-    GVariant *v_uri;
-    GVariant *v_acc;
+    GVariant *v_buddy, *v_acc, *v_alias, * v_uri;
+
     g_variant_iter_init (&v_iter, v_list);
     while ((v_buddy = g_variant_iter_next_value (&v_iter)))
     {
-        v_uri = g_variant_lookup_value(v_buddy,"uri",G_VARIANT_TYPE_STRING);
         v_acc = g_variant_lookup_value(v_buddy,"acc",G_VARIANT_TYPE_STRING);
+        v_alias = g_variant_lookup_value(v_buddy,"alias",G_VARIANT_TYPE_STRING);
+        v_uri = g_variant_lookup_value(v_buddy,"uri",G_VARIANT_TYPE_STRING);
         buddy_t * buddy = g_malloc(sizeof(buddy_t));
-        buddy->uri = g_strdup(g_variant_get_data(v_uri));
         buddy->acc = g_strdup(g_variant_get_data(v_acc));
-        g_debug("Presence : found buddy:(%s, %s).", buddy->uri,buddy->acc);
+        buddy->alias = g_strdup(g_variant_get_data(v_alias));
+        buddy->uri = g_strdup(g_variant_get_data(v_uri));
+        g_debug("Presence : found buddy:(acc:%s, bud: %s).", buddy->acc, buddy->uri);
         list = g_list_append(list, (gpointer)buddy);
     }
 
@@ -124,7 +124,7 @@ presence_load_list(SFLPhoneClient *client, GList * list)
     {
         element = (buddy_t *)(tmp->data);
         g_print ("buddy:(%s,%s).\n",
-            element->uri,element->acc);
+           element->acc, element->uri);
         tmp = g_list_next (tmp);
     }
 }
@@ -143,8 +143,9 @@ presence_save_list(SFLPhoneClient *client, GList * list)
     while (tmp) {
         GVariantBuilder *v_b_buddy = g_variant_builder_new (G_VARIANT_TYPE ("a{ss}"));
         buddy = (buddy_t *)(tmp->data);
-        g_variant_builder_add (v_b_buddy, "{ss}", "uri", buddy->uri);
         g_variant_builder_add (v_b_buddy, "{ss}", "acc", buddy->acc);
+        g_variant_builder_add (v_b_buddy, "{ss}", "alias", buddy->alias);
+        g_variant_builder_add (v_b_buddy, "{ss}", "uri", buddy->uri);
         GVariant * v_buddy = g_variant_builder_end(v_b_buddy);
         g_print("New buddy: %s \n",g_variant_print(v_buddy,TRUE));
         g_variant_builder_add_value(v_b_list, v_buddy);
@@ -188,9 +189,10 @@ presence_add_buddy(GList * list, buddy_t * buddy){
     if(presence_get_buddy(list,buddy)==NULL)
     {
         buddy_t * b = g_malloc(sizeof(buddy_t));
-        b->uri = g_strdup(buddy->uri);
         b->acc = g_strdup(buddy->acc);
-        g_debug("Presence : add buddy:(%s, %s).", b->uri, b->acc);
+        b->alias = g_strdup(buddy->alias);
+        b->uri = g_strdup(buddy->uri);
+        g_debug("Presence : add buddy:(%s, %s).", b->acc, b->uri);
         list = g_list_append(list, (gpointer)b);
     }
     else
@@ -213,7 +215,7 @@ presence_remove_buddy(GList * list, buddy_t * buddy)
 
 
 void
-presence_print_list(GList *list)
+presence_print_list(GList * list)
 {
     GList *tmp = g_list_nth(list,1);
     buddy_t * buddy;
@@ -225,6 +227,26 @@ presence_print_list(GList *list)
         tmp = g_list_next (tmp);
     }
 }
+
+GList *
+presence_get_list(){
+    return presence_buddy_list;
+}
+
+buddy_t *
+presence_list_get_nth(GList * list, guint n)
+{
+    GList *tmp = g_list_nth(list,n);
+    return (buddy_t *)(tmp->data);
+}
+
+
+guint
+presence_list_get_size(GList * list)
+{
+    return g_list_length(list);
+}
+
 
 void
 presence_flush_list(GList *list)
