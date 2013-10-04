@@ -1504,27 +1504,6 @@ dbus_set_noise_suppress_state(const gchar *state)
     }
 }
 
-gchar *
-dbus_get_echo_cancel_state(void)
-{
-    GError *error = NULL;
-    gchar *state;
-    org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_state(config_proxy, &state, &error);
-
-    if (check_error(error))
-        state = g_strdup("");
-
-    return state;
-}
-
-void
-dbus_set_echo_cancel_state(const gchar *state)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_echo_cancel_state(config_proxy, state, &error);
-    check_error(error);
-}
-
 int
 dbus_is_iax2_enabled()
 {

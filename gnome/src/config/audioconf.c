@@ -821,14 +821,6 @@ active_noise_suppress(void)
 }
 
 static void
-active_echo_cancel(void)
-{
-    gchar *state = dbus_get_echo_cancel_state();
-    dbus_set_echo_cancel_state(reverse_state(state));
-    g_free(state);
-}
-
-static void
 active_is_always_recording(void)
 {
     dbus_set_is_always_recording(!dbus_get_is_always_recording());
