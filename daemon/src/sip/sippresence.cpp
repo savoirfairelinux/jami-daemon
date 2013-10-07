@@ -62,10 +62,15 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     /* init pool */
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_.factory, "pres", 1000, 1000, NULL);
+    if (!pool_)
+        throw std::runtime_error("Could not allocate pool for presence");
 
     /* Create mutex */
-    if (pj_mutex_create_recursive(pool_, "pres", &mutex_) != PJ_SUCCESS)
-        ERROR("Unable to create mutex");
+    if (pj_mutex_create_recursive(pool_, "pres", &mutex_) != PJ_SUCCESS) {
+        pj_pool_release(pool_);
+        pj_caching_pool_destroy(&cp_);
+        throw std::runtime_error("Unable to create mutex");
+    }
 
     /* init default status */
     updateStatus(true, "Available");
@@ -80,6 +85,12 @@ SIPPresence::~SIPPresence()
 
     for (const auto & s : sub_server_list_)
         removePresSubServer(s);
+
+    if (mutex_ and pj_mutex_destroy(mutex_) != PJ_SUCCESS)
+        ERROR("Error destroying mutex");
+
+    pj_pool_release(pool_);
+    pj_caching_pool_destroy(&cp_);
 }
 
 SIPAccount * SIPPresence::getAccount() const
