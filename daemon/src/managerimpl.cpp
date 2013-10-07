@@ -2380,21 +2380,14 @@ std::vector<std::string> ManagerImpl::getAccountList() const
 std::map<std::string, std::string> ManagerImpl::getAccountDetails(
     const std::string& accountID) const
 {
-    // Default account used to get default parameters if requested by client (to build new account)
-    static const SIPAccount DEFAULT_ACCOUNT("default");
-
-    if (accountID.empty()) {
-        DEBUG("Returning default account settings");
-        return DEFAULT_ACCOUNT.getAccountDetails();
-    }
-
     Account * account = getAccount(accountID);
 
-    if (account)
+    if (account) {
         return account->getAccountDetails();
-    else {
-        ERROR("Get account details on a non-existing accountID %s. Returning default", accountID.c_str());
-        return DEFAULT_ACCOUNT.getAccountDetails();
+    } else {
+        ERROR("Could not get account details on a non-existing accountID %s", accountID.c_str());
+        // return an empty map since we can't throw an exception to D-Bus
+        return std::map<std::string, std::string>();
     }
 }
 
