@@ -614,14 +614,13 @@ presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gc
     account_t *acc = account_list_get_by_id(accID);
     if (acc)
     {
-        GList * buddy_list = presence_get_list();
-        buddy_t * b = presence_buddy_get_by_string(buddy_list, accID, uri);
+        buddy_t * b = presence_list_buddy_get_by_string(accID, uri);
         if(b)
         {
             b->subscribed = state;
             if(!state) // not monitored means default value for status ( == Offline)
                 b->status = FALSE;
-            update_buddylist_view(presence_view_get());
+            update_buddylist_view();
         }
     }
 }
@@ -634,13 +633,12 @@ presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, co
 
     account_t *acc = account_list_get_by_id(accID);
     if (acc) {
-        GList * buddy_list = presence_get_list();
-        buddy_t * b = presence_buddy_get_by_string(buddy_list, accID, uri);
+        buddy_t * b = presence_list_buddy_get_by_string(accID, uri);
         if(b)
         {
             b->status = status;
             b->note = g_strdup(note); // TODO: mem free before?
-            update_buddylist_view(presence_view_get());
+            update_buddylist_view();
         }
     }
 }

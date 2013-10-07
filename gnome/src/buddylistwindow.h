@@ -40,7 +40,7 @@
   * @brief The main window of the client.
   */
 
-void update_buddylist_view(GtkWidget * view);
+void update_buddylist_view();
 void destroy_buddylist_window();
 void create_buddylist_window(SFLPhoneClient *client);
 

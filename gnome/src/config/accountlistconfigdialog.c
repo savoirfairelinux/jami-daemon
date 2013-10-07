@@ -725,7 +725,7 @@ void show_account_list_config_dialog(SFLPhoneClient *client)
     for (guint i = 0; i < account_list_get_size(); i++)
     {
         account_t * acc = account_list_get_nth(i);
-        presence_send_subscribes(acc, TRUE);
+        presence_list_send_subscribes(acc, TRUE);
     }
 }
 

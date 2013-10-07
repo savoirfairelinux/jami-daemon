@@ -47,20 +47,18 @@ typedef struct prout
     gchar * note;   // more detailed status
 }buddy_t;
 
-void presence_init(SFLPhoneClient *client);
-void presence_load_list(SFLPhoneClient *client, GList *list);
-void presence_save_list(SFLPhoneClient *client, GList * list);
-void presence_flush_list(GList * list);
-void presence_add_buddy(GList * list, buddy_t * buddy);
-void presence_remove_buddy(GList * list, buddy_t * buddy);
-guint presence_list_get_size(GList * list);
-GList * presence_get_list();
-buddy_t * presence_list_get_nth(GList * list, guint n);
-void presence_view_set(GtkWidget * view);
-GtkWidget * presence_view_get();
-buddy_t * presence_buddy_get_by_string(GList * list, const gchar *accID, const gchar *uri);
-GList * presence_get_buddy(GList * list, buddy_t * buddy);
-void presence_send_subscribes(account_t *acc, gboolean flag);
+void presence_list_init(SFLPhoneClient *client);
+void presence_list_load(SFLPhoneClient *client);
+void presence_list_save(SFLPhoneClient *client);
+void presence_list_flush();
+void presence_list_add_buddy(buddy_t * buddy);
+void presence_list_remove_buddy(buddy_t * buddy);
+guint presence_list_get_size();
+GList * presence_list_get();
+buddy_t * presence_list_get_nth(guint n);
+buddy_t * presence_list_buddy_get_by_string(const gchar *accID, const gchar *uri);
+GList * presence_list_get_buddy(buddy_t * buddy);
+void presence_list_send_subscribes(account_t *acc, gboolean flag);
 
 static const char *const PRESENCE_STATUS_ONLINE = "Online";
 static const char *const PRESENCE_STATUS_OFFLINE = "Offline";

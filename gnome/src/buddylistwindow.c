@@ -43,7 +43,8 @@
 #include "str_utils.h"
 
 static GtkWidget *buddylistwindow;
-static GtkWidget *vbox;
+static GtkWidget *buddy_list_tree_view = NULL;
+//static GtkWidget *vbox;
 
 static GtkTreeModel *create_and_fill_model (void);
 static GtkWidget * create_view (void);
@@ -90,7 +91,7 @@ create_and_fill_model (void)
                     -1);
             for (guint j =  1; j < presence_list_get_size(buddy_list); j++)
             {
-                buddy = presence_list_get_nth(buddy_list, j);
+                buddy = presence_list_get_nth(j);
                 if(g_strcmp0(buddy->acc, (gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID))==0)
                 {
                     gtk_tree_store_append(treestore, &child, &toplevel);
@@ -174,13 +175,13 @@ create_view (void)
 }
 
 void
-update_buddylist_view(GtkWidget * view)
+update_buddylist_view()
 {
-    if(!view)
+    if(!buddy_list_tree_view)
         return; // Buddylist window not opend
 
     GtkTreeModel * model = create_and_fill_model();
-    gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
+    gtk_tree_view_set_model(GTK_TREE_VIEW(buddy_list_tree_view), model);
     g_object_unref(model);
     g_debug("BuddyList updated.");
 }
@@ -191,7 +192,7 @@ void
 destroy_buddylist_window()
 {
     g_debug("Destroy buddylist window ");
-    presence_view_set(NULL);
+    buddy_list_tree_view = NULL;
     gtk_widget_destroy(buddylistwindow);
 }
 
@@ -209,22 +210,21 @@ create_buddylist_window(SFLPhoneClient *client)
     gtk_widget_set_name(buddylistwindow, title);
 
     /* Instantiate vbox, subvbox as homogeneous */
-    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
     gtk_container_add(GTK_CONTAINER(buddylistwindow), vbox);
 
     /* Create the tree view*/
-    GtkWidget *buddy_list_tree_view = create_view();
+    buddy_list_tree_view = create_view();
     gtk_box_pack_start(GTK_BOX(vbox), buddy_list_tree_view, TRUE, TRUE, 5);
-    presence_view_set(buddy_list_tree_view);
 
     GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(buddy_list_tree_view));
     g_signal_connect(G_OBJECT(selection), "changed", G_CALLBACK(selection_changed), NULL);
 
     // Load buddylist
-    presence_init(client);
-    g_object_set_data(G_OBJECT(buddylistwindow), "Buddy-List", (gpointer)presence_get_list());
-    update_buddylist_view(buddy_list_tree_view);
+    presence_list_init(client);
+    g_object_set_data(G_OBJECT(buddylistwindow), "Buddy-List", (gpointer)presence_list_get());
+    update_buddylist_view();
 
     /* make sure that everything, window and label, are visible */
     gtk_widget_show_all(buddylistwindow);
