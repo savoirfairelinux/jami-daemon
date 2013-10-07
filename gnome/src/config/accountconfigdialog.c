@@ -222,11 +222,11 @@ static void update_credential_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 }
 
 static GtkWidget*
-create_auto_answer_checkbox(account_t *account)
+create_auto_answer_checkbox(const account_t *account)
 {
     GtkWidget *auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
-    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), account);
+    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
     return auto_answer_checkbox;
 }
 
@@ -1170,7 +1170,7 @@ static void ringtone_enabled_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data, 
 
 void update_ringtone_slider(guint position, guint size)
 {
-    if (ringtone_seekslider)
+    if (ringtone_seekslider && GTK_IS_WIDGET(ringtone_seekslider))
         sfl_seekslider_update_scale(SFL_SEEKSLIDER(ringtone_seekslider), position, size);
 }
 
@@ -1330,53 +1330,51 @@ static void update_account_from_basic_tab(account_t *account)
         proto = g_strdup("SIP");
 
     if (g_strcmp0(proto, "SIP") == 0) {
-        if (!account_is_IP2IP(account)) {
-            account_replace(account, CONFIG_ACCOUNT_REGISTRATION_EXPIRE,
-                            gtk_entry_get_text(GTK_ENTRY(expire_spin_box)));
+        account_replace(account, CONFIG_ACCOUNT_REGISTRATION_EXPIRE,
+                gtk_entry_get_text(GTK_ENTRY(expire_spin_box)));
 
-            account_replace(account, CONFIG_ACCOUNT_ROUTESET,
-                            gtk_entry_get_text(GTK_ENTRY(entry_route_set)));
+        account_replace(account, CONFIG_ACCOUNT_ROUTESET,
+                gtk_entry_get_text(GTK_ENTRY(entry_route_set)));
 
-            gboolean v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_stun_check_box));
-            account_replace(account, CONFIG_STUN_ENABLE,
-                            bool_to_string(v));
+        gboolean v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_stun_check_box));
+        account_replace(account, CONFIG_STUN_ENABLE,
+                bool_to_string(v));
 
-            account_replace(account, CONFIG_STUN_SERVER,
-                            gtk_entry_get_text(GTK_ENTRY(stun_server_entry)));
+        account_replace(account, CONFIG_STUN_SERVER,
+                gtk_entry_get_text(GTK_ENTRY(stun_server_entry)));
 
-            v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button));
-            account_replace(account, CONFIG_PUBLISHED_SAMEAS_LOCAL, bool_to_string(v));
+        v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button));
+        account_replace(account, CONFIG_PUBLISHED_SAMEAS_LOCAL, bool_to_string(v));
 
-            if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
-                account_replace(account, CONFIG_PUBLISHED_PORT,
-                                gtk_entry_get_text(GTK_ENTRY(published_port_spin_box)));
+        if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
+            account_replace(account, CONFIG_PUBLISHED_PORT,
+                    gtk_entry_get_text(GTK_ENTRY(published_port_spin_box)));
 
-                account_replace(account, CONFIG_PUBLISHED_ADDRESS,
-                                gtk_entry_get_text(GTK_ENTRY(published_address_entry)));
-            } else {
-                account_replace(account, CONFIG_PUBLISHED_PORT,
-                                gtk_entry_get_text(GTK_ENTRY(local_port_spin_box)));
-                gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
+            account_replace(account, CONFIG_PUBLISHED_ADDRESS,
+                    gtk_entry_get_text(GTK_ENTRY(published_address_entry)));
+        } else {
+            account_replace(account, CONFIG_PUBLISHED_PORT,
+                    gtk_entry_get_text(GTK_ENTRY(local_port_spin_box)));
+            gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
 
-                gchar *published_address = dbus_get_address_from_interface_name(local_interface);
-                g_free(local_interface);
+            gchar *published_address = dbus_get_address_from_interface_name(local_interface);
+            g_free(local_interface);
 
-                account_replace(account, CONFIG_PUBLISHED_ADDRESS, published_address);
-            }
-
-            account_replace(account, CONFIG_ACCOUNT_AUDIO_PORT_MIN,
-                            gtk_entry_get_text(GTK_ENTRY(audio_port_min_spin_box)));
-            account_replace(account, CONFIG_ACCOUNT_AUDIO_PORT_MAX,
-                            gtk_entry_get_text(GTK_ENTRY(audio_port_max_spin_box)));
-#ifdef SFL_VIDEO
-            account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MIN,
-                            gtk_entry_get_text(GTK_ENTRY(video_port_min_spin_box)));
-            account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MAX,
-                            gtk_entry_get_text(GTK_ENTRY(video_port_max_spin_box)));
-#endif
-            v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
-            account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
+            account_replace(account, CONFIG_PUBLISHED_ADDRESS, published_address);
         }
+
+        account_replace(account, CONFIG_ACCOUNT_AUDIO_PORT_MIN,
+                gtk_entry_get_text(GTK_ENTRY(audio_port_min_spin_box)));
+        account_replace(account, CONFIG_ACCOUNT_AUDIO_PORT_MAX,
+                gtk_entry_get_text(GTK_ENTRY(audio_port_max_spin_box)));
+#ifdef SFL_VIDEO
+        account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MIN,
+                gtk_entry_get_text(GTK_ENTRY(video_port_min_spin_box)));
+        account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MAX,
+                gtk_entry_get_text(GTK_ENTRY(video_port_max_spin_box)));
+#endif
+        v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
+        account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
             g_debug("Set dtmf over rtp");
@@ -1402,13 +1400,6 @@ static void update_account_from_basic_tab(account_t *account)
         g_free(key_exchange);
         const gboolean tls_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_sip_tls_check_box));
         account_replace(account, CONFIG_TLS_ENABLE, bool_to_string(tls_enabled));
-
-        const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
-        account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
-
-        gchar *ringtone_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser));
-        account_replace(account, CONFIG_RINGTONE_PATH, ringtone_path);
-        g_free(ringtone_path);
 
         gchar *address_combo_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
         account_replace(account, CONFIG_LOCAL_INTERFACE, address_combo_text);
@@ -1437,6 +1428,13 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
     const gboolean IS_IP2IP = account_is_IP2IP(account);
     if (!IS_IP2IP)
         update_account_from_basic_tab(account);
+
+    const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
+    account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
+
+    gchar *ringtone_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser));
+    account_replace(account, CONFIG_RINGTONE_PATH, ringtone_path);
+    g_free(ringtone_path);
 
     // Get current protocol for this account
     gchar *current_protocol;

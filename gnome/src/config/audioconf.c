@@ -821,14 +821,6 @@ active_noise_suppress(void)
 }
 
 static void
-active_echo_cancel(void)
-{
-    gchar *state = dbus_get_echo_cancel_state();
-    dbus_set_echo_cancel_state(reverse_state(state));
-    g_free(state);
-}
-
-static void
 active_is_always_recording(void)
 {
     dbus_set_is_always_recording(!dbus_get_is_always_recording());
@@ -941,19 +933,6 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 
     g_signal_connect(G_OBJECT(enableNoiseReduction), "clicked", active_noise_suppress, NULL);
     gtk_grid_attach(GTK_GRID(grid), enableNoiseReduction, 0, 1, 1, 1);
-
-    GtkWidget *enableEchoCancel = gtk_check_button_new_with_mnemonic(_("_Echo Cancellation"));
-    state = dbus_get_echo_cancel_state();
-
-    if (g_strcmp0(state, "enabled") == 0)
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), TRUE);
-    else
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), FALSE);
-
-    g_free(state);
-
-    g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
-    gtk_grid_attach(GTK_GRID(grid), enableEchoCancel, 0, 2, 1, 1);
 
     gtk_widget_show_all(audio_vbox);
 

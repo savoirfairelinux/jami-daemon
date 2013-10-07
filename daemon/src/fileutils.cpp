@@ -72,7 +72,7 @@ bool check_dir(const char *path)
 }
 
 #ifdef __ANDROID__
-static char *program_dir = "/data/data/com.savoirfairelinux.sflphone";
+static char *program_dir = "/data/data/org.sflphone";
 #else
 static char *program_dir = NULL;
 #endif

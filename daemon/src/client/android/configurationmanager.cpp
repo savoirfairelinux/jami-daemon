@@ -302,11 +302,6 @@ void ConfigurationManager::setNoiseSuppressState(const std::string& state)
     Manager::instance().setNoiseSuppressState(state);
 }
 
-std::string ConfigurationManager::getEchoCancelState()
-{
-    return Manager::instance().getEchoCancelState() ? "enabled" : "disabled";
-}
-
 std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 {
     std::map<std::string, std::string> ringToneList;
@@ -333,11 +328,6 @@ std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
     }
     free(namelist);
     return ringToneList;
-}
-
-void ConfigurationManager::setEchoCancelState(const std::string& state)
-{
-    Manager::instance().setEchoCancelState(state);
 }
 
 int32_t ConfigurationManager::isIax2Enabled()

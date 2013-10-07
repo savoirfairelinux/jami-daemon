@@ -84,8 +84,6 @@
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
-#include <functional>
-#include <iterator>
 #include <fstream>
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
@@ -223,16 +221,17 @@ void ManagerImpl::run()
 }
 #endif
 
+void ManagerImpl::interrupt()
+{
+    client_.exit();
+}
+
 void ManagerImpl::finish()
 {
     if (finished_)
         return;
 
     finished_ = true;
-    // Unset signal handlers
-    signal(SIGHUP, SIG_DFL);
-    signal(SIGINT, SIG_DFL);
-    signal(SIGTERM, SIG_DFL);
 
     std::vector<std::string> callList(getCallList());
     DEBUG("Hangup %zu remaining call(s)", callList.size());
@@ -256,7 +255,7 @@ void ManagerImpl::finish()
         audiodriver_ = nullptr;
     }
 
-    client_.exit();
+    saveHistory();
 }
 
 bool ManagerImpl::isCurrentCall(const std::string& callId) const
@@ -1915,7 +1914,7 @@ ManagerImpl::getTelephoneFile()
 std::string ManagerImpl::retrieveConfigPath() const
 {
 #ifdef __ANDROID__
-    std::string configdir = "/data/data/com.savoirfairelinux.sflphone";
+    std::string configdir = "/data/data/org.sflphone";
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
@@ -2242,16 +2241,6 @@ std::string ManagerImpl::getNoiseSuppressState() const
 void ManagerImpl::setNoiseSuppressState(const std::string &state)
 {
     audioPreference.setNoiseReduce(state == "enabled");
-}
-
-bool ManagerImpl::getEchoCancelState() const
-{
-    return audioPreference.getEchoCancel();
-}
-
-void ManagerImpl::setEchoCancelState(const std::string &state)
-{
-    audioPreference.setEchoCancel(state == "enabled");
 }
 
 /**
@@ -2691,18 +2680,14 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     }
 #endif
 
-    using std::placeholders::_1;
+    AccountMap &sipAccounts = SIPVoIPLink::instance()->getAccounts();
 #if HAVE_IAX
-    std::for_each(seq->begin(), seq->end(),
-            std::bind(loadAccount, _1,
-                std::ref(SIPVoIPLink::instance()->getAccounts()),
-                std::ref(IAXVoIPLink::getAccounts()),
-                std::ref(errorCount)));
+    AccountMap &iaxAccounts = IAXVoIPLink::getAccounts();
+    for (auto &s : *seq)
+        loadAccount(s, sipAccounts, iaxAccounts, errorCount);
 #else
-    std::for_each(seq->begin(), seq->end(),
-            std::bind(loadAccount, _1,
-                std::ref(SIPVoIPLink::instance()->getAccounts()),
-                std::ref(errorCount)));
+    for (auto &s : *seq)
+        loadAccount(s, sipAccounts, errorCount);
 #endif
 
     return errorCount;
@@ -2710,17 +2695,21 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
 void ManagerImpl::registerAllAccounts()
 {
-    std::for_each(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end(), registerAccount);
+    for (auto &a : SIPVoIPLink::instance()->getAccounts())
+        registerAccount(a);
 #if HAVE_IAX
-    std::for_each(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end(), registerAccount);
+    for (auto &a : IAXVoIPLink::getAccounts())
+        registerAccount(a);
 #endif
 }
 
 void ManagerImpl::unregisterAllAccounts()
 {
-    std::for_each(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end(), unregisterAccount);
+    for (auto &a : SIPVoIPLink::instance()->getAccounts())
+        unregisterAccount(a);
 #if HAVE_IAX
-    std::for_each(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end(), unregisterAccount);
+    for (auto &a : IAXVoIPLink::getAccounts())
+        unregisterAccount(a);
 #endif
 }
 

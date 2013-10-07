@@ -136,10 +136,10 @@ IAXVoIPLink::getEvent()
             continue;
         }
 
-        IAXCall *call = iaxFindCallBySession(event->session);
+        const std::string id(iaxFindCallIDBySession(event->session));
 
-        if (call) {
-            iaxHandleCallEvent(event, call);
+        if (not id.empty()) {
+            iaxHandleCallEvent(event, id);
         } else if (event->session && event->session == regSession_) {
             // This is a registration session, deal with it
             iaxHandleRegReply(event);
@@ -155,7 +155,7 @@ IAXVoIPLink::getEvent()
         }
     }
 
-    if (nextRefreshStamp_ && nextRefreshStamp_ < time(NULL))
+    if (nextRefreshStamp_ and nextRefreshStamp_ < time(NULL))
         sendRegister(Manager::instance().getIaxAccount(accountID_));
 
     sendAudioFromMic();
@@ -231,7 +231,6 @@ IAXVoIPLink::sendAudioFromMic()
         }
     }
 }
-
 
 IAXCall*
 IAXVoIPLink::getIAXCall(const std::string& id)
@@ -314,19 +313,20 @@ IAXVoIPLink::answer(Call *call)
 void
 IAXVoIPLink::hangup(const std::string& id, int reason UNUSED)
 {
-    IAXCall* call = getIAXCall(id);
-
-    if (call == NULL)
-        throw VoipLinkException("Could not find call");
-
-    Manager::instance().getMainBuffer().unBindAll(call->getCallId());
+    Manager::instance().getMainBuffer().unBindAll(id);
 
     {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
-        iax_hangup(call->session, (char*) "Dumped Call");
-    }
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall* call = getIAXCall(id);
+        if (call == nullptr)
+            throw VoipLinkException("Could not find call");
 
-    call->session = NULL;
+        {
+            std::lock_guard<std::mutex> lock(mutexIAX_);
+            iax_hangup(call->session, (char*) "Dumped Call");
+        }
+        call->session = NULL;
+    }
 
     removeIaxCall(id);
 }
@@ -335,14 +335,16 @@ IAXVoIPLink::hangup(const std::string& id, int reason UNUSED)
 void
 IAXVoIPLink::peerHungup(const std::string& id)
 {
-    IAXCall* call = getIAXCall(id);
+    Manager::instance().getMainBuffer().unBindAll(id);
 
-    if (call == NULL)
-        throw VoipLinkException("Could not find call");
+    {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall* call = getIAXCall(id);
+        if (call == NULL)
+            throw VoipLinkException("Could not find call");
 
-    Manager::instance().getMainBuffer().unBindAll(call->getCallId());
-
-    call->session = NULL;
+        call->session = NULL;
+    }
 
     removeIaxCall(id);
 }
@@ -352,54 +354,59 @@ IAXVoIPLink::peerHungup(const std::string& id)
 void
 IAXVoIPLink::onhold(const std::string& id)
 {
-    IAXCall* call = getIAXCall(id);
-
-    if (call == NULL)
-        throw VoipLinkException("Call does not exist");
-
-    Manager::instance().getMainBuffer().unBindAll(call->getCallId());
+    Manager::instance().getMainBuffer().unBindAll(id);
 
     {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
-        iax_quelch_moh(call->session, true);
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall* call = getIAXCall(id);
+        if (call == NULL)
+            throw VoipLinkException("Could not find call");
+        {
+            std::lock_guard<std::mutex> lock(mutexIAX_);
+            iax_quelch_moh(call->session, true);
+        }
+        call->setState(Call::HOLD);
     }
 
-    call->setState(Call::HOLD);
 }
 
 void
 IAXVoIPLink::offhold(const std::string& id)
 {
-    IAXCall* call = getIAXCall(id);
-
-    if (call == NULL)
-        throw VoipLinkException("Call does not exist");
-
-    Manager::instance().addStream(call->getCallId());
+    Manager::instance().addStream(id);
 
     {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
-        iax_unquelch(call->session);
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall* call = getIAXCall(id);
+        if (call == NULL)
+            throw VoipLinkException("Could not find call");
+
+        {
+            std::lock_guard<std::mutex> lock(mutexIAX_);
+            iax_unquelch(call->session);
+        }
+
+        call->setState(Call::ACTIVE);
     }
 
     Manager::instance().startAudioDriverStream();
-    call->setState(Call::ACTIVE);
 }
 
 void
 IAXVoIPLink::transfer(const std::string& id, const std::string& to)
 {
-    IAXCall* call = getIAXCall(id);
-
-    if (!call)
-        return;
-
     char callto[to.length() + 1];
     strcpy(callto, to.c_str());
 
     {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
-        iax_transfer(call->session, callto);
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall* call = getIAXCall(id);
+        if (call == NULL)
+            return;
+        {
+            std::lock_guard<std::mutex> lock(mutexIAX_);
+            iax_transfer(call->session, callto);
+        }
     }
 }
 
@@ -412,25 +419,29 @@ IAXVoIPLink::attendedTransfer(const std::string& /*transferID*/, const std::stri
 void
 IAXVoIPLink::refuse(const std::string& id)
 {
-    IAXCall* call = getIAXCall(id);
-
-    if (call) {
+    {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall* call = getIAXCall(id);
+        if (call == NULL)
+            return;
         {
             std::lock_guard<std::mutex> lock(mutexIAX_);
             iax_reject(call->session, (char*) "Call rejected manually.");
         }
-
-        removeIaxCall(id);
     }
+    removeIaxCall(id);
 }
 
 
 void
 IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
+    std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
     IAXCall* call = getIAXCall(id);
+    if (call == NULL)
+        return;
 
-    if (call) {
+    {
         std::lock_guard<std::mutex> lock(mutexIAX_);
         iax_send_dtmf(call->session, code);
     }
@@ -442,9 +453,12 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
                              const std::string& message,
                              const std::string& /*from*/)
 {
+    std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
     IAXCall* call = getIAXCall(callID);
+    if (call == nullptr)
+        return;
 
-    if (call) {
+    {
         std::lock_guard<std::mutex> lock(mutexIAX_);
         sfl::InstantMessaging::send_iax_message(call->session, callID, message.c_str());
     }
@@ -456,7 +470,6 @@ IAXVoIPLink::clearIaxCallMap()
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
 
-
     for (const auto & item : iaxCallMap_)
         delete item.second;
 
@@ -467,10 +480,12 @@ IAXVoIPLink::clearIaxCallMap()
 void
 IAXVoIPLink::addIaxCall(IAXCall* call)
 {
-    if (call and getIaxCall(call->getCallId()) == NULL) {
-        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+    if (call == nullptr)
+        return;
+
+    std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+    if (getIaxCall(call->getCallId()) == NULL)
         iaxCallMap_[call->getCallId()] = call;
-    }
 }
 
 void
@@ -484,17 +499,17 @@ IAXVoIPLink::removeIaxCall(const std::string& id)
     iaxCallMap_.erase(id);
 }
 
+
 IAXCall*
 IAXVoIPLink::getIaxCall(const std::string& id)
 {
     IAXCallMap::iterator iter = iaxCallMap_.find(id);
-
     if (iter != iaxCallMap_.end())
-
         return iter->second;
     else
         return NULL;
 }
+
 
 std::string
 IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
@@ -506,7 +521,11 @@ IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
 std::string
 IAXVoIPLink::getCurrentAudioCodecNames(Call *c) const
 {
+    std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
     IAXCall *call = static_cast<IAXCall*>(c);
+    if (call == nullptr)
+        return "";
+
     sfl::AudioCodec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
     return audioCodec ? audioCodec->getMimeSubtype() : "";
 }
@@ -531,8 +550,8 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 }
 
 
-IAXCall*
-IAXVoIPLink::iaxFindCallBySession(iax_session* session)
+std::string
+IAXVoIPLink::iaxFindCallIDBySession(iax_session* session)
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
 
@@ -540,79 +559,140 @@ IAXVoIPLink::iaxFindCallBySession(iax_session* session)
         IAXCall* call = static_cast<IAXCall*>(item.second);
 
         if (call and call->session == session)
-            return call;
+            return call->getCallId();
     }
 
-    return NULL;
+    return "";
 }
 
 void
-IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
+IAXVoIPLink::handleReject(const std::string &id)
 {
-    std::string id = call->getCallId();
+    {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall *call = getIAXCall(id);
+        if (call) {
+            call->setConnectionState(Call::CONNECTED);
+            call->setState(Call::ERROR);
+        }
+    }
+    Manager::instance().callFailure(id);
+    removeIaxCall(id);
+}
 
+void
+IAXVoIPLink::handleAccept(iax_event* event, const std::string &id)
+{
+    if (event->ies.format) {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall *call = getIAXCall(id);
+        if (call)
+            call->format = event->ies.format;
+    }
+}
+
+void
+IAXVoIPLink::handleAnswerTransfer(iax_event* event, const std::string &id)
+{
+    {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall *call = getIAXCall(id);
+        if (!call or call->getConnectionState() == Call::CONNECTED)
+            return;
+
+        call->setConnectionState(Call::CONNECTED);
+        call->setState(Call::ACTIVE);
+
+        if (event->ies.format)
+            call->format = event->ies.format;
+    }
+
+    Manager::instance().addStream(id);
+    Manager::instance().peerAnsweredCall(id);
+    Manager::instance().startAudioDriverStream();
+    Manager::instance().getMainBuffer().flushAllBuffers();
+}
+
+
+void
+IAXVoIPLink::handleBusy(const std::string &id)
+{
+    {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall *call = getIAXCall(id);
+        call->setConnectionState(Call::CONNECTED);
+        call->setState(Call::BUSY);
+    }
+    Manager::instance().callBusy(id);
+    removeIaxCall(id);
+}
+
+void
+IAXVoIPLink::handleMessage(iax_event* event, const std::string &id)
+{
+    std::string peerNumber;
+    {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall *call = getIAXCall(id);
+        if (call == nullptr)
+            return;
+        peerNumber = call->getPeerNumber();
+    }
+
+    Manager::instance().incomingMessage(id, peerNumber, std::string((const char*) event->data));
+}
+
+void
+IAXVoIPLink::handleRinging(const std::string &id)
+{
+    {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall *call = getIAXCall(id);
+        if (call == nullptr)
+            return;
+        call->setConnectionState(Call::RINGING);
+    }
+    Manager::instance().peerRingingCall(id);
+}
+
+void
+IAXVoIPLink::iaxHandleCallEvent(iax_event* event, const std::string &id)
+{
     switch (event->etype) {
         case IAX_EVENT_HANGUP:
             Manager::instance().peerHungupCall(id);
-
             removeIaxCall(id);
             break;
 
         case IAX_EVENT_REJECT:
-            call->setConnectionState(Call::CONNECTED);
-            call->setState(Call::ERROR);
-            Manager::instance().callFailure(id);
-            removeIaxCall(id);
+            handleReject(id);
             break;
 
         case IAX_EVENT_ACCEPT:
-
-            if (event->ies.format)
-                call->format = event->ies.format;
-
+            handleAccept(event, id);
             break;
 
         case IAX_EVENT_ANSWER:
         case IAX_EVENT_TRANSFER:
-
-            if (call->getConnectionState() == Call::CONNECTED)
-                break;
-
-            Manager::instance().addStream(call->getCallId());
-
-            call->setConnectionState(Call::CONNECTED);
-            call->setState(Call::ACTIVE);
-
-            if (event->ies.format)
-                call->format = event->ies.format;
-
-            Manager::instance().peerAnsweredCall(id);
-
-            Manager::instance().startAudioDriverStream();
-            Manager::instance().getMainBuffer().flushAllBuffers();
-
+            handleAnswerTransfer(event, id);
             break;
 
         case IAX_EVENT_BUSY:
-            call->setConnectionState(Call::CONNECTED);
-            call->setState(Call::BUSY);
-            Manager::instance().callBusy(id);
-            removeIaxCall(id);
+            handleBusy(id);
             break;
 
         case IAX_EVENT_VOICE:
-            iaxHandleVoiceEvent(event, call);
+            iaxHandleVoiceEvent(event, id);
             break;
 
         case IAX_EVENT_TEXT:
 #if HAVE_INSTANT_MESSAGING
-            Manager::instance().incomingMessage(call->getCallId(), call->getPeerNumber(), std::string((const char*) event->data));
+            handleMessage(event, id);
 #endif
             break;
 
         case IAX_EVENT_RINGA:
-            call->setConnectionState(Call::RINGING);
-            Manager::instance().peerRingingCall(call->getCallId());
+            handleRinging(id);
             break;
 
         case IAX_IE_MSGCOUNT:
@@ -632,43 +712,52 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 
 
 /* Handle audio event, VOICE packet received */
-void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
+void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
 {
     // Skip this empty packet.
     if (!event->datalen)
         return;
 
-    sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec()));
+    AudioBuffer *out;
 
-    if (!audioCodec)
-        return;
+    {
+        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
+        IAXCall* call = getIAXCall(id);
+        if (call == nullptr)
+            throw VoipLinkException("Could not find call");
 
-    Manager::instance().getMainBuffer().setInternalSamplingRate(audioCodec->getClockRate());
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
+        sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec()));
 
-    if (event->subclass)
-        call->format = event->subclass;
+        if (!audioCodec)
+            return;
 
-    unsigned char *data = (unsigned char*) event->data;
-    unsigned int size = event->datalen;
+        Manager::instance().getMainBuffer().setInternalSamplingRate(audioCodec->getClockRate());
+        unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
 
-    unsigned int max = audioCodec->getClockRate() * 20 / 1000;
+        if (event->subclass)
+            call->format = event->subclass;
 
-    if (size > max)
-        size = max;
+        unsigned char *data = (unsigned char*) event->data;
+        unsigned int size = event->datalen;
 
-    audioCodec->decode(decData_.getData(), data , size);
-    AudioBuffer *out = &decData_;
-    unsigned int audioRate = audioCodec->getClockRate();
+        unsigned int max = audioCodec->getClockRate() * 20 / 1000;
 
-    if (audioRate != mainBufferSampleRate) {
-        decData_.setSampleRate(mainBufferSampleRate);
-        resampledData_.setSampleRate(audioRate);
-        converter_.resample(decData_, resampledData_);
-        out = &resampledData_;
+        if (size > max)
+            size = max;
+
+        audioCodec->decode(decData_.getData(), data , size);
+        out = &decData_;
+        unsigned int audioRate = audioCodec->getClockRate();
+
+        if (audioRate != mainBufferSampleRate) {
+            decData_.setSampleRate(mainBufferSampleRate);
+            resampledData_.setSampleRate(audioRate);
+            converter_.resample(decData_, resampledData_);
+            out = &resampledData_;
+        }
     }
 
-    Manager::instance().getMainBuffer().putData(*out, call->getCallId());
+    Manager::instance().getMainBuffer().putData(*out, id);
 }
 
 /**
@@ -732,10 +821,9 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             break;
 
         case IAX_EVENT_HANGUP:
-            call = iaxFindCallBySession(event->session);
+            id = iaxFindCallIDBySession(event->session);
 
-            if (call) {
-                id = call->getCallId();
+            if (not id.empty()) {
                 Manager::instance().peerHungupCall(id);
                 removeIaxCall(id);
             }
@@ -758,6 +846,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 void
 IAXVoIPLink::unloadAccountMap()
 {
-    std::for_each(iaxAccountMap_.begin(), iaxAccountMap_.end(), unloadAccount);
+    for (auto &a : iaxAccountMap_)
+        unloadAccount(a);
     iaxAccountMap_.clear();
 }

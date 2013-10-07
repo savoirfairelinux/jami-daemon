@@ -6,735 +6,328 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
-"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
-"POT-Creation-Date: 2012-01-04 16:32-0500\n"
-"PO-Revision-Date: 2013-03-27 00:38+0000\n"
-"Last-Translator: Марко М. Костић <Unknown>\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-10-02 11:57-0400\n"
+"PO-Revision-Date: 2013-06-12 22:02+0000\n"
+"Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Ubuntu Serbian Translators\n"
+"Language: sr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2013-06-12 19:08+0000\n"
-"X-Generator: Launchpad (build 16667)\n"
-"Language: sr\n"
+"X-Launchpad-Export-Date: 2013-10-02 15:52+0000\n"
+"X-Generator: Launchpad (build 16791)\n"
 
-#: ../gnome/src/sflnotify.c:85
-#, c-format
-msgid "%s says:"
-msgstr "%s каже:"
-
-#: ../gnome/src/sflnotify.c:103 ../gnome/src/sflnotify.c:122
-#, c-format
-msgid "%s account : %s"
-msgstr "%s налог : %s"
-
-#: ../gnome/src/sflnotify.c:108
-#, c-format
-msgid "<i>From</i> %s"
-msgstr "<i>Зове </i> %s"
-
-#: ../gnome/src/sflnotify.c:125
-#, c-format
-msgid "%d voice mail"
-msgid_plural "%d voice mails"
-msgstr[0] "%d говорна порука"
-msgstr[1] "%d говорних порука"
-msgstr[2] "%d говорних порука"
-
-#: ../gnome/src/sflnotify.c:139
-#, c-format
-msgid "Calling with %s account <i>%s</i>"
-msgstr "Позивам %s преко налога <i>%s</i>"
-
-#: ../gnome/src/sflnotify.c:143
-msgid "Current account"
-msgstr "Тренутни налог"
-
-#: ../gnome/src/sflnotify.c:154
-msgid "You have no accounts set up"
-msgstr "Немате ниједан постављен налог"
-
-#: ../gnome/src/sflnotify.c:155 ../gnome/src/sflnotify.c:168
-#: ../gnome/src/accountlist.c:160
-msgid "Error"
-msgstr "Грeшкa"
-
-#: ../gnome/src/sflnotify.c:167
-msgid "You have no registered accounts"
-msgstr "Немате регистрованих налога"
-
-#: ../gnome/src/sflnotify.c:181
-#, c-format
-msgid ""
-"<i>With:</i> %s \n"
-"using %s"
-msgstr ""
-"<i>Са:</i> %s \n"
-"користећи %s"
-
-#: ../gnome/src/sflnotify.c:194
-#, c-format
-msgid "%s does not support ZRTP."
-msgstr "%s не подржава ЗРТП (ZRTP)."
-
-#: ../gnome/src/sflnotify.c:207
-#, c-format
-msgid "ZRTP negotiation failed with %s"
-msgstr "ЗРТП успостава са %s неуспешна"
-
-#: ../gnome/src/sflnotify.c:220
-#, c-format
-msgid "<i>With:</i> %s"
-msgstr "<i>Са:</i> %s"
-
-#: ../gnome/src/statusicon.c:135
-msgid "_Show main window"
-msgstr "_Прикажи главни прозор"
-
-#: ../gnome/src/statusicon.c:142 ../gnome/src/uimanager.c:970
-#: ../gnome/src/uimanager.c:1286 ../gnome/src/uimanager.c:1346
-msgid "_Hang up"
-msgstr "_Спусти слушалицу"
-
-#: ../gnome/src/statusicon.c:193
-#, c-format
-msgid "%i active account"
-msgid_plural "%i active accounts"
-msgstr[0] "%i налог у употреби"
-msgstr[1] "%i налога у употреби"
-msgstr[2] "%i налога у употреби"
-
-#: ../gnome/src/statusicon.c:194
-msgid "SFLphone"
-msgstr "СФЛ-фон"
-
-#: ../gnome/src/actions.c:176
-msgid "Using account"
-msgstr "Налог:"
-
-#: ../gnome/src/actions.c:180
-msgid "No registered accounts"
-msgstr "Нема регистрованих налога"
-
-#: ../gnome/src/actions.c:609 ../gnome/src/actions.c:881
-msgid "Direct SIP call"
-msgstr "Непосредан СИП позив"
-
-#: ../gnome/src/callable_obj.c:340
-msgid "today at %R"
-msgstr "данас у %R"
-
-#: ../gnome/src/callable_obj.c:343
-msgid "yesterday at %R"
-msgstr "јуче у %R"
-
-#: ../gnome/src/callable_obj.c:345
-msgid "%A at %R"
-msgstr "%A у %R"
-
-#: ../gnome/src/callable_obj.c:349
-msgid "%x at %R"
-msgstr "%x у %R"
-
-#: ../gnome/src/main.c:96 ../gnome/src/dbus/dbus.c:515
-msgid "SFLphone Error"
-msgstr "СФЛ-телефон грешка"
-
-#: ../gnome/src/eel-gconf-extensions.c:73
-msgid ""
-"Cannot find a schema for gpdf preferences. \n"
-"Check your gconf setup, look at gpdf FAQ for \n"
-"more info"
-msgstr ""
-"Не могу да нађем шаблон за гпдф поставке.\n"
-"Проверите вашу гконф поставку. Погледајте\n"
-"гпдф ЧПП за више података."
-
-#: ../gnome/src/accountlist.c:151
+#: ../src/accountlist.c:155
 msgid "Registered"
 msgstr "Регистрован"
 
-#: ../gnome/src/accountlist.c:154
+#: ../src/accountlist.c:157
 msgid "Not Registered"
 msgstr "Нерегистрован"
 
-#: ../gnome/src/accountlist.c:157
+#: ../src/accountlist.c:159
 msgid "Trying..."
 msgstr "Покушавам..."
 
-#: ../gnome/src/accountlist.c:163
+#: ../src/accountlist.c:161 ../src/sflnotify.c:170 ../src/sflnotify.c:183
+#, c-format
+msgid "Error"
+msgstr "Грeшкa"
+
+#: ../src/accountlist.c:163
 msgid "Authentication Failed"
 msgstr "Неуспех при идентификацији"
 
-#: ../gnome/src/accountlist.c:166
+#: ../src/accountlist.c:165
 msgid "Network unreachable"
 msgstr "Мрежа није доступна"
 
-#: ../gnome/src/accountlist.c:169
+#: ../src/accountlist.c:167
 msgid "Host unreachable"
 msgstr "Домаћин није доступан"
 
-#: ../gnome/src/accountlist.c:172
-msgid "Stun configuration error"
-msgstr "Стун грешка при подешавању"
+#: ../src/accountlist.c:169
+#, fuzzy
+msgid "Service unavailable"
+msgstr "Безбедна комуникација није доступна"
 
-#: ../gnome/src/accountlist.c:175
+#: ../src/accountlist.c:171
+#, fuzzy
+msgid "Not acceptable"
+msgstr "Домаћин није доступан"
+
+#: ../src/accountlist.c:173
 msgid "Stun server invalid"
 msgstr "Стун сервер је неисправан"
 
-#: ../gnome/src/accountlist.c:178
+#: ../src/accountlist.c:175
 msgid "Ready"
 msgstr "Спреман"
 
-#: ../gnome/src/accountlist.c:181
+#: ../src/accountlist.c:177
 msgid "Invalid"
 msgstr "Неисправно"
 
-#: ../gnome/src/config/zrtpadvanceddialog.c:51
-msgid "ZRTP Options"
-msgstr "ЗРТП поставке"
+#: ../src/actions.c:134
+msgid "(SIP)"
+msgstr ""
 
-#: ../gnome/src/config/zrtpadvanceddialog.c:70
-msgid "Send Hello Hash in S_DP"
-msgstr "Пошаљи поздравни хеш у С_ДП"
+#: ../src/actions.c:135
+msgid "(IAX)"
+msgstr ""
 
-#: ../gnome/src/config/zrtpadvanceddialog.c:75
-msgid "Ask User to Confirm SAS"
-msgstr "Питај корисника да потврди САС"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:80
-msgid "_Warn if ZRTP not supported"
-msgstr "Упо_зори уколико ЗРТП није подржан"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:85
-msgid "Display SAS once for hold events"
-msgstr "Прикажи САС једном за задржане позиве"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:124
-msgid "SDES Options"
-msgstr "СДЕС (SDES) могућ"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:142
-msgid "Fallback on RTP on SDES failure"
-msgstr "Повратни режим приликом РТП преко СДЕС грешке"
-
-#: ../gnome/src/config/audioconf.c:549
-#: ../gnome/src/config/addressbook-config.c:425
-msgid "Name"
-msgstr "Име"
-
-#: ../gnome/src/config/audioconf.c:554
-msgid "Frequency"
-msgstr "Учестаност"
-
-#: ../gnome/src/config/audioconf.c:559
-msgid "Bitrate"
-msgstr "Проток бита"
-
-#: ../gnome/src/config/audioconf.c:669
-msgid "ALSA plugin"
-msgstr "АЛСА прикључак"
-
-#: ../gnome/src/config/audioconf.c:691
-msgid "Output"
-msgstr "Излаз"
-
-#: ../gnome/src/config/audioconf.c:713
-msgid "Input"
-msgstr "Улаз"
-
-#: ../gnome/src/config/audioconf.c:734
-msgid "Ringtone"
-msgstr "Звук звона"
-
-#: ../gnome/src/config/audioconf.c:775
-msgid "Sound Manager"
-msgstr "Управник звука"
-
-#: ../gnome/src/config/audioconf.c:786
-msgid "_Pulseaudio"
-msgstr "_Пулс-аудио"
-
-#: ../gnome/src/config/audioconf.c:790
-msgid "_ALSA"
-msgstr "_АЛСА"
-
-#: ../gnome/src/config/audioconf.c:796
-msgid "ALSA settings"
-msgstr "Подешавања АЛСЕ"
-
-#: ../gnome/src/config/audioconf.c:807
-msgid "Recordings"
-msgstr "Снимци"
-
-#: ../gnome/src/config/audioconf.c:811
-msgid "Destination folder"
-msgstr "Одредишна фасцикла"
-
-#: ../gnome/src/config/audioconf.c:815
-msgid "Select a folder"
-msgstr "Изаберите фасциклу"
-
-#: ../gnome/src/config/audioconf.c:827
-msgid "_Always recording"
-msgstr "Увек сним_ај"
-
-#: ../gnome/src/config/audioconf.c:834
-msgid "Voice enhancement settings"
-msgstr "Подешавања побољшања звука"
-
-#: ../gnome/src/config/audioconf.c:837
-msgid "_Noise Reduction"
-msgstr "Смањивање шумова"
-
-#: ../gnome/src/config/audioconf.c:851
-msgid "_Echo Cancellation"
-msgstr "Одстрањивање одј_ека"
-
-#: ../gnome/src/config/addressbook-config.c:339
-#: ../gnome/src/config/preferencesdialog.c:416
-#: ../gnome/src/config/shortcuts-config.c:115
-msgid "General"
-msgstr "Опште"
-
-#: ../gnome/src/config/addressbook-config.c:343
-msgid "_Use Evolution address books"
-msgstr "Користи именик Евол_уције"
-
-#: ../gnome/src/config/addressbook-config.c:350
-msgid "Download limit :"
-msgstr "Ограничење скидања:"
-
-#: ../gnome/src/config/addressbook-config.c:358
-msgid "cards"
-msgstr "језичци"
-
-#: ../gnome/src/config/addressbook-config.c:363
-msgid "_Display contact photo if available"
-msgstr "Прикажи слику контакта уколико је _доступна"
-
-#: ../gnome/src/config/addressbook-config.c:369
-msgid "Fields from Evolution's address books"
-msgstr "Поља из именика Еволуције"
-
-#: ../gnome/src/config/addressbook-config.c:372
-msgid "_Work"
-msgstr "По_сао"
-
-#: ../gnome/src/config/addressbook-config.c:378
-msgid "_Home"
-msgstr "_Кућа"
-
-#: ../gnome/src/config/addressbook-config.c:384
-msgid "_Mobile"
-msgstr "_Мобилни"
-
-#: ../gnome/src/config/addressbook-config.c:390
-msgid "Address Books"
-msgstr "Именици"
-
-#: ../gnome/src/config/addressbook-config.c:394
-msgid "Select which Evolution address books to use"
-msgstr "Изаберите које именике из Еволуције ћете користити"
-
-#: ../gnome/src/config/hooks-config.c:149
-msgid "URL Argument"
-msgstr "УРЛ прилог"
-
-#: ../gnome/src/config/hooks-config.c:157
-msgid "Trigger on specific _SIP header"
-msgstr "Уради при посебном _СИП заглављу"
-
-#: ../gnome/src/config/hooks-config.c:166
-msgid "Trigger on _IAX2 URL"
-msgstr "Уради при _ИА-Икс2 УРЛ вези"
-
-#: ../gnome/src/config/hooks-config.c:171
-msgid "Command to _run"
-msgstr "На_редба за извршавање"
-
-#: ../gnome/src/config/hooks-config.c:181
-msgid "Phone number rewriting"
-msgstr "Преписивање броја телефона"
-
-#: ../gnome/src/config/hooks-config.c:185
-msgid "_Prefix dialed numbers with"
-msgstr "Додај следећи _префикс на позване бројеве"
-
-#: ../gnome/src/config/assistant.c:78
+#: ../src/actions.c:141
 #, c-format
-msgid "This assistant is now finished."
-msgstr "То је то. СФЛ-телефон је подешен."
-
-#: ../gnome/src/config/assistant.c:80
-msgid ""
-"You can at any time check your registration state or modify your accounts "
-"parameters in the Options/Accounts window."
+msgid "%s %s"
 msgstr ""
-"Можете у било ком тренутку проверити стање регистрације или изменити ваше "
-"налоге у прозорчету Поставке/Налози."
 
-#: ../gnome/src/config/assistant.c:83
-msgid "Alias"
-msgstr "Псеудоним"
+#: ../src/actions.c:145
+#, c-format
+msgid "No registered accounts"
+msgstr "Нема регистрованих налога"
 
-#: ../gnome/src/config/assistant.c:87
-msgid "Server"
-msgstr "Сервер"
+#: ../src/actions.c:505
+#, c-format
+msgid "Direct SIP call"
+msgstr "Непосредан СИП позив"
 
-#: ../gnome/src/config/assistant.c:91
-msgid "Username"
-msgstr "Корисничко име"
+#. less than 1 week
+#. less than 1 day
+#: ../src/callable_obj.c:306
+msgid "today at %R"
+msgstr "данас у %R"
 
-#: ../gnome/src/config/assistant.c:95
-msgid "Security: "
-msgstr "Безбедност: "
+#. less than 2 days
+#: ../src/callable_obj.c:309
+msgid "yesterday at %R"
+msgstr "јуче у %R"
 
-#: ../gnome/src/config/assistant.c:98
-msgid "SRTP/ZRTP draft-zimmermann"
-msgstr "СРТП/ЗРТП draft-zimmermann"
+#. between 2 days and 1 week
+#: ../src/callable_obj.c:311
+msgid "%A at %R"
+msgstr "%A у %R"
 
-#: ../gnome/src/config/assistant.c:100
-msgid "None"
-msgstr "Ништа"
+#. more than 1 week
+#: ../src/callable_obj.c:315
+msgid "%x at %R"
+msgstr "%x у %R"
 
-#: ../gnome/src/config/assistant.c:244
-msgid "SFLphone account creation wizard"
-msgstr "СФЛ-телефон помоћник за прављење налога"
+#: ../src/config/accountconfigdialog.c:227
+#, fuzzy
+msgid "_Auto-answer calls"
+msgstr "Прихвати позив"
 
-#: ../gnome/src/config/assistant.c:271
-msgid "Welcome to the Account creation wizard of SFLphone!"
-msgstr "Добро дошли у испомоћ СФЛ-телефона"
-
-#: ../gnome/src/config/assistant.c:272
-msgid "This installation wizard will help you configure an account."
-msgstr "Ова испомоћ ће вам олакшати подешавање налога."
-
-#: ../gnome/src/config/assistant.c:287
-msgid "VoIP Protocols"
-msgstr "ВоИП протоколи"
-
-#: ../gnome/src/config/assistant.c:287
-msgid "Select an account type"
-msgstr "Изаберите врсту налога"
-
-#: ../gnome/src/config/assistant.c:289
-msgid "SIP (Session Initiation Protocol)"
-msgstr "СИП (Session Inititation Protocol)"
-
-#: ../gnome/src/config/assistant.c:291
-msgid "IAX2 (InterAsterix Exchange)"
-msgstr "ИА-Икс2 (InterAsterix Exchange)"
-
-#: ../gnome/src/config/assistant.c:306
-msgid "Account"
-msgstr "Налог"
-
-#: ../gnome/src/config/assistant.c:306
-msgid "Please select one of the following options"
-msgstr "Изаберите једну од понуђених могућности"
-
-#: ../gnome/src/config/assistant.c:308
-msgid ""
-"Create a free SIP/IAX2 account on sflphone.org \n"
-"(For testing purpose only)"
-msgstr ""
-"Направите бесплатни СИП/ИА-Икс2 налог на sflphone.org\n"
-"(Само у пробне сврхе)"
-
-#: ../gnome/src/config/assistant.c:310
-msgid "Register an existing SIP or IAX2 account"
-msgstr "Региструјте постојећи СИП или ИА-Икс2 налог"
-
-#: ../gnome/src/config/assistant.c:324
-msgid "SIP account settings"
-msgstr "Подешавања СИП налога"
-
-#: ../gnome/src/config/assistant.c:324 ../gnome/src/config/assistant.c:424
-msgid "Please fill the following information"
-msgstr "Упишите следеће податке"
-
-#: ../gnome/src/config/assistant.c:332 ../gnome/src/config/assistant.c:432
-#: ../gnome/src/config/accountconfigdialog.c:250
-msgid "_Alias"
-msgstr "Н_адимак"
-
-#: ../gnome/src/config/assistant.c:340 ../gnome/src/config/assistant.c:440
-#: ../gnome/src/config/accountconfigdialog.c:289
-msgid "_Host name"
-msgstr "Име домаћина"
-
-#: ../gnome/src/config/assistant.c:348 ../gnome/src/config/assistant.c:448
-#: ../gnome/src/config/accountconfigdialog.c:298
-msgid "_User name"
-msgstr "Корисничко име"
-
-#: ../gnome/src/config/assistant.c:358 ../gnome/src/config/assistant.c:457
-#: ../gnome/src/config/accountconfigdialog.c:313
-msgid "_Password"
-msgstr "Лозинка"
-
-#: ../gnome/src/config/assistant.c:367 ../gnome/src/config/assistant.c:466
-#: ../gnome/src/config/accountconfigdialog.c:329
-msgid "Show password"
-msgstr "Прикажи лозинку"
-
-#: ../gnome/src/config/assistant.c:372 ../gnome/src/config/assistant.c:471
-#: ../gnome/src/config/accountconfigdialog.c:343
-msgid "_Voicemail number"
-msgstr "Број говорне поште"
-
-#: ../gnome/src/config/assistant.c:380 ../gnome/src/config/assistant.c:410
-msgid "Secure communications with _ZRTP"
-msgstr "Безбедне везе са ЗРТП-ом"
-
-#: ../gnome/src/config/assistant.c:394
-msgid "Optional email address"
-msgstr "Необавезна е-адреса"
-
-#: ../gnome/src/config/assistant.c:394
-msgid "This email address will be used to send your voicemail messages."
-msgstr "Ова е-адреса ће бити коришћена за слање ваших говорних порука."
-
-#: ../gnome/src/config/assistant.c:402
-msgid "_Email address"
-msgstr "Е-адреса"
-
-#: ../gnome/src/config/assistant.c:424
-msgid "IAX2 account settings"
-msgstr "ИА-Икс2 подешавања налоаг"
-
-#: ../gnome/src/config/assistant.c:490
-msgid "Network Address Translation (NAT)"
-msgstr "Превођење мрежних адреса (НАТ)"
-
-#: ../gnome/src/config/assistant.c:490
-msgid "You should probably enable this if you are behind a firewall."
-msgstr "Требало би омогућити ово уколико сте иза заштитног зида."
-
-#: ../gnome/src/config/assistant.c:499
-msgid "E_nable STUN"
-msgstr "Укључи СТУН"
-
-#: ../gnome/src/config/assistant.c:506
-msgid "_STUN server"
-msgstr "СТУН сервер"
-
-#: ../gnome/src/config/assistant.c:521
-msgid "Account Registration"
-msgstr "Регистрација налога"
-
-#: ../gnome/src/config/assistant.c:521
-msgid "Congratulations!"
-msgstr "Свака част!"
-
-#: ../gnome/src/config/preferencesdialog.c:169
-msgid "Desktop Notifications"
-msgstr "Системска обавештења"
-
-#: ../gnome/src/config/preferencesdialog.c:174
-msgid "_Enable notifications"
-msgstr "Омогући обавештења"
-
-#: ../gnome/src/config/preferencesdialog.c:181
-msgid "System Tray Icon"
-msgstr "Икона системске касете"
-
-#: ../gnome/src/config/preferencesdialog.c:189
-msgid "Show SFLphone in the system tray"
-msgstr "Прикажи СФЛ-фон у системској касети"
-
-#: ../gnome/src/config/preferencesdialog.c:196
-msgid "_Popup main window on incoming call"
-msgstr "_Прикажи главни прозор при долазном позиву"
-
-#: ../gnome/src/config/preferencesdialog.c:202
-msgid "Ne_ver popup main window"
-msgstr "Никада не приказуј главни прозор"
-
-#: ../gnome/src/config/preferencesdialog.c:215
-msgid "Hide SFLphone window on _startup"
-msgstr "Сакриј прозор СФЛ-фона при покретању"
-
-#: ../gnome/src/config/preferencesdialog.c:229
-msgid "Calls History"
-msgstr "Историјат позива"
-
-#: ../gnome/src/config/preferencesdialog.c:233
-msgid "_Keep my history for at least"
-msgstr "Бележи историјат барем"
-
-#: ../gnome/src/config/preferencesdialog.c:248
-msgid "days"
-msgstr "дана"
-
-#: ../gnome/src/config/preferencesdialog.c:253
-msgid "Instant Messaging"
-msgstr "Брзо дописивање"
-
-#: ../gnome/src/config/preferencesdialog.c:257
-msgid "Enable instant messaging"
-msgstr "Укључи брзо дописивање"
-
-#: ../gnome/src/config/preferencesdialog.c:377
-msgid "Preferences"
-msgstr "Поставке"
-
-#: ../gnome/src/config/preferencesdialog.c:422
-#: ../gnome/src/config/accountconfigdialog.c:1070
-#: ../gnome/src/config/accountconfigdialog.c:1208
-msgid "Audio"
-msgstr "Звук"
-
-#: ../gnome/src/config/preferencesdialog.c:427
-msgid "Hooks"
-msgstr "Кукице"
-
-#: ../gnome/src/config/preferencesdialog.c:432
-msgid "Shortcuts"
-msgstr "Пречице"
-
-#: ../gnome/src/config/preferencesdialog.c:438
-msgid "Address Book"
-msgstr "Именик"
-
-#: ../gnome/src/config/accountconfigdialog.c:231
+#: ../src/config/accountconfigdialog.c:247
 msgid "Account Parameters"
 msgstr "Подешавања налога"
 
-#: ../gnome/src/config/accountconfigdialog.c:260
+#. alias field
+#: ../src/config/accountconfigdialog.c:256 ../src/config/assistant.c:305
+#: ../src/config/assistant.c:403
+msgid "_Alias"
+msgstr "Н_адимак"
+
+#: ../src/config/accountconfigdialog.c:267
 msgid "_Protocol"
 msgstr "_Протокол"
 
-#: ../gnome/src/config/accountconfigdialog.c:277
+#. Should never come here, add debug message.
+#: ../src/config/accountconfigdialog.c:284
 msgid "Unknown"
 msgstr "Непознат(о)"
 
-#: ../gnome/src/config/accountconfigdialog.c:334
+#. server field
+#: ../src/config/accountconfigdialog.c:299 ../src/config/assistant.c:313
+#: ../src/config/assistant.c:411
+msgid "_Host name"
+msgstr "Име домаћина"
+
+#. username field
+#: ../src/config/accountconfigdialog.c:309 ../src/config/assistant.c:321
+#: ../src/config/assistant.c:419
+msgid "_User name"
+msgstr "Корисничко име"
+
+#. password field
+#: ../src/config/accountconfigdialog.c:330 ../src/config/assistant.c:331
+#: ../src/config/assistant.c:428
+msgid "_Password"
+msgstr "Лозинка"
+
+#: ../src/config/accountconfigdialog.c:349 ../src/config/assistant.c:340
+#: ../src/config/assistant.c:437
+msgid "Show password"
+msgstr "Прикажи лозинку"
+
+#: ../src/config/accountconfigdialog.c:354
 msgid "_Proxy"
 msgstr "_Посредник"
 
-#: ../gnome/src/config/accountconfigdialog.c:352
+#. voicemail number field
+#: ../src/config/accountconfigdialog.c:364 ../src/config/assistant.c:345
+#: ../src/config/assistant.c:442
+msgid "_Voicemail number"
+msgstr "Број говорне поште"
+
+#: ../src/config/accountconfigdialog.c:375
 msgid "_User-agent"
 msgstr "Поље HTTP заглавља за именовање читача (User-agent)"
 
-#: ../gnome/src/config/accountconfigdialog.c:413
+#: ../src/config/accountconfigdialog.c:400
+#, fuzzy
+msgid "Presence notifications"
+msgstr "Омогући обавештења"
+
+#: ../src/config/accountconfigdialog.c:409
+#, fuzzy
+msgid "_Enable"
+msgstr "Укључи СТУН"
+
+#: ../src/config/accountconfigdialog.c:478
 msgid "Authentication"
 msgstr "Идентификација"
 
-#: ../gnome/src/config/accountconfigdialog.c:414
+#: ../src/config/accountconfigdialog.c:479
 msgid "Secret"
 msgstr "Тајно"
 
-#: ../gnome/src/config/accountconfigdialog.c:658
+#: ../src/config/accountconfigdialog.c:728
 msgid "Credential"
 msgstr "Акредитиви"
 
-#: ../gnome/src/config/accountconfigdialog.c:692
+#: ../src/config/accountconfigdialog.c:760
 msgid "Authentication name"
 msgstr "Врста идентификације"
 
-#: ../gnome/src/config/accountconfigdialog.c:703
+#: ../src/config/accountconfigdialog.c:771
 msgid "Password"
 msgstr "Лозинка"
 
-#: ../gnome/src/config/accountconfigdialog.c:756
-#: ../gnome/src/config/accountconfigdialog.c:1229
+#: ../src/config/accountconfigdialog.c:823
+#: ../src/config/accountconfigdialog.c:1517
 msgid "Security"
 msgstr "Безбедност"
 
-#: ../gnome/src/config/accountconfigdialog.c:767
+#: ../src/config/accountconfigdialog.c:839
 msgid "Use TLS transport(sips)"
 msgstr "Користи ТЛС пренос (сипс)"
 
-#: ../gnome/src/config/accountconfigdialog.c:773
+#. ZRTP subsection
+#: ../src/config/accountconfigdialog.c:847
 msgid "SRTP key exchange"
 msgstr "СРТП размена кључева"
 
-#: ../gnome/src/config/accountconfigdialog.c:779
+#: ../src/config/accountconfigdialog.c:853
 msgid "Disabled"
 msgstr "Онемогућено"
 
-#: ../gnome/src/config/accountconfigdialog.c:843
+#: ../src/config/accountconfigdialog.c:917
 msgid "Registration"
 msgstr "Регистрација"
 
-#: ../gnome/src/config/accountconfigdialog.c:847
+#: ../src/config/accountconfigdialog.c:921
 msgid "Registration expire"
 msgstr "Регистрација истиче"
 
-#: ../gnome/src/config/accountconfigdialog.c:856
-msgid "_Comply with RFC 3263"
-msgstr "_Усагласи са РФЦ 3263"
-
-#: ../gnome/src/config/accountconfigdialog.c:876
+#: ../src/config/accountconfigdialog.c:944
 msgid "Network Interface"
 msgstr "Мрежни интерфејс"
 
-#: ../gnome/src/config/accountconfigdialog.c:887
+#: ../src/config/accountconfigdialog.c:954
 msgid "Local address"
 msgstr "Месна адреса"
 
-#: ../gnome/src/config/accountconfigdialog.c:918
+#. Local port widget
+#: ../src/config/accountconfigdialog.c:987
 msgid "Local port"
 msgstr "Месни порт"
 
-#: ../gnome/src/config/accountconfigdialog.c:960
-#: ../gnome/src/config/accountconfigdialog.c:994
+#: ../src/config/accountconfigdialog.c:1028
+#: ../src/config/accountconfigdialog.c:1063
 msgid "Published address"
 msgstr "Објављена адреса"
 
-#: ../gnome/src/config/accountconfigdialog.c:964
+#: ../src/config/accountconfigdialog.c:1032
 msgid "Using STUN"
 msgstr "СТУН употребљен"
 
-#: ../gnome/src/config/accountconfigdialog.c:972
+#: ../src/config/accountconfigdialog.c:1039
 msgid "STUN server URL"
 msgstr "УРЛ СТУН сервера"
 
-#: ../gnome/src/config/accountconfigdialog.c:980
+#: ../src/config/accountconfigdialog.c:1047
 msgid "Same as local parameters"
 msgstr "Исто као и месна подешавања"
 
-#: ../gnome/src/config/accountconfigdialog.c:983
+#: ../src/config/accountconfigdialog.c:1051
 msgid "Set published address and port:"
 msgstr "Постави јавну адресу и порт:"
 
-#: ../gnome/src/config/accountconfigdialog.c:1003
+#: ../src/config/accountconfigdialog.c:1072
 msgid "Published port"
 msgstr "Јавни порт"
 
-#: ../gnome/src/config/accountconfigdialog.c:1084
+#: ../src/config/accountconfigdialog.c:1120
+msgid "Min"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1121
+msgid "Max"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1144
+msgid "Audio RTP Port Range"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1150
+msgid "Video RTP Port Range"
+msgstr ""
+
+#. Box for the audiocodecs
+#: ../src/config/accountconfigdialog.c:1193
+#: ../src/config/accountconfigdialog.c:1501
+#: ../src/config/preferencesdialog.c:418
+msgid "Audio"
+msgstr "Звук"
+
+#: ../src/config/accountconfigdialog.c:1205
 msgid "DTMF"
 msgstr "ДТМФ"
 
-#: ../gnome/src/config/accountconfigdialog.c:1095
+#: ../src/config/accountconfigdialog.c:1209
 msgid "RTP"
 msgstr "РТП"
 
-#: ../gnome/src/config/accountconfigdialog.c:1099
+#: ../src/config/accountconfigdialog.c:1215
 msgid "SIP"
 msgstr "СИП"
 
-#: ../gnome/src/config/accountconfigdialog.c:1107
+#: ../src/config/accountconfigdialog.c:1223
 msgid "Ringtones"
 msgstr "Звукови звона"
 
-#: ../gnome/src/config/accountconfigdialog.c:1110
+#: ../src/config/accountconfigdialog.c:1226
 msgid "Choose a ringtone"
 msgstr "Изаберите звук звона"
 
-#: ../gnome/src/config/accountconfigdialog.c:1115
+#: ../src/config/accountconfigdialog.c:1229
 msgid "_Enable ringtones"
 msgstr "Омогући звоно"
 
-#: ../gnome/src/config/accountconfigdialog.c:1127
+#: ../src/config/accountconfigdialog.c:1247
 msgid "Audio Files"
 msgstr "Звучне датотеке"
 
-#: ../gnome/src/config/accountconfigdialog.c:1145
+#. Box for the videocodecs
+#: ../src/config/accountconfigdialog.c:1278
+#: ../src/config/accountconfigdialog.c:1506
+#: ../src/config/preferencesdialog.c:424
+msgid "Video"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1295
+#, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
@@ -745,67 +338,463 @@ msgstr ""
 "ће се користити и када је немогуће утврдити који налог треба да се употреби "
 "при долазном или одлазном позиву."
 
-#: ../gnome/src/config/accountconfigdialog.c:1182
+#: ../src/config/accountconfigdialog.c:1475
 msgid "Account settings"
 msgstr "Подешавања налога"
 
-#: ../gnome/src/config/accountconfigdialog.c:1202
+#: ../src/config/accountconfigdialog.c:1496
 msgid "Basic"
 msgstr "Основно"
 
-#: ../gnome/src/config/accountconfigdialog.c:1224
+#: ../src/config/accountconfigdialog.c:1513
 msgid "Advanced"
 msgstr "Напредно"
 
-#: ../gnome/src/config/accountconfigdialog.c:1235
+#: ../src/config/accountconfigdialog.c:1521
 msgid "Network"
 msgstr "Мрежа"
 
-#: ../gnome/src/config/shortcuts-config.c:117
-msgid "Be careful: these shortcuts might override system-wide shortcuts."
-msgstr "Пажња! Ове пречице могу прегазити системске пречице."
+#: ../src/config/accountlistconfigdialog.c:111
+#, c-format
+msgid "Are you sure want to delete \"%s\"?"
+msgstr ""
 
-#: ../gnome/src/config/accountlistconfigdialog.c:202
+#: ../src/config/accountlistconfigdialog.c:113
+#, c-format
+msgid "Are you sure want to delete account?"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:122
+msgid "Remove"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:124
+#, fuzzy
+msgid "Remove account"
+msgstr "Немате налог у употреби"
+
+#: ../src/config/accountlistconfigdialog.c:530
+msgid "Protocol"
+msgstr "Протокол"
+
+#: ../src/config/accountlistconfigdialog.c:540
+msgid "Status"
+msgstr "Стање"
+
+#: ../src/config/accountlistconfigdialog.c:639
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr "Одговор сервера је \"%s\" (%d)"
 
-#: ../gnome/src/config/accountlistconfigdialog.c:494
-msgid "Protocol"
-msgstr "Протокол"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:502
-msgid "Status"
-msgstr "Стање"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:581
+#: ../src/config/accountlistconfigdialog.c:667
 msgid "Accounts"
 msgstr "Налози"
 
-#: ../gnome/src/config/accountlistconfigdialog.c:590
+#: ../src/config/accountlistconfigdialog.c:676
 msgid "Configured Accounts"
 msgstr "Подешени налози"
 
-#: ../gnome/src/config/accountlistconfigdialog.c:608
-#, c-format
-msgid "There is %d active account"
-msgid_plural "There are %d active accounts"
-msgstr[0] "Тренутно је %d налог у употреби"
-msgstr[1] "Тренутно је %d налога у употреби"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:615
+#: ../src/config/accountlistconfigdialog.c:704
 msgid "You have no active account"
 msgstr "Немате налог у употреби"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:41
+#: ../src/config/addressbook-config.c:313
+#: ../src/config/preferencesdialog.c:412 ../src/config/shortcuts-config.c:117
+msgid "General"
+msgstr "Опште"
+
+#. PHOTO DISPLAY
+#: ../src/config/addressbook-config.c:317
+msgid "_Use Evolution address books"
+msgstr "Користи именик Евол_уције"
+
+#: ../src/config/addressbook-config.c:324
+msgid "Download limit :"
+msgstr "Ограничење скидања:"
+
+#: ../src/config/addressbook-config.c:332
+msgid "cards"
+msgstr "језичци"
+
+#. PHOTO DISPLAY
+#: ../src/config/addressbook-config.c:337
+msgid "_Display contact photo if available"
+msgstr "Прикажи слику контакта уколико је _доступна"
+
+#. Fields
+#: ../src/config/addressbook-config.c:344
+msgid "Fields from Evolution's address books"
+msgstr "Поља из именика Еволуције"
+
+#: ../src/config/addressbook-config.c:347
+msgid "_Work"
+msgstr "По_сао"
+
+#: ../src/config/addressbook-config.c:353
+msgid "_Home"
+msgstr "_Кућа"
+
+#: ../src/config/addressbook-config.c:359
+msgid "_Mobile"
+msgstr "_Мобилни"
+
+#. Address Book
+#: ../src/config/addressbook-config.c:365
+msgid "Address Books"
+msgstr "Именици"
+
+#: ../src/config/addressbook-config.c:369
+msgid "Select which Evolution address books to use"
+msgstr "Изаберите које именике из Еволуције ћете користити"
+
+#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:542
+#: ../src/config/videoconf.c:492
+msgid "Name"
+msgstr "Име"
+
+#: ../src/config/assistant.c:76
+msgid "This assistant is now finished."
+msgstr "То је то. СФЛ-телефон је подешен."
+
+#: ../src/config/assistant.c:79
+msgid ""
+"You can at any time check your registration state or modify your accounts "
+"parameters in the Options/Accounts window."
+msgstr ""
+"Можете у било ком тренутку проверити стање регистрације или изменити ваше "
+"налоге у прозорчету Поставке/Налози."
+
+#: ../src/config/assistant.c:81
+msgid "Alias"
+msgstr "Псеудоним"
+
+#: ../src/config/assistant.c:82
+msgid "Server"
+msgstr "Сервер"
+
+#: ../src/config/assistant.c:83
+msgid "Username"
+msgstr "Корисничко име"
+
+#: ../src/config/assistant.c:84
+msgid "Security: "
+msgstr "Безбедност: "
+
+#: ../src/config/assistant.c:88
+msgid "SRTP/ZRTP draft-zimmermann"
+msgstr "СРТП/ЗРТП draft-zimmermann"
+
+#: ../src/config/assistant.c:90
+msgid "None"
+msgstr "Ништа"
+
+#: ../src/config/assistant.c:226
+msgid "SFLphone account creation wizard"
+msgstr "СФЛ-телефон помоћник за прављење налога"
+
+#: ../src/config/assistant.c:251
+msgid "Welcome to the Account creation wizard of SFLphone!"
+msgstr "Добро дошли у испомоћ СФЛ-телефона"
+
+#: ../src/config/assistant.c:252
+msgid "This installation wizard will help you configure an account."
+msgstr "Ова испомоћ ће вам олакшати подешавање налога."
+
+#: ../src/config/assistant.c:264
+msgid "VoIP Protocols"
+msgstr "ВоИП протоколи"
+
+#: ../src/config/assistant.c:264
+msgid "Select an account type"
+msgstr "Изаберите врсту налога"
+
+#: ../src/config/assistant.c:266
+msgid "SIP (Session Initiation Protocol)"
+msgstr "СИП (Session Inititation Protocol)"
+
+#: ../src/config/assistant.c:268
+msgid "IAX2 (InterAsterix Exchange)"
+msgstr "ИА-Икс2 (InterAsterix Exchange)"
+
+#: ../src/config/assistant.c:280
+msgid "Account"
+msgstr "Налог"
+
+#: ../src/config/assistant.c:280
+msgid "Please select one of the following options"
+msgstr "Изаберите једну од понуђених могућности"
+
+#: ../src/config/assistant.c:282
+msgid ""
+"Create a free SIP/IAX2 account on sflphone.org \n"
+"(For testing purpose only)"
+msgstr ""
+"Направите бесплатни СИП/ИА-Икс2 налог на sflphone.org\n"
+"(Само у пробне сврхе)"
+
+#: ../src/config/assistant.c:284
+msgid "Register an existing SIP or IAX2 account"
+msgstr "Региструјте постојећи СИП или ИА-Икс2 налог"
+
+#: ../src/config/assistant.c:297
+msgid "SIP account settings"
+msgstr "Подешавања СИП налога"
+
+#: ../src/config/assistant.c:297 ../src/config/assistant.c:395
+msgid "Please fill the following information"
+msgstr "Упишите следеће податке"
+
+#. Security options
+#: ../src/config/assistant.c:353 ../src/config/assistant.c:382
+msgid "Secure communications with _ZRTP"
+msgstr "Безбедне везе са ЗРТП-ом"
+
+#: ../src/config/assistant.c:366
+msgid "Optional email address"
+msgstr "Необавезна е-адреса"
+
+#: ../src/config/assistant.c:366
+msgid "This email address will be used to send your voicemail messages."
+msgstr "Ова е-адреса ће бити коришћена за слање ваших говорних порука."
+
+#. email field
+#: ../src/config/assistant.c:374
+msgid "_Email address"
+msgstr "Е-адреса"
+
+#: ../src/config/assistant.c:395
+msgid "IAX2 account settings"
+msgstr "ИА-Икс2 подешавања налоаг"
+
+#: ../src/config/assistant.c:460
+msgid "Network Address Translation (NAT)"
+msgstr "Превођење мрежних адреса (НАТ)"
+
+#: ../src/config/assistant.c:460
+msgid "You should probably enable this if you are behind a firewall."
+msgstr "Требало би омогућити ово уколико сте иза заштитног зида."
+
+#. enable
+#: ../src/config/assistant.c:469
+msgid "E_nable STUN"
+msgstr "Укључи СТУН"
+
+#. server address
+#: ../src/config/assistant.c:476
+msgid "_STUN server"
+msgstr "СТУН сервер"
+
+#: ../src/config/assistant.c:491
+msgid "Account Registration"
+msgstr "Регистрација налога"
+
+#: ../src/config/assistant.c:491
+msgid "Congratulations!"
+msgstr "Свака част!"
+
+#: ../src/config/audioconf.c:547
+msgid "Frequency"
+msgstr "Учестаност"
+
+#: ../src/config/audioconf.c:552
+msgid "Bitrate"
+msgstr "Проток бита"
+
+#: ../src/config/audioconf.c:557
+msgid "Channels"
+msgstr ""
+
+#: ../src/config/audioconf.c:600
+msgid "ALSA plugin"
+msgstr "АЛСА прикључак"
+
+#: ../src/config/audioconf.c:621 ../src/config/audioconf.c:702
+msgid "Output"
+msgstr "Излаз"
+
+#: ../src/config/audioconf.c:642 ../src/config/audioconf.c:724
+msgid "Input"
+msgstr "Улаз"
+
+#: ../src/config/audioconf.c:662 ../src/config/audioconf.c:744
+msgid "Ringtone"
+msgstr "Звук звона"
+
+#: ../src/config/audioconf.c:865
+msgid "Sound Manager"
+msgstr "Управник звука"
+
+#: ../src/config/audioconf.c:872
+msgid "_Pulseaudio"
+msgstr "_Пулс-аудио"
+
+#. Box for the Pulse configuration
+#: ../src/config/audioconf.c:877
+#, fuzzy
+msgid "Pulseaudio settings"
+msgstr "_Пулс-аудио"
+
+#: ../src/config/audioconf.c:881
+msgid "_ALSA"
+msgstr "_АЛСА"
+
+#. Box for the ALSA configuration
+#: ../src/config/audioconf.c:887
+msgid "ALSA settings"
+msgstr "Подешавања АЛСЕ"
+
+#: ../src/config/audioconf.c:902
+msgid "Recordings"
+msgstr "Снимци"
+
+#. label
+#: ../src/config/audioconf.c:906
+msgid "Destination folder"
+msgstr "Одредишна фасцикла"
+
+#. folder chooser button
+#: ../src/config/audioconf.c:910
+msgid "Select a folder"
+msgstr "Изаберите фасциклу"
+
+#: ../src/config/audioconf.c:921
+msgid "_Always recording"
+msgstr "Увек сним_ај"
+
+#. Box for the voice enhancement configuration
+#: ../src/config/audioconf.c:928
+msgid "Voice enhancement settings"
+msgstr "Подешавања побољшања звука"
+
+#: ../src/config/audioconf.c:931
+msgid "_Noise Reduction"
+msgstr "Смањивање шумова"
+
+#: ../src/config/audioconf.c:945
+msgid "_Echo Cancellation"
+msgstr "Одстрањивање одј_ека"
+
+#: ../src/config/hooks-config.c:151
+msgid "URL Argument"
+msgstr "УРЛ прилог"
+
+#: ../src/config/hooks-config.c:160
+msgid "Trigger on specific _SIP header"
+msgstr "Уради при посебном _СИП заглављу"
+
+#: ../src/config/hooks-config.c:169
+msgid "Trigger on _IAX2 URL"
+msgstr "Уради при _ИА-Икс2 УРЛ вези"
+
+#: ../src/config/hooks-config.c:175
+msgid "Command to _run"
+msgstr "На_редба за извршавање"
+
+#: ../src/config/hooks-config.c:183
+msgid "Phone number rewriting"
+msgstr "Преписивање броја телефона"
+
+#: ../src/config/hooks-config.c:187
+msgid "_Prefix dialed numbers with"
+msgstr "Додај следећи _префикс на позване бројеве"
+
+#: ../src/config/hooks-config.c:198
+#, fuzzy
+msgid "Messaging"
+msgstr "Брзо дописивање"
+
+#: ../src/config/hooks-config.c:202
+msgid "Open URL in"
+msgstr ""
+
+#: ../src/config/preferencesdialog.c:179
+msgid "Desktop Notifications"
+msgstr "Системска обавештења"
+
+#. Notification All
+#: ../src/config/preferencesdialog.c:183
+msgid "_Enable notifications"
+msgstr "Омогући обавештења"
+
+#. Window Behaviour frame
+#: ../src/config/preferencesdialog.c:189
+msgid "Window Behaviour"
+msgstr ""
+
+#: ../src/config/preferencesdialog.c:196
+msgid "Bring SFLphone to foreground on incoming calls"
+msgstr ""
+
+#. System Tray option frame
+#: ../src/config/preferencesdialog.c:203
+#, fuzzy
+msgid "System Tray Icon (Legacy)"
+msgstr "Икона системске касете"
+
+#: ../src/config/preferencesdialog.c:210
+msgid "Show SFLphone in the system tray"
+msgstr "Прикажи СФЛ-фон у системској касети"
+
+#: ../src/config/preferencesdialog.c:216
+msgid "_Popup main window on incoming call"
+msgstr "_Прикажи главни прозор при долазном позиву"
+
+#: ../src/config/preferencesdialog.c:221
+msgid "Ne_ver popup main window"
+msgstr "Никада не приказуј главни прозор"
+
+#. HISTORY CONFIGURATION
+#: ../src/config/preferencesdialog.c:237
+msgid "Calls History"
+msgstr "Историјат позива"
+
+#: ../src/config/preferencesdialog.c:241
+msgid "_Keep my history for at least"
+msgstr "Бележи историјат барем"
+
+#: ../src/config/preferencesdialog.c:254
+msgid "days"
+msgstr "дана"
+
+#. INSTANT MESSAGING CONFIGURATION
+#: ../src/config/preferencesdialog.c:258
+msgid "Instant Messaging"
+msgstr "Брзо дописивање"
+
+#: ../src/config/preferencesdialog.c:262
+msgid "Enable instant messaging"
+msgstr "Укључи брзо дописивање"
+
+#: ../src/config/preferencesdialog.c:373
+msgid "Preferences"
+msgstr "Поставке"
+
+#: ../src/config/preferencesdialog.c:430
+msgid "Hooks"
+msgstr "Кукице"
+
+#: ../src/config/preferencesdialog.c:435
+msgid "Shortcuts"
+msgstr "Пречице"
+
+#: ../src/config/preferencesdialog.c:441
+msgid "Address Book"
+msgstr "Именик"
+
+#: ../src/config/shortcuts-config.c:119
+msgid "Be careful: these shortcuts might override system-wide shortcuts."
+msgstr "Пажња! Ове пречице могу прегазити системске пречице."
+
+#: ../src/config/tlsadvanceddialog.c:55
 msgid "Advanced options for TLS"
 msgstr "Напредне поставке за ТЛС"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:58
+#: ../src/config/tlsadvanceddialog.c:72
 msgid "TLS transport"
 msgstr "ТЛС пренос"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:62
+#: ../src/config/tlsadvanceddialog.c:76
+#, c-format
 msgid ""
 "TLS transport can be used along with UDP for those calls that would\n"
 "require secure sip transactions (aka SIPS). You can configure a different\n"
@@ -818,432 +807,656 @@ msgstr ""
 "ТЛС пренос за сваки налог појединачно. Имајте на уму да ће сваки од њих\n"
 "бити покренут на другачијем, посебно намењеном порту.\n"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:109
+#: ../src/config/tlsadvanceddialog.c:120
 msgid "Global TLS listener (all accounts)"
 msgstr "Општи ТЛС прислушкивач (сви налози)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:123
+#: ../src/config/tlsadvanceddialog.c:130
 msgid "Certificate of Authority list"
 msgstr "Сертификат или списак издавача уверења"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:126
+#: ../src/config/tlsadvanceddialog.c:133
 msgid "Choose a CA list file (optional)"
 msgstr "Изабери датотеку са списком издавача уверења (необавезно)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:138
+#: ../src/config/tlsadvanceddialog.c:144
 msgid "Public endpoint certificate file"
 msgstr ""
 
-#: ../gnome/src/config/tlsadvanceddialog.c:141
+#: ../src/config/tlsadvanceddialog.c:147
 msgid "Choose a public endpoint certificate (optional)"
 msgstr ""
 
-#: ../gnome/src/config/tlsadvanceddialog.c:159
+#: ../src/config/tlsadvanceddialog.c:165
 msgid "Choose a private key file (optional)"
 msgstr "Изаберите датотеку личног кључа (по жељи)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:174
+#: ../src/config/tlsadvanceddialog.c:180
 msgid "Password for the private key"
 msgstr "Лозинка за лични кључ"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:189
+#. TLS protocol methods
+#: ../src/config/tlsadvanceddialog.c:193
 msgid "TLS protocol method"
 msgstr "Начин ТЛС протокола"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:217
+#: ../src/config/tlsadvanceddialog.c:216
 msgid "TLS cipher list"
 msgstr "Списак ТЛС шифрарника"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:226
+#: ../src/config/tlsadvanceddialog.c:225
 msgid "Server name instance for outgoing TLS connection"
 msgstr "Име сервера за одлазећу ТЛС везу"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:234
+#: ../src/config/tlsadvanceddialog.c:233
 msgid "Negotiation timeout (sec:msec)"
 msgstr "Трајање преговарања (сек:мил.сек)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:251
+#: ../src/config/tlsadvanceddialog.c:250
 msgid "Verify incoming certificates, as a server"
 msgstr ""
 
-#: ../gnome/src/config/tlsadvanceddialog.c:257
+#: ../src/config/tlsadvanceddialog.c:256
 msgid "Verify certificates from answer, as a client"
 msgstr ""
 
-#: ../gnome/src/config/tlsadvanceddialog.c:263
+#: ../src/config/tlsadvanceddialog.c:262
 msgid "Require certificate for incoming tls connections"
 msgstr ""
 
-#: ../gnome/src/contacts/searchbar.c:198
+#: ../src/config/videoconf.c:499
+#, fuzzy
+msgid "Bitrate (kbps)"
+msgstr "Проток бита"
+
+#: ../src/config/videoconf.c:506
+#, fuzzy
+msgid "Parameters"
+msgstr "Подешавања налога"
+
+#: ../src/config/videoconf.c:808
+msgid "No devices found"
+msgstr ""
+
+#. Set choices of input devices
+#: ../src/config/videoconf.c:819
+msgid "Device"
+msgstr ""
+
+#. Set choices of input
+#: ../src/config/videoconf.c:834
+msgid "Channel"
+msgstr ""
+
+#. Set choices of sizes
+#: ../src/config/videoconf.c:848
+msgid "Size"
+msgstr ""
+
+#. Set choices of rates
+#: ../src/config/videoconf.c:862
+msgid "Rate"
+msgstr ""
+
+#: ../src/config/videoconf.c:888
+#, fuzzy
+msgid "Video Manager"
+msgstr "Управник звука"
+
+#: ../src/config/videoconf.c:891
+msgid "Video4Linux2"
+msgstr ""
+
+#: ../src/config/videoconf.c:897
+msgid "Camera"
+msgstr ""
+
+#: ../src/config/zrtpadvanceddialog.c:52
+msgid "ZRTP Options"
+msgstr "ЗРТП поставке"
+
+#: ../src/config/zrtpadvanceddialog.c:69
+msgid "Send Hello Hash in S_DP"
+msgstr "Пошаљи поздравни хеш у С_ДП"
+
+#: ../src/config/zrtpadvanceddialog.c:74
+msgid "Ask User to Confirm SAS"
+msgstr "Питај корисника да потврди САС"
+
+#: ../src/config/zrtpadvanceddialog.c:79
+msgid "_Warn if ZRTP not supported"
+msgstr "Упо_зори уколико ЗРТП није подржан"
+
+#: ../src/config/zrtpadvanceddialog.c:84
+msgid "Display SAS once for hold events"
+msgstr "Прикажи САС једном за задржане позиве"
+
+#: ../src/config/zrtpadvanceddialog.c:118
+msgid "SDES Options"
+msgstr "СДЕС (SDES) могућ"
+
+#: ../src/config/zrtpadvanceddialog.c:134
+msgid "Fallback on RTP on SDES failure"
+msgstr "Повратни режим приликом РТП преко СДЕС грешке"
+
+#: ../src/contacts/searchbar.c:226
 msgid "Search all"
 msgstr "Претражи све"
 
-#: ../gnome/src/contacts/searchbar.c:199 ../gnome/src/contacts/searchbar.c:214
-#: ../gnome/src/contacts/searchbar.c:226 ../gnome/src/contacts/searchbar.c:238
+#: ../src/contacts/searchbar.c:227 ../src/contacts/searchbar.c:235
+#: ../src/contacts/searchbar.c:243 ../src/contacts/searchbar.c:251
 msgid "Click here to change the search type"
 msgstr "Кликни овде за промену врсте претраге"
 
-#: ../gnome/src/contacts/searchbar.c:213
+#: ../src/contacts/searchbar.c:234
 msgid "Search by missed call"
 msgstr "Претражи по пропуштеним позивима"
 
-#: ../gnome/src/contacts/searchbar.c:225
+#: ../src/contacts/searchbar.c:242
 msgid "Search by incoming call"
 msgstr "Претражи по долазним позивима"
 
-#: ../gnome/src/contacts/searchbar.c:237
+#: ../src/contacts/searchbar.c:250
 msgid "Search by outgoing call"
 msgstr "Претражи по одлазећим позивима"
 
-#: ../gnome/src/sliders.c:174
-msgid "Speakers volume"
-msgstr "Јачина излаза звучника"
+#: ../src/dbus/dbus.c:579
+#, fuzzy
+msgid "ALSA notification: Error while opening playback device"
+msgstr ""
+"АЛСА обавештење:\n"
+"\n"
+"Грешка приликом отварања излазног уређаја"
 
-#: ../gnome/src/sliders.c:174
-msgid "Mic volume"
-msgstr "Јачина улаза микрофона"
+#: ../src/dbus/dbus.c:582
+#, fuzzy
+msgid "ALSA notification: Error while opening capture device"
+msgstr ""
+"АЛСА обавештење:\n"
+"\n"
+"Грешка приликом отварања улазног уређаја"
 
-#: ../gnome/src/mainwindow.c:127
+#: ../src/dbus/dbus.c:585
+#, fuzzy
+msgid "Pulseaudio notification: Pulseaudio is not running"
+msgstr ""
+"Пулс-аудио обавештење:\n"
+"\n"
+"Пулс-аудио није покренут"
+
+#: ../src/dbus/dbus.c:588
+#, fuzzy
+msgid "Codecs notification: Codecs not found"
+msgstr ""
+"Обавештење о кодецима\n"
+"\n"
+"Кодеци нису пронађени"
+
+#: ../src/mainwindow.c:139
 msgid "There is one call in progress."
 msgstr "Један позив је у току"
 
-#: ../gnome/src/mainwindow.c:129
+#: ../src/mainwindow.c:141
 msgid "There are calls in progress."
 msgstr "Постоје позиви који су у току."
 
-#: ../gnome/src/mainwindow.c:133
+#: ../src/mainwindow.c:146
 msgid "Do you still want to quit?"
 msgstr "Да ли и даље желите да изађете?"
 
-#: ../gnome/src/mainwindow.c:425
+#: ../src/mainwindow.c:282
+#, fuzzy
+msgid "Status:"
+msgstr "Стање"
+
+#: ../src/mainwindow.c:288
+msgid "Offline"
+msgstr ""
+
+#: ../src/mainwindow.c:289
+msgid "Online"
+msgstr ""
+
+#: ../src/mainwindow.c:576
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr ""
 
-#: ../gnome/src/mainwindow.c:427
+#: ../src/mainwindow.c:578
 msgid "Secure Communication Unavailable"
 msgstr "Безбедна комуникација није доступна"
 
-#: ../gnome/src/mainwindow.c:430 ../gnome/src/mainwindow.c:456
+#: ../src/mainwindow.c:581 ../src/mainwindow.c:607
 msgid "Continue"
 msgstr "Настави"
 
-#: ../gnome/src/mainwindow.c:431 ../gnome/src/mainwindow.c:457
-#: ../gnome/src/mainwindow.c:474
+#: ../src/mainwindow.c:582 ../src/mainwindow.c:608 ../src/mainwindow.c:625
 msgid "Stop Call"
 msgstr "Прекини позив"
 
-#: ../gnome/src/mainwindow.c:449
+#: ../src/mainwindow.c:600
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
 "Exact reason: %s\n"
 msgstr ""
 
-#: ../gnome/src/mainwindow.c:453
+#: ../src/mainwindow.c:604
 msgid "ZRTP negotiation failed"
 msgstr ""
 
-#: ../gnome/src/mainwindow.c:467
+#: ../src/mainwindow.c:618
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
 msgstr ""
 
-#: ../gnome/src/mainwindow.c:469
+#: ../src/mainwindow.c:620
 msgid "Confirm Go Clear"
 msgstr "Потврди Го чишћење"
 
-#: ../gnome/src/mainwindow.c:472
+#: ../src/mainwindow.c:623
 msgid "Confirm"
 msgstr "Потврди"
 
-#: ../gnome/src/uimanager.c:159
+#: ../src/sflphone_client.c:53
+#, c-format
+msgid ""
+"%s\n"
+"Run '%s --help' to see a full list of available command line options.\n"
+msgstr ""
+
+#: ../src/sflphone_client.c:70
+msgid "SFLphone Error"
+msgstr "СФЛ-телефон грешка"
+
+#: ../src/sflphone_options.c:60
+msgid "Enable debug"
+msgstr ""
+
+#: ../src/sflphone_options.c:67
+msgid "- GNOME client for SFLPhone"
+msgstr ""
+
+#: ../src/sflnotify.c:93
+#, c-format
+msgid "%s says:"
+msgstr "%s каже:"
+
+#. the account is different from NULL
+#: ../src/sflnotify.c:115 ../src/sflnotify.c:135
+#, c-format
+msgid "%s account : %s"
+msgstr "%s налог : %s"
+
+#: ../src/sflnotify.c:120
+#, c-format
+msgid "<i>From</i> %s"
+msgstr "<i>Зове </i> %s"
+
+#. the account is different from NULL
+#: ../src/sflnotify.c:153
+#, c-format
+msgid "Calling with %s account <i>%s</i>"
+msgstr "Позивам %s преко налога <i>%s</i>"
+
+#: ../src/sflnotify.c:157
+#, c-format
+msgid "Current account"
+msgstr "Тренутни налог"
+
+#: ../src/sflnotify.c:169
+#, c-format
+msgid "You have no accounts set up"
+msgstr "Немате ниједан постављен налог"
+
+#: ../src/sflnotify.c:182
+#, c-format
+msgid "You have no registered accounts"
+msgstr "Немате регистрованих налога"
+
+#: ../src/sflnotify.c:196
+#, c-format
+msgid ""
+"<i>With:</i> %s \n"
+"using %s"
+msgstr ""
+"<i>Са:</i> %s \n"
+"користећи %s"
+
+#: ../src/sflnotify.c:210
+#, c-format
+msgid "%s does not support ZRTP."
+msgstr "%s не подржава ЗРТП (ZRTP)."
+
+#: ../src/sflnotify.c:224
+#, c-format
+msgid "ZRTP negotiation failed with %s"
+msgstr "ЗРТП успостава са %s неуспешна"
+
+#: ../src/sflnotify.c:238
+#, c-format
+msgid "<i>With:</i> %s"
+msgstr "<i>Са:</i> %s"
+
+#: ../src/sliders.c:231
+msgid "Speakers volume"
+msgstr "Јачина излаза звучника"
+
+#: ../src/sliders.c:231
+msgid "Mic volume"
+msgstr "Јачина улаза микрофона"
+
+#: ../src/statusicon.c:132
+msgid "_Show main window"
+msgstr "_Прикажи главни прозор"
+
+#: ../src/statusicon.c:139 ../src/uimanager.c:1010 ../src/uimanager.c:1376
+#: ../src/uimanager.c:1445
+msgid "_Hang up"
+msgstr "_Спусти слушалицу"
+
+#: ../src/statusicon.c:190
+msgid "SFLphone"
+msgstr "СФЛ-фон"
+
+#: ../src/uimanager.c:436
 msgid "No address book selected"
 msgstr "Није изабран именик"
 
-#: ../gnome/src/uimanager.c:183 ../gnome/src/uimanager.c:1051
+#: ../src/uimanager.c:456 ../src/uimanager.c:1139
 msgid "Address book"
 msgstr "Именик"
 
-#: ../gnome/src/uimanager.c:428
+#: ../src/uimanager.c:483
 #, c-format
 msgid "Voicemail(%i)"
 msgstr "Говорна пошта(%i)"
 
-#: ../gnome/src/uimanager.c:507
+#: ../src/uimanager.c:575
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "СФЛ-фон је ВоИП клијент који подржава СИП и ИА-Икс2 протоколе."
 
-#: ../gnome/src/uimanager.c:510
+#: ../src/uimanager.c:578
 msgid "About SFLphone"
 msgstr "О СФЛ-фону"
 
-#: ../gnome/src/uimanager.c:931 ../gnome/src/uimanager.c:990
+#: ../src/uimanager.c:951 ../src/uimanager.c:1030
 msgid "Voicemail"
 msgstr "Говорна пошта"
 
-#: ../gnome/src/uimanager.c:960
+#. Call Menu
+#: ../src/uimanager.c:1000
 msgid "Call"
 msgstr "Позови"
 
-#: ../gnome/src/uimanager.c:962 ../gnome/src/uimanager.c:1435
+#: ../src/uimanager.c:1002 ../src/uimanager.c:1541
 msgid "_New call"
 msgstr "_Нови позив"
 
-#: ../gnome/src/uimanager.c:963
+#: ../src/uimanager.c:1003
 msgid "Place a new call"
 msgstr "Нови позив"
 
-#: ../gnome/src/uimanager.c:966 ../gnome/src/uimanager.c:1275
+#: ../src/uimanager.c:1006 ../src/uimanager.c:1365
 msgid "_Pick up"
 msgstr "_Прихвати"
 
-#: ../gnome/src/uimanager.c:967
+#: ../src/uimanager.c:1007
 msgid "Answer the call"
 msgstr "Прихвати позив"
 
-#: ../gnome/src/uimanager.c:971
+#: ../src/uimanager.c:1011
 msgid "Finish the call"
 msgstr "Прекини позив"
 
-#: ../gnome/src/uimanager.c:974
+#: ../src/uimanager.c:1014
 msgid "O_n hold"
 msgstr "_На чекању"
 
-#: ../gnome/src/uimanager.c:975
+#: ../src/uimanager.c:1015
 msgid "Place the call on hold"
 msgstr "Стави позив на чекање"
 
-#: ../gnome/src/uimanager.c:978
+#: ../src/uimanager.c:1018
 msgid "O_ff hold"
 msgstr "Настави позив"
 
-#: ../gnome/src/uimanager.c:979
+#: ../src/uimanager.c:1019
 msgid "Place the call off hold"
 msgstr "Скини позив са чекања"
 
-#: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1331
+#: ../src/uimanager.c:1022 ../src/uimanager.c:1430
 msgid "Send _message"
 msgstr "Пошаљи поруку"
 
-#: ../gnome/src/uimanager.c:983
+#: ../src/uimanager.c:1023
 msgid "Send message"
 msgstr "Пошаљи поруку"
 
-#: ../gnome/src/uimanager.c:986
+#: ../src/uimanager.c:1026
 msgid "Configuration _Assistant"
 msgstr "Помоћник"
 
-#: ../gnome/src/uimanager.c:987
+#: ../src/uimanager.c:1027
 msgid "Run the configuration assistant"
 msgstr "Покрени помоћника"
 
-#: ../gnome/src/uimanager.c:991
+#: ../src/uimanager.c:1031
 msgid "Call your voicemail"
 msgstr "Говорна пошта"
 
-#: ../gnome/src/uimanager.c:994
+#: ../src/uimanager.c:1034
 msgid "_Close"
 msgstr "Затвори"
 
-#: ../gnome/src/uimanager.c:995
+#: ../src/uimanager.c:1035
 msgid "Minimize to system tray"
 msgstr "Умањи у системску касету"
 
-#: ../gnome/src/uimanager.c:998
+#: ../src/uimanager.c:1038
 msgid "_Quit"
 msgstr "_Изађи"
 
-#: ../gnome/src/uimanager.c:999
+#: ../src/uimanager.c:1039
 msgid "Quit the program"
 msgstr "Изађи из програма"
 
-#: ../gnome/src/uimanager.c:1002
-msgid "_Playback record"
-msgstr "_Пусти снимљено"
-
-#: ../gnome/src/uimanager.c:1003
-msgid "Playback recorded file"
-msgstr "Пусти звучни запис снимљеног разговора"
-
-#: ../gnome/src/uimanager.c:1006
-msgid "_Stop playback"
-msgstr "Зау_стави пуштање"
-
-#: ../gnome/src/uimanager.c:1007
-msgid "Stop recorded file playback"
-msgstr "Заустави пуштање звучног записа снимљеног разговора"
-
-#: ../gnome/src/uimanager.c:1011
+#. Edit Menu
+#: ../src/uimanager.c:1043
 msgid "_Edit"
 msgstr "_Уреди"
 
-#: ../gnome/src/uimanager.c:1013
+#: ../src/uimanager.c:1045
 msgid "_Copy"
 msgstr "У_множи"
 
-#: ../gnome/src/uimanager.c:1014
+#: ../src/uimanager.c:1046
 msgid "Copy the selection"
 msgstr "Умножи изабрано"
 
-#: ../gnome/src/uimanager.c:1017
+#: ../src/uimanager.c:1049
 msgid "_Paste"
 msgstr "Нале_пи"
 
-#: ../gnome/src/uimanager.c:1018
+#: ../src/uimanager.c:1050
 msgid "Paste the clipboard"
 msgstr "Налепи из оставе"
 
-#: ../gnome/src/uimanager.c:1021
+#: ../src/uimanager.c:1053
 msgid "Clear _history"
 msgstr "Очисти _историјат"
 
-#: ../gnome/src/uimanager.c:1022
+#: ../src/uimanager.c:1054
 msgid "Clear the call history"
 msgstr "Очисти историјат позива"
 
-#: ../gnome/src/uimanager.c:1025
+#: ../src/uimanager.c:1057
 msgid "_Accounts"
 msgstr "_Налози"
 
-#: ../gnome/src/uimanager.c:1026
+#: ../src/uimanager.c:1058
 msgid "Edit your accounts"
 msgstr "Уредите ваше налоге"
 
-#: ../gnome/src/uimanager.c:1029
+#: ../src/uimanager.c:1061
 msgid "_Preferences"
 msgstr "_Поставке"
 
-#: ../gnome/src/uimanager.c:1030
+#: ../src/uimanager.c:1062
 msgid "Change your preferences"
 msgstr "Промените ваше поставке"
 
-#: ../gnome/src/uimanager.c:1034
+#. View Menu
+#: ../src/uimanager.c:1066
 msgid "_View"
 msgstr "_Приказ"
 
-#: ../gnome/src/uimanager.c:1037
+#. Help menu
+#: ../src/uimanager.c:1069
 msgid "_Help"
 msgstr "_Помоћ"
 
-#: ../gnome/src/uimanager.c:1038
+#: ../src/uimanager.c:1070
 msgid "Contents"
 msgstr "Садржај"
 
-#: ../gnome/src/uimanager.c:1039
+#: ../src/uimanager.c:1071
 msgid "Open the manual"
 msgstr "Отвори упутство"
 
-#: ../gnome/src/uimanager.c:1041
+#: ../src/uimanager.c:1073
 msgid "About this application"
 msgstr "О програму"
 
-#: ../gnome/src/uimanager.c:1045
+#: ../src/uimanager.c:1132
 msgid "_Transfer"
 msgstr "_Пребаци"
 
-#: ../gnome/src/uimanager.c:1045
+#: ../src/uimanager.c:1132
 msgid "Transfer the call"
 msgstr "Пребаци везу"
 
-#: ../gnome/src/uimanager.c:1046 ../gnome/src/uimanager.c:1308
+#: ../src/uimanager.c:1133 ../src/uimanager.c:1398
 msgid "_Record"
 msgstr "_Снимај"
 
-#: ../gnome/src/uimanager.c:1046
+#: ../src/uimanager.c:1133
 msgid "Record the current conversation"
 msgstr "Снимај тренутни разговор"
 
-#: ../gnome/src/uimanager.c:1047
+#: ../src/uimanager.c:1134 ../src/uimanager.c:1410
+msgid "_Mute"
+msgstr ""
+
+#: ../src/uimanager.c:1134
+msgid "Mute microphone for this call"
+msgstr ""
+
+#: ../src/uimanager.c:1135
 msgid "_Show toolbar"
 msgstr "Прикажи алатницу"
 
-#: ../gnome/src/uimanager.c:1047
+#: ../src/uimanager.c:1135
 msgid "Show the toolbar"
 msgstr "Прикажи алатницу"
 
-#: ../gnome/src/uimanager.c:1048
+#: ../src/uimanager.c:1136
 msgid "_Dialpad"
 msgstr "_Бројчаник"
 
-#: ../gnome/src/uimanager.c:1048
+#: ../src/uimanager.c:1136
 msgid "Show the dialpad"
 msgstr "Прикажи бројчаник"
 
-#: ../gnome/src/uimanager.c:1049
+#: ../src/uimanager.c:1137
 msgid "_Volume controls"
 msgstr "_Управљање јачином звука"
 
-#: ../gnome/src/uimanager.c:1049
+#: ../src/uimanager.c:1137
 msgid "Show the volume controls"
 msgstr "Прикажи управљање јачином звука"
 
-#: ../gnome/src/uimanager.c:1050
+#: ../src/uimanager.c:1138
 msgid "_History"
 msgstr "_Историјат"
 
-#: ../gnome/src/uimanager.c:1050
+#: ../src/uimanager.c:1138
 msgid "Calls history"
 msgstr "Историјат позива"
 
-#: ../gnome/src/uimanager.c:1051
+#: ../src/uimanager.c:1139
 msgid "_Address book"
 msgstr "_Именик"
 
-#: ../gnome/src/uimanager.c:1297 ../gnome/src/uimanager.c:1355
+#: ../src/uimanager.c:1140
+msgid "_Buddy list"
+msgstr ""
+
+#: ../src/uimanager.c:1140
+msgid "Display the buddy list"
+msgstr ""
+
+#: ../src/uimanager.c:1387 ../src/uimanager.c:1454
 msgid "On _Hold"
 msgstr "На _чекању"
 
-#: ../gnome/src/uimanager.c:1392
+#: ../src/uimanager.c:1491
 msgid "_Call back"
 msgstr "_Позови поново"
 
-#: ../gnome/src/uimanager.c:1488
+#: ../src/uimanager.c:1599
 msgid "Edit phone number"
 msgstr "Уреди број телефона"
 
-#: ../gnome/src/uimanager.c:1499
+#: ../src/uimanager.c:1610
 msgid "Edit the phone number before making a call"
 msgstr "Уреди број телефона пре позивања"
 
-#: ../gnome/src/dbus/dbus.c:495
-msgid ""
-"ALSA notification\n"
-"\n"
-"Error while opening playback device"
-msgstr ""
-"АЛСА обавештење:\n"
-"\n"
-"Грешка приликом отварања излазног уређаја"
+#, fuzzy
+#~ msgid "%d voice mail"
+#~ msgid_plural "%d voice mails"
+#~ msgstr[0] "Говорна пошта"
+#~ msgstr[1] "Говорна пошта"
 
-#: ../gnome/src/dbus/dbus.c:498
-msgid ""
-"ALSA notification\n"
-"\n"
-"Error while opening capture device"
-msgstr ""
-"АЛСА обавештење:\n"
-"\n"
-"Грешка приликом отварања улазног уређаја"
+#~ msgid "Using account"
+#~ msgstr "Налог:"
 
-#: ../gnome/src/dbus/dbus.c:501
-msgid ""
-"Pulseaudio notification\n"
-"\n"
-"Pulseaudio is not running"
-msgstr ""
-"Пулс-аудио обавештење:\n"
-"\n"
-"Пулс-аудио није покренут"
+#~ msgid ""
+#~ "Cannot find a schema for gpdf preferences. \n"
+#~ "Check your gconf setup, look at gpdf FAQ for \n"
+#~ "more info"
+#~ msgstr ""
+#~ "Не могу да нађем шаблон за гпдф поставке.\n"
+#~ "Проверите вашу гконф поставку. Погледајте\n"
+#~ "гпдф ЧПП за више података."
 
-#: ../gnome/src/dbus/dbus.c:504
-msgid ""
-"Codecs notification\n"
-"\n"
-"Codecs not found"
-msgstr ""
-"Обавештење о кодецима\n"
-"\n"
-"Кодеци нису пронађени"
+#, fuzzy
+#~ msgid "Stun configuration error"
+#~ msgstr "Покрени помоћника"
+
+#~ msgid "Hide SFLphone window on _startup"
+#~ msgstr "Сакриј прозор СФЛ-фона при покретању"
+
+#~ msgid "_Comply with RFC 3263"
+#~ msgstr "_Усагласи са РФЦ 3263"
+
+#, fuzzy
+#~ msgid "There is %d active account"
+#~ msgid_plural "There are %d active accounts"
+#~ msgstr[0] "Немате налог у употреби"
+#~ msgstr[1] "Немате налог у употреби"
+
+#, fuzzy
+#~ msgid "_Playback record"
+#~ msgstr "Увек сним_ај"
+
+#~ msgid "Playback recorded file"
+#~ msgstr "Пусти звучни запис снимљеног разговора"
+
+#~ msgid "_Stop playback"
+#~ msgstr "Зау_стави пуштање"
+
+#~ msgid "Stop recorded file playback"
+#~ msgstr "Заустави пуштање звучног записа снимљеног разговора"

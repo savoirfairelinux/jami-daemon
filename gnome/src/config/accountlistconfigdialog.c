@@ -53,20 +53,22 @@ static GtkListStore *account_store;
 static GtkDialog *account_list_dialog;
 
 // Account properties
-enum {
+typedef enum {
     COLUMN_ACCOUNT_ALIAS,
     COLUMN_ACCOUNT_TYPE,
     COLUMN_ACCOUNT_STATUS,
     COLUMN_ACCOUNT_ACTIVE,
     COLUMN_ACCOUNT_ID,
     COLUMN_ACCOUNT_COUNT
-};
+} column_t;
 
-/* Get selected account ID from treeview
- * @return copied selected_accountID, must be freed by caller */
+/* Get selected account string field from treeview
+ * @return newly allocated string, must be freed by caller */
 static gchar *
-get_selected_accountID(GtkTreeView *tree_view)
+get_selected_account_column(GtkTreeView *tree_view, column_t column)
 {
+    g_assert(column == COLUMN_ACCOUNT_ALIAS || column == COLUMN_ACCOUNT_ID);
+
     GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
     GtkTreeSelection *selection = gtk_tree_view_get_selection(tree_view);
 
@@ -76,12 +78,13 @@ get_selected_accountID(GtkTreeView *tree_view)
     // The Gvalue will be initialized in the following function
     GValue val;
     memset(&val, 0, sizeof(val));
-    gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_ID, &val);
+    gtk_tree_model_get_value(model, &iter, column, &val);
 
-    gchar *selected_accountID = g_strdup(g_value_get_string(&val));
+    gchar *result = g_strdup(g_value_get_string(&val));
     g_value_unset(&val);
-    return selected_accountID;
+    return result;
 }
+
 
 static gboolean
 find_account_in_account_store(const gchar *accountID, GtkTreeModel *model,
@@ -101,18 +104,55 @@ find_account_in_account_store(const gchar *accountID, GtkTreeModel *model,
     return found;
 }
 
-
-static void delete_account_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
+static gboolean
+confirm_account_deletion(GtkWidget *window, const gchar *alias)
 {
-    gchar *selected_accountID = get_selected_accountID(data);
-    g_return_if_fail(selected_accountID != NULL);
+    gchar *msg;
+    if (strlen(alias) > 0)
+        msg = g_markup_printf_escaped(_("Are you sure want to delete \"%s\"?"), alias);
+    else
+        msg = g_markup_printf_escaped(_("Are you sure want to delete account?"));
+
+    /* Create the widgets */
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window),
+            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+            GTK_MESSAGE_WARNING,
+            GTK_BUTTONS_CANCEL,
+            "%s", msg);
+
+    gtk_dialog_add_buttons(GTK_DIALOG(dialog), _("Remove"), GTK_RESPONSE_OK, NULL);
+
+    gtk_window_set_title(GTK_WINDOW(dialog), _("Remove account"));
+    const gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+
+    g_free(msg);
+
+    return response == GTK_RESPONSE_OK;
+}
+
+
+static void delete_account_cb(GtkButton *button, gpointer data)
+{
+    GtkWidget *window = g_object_get_data(G_OBJECT(button), "window");
+
+    gchar *account_name = get_selected_account_column(data, COLUMN_ACCOUNT_ALIAS);
+    g_return_if_fail(account_name != NULL);
+
+    const gboolean confirmed = confirm_account_deletion(window, account_name);
+    g_free(account_name);
+    if (!confirmed)
+        return;
+
+    gchar *account_id = get_selected_account_column(data, COLUMN_ACCOUNT_ID);
+
     GtkTreeModel *model = GTK_TREE_MODEL(account_store);
     GtkTreeIter iter;
-    if (find_account_in_account_store(selected_accountID, model, &iter))
+    if (find_account_in_account_store(account_id, model, &iter))
         gtk_list_store_remove(account_store, &iter);
 
-    dbus_remove_account(selected_accountID);
-    g_free(selected_accountID);
+    dbus_remove_account(account_id);
+    g_free(account_id);
 }
 
 static void account_store_fill();
@@ -133,7 +173,7 @@ static void row_activated_cb(GtkTreeView *view,
                              G_GNUC_UNUSED GtkTreeViewColumn *col,
                              SFLPhoneClient *client)
 {
-    gchar *selected_accountID = get_selected_accountID(view);
+    gchar *selected_accountID = get_selected_account_column(view, COLUMN_ACCOUNT_ID);
     g_return_if_fail(selected_accountID != NULL);
     run_account_dialog(selected_accountID, client, FALSE);
     g_free(selected_accountID);
@@ -146,7 +186,7 @@ typedef struct EditData {
 
 static void edit_account_cb(G_GNUC_UNUSED GtkButton *button, EditData *data)
 {
-    gchar *selected_accountID = get_selected_accountID(GTK_TREE_VIEW(data->view));
+    gchar *selected_accountID = get_selected_account_column(GTK_TREE_VIEW(data->view), COLUMN_ACCOUNT_ID);
     g_return_if_fail(selected_accountID != NULL);
     run_account_dialog(selected_accountID, data->client, FALSE);
     g_free(selected_accountID);
@@ -556,6 +596,7 @@ create_account_list(SFLPhoneClient *client)
 
     delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
     gtk_widget_set_sensitive(delete_button, FALSE);
+    g_object_set_data(G_OBJECT(delete_button), "window", client->win);
     g_signal_connect(G_OBJECT(delete_button), "clicked",
                      G_CALLBACK(delete_account_cb), tree_view);
     gtk_box_pack_start(GTK_BOX(button_box), delete_button, FALSE, FALSE, 0);

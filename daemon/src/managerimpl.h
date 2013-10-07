@@ -136,6 +136,8 @@ class ManagerImpl {
          * Enter Dbus mainloop
          */
         void run();
+        // Interrupt Dbus mainloop
+        void interrupt();
 #endif
 
         /*

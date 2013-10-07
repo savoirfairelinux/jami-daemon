@@ -7,737 +7,328 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
-"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
-"POT-Creation-Date: 2012-01-04 16:32-0500\n"
-"PO-Revision-Date: 2013-01-13 11:24+0000\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-10-02 11:57-0400\n"
+"PO-Revision-Date: 2013-06-15 11:26+0000\n"
 "Last-Translator: fri <pavelfric@seznam.cz>\n"
 "Language-Team: Czech <cs@li.org>\n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2013-06-12 19:08+0000\n"
-"X-Generator: Launchpad (build 16667)\n"
-"Language: cs\n"
+"X-Launchpad-Export-Date: 2013-10-02 15:52+0000\n"
+"X-Generator: Launchpad (build 16791)\n"
 "X-Language: cs_CZ\n"
 "X-Source-Language: C\n"
 
-#: ../gnome/src/sflnotify.c:85
-#, c-format
-msgid "%s says:"
-msgstr "%s říká:"
-
-#: ../gnome/src/sflnotify.c:103 ../gnome/src/sflnotify.c:122
-#, c-format
-msgid "%s account : %s"
-msgstr "%s účet: %s"
-
-#: ../gnome/src/sflnotify.c:108
-#, c-format
-msgid "<i>From</i> %s"
-msgstr "<i>Od</i> %s"
-
-#: ../gnome/src/sflnotify.c:125
-#, c-format
-msgid "%d voice mail"
-msgid_plural "%d voice mails"
-msgstr[0] "%d hlasová zpráva"
-msgstr[1] "%d hlasové zprávy"
-msgstr[2] "%d hlasových zpráv"
-
-#: ../gnome/src/sflnotify.c:139
-#, c-format
-msgid "Calling with %s account <i>%s</i>"
-msgstr "Volání s %s účtem <i>%s</i>"
-
-#: ../gnome/src/sflnotify.c:143
-msgid "Current account"
-msgstr "Nynější účet"
-
-#: ../gnome/src/sflnotify.c:154
-msgid "You have no accounts set up"
-msgstr "Nemáte nastaveny žádné účty"
-
-#: ../gnome/src/sflnotify.c:155 ../gnome/src/sflnotify.c:168
-#: ../gnome/src/accountlist.c:160
-msgid "Error"
-msgstr "Chyba"
-
-#: ../gnome/src/sflnotify.c:167
-msgid "You have no registered accounts"
-msgstr "Nemáte žádné zaregistrované účty"
-
-#: ../gnome/src/sflnotify.c:181
-#, c-format
-msgid ""
-"<i>With:</i> %s \n"
-"using %s"
-msgstr ""
-"<i>S:</i> %s \n"
-"za použití %s"
-
-#: ../gnome/src/sflnotify.c:194
-#, c-format
-msgid "%s does not support ZRTP."
-msgstr "%s nepodporuje ZRTP."
-
-#: ../gnome/src/sflnotify.c:207
-#, c-format
-msgid "ZRTP negotiation failed with %s"
-msgstr "Přenos ZRTP s %s se nezdařil"
-
-#: ../gnome/src/sflnotify.c:220
-#, c-format
-msgid "<i>With:</i> %s"
-msgstr "<i>S:</i> %s"
-
-#: ../gnome/src/statusicon.c:135
-msgid "_Show main window"
-msgstr "_Ukázat hlavní okno"
-
-#: ../gnome/src/statusicon.c:142 ../gnome/src/uimanager.c:970
-#: ../gnome/src/uimanager.c:1286 ../gnome/src/uimanager.c:1346
-msgid "_Hang up"
-msgstr "_Zavěsit"
-
-#: ../gnome/src/statusicon.c:193
-#, c-format
-msgid "%i active account"
-msgid_plural "%i active accounts"
-msgstr[0] "%i činný účet"
-msgstr[1] "%i činné účty"
-msgstr[2] "%i činných účtů"
-
-#: ../gnome/src/statusicon.c:194
-msgid "SFLphone"
-msgstr "SFLphone"
-
-#: ../gnome/src/actions.c:176
-msgid "Using account"
-msgstr "S účtem"
-
-#: ../gnome/src/actions.c:180
-msgid "No registered accounts"
-msgstr "Žádné zaregistrované účty"
-
-#: ../gnome/src/actions.c:609 ../gnome/src/actions.c:881
-msgid "Direct SIP call"
-msgstr "Přímé volání SIP"
-
-#: ../gnome/src/callable_obj.c:340
-msgid "today at %R"
-msgstr "dnes v %R"
-
-#: ../gnome/src/callable_obj.c:343
-msgid "yesterday at %R"
-msgstr "včera v %R"
-
-#: ../gnome/src/callable_obj.c:345
-msgid "%A at %R"
-msgstr "%A v %R"
-
-#: ../gnome/src/callable_obj.c:349
-msgid "%x at %R"
-msgstr "%x v %R"
-
-#: ../gnome/src/main.c:96 ../gnome/src/dbus/dbus.c:515
-msgid "SFLphone Error"
-msgstr "Chyba SFLphone"
-
-#: ../gnome/src/eel-gconf-extensions.c:73
-msgid ""
-"Cannot find a schema for gpdf preferences. \n"
-"Check your gconf setup, look at gpdf FAQ for \n"
-"more info"
-msgstr ""
-"Nelze najít schéma pro nastavení gpdf. \n"
-"Prověřte nastavení gconf, podívejte se na často kladené otázky pro gpdf FAQ "
-"na další\n"
-"informace"
-
-#: ../gnome/src/accountlist.c:151
+#: ../src/accountlist.c:155
 msgid "Registered"
 msgstr "Registrováno"
 
-#: ../gnome/src/accountlist.c:154
+#: ../src/accountlist.c:157
 msgid "Not Registered"
 msgstr "Neregistrováno"
 
-#: ../gnome/src/accountlist.c:157
+#: ../src/accountlist.c:159
 msgid "Trying..."
 msgstr "Zkouší se..."
 
-#: ../gnome/src/accountlist.c:163
+#: ../src/accountlist.c:161 ../src/sflnotify.c:170 ../src/sflnotify.c:183
+#, c-format
+msgid "Error"
+msgstr "Chyba"
+
+#: ../src/accountlist.c:163
 msgid "Authentication Failed"
 msgstr "Ověření selhalo"
 
-#: ../gnome/src/accountlist.c:166
+#: ../src/accountlist.c:165
 msgid "Network unreachable"
 msgstr "Síť není dosažitelná"
 
-#: ../gnome/src/accountlist.c:169
+#: ../src/accountlist.c:167
 msgid "Host unreachable"
 msgstr "Počítač je nedosažitelný"
 
-#: ../gnome/src/accountlist.c:172
-msgid "Stun configuration error"
-msgstr "Chyba v nastavení STUN"
+#: ../src/accountlist.c:169
+msgid "Service unavailable"
+msgstr "Služba nedostupná"
 
-#: ../gnome/src/accountlist.c:175
+#: ../src/accountlist.c:171
+msgid "Not acceptable"
+msgstr "Nepřijatelný"
+
+#: ../src/accountlist.c:173
 msgid "Stun server invalid"
 msgstr "Neplatný server STUN"
 
-#: ../gnome/src/accountlist.c:178
+#: ../src/accountlist.c:175
 msgid "Ready"
 msgstr "Připraven"
 
-#: ../gnome/src/accountlist.c:181
+#: ../src/accountlist.c:177
 msgid "Invalid"
 msgstr "Neplatný"
 
-#: ../gnome/src/config/zrtpadvanceddialog.c:51
-msgid "ZRTP Options"
-msgstr "Volby pro ZRTP"
+#: ../src/actions.c:134
+msgid "(SIP)"
+msgstr ""
 
-#: ../gnome/src/config/zrtpadvanceddialog.c:70
-msgid "Send Hello Hash in S_DP"
-msgstr "Poslat kontrolní součet pozdravení v S_DP"
+#: ../src/actions.c:135
+msgid "(IAX)"
+msgstr ""
 
-#: ../gnome/src/config/zrtpadvanceddialog.c:75
-msgid "Ask User to Confirm SAS"
-msgstr "Požádat uživatele o potvrzení SAS"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:80
-msgid "_Warn if ZRTP not supported"
-msgstr "_Varovat, když není ZRTP podporováno"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:85
-msgid "Display SAS once for hold events"
-msgstr "Zobrazit SAS jen jednou pro události dání do čekání"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:124
-msgid "SDES Options"
-msgstr "Volby pro SDES"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:142
-msgid "Fallback on RTP on SDES failure"
-msgstr "Záloha při selhání s RTP na SDES"
-
-#: ../gnome/src/config/audioconf.c:549
-#: ../gnome/src/config/addressbook-config.c:425
-msgid "Name"
-msgstr "Název"
-
-#: ../gnome/src/config/audioconf.c:554
-msgid "Frequency"
-msgstr "Frekvence"
-
-#: ../gnome/src/config/audioconf.c:559
-msgid "Bitrate"
-msgstr "Datový tok"
-
-#: ../gnome/src/config/audioconf.c:669
-msgid "ALSA plugin"
-msgstr "Přídavný modul ALSA"
-
-#: ../gnome/src/config/audioconf.c:691
-msgid "Output"
-msgstr "Výstup"
-
-#: ../gnome/src/config/audioconf.c:713
-msgid "Input"
-msgstr "Vstup"
-
-#: ../gnome/src/config/audioconf.c:734
-msgid "Ringtone"
-msgstr "Vyzváněcí melodie"
-
-#: ../gnome/src/config/audioconf.c:775
-msgid "Sound Manager"
-msgstr "Správce zvuku"
-
-#: ../gnome/src/config/audioconf.c:786
-msgid "_Pulseaudio"
-msgstr "PulseAudio"
-
-#: ../gnome/src/config/audioconf.c:790
-msgid "_ALSA"
-msgstr "ALSA"
-
-#: ../gnome/src/config/audioconf.c:796
-msgid "ALSA settings"
-msgstr "Nastavení pro ALSA"
-
-#: ../gnome/src/config/audioconf.c:807
-msgid "Recordings"
-msgstr "Nahrávky"
-
-#: ../gnome/src/config/audioconf.c:811
-msgid "Destination folder"
-msgstr "Cílová složka"
-
-#: ../gnome/src/config/audioconf.c:815
-msgid "Select a folder"
-msgstr "Vybrat složku"
-
-#: ../gnome/src/config/audioconf.c:827
-msgid "_Always recording"
-msgstr "_Vždy nahrávat"
-
-#: ../gnome/src/config/audioconf.c:834
-msgid "Voice enhancement settings"
-msgstr "Nastavení k zlepšení hlasu"
-
-#: ../gnome/src/config/audioconf.c:837
-msgid "_Noise Reduction"
-msgstr "Potlačení šumu"
-
-#: ../gnome/src/config/audioconf.c:851
-msgid "_Echo Cancellation"
-msgstr "Zrušení _ozvěny"
-
-#: ../gnome/src/config/addressbook-config.c:339
-#: ../gnome/src/config/preferencesdialog.c:416
-#: ../gnome/src/config/shortcuts-config.c:115
-msgid "General"
-msgstr "Obecné"
-
-#: ../gnome/src/config/addressbook-config.c:343
-msgid "_Use Evolution address books"
-msgstr "_Použít knihy adres Evolution"
-
-#: ../gnome/src/config/addressbook-config.c:350
-msgid "Download limit :"
-msgstr "Omezení stahování:"
-
-#: ../gnome/src/config/addressbook-config.c:358
-msgid "cards"
-msgstr "karty"
-
-#: ../gnome/src/config/addressbook-config.c:363
-msgid "_Display contact photo if available"
-msgstr "_Zobrazit fotografii, je-li dostupná"
-
-#: ../gnome/src/config/addressbook-config.c:369
-msgid "Fields from Evolution's address books"
-msgstr "Pole knihy adres Evolution"
-
-#: ../gnome/src/config/addressbook-config.c:372
-msgid "_Work"
-msgstr "_Pracovní"
-
-#: ../gnome/src/config/addressbook-config.c:378
-msgid "_Home"
-msgstr "_Soukromé"
-
-#: ../gnome/src/config/addressbook-config.c:384
-msgid "_Mobile"
-msgstr "_Mobilní telefon"
-
-#: ../gnome/src/config/addressbook-config.c:390
-msgid "Address Books"
-msgstr "Knihy adres"
-
-#: ../gnome/src/config/addressbook-config.c:394
-msgid "Select which Evolution address books to use"
-msgstr "Vybrat používanou knihu adres Evolution"
-
-#: ../gnome/src/config/hooks-config.c:149
-msgid "URL Argument"
-msgstr "Argument URL"
-
-#: ../gnome/src/config/hooks-config.c:157
-msgid "Trigger on specific _SIP header"
-msgstr "Spustit při určité hlavičce _SIP"
-
-#: ../gnome/src/config/hooks-config.c:166
-msgid "Trigger on _IAX2 URL"
-msgstr "Spustit při adrese (URL) _IAX2"
-
-#: ../gnome/src/config/hooks-config.c:171
-msgid "Command to _run"
-msgstr "Příkaz ke spuštění"
-
-#: ../gnome/src/config/hooks-config.c:181
-msgid "Phone number rewriting"
-msgstr "Přizpůsobení telefonního čísla"
-
-#: ../gnome/src/config/hooks-config.c:185
-msgid "_Prefix dialed numbers with"
-msgstr "_Vložit před telefonní čísla předponu"
-
-#: ../gnome/src/config/assistant.c:78
+#: ../src/actions.c:141
 #, c-format
-msgid "This assistant is now finished."
-msgstr "Průvodce ukončen."
-
-#: ../gnome/src/config/assistant.c:80
-msgid ""
-"You can at any time check your registration state or modify your accounts "
-"parameters in the Options/Accounts window."
+msgid "%s %s"
 msgstr ""
-"Kdykoli můžete prověřit stav své registrace nebo změnit nastavení účtu v "
-"okně Volby -> Účty."
 
-#: ../gnome/src/config/assistant.c:83
-msgid "Alias"
-msgstr "Přezdívka"
+#: ../src/actions.c:145
+#, c-format
+msgid "No registered accounts"
+msgstr "Žádné zaregistrované účty"
 
-#: ../gnome/src/config/assistant.c:87
-msgid "Server"
-msgstr "Server"
+#: ../src/actions.c:505
+#, c-format
+msgid "Direct SIP call"
+msgstr "Přímé volání SIP"
 
-#: ../gnome/src/config/assistant.c:91
-msgid "Username"
-msgstr "Uživatelské jméno"
+#. less than 1 week
+#. less than 1 day
+#: ../src/callable_obj.c:306
+msgid "today at %R"
+msgstr "dnes v %R"
 
-#: ../gnome/src/config/assistant.c:95
-msgid "Security: "
-msgstr "Bezpečnost: "
+#. less than 2 days
+#: ../src/callable_obj.c:309
+msgid "yesterday at %R"
+msgstr "včera v %R"
 
-#: ../gnome/src/config/assistant.c:98
-msgid "SRTP/ZRTP draft-zimmermann"
-msgstr "SRTP/ZRTP draft-zimmermann"
+#. between 2 days and 1 week
+#: ../src/callable_obj.c:311
+msgid "%A at %R"
+msgstr "%A v %R"
 
-#: ../gnome/src/config/assistant.c:100
-msgid "None"
-msgstr "Žádný"
+#. more than 1 week
+#: ../src/callable_obj.c:315
+msgid "%x at %R"
+msgstr "%x v %R"
 
-#: ../gnome/src/config/assistant.c:244
-msgid "SFLphone account creation wizard"
-msgstr "Průvodce vytvořením účtu SFLphone"
+#: ../src/config/accountconfigdialog.c:227
+msgid "_Auto-answer calls"
+msgstr "_Autotomatická odpověď na volání"
 
-#: ../gnome/src/config/assistant.c:271
-msgid "Welcome to the Account creation wizard of SFLphone!"
-msgstr "Vítejte v průvodci vytvořením účtu SFLphone!"
-
-#: ../gnome/src/config/assistant.c:272
-msgid "This installation wizard will help you configure an account."
-msgstr "Pomocník s nastavením vám pomůže se zřízením účtu."
-
-#: ../gnome/src/config/assistant.c:287
-msgid "VoIP Protocols"
-msgstr "Protokoly VoIP"
-
-#: ../gnome/src/config/assistant.c:287
-msgid "Select an account type"
-msgstr "Vyberte typ účtu"
-
-#: ../gnome/src/config/assistant.c:289
-msgid "SIP (Session Initiation Protocol)"
-msgstr "SIP (Protokol zahájení sezení - Session Initiation Protocol)"
-
-#: ../gnome/src/config/assistant.c:291
-msgid "IAX2 (InterAsterix Exchange)"
-msgstr "IAX2 (InterAsterix Exchange)"
-
-#: ../gnome/src/config/assistant.c:306
-msgid "Account"
-msgstr "Účet"
-
-#: ../gnome/src/config/assistant.c:306
-msgid "Please select one of the following options"
-msgstr "Vyberte, prosím, jednu z následujících voleb"
-
-#: ../gnome/src/config/assistant.c:308
-msgid ""
-"Create a free SIP/IAX2 account on sflphone.org \n"
-"(For testing purpose only)"
-msgstr ""
-"Vytvořit účet SIP/IAX2 zdarma na sflphone.org\n"
-"(jen pro účel zkoušení)"
-
-#: ../gnome/src/config/assistant.c:310
-msgid "Register an existing SIP or IAX2 account"
-msgstr "Zaregistrovat existující účet SIP nebo IAX2"
-
-#: ../gnome/src/config/assistant.c:324
-msgid "SIP account settings"
-msgstr "Nastavení účtu SIP"
-
-#: ../gnome/src/config/assistant.c:324 ../gnome/src/config/assistant.c:424
-msgid "Please fill the following information"
-msgstr "Vyplňte, prosím, následující pole"
-
-#: ../gnome/src/config/assistant.c:332 ../gnome/src/config/assistant.c:432
-#: ../gnome/src/config/accountconfigdialog.c:250
-msgid "_Alias"
-msgstr "_Přezdívka"
-
-#: ../gnome/src/config/assistant.c:340 ../gnome/src/config/assistant.c:440
-#: ../gnome/src/config/accountconfigdialog.c:289
-msgid "_Host name"
-msgstr "Název _počítače"
-
-#: ../gnome/src/config/assistant.c:348 ../gnome/src/config/assistant.c:448
-#: ../gnome/src/config/accountconfigdialog.c:298
-msgid "_User name"
-msgstr "Jméno _uživatele"
-
-#: ../gnome/src/config/assistant.c:358 ../gnome/src/config/assistant.c:457
-#: ../gnome/src/config/accountconfigdialog.c:313
-msgid "_Password"
-msgstr "_Heslo"
-
-#: ../gnome/src/config/assistant.c:367 ../gnome/src/config/assistant.c:466
-#: ../gnome/src/config/accountconfigdialog.c:329
-msgid "Show password"
-msgstr "Ukázat heslo"
-
-#: ../gnome/src/config/assistant.c:372 ../gnome/src/config/assistant.c:471
-#: ../gnome/src/config/accountconfigdialog.c:343
-msgid "_Voicemail number"
-msgstr "Volací číslo _hlasové schránky"
-
-#: ../gnome/src/config/assistant.c:380 ../gnome/src/config/assistant.c:410
-msgid "Secure communications with _ZRTP"
-msgstr "Zabezpečené spojení s _ZRTP"
-
-#: ../gnome/src/config/assistant.c:394
-msgid "Optional email address"
-msgstr "Volitelná adresa poštovní schránky"
-
-#: ../gnome/src/config/assistant.c:394
-msgid "This email address will be used to send your voicemail messages."
-msgstr "Vaše hlasové zprávy budou počítačem zasílány na tuto adresu."
-
-#: ../gnome/src/config/assistant.c:402
-msgid "_Email address"
-msgstr "Adresa _elektronické pošty"
-
-#: ../gnome/src/config/assistant.c:424
-msgid "IAX2 account settings"
-msgstr "Nastavení účtu IAX2"
-
-#: ../gnome/src/config/assistant.c:490
-msgid "Network Address Translation (NAT)"
-msgstr "NAT (Překlad síťové adresy - Network Address Translation)"
-
-#: ../gnome/src/config/assistant.c:490
-msgid "You should probably enable this if you are behind a firewall."
-msgstr "Pokud jste za firewallem, měli byste to zřejmě povolit."
-
-#: ../gnome/src/config/assistant.c:499
-msgid "E_nable STUN"
-msgstr "P_ovolit STUN"
-
-#: ../gnome/src/config/assistant.c:506
-msgid "_STUN server"
-msgstr "Server _STUN"
-
-#: ../gnome/src/config/assistant.c:521
-msgid "Account Registration"
-msgstr "Registrace účtu"
-
-#: ../gnome/src/config/assistant.c:521
-msgid "Congratulations!"
-msgstr "Blahopřání!"
-
-#: ../gnome/src/config/preferencesdialog.c:169
-msgid "Desktop Notifications"
-msgstr "Oznamování na ploše"
-
-#: ../gnome/src/config/preferencesdialog.c:174
-msgid "_Enable notifications"
-msgstr "_Povolit oznamování"
-
-#: ../gnome/src/config/preferencesdialog.c:181
-msgid "System Tray Icon"
-msgstr "Ikona v oznamovací oblasti panelu"
-
-#: ../gnome/src/config/preferencesdialog.c:189
-msgid "Show SFLphone in the system tray"
-msgstr "Ukazovat SFLphone v systémové části panelu"
-
-#: ../gnome/src/config/preferencesdialog.c:196
-msgid "_Popup main window on incoming call"
-msgstr "Při příchozím volání otevřít _hlavní okno"
-
-#: ../gnome/src/config/preferencesdialog.c:202
-msgid "Ne_ver popup main window"
-msgstr "_Nikdy neotevírat hlavní okno automaticky"
-
-#: ../gnome/src/config/preferencesdialog.c:215
-msgid "Hide SFLphone window on _startup"
-msgstr "_Skrýt okno SFLphone při spuštění"
-
-#: ../gnome/src/config/preferencesdialog.c:229
-msgid "Calls History"
-msgstr "Historie volání"
-
-#: ../gnome/src/config/preferencesdialog.c:233
-msgid "_Keep my history for at least"
-msgstr "_Uchovat historii alespoň po"
-
-#: ../gnome/src/config/preferencesdialog.c:248
-msgid "days"
-msgstr "dny"
-
-#: ../gnome/src/config/preferencesdialog.c:253
-msgid "Instant Messaging"
-msgstr "Okamžité odesílání zpráv"
-
-#: ../gnome/src/config/preferencesdialog.c:257
-msgid "Enable instant messaging"
-msgstr "Povolit okamžité odesílání zpráv"
-
-#: ../gnome/src/config/preferencesdialog.c:377
-msgid "Preferences"
-msgstr "Nastavení"
-
-#: ../gnome/src/config/preferencesdialog.c:422
-#: ../gnome/src/config/accountconfigdialog.c:1070
-#: ../gnome/src/config/accountconfigdialog.c:1208
-msgid "Audio"
-msgstr "Zvuk"
-
-#: ../gnome/src/config/preferencesdialog.c:427
-msgid "Hooks"
-msgstr "Příkazy a přizpůsobení"
-
-#: ../gnome/src/config/preferencesdialog.c:432
-msgid "Shortcuts"
-msgstr "Klávesové zkratky"
-
-#: ../gnome/src/config/preferencesdialog.c:438
-msgid "Address Book"
-msgstr "Kniha adres"
-
-#: ../gnome/src/config/accountconfigdialog.c:231
+#: ../src/config/accountconfigdialog.c:247
 msgid "Account Parameters"
 msgstr "Nastavení účtu"
 
-#: ../gnome/src/config/accountconfigdialog.c:260
+#. alias field
+#: ../src/config/accountconfigdialog.c:256 ../src/config/assistant.c:305
+#: ../src/config/assistant.c:403
+msgid "_Alias"
+msgstr "_Přezdívka"
+
+#: ../src/config/accountconfigdialog.c:267
 msgid "_Protocol"
 msgstr "_Protokol"
 
-#: ../gnome/src/config/accountconfigdialog.c:277
+#. Should never come here, add debug message.
+#: ../src/config/accountconfigdialog.c:284
 msgid "Unknown"
 msgstr "Neznámý"
 
-#: ../gnome/src/config/accountconfigdialog.c:334
+#. server field
+#: ../src/config/accountconfigdialog.c:299 ../src/config/assistant.c:313
+#: ../src/config/assistant.c:411
+msgid "_Host name"
+msgstr "Název _počítače"
+
+#. username field
+#: ../src/config/accountconfigdialog.c:309 ../src/config/assistant.c:321
+#: ../src/config/assistant.c:419
+msgid "_User name"
+msgstr "Jméno _uživatele"
+
+#. password field
+#: ../src/config/accountconfigdialog.c:330 ../src/config/assistant.c:331
+#: ../src/config/assistant.c:428
+msgid "_Password"
+msgstr "_Heslo"
+
+#: ../src/config/accountconfigdialog.c:349 ../src/config/assistant.c:340
+#: ../src/config/assistant.c:437
+msgid "Show password"
+msgstr "Ukázat heslo"
+
+#: ../src/config/accountconfigdialog.c:354
 msgid "_Proxy"
 msgstr "_Proxy"
 
-#: ../gnome/src/config/accountconfigdialog.c:352
+#. voicemail number field
+#: ../src/config/accountconfigdialog.c:364 ../src/config/assistant.c:345
+#: ../src/config/assistant.c:442
+msgid "_Voicemail number"
+msgstr "Volací číslo _hlasové schránky"
+
+#: ../src/config/accountconfigdialog.c:375
 msgid "_User-agent"
 msgstr "_User-agent"
 
-#: ../gnome/src/config/accountconfigdialog.c:413
+#: ../src/config/accountconfigdialog.c:400
+#, fuzzy
+msgid "Presence notifications"
+msgstr "_Povolit oznamování"
+
+#: ../src/config/accountconfigdialog.c:409
+#, fuzzy
+msgid "_Enable"
+msgstr "Povolit ladění"
+
+#: ../src/config/accountconfigdialog.c:478
 msgid "Authentication"
 msgstr "Ověření"
 
-#: ../gnome/src/config/accountconfigdialog.c:414
+#: ../src/config/accountconfigdialog.c:479
 msgid "Secret"
 msgstr "Tajné"
 
-#: ../gnome/src/config/accountconfigdialog.c:658
+#: ../src/config/accountconfigdialog.c:728
 msgid "Credential"
 msgstr "Přístupové údaje"
 
-#: ../gnome/src/config/accountconfigdialog.c:692
+#: ../src/config/accountconfigdialog.c:760
 msgid "Authentication name"
 msgstr "Uživatelské jméno"
 
-#: ../gnome/src/config/accountconfigdialog.c:703
+#: ../src/config/accountconfigdialog.c:771
 msgid "Password"
 msgstr "Heslo"
 
-#: ../gnome/src/config/accountconfigdialog.c:756
-#: ../gnome/src/config/accountconfigdialog.c:1229
+#: ../src/config/accountconfigdialog.c:823
+#: ../src/config/accountconfigdialog.c:1517
 msgid "Security"
 msgstr "Bezpečnost"
 
-#: ../gnome/src/config/accountconfigdialog.c:767
+#: ../src/config/accountconfigdialog.c:839
 msgid "Use TLS transport(sips)"
 msgstr "Použít přenos TLS (SIPS)"
 
-#: ../gnome/src/config/accountconfigdialog.c:773
+#. ZRTP subsection
+#: ../src/config/accountconfigdialog.c:847
 msgid "SRTP key exchange"
 msgstr "Výměna klíče SRTP"
 
-#: ../gnome/src/config/accountconfigdialog.c:779
+#: ../src/config/accountconfigdialog.c:853
 msgid "Disabled"
 msgstr "Vypnuto"
 
-#: ../gnome/src/config/accountconfigdialog.c:843
+#: ../src/config/accountconfigdialog.c:917
 msgid "Registration"
 msgstr "Registrace"
 
-#: ../gnome/src/config/accountconfigdialog.c:847
+#: ../src/config/accountconfigdialog.c:921
 msgid "Registration expire"
 msgstr "Vypršení registrace"
 
-#: ../gnome/src/config/accountconfigdialog.c:856
-msgid "_Comply with RFC 3263"
-msgstr "Dodržovat RFC 3263"
-
-#: ../gnome/src/config/accountconfigdialog.c:876
+#: ../src/config/accountconfigdialog.c:944
 msgid "Network Interface"
 msgstr "Síťové rozhraní"
 
-#: ../gnome/src/config/accountconfigdialog.c:887
+#: ../src/config/accountconfigdialog.c:954
 msgid "Local address"
 msgstr "Místní adresa"
 
-#: ../gnome/src/config/accountconfigdialog.c:918
+#. Local port widget
+#: ../src/config/accountconfigdialog.c:987
 msgid "Local port"
 msgstr "Místní přípojka"
 
-#: ../gnome/src/config/accountconfigdialog.c:960
-#: ../gnome/src/config/accountconfigdialog.c:994
+#: ../src/config/accountconfigdialog.c:1028
+#: ../src/config/accountconfigdialog.c:1063
 msgid "Published address"
 msgstr "Zveřejněná adresa"
 
-#: ../gnome/src/config/accountconfigdialog.c:964
+#: ../src/config/accountconfigdialog.c:1032
 msgid "Using STUN"
 msgstr "Použít STUN"
 
-#: ../gnome/src/config/accountconfigdialog.c:972
+#: ../src/config/accountconfigdialog.c:1039
 msgid "STUN server URL"
 msgstr "Adresa (URL) serveru STUN"
 
-#: ../gnome/src/config/accountconfigdialog.c:980
+#: ../src/config/accountconfigdialog.c:1047
 msgid "Same as local parameters"
 msgstr "Odpovídající místnímu nastavení"
 
-#: ../gnome/src/config/accountconfigdialog.c:983
+#: ../src/config/accountconfigdialog.c:1051
 msgid "Set published address and port:"
 msgstr "Nastavit adresu a přípojku ke zveřejnění:"
 
-#: ../gnome/src/config/accountconfigdialog.c:1003
+#: ../src/config/accountconfigdialog.c:1072
 msgid "Published port"
 msgstr "Zveřejněná přípojka"
 
-#: ../gnome/src/config/accountconfigdialog.c:1084
+#: ../src/config/accountconfigdialog.c:1120
+msgid "Min"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1121
+msgid "Max"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1144
+msgid "Audio RTP Port Range"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1150
+#, fuzzy
+msgid "Video RTP Port Range"
+msgstr "Správce videa"
+
+#. Box for the audiocodecs
+#: ../src/config/accountconfigdialog.c:1193
+#: ../src/config/accountconfigdialog.c:1501
+#: ../src/config/preferencesdialog.c:418
+msgid "Audio"
+msgstr "Zvuk"
+
+#: ../src/config/accountconfigdialog.c:1205
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../gnome/src/config/accountconfigdialog.c:1095
+#: ../src/config/accountconfigdialog.c:1209
 msgid "RTP"
 msgstr "RTP"
 
-#: ../gnome/src/config/accountconfigdialog.c:1099
+#: ../src/config/accountconfigdialog.c:1215
 msgid "SIP"
 msgstr "SIP"
 
-#: ../gnome/src/config/accountconfigdialog.c:1107
+#: ../src/config/accountconfigdialog.c:1223
 msgid "Ringtones"
 msgstr "Vyzváněcí melodie"
 
-#: ../gnome/src/config/accountconfigdialog.c:1110
+#: ../src/config/accountconfigdialog.c:1226
 msgid "Choose a ringtone"
 msgstr "Vybrat vyzváněcí melodii"
 
-#: ../gnome/src/config/accountconfigdialog.c:1115
+#: ../src/config/accountconfigdialog.c:1229
 msgid "_Enable ringtones"
 msgstr "_Povolit vyzváněcí melodie"
 
-#: ../gnome/src/config/accountconfigdialog.c:1127
+#: ../src/config/accountconfigdialog.c:1247
 msgid "Audio Files"
 msgstr "Zvukové soubory"
 
-#: ../gnome/src/config/accountconfigdialog.c:1145
+#. Box for the videocodecs
+#: ../src/config/accountconfigdialog.c:1278
+#: ../src/config/accountconfigdialog.c:1506
+#: ../src/config/preferencesdialog.c:424
+msgid "Video"
+msgstr "Video"
+
+#: ../src/config/accountconfigdialog.c:1295
+#, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
@@ -747,68 +338,462 @@ msgstr ""
 "URI, jako například <b>sip:remotepeer</b>. Zde stanovená nastavení se budou "
 "používat, i když nelze příchozímu nebo odchozímu volání přiřadit žádný účet."
 
-#: ../gnome/src/config/accountconfigdialog.c:1182
+#: ../src/config/accountconfigdialog.c:1475
 msgid "Account settings"
 msgstr "Nastavení účtu"
 
-#: ../gnome/src/config/accountconfigdialog.c:1202
+#: ../src/config/accountconfigdialog.c:1496
 msgid "Basic"
 msgstr "Základní"
 
-#: ../gnome/src/config/accountconfigdialog.c:1224
+#: ../src/config/accountconfigdialog.c:1513
 msgid "Advanced"
 msgstr "Pokročilé"
 
-#: ../gnome/src/config/accountconfigdialog.c:1235
+#: ../src/config/accountconfigdialog.c:1521
 msgid "Network"
 msgstr "Síť"
 
-#: ../gnome/src/config/shortcuts-config.c:117
-msgid "Be careful: these shortcuts might override system-wide shortcuts."
-msgstr "Pozor: Tato nastavení mohou přepsat klávesové zkratky systému."
+#: ../src/config/accountlistconfigdialog.c:111
+#, c-format
+msgid "Are you sure want to delete \"%s\"?"
+msgstr ""
 
-#: ../gnome/src/config/accountlistconfigdialog.c:202
+#: ../src/config/accountlistconfigdialog.c:113
+#, c-format
+msgid "Are you sure want to delete account?"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:122
+msgid "Remove"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:124
+#, fuzzy
+msgid "Remove account"
+msgstr "Nemáte žádný činný účet"
+
+#: ../src/config/accountlistconfigdialog.c:530
+msgid "Protocol"
+msgstr "Protokol"
+
+#: ../src/config/accountlistconfigdialog.c:540
+msgid "Status"
+msgstr "Stav"
+
+#: ../src/config/accountlistconfigdialog.c:639
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr "Server odpověděl \"%s\" (%d)"
 
-#: ../gnome/src/config/accountlistconfigdialog.c:494
-msgid "Protocol"
-msgstr "Protokol"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:502
-msgid "Status"
-msgstr "Stav"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:581
+#: ../src/config/accountlistconfigdialog.c:667
 msgid "Accounts"
 msgstr "Účty"
 
-#: ../gnome/src/config/accountlistconfigdialog.c:590
+#: ../src/config/accountlistconfigdialog.c:676
 msgid "Configured Accounts"
 msgstr "Nastavené účty"
 
-#: ../gnome/src/config/accountlistconfigdialog.c:608
-#, c-format
-msgid "There is %d active account"
-msgid_plural "There are %d active accounts"
-msgstr[0] "%d činný účet"
-msgstr[1] "%d činné účty"
-msgstr[2] "%d činných účtů"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:615
+#: ../src/config/accountlistconfigdialog.c:704
 msgid "You have no active account"
 msgstr "Nemáte žádný činný účet"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:41
+#: ../src/config/addressbook-config.c:313
+#: ../src/config/preferencesdialog.c:412 ../src/config/shortcuts-config.c:117
+msgid "General"
+msgstr "Obecné"
+
+#. PHOTO DISPLAY
+#: ../src/config/addressbook-config.c:317
+msgid "_Use Evolution address books"
+msgstr "_Použít knihy adres Evolution"
+
+#: ../src/config/addressbook-config.c:324
+msgid "Download limit :"
+msgstr "Omezení stahování:"
+
+#: ../src/config/addressbook-config.c:332
+msgid "cards"
+msgstr "karty"
+
+#. PHOTO DISPLAY
+#: ../src/config/addressbook-config.c:337
+msgid "_Display contact photo if available"
+msgstr "_Zobrazit fotografii, je-li dostupná"
+
+#. Fields
+#: ../src/config/addressbook-config.c:344
+msgid "Fields from Evolution's address books"
+msgstr "Pole knihy adres Evolution"
+
+#: ../src/config/addressbook-config.c:347
+msgid "_Work"
+msgstr "_Pracovní"
+
+#: ../src/config/addressbook-config.c:353
+msgid "_Home"
+msgstr "_Soukromé"
+
+#: ../src/config/addressbook-config.c:359
+msgid "_Mobile"
+msgstr "_Mobilní telefon"
+
+#. Address Book
+#: ../src/config/addressbook-config.c:365
+msgid "Address Books"
+msgstr "Knihy adres"
+
+#: ../src/config/addressbook-config.c:369
+msgid "Select which Evolution address books to use"
+msgstr "Vybrat používanou knihu adres Evolution"
+
+#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:542
+#: ../src/config/videoconf.c:492
+msgid "Name"
+msgstr "Název"
+
+#: ../src/config/assistant.c:76
+msgid "This assistant is now finished."
+msgstr "Průvodce ukončen."
+
+#: ../src/config/assistant.c:79
+msgid ""
+"You can at any time check your registration state or modify your accounts "
+"parameters in the Options/Accounts window."
+msgstr ""
+"Kdykoli můžete prověřit stav své registrace nebo změnit nastavení účtu v "
+"okně Volby -> Účty."
+
+#: ../src/config/assistant.c:81
+msgid "Alias"
+msgstr "Přezdívka"
+
+#: ../src/config/assistant.c:82
+msgid "Server"
+msgstr "Server"
+
+#: ../src/config/assistant.c:83
+msgid "Username"
+msgstr "Uživatelské jméno"
+
+#: ../src/config/assistant.c:84
+msgid "Security: "
+msgstr "Bezpečnost: "
+
+#: ../src/config/assistant.c:88
+msgid "SRTP/ZRTP draft-zimmermann"
+msgstr "SRTP/ZRTP draft-zimmermann"
+
+#: ../src/config/assistant.c:90
+msgid "None"
+msgstr "Žádný"
+
+#: ../src/config/assistant.c:226
+msgid "SFLphone account creation wizard"
+msgstr "Průvodce vytvořením účtu SFLphone"
+
+#: ../src/config/assistant.c:251
+msgid "Welcome to the Account creation wizard of SFLphone!"
+msgstr "Vítejte v průvodci vytvořením účtu SFLphone!"
+
+#: ../src/config/assistant.c:252
+msgid "This installation wizard will help you configure an account."
+msgstr "Pomocník s nastavením vám pomůže se zřízením účtu."
+
+#: ../src/config/assistant.c:264
+msgid "VoIP Protocols"
+msgstr "Protokoly VoIP"
+
+#: ../src/config/assistant.c:264
+msgid "Select an account type"
+msgstr "Vyberte typ účtu"
+
+#: ../src/config/assistant.c:266
+msgid "SIP (Session Initiation Protocol)"
+msgstr "SIP (Protokol zahájení sezení - Session Initiation Protocol)"
+
+#: ../src/config/assistant.c:268
+msgid "IAX2 (InterAsterix Exchange)"
+msgstr "IAX2 (InterAsterix Exchange)"
+
+#: ../src/config/assistant.c:280
+msgid "Account"
+msgstr "Účet"
+
+#: ../src/config/assistant.c:280
+msgid "Please select one of the following options"
+msgstr "Vyberte, prosím, jednu z následujících voleb"
+
+#: ../src/config/assistant.c:282
+msgid ""
+"Create a free SIP/IAX2 account on sflphone.org \n"
+"(For testing purpose only)"
+msgstr ""
+"Vytvořit účet SIP/IAX2 zdarma na sflphone.org\n"
+"(jen pro účel zkoušení)"
+
+#: ../src/config/assistant.c:284
+msgid "Register an existing SIP or IAX2 account"
+msgstr "Zaregistrovat existující účet SIP nebo IAX2"
+
+#: ../src/config/assistant.c:297
+msgid "SIP account settings"
+msgstr "Nastavení účtu SIP"
+
+#: ../src/config/assistant.c:297 ../src/config/assistant.c:395
+msgid "Please fill the following information"
+msgstr "Vyplňte, prosím, následující pole"
+
+#. Security options
+#: ../src/config/assistant.c:353 ../src/config/assistant.c:382
+msgid "Secure communications with _ZRTP"
+msgstr "Zabezpečené spojení s _ZRTP"
+
+#: ../src/config/assistant.c:366
+msgid "Optional email address"
+msgstr "Volitelná adresa poštovní schránky"
+
+#: ../src/config/assistant.c:366
+msgid "This email address will be used to send your voicemail messages."
+msgstr "Vaše hlasové zprávy budou počítačem zasílány na tuto adresu."
+
+#. email field
+#: ../src/config/assistant.c:374
+msgid "_Email address"
+msgstr "Adresa _elektronické pošty"
+
+#: ../src/config/assistant.c:395
+msgid "IAX2 account settings"
+msgstr "Nastavení účtu IAX2"
+
+#: ../src/config/assistant.c:460
+msgid "Network Address Translation (NAT)"
+msgstr "NAT (Překlad síťové adresy - Network Address Translation)"
+
+#: ../src/config/assistant.c:460
+msgid "You should probably enable this if you are behind a firewall."
+msgstr "Pokud jste za firewallem, měli byste to zřejmě povolit."
+
+#. enable
+#: ../src/config/assistant.c:469
+msgid "E_nable STUN"
+msgstr "P_ovolit STUN"
+
+#. server address
+#: ../src/config/assistant.c:476
+msgid "_STUN server"
+msgstr "Server _STUN"
+
+#: ../src/config/assistant.c:491
+msgid "Account Registration"
+msgstr "Registrace účtu"
+
+#: ../src/config/assistant.c:491
+msgid "Congratulations!"
+msgstr "Blahopřání!"
+
+#: ../src/config/audioconf.c:547
+msgid "Frequency"
+msgstr "Frekvence"
+
+#: ../src/config/audioconf.c:552
+msgid "Bitrate"
+msgstr "Datový tok"
+
+#: ../src/config/audioconf.c:557
+#, fuzzy
+msgid "Channels"
+msgstr "Kanál"
+
+#: ../src/config/audioconf.c:600
+msgid "ALSA plugin"
+msgstr "Přídavný modul ALSA"
+
+#: ../src/config/audioconf.c:621 ../src/config/audioconf.c:702
+msgid "Output"
+msgstr "Výstup"
+
+#: ../src/config/audioconf.c:642 ../src/config/audioconf.c:724
+msgid "Input"
+msgstr "Vstup"
+
+#: ../src/config/audioconf.c:662 ../src/config/audioconf.c:744
+msgid "Ringtone"
+msgstr "Vyzváněcí melodie"
+
+#: ../src/config/audioconf.c:865
+msgid "Sound Manager"
+msgstr "Správce zvuku"
+
+#: ../src/config/audioconf.c:872
+msgid "_Pulseaudio"
+msgstr "PulseAudio"
+
+#. Box for the Pulse configuration
+#: ../src/config/audioconf.c:877
+msgid "Pulseaudio settings"
+msgstr "Nastavení Pulseaudio"
+
+#: ../src/config/audioconf.c:881
+msgid "_ALSA"
+msgstr "ALSA"
+
+#. Box for the ALSA configuration
+#: ../src/config/audioconf.c:887
+msgid "ALSA settings"
+msgstr "Nastavení pro ALSA"
+
+#: ../src/config/audioconf.c:902
+msgid "Recordings"
+msgstr "Nahrávky"
+
+#. label
+#: ../src/config/audioconf.c:906
+msgid "Destination folder"
+msgstr "Cílová složka"
+
+#. folder chooser button
+#: ../src/config/audioconf.c:910
+msgid "Select a folder"
+msgstr "Vybrat složku"
+
+#: ../src/config/audioconf.c:921
+msgid "_Always recording"
+msgstr "_Vždy nahrávat"
+
+#. Box for the voice enhancement configuration
+#: ../src/config/audioconf.c:928
+msgid "Voice enhancement settings"
+msgstr "Nastavení k zlepšení hlasu"
+
+#: ../src/config/audioconf.c:931
+msgid "_Noise Reduction"
+msgstr "Potlačení šumu"
+
+#: ../src/config/audioconf.c:945
+msgid "_Echo Cancellation"
+msgstr "Zrušení _ozvěny"
+
+#: ../src/config/hooks-config.c:151
+msgid "URL Argument"
+msgstr "Argument URL"
+
+#: ../src/config/hooks-config.c:160
+msgid "Trigger on specific _SIP header"
+msgstr "Spustit při určité hlavičce _SIP"
+
+#: ../src/config/hooks-config.c:169
+msgid "Trigger on _IAX2 URL"
+msgstr "Spustit při adrese (URL) _IAX2"
+
+#: ../src/config/hooks-config.c:175
+msgid "Command to _run"
+msgstr "Příkaz ke spuštění"
+
+#: ../src/config/hooks-config.c:183
+msgid "Phone number rewriting"
+msgstr "Přizpůsobení telefonního čísla"
+
+#: ../src/config/hooks-config.c:187
+msgid "_Prefix dialed numbers with"
+msgstr "_Vložit před telefonní čísla předponu"
+
+#: ../src/config/hooks-config.c:198
+msgid "Messaging"
+msgstr "Zprávy"
+
+#: ../src/config/hooks-config.c:202
+msgid "Open URL in"
+msgstr "Otevřít adresu v"
+
+#: ../src/config/preferencesdialog.c:179
+msgid "Desktop Notifications"
+msgstr "Oznamování na ploše"
+
+#. Notification All
+#: ../src/config/preferencesdialog.c:183
+msgid "_Enable notifications"
+msgstr "_Povolit oznamování"
+
+#. Window Behaviour frame
+#: ../src/config/preferencesdialog.c:189
+msgid "Window Behaviour"
+msgstr "Chování okna"
+
+#: ../src/config/preferencesdialog.c:196
+msgid "Bring SFLphone to foreground on incoming calls"
+msgstr "Přenést SFLphone při příchozích hovorech do popředí"
+
+#. System Tray option frame
+#: ../src/config/preferencesdialog.c:203
+#, fuzzy
+msgid "System Tray Icon (Legacy)"
+msgstr "Ikona v oznamovací oblasti panelu (dědictví)"
+
+#: ../src/config/preferencesdialog.c:210
+msgid "Show SFLphone in the system tray"
+msgstr "Ukazovat SFLphone v systémové části panelu"
+
+#: ../src/config/preferencesdialog.c:216
+msgid "_Popup main window on incoming call"
+msgstr "Při příchozím volání otevřít _hlavní okno"
+
+#: ../src/config/preferencesdialog.c:221
+msgid "Ne_ver popup main window"
+msgstr "_Nikdy neotevírat hlavní okno automaticky"
+
+#. HISTORY CONFIGURATION
+#: ../src/config/preferencesdialog.c:237
+msgid "Calls History"
+msgstr "Historie volání"
+
+#: ../src/config/preferencesdialog.c:241
+msgid "_Keep my history for at least"
+msgstr "_Uchovat historii alespoň po"
+
+#: ../src/config/preferencesdialog.c:254
+msgid "days"
+msgstr "dny"
+
+#. INSTANT MESSAGING CONFIGURATION
+#: ../src/config/preferencesdialog.c:258
+msgid "Instant Messaging"
+msgstr "Okamžité odesílání zpráv"
+
+#: ../src/config/preferencesdialog.c:262
+msgid "Enable instant messaging"
+msgstr "Povolit okamžité odesílání zpráv"
+
+#: ../src/config/preferencesdialog.c:373
+msgid "Preferences"
+msgstr "Nastavení"
+
+#: ../src/config/preferencesdialog.c:430
+msgid "Hooks"
+msgstr "Příkazy a přizpůsobení"
+
+#: ../src/config/preferencesdialog.c:435
+msgid "Shortcuts"
+msgstr "Klávesové zkratky"
+
+#: ../src/config/preferencesdialog.c:441
+msgid "Address Book"
+msgstr "Kniha adres"
+
+#: ../src/config/shortcuts-config.c:119
+msgid "Be careful: these shortcuts might override system-wide shortcuts."
+msgstr "Pozor: Tato nastavení mohou přepsat klávesové zkratky systému."
+
+#: ../src/config/tlsadvanceddialog.c:55
 msgid "Advanced options for TLS"
 msgstr "Pokročilé volby pro TLS"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:58
+#: ../src/config/tlsadvanceddialog.c:72
 msgid "TLS transport"
 msgstr "Přenos TLS"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:62
+#: ../src/config/tlsadvanceddialog.c:76
+#, c-format
 msgid ""
 "TLS transport can be used along with UDP for those calls that would\n"
 "require secure sip transactions (aka SIPS). You can configure a different\n"
@@ -821,122 +806,219 @@ msgstr ""
 "Pro každý účet můžete samostatně nastavit jiný přenos TLS.\n"
 "Přitom se vždy musí používat zvláštní přípojka navíc (port).\n"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:109
+#: ../src/config/tlsadvanceddialog.c:120
 msgid "Global TLS listener (all accounts)"
 msgstr "Hlídač příjmu TLS (pro všechny účty)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:123
+#: ../src/config/tlsadvanceddialog.c:130
 msgid "Certificate of Authority list"
 msgstr "Certifikát seznamu autorit"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:126
+#: ../src/config/tlsadvanceddialog.c:133
 msgid "Choose a CA list file (optional)"
 msgstr "Vyberte soubor s certifikátem (volitelné)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:138
+#: ../src/config/tlsadvanceddialog.c:144
 msgid "Public endpoint certificate file"
 msgstr "Veřejný certifikát koncového místa"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:141
+#: ../src/config/tlsadvanceddialog.c:147
 msgid "Choose a public endpoint certificate (optional)"
 msgstr "Vyberte veřejný certifikát koncového místa (volitelné)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:159
+#: ../src/config/tlsadvanceddialog.c:165
 msgid "Choose a private key file (optional)"
 msgstr "Vyberte soubor se soukromým klíčem (volitelné)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:174
+#: ../src/config/tlsadvanceddialog.c:180
 msgid "Password for the private key"
 msgstr "Heslo pro soukromý klíč"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:189
+#. TLS protocol methods
+#: ../src/config/tlsadvanceddialog.c:193
 msgid "TLS protocol method"
 msgstr "Metoda pro protokol TLS"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:217
+#: ../src/config/tlsadvanceddialog.c:216
 msgid "TLS cipher list"
 msgstr "Seznam šifrovacích postupů pro TLS"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:226
+#: ../src/config/tlsadvanceddialog.c:225
 msgid "Server name instance for outgoing TLS connection"
 msgstr "Instance názvu serveru pro odchozí spojení TLS"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:234
+#: ../src/config/tlsadvanceddialog.c:233
 msgid "Negotiation timeout (sec:msec)"
 msgstr "Časový interval pro jednání (s:ms)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:251
+#: ../src/config/tlsadvanceddialog.c:250
 msgid "Verify incoming certificates, as a server"
 msgstr "Prověřit příchozí certifikáty (jako server)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:257
+#: ../src/config/tlsadvanceddialog.c:256
 msgid "Verify certificates from answer, as a client"
 msgstr "Prověřit certifikáty v odpovědích (jako klient)"
 
-#: ../gnome/src/config/tlsadvanceddialog.c:263
+#: ../src/config/tlsadvanceddialog.c:262
 msgid "Require certificate for incoming tls connections"
 msgstr "Požadovat certifikáty pro příchozí spojení TLS"
 
-#: ../gnome/src/contacts/searchbar.c:198
+#: ../src/config/videoconf.c:499
+msgid "Bitrate (kbps)"
+msgstr "Datový tok (kbps)"
+
+#: ../src/config/videoconf.c:506
+msgid "Parameters"
+msgstr "Parametry"
+
+#: ../src/config/videoconf.c:808
+msgid "No devices found"
+msgstr "Nenalezena žádná zařízení"
+
+#. Set choices of input devices
+#: ../src/config/videoconf.c:819
+msgid "Device"
+msgstr "Zařízení"
+
+#. Set choices of input
+#: ../src/config/videoconf.c:834
+msgid "Channel"
+msgstr "Kanál"
+
+#. Set choices of sizes
+#: ../src/config/videoconf.c:848
+msgid "Size"
+msgstr "Velikost"
+
+#. Set choices of rates
+#: ../src/config/videoconf.c:862
+msgid "Rate"
+msgstr "Tok"
+
+#: ../src/config/videoconf.c:888
+msgid "Video Manager"
+msgstr "Správce videa"
+
+#: ../src/config/videoconf.c:891
+msgid "Video4Linux2"
+msgstr "Video4Linux2"
+
+#: ../src/config/videoconf.c:897
+msgid "Camera"
+msgstr ""
+
+#: ../src/config/zrtpadvanceddialog.c:52
+msgid "ZRTP Options"
+msgstr "Volby pro ZRTP"
+
+#: ../src/config/zrtpadvanceddialog.c:69
+msgid "Send Hello Hash in S_DP"
+msgstr "Poslat kontrolní součet pozdravení v S_DP"
+
+#: ../src/config/zrtpadvanceddialog.c:74
+msgid "Ask User to Confirm SAS"
+msgstr "Požádat uživatele o potvrzení SAS"
+
+#: ../src/config/zrtpadvanceddialog.c:79
+msgid "_Warn if ZRTP not supported"
+msgstr "_Varovat, když není ZRTP podporováno"
+
+#: ../src/config/zrtpadvanceddialog.c:84
+msgid "Display SAS once for hold events"
+msgstr "Zobrazit SAS jen jednou pro události dání do čekání"
+
+#: ../src/config/zrtpadvanceddialog.c:118
+msgid "SDES Options"
+msgstr "Volby pro SDES"
+
+#: ../src/config/zrtpadvanceddialog.c:134
+msgid "Fallback on RTP on SDES failure"
+msgstr "Záloha při selhání s RTP na SDES"
+
+#: ../src/contacts/searchbar.c:226
 msgid "Search all"
 msgstr "Prohledat vše"
 
-#: ../gnome/src/contacts/searchbar.c:199 ../gnome/src/contacts/searchbar.c:214
-#: ../gnome/src/contacts/searchbar.c:226 ../gnome/src/contacts/searchbar.c:238
+#: ../src/contacts/searchbar.c:227 ../src/contacts/searchbar.c:235
+#: ../src/contacts/searchbar.c:243 ../src/contacts/searchbar.c:251
 msgid "Click here to change the search type"
 msgstr "Pro změnu typu hledání klepněte zde"
 
-#: ../gnome/src/contacts/searchbar.c:213
+#: ../src/contacts/searchbar.c:234
 msgid "Search by missed call"
 msgstr "Hledat podle volání v nepřítomnosti"
 
-#: ../gnome/src/contacts/searchbar.c:225
+#: ../src/contacts/searchbar.c:242
 msgid "Search by incoming call"
 msgstr "Hledat podle příchozího volání"
 
-#: ../gnome/src/contacts/searchbar.c:237
+#: ../src/contacts/searchbar.c:250
 msgid "Search by outgoing call"
 msgstr "Hledat podle odchozího volání"
 
-#: ../gnome/src/sliders.c:174
-msgid "Speakers volume"
-msgstr "Hlasitost reproduktoru"
+#: ../src/dbus/dbus.c:579
+#, fuzzy
+msgid "ALSA notification: Error while opening playback device"
+msgstr "Oznámení ALSA: Chyba při otevírání zařízení pro přehrávání"
 
-#: ../gnome/src/sliders.c:174
-msgid "Mic volume"
-msgstr "Hlasitost mikrofonu"
+#: ../src/dbus/dbus.c:582
+#, fuzzy
+msgid "ALSA notification: Error while opening capture device"
+msgstr "Oznámení ALSA: Chyba při otevírání zařízení pro zachytávání"
 
-#: ../gnome/src/mainwindow.c:127
+#: ../src/dbus/dbus.c:585
+#, fuzzy
+msgid "Pulseaudio notification: Pulseaudio is not running"
+msgstr "Oznámení ALSA: Pulseaudio neběží"
+
+#: ../src/dbus/dbus.c:588
+#, fuzzy
+msgid "Codecs notification: Codecs not found"
+msgstr "Oznámení o kodecích: Kodeky nenalezeny"
+
+#: ../src/mainwindow.c:139
 msgid "There is one call in progress."
 msgstr "Probíhá volání."
 
-#: ../gnome/src/mainwindow.c:129
+#: ../src/mainwindow.c:141
 msgid "There are calls in progress."
 msgstr "Probíhají volání."
 
-#: ../gnome/src/mainwindow.c:133
+#: ../src/mainwindow.c:146
 msgid "Do you still want to quit?"
 msgstr "Opravdu chcete program ukončit?"
 
-#: ../gnome/src/mainwindow.c:425
+#: ../src/mainwindow.c:282
+#, fuzzy
+msgid "Status:"
+msgstr "Stav"
+
+#: ../src/mainwindow.c:288
+msgid "Offline"
+msgstr ""
+
+#: ../src/mainwindow.c:289
+msgid "Online"
+msgstr ""
+
+#: ../src/mainwindow.c:576
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr "ZRTP není podporováno protějškem %s\n"
 
-#: ../gnome/src/mainwindow.c:427
+#: ../src/mainwindow.c:578
 msgid "Secure Communication Unavailable"
 msgstr "Zabezpečené spojení nedostupné"
 
-#: ../gnome/src/mainwindow.c:430 ../gnome/src/mainwindow.c:456
+#: ../src/mainwindow.c:581 ../src/mainwindow.c:607
 msgid "Continue"
 msgstr "Pokračovat"
 
-#: ../gnome/src/mainwindow.c:431 ../gnome/src/mainwindow.c:457
-#: ../gnome/src/mainwindow.c:474
+#: ../src/mainwindow.c:582 ../src/mainwindow.c:608 ../src/mainwindow.c:625
 msgid "Stop Call"
 msgstr "Zastavit volání"
 
-#: ../gnome/src/mainwindow.c:449
+#: ../src/mainwindow.c:600
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
@@ -945,11 +1027,11 @@ msgstr ""
 "Chyba %szabránila zašifrování telefonátu %s.\n"
 "Přesný důvod: %s\n"
 
-#: ../gnome/src/mainwindow.c:453
+#: ../src/mainwindow.c:604
 msgid "ZRTP negotiation failed"
 msgstr "Přenos ZRTP se nezdařil"
 
-#: ../gnome/src/mainwindow.c:467
+#: ../src/mainwindow.c:618
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
@@ -958,299 +1040,418 @@ msgstr ""
 "%s chce ukončit zabezpečenou komunikaci. Rozhovor pak bude pokračovat bez "
 "SRTP.\n"
 
-#: ../gnome/src/mainwindow.c:469
+#: ../src/mainwindow.c:620
 msgid "Confirm Go Clear"
 msgstr "Potvrdit nezabezpečenou komunikaci"
 
-#: ../gnome/src/mainwindow.c:472
+#: ../src/mainwindow.c:623
 msgid "Confirm"
 msgstr "Potvrdit"
 
-#: ../gnome/src/uimanager.c:159
+#: ../src/sflphone_client.c:53
+#, c-format
+msgid ""
+"%s\n"
+"Run '%s --help' to see a full list of available command line options.\n"
+msgstr ""
+"%s\n"
+"Spusťte „%s --help“ pro zobrazení úplného seznamu dostupných přepínačů "
+"příkazového řádku.\n"
+
+#: ../src/sflphone_client.c:70
+msgid "SFLphone Error"
+msgstr "Chyba SFLphone"
+
+#: ../src/sflphone_options.c:60
+msgid "Enable debug"
+msgstr "Povolit ladění"
+
+#: ../src/sflphone_options.c:67
+msgid "- GNOME client for SFLPhone"
+msgstr "- GNOME klient pro SFLPhone"
+
+#: ../src/sflnotify.c:93
+#, c-format
+msgid "%s says:"
+msgstr "%s říká:"
+
+#. the account is different from NULL
+#: ../src/sflnotify.c:115 ../src/sflnotify.c:135
+#, c-format
+msgid "%s account : %s"
+msgstr "%s účet: %s"
+
+#: ../src/sflnotify.c:120
+#, c-format
+msgid "<i>From</i> %s"
+msgstr "<i>Od</i> %s"
+
+#. the account is different from NULL
+#: ../src/sflnotify.c:153
+#, c-format
+msgid "Calling with %s account <i>%s</i>"
+msgstr "Volání s %s účtem <i>%s</i>"
+
+#: ../src/sflnotify.c:157
+#, c-format
+msgid "Current account"
+msgstr "Nynější účet"
+
+#: ../src/sflnotify.c:169
+#, c-format
+msgid "You have no accounts set up"
+msgstr "Nemáte nastaveny žádné účty"
+
+#: ../src/sflnotify.c:182
+#, c-format
+msgid "You have no registered accounts"
+msgstr "Nemáte žádné zaregistrované účty"
+
+#: ../src/sflnotify.c:196
+#, c-format
+msgid ""
+"<i>With:</i> %s \n"
+"using %s"
+msgstr ""
+"<i>S:</i> %s \n"
+"za použití %s"
+
+#: ../src/sflnotify.c:210
+#, c-format
+msgid "%s does not support ZRTP."
+msgstr "%s nepodporuje ZRTP."
+
+#: ../src/sflnotify.c:224
+#, c-format
+msgid "ZRTP negotiation failed with %s"
+msgstr "Přenos ZRTP s %s se nezdařil"
+
+#: ../src/sflnotify.c:238
+#, c-format
+msgid "<i>With:</i> %s"
+msgstr "<i>S:</i> %s"
+
+#: ../src/sliders.c:231
+msgid "Speakers volume"
+msgstr "Hlasitost reproduktoru"
+
+#: ../src/sliders.c:231
+msgid "Mic volume"
+msgstr "Hlasitost mikrofonu"
+
+#: ../src/statusicon.c:132
+msgid "_Show main window"
+msgstr "_Ukázat hlavní okno"
+
+#: ../src/statusicon.c:139 ../src/uimanager.c:1010 ../src/uimanager.c:1376
+#: ../src/uimanager.c:1445
+msgid "_Hang up"
+msgstr "_Zavěsit"
+
+#: ../src/statusicon.c:190
+msgid "SFLphone"
+msgstr "SFLphone"
+
+#: ../src/uimanager.c:436
 msgid "No address book selected"
 msgstr "Nebyla vybrána žádná kniha adres"
 
-#: ../gnome/src/uimanager.c:183 ../gnome/src/uimanager.c:1051
+#: ../src/uimanager.c:456 ../src/uimanager.c:1139
 msgid "Address book"
 msgstr "Kniha adres"
 
-#: ../gnome/src/uimanager.c:428
+#: ../src/uimanager.c:483
 #, c-format
 msgid "Voicemail(%i)"
 msgstr "Hlasová schránka (%i)"
 
-#: ../gnome/src/uimanager.c:507
+#: ../src/uimanager.c:575
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone je klient VoIP slučitelný s protokoly SIP a IAX2."
 
-#: ../gnome/src/uimanager.c:510
+#: ../src/uimanager.c:578
 msgid "About SFLphone"
 msgstr "O programu SFLphone"
 
-#: ../gnome/src/uimanager.c:931 ../gnome/src/uimanager.c:990
+#: ../src/uimanager.c:951 ../src/uimanager.c:1030
 msgid "Voicemail"
 msgstr "Hlasová schránka"
 
-#: ../gnome/src/uimanager.c:960
+#. Call Menu
+#: ../src/uimanager.c:1000
 msgid "Call"
 msgstr "Volání"
 
-#: ../gnome/src/uimanager.c:962 ../gnome/src/uimanager.c:1435
+#: ../src/uimanager.c:1002 ../src/uimanager.c:1541
 msgid "_New call"
 msgstr "_Nové volání"
 
-#: ../gnome/src/uimanager.c:963
+#: ../src/uimanager.c:1003
 msgid "Place a new call"
 msgstr "Uskutečnit nové volání"
 
-#: ../gnome/src/uimanager.c:966 ../gnome/src/uimanager.c:1275
+#: ../src/uimanager.c:1006 ../src/uimanager.c:1365
 msgid "_Pick up"
 msgstr "_Přijmout"
 
-#: ../gnome/src/uimanager.c:967
+#: ../src/uimanager.c:1007
 msgid "Answer the call"
 msgstr "Odpovědět na volání"
 
-#: ../gnome/src/uimanager.c:971
+#: ../src/uimanager.c:1011
 msgid "Finish the call"
 msgstr "Ukončit volání"
 
-#: ../gnome/src/uimanager.c:974
+#: ../src/uimanager.c:1014
 msgid "O_n hold"
 msgstr "V č_ekání"
 
-#: ../gnome/src/uimanager.c:975
+#: ../src/uimanager.c:1015
 msgid "Place the call on hold"
 msgstr "Dát volání do čekání"
 
-#: ../gnome/src/uimanager.c:978
+#: ../src/uimanager.c:1018
 msgid "O_ff hold"
 msgstr "Znovu _vzít"
 
-#: ../gnome/src/uimanager.c:979
+#: ../src/uimanager.c:1019
 msgid "Place the call off hold"
 msgstr "Znovu vzít volání z čekání"
 
-#: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1331
+#: ../src/uimanager.c:1022 ../src/uimanager.c:1430
 msgid "Send _message"
 msgstr "Poslat _zprávu"
 
-#: ../gnome/src/uimanager.c:983
+#: ../src/uimanager.c:1023
 msgid "Send message"
 msgstr "Poslat zprávu"
 
-#: ../gnome/src/uimanager.c:986
+#: ../src/uimanager.c:1026
 msgid "Configuration _Assistant"
 msgstr "Průvodce nastavením"
 
-#: ../gnome/src/uimanager.c:987
+#: ../src/uimanager.c:1027
 msgid "Run the configuration assistant"
 msgstr "Spustit průvodce nastavením"
 
-#: ../gnome/src/uimanager.c:991
+#: ../src/uimanager.c:1031
 msgid "Call your voicemail"
 msgstr "Zavolat svou hlasovou schránku"
 
-#: ../gnome/src/uimanager.c:994
+#: ../src/uimanager.c:1034
 msgid "_Close"
 msgstr "_Zavřít"
 
-#: ../gnome/src/uimanager.c:995
+#: ../src/uimanager.c:1035
 msgid "Minimize to system tray"
 msgstr "Zmenšit do oznamovací oblasti panelu"
 
-#: ../gnome/src/uimanager.c:998
+#: ../src/uimanager.c:1038
 msgid "_Quit"
 msgstr "_Ukončit"
 
-#: ../gnome/src/uimanager.c:999
+#: ../src/uimanager.c:1039
 msgid "Quit the program"
 msgstr "Ukončit program"
 
-#: ../gnome/src/uimanager.c:1002
-msgid "_Playback record"
-msgstr "_Přehrát nahrávku"
-
-#: ../gnome/src/uimanager.c:1003
-msgid "Playback recorded file"
-msgstr "Přehrát nahraný soubor"
-
-#: ../gnome/src/uimanager.c:1006
-msgid "_Stop playback"
-msgstr "_Zastavit přehrávání"
-
-#: ../gnome/src/uimanager.c:1007
-msgid "Stop recorded file playback"
-msgstr "Zastavit přehrávání nahraného souboru"
-
-#: ../gnome/src/uimanager.c:1011
+#. Edit Menu
+#: ../src/uimanager.c:1043
 msgid "_Edit"
 msgstr "Úp_ravy"
 
-#: ../gnome/src/uimanager.c:1013
+#: ../src/uimanager.c:1045
 msgid "_Copy"
 msgstr "_Kopírovat"
 
-#: ../gnome/src/uimanager.c:1014
+#: ../src/uimanager.c:1046
 msgid "Copy the selection"
 msgstr "Kopírovat výběr"
 
-#: ../gnome/src/uimanager.c:1017
+#: ../src/uimanager.c:1049
 msgid "_Paste"
 msgstr "_Vložit"
 
-#: ../gnome/src/uimanager.c:1018
+#: ../src/uimanager.c:1050
 msgid "Paste the clipboard"
 msgstr "Vložit obsah schránky"
 
-#: ../gnome/src/uimanager.c:1021
+#: ../src/uimanager.c:1053
 msgid "Clear _history"
 msgstr "Vymazat _historii volání"
 
-#: ../gnome/src/uimanager.c:1022
+#: ../src/uimanager.c:1054
 msgid "Clear the call history"
 msgstr "Vymazat seznam ukončených volání"
 
-#: ../gnome/src/uimanager.c:1025
+#: ../src/uimanager.c:1057
 msgid "_Accounts"
 msgstr "Úč_ty"
 
-#: ../gnome/src/uimanager.c:1026
+#: ../src/uimanager.c:1058
 msgid "Edit your accounts"
 msgstr "Upravit účty"
 
-#: ../gnome/src/uimanager.c:1029
+#: ../src/uimanager.c:1061
 msgid "_Preferences"
 msgstr "_Nastavení"
 
-#: ../gnome/src/uimanager.c:1030
+#: ../src/uimanager.c:1062
 msgid "Change your preferences"
 msgstr "Změnit nastavení"
 
-#: ../gnome/src/uimanager.c:1034
+#. View Menu
+#: ../src/uimanager.c:1066
 msgid "_View"
 msgstr "_Pohled"
 
-#: ../gnome/src/uimanager.c:1037
+#. Help menu
+#: ../src/uimanager.c:1069
 msgid "_Help"
 msgstr "_Nápověda"
 
-#: ../gnome/src/uimanager.c:1038
+#: ../src/uimanager.c:1070
 msgid "Contents"
 msgstr "Obsah"
 
-#: ../gnome/src/uimanager.c:1039
+#: ../src/uimanager.c:1071
 msgid "Open the manual"
 msgstr "Otevřít příručku"
 
-#: ../gnome/src/uimanager.c:1041
+#: ../src/uimanager.c:1073
 msgid "About this application"
 msgstr "Informace o tomto programu"
 
-#: ../gnome/src/uimanager.c:1045
+#: ../src/uimanager.c:1132
 msgid "_Transfer"
 msgstr "_Předat"
 
-#: ../gnome/src/uimanager.c:1045
+#: ../src/uimanager.c:1132
 msgid "Transfer the call"
 msgstr "Předat volání"
 
-#: ../gnome/src/uimanager.c:1046 ../gnome/src/uimanager.c:1308
+#: ../src/uimanager.c:1133 ../src/uimanager.c:1398
 msgid "_Record"
 msgstr "Na_hrávat hovor"
 
-#: ../gnome/src/uimanager.c:1046
+#: ../src/uimanager.c:1133
 msgid "Record the current conversation"
 msgstr "Zaznamenat nynější hovor"
 
-#: ../gnome/src/uimanager.c:1047
+#: ../src/uimanager.c:1134 ../src/uimanager.c:1410
+msgid "_Mute"
+msgstr "_Ztlumit zvuk"
+
+#: ../src/uimanager.c:1134
+msgid "Mute microphone for this call"
+msgstr "Ztlumit pro tento hovor mikrofon"
+
+#: ../src/uimanager.c:1135
 msgid "_Show toolbar"
 msgstr "_Nástrojový pruh"
 
-#: ../gnome/src/uimanager.c:1047
+#: ../src/uimanager.c:1135
 msgid "Show the toolbar"
 msgstr "Ukázat pruh s nástroji"
 
-#: ../gnome/src/uimanager.c:1048
+#: ../src/uimanager.c:1136
 msgid "_Dialpad"
 msgstr "_Vytáčecí číselník"
 
-#: ../gnome/src/uimanager.c:1048
+#: ../src/uimanager.c:1136
 msgid "Show the dialpad"
 msgstr "Ukázat vytáčecí číselník"
 
-#: ../gnome/src/uimanager.c:1049
+#: ../src/uimanager.c:1137
 msgid "_Volume controls"
 msgstr "_Ovládání hlasitosti"
 
-#: ../gnome/src/uimanager.c:1049
+#: ../src/uimanager.c:1137
 msgid "Show the volume controls"
 msgstr "Ukázat ovládání hlasitosti"
 
-#: ../gnome/src/uimanager.c:1050
+#: ../src/uimanager.c:1138
 msgid "_History"
 msgstr "_Historie"
 
-#: ../gnome/src/uimanager.c:1050
+#: ../src/uimanager.c:1138
 msgid "Calls history"
 msgstr "Seznam ukončených volání"
 
-#: ../gnome/src/uimanager.c:1051
+#: ../src/uimanager.c:1139
 msgid "_Address book"
 msgstr "Kniha _adres"
 
-#: ../gnome/src/uimanager.c:1297 ../gnome/src/uimanager.c:1355
+#: ../src/uimanager.c:1140
+msgid "_Buddy list"
+msgstr ""
+
+#: ../src/uimanager.c:1140
+msgid "Display the buddy list"
+msgstr ""
+
+#: ../src/uimanager.c:1387 ../src/uimanager.c:1454
 msgid "On _Hold"
 msgstr "V č_ekání"
 
-#: ../gnome/src/uimanager.c:1392
+#: ../src/uimanager.c:1491
 msgid "_Call back"
 msgstr "_Zavolat nazpět"
 
-#: ../gnome/src/uimanager.c:1488
+#: ../src/uimanager.c:1599
 msgid "Edit phone number"
 msgstr "Upravit telefonní číslo"
 
-#: ../gnome/src/uimanager.c:1499
+#: ../src/uimanager.c:1610
 msgid "Edit the phone number before making a call"
 msgstr "Upravit telefonní číslo před zavoláním"
 
-#: ../gnome/src/dbus/dbus.c:495
-msgid ""
-"ALSA notification\n"
-"\n"
-"Error while opening playback device"
-msgstr ""
-"Oznámení ALSA\n"
-"\n"
-"Chyba při otevírání zařízení pro přehrávání"
+#, fuzzy
+#~ msgid "%d voice mail"
+#~ msgid_plural "%d voice mails"
+#~ msgstr[0] "Hlasová schránka"
+#~ msgstr[1] "Hlasová schránka"
 
-#: ../gnome/src/dbus/dbus.c:498
-msgid ""
-"ALSA notification\n"
-"\n"
-"Error while opening capture device"
-msgstr ""
-"Oznámení ALSA\n"
-"\n"
-"Chyba při otevírání zařízení pro zachytávání"
+#~ msgid "Using account"
+#~ msgstr "S účtem"
 
-#: ../gnome/src/dbus/dbus.c:501
-msgid ""
-"Pulseaudio notification\n"
-"\n"
-"Pulseaudio is not running"
-msgstr ""
-"Oznámení Pulseaudio\n"
-"\n"
-"Pulseaudio neběží"
+#~ msgid ""
+#~ "Cannot find a schema for gpdf preferences. \n"
+#~ "Check your gconf setup, look at gpdf FAQ for \n"
+#~ "more info"
+#~ msgstr ""
+#~ "Nelze najít schéma pro nastavení gpdf. \n"
+#~ "Prověřte nastavení gconf, podívejte se na často kladené otázky pro gpdf "
+#~ "FAQ na další\n"
+#~ "informace"
 
-#: ../gnome/src/dbus/dbus.c:504
-msgid ""
-"Codecs notification\n"
-"\n"
-"Codecs not found"
-msgstr ""
-"Oznámení ke kodekům\n"
-"\n"
-"Kodeky nenalezeny"
+#, fuzzy
+#~ msgid "Stun configuration error"
+#~ msgstr "Spustit průvodce nastavením"
+
+#~ msgid "Hide SFLphone window on _startup"
+#~ msgstr "_Skrýt okno SFLphone při spuštění"
+
+#~ msgid "_Comply with RFC 3263"
+#~ msgstr "Dodržovat RFC 3263"
+
+#, fuzzy
+#~ msgid "There is %d active account"
+#~ msgid_plural "There are %d active accounts"
+#~ msgstr[0] "Nemáte žádný činný účet"
+#~ msgstr[1] "Nemáte žádný činný účet"
+
+#, fuzzy
+#~ msgid "_Playback record"
+#~ msgstr "_Vždy nahrávat"
+
+#~ msgid "Playback recorded file"
+#~ msgstr "Přehrát nahraný soubor"
+
+#~ msgid "_Stop playback"
+#~ msgstr "_Zastavit přehrávání"
+
+#~ msgid "Stop recorded file playback"
+#~ msgstr "Zastavit přehrávání nahraného souboru"
+
+#~ msgid "Preview"
+#~ msgstr "Náhled"

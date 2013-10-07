@@ -28,45 +28,56 @@
  *  as that of the covered work.
  */
 
-#include <cassert>
+#include "logger.h"
 #include "noisesuppress.h"
 
-NoiseSuppress::NoiseSuppress(int smplPerFrame, int samplingRate) :
+NoiseSuppress::NoiseSuppress(int smplPerFrame, int channels, int samplingRate) :
     smplPerFrame_(smplPerFrame),
-    noiseState_(speex_preprocess_state_init(smplPerFrame_, samplingRate))
+    noiseStates_(channels, nullptr)
 {
-    int i = 1;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DENOISE, &i);
-    i = -20;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
-    i = 0;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC, &i);
-    i = 8000;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC_TARGET, &i);
-    i = 16000;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
-    i = 0;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB, &i);
-    float f = 0.0;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
-    f = 0.0;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
-    i = 0;
-    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_VAD, &i);
+    for (auto &state : noiseStates_) {
+        state = speex_preprocess_state_init(smplPerFrame_, samplingRate);
+
+        int i = 1;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DENOISE, &i);
+        i = -20;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
+        i = 0;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC, &i);
+        i = 8000;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC_TARGET, &i);
+        i = 16000;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
+        i = 0;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DEREVERB, &i);
+        float f = 0.0;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
+        f = 0.0;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
+        i = 0;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_VAD, &i);
+    }
 }
 
 
 NoiseSuppress::~NoiseSuppress()
 {
-    speex_preprocess_state_destroy(noiseState_);
-    noiseState_ = 0;
+    for (auto state : noiseStates_)
+        speex_preprocess_state_destroy(state);
 }
 
 void NoiseSuppress::process(AudioBuffer& buff, int samples)
 {
-    SFLAudioSample* data = buff.getChannel(0)->data();
-    if (noiseState_) {
-        assert(smplPerFrame_ == samples);
-        speex_preprocess_run(noiseState_, data);
+    if (samples != smplPerFrame_) {
+        WARN("Unexpected amount of samples");
+        return;
+    }
+
+    auto &channelData = buff.getData();
+    size_t index = 0;
+    for (auto &c : channelData) {
+        if (index < noiseStates_.size() and noiseStates_[index])
+            speex_preprocess_run(noiseStates_[index], c.data());
+        ++index;
     }
 }

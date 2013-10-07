@@ -102,6 +102,7 @@ class AudioRtpRecord {
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
         int codecFrameSize_;
+        int codecChannels_;
         int converterSamplingRate_;
         double fadeFactor_;
 
@@ -149,6 +150,10 @@ class AudioRtpRecordHandler {
 
         int getCodecFrameSize() const {
             return audioRtpRecord_.codecFrameSize_;
+        }
+
+        int getCodecChannels() const {
+            return audioRtpRecord_.codecChannels_;
         }
 
         bool getHasDynamicPayload() const {

@@ -192,6 +192,7 @@ class IAXVoIPLink : public VoIPLink {
 #endif
         static void clearIaxCallMap();
         static void addIaxCall(IAXCall* call);
+        // must be called while holding iaxCallMapMutex
         static IAXCall* getIaxCall(const std::string& id);
         static void removeIaxCall(const std::string &id);
 
@@ -204,6 +205,13 @@ class IAXVoIPLink : public VoIPLink {
 
     private:
         NON_COPYABLE(IAXVoIPLink);
+
+        void handleAccept(iax_event* event, const std::string &id);
+        void handleReject(const std::string &id);
+        void handleRinging(const std::string &id);
+        void handleAnswerTransfer(iax_event* event, const std::string &id);
+        void handleBusy(const std::string &id);
+        void handleMessage(iax_event* event, const std::string &id);
 
         /**
          * Contains a list of all IAX account
@@ -235,21 +243,21 @@ class IAXVoIPLink : public VoIPLink {
          * @param session an iax_session valid pointer
          * @return iaxcall or 0 if not found
          */
-        IAXCall* iaxFindCallBySession(struct iax_session* session);
+        std::string iaxFindCallIDBySession(struct iax_session* session);
 
         /**
          * Handle IAX Event for a call
          * @param event An iax_event pointer
          * @param call  An IAXCall pointer
          */
-        void iaxHandleCallEvent(iax_event* event, IAXCall* call);
+        void iaxHandleCallEvent(iax_event* event, const std::string &id);
 
         /**
          * Handle the VOICE events specifically
          * @param event The iax_event containing the IAX_EVENT_VOICE
          * @param call  The associated IAXCall
          */
-        void iaxHandleVoiceEvent(iax_event* event, IAXCall* call);
+        void iaxHandleVoiceEvent(iax_event* event, const std::string &id);
 
         /**
          * Handle IAX Registration Reply event
