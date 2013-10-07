@@ -2449,7 +2449,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     Account* newAccount = nullptr;
 
     if (accountType == "SIP") {
-        newAccount = new SIPAccount(newAccountID);
+        newAccount = new SIPAccount(newAccountID, true);
         SIPVoIPLink::instance()->getAccounts()[newAccountID] = newAccount;
     }
 #if HAVE_IAX
@@ -2583,7 +2583,7 @@ namespace {
 
         if (!accountid.empty() and !accountAlias.empty() and accountid != SIPAccount::IP2IP_PROFILE) {
             if (accountType == "SIP") {
-                Account *a = new SIPAccount(accountid);
+                Account *a = new SIPAccount(accountid, true);
                 sipAccountMap[accountid] = a;
                 a->unserialize(*item);
             } else if (accountType == "IAX") {
@@ -2614,7 +2614,7 @@ namespace {
 
     SIPAccount *createIP2IPAccount()
     {
-        SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE);
+        SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE, true);
         try {
             SIPVoIPLink::instance()->sipTransport.createSipTransport(*ip2ip);
         } catch (const std::runtime_error &e) {

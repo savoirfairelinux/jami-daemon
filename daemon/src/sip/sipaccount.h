@@ -123,7 +123,7 @@ class SIPAccount : public Account {
          * Constructor
          * @param accountID The account identifier
          */
-        SIPAccount(const std::string& accountID);
+        SIPAccount(const std::string& accountID, bool presenceEnabled);
         ~SIPAccount();
 
         virtual VoIPLink* getVoIPLink();

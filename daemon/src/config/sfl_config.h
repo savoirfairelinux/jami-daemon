@@ -44,6 +44,7 @@
 
 namespace Conf {
 static const char * const TRUE_STR = "true";
+static const char * const FALSE_STR = "false";
 
 class ConfigTreeItem;
 typedef std::map<std::string, ConfigTreeItem> ItemMap;
