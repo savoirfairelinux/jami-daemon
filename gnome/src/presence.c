@@ -60,24 +60,16 @@ static GtkWidget * presence_view = NULL;
 void
 presence_init(SFLPhoneClient *client)
 {
-//    presence_test(client);
     presence_buddy_list = g_list_alloc();
     presence_load_list(client, presence_buddy_list);
     presence_print_list(presence_buddy_list);
 
-    /*
-    buddy_t * b;
-    for (guint i =  1; i < presence_list_get_size(presence_buddy_list); i++)
+
+    for (guint i = 0; i < account_list_get_size(); i++)
     {
-        b = presence_list_get_nth(presence_buddy_list, i);
-        account_t * acc = account_list_get_by_id(b->acc);
-        if(acc)
-        {
-            if (acc->state == (ACCOUNT_STATE_REGISTERED))
-                dbus_presence_subscribe(b->acc, b->uri, TRUE);
-        }
+        account_t * acc = account_list_get_nth(i);
+        presence_send_subscribes(acc, TRUE);
     }
-    */
 }
 
 void
@@ -123,7 +115,7 @@ presence_load_list(SFLPhoneClient *client, GList * list)
         buddy->alias = g_strdup(g_variant_get_data(v_alias));
         buddy->uri = g_strdup(g_variant_get_data(v_uri));
         buddy->status = FALSE;
-        buddy->note = g_strdup("Unkonw");
+        buddy->note = g_strdup(" ");
         buddy->subscribed = FALSE;
         g_debug("Presence : found buddy:(acc:%s, bud: %s).", buddy->acc, buddy->uri);
         list = g_list_append(list, (gpointer)buddy);
@@ -309,16 +301,16 @@ presence_view_get()
 }
 
 void
-presence_send_subscribes(const gchar *accID, gboolean flag)
+presence_send_subscribes(account_t *acc, gboolean flag)
 {
     buddy_t * b;
     for (guint i =  1; i < presence_list_get_size(presence_buddy_list); i++)
     {
-        b = presence_list_get_nth(presence_buddy_list, i);
-        account_t * acc = account_list_get_by_id(b->acc);
         if(acc)
         {
-            if (acc->state == (ACCOUNT_STATE_REGISTERED))
+            b = presence_list_get_nth(presence_buddy_list,i);
+            if((acc->state == (ACCOUNT_STATE_REGISTERED)) &&
+                        account_lookup(acc, CONFIG_PRESENCE_ENABLED))
                 dbus_presence_subscribe(b->acc, b->uri, flag);
         }
     }

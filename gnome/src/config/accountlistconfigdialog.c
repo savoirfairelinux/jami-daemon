@@ -313,12 +313,7 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
 
     // Store value
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_ACCOUNT_ACTIVE,
-                       enable, -1);
-
-    // unsubscribe before unregister
-    if(!enable)
-        if(account_lookup(account, CONFIG_PRESENCE_ENABLED))
-            presence_send_subscribes(account->accountID, enable);
+                      enable, -1);
 
     // Modify account state
     const gchar * enabled_str = enable ? "true" : "false";
@@ -326,11 +321,6 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
 
     account_replace(account, CONFIG_ACCOUNT_ENABLE, enabled_str);
     dbus_send_register(account->accountID, enable);
-
-    // subscribe to buddy after register
-    if(enable)
-        if(account_lookup(account, CONFIG_PRESENCE_ENABLED))
-            presence_send_subscribes(account->accountID, enable);
 }
 
 /**
@@ -730,5 +720,12 @@ void show_account_list_config_dialog(SFLPhoneClient *client)
     account_store = NULL;
 
     update_actions(client);
+
+    // presence, update buddy subscription
+    for (guint i = 0; i < account_list_get_size(); i++)
+    {
+        account_t * acc = account_list_get_nth(i);
+        presence_send_subscribes(acc, TRUE);
+    }
 }
 

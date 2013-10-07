@@ -54,11 +54,11 @@ enum
     COLUMN_BUDDIES,
     COLUMN_STATUS,
     COLUMN_NOTE,
+    COLUMN_URI,
     COLUMN_SUBSCRIBED
- // NUM_COLS = 2
 };
 
-#define N_COLUMN 4
+#define N_COLUMN 5
 
 
 static GtkTreeModel *
@@ -69,9 +69,10 @@ create_and_fill_model (void)
     treestore = gtk_tree_store_new(N_COLUMN, G_TYPE_STRING, // Alias
                                              G_TYPE_STRING, // Status
                                              G_TYPE_STRING, // Note
+                                             G_TYPE_STRING, // Uri
                                              G_TYPE_STRING);// (temp) subscribed
 
-    GList * buddy_list = presence_get_list();
+    GList * buddy_list = g_object_get_data(G_OBJECT(buddylistwindow), "Buddy-List");
     buddy_t * buddy;
 
     for (guint i = 0; i < account_list_get_size(); i++)
@@ -84,6 +85,7 @@ create_and_fill_model (void)
                     COLUMN_BUDDIES, (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
                     COLUMN_STATUS, "",
                     COLUMN_NOTE, "",
+                    COLUMN_URI, "",
                     COLUMN_SUBSCRIBED, "",
                     -1);
             for (guint j =  1; j < presence_list_get_size(buddy_list); j++)
@@ -93,9 +95,10 @@ create_and_fill_model (void)
                 {
                     gtk_tree_store_append(treestore, &child, &toplevel);
                     gtk_tree_store_set(treestore, &child,
-                        COLUMN_BUDDIES, buddy->uri,
-                        COLUMN_STATUS, (buddy->status)? "Online":"Offline",
+                        COLUMN_BUDDIES, buddy->alias,
+                        COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
                         COLUMN_NOTE,  buddy->note,
+                        COLUMN_URI,  buddy->uri,
                         COLUMN_SUBSCRIBED, (buddy->subscribed)? "Active":"Inactive",
                         -1);
                 }
@@ -108,11 +111,11 @@ create_and_fill_model (void)
 
 gboolean
 selection_changed(GtkTreeSelection *selection) {
+/*
     GtkTreeView *treeView;
     GtkTreeModel *model;
     GtkTreeIter iter;
     gchar *active;
-/*
     treeView = gtk_tree_selection_get_tree_view(selection);
     model = gtk_tree_view_get_model(treeView);
     gtk_tree_selection_get_selected(selection, &model, &iter);
@@ -152,6 +155,13 @@ create_view (void)
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_NOTE);
+
+    col = gtk_tree_view_column_new();
+    gtk_tree_view_column_set_title(col, "Uri");
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    renderer = gtk_cell_renderer_text_new();
+    gtk_tree_view_column_pack_start(col, renderer, TRUE);
+    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_URI);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Suscribed");
@@ -206,11 +216,15 @@ create_buddylist_window(SFLPhoneClient *client)
     /* Create the tree view*/
     GtkWidget *buddy_list_tree_view = create_view();
     gtk_box_pack_start(GTK_BOX(vbox), buddy_list_tree_view, TRUE, TRUE, 5);
-    update_buddylist_view(buddy_list_tree_view);
     presence_view_set(buddy_list_tree_view);
 
     GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(buddy_list_tree_view));
     g_signal_connect(G_OBJECT(selection), "changed", G_CALLBACK(selection_changed), NULL);
+
+    // Load buddylist
+    presence_init(client);
+    g_object_set_data(G_OBJECT(buddylistwindow), "Buddy-List", (gpointer)presence_get_list());
+    update_buddylist_view(buddy_list_tree_view);
 
     /* make sure that everything, window and label, are visible */
     gtk_widget_show_all(buddylistwindow);

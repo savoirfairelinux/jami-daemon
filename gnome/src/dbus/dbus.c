@@ -619,6 +619,8 @@ presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gc
         if(b)
         {
             b->subscribed = state;
+            if(!state) // not monitored means default value for status ( == Offline)
+                b->status = FALSE;
             update_buddylist_view(presence_view_get());
         }
     }
@@ -627,7 +629,8 @@ static void
 presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *uri,
                   gboolean status, const gchar * note)
 {
-    g_debug("DBus: Presence notification (%s) for %s status=%s lineStatus=%s.", accID, uri, status? "Online":"Offline", note);
+    g_debug("DBus: Presence notification (%s) for %s status=%s lineStatus=%s.",
+            accID, uri, status? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE, note);
 
     account_t *acc = account_list_get_by_id(accID);
     if (acc) {

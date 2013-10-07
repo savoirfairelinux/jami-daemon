@@ -34,6 +34,7 @@
 #include <glib.h>
 
 #include "sflphone_client.h"
+#include "accountlist.h"
 
 
 typedef struct prout
@@ -59,6 +60,10 @@ void presence_view_set(GtkWidget * view);
 GtkWidget * presence_view_get();
 buddy_t * presence_buddy_get_by_string(GList * list, const gchar *accID, const gchar *uri);
 GList * presence_get_buddy(GList * list, buddy_t * buddy);
-void presence_send_subscribes(const gchar *accID, gboolean flag);
+void presence_send_subscribes(account_t *acc, gboolean flag);
+
+static const char *const PRESENCE_STATUS_ONLINE = "Online";
+static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
+
 
 #endif
