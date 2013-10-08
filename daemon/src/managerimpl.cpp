@@ -1828,11 +1828,7 @@ void ManagerImpl::ringback()
 void
 ManagerImpl::updateAudioFile(const std::string &file, int sampleRate)
 {
-    try {
-        audiofile_.reset(new AudioFile(file, sampleRate));
-    } catch (const AudioFileException &e) {
-        ERROR("Exception: %s", e.what());
-    }
+    audiofile_.reset(new AudioFile(file, sampleRate));
 }
 
 /**
@@ -1873,6 +1869,8 @@ void ManagerImpl::playRingtone(const std::string& accountID)
         audioLayerSmplr = audiodriver_->getSampleRate();
     }
 
+    bool doFallback = false;
+
     {
         std::lock_guard<std::mutex> m(toneMutex_);
 
@@ -1881,8 +1879,18 @@ void ManagerImpl::playRingtone(const std::string& accountID)
             audiofile_.reset();
         }
 
-        updateAudioFile(ringchoice, audioLayerSmplr);
+        try {
+            updateAudioFile(ringchoice, audioLayerSmplr);
+        } catch (const AudioFileException &e) {
+            WARN("Ringtone error: %s", e.what());
+            doFallback = true; // do ringback once lock is out of scope
+        }
     } // leave mutex
+
+    if (doFallback) {
+        ringback();
+        return;
+    }
 
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
     // start audio if not started AND flush all buffers (main and urgent)
@@ -2139,9 +2147,14 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
             audiofile_.reset();
         }
 
-        updateAudioFile(filepath, sampleRate);
-        if (not audiofile_)
+        try {
+            updateAudioFile(filepath, sampleRate);
+            if (not audiofile_)
+                return false;
+        } catch (const AudioFileException &e) {
+            WARN("Audio file error: %s", e.what());
             return false;
+        }
     } // release toneMutex
 
     {

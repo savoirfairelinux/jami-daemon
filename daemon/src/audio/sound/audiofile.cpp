@@ -93,7 +93,11 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
                              hasHeader ? 0 : 8000);
 
     if (!fileHandle)
+        throw AudioFileException("File handle " + fileName + " could not be created");
+    if (fileHandle.error()) {
+        ERROR("%s", fileHandle.strError());
         throw AudioFileException("File " + fileName + " doesn't exist");
+    }
 
     switch (fileHandle.channels()) {
         case 1:
