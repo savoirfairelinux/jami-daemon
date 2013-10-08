@@ -145,7 +145,7 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
         return -1;
     }
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
+#if (LIBAVCODEC_VERSION_MAJOR < 54)
     encoderBufferSize_ = scaledFrameBufferSize_; // seems to be ok
     encoderBuffer_ = (uint8_t*) av_malloc(encoderBufferSize_);
     if (!encoderBuffer_) {
@@ -281,8 +281,8 @@ int VideoEncoder::flush()
     AVPacket pkt = {};
     av_init_packet(&pkt);
 
-#if (LIBAVCODEC_VERSION_MAJOR >= 54)
     int ret;
+#if (LIBAVCODEC_VERSION_MAJOR >= 54)
 
     int got_packet;
 
