@@ -81,8 +81,6 @@ private:
 
     uint8_t *scaledFrameBuffer_;
     int scaledFrameBufferSize_;
-    uint8_t *encoderBuffer_;
-    int encoderBufferSize_;
     int streamIndex_;
     int dstWidth_;
     int dstHeight_;
