@@ -37,7 +37,7 @@
 #include "accountlist.h"
 
 
-typedef struct prout
+typedef struct
 {
     gchar * alias;  // persistent
     gchar * uri;    // persistent
@@ -48,9 +48,8 @@ typedef struct prout
 }buddy_t;
 
 void presence_list_init(SFLPhoneClient *client);
-void presence_list_load(SFLPhoneClient *client);
-void presence_list_save(SFLPhoneClient *client);
 void presence_list_flush();
+void presence_list_update_buddy(buddy_t * buddy);
 void presence_list_add_buddy(buddy_t * buddy);
 void presence_list_remove_buddy(buddy_t * buddy);
 guint presence_list_get_size();
@@ -59,9 +58,9 @@ buddy_t * presence_list_get_nth(guint n);
 buddy_t * presence_list_buddy_get_by_string(const gchar *accID, const gchar *uri);
 GList * presence_list_get_buddy(buddy_t * buddy);
 void presence_list_send_subscribes(account_t *acc, gboolean flag);
+void presence_list_print();
 
 static const char *const PRESENCE_STATUS_ONLINE = "Online";
 static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
-
 
 #endif
