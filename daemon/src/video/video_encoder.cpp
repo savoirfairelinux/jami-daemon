@@ -103,6 +103,8 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
         // level we are sending (i.e. that they can accept).
         extractProfileLevelID(entry?entry->value:"", encoderCtx_);
         forcePresetX264();
+    } else if (!strcmp(enc_name, "libvpx")) {
+        av_opt_set(encoderCtx_->priv_data, "quality", "realtime", 0);
     }
 
     int ret;
