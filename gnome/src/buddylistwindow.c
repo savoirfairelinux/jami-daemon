@@ -33,6 +33,7 @@
 #endif
 
 #include <gtk/gtk.h>
+#include <string.h>
 
 #include "buddylistwindow.h"
 #include "account_schema.h"
@@ -44,7 +45,7 @@
 
 static GtkWidget *buddylistwindow;
 static GtkWidget *buddy_list_tree_view = NULL;
-//static GtkWidget *vbox;
+static buddy_t tmp_buddy;
 
 static GtkTreeModel *create_and_fill_model (void);
 static GtkWidget * create_view (void);
@@ -52,14 +53,15 @@ gboolean selection_changed(GtkTreeSelection *selection);
 
 enum
 {
-    COLUMN_BUDDIES,
+    COLUMN_ALIAS,
     COLUMN_STATUS,
     COLUMN_NOTE,
     COLUMN_URI,
+    COLUMN_ACCOUNTID,
     COLUMN_SUBSCRIBED
 };
 
-#define N_COLUMN 5
+#define N_COLUMN 6
 
 
 static GtkTreeModel *
@@ -71,6 +73,7 @@ create_and_fill_model (void)
                                              G_TYPE_STRING, // Status
                                              G_TYPE_STRING, // Note
                                              G_TYPE_STRING, // Uri
+                                             G_TYPE_STRING, // AccID
                                              G_TYPE_STRING);// (temp) subscribed
 
     GList * buddy_list = g_object_get_data(G_OBJECT(buddylistwindow), "Buddy-List");
@@ -83,10 +86,11 @@ create_and_fill_model (void)
         {
             gtk_tree_store_append(treestore, &toplevel, NULL);
             gtk_tree_store_set(treestore, &toplevel,
-                    COLUMN_BUDDIES, (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
+                    COLUMN_ALIAS, account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
                     COLUMN_STATUS, "",
                     COLUMN_NOTE, "",
                     COLUMN_URI, "",
+                    COLUMN_ACCOUNTID, account_lookup(acc, CONFIG_ACCOUNT_ID),
                     COLUMN_SUBSCRIBED, "",
                     -1);
             for (guint j =  1; j < presence_list_get_size(buddy_list); j++)
@@ -96,10 +100,11 @@ create_and_fill_model (void)
                 {
                     gtk_tree_store_append(treestore, &child, &toplevel);
                     gtk_tree_store_set(treestore, &child,
-                        COLUMN_BUDDIES, buddy->alias,
+                        COLUMN_ALIAS, buddy->alias,
                         COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
                         COLUMN_NOTE,  buddy->note,
                         COLUMN_URI,  buddy->uri,
+                        COLUMN_ACCOUNTID, buddy->acc,
                         COLUMN_SUBSCRIBED, (buddy->subscribed)? "Active":"Inactive",
                         -1);
                 }
@@ -108,23 +113,6 @@ create_and_fill_model (void)
     }
     return GTK_TREE_MODEL(treestore);
 }
-
-
-gboolean
-selection_changed(GtkTreeSelection *selection) {
-/*
-    GtkTreeView *treeView;
-    GtkTreeModel *model;
-    GtkTreeIter iter;
-    gchar *active;
-    treeView = gtk_tree_selection_get_tree_view(selection);
-    model = gtk_tree_view_get_model(treeView);
-    gtk_tree_selection_get_selected(selection, &model, &iter);
-    gtk_tree_model_get(model, &iter, 1, &active, -1);
-    g_print("***********************************wetoiquwerklfhnknk,nlkjl;k;k");
-*/
-}
-
 
 static GtkWidget *
 create_view (void)
@@ -140,7 +128,7 @@ create_view (void)
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_BUDDIES);
+    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_ALIAS);
 
 
     col = gtk_tree_view_column_new();
@@ -171,8 +159,16 @@ create_view (void)
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_SUBSCRIBED);
 
+    col = gtk_tree_view_column_new();
+    gtk_tree_view_column_set_title(col, "AccID");
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    renderer = gtk_cell_renderer_text_new();
+    gtk_tree_view_column_pack_start(col, renderer, TRUE);
+    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_ACCOUNTID);
+
     return view;
 }
+
 
 void
 update_buddylist_view()
@@ -183,10 +179,266 @@ update_buddylist_view()
     GtkTreeModel * model = create_and_fill_model();
     gtk_tree_view_set_model(GTK_TREE_VIEW(buddy_list_tree_view), model);
     g_object_unref(model);
-    g_debug("BuddyList updated.");
+    gtk_tree_view_expand_all(GTK_TREE_VIEW(buddy_list_tree_view));
+    g_debug("BuddyListTreeView updated.");
 }
 
 
+gboolean
+show_buddy_info(const gchar *title, buddy_t *b)
+{
+    GtkWidget *dialog = gtk_dialog_new_with_buttons((title),
+                        GTK_WINDOW(buddylistwindow),
+                        GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                        GTK_STOCK_CANCEL,
+                        GTK_RESPONSE_CANCEL,
+                        GTK_STOCK_APPLY,
+                        GTK_RESPONSE_APPLY,
+                        NULL);
+
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), grid, TRUE, TRUE, 0);
+
+    gint row = 0;
+
+    GtkWidget *label = gtk_label_new_with_mnemonic("_Account");
+    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    GtkWidget *combo_account = gtk_combo_box_text_new();
+    // fill combox with existing accounts
+    guint acc_index = 0;
+    account_t *acc;
+    for (guint i = 0; i < account_list_get_size(); i++)
+    {
+        acc = account_list_get_nth(i);
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_account),
+                account_lookup(acc, CONFIG_ACCOUNT_ALIAS));
+        // set active acc
+        if(g_strcmp0(account_lookup(acc, CONFIG_ACCOUNT_ID), b->acc) == 0)
+            acc_index = i;
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_account), (gint)acc_index);
+
+    gtk_grid_attach(GTK_GRID(grid), combo_account, 1, row, 1, 1);
+
+    row++;
+    label = gtk_label_new_with_mnemonic("_Alias");
+    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    GtkWidget *entry_alias = gtk_entry_new();
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_alias);
+    gtk_entry_set_text(GTK_ENTRY(entry_alias), b->alias);
+    gtk_grid_attach(GTK_GRID(grid), entry_alias, 1, row, 1, 1);
+
+    row++;
+    label = gtk_label_new_with_mnemonic("_Uri");
+    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    GtkWidget *entry_uri = gtk_entry_new();
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_uri);
+    gtk_entry_set_text(GTK_ENTRY(entry_uri), b->uri);
+    gtk_grid_attach(GTK_GRID(grid), entry_uri, 1, row, 1, 1);
+
+    gtk_widget_show_all(grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+
+    gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+
+    // update buddy OK was pressed
+    if (response == GTK_RESPONSE_APPLY)
+    {
+        // TODO free?
+        acc = account_list_get_by_alias(gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_account)));
+        b->acc = g_strdup(acc->accountID);
+        b->alias = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_alias)));
+        b->uri = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_uri)));
+        gtk_widget_destroy(dialog);
+        return TRUE;
+    }
+
+    gtk_widget_destroy(dialog);
+    return FALSE;
+}
+
+
+static gboolean
+confirm_buddy_deletion(buddy_t *b)
+{
+    gchar *msg;
+    msg = g_markup_printf_escaped("Are you sure want to delete \"%s\" (%s)?",
+            b->alias, b->uri); // TODO: use _()
+
+    /* Create the widgets */
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddylistwindow),
+            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+            GTK_MESSAGE_WARNING,
+            GTK_BUTTONS_CANCEL,
+            "%s", msg);
+
+    gtk_dialog_add_buttons(GTK_DIALOG(dialog), ("Remove"), GTK_RESPONSE_OK, NULL);
+    gtk_window_set_title(GTK_WINDOW(dialog), ("Remove remove"));
+
+    const gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+
+    gtk_widget_destroy(dialog);
+    g_free(msg);
+
+    return response == GTK_RESPONSE_OK;
+}
+
+void
+view_popup_menu_onEdit (GtkWidget *menuitem, gpointer userdata)
+{
+    buddy_t *b = (buddy_t*)userdata;
+    if(show_buddy_info("Edit buddy", b))
+    {
+        // TODO: replace and subscribe
+        presence_list_print();
+        b->subscribed = FALSE;
+        dbus_presence_subscribe(b->acc, b->uri, TRUE);
+        update_buddylist_view();
+    }
+}
+
+
+
+void
+view_popup_menu_onAdd (GtkWidget *menuitem, gpointer userdata)
+{
+    buddy_t *b = (buddy_t*)userdata;
+    // TODO : freemem ?
+    b->uri = g_strdup("<sip:XXXX@server>");
+    b->alias = g_strdup(" ");
+    if(show_buddy_info("Add new buddy", b))
+    {
+        presence_list_add_buddy(b);
+        presence_list_print();
+        b->subscribed = FALSE;
+        dbus_presence_subscribe(b->acc, b->uri, TRUE);
+        update_buddylist_view();
+    }
+}
+
+
+void
+view_popup_menu_onRemove (GtkWidget *menuitem, gpointer userdata)
+{
+    buddy_t *b = (buddy_t*) userdata;
+    const gboolean confirmed = confirm_buddy_deletion(b);
+    if(confirmed)
+    {
+        presence_list_remove_buddy(b);
+        dbus_presence_subscribe(b->acc, b->uri, FALSE);
+        presence_list_print();
+        update_buddylist_view();
+    }
+}
+
+void
+view_popup_menu (GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+{
+    GtkWidget *menu, *menuitem;
+    menu = gtk_menu_new();
+    buddy_t *b = (buddy_t*) userdata;
+
+    menuitem = gtk_menu_item_new_with_label("Add");
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+    g_signal_connect(menuitem, "activate",
+            G_CALLBACK(view_popup_menu_onAdd), userdata);
+
+    if(strlen(b->uri)>0) // if a buddy was selected, not an account
+    {
+        menuitem = gtk_menu_item_new_with_label("Edit");
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+        g_signal_connect(menuitem, "activate",
+                G_CALLBACK(view_popup_menu_onEdit), userdata);
+
+        menuitem = gtk_menu_item_new_with_label("Remove");
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+        g_signal_connect(menuitem, "activate",
+                G_CALLBACK(view_popup_menu_onRemove), userdata);
+    }
+
+    gtk_widget_show_all(menu);
+
+    /* Note: event can be NULL here when called from view_onPopupMenu;
+     *  gdk_event_get_time() accepts a NULL argument */
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+            (event != NULL) ? event->button : 0,
+            gdk_event_get_time((GdkEvent*)event));
+}
+
+
+gboolean
+view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+{
+    /* single click with the right mouse button? */
+    if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3)
+    {
+        /* optional: select row if no row is selected or only
+         *  one other row is selected (will only do something
+         *  if you set a tree selection mode as described later
+         *  in the tutorial) */
+        if (1)
+        {
+            GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
+
+            /* Note: gtk_tree_selection_count_selected_rows() does not
+             *   exist in gtk+-2.0, only in gtk+ >= v2.2 ! */
+            if (gtk_tree_selection_count_selected_rows(selection)  <= 1)
+            {
+                GtkTreePath *path;
+                /* Get tree path for row that was clicked */
+                if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview),
+                            (gint) event->x,
+                            (gint) event->y,
+                            &path, NULL, NULL, NULL))
+                {
+                    gtk_tree_selection_unselect_all(selection);
+                    gtk_tree_selection_select_path(selection, path);
+
+                    GtkTreeIter   iter;
+                    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
+
+                    if (gtk_tree_model_get_iter(model, &iter, path))
+                    {
+                        buddy_t *tmp = &tmp_buddy; // presence_list_create_new_buddy();
+                        GValue val;
+
+                        memset(&val, 0, sizeof(val));
+                        gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNTID, &val);
+                        tmp->acc = g_value_dup_string(&val);
+                        gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
+                        tmp->uri = g_value_dup_string(&val);
+                        gtk_tree_model_get_value(model, &iter, COLUMN_ALIAS, &val);
+                        tmp->alias = g_value_dup_string(&val);
+                        g_value_unset(&val);
+
+                        buddy_t *b = presence_list_buddy_get_by_string(tmp->acc, tmp->uri);
+                        if(!b){
+                            g_debug("An account was selected instead of a buddy");
+                            b = tmp;
+                        }
+                        view_popup_menu(treeview, event, b);
+                    }
+                    gtk_tree_path_free(path);
+                }
+            }
+        } /* end of optional bit */
+        return TRUE;
+    }
+    return FALSE;
+}
+
+gboolean
+view_onPopupMenu (GtkWidget *treeview, gpointer userdata)
+{
+    view_popup_menu(treeview, NULL, userdata);
+
+    return TRUE; /* we handled this */
+}
 
 void
 destroy_buddylist_window()
@@ -218,8 +470,8 @@ create_buddylist_window(SFLPhoneClient *client)
     buddy_list_tree_view = create_view();
     gtk_box_pack_start(GTK_BOX(vbox), buddy_list_tree_view, TRUE, TRUE, 5);
 
-    GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(buddy_list_tree_view));
-    g_signal_connect(G_OBJECT(selection), "changed", G_CALLBACK(selection_changed), NULL);
+    g_signal_connect(G_OBJECT(buddy_list_tree_view), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
+    g_signal_connect(G_OBJECT(buddy_list_tree_view), "popup-menu", G_CALLBACK(view_onPopupMenu), NULL);
 
     // Load buddylist
     presence_list_init(client);
