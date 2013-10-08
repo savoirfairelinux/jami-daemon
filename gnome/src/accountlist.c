@@ -334,7 +334,7 @@ account_t *create_default_account()
 {
     account_t *account = g_new0(account_t, 1);
     account->accountID = g_strdup("new"); // FIXME: maybe replace with NULL?
-    account->properties = dbus_get_account_details("");
+    account->properties = dbus_get_account_template();
     sflphone_fill_codec_list_per_account(account);
     initialize_credential_information(account);
     return account;
