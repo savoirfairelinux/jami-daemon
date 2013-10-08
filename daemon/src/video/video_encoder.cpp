@@ -53,7 +53,11 @@ VideoEncoder::VideoEncoder() :
     , streamIndex_(-1)
     , dstWidth_(0)
     , dstHeight_(0)
-{ }
+#if (LIBAVCODEC_VERSION_MAJOR < 54)
+    , encoderBuffer_(0)
+    , encoderBufferSize_(0)
+#endif
+{}
 
 VideoEncoder::~VideoEncoder()
 {
@@ -64,6 +68,10 @@ VideoEncoder::~VideoEncoder()
         avcodec_close(encoderCtx_);
 
     av_free(scaledFrameBuffer_);
+
+#if (LIBAVCODEC_VERSION_MAJOR < 54)
+    av_free(encoderBuffer_);
+#endif
 }
 
 int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
@@ -136,6 +144,16 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
         ERROR(" buffer too small");
         return -1;
     }
+
+#if LIBAVCODEC_VERSION_MAJOR < 54
+    encoderBufferSize_ = scaledFrameBufferSize_; // seems to be ok
+    encoderBuffer_ = (uint8_t*) av_malloc(encoderBufferSize_);
+    if (!encoderBuffer_) {
+        ERROR("encoderBuffer = av_malloc() failed");
+        return -1;
+    }
+#endif
+
     scaledFrameBuffer_ = (uint8_t*) av_malloc(scaledFrameBufferSize_);
     if (!scaledFrameBuffer_) {
         ERROR("scaledFrameBuffer = av_malloc() failed");
@@ -198,11 +216,13 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int frame_number)
     }
 
     AVPacket pkt = {};
-    int got_packet;
     av_init_packet(&pkt);
+
+#if (LIBAVCODEC_VERSION_MAJOR >= 54)
+    int got_packet;
     ret = avcodec_encode_video2(encoderCtx_, &pkt, frame, &got_packet);
     if (ret != 0) {
-        ERROR("avcodec_encode_video failed");
+        ERROR("avcodec_encode_video2 failed");
         av_free_packet(&pkt);
         return -1;
     }
@@ -221,18 +241,50 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int frame_number)
             ERROR("interleaved_write_frame failed");
     }
 
-    av_free_packet(&pkt);
+#else
+    ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
+                               encoderBufferSize_, frame);
+    if (ret < 0) {
+        ERROR("avcodec_encode_video failed");
+        av_free_packet(&pkt);
+        return ret;
+    }
 
-    return ret;
+    pkt.data = encoderBuffer_;
+    pkt.size = ret;
+
+    // rescale pts from encoded video framerate to rtp clock rate
+    if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE)) {
+        pkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
+                encoderCtx_->time_base, stream_->time_base);
+     } else {
+         pkt.pts = 0;
+     }
+
+     // is it a key frame?
+     if (encoderCtx_->coded_frame->key_frame)
+         pkt.flags |= AV_PKT_FLAG_KEY;
+     pkt.stream_index = stream_->index;
+
+    // write the compressed frame
+     if ((ret = av_interleaved_write_frame(outputCtx_, &pkt)) < 0)
+         ERROR("interleaved_write_frame failed");
+
+#endif
+     av_free_packet(&pkt);
+
+     return ret;
 }
 
 int VideoEncoder::flush()
 {
+    AVPacket pkt = {};
+    av_init_packet(&pkt);
+
+#if (LIBAVCODEC_VERSION_MAJOR >= 54)
     int ret;
 
-    AVPacket pkt = {};
     int got_packet;
-    av_init_packet(&pkt);
 
     ret = avcodec_encode_video2(encoderCtx_, &pkt, NULL, &got_packet);
     if (ret != 0) {
@@ -244,9 +296,26 @@ int VideoEncoder::flush()
     if (pkt.size and got_packet) {
         // write the compressed frame
         ret = av_interleaved_write_frame(outputCtx_, &pkt);
-        if (ret)
+        if (ret < 0)
             ERROR("interleaved_write_frame failed");
     }
+#else
+    ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
+                               encoderBufferSize_, NULL);
+    if (ret < 0) {
+        ERROR("avcodec_encode_video failed");
+        av_free_packet(&pkt);
+        return ret;
+    }
+
+    pkt.data = encoderBuffer_;
+    pkt.size = ret;
+
+    // write the compressed frame
+    ret = av_interleaved_write_frame(outputCtx_, &pkt);
+    if (ret < 0)
+        ERROR("interleaved_write_frame failed");
+#endif
     av_free_packet(&pkt);
 
     return ret;

@@ -84,6 +84,10 @@ private:
     int streamIndex_;
     int dstWidth_;
     int dstHeight_;
+#if (LIBAVCODEC_VERSION_MAJOR < 54)
+    uint8_t *encoderBuffer_;
+    int encoderBufferSize_;
+#endif
 };
 
 }
