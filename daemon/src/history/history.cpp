@@ -105,7 +105,8 @@ void History::ensurePath()
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                DEBUG("Cannot create directory: %s!: %s", userdata.c_str(), strerror(errno));
+                DEBUG("Cannot create directory: %s", userdata.c_str());
+                Logger::strErr();
                 return;
             }
         }

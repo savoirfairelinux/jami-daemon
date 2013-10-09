@@ -85,4 +85,27 @@ bool getDebugMode()
 {
     return debugMode;
 }
+
+void strErr()
+{
+#ifdef __GLIBC__
+    ERROR("%m");
+#else
+    char buf[1000];
+    const char *msg;
+
+    switch (strerror_r(error, buf, sizeof(buf))) {
+        case 0:
+            msg = buf;
+            break;
+        case ERANGE: /* should never happen */
+            msg = "unknown (too big to display)";
+            break;
+        default:
+            msg = "unknown (invalid error number)";
+            break;
+    }
+    ERROR("%s", msg);
+#endif
+}
 }
