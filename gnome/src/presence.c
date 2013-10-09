@@ -59,16 +59,19 @@ static GSettings * presence_setting_schema;
 void
 presence_list_init(SFLPhoneClient *client)
 {
-    presence_setting_schema = client->settings;
-    presence_buddy_list = g_list_alloc();
-    presence_list_load();
-    presence_list_print();
-
-
-    for (guint i = 0; i < account_list_get_size(); i++)
+    if(!presence_buddy_list) // should load and subscribe only once
+    // but this function is called each time the buddy_list_window is created
     {
-        account_t * acc = account_list_get_nth(i);
-        presence_list_send_subscribes(acc, TRUE);
+        presence_setting_schema = client->settings;
+        presence_buddy_list = g_list_alloc();
+        presence_list_load();
+        presence_list_print();
+
+        for (guint i = 0; i < account_list_get_size(); i++)
+        {
+            account_t * acc = account_list_get_nth(i);
+            presence_list_send_subscribes(acc, TRUE);
+        }
     }
 }
 
@@ -142,6 +145,7 @@ presence_list_save()
         g_warning("Uninitialized buddy list.");
         return;
     }
+
     GVariantBuilder *v_b_list = g_variant_builder_new (G_VARIANT_TYPE ("aa{ss}"));
 
     GList *tmp = g_list_nth(presence_buddy_list,1);
@@ -153,17 +157,17 @@ presence_list_save()
         g_variant_builder_add (v_b_buddy, "{ss}", "alias", buddy->alias);
         g_variant_builder_add (v_b_buddy, "{ss}", "uri", buddy->uri);
         GVariant * v_buddy = g_variant_builder_end(v_b_buddy);
-        g_print("New buddy: %s \n",g_variant_print(v_buddy,TRUE));
+        g_print("Presence : saved buddy: %s \n",g_variant_print(v_buddy,TRUE));
         g_variant_builder_add_value(v_b_list, v_buddy);
         tmp = g_list_next (tmp);
     }
     GVariant * v_list = g_variant_builder_end(v_b_list);
 
     if(g_settings_set_value(presence_setting_schema, PRESENCE_BUDDY_LIST_KEY, v_list))
-        g_debug("Presence : saved buddy list.");
+        g_debug("Presence : write buddy list in gsettings.");
 }
 
-GList *
+buddy_t *
 presence_list_get_buddy(buddy_t * buddy)
 {
     GList *tmp = g_list_nth(presence_buddy_list,1);
@@ -182,7 +186,7 @@ presence_list_get_buddy(buddy_t * buddy)
                     (g_strcmp0(buddy->acc, b->acc)==0))
         {
             g_debug ("Found buddy:(%s,%s).", b->uri, b->acc);
-            return tmp;
+            return b;
         }
         tmp = g_list_next (tmp);
     }
@@ -215,15 +219,23 @@ presence_list_buddy_get_by_string(const gchar *accID, const gchar *uri){
 }
 
 void
-presence_list_update_buddy(buddy_t * buddy)
+presence_list_update_buddy(buddy_t * buddy, buddy_t * backup)
 {
-    //GList * ptr = presence_list_get_buddy(buddy);
-    if(buddy != NULL)
+    buddy_t * b = presence_list_get_buddy(buddy);
+
+    if(b != NULL)
     {
-        g_debug("Presence : udate buddy:(%s).", buddy->uri);
+        g_debug("Presence : udate buddy:(%s).", b->uri);
+
+        if(!(presence_list_get_buddy(backup))){
+            g_debug("Presence : update buddy with new uri/acc");
+            dbus_presence_subscribe(backup->acc, backup->uri, FALSE);
+            b->subscribed = FALSE;
+            dbus_presence_subscribe(b->acc, b->uri, TRUE);
+        }
+
         presence_list_save();
     }
-
 }
 
 
@@ -232,13 +244,16 @@ presence_list_add_buddy(buddy_t * buddy)
 {
     if(presence_list_get_buddy(buddy)==NULL)
     {
-        buddy_t * b = g_malloc(sizeof(buddy_t));
+        /*buddy_t * b = g_malloc(sizeof(buddy_t));
         b->acc = g_strdup(buddy->acc);
         b->alias = g_strdup(buddy->alias);
-        b->uri = g_strdup(buddy->uri);
+        b->uri = g_strdup(buddy->uri);*/
+        buddy_t *b = buddy;
+        b->subscribed = FALSE;
         g_debug("Presence : add buddy:(%s, %s).", b->acc, b->uri);
         presence_buddy_list = g_list_append(presence_buddy_list, (gpointer)b);
         presence_list_save();
+        dbus_presence_subscribe(b->acc, b->uri, TRUE);
     }
     else
         g_debug("Presence : don't add  existing buddy.");
@@ -247,12 +262,12 @@ presence_list_add_buddy(buddy_t * buddy)
 void
 presence_list_remove_buddy(buddy_t * buddy)
 {
-    GList * ptr = presence_list_get_buddy(buddy);
-    if(ptr != NULL)
+    buddy_t * b = presence_list_get_buddy(buddy);
+    if(b != NULL)
     {
-        buddy_t * s = (buddy_t *)(ptr->data);
-        g_debug("Presence : remove buddy:(%s).", s->uri);
-        presence_buddy_list = g_list_remove(presence_buddy_list, (gconstpointer)s);
+        g_debug("Presence : remove buddy:(%s).", b->uri);
+        dbus_presence_subscribe(b->acc, b->uri, FALSE);
+        presence_buddy_list = g_list_remove(presence_buddy_list, (gconstpointer)b);
         presence_list_save();
     }
     else
@@ -320,4 +335,17 @@ presence_list_send_subscribes(account_t *acc, gboolean flag)
                 dbus_presence_subscribe(b->acc, b->uri, flag);
         }
     }
+}
+
+buddy_t *
+presence_create_buddy()
+{
+    buddy_t *b = g_malloc(sizeof(buddy_t));
+    b->acc = g_strdup("");
+    b->uri = g_strdup("<sip:XXXX@server>");
+    b->alias = g_strdup("");
+    b->subscribed = FALSE;
+    b->status = FALSE;
+    b->note = g_strdup("");
+    return b;
 }

@@ -34,6 +34,7 @@
 
 #include <gtk/gtk.h>
 #include <string.h>
+#include <glib/gi18n.h>
 
 #include "buddylistwindow.h"
 #include "account_schema.h"
@@ -48,7 +49,7 @@ static GtkWidget *buddy_list_tree_view = NULL;
 static buddy_t tmp_buddy;
 
 static GtkTreeModel *create_and_fill_model (void);
-static GtkWidget * create_view (void);
+static GtkWidget *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 
 enum
@@ -72,7 +73,7 @@ create_and_fill_model (void)
     treestore = gtk_tree_store_new(N_COLUMN, G_TYPE_STRING, // Alias
                                              G_TYPE_STRING, // Status
                                              G_TYPE_STRING, // Note
-                                             G_TYPE_STRING, // Uri
+                                             G_TYPE_STRING, // URI
                                              G_TYPE_STRING, // AccID
                                              G_TYPE_STRING);// (temp) subscribed
 
@@ -82,12 +83,12 @@ create_and_fill_model (void)
     for (guint i = 0; i < account_list_get_size(); i++)
     {
         account_t * acc = account_list_get_nth(i);
-        if (acc->state == (ACCOUNT_STATE_REGISTERED))
+        if(!(account_is_IP2IP(acc)))
         {
             gtk_tree_store_append(treestore, &toplevel, NULL);
             gtk_tree_store_set(treestore, &toplevel,
                     COLUMN_ALIAS, account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
-                    COLUMN_STATUS, "",
+                    COLUMN_STATUS, account_state_name(acc->state),
                     COLUMN_NOTE, "",
                     COLUMN_URI, "",
                     COLUMN_ACCOUNTID, account_lookup(acc, CONFIG_ACCOUNT_ID),
@@ -100,13 +101,13 @@ create_and_fill_model (void)
                 {
                     gtk_tree_store_append(treestore, &child, &toplevel);
                     gtk_tree_store_set(treestore, &child,
-                        COLUMN_ALIAS, buddy->alias,
-                        COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
-                        COLUMN_NOTE,  buddy->note,
-                        COLUMN_URI,  buddy->uri,
-                        COLUMN_ACCOUNTID, buddy->acc,
-                        COLUMN_SUBSCRIBED, (buddy->subscribed)? "Active":"Inactive",
-                        -1);
+                            COLUMN_ALIAS, buddy->alias,
+                            COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
+                            COLUMN_NOTE,  buddy->note,
+                            COLUMN_URI,  buddy->uri,
+                            COLUMN_ACCOUNTID, buddy->acc,
+                            COLUMN_SUBSCRIBED, (buddy->subscribed)? "Active":"Inactive",
+                            -1);
                 }
             }
         }
@@ -124,7 +125,7 @@ create_view (void)
     view = gtk_tree_view_new();
 
     col = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(col, "Buddies");
+    gtk_tree_view_column_set_title(col, _("Buddies"));
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
@@ -144,9 +145,9 @@ create_view (void)
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_NOTE);
-
+/*
     col = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(col, "Uri");
+    gtk_tree_view_column_set_title(col, "URI");
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
@@ -165,7 +166,7 @@ create_view (void)
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_ACCOUNTID);
-
+*/
     return view;
 }
 
@@ -233,7 +234,7 @@ show_buddy_info(const gchar *title, buddy_t *b)
     gtk_grid_attach(GTK_GRID(grid), entry_alias, 1, row, 1, 1);
 
     row++;
-    label = gtk_label_new_with_mnemonic("_Uri");
+    label = gtk_label_new_with_mnemonic("_URI");
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     GtkWidget *entry_uri = gtk_entry_new();
@@ -277,8 +278,8 @@ confirm_buddy_deletion(buddy_t *b)
             GTK_BUTTONS_CANCEL,
             "%s", msg);
 
-    gtk_dialog_add_buttons(GTK_DIALOG(dialog), ("Remove"), GTK_RESPONSE_OK, NULL);
-    gtk_window_set_title(GTK_WINDOW(dialog), ("Remove remove"));
+    gtk_dialog_add_buttons(GTK_DIALOG(dialog), _("Remove"), GTK_RESPONSE_OK, NULL);
+    gtk_window_set_title(GTK_WINDOW(dialog), _("Remove buddy"));
 
     const gint response = gtk_dialog_run(GTK_DIALOG(dialog));
 
@@ -291,36 +292,31 @@ confirm_buddy_deletion(buddy_t *b)
 void
 view_popup_menu_onEdit (GtkWidget *menuitem, gpointer userdata)
 {
-    buddy_t *b = (buddy_t*)userdata;
-    if(show_buddy_info("Edit buddy", b))
+    buddy_t *backup = g_malloc(sizeof(buddy_t));
+    memcpy(backup, (buddy_t*)userdata, sizeof(buddy_t));
+
+    if(show_buddy_info(_("Edit buddy"), (buddy_t *)userdata))
     {
-        // TODO: replace and subscribe
-        presence_list_print();
-        b->subscribed = FALSE;
-        dbus_presence_subscribe(b->acc, b->uri, TRUE);
+        presence_list_update_buddy((buddy_t *)userdata, backup);
         update_buddylist_view();
     }
+    g_free(backup);
 }
-
-
 
 void
 view_popup_menu_onAdd (GtkWidget *menuitem, gpointer userdata)
 {
-    buddy_t *b = (buddy_t*)userdata;
-    // TODO : freemem ?
-    b->uri = g_strdup("<sip:XXXX@server>");
-    b->alias = g_strdup(" ");
-    if(show_buddy_info("Add new buddy", b))
+    buddy_t *b = presence_create_buddy();
+    b->acc = g_strdup(((buddy_t*)userdata)->acc);
+
+    if(show_buddy_info(_("Add new buddy"), b))
     {
         presence_list_add_buddy(b);
-        presence_list_print();
-        b->subscribed = FALSE;
-        dbus_presence_subscribe(b->acc, b->uri, TRUE);
         update_buddylist_view();
     }
+    else
+        g_free(b);
 }
-
 
 void
 view_popup_menu_onRemove (GtkWidget *menuitem, gpointer userdata)
@@ -330,8 +326,6 @@ view_popup_menu_onRemove (GtkWidget *menuitem, gpointer userdata)
     if(confirmed)
     {
         presence_list_remove_buddy(b);
-        dbus_presence_subscribe(b->acc, b->uri, FALSE);
-        presence_list_print();
         update_buddylist_view();
     }
 }
@@ -343,19 +337,19 @@ view_popup_menu (GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
     menu = gtk_menu_new();
     buddy_t *b = (buddy_t*) userdata;
 
-    menuitem = gtk_menu_item_new_with_label("Add");
+    menuitem = gtk_menu_item_new_with_label(_("Add"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate",
             G_CALLBACK(view_popup_menu_onAdd), userdata);
 
     if(strlen(b->uri)>0) // if a buddy was selected, not an account
     {
-        menuitem = gtk_menu_item_new_with_label("Edit");
+        menuitem = gtk_menu_item_new_with_label(_("Edit"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
         g_signal_connect(menuitem, "activate",
                 G_CALLBACK(view_popup_menu_onEdit), userdata);
 
-        menuitem = gtk_menu_item_new_with_label("Remove");
+        menuitem = gtk_menu_item_new_with_label(_("Remove"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
         g_signal_connect(menuitem, "activate",
                 G_CALLBACK(view_popup_menu_onRemove), userdata);
@@ -404,7 +398,8 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event, gpointer userd
 
                     if (gtk_tree_model_get_iter(model, &iter, path))
                     {
-                        buddy_t *tmp = &tmp_buddy; // presence_list_create_new_buddy();
+                        // grab buddy data from the TreeView before displaying the menu
+                        buddy_t *tmp = &tmp_buddy;
                         GValue val;
 
                         memset(&val, 0, sizeof(val));
@@ -417,10 +412,9 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event, gpointer userd
                         g_value_unset(&val);
 
                         buddy_t *b = presence_list_buddy_get_by_string(tmp->acc, tmp->uri);
-                        if(!b){
-                            g_debug("An account was selected instead of a buddy");
-                            b = tmp;
-                        }
+                        if(!b) //"An account was selected instead of a buddy"
+                            b = tmp; // set a dummy buddy with account ID.
+
                         view_popup_menu(treeview, event, b);
                     }
                     gtk_tree_path_free(path);
@@ -451,7 +445,7 @@ destroy_buddylist_window()
 void
 create_buddylist_window(SFLPhoneClient *client)
 {
-    const gchar * title = "SFLphone Buddies";
+    const gchar * title = _("SFLphone Buddies");
     g_debug("Create window : %s", title);
 
     buddylistwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
