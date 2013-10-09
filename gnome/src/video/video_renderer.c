@@ -299,7 +299,7 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
         // Could not decrement semaphore in time, returning
         if (sem_timedwait(&priv->shm_area->notification, &timeout) < 0) {
             if (errno == ETIMEDOUT)
-                g_warning("Timed out waiting for notification");
+                g_warning("Renderer %s timed out waiting for notification", priv->shm_path);
             return;
         }
 
