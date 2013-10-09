@@ -77,6 +77,8 @@ void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     sources_.remove(ob);
+    if (sources_.empty())
+        stop_sink();
 }
 
 void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
