@@ -65,6 +65,7 @@ VideoMixer::~VideoMixer()
     auto videoCtrl = Manager::instance().getVideoControls();
     if (auto shared = videoCtrl->getVideoCamera().lock())
         shared->detach(this);
+    stop_sink();
 }
 
 void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
@@ -77,8 +78,6 @@ void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     sources_.remove(ob);
-    if (sources_.empty())
-        stop_sink();
 }
 
 void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
