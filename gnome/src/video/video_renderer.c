@@ -244,9 +244,10 @@ shm_lock(SHMHeader *shm_area)
 {
     const struct timespec timeout = create_timeout();
     /* We need an upper limit on how long we'll wait to avoid locking the whole GUI */
-    if (sem_timedwait(&shm_area->mutex, &timeout) == ETIMEDOUT) {
-        g_warning("Timed out before shm lock was acquired");
-        return FALSE;
+    if (sem_timedwait(&shm_area->mutex, &timeout) < 0) {
+        g_warning("%s", g_strerror(errno));
+        if (errno == ETIMEDOUT)
+            return FALSE;
     }
     return TRUE;
 }
