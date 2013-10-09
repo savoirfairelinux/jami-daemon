@@ -66,10 +66,11 @@ presence_list_init(SFLPhoneClient *client)
         presence_buddy_list = g_list_alloc();
         presence_list_load();
 
-        for (guint i = 0; i < account_list_get_size(); i++)
+        buddy_t * b;
+        for (guint i =  1; i < presence_list_get_size(); i++)
         {
-            account_t * acc = account_list_get_nth(i);
-            presence_list_send_subscribes(acc, TRUE);
+            b = presence_list_get_nth(i);
+            presence_buddy_subscribe(b, TRUE);
         }
     }
 }
@@ -105,6 +106,7 @@ presence_list_load()
 
     GVariantIter v_iter;
     GVariant *v_buddy, *v_acc, *v_alias, * v_uri;
+    buddy_t * buddy;
 
     g_variant_iter_init (&v_iter, v_list);
     while ((v_buddy = g_variant_iter_next_value (&v_iter)))
@@ -113,13 +115,13 @@ presence_list_load()
         v_alias = g_variant_lookup_value(v_buddy,"alias",G_VARIANT_TYPE_STRING);
         v_uri = g_variant_lookup_value(v_buddy,"uri",G_VARIANT_TYPE_STRING);
 
-        buddy_t * buddy = g_malloc(sizeof(buddy_t));
+        buddy = presence_buddy_create();
+        g_free(buddy->acc);
+        g_free(buddy->alias);
+        g_free(buddy->uri);
         buddy->acc = g_strdup(g_variant_get_data(v_acc));
         buddy->alias = g_strdup(g_variant_get_data(v_alias));
         buddy->uri = g_strdup(g_variant_get_data(v_uri));
-        buddy->status = FALSE;
-        buddy->note = g_strdup("");
-        buddy->subscribed = FALSE;
 
         g_debug("Presence : found buddy:(acc:%s, bud: %s).", buddy->acc, buddy->uri);
         presence_buddy_list = g_list_append(presence_buddy_list, (gpointer)buddy);
@@ -230,11 +232,10 @@ presence_list_update_buddy(buddy_t * buddy, buddy_t * backup)
 
         if(!(presence_list_get_buddy(backup))){
             g_debug("Presence : update buddy with new uri/acc");
-            dbus_presence_subscribe(backup->acc, backup->uri, FALSE);
+            presence_buddy_subscribe(backup, FALSE); //unsubscribe the old buddy
             b->subscribed = FALSE;
-            dbus_presence_subscribe(b->acc, b->uri, TRUE);
+            presence_buddy_subscribe(b, TRUE);
         }
-
         presence_list_save();
     }
 }
@@ -249,7 +250,7 @@ presence_list_add_buddy(buddy_t * buddy)
         presence_buddy_list = g_list_append(presence_buddy_list, (gpointer)buddy);
         presence_list_save();
         buddy->subscribed = FALSE;
-        dbus_presence_subscribe(buddy->acc, buddy->uri, TRUE);
+        presence_buddy_subscribe(buddy, TRUE);
     }
     else
         g_debug("Presence : don't add  existing buddy.");
@@ -262,7 +263,7 @@ presence_list_remove_buddy(buddy_t * buddy)
     if(b != NULL)
     {
         g_debug("Presence : remove buddy:(%s).", b->uri);
-        dbus_presence_subscribe(b->acc, b->uri, FALSE);
+        presence_buddy_subscribe(b, FALSE);
         presence_buddy_list = g_list_remove(presence_buddy_list, (gconstpointer)b);
         presence_buddy_delete(b);
         presence_list_save();
@@ -318,22 +319,6 @@ presence_list_flush()
     g_list_free_full(presence_buddy_list, (GDestroyNotify) presence_buddy_list);
 }
 
-void
-presence_list_send_subscribes(account_t *acc, gboolean flag)
-{
-    buddy_t * b;
-    for (guint i =  1; i < presence_list_get_size(presence_buddy_list); i++)
-    {
-        if(acc)
-        {
-            b = presence_list_get_nth(i);
-            if((acc->state == (ACCOUNT_STATE_REGISTERED)) &&
-                        account_lookup(acc, CONFIG_PRESENCE_ENABLED))
-                dbus_presence_subscribe(b->acc, b->uri, flag);
-        }
-    }
-}
-
 buddy_t *
 presence_buddy_create()
 {
@@ -361,4 +346,17 @@ presence_buddy_delete(buddy_t *b)
     g_free(b->note);
     g_free(b->alias);
     g_free(b);
+}
+
+void
+presence_buddy_subscribe(buddy_t * buddy, gboolean flag)
+{
+    account_t * acc = account_list_get_by_id(buddy->acc);
+    if(acc)
+    {
+        if((acc->state == (ACCOUNT_STATE_REGISTERED)) &&
+                account_lookup(acc, CONFIG_PRESENCE_ENABLED) &&
+                (flag != buddy->subscribed))
+            dbus_presence_subscribe(buddy->acc, buddy->uri, flag);
+    }
 }

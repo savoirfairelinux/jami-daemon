@@ -722,10 +722,11 @@ void show_account_list_config_dialog(SFLPhoneClient *client)
     update_actions(client);
 
     // presence, update buddy subscription
-    for (guint i = 0; i < account_list_get_size(); i++)
+    buddy_t * b;
+    for (guint i =  1; i < presence_list_get_size(); i++)
     {
-        account_t * acc = account_list_get_nth(i);
-        presence_list_send_subscribes(acc, TRUE);
+        b = presence_list_get_nth(i);
+        presence_buddy_subscribe(b, TRUE);
     }
 }
 

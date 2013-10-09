@@ -113,14 +113,6 @@ buddy_t * presence_list_buddy_get_by_string(const gchar *accID, const gchar *uri
 buddy_t * presence_list_get_buddy(buddy_t * buddy);
 
 /**
- * This function calls the dbus method to subscribe to all the buddies.
- * of a given account.
- * @param accID The account ID of the given account
- * @param flag True to subscribe and False to unsubscribe
- */
-void presence_list_send_subscribes(account_t *acc, gboolean flag);
-
-/**
  * This function create a new buddy with default value.
  * @return buddy_t The pointer to the new buddy.
  */
@@ -136,6 +128,14 @@ void presence_buddy_delete(buddy_t *b);
  * This function print the entire list for debugging purpose.
  */
 void presence_list_print();
+
+/**
+ * This function calls the dbus method to subscribe to a buddy.
+ * of a given account.
+ * @param buddy The buddy pointer
+ * @param flag True to subscribe and False to unsubscribe
+ */
+void presence_buddy_subscribe(buddy_t * buddy, gboolean flag);
 
 static const char *const PRESENCE_STATUS_ONLINE = "Online";
 static const char *const PRESENCE_STATUS_OFFLINE = "Offline";

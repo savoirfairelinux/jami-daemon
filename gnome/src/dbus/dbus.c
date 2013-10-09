@@ -632,7 +632,8 @@ presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, co
             accID, uri, status? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE, note);
 
     account_t *acc = account_list_get_by_id(accID);
-    if (acc) {
+    if (acc)
+    {
         buddy_t * b = presence_list_buddy_get_by_string(accID, uri);
         if(b)
         {
