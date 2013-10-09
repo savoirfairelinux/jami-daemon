@@ -297,8 +297,11 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
         shm_unlock(priv->shm_area);
         const struct timespec timeout = create_timeout();
         // Could not decrement semaphore in time, returning
-        if (sem_timedwait(&priv->shm_area->notification, &timeout) < 0)
+        if (sem_timedwait(&priv->shm_area->notification, &timeout) < 0) {
+            if (errno == ETIMEDOUT)
+                g_warning("Timed out waiting for notification");
             return;
+        }
 
         if (!shm_lock(priv->shm_area))
             return;
