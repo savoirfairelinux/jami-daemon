@@ -124,7 +124,13 @@ void presence_list_send_subscribes(account_t *acc, gboolean flag);
  * This function create a new buddy with default value.
  * @return buddy_t The pointer to the new buddy.
  */
-buddy_t * presence_create_buddy();
+buddy_t * presence_buddy_create();
+
+/**
+ * This function frees completely a given buddy.
+ * @param b The given buddy to be deleted.
+ */
+void presence_buddy_delete(buddy_t *b);
 
 /**
  * This function print the entire list for debugging purpose.

@@ -637,7 +637,8 @@ presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, co
         if(b)
         {
             b->status = status;
-            b->note = g_strdup(note); // TODO: mem free before?
+            g_free(b->note);
+            b->note = g_strdup(note);
             update_buddylist_view();
         }
     }

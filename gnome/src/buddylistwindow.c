@@ -85,19 +85,20 @@ create_and_fill_model (void)
         account_t * acc = account_list_get_nth(i);
         if(!(account_is_IP2IP(acc)))
         {
+            gchar *accID = account_lookup(acc, CONFIG_ACCOUNT_ID);
             gtk_tree_store_append(treestore, &toplevel, NULL);
             gtk_tree_store_set(treestore, &toplevel,
                     COLUMN_ALIAS, account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
                     COLUMN_STATUS, account_state_name(acc->state),
                     COLUMN_NOTE, "",
                     COLUMN_URI, "",
-                    COLUMN_ACCOUNTID, account_lookup(acc, CONFIG_ACCOUNT_ID),
+                    COLUMN_ACCOUNTID, accID,
                     COLUMN_SUBSCRIBED, "",
                     -1);
             for (guint j =  1; j < presence_list_get_size(buddy_list); j++)
             {
                 buddy = presence_list_get_nth(j);
-                if(g_strcmp0(buddy->acc, (gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID))==0)
+                if(g_strcmp0(buddy->acc, accID)==0)
                 {
                     gtk_tree_store_append(treestore, &child, &toplevel);
                     gtk_tree_store_set(treestore, &child,
@@ -250,11 +251,17 @@ show_buddy_info(const gchar *title, buddy_t *b)
     // update buddy OK was pressed
     if (response == GTK_RESPONSE_APPLY)
     {
-        // TODO free?
-        acc = account_list_get_by_alias(gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_account)));
+        gchar * alias = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_account));
+        acc = account_list_get_by_alias(alias);
+        g_free(alias);
+
+        g_free(b->acc);
+        g_free(b->alias);
+        g_free(b->uri);
         b->acc = g_strdup(acc->accountID);
         b->alias = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_alias)));
         b->uri = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_uri)));
+
         gtk_widget_destroy(dialog);
         return TRUE;
     }
@@ -290,7 +297,7 @@ confirm_buddy_deletion(buddy_t *b)
 }
 
 void
-view_popup_menu_onEdit (GtkWidget *menuitem, gpointer userdata)
+view_popup_menu_onEdit (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     buddy_t *backup = g_malloc(sizeof(buddy_t));
     memcpy(backup, (buddy_t*)userdata, sizeof(buddy_t));
@@ -304,9 +311,10 @@ view_popup_menu_onEdit (GtkWidget *menuitem, gpointer userdata)
 }
 
 void
-view_popup_menu_onAdd (GtkWidget *menuitem, gpointer userdata)
+view_popup_menu_onAdd (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
-    buddy_t *b = presence_create_buddy();
+    buddy_t *b = presence_buddy_create();
+    g_free(b->acc);
     b->acc = g_strdup(((buddy_t*)userdata)->acc);
 
     if(show_buddy_info(_("Add new buddy"), b))
@@ -315,11 +323,11 @@ view_popup_menu_onAdd (GtkWidget *menuitem, gpointer userdata)
         update_buddylist_view();
     }
     else
-        g_free(b);
+        presence_buddy_delete(b);
 }
 
 void
-view_popup_menu_onRemove (GtkWidget *menuitem, gpointer userdata)
+view_popup_menu_onRemove (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     buddy_t *b = (buddy_t*) userdata;
     const gboolean confirmed = confirm_buddy_deletion(b);
@@ -331,7 +339,7 @@ view_popup_menu_onRemove (GtkWidget *menuitem, gpointer userdata)
 }
 
 void
-view_popup_menu (GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+view_popup_menu (G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
 {
     GtkWidget *menu, *menuitem;
     menu = gtk_menu_new();
@@ -366,7 +374,7 @@ view_popup_menu (GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
 
 
 gboolean
-view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
 {
     /* single click with the right mouse button? */
     if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3)
@@ -404,10 +412,13 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event, gpointer userd
 
                         memset(&val, 0, sizeof(val));
                         gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNTID, &val);
+                        g_free(tmp->acc);
                         tmp->acc = g_value_dup_string(&val);
                         gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
+                        g_free(tmp->uri);
                         tmp->uri = g_value_dup_string(&val);
                         gtk_tree_model_get_value(model, &iter, COLUMN_ALIAS, &val);
+                        g_free(tmp->alias);
                         tmp->alias = g_value_dup_string(&val);
                         g_value_unset(&val);
 
