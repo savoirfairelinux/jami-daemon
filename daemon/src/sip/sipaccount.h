@@ -59,7 +59,8 @@ namespace Conf {
     const char *const DTMF_TYPE_KEY = "dtmfType";
     const char *const SERVICE_ROUTE_KEY = "serviceRoute";
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
-    const char *const PRESENCE_ENABLED_KEY = "presenceEnabled";
+    const char *const PRESENCE_PUBLISH_ENABLED_KEY = "presencePublishEnabled";
+    const char *const PRESENCE_SUBSCRIBE_ENABLED_KEY = "presenceSubscribeEnabled";
 
     // TODO: write an object to store credential which implement serializable
     const char *const SRTP_KEY = "srtp";
@@ -537,7 +538,12 @@ class SIPAccount : public Account {
          */
         SIPPresence * getPresence() const;
 
-        void enablePresence(const bool& flag);
+        /**
+         * Activate the module.
+         * @param function Publish or subscribe to enable
+         * @param enable Flag
+         */
+        void enablePresence(int function, const bool& enable);
 
 //        unsigned generateAudioPort() const;
         uint16_t generateAudioPort() const;

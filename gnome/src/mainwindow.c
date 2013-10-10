@@ -231,7 +231,7 @@ status_changed_cb(GtkComboBox *combo)
         account = account_list_get_nth(i);
         g_assert(account);
         registered = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
-        enabled = account_lookup(account, CONFIG_PRESENCE_ENABLED);
+        enabled = account_lookup(account, CONFIG_PRESENCE_PUBLISH_ENABLED);
         account_replace(account, CONFIG_PRESENCE_STATUS, status);
 
         if(g_strcmp0(enabled, "true") == 0){
@@ -258,7 +258,7 @@ statusbar_enable_presence()
         account = account_list_get_nth(i);
         g_assert(account);
         registered = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
-        enabled = account_lookup(account, CONFIG_PRESENCE_ENABLED);
+        enabled = account_lookup(account, CONFIG_PRESENCE_PUBLISH_ENABLED);
 
         if(g_strcmp0(registered, "true") == 0){
             g_debug("Presence : found registered %s, with presence enabled (status:%s).", account->accountID,status);

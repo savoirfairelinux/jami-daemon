@@ -49,7 +49,8 @@
 SIPPresence::SIPPresence(SIPAccount *acc)
     : publish_sess_()
     , status_data_()
-    , enabled_(true)
+    , publish_enabled_(true)
+    , subscribe_enabled_(true)
     , acc_(acc)
     , sub_server_list_()  //IP2IP context
     , sub_client_list_()
@@ -113,9 +114,12 @@ pj_pool_t*  SIPPresence::getPool() const
     return pool_;
 }
 
-void SIPPresence::enable(bool flag)
+void SIPPresence::enable(int function, bool enabled)
 {
-    enabled_ = flag;
+    if(function == PRESENCE_FUNCTION_PUBLISH)
+        publish_enabled_ = enabled;
+    else if(function == PRESENCE_FUNCTION_SUBSCRIBE)
+        subscribe_enabled_ = enabled;
 }
 
 void SIPPresence::updateStatus(bool status, const std::string &note)
@@ -154,7 +158,7 @@ void SIPPresence::sendPresence(bool status, const std::string &note)
 {
     updateStatus(status, note);
 
-    if (not enabled_)
+    if (not publish_enabled_)
         return;
 
     if (acc_->isIP2IP())
@@ -344,6 +348,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
                     pres->getAccount()->getAccountID(),
                     error,
                     "Publish not supported.");
+            pres->getAccount()->enablePresence(PRESENCE_FUNCTION_PUBLISH, PJ_FALSE);
         }
 
     } else {

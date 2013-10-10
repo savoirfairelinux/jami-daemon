@@ -120,7 +120,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                                 pres_client->term_reason_.slen);
 
                     std::string msg;
-                    bool supported = PJ_FALSE;
+                    bool subscribe_allowed = PJ_FALSE;
 
                     switch (tsx->status_code) {
                         case PJSIP_SC_CALL_TSX_DOES_NOT_EXIST:
@@ -136,17 +136,17 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                             if (pres_client->dlg_->remote.contact)
                                 resub_delay = 500;
                             msg = "Bad subscribe refresh.";
-                            supported = PJ_TRUE;
+                            subscribe_allowed = PJ_TRUE;
                             break;
 
                         case PJSIP_SC_NOT_FOUND:
                             msg = "Subscribe context not set for this buddy.";
-                            supported = PJ_TRUE;
+                            subscribe_allowed = PJ_TRUE;
                             break;
 
                         case PJSIP_SC_FORBIDDEN:
                             msg = "Subscribe not allowed for this buddy.";
-                            supported = PJ_TRUE;
+                            subscribe_allowed = PJ_TRUE;
                             break;
 
                         case PJSIP_SC_PRECONDITION_FAILURE:
@@ -158,8 +158,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                             error,
                             msg);
 
-                    if(!supported){
-                        pres_client->getPresence()->getAccount()->enablePresence(PJ_FALSE);
+                    if(!subscribe_allowed){
+                        pres_client->getPresence()->getAccount()->enablePresence(PRESENCE_FUNCTION_SUBSCRIBE, PJ_FALSE);
                         Manager::instance().saveConfig();
                         Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
                     }
