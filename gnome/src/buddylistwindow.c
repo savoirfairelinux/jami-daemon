@@ -453,13 +453,14 @@ view_onPopupMenu (GtkWidget *treeview, gpointer userdata)
 }
 
 static void
-row_activated_cb(GtkTreeView *treeview,
+view_row_activated_cb(GtkTreeView *treeview,
         GtkTreePath *path,
         G_GNUC_UNUSED GtkTreeViewColumn *col)
 {
+
     buddy_t *b = view_get_buddy(treeview, path);
     if(b) //"NULL if an account was selected instead of a buddy.
-        show_buddy_info(_("Edit buddy"), b);
+        view_popup_menu_onEdit(NULL, b);
 }
 
 void
@@ -494,7 +495,7 @@ create_buddylist_window(SFLPhoneClient *client)
 
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "popup-menu", G_CALLBACK(view_onPopupMenu), NULL);
-    g_signal_connect(G_OBJECT(buddy_list_tree_view), "row-activated", G_CALLBACK(row_activated_cb), NULL);
+    g_signal_connect(G_OBJECT(buddy_list_tree_view), "row-activated", G_CALLBACK(view_row_activated_cb), NULL);
 
     // Load buddylist
     presence_list_init(client);
