@@ -186,7 +186,7 @@ update_buddylist_view()
 }
 
 
-gboolean
+static gboolean
 show_buddy_info(const gchar *title, buddy_t *b)
 {
     GtkWidget *dialog = gtk_dialog_new_with_buttons((title),
@@ -296,7 +296,7 @@ confirm_buddy_deletion(buddy_t *b)
     return response == GTK_RESPONSE_OK;
 }
 
-void
+static void
 view_popup_menu_onEdit (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     buddy_t *backup = g_malloc(sizeof(buddy_t));
@@ -310,7 +310,7 @@ view_popup_menu_onEdit (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
     g_free(backup);
 }
 
-void
+static void
 view_popup_menu_onAdd (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     buddy_t *b = presence_buddy_create();
@@ -326,7 +326,7 @@ view_popup_menu_onAdd (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
         presence_buddy_delete(b);
 }
 
-void
+static void
 view_popup_menu_onRemove (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     buddy_t *b = (buddy_t*) userdata;
@@ -338,7 +338,7 @@ view_popup_menu_onRemove (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
     }
 }
 
-void
+static void
 view_popup_menu (G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
 {
     GtkWidget *menu, *menuitem;
@@ -372,77 +372,94 @@ view_popup_menu (G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, gpoin
             gdk_event_get_time((GdkEvent*)event));
 }
 
+static buddy_t *
+view_get_buddy(GtkTreeView *treeview,
+        GtkTreePath *path)
+{
+    GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
+    buddy_t *b = NULL;
+    gtk_tree_selection_unselect_all(selection);
+    gtk_tree_selection_select_path(selection, path);
 
-gboolean
+    GtkTreeIter   iter;
+    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
+
+    if (gtk_tree_model_get_iter(model, &iter, path))
+    {
+        // grab buddy data from the TreeView before displaying the menu
+        buddy_t *tmp = &tmp_buddy;
+        GValue val;
+
+        memset(&val, 0, sizeof(val));
+        gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNTID, &val);
+        g_free(tmp->acc);
+        tmp->acc = g_value_dup_string(&val);
+        gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
+        g_free(tmp->uri);
+        tmp->uri = g_value_dup_string(&val);
+        gtk_tree_model_get_value(model, &iter, COLUMN_ALIAS, &val);
+        g_free(tmp->alias);
+        tmp->alias = g_value_dup_string(&val);
+        g_value_unset(&val);
+
+        b = presence_list_buddy_get_by_string(tmp->acc, tmp->uri);
+    }
+    return b;
+}
+
+static gboolean
 view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
 {
     /* single click with the right mouse button? */
     if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3)
     {
-        /* optional: select row if no row is selected or only
-         *  one other row is selected (will only do something
-         *  if you set a tree selection mode as described later
-         *  in the tutorial) */
-        if (1)
+        GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
+        //buddy_t *b;
+
+        /* Note: gtk_tree_selection_count_selected_rows() does not
+         *   exist in gtk+-2.0, only in gtk+ >= v2.2 ! */
+        if (gtk_tree_selection_count_selected_rows(selection)  <= 1)
         {
-            GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
-
-            /* Note: gtk_tree_selection_count_selected_rows() does not
-             *   exist in gtk+-2.0, only in gtk+ >= v2.2 ! */
-            if (gtk_tree_selection_count_selected_rows(selection)  <= 1)
+            GtkTreePath *path;
+            /* Get tree path for row that was clicked */
+            if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview),
+                        (gint) event->x,
+                        (gint) event->y,
+                        &path, NULL, NULL, NULL))
             {
-                GtkTreePath *path;
-                /* Get tree path for row that was clicked */
-                if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview),
-                            (gint) event->x,
-                            (gint) event->y,
-                            &path, NULL, NULL, NULL))
-                {
-                    gtk_tree_selection_unselect_all(selection);
-                    gtk_tree_selection_select_path(selection, path);
+                buddy_t *b = view_get_buddy(GTK_TREE_VIEW(treeview), path);
 
-                    GtkTreeIter   iter;
-                    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
+                /* b might be NULL. This means an account was selected instead of a buddy
+                 * Only the Add function will available and the dialog window will
+                 * only display the account alias that must be grabbed.*/
+                if(!b)
+                    b = &tmp_buddy; // at this point tmp_buddy contains the account ID
 
-                    if (gtk_tree_model_get_iter(model, &iter, path))
-                    {
-                        // grab buddy data from the TreeView before displaying the menu
-                        buddy_t *tmp = &tmp_buddy;
-                        GValue val;
-
-                        memset(&val, 0, sizeof(val));
-                        gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNTID, &val);
-                        g_free(tmp->acc);
-                        tmp->acc = g_value_dup_string(&val);
-                        gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
-                        g_free(tmp->uri);
-                        tmp->uri = g_value_dup_string(&val);
-                        gtk_tree_model_get_value(model, &iter, COLUMN_ALIAS, &val);
-                        g_free(tmp->alias);
-                        tmp->alias = g_value_dup_string(&val);
-                        g_value_unset(&val);
-
-                        buddy_t *b = presence_list_buddy_get_by_string(tmp->acc, tmp->uri);
-                        if(!b) //"An account was selected instead of a buddy"
-                            b = tmp; // set a dummy buddy with account ID.
-
-                        view_popup_menu(treeview, event, b);
-                    }
-                    gtk_tree_path_free(path);
-                }
+                gtk_tree_path_free(path);
+                view_popup_menu(treeview, event, b);
             }
-        } /* end of optional bit */
+        }
         return TRUE;
     }
     return FALSE;
 }
 
-gboolean
+static gboolean
 view_onPopupMenu (GtkWidget *treeview, gpointer userdata)
 {
     view_popup_menu(treeview, NULL, userdata);
 
     return TRUE; /* we handled this */
+}
+
+static void
+row_activated_cb(GtkTreeView *treeview,
+        GtkTreePath *path,
+        G_GNUC_UNUSED GtkTreeViewColumn *col)
+{
+    buddy_t *b = view_get_buddy(treeview, path);
+    if(b) //"NULL if an account was selected instead of a buddy.
+        show_buddy_info(_("Edit buddy"), b);
 }
 
 void
@@ -477,6 +494,7 @@ create_buddylist_window(SFLPhoneClient *client)
 
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "popup-menu", G_CALLBACK(view_onPopupMenu), NULL);
+    g_signal_connect(G_OBJECT(buddy_list_tree_view), "row-activated", G_CALLBACK(row_activated_cb), NULL);
 
     // Load buddylist
     presence_list_init(client);
