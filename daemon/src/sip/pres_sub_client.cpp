@@ -140,7 +140,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                             break;
 
                         case PJSIP_SC_NOT_FOUND:
-                            msg = "Subscribe context not set on server.";
+                            msg = "Subscribe context not set for this buddy.";
+                            supported = PJ_TRUE;
                             break;
 
                         case PJSIP_SC_FORBIDDEN:
