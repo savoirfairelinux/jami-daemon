@@ -1159,6 +1159,18 @@ dbus_account_list()
 }
 
 GHashTable *
+dbus_get_account_template()
+{
+    GError *error = NULL;
+    GHashTable *details = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_account_template(config_proxy, &details, &error);
+    check_error(error);
+
+    return details;
+}
+
+GHashTable *
 dbus_get_account_details(const gchar *accountID)
 {
     GError *error = NULL;

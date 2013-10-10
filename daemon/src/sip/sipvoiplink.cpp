@@ -588,11 +588,12 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
 
+    for (auto &a : sipAccountMap_)
+        unloadAccount(a);
+
     pj_shutdown();
     clearSipCallMap();
 
-    for (auto &a : sipAccountMap_)
-        unloadAccount(a);
     sipAccountMap_.clear();
 }
 

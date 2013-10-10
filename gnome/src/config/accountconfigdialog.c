@@ -230,8 +230,16 @@ create_auto_answer_checkbox(const account_t *account)
     return auto_answer_checkbox;
 }
 
+static void
+alias_changed_cb(GtkEditable *editable, gpointer data)
+{
+    const gchar *alias = gtk_entry_get_text(GTK_ENTRY(editable));
+    GtkDialog *dialog = GTK_DIALOG(data);
+    gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_APPLY, strlen(alias));
+}
+
 static GtkWidget*
-create_account_parameters(const account_t *account, gboolean is_new)
+create_account_parameters(const account_t *account, gboolean is_new, GtkWidget *dialog)
 {
     g_assert(account);
     gchar *password = NULL;
@@ -258,6 +266,9 @@ create_account_parameters(const account_t *account, gboolean is_new)
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entry_alias = gtk_entry_new();
+    g_signal_connect(entry_alias, "changed", G_CALLBACK(alias_changed_cb), dialog);
+    /* make sure Apply is not sensitive while alias is empty */
+    g_signal_emit_by_name(entry_alias, "changed", NULL);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_alias);
     gchar *alias = account_lookup(account, CONFIG_ACCOUNT_ALIAS);
     gtk_entry_set_text(GTK_ENTRY(entry_alias), alias);
@@ -419,7 +430,7 @@ create_presence(const account_t *account)
 }
 
 static GtkWidget*
-create_basic_tab(const account_t *account, gboolean is_new)
+create_basic_tab(const account_t *account, gboolean is_new, GtkWidget *dialog)
 {
     // Build the advanced tab, to appear on the account configuration panel
     g_debug("Build basic tab");
@@ -428,7 +439,7 @@ create_basic_tab(const account_t *account, gboolean is_new)
 
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
-    GtkWidget *frame = create_account_parameters(account, is_new);
+    GtkWidget *frame = create_account_parameters(account, is_new, dialog);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     frame = create_presence(account);
@@ -1490,7 +1501,7 @@ show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
     // We do not need the global settings for the IP2IP account
     if (!IS_IP2IP) {
         /* General Settings */
-        GtkWidget *basic_tab = create_basic_tab(account, is_new);
+        GtkWidget *basic_tab = create_basic_tab(account, is_new, dialog);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), basic_tab, gtk_label_new(_("Basic")));
     }
 

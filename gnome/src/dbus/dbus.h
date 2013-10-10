@@ -114,9 +114,15 @@ void dbus_place_call(const callable_obj_t *c);
 gchar **dbus_account_list();
 
 /**
- * ConfigurationManager - Get the details of a specific account
- * @param accountID The unique of the account
- * @return GHashTable* The details of the account
+ * configurationmanager - get a template for a new account
+ * @return ghashtable* the details of the account
+ */
+GHashTable *dbus_get_account_template();
+
+/**
+ * configurationmanager - get the details of a specific account
+ * @param accountid the unique of the account
+ * @return ghashtable* the details of the account
  */
 GHashTable *dbus_get_account_details(const gchar *accountID);
 

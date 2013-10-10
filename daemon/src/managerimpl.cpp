@@ -1828,11 +1828,7 @@ void ManagerImpl::ringback()
 void
 ManagerImpl::updateAudioFile(const std::string &file, int sampleRate)
 {
-    try {
-        audiofile_.reset(new AudioFile(file, sampleRate));
-    } catch (const AudioFileException &e) {
-        ERROR("Exception: %s", e.what());
-    }
+    audiofile_.reset(new AudioFile(file, sampleRate));
 }
 
 /**
@@ -1873,6 +1869,8 @@ void ManagerImpl::playRingtone(const std::string& accountID)
         audioLayerSmplr = audiodriver_->getSampleRate();
     }
 
+    bool doFallback = false;
+
     {
         std::lock_guard<std::mutex> m(toneMutex_);
 
@@ -1881,8 +1879,18 @@ void ManagerImpl::playRingtone(const std::string& accountID)
             audiofile_.reset();
         }
 
-        updateAudioFile(ringchoice, audioLayerSmplr);
+        try {
+            updateAudioFile(ringchoice, audioLayerSmplr);
+        } catch (const AudioFileException &e) {
+            WARN("Ringtone error: %s", e.what());
+            doFallback = true; // do ringback once lock is out of scope
+        }
     } // leave mutex
+
+    if (doFallback) {
+        ringback();
+        return;
+    }
 
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
     // start audio if not started AND flush all buffers (main and urgent)
@@ -2139,9 +2147,14 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
             audiofile_.reset();
         }
 
-        updateAudioFile(filepath, sampleRate);
-        if (not audiofile_)
+        try {
+            updateAudioFile(filepath, sampleRate);
+            if (not audiofile_)
+                return false;
+        } catch (const AudioFileException &e) {
+            WARN("Audio file error: %s", e.what());
             return false;
+        }
     } // release toneMutex
 
     {
@@ -2380,21 +2393,14 @@ std::vector<std::string> ManagerImpl::getAccountList() const
 std::map<std::string, std::string> ManagerImpl::getAccountDetails(
     const std::string& accountID) const
 {
-    // Default account used to get default parameters if requested by client (to build new account)
-    static const SIPAccount DEFAULT_ACCOUNT("default");
-
-    if (accountID.empty()) {
-        DEBUG("Returning default account settings");
-        return DEFAULT_ACCOUNT.getAccountDetails();
-    }
-
     Account * account = getAccount(accountID);
 
-    if (account)
+    if (account) {
         return account->getAccountDetails();
-    else {
-        ERROR("Get account details on a non-existing accountID %s. Returning default", accountID.c_str());
-        return DEFAULT_ACCOUNT.getAccountDetails();
+    } else {
+        ERROR("Could not get account details on a non-existing accountID %s", accountID.c_str());
+        // return an empty map since we can't throw an exception to D-Bus
+        return std::map<std::string, std::string>();
     }
 }
 
@@ -2456,7 +2462,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     Account* newAccount = nullptr;
 
     if (accountType == "SIP") {
-        newAccount = new SIPAccount(newAccountID);
+        newAccount = new SIPAccount(newAccountID, true);
         SIPVoIPLink::instance()->getAccounts()[newAccountID] = newAccount;
     }
 #if HAVE_IAX
@@ -2590,7 +2596,7 @@ namespace {
 
         if (!accountid.empty() and !accountAlias.empty() and accountid != SIPAccount::IP2IP_PROFILE) {
             if (accountType == "SIP") {
-                Account *a = new SIPAccount(accountid);
+                Account *a = new SIPAccount(accountid, true);
                 sipAccountMap[accountid] = a;
                 a->unserialize(*item);
             } else if (accountType == "IAX") {
@@ -2621,7 +2627,7 @@ namespace {
 
     SIPAccount *createIP2IPAccount()
     {
-        SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE);
+        SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE, true);
         try {
             SIPVoIPLink::instance()->sipTransport.createSipTransport(*ip2ip);
         } catch (const std::runtime_error &e) {

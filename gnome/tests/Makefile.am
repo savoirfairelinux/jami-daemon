@@ -24,18 +24,6 @@ check_config_SOURCES = check_config.c
 check_config_CFLAGS = @CHECK_CFLAGS@ @GTK_CFLAGS@
 check_config_LDADD = $(SFLPHONE_LIBS) @CHECK_LIBS@
 
-check_dbus_SOURCES = check_dbus.c
-
-check_dbus_CFLAGS = @CHECK_CFLAGS@ @GTK_CFLAGS@ @DBUSGLIB_CFLAGS@
-if SFL_VIDEO
-check_dbus_CFLAGS+=@CLUTTER_CFLAGS@ @CLUTTERGTK_CFLAGS@
-endif
-
-check_dbus_LDADD = $(SFLPHONE_LIBS) @CHECK_LIBS@ \
-                   $(top_builddir)/src/widget/libwidget.la \
-                   $(top_builddir)/src/icons/libicons.la @X11_LIBS@ \
-                   -ldl
-
 clean-local:
 	rm -rf *.xml
 

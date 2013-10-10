@@ -146,15 +146,8 @@ void ConfigurationManager::registerAllAccounts()
 ///This function is used as a base for new accounts for clients that support it
 std::map<std::string, std::string> ConfigurationManager::getAccountTemplate()
 {
-   std::map<std::string, std::string> accTemplate;
-   accTemplate[ CONFIG_LOCAL_PORT                  ] = CONFIG_DEFAULT_LOCAL_PORT            ;
-   accTemplate[ CONFIG_PUBLISHED_PORT              ] = CONFIG_DEFAULT_PUBLISHED_PORT        ;
-   accTemplate[ CONFIG_PUBLISHED_SAMEAS_LOCAL      ] = CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL;
-   accTemplate[ CONFIG_INTERFACE                   ] = CONFIG_DEFAULT_INTERFACE             ;
-   accTemplate[ CONFIG_ACCOUNT_REGISTRATION_EXPIRE ] = CONFIG_DEFAULT_REGISTRATION_EXPIRE   ;
-   accTemplate[ CONFIG_RINGTONE_ENABLED            ] = CONFIG_DEFAULT_RINGTONE_ENABLED      ;
-   accTemplate[ CONFIG_PRESENCE_ENABLED            ] = CONFIG_DEFAULT_PRESENCE_ENABLED      ;
-   return accTemplate;
+    SIPAccount dummy("dummy", false);
+    return dummy.getAccountDetails();
 }
 
 std::string ConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
