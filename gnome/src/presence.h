@@ -122,7 +122,7 @@ buddy_t * presence_buddy_create();
  * This function frees completely a given buddy.
  * @param b The given buddy to be deleted.
  */
-void presence_buddy_delete(buddy_t *b);
+void presence_buddy_delete(buddy_t *buddy);
 
 /**
  * This function print the entire list for debugging purpose.

@@ -234,8 +234,12 @@ presence_list_update_buddy(buddy_t * buddy, buddy_t * backup)
             g_debug("Presence : update buddy with new uri/acc");
             presence_buddy_subscribe(backup, FALSE); //unsubscribe the old buddy
             b->subscribed = FALSE;
+            g_free(b->note);
+            b->note = g_strdup("");
             presence_buddy_subscribe(b, TRUE);
         }
+        // else, only the alias changed
+
         presence_list_save();
     }
 }
@@ -333,19 +337,19 @@ presence_buddy_create()
 }
 
 void
-presence_buddy_delete(buddy_t *b)
+presence_buddy_delete(buddy_t *buddy)
 {
-    if(!b)
+    if(!buddy)
     {
         g_debug("Presence : can't delete buddy==NULL");
         return;
     }
 
-    g_free(b->acc);
-    g_free(b->uri);
-    g_free(b->note);
-    g_free(b->alias);
-    g_free(b);
+    g_free(buddy->acc);
+    g_free(buddy->uri);
+    g_free(buddy->note);
+    g_free(buddy->alias);
+    g_free(buddy);
 }
 
 void
