@@ -59,6 +59,13 @@
 
 #include <gdk/gdkkeysyms.h>
 
+
+
+// TODO: remove this as soon as presence.h is in the master branch
+static const char *const PRESENCE_STATUS_ONLINE = "Online";
+static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
+
+
 /** Local variables */
 static GtkAccelGroup *accelGroup;
 static GtkWidget *subvbox;
@@ -218,27 +225,29 @@ main_window_bring_to_front(SFLPhoneClient *client, guint32 timestamp)
     gtk_window_present_with_time(GTK_WINDOW(client->win), timestamp);
 }
 
+/**
+ * This function reads the status combo box, updates the account_schema
+ * and call the the DBus presence publish method if enabled.
+ * @param combo The text combo box associated with the status to be published.
+ */
 static void
 status_changed_cb(GtkComboBox *combo)
 {
-    const gchar *registered;
-    const gchar *enabled;
     const gchar *status = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
-    gboolean b = (g_strcmp0(status, "Online") == 0)? TRUE : FALSE;
+    gboolean b = (g_strcmp0(status, PRESENCE_STATUS_ONLINE) == 0)? TRUE : FALSE;
     account_t * account;
 
     for (guint i = 0; i < account_list_get_size(); i++){
         account = account_list_get_nth(i);
         g_assert(account);
-        registered = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
-        enabled = account_lookup(account, CONFIG_PRESENCE_ENABLED);
         account_replace(account, CONFIG_PRESENCE_STATUS, status);
 
-        if(g_strcmp0(enabled, "true") == 0){
-            if ((g_strcmp0(registered, "true") == 0) || (account_is_IP2IP(account))){
-                dbus_presence_publish(account->accountID,b);
-                g_debug("Update status of acc:%s, status:%s", account->accountID,status);
-            }
+        if((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_ENABLED), "true") == 0) &&
+                (((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) ||
+                  (account_is_IP2IP(account)))))
+        {
+            dbus_presence_publish(account->accountID,b);
+            g_debug("Presence : publish status of acc:%s => %s", account->accountID, status);
         }
         else
             g_warning("Account not enabled/registered/IP2IP.");
@@ -248,30 +257,34 @@ status_changed_cb(GtkComboBox *combo)
 void
 statusbar_enable_presence()
 {
-    const gchar *registered;
-    const gchar *enabled;
-    const gchar *status = NULL;
     account_t * account;
+    gboolean global_publish_enabled = FALSE;
+
+    // set offline and unsensitive by default
+    gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0);
+    gtk_widget_set_sensitive(presence_status_combo, FALSE);
 
     /* Check if one of the registered accounts has Presence enabled */
     for (guint i = 0; i < account_list_get_size(); i++){
         account = account_list_get_nth(i);
         g_assert(account);
-        registered = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
-        enabled = account_lookup(account, CONFIG_PRESENCE_ENABLED);
+        account_replace(account, CONFIG_PRESENCE_STATUS, "false");
 
-        if(g_strcmp0(registered, "true") == 0){
-            g_debug("Presence : found registered %s, with presence enabled (status:%s).", account->accountID,status);
-            gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
-            if(g_strcmp0(enabled, "true") == 0){
-                gtk_widget_set_sensitive(presence_status_combo, TRUE);
-                status = account_lookup(account, CONFIG_PRESENCE_STATUS);
-                return;
-            }
+        if((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) &&
+                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_ENABLED), "true") == 0)){
+            account_replace(account, CONFIG_PRESENCE_STATUS, "true");
+            global_publish_enabled = TRUE; // one enabled account is enough
+            g_debug("Presence : found registered %s, with publish enabled.", account->accountID);
         }
     }
-    // disbaled
-    gtk_widget_set_sensitive(presence_status_combo, FALSE);
+
+    if(global_publish_enabled)
+    {
+        gtk_widget_set_sensitive(presence_status_combo, TRUE);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
+    }
+    else
+        g_debug("Presence : no registered account found with publish enabled");
 }
 
 
@@ -285,9 +298,8 @@ create_status_bar()
 
     /* Add presence status combo_box*/
     presence_status_combo = gtk_combo_box_text_new();
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _("Offline"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _("Online"));
-//    gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0); // offline by default
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_OFFLINE));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_ONLINE));
     gtk_widget_set_sensitive(presence_status_combo, FALSE);
     g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
