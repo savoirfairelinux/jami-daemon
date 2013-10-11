@@ -44,6 +44,9 @@
 #include "pjsip-simple/rpid.h"
 #include <pj/pool.h>
 
+#define PRESENCE_FUNCTION_PUBLISH   0
+#define PRESENCE_FUNCTION_SUBSCRIBE 1
+
 struct pres_msg_data {
     /**
      * Additional message headers as linked list. Application can add
@@ -128,9 +131,11 @@ class SIPPresence {
          */
         pj_pool_t*  getPool() const;
         /**
-         * Activate the module (PUBLISH/SUBSCRIBE)
+         * Activate the module.
+         * @param function Publish or subscribe to enable
+         * @param enable Flag
          */
-        void enable(bool flag);
+        void enable(int function, bool enable);
         /**
         * Fill xml document, the header and the body
         */
@@ -191,8 +196,12 @@ class SIPPresence {
          */
         void notifyPresSubServer();
 
-        bool isEnabled() const {
-            return enabled_;
+        bool isPublishEnabled() const {
+            return publish_enabled_;
+        }
+
+        bool isSubscribeEnabled() const {
+            return subscribe_enabled_;
         }
 
         std::list< PresSubClient *> getClientSubscriptions() {
@@ -212,7 +221,8 @@ class SIPPresence {
         pjsip_publishc  *publish_sess_;  /**< Client publication session.*/
         pjsip_pres_status status_data_; /**< Presence Data.*/
 
-        pj_bool_t enabled_; /**< Allow for status publish,*/
+        pj_bool_t publish_enabled_; /**< Allow for status publish,*/
+        pj_bool_t subscribe_enabled_; /**< Allow for buddy subscribe,*/
 
         SIPAccount * acc_; /**<  Associated SIP account. */
         std::list< PresSubServer *> sub_server_list_; /**< Subscribers list.*/
