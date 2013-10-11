@@ -407,9 +407,13 @@ create_presence(const account_t *account)
     gtk_container_add(GTK_CONTAINER(frame), grid);
 
     presence_check_box = gtk_check_button_new_with_mnemonic(_("_Enable"));
+
     gboolean enabled = ((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_SUBSCRIBE_ENABLED), "true")==0)
                       ||  (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_ENABLED), "true")==0));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),enabled);
+    // no control for now
+    gtk_widget_set_sensitive(presence_check_box, FALSE);
+
     gtk_grid_attach(GTK_GRID(grid), presence_check_box, 0, 0, 1, 1);
 
     gtk_widget_show_all(grid);

@@ -52,13 +52,19 @@
 #include "str_utils.h"
 #include "seekslider.h"
 #include "messaging/message_tab.h"
-#include "presence.h"
 
 #include <glib/gi18n.h>
 #include <sys/stat.h>
 #include <gtk/gtk.h>
 
 #include <gdk/gdkkeysyms.h>
+
+
+
+// TODO: remove this as soon as presence.h is in the master branch
+static const char *const PRESENCE_STATUS_ONLINE = "Online";
+static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
+
 
 /** Local variables */
 static GtkAccelGroup *accelGroup;

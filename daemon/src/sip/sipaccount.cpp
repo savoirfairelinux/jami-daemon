@@ -640,7 +640,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
     keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == Conf::TRUE_STR;
     enablePresence(PRESENCE_FUNCTION_PUBLISH, details[CONFIG_PRESENCE_PUBLISH_ENABLED] == Conf::TRUE_STR);
-    enablePresence(PRESENCE_FUNCTION_SUBSCRIBE, details[CONFIG_PRESENCE_PUBLISH_ENABLED] == Conf::TRUE_STR);
+    enablePresence(PRESENCE_FUNCTION_SUBSCRIBE, details[CONFIG_PRESENCE_SUBSCRIBE_ENABLED] == Conf::TRUE_STR);
 
     int tmpMin = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
     int tmpMax = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
