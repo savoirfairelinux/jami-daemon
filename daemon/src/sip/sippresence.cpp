@@ -37,6 +37,7 @@
 #include "manager.h"
 #include "client/client.h"
 #include "client/presencemanager.h"
+#include "client/configurationmanager.h"
 #include "sipaccount.h"
 #include "sip_utils.h"
 #include "pres_sub_server.h"
@@ -349,6 +350,9 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
                     error,
                     "Publish not supported.");
             pres->getAccount()->enablePresence(PRESENCE_FUNCTION_PUBLISH, PJ_FALSE);
+            Manager::instance().saveConfig();
+            Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
+
         }
 
     } else {

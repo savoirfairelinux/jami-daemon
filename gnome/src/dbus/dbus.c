@@ -441,6 +441,9 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 {
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
+
+    // ui updates
+    statusbar_enable_presence();
     status_bar_display_account();
     statusicon_set_tooltip();
 }
@@ -1156,18 +1159,6 @@ dbus_account_list()
     check_error(error);
 
     return array;
-}
-
-GHashTable *
-dbus_get_account_template()
-{
-    GError *error = NULL;
-    GHashTable *details = NULL;
-
-    org_sflphone_SFLphone_ConfigurationManager_get_account_template(config_proxy, &details, &error);
-    check_error(error);
-
-    return details;
 }
 
 GHashTable *
