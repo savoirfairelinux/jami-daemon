@@ -37,7 +37,7 @@
 #include <iostream>
 
 extern "C" {
-#include <gsm/gsm.h>
+#include <gsm.h>
 }
 
 /**
