@@ -142,10 +142,10 @@ void VideoRtpSession::start(int localPort)
 	if (sending_) {
         // Local video startup if needed
         auto videoCtrl = Manager::instance().getVideoControls();
-        if (!videoCtrl->hasCameraStarted()) {
-            videoCtrl->startCamera();
+        const bool firstStart = not videoCtrl->hasCameraStarted();
+        videoCtrl->startCamera();
+        if (firstStart)
             MYSLEEP(1);
-        }
 
         videoLocal_ = videoCtrl->getVideoCamera();
         if (sender_)
@@ -201,6 +201,8 @@ void VideoRtpSession::stop()
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
+    auto videoCtrl = Manager::instance().getVideoControls();
+    videoCtrl->stopCamera();
 }
 
 void VideoRtpSession::forceKeyFrame()

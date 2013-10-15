@@ -482,12 +482,12 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     if (not isIP2IP()) mapNode.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string pres;
-    mapNode.getValue(PRESENCE_ENABLED_KEY, & pres);
-    enablePresence((pres=="true")? true : false);
-    mapNode.getValue(PRESENCE_PUBLISH_SUPPORTED_KEY, & pres);
-    supportPresence(PRESENCE_FUNCTION_PUBLISH, (pres=="true")? true : false);
-    mapNode.getValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, & pres);
-    supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, (pres=="true")? true : false);
+    mapNode.getValue(PRESENCE_ENABLED_KEY, &pres);
+    enablePresence(pres == Conf::TRUE_STR);
+    mapNode.getValue(PRESENCE_PUBLISH_SUPPORTED_KEY, &pres);
+    supportPresence(PRESENCE_FUNCTION_PUBLISH, pres == Conf::TRUE_STR);
+    mapNode.getValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, &pres);
+    supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, pres == Conf::TRUE_STR);
 
     std::string dtmfType;
     mapNode.getValue(DTMF_TYPE_KEY, &dtmfType);
