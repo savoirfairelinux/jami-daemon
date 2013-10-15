@@ -408,8 +408,7 @@ create_presence(const account_t *account)
 
     presence_check_box = gtk_check_button_new_with_mnemonic(_("_Enable"));
 
-    gboolean enabled = ((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_SUBSCRIBE_ENABLED), "true")==0)
-                      ||  (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_ENABLED), "true")==0));
+    gboolean enabled = (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true")==0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),enabled);
     // no control for now
     gtk_widget_set_sensitive(presence_check_box, FALSE);
@@ -1378,8 +1377,10 @@ static void update_account_from_basic_tab(account_t *account)
                 gtk_entry_get_text(GTK_ENTRY(video_port_max_spin_box)));
 #endif
         v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
-        account_replace(account, CONFIG_PRESENCE_PUBLISH_ENABLED, bool_to_string(v));
-        account_replace(account, CONFIG_PRESENCE_SUBSCRIBE_ENABLED, bool_to_string(v));
+        account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
+        // TODO: is this necessary?
+        account_replace(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED, bool_to_string(v));
+        account_replace(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED, bool_to_string(v));
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
             g_debug("Set dtmf over rtp");

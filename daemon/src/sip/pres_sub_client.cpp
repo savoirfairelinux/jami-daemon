@@ -454,6 +454,7 @@ PresSubClient::updateSubscription()
             return PJ_SUCCESS;
         }
 
+        /* Unsubscribe means send a subscribe with timeout=0s*/
         WARN("pres_client %s: unsubscribing..", uri_.ptr);
         retStatus = pjsip_pres_initiate(sub_, 0, &tdata);
 
@@ -538,9 +539,9 @@ PresSubClient::updateSubscription()
     /* Set route-set */
     if (acc->hasServiceRoute())
         pjsip_regc_set_route_set(
-            acc->getRegistrationInfo(),
-            sip_utils::createRouteSet(acc->getServiceRoute(),
-                                      pres_->getPool()));
+                acc->getRegistrationInfo(),
+                sip_utils::createRouteSet(acc->getServiceRoute(),
+                pres_->getPool()));
 
 
     /* FIXME : not sure this is acceptable */
@@ -595,6 +596,5 @@ bool PresSubClient::unsubscribe()
 
 bool PresSubClient::match(PresSubClient *b)
 {
-    //return !(strcmp(b->getURI(),getURI()));
     return (b->getURI() == getURI());
 }

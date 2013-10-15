@@ -242,7 +242,8 @@ status_changed_cb(GtkComboBox *combo)
         g_assert(account);
         account_replace(account, CONFIG_PRESENCE_STATUS, status);
 
-        if((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_ENABLED), "true") == 0) &&
+        if((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0) &&
+            (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
                 (((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) ||
                   (account_is_IP2IP(account)))))
         {
@@ -271,7 +272,8 @@ statusbar_enable_presence()
         account_replace(account, CONFIG_PRESENCE_STATUS, "false");
 
         if((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) &&
-                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_ENABLED), "true") == 0)){
+                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
+                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)){
             account_replace(account, CONFIG_PRESENCE_STATUS, "true");
             global_publish_enabled = TRUE; // one enabled account is enough
             g_debug("Presence : found registered %s, with publish enabled.", account->accountID);
