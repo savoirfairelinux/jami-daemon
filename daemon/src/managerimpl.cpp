@@ -2437,15 +2437,17 @@ std::string
 ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 {
     /** @todo Deal with both the accountMap_ and the Configuration */
-    std::stringstream accountID;
 
-    std::string accountList(preferences.getAccountOrder());
-    accountID << "Account:" << time(nullptr);
-    std::string newAccountID(accountID.str());
+    std::string newAccountID;
 
-    while (accountList.find(newAccountID) != std::string::npos) {
-       newAccountID += "1";
-    }
+    const std::vector<std::string> accountList(getAccountList());
+
+    do {
+        std::stringstream accountID;
+        accountID << "Account:" << time(nullptr);
+        newAccountID = accountID.str();
+    } while (std::find(accountList.begin(), accountList.end(), newAccountID)
+             != accountList.end());
 
     // Get the type
 
@@ -2480,17 +2482,19 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     newAccount->setAccountDetails(details);
 
 
+    std::string accountOrder(preferences.getAccountOrder());
+
     // Add the newly created account in the account order list
-    if (not accountList.empty()) {
+    if (not accountOrder.empty()) {
         // Prepend the new account
-        accountList.insert(0, newAccountID + "/");
-        preferences.setAccountOrder(accountList);
+        accountOrder.insert(0, newAccountID + "/");
+        preferences.setAccountOrder(accountOrder);
     } else {
-        accountList = newAccountID + "/";
-        preferences.setAccountOrder(accountList);
+        accountOrder = newAccountID + "/";
+        preferences.setAccountOrder(accountOrder);
     }
 
-    DEBUG("Getting accounts: %s", accountList.c_str());
+    DEBUG("Getting accounts: %s", accountOrder.c_str());
 
     newAccount->registerVoIPLink();
 
