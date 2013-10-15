@@ -65,6 +65,8 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     private:
         std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoCamera_;
         VideoPreference videoPreference_;
+        // Only modified from main thread
+        int cameraClients_;
 
     public:
 

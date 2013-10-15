@@ -45,6 +45,7 @@ VideoControls::VideoControls(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
     , videoCamera_()
     , videoPreference_()
+    , cameraClients_(0)
 {
     // initialize libav libraries
     libav_utils::sfl_avcodec_init();
@@ -159,8 +160,9 @@ VideoControls::getSettings() {
 void
 VideoControls::startCamera()
 {
+    cameraClients_++;
     if (videoCamera_) {
-        ERROR("Video preview was already started!");
+        WARN("Video preview was already started!");
         return;
     }
 
@@ -176,7 +178,9 @@ VideoControls::stopCamera()
 {
     if (videoCamera_) {
         DEBUG("Stopping video preview");
-        videoCamera_.reset();
+        cameraClients_--;
+        if (cameraClients_ <= 0)
+            videoCamera_.reset();
     } else {
         WARN("Video preview was already stopped");
     }
