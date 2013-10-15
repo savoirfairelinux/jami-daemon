@@ -82,7 +82,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 
     if (pres_client) {
         pres_client->incLock();
-        DEBUG("subription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
+        DEBUG("Subscription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
               pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
         pjsip_evsub_state state = pjsip_evsub_get_state(sub);

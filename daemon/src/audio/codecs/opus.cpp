@@ -34,10 +34,9 @@
 #include <iostream>
 
 
-Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "Opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
+Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
     encoder_(0),
-    decoder_(0),
-    interleaved_()
+    decoder_(0)
 {
     hasDynamicPayload_ = true;
 
@@ -74,39 +73,18 @@ int Opus::encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size)
 
 int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size)
 {
-    if (buf == NULL || dst.size() < 2) return 0;
+    if (buf == NULL) return 0;
 
-    interleaved_.resize(4 * FRAME_SIZE);
-    unsigned samples = opus_decode(decoder_, buf, buffer_size, interleaved_.data(), 2 * FRAME_SIZE, 0);
-
-    std::vector<SFLAudioSample>::iterator left_it = dst.at(0).begin();
-    std::vector<SFLAudioSample>::iterator right_it = dst.at(1).begin();
-    std::vector<opus_int16>::iterator it = interleaved_.begin();
-
-    // hard-coded 2-channels as it is the stereo version
-    for (unsigned i = 0; i < samples; i++) {
-        *left_it++ = *it++;
-        *right_it++ = *it++;
-    }
+    unsigned samples = opus_decode(decoder_, buf, buffer_size, dst[0].data(), 2 * FRAME_SIZE, 0);
 
     return samples;
 }
 
 int Opus::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size)
 {
-    if (dst == NULL or src.size() < 2) return 0;
+    if (dst == NULL) return 0;
 
-    const unsigned samples = src.at(0).size();
-    interleaved_.resize(2 * samples);
-    std::vector<opus_int16>::iterator it = interleaved_.begin();
-
-    // hard-coded 2-channels as it is the stereo version
-    for (unsigned i = 0; i < samples; i++) {
-        *it++ = src.at(0)[i];
-        *it++ = src.at(1)[i];
-    }
-
-    return opus_encode(encoder_, interleaved_.data(), FRAME_SIZE, dst, buffer_size * 2);
+    return opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size * 2);
 }
 
 

@@ -32,8 +32,3 @@ libsiplink_la_SOURCES+= sdes_negotiator.cpp \
 
 libsiplink_la_CXXFLAGS += @PCRE_CFLAGS@
 endif
-
-if BUILD_OPUS
-# FIXME
-libsiplink_la_CXXFLAGS += @opus_CFLAGS@
-endif
