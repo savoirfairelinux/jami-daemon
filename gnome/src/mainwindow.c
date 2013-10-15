@@ -243,9 +243,9 @@ status_changed_cb(GtkComboBox *combo)
         account_replace(account, CONFIG_PRESENCE_STATUS, status);
 
         if((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0) &&
-                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
-                (((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) ||
-                  (account_is_IP2IP(account)))))
+            (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
+            (((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) ||
+            (account_is_IP2IP(account)))))
         {
             dbus_presence_publish(account->accountID,b);
             g_debug("Presence : publish status of acc:%s => %s", account->accountID, status);

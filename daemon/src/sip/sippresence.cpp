@@ -173,7 +173,8 @@ void SIPPresence::sendPresence(bool status, const std::string &note)
 {
     updateStatus(status, note);
 
-    if ((not publish_supported_) or (not enabled_))        return;
+    if ((not publish_supported_) or (not enabled_))
+        return;
 
     if (acc_->isIP2IP())
         notifyPresSubServer(); // to each subscribers
