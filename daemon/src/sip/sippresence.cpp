@@ -50,8 +50,9 @@
 SIPPresence::SIPPresence(SIPAccount *acc)
     : publish_sess_()
     , status_data_()
-    , publish_enabled_(true)
-    , subscribe_enabled_(true)
+    , enabled_(true)
+    , publish_supported_(true)
+    , subscribe_supported_(true)
     , acc_(acc)
     , sub_server_list_()  //IP2IP context
     , sub_client_list_()
@@ -115,12 +116,25 @@ pj_pool_t*  SIPPresence::getPool() const
     return pool_;
 }
 
-void SIPPresence::enable(int function, bool enabled)
+void SIPPresence::enable(bool enabled)
+{
+    enabled_ = enabled;
+}
+
+void SIPPresence::support(int function, bool supported)
 {
     if(function == PRESENCE_FUNCTION_PUBLISH)
-        publish_enabled_ = enabled;
+        publish_supported_ = supported;
     else if(function == PRESENCE_FUNCTION_SUBSCRIBE)
-        subscribe_enabled_ = enabled;
+        subscribe_supported_ = supported;
+}
+
+bool SIPPresence::isSupported(int function)
+{
+    if(function == PRESENCE_FUNCTION_PUBLISH)
+        return publish_supported_;
+    else if(function == PRESENCE_FUNCTION_SUBSCRIBE)
+        return subscribe_supported_;
 }
 
 void SIPPresence::updateStatus(bool status, const std::string &note)
@@ -159,7 +173,7 @@ void SIPPresence::sendPresence(bool status, const std::string &note)
 {
     updateStatus(status, note);
 
-    if (not publish_enabled_)
+    if ((not publish_supported_) or (not enabled_))
         return;
 
     if (acc_->isIP2IP())
@@ -182,6 +196,9 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
 
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)
 {
+    if ((not subscribe_supported_) or (not enabled_))
+        return;
+
     /* Check if the buddy was already subscribed */
     for (const auto & c : sub_client_list_) {
         if (c->getURI() == uri) {
@@ -349,7 +366,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
                     pres->getAccount()->getAccountID(),
                     error,
                     "Publish not supported.");
-            pres->getAccount()->enablePresence(PRESENCE_FUNCTION_PUBLISH, PJ_FALSE);
+            pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, PJ_FALSE);
             Manager::instance().saveConfig();
             Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
 

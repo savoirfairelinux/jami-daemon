@@ -55,8 +55,9 @@ static const char *const CONFIG_ACCOUNT_DTMF_TYPE               = "Account.dtmfT
 static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringtonePath";
 static const char *const CONFIG_RINGTONE_ENABLED                = "Account.ringtoneEnabled";
 static const char *const CONFIG_KEEP_ALIVE_ENABLED              = "Account.keepAliveEnabled";
-static const char *const CONFIG_PRESENCE_PUBLISH_ENABLED        = "Account.presencePublishEnabled";
-static const char *const CONFIG_PRESENCE_SUBSCRIBE_ENABLED      = "Account.presenceSubscribeEnabled";
+static const char *const CONFIG_PRESENCE_ENABLED                = "Account.presenceEnabled";
+static const char *const CONFIG_PRESENCE_PUBLISH_SUPPORTED      = "Account.presencePublishSupported";
+static const char *const CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED    = "Account.presenceSubscribeSupported";
 
 
 static const char *const CONFIG_DEFAULT_REGISTRATION_EXPIRE     = "60";
