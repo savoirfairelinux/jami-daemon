@@ -159,7 +159,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                             msg);
 
                     if(!subscribe_allowed){
-                        pres_client->getPresence()->getAccount()->enablePresence(PRESENCE_FUNCTION_SUBSCRIBE, PJ_FALSE);
+                        pres_client->getPresence()->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, PJ_FALSE);
                         Manager::instance().saveConfig();
                         Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
                     }

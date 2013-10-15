@@ -132,10 +132,15 @@ class SIPPresence {
         pj_pool_t*  getPool() const;
         /**
          * Activate the module.
+         * @param enable Flag
+         */
+        void enable(bool enabled);
+        /**
+         * Support the presence function publish/subscribe.
          * @param function Publish or subscribe to enable
          * @param enable Flag
          */
-        void enable(int function, bool enable);
+        void support(int function, bool enabled);
         /**
         * Fill xml document, the header and the body
         */
@@ -196,13 +201,11 @@ class SIPPresence {
          */
         void notifyPresSubServer();
 
-        bool isPublishEnabled() const {
-            return publish_enabled_;
+        bool isEnabled(){
+            return enabled_;
         }
 
-        bool isSubscribeEnabled() const {
-            return subscribe_enabled_;
-        }
+        bool isSupported(int function);
 
         std::list< PresSubClient *> getClientSubscriptions() {
             return sub_client_list_;
@@ -221,8 +224,9 @@ class SIPPresence {
         pjsip_publishc  *publish_sess_;  /**< Client publication session.*/
         pjsip_pres_status status_data_; /**< Presence Data.*/
 
-        pj_bool_t publish_enabled_; /**< Allow for status publish,*/
-        pj_bool_t subscribe_enabled_; /**< Allow for buddy subscribe,*/
+        pj_bool_t enabled_;
+        pj_bool_t publish_supported_; /**< the server allow for status publishing */
+        pj_bool_t subscribe_supported_; /**< the server allow for buddy subscription */
 
         SIPAccount * acc_; /**<  Associated SIP account. */
         std::list< PresSubServer *> sub_server_list_; /**< Subscribers list.*/

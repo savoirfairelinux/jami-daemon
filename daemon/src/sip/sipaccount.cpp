@@ -213,9 +213,11 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
     ScalarNode keepAliveEnabled(keepAliveEnabled_);
-    std::string presPub(presence_ and getPresence()->isPublishEnabled() ? Conf::TRUE_STR : Conf::FALSE_STR);
+    std::string pres(presence_ and getPresence()->isEnabled() ? Conf::TRUE_STR : Conf::FALSE_STR);
+    ScalarNode presenceEnabled(pres);
+    std::string presPub(presence_ and getPresence()->isSupported(PRESENCE_FUNCTION_PUBLISH) ? Conf::TRUE_STR : Conf::FALSE_STR);
     ScalarNode presencePublish(presPub);
-    std::string presSub(presence_ and getPresence()->isSubscribeEnabled() ? Conf::TRUE_STR : Conf::FALSE_STR);
+    std::string presSub(presence_ and getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE) ? Conf::TRUE_STR : Conf::FALSE_STR);
     ScalarNode presenceSubscribe(presSub);
 
     ScalarNode mailbox(mailBox_);
@@ -301,8 +303,9 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
     accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
     accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
-    accountmap.setKeyValue(PRESENCE_PUBLISH_ENABLED_KEY, &presencePublish);
-    accountmap.setKeyValue(PRESENCE_SUBSCRIBE_ENABLED_KEY, &presenceSubscribe);
+    accountmap.setKeyValue(PRESENCE_ENABLED_KEY, &presenceEnabled);
+    accountmap.setKeyValue(PRESENCE_PUBLISH_SUPPORTED_KEY, &presencePublish);
+    accountmap.setKeyValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, &presenceSubscribe);
 
     accountmap.setKeyValue(SRTP_KEY, &srtpmap);
     srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
@@ -479,10 +482,12 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     if (not isIP2IP()) mapNode.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string pres;
-    mapNode.getValue(PRESENCE_PUBLISH_ENABLED_KEY, & pres);
-    enablePresence(PRESENCE_FUNCTION_PUBLISH, (pres=="true")? true : false);
-    mapNode.getValue(PRESENCE_SUBSCRIBE_ENABLED_KEY, & pres);
-    enablePresence(PRESENCE_FUNCTION_SUBSCRIBE, (pres=="true")? true : false);
+    mapNode.getValue(PRESENCE_ENABLED_KEY, & pres);
+    enablePresence((pres=="true")? true : false);
+    mapNode.getValue(PRESENCE_PUBLISH_SUPPORTED_KEY, & pres);
+    supportPresence(PRESENCE_FUNCTION_PUBLISH, (pres=="true")? true : false);
+    mapNode.getValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, & pres);
+    supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, (pres=="true")? true : false);
 
     std::string dtmfType;
     mapNode.getValue(DTMF_TYPE_KEY, &dtmfType);
@@ -639,8 +644,9 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
     keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == Conf::TRUE_STR;
-    enablePresence(PRESENCE_FUNCTION_PUBLISH, details[CONFIG_PRESENCE_PUBLISH_ENABLED] == Conf::TRUE_STR);
-    enablePresence(PRESENCE_FUNCTION_SUBSCRIBE, details[CONFIG_PRESENCE_SUBSCRIBE_ENABLED] == Conf::TRUE_STR);
+    enablePresence(details[CONFIG_PRESENCE_ENABLED] == Conf::TRUE_STR);
+    supportPresence(PRESENCE_FUNCTION_PUBLISH, details[CONFIG_PRESENCE_PUBLISH_SUPPORTED] == Conf::TRUE_STR);
+    supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, details[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] == Conf::TRUE_STR);
 
     int tmpMin = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
     int tmpMax = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
@@ -747,8 +753,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
-    a[CONFIG_PRESENCE_PUBLISH_ENABLED] = presence_ and presence_->isPublishEnabled()? Conf::TRUE_STR : Conf::FALSE_STR;
-    a[CONFIG_PRESENCE_SUBSCRIBE_ENABLED] = presence_ and presence_->isSubscribeEnabled()? Conf::TRUE_STR : Conf::FALSE_STR;
+    a[CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? Conf::TRUE_STR : Conf::FALSE_STR;
+    a[CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? Conf::TRUE_STR : Conf::FALSE_STR;
+    a[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? Conf::TRUE_STR : Conf::FALSE_STR;
 
     RegistrationState state = UNREGISTERED;
     std::string registrationStateCode;
@@ -1444,16 +1451,28 @@ SIPPresence * SIPAccount::getPresence() const {
 }
 
 /**
- *  Enable the presence module (PUBLISH/SUBSCRIBE)
+ *  Enable the presence module
  */
 void
-SIPAccount::enablePresence(int function, const bool& enabled){
-    DEBUG("Presence enable for :%s (%s: %s).",
+SIPAccount::enablePresence(const bool& enabled){
+    DEBUG("Presence enable for :%s : %s.",
+            accountID_.c_str(),
+            enabled? Conf::TRUE_STR : Conf::FALSE_STR);
+    if (presence_)
+        presence_->enable(enabled);
+}
+
+/**
+ *  Enable the presence function (PUBLISH/SUBSCRIBE)
+ */
+void
+SIPAccount::supportPresence(int function, const bool& enabled){
+    DEBUG("Presence support for :%s (%s: %s).",
             accountID_.c_str(),
             (function==PRESENCE_FUNCTION_PUBLISH)? "publish" : "subscribe",
             enabled? Conf::TRUE_STR : Conf::FALSE_STR);
     if (presence_)
-        presence_->enable(function, enabled);
+        presence_->support(function, enabled);
 }
 
 bool SIPAccount::matches(const std::string &userName, const std::string &server,
