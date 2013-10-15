@@ -359,7 +359,8 @@ presence_buddy_subscribe(buddy_t * buddy, gboolean flag)
     if(acc)
     {
         if((acc->state == (ACCOUNT_STATE_REGISTERED)) &&
-                account_lookup(acc, CONFIG_PRESENCE_SUBSCRIBE_ENABLED) &&
+                account_lookup(acc, CONFIG_PRESENCE_ENABLED) &&
+                account_lookup(acc, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED) &&
                 (flag != buddy->subscribed))
             dbus_presence_subscribe(buddy->acc, buddy->uri, flag);
     }
