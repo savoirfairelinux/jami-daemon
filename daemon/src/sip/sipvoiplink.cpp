@@ -403,7 +403,16 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
         ERROR("Something wrong with Replaces request.");
         delete call;
-        pjsip_endpt_respond_stateless(endpt_, rdata, 500 /* internal server error */, NULL, NULL, NULL);
+        // Something wrong with the Replaces header.
+        if (response) {
+            pjsip_response_addr res_addr;
+            pjsip_get_response_addr(response->pool, rdata, &res_addr);
+            pjsip_endpt_send_response(endpt_, &res_addr, response,
+                    NULL, NULL);
+        } else {
+            pjsip_endpt_respond_stateless(endpt_, rdata,
+                    PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
+        }
         return PJ_FALSE;
     }
 
