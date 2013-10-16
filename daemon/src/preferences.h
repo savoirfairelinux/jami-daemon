@@ -34,6 +34,7 @@
 #include "config/serializable.h"
 #include <string>
 #include <map>
+#include <vector>
 
 class AudioLayer;
 
@@ -50,6 +51,9 @@ class Preferences : public Serializable {
         std::string getAccountOrder() const {
             return accountOrder_;
         }
+
+        // flush invalid accountIDs from account order
+        void verifyAccountOrder(const std::vector<std::string> &accounts);
 
         void addAccount(const std::string &acc);
         void removeAccount(const std::string &acc);

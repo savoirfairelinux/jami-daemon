@@ -1375,6 +1375,8 @@ void ManagerImpl::saveConfig()
             item.second->serialize(emitter);
 #endif
 
+        // FIXME: this is a hack until we get rid of accountOrder
+        preferences.verifyAccountOrder(getAccountList());
         preferences.serialize(emitter);
         voipPreferences.serialize(emitter);
         hookPreference.serialize(emitter);
