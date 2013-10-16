@@ -46,7 +46,7 @@
 
 namespace sfl {
 
-AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
+AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(),
     audioRtpThreadMutex_(), srtpEnabled_(false), helloHashEnabled_(false),
     cachedLocalMasterKey_(MAX_MASTER_KEY_LENGTH),
     cachedLocalMasterSalt_(MAX_MASTER_SALT_LENGTH),
@@ -57,16 +57,13 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
 {}
 
 AudioRtpFactory::~AudioRtpFactory()
-{
-    delete rtpSession_;
-}
+{}
 
 void AudioRtpFactory::initConfig()
 {
     DEBUG("AudioRtpFactory: init config");
 
-    if (rtpSession_ != NULL)
-        stop();
+    stop();
 
     const std::string accountId(ca_->getAccountId());
 
@@ -110,36 +107,39 @@ void AudioRtpFactory::initSession()
 #if HAVE_ZRTP
 
             case ZRTP:
-                rtpSession_ = new AudioZrtpSession(*ca_, zidFilename);
+                rtpSession_.reset(new AudioZrtpSession(*ca_, zidFilename));
 
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                 // not even available at that point.
                 if (helloHashEnabled_)
-                    ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_)->getHelloHash());
+                    ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_.get())->getHelloHash());
 
                 break;
 #endif
 
             case SDES:
-                rtpSession_ = new AudioSrtpSession(*ca_);
+                rtpSession_.reset(new AudioSrtpSession(*ca_));
                 break;
 
             default:
                 throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
-    } else
-        rtpSession_ = new AudioSymmetricRtpSession(*ca_);
+    } else {
+        rtpSession_.reset(new AudioSymmetricRtpSession(*ca_));
+    }
 }
 
 std::vector<long>
 AudioRtpFactory::getSocketDescriptors() const
 {
+    if (!rtpSession_)
+        throw AudioRtpFactoryException("RTP session was null when trying to get socket descriptors");
     return rtpSession_->getSocketDescriptors();
 }
 
 void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 {
-    if (rtpSession_ == NULL)
+    if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
 
     rtpSession_->startRtpThreads(audioCodecs);
@@ -148,14 +148,12 @@ void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 void AudioRtpFactory::stop()
 {
     std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
-
-    delete rtpSession_;
-    rtpSession_ = NULL;
+    rtpSession_.reset();
 }
 
 int AudioRtpFactory::getSessionMedia()
 {
-    if (rtpSession_ == NULL)
+    if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
     return rtpSession_->getEncoderPayloadType();
@@ -164,7 +162,7 @@ int AudioRtpFactory::getSessionMedia()
 std::string
 AudioRtpFactory::getCurrentAudioCodecNames() const
 {
-    if (rtpSession_ == NULL)
+    if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
     return rtpSession_->getCurrentAudioCodecNames();
@@ -172,7 +170,7 @@ AudioRtpFactory::getCurrentAudioCodecNames() const
 
 void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    if (rtpSession_ == NULL)
+    if (!rtpSession_)
         throw AudioRtpFactoryException("rtpSession_ was NULL when trying to update IP address");
 
     rtpSession_->updateSessionMedia(audioCodecs);
@@ -180,7 +178,7 @@ void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
 
 void AudioRtpFactory::updateDestinationIpAddress()
 {
-    if (rtpSession_ == NULL)
+    if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to update IP address");
 
     rtpSession_->updateDestinationIpAddress();
@@ -189,8 +187,8 @@ void AudioRtpFactory::updateDestinationIpAddress()
 #if HAVE_ZRTP
 AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
-    if (keyExchangeProtocol_ == ZRTP)
-        return static_cast<AudioZrtpSession *>(rtpSession_);
+    if (rtpSession_ and keyExchangeProtocol_ == ZRTP)
+        return static_cast<AudioZrtpSession *>(rtpSession_.get());
     else
         throw AudioRtpFactoryException("rtpSession_ is NULL in getAudioZrtpSession");
 }
@@ -201,7 +199,7 @@ void AudioRtpFactory::initLocalCryptoInfo()
     DEBUG("AudioRtpFactory: Init local crypto info");
 
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_);
+        AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_.get());
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
         srtp->initLocalCryptoInfo();
         ca_->getLocalSDP()->setLocalSdpCrypto(srtp->getLocalCryptoInfo());
@@ -213,7 +211,7 @@ void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
     DEBUG("AudioRtpFactory: Init local crypto info");
 
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_);
+        AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_.get());
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
         srtp->initLocalCryptoInfoOnOffhold();
         ca_->getLocalSDP()->setLocalSdpCrypto(srtp->getLocalCryptoInfo());
@@ -225,7 +223,7 @@ void AudioRtpFactory::setRemoteCryptoInfo(SdesNegotiator& nego)
 {
     if (rtpSession_) {
         if (keyExchangeProtocol_ == SDES) {
-            AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
+            AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_.get());
             srtp->setRemoteCryptoInfo(nego);
         } else {
             ERROR("Should not store remote crypto info for non-SDES sessions");
