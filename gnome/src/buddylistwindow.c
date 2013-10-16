@@ -317,6 +317,12 @@ view_popup_menu_onAdd (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
     g_free(b->acc);
     b->acc = g_strdup(((buddy_t*)userdata)->acc);
 
+    account_t * acc = account_list_get_by_id(b->acc);
+    gchar * uri = g_strconcat("<sip:XXXX@", account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME),">", NULL);
+    g_free(b->uri);
+    b->uri = g_strdup(uri);
+    g_free(uri);
+
     if(show_buddy_info(_("Add new buddy"), b))
     {
         presence_list_add_buddy(b);
