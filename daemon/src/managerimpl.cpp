@@ -2444,7 +2444,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     do {
         std::stringstream accountID;
-        accountID << "Account:" << time(nullptr);
+        accountID << "Account:" << rand();
         newAccountID = accountID.str();
     } while (std::find(accountList.begin(), accountList.end(), newAccountID)
              != accountList.end());
