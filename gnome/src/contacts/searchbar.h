@@ -46,7 +46,7 @@
  * Create a new search bar for call hostory
  */
 GtkWidget*
-history_searchbar_new();
+history_searchbar_new(GSettings *settings);
 
 /**
  * Create a new search bar for addressbook
@@ -76,6 +76,6 @@ update_searchbar_addressbook_list(GSettings *settings);
  * Create a new menu listing all system addressbooks
  */
 GtkWidget *
-addressbook_menu_new();
+addressbook_menu_new(GSettings *settings);
 
 #endif
