@@ -46,6 +46,8 @@
 
 #define PRESENCE_FUNCTION_PUBLISH   0
 #define PRESENCE_FUNCTION_SUBSCRIBE 1
+#define PRESENCE_LOCK_FLAG          1
+#define PRESENCE_CLIENT_LOCK_FLAG   2
 
 struct pres_msg_data {
     /**
@@ -212,6 +214,7 @@ class SIPPresence {
         }
 
         void lock();
+        bool tryLock();
         void unlock();
 
     private:
