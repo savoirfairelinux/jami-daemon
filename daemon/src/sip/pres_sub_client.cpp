@@ -82,7 +82,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 
     if (pres_client) {
         pres_client->incLock();
-        DEBUG("subription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
+        DEBUG("Subscription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
               pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
         pjsip_evsub_state state = pjsip_evsub_get_state(sub);
@@ -433,46 +433,48 @@ void PresSubClient::reportPresence()
 }
 
 
-pj_status_t
-PresSubClient::updateSubscription()
+bool PresSubClient::unsubscribe()
 {
+    monitor_ = false;
 
-    if (!monitor_) {
-        /* unsubscribe */
-        pjsip_tx_data *tdata;
-        pj_status_t retStatus;
+    pjsip_tx_data *tdata;
+    pj_status_t retStatus;
 
-        if (sub_ == NULL) {
-            WARN("PresSubClient already unsubscribed sub=NULL.");
-            return PJ_SUCCESS;
-        }
-
-        if (pjsip_evsub_get_state(sub_) == PJSIP_EVSUB_STATE_TERMINATED) {
-            WARN("pres_client already unsubscribed sub=TERMINATED.");
-            //pjsip_evsub_terminate(sub, PJ_FALSE); //
-            sub_ = NULL;
-            return PJ_SUCCESS;
-        }
-
-        /* Unsubscribe means send a subscribe with timeout=0s*/
-        WARN("pres_client %s: unsubscribing..", uri_.ptr);
-        retStatus = pjsip_pres_initiate(sub_, 0, &tdata);
-
-        if (retStatus == PJ_SUCCESS) {
-            pres_->fillDoc(tdata, NULL);
-            retStatus = pjsip_pres_send_request(sub_, tdata);
-        }
-
-        if (retStatus != PJ_SUCCESS and sub_) {
-            pjsip_pres_terminate(sub_, PJ_FALSE);
-            pjsip_evsub_terminate(sub_, PJ_FALSE); // = NULL;
-            WARN("Unable to unsubscribe presence", retStatus);
-        }
-
-        pjsip_evsub_set_mod_data(sub_, modId_, NULL);   // Not interested with further events
-
-        return PJ_SUCCESS;
+    if (sub_ == NULL) {
+        WARN("PresSubClient already unsubscribed sub=NULL.");
+        return false;
     }
+
+    if (pjsip_evsub_get_state(sub_) == PJSIP_EVSUB_STATE_TERMINATED) {
+        WARN("pres_client already unsubscribed sub=TERMINATED.");
+        sub_ = NULL;
+        return false;
+    }
+
+    /* Unsubscribe means send a subscribe with timeout=0s*/
+    WARN("pres_client %s: unsubscribing..", uri_.ptr);
+    retStatus = pjsip_pres_initiate(sub_, 0, &tdata);
+
+    if (retStatus == PJ_SUCCESS) {
+        pres_->fillDoc(tdata, NULL);
+        retStatus = pjsip_pres_send_request(sub_, tdata);
+    }
+
+    if (retStatus != PJ_SUCCESS and sub_) {
+        pjsip_pres_terminate(sub_, PJ_FALSE);
+        sub_ = NULL;
+        WARN("Unable to unsubscribe presence", retStatus);
+    }
+
+    pjsip_evsub_set_mod_data(sub_, modId_, NULL);   // Not interested with further events
+
+    return true;
+}
+
+
+bool PresSubClient::subscribe()
+{
+    monitor_ = true;
 
     if (sub_ and dlg_) { //do not bother if already subscribed
         pjsip_evsub_terminate(sub_, PJ_FALSE);
@@ -501,7 +503,7 @@ PresSubClient::updateSubscription()
 
     if (status != PJ_SUCCESS) {
         ERROR("Unable to create dialog \n");
-        return PJ_FALSE;
+        return false;
     }
 
     /* Add credential for auth. */
@@ -517,7 +519,7 @@ PresSubClient::updateSubscription()
     status = pjsip_pres_create_uac(dlg_, &pres_callback, PJSIP_EVSUB_NO_EVENT_ID, &sub_);
 
     if (status != PJ_SUCCESS) {
-        pjsip_evsub_terminate(sub_, PJ_FALSE); // = NULL;
+        sub_ = NULL;
         WARN("Unable to create presence client", status);
 
         /* This should destroy the dialog since there's no session
@@ -527,13 +529,13 @@ PresSubClient::updateSubscription()
             pjsip_dlg_dec_lock(dlg_);
         }
 
-        return PJ_SUCCESS;
+        return false;
     }
 
     /* Add credential for authentication */
     if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
         ERROR("Could not initialize credentials for invite session authentication");
-        return status;
+        return false;
     }
 
     /* Set route-set */
@@ -543,22 +545,18 @@ PresSubClient::updateSubscription()
                 sip_utils::createRouteSet(acc->getServiceRoute(),
                 pres_->getPool()));
 
-
-    /* FIXME : not sure this is acceptable */
+    // attach the client data to the sub
     pjsip_evsub_set_mod_data(sub_, modId_, this);
 
     status = pjsip_pres_initiate(sub_, -1, &tdata);
-
     if (status != PJ_SUCCESS) {
         if (dlg_)
             pjsip_dlg_dec_lock(dlg_);
-
         if (sub_)
             pjsip_pres_terminate(sub_, PJ_FALSE);
-
-        pjsip_evsub_terminate(sub_, PJ_FALSE); // = NULL;
+        sub_ = NULL;
         WARN("Unable to create initial SUBSCRIBE", status);
-        return PJ_SUCCESS;
+        return false;
     }
 
 //    pjsua_process_msg_data(tdata, NULL);
@@ -568,30 +566,15 @@ PresSubClient::updateSubscription()
     if (status != PJ_SUCCESS) {
         if (dlg_)
             pjsip_dlg_dec_lock(dlg_);
-
-        if (sub_) {
+        if (sub_)
             pjsip_pres_terminate(sub_, PJ_FALSE);
-            sub_ = NULL;
-        }
-
+        sub_ = NULL;
         WARN("Unable to send initial SUBSCRIBE", status);
-        return PJ_SUCCESS;
+        return false;
     }
 
     pjsip_dlg_dec_lock(dlg_);
-    return PJ_SUCCESS;
-}
-
-bool PresSubClient::subscribe()
-{
-    monitor_ = true;
-    return updateSubscription() == PJ_SUCCESS;
-}
-
-bool PresSubClient::unsubscribe()
-{
-    monitor_ = false;
-    return updateSubscription() == PJ_SUCCESS;
+    return true;
 }
 
 bool PresSubClient::match(PresSubClient *b)
