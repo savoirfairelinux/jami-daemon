@@ -50,9 +50,9 @@
 SIPPresence::SIPPresence(SIPAccount *acc)
     : publish_sess_()
     , status_data_()
-    , enabled_(true)
-    , publish_supported_(true)
-    , subscribe_supported_(true)
+    , enabled_(false)
+    , publish_supported_(false)
+    , subscribe_supported_(false)
     , acc_(acc)
     , sub_server_list_()  //IP2IP context
     , sub_client_list_()
@@ -153,8 +153,10 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
         rpid.activity = PJRPID_ACTIVITY_AWAY;
     else if (note == "busy")
         rpid.activity = PJRPID_ACTIVITY_BUSY;
+    /*
     else // TODO: is there any other possibilities
         DEBUG("Presence : no activity");
+    */
 
     pj_bzero(&status_data_, sizeof(status_data_));
     status_data_.info_cnt = 1;
@@ -272,7 +274,7 @@ void SIPPresence::removePresSubServer(PresSubServer *s)
 
 void SIPPresence::notifyPresSubServer()
 {
-    DEBUG("Iterating through Presence_subscription_server:");
+    DEBUG("Iterating through IP2IP Presence_subscription_server:");
 
     for (const auto & s : sub_server_list_)
         s->notify();
