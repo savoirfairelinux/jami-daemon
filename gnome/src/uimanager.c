@@ -1142,7 +1142,7 @@ static const GtkToggleActionEntry toggle_menu_entries[] = {
 
 GtkUIManager *uimanager_new(SFLPhoneClient *client)
 {
-    const gint nb_entries = addrbook ? 8 : 7;
+    const gint nb_entries = addrbook ? 9 : 8;
     GtkUIManager *ui = gtk_ui_manager_new();
 
     /* Register new icons as GTK_STOCK_ITEMS */

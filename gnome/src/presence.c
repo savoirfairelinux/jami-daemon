@@ -151,17 +151,22 @@ presence_list_save()
 
     GList *tmp = g_list_nth(presence_buddy_list,1);
     buddy_t * buddy;
+    account_t *acc;
     while (tmp) {
-        GVariantBuilder *v_b_buddy = g_variant_builder_new (G_VARIANT_TYPE ("a{ss}"));
         buddy = (buddy_t *)(tmp->data);
-        g_variant_builder_add (v_b_buddy, "{ss}", "acc", buddy->acc);
-        g_variant_builder_add (v_b_buddy, "{ss}", "alias", buddy->alias);
-        g_variant_builder_add (v_b_buddy, "{ss}", "uri", buddy->uri);
-        GVariant * v_buddy = g_variant_builder_end(v_b_buddy);
-        const gchar *msg = g_variant_print(v_buddy,TRUE);
-        g_print("Presence : saved buddy: %s \n", msg);
-        g_free((gchar*)msg);
-        g_variant_builder_add_value(v_b_list, v_buddy);
+        acc = account_list_get_by_id(buddy->acc);
+        if(acc) // filter deleted accounts
+        {
+            GVariantBuilder *v_b_buddy = g_variant_builder_new (G_VARIANT_TYPE ("a{ss}"));
+            g_variant_builder_add (v_b_buddy, "{ss}", "acc", buddy->acc);
+            g_variant_builder_add (v_b_buddy, "{ss}", "alias", buddy->alias);
+            g_variant_builder_add (v_b_buddy, "{ss}", "uri", buddy->uri);
+            GVariant * v_buddy = g_variant_builder_end(v_b_buddy);
+            const gchar *msg = g_variant_print(v_buddy,TRUE);
+            g_print("Presence : saved buddy: %s \n", msg);
+            g_free((gchar*)msg);
+            g_variant_builder_add_value(v_b_list, v_buddy);
+        }
         tmp = g_list_next (tmp);
     }
     GVariant * v_list = g_variant_builder_end(v_b_list);
