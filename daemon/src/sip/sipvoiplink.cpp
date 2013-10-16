@@ -79,9 +79,11 @@
 #include <utility> // for std::pair
 #include <algorithm>
 
+#ifdef SFL_PRESENCE
 #include "pjsip-simple/presence.h"
 #include "pjsip-simple/publish.h"
 #include "pres_sub_server.h"
+#endif
 
 using namespace sfl;
 
@@ -533,9 +535,11 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     TRY(pjsip_evsub_init_module(endpt_));
     TRY(pjsip_xfer_init_module(endpt_));
 
+#ifdef SFL_PRESENCE
     // presence/publish management
     TRY(pjsip_pres_init_module(endpt_, pjsip_evsub_instance()));
     TRY(pjsip_endpt_register_module(endpt_, &PresSubServer::mod_presence_server));
+#endif
 
     static const pjsip_inv_callback inv_cb = {
         invite_session_state_changed_cb,
