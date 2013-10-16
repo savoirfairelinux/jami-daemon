@@ -76,7 +76,6 @@ static GtkWidget *expire_spin_box;
 static GtkListStore *credential_store;
 static GtkWidget *delete_cred_button;
 static GtkWidget *treeview_credential;
-static GtkWidget *presence_check_box;
 static GtkWidget *zrtp_button;
 static GtkWidget *key_exchange_combo;
 static GtkWidget *use_sip_tls_check_box;
@@ -103,6 +102,10 @@ static GtkWidget *audio_port_max_spin_box;
 #ifdef SFL_VIDEO
 static GtkWidget *video_port_min_spin_box;
 static GtkWidget *video_port_max_spin_box;
+#endif
+
+#ifdef SFL_PRESENCE
+static GtkWidget *presence_check_box;
 #endif
 
 typedef struct OptionsData {
@@ -160,12 +163,16 @@ void change_protocol_cb()
         if (utf8_case_equal(protocol, "IAX")) {
             gtk_widget_hide(security_tab);
             gtk_widget_hide(advanced_tab);
+#ifdef SFL_PRESENCE
             gtk_widget_set_sensitive(presence_check_box, FALSE);
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),FALSE);
+#endif
         } else {
             gtk_widget_show(security_tab);
             gtk_widget_show(advanced_tab);
+#ifdef SFL_PRESENCE
             gtk_widget_set_sensitive(presence_check_box, TRUE);
+#endif
         }
     }
 
@@ -392,6 +399,7 @@ create_account_parameters(const account_t *account, gboolean is_new)
     return frame;
 }
 
+#ifdef SFL_PRESENCE
 static GtkWidget*
 create_presence(const account_t *account)
 {
@@ -420,6 +428,7 @@ create_presence(const account_t *account)
 
     return frame;
 }
+#endif
 
 static GtkWidget*
 create_basic_tab(const account_t *account, gboolean is_new)
@@ -434,9 +443,11 @@ create_basic_tab(const account_t *account, gboolean is_new)
     GtkWidget *frame = create_account_parameters(account, is_new);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
+#ifdef SFL_PRESENCE
     frame = create_presence(account);
 
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+#endif
 
     gtk_widget_show_all(vbox);
 
@@ -1376,11 +1387,13 @@ static void update_account_from_basic_tab(account_t *account)
         account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MAX,
                 gtk_entry_get_text(GTK_ENTRY(video_port_max_spin_box)));
 #endif
+#ifdef SFL_PRESENCE
         v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
         account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
         // TODO: is this necessary?
         account_replace(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED, bool_to_string(v));
         account_replace(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED, bool_to_string(v));
+#endif
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
             g_debug("Set dtmf over rtp");

@@ -60,10 +60,11 @@
 #include <gdk/gdkkeysyms.h>
 
 
-
+#ifdef SFL_PRESENCE
 // TODO: remove this as soon as presence.h is in the master branch
 static const char *const PRESENCE_STATUS_ONLINE = "Online";
 static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
+#endif
 
 
 /** Local variables */
@@ -75,7 +76,9 @@ static GtkWidget *speaker_control;
 static GtkWidget *mic_control;
 static GtkWidget *statusBar;
 static GtkWidget *seekslider = NULL;
+#ifdef SFL_PRESENCE
 static GtkWidget *presence_status_combo;
+#endif
 
 static gchar *status_current_message;
 
@@ -225,6 +228,7 @@ main_window_bring_to_front(SFLPhoneClient *client, guint32 timestamp)
     gtk_window_present_with_time(GTK_WINDOW(client->win), timestamp);
 }
 
+#ifdef SFL_PRESENCE
 /**
  * This function reads the status combo box, updates the account_schema
  * and call the the DBus presence publish method if enabled.
@@ -288,14 +292,16 @@ statusbar_enable_presence()
     else
         g_debug("Presence : no registered account found with publish enabled");
 }
+#endif
 
 
 GtkWidget*
 create_status_bar()
 {
     GtkWidget *bar = gtk_statusbar_new();
-    GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
 
+#ifdef SFL_PRESENCE
+    GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
     gtk_box_pack_start(GTK_BOX(bar), label, TRUE, TRUE, 0);
 
     /* Add presence status combo_box*/
@@ -307,6 +313,7 @@ create_status_bar()
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
 
     statusbar_enable_presence();
+#endif
 
     return bar;
 }

@@ -45,7 +45,6 @@
 
 #include "uimanager.h"
 #include "statusicon.h"
-#include "buddylistwindow.h"
 #include "config/audioconf.h"
 #include "uimanager.h"
 #include "statusicon.h"
@@ -63,6 +62,10 @@
 #include <sys/stat.h>
 
 #include "sliders.h"
+
+#ifdef SFL_PRESENCE
+#include "buddylistwindow.h"
+#endif
 
 typedef struct
 {
@@ -519,6 +522,7 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
         g_settings_set_boolean(client->settings, "show-dialpad", toggled);
 }
 
+#ifdef SFL_PRESENCE
 static void
 toggle_buddylist_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 {
@@ -528,7 +532,7 @@ toggle_buddylist_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
     else
         destroy_buddylist_window();
 }
-
+#endif
 
 static void
 help_contents_cb(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
@@ -1137,7 +1141,9 @@ static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK(volume_bar_cb), TRUE },
     { "History", "appointment-soon", N_("_History"), NULL, N_("Calls history"), G_CALLBACK(toggle_history_cb), FALSE },
     { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK(toggle_addressbook_cb), FALSE },
+#ifdef SFL_PRESENCE
     { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), G_CALLBACK(toggle_buddylist_cb), FALSE},
+#endif
 };
 
 GtkUIManager *uimanager_new(SFLPhoneClient *client)
