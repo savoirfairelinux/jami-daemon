@@ -2481,20 +2481,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     newAccount->setAccountDetails(details);
 
-
-    std::string accountOrder(preferences.getAccountOrder());
-
-    // Add the newly created account in the account order list
-    if (not accountOrder.empty()) {
-        // Prepend the new account
-        accountOrder.insert(0, newAccountID + "/");
-        preferences.setAccountOrder(accountOrder);
-    } else {
-        accountOrder = newAccountID + "/";
-        preferences.setAccountOrder(accountOrder);
-    }
-
-    DEBUG("Getting accounts: %s", accountOrder.c_str());
+    preferences.addAccount(newAccountID);
 
     newAccount->registerVoIPLink();
 

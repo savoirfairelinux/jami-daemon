@@ -51,6 +51,8 @@ class Preferences : public Serializable {
             return accountOrder_;
         }
 
+        void addAccount(const std::string &acc);
+
         void setAccountOrder(const std::string &ord) {
             accountOrder_ = ord;
         }

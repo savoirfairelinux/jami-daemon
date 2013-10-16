@@ -128,6 +128,15 @@ Preferences::Preferences() :
     , md5Hash_(false)
 {}
 
+void Preferences::addAccount(const std::string &newAccountID)
+{
+    // Add the newly created account in the account order list
+    if (not accountOrder_.empty())
+        accountOrder_.insert(0, newAccountID + "/");
+    else
+        accountOrder_ = newAccountID + "/";
+}
+
 void Preferences::serialize(Conf::YamlEmitter &emiter)
 {
     Conf::MappingNode preferencemap(NULL);
