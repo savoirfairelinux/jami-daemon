@@ -2507,6 +2507,7 @@ void ManagerImpl::removeAccount(const std::string& accountID)
         // delete remAccount;
     }
 
+    preferences.removeAccount(accountID);
     config_.removeSection(accountID);
 
     saveConfig();
