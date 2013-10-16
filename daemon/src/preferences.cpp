@@ -128,6 +128,23 @@ Preferences::Preferences() :
     , md5Hash_(false)
 {}
 
+void Preferences::addAccount(const std::string &newAccountID)
+{
+    // Add the newly created account in the account order list
+    if (not accountOrder_.empty())
+        accountOrder_.insert(0, newAccountID + "/");
+    else
+        accountOrder_ = newAccountID + "/";
+}
+
+void Preferences::removeAccount(const std::string &oldAccountID)
+{
+    // include the slash since we don't want to remove a partial match
+    const size_t start = accountOrder_.find(oldAccountID + "/");
+    if (start != std::string::npos)
+        accountOrder_.erase(start, oldAccountID.length() + 1);
+}
+
 void Preferences::serialize(Conf::YamlEmitter &emiter)
 {
     Conf::MappingNode preferencemap(NULL);

@@ -50,9 +50,9 @@
 SIPPresence::SIPPresence(SIPAccount *acc)
     : publish_sess_()
     , status_data_()
-    , enabled_(true)
-    , publish_supported_(true)
-    , subscribe_supported_(true)
+    , enabled_(false)
+    , publish_supported_(false)
+    , subscribe_supported_(false)
     , acc_(acc)
     , sub_server_list_()  //IP2IP context
     , sub_client_list_()
@@ -83,11 +83,12 @@ SIPPresence::SIPPresence(SIPAccount *acc)
 SIPPresence::~SIPPresence()
 {
     /* Flush the lists */
-    for (const auto & c : sub_client_list_)
-        removePresSubClient(c) ;
-
-    for (const auto & s : sub_server_list_)
-        removePresSubServer(s);
+    // FIXME: unsubscribe doesn't work here. Is the transport usable when the account
+    // is being destroyed?
+    //for (const auto & c : sub_client_list_)
+    //    delete(c);  //unsubscribe() is called by the destructor
+    sub_client_list_.clear();
+    sub_server_list_.clear();
 
     if (mutex_ and pj_mutex_destroy(mutex_) != PJ_SUCCESS)
         ERROR("Error destroying mutex");
@@ -153,8 +154,10 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
         rpid.activity = PJRPID_ACTIVITY_AWAY;
     else if (note == "busy")
         rpid.activity = PJRPID_ACTIVITY_BUSY;
+    /*
     else // TODO: is there any other possibilities
         DEBUG("Presence : no activity");
+    */
 
     pj_bzero(&status_data_, sizeof(status_data_));
     status_data_.info_cnt = 1;
@@ -239,7 +242,7 @@ void SIPPresence::addPresSubClient(PresSubClient *c)
 
 void SIPPresence::removePresSubClient(PresSubClient *c)
 {
-    DEBUG("Presence_subscription_client removed from the buddy list.");
+    DEBUG("Remove Presence_subscription_client from the buddy list.");
     sub_client_list_.remove(c);
 }
 
@@ -272,7 +275,7 @@ void SIPPresence::removePresSubServer(PresSubServer *s)
 
 void SIPPresence::notifyPresSubServer()
 {
-    DEBUG("Iterating through Presence_subscription_server:");
+    DEBUG("Iterating through IP2IP Presence_subscription_server:");
 
     for (const auto & s : sub_server_list_)
         s->notify();
@@ -283,6 +286,17 @@ void SIPPresence::lock()
     pj_mutex_lock(mutex_);
     mutex_owner_ = pj_thread_this();
     ++mutex_nesting_level_;
+}
+
+bool SIPPresence::tryLock()
+{
+    pj_status_t status;
+    status = pj_mutex_trylock(mutex_);
+    if (status == PJ_SUCCESS) {
+	mutex_owner_ = pj_thread_this();
+	++mutex_nesting_level_;
+    }
+    return status==PJ_SUCCESS;
 }
 
 void SIPPresence::unlock()

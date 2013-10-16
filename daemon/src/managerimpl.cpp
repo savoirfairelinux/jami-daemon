@@ -2437,15 +2437,17 @@ std::string
 ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 {
     /** @todo Deal with both the accountMap_ and the Configuration */
-    std::stringstream accountID;
 
-    std::string accountList(preferences.getAccountOrder());
-    accountID << "Account:" << time(nullptr);
-    std::string newAccountID(accountID.str());
+    std::string newAccountID;
 
-    while (accountList.find(newAccountID) != std::string::npos) {
-       newAccountID += "1";
-    }
+    const std::vector<std::string> accountList(getAccountList());
+
+    do {
+        std::stringstream accountID;
+        accountID << "Account:" << rand();
+        newAccountID = accountID.str();
+    } while (std::find(accountList.begin(), accountList.end(), newAccountID)
+             != accountList.end());
 
     // Get the type
 
@@ -2479,18 +2481,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     newAccount->setAccountDetails(details);
 
-
-    // Add the newly created account in the account order list
-    if (not accountList.empty()) {
-        // Prepend the new account
-        accountList.insert(0, newAccountID + "/");
-        preferences.setAccountOrder(accountList);
-    } else {
-        accountList = newAccountID + "/";
-        preferences.setAccountOrder(accountList);
-    }
-
-    DEBUG("Getting accounts: %s", accountList.c_str());
+    preferences.addAccount(newAccountID);
 
     newAccount->registerVoIPLink();
 
@@ -2516,6 +2507,7 @@ void ManagerImpl::removeAccount(const std::string& accountID)
         // delete remAccount;
     }
 
+    preferences.removeAccount(accountID);
     config_.removeSection(accountID);
 
     saveConfig();

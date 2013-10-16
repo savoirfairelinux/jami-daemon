@@ -484,10 +484,6 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     std::string pres;
     mapNode.getValue(PRESENCE_ENABLED_KEY, &pres);
     enablePresence(pres == Conf::TRUE_STR);
-    mapNode.getValue(PRESENCE_PUBLISH_SUPPORTED_KEY, &pres);
-    supportPresence(PRESENCE_FUNCTION_PUBLISH, pres == Conf::TRUE_STR);
-    mapNode.getValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, &pres);
-    supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, pres == Conf::TRUE_STR);
 
     std::string dtmfType;
     mapNode.getValue(DTMF_TYPE_KEY, &dtmfType);
@@ -645,8 +641,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
     keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == Conf::TRUE_STR;
     enablePresence(details[CONFIG_PRESENCE_ENABLED] == Conf::TRUE_STR);
-    supportPresence(PRESENCE_FUNCTION_PUBLISH, details[CONFIG_PRESENCE_PUBLISH_SUPPORTED] == Conf::TRUE_STR);
-    supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, details[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] == Conf::TRUE_STR);
 
     int tmpMin = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
     int tmpMax = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
@@ -1458,8 +1452,12 @@ SIPAccount::enablePresence(const bool& enabled){
     DEBUG("Presence enable for :%s : %s.",
             accountID_.c_str(),
             enabled? Conf::TRUE_STR : Conf::FALSE_STR);
-    if (presence_)
+
+    if (presence_){
         presence_->enable(enabled);
+        supportPresence(PRESENCE_FUNCTION_PUBLISH, true); // try to publish by default
+        supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, true); // try to subscribe by default
+    }
 }
 
 /**

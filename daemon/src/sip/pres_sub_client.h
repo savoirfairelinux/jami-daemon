@@ -73,6 +73,14 @@ class PresSubClient {
          */
         SIPPresence * getPresence();
         /**
+         * Data lock function
+         */
+        bool lock();
+        /**
+         * Data unlock function
+         */
+        void unlock();
+        /**
          * Send a SUBCRIBE to the PXB or directly to a pres_client in the IP2IP context.
          */
         bool subscribe();
@@ -91,7 +99,7 @@ class PresSubClient {
         std::string getURI();
 
         /**
-         * Is the URI present
+         * Is the buddy present
          */
         bool isPresent();
 
@@ -159,7 +167,7 @@ class PresSubClient {
         pj_str_t         contact_;      /**< Contact learned from subscrp. */
         pj_str_t         display_;      /**< pres_client display name. */
         pjsip_dialog    *dlg_;          /**< The underlying dialog. */
-        pj_bool_t        monitor_;      /**< Should we monitor? */
+        pj_bool_t        monitored_;      /**< Should we monitor? */
         pj_str_t         name_;         /**< pres_client name. */
         pj_caching_pool  cp_;
         pj_pool_t       *pool_;         /**< Pool for this pres_client. */
@@ -170,6 +178,7 @@ class PresSubClient {
         pj_timer_entry   timer_;        /**< Resubscription timer */
         void            *user_data_;        /**< Application data. */
         int lock_count_;
+        int lock_flag_;
         static int modId_; // used to extract data structure from event_subscription
 };
 
