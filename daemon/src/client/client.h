@@ -70,8 +70,8 @@ class Client {
         VideoControls* getVideoControls();
 #endif
 
-        void event_loop();
-        void exit();
+        int event_loop();
+        int exit();
 
     private:
         NON_COPYABLE(Client);

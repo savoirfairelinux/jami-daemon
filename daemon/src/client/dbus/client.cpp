@@ -127,30 +127,33 @@ Client::~Client()
     delete dispatcher_;
 }
 
-void Client::event_loop()
+int Client::event_loop()
 {
     try {
         dispatcher_->enter();
     } catch (const DBus::Error &err) {
         ERROR("%s: %s, quitting\n", err.name(), err.what());
-        return;
+        return 1;
     } catch (const std::exception &err) {
         ERROR("%s: quitting\n", err.what());
-        return;
+        return 1;
     }
+
+    return 0;
 }
 
-void Client::exit()
+int Client::exit()
 {
     try {
         dispatcher_->leave();
     } catch (const DBus::Error &err) {
         ERROR("%s: %s, quitting\n", err.name(), err.what());
-        return;
+        return 1;
     } catch (const std::exception &err) {
         ERROR("%s: quitting\n", err.what());
-        return;
+        return 1;
     }
+    return 0;
 }
 
 CallManager *

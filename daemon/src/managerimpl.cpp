@@ -214,16 +214,16 @@ void ManagerImpl::setPath(const std::string &path) {
 }
 
 #if HAVE_DBUS
-void ManagerImpl::run()
+int ManagerImpl::run()
 {
     DEBUG("Starting client event loop");
-    client_.event_loop();
+    return client_.event_loop();
 }
 #endif
 
-void ManagerImpl::interrupt()
+int ManagerImpl::interrupt()
 {
-    client_.exit();
+    return client_.exit();
 }
 
 void ManagerImpl::finish()
