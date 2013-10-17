@@ -62,9 +62,6 @@
 
 #ifdef SFL_PRESENCE
 #include "presence.h"
-// TODO: remove this as soon as presence.h is in the master branch
-//static const char *const PRESENCE_STATUS_ONLINE = "Online";
-//static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
 #endif
 
 
