@@ -55,10 +55,11 @@
 #include "accountlistconfigdialog.h"
 #include "accountconfigdialog.h"
 #include "messaging/message_tab.h"
-
 #include "sflphone_client.h"
 #include "dbus.h"
 #include "actions.h"
+#include "presence.h"
+#include "buddylistwindow.h"
 
 #ifdef SFL_VIDEO
 #include "config/videoconf.h"
@@ -444,6 +445,9 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 {
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
+
+    // ui updates
+    statusbar_enable_presence();
     status_bar_display_account();
     statusicon_set_tooltip();
 }
@@ -610,22 +614,55 @@ screensaver_dbus_proxy_new_cb (G_GNUC_UNUSED GObject * source, GAsyncResult *res
 
 #ifdef SFL_PRESENCE
 static void
-sip_presence_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *buddyUri,
-                  gboolean status, const gchar *lineStatus)
+sip_presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID,
+                              const gchar *uri, gboolean state, G_GNUC_UNUSED void *foo)
 {
-    g_debug("DBus: Sip presence state changed for %s (%s) status=%s lineStatus=%s.", buddyUri, accID, status? "online":"offline", lineStatus);
+    g_debug("DBus: Presence subscription state changed to %s for account %s, buddy:%s",
+          state? "active":"inactive", accID, uri);
+    account_t *acc = account_list_get_by_id(accID);
+    if (acc)
+    {
+        buddy_t * b = presence_list_buddy_get_by_string(accID, uri);
+        if(b)
+        {
+            b->subscribed = state;
+            if(!state) // not monitored means default value for status ( == Offline)
+                b->status = FALSE;
+            update_buddylist_view();
+        }
+    }
+}
+static void
+sip_presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *uri,
+                  gboolean status, const gchar * note)
+{
+    g_debug("DBus: Presence notification (%s) for %s status=%s lineStatus=%s.",
+            accID, uri, status? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE, note);
+
+    account_t *acc = account_list_get_by_id(accID);
+    if (acc)
+    {
+        buddy_t * b = presence_list_buddy_get_by_string(accID, uri);
+        if(b)
+        {
+            b->status = status;
+            g_free(b->note);
+            b->note = g_strdup(note);
+            update_buddylist_view();
+        }
+    }
 }
 
 static void
-sip_presence_server_error_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *err, const gchar *msg)
+sip_presence_server_error_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *err, const gchar *msg)
 {
-    g_debug("DBus: Sip presence error from server : %s / %s.",err, msg);
+    g_debug("DBus: Presence error from server (%s) : %s / %s.",accID, err, msg);
 }
 
 static void
 sip_presence_new_subscription_request_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *uri)
 {
-    g_debug("DBus: Sip presence new subscription from %s.",uri);
+    g_debug("DBus: Presence new subscription from %s.",uri);
 }
 #endif
 
@@ -916,12 +953,17 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     g_debug("Adding presencemanager Dbus signals");
 
     /* Presence related callbacks */
+    dbus_g_proxy_add_signal(presence_proxy, "subscriptionStateChanged", G_TYPE_STRING,
+                            G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(presence_proxy, "subscriptionStateChanged",
+                                G_CALLBACK(sip_presence_subscription_state_changed_cb), client, NULL);
+
     dbus_g_proxy_add_signal(presence_proxy, "newBuddyNotification", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(presence_proxy, "newBuddyNotification",
-                                G_CALLBACK(sip_presence_state_cb), client, NULL);
+                                G_CALLBACK(sip_presence_notification_cb), client, NULL);
 
-    dbus_g_proxy_add_signal(presence_proxy, "serverError", G_TYPE_STRING,
+    dbus_g_proxy_add_signal(presence_proxy, "serverError", G_TYPE_STRING,G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(presence_proxy, "serverError",
                                 G_CALLBACK(sip_presence_server_error_cb), NULL, NULL);
@@ -2189,7 +2231,15 @@ void
 dbus_presence_publish(const gchar *accountID, gboolean status)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_PresenceManager_publish(presence_proxy,accountID,status,"Tout va bien.",NULL);
+    org_sflphone_SFLphone_PresenceManager_publish(presence_proxy, accountID,status, "Tout va bien.", NULL);
+    check_error(error);
+}
+
+void
+dbus_presence_subscribe(const gchar *accountID, const gchar *uri, gboolean flag)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_PresenceManager_subscribe_buddy(presence_proxy, accountID, uri, flag, NULL);
     check_error(error);
 }
 #endif

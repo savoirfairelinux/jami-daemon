@@ -158,6 +158,13 @@ void account_list_free();
 account_t * account_list_get_by_id(const gchar * const accountID);
 
 /**
+ * Return the account associated with an alias
+ * @param alias The alias of the account
+ * @return An account or NULL
+ */
+account_t *account_list_get_by_alias(const gchar * const alias);
+
+/**
  * Move the account from an unit up in the account_list
  * @param index The current index in the list
  */

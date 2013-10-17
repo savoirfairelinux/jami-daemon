@@ -625,5 +625,5 @@ void dbus_screensaver_uninhibit(void);
  * Presence methods
  */
 void dbus_presence_publish(const gchar *accountID, gboolean status);
-
+void dbus_presence_subscribe(const gchar *accountID, const gchar *uri, gboolean flag);
 #endif

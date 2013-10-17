@@ -56,7 +56,7 @@ libsflphone_client_la_SOURCES = \
   sflphone_options.h
 
 if SFL_PRESENCE
-libsflphone_client_la_SOURCES+=buddylistwindow.c buddylistwindow.h
+libsflphone_client_la_SOURCES+=presence.c presence.h buddylistwindow.c buddylistwindow.h
 endif
 
 libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)

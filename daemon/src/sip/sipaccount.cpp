@@ -1475,8 +1475,9 @@ SIPAccount::enablePresence(const bool& enabled){
 
     if (presence_){
         presence_->enable(enabled);
-        supportPresence(PRESENCE_FUNCTION_PUBLISH, true); // try to publish by default
-        supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, true); // try to subscribe by default
+        // try to publish and subscribe by default when presence is enabled
+        supportPresence(PRESENCE_FUNCTION_PUBLISH, enabled);
+        supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, enabled);
     }
 }
 

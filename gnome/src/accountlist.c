@@ -65,6 +65,18 @@ static gint is_accountID_struct(gconstpointer a, gconstpointer b)
     return !!(g_strcmp0(c->accountID, (gchar*) b));
 }
 
+/* GCompareFunc to compare an alias (gchar* and a account_t) */
+static gint is_alias_struct(gconstpointer a, gconstpointer b)
+{
+    if (!a || !b)
+        return 1;
+
+    account_t * c = (account_t*) a;
+
+    /* We only want it to return 0 or 1 */
+    return !!(g_strcmp0(account_lookup(c, CONFIG_ACCOUNT_ALIAS), (gchar*) b));
+}
+
 /* GCompareFunc to get current call (gchar* and a account_t) */
 static gint get_state_struct(gconstpointer a, gconstpointer b)
 {
@@ -105,6 +117,22 @@ account_list_get_by_id(const gchar * const accountID)
     }
 
     GList * c = g_queue_find_custom(accountQueue, accountID, is_accountID_struct);
+
+    if (c)
+        return (account_t *) c->data;
+    else
+        return NULL;
+}
+
+account_t *
+account_list_get_by_alias(const gchar * const alias)
+{
+    if (!alias) {
+        g_debug("Account alias is NULL");
+        return NULL;
+    }
+
+    GList * c = g_queue_find_custom(accountQueue, alias, is_alias_struct);
 
     if (c)
         return (account_t *) c->data;

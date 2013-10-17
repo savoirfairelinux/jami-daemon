@@ -38,6 +38,7 @@
 #include "actions.h"
 #include "mainwindow.h"
 #include "utils.h"
+#include "presence.h"
 #include <glib/gi18n.h>
 #include <string.h>
 
@@ -312,7 +313,7 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
 
     // Store value
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_ACCOUNT_ACTIVE,
-                       enable, -1);
+                      enable, -1);
 
     // Modify account state
     const gchar * enabled_str = enable ? "true" : "false";
@@ -320,7 +321,6 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
 
     account_replace(account, CONFIG_ACCOUNT_ENABLE, enabled_str);
     dbus_send_register(account->accountID, enable);
-
 }
 
 /**
@@ -722,5 +722,15 @@ void show_account_list_config_dialog(SFLPhoneClient *client)
     account_store = NULL;
 
     update_actions(client);
+
+#ifdef SFL_PRESENCE
+    // presence, update buddy subscription
+    buddy_t * b;
+    for (guint i =  1; i < presence_list_get_size(); i++)
+    {
+        b = presence_list_get_nth(i);
+        presence_buddy_subscribe(b, TRUE);
+    }
+#endif
 }
 
