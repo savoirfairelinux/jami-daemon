@@ -46,6 +46,14 @@ first_account_number    = None
 gdbScriptPath           = os.path.dirname(os.path.abspath(__file__))+"/gdb_wrapper.py"
 gdbWrapperCommand       = "gdb -x "+gdbScriptPath+" > /dev/null 2> /dev/null &"
 
+#Numbers
+sip_number_1 = "7001"
+sip_number_2 = "7000"
+sip_unreg    = "7002"
+
+#Messages
+global_info  = ""
+
 
 #---------------------------------------------------------------------#
 #                                                                     #
@@ -100,7 +108,8 @@ def get_first_account():
 	for i, v in enumerate(accounts):
 		if v != "IP2IP":
 			details = configurationManager.getAccountDetails(v)
-			if details["Account.type"] == True or details["Account.type"] == "SIP":
+			if (details["Account.type"] == True or details["Account.type"] == "SIP") \
+				and details['Account.registrationStatus'] == "REGISTERED":
 				return v
 	return "IP2IP"
 
@@ -138,12 +147,13 @@ def meta_test(test_func):
 		for x in range(0,10):
 			try:
 				ret = test_func()
-				if ret['code'] > 0:
-					sys.stdout.write(' \033[91m(Failure)\033[0m\n')
-					print "      \033[0;33m"+ret['error']+"\033[0m"
+				if ret and ret['code'] > 0:
+					#print "      \033[0;33m"+ret['error']+"\033[0m"
 					retCode = 1
+					sys.stdout.write('X')
 			except dbus.exceptions.DBusException:
 				retCode = 1
+				sys.stdout.write('X')
 				reInit()
 		sys.stdout.write('#')
 		sys.stdout.flush()
@@ -214,7 +224,8 @@ def run():
 # This unit case test the basic senario of calling asterisk/freeswitch and then hanging up
 # It call itself to make the test simpler, this also test answering up as a side bonus
 def stress_answer_hangup_server():
-	callManager.placeCall(first_account,str(randint(100000000,100000000000)),first_account_number)
+	details = configurationManager.getAccountDetails(first_account)
+	callManager.placeCall(first_account,str(randint(100000000,100000000000)),sip_number_2)
 	time.sleep(0.05)
 	calls = callManager.getCallList()
 
@@ -226,14 +237,20 @@ def stress_answer_hangup_server():
 		else:
 			return {'code':1,'error':"Unit test \"stress_answer_hangup_server\" failed: Error while placing call, there is "+str(len(calls))+" calls"}
 	else:
-
 		#Accept the calls
 		for i, v in enumerate(calls):
 			time.sleep(0.05)
-			#callManager.accept(v)
+			callManager.accept(v)
+			callManager.accept(v)
+			callManager.accept(v)
+			callManager.accept(v)
+			callManager.placeCall(first_account,str(randint(100000000,100000000000)),sip_number_2)
 
 		#Hang up
 		callManager.hangUp(calls[0])
+	calls = callManager.getCallList()
+	for i, v in enumerate(calls):
+		callManager.hangUp(v)
 	return {'code':0,'error':""}
 add_to_suit("Place call",'Place, answer and hangup',stress_answer_hangup_server)
 
@@ -263,7 +280,7 @@ def stress_answer_hangup_IP2IP():
 add_to_suit("Place call",'Place, answer and hangup (IP2IP)',stress_answer_hangup_IP2IP)
 
 # Test various type of transfers between various type of calls
-# Use both localhost and
+# Use both localhost, SIP and IAX
 def stress_transfers():
 	for i in range(0,50): #repeat the tests
 		for j in range(0,3): # alternate between IP2IP, SIP and IAX
@@ -278,24 +295,23 @@ def stress_transfers():
 				acc2 = ""
 				if i%3 == 0: #Use the first loop to shuffle second account type
 					acc2 = first_account
+					global_info = "Using SIP Account"
 				elif i%3 == 1:
 					acc2 = "IP2IP"
+					global_info = "Using IP2IP"
 				else:
 					acc2 = first_iax_account
+					global_info = "Using IAX account"
 				#print "ACC1"+acc1+" ACC2 "+acc2+ " FIRST IAX "+ first_iax_account +" FISRT "+first_account
 				destination_number = ""
 				if acc2 == "IP2IP":
 					destination_number = "sip:127.0.0.1"
 				else:
 					destination_number = configurationManager.getAccountDetails(acc2)["Account.username"]
-				try:
 					callManager.placeCall(acc1,str(randint(100000000,100000000000)),destination_number)
-				except dbus.exceptions.DBusException:
-					return {'code':666,'error':"Daemon unresponsive"}
 				second_call = None
 				if k == 1:
-					
-					callManager.placeCall(acc1,str(randint(100000000,100000000000)),"188")
+					callManager.placeCall(acc1,str(randint(100000000,100000000000)),sip_number_1)
 				answer_all_calls()
 
 				if k == 1:
@@ -315,30 +331,32 @@ add_to_suit("Transfer",'Make calls and transfer them',stress_transfers)
 
 # This test make as tons or calls, then hangup them all as fast as it can
 def stress_concurent_calls():
-	for i in range(0,50): #repeat the tests
+	for i in range(0,5): #repeat the tests
 		for j in range(0,3): # alternate between IP2IP, SIP and IAX
-			for k in range(0,2): #alternate between classic transfer and attended one
-				acc1 = ""
-				if j == 0:
-					acc1 = first_account
-				elif j == 1:
-					acc1 = "IP2IP"
-				else:
-					acc1 = first_iax_account
-				acc2 = ""
-				if i%3 == 0: #Use the first loop to shuffle second account type
-					acc2 = first_account
-				elif i%3 == 1:
-					acc2 = "IP2IP"
-				else:
-					acc2 = first_iax_account
-				#print "ACC1"+acc1+" ACC2 "+acc2+ " FIRST IAX "+ first_iax_account +" FISRT "+first_account
-				destination_number = ""
-				if acc2 == "IP2IP":
-					destination_number = "sip:127.0.0.1"
-				else:
-					destination_number = configurationManager.getAccountDetails(acc2)["Account.username"]
-				callManager.placeCall(acc1,str(randint(100000000,100000000000)),destination_number)
+			acc1 = ""
+			if j == 0:
+				acc1 = first_account
+				global_info = "Using SIP"
+			elif j == 1:
+				acc1 = "IP2IP"
+				global_info = "Using IP2IP"
+			else:
+				acc1 = first_iax_account
+				global_info = "Using IAX"
+			acc2 = ""
+			if i%3 == 0: #Use the first loop to shuffle second account type
+				acc2 = first_account
+			elif i%3 == 1:
+				acc2 = "IP2IP"
+			else:
+				acc2 = first_iax_account
+			#print "ACC1"+acc1+" ACC2 "+acc2+ " FIRST IAX "+ first_iax_account +" FISRT "+first_account
+			destination_number = ""
+			if acc2 == "IP2IP":
+				destination_number = "sip:127.0.0.1"
+			else:
+				destination_number = configurationManager.getAccountDetails(acc2)["Account.username"]
+			callManager.placeCall(acc1,str(randint(100000000,100000000000)),destination_number)
 	calls = callManager.getCallList()
 	for i, v in enumerate(calls):
 		callManager.hangUp(v)
@@ -395,7 +413,7 @@ def stress_hold_unhold_server():
 		if not details['CALL_STATE'] == "CURRENT":
 			return {'code':4,'error':"\nUnit test \"stress_hold_unhold\" failed: The call should be current, but is "+details['CALL_STATE']}
 	return {'code':0,'error':""}
-#add_to_suit("Hold call",'Hold and unhold',stress_hold_unhold_server)
+add_to_suit("Hold call",'Hold and unhold',stress_hold_unhold_server)
 
 #Run the tests
 run()
