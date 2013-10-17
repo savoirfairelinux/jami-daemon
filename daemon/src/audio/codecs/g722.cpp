@@ -509,7 +509,7 @@ class G722 : public sfl::AudioCodec {
                     amp[outlen++] = (SFLAudioSample)(rhigh << 1);
                 } else {
                     if (decode_state_.eight_k) {
-                        amp[outlen++] = (SFLAudioSample) rlow;
+                        amp[outlen++] = (SFLAudioSample) (rlow << 1);
                     } else {
                         /* Apply the receive QMF */
                         for (i = 0;  i < 22;  i++)
@@ -528,9 +528,9 @@ class G722 : public sfl::AudioCodec {
                             xout1 += decode_state_.x[2*i + 1]*qmf_coeffs[11 - i];
                         }
 
-                        amp[outlen++] = (SFLAudioSample)(xout1 >> 12);
+                        amp[outlen++] = (SFLAudioSample)(xout1 >> 11);
 
-                        amp[outlen++] = (SFLAudioSample)(xout2 >> 12);
+                        amp[outlen++] = (SFLAudioSample)(xout2 >> 11);
                     }
                 }
             }
@@ -622,7 +622,7 @@ class G722 : public sfl::AudioCodec {
                         xhigh = amp[j++] >> 1;
                 } else {
                     if (encode_state_.eight_k) {
-                        xlow = amp[j++];
+                        xlow = amp[j++] >> 1;
                     } else {
                         /* Apply the transmit QMF */
                         /* Shuffle the buffer down */
@@ -643,9 +643,9 @@ class G722 : public sfl::AudioCodec {
                             sumeven += encode_state_.x[2*i + 1]*qmf_coeffs[11 - i];
                         }
 
-                        xlow = (sumeven + sumodd) >> 13;
+                        xlow = (sumeven + sumodd) >> 14;
 
-                        xhigh = (sumeven - sumodd) >> 13;
+                        xhigh = (sumeven - sumodd) >> 14;
                     }
                 }
 
