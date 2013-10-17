@@ -1167,14 +1167,17 @@ SIPVoIPLink::offhold(const std::string& id)
             // Create a new instance for this codec
             sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
-            if (ac == NULL)
+            if (ac == NULL) {
+                ERROR("Could not instantiate codec %d", i->getPayloadType());
                 throw VoipLinkException("Could not instantiate codec");
+            }
 
             audioCodecs.push_back(ac);
         }
 
-        if (audioCodecs.empty())
-            throw VoipLinkException("Could not instantiate codec");
+        if (audioCodecs.empty()) {
+            throw VoipLinkException("Could not instantiate any codecs");
+        }
 
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
@@ -1949,8 +1952,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             const int pl = i->getPayloadType();
 
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
-            if (!ac)
+            if (!ac) {
+                ERROR("Could not instantiate codec %d", pl);
                 throw std::runtime_error("Could not instantiate codec");
+            }
             audioCodecs.push_back(ac);
         }
         if (not audioCodecs.empty())
