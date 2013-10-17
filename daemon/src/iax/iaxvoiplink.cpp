@@ -243,6 +243,13 @@ IAXVoIPLink::sendRegister(Account *a)
 {
     IAXAccount *account = static_cast<IAXAccount*>(a);
 
+    if (!account)
+        throw VoipLinkException("Account is NULL");
+    else if (not account->isEnabled()) {
+        WARN("Account must be enabled to register, ignoring");
+        return;
+    }
+
     if (account->getHostname().empty())
         throw VoipLinkException("Account hostname is empty");
 

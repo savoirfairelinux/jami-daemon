@@ -685,7 +685,12 @@ void SIPVoIPLink::sendRegister(Account *a)
     SIPAccount *account = static_cast<SIPAccount*>(a);
 
     if (!account)
-        throw VoipLinkException("SipVoipLink: Account is not SIPAccount");
+        throw VoipLinkException("Account is NULL");
+    else if (not account->isEnabled()) {
+        WARN("Account must be enabled to register, ignoring");
+        return;
+    }
+
     try {
         sipTransport.createSipTransport(*account);
     } catch (const std::runtime_error &e) {
