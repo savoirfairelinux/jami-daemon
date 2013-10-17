@@ -1897,9 +1897,11 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
             try {
                 call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
-            } catch (...) {}
-
-            Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
+                Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
+            } catch (const AudioRtpFactoryException &e) {
+                ERROR("%s", e.what());
+                Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
+            }
         } else {
             ERROR("SDES negotiation failure");
             Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
