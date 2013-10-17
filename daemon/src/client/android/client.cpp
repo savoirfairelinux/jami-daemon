@@ -39,7 +39,9 @@
 
 Client::Client() : callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
+#ifdef SFL_PRESENCE
 	, presenceManager_(new PresenceManager)
+#endif
     , instanceManager_(0)
     , dispatcher_(0)
 #ifdef SFL_VIDEO
@@ -61,7 +63,9 @@ Client::~Client()
     delete dispatcher_;
     delete instanceManager_;
     delete configurationManager_;
-	delete presenceManager_;
+#ifdef SFL_PRESENCE
+    delete presenceManager_;
+#endif
     delete callManager_;
 }
 
@@ -83,8 +87,10 @@ Client::getConfigurationManager()
     return configurationManager_;
 }
 
+#ifdef SFL_PRESENCE
 PresenceManager *
 Client::getPresenceManager()
 {
     return presenceManager_;
 }
+#endif
