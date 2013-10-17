@@ -38,10 +38,16 @@
 
 class ConfigurationManager;
 class CallManager;
-class PresenceManager;
 class NetworkManager;
 class Instance;
+
+#ifdef SFL_PRESENCE
+class PresenceManager;
+#endif
+
+#ifdef SFL_VIDEO
 class VideoControls;
+#endif
 
 namespace DBus {
     class BusDispatcher;
@@ -56,7 +62,9 @@ class Client {
 
         ConfigurationManager * getConfigurationManager();
 
+#ifdef SFL_PRESENCE
         PresenceManager * getPresenceManager();
+#endif
 
 #ifdef SFL_VIDEO
         VideoControls* getVideoControls();
@@ -69,7 +77,9 @@ class Client {
         NON_COPYABLE(Client);
         CallManager*          callManager_;
         ConfigurationManager* configurationManager_;
+#ifdef SFL_PRESENCE
         PresenceManager*      presenceManager_;
+#endif
         Instance*             instanceManager_;
         DBus::BusDispatcher*  dispatcher_;
 #ifdef SFL_VIDEO

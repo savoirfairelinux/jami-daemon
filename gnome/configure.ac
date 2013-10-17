@@ -46,6 +46,16 @@ AS_IF([test "x$enable_video" = "xyes"], [
 
 AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
 
+dnl Presence is a default-enabled feature
+AC_ARG_ENABLE([presence],
+              AS_HELP_STRING([--disable-presence], [Disable SIP presence support]))
+
+AS_IF([test "x$enable_presence" != "xno"], [
+    AC_DEFINE(SFL_PRESENCE, [], [Presence support enabled])
+    AM_CONDITIONAL(SFL_PRESENCE, true)],
+    AM_CONDITIONAL(SFL_PRESENCE, false))
+
+
 # Check for gtk+-3.0
 PKG_CHECK_MODULES(GTK, gtk+-3.0, [AC_MSG_NOTICE(Using gtk+-3.0)],
                                  [AC_MSG_ERROR(gtk+-3.0 not found)])

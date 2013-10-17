@@ -50,6 +50,7 @@
 #include "hooks/urlhook.h"
 #include "sip/sip_utils.h"
 #include <sstream>
+#include <algorithm>
 #include "global.h"
 #include "fileutils.h"
 
@@ -127,6 +128,35 @@ Preferences::Preferences() :
     , zeroConfenable_(false)
     , md5Hash_(false)
 {}
+
+void Preferences::verifyAccountOrder(const std::vector<std::string> &accountIDs)
+{
+    using namespace std;
+
+    vector<string> tokens;
+    string token;
+    bool drop = false;
+
+    for (const auto c : accountOrder_) {
+        if (c != '/') {
+            token += c;
+        } else {
+            if (find(accountIDs.begin(), accountIDs.end(), token) != accountIDs.end())
+                tokens.push_back(token);
+            else {
+                DEBUG("Dropping nonexistent account %s", token.c_str());
+                drop = true;
+            }
+            token.clear();
+        }
+    }
+
+    if (drop) {
+        accountOrder_.clear();
+        for (const auto &t : tokens)
+            accountOrder_ += t + "/";
+    }
+}
 
 void Preferences::addAccount(const std::string &newAccountID)
 {

@@ -35,6 +35,10 @@
 #ifndef SIPACCOUNT_H
 #define SIPACCOUNT_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <vector>
 #include <map>
 
@@ -534,6 +538,7 @@ class SIPAccount : public Account {
         /* Returns true if the username and/or hostname match this account */
         bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
+#ifdef SFL_PRESENCE
         /**
          * Presence management
          */
@@ -550,6 +555,7 @@ class SIPAccount : public Account {
          * @param enable Flag
          */
         void supportPresence(int function, const bool& enable);
+#endif
 
 //        unsigned generateAudioPort() const;
         uint16_t generateAudioPort() const;
@@ -806,11 +812,6 @@ class SIPAccount : public Account {
          */
         pjsip_host_port via_addr_;
 
-        /**
-         * Presence data structure
-         */
-        SIPPresence * presence_;
-
         /*
          * Port range for audio RTP ports
          */
@@ -822,6 +823,14 @@ class SIPAccount : public Account {
          */
         std::pair<uint16_t, uint16_t> videoPortRange_;
 #endif
+
+#ifdef SFL_PRESENCE
+        /**
+         * Presence data structure
+         */
+        SIPPresence * presence_;
+#endif
+
         static bool portsInUse_[HALF_MAX_PORT];
         static uint16_t getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range);
 

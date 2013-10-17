@@ -252,7 +252,7 @@ search_by_outgoing(G_GNUC_UNUSED GtkWidget *item, GtkEntry *entry)
 }
 
 static void
-icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, G_GNUC_UNUSED gpointer data)
+icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, gpointer data)
 {
     g_debug("Searchbar: Icon pressed");
 
@@ -261,7 +261,7 @@ icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, G_GNUC_UNUS
            gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL,
                           NULL, event->button, event->time);
        else if (calltab_has_name(active_calltree_tab, CONTACTS))
-           gtk_menu_popup(GTK_MENU(addressbook_menu_new()), NULL, NULL, NULL,
+           gtk_menu_popup(GTK_MENU(addressbook_menu_new(data)), NULL, NULL, NULL,
                           NULL, event->button, event->time);
        else
            gtk_entry_set_text(entry, "");
@@ -304,7 +304,7 @@ addressbook_menu_new(GSettings *settings)
 
 
 GtkWidget*
-history_searchbar_new()
+history_searchbar_new(GSettings *settings)
 {
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
@@ -318,7 +318,7 @@ history_searchbar_new()
     // Set the clean insensitive
     text_changed_cb(GTK_ENTRY(searchbox), NULL);
 
-    g_signal_connect(searchbox, "icon-press", G_CALLBACK(icon_press_cb), NULL);
+    g_signal_connect(searchbox, "icon-press", G_CALLBACK(icon_press_cb), settings);
     g_signal_connect(searchbox, "notify::text", G_CALLBACK(text_changed_cb), NULL);
 
     // Set up the search icon
@@ -436,7 +436,7 @@ contacts_searchbar_new(GSettings *settings)
     text_changed_cb(GTK_ENTRY(addressbookentry), NULL);
 
     g_signal_connect(addressbookentry, "notify::text", G_CALLBACK(text_changed_cb), NULL);
-    g_signal_connect(addressbookentry, "icon-press", G_CALLBACK(icon_press_cb), NULL);
+    g_signal_connect(addressbookentry, "icon-press", G_CALLBACK(icon_press_cb), settings);
 
     gtk_entry_set_activates_default(GTK_ENTRY(addressbookentry), TRUE);
     g_signal_connect_after(GTK_ENTRY(addressbookentry), "activate",

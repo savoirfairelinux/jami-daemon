@@ -34,6 +34,7 @@
 #include <ccrtp/CryptoContext.h>
 #include <stdexcept>
 #include <mutex>
+#include <memory>
 #include "audio_rtp_session.h"
 #include "audio_srtp_session.h"
 #include "noncopyable.h"
@@ -157,7 +158,7 @@ class AudioRtpFactory {
     private:
         NON_COPYABLE(AudioRtpFactory);
         enum KeyExchangeProtocol { NONE, SDES, ZRTP };
-        AudioRtpSession *rtpSession_;
+        std::unique_ptr<AudioRtpSession> rtpSession_;
         std::mutex audioRtpThreadMutex_;
 
         // Field used when initializing audio rtp session

@@ -43,8 +43,11 @@
 
 #include "callmanager.h"
 #include "configurationmanager.h"
-#include "presencemanager.h"
 #include "networkmanager.h"
+
+#ifdef SFL_PRESENCE
+#include "presencemanager.h"
+#endif
 
 #ifdef SFL_VIDEO
 #include "video_controls.h"
@@ -52,7 +55,9 @@
 
 Client::Client() : callManager_(0)
     , configurationManager_(0)
+#ifdef SFL_PRESENCE
     , presenceManager_(0)
+#endif
     , instanceManager_(0)
     , dispatcher_(new DBus::BusDispatcher)
 #ifdef SFL_VIDEO
@@ -78,8 +83,11 @@ Client::Client() : callManager_(0)
         DEBUG("DBUS create configuration manager from session connection");
         configurationManager_ = new ConfigurationManager(sessionConnection);
         DEBUG("DBUS create presence manager from session connection");
+
+#ifdef SFL_PRESENCE
         presenceManager_ = new PresenceManager(sessionConnection);
         DEBUG("DBUS create instance manager from session connection");
+#endif
         instanceManager_ = new Instance(sessionConnection);
 
 #ifdef SFL_VIDEO
@@ -111,7 +119,9 @@ Client::~Client()
     delete videoControls_;
 #endif
     delete instanceManager_;
+#ifdef SFL_PRESENCE
     delete presenceManager_;
+#endif
     delete configurationManager_;
     delete callManager_;
     delete dispatcher_;
@@ -155,11 +165,13 @@ Client::getConfigurationManager()
     return configurationManager_;
 }
 
+#ifdef SFL_PRESENCE
 PresenceManager *
 Client::getPresenceManager()
 {
     return presenceManager_;
 }
+#endif
 
 #ifdef SFL_VIDEO
 VideoControls*

@@ -36,13 +36,17 @@
 
 #include "account_schema.h"
 #include "sipaccount.h"
-#include "sippresence.h"
 #include "sip_utils.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
 #include "logger.h"
 #include "manager.h"
+
+#ifdef SFL_PRESENCE
+#include "sippresence.h"
+#endif
+
 #include <unistd.h>
 #include <pwd.h>
 #include <sstream>
@@ -123,10 +127,12 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
-    , presence_(presenceEnabled ? new SIPPresence(this) : 0)
     , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
     , videoPortRange_({49152, (MAX_PORT) - 2})
+#endif
+#ifdef SFL_PRESENCE
+    , presence_(presenceEnabled ? new SIPPresence(this) : 0)
 #endif
 {
     via_addr_.host.ptr = 0;
@@ -140,7 +146,9 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
 
 SIPAccount::~SIPAccount()
 {
+#ifdef SFL_PRESENCE
     delete presence_;
+#endif
 }
 
 
@@ -213,12 +221,15 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
     ScalarNode keepAliveEnabled(keepAliveEnabled_);
+
+#ifdef SFL_PRESENCE
     std::string pres(presence_ and getPresence()->isEnabled() ? Conf::TRUE_STR : Conf::FALSE_STR);
     ScalarNode presenceEnabled(pres);
     std::string presPub(presence_ and getPresence()->isSupported(PRESENCE_FUNCTION_PUBLISH) ? Conf::TRUE_STR : Conf::FALSE_STR);
     ScalarNode presencePublish(presPub);
     std::string presSub(presence_ and getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE) ? Conf::TRUE_STR : Conf::FALSE_STR);
     ScalarNode presenceSubscribe(presSub);
+#endif
 
     ScalarNode mailbox(mailBox_);
     ScalarNode publishAddr(publishedIpAddress_);
@@ -303,9 +314,11 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
     accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
     accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
+#ifdef SFL_PRESENCE
     accountmap.setKeyValue(PRESENCE_ENABLED_KEY, &presenceEnabled);
     accountmap.setKeyValue(PRESENCE_PUBLISH_SUPPORTED_KEY, &presencePublish);
     accountmap.setKeyValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, &presenceSubscribe);
+#endif
 
     accountmap.setKeyValue(SRTP_KEY, &srtpmap);
     srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
@@ -481,9 +494,11 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 
     if (not isIP2IP()) mapNode.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
+#ifdef SFL_PRESENCE
     std::string pres;
     mapNode.getValue(PRESENCE_ENABLED_KEY, &pres);
     enablePresence(pres == Conf::TRUE_STR);
+#endif
 
     std::string dtmfType;
     mapNode.getValue(DTMF_TYPE_KEY, &dtmfType);
@@ -640,7 +655,9 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
     keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == Conf::TRUE_STR;
+#ifdef SFL_PRESENCE
     enablePresence(details[CONFIG_PRESENCE_ENABLED] == Conf::TRUE_STR);
+#endif
 
     int tmpMin = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
     int tmpMax = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
@@ -747,9 +764,11 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
+#ifdef SFL_PRESENCE
     a[CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? Conf::TRUE_STR : Conf::FALSE_STR;
+#endif
 
     RegistrationState state = UNREGISTERED;
     std::string registrationStateCode;
@@ -1440,6 +1459,7 @@ bool SIPAccount::isIP2IP() const{
     return accountID_ == IP2IP_PROFILE;
 }
 
+#ifdef SFL_PRESENCE
 SIPPresence * SIPAccount::getPresence() const {
     return presence_;
 }
@@ -1473,6 +1493,7 @@ SIPAccount::supportPresence(int function, const bool& enabled){
     if (presence_)
         presence_->support(function, enabled);
 }
+#endif
 
 bool SIPAccount::matches(const std::string &userName, const std::string &server,
                          pjsip_endpoint *endpt, pj_pool_t *pool) const
