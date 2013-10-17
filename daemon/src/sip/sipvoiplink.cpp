@@ -1185,8 +1185,6 @@ SIPVoIPLink::offhold(const std::string& id)
         call->getAudioRtp().start(audioCodecs);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
-    } catch (...) {
-        throw VoipLinkException("Could not create audio rtp session");
     }
 
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
