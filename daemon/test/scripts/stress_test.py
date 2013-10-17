@@ -1,14 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 print "\
-#                               --SFLPhone--                                 #\n\
+#                               --SFLphone--                                 #\n\
 #        /¯¯¯¯\  /¯¯¯¯\ /¯¯¯¯\  /¯¯¯\_/¯¯¯\   /¯¯¯¯¯\  /¯¯¯¯\ |¯¯¯¯¯¯¯|      #\n\
 #       / /¯\ | /  /\  \  /\  \| /¯\  /¯\  |  | |¯| | |  /\  | ¯¯| |¯¯       #\n\
 #      / /  / |/  | |  | | |  || |  | |  | |  |  ¯ <  |  | | |   | |         #\n\
 #     / /__/ / |   ¯   |  ¯   || |  | |  | |  | |¯| | |  |_| |   | |         #\n\
 #    |______/   \_____/ \____/ |_|  |_|  |_|  \_____/  \____/    |_|         #\n\
 #                                                                            #\n\
-# copyright:   Savoir-Faire Linux (2012)                                     #\n\
+#                              _Version 2.0_                                 #\n\
+#                                                                            #\n\
+# copyright:   Savoir-Faire Linux (2012-2013)                                #\n\
 # author:      Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com> #\n\
 # description: This script perform stress tests to trigger rare race         #\n\
 #               conditions or ASSERT caused by excessive load. This script   #\n\
@@ -17,14 +19,74 @@ print "\
 import dbus
 import time
 import sys
+import os
 from random import randint
+
+#---------------------------------------------------------------------#
+#                                                                     #
+#                              Variables                              #
+#                                                                     #
+#---------------------------------------------------------------------#
 
 #Initialise DBUS
 bus = dbus.SessionBus()
-callManagerBus          = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/CallManager')
-callManager             = dbus.Interface(callManagerBus, dbus_interface='org.sflphone.SFLphone.CallManager')
-configurationManagerBus = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/ConfigurationManager')
-configurationManager    = dbus.Interface(configurationManagerBus, dbus_interface='org.sflphone.SFLphone.ConfigurationManager')
+callManagerBus          = None
+callManager             = None
+configurationManagerBus = None
+configurationManager    = None
+instanceManagerBus      = None
+instanceManager         = None
+
+#SFLphone
+first_account           = None
+first_iax_account       = None
+first_account_number    = None
+
+#GDB observer
+gdbScriptPath           = os.path.dirname(os.path.abspath(__file__))+"/gdb_wrapper.py"
+gdbWrapperCommand       = "gdb -x "+gdbScriptPath+" > /dev/null 2> /dev/null &"
+
+
+#---------------------------------------------------------------------#
+#                                                                     #
+#                            Initialization                           #
+#                                                                     #
+#---------------------------------------------------------------------#
+
+#Start the GDB plugin
+def start_daemon():
+	os.system(gdbWrapperCommand)
+	time.sleep(10)
+	reInit()
+
+#Stop the daemon normally, do it 3 time to be sure it will unregister everyone
+def stop_daemon():
+	try:
+		instanceManager.Unregister(123)
+		instanceManager.Unregister(123)
+		instanceManager.Unregister(123)
+	except:
+		#Nothing, it is normal
+		print("")
+
+#Connect DBUS
+def reInit():
+	try:
+		global callManagerBus,callManager,configurationManagerBus,configurationManager,instanceManagerBus,instanceManager
+		callManagerBus          = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/CallManager')
+		callManager             = dbus.Interface(callManagerBus, dbus_interface='org.sflphone.SFLphone.CallManager')
+		configurationManagerBus = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/ConfigurationManager')
+		configurationManager    = dbus.Interface(configurationManagerBus, dbus_interface='org.sflphone.SFLphone.ConfigurationManager')
+		instanceManagerBus      = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/Instance')
+		instanceManager         = dbus.Interface(instanceManagerBus     , dbus_interface='org.sflphone.SFLphone.Instance')
+		instanceManager.Register(123,"doombot")
+		global first_account,first_iax_account,first_account_number
+		first_account = get_first_account()
+		first_iax_account = get_first_iax_account()
+		first_account_number = get_account_number(first_account)
+	except dbus.exceptions.DBusException:
+		time.sleep(0.5)
+		reInit()
 
 #---------------------------------------------------------------------#
 #                                                                     #
@@ -34,26 +96,26 @@ configurationManager    = dbus.Interface(configurationManagerBus, dbus_interface
 
 #Get the first non-IP2IP account
 def get_first_account():
-	accounts = configurationManager->getAccountList()
+	accounts = configurationManager.getAccountList()
 	for i, v in enumerate(accounts):
 		if v != "IP2IP":
-			details = configurationManager->getAccountDetails(v)
+			details = configurationManager.getAccountDetails(v)
 			if details["Account.type"] == True or details["Account.type"] == "SIP":
 				return v
 	return "IP2IP"
 
 #Get the first IAX account
 def get_first_iax_account():
-	accounts = configurationManager->getAccountList()
+	accounts = configurationManager.getAccountList()
 	for i, v in enumerate(accounts):
 		if v != "IP2IP":
-			details = configurationManager->getAccountDetails(v)
+			details = configurationManager.getAccountDetails(v)
 			if details["Account.type"] != True and details["Account.type"] != "SIP":
 				return v
 	return "IP2IP"
 
 def get_account_number(account):
-	details = configurationManager->getAccountDetails(account)
+	details = configurationManager.getAccountDetails(account)
 	return details["Account.username"]
 
 def answer_all_calls():
@@ -65,32 +127,31 @@ def answer_all_calls():
 
 #Return true is the account is registered
 def check_account_state(account):
-	details = configurationManager->getAccountDetails(account)
+	details = configurationManager.getAccountDetails(account)
 	#details = {'test':1,'test2':2,'registrationStatus':3}
 	return details['Account.registrationStatus'] == "REGISTERED"
 
 #Meta test, common for all tests
 def meta_test(test_func):
-	try:
-		for y in range(0,15):
-			for x in range(0,10):
+	retCode = 0
+	for y in range(0,15):
+		for x in range(0,10):
+			try:
 				ret = test_func()
 				if ret['code'] > 0:
 					sys.stdout.write(' \033[91m(Failure)\033[0m\n')
 					print "      \033[0;33m"+ret['error']+"\033[0m"
-					return 1
-			sys.stdout.write('#')
-			sys.stdout.flush()
+					retCode = 1
+			except dbus.exceptions.DBusException:
+				retCode = 1
+				reInit()
+		sys.stdout.write('#')
+		sys.stdout.flush()
+	if retCode == 0:
 		sys.stdout.write(' \033[92m(Success)\033[0m\n')
-	except dbus.exceptions.DBusException:
+	else:
 		sys.stdout.write(' \033[91m(Failure)\033[0m\n')
-		print "      \033[0;33mUnit test \"stress_answer_hangup_server\" failed: Timeout, the daemon is unreachable, it may be a crash, a lock or an assert\033[0m"
-		return 1
-	#except Exception:
-		#sys.stdout.write(' \033[91m(Failure)\033[0m\n')
-		#print "      \033[0;33mUnit test \"stress_answer_hangup_server\" failed: Unknown error, disable 'except Exception' for details\033[0m"
-		#return 1
-	return 0
+	return retCode
 
 #Add a new test
 suits = {}
@@ -106,17 +167,33 @@ def run():
 	for k in suits.keys():
 		print "\n\033[1mExecuting \""+str(k)+"\" tests suit:\033[0m ("+str(counter)+"/"+str(len(suits))+")"
 		for  i, v in enumerate(suits[k]):
+			#Start SFLphone
+			start_daemon()
 			sys.stdout.write("   ["+str(i+1)+"/"+str(len(suits[k]))+"] Testing \""+v['test_name']+"\": ")
 			sys.stdout.flush()
+			
+			#Run the test
 			retval = meta_test(v['test_func'])
 			if not k in results:
 				results[k] = 0
 			if retval > 0:
 				results[k]= results[k] + 1
+			
+			#Stop SFLphone
+			stop_daemon()
+			time.sleep(15)
+			try:
+				#Try to read the GDB wrapper report
+				with open('/tmp/doombotReport') as report:
+					print "Test results:"
+					print report.read()
+			except IOError:
+				print 'Report not found'
 		counter = counter + 1
-
+	
+	#Print the test summary
 	print "\n\n\033[1mSummary:\033[0m"
-	totaltests = 0
+	totaltests   = 0
 	totalsuccess = 0
 	for k in suits.keys():
 		print "   Suit \""+k+"\": "+str(len(suits[k])-results[k])+"/"+str(len(suits[k]))
@@ -126,14 +203,6 @@ def run():
 	print "\nTotal: "+str(totalsuccess)+"/"+str(totaltests)+", "+str(totaltests-totalsuccess)+" failures"
 
 
-#---------------------------------------------------------------------#
-#                                                                     #
-#                              Variables                              #
-#                                                                     #
-#---------------------------------------------------------------------#
-first_account = get_first_account()
-first_iax_account = get_first_iax_account()
-first_account_number = get_account_number(first_account)
 
 
 #---------------------------------------------------------------------#
@@ -187,7 +256,7 @@ def stress_answer_hangup_IP2IP():
 		#Accept the calls
 		for i, v in enumerate(calls):
 			time.sleep(0.05)
-			#callManager.accept(v)
+			callManager.accept(v)
 		#Hang up
 		callManager.hangUp(calls[0])
 	return {'code':0,'error':""}
@@ -213,15 +282,19 @@ def stress_transfers():
 					acc2 = "IP2IP"
 				else:
 					acc2 = first_iax_account
-				print "ACC1"+acc1+" ACC2 "+acc2+ " FIRST IAX "+ first_iax_account +" FISRT "+first_account
+				#print "ACC1"+acc1+" ACC2 "+acc2+ " FIRST IAX "+ first_iax_account +" FISRT "+first_account
 				destination_number = ""
 				if acc2 == "IP2IP":
 					destination_number = "sip:127.0.0.1"
 				else:
-					destination_number = configurationManager->getAccountDetails(acc2)["Account.username"]
-				callManager.placeCall(acc1,str(randint(100000000,100000000000)),destination_number)
+					destination_number = configurationManager.getAccountDetails(acc2)["Account.username"]
+				try:
+					callManager.placeCall(acc1,str(randint(100000000,100000000000)),destination_number)
+				except dbus.exceptions.DBusException:
+					return {'code':666,'error':"Daemon unresponsive"}
 				second_call = None
 				if k == 1:
+					
 					callManager.placeCall(acc1,str(randint(100000000,100000000000)),"188")
 				answer_all_calls()
 
@@ -237,6 +310,7 @@ def stress_transfers():
 					calls = callManager.getCallList()
 					for i, v in enumerate(calls):
 						callManager.transfer(v,destination_number)
+add_to_suit("Transfer",'Make calls and transfer them',stress_transfers)
 
 
 # This test make as tons or calls, then hangup them all as fast as it can
@@ -258,12 +332,12 @@ def stress_concurent_calls():
 					acc2 = "IP2IP"
 				else:
 					acc2 = first_iax_account
-				print "ACC1"+acc1+" ACC2 "+acc2+ " FIRST IAX "+ first_iax_account +" FISRT "+first_account
+				#print "ACC1"+acc1+" ACC2 "+acc2+ " FIRST IAX "+ first_iax_account +" FISRT "+first_account
 				destination_number = ""
 				if acc2 == "IP2IP":
 					destination_number = "sip:127.0.0.1"
 				else:
-					destination_number = configurationManager->getAccountDetails(acc2)["Account.username"]
+					destination_number = configurationManager.getAccountDetails(acc2)["Account.username"]
 				callManager.placeCall(acc1,str(randint(100000000,100000000000)),destination_number)
 	calls = callManager.getCallList()
 	for i, v in enumerate(calls):
@@ -324,6 +398,5 @@ def stress_hold_unhold_server():
 #add_to_suit("Hold call",'Hold and unhold',stress_hold_unhold_server)
 
 #Run the tests
-#run()
-stress_transfers()
+run()
 #kate: space-indent off; tab-indents  on; mixedindent off; indent-width 4;tab-width 4;
