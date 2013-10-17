@@ -61,9 +61,10 @@
 
 
 #ifdef SFL_PRESENCE
+#include "presence.h"
 // TODO: remove this as soon as presence.h is in the master branch
-static const char *const PRESENCE_STATUS_ONLINE = "Online";
-static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
+//static const char *const PRESENCE_STATUS_ONLINE = "Online";
+//static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
 #endif
 
 
@@ -309,10 +310,10 @@ create_status_bar()
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_OFFLINE));
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_ONLINE));
     gtk_widget_set_sensitive(presence_status_combo, FALSE);
-    g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
 
     statusbar_enable_presence();
+    g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
 #endif
 
     return bar;

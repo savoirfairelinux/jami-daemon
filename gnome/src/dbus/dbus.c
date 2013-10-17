@@ -614,7 +614,7 @@ screensaver_dbus_proxy_new_cb (G_GNUC_UNUSED GObject * source, GAsyncResult *res
 
 #ifdef SFL_PRESENCE
 static void
-presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID,
+sip_presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID,
                               const gchar *uri, gboolean state, G_GNUC_UNUSED void *foo)
 {
     g_debug("DBus: Presence subscription state changed to %s for account %s, buddy:%s",
@@ -633,7 +633,7 @@ presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gc
     }
 }
 static void
-presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *uri,
+sip_presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *uri,
                   gboolean status, const gchar * note)
 {
     g_debug("DBus: Presence notification (%s) for %s status=%s lineStatus=%s.",
@@ -654,13 +654,13 @@ presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, co
 }
 
 static void
-presence_server_error_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *err, const gchar *msg)
+sip_presence_server_error_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *err, const gchar *msg)
 {
     g_debug("DBus: Presence error from server (%s) : %s / %s.",accID, err, msg);
 }
 
 static void
-presence_new_subscription_request_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *uri)
+sip_presence_new_subscription_request_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *uri)
 {
     g_debug("DBus: Presence new subscription from %s.",uri);
 }
@@ -956,17 +956,17 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     dbus_g_proxy_add_signal(presence_proxy, "subscriptionStateChanged", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(presence_proxy, "subscriptionStateChanged",
-                                G_CALLBACK(presence_subscription_state_changed_cb), client, NULL);
+                                G_CALLBACK(sip_presence_subscription_state_changed_cb), client, NULL);
 
     dbus_g_proxy_add_signal(presence_proxy, "newBuddyNotification", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(presence_proxy, "newBuddyNotification",
-                                G_CALLBACK(presence_notification_cb), client, NULL);
+                                G_CALLBACK(sip_presence_notification_cb), client, NULL);
 
     dbus_g_proxy_add_signal(presence_proxy, "serverError", G_TYPE_STRING,G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(presence_proxy, "serverError",
-                                G_CALLBACK(presence_server_error_cb), NULL, NULL);
+                                G_CALLBACK(sip_presence_server_error_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal(presence_proxy, "newServerSubscriptionRequest", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(presence_proxy, "newServerSubscriptionRequest",

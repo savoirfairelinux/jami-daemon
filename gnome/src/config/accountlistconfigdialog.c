@@ -723,6 +723,7 @@ void show_account_list_config_dialog(SFLPhoneClient *client)
 
     update_actions(client);
 
+#ifdef SFL_PRESENCE
     // presence, update buddy subscription
     buddy_t * b;
     for (guint i =  1; i < presence_list_get_size(); i++)
@@ -730,5 +731,6 @@ void show_account_list_config_dialog(SFLPhoneClient *client)
         b = presence_list_get_nth(i);
         presence_buddy_subscribe(b, TRUE);
     }
+#endif
 }
 
