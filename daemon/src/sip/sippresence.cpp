@@ -83,10 +83,10 @@ SIPPresence::SIPPresence(SIPAccount *acc)
 SIPPresence::~SIPPresence()
 {
     /* Flush the lists */
-    // FIXME: unsubscribe doesn't work here. Is the transport usable when the account
-    // is being destroyed?
-    for (const auto & c : sub_client_list_)
-        delete(c);
+    // FIXME: Can't destroy/unsubscribe buddies properly.
+    // Is the transport usable when the account is being destroyed?
+    //for (const auto & c : sub_client_list_)
+    //    delete(c);
     sub_client_list_.clear();
     sub_server_list_.clear();
 
