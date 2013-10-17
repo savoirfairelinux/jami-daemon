@@ -591,7 +591,7 @@ static GtkWidget* alsa_box()
     gtk_box_pack_start(GTK_BOX(alsa_hbox), grid, TRUE, TRUE, 1);
     gtk_widget_show(grid);
 
-    gchar *message = "<small><i>default</i> plugin always uses internal sound card. Select <i>dmix/dsnoop</i> to use an alternate soundcard.</small>";
+    gchar *message = "<small>Select <i>dmix/dsnoop</i> to use non-default soundcard.</small>";
     GtkWidget *info_bar = gnome_info_bar(message, GTK_MESSAGE_INFO);
     /* Info bar gets a width of 2 cells */
     gtk_grid_attach(GTK_GRID(grid), info_bar, 1, 1, 2, 1);
