@@ -475,6 +475,8 @@ destroy_buddylist_window()
     g_debug("Destroy buddylist window ");
     buddy_list_tree_view = NULL;
     gtk_widget_destroy(buddylistwindow);
+
+    presence_list_flush();
 }
 
 void

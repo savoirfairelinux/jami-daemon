@@ -66,6 +66,7 @@ presence_list_init(SFLPhoneClient *client)
         presence_buddy_list = g_list_alloc();
         presence_list_load();
 
+        // send the subscribe
         buddy_t * b;
         for (guint i =  1; i < presence_list_get_size(); i++)
         {
@@ -323,9 +324,19 @@ presence_list_flush()
         g_warning("Uninitialized buddy list.");
         return;
     }
+
+    // unsubscribe
+    buddy_t * b;
+    for (guint i =  1; i < presence_list_get_size(); i++)
+    {
+        b = presence_list_get_nth(i);
+        presence_buddy_subscribe(b, FALSE);
+    }
+
     g_debug("Presence : flush the buddy list.");
-    //g_list_foreach(presence_buddy_list, (GFunc) g_free, NULL);
-    g_list_free_full(presence_buddy_list, (GDestroyNotify) presence_buddy_list);
+    g_list_foreach(presence_buddy_list, (GFunc) g_free, NULL);
+    //g_list_free_full(presence_buddy_list, (GDestroyNotify) presence_buddy_delete);
+    presence_buddy_list = NULL;
 }
 
 buddy_t *

@@ -263,10 +263,6 @@ statusbar_enable_presence()
     account_t * account;
     gboolean global_publish_enabled = FALSE;
 
-    // set offline and unsensitive by default
-    gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0);
-    gtk_widget_set_sensitive(presence_status_combo, FALSE);
-
     /* Check if one of the registered accounts has Presence enabled */
     for (guint i = 0; i < account_list_get_size(); i++){
         account = account_list_get_nth(i);
@@ -288,7 +284,11 @@ statusbar_enable_presence()
         gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
     }
     else
+    {
+        gtk_widget_set_sensitive(presence_status_combo, FALSE);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0);
         g_debug("Presence : no registered account found with publish enabled");
+    }
 }
 #endif
 
@@ -309,8 +309,8 @@ create_status_bar()
     gtk_widget_set_sensitive(presence_status_combo, FALSE);
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
 
-    statusbar_enable_presence();
     g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
+    statusbar_enable_presence();
 #endif
 
     return bar;
