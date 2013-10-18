@@ -347,7 +347,7 @@ create_main_window(SFLPhoneClient *client)
     }
 
 
-    /* Status bar, cntains presence_status selector */
+    /* Status bar */
     statusBar = create_status_bar();
     pack_main_window_start(GTK_BOX(vbox), statusBar, FALSE, TRUE, 0);
 
