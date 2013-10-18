@@ -528,7 +528,7 @@ toggle_buddylist_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 {
     const gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
     if (toggled)
-        create_buddylist_window(client);
+        create_buddylist_window(client, togglemenuitem);
     else
         destroy_buddylist_window();
 }
@@ -1699,8 +1699,6 @@ create_menus(GtkUIManager *ui, SFLPhoneClient *client)
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), must_show_volume(client));
     gtk_action_set_sensitive(volumeToggle_, TRUE);
     gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Toolbar"), FALSE);
-    //gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(get_action(ui, "/MenuBar/ViewMenu/Buddies")), FALSE);
-    //gtk_action_set_sensitive(GTK_ACTION(get_action(ui, "MenuBar/ViewMenu/Buddies")), FALSE);
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
     waitingLayer = create_waiting_icon();

@@ -46,21 +46,27 @@
 
 static GtkWidget *buddylistwindow;
 static GtkWidget *buddy_list_tree_view = NULL;
+static GtkToggleAction *toggle_action = NULL;
 static buddy_t tmp_buddy;
 
 static GtkTreeModel *create_and_fill_model (void);
 static GtkWidget *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 
+#define PRESENCE_DEBUG
+
 enum
 {
     COLUMN_ALIAS,
     COLUMN_STATUS,
     COLUMN_NOTE,
+#ifdef PRESENCE_DEBUG
     COLUMN_URI,
     COLUMN_ACCOUNTID,
     COLUMN_SUBSCRIBED
+#endif
 };
+
 
 #define N_COLUMN 6
 
@@ -75,7 +81,7 @@ create_and_fill_model (void)
                                              G_TYPE_STRING, // Note
                                              G_TYPE_STRING, // URI
                                              G_TYPE_STRING, // AccID
-                                             G_TYPE_STRING);// (temp) subscribed
+                                             G_TYPE_STRING);// subscribed
 
     GList * buddy_list = g_object_get_data(G_OBJECT(buddylistwindow), "Buddy-List");
     buddy_t * buddy;
@@ -83,7 +89,7 @@ create_and_fill_model (void)
     for (guint i = 0; i < account_list_get_size(); i++)
     {
         account_t * acc = account_list_get_nth(i);
-        if(!(account_is_IP2IP(acc)))
+        if(!(account_is_IP2IP(acc)) && (acc->state == ACCOUNT_STATE_REGISTERED))
         {
             gchar *accID = account_lookup(acc, CONFIG_ACCOUNT_ID);
             gtk_tree_store_append(treestore, &toplevel, NULL);
@@ -146,7 +152,8 @@ create_view (void)
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_NOTE);
-/*
+
+#ifdef PRESENCE_DEBUG
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "URI");
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
@@ -167,7 +174,8 @@ create_view (void)
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_ACCOUNTID);
-*/
+#endif
+
     return view;
 }
 
@@ -275,8 +283,9 @@ static gboolean
 confirm_buddy_deletion(buddy_t *b)
 {
     gchar *msg;
-    msg = g_markup_printf_escaped("Are you sure want to delete \"%s\" (%s)?",
-            b->alias, b->uri); // TODO: use _()
+    account_t * acc = account_list_get_by_id(b->acc);
+    msg = g_markup_printf_escaped("Are you sure want to delete \"%s\" of %s",
+            b->alias, (gchar*)account_lookup(acc, CONFIG_ACCOUNT_ALIAS)); // TODO: use _()
 
     /* Create the widgets */
     GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddylistwindow),
@@ -323,6 +332,9 @@ view_popup_menu_onAdd (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
     b->uri = g_strdup(uri);
     g_free(uri);
 
+    g_free(b->note);
+    b->note = g_strdup("Not Found.");
+
     if(show_buddy_info(_("Add new buddy"), b))
     {
         presence_list_add_buddy(b);
@@ -347,10 +359,11 @@ view_popup_menu_onRemove (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 static void
 view_popup_menu (G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
 {
+g_print("0\n");
     GtkWidget *menu, *menuitem;
     menu = gtk_menu_new();
     buddy_t *b = (buddy_t*) userdata;
-
+g_print("1\n");
     menuitem = gtk_menu_item_new_with_label(_("Add"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate",
@@ -476,12 +489,16 @@ destroy_buddylist_window()
     buddy_list_tree_view = NULL;
     gtk_widget_destroy(buddylistwindow);
 
+    gtk_toggle_action_set_active(toggle_action, FALSE);
     presence_list_flush();
 }
 
 void
-create_buddylist_window(SFLPhoneClient *client)
+create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
 {
+    // keep track of widget which opened that window
+    toggle_action = action;
+
     const gchar * title = _("SFLphone Buddies");
     g_debug("Create window : %s", title);
 
@@ -504,6 +521,7 @@ create_buddylist_window(SFLPhoneClient *client)
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "popup-menu", G_CALLBACK(view_onPopupMenu), NULL);
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "row-activated", G_CALLBACK(view_row_activated_cb), NULL);
+    g_signal_connect_after(buddylistwindow, "destroy", (GCallback)destroy_buddylist_window, NULL);
 
     // Load buddylist
     presence_list_init(client);

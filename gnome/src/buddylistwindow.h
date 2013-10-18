@@ -42,6 +42,6 @@
 
 void update_buddylist_view();
 void destroy_buddylist_window();
-void create_buddylist_window(SFLPhoneClient *client);
+void create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action);
 
 #endif
