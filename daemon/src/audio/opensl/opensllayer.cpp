@@ -568,6 +568,8 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
     assert(nullptr != queue);
 	AudioBuffer &buffer = getNextPlaybackBuffer();
 
+	notifyIncomingCall();
+
 	unsigned samplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 	bufferIsFilled_ = false;
 
@@ -586,10 +588,11 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 #ifdef RECORD_AUDIO_TODISK
         opensl_outfile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
 #endif
+
         SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
 
         if (SL_RESULT_SUCCESS != result) {
-            DEBUG("Error could not enqueue buffers in playback callback\n");
+            ERROR("Error could not enqueue buffers in playback callback\n");
         }
 
         incrementPlaybackIndex();
@@ -704,6 +707,12 @@ bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
         buffer.reset();
     }
 
+//	DEBUG("STRAT");
+//	for(std::vector<SFLAudioSample>::iterator it = buffer.getChannel(0)->begin(); it != buffer.getChannel(0)->end(); ++it) {
+//		DEBUG("it data: %d", *it);
+//	}
+//	DEBUG("size: %d", buffer.getChannel(0)->data());
+
     return true;
 }
 
@@ -712,12 +721,16 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
     // Urgent data (dtmf, incoming call signal) come first.
     samplesToGet = std::min(samplesToGet, BUFFER_SIZE);
     buffer.resize(samplesToGet);
+
+	//DEBUG("samplesToGet: %d \n", samplesToGet);
+	//DEBUG("Urgent buffer.size: %d \n", buffer.capacity());
+
 	const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
     buffer.applyGain(playbackGain_);
 
 	if (sampleRate_ != mainBufferSampleRate) {
-        DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
+        DEBUG("OpenSLLayer::audioPlaybackFillWithUrgent sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
         AudioBuffer out(buffer, false);
         out.setSampleRate(sampleRate_);
         converter_.resample(buffer, out);
@@ -730,24 +743,46 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
     return true;
 }
 
-bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
+bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesToGet)
 {
-    //const size_t samplesToCpy = buffer.samples();
-//	const size_t bytesToPut = buffer.capacity() * sizeof(SFLAudioSample);
+	MainBuffer &mainBuffer = Manager::instance().getMainBuffer();
 
-    MainBuffer &mainBuffer = Manager::instance().getMainBuffer();
+	const size_t mainBufferSampleRate = mainBuffer.getInternalSamplingRate();
+    const bool resample = sampleRate_ != mainBufferSampleRate;
 
-    buffer.resize(samplesAvail);
+	double resampleFactor = 1.0;
+	size_t maxNbBytesToGet = bytesToGet;
+
+    if (resample) {
+        resampleFactor = static_cast<double>(sampleRate_) / mainBufferSampleRate;
+        maxNbBytesToGet = bytesToGet / resampleFactor;
+	}
+	bytesToGet = std::min(maxNbBytesToGet, bytesToGet);
+	const size_t maxSamplesToGet = bytesToGet / sizeof(SFLAudioSample);
+	unsigned samplesToGet = std::min(maxSamplesToGet, BUFFER_SIZE);
+
+
+	buffer.resize(samplesToGet);
+
+
+	buffer.setSampleRate(mainBufferSampleRate);
     mainBuffer.getData(buffer, MainBuffer::DEFAULT_ID);
-    buffer.applyGain(getPlaybackGain());
+    //buffer.applyGain(getPlaybackGain());
 
-    if (sampleRate_ != mainBuffer.getInternalSamplingRate()) {
-        DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
-        AudioBuffer out(buffer, false);
-        out.setSampleRate(sampleRate_);
-        converter_.resample(buffer, out);
-        buffer = out;
-    }
+	for(std::vector<SFLAudioSample>::iterator it = buffer.getChannel(0)->begin(); it != buffer.getChannel(0)->end(); ++it) {
+		DEBUG("data: %d", *it);
+	}
+
+ //   if (resample) {
+//		DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
+//		const size_t outSamples = samplesToGet * resampleFactor;
+ //       const size_t outBytes = outSamples * sizeof(SFLAudioSample);
+ //       AudioBuffer rsmpl_out(outSamples, 1, sampleRate_);
+ //       converter_.resample(buffer, rsmpl_out);
+//        buffer = rsmpl_out;
+//    }
+
+	Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
 
     return true;
 }
