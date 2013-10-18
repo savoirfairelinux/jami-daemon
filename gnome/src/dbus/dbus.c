@@ -58,8 +58,11 @@
 #include "sflphone_client.h"
 #include "dbus.h"
 #include "actions.h"
+
+#ifdef SFL_PRESENCE
 #include "presence.h"
 #include "buddylistwindow.h"
+#endif
 
 #ifdef SFL_VIDEO
 #include "config/videoconf.h"
@@ -447,7 +450,9 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
     sflphone_fill_ip2ip_profile();
 
     // ui updates
+#ifdef SFL_PRESENCE
     statusbar_enable_presence();
+#endif
     status_bar_display_account();
     statusicon_set_tooltip();
 }
@@ -622,7 +627,7 @@ sip_presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, cons
     account_t *acc = account_list_get_by_id(accID);
     if (acc)
     {
-        buddy_t * b = presence_list_buddy_get_by_string(accID, uri);
+        buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
         if(b)
         {
             b->subscribed = state;
@@ -642,7 +647,7 @@ sip_presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID
     account_t *acc = account_list_get_by_id(accID);
     if (acc)
     {
-        buddy_t * b = presence_list_buddy_get_by_string(accID, uri);
+        buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
         if(b)
         {
             b->status = status;

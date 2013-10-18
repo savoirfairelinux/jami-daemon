@@ -40,6 +40,7 @@
 typedef struct
 {
     gchar * alias;  // persistent
+    gchar * group;  // persistent
     gchar * uri;    // persistent
     gchar * acc;    // persistent
     gboolean subscribed; // is subscription active
@@ -51,49 +52,49 @@ typedef struct
  * This function inits the buddy list from the client's gsettings schema.
  * @param client The given client which provide the schema
  */
-void presence_list_init(SFLPhoneClient *client);
+void presence_buddy_list_init(SFLPhoneClient *client);
 
 /**
  * This function clears the buddy list.
  */
-void presence_list_flush();
+void presence_buddy_list_flush();
 
 /**
  * This function saved a modified buddy and resubscribes if necessary.
  * @param buddy A known buddy but with new information to be saved.
  * @param backup A backup of this buddy before it was changed
  */
-void presence_list_update_buddy(buddy_t * buddy, buddy_t *backup);
+void presence_buddy_list_update_buddy(buddy_t * buddy, buddy_t *backup);
 
 /**
  * This function adds a buddy in the list.
  * @param buddy The buddy structure to be added.
  */
-void presence_list_add_buddy(buddy_t * buddy);
+void presence_buddy_list_add_buddy(buddy_t * buddy);
 
 /**
  * This function removes a buddy from the list.
  * @param buddy The buddy structure to be removed.
  */
-void presence_list_remove_buddy(buddy_t * buddy);
+void presence_buddy_list_remove_buddy(buddy_t * buddy);
 
 /**
  * This function returns the number of buddies in list.
  * @return guint The size of the buddy list.
  */
-guint presence_list_get_size();
+guint presence_buddy_list_get_size();
 
 /**
  * This function returns a pointer to the buddy list.
  * @return Glist * The pointer to the list.
  */
-GList * presence_list_get();
+GList * presence_buddy_list_get();
 
 /**
  * This function returns the nth buddy of the list.
  * @return buddy_t * The pointer to the nth buddy.
  */
-buddy_t * presence_list_get_nth(guint n);
+buddy_t * presence_buddy_list_get_nth(guint n);
 
 /**
  * This function returns a buddy which matches with params.
@@ -101,7 +102,14 @@ buddy_t * presence_list_get_nth(guint n);
  * @param uri The buddy's uri.
  * @return Glist * The pointer to the found buddy.
  */
-buddy_t * presence_list_buddy_get_by_string(const gchar *accID, const gchar *uri);
+buddy_t * presence_buddy_list_buddy_get_by_string(const gchar *accID, const gchar *uri);
+
+/**
+ * This function returns a buddy which matches with params.
+ * @param uri The buddy's uri.
+ * @return Glist * The pointer to the found buddy.
+ */
+buddy_t * presence_buddy_list_buddy_get_by_uri(const gchar *uri);
 
 /**
  * This function detects if the buddy already exists, based
@@ -110,7 +118,7 @@ buddy_t * presence_list_buddy_get_by_string(const gchar *accID, const gchar *uri
  * @param buddy The buddy to be found in the list.
  * @return buddy_t *  The pointer to the buddy if it exist and NULL if not.
  */
-buddy_t * presence_list_get_buddy(buddy_t * buddy);
+buddy_t * presence_buddy_list_get_buddy(buddy_t * buddy);
 
 /**
  * This function create a new buddy with default value.
@@ -127,7 +135,7 @@ void presence_buddy_delete(buddy_t *buddy);
 /**
  * This function print the entire list for debugging purpose.
  */
-void presence_list_print();
+void presence_buddy_list_print();
 
 /**
  * This function calls the dbus method to subscribe to a buddy.
@@ -136,6 +144,56 @@ void presence_list_print();
  * @param flag True to subscribe and False to unsubscribe
  */
 void presence_buddy_subscribe(buddy_t * buddy, gboolean flag);
+
+/**
+ * This function edit a group in the list and the associated buddies.
+ * @param group The group structure to be edited.
+ */
+void presence_group_list_update_group(const gchar *group);
+
+/**
+ * This function adds a group in the list.
+ * @param group The group structure to be added.
+ */
+void presence_group_list_add_group(const gchar * group);
+
+/**
+ * This function removes a group from the list and all
+ * associated buddies.
+ * @param group The group structure to be removed.
+ */
+void presence_group_list_remove_group(const gchar * group);
+
+/**
+ * This function returns the number of groups in list.
+ * @return guint The size of the group list.
+ */
+guint presence_group_list_get_size();
+
+/**
+ * This function returns a pointer to the group list.
+ * @return Glist * The pointer to the list.
+ */
+GList * presence_group_list_get();
+
+/**
+ * This function returns the nth group of the list.
+ * @return gchar * The pointer to the nth group.
+ */
+gchar * presence_group_list_get_nth(guint n);
+
+/**
+ * This function detects if the group already exists, based
+ * on its accountID and URI and return the pointer to the real element
+ * of the list.
+ * @param group The group to be found in the list.
+ * @return group *  The pointer to the group if it exist and NULL if not.
+ */
+gchar * presence_group_list_get_group(const gchar *group);
+/**
+ * This function print the entire list for debugging purpose.
+ */
+void presence_group_list_print();
 
 static const char *const PRESENCE_STATUS_ONLINE = "Online";
 static const char *const PRESENCE_STATUS_OFFLINE = "Offline";
