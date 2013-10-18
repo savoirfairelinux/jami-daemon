@@ -446,7 +446,7 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
 
-#if SFL_PRESENCE
+#ifdef SFL_PRESENCE
     // ui updates
     statusbar_enable_presence();
 #endif
