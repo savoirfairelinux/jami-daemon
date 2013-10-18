@@ -259,6 +259,8 @@ class OpenSLLayer : public AudioLayer {
         int playbackBufferIndex_;
         int recordBufferIndex_;
 
+		bool bufferIsFilled_;
+
         AudioBufferStack playbackBufferStack_;
         AudioBufferStack recordBufferStack_;
 };

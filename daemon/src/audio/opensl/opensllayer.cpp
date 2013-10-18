@@ -290,12 +290,16 @@ OpenSLLayer::initAudioPlayback()
                                            NB_BUFFER_PLAYBACK_QUEUE
                                                             };
 
-    // Initnialize the audio format for this queue
+
+    // Initialize the audio format for this queue
     DEBUG("Setting audio format\n");
-    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
-                                    SL_SAMPLINGRATE_8,
-                                    SL_PCMSAMPLEFORMAT_FIXED_16,
-                                    SL_PCMSAMPLEFORMAT_FIXED_16,
+
+	DEBUG("sizeof(SFLAudioSample): %d", sizeof(SFLAudioSample));
+    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM,
+									1,
+                                    sampleRate_ * 1000,	// As specified in the doc, in milliHz
+                                    sizeof(SFLAudioSample) * 8, // Assuming byte = 8bits.
+                                    sizeof(SFLAudioSample) * 8,
                                     SL_SPEAKER_FRONT_CENTER,
                                     SL_BYTEORDER_LITTLEENDIAN
                                    };
@@ -384,17 +388,16 @@ OpenSLLayer::initAudioCapture()
                                            NB_BUFFER_CAPTURE_QUEUE
                                                            };
 
-    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
-                                    SL_SAMPLINGRATE_8,
-                                    SL_PCMSAMPLEFORMAT_FIXED_16,
-                                    SL_PCMSAMPLEFORMAT_FIXED_16,
-                                    SL_SPEAKER_FRONT_CENTER,
-                                    SL_BYTEORDER_LITTLEENDIAN
-                                   };
+    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, // audio
+									1, // mono
+                                    sampleRate_ * 1000,
+                                    sizeof(SFLAudioSample) * 8,
+                                    sizeof(SFLAudioSample) * 8,
+                                    SL_SPEAKER_FRONT_CENTER, // internal speaker
+                                    SL_BYTEORDER_LITTLEENDIAN };
 
     SLDataSink audioSink = {&bufferLocator,
-                            &audioFormat
-                           };
+                            &audioFormat};
 
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
@@ -563,16 +566,23 @@ void
 OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(nullptr != queue);
+	AudioBuffer &buffer = getNextPlaybackBuffer();
 
-  //  usleep(20000);
+	unsigned samplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+	bufferIsFilled_ = false;
 
-    AudioBuffer &buffer = getNextPlaybackBuffer();
+	if (samplesToGet > 0) {
+		bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, samplesToGet);
+	} else {
+		size_t bytesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
+		if(bytesToGet <= 0){
+			bufferIsFilled_ = audioPlaybackFillWithToneOrRingtone(buffer);
+		} else {
+			bufferIsFilled_ = audioPlaybackFillWithVoice(buffer, bytesToGet);
+		}
+	}
 
-    //buffer.reset();
-
-    const bool bufferFilled = audioPlaybackFillBuffer(buffer);
-
-    if (bufferFilled) {
+    if (bufferIsFilled_) {
 #ifdef RECORD_AUDIO_TODISK
         opensl_outfile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
 #endif
@@ -583,7 +593,9 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
         }
 
         incrementPlaybackIndex();
-    }
+    } else {
+		ERROR("OpenSLLayer::playback buffer not filled");
+	}
 }
 
 void
@@ -598,25 +610,21 @@ OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(nullptr != queue);
 
-    AudioBuffer &old_buffer = getNextRecordBuffer();
-    incrementRecordIndex();
     AudioBuffer &buffer = getNextRecordBuffer();
-
     SLresult result;
 
+#ifdef RECORD_AUDIO_TODISK
+    opensl_infile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
+#endif
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
     result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
     
-    audioCaptureFillBuffer(old_buffer);
-
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);
-    
-#ifdef RECORD_AUDIO_TODISK
-    opensl_infile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
-#endif
+    incrementRecordIndex();
+
 }
 
 void
@@ -648,51 +656,6 @@ OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType ty
 #endif
 }
 
-bool OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer)
-{
-    // Looks if there's any voice audio from rtp to be played
-    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
-    size_t samplesToGet = mbuffer.availableForGet(MainBuffer::DEFAULT_ID);
-    size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
-
-    PlaybackMode mode = getPlaybackMode();
-
-    bool bufferFilled = false;
-
-    switch (mode) {
-        case NONE:
-        case TONE:
-        case RINGTONE:
-        case URGENT: {
-            if (urgentSamplesToGet > 0)
-                bufferFilled = audioPlaybackFillWithUrgent(buffer, urgentSamplesToGet);
-            else
-                bufferFilled = audioPlaybackFillWithToneOrRingtone(buffer);
-        }
-        break;
-    
-        case VOICE: {
-            if (samplesToGet > 0)
-                bufferFilled = audioPlaybackFillWithVoice(buffer, samplesToGet);
-            else {
-                buffer.reset();
-                bufferFilled = true;
-            }
-        }
-        break;
-
-        case ZEROS:
-        default: {
-            buffer.reset();
-            bufferFilled = true;
-        }
-    }
-
-    if (!bufferFilled)
-        DEBUG("Error buffer not filled in audio playback\n");
-
-    return bufferFilled;
-}
 
 // #define RECORD_TOMAIN_TODISK
 #ifdef RECORD_TOMAIN_TODISK
@@ -749,8 +712,17 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
     // Urgent data (dtmf, incoming call signal) come first.
     samplesToGet = std::min(samplesToGet, BUFFER_SIZE);
     buffer.resize(samplesToGet);
+	const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
     buffer.applyGain(playbackGain_);
+
+	if (sampleRate_ != mainBufferSampleRate) {
+        DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
+        AudioBuffer out(buffer, false);
+        out.setSampleRate(sampleRate_);
+        converter_.resample(buffer, out);
+        buffer = out;
+    }
 
     // Consume the regular one as well (same amount of samples)
     Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
@@ -761,9 +733,7 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
 bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
 {
     //const size_t samplesToCpy = buffer.samples();
-
-    if (samplesAvail == 0)
-        return false;
+//	const size_t bytesToPut = buffer.capacity() * sizeof(SFLAudioSample);
 
     MainBuffer &mainBuffer = Manager::instance().getMainBuffer();
 
