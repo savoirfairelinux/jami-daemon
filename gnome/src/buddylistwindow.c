@@ -44,32 +44,32 @@
 #include "dbus.h"
 #include "str_utils.h"
 
-static GtkWidget *buddylistwindow;
+static GtkWidget *buddy_list_window;
 static GtkWidget *buddy_list_tree_view = NULL;
 static GtkToggleAction *toggle_action = NULL;
+static GtkWidget *presence_status_combo;
+static GtkWidget *presence_status_bar;
 static buddy_t tmp_buddy;
 
 static GtkTreeModel *create_and_fill_model (void);
 static GtkWidget *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 
-#define PRESENCE_DEBUG
+#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
+
+/***************************** tree view **********************************/
 
 enum
 {
     COLUMN_ALIAS,
     COLUMN_STATUS,
     COLUMN_NOTE,
-#ifdef PRESENCE_DEBUG
     COLUMN_URI,
     COLUMN_ACCOUNTID,
     COLUMN_SUBSCRIBED
-#endif
 };
 
-
 #define N_COLUMN 6
-
 
 static GtkTreeModel *
 create_and_fill_model (void)
@@ -83,7 +83,7 @@ create_and_fill_model (void)
                                              G_TYPE_STRING, // AccID
                                              G_TYPE_STRING);// subscribed
 
-    GList * buddy_list = g_object_get_data(G_OBJECT(buddylistwindow), "Buddy-List");
+    GList * buddy_list = g_object_get_data(G_OBJECT(buddy_list_window), "Buddy-List");
     buddy_t * buddy;
 
     for (guint i = 0; i < account_list_get_size(); i++)
@@ -193,12 +193,13 @@ update_buddylist_view()
     g_debug("BuddyListTreeView updated.");
 }
 
+/***************************** contextual menu **********************************/
 
 static gboolean
 show_buddy_info(const gchar *title, buddy_t *b)
 {
     GtkWidget *dialog = gtk_dialog_new_with_buttons((title),
-                        GTK_WINDOW(buddylistwindow),
+                        GTK_WINDOW(buddy_list_window),
                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                         GTK_STOCK_CANCEL,
                         GTK_RESPONSE_CANCEL,
@@ -288,7 +289,7 @@ confirm_buddy_deletion(buddy_t *b)
             b->alias, (gchar*)account_lookup(acc, CONFIG_ACCOUNT_ALIAS)); // TODO: use _()
 
     /* Create the widgets */
-    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddylistwindow),
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddy_list_window),
             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
             GTK_MESSAGE_WARNING,
             GTK_BUTTONS_CANCEL,
@@ -482,12 +483,105 @@ view_row_activated_cb(GtkTreeView *treeview,
         view_popup_menu_onEdit(NULL, b);
 }
 
+/******************************** Status bar *********************************/
+
+/**
+ * This function reads the status combo box, updates the account_schema
+ * and call the the DBus presence publish method if enabled.
+ * @param combo The text combo box associated with the status to be published.
+ */
+static void
+status_changed_cb(GtkComboBox *combo)
+{
+    const gchar *status = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
+    gboolean b = (g_strcmp0(status, PRESENCE_STATUS_ONLINE) == 0)? TRUE : FALSE;
+    account_t * account;
+
+    for (guint i = 0; i < account_list_get_size(); i++){
+        account = account_list_get_nth(i);
+        g_assert(account);
+        account_replace(account, CONFIG_PRESENCE_STATUS, status);
+
+        if((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0) &&
+            (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
+            (((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) ||
+            (account_is_IP2IP(account)))))
+        {
+            dbus_presence_publish(account->accountID,b);
+            g_debug("Presence : publish status of acc:%s => %s", account->accountID, status);
+        }
+        else
+            g_warning("Account not enabled/registered/IP2IP.");
+    }
+}
+
+void
+statusbar_enable_presence()
+{
+    account_t * account;
+    gboolean global_publish_enabled = FALSE;
+
+    /* Check if one of the registered accounts has Presence enabled */
+    for (guint i = 0; i < account_list_get_size(); i++){
+        account = account_list_get_nth(i);
+        g_assert(account);
+        account_replace(account, CONFIG_PRESENCE_STATUS, "false");
+
+        if((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) &&
+                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
+                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)){
+            account_replace(account, CONFIG_PRESENCE_STATUS, "true");
+            global_publish_enabled = TRUE; // one enabled account is enough
+            g_debug("Presence : found registered %s, with publish enabled.", account->accountID);
+        }
+    }
+
+    if(global_publish_enabled)
+    {
+        gtk_widget_set_sensitive(presence_status_combo, TRUE);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
+    }
+    else
+    {
+        gtk_widget_set_sensitive(presence_status_combo, FALSE);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0);
+        g_debug("Presence : no registered account found with publish enabled");
+    }
+}
+
+
+
+GtkWidget*
+create_presence_status_bar()
+{
+    GtkWidget *bar = gtk_statusbar_new();
+
+    GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
+    gtk_box_pack_start(GTK_BOX(bar), label, TRUE, TRUE, 0);
+
+    /* Add presence status combo_box*/
+    presence_status_combo = gtk_combo_box_text_new();
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_OFFLINE));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_ONLINE));
+    gtk_widget_set_sensitive(presence_status_combo, FALSE);
+    gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
+
+    g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
+    statusbar_enable_presence();
+
+    return bar;
+}
+
+
+
+/******************************** window  *********************************/
+
 void
 destroy_buddylist_window()
 {
     g_debug("Destroy buddylist window ");
     buddy_list_tree_view = NULL;
-    gtk_widget_destroy(buddylistwindow);
+    gtk_widget_destroy(buddy_list_window);
 
     gtk_toggle_action_set_active(toggle_action, FALSE);
     presence_list_flush();
@@ -502,32 +596,36 @@ create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
     const gchar * title = _("SFLphone Buddies");
     g_debug("Create window : %s", title);
 
-    buddylistwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    buddy_list_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-    gtk_container_set_border_width(GTK_CONTAINER(buddylistwindow), 0);
-    gtk_window_set_title(GTK_WINDOW(buddylistwindow), title);
-    gtk_window_set_default_size(GTK_WINDOW(buddylistwindow), BUDDYLIST_WINDOW_WIDTH, BUDDYLIST_WINDOW_HEIGHT);
-    gtk_widget_set_name(buddylistwindow, title);
+    gtk_container_set_border_width(GTK_CONTAINER(buddy_list_window), 0);
+    gtk_window_set_title(GTK_WINDOW(buddy_list_window), title);
+    gtk_window_set_default_size(GTK_WINDOW(buddy_list_window), BUDDYLIST_WINDOW_WIDTH, BUDDYLIST_WINDOW_HEIGHT);
+    gtk_widget_set_name(buddy_list_window, title);
 
     /* Instantiate vbox, subvbox as homogeneous */
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
-    gtk_container_add(GTK_CONTAINER(buddylistwindow), vbox);
+    gtk_container_add(GTK_CONTAINER(buddy_list_window), vbox);
 
     /* Create the tree view*/
     buddy_list_tree_view = create_view();
     gtk_box_pack_start(GTK_BOX(vbox), buddy_list_tree_view, TRUE, TRUE, 5);
 
+    /* Status bar, cntains presence_status selector */
+    presence_status_bar = create_presence_status_bar();
+    gtk_box_pack_start(GTK_BOX(vbox), presence_status_bar, FALSE, TRUE, 0);
+
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "popup-menu", G_CALLBACK(view_onPopupMenu), NULL);
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "row-activated", G_CALLBACK(view_row_activated_cb), NULL);
-    g_signal_connect_after(buddylistwindow, "destroy", (GCallback)destroy_buddylist_window, NULL);
+    g_signal_connect_after(buddy_list_window, "destroy", (GCallback)destroy_buddylist_window, NULL);
 
     // Load buddylist
     presence_list_init(client);
-    g_object_set_data(G_OBJECT(buddylistwindow), "Buddy-List", (gpointer)presence_list_get());
+    g_object_set_data(G_OBJECT(buddy_list_window), "Buddy-List", (gpointer)presence_list_get());
     update_buddylist_view();
 
     /* make sure that everything, window and label, are visible */
-    gtk_widget_show_all(buddylistwindow);
+    gtk_widget_show_all(buddy_list_window);
 }

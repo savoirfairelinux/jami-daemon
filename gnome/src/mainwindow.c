@@ -60,11 +60,6 @@
 #include <gdk/gdkkeysyms.h>
 
 
-#ifdef SFL_PRESENCE
-#include "presence.h"
-#endif
-
-
 /** Local variables */
 static GtkAccelGroup *accelGroup;
 static GtkWidget *subvbox;
@@ -74,9 +69,6 @@ static GtkWidget *speaker_control;
 static GtkWidget *mic_control;
 static GtkWidget *statusBar;
 static GtkWidget *seekslider = NULL;
-#ifdef SFL_PRESENCE
-static GtkWidget *presence_status_combo;
-#endif
 
 static gchar *status_current_message;
 
@@ -226,93 +218,11 @@ main_window_bring_to_front(SFLPhoneClient *client, guint32 timestamp)
     gtk_window_present_with_time(GTK_WINDOW(client->win), timestamp);
 }
 
-#ifdef SFL_PRESENCE
-/**
- * This function reads the status combo box, updates the account_schema
- * and call the the DBus presence publish method if enabled.
- * @param combo The text combo box associated with the status to be published.
- */
-static void
-status_changed_cb(GtkComboBox *combo)
-{
-    const gchar *status = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
-    gboolean b = (g_strcmp0(status, PRESENCE_STATUS_ONLINE) == 0)? TRUE : FALSE;
-    account_t * account;
-
-    for (guint i = 0; i < account_list_get_size(); i++){
-        account = account_list_get_nth(i);
-        g_assert(account);
-        account_replace(account, CONFIG_PRESENCE_STATUS, status);
-
-        if((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0) &&
-            (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
-            (((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) ||
-            (account_is_IP2IP(account)))))
-        {
-            dbus_presence_publish(account->accountID,b);
-            g_debug("Presence : publish status of acc:%s => %s", account->accountID, status);
-        }
-        else
-            g_warning("Account not enabled/registered/IP2IP.");
-    }
-}
-
-void
-statusbar_enable_presence()
-{
-    account_t * account;
-    gboolean global_publish_enabled = FALSE;
-
-    /* Check if one of the registered accounts has Presence enabled */
-    for (guint i = 0; i < account_list_get_size(); i++){
-        account = account_list_get_nth(i);
-        g_assert(account);
-        account_replace(account, CONFIG_PRESENCE_STATUS, "false");
-
-        if((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) &&
-                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
-                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)){
-            account_replace(account, CONFIG_PRESENCE_STATUS, "true");
-            global_publish_enabled = TRUE; // one enabled account is enough
-            g_debug("Presence : found registered %s, with publish enabled.", account->accountID);
-        }
-    }
-
-    if(global_publish_enabled)
-    {
-        gtk_widget_set_sensitive(presence_status_combo, TRUE);
-        gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
-    }
-    else
-    {
-        gtk_widget_set_sensitive(presence_status_combo, FALSE);
-        gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0);
-        g_debug("Presence : no registered account found with publish enabled");
-    }
-}
-#endif
-
 
 GtkWidget*
 create_status_bar()
 {
     GtkWidget *bar = gtk_statusbar_new();
-
-#ifdef SFL_PRESENCE
-    GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
-    gtk_box_pack_start(GTK_BOX(bar), label, TRUE, TRUE, 0);
-
-    /* Add presence status combo_box*/
-    presence_status_combo = gtk_combo_box_text_new();
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_OFFLINE));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_ONLINE));
-    gtk_widget_set_sensitive(presence_status_combo, FALSE);
-    gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
-
-    g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
-    statusbar_enable_presence();
-#endif
-
     return bar;
 }
 
@@ -437,7 +347,7 @@ create_main_window(SFLPhoneClient *client)
     }
 
 
-    /* Status bar, contains presence_status selector */
+    /* Status bar, cntains presence_status selector */
     statusBar = create_status_bar();
     pack_main_window_start(GTK_BOX(vbox), statusBar, FALSE, TRUE, 0);
 
