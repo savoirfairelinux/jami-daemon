@@ -290,16 +290,14 @@ OpenSLLayer::initAudioPlayback()
                                            NB_BUFFER_PLAYBACK_QUEUE
                                                             };
 
-
-    // Initialize the audio format for this queue
+    // Initnialize the audio format for this queue
     DEBUG("Setting audio format\n");
-
-	DEBUG("sizeof(SFLAudioSample): %d", sizeof(SFLAudioSample));
-    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM,
-									1,
-                                    sampleRate_ * 1000,	// As specified in the doc, in milliHz
-                                    sizeof(SFLAudioSample) * 8, // Assuming byte = 8bits.
-                                    sizeof(SFLAudioSample) * 8,
+    ERROR("Sampling Rate: %d", sampleRate_);
+	ERROR("getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
+    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
+                                    sampleRate_ * 1000,
+                                    SL_PCMSAMPLEFORMAT_FIXED_16,
+                                    SL_PCMSAMPLEFORMAT_FIXED_16,
                                     SL_SPEAKER_FRONT_CENTER,
                                     SL_BYTEORDER_LITTLEENDIAN
                                    };
@@ -388,16 +386,17 @@ OpenSLLayer::initAudioCapture()
                                            NB_BUFFER_CAPTURE_QUEUE
                                                            };
 
-    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, // audio
-									1, // mono
+    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
                                     sampleRate_ * 1000,
-                                    sizeof(SFLAudioSample) * 8,
-                                    sizeof(SFLAudioSample) * 8,
-                                    SL_SPEAKER_FRONT_CENTER, // internal speaker
-                                    SL_BYTEORDER_LITTLEENDIAN };
+                                    SL_PCMSAMPLEFORMAT_FIXED_16,
+                                    SL_PCMSAMPLEFORMAT_FIXED_16,
+                                    SL_SPEAKER_FRONT_CENTER,
+                                    SL_BYTEORDER_LITTLEENDIAN
+                                   };
 
     SLDataSink audioSink = {&bufferLocator,
-                            &audioFormat};
+                            &audioFormat
+                           };
 
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
@@ -563,45 +562,6 @@ OpenSLLayer::getPlaybackDeviceList() const
 }
 
 void
-OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
-{
-    assert(nullptr != queue);
-	AudioBuffer &buffer = getNextPlaybackBuffer();
-
-	notifyIncomingCall();
-
-	unsigned samplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
-	bufferIsFilled_ = false;
-
-	if (samplesToGet > 0) {
-		bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, samplesToGet);
-	} else {
-		size_t bytesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
-		if(bytesToGet <= 0){
-			bufferIsFilled_ = audioPlaybackFillWithToneOrRingtone(buffer);
-		} else {
-			bufferIsFilled_ = audioPlaybackFillWithVoice(buffer, bytesToGet);
-		}
-	}
-
-    if (bufferIsFilled_) {
-#ifdef RECORD_AUDIO_TODISK
-        opensl_outfile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
-#endif
-
-        SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
-
-        if (SL_RESULT_SUCCESS != result) {
-            ERROR("Error could not enqueue buffers in playback callback\n");
-        }
-
-        incrementPlaybackIndex();
-    } else {
-		ERROR("OpenSLLayer::playback buffer not filled");
-	}
-}
-
-void
 OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
     assert(nullptr != context);
@@ -609,25 +569,46 @@ OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *co
 }
 
 void
-OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
+OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(nullptr != queue);
 
-    AudioBuffer &buffer = getNextRecordBuffer();
-    SLresult result;
+	notifyIncomingCall();
 
+    AudioBuffer &buffer = getNextPlaybackBuffer();
+
+	MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+    size_t samplesToGet = mbuffer.availableForGet(MainBuffer::DEFAULT_ID);
+    size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+
+	bufferIsFilled_ = false;
+//	DEBUG("samplesToGet:%d", samplesToGet);
+//	DEBUG("urgentSamplesToGet:%d", urgentSamplesToGet);
+
+    if (urgentSamplesToGet > 0)
+        bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, urgentSamplesToGet);
+    else {
+		if (samplesToGet > 0)
+			bufferIsFilled_ = audioPlaybackFillWithVoice(buffer, samplesToGet);
+        else {
+            bufferIsFilled_ = audioPlaybackFillWithToneOrRingtone(buffer);
+        }
+	}
+
+    if (bufferIsFilled_) {
 #ifdef RECORD_AUDIO_TODISK
-    opensl_infile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
+        opensl_outfile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
 #endif
-    // enqueue an empty buffer to be filled by the recorder
-    // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
-    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
-    
-    // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
-    // which for this code example would indicate a programming error
-    assert(SL_RESULT_SUCCESS == result);
-    incrementRecordIndex();
+        SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
 
+        if (SL_RESULT_SUCCESS != result) {
+            DEBUG("Error could not enqueue buffers in playback callback\n");
+        }
+
+        incrementPlaybackIndex();
+    } else {
+		DEBUG("Error buffer not filled in audio playback\n");
+	}
 }
 
 void
@@ -636,6 +617,34 @@ OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *con
     assert(nullptr != context);
     static_cast<OpenSLLayer*>(context)->capture(queue);
 }
+
+void
+OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
+{
+    assert(nullptr != queue);
+
+    AudioBuffer &old_buffer = getNextRecordBuffer();
+    incrementRecordIndex();
+    AudioBuffer &buffer = getNextRecordBuffer();
+
+    SLresult result;
+
+    // enqueue an empty buffer to be filled by the recorder
+    // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
+    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
+    
+    audioCaptureFillBuffer(old_buffer);
+
+    // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
+    // which for this code example would indicate a programming error
+    assert(SL_RESULT_SUCCESS == result);
+
+#ifdef RECORD_AUDIO_TODISK
+    opensl_infile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
+#endif
+}
+
+
 
 void
 OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
@@ -707,12 +716,6 @@ bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
         buffer.reset();
     }
 
-//	DEBUG("STRAT");
-//	for(std::vector<SFLAudioSample>::iterator it = buffer.getChannel(0)->begin(); it != buffer.getChannel(0)->end(); ++it) {
-//		DEBUG("it data: %d", *it);
-//	}
-//	DEBUG("size: %d", buffer.getChannel(0)->data());
-
     return true;
 }
 
@@ -721,21 +724,8 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
     // Urgent data (dtmf, incoming call signal) come first.
     samplesToGet = std::min(samplesToGet, BUFFER_SIZE);
     buffer.resize(samplesToGet);
-
-	//DEBUG("samplesToGet: %d \n", samplesToGet);
-	//DEBUG("Urgent buffer.size: %d \n", buffer.capacity());
-
-	const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
     buffer.applyGain(playbackGain_);
-
-	if (sampleRate_ != mainBufferSampleRate) {
-        DEBUG("OpenSLLayer::audioPlaybackFillWithUrgent sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
-        AudioBuffer out(buffer, false);
-        out.setSampleRate(sampleRate_);
-        converter_.resample(buffer, out);
-        buffer = out;
-    }
 
     // Consume the regular one as well (same amount of samples)
     Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
@@ -743,46 +733,21 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
     return true;
 }
 
-bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesToGet)
+bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
 {
-	MainBuffer &mainBuffer = Manager::instance().getMainBuffer();
+    MainBuffer &mainBuffer = Manager::instance().getMainBuffer();
 
-	const size_t mainBufferSampleRate = mainBuffer.getInternalSamplingRate();
-    const bool resample = sampleRate_ != mainBufferSampleRate;
-
-	double resampleFactor = 1.0;
-	size_t maxNbBytesToGet = bytesToGet;
-
-    if (resample) {
-        resampleFactor = static_cast<double>(sampleRate_) / mainBufferSampleRate;
-        maxNbBytesToGet = bytesToGet / resampleFactor;
-	}
-	bytesToGet = std::min(maxNbBytesToGet, bytesToGet);
-	const size_t maxSamplesToGet = bytesToGet / sizeof(SFLAudioSample);
-	unsigned samplesToGet = std::min(maxSamplesToGet, BUFFER_SIZE);
-
-
-	buffer.resize(samplesToGet);
-
-
-	buffer.setSampleRate(mainBufferSampleRate);
+    buffer.resize(samplesAvail);
     mainBuffer.getData(buffer, MainBuffer::DEFAULT_ID);
-    //buffer.applyGain(getPlaybackGain());
+    buffer.applyGain(getPlaybackGain());
 
-	for(std::vector<SFLAudioSample>::iterator it = buffer.getChannel(0)->begin(); it != buffer.getChannel(0)->end(); ++it) {
-		DEBUG("data: %d", *it);
-	}
-
- //   if (resample) {
-//		DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
-//		const size_t outSamples = samplesToGet * resampleFactor;
- //       const size_t outBytes = outSamples * sizeof(SFLAudioSample);
- //       AudioBuffer rsmpl_out(outSamples, 1, sampleRate_);
- //       converter_.resample(buffer, rsmpl_out);
-//        buffer = rsmpl_out;
-//    }
-
-	Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
+    if (sampleRate_ != mainBuffer.getInternalSamplingRate()) {
+        DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
+        AudioBuffer out(buffer, false);
+        out.setSampleRate(sampleRate_);
+        converter_.resample(buffer, out);
+        buffer = out;
+    }
 
     return true;
 }

@@ -134,11 +134,6 @@ class OpenSLLayer : public AudioLayer {
 
         bool audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
 
-        /**
-         * The main logic to determine what should be played is determined here
-         */
-        bool audioPlaybackFillBuffer(AudioBuffer &buffer);
-
         void audioCaptureFillBuffer(AudioBuffer &buffer);
 
 
