@@ -43,6 +43,11 @@
 
 namespace sfl_video {
 
+class VideoSenderException : public std::runtime_error {
+    public:
+        VideoSenderException(const char *msg) : std::runtime_error(msg) {}
+};
+
 class SocketPair;
 
 class VideoSender : public VideoFramePassiveReader
@@ -62,7 +67,6 @@ public:
 private:
     NON_COPYABLE(VideoSender);
 
-    bool setup();
     void encodeAndSendVideo(VideoFrame&);
 
     std::map<std::string, std::string> args_;
