@@ -453,7 +453,6 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
     status_bar_display_account();
     statusicon_set_tooltip();
 #ifdef SFL_PRESENCE
-    g_print("DDDDDDDDDDDDDDBBBBBBBBBBBUUUUSS : detail changed");
     statusbar_enable_presence();
 #endif
 }

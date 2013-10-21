@@ -492,15 +492,15 @@ view_popup_menu_buddy(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, 
     menuitem = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
-    menuitem = gtk_menu_item_new_with_label(_("Add member"));
+    menuitem = gtk_menu_item_new_with_label(_("Add buddy"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
 
-    menuitem = gtk_menu_item_new_with_label(_("Edit member"));
+    menuitem = gtk_menu_item_new_with_label(_("Edit buddy"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onEditBuddy), userdata);
 
-    menuitem = gtk_menu_item_new_with_label(_("Remove member"));
+    menuitem = gtk_menu_item_new_with_label(_("Remove buddy"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveBuddy), userdata);
 
@@ -558,7 +558,7 @@ view_popup_menu_group(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, 
     menuitem = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
-    menuitem = gtk_menu_item_new_with_label(_("Add member"));
+    menuitem = gtk_menu_item_new_with_label(_("Add buddy"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
 
@@ -605,6 +605,13 @@ view_popup_menu_default(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddGroup), userdata);
 
+    menuitem = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+
+    menuitem = gtk_menu_item_new_with_label(_("Add buddy"));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
+
     gtk_widget_show_all(menu);
 
     /* Note: event can be NULL here when called from view_onPopupMenu;
@@ -625,7 +632,7 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
 
         /* Note: gtk_tree_selection_count_selected_rows() does not
          *   exist in gtk+-2.0, only in gtk+ >= v2.2 ! */
-        if (gtk_tree_selection_count_selected_rows(selection)  <= 1)
+        if (gtk_tree_selection_count_selected_rows(selection)  == 1)
         {
             GtkTreePath *path;
             /* Get tree path for row that was clicked */
@@ -645,11 +652,11 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
                 }
                 gtk_tree_path_free(path);
             }
-        }
-        else //no selection
-        {
-            gchar *group = g_strdup("Group");
-            view_popup_menu_default(treeview, event, group);
+            else // right click in the back ground
+            {
+                gchar *group = g_strdup("Group");
+                view_popup_menu_default(treeview, event, group);
+            }
         }
         return TRUE;
     }
