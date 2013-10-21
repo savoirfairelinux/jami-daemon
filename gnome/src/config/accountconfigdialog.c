@@ -1373,23 +1373,6 @@ static void update_account_from_basic_tab(account_t *account)
         v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button));
         account_replace(account, CONFIG_PUBLISHED_SAMEAS_LOCAL, bool_to_string(v));
 
-        if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
-            account_replace(account, CONFIG_PUBLISHED_PORT,
-                    gtk_entry_get_text(GTK_ENTRY(published_port_spin_box)));
-
-            account_replace(account, CONFIG_PUBLISHED_ADDRESS,
-                    gtk_entry_get_text(GTK_ENTRY(published_address_entry)));
-        } else {
-            account_replace(account, CONFIG_PUBLISHED_PORT,
-                    gtk_entry_get_text(GTK_ENTRY(local_port_spin_box)));
-            gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
-
-            gchar *published_address = dbus_get_address_from_interface_name(local_interface);
-            g_free(local_interface);
-
-            account_replace(account, CONFIG_PUBLISHED_ADDRESS, published_address);
-        }
-
         account_replace(account, CONFIG_ACCOUNT_AUDIO_PORT_MIN,
                 gtk_entry_get_text(GTK_ENTRY(audio_port_min_spin_box)));
         account_replace(account, CONFIG_ACCOUNT_AUDIO_PORT_MAX,
@@ -1460,6 +1443,28 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
     const gboolean IS_IP2IP = account_is_IP2IP(account);
     if (!IS_IP2IP)
         update_account_from_basic_tab(account);
+
+    if (account_is_SIP(account)) {
+        if (IS_IP2IP ||
+            gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
+            account_replace(account, CONFIG_PUBLISHED_PORT,
+                    gtk_entry_get_text(GTK_ENTRY(local_port_spin_box)));
+            account_replace(account, CONFIG_LOCAL_PORT,
+                    gtk_entry_get_text(GTK_ENTRY(local_port_spin_box)));
+            gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
+
+            gchar *published_address = dbus_get_address_from_interface_name(local_interface);
+            g_free(local_interface);
+
+            account_replace(account, CONFIG_PUBLISHED_ADDRESS, published_address);
+        } else {
+            account_replace(account, CONFIG_PUBLISHED_PORT,
+                    gtk_entry_get_text(GTK_ENTRY(published_port_spin_box)));
+
+            account_replace(account, CONFIG_PUBLISHED_ADDRESS,
+                    gtk_entry_get_text(GTK_ENTRY(published_address_entry)));
+        }
+    }
 
     const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
     account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
