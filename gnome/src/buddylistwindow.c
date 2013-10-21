@@ -54,7 +54,7 @@ static GtkTreeModel *create_and_fill_buddylist_tree (void);
 static GtkWidget *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 
-//#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
+#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
 
 /***************************** tree view **********************************/
 
@@ -127,21 +127,6 @@ create_and_fill_buddylist_tree (void)
                         -1);
             }
         }
-    }
-
-    if(group_count == 0)
-    {
-        gtk_tree_store_append(treestore, &toplevel, NULL);
-        gtk_tree_store_set(treestore, &toplevel,
-                COLUMN_OVERVIEW, "Group",
-                COLUMN_ALIAS, "",
-                COLUMN_GROUP, "Group",
-                COLUMN_STATUS, "",
-                COLUMN_NOTE, "",
-                COLUMN_URI, "",
-                COLUMN_ACCOUNTID, "",
-                COLUMN_SUBSCRIBED, "",
-                -1);
     }
 
     return GTK_TREE_MODEL(treestore);
@@ -265,7 +250,7 @@ show_buddy_info(const gchar *title, buddy_t *b)
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_group), group);
         // set active group
         if(g_strcmp0(group, b->group) == 0)
-            group_index = i;
+            group_index = i-1;
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index);
 
@@ -392,7 +377,7 @@ static gboolean
 confirm_group_deletion(gchar *group)
 {
     gchar *msg;
-    msg = g_markup_printf_escaped("Are you sure want to delete the group %s", group);
+    msg = g_markup_printf_escaped("Do you really want to delete the group %s", group);
 
     /* Create the widgets */
     GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddy_list_window),
@@ -411,6 +396,7 @@ confirm_group_deletion(gchar *group)
 
     return response == GTK_RESPONSE_OK;
 }
+
 /*********************************  Contextual Menus ****************************/
 
 static void
@@ -421,7 +407,7 @@ view_popup_menu_onEditBuddy (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdat
 
     if(show_buddy_info(_("Edit buddy"), (buddy_t *)userdata))
     {
-        presence_buddy_list_update_buddy((buddy_t *)userdata, backup);
+        presence_buddy_list_edit_buddy((buddy_t *)userdata, backup);
         update_buddylist_view();
     }
     g_free(backup);
@@ -460,20 +446,24 @@ view_popup_menu_onRemoveBuddy (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userd
         update_buddylist_view();
     }
 }
-static void
-view_popup_menu_onEditGroup(G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
-{
-    if(show_group_info(_("Edit group"), (gchar*) userdata))
-        g_print("TODO updat group list  %s\n", (gchar*) userdata);
-}
 
 static void
 view_popup_menu_onAddGroup (G_GNUC_UNUSED GtkWidget *menuitem, G_GNUC_UNUSED gpointer userdata)
 {
-    gchar *group = (gchar*) g_strdup("");
+    gchar *group = g_strdup("");
     if (show_group_info(_("Add group"), group))
     {
         presence_group_list_add_group(group);
+        update_buddylist_view();
+    }
+}
+
+static void
+view_popup_menu_onEditGroup (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
+{
+    gchar *group = g_strdup((gchar*) userdata); // make a copy to keep track of the old name
+    if(show_group_info(_("Edit group"), group)){
+        presence_group_list_edit_group(group, (gchar*) userdata);
         update_buddylist_view();
     }
 }
@@ -484,7 +474,6 @@ view_popup_menu_onRemoveGroup (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userd
     gchar *group = (gchar*) userdata;
     if(confirm_group_deletion(group))
     {
-        g_print("TODO : remove group !!!!!!!!!!!!!!!!!\n");
         presence_group_list_remove_group(group);
         update_buddylist_view();
     }
@@ -506,11 +495,11 @@ view_popup_menu_buddy(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, 
     menuitem = gtk_menu_item_new_with_label(_("Add member"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
-/*
+
     menuitem = gtk_menu_item_new_with_label(_("Edit member"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onEditBuddy), userdata);
-*/
+
     menuitem = gtk_menu_item_new_with_label(_("Remove member"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveBuddy), userdata);
@@ -557,11 +546,11 @@ view_popup_menu_group(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, 
     menuitem = gtk_menu_item_new_with_label(_("Add group"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddGroup), userdata);
-/*
+
     menuitem = gtk_menu_item_new_with_label(_("Edit group"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onEditGroup), userdata);
-*/
+
     menuitem = gtk_menu_item_new_with_label(_("Remove group"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveGroup), userdata);
@@ -709,8 +698,6 @@ status_changed_cb(GtkComboBox *combo)
             dbus_presence_publish(account->accountID,b);
             g_debug("Presence : publish status of acc:%s => %s", account->accountID, status);
         }
-        else
-            g_warning("Account not enabled/registered/IP2IP.");
     }
 }
 

@@ -64,7 +64,7 @@ void presence_buddy_list_flush();
  * @param buddy A known buddy but with new information to be saved.
  * @param backup A backup of this buddy before it was changed
  */
-void presence_buddy_list_update_buddy(buddy_t * buddy, buddy_t *backup);
+void presence_buddy_list_edit_buddy(buddy_t * buddy, buddy_t *backup);
 
 /**
  * This function adds a buddy in the list.
@@ -121,6 +121,15 @@ buddy_t * presence_buddy_list_buddy_get_by_uri(const gchar *uri);
 buddy_t * presence_buddy_list_get_buddy(buddy_t * buddy);
 
 /**
+ * This function detects if the buddy already exists, based
+ * on its accountID and URI and return the pointer to the real element
+ * of the list.
+ * @param buddy The buddy to be found in the list.
+ * @return GList*  The pointer to the link in the list if it exist and NULL if not.
+ */
+GList * presence_buddy_list_get_link(buddy_t * buddy);
+
+/**
  * This function create a new buddy with default value.
  * @return buddy_t The pointer to the new buddy.
  */
@@ -146,10 +155,16 @@ void presence_buddy_list_print();
 void presence_buddy_subscribe(buddy_t * buddy, gboolean flag);
 
 /**
- * This function edit a group in the list and the associated buddies.
- * @param group The group structure to be edited.
+ * This function the group list based on the existing group fields of the buddies.
  */
-void presence_group_list_update_group(const gchar *group);
+void presence_group_list_init();
+
+/**
+ * This function edit a group in the list and the associated buddies.
+ * @param new The new group name.
+ * @param old The old group pointer to be edited.
+ */
+void presence_group_list_edit_group(gchar *new, gchar *old);
 
 /**
  * This function adds a group in the list.
@@ -190,6 +205,21 @@ gchar * presence_group_list_get_nth(guint n);
  * @return group *  The pointer to the group if it exist and NULL if not.
  */
 gchar * presence_group_list_get_group(const gchar *group);
+
+/**
+ * This function detects if the group already exists, based
+ * on its accountID and URI and return the pointer to the real element
+ * of the list.
+ * @param group The group to be found in the list.
+ * @return  GList *  The pointer to the group if it exist and NULL if not.
+ */
+GList * presence_group_list_get_link(const gchar *group);
+
+/**
+ * Flush the group list;
+ */
+void presence_group_list_flush();
+
 /**
  * This function print the entire list for debugging purpose.
  */

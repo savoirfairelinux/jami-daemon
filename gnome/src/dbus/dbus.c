@@ -453,6 +453,7 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
     status_bar_display_account();
     statusicon_set_tooltip();
 #ifdef SFL_PRESENCE
+    g_print("DDDDDDDDDDDDDDBBBBBBBBBBBUUUUSS : detail changed");
     statusbar_enable_presence();
 #endif
 }
@@ -627,8 +628,7 @@ sip_presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, cons
     account_t *acc = account_list_get_by_id(accID);
     if (acc)
     {
-        //buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
-        buddy_t * b = presence_buddy_list_buddy_get_by_uri(uri);
+        buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
         if(b)
         {
             b->subscribed = state;
@@ -652,8 +652,7 @@ sip_presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID
     account_t *acc = account_list_get_by_id(accID);
     if (acc)
     {
-        //buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
-        buddy_t * b = presence_buddy_list_buddy_get_by_uri(uri);
+        buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
         if(b)
         {
             b->status = status;
