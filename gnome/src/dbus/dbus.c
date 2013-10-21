@@ -450,11 +450,11 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
     sflphone_fill_ip2ip_profile();
 
     // ui updates
+    status_bar_display_account();
+    statusicon_set_tooltip();
 #ifdef SFL_PRESENCE
     statusbar_enable_presence();
 #endif
-    status_bar_display_account();
-    statusicon_set_tooltip();
 }
 
 static void
@@ -627,12 +627,17 @@ sip_presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, cons
     account_t *acc = account_list_get_by_id(accID);
     if (acc)
     {
-        buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
+        //buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
+        buddy_t * b = presence_buddy_list_buddy_get_by_uri(uri);
         if(b)
         {
             b->subscribed = state;
             if(!state) // not monitored means default value for status ( == Offline)
+            {
                 b->status = FALSE;
+                g_free(b->note);
+                b->note = g_strdup("Not Found");
+            }
             update_buddylist_view();
         }
     }
@@ -647,7 +652,8 @@ sip_presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID
     account_t *acc = account_list_get_by_id(accID);
     if (acc)
     {
-        buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
+        //buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
+        buddy_t * b = presence_buddy_list_buddy_get_by_uri(uri);
         if(b)
         {
             b->status = status;

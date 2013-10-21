@@ -54,7 +54,7 @@ static GtkTreeModel *create_and_fill_buddylist_tree (void);
 static GtkWidget *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 
-#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
+//#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
 
 /***************************** tree view **********************************/
 
@@ -88,11 +88,13 @@ create_and_fill_buddylist_tree (void)
 
     GList * buddy_list = g_object_get_data(G_OBJECT(buddy_list_window), "Buddy-List");
     buddy_t * buddy;
+    guint group_count = 0;
 
     for (guint i = 1; i < presence_group_list_get_size(); i++)
     {
-        gchar *group = presence_group_list_get_nth(i);
+        group_count++;
 
+        gchar *group = presence_group_list_get_nth(i);
         gtk_tree_store_append(treestore, &toplevel, NULL);
         gtk_tree_store_set(treestore, &toplevel,
                 COLUMN_OVERVIEW, group,
@@ -125,6 +127,21 @@ create_and_fill_buddylist_tree (void)
                         -1);
             }
         }
+    }
+
+    if(group_count == 0)
+    {
+        gtk_tree_store_append(treestore, &toplevel, NULL);
+        gtk_tree_store_set(treestore, &toplevel,
+                COLUMN_OVERVIEW, "Group",
+                COLUMN_ALIAS, "",
+                COLUMN_GROUP, "Group",
+                COLUMN_STATUS, "",
+                COLUMN_NOTE, "",
+                COLUMN_URI, "",
+                COLUMN_ACCOUNTID, "",
+                COLUMN_SUBSCRIBED, "",
+                -1);
     }
 
     return GTK_TREE_MODEL(treestore);
@@ -415,10 +432,11 @@ view_popup_menu_onAddBuddy (G_GNUC_UNUSED GtkWidget *menuitem, G_GNUC_UNUSED gpo
 {
     buddy_t *b = presence_buddy_create();
 
-    // TODO :
-    //account_t * acc = account_list_get_by_id(b->acc);
-    //gchar * uri = g_strconcat("<sip:XXXX@", account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME),">", NULL);
-    gchar * uri = g_strconcat("<sip:XXXX@192.95.9.63>", NULL);
+    account_t *acc = account_list_get_current() ;
+    g_free(b->acc);
+    b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
+
+    gchar * uri = g_strconcat("<sip:XXXX@", account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME),">", NULL);
     g_free(b->uri);
     b->uri = g_strdup(uri);
     g_free(uri);
@@ -482,17 +500,17 @@ view_popup_menu_buddy(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, 
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddGroup), userdata);
 
-    GtkWidget *separator = gtk_separator_menu_item_new();
-    gtk_menu_shell_append(GTK_MENU_SHELL(menuitem), separator);
+    menuitem = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
     menuitem = gtk_menu_item_new_with_label(_("Add member"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
-
+/*
     menuitem = gtk_menu_item_new_with_label(_("Edit member"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onEditBuddy), userdata);
-
+*/
     menuitem = gtk_menu_item_new_with_label(_("Remove member"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveBuddy), userdata);
@@ -539,17 +557,17 @@ view_popup_menu_group(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, 
     menuitem = gtk_menu_item_new_with_label(_("Add group"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddGroup), userdata);
-
+/*
     menuitem = gtk_menu_item_new_with_label(_("Edit group"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onEditGroup), userdata);
-
+*/
     menuitem = gtk_menu_item_new_with_label(_("Remove group"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveGroup), userdata);
 
-    GtkWidget *separator = gtk_separator_menu_item_new();
-    gtk_menu_shell_append(GTK_MENU_SHELL(menuitem), separator);
+    menuitem = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
     menuitem = gtk_menu_item_new_with_label(_("Add member"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -588,6 +606,26 @@ view_get_group(GtkTreeView *treeview,
     return group;
 }
 
+static void
+view_popup_menu_default(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+{
+    GtkWidget *menu, *menuitem;
+    menu = gtk_menu_new();
+
+    menuitem = gtk_menu_item_new_with_label(_("Add group"));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddGroup), userdata);
+
+    gtk_widget_show_all(menu);
+
+    /* Note: event can be NULL here when called from view_onPopupMenu;
+     *  gdk_event_get_time() accepts a NULL argument */
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+            (event != NULL) ? event->button : 0,
+            gdk_event_get_time((GdkEvent*)event));
+
+}
+
 static gboolean
 view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
 {
@@ -618,6 +656,11 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
                 }
                 gtk_tree_path_free(path);
             }
+        }
+        else //no selection
+        {
+            gchar *group = g_strdup("Group");
+            view_popup_menu_default(treeview, event, group);
         }
         return TRUE;
     }
@@ -683,10 +726,12 @@ statusbar_enable_presence()
         g_assert(account);
         account_replace(account, CONFIG_PRESENCE_STATUS, "false");
 
-        if((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) &&
+        if(!(account_is_IP2IP(account)) &&
+                (account->state == ACCOUNT_STATE_REGISTERED) &&
+                (g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) &&
                 (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
-                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)){
-            account_replace(account, CONFIG_PRESENCE_STATUS, "true");
+                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0))
+        {
             global_publish_enabled = TRUE; // one enabled account is enough
             g_debug("Presence : found registered %s, with publish enabled.", account->accountID);
         }
@@ -769,9 +814,9 @@ create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
     gtk_box_pack_start(GTK_BOX(vbox), presence_status_bar, FALSE, TRUE, 0);
 
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
-    //g_signal_connect(G_OBJECT(buddy_list_tree_view), "popup-menu", G_CALLBACK(view_onPopupMenu), NULL);
     g_signal_connect(G_OBJECT(buddy_list_tree_view), "row-activated", G_CALLBACK(view_row_activated_cb), NULL);
-    g_signal_connect_after(buddy_list_window, "destroy", (GCallback)destroy_buddylist_window, NULL);
+    g_signal_connect(G_OBJECT(buddy_list_window), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
+    g_signal_connect_after(buddy_list_window, "destroy", G_CALLBACK(destroy_buddylist_window), NULL);
 
     // Load buddylist
     presence_buddy_list_init(client);

@@ -59,8 +59,9 @@ static GSettings * presence_setting_schema;
 void
 presence_buddy_list_init(SFLPhoneClient *client)
 {
+    // this function is called each time the buddy_list_window is created
+
     if(!presence_buddy_list) // should load and subscribe only once
-    // but this function is called each time the buddy_list_window is created
     {
         presence_setting_schema = client->settings;
         presence_buddy_list = g_list_alloc();
