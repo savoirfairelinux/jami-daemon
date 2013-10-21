@@ -1363,10 +1363,9 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
     std::string toUri;
     pj_str_t dst = { 0, 0 };
 
-    if (to.find("@") == std::string::npos) {
-        toUri = account->getToUri(to);
-        pj_cstr(&dst, toUri.c_str());
-    }
+    toUri = account->getToUri(to);
+    pj_cstr(&dst, toUri.c_str());
+    DEBUG("Transferring to %.*s", dst.slen, dst.ptr);
 
     if (!transferCommon(call, &dst))
         throw VoipLinkException("Couldn't transfer");
