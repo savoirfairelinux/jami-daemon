@@ -42,19 +42,6 @@
 const int OpenSLLayer::NB_BUFFER_PLAYBACK_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 const int OpenSLLayer::NB_BUFFER_CAPTURE_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 
-static long sawPtr = 0;
-static void generateSawTooth(short *buffer, int length)
-{
-    assert(nullptr != buffer);
-    assert(length > 0);
-
-    unsigned int i;
-
-    for (i = 0; i < length; ++i, ++sawPtr) {
-        buffer[i] = 32768 - ((sawPtr % 10) * 6600);
-    }
-}
-
 class OpenSLThread {
     public:
         OpenSLThread(OpenSLLayer *opensl);
@@ -136,7 +123,6 @@ OpenSLLayer::OpenSLLayer()
     , indexOut_(0)
     , indexRing_(0)
     , audioThread_(0)
-    , isStarted_(false)
     , engineObject_(0)
     , engineInterface_(0)
     , outputMixer_(0)
@@ -156,7 +142,12 @@ OpenSLLayer::OpenSLLayer()
 // Destructor
 OpenSLLayer::~OpenSLLayer()
 {
-    stopStream();
+    isStarted_ = false;
+    delete audioThread_;
+
+    /* Then close the audio devices */
+    stopAudioPlayback();
+    stopAudioCapture();
 }
 
 #define RECORD_AUDIO_TODISK
@@ -292,8 +283,8 @@ OpenSLLayer::initAudioPlayback()
 
     // Initnialize the audio format for this queue
     DEBUG("Setting audio format\n");
-    ERROR("Sampling Rate: %d", sampleRate_);
-	ERROR("getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
+    ERROR("Playback-> Sampling Rate: %d", sampleRate_);
+	ERROR("Playback-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
                                     sampleRate_ * 1000,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
@@ -386,6 +377,8 @@ OpenSLLayer::initAudioCapture()
                                            NB_BUFFER_CAPTURE_QUEUE
                                                            };
 
+	ERROR("Capture-> Sampling Rate: %d", sampleRate_);
+	ERROR("Capture-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
                                     sampleRate_ * 1000,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
@@ -685,17 +678,13 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     buffer.applyGain(captureGain_);
 
     if (resample) {
-        AudioBuffer out(buffer);
-        out.setSampleRate(sampleRate_);
-
+		int outSamples = buffer.frames() * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
+        AudioBuffer out(outSamples, 1, mainBufferSampleRate);
         converter_.resample(buffer, out);
         dcblocker_.process(out);
         mbuffer.putData(out, MainBuffer::DEFAULT_ID);
     } else {
         dcblocker_.process(buffer);
-#ifdef RECORD_TOMAIN_TODISK
-        opensl_tomainbuffer.write((char const *)in_ptr, toGetBytes /);
-#endif
         mbuffer.putData(buffer, MainBuffer::DEFAULT_ID);
     }
 }

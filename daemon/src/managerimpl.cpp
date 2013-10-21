@@ -2314,6 +2314,8 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 
     if (wasActive)
         audiodriver_->startStream();
+	else
+		ERROR("audio layer not active");
 }
 
 //THREAD=Main

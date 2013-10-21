@@ -219,8 +219,6 @@ class OpenSLLayer : public AudioLayer {
 
         OpenSLThread *audioThread_;
 
-        bool isStarted_;
-
         /**
          * OpenSL standard object interface
          */
