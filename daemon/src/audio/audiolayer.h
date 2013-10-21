@@ -70,15 +70,6 @@ class AudioLayer {
             SFL_PCM_RINGTONE = 0x0024       /** To open the ringtone device only */
         };
 
-        enum PlaybackMode {
-            NONE = 0,
-            TONE,
-            RINGTONE,
-            VOICE,
-            URGENT,
-            ZEROS
-        };
-
         AudioLayer();
         virtual ~AudioLayer();
 
@@ -110,14 +101,6 @@ class AudioLayer {
          */
         bool isStarted() const {
             return isStarted_;
-        }
-
-        PlaybackMode getPlaybackMode() const {
-            return playbackMode_;
-        }
-
-        void setPlaybackMode(PlaybackMode mode) {
-            playbackMode_ = mode;
         }
 
         /**
@@ -199,8 +182,6 @@ class AudioLayer {
          * Whether or not the audio layer stream is started
          */
         bool isStarted_;
-
-        PlaybackMode playbackMode_;
 
         /**
          * Urgent ring buffer used for ringtones
