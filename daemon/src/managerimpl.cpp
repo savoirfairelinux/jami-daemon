@@ -2275,10 +2275,10 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
         return;
     }
 
-    // Only modify internal sampling rate if new sampling rate is higher
+    // Only modify internal sampling rate if new sampling rate is different
     int currentSamplerate = mainBuffer_.getInternalSamplingRate();
 
-    if (currentSamplerate >= samplerate) {
+    if (currentSamplerate == samplerate) {
         DEBUG("No need to update audio layer sampling rate");
         return;
     } else

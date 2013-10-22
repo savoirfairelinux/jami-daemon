@@ -54,7 +54,7 @@ MainBuffer::~MainBuffer()
 
 void MainBuffer::setInternalSamplingRate(int sr)
 {
-    if (sr > internalSamplingRate_) {
+    if (sr != internalSamplingRate_) {
         flushAllBuffers();
         internalSamplingRate_ = sr;
     }
