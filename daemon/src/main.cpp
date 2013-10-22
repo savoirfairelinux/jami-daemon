@@ -173,13 +173,14 @@ int main(int argc, char *argv [])
         return 1;
     }
 
+    int ret = 0;
 #ifdef SFL_VIDEO
     WARN("Built with video support");
 #endif
 #if HAVE_DBUS
-    Manager::instance().run();
+    ret = Manager::instance().run();
 #endif
     Manager::instance().finish();
 
-    return 0;
+    return ret;
 }

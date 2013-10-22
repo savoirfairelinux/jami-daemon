@@ -685,7 +685,12 @@ void SIPVoIPLink::sendRegister(Account *a)
     SIPAccount *account = static_cast<SIPAccount*>(a);
 
     if (!account)
-        throw VoipLinkException("SipVoipLink: Account is not SIPAccount");
+        throw VoipLinkException("Account is NULL");
+    else if (not account->isEnabled()) {
+        WARN("Account must be enabled to register, ignoring");
+        return;
+    }
+
     try {
         sipTransport.createSipTransport(*account);
     } catch (const std::runtime_error &e) {
@@ -1162,14 +1167,17 @@ SIPVoIPLink::offhold(const std::string& id)
             // Create a new instance for this codec
             sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
-            if (ac == NULL)
+            if (ac == NULL) {
+                ERROR("Could not instantiate codec %d", i->getPayloadType());
                 throw VoipLinkException("Could not instantiate codec");
+            }
 
             audioCodecs.push_back(ac);
         }
 
-        if (audioCodecs.empty())
-            throw VoipLinkException("Could not instantiate codec");
+        if (audioCodecs.empty()) {
+            throw VoipLinkException("Could not instantiate any codecs");
+        }
 
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
@@ -1185,8 +1193,6 @@ SIPVoIPLink::offhold(const std::string& id)
         call->getAudioRtp().start(audioCodecs);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
-    } catch (...) {
-        throw VoipLinkException("Could not create audio rtp session");
     }
 
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
@@ -1357,10 +1363,9 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
     std::string toUri;
     pj_str_t dst = { 0, 0 };
 
-    if (to.find("@") == std::string::npos) {
-        toUri = account->getToUri(to);
-        pj_cstr(&dst, toUri.c_str());
-    }
+    toUri = account->getToUri(to);
+    pj_cstr(&dst, toUri.c_str());
+    DEBUG("Transferring to %.*s", dst.slen, dst.ptr);
 
     if (!transferCommon(call, &dst))
         throw VoipLinkException("Couldn't transfer");
@@ -1899,9 +1904,11 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
             try {
                 call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
-            } catch (...) {}
-
-            Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
+                Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
+            } catch (const AudioRtpFactoryException &e) {
+                ERROR("%s", e.what());
+                Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
+            }
         } else {
             ERROR("SDES negotiation failure");
             Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
@@ -1944,8 +1951,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             const int pl = i->getPayloadType();
 
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
-            if (!ac)
+            if (!ac) {
+                ERROR("Could not instantiate codec %d", pl);
                 throw std::runtime_error("Could not instantiate codec");
+            }
             audioCodecs.push_back(ac);
         }
         if (not audioCodecs.empty())

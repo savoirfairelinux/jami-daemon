@@ -214,16 +214,16 @@ void ManagerImpl::setPath(const std::string &path) {
 }
 
 #if HAVE_DBUS
-void ManagerImpl::run()
+int ManagerImpl::run()
 {
     DEBUG("Starting client event loop");
-    client_.event_loop();
+    return client_.event_loop();
 }
 #endif
 
-void ManagerImpl::interrupt()
+int ManagerImpl::interrupt()
 {
-    client_.exit();
+    return client_.exit();
 }
 
 void ManagerImpl::finish()
@@ -380,9 +380,6 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     // If sflphone is ringing
     stopTone();
 
-    // set playback mode to VOICE
-    if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::VOICE);
-
     // store the current call id
     std::string current_call_id(getCurrentCallId());
 
@@ -450,9 +447,6 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     std::string currentCallId(getCurrentCallId());
 
     stopTone();
-
-    // set playback mode to NONE
-    if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::NONE);
 
     DEBUG("Send call state change (HUNGUP) for id %s", callId.c_str());
     client_.getCallManager()->callStateChanged(callId, "HUNGUP");
@@ -1631,12 +1625,8 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     DEBUG("Peer answered call %s", id.c_str());
 
     // The if statement is usefull only if we sent two calls at the same time.
-    if (isCurrentCall(id)) {
+    if (isCurrentCall(id))
         stopTone();
-
-        // set playback mode to VOICE
-        if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::VOICE);
-    }
 
     // Connect audio streams
     addStream(id);
@@ -1674,9 +1664,6 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     } else if (isCurrentCall(call_id)) {
         stopTone();
         unsetCurrentCall();
-
-        // set playback mode to NONE
-        if (audiodriver_) audiodriver_->setPlaybackMode(AudioLayer::NONE);
     }
 
     /* Direct IP to IP call */

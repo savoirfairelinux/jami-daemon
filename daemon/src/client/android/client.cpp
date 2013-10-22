@@ -69,11 +69,15 @@ Client::~Client()
     delete callManager_;
 }
 
-void Client::event_loop()
-{}
+int Client::event_loop()
+{
+    return 0;
+}
 
-void Client::exit()
-{}
+int Client::exit()
+{
+    return 0;
+}
 
 CallManager *
 Client::getCallManager()

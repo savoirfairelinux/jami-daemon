@@ -151,8 +151,16 @@ void VideoRtpSession::start(int localPort)
         if (sender_)
             WARN("Restarting video sender");
 
-        sender_.reset(new VideoSender(callID_, txArgs_, *socketPair_));
-    } else {
+        try {
+            sender_.reset(new VideoSender(callID_, txArgs_, *socketPair_));
+        } catch (const VideoSenderException &e) {
+            ERROR("%s", e.what());
+            sending_ = false;
+        }
+    }
+
+    /* sending may have been set to false in previous block */
+    if (not sending_) {
         DEBUG("Video sending disabled");
         if (auto shared = videoLocal_.lock())
             shared->detach(sender_.get());

@@ -54,65 +54,55 @@ VideoSender::VideoSender(const std::string &id,
     , forceKeyFrame_(0)
     , frameNumber_(0)
     , sdp_()
-{ setup(); }
-
-bool VideoSender::setup()
 {
     const char *enc_name = args_["codec"].c_str();
 
-	/* Encoder setup */
-	if (!args_["width"].empty()) {
-		const char *s = args_["width"].c_str();
-		videoEncoder_->setOption("width", s);
-	} else {
-        ERROR("width option not set");
-        return false;
+    /* Encoder setup */
+    if (!args_["width"].empty()) {
+        const char *s = args_["width"].c_str();
+        videoEncoder_->setOption("width", s);
+    } else {
+        throw VideoSenderException("width option not set");
     }
 
-	if (!args_["height"].empty()) {
-		const char *s = args_["height"].c_str();
-		videoEncoder_->setOption("height", s);
-	} else {
-        ERROR("height option not set");
-        return false;
+    if (!args_["height"].empty()) {
+        const char *s = args_["height"].c_str();
+        videoEncoder_->setOption("height", s);
+    } else {
+        throw VideoSenderException("height option not set");
     }
 
-	videoEncoder_->setOption("bitrate", args_["bitrate"].c_str());
+    videoEncoder_->setOption("bitrate", args_["bitrate"].c_str());
 
-	if (!args_["framerate"].empty())
-		videoEncoder_->setOption("framerate", args_["framerate"].c_str());
+    if (!args_["framerate"].empty())
+        videoEncoder_->setOption("framerate", args_["framerate"].c_str());
 
-	if (!args_["parameters"].empty())
-		videoEncoder_->setOption("parameters", args_["parameters"].c_str());
+    if (!args_["parameters"].empty())
+        videoEncoder_->setOption("parameters", args_["parameters"].c_str());
 
     if (!args_["payload_type"].empty()) {
         DEBUG("Writing stream header for payload type %s",
-			  args_["payload_type"].c_str());
+              args_["payload_type"].c_str());
         videoEncoder_->setOption("payload_type", args_["payload_type"].c_str());
     }
 
-	if (videoEncoder_->openOutput(enc_name, "rtp", args_["destination"].c_str(),
-                                  NULL)) {
-        ERROR("encoder openOutput() failed");
-        return false;
-    }
+    if (videoEncoder_->openOutput(enc_name, "rtp", args_["destination"].c_str(),
+                                  NULL))
+        throw VideoSenderException("encoder openOutput() failed");
 
-	videoEncoder_->setIOContext(muxContext_);
-	if (videoEncoder_->startIO()) {
-        ERROR("encoder start failed");
-        return false;
-    }
+    videoEncoder_->setIOContext(muxContext_);
+    if (videoEncoder_->startIO())
+        throw VideoSenderException("encoder start failed");
 
-	videoEncoder_->print_sdp(sdp_);
-    return true;
+    videoEncoder_->print_sdp(sdp_);
 }
 
 void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
-	bool is_keyframe = forceKeyFrame_ > 0;
+    bool is_keyframe = forceKeyFrame_ > 0;
 
-	if (is_keyframe)
-		--forceKeyFrame_;
+    if (is_keyframe)
+        --forceKeyFrame_;
 
     if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
         ERROR("encoding failed");
