@@ -76,165 +76,168 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
     PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
     /* No need to pres->lock() here since the client has a locked dialog*/
 
-    if (pres_client) {
-        DEBUG("Subscription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
-              pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
+    if (!pres_client) {
+        WARN("pres_client not found");
+        return;
+    }
 
-        pjsip_evsub_state state = pjsip_evsub_get_state(sub);
+    DEBUG("Subscription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
+            pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
-        SIPPresence * pres = pres_client->getPresence();
+    pjsip_evsub_state state = pjsip_evsub_get_state(sub);
 
-        if (state == PJSIP_EVSUB_STATE_ACCEPTED) {
-            pres_client->enable(true);
-            Manager::instance().getClient()->getPresenceManager()->subscriptionStateChanged(
-                    pres->getAccount()->getAccountID(),
-                    pres_client->getURI().c_str(),
-                    PJ_TRUE);
+    SIPPresence * pres = pres_client->getPresence();
 
-        } else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
-            int resub_delay = -1;
-            pj_strdup_with_null(pres_client->pool_, &pres_client->term_reason_, pjsip_evsub_get_termination_reason(sub));
+    if (state == PJSIP_EVSUB_STATE_ACCEPTED) {
+        pres_client->enable(true);
+        Manager::instance().getClient()->getPresenceManager()->subscriptionStateChanged(
+                pres->getAccount()->getAccountID(),
+                pres_client->getURI().c_str(),
+                PJ_TRUE);
 
-            Manager::instance().getClient()->getPresenceManager()->subscriptionStateChanged(
-                    pres->getAccount()->getAccountID(),
-                    pres_client->getURI().c_str(),
-                    PJ_FALSE);
+    } else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
+        int resub_delay = -1;
+        pj_strdup_with_null(pres_client->pool_, &pres_client->term_reason_, pjsip_evsub_get_termination_reason(sub));
 
-            pres_client->term_code_ = 200;
+        Manager::instance().getClient()->getPresenceManager()->subscriptionStateChanged(
+                pres->getAccount()->getAccountID(),
+                pres_client->getURI().c_str(),
+                PJ_FALSE);
 
-            /* Determine whether to resubscribe automatically */
-            if (event && event->type == PJSIP_EVENT_TSX_STATE) {
-                const pjsip_transaction *tsx = event->body.tsx_state.tsx;
+        pres_client->term_code_ = 200;
 
-                if (pjsip_method_cmp(&tsx->method, &pjsip_subscribe_method) == 0) {
-                    pres_client->term_code_ = tsx->status_code;
-                    std::ostringstream os;
-                    os << pres_client->term_code_;
-                    const std::string error = os.str() + "/" +
-                        std::string(pres_client->term_reason_.ptr,
-                                pres_client->term_reason_.slen);
+        /* Determine whether to resubscribe automatically */
+        if (event && event->type == PJSIP_EVENT_TSX_STATE) {
+            const pjsip_transaction *tsx = event->body.tsx_state.tsx;
 
-                    std::string msg;
-                    bool subscribe_allowed = PJ_FALSE;
+            if (pjsip_method_cmp(&tsx->method, &pjsip_subscribe_method) == 0) {
+                pres_client->term_code_ = tsx->status_code;
+                std::ostringstream os;
+                os << pres_client->term_code_;
+                const std::string error = os.str() + "/" +
+                    std::string(pres_client->term_reason_.ptr,
+                            pres_client->term_reason_.slen);
 
-                    switch (tsx->status_code) {
-                        case PJSIP_SC_CALL_TSX_DOES_NOT_EXIST:
-                            /* 481: we refreshed too late? resubscribe
-                             * immediately.
-                             */
-                            /* But this must only happen when the 481 is received
-                             * on subscription refresh request. We MUST NOT try to
-                             * resubscribe automatically if the 481 is received
-                             * on the initial SUBSCRIBE (if server returns this
-                             * response for some reason).
-                             */
-                            if (pres_client->dlg_->remote.contact)
-                                resub_delay = 500;
-                            msg = "Bad subscribe refresh.";
-                            subscribe_allowed = PJ_TRUE;
-                            break;
+                std::string msg;
+                bool subscribe_allowed = PJ_FALSE;
 
-                        case PJSIP_SC_NOT_FOUND:
-                            msg = "Subscribe context not set for this buddy.";
-                            subscribe_allowed = PJ_TRUE;
-                            break;
-
-                        case PJSIP_SC_FORBIDDEN:
-                            msg = "Subscribe not allowed for this buddy.";
-                            subscribe_allowed = PJ_TRUE;
-                            break;
-
-                        case PJSIP_SC_PRECONDITION_FAILURE:
-                            msg = "Wrong server.";
-                            break;
-                    }
-                    Manager::instance().getClient()->getPresenceManager()->serverError(
-                            pres_client->getPresence()->getAccount()->getAccountID(),
-                            error,
-                            msg);
-
-                    if(!subscribe_allowed){
-                        pres_client->getPresence()->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, PJ_FALSE);
-                        Manager::instance().saveConfig();
-                        Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
-                    }
-
-                } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
-                    if (pres_client->isTermReason("deactivated") || pres_client->isTermReason("timeout")) {
-                        /* deactivated: The subscription has been terminated,
-                            * but the subscriber SHOULD retry immediately with
-                            * a new subscription.
-                            */
-                        /* timeout: The subscription has been terminated
-                         * because it was not refreshed before it expired.
-                         * Clients MAY re-subscribe immediately. The
-                         * "retry-after" parameter has no semantics for
-                         * "timeout".
+                switch (tsx->status_code) {
+                    case PJSIP_SC_CALL_TSX_DOES_NOT_EXIST:
+                        /* 481: we refreshed too late? resubscribe
+                         * immediately.
                          */
-                        resub_delay = 500;
-                    } else if (pres_client->isTermReason("probation") || pres_client->isTermReason("giveup")) {
-                        /* probation: The subscription has been terminated,
-                         * but the client SHOULD retry at some later time.
-                         * If a "retry-after" parameter is also present, the
-                         * client SHOULD wait at least the number of seconds
-                         * specified by that parameter before attempting to re-
-                         * subscribe.
+                        /* But this must only happen when the 481 is received
+                         * on subscription refresh request. We MUST NOT try to
+                         * resubscribe automatically if the 481 is received
+                         * on the initial SUBSCRIBE (if server returns this
+                         * response for some reason).
                          */
-                        /* giveup: The subscription has been terminated because
-                         * the notifier could not obtain authorization in a
-                         * timely fashion.  If a "retry-after" parameter is
-                         * also present, the client SHOULD wait at least the
-                         * number of seconds specified by that parameter before
-                         * attempting to re-subscribe; otherwise, the client
-                         * MAY retry immediately, but will likely get put back
-                         * into pending state.
-                         */
-                        const pjsip_sub_state_hdr *sub_hdr;
-                        pj_str_t sub_state = CONST_PJ_STR("Subscription-State");
-                        const pjsip_msg *msg;
+                        if (pres_client->dlg_->remote.contact)
+                            resub_delay = 500;
+                        msg = "Bad subscribe refresh.";
+                        subscribe_allowed = PJ_TRUE;
+                        break;
 
-                        msg = event->body.tsx_state.src.rdata->msg_info.msg;
-                        sub_hdr = (const pjsip_sub_state_hdr*) pjsip_msg_find_hdr_by_name(msg, &sub_state, NULL);
+                    case PJSIP_SC_NOT_FOUND:
+                        msg = "Subscribe context not set for this buddy.";
+                        subscribe_allowed = PJ_TRUE;
+                        break;
 
-                        if (sub_hdr && sub_hdr->retry_after > 0)
-                            resub_delay = sub_hdr->retry_after * 1000;
-                    }
+                    case PJSIP_SC_FORBIDDEN:
+                        msg = "Subscribe not allowed for this buddy.";
+                        subscribe_allowed = PJ_TRUE;
+                        break;
 
+                    case PJSIP_SC_PRECONDITION_FAILURE:
+                        msg = "Wrong server.";
+                        break;
                 }
+                Manager::instance().getClient()->getPresenceManager()->serverError(
+                        pres_client->getPresence()->getAccount()->getAccountID(),
+                        error,
+                        msg);
+
+                if(!subscribe_allowed){
+                    pres_client->getPresence()->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, PJ_FALSE);
+                    Manager::instance().saveConfig();
+                    Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
+                }
+
+            } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
+                if (pres_client->isTermReason("deactivated") || pres_client->isTermReason("timeout")) {
+                    /* deactivated: The subscription has been terminated,
+                     * but the subscriber SHOULD retry immediately with
+                     * a new subscription.
+                     */
+                    /* timeout: The subscription has been terminated
+                     * because it was not refreshed before it expired.
+                     * Clients MAY re-subscribe immediately. The
+                     * "retry-after" parameter has no semantics for
+                     * "timeout".
+                     */
+                    resub_delay = 500;
+                } else if (pres_client->isTermReason("probation") || pres_client->isTermReason("giveup")) {
+                    /* probation: The subscription has been terminated,
+                     * but the client SHOULD retry at some later time.
+                     * If a "retry-after" parameter is also present, the
+                     * client SHOULD wait at least the number of seconds
+                     * specified by that parameter before attempting to re-
+                     * subscribe.
+                     */
+                    /* giveup: The subscription has been terminated because
+                     * the notifier could not obtain authorization in a
+                     * timely fashion.  If a "retry-after" parameter is
+                     * also present, the client SHOULD wait at least the
+                     * number of seconds specified by that parameter before
+                     * attempting to re-subscribe; otherwise, the client
+                     * MAY retry immediately, but will likely get put back
+                     * into pending state.
+                     */
+                    const pjsip_sub_state_hdr *sub_hdr;
+                    pj_str_t sub_state = CONST_PJ_STR("Subscription-State");
+                    const pjsip_msg *msg;
+
+                    msg = event->body.tsx_state.src.rdata->msg_info.msg;
+                    sub_hdr = (const pjsip_sub_state_hdr*) pjsip_msg_find_hdr_by_name(msg, &sub_state, NULL);
+
+                    if (sub_hdr && sub_hdr->retry_after > 0)
+                        resub_delay = sub_hdr->retry_after * 1000;
+                }
+
             }
-
-            /* For other cases of subscription termination, if resubscribe
-             * timer is not set, schedule with default expiration (plus minus
-             * some random value, to avoid sending SUBSCRIBEs all at once)
-             */
-            if (resub_delay == -1) {
-                resub_delay = PRES_TIMER * 1000;
-            }
-
-            pres_client->sub_ = sub;
-            pres_client->rescheduleTimer(PJ_TRUE, resub_delay);
-
-        } else { //state==ACTIVE ......
-            //This will clear the last termination code/reason
-            pres_client->term_code_ = 0;
-            pres_client->term_reason_.ptr = NULL;
         }
 
-        /* Clear subscription */
-        if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
-            pjsip_evsub_terminate(pres_client->sub_, PJ_FALSE); // = NULL;
-            pres_client->status_.info_cnt = 0;
-            pres_client->dlg_ = NULL;
-            pres_client->rescheduleTimer(PJ_FALSE, 0);
-            pjsip_evsub_set_mod_data(sub, modId_, NULL);
-
-            pres_client->enable(false);
+        /* For other cases of subscription termination, if resubscribe
+         * timer is not set, schedule with default expiration (plus minus
+         * some random value, to avoid sending SUBSCRIBEs all at once)
+         */
+        if (resub_delay == -1) {
+            resub_delay = PRES_TIMER * 1000;
         }
+
+        pres_client->sub_ = sub;
+        pres_client->rescheduleTimer(PJ_TRUE, resub_delay);
+
+    } else { //state==ACTIVE ......
+        //This will clear the last termination code/reason
+        pres_client->term_code_ = 0;
+        pres_client->term_reason_.ptr = NULL;
+    }
+
+    /* Clear subscription */
+    if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+        pjsip_evsub_terminate(pres_client->sub_, PJ_FALSE); // = NULL;
+        pres_client->status_.info_cnt = 0;
+        pres_client->dlg_ = NULL;
+        pres_client->rescheduleTimer(PJ_FALSE, 0);
+        pjsip_evsub_set_mod_data(sub, modId_, NULL);
+
+        pres_client->enable(false);
     }
 }
 
 /* Callback when transaction state has changed. */
-void
+    void
 PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pjsip_event *event)
 {
 
@@ -491,7 +494,7 @@ bool PresSubClient::unsubscribe()
         return false;
     }
 
-    pjsip_evsub_set_mod_data(sub_, modId_, NULL);   // Not interested with further events
+    //pjsip_evsub_set_mod_data(sub_, modId_, NULL);   // Not interested with further events
 
     unlock();
     return true;
@@ -504,7 +507,7 @@ bool PresSubClient::subscribe()
 
     if (sub_ and dlg_) { //do not bother if already subscribed
         pjsip_evsub_terminate(sub_, PJ_FALSE);
-        DEBUG("Terminate existing sub.");
+        DEBUG("PreseSubClient %s: already subscribed. Refresh it.", uri_.ptr);
     }
 
     //subscribe
@@ -519,8 +522,7 @@ bool PresSubClient::subscribe()
     pres_callback.on_rx_notify = &pres_client_evsub_on_rx_notify;
 
     SIPAccount * acc = pres_->getAccount();
-    DEBUG("PresSubClient %s: subscribing presence,using %s..",
-          uri_.ptr, acc->getAccountID().c_str());
+    DEBUG("PresSubClient %s: subscribing ", uri_.ptr);
 
 
     /* Create UAC dialog */

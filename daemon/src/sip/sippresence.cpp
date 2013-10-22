@@ -44,8 +44,8 @@
 #include "pres_sub_client.h"
 #include "sipvoiplink.h"
 
-#define MAX_N_SUB_SERVER 20
-#define MAX_N_SUB_CLIENT 20
+#define MAX_N_SUB_SERVER 50
+#define MAX_N_SUB_CLIENT 50
 
 SIPPresence::SIPPresence(SIPAccount *acc)
     : publish_sess_()
@@ -205,10 +205,12 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
     /* Check if the buddy was already subscribed */
     for (const auto & c : sub_client_list_) {
         if (c->getURI() == uri) {
-            DEBUG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
-            delete c;
-            removePresSubClient(c);
-            break;
+            //DEBUG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
+            if(flag)
+                c->subscribe();
+            else
+                c->unsubscribe();
+            return;
         }
     }
 
