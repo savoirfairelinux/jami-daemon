@@ -287,13 +287,12 @@ presence_buddy_list_edit_buddy(buddy_t * buddy, buddy_t * backup)
     }
 }
 
-
 void
 presence_buddy_list_add_buddy(buddy_t * buddy)
 {
     if(presence_buddy_list_get_buddy(buddy)==NULL)
     {
-        g_debug("Presence : add buddy:(%s, %s).", buddy->acc, buddy->uri);
+        g_debug("Presence : add buddy (%s, %s).", buddy->acc, buddy->uri);
         presence_buddy_list = g_list_append(presence_buddy_list, (gpointer)buddy);
         presence_buddy_list_save();
         buddy->subscribed = FALSE;
@@ -384,8 +383,8 @@ presence_buddy_create()
 {
     buddy_t *b = g_malloc(sizeof(buddy_t));
     b->acc = g_strdup("");
-    b->uri = g_strdup("");
-    b->group = g_strdup("_");
+    b->uri = g_strdup("username");
+    b->group = g_strdup("Group");
     b->alias = g_strdup("");
     b->subscribed = FALSE;
     b->status = FALSE;
@@ -425,7 +424,6 @@ presence_buddy_subscribe(buddy_t * buddy, gboolean flag)
 }
 
 /********************************* group list functions *************************/
-
 
 void
 presence_group_list_init()

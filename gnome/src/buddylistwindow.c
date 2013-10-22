@@ -40,7 +40,6 @@
 #include "account_schema.h"
 #include "accountlist.h"
 #include "actions.h"
-#include "presence.h"
 #include "dbus.h"
 #include "str_utils.h"
 
@@ -218,7 +217,7 @@ update_buddylist_view()
 
 /***************************** dialog win **********************************/
 
-static gboolean
+gboolean
 show_buddy_info(const gchar *title, buddy_t *b)
 {
     GtkWidget *dialog = gtk_dialog_new_with_buttons((title),

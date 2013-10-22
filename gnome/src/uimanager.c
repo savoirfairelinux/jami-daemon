@@ -65,6 +65,7 @@
 
 #ifdef SFL_PRESENCE
 #include "buddylistwindow.h"
+#include "presence.h"
 #endif
 
 typedef struct
@@ -1219,6 +1220,41 @@ edit_number_cb(G_GNUC_UNUSED GtkWidget *widget, EditNumberData *data)
     g_free(data);
 }
 
+#ifdef SFL_PRESENCE
+void
+add_presence_subscription_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED calltab_t * tab)
+{
+    callable_obj_t * c = calltab_get_selected_call(tab);
+    buddy_t * b = presence_buddy_create();
+
+    g_free(b->alias);
+    g_free(b->uri);
+    g_free(b->acc);
+
+    if(g_strcmp0(c->_accountID, "") == 0)
+    {
+        account_t *acc = account_list_get_current() ;
+        b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
+    }
+    else
+        b->acc = g_strdup(c->_accountID);
+
+    b->alias = g_strdup(c->_display_name);
+    b->uri = g_strdup(c->_peer_number);
+
+    g_debug("Presence : trying to create a new subscription (%s,%s)", b->uri, b->acc);
+
+    // popup
+    if(show_buddy_info(_("Add new buddy"), b))
+    {
+        presence_buddy_list_add_buddy(b);
+        update_buddylist_view();
+    }
+    else
+        presence_buddy_delete(b);
+}
+#endif
+
 void
 add_registered_accounts_to_menu(GtkWidget *menu)
 {
@@ -1445,11 +1481,10 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                 gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
                 g_signal_connect(G_OBJECT(menu_items), "activate",
                                  G_CALLBACK(call_im),
-                                 client);
+                                 selectedCall);
                 gtk_widget_show(menu_items);
             }
         }
-
     } else {
         g_debug("Build conf menus");
 
@@ -1508,6 +1543,17 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
         gtk_widget_show(menu_items);
     }
 
+#ifdef SFL_PRESENCE
+    if (selectedCall) {
+        GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("See status"));
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
+        if(!presence_buddy_list_get())
+            gtk_widget_set_sensitive(menu_items, FALSE);
+        g_signal_connect(G_OBJECT(menu_items), "activate", G_CALLBACK(add_presence_subscription_cb), history_tab);
+        gtk_widget_show(menu_items);
+    }
+#endif
+
     GtkWidget *separator = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), separator);
     gtk_widget_show(separator);
@@ -1556,6 +1602,15 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), new_call);
         g_signal_connect(new_call, "activate", G_CALLBACK(call_back), client);
         gtk_widget_show(new_call);
+
+#ifdef SFL_PRESENCE
+        GtkWidget * presence = gtk_image_menu_item_new_with_mnemonic(_("See status"));
+        if(!presence_buddy_list_get()) // TODO && subscribe spported
+            gtk_widget_set_sensitive(presence, FALSE);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), presence);
+        g_signal_connect(G_OBJECT(presence), "activate", G_CALLBACK(add_presence_subscription_cb), contacts_tab);
+        gtk_widget_show(presence);
+#endif
 
         GtkWidget *edit = gtk_image_menu_item_new_from_stock(GTK_STOCK_EDIT,
                           get_accel_group());

@@ -32,6 +32,7 @@
 #define __BUDDYLISTWINDOW_H__
 
 #include "sflphone_client.h"
+#include "presence.h"
 
 #define BUDDYLIST_WINDOW_WIDTH 280
 #define BUDDYLIST_WINDOW_HEIGHT 320
@@ -39,7 +40,7 @@
 /** @file buddylistwindow.h
   * @brief The main window of the client.
   */
-
+gboolean show_buddy_info(const gchar *title, buddy_t *b);
 void update_buddylist_view();
 void destroy_buddylist_window();
 void create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action);
