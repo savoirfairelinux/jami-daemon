@@ -65,9 +65,9 @@
                 New clients connecting to existing daemon need to be aware of active
                 subscriptions.
             </tp:rationale>
-            <!--TODO<annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString"/>
+            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString">
                 While there is more status than "Online" or "Offline", only those
-            </annotation>-->
+            </annotation>
             <arg type="s" name="accountID" direction="in">
             </arg>
             <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
@@ -102,28 +102,6 @@
 
         <!-- SIGNALS !-->
 
-       <signal name="subscriptionStateChanged" tp:name-for-bindings="subscriptionStateChanged">
-            <tp:added version="1.3.0"/>
-            <tp:docstring>
-                Notify when a the server changes the state of a subscription.
-            </tp:docstring>
-            <arg type="s" name="accountID">
-                <tp:docstring>
-                    The associated account
-                </tp:docstring>
-            </arg>
-            <arg type="s" name="buddyUri">
-                <tp:docstring>
-                    The registered URI
-                </tp:docstring>
-            </arg>
-            <arg type="b" name="state">
-                <tp:docstring>
-                    True/ false when the subscription is active/termintated.
-                </tp:docstring>
-            </arg>
-        </signal>
-
         <signal name="newBuddyNotification" tp:name-for-bindings="newBuddyNotification">
             <tp:added version="1.3.0"/>
             <tp:docstring>
@@ -147,6 +125,28 @@
             <arg type="s" name="lineStatus">
                 <tp:docstring>
                     A string containing informations from the user (human readable)
+                </tp:docstring>
+            </arg>
+        </signal>
+
+        <signal name="subscriptionStateChanged" tp:name-for-bindings="subscriptionStateChanged">
+            <tp:added version="1.3.0"/>
+            <tp:docstring>
+                Notify when a the server changes the state of a subscription.
+            </tp:docstring>
+            <arg type="s" name="accountID">
+                <tp:docstring>
+                    The associated account
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="buddyUri">
+                <tp:docstring>
+                    The registered URI
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="state">
+                <tp:docstring>
+                    True/ false when the subscription is active/termintated.
                 </tp:docstring>
             </arg>
         </signal>
