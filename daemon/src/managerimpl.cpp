@@ -2555,9 +2555,11 @@ namespace {
     }
 
 #if HAVE_IAX
-    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, AccountMap &iaxAccountMap, int &errorCount)
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap,
+                     AccountMap &iaxAccountMap, int &errorCount, const std::string &accountOrder)
 #else
-    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, int &errorCount)
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, int &errorCount,
+                     const std::string &accountOrder)
 #endif
     {
         if (!item) {
@@ -2574,9 +2576,14 @@ namespace {
 
         std::string accountAlias;
         item->getValue("alias", &accountAlias);
+        const auto inAccountOrder = [&] (const std::string &id) {
+            return accountOrder.find(id + "/") != std::string::npos; };
 
-        if (!accountid.empty() and !accountAlias.empty() and accountid != SIPAccount::IP2IP_PROFILE) {
-            if (accountType == "SIP") {
+        if (!accountid.empty() and !accountAlias.empty() and
+            accountid != SIPAccount::IP2IP_PROFILE) {
+            if (not inAccountOrder(accountid)) {
+                WARN("Dropping account %s, which is not in account order", accountid.c_str());
+            } else if (accountType == "SIP") {
                 Account *a = new SIPAccount(accountid, true);
                 sipAccountMap[accountid] = a;
                 a->unserialize(*item);
@@ -2667,14 +2674,16 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     }
 #endif
 
+    const std::string accountOrder = preferences.getAccountOrder();
+
     AccountMap &sipAccounts = SIPVoIPLink::instance()->getAccounts();
 #if HAVE_IAX
     AccountMap &iaxAccounts = IAXVoIPLink::getAccounts();
     for (auto &s : *seq)
-        loadAccount(s, sipAccounts, iaxAccounts, errorCount);
+        loadAccount(s, sipAccounts, iaxAccounts, errorCount, accountOrder);
 #else
     for (auto &s : *seq)
-        loadAccount(s, sipAccounts, errorCount);
+        loadAccount(s, sipAccounts, errorCount, accountOrder);
 #endif
 
     return errorCount;
