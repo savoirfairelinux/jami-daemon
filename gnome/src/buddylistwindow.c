@@ -53,7 +53,7 @@ static GtkTreeModel *create_and_fill_buddylist_tree (void);
 static GtkWidget *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 
-#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
+//#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
 
 /***************************** tree view **********************************/
 

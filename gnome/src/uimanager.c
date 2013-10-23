@@ -1604,10 +1604,22 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
         gtk_widget_show(new_call);
 
 #ifdef SFL_PRESENCE
-        GtkWidget * presence = gtk_image_menu_item_new_with_mnemonic(_("See status"));
-        if(!presence_buddy_list_get()) // TODO && subscribe spported
-            gtk_widget_set_sensitive(presence, FALSE);
+        GtkWidget *presence = gtk_image_menu_item_new_wit  h_mnemonic(_("See status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), presence);
+
+        /*account_t * acc = account_list_get_by_id(selectedCall->_accountID);
+        if(acc)
+        {
+            if((acc->state != ACCOUNT_STATE_REGISTERED) ||
+                    !account_lookup(acc, CONFIG_PRESENCE_ENABLED) ||
+                    !account_lookup(acc, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED) ||
+                    !presence_buddy_list_get())
+                gtk_widget_set_sensitive(presence, FALSE);
+        }*/
+
+        if(!presence_buddy_list_get())
+            gtk_widget_set_sensitive(presence, FALSE);
+
         g_signal_connect(G_OBJECT(presence), "activate", G_CALLBACK(add_presence_subscription_cb), contacts_tab);
         gtk_widget_show(presence);
 #endif
