@@ -782,8 +782,11 @@ void SIPVoIPLink::sendRegister(Account *a)
         pjsip_transport_dec_ref(account->transport_);
 
     // pjsip_regc_send increment the transport ref count by one,
-    if (pjsip_regc_send(regc, tdata) != PJ_SUCCESS)
+    pj_status_t status;
+    if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
+        sip_strerror(status);
         throw VoipLinkException("Unable to send account registration request");
+    }
 
     // Decrease transport's ref count, since coresponding reference counter decrementation
     // is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
@@ -822,8 +825,11 @@ void SIPVoIPLink::sendUnregister(Account *a)
     if (pjsip_regc_unregister(regc, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to unregister sip account");
 
-    if (pjsip_regc_send(regc, tdata) != PJ_SUCCESS)
+    pj_status_t status;
+    if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
+        sip_strerror(status);
         throw VoipLinkException("Unable to send request to unregister sip account");
+    }
 
     account->setRegister(false);
 }
