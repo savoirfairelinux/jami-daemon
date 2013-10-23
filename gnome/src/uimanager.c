@@ -1604,7 +1604,7 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
         gtk_widget_show(new_call);
 
 #ifdef SFL_PRESENCE
-        GtkWidget *presence = gtk_image_menu_item_new_wit  h_mnemonic(_("See status"));
+        GtkWidget *presence = gtk_image_menu_item_new_with_mnemonic(_("See status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), presence);
 
         /*account_t * acc = account_list_get_by_id(selectedCall->_accountID);
