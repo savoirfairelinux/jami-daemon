@@ -607,8 +607,10 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
                 int err;
 
-                if ((err = snd_ctl_pcm_info(handle , pcminfo)) < 0) {
-                    WARN("Cannot get info: %s", snd_strerror(err));
+                if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
+                    WARN("Cannot get info for %s %s: %s", getCapture ?
+                         "capture device" : "playback device", name.c_str(),
+                         snd_strerror(err));
                 } else {
                     DEBUG("card %i : %s [%s]",
                           numCard,
