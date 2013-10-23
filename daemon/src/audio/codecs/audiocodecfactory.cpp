@@ -40,6 +40,7 @@
 #include <dlfcn.h>
 #include <algorithm> // for std::find
 #include <dlfcn.h>
+#include <stdexcept>
 
 #include "audiocodec.h"
 #include "audiocodecfactory.h"
