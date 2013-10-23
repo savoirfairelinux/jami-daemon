@@ -102,7 +102,7 @@
             <description>Search phone mobile</description>
         </key>
         <key name="presence-buddy-list" type="aa{ss}">
-            <default>[{"uri":"","acc":"","alias":""}]</default>
+            <default>[]</default>
             <summary>Search phone mobile</summary>
             <description>Search phone mobile</description>
         </key>

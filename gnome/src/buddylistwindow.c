@@ -110,26 +110,37 @@ create_and_fill_buddylist_tree (void)
         {
             buddy = presence_buddy_list_get_nth(j);
             account_t *acc = account_list_get_by_id(buddy->acc);
-            if((g_strcmp0(buddy->group, group)==0) &&
-                (acc->state == ACCOUNT_STATE_REGISTERED))
+            if(acc)
             {
-                gtk_tree_store_append(treestore, &child, &toplevel);
-                gtk_tree_store_set(treestore, &child,
-                        COLUMN_OVERVIEW, "",
-                        COLUMN_ALIAS, buddy->alias,
-                        COLUMN_GROUP, buddy->group,
-                        COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
-                        COLUMN_NOTE,  buddy->note,
-                        COLUMN_URI,  buddy->uri,
-                        COLUMN_ACCOUNTID, buddy->acc,
-                        COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
-                        -1);
+                if((g_strcmp0(buddy->group, group)==0) &&
+                        (acc->state == ACCOUNT_STATE_REGISTERED))
+                {
+                    gtk_tree_store_append(treestore, &child, &toplevel);
+                    gtk_tree_store_set(treestore, &child,
+                            COLUMN_OVERVIEW, "",
+                            COLUMN_ALIAS, buddy->alias,
+                            COLUMN_GROUP, buddy->group,
+                            COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
+                            COLUMN_NOTE,  buddy->note,
+                            COLUMN_URI,  buddy->uri,
+                            COLUMN_ACCOUNTID, buddy->acc,
+                            COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
+                            -1);
+                }
             }
         }
     }
 
     return GTK_TREE_MODEL(treestore);
 }
+
+/*void cell_edited(GtkCellRendererText *renderer,
+    gchar *path,
+    gchar *new_text,
+    GtkTreeView *treeview)
+{
+    g_print("++++++++++++++++++++++++++");
+}*/
 
 static GtkWidget *
 create_view (void)
@@ -139,13 +150,24 @@ create_view (void)
     GtkWidget *view;
 
     view = gtk_tree_view_new();
-
+/*
+    GtkCellRenderer *cell = gtk_cell_renderer_text_new ();
+    g_object_set (cell, "editable", TRUE, NULL);
+    g_signal_connect (cell, "edited",G_CALLBACK(cell_edited), view);
+    //g_object_set_data (G_OBJECT (cell),
+    //        "column", GINT_TO_POINTER (COLUMN_OVERVIEW));
+    col = gtk_tree_view_column_new_with_attributes (
+            "Key", cell,
+            "text", COLUMN_OVERVIEW,
+            "title", "super",
+            NULL);
+*/
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, _(""));
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_OVERVIEW);
+     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_OVERVIEW);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, _("Buddies"));
