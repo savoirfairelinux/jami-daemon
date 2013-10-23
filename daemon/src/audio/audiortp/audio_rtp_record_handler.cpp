@@ -387,6 +387,9 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
 #endif
 
+    // ensure that decoded buffer's reported sample rate value
+    // is consistent with our decoder.
+    audioRtpRecord_.decData_.setSampleRate(getCodecSampleRate());
     audioRtpRecord_.fadeInDecodedData();
 
     // Normalize incoming signal
@@ -400,6 +403,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
         RETURN_IF_NULL(audioRtpRecord_.converterDecode_, "Converter already destroyed");
+        audioRtpRecord_.resampledData_.setSampleRate(mainBufferSampleRate);
         out = &(audioRtpRecord_.resampledData_);
         // Do sample rate conversion
         audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledData_);
