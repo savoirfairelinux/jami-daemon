@@ -356,8 +356,6 @@ void checkSoundCard(int &card, AudioLayer::PCMType stream)
         WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
-
-    card = ALSA_DFT_CARD_ID;
 }
 #endif
 }
