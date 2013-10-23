@@ -111,7 +111,7 @@ presence_buddy_list_load()
         buddy->group = g_strdup(g_variant_get_data(v_group));
         buddy->uri = g_strdup(g_variant_get_data(v_uri));
 
-        g_debug("Presence : found buddy:(bud: %s).", buddy->uri);
+        g_debug("Presence : load buddy %s.", buddy->uri);
         presence_buddy_list = g_list_append(presence_buddy_list, (gpointer)buddy);
     }
 }
@@ -141,7 +141,7 @@ presence_buddy_list_save()
             g_variant_builder_add (v_b_buddy, "{ss}", "uri", buddy->uri);
             GVariant * v_buddy = g_variant_builder_end(v_b_buddy);
             const gchar *msg = g_variant_print(v_buddy,TRUE);
-            g_print("Presence : saved buddy: %s \n", msg);
+            g_debug("Presence : saved buddy: %s", msg);
             g_free((gchar*)msg);
             g_variant_builder_add_value(v_b_list, v_buddy);
         }
@@ -171,7 +171,7 @@ presence_buddy_list_get_buddy(buddy_t * buddy)
         if((g_strcmp0(buddy->uri, b->uri)==0) &&
                     (g_strcmp0(buddy->acc, b->acc)==0))
         {
-            g_debug ("Found buddy:(%s,%s).", b->uri, b->acc);
+            g_debug ("Presence : get buddy %s.", b->uri);
             return b;
         }
         tmp = g_list_next (tmp);
@@ -197,7 +197,7 @@ presence_buddy_list_get_link(buddy_t * buddy)
         if((g_strcmp0(buddy->uri, b->uri)==0) &&
                     (g_strcmp0(buddy->acc, b->acc)==0))
         {
-            g_debug ("Found buddy:(%s,%s).", b->uri, b->acc);
+            g_debug ("Presence: get buddy link %s.", b->uri);
             return tmp;
         }
         tmp = g_list_next (tmp);
@@ -222,7 +222,7 @@ presence_buddy_list_buddy_get_by_string(const gchar *accID, const gchar *uri){
         if((g_strcmp0(uri, b->uri)==0) &&
                     (g_strcmp0(accID, b->acc)==0))
         {
-            g_debug ("Found buddy:(%s,%s).", b->acc, b->uri);
+            g_debug ("Presence: get buddy:(%s,%s).", b->acc, b->uri);
             return b;
         }
         tmp = g_list_next (tmp);
@@ -246,7 +246,7 @@ presence_buddy_list_buddy_get_by_uri(const gchar *uri){
         b = (buddy_t *)(tmp->data);
         if(g_strcmp0(uri, b->uri)==0)
         {
-            g_debug ("Found buddy:(%s,%s).", b->acc, b->uri);
+            g_debug ("Presence: get buddy %s.", b->uri);
             return b;
         }
         tmp = g_list_next (tmp);
@@ -302,7 +302,7 @@ presence_buddy_list_remove_buddy(buddy_t * buddy)
     {
         buddy_t * b = (buddy_t*) (node->data);
         g_debug("Presence : remove buddy:(%s).", b->uri);
-        presence_buddy_subscribe(b, FALSE);
+        //presence_buddy_subscribe(b, FALSE);
         presence_buddy_list = g_list_remove_link(presence_buddy_list, node);
         presence_buddy_delete(b);
         presence_buddy_list_save();
@@ -315,15 +315,17 @@ presence_buddy_list_remove_buddy(buddy_t * buddy)
 void
 presence_buddy_list_print()
 {
+#ifdef PRESENCE_DEBUG
     GList *tmp = g_list_nth(presence_buddy_list,1);
     buddy_t * buddy;
-    g_print("-------- Print buddy list:\n");
+    g_debug("Print buddy list:");
     while (tmp)
     {
         buddy = (buddy_t *)(tmp->data);
-        g_print ("buddy:(%s,%s,%s).\n", buddy->acc, buddy->alias, buddy->uri);
+        g_debug("-----(%s,%s,%s)", buddy->acc, buddy->alias, buddy->uri);
         tmp = g_list_next (tmp);
     }
+#endif
 }
 
 GList *
@@ -505,15 +507,17 @@ presence_group_list_remove_group(const gchar *group)
 void
 presence_group_list_print()
 {
+#ifdef PRESENCE_DEBUG
     GList *tmp = g_list_nth(presence_group_list,1);
     gchar *group;
-    g_print("-------- Print group list:\n");
+    g_debug("Print group list:\n");
     while (tmp)
     {
         group = (gchar *)(tmp->data);
-        g_print ("group: %s.\n", group);
+        g_debug("------ %s.\n", group);
         tmp = g_list_next (tmp);
     }
+#endif
 }
 
 GList *
@@ -564,7 +568,7 @@ presence_group_list_get_link(const gchar *group)
     {
         if(g_strcmp0(group, (gchar *)(tmp->data))==0)
         {
-            g_debug ("Found groupe: %s.", group);
+            g_debug ("Presence: get groupe link %s.", group);
             return tmp;
         }
         tmp = g_list_next (tmp);
