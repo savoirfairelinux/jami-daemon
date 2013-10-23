@@ -100,6 +100,9 @@ presence_buddy_list_load()
         v_alias = g_variant_lookup_value(v_buddy,"alias",G_VARIANT_TYPE_STRING);
         v_group = g_variant_lookup_value(v_buddy,"group",G_VARIANT_TYPE_STRING);
         v_uri = g_variant_lookup_value(v_buddy,"uri",G_VARIANT_TYPE_STRING);
+        // check format
+        if((v_acc==NULL)||(v_alias==NULL)||(v_group==NULL)||(v_uri==NULL))
+            continue;
 
         buddy = presence_buddy_create();
         g_free(buddy->acc);

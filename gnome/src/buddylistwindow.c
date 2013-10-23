@@ -52,8 +52,11 @@ static GtkWidget *presence_status_bar;
 static GtkTreeModel *create_and_fill_buddylist_tree (void);
 static GtkWidget *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
+static buddy_t *view_get_buddy(GtkTreeView *treeview, GtkTreePath *path);
+static gchar *view_get_group(GtkTreeView *treeview, GtkTreePath *path);
+void update_buddylist_view();
 
-//#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
+buddy_t * tmp_buddy;
 
 /***************************** tree view **********************************/
 
@@ -297,16 +300,18 @@ show_buddy_info(const gchar *title, buddy_t *b)
     GtkWidget *combo_group = gtk_combo_box_text_new();
     // fill combox with existing groups
     guint group_index = 0;
+    guint group_count = 0;
     gchar *group;
     for (guint i = 1; i < presence_group_list_get_size(); i++)
     {
         group = presence_group_list_get_nth(i);
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_group), group);
+        group_count++;
         // set active group
         if(g_strcmp0(group, b->group) == 0)
-            group_index = i-1;
+            group_index = i;
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index - 1);
 
     gtk_grid_attach(GTK_GRID(grid), combo_group, 1, row, 1, 1);
 
@@ -336,15 +341,20 @@ show_buddy_info(const gchar *title, buddy_t *b)
     // update buddy OK was pressed
     if (response == GTK_RESPONSE_APPLY)
     {
-        gchar * gr = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_group));
+        // FIXME: this function doesn't work as expected
+        // if(gtk_combo_box_get_has_entry(GTK_COMBO_BOX(combo_group)))
+        if(group_count > 0)
+        {
+            gchar * gr = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_group));
+            g_free(b->group);
+            b->group = g_strdup(gr);
+            g_free(gr);
+        }
 
-        g_free(b->group);
         g_free(b->alias);
         g_free(b->uri);
-        b->group = g_strdup(gr);
         b->alias = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_alias)));
         b->uri = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_uri)));
-        g_free(gr);
 
         gtk_widget_destroy(dialog);
         return TRUE;
@@ -468,9 +478,17 @@ view_popup_menu_onEditBuddy (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdat
 }
 
 static void
-view_popup_menu_onAddBuddy (G_GNUC_UNUSED GtkWidget *menuitem, G_GNUC_UNUSED gpointer userdata)
+view_popup_menu_onAddBuddy (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     buddy_t *b = presence_buddy_create();
+
+    // try to grab the selected group
+    if(userdata != NULL) // might be a group row or a buddy row
+    {
+        buddy_t *tmp_b = ((buddy_t*)userdata);
+        g_free(b->group);
+        b->group = g_strdup(tmp_b->group);
+    }
 
     account_t *acc = account_list_get_current();
     g_free(b->acc);
@@ -597,9 +615,12 @@ view_popup_menu_group(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event, 
     GtkWidget *menu, *menuitem;
     menu = gtk_menu_new();
 
+    g_free(tmp_buddy->group);
+    tmp_buddy->group = g_strdup((gchar*)userdata);
+
     menuitem = gtk_menu_item_new_with_label(_("Add buddy"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
+    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), tmp_buddy);
 
     menuitem = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -655,9 +676,12 @@ view_popup_menu_default(G_GNUC_UNUSED GtkWidget *treeview, GdkEventButton *event
     GtkWidget *menu, *menuitem;
     menu = gtk_menu_new();
 
+    g_free(tmp_buddy->group);
+    tmp_buddy->group = g_strdup((gchar*)userdata);
+
     menuitem = gtk_menu_item_new_with_label(_("Add buddy"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
+    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), tmp_buddy);
 
     menuitem = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -705,13 +729,13 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
                         view_popup_menu_group(treeview, event, group);
                 }
                 gtk_tree_path_free(path);
+
+                return TRUE;
             }
         }
-        else // right click in the back ground
-        {
-            gchar *group = g_strdup("Group");
-            view_popup_menu_default(treeview, event, group);
-        }
+        // right click on the back ground
+        gchar *group = g_strdup("");
+        view_popup_menu_default(treeview, event, group);
 
         return TRUE;
     }
@@ -867,6 +891,8 @@ create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
     presence_buddy_list_init(client);
     g_object_set_data(G_OBJECT(buddy_list_window), "Buddy-List", (gpointer)presence_buddy_list_get());
     update_buddylist_view();
+
+    tmp_buddy = presence_buddy_create();
 
     /* make sure that everything, window and label, are visible */
     gtk_widget_show_all(buddy_list_window);
