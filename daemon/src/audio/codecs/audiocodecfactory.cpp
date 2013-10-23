@@ -101,7 +101,7 @@ AudioCodecFactory::getCodec(int payload) const
     AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
 
     if (iter != codecsMap_.end())
-        return static_cast<sfl::AudioCodec *>(iter->second);
+        return iter->second;
     else {
         ERROR("Cannot find codec %i", payload);
         return NULL;
@@ -242,14 +242,20 @@ AudioCodecFactory::loadCodec(const std::string &path)
         return NULL;
     }
 
-    sfl::AudioCodec *a = static_cast<sfl::AudioCodec *>(createCodec());
+    try {
+        sfl::AudioCodec *a = createCodec();
 
-    if (a)
-        codecInMemory_.push_back(AudioCodecHandlePointer(a, codecHandle));
-    else
+        if (a)
+            codecInMemory_.push_back(AudioCodecHandlePointer(a, codecHandle));
+        else
+            dlclose(codecHandle);
+
+        return a;
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
         dlclose(codecHandle);
-
-    return a;
+        return nullptr;
+    }
 }
 
 
@@ -283,8 +289,6 @@ AudioCodecFactory::instantiateCodec(int payload) const
     // flush last error
     dlerror();
 
-    sfl::AudioCodec *result = NULL;
-
     for (const auto &codec : codecInMemory_) {
         if (codec.first->getPayloadType() == payload) {
 
@@ -296,12 +300,17 @@ AudioCodecFactory::instantiateCodec(int payload) const
                 ERROR("%s", error);
                 dlerror();
             } else {
-                result = static_cast<sfl::AudioCodec *>(createCodec());
+                try {
+                    return createCodec();
+                } catch (const std::runtime_error &e) {
+                    ERROR("%s", e.what());
+                    return nullptr;
+                }
             }
         }
     }
 
-    return result;
+    return nullptr;
 }
 
 bool
