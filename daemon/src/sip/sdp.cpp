@@ -204,9 +204,10 @@ string Sdp::getAudioCodecNames() const
     return result;
 }
 
-void Sdp::getSessionAudioMedia(std::vector<sfl::AudioCodec*> &codecs) const
+std::vector<sfl::AudioCodec*>
+Sdp::getSessionAudioMedia() const
 {
-    codecs = sessionAudioMedia_;
+    return sessionAudioMedia_;
 }
 
 

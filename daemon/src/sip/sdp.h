@@ -248,7 +248,7 @@ class Sdp {
 
         std::string getAudioCodecNames() const;
         std::string getSessionVideoCodec() const;
-        void getSessionAudioMedia(std::vector<sfl::AudioCodec*> &) const;
+        std::vector<sfl::AudioCodec*> getSessionAudioMedia() const;
         // Sets @param settings with appropriate values and returns true if
         // we are sending video, false otherwise
         bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
