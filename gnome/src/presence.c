@@ -374,7 +374,7 @@ presence_buddy_create()
     buddy_t *b = g_malloc(sizeof(buddy_t));
     b->acc = g_strdup("");
     b->uri = g_strdup("username");
-    b->group = g_strdup("Group");
+    b->group = g_strdup("");
     b->alias = g_strdup("");
     b->subscribed = FALSE;
     b->status = FALSE;
@@ -430,13 +430,6 @@ presence_group_list_init()
         count++;
         b = presence_buddy_list_get_nth(i);
         presence_group_list_add_group(b->group);
-    }
-
-    // if empty, fill with a first group
-    if(count == 0)
-    {
-        gchar * def_group = g_strdup("Group");
-        presence_group_list_add_group(def_group);
     }
     presence_group_list_print();
 }

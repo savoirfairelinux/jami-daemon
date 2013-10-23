@@ -87,13 +87,14 @@ create_and_fill_buddylist_tree (void)
 
     GList * buddy_list = g_object_get_data(G_OBJECT(buddy_list_window), "Buddy-List");
     buddy_t * buddy;
-    guint group_count = 0;
 
     for (guint i = 1; i < presence_group_list_get_size(); i++)
     {
-        group_count++;
-
         gchar *group = presence_group_list_get_nth(i);
+
+        if(g_strcmp0(group, "")==0)
+                continue;
+
         gtk_tree_store_append(treestore, &toplevel, NULL);
         gtk_tree_store_set(treestore, &toplevel,
                 COLUMN_OVERVIEW, group,
@@ -110,37 +111,69 @@ create_and_fill_buddylist_tree (void)
         {
             buddy = presence_buddy_list_get_nth(j);
             account_t *acc = account_list_get_by_id(buddy->acc);
-            if(acc)
+            if(acc == NULL)
+                continue;
+
+            if((g_strcmp0(buddy->group, group)==0) &&
+                    (acc->state == ACCOUNT_STATE_REGISTERED))
             {
-                if((g_strcmp0(buddy->group, group)==0) &&
-                        (acc->state == ACCOUNT_STATE_REGISTERED))
-                {
-                    gtk_tree_store_append(treestore, &child, &toplevel);
-                    gtk_tree_store_set(treestore, &child,
-                            COLUMN_OVERVIEW, "",
-                            COLUMN_ALIAS, buddy->alias,
-                            COLUMN_GROUP, buddy->group,
-                            COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
-                            COLUMN_NOTE,  buddy->note,
-                            COLUMN_URI,  buddy->uri,
-                            COLUMN_ACCOUNTID, buddy->acc,
-                            COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
-                            -1);
-                }
+                gtk_tree_store_append(treestore, &child, &toplevel);
+                gtk_tree_store_set(treestore, &child,
+                        COLUMN_OVERVIEW, "",
+                        COLUMN_ALIAS, buddy->alias,
+                        COLUMN_GROUP, buddy->group,
+                        COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
+                        COLUMN_NOTE,  buddy->note,
+                        COLUMN_URI,  buddy->uri,
+                        COLUMN_ACCOUNTID, buddy->acc,
+                        COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
+                        -1);
             }
         }
+    }
+
+    // then display buddies with no group (=='')
+    for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++)
+    {
+        buddy = presence_buddy_list_get_nth(j);
+        account_t *acc = account_list_get_by_id(buddy->acc);
+        if(acc == NULL)
+            continue;
+
+        if((g_strcmp0(buddy->group, "")==0) &&
+                (acc->state == ACCOUNT_STATE_REGISTERED))
+        {
+            gtk_tree_store_append(treestore, &toplevel, NULL);
+            gtk_tree_store_set(treestore, &toplevel,
+                    COLUMN_OVERVIEW, "",
+                    COLUMN_ALIAS, buddy->alias,
+                    COLUMN_GROUP, buddy->group,
+                    COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
+                    COLUMN_NOTE,  buddy->note,
+                    COLUMN_URI,  buddy->uri,
+                    COLUMN_ACCOUNTID, buddy->acc,
+                    COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
+                    -1);
+            }
     }
 
     return GTK_TREE_MODEL(treestore);
 }
 
-/*void cell_edited(GtkCellRendererText *renderer,
-    gchar *path,
-    gchar *new_text,
-    GtkTreeView *treeview)
+void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
+        gchar *path_str,
+        gchar *new_text,
+        GtkTreeView *treeview)
 {
-    g_print("++++++++++++++++++++++++++");
-}*/
+    g_print("Cell new text: %s", new_text);
+    GtkTreePath * path = gtk_tree_path_new_from_string(path_str);
+    gchar *group = view_get_group(GTK_TREE_VIEW(treeview), path);
+
+    if (group == NULL)
+        return;
+    presence_group_list_edit_group(new_text, group);
+    update_buddylist_view();
+}
 
 static GtkWidget *
 create_view (void)
@@ -439,7 +472,7 @@ view_popup_menu_onAddBuddy (G_GNUC_UNUSED GtkWidget *menuitem, G_GNUC_UNUSED gpo
 {
     buddy_t *b = presence_buddy_create();
 
-    account_t *acc = account_list_get_current() ;
+    account_t *acc = account_list_get_current();
     g_free(b->acc);
     b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
 
@@ -673,12 +706,13 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
                 }
                 gtk_tree_path_free(path);
             }
-            else // right click in the back ground
-            {
-                gchar *group = g_strdup("Group");
-                view_popup_menu_default(treeview, event, group);
-            }
         }
+        else // right click in the back ground
+        {
+            gchar *group = g_strdup("Group");
+            view_popup_menu_default(treeview, event, group);
+        }
+
         return TRUE;
     }
     return FALSE;
@@ -695,7 +729,7 @@ view_row_activated_cb(GtkTreeView *treeview,
         view_popup_menu_onEditBuddy(NULL, b);
     else{
         // TODO: edit cell and update buddy->group
-        g_print("Row activated and group selected");
+        //g_print("Row activated and group selected");
     }
 }
 
