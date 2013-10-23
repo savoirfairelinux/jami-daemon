@@ -67,6 +67,7 @@ presence_buddy_list_init(SFLPhoneClient *client)
         presence_setting_schema = client->settings;
         presence_buddy_list = g_list_alloc();
         presence_buddy_list_load();
+        presence_buddy_list_print();
 
         // send the subscribe
         buddy_t * b;
@@ -112,17 +113,6 @@ presence_buddy_list_load()
 
         g_debug("Presence : found buddy:(bud: %s).", buddy->uri);
         presence_buddy_list = g_list_append(presence_buddy_list, (gpointer)buddy);
-    }
-
-    GList *tmp =  g_list_nth(presence_buddy_list,1);
-    buddy_t * element;
-    g_print("-------- Loaded buddy list:\n");
-    while (tmp)
-    {
-        element = (buddy_t *)(tmp->data);
-        g_print ("buddy:(%s,%s).\n",
-           element->acc, element->uri);
-        tmp = g_list_next (tmp);
     }
 }
 
@@ -528,7 +518,7 @@ presence_group_list_print()
     while (tmp)
     {
         group = (gchar *)(tmp->data);
-        g_print ("(%s).\n", group);
+        g_print ("group: %s.\n", group);
         tmp = g_list_next (tmp);
     }
 }
