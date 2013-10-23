@@ -768,6 +768,7 @@ statusbar_enable_presence()
 {
     account_t * account;
     gboolean global_publish_enabled = FALSE;
+    gboolean global_publish_status = FALSE;
 
     /* Check if one of the registered accounts has Presence enabled */
     for (guint i = 0; i < account_list_get_size(); i++){
@@ -776,27 +777,22 @@ statusbar_enable_presence()
         account_replace(account, CONFIG_PRESENCE_STATUS, "false");
 
         if(!(account_is_IP2IP(account)) &&
-                (account->state == ACCOUNT_STATE_REGISTERED) &&
-                (g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) &&
-                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
-                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0))
+                (account->state == ACCOUNT_STATE_REGISTERED))
         {
-            global_publish_enabled = TRUE; // one enabled account is enough
-            g_debug("Presence : found registered %s, with publish enabled.", account->accountID);
+            global_publish_status = TRUE;
+
+            if((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) &&
+                    (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
+                    (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0))
+            {
+                global_publish_enabled = TRUE; // one enabled account is enough
+                g_debug("Presence : found registered %s, with publish enabled.", account->accountID);
+            }
         }
     }
 
-    if(global_publish_enabled)
-    {
-        gtk_widget_set_sensitive(presence_status_combo, TRUE);
-        gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 1);
-    }
-    else
-    {
-        gtk_widget_set_sensitive(presence_status_combo, FALSE);
-        gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo), 0);
-        g_debug("Presence : no registered account found with publish enabled");
-    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo),  global_publish_status? 1:0);
+    gtk_widget_set_sensitive(presence_status_combo, global_publish_enabled? TRUE:FALSE);
 }
 
 GtkWidget*
