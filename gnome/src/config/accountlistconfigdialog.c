@@ -652,8 +652,11 @@ void update_account_list_status_bar(account_t *account)
 
     GtkTreeModel *model = GTK_TREE_MODEL(account_store);
     GtkTreeIter iter;
-    if (find_account_in_account_store(account->accountID, model, &iter))
+    if (find_account_in_account_store(account->accountID, model, &iter)) {
         gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS, state_name, -1);
+        gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_ACTIVE,
+                           account->state == ACCOUNT_STATE_REGISTERED, -1);
+    }
 }
 
 void dialog_destroy_cb()

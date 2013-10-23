@@ -661,6 +661,15 @@ void SIPVoIPLink::setSipLogLevel()
     pj_log_set_level(level);
 }
 
+namespace {
+void sip_strerror(pj_status_t code)
+{
+    char err_msg[PJ_ERR_MSG_SIZE];
+    pj_strerror(code, err_msg, sizeof err_msg);
+    ERROR("%d: %s", code, err_msg);
+}
+}
+
 // Called from EventThread::run (not main thread)
 bool SIPVoIPLink::getEvent()
 {
@@ -673,7 +682,10 @@ bool SIPVoIPLink::getEvent()
     }
 
     static const pj_time_val timeout = {0, 10};
-    pjsip_endpt_handle_events(endpt_, &timeout);
+    pj_status_t ret;
+    if ((ret = pjsip_endpt_handle_events(endpt_, &timeout)) != PJ_SUCCESS)
+        sip_strerror(ret);
+
 #ifdef SFL_VIDEO
     dequeKeyframeRequests();
 #endif

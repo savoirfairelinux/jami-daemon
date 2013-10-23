@@ -36,7 +36,7 @@
  #define pthread_yield sched_yield
  #endif
 
-EventThread::EventThread(VoIPLink *link) : link_(link), thread_(0)
+EventThread::EventThread(VoIPLink *link) : link_(link), thread_()
 {}
 
 EventThread::~EventThread()
@@ -46,25 +46,17 @@ EventThread::~EventThread()
 
 void EventThread::join()
 {
-    if (thread_)
-        pthread_join(thread_, NULL);
+    if (thread_.joinable())
+        thread_.join();
 }
 
 void EventThread::start()
 {
-    pthread_create(&thread_, NULL, &runCallback, this);
-}
-
-void *
-EventThread::runCallback(void *data)
-{
-    EventThread *context = static_cast<EventThread*>(data);
-    context->run();
-    return NULL;
+    thread_ = std::thread(&EventThread::run, this);
 }
 
 void EventThread::run()
 {
     while (link_->getEvent())
-        pthread_yield();
+        std::this_thread::yield();
 }
