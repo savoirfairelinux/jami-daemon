@@ -386,7 +386,6 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
 
         WARN("pres_client  %.*s will resubscribe in %u ms (reason: %.*s)",
              uri_.slen, uri_.ptr, msec, (int) term_reason_.slen, term_reason_.ptr);
-        monitored_ = PJ_TRUE;
         pj_timer_entry_init(&timer_, 0, this, &pres_client_timer_cb);
         delay.sec = 0;
         delay.msec = msec;
@@ -400,9 +399,10 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
 
 void PresSubClient::enable(bool flag)
 {
-    if(flag)
-        pres_->addPresSubClient(this);
     DEBUG("pres_client %s is %s monitored.",getURI().c_str(), flag? "":"NOT");
+    if(flag && !monitored_)
+        pres_->addPresSubClient(this);
+    monitored_ = flag;
 }
 
 void PresSubClient::reportPresence()
@@ -503,7 +503,6 @@ bool PresSubClient::unsubscribe()
 
 bool PresSubClient::subscribe()
 {
-    monitored_ = true;
 
     if (sub_ and dlg_) { //do not bother if already subscribed
         pjsip_evsub_terminate(sub_, PJ_FALSE);
