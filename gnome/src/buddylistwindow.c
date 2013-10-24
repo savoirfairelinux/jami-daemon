@@ -204,7 +204,7 @@ create_view (void)
             NULL);
 */
     col = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(col, _(""));
+    gtk_tree_view_column_set_title(col, _(" "));
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
@@ -280,6 +280,30 @@ update_buddylist_view()
 
 /***************************** dialog win **********************************/
 
+
+static gboolean
+field_error_dialog(const gchar *error_string)
+{
+    gchar *msg;
+    msg = g_markup_printf_escaped("Field error %s.",error_string);// TODO: use _()
+
+    /* Create the widgets */
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddy_list_window),
+            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+            GTK_MESSAGE_ERROR,
+            GTK_BUTTONS_OK,
+            "%s", msg);
+
+    gtk_window_set_title(GTK_WINDOW(dialog), _("Field error"));
+
+    const gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+
+    gtk_widget_destroy(dialog);
+    g_free(msg);
+
+    return response == GTK_RESPONSE_OK;
+}
+
 gboolean
 show_buddy_info(const gchar *title, buddy_t *b)
 {
@@ -314,9 +338,9 @@ show_buddy_info(const gchar *title, buddy_t *b)
         group_count++;
         // set active group
         if(g_strcmp0(group, b->group) == 0)
-            group_index = i;
+            group_index = i - 1;
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index - 1);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index);
 
     gtk_grid_attach(GTK_GRID(grid), combo_group, 1, row, 1, 1);
 
@@ -360,6 +384,15 @@ show_buddy_info(const gchar *title, buddy_t *b)
         g_free(b->uri);
         b->alias = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_alias)));
         b->uri = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_uri)));
+
+        // check the filed
+        if((g_strcmp0(b->alias, "")==0) || (g_strcmp0(b->uri, "")==0))
+        {
+            field_error_dialog("a field is empty");
+            gtk_widget_destroy(dialog);
+            gboolean res = show_buddy_info(title, b);// recursive call
+            return res;
+        }
 
         gtk_widget_destroy(dialog);
         return TRUE;
