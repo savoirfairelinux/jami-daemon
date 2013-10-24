@@ -174,7 +174,7 @@ create_and_fill_buddylist_tree (void)
 
     // sort the groups and their buddies by name
     GtkTreeSortable * sortable = GTK_TREE_SORTABLE(treestore);
-    gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_OVERVIEW, GTK_SORT_ASCENDING);
+    //gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_OVERVIEW, GTK_SORT_ASCENDING);
     gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_ALIAS, GTK_SORT_ASCENDING);
 
     return GTK_TREE_MODEL(treestore);
@@ -334,29 +334,35 @@ show_buddy_info(const gchar *title, buddy_t *b)
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), grid, TRUE, TRUE, 0);
 
     gint row = 0;
+    GtkWidget *label;
 
-    GtkWidget *label = gtk_label_new_with_mnemonic("_Group");
-    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
-    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    GtkWidget *combo_group = gtk_combo_box_text_new();
-    // fill combox with existing groups
+    // TODO: this is ugly but temporary
     guint group_index = 0;
     guint group_count = 0;
-    gchar *group;
-    for (guint i = 1; i < presence_group_list_get_size(); i++)
+    GtkWidget * combo_group;
+    if(g_strcmp0(title, "Add new buddy") != 0)
     {
-        group = presence_group_list_get_nth(i);
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_group), group);
-        group_count++;
-        // set active group
-        if(g_strcmp0(group, b->group) == 0)
-            group_index = i - 1;
+        label = gtk_label_new_with_mnemonic("_Group");
+        gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+        gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+        combo_group = gtk_combo_box_text_new();
+        // fill combox with existing groups
+        gchar *group;
+        for (guint i = 1; i < presence_group_list_get_size(); i++)
+        {
+            group = presence_group_list_get_nth(i);
+            gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_group), group);
+            group_count++;
+            // set active group
+            if(g_strcmp0(group, b->group) == 0)
+                group_index = i - 1;
+        }
+        gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index);
+
+        gtk_grid_attach(GTK_GRID(grid), combo_group, 1, row, 1, 1);
+        row++;
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index);
 
-    gtk_grid_attach(GTK_GRID(grid), combo_group, 1, row, 1, 1);
-
-    row++;
     label = gtk_label_new_with_mnemonic("_Alias");
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
@@ -382,16 +388,19 @@ show_buddy_info(const gchar *title, buddy_t *b)
     // update buddy OK was pressed
     if (response == GTK_RESPONSE_APPLY)
     {
-        // FIXME: this function doesn't work as expected
-        // if(gtk_combo_box_get_has_entry(GTK_COMBO_BOX(combo_group)))
-        if(group_count > 0)
+        // this is ugly but temporary
+        if(g_strcmp0(title, "Add new buddy") != 0)
         {
-            gchar * gr = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_group));
-            g_free(b->group);
-            b->group = g_strdup(gr);
-            g_free(gr);
+            // FIXME: this function doesn't work as expected
+            // if(gtk_combo_box_get_has_entry(GTK_COMBO_BOX(combo_group)))
+            if(group_count > 0)
+            {
+                gchar * gr = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_group));
+                g_free(b->group);
+                b->group = g_strdup(gr);
+                g_free(gr);
+            }
         }
-
         g_free(b->alias);
         g_free(b->uri);
         b->alias = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_alias)));
