@@ -135,6 +135,11 @@ create_and_fill_buddylist_tree (void)
         }
     }
 
+    // sort the groups and their buddies by name
+    GtkTreeSortable * sortable = GTK_TREE_SORTABLE(treestore);
+    gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_OVERVIEW, GTK_SORT_ASCENDING);
+    gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_ALIAS, GTK_SORT_ASCENDING);
+
     // then display buddies with no group (=='')
     for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++)
     {
@@ -203,7 +208,7 @@ create_view (void)
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_OVERVIEW);
+    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_OVERVIEW);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, _("Buddies"));
