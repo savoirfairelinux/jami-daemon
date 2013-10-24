@@ -2103,6 +2103,7 @@ bool ManagerImpl::toggleRecordingCall(const std::string& id)
 
     const bool result = rec->toggleRecording();
     client_.getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
+    client_.getCallManager()->recordingStateChanged(id, result);
     return result;
 }
 

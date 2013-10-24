@@ -774,6 +774,12 @@
             <arg type="s" name="callID" />
         </signal>
 
+        <signal name="recordingStateChanged" tp:name-for-bindings="recordingStateChange">
+           <tp:added version="1.3.0"/>
+           <arg type="s" name="callID" />
+           <arg type="b" name="recordingState"/>
+        </signal>
+
         <signal name="zrtpNegotiationFailed" tp:name-for-bindings="zrtpNegotiationFailed">
             <tp:added version="0.9.7"/>
             <arg type="s" name="callID" />

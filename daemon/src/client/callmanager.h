@@ -178,6 +178,7 @@ class CallManager
         void newCallCreated(const std::string&, const std::string&, const std::string&);
         void registrationStateChanged(const std::string&, const std::string&, const int32_t&);
         void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
+        void recordingStateChanged(const std::string& callID, const bool& state);
 
 #endif // __ANDROID__
 private:
