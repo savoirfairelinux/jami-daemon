@@ -40,6 +40,8 @@
 #include "account_schema.h"
 #include "accountlist.h"
 #include "actions.h"
+#include "contacts/calltree.h"
+#include "callable_obj.h"
 #include "dbus.h"
 #include "str_utils.h"
 
@@ -512,6 +514,21 @@ confirm_group_deletion(gchar *group)
 /*********************************  Contextual Menus ****************************/
 
 static void
+view_popup_menu_onCallBuddy(G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
+{
+    buddy_t *b= (buddy_t*)userdata;
+    callable_obj_t * c = sflphone_new_call(presence_client);
+
+    g_free(c->_peer_number);
+    c->_peer_number = g_strdup(b->uri);
+    g_free(c->_accountID);
+    c->_accountID = g_strdup(b->acc);
+
+    calltree_update_call(current_calls_tab, c, presence_client, FALSE);
+    sflphone_place_call(c, presence_client);
+}
+
+static void
 view_popup_menu_onEditBuddy (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     buddy_t *backup = g_malloc(sizeof(buddy_t));
@@ -604,6 +621,7 @@ view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
 {
     GtkWidget *menu, *menuitem;
     menu = gtk_menu_new();
+    gchar* gr = g_strdup(((buddy_t*)userdata)->group); // TODO; is this to be freed?
 
     if(type == POPUP_MENU_TYPE_BUDDY)
     {
@@ -634,17 +652,17 @@ view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
 
     menuitem = gtk_menu_item_new_with_label(_("Add group"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddGroup), userdata);
+    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddGroup), gr);
 
     if(type == POPUP_MENU_TYPE_GROUP)
     {
         menuitem = gtk_menu_item_new_with_label(_("Edit group"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-        g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onEditGroup), userdata);
+        g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onEditGroup), gr);
 
         menuitem = gtk_menu_item_new_with_label(_("Remove group"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-        g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveGroup), userdata);
+        g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveGroup), gr);
     }
 
     gtk_widget_show_all(menu);
