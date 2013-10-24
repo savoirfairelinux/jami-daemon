@@ -1214,6 +1214,11 @@ SIPVoIPLink::offhold(const std::string& id)
         call->getAudioRtp().start(audioCodecs);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
+        throw VoipLinkException("SDP issue in offhold");
+    } catch (const ost::Socket::Error &e) {
+        throw VoipLinkException("Socket problem in offhold");
+    } catch (const ost::Socket *) {
+        throw VoipLinkException("Socket problem in offhold");
     }
 
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");

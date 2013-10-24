@@ -591,16 +591,21 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
             detachParticipant(MainBuffer::DEFAULT_ID);
     }
 
-    if (isIPToIP(callId))
-        SIPVoIPLink::instance()->offhold(callId);
-    else {
-        /* Classic call, attached to an account */
-        Call * call = getCallFromCallID(callId);
+    try {
+        if (isIPToIP(callId))
+            SIPVoIPLink::instance()->offhold(callId);
+        else {
+            /* Classic call, attached to an account */
+            Call * call = getCallFromCallID(callId);
 
-        if (call)
-            getAccountLink(call->getAccountId())->offhold(callId);
-        else
-            result = false;
+            if (call)
+                getAccountLink(call->getAccountId())->offhold(callId);
+            else
+                result = false;
+        }
+    } catch (const VoipLinkException &e) {
+        ERROR("%s", e.what());
+        return false;
     }
 
     client_.getCallManager()->callStateChanged(callId, "UNHOLD");
