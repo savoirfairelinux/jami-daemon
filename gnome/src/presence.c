@@ -378,8 +378,8 @@ presence_buddy_create()
 {
     buddy_t *b = g_malloc(sizeof(buddy_t));
     b->acc = g_strdup("");
-    b->uri = g_strdup("username");
-    b->group = g_strdup("");
+    b->uri = g_strdup("");
+    b->group = g_strdup(" "); //' ' is important
     b->alias = g_strdup("");
     b->subscribed = FALSE;
     b->status = FALSE;
@@ -436,6 +436,7 @@ presence_group_list_init()
         b = presence_buddy_list_get_nth(i);
         presence_group_list_add_group(b->group);
     }
+    presence_group_list_add_group(g_strdup(" "));
     presence_group_list_print();
 }
 
