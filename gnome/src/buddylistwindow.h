@@ -40,7 +40,7 @@
 /** @file buddylistwindow.h
   * @brief The main window of the client.
   */
-gboolean show_buddy_info(const gchar *title, buddy_t *b);
+gboolean show_buddy_info_dialog(const gchar *title, buddy_t *b);
 void update_buddylist_view();
 void destroy_buddylist_window();
 void create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action);

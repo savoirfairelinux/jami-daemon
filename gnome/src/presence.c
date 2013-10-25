@@ -68,14 +68,14 @@ presence_buddy_list_init(SFLPhoneClient *client)
         presence_buddy_list = g_list_alloc();
         presence_buddy_list_load();
         presence_buddy_list_print();
+    }
 
-        // send the subscribe
-        buddy_t * b;
-        for (guint i =  1; i < presence_buddy_list_get_size(); i++)
-        {
-            b = presence_buddy_list_get_nth(i);
-            presence_buddy_subscribe(b, TRUE);
-        }
+    // send the subscriptions
+    buddy_t * b;
+    for (guint i =  1; i < presence_buddy_list_get_size(); i++)
+    {
+        b = presence_buddy_list_get_nth(i);
+        presence_buddy_subscribe(b, TRUE);
     }
 
     presence_group_list_init();
@@ -378,8 +378,8 @@ presence_buddy_create()
 {
     buddy_t *b = g_malloc(sizeof(buddy_t));
     b->acc = g_strdup("");
-    b->uri = g_strdup("username");
-    b->group = g_strdup("");
+    b->uri = g_strdup("");
+    b->group = g_strdup(" "); //' ' is important
     b->alias = g_strdup("");
     b->subscribed = FALSE;
     b->status = FALSE;
@@ -436,6 +436,7 @@ presence_group_list_init()
         b = presence_buddy_list_get_nth(i);
         presence_group_list_add_group(b->group);
     }
+    presence_group_list_add_group(g_strdup(" "));
     presence_group_list_print();
 }
 
@@ -513,11 +514,11 @@ presence_group_list_print()
 #ifdef PRESENCE_DEBUG
     GList *tmp = g_list_nth(presence_group_list,1);
     gchar *group;
-    g_debug("Print group list:\n");
+    g_debug("Print group list:");
     while (tmp)
     {
         group = (gchar *)(tmp->data);
-        g_debug("------ %s.\n", group);
+        g_debug("------ %s.", group);
         tmp = g_list_next (tmp);
     }
 #endif

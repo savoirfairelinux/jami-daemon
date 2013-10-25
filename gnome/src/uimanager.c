@@ -1245,7 +1245,7 @@ add_presence_subscription_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED cal
     g_debug("Presence : trying to create a new subscription (%s,%s)", b->uri, b->acc);
 
     // popup
-    if(show_buddy_info(_("Add new buddy"), b))
+    if(show_buddy_info_dialog(_("Add new buddy"), b))
     {
         presence_buddy_list_add_buddy(b);
         update_buddylist_view();
@@ -1545,7 +1545,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
 
 #ifdef SFL_PRESENCE
     if (selectedCall) {
-        GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("See status"));
+        GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("Follow status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
         if(!presence_buddy_list_get())
             gtk_widget_set_sensitive(menu_items, FALSE);
@@ -1604,7 +1604,7 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
         gtk_widget_show(new_call);
 
 #ifdef SFL_PRESENCE
-        GtkWidget *presence = gtk_image_menu_item_new_with_mnemonic(_("See status"));
+        GtkWidget *presence = gtk_image_menu_item_new_with_mnemonic(_("Follow status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), presence);
 
         /*account_t * acc = account_list_get_by_id(selectedCall->_accountID);
