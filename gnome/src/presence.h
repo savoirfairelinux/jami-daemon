@@ -37,7 +37,7 @@
 #include "accountlist.h"
 
 
-#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
+//#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
 
 typedef struct
 {

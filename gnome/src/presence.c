@@ -68,14 +68,14 @@ presence_buddy_list_init(SFLPhoneClient *client)
         presence_buddy_list = g_list_alloc();
         presence_buddy_list_load();
         presence_buddy_list_print();
+    }
 
-        // send the subscribe
-        buddy_t * b;
-        for (guint i =  1; i < presence_buddy_list_get_size(); i++)
-        {
-            b = presence_buddy_list_get_nth(i);
-            presence_buddy_subscribe(b, TRUE);
-        }
+    // send the subscriptions
+    buddy_t * b;
+    for (guint i =  1; i < presence_buddy_list_get_size(); i++)
+    {
+        b = presence_buddy_list_get_nth(i);
+        presence_buddy_subscribe(b, TRUE);
     }
 
     presence_group_list_init();
