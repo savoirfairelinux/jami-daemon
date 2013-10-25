@@ -101,7 +101,7 @@ create_and_fill_buddylist_tree (void)
     GList * buddy_list = g_object_get_data(G_OBJECT(buddy_list_window), "Buddy-List");
     buddy_t * buddy;
 
-    // then display buddies with no group (=='')
+    // then display buddies with no group (==' ')
     for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++)
     {
         buddy = presence_buddy_list_get_nth(j);
@@ -191,7 +191,6 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
 
     if(b != NULL) // change the buddy alias
     {
-        g_print("tralala\n");
         buddy_t *backup = g_malloc(sizeof(buddy_t));
         memcpy(backup, b, sizeof(buddy_t));
         g_free(b->alias);
