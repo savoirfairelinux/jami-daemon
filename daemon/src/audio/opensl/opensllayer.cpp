@@ -541,9 +541,87 @@ OpenSLLayer::stopAudioCapture()
 std::vector<std::string>
 OpenSLLayer::getCaptureDeviceList() const
 {
-    std::vector<std::string> captureDeviceList;
+	std::vector<std::string> captureDeviceList;
+
+/**
+
+Although OpenSL ES specification allows enumerating
+available output (and also input) devices, NDK implementation is not mature enough to
+obtain or select proper one (SLAudioIODeviceCapabilitiesItf, the official interface
+to obtain such an information)-> SL_FEATURE_UNSUPPORTED
+
+	SLuint32 InputDeviceIDs[MAX_NUMBER_INPUT_DEVICES];
+	SLint32 numInputs = 0;
+	SLboolean mic_available = SL_BOOLEAN_FALSE;
+	SLuint32 mic_deviceID = 0;
+
+	SLresult res;
+
+	res = slCreateEngine(&engineObject_, 0, nullptr, 0, nullptr, nullptr);
+	CheckErr(res);
+
+	res = (*engineObject_)->Realize(engineObject_, SL_BOOLEAN_FALSE);
+	CheckErr(res);
+
+	// Get the Audio IO DEVICE CAPABILITIES interface, implicit
+	DEBUG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
+	res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&AudioIODeviceCapabilitiesItf);
+	CheckErr(res);
+
+	DEBUG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
+	numInputs = MAX_NUMBER_INPUT_DEVICES;
+
+	res = (*AudioIODeviceCapabilitiesItf)->GetAvailableAudioInputs(AudioIODeviceCapabilitiesItf, &numInputs, InputDeviceIDs);
+	CheckErr(res);
+
+	int i;
+	// Search for either earpiece microphone or headset microphone input
+	device - with a preference for the latter
+	for (i=0;i<numInputs; i++)
+	{
+		res = (*AudioIODeviceCapabilitiesItf)->QueryAudioInputCapabilities(AudioIODeviceCapabilitiesItf,
+																				InputDeviceIDs[i],
+																				&AudioInputDescriptor);
+		CheckErr(res);
+
+		if((AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED) &&
+			(AudioInputDescriptor.deviceScope == SL_DEVSCOPE_USER) &&
+			(AudioInputDescriptor.deviceLocation == SL_DEVLOCATION_HEADSET))
+		{
+			DEBUG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i] );
+			mic_deviceID = InputDeviceIDs[i];
+			mic_available = SL_BOOLEAN_TRUE;
+			break;
+		} else if((AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_INTEGRATED) &&
+					(AudioInputDescriptor.deviceScope == SL_DEVSCOPE_USER) &&
+					(AudioInputDescriptor.deviceLocation == SL_DEVLOCATION_HANDSET))
+		{
+			DEBUG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i] );
+			mic_deviceID = InputDeviceIDs[i];
+			mic_available = SL_BOOLEAN_TRUE;
+			break;
+		}
+	}
+
+	if (!mic_available) {
+		// Appropriate error message here
+		ERROR("No mic available quitting");
+		exit(1);
+	}
+*/
 
     return captureDeviceList;
+}
+
+/* Checks for error. If any errors exit the application! */
+void
+OpenSLLayer::CheckErr( SLresult res )
+{
+	if ( res != SL_RESULT_SUCCESS )
+	{
+		// Debug printing to be placed here
+		exit(1);
+	}
 }
 
 std::vector<std::string>
@@ -575,8 +653,8 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
     size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
 	bufferIsFilled_ = false;
-//	DEBUG("samplesToGet:%d", samplesToGet);
-//	DEBUG("urgentSamplesToGet:%d", urgentSamplesToGet);
+	//DEBUG("samplesToGet:%d", samplesToGet);
+	//DEBUG("urgentSamplesToGet:%d", urgentSamplesToGet);
 
     if (urgentSamplesToGet > 0)
         bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, urgentSamplesToGet);
@@ -621,11 +699,11 @@ OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
     AudioBuffer &buffer = getNextRecordBuffer();
 
     SLresult result;
-
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
     result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
     
+
     audioCaptureFillBuffer(old_buffer);
 
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,

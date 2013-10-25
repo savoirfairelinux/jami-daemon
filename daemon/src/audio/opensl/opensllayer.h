@@ -55,6 +55,9 @@ class OpenSLThread;
 #define ANDROID_BUFFER_QUEUE_LENGTH 2U
 #define BUFFER_SIZE 80U
 
+#define MAX_NUMBER_INTERFACES 5
+#define MAX_NUMBER_INPUT_DEVICES 3
+
 
 /**
  * @file  OpenSLLayer.h
@@ -190,6 +193,8 @@ class OpenSLLayer : public AudioLayer {
             recordBufferIndex_ = (recordBufferIndex_ + 1) % NB_BUFFER_CAPTURE_QUEUE;
         }
 
+		void CheckErr( SLresult res );
+
         void playback(SLAndroidSimpleBufferQueueItf queue);
         void capture(SLAndroidSimpleBufferQueueItf queue);
         friend class OpenSLThread;
@@ -242,6 +247,9 @@ class OpenSLLayer : public AudioLayer {
         SLPlayItf playerInterface_;
 
         SLRecordItf recorderInterface_;
+
+		SLAudioIODeviceCapabilitiesItf AudioIODeviceCapabilitiesItf;
+		SLAudioInputDescriptor AudioInputDescriptor;
 
         /**
          * OpenSL playback buffer
