@@ -208,13 +208,13 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
     update_buddylist_view();
 }
 
-void cell_data_func(GtkTreeViewColumn *col,
+void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col, // TODO: this could be usefull
                            GtkCellRenderer   *renderer,
                            GtkTreeModel      *model,
                            GtkTreeIter       *iter,
                            gpointer           userdata)
 {
-    guint col_ID = (guint) userdata;
+    guint col_ID = GPOINTER_TO_INT(userdata);
     gchar * group = NULL;
     GValue val;
     memset(&val, 0, sizeof(val));
@@ -257,15 +257,19 @@ create_view (void)
     GtkCellRenderer *editable_cell = gtk_cell_renderer_text_new ();
     g_signal_connect (editable_cell, "edited",G_CALLBACK(cell_edited), view);
 
-    col = gtk_tree_view_column_new_with_attributes(" ", editable_cell, "text", COLUMN_OVERVIEW, NULL);
+    col = gtk_tree_view_column_new_with_attributes(" ",
+            editable_cell, "text", COLUMN_OVERVIEW, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     gtk_tree_view_column_pack_start(col, editable_cell, TRUE);
-    gtk_tree_view_column_set_cell_data_func(col, editable_cell, cell_data_func, COLUMN_OVERVIEW, NULL);
+    gtk_tree_view_column_set_cell_data_func(col, editable_cell,
+            cell_data_func, GINT_TO_POINTER(COLUMN_OVERVIEW), NULL);
 
-    col = gtk_tree_view_column_new_with_attributes("Buddies", editable_cell, "text", COLUMN_ALIAS, NULL);
+    col = gtk_tree_view_column_new_with_attributes("Alias",
+            editable_cell, "text", COLUMN_ALIAS, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
-    gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_set_cell_data_func(col, editable_cell, cell_data_func, COLUMN_ALIAS, NULL);
+    gtk_tree_view_column_pack_start(col, editable_cell, TRUE);
+    gtk_tree_view_column_set_cell_data_func(col, editable_cell,
+            cell_data_func, GINT_TO_POINTER( COLUMN_ALIAS), NULL);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Note");
