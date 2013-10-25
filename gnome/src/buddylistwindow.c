@@ -187,47 +187,86 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
 {
     g_print("Cell new text: %s", new_text);
     GtkTreePath * path = gtk_tree_path_new_from_string(path_str);
-    gchar *group = view_get_group(GTK_TREE_VIEW(treeview), path);
+    buddy_t *b = view_get_buddy(treeview, path);
 
-    if (group == NULL)
-        return;
-    presence_group_list_edit_group(new_text, group);
+    if(b != NULL) // change the buddy alias
+    {
+        g_print("tralala\n");
+        buddy_t *backup = g_malloc(sizeof(buddy_t));
+        memcpy(backup, b, sizeof(buddy_t));
+        g_free(b->alias);
+        b->alias = g_strdup(new_text);
+        presence_buddy_list_edit_buddy(b, backup);
+        g_free(backup);
+    }
+    else    // or change the group name
+    {
+        gchar *group = view_get_group(treeview, path);
+        if (group == NULL)
+            return;
+        presence_group_list_edit_group(new_text, group);
+    }
     update_buddylist_view();
+}
+
+void cell_data_func(GtkTreeViewColumn *col,
+                           GtkCellRenderer   *renderer,
+                           GtkTreeModel      *model,
+                           GtkTreeIter       *iter,
+                           gpointer           userdata)
+{
+    guint col_ID = (guint) userdata;
+    gchar * group = NULL;
+    GValue val;
+    memset(&val, 0, sizeof(val));
+    gtk_tree_model_get_value(model, iter, COLUMN_OVERVIEW, &val);
+    group = g_value_dup_string(&val);
+    g_value_unset(&val);
+    //    g_print("/// %d: %s\n", col_ID, group);
+
+    // set the cell editable when the mouse pointer is on a group
+    if((group) && (g_strcmp0(group,"")!=0) && (g_strcmp0(group," ")))
+        g_object_set(renderer, "editable", (col_ID==COLUMN_OVERVIEW)? TRUE:FALSE, NULL);
+    // set the cell editable when the mouse pointer is on a buddy alias
+    else
+        g_object_set(renderer, "editable", (col_ID==COLUMN_ALIAS)? TRUE:FALSE, NULL);
+}
+
+void
+update_buddylist_view()
+{
+    if(!buddy_list_tree_view)
+        return; // Buddylist window not opend
+
+    GtkTreeModel * model = create_and_fill_buddylist_tree();
+    gtk_tree_view_set_model(GTK_TREE_VIEW(buddy_list_tree_view), model);
+    g_object_unref(model);
+    gtk_tree_view_expand_all(GTK_TREE_VIEW(buddy_list_tree_view));
+    g_debug("BuddyListTreeView updated.");
 }
 
 static GtkWidget *
 create_view (void)
 {
     GtkTreeViewColumn *col;
-    GtkCellRenderer *renderer;
+    GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
     GtkWidget *view;
 
     view = gtk_tree_view_new();
-/*
-    GtkCellRenderer *cell = gtk_cell_renderer_text_new ();
-    g_object_set (cell, "editable", TRUE, NULL);
-    g_signal_connect (cell, "edited",G_CALLBACK(cell_edited), view);
-    //g_object_set_data (G_OBJECT (cell),
-    //        "column", GINT_TO_POINTER (COLUMN_OVERVIEW));
-    col = gtk_tree_view_column_new_with_attributes (
-            "Key", cell,
-            "text", COLUMN_OVERVIEW,
-            "title", "super",
-            NULL);
-*/
-    col = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(col, _(" "));
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
-    renderer = gtk_cell_renderer_text_new();
-    gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_OVERVIEW);
 
-    col = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(col, _("Buddies"));
+
+    GtkCellRenderer *editable_cell = gtk_cell_renderer_text_new ();
+    g_signal_connect (editable_cell, "edited",G_CALLBACK(cell_edited), view);
+
+    col = gtk_tree_view_column_new_with_attributes(" ", editable_cell, "text", COLUMN_OVERVIEW, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
-    renderer = gtk_cell_renderer_text_new();
+    gtk_tree_view_column_pack_start(col, editable_cell, TRUE);
+    gtk_tree_view_column_set_cell_data_func(col, editable_cell, cell_data_func, COLUMN_OVERVIEW, NULL);
+
+    col = gtk_tree_view_column_new_with_attributes("Buddies", editable_cell, "text", COLUMN_ALIAS, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_ALIAS);
+    gtk_tree_view_column_set_cell_data_func(col, editable_cell, cell_data_func, COLUMN_ALIAS, NULL);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Note");
@@ -274,20 +313,6 @@ create_view (void)
 #endif
 
     return view;
-}
-
-
-void
-update_buddylist_view()
-{
-    if(!buddy_list_tree_view)
-        return; // Buddylist window not opend
-
-    GtkTreeModel * model = create_and_fill_buddylist_tree();
-    gtk_tree_view_set_model(GTK_TREE_VIEW(buddy_list_tree_view), model);
-    g_object_unref(model);
-    gtk_tree_view_expand_all(GTK_TREE_VIEW(buddy_list_tree_view));
-    g_debug("BuddyListTreeView updated.");
 }
 
 /***************************** dialog win **********************************/

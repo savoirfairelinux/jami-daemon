@@ -514,11 +514,11 @@ presence_group_list_print()
 #ifdef PRESENCE_DEBUG
     GList *tmp = g_list_nth(presence_group_list,1);
     gchar *group;
-    g_debug("Print group list:\n");
+    g_debug("Print group list:");
     while (tmp)
     {
         group = (gchar *)(tmp->data);
-        g_debug("------ %s.\n", group);
+        g_debug("------ %s.", group);
         tmp = g_list_next (tmp);
     }
 #endif
