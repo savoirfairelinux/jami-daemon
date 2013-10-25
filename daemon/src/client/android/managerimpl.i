@@ -40,10 +40,7 @@ class ManagerImpl {
 public:
     void init(const std::string &config_file);
     void setPath(const std::string &path);
-    bool outgoingCall(const std::string&, const std::string&, const std::string&, const std::string& = "");
-    void refuseCall(const std::string& id);
-    bool answerCall(const std::string& id);
-    void hangupCall(const std::string& id);
+	void finish();
 };
 
 //%rename(Manager_instance) Manager::instance;

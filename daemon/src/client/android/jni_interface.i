@@ -78,7 +78,7 @@ namespace std {
 
 /* parsed by SWIG to generate all the glue */
 /* %include "../managerimpl.h" */
-/* %include <dbus/callmanager.h> */
+/* %include <client/callmanager.h> */
 
 //%constant struct callmanager_callback* WRAPPER_CALLBACK_STRUCT = &wrapper_callback_struct;
 
