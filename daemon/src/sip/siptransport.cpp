@@ -588,21 +588,18 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     pjsip_tpselector *tp_sel = createTransportSelector(transport, pool_);
     RETURN_IF_NULL(tp_sel, "Could not initialize transport selector, using local address %s:%s", addr.c_str(), port.c_str());
 
-    pj_str_t localAddress = {0,0};
-    int i_port = 0;
-
-    // Find the local address and port for this transport
-    if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS) {
+    pjsip_tpmgr_fla2_param param = {transportType, tp_sel, {0,0}, PJ_FALSE, {0,0}, 0, NULL};
+    if (pjsip_tpmgr_find_local_addr2(tpmgr, pool_, &param) != PJ_SUCCESS) {
         WARN("SipTransport: Could not retrieve local address and port from transport, using %s:%s", addr.c_str(), port.c_str());
         return;
     }
 
     // Update local address based on the transport type
-    addr = std::string(localAddress.ptr, localAddress.slen);
+    addr = std::string(param.ret_addr.ptr, param.ret_addr.slen);
 
     // Determine the local port based on transport information
     ss.str("");
-    ss << i_port;
+    ss << param.ret_port;
     port = ss.str();
 
 #undef RETURN_IF_FAIL
