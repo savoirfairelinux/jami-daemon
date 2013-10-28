@@ -96,6 +96,34 @@ void AudioRtpFactory::initConfig()
     }
 }
 
+// XXX: This wrapper exists because CCRTP may directly call abort() upon socket failure
+//      when calling UDPSocket::UDPSocket
+namespace {
+    jmp_buf env;
+
+    // SIGABRT handler must not return or the program will terminate.
+    // Therefore we call longjmp.
+    void on_sigabrt(int /*signum*/)
+    {
+        signal(SIGABRT, SIG_DFL); // restore default SIGABRT handler
+        longjmp(env, 1);
+    }
+
+    AudioRtpSession *
+    callConstructor(const std::function<AudioRtpSession* ()> &func)
+    {
+        AudioRtpSession *session = nullptr;
+        if (setjmp(env) == 0) {
+            signal(SIGABRT, &on_sigabrt);
+            session = func();
+        } else {
+            ERROR("aborted");
+            throw AudioRtpFactoryException("Socket failure");
+        }
+        return session;
+    }
+}
+
 void AudioRtpFactory::initSession()
 {
     std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
@@ -106,26 +134,30 @@ void AudioRtpFactory::initSession()
         switch (keyExchangeProtocol_) {
 #if HAVE_ZRTP
 
-            case ZRTP:
-                rtpSession_.reset(new AudioZrtpSession(*ca_, zidFilename));
+            case ZRTP: {
+                const auto ctor = [&] () {return new AudioZrtpSession(*ca_, zidFilename);};
+                rtpSession_.reset(callConstructor(ctor));
 
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                 // not even available at that point.
                 if (helloHashEnabled_)
                     ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_.get())->getHelloHash());
-
                 break;
+            }
 #endif
 
-            case SDES:
-                rtpSession_.reset(new AudioSrtpSession(*ca_));
+            case SDES: {
+                const auto ctor = [&] () {return new AudioSrtpSession(*ca_);};
+                rtpSession_.reset(callConstructor(ctor));
                 break;
+            }
 
             default:
                 throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
     } else {
-        rtpSession_.reset(new AudioSymmetricRtpSession(*ca_));
+        const auto ctor = [&] () {return new AudioSymmetricRtpSession(*ca_);};
+        rtpSession_.reset(callConstructor(ctor));
     }
 }
 
