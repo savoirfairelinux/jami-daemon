@@ -46,14 +46,14 @@
 #include "str_utils.h"
 
 static GtkWidget *buddy_list_window;
-static GtkWidget *buddy_list_tree_view = NULL;
+static GtkTreeView *buddy_list_tree_view = NULL;
 static GtkToggleAction *toggle_action = NULL;
 static GtkWidget *presence_status_combo;
 static GtkWidget *presence_status_bar;
 static GtkWidget *show_all_check_box;
 
 static GtkTreeModel *create_and_fill_buddylist_tree (void);
-static GtkWidget *create_view (void);
+static GtkTreeView *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 static buddy_t *view_get_buddy(GtkTreeView *treeview, GtkTreePath *path);
 static gchar *view_get_group(GtkTreeView *treeview, GtkTreePath *path);
@@ -257,34 +257,33 @@ update_buddylist_view()
         return; // Buddylist window not opend
 
     GtkTreeModel * model = create_and_fill_buddylist_tree();
-    gtk_tree_view_set_model(GTK_TREE_VIEW(buddy_list_tree_view), model);
+    gtk_tree_view_set_model(buddy_list_tree_view, model);
     g_object_unref(model);
-    gtk_tree_view_expand_all(GTK_TREE_VIEW(buddy_list_tree_view));
+    gtk_tree_view_expand_all(buddy_list_tree_view);
     g_debug("BuddyListTreeView updated.");
 }
 
-static GtkWidget *
+static GtkTreeView *
 create_view (void)
 {
     GtkTreeViewColumn *col;
     GtkCellRenderer *renderer = gtk_cell_renderer_text_new(); // default text render
-    GtkWidget *view;
-
-    view = gtk_tree_view_new();
+    GtkWidget * view_widget = gtk_tree_view_new();
+    GtkTreeView *view = GTK_TREE_VIEW(view_widget);
 
     GtkCellRenderer *editable_cell = gtk_cell_renderer_text_new ();
     g_signal_connect (editable_cell, "edited",G_CALLBACK(cell_edited), view);
 
     col = gtk_tree_view_column_new_with_attributes(" ",
             editable_cell, "text", COLUMN_OVERVIEW, NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_append_column(view, col);
     gtk_tree_view_column_pack_start(col, editable_cell, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, editable_cell,
             cell_data_func, GINT_TO_POINTER(COLUMN_OVERVIEW), NULL);
 
     col = gtk_tree_view_column_new_with_attributes("Alias",
             editable_cell, "text", COLUMN_ALIAS, NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_append_column(view, col);
     gtk_tree_view_column_pack_start(col, editable_cell, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, editable_cell,
             cell_data_func, GINT_TO_POINTER(COLUMN_ALIAS), NULL);
@@ -294,14 +293,14 @@ create_view (void)
             status_icon_renderer, "text", COLUMN_STATUS, NULL);
     // set type to "text" instead of "pixbuf". this is a work around because
     // the gtk stock icon is referenced as a string
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_append_column(view, col);
     gtk_tree_view_column_pack_start(col, status_icon_renderer, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, status_icon_renderer,
             icon_cell_data_func, GINT_TO_POINTER(COLUMN_STATUS), NULL);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Note");
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_append_column(view, col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_NOTE);
@@ -309,28 +308,28 @@ create_view (void)
 #ifdef PRESENCE_DEBUG
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "URI");
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_append_column(view, col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_URI);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Suscribed");
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_append_column(view, col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_SUBSCRIBED);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "AccID");
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_append_column(view, col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_ACCOUNTID);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Group");
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_append_column(view, col);
     renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_GROUP);
@@ -705,13 +704,13 @@ static buddy_t *
 view_get_buddy(GtkTreeView *treeview,
         GtkTreePath *path)
 {
-    GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
+    GtkTreeSelection * selection = gtk_tree_view_get_selection(treeview);
     buddy_t *b = NULL;
     gtk_tree_selection_unselect_all(selection);
     gtk_tree_selection_select_path(selection, path);
 
     GtkTreeIter   iter;
-    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
+    GtkTreeModel *model = gtk_tree_view_get_model(treeview);
 
     if (gtk_tree_model_get_iter(model, &iter, path))
     {
@@ -729,13 +728,13 @@ static gchar *
 view_get_group(GtkTreeView *treeview,
         GtkTreePath *path)
 {
-    GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
+    GtkTreeSelection * selection = gtk_tree_view_get_selection(treeview);
     gchar *group = NULL;
     gtk_tree_selection_unselect_all(selection);
     gtk_tree_selection_select_path(selection, path);
 
     GtkTreeIter   iter;
-    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
+    GtkTreeModel *model = gtk_tree_view_get_model(treeview);
 
     if (gtk_tree_model_get_iter(model, &iter, path))
     {
@@ -750,12 +749,12 @@ view_get_group(GtkTreeView *treeview,
 }
 
 static gboolean
-view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
+view_onButtonPressed(GtkTreeView *treeview, GdkEventButton *event)
 {
     /* single click with the right mouse button? */
     if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3)
     {
-        GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
+        GtkTreeSelection * selection = gtk_tree_view_get_selection(treeview);
 
         /* Note: gtk_tree_selection_count_selected_rows() does not
          *   exist in gtk+-2.0, only in gtk+ >= v2.2 ! */
@@ -763,19 +762,19 @@ view_onButtonPressed (GtkWidget *treeview, GdkEventButton *event)
         {
             GtkTreePath *path;
             /* Get tree path for row that was clicked */
-            if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview),
+            if (gtk_tree_view_get_path_at_pos(treeview,
                         (gint) event->x,
                         (gint) event->y,
                         &path, NULL, NULL, NULL))
             {
-                buddy_t *b = view_get_buddy(GTK_TREE_VIEW(treeview), path);
+                buddy_t *b = view_get_buddy(treeview, path);
                 if (b != NULL)
                     view_popup_menu(event, b, POPUP_MENU_TYPE_BUDDY);
                 else // a group row has been selected
                 {
                     // use a fake buddy as argument
                     g_free(tmp_buddy->group);
-                    tmp_buddy->group = g_strdup(view_get_group(GTK_TREE_VIEW(treeview), path));
+                    tmp_buddy->group = g_strdup(view_get_group(treeview, path));
                     if (tmp_buddy->group != NULL)
                         view_popup_menu(event, tmp_buddy, POPUP_MENU_TYPE_GROUP);
                 }
@@ -939,8 +938,8 @@ create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
 
     /* Create the tree view*/
     buddy_list_tree_view = create_view();
-    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(buddy_list_tree_view), TRUE);
-    gtk_box_pack_start(GTK_BOX(vbox), buddy_list_tree_view, TRUE, TRUE, 5);
+    gtk_tree_view_set_reorderable(buddy_list_tree_view, TRUE);
+    gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(buddy_list_tree_view), TRUE, TRUE, 5);
 
     /* Status bar, cntains presence_status selector */
     presence_status_bar = create_presence_status_bar();
