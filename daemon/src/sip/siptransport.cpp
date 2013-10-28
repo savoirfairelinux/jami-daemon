@@ -590,7 +590,7 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
 
     pjsip_tpmgr_fla2_param param = {transportType, tp_sel, {0,0}, PJ_FALSE, {0,0}, 0, NULL};
     if (pjsip_tpmgr_find_local_addr2(tpmgr, pool_, &param) != PJ_SUCCESS) {
-        WARN("SipTransport: Could not retrieve local address and port from transport, using %s:%s", addr.c_str(), port.c_str());
+        WARN("Could not retrieve local address and port from transport, using %s:%s", addr.c_str(), port.c_str());
         return;
     }
 
