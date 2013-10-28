@@ -89,6 +89,7 @@ create_and_fill_buddylist_tree (void)
 {
     GtkTreeStore *treestore;
     GtkTreeIter toplevel, child;
+
     treestore = gtk_tree_store_new(N_COLUMN, G_TYPE_STRING, // Group + photo
                                              G_TYPE_STRING, // Alias
                                              G_TYPE_STRING, // Group
@@ -114,16 +115,16 @@ create_and_fill_buddylist_tree (void)
         {
             gtk_tree_store_append(treestore, &toplevel, NULL);
             gtk_tree_store_set(treestore, &toplevel,
-                    COLUMN_OVERVIEW, "",
+                    COLUMN_OVERVIEW, " ", // to be on the top of the sorted list
                     COLUMN_ALIAS, buddy->alias,
                     COLUMN_GROUP, buddy->group,
-                    COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
+                    COLUMN_STATUS, (buddy->status)? GTK_STOCK_YES : GTK_STOCK_NO,
                     COLUMN_NOTE,  buddy->note,
                     COLUMN_URI,  buddy->uri,
                     COLUMN_ACCOUNTID, buddy->acc,
                     COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
                     -1);
-            }
+        }
     }
 
     // then display the groups
@@ -162,7 +163,7 @@ create_and_fill_buddylist_tree (void)
                         COLUMN_OVERVIEW, "",
                         COLUMN_ALIAS, buddy->alias,
                         COLUMN_GROUP, buddy->group,
-                        COLUMN_STATUS, (buddy->status)? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE,
+                        COLUMN_STATUS, (buddy->status)? GTK_STOCK_YES : GTK_STOCK_NO,
                         COLUMN_NOTE,  buddy->note,
                         COLUMN_URI,  buddy->uri,
                         COLUMN_ACCOUNTID, buddy->acc,
@@ -174,7 +175,7 @@ create_and_fill_buddylist_tree (void)
 
     // sort the groups and their buddies by name
     GtkTreeSortable * sortable = GTK_TREE_SORTABLE(treestore);
-    //gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_OVERVIEW, GTK_SORT_ASCENDING);
+    gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_OVERVIEW, GTK_SORT_ASCENDING);
     gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_ALIAS, GTK_SORT_ASCENDING);
 
     return GTK_TREE_MODEL(treestore);
@@ -221,14 +222,32 @@ void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col, // TODO: this could be
     gtk_tree_model_get_value(model, iter, COLUMN_OVERVIEW, &val);
     group = g_value_dup_string(&val);
     g_value_unset(&val);
-    //    g_print("/// %d: %s\n", col_ID, group);
+    //g_print("/// %d: %s\n", col_ID, group);
 
     // set the cell editable when the mouse pointer is on a group
     if((group) && (g_strcmp0(group,"")!=0) && (g_strcmp0(group," ")))
+    {
         g_object_set(renderer, "editable", (col_ID==COLUMN_OVERVIEW)? TRUE:FALSE, NULL);
+    }
     // set the cell editable when the mouse pointer is on a buddy alias
     else
+    {
         g_object_set(renderer, "editable", (col_ID==COLUMN_ALIAS)? TRUE:FALSE, NULL);
+    }
+}
+
+void icon_cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
+                           GtkCellRenderer   *renderer,
+                           GtkTreeModel      *model,
+                           GtkTreeIter       *iter,
+                           G_GNUC_UNUSED gpointer userdata)
+{
+    GValue val;
+    memset(&val, 0, sizeof(val));
+    gtk_tree_model_get_value(model, iter, COLUMN_STATUS, &val);
+    gchar *icon_name = g_value_dup_string(&val);
+    g_value_unset(&val);
+    g_object_set(renderer, "icon-name", icon_name, NULL);
 }
 
 void
@@ -248,11 +267,10 @@ static GtkWidget *
 create_view (void)
 {
     GtkTreeViewColumn *col;
-    GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
+    GtkCellRenderer *renderer = gtk_cell_renderer_text_new(); // default text render
     GtkWidget *view;
 
     view = gtk_tree_view_new();
-
 
     GtkCellRenderer *editable_cell = gtk_cell_renderer_text_new ();
     g_signal_connect (editable_cell, "edited",G_CALLBACK(cell_edited), view);
@@ -269,7 +287,17 @@ create_view (void)
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     gtk_tree_view_column_pack_start(col, editable_cell, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, editable_cell,
-            cell_data_func, GINT_TO_POINTER( COLUMN_ALIAS), NULL);
+            cell_data_func, GINT_TO_POINTER(COLUMN_ALIAS), NULL);
+
+    GtkCellRenderer * status_icon_renderer  = gtk_cell_renderer_pixbuf_new();
+    // put "text" instead of "pixbuf". this is a hack since the gtk stock icon
+    // is refernced as a string
+    col = gtk_tree_view_column_new_with_attributes("Status",
+            status_icon_renderer, "text", COLUMN_STATUS, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+    gtk_tree_view_column_pack_start(col, status_icon_renderer, TRUE);
+    gtk_tree_view_column_set_cell_data_func(col, status_icon_renderer,
+            icon_cell_data_func, GINT_TO_POINTER(COLUMN_STATUS), NULL);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Note");
@@ -279,13 +307,6 @@ create_view (void)
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_NOTE);
 
 #ifdef PRESENCE_DEBUG
-    col = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(col, "Status");
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
-    renderer = gtk_cell_renderer_text_new();
-    gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_STATUS);
-
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "URI");
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
