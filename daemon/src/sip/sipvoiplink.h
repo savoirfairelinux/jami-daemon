@@ -335,7 +335,6 @@ class SIPVoIPLink : public VoIPLink {
         std::queue<std::string> keyframeRequests_;
 #endif
 
-        static bool destroyed_;
         static SIPVoIPLink *instance_;
 
         friend class SIPTest;

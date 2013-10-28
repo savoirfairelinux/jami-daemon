@@ -88,7 +88,6 @@
 using namespace sfl;
 
 SIPVoIPLink *SIPVoIPLink::instance_ = 0;
-bool SIPVoIPLink::destroyed_ = false;
 
 namespace {
 
@@ -612,7 +611,6 @@ SIPVoIPLink::~SIPVoIPLink()
 
 SIPVoIPLink* SIPVoIPLink::instance()
 {
-    assert(!destroyed_);
     if (!instance_) {
         DEBUG("creating SIPVoIPLink instance");
         instance_ = new SIPVoIPLink;
@@ -623,7 +621,6 @@ SIPVoIPLink* SIPVoIPLink::instance()
 void SIPVoIPLink::destroy()
 {
     delete instance_;
-    destroyed_ = true;
     instance_ = 0;
 }
 
