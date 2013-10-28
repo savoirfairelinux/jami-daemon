@@ -50,6 +50,7 @@ static GtkWidget *buddy_list_tree_view = NULL;
 static GtkToggleAction *toggle_action = NULL;
 static GtkWidget *presence_status_combo;
 static GtkWidget *presence_status_bar;
+static GtkWidget *show_all_check_box;
 
 static GtkTreeModel *create_and_fill_buddylist_tree (void);
 static GtkWidget *create_view (void);
@@ -89,6 +90,9 @@ create_and_fill_buddylist_tree (void)
 {
     GtkTreeStore *treestore;
     GtkTreeIter toplevel, child;
+    GList * buddy_list = g_object_get_data(G_OBJECT(buddy_list_window), "Buddy-List");
+    buddy_t * buddy;
+    gboolean show_all= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_all_check_box));
 
     treestore = gtk_tree_store_new(N_COLUMN, G_TYPE_STRING, // Group + photo
                                              G_TYPE_STRING, // Alias
@@ -99,9 +103,6 @@ create_and_fill_buddylist_tree (void)
                                              G_TYPE_STRING, // AccID
                                              G_TYPE_STRING);// subscribed
 
-    GList * buddy_list = g_object_get_data(G_OBJECT(buddy_list_window), "Buddy-List");
-    buddy_t * buddy;
-
     // then display buddies with no group (==' ')
     for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++)
     {
@@ -111,7 +112,7 @@ create_and_fill_buddylist_tree (void)
             continue;
 
         if((g_strcmp0(buddy->group, " ")==0) &&
-                (acc->state == ACCOUNT_STATE_REGISTERED))
+                ((acc->state == ACCOUNT_STATE_REGISTERED) || show_all))
         {
             gtk_tree_store_append(treestore, &toplevel, NULL);
             gtk_tree_store_set(treestore, &toplevel,
@@ -126,7 +127,6 @@ create_and_fill_buddylist_tree (void)
                     -1);
         }
     }
-
     // then display the groups
     for (guint i = 1; i < presence_group_list_get_size(); i++)
     {
@@ -156,7 +156,7 @@ create_and_fill_buddylist_tree (void)
                 continue;
 
             if((g_strcmp0(buddy->group, group)==0) &&
-                    (acc->state == ACCOUNT_STATE_REGISTERED))
+                    ((acc->state == ACCOUNT_STATE_REGISTERED) || show_all))
             {
                 gtk_tree_store_append(treestore, &child, &toplevel);
                 gtk_tree_store_set(treestore, &child,
@@ -209,7 +209,7 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
     update_buddylist_view();
 }
 
-void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col, // TODO: this could be usefull
+void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
                            GtkCellRenderer   *renderer,
                            GtkTreeModel      *model,
                            GtkTreeIter       *iter,
@@ -290,10 +290,10 @@ create_view (void)
             cell_data_func, GINT_TO_POINTER(COLUMN_ALIAS), NULL);
 
     GtkCellRenderer * status_icon_renderer  = gtk_cell_renderer_pixbuf_new();
-    // put "text" instead of "pixbuf". this is a hack since the gtk stock icon
-    // is refernced as a string
     col = gtk_tree_view_column_new_with_attributes("Status",
             status_icon_renderer, "text", COLUMN_STATUS, NULL);
+    // set type to "text" instead of "pixbuf". this is a work around because
+    // the gtk stock icon is referenced as a string
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     gtk_tree_view_column_pack_start(col, status_icon_renderer, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, status_icon_renderer,
@@ -869,10 +869,20 @@ statusbar_enable_presence()
     gtk_widget_set_sensitive(presence_status_combo, global_publish_enabled? TRUE:FALSE);
 }
 
+void
+show_all_toggled_cb()
+{
+    update_buddylist_view();
+}
+
 GtkWidget*
 create_presence_status_bar()
 {
     GtkWidget *bar = gtk_statusbar_new();
+
+    show_all_check_box = gtk_check_button_new_with_mnemonic(_("_Show all"));
+    gtk_box_pack_start(GTK_BOX(bar), show_all_check_box, TRUE, TRUE, 0);
+    g_signal_connect (show_all_check_box, "toggled", G_CALLBACK(show_all_toggled_cb), NULL);
 
     GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
     gtk_box_pack_start(GTK_BOX(bar), label, TRUE, TRUE, 0);
@@ -884,7 +894,7 @@ create_presence_status_bar()
     gtk_widget_set_sensitive(presence_status_combo, FALSE);
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
 
-    g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL );
+    g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL);
     statusbar_enable_presence();
 
     return bar;
@@ -929,6 +939,7 @@ create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
 
     /* Create the tree view*/
     buddy_list_tree_view = create_view();
+    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(buddy_list_tree_view), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), buddy_list_tree_view, TRUE, TRUE, 5);
 
     /* Status bar, cntains presence_status selector */
