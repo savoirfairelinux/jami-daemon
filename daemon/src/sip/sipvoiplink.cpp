@@ -672,8 +672,13 @@ bool SIPVoIPLink::getEvent()
 {
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
         static thread_local pj_thread_desc desc;
         static thread_local pj_thread_t *this_thread;
+#else
+        static __thread pj_thread_desc desc;
+        static __thread pj_thread_t *this_thread;
+#endif
         DEBUG("Registering thread");
         pj_thread_register(NULL, desc, &this_thread);
     }
