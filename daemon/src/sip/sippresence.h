@@ -213,6 +213,14 @@ class SIPPresence {
             return sub_client_list_;
         }
 
+        bool isOnline(){
+            return status_;
+        }
+
+        std::string getNote(){
+            return note_;
+        }
+
         void lock();
         bool tryLock();
         void unlock();
@@ -225,12 +233,14 @@ class SIPPresence {
         static pj_status_t send_publish(SIPPresence *pres);
 
         pjsip_publishc  *publish_sess_;  /**< Client publication session.*/
-        pjsip_pres_status status_data_; /**< Presence Data.*/
+        pjsip_pres_status status_data_; /**< Presence Data to be published.*/
 
         pj_bool_t enabled_;
         pj_bool_t publish_supported_; /**< the server allow for status publishing */
         pj_bool_t subscribe_supported_; /**< the server allow for buddy subscription */
 
+        bool status_; /**< Status received from the server*/
+        std::string note_; /**< Note received  from the server*/
         SIPAccount * acc_; /**<  Associated SIP account. */
         std::list< PresSubServer *> sub_server_list_; /**< Subscribers list.*/
         std::list< PresSubClient *> sub_client_list_; /**< Subcribed buddy list.*/

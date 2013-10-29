@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ * Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
  *  Author: Patrick Keroulas  <patrick.keroulas@savoirfairelinux.com>
  *
@@ -53,6 +53,8 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     , enabled_(false)
     , publish_supported_(false)
     , subscribe_supported_(false)
+    , status_(false)
+    , note_(" ")
     , acc_(acc)
     , sub_server_list_()  //IP2IP context
     , sub_client_list_()
@@ -76,7 +78,7 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     }
 
     /* init default status */
-    updateStatus(true, "Available");
+    updateStatus(false, " ");
 }
 
 
@@ -144,7 +146,7 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
 
     pjrpid_element rpid = {
         PJRPID_ELEMENT_TYPE_PERSON,
-        CONST_PJ_STR("20"),
+        CONST_PJ_STR("0"),
         PJRPID_ACTIVITY_UNKNOWN,
         pj_str((char *) note.c_str())
     };
@@ -192,9 +194,21 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     const std::string acc_ID = acc_->getAccountID();
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
-    DEBUG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s", uri.c_str(), acc_ID.c_str(),(status->info[0].basic_open ? "open" : "closed"), note.c_str());
-    /* report status to client signal */
-    Manager::instance().getClient()->getPresenceManager()->newBuddyNotification(acc_ID, uri, status->info[0].basic_open, note);
+    DEBUG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s", uri.c_str(), acc_ID.c_str(), basic.c_str(), note.c_str());
+
+    if(uri == acc_->getFromUri())
+    {
+        // save the status of our own account
+        status_ = status->info[0].basic_open;
+        note_ = note;
+        Manager::instance().saveConfig();
+        Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
+    }
+    else
+    {
+        // report status to client signal
+        Manager::instance().getClient()->getPresenceManager()->newBuddyNotification(acc_ID, uri, status->info[0].basic_open, note);
+    }
 }
 
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)

@@ -768,6 +768,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? Conf::TRUE_STR : Conf::FALSE_STR;
+    a[CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? Conf::TRUE_STR : Conf::FALSE_STR;
+    a[CONFIG_PRESENCE_NOTE] = presence_? presence_->getNote() : " ";
 #endif
 
     RegistrationState state = UNREGISTERED;
@@ -881,6 +883,9 @@ void SIPAccount::registerVoIPLink()
         ERROR("%s", e.what());
     }
 
+#ifdef SFL_PRESENCE
+    getPresence()->subscribeClient(getFromUri(), true); //self presence subscription
+#endif
 }
 
 void SIPAccount::unregisterVoIPLink()
@@ -1455,12 +1460,14 @@ VoIPLink* SIPAccount::getVoIPLink()
     return link_;
 }
 
-bool SIPAccount::isIP2IP() const{
+bool SIPAccount::isIP2IP() const
+{
     return accountID_ == IP2IP_PROFILE;
 }
 
 #ifdef SFL_PRESENCE
-SIPPresence * SIPAccount::getPresence() const {
+SIPPresence * SIPAccount::getPresence() const
+{
     return presence_;
 }
 
@@ -1468,7 +1475,8 @@ SIPPresence * SIPAccount::getPresence() const {
  *  Enable the presence module
  */
 void
-SIPAccount::enablePresence(const bool& enabled){
+SIPAccount::enablePresence(const bool& enabled)
+{
     DEBUG("Presence enable for :%s : %s.",
             accountID_.c_str(),
             enabled? Conf::TRUE_STR : Conf::FALSE_STR);
@@ -1485,7 +1493,8 @@ SIPAccount::enablePresence(const bool& enabled){
  *  Enable the presence function (PUBLISH/SUBSCRIBE)
  */
 void
-SIPAccount::supportPresence(int function, const bool& enabled){
+SIPAccount::supportPresence(int function, const bool& enabled)
+{
     DEBUG("Presence support for :%s (%s: %s).",
             accountID_.c_str(),
             (function==PRESENCE_FUNCTION_PUBLISH)? "publish" : "subscribe",

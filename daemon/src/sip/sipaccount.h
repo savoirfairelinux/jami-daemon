@@ -66,6 +66,8 @@ namespace Conf {
     const char *const PRESENCE_ENABLED_KEY = "presenceEnabled";
     const char *const PRESENCE_PUBLISH_SUPPORTED_KEY = "presencePublishSupported";
     const char *const PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSupported";
+    const char *const PRESENCE_STATUS_KEY = "presenceStatus";
+    const char *const PRESENCE_NOTE_KEY = "presenceNote";
 
     // TODO: write an object to store credential which implement serializable
     const char *const SRTP_KEY = "srtp";
