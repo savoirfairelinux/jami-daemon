@@ -900,6 +900,12 @@ create_presence_status_bar()
 }
 
 /******************************** window  *********************************/
+gboolean
+timer_cb()
+{
+    presence_buddy_list_init(presence_client);
+    return TRUE; // this is necessary to keep the timer alive
+}
 
 void
 destroy_buddylist_window()
@@ -950,10 +956,13 @@ create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
     g_signal_connect(G_OBJECT(buddy_list_window), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
     g_signal_connect_after(buddy_list_window, "destroy", G_CALLBACK(destroy_buddylist_window), NULL);
 
-    // Load buddylist
+    /*  Load buddylist  */
     presence_buddy_list_init(presence_client);
     g_object_set_data(G_OBJECT(buddy_list_window), "Buddy-List", (gpointer)presence_buddy_list_get());
     update_buddylist_view();
+
+    /*  timer to refresh the subscription */
+    g_timeout_add_seconds(60, (GSourceFunc)timer_cb, NULL);
 
     tmp_buddy = presence_buddy_create();
 
