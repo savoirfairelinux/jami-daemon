@@ -72,7 +72,7 @@ typedef struct _Search_Handler_And_Data {
  * The global addressbook list
  */
 static GSList *books_data = NULL;
-static GStaticMutex books_data_mutex = G_STATIC_MUTEX_INIT;
+static GMutex books_data_mutex;
 
 /**
  * Current selected addressbook's uri and uid, initialized with default
@@ -90,11 +90,11 @@ static EBookQueryTest current_test = E_BOOK_QUERY_BEGINS_WITH;
 gboolean
 books_ready()
 {
-    g_static_mutex_lock(&books_data_mutex);
+    g_mutex_lock(&books_data_mutex);
 
     gboolean ret = books_data && g_slist_length(books_data) > 0;
 
-    g_static_mutex_unlock(&books_data_mutex);
+    g_mutex_unlock(&books_data_mutex);
 
     return ret ;
 }
@@ -107,7 +107,7 @@ books_active()
 {
     gboolean ret = FALSE;
 
-    g_static_mutex_lock(&books_data_mutex);
+    g_mutex_lock(&books_data_mutex);
 
     for (GSList *iter = books_data; iter; iter = iter->next)
         if (((book_data_t *) iter->data)->active) {
@@ -115,7 +115,7 @@ books_active()
             break;
         }
 
-    g_static_mutex_unlock(&books_data_mutex);
+    g_mutex_unlock(&books_data_mutex);
 
     return ret;
 }
@@ -127,7 +127,7 @@ books_get_book_data_by_uid(gchar *uid)
 {
     book_data_t *ret = NULL;
 
-    g_static_mutex_lock(&books_data_mutex);
+    g_mutex_lock(&books_data_mutex);
 
     for (GSList *iter = books_data; iter != NULL; iter = iter->next)
         if (!strcmp(((book_data_t *)iter->data)->uid, uid) ) {
@@ -135,7 +135,7 @@ books_get_book_data_by_uid(gchar *uid)
             break;
         }
 
-    g_static_mutex_unlock(&books_data_mutex);
+    g_mutex_unlock(&books_data_mutex);
 
     return ret;
 }
@@ -310,7 +310,7 @@ client_open_async_callback(GObject *client, GAsyncResult *result, gpointer closu
 void
 init_eds()
 {
-    g_static_mutex_lock(&books_data_mutex);
+    g_mutex_lock(&books_data_mutex);
 
     for (GSList *iter = books_data; iter != NULL; iter = iter->next) {
         book_data_t *book_data = (book_data_t *) iter->data;
@@ -321,7 +321,7 @@ init_eds()
         current_uid = book_data->uid;
     }
 
-    g_static_mutex_unlock(&books_data_mutex);
+    g_mutex_unlock(&books_data_mutex);
 }
 
 static GSList *
@@ -370,7 +370,7 @@ fill_books_data()
     const gchar *extension_name = E_SOURCE_EXTENSION_ADDRESS_BOOK;
     GList *list = e_source_registry_list_sources(registry, extension_name);
 
-    g_static_mutex_lock(&books_data_mutex);
+    g_mutex_lock(&books_data_mutex);
 
     books_data = free_books_data(books_data);
 
@@ -382,7 +382,7 @@ fill_books_data()
         }
     }
 
-    g_static_mutex_unlock(&books_data_mutex);
+    g_mutex_unlock(&books_data_mutex);
 
     /* Free each source in the list and the list itself */
     g_list_free_full(list, g_object_unref);
@@ -418,7 +418,7 @@ fill_books_data()
         return;
     }
 
-    g_static_mutex_lock(&books_data_mutex);
+    g_mutex_lock(&books_data_mutex);
 
     books_data = free_books_data(books_data);
 
@@ -432,7 +432,7 @@ fill_books_data()
         }
     }
 
-    g_static_mutex_unlock(&books_data_mutex);
+    g_mutex_unlock(&books_data_mutex);
 
     g_object_unref(source_list);
 }
@@ -442,7 +442,7 @@ fill_books_data()
 void
 determine_default_addressbook()
 {
-    g_static_mutex_lock(&books_data_mutex);
+    g_mutex_lock(&books_data_mutex);
 
     /* Just grabbing first addressbook as default */
     for (GSList *elm = books_data; elm ; elm = g_slist_next(elm)) {
@@ -467,7 +467,7 @@ determine_default_addressbook()
         }
     }
 
-    g_static_mutex_unlock(&books_data_mutex);
+    g_mutex_unlock(&books_data_mutex);
 }
 
 void
@@ -506,7 +506,7 @@ set_current_addressbook(const gchar *name)
     if(name == NULL)
         return;
 
-    g_static_mutex_lock(&books_data_mutex);
+    g_mutex_lock(&books_data_mutex);
 
     for (GSList *iter = books_data; iter != NULL; iter = iter->next) {
         book_data_t *book_data = (book_data_t *) iter->data;
@@ -518,7 +518,7 @@ set_current_addressbook(const gchar *name)
         }
     }
 
-    g_static_mutex_unlock(&books_data_mutex);
+    g_mutex_unlock(&books_data_mutex);
 }
 
 
