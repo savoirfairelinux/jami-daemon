@@ -85,6 +85,105 @@ enum
 
 #define N_COLUMN 8
 
+gboolean dndactive = FALSE;
+enum {
+        TARGET_STRING,
+        TARGET_INTEGER,
+        TARGET_FLOAT
+};
+static const GtkTargetEntry drag_targets = {
+        "STRING", GTK_TARGET_SAME_APP,TARGET_STRING
+};
+
+/* User callback for "get"ing the data out of the row that was DnD'd */
+void on_drag_data_get(  GtkWidget *widget, GdkDragContext *drag_context,
+        GtkSelectionData *sdata, guint info, guint time_,
+        gpointer user_data)
+{
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+    GtkTreeSelection *selector;
+    gboolean rv;
+
+    /* Get the selector widget from the treeview in question */
+    selector = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
+
+    /* Get the tree model (list_store) and initialise the iterator */
+    rv = gtk_tree_selection_get_selected(selector, &model, &iter);
+    if(rv==FALSE){
+        printf(" No row selected\n");
+        return;
+    }
+
+    // TODO : get the path would be cleaner
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
+    buddy_t *b = NULL;
+    GValue val;
+    memset(&val, 0, sizeof(val));
+    gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
+    b = presence_buddy_list_buddy_get_by_uri(g_value_dup_string(&val));
+    g_value_unset(&val);
+    if(!b)
+        return;
+
+    g_print("Src b->uri : %s (l=%d) \n",b->uri, strlen(b->uri));
+
+    // TODO: pack the data
+    //   struct DATA *temp = malloc(sizeof(struct DATA));
+    //   ....
+/*    gtk_selection_data_set(sdata,
+            gdk_atom_intern ("struct DATA pointer", FALSE),
+            8,              // Tell GTK how to pack the data (bytes)
+            (void *)&b->uri,  // The actual pointer that we just made
+            sizeof (b->uri)); // The size of the pointer
+*/
+    gtk_selection_data_set_text(sdata, b->uri, strlen(b->uri));
+}
+
+
+void on_drag_data_received(GtkWidget *widget,
+        G_GNUC_UNUSED GdkDragContext *drag_context,
+        gint x, gint y, GtkSelectionData *sdata,
+        G_GNUC_UNUSED guint info,
+        G_GNUC_UNUSED guint time_,
+        G_GNUC_UNUSED gpointer user_data)
+{
+
+    // GOAL: grab "group" from target (pointed a drop) buddy and copy it in the src (dragged) buddy
+
+    GtkTreePath *path;
+    if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path, NULL, NULL, NULL))
+    {
+        buddy_t *b_target = view_get_buddy(GTK_TREE_VIEW(widget), path);
+        if(b_target)
+        {
+            g_print("Target b->uri : %s \n",b_target->uri);
+
+            gchar * uri_src = gtk_selection_data_get_text(sdata);
+            buddy_t * b_src = presence_buddy_list_buddy_get_by_uri(uri_src);
+            if(b_src)
+            {
+                g_print("Src b %s found\n",uri_src);
+                buddy_t *backup = g_malloc(sizeof(buddy_t));
+                memcpy(backup, b_src, sizeof(buddy_t));
+                g_free(b_src->group);
+                b_src->group = g_strdup(b_target->group);
+                presence_buddy_list_edit_buddy(b_src, backup);
+                g_free(backup);
+            }
+            else
+            {
+                g_print("Src b %s not found\n",uri_src);
+            }
+        }
+        else
+            g_print("Target b not found\n");
+    }
+    else
+        g_print("Target path not found\n");
+
+    update_buddylist_view();
+}
 static GtkTreeModel *
 create_and_fill_buddylist_tree (void)
 {
@@ -191,7 +290,7 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
     GtkTreePath * path = gtk_tree_path_new_from_string(path_str);
     buddy_t *b = view_get_buddy(treeview, path);
 
-    if(b != NULL) // change the buddy alias
+    if(b) // change the buddy alias
     {
         buddy_t *backup = g_malloc(sizeof(buddy_t));
         memcpy(backup, b, sizeof(buddy_t));
@@ -225,8 +324,10 @@ void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
     g_value_unset(&val);
     //g_print("/// %d: %s\n", col_ID, group);
 
-    // set the cell editable when the mouse pointer is on a group
-    if((group) && (g_strcmp0(group,"")!=0) && (g_strcmp0(group," ")))
+    // when the mouse pointer is on a group, set the row reorderable
+    if((group) &&
+         (g_strcmp0(group,"")!=0) &&    // not a child buddy row
+         (g_strcmp0(group," ")!=0))     // not an orphan buddy row
     {
         g_object_set(renderer, "editable", (col_ID==COLUMN_OVERVIEW)? TRUE:FALSE, NULL);
     }
@@ -951,8 +1052,17 @@ create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
 
     /* Create the tree view*/
     buddy_list_tree_view = create_view();
-    gtk_tree_view_set_reorderable(buddy_list_tree_view, TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(buddy_list_tree_view), TRUE, TRUE, 5);
+    gtk_tree_view_set_reorderable(buddy_list_tree_view, TRUE);
+    gtk_tree_view_set_rules_hint(buddy_list_tree_view,TRUE);
+
+    /* DnD */
+    gtk_drag_source_set(GTK_WIDGET(buddy_list_tree_view), GDK_BUTTON1_MASK,
+         &drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
+    g_signal_connect(GTK_WIDGET(buddy_list_tree_view), "drag-data-get", G_CALLBACK(on_drag_data_get), NULL);
+    gtk_drag_dest_set(GTK_WIDGET(buddy_list_tree_view), GTK_DEST_DEFAULT_ALL,
+         &drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
+    g_signal_connect(GTK_WIDGET(buddy_list_tree_view), "drag-data-received", G_CALLBACK(on_drag_data_received), NULL);
 
     /* Status bar, cntains presence_status selector */
     presence_status_bar = create_presence_status_bar();
