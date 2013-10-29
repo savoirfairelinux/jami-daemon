@@ -72,6 +72,16 @@ typedef struct PaDeviceInfos {
         };
 } PaDeviceInfos;
 
+class PulseMainLoopLock {
+    public:
+        explicit PulseMainLoopLock(pa_threaded_mainloop *loop);
+        ~PulseMainLoopLock();
+
+    private:
+        NON_COPYABLE(PulseMainLoopLock);
+        pa_threaded_mainloop *loop_;
+};
+
 class PulseLayer : public AudioLayer {
     public:
         PulseLayer(AudioPreference &pref);

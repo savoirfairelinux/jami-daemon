@@ -74,6 +74,16 @@ std::ofstream outfileResampled("testMicOuputResampled.raw", std::ifstream::binar
 std::ofstream outfile("testMicOuput.raw", std::ifstream::binary);
 #endif
 
+PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop)
+{
+    pa_threaded_mainloop_lock(loop_);
+}
+
+PulseMainLoopLock::~PulseMainLoopLock()
+{
+    pa_threaded_mainloop_unlock(loop_);
+}
+
 PulseLayer::PulseLayer(AudioPreference &pref)
     : playback_(0)
     , record_(0)
@@ -89,6 +99,8 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 {
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
+
+    PulseMainLoopLock lock(mainloop_);
 
 #if PA_CHECK_VERSION(1, 0, 0)
     pa_proplist *pl = pa_proplist_new();
@@ -112,8 +124,6 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     if (pa_context_connect(context_, nullptr , PA_CONTEXT_NOAUTOSPAWN , nullptr) < 0)
         throw std::runtime_error("Could not connect pulseaudio context to the server");
 
-    pa_threaded_mainloop_lock(mainloop_);
-
     if (pa_threaded_mainloop_start(mainloop_) < 0)
         throw std::runtime_error("Failed to start pulseaudio mainloop");
 
@@ -121,8 +131,6 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 
     if (pa_context_get_state(context_) != PA_CONTEXT_READY)
         throw std::runtime_error("Couldn't connect to pulse audio server");
-
-    pa_threaded_mainloop_unlock(mainloop_);
 
     isStarted_ = true;
 }
@@ -380,15 +388,15 @@ void PulseLayer::startStream()
 void
 PulseLayer::stopStream()
 {
-    pa_threaded_mainloop_lock(mainloop_);
+    {
+        PulseMainLoopLock lock(mainloop_);
 
-    if (playback_)
-        pa_stream_flush(playback_->pulseStream(), nullptr, nullptr);
+        if (playback_)
+            pa_stream_flush(playback_->pulseStream(), nullptr, nullptr);
 
-    if (record_)
-        pa_stream_flush(record_->pulseStream(), nullptr, nullptr);
-
-    pa_threaded_mainloop_unlock(mainloop_);
+        if (record_)
+            pa_stream_flush(record_->pulseStream(), nullptr, nullptr);
+    }
 
     disconnectAudioStream();
 }

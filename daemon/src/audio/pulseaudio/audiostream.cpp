@@ -68,30 +68,30 @@ AudioStream::AudioStream(pa_context *c,
     attributes.fragsize = pa_usec_to_bytes(80 * PA_USEC_PER_MSEC, &sample_spec);
     attributes.minreq = (uint32_t) -1;
 
-    pa_threaded_mainloop_lock(mainloop_);
-    const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE);
+    {
+        PulseMainLoopLock lock(mainloop_);
+        const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE);
 
-    if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM) {
-        pa_stream_connect_playback(audiostream_,
-                                   infos->name.empty() ? NULL : infos->name.c_str(),
-                                   &attributes,
-                                   flags,
-                                   NULL, NULL);
-    } else if (type == CAPTURE_STREAM) {
-        pa_stream_connect_record(audiostream_,
-                                 infos->name.empty() ? NULL : infos->name.c_str(),
-                                 &attributes,
-                                 flags);
+        if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM) {
+            pa_stream_connect_playback(audiostream_,
+                    infos->name.empty() ? NULL : infos->name.c_str(),
+                    &attributes,
+                    flags,
+                    NULL, NULL);
+        } else if (type == CAPTURE_STREAM) {
+            pa_stream_connect_record(audiostream_,
+                    infos->name.empty() ? NULL : infos->name.c_str(),
+                    &attributes,
+                    flags);
+        }
     }
-
-    pa_threaded_mainloop_unlock(mainloop_);
 
     pa_stream_set_state_callback(audiostream_, stream_state_callback, NULL);
 }
 
 AudioStream::~AudioStream()
 {
-    pa_threaded_mainloop_lock(mainloop_);
+    PulseMainLoopLock lock(mainloop_);
 
     pa_stream_disconnect(audiostream_);
 
@@ -102,8 +102,6 @@ AudioStream::~AudioStream()
     pa_stream_set_overflow_callback(audiostream_, NULL, NULL);
 
     pa_stream_unref(audiostream_);
-
-    pa_threaded_mainloop_unlock(mainloop_);
 }
 
 void
