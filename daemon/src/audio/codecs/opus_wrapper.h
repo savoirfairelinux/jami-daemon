@@ -46,6 +46,7 @@ public:
    static const uint8_t PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
 
 private:
+   sfl::AudioCodec * clone();
    virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
 

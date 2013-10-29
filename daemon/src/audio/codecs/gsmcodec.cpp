@@ -65,6 +65,12 @@ class Gsm : public sfl::AudioCodec {
             gsm_destroy(encode_gsmhandle_);
         }
 private:
+        AudioCodec *
+        clone()
+        {
+            return new Gsm;
+        }
+
         int decode(SFLAudioSample * dst, unsigned char * src, size_t /*buf_size*/)
         {
             if (gsm_decode(decode_gsmhandle_, (gsm_byte*) src, (gsm_signal*) dst) < 0)

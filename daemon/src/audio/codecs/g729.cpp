@@ -73,6 +73,12 @@ G729::~G729()
         dlclose(handler_);
 }
 
+sfl::AudioCodec *
+G729::clone()
+{
+    return new G729;
+}
+
 int G729::decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size)
 {
     decoder_(decoderContext_, buf, false, dst);

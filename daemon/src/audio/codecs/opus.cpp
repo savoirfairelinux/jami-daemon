@@ -61,6 +61,12 @@ Opus::~Opus()
         opus_decoder_destroy(decoder_);
 }
 
+sfl::AudioCodec *
+Opus::clone()
+{
+    return new Opus;
+}
+
 int Opus::decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size)
 {
     return opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);

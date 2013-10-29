@@ -42,6 +42,12 @@ class Alaw : public sfl::AudioCodec {
         }
 
     private:
+        AudioCodec *
+        clone()
+        {
+            return new Alaw;
+        }
+
         int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size)
         {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)

@@ -50,6 +50,12 @@ class G722 : public sfl::AudioCodec {
         }
 
     private:
+        AudioCodec *
+        clone()
+        {
+            return new G722;
+        }
+
         int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size)
         {
             return g722_decode(dst, src, buf_size);

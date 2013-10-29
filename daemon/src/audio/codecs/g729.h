@@ -44,6 +44,7 @@ public:
    G729();
    ~G729();
 private:
+   AudioCodec * clone();
    virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size);
 

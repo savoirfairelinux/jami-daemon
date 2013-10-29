@@ -49,6 +49,12 @@ class Ilbc: public sfl::AudioCodec {
         }
 
     private:
+        AudioCodec *
+        clone()
+        {
+            return new Ilbc;
+        }
+
         // iLBC expects floating point data, so we have to convert
         int decode(SFLAudioSample *dst, unsigned char *src, size_t /*buf_size*/) {
             const int NORMAL_MODE = 1;

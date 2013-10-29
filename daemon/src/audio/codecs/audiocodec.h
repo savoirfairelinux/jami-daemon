@@ -59,6 +59,8 @@ class AudioCodec {
          */
         AudioCodec(const AudioCodec& codec);
 
+        virtual AudioCodec * clone() = 0;
+
         virtual ~AudioCodec() {};
 
         std::string getMimeSubtype() const;
@@ -129,9 +131,9 @@ class AudioCodec {
 
     private:
         AudioCodec& operator=(const AudioCodec&);
-        uint8_t payload_;
 
 protected:
+        uint8_t payload_;
         bool hasDynamicPayload_;
 };
 } // end namespace sfl

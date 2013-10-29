@@ -287,26 +287,13 @@ AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
 sfl::AudioCodec*
 AudioCodecFactory::instantiateCodec(int payload) const
 {
-    // flush last error
-    dlerror();
-
     for (const auto &codec : codecInMemory_) {
         if (codec.first->getPayloadType() == payload) {
-
-            create_t* createCodec = (create_t*) dlsym(codec.second, AUDIO_CODEC_ENTRY_SYMBOL);
-
-            const char *error = dlerror();
-
-            if (error) {
-                ERROR("%s", error);
-                dlerror();
-            } else {
-                try {
-                    return createCodec();
-                } catch (const std::runtime_error &e) {
-                    ERROR("%s", e.what());
-                    return nullptr;
-                }
+            try {
+                return codec.first->clone();
+            } catch (const std::runtime_error &e) {
+                ERROR("%s", e.what());
+                return nullptr;
             }
         }
     }

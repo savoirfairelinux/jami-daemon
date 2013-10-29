@@ -46,7 +46,8 @@ public:
             speex_enc_bits_(),
             speex_dec_state_(0),
             speex_enc_state_(0),
-            speex_frame_size_(0) {
+            speex_frame_size_(0),
+            mode_(mode) {
                 assert(payload >= 110 && payload <= 112);
                 assert(110 == PAYLOAD_CODEC_SPEEX_8000 &&
                        111 == PAYLOAD_CODEC_SPEEX_16000 &&
@@ -57,11 +58,11 @@ public:
 
                 // Init the decoder struct
                 speex_bits_init(&speex_dec_bits_);
-                speex_dec_state_ = speex_decoder_init(mode);
+                speex_dec_state_ = speex_decoder_init(mode_);
 
                 // Init the encoder struct
                 speex_bits_init(&speex_enc_bits_);
-                speex_enc_state_ = speex_encoder_init(mode);
+                speex_enc_state_ = speex_encoder_init(mode_);
 
                 speex_encoder_ctl(speex_enc_state_, SPEEX_SET_SAMPLING_RATE, &clockRate_);
                 speex_decoder_ctl(speex_dec_state_, SPEEX_GET_FRAME_SIZE, &speex_frame_size_);
@@ -82,6 +83,12 @@ public:
 
 private:
 
+        AudioCodec *
+        clone()
+        {
+            return new Speex(payload_, clockRate_, frameSize_, bitrate_, hasDynamicPayload_, mode_);
+        }
+
         NON_COPYABLE(Speex);
 
         virtual int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size) {
@@ -101,4 +108,5 @@ private:
         void *speex_dec_state_;
         void *speex_enc_state_;
         int speex_frame_size_;
+        const SpeexMode *mode_;
 };
