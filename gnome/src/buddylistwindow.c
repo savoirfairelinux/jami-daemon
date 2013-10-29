@@ -127,6 +127,7 @@ create_and_fill_buddylist_tree (void)
                     -1);
         }
     }
+
     // then display the groups
     for (guint i = 1; i < presence_group_list_get_size(); i++)
     {
@@ -134,7 +135,7 @@ create_and_fill_buddylist_tree (void)
 
         // display buddy with no group after
         if(g_strcmp0(group, " ")==0)
-                continue;
+            continue;
 
         gtk_tree_store_append(treestore, &toplevel, NULL);
         gtk_tree_store_set(treestore, &toplevel,
@@ -176,7 +177,7 @@ create_and_fill_buddylist_tree (void)
     // sort the groups and their buddies by name
     GtkTreeSortable * sortable = GTK_TREE_SORTABLE(treestore);
     gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_OVERVIEW, GTK_SORT_ASCENDING);
-    gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_ALIAS, GTK_SORT_ASCENDING);
+    //gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_ALIAS, GTK_SORT_ASCENDING);
 
     return GTK_TREE_MODEL(treestore);
 }
