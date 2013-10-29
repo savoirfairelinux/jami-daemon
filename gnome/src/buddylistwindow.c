@@ -49,7 +49,7 @@ static GtkWidget *buddy_list_window;
 static GtkTreeView *buddy_list_tree_view = NULL;
 static GtkToggleAction *toggle_action = NULL;
 static GtkWidget *presence_status_combo;
-static GtkWidget *presence_status_bar;
+static GtkWidget *presence_status_bar = NULL;
 static GtkWidget *show_all_check_box;
 
 static GtkTreeModel *create_and_fill_buddylist_tree (void);
@@ -844,6 +844,9 @@ statusbar_enable_presence()
     gboolean global_publish_enabled = FALSE;
     gboolean global_status = FALSE;
 
+    if(!presence_status_bar) // buddy window not opened
+        return;
+
     /* Check if one of the registered accounts has Presence enabled */
     for (guint i = 0; i < account_list_get_size(); i++){
         account = account_list_get_nth(i);
@@ -915,6 +918,7 @@ destroy_buddylist_window()
 {
     g_debug("Destroy buddylist window ");
     buddy_list_tree_view = NULL;
+    presence_status_bar = NULL;
     gtk_widget_destroy(buddy_list_window);
 
     gtk_toggle_action_set_active(toggle_action, FALSE);
