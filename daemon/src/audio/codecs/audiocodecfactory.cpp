@@ -293,7 +293,7 @@ AudioCodecFactory::instantiateCodec(int payload) const
     for (const auto &codec : codecInMemory_) {
         if (codec.first->getPayloadType() == payload) {
 
-            create_t* createCodec = (create_t*) dlsym(codec.second , AUDIO_CODEC_ENTRY_SYMBOL);
+            create_t* createCodec = (create_t*) dlsym(codec.second, AUDIO_CODEC_ENTRY_SYMBOL);
 
             const char *error = dlerror();
 

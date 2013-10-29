@@ -287,8 +287,7 @@ void SDPTest::testReinvite()
 
     CPPUNIT_ASSERT(session_->getPublishedIP() == LOCALHOST);
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
-    std::vector<sfl::AudioCodec*> codecs;
-    session_->getSessionAudioMedia(codecs);
+    std::vector<sfl::AudioCodec*> codecs(session_->getSessionAudioMedia());
     sfl::AudioCodec *codec = codecs[0];
     CPPUNIT_ASSERT(codec and codec->getMimeSubtype() == "PCMU");
 
