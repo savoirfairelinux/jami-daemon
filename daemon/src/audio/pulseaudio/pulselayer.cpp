@@ -100,6 +100,9 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
 
+    if (pa_threaded_mainloop_start(mainloop_) < 0)
+        throw std::runtime_error("Failed to start pulseaudio mainloop");
+
     PulseMainLoopLock lock(mainloop_);
 
 #if PA_CHECK_VERSION(1, 0, 0)
@@ -124,13 +127,15 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     if (pa_context_connect(context_, nullptr , PA_CONTEXT_NOAUTOSPAWN , nullptr) < 0)
         throw std::runtime_error("Could not connect pulseaudio context to the server");
 
-    if (pa_threaded_mainloop_start(mainloop_) < 0)
-        throw std::runtime_error("Failed to start pulseaudio mainloop");
-
-    pa_threaded_mainloop_wait(mainloop_);
-
-    if (pa_context_get_state(context_) != PA_CONTEXT_READY)
-        throw std::runtime_error("Couldn't connect to pulse audio server");
+    // wait until context is ready
+    for (;;) {
+        pa_context_state_t context_state = pa_context_get_state(context_);
+        if (not PA_CONTEXT_IS_GOOD(context_state))
+            throw std::runtime_error("Pulse audio context is bad");
+        if (context_state == PA_CONTEXT_READY)
+            break;
+        pa_threaded_mainloop_wait(mainloop_);
+    }
 
     isStarted_ = true;
 }
@@ -144,16 +149,16 @@ PulseLayer::~PulseLayer()
 
     disconnectAudioStream();
 
-    if (mainloop_)
-        pa_threaded_mainloop_stop(mainloop_);
+    {
+        PulseMainLoopLock lock(mainloop_);
 
-    if (context_) {
+        pa_context_set_state_callback(context_, NULL, NULL);
         pa_context_disconnect(context_);
         pa_context_unref(context_);
     }
 
-    if (mainloop_)
-        pa_threaded_mainloop_free(mainloop_);
+    pa_threaded_mainloop_stop(mainloop_);
+    pa_threaded_mainloop_free(mainloop_);
 }
 
 void PulseLayer::context_state_callback(pa_context* c, void *user_data)
