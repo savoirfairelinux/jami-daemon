@@ -218,7 +218,7 @@ create_and_fill_buddylist_tree (void)
             continue;
 
         if((g_strcmp0(buddy->group, " ")==0) &&
-                ((acc->state == ACCOUNT_STATE_REGISTERED) || show_all))
+                ((g_strcmp0(buddy->note,"Not Found")!=0) || show_all))
         {
             gtk_tree_store_append(treestore, &toplevel, NULL);
             gtk_tree_store_set(treestore, &toplevel,
@@ -263,7 +263,7 @@ create_and_fill_buddylist_tree (void)
                 continue;
 
             if((g_strcmp0(buddy->group, group)==0) &&
-                    ((acc->state == ACCOUNT_STATE_REGISTERED) || show_all))
+                    ((g_strcmp0(buddy->note,"Not Found")!=0) || show_all))
             {
                 gtk_tree_store_append(treestore, &child, &toplevel);
                 gtk_tree_store_set(treestore, &child,
