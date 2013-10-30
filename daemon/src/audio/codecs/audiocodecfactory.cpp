@@ -325,7 +325,6 @@ AudioCodecFactory::seemsValid(const std::string &lib)
         "g722",
         "g729", //G729 have to be loaded first, if it is valid or not is checked later
         "opus", //Opus have to be loaded first, if it is valid or not is checked later
-        "opus_stereo",
 #ifdef HAVE_SPEEX_CODEC
         "speex_nb",
         "speex_wb",
