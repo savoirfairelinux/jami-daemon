@@ -75,11 +75,13 @@ typedef struct PaDeviceInfos {
 class PulseMainLoopLock {
     public:
         explicit PulseMainLoopLock(pa_threaded_mainloop *loop);
+        void destroyLoop();
         ~PulseMainLoopLock();
 
     private:
         NON_COPYABLE(PulseMainLoopLock);
         pa_threaded_mainloop *loop_;
+        bool destroyLoop_;
 };
 
 class PulseLayer : public AudioLayer {

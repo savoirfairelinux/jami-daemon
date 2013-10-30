@@ -74,14 +74,24 @@ std::ofstream outfileResampled("testMicOuputResampled.raw", std::ifstream::binar
 std::ofstream outfile("testMicOuput.raw", std::ifstream::binary);
 #endif
 
-PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop)
+PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop), destroyLoop_(false)
 {
     pa_threaded_mainloop_lock(loop_);
+}
+
+// set this flag if we want the loop to be destroyed once it's unlocked
+void PulseMainLoopLock::destroyLoop()
+{
+    destroyLoop_ = true;
 }
 
 PulseMainLoopLock::~PulseMainLoopLock()
 {
     pa_threaded_mainloop_unlock(loop_);
+    if (destroyLoop_) {
+        pa_threaded_mainloop_stop(loop_);
+        pa_threaded_mainloop_free(loop_);
+    }
 }
 
 PulseLayer::PulseLayer(AudioPreference &pref)
@@ -100,8 +110,10 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
 
-    if (pa_threaded_mainloop_start(mainloop_) < 0)
+    if (pa_threaded_mainloop_start(mainloop_) < 0) {
+        pa_threaded_mainloop_free(mainloop_);
         throw std::runtime_error("Failed to start pulseaudio mainloop");
+    }
 
     PulseMainLoopLock lock(mainloop_);
 
@@ -119,19 +131,25 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     context_ = pa_context_new(pa_threaded_mainloop_get_api(mainloop_), "SFLphone");
 #endif
 
-    if (!context_)
+    if (!context_) {
+        lock.destroyLoop();
         throw std::runtime_error("Couldn't create pulseaudio context");
+    }
 
     pa_context_set_state_callback(context_, context_state_callback, this);
 
-    if (pa_context_connect(context_, nullptr , PA_CONTEXT_NOAUTOSPAWN , nullptr) < 0)
+    if (pa_context_connect(context_, nullptr , PA_CONTEXT_NOAUTOSPAWN , nullptr) < 0) {
+        lock.destroyLoop();
         throw std::runtime_error("Could not connect pulseaudio context to the server");
+    }
 
     // wait until context is ready
     for (;;) {
         pa_context_state_t context_state = pa_context_get_state(context_);
-        if (not PA_CONTEXT_IS_GOOD(context_state))
+        if (not PA_CONTEXT_IS_GOOD(context_state)) {
+            lock.destroyLoop();
             throw std::runtime_error("Pulse audio context is bad");
+        }
         if (context_state == PA_CONTEXT_READY)
             break;
         pa_threaded_mainloop_wait(mainloop_);
