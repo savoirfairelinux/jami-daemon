@@ -418,6 +418,36 @@ presence_buddy_subscribe(buddy_t * buddy, gboolean flag)
     }
 }
 
+void
+presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
+{
+    g_free(b->alias);
+    g_free(b->uri);
+    g_free(b->acc);
+
+    if(strlen(c->_accountID) == 0)
+    {
+        account_t *acc = account_list_get_current() ;
+        b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
+    }
+    else
+        b->acc = g_strdup(c->_accountID);
+
+    if(strlen(c->_display_name) == 0)
+    {
+        gchar *number = g_strrstr(c->_peer_number, ":") + 1;
+        gchar *end = g_strrstr(c->_peer_number, "@");
+        if (end && number)
+            b->alias = g_strndup(number, end - number);
+        else
+            b->alias = g_strdup(c->_peer_number);
+    }
+    else
+        b->alias = g_strdup(c->_display_name);
+
+    b->uri = g_strdup(c->_peer_number);
+}
+
 /********************************* group list functions *************************/
 
 void

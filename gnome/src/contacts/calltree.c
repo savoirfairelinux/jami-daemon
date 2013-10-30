@@ -402,30 +402,8 @@ void on_call_drag_data_get( G_GNUC_UNUSED GtkWidget *widget,
     callable_obj_t * c = calltab_get_selected_call(active_calltree_tab);
     buddy_t * b = presence_buddy_create();
 
-    g_free(b->alias);
-    g_free(b->uri);
-    g_free(b->acc);
+    presence_callable_to_buddy(c, b);
 
-    if(strlen(c->_accountID) == 0)
-    {
-        account_t *acc = account_list_get_current() ;
-        b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
-    }
-    else
-        b->acc = g_strdup(c->_accountID);
-
-    if(strlen(c->_display_name) == 0)
-    {
-        gchar copy[strlen(c->_peer_number) + 1];
-        strcpy(copy, c->_peer_number);
-        gchar * alias = copy;
-        alias = clean_display_number(alias);
-        b->alias = g_strdup(alias);
-    }
-    else
-        b->alias = g_strdup(c->_display_name);
-
-    b->uri = g_strdup(c->_peer_number);
     g_debug("Drag src from calltree: b->uri : %s",b->uri);
 
     gtk_selection_data_set(sdata,
