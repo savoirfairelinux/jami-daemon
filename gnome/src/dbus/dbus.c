@@ -635,7 +635,7 @@ sip_presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, cons
             {
                 b->status = FALSE;
                 g_free(b->note);
-                b->note = g_strdup("Not Found");
+                b->note = g_strdup("Not found");
             }
             update_buddylist_view();
         }

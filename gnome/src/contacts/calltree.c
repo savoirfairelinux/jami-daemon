@@ -53,6 +53,11 @@
 #include "searchbar.h"
 #include "sflphone_client.h"
 
+#ifdef SFL_PRESENCE
+#include "buddylistwindow.h"
+#include "presence.h"
+#endif
+
 #if !GLIB_CHECK_VERSION(2, 30, 0)
 #define G_VALUE_INIT  { 0, { { 0 } } }
 #endif
@@ -386,6 +391,29 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
     return msg;
 }
 
+#ifdef SFL_PRESENCE
+void on_call_drag_data_get( G_GNUC_UNUSED GtkWidget *widget,
+        G_GNUC_UNUSED GdkDragContext *drag_context,
+        GtkSelectionData *sdata,
+        G_GNUC_UNUSED guint info,
+        G_GNUC_UNUSED guint time_,
+        G_GNUC_UNUSED gpointer user_data)
+{
+    callable_obj_t * c = calltab_get_selected_call(active_calltree_tab);
+    buddy_t * b = presence_buddy_create();
+
+    presence_callable_to_buddy(c, b);
+
+    g_debug("Drag src from calltree: b->uri : %s",b->uri);
+
+    gtk_selection_data_set(sdata,
+            gdk_atom_intern ("struct buddy_t pointer", FALSE),
+            8,           // Tell GTK how to pack the data (bytes)
+            (void *)&b,  // The actual pointer that we just made
+            sizeof (b)); // The size of the pointer
+}
+#endif
+
 void
 calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
 {
@@ -436,6 +464,13 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
     g_signal_connect(G_OBJECT(tab->view), "button-press-event",
                      G_CALLBACK(button_pressed),
                      client);
+
+#ifdef SFL_PRESENCE
+    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
+    gtk_drag_source_set(tab->view, GDK_BUTTON1_MASK,
+         &presence_drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
+    g_signal_connect(tab->view, "drag-data-get", G_CALLBACK(on_call_drag_data_get), NULL);
+#endif
 
     if (calltab_has_name(tab, CURRENT_CALLS)) {
 
@@ -510,6 +545,7 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
             gtk_box_pack_start(GTK_BOX(tab->tree), alignment, FALSE, TRUE, 0);
         }
     }
+
 
     if (!calltab_has_name(tab, HISTORY))
         gtk_widget_show(tab->tree);

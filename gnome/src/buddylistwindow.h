@@ -45,4 +45,14 @@ void update_buddylist_view();
 void destroy_buddylist_window();
 void create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action);
 
+/* drag n drop */
+enum {
+        TARGET_STRING,
+        TARGET_INTEGER,
+        TARGET_FLOAT
+};
+static const GtkTargetEntry presence_drag_targets = {
+        "STRING", GTK_TARGET_SAME_APP,TARGET_STRING
+};
+
 #endif

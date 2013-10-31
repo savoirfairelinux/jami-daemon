@@ -35,7 +35,7 @@
 
 #include "sflphone_client.h"
 #include "accountlist.h"
-
+#include "callable_obj.h"
 
 //#define PRESENCE_DEBUG // allow for exhaustive description of the buddies
 
@@ -155,6 +155,14 @@ void presence_buddy_list_print();
  * @param flag True to subscribe and False to unsubscribe
  */
 void presence_buddy_subscribe(buddy_t * buddy, gboolean flag);
+
+/**
+ * This function grabs data from a callable object and copies it
+ * into a given buddy.
+ * @param c The input callable object.
+ * @param b The output buddy.
+ */
+void presence_callable_to_buddy(callable_obj_t *c, buddy_t *b);
 
 /**
  * This function the group list based on the existing group fields of the buddies.

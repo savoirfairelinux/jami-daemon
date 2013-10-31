@@ -1222,20 +1222,7 @@ add_presence_subscription_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED cal
     callable_obj_t * c = calltab_get_selected_call(tab);
     buddy_t * b = presence_buddy_create();
 
-    g_free(b->alias);
-    g_free(b->uri);
-    g_free(b->acc);
-
-    if(g_strcmp0(c->_accountID, "") == 0)
-    {
-        account_t *acc = account_list_get_current() ;
-        b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
-    }
-    else
-        b->acc = g_strdup(c->_accountID);
-
-    b->alias = g_strdup(c->_display_name);
-    b->uri = g_strdup(c->_peer_number);
+    presence_callable_to_buddy(c, b);
 
     g_debug("Presence : trying to create a new subscription (%s,%s)", b->uri, b->acc);
 
@@ -1601,16 +1588,6 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
 #ifdef SFL_PRESENCE
         GtkWidget *presence = gtk_image_menu_item_new_with_mnemonic(_("Follow status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), presence);
-
-        /*account_t * acc = account_list_get_by_id(selectedCall->_accountID);
-        if(acc)
-        {
-            if((acc->state != ACCOUNT_STATE_REGISTERED) ||
-                    !account_lookup(acc, CONFIG_PRESENCE_ENABLED) ||
-                    !account_lookup(acc, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED) ||
-                    !presence_buddy_list_get())
-                gtk_widget_set_sensitive(presence, FALSE);
-        }*/
 
         if(!presence_buddy_list_get())
             gtk_widget_set_sensitive(presence, FALSE);
