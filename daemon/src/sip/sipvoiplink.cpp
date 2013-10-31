@@ -638,14 +638,24 @@ SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
+    std::string result(SIPAccount::IP2IP_PROFILE);
+    MatchRank best = MatchRank::NONE;
+
     for (const auto &item : sipAccountMap_) {
         SIPAccount *account = static_cast<SIPAccount*>(item.second);
-        if (account and account->matches(userName, server, endpt_, pool_))
+        if (!account)
+            continue;
+        const MatchRank match(account->matches(userName, server, endpt_, pool_));
+        // return right away if this is a full match
+        if (match == MatchRank::FULL) {
             return item.first;
+        } else if (match > best) {
+            best = match;
+            result = item.first;
+        }
     }
 
-    DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
-    return SIPAccount::IP2IP_PROFILE;
+    return result;
 }
 
 void SIPVoIPLink::setSipLogLevel()

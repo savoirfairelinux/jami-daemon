@@ -1504,23 +1504,25 @@ SIPAccount::supportPresence(int function, const bool& enabled)
 }
 #endif
 
-bool SIPAccount::matches(const std::string &userName, const std::string &server,
-                         pjsip_endpoint *endpt, pj_pool_t *pool) const
+MatchRank
+SIPAccount::matches(const std::string &userName, const std::string &server,
+                    pjsip_endpoint *endpt, pj_pool_t *pool) const
 {
     if (fullMatch(userName, server, endpt, pool)) {
         DEBUG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
-        return true;
+        return MatchRank::FULL;
     } else if (hostnameMatch(server, endpt, pool)) {
         DEBUG("Matching account id in request with hostname %s", server.c_str());
-        return true;
+        return MatchRank::PARTIAL;
     } else if (userMatch(userName)) {
         DEBUG("Matching account id in request with username %s", userName.c_str());
-        return true;
+        return MatchRank::PARTIAL;
     } else if (proxyMatch(server, endpt, pool)) {
         DEBUG("Matching account id in request with proxy %s", server.c_str());
-        return true;
-    } else
-        return false;
+        return MatchRank::PARTIAL;
+    } else {
+        return MatchRank::NONE;
+    }
 }
 
 // returns even number in range [lower, upper]
