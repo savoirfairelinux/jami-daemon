@@ -156,10 +156,7 @@ void on_buddy_drag_data_received(GtkWidget *widget,
         //gtk_tree_path_free(path);
     }
     else
-    {
-        g_print("Target path not found.");
         return;
-    }
 
     const guchar *data = gtk_selection_data_get_data(sdata);
     buddy_t *b_src = NULL;
@@ -176,9 +173,9 @@ void on_buddy_drag_data_received(GtkWidget *widget,
         g_print("Dragged src b %s found\n", b_src->uri);
         buddy_t *backup = g_malloc(sizeof(buddy_t));
         memcpy(backup, b_src, sizeof(buddy_t));
-        g_free(b_src->group);
-        b_src->group = g_strdup(gr_target);
-        presence_buddy_list_edit_buddy(b_src, backup);
+        g_free(b->group);
+        b->group = g_strdup(gr_target);
+        presence_buddy_list_edit_buddy(b, backup);
         g_free(backup);
         // TODO change rank
     }
@@ -191,6 +188,7 @@ void on_buddy_drag_data_received(GtkWidget *widget,
 
     update_buddylist_view();
 }
+
 static GtkTreeModel *
 create_and_fill_buddylist_tree (void)
 {
@@ -631,9 +629,7 @@ static gboolean
 confirm_buddy_deletion(buddy_t *b)
 {
     gchar *msg;
-    account_t * acc = account_list_get_by_id(b->acc);
-    msg = g_markup_printf_escaped("Are you sure want to delete \"%s\" of %s",
-            b->alias, (gchar*)account_lookup(acc, CONFIG_ACCOUNT_ALIAS)); // TODO: use _()
+    msg = g_markup_printf_escaped("Are you sure want to delete \"%s\"", b->alias);
 
     /* Create the widgets */
     GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddy_list_window),
