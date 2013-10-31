@@ -238,7 +238,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     }
     std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    std::string account_id(SIPVoIPLink::instance()->getAccountIdFromNameAndServer(userName, server));
+    std::string account_id(SIPVoIPLink::instance()->guessAccountIdFromNameAndServer(userName, server));
 
     std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
 
@@ -309,7 +309,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         delete call;
         return PJ_FALSE;
     }
-
 
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
@@ -632,8 +631,8 @@ void SIPVoIPLink::destroy()
 }
 
 std::string
-SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
-                                           const std::string &server) const
+SIPVoIPLink::guessAccountIdFromNameAndServer(const std::string &userName,
+                                             const std::string &server) const
 {
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match

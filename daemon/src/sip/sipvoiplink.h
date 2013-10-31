@@ -296,8 +296,8 @@ class SIPVoIPLink : public VoIPLink {
 #endif
 
         std::string
-        getAccountIdFromNameAndServer(const std::string &userName,
-                                      const std::string &server) const;
+        guessAccountIdFromNameAndServer(const std::string &userName,
+                                        const std::string &server) const;
         int getModId();
         pjsip_endpoint * getEndpoint();
         pjsip_module * getMod();
