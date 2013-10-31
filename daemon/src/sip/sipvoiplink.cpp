@@ -304,6 +304,13 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_tpselector *tp_sel = SIPVoIPLink::instance()->sipTransport.createTransportSelector(account->transport_, call->getMemoryPool());
 
+    if (!tp_sel) {
+        ERROR("Could not create transport selector");
+        delete call;
+        return PJ_FALSE;
+    }
+
+
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, std::min(length, sizeof tmp));
@@ -383,7 +390,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
 
-    if (!dialog or !tp_sel or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
+    if (!dialog or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
         ERROR("Could not set transport for dialog");
         delete call;
         return PJ_FALSE;
