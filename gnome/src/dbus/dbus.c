@@ -38,9 +38,6 @@
 #include "calltab.h"
 #include "callmanager-glue.h"
 #include "configurationmanager-glue.h"
-#ifdef SFL_PRESENCE
-#include "presencemanager-glue.h"
-#endif
 #ifdef SFL_VIDEO
 #include "video_controls-glue.h"
 #endif
@@ -61,7 +58,8 @@
 
 #ifdef SFL_PRESENCE
 #include "presence.h"
-#include "buddylistwindow.h"
+#include "presencemanager-glue.h"
+#include "presencewindow.h"
 #endif
 
 #ifdef SFL_VIDEO
@@ -453,7 +451,7 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
     status_bar_display_account();
     statusicon_set_tooltip();
 #ifdef SFL_PRESENCE
-    statusbar_enable_presence();
+    update_presence_statusbar();
 #endif
 }
 
@@ -637,7 +635,7 @@ sip_presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, cons
                 g_free(b->note);
                 b->note = g_strdup("Not found");
             }
-            update_buddylist_view();
+            update_presence_view();
         }
     }
 }
@@ -657,7 +655,7 @@ sip_presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID
             b->status = status;
             g_free(b->note);
             b->note = g_strdup(note);
-            update_buddylist_view();
+            update_presence_view();
         }
     }
 }

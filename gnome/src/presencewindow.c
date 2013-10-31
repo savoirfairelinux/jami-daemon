@@ -36,7 +36,7 @@
 #include <string.h>
 #include <glib/gi18n.h>
 
-#include "buddylistwindow.h"
+#include "presencewindow.h"
 #include "account_schema.h"
 #include "accountlist.h"
 #include "actions.h"
@@ -45,19 +45,19 @@
 #include "dbus.h"
 #include "str_utils.h"
 
-static GtkWidget *buddy_list_window;
+static GtkWidget *presence_window;
 static GtkTreeView *buddy_list_tree_view = NULL;
 static GtkToggleAction *toggle_action = NULL;
 static GtkWidget *presence_status_combo;
 static GtkWidget *presence_status_bar = NULL;
 static GtkWidget *show_all_check_box;
 
-static GtkTreeModel *create_and_fill_buddylist_tree (void);
+static GtkTreeModel *create_and_fill_presence_tree (void);
 static GtkTreeView *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 static buddy_t *view_get_buddy(GtkTreeView *treeview, GtkTreePath *path);
 static gchar *view_get_group(GtkTreeView *treeview, GtkTreePath *path);
-void update_buddylist_view();
+void update_presence_view();
 
 static SFLPhoneClient * presence_client;
 static buddy_t * tmp_buddy;
@@ -142,24 +142,21 @@ void on_buddy_drag_data_received(GtkWidget *widget,
     // and apply it on the  dragged src buddy
 
     GtkTreePath *path;
-    gchar *gr_target;
-    if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path, NULL, NULL, NULL))
+    gchar *gr_target = NULL;
+    buddy_t *b_src = NULL;
+    const guchar *data = gtk_selection_data_get_data(sdata);
+
+    if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path,
+                NULL, NULL, NULL))
     {
         //gchar * spath = gtk_tree_path_to_string(path);
-        //g_print("========= (%d,%d) => Path:%s\n", x, y, spath);
-        gr_target = view_get_group(GTK_TREE_VIEW(widget), path);
-        if(!gr_target)
-        {
-            g_debug("Target group not found");
-            return;
-        }
+        //g_debug("========= (%d,%d) => Path:%s\n", x, y, spath);
         //gtk_tree_path_free(path);
+        gr_target = view_get_group(GTK_TREE_VIEW(widget), path);
     }
-    else
-        return;
+    if(!gr_target) // set group to default
+        gr_target = g_strdup(" ");
 
-    const guchar *data = gtk_selection_data_get_data(sdata);
-    buddy_t *b_src = NULL;
     memcpy (&b_src, data, sizeof(b_src));
     if(!b_src)
     {
@@ -186,15 +183,15 @@ void on_buddy_drag_data_received(GtkWidget *widget,
         presence_buddy_list_add_buddy(b_src);
     }
 
-    update_buddylist_view();
+    update_presence_view();
 }
 
 static GtkTreeModel *
-create_and_fill_buddylist_tree (void)
+create_and_fill_presence_tree (void)
 {
     GtkTreeStore *treestore;
     GtkTreeIter toplevel, child;
-    GList * buddy_list = g_object_get_data(G_OBJECT(buddy_list_window), "Buddy-List");
+    GList * buddy_list = g_object_get_data(G_OBJECT(presence_window), "Buddy-List");
     buddy_t * buddy;
     gboolean show_all= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_all_check_box));
 
@@ -311,7 +308,7 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
             return;
         presence_group_list_edit_group(new_text, group);
     }
-    update_buddylist_view();
+    update_presence_view();
 }
 
 void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
@@ -358,16 +355,16 @@ void icon_cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
 }
 
 void
-update_buddylist_view()
+update_presence_view()
 {
     if(!buddy_list_tree_view)
-        return; // Buddylist window not opend
+        return; // presence window not opend
 
-    GtkTreeModel * model = create_and_fill_buddylist_tree();
+    GtkTreeModel * model = create_and_fill_presence_tree();
     gtk_tree_view_set_model(buddy_list_tree_view, model);
     g_object_unref(model);
     gtk_tree_view_expand_all(buddy_list_tree_view);
-    g_debug("BuddyListTreeView updated.");
+    g_debug("presenceTreeView updated.");
 }
 
 static GtkTreeView *
@@ -455,7 +452,7 @@ field_error_dialog(const gchar *error_string)
     msg = g_markup_printf_escaped("Field error %s.",error_string);// TODO: use _()
 
     /* Create the widgets */
-    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddy_list_window),
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(presence_window),
             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
             GTK_MESSAGE_ERROR,
             GTK_BUTTONS_OK,
@@ -475,7 +472,7 @@ gboolean
 show_buddy_info_dialog(const gchar *title, buddy_t *b)
 {
     GtkWidget *dialog = gtk_dialog_new_with_buttons((title),
-                        GTK_WINDOW(buddy_list_window),
+                        GTK_WINDOW(presence_window),
                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                         GTK_STOCK_CANCEL,
                         GTK_RESPONSE_CANCEL,
@@ -486,7 +483,8 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
     gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), grid, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+            grid, TRUE, TRUE, 0);
 
     gint row = 0;
     GtkWidget *label;
@@ -583,7 +581,7 @@ static gboolean
 show_group_info_dialog(const gchar *title, gchar *group)
 {
     GtkWidget *dialog = gtk_dialog_new_with_buttons((title),
-                        GTK_WINDOW(buddy_list_window),
+                        GTK_WINDOW(presence_window),
                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                         GTK_STOCK_CANCEL,
                         GTK_RESPONSE_CANCEL,
@@ -594,7 +592,8 @@ show_group_info_dialog(const gchar *title, gchar *group)
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
     gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), grid, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+            grid, TRUE, TRUE, 0);
 
     gint row = 0;
     GtkWidget *label = gtk_label_new_with_mnemonic("Group");
@@ -632,7 +631,7 @@ confirm_buddy_deletion(buddy_t *b)
     msg = g_markup_printf_escaped("Are you sure want to delete \"%s\"", b->alias);
 
     /* Create the widgets */
-    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddy_list_window),
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(presence_window),
             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
             GTK_MESSAGE_WARNING,
             GTK_BUTTONS_CANCEL,
@@ -656,7 +655,7 @@ confirm_group_deletion(gchar *group)
     msg = g_markup_printf_escaped("Do you really want to delete the group %s", group);
 
     /* Create the widgets */
-    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(buddy_list_window),
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(presence_window),
             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
             GTK_MESSAGE_WARNING,
             GTK_BUTTONS_CANCEL,
@@ -715,7 +714,7 @@ view_popup_menu_onAddBuddy(G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
     if(show_buddy_info_dialog(_("Add new buddy"), b))
     {
         presence_buddy_list_add_buddy(b);
-        update_buddylist_view();
+        update_presence_view();
     }
     else
         presence_buddy_delete(b);
@@ -728,7 +727,7 @@ view_popup_menu_onRemoveBuddy (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userd
     if(confirm_buddy_deletion(b))
     {
         presence_buddy_list_remove_buddy(b);
-        update_buddylist_view();
+        update_presence_view();
     }
 }
 
@@ -739,7 +738,7 @@ view_popup_menu_onAddGroup (G_GNUC_UNUSED GtkWidget *menuitem, G_GNUC_UNUSED gpo
     if (show_group_info_dialog(_("Add group"), group))
     {
         presence_group_list_add_group(group);
-        update_buddylist_view();
+        update_presence_view();
     }
 }
 
@@ -750,7 +749,7 @@ view_popup_menu_onRemoveGroup (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userd
     if(confirm_group_deletion(group))
     {
         presence_group_list_remove_group(group);
-        update_buddylist_view();
+        update_presence_view();
     }
 }
 
@@ -765,7 +764,8 @@ view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
     {
         menuitem = gtk_menu_item_new_with_label(_("Call"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-        g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onCallBuddy), userdata);
+        g_signal_connect(menuitem, "activate",
+                G_CALLBACK(view_popup_menu_onCallBuddy), userdata);
 
         menuitem = gtk_separator_menu_item_new();
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -773,13 +773,15 @@ view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
 
     menuitem = gtk_menu_item_new_with_label(_("Add buddy"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
+    g_signal_connect(menuitem, "activate",
+            G_CALLBACK(view_popup_menu_onAddBuddy), userdata);
 
     if(type == POPUP_MENU_TYPE_BUDDY)
     {
         menuitem = gtk_menu_item_new_with_label(_("Remove buddy"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-        g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveBuddy), userdata);
+        g_signal_connect(menuitem, "activate",
+                G_CALLBACK(view_popup_menu_onRemoveBuddy), userdata);
     }
 
     menuitem = gtk_separator_menu_item_new();
@@ -787,13 +789,15 @@ view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
 
     menuitem = gtk_menu_item_new_with_label(_("Add group"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onAddGroup), gr);
+    g_signal_connect(menuitem, "activate",
+            G_CALLBACK(view_popup_menu_onAddGroup), gr);
 
     if(type == POPUP_MENU_TYPE_GROUP)
     {
         menuitem = gtk_menu_item_new_with_label(_("Remove group"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-        g_signal_connect(menuitem, "activate", G_CALLBACK(view_popup_menu_onRemoveGroup), gr);
+        g_signal_connect(menuitem, "activate",
+                G_CALLBACK(view_popup_menu_onRemoveGroup), gr);
     }
 
     gtk_widget_show_all(menu);
@@ -942,7 +946,7 @@ status_changed_cb(GtkComboBox *combo)
 }
 
 void
-statusbar_enable_presence()
+update_presence_statusbar()
 {
     account_t * account;
     gboolean global_publish_enabled = FALSE;
@@ -981,11 +985,12 @@ statusbar_enable_presence()
 void
 show_all_toggled_cb()
 {
-    update_buddylist_view();
+    /* Display all the buddies including 'Not found' ones.*/
+    update_presence_view();
 }
 
 GtkWidget*
-create_presence_status_bar()
+create_presence_statusbar()
 {
     GtkWidget *bar = gtk_statusbar_new();
 
@@ -998,60 +1003,61 @@ create_presence_status_bar()
 
     /* Add presence status combo_box*/
     presence_status_combo = gtk_combo_box_text_new();
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_OFFLINE));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo), _(PRESENCE_STATUS_ONLINE));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo),
+            _(PRESENCE_STATUS_OFFLINE));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo),
+            _(PRESENCE_STATUS_ONLINE));
     gtk_widget_set_sensitive(presence_status_combo, FALSE);
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
 
-    g_signal_connect(G_OBJECT(presence_status_combo), "changed", G_CALLBACK(status_changed_cb), NULL);
-    statusbar_enable_presence();
+    g_signal_connect(G_OBJECT(presence_status_combo), "changed",
+            G_CALLBACK(status_changed_cb), NULL);
+    update_presence_statusbar();
 
     return bar;
 }
 
 /******************************** window  *********************************/
 gboolean
-timer_cb()
+buddy_subsribe_timer_cb()
 {
     presence_buddy_list_init(presence_client);
     return TRUE; // this is necessary to keep the timer alive
 }
 
 void
-destroy_buddylist_window()
+destroy_presence_window()
 {
-    g_debug("Destroy buddylist window ");
+    g_debug("Destroy presence window ");
     buddy_list_tree_view = NULL;
     presence_status_bar = NULL;
-    gtk_widget_destroy(buddy_list_window);
+    gtk_widget_destroy(presence_window);
 
     gtk_toggle_action_set_active(toggle_action, FALSE);
     //presence_buddy_list_flush();
 }
 
 void
-create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
+create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
 {
-    // keep track of widget which opened that window
+    /* keep track of the widget which opened that window and the SFL client */
     toggle_action = action;
-
-    // keep track of the client
     presence_client = client;
 
     const gchar * title = _("SFLphone Buddies");
     g_debug("Create window : %s", title);
 
-    buddy_list_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-    gtk_container_set_border_width(GTK_CONTAINER(buddy_list_window), 0);
-    gtk_window_set_title(GTK_WINDOW(buddy_list_window), title);
-    gtk_window_set_default_size(GTK_WINDOW(buddy_list_window), BUDDYLIST_WINDOW_WIDTH, BUDDYLIST_WINDOW_HEIGHT);
-    gtk_widget_set_name(buddy_list_window, title);
+    presence_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_container_set_border_width(GTK_CONTAINER(presence_window), 0);
+    gtk_window_set_title(GTK_WINDOW(presence_window), title);
+    gtk_window_set_default_size(GTK_WINDOW(presence_window),
+            PRESENCE_WINDOW_WIDTH, PRESENCE_WINDOW_HEIGHT);
+    gtk_widget_set_name(presence_window, title);
 
     /* Instantiate vbox, subvbox as homogeneous */
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
-    gtk_container_add(GTK_CONTAINER(buddy_list_window), vbox);
+    gtk_container_add(GTK_CONTAINER(presence_window), vbox);
 
     /* Create the tree view*/
     buddy_list_tree_view = create_view();
@@ -1062,31 +1068,35 @@ create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action)
 
     /* DnD, the treeview is one the drag sources to drop buddies into groups */
     gtk_drag_source_set(GTK_WIDGET(buddy_list_tree_view), GDK_BUTTON1_MASK,
-         &presence_drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
-    g_signal_connect(GTK_WIDGET(buddy_list_tree_view), "drag-data-get", G_CALLBACK(on_buddy_drag_data_get), NULL);
+            &presence_drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
+    g_signal_connect(GTK_WIDGET(buddy_list_tree_view), "drag-data-get",
+            G_CALLBACK(on_buddy_drag_data_get), NULL);
     gtk_drag_dest_set(GTK_WIDGET(buddy_list_tree_view), GTK_DEST_DEFAULT_ALL,
          &presence_drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
-    g_signal_connect(GTK_WIDGET(buddy_list_tree_view), "drag-data-received", G_CALLBACK(on_buddy_drag_data_received), NULL);
+    g_signal_connect(GTK_WIDGET(buddy_list_tree_view), "drag-data-received",
+            G_CALLBACK(on_buddy_drag_data_received), NULL);
 
     /* Status bar, cntains presence_status selector */
-    presence_status_bar = create_presence_status_bar();
+    presence_status_bar = create_presence_statusbar();
     gtk_box_pack_start(GTK_BOX(vbox), presence_status_bar, FALSE, TRUE, 0);
 
-    g_signal_connect(G_OBJECT(buddy_list_tree_view), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
-    //g_signal_connect(G_OBJECT(buddy_list_tree_view), "row-activated", G_CALLBACK(view_row_activated_cb), NULL);
-    g_signal_connect(G_OBJECT(buddy_list_window), "button-press-event", G_CALLBACK(view_onButtonPressed), NULL);
-    g_signal_connect_after(buddy_list_window, "destroy", G_CALLBACK(destroy_buddylist_window), NULL);
+    g_signal_connect(G_OBJECT(buddy_list_tree_view), "button-press-event",
+            G_CALLBACK(view_onButtonPressed), NULL);
+    g_signal_connect(G_OBJECT(presence_window), "button-press-event",
+            G_CALLBACK(view_onButtonPressed), NULL);
+    g_signal_connect_after(presence_window, "destroy",
+            G_CALLBACK(destroy_presence_window), NULL);
 
-    /*  Load buddylist  */
+    /*  Load presence  */
     presence_buddy_list_init(presence_client);
-    g_object_set_data(G_OBJECT(buddy_list_window), "Buddy-List", (gpointer)presence_buddy_list_get());
-    update_buddylist_view();
-
-    /*  timer to refresh the subscription */
-    g_timeout_add_seconds(60, (GSourceFunc)timer_cb, NULL);
-
+    g_object_set_data(G_OBJECT(presence_window), "Buddy-List",
+            (gpointer)presence_buddy_list_get());
+    update_presence_view();
     tmp_buddy = presence_buddy_create();
 
+    /*  timer to refresh the subscription */
+    g_timeout_add_seconds(120, (GSourceFunc)buddy_subsribe_timer_cb, NULL);
+
     /* make sure that everything, window and label, are visible */
-    gtk_widget_show_all(buddy_list_window);
+    gtk_widget_show_all(presence_window);
 }

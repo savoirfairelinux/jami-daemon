@@ -663,7 +663,7 @@ void dialog_destroy_cb()
 {
 #ifdef SFL_PRESENCE
     // update ui
-    statusbar_enable_presence();
+    update_presence_statusbar();
 #endif
 }
 

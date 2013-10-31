@@ -28,22 +28,23 @@
  *  as that of the covered work.
  */
 
-#ifndef __BUDDYLISTWINDOW_H__
-#define __BUDDYLISTWINDOW_H__
+#ifndef __PRESENCEWINDOW_H__
+#define __PRESENCEWINDOW_H__
 
 #include "sflphone_client.h"
 #include "presence.h"
 
-#define BUDDYLIST_WINDOW_WIDTH 280
-#define BUDDYLIST_WINDOW_HEIGHT 320
+#define PRESENCE_WINDOW_WIDTH 280
+#define PRESENCE_WINDOW_HEIGHT 320
 
-/** @file buddylistwindow.h
+/** @file presencewindow.h
   * @brief The main window of the client.
   */
 gboolean show_buddy_info_dialog(const gchar *title, buddy_t *b);
-void update_buddylist_view();
-void destroy_buddylist_window();
-void create_buddylist_window(SFLPhoneClient *client, GtkToggleAction *action);
+void update_presence_statusbar();
+void update_presence_view();
+void destroy_presence_window();
+void create_presence_window(SFLPhoneClient *client, GtkToggleAction *action);
 
 /* drag n drop */
 enum {

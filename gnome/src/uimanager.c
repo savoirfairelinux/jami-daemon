@@ -64,7 +64,7 @@
 #include "sliders.h"
 
 #ifdef SFL_PRESENCE
-#include "buddylistwindow.h"
+#include "presencewindow.h"
 #include "presence.h"
 #endif
 
@@ -525,13 +525,13 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 
 #ifdef SFL_PRESENCE
 static void
-toggle_buddylist_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
+toggle_presence_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 {
     const gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
     if (toggled)
-        create_buddylist_window(client, togglemenuitem);
+        create_presence_window(client, togglemenuitem);
     else
-        destroy_buddylist_window();
+        destroy_presence_window();
 }
 #endif
 
@@ -1143,7 +1143,7 @@ static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "History", "appointment-soon", N_("_History"), NULL, N_("Calls history"), G_CALLBACK(toggle_history_cb), FALSE },
     { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK(toggle_addressbook_cb), FALSE },
 #ifdef SFL_PRESENCE
-    { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), G_CALLBACK(toggle_buddylist_cb), FALSE},
+    { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), G_CALLBACK(toggle_presence_cb), FALSE},
 #endif
 };
 
@@ -1230,7 +1230,7 @@ add_presence_subscription_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED cal
     if(show_buddy_info_dialog(_("Add new buddy"), b))
     {
         presence_buddy_list_add_buddy(b);
-        update_buddylist_view();
+        update_presence_view();
     }
     else
         presence_buddy_delete(b);

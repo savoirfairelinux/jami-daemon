@@ -414,7 +414,7 @@ create_account_parameters(const account_t *account, gboolean is_new, GtkWidget *
 
 #ifdef SFL_PRESENCE
 static GtkWidget*
-create_presence(const account_t *account)
+create_presence_checkbox(const account_t *account)
 {
     g_assert(account);
 
@@ -457,7 +457,7 @@ create_basic_tab(const account_t *account, gboolean is_new, GtkWidget *dialog)
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
 #ifdef SFL_PRESENCE
-    frame = create_presence(account);
+    frame = create_presence_checkbox(account);
 
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 #endif
