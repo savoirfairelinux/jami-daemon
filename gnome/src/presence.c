@@ -250,7 +250,7 @@ presence_buddy_list_buddy_get_by_uri(const gchar *uri){
         b = (buddy_t *)(tmp->data);
         if(g_strcmp0(uri, b->uri)==0)
         {
-            g_debug ("Presence: get buddy %s.", b->uri);
+            g_debug ("Presence: get buddy by uri %s.", b->uri);
             return b;
         }
         tmp = g_list_next (tmp);
@@ -261,22 +261,23 @@ presence_buddy_list_buddy_get_by_uri(const gchar *uri){
 void
 presence_buddy_list_edit_buddy(buddy_t * buddy, buddy_t * backup)
 {
-    buddy_t * b = presence_buddy_list_get_buddy(buddy);
+    buddy_t * b = presence_buddy_list_buddy_get_by_uri(buddy->uri);
 
     if(!b)
         return;
 
-    g_debug("Presence: edit buddy %s.", b->uri);
-
-    if(!(presence_buddy_list_get_buddy(backup))){
-        g_debug("Presence: edit buddy with new uri/acc");
+    // send a new subscribe if the URI has changed
+    if(g_strcmp0(buddy->uri, backup->uri) == 0)
+    {
+        g_debug("Presence: edit buddy %s with new uri", b->uri);
         presence_buddy_subscribe(backup, FALSE); //unsubscribe the old buddy
         b->subscribed = FALSE; // subscribe to the new one
         g_free(b->note);
         b->note = g_strdup(PRESENCE_DEFAULT_NOTE);
         presence_buddy_subscribe(b, TRUE);
     }
-    // else, only the alias changed
+    else
+        g_debug("Presence: edit buddy %s.", b->uri);
 
     presence_buddy_list_save();
 }

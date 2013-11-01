@@ -287,7 +287,11 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
         gchar *new_text,
         GtkTreeView *treeview)
 {
-    g_print("Cell new text: %s", new_text);
+    GtkTreeViewColumn *focus_column;
+    gtk_tree_view_get_cursor(treeview, NULL, &focus_column);
+    const gchar * col_name = gtk_tree_view_column_get_title(focus_column);
+
+    g_debug("Presence: value of col: %s is set to %s", col_name, new_text);
     GtkTreePath * path = gtk_tree_path_new_from_string(path_str);
     buddy_t *b = view_get_buddy(treeview, path);
 
@@ -295,8 +299,19 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
     {
         buddy_t *backup = g_malloc(sizeof(buddy_t));
         memcpy(backup, b, sizeof(buddy_t));
-        g_free(b->alias);
-        b->alias = g_strdup(new_text);
+        if(g_strcmp0(col_name, "Alias") == 0)
+        {
+            g_free(b->alias);
+            b->alias = g_strdup(new_text);
+        }
+        else if(g_strcmp0(col_name, "URI") == 0)
+        {
+            g_free(b->uri);
+            b->uri = g_strdup(new_text);
+        }
+        else
+            return;
+
         presence_buddy_list_edit_buddy(b, backup);
         g_free(backup);
     }
@@ -332,10 +347,11 @@ void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
     {
         g_object_set(renderer, "editable", (col_ID==COLUMN_OVERVIEW)? TRUE:FALSE, NULL);
     }
-    // set the cell editable when the mouse pointer is on a buddy alias
+    // set the cell editable when the mouse pointer is on a buddy alias or uri
     else
     {
         g_object_set(renderer, "editable", (col_ID==COLUMN_ALIAS)? TRUE:FALSE, NULL);
+        g_object_set(renderer, "editable", (col_ID==COLUMN_URI)? TRUE:FALSE, NULL);
     }
 }
 
@@ -412,11 +428,12 @@ create_view (void)
 
 #ifdef PRESENCE_DEBUG
     col = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(col, "URI");
+    col = gtk_tree_view_column_new_with_attributes("URI",
+            editable_cell, "text", COLUMN_URI, NULL);
     gtk_tree_view_append_column(view, col);
-    renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_URI);
+    gtk_tree_view_column_set_cell_data_func(col, editable_cell,
+            cell_data_func, GINT_TO_POINTER(COLUMN_URI), NULL);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Suscribed");
