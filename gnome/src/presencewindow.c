@@ -53,7 +53,7 @@ static GtkWidget *presence_status_bar = NULL;
 static GtkWidget *show_all_check_box;
 
 static GtkTreeModel *create_and_fill_presence_tree (void);
-static GtkTreeView *create_view (void);
+static GtkTreeView *create_presence_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 static buddy_t *view_get_buddy(GtkTreeView *treeview, GtkTreePath *path);
 static gchar *view_get_group(GtkTreeView *treeview, GtkTreePath *path);
@@ -385,7 +385,7 @@ update_presence_view()
 }
 
 static GtkTreeView *
-create_view (void)
+create_presence_view (void)
 {
     GtkTreeViewColumn *col;
     GtkCellRenderer *renderer = gtk_cell_renderer_text_new(); // default text render
@@ -398,14 +398,15 @@ create_view (void)
     col = gtk_tree_view_column_new_with_attributes(" ",
             editable_cell, "text", COLUMN_OVERVIEW, NULL);
     gtk_tree_view_append_column(view, col);
-    gtk_tree_view_column_pack_start(col, editable_cell, TRUE);
+    // pack with the defaul renderer to avoid GTK warning.
+    gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, editable_cell,
             cell_data_func, GINT_TO_POINTER(COLUMN_OVERVIEW), NULL);
 
     col = gtk_tree_view_column_new_with_attributes("Alias",
             editable_cell, "text", COLUMN_ALIAS, NULL);
     gtk_tree_view_append_column(view, col);
-    gtk_tree_view_column_pack_start(col, editable_cell, TRUE);
+    gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, editable_cell,
             cell_data_func, GINT_TO_POINTER(COLUMN_ALIAS), NULL);
 
@@ -415,7 +416,7 @@ create_view (void)
     // set type to "text" instead of "pixbuf". this is a work around because
     // the gtk stock icon is referenced as a string
     gtk_tree_view_append_column(view, col);
-    gtk_tree_view_column_pack_start(col, status_icon_renderer, TRUE);
+    gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, status_icon_renderer,
             icon_cell_data_func, GINT_TO_POINTER(COLUMN_STATUS), NULL);
 
@@ -936,8 +937,8 @@ view_row_activated_cb(GtkTreeView *treeview,
 /******************************** Status bar *********************************/
 
 /**
- * This function reads the status combo box, updates the account_schema
- * and call the the DBus presence publish method if enabled.
+ * This function reads the status combo box and call the DBus presence
+ * publish method if enabled.
  * @param combo The text combo box associated with the status to be published.
  */
 static void
@@ -947,6 +948,7 @@ presence_statusbar_changed_cb(GtkComboBox *combo)
     gboolean b = (g_strcmp0(status, PRESENCE_STATUS_ONLINE) == 0)? TRUE : FALSE;
     account_t * account;
 
+    //send publish to every registered accounts with presence and publish enabled
     for (guint i = 0; i < account_list_get_size(); i++){
         account = account_list_get_nth(i);
         g_assert(account);
@@ -970,7 +972,7 @@ update_presence_statusbar()
     gboolean global_publish_enabled = FALSE;
     gboolean global_status = FALSE;
 
-    if(!presence_status_bar) // buddy window not opened
+    if(!presence_status_bar) // presence window not opened
         return;
 
     /* Check if one of the registered accounts has Presence enabled */
@@ -979,22 +981,21 @@ update_presence_statusbar()
         g_assert(account);
 
         if(!(account_is_IP2IP(account)) &&
-                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0)/* &&
-                (account->state == ACCOUNT_STATE_REGISTERED) */)
+                (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
+                (account->state == ACCOUNT_STATE_REGISTERED) )
         {
             if(g_strcmp0(account_lookup(account, CONFIG_PRESENCE_STATUS), "true") == 0)
-            {
                 global_status = TRUE;
-                g_debug("Presence: status bar, %s with status is online.", account->accountID);
-            }
 
             if(g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)
-            {
                 global_publish_enabled = TRUE;
-                g_debug("Presence: status bar, %s with publish enabled.", account->accountID);
-            }
         }
     }
+
+    if(global_status)
+        g_debug("Presence: statusbar, at least 1 account is online.");
+    if(global_publish_enabled)
+        g_debug("Presence: statusbar, at least 1 account can publish.");
 
     gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo),  global_status? 1:0);
     gtk_widget_set_sensitive(presence_status_combo, global_publish_enabled? TRUE:FALSE);
@@ -1025,12 +1026,12 @@ create_presence_statusbar()
             _(PRESENCE_STATUS_OFFLINE));
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(presence_status_combo),
             _(PRESENCE_STATUS_ONLINE));
-    gtk_widget_set_sensitive(presence_status_combo, FALSE);
+    gtk_widget_set_sensitive(presence_status_combo, TRUE);
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
 
     g_signal_connect(G_OBJECT(presence_status_combo), "changed",
             G_CALLBACK(presence_statusbar_changed_cb), NULL);
-    update_presence_statusbar();
+    //update_presence_statusbar();
 
     return bar;
 }
@@ -1078,7 +1079,7 @@ create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
     gtk_container_add(GTK_CONTAINER(presence_window), vbox);
 
     /* Create the tree view*/
-    buddy_list_tree_view = create_view();
+    buddy_list_tree_view = create_presence_view();
     gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(buddy_list_tree_view), TRUE, TRUE, 5);
     gtk_tree_view_set_reorderable(buddy_list_tree_view, TRUE);
     gtk_tree_view_set_rules_hint(buddy_list_tree_view,TRUE);

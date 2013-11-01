@@ -444,6 +444,7 @@ registration_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *acco
 static void
 accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 {
+    g_debug("Account details changed.");
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
 
@@ -2238,6 +2239,7 @@ void
 dbus_presence_publish(const gchar *accountID, gboolean status)
 {
     GError *error = NULL;
+    g_debug("DBus: publish presence status.");
     org_sflphone_SFLphone_PresenceManager_publish(presence_proxy, accountID,status, "Tout va bien.", NULL);
     check_error(error);
 }
