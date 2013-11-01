@@ -57,7 +57,6 @@ static GtkTreeView *create_view (void);
 gboolean selection_changed(GtkTreeSelection *selection);
 static buddy_t *view_get_buddy(GtkTreeView *treeview, GtkTreePath *path);
 static gchar *view_get_group(GtkTreeView *treeview, GtkTreePath *path);
-void update_presence_view();
 
 static SFLPhoneClient * presence_client;
 static buddy_t * tmp_buddy;
@@ -364,7 +363,9 @@ update_presence_view()
     gtk_tree_view_set_model(buddy_list_tree_view, model);
     g_object_unref(model);
     gtk_tree_view_expand_all(buddy_list_tree_view);
-    g_debug("presenceTreeView updated.");
+#ifdef PRESENCE_DEBUG
+    g_debug("Presence: view updated.");
+#endif
 }
 
 static GtkTreeView *
@@ -923,7 +924,7 @@ view_row_activated_cb(GtkTreeView *treeview,
  * @param combo The text combo box associated with the status to be published.
  */
 static void
-status_changed_cb(GtkComboBox *combo)
+presence_statusbar_changed_cb(GtkComboBox *combo)
 {
     const gchar *status = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
     gboolean b = (g_strcmp0(status, PRESENCE_STATUS_ONLINE) == 0)? TRUE : FALSE;
@@ -940,7 +941,7 @@ status_changed_cb(GtkComboBox *combo)
             (account_is_IP2IP(account)))))
         {
             dbus_presence_publish(account->accountID,b);
-            g_debug("Presence : publish status of acc:%s => %s", account->accountID, status);
+            g_debug("Presence: publish status of acc:%s => %s", account->accountID, status);
         }
     }
 }
@@ -967,13 +968,13 @@ update_presence_statusbar()
             if(g_strcmp0(account_lookup(account, CONFIG_PRESENCE_STATUS), "true") == 0)
             {
                 global_status = TRUE;
-                g_debug("Presence : status bar, %s with status is online.", account->accountID);
+                g_debug("Presence: status bar, %s with status is online.", account->accountID);
             }
 
             if(g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)
             {
                 global_publish_enabled = TRUE;
-                g_debug("Presence : status bar, %s with publish enabled.", account->accountID);
+                g_debug("Presence: status bar, %s with publish enabled.", account->accountID);
             }
         }
     }
@@ -1011,7 +1012,7 @@ create_presence_statusbar()
     gtk_box_pack_start(GTK_BOX(bar), presence_status_combo, TRUE, TRUE, 0);
 
     g_signal_connect(G_OBJECT(presence_status_combo), "changed",
-            G_CALLBACK(status_changed_cb), NULL);
+            G_CALLBACK(presence_statusbar_changed_cb), NULL);
     update_presence_statusbar();
 
     return bar;

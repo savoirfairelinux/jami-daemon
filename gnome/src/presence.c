@@ -115,7 +115,7 @@ presence_buddy_list_load()
         buddy->group = g_strdup(g_variant_get_data(v_group));
         buddy->uri = g_strdup(g_variant_get_data(v_uri));
 
-        //g_debug("Presence : load buddy %s.", buddy->uri);
+        //g_debug("Presence: load buddy %s.", buddy->uri);
         presence_buddy_list = g_list_append(presence_buddy_list, (gpointer)buddy);
     }
 }
@@ -145,7 +145,7 @@ presence_buddy_list_save()
             g_variant_builder_add (v_b_buddy, "{ss}", "uri", buddy->uri);
             GVariant * v_buddy = g_variant_builder_end(v_b_buddy);
             const gchar *msg = g_variant_print(v_buddy,TRUE);
-            g_debug("Presence : saved buddy: %s", msg);
+            //g_debug("Presence: saved buddy: %s", msg);
             g_free((gchar*)msg);
             g_variant_builder_add_value(v_b_list, v_buddy);
         }
@@ -154,7 +154,7 @@ presence_buddy_list_save()
     GVariant * v_list = g_variant_builder_end(v_b_list);
 
     if(g_settings_set_value(presence_setting_schema, PRESENCE_BUDDY_LIST_KEY, v_list))
-        g_debug("Presence : write buddy list in gsettings.");
+        g_debug("Presence: write buddy list in gsettings.");
 }
 
 buddy_t *
@@ -175,7 +175,9 @@ presence_buddy_list_get_buddy(buddy_t * buddy)
         if((g_strcmp0(buddy->uri, b->uri)==0) &&
                     (g_strcmp0(buddy->acc, b->acc)==0))
         {
-            g_debug ("Presence : get buddy %s.", b->uri);
+#ifdef PRESENCE_DEBUG
+            g_debug ("Presence: get buddy %s.", b->uri);
+#endif
             return b;
         }
         tmp = g_list_next (tmp);
@@ -264,10 +266,10 @@ presence_buddy_list_edit_buddy(buddy_t * buddy, buddy_t * backup)
     if(!b)
         return;
 
-    g_debug("Presence : edit buddy:(%s).", b->uri);
+    g_debug("Presence: edit buddy %s.", b->uri);
 
     if(!(presence_buddy_list_get_buddy(backup))){
-        g_debug("Presence : edit buddy with new uri/acc");
+        g_debug("Presence: edit buddy with new uri/acc");
         presence_buddy_subscribe(backup, FALSE); //unsubscribe the old buddy
         b->subscribed = FALSE; // subscribe to the new one
         g_free(b->note);
@@ -285,7 +287,7 @@ presence_buddy_list_add_buddy(buddy_t * buddy)
     if(presence_buddy_list_get_buddy(buddy))
         return; // the buddy already exist
 
-    g_debug("Presence : add buddy (%s, %s).", buddy->acc, buddy->uri);
+    g_debug("Presence: add buddy %s.", buddy->uri);
     presence_buddy_list = g_list_append(presence_buddy_list, (gpointer)buddy);
     presence_buddy_list_save();
     buddy->subscribed = FALSE;
@@ -302,7 +304,7 @@ presence_buddy_list_remove_buddy(buddy_t * buddy)
         return; // the buddy doesn't exist
 
     buddy_t * b = (buddy_t*) (node->data);
-    g_debug("Presence : remove buddy:(%s).", b->uri);
+    g_debug("Presence: remove buddy:(%s).", b->uri);
     //presence_buddy_subscribe(b, FALSE);
     presence_buddy_list = g_list_remove_link(presence_buddy_list, node);
     presence_buddy_delete(b);
@@ -316,11 +318,11 @@ presence_buddy_list_print()
 #ifdef PRESENCE_DEBUG
     GList *tmp = g_list_nth(presence_buddy_list,1);
     buddy_t * buddy;
-    g_debug("Presence : buddy list:");
+    g_debug("Presence: buddy list:");
     while (tmp)
     {
         buddy = (buddy_t *)(tmp->data);
-        g_debug("  |-> (%s,%s,%s)", buddy->acc, buddy->alias, buddy->uri);
+        g_debug("  |-> (%s,%s)", buddy->alias, buddy->uri);
         tmp = g_list_next (tmp);
     }
 #endif
@@ -362,7 +364,7 @@ presence_buddy_list_flush()
         presence_buddy_subscribe(b, FALSE);
     }
 
-    g_debug("Presence : flush the buddy list.");
+    g_debug("Presence: flush the buddy list.");
     g_list_foreach(presence_buddy_list, (GFunc) g_free, NULL);
     //g_list_free_full(presence_buddy_list, (GDestroyNotify) presence_buddy_delete);
     presence_buddy_list = NULL;
@@ -386,10 +388,7 @@ void
 presence_buddy_delete(buddy_t *buddy)
 {
     if(!buddy)
-    {
-        g_debug("Presence : can't delete buddy==NULL");
         return;
-    }
 
     g_free(buddy->acc);
     g_free(buddy->alias);
@@ -472,7 +471,7 @@ presence_group_list_edit_group(gchar *new,  gchar *old)
     if(!node)
         return; // The group doesn't exist
 
-    g_debug("Presence : edit group: %s with new name %s.", old, new);
+    g_debug("Presence: edit group %s with new name %s.", old, new);
 
     // replace the group field of all the buddies
     buddy_t * b;
@@ -497,7 +496,7 @@ presence_group_list_add_group(const gchar *group)
     if(presence_group_list_get_link(group))
         return; // The group already exists
 
-    g_debug("Presence : add group:%s.", group);
+    g_debug("Presence: add group %s.", group);
     gchar * copy = strdup(group);
     presence_group_list = g_list_append(presence_group_list, (gpointer)copy);
     //presence_group_list_print();
@@ -511,7 +510,7 @@ presence_group_list_remove_group(const gchar *group)
         return; // The group doesn't exit
 
     gchar *gr = (gchar*) (node->data);
-    g_debug("Presence : remove group: %s.", gr);
+    g_debug("Presence: remove group %s.", gr);
     //presence_group_list = g_list_remove(presence_group_list, (gconstpointer)gr);
     presence_group_list = g_list_delete_link(presence_group_list, node);
 
@@ -533,7 +532,7 @@ presence_group_list_print()
 #ifdef PRESENCE_DEBUG
     GList *tmp = g_list_nth(presence_group_list,1);
     gchar *group;
-    g_debug("Presence : group list:");
+    g_debug("Presence: group list:");
     while (tmp)
     {
         group = (gchar *)(tmp->data);
@@ -571,7 +570,7 @@ presence_group_list_flush()
         return;
     }
 
-    g_debug("Presence : flush the group list.");
+    g_debug("Presence: flush the group list.");
     g_list_foreach(presence_group_list, (GFunc) g_free, NULL);
     g_list_free(presence_group_list);
     presence_group_list = NULL;
@@ -591,7 +590,7 @@ presence_group_list_get_link(const gchar *group)
     {
         if(g_strcmp0(group, (gchar *)(tmp->data))==0)
         {
-            g_debug ("Presence: get groupe link %s.", group);
+            //g_debug ("Presence: get groupe link %s.", group);
             return tmp;
         }
         tmp = g_list_next (tmp);

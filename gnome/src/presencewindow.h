@@ -46,7 +46,7 @@ void update_presence_view();
 void destroy_presence_window();
 void create_presence_window(SFLPhoneClient *client, GtkToggleAction *action);
 
-/* drag n drop */
+/* drag & drop shared info*/
 enum {
         TARGET_STRING,
         TARGET_INTEGER,
