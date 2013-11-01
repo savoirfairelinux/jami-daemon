@@ -270,7 +270,7 @@ presence_buddy_list_edit_buddy(buddy_t * buddy, buddy_t * backup)
     if(g_strcmp0(buddy->uri, backup->uri) == 0)
     {
         g_debug("Presence: edit buddy %s with new uri", b->uri);
-        presence_buddy_subscribe(backup, FALSE); //unsubscribe the old buddy
+        //presence_buddy_subscribe(backup, FALSE); //unsubscribe the old buddy
         b->subscribed = FALSE; // subscribe to the new one
         g_free(b->note);
         b->note = g_strdup(PRESENCE_DEFAULT_NOTE);
