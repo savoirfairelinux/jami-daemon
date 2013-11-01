@@ -198,6 +198,9 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
 
     if(uri == acc_->getFromUri())
     {
+        if((note_ == note) && (status_ == status->info[0].basic_open))
+            return;
+
         // save the status of our own account
         status_ = status->info[0].basic_open;
         note_ = note;
@@ -213,7 +216,13 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
 
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)
 {
-    if ((not subscribe_supported_) or (not enabled_))
+    std::string account_host = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
+    std::string sub_host = sip_utils::getHostFromUri(uri);
+
+    /* if an account has a server that doesn't support SUBSCRIBE, it's still possible
+     * to subscribe to someone on another server */
+    if (((not subscribe_supported_) && (account_host == sub_host))
+            or (not enabled_))
         return;
 
     /* Check if the buddy was already subscribed */
@@ -235,12 +244,10 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
 
     if (flag) {
         PresSubClient *c = new PresSubClient(uri, this);
-
         if (!(c->subscribe())) {
             WARN("Failed send subscribe.");
             delete c;
         }
-
         // the buddy has to be accepted before being added in the list
     }
 }
@@ -391,15 +398,16 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
             WARN("Publish retry.");
             publish(pres);
         } else if ((param->code == PJSIP_SC_BAD_EVENT) || (param->code == PJSIP_SC_NOT_IMPLEMENTED)){ //489 or 501
-            ERROR("Client (PUBLISH) failed (%s)",error.c_str());
+            WARN("Client (PUBLISH) failed (%s)",error.c_str());
+
             Manager::instance().getClient()->getPresenceManager()->serverError(
                     pres->getAccount()->getAccountID(),
                     error,
                     "Publish not supported.");
+
             pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, PJ_FALSE);
             Manager::instance().saveConfig();
             Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
-
         }
 
     } else {

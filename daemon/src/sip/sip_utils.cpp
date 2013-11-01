@@ -143,6 +143,21 @@ sip_utils::stripSipUriPrefix(std::string& sipUri)
         sipUri.erase(found, 1);
 }
 
+std::string
+sip_utils::getHostFromUri(const std::string& sipUri)
+{
+    std::string hostname(sipUri);
+    size_t found = hostname.find("@");
+    if (found != std::string::npos)
+        hostname.erase(0, found+1);
+
+    found = hostname.find(">");
+    if (found != std::string::npos)
+        hostname.erase(found, 1);
+
+    return hostname;
+}
+
 std::vector<std::string>
 sip_utils::getIPList(const std::string &name)
 {

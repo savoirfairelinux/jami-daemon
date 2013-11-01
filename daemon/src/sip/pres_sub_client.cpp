@@ -152,12 +152,22 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                         msg = "Wrong server.";
                         break;
                 }
+
+                /*  report error:
+                 *  1) send a signal through DBus
+                 *  2) change the support field in the account schema if the pres_sub's server
+                 *  is the same as the account's server
+                 */
                 Manager::instance().getClient()->getPresenceManager()->serverError(
                         pres_client->getPresence()->getAccount()->getAccountID(),
                         error,
                         msg);
 
-                if(!subscribe_allowed){
+                std::string account_host = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
+                std::string sub_host = sip_utils::getHostFromUri(pres_client->getURI());
+
+                if((!subscribe_allowed) && (account_host == sub_host)
+                        && pres_client->getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)){ // avoid mutiple details reload
                     pres_client->getPresence()->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, PJ_FALSE);
                     Manager::instance().saveConfig();
                     Manager::instance().getClient()->getConfigurationManager()->accountsChanged();

@@ -53,6 +53,8 @@ namespace sip_utils {
 
     std::string parseDisplayName(const char * buffer);
 
+    std::string getHostFromUri(const std::string& sipUri);
+
     std::vector<std::string> getIPList(const std::string &name);
 
     void addContactHeader(const std::string &contactStr, pjsip_tx_data *tdata);
