@@ -67,7 +67,7 @@ class AudioRtpFactory {
         ~AudioRtpFactory();
 
         std::vector<long>
-        getSocketDescriptors() const;
+        getSocketDescriptors();
 
         void initConfig();
 
@@ -153,7 +153,7 @@ class AudioRtpFactory {
         void restoreLocalContext();
 
         std::string
-        getCurrentAudioCodecNames() const;
+        getCurrentAudioCodecNames();
 
     private:
         NON_COPYABLE(AudioRtpFactory);
