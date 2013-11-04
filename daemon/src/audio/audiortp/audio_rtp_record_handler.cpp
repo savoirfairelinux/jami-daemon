@@ -42,11 +42,6 @@
 
 namespace sfl {
 
-#ifdef RECTODISK
-std::ofstream rtpResampled("testRtpOutputResampled.raw", std::ifstream::binary);
-std::ofstream rtpNotResampled("testRtpOutput.raw", std::ifstream::binary);
-#endif
-
 DTMFEvent::DTMFEvent(char digit) : payload(), newevent(true), length(1000)
 {
     /*
@@ -164,10 +159,6 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
 AudioRtpRecord::~AudioRtpRecord()
 {
     dead_ = true;
-#ifdef RTP_DECODE_RECTODISK
-    beforedecode.close();
-    afterdecode.close();
-#endif
 
     delete converterEncode_;
     converterEncode_ = 0;
@@ -292,10 +283,6 @@ int AudioRtpRecordHandler::processDataEncode()
     micData.resize(samplesToGet);
     const size_t samps = Manager::instance().getMainBuffer().getData(micData, id_);
 
-#ifdef RECTODISK
-    rtpNotResampled << micData;
-#endif
-
     if (samps != samplesToGet) {
         ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samps);
         return 0;
@@ -312,10 +299,6 @@ int AudioRtpRecordHandler::processDataEncode()
         audioRtpRecord_.resampledData_.setSampleRate(codecSampleRate);
         audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledData_);
 
-#ifdef RECTODISK
-        rtpResampled << audioRtpRecord_.resampledData_;
-#endif
-
         out = &(audioRtpRecord_.resampledData_);
     }
 
@@ -327,10 +310,6 @@ int AudioRtpRecordHandler::processDataEncode()
         audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
     }
 
-#endif
-
-#ifdef RTP_ENCODE_RECTODISK
-    beforesend.write((const char *)(micData), getCodecFrameSize() * 2);
 #endif
 
     {
@@ -371,11 +350,6 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         // Return the size of data in samples
         audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
     }
-
-#ifdef RTP_DECODE_RECTODISK
-    afterdecode.write((const char *)spkrDataDecoded, inSamples * sizeof(SFLDataFormat));
-#endif
-#undef RTP_DECODE_RECTODISK
 
 #if HAVE_SPEEXDSP
 

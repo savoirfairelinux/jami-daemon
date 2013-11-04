@@ -69,11 +69,6 @@ void stream_moved_callback(pa_stream *s, void *userdata UNUSED)
 
 } // end anonymous namespace
 
-#ifdef RECTODISK
-std::ofstream outfileResampled("testMicOuputResampled.raw", std::ifstream::binary);
-std::ofstream outfile("testMicOuput.raw", std::ifstream::binary);
-#endif
-
 PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop), destroyLoop_(false)
 {
     pa_threaded_mainloop_lock(loop_);
@@ -160,11 +155,6 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 
 PulseLayer::~PulseLayer()
 {
-#ifdef RECTODISK
-    outfile.close();
-    outfileResampled.close();
-#endif
-
     disconnectAudioStream();
 
     {
@@ -546,10 +536,6 @@ void PulseLayer::readFromMic()
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data)
         return;
 
-#ifdef RECTODISK
-    outfile.write((const char *)data, bytes);
-#endif
-
     assert(channels);
     assert(sample_size);
     const size_t samples = bytes / sample_size / channels;
@@ -573,10 +559,6 @@ void PulseLayer::readFromMic()
     dcblocker_.process(*out);
     out->applyGain(playbackGain_);
     Manager::instance().getMainBuffer().putData(*out, MainBuffer::DEFAULT_ID);
-
-#ifdef RECTODISK
-    outfileResampled.write((const char *)out->getChannel(0), out->frames() * sizeof(SFLAudioSample));
-#endif
 
     if (pa_stream_drop(record_->pulseStream()) < 0)
         ERROR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
