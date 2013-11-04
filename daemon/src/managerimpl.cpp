@@ -2172,10 +2172,7 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
 {
     DEBUG("Stop recorded file playback %s", filepath.c_str());
 
-    {
-        std::lock_guard<std::mutex> lock(audioLayerMutex_);
-        audiodriver_->stopStream();
-    }
+    checkAudio();
 
     {
         std::lock_guard<std::mutex> m(toneMutex_);
