@@ -1551,15 +1551,15 @@ dbus_get_current_audio_output_plugin()
 /**
  * Get noise reduction state
  */
-gchar *
+gboolean
 dbus_get_noise_suppress_state()
 {
-    gchar *state;
+    gboolean state;
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_noise_suppress_state(config_proxy, &state, &error);
 
     if (check_error(error))
-        state = g_strdup("");
+        state = FALSE;
 
     return state;
 }
@@ -1568,7 +1568,7 @@ dbus_get_noise_suppress_state()
  * Set noise reduction state
  */
 void
-dbus_set_noise_suppress_state(const gchar *state)
+dbus_set_noise_suppress_state(gboolean state)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_noise_suppress_state(config_proxy, state, &error);

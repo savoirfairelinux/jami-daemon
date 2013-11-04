@@ -2238,14 +2238,14 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin() const
 }
 
 
-std::string ManagerImpl::getNoiseSuppressState() const
+bool ManagerImpl::getNoiseSuppressState() const
 {
-    return audioPreference.getNoiseReduce() ? "enabled" : "disabled";
+    return audioPreference.getNoiseReduce();
 }
 
-void ManagerImpl::setNoiseSuppressState(const std::string &state)
+void ManagerImpl::setNoiseSuppressState(bool state)
 {
-    audioPreference.setNoiseReduce(state == "enabled");
+    audioPreference.setNoiseReduce(state);
 }
 
 /**

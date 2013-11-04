@@ -292,12 +292,12 @@ std::string ConfigurationManager::getCurrentAudioOutputPlugin()
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
 
-std::string ConfigurationManager::getNoiseSuppressState()
+bool ConfigurationManager::getNoiseSuppressState()
 {
     return Manager::instance().getNoiseSuppressState();
 }
 
-void ConfigurationManager::setNoiseSuppressState(const std::string& state)
+void ConfigurationManager::setNoiseSuppressState(const bool& state)
 {
     Manager::instance().setNoiseSuppressState(state);
 }

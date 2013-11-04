@@ -106,8 +106,8 @@ class ConfigurationManager
         std::vector< std::string > getCurrentAudioDevicesIndex();
         int32_t getAudioDeviceIndex(const std::string& name);
         std::string getCurrentAudioOutputPlugin();
-        std::string getNoiseSuppressState();
-        void setNoiseSuppressState(const std::string& state);
+        bool getNoiseSuppressState();
+        void setNoiseSuppressState(const bool& state);
 
         std::map<std::string, std::string> getRingtoneList();
 

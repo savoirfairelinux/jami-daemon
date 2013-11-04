@@ -562,13 +562,13 @@ class ManagerImpl {
          * Get the noise reduction engin state from
          * the current audio layer.
          */
-        std::string getNoiseSuppressState() const;
+        bool getNoiseSuppressState() const;
 
         /**
          * Set the noise reduction engin state in the current
          * audio layer.
          */
-        void setNoiseSuppressState(const std::string &state);
+        void setNoiseSuppressState(bool state);
 
         /**
          * Get the echo canceller engin state from
