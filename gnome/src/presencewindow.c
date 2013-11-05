@@ -296,33 +296,38 @@ void cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
     GtkTreePath * path = gtk_tree_path_new_from_string(path_str);
     buddy_t *b = view_get_buddy(treeview, path);
 
-    if(b) // change the buddy alias
+    buddy_t *backup = g_malloc(sizeof(buddy_t));
+    if(b) // a buddy line was edited
     {
-        buddy_t *backup = g_malloc(sizeof(buddy_t));
         memcpy(backup, b, sizeof(buddy_t));
-        if(g_strcmp0(col_name, "Alias") == 0)
+        if((g_strcmp0(col_name, "Alias") == 0) &&           // alias edited
+                (g_strcmp0(new_text, backup->alias) != 0))  // different alias
         {
             g_free(b->alias);
             b->alias = g_strdup(new_text);
         }
-        else if(g_strcmp0(col_name, "URI") == 0)
+        else if((g_strcmp0(col_name, "URI") == 0) &&                // uri edited
+                (g_strcmp0(new_text, backup->uri) != 0) &&          // different uri
+                (!presence_buddy_list_buddy_get_by_uri(new_text)))  // new uri
         {
             g_free(b->uri);
             b->uri = g_strdup(new_text);
         }
         else
-            return;
+            goto exit;
 
         presence_buddy_list_edit_buddy(b, backup);
-        g_free(backup);
     }
-    else    // or change the group name
+    else    // a group line was edited
     {
         gchar *group = view_get_group(treeview, path);
         if (group == NULL)
-            return;
+            goto exit;
         presence_group_list_edit_group(new_text, group);
     }
+
+exit:
+    g_free(backup);
     update_presence_view();
 }
 

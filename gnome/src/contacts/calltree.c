@@ -54,7 +54,7 @@
 #include "sflphone_client.h"
 
 #ifdef SFL_PRESENCE
-#include "buddylistwindow.h"
+#include "presencewindow.h"
 #include "presence.h"
 #endif
 

@@ -155,6 +155,7 @@ presence_buddy_list_save()
 
     if(g_settings_set_value(presence_setting_schema, PRESENCE_BUDDY_LIST_KEY, v_list))
         g_debug("Presence: write buddy list in gsettings.");
+    presence_buddy_list_print();
 }
 
 buddy_t *
