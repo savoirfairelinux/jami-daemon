@@ -53,6 +53,11 @@
 #include "video_controls.h"
 #endif
 
+struct DummyCallback : DBus::Callback_Base<void, DBus::DefaultTimeout&>
+{
+    void call(DBus::DefaultTimeout &) const {}
+};
+
 Client::Client() : callManager_(0)
     , configurationManager_(0)
 #ifdef SFL_PRESENCE
@@ -72,6 +77,13 @@ Client::Client() : callManager_(0)
         DBus::_init_threading();
         DEBUG("DBUS instantiate default dispatcher");
         DBus::default_dispatcher = dispatcher_;
+
+        // This timeout is useless except that it shortens DBus' polling
+        // timeout (the default is 10 seconds).
+        // timeout and expired are deleted internally by dispatcher_'s
+        // destructor, so we must NOT delete them ourselves.
+        DBus::Timeout timeout = new DBus::DefaultTimeout(1000, true, dispatcher_);
+        timeout->expired = new DummyCallback;
 
         DEBUG("DBUS session connection to session bus");
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
