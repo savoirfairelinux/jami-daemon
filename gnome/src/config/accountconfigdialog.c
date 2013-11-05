@@ -458,7 +458,6 @@ create_basic_tab(const account_t *account, gboolean is_new, GtkWidget *dialog)
 
 #ifdef SFL_PRESENCE
     frame = create_presence_checkbox(account);
-
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 #endif
 
@@ -1383,12 +1382,14 @@ static void update_account_from_basic_tab(account_t *account)
         account_replace(account, CONFIG_ACCOUNT_VIDEO_PORT_MAX,
                 gtk_entry_get_text(GTK_ENTRY(video_port_max_spin_box)));
 #endif
+
 #ifdef SFL_PRESENCE
         v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
         account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
-        // TODO: is this necessary?
+        // this allow the daemon for retrying to publish/subscribe
         account_replace(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED, bool_to_string(v));
         account_replace(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED, bool_to_string(v));
+        // TODO enable/disable the presence window view
 #endif
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {

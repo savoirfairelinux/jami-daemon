@@ -525,7 +525,7 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 
 #ifdef SFL_PRESENCE
 static void
-toggle_presence_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
+toggle_presence_window_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 {
     const gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
     if (toggled)
