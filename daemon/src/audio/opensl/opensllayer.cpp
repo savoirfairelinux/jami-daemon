@@ -671,7 +671,6 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 		if (samplesToGet > 0)
 			bufferIsFilled_ = audioPlaybackFillWithVoice(buffer, samplesToGet);
         else {
-			DEBUG("No voice!");
             bufferIsFilled_ = audioPlaybackFillWithToneOrRingtone(buffer);
         }
 	}

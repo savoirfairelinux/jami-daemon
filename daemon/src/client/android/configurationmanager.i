@@ -105,7 +105,7 @@ public:
     int32_t getAudioDeviceIndex(const std::string& name);
     std::string getCurrentAudioOutputPlugin();
     std::string getNoiseSuppressState();
-    void setNoiseSuppressState(const std::string& state);
+    void setNoiseSuppressState(const bool& state);
 
     std::map<std::string, std::string> getRingtoneList();
 
