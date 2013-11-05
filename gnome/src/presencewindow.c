@@ -51,6 +51,7 @@ static GtkToggleAction *toggle_action = NULL;
 static GtkWidget *presence_status_combo;
 static GtkWidget *presence_status_bar = NULL;
 static GtkWidget *show_all_check_box;
+static GtkWidget *show_uri_check_box;
 
 static GtkTreeModel *create_and_fill_presence_tree (void);
 static GtkTreeView *create_presence_view (void);
@@ -74,12 +75,12 @@ enum
 {
     COLUMN_OVERVIEW,
     COLUMN_ALIAS,
-    COLUMN_GROUP,
     COLUMN_STATUS,
     COLUMN_NOTE,
     COLUMN_URI,
+    COLUMN_SUBSCRIBED,
     COLUMN_ACCOUNTID,
-    COLUMN_SUBSCRIBED
+    COLUMN_GROUP,
 };
 
 #define N_COLUMN 8
@@ -413,8 +414,8 @@ create_presence_view (void)
     GtkCellRenderer * status_icon_renderer  = gtk_cell_renderer_pixbuf_new();
     col = gtk_tree_view_column_new_with_attributes("Status",
             status_icon_renderer, "text", COLUMN_STATUS, NULL);
-    // set type to "text" instead of "pixbuf". this is a work around because
-    // the gtk stock icon is referenced as a string
+    // FIXME: set type to "text" instead of "pixbuf". this is a work around because
+    // the gtk stock icon is referenced as a string BUT there is still a warning
     gtk_tree_view_append_column(view, col);
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, status_icon_renderer,
@@ -427,15 +428,15 @@ create_presence_view (void)
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_add_attribute(col, renderer,"text", COLUMN_NOTE);
 
-#ifdef PRESENCE_DEBUG
-    col = gtk_tree_view_column_new();
     col = gtk_tree_view_column_new_with_attributes("URI",
             editable_cell, "text", COLUMN_URI, NULL);
     gtk_tree_view_append_column(view, col);
+    renderer = gtk_cell_renderer_text_new();
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
     gtk_tree_view_column_set_cell_data_func(col, editable_cell,
             cell_data_func, GINT_TO_POINTER(COLUMN_URI), NULL);
 
+#ifdef PRESENCE_DEBUG
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Suscribed");
     gtk_tree_view_append_column(view, col);
@@ -1005,6 +1006,22 @@ void
 show_all_toggled_cb()
 {
     /* Display all the buddies including 'Not found' ones.*/
+
+    update_presence_view();
+}
+
+
+void
+show_uri_toggled_cb()
+{
+    // reload the tree view with new columns
+    GtkTreeViewColumn *col = gtk_tree_view_get_column(buddy_list_tree_view, (gint)COLUMN_URI);
+
+    if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_uri_check_box)))
+        gtk_tree_view_column_set_visible(col,TRUE);
+    else
+        gtk_tree_view_column_set_visible(col, FALSE);
+
     update_presence_view();
 }
 
@@ -1016,6 +1033,10 @@ create_presence_statusbar()
     show_all_check_box = gtk_check_button_new_with_mnemonic(_("_Show all"));
     gtk_box_pack_start(GTK_BOX(bar), show_all_check_box, TRUE, TRUE, 0);
     g_signal_connect (show_all_check_box, "toggled", G_CALLBACK(show_all_toggled_cb), NULL);
+
+    show_uri_check_box = gtk_check_button_new_with_mnemonic(_("_Edit URIs"));
+    gtk_box_pack_start(GTK_BOX(bar), show_uri_check_box, TRUE, TRUE, 0);
+    g_signal_connect (show_uri_check_box, "toggled", G_CALLBACK(show_uri_toggled_cb), NULL);
 
     GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
     gtk_box_pack_start(GTK_BOX(bar), label, TRUE, TRUE, 0);
@@ -1083,7 +1104,7 @@ create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
     gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(buddy_list_tree_view), TRUE, TRUE, 5);
     gtk_tree_view_set_reorderable(buddy_list_tree_view, TRUE);
     gtk_tree_view_set_rules_hint(buddy_list_tree_view,TRUE);
-    gtk_tree_view_set_headers_visible(buddy_list_tree_view, FALSE);
+//  gtk_tree_view_set_headers_visible(buddy_list_tree_view, FALSE);
 
     /* DnD, the treeview is one the drag sources to drop buddies into groups */
     gtk_drag_source_set(GTK_WIDGET(buddy_list_tree_view), GDK_BUTTON1_MASK,

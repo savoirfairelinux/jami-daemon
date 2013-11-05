@@ -1143,7 +1143,7 @@ static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "History", "appointment-soon", N_("_History"), NULL, N_("Calls history"), G_CALLBACK(toggle_history_cb), FALSE },
     { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK(toggle_addressbook_cb), FALSE },
 #ifdef SFL_PRESENCE
-    { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), G_CALLBACK(toggle_presence_cb), FALSE},
+    { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), G_CALLBACK(toggle_presence_window_cb), FALSE},
 #endif
 };
 
@@ -1738,6 +1738,23 @@ create_menus(GtkUIManager *ui, SFLPhoneClient *client)
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), must_show_volume(client));
     gtk_action_set_sensitive(volumeToggle_, TRUE);
     gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Toolbar"), FALSE);
+
+#ifdef SFL_PRESENCE
+    // Should the buddy list be available?
+    // find at least one account with presence feature enabled
+    account_t * account;
+    gboolean global_presence_enabled = FALSE;
+
+    for (guint i = 0; i < account_list_get_size(); i++){
+        account = account_list_get_nth(i);
+        g_assert(account);
+        if((account->state == ACCOUNT_STATE_REGISTERED) &&
+            (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0))
+            global_presence_enabled = TRUE;
+    }
+
+    gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Buddies"), global_presence_enabled);
+#endif
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
     waitingLayer = create_waiting_icon();
