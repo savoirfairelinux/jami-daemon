@@ -804,20 +804,10 @@ select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
         g_warning("Unexpected audio API state");
 }
 
-static const gchar *reverse_state(const gchar *state)
-{
-    if (g_strcmp0(state, "enabled") == 0)
-        return "disabled";
-    else
-        return "enabled";
-}
-
 static void
 active_noise_suppress(void)
 {
-    gchar *state = dbus_get_noise_suppress_state();
-    dbus_set_noise_suppress_state(reverse_state(state));
-    g_free(state);
+    dbus_set_noise_suppress_state(!dbus_get_noise_suppress_state());
 }
 
 static void
@@ -921,15 +911,8 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     gtk_box_pack_start(GTK_BOX(audio_vbox), frame, FALSE, FALSE, 0);
 
     GtkWidget *enableNoiseReduction = gtk_check_button_new_with_mnemonic(_("_Noise Reduction"));
-    gchar *state = dbus_get_noise_suppress_state();
 
-    if (g_strcmp0(state, "enabled") == 0)
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableNoiseReduction), TRUE);
-    else
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableNoiseReduction), FALSE);
-
-    g_free(state);
-    state = NULL;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableNoiseReduction), dbus_get_noise_suppress_state());
 
     g_signal_connect(G_OBJECT(enableNoiseReduction), "clicked", active_noise_suppress, NULL);
     gtk_grid_attach(GTK_GRID(grid), enableNoiseReduction, 0, 1, 1, 1);

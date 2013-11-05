@@ -324,13 +324,13 @@ gchar *dbus_get_current_audio_output_plugin();
  * ConfigurationManager - Get the current noise suppressor state
  * @return gchar* The state (enabled/disabled)
  */
-gchar *dbus_get_noise_suppress_state(void);
+gboolean dbus_get_noise_suppress_state(void);
 
 /**
  * ConfigurationManager - Set the current noise suppressor state
  * @param gchar* The state (enabled/disabled)
  */
-void dbus_set_noise_suppress_state(const gchar *state);
+void dbus_set_noise_suppress_state(gboolean state);
 
 /**
  * ConfigurationManager - Get the current echo cancel state

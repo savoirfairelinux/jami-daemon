@@ -61,8 +61,6 @@ AudioRtpFactory::~AudioRtpFactory()
 
 void AudioRtpFactory::initConfig()
 {
-    DEBUG("AudioRtpFactory: init config");
-
     stop();
 
     const std::string accountId(ca_->getAccountId());
@@ -162,8 +160,9 @@ void AudioRtpFactory::initSession()
 }
 
 std::vector<long>
-AudioRtpFactory::getSocketDescriptors() const
+AudioRtpFactory::getSocketDescriptors()
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to get socket descriptors");
     return rtpSession_->getSocketDescriptors();
@@ -171,6 +170,7 @@ AudioRtpFactory::getSocketDescriptors() const
 
 void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
 
@@ -185,6 +185,7 @@ void AudioRtpFactory::stop()
 
 int AudioRtpFactory::getSessionMedia()
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
@@ -192,8 +193,9 @@ int AudioRtpFactory::getSessionMedia()
 }
 
 std::string
-AudioRtpFactory::getCurrentAudioCodecNames() const
+AudioRtpFactory::getCurrentAudioCodecNames()
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
@@ -202,6 +204,7 @@ AudioRtpFactory::getCurrentAudioCodecNames() const
 
 void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (!rtpSession_)
         throw AudioRtpFactoryException("rtpSession_ was NULL when trying to update IP address");
 
@@ -210,6 +213,7 @@ void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
 
 void AudioRtpFactory::updateDestinationIpAddress()
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to update IP address");
 
@@ -219,6 +223,7 @@ void AudioRtpFactory::updateDestinationIpAddress()
 #if HAVE_ZRTP
 AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (rtpSession_ and keyExchangeProtocol_ == ZRTP)
         return static_cast<AudioZrtpSession *>(rtpSession_.get());
     else
@@ -228,7 +233,7 @@ AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 
 void AudioRtpFactory::initLocalCryptoInfo()
 {
-    DEBUG("AudioRtpFactory: Init local crypto info");
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
 
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_.get());
@@ -240,7 +245,7 @@ void AudioRtpFactory::initLocalCryptoInfo()
 
 void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 {
-    DEBUG("AudioRtpFactory: Init local crypto info");
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
 
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_.get());
@@ -253,31 +258,35 @@ void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 
 void AudioRtpFactory::setRemoteCryptoInfo(SdesNegotiator& nego)
 {
-    if (rtpSession_) {
-        if (keyExchangeProtocol_ == SDES) {
-            AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_.get());
-            srtp->setRemoteCryptoInfo(nego);
-        } else {
-            ERROR("Should not store remote crypto info for non-SDES sessions");
-        }
-    } else
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
+    if (!rtpSession_)
         throw AudioRtpFactoryException("rtpSession_ is NULL in setRemoteCryptoInfo");
+
+    if (keyExchangeProtocol_ == SDES) {
+        AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_.get());
+        srtp->setRemoteCryptoInfo(nego);
+    } else {
+        ERROR("Should not store remote crypto info for non-SDES sessions");
+    }
 }
 
 void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (rtpSession_)
         rtpSession_->setDtmfPayloadType(payloadType);
 }
 
 void AudioRtpFactory::sendDtmfDigit(int digit)
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (rtpSession_)
         rtpSession_->putDtmfEvent(digit);
 }
 
 void AudioRtpFactory::saveLocalContext()
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
         cachedLocalMasterKey_ = rtpSession_->getLocalMasterKey();
         cachedLocalMasterSalt_ = rtpSession_->getLocalMasterSalt();
@@ -286,6 +295,7 @@ void AudioRtpFactory::saveLocalContext()
 
 void AudioRtpFactory::restoreLocalContext()
 {
+    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
         rtpSession_->setLocalMasterKey(cachedLocalMasterKey_);
         rtpSession_->setLocalMasterSalt(cachedLocalMasterSalt_);

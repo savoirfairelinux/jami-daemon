@@ -119,6 +119,7 @@ class SIPPresence;
  */
 enum {MAX_PORT = 65536};
 enum {HALF_MAX_PORT = MAX_PORT / 2};
+enum class MatchRank {NONE, PARTIAL, FULL};
 
 class SIPAccount : public Account {
     public:
@@ -538,7 +539,7 @@ class SIPAccount : public Account {
         pjsip_transport* transport_;
 
         /* Returns true if the username and/or hostname match this account */
-        bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
+        MatchRank matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
 #ifdef SFL_PRESENCE
         /**

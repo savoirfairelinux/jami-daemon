@@ -361,16 +361,18 @@ static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNU
         sfl_seekslider_set_display(self, SFL_SEEKSLIDER_DISPLAY_PAUSE);
 }
 
-static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
+static void sfl_seekslider_stop_playback_record_cb(GtkButton *button G_GNUC_UNUSED, gpointer user_data)
 {
     SFLSeekSlider *self = SFL_SEEKSLIDER(user_data);
 
     if (self->priv->file_path == NULL || (*self->priv->file_path == 0))
         return;
 
-    dbus_stop_recorded_file_playback(self->priv->file_path);
-    g_debug("Stop file playback %s", self->priv->file_path);
-    self->priv->is_playing = FALSE;
+    if (self->priv->is_playing) {
+        dbus_stop_recorded_file_playback(self->priv->file_path);
+        g_debug("Stop file playback %s", self->priv->file_path);
+        self->priv->is_playing = FALSE;
+    }
 
     sfl_seekslider_set_display(self, SFL_SEEKSLIDER_DISPLAY_PLAY);
 }

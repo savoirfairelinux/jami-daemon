@@ -150,7 +150,7 @@ OpenSLLayer::~OpenSLLayer()
     stopAudioCapture();
 }
 
-#define RECORD_AUDIO_TODISK
+#define RECORD_AUDIO_TODISK 1
 
 #ifdef RECORD_AUDIO_TODISK
 #include <fstream>
@@ -168,8 +168,8 @@ OpenSLLayer::startStream()
 
     if (audioThread_ == nullptr) {
 #ifdef RECORD_AUDIO_TODISK
-        opensl_outfile.open("/data/data/org.sflphone/opensl_playback.raw", std::ofstream::out | std::ofstream::binary);
-        opensl_infile.open("/data/data/org.sflphone/opensl_record.raw", std::ofstream::out | std::ofstream::binary);
+        opensl_outfile.open("/data/data/org.sflphone/opensl_playback.pcm", std::ofstream::out | std::ofstream::binary);
+        opensl_infile.open("/data/data/org.sflphone/opensl_record.pcm", std::ofstream::out | std::ofstream::binary);
 #endif
 
         audioThread_ = new OpenSLThread(this);
@@ -314,26 +314,35 @@ OpenSLLayer::initAudioPlayback()
     result = (*engineInterface_)->CreateAudioPlayer(engineInterface_, &playerObject_, &audioSource, &audioSink, nbInterface, ids, req);
     assert(SL_RESULT_SUCCESS == result);
 
-    SLAndroidConfigurationItf playerConfig;
-    SLint32 streamType = SL_ANDROID_STREAM_VOICE;
+//    SLAndroidConfigurationItf playerConfig;
+//    SLint32 streamType = SL_ANDROID_STREAM_VOICE;
 
-    result = (*playerObject_)->GetInterface(playerObject_,
-                                            SL_IID_ANDROIDCONFIGURATION,
-                                            &playerConfig);
 
-    if (result == SL_RESULT_SUCCESS && playerConfig) {
-        result = (*playerConfig)->SetConfiguration(
-                     playerConfig, SL_ANDROID_KEY_STREAM_TYPE,
-                     &streamType, sizeof(SLint32));
-    }
+//    result = (*playerObject_)->GetInterface(playerObject_,
+//                                            SL_IID_ANDROIDCONFIGURATION,
+//                                            &playerConfig);
+
+//    if (result == SL_RESULT_SUCCESS && playerConfig) {
+//        result = (*playerConfig)->SetConfiguration(
+//                     playerConfig, SL_ANDROID_KEY_STREAM_TYPE,
+//                     &streamType, sizeof(SLint32));
+//    }
+
+	DEBUG("Realize audio player\n");
+    result = (*playerObject_)->Realize(playerObject_, SL_BOOLEAN_FALSE);
+    assert(SL_RESULT_SUCCESS == result);
+
+
+	SLVolumeItf volumeIf;
+    (*playerObject_)->GetInterface(playerObject_, SL_IID_VOLUME, &volumeIf);
+
+    SLmillibel maxVolume;
+    (*volumeIf)->GetVolumeLevel(volumeIf, &maxVolume);
+	ERROR("Volume %d", maxVolume);
 
     if (result != SL_RESULT_SUCCESS) {
         ERROR("Unable to set android player configuration");
     }
-
-    DEBUG("Realize audio player\n");
-    result = (*playerObject_)->Realize(playerObject_, SL_BOOLEAN_FALSE);
-    assert(SL_RESULT_SUCCESS == result);
 
     // create audio interface
     DEBUG("Create audio player interface\n");

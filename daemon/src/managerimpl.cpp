@@ -2172,10 +2172,7 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
 {
     DEBUG("Stop recorded file playback %s", filepath.c_str());
 
-    {
-        std::lock_guard<std::mutex> lock(audioLayerMutex_);
-        audiodriver_->stopStream();
-    }
+    checkAudio();
 
     {
         std::lock_guard<std::mutex> m(toneMutex_);
@@ -2241,14 +2238,14 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin() const
 }
 
 
-std::string ManagerImpl::getNoiseSuppressState() const
+bool ManagerImpl::getNoiseSuppressState() const
 {
-    return audioPreference.getNoiseReduce() ? "enabled" : "disabled";
+    return audioPreference.getNoiseReduce();
 }
 
-void ManagerImpl::setNoiseSuppressState(const std::string &state)
+void ManagerImpl::setNoiseSuppressState(bool state)
 {
-    audioPreference.setNoiseReduce(state == "enabled");
+    audioPreference.setNoiseReduce(state);
 }
 
 /**
