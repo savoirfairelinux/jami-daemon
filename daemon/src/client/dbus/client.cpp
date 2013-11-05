@@ -82,7 +82,7 @@ Client::Client() : callManager_(0)
         // timeout (the default is 10 seconds).
         // timeout and expired are deleted internally by dispatcher_'s
         // destructor, so we must NOT delete them ourselves.
-        DBus::Timeout timeout = new DBus::DefaultTimeout(1000, true, dispatcher_);
+        DBus::DefaultTimeout *timeout = new DBus::DefaultTimeout(1000, true, dispatcher_);
         timeout->expired = new DummyCallback;
 
         DEBUG("DBUS session connection to session bus");
