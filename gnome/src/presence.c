@@ -260,15 +260,13 @@ presence_buddy_list_buddy_get_by_uri(const gchar *uri){
 }
 
 void
-presence_buddy_list_edit_buddy(buddy_t * buddy, buddy_t * backup)
+presence_buddy_list_edit_buddy(buddy_t * b, buddy_t * backup)
 {
-    buddy_t * b = presence_buddy_list_buddy_get_by_uri(buddy->uri);
-
-    if(!b)
+   if((!b) || (!backup))
         return;
 
     // send a new subscribe if the URI has changed
-    if(g_strcmp0(buddy->uri, backup->uri) == 0)
+    if(g_strcmp0(b->uri, backup->uri) != 0)
     {
         g_debug("Presence: edit buddy %s with new uri", b->uri);
         //presence_buddy_subscribe(backup, FALSE); //unsubscribe the old buddy
@@ -417,23 +415,27 @@ presence_buddy_subscribe(buddy_t * buddy, gboolean flag)
 void
 presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
 {
-    account_t *acc;
+    if((!c) || (!b))
+        return;
+
+    account_t *acc =  account_list_get_current();
     gchar *uri;
+    gchar *hostname;
 
     g_free(b->alias);
     g_free(b->uri);
     g_free(b->acc);
 
     if(strlen(c->_accountID) == 0)
-    {
-        acc = account_list_get_current() ;
         b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
-    }
     else
         b->acc = g_strdup(c->_accountID);
 
+    hostname = account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME);
+
     if(strlen(c->_display_name) == 0)
     {
+        // extract a default alias from the uri
         gchar *number = g_strrstr(c->_peer_number, ":") + 1;
         gchar *end = g_strrstr(c->_peer_number, "@");
         if (end && number)
@@ -444,7 +446,31 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
     else
         b->alias = g_strdup(c->_display_name);
 
-    b->uri = g_strdup(c->_peer_number);
+    const gchar SIP_PREFIX[] = "<sip:";
+    if(strlen(c->_peer_number) > 0)
+    {
+        if (g_str_has_prefix(c->_peer_number, SIP_PREFIX))
+            b->uri = g_strdup(c->_peer_number);
+        else
+        {
+            // had prefix and suffix
+            if(g_strrstr(c->_peer_number, "@"))
+                uri = g_strconcat("<sip:", c->_peer_number, ">", NULL);
+            else
+                uri = g_strconcat("<sip:", c->_peer_number, "@", hostname,
+                        ">", NULL);
+            b->uri = g_strdup(uri);
+        }
+    }
+    else
+    {
+        g_warning("Presence: buddy has NO URI");
+        acc = account_list_get_by_id(b->acc);
+        uri = g_strconcat("<sip:XXXX@", hostname,
+                ">", NULL);
+        b->uri = g_strdup(uri);
+    }
+
 }
 
 /********************************* group list functions *************************/
