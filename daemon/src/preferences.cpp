@@ -104,6 +104,7 @@ static const char * const ALWAYS_RECORDING_KEY = "alwaysRecording";
 static const char * const VOLUMEMIC_KEY = "volumeMic";
 static const char * const VOLUMESPKR_KEY = "volumeSpkr";
 static const char * const NOISE_REDUCE_KEY = "noiseReduce";
+static const char * const CAPTURE_MUTED_KEY = "captureMuted";
 
 // shortcut preferences
 static const char * const HANGUP_SHORT_KEY = "hangUp";
@@ -346,6 +347,7 @@ AudioPreference::AudioPreference() :
     , volumemic_(1.0)
     , volumespkr_(1.0)
     , noisereduce_(false)
+    , captureMuted_(false)
 {}
 
 namespace {
@@ -434,6 +436,7 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     spkrstr << volumespkr_;
     Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
     Conf::ScalarNode noise(noisereduce_);
+    Conf::ScalarNode captureMuted(captureMuted_);
 
     Conf::MappingNode preferencemap(NULL);
     preferencemap.setKeyValue(AUDIO_API_KEY, &audioapi);
@@ -441,6 +444,7 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(ALWAYS_RECORDING_KEY, &alwaysRecording);
     preferencemap.setKeyValue(VOLUMEMIC_KEY, &volumemic);
     preferencemap.setKeyValue(VOLUMESPKR_KEY, &volumespkr);
+    preferencemap.setKeyValue(CAPTURE_MUTED_KEY, &captureMuted);
 
     Conf::MappingNode alsapreferencemap(NULL);
 #if HAVE_ALSA
@@ -496,6 +500,7 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     map.getValue(VOLUMESPKR_KEY, &volumespkr_);
     volumespkr_ = clamp(-1.0, 1.0, volumespkr_);
     map.getValue(NOISE_REDUCE_KEY, &noisereduce_);
+    map.getValue(CAPTURE_MUTED_KEY, &captureMuted_);
 
     Conf::MappingNode *alsamap = (Conf::MappingNode *) map.getValue("alsa");
 

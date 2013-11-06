@@ -762,7 +762,10 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
     const bool resample = mainBufferSampleRate != sampleRate_;
 
-    buffer.applyGain(captureGain_);
+    if (isCaptureMuted_)
+        buffer.applyGain(0.0);
+    else
+        buffer.applyGain(captureGain_);
 
     if (resample) {
 		int outSamples = buffer.frames() * (static_cast<double>(sampleRate_) / mainBufferSampleRate);

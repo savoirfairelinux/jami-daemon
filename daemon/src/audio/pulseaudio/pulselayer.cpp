@@ -102,6 +102,10 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , enumeratingSources_(false)
     , preference_(pref)
 {
+    setCaptureGain(pref.getVolumemic());
+    setPlaybackGain(pref.getVolumespkr());
+    setCaptureMuted(pref.getCaptureMuted());
+
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
 
@@ -546,7 +550,10 @@ void PulseLayer::readFromMic()
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
-    in.applyGain(captureGain_);
+    if (isCaptureMuted_)
+        in.applyGain(0.0);
+    else
+        in.applyGain(captureGain_);
 
     AudioBuffer * out = &in;
 

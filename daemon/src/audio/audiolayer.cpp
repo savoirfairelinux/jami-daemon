@@ -35,7 +35,8 @@
 #include "manager.h"
 
 AudioLayer::AudioLayer()
-    : captureGain_(1.0)
+    : isCaptureMuted_(false)
+    , captureGain_(1.0)
     , playbackGain_(1.0)
     , isStarted_(false)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)

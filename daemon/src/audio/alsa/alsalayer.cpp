@@ -170,6 +170,7 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
 {
     setCaptureGain(pref.getVolumemic());
     setPlaybackGain(pref.getVolumespkr());
+    setCaptureMuted(pref.getCaptureMuted());
 }
 
 AlsaLayer::~AlsaLayer()
@@ -720,7 +721,10 @@ void AlsaLayer::capture()
         return;
     }
 
-    in.applyGain(captureGain_);
+    if (isCaptureMuted_)
+        in.applyGain(0.0);
+    else
+        in.applyGain(captureGain_);
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);

@@ -121,6 +121,13 @@ class AudioLayer {
         void flushUrgent();
 
         /**
+         * Mute capture (microphone)
+         */
+        void setCaptureMuted(bool muted) {
+            isCaptureMuted_ = muted;
+        }
+
+        /**
          * Set capture stream gain (microphone)
          * Range should be [-1.0, 1.0]
          */
@@ -167,6 +174,11 @@ class AudioLayer {
         virtual void updatePreference(AudioPreference &pref, int index, PCMType type) = 0;
 
     protected:
+
+        /**
+         * True if capture is not being used
+         */
+        bool isCaptureMuted_;
 
         /**
          * Gain applied to mic signal

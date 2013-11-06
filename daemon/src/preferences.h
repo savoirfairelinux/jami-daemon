@@ -337,6 +337,14 @@ class AudioPreference : public Serializable {
             noisereduce_ = noise;
         }
 
+        bool getCaptureMuted() const {
+            return captureMuted_;
+        }
+
+        void setCaptureMuted(bool muted) {
+            captureMuted_ = muted;
+        }
+
     private:
         std::string audioApi_;
 
@@ -359,6 +367,7 @@ class AudioPreference : public Serializable {
         double volumespkr_;
 
         bool noisereduce_;
+        bool captureMuted_;
 };
 
 class ShortcutPreferences : public Serializable {
