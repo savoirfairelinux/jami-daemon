@@ -36,8 +36,13 @@
 #include <stdexcept>
 #include <iostream>
 
+// FIXME: this should be set by configure
 extern "C" {
+#ifdef __ANDROID__
 #include <gsm.h>
+#else
+#include <gsm/gsm.h>
+#endif
 }
 
 /**
