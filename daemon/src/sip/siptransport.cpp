@@ -179,7 +179,7 @@ stun_sock_on_status_cb(pj_stun_sock * /*stun_sock*/, pj_stun_sock_op op,
         ERROR("STUN operation failure");
 
     // Always return true so the stun transport registration retry even on failure
-    return true;
+    return PJ_TRUE;
 }
 
 static pj_bool_t
