@@ -8,7 +8,7 @@ libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 if BUILD_GSM
 GSM_LIB = libcodec_gsm.so
 libcodec_gsm_so_SOURCES = gsmcodec.cpp
-libcodec_gsm_so_CXXFLAGS = -fPIC -g -Wall
+libcodec_gsm_so_CXXFLAGS = -fPIC -g -Wall $(GSM_CXXFLAGS)
 libcodec_gsm_so_LDFLAGS = --shared -lc -lgsm
 libcodec_gsm_so_LDADD = libcodecdescriptor.la
 INSTALL_GSM_RULE = install-libcodec_gsm_so
