@@ -392,13 +392,17 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
 }
 
 #ifdef SFL_PRESENCE
-void on_call_drag_data_get( G_GNUC_UNUSED GtkWidget *widget,
+void on_call_drag_data_get(GtkWidget *widget,
         G_GNUC_UNUSED GdkDragContext *drag_context,
         GtkSelectionData *sdata,
         G_GNUC_UNUSED guint info,
         G_GNUC_UNUSED guint time_,
         G_GNUC_UNUSED gpointer user_data)
 {
+    GtkTreeSelection *selector = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
+    if(!gtk_tree_selection_get_selected(selector, NULL, NULL))
+        return;
+
     callable_obj_t * c = calltab_get_selected_call(active_calltree_tab);
     buddy_t * b = presence_buddy_create();
 
@@ -466,7 +470,7 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
                      client);
 
 #ifdef SFL_PRESENCE
-    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
+//    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
     gtk_drag_source_set(tab->view, GDK_BUTTON1_MASK,
          &presence_drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
     g_signal_connect(tab->view, "drag-data-get", G_CALLBACK(on_call_drag_data_get), NULL);
