@@ -69,7 +69,7 @@ class OpenSLLayer : public AudioLayer {
         /**
          * Constructor
          */
-        OpenSLLayer();
+        OpenSLLayer(const AudioPreference &pref);
 
         /**
          * Destructor
@@ -125,6 +125,8 @@ class OpenSLLayer : public AudioLayer {
         }
 
     private:
+        typedef std::vector<AudioBuffer> AudioBufferStack;
+
 
         bool audioBufferFillWithZeros(AudioBuffer &buffer);
 

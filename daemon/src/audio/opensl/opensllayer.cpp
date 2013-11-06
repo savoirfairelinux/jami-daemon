@@ -118,8 +118,9 @@ OpenSLThread::run()
 }
 
 // Constructor
-OpenSLLayer::OpenSLLayer()
-    : indexIn_(0)
+OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
+    : AudioLayer(pref)
+    , indexIn_(0)
     , indexOut_(0)
     , indexRing_(0)
     , audioThread_(0)

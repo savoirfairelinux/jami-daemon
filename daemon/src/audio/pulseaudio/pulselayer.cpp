@@ -90,7 +90,8 @@ PulseMainLoopLock::~PulseMainLoopLock()
 }
 
 PulseLayer::PulseLayer(AudioPreference &pref)
-    : playback_(0)
+    : AudioLayer(pref)
+    , playback_(0)
     , record_(0)
     , ringtone_(0)
     , sinkList_()
@@ -104,7 +105,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 {
     setCaptureGain(pref.getVolumemic());
     setPlaybackGain(pref.getVolumespkr());
-    setCaptureMuted(pref.getCaptureMuted());
+    muteCapture(pref.getCaptureMuted());
 
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");

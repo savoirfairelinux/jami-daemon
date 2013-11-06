@@ -34,10 +34,10 @@
 #include "audio/dcblocker.h"
 #include "manager.h"
 
-AudioLayer::AudioLayer()
-    : isCaptureMuted_(false)
-    , captureGain_(1.0)
-    , playbackGain_(1.0)
+AudioLayer::AudioLayer(const AudioPreference &pref)
+    : isCaptureMuted_(pref.getCaptureMuted())
+    , captureGain_(pref.getVolumemic())
+    , playbackGain_(pref.getVolumespkr())
     , isStarted_(false)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
     , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())

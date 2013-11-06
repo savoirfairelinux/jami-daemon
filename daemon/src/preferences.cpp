@@ -365,7 +365,7 @@ void checkSoundCard(int &card, AudioLayer::PCMType stream)
 AudioLayer* AudioPreference::createAudioLayer()
 {
 #ifdef __ANDROID__
-    return new OpenSLLayer();
+    return new OpenSLLayer(*this);
 #endif
 
 #if HAVE_PULSE

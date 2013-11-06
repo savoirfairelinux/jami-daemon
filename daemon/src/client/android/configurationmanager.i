@@ -106,6 +106,8 @@ public:
     std::string getCurrentAudioOutputPlugin();
     std::string getNoiseSuppressState();
     void setNoiseSuppressState(const bool& state);
+    bool isCaptureMuted();
+    void muteCapture(const bool& mute);
 
     std::map<std::string, std::string> getRingtoneList();
 

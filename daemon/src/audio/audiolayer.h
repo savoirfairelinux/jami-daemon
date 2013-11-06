@@ -50,9 +50,6 @@
 class MainBuffer;
 class AudioPreference;
 
-
-typedef std::vector<AudioBuffer> AudioBufferStack;
-
 namespace ost {
 class Time;
 }
@@ -70,7 +67,7 @@ class AudioLayer {
             SFL_PCM_RINGTONE = 0x0024       /** To open the ringtone device only */
         };
 
-        AudioLayer();
+        AudioLayer(const AudioPreference &);
         virtual ~AudioLayer();
 
         virtual std::vector<std::string> getCaptureDeviceList() const = 0;
@@ -120,10 +117,14 @@ class AudioLayer {
          */
         void flushUrgent();
 
+        bool isCaptureMuted() const {
+            return isCaptureMuted_;
+        }
+
         /**
          * Mute capture (microphone)
          */
-        void setCaptureMuted(bool muted) {
+        void muteCapture(bool muted) {
             isCaptureMuted_ = muted;
         }
 

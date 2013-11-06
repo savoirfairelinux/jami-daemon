@@ -151,7 +151,8 @@ void AlsaThread::run()
 }
 
 AlsaLayer::AlsaLayer(const AudioPreference &pref)
-    : indexIn_(pref.getAlsaCardin())
+    : AudioLayer(pref)
+    , indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
     , watchdogTotalCount_(0)
@@ -167,11 +168,7 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , is_playback_open_(false)
     , is_capture_open_(false)
     , audioThread_(NULL)
-{
-    setCaptureGain(pref.getVolumemic());
-    setPlaybackGain(pref.getVolumespkr());
-    setCaptureMuted(pref.getCaptureMuted());
-}
+{}
 
 AlsaLayer::~AlsaLayer()
 {

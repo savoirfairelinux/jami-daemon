@@ -302,6 +302,30 @@ void ConfigurationManager::setNoiseSuppressState(const bool& state)
     Manager::instance().setNoiseSuppressState(state);
 }
 
+bool ConfigurationManager::isCaptureMuted()
+{
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if (!audiolayer) {
+        ERROR("Audio layer not valid");
+        return false;
+    }
+
+    return audiolayer->isCaptureMuted();
+}
+
+void ConfigurationManager::muteCapture(const bool& mute)
+{
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if (!audiolayer) {
+        ERROR("Audio layer not valid");
+        return;
+    }
+
+    return audiolayer->muteCapture(mute);
+}
+
 std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 {
     std::map<std::string, std::string> ringToneList;
