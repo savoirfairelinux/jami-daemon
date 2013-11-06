@@ -31,10 +31,11 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
- #ifdef __ANDROID__
- #include <sched.h>
- #define pthread_yield sched_yield
- #endif
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+#define YIELD std::this_thread::yield
+#else
+#define YIELD pthread_yield
+#endif
 
 EventThread::EventThread(VoIPLink *link) : link_(link), thread_()
 {}
@@ -58,5 +59,5 @@ void EventThread::start()
 void EventThread::run()
 {
     while (link_->getEvent())
-        std::this_thread::yield();
+        YIELD();
 }
