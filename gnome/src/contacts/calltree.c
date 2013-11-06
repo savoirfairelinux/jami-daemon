@@ -470,7 +470,6 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
                      client);
 
 #ifdef SFL_PRESENCE
-//    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
     gtk_drag_source_set(tab->view, GDK_BUTTON1_MASK,
          &presence_drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
     g_signal_connect(tab->view, "drag-data-get", G_CALLBACK(on_call_drag_data_get), NULL);

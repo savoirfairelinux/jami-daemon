@@ -147,21 +147,21 @@ void on_buddy_drag_data_received(GtkWidget *widget,
     buddy_t *b_src = NULL;
     const guchar *data = gtk_selection_data_get_data(sdata);
 
-    if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path,
+    if(!gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path,
                 NULL, NULL, NULL))
-    {
-        //gchar * spath = gtk_tree_path_to_string(path);
-        //g_debug("========= (%d,%d) => Path:%s\n", x, y, spath);
-        //gtk_tree_path_free(path);
-        gr_target = presence_view_row_get_group(GTK_TREE_VIEW(widget), path);
-    }
+        return;
+
+    //gchar * spath = gtk_tree_path_to_string(path);
+    //g_debug("========= (%d,%d) => Path:%s\n", x, y, spath);
+    gr_target = presence_view_row_get_group(GTK_TREE_VIEW(widget), path);
+    gtk_tree_path_free(path);
     if(!gr_target) // set group to default
         gr_target = g_strdup(" ");
 
-    memcpy (&b_src, data, sizeof(b_src));
+    memcpy(&b_src, data, sizeof(b_src));
     if(!b_src)
     {
-        g_warning("Dragged src b %s not found\n",b_src->uri);
+        g_warning("Dragged src data not found");
         return;
     }
 
@@ -169,14 +169,14 @@ void on_buddy_drag_data_received(GtkWidget *widget,
     buddy_t *b = presence_buddy_list_buddy_get_by_uri(b_src->uri);
     if(b) // the dragged source data refers to an existing buddy. Change its group only,
     {
-        g_print("Dragged src b %s found\n", b_src->uri);
+        g_debug("Dragged src data found: %s", b_src->uri);
         buddy_t *backup = g_malloc(sizeof(buddy_t));
         memcpy(backup, b_src, sizeof(buddy_t));
         g_free(b->group);
         b->group = g_strdup(gr_target);
         presence_buddy_list_edit_buddy(b, backup);
         g_free(backup);
-        // TODO change rank
+        // TODO change rank in tree view
     }
     else // create the new buddy from the dragged source data
     {
