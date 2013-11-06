@@ -417,13 +417,16 @@ presence_buddy_subscribe(buddy_t * buddy, gboolean flag)
 void
 presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
 {
+    account_t *acc;
+    gchar *uri;
+
     g_free(b->alias);
     g_free(b->uri);
     g_free(b->acc);
 
     if(strlen(c->_accountID) == 0)
     {
-        account_t *acc = account_list_get_current() ;
+        acc = account_list_get_current() ;
         b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
     }
     else
