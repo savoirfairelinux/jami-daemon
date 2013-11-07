@@ -48,14 +48,6 @@
 #include "history/historynamecache.h"
 #include "audio/audiolayer.h"
 
-namespace {
-    const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
-}
-
-ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
-    DBus::ObjectAdaptor(connection, SERVER_PATH)
-{}
-
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
     SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
