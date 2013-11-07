@@ -32,7 +32,8 @@ instance-glue.h: instance-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 libclient_la_SOURCES = \
-    callmanager.cpp \
+    callmanager_dbus.cpp \
+    ../callmanager.cpp \
     configurationmanager_dbus.cpp  \
     ../configurationmanager.cpp  \
     instance.cpp  \
