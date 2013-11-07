@@ -435,7 +435,7 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
         return;
 
     account_t *acc =  account_list_get_current();
-    gchar *uri;
+    gchar *uri = NULL;
     gchar *hostname;
 
     g_free(b->alias);
@@ -458,8 +458,6 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
             b->alias = g_strndup(number, end - number);
         else
             b->alias = g_strdup(c->_peer_number);
-        g_free(number);
-        g_free(end);
     }
     else
         b->alias = g_strdup(c->_display_name);
