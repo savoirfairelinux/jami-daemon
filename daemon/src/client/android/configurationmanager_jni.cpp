@@ -55,3 +55,7 @@ void ConfigurationManager::registrationStateChanged(const std::string& accoundID
 {
     on_account_state_changed_wrapper(accoundID, state);
 }
+
+void ConfigurationManager::errorAlert(const int & /*alert*/)
+{
+}
