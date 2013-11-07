@@ -1287,6 +1287,42 @@ dbus_set_volume(const gchar *device, gdouble value)
     check_error(error);
 }
 
+void
+dbus_mute_capture(gboolean muted)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_mute_capture(config_proxy, muted, &error);
+    check_error(error);
+}
+
+void
+dbus_mute_playback(gboolean muted)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_mute_playback(config_proxy, muted, &error);
+    check_error(error);
+}
+
+gboolean
+dbus_is_capture_muted()
+{
+    GError *error = NULL;
+    gboolean muted;
+    org_sflphone_SFLphone_ConfigurationManager_is_capture_muted(config_proxy, &muted, &error);
+    check_error(error);
+    return muted;
+}
+
+gboolean
+dbus_is_playback_muted()
+{
+    GError *error = NULL;
+    gboolean muted;
+    org_sflphone_SFLphone_ConfigurationManager_is_playback_muted(config_proxy, &muted, &error);
+    check_error(error);
+    return muted;
+}
+
 gdouble
 dbus_get_volume(const gchar *device)
 {

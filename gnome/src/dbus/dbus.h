@@ -189,6 +189,11 @@ void dbus_set_volume(const gchar *device, gdouble value);
  */
 gdouble dbus_get_volume(const gchar *device);
 
+void dbus_mute_capture(gboolean mute);
+void dbus_mute_playback(gboolean mute);
+gboolean dbus_is_capture_muted();
+gboolean dbus_is_playback_muted();
+
 /**
  * ConfigurationManager - Play DTMF
  * @param key The DTMF to send

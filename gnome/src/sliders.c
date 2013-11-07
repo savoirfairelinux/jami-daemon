@@ -35,7 +35,6 @@
 #include <string.h>
 #include <gtk/gtk.h>
 
-static gdouble     value[2];
 static GtkWidget * slider[2];
 static GtkWidget * button[2];
 
@@ -55,7 +54,6 @@ enum volume_t {
     VOL75
 };
 
-static guint toggledConnId[2]; // The button toggled signal connection ID
 static guint movedConnId[2];   // The slider_moved signal connection ID
 
 static guint device_state = DEVICE_STATE_ACTIVE;
@@ -68,7 +66,7 @@ update_icons(int dev)
     if (button[dev]) {
         int icon = MUTED;
 
-        if (val == 0)
+        if (val == 0 || gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button[dev])))
             icon = MUTED;
         else if (val < 0.33)
             icon = VOL25;
@@ -95,22 +93,18 @@ slider_moved(GtkRange* range, gchar* device)
 }
 
 void
-mute_cb(GtkWidget *widget, gchar*  device)
+mute_cb(GtkWidget *widget, gchar *device)
 {
     int dev;
 
-    if (g_strcmp0(device, "speaker") == 0)
-        dev = DEVICE_SPEAKER;
-    else
-        dev = DEVICE_MIC;
+    gboolean do_mute = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {   // Save value
-        g_debug("Save");
-        value[dev] = gtk_range_get_value(GTK_RANGE(slider[dev]));
-        dbus_set_volume(device, 0);
-    } else { //Restore value
-        g_debug("Restore");
-        dbus_set_volume(device, value[dev]);
+    if (g_strcmp0(device, "speaker") == 0) {
+        dev = DEVICE_SPEAKER;
+        dbus_mute_playback(do_mute);
+    } else {
+        dev = DEVICE_MIC;
+        dbus_mute_capture(do_mute);
     }
 
     update_icons(dev);
@@ -140,19 +134,17 @@ void set_slider_value(const gchar *device, gdouble newval)
     update_icons(dev);
 }
 
-void set_slider_no_update (const gchar * device, gdouble newval)
+void set_slider_no_update(const gchar * device, gdouble newval)
 {
     int dev = 0;
 
     if (g_strcmp0(device, "speaker") == 0) {
         dev = DEVICE_SPEAKER;
         g_debug("Set value no update for speaker: %f\n", newval);
-    }
-    else if (g_strcmp0(device, "mic") == 0) {
+    } else if (g_strcmp0(device, "mic") == 0) {
         dev = DEVICE_MIC;
         g_debug("Set value no update for mic: %f\n", newval);
-    }
-    else {
+    } else {
         g_warning("Unknown device: %s", device);
         return;
     }
@@ -160,10 +152,6 @@ void set_slider_no_update (const gchar * device, gdouble newval)
     g_signal_handler_block(G_OBJECT(slider[dev]), movedConnId[dev]);
     gtk_range_set_value(GTK_RANGE(slider[dev]), newval);
     g_signal_handler_unblock(slider[dev], movedConnId[dev]);
-
-    g_signal_handler_block(G_OBJECT(button[dev]),toggledConnId[dev]);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button[dev]), (newval == 0 ? TRUE: FALSE));
-    g_signal_handler_unblock(button[dev], toggledConnId[dev]);
 
     update_icons(dev);
 }
@@ -214,8 +202,8 @@ create_slider(const gchar * device)
 
     button[dev] = gtk_toggle_button_new();
     gtk_box_pack_start(GTK_BOX(ret), button[dev], FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    toggledConnId[dev] = g_signal_connect(G_OBJECT(button[dev]), "toggled",
-                                          G_CALLBACK(mute_cb), (gpointer) device);
+    const guint toggledConnId = g_signal_connect(G_OBJECT(button[dev]), "toggled",
+                                                 G_CALLBACK(mute_cb), (gpointer) device);
 
     slider[dev] = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 1, 0.05);
     gtk_scale_set_draw_value(GTK_SCALE(slider[dev]), FALSE);
@@ -225,6 +213,14 @@ create_slider(const gchar * device)
     gtk_box_pack_start(GTK_BOX(ret), slider[dev], TRUE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 
     set_slider_no_update(device, dbus_get_volume(device));
+
+    g_signal_handler_block(G_OBJECT(slider[dev]), toggledConnId);
+    const gboolean active =
+        (dev == DEVICE_MIC && dbus_is_capture_muted()) ||
+        (dev == DEVICE_SPEAKER && dbus_is_playback_muted());
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button[dev]), active);
+    g_signal_handler_unblock(G_OBJECT(slider[dev]), toggledConnId);
 
     return ret;
 }
