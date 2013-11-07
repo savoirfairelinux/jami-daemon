@@ -458,6 +458,8 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
             b->alias = g_strndup(number, end - number);
         else
             b->alias = g_strdup(c->_peer_number);
+        g_free(number);
+        g_free(end);
     }
     else
         b->alias = g_strdup(c->_display_name);
@@ -482,11 +484,11 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
     {
         g_warning("Presence: buddy has NO URI");
         acc = account_list_get_by_id(b->acc);
-        uri = g_strconcat("<sip:XXXX@", hostname,
-                ">", NULL);
+        uri = g_strconcat("<sip:XXXX@", hostname, ">", NULL);
         b->uri = g_strdup(uri);
     }
-
+    if(uri)
+        g_free(uri);
 }
 
 /********************************* group list functions *************************/
