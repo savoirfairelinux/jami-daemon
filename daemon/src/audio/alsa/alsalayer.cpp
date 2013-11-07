@@ -718,10 +718,7 @@ void AlsaLayer::capture()
         return;
     }
 
-    if (isCaptureMuted_)
-        in.applyGain(0.0);
-    else
-        in.applyGain(captureGain_);
+    in.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
@@ -776,7 +773,7 @@ void AlsaLayer::playback(int maxSamples)
         AudioBuffer out(samplesToGet, 1, mainBufferSampleRate);
 
         Manager::instance().getMainBuffer().getData(out, MainBuffer::DEFAULT_ID);
-        out.applyGain(playbackGain_);
+        out.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
         if (resample) {
             const size_t outSamples = samplesToGet * resampleFactor;
@@ -811,7 +808,7 @@ void AlsaLayer::audioCallback()
         samplesToGet = std::min(samplesToGet, (unsigned)playbackAvailSmpl);
         AudioBuffer out(samplesToGet);
         urgentRingBuffer_.get(out, MainBuffer::DEFAULT_ID);
-        out.applyGain(playbackGain_);
+        out.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
         write(out.getChannel(0)->data(), samplesToGet * sizeof(SFLAudioSample), playbackHandle_);
         // Consume the regular one as well (same amount of bytes)

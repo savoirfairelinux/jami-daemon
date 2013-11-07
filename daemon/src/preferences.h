@@ -345,6 +345,14 @@ class AudioPreference : public Serializable {
             captureMuted_ = muted;
         }
 
+        bool getPlaybackMuted() const {
+            return playbackMuted_;
+        }
+
+        void setPlaybackMuted(bool muted) {
+            playbackMuted_= muted;
+        }
+
     private:
         std::string audioApi_;
 
@@ -368,6 +376,7 @@ class AudioPreference : public Serializable {
 
         bool noisereduce_;
         bool captureMuted_;
+        bool playbackMuted_;
 };
 
 class ShortcutPreferences : public Serializable {

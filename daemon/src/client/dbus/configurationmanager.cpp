@@ -392,6 +392,30 @@ void ConfigurationManager::muteCapture(const bool &mute)
     return audiolayer->muteCapture(mute);
 }
 
+bool ConfigurationManager::isPlaybackMuted()
+{
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if (!audiolayer) {
+        ERROR("Audio layer not valid");
+        return false;
+    }
+
+    return audiolayer->isPlaybackMuted();
+}
+
+void ConfigurationManager::mutePlayback(const bool &mute)
+{
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if (!audiolayer) {
+        ERROR("Audio layer not valid");
+        return;
+    }
+
+    return audiolayer->mutePlayback(mute);
+}
+
 std::map<std::string, std::string> ConfigurationManager::getHookSettings()
 {
     return Manager::instance().hookPreference.toMap();

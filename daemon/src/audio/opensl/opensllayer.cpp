@@ -763,10 +763,7 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
     const bool resample = mainBufferSampleRate != sampleRate_;
 
-    if (isCaptureMuted_)
-        buffer.applyGain(0.0);
-    else
-        buffer.applyGain(captureGain_);
+    buffer.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     if (resample) {
 		int outSamples = buffer.frames() * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
@@ -805,7 +802,7 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
     samplesToGet = std::min(samplesToGet, BUFFER_SIZE);
     buffer.resize(samplesToGet);
     urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
-    buffer.applyGain(playbackGain_);
+    buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
     // Consume the regular one as well (same amount of samples)
     Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
@@ -819,7 +816,7 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samples
 
     buffer.resize(samplesAvail);
     mainBuffer.getData(buffer, MainBuffer::DEFAULT_ID);
-    buffer.applyGain(getPlaybackGain());
+    buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
     if (sampleRate_ != mainBuffer.getInternalSamplingRate()) {
         DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sampleRate_ != mainBuffer.getInternalSamplingRate() \n");

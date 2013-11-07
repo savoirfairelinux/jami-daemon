@@ -219,7 +219,7 @@
        <method name="muteCapture" tp:name-for-bindings="muteCapture">
            <arg type="b" name="mute" direction="in">
                <tp:docstring>
-                   True to mute audio, false otherwise
+                   True to mute audio capture, false to unmute.
                </tp:docstring>
            </arg>
        </method>
@@ -227,7 +227,23 @@
        <method name="isCaptureMuted" tp:name-for-bindings="isCaptureMuted">
            <arg type="b" name="muted" direction="out">
                <tp:docstring>
-                   Returns true if audio input is muted, false otherwise
+                   Returns true if audio capture is muted, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="mutePlayback" tp:name-for-bindings="mutePlayback">
+           <arg type="b" name="mute" direction="in">
+               <tp:docstring>
+                   True to mute audio playback, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="isPlaybackMuted" tp:name-for-bindings="isPlaybackMuted">
+           <arg type="b" name="muted" direction="out">
+               <tp:docstring>
+                   Returns true if audio playback is muted, false otherwise.
                </tp:docstring>
            </arg>
        </method>

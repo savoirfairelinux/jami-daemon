@@ -108,6 +108,8 @@ public:
     void setNoiseSuppressState(const bool& state);
     bool isCaptureMuted();
     void muteCapture(const bool& mute);
+    bool isPlaybackMuted();
+    void mutePlayback(const bool& mute);
 
     std::map<std::string, std::string> getRingtoneList();
 

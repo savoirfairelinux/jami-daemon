@@ -457,7 +457,7 @@ void PulseLayer::writeToSpeaker()
         AudioBuffer linearbuff(urgentSamples, n_channels);
         pa_stream_begin_write(s, (void**)&data, &urgentBytes);
         urgentRingBuffer_.get(linearbuff, MainBuffer::DEFAULT_ID); // retrive only the first sample_spec->channels channels
-        linearbuff.applyGain(playbackGain_);
+        linearbuff.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         linearbuff.interleave(data);
         pa_stream_write(s, data, urgentBytes, nullptr, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of samples)
@@ -517,11 +517,11 @@ void PulseLayer::writeToSpeaker()
     if (resample) {
         AudioBuffer rsmpl_out(nResampled, 1, sampleRate_);
         converter_.resample(linearbuff, rsmpl_out);
-        rsmpl_out.applyGain(playbackGain_);
+        rsmpl_out.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         rsmpl_out.interleave(data);
         pa_stream_write(s, data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);
     } else {
-        linearbuff.applyGain(playbackGain_);
+        linearbuff.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         linearbuff.interleave(data);
         pa_stream_write(s, data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);
     }
@@ -551,10 +551,7 @@ void PulseLayer::readFromMic()
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
-    if (isCaptureMuted_)
-        in.applyGain(0.0);
-    else
-        in.applyGain(captureGain_);
+    in.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     AudioBuffer * out = &in;
 
@@ -565,7 +562,7 @@ void PulseLayer::readFromMic()
     }
 
     dcblocker_.process(*out);
-    out->applyGain(playbackGain_);
+    out->applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
     Manager::instance().getMainBuffer().putData(*out, MainBuffer::DEFAULT_ID);
 
     if (pa_stream_drop(record_->pulseStream()) < 0)

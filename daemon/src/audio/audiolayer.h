@@ -128,6 +128,17 @@ class AudioLayer {
             isCaptureMuted_ = muted;
         }
 
+        bool isPlaybackMuted() const {
+            return isPlaybackMuted_;
+        }
+
+        /**
+         * Mute playback
+         */
+        void mutePlayback(bool muted) {
+            isPlaybackMuted_ = muted;
+        }
+
         /**
          * Set capture stream gain (microphone)
          * Range should be [-1.0, 1.0]
@@ -177,9 +188,14 @@ class AudioLayer {
     protected:
 
         /**
-         * True if capture is not being used
+         * True if capture is not to be used
          */
         bool isCaptureMuted_;
+
+        /**
+         * True if playback is not to be used
+         */
+        bool isPlaybackMuted_;
 
         /**
          * Gain applied to mic signal

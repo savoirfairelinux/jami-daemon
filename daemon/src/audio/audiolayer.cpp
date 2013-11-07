@@ -36,6 +36,7 @@
 
 AudioLayer::AudioLayer(const AudioPreference &pref)
     : isCaptureMuted_(pref.getCaptureMuted())
+    , isPlaybackMuted_(pref.getPlaybackMuted())
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
     , isStarted_(false)

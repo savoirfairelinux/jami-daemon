@@ -1361,6 +1361,8 @@ void ManagerImpl::saveConfig()
     if (audiodriver_ != nullptr) {
         audioPreference.setVolumemic(audiodriver_->getCaptureGain());
         audioPreference.setVolumespkr(audiodriver_->getPlaybackGain());
+        audioPreference.setCaptureMuted(audiodriver_->isCaptureMuted());
+        audioPreference.setPlaybackMuted(audiodriver_->isPlaybackMuted());
     }
 
     try {
