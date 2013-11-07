@@ -189,8 +189,6 @@ void sflphone_add_participant();
 
 gboolean sflphone_rec_call(SFLPhoneClient *client);
 
-void sflphone_mute_call(void);
-
 void status_bar_display_account();
 
 void sflphone_fill_history_lazy();

@@ -859,14 +859,6 @@ sflphone_rec_call(SFLPhoneClient *client)
     return result;
 }
 
-void
-sflphone_mute_call()
-{
-    g_debug("%s", __PRETTY_FUNCTION__);
-
-    toggle_slider_mute_microphone();
-}
-
 static void
 sflphone_fill_audio_codec_list_per_account(account_t *account)
 {
