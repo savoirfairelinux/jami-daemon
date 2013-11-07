@@ -40,7 +40,7 @@ libclient_la_SOURCES = \
     client.cpp
 
 if SFL_PRESENCE
-libclient_la_SOURCES+=presencemanager.cpp
+libclient_la_SOURCES+=../presencemanager.cpp presencemanager_dbus.cpp
 endif
 
 if SFL_VIDEO
