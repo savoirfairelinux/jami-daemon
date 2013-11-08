@@ -67,6 +67,20 @@ Opus::clone()
     return new Opus;
 }
 
+// Reference: http://tools.ietf.org/html/draft-spittka-payload-rtp-opus-03#section-6.2
+// "The RTP clock rate in "a=rtpmap" MUST be 48000..."
+uint32_t Opus::getSDPClockRate() const
+{
+    return 48000;
+}
+
+// "...and the number of channels MUST be 2."
+const char *
+Opus::getSDPChannels() const
+{
+    return "2";
+}
+
 int Opus::decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size)
 {
     return opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);

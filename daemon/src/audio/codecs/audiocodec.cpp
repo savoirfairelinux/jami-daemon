@@ -88,6 +88,11 @@ uint32_t AudioCodec::getClockRate() const
     return clockRate_;
 }
 
+uint32_t AudioCodec::getSDPClockRate() const
+{
+    return clockRate_;
+}
+
 unsigned AudioCodec::getFrameSize() const
 {
     return frameSize_;
@@ -101,6 +106,12 @@ double AudioCodec::getBitRate() const
 unsigned AudioCodec::getChannels() const
 {
     return channel_;
+}
+
+const char *
+AudioCodec::getSDPChannels() const
+{
+    return "";
 }
 
 } // end namespace sfl

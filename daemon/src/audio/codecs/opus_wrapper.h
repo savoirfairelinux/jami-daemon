@@ -54,6 +54,9 @@ private:
    virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size);
 
+   virtual uint32_t getSDPClockRate() const;
+   virtual const char *getSDPChannels() const;
+
    NON_COPYABLE(Opus);
    //Attributes
    OpusEncoder *encoder_;

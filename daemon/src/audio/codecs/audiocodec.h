@@ -103,10 +103,16 @@ class AudioCodec {
         bool hasDynamicPayload() const;
 
         uint32_t getClockRate() const;
+        // clock-rate in SDP MAY be different than actual clock-rate (in derived classes)
+        virtual uint32_t getSDPClockRate() const;
 
         double getBitRate() const;
 
         unsigned getChannels() const;
+        // channels in SDP MAY be different than actual channels (in derived classes)
+        // Should be an empty string EXCEPT for Opus which returns "2".
+        virtual const char *
+        getSDPChannels() const;
 
         /**
          * @return the framing size for this codec.

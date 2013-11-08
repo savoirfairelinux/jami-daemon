@@ -230,14 +230,14 @@ Sdp::setMediaDescriptorLines(bool audio)
         unsigned clock_rate;
         string enc_name;
         int payload;
-        unsigned channels;
+        const char *channels = "";
 
         if (audio) {
             sfl::AudioCodec *codec = audio_codec_list_[i];
             payload = codec->getPayloadType();
             enc_name = codec->getMimeSubtype();
-            clock_rate = codec->getClockRate();
-            channels = codec->getChannels();
+            clock_rate = codec->getSDPClockRate();
+            channels = codec->getSDPChannels();
             // G722 require G722/8000 media description even if it is 16000 codec
             if (codec->getPayloadType () == 9)
                 clock_rate = 8000;
@@ -261,8 +261,8 @@ Sdp::setMediaDescriptorLines(bool audio)
         rtpmap.pt = med->desc.fmt[i];
         rtpmap.enc_name = pj_str((char*) enc_name.c_str());
         rtpmap.clock_rate = clock_rate;
-        rtpmap.param.ptr = ((char* const)"");
-        rtpmap.param.slen = 0;
+        rtpmap.param.ptr = (char *) channels;
+        rtpmap.param.slen = strlen(channels); // don't include NULL terminator
 
         pjmedia_sdp_attr *attr;
         pjmedia_sdp_rtpmap_to_attr(memPool_, &rtpmap, &attr);
