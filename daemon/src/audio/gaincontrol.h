@@ -44,15 +44,19 @@ class GainControl {
          */
         GainControl(double, double);
 
+        void enable();
+        void disable();
+
+        void process(AudioBuffer& buf);
+
+    private:
         /**
          * Apply addaptive gain factor on input signal
          * /param Input audio buffer
          * /param Input samples
          */
         void process(SFLAudioSample *, int samples);
-        void process(AudioBuffer& buf);
 
-    private:
         class DetectionAverage {
             public:
                 /**
@@ -159,6 +163,7 @@ class GainControl {
          */
         double maxDecreaseStep_;
 
+        bool enabled_;
 };
 
 #endif // GAINCONTROL_H

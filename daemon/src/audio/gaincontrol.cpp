@@ -52,13 +52,15 @@ GainControl::GainControl(double sr, double target) : averager_(sr, SFL_GAIN_ATTA
     , previousGain_(0.0)
     , maxIncreaseStep_(exp(0.11513 * 12. * 160 / 8000)) // Computed on 12 frames (240 ms)
     , maxDecreaseStep_(exp(-0.11513 * 40. * 160 / 8000))// Computed on 40 frames (800 ms)
+    , enabled_(false)
 {
     DEBUG("Target gain %f dB (%f linear)", targetLeveldB_, targetLevelLinear_);
 }
 
 void GainControl::process(AudioBuffer& buf)
 {
-    process(buf.getChannel(0)->data(), buf.frames());
+    if (enabled_)
+        process(buf.getChannel(0)->data(), buf.frames());
 }
 
 void GainControl::process(SFLAudioSample *buf, int samples)
@@ -124,4 +126,14 @@ double GainControl::Limiter::limit(double in) const
                   in < -threshold_ ? (ratio_ * (in + threshold_)) - threshold_ : in);
 
     return out;
+}
+
+void GainControl::enable()
+{
+    enabled_ = true;
+}
+
+void GainControl::disable()
+{
+    enabled_ = false;
 }
