@@ -391,9 +391,9 @@ presence_buddy_copy(buddy_t * b_src)
         return;
 
     buddy_t *b_dest = g_malloc(sizeof(buddy_t));
-    b_dest->alias =  g_strdup(b_src->alias);
-    b_dest->group =  g_strdup(b_src->group);
-    b_dest->uri =  g_strdup(b_src->uri);
+    b_dest->alias = g_strdup(b_src->alias);
+    b_dest->group = g_strdup(b_src->group);
+    b_dest->uri = g_strdup(b_src->uri);
     b_dest->acc = g_strdup(b_src->acc);
     b_dest->subscribed = b_src->subscribed;
     b_dest->status = b_src->status;

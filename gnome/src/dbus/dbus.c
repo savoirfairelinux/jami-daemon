@@ -2283,6 +2283,7 @@ dbus_presence_publish(const gchar *accountID, gboolean status)
 void
 dbus_presence_subscribe(const gchar *accountID, const gchar *uri, gboolean flag)
 {
+    g_debug("DBus: subscrbe presence status %s:%s.", uri, flag? "true" : "false");
     GError *error = NULL;
     org_sflphone_SFLphone_PresenceManager_subscribe_buddy(presence_proxy, accountID, uri, flag, NULL);
     check_error(error);
