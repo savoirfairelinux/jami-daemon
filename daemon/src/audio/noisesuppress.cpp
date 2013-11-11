@@ -40,22 +40,6 @@ NoiseSuppress::NoiseSuppress(int smplPerFrame, int channels, int samplingRate) :
 
         int i = 1;
         speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DENOISE, &i);
-        i = -20;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
-        i = 0;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC, &i);
-        i = 8000;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC_TARGET, &i);
-        i = 16000;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
-        i = 0;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DEREVERB, &i);
-        float f = 0.0;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
-        f = 0.0;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
-        i = 0;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_VAD, &i);
     }
 }
 
