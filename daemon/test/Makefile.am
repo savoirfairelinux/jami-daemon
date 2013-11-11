@@ -26,8 +26,6 @@ test_SOURCES = constants.h \
 			   siptest.cpp \
 			   sdptest.h \
 			   sdptest.cpp \
-			   gaincontroltest.h \
-			   gaincontroltest.cpp \
 			   mainbuffertest.h \
 			   mainbuffertest.cpp \
 			   resamplertest.h \

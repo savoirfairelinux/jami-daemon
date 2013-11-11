@@ -40,6 +40,11 @@ NoiseSuppress::NoiseSuppress(int smplPerFrame, int channels, int samplingRate) :
 
         int i = 1;
         speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DENOISE, &i);
+
+        // automatic gain control, range [1-32768]
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC, &i);
+        int target = 16000;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC_TARGET, &target);
     }
 }
 

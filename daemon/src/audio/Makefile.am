@@ -29,7 +29,6 @@ libaudio_la_SOURCES = \
 		samplerateconverter.cpp \
 		delaydetection.cpp \
 		$(SFL_SPEEXDSP_SRC) \
-		gaincontrol.cpp \
 		dcblocker.cpp
 
 noinst_HEADERS = \
@@ -43,7 +42,6 @@ noinst_HEADERS = \
 	 	recordable.h \
 		delaydetection.h \
 		$(SFL_SPEEXDSP_HEAD) \
-		gaincontrol.h \
 		dcblocker.h \
 		samplerateconverter.h
 

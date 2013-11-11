@@ -49,7 +49,6 @@ using std::ptrdiff_t;
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 #include "audio/noisesuppress.h"
-#include "audio/gaincontrol.h"
 
 class SIPCall;
 
@@ -202,7 +201,6 @@ class AudioRtpRecordHandler {
 
     private:
         const std::string id_;
-        GainControl gainController_;
         int warningInterval_;
 };
 }
