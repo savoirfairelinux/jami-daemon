@@ -138,6 +138,13 @@ GList * presence_buddy_list_get_link(buddy_t * buddy);
 buddy_t * presence_buddy_create();
 
 /**
+ * This function deep-copies a given buddy.
+ * @param b_src The source buddy.
+ * @return buddy_t The pointer to the dest buddy.
+ */
+buddy_t * presence_buddy_copy(buddy_t * b_src);
+
+/**
  * This function frees completely a given buddy.
  * @param b The given buddy to be deleted.
  */

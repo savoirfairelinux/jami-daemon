@@ -36,6 +36,7 @@
 #include <string.h>
 #include <glib/gi18n.h>
 
+#include "mainwindow.h"
 #include "presencewindow.h"
 #include "account_schema.h"
 #include "accountlist.h"
@@ -44,14 +45,13 @@
 #include "callable_obj.h"
 #include "dbus.h"
 #include "str_utils.h"
+#include "statusicon.h"
 
 static GtkWidget *presence_window;
 static GtkTreeView *buddy_list_tree_view = NULL;
 static GtkToggleAction *toggle_action = NULL;
 static GtkWidget *presence_status_combo;
 static GtkWidget *presence_status_bar = NULL;
-static GtkWidget *show_all_check_box;
-static GtkWidget *show_uri_check_box;
 
 static GtkTreeModel *create_and_fill_presence_tree (void);
 static GtkTreeView *create_presence_view (void);
@@ -62,6 +62,7 @@ static gchar *presence_view_row_get_group(GtkTreeView *treeview, GtkTreePath *pa
 
 static SFLPhoneClient * presence_client;
 static buddy_t * tmp_buddy;
+static gboolean show_all;
 
 enum
 {
@@ -121,7 +122,7 @@ void on_buddy_drag_data_get(  GtkWidget *widget,
     if(!b)
         return;
 
-    g_debug("Drag src from buddy list b->uri : %s",b->uri);
+    g_debug("Drag src from buddy list b->uri : %s", b->uri);
 
     gtk_selection_data_set(sdata,
             gdk_atom_intern ("struct buddy_t pointer", FALSE),
@@ -143,8 +144,6 @@ void on_buddy_drag_data_received(GtkWidget *widget,
     // and apply it on the  dragged src buddy
 
     GtkTreePath *path;
-    gchar *gr_target = NULL;
-    buddy_t *b_src = NULL;
     const guchar *data = gtk_selection_data_get_data(sdata);
 
     if(!gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path,
@@ -153,11 +152,12 @@ void on_buddy_drag_data_received(GtkWidget *widget,
 
     //gchar * spath = gtk_tree_path_to_string(path);
     //g_debug("========= (%d,%d) => Path:%s\n", x, y, spath);
-    gr_target = presence_view_row_get_group(GTK_TREE_VIEW(widget), path);
+    gchar *gr_target = presence_view_row_get_group(GTK_TREE_VIEW(widget), path);
     gtk_tree_path_free(path);
     if(!gr_target) // set group to default
         gr_target = g_strdup(" ");
 
+    buddy_t *b_src = NULL;
     memcpy(&b_src, data, sizeof(b_src));
     if(!b_src)
     {
@@ -165,17 +165,23 @@ void on_buddy_drag_data_received(GtkWidget *widget,
         return;
     }
 
-    // TODO: there was a seg fault on b_src->uri
     buddy_t *b = presence_buddy_list_buddy_get_by_uri(b_src->uri);
-    if(b) // the dragged source data refers to an existing buddy. Change its group only,
+    if(b) // the dragged source data refers to an existing buddy.
     {
-        g_debug("Dragged src data found: %s", b_src->uri);
-        buddy_t *backup = g_malloc(sizeof(buddy_t));
-        memcpy(backup, b_src, sizeof(buddy_t));
+        g_debug("Dragged src data found: %s, %s", b_src->alias, b_src->uri);
+        buddy_t *backup = presence_buddy_copy(b);
+
+        //set the group to the one under the mouse pointer
         g_free(b->group);
         b->group = g_strdup(gr_target);
+
+        // The src may come from the history/contact window and the alias maybe change.
+        // but if not, don't free b_src because b and b_src points to the same buddy.
+        gchar *alias = g_strdup(b_src->alias);
+        g_free(b->alias);
+        b->alias = g_strdup(alias);
         presence_buddy_list_edit_buddy(b, backup);
-        g_free(backup);
+        presence_buddy_delete(backup);
         // TODO change rank in tree view
     }
     else // create the new buddy from the dragged source data
@@ -184,7 +190,7 @@ void on_buddy_drag_data_received(GtkWidget *widget,
         b_src->group = g_strdup(gr_target);
         presence_buddy_list_add_buddy(b_src);
     }
-
+    g_free(gr_target);
     update_presence_view();
 }
 
@@ -195,7 +201,6 @@ create_and_fill_presence_tree (void)
     GtkTreeIter toplevel, child;
     GList * buddy_list = g_object_get_data(G_OBJECT(presence_window), "Buddy-List");
     buddy_t * buddy;
-    gboolean show_all= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_all_check_box));
 
     treestore = gtk_tree_store_new(N_COLUMN, G_TYPE_STRING, // Group + photo
                                              G_TYPE_STRING, // Alias
@@ -235,6 +240,7 @@ create_and_fill_presence_tree (void)
     for (guint i = 1; i < presence_group_list_get_size(); i++)
     {
         gchar *group = presence_group_list_get_nth(i);
+        gchar *tmp = g_markup_printf_escaped("<b>%s</b>", group);
 
         // display buddy with no group after
         if(g_strcmp0(group, " ")==0)
@@ -242,7 +248,7 @@ create_and_fill_presence_tree (void)
 
         gtk_tree_store_append(treestore, &toplevel, NULL);
         gtk_tree_store_set(treestore, &toplevel,
-                COLUMN_OVERVIEW, group,
+                COLUMN_OVERVIEW, tmp,
                 COLUMN_ALIAS, "",
                 COLUMN_GROUP, group,
                 COLUMN_STATUS, "",
@@ -251,6 +257,7 @@ create_and_fill_presence_tree (void)
                 COLUMN_ACCOUNTID, "",
                 COLUMN_SUBSCRIBED, "",
                 -1);
+        g_free(tmp);
 
         for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++)
         {
@@ -300,8 +307,9 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
     if(presence_view_row_is_buddy(treeview, path)) // a buddy line was edited
     {
         buddy_t *b = presence_view_row_get_buddy(treeview, path);
-        buddy_t *backup = g_malloc(sizeof(buddy_t));
-        memcpy(backup, b, sizeof(buddy_t));
+        if(!b)
+            return;
+        buddy_t *backup = presence_buddy_copy(b);
 
         if((g_strcmp0(col_name, "Alias") == 0) &&           // alias edited
                 (g_strcmp0(new_text, backup->alias) != 0))  // different alias
@@ -319,7 +327,7 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
             presence_buddy_list_edit_buddy(b, backup);
         }
 
-        g_free(backup);
+        presence_buddy_delete(backup);
     }
     else    // a group line was edited
     {
@@ -329,6 +337,7 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
         g_free(group);
     }
 
+    gtk_tree_path_free(path);
     update_presence_view();
 }
 
@@ -339,15 +348,14 @@ void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
                            gpointer           userdata)
 {
     guint col_ID = GPOINTER_TO_INT(userdata);
-    gchar * group = NULL;
+    // TODO: replace with get the path, get the group and get row_is_buddy
     GValue val;
     memset(&val, 0, sizeof(val));
     gtk_tree_model_get_value(model, iter, COLUMN_OVERVIEW, &val);
-    group = g_value_dup_string(&val);
+    gchar* group = g_value_dup_string(&val);
     g_value_unset(&val);
-    //g_print("/// %d: %s\n", col_ID, group);
 
-    // when the mouse pointer is on a group, set the row reorderable
+    // when the mouse pointer on a group field, set the cell editable
     if((group) &&
          (g_strcmp0(group,"")!=0) &&    // not a child buddy row
          (g_strcmp0(group," ")!=0))     // not an orphan buddy row
@@ -357,9 +365,14 @@ void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
     // set the cell editable when the mouse pointer is on a buddy alias or uri
     else
     {
-        g_object_set(renderer, "editable", (col_ID==COLUMN_ALIAS)? TRUE:FALSE, NULL);
-        g_object_set(renderer, "editable", (col_ID==COLUMN_URI)? TRUE:FALSE, NULL);
+        if(col_ID == COLUMN_ALIAS)
+            g_object_set(renderer, "editable", TRUE, NULL);
+        else if(col_ID == COLUMN_URI)
+            g_object_set(renderer, "editable", TRUE, NULL);
+        else
+            g_object_set(renderer, "editable", FALSE, NULL);
     }
+    g_free(group);
 }
 
 void icon_cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
@@ -404,7 +417,7 @@ create_presence_view (void)
             G_CALLBACK(presence_view_cell_edited), view);
 
     col = gtk_tree_view_column_new_with_attributes(" ",
-            editable_cell, "text", COLUMN_OVERVIEW, NULL);
+            editable_cell, "markup", COLUMN_OVERVIEW, NULL);
     gtk_tree_view_append_column(view, col);
     // pack with the defaul renderer to avoid GTK warning.
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
@@ -717,6 +730,14 @@ presence_view_popup_menu_onCallBuddy(G_GNUC_UNUSED GtkWidget *menuitem, gpointer
 
     calltree_update_call(current_calls_tab, c, presence_client, FALSE);
     sflphone_place_call(c, presence_client);
+
+    /* Legacy system tray option, requires TopIcons GNOME extension */
+    status_tray_icon_blink(TRUE);
+    if (g_settings_get_boolean(presence_client->settings, "popup-main-window"))
+        popup_main_window(presence_client);
+
+    if (g_settings_get_boolean(presence_client->settings, "bring-window-to-front"))
+        main_window_bring_to_front(presence_client, c->_time_start);
 }
 
 static void
@@ -770,6 +791,7 @@ presence_view_popup_menu_onAddGroup (G_GNUC_UNUSED GtkWidget *menuitem, G_GNUC_U
         presence_group_list_add_group(group);
         update_presence_view();
     }
+    g_free(group);
 }
 
 static void
@@ -787,7 +809,7 @@ static void
 presence_view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
 {
     GtkWidget *menu, *menuitem;
-    menu = gtk_menu_new();
+    menu = gtk_menu_new(); //TODO free ???
     gchar* gr = g_strdup(((buddy_t*)userdata)->group); // TODO; is it necessary to be free?
 
     if(type == POPUP_MENU_TYPE_BUDDY)
@@ -814,7 +836,7 @@ presence_view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
                 G_CALLBACK(presence_view_popup_menu_onRemoveBuddy), userdata);
     }
 
-    menuitem = gtk_separator_menu_item_new();
+    menuitem = gtk_separator_menu_item_new(); // TODO:free?
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
     menuitem = gtk_menu_item_new_with_label(_("Add group"));
@@ -848,13 +870,14 @@ presence_view_row_is_buddy(GtkTreeView *treeview, GtkTreePath *path)
 
     if (gtk_tree_model_get_iter(model, &iter, path))
     {
-        // grab buddy data from the TreeView before displaying the menu
         GValue val;
         memset(&val, 0, sizeof(val));
         gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
-        if(strlen(g_value_dup_string(&val))>0)
+        gchar *uri = g_value_dup_string(&val);
+        if(strlen(uri)>0)
             res =TRUE;
         g_value_unset(&val);
+        g_free(uri);
     }
     return res;
 }
@@ -872,12 +895,13 @@ presence_view_row_get_buddy(GtkTreeView *treeview, GtkTreePath *path)
 
     if (gtk_tree_model_get_iter(model, &iter, path))
     {
-        // grab buddy data from the TreeView before displaying the menu
         GValue val;
         memset(&val, 0, sizeof(val));
         gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
-        b = presence_buddy_list_buddy_get_by_uri(g_value_dup_string(&val));
+        gchar *uri = g_value_dup_string(&val);
+        b = presence_buddy_list_buddy_get_by_uri(uri);
         g_value_unset(&val);
+        g_free(uri);
     }
     g_assert(b);
     return b;
@@ -896,7 +920,6 @@ presence_view_row_get_group(GtkTreeView *treeview, GtkTreePath *path)
 
     if (gtk_tree_model_get_iter(model, &iter, path))
     {
-        // grab group data from the TreeView before displaying the menu
         GValue val;
         memset(&val, 0, sizeof(val));
         gtk_tree_model_get_value(model, &iter, COLUMN_GROUP, &val);
@@ -941,7 +964,6 @@ presence_view_onButtonPressed(GtkTreeView *treeview, GdkEventButton *event)
                         presence_view_popup_menu(event, tmp_buddy, POPUP_MENU_TYPE_GROUP);
                 }
                 gtk_tree_path_free(path);
-
                 return TRUE;
             }
         }
@@ -1035,41 +1057,10 @@ update_presence_statusbar()
     gtk_widget_set_sensitive(presence_status_combo, global_publish_enabled? TRUE:FALSE);
 }
 
-void
-show_all_toggled_cb()
-{
-    /* Display all the buddies including 'Not found' ones.*/
-
-    update_presence_view();
-}
-
-
-void
-show_uri_toggled_cb()
-{
-    // reload the tree view with new columns
-    GtkTreeViewColumn *col = gtk_tree_view_get_column(buddy_list_tree_view, (gint)COLUMN_URI);
-
-    if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_uri_check_box)))
-        gtk_tree_view_column_set_visible(col,TRUE);
-    else
-        gtk_tree_view_column_set_visible(col, FALSE);
-
-    update_presence_view();
-}
-
 GtkWidget*
 create_presence_statusbar()
 {
     GtkWidget *bar = gtk_statusbar_new();
-
-    show_all_check_box = gtk_check_button_new_with_mnemonic(_("_Show all"));
-    gtk_box_pack_start(GTK_BOX(bar), show_all_check_box, TRUE, TRUE, 0);
-    g_signal_connect (show_all_check_box, "toggled", G_CALLBACK(show_all_toggled_cb), NULL);
-
-    show_uri_check_box = gtk_check_button_new_with_mnemonic(_("_Edit URIs"));
-    gtk_box_pack_start(GTK_BOX(bar), show_uri_check_box, TRUE, TRUE, 0);
-    g_signal_connect (show_uri_check_box, "toggled", G_CALLBACK(show_uri_toggled_cb), NULL);
 
     GtkWidget *label = gtk_label_new_with_mnemonic(_("Status:"));
     gtk_box_pack_start(GTK_BOX(bar), label, TRUE, TRUE, 0);
@@ -1088,6 +1079,89 @@ create_presence_statusbar()
     //update_presence_statusbar();
 
     return bar;
+}
+
+
+/*************************** Menu bar callback *******************************/
+
+void
+file_on_addbuddy_cb(GtkWidget *w)
+{
+    presence_view_popup_menu_onAddBuddy(w, NULL);
+}
+
+void
+file_on_addgroup_cb(GtkWidget *w)
+{
+    presence_view_popup_menu_onAddGroup(w, NULL);
+}
+
+void
+view_allbuddies_toggled_cb(GtkWidget *toggle)
+{
+    /* Display all the buddies including 'Not found' ones.*/
+    show_all = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(toggle));
+    update_presence_view();
+}
+
+void
+view_uri_toggled_cb(GtkWidget *toggle)
+{
+    // show or hide the uri column
+    GtkTreeViewColumn *col = gtk_tree_view_get_column(buddy_list_tree_view, (gint)COLUMN_URI);
+
+    if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(toggle)))
+        gtk_tree_view_column_set_visible(col,TRUE);
+    else
+        gtk_tree_view_column_set_visible(col, FALSE);
+
+    update_presence_view();
+}
+
+GtkWidget *
+create_presence_menubar()
+{
+    GtkWidget *menu_bar = gtk_menu_bar_new();
+    GtkWidget *item_file = gtk_menu_item_new_with_label("File");
+    GtkWidget *item_view = gtk_menu_item_new_with_label("View");
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), item_file);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), item_view);
+
+    GtkWidget *menu;
+    GtkWidget *menu_item;
+
+    menu = gtk_menu_new();
+    menu_item = gtk_menu_item_new_with_label("Add buddy...");
+    g_signal_connect(G_OBJECT(menu_item), "activate",
+            G_CALLBACK(file_on_addbuddy_cb), menu_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    menu_item = gtk_menu_item_new_with_label("Add group...");
+    g_signal_connect(G_OBJECT(menu_item), "activate",
+            G_CALLBACK(file_on_addgroup_cb), menu_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item_file), menu);
+    menu_item = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    menu_item = gtk_menu_item_new_with_label("Close");
+    g_signal_connect(G_OBJECT(menu_item), "activate",
+            G_CALLBACK(destroy_presence_window), NULL);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+
+
+    menu = gtk_menu_new();
+    menu_item = gtk_check_menu_item_new_with_label("All buddies");
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), FALSE);
+    g_signal_connect(G_OBJECT(menu_item), "activate",
+            G_CALLBACK(view_allbuddies_toggled_cb), menu_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    menu_item = gtk_check_menu_item_new_with_label("Editable URIs");
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), FALSE);
+    g_signal_connect(G_OBJECT(menu_item), "activate",
+            G_CALLBACK(view_uri_toggled_cb), menu_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item_view), menu);
+
+    return menu_bar;
 }
 
 /******************************** window  *********************************/
@@ -1117,9 +1191,10 @@ create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
     toggle_action = action;
     presence_client = client;
 
-    const gchar * title = _("SFLphone Buddies");
+    const gchar * title = _("SFLphone Presence");
     g_debug("Create window : %s", title);
 
+    /*--------------------- Window -------------------------------------*/
     presence_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_container_set_border_width(GTK_CONTAINER(presence_window), 0);
     gtk_window_set_title(GTK_WINDOW(presence_window), title);
@@ -1127,19 +1202,24 @@ create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
             PRESENCE_WINDOW_WIDTH, PRESENCE_WINDOW_HEIGHT);
     gtk_widget_set_name(presence_window, title);
 
-    /* Instantiate vbox, subvbox as homogeneous */
+    /*---------------- Instantiate vbox as homogeneous ----------------*/
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
     gtk_container_add(GTK_CONTAINER(presence_window), vbox);
 
-    /* Create the tree view*/
+    /*----------------------- Create the menu bar----------------------*/
+    GtkWidget * menu_bar = create_presence_menubar();
+    gtk_box_pack_start(GTK_BOX(vbox), menu_bar, FALSE, FALSE, 3);
+
+    /*---------------------- Create the tree view ---------------------*/
     buddy_list_tree_view = create_presence_view();
     gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(buddy_list_tree_view), TRUE, TRUE, 5);
     gtk_tree_view_set_reorderable(buddy_list_tree_view, TRUE);
     gtk_tree_view_set_rules_hint(buddy_list_tree_view,TRUE);
     gtk_tree_view_set_headers_visible(buddy_list_tree_view, FALSE);
 
-    /* DnD, the treeview is one the drag sources to drop buddies into groups */
+    /*---------------------- Drag-n-Drop ------------------------------*/
+    //DnD, the treeview is one the drag sources to drop buddies into groups
     gtk_drag_source_set(GTK_WIDGET(buddy_list_tree_view), GDK_BUTTON1_MASK,
             &presence_drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
     g_signal_connect(GTK_WIDGET(buddy_list_tree_view), "drag-data-get",
@@ -1149,7 +1229,7 @@ create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
     g_signal_connect(GTK_WIDGET(buddy_list_tree_view), "drag-data-received",
             G_CALLBACK(on_buddy_drag_data_received), NULL);
 
-    /* Status bar, cntains presence_status selector */
+    /*-------------------------- Status bar--------------------------- */
     presence_status_bar = create_presence_statusbar();
     gtk_box_pack_start(GTK_BOX(vbox), presence_status_bar, FALSE, TRUE, 0);
 
@@ -1160,14 +1240,14 @@ create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
     g_signal_connect_after(presence_window, "destroy",
             G_CALLBACK(destroy_presence_window), NULL);
 
-    /*  Load presence  */
+    /*------------------------- Load presence -------------------------*/
     presence_buddy_list_init(presence_client);
     g_object_set_data(G_OBJECT(presence_window), "Buddy-List",
             (gpointer)presence_buddy_list_get());
     update_presence_view();
     tmp_buddy = presence_buddy_create();
 
-    /*  timer to refresh the subscription */
+    /*------------------ Timer to refresh the subscription------------ */
     g_timeout_add_seconds(120, (GSourceFunc)buddy_subsribe_timer_cb, NULL);
 
     /* make sure that everything, window and label, are visible */

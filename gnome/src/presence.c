@@ -262,7 +262,7 @@ presence_buddy_list_buddy_get_by_uri(const gchar *uri){
 void
 presence_buddy_list_edit_buddy(buddy_t * b, buddy_t * backup)
 {
-   if((!b) || (!backup))
+    if((!b) || (!backup))
         return;
 
     // send a new subscribe if the URI has changed
@@ -276,7 +276,7 @@ presence_buddy_list_edit_buddy(buddy_t * b, buddy_t * backup)
         presence_buddy_subscribe(b, TRUE);
     }
     else
-        g_debug("Presence: edit buddy %s.", b->uri);
+        g_debug("Presence: edit buddy %s %s.", b->alias, b->uri);
 
     presence_buddy_list_save();
 }
@@ -377,11 +377,28 @@ presence_buddy_create()
     b->acc = g_strdup("");
     b->uri = g_strdup("");
     b->group = g_strdup(" "); //' ' is important
-    b->alias = g_strdup("");
+    b->alias = g_strdup(" ");
     b->subscribed = FALSE;
     b->status = FALSE;
     b->note = g_strdup(PRESENCE_DEFAULT_NOTE);
     return b;
+}
+
+buddy_t *
+presence_buddy_copy(buddy_t * b_src)
+{
+    if(!b_src)
+        return;
+
+    buddy_t *b_dest = g_malloc(sizeof(buddy_t));
+    b_dest->alias =  g_strdup(b_src->alias);
+    b_dest->group =  g_strdup(b_src->group);
+    b_dest->uri =  g_strdup(b_src->uri);
+    b_dest->acc = g_strdup(b_src->acc);
+    b_dest->subscribed = b_src->subscribed;
+    b_dest->status = b_src->status;
+    b_dest->note =  g_strdup(b_src->note);
+    return b_dest;
 }
 
 void
