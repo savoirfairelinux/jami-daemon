@@ -1652,8 +1652,7 @@ create_menus(GtkUIManager *ui, SFLPhoneClient *client)
     for (guint i = 0; i < account_list_get_size(); i++){
         account = account_list_get_nth(i);
         g_assert(account);
-        if((account->state == ACCOUNT_STATE_REGISTERED) &&
-            (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0))
+        if(g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0)
             global_presence_enabled = TRUE;
     }
 
