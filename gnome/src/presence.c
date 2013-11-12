@@ -387,8 +387,8 @@ presence_buddy_create()
 buddy_t *
 presence_buddy_copy(buddy_t * b_src)
 {
-    if(!b_src)
-        return;
+    if (!b_src)
+        return NULL;
 
     buddy_t *b_dest = g_malloc(sizeof(buddy_t));
     b_dest->alias = g_strdup(b_src->alias);
