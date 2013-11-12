@@ -29,9 +29,10 @@
  */
 
 #include "logger.h"
-#include "noisesuppress.h"
+#include "dsp.h"
+#include "audiobuffer.h"
 
-NoiseSuppress::NoiseSuppress(int smplPerFrame, int channels, int samplingRate) :
+DSP::DSP(int smplPerFrame, int channels, int samplingRate) :
     smplPerFrame_(smplPerFrame),
     noiseStates_(channels, nullptr)
 {
@@ -39,7 +40,7 @@ NoiseSuppress::NoiseSuppress(int smplPerFrame, int channels, int samplingRate) :
         state = speex_preprocess_state_init(smplPerFrame_, samplingRate);
 }
 
-void NoiseSuppress::enableAGC()
+void DSP::enableAGC()
 {
     // automatic gain control, range [1-32768]
     for (auto &state : noiseStates_) {
@@ -50,7 +51,7 @@ void NoiseSuppress::enableAGC()
     }
 }
 
-void NoiseSuppress::disableAGC()
+void DSP::disableAGC()
 {
     for (auto &state : noiseStates_) {
         int enable = 0;
@@ -58,7 +59,7 @@ void NoiseSuppress::disableAGC()
     }
 }
 
-void NoiseSuppress::enableDenoise()
+void DSP::enableDenoise()
 {
     for (auto &state : noiseStates_) {
         int enable = 1;
@@ -66,7 +67,7 @@ void NoiseSuppress::enableDenoise()
     }
 }
 
-void NoiseSuppress::disableDenoise()
+void DSP::disableDenoise()
 {
     for (auto &state : noiseStates_) {
         int enable = 0;
@@ -74,13 +75,13 @@ void NoiseSuppress::disableDenoise()
     }
 }
 
-NoiseSuppress::~NoiseSuppress()
+DSP::~DSP()
 {
     for (auto state : noiseStates_)
         speex_preprocess_state_destroy(state);
 }
 
-void NoiseSuppress::process(AudioBuffer& buff, int samples)
+void DSP::process(AudioBuffer& buff, int samples)
 {
     if (samples != smplPerFrame_) {
         WARN("Unexpected amount of samples");

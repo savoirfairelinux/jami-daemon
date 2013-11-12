@@ -75,7 +75,7 @@ void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
     if (lastSamplingRate != audioRtpRecord_.codecSampleRate_) {
         DEBUG("Update noise suppressor with sampling rate %d and frame size %d",
               getCodecSampleRate(), getCodecFrameSize());
-        initNoiseSuppress();
+        initDSP();
     }
 
 #endif
@@ -251,7 +251,7 @@ void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &au
     setSessionMedia(audioCodecs);
     initBuffers();
 #if HAVE_SPEEXDSP
-    initNoiseSuppress();
+    initDSP();
 #endif
 
     queue_.enableStack();

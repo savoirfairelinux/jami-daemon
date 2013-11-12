@@ -103,8 +103,8 @@ AudioRtpRecord::AudioRtpRecord() :
     , converterSamplingRate_(0)
     , fadeFactor_(1.0 / 32000.0)
 #if HAVE_SPEEXDSP
-    , noiseSuppressEncode_(0)
-    , noiseSuppressDecode_(0)
+    , dspEncode_(0)
+    , dspDecode_(0)
     , audioProcessMutex_()
 #endif
     , dtmfPayloadType_(101) // same as Asterisk
@@ -171,10 +171,10 @@ AudioRtpRecord::~AudioRtpRecord()
 #if HAVE_SPEEXDSP
     {
         std::lock_guard<std::mutex> lock(audioProcessMutex_);
-        delete noiseSuppressDecode_;
-        noiseSuppressDecode_ = 0;
-        delete noiseSuppressEncode_;
-        noiseSuppressEncode_ = 0;
+        delete dspDecode_;
+        dspDecode_ = 0;
+        delete dspEncode_;
+        dspEncode_ = 0;
     }
 #endif
 }
@@ -244,13 +244,13 @@ void AudioRtpRecordHandler::initBuffers()
 }
 
 #if HAVE_SPEEXDSP
-void AudioRtpRecordHandler::initNoiseSuppress()
+void AudioRtpRecordHandler::initDSP()
 {
     std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
-    delete audioRtpRecord_.noiseSuppressEncode_;
-    audioRtpRecord_.noiseSuppressEncode_ = new NoiseSuppress(getCodecFrameSize(), getCodecChannels(), getCodecSampleRate());
-    delete audioRtpRecord_.noiseSuppressDecode_;
-    audioRtpRecord_.noiseSuppressDecode_ = new NoiseSuppress(getCodecFrameSize(), getCodecChannels(), getCodecSampleRate());
+    delete audioRtpRecord_.dspEncode_;
+    audioRtpRecord_.dspEncode_ = new DSP(getCodecFrameSize(), getCodecChannels(), getCodecSampleRate());
+    delete audioRtpRecord_.dspDecode_;
+    audioRtpRecord_.dspDecode_ = new DSP(getCodecFrameSize(), getCodecChannels(), getCodecSampleRate());
 }
 #endif
 
@@ -307,18 +307,18 @@ int AudioRtpRecordHandler::processDataEncode()
 
     if (denoise or agc) {
         std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
-        RETURN_IF_NULL(audioRtpRecord_.noiseSuppressEncode_, 0, "Noise suppressor already destroyed");
+        RETURN_IF_NULL(audioRtpRecord_.dspEncode_, 0, "DSP already destroyed");
         if (denoise)
-            audioRtpRecord_.noiseSuppressEncode_->enableDenoise();
+            audioRtpRecord_.dspEncode_->enableDenoise();
         else
-            audioRtpRecord_.noiseSuppressEncode_->disableDenoise();
+            audioRtpRecord_.dspEncode_->disableDenoise();
 
         if (agc)
-            audioRtpRecord_.noiseSuppressEncode_->enableAGC();
+            audioRtpRecord_.dspEncode_->enableAGC();
         else
-            audioRtpRecord_.noiseSuppressEncode_->disableAGC();
+            audioRtpRecord_.dspEncode_->disableAGC();
 
-        audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
+        audioRtpRecord_.dspEncode_->process(micData, getCodecFrameSize());
     }
 #endif
 
@@ -368,17 +368,17 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
     if (denoise or agc) {
         std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
-        RETURN_IF_NULL(audioRtpRecord_.noiseSuppressDecode_, "Noise suppressor already destroyed");
+        RETURN_IF_NULL(audioRtpRecord_.dspDecode_, "DSP already destroyed");
         if (denoise)
-            audioRtpRecord_.noiseSuppressDecode_->enableDenoise();
+            audioRtpRecord_.dspDecode_->enableDenoise();
         else
-            audioRtpRecord_.noiseSuppressDecode_->disableDenoise();
+            audioRtpRecord_.dspDecode_->disableDenoise();
 
         if (agc)
-            audioRtpRecord_.noiseSuppressDecode_->enableAGC();
+            audioRtpRecord_.dspDecode_->enableAGC();
         else
-            audioRtpRecord_.noiseSuppressDecode_->disableAGC();
-        audioRtpRecord_.noiseSuppressDecode_->process(audioRtpRecord_.decData_, getCodecFrameSize());
+            audioRtpRecord_.dspDecode_->disableAGC();
+        audioRtpRecord_.dspDecode_->process(audioRtpRecord_.decData_, getCodecFrameSize());
     }
 
 #endif

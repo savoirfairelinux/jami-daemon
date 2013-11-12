@@ -28,17 +28,19 @@
  *  as that of the covered work.
  */
 
-#ifndef NOISESUPPRESS_H
-#define NOISESUPPRESS_H
+#ifndef DSP_H_
+#define DSP_H_
 
 #include <speex/speex_preprocess.h>
+#include <vector>
 #include "noncopyable.h"
-#include "audiobuffer.h"
 
-class NoiseSuppress {
+class AudioBuffer;
+
+class DSP {
     public:
-        NoiseSuppress(int smplPerFrame, int channels, int samplingRate);
-        ~NoiseSuppress();
+        DSP(int smplPerFrame, int channels, int samplingRate);
+        ~DSP();
         void enableAGC();
         void disableAGC();
         void enableDenoise();
@@ -46,11 +48,11 @@ class NoiseSuppress {
         void process(AudioBuffer& buf, int samples);
 
     private:
-        NON_COPYABLE(NoiseSuppress);
+        NON_COPYABLE(DSP);
 
         int smplPerFrame_;
         // one state per channel
         std::vector<SpeexPreprocessState*> noiseStates_;
 };
 
-#endif
+#endif // DSP_H_

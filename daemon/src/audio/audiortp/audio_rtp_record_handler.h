@@ -48,7 +48,7 @@ using std::ptrdiff_t;
 #include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
-#include "audio/noisesuppress.h"
+#include "audio/dsp.h"
 
 class SIPCall;
 
@@ -106,8 +106,8 @@ class AudioRtpRecord {
         double fadeFactor_;
 
 #if HAVE_SPEEXDSP
-        NoiseSuppress *noiseSuppressEncode_;
-        NoiseSuppress *noiseSuppressDecode_;
+        DSP *dspEncode_;
+        DSP *dspDecode_;
         std::mutex audioProcessMutex_;
 #endif
 
@@ -170,7 +170,7 @@ class AudioRtpRecordHandler {
         void initBuffers();
 
 #if HAVE_SPEEXDSP
-        void initNoiseSuppress();
+        void initDSP();
 #endif
 
         /**
