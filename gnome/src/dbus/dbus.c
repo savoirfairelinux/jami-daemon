@@ -1615,6 +1615,38 @@ dbus_set_noise_suppress_state(gboolean state)
     }
 }
 
+/**
+ * Get AGC state
+ */
+gboolean
+dbus_get_agc_state()
+{
+    gboolean state;
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_is_agc_enabled(config_proxy, &state, &error);
+
+    if (check_error(error))
+        state = FALSE;
+
+    return state;
+}
+
+/**
+ * Set AGC state
+ */
+void
+dbus_set_agc_state(gboolean state)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_agc_state(config_proxy, state, &error);
+
+    if (error) {
+        g_warning("Failed to call set_agc_state() on "
+              "ConfigurationManager: %s", error->message);
+        g_error_free(error);
+    }
+}
+
 int
 dbus_is_iax2_enabled()
 {

@@ -282,12 +282,12 @@ void ConfigurationManager::setNoiseSuppressState(const bool& state)
     Manager::instance().setNoiseSuppressState(state);
 }
 
-bool ConfigurationManager::isAGCEnabled()
+bool ConfigurationManager::isAgcEnabled()
 {
     return Manager::instance().isAGCEnabled();
 }
 
-void ConfigurationManager::setAGCState(const bool& enabled)
+void ConfigurationManager::setAgcState(const bool& enabled)
 {
     Manager::instance().setAGCState(enabled);
 }

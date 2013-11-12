@@ -327,35 +327,27 @@ gchar *dbus_get_current_audio_output_plugin();
 
 /**
  * ConfigurationManager - Get the current noise suppressor state
- * @return gchar* The state (enabled/disabled)
+ * @return gboolean The state (enabled/disabled)
  */
 gboolean dbus_get_noise_suppress_state(void);
 
 /**
  * ConfigurationManager - Set the current noise suppressor state
- * @param gchar* The state (enabled/disabled)
+ * @param gboolean The state (enabled/disabled)
  */
 void dbus_set_noise_suppress_state(gboolean state);
 
 /**
- * ConfigurationManager - Get the current echo cancel state
- * @return gchar* The state (enabled/disabled)
+ * ConfigurationManager - Get the current AGC state
+ * @return gboolean The state (enabled/disabled)
  */
-gchar *dbus_get_echo_cancel_state(void);
+gboolean dbus_get_agc_state(void);
 
 /**
- * ConfigurationManager - Set the current echo cancel state
- * @param gchar* The state (enabled/disabled)
+ * ConfigurationManager - Set the current noise suppressor state
+ * @param gboolean The state (enabled/disabled)
  */
-void dbus_set_echo_cancel_state(const gchar *state);
-
-int dbus_get_echo_cancel_tail_length(void);
-
-void dbus_set_echo_cancel_tail_length(int length);
-
-int dbus_get_echo_cancel_delay(void);
-
-void dbus_set_echo_cancel_delay(int delay);
+void dbus_set_agc_state(gboolean state);
 
 /**
  * ConfigurationManager - Tells the GUI if IAX2 support is enabled

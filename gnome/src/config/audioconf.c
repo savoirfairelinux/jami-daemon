@@ -811,6 +811,12 @@ active_noise_suppress(void)
 }
 
 static void
+toggle_agc(void)
+{
+    dbus_set_agc_state(!dbus_get_agc_state());
+}
+
+static void
 active_is_always_recording(void)
 {
     dbus_set_is_always_recording(!dbus_get_is_always_recording());
@@ -916,6 +922,13 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 
     g_signal_connect(G_OBJECT(enableNoiseReduction), "clicked", active_noise_suppress, NULL);
     gtk_grid_attach(GTK_GRID(grid), enableNoiseReduction, 0, 1, 1, 1);
+
+    GtkWidget *enableAGC = gtk_check_button_new_with_mnemonic(_("Automatic _Gain Control"));
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableAGC), dbus_get_agc_state());
+
+    g_signal_connect(G_OBJECT(enableAGC), "clicked", toggle_agc, NULL);
+    gtk_grid_attach(GTK_GRID(grid), enableAGC, 0, 2, 1, 1);
 
     gtk_widget_show_all(audio_vbox);
 
