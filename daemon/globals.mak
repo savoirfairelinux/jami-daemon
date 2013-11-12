@@ -7,16 +7,17 @@ sflplugindir=$(sfllibdir)/plugins
 
 ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
+PJPROJECT_DIR=pjproject-2.1.0
 
 # for pjsip
-include $(src)/libs/pjproject-2.1.0/build.mak
+include $(src)/libs/$(PJPROJECT_DIR)/build.mak
 PJSIP_LIBS=$(APP_LDFLAGS) $(APP_LDLIBS)
 
-SIP_CFLAGS=-I$(src)/libs/pjproject-2.1.0/pjsip/include \
-		   -I$(src)/libs/pjproject-2.1.0/pjlib/include \
-		   -I$(src)/libs/pjproject-2.1.0/pjlib-util/include \
-		   -I$(src)/libs/pjproject-2.1.0/pjmedia/include \
-		   -I$(src)/libs/pjproject-2.1.0/pjnath/include \
+SIP_CFLAGS=-I$(src)/libs/$(PJPROJECT_DIR)/pjsip/include \
+		   -I$(src)/libs/$(PJPROJECT_DIR)/pjlib/include \
+		   -I$(src)/libs/$(PJPROJECT_DIR)/pjlib-util/include \
+		   -I$(src)/libs/$(PJPROJECT_DIR)/pjmedia/include \
+		   -I$(src)/libs/$(PJPROJECT_DIR)/pjnath/include \
 		   -DPJ_AUTOCONF=1
 
 if BUILD_SPEEX
@@ -41,7 +42,7 @@ endif
 AM_CPPFLAGS = \
 	-I$(src)/libs \
 	-I$(src)/libs/iax2 \
-	-I$(src)/libs/pjproject-2.1.0 \
+	-I$(src)/libs/$(PJPROJECT_DIR) \
 	-I$(src)/src \
 	-I$(src)/src/config \
 	-I$(src)/test \
