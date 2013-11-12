@@ -104,8 +104,10 @@ public:
     std::vector< std::string > getCurrentAudioDevicesIndex();
     int32_t getAudioDeviceIndex(const std::string& name);
     std::string getCurrentAudioOutputPlugin();
-    std::string getNoiseSuppressState();
+    bool getNoiseSuppressState();
     void setNoiseSuppressState(const bool& state);
+    bool isAGCEnabled();
+    void setAGCState(const bool& state);
     bool isCaptureMuted();
     void muteCapture(const bool& mute);
     bool isPlaybackMuted();

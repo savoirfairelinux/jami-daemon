@@ -2250,6 +2250,16 @@ void ManagerImpl::setNoiseSuppressState(bool state)
     audioPreference.setNoiseReduce(state);
 }
 
+bool ManagerImpl::isAGCEnabled() const
+{
+    return audioPreference.isAGCEnabled();
+}
+
+void ManagerImpl::setAGCState(bool state)
+{
+    audioPreference.setAGCState(state);
+}
+
 /**
  * Initialization: Main Thread
  */

@@ -570,16 +570,8 @@ class ManagerImpl {
          */
         void setNoiseSuppressState(bool state);
 
-        /**
-         * Get the echo canceller engin state from
-         * the current audio layer
-         */
-        bool getEchoCancelState() const;
-
-        /**
-         * Set the echo canceller engin state
-         */
-        void setEchoCancelState(const std::string &state);
+        bool isAGCEnabled() const;
+        void setAGCState(bool enabled);
 
         /**
          * Ringtone option.

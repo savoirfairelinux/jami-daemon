@@ -104,6 +104,7 @@ static const char * const ALWAYS_RECORDING_KEY = "alwaysRecording";
 static const char * const VOLUMEMIC_KEY = "volumeMic";
 static const char * const VOLUMESPKR_KEY = "volumeSpkr";
 static const char * const NOISE_REDUCE_KEY = "noiseReduce";
+static const char * const AGC_KEY = "automaticGainControl";
 static const char * const CAPTURE_MUTED_KEY = "captureMuted";
 static const char * const PLAYBACK_MUTED_KEY = "playbackMuted";
 
@@ -347,7 +348,8 @@ AudioPreference::AudioPreference() :
     , alwaysRecording_(false)
     , volumemic_(1.0)
     , volumespkr_(1.0)
-    , noisereduce_(false)
+    , denoise_(false)
+    , agcEnabled_(false)
     , captureMuted_(false)
     , playbackMuted_(false)
 {}
@@ -437,7 +439,8 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     std::ostringstream spkrstr;
     spkrstr << volumespkr_;
     Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
-    Conf::ScalarNode noise(noisereduce_);
+    Conf::ScalarNode denoise(denoise_);
+    Conf::ScalarNode agc(agcEnabled_);
     Conf::ScalarNode captureMuted(captureMuted_);
     Conf::ScalarNode playbackMuted(playbackMuted_);
 
@@ -468,7 +471,8 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     pulsepreferencemap.setKeyValue(DEVICE_RINGTONE_KEY, &pulseDeviceRingtone);
 #endif
 
-    preferencemap.setKeyValue(NOISE_REDUCE_KEY, &noise);
+    preferencemap.setKeyValue(NOISE_REDUCE_KEY, &denoise);
+    preferencemap.setKeyValue(AGC_KEY, &agc);
     emitter.serializePreference(&preferencemap, "audio");
 }
 
@@ -503,7 +507,8 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     volumemic_ = clamp(-1.0, 1.0, volumemic_);
     map.getValue(VOLUMESPKR_KEY, &volumespkr_);
     volumespkr_ = clamp(-1.0, 1.0, volumespkr_);
-    map.getValue(NOISE_REDUCE_KEY, &noisereduce_);
+    map.getValue(NOISE_REDUCE_KEY, &denoise_);
+    map.getValue(AGC_KEY, &agcEnabled_);
     map.getValue(CAPTURE_MUTED_KEY, &captureMuted_);
     map.getValue(PLAYBACK_MUTED_KEY, &playbackMuted_);
 

@@ -329,12 +329,20 @@ class AudioPreference : public Serializable {
             volumespkr_ = s;
         }
 
-        bool getNoiseReduce() const {
-            return noisereduce_;
+        bool isAGCEnabled() const {
+            return agcEnabled_;
         }
 
-        void setNoiseReduce(bool noise) {
-            noisereduce_ = noise;
+        bool setAGCState(bool enabled) {
+            agcEnabled_ = enabled;
+        }
+
+        bool getNoiseReduce() const {
+            return denoise_;
+        }
+
+        void setNoiseReduce(bool enabled) {
+            denoise_ = enabled;
         }
 
         bool getCaptureMuted() const {
@@ -374,7 +382,8 @@ class AudioPreference : public Serializable {
         double volumemic_;
         double volumespkr_;
 
-        bool noisereduce_;
+        bool denoise_;
+        bool agcEnabled_;
         bool captureMuted_;
         bool playbackMuted_;
 };

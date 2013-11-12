@@ -109,6 +109,9 @@ class ConfigurationManager
         bool getNoiseSuppressState();
         void setNoiseSuppressState(const bool& state);
 
+        bool isAGCEnabled();
+        void setAGCState(const bool& enabled);
+
         bool isCaptureMuted();
         void muteCapture(const bool& mute);
         bool isPlaybackMuted();

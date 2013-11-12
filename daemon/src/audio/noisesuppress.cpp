@@ -35,19 +35,44 @@ NoiseSuppress::NoiseSuppress(int smplPerFrame, int channels, int samplingRate) :
     smplPerFrame_(smplPerFrame),
     noiseStates_(channels, nullptr)
 {
-    for (auto &state : noiseStates_) {
+    for (auto &state : noiseStates_)
         state = speex_preprocess_state_init(smplPerFrame_, samplingRate);
+}
 
-        int i = 1;
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DENOISE, &i);
-
-        // automatic gain control, range [1-32768]
-        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC, &i);
+void NoiseSuppress::enableAGC()
+{
+    // automatic gain control, range [1-32768]
+    for (auto &state : noiseStates_) {
+        int enable = 1;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC, &enable);
         int target = 16000;
         speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC_TARGET, &target);
     }
 }
 
+void NoiseSuppress::disableAGC()
+{
+    for (auto &state : noiseStates_) {
+        int enable = 0;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC, &enable);
+    }
+}
+
+void NoiseSuppress::enableDenoise()
+{
+    for (auto &state : noiseStates_) {
+        int enable = 1;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
+    }
+}
+
+void NoiseSuppress::disableDenoise()
+{
+    for (auto &state : noiseStates_) {
+        int enable = 0;
+        speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
+    }
+}
 
 NoiseSuppress::~NoiseSuppress()
 {

@@ -302,13 +302,24 @@ int AudioRtpRecordHandler::processDataEncode()
     }
 
 #if HAVE_SPEEXDSP
+    const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
+    const bool agc = Manager::instance().audioPreference.isAGCEnabled();
 
-    if (Manager::instance().audioPreference.getNoiseReduce()) {
+    if (denoise or agc) {
         std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
         RETURN_IF_NULL(audioRtpRecord_.noiseSuppressEncode_, 0, "Noise suppressor already destroyed");
+        if (denoise)
+            audioRtpRecord_.noiseSuppressEncode_->enableDenoise();
+        else
+            audioRtpRecord_.noiseSuppressEncode_->disableDenoise();
+
+        if (agc)
+            audioRtpRecord_.noiseSuppressEncode_->enableAGC();
+        else
+            audioRtpRecord_.noiseSuppressEncode_->disableAGC();
+
         audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
     }
-
 #endif
 
     {
@@ -352,9 +363,21 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
 #if HAVE_SPEEXDSP
 
-    if (Manager::instance().audioPreference.getNoiseReduce()) {
+    const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
+    const bool agc = Manager::instance().audioPreference.isAGCEnabled();
+
+    if (denoise or agc) {
         std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
         RETURN_IF_NULL(audioRtpRecord_.noiseSuppressDecode_, "Noise suppressor already destroyed");
+        if (denoise)
+            audioRtpRecord_.noiseSuppressDecode_->enableDenoise();
+        else
+            audioRtpRecord_.noiseSuppressDecode_->disableDenoise();
+
+        if (agc)
+            audioRtpRecord_.noiseSuppressDecode_->enableAGC();
+        else
+            audioRtpRecord_.noiseSuppressDecode_->disableAGC();
         audioRtpRecord_.noiseSuppressDecode_->process(audioRtpRecord_.decData_, getCodecFrameSize());
     }
 

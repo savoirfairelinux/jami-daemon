@@ -39,7 +39,10 @@ class NoiseSuppress {
     public:
         NoiseSuppress(int smplPerFrame, int channels, int samplingRate);
         ~NoiseSuppress();
-        //void process(SFLAudioSample *data, int samples);
+        void enableAGC();
+        void disableAGC();
+        void enableDenoise();
+        void disableDenoise();
         void process(AudioBuffer& buf, int samples);
 
     private:

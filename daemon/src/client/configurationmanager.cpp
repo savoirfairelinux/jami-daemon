@@ -282,6 +282,16 @@ void ConfigurationManager::setNoiseSuppressState(const bool& state)
     Manager::instance().setNoiseSuppressState(state);
 }
 
+bool ConfigurationManager::isAGCEnabled()
+{
+    return Manager::instance().isAGCEnabled();
+}
+
+void ConfigurationManager::setAGCState(const bool& enabled)
+{
+    Manager::instance().setAGCState(enabled);
+}
+
 std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 {
     std::map<std::string, std::string> ringToneList;

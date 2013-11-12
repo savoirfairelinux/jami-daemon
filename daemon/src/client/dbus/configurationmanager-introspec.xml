@@ -393,6 +393,16 @@
                </arg>
        </method>
 
+       <method name="isAGCEnabled" tp:name-for-bindings="isAGCEnabled">
+           <arg type="b" name="enabled" direction="out">
+           </arg>
+       </method>
+
+       <method name="setAGCState" tp:name-for-bindings="setAGCState">
+               <arg type="b" name="enabled" direction="in">
+               </arg>
+       </method>
+
        <!--    General Settings Panel         -->
 
        <method name="isIax2Enabled" tp:name-for-bindings="isIax2Enabled">
