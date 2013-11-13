@@ -142,6 +142,9 @@ class SIPAccount : public Account {
             registrationStateDetailed_ = details;
         }
 
+        void resetAutoRegistration();
+        bool checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool);
+
         /**
          * Returns true if this is the IP2IP account
          */
@@ -308,6 +311,8 @@ class SIPAccount : public Account {
         void setRegistrationInfo(pjsip_regc *regc) {
             regc_ = regc;
         }
+
+        void destroyRegistrationInfo();
 
         /**
          * @return pjsip_tls_setting structure, filled from the configuration
@@ -575,6 +580,14 @@ class SIPAccount : public Account {
         bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool proxyMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
+
+        struct {
+            pj_bool_t    active;    /**< Flag of reregister status. */
+            pj_timer_entry   timer;     /**< Timer for reregistration.  */
+            void        *reg_tp;    /**< Transport for registration.    */
+            unsigned     attempt_cnt; /**< Attempt counter.     */
+        } auto_rereg_;           /**< Reregister/reconnect data. */
+
         /**
          * Map of credential for this account
          */
@@ -814,6 +827,12 @@ class SIPAccount : public Account {
          * Optional: via_addr construct from received parameters
          */
         pjsip_host_port via_addr_;
+
+        pj_str_t contact_;
+        int contactRewriteMethod_;
+        bool allowViaRewrite_;
+        bool allowContactRewrite_;
+        pjsip_transport *via_tp_;
 
         /*
          * Port range for audio RTP ports

@@ -79,6 +79,7 @@ bool SIPAccount::portsInUse_[HALF_MAX_PORT];
 SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     : Account(accountID)
     , transport_(NULL)
+    , auto_rereg_()
     , credentials_()
     , regc_(NULL)
     , bRegister_(false)
@@ -127,6 +128,11 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
+    , contact_()
+    , contactRewriteMethod_(2)
+    , allowViaRewrite_(true)
+    , allowContactRewrite_(true)
+    , via_tp_(nullptr)
     , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
     , videoPortRange_({49152, (MAX_PORT) - 2})
@@ -1559,3 +1565,223 @@ SIPAccount::generateVideoPort() const
     return getRandomEvenNumber(videoPortRange_);
 }
 #endif
+
+void
+SIPAccount::destroyRegistrationInfo()
+{
+    pjsip_regc_destroy(regc_);
+    regc_ = nullptr;
+}
+
+void
+SIPAccount::resetAutoRegistration()
+{
+    auto_rereg_.active = PJ_FALSE;
+    auto_rereg_.attempt_cnt = 0;
+}
+
+/* Check if IP is private IP address */
+static pj_bool_t
+is_private_ip(const pj_str_t *addr)
+{
+    const pj_str_t private_net[] =
+    {
+    { (char*) "10.", 3 },
+    { (char*) "127.", 4 },
+    { (char*) "172.16.", 7 },
+    { (char*) "192.168.", 8 }
+    };
+
+    for (unsigned i = 0; i < PJ_ARRAY_SIZE(private_net); ++i)
+        if (pj_strncmp(addr, &private_net[i], private_net[i].slen) == 0)
+            return PJ_TRUE;
+
+    return PJ_FALSE;
+}
+
+
+/* Update NAT address from the REGISTER response */
+bool
+SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
+{
+    pjsip_transport *tp = param->rdata->tp_info.transport;
+
+    /* Get the received and rport info */
+    pjsip_via_hdr *via = param->rdata->msg_info.via;
+    int rport;
+    if (via->rport_param < 1) {
+        /* Remote doesn't support rport */
+        rport = via->sent_by.port;
+        if (rport == 0) {
+            pjsip_transport_type_e tp_type;
+            tp_type = (pjsip_transport_type_e) tp->key.type;
+            rport = pjsip_transport_get_default_port_for_type(tp_type);
+        }
+    } else {
+        rport = via->rport_param;
+    }
+
+    const pj_str_t *via_addr = via->recvd_param.slen != 0 ?
+        &via->recvd_param : &via->sent_by.host;
+
+    /* If allowViaRewrite_ is enabled, we save the Via "received" address
+     * from the response.
+     */
+    if (allowViaRewrite_ and (via_addr_.host.slen == 0 or via_tp_ != tp)) {
+        if (pj_strcmp(&via_addr_.host, via_addr))
+            pj_strdup(pool, &via_addr_.host, via_addr);
+
+        via_addr_.port = rport;
+        via_tp_ = tp;
+        pjsip_regc_set_via_sent_by(regc_, &via_addr_, via_tp_);
+    }
+
+    /* Only update if account is configured to auto-update */
+    if (not allowContactRewrite_)
+        return false;
+
+    /* Compare received and rport with the URI in our registration */
+    const pj_str_t STR_CONTACT = { "Contact", 7 };
+    pjsip_contact_hdr *contact_hdr = (pjsip_contact_hdr*)
+    pjsip_parse_hdr(pool, &STR_CONTACT, contact_.ptr, contact_.slen, NULL);
+    pj_assert(contact_hdr != NULL);
+    pjsip_sip_uri *uri = (pjsip_sip_uri*) contact_hdr->uri;
+    pj_assert(uri != NULL);
+    uri = (pjsip_sip_uri*) pjsip_uri_get_uri(uri);
+
+    if (uri->port == 0) {
+        pjsip_transport_type_e tp_type;
+        tp_type = (pjsip_transport_type_e) tp->key.type;
+        uri->port = pjsip_transport_get_default_port_for_type(tp_type);
+    }
+
+    /* Convert IP address strings into sockaddr for comparison.
+     * (http://trac.pjsip.org/repos/ticket/863)
+     */
+    pj_sockaddr contact_addr, recv_addr;
+    pj_status_t status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &uri->host, &contact_addr);
+    if (status == PJ_SUCCESS)
+        status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, via_addr, &recv_addr);
+
+    bool matched;
+    if (status == PJ_SUCCESS) {
+        // Compare the addresses as sockaddr according to the ticket above
+        matched = (uri->port == rport and pj_sockaddr_cmp(&contact_addr, &recv_addr) == 0);
+    } else {
+        // Compare the addresses as string, as before
+        matched = (uri->port == rport and pj_stricmp(&uri->host, via_addr) == 0);
+    }
+
+    if (matched) {
+        // Address doesn't change
+        return false;
+    }
+
+    /* Get server IP */
+    pj_str_t srv_ip = pj_str(param->rdata->pkt_info.src_name);
+
+    /* At this point we've detected that the address as seen by registrar.
+     * has changed.
+     */
+
+    /* Do not switch if both Contact and server's IP address are
+     * public but response contains private IP. A NAT in the middle
+     * might have messed up with the SIP packets. See:
+     * http://trac.pjsip.org/repos/ticket/643
+     *
+     * This exception can be disabled by setting allow_contact_rewrite
+     * to 2. In this case, the switch will always be done whenever there
+     * is difference in the IP address in the response.
+     */
+    if (allowContactRewrite_ != 2 && not is_private_ip(&uri->host) and
+        not is_private_ip(&srv_ip) and is_private_ip(via_addr)) {
+        /* Don't switch */
+        return false;
+    }
+
+    /* Also don't switch if only the port number part is different, and
+     * the Via received address is private.
+     * See http://trac.pjsip.org/repos/ticket/864
+     */
+    if (allowContactRewrite_ != 2 and pj_sockaddr_cmp(&contact_addr, &recv_addr) == 0 and
+        is_private_ip(via_addr)) {
+        /* Don't switch */
+        return false;
+    }
+
+    WARN("IP address change detected for account %s "
+         "(%.*s:%d --> %.*s:%d). Updating registration "
+         "(using method %d)",
+         accountID_.c_str(),
+         (int) uri->host.slen,
+         uri->host.ptr,
+         uri->port,
+         (int) via_addr->slen,
+         via_addr->ptr,
+         rport,
+         contactRewriteMethod_);
+
+    pj_assert(contactRewriteMethod_ == 1 or contactRewriteMethod_ == 2);
+
+    if (contactRewriteMethod_ == 1) {
+        /* Unregister current contact */
+        link_->sendUnregister(this);
+        destroyRegistrationInfo();
+    }
+
+    /*
+     * Build new Contact header
+     */
+    {
+        char *tmp;
+        const char *beginquote, *endquote;
+        char transport_param[32];
+        int len;
+
+        /* Enclose IPv6 address in square brackets */
+        if (tp->key.type & PJSIP_TRANSPORT_IPV6) {
+            beginquote = "[";
+            endquote = "]";
+        } else {
+            beginquote = endquote = "";
+        }
+
+        /* Don't add transport parameter if it's UDP */
+        if (tp->key.type != PJSIP_TRANSPORT_UDP and
+            tp->key.type != PJSIP_TRANSPORT_UDP6) {
+            pj_ansi_snprintf(transport_param, sizeof(transport_param),
+                 ";transport=%s",
+                 pjsip_transport_get_type_name(
+                     (pjsip_transport_type_e)tp->key.type));
+        } else {
+            transport_param[0] = '\0';
+        }
+
+        tmp = (char*) pj_pool_alloc(pool, PJSIP_MAX_URL_SIZE);
+        len = pj_ansi_snprintf(tmp, PJSIP_MAX_URL_SIZE,
+                "<sip:%s%s%s%.*s%s:%d%s>",
+                username_.c_str(),
+                (not username_.empty() ?  "@" : ""),
+                beginquote,
+                (int) via_addr->slen,
+                via_addr->ptr,
+                endquote,
+                rport,
+                transport_param);
+        if (len < 1) {
+            ERROR("URI too long");
+            return false;
+        }
+
+        pj_strdup2_with_null(pool, &contact_, tmp);
+    }
+
+    if (contactRewriteMethod_ == 2 && regc_ != NULL)
+        pjsip_regc_update_contact(regc_, 1, &contact_);
+
+    /* TODO: Perform new registration */
+    //pjsua_acc_set_registration(acc->index, PJ_TRUE);
+
+
+    return true;
+}
