@@ -180,6 +180,8 @@ class CallManager
         void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
         void recordingStateChanged(const std::string& callID, const bool& state);
         void volumeChanged(const std::string& device, const int& value);
+        void secureSdesOn(const std::string& arg);
+        void secureSdesOff(const std::string& arg);
 
 #endif // __ANDROID__
 private:
