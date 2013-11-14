@@ -57,7 +57,7 @@ void SdesNegotiatorTest::testTagPattern()
     std::string subject = "a=crypto:4";
 
     sfl::Pattern pattern("^a=crypto:(?P<tag>[0-9]{1,9})", false);
-    pattern << subject;
+    pattern.updateSubject(subject);
 
     CPPUNIT_ASSERT(pattern.matches());
     CPPUNIT_ASSERT(pattern.group("tag").compare("4") == 0);
@@ -73,7 +73,7 @@ void SdesNegotiatorTest::testCryptoSuitePattern()
                                "AES_CM_128_HMAC_SHA1_32|"		\
                                "F8_128_HMAC_SHA1_80|"			\
                                "[A-Za-z0-9_]+)", false);
-    pattern << subject;
+    pattern.updateSubject(subject);
 
     CPPUNIT_ASSERT(pattern.matches());
     CPPUNIT_ASSERT(pattern.group("cryptoSuite").compare("AES_CM_128_HMAC_SHA1_80") == 0);
@@ -92,7 +92,7 @@ void SdesNegotiatorTest::testKeyParamsPattern()
                                "(?P<mkiValue>[0-9]+)\\:"		\
                                "(?P<mkiLength>[0-9]{1,3})\\;?)?", true);
 
-    pattern << subject;
+    pattern.updateSubject(subject);
 
     pattern.matches();
     CPPUNIT_ASSERT(pattern.group("srtpKeyMethod").compare("inline:"));
@@ -116,7 +116,7 @@ void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
                                "(?P<mkiValue>[0-9]+)\\:"                \
                                "(?P<mkiLength>[0-9]{1,3})\\;?)?", true);
 
-    pattern << subject;
+    pattern.updateSubject(subject);
     pattern.matches();
     CPPUNIT_ASSERT(pattern.group("srtpKeyMethod").compare("inline:"));
     CPPUNIT_ASSERT(pattern.group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj")

@@ -134,7 +134,7 @@ class Pattern {
          */
         std::vector<std::string> split();
 
-        void operator<< (const std::string& subject) {
+        void updateSubject(const std::string& subject) {
             subject_ = subject;
         }
 

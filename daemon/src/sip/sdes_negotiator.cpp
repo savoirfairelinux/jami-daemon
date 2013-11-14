@@ -98,7 +98,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
         // that we will analyze further down.
         std::vector<std::string> sdesLine;
 
-        *generalSyntaxPattern << item;
+        generalSyntaxPattern->updateSubject(item);
 
         try {
             sdesLine = generalSyntaxPattern->split();
@@ -111,7 +111,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
 
         // Check if the attribute starts with a=crypto
         // and get the tag for this line
-        *tagPattern << sdesLine.at(0);
+        tagPattern->updateSubject(sdesLine.at(0));
 
         std::string tag;
 
@@ -126,7 +126,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
 
         // Check if the crypto suite is valid and retreive
         // its value.
-        *cryptoSuitePattern << sdesLine.at(1);
+        cryptoSuitePattern->updateSubject(sdesLine.at(1));
 
         std::string cryptoSuite;
 
@@ -140,7 +140,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
             return cryptoAttributeVector;
 
         // Parse one or more key-params field.
-        *keyParamsPattern << sdesLine.at(2);
+        keyParamsPattern->updateSubject(sdesLine.at(2));
 
         std::string srtpKeyInfo;
         std::string srtpKeyMethod;
