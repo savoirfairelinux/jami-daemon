@@ -56,7 +56,7 @@ void SdesNegotiatorTest::testTagPattern()
     TITLE();
     std::string subject = "a=crypto:4";
 
-    sfl::Pattern pattern("^a=crypto:(?P<tag>[0-9]{1,9})");
+    sfl::Pattern pattern("^a=crypto:(?P<tag>[0-9]{1,9})", false);
     pattern << subject;
 
     CPPUNIT_ASSERT(pattern.matches());
@@ -72,7 +72,7 @@ void SdesNegotiatorTest::testCryptoSuitePattern()
     sfl::Pattern pattern("(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
                                "AES_CM_128_HMAC_SHA1_32|"		\
                                "F8_128_HMAC_SHA1_80|"			\
-                               "[A-Za-z0-9_]+)");
+                               "[A-Za-z0-9_]+)", false);
     pattern << subject;
 
     CPPUNIT_ASSERT(pattern.matches());
@@ -90,7 +90,7 @@ void SdesNegotiatorTest::testKeyParamsPattern()
                                "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
                                "(2\\^(?P<lifetime>[0-9]+)\\|"		\
                                "(?P<mkiValue>[0-9]+)\\:"		\
-                               "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
+                               "(?P<mkiLength>[0-9]{1,3})\\;?)?", true);
 
     pattern << subject;
 
@@ -114,7 +114,7 @@ void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
                                "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)" \
                                "(\\|2\\^(?P<lifetime>[0-9]+)\\|"                \
                                "(?P<mkiValue>[0-9]+)\\:"                \
-                               "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
+                               "(?P<mkiLength>[0-9]{1,3})\\;?)?", true);
 
     pattern << subject;
     pattern.matches();

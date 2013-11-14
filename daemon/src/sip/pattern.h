@@ -78,123 +78,13 @@ class Pattern {
         */
 
         Pattern(const std::string& pattern,
-                const std::string& options = "");
+                bool matchGlobally);
 
         /**
          * Destructor. Pcre pattern gets freed
          * here.
          */
         ~Pattern();
-
-        /**
-         * Assignment operator overloading.
-         * Set the regular expression
-         * to be used on subject strings
-         * and compile the regular expression
-         * from that string.
-         *
-         * @param pattern The new pattern
-         */
-        Pattern& operator=(const std::string& pattern) {
-            pattern_ = pattern;
-            compile();
-            return *this;
-        }
-
-        Pattern& operator=(const char * pattern) {
-            pattern_ = pattern;
-            compile();
-            return *this;
-        }
-
-        /**
-         * Compile the regular expression
-         * from the pattern that was set for
-         * this object.
-         */
-        void compile();
-
-        /**
-         * Get the currently set regular expression
-         * that is used on subject strings
-         *
-         * @return The currently set pattern
-         */
-        std::string getPattern() const {
-            return pattern_;
-        }
-
-        /**
-         * << operator overload. Sets the the subject
-         * for latter use on the >> operator.
-         *
-         * @param subject
-         *      The expression to be evaluated
-         *      by the pattern.
-         *
-         */
-        void operator<< (const std::string& subject) {
-            subject_ = subject;
-        }
-
-        /**
-         * Get the start position of the overall match.
-         *
-         * @return the start position of the overall match.
-         */
-        size_t start() const;
-
-        /**
-         * Get the start position of the specified match.
-         *
-         * @param groupNumber The capturing group number.
-         *
-         * @return the start position of the specified match.
-         */
-        size_t start(unsigned int groupNumber) const;
-
-        /**
-         * Get the start position of the specified match.
-         *
-         * @param groupName The capturing group name.
-         */
-        void start(const std::string& groupName) const;
-
-        /**
-         * Get the end position of the overall match.
-         *
-         * @return the end position of the overall match.
-         */
-        size_t end() const;
-
-        /**
-         * Get the end position of the specified match.
-         *
-         * @param groupNumber The capturing group number.
-         *
-         * @return the end position of the specified match.
-         */
-        size_t end(unsigned int groupNumber) const;
-
-        /**
-         * Get the end position of the specified match.
-         *
-         * @param groupName The capturing group name.
-         *
-         * @return the end position of the specified match.
-         */
-        void end(const std::string& groupName) const;
-
-        /**
-         * Get the number of capturing groups in the
-         * compiled regex.
-         *
-         * @return The number of capture groups.
-         *
-         * @pre The regular expression should have been
-         * 	    compiled prior to the execution of this method.
-         */
-        unsigned int getCaptureGroupCount();
 
         /**
          * Get the substring matched in a capturing
@@ -212,58 +102,7 @@ class Pattern {
          *         regular expression designated
          *         the group name.
          */
-        std::string group(const std::string& groupName);
-
-        /**
-         * Get the substring matched in a named group.
-         *
-         * This methods only performs a basic lookup
-         * inside its internal substring table. Thus,
-         * matches() should have been called prior to
-         * this method in order to obtain the desired
-         * output.
-         *
-         * @param groupNumber The number of the group.
-         *
-         * @return the substring matched by the
-         *         regular expression designated
-         *         the group number.
-         */
-        std::string group(int groupNumber);
-
-        /**
-         * Similar to python's MatchObject.groups. Get all
-         * the substrings matched by the capture groups defined
-         * in the pattern. The complete (implicit) capture group
-         * is not returned : ie only groups from 1 up to the number
-         * of groups in the pattern are returned.
-         *
-         * @return A vector of stings that were matched by some
-         * 		   capturing group in the pattern.
-         *
-         * @pre The regular expression should have been
-         * 	    compiled prior to the execution of this method.
-         */
-        std::vector<std::string> groups();
-
-        /**
-         * Try to match the compiled pattern with a
-         * subject.
-         *
-         * @param subject Subject to be matched
-         * 		          by the pattern.
-         *
-         * @return true If the subject matches the pattern,
-         *         false otherwise.
-         *
-         * @pre The regular expression should have been
-         * 	    compiled prior to the execution of this method.
-         *
-         * @post The internal substring table will be updated
-         *       with the new matches. Therefore, subsequent
-         * 		 calls to group may return different results.
-         */
-        bool matches(const std::string& subject);
+        std::string group(const char *groupName);
 
         /**
          * Try to match the compiled pattern with the implicit
@@ -295,7 +134,32 @@ class Pattern {
          */
         std::vector<std::string> split();
 
+        void operator<< (const std::string& subject) {
+            subject_ = subject;
+        }
+
     private:
+        /**
+         * Get the start position of the overall match.
+         *
+         * @return the start position of the overall match.
+         */
+        size_t start() const;
+
+        /**
+         * Get the end position of the overall match.
+         *
+         * @return the end position of the overall match.
+         */
+        size_t end() const;
+
+        /**
+         * Compile the regular expression
+         * from the pattern that was set for
+         * this object.
+         */
+        void compile();
+
         NON_COPYABLE(Pattern);
          // The regular expression that represents that pattern.
         std::string pattern_;
@@ -319,11 +183,7 @@ class Pattern {
         // The number of substrings matched after calling pcre_exec.
         int count_;
 
-        // PCRE options for this pattern.
-        int options_;
-
-        // String representation of the options.
-        std::string optionsDescription_;
+        bool matchGlobally_;
 };
 }
 
