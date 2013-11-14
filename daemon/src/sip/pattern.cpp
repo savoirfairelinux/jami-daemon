@@ -33,28 +33,14 @@
 
 namespace sfl {
 
-Pattern::Pattern(const std::string& pattern, bool global) :
+Pattern::Pattern(const std::string& pattern, bool matchGlobally) :
     pattern_(pattern),
     subject_(),
     re_(NULL),
     ovector_(),
+    offset_{0, 0},
     count_(0),
-    matchGlobally_(global)
-{
-    // Set offsets
-    offset_[0] = offset_[1] = 0;
-
-    // Compile the pattern.
-    compile();
-}
-
-Pattern::~Pattern()
-{
-    if (re_ != NULL)
-        pcre_free(re_);
-}
-
-void Pattern::compile()
+    matchGlobally_(matchGlobally)
 {
     // Compile the pattern
     int offset;
@@ -81,6 +67,13 @@ void Pattern::compile()
     ovector_.clear();
     ovector_.resize((captureCount + 1) * 3);
 }
+
+Pattern::~Pattern()
+{
+    if (re_ != NULL)
+        pcre_free(re_);
+}
+
 
 std::string Pattern::group(const char *groupName)
 {

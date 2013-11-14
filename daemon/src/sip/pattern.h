@@ -153,13 +153,6 @@ class Pattern {
          */
         size_t end() const;
 
-        /**
-         * Compile the regular expression
-         * from the pattern that was set for
-         * this object.
-         */
-        void compile();
-
         NON_COPYABLE(Pattern);
          // The regular expression that represents that pattern.
         std::string pattern_;
