@@ -114,6 +114,7 @@ namespace {
         if (setjmp(env) == 0) {
             signal(SIGABRT, &on_sigabrt);
             session = func();
+            signal(SIGABRT, SIG_DFL); // restore default SIGABRT handler
         } else {
             ERROR("aborted");
             throw AudioRtpFactoryException("Socket failure");
