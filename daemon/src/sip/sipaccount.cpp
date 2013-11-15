@@ -128,7 +128,8 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
-    , contact_()
+    , contactBuffer_()
+    , contact_{contactBuffer_, 0}
     , contactRewriteMethod_(2)
     , allowViaRewrite_(true)
     , allowContactRewrite_(true)
@@ -1181,7 +1182,8 @@ std::string SIPAccount::getServerUri() const
 }
 
 
-std::string SIPAccount::getContactHeader() const
+pj_str_t
+SIPAccount::getContactHeader()
 {
     if (transport_ == NULL)
         ERROR("Transport not created yet");
@@ -1226,9 +1228,17 @@ std::string SIPAccount::getContactHeader() const
     } else
         scheme = "sip:";
 
-    return displayName_ + (displayName_.empty() ? "" : " ") + "<" +
-           scheme + username_ + (username_.empty() ? "" : "@") +
-           address + ":" + port + transport + ">";
+    contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
+                                     "%s%s<%s%s%s%s:%s%s>",
+                                     displayName_.c_str(),
+                                     (displayName_.empty() ? "" : " "),
+                                     scheme.c_str(),
+                                     username_.c_str(),
+                                     (username_.empty() ? "" : "@"),
+                                     address.c_str(),
+                                     port.c_str(),
+                                     transport.c_str());
+    return contact_;
 }
 
 
@@ -1641,7 +1651,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         return false;
 
     /* Compare received and rport with the URI in our registration */
-    const pj_str_t STR_CONTACT = { "Contact", 7 };
+    const pj_str_t STR_CONTACT = { (char*) "Contact", 7 };
     pjsip_contact_hdr *contact_hdr = (pjsip_contact_hdr*)
     pjsip_parse_hdr(pool, &STR_CONTACT, contact_.ptr, contact_.slen, NULL);
     pj_assert(contact_hdr != NULL);
@@ -1773,14 +1783,23 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
             return false;
         }
 
-        pj_strdup2_with_null(pool, &contact_, tmp);
+        pj_str_t tmp_str = {tmp, len};
+        pj_strncpy_with_null(&contact_, &tmp_str, PJSIP_MAX_URL_SIZE);
     }
 
     if (contactRewriteMethod_ == 2 && regc_ != NULL)
         pjsip_regc_update_contact(regc_, 1, &contact_);
 
+#if 0
     /* TODO: Perform new registration */
     //pjsua_acc_set_registration(acc->index, PJ_TRUE);
+    /*  Perform new registration */
+    try {
+        link_->sendRegister(this);
+    } catch (const VoipLinkException &e) {
+        ERROR("%s", e.what());
+    }
+#endif
 
 
     return true;

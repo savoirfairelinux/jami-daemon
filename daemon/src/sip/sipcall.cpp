@@ -56,7 +56,8 @@ SIPCall::SIPCall(const std::string& id, Call::CallType type,
 #endif
     , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))
-    , contactHeader_()
+    , contactBuffer_()
+    , contactHeader_{contactBuffer_, 0}
 {}
 
 SIPCall::~SIPCall()
@@ -65,9 +66,9 @@ SIPCall::~SIPCall()
     pj_pool_release(pool_);
 }
 
-void SIPCall::setContactHeader(const std::string &contact)
+void SIPCall::setContactHeader(pj_str_t *contact)
 {
-    contactHeader_ = contact;
+    pj_strcpy(&contactHeader_, contact);
 }
 
 void SIPCall::answer()
@@ -81,9 +82,9 @@ void SIPCall::answer()
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     // contactStr must stay in scope as long as tdata
-    if (not contactHeader_.empty()) {
-        DEBUG("Answering with contact header: %s", contactHeader_.c_str());
-        sip_utils::addContactHeader(contactHeader_, tdata);
+    if (contactHeader_.slen == 0) {
+        DEBUG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
+        sip_utils::addContactHeader(&contactHeader_, tdata);
     }
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)

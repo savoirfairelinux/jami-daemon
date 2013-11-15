@@ -112,8 +112,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     pres->lock();
 
     /* Create UAS dialog: */
-    std::string c(acc->getContactHeader());
-    const pj_str_t contact = pj_str((char*) c.c_str());
+    const pj_str_t contact(acc->getContactHeader());
     status = pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, &contact, &dlg);
 
     if (status != PJ_SUCCESS) {

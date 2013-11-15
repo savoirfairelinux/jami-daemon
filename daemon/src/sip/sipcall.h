@@ -44,6 +44,8 @@
 
 #include "noncopyable.h"
 
+#include "pjsip/sip_config.h"
+
 struct pjsip_evsub;
 struct pj_caching_pool;
 struct pj_pool_t;
@@ -108,7 +110,7 @@ class SIPCall : public Call {
          */
         pjsip_inv_session *inv;
 
-        void setContactHeader(const std::string &contact);
+        void setContactHeader(pj_str_t *contact);
 
     private:
         // override of Call::getDetails
@@ -143,7 +145,8 @@ class SIPCall : public Call {
          */
         Sdp *local_sdp_;
 
-        std::string contactHeader_;
+        char contactBuffer_[PJSIP_MAX_URL_SIZE];
+        pj_str_t contactHeader_;
 };
 
 #endif // __SIPCALL_H__

@@ -399,7 +399,7 @@ class SIPAccount : public Account {
          * Get the contact header for
          * @return pj_str_t The contact header based on account information
          */
-        std::string getContactHeader() const;
+        pj_str_t getContactHeader();
 
         /**
          * Get the local interface name on which this account is bound.
@@ -828,10 +828,12 @@ class SIPAccount : public Account {
          */
         pjsip_host_port via_addr_;
 
+        char contactBuffer_[PJSIP_MAX_URL_SIZE];
         pj_str_t contact_;
         int contactRewriteMethod_;
         bool allowViaRewrite_;
-        bool allowContactRewrite_;
+        /* Undocumented feature in pjsip, this can == 2 */
+        int allowContactRewrite_;
         pjsip_transport *via_tp_;
 
         /*
@@ -855,7 +857,6 @@ class SIPAccount : public Account {
 
         static bool portsInUse_[HALF_MAX_PORT];
         static uint16_t getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range);
-
 };
 
 #endif

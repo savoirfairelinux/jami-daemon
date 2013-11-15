@@ -476,8 +476,8 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         // contactStr must stay in scope as long as tdata
-        const std::string contactStr(account->getContactHeader());
-        sip_utils::addContactHeader(contactStr, tdata);
+        const pj_str_t contactStr(account->getContactHeader());
+        sip_utils::addContactHeader(&contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
@@ -776,9 +776,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string received(account->getReceivedParameter());
 
     // Get the contact header
-    std::string contact = account->getContactHeader();
-    pj_str_t pjContact = pj_str((char*) contact.c_str());
-
+    const pj_str_t pjContact(account->getContactHeader());
 
     if (account->transport_) {
         if (account->isStunEnabled()) {
@@ -1090,7 +1088,8 @@ SIPVoIPLink::answer(Call *call)
             updateSDPFromSTUN(*sipCall, *account, SIPVoIPLink::instance()->sipTransport);
     }
 
-    sipCall->setContactHeader(account->getContactHeader());
+    pj_str_t contact(account->getContactHeader());
+    sipCall->setContactHeader(&contact);
     sipCall->answer();
 }
 
@@ -1152,8 +1151,8 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
         return;
 
     // contactStr must stay in scope as long as tdata
-    const std::string contactStr(account->getContactHeader());
-    sip_utils::addContactHeader(contactStr, tdata);
+    const pj_str_t contactStr(account->getContactHeader());
+    sip_utils::addContactHeader(&contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
@@ -1683,9 +1682,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     std::string from(account->getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
-    // Get the contact header
-    std::string contact(account->getContactHeader());
-    pj_str_t pjContact = pj_str((char*) contact.c_str());
+    pj_str_t pjContact(account->getContactHeader());
 
     pjsip_dialog *dialog = NULL;
 
@@ -2333,7 +2330,7 @@ void registration_cb(pjsip_regc_cbparam *param)
              */
             // update_rfc5626_status(acc, param->rdata);
 
-            checkNatAddress(*param, *account);
+            account->checkNATAddress(param, pool_);
 
             /* TODO Check and update Service-Route header */
             //update_service_route(acc, param->rdata);
