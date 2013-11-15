@@ -2327,7 +2327,8 @@ void registration_cb(pjsip_regc_cbparam *param)
             account->checkNATAddress(param, pool_);
 
             /* TODO Check and update Service-Route header */
-            //update_service_route(acc, param->rdata);
+            if (account->hasServiceRoute())
+                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(account->getServiceRoute(), pool_));
 
             // start the periodic registration request based on Expire header
             // account determines itself if a keep alive is required
