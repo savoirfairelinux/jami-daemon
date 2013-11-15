@@ -571,6 +571,8 @@ class SIPAccount : public Account {
         uint16_t generateVideoPort() const;
 #endif
 
+        void scheduleReregistration(pjsip_endpoint *endpt);
+
     private:
         NON_COPYABLE(SIPAccount);
 
@@ -579,7 +581,6 @@ class SIPAccount : public Account {
         bool userMatch(const std::string &username) const;
         bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool proxyMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
-
 
         struct {
             pj_bool_t    active;    /**< Flag of reregister status. */

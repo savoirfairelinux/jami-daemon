@@ -2354,15 +2354,13 @@ void registration_cb(pjsip_regc_cbparam *param)
         case PJSIP_SC_BAD_GATEWAY:
         case PJSIP_SC_SERVICE_UNAVAILABLE:
         case PJSIP_SC_SERVER_TIMEOUT:
-            // TODO
-            // schedule_reregistration(*account);
+            account->scheduleReregistration(endpt_);
             break;
 
         default:
-
             /* Global failure */
             if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
-            {} //TODO schedule_reregistration(*account);
+                account->scheduleReregistration(endpt_);
     }
 
     const pj_str_t *description = pjsip_get_status_text(param->code);

@@ -132,7 +132,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , contact_{contactBuffer_, 0}
     , contactRewriteMethod_(2)
     , allowViaRewrite_(true)
-    , allowContactRewrite_(true)
+    , allowContactRewrite_(1)
     , via_tp_(nullptr)
     , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
@@ -1801,6 +1801,48 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
     }
 #endif
 
-
     return true;
+}
+
+/* Schedule reregistration for specified account. Note that the first
+ * re-registration after a registration failure will be done immediately.
+ * Also note that this function should be called within PJSUA mutex.
+ */
+void
+SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
+{
+    /* Cancel any re-registration timer */
+    if (auto_rereg_.timer.id) {
+        auto_rereg_.timer.id = PJ_FALSE;
+        pjsip_endpt_cancel_timer(endpt, &auto_rereg_.timer);
+    }
+
+    /* Update re-registration flag */
+    auto_rereg_.active = PJ_TRUE;
+
+    /* Set up timer for reregistration */
+    auto_rereg_.timer.cb = &SIPAccount::keepAliveRegistrationCb;
+    auto_rereg_.timer.user_data = this;
+
+    /* Reregistration attempt. The first attempt will be done immediately. */
+    pj_time_val delay;
+    const int FIRST_RETRY_INTERVAL = 60;
+    const int RETRY_INTERVAL = 300;
+    delay.sec = auto_rereg_.attempt_cnt ? RETRY_INTERVAL : FIRST_RETRY_INTERVAL;
+    delay.msec = 0;
+
+    /* Randomize interval by +/- 10 secs */
+    if (delay.sec >= 10) {
+        delay.msec = -10000 + (pj_rand() % 20000);
+    } else {
+        delay.sec = 0;
+        delay.msec = (pj_rand() % 10000);
+    }
+
+    pj_time_val_normalize(&delay);
+
+    WARN("Scheduling re-registration retry in %u seconds..", delay.sec);
+    auto_rereg_.timer.id = PJ_TRUE;
+    if (pjsip_endpt_schedule_timer(endpt, &auto_rereg_.timer, &delay) != PJ_SUCCESS)
+        auto_rereg_.timer.id = PJ_FALSE;
 }
