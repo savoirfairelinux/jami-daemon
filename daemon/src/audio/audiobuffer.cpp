@@ -214,25 +214,3 @@ size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /
 
     return sample_num;
 }
-
-std::ostream& operator<<(std::ostream& os, const AudioBuffer& buf)
-{
-    for (unsigned i = 0; i < buf.frames(); i++) {
-        for (unsigned j = 0; j < buf.samples_.size(); j++)
-            os << buf.samples_[j][i];
-    }
-
-    return os;
-}
-
-std::istream& operator>>(std::istream& is, AudioBuffer& buf)
-{
-    for (unsigned i = 0; ; i++) {
-        for (unsigned j = 0; j < buf.samples_.size(); j++) {
-            if (is && is.good())
-                is >> buf.samples_[j][i];
-            else
-                break;
-        }
-    }
-}

@@ -333,7 +333,7 @@ class AudioPreference : public Serializable {
             return agcEnabled_;
         }
 
-        bool setAGCState(bool enabled) {
+        void setAGCState(bool enabled) {
             agcEnabled_ = enabled;
         }
 

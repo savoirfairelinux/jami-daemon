@@ -31,7 +31,6 @@
 #ifndef _AUDIO_BUFFER_H
 #define _AUDIO_BUFFER_H
 
-#include <iostream>
 #include <vector>
 #include <cstddef> // for size_t
 
@@ -209,12 +208,6 @@ class AudioBuffer {
          * Buffer sample number is increased if required to hold the new requested samples.
          */
         size_t copy(SFLAudioSample* in, size_t sample_num, size_t pos_out = 0);
-
-        /**
-         * Overloading << and >> to easily import/export a multichannel stream
-         */
-        friend std::ostream& operator<<(std::ostream& os, const AudioBuffer& buf);
-        friend std::istream& operator>>(std::istream& is, AudioBuffer& buf);
 
     private:
         int sampleRate_;

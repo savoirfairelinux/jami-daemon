@@ -138,6 +138,8 @@ bool SIPPresence::isSupported(int function)
         return publish_supported_;
     else if(function == PRESENCE_FUNCTION_SUBSCRIBE)
         return subscribe_supported_;
+
+    return false;
 }
 
 void SIPPresence::updateStatus(bool status, const std::string &note)
