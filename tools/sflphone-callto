@@ -11,6 +11,13 @@ RESFILE=~/.config/sflphone/sflphoned.yml
 # Parse sflphonedrc and get default account id string
 if [ -f "$RESFILE" ]; then
 
+# Test if a SFLphone client is already open, if not open a new one
+# Opening a new client will start sflphoned if not already running
+SFLPHONEC=`ps -A | grep sflphone-client`
+if [ "$SFLPHONEC" = "" ]; then
+    sflphone-client-gnome&
+fi
+
 # FIXME: this doesn't check if account is enabled, and is unreadable/unmaintainable.
 # D-Bus API should be fixed so that we can simply dial and let the daemon worry
 # about which account (default account? most recently used?) should place the
