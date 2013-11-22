@@ -589,6 +589,8 @@ class SIPAccount : public Account {
             unsigned     attempt_cnt; /**< Attempt counter.     */
         } auto_rereg_;           /**< Reregister/reconnect data. */
 
+        static void autoReregTimerCb(pj_timer_heap_t *th, pj_timer_entry *te);
+
         /**
          * Map of credential for this account
          */

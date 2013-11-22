@@ -1804,6 +1804,34 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
     return true;
 }
 
+/* Auto re-registration timeout callback */
+void
+SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
+{
+    std::pair<SIPAccount *, pjsip_endpoint *> *context = static_cast<std::pair<SIPAccount *, pjsip_endpoint *> *>(te->user_data);
+    SIPAccount *acc = context->first;
+    pjsip_endpoint *endpt = context->second;
+
+    /* Check if the reregistration timer is still valid, e.g: while waiting
+     * timeout timer application might have deleted the account or disabled
+     * the auto-reregistration.
+     */
+    if (not acc->auto_rereg_.active) {
+        delete context;
+        return;
+    }
+
+    /* Start re-registration */
+    acc->auto_rereg_.attempt_cnt++;
+    try {
+        acc->link_->sendRegister(acc);
+    } catch (const VoipLinkException &e) {
+        ERROR("%s", e.what());
+        acc->scheduleReregistration(endpt);
+    }
+    delete context;
+}
+
 /* Schedule reregistration for specified account. Note that the first
  * re-registration after a registration failure will be done immediately.
  * Also note that this function should be called within PJSUA mutex.
@@ -1821,8 +1849,8 @@ SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
     auto_rereg_.active = PJ_TRUE;
 
     /* Set up timer for reregistration */
-    auto_rereg_.timer.cb = &SIPAccount::keepAliveRegistrationCb;
-    auto_rereg_.timer.user_data = this;
+    auto_rereg_.timer.cb = &SIPAccount::autoReregTimerCb;
+    auto_rereg_.timer.user_data = new std::pair<SIPAccount *, pjsip_endpoint *>(this, endpt);
 
     /* Reregistration attempt. The first attempt will be done immediately. */
     pj_time_val delay;
