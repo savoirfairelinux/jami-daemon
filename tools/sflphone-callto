@@ -6,23 +6,21 @@
 # to this script.
 
 # The sflphone daemon config file
-RESFILE=~/.config/sflphone/sflphonedrc
+RESFILE=~/.config/sflphone/sflphoned.yml
 
 # Parse sflphonedrc and get default account id string
 if [ -f "$RESFILE" ]; then
 
-    # Use first ID
-    ACCOUNTID=`grep Accounts.order $RESFILE | sed -e 's/Accounts.order=//' -e 's/\/.*//'`
-
-    # Accounts.order is not set
-    if [ -z $ACCOUNTID ]; then
-
-        # Use first account declared in sflphone config
-        ACCOUNTID="`grep -m 1 Account: $RESFILE | sed -e 's/\[//' -e 's/\]//'`"
-    fi
+# FIXME: this doesn't check if account is enabled, and is unreadable/unmaintainable.
+# D-Bus API should be fixed so that we can simply dial and let the daemon worry
+# about which account (default account? most recently used?) should place the
+# call.
+#
+# Use first ID
+ACCOUNTID=`grep order $RESFILE | sed -e 's/order: IP2IP\///' -e 's/\/.*//' | tr -d ' '`
 
 else
-    echo Fatal: Cant find sflphonedrc config file.
+    echo Fatal: Can't find sflphoned.yml config file.
     exit 1
 fi
 
