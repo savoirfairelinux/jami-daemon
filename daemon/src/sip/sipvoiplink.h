@@ -286,12 +286,6 @@ class SIPVoIPLink : public VoIPLink {
          */
         void createDefaultSipUdpTransport();
 
-    private:
-        /**
-         * This must be locked if a non-SIP event thread is stopping/starting
-         * and endpoint's transport, otherwise we segfault in getEvent() */
-        std::mutex endptMutex_;
-
     public:
         /**
          * Instance that maintain and manage transport (UDP, TLS)

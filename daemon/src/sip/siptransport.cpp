@@ -148,7 +148,7 @@ std::vector<std::string> SipTransport::getAllIpInterface()
     return ifaceList;
 }
 
-SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool, std::mutex &endptMutex) : transportMap_(), cp_(cp), pool_(pool), endpt_(endpt), endptMutex_(endptMutex)
+SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool) : transportMap_(), cp_(cp), pool_(pool), endpt_(endpt)
 {}
 
 #if HAVE_TLS
@@ -403,12 +403,6 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
     // Update address and port with active transport
     RETURN_IF_NULL(transport, "Transport is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
 
-    std::lock_guard<std::mutex> lock(endptMutex_);
-
-    // temporarily suspend transport since it's attached to an ioqueue
-    if (pjsip_udp_transport_pause(transport, PJSIP_UDP_TRANSPORT_KEEP_SOCKET) != PJ_SUCCESS)
-        ERROR("Could not pause transport");
-
     pj_sockaddr_in mapped_addr;
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
     const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort, *stunServerName, stunPort};
@@ -430,9 +424,6 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
     std::ostringstream os;
     os << pj_ntohs(mapped_addr.sin_port);
     port = os.str();
-
-    if (pjsip_udp_transport_restart(transport, PJSIP_UDP_TRANSPORT_KEEP_SOCKET, sipSocket, NULL, NULL) != PJ_SUCCESS)
-        ERROR("Could not restart UDP transport");
 
     WARN("Using STUN %s:%s", addr.c_str(), port.c_str());
 }

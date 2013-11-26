@@ -506,8 +506,7 @@ pjsip_module * SIPVoIPLink::getMod()
     return &mod_ua_;
 }
 
-SIPVoIPLink::SIPVoIPLink() : endptMutex_(),
-    sipTransport(), sipAccountMap_(),
+SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
     sipCallMapMutex_(), sipCallMap_(), evThread_(this)
 #ifdef SFL_VIDEO
     , keyframeRequestsMutex_()
@@ -537,7 +536,7 @@ SIPVoIPLink::SIPVoIPLink() : endptMutex_(),
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
-    sipTransport.reset(new SipTransport(endpt_, cp_, pool_, endptMutex_));
+    sipTransport.reset(new SipTransport(endpt_, cp_, pool_));
 
     if (SipTransport::getSIPLocalIP().empty())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -726,8 +725,6 @@ bool SIPVoIPLink::getEvent()
 
     static const pj_time_val timeout = {0, 10};
     pj_status_t ret;
-
-    std::lock_guard<std::mutex> lock(endptMutex_);
 
     if ((ret = pjsip_endpt_handle_events(endpt_, &timeout)) != PJ_SUCCESS)
         sip_strerror(ret);
