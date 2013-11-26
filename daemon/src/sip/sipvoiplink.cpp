@@ -780,15 +780,12 @@ void SIPVoIPLink::sendRegister(Account *a)
     const pj_str_t pjContact(account->getContactHeader());
 
     if (account->transport_) {
-        if (account->isStunEnabled()) {
-            pjsip_host_port hp = account->getHostPortFromSTUN(pool_);
-            DEBUG("Setting VIA sent-by to %*.s:%d", hp.host.slen, hp.host.ptr, hp.port);
-            if (pjsip_regc_set_via_sent_by(regc, &hp, account->transport_) != PJ_SUCCESS)
-                throw VoipLinkException("Unable to set the \"sent-by\" field");
-
-        } else if (not account->getPublishedSameasLocal() or (not received.empty() and received != account->getPublishedAddress())) {
+        if (not account->getPublishedSameasLocal() or (not received.empty() and received != account->getPublishedAddress())) {
             DEBUG("Setting VIA sent-by to %s:%d", received.c_str(), account->getRPort());
 
+            if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
+                throw VoipLinkException("Unable to set the \"sent-by\" field");
+        } else if (account->isStunEnabled()) {
             if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
         }

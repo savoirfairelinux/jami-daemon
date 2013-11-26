@@ -1202,6 +1202,9 @@ SIPAccount::getContactHeader()
         DEBUG("Using published address %s and port %s", address.c_str(), port.c_str());
     } else if (stunEnabled_) {
         link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
+        publishedIpAddress_ = address;
+        publishedPort_ = atoi(port.c_str());
+        usePublishedAddressPortInVIA();
     } else {
         if (!receivedParameter_.empty()) {
             address = receivedParameter_;
