@@ -1,1 +1,1 @@
-./configure --without-dbus --without-alsa --without-pulse --without-tls --without-iax2  --without-zrtp --without-speexdsp --without-speex
+./configure --without-dbus --without-alsa --without-pulse --without-iax2 --without-speexdsp --without-tls --without-zrtp
