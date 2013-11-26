@@ -148,120 +148,8 @@ std::vector<std::string> SipTransport::getAllIpInterface()
     return ifaceList;
 }
 
-SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool) : transportMap_(), stunSocketMap_(), cp_(cp), pool_(pool), endpt_(endpt)
+SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool) : transportMap_(), cp_(cp), pool_(pool), endpt_(endpt)
 {}
-
-pj_bool_t
-stun_sock_on_status_cb(pj_stun_sock * /*stun_sock*/, pj_stun_sock_op op,
-                       pj_status_t status)
-{
-    switch (op) {
-        case PJ_STUN_SOCK_DNS_OP:
-            DEBUG("STUN operation dns resolution");
-            break;
-        case PJ_STUN_SOCK_BINDING_OP:
-            DEBUG("STUN operation binding");
-            break;
-        case PJ_STUN_SOCK_KEEP_ALIVE_OP:
-            DEBUG("STUN operation keep alive");
-            break;
-        case PJ_STUN_SOCK_MAPPED_ADDR_CHANGE:
-            DEBUG("STUN operation address mapping change");
-            break;
-        default:
-            DEBUG("STUN unknown operation");
-            break;
-    }
-
-    if (status == PJ_SUCCESS)
-        DEBUG("STUN operation success");
-    else
-        ERROR("STUN operation failure");
-
-    // Always return true so the stun transport registration retry even on failure
-    return PJ_TRUE;
-}
-
-static pj_bool_t
-stun_sock_on_rx_data_cb(pj_stun_sock * /*stun_sock*/, void * /*pkt*/,
-                        unsigned /*pkt_len*/,
-                        const pj_sockaddr_t * /*src_addr*/,
-                        unsigned /*addr_len*/)
-{
-    return PJ_TRUE;
-}
-
-
-pj_status_t SipTransport::createStunResolver(pj_str_t serverName, pj_uint16_t port)
-{
-    std::string stunResolverName(serverName.ptr, serverName.slen);
-    if (stunSocketMap_.find(stunResolverName) != stunSocketMap_.end()) {
-        DEBUG("%s already added", stunResolverName.c_str());
-        return PJ_SUCCESS;
-    }
-
-    pj_stun_config stunCfg;
-    pj_stun_config_init(&stunCfg, &cp_->factory, 0,
-            pjsip_endpt_get_ioqueue(endpt_), pjsip_endpt_get_timer_heap(endpt_));
-
-    pj_status_t status = pj_stun_config_check_valid(&stunCfg);
-    if (status != PJ_SUCCESS) {
-        ERROR("STUN config is not valid");
-        return status;
-    }
-
-    static const pj_stun_sock_cb stun_sock_cb = {
-        stun_sock_on_rx_data_cb,
-        NULL,
-        stun_sock_on_status_cb
-    };
-
-    pj_stun_sock *stun_sock = NULL;
-    status = pj_stun_sock_create(&stunCfg,
-            stunResolverName.c_str(), pj_AF_INET(), &stun_sock_cb, NULL, NULL,
-            &stun_sock);
-
-    if (status != PJ_SUCCESS) {
-        char errmsg[PJ_ERR_MSG_SIZE];
-        pj_strerror(status, errmsg, sizeof(errmsg));
-        ERROR("Failed to create STUN socket for %.*s: %s",
-              (int) serverName.slen, serverName.ptr, errmsg);
-        return status;
-    }
-
-    status = pj_stun_sock_start(stun_sock, &serverName, port, NULL);
-
-    // store socket inside list
-    if (status == PJ_SUCCESS) {
-        DEBUG("Adding %s resolver", stunResolverName.c_str());
-        stunSocketMap_[stunResolverName] = stun_sock;
-    } else {
-        char errmsg[PJ_ERR_MSG_SIZE];
-        pj_strerror(status, errmsg, sizeof(errmsg));
-        DEBUG("Error starting STUN socket for %.*s: %s",
-              (int) serverName.slen, serverName.ptr, errmsg);
-        pj_stun_sock_destroy(stun_sock);
-    }
-
-    return status;
-}
-
-pj_status_t SipTransport::destroyStunResolver(const std::string &serverName)
-{
-    std::map<std::string, pj_stun_sock *>::iterator it;
-    it = stunSocketMap_.find(serverName);
-
-    DEBUG("***************** Destroy Stun Resolver *********************");
-
-    if (it != stunSocketMap_.end()) {
-        DEBUG("Deleting STUN resolver %s", it->first.c_str());
-        if (it->second)
-            pj_stun_sock_destroy(it->second);
-        stunSocketMap_.erase(it);
-    }
-
-    return PJ_SUCCESS;
-}
 
 #if HAVE_TLS
 pjsip_tpfactory* SipTransport::createTlsListener(SIPAccount &account)
@@ -350,16 +238,10 @@ void SipTransport::createSipTransport(SIPAccount &account)
 #if HAVE_TLS
     if (account.isTlsEnabled()) {
         account.transport_ = createTlsTransport(account);
-    } else if (account.isStunEnabled()) {
-#else
-    if (account.isStunEnabled()) {
-#endif
-        account.transport_ = createStunTransport(account);
-        if (account.transport_ == NULL) {
-            WARN("falling back to UDP transport");
-            account.transport_ = createUdpTransport(account.getLocalInterface(), account.getLocalPort());
-        }
     } else {
+#else
+    {
+#endif
         // if this transport already exists, reuse it
         std::string key(transportMapKey(account.getLocalInterface(), account.getLocalPort()));
         std::map<std::string, pjsip_transport *>::iterator iter = transportMap_.find(key);
@@ -424,43 +306,6 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     return transport;
 }
 
-pjsip_transport *
-SipTransport::createUdpTransport(const std::string &interface, unsigned int port, const std::string &publicAddr, unsigned int publicPort)
-{
-    // init socket to bind this transport to
-    pj_uint16_t listeningPort = (pj_uint16_t) port;
-    pjsip_transport *transport = NULL;
-
-    DEBUG("Update UDP transport on %s:%d with public addr %s:%d",
-          interface.c_str(), port, publicAddr.c_str(), publicPort);
-
-    // determine the ip address for this transport
-    std::string listeningAddress(getInterfaceAddrFromName(interface));
-
-    RETURN_IF_FAIL(not listeningAddress.empty(), NULL, "Could not determine ip address for this transport");
-
-    std::ostringstream fullAddress;
-    fullAddress << listeningAddress << ":" << listeningPort;
-    pj_str_t udpString;
-    std::string fullAddressStr(fullAddress.str());
-    pj_cstr(&udpString, fullAddressStr.c_str());
-    pj_sockaddr boundAddr;
-    pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &udpString, &boundAddr);
-
-    pj_str_t public_addr = pj_str((char *) publicAddr.c_str());
-    pjsip_host_port hostPort;
-    hostPort.host = public_addr;
-    hostPort.port = publicPort;
-
-    pj_status_t status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, &hostPort, 1, &transport);
-    RETURN_IF_FAIL(status == PJ_SUCCESS, NULL,
-            "Could not start new transport with address %s:%d, error code %d", publicAddr.c_str(), publicPort, status);
-
-    // dump debug information to stdout
-    pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
-
-    return transport;
-}
 
 pjsip_tpselector *SipTransport::createTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
 {
@@ -490,81 +335,18 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
     return result;
 }
 
-
-pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
-{
-#if HAVE_DBUS
-#define RETURN_IF_STUN_FAIL(A, M, ...) \
-    if (!(A)) { \
-        ERROR(M, ##__VA_ARGS__); \
-        Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
-        return NULL; }
-#else /* HAVE_DBUS */
-#define RETURN_IF_STUN_FAIL(A, M, ...)
-#endif /* HAVE_DBUS */
-
-    pj_str_t serverName = account.getStunServerName();
-    pj_uint16_t port = account.getStunPort();
-
-    RETURN_IF_STUN_FAIL(createStunResolver(serverName, port) == PJ_SUCCESS, "Can't resolve STUN server");
-
-    pj_sock_t sock = PJ_INVALID_SOCKET;
-
-    pj_sockaddr_in boundAddr;
-
-    RETURN_IF_STUN_FAIL(pj_sockaddr_in_init(&boundAddr, &serverName, 0) == PJ_SUCCESS,
-                        "Can't initialize IPv4 socket on %*s:%i", serverName.slen, serverName.ptr, port);
-
-    RETURN_IF_STUN_FAIL(pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &sock) == PJ_SUCCESS,
-                        "Can't create or bind socket");
-
-    // Query the mapped IP address and port on the 'outside' of the NAT
-    pj_sockaddr_in pub_addr;
-
-    if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
-        ERROR("Can't contact STUN server");
-        pj_sock_close(sock);
-
-        Manager::instance().getClient()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
-        return NULL;
-    }
-
-    pjsip_host_port a_name = {
-        pj_str(pj_inet_ntoa(pub_addr.sin_addr)),
-        pj_ntohs(pub_addr.sin_port)
-    };
-
-    pjsip_transport *transport;
-    pjsip_udp_transport_attach2(endpt_, PJSIP_TRANSPORT_UDP, sock, &a_name, 1,
-                                &transport);
-
-    pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
-
-    return transport;
-#undef RETURN_IF_STUN_FAIL
-}
-
-void SipTransport::shutdownSTUNResolver(SIPAccount &account)
-{
-    if (account.isStunEnabled()) {
-        pj_str_t stunServerName = account.getStunServerName();
-        std::string server(stunServerName.ptr, stunServerName.slen);
-        destroyStunResolver(server);
-    }
-}
-
 void SipTransport::shutdownSipTransport(SIPAccount &account)
 {
-    shutdownSTUNResolver(account);
     if (account.transport_) {
         pjsip_transport_dec_ref(account.transport_);
         account.transport_ = NULL;
     }
 }
 
+#define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { ERROR(M, ##__VA_ARGS__); return; }
+
 void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &addr, std::string &port) const
 {
-#define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { ERROR(M, ##__VA_ARGS__); return; }
 
     // Initialize the sip port with the default SIP port
     std::stringstream ss;
@@ -601,6 +383,56 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     ss.str("");
     ss << param.ret_port;
     port = ss.str();
-
-#undef RETURN_IF_FAIL
 }
+
+void
+SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
+                                       pj_str_t *stunServerName,
+                                       int stunPort,
+                                       std::string &addr, std::string &port) const
+{
+    // Initialize the sip port with the default SIP port
+    std::stringstream ss;
+    ss << DEFAULT_SIP_PORT;
+    port = ss.str();
+
+    // Initialize the sip address with the hostname
+    const pj_str_t *pjMachineName = pj_gethostname();
+    addr = std::string(pjMachineName->ptr, pjMachineName->slen);
+
+    // Update address and port with active transport
+    RETURN_IF_NULL(transport, "Transport is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
+
+    // temporarily suspend transport since it's attached to an ioqueue
+    if (pjsip_udp_transport_pause(transport, PJSIP_UDP_TRANSPORT_KEEP_SOCKET) != PJ_SUCCESS)
+        ERROR("Could not pause transport");
+
+    pj_sockaddr_in mapped_addr;
+    pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
+    const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort, *stunServerName, stunPort};
+    const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_->factory,
+            &stunOpt, 1, &sipSocket, &mapped_addr);
+
+    switch (stunStatus) {
+        case PJLIB_UTIL_ESTUNNOTRESPOND:
+           ERROR("No response from servers.");
+           return;
+        case PJLIB_UTIL_ESTUNSYMMETRIC:
+           ERROR("Different mapped addresses are returned by servers.");
+           return;
+        default:
+           break;
+    }
+
+    addr = std::string(pj_inet_ntoa(mapped_addr.sin_addr));
+    std::ostringstream os;
+    os << pj_ntohs(mapped_addr.sin_port);
+    port = os.str();
+
+    if (pjsip_udp_transport_restart(transport, PJSIP_UDP_TRANSPORT_KEEP_SOCKET, sipSocket, NULL, NULL) != PJ_SUCCESS)
+        ERROR("Could not restart UDP transport");
+
+    WARN("Using STUN %s:%s", addr.c_str(), port.c_str());
+}
+
+#undef RETURN_IF_NULL

@@ -89,8 +89,6 @@ class SipTransport {
             pool_ = pool;
         }
 
-        pj_status_t destroyStunResolver(const std::string &serverName);
-
         /**
          * General Sip transport creation method according to the
          * transport type specified in account settings
@@ -106,11 +104,6 @@ class SipTransport {
          */
         pjsip_tpselector *
         createTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const;
-
-        /**
-         * This function unset the STUN resolver for a given account.
-         */
-        void shutdownSTUNResolver(SIPAccount &account);
 
         /**
          * This function returns a list of STUN mapped sockets for
@@ -134,23 +127,11 @@ class SipTransport {
          */
         void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
 
-        /**
-         * Create a new udp transport specifying the bound address AND the published address.
-         * The published address is the address to appears in the sip VIA header. This is used
-         * essentially when the client is behind a trafic routing device.
-         *
-         * @param The interface to bind this transport with
-         * @param The requested udp port number
-         * @param The public address for this transport
-         * @param The public port for this transport
-         */
-        pjsip_transport *createUdpTransport(const std::string &interface, unsigned int port, const std::string &publicAddr, unsigned int publicPort);
+        void findLocalAddressFromSTUN(pjsip_transport *transport, pj_str_t *stunServerName,
+                int stunPort, std::string &address, std::string &port) const;
 
     private:
         NON_COPYABLE(SipTransport);
-
-        pjsip_transport *
-        createStunTransport(SIPAccount &account);
 
 #if HAVE_TLS
         /**
@@ -174,14 +155,6 @@ class SipTransport {
 #endif
 
         /**
-         * Create a new stun resolver. Store it inside the array. Resolve public address for this
-         * server name.
-         * @param serverName The name of the stun server
-         * @param port number
-         */
-        pj_status_t createStunResolver(pj_str_t serverName, pj_uint16_t port);
-
-        /**
         * Create SIP UDP transport from account's setting
         * @param account The account for which a transport must be created.
         */
@@ -193,11 +166,6 @@ class SipTransport {
          * several accounts would share the same port number.
          */
         std::map<std::string, pjsip_transport*> transportMap_;
-
-        /**
-         * Stun resolver array
-         */
-        std::map<std::string, pj_stun_sock *> stunSocketMap_;
 
         pj_caching_pool *cp_;
 

@@ -137,6 +137,8 @@ class SIPAccount : public Account {
 
         virtual VoIPLink* getVoIPLink();
 
+        pjsip_host_port getHostPortFromSTUN(pj_pool_t *pool);
+
         std::string getUserAgentName() const;
         void setRegistrationStateDetailed(const std::pair<int, std::string> &details) {
             registrationStateDetailed_ = details;

@@ -647,11 +647,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
-    if (stunServer_ != details[CONFIG_STUN_SERVER]) {
-        link_->sipTransport.destroyStunResolver(stunServer_);
-        // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
-    }
-
     stunServer_ = details[CONFIG_STUN_SERVER];
     stunEnabled_ = details[CONFIG_STUN_ENABLE] == Conf::TRUE_STR;
     dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
@@ -1205,6 +1200,8 @@ SIPAccount::getContactHeader()
         portstr << publishedPort_;
         port = portstr.str();
         DEBUG("Using published address %s and port %s", address.c_str(), port.c_str());
+    } else if (stunEnabled_) {
+        link_->sipTransport.findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
     } else {
         if (!receivedParameter_.empty()) {
             address = receivedParameter_;
@@ -1241,6 +1238,19 @@ SIPAccount::getContactHeader()
     return contact_;
 }
 
+pjsip_host_port
+SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
+{
+    std::string addr, port;
+    link_->sipTransport.findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
+    pjsip_host_port result;
+    pj_strdup2(pool, &result.host, addr.c_str());
+    result.host.slen = addr.length();
+    std::stringstream ss;
+    ss << port;
+    ss >> result.port;
+    return result;
+}
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {
