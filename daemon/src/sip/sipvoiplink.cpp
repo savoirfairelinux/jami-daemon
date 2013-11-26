@@ -311,7 +311,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
                           ? account->getPublishedAddress()
                           : addrToUse;
 
-    pjsip_tpselector *tp_sel = SIPVoIPLink::instance()->sipTransport.createTransportSelector(account->transport_, call->getMemoryPool());
+    pjsip_tpselector *tp_sel = SIPVoIPLink::instance()->sipTransport->createTransportSelector(account->transport_, call->getMemoryPool());
 
     if (!tp_sel) {
         ERROR("Could not create transport selector");
@@ -350,7 +350,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     if (account->isStunEnabled())
-        updateSDPFromSTUN(*call, *account, SIPVoIPLink::instance()->sipTransport);
+        updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance()->sipTransport);
 
     if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
         std::string sdpOffer(static_cast<const char*>(body->data), body->len);
@@ -506,7 +506,8 @@ pjsip_module * SIPVoIPLink::getMod()
     return &mod_ua_;
 }
 
-SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
+SIPVoIPLink::SIPVoIPLink() : endptMutex_(),
+    sipTransport(), sipAccountMap_(),
     sipCallMapMutex_(), sipCallMap_(), evThread_(this)
 #ifdef SFL_VIDEO
     , keyframeRequestsMutex_()
@@ -536,9 +537,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
-    sipTransport.setEndpoint(endpt_);
-    sipTransport.setCachingPool(cp_);
-    sipTransport.setPool(pool_);
+    sipTransport.reset(new SipTransport(endpt_, cp_, pool_, endptMutex_));
 
     if (SipTransport::getSIPLocalIP().empty())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -728,6 +727,8 @@ bool SIPVoIPLink::getEvent()
     static const pj_time_val timeout = {0, 10};
     pj_status_t ret;
 
+    std::lock_guard<std::mutex> lock(endptMutex_);
+
     if ((ret = pjsip_endpt_handle_events(endpt_, &timeout)) != PJ_SUCCESS)
         sip_strerror(ret);
 
@@ -749,7 +750,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     }
 
     try {
-        sipTransport.createSipTransport(*account);
+        sipTransport->createSipTransport(*account);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }
@@ -816,7 +817,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     if (pjsip_regc_register(regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize transaction data for account registration");
 
-    pjsip_tpselector *tp_sel = sipTransport.createTransportSelector(account->transport_, pool_);
+    pjsip_tpselector *tp_sel = sipTransport->createTransportSelector(account->transport_, pool_);
 
     if (tp_sel == NULL)
         throw VoipLinkException("Unable to create transport selector");
@@ -1037,7 +1038,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
         call->getAudioRtp().initSession();
 
         if (account->isStunEnabled())
-            updateSDPFromSTUN(*call, *account, SIPVoIPLink::instance()->sipTransport);
+            updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance()->sipTransport);
 
         call->getAudioRtp().initLocalCryptoInfo();
         call->getAudioRtp().start(audioCodecs);
@@ -1080,7 +1081,7 @@ SIPVoIPLink::answer(Call *call)
         sdp_create_offer_cb(sipCall->inv, &dummy);
 
         if (account->isStunEnabled())
-            updateSDPFromSTUN(*sipCall, *account, SIPVoIPLink::instance()->sipTransport);
+            updateSDPFromSTUN(*sipCall, *account, *SIPVoIPLink::instance()->sipTransport);
     }
 
     pj_str_t contact(account->getContactHeader());
@@ -1266,7 +1267,7 @@ SIPVoIPLink::offhold(const std::string& id)
         SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
         if (account and account->isStunEnabled())
-            updateSDPFromSTUN(*call, *account, SIPVoIPLink::instance()->sipTransport);
+            updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance()->sipTransport);
 
         call->getAudioRtp().restoreLocalContext();
         call->getAudioRtp().initLocalCryptoInfoOnOffHold();
@@ -1714,7 +1715,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         return false;
     }
 
-    pjsip_tpselector *tp_sel = sipTransport.createTransportSelector(account->transport_, call->inv->pool);
+    pjsip_tpselector *tp_sel = sipTransport->createTransportSelector(account->transport_, call->inv->pool);
 
     if (!tp_sel or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
         ERROR("Unable to associate transport for invite session dialog");
@@ -2054,7 +2055,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp().initSession();
 
             if (sipaccount->isStunEnabled())
-                updateSDPFromSTUN(*call, *sipaccount, SIPVoIPLink::instance()->sipTransport);
+                updateSDPFromSTUN(*call, *sipaccount, *SIPVoIPLink::instance()->sipTransport);
         }
     }
 

@@ -1193,7 +1193,7 @@ SIPAccount::getContactHeader()
     std::string address, port;
     std::ostringstream portstr;
 
-    link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
+    link_->sipTransport->findLocalAddressFromTransport(transport_, transportType, address, port);
 
     if (not publishedSameasLocal_) {
         address = publishedIpAddress_;
@@ -1201,7 +1201,7 @@ SIPAccount::getContactHeader()
         port = portstr.str();
         DEBUG("Using published address %s and port %s", address.c_str(), port.c_str());
     } else if (stunEnabled_) {
-        link_->sipTransport.findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
+        link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
     } else {
         if (!receivedParameter_.empty()) {
             address = receivedParameter_;
@@ -1242,7 +1242,7 @@ pjsip_host_port
 SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
     std::string addr, port;
-    link_->sipTransport.findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
+    link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
     pjsip_host_port result;
     pj_strdup2(pool, &result.host, addr.c_str());
     result.host.slen = addr.length();

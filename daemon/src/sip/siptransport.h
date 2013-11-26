@@ -34,6 +34,7 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include <pjsip.h>
 #include <pjlib.h>
@@ -49,7 +50,7 @@ class SIPAccount;
 
 class SipTransport {
     public:
-        SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool);
+        SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool, std::mutex &mutex);
         static std::string getSIPLocalIP();
 
         /**
@@ -76,18 +77,6 @@ class SipTransport {
          * the system.
          */
         static std::vector<std::string> getAllIpInterface();
-
-        void setEndpoint(pjsip_endpoint *endpt) {
-            endpt_ = endpt;
-        }
-
-        void setCachingPool(pj_caching_pool *cp) {
-            cp_ = cp;
-        }
-
-        void setPool(pj_pool_t *pool) {
-            pool_ = pool;
-        }
 
         /**
          * General Sip transport creation method according to the
@@ -172,6 +161,7 @@ class SipTransport {
         pj_pool_t *pool_;
 
         pjsip_endpoint *endpt_;
+        std::mutex &endptMutex_;
 };
 
 #endif // SIPTRANSPORT_H_
