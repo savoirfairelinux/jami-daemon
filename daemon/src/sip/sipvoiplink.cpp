@@ -819,10 +819,6 @@ void SIPVoIPLink::sendRegister(Account *a)
     if (pjsip_regc_set_transport(regc, tp_sel) != PJ_SUCCESS)
         throw VoipLinkException("Unable to set transport");
 
-    // decrease transport's ref count, counter incrementation is managed when acquiring transport
-    if (account->transport_)
-        pjsip_transport_dec_ref(account->transport_);
-
     // pjsip_regc_send increment the transport ref count by one,
     pj_status_t status;
 

@@ -233,8 +233,6 @@ std::string transportMapKey(const std::string &interface, int port)
 
 void SipTransport::createSipTransport(SIPAccount &account)
 {
-    shutdownSipTransport(account);
-
 #if HAVE_TLS
     if (account.isTlsEnabled()) {
         account.transport_ = createTlsTransport(account);
@@ -333,14 +331,6 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
         WARN("STUN PORTS: %ld", pj_ntohs(it.sin_port));
 
     return result;
-}
-
-void SipTransport::shutdownSipTransport(SIPAccount &account)
-{
-    if (account.transport_) {
-        pjsip_transport_dec_ref(account.transport_);
-        account.transport_ = NULL;
-    }
 }
 
 #define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { ERROR(M, ##__VA_ARGS__); return; }

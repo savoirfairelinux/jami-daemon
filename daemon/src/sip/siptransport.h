@@ -101,11 +101,6 @@ class SipTransport {
                          std::vector<long> &socks) const;
 
         /**
-         * This function unset the transport for a given account.
-         */
-        void shutdownSipTransport(SIPAccount &account);
-
-        /**
          * Get the correct address to use (ie advertised) from
          * a uri. The corresponding transport that should be used
          * with that uri will be discovered.
