@@ -447,7 +447,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     pj_str_t entity;
 
     status = pjsip_publishc_publish(pres->publish_sess_, PJ_TRUE, &tdata);
-    pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
+    pj_str_t from = pj_strdup3(pres->pool_, acc->getFromUri().c_str());
 
     if (status != PJ_SUCCESS) {
         ERROR("Error creating PUBLISH request", status);
@@ -534,7 +534,7 @@ SIPPresence::publish(SIPPresence *pres)
     }
 
     /* Initialize client publication */
-    pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
+    pj_str_t from = pj_strdup3(pres->pool_, acc->getFromUri().c_str());
     status = pjsip_publishc_init(pres->publish_sess_, &STR_PRESENCE, &from, &from, &from, 0xFFFF);
 
     if (status != PJ_SUCCESS) {

@@ -321,8 +321,8 @@ PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *r
 
 PresSubClient::PresSubClient(const std::string& uri, SIPPresence *pres) :
     pres_(pres),
-    uri_(pj_str(strdup(uri.c_str()))),
-    contact_(pj_str(strdup(pres_->getAccount()->getFromUri().c_str()))),
+    uri_{0, 0},
+    contact_{0, 0},
     display_(),
     dlg_(NULL),
     monitored_(false),
@@ -340,6 +340,8 @@ PresSubClient::PresSubClient(const std::string& uri, SIPPresence *pres) :
 {
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_.factory, "Pres_sub_client", 512, 512, NULL);
+    uri_ = pj_strdup3(pool_, uri.c_str());
+    contact_ = pj_strdup3(pool_, pres_->getAccount()->getFromUri().c_str());
 }
 
 PresSubClient::~PresSubClient()
@@ -535,7 +537,7 @@ bool PresSubClient::subscribe()
 
 
     /* Create UAC dialog */
-    pj_str_t from = pj_str(strdup(acc->getFromUri().c_str()));
+    pj_str_t from = pj_strdup3(pool_, acc->getFromUri().c_str());
     status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from, &contact_, &uri_, NULL, &dlg_);
 
     if (status != PJ_SUCCESS) {
