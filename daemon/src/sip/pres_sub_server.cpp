@@ -107,6 +107,8 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
 
     /* get parents*/
     SIPAccount *acc = Manager::instance().getIP2IPAccount();
+    assert(acc);
+
     pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
     SIPPresence * pres = acc->getPresence();
     pres->lock();
