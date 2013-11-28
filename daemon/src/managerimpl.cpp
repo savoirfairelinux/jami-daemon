@@ -233,29 +233,34 @@ void ManagerImpl::finish()
 
     finished_ = true;
 
-    std::vector<std::string> callList(getCallList());
-    DEBUG("Hangup %zu remaining call(s)", callList.size());
+    try {
 
-    for (const auto &item : callList)
-        hangupCall(item);
+        std::vector<std::string> callList(getCallList());
+        DEBUG("Hangup %zu remaining call(s)", callList.size());
 
-    saveConfig();
+        for (const auto &item : callList)
+            hangupCall(item);
 
-    unregisterAllAccounts();
+        saveConfig();
 
-    SIPVoIPLink::destroy();
+        unregisterAllAccounts();
+
+        SIPVoIPLink::destroy();
 #if HAVE_IAX
-    IAXVoIPLink::unloadAccountMap();
+        IAXVoIPLink::unloadAccountMap();
 #endif
 
-    {
-        std::lock_guard<std::mutex> lock(audioLayerMutex_);
+        {
+            std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-        delete audiodriver_;
-        audiodriver_ = nullptr;
+            delete audiodriver_;
+            audiodriver_ = nullptr;
+        }
+
+        saveHistory();
+    } catch (const VoipLinkException &err) {
+        ERROR("%s", err.what());
     }
-
-    saveHistory();
 }
 
 bool ManagerImpl::isCurrentCall(const std::string& callId) const
