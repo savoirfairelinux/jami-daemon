@@ -627,6 +627,8 @@ IAXVoIPLink::handleBusy(const std::string &id)
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
         IAXCall *call = getIAXCall(id);
+        if (call == nullptr)
+            return;
         call->setConnectionState(Call::CONNECTED);
         call->setState(Call::BUSY);
     }
