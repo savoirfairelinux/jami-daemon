@@ -434,6 +434,15 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
         return;
 
     account_t *acc =  account_list_get_current();
+    if(!acc)
+    {
+        acc = account_list_get_nth(1); //0 is IP2IP
+        if(!acc)
+        {
+            g_warning("At least one account must exist to able to subscribe.");
+            return;
+        }
+    }
     gchar *uri = NULL;
     gchar *hostname;
 
