@@ -79,8 +79,10 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
         virtual std::vector<uint8> getLocalMasterSalt() const { std::vector<uint8> vec; return vec; }
 
     private:
-        NON_COPYABLE(AudioSymmetricRtpSession);
+        void onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks);
+        void onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks);
 
+        NON_COPYABLE(AudioSymmetricRtpSession);
         void startReceiveThread();
 };
 

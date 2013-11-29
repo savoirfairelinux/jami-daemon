@@ -60,4 +60,26 @@ void AudioSymmetricRtpSession::startReceiveThread()
 {
     ost::SymmetricRTPSession::start();
 }
+
+// redefined from QueueRTCPManager
+void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks)
+{
+    ost::SymmetricRTPSession::onGotRR(source, RR, blocks);
+    // TODO: do something with this data
+#if 0
+    std::cout << "I got an RR RTCP report from "
+        << std::hex << (int)source.getID() << "@"
+        << std::dec
+        << source.getNetworkAddress() << ":"
+        << source.getControlTransportPort() << std::endl;
+#endif
+}
+
+// redefined from QueueRTCPManager
+void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks)
+{
+    ost::SymmetricRTPSession::onGotSR(source, SR, blocks);
+    // TODO: do something with this data
+}
+
 }
