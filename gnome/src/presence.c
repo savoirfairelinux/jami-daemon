@@ -420,8 +420,7 @@ presence_buddy_subscribe(buddy_t * buddy, gboolean flag)
     account_t * acc = account_list_get_by_id(buddy->acc);
     if(acc)
     {
-        if((acc->state == (ACCOUNT_STATE_REGISTERED)) &&
-                account_lookup(acc, CONFIG_PRESENCE_ENABLED) &&
+        if(account_lookup(acc, CONFIG_PRESENCE_ENABLED) &&
                 account_lookup(acc, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED) &&
                 (flag != buddy->subscribed))
             dbus_presence_subscribe(buddy->acc, buddy->uri, flag);

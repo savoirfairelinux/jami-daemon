@@ -754,6 +754,15 @@ presence_view_popup_menu_onAddBuddy(G_GNUC_UNUSED GtkWidget *menuitem, gpointer 
     }
 
     account_t *acc = account_list_get_current();
+    if(!acc)
+    {
+        acc = account_list_get_nth(1); //0 is IP2IP
+        if(!acc)
+        {
+            g_warning("At least one account must exist to able to subscribe.");
+            return;
+        }
+    }
     g_free(b->acc);
     b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
 
