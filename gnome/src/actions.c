@@ -749,7 +749,7 @@ sflphone_place_call(callable_obj_t * c, SFLPhoneClient *client)
 
     // Make sure the previously found account is registered, take first one registered elsewhere
     if (account) {
-        gpointer status = g_hash_table_lookup(account->properties, "Status");
+        const gchar *status = account_lookup(account, CONFIG_ACCOUNT_REGISTRATION_STATUS);
         if (!utf8_case_equal(status, "REGISTERED")) {
             // Place the call with the first registered account
             account = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
