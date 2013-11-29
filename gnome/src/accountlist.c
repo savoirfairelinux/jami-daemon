@@ -61,7 +61,7 @@ static gint is_accountID_struct(gconstpointer a, gconstpointer b)
 
     account_t * c = (account_t*) a;
 
-    /* We only want it to return 0 or 1 */
+    /* We only want it to return 0 or 1...0 is a match, 1 is not */
     return !!(g_strcmp0(c->accountID, (gchar*) b));
 }
 
@@ -73,7 +73,7 @@ static gint is_alias_struct(gconstpointer a, gconstpointer b)
 
     account_t * c = (account_t*) a;
 
-    /* We only want it to return 0 or 1 */
+    /* We only want it to return 0 or 1...0 is a match, 1 is not */
     return !!(g_strcmp0(account_lookup(c, CONFIG_ACCOUNT_ALIAS), (gchar*) b));
 }
 
@@ -392,7 +392,8 @@ void initialize_credential_information(account_t *account)
 
 void account_replace(account_t *account, const gchar *key, const gchar *value)
 {
-    g_assert(account && account->properties);
+    g_assert(account);
+    g_assert(account->properties);
     g_hash_table_replace(account->properties, g_strdup(key), g_strdup(value));
 }
 
