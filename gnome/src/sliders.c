@@ -214,13 +214,13 @@ create_slider(const gchar * device)
 
     set_slider_no_update(device, dbus_get_volume(device));
 
-    g_signal_handler_block(G_OBJECT(slider[dev]), toggledConnId);
+    g_signal_handler_block(G_OBJECT(button[dev]), toggledConnId);
     const gboolean active =
         (dev == DEVICE_MIC && dbus_is_capture_muted()) ||
         (dev == DEVICE_SPEAKER && dbus_is_playback_muted());
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button[dev]), active);
-    g_signal_handler_unblock(G_OBJECT(slider[dev]), toggledConnId);
+    g_signal_handler_unblock(G_OBJECT(button[dev]), toggledConnId);
 
     return ret;
 }
