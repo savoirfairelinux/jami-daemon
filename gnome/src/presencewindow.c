@@ -1196,6 +1196,9 @@ destroy_presence_window()
 void
 create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
 {
+    static const int PRESENCE_WINDOW_WIDTH = 280;
+    static const int PRESENCE_WINDOW_HEIGHT = 320;
+
     /* keep track of the widget which opened that window and the SFL client */
     toggle_action = action;
     presence_client = client;

@@ -34,9 +34,6 @@
 #include "sflphone_client.h"
 #include "presence.h"
 
-#define PRESENCE_WINDOW_WIDTH 280
-#define PRESENCE_WINDOW_HEIGHT 320
-
 /** @file presencewindow.h
   * @brief The main window of the client.
   */
