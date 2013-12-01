@@ -88,7 +88,7 @@ enum
 
 
 /* User callback for "get"ing the data out of the row that was DnD'd */
-void on_buddy_drag_data_get(  GtkWidget *widget,
+void on_buddy_drag_data_get(GtkWidget *widget,
         G_GNUC_UNUSED GdkDragContext *drag_context,
         GtkSelectionData *sdata,
         G_GNUC_UNUSED guint info,
@@ -98,17 +98,13 @@ void on_buddy_drag_data_get(  GtkWidget *widget,
     GtkTreeIter iter;
     GtkTreeModel *model;
     GtkTreeSelection *selector;
-    gboolean rv;
 
     /* Get the selector widget from the treeview in question */
     selector = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 
     /* Get the tree model (list_store) and initialise the iterator */
-    rv = gtk_tree_selection_get_selected(selector, &model, &iter);
-    if(rv==FALSE){
-        //printf(" No row selected\n");
+    if (!gtk_tree_selection_get_selected(selector, &model, &iter))
         return;
-    }
 
     // TODO : get the path would be cleaner
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
@@ -118,7 +114,7 @@ void on_buddy_drag_data_get(  GtkWidget *widget,
     gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
     b = presence_buddy_list_buddy_get_by_uri(g_value_dup_string(&val));
     g_value_unset(&val);
-    if(!b)
+    if (!b)
         return;
 
     g_debug("Drag src from buddy list b->uri : %s", b->uri);
@@ -145,7 +141,7 @@ void on_buddy_drag_data_received(GtkWidget *widget,
     GtkTreePath *path;
     const guchar *data = gtk_selection_data_get_data(sdata);
 
-    if(!gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path,
+    if (!gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path,
                 NULL, NULL, NULL))
         return;
 
@@ -153,24 +149,23 @@ void on_buddy_drag_data_received(GtkWidget *widget,
     //g_debug("========= (%d,%d) => Path:%s\n", x, y, spath);
     gchar *gr_target = presence_view_row_get_group(GTK_TREE_VIEW(widget), path);
     gtk_tree_path_free(path);
-    if(!gr_target) // set group to default
+    if (!gr_target) // set group to default
         gr_target = g_strdup(" ");
 
     buddy_t *b_src = NULL;
     memcpy(&b_src, data, sizeof(b_src));
-    if(!b_src)
-    {
+    if (!b_src) {
         g_warning("Dragged src data not found");
         return;
     }
 
     buddy_t *b = presence_buddy_list_buddy_get_by_uri(b_src->uri);
-    if(b) // the dragged source data refers to an existing buddy.
-    {
+    // the dragged source data refers to an existing buddy.
+    if (b) {
         g_debug("Dragged src data found: %s, %s", b_src->alias, b_src->uri);
         buddy_t *backup = presence_buddy_copy(b);
 
-        //set the group to the one under the mouse pointer
+        // set the group to the one under the mouse pointer
         g_free(b->group);
         b->group = g_strdup(gr_target);
 
@@ -182,9 +177,8 @@ void on_buddy_drag_data_received(GtkWidget *widget,
         presence_buddy_list_edit_buddy(b, backup);
         presence_buddy_delete(backup);
         // TODO change rank in tree view
-    }
-    else // create the new buddy from the dragged source data
-    {
+    } else {
+        // create the new buddy from the dragged source data
         g_free(b_src->group);
         b_src->group = g_strdup(gr_target);
         presence_buddy_list_add_buddy(b_src);
@@ -215,12 +209,11 @@ create_and_fill_presence_tree (void)
     {
         buddy = presence_buddy_list_get_nth(j);
         account_t *acc = account_list_get_by_id(buddy->acc);
-        if(acc == NULL)
+        if (acc == NULL)
             continue;
 
-        if((g_strcmp0(buddy->group, " ")==0) &&
-                ((g_strcmp0(buddy->note,"Not found")!=0) || show_all))
-        {
+        if ((g_strcmp0(buddy->group, " ") == 0) &&
+            ((g_strcmp0(buddy->note,"Not found") != 0) || show_all)) {
             gtk_tree_store_append(treestore, &toplevel, NULL);
             gtk_tree_store_set(treestore, &toplevel,
                     COLUMN_OVERVIEW, " ", // to be on the top of the sorted list
@@ -236,13 +229,12 @@ create_and_fill_presence_tree (void)
     }
 
     // then display the groups
-    for (guint i = 1; i < presence_group_list_get_size(); i++)
-    {
+    for (guint i = 1; i < presence_group_list_get_size(); i++) {
         gchar *group = presence_group_list_get_nth(i);
         gchar *tmp = g_markup_printf_escaped("<b>%s</b>", group);
 
         // display buddy with no group after
-        if(g_strcmp0(group, " ")==0)
+        if (g_strcmp0(group, " ") == 0)
             continue;
 
         gtk_tree_store_append(treestore, &toplevel, NULL);
@@ -258,16 +250,14 @@ create_and_fill_presence_tree (void)
                 -1);
         g_free(tmp);
 
-        for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++)
-        {
+        for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++) {
             buddy = presence_buddy_list_get_nth(j);
             account_t *acc = account_list_get_by_id(buddy->acc);
-            if(acc == NULL)
+            if (acc == NULL)
                 continue;
 
-            if((g_strcmp0(buddy->group, group)==0) &&
-                    ((g_strcmp0(buddy->note,"Not found")!=0) || show_all))
-            {
+            if ((g_strcmp0(buddy->group, group) == 0) &&
+               ((g_strcmp0(buddy->note,"Not found") != 0) || show_all)) {
                 gtk_tree_store_append(treestore, &child, &toplevel);
                 gtk_tree_store_set(treestore, &child,
                         COLUMN_OVERVIEW, "",
@@ -277,7 +267,7 @@ create_and_fill_presence_tree (void)
                         COLUMN_NOTE,  buddy->note,
                         COLUMN_URI,  buddy->uri,
                         COLUMN_ACCOUNTID, buddy->acc,
-                        COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
+                        COLUMN_SUBSCRIBED, (buddy->subscribed) ? "yes" : "no",
                         -1);
             }
         }
@@ -306,21 +296,20 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
     if(presence_view_row_is_buddy(treeview, path)) // a buddy line was edited
     {
         buddy_t *b = presence_view_row_get_buddy(treeview, path);
-        if(!b)
+        if (!b)
             return;
         buddy_t *backup = presence_buddy_copy(b);
 
-        if((g_strcmp0(col_name, "Alias") == 0) &&           // alias edited
-                (g_strcmp0(new_text, backup->alias) != 0))  // different alias
-        {
+        if ((g_strcmp0(col_name, "Alias") == 0) &&
+            (g_strcmp0(new_text, backup->alias) != 0)) {
+            // alias was edited and has changed
             g_free(b->alias);
             b->alias = g_strdup(new_text);
             presence_buddy_list_edit_buddy(b, backup);
-        }
-        else if((g_strcmp0(col_name, "URI") == 0) &&                // uri edited
-                (g_strcmp0(new_text, backup->uri) != 0) &&          // different uri
-                (!presence_buddy_list_buddy_get_by_uri(new_text)))  // new uri
-        {
+        } else if((g_strcmp0(col_name, "URI") == 0) &&
+                (g_strcmp0(new_text, backup->uri) != 0) &&
+                (!presence_buddy_list_buddy_get_by_uri(new_text))) {
+            // uri was edited and has changed to a new uri
             g_free(b->uri);
             b->uri = g_strdup(new_text);
             presence_buddy_list_edit_buddy(b, backup);
@@ -328,10 +317,10 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
 
         presence_buddy_delete(backup);
     }
-    else    // a group line was edited
-    {
+    else {
+        // a group line was edited
         gchar *group = presence_view_row_get_group(treeview, path);
-        if(g_strcmp0(new_text, group) != 0)
+        if (g_strcmp0(new_text, group) != 0)
             presence_group_list_edit_group(new_text, group);
         g_free(group);
     }
@@ -341,10 +330,10 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
 }
 
 void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
-                           GtkCellRenderer   *renderer,
-                           GtkTreeModel      *model,
-                           GtkTreeIter       *iter,
-                           gpointer           userdata)
+        GtkCellRenderer   *renderer,
+        GtkTreeModel      *model,
+        GtkTreeIter       *iter,
+        gpointer           userdata)
 {
     guint col_ID = GPOINTER_TO_INT(userdata);
     // TODO: replace with get the path, get the group and get row_is_buddy
@@ -355,18 +344,14 @@ void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
     g_value_unset(&val);
 
     // when the mouse pointer on a group field, set the cell editable
-    if((group) &&
-         (g_strcmp0(group,"")!=0) &&    // not a child buddy row
-         (g_strcmp0(group," ")!=0))     // not an orphan buddy row
-    {
-        g_object_set(renderer, "editable", (col_ID==COLUMN_OVERVIEW)? TRUE:FALSE, NULL);
-    }
-    // set the cell editable when the mouse pointer is on a buddy alias or uri
-    else
-    {
-        if(col_ID == COLUMN_ALIAS)
+    // not a child buddy row and not an orphan buddy row
+    if (g_strcmp0(group, "") != 0 && g_strcmp0(group, " ") != 0) {
+        g_object_set(renderer, "editable", col_ID == COLUMN_OVERVIEW, NULL);
+    } else {
+        // set the cell editable when the mouse pointer is on a buddy alias or uri
+        if (col_ID == COLUMN_ALIAS)
             g_object_set(renderer, "editable", TRUE, NULL);
-        else if(col_ID == COLUMN_URI)
+        else if (col_ID == COLUMN_URI)
             g_object_set(renderer, "editable", TRUE, NULL);
         else
             g_object_set(renderer, "editable", FALSE, NULL);
@@ -391,7 +376,7 @@ void icon_cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
 void
 update_presence_view()
 {
-    if(!buddy_list_tree_view)
+    if (!buddy_list_tree_view)
         return; // presence window not opend
 
     GtkTreeModel * model = create_and_fill_presence_tree();
@@ -411,8 +396,8 @@ create_presence_view (void)
     GtkWidget * view_widget = gtk_tree_view_new();
     GtkTreeView *view = GTK_TREE_VIEW(view_widget);
 
-    GtkCellRenderer *editable_cell = gtk_cell_renderer_text_new ();
-    g_signal_connect (editable_cell, "edited",
+    GtkCellRenderer *editable_cell = gtk_cell_renderer_text_new();
+    g_signal_connect(editable_cell, "edited",
             G_CALLBACK(presence_view_cell_edited), view);
 
     col = gtk_tree_view_column_new_with_attributes(" ",
