@@ -48,10 +48,10 @@
 #include "statusicon.h"
 
 static GtkWidget *presence_window;
-static GtkTreeView *buddy_list_tree_view = NULL;
-static GtkToggleAction *toggle_action = NULL;
+static GtkTreeView *buddy_list_tree_view;
+static GtkToggleAction *toggle_action;
 static GtkWidget *presence_status_combo;
-static GtkWidget *presence_status_bar = NULL;
+static GtkWidget *presence_status_bar;
 
 static GtkTreeModel *create_and_fill_presence_tree (void);
 static GtkTreeView *create_presence_view (void);
