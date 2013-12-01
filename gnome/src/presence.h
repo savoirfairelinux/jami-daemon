@@ -48,7 +48,7 @@ typedef struct
     gboolean subscribed; // is subscription active
     gboolean status;    // Online/Offline
     gchar * note;   // more detailed status
-}buddy_t;
+} buddy_t;
 
 /**
  * This function inits the buddy list from the client's gsettings schema.
@@ -178,10 +178,10 @@ void presence_group_list_init();
 
 /**
  * This function edit a group in the list and the associated buddies.
- * @param new The new group name.
- * @param old The old group pointer to be edited.
+ * @param new_group The new group name.
+ * @param old_group The old group pointer to be edited.
  */
-void presence_group_list_edit_group(gchar *new, gchar *old);
+void presence_group_list_edit_group(gchar *new_group, gchar *old_group);
 
 /**
  * This function adds a group in the list.
