@@ -53,15 +53,15 @@ static GtkToggleAction *toggle_action;
 static GtkWidget *presence_status_combo;
 static GtkWidget *presence_status_bar;
 
-static GtkTreeModel *create_and_fill_presence_tree (void);
-static GtkTreeView *create_presence_view (void);
+static GtkTreeModel *create_and_fill_presence_tree(void);
+static GtkTreeView *create_presence_view(void);
 gboolean selection_changed(GtkTreeSelection *selection);
 static gboolean presence_view_row_is_buddy(GtkTreeView *treeview, GtkTreePath *path);
 static buddy_t *presence_view_row_get_buddy(GtkTreeView *treeview, GtkTreePath *path);
 static gchar *presence_view_row_get_group(GtkTreeView *treeview, GtkTreePath *path);
 
-static SFLPhoneClient * presence_client;
-static buddy_t * tmp_buddy;
+static SFLPhoneClient *presence_client;
+static buddy_t *tmp_buddy;
 static gboolean show_all;
 
 enum
