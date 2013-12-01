@@ -66,9 +66,9 @@ static gboolean show_all;
 
 enum
 {
-    POPUP_MENU_TYPE_DEFAULT = 0,
-    POPUP_MENU_TYPE_BUDDY = 1,
-    POPUP_MENU_TYPE_GROUP = 2,
+    POPUP_MENU_TYPE_DEFAULT,
+    POPUP_MENU_TYPE_BUDDY,
+    POPUP_MENU_TYPE_GROUP
 };
 
 /***************************** tree view **********************************/
@@ -83,9 +83,8 @@ enum
     COLUMN_SUBSCRIBED,
     COLUMN_ACCOUNTID,
     COLUMN_GROUP,
+    N_COLUMN
 };
-
-#define N_COLUMN 8
 
 
 /* User callback for "get"ing the data out of the row that was DnD'd */
