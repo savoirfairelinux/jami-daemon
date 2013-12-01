@@ -45,12 +45,12 @@ void create_presence_window(SFLPhoneClient *client, GtkToggleAction *action);
 
 /* drag & drop shared info*/
 enum {
-        TARGET_STRING,
-        TARGET_INTEGER,
-        TARGET_FLOAT
+    TARGET_STRING,
+    TARGET_INTEGER,
+    TARGET_FLOAT
 };
 static const GtkTargetEntry presence_drag_targets = {
-        "STRING", GTK_TARGET_SAME_APP,TARGET_STRING
+    "STRING", GTK_TARGET_SAME_APP,TARGET_STRING
 };
 
 #endif
