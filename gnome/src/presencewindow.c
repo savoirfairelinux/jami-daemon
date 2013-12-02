@@ -205,8 +205,7 @@ create_and_fill_presence_tree (void)
                                              G_TYPE_STRING);// subscribed
 
     // then display buddies with no group (==' ')
-    for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++)
-    {
+    for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++) {
         buddy = presence_buddy_list_get_nth(j);
         account_t *acc = account_list_get_by_id(buddy->acc);
         if (acc == NULL)
@@ -293,8 +292,8 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
     g_debug("Presence: value of col: %s is set to %s", col_name, new_text);
     GtkTreePath * path = gtk_tree_path_new_from_string(path_str);
 
-    if(presence_view_row_is_buddy(treeview, path)) // a buddy line was edited
-    {
+    // a buddy line was edited
+    if (presence_view_row_is_buddy(treeview, path)) {
         buddy_t *b = presence_view_row_get_buddy(treeview, path);
         if (!b)
             return;
@@ -306,7 +305,7 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
             g_free(b->alias);
             b->alias = g_strdup(new_text);
             presence_buddy_list_edit_buddy(b, backup);
-        } else if((g_strcmp0(col_name, "URI") == 0) &&
+        } else if ((g_strcmp0(col_name, "URI") == 0) &&
                 (g_strcmp0(new_text, backup->uri) != 0) &&
                 (!presence_buddy_list_buddy_get_by_uri(new_text))) {
             // uri was edited and has changed to a new uri
@@ -316,8 +315,7 @@ void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
         }
 
         presence_buddy_delete(backup);
-    }
-    else {
+    } else {
         // a group line was edited
         gchar *group = presence_view_row_get_group(treeview, path);
         if (g_strcmp0(new_text, group) != 0)
@@ -520,7 +518,7 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
     guint group_index = 0;
     guint group_count = 0;
     GtkWidget * combo_group;
-    if(g_strcmp0(title, "Add new buddy") != 0)
+    if (g_strcmp0(title, "Add new buddy") != 0)
     {
         label = gtk_label_new_with_mnemonic("_Group");
         gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
@@ -528,13 +526,12 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
         combo_group = gtk_combo_box_text_new();
         // fill combox with existing groups
         gchar *group;
-        for (guint i = 1; i < presence_group_list_get_size(); i++)
-        {
+        for (guint i = 1; i < presence_group_list_get_size(); i++) {
             group = presence_group_list_get_nth(i);
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_group), group);
             group_count++;
             // set active group
-            if(g_strcmp0(group, b->group) == 0)
+            if (g_strcmp0(group, b->group) == 0)
                 group_index = i - 1;
         }
         gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index);
@@ -569,12 +566,11 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
     if (response == GTK_RESPONSE_APPLY)
     {
         // this is ugly but temporary
-        if(g_strcmp0(title, "Add new buddy") != 0)
+        if (g_strcmp0(title, "Add new buddy") != 0)
         {
             // FIXME: this function doesn't work as expected
             // if(gtk_combo_box_get_has_entry(GTK_COMBO_BOX(combo_group)))
-            if(group_count > 0)
-            {
+            if (group_count > 0) {
                 gchar * gr = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_group));
                 g_free(b->group);
                 b->group = g_strdup(gr);
@@ -587,8 +583,7 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
         b->uri = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_uri)));
 
         // check the filed
-        if((g_strcmp0(b->alias, "")==0) || (g_strcmp0(b->uri, "")==0))
-        {
+        if (strlen(b->alias) == 0 || strlen(b->uri) == 0) {
             field_error_dialog("a field is empty");
             gtk_widget_destroy(dialog);
             gboolean res = show_buddy_info_dialog(title, b);// recursive call
@@ -730,46 +725,42 @@ presence_view_popup_menu_onAddBuddy(G_GNUC_UNUSED GtkWidget *menuitem, gpointer 
     buddy_t *b = presence_buddy_create();
 
     // try to grab the selected group
-    if(userdata != NULL) // might be a group row or a buddy row
-    {
+    if (userdata != NULL) {
+        // might be a group row or a buddy row
         buddy_t *tmp_b = ((buddy_t*)userdata);
         g_free(b->group);
         b->group = g_strdup(tmp_b->group);
     }
 
     account_t *acc = account_list_get_current();
-    if(!acc)
-    {
+    if (!acc) {
         acc = account_list_get_nth(1); //0 is IP2IP
-        if(!acc)
-        {
+        if (!acc) {
             g_warning("At least one account must exist to able to subscribe.");
             return;
         }
     }
     g_free(b->acc);
-    b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
+    b->acc = g_strdup((gchar*) account_lookup(acc, CONFIG_ACCOUNT_ID));
 
-    gchar * uri = g_strconcat("<sip:XXXX@", account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME),">", NULL);
+    gchar * uri = g_strconcat("<sip:XXXX@", account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME), ">", NULL);
     g_free(b->uri);
     b->uri = g_strdup(uri);
     g_free(uri);
 
-    if(show_buddy_info_dialog(_("Add new buddy"), b))
-    {
+    if (show_buddy_info_dialog(_("Add new buddy"), b)) {
         presence_buddy_list_add_buddy(b);
         update_presence_view();
-    }
-    else
+    } else {
         presence_buddy_delete(b);
+    }
 }
 
 static void
 presence_view_popup_menu_onRemoveBuddy (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     buddy_t *b = (buddy_t*) userdata;
-    if(confirm_buddy_deletion(b))
-    {
+    if (confirm_buddy_deletion(b)) {
         presence_buddy_list_remove_buddy(b);
         update_presence_view();
     }
@@ -779,8 +770,7 @@ static void
 presence_view_popup_menu_onAddGroup (G_GNUC_UNUSED GtkWidget *menuitem, G_GNUC_UNUSED gpointer userdata)
 {
     gchar *group = g_strdup("");
-    if (show_group_info_dialog(_("Add group"), group))
-    {
+    if (show_group_info_dialog(_("Add group"), group)) {
         presence_group_list_add_group(group);
         update_presence_view();
     }
@@ -791,8 +781,7 @@ static void
 presence_view_popup_menu_onRemoveGroup (G_GNUC_UNUSED GtkWidget *menuitem, gpointer userdata)
 {
     gchar *group = (gchar*) userdata;
-    if(confirm_group_deletion(group))
-    {
+    if (confirm_group_deletion(group)) {
         presence_group_list_remove_group(group);
         update_presence_view();
     }
@@ -805,8 +794,7 @@ presence_view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
     menu = gtk_menu_new(); //TODO free ???
     gchar* gr = g_strdup(((buddy_t*)userdata)->group); // TODO; is it necessary to be free?
 
-    if(type == POPUP_MENU_TYPE_BUDDY)
-    {
+    if (type == POPUP_MENU_TYPE_BUDDY) {
         menuitem = gtk_menu_item_new_with_label(_("Call"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
         g_signal_connect(menuitem, "activate",
@@ -821,8 +809,7 @@ presence_view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
     g_signal_connect(menuitem, "activate",
             G_CALLBACK(presence_view_popup_menu_onAddBuddy), userdata);
 
-    if(type == POPUP_MENU_TYPE_BUDDY)
-    {
+    if (type == POPUP_MENU_TYPE_BUDDY) {
         menuitem = gtk_menu_item_new_with_label(_("Remove buddy"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
         g_signal_connect(menuitem, "activate",
@@ -837,8 +824,7 @@ presence_view_popup_menu(GdkEventButton *event, gpointer userdata, guint type)
     g_signal_connect(menuitem, "activate",
             G_CALLBACK(presence_view_popup_menu_onAddGroup), gr);
 
-    if(type == POPUP_MENU_TYPE_GROUP)
-    {
+    if (type == POPUP_MENU_TYPE_GROUP) {
         menuitem = gtk_menu_item_new_with_label(_("Remove group"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
         g_signal_connect(menuitem, "activate",
@@ -861,14 +847,12 @@ presence_view_row_is_buddy(GtkTreeView *treeview, GtkTreePath *path)
     GtkTreeModel *model = gtk_tree_view_get_model(treeview);
     gboolean res = FALSE;
 
-    if (gtk_tree_model_get_iter(model, &iter, path))
-    {
+    if (gtk_tree_model_get_iter(model, &iter, path)) {
         GValue val;
         memset(&val, 0, sizeof(val));
         gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
         gchar *uri = g_value_dup_string(&val);
-        if(strlen(uri)>0)
-            res =TRUE;
+        res = strlen(uri) > 0;
         g_value_unset(&val);
         g_free(uri);
     }
@@ -886,8 +870,7 @@ presence_view_row_get_buddy(GtkTreeView *treeview, GtkTreePath *path)
     GtkTreeIter   iter;
     GtkTreeModel *model = gtk_tree_view_get_model(treeview);
 
-    if (gtk_tree_model_get_iter(model, &iter, path))
-    {
+    if (gtk_tree_model_get_iter(model, &iter, path)) {
         GValue val;
         memset(&val, 0, sizeof(val));
         gtk_tree_model_get_value(model, &iter, COLUMN_URI, &val);
@@ -911,8 +894,7 @@ presence_view_row_get_group(GtkTreeView *treeview, GtkTreePath *path)
     GtkTreeIter   iter;
     GtkTreeModel *model = gtk_tree_view_get_model(treeview);
 
-    if (gtk_tree_model_get_iter(model, &iter, path))
-    {
+    if (gtk_tree_model_get_iter(model, &iter, path)) {
         GValue val;
         memset(&val, 0, sizeof(val));
         gtk_tree_model_get_value(model, &iter, COLUMN_GROUP, &val);
@@ -927,29 +909,24 @@ static gboolean
 presence_view_onButtonPressed(GtkTreeView *treeview, GdkEventButton *event)
 {
     /* single click with the right mouse button? */
-    if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3)
-    {
+    if (event->type == GDK_BUTTON_PRESS && event->button == 3) {
         GtkTreeSelection * selection = gtk_tree_view_get_selection(treeview);
 
         /* Note: gtk_tree_selection_count_selected_rows() does not
          *   exist in gtk+-2.0, only in gtk+ >= v2.2 ! */
-        if (gtk_tree_selection_count_selected_rows(selection)  == 1)
-        {
+        if (gtk_tree_selection_count_selected_rows(selection) == 1) {
             GtkTreePath *path;
             /* Get tree path for row that was clicked */
             if (gtk_tree_view_get_path_at_pos(treeview,
                         (gint) event->x,
                         (gint) event->y,
-                        &path, NULL, NULL, NULL))
-            {
-                if(presence_view_row_is_buddy(treeview, path))
-                {
+                        &path, NULL, NULL, NULL)) {
+                if (presence_view_row_is_buddy(treeview, path)) {
                     buddy_t *b = presence_view_row_get_buddy(treeview, path);
-                    if (b != NULL)
+                    if (b)
                         presence_view_popup_menu(event, b, POPUP_MENU_TYPE_BUDDY);
-                }
-                else // a group row has been selected
-                {
+                } else {
+                    // a group row has been selected
                     // use a fake buddy as argument
                     g_free(tmp_buddy->group);
                     tmp_buddy->group = g_strdup(presence_view_row_get_group(treeview, path));
@@ -994,21 +971,20 @@ static void
 presence_statusbar_changed_cb(GtkComboBox *combo)
 {
     const gchar *status = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
-    gboolean b = (g_strcmp0(status, PRESENCE_STATUS_ONLINE) == 0)? TRUE : FALSE;
+    gboolean b = g_strcmp0(status, PRESENCE_STATUS_ONLINE) == 0;
     account_t * account;
 
     //send publish to every registered accounts with presence and publish enabled
-    for (guint i = 0; i < account_list_get_size(); i++){
+    for (guint i = 0; i < account_list_get_size(); i++) {
         account = account_list_get_nth(i);
         g_assert(account);
         account_replace(account, CONFIG_PRESENCE_STATUS, status);
 
-        if((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0) &&
+        if ((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0) &&
             (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
             (((g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_ENABLE), "true") == 0) ||
-            (account_is_IP2IP(account)))))
-        {
-            dbus_presence_publish(account->accountID,b);
+            (account_is_IP2IP(account))))) {
+            dbus_presence_publish(account->accountID, b);
             g_debug("Presence: publish status of acc:%s => %s", account->accountID, status);
         }
     }
@@ -1021,29 +997,29 @@ update_presence_statusbar()
     gboolean global_publish_enabled = FALSE;
     gboolean global_status = FALSE;
 
-    if(!presence_status_bar) // presence window not opened
+    if (!presence_status_bar) // presence window not opened
         return;
 
     /* Check if one of the registered accounts has Presence enabled */
-    for (guint i = 0; i < account_list_get_size(); i++){
+    for (guint i = 0; i < account_list_get_size(); i++) {
         account = account_list_get_nth(i);
         g_assert(account);
 
-        if(!(account_is_IP2IP(account)) &&
+        if (!(account_is_IP2IP(account)) &&
                 (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
-                (account->state == ACCOUNT_STATE_REGISTERED) )
+                (account->state == ACCOUNT_STATE_REGISTERED))
         {
-            if(g_strcmp0(account_lookup(account, CONFIG_PRESENCE_STATUS), "true") == 0)
+            if (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_STATUS), "true") == 0)
                 global_status = TRUE;
 
-            if(g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)
+            if (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)
                 global_publish_enabled = TRUE;
         }
     }
 
-    if(global_status)
+    if (global_status)
         g_debug("Presence: statusbar, at least 1 account is online.");
-    if(global_publish_enabled)
+    if (global_publish_enabled)
         g_debug("Presence: statusbar, at least 1 account can publish.");
 
     gtk_combo_box_set_active(GTK_COMBO_BOX(presence_status_combo),  global_status? 1:0);
@@ -1103,10 +1079,8 @@ view_uri_toggled_cb(GtkWidget *toggle)
     // show or hide the uri column
     GtkTreeViewColumn *col = gtk_tree_view_get_column(buddy_list_tree_view, (gint)COLUMN_URI);
 
-    if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(toggle)))
-        gtk_tree_view_column_set_visible(col,TRUE);
-    else
-        gtk_tree_view_column_set_visible(col, FALSE);
+    gtk_tree_view_column_set_visible(col,
+            gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(toggle)));
 
     update_presence_view();
 }
@@ -1239,12 +1213,12 @@ create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
     /*------------------------- Load presence -------------------------*/
     presence_buddy_list_init(presence_client);
     g_object_set_data(G_OBJECT(presence_window), "Buddy-List",
-            (gpointer)presence_buddy_list_get());
+            (gpointer) presence_buddy_list_get());
     update_presence_view();
     tmp_buddy = presence_buddy_create();
 
     /*------------------ Timer to refresh the subscription------------ */
-    g_timeout_add_seconds(120, (GSourceFunc)buddy_subsribe_timer_cb, NULL);
+    g_timeout_add_seconds(120, (GSourceFunc) buddy_subsribe_timer_cb, NULL);
 
     /* make sure that everything, window and label, are visible */
     gtk_widget_show_all(presence_window);
