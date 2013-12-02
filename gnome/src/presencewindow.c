@@ -205,7 +205,7 @@ create_and_fill_presence_tree (void)
                                              G_TYPE_STRING);// subscribed
 
     // then display buddies with no group (==' ')
-    for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++) {
+    for (guint j =  0; j < presence_buddy_list_get_size(buddy_list); j++) {
         buddy = presence_buddy_list_get_nth(j);
         account_t *acc = account_list_get_by_id(buddy->acc);
         if (acc == NULL)
@@ -228,7 +228,7 @@ create_and_fill_presence_tree (void)
     }
 
     // then display the groups
-    for (guint i = 1; i < presence_group_list_get_size(); i++) {
+    for (guint i = 0; i < presence_group_list_get_size(); i++) {
         gchar *group = presence_group_list_get_nth(i);
         gchar *tmp = g_markup_printf_escaped("<b>%s</b>", group);
 
@@ -249,7 +249,7 @@ create_and_fill_presence_tree (void)
                 -1);
         g_free(tmp);
 
-        for (guint j =  1; j < presence_buddy_list_get_size(buddy_list); j++) {
+        for (guint j =  0; j < presence_buddy_list_get_size(buddy_list); j++) {
             buddy = presence_buddy_list_get_nth(j);
             account_t *acc = account_list_get_by_id(buddy->acc);
             if (acc == NULL)
@@ -526,13 +526,13 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
         combo_group = gtk_combo_box_text_new();
         // fill combox with existing groups
         gchar *group;
-        for (guint i = 1; i < presence_group_list_get_size(); i++) {
+        for (guint i = 0; i < presence_group_list_get_size(); i++) {
             group = presence_group_list_get_nth(i);
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_group), group);
             group_count++;
             // set active group
             if (g_strcmp0(group, b->group) == 0)
-                group_index = i - 1;
+                group_index = i;
         }
         gtk_combo_box_set_active(GTK_COMBO_BOX(combo_group), (gint)group_index);
 
