@@ -251,7 +251,7 @@ static int flipPlanarHorizontal(AVFrame *frame)
 
             default:
                 for (int j = 0; j < (frame->width >> hsub) / 2; j++) {
-                    uint8_t tmp[j * step];
+                    uint8_t tmp[step];
                     memcpy(tmp, outrow + j * step, step);
                     memcpy(outrow + j * step, inrow - j * step, step);
                     memcpy(inrow - j * step, tmp, step);
