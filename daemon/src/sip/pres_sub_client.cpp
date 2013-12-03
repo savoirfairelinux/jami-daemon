@@ -518,7 +518,7 @@ bool PresSubClient::subscribe()
 
     if (sub_ and dlg_) { //do not bother if already subscribed
         pjsip_evsub_terminate(sub_, PJ_FALSE);
-        DEBUG("PreseSubClient %s: already subscribed. Refresh it.", uri_.ptr);
+        DEBUG("PreseSubClient %.*s: already subscribed. Refresh it.", uri_.slen, uri_.ptr);
     }
 
     //subscribe
