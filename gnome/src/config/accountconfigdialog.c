@@ -1436,9 +1436,13 @@ static void update_account_from_basic_tab(account_t *account)
     g_free(proto);
 }
 
-void update_account_from_dialog(GtkWidget *dialog, account_t *account)
+void update_account_from_dialog(GtkWidget *dialog, const gchar *accountID)
 {
     if (!dialog)
+        return;
+
+    account_t *account = account_list_get_by_id(accountID);
+    if (!account)
         return;
 
     const gboolean IS_IP2IP = account_is_IP2IP(account);
@@ -1503,7 +1507,7 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
 }
 
 GtkWidget *
-show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
+show_account_window(const gchar *accountID, SFLPhoneClient *client, gboolean is_new)
 {
     // First we reset
     reset();
@@ -1523,6 +1527,13 @@ show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), notebook, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
     gtk_widget_show(notebook);
+
+    account_t *account = account_list_get_by_id(accountID);
+    if (!account) {
+        g_error("Invalid account %s", accountID);
+        return NULL;
+    }
+
     const gboolean IS_IP2IP = account_is_IP2IP(account);
 
     // We do not need the global settings for the IP2IP account

@@ -160,10 +160,9 @@ static void account_store_fill();
 static void
 run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client, gboolean is_new)
 {
-    account_t *account = account_list_get_by_id(selected_accountID);
-    GtkWidget *dialog = show_account_window(account, client, is_new);
+    GtkWidget *dialog = show_account_window(selected_accountID, client, is_new);
     if (dialog) {
-        update_account_from_dialog(dialog, account);
+        update_account_from_dialog(dialog, selected_accountID);
         account_store_fill();
     }
 }

@@ -45,13 +45,13 @@
  * @return The dialog with the pertinent account information
  */
 GtkWidget *
-show_account_window(account_t *a, SFLPhoneClient *client, gboolean is_new);
+show_account_window(const gchar *accountID, SFLPhoneClient *client, gboolean is_new);
 
 /*
  * @param dialog The dialog the account will be update from
  * @param a The account you want to display
  */
-void update_account_from_dialog(GtkWidget *dialog, account_t *a);
+void update_account_from_dialog(GtkWidget *dialog, const gchar *accountID);
 
 /*
  * @param position The position of the slider
