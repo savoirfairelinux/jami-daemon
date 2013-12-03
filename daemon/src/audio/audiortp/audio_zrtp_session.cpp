@@ -39,11 +39,6 @@
 #include "manager.h"
 #include "fileutils.h"
 
-#include <libzrtpcpp/zrtpccrtp.h>
-#include <libzrtpcpp/ZrtpQueue.h>
-#include <libzrtpcpp/ZrtpUserCallback.h>
-#include <ccrtp/rtp.h>
-
 namespace sfl {
 
 AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename) :
