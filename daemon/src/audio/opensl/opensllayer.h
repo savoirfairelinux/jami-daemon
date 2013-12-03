@@ -35,8 +35,8 @@
 #include <SLES/OpenSLES_Android.h>
 #include <vector>
 
-#include "../audiolayer.h"
-#include "logger.h"
+#include "audio/audiolayer.h"
+
 
 
 enum PCMType {

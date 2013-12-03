@@ -64,6 +64,12 @@ OpenSLThread::OpenSLThread(OpenSLLayer *opensl)
     : thread_(0), opensl_(opensl), running_(false)
 {}
 
+bool
+OpenSLThread::isRunning() const
+{
+    return running_;
+}
+
 OpenSLThread::~OpenSLThread()
 {
     running_ = false;
@@ -88,18 +94,15 @@ OpenSLThread::runCallback(void *data)
     return nullptr;
 }
 
-bool
-OpenSLThread::isRunning() const
-{
-    return running_;
-}
-
 void
 OpenSLThread::initAudioLayer()
 {
     opensl_->initAudioEngine();
     opensl_->initAudioPlayback();
     opensl_->initAudioCapture();
+
+    opensl_->flushMain();
+    opensl_->flushUrgent();
 }
 
 /**
@@ -151,14 +154,6 @@ OpenSLLayer::~OpenSLLayer()
     stopAudioCapture();
 }
 
-#define RECORD_AUDIO_TODISK 1
-
-#ifdef RECORD_AUDIO_TODISK
-#include <fstream>
-std::ofstream opensl_outfile;
-std::ofstream opensl_infile;
-#endif
-
 void
 OpenSLLayer::startStream()
 {
@@ -168,11 +163,6 @@ OpenSLLayer::startStream()
     DEBUG("Start OpenSL audio layer");
 
     if (audioThread_ == nullptr) {
-#ifdef RECORD_AUDIO_TODISK
-        opensl_outfile.open("/data/data/org.sflphone/opensl_playback.pcm", std::ofstream::out | std::ofstream::binary);
-        opensl_infile.open("/data/data/org.sflphone/opensl_record.pcm", std::ofstream::out | std::ofstream::binary);
-#endif
-
         audioThread_ = new OpenSLThread(this);
         isStarted_ = true;
         audioThread_->start();
@@ -195,10 +185,6 @@ OpenSLLayer::stopStream()
 
     delete audioThread_;
     audioThread_ = nullptr;
-#ifdef RECORD_AUDIO_TODISK
-    opensl_outfile.close();
-    opensl_infile.close();
-#endif
 }
 
 void
@@ -658,13 +644,12 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 
     AudioBuffer &buffer = getNextPlaybackBuffer();
 
-	MainBuffer &mbuffer = Manager::instance().getMainBuffer();
-    size_t samplesToGet = mbuffer.availableForGet(MainBuffer::DEFAULT_ID);
+    size_t samplesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
     size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
 	bufferIsFilled_ = false;
-	//DEBUG("samplesToGet:%d", samplesToGet);
-	//DEBUG("urgentSamplesToGet:%d", urgentSamplesToGet);
+	DEBUG("samplesToGet:%d", samplesToGet);
+	DEBUG("urgentSamplesToGet:%d", urgentSamplesToGet);
 
     if (urgentSamplesToGet > 0)
         bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, urgentSamplesToGet);
@@ -677,9 +662,6 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 	}
 
     if (bufferIsFilled_) {
-#ifdef RECORD_AUDIO_TODISK
-        opensl_outfile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
-#endif
         SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
 
         if (SL_RESULT_SUCCESS != result) {
@@ -719,10 +701,6 @@ OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);
-
-#ifdef RECORD_AUDIO_TODISK
-    opensl_infile.write((char const *)(buffer.getChannel(0)->data()), buffer.frames()*sizeof(SFLAudioSample));
-#endif
 }
 
 
@@ -748,13 +726,6 @@ OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType ty
 
 #endif
 }
-
-
-// #define RECORD_TOMAIN_TODISK
-#ifdef RECORD_TOMAIN_TODISK
-#include <fstream>
-std::ofstream opensl_tomainbuffer("/data/data/org.sflphone/opensl_tomain.raw", std::ofstream::out | std::ofstream::binary);
-#endif
 
 void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
 {
