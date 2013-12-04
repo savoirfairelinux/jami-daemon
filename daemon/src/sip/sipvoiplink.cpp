@@ -1682,6 +1682,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         return false;
     }
 
+    account->updateDialogViaSentBy(dialog);
+
     if (account->hasServiceRoute())
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
 

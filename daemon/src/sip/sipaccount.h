@@ -144,6 +144,8 @@ class SIPAccount : public Account {
             registrationStateDetailed_ = details;
         }
 
+        void updateDialogViaSentBy(pjsip_dialog *dlg);
+
         void resetAutoRegistration();
         bool checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool);
 

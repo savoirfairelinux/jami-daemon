@@ -1887,3 +1887,9 @@ SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
     if (pjsip_endpt_schedule_timer(endpt, &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;
 }
+
+void SIPAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
+{
+    if (allowViaRewrite_ && via_addr_.host.slen > 0)
+        pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
+}
