@@ -580,15 +580,9 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
 
     static const pj_str_t allowed[] = {
         CONST_PJ_STR("INFO"),
-        CONST_PJ_STR("REGISTER"),
         CONST_PJ_STR("OPTIONS"),
         CONST_PJ_STR("MESSAGE"),
-        CONST_PJ_STR("INVITE"),
-        CONST_PJ_STR("ACK"),
-        CONST_PJ_STR("BYE"),
-        CONST_PJ_STR("NOTIFY"),
         CONST_PJ_STR("PUBLISH"),
-        CONST_PJ_STR("CANCEL")
     };
 
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
