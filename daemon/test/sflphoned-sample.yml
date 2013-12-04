@@ -28,7 +28,7 @@ accounts:
     keyExchange:
     rtpFallback: false
   stunEnabled: false
-  stunServer: stun.sflphone.org
+  stunServer:
   tls:
     calist:
     certificate:
@@ -96,7 +96,7 @@ accounts:
     keyExchange: sdes
     rtpFallback: false
   stunEnabled: false
-  stunServer: stun.sflphone.org
+  stunServer:
   tls:
     calist:
     certificate:

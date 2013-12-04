@@ -64,7 +64,7 @@ void ConfigurationTest::testYamlEmitter()
     ScalarNode publishPort("5060");
     ScalarNode sameasLocal(true);
     ScalarNode codecs("0/9/110/111/112/");
-    ScalarNode stunServer("stun.sflphone.org");
+    ScalarNode stunServer("");
     ScalarNode stunEnabled(false);
     ScalarNode displayName("Alexandre Savard");
     ScalarNode dtmfType("sipinfo");
