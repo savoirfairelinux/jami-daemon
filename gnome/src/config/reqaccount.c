@@ -130,7 +130,7 @@ get_rest_account(const char *host, const char *email)
     rest_account ra = {0};
     g_debug("HOST: %s", host);
     strcpy(ret,"GET /rest/accountcreator?email=");
-    strncat(ret, email, sizeof(ret) - strlen(ret));
+    strncat(ret, email, sizeof(ret) - strlen(ret) - 1);
 
     if (req(host, 80, ret, sizeof(ret)) != -1) {
         strncpy(ra.user, strtok(ret, "\n"), sizeof(ra.user));
