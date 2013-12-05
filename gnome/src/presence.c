@@ -468,7 +468,6 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
         }
     } else {
         g_warning("Presence: buddy has NO URI");
-        acc = account_list_get_by_id(b->acc);
         uri = g_strconcat("<sip:XXXX@", hostname, ">", NULL);
         b->uri = g_strdup(uri);
     }
