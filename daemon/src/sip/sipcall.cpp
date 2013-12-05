@@ -82,7 +82,7 @@ void SIPCall::answer()
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     // contactStr must stay in scope as long as tdata
-    if (contactHeader_.slen == 0) {
+    if (contactHeader_.slen) {
         DEBUG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
         sip_utils::addContactHeader(&contactHeader_, tdata);
     }
