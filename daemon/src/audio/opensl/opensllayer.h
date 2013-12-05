@@ -199,6 +199,8 @@ class OpenSLLayer : public AudioLayer {
 
         void playback(SLAndroidSimpleBufferQueueItf queue);
         void capture(SLAndroidSimpleBufferQueueItf queue);
+
+        void dumpAvailableEngineInterfaces();
         friend class OpenSLThread;
 
         static const int NB_BUFFER_PLAYBACK_QUEUE;
@@ -243,9 +245,8 @@ class OpenSLLayer : public AudioLayer {
         SLObjectItf playerObject_;
         SLObjectItf recorderObject_;
 
-        /**
-         *
-         */
+
+        SLOutputMixItf outputMixInterface_;
         SLPlayItf playerInterface_;
 
         SLRecordItf recorderInterface_;

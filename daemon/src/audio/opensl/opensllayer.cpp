@@ -36,6 +36,7 @@
 #include "array_size.h"
 #include "manager.h"
 #include "mainbuffer.h"
+#include "audio/dcblocker.h"
 
 #include "opensllayer.h"
 
@@ -157,6 +158,8 @@ OpenSLLayer::~OpenSLLayer()
 void
 OpenSLLayer::startStream()
 {
+    dcblocker_.reset();
+
     if (isStarted_)
         return;
 
@@ -165,6 +168,8 @@ OpenSLLayer::startStream()
     if (audioThread_ == nullptr) {
         audioThread_ = new OpenSLThread(this);
         isStarted_ = true;
+        audioThread_->start();
+    } else if (!audioThread_->isRunning()) {
         audioThread_->start();
     }
 
@@ -185,6 +190,9 @@ OpenSLLayer::stopStream()
 
     delete audioThread_;
     audioThread_ = nullptr;
+
+    flushMain();
+    flushUrgent();
 }
 
 void
@@ -265,14 +273,15 @@ OpenSLLayer::initAudioPlayback()
     // Initialize the location of the buffer queue
     DEBUG("Create playback queue\n");
     SLDataLocator_AndroidSimpleBufferQueue bufferLocation = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-                                           NB_BUFFER_PLAYBACK_QUEUE
+                                                            NB_BUFFER_PLAYBACK_QUEUE
                                                             };
 
     // Initnialize the audio format for this queue
     DEBUG("Setting audio format\n");
     ERROR("Playback-> Sampling Rate: %d", sampleRate_);
 	ERROR("Playback-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
-    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
+    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM,
+                                    1,
                                     sampleRate_ * 1000,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
@@ -284,15 +293,21 @@ OpenSLLayer::initAudioPlayback()
     DEBUG("Set Audio Sources\n");
     SLDataSource audioSource = {&bufferLocation, &audioFormat};
 
+    DEBUG("Get Output Mixer interface\n");
+    result = (*outputMixer_)->GetInterface(outputMixer_, SL_IID_OUTPUTMIX, &outputMixInterface_);
+    CheckErr(result);
+
     // Cofiguration fo the audio sink as an output mixer
     DEBUG("Set output mixer location\n");
     SLDataLocator_OutputMix mixerLocation = {SL_DATALOCATOR_OUTPUTMIX, outputMixer_};
     SLDataSink audioSink = {&mixerLocation, nullptr};
 
     const SLInterfaceID ids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-                                 SL_IID_VOLUME, SL_IID_ANDROIDCONFIGURATION
+                                SL_IID_VOLUME,
+                                SL_IID_ANDROIDCONFIGURATION,
+                                SL_IID_PLAY
                                 };
-    const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     const unsigned nbInterface = ARRAYSIZE(ids);
 
@@ -318,14 +333,6 @@ OpenSLLayer::initAudioPlayback()
 	DEBUG("Realize audio player\n");
     result = (*playerObject_)->Realize(playerObject_, SL_BOOLEAN_FALSE);
     assert(SL_RESULT_SUCCESS == result);
-
-
-	SLVolumeItf volumeIf;
-    (*playerObject_)->GetInterface(playerObject_, SL_IID_VOLUME, &volumeIf);
-
-    SLmillibel maxVolume;
-    (*volumeIf)->GetVolumeLevel(volumeIf, &maxVolume);
-	ERROR("Volume %d", maxVolume);
 
     if (result != SL_RESULT_SUCCESS) {
         ERROR("Unable to set android player configuration");
@@ -373,8 +380,8 @@ OpenSLLayer::initAudioCapture()
                                            NB_BUFFER_CAPTURE_QUEUE
                                                            };
 
-	ERROR("Capture-> Sampling Rate: %d", sampleRate_);
-	ERROR("Capture-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
+	DEBUG("Capture-> Sampling Rate: %d", sampleRate_);
+	DEBUG("Capture-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
                                     sampleRate_ * 1000,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
@@ -539,12 +546,12 @@ OpenSLLayer::getCaptureDeviceList() const
 {
 	std::vector<std::string> captureDeviceList;
 
-/**
 
-Although OpenSL ES specification allows enumerating
-available output (and also input) devices, NDK implementation is not mature enough to
-obtain or select proper one (SLAudioIODeviceCapabilitiesItf, the official interface
-to obtain such an information)-> SL_FEATURE_UNSUPPORTED
+
+// Although OpenSL ES specification allows enumerating
+// available output (and also input) devices, NDK implementation is not mature enough to
+// obtain or select proper one (SLAudioIODeviceCapabilitiesItf, the official interface
+// to obtain such an information)-> SL_FEATURE_UNSUPPORTED
 
 	SLuint32 InputDeviceIDs[MAX_NUMBER_INPUT_DEVICES];
 	SLint32 numInputs = 0;
@@ -553,16 +560,16 @@ to obtain such an information)-> SL_FEATURE_UNSUPPORTED
 
 	SLresult res;
 
-	res = slCreateEngine(&engineObject_, 0, nullptr, 0, nullptr, nullptr);
-	CheckErr(res);
+	initAudioEngine();
+    initAudioPlayback();
+    initAudioCapture();
 
-	res = (*engineObject_)->Realize(engineObject_, SL_BOOLEAN_FALSE);
-	CheckErr(res);
 
 	// Get the Audio IO DEVICE CAPABILITIES interface, implicit
 	DEBUG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
-	res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&AudioIODeviceCapabilitiesItf);
-	CheckErr(res);
+
+    res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&AudioIODeviceCapabilitiesItf);
+    CheckErr(res);
 
 	DEBUG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
 	numInputs = MAX_NUMBER_INPUT_DEVICES;
@@ -572,7 +579,7 @@ to obtain such an information)-> SL_FEATURE_UNSUPPORTED
 
 	int i;
 	// Search for either earpiece microphone or headset microphone input
-	device - with a preference for the latter
+	// device - with a preference for the latter
 	for (i=0;i<numInputs; i++)
 	{
 		res = (*AudioIODeviceCapabilitiesItf)->QueryAudioInputCapabilities(AudioIODeviceCapabilitiesItf,
@@ -604,7 +611,7 @@ to obtain such an information)-> SL_FEATURE_UNSUPPORTED
 		ERROR("No mic available quitting");
 		exit(1);
 	}
-*/
+
 
     return captureDeviceList;
 }
@@ -648,8 +655,8 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
     size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
 	bufferIsFilled_ = false;
-	DEBUG("samplesToGet:%d", samplesToGet);
-	DEBUG("urgentSamplesToGet:%d", urgentSamplesToGet);
+	//DEBUG("samplesToGet:%d", samplesToGet);
+	//DEBUG("urgentSamplesToGet:%d", urgentSamplesToGet);
 
     if (urgentSamplesToGet > 0)
         bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, urgentSamplesToGet);
@@ -798,4 +805,74 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samples
     }
 
     return true;
+}
+
+void dumpAvailableEngineInterfaces()
+{
+    SLresult result;
+    DEBUG("Engine Interfaces\n");
+    SLuint32 numSupportedInterfaces;
+    result = slQueryNumSupportedEngineInterfaces(&numSupportedInterfaces);
+    assert(SL_RESULT_SUCCESS == result);
+    result = slQueryNumSupportedEngineInterfaces(NULL);
+    assert(SL_RESULT_PARAMETER_INVALID == result);
+
+    DEBUG("Engine number of supported interfaces %lu\n", numSupportedInterfaces);
+    for(SLuint32 i=0; i< numSupportedInterfaces; i++){
+        SLInterfaceID  pInterfaceId;
+        slQuerySupportedEngineInterfaces(i, &pInterfaceId);
+        const char* nm = "unknown iid";
+
+        if (pInterfaceId==SL_IID_NULL) nm="null";
+        else if (pInterfaceId==SL_IID_OBJECT) nm="object";
+        else if (pInterfaceId==SL_IID_AUDIOIODEVICECAPABILITIES) nm="audiodevicecapabilities";
+        else if (pInterfaceId==SL_IID_LED) nm="led";
+        else if (pInterfaceId==SL_IID_VIBRA) nm="vibra";
+        else if (pInterfaceId==SL_IID_METADATAEXTRACTION) nm="metadataextraction";
+        else if (pInterfaceId==SL_IID_METADATATRAVERSAL) nm="metadatatraversal";
+        else if (pInterfaceId==SL_IID_DYNAMICSOURCE) nm="dynamicsource";
+        else if (pInterfaceId==SL_IID_OUTPUTMIX) nm="outputmix";
+        else if (pInterfaceId==SL_IID_PLAY) nm="play";
+        else if (pInterfaceId==SL_IID_PREFETCHSTATUS) nm="prefetchstatus";
+        else if (pInterfaceId==SL_IID_PLAYBACKRATE) nm="playbackrate";
+        else if (pInterfaceId==SL_IID_SEEK) nm="seek";
+        else if (pInterfaceId==SL_IID_RECORD) nm="record";
+        else if (pInterfaceId==SL_IID_EQUALIZER) nm="equalizer";
+        else if (pInterfaceId==SL_IID_VOLUME) nm="volume";
+        else if (pInterfaceId==SL_IID_DEVICEVOLUME) nm="devicevolume";
+        else if (pInterfaceId==SL_IID_BUFFERQUEUE) nm="bufferqueue";
+        else if (pInterfaceId==SL_IID_PRESETREVERB) nm="presetreverb";
+        else if (pInterfaceId==SL_IID_ENVIRONMENTALREVERB) nm="environmentalreverb";
+        else if (pInterfaceId==SL_IID_EFFECTSEND) nm="effectsend";
+        else if (pInterfaceId==SL_IID_3DGROUPING) nm="3dgrouping";
+        else if (pInterfaceId==SL_IID_3DCOMMIT) nm="3dcommit";
+        else if (pInterfaceId==SL_IID_3DLOCATION) nm="3dlocation";
+        else if (pInterfaceId==SL_IID_3DDOPPLER) nm="3ddoppler";
+        else if (pInterfaceId==SL_IID_3DSOURCE) nm="3dsource";
+        else if (pInterfaceId==SL_IID_3DMACROSCOPIC) nm="3dmacroscopic";
+        else if (pInterfaceId==SL_IID_MUTESOLO) nm="mutesolo";
+        else if (pInterfaceId==SL_IID_DYNAMICINTERFACEMANAGEMENT) nm="dynamicinterfacemanagement";
+        else if (pInterfaceId==SL_IID_MIDIMESSAGE) nm="midimessage";
+        else if (pInterfaceId==SL_IID_MIDIMUTESOLO) nm="midimutesolo";
+        else if (pInterfaceId==SL_IID_MIDITEMPO) nm="miditempo";
+        else if (pInterfaceId==SL_IID_MIDITIME) nm="miditime";
+        else if (pInterfaceId==SL_IID_AUDIODECODERCAPABILITIES) nm="audiodecodercapabilities";
+        else if (pInterfaceId==SL_IID_AUDIOENCODERCAPABILITIES) nm="audioencodercapabilities";
+        else if (pInterfaceId==SL_IID_AUDIOENCODER) nm="audioencoder";
+        else if (pInterfaceId==SL_IID_BASSBOOST) nm="bassboost";
+        else if (pInterfaceId==SL_IID_PITCH) nm="pitch";
+        else if (pInterfaceId==SL_IID_RATEPITCH) nm="ratepitch";
+        else if (pInterfaceId==SL_IID_VIRTUALIZER) nm="virtualizer";
+        else if (pInterfaceId==SL_IID_VISUALIZATION) nm="visualization";
+        else if (pInterfaceId==SL_IID_ENGINE) nm="engine";
+        else if (pInterfaceId==SL_IID_ENGINECAPABILITIES) nm="enginecapabilities";
+        else if (pInterfaceId==SL_IID_THREADSYNC) nm="theadsync";
+        else if (pInterfaceId==SL_IID_ANDROIDEFFECT) nm="androideffect";
+        else if (pInterfaceId==SL_IID_ANDROIDEFFECTSEND) nm="androideffectsend";
+        else if (pInterfaceId==SL_IID_ANDROIDEFFECTCAPABILITIES) nm="androideffectcapabilities";
+        else if (pInterfaceId==SL_IID_ANDROIDCONFIGURATION) nm="androidconfiguration";
+        else if (pInterfaceId==SL_IID_ANDROIDSIMPLEBUFFERQUEUE) nm="simplebuferqueue";
+        //else if (pInterfaceId==//SL_IID_ANDROIDBUFFERQUEUESOURCE) nm="bufferqueuesource";
+        DEBUG("%s,",nm);
+    }
 }
