@@ -600,7 +600,7 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
 
 
 static gboolean
-show_group_info_dialog(const gchar *title, gchar *group)
+show_group_info_dialog(const gchar *title, gchar **group)
 {
     GtkWidget *dialog = gtk_dialog_new_with_buttons((title),
                         GTK_WINDOW(presence_window),
@@ -623,7 +623,7 @@ show_group_info_dialog(const gchar *title, gchar *group)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     GtkWidget *entry_group = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_group);
-    gtk_entry_set_text(GTK_ENTRY(entry_group), group);
+    gtk_entry_set_text(GTK_ENTRY(entry_group), *group);
     gtk_grid_attach(GTK_GRID(grid), entry_group, 1, row, 1, 1);
 
     gtk_widget_show_all(grid);
@@ -634,8 +634,8 @@ show_group_info_dialog(const gchar *title, gchar *group)
     // update buddy OK was pressed
     if (response == GTK_RESPONSE_APPLY)
     {
-        g_free(group);
-        group = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_group)));
+        g_free(*group);
+        *group = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_group)));
 
         gtk_widget_destroy(dialog);
         return TRUE;
@@ -770,7 +770,7 @@ static void
 presence_view_popup_menu_onAddGroup (G_GNUC_UNUSED GtkWidget *menuitem, G_GNUC_UNUSED gpointer userdata)
 {
     gchar *group = g_strdup("");
-    if (show_group_info_dialog(_("Add group"), group)) {
+    if (show_group_info_dialog(_("Add group"), &group)) {
         presence_group_list_add_group(group);
         update_presence_view();
     }
