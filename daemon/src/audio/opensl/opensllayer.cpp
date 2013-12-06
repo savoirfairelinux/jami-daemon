@@ -314,19 +314,19 @@ OpenSLLayer::initAudioPlayback()
     result = (*engineInterface_)->CreateAudioPlayer(engineInterface_, &playerObject_, &audioSource, &audioSink, nbInterface, ids, req);
     assert(SL_RESULT_SUCCESS == result);
 
-//    SLAndroidConfigurationItf playerConfig;
-//    SLint32 streamType = SL_ANDROID_STREAM_VOICE;
+    SLAndroidConfigurationItf playerConfig;
+    SLint32 streamType = SL_ANDROID_STREAM_VOICE;
 
 
-//    result = (*playerObject_)->GetInterface(playerObject_,
-//                                            SL_IID_ANDROIDCONFIGURATION,
-//                                            &playerConfig);
+    result = (*playerObject_)->GetInterface(playerObject_,
+                                            SL_IID_ANDROIDCONFIGURATION,
+                                            &playerConfig);
 
-//    if (result == SL_RESULT_SUCCESS && playerConfig) {
-//        result = (*playerConfig)->SetConfiguration(
-//                     playerConfig, SL_ANDROID_KEY_STREAM_TYPE,
-//                     &streamType, sizeof(SLint32));
-//    }
+    if (result == SL_RESULT_SUCCESS && playerConfig) {
+        result = (*playerConfig)->SetConfiguration(
+                     playerConfig, SL_ANDROID_KEY_STREAM_TYPE,
+                     &streamType, sizeof(SLint32));
+    }
 
 	DEBUG("Realize audio player\n");
     result = (*playerObject_)->Realize(playerObject_, SL_BOOLEAN_FALSE);
