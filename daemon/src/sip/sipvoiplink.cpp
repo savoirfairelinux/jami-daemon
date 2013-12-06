@@ -2295,6 +2295,22 @@ void registration_cb(pjsip_regc_cbparam *param)
               param->code, (int)param->reason.slen, param->reason.ptr);
         account->destroyRegistrationInfo();
         account->stopKeepAliveTimer();
+        switch (param->code) {
+            case PJSIP_SC_FORBIDDEN:
+                account->setRegistrationState(ERROR_AUTH);
+                break;
+            case PJSIP_SC_NOT_FOUND:
+                account->setRegistrationState(ERROR_HOST);
+                break;
+            case PJSIP_SC_REQUEST_TIMEOUT:
+                account->setRegistrationState(ERROR_HOST);
+                break;
+            case PJSIP_SC_SERVICE_UNAVAILABLE:
+                account->setRegistrationState(ERROR_SERVICE_UNAVAILABLE);
+                break;
+            default:
+                account->setRegistrationState(ERROR_GENERIC);
+        }
     } else if (PJSIP_IS_STATUS_IN_CLASS(param->code, 200)) {
 
         // Update auto registration flag
