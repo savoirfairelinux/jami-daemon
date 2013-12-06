@@ -278,8 +278,6 @@ OpenSLLayer::initAudioPlayback()
 
     // Initnialize the audio format for this queue
     DEBUG("Setting audio format\n");
-    ERROR("Playback-> Sampling Rate: %d", sampleRate_);
-	ERROR("Playback-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM,
                                     1,
                                     sampleRate_ * 1000,
