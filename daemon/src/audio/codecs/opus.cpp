@@ -95,7 +95,7 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *
 {
     if (buf == NULL) return 0;
 
-    unsigned samples = opus_decode(decoder_, buf, buffer_size, dst[0].data(), 2 * FRAME_SIZE, 0);
+    unsigned samples = opus_decode(decoder_, buf, buffer_size, dst[0].data(), sizeof(SFLAudioSample) * FRAME_SIZE, 0);
 
     return samples;
 }
@@ -104,7 +104,7 @@ int Opus::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &
 {
     if (dst == NULL) return 0;
 
-    return opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size * 2);
+    return opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size * sizeof(SFLAudioSample));
 }
 
 
