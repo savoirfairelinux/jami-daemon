@@ -84,7 +84,7 @@ Account::Account(const string &accountID) :
     , audioCodecList_()
     , videoCodecList_()
     , audioCodecStr_()
-    , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
+    , ringtonePath_("")
     , ringtoneEnabled_(true)
     , displayName_("")
     , userAgent_(DEFAULT_USER_AGENT)
@@ -92,6 +92,11 @@ Account::Account(const string &accountID) :
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
+    #ifdef __ANDROID__
+        ringtonePath_ = "/data/data/org.sflphone/files/ringtones/konga.ul";
+    #else
+        ringtonePath_ = "/usr/share/sflphone/ringtones/konga.ul";
+    #endif
 }
 
 Account::~Account()
