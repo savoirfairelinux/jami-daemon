@@ -43,7 +43,11 @@ const char * const HistoryItem::CONFID_KEY =            "confid";
 const char * const HistoryItem::DISPLAY_NAME_KEY =      "display_name";
 const char * const HistoryItem::PEER_NUMBER_KEY =       "peer_number";
 const char * const HistoryItem::RECORDING_PATH_KEY =    "recordfile";
+// FIXME: Deprecated
 const char * const HistoryItem::STATE_KEY =             "state";
+// New version:
+const char * const HistoryItem::MISSED_KEY =            "missed";
+const char * const HistoryItem::DIRECTION_KEY =         "direction";
 const char * const HistoryItem::TIMESTAMP_START_KEY =   "timestamp_start";
 const char * const HistoryItem::TIMESTAMP_STOP_KEY =    "timestamp_stop";
 const char * const HistoryItem::AUDIO_CODEC_KEY =       "audio_codec";

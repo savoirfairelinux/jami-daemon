@@ -206,10 +206,20 @@ std::map<std::string, std::string> Call::createHistoryEntry() const
     result[HistoryItem::RECORDING_PATH_KEY] = recAudio_.fileExists() ? getFilename() : "";
     result[HistoryItem::TIMESTAMP_START_KEY] = timestamp_to_string(timestamp_start_);
     result[HistoryItem::TIMESTAMP_STOP_KEY] = timestamp_to_string(timestamp_stop_);
-    if (connectionState_ == RINGING)
+
+    // FIXME: state will no longer exist, it will be split into
+    // a boolean field called "missed" and a direction field "incoming" or "outgoing"
+    if (connectionState_ == RINGING) {
         result[HistoryItem::STATE_KEY] = HistoryItem::MISSED_STRING;
-    else
+        result[HistoryItem::MISSED_KEY] = "true";
+    } else {
         result[HistoryItem::STATE_KEY] = getTypeStr();
+        result[HistoryItem::MISSED_KEY] = "false";
+    }
+
+    // now "missed" and direction are independent
+    result[HistoryItem::DIRECTION_KEY] = getTypeStr();
+
     return result;
 }
 

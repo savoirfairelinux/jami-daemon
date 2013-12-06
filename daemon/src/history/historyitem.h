@@ -51,6 +51,8 @@ class HistoryItem {
         static const char * const AUDIO_CODEC_KEY;
         static const char * const VIDEO_CODEC_KEY;
         static const char * const STATE_KEY;
+        static const char * const MISSED_KEY;
+        static const char * const DIRECTION_KEY;
 
         static const char * const MISSED_STRING;
         static const char * const INCOMING_STRING;
