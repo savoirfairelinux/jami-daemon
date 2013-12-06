@@ -233,11 +233,12 @@ std::map<std::string, std::string>
 Call::getNullDetails()
 {
     std::map<std::string, std::string> details;
-    details["ACCOUNTID"] = "";
+    details["CALL_TYPE"] = "0";
     details["PEER_NUMBER"] = "Unknown";
-    details["PEER_NAME"] = "Unknown";
     details["DISPLAY_NAME"] = "Unknown";
     details["CALL_STATE"] = "UNKNOWN";
-    details["CALL_TYPE"] = "0";
+    details["CONF_ID"] = "";
+    details["TIMESTAMP_START"] = "";
+    details["ACCOUNTID"] = "";
     return details;
 }
