@@ -40,6 +40,8 @@
 
 namespace sfl_video {
 
+const char * VideoMixer::VIDEO_MIXER_SUFFIX = "_MX";
+
 VideoMixer::VideoMixer(const std::string &id) :
     VideoGenerator::VideoGenerator()
     , id_(id)
@@ -47,7 +49,7 @@ VideoMixer::VideoMixer(const std::string &id) :
     , height_(0)
     , sources_()
     , mutex_()
-    , sink_(id+"_MX")
+    , sink_(id + VIDEO_MIXER_SUFFIX)
 {
     auto videoCtrl = Manager::instance().getVideoControls();
     if (!videoCtrl->hasCameraStarted()) {
@@ -112,10 +114,10 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
         previous_p->copy(output);
     previous_p.reset();
 
-    const int n=sources_.size();
-    const int zoom=ceil(sqrt(n));
-    const int cell_width=width_ / zoom;
-    const int cell_height=height_ / zoom;
+    const int n = sources_.size();
+    const int zoom = ceil(sqrt(n));
+    const int cell_width = width_ / zoom;
+    const int cell_height = height_ / zoom;
 
     if (!scaled_input.allocBuffer(cell_width, cell_height,
                                   VIDEO_PIXFMT_YUV420P)) {
