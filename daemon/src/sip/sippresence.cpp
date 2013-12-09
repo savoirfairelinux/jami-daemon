@@ -197,23 +197,8 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
     DEBUG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s", uri.c_str(), acc_ID.c_str(), basic.c_str(), note.c_str());
-
-    if(uri == acc_->getFromUri())
-    {
-        if((note_ == note) && (status_ == status->info[0].basic_open))
-            return;
-
-        // save the status of our own account
-        status_ = status->info[0].basic_open;
-        note_ = note;
-        Manager::instance().saveConfig();
-        Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
-    }
-    else
-    {
-        // report status to client signal
-        Manager::instance().getClient()->getPresenceManager()->newBuddyNotification(acc_ID, uri, status->info[0].basic_open, note);
-    }
+    // report status to client signal
+    Manager::instance().getClient()->getPresenceManager()->newBuddyNotification(acc_ID, uri, status->info[0].basic_open, note);
 }
 
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)
