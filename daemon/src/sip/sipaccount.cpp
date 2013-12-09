@@ -770,6 +770,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? Conf::TRUE_STR : Conf::FALSE_STR;
+    // initialize status values
+    a[CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? Conf::TRUE_STR : Conf::FALSE_STR;
+    a[CONFIG_PRESENCE_NOTE] = presence_? presence_->getNote() : " ";
 #endif
 
     RegistrationState state = UNREGISTERED;

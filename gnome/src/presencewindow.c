@@ -1009,7 +1009,7 @@ update_presence_statusbar()
                 (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0) &&
                 (account->state == ACCOUNT_STATE_REGISTERED))
         {
-            if (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_STATUS), "true") == 0)
+            if (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_STATUS), PRESENCE_STATUS_ONLINE) == 0)
                 global_status = TRUE;
 
             if (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") == 0)

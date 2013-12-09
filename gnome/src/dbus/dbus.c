@@ -640,6 +640,7 @@ sip_presence_subscription_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, cons
         }
     }
 }
+
 static void
 sip_presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID, const gchar *uri,
                   gboolean status, const gchar * note)
@@ -650,13 +651,28 @@ sip_presence_notification_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accID
     account_t *acc = account_list_get_by_id(accID);
     if (acc)
     {
-        buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
-        if(b)
+        gchar *my_uri = g_strconcat("<sip:",
+                account_lookup(acc, CONFIG_ACCOUNT_USERNAME),
+                "@",
+                account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME),
+                ">", NULL);
+
+        if ((g_strcmp0(uri, my_uri) == 0)) // self-subscription
         {
-            b->status = status;
-            g_free(b->note);
-            b->note = g_strdup(note);
-            update_presence_view();
+            account_replace(acc, CONFIG_PRESENCE_STATUS, status? PRESENCE_STATUS_ONLINE:PRESENCE_STATUS_OFFLINE);
+            account_replace(acc, CONFIG_PRESENCE_NOTE, note);
+            update_presence_statusbar();
+        }
+        else
+        {
+            buddy_t * b = presence_buddy_list_buddy_get_by_string(accID, uri);
+            if(b)
+            {
+                b->status = status;
+                g_free(b->note);
+                b->note = g_strdup(note);
+                update_presence_view();
+            }
         }
     }
 }
