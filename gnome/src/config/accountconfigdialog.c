@@ -1386,9 +1386,6 @@ static void update_account_from_basic_tab(account_t *account)
 #ifdef SFL_PRESENCE
         v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
         account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
-        // this allow the daemon for retrying to publish/subscribe
-        account_replace(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED, bool_to_string(v));
-        account_replace(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED, bool_to_string(v));
         // TODO enable/disable the presence window view
 #endif
 
