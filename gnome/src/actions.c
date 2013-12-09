@@ -346,8 +346,7 @@ sflphone_hang_up(SFLPhoneClient *client)
     statusbar_update_clock("");
 
     // Allow screen saver to start
-    guint nbcall = calllist_get_size(current_calls_tab);
-    if(nbcall == 1)
+    if (calllist_get_size(current_calls_tab) == 1)
         dbus_screensaver_uninhibit();
 }
 
@@ -357,8 +356,7 @@ sflphone_pick_up(SFLPhoneClient *client)
     callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
 
     // Disable screensaver if the list is empty call
-    guint nbcall = calllist_get_size(current_calls_tab);
-    if(nbcall == 0)
+    if (calllist_get_size(current_calls_tab) == 0)
         dbus_screensaver_inhibit();
 
     if (!selectedCall) {
