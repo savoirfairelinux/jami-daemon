@@ -403,7 +403,7 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
 
     switch (stunStatus) {
         case PJLIB_UTIL_ESTUNNOTRESPOND:
-           ERROR("No response from servers.");
+           ERROR("No response from STUN server %.*s", stunServerName->slen, stunServerName->ptr);
            return;
         case PJLIB_UTIL_ESTUNSYMMETRIC:
            ERROR("Different mapped addresses are returned by servers.");
@@ -417,7 +417,8 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
     os << pj_ntohs(mapped_addr.sin_port);
     port = os.str();
 
-    WARN("Using STUN %s:%s", addr.c_str(), port.c_str());
+    WARN("Using address %s:%s provided by STUN server %.*s",
+         addr.c_str(), port.c_str(), stunServerName->slen, stunServerName->ptr);
 }
 
 #undef RETURN_IF_NULL
