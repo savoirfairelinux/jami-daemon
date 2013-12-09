@@ -59,12 +59,11 @@ bool History::load(int limit)
         return false;
     }
 
-    int counter = 0;
-    while (!infile.eof() and counter < limit) {
+    while (!infile.eof()) {
         HistoryItem item(infile);
         addEntry(item, limit);
-        ++counter;
     }
+
     return true;
 }
 
