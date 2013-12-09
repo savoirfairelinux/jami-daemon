@@ -636,9 +636,11 @@ show_group_info_dialog(const gchar *title, gchar **group)
     {
         g_free(*group);
         *group = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_group)));
-
         gtk_widget_destroy(dialog);
-        return TRUE;
+        if ((g_strcmp0(group, "") == 0) || (g_strcmp0(group," ") == 0))
+            return FALSE;
+        else
+            return TRUE;
     }
 
     gtk_widget_destroy(dialog);
