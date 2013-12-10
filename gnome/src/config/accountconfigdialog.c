@@ -103,9 +103,9 @@ static GtkWidget *audio_port_max_spin_box;
 static GtkWidget *video_port_min_spin_box;
 static GtkWidget *video_port_max_spin_box;
 #endif
-
 #ifdef SFL_PRESENCE
 static GtkWidget *presence_check_box;
+static gboolean is_account_new;
 #endif
 
 typedef struct OptionsData {
@@ -154,10 +154,9 @@ static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
 }
 
 /* Signal to protocol_combo 'changed' */
-void change_protocol_cb()
+static void change_protocol_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
     gchar *protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
-
     // Only if tabs are not NULL
     if (security_tab && advanced_tab) {
         if (utf8_case_equal(protocol, "IAX")) {
@@ -171,7 +170,17 @@ void change_protocol_cb()
             gtk_widget_show(security_tab);
             gtk_widget_show(advanced_tab);
 #ifdef SFL_PRESENCE
-            gtk_widget_set_sensitive(presence_check_box, TRUE);
+            account_t * account = (account_t*) data;
+            if(account)
+            {
+                // the presence can be enabled when at least 1 presence feature is supported by the PBX
+                // OR when the account is new
+                gtk_widget_set_sensitive(presence_check_box,
+                        ((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true")==0) ||
+                         (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED), "true")==0) ||
+                         (is_account_new))?
+                        TRUE : FALSE);
+            }
 #endif
         }
     }
@@ -313,7 +322,7 @@ create_account_parameters(const account_t *account, gboolean is_new, GtkWidget *
 
     /* Link signal 'changed' */
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed",
-                     G_CALLBACK(change_protocol_cb), NULL);
+                     G_CALLBACK(change_protocol_cb), (gpointer) account);
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_Host name"));
@@ -431,8 +440,7 @@ create_presence_checkbox(const account_t *account)
 
     gboolean enabled = (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true")==0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),enabled);
-    // no control for now
-    gtk_widget_set_sensitive(presence_check_box, FALSE);
+    // sensitivity is set later in change_protocol_cb
 
     gtk_grid_attach(GTK_GRID(grid), presence_check_box, 0, 0, 1, 1);
 
@@ -459,6 +467,7 @@ create_basic_tab(const account_t *account, gboolean is_new, GtkWidget *dialog)
 #ifdef SFL_PRESENCE
     frame = create_presence_checkbox(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+    is_account_new = is_new; // need a copy for a cb
 #endif
 
     gtk_widget_show_all(vbox);
