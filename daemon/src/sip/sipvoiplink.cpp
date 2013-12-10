@@ -2194,20 +2194,13 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
         }
     }
 
-    if (!event->body.tsx_state.src.rdata)
-        return;
-
-    pjsip_rx_data *r_data = event->body.tsx_state.src.rdata;
-
-    // Respond with a 200/OK
-    sendOK(inv->dlg, r_data, tsx);
-
 #if HAVE_INSTANT_MESSAGING
 
     if (!call)
         return;
 
     // Incoming TEXT message
+    pjsip_rx_data *r_data = event->body.tsx_state.src.rdata;
 
     // Get the message inside the transaction
     if (!r_data->msg_info.msg->body)
@@ -2244,6 +2237,12 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
             from = from.substr(1, from.size() - 2);
 
         Manager::instance().incomingMessage(call->getCallId(), from, findTextMessage(formattedMessage));
+
+        if (!event->body.tsx_state.src.rdata)
+            return;
+
+        // Respond with a 200/OK
+        sendOK(inv->dlg, r_data, tsx);
 
     } catch (const sfl::InstantMessageException &except) {
         ERROR("%s", except.what());
