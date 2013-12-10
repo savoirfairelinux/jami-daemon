@@ -2367,7 +2367,7 @@ void registration_cb(pjsip_regc_cbparam *param)
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
 
-        Manager::instance().getClient()->getCallManager()->registrationStateChanged(accountID, state, param->code);
+        Manager::instance().getClient()->getConfigurationManager()->sipRegistrationStateChanged(accountID, state, param->code);
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);

@@ -96,11 +96,6 @@ void CallManager::newCallCreated(const std::string& accountID, const std::string
     on_new_call_created_wrapper(accountID, callID, to);
 }
 
-void CallManager::registrationStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code)
-{
-    on_account_state_changed_with_code_wrapper(accoundID, state, code);
-}
-
 void CallManager::sipCallStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code)
 {
 

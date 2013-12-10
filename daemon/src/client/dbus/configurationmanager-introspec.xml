@@ -448,10 +448,35 @@
        <signal name="historyChanged" tp:name-for-bindings="historyChanged">
        </signal>
 
+       <!-- FIXME: we should rethink these two signals -->
+       <!-- Used by IAX and SIP accounts -->
        <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
            <arg type="s" name="accountID"/>
            <arg type="i" name="registration_state"/>
        </signal>
+
+       <!-- Only used by SIP accounts, data is directly from pjsip -->
+       <signal name="sipRegistrationStateChanged" tp:name-for-bindings="sipRegistrationStateChanged">
+           <tp:docstring>
+               <p>Account state changed, SFLphone received a notification from registrar.</p>
+           </tp:docstring>
+           <arg type="s" name="accountID" >
+               <tp:docstring>
+                   The account ID
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="state">
+               <tp:docstring>
+                   Description string
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="code">
+               <tp:docstring>
+                   The SIP message code
+               </tp:docstring>
+           </arg>
+       </signal>
+
 
        <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">
            <arg type="s" name="reason">

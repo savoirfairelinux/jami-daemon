@@ -665,28 +665,6 @@
               </tp:docstring>
         </signal>
 
-        <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
-            <tp:docstring>
-                <p>Account state changed, SFLphone received a notification
-                from registrar.</p>
-            </tp:docstring>
-            <arg type="s" name="accountID" >
-              <tp:docstring>
-                The account ID
-              </tp:docstring>
-            </arg>
-            <arg type="s" name="state">
-              <tp:docstring>
-                Description string
-              </tp:docstring>
-            </arg>
-            <arg type="i" name="code">
-              <tp:docstring>
-                The SIP or IAX2 message code
-              </tp:docstring>
-            </arg>
-        </signal>
-
         <signal name="voiceMailNotify" tp:name-for-bindings="voiceMailNotify">
             <tp:docstring>
               Notify the clients of the voicemail number for a specific account, if applicable.

@@ -56,6 +56,11 @@ void ConfigurationManager::registrationStateChanged(const std::string& accoundID
     on_account_state_changed_wrapper(accoundID, state);
 }
 
+void ConfigurationManager::sipRegistrationStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code)
+{
+    on_account_state_changed_with_code_wrapper(accoundID, state, code);
+}
+
 void ConfigurationManager::errorAlert(const int & /*alert*/)
 {
 }

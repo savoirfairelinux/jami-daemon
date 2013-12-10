@@ -176,7 +176,6 @@ class CallManager
         void updatePlaybackScale(const std::string&, const int32_t&, const int32_t&);
         void conferenceRemoved(const std::string&);
         void newCallCreated(const std::string&, const std::string&, const std::string&);
-        void registrationStateChanged(const std::string&, const std::string&, const int32_t&);
         void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
         void recordingStateChanged(const std::string& callID, const bool& state);
         void volumeChanged(const std::string& device, const int& value);
