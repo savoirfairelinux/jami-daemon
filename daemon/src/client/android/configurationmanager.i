@@ -33,8 +33,8 @@
 typedef struct configurationmanager_callback
 {
     void (*on_accounts_changed)(void);
-    void (*on_account_state_changed)(const std::string& accoundID, const int32_t& state);
-    void (*on_account_state_changed_with_code)(const std::string& accoundID, const std::string& state, const int32_t& code);
+    void (*on_account_state_changed)(const std::string& accountID, const int32_t& state);
+    void (*on_account_state_changed_with_code)(const std::string& accountID, const std::string& state, const int32_t& code);
 } configurationmanager_callback_t;
 
 
@@ -42,8 +42,8 @@ class ConfigurationCallback {
 public:
     virtual ~ConfigurationCallback() {}
     virtual void on_accounts_changed(void) {}
-    virtual void on_account_state_changed(const std::string& accoundID, const int32_t& state) {}
-    virtual void on_account_state_changed_with_code(const std::string& accoundID, const std::string& state, const int32_t& code) {}
+    virtual void on_account_state_changed(const std::string& accountID, const int32_t& state) {}
+    virtual void on_account_state_changed_with_code(const std::string& accountID, const std::string& state, const int32_t& code) {}
 };
 
 static ConfigurationCallback *registeredConfigurationCallbackObject = NULL;
@@ -52,12 +52,12 @@ void on_accounts_changed_wrapper (void) {
     registeredConfigurationCallbackObject->on_accounts_changed();
 }
 
-void on_account_state_changed_wrapper (const std::string& accoundID, const int32_t& state) {
-    registeredConfigurationCallbackObject->on_account_state_changed(accoundID, state);
+void on_account_state_changed_wrapper (const std::string& accountID, const int32_t& state) {
+    registeredConfigurationCallbackObject->on_account_state_changed(accountID, state);
 }
 
-void on_account_state_changed_with_code_wrapper (const std::string& accoundID, const std::string& state, const int32_t& code) {
-    registeredConfigurationCallbackObject->on_account_state_changed_with_code(accoundID, state, code);
+void on_account_state_changed_with_code_wrapper (const std::string& accountID, const std::string& state, const int32_t& code) {
+    registeredConfigurationCallbackObject->on_account_state_changed_with_code(accountID, state, code);
 }
 
 static struct configurationmanager_callback wrapper_configurationcallback_struct = {
@@ -80,9 +80,9 @@ public:
     void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
     std::map<std::string, std::string> getAccountTemplate();
     std::string addAccount(const std::map< std::string, std::string >& details);
-    void removeAccount(const std::string& accoundID);
+    void removeAccount(const std::string& accountID);
     std::vector< std::string > getAccountList();
-    void sendRegister(const std::string& accoundID, const bool& enable);
+    void sendRegister(const std::string& accountID, const bool& enable);
     void registerAllAccounts(void);
 
     std::map< std::string, std::string > getTlsSettingsDefault();
@@ -155,8 +155,8 @@ class ConfigurationCallback {
 public:
     virtual ~ConfigurationCallback();
     virtual void on_accounts_changed(void);
-    virtual void on_account_state_changed(const std::string& accoundID, const int32_t& state);
-    virtual void on_account_state_changed_with_code(const std::string& accoundID, const std::string& state, const int32_t& code);
+    virtual void on_account_state_changed(const std::string& accountID, const int32_t& state);
+    virtual void on_account_state_changed_with_code(const std::string& accountID, const std::string& state, const int32_t& code);
 };
 
 static ConfigurationCallback *registeredConfigurationCallbackObject = NULL;

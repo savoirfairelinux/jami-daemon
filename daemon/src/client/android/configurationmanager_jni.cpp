@@ -46,19 +46,19 @@ void ConfigurationManager::historyChanged()
 
 }
 
-void ConfigurationManager::stunStatusFailure(const std::string& accoundID)
+void ConfigurationManager::stunStatusFailure(const std::string& accountID)
 {
 
 }
 
-void ConfigurationManager::registrationStateChanged(const std::string& accoundID, int const& state)
+void ConfigurationManager::registrationStateChanged(const std::string& accountID, int const& state)
 {
-    on_account_state_changed_wrapper(accoundID, state);
+    on_account_state_changed_wrapper(accountID, state);
 }
 
-void ConfigurationManager::sipRegistrationStateChanged(const std::string& accoundID, const std::string& state, const int32_t& code)
+void ConfigurationManager::sipRegistrationStateChanged(const std::string& accountID, const std::string& state, const int32_t& code)
 {
-    on_account_state_changed_with_code_wrapper(accoundID, state, code);
+    on_account_state_changed_with_code_wrapper(accountID, state, code);
 }
 
 void ConfigurationManager::errorAlert(const int & /*alert*/)
