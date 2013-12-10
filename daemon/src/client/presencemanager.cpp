@@ -61,8 +61,15 @@ PresenceManager::subscribeBuddy(const std::string& accountID, const std::string&
     if (!sipaccount)
         ERROR("Could not find account %s",accountID.c_str());
     else{
-        DEBUG("%subscribePresence (acc:%s, buddy:%s)",flag? "S":"Uns", accountID.c_str(), uri.c_str());
-        sipaccount->getPresence()->subscribeClient(uri,flag);
+        SIPPresence *pres = sipaccount->getPresence();
+        if (pres)
+        {
+            if((pres->isEnabled()) && pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE))
+            {
+                DEBUG("%subscribePresence (acc:%s, buddy:%s)",flag? "S":"Uns", accountID.c_str(), uri.c_str());
+                pres->subscribeClient(uri,flag);
+            }
+        }
     }
 }
 
@@ -77,8 +84,15 @@ PresenceManager::publish(const std::string& accountID, const bool& status, const
     if (!sipaccount)
         ERROR("Could not find account %s.",accountID.c_str());
     else{
-        DEBUG("Send Presence (acc:%s, status %s).",accountID.c_str(),status? "online":"offline");
-        sipaccount->getPresence()->sendPresence(status, note);
+        SIPPresence *pres = sipaccount->getPresence();
+        if (pres)
+        {
+            if((pres->isEnabled()) && pres->isSupported(PRESENCE_FUNCTION_PUBLISH))
+            {
+                DEBUG("Send Presence (acc:%s, status %s).",accountID.c_str(),status? "online":"offline");
+                pres->sendPresence(status, note);
+            }
+        }
     }
 }
 

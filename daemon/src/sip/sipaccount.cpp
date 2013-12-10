@@ -45,6 +45,7 @@
 
 #ifdef SFL_PRESENCE
 #include "sippresence.h"
+#include "client/configurationmanager.h"
 #endif
 
 #include <unistd.h>
@@ -505,6 +506,12 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     std::string pres;
     mapNode.getValue(PRESENCE_ENABLED_KEY, &pres);
     enablePresence(pres == Conf::TRUE_STR);
+    mapNode.getValue(PRESENCE_PUBLISH_SUPPORTED_KEY, &pres);
+    if (presence_)
+        presence_->support(PRESENCE_FUNCTION_PUBLISH, pres == Conf::TRUE_STR);
+    mapNode.getValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, &pres);
+    if (presence_)
+        presence_->support(PRESENCE_FUNCTION_SUBSCRIBE, pres == Conf::TRUE_STR);
 #endif
 
     std::string dtmfType;
@@ -888,6 +895,7 @@ void SIPAccount::registerVoIPLink()
 
 #ifdef SFL_PRESENCE
     getPresence()->subscribeClient(getFromUri(), true); //self presence subscription
+    getPresence()->sendPresence(true,""); // try to publish whatever the status is.
 #endif
 }
 
@@ -1507,32 +1515,38 @@ SIPPresence * SIPAccount::getPresence() const
 void
 SIPAccount::enablePresence(const bool& enabled)
 {
-    DEBUG("Presence enable for :%s : %s.",
+    DEBUG("Presence enable for %s : %s.",
             accountID_.c_str(),
             enabled? Conf::TRUE_STR : Conf::FALSE_STR);
 
-    if (presence_){
+    if (presence_)
         presence_->enable(enabled);
-        if(enabled)// try to publish and subscribe by default when presence is enabled
-        {
-            supportPresence(PRESENCE_FUNCTION_PUBLISH, enabled);
-            supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, enabled);
-        }
-    }
 }
 
 /**
- *  Enable the presence function (PUBLISH/SUBSCRIBE)
+ *  Set the presence (PUBLISH/SUBSCRIBE) support flags
+ *  and process the change.
  */
 void
 SIPAccount::supportPresence(int function, const bool& enabled)
 {
-    DEBUG("Presence support for :%s (%s: %s).",
+    if(getPresence()->isSupported(function) == enabled)
+        return;
+
+    DEBUG("Presence support for %s (%s: %s).",
             accountID_.c_str(),
             (function==PRESENCE_FUNCTION_PUBLISH)? "publish" : "subscribe",
             enabled? Conf::TRUE_STR : Conf::FALSE_STR);
     if (presence_)
         presence_->support(function, enabled);
+
+    // force presence to disable when nothing is supported
+    if(!(getPresence()->isSupported(PRESENCE_FUNCTION_PUBLISH)) &&
+       !(getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)))
+        enablePresence(false);
+
+    Manager::instance().saveConfig();
+    Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
 }
 #endif
 

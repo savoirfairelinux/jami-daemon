@@ -95,6 +95,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                 pres_client->getURI().c_str(),
                 PJ_TRUE);
 
+        pres->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, PJ_TRUE);
+
     } else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
         int resub_delay = -1;
         pj_strdup_with_null(pres_client->pool_, &pres_client->term_reason_, pjsip_evsub_get_termination_reason(sub));
@@ -166,12 +168,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                 std::string account_host = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
                 std::string sub_host = sip_utils::getHostFromUri(pres_client->getURI());
 
-                if((!subscribe_allowed) && (account_host == sub_host)
-                        && pres_client->getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)){ // avoid mutiple details reload
+                if((!subscribe_allowed) && (account_host == sub_host))
                     pres_client->getPresence()->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, PJ_FALSE);
-                    Manager::instance().saveConfig();
-                    Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
-                }
 
             } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
                 if (pres_client->isTermReason("deactivated") || pres_client->isTermReason("timeout")) {

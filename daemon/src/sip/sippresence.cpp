@@ -180,8 +180,8 @@ void SIPPresence::sendPresence(bool status, const std::string &note)
 {
     updateStatus(status, note);
 
-    if ((not publish_supported_) or (not enabled_))
-        return;
+    //if ((not publish_supported_) or (not enabled_))
+    //    return;
 
     if (acc_->isIP2IP())
         notifyPresSubServer(); // to each subscribers
@@ -210,14 +210,15 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
 
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)
 {
-    std::string account_host = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
-    std::string sub_host = sip_utils::getHostFromUri(uri);
-
     /* if an account has a server that doesn't support SUBSCRIBE, it's still possible
      * to subscribe to someone on another server */
+    /*
+    std::string account_host = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
+    std::string sub_host = sip_utils::getHostFromUri(uri);
     if (((not subscribe_supported_) && (account_host == sub_host))
             or (not enabled_))
         return;
+    */
 
     /* Check if the buddy was already subscribed */
     for (const auto & c : sub_client_list_) {
@@ -400,8 +401,6 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
                     "Publish not supported.");
 
             pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, PJ_FALSE);
-            Manager::instance().saveConfig();
-            Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
         }
 
     } else {
@@ -412,6 +411,8 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
             pjsip_publishc_destroy(param->pubc);
             pres->publish_sess_ = NULL;
         }
+
+        pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, PJ_TRUE);
     }
 }
 
