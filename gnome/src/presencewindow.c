@@ -637,7 +637,9 @@ show_group_info_dialog(const gchar *title, gchar **group)
         g_free(*group);
         *group = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_group)));
         gtk_widget_destroy(dialog);
-        if ((g_strcmp0(group, "") == 0) || (g_strcmp0(group," ") == 0))
+
+        // check that the group name isn't empty or default
+        if ((g_strcmp0(*group, "") == 0) || (g_strcmp0(*group," ") == 0))
             return FALSE;
         else
             return TRUE;
@@ -1020,7 +1022,7 @@ update_presence_statusbar()
     }
 
     if (global_status)
-        g_debug("Presence: statusbar, at least 1 account is online.");
+        g_debug("Presence: statusbar, at least 1 account is registered.");
     if (global_publish_enabled)
         g_debug("Presence: statusbar, at least 1 account can publish.");
 
