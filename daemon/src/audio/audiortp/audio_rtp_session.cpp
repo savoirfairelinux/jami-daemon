@@ -143,8 +143,13 @@ void AudioRtpSession::sendDtmfEvent()
     }
 
     // restore the payload to audio
-    const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getEncoderPayloadType()));
-    queue_.setPayloadFormat(pf);
+    if (getHasDynamicPayload()) {
+        const ost::DynamicPayloadFormat pf(getEncoderPayloadType(), audioRtpRecord_.codecSampleRate_);
+        queue_.setPayloadFormat(pf);
+    } else {
+        const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getEncoderPayloadType()));
+        queue_.setPayloadFormat(pf);
+    }
 
     // decrease length remaining to process for this event
     dtmf.length -= increment;
