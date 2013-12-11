@@ -98,7 +98,7 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
         const int G722_RTP_CLOCK_RATE = 8000;
         queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, G722_RTP_CLOCK_RATE));
     } else {
-        if (getHasDynamicPayload())
+        if (hasDynamicPayload())
             queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, getCodecSampleRate()));
         else
             queue_.setPayloadFormat(ost::StaticPayloadFormat(static_cast<ost::StaticPayloadType>(payloadType)));
@@ -143,8 +143,8 @@ void AudioRtpSession::sendDtmfEvent()
     }
 
     // restore the payload to audio
-    if (getHasDynamicPayload()) {
-        const ost::DynamicPayloadFormat pf(getEncoderPayloadType(), audioRtpRecord_.codecSampleRate_);
+    if (hasDynamicPayload()) {
+        const ost::DynamicPayloadFormat pf(getEncoderPayloadType(), getCodecSampleRate());
         queue_.setPayloadFormat(pf);
     } else {
         const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getEncoderPayloadType()));

@@ -155,7 +155,7 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.codecChannels_;
         }
 
-        bool getHasDynamicPayload() const {
+        bool hasDynamicPayload() const {
             return audioRtpRecord_.hasDynamicPayloadType_;
         }
 
