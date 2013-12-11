@@ -531,7 +531,7 @@ bool PresSubClient::subscribe()
     pres_callback.on_rx_notify = &pres_client_evsub_on_rx_notify;
 
     SIPAccount * acc = pres_->getAccount();
-    DEBUG("PresSubClient %s: subscribing ", uri_.ptr);
+    DEBUG("PresSubClient %.*s: subscribing ", uri_.slen, uri_.ptr);
 
 
     /* Create UAC dialog */
