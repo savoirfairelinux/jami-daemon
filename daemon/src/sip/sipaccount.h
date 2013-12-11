@@ -566,7 +566,7 @@ class SIPAccount : public Account {
          * Activate the publish/subscribe.
          * @param enable Flag
          */
-        void supportPresence(int function, const bool& enable);
+        void supportPresence(int function, bool enable);
 #endif
 
 //        unsigned generateAudioPort() const;

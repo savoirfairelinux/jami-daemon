@@ -1528,21 +1528,20 @@ SIPAccount::enablePresence(const bool& enabled)
  *  and process the change.
  */
 void
-SIPAccount::supportPresence(int function, const bool& enabled)
+SIPAccount::supportPresence(int function, bool enabled)
 {
-    if(getPresence()->isSupported(function) == enabled)
+    if (getPresence()->isSupported(function) == enabled)
         return;
 
-    DEBUG("Presence support for %s (%s: %s).",
-            accountID_.c_str(),
-            (function==PRESENCE_FUNCTION_PUBLISH)? "publish" : "subscribe",
-            enabled? Conf::TRUE_STR : Conf::FALSE_STR);
+    DEBUG("Presence support for %s (%s: %s).", accountID_.c_str(),
+          function == PRESENCE_FUNCTION_PUBLISH ? "publish" : "subscribe",
+          enabled ? Conf::TRUE_STR : Conf::FALSE_STR);
     if (presence_)
         presence_->support(function, enabled);
 
     // force presence to disable when nothing is supported
-    if(!(getPresence()->isSupported(PRESENCE_FUNCTION_PUBLISH)) &&
-       !(getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)))
+    if (not getPresence()->isSupported(PRESENCE_FUNCTION_PUBLISH) and
+        not getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE))
         enablePresence(false);
 
     Manager::instance().saveConfig();

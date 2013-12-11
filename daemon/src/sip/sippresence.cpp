@@ -400,7 +400,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
                     error,
                     "Publish not supported.");
 
-            pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, PJ_FALSE);
+            pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, false);
         }
 
     } else {
@@ -412,7 +412,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
             pres->publish_sess_ = NULL;
         }
 
-        pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, PJ_TRUE);
+        pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, true);
     }
 }
 
