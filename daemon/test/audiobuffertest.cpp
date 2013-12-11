@@ -42,7 +42,7 @@ void AudioBufferTest::testAudioBufferConstructors()
     SFLAudioSample test_samples1[] = {};
     SFLAudioSample test_samples2[] = {10, 11, 12, 13, 14, 15, 16, 17};
 
-    AudioBuffer empty_buf(0);
+    AudioBuffer empty_buf(0, 1);
     CPPUNIT_ASSERT(empty_buf.frames() == 0);
     CPPUNIT_ASSERT(empty_buf.channels() == 1);
     CPPUNIT_ASSERT(empty_buf.getChannel(0)->size() == 0);
@@ -84,7 +84,7 @@ void AudioBufferTest::testAudioBufferMix()
     test_buf1.setChannelNum(2, true);
     CPPUNIT_ASSERT((*test_buf1.getChannel(1))[0] == test_samples1[0]);
 
-    AudioBuffer test_buf2(0);
+    AudioBuffer test_buf2(0, 1);
     test_buf2.deinterleave(test_samples2, 3, 3);
     CPPUNIT_ASSERT((*test_buf2.getChannel(0))[2] == test_samples2[6]);
     CPPUNIT_ASSERT((*test_buf2.getChannel(1))[1] == test_samples2[4]);

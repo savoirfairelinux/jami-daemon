@@ -1449,7 +1449,7 @@ void ManagerImpl::playDtmf(char code)
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
     //std::vector<SFLAudioSample> buf(size);
-    AudioBuffer buf(size);
+    AudioBuffer buf(size, 1);
 
     // Handle dtmf
     dtmfKey_->startTone(code);

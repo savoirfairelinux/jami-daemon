@@ -36,7 +36,7 @@
 #include "resamplertest.h"
 
 ResamplerTest::ResamplerTest() :
-    CppUnit::TestCase("Resampler module test"), inputBuffer(MAX_BUFFER_LENGTH), outputBuffer(MAX_BUFFER_LENGTH)
+    CppUnit::TestCase("Resampler module test"), inputBuffer(MAX_BUFFER_LENGTH, 1), outputBuffer(MAX_BUFFER_LENGTH, 1)
 {}
 
 void ResamplerTest::setUp()
