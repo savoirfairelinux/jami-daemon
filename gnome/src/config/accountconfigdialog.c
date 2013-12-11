@@ -154,7 +154,7 @@ static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
 }
 
 /* Signal to protocol_combo 'changed' */
-static void change_protocol_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
+static void change_protocol_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
 {
     gchar *protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
     // Only if tabs are not NULL
@@ -170,16 +170,14 @@ static void change_protocol_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gp
             gtk_widget_show(security_tab);
             gtk_widget_show(advanced_tab);
 #ifdef SFL_PRESENCE
-            account_t * account = (account_t*) data;
-            if(account)
-            {
+            if (data) {
+                account_t * account = data;
                 // the presence can be enabled when at least 1 presence feature is supported by the PBX
                 // OR when the account is new
                 gtk_widget_set_sensitive(presence_check_box,
-                        ((g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true")==0) ||
-                         (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED), "true")==0) ||
-                         (is_account_new))?
-                        TRUE : FALSE);
+                        !g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") ||
+                        !g_strcmp0(account_lookup(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED), "true") ||
+                        is_account_new);
             }
 #endif
         }
@@ -256,7 +254,7 @@ alias_changed_cb(GtkEditable *editable, gpointer data)
 
 
 static GtkWidget*
-create_account_parameters(const account_t *account, gboolean is_new, GtkWidget *dialog)
+create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog)
 {
     g_assert(account);
     gchar *password = NULL;
@@ -322,7 +320,7 @@ create_account_parameters(const account_t *account, gboolean is_new, GtkWidget *
 
     /* Link signal 'changed' */
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed",
-                     G_CALLBACK(change_protocol_cb), (gpointer) account);
+                     G_CALLBACK(change_protocol_cb), account);
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_Host name"));
@@ -452,7 +450,7 @@ create_presence_checkbox(const account_t *account)
 #endif
 
 static GtkWidget*
-create_basic_tab(const account_t *account, gboolean is_new, GtkWidget *dialog)
+create_basic_tab(account_t *account, gboolean is_new, GtkWidget *dialog)
 {
     // Build the advanced tab, to appear on the account configuration panel
     g_debug("Build basic tab");
