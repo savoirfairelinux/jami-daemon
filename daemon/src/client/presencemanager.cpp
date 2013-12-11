@@ -56,20 +56,17 @@ namespace {
 void
 PresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
 {
-
     SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
-    if (!sipaccount)
+    if (!sipaccount) {
         ERROR("Could not find account %s",accountID.c_str());
-    else{
-        SIPPresence *pres = sipaccount->getPresence();
-        if (pres)
-        {
-            if((pres->isEnabled()) && pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE))
-            {
-                DEBUG("%subscribePresence (acc:%s, buddy:%s)",flag? "S":"Uns", accountID.c_str(), uri.c_str());
-                pres->subscribeClient(uri,flag);
-            }
-        }
+        return;
+    }
+
+    SIPPresence *pres = sipaccount->getPresence();
+    if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
+        DEBUG("%subscribePresence (acc:%s, buddy:%s)", flag ? "S" : "Uns",
+              accountID.c_str(), uri.c_str());
+        pres->subscribeClient(uri, flag);
     }
 }
 
@@ -81,18 +78,16 @@ void
 PresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
 {
     SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
-    if (!sipaccount)
+    if (!sipaccount) {
         ERROR("Could not find account %s.",accountID.c_str());
-    else{
-        SIPPresence *pres = sipaccount->getPresence();
-        if (pres)
-        {
-            if((pres->isEnabled()) && pres->isSupported(PRESENCE_FUNCTION_PUBLISH))
-            {
-                DEBUG("Send Presence (acc:%s, status %s).",accountID.c_str(),status? "online":"offline");
-                pres->sendPresence(status, note);
-            }
-        }
+        return;
+    }
+
+    SIPPresence *pres = sipaccount->getPresence();
+    if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
+        DEBUG("Send Presence (acc:%s, status %s).", accountID.c_str(),
+              status ? "online" : "offline");
+        pres->sendPresence(status, note);
     }
 }
 
@@ -103,12 +98,14 @@ void
 PresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
 {
     SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
-    if (!sipaccount)
+    if (!sipaccount) {
         ERROR("Could not find account IP2IP");
-    else{
-        DEBUG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(), flag? "true":"false");
-        sipaccount->getPresence()->approvePresSubServer(uri, flag);
+        return;
     }
+
+    DEBUG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
+          flag ? "true" : "false");
+    sipaccount->getPresence()->approvePresSubServer(uri, flag);
 }
 
 /**
@@ -122,7 +119,7 @@ PresenceManager::getSubscriptions(const std::string& accountID)
     if (sipaccount) {
         for (auto s : sipaccount->getPresence()->getClientSubscriptions()) {
             std::map<std::string, std::string> sub;
-            sub[ STATUS_KEY     ] = s->isPresent()?ONLINE_KEY:OFFLINE_KEY;
+            sub[ STATUS_KEY     ] = s->isPresent() ? ONLINE_KEY : OFFLINE_KEY;
             sub[ LINESTATUS_KEY ] = s->getLineStatus();
             ret.push_back(sub);
         }
@@ -137,6 +134,9 @@ void
 PresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
     SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    if (!sipaccount)
+        return;
+
     for (const auto &u : uris)
-        sipaccount->getPresence()->subscribeClient(u,true);
+        sipaccount->getPresence()->subscribeClient(u, true);
 }
