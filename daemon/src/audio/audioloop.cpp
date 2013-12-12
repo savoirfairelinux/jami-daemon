@@ -46,8 +46,7 @@
 
 AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0)
 {
-    buffer_ = new AudioBuffer(0, 1);
-    buffer_->setSampleRate(sampleRate);
+    buffer_ = new AudioBuffer(0, 1, sampleRate);
 }
 
 AudioLoop::~AudioLoop()

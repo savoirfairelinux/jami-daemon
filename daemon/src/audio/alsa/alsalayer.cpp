@@ -806,7 +806,8 @@ void AlsaLayer::audioCallback()
     if (samplesToGet > 0) {
         // Urgent data (dtmf, incoming call signal) come first.
         samplesToGet = std::min(samplesToGet, (unsigned)playbackAvailSmpl);
-        AudioBuffer out(samplesToGet, 1);
+        // FIXME: should this sample rate really be hardcoded?
+        AudioBuffer out(samplesToGet, 1, 8000);
         urgentRingBuffer_.get(out, MainBuffer::DEFAULT_ID);
         out.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
@@ -827,7 +828,8 @@ void AlsaLayer::audioCallback()
 
         int ringtoneAvailBytes = ringtoneAvailSmpl * sizeof(SFLAudioSample);
 
-        AudioBuffer out(ringtoneAvailSmpl, 1);
+        // FIXME: should this sample rate really be hardcoded?
+        AudioBuffer out(ringtoneAvailSmpl, 1, 8000);
 
         if (file_tone) {
             DEBUG("playback gain %d", playbackGain_);

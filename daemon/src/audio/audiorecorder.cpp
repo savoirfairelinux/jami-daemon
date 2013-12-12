@@ -80,7 +80,7 @@ AudioRecorder::runCallback(void *data)
 void AudioRecorder::run()
 {
     static const size_t BUFFER_LENGTH = 10000;
-    AudioBuffer buffer(BUFFER_LENGTH, 1);
+    AudioBuffer buffer(BUFFER_LENGTH, 1, 8000);
 
     while (running_) {
         const size_t availableSamples = mbuffer_.availableForGet(recorderId_);

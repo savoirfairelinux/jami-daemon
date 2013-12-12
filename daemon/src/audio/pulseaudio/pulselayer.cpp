@@ -96,7 +96,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , ringtone_(0)
     , sinkList_()
     , sourceList_()
-    , mic_buffer_(0, 1)
+    , mic_buffer_(0, 1, 8000)
     , context_(0)
     , mainloop_(pa_threaded_mainloop_new())
     , enumeratingSinks_(false)
@@ -454,7 +454,7 @@ void PulseLayer::writeToSpeaker()
     SFLAudioSample *data = 0;
 
     if (urgentBytes) {
-        AudioBuffer linearbuff(urgentSamples, n_channels);
+        AudioBuffer linearbuff(urgentSamples, n_channels, 8000);
         pa_stream_begin_write(s, (void**)&data, &urgentBytes);
         urgentRingBuffer_.get(linearbuff, MainBuffer::DEFAULT_ID); // retrive only the first sample_spec->channels channels
         linearbuff.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
@@ -472,7 +472,7 @@ void PulseLayer::writeToSpeaker()
     if (toneToPlay) {
         if (playback_->isReady()) {
             pa_stream_begin_write(s, (void**)&data, &writableBytes);
-            AudioBuffer linearbuff(writableSamples, n_channels);
+            AudioBuffer linearbuff(writableSamples, n_channels, 8000);
             toneToPlay->getNext(linearbuff, playbackGain_); // retrive only n_channels
             linearbuff.interleave(data);
             pa_stream_write(s, data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
@@ -511,7 +511,7 @@ void PulseLayer::writeToSpeaker()
 
     pa_stream_begin_write(s, (void**)&data, &resampledBytes);
 
-    AudioBuffer linearbuff(readableSamples, n_channels);
+    AudioBuffer linearbuff(readableSamples, n_channels, 8000);
     Manager::instance().getMainBuffer().getData(linearbuff, MainBuffer::DEFAULT_ID);
 
     if (resample) {
@@ -594,7 +594,7 @@ void PulseLayer::ringtoneToSpeaker()
 
     if (fileToPlay) {
         const unsigned samples = (bytes / sample_size) / ringtone_->channels();
-        AudioBuffer tmp(samples, ringtone_->channels());
+        AudioBuffer tmp(samples, ringtone_->channels(), 8000);
         fileToPlay->getNext(tmp, playbackGain_);
         tmp.interleave((SFLAudioSample*) data);
     } else {

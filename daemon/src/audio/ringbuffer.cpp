@@ -48,7 +48,7 @@ const size_t MIN_BUFFER_SIZE = 1280;
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer(size_t size, const std::string &call_id) :
     endPos_(0)
-    , buffer_(std::max(size, MIN_BUFFER_SIZE), 1)
+    , buffer_(std::max(size, MIN_BUFFER_SIZE), 1, 8000)
     , readpointers_()
     , buffer_id_(call_id)
 {

@@ -42,24 +42,24 @@ void AudioBufferTest::testAudioBufferConstructors()
     SFLAudioSample test_samples1[] = {};
     SFLAudioSample test_samples2[] = {10, 11, 12, 13, 14, 15, 16, 17};
 
-    AudioBuffer empty_buf(0, 1);
+    AudioBuffer empty_buf(0, 1, 8000);
     CPPUNIT_ASSERT(empty_buf.frames() == 0);
     CPPUNIT_ASSERT(empty_buf.channels() == 1);
     CPPUNIT_ASSERT(empty_buf.getChannel(0)->size() == 0);
 
-    AudioBuffer test_buf1(8, 2);
+    AudioBuffer test_buf1(8, 2, 8000);
     CPPUNIT_ASSERT(test_buf1.frames() == 8);
     CPPUNIT_ASSERT(test_buf1.channels() == 2);
     CPPUNIT_ASSERT(test_buf1.getChannel(0)->size() == 8);
     CPPUNIT_ASSERT(test_buf1.getChannel(1)->size() == 8);
     CPPUNIT_ASSERT(test_buf1.getChannel(2) == NULL);
 
-    AudioBuffer test_buf2(test_samples1, 0, 0);
+    AudioBuffer test_buf2(test_samples1, 0, 0, 8000);
     CPPUNIT_ASSERT(test_buf2.frames() == 0);
     CPPUNIT_ASSERT(test_buf2.channels() == 1);
     CPPUNIT_ASSERT(test_buf2.getChannel(0)->size() == 0);
 
-    AudioBuffer test_buf3(test_samples2, 4, 2);
+    AudioBuffer test_buf3(test_samples2, 4, 2, 8000);
     CPPUNIT_ASSERT(test_buf3.frames() == 4);
     CPPUNIT_ASSERT(test_buf3.channels() == 2);
     CPPUNIT_ASSERT(test_buf3.getChannel(0)->size() == 4);
@@ -72,7 +72,7 @@ void AudioBufferTest::testAudioBufferMix()
     SFLAudioSample test_samples1[] = {18, 19, 20, 21, 22, 23, 24, 25};
     SFLAudioSample test_samples2[] = {10, 11, 12, 13, 14, 15, 16, 17, 18};
 
-    AudioBuffer test_buf1(test_samples1, 4, 2);
+    AudioBuffer test_buf1(test_samples1, 4, 2, 8000);
     CPPUNIT_ASSERT(test_buf1.channels() == 2);
     test_buf1.setChannelNum(1);
     CPPUNIT_ASSERT(test_buf1.channels() == 1);
@@ -84,7 +84,7 @@ void AudioBufferTest::testAudioBufferMix()
     test_buf1.setChannelNum(2, true);
     CPPUNIT_ASSERT((*test_buf1.getChannel(1))[0] == test_samples1[0]);
 
-    AudioBuffer test_buf2(0, 1);
+    AudioBuffer test_buf2(0, 1, 8000);
     test_buf2.deinterleave(test_samples2, 3, 3);
     CPPUNIT_ASSERT((*test_buf2.getChannel(0))[2] == test_samples2[6]);
     CPPUNIT_ASSERT((*test_buf2.getChannel(1))[1] == test_samples2[4]);
