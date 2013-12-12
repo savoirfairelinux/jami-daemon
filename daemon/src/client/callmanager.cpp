@@ -107,44 +107,6 @@ CallManager::attendedTransfer(const std::string& transferID, const std::string& 
     return Manager::instance().attendedTransfer(transferID, targetID);
 }
 
-void CallManager::setVolume(const std::string& device, const double& value)
-{
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
-
-    if(!audiolayer) {
-        ERROR("Audio layer not valid while updating volume");
-        return;
-    }
-
-    DEBUG("set volume for %s: %f", device.c_str(), value);
-
-    if (device == "speaker") {
-        audiolayer->setPlaybackGain(value);
-    } else if (device == "mic") {
-        audiolayer->setCaptureGain(value);
-    }
-
-    volumeChanged(device, value);
-}
-
-double
-CallManager::getVolume(const std::string& device)
-{
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
-
-    if (!audiolayer) {
-        ERROR("Audio layer not valid while updating volume");
-        return 0.0;
-    }
-
-    if (device == "speaker")
-        return audiolayer->getPlaybackGain();
-    else if (device == "mic")
-        return audiolayer->getCaptureGain();
-
-    return 0;
-}
-
 bool
 CallManager::joinParticipant(const std::string& sel_callID,
                              const std::string& drag_callID)

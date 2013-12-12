@@ -220,8 +220,6 @@ public:
     void stopRecordedFilePlayback(const std::string& filepath);
 
     /* General audio methods */
-    void setVolume(const std::string& device, const double& value);
-    double getVolume(const std::string& device);
     bool toggleRecording(const std::string& callID);
     void recordPlaybackSeek(const double& value);
     bool getIsRecording(const std::string& callID);

@@ -111,10 +111,6 @@ void CallManager::updatePlaybackScale(const std::string&, const int32_t&, const 
 
 }
 
-void CallManager::volumeChanged(const std::string&, const int&)
-{
-}
-
 void CallManager::secureSdesOn(std::string const&)
 {}
 

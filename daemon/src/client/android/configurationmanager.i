@@ -112,6 +112,8 @@ public:
     void muteCapture(const bool& mute);
     bool isPlaybackMuted();
     void mutePlayback(const bool& mute);
+    void setVolume(const std::string& device, const double& value);
+    double getVolume(const std::string& device);
 
     std::map<std::string, std::string> getRingtoneList();
 

@@ -51,6 +51,10 @@ void ConfigurationManager::stunStatusFailure(const std::string& accountID)
 
 }
 
+void ConfigurationManager::volumeChanged(const std::string&, const int&)
+{
+}
+
 void ConfigurationManager::registrationStateChanged(const std::string& accountID, int const& state)
 {
     on_account_state_changed_wrapper(accountID, state);

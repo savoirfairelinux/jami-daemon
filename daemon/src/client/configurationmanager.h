@@ -154,7 +154,12 @@ class ConfigurationManager
         std::map<std::string, std::string> getShortcuts();
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
 
+        void setVolume(const std::string& device, const double& value);
+        double getVolume(const std::string& device);
+
 #ifdef __ANDROID__
+        void volumeChanged(const std::string& device, const int& value);
+
         // signals must be implemented manually for Android
         void accountsChanged();
 

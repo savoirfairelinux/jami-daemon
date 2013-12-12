@@ -370,6 +370,45 @@ std::string ConfigurationManager::getAudioManager()
     return Manager::instance().getAudioManager();
 }
 
+void ConfigurationManager::setVolume(const std::string& device, const double& value)
+{
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if(!audiolayer) {
+        ERROR("Audio layer not valid while updating volume");
+        return;
+    }
+
+    DEBUG("set volume for %s: %f", device.c_str(), value);
+
+    if (device == "speaker") {
+        audiolayer->setPlaybackGain(value);
+    } else if (device == "mic") {
+        audiolayer->setCaptureGain(value);
+    }
+
+    volumeChanged(device, value);
+}
+
+double
+ConfigurationManager::getVolume(const std::string& device)
+{
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if (!audiolayer) {
+        ERROR("Audio layer not valid while updating volume");
+        return 0.0;
+    }
+
+    if (device == "speaker")
+        return audiolayer->getPlaybackGain();
+    else if (device == "mic")
+        return audiolayer->getCaptureGain();
+
+    return 0;
+}
+
+
 bool ConfigurationManager::isCaptureMuted()
 {
     AudioLayer *audiolayer = Manager::instance().getAudioDriver();
