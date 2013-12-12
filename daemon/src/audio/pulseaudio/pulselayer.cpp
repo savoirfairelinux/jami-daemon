@@ -96,7 +96,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , ringtone_(0)
     , sinkList_()
     , sourceList_()
-    , mic_buffer_(0, 1, 8000)
+    , micBuffer_(0, 1, 8000)
     , context_(0)
     , mainloop_(pa_threaded_mainloop_new())
     , enumeratingSinks_(false)
@@ -556,9 +556,9 @@ void PulseLayer::readFromMic()
     AudioBuffer * out = &in;
 
     if (resample) {
-        mic_buffer_.setSampleRate(mainBufferSampleRate);
-        converter_.resample(in, mic_buffer_);
-        out = &mic_buffer_;
+        micBuffer_.setSampleRate(mainBufferSampleRate);
+        converter_.resample(in, micBuffer_);
+        out = &micBuffer_;
     }
 
     dcblocker_.process(*out);

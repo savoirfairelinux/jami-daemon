@@ -179,7 +179,7 @@ class PulseLayer : public AudioLayer {
         /*
          * Buffers used to avoid doing malloc/free in the audio thread
          */
-        AudioBuffer mic_buffer_;
+        AudioBuffer micBuffer_;
 
         /** PulseAudio context and asynchronous loop */
         pa_context* context_;
