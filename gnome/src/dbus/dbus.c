@@ -870,9 +870,9 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     dbus_g_proxy_connect_signal(call_proxy, "incomingMessage",
                                 G_CALLBACK(incoming_message_cb), client, NULL);
 
-    dbus_g_proxy_add_signal(call_proxy, "volumeChanged", G_TYPE_STRING,
+    dbus_g_proxy_add_signal(config_proxy, "volumeChanged", G_TYPE_STRING,
                             G_TYPE_DOUBLE, G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal(call_proxy, "volumeChanged",
+    dbus_g_proxy_connect_signal(config_proxy, "volumeChanged",
                                 G_CALLBACK(volume_changed_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "transferSucceeded", G_TYPE_INVALID);
@@ -1299,7 +1299,7 @@ void
 dbus_set_volume(const gchar *device, gdouble value)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_set_volume(call_proxy, device, value, &error);
+    org_sflphone_SFLphone_ConfigurationManager_set_volume(call_proxy, device, value, &error);
     check_error(error);
 }
 
@@ -1344,7 +1344,7 @@ dbus_get_volume(const gchar *device)
 {
     gdouble value;
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_get_volume(call_proxy, device, &value, &error);
+    org_sflphone_SFLphone_ConfigurationManager_get_volume(call_proxy, device, &value, &error);
     check_error(error);
     return value;
 }
