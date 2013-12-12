@@ -1299,7 +1299,7 @@ void
 dbus_set_volume(const gchar *device, gdouble value)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_volume(call_proxy, device, value, &error);
+    org_sflphone_SFLphone_ConfigurationManager_set_volume(config_proxy, device, value, &error);
     check_error(error);
 }
 
@@ -1344,7 +1344,7 @@ dbus_get_volume(const gchar *device)
 {
     gdouble value;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_volume(call_proxy, device, &value, &error);
+    org_sflphone_SFLphone_ConfigurationManager_get_volume(config_proxy, device, &value, &error);
     check_error(error);
     return value;
 }
