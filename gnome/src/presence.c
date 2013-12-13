@@ -434,10 +434,7 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
     g_free(b->uri);
     g_free(b->acc);
 
-    if (strlen(c->_accountID) == 0)
-        b->acc = g_strdup((gchar*)account_lookup(acc, CONFIG_ACCOUNT_ID));
-    else
-        b->acc = g_strdup(c->_accountID);
+    b->acc = g_strdup(c->_accountID);
 
     hostname = account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME);
 

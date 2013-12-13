@@ -745,7 +745,7 @@ presence_view_popup_menu_onAddBuddy(G_GNUC_UNUSED GtkWidget *menuitem, gpointer 
         }
     }
     g_free(b->acc);
-    b->acc = g_strdup((gchar*) account_lookup(acc, CONFIG_ACCOUNT_ID));
+    b->acc = g_strdup(acc->accountID);
 
     gchar * uri = g_strconcat("<sip:XXXX@", account_lookup(acc, CONFIG_ACCOUNT_HOSTNAME), ">", NULL);
     g_free(b->uri);
