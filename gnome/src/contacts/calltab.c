@@ -90,14 +90,14 @@ calltab_set_selected_call(calltab_t *tab, callable_obj_t *call)
 callable_obj_t *
 calltab_get_selected_call(calltab_t *tab)
 {
-    g_assert(tab);
+    g_return_val_if_fail(!calllist_empty(tab), NULL);
     return tab->selectedCall;
 }
 
 conference_obj_t*
 calltab_get_selected_conf(calltab_t *tab)
 {
-    g_assert(tab);
+    g_return_val_if_fail(!calllist_empty(tab), NULL);
     return tab->selectedConf;
 }
 

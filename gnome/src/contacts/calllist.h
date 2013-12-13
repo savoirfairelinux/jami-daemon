@@ -104,6 +104,9 @@ calllist_remove_call(calltab_t* tab, const gchar * callID, SFLPhoneClient *clien
 callable_obj_t *
 calllist_get_by_state(calltab_t* tab, call_state_t state);
 
+gboolean
+calllist_empty(calltab_t *tab);
+
 /** Return the number of calls in the list
   * @return The number of calls in the list */
 guint

@@ -96,6 +96,13 @@ calllist_free_element(gpointer data, G_GNUC_UNUSED gpointer user_data)
     free_callable_obj_t(call);
 }
 
+gboolean
+calllist_empty(calltab_t *tab)
+{
+    g_return_val_if_fail(tab != NULL && tab->callQueue != NULL, FALSE);
+    return !calllist_get_size(tab);
+}
+
 void
 calllist_clean(calltab_t* tab)
 {
