@@ -37,9 +37,6 @@
  * @brief Account specfic keys/constants that must be shared in daemon and clients.
  */
 
-// Account identifier
-static const char *const CONFIG_ACCOUNT_ID                      = "Account.id";
-
 // Common account parameters
 static const char *const CONFIG_ACCOUNT_TYPE                    = "Account.type";
 static const char *const CONFIG_ACCOUNT_ALIAS                   = "Account.alias";

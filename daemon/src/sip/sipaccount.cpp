@@ -748,7 +748,6 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a[CONFIG_ACCOUNT_ID] = accountID_;
     // note: The IP2IP profile will always have IP2IP as an alias
     a[CONFIG_ACCOUNT_ALIAS] = alias_;
 
@@ -1404,7 +1403,6 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 {
     assert(isIP2IP());
     std::map<std::string, std::string> ip2ipAccountDetails;
-    ip2ipAccountDetails[CONFIG_ACCOUNT_ID] = IP2IP_PROFILE;
     ip2ipAccountDetails[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
     ip2ipAccountDetails[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     ip2ipAccountDetails[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? Conf::TRUE_STR : Conf::FALSE_STR;

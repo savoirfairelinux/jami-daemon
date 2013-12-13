@@ -121,7 +121,6 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a[CONFIG_ACCOUNT_ID] = accountID_;
     a[CONFIG_ACCOUNT_ALIAS] = alias_;
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
     a[CONFIG_ACCOUNT_TYPE] = ACCOUNT_TYPE;
