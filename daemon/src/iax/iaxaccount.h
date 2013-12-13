@@ -45,8 +45,6 @@ class IAXAccount : public Account {
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
 
-        void setAccountDetails(std::map<std::string, std::string> details);
-
         std::map<std::string, std::string> getAccountDetails() const;
 
         // Actually useless, since config loading is done in init()
@@ -63,6 +61,8 @@ class IAXAccount : public Account {
         }
 
     private:
+        void setAccountDetails(const std::map<std::string, std::string> &details);
+
          // Account login information: password
         std::string password_;
         IAXVoIPLink link_;

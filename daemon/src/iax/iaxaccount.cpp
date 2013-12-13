@@ -104,17 +104,17 @@ void IAXAccount::unserialize(const Conf::YamlNode &map)
     map.getValue(USER_AGENT_KEY, &userAgent_);
 }
 
-void IAXAccount::setAccountDetails(std::map<std::string, std::string> details)
+void IAXAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     // Account setting common to SIP and IAX
-    alias_ = details[CONFIG_ACCOUNT_ALIAS];
-    username_ = details[CONFIG_ACCOUNT_USERNAME];
-    hostname_ = details[CONFIG_ACCOUNT_HOSTNAME];
-    password_ = details[CONFIG_ACCOUNT_PASSWORD];
-    enabled_ = details[CONFIG_ACCOUNT_ENABLE] == "true";
-    mailBox_ = details[CONFIG_ACCOUNT_MAILBOX];
-    displayName_ = details[CONFIG_DISPLAY_NAME];
-    userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
+    parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
+    parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
+    parseString(details, CONFIG_ACCOUNT_HOSTNAME, hostname_);
+    parseString(details, CONFIG_ACCOUNT_PASSWORD, password_);
+    parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
+    parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
+    parseString(details, CONFIG_DISPLAY_NAME, displayName_);
+    parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
 }
 
 std::map<std::string, std::string> IAXAccount::getAccountDetails() const

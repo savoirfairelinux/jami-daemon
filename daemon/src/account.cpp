@@ -309,3 +309,26 @@ Account::getActiveVideoCodecs() const
     result.erase(std::remove_if(result.begin(), result.end(), is_inactive), result.end());
     return result;
 }
+
+#define find_iter()                             \
+        const auto iter = details.find(key);    \
+        if (iter == details.end()) {            \
+            ERROR("Couldn't find key \"%s\"", key); \
+            return;                             \
+        }
+
+void
+Account::parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s)
+{
+    find_iter();
+    s = iter->second;
+}
+
+void
+Account::parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b)
+{
+    find_iter();
+    b = iter->second == Conf::TRUE_STR;
+}
+
+#undef find_iter

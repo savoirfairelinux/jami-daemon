@@ -170,12 +170,6 @@ class SIPAccount : public Account {
         virtual void unserialize(const Conf::YamlNode &map);
 
         /**
-         * Set the internal state for this account, mainly used to manage account details from the client application.
-         * @param The map containing the account information.
-         */
-        virtual void setAccountDetails(std::map<std::string, std::string> details);
-
-        /**
          * Return an map containing the internal state of this account. Client application can use this method to manage
          * account info.
          * @return A map containing the account information.
@@ -578,6 +572,12 @@ class SIPAccount : public Account {
         void scheduleReregistration(pjsip_endpoint *endpt);
 
     private:
+        /**
+         * Set the internal state for this account, mainly used to manage account details from the client application.
+         * @param The map containing the account information.
+         */
+        void setAccountDetails(const std::map<std::string, std::string> &details);
+
         NON_COPYABLE(SIPAccount);
 
         void usePublishedAddressPortInVIA();
@@ -727,6 +727,7 @@ class SIPAccount : public Account {
         /**
          * Determine if TLS is enabled for this account. TLS provides a secured channel for
          * SIP signalization. It is independant than the media encription provided by SRTP or ZRTP.
+         * FIXME: this should be a bool
          */
         std::string tlsEnable_;
 

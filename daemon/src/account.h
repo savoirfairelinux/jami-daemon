@@ -64,7 +64,7 @@ class Account : public Serializable {
          */
         virtual ~Account();
 
-        virtual void setAccountDetails(std::map<std::string, std::string> details) = 0;
+        virtual void setAccountDetails(const std::map<std::string, std::string> &details) = 0;
 
         virtual std::map<std::string, std::string> getAccountDetails() const = 0;
 
@@ -205,6 +205,10 @@ class Account : public Serializable {
         void loadDefaultCodecs();
 
     protected:
+
+        static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
+        static void parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b);
+
         friend class ConfigurationTest;
         // General configuration keys for accounts
         static const char * const AUDIO_CODECS_KEY;

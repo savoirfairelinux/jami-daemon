@@ -628,87 +628,112 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 #endif
 }
 
-void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
+namespace {
+
+template <typename T>
+void parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
+{
+    const auto iter = details.find(key);
+    if (iter == details.end()) {
+        ERROR("Couldn't find key %s", key);
+        return;
+    }
+    i = atoi(iter->second.c_str());
+}
+
+}
+
+void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     // Account setting common to SIP and IAX
-    alias_ = details[CONFIG_ACCOUNT_ALIAS];
-    username_ = details[CONFIG_ACCOUNT_USERNAME];
-    hostname_ = details[CONFIG_ACCOUNT_HOSTNAME];
-    enabled_ = details[CONFIG_ACCOUNT_ENABLE] == Conf::TRUE_STR;
-    autoAnswerEnabled_ = details[CONFIG_ACCOUNT_AUTOANSWER] == Conf::TRUE_STR;
-    ringtonePath_ = details[CONFIG_RINGTONE_PATH];
-    ringtoneEnabled_ = details[CONFIG_RINGTONE_ENABLED] == Conf::TRUE_STR;
-    mailBox_ = details[CONFIG_ACCOUNT_MAILBOX];
+    parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
+    parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
+    parseString(details, CONFIG_ACCOUNT_HOSTNAME, hostname_);
+    parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
+    parseBool(details, CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
+    parseString(details, CONFIG_RINGTONE_PATH, ringtonePath_);
+    parseBool(details, CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
+    parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
 
     // SIP specific account settings
 
     // general sip settings
-    displayName_ = details[CONFIG_DISPLAY_NAME];
-    serviceRoute_ = details[CONFIG_ACCOUNT_ROUTESET];
-    interface_ = details[CONFIG_LOCAL_INTERFACE];
-    publishedSameasLocal_ = details[CONFIG_PUBLISHED_SAMEAS_LOCAL] == Conf::TRUE_STR;
-    publishedIpAddress_ = details[CONFIG_PUBLISHED_ADDRESS];
-    localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
-    publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
+    parseString(details, CONFIG_DISPLAY_NAME, displayName_);
+    parseString(details, CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
+    parseString(details, CONFIG_LOCAL_INTERFACE, interface_);
+    parseBool(details, CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
+    parseString(details, CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
+    parseInt(details, CONFIG_LOCAL_PORT, localPort_);
+    parseInt(details, CONFIG_PUBLISHED_PORT, publishedPort_);
 
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
-    stunServer_ = details[CONFIG_STUN_SERVER];
-    stunEnabled_ = details[CONFIG_STUN_ENABLE] == Conf::TRUE_STR;
-    dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
-    registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
+    parseString(details, CONFIG_STUN_SERVER, stunServer_);
+    parseBool(details, CONFIG_STUN_ENABLE, stunEnabled_);
+    parseString(details, CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
+    parseInt(details, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire_);
 
     if (registrationExpire_ < MIN_REGISTRATION_TIME)
         registrationExpire_ = MIN_REGISTRATION_TIME;
 
-    userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
-    keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == Conf::TRUE_STR;
+    parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
+    parseBool(details, CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
 #ifdef SFL_PRESENCE
-    enablePresence(details[CONFIG_PRESENCE_ENABLED] == Conf::TRUE_STR);
+    bool presenceEnabled = false;
+    parseBool(details, CONFIG_PRESENCE_ENABLED, presenceEnabled);
+    enablePresence(presenceEnabled);
 #endif
 
-    int tmpMin = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MIN].c_str());
-    int tmpMax = atoi(details[CONFIG_ACCOUNT_AUDIO_PORT_MAX].c_str());
+    int tmpMin = -1;
+    parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
+    int tmpMax = -1;
+    parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, audioPortRange_);
 #ifdef SFL_VIDEO
-    tmpMin = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MIN].c_str());
-    tmpMax = atoi(details[CONFIG_ACCOUNT_VIDEO_PORT_MAX].c_str());
+    tmpMin = -1;
+    parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
+    tmpMax = -1;
+    parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
 
     // srtp settings
-    srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == Conf::TRUE_STR;
-    srtpFallback_ = details[CONFIG_SRTP_RTP_FALLBACK] == Conf::TRUE_STR;
-    zrtpDisplaySas_ = details[CONFIG_ZRTP_DISPLAY_SAS] == Conf::TRUE_STR;
-    zrtpDisplaySasOnce_ = details[CONFIG_ZRTP_DISPLAY_SAS_ONCE] == Conf::TRUE_STR;
-    zrtpNotSuppWarning_ = details[CONFIG_ZRTP_NOT_SUPP_WARNING] == Conf::TRUE_STR;
-    zrtpHelloHash_ = details[CONFIG_ZRTP_HELLO_HASH] == Conf::TRUE_STR;
-    validate(srtpKeyExchange_, details[CONFIG_SRTP_KEY_EXCHANGE],
-             VALID_SRTP_KEY_EXCHANGES);
+    parseBool(details, CONFIG_SRTP_ENABLE, srtpEnabled_);
+    parseBool(details, CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
+    parseBool(details, CONFIG_ZRTP_DISPLAY_SAS, zrtpDisplaySas_);
+    parseBool(details, CONFIG_ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce_);
+    parseBool(details, CONFIG_ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning_);
+    parseBool(details, CONFIG_ZRTP_HELLO_HASH, zrtpHelloHash_);
+    auto iter = details.find(CONFIG_SRTP_KEY_EXCHANGE);
+    if (iter != details.end())
+        validate(srtpKeyExchange_, iter->second, VALID_SRTP_KEY_EXCHANGES);
 
     // TLS settings
-    tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
-    tlsEnable_ = details[CONFIG_TLS_ENABLE];
-    tlsCaListFile_ = details[CONFIG_TLS_CA_LIST_FILE];
-    tlsCertificateFile_ = details[CONFIG_TLS_CERTIFICATE_FILE];
-    tlsPrivateKeyFile_ = details[CONFIG_TLS_PRIVATE_KEY_FILE];
-    tlsPassword_ = details[CONFIG_TLS_PASSWORD];
-    validate(tlsMethod_, details[CONFIG_TLS_METHOD], VALID_TLS_METHODS);
-    tlsCiphers_ = details[CONFIG_TLS_CIPHERS];
-    tlsServerName_ = details[CONFIG_TLS_SERVER_NAME];
-    tlsVerifyServer_ = details[CONFIG_TLS_VERIFY_SERVER] == Conf::TRUE_STR;
-    tlsVerifyClient_ = details[CONFIG_TLS_VERIFY_CLIENT] == Conf::TRUE_STR;
-    tlsRequireClientCertificate_ = details[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] == Conf::TRUE_STR;
-    tlsNegotiationTimeoutSec_ = details[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC];
-    tlsNegotiationTimeoutMsec_ = details[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC];
+    parseInt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
+    parseString(details, CONFIG_TLS_ENABLE, tlsEnable_);
+    parseString(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
+    parseString(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    parseString(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    parseString(details, CONFIG_TLS_PASSWORD, tlsPassword_);
+    iter = details.find(CONFIG_TLS_METHOD);
+    if (iter != details.end())
+        validate(tlsMethod_, iter->second, VALID_TLS_METHODS);
+    parseString(details, CONFIG_TLS_CIPHERS, tlsCiphers_);
+    parseString(details, CONFIG_TLS_SERVER_NAME, tlsServerName_);
+    parseBool(details, CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
+    parseBool(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    parseBool(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    parseString(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    parseString(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
 
     if (credentials_.empty()) { // credentials not set, construct 1 entry
+        WARN("No credentials set, inferring them...");
         std::vector<std::map<std::string, std::string> > v;
         std::map<std::string, std::string> map;
         map[CONFIG_ACCOUNT_USERNAME] = username_;
-        map[CONFIG_ACCOUNT_PASSWORD] = details[CONFIG_ACCOUNT_PASSWORD];
-        map[CONFIG_ACCOUNT_REALM]    = "*";
+        parseString(details, CONFIG_ACCOUNT_PASSWORD, map[CONFIG_ACCOUNT_PASSWORD]);
+        map[CONFIG_ACCOUNT_REALM] = "*";
         v.push_back(map);
         setCredentials(v);
     }
