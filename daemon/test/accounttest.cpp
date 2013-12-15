@@ -34,13 +34,14 @@
 #include "account_schema.h"
 #include "accounttest.h"
 #include "manager.h"
+#include "client/configurationmanager.h"
 #include "logger.h"
 
 void AccountTest::TestAddRemove()
 {
     DEBUG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
 
-    std::map<std::string, std::string> details;
+    std::map<std::string, std::string> details(Manager::instance().getClient()->getConfigurationManager()->getAccountTemplate());
     details[CONFIG_ACCOUNT_TYPE] = "SIP";
     details[CONFIG_ACCOUNT_ENABLE] = "false";
     details[CONFIG_LOCAL_INTERFACE] = "default";
