@@ -60,9 +60,6 @@ calltab_get_selected_type(calltab_t *);
 callable_obj_t *
 calltab_get_selected_call(calltab_t *);
 
-void
-calltab_set_selected_call(calltab_t *, callable_obj_t *call);
-
 conference_obj_t *
 calltab_get_selected_conf(calltab_t *);
 

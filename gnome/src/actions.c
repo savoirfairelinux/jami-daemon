@@ -509,7 +509,7 @@ sflphone_incoming_call(callable_obj_t * c, SFLPhoneClient *client)
     if (!account) {
         g_warning("Account is NULL");
     } else if (account_has_autoanswer_on(account)) {
-        calltab_set_selected_call(active_calltree_tab, c);
+        calltab_select_call(active_calltree_tab, c);
         sflphone_pick_up(client);
     }
 }
