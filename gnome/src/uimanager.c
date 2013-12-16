@@ -438,10 +438,15 @@ update_actions(SFLPhoneClient *client)
         }
     }
 
-    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree_tab);
-    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
+    callable_obj_t * selectedCall = NULL;
+    conference_obj_t * selectedConf = NULL;
 
     const gboolean instant_messaging_enabled = g_settings_get_boolean(client->settings, "instant-messaging-enabled");
+
+    if (!calllist_empty(active_calltree_tab)) {
+        selectedCall = calltab_get_selected_call(active_calltree_tab);
+        selectedConf = calltab_get_selected_conf(active_calltree_tab);
+    }
 
     if (selectedCall) {
         update_toolbar_for_call(selectedCall, instant_messaging_enabled, client);

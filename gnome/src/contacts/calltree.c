@@ -231,6 +231,9 @@ row_single_click(G_GNUC_UNUSED GtkTreeView *tree_view, SFLPhoneClient *client)
 {
     gchar * displaySasOnce = NULL;
 
+    if (calllist_empty(active_calltree_tab))
+        return;
+
     callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
     conference_obj_t *selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
@@ -1200,6 +1203,9 @@ void calltree_display(calltab_t *tab, SFLPhoneClient *client)
 
 gboolean calltree_update_clock(G_GNUC_UNUSED gpointer data)
 {
+    if (calllist_empty(current_calls_tab))
+        return TRUE;
+
     char timestr[20];
     const gchar *msg = "";
     long duration;
