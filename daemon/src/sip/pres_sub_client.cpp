@@ -344,7 +344,7 @@ PresSubClient::PresSubClient(const std::string& uri, SIPPresence *pres) :
 
 PresSubClient::~PresSubClient()
 {
-    DEBUG("Destroying pres_client object with uri %s", uri_.ptr);
+    DEBUG("Destroying pres_client object with uri %.*s", uri_.slen, uri_.ptr);
     rescheduleTimer(PJ_FALSE, 0);
     unsubscribe();
     pj_pool_release(pool_);
@@ -488,7 +488,7 @@ bool PresSubClient::unsubscribe()
     }
 
     /* Unsubscribe means send a subscribe with timeout=0s*/
-    WARN("pres_client %s: unsubscribing..", uri_.ptr);
+    WARN("pres_client %.*s: unsubscribing..", uri_.slen, uri_.ptr);
     retStatus = pjsip_pres_initiate(sub_, 0, &tdata);
 
     if (retStatus == PJ_SUCCESS) {
