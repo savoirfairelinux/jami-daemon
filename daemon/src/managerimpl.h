@@ -777,6 +777,8 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+        void removeAccounts();
+
         bool parseConfiguration();
 
         // Set the ringtone or recorded call to be played

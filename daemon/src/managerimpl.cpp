@@ -183,6 +183,8 @@ void ManagerImpl::init(const std::string &config_file)
         // restore previous configuration
         WARN("Restoring last working configuration");
         try {
+            // remove accounts from broken configuration
+            removeAccounts();
             restore_backup(path_);
             parseConfiguration();
         } catch (const Conf::YamlParserException &e) {
@@ -2505,6 +2507,12 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     client_.getConfigurationManager()->accountsChanged();
 
     return newAccountID;
+}
+
+void ManagerImpl::removeAccounts()
+{
+    for (const auto &acc : getAccountList())
+        removeAccount(acc);
 }
 
 void ManagerImpl::removeAccount(const std::string& accountID)
