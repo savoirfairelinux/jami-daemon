@@ -2428,6 +2428,12 @@ void ManagerImpl::setAccountDetails(const std::string& accountID,
         return;
     }
 
+    // Ignore if nothing has changed
+    if (details == account->getAccountDetails())
+        return;
+
+    // Unregister before modifying any account information
+    account->unregisterVoIPLink();
     account->setAccountDetails(details);
 
     // Serialize configuration to disk once it is done
