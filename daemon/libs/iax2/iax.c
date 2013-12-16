@@ -3258,7 +3258,7 @@ struct iax_event *iax_get_event(int blocking)
 		now = (tv.tv_sec - session->rxcore.tv_sec) * 1000 +
 		      (tv.tv_usec - session->rxcore.tv_usec) / 1000;
 
-		if ( now <= (next = jb_next(session->jb)) )
+		if ( !session->jb || now <= (next = jb_next(session->jb)) )
 			continue;
 
 		/* interp len no longer hardcoded, now determined by get_interp_len */
