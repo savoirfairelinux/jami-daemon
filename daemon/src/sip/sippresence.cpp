@@ -543,8 +543,10 @@ SIPPresence::publish(SIPPresence *pres)
     }
 
     /* Set route-set */
-    if (acc->hasServiceRoute())
-        pjsip_regc_set_route_set(acc->getRegistrationInfo(), sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
+    // FIXME: is this really necessary?
+    pjsip_regc *regc = acc->getRegistrationInfo();
+    if (regc and acc->hasServiceRoute())
+        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
 
     /* Send initial PUBLISH request */
     status = send_publish(pres);
