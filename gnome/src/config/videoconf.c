@@ -605,7 +605,11 @@ preferences_dialog_fill_video_input_device_rate_list()
         if (!rate || !*rate || set_combo_index_from_str(GTK_COMBO_BOX(v4l2Rate), rate, c)) {
             // if setting is invalid, choose first entry
             gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Rate), 0);
-            dbus_set_active_video_device_rate(get_active_text(GTK_COMBO_BOX(v4l2Rate)));
+            gchar *selected = get_active_text(GTK_COMBO_BOX(v4l2Rate));
+            if (selected) {
+                dbus_set_active_video_device_rate(selected);
+                g_free(selected);
+            }
         }
         g_free(rate);
     } else
@@ -658,7 +662,11 @@ preferences_dialog_fill_video_input_device_size_list()
         if (!size || !*size || set_combo_index_from_str(GTK_COMBO_BOX(v4l2Size), size, c)) {
             // if setting is invalid, choose first entry
             gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Size), 0);
-            dbus_set_active_video_device_size(get_active_text(GTK_COMBO_BOX(v4l2Size)));
+            gchar *selected = get_active_text(GTK_COMBO_BOX(v4l2Size));
+            if (selected) {
+                dbus_set_active_video_device_size(selected);
+                g_free(selected);
+            }
         }
         g_free(size);
     } else
@@ -710,7 +718,11 @@ preferences_dialog_fill_video_input_device_channel_list()
         if (!channel || !*channel || set_combo_index_from_str(GTK_COMBO_BOX(v4l2Channel), channel, c)) {
             // if setting is invalid, choose first entry
             gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Channel), 0);
-            dbus_set_active_video_device_channel(get_active_text(GTK_COMBO_BOX(v4l2Channel)));
+            gchar *selected = get_active_text(GTK_COMBO_BOX(v4l2Channel));
+            if (selected) {
+                dbus_set_active_video_device_channel(selected);
+                g_free(selected);
+            }
         }
         g_free(channel);
     } else
@@ -757,7 +769,11 @@ preferences_dialog_fill_video_input_device_list()
         if (!dev || !*dev || set_combo_index_from_str(GTK_COMBO_BOX(v4l2Device), dev, c)) {
             // if setting is invalid, choose first entry
             gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Device), 0);
-            dbus_set_active_video_device(get_active_text(GTK_COMBO_BOX(v4l2Device)));
+            gchar *selected = get_active_text(GTK_COMBO_BOX(v4l2Device));
+            if (selected) {
+                dbus_set_active_video_device(selected);
+                g_free(selected);
+            }
         }
         g_free(dev);
         return TRUE;
