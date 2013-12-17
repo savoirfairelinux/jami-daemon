@@ -1463,6 +1463,13 @@ void ManagerImpl::playDtmf(char code)
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
         audiodriver_->startStream();
+
+        // FIXME: do real synchronization
+        int tries = 10;
+        while (not audiodriver_->isStarted() and tries--) {
+            WARN("Audio layer not ready yet");
+            usleep(10000);
+        }
         audiodriver_->putUrgent(buf);
     }
 

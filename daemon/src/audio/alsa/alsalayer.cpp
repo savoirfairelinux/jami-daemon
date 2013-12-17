@@ -143,6 +143,7 @@ void AlsaThread::initAudioLayer(void)
 void AlsaThread::run()
 {
     initAudioLayer();
+    alsa_->isStarted_ = true;
 
     while (alsa_->isStarted_) {
         alsa_->audioCallback();
@@ -221,8 +222,6 @@ AlsaLayer::startStream()
     } else if (!audioThread_->isRunning()) {
         audioThread_->start();
     }
-
-    isStarted_ = true;
 }
 
 void
