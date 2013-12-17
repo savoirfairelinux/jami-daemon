@@ -194,6 +194,9 @@ void dbus_mute_playback(gboolean mute);
 gboolean dbus_is_capture_muted();
 gboolean dbus_is_playback_muted();
 
+void dbus_mute_dtmf(gboolean mute);
+gboolean dbus_is_dtmf_muted();
+
 /**
  * ConfigurationManager - Play DTMF
  * @param key The DTMF to send

@@ -1312,11 +1312,29 @@ dbus_mute_capture(gboolean muted)
 }
 
 void
+dbus_mute_dtmf(gboolean muted)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_mute_dtmf(config_proxy, muted, &error);
+    check_error(error);
+}
+
+void
 dbus_mute_playback(gboolean muted)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_mute_playback(config_proxy, muted, &error);
     check_error(error);
+}
+
+gboolean
+dbus_is_dtmf_muted()
+{
+    GError *error = NULL;
+    gboolean muted;
+    org_sflphone_SFLphone_ConfigurationManager_is_dtmf_muted(config_proxy, &muted, &error);
+    check_error(error);
+    return muted;
 }
 
 gboolean
