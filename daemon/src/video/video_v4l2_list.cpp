@@ -211,6 +211,25 @@ VideoV4l2ListThread::~VideoV4l2ListThread()
         udev_unref(udev_);
 }
 
+void VideoV4l2ListThread::updateDefault()
+{
+    const std::string &name = devices_.back().name;
+    auto controls = Manager::instance().getVideoControls();
+    controls->setActiveDevice(name);
+    const auto channel = devices_.back().getChannelList()[0];
+    controls->setActiveDeviceChannel(channel);
+    const auto size = devices_.back().getChannel(name).getSizeList()[0];
+    controls->setActiveDeviceSize(size);
+    const auto rateList(controls->getDeviceRateList(name, channel, size));
+    // compare by integer value
+    const auto highest = std::max_element(rateList.begin(), rateList.end(), []
+            (const std::string &l, const std::string &r) {
+                return atoi(l.c_str()) < atoi(r.c_str());
+            });
+
+    Manager::instance().getVideoControls()->setActiveDeviceRate(*highest);
+}
+
 void VideoV4l2ListThread::run()
 {
     if (!udev_mon_) {
@@ -242,8 +261,10 @@ void VideoV4l2ListThread::run()
                     if (!strcmp(action, "add")) {
                         DEBUG("udev: adding %s", node);
                         try {
-                            addDevice(node);
-                            Manager::instance().getVideoControls()->deviceEvent();
+                            if (addDevice(node)) {
+                                updateDefault();
+                                Manager::instance().getVideoControls()->deviceEvent();
+                            }
                         } catch (const std::runtime_error &e) {
                             ERROR("%s", e.what());
                         }
@@ -288,8 +309,11 @@ bool VideoV4l2ListThread::addDevice(const string &dev)
     std::lock_guard<std::mutex> lock(mutex_);
 
     int fd = open(dev.c_str(), O_RDWR);
-    if (fd == -1)
+    if (fd == -1) {
+        ERROR("Problem opening device");
+        Logger::strErr();
         return false;
+    }
 
     const string s(dev);
     VideoV4l2Device v(fd, s);
