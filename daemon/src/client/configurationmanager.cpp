@@ -408,6 +408,17 @@ ConfigurationManager::getVolume(const std::string& device)
     return 0;
 }
 
+// FIXME: we should store "muteDtmf" instead of "playDtmf"
+// in config and avoid negating like this
+bool ConfigurationManager::isDtmfMuted()
+{
+    return not Manager::instance().voipPreferences.getPlayDtmf();
+}
+
+void ConfigurationManager::muteDtmf(const bool &mute)
+{
+    Manager::instance().voipPreferences.setPlayDtmf(not mute);
+}
 
 bool ConfigurationManager::isCaptureMuted()
 {

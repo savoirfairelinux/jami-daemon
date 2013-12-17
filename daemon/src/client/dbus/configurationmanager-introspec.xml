@@ -267,6 +267,13 @@
            </arg>
        </signal>
 
+       <!-- For now only expose these two options to clients -->
+       <method name="muteDtmf" tp:name-for-bindings="muteDtmf">
+           <arg type="b" name="muteDtmf" direction="in"/>
+       </method>
+       <method name="isDtmfMuted" tp:name-for-bindings="isDtmfMuted">
+           <arg type="b" name="muted" direction="out"/>
+       </method>
 
        <method name="muteCapture" tp:name-for-bindings="muteCapture">
            <arg type="b" name="mute" direction="in">

@@ -108,6 +108,8 @@ public:
     void setNoiseSuppressState(const bool& state);
     bool isAgcEnabled();
     void setAgcState(const bool& state);
+    bool isDtmfMuted();
+    void muteDtmf(const bool& mute);
     bool isCaptureMuted();
     void muteCapture(const bool& mute);
     bool isPlaybackMuted();

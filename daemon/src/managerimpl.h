@@ -790,12 +790,6 @@ class ManagerImpl {
         Call *getCallFromCallID(const std::string &callID);
 
         /**
-         * Play the dtmf-associated sound
-         * @param code  The pressed key
-         */
-        void playDtmf(char code);
-
-        /**
          * Process remaining participant given a conference and the current call id.
          * Mainly called when a participant is detached or hagned up
          * @param current call id
@@ -1022,6 +1016,13 @@ class ManagerImpl {
 
     private:
         NON_COPYABLE(ManagerImpl);
+
+        /**
+         * Play the dtmf-associated sound
+         * @param code  The pressed key
+         */
+        void playDtmf(char code);
+
 
         // Map containing conference pointers
         ConferenceMap conferenceMap_;

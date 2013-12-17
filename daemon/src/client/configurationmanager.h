@@ -112,6 +112,9 @@ class ConfigurationManager
         bool isAgcEnabled();
         void setAgcState(const bool& enabled);
 
+        void muteDtmf(const bool& mute);
+        bool isDtmfMuted();
+
         bool isCaptureMuted();
         void muteCapture(const bool& mute);
         bool isPlaybackMuted();
