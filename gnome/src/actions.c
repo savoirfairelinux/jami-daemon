@@ -586,17 +586,18 @@ sflphone_new_call(SFLPhoneClient *client)
     if(nbcall == 0)
         dbus_screensaver_inhibit();
 
-    callable_obj_t *current_selected_call = calltab_get_selected_call(current_calls_tab);
+    callable_obj_t *selected_call = calllist_empty(current_calls_tab) ? NULL :
+        calltab_get_selected_call(current_calls_tab);
 
-    if (current_selected_call != NULL) {
-        gchar *confID = dbus_get_conference_id(current_selected_call->_callID);
+    if (selected_call != NULL) {
+        gchar *confID = dbus_get_conference_id(selected_call->_callID);
         if(g_strcmp0(confID, "") != 0) {
             sflphone_on_hold();
         }
     }
 
     // Play a tone when creating a new call
-    if (calllist_get_size(current_calls_tab) == 0)
+    if (calllist_empty(current_calls_tab))
         dbus_start_tone(TRUE , (current_account_has_new_message()  > 0) ? TONE_WITH_MESSAGE : TONE_WITHOUT_MESSAGE) ;
 
     callable_obj_t *c = create_new_call(CALL, CALL_STATE_DIALING, "", "", "", "");
@@ -614,7 +615,8 @@ sflphone_new_call(SFLPhoneClient *client)
 void
 sflphone_keypad(guint keyval, const gchar * key, SFLPhoneClient *client)
 {
-    callable_obj_t * c = calltab_get_selected_call(current_calls_tab);
+    callable_obj_t * c = calllist_empty(current_calls_tab) ? NULL :
+                         calltab_get_selected_call(current_calls_tab);
 
     const gboolean current_is_active_tab = calltab_has_name(active_calltree_tab, CURRENT_CALLS);
     if (!current_is_active_tab || (current_is_active_tab && !c)) {

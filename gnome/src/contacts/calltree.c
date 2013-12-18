@@ -581,9 +581,11 @@ calltree_remove_call(calltab_t* tab, const gchar *target_id)
     gtk_tree_model_foreach(model, remove_element_if_match, (gpointer) target_id);
 
     /* invalidate selected call if it was our target */
-    callable_obj_t *sel = calltab_get_selected_call(tab);
-    if (sel && g_strcmp0(sel->_callID, target_id) == 0)
-        calltab_select_call(tab, NULL);
+    if (!calllist_empty(tab)) {
+        callable_obj_t *sel = calltab_get_selected_call(tab);
+        if (sel && g_strcmp0(sel->_callID, target_id) == 0)
+            calltab_select_call(tab, NULL);
+    }
 
     statusbar_update_clock("");
 }
