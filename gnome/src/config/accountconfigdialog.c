@@ -1511,13 +1511,13 @@ void update_account_from_dialog(GtkWidget *dialog, const gchar *accountID)
 }
 
 GtkWidget *
-show_account_window(const gchar *accountID, SFLPhoneClient *client, gboolean is_new)
+show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *client, gboolean is_new)
 {
     // First we reset
     reset();
 
     GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Account settings"),
-                        GTK_WINDOW(client->win),
+                        GTK_WINDOW(parent),
                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                         GTK_STOCK_CANCEL,
                         GTK_RESPONSE_CANCEL,

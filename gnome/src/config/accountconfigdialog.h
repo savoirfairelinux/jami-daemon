@@ -45,7 +45,7 @@
  * @return The dialog with the pertinent account information
  */
 GtkWidget *
-show_account_window(const gchar *accountID, SFLPhoneClient *client, gboolean is_new);
+show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *client, gboolean is_new);
 
 /*
  * @param dialog The dialog the account will be update from
