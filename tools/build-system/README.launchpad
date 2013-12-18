@@ -6,4 +6,5 @@ tools/build-system/setenv.sh
 
 See commit 1b19e3869aa5e4632b8b043f47024297218ed2c5 for an example.
 
-In addition, you'll have to modify the sflphone-package-manager job on Jenkins
+In addition, you'll have to modify the sflphone-package-manager job on Jenkins, specifically
+Configure->Build->Execute Shell (add new distro).
