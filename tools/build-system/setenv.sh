@@ -22,5 +22,5 @@ export REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
 
 export WORKING_DIR="${ROOT_DIR}/sflphone-build-repository/tools/build-system"
 export LAUNCHPAD_DIR="${WORKING_DIR}/launchpad"
-LAUNCHPAD_DISTRIBUTIONS=("oneiric" "precise" "quantal" "raring" "saucy")
+LAUNCHPAD_DISTRIBUTIONS=("oneiric" "precise" "quantal" "raring" "saucy" "trusty")
 export LAUNCHPAD_DISTRIBUTIONS
