@@ -106,8 +106,10 @@ bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
 
     allocated_ = not avpicture_alloc((AVPicture *) frame_,
                                      libav_pix_fmt, width, height);
-    if (allocated_)
+    if (allocated_) {
         setGeometry(width, height, pix_fmt);
+        clear();
+    }
 
     return allocated_;
 }
@@ -186,9 +188,12 @@ void VideoFrame::copy(VideoFrame &dst)
 void VideoFrame::clear()
 {
     // FIXME: beurk!!!!
+
     memset(frame_->data[0], 0, frame_->linesize[0]*frame_->height);
-    memset(frame_->data[1], 0, frame_->linesize[1]*frame_->height/2);
-    memset(frame_->data[2], 0, frame_->linesize[2]*frame_->height/2);
+    // 128 is the black level for U/V channels
+    memset(frame_->data[1], 128, frame_->linesize[1]*frame_->height/2);
+    memset(frame_->data[2], 128, frame_->linesize[2]*frame_->height/2);
+}
 }
 
 
