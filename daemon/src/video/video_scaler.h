@@ -46,6 +46,9 @@ public:
     ~VideoScaler();
     void scale(VideoFrame &input, VideoFrame &output);
     void reset();
+    void scale_and_pad(VideoFrame &input, VideoFrame &output,
+                       unsigned xoff, unsigned yoff,
+                       unsigned dest_width, unsigned dest_height);
 
 private:
     NON_COPYABLE(VideoScaler);

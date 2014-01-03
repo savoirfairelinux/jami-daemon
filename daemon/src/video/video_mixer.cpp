@@ -97,7 +97,6 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
 void VideoMixer::render_frame(VideoFrame& input, const int index)
 {
     VideoScaler scaler;
-    VideoFrame scaled_input;
 
     if (!width_ or !height_)
         return;
@@ -118,18 +117,10 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
     const int zoom = ceil(sqrt(n));
     const int cell_width = width_ / zoom;
     const int cell_height = height_ / zoom;
+    const int xoff = (index % zoom) * cell_width;
+    const int yoff = (index / zoom) * cell_height;
 
-    if (!scaled_input.allocBuffer(cell_width, cell_height,
-                                  VIDEO_PIXFMT_YUV420P)) {
-        ERROR("VideoFrame::allocBuffer() failed");
-        return;
-    }
-
-    int xoff = (index % zoom) * cell_width;
-    int yoff = (index / zoom) * cell_height;
-
-    scaler.scale(input, scaled_input);
-    output.blit(scaled_input, xoff, yoff);
+    scaler.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
 
     publishFrame();
 }

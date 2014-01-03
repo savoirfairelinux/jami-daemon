@@ -62,6 +62,41 @@ void VideoScaler::scale(VideoFrame &input, VideoFrame &output)
               input_frame->height, output_frame->data, output_frame->linesize);
 }
 
+void VideoScaler::scale_and_pad(VideoFrame &input, VideoFrame &output,
+                                unsigned xoff, unsigned yoff,
+                                unsigned dest_width, unsigned dest_height)
+{
+    AVFrame *input_frame = input.get();
+    AVFrame *output_frame = output.get();
+    uint8_t *data[AV_NUM_DATA_POINTERS];
+
+    for (int i = 0; i < AV_NUM_DATA_POINTERS; i++) {
+        if (output_frame->data[i]) {
+            const unsigned divisor = i == 0 ? 1 : 2;
+            unsigned offset = (yoff * output_frame->linesize[i] + xoff) / divisor;
+            data[i] = output_frame->data[i] + offset;
+        } else
+            data[i] = 0;
+    }
+
+    ctx_ = sws_getCachedContext(ctx_,
+                                input_frame->width,
+                                input_frame->height,
+                                (AVPixelFormat) input_frame->format,
+                                dest_width,
+                                dest_height,
+                                (AVPixelFormat) output_frame->format,
+                                mode_,
+                                NULL, NULL, NULL);
+    if (!ctx_) {
+        ERROR("Unable to create a scaler context");
+        return;
+    }
+
+    sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
+              input_frame->height, data, output_frame->linesize);
+}
+
 void VideoScaler::reset()
 {
     if (ctx_) {
