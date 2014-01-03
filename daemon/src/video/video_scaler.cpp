@@ -35,7 +35,7 @@
 
 namespace sfl_video {
 
-VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_BICUBIC) {}
+VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_FAST_BILINEAR) {}
 
 VideoScaler::~VideoScaler() { sws_freeContext(ctx_); }
 
