@@ -194,7 +194,6 @@ void VideoFrame::clear()
     memset(frame_->data[1], 128, frame_->linesize[1]*frame_->height/2);
     memset(frame_->data[2], 128, frame_->linesize[2]*frame_->height/2);
 }
-}
 
 
 static int flipPlanarHorizontal(AVFrame *frame)
