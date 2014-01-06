@@ -367,6 +367,29 @@ void SIPTest::testSIPURI()
     CPPUNIT_ASSERT(foo == "17771234567");
 }
 
+void SIPTest::testParseDisplayName()
+{
+    // 1st element is input, 2nd is expected output
+    const char *test_set[][2] = {
+    {"\nFrom: \"A. G. Bell\" <sip:agb@bell-telephone.com> ;tag=a48s", "A. G. Bell"},
+    {"\nFrom: \"A. G. Bell2\" <sip:agb@bell-telephone.com> ;tag=a48s\r\nOtherLine: \"bla\"\r\n", "A. G. Bell2"},
+    {"\nf: Anonymous <sip:c8oqz84zk7z@privacy.org>;tag=hyh8", "Anonymous"},
+    {"\nFrom: \"Alejandro Perez\" <sip:1111@10.0.0.1>;tag=3a7516a63bdbo0", "Alejandro Perez"},
+    {"\nFrom: \"Malformed <sip:1111@10.0.0.1>;tag=3a6a63bdbo0", ""},
+    {"\nTo: <sip:1955@10.0.0.1>;tag=as6fbade41", ""},
+    {"\nFrom: \"1000\" <sip:1000@sip.example.es>;tag=as775338f3", "1000"},
+    {"\nFrom: 1111_9532323 <sip:1111_9532323@sip.example.es>;tag=caa3a61", "1111_9532323"},
+    {"\nFrom: \"4444_953111111\" <sip:4444_111111@sip.example.es>;tag=2b00632co0", "4444_953111111"},
+    {"\nFrom: <sip:6926666@4.4.4.4>;tag=4421-D9700", ""},
+    {"\nFrom: <sip:pinger@sipwise.local>;tag=01f516a4", ""},
+    {"\nFrom: sip:pinger@sipwise.local;tag=01f516a4", ""},
+    {"\nFrom: sip:+1212555@server.example.com;tag=887s", ""}};
+
+    for (const auto &t : test_set) {
+        const std::string str(sip_utils::parseDisplayName(t[0]));
+        CPPUNIT_ASSERT(str == t[1]);
+    }
+}
 
 void SIPTest::testIncomingIpCallSdp()
 {

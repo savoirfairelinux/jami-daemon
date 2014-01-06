@@ -52,6 +52,7 @@ class SIPTest : public CppUnit::TestCase {
           */
         CPPUNIT_TEST_SUITE(SIPTest);
         CPPUNIT_TEST ( testSimpleOutgoingIpCall );
+        CPPUNIT_TEST ( testParseDisplayName );
         // CPPUNIT_TEST ( testSimpleIncomingIpCall );
         // CPPUNIT_TEST ( testTwoOutgoingIpCall );
         // CPPUNIT_TEST ( testTwoIncomingIpCall );
@@ -88,6 +89,8 @@ class SIPTest : public CppUnit::TestCase {
         void testIncomingIpCallSdp(void);
 
         void testSIPURI();
+
+        void testParseDisplayName();
 };
 
 /* Register our test module */
