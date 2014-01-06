@@ -101,19 +101,44 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 std::string
 sip_utils::parseDisplayName(const char * buffer)
 {
-    const char* from_header = strstr(buffer, "From: ");
-
+    // Start in From: in short and long form
+    const char* from_header = strstr(buffer, "\nFrom: ");
+    if (!from_header)
+        from_header = strstr(buffer, "\nf: ");
     if (!from_header)
         return "";
 
     std::string temp(from_header);
-    size_t begin_displayName = temp.find("\"") + 1;
-    size_t end_displayName = temp.rfind("\"");
-    std::string displayName(temp.substr(begin_displayName, end_displayName - begin_displayName));
+
+    // Cut at end of line
+    temp = temp.substr(0, temp.find("\n", 1));
+
+    size_t begin_displayName = temp.find("\"");
+    size_t end_displayName;
+    if (begin_displayName != std::string::npos) {
+      // parse between quotes
+      end_displayName = temp.find("\"", begin_displayName+1);
+      if (end_displayName == std::string::npos)
+          return "";
+    } else {
+      // parse without quotes
+      end_displayName = temp.find("<");
+      if (end_displayName != std::string::npos) {
+          begin_displayName = temp.find_first_not_of(" ", temp.find(":")) + 1;
+          end_displayName--;
+          if (end_displayName == begin_displayName)
+              return "";
+      } else {
+          return "";
+      }
+    }
+
+    std::string displayName = temp.substr(begin_displayName + 1,
+                                          end_displayName - begin_displayName - 1);
 
     static const size_t MAX_DISPLAY_NAME_SIZE = 25;
     if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
-        return "";
+        return displayName.substr(0, MAX_DISPLAY_NAME_SIZE);
 
     return displayName;
 }
