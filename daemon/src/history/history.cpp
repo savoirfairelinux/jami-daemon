@@ -52,6 +52,10 @@ using std::vector;
 
 bool History::load(int limit)
 {
+    // load only once
+    if (!items_.empty())
+        return true;
+
     ensurePath();
     std::ifstream infile(path_.c_str());
     if (!infile) {
@@ -92,7 +96,7 @@ void History::ensurePath()
 {
     if (path_.empty()) {
 #ifdef __ANDROID__
-		path_ = fileutils::get_home_dir() + DIR_SEPARATOR_STR "history";
+		path_ = fileutils::get_home_dir() + DIR_SEPARATOR_STR  + "history";
 #else
         const string xdg_data = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                                 ".local/share/sflphone";

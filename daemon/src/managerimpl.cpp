@@ -169,6 +169,9 @@ void ManagerImpl::init(const std::string &config_file)
 
     bool no_errors = true;
 
+    // manager can restart without being recreated (android)
+    finished_ = false;
+
     try {
         no_errors = parseConfiguration();
     } catch (const Conf::YamlParserException &e) {
