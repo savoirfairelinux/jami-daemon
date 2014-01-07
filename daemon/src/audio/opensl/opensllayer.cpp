@@ -116,6 +116,7 @@ OpenSLThread::run()
 
     opensl_->startAudioPlayback();
     opensl_->startAudioCapture();
+    opensl_->isStarted_ = true;
 
     while (opensl_->isStarted_)
         usleep(20000); // 20 ms
@@ -167,7 +168,6 @@ OpenSLLayer::startStream()
 
     if (audioThread_ == nullptr) {
         audioThread_ = new OpenSLThread(this);
-        isStarted_ = true;
         audioThread_->start();
     } else if (!audioThread_->isRunning()) {
         audioThread_->start();
