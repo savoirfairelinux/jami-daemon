@@ -1025,7 +1025,6 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 #endif
 
     /* Defines a default timeout for the proxies */
-#if HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT
     static const int DEFAULT_DBUS_TIMEOUT = 30000;
     dbus_g_proxy_set_default_timeout(call_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(instance_proxy, DEFAULT_DBUS_TIMEOUT);
@@ -1035,7 +1034,6 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 #endif
 #ifdef SFL_VIDEO
     dbus_g_proxy_set_default_timeout(video_proxy, DEFAULT_DBUS_TIMEOUT);
-#endif
 #endif
 
     gboolean status = dbus_connect_session_manager(connection);

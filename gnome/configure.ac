@@ -29,7 +29,8 @@ dnl uninstalled gsr ui dir
 AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
   [path to uninstalled SFLphone UI dir])
 
-PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1 >= 0.75, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=true, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=false);
+PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1 >= 0.75);
+
 PKG_CHECK_MODULES([LIBNOTIFY], [libnotify >= 0.5.0])
 if echo "$LIBNOTIFY_LIBS" | grep -q gtk+-x11-2.0; then
     AC_MSG_ERROR([Your libnotify is linked with GTK+2 ! Install libnotify4-dev])
