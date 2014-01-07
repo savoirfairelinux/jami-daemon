@@ -292,11 +292,7 @@ create_main_window(SFLPhoneClient *client)
     pack_main_window_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
 
     /* Setup call main widget*/
-#if GTK_MAJOR_VERSION == 2
-    GtkWidget *vpaned = gtk_vpaned_new();
-#else
     GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-#endif
     current_calls_tab->mainwidget = vpaned;
 
     const gint messaging_height = g_settings_get_int(client->settings, "message-tab-height");
