@@ -97,7 +97,7 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     return route_set;
 }
 
-
+// FIXME: replace with regex
 std::string
 sip_utils::parseDisplayName(const char * buffer)
 {
@@ -117,14 +117,16 @@ sip_utils::parseDisplayName(const char * buffer)
     size_t end_displayName;
     if (begin_displayName != std::string::npos) {
       // parse between quotes
-      end_displayName = temp.find("\"", begin_displayName+1);
+      end_displayName = temp.find("\"", begin_displayName + 1);
       if (end_displayName == std::string::npos)
           return "";
     } else {
       // parse without quotes
       end_displayName = temp.find("<");
       if (end_displayName != std::string::npos) {
-          begin_displayName = temp.find_first_not_of(" ", temp.find(":")) + 1;
+          begin_displayName = temp.find_first_not_of(" ", temp.find(":"));
+          // omit trailing/leading spaces
+          begin_displayName++;
           end_displayName--;
           if (end_displayName == begin_displayName)
               return "";
