@@ -1649,19 +1649,7 @@ create_menus(GtkUIManager *ui, SFLPhoneClient *client)
     gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Toolbar"), FALSE);
 
 #ifdef SFL_PRESENCE
-    // Should the buddy list be available?
-    // find at least one account with presence feature enabled
-    account_t * account;
-    gboolean global_presence_enabled = FALSE;
-
-    for (guint i = 0; i < account_list_get_size(); i++){
-        account = account_list_get_nth(i);
-        g_assert(account);
-        if(g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true") == 0)
-            global_presence_enabled = TRUE;
-    }
-
-    gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Buddies"), global_presence_enabled);
+    gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Buddies"), TRUE);
 #endif
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
