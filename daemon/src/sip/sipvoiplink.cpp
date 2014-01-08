@@ -772,9 +772,10 @@ void SIPVoIPLink::sendRegister(Account *a)
 
     if (account->transport_) {
         if (not account->getPublishedSameasLocal() or (not received.empty() and received != account->getPublishedAddress())) {
-            DEBUG("Setting VIA sent-by to %s:%d", received.c_str(), account->getRPort());
+            pjsip_host_port *via = account->getViaAddr();
+            DEBUG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
 
-            if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
+            if (pjsip_regc_set_via_sent_by(regc, via, account->transport_) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
         } else if (account->isStunEnabled()) {
             if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
