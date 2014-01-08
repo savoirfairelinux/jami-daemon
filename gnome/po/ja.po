@@ -7,64 +7,63 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-02 11:57-0400\n"
-"PO-Revision-Date: 2013-06-12 22:02+0000\n"
+"POT-Creation-Date: 2014-01-08 10:48-0500\n"
+"PO-Revision-Date: 2013-10-02 16:32+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2013-10-02 15:52+0000\n"
-"X-Generator: Launchpad (build 16791)\n"
+"X-Launchpad-Export-Date: 2014-01-08 15:41+0000\n"
+"X-Generator: Launchpad (build 16884)\n"
 
-#: ../src/accountlist.c:155
+#: ../src/accountlist.c:183
 msgid "Registered"
 msgstr "登録済み"
 
-#: ../src/accountlist.c:157
+#: ../src/accountlist.c:185
 msgid "Not Registered"
 msgstr "未登録"
 
-#: ../src/accountlist.c:159
+#: ../src/accountlist.c:187
 msgid "Trying..."
 msgstr "設定中…"
 
-#: ../src/accountlist.c:161 ../src/sflnotify.c:170 ../src/sflnotify.c:183
+#: ../src/accountlist.c:189 ../src/sflnotify.c:170 ../src/sflnotify.c:183
 #, c-format
 msgid "Error"
 msgstr "エラー"
 
-#: ../src/accountlist.c:163
+#: ../src/accountlist.c:191
 msgid "Authentication Failed"
 msgstr "認証に失敗"
 
-#: ../src/accountlist.c:165
+#: ../src/accountlist.c:193
 msgid "Network unreachable"
 msgstr "ネットワーク接続不可"
 
-#: ../src/accountlist.c:167
+#: ../src/accountlist.c:195
 msgid "Host unreachable"
 msgstr "ホスト接続不可"
 
-#: ../src/accountlist.c:169
+#: ../src/accountlist.c:197
 msgid "Service unavailable"
 msgstr ""
 
-#: ../src/accountlist.c:171
-#, fuzzy
+#: ../src/accountlist.c:199
 msgid "Not acceptable"
-msgstr "ホスト接続不可"
+msgstr ""
 
-#: ../src/accountlist.c:173
+#: ../src/accountlist.c:201
 msgid "Stun server invalid"
 msgstr "Stun サーバー無効"
 
-#: ../src/accountlist.c:175
+#: ../src/accountlist.c:203
 msgid "Ready"
 msgstr "準備完了"
 
-#: ../src/accountlist.c:177
+#: ../src/accountlist.c:205
 msgid "Invalid"
 msgstr "無効"
 
@@ -112,220 +111,217 @@ msgstr ""
 msgid "%x at %R"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:227
-#, fuzzy
+#: ../src/config/accountconfigdialog.c:234
 msgid "_Auto-answer calls"
-msgstr "応答"
+msgstr ""
 
-#: ../src/config/accountconfigdialog.c:247
+#: ../src/config/accountconfigdialog.c:263
 msgid "Account Parameters"
 msgstr "アカウント・パラメーター"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:256 ../src/config/assistant.c:305
+#: ../src/config/accountconfigdialog.c:272 ../src/config/assistant.c:305
 #: ../src/config/assistant.c:403
 msgid "_Alias"
 msgstr "エイリアス(_A)"
 
-#: ../src/config/accountconfigdialog.c:267
+#: ../src/config/accountconfigdialog.c:287
 msgid "_Protocol"
 msgstr "プロトコル(_P)"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:284
+#: ../src/config/accountconfigdialog.c:304
 msgid "Unknown"
 msgstr "Unknown"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:299 ../src/config/assistant.c:313
+#: ../src/config/accountconfigdialog.c:319 ../src/config/assistant.c:313
 #: ../src/config/assistant.c:411
 msgid "_Host name"
 msgstr "ホスト名(_H)"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:309 ../src/config/assistant.c:321
+#: ../src/config/accountconfigdialog.c:329 ../src/config/assistant.c:321
 #: ../src/config/assistant.c:419
 msgid "_User name"
 msgstr "ユーザー名(_U)"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:330 ../src/config/assistant.c:331
+#: ../src/config/accountconfigdialog.c:350 ../src/config/assistant.c:331
 #: ../src/config/assistant.c:428
 msgid "_Password"
 msgstr "パスワード(_P)"
 
-#: ../src/config/accountconfigdialog.c:349 ../src/config/assistant.c:340
+#: ../src/config/accountconfigdialog.c:369 ../src/config/assistant.c:340
 #: ../src/config/assistant.c:437
 msgid "Show password"
 msgstr "パスワードを表示"
 
-#: ../src/config/accountconfigdialog.c:354
+#: ../src/config/accountconfigdialog.c:374
 msgid "_Proxy"
 msgstr "プロキシ(_P)"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:364 ../src/config/assistant.c:345
+#: ../src/config/accountconfigdialog.c:384 ../src/config/assistant.c:345
 #: ../src/config/assistant.c:442
 msgid "_Voicemail number"
 msgstr "ボイスメール番号(_V)"
 
-#: ../src/config/accountconfigdialog.c:375
+#: ../src/config/accountconfigdialog.c:395
 msgid "_User-agent"
 msgstr "ユーザーエージェント(_U)"
 
-#: ../src/config/accountconfigdialog.c:400
-#, fuzzy
+#: ../src/config/accountconfigdialog.c:421
 msgid "Presence notifications"
-msgstr "通知を有効(_E)"
+msgstr ""
 
-#: ../src/config/accountconfigdialog.c:409
-#, fuzzy
+#: ../src/config/accountconfigdialog.c:430
 msgid "_Enable"
-msgstr "STUN を有効(_E)"
+msgstr ""
 
-#: ../src/config/accountconfigdialog.c:478
+#: ../src/config/accountconfigdialog.c:504
 msgid "Authentication"
 msgstr "認証"
 
-#: ../src/config/accountconfigdialog.c:479
+#: ../src/config/accountconfigdialog.c:505
 msgid "Secret"
 msgstr "シークレット"
 
-#: ../src/config/accountconfigdialog.c:728
+#: ../src/config/accountconfigdialog.c:754
 msgid "Credential"
 msgstr "Credential"
 
-#: ../src/config/accountconfigdialog.c:760
+#: ../src/config/accountconfigdialog.c:786
 msgid "Authentication name"
 msgstr "認証名"
 
-#: ../src/config/accountconfigdialog.c:771
+#: ../src/config/accountconfigdialog.c:797
 msgid "Password"
 msgstr "パスワード"
 
-#: ../src/config/accountconfigdialog.c:823
-#: ../src/config/accountconfigdialog.c:1517
+#: ../src/config/accountconfigdialog.c:849
+#: ../src/config/accountconfigdialog.c:1553
 msgid "Security"
 msgstr "セキュリティ"
 
-#: ../src/config/accountconfigdialog.c:839
+#: ../src/config/accountconfigdialog.c:865
 msgid "Use TLS transport(sips)"
 msgstr "TLS transport(sips) を使用"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:847
+#: ../src/config/accountconfigdialog.c:873
 msgid "SRTP key exchange"
 msgstr "SRTP key exchange"
 
-#: ../src/config/accountconfigdialog.c:853
+#: ../src/config/accountconfigdialog.c:879
 msgid "Disabled"
 msgstr "無効"
 
-#: ../src/config/accountconfigdialog.c:917
+#: ../src/config/accountconfigdialog.c:943
 msgid "Registration"
 msgstr "登録"
 
-#: ../src/config/accountconfigdialog.c:921
+#: ../src/config/accountconfigdialog.c:947
 msgid "Registration expire"
 msgstr "登録失効"
 
-#: ../src/config/accountconfigdialog.c:944
+#: ../src/config/accountconfigdialog.c:970
 msgid "Network Interface"
 msgstr "ネットワーク・インターフェイス"
 
-#: ../src/config/accountconfigdialog.c:954
+#: ../src/config/accountconfigdialog.c:980
 msgid "Local address"
 msgstr ""
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:987
+#: ../src/config/accountconfigdialog.c:1013
 msgid "Local port"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1028
-#: ../src/config/accountconfigdialog.c:1063
+#: ../src/config/accountconfigdialog.c:1054
+#: ../src/config/accountconfigdialog.c:1089
 msgid "Published address"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1032
+#: ../src/config/accountconfigdialog.c:1058
 msgid "Using STUN"
 msgstr "STUN を使用"
 
-#: ../src/config/accountconfigdialog.c:1039
+#: ../src/config/accountconfigdialog.c:1065
 msgid "STUN server URL"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1047
+#: ../src/config/accountconfigdialog.c:1073
 msgid "Same as local parameters"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1051
+#: ../src/config/accountconfigdialog.c:1077
 msgid "Set published address and port:"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1072
+#: ../src/config/accountconfigdialog.c:1098
 msgid "Published port"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1120
+#: ../src/config/accountconfigdialog.c:1146
 msgid "Min"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1121
+#: ../src/config/accountconfigdialog.c:1147
 msgid "Max"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1144
+#: ../src/config/accountconfigdialog.c:1170
 msgid "Audio RTP Port Range"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1150
+#: ../src/config/accountconfigdialog.c:1176
 msgid "Video RTP Port Range"
 msgstr ""
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1193
-#: ../src/config/accountconfigdialog.c:1501
+#: ../src/config/accountconfigdialog.c:1219
+#: ../src/config/accountconfigdialog.c:1537
 #: ../src/config/preferencesdialog.c:418
 msgid "Audio"
 msgstr "オーディオ"
 
-#: ../src/config/accountconfigdialog.c:1205
+#: ../src/config/accountconfigdialog.c:1231
 msgid "DTMF"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1209
+#: ../src/config/accountconfigdialog.c:1235
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1215
+#: ../src/config/accountconfigdialog.c:1241
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1223
+#: ../src/config/accountconfigdialog.c:1249
 msgid "Ringtones"
 msgstr "着信音"
 
-#: ../src/config/accountconfigdialog.c:1226
+#: ../src/config/accountconfigdialog.c:1252
 msgid "Choose a ringtone"
 msgstr "着信音の選択"
 
-#: ../src/config/accountconfigdialog.c:1229
+#: ../src/config/accountconfigdialog.c:1255
 msgid "_Enable ringtones"
 msgstr "着信音を有効(_E)"
 
-#: ../src/config/accountconfigdialog.c:1247
+#: ../src/config/accountconfigdialog.c:1273
 msgid "Audio Files"
 msgstr "オーディオ・ファイル"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1278
-#: ../src/config/accountconfigdialog.c:1506
+#: ../src/config/accountconfigdialog.c:1304
+#: ../src/config/accountconfigdialog.c:1542
 #: ../src/config/preferencesdialog.c:424
 msgid "Video"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1295
+#: ../src/config/accountconfigdialog.c:1321
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -333,40 +329,40 @@ msgid ""
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1475
+#: ../src/config/accountconfigdialog.c:1511
 msgid "Account settings"
 msgstr "アカウント設定"
 
-#: ../src/config/accountconfigdialog.c:1496
+#: ../src/config/accountconfigdialog.c:1532
 msgid "Basic"
 msgstr "基本設定"
 
-#: ../src/config/accountconfigdialog.c:1513
+#: ../src/config/accountconfigdialog.c:1549
 msgid "Advanced"
 msgstr "詳細設定"
 
-#: ../src/config/accountconfigdialog.c:1521
+#: ../src/config/accountconfigdialog.c:1557
 msgid "Network"
 msgstr "ネットワーク"
 
-#: ../src/config/accountlistconfigdialog.c:111
+#: ../src/config/accountlistconfigdialog.c:112
 #, c-format
 msgid "Are you sure want to delete \"%s\"?"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:113
+#: ../src/config/accountlistconfigdialog.c:114
 #, c-format
 msgid "Are you sure want to delete account?"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:122
+#: ../src/config/accountlistconfigdialog.c:123 ../src/presencewindow.c:683
+#: ../src/presencewindow.c:707
 msgid "Remove"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:124
-#, fuzzy
+#: ../src/config/accountlistconfigdialog.c:125
 msgid "Remove account"
-msgstr "アクティブ・アカウントがありません"
+msgstr ""
 
 #: ../src/config/accountlistconfigdialog.c:530
 msgid "Protocol"
@@ -381,15 +377,15 @@ msgstr "状態"
 msgid "Server returned \"%s\" (%d)"
 msgstr "サーバーが \"%s\" (%d) を返答しました"
 
-#: ../src/config/accountlistconfigdialog.c:667
+#: ../src/config/accountlistconfigdialog.c:672
 msgid "Accounts"
 msgstr "アカウント"
 
-#: ../src/config/accountlistconfigdialog.c:676
+#: ../src/config/accountlistconfigdialog.c:681
 msgid "Configured Accounts"
 msgstr "設定済みアカウント"
 
-#: ../src/config/accountlistconfigdialog.c:704
+#: ../src/config/accountlistconfigdialog.c:709
 msgid "You have no active account"
 msgstr "アクティブ・アカウントがありません"
 
@@ -615,59 +611,58 @@ msgstr "インプット"
 msgid "Ringtone"
 msgstr "着信音"
 
-#: ../src/config/audioconf.c:865
+#: ../src/config/audioconf.c:853
 msgid "Sound Manager"
 msgstr "サウンド・マネージャー"
 
-#: ../src/config/audioconf.c:872
+#: ../src/config/audioconf.c:860
 msgid "_Pulseaudio"
 msgstr "Pulseaudio(_P)"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:877
-#, fuzzy
+#: ../src/config/audioconf.c:865
 msgid "Pulseaudio settings"
-msgstr "Pulseaudio(_P)"
+msgstr ""
 
-#: ../src/config/audioconf.c:881
+#: ../src/config/audioconf.c:869
 msgid "_ALSA"
 msgstr "ALSA(_A)"
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:887
+#: ../src/config/audioconf.c:875
 msgid "ALSA settings"
 msgstr "ALSA 設定"
 
-#: ../src/config/audioconf.c:902
+#: ../src/config/audioconf.c:890
 msgid "Recordings"
 msgstr "録音"
 
 #. label
-#: ../src/config/audioconf.c:906
+#: ../src/config/audioconf.c:894
 msgid "Destination folder"
 msgstr "保存先フォルダー"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:910
+#: ../src/config/audioconf.c:898
 msgid "Select a folder"
 msgstr "フォルダーの選択"
 
-#: ../src/config/audioconf.c:921
+#: ../src/config/audioconf.c:909
 msgid "_Always recording"
 msgstr "常時録音(_A)"
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:928
+#: ../src/config/audioconf.c:916
 msgid "Voice enhancement settings"
 msgstr "音声詳細設定"
 
-#: ../src/config/audioconf.c:931
+#: ../src/config/audioconf.c:919
 msgid "_Noise Reduction"
 msgstr "ノイズ・リダクション(_N)"
 
-#: ../src/config/audioconf.c:945
-msgid "_Echo Cancellation"
-msgstr "エコー・キャンセラー(_E)"
+#: ../src/config/audioconf.c:926
+msgid "Automatic _Gain Control"
+msgstr ""
 
 #: ../src/config/hooks-config.c:151
 msgid "URL Argument"
@@ -694,9 +689,8 @@ msgid "_Prefix dialed numbers with"
 msgstr "プレフィックス番号(_P)"
 
 #: ../src/config/hooks-config.c:198
-#, fuzzy
 msgid "Messaging"
-msgstr "インスタント・メッセージング"
+msgstr ""
 
 #: ../src/config/hooks-config.c:202
 msgid "Open URL in"
@@ -722,9 +716,8 @@ msgstr ""
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:203
-#, fuzzy
 msgid "System Tray Icon (Legacy)"
-msgstr "システムトレイ・アイコン"
+msgstr ""
 
 #: ../src/config/preferencesdialog.c:210
 msgid "Show SFLphone in the system tray"
@@ -856,14 +849,12 @@ msgid "Require certificate for incoming tls connections"
 msgstr ""
 
 #: ../src/config/videoconf.c:499
-#, fuzzy
 msgid "Bitrate (kbps)"
-msgstr "ビットレート"
+msgstr ""
 
 #: ../src/config/videoconf.c:506
-#, fuzzy
 msgid "Parameters"
-msgstr "アカウント・パラメーター"
+msgstr ""
 
 #: ../src/config/videoconf.c:808
 msgid "No devices found"
@@ -890,9 +881,8 @@ msgid "Rate"
 msgstr ""
 
 #: ../src/config/videoconf.c:888
-#, fuzzy
 msgid "Video Manager"
-msgstr "サウンド・マネージャー"
+msgstr ""
 
 #: ../src/config/videoconf.c:891
 msgid "Video4Linux2"
@@ -951,37 +941,21 @@ msgstr "受話の検索"
 msgid "Search by outgoing call"
 msgstr "発信の検索"
 
-#: ../src/dbus/dbus.c:579
-#, fuzzy
+#: ../src/dbus/dbus.c:591
 msgid "ALSA notification: Error while opening playback device"
 msgstr ""
-"ALSA 通知\n"
-"\n"
-"Error while opening playback device"
 
-#: ../src/dbus/dbus.c:582
-#, fuzzy
+#: ../src/dbus/dbus.c:594
 msgid "ALSA notification: Error while opening capture device"
 msgstr ""
-"ALSA 通知\n"
-"\n"
-"Error while opening capture device"
 
-#: ../src/dbus/dbus.c:585
-#, fuzzy
+#: ../src/dbus/dbus.c:597
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr ""
-"Pulseaudio 通知\n"
-"\n"
-"Pulseaudioが起動していません"
 
-#: ../src/dbus/dbus.c:588
-#, fuzzy
+#: ../src/dbus/dbus.c:600
 msgid "Codecs notification: Codecs not found"
 msgstr ""
-"Codecs 通知\n"
-"\n"
-"コーデックが見付かりませんでした"
 
 #: ../src/mainwindow.c:139
 msgid "There is one call in progress."
@@ -995,61 +969,88 @@ msgstr "呼び出し中"
 msgid "Do you still want to quit?"
 msgstr "終了しますか？"
 
-#: ../src/mainwindow.c:282
-#, fuzzy
-msgid "Status:"
-msgstr "状態"
-
-#: ../src/mainwindow.c:288
-msgid "Offline"
-msgstr ""
-
-#: ../src/mainwindow.c:289
-msgid "Online"
-msgstr ""
-
-#: ../src/mainwindow.c:576
+#: ../src/mainwindow.c:505
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr ""
 
-#: ../src/mainwindow.c:578
+#: ../src/mainwindow.c:507
 msgid "Secure Communication Unavailable"
 msgstr ""
 
-#: ../src/mainwindow.c:581 ../src/mainwindow.c:607
+#: ../src/mainwindow.c:510 ../src/mainwindow.c:536
 msgid "Continue"
 msgstr ""
 
-#: ../src/mainwindow.c:582 ../src/mainwindow.c:608 ../src/mainwindow.c:625
+#: ../src/mainwindow.c:511 ../src/mainwindow.c:537 ../src/mainwindow.c:554
 msgid "Stop Call"
 msgstr "通話を終了"
 
-#: ../src/mainwindow.c:600
+#: ../src/mainwindow.c:529
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
 "Exact reason: %s\n"
 msgstr ""
 
-#: ../src/mainwindow.c:604
+#: ../src/mainwindow.c:533
 msgid "ZRTP negotiation failed"
 msgstr "ZRTP negotiation 失敗"
 
-#: ../src/mainwindow.c:618
+#: ../src/mainwindow.c:547
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
 msgstr ""
 
-#: ../src/mainwindow.c:620
+#: ../src/mainwindow.c:549
 msgid "Confirm Go Clear"
 msgstr ""
 
-#: ../src/mainwindow.c:623
+#: ../src/mainwindow.c:552
 msgid "Confirm"
 msgstr "確認"
+
+#: ../src/presencewindow.c:504
+msgid "Field error"
+msgstr ""
+
+#: ../src/presencewindow.c:684 ../src/presencewindow.c:708
+#: ../src/presencewindow.c:833
+msgid "Remove buddy"
+msgstr ""
+
+#. popup
+#: ../src/presencewindow.c:765 ../src/uimanager.c:1148
+msgid "Add new buddy"
+msgstr ""
+
+#: ../src/presencewindow.c:789 ../src/presencewindow.c:842
+msgid "Add group"
+msgstr ""
+
+#. Call Menu
+#: ../src/presencewindow.c:817 ../src/uimanager.c:982
+msgid "Call"
+msgstr "発信"
+
+#: ../src/presencewindow.c:826
+msgid "Add buddy"
+msgstr ""
+
+#: ../src/presencewindow.c:849
+msgid "Remove group"
+msgstr ""
+
+#: ../src/presencewindow.c:1065
+msgid "Status:"
+msgstr ""
+
+#: ../src/presencewindow.c:1194
+#, fuzzy
+msgid "SFLphone Presence"
+msgstr "SFLphone エラー"
 
 #: ../src/sflphone_client.c:53
 #, c-format
@@ -1129,11 +1130,11 @@ msgstr "%s のZRTP negotiation 失敗"
 msgid "<i>With:</i> %s"
 msgstr ""
 
-#: ../src/sliders.c:231
+#: ../src/sliders.c:201
 msgid "Speakers volume"
 msgstr "スピーカー音量"
 
-#: ../src/sliders.c:231
+#: ../src/sliders.c:201
 msgid "Mic volume"
 msgstr "マイク音量"
 
@@ -1141,8 +1142,8 @@ msgstr "マイク音量"
 msgid "_Show main window"
 msgstr "メインウィンドウを表示(_S)"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:1010 ../src/uimanager.c:1376
-#: ../src/uimanager.c:1445
+#: ../src/statusicon.c:139 ../src/uimanager.c:992 ../src/uimanager.c:1323
+#: ../src/uimanager.c:1379
 msgid "_Hang up"
 msgstr "通話を切る(_H)"
 
@@ -1150,293 +1151,249 @@ msgstr "通話を切る(_H)"
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../src/uimanager.c:436
+#: ../src/uimanager.c:417
 msgid "No address book selected"
 msgstr "address book が未選択です"
 
-#: ../src/uimanager.c:456 ../src/uimanager.c:1139
+#: ../src/uimanager.c:437 ../src/uimanager.c:1065
 msgid "Address book"
 msgstr ""
 
-#: ../src/uimanager.c:483
+#: ../src/uimanager.c:464
 #, c-format
 msgid "Voicemail(%i)"
 msgstr "ボイスメール(%i)"
 
-#: ../src/uimanager.c:575
+#: ../src/uimanager.c:557
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone は SIP と IAX2 プロトコルに互換性があるVoIPクライアントです"
 
-#: ../src/uimanager.c:578
+#: ../src/uimanager.c:560
 msgid "About SFLphone"
 msgstr "SFLphone について"
 
-#: ../src/uimanager.c:951 ../src/uimanager.c:1030
+#: ../src/uimanager.c:933 ../src/uimanager.c:1012
 msgid "Voicemail"
 msgstr "ボイスメール"
 
-#. Call Menu
-#: ../src/uimanager.c:1000
-msgid "Call"
-msgstr "発信"
-
-#: ../src/uimanager.c:1002 ../src/uimanager.c:1541
+#: ../src/uimanager.c:984 ../src/uimanager.c:1486
 msgid "_New call"
 msgstr "新規に発信(_N)"
 
-#: ../src/uimanager.c:1003
+#: ../src/uimanager.c:985
 msgid "Place a new call"
 msgstr "新規に発信"
 
-#: ../src/uimanager.c:1006 ../src/uimanager.c:1365
+#: ../src/uimanager.c:988 ../src/uimanager.c:1312
 msgid "_Pick up"
 msgstr ""
 
-#: ../src/uimanager.c:1007
+#: ../src/uimanager.c:989
 msgid "Answer the call"
 msgstr "応答"
 
-#: ../src/uimanager.c:1011
+#: ../src/uimanager.c:993
 msgid "Finish the call"
 msgstr "通話を終了"
 
-#: ../src/uimanager.c:1014
+#: ../src/uimanager.c:996
 msgid "O_n hold"
 msgstr "保留(_n)"
 
-#: ../src/uimanager.c:1015
+#: ../src/uimanager.c:997
 msgid "Place the call on hold"
 msgstr "保留中"
 
-#: ../src/uimanager.c:1018
+#: ../src/uimanager.c:1000
 msgid "O_ff hold"
 msgstr "保留解除(_f)"
 
-#: ../src/uimanager.c:1019
+#: ../src/uimanager.c:1001
 msgid "Place the call off hold"
 msgstr "保留を解除"
 
-#: ../src/uimanager.c:1022 ../src/uimanager.c:1430
+#: ../src/uimanager.c:1004 ../src/uimanager.c:1365
 msgid "Send _message"
 msgstr "メッセージを送信(_m)"
 
-#: ../src/uimanager.c:1023
+#: ../src/uimanager.c:1005
 msgid "Send message"
 msgstr "メッセージを送信します"
 
-#: ../src/uimanager.c:1026
+#: ../src/uimanager.c:1008
 msgid "Configuration _Assistant"
 msgstr "設定アシスタント(_A)"
 
-#: ../src/uimanager.c:1027
+#: ../src/uimanager.c:1009
 msgid "Run the configuration assistant"
 msgstr "設定アシスタントを起動します"
 
-#: ../src/uimanager.c:1031
+#: ../src/uimanager.c:1013
 msgid "Call your voicemail"
 msgstr "ボイスメールに発信"
 
-#: ../src/uimanager.c:1034
+#: ../src/uimanager.c:1016
 msgid "_Close"
 msgstr "閉じる(_C)"
 
-#: ../src/uimanager.c:1035
+#: ../src/uimanager.c:1017
 msgid "Minimize to system tray"
 msgstr "システムトレイに最小化する"
 
-#: ../src/uimanager.c:1038
+#: ../src/uimanager.c:1020
 msgid "_Quit"
 msgstr "終了(_Q)"
 
-#: ../src/uimanager.c:1039
+#: ../src/uimanager.c:1021
 msgid "Quit the program"
 msgstr "プログラムを終了します"
 
 #. Edit Menu
-#: ../src/uimanager.c:1043
+#: ../src/uimanager.c:1025
 msgid "_Edit"
 msgstr "編集(_E)"
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1027
 msgid "_Copy"
 msgstr "コピー(_C)"
 
-#: ../src/uimanager.c:1046
+#: ../src/uimanager.c:1028
 msgid "Copy the selection"
 msgstr "選択範囲をコピーします"
 
-#: ../src/uimanager.c:1049
+#: ../src/uimanager.c:1031
 msgid "_Paste"
 msgstr "貼り付け(_P)"
 
-#: ../src/uimanager.c:1050
+#: ../src/uimanager.c:1032
 msgid "Paste the clipboard"
 msgstr "クリップボードへ貼り付けます"
 
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1035
 msgid "Clear _history"
 msgstr "履歴消去(_h)"
 
-#: ../src/uimanager.c:1054
+#: ../src/uimanager.c:1036
 msgid "Clear the call history"
 msgstr "通話履歴を消去"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1039
 msgid "_Accounts"
 msgstr "アカウント(_A)"
 
-#: ../src/uimanager.c:1058
+#: ../src/uimanager.c:1040
 msgid "Edit your accounts"
 msgstr "アカウントを編集します"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1043
 msgid "_Preferences"
 msgstr "設定(_P)"
 
-#: ../src/uimanager.c:1062
+#: ../src/uimanager.c:1044
 msgid "Change your preferences"
 msgstr "設定を変更します"
 
 #. View Menu
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1048
 msgid "_View"
 msgstr "表示(_V)"
 
 #. Help menu
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1051
 msgid "_Help"
 msgstr "ヘルプ(_H)"
 
-#: ../src/uimanager.c:1070
+#: ../src/uimanager.c:1052
 msgid "Contents"
 msgstr "コンテンツ"
 
-#: ../src/uimanager.c:1071
+#: ../src/uimanager.c:1053
 msgid "Open the manual"
 msgstr "手動で開く"
 
-#: ../src/uimanager.c:1073
+#: ../src/uimanager.c:1055
 msgid "About this application"
 msgstr "このアプリケーションについて"
 
-#: ../src/uimanager.c:1132
+#: ../src/uimanager.c:1059
 msgid "_Transfer"
 msgstr "転送(_T)"
 
-#: ../src/uimanager.c:1132
+#: ../src/uimanager.c:1059
 msgid "Transfer the call"
 msgstr "通話転送"
 
-#: ../src/uimanager.c:1133 ../src/uimanager.c:1398
+#: ../src/uimanager.c:1060 ../src/uimanager.c:1345
 msgid "_Record"
 msgstr "録音(_R)"
 
-#: ../src/uimanager.c:1133
+#: ../src/uimanager.c:1060
 msgid "Record the current conversation"
 msgstr "現在の会話を録音します"
 
-#: ../src/uimanager.c:1134 ../src/uimanager.c:1410
-msgid "_Mute"
-msgstr ""
-
-#: ../src/uimanager.c:1134
-msgid "Mute microphone for this call"
-msgstr ""
-
-#: ../src/uimanager.c:1135
+#: ../src/uimanager.c:1061
 msgid "_Show toolbar"
 msgstr "ツールバーの表示(_S)"
 
-#: ../src/uimanager.c:1135
+#: ../src/uimanager.c:1061
 msgid "Show the toolbar"
 msgstr "ツールバーを表示します"
 
-#: ../src/uimanager.c:1136
+#: ../src/uimanager.c:1062
 msgid "_Dialpad"
 msgstr "ダイアルパッド(_D)"
 
-#: ../src/uimanager.c:1136
+#: ../src/uimanager.c:1062
 msgid "Show the dialpad"
 msgstr "ダイヤルパッドを表示します"
 
-#: ../src/uimanager.c:1137
+#: ../src/uimanager.c:1063
 msgid "_Volume controls"
 msgstr "音量調節(_V)"
 
-#: ../src/uimanager.c:1137
+#: ../src/uimanager.c:1063
 msgid "Show the volume controls"
 msgstr "音量を調節します"
 
-#: ../src/uimanager.c:1138
+#: ../src/uimanager.c:1064
 msgid "_History"
 msgstr "履歴(_H)"
 
-#: ../src/uimanager.c:1138
+#: ../src/uimanager.c:1064
 msgid "Calls history"
 msgstr "通話履歴"
 
-#: ../src/uimanager.c:1139
+#: ../src/uimanager.c:1065
 msgid "_Address book"
 msgstr "アドレスブック(_A)"
 
-#: ../src/uimanager.c:1140
+#: ../src/uimanager.c:1067
 msgid "_Buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1140
+#: ../src/uimanager.c:1067
 msgid "Display the buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1387 ../src/uimanager.c:1454
+#: ../src/uimanager.c:1334 ../src/uimanager.c:1388
 msgid "On _Hold"
 msgstr "保留(_H)"
 
-#: ../src/uimanager.c:1491
+#: ../src/uimanager.c:1425
 msgid "_Call back"
 msgstr "折り返し電話(_C)"
 
-#: ../src/uimanager.c:1599
+#: ../src/uimanager.c:1435 ../src/uimanager.c:1494
+msgid "Follow status"
+msgstr ""
+
+#: ../src/uimanager.c:1555
 msgid "Edit phone number"
 msgstr "電話番号の編集"
 
-#: ../src/uimanager.c:1610
+#: ../src/uimanager.c:1566
 msgid "Edit the phone number before making a call"
 msgstr "通話する前に電話番号を編集します"
 
-#, fuzzy
-#~ msgid "%d voice mail"
-#~ msgid_plural "%d voice mails"
-#~ msgstr[0] "ボイスメール"
-#~ msgstr[1] "ボイスメール"
-
-#~ msgid "Using account"
-#~ msgstr "使用アカウント"
-
-#, fuzzy
-#~ msgid "Stun configuration error"
-#~ msgstr "設定アシスタントを起動します"
-
-#~ msgid "Hide SFLphone window on _startup"
-#~ msgstr "起動時に SFLphone ウィンドウを表示しない(_s)"
-
-#~ msgid "_Comply with RFC 3263"
-#~ msgstr "_Comply with RFC 3263"
-
-#, fuzzy
-#~ msgid "There is %d active account"
-#~ msgid_plural "There are %d active accounts"
-#~ msgstr[0] "アクティブ・アカウントがありません"
-#~ msgstr[1] "アクティブ・アカウントがありません"
-
-#, fuzzy
-#~ msgid "_Playback record"
-#~ msgstr "常時録音(_A)"
-
-#~ msgid "Playback recorded file"
-#~ msgstr "録音ファイルを再生します"
-
-#~ msgid "_Stop playback"
-#~ msgstr "再生をストップ(_S)"
-
-#~ msgid "Stop recorded file playback"
-#~ msgstr "録音ファイルの再生をストップします"
+#~ msgid "_Echo Cancellation"
+#~ msgstr "エコー・キャンセラー(_E)"

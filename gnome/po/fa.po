@@ -7,78 +7,78 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-02 11:57-0400\n"
-"PO-Revision-Date: 2013-06-27 18:53+0000\n"
+"POT-Creation-Date: 2014-01-08 10:48-0500\n"
+"PO-Revision-Date: 2013-10-03 18:24+0000\n"
 "Last-Translator: Mahtab Ghamsari <mahtab.ghamsari@savoirfairelinux.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2013-10-02 15:52+0000\n"
-"X-Generator: Launchpad (build 16791)\n"
+"X-Launchpad-Export-Date: 2014-01-08 15:41+0000\n"
+"X-Generator: Launchpad (build 16884)\n"
 
-#: ../src/accountlist.c:155
+#: ../src/accountlist.c:183
 msgid "Registered"
 msgstr "ثبت شده"
 
-#: ../src/accountlist.c:157
+#: ../src/accountlist.c:185
 msgid "Not Registered"
 msgstr "ثبت نام نشده"
 
-#: ../src/accountlist.c:159
+#: ../src/accountlist.c:187
 msgid "Trying..."
 msgstr "تلاش....."
 
-#: ../src/accountlist.c:161 ../src/sflnotify.c:170 ../src/sflnotify.c:183
+#: ../src/accountlist.c:189 ../src/sflnotify.c:170 ../src/sflnotify.c:183
 #, c-format
 msgid "Error"
 msgstr "خطا"
 
-#: ../src/accountlist.c:163
+#: ../src/accountlist.c:191
 msgid "Authentication Failed"
 msgstr "تأیید هویت شکست خورد"
 
-#: ../src/accountlist.c:165
+#: ../src/accountlist.c:193
 msgid "Network unreachable"
 msgstr "شبکه غیرقابل دسترسی است"
 
-#: ../src/accountlist.c:167
+#: ../src/accountlist.c:195
 msgid "Host unreachable"
 msgstr "میزبان غیرقابل دسترسی است"
 
-#: ../src/accountlist.c:169
+#: ../src/accountlist.c:197
 msgid "Service unavailable"
 msgstr "سرویس موجود نیست"
 
-#: ../src/accountlist.c:171
+#: ../src/accountlist.c:199
 msgid "Not acceptable"
 msgstr "غیر قابل قبول"
 
-#: ../src/accountlist.c:173
+#: ../src/accountlist.c:201
 msgid "Stun server invalid"
 msgstr "سرور(STUN) معتبر نیست"
 
-#: ../src/accountlist.c:175
+#: ../src/accountlist.c:203
 msgid "Ready"
 msgstr "آماده‌"
 
-#: ../src/accountlist.c:177
+#: ../src/accountlist.c:205
 msgid "Invalid"
 msgstr "نامعتبر"
 
 #: ../src/actions.c:134
 msgid "(SIP)"
-msgstr ""
+msgstr "پروتکل سیپ (SIP)"
 
 #: ../src/actions.c:135
 msgid "(IAX)"
-msgstr ""
+msgstr "پروتکل IAX"
 
 #: ../src/actions.c:141
 #, c-format
 msgid "%s %s"
-msgstr ""
+msgstr "%s و %s"
 
 #: ../src/actions.c:145
 #, c-format
@@ -111,220 +111,217 @@ msgstr "A% ساعت R%"
 msgid "%x at %R"
 msgstr "x% ساعت R%"
 
-#: ../src/config/accountconfigdialog.c:227
+#: ../src/config/accountconfigdialog.c:234
 msgid "_Auto-answer calls"
 msgstr "تماس های اتوماتیک"
 
-#: ../src/config/accountconfigdialog.c:247
+#: ../src/config/accountconfigdialog.c:263
 msgid "Account Parameters"
 msgstr "پارامتر های حساب"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:256 ../src/config/assistant.c:305
+#: ../src/config/accountconfigdialog.c:272 ../src/config/assistant.c:305
 #: ../src/config/assistant.c:403
 msgid "_Alias"
 msgstr "ـاسم مستعار"
 
-#: ../src/config/accountconfigdialog.c:267
+#: ../src/config/accountconfigdialog.c:287
 msgid "_Protocol"
 msgstr "ـپروتکل"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:284
+#: ../src/config/accountconfigdialog.c:304
 msgid "Unknown"
 msgstr "_ناشناخته"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:299 ../src/config/assistant.c:313
+#: ../src/config/accountconfigdialog.c:319 ../src/config/assistant.c:313
 #: ../src/config/assistant.c:411
 msgid "_Host name"
 msgstr "نام _میزبان"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:309 ../src/config/assistant.c:321
+#: ../src/config/accountconfigdialog.c:329 ../src/config/assistant.c:321
 #: ../src/config/assistant.c:419
 msgid "_User name"
 msgstr "نام _کاربری"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:330 ../src/config/assistant.c:331
+#: ../src/config/accountconfigdialog.c:350 ../src/config/assistant.c:331
 #: ../src/config/assistant.c:428
 msgid "_Password"
 msgstr "_گذر‌واژه"
 
-#: ../src/config/accountconfigdialog.c:349 ../src/config/assistant.c:340
+#: ../src/config/accountconfigdialog.c:369 ../src/config/assistant.c:340
 #: ../src/config/assistant.c:437
 msgid "Show password"
 msgstr "نمایش _گذرواژه"
 
-#: ../src/config/accountconfigdialog.c:354
+#: ../src/config/accountconfigdialog.c:374
 msgid "_Proxy"
 msgstr "_پیشکار(پراکسی)"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:364 ../src/config/assistant.c:345
+#: ../src/config/accountconfigdialog.c:384 ../src/config/assistant.c:345
 #: ../src/config/assistant.c:442
 msgid "_Voicemail number"
 msgstr "شماره پست صوتی"
 
-#: ../src/config/accountconfigdialog.c:375
+#: ../src/config/accountconfigdialog.c:395
 msgid "_User-agent"
 msgstr "عامل کاربر"
 
-#: ../src/config/accountconfigdialog.c:400
-#, fuzzy
+#: ../src/config/accountconfigdialog.c:421
 msgid "Presence notifications"
-msgstr "فعال کردن آگهی ها و اخطارها"
+msgstr "پیام های وجود"
 
-#: ../src/config/accountconfigdialog.c:409
-#, fuzzy
+#: ../src/config/accountconfigdialog.c:430
 msgid "_Enable"
-msgstr "به کار انداختن اشکال‌زدا"
+msgstr "_فعال‌کردن"
 
-#: ../src/config/accountconfigdialog.c:478
+#: ../src/config/accountconfigdialog.c:504
 msgid "Authentication"
 msgstr "تصدیق هویت"
 
-#: ../src/config/accountconfigdialog.c:479
+#: ../src/config/accountconfigdialog.c:505
 msgid "Secret"
 msgstr "سری"
 
-#: ../src/config/accountconfigdialog.c:728
+#: ../src/config/accountconfigdialog.c:754
 msgid "Credential"
 msgstr "گواهی نامه"
 
-#: ../src/config/accountconfigdialog.c:760
+#: ../src/config/accountconfigdialog.c:786
 msgid "Authentication name"
 msgstr "نام برای تصدیق"
 
-#: ../src/config/accountconfigdialog.c:771
+#: ../src/config/accountconfigdialog.c:797
 msgid "Password"
 msgstr "گذرواژه"
 
-#: ../src/config/accountconfigdialog.c:823
-#: ../src/config/accountconfigdialog.c:1517
+#: ../src/config/accountconfigdialog.c:849
+#: ../src/config/accountconfigdialog.c:1553
 msgid "Security"
 msgstr "امنیت"
 
-#: ../src/config/accountconfigdialog.c:839
+#: ../src/config/accountconfigdialog.c:865
 msgid "Use TLS transport(sips)"
 msgstr "استفاده از امنیت لایه انتقال(TLS)"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:847
+#: ../src/config/accountconfigdialog.c:873
 msgid "SRTP key exchange"
 msgstr "تغییر کلید (SRTP)"
 
-#: ../src/config/accountconfigdialog.c:853
+#: ../src/config/accountconfigdialog.c:879
 msgid "Disabled"
 msgstr "غیرفعال شد"
 
-#: ../src/config/accountconfigdialog.c:917
+#: ../src/config/accountconfigdialog.c:943
 msgid "Registration"
 msgstr "ثبت نام"
 
-#: ../src/config/accountconfigdialog.c:921
+#: ../src/config/accountconfigdialog.c:947
 msgid "Registration expire"
 msgstr "انقضای ثبت نام"
 
-#: ../src/config/accountconfigdialog.c:944
+#: ../src/config/accountconfigdialog.c:970
 msgid "Network Interface"
 msgstr "رابط شبکه"
 
-#: ../src/config/accountconfigdialog.c:954
+#: ../src/config/accountconfigdialog.c:980
 msgid "Local address"
 msgstr "آدرس محلی"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:987
+#: ../src/config/accountconfigdialog.c:1013
 msgid "Local port"
 msgstr "پورت محلی"
 
-#: ../src/config/accountconfigdialog.c:1028
-#: ../src/config/accountconfigdialog.c:1063
+#: ../src/config/accountconfigdialog.c:1054
+#: ../src/config/accountconfigdialog.c:1089
 msgid "Published address"
 msgstr "آدرس منتشر شده"
 
-#: ../src/config/accountconfigdialog.c:1032
+#: ../src/config/accountconfigdialog.c:1058
 msgid "Using STUN"
 msgstr "با استفاده از STUN"
 
-#: ../src/config/accountconfigdialog.c:1039
+#: ../src/config/accountconfigdialog.c:1065
 msgid "STUN server URL"
 msgstr "نشانی وب سرور STUN"
 
-#: ../src/config/accountconfigdialog.c:1047
+#: ../src/config/accountconfigdialog.c:1073
 msgid "Same as local parameters"
 msgstr "برابر با پارامترهای محلی"
 
-#: ../src/config/accountconfigdialog.c:1051
+#: ../src/config/accountconfigdialog.c:1077
 msgid "Set published address and port:"
 msgstr "نشانی انتشار و پورت را تعیین کنید"
 
-#: ../src/config/accountconfigdialog.c:1072
+#: ../src/config/accountconfigdialog.c:1098
 msgid "Published port"
 msgstr "پورت ثبت شده"
 
-#: ../src/config/accountconfigdialog.c:1120
+#: ../src/config/accountconfigdialog.c:1146
 msgid "Min"
-msgstr ""
+msgstr "حداقل"
 
-#: ../src/config/accountconfigdialog.c:1121
+#: ../src/config/accountconfigdialog.c:1147
 msgid "Max"
-msgstr ""
+msgstr "حداکثر"
 
-#: ../src/config/accountconfigdialog.c:1144
+#: ../src/config/accountconfigdialog.c:1170
 msgid "Audio RTP Port Range"
-msgstr ""
+msgstr "محدوده  پورت صوتی RTP"
 
-#: ../src/config/accountconfigdialog.c:1150
-#, fuzzy
+#: ../src/config/accountconfigdialog.c:1176
 msgid "Video RTP Port Range"
-msgstr "مدیر ویدئو"
+msgstr "محدوده  پورت تصویری RTP"
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1193
-#: ../src/config/accountconfigdialog.c:1501
+#: ../src/config/accountconfigdialog.c:1219
+#: ../src/config/accountconfigdialog.c:1537
 #: ../src/config/preferencesdialog.c:418
 msgid "Audio"
 msgstr "صوتی"
 
-#: ../src/config/accountconfigdialog.c:1205
+#: ../src/config/accountconfigdialog.c:1231
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1209
+#: ../src/config/accountconfigdialog.c:1235
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1215
+#: ../src/config/accountconfigdialog.c:1241
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1223
+#: ../src/config/accountconfigdialog.c:1249
 msgid "Ringtones"
 msgstr "آهنگ زنگ"
 
-#: ../src/config/accountconfigdialog.c:1226
+#: ../src/config/accountconfigdialog.c:1252
 msgid "Choose a ringtone"
 msgstr "برای زنگ خود آهنگ انتخاب کنید"
 
-#: ../src/config/accountconfigdialog.c:1229
+#: ../src/config/accountconfigdialog.c:1255
 msgid "_Enable ringtones"
 msgstr "آهنگ زنگ ها را فعال کنید"
 
-#: ../src/config/accountconfigdialog.c:1247
+#: ../src/config/accountconfigdialog.c:1273
 msgid "Audio Files"
 msgstr "پرونده‌های صوتی"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1278
-#: ../src/config/accountconfigdialog.c:1506
+#: ../src/config/accountconfigdialog.c:1304
+#: ../src/config/accountconfigdialog.c:1542
 #: ../src/config/preferencesdialog.c:424
 msgid "Video"
 msgstr "ویدئو"
 
-#: ../src/config/accountconfigdialog.c:1295
+#: ../src/config/accountconfigdialog.c:1321
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -334,40 +331,40 @@ msgstr ""
 "این نما وقتی استفاده می شود که شما می خواهید  با استفاده ازیک URI مثل <b>sip:"
 "remotepeer</b>  به مخاطب دور دسترسی پیدا کنید."
 
-#: ../src/config/accountconfigdialog.c:1475
+#: ../src/config/accountconfigdialog.c:1511
 msgid "Account settings"
 msgstr "تنظیمات حساب"
 
-#: ../src/config/accountconfigdialog.c:1496
+#: ../src/config/accountconfigdialog.c:1532
 msgid "Basic"
 msgstr "مقدماتی"
 
-#: ../src/config/accountconfigdialog.c:1513
+#: ../src/config/accountconfigdialog.c:1549
 msgid "Advanced"
 msgstr "پیشرفته"
 
-#: ../src/config/accountconfigdialog.c:1521
+#: ../src/config/accountconfigdialog.c:1557
 msgid "Network"
 msgstr "شبکه"
 
-#: ../src/config/accountlistconfigdialog.c:111
+#: ../src/config/accountlistconfigdialog.c:112
 #, c-format
 msgid "Are you sure want to delete \"%s\"?"
-msgstr ""
+msgstr "آیا مطمئن هستید که می خواهید \"%s\" را حذف کنید؟"
 
-#: ../src/config/accountlistconfigdialog.c:113
+#: ../src/config/accountlistconfigdialog.c:114
 #, c-format
 msgid "Are you sure want to delete account?"
-msgstr ""
+msgstr "آیا مطمئن هستید که می خواهید حساب کاربری خود را حذف کنید؟"
 
-#: ../src/config/accountlistconfigdialog.c:122
+#: ../src/config/accountlistconfigdialog.c:123 ../src/presencewindow.c:683
+#: ../src/presencewindow.c:707
 msgid "Remove"
-msgstr ""
+msgstr "حذف"
 
-#: ../src/config/accountlistconfigdialog.c:124
-#, fuzzy
+#: ../src/config/accountlistconfigdialog.c:125
 msgid "Remove account"
-msgstr "حساب فعلی"
+msgstr "حذف حساب کاربری"
 
 #: ../src/config/accountlistconfigdialog.c:530
 msgid "Protocol"
@@ -384,15 +381,15 @@ msgstr ""
 "جواب سرور %s\r\n"
 " %d"
 
-#: ../src/config/accountlistconfigdialog.c:667
+#: ../src/config/accountlistconfigdialog.c:672
 msgid "Accounts"
 msgstr "حساب‌ها"
 
-#: ../src/config/accountlistconfigdialog.c:676
+#: ../src/config/accountlistconfigdialog.c:681
 msgid "Configured Accounts"
 msgstr "پیکربندی حساب ها"
 
-#: ../src/config/accountlistconfigdialog.c:704
+#: ../src/config/accountlistconfigdialog.c:709
 msgid "You have no active account"
 msgstr "شما حساب فعال ندارید"
 
@@ -599,9 +596,8 @@ msgid "Bitrate"
 msgstr "میزان ارسال بیت"
 
 #: ../src/config/audioconf.c:557
-#, fuzzy
 msgid "Channels"
-msgstr "کانال"
+msgstr "کانال‌ها"
 
 #: ../src/config/audioconf.c:600
 msgid "ALSA plugin"
@@ -619,58 +615,58 @@ msgstr "ورودی"
 msgid "Ringtone"
 msgstr "آهنگ زنگ"
 
-#: ../src/config/audioconf.c:865
+#: ../src/config/audioconf.c:853
 msgid "Sound Manager"
 msgstr "مدیر صدا"
 
-#: ../src/config/audioconf.c:872
+#: ../src/config/audioconf.c:860
 msgid "_Pulseaudio"
 msgstr "پالس آدیو"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:877
+#: ../src/config/audioconf.c:865
 msgid "Pulseaudio settings"
 msgstr "تنظیمات پالس آدیو"
 
-#: ../src/config/audioconf.c:881
+#: ../src/config/audioconf.c:869
 msgid "_ALSA"
 msgstr "_ALSA"
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:887
+#: ../src/config/audioconf.c:875
 msgid "ALSA settings"
 msgstr "تنظیمات _ALSA"
 
-#: ../src/config/audioconf.c:902
+#: ../src/config/audioconf.c:890
 msgid "Recordings"
 msgstr "ضبط"
 
 #. label
-#: ../src/config/audioconf.c:906
+#: ../src/config/audioconf.c:894
 msgid "Destination folder"
 msgstr "پوشه‌ی مقصد"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:910
+#: ../src/config/audioconf.c:898
 msgid "Select a folder"
 msgstr "یک پوشه انتخاب کنید"
 
-#: ../src/config/audioconf.c:921
+#: ../src/config/audioconf.c:909
 msgid "_Always recording"
 msgstr "همیشه ظبط شود"
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:928
+#: ../src/config/audioconf.c:916
 msgid "Voice enhancement settings"
 msgstr "تنظیمات برای بهبود صدا"
 
-#: ../src/config/audioconf.c:931
+#: ../src/config/audioconf.c:919
 msgid "_Noise Reduction"
 msgstr "کاستن اختلال"
 
-#: ../src/config/audioconf.c:945
-msgid "_Echo Cancellation"
-msgstr "لغو انعکاس صدا"
+#: ../src/config/audioconf.c:926
+msgid "Automatic _Gain Control"
+msgstr ""
 
 #: ../src/config/hooks-config.c:151
 msgid "URL Argument"
@@ -902,7 +898,7 @@ msgstr "Video4Linux2"
 
 #: ../src/config/videoconf.c:897
 msgid "Camera"
-msgstr ""
+msgstr "دوربین"
 
 #: ../src/config/zrtpadvanceddialog.c:52
 msgid "ZRTP Options"
@@ -953,19 +949,19 @@ msgstr "جستجو با استفاده از تماس های ورودی"
 msgid "Search by outgoing call"
 msgstr "جستجو با استفاده از تماس های خروجی"
 
-#: ../src/dbus/dbus.c:579
+#: ../src/dbus/dbus.c:591
 msgid "ALSA notification: Error while opening playback device"
 msgstr "اخطار :‌ اشکال در باز شدن دستگاه بازنواخت"
 
-#: ../src/dbus/dbus.c:582
+#: ../src/dbus/dbus.c:594
 msgid "ALSA notification: Error while opening capture device"
 msgstr "اخطارهای ALSA :‌ خطا در باز شدن دستگاه گیرنده"
 
-#: ../src/dbus/dbus.c:585
+#: ../src/dbus/dbus.c:597
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr "اطلاعیه های پالس آدیو:‌ پالس آدیو در حال کار نیست"
 
-#: ../src/dbus/dbus.c:588
+#: ../src/dbus/dbus.c:600
 msgid "Codecs notification: Codecs not found"
 msgstr "اخطار کدک:‌ کدک پیدا نشد"
 
@@ -981,37 +977,24 @@ msgstr "تماس هایی در جریان هستند"
 msgid "Do you still want to quit?"
 msgstr "هنوز می خواهید خارج شوید؟"
 
-#: ../src/mainwindow.c:282
-#, fuzzy
-msgid "Status:"
-msgstr "وضعیت"
-
-#: ../src/mainwindow.c:288
-msgid "Offline"
-msgstr ""
-
-#: ../src/mainwindow.c:289
-msgid "Online"
-msgstr ""
-
-#: ../src/mainwindow.c:576
+#: ../src/mainwindow.c:505
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr "ZRTP  از طرف %s  پشتیبانی نمی شود\n"
 
-#: ../src/mainwindow.c:578
+#: ../src/mainwindow.c:507
 msgid "Secure Communication Unavailable"
 msgstr "ارتباط امن موجود نیست"
 
-#: ../src/mainwindow.c:581 ../src/mainwindow.c:607
+#: ../src/mainwindow.c:510 ../src/mainwindow.c:536
 msgid "Continue"
 msgstr "ادامه"
 
-#: ../src/mainwindow.c:582 ../src/mainwindow.c:608 ../src/mainwindow.c:625
+#: ../src/mainwindow.c:511 ../src/mainwindow.c:537 ../src/mainwindow.c:554
 msgid "Stop Call"
 msgstr "توقف تماس"
 
-#: ../src/mainwindow.c:600
+#: ../src/mainwindow.c:529
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
@@ -1020,11 +1003,11 @@ msgstr ""
 "یک اشکال %s باعث تغییر تماس با  %s به تماس غیر رمزی شده است.\n"
 "دلیل اشکال:‌  %s\n"
 
-#: ../src/mainwindow.c:604
+#: ../src/mainwindow.c:533
 msgid "ZRTP negotiation failed"
 msgstr "عدم موفقیت مذاکرات ZRTP"
 
-#: ../src/mainwindow.c:618
+#: ../src/mainwindow.c:547
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
@@ -1033,13 +1016,55 @@ msgstr ""
 "%s مایل است ارتباط محفوظ را قطع کند. آیا می خواهید بدون SRTP به مکالمه ادامه "
 "دهید؟\n"
 
-#: ../src/mainwindow.c:620
+#: ../src/mainwindow.c:549
 msgid "Confirm Go Clear"
 msgstr "تایید پاک کردن"
 
-#: ../src/mainwindow.c:623
+#: ../src/mainwindow.c:552
 msgid "Confirm"
 msgstr "تأیید"
+
+#: ../src/presencewindow.c:504
+msgid "Field error"
+msgstr ""
+
+#: ../src/presencewindow.c:684 ../src/presencewindow.c:708
+#: ../src/presencewindow.c:833
+#, fuzzy
+msgid "Remove buddy"
+msgstr "حذف"
+
+#. popup
+#: ../src/presencewindow.c:765 ../src/uimanager.c:1148
+msgid "Add new buddy"
+msgstr ""
+
+#: ../src/presencewindow.c:789 ../src/presencewindow.c:842
+msgid "Add group"
+msgstr ""
+
+#. Call Menu
+#: ../src/presencewindow.c:817 ../src/uimanager.c:982
+msgid "Call"
+msgstr "تماس"
+
+#: ../src/presencewindow.c:826
+msgid "Add buddy"
+msgstr ""
+
+#: ../src/presencewindow.c:849
+#, fuzzy
+msgid "Remove group"
+msgstr "حذف حساب کاربری"
+
+#: ../src/presencewindow.c:1065
+msgid "Status:"
+msgstr "وضعیت:"
+
+#: ../src/presencewindow.c:1194
+#, fuzzy
+msgid "SFLphone Presence"
+msgstr "خطا در SFLPhone"
 
 #: ../src/sflphone_client.c:53
 #, c-format
@@ -1124,11 +1149,11 @@ msgstr "مذاکرات ZRTP با %s موفق نبودند"
 msgid "<i>With:</i> %s"
 msgstr "با  %s"
 
-#: ../src/sliders.c:231
+#: ../src/sliders.c:201
 msgid "Speakers volume"
 msgstr "درجه صدای بلند گو"
 
-#: ../src/sliders.c:231
+#: ../src/sliders.c:201
 msgid "Mic volume"
 msgstr "درجه صدای میکروفن"
 
@@ -1136,8 +1161,8 @@ msgstr "درجه صدای میکروفن"
 msgid "_Show main window"
 msgstr "نمایش پنجره اضلی"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:1010 ../src/uimanager.c:1376
-#: ../src/uimanager.c:1445
+#: ../src/statusicon.c:139 ../src/uimanager.c:992 ../src/uimanager.c:1323
+#: ../src/uimanager.c:1379
 msgid "_Hang up"
 msgstr "ـپایان تماس"
 
@@ -1145,261 +1170,261 @@ msgstr "ـپایان تماس"
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../src/uimanager.c:436
+#: ../src/uimanager.c:417
 msgid "No address book selected"
 msgstr "هیچ کتاب نشانی انتخاب نشده است"
 
-#: ../src/uimanager.c:456 ../src/uimanager.c:1139
+#: ../src/uimanager.c:437 ../src/uimanager.c:1065
 msgid "Address book"
 msgstr "دفتر آدرس"
 
-#: ../src/uimanager.c:483
+#: ../src/uimanager.c:464
 #, c-format
 msgid "Voicemail(%i)"
 msgstr "پیغام گیر %i"
 
-#: ../src/uimanager.c:575
+#: ../src/uimanager.c:557
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone یک سیستم VoIP است سازگار با پروتکل های  SIP و  IAX2"
 
-#: ../src/uimanager.c:578
+#: ../src/uimanager.c:560
 msgid "About SFLphone"
 msgstr "درباره SFLphone"
 
-#: ../src/uimanager.c:951 ../src/uimanager.c:1030
+#: ../src/uimanager.c:933 ../src/uimanager.c:1012
 msgid "Voicemail"
 msgstr "پیغام گیر"
 
-#. Call Menu
-#: ../src/uimanager.c:1000
-msgid "Call"
-msgstr "تماس"
-
-#: ../src/uimanager.c:1002 ../src/uimanager.c:1541
+#: ../src/uimanager.c:984 ../src/uimanager.c:1486
 msgid "_New call"
 msgstr "_تماس جدید"
 
-#: ../src/uimanager.c:1003
+#: ../src/uimanager.c:985
 msgid "Place a new call"
 msgstr "تماس جدید"
 
-#: ../src/uimanager.c:1006 ../src/uimanager.c:1365
+#: ../src/uimanager.c:988 ../src/uimanager.c:1312
 msgid "_Pick up"
 msgstr "جواب"
 
-#: ../src/uimanager.c:1007
+#: ../src/uimanager.c:989
 msgid "Answer the call"
 msgstr "جواب بدهید"
 
-#: ../src/uimanager.c:1011
+#: ../src/uimanager.c:993
 msgid "Finish the call"
 msgstr "اتمام تماس"
 
-#: ../src/uimanager.c:1014
+#: ../src/uimanager.c:996
 msgid "O_n hold"
 msgstr "در انتظار"
 
-#: ../src/uimanager.c:1015
+#: ../src/uimanager.c:997
 msgid "Place the call on hold"
 msgstr "تماس را  در انتظارقرار ده"
 
-#: ../src/uimanager.c:1018
+#: ../src/uimanager.c:1000
 msgid "O_ff hold"
 msgstr "اتمام انتظار"
 
-#: ../src/uimanager.c:1019
+#: ../src/uimanager.c:1001
 msgid "Place the call off hold"
 msgstr "تماس را از انتظار بردار"
 
-#: ../src/uimanager.c:1022 ../src/uimanager.c:1430
+#: ../src/uimanager.c:1004 ../src/uimanager.c:1365
 msgid "Send _message"
 msgstr "پیغام را بفرستید"
 
-#: ../src/uimanager.c:1023
+#: ../src/uimanager.c:1005
 msgid "Send message"
 msgstr "ارسال پیغام"
 
-#: ../src/uimanager.c:1026
+#: ../src/uimanager.c:1008
 msgid "Configuration _Assistant"
 msgstr "دستیار پیکربندی"
 
-#: ../src/uimanager.c:1027
+#: ../src/uimanager.c:1009
 msgid "Run the configuration assistant"
 msgstr "دستیار پیکربندی را بکار اندازید"
 
-#: ../src/uimanager.c:1031
+#: ../src/uimanager.c:1013
 msgid "Call your voicemail"
 msgstr "با پیغام گیر خود تماس گیرید"
 
-#: ../src/uimanager.c:1034
+#: ../src/uimanager.c:1016
 msgid "_Close"
 msgstr "_خروج"
 
-#: ../src/uimanager.c:1035
+#: ../src/uimanager.c:1017
 msgid "Minimize to system tray"
 msgstr "کوچک کردن در حد تری"
 
-#: ../src/uimanager.c:1038
+#: ../src/uimanager.c:1020
 msgid "_Quit"
 msgstr "_ترک"
 
-#: ../src/uimanager.c:1039
+#: ../src/uimanager.c:1021
 msgid "Quit the program"
 msgstr "ترک برنامه"
 
 #. Edit Menu
-#: ../src/uimanager.c:1043
+#: ../src/uimanager.c:1025
 msgid "_Edit"
 msgstr "_ويرايش"
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1027
 msgid "_Copy"
 msgstr "_کپی"
 
-#: ../src/uimanager.c:1046
+#: ../src/uimanager.c:1028
 msgid "Copy the selection"
 msgstr "کپی انتخواب شده ها"
 
-#: ../src/uimanager.c:1049
+#: ../src/uimanager.c:1031
 msgid "_Paste"
 msgstr "_چسباندن"
 
-#: ../src/uimanager.c:1050
+#: ../src/uimanager.c:1032
 msgid "Paste the clipboard"
 msgstr "چسباندن محتویات تخته گیره"
 
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1035
 msgid "Clear _history"
 msgstr "پاک کردن تاریخچه"
 
-#: ../src/uimanager.c:1054
+#: ../src/uimanager.c:1036
 msgid "Clear the call history"
 msgstr "تاریخچه تماس ها را  پاک کنید"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1039
 msgid "_Accounts"
 msgstr "_ تاریخچه"
 
-#: ../src/uimanager.c:1058
+#: ../src/uimanager.c:1040
 msgid "Edit your accounts"
 msgstr "حساب‌ خود را تنظیم کنید"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1043
 msgid "_Preferences"
 msgstr "_ترجیحات"
 
-#: ../src/uimanager.c:1062
+#: ../src/uimanager.c:1044
 msgid "Change your preferences"
 msgstr "ترجیحات خود را تغییر دهید"
 
 #. View Menu
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1048
 msgid "_View"
 msgstr "_نما"
 
 #. Help menu
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1051
 msgid "_Help"
 msgstr "_راهنما"
 
-#: ../src/uimanager.c:1070
+#: ../src/uimanager.c:1052
 msgid "Contents"
 msgstr "فهرست مطالب"
 
-#: ../src/uimanager.c:1071
+#: ../src/uimanager.c:1053
 msgid "Open the manual"
 msgstr "باز کردن روش کار"
 
-#: ../src/uimanager.c:1073
+#: ../src/uimanager.c:1055
 msgid "About this application"
 msgstr "درباره این برنامه"
 
-#: ../src/uimanager.c:1132
+#: ../src/uimanager.c:1059
 msgid "_Transfer"
 msgstr "انتقال"
 
-#: ../src/uimanager.c:1132
+#: ../src/uimanager.c:1059
 msgid "Transfer the call"
 msgstr "انتقال تماس"
 
-#: ../src/uimanager.c:1133 ../src/uimanager.c:1398
+#: ../src/uimanager.c:1060 ../src/uimanager.c:1345
 msgid "_Record"
 msgstr "_ضبط"
 
-#: ../src/uimanager.c:1133
+#: ../src/uimanager.c:1060
 msgid "Record the current conversation"
 msgstr "ضبط گفتگو فعلی"
 
-#: ../src/uimanager.c:1134 ../src/uimanager.c:1410
-msgid "_Mute"
-msgstr "_سکوت"
-
-#: ../src/uimanager.c:1134
-msgid "Mute microphone for this call"
-msgstr "صدای میکروفن را قطع کنید"
-
-#: ../src/uimanager.c:1135
+#: ../src/uimanager.c:1061
 msgid "_Show toolbar"
 msgstr "نشان دادن نوار ابزار"
 
-#: ../src/uimanager.c:1135
+#: ../src/uimanager.c:1061
 msgid "Show the toolbar"
 msgstr "نوار ابزار را نشان ده"
 
-#: ../src/uimanager.c:1136
+#: ../src/uimanager.c:1062
 msgid "_Dialpad"
 msgstr "_شماره‌گیر"
 
-#: ../src/uimanager.c:1136
+#: ../src/uimanager.c:1062
 msgid "Show the dialpad"
 msgstr "نشان دادن صفحه مدرج"
 
-#: ../src/uimanager.c:1137
+#: ../src/uimanager.c:1063
 msgid "_Volume controls"
 msgstr "کنترل صدا"
 
-#: ../src/uimanager.c:1137
+#: ../src/uimanager.c:1063
 msgid "Show the volume controls"
 msgstr "کنترل صدا را نشان ده"
 
-#: ../src/uimanager.c:1138
+#: ../src/uimanager.c:1064
 msgid "_History"
 msgstr "_تاریخچه"
 
-#: ../src/uimanager.c:1138
+#: ../src/uimanager.c:1064
 msgid "Calls history"
 msgstr "تاریخچه تماس ها"
 
-#: ../src/uimanager.c:1139
+#: ../src/uimanager.c:1065
 msgid "_Address book"
 msgstr "کتاب تلفن و نشانی"
 
-#: ../src/uimanager.c:1140
+#: ../src/uimanager.c:1067
 msgid "_Buddy list"
-msgstr ""
+msgstr "لیست دوستان"
 
-#: ../src/uimanager.c:1140
+#: ../src/uimanager.c:1067
 msgid "Display the buddy list"
-msgstr ""
+msgstr "نمایش لیست دوستان"
 
-#: ../src/uimanager.c:1387 ../src/uimanager.c:1454
+#: ../src/uimanager.c:1334 ../src/uimanager.c:1388
 msgid "On _Hold"
 msgstr "در انتظار"
 
-#: ../src/uimanager.c:1491
+#: ../src/uimanager.c:1425
 msgid "_Call back"
 msgstr "تماس"
 
-#: ../src/uimanager.c:1599
+#: ../src/uimanager.c:1435 ../src/uimanager.c:1494
+msgid "Follow status"
+msgstr ""
+
+#: ../src/uimanager.c:1555
 msgid "Edit phone number"
 msgstr "ویرایش شماره تلفن"
 
-#: ../src/uimanager.c:1610
+#: ../src/uimanager.c:1566
 msgid "Edit the phone number before making a call"
 msgstr "شماره تلفن را پیش از تماس تغییر دهید"
 
-#~ msgid "Using account"
-#~ msgstr "با استفاده از حساب"
+#~ msgid "_Echo Cancellation"
+#~ msgstr "لغو انعکاس صدا"
 
-#~ msgid "Preview"
-#~ msgstr "پیش نمایش"
+#~ msgid "Offline"
+#~ msgstr "غایب"
+
+#~ msgid "Online"
+#~ msgstr "آنلاین"
+
+#~ msgid "_Mute"
+#~ msgstr "_سکوت"
+
+#~ msgid "Mute microphone for this call"
+#~ msgstr "صدای میکروفن را قطع کنید"
