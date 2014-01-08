@@ -160,8 +160,6 @@ Call::toggleRecording()
         mbuffer.unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
     }
 
-    Manager::instance().getMainBuffer().dumpInfo();
-
     return startRecording;
 }
 

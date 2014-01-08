@@ -371,8 +371,6 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         return false;
     }
 
-    getMainBuffer().dumpInfo();
-
     return true;
 }
 
@@ -428,8 +426,6 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     // Connect streams
     addStream(call_id);
-
-    getMainBuffer().dumpInfo();
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
@@ -504,7 +500,6 @@ bool ManagerImpl::hangupCall(const std::string& callId)
         }
     }
 
-    getMainBuffer().dumpInfo();
     return true;
 }
 
@@ -529,8 +524,6 @@ bool ManagerImpl::hangupConference(const std::string& id)
     }
 
     unsetCurrentCall();
-
-    getMainBuffer().dumpInfo();
 
     return true;
 }
@@ -577,7 +570,6 @@ bool ManagerImpl::onHoldCall(const std::string& callId)
 
     client_.getCallManager()->callStateChanged(callId, "HOLD");
 
-    getMainBuffer().dumpInfo();
     return result;
 }
 
@@ -631,7 +623,6 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
 
     addStream(callId);
 
-    getMainBuffer().dumpInfo();
     return result;
 }
 
@@ -658,8 +649,6 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 
     // remove waiting call in case we make transfer without even answer
     removeWaitingCall(callId);
-
-    getMainBuffer().dumpInfo();
 
     return true;
 }
@@ -724,7 +713,6 @@ bool ManagerImpl::refuseCall(const std::string& id)
     // Disconnect streams
     removeStream(id);
 
-    getMainBuffer().dumpInfo();
     return true;
 }
 
@@ -1109,7 +1097,6 @@ ManagerImpl::joinParticipant(const std::string& callId1, const std::string& call
             conf->setRecordingSmplRate(audiodriver_->getSampleRate());
     }
 
-    getMainBuffer().dumpInfo();
     return true;
 }
 
@@ -1161,7 +1148,6 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
                 conf->setRecordingSmplRate(audiodriver_->getSampleRate());
         }
 
-        getMainBuffer().dumpInfo();
     } else {
         delete conf;
     }
@@ -1258,8 +1244,6 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
 
     removeStream(call_id);
 
-    getMainBuffer().dumpInfo();
-
     client_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 
     processRemainingParticipants(*conf);
@@ -1353,15 +1337,12 @@ void ManagerImpl::addStream(const std::string& call_id)
         audiodriver_->flushUrgent();
         audiodriver_->flushMain();
     }
-
-    getMainBuffer().dumpInfo();
 }
 
 void ManagerImpl::removeStream(const std::string& call_id)
 {
     DEBUG("Remove audio stream %s", call_id.c_str());
     getMainBuffer().unBindAll(call_id);
-    getMainBuffer().dumpInfo();
 }
 
 //THREAD=Main

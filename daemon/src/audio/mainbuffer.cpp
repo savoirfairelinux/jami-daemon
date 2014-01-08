@@ -39,17 +39,13 @@
 const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
 MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)
-{
-    //pthread_mutex_init(&mutex_, NULL);
-}
+{}
 
 MainBuffer::~MainBuffer()
 {
     // delete any ring buffers that didn't get removed
     for (auto &item : ringBufferMap_)
         delete item.second;
-
-    //pthread_mutex_destroy(&mutex_);
 }
 
 void MainBuffer::setInternalSamplingRate(int sr)
@@ -233,7 +229,6 @@ void MainBuffer::unBindAll(const std::string & call_id)
         unBindCallID(call_id, item_set);
 }
 
-//void MainBuffer::putData(void *buffer, size_t toCopy, const std::string &call_id)
 void MainBuffer::putData(AudioBuffer& buffer, const std::string &call_id)
 {
     std::lock_guard<std::mutex> guard(mutex_);
@@ -244,7 +239,6 @@ void MainBuffer::putData(AudioBuffer& buffer, const std::string &call_id)
         ring_buffer->put(buffer);
 }
 
-//size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_id)
 size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
 {
     std::lock_guard<std::mutex> guard(mutex_);
@@ -259,7 +253,7 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if (iter_id != callid_set->end())
-            return getDataByID(buffer, *iter_id, call_id); //return getDataByID(buffer, toCopy, *iter_id, call_id);
+            return getDataByID(buffer, *iter_id, call_id);
         else
             return 0;
     } else {
@@ -286,12 +280,6 @@ size_t MainBuffer::getDataByID(AudioBuffer& buffer, const std::string & call_id,
     RingBuffer* ring_buffer = getRingBuffer(call_id);
     return ring_buffer ? ring_buffer->get(buffer, reader_id) : 0;
 }
-
-/*size_t MainBuffer::getDataByID(void *buffer, size_t toCopy, const std::string & call_id, const std::string & reader_id)
-{
-    RingBuffer* ring_buffer = getRingBuffer(call_id);
-    return ring_buffer ? ring_buffer->get(buffer, toCopy, reader_id) : 0;
-}*/
 
 size_t MainBuffer::availableForGet(const std::string &call_id)
 {
@@ -390,50 +378,4 @@ void MainBuffer::flushAllBuffers()
 {
     for (auto &item : ringBufferMap_)
         item.second->flushAll();
-}
-
-void MainBuffer::dumpInfo()
-{
-#if 0
-    std::lock_guard<std::mutex> guard(mutex_);
-
-    // print each call and bound call ids
-    for (const auto &item_call : callIDMap_) {
-        std::string dbg_str("    Call: \t");
-        dbg_str.append(item_call.first);
-        dbg_str.append("   is bound to: \t");
-
-        CallIDSet *call_id_set = item_call.second;
-
-        for (const auto &item : *call_id_set) {
-            dbg_str.append(item);
-            dbg_str.append(", ");
-        }
-
-        DEBUG("%s", dbg_str.c_str());
-    }
-
-    // Print ringbuffers ids and readpointers
-    for (const auto &item_buffer : ringBufferMap_) {
-        std::string dbg_str("    Buffer: \t");
-
-        dbg_str.append(item_buffer.first);
-        dbg_str.append("   as read pointer: \t");
-
-        RingBuffer* rbuffer = item_buffer.second;
-
-        if (rbuffer) {
-            ReadPointer* rpointer = rbuffer->getReadPointerList();
-
-            if (rpointer) {
-                for (const auto &item : *rpointer) {
-                    dbg_str.append(item.first);
-                    dbg_str.append(", ");
-                }
-            }
-        }
-
-        DEBUG("%s", dbg_str.c_str());
-    }
-#endif
 }

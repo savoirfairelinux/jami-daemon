@@ -96,8 +96,6 @@ class MainBuffer {
 
         void flushAllBuffers();
 
-        void dumpInfo();
-
     private:
         NON_COPYABLE(MainBuffer);
 
