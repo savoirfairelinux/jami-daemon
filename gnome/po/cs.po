@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-08 10:48-0500\n"
+"POT-Creation-Date: 2014-01-10 10:41-0500\n"
 "PO-Revision-Date: 2013-10-02 16:32+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -16,8 +16,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-01-08 15:41+0000\n"
-"X-Generator: Launchpad (build 16884)\n"
+"X-Launchpad-Export-Date: 2014-01-10 15:36+0000\n"
+"X-Generator: Launchpad (build 16890)\n"
 "X-Language: cs_CZ\n"
 "X-Source-Language: C\n"
 
@@ -88,7 +88,7 @@ msgstr ""
 msgid "No registered accounts"
 msgstr "Žádné zaregistrované účty"
 
-#: ../src/actions.c:505
+#: ../src/actions.c:503
 #, c-format
 msgid "Direct SIP call"
 msgstr "Přímé volání SIP"
@@ -114,217 +114,217 @@ msgstr "%A v %R"
 msgid "%x at %R"
 msgstr "%x v %R"
 
-#: ../src/config/accountconfigdialog.c:234
+#: ../src/config/accountconfigdialog.c:241
 msgid "_Auto-answer calls"
 msgstr "_Autotomatická odpověď na volání"
 
-#: ../src/config/accountconfigdialog.c:263
+#: ../src/config/accountconfigdialog.c:270
 msgid "Account Parameters"
 msgstr "Nastavení účtu"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:272 ../src/config/assistant.c:305
+#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:305
 #: ../src/config/assistant.c:403
 msgid "_Alias"
 msgstr "_Přezdívka"
 
-#: ../src/config/accountconfigdialog.c:287
+#: ../src/config/accountconfigdialog.c:294
 msgid "_Protocol"
 msgstr "_Protokol"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:304
+#: ../src/config/accountconfigdialog.c:311
 msgid "Unknown"
 msgstr "Neznámý"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:319 ../src/config/assistant.c:313
+#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:313
 #: ../src/config/assistant.c:411
 msgid "_Host name"
 msgstr "Název _počítače"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:329 ../src/config/assistant.c:321
+#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:321
 #: ../src/config/assistant.c:419
 msgid "_User name"
 msgstr "Jméno _uživatele"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:350 ../src/config/assistant.c:331
+#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:331
 #: ../src/config/assistant.c:428
 msgid "_Password"
 msgstr "_Heslo"
 
-#: ../src/config/accountconfigdialog.c:369 ../src/config/assistant.c:340
+#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:340
 #: ../src/config/assistant.c:437
 msgid "Show password"
 msgstr "Ukázat heslo"
 
-#: ../src/config/accountconfigdialog.c:374
+#: ../src/config/accountconfigdialog.c:381
 msgid "_Proxy"
 msgstr "_Proxy"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:384 ../src/config/assistant.c:345
+#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:345
 #: ../src/config/assistant.c:442
 msgid "_Voicemail number"
 msgstr "Volací číslo _hlasové schránky"
 
-#: ../src/config/accountconfigdialog.c:395
+#: ../src/config/accountconfigdialog.c:402
 msgid "_User-agent"
 msgstr "_User-agent"
 
-#: ../src/config/accountconfigdialog.c:421
+#: ../src/config/accountconfigdialog.c:428
 msgid "Presence notifications"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:430
+#: ../src/config/accountconfigdialog.c:437
 msgid "_Enable"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:504
+#: ../src/config/accountconfigdialog.c:511
 msgid "Authentication"
 msgstr "Ověření"
 
-#: ../src/config/accountconfigdialog.c:505
+#: ../src/config/accountconfigdialog.c:512
 msgid "Secret"
 msgstr "Tajné"
 
-#: ../src/config/accountconfigdialog.c:754
+#: ../src/config/accountconfigdialog.c:761
 msgid "Credential"
 msgstr "Přístupové údaje"
 
-#: ../src/config/accountconfigdialog.c:786
+#: ../src/config/accountconfigdialog.c:793
 msgid "Authentication name"
 msgstr "Uživatelské jméno"
 
-#: ../src/config/accountconfigdialog.c:797
+#: ../src/config/accountconfigdialog.c:804
 msgid "Password"
 msgstr "Heslo"
 
-#: ../src/config/accountconfigdialog.c:849
-#: ../src/config/accountconfigdialog.c:1553
+#: ../src/config/accountconfigdialog.c:856
+#: ../src/config/accountconfigdialog.c:1568
 msgid "Security"
 msgstr "Bezpečnost"
 
-#: ../src/config/accountconfigdialog.c:865
+#: ../src/config/accountconfigdialog.c:872
 msgid "Use TLS transport(sips)"
 msgstr "Použít přenos TLS (SIPS)"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:873
+#: ../src/config/accountconfigdialog.c:880
 msgid "SRTP key exchange"
 msgstr "Výměna klíče SRTP"
 
-#: ../src/config/accountconfigdialog.c:879
+#: ../src/config/accountconfigdialog.c:886
 msgid "Disabled"
 msgstr "Vypnuto"
 
-#: ../src/config/accountconfigdialog.c:943
+#: ../src/config/accountconfigdialog.c:950
 msgid "Registration"
 msgstr "Registrace"
 
-#: ../src/config/accountconfigdialog.c:947
+#: ../src/config/accountconfigdialog.c:954
 msgid "Registration expire"
 msgstr "Vypršení registrace"
 
-#: ../src/config/accountconfigdialog.c:970
+#: ../src/config/accountconfigdialog.c:977
 msgid "Network Interface"
 msgstr "Síťové rozhraní"
 
-#: ../src/config/accountconfigdialog.c:980
+#: ../src/config/accountconfigdialog.c:987
 msgid "Local address"
 msgstr "Místní adresa"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:1013
+#: ../src/config/accountconfigdialog.c:1020
 msgid "Local port"
 msgstr "Místní přípojka"
 
-#: ../src/config/accountconfigdialog.c:1054
-#: ../src/config/accountconfigdialog.c:1089
+#: ../src/config/accountconfigdialog.c:1061
+#: ../src/config/accountconfigdialog.c:1096
 msgid "Published address"
 msgstr "Zveřejněná adresa"
 
-#: ../src/config/accountconfigdialog.c:1058
+#: ../src/config/accountconfigdialog.c:1065
 msgid "Using STUN"
 msgstr "Použít STUN"
 
-#: ../src/config/accountconfigdialog.c:1065
+#: ../src/config/accountconfigdialog.c:1072
 msgid "STUN server URL"
 msgstr "Adresa (URL) serveru STUN"
 
-#: ../src/config/accountconfigdialog.c:1073
+#: ../src/config/accountconfigdialog.c:1080
 msgid "Same as local parameters"
 msgstr "Odpovídající místnímu nastavení"
 
-#: ../src/config/accountconfigdialog.c:1077
+#: ../src/config/accountconfigdialog.c:1084
 msgid "Set published address and port:"
 msgstr "Nastavit adresu a přípojku ke zveřejnění:"
 
-#: ../src/config/accountconfigdialog.c:1098
+#: ../src/config/accountconfigdialog.c:1105
 msgid "Published port"
 msgstr "Zveřejněná přípojka"
 
-#: ../src/config/accountconfigdialog.c:1146
+#: ../src/config/accountconfigdialog.c:1153
 msgid "Min"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1147
+#: ../src/config/accountconfigdialog.c:1154
 msgid "Max"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1170
+#: ../src/config/accountconfigdialog.c:1177
 msgid "Audio RTP Port Range"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1176
+#: ../src/config/accountconfigdialog.c:1183
 msgid "Video RTP Port Range"
 msgstr ""
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1219
-#: ../src/config/accountconfigdialog.c:1537
+#: ../src/config/accountconfigdialog.c:1226
+#: ../src/config/accountconfigdialog.c:1552
 #: ../src/config/preferencesdialog.c:418
 msgid "Audio"
 msgstr "Zvuk"
 
-#: ../src/config/accountconfigdialog.c:1231
+#: ../src/config/accountconfigdialog.c:1238
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1235
+#: ../src/config/accountconfigdialog.c:1242
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1241
+#: ../src/config/accountconfigdialog.c:1248
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1249
+#: ../src/config/accountconfigdialog.c:1256
 msgid "Ringtones"
 msgstr "Vyzváněcí melodie"
 
-#: ../src/config/accountconfigdialog.c:1252
+#: ../src/config/accountconfigdialog.c:1259
 msgid "Choose a ringtone"
 msgstr "Vybrat vyzváněcí melodii"
 
-#: ../src/config/accountconfigdialog.c:1255
+#: ../src/config/accountconfigdialog.c:1262
 msgid "_Enable ringtones"
 msgstr "_Povolit vyzváněcí melodie"
 
-#: ../src/config/accountconfigdialog.c:1273
+#: ../src/config/accountconfigdialog.c:1280
 msgid "Audio Files"
 msgstr "Zvukové soubory"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1304
-#: ../src/config/accountconfigdialog.c:1542
+#: ../src/config/accountconfigdialog.c:1311
+#: ../src/config/accountconfigdialog.c:1557
 #: ../src/config/preferencesdialog.c:424
 msgid "Video"
 msgstr "Video"
 
-#: ../src/config/accountconfigdialog.c:1321
+#: ../src/config/accountconfigdialog.c:1328
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -335,19 +335,19 @@ msgstr ""
 "URI, jako například <b>sip:remotepeer</b>. Zde stanovená nastavení se budou "
 "používat, i když nelze příchozímu nebo odchozímu volání přiřadit žádný účet."
 
-#: ../src/config/accountconfigdialog.c:1511
+#: ../src/config/accountconfigdialog.c:1519
 msgid "Account settings"
 msgstr "Nastavení účtu"
 
-#: ../src/config/accountconfigdialog.c:1532
+#: ../src/config/accountconfigdialog.c:1547
 msgid "Basic"
 msgstr "Základní"
 
-#: ../src/config/accountconfigdialog.c:1549
+#: ../src/config/accountconfigdialog.c:1564
 msgid "Advanced"
 msgstr "Pokročilé"
 
-#: ../src/config/accountconfigdialog.c:1557
+#: ../src/config/accountconfigdialog.c:1572
 msgid "Network"
 msgstr "Síť"
 
@@ -361,8 +361,8 @@ msgstr ""
 msgid "Are you sure want to delete account?"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:123 ../src/presencewindow.c:683
-#: ../src/presencewindow.c:707
+#: ../src/config/accountlistconfigdialog.c:123 ../src/presencewindow.c:666
+#: ../src/presencewindow.c:690
 msgid "Remove"
 msgstr ""
 
@@ -370,28 +370,28 @@ msgstr ""
 msgid "Remove account"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:530
+#: ../src/config/accountlistconfigdialog.c:529
 msgid "Protocol"
 msgstr "Protokol"
 
-#: ../src/config/accountlistconfigdialog.c:540
+#: ../src/config/accountlistconfigdialog.c:539
 msgid "Status"
 msgstr "Stav"
 
-#: ../src/config/accountlistconfigdialog.c:639
+#: ../src/config/accountlistconfigdialog.c:638
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr "Server odpověděl \"%s\" (%d)"
 
-#: ../src/config/accountlistconfigdialog.c:672
+#: ../src/config/accountlistconfigdialog.c:671
 msgid "Accounts"
 msgstr "Účty"
 
-#: ../src/config/accountlistconfigdialog.c:681
+#: ../src/config/accountlistconfigdialog.c:680
 msgid "Configured Accounts"
 msgstr "Nastavené účty"
 
-#: ../src/config/accountlistconfigdialog.c:709
+#: ../src/config/accountlistconfigdialog.c:708
 msgid "You have no active account"
 msgstr "Nemáte žádný činný účet"
 
@@ -617,57 +617,66 @@ msgstr "Vstup"
 msgid "Ringtone"
 msgstr "Vyzváněcí melodie"
 
-#: ../src/config/audioconf.c:853
+#: ../src/config/audioconf.c:864
 msgid "Sound Manager"
 msgstr "Správce zvuku"
 
-#: ../src/config/audioconf.c:860
+#: ../src/config/audioconf.c:871
 msgid "_Pulseaudio"
 msgstr "PulseAudio"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:865
+#: ../src/config/audioconf.c:876
 msgid "Pulseaudio settings"
 msgstr "Nastavení Pulseaudio"
 
-#: ../src/config/audioconf.c:869
+#: ../src/config/audioconf.c:880
 msgid "_ALSA"
 msgstr "ALSA"
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:875
+#: ../src/config/audioconf.c:886
 msgid "ALSA settings"
 msgstr "Nastavení pro ALSA"
 
-#: ../src/config/audioconf.c:890
+#: ../src/config/audioconf.c:901
 msgid "Recordings"
 msgstr "Nahrávky"
 
 #. label
-#: ../src/config/audioconf.c:894
+#: ../src/config/audioconf.c:905
 msgid "Destination folder"
 msgstr "Cílová složka"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:898
+#: ../src/config/audioconf.c:909
 msgid "Select a folder"
 msgstr "Vybrat složku"
 
-#: ../src/config/audioconf.c:909
+#: ../src/config/audioconf.c:920
 msgid "_Always recording"
 msgstr "_Vždy nahrávat"
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:916
+#: ../src/config/audioconf.c:927
 msgid "Voice enhancement settings"
 msgstr "Nastavení k zlepšení hlasu"
 
-#: ../src/config/audioconf.c:919
+#: ../src/config/audioconf.c:930
 msgid "_Noise Reduction"
 msgstr "Potlačení šumu"
 
-#: ../src/config/audioconf.c:926
+#: ../src/config/audioconf.c:937
 msgid "Automatic _Gain Control"
+msgstr ""
+
+#: ../src/config/audioconf.c:944
+#, fuzzy
+msgid "Tone settings"
+msgstr "Nastavení účtu"
+
+#: ../src/config/audioconf.c:947
+msgid "_Mute DTMF"
 msgstr ""
 
 #: ../src/config/hooks-config.c:151
@@ -866,39 +875,39 @@ msgstr "Datový tok (kbps)"
 msgid "Parameters"
 msgstr "Parametry"
 
-#: ../src/config/videoconf.c:808
+#: ../src/config/videoconf.c:824
 msgid "No devices found"
 msgstr "Nenalezena žádná zařízení"
 
 #. Set choices of input devices
-#: ../src/config/videoconf.c:819
+#: ../src/config/videoconf.c:835
 msgid "Device"
 msgstr "Zařízení"
 
 #. Set choices of input
-#: ../src/config/videoconf.c:834
+#: ../src/config/videoconf.c:850
 msgid "Channel"
 msgstr "Kanál"
 
 #. Set choices of sizes
-#: ../src/config/videoconf.c:848
+#: ../src/config/videoconf.c:864
 msgid "Size"
 msgstr "Velikost"
 
 #. Set choices of rates
-#: ../src/config/videoconf.c:862
+#: ../src/config/videoconf.c:878
 msgid "Rate"
 msgstr "Tok"
 
-#: ../src/config/videoconf.c:888
+#: ../src/config/videoconf.c:904
 msgid "Video Manager"
 msgstr "Správce videa"
 
-#: ../src/config/videoconf.c:891
+#: ../src/config/videoconf.c:907
 msgid "Video4Linux2"
 msgstr "Video4Linux2"
 
-#: ../src/config/videoconf.c:897
+#: ../src/config/videoconf.c:913
 msgid "Camera"
 msgstr ""
 
@@ -979,24 +988,24 @@ msgstr "Probíhají volání."
 msgid "Do you still want to quit?"
 msgstr "Opravdu chcete program ukončit?"
 
-#: ../src/mainwindow.c:505
+#: ../src/mainwindow.c:501
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr "ZRTP není podporováno protějškem %s\n"
 
-#: ../src/mainwindow.c:507
+#: ../src/mainwindow.c:503
 msgid "Secure Communication Unavailable"
 msgstr "Zabezpečené spojení nedostupné"
 
-#: ../src/mainwindow.c:510 ../src/mainwindow.c:536
+#: ../src/mainwindow.c:506 ../src/mainwindow.c:532
 msgid "Continue"
 msgstr "Pokračovat"
 
-#: ../src/mainwindow.c:511 ../src/mainwindow.c:537 ../src/mainwindow.c:554
+#: ../src/mainwindow.c:507 ../src/mainwindow.c:533 ../src/mainwindow.c:550
 msgid "Stop Call"
 msgstr "Zastavit volání"
 
-#: ../src/mainwindow.c:529
+#: ../src/mainwindow.c:525
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
@@ -1005,11 +1014,11 @@ msgstr ""
 "Chyba %szabránila zašifrování telefonátu %s.\n"
 "Přesný důvod: %s\n"
 
-#: ../src/mainwindow.c:533
+#: ../src/mainwindow.c:529
 msgid "ZRTP negotiation failed"
 msgstr "Přenos ZRTP se nezdařil"
 
-#: ../src/mainwindow.c:547
+#: ../src/mainwindow.c:543
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
@@ -1018,53 +1027,52 @@ msgstr ""
 "%s chce ukončit zabezpečenou komunikaci. Rozhovor pak bude pokračovat bez "
 "SRTP.\n"
 
-#: ../src/mainwindow.c:549
+#: ../src/mainwindow.c:545
 msgid "Confirm Go Clear"
 msgstr "Potvrdit nezabezpečenou komunikaci"
 
-#: ../src/mainwindow.c:552
+#: ../src/mainwindow.c:548
 msgid "Confirm"
 msgstr "Potvrdit"
 
-#: ../src/presencewindow.c:504
+#: ../src/presencewindow.c:486
 msgid "Field error"
 msgstr ""
 
-#: ../src/presencewindow.c:684 ../src/presencewindow.c:708
-#: ../src/presencewindow.c:833
+#: ../src/presencewindow.c:667 ../src/presencewindow.c:691
+#: ../src/presencewindow.c:817
 msgid "Remove buddy"
 msgstr ""
 
 #. popup
-#: ../src/presencewindow.c:765 ../src/uimanager.c:1148
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1153
 msgid "Add new buddy"
 msgstr ""
 
-#: ../src/presencewindow.c:789 ../src/presencewindow.c:842
+#: ../src/presencewindow.c:777 ../src/presencewindow.c:826
 msgid "Add group"
 msgstr ""
 
 #. Call Menu
-#: ../src/presencewindow.c:817 ../src/uimanager.c:982
+#: ../src/presencewindow.c:802 ../src/uimanager.c:987
 msgid "Call"
 msgstr "Volání"
 
-#: ../src/presencewindow.c:826
+#: ../src/presencewindow.c:811
 msgid "Add buddy"
 msgstr ""
 
-#: ../src/presencewindow.c:849
+#: ../src/presencewindow.c:832
 msgid "Remove group"
 msgstr ""
 
-#: ../src/presencewindow.c:1065
+#: ../src/presencewindow.c:1038
 msgid "Status:"
 msgstr ""
 
-#: ../src/presencewindow.c:1194
-#, fuzzy
+#: ../src/presencewindow.c:1168
 msgid "SFLphone Presence"
-msgstr "Chyba SFLphone"
+msgstr ""
 
 #: ../src/sflphone_client.c:53
 #, c-format
@@ -1161,8 +1169,8 @@ msgstr "Hlasitost mikrofonu"
 msgid "_Show main window"
 msgstr "_Ukázat hlavní okno"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:992 ../src/uimanager.c:1323
-#: ../src/uimanager.c:1379
+#: ../src/statusicon.c:139 ../src/uimanager.c:997 ../src/uimanager.c:1328
+#: ../src/uimanager.c:1384
 msgid "_Hang up"
 msgstr "_Zavěsit"
 
@@ -1174,251 +1182,242 @@ msgstr "SFLphone"
 msgid "No address book selected"
 msgstr "Nebyla vybrána žádná kniha adres"
 
-#: ../src/uimanager.c:437 ../src/uimanager.c:1065
+#: ../src/uimanager.c:437 ../src/uimanager.c:1070
 msgid "Address book"
 msgstr "Kniha adres"
 
-#: ../src/uimanager.c:464
+#: ../src/uimanager.c:469
 #, c-format
 msgid "Voicemail(%i)"
 msgstr "Hlasová schránka (%i)"
 
-#: ../src/uimanager.c:557
+#: ../src/uimanager.c:562
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone je klient VoIP slučitelný s protokoly SIP a IAX2."
 
-#: ../src/uimanager.c:560
+#: ../src/uimanager.c:565
 msgid "About SFLphone"
 msgstr "O programu SFLphone"
 
-#: ../src/uimanager.c:933 ../src/uimanager.c:1012
+#: ../src/uimanager.c:938 ../src/uimanager.c:1017
 msgid "Voicemail"
 msgstr "Hlasová schránka"
 
-#: ../src/uimanager.c:984 ../src/uimanager.c:1486
+#: ../src/uimanager.c:989 ../src/uimanager.c:1491
 msgid "_New call"
 msgstr "_Nové volání"
 
-#: ../src/uimanager.c:985
+#: ../src/uimanager.c:990
 msgid "Place a new call"
 msgstr "Uskutečnit nové volání"
 
-#: ../src/uimanager.c:988 ../src/uimanager.c:1312
+#: ../src/uimanager.c:993 ../src/uimanager.c:1317
 msgid "_Pick up"
 msgstr "_Přijmout"
 
-#: ../src/uimanager.c:989
+#: ../src/uimanager.c:994
 msgid "Answer the call"
 msgstr "Odpovědět na volání"
 
-#: ../src/uimanager.c:993
+#: ../src/uimanager.c:998
 msgid "Finish the call"
 msgstr "Ukončit volání"
 
-#: ../src/uimanager.c:996
+#: ../src/uimanager.c:1001
 msgid "O_n hold"
 msgstr "V č_ekání"
 
-#: ../src/uimanager.c:997
+#: ../src/uimanager.c:1002
 msgid "Place the call on hold"
 msgstr "Dát volání do čekání"
 
-#: ../src/uimanager.c:1000
+#: ../src/uimanager.c:1005
 msgid "O_ff hold"
 msgstr "Znovu _vzít"
 
-#: ../src/uimanager.c:1001
+#: ../src/uimanager.c:1006
 msgid "Place the call off hold"
 msgstr "Znovu vzít volání z čekání"
 
-#: ../src/uimanager.c:1004 ../src/uimanager.c:1365
+#: ../src/uimanager.c:1009 ../src/uimanager.c:1370
 msgid "Send _message"
 msgstr "Poslat _zprávu"
 
-#: ../src/uimanager.c:1005
+#: ../src/uimanager.c:1010
 msgid "Send message"
 msgstr "Poslat zprávu"
 
-#: ../src/uimanager.c:1008
+#: ../src/uimanager.c:1013
 msgid "Configuration _Assistant"
 msgstr "Průvodce nastavením"
 
-#: ../src/uimanager.c:1009
+#: ../src/uimanager.c:1014
 msgid "Run the configuration assistant"
 msgstr "Spustit průvodce nastavením"
 
-#: ../src/uimanager.c:1013
+#: ../src/uimanager.c:1018
 msgid "Call your voicemail"
 msgstr "Zavolat svou hlasovou schránku"
 
-#: ../src/uimanager.c:1016
+#: ../src/uimanager.c:1021
 msgid "_Close"
 msgstr "_Zavřít"
 
-#: ../src/uimanager.c:1017
+#: ../src/uimanager.c:1022
 msgid "Minimize to system tray"
 msgstr "Zmenšit do oznamovací oblasti panelu"
 
-#: ../src/uimanager.c:1020
+#: ../src/uimanager.c:1025
 msgid "_Quit"
 msgstr "_Ukončit"
 
-#: ../src/uimanager.c:1021
+#: ../src/uimanager.c:1026
 msgid "Quit the program"
 msgstr "Ukončit program"
 
 #. Edit Menu
-#: ../src/uimanager.c:1025
+#: ../src/uimanager.c:1030
 msgid "_Edit"
 msgstr "Úp_ravy"
 
-#: ../src/uimanager.c:1027
+#: ../src/uimanager.c:1032
 msgid "_Copy"
 msgstr "_Kopírovat"
 
-#: ../src/uimanager.c:1028
+#: ../src/uimanager.c:1033
 msgid "Copy the selection"
 msgstr "Kopírovat výběr"
 
-#: ../src/uimanager.c:1031
+#: ../src/uimanager.c:1036
 msgid "_Paste"
 msgstr "_Vložit"
 
-#: ../src/uimanager.c:1032
+#: ../src/uimanager.c:1037
 msgid "Paste the clipboard"
 msgstr "Vložit obsah schránky"
 
-#: ../src/uimanager.c:1035
+#: ../src/uimanager.c:1040
 msgid "Clear _history"
 msgstr "Vymazat _historii volání"
 
-#: ../src/uimanager.c:1036
+#: ../src/uimanager.c:1041
 msgid "Clear the call history"
 msgstr "Vymazat seznam ukončených volání"
 
-#: ../src/uimanager.c:1039
+#: ../src/uimanager.c:1044
 msgid "_Accounts"
 msgstr "Úč_ty"
 
-#: ../src/uimanager.c:1040
+#: ../src/uimanager.c:1045
 msgid "Edit your accounts"
 msgstr "Upravit účty"
 
-#: ../src/uimanager.c:1043
+#: ../src/uimanager.c:1048
 msgid "_Preferences"
 msgstr "_Nastavení"
 
-#: ../src/uimanager.c:1044
+#: ../src/uimanager.c:1049
 msgid "Change your preferences"
 msgstr "Změnit nastavení"
 
 #. View Menu
-#: ../src/uimanager.c:1048
+#: ../src/uimanager.c:1053
 msgid "_View"
 msgstr "_Pohled"
 
 #. Help menu
-#: ../src/uimanager.c:1051
+#: ../src/uimanager.c:1056
 msgid "_Help"
 msgstr "_Nápověda"
 
-#: ../src/uimanager.c:1052
+#: ../src/uimanager.c:1057
 msgid "Contents"
 msgstr "Obsah"
 
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1058
 msgid "Open the manual"
 msgstr "Otevřít příručku"
 
-#: ../src/uimanager.c:1055
+#: ../src/uimanager.c:1060
 msgid "About this application"
 msgstr "Informace o tomto programu"
 
-#: ../src/uimanager.c:1059
+#: ../src/uimanager.c:1064
 msgid "_Transfer"
 msgstr "_Předat"
 
-#: ../src/uimanager.c:1059
+#: ../src/uimanager.c:1064
 msgid "Transfer the call"
 msgstr "Předat volání"
 
-#: ../src/uimanager.c:1060 ../src/uimanager.c:1345
+#: ../src/uimanager.c:1065 ../src/uimanager.c:1350
 msgid "_Record"
 msgstr "Na_hrávat hovor"
 
-#: ../src/uimanager.c:1060
+#: ../src/uimanager.c:1065
 msgid "Record the current conversation"
 msgstr "Zaznamenat nynější hovor"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1066
 msgid "_Show toolbar"
 msgstr "_Nástrojový pruh"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1066
 msgid "Show the toolbar"
 msgstr "Ukázat pruh s nástroji"
 
-#: ../src/uimanager.c:1062
+#: ../src/uimanager.c:1067
 msgid "_Dialpad"
 msgstr "_Vytáčecí číselník"
 
-#: ../src/uimanager.c:1062
+#: ../src/uimanager.c:1067
 msgid "Show the dialpad"
 msgstr "Ukázat vytáčecí číselník"
 
-#: ../src/uimanager.c:1063
+#: ../src/uimanager.c:1068
 msgid "_Volume controls"
 msgstr "_Ovládání hlasitosti"
 
-#: ../src/uimanager.c:1063
+#: ../src/uimanager.c:1068
 msgid "Show the volume controls"
 msgstr "Ukázat ovládání hlasitosti"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1069
 msgid "_History"
 msgstr "_Historie"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1069
 msgid "Calls history"
 msgstr "Seznam ukončených volání"
 
-#: ../src/uimanager.c:1065
+#: ../src/uimanager.c:1070
 msgid "_Address book"
 msgstr "Kniha _adres"
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1072
 msgid "_Buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1072
 msgid "Display the buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1334 ../src/uimanager.c:1388
+#: ../src/uimanager.c:1339 ../src/uimanager.c:1393
 msgid "On _Hold"
 msgstr "V č_ekání"
 
-#: ../src/uimanager.c:1425
+#: ../src/uimanager.c:1430
 msgid "_Call back"
 msgstr "_Zavolat nazpět"
 
-#: ../src/uimanager.c:1435 ../src/uimanager.c:1494
+#: ../src/uimanager.c:1440 ../src/uimanager.c:1499
 msgid "Follow status"
 msgstr ""
 
-#: ../src/uimanager.c:1555
+#: ../src/uimanager.c:1560
 msgid "Edit phone number"
 msgstr "Upravit telefonní číslo"
 
-#: ../src/uimanager.c:1566
+#: ../src/uimanager.c:1571
 msgid "Edit the phone number before making a call"
 msgstr "Upravit telefonní číslo před zavoláním"
-
-#~ msgid "_Echo Cancellation"
-#~ msgstr "Zrušení _ozvěny"
-
-#~ msgid "_Mute"
-#~ msgstr "_Ztlumit zvuk"
-
-#~ msgid "Mute microphone for this call"
-#~ msgstr "Ztlumit pro tento hovor mikrofon"

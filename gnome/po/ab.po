@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-08 10:48-0500\n"
+"POT-Creation-Date: 2014-01-10 10:41-0500\n"
 "PO-Revision-Date: 2013-10-02 16:32+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Asturian <ast@li.org>\n"
@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-01-08 15:41+0000\n"
-"X-Generator: Launchpad (build 16884)\n"
+"X-Launchpad-Export-Date: 2014-01-10 15:36+0000\n"
+"X-Generator: Launchpad (build 16890)\n"
 
 #: ../src/accountlist.c:183
 msgid "Registered"
@@ -85,7 +85,7 @@ msgstr ""
 msgid "No registered accounts"
 msgstr "Nun hai cuentes rexistráes"
 
-#: ../src/actions.c:505
+#: ../src/actions.c:503
 #, c-format
 msgid "Direct SIP call"
 msgstr "Llamada SIP direuta"
@@ -111,217 +111,217 @@ msgstr "%A a les %R"
 msgid "%x at %R"
 msgstr "%x a les %R"
 
-#: ../src/config/accountconfigdialog.c:234
+#: ../src/config/accountconfigdialog.c:241
 msgid "_Auto-answer calls"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:263
+#: ../src/config/accountconfigdialog.c:270
 msgid "Account Parameters"
 msgstr "Parámetros de cuenta"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:272 ../src/config/assistant.c:305
+#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:305
 #: ../src/config/assistant.c:403
 msgid "_Alias"
 msgstr "Nom_atu"
 
-#: ../src/config/accountconfigdialog.c:287
+#: ../src/config/accountconfigdialog.c:294
 msgid "_Protocol"
 msgstr "_Protocolu"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:304
+#: ../src/config/accountconfigdialog.c:311
 msgid "Unknown"
 msgstr "Desconocíu"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:319 ../src/config/assistant.c:313
+#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:313
 #: ../src/config/assistant.c:411
 msgid "_Host name"
 msgstr "Nome del _host"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:329 ../src/config/assistant.c:321
+#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:321
 #: ../src/config/assistant.c:419
 msgid "_User name"
 msgstr "Nome d'_usuariu"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:350 ../src/config/assistant.c:331
+#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:331
 #: ../src/config/assistant.c:428
 msgid "_Password"
 msgstr "Cont_raseña"
 
-#: ../src/config/accountconfigdialog.c:369 ../src/config/assistant.c:340
+#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:340
 #: ../src/config/assistant.c:437
 msgid "Show password"
 msgstr "Amosar contraseña"
 
-#: ../src/config/accountconfigdialog.c:374
+#: ../src/config/accountconfigdialog.c:381
 msgid "_Proxy"
 msgstr ""
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:384 ../src/config/assistant.c:345
+#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:345
 #: ../src/config/assistant.c:442
 msgid "_Voicemail number"
 msgstr "Númberu del buzón de _voz"
 
-#: ../src/config/accountconfigdialog.c:395
+#: ../src/config/accountconfigdialog.c:402
 msgid "_User-agent"
 msgstr "Axente d'_usuariu"
 
-#: ../src/config/accountconfigdialog.c:421
+#: ../src/config/accountconfigdialog.c:428
 msgid "Presence notifications"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:430
+#: ../src/config/accountconfigdialog.c:437
 msgid "_Enable"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:504
+#: ../src/config/accountconfigdialog.c:511
 msgid "Authentication"
 msgstr "Autenticación"
 
-#: ../src/config/accountconfigdialog.c:505
+#: ../src/config/accountconfigdialog.c:512
 msgid "Secret"
 msgstr "Secretu"
 
-#: ../src/config/accountconfigdialog.c:754
+#: ../src/config/accountconfigdialog.c:761
 msgid "Credential"
 msgstr "Credencial"
 
-#: ../src/config/accountconfigdialog.c:786
+#: ../src/config/accountconfigdialog.c:793
 msgid "Authentication name"
 msgstr "Nome d'autenticación"
 
-#: ../src/config/accountconfigdialog.c:797
+#: ../src/config/accountconfigdialog.c:804
 msgid "Password"
 msgstr "Contraseña"
 
-#: ../src/config/accountconfigdialog.c:849
-#: ../src/config/accountconfigdialog.c:1553
+#: ../src/config/accountconfigdialog.c:856
+#: ../src/config/accountconfigdialog.c:1568
 msgid "Security"
 msgstr "Seguridá"
 
-#: ../src/config/accountconfigdialog.c:865
+#: ../src/config/accountconfigdialog.c:872
 msgid "Use TLS transport(sips)"
 msgstr ""
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:873
+#: ../src/config/accountconfigdialog.c:880
 msgid "SRTP key exchange"
 msgstr "Intercambéu de clave SRTP"
 
-#: ../src/config/accountconfigdialog.c:879
+#: ../src/config/accountconfigdialog.c:886
 msgid "Disabled"
 msgstr "Desactiváu"
 
-#: ../src/config/accountconfigdialog.c:943
+#: ../src/config/accountconfigdialog.c:950
 msgid "Registration"
 msgstr "Rexistru"
 
-#: ../src/config/accountconfigdialog.c:947
+#: ../src/config/accountconfigdialog.c:954
 msgid "Registration expire"
 msgstr "Fin del rexistu"
 
-#: ../src/config/accountconfigdialog.c:970
+#: ../src/config/accountconfigdialog.c:977
 msgid "Network Interface"
 msgstr "Interfaz de rede"
 
-#: ../src/config/accountconfigdialog.c:980
+#: ../src/config/accountconfigdialog.c:987
 msgid "Local address"
 msgstr "Direición llocal"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:1013
+#: ../src/config/accountconfigdialog.c:1020
 msgid "Local port"
 msgstr "Puertu llocal"
 
-#: ../src/config/accountconfigdialog.c:1054
-#: ../src/config/accountconfigdialog.c:1089
+#: ../src/config/accountconfigdialog.c:1061
+#: ../src/config/accountconfigdialog.c:1096
 msgid "Published address"
 msgstr "Direición espublizada"
 
-#: ../src/config/accountconfigdialog.c:1058
+#: ../src/config/accountconfigdialog.c:1065
 msgid "Using STUN"
 msgstr "Usando STUN"
 
-#: ../src/config/accountconfigdialog.c:1065
+#: ../src/config/accountconfigdialog.c:1072
 msgid "STUN server URL"
 msgstr "URL del sirvidor STUN"
 
-#: ../src/config/accountconfigdialog.c:1073
+#: ../src/config/accountconfigdialog.c:1080
 msgid "Same as local parameters"
 msgstr "Igual que los parámetros llocales"
 
-#: ../src/config/accountconfigdialog.c:1077
+#: ../src/config/accountconfigdialog.c:1084
 msgid "Set published address and port:"
 msgstr "Afitar direición y puertu espublizaos:"
 
-#: ../src/config/accountconfigdialog.c:1098
+#: ../src/config/accountconfigdialog.c:1105
 msgid "Published port"
 msgstr "Puertu espublizáu"
 
-#: ../src/config/accountconfigdialog.c:1146
+#: ../src/config/accountconfigdialog.c:1153
 msgid "Min"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1147
+#: ../src/config/accountconfigdialog.c:1154
 msgid "Max"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1170
+#: ../src/config/accountconfigdialog.c:1177
 msgid "Audio RTP Port Range"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1176
+#: ../src/config/accountconfigdialog.c:1183
 msgid "Video RTP Port Range"
 msgstr ""
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1219
-#: ../src/config/accountconfigdialog.c:1537
+#: ../src/config/accountconfigdialog.c:1226
+#: ../src/config/accountconfigdialog.c:1552
 #: ../src/config/preferencesdialog.c:418
 msgid "Audio"
 msgstr "Soníu"
 
-#: ../src/config/accountconfigdialog.c:1231
+#: ../src/config/accountconfigdialog.c:1238
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1235
+#: ../src/config/accountconfigdialog.c:1242
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1241
+#: ../src/config/accountconfigdialog.c:1248
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1249
+#: ../src/config/accountconfigdialog.c:1256
 msgid "Ringtones"
 msgstr "Tonos de llamada"
 
-#: ../src/config/accountconfigdialog.c:1252
+#: ../src/config/accountconfigdialog.c:1259
 msgid "Choose a ringtone"
 msgstr "Escueya un tono de llamada"
 
-#: ../src/config/accountconfigdialog.c:1255
+#: ../src/config/accountconfigdialog.c:1262
 msgid "_Enable ringtones"
 msgstr "_Activar tonos de llamada"
 
-#: ../src/config/accountconfigdialog.c:1273
+#: ../src/config/accountconfigdialog.c:1280
 msgid "Audio Files"
 msgstr "Ficheros de soníu"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1304
-#: ../src/config/accountconfigdialog.c:1542
+#: ../src/config/accountconfigdialog.c:1311
+#: ../src/config/accountconfigdialog.c:1557
 #: ../src/config/preferencesdialog.c:424
 msgid "Video"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1321
+#: ../src/config/accountconfigdialog.c:1328
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -332,19 +332,19 @@ msgstr ""
 "URI sip  como <b>sip:parremotu</b>. Los parámetros que conseñe equí, tamién "
 "van usase si una llamada entrante o saliente nun concasa con cuenta dala."
 
-#: ../src/config/accountconfigdialog.c:1511
+#: ../src/config/accountconfigdialog.c:1519
 msgid "Account settings"
 msgstr "Axustes de la cuenta"
 
-#: ../src/config/accountconfigdialog.c:1532
+#: ../src/config/accountconfigdialog.c:1547
 msgid "Basic"
 msgstr "Básicu"
 
-#: ../src/config/accountconfigdialog.c:1549
+#: ../src/config/accountconfigdialog.c:1564
 msgid "Advanced"
 msgstr "Avanzáu"
 
-#: ../src/config/accountconfigdialog.c:1557
+#: ../src/config/accountconfigdialog.c:1572
 msgid "Network"
 msgstr "Rede"
 
@@ -358,8 +358,8 @@ msgstr ""
 msgid "Are you sure want to delete account?"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:123 ../src/presencewindow.c:683
-#: ../src/presencewindow.c:707
+#: ../src/config/accountlistconfigdialog.c:123 ../src/presencewindow.c:666
+#: ../src/presencewindow.c:690
 msgid "Remove"
 msgstr ""
 
@@ -367,28 +367,28 @@ msgstr ""
 msgid "Remove account"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:530
+#: ../src/config/accountlistconfigdialog.c:529
 msgid "Protocol"
 msgstr "Protocolu"
 
-#: ../src/config/accountlistconfigdialog.c:540
+#: ../src/config/accountlistconfigdialog.c:539
 msgid "Status"
 msgstr "Estáu"
 
-#: ../src/config/accountlistconfigdialog.c:639
+#: ../src/config/accountlistconfigdialog.c:638
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr "El sirvidor devolvió \"%s\" (%d)"
 
-#: ../src/config/accountlistconfigdialog.c:672
+#: ../src/config/accountlistconfigdialog.c:671
 msgid "Accounts"
 msgstr "Cuentes"
 
-#: ../src/config/accountlistconfigdialog.c:681
+#: ../src/config/accountlistconfigdialog.c:680
 msgid "Configured Accounts"
 msgstr "Cuentes Configuraes"
 
-#: ../src/config/accountlistconfigdialog.c:709
+#: ../src/config/accountlistconfigdialog.c:708
 msgid "You have no active account"
 msgstr "Nun hai denguna cuenta activada"
 
@@ -614,57 +614,66 @@ msgstr "Entrada"
 msgid "Ringtone"
 msgstr "Tonu de llamada"
 
-#: ../src/config/audioconf.c:853
+#: ../src/config/audioconf.c:864
 msgid "Sound Manager"
 msgstr "Xestor de soníu"
 
-#: ../src/config/audioconf.c:860
+#: ../src/config/audioconf.c:871
 msgid "_Pulseaudio"
 msgstr "_Pulseaudio"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:865
+#: ../src/config/audioconf.c:876
 msgid "Pulseaudio settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:869
+#: ../src/config/audioconf.c:880
 msgid "_ALSA"
 msgstr "_ALSA"
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:875
+#: ../src/config/audioconf.c:886
 msgid "ALSA settings"
 msgstr "Axustes de ALSA"
 
-#: ../src/config/audioconf.c:890
+#: ../src/config/audioconf.c:901
 msgid "Recordings"
 msgstr "Grabaciones"
 
 #. label
-#: ../src/config/audioconf.c:894
+#: ../src/config/audioconf.c:905
 msgid "Destination folder"
 msgstr "Carpeta de destín"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:898
+#: ../src/config/audioconf.c:909
 msgid "Select a folder"
 msgstr "Seleicione una carpeta"
 
-#: ../src/config/audioconf.c:909
+#: ../src/config/audioconf.c:920
 msgid "_Always recording"
 msgstr ""
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:916
+#: ../src/config/audioconf.c:927
 msgid "Voice enhancement settings"
 msgstr "Axustes de meyora de voz"
 
-#: ../src/config/audioconf.c:919
+#: ../src/config/audioconf.c:930
 msgid "_Noise Reduction"
 msgstr "Ame_norgamientu de ruíu"
 
-#: ../src/config/audioconf.c:926
+#: ../src/config/audioconf.c:937
 msgid "Automatic _Gain Control"
+msgstr ""
+
+#: ../src/config/audioconf.c:944
+#, fuzzy
+msgid "Tone settings"
+msgstr "Axustes de la cuenta"
+
+#: ../src/config/audioconf.c:947
+msgid "_Mute DTMF"
 msgstr ""
 
 #: ../src/config/hooks-config.c:151
@@ -865,39 +874,39 @@ msgstr ""
 msgid "Parameters"
 msgstr ""
 
-#: ../src/config/videoconf.c:808
+#: ../src/config/videoconf.c:824
 msgid "No devices found"
 msgstr ""
 
 #. Set choices of input devices
-#: ../src/config/videoconf.c:819
+#: ../src/config/videoconf.c:835
 msgid "Device"
 msgstr ""
 
 #. Set choices of input
-#: ../src/config/videoconf.c:834
+#: ../src/config/videoconf.c:850
 msgid "Channel"
 msgstr ""
 
 #. Set choices of sizes
-#: ../src/config/videoconf.c:848
+#: ../src/config/videoconf.c:864
 msgid "Size"
 msgstr ""
 
 #. Set choices of rates
-#: ../src/config/videoconf.c:862
+#: ../src/config/videoconf.c:878
 msgid "Rate"
 msgstr ""
 
-#: ../src/config/videoconf.c:888
+#: ../src/config/videoconf.c:904
 msgid "Video Manager"
 msgstr ""
 
-#: ../src/config/videoconf.c:891
+#: ../src/config/videoconf.c:907
 msgid "Video4Linux2"
 msgstr ""
 
-#: ../src/config/videoconf.c:897
+#: ../src/config/videoconf.c:913
 msgid "Camera"
 msgstr ""
 
@@ -978,24 +987,24 @@ msgstr "Hai llamaes en cursu."
 msgid "Do you still want to quit?"
 msgstr "¿Entá quier salir?"
 
-#: ../src/mainwindow.c:505
+#: ../src/mainwindow.c:501
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr "El par %s nun sofita ZRTP\n"
 
-#: ../src/mainwindow.c:507
+#: ../src/mainwindow.c:503
 msgid "Secure Communication Unavailable"
 msgstr "La comunicación segura nun ta disponible"
 
-#: ../src/mainwindow.c:510 ../src/mainwindow.c:536
+#: ../src/mainwindow.c:506 ../src/mainwindow.c:532
 msgid "Continue"
 msgstr "Siguir"
 
-#: ../src/mainwindow.c:511 ../src/mainwindow.c:537 ../src/mainwindow.c:554
+#: ../src/mainwindow.c:507 ../src/mainwindow.c:533 ../src/mainwindow.c:550
 msgid "Stop Call"
 msgstr "Terminar llamada"
 
-#: ../src/mainwindow.c:529
+#: ../src/mainwindow.c:525
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
@@ -1004,11 +1013,11 @@ msgstr ""
 "Un error de %s fizo que la llamada con %s pasara a mou ensin encriptar.\n"
 "Razón esauta: %s\n"
 
-#: ../src/mainwindow.c:533
+#: ../src/mainwindow.c:529
 msgid "ZRTP negotiation failed"
 msgstr "Falló la negociación ZRTP"
 
-#: ../src/mainwindow.c:547
+#: ../src/mainwindow.c:543
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
@@ -1017,53 +1026,52 @@ msgstr ""
 "%s quier dexar d'usar comunicación segura. Confirmar reaniciará la "
 "conversación ensin SRTP.\n"
 
-#: ../src/mainwindow.c:549
+#: ../src/mainwindow.c:545
 msgid "Confirm Go Clear"
 msgstr "Confirmar mou en claro"
 
-#: ../src/mainwindow.c:552
+#: ../src/mainwindow.c:548
 msgid "Confirm"
 msgstr "Confirmar"
 
-#: ../src/presencewindow.c:504
+#: ../src/presencewindow.c:486
 msgid "Field error"
 msgstr ""
 
-#: ../src/presencewindow.c:684 ../src/presencewindow.c:708
-#: ../src/presencewindow.c:833
+#: ../src/presencewindow.c:667 ../src/presencewindow.c:691
+#: ../src/presencewindow.c:817
 msgid "Remove buddy"
 msgstr ""
 
 #. popup
-#: ../src/presencewindow.c:765 ../src/uimanager.c:1148
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1153
 msgid "Add new buddy"
 msgstr ""
 
-#: ../src/presencewindow.c:789 ../src/presencewindow.c:842
+#: ../src/presencewindow.c:777 ../src/presencewindow.c:826
 msgid "Add group"
 msgstr ""
 
 #. Call Menu
-#: ../src/presencewindow.c:817 ../src/uimanager.c:982
+#: ../src/presencewindow.c:802 ../src/uimanager.c:987
 msgid "Call"
 msgstr "Llamada"
 
-#: ../src/presencewindow.c:826
+#: ../src/presencewindow.c:811
 msgid "Add buddy"
 msgstr ""
 
-#: ../src/presencewindow.c:849
+#: ../src/presencewindow.c:832
 msgid "Remove group"
 msgstr ""
 
-#: ../src/presencewindow.c:1065
+#: ../src/presencewindow.c:1038
 msgid "Status:"
 msgstr ""
 
-#: ../src/presencewindow.c:1194
-#, fuzzy
+#: ../src/presencewindow.c:1168
 msgid "SFLphone Presence"
-msgstr "Error SFLphone"
+msgstr ""
 
 #: ../src/sflphone_client.c:53
 #, c-format
@@ -1157,8 +1165,8 @@ msgstr "Volume del micrófonu"
 msgid "_Show main window"
 msgstr "Amo_sar ventana principal"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:992 ../src/uimanager.c:1323
-#: ../src/uimanager.c:1379
+#: ../src/statusicon.c:139 ../src/uimanager.c:997 ../src/uimanager.c:1328
+#: ../src/uimanager.c:1384
 msgid "_Hang up"
 msgstr "_Colgar"
 
@@ -1170,243 +1178,243 @@ msgstr "SFLphone"
 msgid "No address book selected"
 msgstr "Nun s'escoyó una llibreta de direiciones"
 
-#: ../src/uimanager.c:437 ../src/uimanager.c:1065
+#: ../src/uimanager.c:437 ../src/uimanager.c:1070
 msgid "Address book"
 msgstr "Llibreta de direiciones"
 
-#: ../src/uimanager.c:464
+#: ../src/uimanager.c:469
 #, c-format
 msgid "Voicemail(%i)"
 msgstr ""
 
-#: ../src/uimanager.c:557
+#: ../src/uimanager.c:562
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
 "SFLphone ye un programa de VoIP compatible colos protocolos SIP ya IAX2."
 
-#: ../src/uimanager.c:560
+#: ../src/uimanager.c:565
 msgid "About SFLphone"
 msgstr "Tocante a SFLphone"
 
-#: ../src/uimanager.c:933 ../src/uimanager.c:1012
+#: ../src/uimanager.c:938 ../src/uimanager.c:1017
 msgid "Voicemail"
 msgstr "Buzón de voz"
 
-#: ../src/uimanager.c:984 ../src/uimanager.c:1486
+#: ../src/uimanager.c:989 ../src/uimanager.c:1491
 msgid "_New call"
 msgstr "Llamada _Nueva"
 
-#: ../src/uimanager.c:985
+#: ../src/uimanager.c:990
 msgid "Place a new call"
 msgstr "Facer una llamada nueva"
 
-#: ../src/uimanager.c:988 ../src/uimanager.c:1312
+#: ../src/uimanager.c:993 ../src/uimanager.c:1317
 msgid "_Pick up"
 msgstr "_Descolgar"
 
-#: ../src/uimanager.c:989
+#: ../src/uimanager.c:994
 msgid "Answer the call"
 msgstr "Contestar la llamada"
 
-#: ../src/uimanager.c:993
+#: ../src/uimanager.c:998
 msgid "Finish the call"
 msgstr "Finar la llamada"
 
-#: ../src/uimanager.c:996
+#: ../src/uimanager.c:1001
 msgid "O_n hold"
 msgstr "_N'espera"
 
-#: ../src/uimanager.c:997
+#: ../src/uimanager.c:1002
 msgid "Place the call on hold"
 msgstr "Poner la llamada n'espera"
 
-#: ../src/uimanager.c:1000
+#: ../src/uimanager.c:1005
 msgid "O_ff hold"
 msgstr "_Salir d'espera"
 
-#: ../src/uimanager.c:1001
+#: ../src/uimanager.c:1006
 msgid "Place the call off hold"
 msgstr "Sacar la llamada d'espera"
 
-#: ../src/uimanager.c:1004 ../src/uimanager.c:1365
+#: ../src/uimanager.c:1009 ../src/uimanager.c:1370
 msgid "Send _message"
 msgstr ""
 
-#: ../src/uimanager.c:1005
+#: ../src/uimanager.c:1010
 msgid "Send message"
 msgstr ""
 
-#: ../src/uimanager.c:1008
+#: ../src/uimanager.c:1013
 msgid "Configuration _Assistant"
 msgstr "_Asistente de configuración"
 
-#: ../src/uimanager.c:1009
+#: ../src/uimanager.c:1014
 msgid "Run the configuration assistant"
 msgstr "Executar l'asistente de configuración"
 
-#: ../src/uimanager.c:1013
+#: ../src/uimanager.c:1018
 msgid "Call your voicemail"
 msgstr "Llamar al buzón de voz"
 
-#: ../src/uimanager.c:1016
+#: ../src/uimanager.c:1021
 msgid "_Close"
 msgstr "_Zarrar"
 
-#: ../src/uimanager.c:1017
+#: ../src/uimanager.c:1022
 msgid "Minimize to system tray"
 msgstr "Minimizar na bandexa de sistema"
 
-#: ../src/uimanager.c:1020
+#: ../src/uimanager.c:1025
 msgid "_Quit"
 msgstr "_Colar"
 
-#: ../src/uimanager.c:1021
+#: ../src/uimanager.c:1026
 msgid "Quit the program"
 msgstr "Colar del programa"
 
 #. Edit Menu
-#: ../src/uimanager.c:1025
+#: ../src/uimanager.c:1030
 msgid "_Edit"
 msgstr "_Editar"
 
-#: ../src/uimanager.c:1027
+#: ../src/uimanager.c:1032
 msgid "_Copy"
 msgstr "_Copiar"
 
-#: ../src/uimanager.c:1028
+#: ../src/uimanager.c:1033
 msgid "Copy the selection"
 msgstr "Copiar la seleición"
 
-#: ../src/uimanager.c:1031
+#: ../src/uimanager.c:1036
 msgid "_Paste"
 msgstr "A_pegar"
 
-#: ../src/uimanager.c:1032
+#: ../src/uimanager.c:1037
 msgid "Paste the clipboard"
 msgstr "Pegar el conteníu del cartafueyu"
 
-#: ../src/uimanager.c:1035
+#: ../src/uimanager.c:1040
 msgid "Clear _history"
 msgstr "Llimpiar _hestorial"
 
-#: ../src/uimanager.c:1036
+#: ../src/uimanager.c:1041
 msgid "Clear the call history"
 msgstr "Llimpiar l'hestorial de llamáes"
 
-#: ../src/uimanager.c:1039
+#: ../src/uimanager.c:1044
 msgid "_Accounts"
 msgstr "_Cuentes"
 
-#: ../src/uimanager.c:1040
+#: ../src/uimanager.c:1045
 msgid "Edit your accounts"
 msgstr "Editar les sos cuentes"
 
-#: ../src/uimanager.c:1043
+#: ../src/uimanager.c:1048
 msgid "_Preferences"
 msgstr "_Preferencies"
 
-#: ../src/uimanager.c:1044
+#: ../src/uimanager.c:1049
 msgid "Change your preferences"
 msgstr "Camudar les sos preferencies"
 
 #. View Menu
-#: ../src/uimanager.c:1048
+#: ../src/uimanager.c:1053
 msgid "_View"
 msgstr "_Ver"
 
 #. Help menu
-#: ../src/uimanager.c:1051
+#: ../src/uimanager.c:1056
 msgid "_Help"
 msgstr "_Aida"
 
-#: ../src/uimanager.c:1052
+#: ../src/uimanager.c:1057
 msgid "Contents"
 msgstr "Conteníu"
 
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1058
 msgid "Open the manual"
 msgstr "Abrir el manual"
 
-#: ../src/uimanager.c:1055
+#: ../src/uimanager.c:1060
 msgid "About this application"
 msgstr "Tocante a esta aplicación"
 
-#: ../src/uimanager.c:1059
+#: ../src/uimanager.c:1064
 msgid "_Transfer"
 msgstr "_Tresferir"
 
-#: ../src/uimanager.c:1059
+#: ../src/uimanager.c:1064
 msgid "Transfer the call"
 msgstr "Tresferir la llamada"
 
-#: ../src/uimanager.c:1060 ../src/uimanager.c:1345
+#: ../src/uimanager.c:1065 ../src/uimanager.c:1350
 msgid "_Record"
 msgstr "G_rabar"
 
-#: ../src/uimanager.c:1060
+#: ../src/uimanager.c:1065
 msgid "Record the current conversation"
 msgstr "Grabar la conversación actual"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1066
 msgid "_Show toolbar"
 msgstr "Amo_sar ferramientes"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1066
 msgid "Show the toolbar"
 msgstr "Amuesa la barra de ferramientes"
 
-#: ../src/uimanager.c:1062
+#: ../src/uimanager.c:1067
 msgid "_Dialpad"
 msgstr "_Tecláu"
 
-#: ../src/uimanager.c:1062
+#: ../src/uimanager.c:1067
 msgid "Show the dialpad"
 msgstr "Amosar el tecláu pa marcar"
 
-#: ../src/uimanager.c:1063
+#: ../src/uimanager.c:1068
 msgid "_Volume controls"
 msgstr "_Controles de volume"
 
-#: ../src/uimanager.c:1063
+#: ../src/uimanager.c:1068
 msgid "Show the volume controls"
 msgstr "Amuesa los controles de volume"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1069
 msgid "_History"
 msgstr "_Hestorial"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1069
 msgid "Calls history"
 msgstr "Hestorial de llamáes"
 
-#: ../src/uimanager.c:1065
+#: ../src/uimanager.c:1070
 msgid "_Address book"
 msgstr "Llibret_a de direiciones"
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1072
 msgid "_Buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1072
 msgid "Display the buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1334 ../src/uimanager.c:1388
+#: ../src/uimanager.c:1339 ../src/uimanager.c:1393
 msgid "On _Hold"
 msgstr "_N'espera"
 
-#: ../src/uimanager.c:1425
+#: ../src/uimanager.c:1430
 msgid "_Call back"
 msgstr "Tornar _Llamada"
 
-#: ../src/uimanager.c:1435 ../src/uimanager.c:1494
+#: ../src/uimanager.c:1440 ../src/uimanager.c:1499
 msgid "Follow status"
 msgstr ""
 
-#: ../src/uimanager.c:1555
+#: ../src/uimanager.c:1560
 msgid "Edit phone number"
 msgstr "Editar númberu de teléfonu"
 
-#: ../src/uimanager.c:1566
+#: ../src/uimanager.c:1571
 msgid "Edit the phone number before making a call"
 msgstr "Editar el númberu de teléfonu enantes de llamar"
