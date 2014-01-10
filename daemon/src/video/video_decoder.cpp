@@ -74,10 +74,15 @@ int VideoDecoder::openInput(const std::string &source_str,
 
     int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
                                   options_ ? &options_ : NULL);
-    if (ret)
-        ERROR("avformat_open_input failed (%d)", ret);
 
-    DEBUG("Using format %s", format_str.c_str());
+    if (ret) {
+        char errbuf[64];
+        av_strerror(ret, errbuf, sizeof(errbuf));
+        ERROR("avformat_open_input failed: %s", errbuf);
+    } else {
+        DEBUG("Using format %s", format_str.c_str());
+    }
+
     return ret;
 }
 
