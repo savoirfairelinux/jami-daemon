@@ -560,7 +560,7 @@ help_about(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
             "artists", artists,
             "authors", authors,
             "comments", _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
-            "copyright", "Copyright © 2004-2013 Savoir-faire Linux Inc.",
+            "copyright", "Copyright © 2004-2014 Savoir-faire Linux Inc.",
             "name", PACKAGE_NAME,
             "title", _("About SFLphone"),
             "version", PACKAGE_VERSION,
