@@ -166,7 +166,7 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_grid_attach(GTK_GRID(grid), privateKeyFileChooser, 1, 5, 1, 1);
 
     if (!tls_private_key_file) {
-        gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
+        gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(privateKeyFileChooser));
     } else {
         if (!*tls_private_key_file) {
             gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(privateKeyFileChooser));

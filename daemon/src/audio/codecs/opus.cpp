@@ -83,28 +83,40 @@ Opus::getSDPChannels() const
 
 int Opus::decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size)
 {
-    return opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);
+    const int ret = opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);
+    if (ret < 0)
+        std::cerr << opus_strerror(ret) << std::endl;
+    return ret;
 }
 
 int Opus::encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size)
 {
-    return opus_encode(encoder_, src, FRAME_SIZE, dst, buffer_size * 2);
+    const int ret = opus_encode(encoder_, src, FRAME_SIZE, dst, buffer_size * 2);
+    if (ret < 0)
+        std::cerr << opus_strerror(ret) << std::endl;
+    return ret;
 }
 
 int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size)
 {
     if (buf == NULL) return 0;
 
-    unsigned samples = opus_decode(decoder_, buf, buffer_size, dst[0].data(), sizeof(SFLAudioSample) * FRAME_SIZE, 0);
+    const int ret = opus_decode(decoder_, buf, buffer_size, dst[0].data(), sizeof(SFLAudioSample) * FRAME_SIZE, 0);
+    if (ret < 0)
+        std::cerr << opus_strerror(ret) << std::endl;
 
-    return samples;
+    return ret;
 }
 
 int Opus::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size)
 {
     if (dst == NULL) return 0;
 
-    return opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size * sizeof(SFLAudioSample));
+    const int ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size * sizeof(SFLAudioSample));
+    if (ret < 0)
+        std::cerr << opus_strerror(ret) << std::endl;
+
+    return ret;
 }
 
 
