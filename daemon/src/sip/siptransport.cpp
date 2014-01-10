@@ -329,6 +329,24 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
         throw std::runtime_error("Can't contact STUN server");
     }
 
+    pj_status_t ret;
+    if ((ret = pjstun_get_mapped_addr(&cp_->factory, socketDescriptors.size(), &socketDescriptors[0],
+                    &serverName, port, &serverName, port, &result[0])) != PJ_SUCCESS) {
+        ERROR("STUN query to server \"%.*s\" failed", serverName.slen, serverName.ptr);
+        switch (ret) {
+            case PJLIB_UTIL_ESTUNNOTRESPOND:
+                ERROR("No response from STUN server(s)");
+                break;
+            case PJLIB_UTIL_ESTUNSYMMETRIC:
+                ERROR("Different mapped addresses are returned by servers.");
+                break;
+            default:
+                break;
+        }
+        throw std::runtime_error("Can't resolve STUN request");
+    }
+
+
     for (const auto & it : result)
         WARN("STUN PORTS: %ld", pj_ntohs(it.sin_port));
 
