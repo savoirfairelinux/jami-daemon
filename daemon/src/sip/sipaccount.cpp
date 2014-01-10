@@ -99,7 +99,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , stunServerName_()
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
-    , tlsEnable_(Conf::FALSE_STR)
+    , tlsEnable_(false)
     , tlsCaListFile_()
     , tlsCertificateFile_()
     , tlsPrivateKeyFile_()
@@ -710,8 +710,8 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
         validate(srtpKeyExchange_, iter->second, VALID_SRTP_KEY_EXCHANGES);
 
     // TLS settings
+    parseBool(details, CONFIG_TLS_ENABLE, tlsEnable_);
     parseInt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
-    parseString(details, CONFIG_TLS_ENABLE, tlsEnable_);
     parseString(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
     parseString(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
     parseString(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
@@ -865,7 +865,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     std::stringstream tlslistenerport;
     tlslistenerport << tlsListenerPort_;
     a[CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
-    a[CONFIG_TLS_ENABLE] = tlsEnable_;
+    a[CONFIG_TLS_ENABLE] = tlsEnable_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
     a[CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
     a[CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
@@ -890,7 +890,7 @@ void SIPAccount::registerVoIPLink()
 #if HAVE_TLS
 
     // Init TLS settings if the user wants to use TLS
-    if (tlsEnable_ == Conf::TRUE_STR) {
+    if (tlsEnable_) {
         DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
@@ -1088,7 +1088,7 @@ void SIPAccount::loadConfig()
 
 #if HAVE_TLS
 
-    if (tlsEnable_ == Conf::TRUE_STR) {
+    if (tlsEnable_) {
         initTlsConfiguration();
         transportType_ = PJSIP_TRANSPORT_TLS;
     } else
@@ -1455,7 +1455,7 @@ std::map<std::string, std::string> SIPAccount::getTlsSettings() const
     std::stringstream portstr;
     portstr << tlsListenerPort_;
     tlsSettings[CONFIG_TLS_LISTENER_PORT] = portstr.str();
-    tlsSettings[CONFIG_TLS_ENABLE] = tlsEnable_;
+    tlsSettings[CONFIG_TLS_ENABLE] = tlsEnable_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     tlsSettings[CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
     tlsSettings[CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
     tlsSettings[CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;

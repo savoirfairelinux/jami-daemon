@@ -727,9 +727,8 @@ class SIPAccount : public Account {
         /**
          * Determine if TLS is enabled for this account. TLS provides a secured channel for
          * SIP signalization. It is independant than the media encription provided by SRTP or ZRTP.
-         * FIXME: this should be a bool
          */
-        std::string tlsEnable_;
+        bool tlsEnable_;
 
         /**
          * Certificate autority file
