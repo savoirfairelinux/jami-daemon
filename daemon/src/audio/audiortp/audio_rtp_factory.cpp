@@ -54,7 +54,10 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(),
     cachedRemoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
     remoteOfferIsSet_(false), ca_(ca),
     keyExchangeProtocol_(NONE)
-{}
+{
+    // FIXME: workaround for uncatchable ost::Socket "exceptions"
+    ost::Thread::setException(ost::Thread::throwNothing);
+}
 
 AudioRtpFactory::~AudioRtpFactory()
 {}
