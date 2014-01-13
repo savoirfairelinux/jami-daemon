@@ -264,7 +264,10 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
             }
         }
 
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
+        if (pjsip_rdata_get_tsx(rdata))
+            pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
+        else
+            ERROR("No transaction instance");
         return PJ_FALSE;
     } else if (method->id == PJSIP_OPTIONS_METHOD) {
         handleIncomingOptions(rdata);
