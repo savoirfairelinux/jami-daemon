@@ -8,7 +8,7 @@ License:        GPLv3
 URL:            http://sflphone.org/
 Source0:        https://projects.savoirfairelinux.com/attachments/download/6423/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:      gettext openssl-devel desktop-file-utils perl
+BuildRequires:      gettext openssl-devel desktop-file-utils perl libuuid-devel
 BuildRequires:      libyaml-devel alsa-lib-devel pulseaudio-libs-devel
 BuildRequires:      ccrtp-devel libzrtpcpp-devel dbus-c++-devel pcre-devel
 BuildRequires:      gsm-devel speex-devel expat-devel libsamplerate-devel
@@ -246,9 +246,6 @@ fi
 %files kde
 %{_bindir}/sflphone-client-kde
 %{_datadir}/kde4/apps/sflphone-client-kde
-%{_datadir}/kde4/apps/plasma/plasmoids/
-%{_datadir}/kde4/apps/plasma/services/sflphone.operations
-%{_datadir}/kde4/services
 %{_datadir}/config.kcfg/sflphone-client-kde.kcfg
 %{_datadir}/applications/kde4
 %doc %{_datadir}/doc/HTML/*/sflphone-client-kde
@@ -256,9 +253,8 @@ fi
 %{_datadir}/icons/hicolor
 %{_libdir}/libksflphone.so*
 %{_libdir}/libqtsflphone.so*
-%{_libdir}/kde4/plasma_engine_sflphone.so
 %exclude %{_includedir}/kde4/ksflphone/*.h
-%exclude %{_includedir}/kde4/qtsflphone/*.h
+%exclude %{_includedir}/qtsflphone/*.h
 %endif
 
 %changelog
