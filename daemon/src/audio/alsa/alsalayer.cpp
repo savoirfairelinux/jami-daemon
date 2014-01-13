@@ -145,7 +145,7 @@ void AlsaThread::run()
     initAudioLayer();
     alsa_->isStarted_ = true;
 
-    while (alsa_->isStarted_) {
+    while (alsa_->isStarted_ and running_) {
         alsa_->audioCallback();
         usleep(20000); // 20 ms
     }
