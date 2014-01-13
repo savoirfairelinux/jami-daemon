@@ -1,6 +1,6 @@
 %bcond_with video
 Name:           sflphone
-Version:        1.2.3
+Version:        1.3.0
 Release:        1%{?dist}
 Summary:        SIP/IAX2 compatible enterprise-class software phone
 Group:          Applications/Internet
@@ -258,6 +258,11 @@ fi
 %endif
 
 %changelog
+* Mon Jan 13 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.3.0-1
+- Update to 1.3.0
+- Fix KDE paths (tested on f20)
+- Added libuuid dependency for pjsip
+
 * Wed Jun 19 2013 Simon Piette <simonp@fedoraproject.org> - 1.2.3-1
 - Update to 1.2.3
 - Enable ilbc

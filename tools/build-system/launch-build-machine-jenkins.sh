@@ -22,7 +22,7 @@ DO_LOGGING=1
 DO_UPLOAD=1
 SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
-VERSION_NUMBER="1.2.3"
+VERSION_NUMBER="1.3.0"
 
 LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-client-gnome" "sflphone-plugins" "sflphone-common-video" "sflphone-client-gnome-video")
 #LAUNCHPAD_PACKAGES=("sflphone-common-video" "sflphone-client-gnome-video")
