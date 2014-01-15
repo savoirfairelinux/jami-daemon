@@ -131,8 +131,9 @@ namespace {
         signal(SIGINT, SIG_DFL);
         signal(SIGTERM, SIG_DFL);
 
-        // Stop manager in new thread since we don't know which thread
-        // this handler is interrupting
+        // Stop manager in new thread since we don't know what
+        // this handler is interrupting (e.g. a mutex might be held in the
+        // interrupted function)
         std::thread th([code] {
             Manager::instance().interrupt();
             std::cerr << "Caught signal " << strsignal(code)
