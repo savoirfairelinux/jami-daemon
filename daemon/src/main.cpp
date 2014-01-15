@@ -35,6 +35,7 @@
 #endif
 
 #include <iostream>
+#include <thread>
 #include <signal.h>
 #include <getopt.h>
 #include "fileutils.h"
@@ -130,19 +131,22 @@ namespace {
         signal(SIGINT, SIG_DFL);
         signal(SIGTERM, SIG_DFL);
 
-        std::cerr << "Caught signal " << strsignal(code) << ", terminating..." << std::endl;
-        Manager::instance().interrupt();
+        // Stop manager in new thread since we don't know which thread
+        // this handler is interrupting
+        std::thread th([code] {
+            Manager::instance().interrupt();
+            std::cerr << "Caught signal " << strsignal(code)
+                      << ", terminating..." << std::endl;
+        });
+
+        // Detach thread and leave signal handler so that interrupted thread
+        // can continue
+        th.detach();
     }
 }
 
 int main(int argc, char *argv [])
 {
-    // TODO: Block signals for all threads but the main thread, decide how/if we should
-    // handle other signals
-    signal(SIGINT, signal_handler);
-    signal(SIGHUP, signal_handler);
-    signal(SIGTERM, signal_handler);
-
     // make a copy as we don't want to modify argv[0], copy it to a vector to
     // guarantee that memory is correctly managed/exception safe
     std::string programName(argv[0]);
@@ -172,6 +176,12 @@ int main(int argc, char *argv [])
             std::endl;
         return 1;
     }
+
+    // TODO: Block signals for all threads but the main thread, decide how/if we should
+    // handle other signals
+    signal(SIGINT, signal_handler);
+    signal(SIGHUP, signal_handler);
+    signal(SIGTERM, signal_handler);
 
     int ret = 0;
 #ifdef SFL_VIDEO
