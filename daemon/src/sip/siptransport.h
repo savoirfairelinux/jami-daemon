@@ -157,4 +157,6 @@ class SipTransport {
         pjsip_endpoint *endpt_;
 };
 
+void sip_strerror(pj_status_t code);
+
 #endif // SIPTRANSPORT_H_

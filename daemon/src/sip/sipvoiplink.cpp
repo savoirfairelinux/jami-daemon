@@ -695,15 +695,6 @@ void SIPVoIPLink::setSipLogLevel()
     pj_log_set_level(level);
 }
 
-namespace {
-void sip_strerror(pj_status_t code)
-{
-    char err_msg[PJ_ERR_MSG_SIZE];
-    pj_strerror(code, err_msg, sizeof err_msg);
-    ERROR("%d: %s", code, err_msg);
-}
-}
-
 // Called from EventThread::run (not main thread)
 bool SIPVoIPLink::getEvent()
 {

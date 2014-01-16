@@ -289,10 +289,18 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
 
     if (boundAddr.addr.sa_family == pj_AF_INET()) {
         status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
-        RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "UDP IPV4 Transport did not start");
+        if (status != PJ_SUCCESS) {
+            ERROR("UDP IPV4 Transport did not start");
+            sip_strerror(status);
+            return NULL;
+        }
     } else if (boundAddr.addr.sa_family == pj_AF_INET6()) {
         status = pjsip_udp_transport_start6(endpt_, &boundAddr.ipv6, NULL, 1, &transport);
-        RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "UDP IPV6 Transport did not start");
+        if (status != PJ_SUCCESS) {
+            ERROR("UDP IPV6 Transport did not start");
+            sip_strerror(status);
+            return NULL;
+        }
     }
 
     DEBUG("Created UDP transport on %s:%d", interface.c_str(), port);
@@ -434,3 +442,10 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
 }
 
 #undef RETURN_IF_NULL
+
+void sip_strerror(pj_status_t code)
+{
+    char err_msg[PJ_ERR_MSG_SIZE];
+    pj_strerror(code, err_msg, sizeof err_msg);
+    ERROR("%d: %s", code, err_msg);
+}
