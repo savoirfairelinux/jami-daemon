@@ -421,7 +421,8 @@ int iax_ie_append_raw(struct iax_ie_data *ied, unsigned char ie, const void *dat
 	}
 	ied->buf[ied->pos++] = ie;
 	ied->buf[ied->pos++] = datalen;
-	memcpy(ied->buf + ied->pos, data, datalen);
+	if (data)
+	    memcpy(ied->buf + ied->pos, data, datalen);
 	ied->pos += datalen;
 	return 0;
 }
