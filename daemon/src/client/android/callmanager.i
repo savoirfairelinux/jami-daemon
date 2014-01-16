@@ -62,6 +62,9 @@ typedef struct callmanager_callback
     void (*on_record_playback_filepath) (const std::string& id,
                                          const std::string& filename);
 
+    void (*on_recording_state_changed) (const std::string& callID,
+                                        const bool& state);
+
     void (*newPresSubClientNotification) (const std::string& uri,
 											const std::string& basic,
 											const std::string& note);
@@ -101,6 +104,9 @@ public:
 
     virtual void on_record_playback_filepath(const std::string& id,
                                               const std::string& filename) {}
+
+    virtual void on_recording_state_changed(const std::string& callID,
+                                        const bool& state) {}
 
     virtual void newPresSubClientNotification(const std::string& uri,
 											const std::string& basic,
@@ -147,11 +153,15 @@ void on_conference_state_changed_wrapper (const std::string& confID,
 }
 
 void on_incoming_message_wrapper(const std::string& ID, const std::string& from, const std::string& msg) {
-  registeredCallbackObject->on_incoming_message(ID, from, msg);
+    registeredCallbackObject->on_incoming_message(ID, from, msg);
 }
 
 void on_record_playback_filepath_wrapper(const std::string& id, const std::string& filename) {
-  registeredCallbackObject->on_record_playback_filepath(id, filename);
+    registeredCallbackObject->on_record_playback_filepath(id, filename);
+}
+
+void on_recording_state_changed_wrapper(const std::string& callID, const bool& state) {
+    registeredCallbackObject->on_recording_state_changed(callID, state);
 }
 
 void on_newPresSubClientNotification_wrapper(const std::string& uri, const std::string& basic, const std::string& note) {
@@ -172,6 +182,7 @@ static struct callmanager_callback wrapper_callback_struct = {
     &on_conference_state_changed_wrapper,
     &on_incoming_message_wrapper,
     &on_record_playback_filepath_wrapper,
+    &on_recording_state_changed_wrapper,
 	&on_newPresSubClientNotification_wrapper,
 	&on_newPresSubServerRequest_wrapper,
 };
@@ -268,6 +279,9 @@ public:
 
     virtual void on_record_playback_filepath(const std::string& id,
                                             const std::string& filename);
+
+    virtual void on_recording_state_changed(const std::string& callID,
+                                            const bool& state);
 
     virtual void newPresSubClientNotification(const std::string& uri,
 											const std::string& basic,

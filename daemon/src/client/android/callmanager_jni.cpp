@@ -101,9 +101,9 @@ void CallManager::sipCallStateChanged(const std::string& accoundID, const std::s
 
 }
 
-void CallManager::recordingStateChanged(const std::string& callID, const bool& state )
+void CallManager::recordingStateChanged(const std::string& callID, const bool& state)
 {
-
+    on_recording_state_changed_wrapper(callID, state);
 }
 
 void CallManager::updatePlaybackScale(const std::string&, const int32_t&, const int32_t&)

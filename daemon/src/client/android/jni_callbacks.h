@@ -26,3 +26,4 @@ extern void on_account_state_changed_wrapper (const std::string& accoundID, int 
 extern void on_account_state_changed_with_code_wrapper (const std::string& accoundID, const std::string& state, const int32_t& code);
 
 void on_record_playback_filepath_wrapper(const std::string& id, const std::string& filename);
+void on_recording_state_changed_wrapper(const std::string& callID, const bool& state);
