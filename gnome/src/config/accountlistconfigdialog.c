@@ -705,7 +705,7 @@ void show_account_list_config_dialog(SFLPhoneClient *client)
         g_free(message);
     } else {
         gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION,
-                           _("You have no active account"));
+                           _("You have no active accounts"));
     }
 
     gtk_dialog_run(account_list_dialog);
