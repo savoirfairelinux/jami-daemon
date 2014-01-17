@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifndef ACCOUNT_SCHEMA_H
+#ifndef ACCOUNT_SCHEMA_H_
 #define ACCOUNT_SCHEMA_H_
 
 /**
@@ -116,4 +116,4 @@ static const char *const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE  = "TLS.requireCl
 static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC     = "TLS.negotiationTimeoutSec";
 static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC    = "TLS.negotiationTimemoutMsec";
 
-#endif
+#endif // ACCOUNT_SCHEMA_H_

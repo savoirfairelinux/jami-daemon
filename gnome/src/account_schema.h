@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifndef ACCOUNT_SCHEMA_H
+#ifndef ACCOUNT_SCHEMA_H_
 #define ACCOUNT_SCHEMA_H_
 
 /**
