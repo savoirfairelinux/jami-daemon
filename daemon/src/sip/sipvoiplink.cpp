@@ -264,10 +264,16 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
             }
         }
 
-        if (pjsip_rdata_get_tsx(rdata))
+        /* Check that no UAS transaction has been created for this request.
+         * If UAS transaction has been created for this request, application
+         * MUST send the response statefully using that transaction.
+         */
+
+        if (!pjsip_rdata_get_tsx(rdata))
             pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
         else
-            ERROR("No transaction instance");
+            ERROR("Transaction has been created for this request, send response statefully instead");
+
         return PJ_FALSE;
     } else if (method->id == PJSIP_OPTIONS_METHOD) {
         handleIncomingOptions(rdata);
