@@ -37,15 +37,6 @@
 
 #include "audio/audiolayer.h"
 
-
-
-enum PCMType {
-    SFL_PCM_BOTH = 0x0021,          /** To open both playback and capture devices */
-    SFL_PCM_PLAYBACK = 0x0022,      /** To open playback device only */
-    SFL_PCM_CAPTURE = 0x0023,       /** To open capture device only */
-    SFL_PCM_RINGTONE = 0x0024       /** To open the ringtone device only */
-};
-
 class AudioPreference;
 
 #include "noncopyable.h"
@@ -120,7 +111,7 @@ class OpenSLLayer : public AudioLayer {
             return 0;
         }
 
-        virtual std::string getAudioDeviceName(int, AudioLayer::PCMType) const {
+        virtual std::string getAudioDeviceName(int, DeviceType) const {
             return "";
         }
 
@@ -224,7 +215,7 @@ class OpenSLLayer : public AudioLayer {
 
         NON_COPYABLE(OpenSLLayer);
 
-        virtual void updatePreference(AudioPreference &pref, int index, PCMType type);
+        virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
         OpenSLThread *audioThread_;
 

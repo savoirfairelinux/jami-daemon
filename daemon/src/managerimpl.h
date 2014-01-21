@@ -523,9 +523,9 @@ class ManagerImpl {
         /**
              * Set audio device
              * @param index The index of the soundcard
-             * @param the type of stream, either SFL_PCM_PLAYBACK, SFL_PCM_CAPTURE, SFL_PCM_RINGTONE
+             * @param the type of stream, either PLAYBACK, CAPTURE, RINGTONE
              */
-        void setAudioDevice(int index, AudioLayer::PCMType streamType);
+        void setAudioDevice(int index, DeviceType streamType);
 
         /**
          * Get list of supported audio output device

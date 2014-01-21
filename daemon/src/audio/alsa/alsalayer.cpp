@@ -632,7 +632,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
 
 bool
-AlsaLayer::soundCardIndexExists(int card, PCMType stream)
+AlsaLayer::soundCardIndexExists(int card, DeviceType stream)
 {
     snd_pcm_info_t *pcminfo;
     snd_pcm_info_alloca(&pcminfo);
@@ -646,7 +646,7 @@ AlsaLayer::soundCardIndexExists(int card, PCMType stream)
     if (snd_ctl_open(&handle, name.c_str(), 0) != 0)
         return false;
 
-    snd_pcm_info_set_stream(pcminfo , (stream == SFL_PCM_PLAYBACK) ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+    snd_pcm_info_set_stream(pcminfo , stream == DeviceType::PLAYBACK ?  SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
     bool ret = snd_ctl_pcm_info(handle , pcminfo) >= 0;
     snd_ctl_close(handle);
     return ret;
@@ -671,22 +671,18 @@ AlsaLayer::getAudioDeviceIndex(const std::string &description) const
 }
 
 std::string
-AlsaLayer::getAudioDeviceName(int index, PCMType type) const
+AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
 {
     // a bit ugly and wrong.. i do not know how to implement it better in alsalayer.
     // in addition, for now it is used in pulselayer only due to alsa and pulse layers api differences.
     // but after some tweaking in alsalayer, it could be used in it too.
     switch (type) {
-        case SFL_PCM_PLAYBACK:
-        case SFL_PCM_RINGTONE:
+        case DeviceType::PLAYBACK:
+        case DeviceType::RINGTONE:
             return getPlaybackDeviceList().at(index);
 
-        case SFL_PCM_CAPTURE:
+        case DeviceType::CAPTURE:
             return getCaptureDeviceList().at(index);
-
-        default:
-            ERROR("Unexpected type %d", type);
-            return "";
     }
 }
 
@@ -843,18 +839,18 @@ void AlsaLayer::audioCallback()
         capture();
 }
 
-void AlsaLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
+void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
 {
     switch (type) {
-        case SFL_PCM_PLAYBACK:
+        case DeviceType::PLAYBACK:
             preference.setAlsaCardout(index);
             break;
 
-        case AudioLayer::SFL_PCM_CAPTURE:
+        case DeviceType::CAPTURE:
             preference.setAlsaCardin(index);
             break;
 
-        case AudioLayer::SFL_PCM_RINGTONE:
+        case DeviceType::RINGTONE:
             preference.setAlsaCardring(index);
             break;
 

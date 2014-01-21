@@ -1987,7 +1987,7 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 /**
  * Set audio output device
  */
-void ManagerImpl::setAudioDevice(int index, AudioLayer::PCMType type)
+void ManagerImpl::setAudioDevice(int index, DeviceType type)
 {
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 

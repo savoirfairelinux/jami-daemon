@@ -109,7 +109,7 @@ class PulseLayer : public AudioLayer {
         virtual std::vector<std::string> getPlaybackDeviceList() const;
         int getAudioDeviceIndex(const std::string& name) const;
 
-        std::string getAudioDeviceName(int index, PCMType type) const;
+        std::string getAudioDeviceName(int index, DeviceType type) const;
 
         virtual void startStream();
 
@@ -127,7 +127,7 @@ class PulseLayer : public AudioLayer {
                                              const pa_sink_info *i,
                                              int eol, void *userdata);
 
-        virtual void updatePreference(AudioPreference &pref, int index, PCMType type);
+        virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
         virtual int getIndexCapture() const;
         virtual int getIndexPlayback() const;

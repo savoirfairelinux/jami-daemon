@@ -287,12 +287,12 @@ const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>
     return &(*dev_info);
 }
 
-std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
+std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
 {
 
     switch (type) {
-        case SFL_PCM_PLAYBACK:
-        case SFL_PCM_RINGTONE:
+        case DeviceType::PLAYBACK:
+        case DeviceType::RINGTONE:
             if (index < 0 or static_cast<size_t>(index) >= sinkList_.size()) {
                 ERROR("Index %d out of range", index);
                 return "";
@@ -300,16 +300,13 @@ std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
 
             return sinkList_[index].name;
 
-        case SFL_PCM_CAPTURE:
+        case DeviceType::CAPTURE:
             if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
                 ERROR("Index %d out of range", index);
                 return "";
             }
 
             return sourceList_[index].name;
-
-        default:
-            return "";
     }
 }
 
@@ -736,27 +733,24 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
     }
 }
 
-void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
+void PulseLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
 {
     const std::string devName(getAudioDeviceName(index, type));
 
     switch (type) {
-        case SFL_PCM_PLAYBACK:
+        case DeviceType::PLAYBACK:
             DEBUG("setting %s for playback", devName.c_str());
             preference.setPulseDevicePlayback(devName);
             break;
 
-        case SFL_PCM_CAPTURE:
+        case DeviceType::CAPTURE:
             DEBUG("setting %s for capture", devName.c_str());
             preference.setPulseDeviceRecord(devName);
             break;
 
-        case SFL_PCM_RINGTONE:
+        case DeviceType::RINGTONE:
             DEBUG("setting %s for ringer", devName.c_str());
             preference.setPulseDeviceRingtone(devName);
-            break;
-
-        default:
             break;
     }
 }

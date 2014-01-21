@@ -711,21 +711,18 @@ OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
 
 
 void
-OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
+OpenSLLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
 {
 #ifdef OUTSIDE_TESTING
 
     switch (type) {
-        case SFL_PCM_PLAYBACK:
+        case Device::PLAYBACK:
             break;
 
-        case SFL_PCM_CAPTURE:
+        case Device::CAPTURE:
             break;
 
-        case SFL_PCM_RINGTONE:
-            break;
-
-        default:
+        case Device::RINGTONE:
             break;
     }
 

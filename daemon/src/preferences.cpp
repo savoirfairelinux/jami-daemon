@@ -356,9 +356,9 @@ AudioPreference::AudioPreference() :
 
 namespace {
 #if HAVE_ALSA
-void checkSoundCard(int &card, AudioLayer::PCMType stream)
+void checkSoundCard(int &card, DeviceType type)
 {
-    if (not AlsaLayer::soundCardIndexExists(card, stream)) {
+    if (not AlsaLayer::soundCardIndexExists(card, type)) {
         WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
@@ -386,9 +386,9 @@ AudioLayer* AudioPreference::createAudioLayer()
 #if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(alsaCardin_, AudioLayer::SFL_PCM_CAPTURE);
-    checkSoundCard(alsaCardout_, AudioLayer::SFL_PCM_PLAYBACK);
-    checkSoundCard(alsaCardring_, AudioLayer::SFL_PCM_RINGTONE);
+    checkSoundCard(alsaCardin_, DeviceType::CAPTURE);
+    checkSoundCard(alsaCardout_, DeviceType::PLAYBACK);
+    checkSoundCard(alsaCardring_, DeviceType::RINGTONE);
 
     return new AlsaLayer(*this);
 #else

@@ -242,17 +242,17 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
 
 void ConfigurationManager::setAudioOutputDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_PLAYBACK);
+    return Manager::instance().setAudioDevice(index, DeviceType::PLAYBACK);
 }
 
 void ConfigurationManager::setAudioInputDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_CAPTURE);
+    return Manager::instance().setAudioDevice(index, DeviceType::CAPTURE);
 }
 
 void ConfigurationManager::setAudioRingtoneDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_RINGTONE);
+    return Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()
