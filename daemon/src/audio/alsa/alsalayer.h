@@ -30,21 +30,19 @@
  *  as that of the covered work.
  */
 
-#ifndef _ALSA_LAYER_H
-#define _ALSA_LAYER_H
+#ifndef ALSA_LAYER_H_
+#define ALSA_LAYER_H_
 
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
 #include <alsa/asoundlib.h>
 
-class RingBuffer;
-class ManagerImpl;
-class AlsaThread;
-
 /**
  * @file  AlsaLayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
+
+class AlsaThread;
 
 /** Associate a sound card index to its string description */
 typedef std::pair<int , std::string> HwIDPair;
@@ -252,4 +250,4 @@ class AlsaLayer : public AudioLayer {
         AlsaThread *audioThread_;
 };
 
-#endif // _ALSA_LAYER_H_
+#endif // ALSA_LAYER_H_

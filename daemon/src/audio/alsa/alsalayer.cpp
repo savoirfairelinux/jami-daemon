@@ -31,18 +31,10 @@
  */
 
 #include "alsalayer.h"
-#include "audio/dcblocker.h"
-#include "eventthread.h"
-#include "audio/samplerateconverter.h"
 #include "logger.h"
 #include "manager.h"
 #include "noncopyable.h"
 #include "client/configurationmanager.h"
-#include <ctime>
-
-#define SFL_ALSA_PERIOD_SIZE 160
-#define SFL_ALSA_NB_PERIOD 8
-#define SFL_ALSA_BUFFER_SIZE SFL_ALSA_PERIOD_SIZE * SFL_ALSA_NB_PERIOD
 
 class AlsaThread {
     public:
@@ -339,6 +331,10 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     snd_pcm_hw_params_t *hwparams;
     snd_pcm_hw_params_alloca(&hwparams);
 
+    const unsigned SFL_ALSA_PERIOD_SIZE = 160;
+    const unsigned SFL_ALSA_NB_PERIOD = 8;
+    const unsigned SFL_ALSA_BUFFER_SIZE = SFL_ALSA_PERIOD_SIZE * SFL_ALSA_NB_PERIOD;
+
     snd_pcm_uframes_t period_size = SFL_ALSA_PERIOD_SIZE;
     snd_pcm_uframes_t buffer_size = SFL_ALSA_BUFFER_SIZE;
     unsigned int periods = SFL_ALSA_NB_PERIOD;
@@ -599,7 +595,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
         if (snd_ctl_open(&handle, name.c_str(), 0) == 0) {
             if (snd_ctl_card_info(handle, info) == 0) {
-                snd_pcm_info_set_device(pcminfo , 0);
+                snd_pcm_info_set_device(pcminfo, 0);
                 snd_pcm_info_set_stream(pcminfo, getCapture ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
 
                 int err;
@@ -618,7 +614,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
                     description.append(snd_pcm_info_get_name(pcminfo));
 
                     // The number of the sound card is associated with a string description
-                    audioDevice.push_back(HwIDPair(numCard , description));
+                    audioDevice.push_back(HwIDPair(numCard, description));
                 }
             }
 
@@ -646,8 +642,8 @@ AlsaLayer::soundCardIndexExists(int card, DeviceType stream)
     if (snd_ctl_open(&handle, name.c_str(), 0) != 0)
         return false;
 
-    snd_pcm_info_set_stream(pcminfo , stream == DeviceType::PLAYBACK ?  SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
-    bool ret = snd_ctl_pcm_info(handle , pcminfo) >= 0;
+    snd_pcm_info_set_stream(pcminfo, stream == DeviceType::PLAYBACK ?  SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+    bool ret = snd_ctl_pcm_info(handle, pcminfo) >= 0;
     snd_ctl_close(handle);
     return ret;
 }
