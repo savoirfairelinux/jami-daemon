@@ -843,13 +843,14 @@ static void record_path_changed(GtkFileChooser *chooser, G_GNUC_UNUSED gpointer 
 }
 
 static
-void
+gboolean
 mute_dtmf_toggled(GtkToggleButton *tb, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_toggle_button_get_active(tb))
         dbus_mute_dtmf(TRUE);
     else
         dbus_mute_dtmf(FALSE);
+    return TRUE;
 }
 
 
@@ -947,7 +948,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     GtkWidget *muteDtmf = gtk_check_button_new_with_mnemonic(_("_Mute DTMF"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(muteDtmf), dbus_is_dtmf_muted());
 
-    g_signal_connect(G_OBJECT(muteDtmf), "toggled", mute_dtmf_toggled, NULL);
+    g_signal_connect(G_OBJECT(muteDtmf), "toggled", G_CALLBACK(mute_dtmf_toggled), NULL);
     gtk_grid_attach(GTK_GRID(grid), muteDtmf, 0, 1, 1, 1);
 
     gtk_widget_show_all(audio_vbox);
