@@ -62,7 +62,7 @@ void cleanup()
 int main(int argc, char* argv[])
 {
     atexit(cleanup);
-    printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
+    printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2014\n\n");
     Logger::setConsoleLog(true);
     Logger::setDebugMode(true);
     fileutils::FileHandle f(fileutils::create_pidfile());
