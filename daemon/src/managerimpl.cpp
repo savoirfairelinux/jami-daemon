@@ -2604,9 +2604,8 @@ namespace {
         const auto inAccountOrder = [&] (const std::string &id) {
             return accountOrder.find(id + "/") != std::string::npos; };
 
-        if (!accountid.empty() and !accountAlias.empty() and
-            accountid != SIPAccount::IP2IP_PROFILE) {
-            if (not inAccountOrder(accountid)) {
+        if (!accountid.empty() and !accountAlias.empty()) {
+            if (not inAccountOrder(accountid) and accountid != SIPAccount::IP2IP_PROFILE) {
                 WARN("Dropping account %s, which is not in account order", accountid.c_str());
             } else if (accountType == "SIP") {
                 Account *a = new SIPAccount(accountid, true);
@@ -2663,21 +2662,9 @@ void ManagerImpl::loadDefaultAccountMap()
 int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
-    // build a default IP2IP account with default parameters
-    AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(SIPAccount::IP2IP_PROFILE);
-    if (iter == SIPVoIPLink::instance()->getAccounts().end())
-        SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
 
     // load saved preferences for IP2IP account from configuration file
     Sequence *seq = parser.getAccountSequence()->getSequence();
-
-    Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
-    if (ip2ip != seq->end())
-        SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE]->unserialize(**ip2ip);
-
-    // Force IP2IP settings to be loaded
-    // No registration in the sense of the REGISTER method is performed.
-    SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 
     // build preferences
     preferences.unserialize(*parser.getPreferenceNode());
@@ -2710,6 +2697,9 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     for (auto &s : *seq)
         loadAccount(s, sipAccounts, errorCount, accountOrder);
 #endif
+
+    // This must happen after account is loaded
+    SIPVoIPLink::instance()->loadIP2IPSettings();
 
     return errorCount;
 }

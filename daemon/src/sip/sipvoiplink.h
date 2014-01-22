@@ -287,6 +287,8 @@ class SIPVoIPLink : public VoIPLink {
         void createDefaultSipUdpTransport();
 
     public:
+        void loadIP2IPSettings();
+
         /**
          * Instance that maintain and manage transport (UDP, TLS)
          */

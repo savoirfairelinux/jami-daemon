@@ -2517,3 +2517,14 @@ int SIPVoIPLink::getModId()
 {
     return mod_ua_.id;
 }
+
+void SIPVoIPLink::loadIP2IPSettings()
+{
+    try {
+        SIPAccount *ip2ip = static_cast<SIPAccount*>(sipAccountMap_[SIPAccount::IP2IP_PROFILE]);
+        sipTransport->createSipTransport(*ip2ip);
+        ip2ip->registerVoIPLink();
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
+    }
+}
