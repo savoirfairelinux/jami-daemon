@@ -2640,11 +2640,7 @@ namespace {
     SIPAccount *createIP2IPAccount()
     {
         SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE, true);
-        try {
-            SIPVoIPLink::instance()->sipTransport->createSipTransport(*ip2ip);
-        } catch (const std::runtime_error &e) {
-            ERROR("%s", e.what());
-        }
+        SIPVoIPLink::instance()->loadIP2IPSettings();
         return ip2ip;
     }
 } // end anonymous namespace
