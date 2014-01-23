@@ -247,8 +247,13 @@ void SipTransport::createSipTransport(SIPAccount &account)
         if (iter != transportMap_.end()) {
             account.transport_ = iter->second;
             pjsip_transport_add_ref(account.transport_);
-        } else
+        } else {
+            // FIXME: transport should have its reference count decremented and
+            // be removed from the map if it's no longer in use
+            if (account.transport_)
+                WARN("Leaking old transport");
             account.transport_ = createUdpTransport(account.getLocalInterface(), account.getLocalPort());
+        }
     }
 
     if (!account.transport_) {
