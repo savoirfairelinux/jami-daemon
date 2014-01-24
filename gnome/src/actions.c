@@ -225,17 +225,17 @@ void sflphone_fill_account_list(void)
             acc->state = ACCOUNT_STATE_UNREGISTERED;
         else if (g_strcmp0(status, "TRYING") == 0)
             acc->state = ACCOUNT_STATE_TRYING;
-        else if (g_strcmp0(status, "g_warning") == 0)
+        else if (g_strcmp0(status, "ERROR") == 0)
             acc->state = ACCOUNT_STATE_ERROR;
-        else if (g_strcmp0(status, "g_warning_AUTH") == 0)
+        else if (g_strcmp0(status, "ERROR_AUTH") == 0)
             acc->state = ACCOUNT_STATE_ERROR_AUTH;
-        else if (g_strcmp0(status, "g_warning_NETWORK") == 0)
+        else if (g_strcmp0(status, "ERROR_NETWORK") == 0)
             acc->state = ACCOUNT_STATE_ERROR_NETWORK;
-        else if (g_strcmp0(status, "g_warning_HOST") == 0)
+        else if (g_strcmp0(status, "ERROR_HOST") == 0)
             acc->state = ACCOUNT_STATE_ERROR_HOST;
-        else if (g_strcmp0(status, "g_warning_NOT_ACCEPTABLE") == 0)
+        else if (g_strcmp0(status, "ERROR_NOT_ACCEPTABLE") == 0)
             acc->state = ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE;
-        else if (g_strcmp0(status, "g_warning_EXIST_STUN") == 0)
+        else if (g_strcmp0(status, "ERROR_EXIST_STUN") == 0)
             acc->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
         else if (g_strcmp0(status, "ACCOUNT_STATE_IP2IP_READY") == 0)
             acc->state = ACCOUNT_STATE_IP2IP_READY;
