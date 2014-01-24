@@ -33,7 +33,7 @@
 #define REGISTRATION_STATES_H_
 
 /** Contains all the Registration states for an account can be in */
-typedef enum {
+enum class RegistrationState {
     UNREGISTERED,
     TRYING,
     REGISTERED,
@@ -43,8 +43,7 @@ typedef enum {
     ERROR_HOST,
     ERROR_SERVICE_UNAVAILABLE,
     ERROR_EXIST_STUN,
-    ERROR_NOT_ACCEPTABLE,
-    NUMBER_OF_STATES
-} RegistrationState;
+    ERROR_NOT_ACCEPTABLE
+};
 
 #endif // REGISTRATION_STATES_H_

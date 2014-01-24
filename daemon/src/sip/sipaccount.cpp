@@ -806,7 +806,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_PRESENCE_NOTE] = presence_? presence_->getNote() : " ";
 #endif
 
-    RegistrationState state = UNREGISTERED;
+    RegistrationState state = RegistrationState::UNREGISTERED;
     std::string registrationStateCode;
     std::string registrationStateDescription;
 
@@ -915,6 +915,7 @@ void SIPAccount::registerVoIPLink()
         link_->sendRegister(this);
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
+        registrationState_ = RegistrationState::ERROR_GENERIC;
     }
 
 #ifdef SFL_PRESENCE

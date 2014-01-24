@@ -266,7 +266,7 @@ IAXVoIPLink::sendRegister(Account *a)
     if (regSession_) {
         iax_register(regSession_, account->getHostname().data(), account->getUsername().data(), account->getPassword().data(), 120);
         nextRefreshStamp_ = time(NULL) + 10;
-        account->setRegistrationState(TRYING);
+        account->setRegistrationState(RegistrationState::TRYING);
     }
 }
 
@@ -281,7 +281,7 @@ IAXVoIPLink::sendUnregister(Account *a)
 
     nextRefreshStamp_ = 0;
 
-    static_cast<IAXAccount*>(a)->setRegistrationState(UNREGISTERED);
+    static_cast<IAXAccount*>(a)->setRegistrationState(RegistrationState::UNREGISTERED);
 }
 
 Call*
@@ -785,7 +785,7 @@ void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
         regSession_ = NULL;
     }
 
-    account->setRegistrationState((event->etype == IAX_EVENT_REGREJ) ? ERROR_AUTH : REGISTERED);
+    account->setRegistrationState((event->etype == IAX_EVENT_REGREJ) ? RegistrationState::ERROR_AUTH : RegistrationState::REGISTERED);
 
     if (event->etype == IAX_EVENT_REGACK)
         nextRefreshStamp_ = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);

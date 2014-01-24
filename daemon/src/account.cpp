@@ -80,7 +80,7 @@ Account::Account(const string &accountID) :
     , alias_()
     , enabled_(true)
     , autoAnswerEnabled_(false)
-    , registrationState_(UNREGISTERED)
+    , registrationState_(RegistrationState::UNREGISTERED)
     , audioCodecList_()
     , videoCodecList_()
     , audioCodecStr_()
@@ -102,13 +102,13 @@ Account::Account(const string &accountID) :
 Account::~Account()
 {}
 
-void Account::setRegistrationState(const RegistrationState &state)
+void Account::setRegistrationState(RegistrationState state)
 {
     if (state != registrationState_) {
         registrationState_ = state;
         // Notify the client
         ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
-        c->registrationStateChanged(accountID_, registrationState_);
+        c->registrationStateChanged(accountID_, static_cast<int32_t>(registrationState_));
     }
 }
 
@@ -253,23 +253,23 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
 
 string Account::mapStateNumberToString(RegistrationState state)
 {
-    static const char * mapStateToChar[NUMBER_OF_STATES] = {
-        "UNREGISTERED",
-        "TRYING",
-        "REGISTERED",
-        "ERROR",
-        "ERRORAUTH",
-        "ERRORNETWORK",
-        "ERRORHOST",
-        "ERRORSERVICEUNAVAILABLE",
-        "ERROREXISTSTUN",
-        "ERRORNOTACCEPTABLE",
+#define CASE_STATE(X) case RegistrationState::X: \
+                           return #X
+
+    switch (state) {
+        CASE_STATE(UNREGISTERED);
+        CASE_STATE(TRYING);
+        CASE_STATE(REGISTERED);
+        CASE_STATE(ERROR_GENERIC);
+        CASE_STATE(ERROR_AUTH);
+        CASE_STATE(ERROR_NETWORK);
+        CASE_STATE(ERROR_HOST);
+        CASE_STATE(ERROR_SERVICE_UNAVAILABLE);
+        CASE_STATE(ERROR_EXIST_STUN);
+        CASE_STATE(ERROR_NOT_ACCEPTABLE);
     };
 
-    if (state >= NUMBER_OF_STATES)
-        return "ERROR";
-
-    return mapStateToChar[state];
+#undef CASE_STATE
 }
 
 vector<map<string, string> >

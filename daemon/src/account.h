@@ -116,7 +116,7 @@ class Account : public Serializable {
          * Set the registration state of the specified link
          * @param state	The registration state of underlying VoIPLink
          */
-        void setRegistrationState(const RegistrationState &state);
+        void setRegistrationState(RegistrationState state);
 
         /* They should be treated like macro definitions by the C++ compiler */
         std::string getUsername() const {

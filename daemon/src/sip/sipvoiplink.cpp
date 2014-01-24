@@ -747,7 +747,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     }
 
     account->setRegister(true);
-    account->setRegistrationState(TRYING);
+    account->setRegistrationState(RegistrationState::TRYING);
 
     pjsip_regc *regc = account->getRegistrationInfo();
 
@@ -831,7 +831,7 @@ void SIPVoIPLink::sendUnregister(Account *a)
 
     // This may occurs if account failed to register and is in state INVALID
     if (!account->isRegistered()) {
-        account->setRegistrationState(UNREGISTERED);
+        account->setRegistrationState(RegistrationState::UNREGISTERED);
         return;
     }
 
@@ -2297,19 +2297,19 @@ void registration_cb(pjsip_regc_cbparam *param)
         account->stopKeepAliveTimer();
         switch (param->code) {
             case PJSIP_SC_FORBIDDEN:
-                account->setRegistrationState(ERROR_AUTH);
+                account->setRegistrationState(RegistrationState::ERROR_AUTH);
                 break;
             case PJSIP_SC_NOT_FOUND:
-                account->setRegistrationState(ERROR_HOST);
+                account->setRegistrationState(RegistrationState::ERROR_HOST);
                 break;
             case PJSIP_SC_REQUEST_TIMEOUT:
-                account->setRegistrationState(ERROR_HOST);
+                account->setRegistrationState(RegistrationState::ERROR_HOST);
                 break;
             case PJSIP_SC_SERVICE_UNAVAILABLE:
-                account->setRegistrationState(ERROR_SERVICE_UNAVAILABLE);
+                account->setRegistrationState(RegistrationState::ERROR_SERVICE_UNAVAILABLE);
                 break;
             default:
-                account->setRegistrationState(ERROR_GENERIC);
+                account->setRegistrationState(RegistrationState::ERROR_GENERIC);
         }
     } else if (PJSIP_IS_STATUS_IN_CLASS(param->code, 200)) {
 
@@ -2321,7 +2321,7 @@ void registration_cb(pjsip_regc_cbparam *param)
             /* Stop keep-alive timer if any. */
             account->stopKeepAliveTimer();
             DEBUG("Unregistration success");
-            account->setRegistrationState(UNREGISTERED);
+            account->setRegistrationState(RegistrationState::UNREGISTERED);
         } else {
             /* TODO Check and update SIP outbound status first, since the result
              * will determine if we should update re-registration
@@ -2339,7 +2339,7 @@ void registration_cb(pjsip_regc_cbparam *param)
             if (account->isKeepAliveEnabled())
                 account->startKeepAliveTimer();
 
-            account->setRegistrationState(REGISTERED);
+            account->setRegistrationState(RegistrationState::REGISTERED);
         }
     }
 
