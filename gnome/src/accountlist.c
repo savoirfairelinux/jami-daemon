@@ -179,12 +179,12 @@ void account_list_set_current(account_t *current)
 const gchar * account_state_name(account_state_t s)
 {
     switch (s) {
-        case ACCOUNT_STATE_REGISTERED:
-            return _("Registered");
         case ACCOUNT_STATE_UNREGISTERED:
             return _("Not Registered");
         case ACCOUNT_STATE_TRYING:
             return _("Trying...");
+        case ACCOUNT_STATE_REGISTERED:
+            return _("Registered");
         case ACCOUNT_STATE_ERROR:
             return _("Error");
         case ACCOUNT_STATE_ERROR_AUTH:
@@ -195,13 +195,14 @@ const gchar * account_state_name(account_state_t s)
             return _("Host unreachable");
         case ACCOUNT_STATE_ERROR_SERVICE_UNAVAILABLE:
             return _("Service unavailable");
-        case ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE:
-            return _("Not acceptable");
         case ACCOUNT_STATE_ERROR_EXIST_STUN:
             return _("Stun server invalid");
+        case ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE:
+            return _("Not acceptable");
         case ACCOUNT_STATE_IP2IP_READY:
             return _("Ready");
         default:
+            g_warning("Unexpected state %d", s);
             return _("Invalid");
     }
 }
