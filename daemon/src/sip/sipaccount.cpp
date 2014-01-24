@@ -915,7 +915,7 @@ void SIPAccount::registerVoIPLink()
         link_->sendRegister(this);
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
-        registrationState_ = RegistrationState::ERROR_GENERIC;
+        setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 
 #ifdef SFL_PRESENCE
