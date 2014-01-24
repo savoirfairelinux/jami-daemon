@@ -225,7 +225,7 @@ void sflphone_fill_account_list(void)
             acc->state = ACCOUNT_STATE_UNREGISTERED;
         else if (g_strcmp0(status, "TRYING") == 0)
             acc->state = ACCOUNT_STATE_TRYING;
-        else if (g_strcmp0(status, "ERROR") == 0)
+        else if (g_strcmp0(status, "ERROR_GENERIC") == 0)
             acc->state = ACCOUNT_STATE_ERROR;
         else if (g_strcmp0(status, "ERROR_AUTH") == 0)
             acc->state = ACCOUNT_STATE_ERROR_AUTH;
@@ -239,8 +239,10 @@ void sflphone_fill_account_list(void)
             acc->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
         else if (g_strcmp0(status, "ACCOUNT_STATE_IP2IP_READY") == 0)
             acc->state = ACCOUNT_STATE_IP2IP_READY;
-        else
+        else {
+            g_warning("Unexpected status %s", status);
             acc->state = ACCOUNT_STATE_INVALID;
+        }
 
         gchar * code = account_lookup(acc, CONFIG_ACCOUNT_REGISTRATION_STATE_CODE);
         if (code != NULL)
