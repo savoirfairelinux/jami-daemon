@@ -310,7 +310,7 @@ std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
         default:
             // Should never happen
             ERROR("Unexpected type");
-            return ""
+            return "";
     }
 }
 
