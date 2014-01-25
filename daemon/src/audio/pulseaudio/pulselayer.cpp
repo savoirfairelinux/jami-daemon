@@ -307,6 +307,10 @@ std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
             }
 
             return sourceList_[index].name;
+        default:
+            // Should never happen
+            ERROR("Unexpected type");
+            return ""
     }
 }
 

@@ -679,6 +679,10 @@ AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
 
         case DeviceType::CAPTURE:
             return getCaptureDeviceList().at(index);
+        default:
+            // Should never happen
+            ERROR("Unexpected type");
+            return "";
     }
 }
 
