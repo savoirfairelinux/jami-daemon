@@ -237,7 +237,7 @@ void sflphone_fill_account_list(void)
             acc->state = ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE;
         else if (g_strcmp0(status, "ERROR_EXIST_STUN") == 0)
             acc->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
-        else if (g_strcmp0(status, "ACCOUNT_STATE_IP2IP_READY") == 0)
+        else if (g_strcmp0(status, "READY") == 0)
             acc->state = ACCOUNT_STATE_IP2IP_READY;
         else {
             g_warning("Unexpected status %s", status);
