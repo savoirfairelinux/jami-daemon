@@ -744,6 +744,7 @@ void SIPVoIPLink::sendRegister(Account *a)
         sipTransport->createSipTransport(*account);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
+        throw VoipLinkException("Could not create or acquire SIP transport");
     }
 
     account->setRegister(true);
