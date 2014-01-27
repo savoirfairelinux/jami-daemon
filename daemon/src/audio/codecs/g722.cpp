@@ -3,6 +3,7 @@
  *  Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  Mostly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
+ *  See:  http://svnview.digium.com/svn/asterisk?view=revision&revision=194722
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
