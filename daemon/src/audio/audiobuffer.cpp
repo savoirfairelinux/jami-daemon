@@ -108,7 +108,7 @@ std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
     if (chan < samples_.size())
         return &samples_[chan];
 
-    return NULL;
+    return nullptr;
 }
 
 void AudioBuffer::applyGain(double gain)
@@ -144,7 +144,7 @@ size_t AudioBuffer::interleaveFloat(float* out) const
 
 void AudioBuffer::deinterleave(const SFLAudioSample* in, size_t sample_num, unsigned channel_num)
 {
-    if (in == NULL)
+    if (in == nullptr)
         return;
 
     // Resize buffer
@@ -200,15 +200,13 @@ size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_
 
 size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /* = 0 */)
 {
-    if (in == NULL) return 0;
+    if (in == nullptr || sample_num==0) return 0;
 
     if ((pos_out + sample_num) > frames())
         resize(pos_out + sample_num);
 
     const size_t chan_num = samples_.size();
-    unsigned i;
-
-    for (i = 0; i < chan_num; i++) {
+    for (unsigned i = 0; i < chan_num; i++) {
         std::copy(in, in + sample_num, samples_[i].begin() + pos_out);
     }
 
