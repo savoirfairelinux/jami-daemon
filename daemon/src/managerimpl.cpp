@@ -131,6 +131,13 @@ namespace {
     }
 }
 
+namespace {
+    void loadDefaultAccountMap()
+    {
+        SIPVoIPLink::instance()->loadIP2IPSettings();
+    }
+}
+
 bool ManagerImpl::parseConfiguration()
 {
     bool result = true;
@@ -2636,22 +2643,7 @@ namespace {
     {
         item.second->unregisterVoIPLink();
     }
-
-    SIPAccount *createIP2IPAccount()
-    {
-        SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE, true);
-        SIPVoIPLink::instance()->loadIP2IPSettings();
-        return ip2ip;
-    }
 } // end anonymous namespace
-
-void ManagerImpl::loadDefaultAccountMap()
-{
-    // build a default IP2IP account with default parameters only if does not exist
-    const auto iter = SIPVoIPLink::instance()->getAccounts().find(SIPAccount::IP2IP_PROFILE);
-    if (iter == SIPVoIPLink::instance()->getAccounts().end())
-        SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
-}
 
 int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {

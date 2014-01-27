@@ -899,10 +899,6 @@ class ManagerImpl {
          * Load the account map from configuration
          */
         int loadAccountMap(Conf::YamlParser &parser);
-        /**
-         * Load default account map (no configuration)
-         */
-        void loadDefaultAccountMap();
 
         /**
          * Instance of the MainBuffer for the whole application

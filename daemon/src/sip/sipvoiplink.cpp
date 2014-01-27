@@ -2522,7 +2522,13 @@ int SIPVoIPLink::getModId()
 void SIPVoIPLink::loadIP2IPSettings()
 {
     try {
+        const auto iter = sipAccountMap_.find(SIPAccount::IP2IP_PROFILE);
+        // if IP2IP doesn't exist yet, create it
+        if (iter == sipAccountMap_.end())
+            sipAccountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE, true);
+
         SIPAccount *ip2ip = static_cast<SIPAccount*>(sipAccountMap_[SIPAccount::IP2IP_PROFILE]);
+
         sipTransport->createSipTransport(*ip2ip);
         ip2ip->registerVoIPLink();
     } catch (const std::runtime_error &e) {
