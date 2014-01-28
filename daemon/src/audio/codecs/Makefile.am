@@ -58,12 +58,12 @@ endif
 
 noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so $(OPUS_LIB) $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
 
-libcodec_ulaw_so_SOURCES = ulaw.cpp
+libcodec_ulaw_so_SOURCES = ulaw.cpp g711.h
 libcodec_ulaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_ulaw_so_LDADD = libcodecdescriptor.la
 libcodec_ulaw_so_LDFLAGS = --shared -lc
 
-libcodec_alaw_so_SOURCES = alaw.cpp
+libcodec_alaw_so_SOURCES = alaw.cpp g711.h
 libcodec_alaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_LDADD = libcodecdescriptor.la
 libcodec_alaw_so_LDFLAGS = --shared -lc

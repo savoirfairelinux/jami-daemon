@@ -31,6 +31,7 @@
 
 #include "audiocodec.h"
 #include "sfl_types.h"
+#include "g711.h"
 
 class Ulaw : public sfl::AudioCodec {
     public:
@@ -61,60 +62,12 @@ class Ulaw : public sfl::AudioCodec {
             return buf_size;
         }
 
-        SFLAudioSample ULawDecode(uint8_t ulaw) {
-            ulaw ^= 0xff;  // u-law has all bits inverted for transmission
-            int linear = ulaw & 0x0f;
-            linear <<= 3;
-            linear |= 0x84;  // Set MSB (0x80) and a 'half' bit (0x04) to place PCM value in middle of range
-
-            uint8_t shift = ulaw >> 4;
-            shift &= 7;
-            linear <<= shift;
-            linear -= 0x84; // Subract uLaw bias
-
-            if (ulaw & 0x80)
-                return -linear;
-            else
-                return linear;
+        static SFLAudioSample ULawDecode(uint8_t ulaw) {
+            return ulaw_to_linear(ulaw);
         }
 
-        uint8_t ULawEncode(SFLAudioSample pcm16) {
-            int p = pcm16;
-            uint8_t u;  // u-law value we are forming
-
-            if (p < 0) {
-                p = ~p;
-                u = 0x80 ^ 0x10 ^ 0xff;  // Sign bit = 1 (^0x10 because this will get inverted later) ^0xff ^0xff to invert final u-Law code
-            } else {
-                u = 0x00 ^ 0x10 ^ 0xff;  // Sign bit = 0 (-0x10 because this amount extra will get added later) ^0xff to invert final u-Law code
-            }
-
-            p += 0x84; // Add uLaw bias
-
-            if (p > 0x7f00)
-                p = 0x7f00;  // Clip to 15 bits
-
-            // Calculate segment and interval numbers
-            p >>= 3;        // Shift down to 13bit
-
-            if (p >= 0x100) {
-                p >>= 4;
-                u ^= 0x40;
-            }
-
-            if (p >= 0x40) {
-                p >>= 2;
-                u ^= 0x20;
-            }
-
-            if (p >= 0x20) {
-                p >>= 1;
-                u ^= 0x10;
-            }
-
-            u ^= p; // u now equal to encoded u-law value (with all bits inverted)
-
-            return u;
+        static uint8_t ULawEncode(SFLAudioSample pcm16) {
+            return linear_to_ulaw(pcm16);
         }
 };
 

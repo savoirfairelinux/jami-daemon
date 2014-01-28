@@ -31,6 +31,7 @@
 
 #include "sfl_types.h"
 #include "audiocodec.h"
+#include "g711.h"
 
 class Alaw : public sfl::AudioCodec {
 
@@ -64,64 +65,12 @@ class Alaw : public sfl::AudioCodec {
             return buf_size;
         }
 
-        int ALawDecode(uint8_t alaw) {
-            alaw ^= 0x55;  // A-law has alternate bits inverted for transmission
-            uint8_t sign = alaw & 0x80;
-            int linear = alaw & 0x1f;
-            linear <<= 4;
-            linear += 8;  // Add a 'half' bit (0x08) to place PCM value in middle of range
-
-            alaw &= 0x7f;
-
-            if (alaw >= 0x20) {
-                linear |= 0x100;  // Put in MSB
-                uint8_t shift = (alaw >> 4) - 1;
-                linear <<= shift;
-            }
-
-            if (!sign)
-                return -linear;
-            else
-                return linear;
+        static int ALawDecode(uint8_t alaw) {
+            return alaw_to_linear(alaw);
         }
 
-        uint8_t ALawEncode(SFLAudioSample pcm16) {
-            int p = pcm16;
-            uint8_t a;  // u-law value we are forming
-
-            if (p < 0) {
-                p = ~p;
-                a = 0x00; // sign = 0
-            } else {
-                //+ve value
-                a = 0x80; //sign = 1
-            }
-
-            //calculate segment and interval numbers
-            p >>= 4;
-
-            if (p >= 0x20) {
-                if (p >= 0x100) {
-                    p >>= 4;
-                    a += 0x40;
-                }
-
-                if (p >= 0x40) {
-                    p >>= 2;
-                    a += 0x20;
-                }
-
-                if (p >= 0x20) {
-                    p >>= 1;
-                    a += 0x10;
-                }
-            }
-
-            // a&0x70 now holds segment value and 'p' the interval number
-            a += p; // a now equal to encoded A-law value
-
-            // A-law has alternate bits inverted for transmission
-            return a ^ 0x55;
+        static uint8_t ALawEncode(SFLAudioSample pcm16) {
+            return linear_to_alaw(pcm16);
         }
 };
 
