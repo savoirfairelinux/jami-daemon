@@ -96,6 +96,25 @@ namespace {
     {
         return std::find(codecs.begin(), codecs.end(), codec) != codecs.end();
     }
+
+    std::string
+    rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
+    {
+        std::ostringstream os;
+        const std::string enc(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
+        const std::string param(rtpmap->param.ptr, rtpmap->param.slen);
+        os << enc << "/" << rtpmap->clock_rate;
+        if (not param.empty())
+            os << "/" << param;
+        return os.str();
+    }
+
+    sfl::AudioCodec *
+    findCodecByName(const std::string &codec)
+    {
+        // try finding by name
+        return Manager::instance().audioCodecFactory.getCodec(codec);
+    }
 }
 
 
@@ -124,8 +143,13 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
                     sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
                     if (codec)
                         sessionAudioMedia_.push_back(codec);
-                    else
-                        ERROR("Could not get codec for payload type %lu", pt);
+                    else {
+                        codec = findCodecByName(rtpmapToString(rtpmap));
+                        if (codec)
+                            sessionAudioMedia_.push_back(codec);
+                        else
+                            ERROR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
+                    }
                 }
             } else if (!pj_stricmp2(&current->desc.media, "video")) {
                 const string codec(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
@@ -165,6 +189,16 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 
             // add audio codecs from remote as needed
             for (unsigned fmt = 0; fmt < r_media->desc.fmt_count; ++fmt) {
+                static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
+                pjmedia_sdp_attr *rtpMapAttribute = pjmedia_sdp_media_find_attr(r_media, &STR_RTPMAP, &r_media->desc.fmt[fmt]);
+
+                if (!rtpMapAttribute) {
+                    ERROR("Could not find rtpmap attribute");
+                    break;
+                }
+
+                pjmedia_sdp_rtpmap *rtpmap;
+                pjmedia_sdp_attr_to_rtpmap(memPool_, rtpMapAttribute, &rtpmap);
 
                 const unsigned long pt = pj_strtoul(&r_media->desc.fmt[fmt]);
                 if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMedia_, pt)) {
@@ -172,8 +206,14 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
                     if (codec) {
                         DEBUG("Adding codec with new payload type %d", pt);
                         sessionAudioMedia_.push_back(codec);
-                    } else
-                        DEBUG("Could not get codec for payload type %lu", pt);
+                    } else {
+                        // Search by codec name, clock rate and param (channel count)
+                        codec = findCodecByName(rtpmapToString(rtpmap));
+                        if (codec)
+                            sessionAudioMedia_.push_back(codec);
+                        else
+                            ERROR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
+                    }
                 }
             }
         }

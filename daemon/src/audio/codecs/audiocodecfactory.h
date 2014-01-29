@@ -68,6 +68,13 @@ class AudioCodecFactory {
         sfl::AudioCodec* getCodec(int payload) const;
 
         /**
+         * Get the codec object associated with the codec attribute
+         * @param string The name to compare, should be in the form speex/16000
+         * @return AudioCodec* A pointer to an AudioCodec object
+         */
+        sfl::AudioCodec* getCodec(const std::string &name) const;
+
+        /**
          * Set the default codecs order.
          * This order will be apply to each account by default
          */

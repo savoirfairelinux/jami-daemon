@@ -109,6 +109,28 @@ AudioCodecFactory::getCodec(int payload) const
     }
 }
 
+sfl::AudioCodec*
+AudioCodecFactory::getCodec(const std::string &name) const
+{
+    for (const auto iter : codecsMap_) {
+        std::ostringstream os;
+        const std::string channels(iter.second->getSDPChannels());
+        os << "/" << iter.second->getSDPClockRate();
+        if (not channels.empty())
+            os << "/" << channels;
+
+        const std::string match(iter.second->getMimeSubtype() + os.str());
+        DEBUG("Trying %s", match.c_str());
+        if (name.find(match) != std::string::npos) {
+            DEBUG("Found match");
+            return iter.second;
+        }
+    }
+
+    ERROR("Cannot find codec %s", name.c_str());
+    return NULL;
+}
+
 double
 AudioCodecFactory::getBitRate(int payload) const
 {
