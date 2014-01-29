@@ -37,8 +37,6 @@
 using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <libzrtpcpp/zrtpccrtp.h>
-#include <libzrtpcpp/ZrtpQueue.h>
-#include <libzrtpcpp/ZrtpUserCallback.h>
 
 #include "global.h"
 #include "audio_rtp_session.h"
