@@ -53,11 +53,19 @@ class MainBuffer {
 
         ~MainBuffer();
 
+        int getInternalSamplingRate() const {
+            return internalAudioFormat_.sample_rate;
+        }
+
+        AudioFormat getInternalAudioFormat() const {
+            return internalAudioFormat_;
+        }
+
         void setInternalSamplingRate(int sr);
 
-        int getInternalSamplingRate() const {
-            return internalSamplingRate_;
-        }
+        void setInternalAudioFormat(AudioFormat format);
+
+        void setMinimumAudioFormat(AudioFormat format);
 
         /**
          * Bind together two audio streams so taht a client will be able
@@ -138,7 +146,7 @@ class MainBuffer {
 
         std::mutex mutex_;
 
-        int internalSamplingRate_;
+        AudioFormat internalAudioFormat_;
 
         friend class MainBufferTest;
 };

@@ -31,18 +31,22 @@
 #include "audiobuffer.h"
 #include "logger.h"
 
-AudioBuffer::AudioBuffer(size_t sample_num, unsigned channel_num, int sample_rate)
-    :  sampleRate_(sample_rate),
-       samples_(std::max(1U, channel_num),
+
+const AudioFormat AudioFormat::MONO = AudioFormat(AudioFormat::DEFAULT_SAMPLE_RATE, 1);
+const AudioFormat AudioFormat::STEREO = AudioFormat(AudioFormat::DEFAULT_SAMPLE_RATE, 2);
+
+AudioBuffer::AudioBuffer(size_t sample_num, AudioFormat format)
+    :  sampleRate_(format.sample_rate),
+       samples_(std::max(1U, format.channel_num),
                 std::vector<SFLAudioSample>(sample_num, 0))
 {
 }
 
-AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, unsigned channel_num, int sample_rate)
-    :  sampleRate_(sample_rate),
-       samples_((std::max(1U, channel_num)), std::vector<SFLAudioSample>(sample_num, 0))
+AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, AudioFormat format)
+    :  sampleRate_(format.sample_rate),
+       samples_((std::max(1U, format.channel_num)), std::vector<SFLAudioSample>(sample_num, 0))
 {
-    deinterleave(in, sample_num, channel_num);
+    deinterleave(in, sample_num, format.channel_num);
 }
 
 AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false */)
@@ -88,6 +92,12 @@ void AudioBuffer::setChannelNum(unsigned n, bool copy_content /* = false */)
         samples_.resize(n, std::vector<SFLAudioSample>(start_size, 0));
 }
 
+void AudioBuffer::setFormat(AudioFormat format)
+{
+    setChannelNum(format.channel_num);
+    setSampleRate(format.sample_rate);
+}
+
 void AudioBuffer::resize(size_t sample_num)
 {
     if (frames() == sample_num)
@@ -95,12 +105,6 @@ void AudioBuffer::resize(size_t sample_num)
 
     for (unsigned i = 0; i < samples_.size(); i++)
         samples_[i].resize(sample_num);
-}
-
-void AudioBuffer::empty()
-{
-    for (unsigned i = 0; i < samples_.size(); i++)
-        samples_[i].clear();
 }
 
 std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)

@@ -68,16 +68,21 @@ class AudioStream {
             return audiostream_;
         }
 
-        const pa_sample_spec *sampleSpec() {
+        const pa_sample_spec * sampleSpec() const {
             return pa_stream_get_sample_spec(audiostream_);
         }
 
-        inline size_t sampleSize() {
+        inline size_t sampleSize() const {
             return pa_sample_size(sampleSpec());
         }
 
-        inline uint8_t channels() {
+        inline uint8_t channels() const {
             return sampleSpec()->channels;
+        }
+
+        inline AudioFormat getFormat() const {
+            auto s = sampleSpec();
+            return AudioFormat(s->rate, s->channels);
         }
 
         bool isReady();

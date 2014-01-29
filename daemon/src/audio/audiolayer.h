@@ -213,15 +213,15 @@ class AudioLayer {
         bool isStarted_;
 
         /**
-         * Urgent ring buffer used for ringtones
-         */
-        RingBuffer urgentRingBuffer_;
-
-        /**
          * Sample Rate SFLphone should send sound data to the sound card
          * The value can be set in the user config file- now: 44100HZ
          */
         unsigned int sampleRate_;
+
+        /**
+         * Urgent ring buffer used for ringtones
+         */
+        RingBuffer urgentRingBuffer_;
 
         /**
          * Lock for the entire audio layer

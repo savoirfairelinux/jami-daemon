@@ -118,7 +118,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     // get n "items", aka samples (not frames)
     fileHandle.read(interleaved, nbFrames * fileHandle.channels());
 
-    AudioBuffer * buffer = new AudioBuffer(nbFrames, fileHandle.channels(), fileHandle.samplerate());
+    AudioBuffer * buffer = new AudioBuffer(nbFrames, AudioFormat(fileHandle.samplerate(), fileHandle.channels()));
     buffer->deinterleave(interleaved, nbFrames, fileHandle.channels());
     delete [] interleaved;
 
@@ -126,7 +126,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
 
     if (fileHandle.samplerate() != rate) {
         SamplerateConverter converter(std::max(fileHandle.samplerate(), rate), fileHandle.channels());
-        AudioBuffer * resampled = new AudioBuffer(nbFrames, fileHandle.channels(), rate);
+        AudioBuffer * resampled = new AudioBuffer(nbFrames, AudioFormat(rate, fileHandle.channels()));
         converter.resample(*buffer, *resampled);
         delete buffer;
         delete buffer_;

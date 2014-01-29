@@ -140,8 +140,8 @@ OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     , recorderBufferQueue_(0)
     , playbackBufferIndex_(0)
     , recordBufferIndex_(0)
-    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE, 1, 8000))
-    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE, 1, 8000))
+    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE, AudioFormat::MONO))
+    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE, AudioFormat::MONO))
 {
 }
 
@@ -733,14 +733,15 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
 {
     MainBuffer &mbuffer = Manager::instance().getMainBuffer();
 
-    const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
-    const bool resample = mainBufferSampleRate != sampleRate_;
+    //const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
+    const AudioFormat mainBufferFormat = mbuffer.getInternalAudioFormat();
+    const bool resample = mainBufferFormat.sample_rate != sampleRate_;
 
     buffer.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     if (resample) {
-		int outSamples = buffer.frames() * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
-        AudioBuffer out(outSamples, 1, mainBufferSampleRate);
+		int outSamples = buffer.frames() * (static_cast<double>(sampleRate_) / mainBufferFormat.sample_rate);
+        AudioBuffer out(outSamples, mainBufferFormat);
         converter_.resample(buffer, out);
         dcblocker_.process(out);
         mbuffer.putData(out, MainBuffer::DEFAULT_ID);

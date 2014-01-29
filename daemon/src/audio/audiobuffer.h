@@ -36,16 +36,47 @@
 
 #include "sfl_types.h"
 
+/**
+ * Structure to hold sample rate and channel number associated with audio data.
+ */
+typedef struct AudioFormat {
+    unsigned sample_rate;
+    unsigned channel_num;
+
+    AudioFormat(unsigned sr, unsigned c=1) : sample_rate(sr), channel_num(c) {}
+
+    inline bool operator == (const AudioFormat &b) const {
+        return ( (b.sample_rate==sample_rate) && (b.channel_num==channel_num) );
+    }
+
+    inline bool operator != (const AudioFormat &b) const {
+        return !(*this == b);
+    }
+
+    /**
+     * Bytes per second (default), or bytes necessary
+     * to hold delay_ms milliseconds of audio data.
+     */
+    inline unsigned getBandwidth(unsigned delay_ms=1000) const {
+            return (sample_rate*channel_num*delay_ms*sizeof(SFLAudioSample))/1000;
+    }
+
+    static const unsigned DEFAULT_SAMPLE_RATE = 48000;
+    static const AudioFormat MONO;
+    static const AudioFormat STEREO;
+} AudioFormat;
+
 class AudioBuffer {
     public:
         /**
          * Default constructor.
          */
-        AudioBuffer(size_t sample_num, unsigned channel_num, int sample_rate);
+        AudioBuffer(size_t sample_num, AudioFormat format);
 
         /**
-         * Construtor from existing interleaved data (copied into the buffer).  */
-        AudioBuffer(const SFLAudioSample* in, size_t sample_num, unsigned channel_num, int sample_rate);
+         * Construtor from existing interleaved data (copied into the buffer).
+         */
+        AudioBuffer(const SFLAudioSample* in, size_t sample_num, AudioFormat format);
 
         /**
          * Copy constructor that by default only copies the buffer parameters (channel number, sample rate and buffer size).
@@ -67,11 +98,6 @@ class AudioBuffer {
          * Move operator
          */
         AudioBuffer& operator=(AudioBuffer&& other);
-
-        void reset() {
-            for(auto& c : samples_)
-                std::fill(c.begin(), c.end(), 0);
-        }
 
         inline size_t size() {
             return frames() * channels() * sizeof(SFLAudioSample);
@@ -104,6 +130,16 @@ class AudioBuffer {
         void setChannelNum(unsigned n, bool copy_first = false);
 
         /**
+         * Set the buffer format (channels and sample rate).
+         * No data conversion is performed.
+         */
+        void setFormat(AudioFormat format);
+
+        inline AudioFormat getFormat() const {
+            return AudioFormat(sampleRate_, samples_.size());
+        }
+
+        /**
          * Returns the number of (multichannel) frames in this buffer.
          */
         inline size_t frames() const {
@@ -126,14 +162,20 @@ class AudioBuffer {
         void resize(size_t sample_num);
 
         /**
-         * Set all samples in this buffer to 0. Buffer size is not changed.
-         */
-        void clear();
-
-        /**
          * Resize the buffer to 0. All samples are lost but the number of channels and sample rate are kept.
          */
-        void empty();
+        void clear() {
+            for(auto& c : samples_)
+                c.clear();
+        }
+
+        /**
+         * Set all samples in this buffer to 0. Buffer size is not changed.
+         */
+        void reset() {
+            for(auto& c : samples_)
+                std::fill(c.begin(), c.end(), 0);
+        }
 
         /**
          * Return the data (audio samples) for a given channel number.
@@ -211,7 +253,7 @@ class AudioBuffer {
     private:
         int sampleRate_;
 
-        // main buffers holding data for each channels
+        // buffers holding data for each channels
         std::vector<std::vector<SFLAudioSample> > samples_;
 };
 

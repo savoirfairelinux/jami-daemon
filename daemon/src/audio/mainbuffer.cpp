@@ -38,7 +38,7 @@
 
 const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
-MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)
+MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalAudioFormat_(48000, 1)
 {}
 
 MainBuffer::~MainBuffer()
@@ -50,9 +50,25 @@ MainBuffer::~MainBuffer()
 
 void MainBuffer::setInternalSamplingRate(int sr)
 {
-    if (sr != internalSamplingRate_) {
+    if (sr != internalAudioFormat_.sample_rate) {
         flushAllBuffers();
-        internalSamplingRate_ = sr;
+        internalAudioFormat_.sample_rate = sr;
+    }
+}
+
+void MainBuffer::setInternalAudioFormat(AudioFormat format)
+{
+    if(format != internalAudioFormat_) {
+        flushAllBuffers();
+        internalAudioFormat_ = format;
+    }
+}
+
+void MainBuffer::setMinimumAudioFormat(AudioFormat format)
+{
+    if(format.sample_rate > internalAudioFormat_.sample_rate ||
+        format.channel_num > internalAudioFormat_.channel_num) {
+        setInternalAudioFormat(format);
     }
 }
 
@@ -258,7 +274,7 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
             return 0;
     } else {
         buffer.reset();
-        buffer.setSampleRate(internalSamplingRate_);
+        buffer.setFormat(internalAudioFormat_);
 
         size_t size = 0;
         AudioBuffer mixBuffer(buffer);

@@ -45,7 +45,7 @@
 #include "logger.h"
 
 AudioLoop::AudioLoop(unsigned int sampleRate) :
-    buffer_(new AudioBuffer(0, 1, sampleRate)), pos_(0)
+    buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1))), pos_(0)
 {}
 
 AudioLoop::~AudioLoop()

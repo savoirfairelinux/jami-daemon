@@ -96,7 +96,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , ringtone_(0)
     , sinkList_()
     , sourceList_()
-    , micBuffer_(0, 1, 8000)
+    , micBuffer_(0, AudioFormat::MONO)
     , context_(0)
     , mainloop_(pa_threaded_mainloop_new())
     , enumeratingSinks_(false)
@@ -427,7 +427,7 @@ void PulseLayer::writeToSpeaker()
     pa_stream *s = playback_->pulseStream();
     const pa_sample_spec* sample_spec = pa_stream_get_sample_spec(s);
     size_t sample_size = pa_frame_size(sample_spec);
-    const unsigned n_channels = sample_spec->channels;
+    const AudioFormat format(playback_->getFormat());
 
     // available bytes to be written in pulseaudio internal buffer
     int ret = pa_stream_writable_size(s);
@@ -454,7 +454,7 @@ void PulseLayer::writeToSpeaker()
     SFLAudioSample *data = 0;
 
     if (urgentBytes) {
-        AudioBuffer linearbuff(urgentSamples, n_channels, 8000);
+        AudioBuffer linearbuff(urgentSamples, format);
         pa_stream_begin_write(s, (void**)&data, &urgentBytes);
         urgentRingBuffer_.get(linearbuff, MainBuffer::DEFAULT_ID); // retrive only the first sample_spec->channels channels
         linearbuff.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
@@ -472,7 +472,7 @@ void PulseLayer::writeToSpeaker()
     if (toneToPlay) {
         if (playback_->isReady()) {
             pa_stream_begin_write(s, (void**)&data, &writableBytes);
-            AudioBuffer linearbuff(writableSamples, n_channels, 8000);
+            AudioBuffer linearbuff(writableSamples, format);
             toneToPlay->getNext(linearbuff, playbackGain_); // retrive only n_channels
             linearbuff.interleave(data);
             pa_stream_write(s, data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
@@ -497,11 +497,12 @@ void PulseLayer::writeToSpeaker()
 
     double resampleFactor = 1.;
 
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
-    bool resample = sampleRate_ != mainBufferSampleRate;
+    //unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
+    AudioFormat mainBufferAudioFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    bool resample = sampleRate_ != mainBufferAudioFormat.sample_rate;
 
     if (resample) {
-        resampleFactor = (double) sampleRate_ / mainBufferSampleRate;
+        resampleFactor = (double) sampleRate_ / mainBufferAudioFormat.sample_rate;
         readableSamples = (double) readableSamples / resampleFactor;
     }
 
@@ -511,11 +512,11 @@ void PulseLayer::writeToSpeaker()
 
     pa_stream_begin_write(s, (void**)&data, &resampledBytes);
 
-    AudioBuffer linearbuff(readableSamples, n_channels, 8000);
+    AudioBuffer linearbuff(readableSamples, format);
     Manager::instance().getMainBuffer().getData(linearbuff, MainBuffer::DEFAULT_ID);
 
     if (resample) {
-        AudioBuffer rsmpl_out(nResampled, 1, sampleRate_);
+        AudioBuffer rsmpl_out(nResampled, format);
         converter_.resample(linearbuff, rsmpl_out);
         rsmpl_out.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         rsmpl_out.interleave(data);
@@ -536,17 +537,17 @@ void PulseLayer::readFromMic()
     size_t bytes;
 
     const size_t sample_size = record_->sampleSize();
-    const uint8_t channels = record_->channels();
+    const AudioFormat format(record_->getFormat());
 
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data)
         return;
 
-    assert(channels);
+    assert(format.channel_num);
     assert(sample_size);
-    const size_t samples = bytes / sample_size / channels;
+    const size_t samples = bytes / sample_size / format.channel_num;
 
-    AudioBuffer in(samples, channels, sampleRate_);
-    in.deinterleave((SFLAudioSample*)data, samples, channels);
+    AudioBuffer in(samples, format);
+    in.deinterleave((SFLAudioSample*)data, samples, format.channel_num);
 
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
@@ -594,7 +595,7 @@ void PulseLayer::ringtoneToSpeaker()
 
     if (fileToPlay) {
         const unsigned samples = (bytes / sample_size) / ringtone_->channels();
-        AudioBuffer tmp(samples, ringtone_->channels(), 8000);
+        AudioBuffer tmp(samples, ringtone_->getFormat());
         fileToPlay->getNext(tmp, playbackGain_);
         tmp.interleave((SFLAudioSample*) data);
     } else {

@@ -841,6 +841,9 @@ class ManagerImpl {
         // Main thread
         std::unique_ptr<DTMF> dtmfKey_;
 
+        /** Buffer to generate DTMF */
+        AudioBuffer dtmfBuf_;
+
         /////////////////////
         // Protected by Mutex
         /////////////////////

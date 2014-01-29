@@ -94,7 +94,7 @@ ManagerImpl::ManagerImpl() :
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), client_(),
 	config_(),
-    currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
+    currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
     IPToIPMap_(), mainBuffer_(), conferenceMap_(), history_(), finished_(false)
@@ -1438,17 +1438,13 @@ void ManagerImpl::playDtmf(char code)
     //                     ---------------------
     //                            ms/s
     int size = (int)((pulselen * (float) audiodriver_->getSampleRate()) / 1000);
-
-    // this buffer is for mono
-    // TODO <-- this should be global and hide if same size
-    //std::vector<SFLAudioSample> buf(size);
-    AudioBuffer buf(size, 1, 8000);
+    dtmfBuf_.resize(size);
 
     // Handle dtmf
     dtmfKey_->startTone(code);
 
     // copy the sound
-    if (dtmfKey_->generateDTMF(*buf.getChannel(0))) {
+    if (dtmfKey_->generateDTMF(*dtmfBuf_.getChannel(0))) {
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
@@ -1461,7 +1457,7 @@ void ManagerImpl::playDtmf(char code)
             WARN("Audio layer not ready yet");
             usleep(10000);
         }
-        audiodriver_->putUrgent(buf);
+        audiodriver_->putUrgent(dtmfBuf_);
     }
 
     // TODO Cache the DTMF

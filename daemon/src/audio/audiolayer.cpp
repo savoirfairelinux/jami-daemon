@@ -40,8 +40,8 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
     , isStarted_(false)
-    , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
     , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())
+    , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID, AudioFormat(sampleRate_))
     , mutex_()
     , dcblocker_()
     , converter_(sampleRate_)
@@ -92,7 +92,7 @@ void AudioLayer::notifyIncomingCall()
 
     Tone tone("440/160", getSampleRate());
     unsigned int nbSample = tone.getSize();
-    AudioBuffer buf(nbSample, 1, 8000);
+    AudioBuffer buf(nbSample, AudioFormat::MONO);
     tone.getNext(buf, 1.0);
 
     /* Put the data in the urgent ring buffer */
