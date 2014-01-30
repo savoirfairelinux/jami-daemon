@@ -510,8 +510,10 @@ void Sdp::startNegotiation()
     const pjmedia_sdp_session *active_local;
     const pjmedia_sdp_session *active_remote;
 
-    if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO)
+    if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
         WARN("Negotiator not in right state for negotiation");
+        return;
+    }
 
     if (pjmedia_sdp_neg_negotiate(memPool_, negotiator_, 0) != PJ_SUCCESS)
         return;
