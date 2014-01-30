@@ -102,7 +102,7 @@ sflphone_client_new()
 {
     SFLPhoneClient *client = g_object_new(sflphone_client_get_type(),
             "application-id", "org.sfl.SFLphone",
-            "flags", G_APPLICATION_HANDLES_COMMAND_LINE | G_APPLICATION_IS_SERVICE, NULL);
+            "flags", G_APPLICATION_HANDLES_COMMAND_LINE, NULL);
     return client;
 }
 
