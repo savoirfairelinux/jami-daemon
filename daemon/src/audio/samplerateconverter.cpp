@@ -29,24 +29,40 @@
  */
 
 #include "samplerateconverter.h"
+#include "logger.h"
 #include "sfl_types.h"
 
-SamplerateConverter::SamplerateConverter(int freq, size_t channels /* = 1 */) : floatBufferIn_(),
-    floatBufferOut_(), scratchBuffer_(), samples_(0), channels_(channels), maxFreq_(freq), src_state_(0)
+SamplerateConverter::SamplerateConverter(AudioFormat format) : floatBufferIn_(),
+    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), src_state_(nullptr)
 {
-    int err;
-    src_state_ = src_new(SRC_LINEAR, channels_, &err);
+    setFormat(format);
+}
 
-    samples_ = (freq * 20) / 1000; // start with 20 ms buffers
-
-    floatBufferIn_.resize(samples_);
-    floatBufferOut_.resize(samples_);
-    scratchBuffer_.resize(samples_);
+SamplerateConverter::SamplerateConverter(unsigned sample_rate, unsigned channels) : floatBufferIn_(),
+    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(sample_rate, channels), src_state_(nullptr)
+{
+    setFormat(format_);
 }
 
 SamplerateConverter::~SamplerateConverter()
 {
     src_delete(src_state_);
+}
+
+void
+SamplerateConverter::setFormat(AudioFormat format)
+{
+    format_ = format;
+    samples_ = (format.channel_num * format.sample_rate * 20) / 1000; // start with 20 ms buffers
+    floatBufferIn_.resize(samples_);
+    floatBufferOut_.resize(samples_);
+    scratchBuffer_.resize(samples_);
+
+    if(src_state_ != nullptr)
+        src_delete(src_state_);
+
+    int err;
+    src_state_ = src_new(SRC_LINEAR, format.channel_num, &err);
 }
 
 void
@@ -72,19 +88,24 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     const size_t nbFrames = dataIn.frames();
     const size_t nbChans = dataIn.channels();
 
-    if (nbChans != channels_) {
+    if (nbChans != format_.channel_num) {
         // change channel num if needed
         int err;
         src_delete(src_state_);
         src_state_ = src_new(SRC_LINEAR, nbChans, &err);
-        channels_ = nbChans;
+        format_.channel_num = nbChans;
+        DEBUG("SRC channel number changed.");
+    }
+    if(nbChans != dataOut.channels()) {
+        // TODO: warning ?
+        DEBUG("Output buffer has the wrong number of channels (in %d out %d).", nbChans, dataOut.channels());
+        dataOut.setChannelNum(nbChans);
     }
 
     size_t inSamples = nbChans * nbFrames;
     size_t outSamples = inSamples * sampleFactor;
 
     // grow buffer if needed
-    samples_ = std::max(inSamples, outSamples);
     floatBufferIn_.resize(inSamples);
     floatBufferOut_.resize(outSamples);
     scratchBuffer_.resize(outSamples);

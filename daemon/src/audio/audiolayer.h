@@ -179,6 +179,14 @@ class AudioLayer {
         }
 
         /**
+         * Hardware-preferred audio format (sample rate and channel number)
+         * for playback. Should be available after outputStarted is called.
+         */
+        virtual AudioFormat getPreferredAudioFormat() const {
+            return AudioFormat::MONO;
+        }
+
+        /**
          * Emit an audio notification on incoming calls
          */
         void notifyIncomingCall();
@@ -186,6 +194,10 @@ class AudioLayer {
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type) = 0;
 
     protected:
+        /**
+         * Callback to be called by derived classes when the audio output is opened.
+         */
+        void outputStarted();
 
         /**
          * True if capture is not to be used

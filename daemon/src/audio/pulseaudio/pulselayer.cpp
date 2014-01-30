@@ -91,13 +91,13 @@ PulseMainLoopLock::~PulseMainLoopLock()
 
 PulseLayer::PulseLayer(AudioPreference &pref)
     : AudioLayer(pref)
-    , playback_(0)
-    , record_(0)
-    , ringtone_(0)
+    , playback_(nullptr)
+    , record_(nullptr)
+    , ringtone_(nullptr)
     , sinkList_()
     , sourceList_()
     , micBuffer_(0, AudioFormat::MONO)
-    , context_(0)
+    , context_(nullptr)
     , mainloop_(pa_threaded_mainloop_new())
     , enumeratingSinks_(false)
     , enumeratingSources_(false)
@@ -368,6 +368,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     pa_threaded_mainloop_signal(mainloop_, 0);
 
+    outputStarted();
     flushMain();
     flushUrgent();
 }
@@ -417,6 +418,14 @@ PulseLayer::stopStream()
     }
 
     disconnectAudioStream();
+}
+
+AudioFormat
+PulseLayer::getPreferredAudioFormat() const
+{
+    if(!playback_)
+        return AudioLayer::getPreferredAudioFormat();
+    return playback_->getFormat();
 }
 
 void PulseLayer::writeToSpeaker()
@@ -497,7 +506,6 @@ void PulseLayer::writeToSpeaker()
 
     double resampleFactor = 1.;
 
-    //unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     AudioFormat mainBufferAudioFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     bool resample = sampleRate_ != mainBufferAudioFormat.sample_rate;
 

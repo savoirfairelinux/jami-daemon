@@ -193,7 +193,7 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
 void AudioRtpRecordHandler::initBuffers()
 {
     // Set sampling rate, main buffer choose the highest one
-    Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
+    //Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
 
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)

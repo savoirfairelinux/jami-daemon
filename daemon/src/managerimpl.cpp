@@ -94,7 +94,7 @@ ManagerImpl::ManagerImpl() :
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), client_(),
 	config_(),
-    currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO),
+    currentCallId_(), currentCallMutex_(), audiodriver_(nullptr), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
     IPToIPMap_(), mainBuffer_(), conferenceMap_(), history_(), finished_(false)
@@ -2282,6 +2282,27 @@ void ManagerImpl::switchAudioManager()
         audiodriver_->startStream();
 }
 
+
+void ManagerImpl::audioOutputStarted(AudioFormat format)
+{
+    AudioFormat currentFormat = mainBuffer_.getInternalAudioFormat();
+    format.channel_num = std::min(2u, format.channel_num); // max 2 channels.
+
+    if(currentFormat == format)
+        return;
+
+    DEBUG("Audio format changed: %s -> %s", currentFormat.toString().c_str(), format.toString().c_str());
+
+    mainBuffer_.setInternalAudioFormat(format);
+
+    {
+        std::lock_guard<std::mutex> toneLock(toneMutex_);
+        telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), format.sample_rate));
+    }
+    dtmfKey_.reset(new DTMF(format.sample_rate));
+}
+
+/*
 void ManagerImpl::audioSamplingRateChanged(int samplerate)
 {
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
@@ -2317,7 +2338,7 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 
     if (wasActive)
         audiodriver_->startStream();
-}
+}*/
 
 //THREAD=Main
 std::string ManagerImpl::getConfigString(const std::string& section,

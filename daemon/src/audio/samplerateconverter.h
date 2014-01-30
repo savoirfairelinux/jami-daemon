@@ -48,10 +48,17 @@ class SamplerateConverter {
         * internal buffer size. Converter must be reinitialized
         * every time these parameters change
         */
-        SamplerateConverter(int freq, size_t channels = 1);
+        SamplerateConverter(AudioFormat outFormat);
+        SamplerateConverter(unsigned sample_rate, unsigned channels=1);
 
         /** Destructor */
         ~SamplerateConverter();
+
+        /**
+         * Change the converter sample rate and channel number.
+         * Internal state is lost.
+         */
+        void setFormat(AudioFormat format);
 
         /**
          * resample from the samplerate1 to the samplerate2
@@ -60,7 +67,6 @@ class SamplerateConverter {
          * @param SamplerateConverter2 The desired sample rate
          * @param nbSamples	  The number of samples to process
          */
-        //void resample(SFLAudioSample* dataIn, SFLAudioSample* dataOut, size_t dataOutSize, int oldrate, int newrate, size_t nbSamples);
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
         /**
@@ -71,7 +77,6 @@ class SamplerateConverter {
          */
         void Short2FloatArray(const SFLAudioSample *in, float *out, int len);
 
-
     private:
         NON_COPYABLE(SamplerateConverter);
 
@@ -81,8 +86,7 @@ class SamplerateConverter {
         std::vector<SFLAudioSample> scratchBuffer_;
 
         size_t samples_; // size in samples of temporary buffers
-        size_t channels_; // number of channels configured
-        int maxFreq_; // maximal output frequency
+        AudioFormat format_; // number of channels and max output frequency
 
         SRC_STATE* src_state_;
 };

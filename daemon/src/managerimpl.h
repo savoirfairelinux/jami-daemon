@@ -669,7 +669,12 @@ class ManagerImpl {
          * Set the internal audio sampling rate change. Should close the audio layer and
          * reopen stream at different rate,
          */
-        void audioSamplingRateChanged(int);
+        //void audioSamplingRateChanged(int);
+
+        /**
+         * Callback called when the audio layer initialised with its preferred format.
+         */
+        void audioOutputStarted(AudioFormat format);
 
         /**
          * Change a specific value in the configuration tree.

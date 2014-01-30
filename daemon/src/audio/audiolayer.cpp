@@ -53,6 +53,16 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
 AudioLayer::~AudioLayer()
 {}
 
+void AudioLayer::outputStarted()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    AudioFormat format = getPreferredAudioFormat();
+    sampleRate_ = format.sample_rate;
+    urgentRingBuffer_.setFormat(format);
+    converter_.setFormat(format);
+    Manager::instance().audioOutputStarted(format);
+}
+
 void AudioLayer::flushMain()
 {
     std::lock_guard<std::mutex> lock(mutex_);

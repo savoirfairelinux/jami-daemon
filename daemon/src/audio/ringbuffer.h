@@ -54,6 +54,14 @@ class RingBuffer {
 
         void flushAll();
 
+        inline  AudioFormat getFormat() const {
+            return buffer_.getFormat();
+        }
+
+        inline void setFormat(AudioFormat format) {
+            buffer_.setFormat(format);
+        }
+
         /**
          * Get read pointer coresponding to this call
          */

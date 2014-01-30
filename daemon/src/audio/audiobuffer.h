@@ -32,6 +32,8 @@
 #define _AUDIO_BUFFER_H
 
 #include <vector>
+#include <string>
+#include <sstream>
 #include <cstddef> // for size_t
 
 #include "sfl_types.h"
@@ -53,6 +55,12 @@ typedef struct AudioFormat {
         return !(*this == b);
     }
 
+    inline std::string toString() const {
+        std::stringstream ss;
+        ss << "{" << channel_num << " channels, " << sample_rate << "kHz}";
+        return ss.str();
+    }
+
     /**
      * Bytes per second (default), or bytes necessary
      * to hold delay_ms milliseconds of audio data.
@@ -65,6 +73,8 @@ typedef struct AudioFormat {
     static const AudioFormat MONO;
     static const AudioFormat STEREO;
 } AudioFormat;
+
+std::ostream& operator <<(std::ostream& stream, const AudioFormat& f);
 
 class AudioBuffer {
     public:

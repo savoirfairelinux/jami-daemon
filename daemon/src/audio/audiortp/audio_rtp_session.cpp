@@ -68,7 +68,7 @@ void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
     if (codecsDiffer(audioCodecs))
         setSessionMedia(audioCodecs);
 
-    Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
+    //Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
 
 #if HAVE_SPEEXDSP
 

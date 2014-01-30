@@ -35,6 +35,11 @@
 const AudioFormat AudioFormat::MONO = AudioFormat(AudioFormat::DEFAULT_SAMPLE_RATE, 1);
 const AudioFormat AudioFormat::STEREO = AudioFormat(AudioFormat::DEFAULT_SAMPLE_RATE, 2);
 
+std::ostream& operator <<(std::ostream& stream, const AudioFormat& f) {
+    stream << f.toString();
+    return stream;
+}
+
 AudioBuffer::AudioBuffer(size_t sample_num, AudioFormat format)
     :  sampleRate_(format.sample_rate),
        samples_(std::max(1U, format.channel_num),
