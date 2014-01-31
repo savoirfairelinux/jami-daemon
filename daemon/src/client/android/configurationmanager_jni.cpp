@@ -68,3 +68,8 @@ void ConfigurationManager::sipRegistrationStateChanged(const std::string& accoun
 void ConfigurationManager::errorAlert(const int & /*alert*/)
 {
 }
+
+std::vector< int32_t > ConfigurationManager::getHardwareAudioFormat()
+{
+    return get_hardware_audio_format_wrapper();
+}

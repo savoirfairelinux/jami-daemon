@@ -35,6 +35,7 @@ typedef struct configurationmanager_callback
     void (*on_accounts_changed)(void);
     void (*on_account_state_changed)(const std::string& accountID, const int32_t& state);
     void (*on_account_state_changed_with_code)(const std::string& accountID, const std::string& state, const int32_t& code);
+    std::vector<int32_t> (*get_hardware_audio_format)(void);
 } configurationmanager_callback_t;
 
 
@@ -44,6 +45,7 @@ public:
     virtual void on_accounts_changed(void) {}
     virtual void on_account_state_changed(const std::string& accountID, const int32_t& state) {}
     virtual void on_account_state_changed_with_code(const std::string& accountID, const std::string& state, const int32_t& code) {}
+    virtual std::vector<int32_t> get_hardware_audio_format(void) {}
 };
 
 static ConfigurationCallback *registeredConfigurationCallbackObject = NULL;
@@ -60,10 +62,15 @@ void on_account_state_changed_with_code_wrapper (const std::string& accountID, c
     registeredConfigurationCallbackObject->on_account_state_changed_with_code(accountID, state, code);
 }
 
+std::vector<int32_t> get_hardware_audio_format_wrapper(void) {
+    return registeredConfigurationCallbackObject->get_hardware_audio_format();
+}
+
 static struct configurationmanager_callback wrapper_configurationcallback_struct = {
     &on_accounts_changed_wrapper,
     &on_account_state_changed_wrapper,
-    &on_account_state_changed_with_code_wrapper
+    &on_account_state_changed_with_code_wrapper,
+    &get_hardware_audio_format_wrapper
 };
 
 void setConfigurationCallbackObject(ConfigurationCallback *callback) {
@@ -161,6 +168,7 @@ public:
     virtual void on_accounts_changed(void);
     virtual void on_account_state_changed(const std::string& accountID, const int32_t& state);
     virtual void on_account_state_changed_with_code(const std::string& accountID, const std::string& state, const int32_t& code);
+    virtual std::vector<int32_t> get_hardware_audio_format(void);
 };
 
 static ConfigurationCallback *registeredConfigurationCallbackObject = NULL;

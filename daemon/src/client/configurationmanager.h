@@ -173,6 +173,8 @@ class ConfigurationManager
         void registrationStateChanged(const std::string& accoundID, int const& state);
         void sipRegistrationStateChanged(const std::string&, const std::string&, const int32_t&);
         void errorAlert(const int& alert);
+
+	std::vector< int32_t > getHardwareAudioFormat();
 #endif  // __ANDROID__
 };
 

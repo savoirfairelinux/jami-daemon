@@ -38,6 +38,8 @@
 #include "mainbuffer.h"
 #include "audio/dcblocker.h"
 
+#include "client/configurationmanager.h"
+
 #include "opensllayer.h"
 
 const int OpenSLLayer::NB_BUFFER_PLAYBACK_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
@@ -98,6 +100,9 @@ OpenSLThread::runCallback(void *data)
 void
 OpenSLThread::initAudioLayer()
 {
+    std::vector<int32_t> hw_infos = Manager::instance().getClient()->getConfigurationManager()->getHardwareAudioFormat();
+    DEBUG("Foud hardware audio format infos: SR: %d, BS: %d", hw_infos[0], hw_infos[1]);
+
     opensl_->initAudioEngine();
     opensl_->initAudioPlayback();
     opensl_->initAudioCapture();

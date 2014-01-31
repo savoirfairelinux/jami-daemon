@@ -2283,7 +2283,7 @@ void ManagerImpl::switchAudioManager()
 }
 
 
-void ManagerImpl::audioOutputStarted(AudioFormat format)
+void ManagerImpl::hardwareAudioFormatChanged(AudioFormat format)
 {
     AudioFormat currentFormat = mainBuffer_.getInternalAudioFormat();
     format.channel_num = std::min(2u, format.channel_num); // max 2 channels.

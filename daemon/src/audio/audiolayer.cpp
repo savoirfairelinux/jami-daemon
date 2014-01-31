@@ -32,6 +32,7 @@
 #include <ctime>
 #include "audiolayer.h"
 #include "audio/dcblocker.h"
+#include "logger.h"
 #include "manager.h"
 
 AudioLayer::AudioLayer(const AudioPreference &pref)
@@ -53,14 +54,15 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
 AudioLayer::~AudioLayer()
 {}
 
-void AudioLayer::outputStarted()
+void AudioLayer::hardwareFormatAvailable()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     AudioFormat format = getPreferredAudioFormat();
+    DEBUG("hardwareFormatAvailable : %s", format.toString().c_str());
     sampleRate_ = format.sample_rate;
     urgentRingBuffer_.setFormat(format);
     converter_.setFormat(format);
-    Manager::instance().audioOutputStarted(format);
+    Manager::instance().hardwareAudioFormatChanged(format);
 }
 
 void AudioLayer::flushMain()

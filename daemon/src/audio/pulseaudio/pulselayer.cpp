@@ -337,6 +337,8 @@ void PulseLayer::createStreams(pa_context* c)
 
     playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, sampleRate_, dev_infos);
 
+    hardwareFormatAvailable();
+
     pa_stream_set_write_callback(playback_->pulseStream(), playback_callback, this);
     pa_stream_set_moved_callback(playback_->pulseStream(), stream_moved_callback, this);
 
@@ -368,7 +370,6 @@ void PulseLayer::createStreams(pa_context* c)
 
     pa_threaded_mainloop_signal(mainloop_, 0);
 
-    outputStarted();
     flushMain();
     flushUrgent();
 }

@@ -674,7 +674,8 @@ class ManagerImpl {
         /**
          * Callback called when the audio layer initialised with its preferred format.
          */
-        void audioOutputStarted(AudioFormat format);
+        //void audioOutputStarted(AudioFormat format);
+        void hardwareAudioFormatChanged(AudioFormat format);
 
         /**
          * Change a specific value in the configuration tree.

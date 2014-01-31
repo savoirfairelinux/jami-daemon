@@ -197,7 +197,7 @@ class AudioLayer {
         /**
          * Callback to be called by derived classes when the audio output is opened.
          */
-        void outputStarted();
+        void hardwareFormatAvailable();
 
         /**
          * True if capture is not to be used
