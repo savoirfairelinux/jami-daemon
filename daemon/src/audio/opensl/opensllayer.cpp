@@ -100,9 +100,6 @@ OpenSLThread::runCallback(void *data)
 void
 OpenSLThread::initAudioLayer()
 {
-    std::vector<int32_t> hw_infos = Manager::instance().getClient()->getConfigurationManager()->getHardwareAudioFormat();
-    DEBUG("Foud hardware audio format infos: SR: %d, BS: %d", hw_infos[0], hw_infos[1]);
-
     opensl_->initAudioEngine();
     opensl_->initAudioPlayback();
     opensl_->initAudioCapture();
@@ -145,9 +142,10 @@ OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     , recorderBufferQueue_(nullptr)
     , playbackBufferIndex_(0)
     , recordBufferIndex_(0)
+    , hardwareFormat_(AudioFormat::MONO)
     , hardwareBuffSize_(BUFFER_SIZE)
-    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE, AudioFormat::MONO))
-    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE, AudioFormat::MONO))
+    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO))
+    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO))
 {
 }
 
@@ -173,8 +171,8 @@ OpenSLLayer::startStream()
     DEBUG("Start OpenSL audio layer");
 
     std::vector<int32_t> hw_infos = Manager::instance().getClient()->getConfigurationManager()->getHardwareAudioFormat();
-    unsigned    hardwareFormat_ = AudioFormat(hw_infos[0], 1),  // Mono on Android
-                hardwareBuffSize_   = hw_infos[1];
+    hardwareFormat_ = AudioFormat(hw_infos[0], 1);  // Mono on Android
+    hardwareBuffSize_ = hw_infos[1];
 
     for(auto& buf : playbackBufferStack_)
         buf.resize(hardwareBuffSize_);

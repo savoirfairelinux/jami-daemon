@@ -258,12 +258,12 @@ class OpenSLLayer : public AudioLayer {
         int recordBufferIndex_;
 
         bool bufferIsFilled_;
+        AudioFormat hardwareFormat_;
+        size_t hardwareBuffSize_;
 
         AudioBufferStack playbackBufferStack_;
         AudioBufferStack recordBufferStack_;
 
-        AudioFormat hardwareFormat_;
-        AudioFormat hardwareBuffSize_;
 };
 
 #endif // _OPENSL_LAYER_H_
