@@ -133,18 +133,19 @@ OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     , indexIn_(0)
     , indexOut_(0)
     , indexRing_(0)
-    , audioThread_(0)
-    , engineObject_(0)
-    , engineInterface_(0)
-    , outputMixer_(0)
-    , playerObject_(0)
-    , recorderObject_(0)
-    , playerInterface_(0)
-    , recorderInterface_(0)
-    , playbackBufferQueue_(0)
-    , recorderBufferQueue_(0)
+    , audioThread_(nullptr)
+    , engineObject_(nullptr)
+    , engineInterface_(nullptr)
+    , outputMixer_(nullptr)
+    , playerObject_(nullptr)
+    , recorderObject_(nullptr)
+    , playerInterface_(nullptr)
+    , recorderInterface_(nullptr)
+    , playbackBufferQueue_(nullptr)
+    , recorderBufferQueue_(nullptr)
     , playbackBufferIndex_(0)
     , recordBufferIndex_(0)
+    , hardwareBuffSize_(BUFFER_SIZE)
     , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE, AudioFormat::MONO))
     , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(BUFFER_SIZE, AudioFormat::MONO))
 {
@@ -170,6 +171,17 @@ OpenSLLayer::startStream()
         return;
 
     DEBUG("Start OpenSL audio layer");
+
+    std::vector<int32_t> hw_infos = Manager::instance().getClient()->getConfigurationManager()->getHardwareAudioFormat();
+    unsigned    hardwareFormat_ = AudioFormat(hw_infos[0], 1),  // Mono on Android
+                hardwareBuffSize_   = hw_infos[1];
+
+    for(auto& buf : playbackBufferStack_)
+        buf.resize(hardwareBuffSize_);
+    for(auto& buf : recordBufferStack_)
+        buf.resize(hardwareBuffSize_);
+
+    hardwareFormatAvailable();
 
     if (audioThread_ == nullptr) {
         audioThread_ = new OpenSLThread(this);
@@ -758,7 +770,7 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
 
 bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
 {
-    buffer.resize(BUFFER_SIZE);
+    buffer.resize(hardwareBuffSize_);
     AudioLoop *tone = Manager::instance().getTelephoneTone();
     AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
@@ -778,7 +790,7 @@ bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
 bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t samplesToGet)
 {
     // Urgent data (dtmf, incoming call signal) come first.
-    samplesToGet = std::min(samplesToGet, BUFFER_SIZE);
+    samplesToGet = std::min(samplesToGet, hardwareBuffSize_);
     buffer.resize(samplesToGet);
     urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
     buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);

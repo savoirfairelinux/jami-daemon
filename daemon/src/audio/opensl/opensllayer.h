@@ -44,11 +44,10 @@ class AudioPreference;
 class OpenSLThread;
 
 #define ANDROID_BUFFER_QUEUE_LENGTH 2U
-#define BUFFER_SIZE 80U
+#define BUFFER_SIZE 64U
 
 #define MAX_NUMBER_INTERFACES 5
 #define MAX_NUMBER_INPUT_DEVICES 3
-
 
 /**
  * @file  OpenSLLayer.h
@@ -113,6 +112,10 @@ class OpenSLLayer : public AudioLayer {
 
         virtual std::string getAudioDeviceName(int, DeviceType) const {
             return "";
+        }
+
+        AudioFormat getPreferredAudioFormat() const {
+            return hardwareFormat_;
         }
 
     private:
@@ -186,7 +189,7 @@ class OpenSLLayer : public AudioLayer {
             recordBufferIndex_ = (recordBufferIndex_ + 1) % NB_BUFFER_CAPTURE_QUEUE;
         }
 
-		void CheckErr( SLresult res );
+        void CheckErr( SLresult res );
 
         void playback(SLAndroidSimpleBufferQueueItf queue);
         void capture(SLAndroidSimpleBufferQueueItf queue);
@@ -254,10 +257,13 @@ class OpenSLLayer : public AudioLayer {
         int playbackBufferIndex_;
         int recordBufferIndex_;
 
-		bool bufferIsFilled_;
+        bool bufferIsFilled_;
 
         AudioBufferStack playbackBufferStack_;
         AudioBufferStack recordBufferStack_;
+
+        AudioFormat hardwareFormat_;
+        AudioFormat hardwareBuffSize_;
 };
 
 #endif // _OPENSL_LAYER_H_
