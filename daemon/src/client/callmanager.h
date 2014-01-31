@@ -179,6 +179,11 @@ class CallManager
         void secureSdesOn(const std::string& arg);
         void secureSdesOff(const std::string& arg);
 
+        void secureZrtpOn(const std::string& callID, const std::string& cipher);
+        void secureZrtpOff(const std::string& callID);
+        void showSAS(const std::string& callID, const std::string& sas, const bool& verified);
+        void zrtpNotSuppOther(const std::string& callID);
+        void zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3);
 #endif // __ANDROID__
 private:
 

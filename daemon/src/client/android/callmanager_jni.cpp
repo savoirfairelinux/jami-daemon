@@ -112,7 +112,36 @@ void CallManager::updatePlaybackScale(const std::string&, const int32_t&, const 
 }
 
 void CallManager::secureSdesOn(std::string const&)
-{}
+{
+
+}
 
 void CallManager::secureSdesOff(std::string const&)
-{}
+{
+
+}
+
+void CallManager::secureZrtpOn(const std::string& callID, const std::string& cipher)
+{
+
+}
+
+void CallManager::secureZrtpOff(const std::string& callID)
+{
+
+}
+
+void CallManager::showSAS(const std::string& callID, const std::string& sas, const bool& verified)
+{
+
+}
+
+void CallManager::zrtpNotSuppOther(const std::string& callID)
+{
+
+}
+
+void CallManager::zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3)
+{
+
+}
