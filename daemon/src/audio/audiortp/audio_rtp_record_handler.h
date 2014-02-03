@@ -183,9 +183,9 @@ class AudioRtpRecordHandler {
         std::list<DTMFEvent> dtmfQueue_;
 
     private:
+        unsigned int dtmfPayloadType_;
         const std::string id_;
         int warningInterval_;
-        unsigned int dtmfPayloadType_;
 
 };
 }
