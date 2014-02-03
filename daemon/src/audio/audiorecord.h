@@ -47,8 +47,8 @@ class AudioRecord {
         AudioRecord();
         ~AudioRecord();
 
-        void setSndSamplingRate(int smplRate);
-        void setRecordingOptions(int sndSmplRate, const std::string &path);
+        void setSndFormat(AudioFormat format);
+        void setRecordingOptions(AudioFormat format, const std::string &path);
 
         /**
          * Init recording file path
@@ -104,7 +104,6 @@ class AudioRecord {
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        //void recData(SFLDataFormat* buffer, size_t nSamples);
         void recData(AudioBuffer& buffer);
 
     protected:
@@ -133,12 +132,7 @@ class AudioRecord {
         /**
          * Number of channels
          */
-        int16_t channels_;
-
-        /**
-         * Sampling rate
-         */
-        int sndSmplRate_;
+        AudioFormat sndFormat_;
 
         /**
          * Maximum number of samples

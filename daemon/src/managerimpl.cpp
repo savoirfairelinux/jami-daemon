@@ -1101,7 +1101,7 @@ ManagerImpl::joinParticipant(const std::string& callId1, const std::string& call
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
         if (audiodriver_)
-            conf->setRecordingSmplRate(audiodriver_->getSampleRate());
+            conf->setRecordingFormat(audiodriver_->getFormat());
     }
 
     return true;
@@ -1152,7 +1152,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
             std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
             if (audiodriver_)
-                conf->setRecordingSmplRate(audiodriver_->getSampleRate());
+                conf->setRecordingFormat(audiodriver_->getFormat());
         }
 
     } else {

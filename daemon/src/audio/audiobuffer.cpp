@@ -142,6 +142,13 @@ size_t AudioBuffer::interleave(SFLAudioSample* out) const
     return frames() * channels();
 }
 
+std::vector<SFLAudioSample> AudioBuffer::interleave() const
+{
+    std::vector<SFLAudioSample> data(capacity());
+    interleave(data.data());
+    return data;
+}
+
 size_t AudioBuffer::interleaveFloat(float* out) const
 {
     for (unsigned i=0, f=frames(), c=channels(); i < f; i++)

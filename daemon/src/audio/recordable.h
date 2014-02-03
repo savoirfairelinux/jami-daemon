@@ -73,7 +73,7 @@ class Recordable {
         /**
          * Set recording sampling rate.
          */
-        void setRecordingSmplRate(int smplRate);
+        void setRecordingFormat(AudioFormat format);
 
     protected:
         AudioRecord recAudio_;

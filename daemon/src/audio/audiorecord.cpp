@@ -89,9 +89,8 @@ createFilename()
 }
 
 
-AudioRecord::AudioRecord() : fileHandle_(0)
-    , channels_(1)
-    , sndSmplRate_(8000)
+AudioRecord::AudioRecord() : fileHandle_(nullptr)
+    , sndFormat_(AudioFormat::MONO)
     , recordingEnabled_(false)
     , filename_(createFilename())
     , savePath_()
@@ -104,12 +103,12 @@ AudioRecord::~AudioRecord()
     delete fileHandle_;
 }
 
-void AudioRecord::setSndSamplingRate(int smplRate)
+void AudioRecord::setSndFormat(AudioFormat format)
 {
-    sndSmplRate_ = smplRate;
+    sndFormat_ = format;
 }
 
-void AudioRecord::setRecordingOptions(int sndSmplRate, const std::string &path)
+void AudioRecord::setRecordingOptions(AudioFormat format, const std::string &path)
 {
     std::string filePath;
 
@@ -120,8 +119,7 @@ void AudioRecord::setRecordingOptions(int sndSmplRate, const std::string &path)
         filePath = path;
     }
 
-    channels_ = 1;
-    sndSmplRate_ = sndSmplRate;
+    sndFormat_ = format;
     savePath_ = (*filePath.rbegin() == DIR_SEPARATOR_CH) ? filePath : filePath + DIR_SEPARATOR_STR;
 }
 
@@ -166,7 +164,7 @@ bool AudioRecord::openFile()
     const bool doAppend = fileExists();
     const int access = doAppend ? SFM_RDWR : SFM_WRITE;
 
-    fileHandle_ = new SndfileHandle(savePath_.c_str(), access, SF_FORMAT_WAV | SF_FORMAT_PCM_16, channels_, sndSmplRate_);
+    fileHandle_ = new SndfileHandle(savePath_.c_str(), access, SF_FORMAT_WAV | SF_FORMAT_PCM_16, sndFormat_.channel_num, sndFormat_.sample_rate);
 
     // check overloaded boolean operator
     if (!*fileHandle_) {
@@ -231,10 +229,9 @@ void AudioRecord::recData(AudioBuffer& buffer)
         return;
     }
 
-    const int nSamples = buffer.frames();
-
-    // FIXME: mono only
-    if (fileHandle_->write(buffer.getChannel(0)->data(), nSamples) != nSamples) {
+    auto interleaved = buffer.interleave();
+    const int nSamples = interleaved.size();
+    if (fileHandle_->write(interleaved.data(), nSamples) != nSamples) {
         WARN("Could not record data!");
     } else {
         fileHandle_->writeSync();

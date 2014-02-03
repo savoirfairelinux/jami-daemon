@@ -209,6 +209,11 @@ class AudioBuffer {
         size_t interleave(SFLAudioSample* out) const;
 
         /**
+         * Returns vector of interleaved data (fixed-point 16-bits).
+         */
+        std::vector<SFLAudioSample> interleave() const;
+
+        /**
          * Write interleaved multichannel data to the out buffer, while samples are converted to float.
          * The out buffer must be at least of size capacity()*sizeof(float) bytes.
          *

@@ -53,7 +53,7 @@ std::string Recordable::getFilename() const
     return recAudio_.getFilename();
 }
 
-void Recordable::setRecordingSmplRate(int smplRate)
+void Recordable::setRecordingFormat(AudioFormat format)
 {
-    recAudio_.setSndSamplingRate(smplRate);
+    recAudio_.setSndFormat(format);
 }
