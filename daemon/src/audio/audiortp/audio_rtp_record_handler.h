@@ -95,8 +95,6 @@ class AudioRtpRecord {
         std::mutex audioProcessMutex_;
 #endif
 
-        unsigned int dtmfPayloadType_;
-
         bool isDead();
         friend class AudioRtpRecordHandler;
         /**
@@ -168,11 +166,11 @@ class AudioRtpRecordHandler {
         void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
 
         void setDtmfPayloadType(unsigned int payloadType) {
-            audioRtpRecord_.dtmfPayloadType_ = payloadType;
+            dtmfPayloadType_ = payloadType;
         }
 
         unsigned int getDtmfPayloadType() const {
-            return audioRtpRecord_.dtmfPayloadType_;
+            return dtmfPayloadType_;
         }
 
         void putDtmfEvent(char digit);
@@ -187,6 +185,8 @@ class AudioRtpRecordHandler {
     private:
         const std::string id_;
         int warningInterval_;
+        unsigned int dtmfPayloadType_;
+
 };
 }
 

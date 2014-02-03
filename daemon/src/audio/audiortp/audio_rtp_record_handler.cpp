@@ -66,7 +66,6 @@ AudioRtpRecord::AudioRtpRecord() :
     , dspDecode_(0)
     , audioProcessMutex_()
 #endif
-    , dtmfPayloadType_(101) // same as Asterisk
     , dead_(false)
     , currentCodecIndex_(0)
 {}
@@ -141,6 +140,7 @@ AudioRtpRecord::~AudioRtpRecord()
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
     dtmfQueue_(),
+    dtmfPayloadType_(101), // same as Asterisk
     id_(call.getCallId()),
     warningInterval_(0)
 {}
