@@ -47,7 +47,6 @@ namespace sfl {
 AudioRtpRecord::AudioRtpRecord() :
     callId_("")
     , codecSampleRate_(0)
-    , dtmfQueue_()
     , audioCodecs_()
     , audioCodecMutex_()
     , encoderPayloadType_(0)
@@ -141,6 +140,7 @@ AudioRtpRecord::~AudioRtpRecord()
 
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
+    dtmfQueue_(),
     id_(call.getCallId()),
     warningInterval_(0)
 {}
@@ -217,7 +217,7 @@ void AudioRtpRecordHandler::initDSP()
 void AudioRtpRecordHandler::putDtmfEvent(char digit)
 {
     DTMFEvent dtmf(digit);
-    audioRtpRecord_.dtmfQueue_.push_back(dtmf);
+    dtmfQueue_.push_back(dtmf);
 }
 
 #define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }

@@ -70,7 +70,6 @@ class AudioRtpRecord {
         sfl::AudioCodec* getCurrentCodec() const;
         std::string callId_;
         int codecSampleRate_;
-        std::list<DTMFEvent> dtmfQueue_;
 
     private:
         std::vector<AudioCodec*> audioCodecs_;
@@ -145,7 +144,7 @@ class AudioRtpRecordHandler {
         }
 
         bool hasDTMFPending() const {
-            return not audioRtpRecord_.dtmfQueue_.empty();
+            return not dtmfQueue_.empty();
         }
 
         const unsigned char *getMicDataEncoded() const {
@@ -183,6 +182,7 @@ class AudioRtpRecordHandler {
     protected:
         bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;
         AudioRtpRecord audioRtpRecord_;
+        std::list<DTMFEvent> dtmfQueue_;
 
     private:
         const std::string id_;

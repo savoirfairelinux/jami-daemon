@@ -113,7 +113,7 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
 
 void AudioRtpSession::sendDtmfEvent()
 {
-    DTMFEvent &dtmf(audioRtpRecord_.dtmfQueue_.front());
+    DTMFEvent &dtmf(dtmfQueue_.front());
     DEBUG("Send RTP Dtmf (%d)", dtmf.payload.event);
 
     const int increment = getIncrementForDTMF();
@@ -160,7 +160,7 @@ void AudioRtpSession::sendDtmfEvent()
         dtmf.payload.ebit = true;
 
     if (dtmf.length < increment)
-        audioRtpRecord_.dtmfQueue_.pop_front();
+        dtmfQueue_.pop_front();
 }
 
 
