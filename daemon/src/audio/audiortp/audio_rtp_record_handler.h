@@ -55,16 +55,6 @@ class DSP;
 
 namespace sfl {
 
-// G.722 VoIP is typically carried in RTP payload type 9.[2] Note that IANA records the clock rate for type 9 G.722 as 8 kHz
-// (instead of 16 kHz), RFC3551[3]  clarifies that this is due to a historical error and is retained in order to maintain backward
-// compatibility. Consequently correct implementations represent the value 8,000 where required but encode and decode audio at 16 kHz.
-
-inline uint32
-timeval2microtimeout(const timeval& t)
-{
-    return ((t.tv_sec * 1000000ul) + t.tv_usec);
-}
-
 struct DTMFEvent {
     DTMFEvent(char digit);
     ost::RTPPacket::RFC2833Payload payload;
