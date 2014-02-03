@@ -39,6 +39,8 @@
 #include "sip/sipcall.h"
 #include "audio/audiolayer.h"
 #include "manager.h"
+#include "audio/samplerateconverter.h"
+#include "audio/dsp.h"
 
 namespace sfl {
 

@@ -47,10 +47,11 @@ using std::ptrdiff_t;
 
 #include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
-#include "audio/samplerateconverter.h"
-#include "audio/dsp.h"
+#include "audio/audiobuffer.h"
 
 class SIPCall;
+class SamplerateConverter;
+class DSP;
 
 namespace sfl {
 
