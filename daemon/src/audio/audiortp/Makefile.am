@@ -14,6 +14,8 @@ libaudiortp_la_SOURCES = \
 		audio_rtp_factory.cpp \
 		audio_srtp_session.cpp \
 		audio_rtp_session.h \
+		dtmf_event.h \
+		dtmf_event.cpp \
 		audio_rtp_record_handler.h \
 		audio_rtp_factory.h \
 		audio_symmetric_rtp_session.h \

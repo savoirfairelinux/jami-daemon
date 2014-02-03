@@ -48,19 +48,13 @@ using std::ptrdiff_t;
 #include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/audiobuffer.h"
+#include "dtmf_event.h"
 
 class SIPCall;
 class SamplerateConverter;
 class DSP;
 
 namespace sfl {
-
-struct DTMFEvent {
-    DTMFEvent(char digit);
-    ost::RTPPacket::RFC2833Payload payload;
-    bool newevent;
-    int length;
-};
 
 /**
  * Class meant to store internal data in order to encode/decode,

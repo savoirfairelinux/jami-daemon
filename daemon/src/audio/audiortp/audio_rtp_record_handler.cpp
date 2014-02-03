@@ -44,48 +44,6 @@
 
 namespace sfl {
 
-DTMFEvent::DTMFEvent(char digit) : payload(), newevent(true), length(1000)
-{
-    /*
-       From RFC2833:
-
-       Event  encoding (decimal)
-       _________________________
-       0--9                0--9
-       *                     10
-       #                     11
-       A--D              12--15
-       Flash                 16
-    */
-
-    switch (digit) {
-        case '*':
-            digit = 10;
-            break;
-
-        case '#':
-            digit = 11;
-            break;
-
-        case 'A' ... 'D':
-            digit = digit - 'A' + 12;
-            break;
-
-        case '0' ... '9':
-            digit = digit - '0';
-            break;
-
-        default:
-            ERROR("Unexpected DTMF %c", digit);
-    }
-
-    payload.event = digit;
-    payload.ebit = false; // end of event bit
-    payload.rbit = false; // reserved bit
-    payload.duration = 1; // duration for this event
-    payload.vol = 10;
-}
-
 AudioRtpRecord::AudioRtpRecord() :
     callId_("")
     , codecSampleRate_(0)
