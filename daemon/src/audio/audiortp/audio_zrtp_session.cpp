@@ -47,6 +47,7 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
     , AudioRtpSession(call, *this)
     , zidFilename_(zidFilename)
 {
+    setSignSas(false);
     initializeZid();
     DEBUG("Setting new RTP session with destination %s:%d",
           localIP.c_str(), call_.getLocalAudioPort());
