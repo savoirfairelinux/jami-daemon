@@ -20,6 +20,14 @@ void on_incoming_message_wrapper(const std::string& ID, const std::string& from,
 void on_newPresSubClientNotification_wrapper(const std::string& uri, const std::string& basic, const std::string& note);
 void on_newPresSubServerRequest_wrapper(const std::string& remote);
 
+void on_secure_sdes_on_wrapper(const std::string& callID);
+void on_secure_sdes_off_wrapper(const std::string& callID);
+void on_secure_zrtp_on_wrapper(const std::string& callID,const std::string& cipher);
+void on_secure_zrtp_off_wrapper(const std::string& callID);
+void on_show_sas_wrapper(const std::string& callID, const std::string& sas, const bool& verified);
+void on_zrtp_not_supported_wrapper(const std::string& callID);
+void on_zrtp_negociation_failed_wrapper(const std::string& callID, const std::string& reason, const std::string& severity);
+
 extern struct configurationmanager_callback wrapper_configurationcallback_struct;
 extern void on_accounts_changed_wrapper ();
 extern void on_account_state_changed_wrapper (const std::string& accoundID, int const& state);

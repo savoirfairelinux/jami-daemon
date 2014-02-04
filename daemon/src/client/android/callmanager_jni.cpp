@@ -111,37 +111,37 @@ void CallManager::updatePlaybackScale(const std::string&, const int32_t&, const 
 
 }
 
-void CallManager::secureSdesOn(std::string const&)
+void CallManager::secureSdesOn(std::string const& callID)
 {
-
+    on_secure_sdes_on_wrapper(callID);
 }
 
-void CallManager::secureSdesOff(std::string const&)
+void CallManager::secureSdesOff(std::string const& callID)
 {
-
+    on_secure_sdes_off_wrapper(callID);
 }
 
 void CallManager::secureZrtpOn(const std::string& callID, const std::string& cipher)
 {
-
+    on_secure_zrtp_on_wrapper(callID, cipher);
 }
 
 void CallManager::secureZrtpOff(const std::string& callID)
 {
-
+    on_secure_zrtp_off_wrapper(callID);
 }
 
 void CallManager::showSAS(const std::string& callID, const std::string& sas, const bool& verified)
 {
-
+    on_show_sas_wrapper(callID, sas, verified);
 }
 
 void CallManager::zrtpNotSuppOther(const std::string& callID)
 {
-
+    on_zrtp_not_supported_wrapper(callID);
 }
 
-void CallManager::zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3)
+void CallManager::zrtpNegotiationFailed(const std::string& callID, const std::string& reason, const std::string& severity)
 {
-
+    on_zrtp_negociation_failed_wrapper(callID, reason, severity);
 }

@@ -71,6 +71,25 @@ typedef struct callmanager_callback
 
 	void (*newPresSubServerRequest) (const std::string& remote);
 
+    void (*on_secure_sdes_on) (const std::string& callID);
+
+    void (*on_secure_sdes_off) (const std::string& callID);
+
+    void (*on_secure_zrtp_on) (const std::string& callID,
+                                const std::string& cipher);
+
+    void (*on_secure_zrtp_off) (const std::string& callID);
+
+    void (*on_show_sas) (const std::string& callID,
+                        const std::string& sas,
+                        const bool& verified);
+
+    void (*on_zrtp_not_supported) (const std::string& callID);
+
+    void (*on_zrtp_negociation_failed) (const std::string& callID,
+                                                const std::string& reason,
+                                                const std::string& severity);
+
 } callmanager_callback_t;
 
 
@@ -113,6 +132,25 @@ public:
 											const std::string& note) {}
 
 	virtual void newPresSubServerRequest(const std::string& remote) {}
+
+    virtual void on_secure_sdes_on(const std::string& callID) {}
+
+    virtual void on_secure_sdes_off(const std::string& callID) {}
+
+    virtual void on_secure_zrtp_on(const std::string& callID,
+                                const std::string& cipher) {}
+
+    virtual void on_secure_zrtp_off(const std::string& callID) {}
+
+    virtual void on_show_sas(const std::string& callID,
+                        const std::string& sas,
+                        const bool& verified) {}
+
+    virtual void on_zrtp_not_supported(const std::string& callID) {}
+
+    virtual void on_zrtp_negociation_failed(const std::string& callID,
+                                                const std::string& reason,
+                                                const std::string& severity) {}
 };
 
 
@@ -172,6 +210,34 @@ void on_newPresSubServerRequest_wrapper(const std::string& remote) {
 	registeredCallbackObject->newPresSubServerRequest(remote);
 }
 
+void on_secure_sdes_on_wrapper(const std::string& callID){
+    registeredCallbackObject->on_secure_sdes_on(callID);
+}
+
+void on_secure_sdes_off_wrapper(const std::string& callID) {
+    registeredCallbackObject->on_secure_sdes_off(callID);
+}
+
+void on_secure_zrtp_on_wrapper(const std::string& callID,const std::string& cipher){
+    registeredCallbackObject->on_secure_zrtp_on(callID, cipher);
+}
+
+void on_secure_zrtp_off_wrapper(const std::string& callID){
+    registeredCallbackObject->on_secure_zrtp_off(callID);
+}
+
+void on_show_sas_wrapper(const std::string& callID, const std::string& sas, const bool& verified){
+    registeredCallbackObject->on_show_sas(callID, sas, verified);
+}
+
+void on_zrtp_not_supported_wrapper(const std::string& callID){
+    registeredCallbackObject->on_zrtp_not_supported(callID);
+}
+
+void on_zrtp_negociation_failed_wrapper(const std::string& callID, const std::string& reason, const std::string& severity){
+    registeredCallbackObject->on_zrtp_negociation_failed(callID, reason, severity);
+}
+
 static struct callmanager_callback wrapper_callback_struct = {
     &on_new_call_created_wrapper,
     &on_call_state_changed_wrapper,
@@ -185,6 +251,13 @@ static struct callmanager_callback wrapper_callback_struct = {
     &on_recording_state_changed_wrapper,
 	&on_newPresSubClientNotification_wrapper,
 	&on_newPresSubServerRequest_wrapper,
+    &on_secure_sdes_on_wrapper,
+    &on_secure_sdes_off_wrapper,
+    &on_secure_zrtp_on_wrapper,
+    &on_secure_zrtp_off_wrapper,
+    &on_show_sas_wrapper,
+    &on_zrtp_not_supported_wrapper,
+    &on_zrtp_negociation_failed_wrapper
 };
 
 void setCallbackObject(Callback* callback) {
@@ -288,6 +361,25 @@ public:
 											const std::string& note);
 
 	virtual void newPresSubServerRequest(const std::string& remote);
+
+    virtual void on_secure_sdes_on(const std::string& callID);
+
+    virtual void on_secure_sdes_off(const std::string& callID);
+
+    virtual void on_secure_zrtp_on(const std::string& callID,
+                                const std::string& cipher);
+
+    virtual void on_secure_zrtp_off(const std::string& callID);
+
+    virtual void on_show_sas(const std::string& callID,
+                        const std::string& sas,
+                        const bool& verified);
+
+    virtual void on_zrtp_not_supported(const std::string& callID);
+
+    virtual void on_zrtp_negociation_failed(const std::string& callID,
+                                                const std::string& reason,
+                                                const std::string& severity);
 };
 
 static Callback* registeredCallbackObject = NULL;
