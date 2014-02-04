@@ -57,14 +57,25 @@ private:
    virtual uint32_t getSDPClockRate() const;
    virtual const char *getSDPChannels() const;
 
+   virtual void setOptimalFormat(uint32_t sample_rate, uint8_t channels);
+
    NON_COPYABLE(Opus);
    //Attributes
    OpusEncoder *encoder_;
    OpusDecoder *decoder_;
 
-   static const int FRAME_SIZE = 160;
-   static const int CLOCK_RATE = 16000;
-   static const int CHANNELS   = 1;
+   // Valid sampling rates allowed by the Opus library.
+   static constexpr uint32_t VALID_SAMPLING_RATE[] = {8000, 12000, 16000, 24000, 48000};
+   static constexpr size_t VALID_SAMPLING_RATE_NUM = sizeof(VALID_SAMPLING_RATE)/sizeof(uint32_t);
+
+   static const unsigned CLOCK_RATE = 48000;
+   static const unsigned FRAME_SIZE = 10 * CLOCK_RATE / 1000; // 10ms
+   static const unsigned CHANNELS   = 2;
+
+   // Opus documentation:
+   // "If this is less than the maximum packet duration (120ms; 5760 for 48kHz),
+   // opus_decode will not be capable of decoding some packets."
+   static const unsigned MAX_PACKET_SIZE = 120 * CLOCK_RATE / 1000; // 120ms
 };
 
 #endif

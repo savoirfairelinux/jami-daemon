@@ -32,31 +32,22 @@
 #include "sfl_types.h"
 #include <stdexcept>
 #include <iostream>
+#include <array>
 
+constexpr uint32_t Opus::VALID_SAMPLING_RATE[];
 
-Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
-    encoder_(0),
-    decoder_(0)
+Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "opus", CLOCK_RATE, FRAME_SIZE, 1),
+    encoder_(nullptr),
+    decoder_(nullptr)
 {
     hasDynamicPayload_ = true;
-
-    int err = 0;
-    encoder_ = opus_encoder_create(CLOCK_RATE, CHANNELS, OPUS_APPLICATION_VOIP, &err);
-
-    if (err)
-        throw std::runtime_error("opus: could not create encoder");
-
-    decoder_ = opus_decoder_create(CLOCK_RATE, CHANNELS, &err);
-
-    if (err)
-        throw std::runtime_error("opus: could not create decoder");
+    setOptimalFormat(CLOCK_RATE, 1);
 }
 
 Opus::~Opus()
 {
     if (encoder_)
         opus_encoder_destroy(encoder_);
-
     if (decoder_)
         opus_decoder_destroy(decoder_);
 }
@@ -65,6 +56,39 @@ sfl::AudioCodec *
 Opus::clone()
 {
     return new Opus;
+}
+
+void Opus::setOptimalFormat(uint32_t sample_rate, uint8_t channels)
+{
+    // Use a SR higher or equal to sample_rate.
+    // Typical case: 44.1kHz => 48kHz.
+    unsigned i=0;
+    while(i<VALID_SAMPLING_RATE_NUM-1 && VALID_SAMPLING_RATE[i] < sample_rate) i++;
+    sample_rate = VALID_SAMPLING_RATE[i];
+
+    // Opus supports 1 or 2 channels.
+    channels = std::max(std::min(channels, (uint8_t)2), (uint8_t)1);
+
+    if(not (!encoder_ || !decoder_ || sample_rate!=clockRate_ || channels!=channel_))
+        return;
+
+    clockRate_ = sample_rate;
+    channel_ = channels;
+
+    std::cerr << "Opus switch mode: " << clockRate_ << "kHz, " << (unsigned)channel_ << "channels." << std::endl;
+
+    int err;
+    if (encoder_)
+        opus_encoder_destroy(encoder_);
+    encoder_ = opus_encoder_create(clockRate_, channel_, OPUS_APPLICATION_VOIP, &err);
+    if (err)
+        throw std::runtime_error("opus: could not create encoder");
+
+    if (decoder_)
+        opus_decoder_destroy(decoder_);
+    decoder_ = opus_decoder_create(clockRate_, channel_, &err);
+    if (err)
+        throw std::runtime_error("opus: could not create decoder");
 }
 
 // Reference: http://tools.ietf.org/html/draft-spittka-payload-rtp-opus-03#section-6.2
@@ -99,26 +123,47 @@ int Opus::encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size)
 
 int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size)
 {
-    if (buf == NULL) return 0;
+    if (buf == nullptr) return 0;
 
-    const int ret = opus_decode(decoder_, buf, buffer_size, dst[0].data(), sizeof(SFLAudioSample) * FRAME_SIZE, 0);
+    int ret;
+    if(channel_ == 1) {
+        ret = opus_decode(decoder_, buf, buffer_size, dst[0].data(), MAX_PACKET_SIZE, 0);
+    } else {
+        std::array<SFLAudioSample, 2*MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
+        ret = opus_decode(decoder_, buf, buffer_size, ibuf.data(), MAX_PACKET_SIZE, 0);
+        for(int i=0; i<ret; i++) {
+            dst[0][i] = ibuf[2*i];
+            dst[1][i] = ibuf[2*i+1];
+        }
+    }
     if (ret < 0)
         std::cerr << opus_strerror(ret) << std::endl;
-
+    else {
+        for(auto& c: dst)
+            c.resize(ret);
+    }
     return ret;
 }
 
 int Opus::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size)
 {
-    if (dst == NULL) return 0;
+    if (dst == nullptr) return 0;
 
-    const int ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size * sizeof(SFLAudioSample));
+    int ret;
+    if(channel_ == 1) {
+        ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size);
+    } else {
+        std::array<SFLAudioSample, 2*FRAME_SIZE> ibuf; // interleave on stack, 1.875KiB used;
+        for(unsigned i=0; i<FRAME_SIZE; i++) {
+            ibuf[2*i] = src[0][i];
+            ibuf[2*i+1] = src[1][i];
+        }
+        ret = opus_encode(encoder_, ibuf.data(), FRAME_SIZE, dst, buffer_size);
+    }
     if (ret < 0)
         std::cerr << opus_strerror(ret) << std::endl;
-
     return ret;
 }
-
 
 // cppcheck-suppress unusedFunction
 extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()

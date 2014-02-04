@@ -40,13 +40,13 @@
 #define STR(s) #s
 
 /* bump when codec binary interface changes */
-#define AUDIO_CODEC_ENTRY create_1_3_0
+#define AUDIO_CODEC_ENTRY create_1_4_0
 #define AUDIO_CODEC_ENTRY_SYMBOL XSTR(AUDIO_CODEC_ENTRY)
 
 // We assume all decoders will be fed 20ms of audio or less
-// And we'll resample them to 44.1kHz or less
-// Also assume mono
-#define DEC_BUFFER_SIZE ((44100 * 20) / 1000)
+// And we'll resample them to 48kHz or less
+// Also assume stereo
+#define DEC_BUFFER_SIZE (2 * (48000 * 40) / 1000)
 
 namespace sfl {
 
@@ -111,13 +111,19 @@ class AudioCodec {
         unsigned getChannels() const;
         // channels in SDP MAY be different than actual channels (in derived classes)
         // Should be an empty string EXCEPT for Opus which returns "2".
-        virtual const char *
-        getSDPChannels() const;
+        virtual const char * getSDPChannels() const;
 
         /**
          * @return the framing size for this codec.
          */
         unsigned int getFrameSize() const;
+
+        /**
+         * Set the sampling rate and channel number preffered by the core.
+         * May or may not be considered by the codec.
+         * Use getClockRate() and getChannels() to get the format used by the codec.
+         */
+        virtual void setOptimalFormat(uint32_t /* sample_rate */ , uint8_t /* channels */ ) {}
 
     protected:
         /** Holds SDP-compliant codec name */
@@ -135,12 +141,12 @@ class AudioCodec {
         /** Bitrate */
         double bitrate_;
 
+        uint8_t payload_;
+        bool hasDynamicPayload_;
+
     private:
         AudioCodec& operator=(const AudioCodec&);
 
-protected:
-        uint8_t payload_;
-        bool hasDynamicPayload_;
 };
 } // end namespace sfl
 
