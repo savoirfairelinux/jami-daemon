@@ -184,7 +184,7 @@ class AudioRtpFactory {
         /** Used to make sure remote crypto context not initialized twice. */
         bool remoteOfferIsSet_;
 
-        SIPCall *ca_;
+        SIPCall *call_;
         KeyExchangeProtocol keyExchangeProtocol_;
 };
 }

@@ -52,7 +52,7 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(),
     cachedLocalMasterSalt_(MAX_MASTER_SALT_LENGTH),
     cachedRemoteMasterKey_(MAX_MASTER_KEY_LENGTH),
     cachedRemoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
-    remoteOfferIsSet_(false), ca_(ca),
+    remoteOfferIsSet_(false), call_(ca),
     keyExchangeProtocol_(NONE)
 {
     // FIXME: workaround for uncatchable ost::Socket "exceptions"
@@ -66,7 +66,7 @@ void AudioRtpFactory::initConfig()
 {
     stop();
 
-    const std::string accountId(ca_->getAccountId());
+    const std::string accountId(call_->getAccountId());
 
     SIPAccount *account = Manager::instance().getSipAccount(accountId);
 
@@ -137,19 +137,19 @@ void AudioRtpFactory::initSession()
 #if HAVE_ZRTP
 
             case ZRTP: {
-                const auto ctor = [&] () {return new AudioZrtpSession(*ca_, zidFilename);};
+                const auto ctor = [&] () {return new AudioZrtpSession(*call_, zidFilename);};
                 rtpSession_.reset(callConstructor(ctor));
 
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                 // not even available at that point.
                 if (helloHashEnabled_)
-                    ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_.get())->getHelloHash());
+                    call_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_.get())->getHelloHash());
                 break;
             }
 #endif
 
             case SDES: {
-                const auto ctor = [&] () {return new AudioSrtpSession(*ca_);};
+                const auto ctor = [&] () {return new AudioSrtpSession(*call_);};
                 rtpSession_.reset(callConstructor(ctor));
                 break;
             }
@@ -158,7 +158,7 @@ void AudioRtpFactory::initSession()
                 throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
     } else {
-        const auto ctor = [&] () {return new AudioSymmetricRtpSession(*ca_);};
+        const auto ctor = [&] () {return new AudioSymmetricRtpSession(*call_);};
         rtpSession_.reset(callConstructor(ctor));
     }
 }
@@ -243,7 +243,7 @@ void AudioRtpFactory::initLocalCryptoInfo()
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_.get());
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
         srtp->initLocalCryptoInfo();
-        ca_->getLocalSDP()->setLocalSdpCrypto(srtp->getLocalCryptoInfo());
+        call_->getLocalSDP()->setLocalSdpCrypto(srtp->getLocalCryptoInfo());
     }
 }
 
@@ -255,7 +255,7 @@ void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_.get());
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
         srtp->initLocalCryptoInfoOnOffhold();
-        ca_->getLocalSDP()->setLocalSdpCrypto(srtp->getLocalCryptoInfo());
+        call_->getLocalSDP()->setLocalSdpCrypto(srtp->getLocalCryptoInfo());
     }
 }
 
