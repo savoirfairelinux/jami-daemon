@@ -70,18 +70,8 @@ void AudioZrtpSession::initializeZid()
     if (zidFilename_.empty())
         throw ZrtpZidException("zid filename empty");
 
-    const std::string cache_home(XDG_CACHE_HOME);
-    std::string zidDirName;
-    std::string zidCompleteFilename;
-
-    if (not cache_home.empty()) {
-        zidDirName = cache_home;
-    } else {
-        zidDirName = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
-                              ".cache" + DIR_SEPARATOR_STR + PACKAGE;
-    }
-
-    zidCompleteFilename = zidDirName + DIR_SEPARATOR_STR + zidFilename_;
+    const std::string zidDirName(fileutils::get_cache_dir());
+    const std::string zidCompleteFilename(zidDirName + DIR_SEPARATOR_STR + zidFilename_);
 
     fileutils::check_dir(zidDirName.c_str());
 

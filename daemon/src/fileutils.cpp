@@ -178,6 +178,18 @@ FileHandle::~FileHandle()
     }
 }
 
+std::string
+get_cache_dir()
+{
+    const std::string cache_home(XDG_CACHE_HOME);
+
+    if (not cache_home.empty()) {
+        return cache_home;
+    } else {
+        return get_home_dir() + DIR_SEPARATOR_STR +
+            ".cache" + DIR_SEPARATOR_STR + PACKAGE;
+    }
+}
 
 std::string
 get_home_dir()
