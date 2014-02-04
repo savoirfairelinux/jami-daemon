@@ -104,7 +104,7 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
             queue_.setPayloadFormat(ost::StaticPayloadFormat(static_cast<ost::StaticPayloadType>(payloadType)));
     }
 
-    call_.setRecordingSmplRate(getCodecSampleRate());
+    call_.setRecordingFormat(getCodecFormat());
 
     int transportRate = getCodecFrameSize() / (getCodecSampleRate() / 1000);
     transportRate_ = (transportRate > 0)?transportRate:20;

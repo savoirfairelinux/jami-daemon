@@ -129,12 +129,16 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.codecSampleRate_;
         }
 
-        int getCodecFrameSize() const {
-            return audioRtpRecord_.codecFrameSize_;
-        }
-
         int getCodecChannels() const {
             return audioRtpRecord_.codecChannels_;
+        }
+
+        inline AudioFormat getCodecFormat() const {
+            return AudioFormat(audioRtpRecord_.codecSampleRate_, audioRtpRecord_.codecChannels_);
+        }
+
+        int getCodecFrameSize() const {
+            return audioRtpRecord_.codecFrameSize_;
         }
 
         bool hasDynamicPayload() const {

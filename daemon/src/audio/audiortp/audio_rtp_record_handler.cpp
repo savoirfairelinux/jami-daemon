@@ -55,15 +55,15 @@ AudioRtpRecord::AudioRtpRecord() :
     , decData_(DEC_BUFFER_SIZE, AudioFormat::MONO)
     , resampledData_(0, AudioFormat::MONO)
     , encodedData_()
-    , converterEncode_(0)
-    , converterDecode_(0)
+    , converterEncode_(nullptr)
+    , converterDecode_(nullptr)
     , codecFrameSize_(0)
     , codecChannels_(0)
     , converterSamplingRate_(0)
     , fadeFactor_(1.0 / 32000.0)
 #if HAVE_SPEEXDSP
-    , dspEncode_(0)
-    , dspDecode_(0)
+    , dspEncode_(nullptr)
+    , dspDecode_(nullptr)
     , audioProcessMutex_()
 #endif
     , dead_(false)
@@ -100,6 +100,8 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
 {
     for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
         if (*i and (*i)->getPayloadType() == newPt) {
+            AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
+            (*i)->setOptimalFormat(f.sample_rate, f.channel_num);
             decoderPayloadType_ = (*i)->getPayloadType();
             codecSampleRate_ = (*i)->getClockRate();
             codecFrameSize_ = (*i)->getFrameSize();
@@ -182,6 +184,8 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
         return;
     }
 
+    AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    audioCodecs[0]->setOptimalFormat(f.sample_rate, f.channel_num);
     audioRtpRecord_.currentCodecIndex_ = 0;
     audioRtpRecord_.encoderPayloadType_ = audioRtpRecord_.decoderPayloadType_ = audioCodecs[0]->getPayloadType();
     audioRtpRecord_.codecSampleRate_ = audioCodecs[0]->getClockRate();
@@ -227,10 +231,10 @@ int AudioRtpRecordHandler::processDataEncode()
     if (audioRtpRecord_.isDead())
         return 0;
 
-    int codecSampleRate = getCodecSampleRate();
-    int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
+    AudioFormat codecFormat = getCodecFormat();
+    AudioFormat mainBufferFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
 
-    double resampleFactor = (double) mainBufferSampleRate / codecSampleRate;
+    double resampleFactor = (double) mainBufferFormat.sample_rate / codecFormat.sample_rate;
 
     // compute nb of byte to get corresponding to 1 audio frame
     const size_t samplesToGet = resampleFactor * getCodecFrameSize();
@@ -238,8 +242,7 @@ int AudioRtpRecordHandler::processDataEncode()
     if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
         return 0;
 
-    AudioBuffer& micData = audioRtpRecord_.decData_;
-    micData.resize(samplesToGet);
+    AudioBuffer micData(samplesToGet, mainBufferFormat);
     const size_t samps = Manager::instance().getMainBuffer().getData(micData, id_);
 
     if (samps != samplesToGet) {
@@ -251,11 +254,10 @@ int AudioRtpRecordHandler::processDataEncode()
 
     AudioBuffer *out = &micData;
 
-    if (codecSampleRate != mainBufferSampleRate) {
+    if (codecFormat.sample_rate != mainBufferFormat.sample_rate) {
         RETURN_IF_NULL(audioRtpRecord_.converterEncode_, 0, "Converter already destroyed");
 
-        micData.setSampleRate(mainBufferSampleRate);
-        audioRtpRecord_.resampledData_.setSampleRate(codecSampleRate);
+        audioRtpRecord_.resampledData_.setFormat(codecFormat);
         audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledData_);
 
         out = &(audioRtpRecord_.resampledData_);
@@ -312,13 +314,13 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         }
     }
 
-    size = std::min(size, audioRtpRecord_.decData_.frames());
-
     {
         std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         // Return the size of data in samples
-        audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
+        audioRtpRecord_.decData_.setFormat(getCodecFormat());
+        //audioRtpRecord_.decData_.resize(5760);
+        int decoded = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
     }
 
 #if HAVE_SPEEXDSP
@@ -343,20 +345,17 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
 #endif
 
-    // ensure that decoded buffer's reported sample rate value
-    // is consistent with our decoder.
-    audioRtpRecord_.decData_.setSampleRate(getCodecSampleRate());
     audioRtpRecord_.fadeInDecodedData();
 
     AudioBuffer *out = &(audioRtpRecord_.decData_);
 
     int codecSampleRate = out->getSampleRate();
-    int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
+    AudioFormat mainBufferFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
 
     // test if resampling is required
-    if (codecSampleRate != mainBufferSampleRate) {
+    if (codecSampleRate != mainBufferFormat.sample_rate) {
         RETURN_IF_NULL(audioRtpRecord_.converterDecode_, "Converter already destroyed");
-        audioRtpRecord_.resampledData_.setSampleRate(mainBufferSampleRate);
+        audioRtpRecord_.resampledData_.setFormat(mainBufferFormat);
         out = &(audioRtpRecord_.resampledData_);
         // Do sample rate conversion
         audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledData_);
