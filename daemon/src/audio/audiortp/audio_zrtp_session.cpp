@@ -41,14 +41,15 @@
 
 namespace sfl {
 
-AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename) :
-    ost::SymmetricZRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
+AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename,
+                                   const std::string &localIP) :
+    ost::SymmetricZRTPSession(ost::InetHostAddress(localIP.c_str()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
     , zidFilename_(zidFilename)
 {
     initializeZid();
     DEBUG("Setting new RTP session with destination %s:%d",
-          call_.getLocalIp().c_str(), call_.getLocalAudioPort());
+          localIP.c_str(), call_.getLocalAudioPort());
     audioRtpRecord_.callId_ = call_.getCallId();
 }
 

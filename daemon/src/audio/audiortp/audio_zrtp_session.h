@@ -56,7 +56,7 @@ class AudioZrtpSession :
     public ost::SymmetricZRTPSession,
     public AudioRtpSession {
     public:
-        AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
+        AudioZrtpSession(SIPCall &call, const std::string& zidFilename, const std::string &localIP);
 
         std::vector<long>
         getSocketDescriptors() const;

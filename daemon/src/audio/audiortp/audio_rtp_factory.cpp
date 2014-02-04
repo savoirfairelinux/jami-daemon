@@ -108,7 +108,7 @@ void AudioRtpFactory::initSession()
 #if HAVE_ZRTP
 
             case ZRTP: {
-                rtpSession_.reset(new AudioZrtpSession(*call_, zidFilename));
+                rtpSession_.reset(new AudioZrtpSession(*call_, zidFilename, call_->getLocalIp()));
 
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                 // not even available at that point.
