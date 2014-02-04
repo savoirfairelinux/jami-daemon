@@ -46,7 +46,9 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
     ost::SymmetricZRTPSession(ost::InetHostAddress(localIP.c_str()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
     , zidFilename_(zidFilename)
+    , zrtpConfigure_()
 {
+    setEnrollmentMode(false);
     setSignSas(false);
     initializeZid();
     DEBUG("Setting new RTP session with destination %s:%d",
@@ -83,7 +85,13 @@ void AudioZrtpSession::initializeZid()
 
     fileutils::check_dir(zidDirName.c_str());
 
-    if (initialize(zidCompleteFilename.c_str()) >= 0) {
+    // workaround buggy libzrtpcpp that can't parse EC25, see:
+    // https://projects.savoirfairelinux.com/issues/40216
+    zrtpConfigure_.reset(new ZrtpConfigure);
+    // FIXME: perhaps this should be only done for libzrtpcpp < 3?
+    zrtpConfigure_->setMandatoryOnly();
+
+    if (initialize(zidCompleteFilename.c_str(), true, zrtpConfigure_.get()) >= 0) {
         setEnableZrtp(true);
         setUserCallback(new ZrtpSessionCallback(call_));
         return;

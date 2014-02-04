@@ -37,6 +37,7 @@
 using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <libzrtpcpp/zrtpccrtp.h>
+#include <memory>
 
 #include "global.h"
 #include "audio_rtp_session.h"
@@ -79,6 +80,7 @@ class AudioZrtpSession :
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
+        std::unique_ptr<ZrtpConfigure> zrtpConfigure_;
         void startReceiveThread();
         virtual int getIncrementForDTMF() const;
 };
