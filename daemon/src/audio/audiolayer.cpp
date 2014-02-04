@@ -41,11 +41,11 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
     , isStarted_(false)
-    , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())
-    , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID, AudioFormat(sampleRate_))
+    , audioFormat_(Manager::instance().getMainBuffer().getInternalAudioFormat())
+    , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID, audioFormat_)
     , mutex_()
     , dcblocker_()
-    , converter_(sampleRate_)
+    , converter_(audioFormat_.sample_rate)
     , lastNotificationTime_(0)
 {
     urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
@@ -59,7 +59,7 @@ void AudioLayer::hardwareFormatAvailable()
     std::lock_guard<std::mutex> lock(mutex_);
     AudioFormat format = getPreferredAudioFormat();
     DEBUG("hardwareFormatAvailable : %s", format.toString().c_str());
-    sampleRate_ = format.sample_rate;
+    audioFormat_ = format;
     urgentRingBuffer_.setFormat(format);
     converter_.setFormat(format);
     Manager::instance().hardwareAudioFormatChanged(format);

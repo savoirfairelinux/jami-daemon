@@ -348,7 +348,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     TRY(snd_pcm_hw_params_any(HW), "hwparams init");
     TRY(snd_pcm_hw_params_set_access(HW, SND_PCM_ACCESS_RW_INTERLEAVED), "access type");
     TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_S16_LE), "sample format");
-    TRY(snd_pcm_hw_params_set_rate_near(HW, &sampleRate_, NULL), "sample rate");
+    TRY(snd_pcm_hw_params_set_rate_near(HW, &audioFormat_.sample_rate, NULL), "sample rate");
     TRY(snd_pcm_hw_params_set_channels(HW, 1), "channel count");
 
     snd_pcm_hw_params_get_buffer_size_min(hwparams, &buffer_size_min);
@@ -379,9 +379,9 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 
 #undef HW
 
-    DEBUG("%s using sampling rate %dHz",
+    DEBUG("%s using format %s",
           (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
-          sampleRate_);
+          audioFormat_.toString().c_str() );
 
     snd_pcm_sw_params_t *swparams = NULL;
     snd_pcm_sw_params_alloca(&swparams);
@@ -689,7 +689,7 @@ AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
 void AlsaLayer::capture()
 {
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
-    bool resample = sampleRate_ != mainBufferSampleRate;
+    bool resample = audioFormat_.sample_rate != mainBufferSampleRate;
 
     int toGetSamples = snd_pcm_avail_update(captureHandle_);
 
@@ -702,7 +702,7 @@ void AlsaLayer::capture()
     const int framesPerBufferAlsa = 2048;
     toGetSamples = std::min(framesPerBufferAlsa, toGetSamples);
 
-    AudioBuffer in(toGetSamples, AudioFormat(sampleRate_, 1));
+    AudioBuffer in(toGetSamples, audioFormat_);
 
     // TODO: handle ALSA multichannel capture
     const int toGetBytes = in.frames() * sizeof(SFLAudioSample);
@@ -716,7 +716,7 @@ void AlsaLayer::capture()
     in.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     if (resample) {
-        int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
+        int outSamples = toGetSamples * (static_cast<double>(audioFormat_.sample_rate) / mainBufferSampleRate);
         AudioBuffer rsmpl_out(outSamples, AudioFormat(mainBufferSampleRate, 1));
         converter_.resample(in, rsmpl_out);
         dcblocker_.process(rsmpl_out);
@@ -740,7 +740,7 @@ void AlsaLayer::playback(int maxSamples)
         AudioLoop *tone = Manager::instance().getTelephoneTone();
         AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
-        AudioBuffer out(maxSamples, AudioFormat(sampleRate_, 1));
+        AudioBuffer out(maxSamples, audioFormat_);
 
         if (tone)
             tone->getNext(out, playbackGain_);
@@ -752,13 +752,13 @@ void AlsaLayer::playback(int maxSamples)
         // play the regular sound samples
 
         const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
-        const bool resample = sampleRate_ != mainBufferSampleRate;
+        const bool resample = audioFormat_.sample_rate != mainBufferSampleRate;
 
         double resampleFactor = 1.0;
         size_t maxNbBytesToGet = bytesToPut;
 
         if (resample) {
-            resampleFactor = static_cast<double>(sampleRate_) / mainBufferSampleRate;
+            resampleFactor = static_cast<double>(audioFormat_.sample_rate) / mainBufferSampleRate;
             maxNbBytesToGet = bytesToGet / resampleFactor;
         }
 
@@ -773,7 +773,7 @@ void AlsaLayer::playback(int maxSamples)
         if (resample) {
             const size_t outSamples = samplesToGet * resampleFactor;
             const size_t outBytes = outSamples * sizeof(SFLAudioSample);
-            AudioBuffer rsmpl_out(outSamples, AudioFormat(sampleRate_, 1));
+            AudioBuffer rsmpl_out(outSamples, audioFormat_);
             converter_.resample(out, rsmpl_out);
             write(rsmpl_out.getChannel(0)->data(), outBytes, playbackHandle_);
         } else {

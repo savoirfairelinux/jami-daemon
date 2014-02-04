@@ -335,7 +335,7 @@ void PulseLayer::createStreams(pa_context* c)
         DEBUG("Prefered playback device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
 
-    playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, sampleRate_, dev_infos);
+    playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos);
 
     hardwareFormatAvailable();
 
@@ -350,7 +350,7 @@ void PulseLayer::createStreams(pa_context* c)
         DEBUG("Prefered capture device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
 
-    record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, sampleRate_, dev_infos);
+    record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos);
 
     pa_stream_set_read_callback(record_->pulseStream() , capture_callback, this);
     pa_stream_set_moved_callback(record_->pulseStream(), stream_moved_callback, this);
@@ -363,7 +363,7 @@ void PulseLayer::createStreams(pa_context* c)
         DEBUG("Prefered ringtone device not found in device list, selecting %s instead.", dev_infos->name.c_str());
     }
 
-    ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, sampleRate_, dev_infos);
+    ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos);
 
     pa_stream_set_write_callback(ringtone_->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone_->pulseStream(), stream_moved_callback, this);
@@ -508,10 +508,10 @@ void PulseLayer::writeToSpeaker()
     double resampleFactor = 1.;
 
     AudioFormat mainBufferAudioFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
-    bool resample = sampleRate_ != mainBufferAudioFormat.sample_rate;
+    bool resample = audioFormat_.sample_rate != mainBufferAudioFormat.sample_rate;
 
     if (resample) {
-        resampleFactor = (double) sampleRate_ / mainBufferAudioFormat.sample_rate;
+        resampleFactor = (double) audioFormat_.sample_rate / mainBufferAudioFormat.sample_rate;
         readableSamples = (double) readableSamples / resampleFactor;
     }
 
@@ -559,7 +559,7 @@ void PulseLayer::readFromMic()
     in.deinterleave((SFLAudioSample*)data, samples, format.channel_num);
 
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
-    bool resample = sampleRate_ != mainBufferSampleRate;
+    bool resample = audioFormat_.sample_rate != mainBufferSampleRate;
 
     in.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 

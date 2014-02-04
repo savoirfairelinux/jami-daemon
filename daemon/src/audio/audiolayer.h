@@ -175,7 +175,14 @@ class AudioLayer {
          *			    default: 44100 HZ
          */
         unsigned int getSampleRate() const {
-            return sampleRate_;
+            return audioFormat_.sample_rate;
+        }
+
+        /**
+         * Get the audio format of the layer (sample rate & channel number).
+         */
+        AudioFormat getFormat() const {
+            return audioFormat_;
         }
 
         /**
@@ -228,7 +235,7 @@ class AudioLayer {
          * Sample Rate SFLphone should send sound data to the sound card
          * The value can be set in the user config file- now: 44100HZ
          */
-        unsigned int sampleRate_;
+        AudioFormat audioFormat_;
 
         /**
          * Urgent ring buffer used for ringtones

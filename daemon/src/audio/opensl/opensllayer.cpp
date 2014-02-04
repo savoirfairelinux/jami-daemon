@@ -295,7 +295,7 @@ OpenSLLayer::initAudioPlayback()
     DEBUG("Setting audio format\n");
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM,
                                     1,
-                                    sampleRate_ * 1000,
+                                    audioFormat_.sample_rate * 1000,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
                                     SL_SPEAKER_FRONT_CENTER,
@@ -393,10 +393,10 @@ OpenSLLayer::initAudioCapture()
                                            NB_BUFFER_CAPTURE_QUEUE
                                                            };
 
-	DEBUG("Capture-> Sampling Rate: %d", sampleRate_);
+	DEBUG("Capture-> Sampling Rate: %d", audioFormat_.sample_rate);
 	DEBUG("Capture-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
-                                    sampleRate_ * 1000,
+                                    audioFormat_.sample_rate * 1000,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
                                     SL_SPEAKER_FRONT_CENTER,
@@ -750,12 +750,12 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
 
     //const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
     const AudioFormat mainBufferFormat = mbuffer.getInternalAudioFormat();
-    const bool resample = mainBufferFormat.sample_rate != sampleRate_;
+    const bool resample = mainBufferFormat.sample_rate != audioFormat_.sample_rate;
 
     buffer.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     if (resample) {
-		int outSamples = buffer.frames() * (static_cast<double>(sampleRate_) / mainBufferFormat.sample_rate);
+		int outSamples = buffer.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
         AudioBuffer out(outSamples, mainBufferFormat);
         converter_.resample(buffer, out);
         dcblocker_.process(out);
@@ -807,10 +807,10 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samples
     mainBuffer.getData(buffer, MainBuffer::DEFAULT_ID);
     buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
-    if (sampleRate_ != mainBuffer.getInternalSamplingRate()) {
-        DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sampleRate_ != mainBuffer.getInternalSamplingRate() \n");
+    if (audioFormat_.sample_rate != mainBuffer.getInternalSamplingRate()) {
+        DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
         AudioBuffer out(buffer, false);
-        out.setSampleRate(sampleRate_);
+        out.setSampleRate(audioFormat_.sample_rate);
         converter_.resample(buffer, out);
         buffer = out;
     }
