@@ -407,6 +407,7 @@
         </method>
 
         <method name="getCurrentAudioCodecName" tp:name-for-bindings="getCurrentAudioCodecName">
+            <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
             <arg type="s" name="callID" direction="in"/>
             <arg type="s" name="codecName" direction="out"/>
         </method>

@@ -148,6 +148,7 @@
         </signal>
 
         <method name="getCurrentCodecName" tp:name-for-bindings="getCurrentCodecName">
+            <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
             <arg type="s" name="callID" direction="in"/>
             <arg type="s" name="codecName" direction="out"/>
         </method>
