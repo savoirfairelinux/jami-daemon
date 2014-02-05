@@ -225,10 +225,6 @@ size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_
         resize(pos_out + to_copy);
 
     sampleRate_ = in.sampleRate_;
-    /*if(chan_num > samples_.size()) {
-        WARN("Growing channel number %d -> %d chan", samples_.size(), chan_num);
-        setChannelNum(chan_num);
-    }*/
 
     for (unsigned i = 0; i < chan_num; i++) {
         size_t src_chan = upmix ? std::min<size_t>(i, in.samples_.size() - 1U) : i;
