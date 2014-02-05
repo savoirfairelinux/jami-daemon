@@ -66,7 +66,6 @@
                         <li>TLS_VERIFY_CLIENT</li>
                         <li>TLS_REQUIRE_CLIENT_CERTIFICATE</li>
                         <li>TLS_NEGOTIATION_TIMEOUT_SEC</li>
-                        <li>TLS_NEGOTIATION_TIMEOUT_MSEC</li>
                     </ul>
                 </tp:docstring>
             </arg>
@@ -124,7 +123,6 @@
             <li>TLS_VERIFY_CLIENT</li>
             <li>TLS_REQUIRE_CLIENT_CERTIFICATE</li>
             <li>TLS_NEGOTIATION_TIMEOUT_SEC</li>
-            <li>TLS_NEGOTIATION_TIMEOUT_MSEC</li>
             </ul>
             </tp:docstring>
             </arg>

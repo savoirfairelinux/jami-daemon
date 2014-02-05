@@ -98,7 +98,6 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gchar * verify_client = NULL;
     gchar * require_client_certificate = NULL;
     gchar * negotiation_timeout_sec = NULL;
-    gchar * negotiation_timeout_msec = NULL;
 
     if (account->properties != NULL) {
         tls_listener_port = account_lookup(account, CONFIG_TLS_LISTENER_PORT);
@@ -113,7 +112,6 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
         verify_client = account_lookup(account, CONFIG_TLS_VERIFY_CLIENT);
         require_client_certificate = account_lookup(account, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE);
         negotiation_timeout_sec = account_lookup(account, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC);
-        negotiation_timeout_msec = account_lookup(account, CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC);
     }
 
 
@@ -230,7 +228,7 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_entry_set_text(GTK_ENTRY(serverNameInstance), tls_server_name);
     gtk_grid_attach(GTK_GRID(grid), serverNameInstance, 1, 9, 1, 1);
 
-    label = gtk_label_new(_("Negotiation timeout (sec:msec)"));
+    label = gtk_label_new(_("Negotiation timeout (seconds)"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_grid_attach(GTK_GRID(grid), label, 0, 10, 1, 1);
     GtkWidget * tlsTimeOutSec;
@@ -240,11 +238,6 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), tlsTimeOutSec);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tlsTimeOutSec), g_ascii_strtod(negotiation_timeout_sec, NULL));
     gtk_box_pack_start(GTK_BOX(hbox), tlsTimeOutSec, TRUE, TRUE, 0);
-    GtkWidget * tlsTimeOutMSec;
-    tlsTimeOutMSec = gtk_spin_button_new_with_range(0, pow(2,sizeof(long)), 1);
-    gtk_label_set_mnemonic_widget(GTK_LABEL(label), tlsTimeOutMSec);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tlsTimeOutMSec), g_ascii_strtod(negotiation_timeout_msec, NULL));
-    gtk_box_pack_start(GTK_BOX(hbox), tlsTimeOutMSec, TRUE, TRUE, 0);
 
     GtkWidget * verifyCertificateServer;
     verifyCertificateServer = gtk_check_button_new_with_mnemonic(_("Verify incoming certificates, as a server"));
@@ -294,8 +287,6 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
         account_replace(account, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, toggle_to_string(requireCertificate));
 
         account_replace(account, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, gtk_entry_get_text(GTK_ENTRY(tlsTimeOutSec)));
-
-        account_replace(account, CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC, gtk_entry_get_text(GTK_ENTRY(tlsTimeOutMSec)));
     }
 
     gtk_widget_destroy(GTK_WIDGET(tlsDialog));

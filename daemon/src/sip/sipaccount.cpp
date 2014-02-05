@@ -111,7 +111,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , tlsVerifyClient_(true)
     , tlsRequireClientCertificate_(true)
     , tlsNegotiationTimeoutSec_("2")
-    , tlsNegotiationTimeoutMsec_("0")
     , stunServer_("")
     , stunEnabled_(false)
     , srtpEnabled_(false)
@@ -618,7 +617,6 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         tlsMap->getValue(VERIFY_SERVER_KEY, &tlsVerifyClient_);
         // FIXME
         tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutSec_);
-        tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutMsec_);
     }
     mapNode.getValue(USER_AGENT_KEY, &userAgent_);
 
@@ -725,7 +723,6 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseBool(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
     parseBool(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
     parseString(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
-    parseString(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
 
     if (credentials_.empty()) { // credentials not set, construct 1 entry
         WARN("No credentials set, inferring them...");
@@ -877,7 +874,6 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
-    a[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
 
     return a;
 }
@@ -1052,7 +1048,6 @@ void SIPAccount::initTlsConfiguration()
     tlsSetting_.require_client_cert = tlsRequireClientCertificate_;
 
     tlsSetting_.timeout.sec = atol(tlsNegotiationTimeoutSec_.c_str());
-    tlsSetting_.timeout.msec = atol(tlsNegotiationTimeoutMsec_.c_str());
 
     tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
     tlsSetting_.qos_ignore_error = PJ_TRUE;
@@ -1468,7 +1463,6 @@ std::map<std::string, std::string> SIPAccount::getTlsSettings() const
     tlsSettings[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     tlsSettings[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     tlsSettings[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
-    tlsSettings[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
 
     return tlsSettings;
 }
@@ -1514,7 +1508,6 @@ void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& detail
     set_opt(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
     set_opt(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
     set_opt(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
-    set_opt(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
 }
 
 VoIPLink* SIPAccount::getVoIPLink()

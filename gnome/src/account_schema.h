@@ -114,6 +114,5 @@ static const char *const CONFIG_TLS_VERIFY_SERVER               = "TLS.verifySer
 static const char *const CONFIG_TLS_VERIFY_CLIENT               = "TLS.verifyClient";
 static const char *const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE  = "TLS.requireClientCertificate";
 static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC     = "TLS.negotiationTimeoutSec";
-static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC    = "TLS.negotiationTimemoutMsec";
 
-#endif
+#endif // ACCOUNT_SCHEMA_H_

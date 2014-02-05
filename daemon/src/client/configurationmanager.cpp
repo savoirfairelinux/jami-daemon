@@ -85,7 +85,6 @@ ConfigurationManager::getTlsSettingsDefault()
     tlsSettingsDefault[CONFIG_TLS_VERIFY_CLIENT] = "true";
     tlsSettingsDefault[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
     tlsSettingsDefault[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
-    tlsSettingsDefault[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = "0";
 
     return tlsSettingsDefault;
 }
