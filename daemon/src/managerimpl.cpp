@@ -2302,44 +2302,6 @@ void ManagerImpl::hardwareAudioFormatChanged(AudioFormat format)
     dtmfKey_.reset(new DTMF(format.sample_rate));
 }
 
-/*
-void ManagerImpl::audioSamplingRateChanged(int samplerate)
-{
-    std::lock_guard<std::mutex> lock(audioLayerMutex_);
-
-    if (!audiodriver_) {
-        DEBUG("No Audio driver initialized");
-        return;
-    }
-
-    // Only modify internal sampling rate if new sampling rate is different
-    int currentSamplerate = mainBuffer_.getInternalSamplingRate();
-
-    if (currentSamplerate == samplerate) {
-        DEBUG("No need to update audio layer sampling rate");
-        return;
-    } else
-        DEBUG("Audio sampling rate changed: %d -> %d", currentSamplerate, samplerate);
-
-    bool wasActive = audiodriver_->isStarted();
-
-    mainBuffer_.setInternalSamplingRate(samplerate);
-
-    delete audiodriver_;
-    audiodriver_ = audioPreference.createAudioLayer();
-
-    unsigned int sampleRate = audiodriver_->getSampleRate();
-
-    {
-        std::lock_guard<std::mutex> toneLock(toneMutex_);
-        telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), sampleRate));
-    }
-    dtmfKey_.reset(new DTMF(sampleRate));
-
-    if (wasActive)
-        audiodriver_->startStream();
-}*/
-
 //THREAD=Main
 std::string ManagerImpl::getConfigString(const std::string& section,
                                          const std::string& name) const
