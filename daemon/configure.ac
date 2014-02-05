@@ -191,8 +191,8 @@ AC_ARG_WITH([zrtp],
 AS_IF([test "x$with_zrtp" = "xyes"], [
        PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= 3.0.0, [with_zrtp3=yes],
            dnl Fallback to older version
-           PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= 1.3.0, [with_zrtp3=no],
-               AC_MSG_ERROR([Missing zrtp development files])))
+           [PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= 1.3.0, [with_zrtp3=no],
+               AC_MSG_ERROR([Missing zrtp development files]))])
     ]);
 
 dnl This is a workaround until libzrtpcpp gets a version macro
