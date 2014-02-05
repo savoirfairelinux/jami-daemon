@@ -61,7 +61,7 @@ class MainBuffer {
             return internalAudioFormat_;
         }
 
-        void setInternalSamplingRate(int sr);
+        void setInternalSamplingRate(unsigned sr);
 
         void setInternalAudioFormat(AudioFormat format);
 

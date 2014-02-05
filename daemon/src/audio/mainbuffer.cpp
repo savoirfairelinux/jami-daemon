@@ -48,7 +48,7 @@ MainBuffer::~MainBuffer()
         delete item.second;
 }
 
-void MainBuffer::setInternalSamplingRate(int sr)
+void MainBuffer::setInternalSamplingRate(unsigned sr)
 {
     if (sr != internalAudioFormat_.sample_rate) {
         flushAllBuffers();
@@ -58,7 +58,7 @@ void MainBuffer::setInternalSamplingRate(int sr)
 
 void MainBuffer::setInternalAudioFormat(AudioFormat format)
 {
-    if(format != internalAudioFormat_) {
+    if (format != internalAudioFormat_) {
         flushAllBuffers();
         internalAudioFormat_ = format;
     }
@@ -66,7 +66,7 @@ void MainBuffer::setInternalAudioFormat(AudioFormat format)
 
 void MainBuffer::setMinimumAudioFormat(AudioFormat format)
 {
-    if(format.sample_rate > internalAudioFormat_.sample_rate ||
+    if (format.sample_rate > internalAudioFormat_.sample_rate or
         format.channel_num > internalAudioFormat_.channel_num) {
         setInternalAudioFormat(format);
     }
