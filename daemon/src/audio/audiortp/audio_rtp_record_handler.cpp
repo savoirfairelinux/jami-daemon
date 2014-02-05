@@ -258,7 +258,7 @@ int AudioRtpRecordHandler::processDataEncode()
         RETURN_IF_NULL(audioRtpRecord_.converterEncode_, 0, "Converter already destroyed");
         audioRtpRecord_.resampledDataEncode_.setChannelNum(mainBuffFormat.channel_num);
         audioRtpRecord_.resampledDataEncode_.setSampleRate(codecFormat.sample_rate);
-        //WARN("Resample %s->%s", micData.toString().c_str(), audioRtpRecord_.resampledData_.toString().c_str());
+        //WARN("Resample %s->%s", micData.toString().c_str(), audioRtpRecord_.resampledDataEncode_.toString().c_str());
         audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledDataEncode_);
         out = &(audioRtpRecord_.resampledDataEncode_);
     }
@@ -323,7 +323,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         audioRtpRecord_.decData_.setFormat(getCodecFormat());
-        audioRtpRecord_.decData_.resize(5760);
+        audioRtpRecord_.decData_.resize(DEC_BUFFER_SIZE);
         int decoded = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
         audioRtpRecord_.decData_.resize(decoded);
         //WARN("%d = decode(%s, .., %d)", decoded, audioRtpRecord_.decData_.toString().c_str(), size);
@@ -362,7 +362,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         RETURN_IF_NULL(audioRtpRecord_.converterDecode_, "Converter already destroyed");
         audioRtpRecord_.resampledDataDecode_.setChannelNum(decFormat.channel_num);
         audioRtpRecord_.resampledDataDecode_.setSampleRate(mainBuffFormat.sample_rate);
-        //WARN("Resample %s->%s", audioRtpRecord_.decData_.toString().c_str(), audioRtpRecord_.resampledData_.toString().c_str());
+        //WARN("Resample %s->%s", audioRtpRecord_.decData_.toString().c_str(), audioRtpRecord_.resampledDataDecode_.toString().c_str());
         audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledDataDecode_);
         out = &(audioRtpRecord_.resampledDataDecode_);
     }
