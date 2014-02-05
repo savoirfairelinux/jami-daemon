@@ -424,7 +424,7 @@ PulseLayer::stopStream()
 AudioFormat
 PulseLayer::getPreferredAudioFormat() const
 {
-    if(!playback_)
+    if (!playback_)
         return AudioLayer::getPreferredAudioFormat();
     return playback_->getFormat();
 }
