@@ -157,40 +157,6 @@
             <arg type="i" name="type" direction="in"/>
         </method>
 
-        <method name="setVolume" tp:name-for-bindings="setVolume">
-            <tp:docstring>
-              <p>Sets the volume using a linear scale [0,100].</p>
-              <tp:rationale>Pulseaudio has its own mechanism to modify application volume. This method is enabled only if the ALSA API is used.</tp:rationale>
-            </tp:docstring>
-            <arg type="s" name="device" direction="in">
-              <tp:docstring>
-                The device: mic or speaker
-              </tp:docstring>
-            </arg>
-            <arg type="d" name="value" direction="in">
-              <tp:docstring>
-                The volume value (between 0 and 100)
-              </tp:docstring>
-            </arg>
-        </method>
-
-        <method name="getVolume" tp:name-for-bindings="getVolume">
-            <tp:docstring>
-              <p>Return the volume value of the given device on a linear scale [0,100].</p>
-              <tp:rationale>Only enabled if the ALSA API is used, Pulseaudio has its own mechanism to modify application volume.</tp:rationale>
-            </tp:docstring>
-            <arg type="s" name="device" direction="in">
-              <tp:docstring>
-                The device: mic or speaker
-              </tp:docstring>
-            </arg>
-            <arg type="d" name="value" direction="out">
-              <tp:docstring>
-                The volume value (between 0 and 100)
-              </tp:docstring>
-            </arg>
-        </method>
-
         <method name="joinParticipant" tp:name-for-bindings="joinParticipant">
             <tp:added version="0.9.7"/>
             <tp:docstring>
@@ -666,28 +632,6 @@
               </tp:docstring>
         </signal>
 
-        <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
-            <tp:docstring>
-                <p>Account state changed, SFLphone received a notification
-                from registrar.</p>
-            </tp:docstring>
-            <arg type="s" name="accountID" >
-              <tp:docstring>
-                The account ID
-              </tp:docstring>
-            </arg>
-            <arg type="s" name="state">
-              <tp:docstring>
-                Description string
-              </tp:docstring>
-            </arg>
-            <arg type="i" name="code">
-              <tp:docstring>
-                The SIP or IAX2 message code
-              </tp:docstring>
-            </arg>
-        </signal>
-
         <signal name="voiceMailNotify" tp:name-for-bindings="voiceMailNotify">
             <tp:docstring>
               Notify the clients of the voicemail number for a specific account, if applicable.
@@ -700,23 +644,6 @@
             <arg type="i" name="count">
               <tp:docstring>
                 The number of waiting messages.
-              </tp:docstring>
-            </arg>
-        </signal>
-
-        <signal name="volumeChanged" tp:name-for-bindings="volumeChanged">
-                <tp:docstring>
-              <p>Notify clients of a volume level change.</p>
-              <p>This signal occurs only if ALSA is enabled since Pulseaudio streams are managed externally. </p>
-            </tp:docstring>
-            <arg type="s" name="device">
-              <tp:docstring>
-                The device: mic or speaker
-              </tp:docstring>
-            </arg>
-            <arg type="d" name="value">
-              <tp:docstring>
-                The new volume value
               </tp:docstring>
             </arg>
         </signal>
@@ -775,6 +702,12 @@
             <arg type="s" name="callID" />
         </signal>
 
+        <signal name="recordingStateChanged" tp:name-for-bindings="recordingStateChange">
+           <tp:added version="1.3.0"/>
+           <arg type="s" name="callID" />
+           <arg type="b" name="recordingState"/>
+        </signal>
+
         <signal name="zrtpNegotiationFailed" tp:name-for-bindings="zrtpNegotiationFailed">
             <tp:added version="0.9.7"/>
             <arg type="s" name="callID" />
@@ -820,6 +753,5 @@
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="accepted" direction="in"/>
         </method>
-
     </interface>
 </node>
