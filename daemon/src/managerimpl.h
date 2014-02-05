@@ -666,15 +666,8 @@ class ManagerImpl {
         void switchAudioManager();
 
         /**
-         * Set the internal audio sampling rate change. Should close the audio layer and
-         * reopen stream at different rate,
-         */
-        //void audioSamplingRateChanged(int);
-
-        /**
          * Callback called when the audio layer initialised with its preferred format.
          */
-        //void audioOutputStarted(AudioFormat format);
         void hardwareAudioFormatChanged(AudioFormat format);
 
         /**
