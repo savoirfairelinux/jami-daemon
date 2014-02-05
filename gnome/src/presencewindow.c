@@ -711,7 +711,7 @@ presence_view_popup_menu_onCallBuddy(G_GNUC_UNUSED GtkWidget *menuitem, gpointer
     g_free(c->_accountID);
     c->_accountID = g_strdup(b->acc);
 
-    calltree_update_call(current_calls_tab, c, presence_client, FALSE);
+    calltree_update_call(current_calls_tab, c, presence_client);
     sflphone_place_call(c, presence_client);
 
     /* Legacy system tray option, requires TopIcons GNOME extension */

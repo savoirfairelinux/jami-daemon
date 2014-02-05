@@ -76,7 +76,7 @@ calltree_add_call (calltab_t *, callable_obj_t *, GtkTreeIter *);
  * @param c The call to update
  */
 void
-calltree_update_call(calltab_t *, callable_obj_t *, SFLPhoneClient *client, gboolean update_codecs);
+calltree_update_call(calltab_t *, callable_obj_t *, SFLPhoneClient *client);
 
 /**
  * Remove a call from the call tree

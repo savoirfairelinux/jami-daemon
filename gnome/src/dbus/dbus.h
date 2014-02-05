@@ -258,18 +258,6 @@ void
 dbus_set_video_codecs(const gchar *id, const GPtrArray *list);
 
 /**
- * CallManager - return the video codec name
- * @param callable_obj_t* current call
- */
-gchar *dbus_get_current_video_codec_name(const callable_obj_t *c);
-
-/**
- * CallManager - return the audio codec name
- * @param callable_obj_t* current call
- */
-gchar *dbus_get_current_audio_codec_name(const callable_obj_t *c);
-
-/**
  * ConfigurationManager - Get the list of available output audio plugins
  * @return gchar** The list of plugins
  */

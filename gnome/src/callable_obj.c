@@ -34,7 +34,6 @@
 
 #include "callable_obj.h"
 #include "str_utils.h"
-#include "codeclist.h"
 #include "sflphone_const.h"
 #include <time.h>
 #include <glib/gi18n.h>
@@ -66,56 +65,6 @@ gchar* call_get_peer_number(const gchar *format)
         return g_strndup(number, end - number);
     else
         return g_strdup(format);
-}
-
-#ifdef SFL_VIDEO
-gchar* call_get_video_codec(callable_obj_t *obj)
-{
-    return dbus_get_current_video_codec_name(obj);
-}
-#endif
-
-gchar* call_get_audio_codec(callable_obj_t *obj)
-{
-    gchar *ret = NULL;
-    gchar *audio_codec = NULL;
-
-    if (!obj)
-        goto out;
-
-    audio_codec = dbus_get_current_audio_codec_name(obj);
-
-    if (!audio_codec)
-        goto out;
-
-    /* Codec may contain multiple codecs depending on the call */
-    gchar **split_codecs = g_strsplit(audio_codec, " ", 0);
-    if (g_strv_length(split_codecs) >= 1)
-        ret = g_strdup(split_codecs[0]);
-    g_strfreev(split_codecs);
-
-    account_t *acc = account_list_get_by_id(obj->_accountID);
-
-    if (!acc)
-        goto out;
-
-    const codec_t *const codec = codec_list_get_by_name(audio_codec, acc->acodecs);
-
-    if (!codec)
-        goto out;
-
-    if (ret)
-        g_free(ret);
-
-    ret = g_strdup_printf("%s/%i", audio_codec, codec->sample_rate);
-
-out:
-    g_free(audio_codec);
-
-    if (ret == NULL)
-        return g_strdup("");
-
-    return ret;
 }
 
 void call_add_error(callable_obj_t * call, gpointer dialog)

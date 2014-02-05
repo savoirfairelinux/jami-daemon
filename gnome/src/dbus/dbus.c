@@ -203,7 +203,7 @@ process_existing_call_state_change(callable_obj_t *c, const gchar *state, SFLPho
         if (c->_state == CALL_STATE_CURRENT)
             time(&c->_time_stop);
 
-        calltree_update_call(history_tab, c, client, FALSE);
+        calltree_update_call(history_tab, c, client);
         status_bar_display_account();
         sflphone_hung_up(c, client);
     } else if (g_strcmp0(state, "UNHOLD") == 0 || g_strcmp0(state, "CURRENT") == 0)
@@ -1434,38 +1434,6 @@ dbus_audio_codec_details(int payload)
     org_sflphone_SFLphone_ConfigurationManager_get_audio_codec_details(config_proxy, payload, &array, &error);
     check_error(error);
     return array;
-}
-
-#ifdef SFL_VIDEO
-
-gchar *
-dbus_get_current_video_codec_name(const callable_obj_t *c)
-{
-    gchar *codecName = NULL;
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_VideoControls_get_current_codec_name(video_proxy,
-            c->_callID, &codecName, &error);
-
-    if (check_error(error)) {
-        g_free(codecName);
-        codecName = g_strdup("");
-    }
-
-    return codecName;
-}
-#endif
-
-gchar *
-dbus_get_current_audio_codec_name(const callable_obj_t *c)
-{
-    gchar *codecName = NULL;
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_CallManager_get_current_audio_codec_name(call_proxy, c->_callID, &codecName,
-                                      &error);
-    check_error(error);
-    return codecName;
 }
 
 GArray *

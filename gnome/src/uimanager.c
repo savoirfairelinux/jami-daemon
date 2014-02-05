@@ -846,7 +846,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
                     selectedCall->_peer_info = g_strconcat("\"\" <",
                                                            selectedCall->_peer_number, ">", NULL);
 
-                calltree_update_call(current_calls_tab, selectedCall, client, FALSE);
+                calltree_update_call(current_calls_tab, selectedCall, client);
             }
             break;
             case CALL_STATE_RINGING:
@@ -865,7 +865,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
                 selectedCall->_peer_info = g_strconcat("\"\" <",
                                                        selectedCall->_peer_number, ">", NULL);
 
-                calltree_update_call(current_calls_tab, selectedCall, client, FALSE);
+                calltree_update_call(current_calls_tab, selectedCall, client);
             }
             break;
             case CALL_STATE_CURRENT:
@@ -881,7 +881,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
                     selectedCall->_peer_info = get_peer_info(temp, selectedCall->_display_name);
                     g_free(temp);
                     g_free(oneNo);
-                    calltree_update_call(current_calls_tab, selectedCall, client, TRUE);
+                    calltree_update_call(current_calls_tab, selectedCall, client);
                 }
             }
             break;
@@ -897,7 +897,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
         g_free(selectedCall->_peer_info);
         selectedCall->_peer_info = g_strconcat("\"\" <",
                                                selectedCall->_peer_number, ">", NULL);
-        calltree_update_call(current_calls_tab, selectedCall, client, FALSE);
+        calltree_update_call(current_calls_tab, selectedCall, client);
     }
 
     g_free(no);
