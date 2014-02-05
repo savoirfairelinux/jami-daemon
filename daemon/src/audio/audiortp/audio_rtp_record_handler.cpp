@@ -197,9 +197,6 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
 
 void AudioRtpRecordHandler::initBuffers()
 {
-    // Set sampling rate, main buffer choose the highest one
-    //Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
-
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
     delete audioRtpRecord_.converterEncode_;
@@ -258,13 +255,11 @@ int AudioRtpRecordHandler::processDataEncode()
         RETURN_IF_NULL(audioRtpRecord_.converterEncode_, 0, "Converter already destroyed");
         audioRtpRecord_.resampledDataEncode_.setChannelNum(mainBuffFormat.channel_num);
         audioRtpRecord_.resampledDataEncode_.setSampleRate(codecFormat.sample_rate);
-        //WARN("Resample %s->%s", micData.toString().c_str(), audioRtpRecord_.resampledDataEncode_.toString().c_str());
         audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledDataEncode_);
         out = &(audioRtpRecord_.resampledDataEncode_);
     }
-    if(codecFormat.channel_num != mainBuffFormat.channel_num) {
+    if (codecFormat.channel_num != mainBuffFormat.channel_num)
         out->setChannelNum(codecFormat.channel_num, true);
-    }
 
 #if HAVE_SPEEXDSP
     const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
@@ -292,7 +287,6 @@ int AudioRtpRecordHandler::processDataEncode()
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
         int encoded = audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out->getData(), getCodecFrameSize());
-        //WARN("%d = encode(..., %s, %d)", encoded, out->toString().c_str(), getCodecFrameSize());
         return encoded;
     }
 }
@@ -326,7 +320,6 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         audioRtpRecord_.decData_.resize(DEC_BUFFER_SIZE);
         int decoded = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
         audioRtpRecord_.decData_.resize(decoded);
-        //WARN("%d = decode(%s, .., %d)", decoded, audioRtpRecord_.decData_.toString().c_str(), size);
     }
 
 #if HAVE_SPEEXDSP
@@ -366,9 +359,8 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledDataDecode_);
         out = &(audioRtpRecord_.resampledDataDecode_);
     }
-    if(decFormat.channel_num != mainBuffFormat.channel_num) {
+    if (decFormat.channel_num != mainBuffFormat.channel_num)
         out->setChannelNum(mainBuffFormat.channel_num, true);
-    }
 
     Manager::instance().getMainBuffer().putData(*out, id_);
 }
