@@ -109,6 +109,15 @@ class AudioBuffer {
          */
         AudioBuffer& operator=(AudioBuffer&& other);
 
+        /**
+         * Buffer description for debugging
+         */
+        inline std::string toString() const {
+            std::stringstream ss;
+            ss << "[AudioBuffer " << frames() << " frames; " << getFormat().toString() << "]";
+            return ss.str();
+        }
+
         inline size_t size() {
             return frames() * channels() * sizeof(SFLAudioSample);
         }
@@ -131,13 +140,17 @@ class AudioBuffer {
         }
 
         /**
-         * Set the number of channels of this buffer.
+         * Set the number of channels of this buffer, eventually with up or downmixing.
          *
-         * @param n: the new number of channels. If n < channels(), channels are removed from the buffer, otherwise the behavior depends on copy_first.
+         * Currently supported remixing: 1ch->Nch, 2ch->1ch.
          *
-         * @param copy_first: if set to true and n > channels(), new channels are initialised as a copy of the first channel (channel 0). If set to false, new channels are initialised to 0.
+         * @param n: the new number of channels.
+         *
+         * @param mix: if false, no buffer data is changed, removed channels
+         *              are lost and new channels are initialised to 0.
+         *              If true, up or downmixing happens.
          */
-        void setChannelNum(unsigned n, bool copy_first = false);
+        void setChannelNum(unsigned n, bool mix = false);
 
         /**
          * Set the buffer format (channels and sample rate).

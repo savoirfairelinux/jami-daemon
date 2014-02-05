@@ -82,19 +82,40 @@ void AudioBuffer::setSampleRate(int sr)
     sampleRate_ = sr;
 }
 
-void AudioBuffer::setChannelNum(unsigned n, bool copy_content /* = false */)
+void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
 {
+    unsigned c=samples_.size();
     n = std::max(1U, n);
 
-    if (n == samples_.size())
+    if (n == c)
         return;
 
-    const size_t start_size = frames();
+    if(!mix || c==0) {
+        if(n < c)
+            samples_.resize(n);
+        else
+            samples_.resize(n, std::vector<SFLAudioSample>(frames(), 0));
+        return;
+    }
 
-    if (copy_content and not samples_.empty())
+    // 2ch->1ch
+    if(n == 1) {
+        std::vector<SFLAudioSample>& chan1 = samples_[0];
+        std::vector<SFLAudioSample>& chan2 = samples_[1];
+        for(unsigned i=0, f=frames(); i<f; i++)
+            chan1[i] = chan1[i]/2 + chan2[i]/2;
+        samples_.resize(1);
+        return;
+    }
+
+    // 1ch->Nch
+    if(c == 1) {
         samples_.resize(n, samples_[0]);
-    else
-        samples_.resize(n, std::vector<SFLAudioSample>(start_size, 0));
+        return;
+    }
+
+    WARN("Unsupported channel mixing: %dch->%dch", c, n);
+    samples_.resize(n, samples_[0]);
 }
 
 void AudioBuffer::setFormat(AudioFormat format)
@@ -204,7 +225,10 @@ size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_
         resize(pos_out + to_copy);
 
     sampleRate_ = in.sampleRate_;
-    //setChannelNum(chan_num);
+    /*if(chan_num > samples_.size()) {
+        WARN("Growing channel number %d -> %d chan", samples_.size(), chan_num);
+        setChannelNum(chan_num);
+    }*/
 
     for (unsigned i = 0; i < chan_num; i++) {
         size_t src_chan = upmix ? std::min<size_t>(i, in.samples_.size() - 1U) : i;
