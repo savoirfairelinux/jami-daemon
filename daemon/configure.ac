@@ -189,15 +189,15 @@ AC_ARG_WITH([zrtp],
     [],
     [with_zrtp=yes])
 AS_IF([test "x$with_zrtp" = "xyes"], [
-       PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= 3.0.0, [with_zrtp3=yes],
+       PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= 2.3.0, [with_zrtp_configure=yes],
            dnl Fallback to older version
-           [PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= 1.3.0, [with_zrtp3=no],
+           [PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= 1.3.0, [with_zrtp_configure=no],
                AC_MSG_ERROR([Missing zrtp development files]))])
     ]);
 
 dnl This is a workaround until libzrtpcpp gets a version macro
 AC_DEFINE_UNQUOTED([HAVE_ZRTP], `if test "x$with_zrtp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp support])
-AC_DEFINE_UNQUOTED([HAVE_ZRTP_CONFIGURE], `if test "x$with_zrtp3" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp >= 3.0])
+AC_DEFINE_UNQUOTED([HAVE_ZRTP_CONFIGURE], `if test "x$with_zrtp_configure" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp >= 2.3.0])
 AM_CONDITIONAL(BUILD_ZRTP, test "x$with_zrtp" = "xyes" )
 
 # DBUSCPP
