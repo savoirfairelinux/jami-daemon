@@ -138,10 +138,6 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *
     }
     if (ret < 0)
         std::cerr << opus_strerror(ret) << std::endl;
-    else {
-        for(auto& c: dst)
-            c.resize(ret);
-    }
     return ret;
 }
 

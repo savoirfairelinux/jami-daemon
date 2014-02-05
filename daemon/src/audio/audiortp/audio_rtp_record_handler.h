@@ -80,7 +80,8 @@ class AudioRtpRecord {
         int decoderPayloadType_;
         bool hasDynamicPayloadType_;
         AudioBuffer decData_;
-        AudioBuffer resampledData_;
+        AudioBuffer resampledDataEncode_;
+        AudioBuffer resampledDataDecode_;
         std::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;

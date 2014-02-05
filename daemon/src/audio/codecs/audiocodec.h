@@ -43,10 +43,10 @@
 #define AUDIO_CODEC_ENTRY create_1_4_0
 #define AUDIO_CODEC_ENTRY_SYMBOL XSTR(AUDIO_CODEC_ENTRY)
 
-// We assume all decoders will be fed 20ms of audio or less
-// And we'll resample them to 48kHz or less
-// Also assume stereo
-#define DEC_BUFFER_SIZE (2 * (48000 * 40) / 1000)
+// Opus documentation:
+// "If this is less than the maximum packet duration (120ms; 5760 for 48kHz),
+// opus_decode will not be capable of decoding some packets."
+#define DEC_BUFFER_SIZE (120 * 48000 / 1000)
 
 namespace sfl {
 

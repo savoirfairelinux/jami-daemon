@@ -53,7 +53,8 @@ AudioRtpRecord::AudioRtpRecord() :
     , decoderPayloadType_(0)
     , hasDynamicPayloadType_(false)
     , decData_(DEC_BUFFER_SIZE, AudioFormat::MONO)
-    , resampledData_(0, AudioFormat::MONO)
+    , resampledDataEncode_(0, AudioFormat::MONO)
+    , resampledDataDecode_(0, AudioFormat::MONO)
     , encodedData_()
     , converterEncode_(nullptr)
     , converterDecode_(nullptr)
@@ -232,9 +233,9 @@ int AudioRtpRecordHandler::processDataEncode()
         return 0;
 
     AudioFormat codecFormat = getCodecFormat();
-    AudioFormat mainBufferFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
 
-    double resampleFactor = (double) mainBufferFormat.sample_rate / codecFormat.sample_rate;
+    double resampleFactor = (double) mainBuffFormat.sample_rate / codecFormat.sample_rate;
 
     // compute nb of byte to get corresponding to 1 audio frame
     const size_t samplesToGet = resampleFactor * getCodecFrameSize();
@@ -242,7 +243,7 @@ int AudioRtpRecordHandler::processDataEncode()
     if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
         return 0;
 
-    AudioBuffer micData(samplesToGet, mainBufferFormat);
+    AudioBuffer micData(samplesToGet, mainBuffFormat);
     const size_t samps = Manager::instance().getMainBuffer().getData(micData, id_);
 
     if (samps != samplesToGet) {
@@ -253,14 +254,16 @@ int AudioRtpRecordHandler::processDataEncode()
     audioRtpRecord_.fadeInDecodedData();
 
     AudioBuffer *out = &micData;
-
-    if (codecFormat.sample_rate != mainBufferFormat.sample_rate) {
+    if (codecFormat.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(audioRtpRecord_.converterEncode_, 0, "Converter already destroyed");
-
-        audioRtpRecord_.resampledData_.setFormat(codecFormat);
-        audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledData_);
-
-        out = &(audioRtpRecord_.resampledData_);
+        audioRtpRecord_.resampledDataEncode_.setChannelNum(mainBuffFormat.channel_num);
+        audioRtpRecord_.resampledDataEncode_.setSampleRate(codecFormat.sample_rate);
+        //WARN("Resample %s->%s", micData.toString().c_str(), audioRtpRecord_.resampledData_.toString().c_str());
+        audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledDataEncode_);
+        out = &(audioRtpRecord_.resampledDataEncode_);
+    }
+    if(codecFormat.channel_num != mainBuffFormat.channel_num) {
+        out->setChannelNum(codecFormat.channel_num, true);
     }
 
 #if HAVE_SPEEXDSP
@@ -280,7 +283,7 @@ int AudioRtpRecordHandler::processDataEncode()
         else
             audioRtpRecord_.dspEncode_->disableAGC();
 
-        audioRtpRecord_.dspEncode_->process(micData, getCodecFrameSize());
+        audioRtpRecord_.dspEncode_->process(*out, getCodecFrameSize());
     }
 #endif
 
@@ -288,7 +291,9 @@ int AudioRtpRecordHandler::processDataEncode()
         std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
-        return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out->getData(), getCodecFrameSize());
+        int encoded = audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out->getData(), getCodecFrameSize());
+        //WARN("%d = encode(..., %s, %d)", encoded, out->toString().c_str(), getCodecFrameSize());
+        return encoded;
     }
 }
 #undef RETURN_IF_NULL
@@ -317,10 +322,11 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     {
         std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
-        // Return the size of data in samples
         audioRtpRecord_.decData_.setFormat(getCodecFormat());
-        //audioRtpRecord_.decData_.resize(5760);
+        audioRtpRecord_.decData_.resize(5760);
         int decoded = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
+        audioRtpRecord_.decData_.resize(decoded);
+        //WARN("%d = decode(%s, .., %d)", decoded, audioRtpRecord_.decData_.toString().c_str(), size);
     }
 
 #if HAVE_SPEEXDSP
@@ -349,16 +355,19 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
     AudioBuffer *out = &(audioRtpRecord_.decData_);
 
-    int codecSampleRate = out->getSampleRate();
-    AudioFormat mainBufferFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
-
-    // test if resampling is required
-    if (codecSampleRate != mainBufferFormat.sample_rate) {
+    // test if resampling or up/down-mixing is required
+    AudioFormat decFormat = out->getFormat();
+    AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(audioRtpRecord_.converterDecode_, "Converter already destroyed");
-        audioRtpRecord_.resampledData_.setFormat(mainBufferFormat);
-        out = &(audioRtpRecord_.resampledData_);
-        // Do sample rate conversion
-        audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledData_);
+        audioRtpRecord_.resampledDataDecode_.setChannelNum(decFormat.channel_num);
+        audioRtpRecord_.resampledDataDecode_.setSampleRate(mainBuffFormat.sample_rate);
+        //WARN("Resample %s->%s", audioRtpRecord_.decData_.toString().c_str(), audioRtpRecord_.resampledData_.toString().c_str());
+        audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledDataDecode_);
+        out = &(audioRtpRecord_.resampledDataDecode_);
+    }
+    if(decFormat.channel_num != mainBuffFormat.channel_num) {
+        out->setChannelNum(mainBuffFormat.channel_num, true);
     }
 
     Manager::instance().getMainBuffer().putData(*out, id_);
