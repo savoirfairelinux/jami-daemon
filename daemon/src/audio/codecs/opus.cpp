@@ -62,20 +62,21 @@ void Opus::setOptimalFormat(uint32_t sample_rate, uint8_t channels)
 {
     // Use a SR higher or equal to sample_rate.
     // Typical case: 44.1kHz => 48kHz.
-    unsigned i=0;
-    while(i<VALID_SAMPLING_RATE_NUM-1 && VALID_SAMPLING_RATE[i] < sample_rate) i++;
+    unsigned i = 0;
+    while (i < VALID_SAMPLING_RATE_NUM - 1 and VALID_SAMPLING_RATE[i] < sample_rate)
+        i++;
     sample_rate = VALID_SAMPLING_RATE[i];
 
     // Opus supports 1 or 2 channels.
-    channels = std::max(std::min(channels, (uint8_t)2), (uint8_t)1);
+    channels = std::max(std::min(channels, (uint8_t) 2), (uint8_t) 1);
 
-    if(not (!encoder_ || !decoder_ || sample_rate!=clockRate_ || channels!=channel_))
+    if (not (!encoder_ || !decoder_ || sample_rate != clockRate_ || channels != channel_))
         return;
 
     clockRate_ = sample_rate;
     channel_ = channels;
 
-    std::cerr << "Opus switch mode: " << clockRate_ << "kHz, " << (unsigned)channel_ << "channels." << std::endl;
+    std::cerr << "Opus switch mode: " << clockRate_ << "kHz, " << channel_ << "channels." << std::endl;
 
     int err;
     if (encoder_)
@@ -149,10 +150,10 @@ int Opus::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &
     if(channel_ == 1) {
         ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size);
     } else {
-        std::array<SFLAudioSample, 2*FRAME_SIZE> ibuf; // interleave on stack, 1.875KiB used;
-        for(unsigned i=0; i<FRAME_SIZE; i++) {
-            ibuf[2*i] = src[0][i];
-            ibuf[2*i+1] = src[1][i];
+        std::array<SFLAudioSample, 2 * FRAME_SIZE> ibuf; // interleave on stack, 1.875KiB used;
+        for (unsigned i = 0; i < FRAME_SIZE; i++) {
+            ibuf[2 * i] = src[0][i];
+            ibuf[2 * i + 1] = src[1][i];
         }
         ret = opus_encode(encoder_, ibuf.data(), FRAME_SIZE, dst, buffer_size);
     }
