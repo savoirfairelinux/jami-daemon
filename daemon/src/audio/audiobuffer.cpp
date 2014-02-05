@@ -84,14 +84,14 @@ void AudioBuffer::setSampleRate(int sr)
 
 void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
 {
-    unsigned c=samples_.size();
+    const unsigned c = samples_.size();
     n = std::max(1U, n);
 
     if (n == c)
         return;
 
-    if(!mix || c==0) {
-        if(n < c)
+    if (!mix or c == 0) {
+        if (n < c)
             samples_.resize(n);
         else
             samples_.resize(n, std::vector<SFLAudioSample>(frames(), 0));
@@ -99,17 +99,17 @@ void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
     }
 
     // 2ch->1ch
-    if(n == 1) {
+    if (n == 1) {
         std::vector<SFLAudioSample>& chan1 = samples_[0];
         std::vector<SFLAudioSample>& chan2 = samples_[1];
-        for(unsigned i=0, f=frames(); i<f; i++)
-            chan1[i] = chan1[i]/2 + chan2[i]/2;
+        for (unsigned i = 0, f = frames(); i < f; i++)
+            chan1[i] = chan1[i] / 2 + chan2[i] / 2;
         samples_.resize(1);
         return;
     }
 
     // 1ch->Nch
-    if(c == 1) {
+    if (c == 1) {
         samples_.resize(n, samples_[0]);
         return;
     }
@@ -240,15 +240,14 @@ size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_
 
 size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /* = 0 */)
 {
-    if (in == nullptr || sample_num==0) return 0;
+    if (in == nullptr || sample_num == 0) return 0;
 
     if ((pos_out + sample_num) > frames())
         resize(pos_out + sample_num);
 
     const size_t chan_num = samples_.size();
-    for (unsigned i = 0; i < chan_num; i++) {
+    for (unsigned i = 0; i < chan_num; i++)
         std::copy(in, in + sample_num, samples_[i].begin() + pos_out);
-    }
 
     return sample_num;
 }
