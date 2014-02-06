@@ -186,8 +186,12 @@ get_cache_dir()
     if (not cache_home.empty()) {
         return cache_home;
     } else {
+#ifdef __ANDROID__
+        return get_home_dir() + DIR_SEPARATOR_STR + PACKAGE;
+#else
         return get_home_dir() + DIR_SEPARATOR_STR +
             ".cache" + DIR_SEPARATOR_STR + PACKAGE;
+#endif
     }
 }
 
