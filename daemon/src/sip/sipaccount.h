@@ -744,7 +744,6 @@ class SIPAccount : public Account {
         bool tlsVerifyClient_;
         bool tlsRequireClientCertificate_;
         std::string tlsNegotiationTimeoutSec_;
-        std::string tlsNegotiationTimeoutMsec_;
 
         /**
          * The stun server hostname (optional), used to provide the public IP address in case the softphone
