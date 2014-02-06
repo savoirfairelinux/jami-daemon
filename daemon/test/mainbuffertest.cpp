@@ -219,8 +219,8 @@ void MainBufferTest::testRingBufferInt()
     SFLAudioSample testsample1 = 12;
     SFLAudioSample testsample2[] = {13, 14, 15, 16, 17, 18};
 
-    AudioBuffer testbuf1(&testsample1, 1, 1, 8000); // 1 sample, 1 channel
-    AudioBuffer testbuf2(testsample2, 3, 2, 8000); // 3 samples, 2 channels
+    AudioBuffer testbuf1(&testsample1, 1, AudioFormat::MONO); // 1 sample, 1 channel
+    AudioBuffer testbuf2(testsample2, 3, AudioFormat::STEREO); // 3 samples, 2 channels
 
     // test with default ring buffer
     mainbuffer_->createRingBuffer(MainBuffer::DEFAULT_ID);
@@ -240,7 +240,7 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 4);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
 
-    AudioBuffer testget(&testsample1, 1, 1, 8000);
+    AudioBuffer testget(&testsample1, 1, AudioFormat::MONO);
 
     // get some data (without any read pointers)
     CPPUNIT_ASSERT(test_ring_buffer->hasNoReadPointers());
@@ -305,8 +305,8 @@ void MainBufferTest::testRingBufferNonDefaultID()
     SFLAudioSample testsample1 = 12;
     SFLAudioSample testsample2[] = {13, 14, 15, 16, 17, 18};
 
-    AudioBuffer testbuf1(&testsample1, 1, 1, 8000); // 1 sample, 1 channel
-    AudioBuffer testbuf2(testsample2, 3, 2, 8000); // 3 samples, 2 channels
+    AudioBuffer testbuf1(&testsample1, 1, AudioFormat::MONO); // 1 sample, 1 channel
+    AudioBuffer testbuf2(testsample2, 3, AudioFormat::STEREO); // 3 samples, 2 channels
 
     // test putData, getData with arbitrary read pointer id
     mainbuffer_->createRingBuffer(MainBuffer::DEFAULT_ID);
@@ -324,8 +324,8 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 4);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
 
-    AudioBuffer testget(1, 1, 8000);
-    AudioBuffer testgetlarge(100, 1, 8000);
+    AudioBuffer testget(1, AudioFormat::MONO);
+    AudioBuffer testgetlarge(100, AudioFormat::MONO);
 
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 4);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 4);
@@ -417,8 +417,8 @@ void MainBufferTest::testTwoPointer()
 
     SFLAudioSample test_sample = 12;
 
-    AudioBuffer test_input(&test_sample, 1, 1, 8000);
-    AudioBuffer test_output(1, 1, 8000);
+    AudioBuffer test_input(&test_sample, 1, AudioFormat::MONO);
+    AudioBuffer test_output(1, AudioFormat::MONO);
 
     input_buffer->put(test_input);
     CPPUNIT_ASSERT(output_buffer->get(test_output, MainBuffer::DEFAULT_ID) == 1);
@@ -836,10 +836,10 @@ void MainBufferTest::testGetPutDataByID()
     SFLAudioSample test_sample1 = 12;
     SFLAudioSample test_sample2 = 13;
 
-    AudioBuffer test_input1(&test_sample1, 1, 1, 8000);
-    AudioBuffer test_input2(&test_sample2, 1, 1, 8000);
-    AudioBuffer test_output(1, 1, 8000);
-    AudioBuffer test_output_large(100, 1, 8000);
+    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO);
+    AudioBuffer test_input2(&test_sample2, 1, AudioFormat::MONO);
+    AudioBuffer test_output(1, AudioFormat::MONO);
+    AudioBuffer test_output_large(100, AudioFormat::MONO);
 
     // put by MainBuffer::DEFAULT_ID get by test_id without preleminary put
     CPPUNIT_ASSERT(mainbuffer_->availableForGetByID(MainBuffer::DEFAULT_ID, test_id) == 0);
@@ -881,9 +881,9 @@ void MainBufferTest::testGetPutData()
     SFLAudioSample test_sample1 = 12;
     SFLAudioSample test_sample2 = 13;
 
-    AudioBuffer test_input1(&test_sample1, 1, 1, 8000);
-    AudioBuffer test_input2(&test_sample2, 1, 1, 8000);
-    AudioBuffer test_output(100, 1, 8000);
+    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO);
+    AudioBuffer test_input2(&test_sample2, 1, AudioFormat::MONO);
+    AudioBuffer test_output(100, AudioFormat::MONO);
 
     // get by test_id without preleminary put
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 0);
@@ -920,7 +920,7 @@ void MainBufferTest::testDiscardFlush()
     mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
 
     SFLAudioSample test_sample1 = 12;
-    AudioBuffer test_input1(&test_sample1, 1, 1, 8000);
+    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO);
 
     mainbuffer_->putData(test_input1, test_id);
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(MainBuffer::DEFAULT_ID) == 1);
@@ -990,12 +990,12 @@ void MainBufferTest::testRingBufferSeveralPointers()
     SFLAudioSample testint2 = 13;
     SFLAudioSample testint3 = 14;
     SFLAudioSample testint4 = 15;
-    AudioBuffer test_input1(&testint1, 1, 1, 8000);
-    AudioBuffer test_input2(&testint2, 1, 1, 8000);
-    AudioBuffer test_input3(&testint3, 1, 1, 8000);
-    AudioBuffer test_input4(&testint4, 1, 1, 8000);
+    AudioBuffer test_input1(&testint1, 1, AudioFormat::MONO);
+    AudioBuffer test_input2(&testint2, 1, AudioFormat::MONO);
+    AudioBuffer test_input3(&testint3, 1, AudioFormat::MONO);
+    AudioBuffer test_input4(&testint4, 1, AudioFormat::MONO);
 
-    AudioBuffer test_output(1, 1, 8000);
+    AudioBuffer test_output(1, AudioFormat::MONO);
 
     test_ring_buffer->put(test_input1);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 1);
@@ -1208,7 +1208,7 @@ void MainBufferTest::testConference()
 
     // test putData default
     SFLAudioSample testint = 12;
-    AudioBuffer testbuf(&testint, 1, 1, 8000);
+    AudioBuffer testbuf(&testint, 1, AudioFormat::MONO);
 
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(MainBuffer::DEFAULT_ID) == 0);
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id1) == 0);

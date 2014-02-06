@@ -36,7 +36,7 @@
 #include "resamplertest.h"
 
 ResamplerTest::ResamplerTest() :
-    CppUnit::TestCase("Resampler module test"), inputBuffer(MAX_BUFFER_LENGTH, 1, 8000), outputBuffer(MAX_BUFFER_LENGTH, 1, 8000)
+    CppUnit::TestCase("Resampler module test"), inputBuffer(MAX_BUFFER_LENGTH, AudioFormat::MONO), outputBuffer(MAX_BUFFER_LENGTH, AudioFormat::MONO)
 {}
 
 void ResamplerTest::setUp()
@@ -71,8 +71,8 @@ void ResamplerTest::testUpsamplingRamp()
 
     performUpsampling(converter);
 
-    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
-    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
+    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
+    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
@@ -92,8 +92,8 @@ void ResamplerTest::testDownsamplingRamp()
 
     performDownsampling(converter);
 
-    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
-    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
+    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
+    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
@@ -113,8 +113,8 @@ void ResamplerTest::testUpsamplingTriangle()
 
     performUpsampling(converter);
 
-    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
-    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
+    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
+    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
@@ -134,8 +134,8 @@ void ResamplerTest::testDownsamplingTriangle()
 
     performDownsampling(converter);
 
-    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
-    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
+    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
+    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
@@ -155,8 +155,8 @@ void ResamplerTest::testUpsamplingSine()
 
     performUpsampling(converter);
 
-    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
-    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
+    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
+    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
@@ -177,8 +177,8 @@ void ResamplerTest::testDownsamplingSine()
 
     performDownsampling(converter);
 
-    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
-    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
+    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
+    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
 
     tmpInputBuffer.copy(inputBuffer);
     std::cout << "Input Buffer" << std::endl;
@@ -212,8 +212,8 @@ void ResamplerTest::generateSineSignal()
 
 void ResamplerTest::performUpsampling(SamplerateConverter &converter)
 {
-    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
-    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
+    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
+    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
 
     for (size_t i = 0, j = 0; i < (inputBuffer.frames() / 2); i += tmpInputBuffer.frames(), j += tmpOutputBuffer.frames()) {
         tmpInputBuffer.copy(inputBuffer, i);
@@ -224,8 +224,8 @@ void ResamplerTest::performUpsampling(SamplerateConverter &converter)
 
 void ResamplerTest::performDownsampling(SamplerateConverter &converter)
 {
-    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
-    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
+    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
+    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
 
     for (size_t i = 0, j = 0; i < inputBuffer.frames(); i += tmpInputBuffer.frames(), j += tmpOutputBuffer.frames()) {
         tmpInputBuffer.copy(inputBuffer, i);
