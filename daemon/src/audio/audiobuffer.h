@@ -81,12 +81,12 @@ class AudioBuffer {
         /**
          * Default constructor.
          */
-        AudioBuffer(size_t sample_num, AudioFormat format);
+        AudioBuffer(size_t sample_num, const AudioFormat &format);
 
         /**
          * Construtor from existing interleaved data (copied into the buffer).
          */
-        AudioBuffer(const SFLAudioSample* in, size_t sample_num, AudioFormat format);
+        AudioBuffer(const SFLAudioSample* in, size_t sample_num, const AudioFormat &format);
 
         /**
          * Copy constructor that by default only copies the buffer parameters (channel number, sample rate and buffer size).
@@ -156,7 +156,7 @@ class AudioBuffer {
          * Set the buffer format (channels and sample rate).
          * No data conversion is performed.
          */
-        void setFormat(AudioFormat format);
+        void setFormat(const AudioFormat &format);
 
         inline AudioFormat getFormat() const {
             return AudioFormat(sampleRate_, samples_.size());

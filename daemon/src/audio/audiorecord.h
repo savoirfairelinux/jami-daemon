@@ -47,8 +47,8 @@ class AudioRecord {
         AudioRecord();
         ~AudioRecord();
 
-        void setSndFormat(AudioFormat format);
-        void setRecordingOptions(AudioFormat format, const std::string &path);
+        void setSndFormat(const AudioFormat &format);
+        void setRecordingOptions(const AudioFormat &format, const std::string &path);
 
         /**
          * Init recording file path

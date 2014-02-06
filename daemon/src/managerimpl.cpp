@@ -2288,7 +2288,7 @@ void ManagerImpl::hardwareAudioFormatChanged(AudioFormat format)
     AudioFormat currentFormat = mainBuffer_.getInternalAudioFormat();
     format.channel_num = std::min(2u, format.channel_num); // max 2 channels.
 
-    if(currentFormat == format)
+    if (currentFormat == format)
         return;
 
     DEBUG("Audio format changed: %s -> %s", currentFormat.toString().c_str(), format.toString().c_str());

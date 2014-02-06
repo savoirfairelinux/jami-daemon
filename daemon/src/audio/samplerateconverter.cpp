@@ -32,7 +32,7 @@
 #include "logger.h"
 #include "sfl_types.h"
 
-SamplerateConverter::SamplerateConverter(AudioFormat format) : floatBufferIn_(),
+SamplerateConverter::SamplerateConverter(const AudioFormat &format) : floatBufferIn_(),
     floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), src_state_(nullptr)
 {
     setFormat(format);
@@ -50,7 +50,7 @@ SamplerateConverter::~SamplerateConverter()
 }
 
 void
-SamplerateConverter::setFormat(AudioFormat format)
+SamplerateConverter::setFormat(const AudioFormat &format)
 {
     format_ = format;
     samples_ = (format.channel_num * format.sample_rate * 20) / 1000; // start with 20 ms buffers

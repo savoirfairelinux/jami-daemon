@@ -103,12 +103,12 @@ AudioRecord::~AudioRecord()
     delete fileHandle_;
 }
 
-void AudioRecord::setSndFormat(AudioFormat format)
+void AudioRecord::setSndFormat(const AudioFormat &format)
 {
     sndFormat_ = format;
 }
 
-void AudioRecord::setRecordingOptions(AudioFormat format, const std::string &path)
+void AudioRecord::setRecordingOptions(const AudioFormat &format, const std::string &path)
 {
     std::string filePath;
 
