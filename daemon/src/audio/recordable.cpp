@@ -53,7 +53,7 @@ std::string Recordable::getFilename() const
     return recAudio_.getFilename();
 }
 
-void Recordable::setRecordingFormat(const AudioFormat &format)
+void Recordable::setRecordingFormat(AudioFormat format)
 {
     recAudio_.setSndFormat(format);
 }

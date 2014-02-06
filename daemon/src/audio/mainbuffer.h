@@ -63,9 +63,9 @@ class MainBuffer {
 
         void setInternalSamplingRate(unsigned sr);
 
-        void setInternalAudioFormat(const AudioFormat &format);
+        void setInternalAudioFormat(AudioFormat format);
 
-        void setMinimumAudioFormat(const AudioFormat &format);
+        void setMinimumAudioFormat(AudioFormat format);
 
         /**
          * Bind together two audio streams so taht a client will be able

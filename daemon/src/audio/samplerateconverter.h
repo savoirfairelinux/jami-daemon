@@ -48,7 +48,7 @@ class SamplerateConverter {
         * internal buffer size. Converter must be reinitialized
         * every time these parameters change
         */
-        SamplerateConverter(const AudioFormat &outFormat);
+        SamplerateConverter(AudioFormat outFormat);
         SamplerateConverter(unsigned sample_rate, unsigned channels=1);
 
         /** Destructor */
@@ -58,7 +58,7 @@ class SamplerateConverter {
          * Change the converter sample rate and channel number.
          * Internal state is lost.
          */
-        void setFormat(const AudioFormat &format);
+        void setFormat(AudioFormat format);
 
         /**
          * resample from the samplerate1 to the samplerate2

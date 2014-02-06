@@ -40,14 +40,14 @@ std::ostream& operator <<(std::ostream& stream, const AudioFormat& f) {
     return stream;
 }
 
-AudioBuffer::AudioBuffer(size_t sample_num, const AudioFormat &format)
+AudioBuffer::AudioBuffer(size_t sample_num, AudioFormat format)
     :  sampleRate_(format.sample_rate),
        samples_(std::max(1U, format.channel_num),
                 std::vector<SFLAudioSample>(sample_num, 0))
 {
 }
 
-AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, const AudioFormat &format)
+AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, AudioFormat format)
     :  sampleRate_(format.sample_rate),
        samples_((std::max(1U, format.channel_num)), std::vector<SFLAudioSample>(sample_num, 0))
 {
@@ -118,7 +118,7 @@ void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
     samples_.resize(n, samples_[0]);
 }
 
-void AudioBuffer::setFormat(const AudioFormat &format)
+void AudioBuffer::setFormat(AudioFormat format)
 {
     setChannelNum(format.channel_num);
     setSampleRate(format.sample_rate);

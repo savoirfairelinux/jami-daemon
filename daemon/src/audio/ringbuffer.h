@@ -41,7 +41,7 @@ class RingBuffer {
          * Constructor
          * @param size  Size of the buffer to create
          */
-        RingBuffer(size_t size, const std::string &call_id, const AudioFormat &format=AudioFormat::MONO);
+        RingBuffer(size_t size, const std::string &call_id, AudioFormat format=AudioFormat::MONO);
 
         std::string getBufferId() const {
             return buffer_id_;
@@ -58,7 +58,7 @@ class RingBuffer {
             return buffer_.getFormat();
         }
 
-        inline void setFormat(const AudioFormat &format) {
+        inline void setFormat(AudioFormat format) {
             buffer_.setFormat(format);
         }
 
