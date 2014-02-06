@@ -47,10 +47,10 @@ namespace sfl {
 AudioRtpRecord::AudioRtpRecord() :
     callId_("")
     , codecSampleRate_(0)
+    , encoder_()
+    , decoder_()
     , audioCodecs_()
     , audioCodecMutex_()
-    , encoderPayloadType_(0)
-    , decoderPayloadType_(0)
     , hasDynamicPayloadType_(false)
     , decData_(DEC_BUFFER_SIZE, AudioFormat::MONO)
     , resampledDataEncode_(0, AudioFormat::MONO)
@@ -103,7 +103,7 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
         if (*i and (*i)->getPayloadType() == newPt) {
             AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
             (*i)->setOptimalFormat(f.sample_rate, f.channel_num);
-            decoderPayloadType_ = (*i)->getPayloadType();
+            decoder_.setPayloadType((*i)->getPayloadType());
             codecSampleRate_ = (*i)->getClockRate();
             codecFrameSize_ = (*i)->getFrameSize();
             codecChannels_ = (*i)->getChannels();
@@ -188,7 +188,10 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
     AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
     audioCodecs[0]->setOptimalFormat(f.sample_rate, f.channel_num);
     audioRtpRecord_.currentCodecIndex_ = 0;
-    audioRtpRecord_.encoderPayloadType_ = audioRtpRecord_.decoderPayloadType_ = audioCodecs[0]->getPayloadType();
+    // FIXME: this is probably not the right payload type
+    const int pt = audioCodecs[0]->getPayloadType();
+    audioRtpRecord_.encoder_.setPayloadType(pt);
+    audioRtpRecord_.decoder_.setPayloadType(pt);
     audioRtpRecord_.codecSampleRate_ = audioCodecs[0]->getClockRate();
     audioRtpRecord_.codecFrameSize_ = audioCodecs[0]->getFrameSize();
     audioRtpRecord_.codecChannels_ = audioCodecs[0]->getChannels();
@@ -299,13 +302,14 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     if (audioRtpRecord_.isDead())
         return;
 
-    if (audioRtpRecord_.decoderPayloadType_ != payloadType) {
+    const int decPt = audioRtpRecord_.decoder_.getPayloadType();
+    if (decPt != payloadType) {
         const bool switched = audioRtpRecord_.tryToSwitchPayloadTypes(payloadType);
 
         if (not switched) {
             if (!warningInterval_) {
                 warningInterval_ = 250;
-                WARN("Invalid payload type %d, expected %d", payloadType, audioRtpRecord_.decoderPayloadType_);
+                WARN("Invalid payload type %d, expected %d", payloadType, decPt);
             }
 
             warningInterval_--;

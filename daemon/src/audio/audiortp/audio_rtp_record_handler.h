@@ -56,6 +56,22 @@ class DSP;
 
 namespace sfl {
 
+class AudioEncoder {
+    public:
+        int getPayloadType() const { return payloadType_; }
+        void setPayloadType(int pt) { payloadType_ = pt; }
+    private:
+        int payloadType_;
+};
+
+class AudioDecoder {
+    public:
+        int getPayloadType() const { return payloadType_; }
+        void setPayloadType(int pt) { payloadType_ = pt; }
+    private:
+        int payloadType_;
+};
+
 /**
  * Class meant to store internal data in order to encode/decode,
  * resample, process, and packetize audio streams. This class should not be
@@ -72,12 +88,13 @@ class AudioRtpRecord {
         int codecSampleRate_;
 
     private:
+        AudioEncoder encoder_;
+        AudioDecoder decoder_;
+
         std::vector<AudioCodec*> audioCodecs_;
         std::mutex audioCodecMutex_;
         // these will have the same value unless we are sending
         // a different codec than we are receiving (asymmetric RTP)
-        int encoderPayloadType_;
-        int decoderPayloadType_;
         bool hasDynamicPayloadType_;
         AudioBuffer decData_;
         AudioBuffer resampledDataEncode_;
@@ -122,8 +139,12 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.audioCodecs_[0];
         }
 
-        int getEncoderPayloadType() const {
-            return audioRtpRecord_.encoderPayloadType_;
+        const AudioEncoder &getEncoder() const {
+            return audioRtpRecord_.encoder_;
+        }
+
+        const AudioDecoder &getDecoder() const {
+            return audioRtpRecord_.decoder_;
         }
 
         int getCodecSampleRate() const {

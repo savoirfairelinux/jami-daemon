@@ -161,7 +161,7 @@ int AudioRtpFactory::getSessionMedia()
     if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
-    return rtpSession_->getEncoderPayloadType();
+    return rtpSession_->getEncoder().getPayloadType();
 }
 
 std::string
