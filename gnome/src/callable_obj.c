@@ -176,7 +176,6 @@ void free_callable_obj_t (callable_obj_t *c)
     g_free(c->_callID);
     g_free(c->_historyConfID);
     g_free(c->_accountID);
-    g_free(c->_srtp_cipher);
     g_free(c->_sas);
     g_free(c->_display_name);
     g_free(c->_peer_number);

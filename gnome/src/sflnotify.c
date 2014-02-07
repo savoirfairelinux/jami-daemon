@@ -193,12 +193,15 @@ notify_secure_on(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar *title = g_markup_printf_escaped("Secure mode on.");
-    gchar *callerid = g_markup_printf_escaped(_("<i>With:</i> %s \nusing %s") , c->_peer_number, c->_srtp_cipher);
+    gchar *callerid = g_markup_printf_escaped(_("<i>With:</i> %s \n") , c->_peer_number);
+
     create_new_gnome_notification(title,
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
                                   utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
                                   client);
+    g_free(callerid);
+    g_free(title);
 #endif
 }
 

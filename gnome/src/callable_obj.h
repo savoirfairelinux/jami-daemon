@@ -101,7 +101,6 @@ typedef struct  {
     time_t _time_stop;              // The timestamp the call was over
     gchar *_history_state;          // The history state if necessary
     srtp_state_t _srtp_state;       // The state of security on the call
-    gchar* _srtp_cipher;            // Cipher used for the srtp session
     gchar* _sas;                    // The Short Authentication String that should be displayed
     gboolean _zrtp_confirmed;       // Override real state. Used for hold/unhold
     // since rtp session is killed each time and

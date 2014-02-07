@@ -515,11 +515,10 @@ static void
 secure_zrtp_on_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                   const gchar *cipher, SFLPhoneClient *client)
 {
-    g_debug("SRTP using ZRTP is ON secure_on_cb");
+    g_debug("SRTP using ZRTP is ON with cipher %s", cipher);
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
-        c->_srtp_cipher = g_strdup(cipher);
         sflphone_srtp_zrtp_on(c, client);
         notify_secure_on(c, client);
     }
