@@ -231,11 +231,16 @@ void AudioRtpRecordHandler::putDtmfEvent(char digit)
     dtmfQueue_.push_back(dtmf);
 }
 
-#define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }
-
 int AudioRtpRecordHandler::processDataEncode()
 {
-    if (audioRtpRecord_.isDead())
+    return audioRtpRecord_.processDataEncode(id_);
+}
+
+#define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }
+
+int AudioRtpRecord::processDataEncode(const std::string &id)
+{
+    if (isDead())
         return 0;
 
     AudioFormat codecFormat = getCodecFormat();
@@ -244,28 +249,28 @@ int AudioRtpRecordHandler::processDataEncode()
     double resampleFactor = (double) mainBuffFormat.sample_rate / codecFormat.sample_rate;
 
     // compute nb of byte to get corresponding to 1 audio frame
-    const size_t samplesToGet = resampleFactor * getCodecFrameSize();
+    const size_t samplesToGet = resampleFactor * codecFrameSize_;
 
-    if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
+    if (Manager::instance().getMainBuffer().availableForGet(id) < samplesToGet)
         return 0;
 
     AudioBuffer micData(samplesToGet, mainBuffFormat);
-    const size_t samps = Manager::instance().getMainBuffer().getData(micData, id_);
+    const size_t samps = Manager::instance().getMainBuffer().getData(micData, id);
 
     if (samps != samplesToGet) {
         ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samps);
         return 0;
     }
 
-    audioRtpRecord_.fadeInDecodedData();
+    fadeInDecodedData();
 
     AudioBuffer *out = &micData;
     if (codecFormat.sample_rate != mainBuffFormat.sample_rate) {
-        RETURN_IF_NULL(audioRtpRecord_.converterEncode_, 0, "Converter already destroyed");
-        audioRtpRecord_.resampledDataEncode_.setChannelNum(mainBuffFormat.channel_num);
-        audioRtpRecord_.resampledDataEncode_.setSampleRate(codecFormat.sample_rate);
-        audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledDataEncode_);
-        out = &(audioRtpRecord_.resampledDataEncode_);
+        RETURN_IF_NULL(converterEncode_, 0, "Converter already destroyed");
+        resampledDataEncode_.setChannelNum(mainBuffFormat.channel_num);
+        resampledDataEncode_.setSampleRate(codecFormat.sample_rate);
+        converterEncode_->resample(micData, resampledDataEncode_);
+        out = &resampledDataEncode_;
     }
     if (codecFormat.channel_num != mainBuffFormat.channel_num)
         out->setChannelNum(codecFormat.channel_num, true);
@@ -275,27 +280,27 @@ int AudioRtpRecordHandler::processDataEncode()
     const bool agc = Manager::instance().audioPreference.isAGCEnabled();
 
     if (denoise or agc) {
-        std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
-        RETURN_IF_NULL(audioRtpRecord_.dspEncode_, 0, "DSP already destroyed");
+        std::lock_guard<std::mutex> lock(audioProcessMutex_);
+        RETURN_IF_NULL(dspEncode_, 0, "DSP already destroyed");
         if (denoise)
-            audioRtpRecord_.dspEncode_->enableDenoise();
+            dspEncode_->enableDenoise();
         else
-            audioRtpRecord_.dspEncode_->disableDenoise();
+            dspEncode_->disableDenoise();
 
         if (agc)
-            audioRtpRecord_.dspEncode_->enableAGC();
+            dspEncode_->enableAGC();
         else
-            audioRtpRecord_.dspEncode_->disableAGC();
+            dspEncode_->disableAGC();
 
-        audioRtpRecord_.dspEncode_->process(*out, getCodecFrameSize());
+        dspEncode_->process(*out, codecFrameSize_);
     }
 #endif
 
     {
-        std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
-        RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
-        unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
-        int encoded = audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out->getData(), getCodecFrameSize());
+        std::lock_guard<std::mutex> lock(audioCodecMutex_);
+        RETURN_IF_NULL(getCurrentCodec(), 0, "Audio codec already destroyed");
+        unsigned char *micDataEncoded = encodedData_.data();
+        int encoded = getCurrentCodec()->encode(micDataEncoded, out->getData(), codecFrameSize_);
         return encoded;
     }
 }

@@ -123,6 +123,11 @@ class AudioRtpRecord {
          */
         void processDataDecode(unsigned char * spkrData, size_t size, int payloadType, const std::string &id);
 
+        /**
+         * Encode audio data from mainbuffer
+         */
+        int processDataEncode(const std::string &id);
+
         inline AudioFormat getCodecFormat() const {
             return AudioFormat(codecSampleRate_, codecChannels_);
         }
