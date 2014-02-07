@@ -117,6 +117,16 @@ class AudioRtpRecord {
 
         bool isDead();
         friend class AudioRtpRecordHandler;
+
+        /**
+         * Decode audio data received from peer
+         */
+        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType, const std::string &id);
+
+        inline AudioFormat getCodecFormat() const {
+            return AudioFormat(codecSampleRate_, codecChannels_);
+        }
+
         /**
         * Ramp In audio data to avoid audio click from peer
         */
@@ -124,6 +134,7 @@ class AudioRtpRecord {
         NON_COPYABLE(AudioRtpRecord);
         std::atomic<bool> dead_;
         size_t currentCodecIndex_;
+        int warningInterval_;
 };
 
 
@@ -213,7 +224,6 @@ class AudioRtpRecordHandler {
     private:
         unsigned int dtmfPayloadType_;
         const std::string id_;
-        int warningInterval_;
 
 };
 }

@@ -69,6 +69,7 @@ AudioRtpRecord::AudioRtpRecord() :
 #endif
     , dead_(false)
     , currentCodecIndex_(0)
+    , warningInterval_(0)
 {}
 
 // Call from processData*
@@ -144,8 +145,7 @@ AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
     dtmfQueue_(),
     dtmfPayloadType_(101), // same as Asterisk
-    id_(call.getCallId()),
-    warningInterval_(0)
+    id_(call.getCallId())
 {}
 
 
@@ -305,12 +305,17 @@ int AudioRtpRecordHandler::processDataEncode()
 
 void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
-    if (audioRtpRecord_.isDead())
+    audioRtpRecord_.processDataDecode(spkrData, size, payloadType, id_);
+}
+
+void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int payloadType, const std::string &id)
+{
+    if (isDead())
         return;
 
-    const int decPt = audioRtpRecord_.decoder_.getPayloadType();
+    const int decPt = decoder_.getPayloadType();
     if (decPt != payloadType) {
-        const bool switched = audioRtpRecord_.tryToSwitchPayloadTypes(payloadType);
+        const bool switched = tryToSwitchPayloadTypes(payloadType);
 
         if (not switched) {
             if (!warningInterval_) {
@@ -324,12 +329,12 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     }
 
     {
-        std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
-        RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
-        audioRtpRecord_.decData_.setFormat(getCodecFormat());
-        audioRtpRecord_.decData_.resize(DEC_BUFFER_SIZE);
-        int decoded = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
-        audioRtpRecord_.decData_.resize(decoded);
+        std::lock_guard<std::mutex> lock(audioCodecMutex_);
+        RETURN_IF_NULL(getCurrentCodec(), "Audio codecs already destroyed");
+        decData_.setFormat(getCodecFormat());
+        decData_.resize(DEC_BUFFER_SIZE);
+        int decoded = getCurrentCodec()->decode(decData_.getData(), spkrData, size);
+        decData_.resize(decoded);
     }
 
 #if HAVE_SPEEXDSP
@@ -338,41 +343,40 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     const bool agc = Manager::instance().audioPreference.isAGCEnabled();
 
     if (denoise or agc) {
-        std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
-        RETURN_IF_NULL(audioRtpRecord_.dspDecode_, "DSP already destroyed");
+        std::lock_guard<std::mutex> lock(audioProcessMutex_);
+        RETURN_IF_NULL(dspDecode_, "DSP already destroyed");
         if (denoise)
-            audioRtpRecord_.dspDecode_->enableDenoise();
+            dspDecode_->enableDenoise();
         else
-            audioRtpRecord_.dspDecode_->disableDenoise();
+            dspDecode_->disableDenoise();
 
         if (agc)
-            audioRtpRecord_.dspDecode_->enableAGC();
+            dspDecode_->enableAGC();
         else
-            audioRtpRecord_.dspDecode_->disableAGC();
-        audioRtpRecord_.dspDecode_->process(audioRtpRecord_.decData_, getCodecFrameSize());
+            dspDecode_->disableAGC();
+        dspDecode_->process(decData_, codecFrameSize_);
     }
 
 #endif
 
-    audioRtpRecord_.fadeInDecodedData();
+    fadeInDecodedData();
 
-    AudioBuffer *out = &(audioRtpRecord_.decData_);
+    AudioBuffer *out = &decData_;
 
     // test if resampling or up/down-mixing is required
     AudioFormat decFormat = out->getFormat();
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
-        RETURN_IF_NULL(audioRtpRecord_.converterDecode_, "Converter already destroyed");
-        audioRtpRecord_.resampledDataDecode_.setChannelNum(decFormat.channel_num);
-        audioRtpRecord_.resampledDataDecode_.setSampleRate(mainBuffFormat.sample_rate);
+        RETURN_IF_NULL(converterDecode_, "Converter already destroyed");
+        resampledDataDecode_.setChannelNum(decFormat.channel_num);
+        resampledDataDecode_.setSampleRate(mainBuffFormat.sample_rate);
         //WARN("Resample %s->%s", audioRtpRecord_.decData_.toString().c_str(), audioRtpRecord_.resampledDataDecode_.toString().c_str());
-        audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledDataDecode_);
-        out = &(audioRtpRecord_.resampledDataDecode_);
+        converterDecode_->resample(decData_, resampledDataDecode_);
+        out = &resampledDataDecode_;
     }
     if (decFormat.channel_num != mainBuffFormat.channel_num)
         out->setChannelNum(mainBuffFormat.channel_num, true);
-
-    Manager::instance().getMainBuffer().putData(*out, id_);
+    Manager::instance().getMainBuffer().putData(*out, id);
 }
 #undef RETURN_IF_NULL
 
