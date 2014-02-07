@@ -156,12 +156,18 @@ AudioRtpRecordHandler::~AudioRtpRecordHandler()
 std::string
 AudioRtpRecordHandler::getCurrentAudioCodecNames()
 {
+    return audioRtpRecord_.getCurrentCodecNames();
+}
+
+std::string
+AudioRtpRecord::getCurrentCodecNames()
+{
     std::string result;
-    std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
+    std::lock_guard<std::mutex> lock(audioCodecMutex_);
     {
         std::string sep = "";
 
-        for (auto &i : audioRtpRecord_.audioCodecs_) {
+        for (auto &i : audioCodecs_) {
             if (i)
                 result += sep + i->getMimeSubtype();
 

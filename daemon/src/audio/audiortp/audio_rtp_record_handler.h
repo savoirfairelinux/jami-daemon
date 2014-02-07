@@ -88,6 +88,8 @@ class AudioRtpRecord {
         int codecSampleRate_;
 
     private:
+        std::string getCurrentCodecNames();
+
         AudioEncoder encoder_;
         AudioDecoder decoder_;
 
