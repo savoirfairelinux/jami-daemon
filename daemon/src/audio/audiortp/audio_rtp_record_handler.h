@@ -56,26 +56,15 @@ class DSP;
 
 namespace sfl {
 
-struct AudioEncoder {
-    AudioEncoder(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr) {}
+struct AudioRtpContext {
+    AudioRtpContext(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr) {}
     int payloadType;
     int frameSize;
     AudioFormat format;
     AudioBuffer resampledData;
     SamplerateConverter *resampler;
     private:
-    NON_COPYABLE(AudioEncoder);
-};
-
-struct AudioDecoder {
-    AudioDecoder(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr) {}
-    int payloadType;
-    int frameSize;
-    AudioFormat format;
-    AudioBuffer resampledData;
-    SamplerateConverter *resampler;
-    private:
-    NON_COPYABLE(AudioDecoder);
+    NON_COPYABLE(AudioRtpContext);
 };
 
 /**
@@ -101,8 +90,8 @@ class AudioRtpRecord {
 
         std::string getCurrentCodecNames();
 
-        AudioEncoder encoder_;
-        AudioDecoder decoder_;
+        AudioRtpContext encoder_;
+        AudioRtpContext decoder_;
 
         std::vector<AudioCodec*> audioCodecs_;
         std::mutex audioCodecMutex_;
@@ -158,11 +147,11 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.audioCodecs_[0];
         }
 
-        const AudioEncoder &getEncoder() const {
+        const AudioRtpContext &getEncoder() const {
             return audioRtpRecord_.encoder_;
         }
 
-        const AudioDecoder &getDecoder() const {
+        const AudioRtpContext &getDecoder() const {
             return audioRtpRecord_.decoder_;
         }
 
