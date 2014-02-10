@@ -46,9 +46,8 @@ namespace sfl {
 
 AudioRtpRecord::AudioRtpRecord() :
     callId_("")
-    , codecSampleRate_(0)
-    , encoder_()
-    , decoder_()
+    , encoder_(AudioFormat::MONO)
+    , decoder_(AudioFormat::MONO)
     , audioCodecs_()
     , audioCodecMutex_()
     , hasDynamicPayloadType_(false)
@@ -58,8 +57,6 @@ AudioRtpRecord::AudioRtpRecord() :
     , encodedData_()
     , converterEncode_(nullptr)
     , converterDecode_(nullptr)
-    , codecFrameSize_(0)
-    , codecChannels_(0)
     , converterSamplingRate_(0)
     , fadeFactor_(1.0 / 32000.0)
 #if HAVE_SPEEXDSP
@@ -105,10 +102,11 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
             AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
             (*i)->setOptimalFormat(f.sample_rate, f.channel_num);
             decoder_.payloadType = (*i)->getPayloadType();
-            codecSampleRate_ = (*i)->getClockRate();
-            codecFrameSize_ = (*i)->getFrameSize();
-            codecChannels_ = (*i)->getChannels();
+            decoder_.format.sample_rate = (*i)->getClockRate();
+            decoder_.frameSize = (*i)->getFrameSize();
+            decoder_.format.channel_num = (*i)->getChannels();
             hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
+            // FIXME: this is not reliable
             currentCodecIndex_ = std::distance(audioCodecs_.begin(), i);
             DEBUG("Switched payload type to %d", newPt);
             return true;
@@ -204,9 +202,9 @@ void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     const int pt = audioCodecs[0]->getPayloadType();
     encoder_.payloadType = pt;
     decoder_.payloadType = pt;
-    encoder_.sampleRate = decoder_.sampleRate = audioCodecs[0]->getClockRate();
-    codecFrameSize_ = audioCodecs[0]->getFrameSize();
-    codecChannels_ = audioCodecs[0]->getChannels();
+    encoder_.format.sample_rate = decoder_.format.sample_rate = audioCodecs[0]->getClockRate();
+    encoder_.frameSize = decoder_.frameSize = audioCodecs[0]->getFrameSize();
+    encoder_.format.channel_num = decoder_.format.channel_num = audioCodecs[0]->getChannels();
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 
@@ -220,9 +218,9 @@ void AudioRtpRecord::initBuffers()
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
     delete converterEncode_;
-    converterEncode_ = new SamplerateConverter(encoder_.sampleRate);
+    converterEncode_ = new SamplerateConverter(encoder_.format.sample_rate);
     delete converterDecode_;
-    converterDecode_ = new SamplerateConverter(decoder_.sampleRate);
+    converterDecode_ = new SamplerateConverter(decoder_.format.sample_rate);
 }
 
 #if HAVE_SPEEXDSP
@@ -235,9 +233,9 @@ void AudioRtpRecord::initDSP()
 {
     std::lock_guard<std::mutex> lock(audioProcessMutex_);
     delete dspEncode_;
-    dspEncode_ = new DSP(codecFrameSize_, encoder_.channels, encoder_.sampleRate);
+    dspEncode_ = new DSP(encoder_.frameSize, encoder_.format.channel_num, encoder_.format.sample_rate);
     delete dspDecode_;
-    dspDecode_ = new DSP(codecFrameSize_, decoder_.channels, decoder_.sampleRate);
+    dspDecode_ = new DSP(decoder_.frameSize, decoder_.format.channel_num, decoder_.format.sample_rate);
 }
 #endif
 
@@ -259,13 +257,12 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
     if (isDead())
         return 0;
 
-    AudioFormat codecFormat = getCodecFormat();
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
 
-    double resampleFactor = (double) mainBuffFormat.sample_rate / codecFormat.sample_rate;
+    double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format.sample_rate;
 
     // compute nb of byte to get corresponding to 1 audio frame
-    const size_t samplesToGet = resampleFactor * codecFrameSize_;
+    const size_t samplesToGet = resampleFactor * encoder_.frameSize;
 
     if (Manager::instance().getMainBuffer().availableForGet(id) < samplesToGet)
         return 0;
@@ -281,15 +278,15 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
     fadeInDecodedData();
 
     AudioBuffer *out = &micData;
-    if (codecFormat.sample_rate != mainBuffFormat.sample_rate) {
+    if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(converterEncode_, 0, "Converter already destroyed");
         resampledDataEncode_.setChannelNum(mainBuffFormat.channel_num);
-        resampledDataEncode_.setSampleRate(codecFormat.sample_rate);
+        resampledDataEncode_.setSampleRate(encoder_.format.sample_rate);
         converterEncode_->resample(micData, resampledDataEncode_);
         out = &resampledDataEncode_;
     }
-    if (codecFormat.channel_num != mainBuffFormat.channel_num)
-        out->setChannelNum(codecFormat.channel_num, true);
+    if (encoder_.format.channel_num != mainBuffFormat.channel_num)
+        out->setChannelNum(encoder_.format.channel_num, true);
 
 #if HAVE_SPEEXDSP
     const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
@@ -308,7 +305,7 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
         else
             dspEncode_->disableAGC();
 
-        dspEncode_->process(*out, codecFrameSize_);
+        dspEncode_->process(*out, encoder_.frameSize);
     }
 #endif
 
@@ -316,7 +313,7 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         RETURN_IF_NULL(getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = encodedData_.data();
-        int encoded = getCurrentCodec()->encode(micDataEncoded, out->getData(), codecFrameSize_);
+        int encoded = getCurrentCodec()->encode(micDataEncoded, out->getData(), encoder_.frameSize);
         return encoded;
     }
 }
@@ -352,7 +349,7 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         RETURN_IF_NULL(getCurrentCodec(), "Audio codecs already destroyed");
-        decData_.setFormat(getCodecFormat());
+        decData_.setFormat(decoder_.format);
         decData_.resize(DEC_BUFFER_SIZE);
         int decoded = getCurrentCodec()->decode(decData_.getData(), spkrData, size);
         decData_.resize(decoded);
@@ -375,7 +372,7 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
             dspDecode_->enableAGC();
         else
             dspDecode_->disableAGC();
-        dspDecode_->process(decData_, codecFrameSize_);
+        dspDecode_->process(decData_, decoder_.frameSize);
     }
 
 #endif

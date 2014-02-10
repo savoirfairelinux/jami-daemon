@@ -57,15 +57,17 @@ class DSP;
 namespace sfl {
 
 struct AudioEncoder {
-        int payloadType;
-        unsigned sampleRate;
-        unsigned channels;
+    AudioEncoder(AudioFormat f) : payloadType(0), frameSize(0), format(f) {}
+    int payloadType;
+    int frameSize;
+    AudioFormat format;
 };
 
 struct AudioDecoder {
-        int payloadType;
-        unsigned sampleRate;
-        unsigned channels;
+    AudioDecoder(AudioFormat f) : payloadType(0), frameSize(0), format(f) {}
+    int payloadType;
+    int frameSize;
+    AudioFormat format;
 };
 
 /**
@@ -81,7 +83,6 @@ class AudioRtpRecord {
         bool tryToSwitchPayloadTypes(int newPt);
         sfl::AudioCodec* getCurrentCodec() const;
         std::string callId_;
-        int codecSampleRate_;
 
     private:
         void initBuffers();
@@ -106,8 +107,6 @@ class AudioRtpRecord {
         std::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
-        int codecFrameSize_;
-        int codecChannels_;
         int converterSamplingRate_;
         double fadeFactor_;
 
@@ -129,10 +128,6 @@ class AudioRtpRecord {
          * Encode audio data from mainbuffer
          */
         int processDataEncode(const std::string &id);
-
-        inline AudioFormat getCodecFormat() const {
-            return AudioFormat(codecSampleRate_, codecChannels_);
-        }
 
         /**
         * Ramp In audio data to avoid audio click from peer
@@ -165,22 +160,6 @@ class AudioRtpRecordHandler {
 
         const AudioDecoder &getDecoder() const {
             return audioRtpRecord_.decoder_;
-        }
-
-        int getCodecSampleRate() const {
-            return audioRtpRecord_.codecSampleRate_;
-        }
-
-        int getCodecChannels() const {
-            return audioRtpRecord_.codecChannels_;
-        }
-
-        inline AudioFormat getCodecFormat() const {
-            return AudioFormat(audioRtpRecord_.codecSampleRate_, audioRtpRecord_.codecChannels_);
-        }
-
-        int getCodecFrameSize() const {
-            return audioRtpRecord_.codecFrameSize_;
         }
 
         bool hasDynamicPayload() const {

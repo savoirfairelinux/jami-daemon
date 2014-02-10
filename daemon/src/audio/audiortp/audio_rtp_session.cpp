@@ -63,21 +63,19 @@ AudioRtpSession::~AudioRtpSession()
 
 void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    int lastSamplingRate = audioRtpRecord_.codecSampleRate_;
+    // FIXME: we should differentiate for encoder and decoder (i.e. send vs. recv vs. sendrecv)
+    const unsigned lastEncoderSampleRate = getEncoder().format.sample_rate;
+    const unsigned lastDecoderSampleRate = getDecoder().format.sample_rate;
 
     if (codecsDiffer(audioCodecs))
         setSessionMedia(audioCodecs);
 
-    //Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
-
+    // FIXME: move this into AudioRtpRecord
 #if HAVE_SPEEXDSP
-
-    if (lastSamplingRate != audioRtpRecord_.codecSampleRate_) {
-        DEBUG("Update noise suppressor with sampling rate %d and frame size %d",
-              getCodecSampleRate(), getCodecFrameSize());
+    if (lastEncoderSampleRate != getEncoder().format.sample_rate or
+        lastDecoderSampleRate != getDecoder().format.sample_rate) {
         initDSP();
     }
-
 #endif
 }
 
@@ -92,21 +90,21 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
         const int G722_RTP_TIME_INCREMENT = 160;
         timestampIncrement_ = G722_RTP_TIME_INCREMENT;
     } else
-        timestampIncrement_ = getCodecFrameSize();
+        timestampIncrement_ = getEncoder().frameSize;
 
     if (payloadType == ost::sptG722) {
         const int G722_RTP_CLOCK_RATE = 8000;
         queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, G722_RTP_CLOCK_RATE));
     } else {
         if (hasDynamicPayload())
-            queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, getCodecSampleRate()));
+            queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, getEncoder().format.sample_rate));
         else
             queue_.setPayloadFormat(ost::StaticPayloadFormat(static_cast<ost::StaticPayloadType>(payloadType)));
     }
 
-    call_.setRecordingFormat(getCodecFormat());
+    call_.setRecordingFormat(getEncoder().format);
 
-    int transportRate = getCodecFrameSize() / (getCodecSampleRate() / 1000);
+    int transportRate = getEncoder().frameSize / getEncoder().format.sample_rate / 1000;
     transportRate_ = (transportRate > 0)?transportRate:20;
     DEBUG("Switching to a transport rate of %d ms",transportRate_);
 }
@@ -144,7 +142,7 @@ void AudioRtpSession::sendDtmfEvent()
 
     // restore the payload to audio
     if (hasDynamicPayload()) {
-        const ost::DynamicPayloadFormat pf(getEncoder().payloadType, getEncoder().sampleRate);
+        const ost::DynamicPayloadFormat pf(getEncoder().payloadType, getEncoder().format.sample_rate);
         queue_.setPayloadFormat(pf);
     } else {
         const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getEncoder().payloadType));
