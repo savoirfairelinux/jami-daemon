@@ -43,12 +43,12 @@
  */
 typedef struct AudioFormat {
     unsigned sample_rate;
-    unsigned channel_num;
+    unsigned nb_channels;
 
-    AudioFormat(unsigned sr, unsigned c=1) : sample_rate(sr), channel_num(c) {}
+    AudioFormat(unsigned sr, unsigned c=1) : sample_rate(sr), nb_channels(c) {}
 
     inline bool operator == (const AudioFormat &b) const {
-        return ( (b.sample_rate==sample_rate) && (b.channel_num==channel_num) );
+        return ( (b.sample_rate == sample_rate) && (b.nb_channels == nb_channels) );
     }
 
     inline bool operator != (const AudioFormat &b) const {
@@ -57,7 +57,7 @@ typedef struct AudioFormat {
 
     inline std::string toString() const {
         std::stringstream ss;
-        ss << "{" << channel_num << " channels, " << sample_rate << "kHz}";
+        ss << "{" << nb_channels << " channels, " << sample_rate << "kHz}";
         return ss.str();
     }
 
@@ -66,7 +66,7 @@ typedef struct AudioFormat {
      * to hold delay_ms milliseconds of audio data.
      */
     inline unsigned getBandwidth(unsigned delay_ms=1000) const {
-            return (sample_rate*channel_num*delay_ms*sizeof(SFLAudioSample))/1000;
+            return (sample_rate * nb_channels * delay_ms * sizeof(SFLAudioSample)) / 1000;
     }
 
     static const unsigned DEFAULT_SAMPLE_RATE = 48000;
@@ -237,7 +237,7 @@ class AudioBuffer {
         /**
          * Import interleaved multichannel data. Internal buffer is resized as needed. Function will read sample_num*channel_num elements of the in buffer.
          */
-        void deinterleave(const SFLAudioSample* in, size_t sample_num, unsigned channel_num = 1);
+        void deinterleave(const SFLAudioSample* in, size_t sample_num, unsigned nb_channels = 1);
 
         /**
          * In-place gain transformation.

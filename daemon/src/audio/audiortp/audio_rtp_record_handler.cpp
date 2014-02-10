@@ -100,11 +100,11 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
     for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
         if (*i and (*i)->getPayloadType() == newPt) {
             AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
-            (*i)->setOptimalFormat(f.sample_rate, f.channel_num);
+            (*i)->setOptimalFormat(f.sample_rate, f.nb_channels);
             decoder_.payloadType = (*i)->getPayloadType();
             decoder_.format.sample_rate = (*i)->getClockRate();
             decoder_.frameSize = (*i)->getFrameSize();
-            decoder_.format.channel_num = (*i)->getChannels();
+            decoder_.format.nb_channels = (*i)->getChannels();
             hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
             // FIXME: this is not reliable
             currentCodecIndex_ = std::distance(audioCodecs_.begin(), i);
@@ -195,7 +195,7 @@ void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     }
 
     AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
-    audioCodecs[0]->setOptimalFormat(f.sample_rate, f.channel_num);
+    audioCodecs[0]->setOptimalFormat(f.sample_rate, f.nb_channels);
     // FIXME: this should be distinct for encoder and decoder
     currentCodecIndex_ = 0;
     // FIXME: this is probably not the right payload type
@@ -204,7 +204,7 @@ void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     decoder_.payloadType = pt;
     encoder_.format.sample_rate = decoder_.format.sample_rate = audioCodecs[0]->getClockRate();
     encoder_.frameSize = decoder_.frameSize = audioCodecs[0]->getFrameSize();
-    encoder_.format.channel_num = decoder_.format.channel_num = audioCodecs[0]->getChannels();
+    encoder_.format.nb_channels = decoder_.format.nb_channels = audioCodecs[0]->getChannels();
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 
@@ -233,9 +233,9 @@ void AudioRtpRecord::initDSP()
 {
     std::lock_guard<std::mutex> lock(audioProcessMutex_);
     delete dspEncode_;
-    dspEncode_ = new DSP(encoder_.frameSize, encoder_.format.channel_num, encoder_.format.sample_rate);
+    dspEncode_ = new DSP(encoder_.frameSize, encoder_.format.nb_channels, encoder_.format.sample_rate);
     delete dspDecode_;
-    dspDecode_ = new DSP(decoder_.frameSize, decoder_.format.channel_num, decoder_.format.sample_rate);
+    dspDecode_ = new DSP(decoder_.frameSize, decoder_.format.nb_channels, decoder_.format.sample_rate);
 }
 #endif
 
@@ -280,13 +280,13 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
     AudioBuffer *out = &micData;
     if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(converterEncode_, 0, "Converter already destroyed");
-        resampledDataEncode_.setChannelNum(mainBuffFormat.channel_num);
+        resampledDataEncode_.setChannelNum(mainBuffFormat.nb_channels);
         resampledDataEncode_.setSampleRate(encoder_.format.sample_rate);
         converterEncode_->resample(micData, resampledDataEncode_);
         out = &resampledDataEncode_;
     }
-    if (encoder_.format.channel_num != mainBuffFormat.channel_num)
-        out->setChannelNum(encoder_.format.channel_num, true);
+    if (encoder_.format.nb_channels != mainBuffFormat.nb_channels)
+        out->setChannelNum(encoder_.format.nb_channels, true);
 
 #if HAVE_SPEEXDSP
     const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
@@ -386,14 +386,14 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(converterDecode_, "Converter already destroyed");
-        resampledDataDecode_.setChannelNum(decFormat.channel_num);
+        resampledDataDecode_.setChannelNum(decFormat.nb_channels);
         resampledDataDecode_.setSampleRate(mainBuffFormat.sample_rate);
         //WARN("Resample %s->%s", audioRtpRecord_.decData_.toString().c_str(), audioRtpRecord_.resampledDataDecode_.toString().c_str());
         converterDecode_->resample(decData_, resampledDataDecode_);
         out = &resampledDataDecode_;
     }
-    if (decFormat.channel_num != mainBuffFormat.channel_num)
-        out->setChannelNum(mainBuffFormat.channel_num, true);
+    if (decFormat.nb_channels != mainBuffFormat.nb_channels)
+        out->setChannelNum(mainBuffFormat.nb_channels, true);
     Manager::instance().getMainBuffer().putData(*out, id);
 }
 #undef RETURN_IF_NULL

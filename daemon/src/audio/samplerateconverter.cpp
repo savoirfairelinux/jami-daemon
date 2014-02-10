@@ -53,7 +53,7 @@ void
 SamplerateConverter::setFormat(AudioFormat format)
 {
     format_ = format;
-    samples_ = (format.channel_num * format.sample_rate * 20) / 1000; // start with 20 ms buffers
+    samples_ = (format.nb_channels * format.sample_rate * 20) / 1000; // start with 20 ms buffers
     floatBufferIn_.resize(samples_);
     floatBufferOut_.resize(samples_);
     scratchBuffer_.resize(samples_);
@@ -62,7 +62,7 @@ SamplerateConverter::setFormat(AudioFormat format)
         src_delete(src_state_);
 
     int err;
-    src_state_ = src_new(SRC_LINEAR, format.channel_num, &err);
+    src_state_ = src_new(SRC_LINEAR, format.nb_channels, &err);
 }
 
 void
@@ -88,12 +88,12 @@ void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataO
     const size_t nbFrames = dataIn.frames();
     const size_t nbChans = dataIn.channels();
 
-    if (nbChans != format_.channel_num) {
+    if (nbChans != format_.nb_channels) {
         // change channel num if needed
         int err;
         src_delete(src_state_);
         src_state_ = src_new(SRC_LINEAR, nbChans, &err);
-        format_.channel_num = nbChans;
+        format_.nb_channels = nbChans;
         DEBUG("SRC channel number changed.");
     }
     if(nbChans != dataOut.channels()) {

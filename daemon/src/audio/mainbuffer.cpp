@@ -67,7 +67,7 @@ void MainBuffer::setInternalAudioFormat(AudioFormat format)
 void MainBuffer::setMinimumAudioFormat(AudioFormat format)
 {
     if (format.sample_rate > internalAudioFormat_.sample_rate or
-        format.channel_num > internalAudioFormat_.channel_num) {
+        format.nb_channels > internalAudioFormat_.nb_channels) {
         setInternalAudioFormat(format);
     }
 }

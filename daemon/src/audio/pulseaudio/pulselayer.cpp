@@ -551,12 +551,12 @@ void PulseLayer::readFromMic()
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data)
         return;
 
-    assert(format.channel_num);
+    assert(format.nb_channels);
     assert(sample_size);
-    const size_t samples = bytes / sample_size / format.channel_num;
+    const size_t samples = bytes / sample_size / format.nb_channels;
 
     AudioBuffer in(samples, format);
-    in.deinterleave((SFLAudioSample*)data, samples, format.channel_num);
+    in.deinterleave((SFLAudioSample*)data, samples, format.nb_channels);
 
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = audioFormat_.sample_rate != mainBufferSampleRate;

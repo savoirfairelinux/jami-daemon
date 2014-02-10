@@ -164,7 +164,7 @@ bool AudioRecord::openFile()
     const bool doAppend = fileExists();
     const int access = doAppend ? SFM_RDWR : SFM_WRITE;
 
-    fileHandle_ = new SndfileHandle(savePath_.c_str(), access, SF_FORMAT_WAV | SF_FORMAT_PCM_16, sndFormat_.channel_num, sndFormat_.sample_rate);
+    fileHandle_ = new SndfileHandle(savePath_.c_str(), access, SF_FORMAT_WAV | SF_FORMAT_PCM_16, sndFormat_.nb_channels, sndFormat_.sample_rate);
 
     // check overloaded boolean operator
     if (!*fileHandle_) {
