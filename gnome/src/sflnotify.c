@@ -54,6 +54,7 @@ typedef struct {
 } GnomeNotification;
 #endif
 
+/* XXX: This function will free its arguments */
 static void
 create_new_gnome_notification(gchar *title, gchar *body, NotifyUrgency urgency, gint timeout, SFLPhoneClient *client)
 {
@@ -200,8 +201,6 @@ notify_secure_on(callable_obj_t* c, SFLPhoneClient *client)
                                   NOTIFY_URGENCY_CRITICAL,
                                   utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
                                   client);
-    g_free(callerid);
-    g_free(title);
 #endif
 }
 
