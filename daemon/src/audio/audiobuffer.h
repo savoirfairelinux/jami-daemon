@@ -45,7 +45,7 @@ typedef struct AudioFormat {
     unsigned sample_rate;
     unsigned nb_channels;
 
-    AudioFormat(unsigned sr, unsigned c=1) : sample_rate(sr), nb_channels(c) {}
+    AudioFormat(unsigned sr, unsigned c) : sample_rate(sr), nb_channels(c) {}
 
     inline bool operator == (const AudioFormat &b) const {
         return ( (b.sample_rate == sample_rate) && (b.nb_channels == nb_channels) );
