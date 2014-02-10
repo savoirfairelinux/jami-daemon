@@ -52,8 +52,6 @@ AudioRtpRecord::AudioRtpRecord() :
     , audioCodecMutex_()
     , hasDynamicPayloadType_(false)
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
-    , resampledDataEncode_(0, AudioFormat::MONO)
-    , resampledDataDecode_(0, AudioFormat::MONO)
     , encodedData_()
     , converterEncode_(nullptr)
     , converterDecode_(nullptr)
@@ -280,10 +278,10 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
     AudioBuffer *out = &micData;
     if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(converterEncode_, 0, "Converter already destroyed");
-        resampledDataEncode_.setChannelNum(mainBuffFormat.nb_channels);
-        resampledDataEncode_.setSampleRate(encoder_.format.sample_rate);
-        converterEncode_->resample(micData, resampledDataEncode_);
-        out = &resampledDataEncode_;
+        encoder_.resampledData.setChannelNum(mainBuffFormat.nb_channels);
+        encoder_.resampledData.setSampleRate(encoder_.format.sample_rate);
+        converterEncode_->resample(micData, encoder_.resampledData);
+        out = &encoder_.resampledData;
     }
     if (encoder_.format.nb_channels != mainBuffFormat.nb_channels)
         out->setChannelNum(encoder_.format.nb_channels, true);
@@ -386,10 +384,10 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(converterDecode_, "Converter already destroyed");
-        resampledDataDecode_.setChannelNum(decFormat.nb_channels);
-        resampledDataDecode_.setSampleRate(mainBuffFormat.sample_rate);
-        converterDecode_->resample(rawBuffer_, resampledDataDecode_);
-        out = &resampledDataDecode_;
+        decoder_.resampledData.setChannelNum(decFormat.nb_channels);
+        decoder_.resampledData.setSampleRate(mainBuffFormat.sample_rate);
+        converterDecode_->resample(rawBuffer_, decoder_.resampledData);
+        out = &decoder_.resampledData;
     }
     if (decFormat.nb_channels != mainBuffFormat.nb_channels)
         out->setChannelNum(mainBuffFormat.nb_channels, true);

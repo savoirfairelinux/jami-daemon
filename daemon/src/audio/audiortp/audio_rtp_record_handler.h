@@ -57,17 +57,19 @@ class DSP;
 namespace sfl {
 
 struct AudioEncoder {
-    AudioEncoder(AudioFormat f) : payloadType(0), frameSize(0), format(f) {}
+    AudioEncoder(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO) {}
     int payloadType;
     int frameSize;
     AudioFormat format;
+    AudioBuffer resampledData;
 };
 
 struct AudioDecoder {
-    AudioDecoder(AudioFormat f) : payloadType(0), frameSize(0), format(f) {}
+    AudioDecoder(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO) {}
     int payloadType;
     int frameSize;
     AudioFormat format;
+    AudioBuffer resampledData;
 };
 
 /**
@@ -103,8 +105,6 @@ class AudioRtpRecord {
         bool hasDynamicPayloadType_;
         // FIXME: probably need one for pre-encoder data, one for post-decoder data
         AudioBuffer rawBuffer_;
-        AudioBuffer resampledDataEncode_;
-        AudioBuffer resampledDataDecode_;
         std::array<unsigned char, RAW_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
