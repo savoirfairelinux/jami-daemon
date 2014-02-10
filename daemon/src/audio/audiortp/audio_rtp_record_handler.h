@@ -88,6 +88,8 @@ class AudioRtpRecord {
         int codecSampleRate_;
 
     private:
+        void setRtpMedia(const std::vector<AudioCodec*> &codecs);
+
         std::string getCurrentCodecNames();
 
         AudioEncoder encoder_;
@@ -151,7 +153,7 @@ class AudioRtpRecordHandler {
         /**
          *  Set rtp media for this session
          */
-        void setRtpMedia(const std::vector<AudioCodec*> &audioCodec);
+        void setRtpMedia(const std::vector<AudioCodec*> &codecs);
 
         AudioCodec *getAudioCodec() const {
             return audioRtpRecord_.audioCodecs_[0];

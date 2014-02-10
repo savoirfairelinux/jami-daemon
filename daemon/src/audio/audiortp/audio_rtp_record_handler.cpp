@@ -178,13 +178,18 @@ AudioRtpRecord::getCurrentCodecNames()
     return result;
 }
 
-void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
+void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &codecs)
 {
-    std::lock_guard<std::mutex> lock(audioRtpRecord_.audioCodecMutex_);
+    audioRtpRecord_.setRtpMedia(codecs);
+}
 
-    audioRtpRecord_.deleteCodecs();
+void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
+{
+    std::lock_guard<std::mutex> lock(audioCodecMutex_);
+
+    deleteCodecs();
     // Set various codec info to reduce indirection
-    audioRtpRecord_.audioCodecs_ = audioCodecs;
+    audioCodecs_ = audioCodecs;
 
     if (audioCodecs.empty()) {
         ERROR("Audio codecs empty");
@@ -193,15 +198,16 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
 
     AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
     audioCodecs[0]->setOptimalFormat(f.sample_rate, f.channel_num);
-    audioRtpRecord_.currentCodecIndex_ = 0;
+    // FIXME: this should be distinct for encoder and decoder
+    currentCodecIndex_ = 0;
     // FIXME: this is probably not the right payload type
     const int pt = audioCodecs[0]->getPayloadType();
-    audioRtpRecord_.encoder_.setPayloadType(pt);
-    audioRtpRecord_.decoder_.setPayloadType(pt);
-    audioRtpRecord_.codecSampleRate_ = audioCodecs[0]->getClockRate();
-    audioRtpRecord_.codecFrameSize_ = audioCodecs[0]->getFrameSize();
-    audioRtpRecord_.codecChannels_ = audioCodecs[0]->getChannels();
-    audioRtpRecord_.hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
+    encoder_.setPayloadType(pt);
+    decoder_.setPayloadType(pt);
+    codecSampleRate_ = audioCodecs[0]->getClockRate();
+    codecFrameSize_ = audioCodecs[0]->getFrameSize();
+    codecChannels_ = audioCodecs[0]->getChannels();
+    hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 
 void AudioRtpRecordHandler::initBuffers()
