@@ -88,6 +88,7 @@ class AudioRtpRecord {
         int codecSampleRate_;
 
     private:
+        void initBuffers();
         void setRtpMedia(const std::vector<AudioCodec*> &codecs);
 
         std::string getCurrentCodecNames();

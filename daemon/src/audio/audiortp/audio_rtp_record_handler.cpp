@@ -212,12 +212,17 @@ void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 
 void AudioRtpRecordHandler::initBuffers()
 {
+    audioRtpRecord_.initBuffers();
+}
+
+void AudioRtpRecord::initBuffers()
+{
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
-    delete audioRtpRecord_.converterEncode_;
-    audioRtpRecord_.converterEncode_ = new SamplerateConverter(getCodecSampleRate());
-    delete audioRtpRecord_.converterDecode_;
-    audioRtpRecord_.converterDecode_ = new SamplerateConverter(getCodecSampleRate());
+    delete converterEncode_;
+    converterEncode_ = new SamplerateConverter(codecSampleRate_);
+    delete converterDecode_;
+    converterDecode_ = new SamplerateConverter(codecSampleRate_);
 }
 
 #if HAVE_SPEEXDSP
