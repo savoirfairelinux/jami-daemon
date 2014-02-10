@@ -53,9 +53,6 @@ AudioRtpRecord::AudioRtpRecord() :
     , hasDynamicPayloadType_(false)
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , encodedData_()
-    , converterEncode_(nullptr)
-    , converterDecode_(nullptr)
-    , converterSamplingRate_(0)
     , fadeFactor_(1.0 / 32000.0)
 #if HAVE_SPEEXDSP
     , dspEncode_(nullptr)
@@ -118,10 +115,11 @@ AudioRtpRecord::~AudioRtpRecord()
 {
     dead_ = true;
 
-    delete converterEncode_;
-    converterEncode_ = 0;
-    delete converterDecode_;
-    converterDecode_ = 0;
+    delete encoder_.resampler;
+    encoder_.resampler = nullptr;
+    delete decoder_.resampler;
+    decoder_.resampler = nullptr;
+
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         deleteCodecs();
@@ -215,10 +213,10 @@ void AudioRtpRecord::initBuffers()
 {
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
-    delete converterEncode_;
-    converterEncode_ = new SamplerateConverter(encoder_.format.sample_rate);
-    delete converterDecode_;
-    converterDecode_ = new SamplerateConverter(decoder_.format.sample_rate);
+    delete encoder_.resampler;
+    encoder_.resampler = new SamplerateConverter(encoder_.format.sample_rate);
+    delete decoder_.resampler;
+    decoder_.resampler = new SamplerateConverter(decoder_.format.sample_rate);
 }
 
 #if HAVE_SPEEXDSP
@@ -277,10 +275,10 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
 
     AudioBuffer *out = &micData;
     if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
-        RETURN_IF_NULL(converterEncode_, 0, "Converter already destroyed");
+        RETURN_IF_NULL(encoder_.resampler, 0, "Resampler already destroyed");
         encoder_.resampledData.setChannelNum(mainBuffFormat.nb_channels);
         encoder_.resampledData.setSampleRate(encoder_.format.sample_rate);
-        converterEncode_->resample(micData, encoder_.resampledData);
+        encoder_.resampler->resample(micData, encoder_.resampledData);
         out = &encoder_.resampledData;
     }
     if (encoder_.format.nb_channels != mainBuffFormat.nb_channels)
@@ -383,10 +381,10 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
     AudioFormat decFormat = out->getFormat();
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
-        RETURN_IF_NULL(converterDecode_, "Converter already destroyed");
+        RETURN_IF_NULL(decoder_.resampler, "Resampler already destroyed");
         decoder_.resampledData.setChannelNum(decFormat.nb_channels);
         decoder_.resampledData.setSampleRate(mainBuffFormat.sample_rate);
-        converterDecode_->resample(rawBuffer_, decoder_.resampledData);
+        decoder_.resampler->resample(rawBuffer_, decoder_.resampledData);
         out = &decoder_.resampledData;
     }
     if (decFormat.nb_channels != mainBuffFormat.nb_channels)

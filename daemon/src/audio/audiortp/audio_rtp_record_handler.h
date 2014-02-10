@@ -57,19 +57,25 @@ class DSP;
 namespace sfl {
 
 struct AudioEncoder {
-    AudioEncoder(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO) {}
+    AudioEncoder(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr) {}
     int payloadType;
     int frameSize;
     AudioFormat format;
     AudioBuffer resampledData;
+    SamplerateConverter *resampler;
+    private:
+    NON_COPYABLE(AudioEncoder);
 };
 
 struct AudioDecoder {
-    AudioDecoder(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO) {}
+    AudioDecoder(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr) {}
     int payloadType;
     int frameSize;
     AudioFormat format;
     AudioBuffer resampledData;
+    SamplerateConverter *resampler;
+    private:
+    NON_COPYABLE(AudioDecoder);
 };
 
 /**
@@ -106,9 +112,6 @@ class AudioRtpRecord {
         // FIXME: probably need one for pre-encoder data, one for post-decoder data
         AudioBuffer rawBuffer_;
         std::array<unsigned char, RAW_BUFFER_SIZE> encodedData_;
-        SamplerateConverter *converterEncode_;
-        SamplerateConverter *converterDecode_;
-        int converterSamplingRate_;
         double fadeFactor_;
 
 #if HAVE_SPEEXDSP
