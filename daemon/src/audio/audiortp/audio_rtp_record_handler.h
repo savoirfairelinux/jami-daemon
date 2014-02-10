@@ -58,6 +58,7 @@ namespace sfl {
 
 struct AudioRtpContext {
     AudioRtpContext(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr) {}
+    void resetResampler();
     int payloadType;
     int frameSize;
     AudioFormat format;

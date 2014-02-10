@@ -209,14 +209,18 @@ void AudioRtpRecordHandler::initBuffers()
     audioRtpRecord_.initBuffers();
 }
 
+void AudioRtpContext::resetResampler()
+{
+    // initialize resampler using AudioLayer's sampling rate
+    // (internal buffers initialized with maximal sampling rate and frame size)
+    delete resampler;
+    resampler = new SamplerateConverter(format.sample_rate);
+}
+
 void AudioRtpRecord::initBuffers()
 {
-    // initialize SampleRate converter using AudioLayer's sampling rate
-    // (internal buffers initialized with maximal sampling rate and frame size)
-    delete encoder_.resampler;
-    encoder_.resampler = new SamplerateConverter(encoder_.format.sample_rate);
-    delete decoder_.resampler;
-    decoder_.resampler = new SamplerateConverter(decoder_.format.sample_rate);
+    encoder_.resetResampler();
+    decoder_.resetResampler();
 }
 
 #if HAVE_SPEEXDSP
