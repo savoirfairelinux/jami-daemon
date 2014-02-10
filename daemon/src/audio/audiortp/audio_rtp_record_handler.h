@@ -89,6 +89,9 @@ class AudioRtpRecord {
 
     private:
         void initBuffers();
+#if HAVE_SPEEXDSP
+        void initDSP();
+#endif
         void setRtpMedia(const std::vector<AudioCodec*> &codecs);
 
         std::string getCurrentCodecNames();

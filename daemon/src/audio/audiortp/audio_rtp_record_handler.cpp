@@ -228,11 +228,16 @@ void AudioRtpRecord::initBuffers()
 #if HAVE_SPEEXDSP
 void AudioRtpRecordHandler::initDSP()
 {
-    std::lock_guard<std::mutex> lock(audioRtpRecord_.audioProcessMutex_);
-    delete audioRtpRecord_.dspEncode_;
-    audioRtpRecord_.dspEncode_ = new DSP(getCodecFrameSize(), getCodecChannels(), getCodecSampleRate());
-    delete audioRtpRecord_.dspDecode_;
-    audioRtpRecord_.dspDecode_ = new DSP(getCodecFrameSize(), getCodecChannels(), getCodecSampleRate());
+    audioRtpRecord_.initDSP();
+}
+
+void AudioRtpRecord::initDSP()
+{
+    std::lock_guard<std::mutex> lock(audioProcessMutex_);
+    delete dspEncode_;
+    dspEncode_ = new DSP(codecFrameSize_, codecChannels_, codecSampleRate_);
+    delete dspDecode_;
+    dspDecode_ = new DSP(codecFrameSize_, codecChannels_, codecSampleRate_);
 }
 #endif
 
