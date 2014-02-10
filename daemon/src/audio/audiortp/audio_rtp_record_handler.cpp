@@ -104,7 +104,7 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
         if (*i and (*i)->getPayloadType() == newPt) {
             AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
             (*i)->setOptimalFormat(f.sample_rate, f.channel_num);
-            decoder_.setPayloadType((*i)->getPayloadType());
+            decoder_.payloadType = (*i)->getPayloadType();
             codecSampleRate_ = (*i)->getClockRate();
             codecFrameSize_ = (*i)->getFrameSize();
             codecChannels_ = (*i)->getChannels();
@@ -202,9 +202,9 @@ void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     currentCodecIndex_ = 0;
     // FIXME: this is probably not the right payload type
     const int pt = audioCodecs[0]->getPayloadType();
-    encoder_.setPayloadType(pt);
-    decoder_.setPayloadType(pt);
-    codecSampleRate_ = audioCodecs[0]->getClockRate();
+    encoder_.payloadType = pt;
+    decoder_.payloadType = pt;
+    encoder_.sampleRate = decoder_.sampleRate = audioCodecs[0]->getClockRate();
     codecFrameSize_ = audioCodecs[0]->getFrameSize();
     codecChannels_ = audioCodecs[0]->getChannels();
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
@@ -220,9 +220,9 @@ void AudioRtpRecord::initBuffers()
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
     delete converterEncode_;
-    converterEncode_ = new SamplerateConverter(codecSampleRate_);
+    converterEncode_ = new SamplerateConverter(encoder_.sampleRate);
     delete converterDecode_;
-    converterDecode_ = new SamplerateConverter(codecSampleRate_);
+    converterDecode_ = new SamplerateConverter(decoder_.sampleRate);
 }
 
 #if HAVE_SPEEXDSP
@@ -235,9 +235,9 @@ void AudioRtpRecord::initDSP()
 {
     std::lock_guard<std::mutex> lock(audioProcessMutex_);
     delete dspEncode_;
-    dspEncode_ = new DSP(codecFrameSize_, codecChannels_, codecSampleRate_);
+    dspEncode_ = new DSP(codecFrameSize_, encoder_.channels, encoder_.sampleRate);
     delete dspDecode_;
-    dspDecode_ = new DSP(codecFrameSize_, codecChannels_, codecSampleRate_);
+    dspDecode_ = new DSP(codecFrameSize_, decoder_.channels, decoder_.sampleRate);
 }
 #endif
 
@@ -334,7 +334,7 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
     if (isDead())
         return;
 
-    const int decPt = decoder_.getPayloadType();
+    const int decPt = decoder_.payloadType;
     if (decPt != payloadType) {
         const bool switched = tryToSwitchPayloadTypes(payloadType);
 

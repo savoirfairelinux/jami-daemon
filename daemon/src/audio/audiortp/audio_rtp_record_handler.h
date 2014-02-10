@@ -56,20 +56,16 @@ class DSP;
 
 namespace sfl {
 
-class AudioEncoder {
-    public:
-        int getPayloadType() const { return payloadType_; }
-        void setPayloadType(int pt) { payloadType_ = pt; }
-    private:
-        int payloadType_;
+struct AudioEncoder {
+        int payloadType;
+        unsigned sampleRate;
+        unsigned channels;
 };
 
-class AudioDecoder {
-    public:
-        int getPayloadType() const { return payloadType_; }
-        void setPayloadType(int pt) { payloadType_ = pt; }
-    private:
-        int payloadType_;
+struct AudioDecoder {
+        int payloadType;
+        unsigned sampleRate;
+        unsigned channels;
 };
 
 /**
