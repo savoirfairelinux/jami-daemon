@@ -51,7 +51,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , audioCodecs_()
     , audioCodecMutex_()
     , hasDynamicPayloadType_(false)
-    , decData_(DEC_BUFFER_SIZE, AudioFormat::MONO)
+    , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , resampledDataEncode_(0, AudioFormat::MONO)
     , resampledDataDecode_(0, AudioFormat::MONO)
     , encodedData_()
@@ -275,7 +275,7 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
         return 0;
     }
 
-    fadeInDecodedData();
+    fadeInRawBuffer();
 
     AudioBuffer *out = &micData;
     if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
@@ -349,10 +349,10 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         RETURN_IF_NULL(getCurrentCodec(), "Audio codecs already destroyed");
-        decData_.setFormat(decoder_.format);
-        decData_.resize(DEC_BUFFER_SIZE);
-        int decoded = getCurrentCodec()->decode(decData_.getData(), spkrData, size);
-        decData_.resize(decoded);
+        rawBuffer_.setFormat(decoder_.format);
+        rawBuffer_.resize(RAW_BUFFER_SIZE);
+        int decoded = getCurrentCodec()->decode(rawBuffer_.getData(), spkrData, size);
+        rawBuffer_.resize(decoded);
     }
 
 #if HAVE_SPEEXDSP
@@ -372,14 +372,14 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
             dspDecode_->enableAGC();
         else
             dspDecode_->disableAGC();
-        dspDecode_->process(decData_, decoder_.frameSize);
+        dspDecode_->process(rawBuffer_, decoder_.frameSize);
     }
 
 #endif
 
-    fadeInDecodedData();
+    fadeInRawBuffer();
 
-    AudioBuffer *out = &decData_;
+    AudioBuffer *out = &rawBuffer_;
 
     // test if resampling or up/down-mixing is required
     AudioFormat decFormat = out->getFormat();
@@ -388,8 +388,7 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
         RETURN_IF_NULL(converterDecode_, "Converter already destroyed");
         resampledDataDecode_.setChannelNum(decFormat.nb_channels);
         resampledDataDecode_.setSampleRate(mainBuffFormat.sample_rate);
-        //WARN("Resample %s->%s", audioRtpRecord_.decData_.toString().c_str(), audioRtpRecord_.resampledDataDecode_.toString().c_str());
-        converterDecode_->resample(decData_, resampledDataDecode_);
+        converterDecode_->resample(rawBuffer_, resampledDataDecode_);
         out = &resampledDataDecode_;
     }
     if (decFormat.nb_channels != mainBuffFormat.nb_channels)
@@ -398,13 +397,13 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
 }
 #undef RETURN_IF_NULL
 
-void AudioRtpRecord::fadeInDecodedData()
+void AudioRtpRecord::fadeInRawBuffer()
 {
     // if factor reaches 1, this function should have no effect
     if (fadeFactor_ >= 1.0)
         return;
 
-    decData_.applyGain(fadeFactor_);
+    rawBuffer_.applyGain(fadeFactor_);
 
     // Factor used to increase volume in fade in
     const double FADEIN_STEP_SIZE = 4.0;

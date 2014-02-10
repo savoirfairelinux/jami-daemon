@@ -101,10 +101,11 @@ class AudioRtpRecord {
         // these will have the same value unless we are sending
         // a different codec than we are receiving (asymmetric RTP)
         bool hasDynamicPayloadType_;
-        AudioBuffer decData_;
+        // FIXME: probably need one for pre-encoder data, one for post-decoder data
+        AudioBuffer rawBuffer_;
         AudioBuffer resampledDataEncode_;
         AudioBuffer resampledDataDecode_;
-        std::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
+        std::array<unsigned char, RAW_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
         int converterSamplingRate_;
@@ -132,7 +133,7 @@ class AudioRtpRecord {
         /**
         * Ramp In audio data to avoid audio click from peer
         */
-        void fadeInDecodedData();//size_t size);
+        void fadeInRawBuffer();
         NON_COPYABLE(AudioRtpRecord);
         std::atomic<bool> dead_;
         size_t currentCodecIndex_;

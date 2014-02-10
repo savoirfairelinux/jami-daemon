@@ -46,7 +46,7 @@
 // Opus documentation:
 // "If this is less than the maximum packet duration (120ms; 5760 for 48kHz),
 // opus_decode will not be capable of decoding some packets."
-#define DEC_BUFFER_SIZE (120 * 48000 / 1000)
+#define RAW_BUFFER_SIZE (120 * 48000 / 1000)
 
 namespace sfl {
 

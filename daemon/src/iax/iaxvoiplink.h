@@ -40,7 +40,7 @@
 #include "account.h"
 #include "voiplink.h"
 #include "audio/audiobuffer.h"
-#include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
+#include "audio/codecs/audiocodec.h" // for RAW_BUFFER_SIZE
 #include "sfl_types.h"
 #include "noncopyable.h"
 #include "audio/samplerateconverter.h"
@@ -295,11 +295,9 @@ class IAXVoIPLink : public VoIPLink {
         std::mutex mutexIAX_;
 
         /** encoder/decoder/resampler buffers */
-        AudioBuffer decData_;
+        AudioBuffer rawBuffer_;
         AudioBuffer resampledData_;
-        //SFLAudioSample decData_[DEC_BUFFER_SIZE];
-        //SFLAudioSample resampledData_[DEC_BUFFER_SIZE * 4];
-        unsigned char encodedData_[DEC_BUFFER_SIZE];
+        unsigned char encodedData_[RAW_BUFFER_SIZE];
 
         /** Sample rate converter object */
         SamplerateConverter converter_;

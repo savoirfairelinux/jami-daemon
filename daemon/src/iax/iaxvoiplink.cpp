@@ -53,8 +53,8 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     regSession_(NULL)
     , nextRefreshStamp_(0)
     , mutexIAX_()
-    , decData_(DEC_BUFFER_SIZE, AudioFormat::MONO)
-    , resampledData_(DEC_BUFFER_SIZE * 4, AudioFormat::MONO)
+    , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
+    , resampledData_(RAW_BUFFER_SIZE * 4, AudioFormat::MONO)
     , encodedData_()
     , converter_(44100)
     , initDone_(false)
@@ -202,8 +202,8 @@ IAXVoIPLink::sendAudioFromMic()
             continue;
 
         // Get bytes from micRingBuffer to data_from_mic
-        decData_.resize(samples);
-        samples = Manager::instance().getMainBuffer().getData(decData_, currentCall->getCallId());
+        rawBuffer_.resize(samples);
+        samples = Manager::instance().getMainBuffer().getData(rawBuffer_, currentCall->getCallId());
 
         int compSize;
         unsigned int audioRate = audioCodec->getClockRate();
@@ -211,17 +211,17 @@ IAXVoIPLink::sendAudioFromMic()
         AudioBuffer *in;
 
         if (audioRate != mainBufferSampleRate) {
-            decData_.setSampleRate(audioRate);
+            rawBuffer_.setSampleRate(audioRate);
             resampledData_.setSampleRate(mainBufferSampleRate);
-            converter_.resample(decData_, resampledData_);
+            converter_.resample(rawBuffer_, resampledData_);
             in = &resampledData_;
             outSamples = 0;
         } else {
             outSamples = samples;
-            in = &decData_;
+            in = &rawBuffer_;
         }
 
-        compSize = audioCodec->encode(encodedData_, in->getData(), DEC_BUFFER_SIZE);
+        compSize = audioCodec->encode(encodedData_, in->getData(), RAW_BUFFER_SIZE);
 
         if (currentCall->session and samples > 0) {
             std::lock_guard<std::mutex> lock(mutexIAX_);
@@ -754,14 +754,14 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
         if (size > max)
             size = max;
 
-        audioCodec->decode(decData_.getData(), data , size);
-        out = &decData_;
+        audioCodec->decode(rawBuffer_.getData(), data , size);
+        out = &rawBuffer_;
         unsigned int audioRate = audioCodec->getClockRate();
 
         if (audioRate != mainBufferSampleRate) {
-            decData_.setSampleRate(mainBufferSampleRate);
+            rawBuffer_.setSampleRate(mainBufferSampleRate);
             resampledData_.setSampleRate(audioRate);
-            converter_.resample(decData_, resampledData_);
+            converter_.resample(rawBuffer_, resampledData_);
             out = &resampledData_;
         }
     }
