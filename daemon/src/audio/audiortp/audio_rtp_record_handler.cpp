@@ -54,7 +54,8 @@ AudioRtpRecord::AudioRtpRecord(const std::string &id) :
     , encodedData_()
     , fadeFactor_(1.0 / 32000.0)
     , dead_(false)
-    , currentCodecIndex_(0)
+    , currentEncoderIndex_(0)
+    , currentDecoderIndex_(0)
     , warningInterval_(0)
     , dtmfPayloadType_(101) // same as Asterisk
     , dtmfQueue_()
@@ -83,14 +84,25 @@ bool AudioRtpRecord::isDead()
 }
 
 sfl::AudioCodec *
-AudioRtpRecord::getCurrentCodec() const
+AudioRtpRecord::getCurrentEncoder() const
 {
-    if (audioCodecs_.empty() or currentCodecIndex_ >= audioCodecs_.size()) {
+    if (audioCodecs_.empty() or currentEncoderIndex_ >= audioCodecs_.size()) {
         ERROR("No codec found");
         return 0;
     }
 
-    return audioCodecs_[currentCodecIndex_];
+    return audioCodecs_[currentEncoderIndex_];
+}
+
+sfl::AudioCodec *
+AudioRtpRecord::getCurrentDecoder() const
+{
+    if (audioCodecs_.empty() or currentDecoderIndex_ >= audioCodecs_.size()) {
+        ERROR("No codec found");
+        return 0;
+    }
+
+    return audioCodecs_[currentDecoderIndex_];
 }
 
 void
@@ -114,7 +126,7 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
             decoder_.format.nb_channels = (*i)->getChannels();
             hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
             // FIXME: this is not reliable
-            currentCodecIndex_ = std::distance(audioCodecs_.begin(), i);
+            currentDecoderIndex_ = std::distance(audioCodecs_.begin(), i);
             DEBUG("Switched payload type to %d", newPt);
             return true;
         }
@@ -166,8 +178,8 @@ void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 
     AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
     audioCodecs[0]->setOptimalFormat(f.sample_rate, f.nb_channels);
-    // FIXME: this should be distinct for encoder and decoder
-    currentCodecIndex_ = 0;
+    // FIXME: assuming right encoder/decoder are first?
+    currentEncoderIndex_ = currentDecoderIndex_ = 0;
     // FIXME: this is probably not the right payload type
     const int pt = audioCodecs[0]->getPayloadType();
     encoder_.payloadType = pt;
@@ -283,9 +295,9 @@ int AudioRtpRecord::processDataEncode()
 
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
-        RETURN_IF_NULL(getCurrentCodec(), 0, "Audio codec already destroyed");
+        RETURN_IF_NULL(getCurrentEncoder(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = encodedData_.data();
-        int encoded = getCurrentCodec()->encode(micDataEncoded, out->getData(), encoder_.frameSize);
+        int encoded = getCurrentEncoder()->encode(micDataEncoded, out->getData(), encoder_.frameSize);
         return encoded;
     }
 }
@@ -315,10 +327,10 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
 
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
-        RETURN_IF_NULL(getCurrentCodec(), "Audio codecs already destroyed");
+        RETURN_IF_NULL(getCurrentDecoder(), "Audio codecs already destroyed");
         rawBuffer_.setFormat(decoder_.format);
         rawBuffer_.resize(RAW_BUFFER_SIZE);
-        int decoded = getCurrentCodec()->decode(rawBuffer_.getData(), spkrData, size);
+        int decoded = getCurrentDecoder()->decode(rawBuffer_.getData(), spkrData, size);
         rawBuffer_.resize(decoded);
     }
 

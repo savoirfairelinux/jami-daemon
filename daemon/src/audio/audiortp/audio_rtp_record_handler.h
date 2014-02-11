@@ -148,7 +148,8 @@ class AudioRtpRecord {
     private:
         void deleteCodecs();
         bool tryToSwitchPayloadTypes(int newPt);
-        sfl::AudioCodec* getCurrentCodec() const;
+        sfl::AudioCodec* getCurrentEncoder() const;
+        sfl::AudioCodec* getCurrentDecoder() const;
 
         const std::string id_;
 
@@ -173,7 +174,8 @@ class AudioRtpRecord {
         void fadeInRawBuffer();
         NON_COPYABLE(AudioRtpRecord);
         std::atomic<bool> dead_;
-        size_t currentCodecIndex_;
+        size_t currentEncoderIndex_;
+        size_t currentDecoderIndex_;
         int warningInterval_;
 
         unsigned int dtmfPayloadType_;
