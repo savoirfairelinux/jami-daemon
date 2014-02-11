@@ -88,11 +88,11 @@ class AudioRtpRecord {
     public:
         AudioRtpRecord(const std::string &id);
         ~AudioRtpRecord();
+    private:
         void deleteCodecs();
         bool tryToSwitchPayloadTypes(int newPt);
         sfl::AudioCodec* getCurrentCodec() const;
 
-    private:
         const std::string id_;
         void initBuffers();
 #if HAVE_SPEEXDSP
