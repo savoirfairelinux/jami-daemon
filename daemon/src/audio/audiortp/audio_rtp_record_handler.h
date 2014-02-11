@@ -37,7 +37,6 @@
 
 #include <cstddef>
 #include <array>
-#include <list>
 #include <mutex>
 #include <atomic>
 
@@ -59,6 +58,10 @@ class AudioRtpContext {
 #endif
     {}
     ~AudioRtpContext();
+
+    private:
+    NON_COPYABLE(AudioRtpContext);
+
     void resetResampler();
     int payloadType;
     int frameSize;
@@ -68,14 +71,11 @@ class AudioRtpContext {
 #if HAVE_SPEEXDSP
     void resetDSP();
     void applyDSP(AudioBuffer &rawBuffer);
-#endif
-    private:
-    NON_COPYABLE(AudioRtpContext);
-#if HAVE_SPEEXDSP
     DSP *dsp;
     std::mutex dspMutex;
 #endif
 
+    friend class AudioRtpStream;
 };
 
 /**
@@ -107,10 +107,6 @@ class AudioRtpStream {
             return encodedData_.data();
         }
 
-#if HAVE_SPEEXDSP
-        void initDSP();
-#endif
-
         std::string getCurrentAudioCodecNames();
 
         int getEncoderPayloadType() const;
@@ -118,6 +114,7 @@ class AudioRtpStream {
         AudioFormat getEncoderFormat() const { return encoder_.format; }
 
 #if HAVE_SPEEXDSP
+        void initDSP();
         void resetDSP();
 #endif
         bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;
@@ -126,11 +123,9 @@ class AudioRtpStream {
     private:
         const std::string id_;
 
-    protected:
         AudioRtpContext encoder_;
         AudioRtpContext decoder_;
 
-    private:
         void deleteCodecs();
         bool tryToSwitchPayloadTypes(int newPt);
         sfl::AudioCodec* getCurrentEncoder() const;
