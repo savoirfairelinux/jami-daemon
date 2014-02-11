@@ -196,13 +196,6 @@ class IAXVoIPLink : public VoIPLink {
         static IAXCall* getIaxCall(const std::string& id);
         static void removeIaxCall(const std::string &id);
 
-        /**
-         * Return the codec protocol used for this call
-         * @param id The call identifier
-         */
-        virtual std::string getCurrentVideoCodecName(Call *c) const;
-        virtual std::string getCurrentAudioCodecNames(Call *c) const;
-
     private:
         NON_COPYABLE(IAXVoIPLink);
 

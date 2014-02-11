@@ -228,9 +228,10 @@ CallManager::getIsRecording(const std::string& callID)
     return Manager::instance().isRecording(callID);
 }
 
-std::string CallManager::getCurrentAudioCodecName(const std::string& callID)
+std::string CallManager::getCurrentAudioCodecName(const std::string& /*callID*/)
 {
-    return Manager::instance().getCurrentAudioCodecName(callID);
+    WARN("Deprecated");
+    return "";
 }
 
 std::map<std::string, std::string>

@@ -1939,34 +1939,6 @@ std::string ManagerImpl::retrieveConfigPath() const
     return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 
-std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
-{
-    Call* call = getCallFromCallID(id);
-    std::string codecName;
-
-    if (call) {
-        Call::CallState state = call->getState();
-
-        if (state == Call::ACTIVE or state == Call::CONFERENCING) {
-            VoIPLink* link = getAccountLink(call->getAccountId());
-            codecName = link->getCurrentAudioCodecNames(call);
-        }
-    }
-
-    return codecName;
-}
-
-std::string
-ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
-{
-    Call *call(getCallFromCallID(ID));
-    if (call) {
-        VoIPLink* link = getAccountLink(call->getAccountId());
-        return link->getCurrentVideoCodecName(call);
-    } else {
-        return "";
-    }
-}
 
 /**
  * Set input audio plugin

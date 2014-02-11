@@ -1516,23 +1516,6 @@ SIPVoIPLink::refuse(const std::string& id)
     removeSipCall(id);
 }
 
-std::string
-SIPVoIPLink::getCurrentVideoCodecName(Call *call) const
-{
-    return static_cast<SIPCall*>(call)->getLocalSDP()->getSessionVideoCodec();
-}
-
-std::string
-SIPVoIPLink::getCurrentAudioCodecNames(Call *call) const
-{
-    try {
-        return static_cast<SIPCall*>(call)->getAudioRtp().getCurrentAudioCodecNames();
-    } catch (const AudioRtpFactoryException &e) {
-        ERROR("%s", e.what());
-        return "";
-    }
-}
-
 namespace {
 void sendSIPInfo(const SIPCall &call, const char *const body, const char *const subtype)
 {

@@ -155,13 +155,6 @@ void AudioRtpFactory::stop()
     rtpSession_.reset();
 }
 
-std::string
-AudioRtpFactory::getCurrentAudioCodecNames() const
-{
-    WARN("Deprecated method");
-    return "";
-}
-
 void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);

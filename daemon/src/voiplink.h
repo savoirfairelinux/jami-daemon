@@ -144,13 +144,6 @@ class VoIPLink {
         virtual void carryingDTMFdigits(const std::string &id, char code) = 0;
 
         /**
-         * Return the codec protocol used for this call
-         * @param call The call
-         */
-        virtual std::string getCurrentVideoCodecName(Call *call) const = 0;
-        virtual std::string getCurrentAudioCodecNames(Call *call) const = 0;
-
-        /**
          * Send a message to a call identified by its callid
          *
          * @param The Id of the call to send the message to

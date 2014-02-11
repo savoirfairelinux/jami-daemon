@@ -184,6 +184,9 @@ void AudioRtpSession::sendMicData()
     // Increment timestamp for outgoing packet
     timestamp_ += timestampIncrement_;
 
+    // this step is only needed for ZRTP
+    queue_.putData(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
+
     // putData puts the data on RTP queue, sendImmediate bypass this queue
     queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 }

@@ -517,26 +517,6 @@ IAXVoIPLink::getIaxCall(const std::string& id)
         return NULL;
 }
 
-
-std::string
-IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
-{
-    // FIXME: Video not supported for IAX yet
-    return "";
-}
-
-std::string
-IAXVoIPLink::getCurrentAudioCodecNames(Call *c) const
-{
-    std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-    IAXCall *call = static_cast<IAXCall*>(c);
-    if (call == nullptr)
-        return "";
-
-    sfl::AudioCodec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
-    return audioCodec ? audioCodec->getMimeSubtype() : "";
-}
-
 void
 IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 {

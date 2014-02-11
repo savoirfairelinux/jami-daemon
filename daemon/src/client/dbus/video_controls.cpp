@@ -200,7 +200,7 @@ VideoControls::hasCameraStarted()
 }
 
 std::string
-VideoControls::getCurrentCodecName(const std::string &callID)
+VideoControls::getCurrentCodecName(const std::string & /*callID*/)
 {
-    return Manager::instance().getCurrentVideoCodecName(callID);
+    return "";
 }

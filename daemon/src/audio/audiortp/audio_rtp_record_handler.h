@@ -84,7 +84,6 @@ class AudioRtpStream {
         virtual ~AudioRtpStream();
         void initBuffers();
         void setRtpMedia(const std::vector<AudioCodec*> &codecs);
-        std::string getCurrentCodecNames();
         /**
          * Decode audio data received from peer
          */
@@ -102,8 +101,6 @@ class AudioRtpStream {
         const unsigned char *getMicDataEncoded() const {
             return encodedData_.data();
         }
-
-        std::string getCurrentAudioCodecNames();
 
         int getEncoderPayloadType() const;
         int getEncoderFrameSize() const;

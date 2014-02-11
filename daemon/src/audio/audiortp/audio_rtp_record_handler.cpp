@@ -187,25 +187,6 @@ void AudioRtpContext::applyDSP(AudioBuffer &buffer)
 #endif
 
 
-std::string
-AudioRtpStream::getCurrentCodecNames()
-{
-    std::string result;
-    std::lock_guard<std::mutex> lock(audioCodecMutex_);
-    {
-        std::string sep = "";
-
-        for (auto &i : audioCodecs_) {
-            if (i)
-                result += sep + i->getMimeSubtype();
-
-            sep = " ";
-        }
-    }
-
-    return result;
-}
-
 void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     std::lock_guard<std::mutex> lock(audioCodecMutex_);

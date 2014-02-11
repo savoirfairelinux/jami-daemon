@@ -251,13 +251,6 @@ class SIPVoIPLink : public VoIPLink {
         SIPCall* tryGetSIPCall(const std::string &id);
 
         /**
-         * Return the codec protocol used for this call
-         * @param c The call identifier
-         */
-        std::string getCurrentVideoCodecName(Call *c) const;
-        std::string getCurrentAudioCodecNames(Call *c) const;
-
-        /**
          * Retrive useragent name from account
          */
         std::string getUseragentName(SIPAccount *) const;
