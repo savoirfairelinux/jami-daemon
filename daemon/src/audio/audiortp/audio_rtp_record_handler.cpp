@@ -64,11 +64,6 @@ AudioRtpStream::~AudioRtpStream()
 {
     dead_ = true;
 
-    delete encoder_.resampler;
-    encoder_.resampler = nullptr;
-    delete decoder_.resampler;
-    decoder_.resampler = nullptr;
-
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         deleteCodecs();
@@ -211,8 +206,7 @@ void AudioRtpContext::resetResampler()
 {
     // initialize resampler using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
-    delete resampler;
-    resampler = new SamplerateConverter(format.sample_rate);
+    resampler.reset(new SamplerateConverter(format.sample_rate));
 }
 
 void AudioRtpStream::initBuffers()

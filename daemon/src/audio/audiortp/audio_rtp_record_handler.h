@@ -63,7 +63,7 @@ class AudioRtpContext {
     int frameSize;
     AudioFormat format;
     AudioBuffer resampledData;
-    SamplerateConverter *resampler;
+    std::unique_ptr<SamplerateConverter> resampler;
 #if HAVE_SPEEXDSP
     void resetDSP();
     void applyDSP(AudioBuffer &rawBuffer);
