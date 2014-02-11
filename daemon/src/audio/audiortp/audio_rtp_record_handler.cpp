@@ -396,4 +396,10 @@ AudioRtpStream::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
     return false;
 }
 
+int
+AudioRtpStream::getEncoderPayloadType() const
+{
+    return encoder_.payloadType;
+}
+
 }

@@ -100,14 +100,6 @@ class AudioRtpStream {
          */
         int processDataEncode();
 
-        const AudioRtpContext &getEncoder() const {
-            return encoder_;
-        }
-
-        const AudioRtpContext &getDecoder() const {
-            return decoder_;
-        }
-
         bool hasDynamicPayload() const {
             return hasDynamicPayloadType_;
         }
@@ -136,21 +128,23 @@ class AudioRtpStream {
 
         std::string getCurrentAudioCodecNames();
 
+        int getEncoderPayloadType() const;
+
+    private:
+        const std::string id_;
+
     protected:
 #if HAVE_SPEEXDSP
         void resetDSP();
 #endif
+        AudioRtpContext encoder_;
+        AudioRtpContext decoder_;
 
     private:
         void deleteCodecs();
         bool tryToSwitchPayloadTypes(int newPt);
         sfl::AudioCodec* getCurrentEncoder() const;
         sfl::AudioCodec* getCurrentDecoder() const;
-
-        const std::string id_;
-
-        AudioRtpContext encoder_;
-        AudioRtpContext decoder_;
 
         std::vector<AudioCodec*> audioCodecs_;
         std::mutex audioCodecMutex_;
