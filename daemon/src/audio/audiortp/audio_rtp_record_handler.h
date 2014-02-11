@@ -38,6 +38,7 @@
 #include <cstddef>
 #include <array>
 #include <mutex>
+#include <memory>
 #include <atomic>
 
 #include "noncopyable.h"
@@ -51,12 +52,7 @@ namespace sfl {
 
 class AudioRtpContext {
     public:
-    AudioRtpContext(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr)
-#if HAVE_SPEEXDSP
-    , dsp(nullptr)
-    , dspMutex()
-#endif
-    {}
+    AudioRtpContext(AudioFormat f);
     ~AudioRtpContext();
 
     private:
@@ -71,7 +67,7 @@ class AudioRtpContext {
 #if HAVE_SPEEXDSP
     void resetDSP();
     void applyDSP(AudioBuffer &rawBuffer);
-    DSP *dsp;
+    std::unique_ptr<DSP> dsp;
     std::mutex dspMutex;
 #endif
 

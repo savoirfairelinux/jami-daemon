@@ -134,12 +134,20 @@ bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
     return false;
 }
 
+AudioRtpContext::AudioRtpContext(AudioFormat f) :
+    payloadType(0), frameSize(0), format(f),
+    resampledData(0, AudioFormat::MONO), resampler(nullptr)
+#if HAVE_SPEEXDSP
+    , dsp()
+    , dspMutex()
+#endif
+{}
+
 AudioRtpContext::~AudioRtpContext()
 {
 #if HAVE_SPEEXDSP
     std::lock_guard<std::mutex> lock(dspMutex);
-    delete dsp;
-    dsp = 0;
+    dsp.reset(nullptr);
 #endif
 }
 
@@ -224,8 +232,7 @@ void AudioRtpContext::resetDSP()
 {
     std::lock_guard<std::mutex> lock(dspMutex);
     assert(frameSize);
-    delete dsp;
-    dsp = new DSP(frameSize, format.nb_channels, format.sample_rate);
+    dsp.reset(new DSP(frameSize, format.nb_channels, format.sample_rate));
 }
 #endif
 
