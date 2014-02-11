@@ -167,9 +167,9 @@ void VideoRtpSession::start(int localPort)
     if (not sending_) {
         DEBUG("Video sending disabled");
         if (auto shared = videoLocal_.lock())
-            shared->detach(sender_.get());
+            shared->detach_reader(*sender_.get());
         if (videoMixerSP_)
-            videoMixerSP_->detach(sender_.get());
+            videoMixerSP_->detach_reader(*sender_.get());
         sender_.reset();
     }
 
@@ -183,7 +183,7 @@ void VideoRtpSession::start(int localPort)
     } else {
         DEBUG("Video receiving disabled");
         if (receiveThread_)
-            receiveThread_->detach(videoMixerSP_.get());
+            receiveThread_->detach_reader(*videoMixerSP_.get());
         receiveThread_.reset();
     }
 
@@ -192,7 +192,7 @@ void VideoRtpSession::start(int localPort)
         setupConferenceVideoPipeline();
     } else if (auto shared = videoLocal_.lock()) {
         if (sender_)
-            shared->attach(sender_.get());
+            shared->attach_reader(*sender_.get());
     }
 }
 
@@ -200,12 +200,12 @@ void VideoRtpSession::stop()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (auto shared = videoLocal_.lock())
-        shared->detach(sender_.get());
+        shared->detach_reader(*sender_.get());
 
     if (videoMixerSP_) {
-        videoMixerSP_->detach(sender_.get());
+        videoMixerSP_->detach_reader(*sender_.get());
         if (receiveThread_)
-            receiveThread_->detach(videoMixerSP_.get());
+            receiveThread_->detach_reader(*videoMixerSP_.get());
     }
 
     if (socketPair_)
@@ -234,7 +234,7 @@ void VideoRtpSession::addReceivingDetails(std::map<std::string, std::string> &de
 
 void VideoRtpSession::setupConferenceVideoPipeline()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+	std::lock_guard<std::mutex> lock(mutex_);
     if (!sender_)
         return;
 
@@ -242,11 +242,11 @@ void VideoRtpSession::setupConferenceVideoPipeline()
                                  atol(txArgs_["height"].c_str()));
     if (auto shared = videoLocal_.lock())
         shared->detach(sender_.get());
-    videoMixerSP_->attach(sender_.get());
+    videoMixerSP_->attach_reader(*sender_.get());
 
     if (receiveThread_) {
         receiveThread_->enterConference();
-        receiveThread_->attach(videoMixerSP_.get());
+        receiveThread_->attach_reader(*videoMixerSP_.get());
     }
 }
 
@@ -271,10 +271,10 @@ void VideoRtpSession::exitConference()
     std::lock_guard<std::mutex> lock(mutex_);
     if (videoMixerSP_) {
         if (sender_)
-            videoMixerSP_->detach(sender_.get());
+            videoMixerSP_->detach_reader(*sender_.get());
 
         if (receiveThread_) {
-            receiveThread_->detach(videoMixerSP_.get());
+            receiveThread_->detach_reader(*videoMixerSP_.get());
             receiveThread_->exitConference();
         }
 
@@ -282,7 +282,7 @@ void VideoRtpSession::exitConference()
     }
 
     if (auto shared = videoLocal_.lock())
-        shared->attach(sender_.get());
+        shared->attach_reader(*sender_.get());
 }
 
 } // end namespace sfl_video

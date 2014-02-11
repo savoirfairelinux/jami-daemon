@@ -46,7 +46,10 @@ namespace sfl_video {
 
 class SocketPair;
 
-class VideoReceiveThread : public VideoGenerator, public SFLThread  {
+class VideoReceiveThread :
+    public VideoGenerator,
+    public SFLThread
+{
 public:
     VideoReceiveThread(const std::string &id,
                        const std::map<std::string, std::string> &args);

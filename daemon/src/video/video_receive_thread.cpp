@@ -153,7 +153,7 @@ void VideoReceiveThread::process()
 
 void VideoReceiveThread::cleanup()
 {
-    if (detach(&sink_))
+    if (detach_reader(sink_))
         Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     sink_.stop();
 
@@ -226,7 +226,7 @@ void VideoReceiveThread::enterConference()
     if (!isRunning())
         return;
 
-    if (detach(&sink_)) {
+    if (detach_reader(sink_)) {
         Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
         DEBUG("RX: shm sink <%s> detached", sink_.openedName().c_str());
     }
@@ -238,7 +238,7 @@ void VideoReceiveThread::exitConference()
         return;
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
-        if (attach(&sink_)) {
+        if (attach_reader(sink_)) {
             Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
             DEBUG("RX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), dstWidth_, dstHeight_);

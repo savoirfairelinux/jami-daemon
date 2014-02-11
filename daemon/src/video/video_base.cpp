@@ -374,10 +374,10 @@ void VideoGenerator::publishFrame()
 {
     std::unique_lock<std::mutex> lk(mutex_);
     lastFrame_ = std::move(writableFrame_);
-    notify(lastFrame_);
+    push(lastFrame_);
 }
 
-std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
+VideoFrameShrPtr VideoGenerator::obtainLastFrame()
 {
     std::unique_lock<std::mutex> lk(mutex_);
     return lastFrame_;

@@ -66,76 +66,186 @@ enum VideoPixelFormat {
     VIDEO_PIXFMT_YUV420P = -2,
 };
 
+/*=== API  ===================================================================*/
+
+template <typename T> class ActiveWriter;
+template <typename T> class PassiveWriter;
+template <typename T> class ActiveReader;
+template <typename T> class PassiveReader;
+
+template <typename T> struct ActiveWriterI;
+template <typename T> struct PassiveWriterI;
+template <typename T> struct ActiveReaderI;
+template <typename T> struct PassiveReaderI;
+
+template <typename T>
+struct PassiveReaderI
+{
+	virtual ~PassiveReaderI() {};
+    virtual void attached(ActiveWriter<T>&) = 0;
+    virtual void detached(ActiveWriter<T>&) = 0;
+
+    // must be implemented by subclass
+    virtual void update(ActiveWriter<T>&, T&) = 0;
+};
+
+template <typename T>
+struct ActiveWriterI
+{
+	virtual ~ActiveWriterI() {};
+	virtual bool attach_reader(PassiveReader<T>&) = 0;
+	virtual bool detach_reader(PassiveReader<T>&) = 0;
+	virtual void push(T& data) = 0;
+	virtual int getReadersCount() = 0;
+};
+
+template <typename T>
+struct PassiveWriterI
+{
+	virtual ~PassiveWriterI() {};
+    virtual void attached(ActiveReader<T>&) = 0;
+    virtual void detached(ActiveReader<T>&) = 0;
+
+    // must be implemented by subclass
+    virtual void request(ActiveReader<T>&, T&) = 0;
+};
+
+template <typename T>
+struct ActiveReaderI
+{
+	virtual ~ActiveReaderI() {};
+	virtual void attach_writer(PassiveWriter<T>&) = 0;
+	virtual void detach_writer() = 0;
+	virtual void pull(T& data) = 0;
+};
+
+/*=== PassiveReader ==========================================================*/
+
+template <typename T>
+class PassiveReader : public PassiveReaderI<T>
+{
+public:
+    virtual void attached(ActiveWriter<T>&) {}
+    virtual void detached(ActiveWriter<T>&) {}
+};
+
+/*=== ActiveWriter ===========================================================*/
+
+template <typename T>
+class ActiveWriter : public ActiveWriterI<T>
+{
+public:
+    ActiveWriter() : readers_(), mutex_() {}
+    ~ActiveWriter() {
+        std::unique_lock<std::mutex> lk(mutex_);
+        for (const auto reader : readers_)
+            reader->detached(*this);
+    }
+
+    bool attach_reader(PassiveReader<T>& reader) {
+        std::unique_lock<std::mutex> lk(mutex_);
+        if (readers_.insert(&reader).second) {
+            reader.attached(*this);
+            return true;
+        }
+        return false;
+    }
+
+    bool detach_reader(PassiveReader<T>& reader) {
+        std::unique_lock<std::mutex> lk(mutex_);
+        if (readers_.erase(&reader)) {
+            reader.detached(*this);
+            return true;
+        }
+        return false;
+    }
+
+    void push(T& data) {
+        std::unique_lock<std::mutex> lk(mutex_);
+        for (const auto reader : readers_)
+            reader->update(*this, data);
+    }
+
+    int getReadersCount() {
+        std::unique_lock<std::mutex> lk(mutex_);
+        return readers_.size();
+    }
+
+private:
+    NON_COPYABLE(ActiveWriter<T>);
+	std::set<PassiveReader<T>* > readers_;
+    std::mutex mutex_; // to lock readers_
+};
+
+/*=== PassiveWriter ==========================================================*/
+
+template <typename T>
+class PassiveWriter : public PassiveWriterI<T>
+{
+public:
+    virtual void attached(ActiveReader<T>&) {};
+    virtual void detached(ActiveReader<T>&) {};
+};
+
+/*=== NullPassiveWriter ======================================================*/
+
+// A PassiveWriter that never feeds data
+template <typename T>
+class NullPassiveWriter : public PassiveWriter<T>
+{
+public:
+    static NullPassiveWriter<T>* get_instance() {
+		if (!instance_)
+			instance_ = new NullPassiveWriter<T>();
+        return instance_;
+    }
+    void request(ActiveReader<T>&, T&) {};
+
+private:
+    static NullPassiveWriter<T>* instance_;
+};
+
+template <typename T> NullPassiveWriter<T>* NullPassiveWriter<T>::instance_ = nullptr;
+
+/*=== ActiveReader ===========================================================*/
+
+template <typename T>
+class ActiveReader : public ActiveReaderI<T>
+{
+public:
+    ActiveReader() : writer_(NullPassiveWriter<T>::get_instance()), mutex_() {};
+    virtual ~ActiveReader() {};
+    void attach_writer(PassiveWriter<T>& writer) {
+		std::unique_lock<std::mutex> lk(mutex_);
+		writer_ = &writer;
+		writer_->attached(*this);
+	}
+    void detach_writer() {
+		std::unique_lock<std::mutex> lk(mutex_);
+		writer_->detached(*this);
+		writer_ = NullPassiveWriter<T>::get_instance();
+	}
+    void pull(T& data) {
+		std::unique_lock<std::mutex> lk(mutex_);
+		writer_->request(*this, data);
+	}
+
+private:
+	NON_COPYABLE(ActiveReader<T>);
+
+    // Set by default and at detach call to a NullPassiveWriter instance,
+    // so the pull method can be safely called at anytime.
+    PassiveWriter<T>* writer_;
+	std::mutex mutex_; // to lock writer_
+};
+
 namespace sfl_video {
 
-template <typename T> class Observer;
-template <typename T> class Observable;
 class VideoFrame;
 
 typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
 typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
 typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
-
-/*=== Observable =============================================================*/
-
-template <typename T>
-class Observable
-{
-public:
-    Observable() : observers_(), mutex_() {}
-    virtual ~Observable() {
-        std::unique_lock<std::mutex> lk(mutex_);
-        for (auto &o : observers_)
-            o->detached(this);
-    };
-
-    bool attach(Observer<T>* o) {
-        std::unique_lock<std::mutex> lk(mutex_);
-        if (o and observers_.insert(o).second) {
-            o->attached(this);
-            return true;
-        }
-        return false;
-    }
-
-    bool detach(Observer<T>* o) {
-        std::unique_lock<std::mutex> lk(mutex_);
-        if (o and observers_.erase(o)) {
-            o->detached(this);
-            return true;
-        }
-        return false;
-    }
-
-    void notify(T& data) {
-        std::unique_lock<std::mutex> lk(mutex_);
-        for (auto observer : observers_)
-            observer->update(this, data);
-    }
-
-    int getObserversCount() {
-        std::unique_lock<std::mutex> lk(mutex_);
-        return observers_.size();
-    }
-
-private:
-    NON_COPYABLE(Observable<T>);
-
-	std::set<Observer<T>*> observers_;
-    std::mutex mutex_; // lock observers_
-};
-
-/*=== Observer =============================================================*/
-
-template <typename T>
-class Observer
-{
-public:
-    virtual ~Observer() {};
-	virtual void update(Observable<T>*, T&) = 0;
-    virtual void attached(Observable<T>*) {};
-    virtual void detached(Observable<T>*) {};
-};
 
 /*=== VideoPacket  ===========================================================*/
 
@@ -214,12 +324,17 @@ private:
     AVFrame *frame_;
     bool allocated_;
 };
+typedef std::shared_ptr<VideoFrame> VideoFrameShrPtr;
 
-class VideoFrameActiveWriter : public Observable<std::shared_ptr<VideoFrame> >
-{};
+/*=== Video related Reader/Writer classes ====================================*/
 
-class VideoFramePassiveReader : public Observer<std::shared_ptr<VideoFrame> >
-{};
+/* For push model */
+typedef ActiveWriter<VideoFrameShrPtr> VideoFrameActiveWriter;
+typedef PassiveReader<VideoFrameShrPtr> VideoFramePassiveReader;
+
+/* For pull model */
+typedef ActiveReader<VideoFrameShrPtr> VideoFrameActiveReader;
+typedef PassiveWriter<VideoFrameShrPtr> VideoFramePassiveWriter;
 
 /*=== VideoGenerator =========================================================*/
 
@@ -232,7 +347,7 @@ public:
     virtual int getHeight() const = 0;
     virtual int getPixelFormat() const = 0;
 
-    std::shared_ptr<VideoFrame> obtainLastFrame();
+    VideoFrameShrPtr obtainLastFrame();
 
 protected:
     // getNewFrame and publishFrame must be called by the same thread only
@@ -240,8 +355,8 @@ protected:
     void publishFrame();
 
 private:
-    std::shared_ptr<VideoFrame> writableFrame_;
-    std::shared_ptr<VideoFrame> lastFrame_;
+    VideoFrameShrPtr writableFrame_;
+    VideoFrameShrPtr lastFrame_;
     std::mutex mutex_; // lock writableFrame_/lastFrame_ access
 };
 

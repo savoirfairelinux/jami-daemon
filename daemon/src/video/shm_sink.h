@@ -57,14 +57,14 @@ public:
     bool start();
     bool stop();
 
-    bool resize_area(size_t desired_length);
+    bool resize_area(size_t);
 
-    void render(const std::vector<unsigned char> &data);
-    void render_frame(VideoFrame& src);
-    void render_callback(VideoProvider &provider, size_t bytes);
+    void render(const std::vector<unsigned char> &);
+    void render_frame(VideoFrame&);
+    void render_callback(VideoProvider &, size_t);
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >*, std::shared_ptr<VideoFrame> &);
+    void update(VideoFrameActiveWriter&, VideoFrameShrPtr&);
 
 private:
     NON_COPYABLE(SHMSink);

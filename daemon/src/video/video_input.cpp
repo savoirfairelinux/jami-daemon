@@ -46,6 +46,7 @@ namespace sfl_video {
 VideoInput::VideoInput(const std::string& device) :
     VideoGenerator::VideoGenerator()
     , id_(SINK_ID)
+    , args_(args)
     , decoder_(0)
     , sink_()
     , mirror_(true)
@@ -127,7 +128,7 @@ bool VideoInput::setup()
 
     /* Sink setup */
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
-    if (attach(&sink_)) {
+    if (attach_reader(sink_)) {
         Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(),
 			decoder_->getWidth(), decoder_->getHeight());
         DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
@@ -142,7 +143,7 @@ void VideoInput::process()
 
 void VideoInput::cleanup()
 {
-    if (detach(&sink_)) {
+    if (detach_reader(sink_)) {
         Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
         sink_.stop();
     }

@@ -108,8 +108,8 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         ERROR("encoding failed");
 }
 
-void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
-                         std::shared_ptr<VideoFrame> & frame_p)
+void VideoSender::update(VideoFrameActiveWriter& /*writer*/,
+                         VideoFrameShrPtr& frame_p)
 {
     encodeAndSendVideo(*frame_p);
 }

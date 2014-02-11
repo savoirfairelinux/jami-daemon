@@ -41,16 +41,16 @@
 #include <mutex>
 #include <list>
 
-
 namespace sfl_video {
 
+/* VideoMixer is implemented in a Push/Push model */
 class VideoMixer :
-        public VideoGenerator,
-        public VideoFramePassiveReader
+        public VideoFramePassiveReader, /* left side */
+        public VideoGenerator           /* right side */
 {
 public:
     VideoMixer(const std::string &id);
-    virtual ~VideoMixer();
+    ~VideoMixer();
 
     void setDimensions(int width, int height);
 
@@ -59,10 +59,9 @@ public:
     int getPixelFormat() const;
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                std::shared_ptr<VideoFrame> &v);
-    void attached(Observable<std::shared_ptr<VideoFrame> >* ob);
-    void detached(Observable<std::shared_ptr<VideoFrame> >* ob);
+    void attached(VideoFrameActiveWriter&);
+    void detached(VideoFrameActiveWriter&);
+    void update(VideoFrameActiveWriter&, VideoFrameShrPtr&);
 
 private:
     NON_COPYABLE(VideoMixer);
@@ -74,7 +73,7 @@ private:
     const std::string id_;
     int width_;
     int height_;
-    std::list<Observable<std::shared_ptr<VideoFrame> >*> sources_;
+    std::list<VideoFrameActiveWriter *> sources_;
     std::mutex mutex_;
     SHMSink sink_;
     static const char * VIDEO_MIXER_SUFFIX;

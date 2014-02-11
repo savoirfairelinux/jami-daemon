@@ -50,7 +50,8 @@ class VideoSenderException : public std::runtime_error {
 
 class SocketPair;
 
-class VideoSender : public VideoFramePassiveReader
+class VideoSender :
+        public VideoFramePassiveReader
 {
 public:
     VideoSender(const std::string &id,
@@ -61,8 +62,7 @@ public:
     void forceKeyFrame();
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >* obs,
-                std::shared_ptr<VideoFrame> &);
+    void update(VideoFrameActiveWriter& writer, VideoFrameShrPtr& frame);
 
 private:
     NON_COPYABLE(VideoSender);

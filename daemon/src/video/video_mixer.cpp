@@ -59,39 +59,39 @@ VideoMixer::VideoMixer(const std::string &id) :
 
     // Local video camera is always attached
     if (auto shared = videoCtrl->getVideoCamera().lock())
-        shared->attach(this);
+        shared->attach_reader(*this);
 }
 
 VideoMixer::~VideoMixer()
 {
     auto videoCtrl = Manager::instance().getVideoControls();
     if (auto shared = videoCtrl->getVideoCamera().lock())
-        shared->detach(this);
+        shared->detach_reader(*this);
     stop_sink();
 }
 
-void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
+void VideoMixer::attached(VideoFrameActiveWriter& writer)
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    sources_.push_back(ob);
+    sources_.push_back(&writer);
 }
 
-void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
+void VideoMixer::detached(VideoFrameActiveWriter& writer)
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    sources_.remove(ob);
+    sources_.remove(&writer);
 }
 
-void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                        std::shared_ptr<VideoFrame>& frame_p)
+void VideoMixer::update(VideoFrameActiveWriter& writer,
+                        VideoFrameShrPtr& frame_p)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     int i=0;
     for (auto x : sources_) {
-        if (x == ob) break;
+        if (x == &writer) break;
         i++;
     }
-    render_frame(*frame_p, i);
+    render_frame(*frame_p.get(), i);
 }
 
 void VideoMixer::render_frame(VideoFrame& input, const int index)
@@ -101,25 +101,26 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
     if (!width_ or !height_)
         return;
 
-    VideoFrame &output = getNewFrame();
+    auto& output = getNewFrame();
 
     if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
         ERROR("VideoFrame::allocBuffer() failed");
         return;
     }
 
-    std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
+    // fill output with previously rendered frame before insert
+    // the new source's frame.
+    auto previous_p(obtainLastFrame());
     if (previous_p)
         previous_p->copy(output);
-    previous_p.reset();
 
+    // scale and blit pad in one pass
     const int n = sources_.size();
     const int zoom = ceil(sqrt(n));
     const int cell_width = width_ / zoom;
     const int cell_height = height_ / zoom;
     const int xoff = (index % zoom) * cell_width;
     const int yoff = (index / zoom) * cell_height;
-
     scaler.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
 
     publishFrame();
@@ -143,7 +144,7 @@ void VideoMixer::setDimensions(int width, int height)
 void VideoMixer::start_sink()
 {
     if (sink_.start()) {
-        if (this->attach(&sink_)) {
+        if (this->attach_reader(sink_)) {
             Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), width_, height_);
             DEBUG("MX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), width_, height_);
@@ -154,7 +155,7 @@ void VideoMixer::start_sink()
 
 void VideoMixer::stop_sink()
 {
-    if (this->detach(&sink_)) {
+    if (this->detach_reader(sink_)) {
         Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
         sink_.stop();
     }
