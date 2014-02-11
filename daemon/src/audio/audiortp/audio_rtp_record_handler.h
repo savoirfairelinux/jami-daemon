@@ -100,10 +100,6 @@ class AudioRtpRecord {
          */
         int processDataEncode();
 
-        AudioCodec *getAudioCodec() const {
-            return audioCodecs_[0];
-        }
-
         const AudioRtpContext &getEncoder() const {
             return encoder_;
         }
