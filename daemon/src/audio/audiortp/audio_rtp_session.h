@@ -45,7 +45,7 @@ namespace sfl {
 
 class AudioCodec;
 
-class AudioRtpSession : public AudioRtpRecordHandler {
+class AudioRtpSession : public AudioRtpRecord {
     public:
         /**
         * Constructor

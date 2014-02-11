@@ -171,7 +171,7 @@ AudioRtpFactory::getCurrentAudioCodecNames()
     if (!rtpSession_)
         throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
-    return rtpSession_->getCurrentAudioCodecNames();
+    return rtpSession_->getCurrentCodecNames();
 }
 
 void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)

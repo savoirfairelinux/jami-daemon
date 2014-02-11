@@ -41,7 +41,7 @@
 
 namespace sfl {
 AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
-    AudioRtpRecordHandler(call.getCallId())
+    AudioRtpRecord(call.getCallId())
     , isStarted_(false)
     , queue_(queue)
     , call_(call)
@@ -74,7 +74,7 @@ void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
 #if HAVE_SPEEXDSP
     if (lastEncoderSampleRate != getEncoder().format.sample_rate or
         lastDecoderSampleRate != getDecoder().format.sample_rate) {
-        initDSP();
+        resetDSP();
     }
 #endif
 }
@@ -254,7 +254,7 @@ void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &au
     setSessionMedia(audioCodecs);
     initBuffers();
 #if HAVE_SPEEXDSP
-    initDSP();
+    resetDSP();
 #endif
 
     queue_.enableStack();

@@ -81,26 +81,76 @@ class AudioRtpContext {
 
 /**
  * Class meant to store internal data in order to encode/decode,
- * resample, process, and packetize audio streams. This class should not be
- * handled directly. Use AudioRtpRecordHandler
+ * resample, process, and packetize audio streams.
  */
 class AudioRtpRecord {
     public:
         AudioRtpRecord(const std::string &id);
-        ~AudioRtpRecord();
+        virtual ~AudioRtpRecord();
+        void initBuffers();
+        void setRtpMedia(const std::vector<AudioCodec*> &codecs);
+        std::string getCurrentCodecNames();
+        /**
+         * Decode audio data received from peer
+         */
+        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
+
+        /**
+         * Encode audio data from mainbuffer
+         */
+        int processDataEncode();
+
+        AudioCodec *getAudioCodec() const {
+            return audioCodecs_[0];
+        }
+
+        const AudioRtpContext &getEncoder() const {
+            return encoder_;
+        }
+
+        const AudioRtpContext &getDecoder() const {
+            return decoder_;
+        }
+
+        bool hasDynamicPayload() const {
+            return hasDynamicPayloadType_;
+        }
+
+        bool hasDTMFPending() const {
+            return not dtmfQueue_.empty();
+        }
+
+        const unsigned char *getMicDataEncoded() const {
+            return encodedData_.data();
+        }
+
+#if HAVE_SPEEXDSP
+        void initDSP();
+#endif
+
+        void setDtmfPayloadType(unsigned int payloadType) {
+            dtmfPayloadType_ = payloadType;
+        }
+
+        unsigned int getDtmfPayloadType() const {
+            return dtmfPayloadType_;
+        }
+
+        void putDtmfEvent(char digit);
+
+        std::string getCurrentAudioCodecNames();
+
+    protected:
+#if HAVE_SPEEXDSP
+        void resetDSP();
+#endif
+
     private:
         void deleteCodecs();
         bool tryToSwitchPayloadTypes(int newPt);
         sfl::AudioCodec* getCurrentCodec() const;
 
         const std::string id_;
-        void initBuffers();
-#if HAVE_SPEEXDSP
-        void resetDSP();
-#endif
-        void setRtpMedia(const std::vector<AudioCodec*> &codecs);
-
-        std::string getCurrentCodecNames();
 
         AudioRtpContext encoder_;
         AudioRtpContext decoder_;
@@ -116,17 +166,6 @@ class AudioRtpRecord {
         double fadeFactor_;
 
         bool isDead();
-        friend class AudioRtpRecordHandler;
-
-        /**
-         * Decode audio data received from peer
-         */
-        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
-
-        /**
-         * Encode audio data from mainbuffer
-         */
-        int processDataEncode();
 
         /**
         * Ramp In audio data to avoid audio click from peer
@@ -136,79 +175,12 @@ class AudioRtpRecord {
         std::atomic<bool> dead_;
         size_t currentCodecIndex_;
         int warningInterval_;
-};
 
-
-class AudioRtpRecordHandler {
-    public:
-        AudioRtpRecordHandler(const std::string &id);
-        virtual ~AudioRtpRecordHandler();
-
-        /**
-         *  Set rtp media for this session
-         */
-        void setRtpMedia(const std::vector<AudioCodec*> &codecs);
-
-        AudioCodec *getAudioCodec() const {
-            return audioRtpRecord_.audioCodecs_[0];
-        }
-
-        const AudioRtpContext &getEncoder() const {
-            return audioRtpRecord_.encoder_;
-        }
-
-        const AudioRtpContext &getDecoder() const {
-            return audioRtpRecord_.decoder_;
-        }
-
-        bool hasDynamicPayload() const {
-            return audioRtpRecord_.hasDynamicPayloadType_;
-        }
-
-        bool hasDTMFPending() const {
-            return not dtmfQueue_.empty();
-        }
-
-        const unsigned char *getMicDataEncoded() const {
-            return audioRtpRecord_.encodedData_.data();
-        }
-
-        void initBuffers();
-
-#if HAVE_SPEEXDSP
-        void initDSP();
-#endif
-
-        /**
-         * Encode audio data from mainbuffer
-         */
-        int processDataEncode();
-
-        /**
-         * Decode audio data received from peer
-         */
-        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
-
-        void setDtmfPayloadType(unsigned int payloadType) {
-            dtmfPayloadType_ = payloadType;
-        }
-
-        unsigned int getDtmfPayloadType() const {
-            return dtmfPayloadType_;
-        }
-
-        void putDtmfEvent(char digit);
-
-        std::string getCurrentAudioCodecNames();
+        unsigned int dtmfPayloadType_;
 
     protected:
         bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;
-        AudioRtpRecord audioRtpRecord_;
         std::list<DTMFEvent> dtmfQueue_;
-
-    private:
-        unsigned int dtmfPayloadType_;
-
 };
 }
 

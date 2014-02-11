@@ -56,7 +56,25 @@ AudioRtpRecord::AudioRtpRecord(const std::string &id) :
     , dead_(false)
     , currentCodecIndex_(0)
     , warningInterval_(0)
+    , dtmfPayloadType_(101) // same as Asterisk
+    , dtmfQueue_()
 {}
+
+AudioRtpRecord::~AudioRtpRecord()
+{
+    dead_ = true;
+
+    delete encoder_.resampler;
+    encoder_.resampler = nullptr;
+    delete decoder_.resampler;
+    decoder_.resampler = nullptr;
+
+    {
+        std::lock_guard<std::mutex> lock(audioCodecMutex_);
+        deleteCodecs();
+    }
+}
+
 
 // Call from processData*
 bool AudioRtpRecord::isDead()
@@ -114,38 +132,6 @@ AudioRtpContext::~AudioRtpContext()
 #endif
 }
 
-AudioRtpRecord::~AudioRtpRecord()
-{
-    dead_ = true;
-
-    delete encoder_.resampler;
-    encoder_.resampler = nullptr;
-    delete decoder_.resampler;
-    decoder_.resampler = nullptr;
-
-    {
-        std::lock_guard<std::mutex> lock(audioCodecMutex_);
-        deleteCodecs();
-    }
-}
-
-AudioRtpRecordHandler::AudioRtpRecordHandler(const std::string &id) :
-    audioRtpRecord_(id),
-    dtmfQueue_(),
-    dtmfPayloadType_(101) // same as Asterisk
-{}
-
-
-AudioRtpRecordHandler::~AudioRtpRecordHandler()
-{
-}
-
-std::string
-AudioRtpRecordHandler::getCurrentAudioCodecNames()
-{
-    return audioRtpRecord_.getCurrentCodecNames();
-}
-
 std::string
 AudioRtpRecord::getCurrentCodecNames()
 {
@@ -163,11 +149,6 @@ AudioRtpRecord::getCurrentCodecNames()
     }
 
     return result;
-}
-
-void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &codecs)
-{
-    audioRtpRecord_.setRtpMedia(codecs);
 }
 
 void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
@@ -197,11 +178,6 @@ void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 
-void AudioRtpRecordHandler::initBuffers()
-{
-    audioRtpRecord_.initBuffers();
-}
-
 void AudioRtpContext::resetResampler()
 {
     // initialize resampler using AudioLayer's sampling rate
@@ -217,11 +193,6 @@ void AudioRtpRecord::initBuffers()
 }
 
 #if HAVE_SPEEXDSP
-void AudioRtpRecordHandler::initDSP()
-{
-    audioRtpRecord_.resetDSP();
-}
-
 void AudioRtpRecord::resetDSP()
 {
     encoder_.resetDSP();
@@ -236,15 +207,10 @@ void AudioRtpContext::resetDSP()
 }
 #endif
 
-void AudioRtpRecordHandler::putDtmfEvent(char digit)
+void AudioRtpRecord::putDtmfEvent(char digit)
 {
     DTMFEvent dtmf(digit);
     dtmfQueue_.push_back(dtmf);
-}
-
-int AudioRtpRecordHandler::processDataEncode()
-{
-    return audioRtpRecord_.processDataEncode();
 }
 
 #if HAVE_SPEEXDSP
@@ -327,11 +293,6 @@ int AudioRtpRecord::processDataEncode()
 
 #define RETURN_IF_NULL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return; }
 
-void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
-{
-    audioRtpRecord_.processDataDecode(spkrData, size, payloadType);
-}
-
 void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
     if (isDead())
@@ -399,9 +360,9 @@ void AudioRtpRecord::fadeInRawBuffer()
 }
 
 bool
-AudioRtpRecordHandler::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
+AudioRtpRecord::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
 {
-    const std::vector<AudioCodec*> &current = audioRtpRecord_.audioCodecs_;
+    const std::vector<AudioCodec*> &current = audioCodecs_;
 
     if (codecs.size() != current.size())
         return true;
