@@ -35,6 +35,7 @@
 #include "audio_rtp_record_handler.h"
 #include <fstream>
 #include <algorithm>
+#include <cassert>
 #include "logger.h"
 #include "audio/audiolayer.h"
 #include "manager.h"
@@ -57,8 +58,6 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
     , currentEncoderIndex_(0)
     , currentDecoderIndex_(0)
     , warningInterval_(0)
-    , dtmfPayloadType_(101) // same as Asterisk
-    , dtmfQueue_()
 {}
 
 AudioRtpStream::~AudioRtpStream()
@@ -184,9 +183,19 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     const int pt = audioCodecs[0]->getPayloadType();
     encoder_.payloadType = pt;
     decoder_.payloadType = pt;
-    encoder_.format.sample_rate = decoder_.format.sample_rate = audioCodecs[0]->getClockRate();
+
     encoder_.frameSize = decoder_.frameSize = audioCodecs[0]->getFrameSize();
     encoder_.format.nb_channels = decoder_.format.nb_channels = audioCodecs[0]->getChannels();
+
+    if (audioCodecs[0]->getClockRate() != decoder_.format.sample_rate or
+        audioCodecs[0]->getClockRate() != encoder_.format.sample_rate) {
+        encoder_.format.sample_rate = decoder_.format.sample_rate = audioCodecs[0]->getClockRate();
+
+#if HAVE_SPEEXDSP
+        resetDSP();
+#endif
+    }
+
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 
@@ -214,16 +223,11 @@ void AudioRtpStream::resetDSP()
 void AudioRtpContext::resetDSP()
 {
     std::lock_guard<std::mutex> lock(dspMutex);
+    assert(frameSize);
     delete dsp;
     dsp = new DSP(frameSize, format.nb_channels, format.sample_rate);
 }
 #endif
-
-void AudioRtpStream::putDtmfEvent(char digit)
-{
-    DTMFEvent dtmf(digit);
-    dtmfQueue_.push_back(dtmf);
-}
 
 #if HAVE_SPEEXDSP
 void AudioRtpContext::applyDSP(AudioBuffer &buffer)
@@ -400,6 +404,20 @@ int
 AudioRtpStream::getEncoderPayloadType() const
 {
     return encoder_.payloadType;
+}
+
+int
+AudioRtpStream::getEncoderFrameSize() const
+{
+    return encoder_.frameSize;
+}
+
+
+int
+AudioRtpStream::getTransportRate() const
+{
+    const int transportRate = encoder_.frameSize / encoder_.format.sample_rate / 1000;
+    return transportRate > 0 ? transportRate : 20;
 }
 
 }

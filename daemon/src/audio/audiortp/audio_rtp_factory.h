@@ -94,11 +94,6 @@ class AudioRtpFactory {
         void stop();
 
         /**
-         * Return the RTP payload currently used for this session
-         */
-        int getSessionMedia();
-
-        /**
          * Dynamically update session media
          */
         void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
@@ -153,7 +148,7 @@ class AudioRtpFactory {
         void restoreLocalContext();
 
         std::string
-        getCurrentAudioCodecNames();
+        getCurrentAudioCodecNames() const;
 
     private:
         NON_COPYABLE(AudioRtpFactory);

@@ -38,6 +38,7 @@
 #include <ccrtp/rtp.h>
 #include <ccrtp/formats.h>
 #include "noncopyable.h"
+#include "dtmf_event.h"
 
 class SIPCall;
 
@@ -45,7 +46,7 @@ namespace sfl {
 
 class AudioCodec;
 
-class AudioRtpSession : public AudioRtpStream {
+class AudioRtpSession {
     public:
         /**
         * Constructor
@@ -57,6 +58,21 @@ class AudioRtpSession : public AudioRtpStream {
         void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
 
         void startRtpThreads(const std::vector<AudioCodec*> &audioCodecs);
+
+        void putDtmfEvent(char digit);
+        bool hasDTMFPending() const {
+            return not dtmfQueue_.empty();
+        }
+
+        int getDtmfPayloadType() const {
+            return dtmfPayloadType_;
+        }
+
+        void setDtmfPayloadType(int pt) {
+            dtmfPayloadType_ = pt;
+        }
+
+        int getTransportRate() const;
 
         /**
          * Used mostly when receiving a reinvite
@@ -175,6 +191,12 @@ class AudioRtpSession : public AudioRtpStream {
         short timestampCount_;
 
         AudioRtpSendThread rtpSendThread_;
+        std::list<DTMFEvent> dtmfQueue_;
+    protected:
+        AudioRtpStream rtpStream_;
+    private:
+        int dtmfPayloadType_; // same as Asterisk
+
 };
 
 }

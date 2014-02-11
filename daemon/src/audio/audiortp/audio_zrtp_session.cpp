@@ -109,7 +109,7 @@ void AudioZrtpSession::initializeZid()
 
 void AudioZrtpSession::sendMicData()
 {
-    int compSize = processDataEncode();
+    int compSize = rtpStream_.processDataEncode();
 
     // if no data return
     if (compSize == 0)
@@ -119,10 +119,10 @@ void AudioZrtpSession::sendMicData()
     timestamp_ += timestampIncrement_;
 
     // this step is only needed for ZRTP
-    queue_.putData(timestamp_, getMicDataEncoded(), compSize);
+    queue_.putData(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 
     // putData puts the data on RTP queue, sendImmediate bypasses this queue
-    queue_.sendImmediate(timestamp_, getMicDataEncoded(), compSize);
+    queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 }
 
 int AudioZrtpSession::getIncrementForDTMF() const

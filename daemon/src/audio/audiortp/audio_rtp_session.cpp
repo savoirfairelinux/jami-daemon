@@ -41,8 +41,7 @@
 
 namespace sfl {
 AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
-    AudioRtpStream(call.getCallId())
-    , isStarted_(false)
+    isStarted_(false)
     , queue_(queue)
     , call_(call)
     , timestamp_(0)
@@ -52,6 +51,9 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , remote_port_(0)
     , timestampCount_(0)
     , rtpSendThread_(*this)
+    , dtmfQueue_()
+    , rtpStream_(call.getCallId())
+    , dtmfPayloadType_(101) // same as Asterisk
 {
     queue_.setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
@@ -63,50 +65,39 @@ AudioRtpSession::~AudioRtpSession()
 
 void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    // FIXME: we should differentiate for encoder and decoder (i.e. send vs. recv vs. sendrecv)
-    const unsigned lastEncoderSampleRate = encoder_.format.sample_rate;
-    const unsigned lastDecoderSampleRate = decoder_.format.sample_rate;
-
-    if (codecsDiffer(audioCodecs))
+    if (rtpStream_.codecsDiffer(audioCodecs))
         setSessionMedia(audioCodecs);
-
-    // FIXME: move this into AudioRtpStream
-#if HAVE_SPEEXDSP
-    if (lastEncoderSampleRate != encoder_.format.sample_rate or
-        lastDecoderSampleRate != decoder_.format.sample_rate) {
-        resetDSP();
-    }
-#endif
 }
 
 void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    setRtpMedia(audioCodecs);
+    rtpStream_.setRtpMedia(audioCodecs);
 
     // G722 requires timestamp to be incremented at 8kHz
-    const ost::PayloadType payloadType = encoder_.payloadType;
+    const ost::PayloadType payloadType = rtpStream_.getEncoderPayloadType();
 
     if (payloadType == ost::sptG722) {
         const int G722_RTP_TIME_INCREMENT = 160;
         timestampIncrement_ = G722_RTP_TIME_INCREMENT;
     } else
-        timestampIncrement_ = encoder_.frameSize;
+        timestampIncrement_ = rtpStream_.getEncoderFrameSize();
+
+    const AudioFormat encoderFormat(rtpStream_.getEncoderFormat());
 
     if (payloadType == ost::sptG722) {
         const int G722_RTP_CLOCK_RATE = 8000;
         queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, G722_RTP_CLOCK_RATE));
     } else {
-        if (hasDynamicPayload())
-            queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, encoder_.format.sample_rate));
+        if (rtpStream_.hasDynamicPayload())
+            queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, encoderFormat.sample_rate));
         else
             queue_.setPayloadFormat(ost::StaticPayloadFormat(static_cast<ost::StaticPayloadType>(payloadType)));
     }
 
-    call_.setRecordingFormat(encoder_.format);
+    call_.setRecordingFormat(encoderFormat);
 
-    int transportRate = encoder_.frameSize / encoder_.format.sample_rate / 1000;
-    transportRate_ = (transportRate > 0)?transportRate:20;
-    DEBUG("Switching to a transport rate of %d ms",transportRate_);
+    transportRate_ = rtpStream_.getTransportRate();
+    DEBUG("Switching to a transport rate of %d ms", transportRate_);
 }
 
 void AudioRtpSession::sendDtmfEvent()
@@ -119,10 +110,10 @@ void AudioRtpSession::sendDtmfEvent()
         timestamp_ += increment;
 
     // discard equivalent size of audio
-    processDataEncode();
+    rtpStream_.processDataEncode();
 
     // change Payload type for DTMF payload
-    queue_.setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) getDtmfPayloadType(), 8000));
+    queue_.setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) dtmfPayloadType_, 8000));
 
     // Set marker in case this is a new Event
     if (dtmf.newevent)
@@ -141,11 +132,13 @@ void AudioRtpSession::sendDtmfEvent()
     }
 
     // restore the payload to audio
-    if (hasDynamicPayload()) {
-        const ost::DynamicPayloadFormat pf(encoder_.payloadType, encoder_.format.sample_rate);
+    const int pt = rtpStream_.getEncoderPayloadType();
+    const AudioFormat encoderFormat = rtpStream_.getEncoderFormat();
+    if (rtpStream_.hasDynamicPayload()) {
+        const ost::DynamicPayloadFormat pf(pt, encoderFormat.sample_rate);
         queue_.setPayloadFormat(pf);
     } else {
-        const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(encoder_.payloadType));
+        const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(pt));
         queue_.setPayloadFormat(pf);
     }
 
@@ -174,7 +167,7 @@ void AudioRtpSession::receiveSpeakerData()
 
     // DTMF over RTP, size must be over 4 in order to process it as voice data
     if (size > 4)
-        processDataDecode(spkrDataIn, size, adu->getType());
+        rtpStream_.processDataDecode(spkrDataIn, size, adu->getType());
 
     delete adu;
 }
@@ -182,7 +175,7 @@ void AudioRtpSession::receiveSpeakerData()
 
 void AudioRtpSession::sendMicData()
 {
-    int compSize = processDataEncode();
+    int compSize = rtpStream_.processDataEncode();
 
     // if no data return
     if (compSize == 0)
@@ -192,7 +185,7 @@ void AudioRtpSession::sendMicData()
     timestamp_ += timestampIncrement_;
 
     // putData puts the data on RTP queue, sendImmediate bypass this queue
-    queue_.sendImmediate(timestamp_, getMicDataEncoded(), compSize);
+    queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 }
 
 
@@ -252,9 +245,9 @@ void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &au
     isStarted_ = true;
     setSessionTimeouts();
     setSessionMedia(audioCodecs);
-    initBuffers();
+    rtpStream_.initBuffers();
 #if HAVE_SPEEXDSP
-    resetDSP();
+    rtpStream_.resetDSP();
 #endif
 
     queue_.enableStack();
@@ -331,5 +324,11 @@ void AudioRtpSession::AudioRtpSendThread::run()
 void AudioRtpSession::startSendThread()
 {
     rtpSendThread_.start();
+}
+
+void AudioRtpSession::putDtmfEvent(char digit)
+{
+    DTMFEvent dtmf(digit);
+    dtmfQueue_.push_back(dtmf);
 }
 }

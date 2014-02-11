@@ -44,7 +44,6 @@
 #include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/audiobuffer.h"
-#include "dtmf_event.h"
 
 class SamplerateConverter;
 class DSP;
@@ -104,10 +103,6 @@ class AudioRtpStream {
             return hasDynamicPayloadType_;
         }
 
-        bool hasDTMFPending() const {
-            return not dtmfQueue_.empty();
-        }
-
         const unsigned char *getMicDataEncoded() const {
             return encodedData_.data();
         }
@@ -116,27 +111,22 @@ class AudioRtpStream {
         void initDSP();
 #endif
 
-        void setDtmfPayloadType(unsigned int payloadType) {
-            dtmfPayloadType_ = payloadType;
-        }
-
-        unsigned int getDtmfPayloadType() const {
-            return dtmfPayloadType_;
-        }
-
-        void putDtmfEvent(char digit);
-
         std::string getCurrentAudioCodecNames();
 
         int getEncoderPayloadType() const;
+        int getEncoderFrameSize() const;
+        AudioFormat getEncoderFormat() const { return encoder_.format; }
+
+#if HAVE_SPEEXDSP
+        void resetDSP();
+#endif
+        bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;
+        int getTransportRate() const;
 
     private:
         const std::string id_;
 
     protected:
-#if HAVE_SPEEXDSP
-        void resetDSP();
-#endif
         AudioRtpContext encoder_;
         AudioRtpContext decoder_;
 
@@ -167,12 +157,6 @@ class AudioRtpStream {
         size_t currentEncoderIndex_;
         size_t currentDecoderIndex_;
         int warningInterval_;
-
-        unsigned int dtmfPayloadType_;
-
-    protected:
-        bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;
-        std::list<DTMFEvent> dtmfQueue_;
 };
 }
 

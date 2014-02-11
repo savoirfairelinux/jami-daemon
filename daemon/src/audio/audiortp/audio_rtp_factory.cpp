@@ -155,23 +155,11 @@ void AudioRtpFactory::stop()
     rtpSession_.reset();
 }
 
-int AudioRtpFactory::getSessionMedia()
-{
-    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
-    if (!rtpSession_)
-        throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
-
-    return rtpSession_->getEncoderPayloadType();
-}
-
 std::string
-AudioRtpFactory::getCurrentAudioCodecNames()
+AudioRtpFactory::getCurrentAudioCodecNames() const
 {
-    std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
-    if (!rtpSession_)
-        throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
-
-    return rtpSession_->getCurrentCodecNames();
+    WARN("Deprecated method");
+    return "";
 }
 
 void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
