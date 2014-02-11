@@ -118,13 +118,13 @@ class AudioRtpSession {
          */
         int timestampIncrement_;
 
+    private:
+
         /**
          * Rate at which the transport layer handle packets, should be
          * synchronized with codec requirements.
          */
         unsigned int transportRate_;
-
-    private:
 
         NON_COPYABLE(AudioRtpSession);
         virtual void startReceiveThread() = 0;
@@ -195,7 +195,7 @@ class AudioRtpSession {
     protected:
         AudioRtpStream rtpStream_;
     private:
-        int dtmfPayloadType_; // same as Asterisk
+        int dtmfPayloadType_;
 
 };
 
