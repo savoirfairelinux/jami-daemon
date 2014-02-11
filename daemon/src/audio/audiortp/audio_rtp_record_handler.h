@@ -56,16 +56,32 @@ class DSP;
 
 namespace sfl {
 
-struct AudioRtpContext {
-    AudioRtpContext(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr) {}
+class AudioRtpContext {
+    public:
+    AudioRtpContext(AudioFormat f) : payloadType(0), frameSize(0), format(f), resampledData(0, AudioFormat::MONO), resampler(nullptr)
+#if HAVE_SPEEXDSP
+    , dsp(nullptr)
+    , dspMutex()
+#endif
+    {}
+    ~AudioRtpContext();
     void resetResampler();
     int payloadType;
     int frameSize;
     AudioFormat format;
     AudioBuffer resampledData;
     SamplerateConverter *resampler;
+#if HAVE_SPEEXDSP
+    void resetDSP();
+    void applyDSP(AudioBuffer &rawBuffer);
+#endif
     private:
     NON_COPYABLE(AudioRtpContext);
+#if HAVE_SPEEXDSP
+    DSP *dsp;
+    std::mutex dspMutex;
+#endif
+
 };
 
 /**
@@ -85,7 +101,7 @@ class AudioRtpRecord {
     private:
         void initBuffers();
 #if HAVE_SPEEXDSP
-        void initDSP();
+        void resetDSP();
 #endif
         void setRtpMedia(const std::vector<AudioCodec*> &codecs);
 
@@ -103,12 +119,6 @@ class AudioRtpRecord {
         AudioBuffer rawBuffer_;
         std::array<unsigned char, RAW_BUFFER_SIZE> encodedData_;
         double fadeFactor_;
-
-#if HAVE_SPEEXDSP
-        DSP *dspEncode_;
-        DSP *dspDecode_;
-        std::mutex audioProcessMutex_;
-#endif
 
         bool isDead();
         friend class AudioRtpRecordHandler;

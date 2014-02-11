@@ -54,11 +54,6 @@ AudioRtpRecord::AudioRtpRecord() :
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , encodedData_()
     , fadeFactor_(1.0 / 32000.0)
-#if HAVE_SPEEXDSP
-    , dspEncode_(nullptr)
-    , dspDecode_(nullptr)
-    , audioProcessMutex_()
-#endif
     , dead_(false)
     , currentCodecIndex_(0)
     , warningInterval_(0)
@@ -111,6 +106,15 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
     return false;
 }
 
+AudioRtpContext::~AudioRtpContext()
+{
+#if HAVE_SPEEXDSP
+    std::lock_guard<std::mutex> lock(dspMutex);
+    delete dsp;
+    dsp = 0;
+#endif
+}
+
 AudioRtpRecord::~AudioRtpRecord()
 {
     dead_ = true;
@@ -124,15 +128,6 @@ AudioRtpRecord::~AudioRtpRecord()
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         deleteCodecs();
     }
-#if HAVE_SPEEXDSP
-    {
-        std::lock_guard<std::mutex> lock(audioProcessMutex_);
-        delete dspDecode_;
-        dspDecode_ = 0;
-        delete dspEncode_;
-        dspEncode_ = 0;
-    }
-#endif
 }
 
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
@@ -226,16 +221,20 @@ void AudioRtpRecord::initBuffers()
 #if HAVE_SPEEXDSP
 void AudioRtpRecordHandler::initDSP()
 {
-    audioRtpRecord_.initDSP();
+    audioRtpRecord_.resetDSP();
 }
 
-void AudioRtpRecord::initDSP()
+void AudioRtpRecord::resetDSP()
 {
-    std::lock_guard<std::mutex> lock(audioProcessMutex_);
-    delete dspEncode_;
-    dspEncode_ = new DSP(encoder_.frameSize, encoder_.format.nb_channels, encoder_.format.sample_rate);
-    delete dspDecode_;
-    dspDecode_ = new DSP(decoder_.frameSize, decoder_.format.nb_channels, decoder_.format.sample_rate);
+    encoder_.resetDSP();
+    decoder_.resetDSP();
+}
+
+void AudioRtpContext::resetDSP()
+{
+    std::lock_guard<std::mutex> lock(dspMutex);
+    delete dsp;
+    dsp = new DSP(frameSize, format.nb_channels, format.sample_rate);
 }
 #endif
 
@@ -249,6 +248,32 @@ int AudioRtpRecordHandler::processDataEncode()
 {
     return audioRtpRecord_.processDataEncode(id_);
 }
+
+#if HAVE_SPEEXDSP
+void AudioRtpContext::applyDSP(AudioBuffer &buffer)
+{
+    const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
+    const bool agc = Manager::instance().audioPreference.isAGCEnabled();
+
+    if (denoise or agc) {
+        std::lock_guard<std::mutex> lock(dspMutex);
+        if (!dsp)
+            return;
+
+        if (denoise)
+            dsp->enableDenoise();
+        else
+            dsp->disableDenoise();
+
+        if (agc)
+            dsp->enableAGC();
+        else
+            dsp->disableAGC();
+
+        dsp->process(buffer, frameSize);
+    }
+}
+#endif
 
 #define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }
 
@@ -289,24 +314,7 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
         out->setChannelNum(encoder_.format.nb_channels, true);
 
 #if HAVE_SPEEXDSP
-    const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
-    const bool agc = Manager::instance().audioPreference.isAGCEnabled();
-
-    if (denoise or agc) {
-        std::lock_guard<std::mutex> lock(audioProcessMutex_);
-        RETURN_IF_NULL(dspEncode_, 0, "DSP already destroyed");
-        if (denoise)
-            dspEncode_->enableDenoise();
-        else
-            dspEncode_->disableDenoise();
-
-        if (agc)
-            dspEncode_->enableAGC();
-        else
-            dspEncode_->disableAGC();
-
-        dspEncode_->process(*out, encoder_.frameSize);
-    }
+    encoder_.applyDSP(*out);
 #endif
 
     {
@@ -356,25 +364,7 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
     }
 
 #if HAVE_SPEEXDSP
-
-    const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
-    const bool agc = Manager::instance().audioPreference.isAGCEnabled();
-
-    if (denoise or agc) {
-        std::lock_guard<std::mutex> lock(audioProcessMutex_);
-        RETURN_IF_NULL(dspDecode_, "DSP already destroyed");
-        if (denoise)
-            dspDecode_->enableDenoise();
-        else
-            dspDecode_->disableDenoise();
-
-        if (agc)
-            dspDecode_->enableAGC();
-        else
-            dspDecode_->disableAGC();
-        dspDecode_->process(rawBuffer_, decoder_.frameSize);
-    }
-
+    decoder_.applyDSP(rawBuffer_);
 #endif
 
     fadeInRawBuffer();
