@@ -50,7 +50,6 @@ using std::ptrdiff_t;
 #include "audio/audiobuffer.h"
 #include "dtmf_event.h"
 
-class SIPCall;
 class SamplerateConverter;
 class DSP;
 
@@ -91,14 +90,14 @@ class AudioRtpContext {
  */
 class AudioRtpRecord {
     public:
-        AudioRtpRecord();
+        AudioRtpRecord(const std::string &id);
         ~AudioRtpRecord();
         void deleteCodecs();
         bool tryToSwitchPayloadTypes(int newPt);
         sfl::AudioCodec* getCurrentCodec() const;
-        std::string callId_;
 
     private:
+        const std::string id_;
         void initBuffers();
 #if HAVE_SPEEXDSP
         void resetDSP();
@@ -126,12 +125,12 @@ class AudioRtpRecord {
         /**
          * Decode audio data received from peer
          */
-        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType, const std::string &id);
+        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
 
         /**
          * Encode audio data from mainbuffer
          */
-        int processDataEncode(const std::string &id);
+        int processDataEncode();
 
         /**
         * Ramp In audio data to avoid audio click from peer
@@ -146,7 +145,7 @@ class AudioRtpRecord {
 
 class AudioRtpRecordHandler {
     public:
-        AudioRtpRecordHandler(SIPCall &);
+        AudioRtpRecordHandler(const std::string &id);
         virtual ~AudioRtpRecordHandler();
 
         /**
@@ -213,7 +212,6 @@ class AudioRtpRecordHandler {
 
     private:
         unsigned int dtmfPayloadType_;
-        const std::string id_;
 
 };
 }

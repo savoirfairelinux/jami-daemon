@@ -44,7 +44,6 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
 {
     DEBUG("Setting new RTP session with destination %s:%d",
           call_.getLocalIp().c_str(), call_.getLocalAudioPort());
-    audioRtpRecord_.callId_ = call_.getCallId();
 }
 
 std::vector<long>

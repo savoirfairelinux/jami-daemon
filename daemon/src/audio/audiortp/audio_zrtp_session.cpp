@@ -57,7 +57,6 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
     initializeZid();
     DEBUG("Setting new RTP session with destination %s:%d",
           localIP.c_str(), call_.getLocalAudioPort());
-    audioRtpRecord_.callId_ = call_.getCallId();
 }
 
 std::vector<long>

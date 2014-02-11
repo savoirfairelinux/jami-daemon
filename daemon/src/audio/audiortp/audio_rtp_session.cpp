@@ -41,7 +41,7 @@
 
 namespace sfl {
 AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
-    AudioRtpRecordHandler(call)
+    AudioRtpRecordHandler(call.getCallId())
     , isStarted_(false)
     , queue_(queue)
     , call_(call)

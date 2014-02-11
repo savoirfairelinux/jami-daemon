@@ -36,7 +36,6 @@
 #include <fstream>
 #include <algorithm>
 #include "logger.h"
-#include "sip/sipcall.h"
 #include "audio/audiolayer.h"
 #include "manager.h"
 #include "audio/samplerateconverter.h"
@@ -44,8 +43,8 @@
 
 namespace sfl {
 
-AudioRtpRecord::AudioRtpRecord() :
-    callId_("")
+AudioRtpRecord::AudioRtpRecord(const std::string &id) :
+    id_(id)
     , encoder_(AudioFormat::MONO)
     , decoder_(AudioFormat::MONO)
     , audioCodecs_()
@@ -130,11 +129,10 @@ AudioRtpRecord::~AudioRtpRecord()
     }
 }
 
-AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
-    audioRtpRecord_(),
+AudioRtpRecordHandler::AudioRtpRecordHandler(const std::string &id) :
+    audioRtpRecord_(id),
     dtmfQueue_(),
-    dtmfPayloadType_(101), // same as Asterisk
-    id_(call.getCallId())
+    dtmfPayloadType_(101) // same as Asterisk
 {}
 
 
@@ -246,7 +244,7 @@ void AudioRtpRecordHandler::putDtmfEvent(char digit)
 
 int AudioRtpRecordHandler::processDataEncode()
 {
-    return audioRtpRecord_.processDataEncode(id_);
+    return audioRtpRecord_.processDataEncode();
 }
 
 #if HAVE_SPEEXDSP
@@ -277,7 +275,7 @@ void AudioRtpContext::applyDSP(AudioBuffer &buffer)
 
 #define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }
 
-int AudioRtpRecord::processDataEncode(const std::string &id)
+int AudioRtpRecord::processDataEncode()
 {
     if (isDead())
         return 0;
@@ -289,11 +287,11 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
     // compute nb of byte to get corresponding to 1 audio frame
     const size_t samplesToGet = resampleFactor * encoder_.frameSize;
 
-    if (Manager::instance().getMainBuffer().availableForGet(id) < samplesToGet)
+    if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
         return 0;
 
     AudioBuffer micData(samplesToGet, mainBuffFormat);
-    const size_t samps = Manager::instance().getMainBuffer().getData(micData, id);
+    const size_t samps = Manager::instance().getMainBuffer().getData(micData, id_);
 
     if (samps != samplesToGet) {
         ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samps);
@@ -331,10 +329,10 @@ int AudioRtpRecord::processDataEncode(const std::string &id)
 
 void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
-    audioRtpRecord_.processDataDecode(spkrData, size, payloadType, id_);
+    audioRtpRecord_.processDataDecode(spkrData, size, payloadType);
 }
 
-void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int payloadType, const std::string &id)
+void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
     if (isDead())
         return;
@@ -383,7 +381,7 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
     }
     if (decFormat.nb_channels != mainBuffFormat.nb_channels)
         out->setChannelNum(mainBuffFormat.nb_channels, true);
-    Manager::instance().getMainBuffer().putData(*out, id);
+    Manager::instance().getMainBuffer().putData(*out, id_);
 }
 #undef RETURN_IF_NULL
 
