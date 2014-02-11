@@ -43,7 +43,7 @@
 
 namespace sfl {
 
-AudioRtpRecord::AudioRtpRecord(const std::string &id) :
+AudioRtpStream::AudioRtpStream(const std::string &id) :
     id_(id)
     , encoder_(AudioFormat::MONO)
     , decoder_(AudioFormat::MONO)
@@ -61,7 +61,7 @@ AudioRtpRecord::AudioRtpRecord(const std::string &id) :
     , dtmfQueue_()
 {}
 
-AudioRtpRecord::~AudioRtpRecord()
+AudioRtpStream::~AudioRtpStream()
 {
     dead_ = true;
 
@@ -78,13 +78,13 @@ AudioRtpRecord::~AudioRtpRecord()
 
 
 // Call from processData*
-bool AudioRtpRecord::isDead()
+bool AudioRtpStream::isDead()
 {
     return dead_;
 }
 
 sfl::AudioCodec *
-AudioRtpRecord::getCurrentEncoder() const
+AudioRtpStream::getCurrentEncoder() const
 {
     if (audioCodecs_.empty() or currentEncoderIndex_ >= audioCodecs_.size()) {
         ERROR("No codec found");
@@ -95,7 +95,7 @@ AudioRtpRecord::getCurrentEncoder() const
 }
 
 sfl::AudioCodec *
-AudioRtpRecord::getCurrentDecoder() const
+AudioRtpStream::getCurrentDecoder() const
 {
     if (audioCodecs_.empty() or currentDecoderIndex_ >= audioCodecs_.size()) {
         ERROR("No codec found");
@@ -106,7 +106,7 @@ AudioRtpRecord::getCurrentDecoder() const
 }
 
 void
-AudioRtpRecord::deleteCodecs()
+AudioRtpStream::deleteCodecs()
 {
     for (auto &i : audioCodecs_)
         delete i;
@@ -114,7 +114,7 @@ AudioRtpRecord::deleteCodecs()
     audioCodecs_.clear();
 }
 
-bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
+bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
 {
     for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
         if (*i and (*i)->getPayloadType() == newPt) {
@@ -145,7 +145,7 @@ AudioRtpContext::~AudioRtpContext()
 }
 
 std::string
-AudioRtpRecord::getCurrentCodecNames()
+AudioRtpStream::getCurrentCodecNames()
 {
     std::string result;
     std::lock_guard<std::mutex> lock(audioCodecMutex_);
@@ -163,7 +163,7 @@ AudioRtpRecord::getCurrentCodecNames()
     return result;
 }
 
-void AudioRtpRecord::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
+void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     std::lock_guard<std::mutex> lock(audioCodecMutex_);
 
@@ -198,14 +198,14 @@ void AudioRtpContext::resetResampler()
     resampler = new SamplerateConverter(format.sample_rate);
 }
 
-void AudioRtpRecord::initBuffers()
+void AudioRtpStream::initBuffers()
 {
     encoder_.resetResampler();
     decoder_.resetResampler();
 }
 
 #if HAVE_SPEEXDSP
-void AudioRtpRecord::resetDSP()
+void AudioRtpStream::resetDSP()
 {
     encoder_.resetDSP();
     decoder_.resetDSP();
@@ -219,7 +219,7 @@ void AudioRtpContext::resetDSP()
 }
 #endif
 
-void AudioRtpRecord::putDtmfEvent(char digit)
+void AudioRtpStream::putDtmfEvent(char digit)
 {
     DTMFEvent dtmf(digit);
     dtmfQueue_.push_back(dtmf);
@@ -253,7 +253,7 @@ void AudioRtpContext::applyDSP(AudioBuffer &buffer)
 
 #define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }
 
-int AudioRtpRecord::processDataEncode()
+int AudioRtpStream::processDataEncode()
 {
     if (isDead())
         return 0;
@@ -305,7 +305,7 @@ int AudioRtpRecord::processDataEncode()
 
 #define RETURN_IF_NULL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return; }
 
-void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
+void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
     if (isDead())
         return;
@@ -358,7 +358,7 @@ void AudioRtpRecord::processDataDecode(unsigned char *spkrData, size_t size, int
 }
 #undef RETURN_IF_NULL
 
-void AudioRtpRecord::fadeInRawBuffer()
+void AudioRtpStream::fadeInRawBuffer()
 {
     // if factor reaches 1, this function should have no effect
     if (fadeFactor_ >= 1.0)
@@ -372,7 +372,7 @@ void AudioRtpRecord::fadeInRawBuffer()
 }
 
 bool
-AudioRtpRecord::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
+AudioRtpStream::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
 {
     const std::vector<AudioCodec*> &current = audioCodecs_;
 

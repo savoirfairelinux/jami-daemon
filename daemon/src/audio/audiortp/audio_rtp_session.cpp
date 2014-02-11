@@ -41,7 +41,7 @@
 
 namespace sfl {
 AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
-    AudioRtpRecord(call.getCallId())
+    AudioRtpStream(call.getCallId())
     , isStarted_(false)
     , queue_(queue)
     , call_(call)
@@ -70,7 +70,7 @@ void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
     if (codecsDiffer(audioCodecs))
         setSessionMedia(audioCodecs);
 
-    // FIXME: move this into AudioRtpRecord
+    // FIXME: move this into AudioRtpStream
 #if HAVE_SPEEXDSP
     if (lastEncoderSampleRate != getEncoder().format.sample_rate or
         lastDecoderSampleRate != getDecoder().format.sample_rate) {

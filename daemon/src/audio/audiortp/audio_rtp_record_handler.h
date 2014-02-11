@@ -83,10 +83,10 @@ class AudioRtpContext {
  * Class meant to store internal data in order to encode/decode,
  * resample, process, and packetize audio streams.
  */
-class AudioRtpRecord {
+class AudioRtpStream {
     public:
-        AudioRtpRecord(const std::string &id);
-        virtual ~AudioRtpRecord();
+        AudioRtpStream(const std::string &id);
+        virtual ~AudioRtpStream();
         void initBuffers();
         void setRtpMedia(const std::vector<AudioCodec*> &codecs);
         std::string getCurrentCodecNames();
@@ -168,7 +168,7 @@ class AudioRtpRecord {
         * Ramp In audio data to avoid audio click from peer
         */
         void fadeInRawBuffer();
-        NON_COPYABLE(AudioRtpRecord);
+        NON_COPYABLE(AudioRtpStream);
         std::atomic<bool> dead_;
         size_t currentEncoderIndex_;
         size_t currentDecoderIndex_;
