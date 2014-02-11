@@ -146,6 +146,47 @@ AudioRtpContext::~AudioRtpContext()
 #endif
 }
 
+void AudioRtpContext::resetResampler()
+{
+    // initialize resampler using AudioLayer's sampling rate
+    // (internal buffers initialized with maximal sampling rate and frame size)
+    resampler.reset(new SamplerateConverter(format.sample_rate));
+}
+
+#if HAVE_SPEEXDSP
+void AudioRtpContext::resetDSP()
+{
+    std::lock_guard<std::mutex> lock(dspMutex);
+    assert(frameSize);
+    dsp.reset(new DSP(frameSize, format.nb_channels, format.sample_rate));
+}
+
+void AudioRtpContext::applyDSP(AudioBuffer &buffer)
+{
+    const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
+    const bool agc = Manager::instance().audioPreference.isAGCEnabled();
+
+    if (denoise or agc) {
+        std::lock_guard<std::mutex> lock(dspMutex);
+        if (!dsp)
+            return;
+
+        if (denoise)
+            dsp->enableDenoise();
+        else
+            dsp->disableDenoise();
+
+        if (agc)
+            dsp->enableAGC();
+        else
+            dsp->disableAGC();
+
+        dsp->process(buffer, frameSize);
+    }
+}
+#endif
+
+
 std::string
 AudioRtpStream::getCurrentCodecNames()
 {
@@ -202,13 +243,6 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 
-void AudioRtpContext::resetResampler()
-{
-    // initialize resampler using AudioLayer's sampling rate
-    // (internal buffers initialized with maximal sampling rate and frame size)
-    resampler.reset(new SamplerateConverter(format.sample_rate));
-}
-
 void AudioRtpStream::initBuffers()
 {
     encoder_.resetResampler();
@@ -220,39 +254,6 @@ void AudioRtpStream::resetDSP()
 {
     encoder_.resetDSP();
     decoder_.resetDSP();
-}
-
-void AudioRtpContext::resetDSP()
-{
-    std::lock_guard<std::mutex> lock(dspMutex);
-    assert(frameSize);
-    dsp.reset(new DSP(frameSize, format.nb_channels, format.sample_rate));
-}
-#endif
-
-#if HAVE_SPEEXDSP
-void AudioRtpContext::applyDSP(AudioBuffer &buffer)
-{
-    const bool denoise = Manager::instance().audioPreference.getNoiseReduce();
-    const bool agc = Manager::instance().audioPreference.isAGCEnabled();
-
-    if (denoise or agc) {
-        std::lock_guard<std::mutex> lock(dspMutex);
-        if (!dsp)
-            return;
-
-        if (denoise)
-            dsp->enableDenoise();
-        else
-            dsp->disableDenoise();
-
-        if (agc)
-            dsp->enableAGC();
-        else
-            dsp->disableAGC();
-
-        dsp->process(buffer, frameSize);
-    }
 }
 #endif
 
