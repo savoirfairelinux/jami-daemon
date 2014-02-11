@@ -36,10 +36,6 @@
 #endif
 
 #include <cstddef>
-
-using std::ptrdiff_t;
-
-#include <ccrtp/rtp.h>
 #include <array>
 #include <list>
 #include <mutex>
