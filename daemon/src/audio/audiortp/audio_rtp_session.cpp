@@ -184,8 +184,11 @@ void AudioRtpSession::sendMicData()
     // Increment timestamp for outgoing packet
     timestamp_ += timestampIncrement_;
 
+    // TODO: TEST
+#if 0
     // this step is only needed for ZRTP
     queue_.putData(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
+#endif
 
     // putData puts the data on RTP queue, sendImmediate bypass this queue
     queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
@@ -335,7 +338,7 @@ AudioRtpSession::saveState() const
 }
 
 void
-AudioRtpSession::restoreState(const CachedAudioRtpState &state)
+AudioRtpSession::restoreState(const CachedAudioRtpState &state UNUSED)
 {
     ERROR("Not implemented");
 }
