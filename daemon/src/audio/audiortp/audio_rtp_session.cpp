@@ -334,4 +334,17 @@ void AudioRtpSession::putDtmfEvent(char digit)
     DTMFEvent dtmf(digit);
     dtmfQueue_.push_back(dtmf);
 }
+
+CachedAudioRtpState *
+AudioRtpSession::saveState() const
+{
+    ERROR("Not implemented");
+    return nullptr;
+}
+
+void
+AudioRtpSession::restoreState(const CachedAudioRtpState &state)
+{
+    ERROR("Not implemented");
+}
 }

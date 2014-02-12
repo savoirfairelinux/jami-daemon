@@ -45,6 +45,9 @@ class SIPCall;
 namespace sfl {
 
 class AudioCodec;
+class AudioRtpSession;
+
+class CachedAudioRtpState;
 
 class AudioRtpSession {
     public:
@@ -81,16 +84,11 @@ class AudioRtpSession {
 
         virtual int getIncrementForDTMF() const;
 
-        virtual void setLocalMasterKey(const std::vector<uint8>& key) = 0;
-
-        virtual void setLocalMasterSalt(const std::vector<uint8>& key) = 0;
-
-        virtual std::vector<uint8> getLocalMasterKey() const = 0;
-
-        virtual std::vector<uint8> getLocalMasterSalt() const = 0;
-
         virtual std::vector<long>
         getSocketDescriptors() const = 0;
+
+        virtual CachedAudioRtpState * saveState() const;
+        virtual void restoreState(const CachedAudioRtpState &state);
 
     private:
         bool isStarted_;
@@ -198,7 +196,6 @@ class AudioRtpSession {
         int dtmfPayloadType_;
 
 };
-
 }
 #endif // AUDIO_RTP_SESSION_H__
 

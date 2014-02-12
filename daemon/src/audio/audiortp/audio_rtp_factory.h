@@ -151,6 +151,7 @@ class AudioRtpFactory {
         NON_COPYABLE(AudioRtpFactory);
         enum KeyExchangeProtocol { NONE, SDES, ZRTP };
         std::unique_ptr<AudioRtpSession> rtpSession_;
+        std::unique_ptr<CachedAudioRtpState> cachedAudioRtpState_;
         std::mutex audioRtpThreadMutex_;
 
         // Field used when initializing audio rtp session

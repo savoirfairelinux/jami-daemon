@@ -102,12 +102,11 @@ void AudioRtpFactory::initSession()
     std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
 
     if (srtpEnabled_) {
-        const std::string zidFilename(Manager::instance().voipPreferences.getZidFile());
 
         switch (keyExchangeProtocol_) {
 #if HAVE_ZRTP
-
             case ZRTP: {
+                const std::string zidFilename(Manager::instance().voipPreferences.getZidFile());
                 rtpSession_.reset(new AudioZrtpSession(*call_, zidFilename, call_->getLocalIp()));
 
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
@@ -240,18 +239,14 @@ void AudioRtpFactory::sendDtmfDigit(int digit)
 void AudioRtpFactory::saveLocalContext()
 {
     std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
-    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        cachedLocalMasterKey_ = rtpSession_->getLocalMasterKey();
-        cachedLocalMasterSalt_ = rtpSession_->getLocalMasterSalt();
-    }
+    if (rtpSession_ and keyExchangeProtocol_ == SDES)
+        cachedAudioRtpState_.reset(rtpSession_->saveState());
 }
 
 void AudioRtpFactory::restoreLocalContext()
 {
     std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
-    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        rtpSession_->setLocalMasterKey(cachedLocalMasterKey_);
-        rtpSession_->setLocalMasterSalt(cachedLocalMasterSalt_);
-    }
+    if (rtpSession_ and keyExchangeProtocol_ == SDES)
+        rtpSession_->restoreState(*cachedAudioRtpState_);
 }
 }

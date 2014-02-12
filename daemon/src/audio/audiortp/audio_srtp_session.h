@@ -105,56 +105,13 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         void initLocalCryptoInfoOnOffhold();
 
-        /**
-         * Replace the local master key with the one specified. One must call
-         * initializeLocalCryptoContext to apply the key to the encryption engine.
-         */
-        void setLocalMasterKey(const std::vector<uint8>& key);
-
-        /**
-         * Store the current local master key in an external buffer
-         * for future reinitialization of the session.
-         */
-        std::vector<uint8> getLocalMasterKey() const;
-
-        /**
-         * Replace the local master salt with the one specificed. One must call
-         * initializeLocalCryptoContext to apply the key to the encryption engine.
-         */
-        void setLocalMasterSalt(const std::vector<uint8>& salt);
-
-        /**
-         * Store the lcoal master salt in an external buffer for future
-         * reinitialization of the ssession.
-         */
-        std::vector<uint8> getLocalMasterSalt() const;
-
-        /**
-         * Replace the remote master key with one specified. One must call
-         * initializeRemoteCryptoContext to apply the key to the decryption engine.
-         */
-        void setRemoteMasterKey(const std::vector<uint8>& key);
-
-        /**
-         * Store the remote master key in an extenal buffer for future
-         * reinitialization of the session.
-         */
-        std::vector<uint8> getRemoteMasterKey() const;
-
-        /**
-         * Replace the remote master salt with one specified. On must call
-         * initializeRemoteCryptoContext to apply the key to the decryption engine.
-         */
-        void setRemoteMasterSalt(const std::vector<uint8>& salt);
-
-        /**
-         * Store the remote master salt in an external buffer for future
-         * reinitialization of the session.
-         */
-        std::vector<uint8> getRemoteMasterSalt() const;
-
     private:
         NON_COPYABLE(AudioSrtpSession);
+
+        CachedAudioRtpState *
+        saveState() const;
+
+        void restoreState(const CachedAudioRtpState &state);
 
         /**
          * Remote srtp crypto context to be set into incoming data queue.
@@ -232,6 +189,15 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         bool remoteOfferIsSet_;
 };
+
+class CachedAudioRtpState {
+    public:
+        CachedAudioRtpState(const std::vector<uint8> &key, const std::vector<uint8> &salt);
+    private:
+        friend class AudioSrtpSession;
+        std::vector<uint8> key_, salt_;
+};
+
 }
 
 #endif // __AUDIO_SRTP_SESSION_H__

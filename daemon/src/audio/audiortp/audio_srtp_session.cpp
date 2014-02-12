@@ -314,51 +314,20 @@ void AudioSrtpSession::initializeLocalCryptoContext()
             crypto.srtpAuthTagLength / BITS_PER_BYTE);
 }
 
-void
-AudioSrtpSession::setLocalMasterKey(const std::vector<uint8>& key)
+CachedAudioRtpState *
+AudioSrtpSession::saveState() const
 {
-    localMasterKey_ = key;
+    return new CachedAudioRtpState(localMasterKey_, localMasterSalt_);
 }
 
-std::vector<uint8>
-AudioSrtpSession::getLocalMasterKey() const
-{
-    return localMasterKey_;
-}
+CachedAudioRtpState::CachedAudioRtpState(const std::vector<uint8> &key, const std::vector<uint8> &salt) : key_(key), salt_(salt)
+{}
 
 void
-AudioSrtpSession::setLocalMasterSalt(const std::vector<uint8>& salt)
+AudioSrtpSession::restoreState(const CachedAudioRtpState &state)
 {
-    localMasterSalt_ = salt;
-}
-
-std::vector<uint8>
-AudioSrtpSession::getLocalMasterSalt() const
-{
-    return localMasterSalt_;
-}
-
-void
-AudioSrtpSession::setRemoteMasterKey(const std::vector<uint8>& key)
-{
-    remoteMasterKey_ = key;
-}
-
-std::vector<uint8> AudioSrtpSession::getRemoteMasterKey() const
-{
-    return remoteMasterKey_;
-}
-
-void
-AudioSrtpSession::setRemoteMasterSalt(const std::vector<uint8>& salt)
-{
-    remoteMasterSalt_ = salt;
-}
-
-std::vector<uint8>
-AudioSrtpSession::getRemoteMasterSalt() const
-{
-    return remoteMasterSalt_;
+    localMasterKey_ = state.key_;
+    localMasterSalt_ = state.salt_;
 }
 
 }

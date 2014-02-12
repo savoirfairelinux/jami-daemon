@@ -68,16 +68,6 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
 
-        virtual void setLocalMasterKey(const std::vector<uint8>& key UNUSED) {}
-
-        virtual void setLocalMasterSalt(const std::vector<uint8>& key UNUSED) {};
-
-        /** Not used for symmetric rtp session, return an empty vector */
-        virtual std::vector<uint8> getLocalMasterKey() const { std::vector<uint8> vec; return vec; }
-
-        /** Not used for symmetric rtp session, return an empty vector */
-        virtual std::vector<uint8> getLocalMasterSalt() const { std::vector<uint8> vec; return vec; }
-
     private:
         void onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks);
         void onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks);
