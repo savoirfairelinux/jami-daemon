@@ -718,7 +718,7 @@ void AlsaLayer::capture()
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(audioFormat_.sample_rate) / mainBufferSampleRate);
         AudioBuffer rsmpl_out(outSamples, AudioFormat(mainBufferSampleRate, 1));
-        converter_.resample(in, rsmpl_out);
+        resampler_.resample(in, rsmpl_out);
         dcblocker_.process(rsmpl_out);
         Manager::instance().getMainBuffer().putData(rsmpl_out, MainBuffer::DEFAULT_ID);
     } else {
@@ -774,7 +774,7 @@ void AlsaLayer::playback(int maxSamples)
             const size_t outSamples = samplesToGet * resampleFactor;
             const size_t outBytes = outSamples * sizeof(SFLAudioSample);
             AudioBuffer rsmpl_out(outSamples, audioFormat_);
-            converter_.resample(out, rsmpl_out);
+            resampler_.resample(out, rsmpl_out);
             write(rsmpl_out.getChannel(0)->data(), outBytes, playbackHandle_);
         } else {
             write(out.getChannel(0)->data(), bytesToGet, playbackHandle_);

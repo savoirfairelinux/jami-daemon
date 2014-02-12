@@ -39,20 +39,20 @@
 #include "sfl_types.h"
 #include "noncopyable.h"
 
-class SamplerateConverter {
+class Resampler {
     public:
         /**
-         * Samplerate converter is used for several situation:
+         * Resampler is used for several situations:
         * streaming conversion (RTP, IAX), audiolayer conversion,
         * audio files conversion. Parameters are used to compute
-        * internal buffer size. Converter must be reinitialized
+        * internal buffer size. Resampler must be reinitialized
         * every time these parameters change
         */
-        SamplerateConverter(AudioFormat outFormat);
-        SamplerateConverter(unsigned sample_rate, unsigned channels=1);
+        Resampler(AudioFormat outFormat);
+        Resampler(unsigned sample_rate, unsigned channels=1);
 
         /** Destructor */
-        ~SamplerateConverter();
+        ~Resampler();
 
         /**
          * Change the converter sample rate and channel number.
@@ -62,9 +62,8 @@ class SamplerateConverter {
 
         /**
          * resample from the samplerate1 to the samplerate2
-         * @param data  The data buffer
-         * @param SamplerateConverter1 The original sample rate
-         * @param SamplerateConverter2 The desired sample rate
+         * @param dataIn  Input buffer
+         * @param dataOut Output buffer
          * @param nbSamples	  The number of samples to process
          */
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
@@ -78,7 +77,7 @@ class SamplerateConverter {
         void Short2FloatArray(const SFLAudioSample *in, float *out, int len);
 
     private:
-        NON_COPYABLE(SamplerateConverter);
+        NON_COPYABLE(Resampler);
 
         /* temporary buffers */
         std::vector<float> floatBufferIn_;

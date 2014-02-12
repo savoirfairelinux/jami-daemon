@@ -292,8 +292,7 @@ class IAXVoIPLink : public VoIPLink {
         AudioBuffer resampledData_;
         unsigned char encodedData_[RAW_BUFFER_SIZE];
 
-        /** Sample rate converter object */
-        SamplerateConverter converter_;
+        Resampler resampler_;
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to

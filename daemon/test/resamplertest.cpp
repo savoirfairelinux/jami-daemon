@@ -67,9 +67,9 @@ void ResamplerTest::testUpsamplingRamp()
     generateRamp();
 
     std::cout << "Test Upsampling Ramp" << std::endl;
-    SamplerateConverter converter(44100);
+    Resampler resampler(44100);
 
-    performUpsampling(converter);
+    performUpsampling(resampler);
 
     AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
     AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
@@ -88,9 +88,9 @@ void ResamplerTest::testDownsamplingRamp()
     generateRamp();
 
     std::cout << "Test Downsampling Ramp" << std::endl;
-    SamplerateConverter converter(44100);
+    Resampler resampler(44100);
 
-    performDownsampling(converter);
+    performDownsampling(resampler);
 
     AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
     AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
@@ -109,9 +109,9 @@ void ResamplerTest::testUpsamplingTriangle()
     generateTriangularSignal();
 
     std::cout << "Test Upsampling Triangle" << std::endl;
-    SamplerateConverter converter(44100);
+    Resampler resampler(44100);
 
-    performUpsampling(converter);
+    performUpsampling(resampler);
 
     AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
     AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
@@ -130,9 +130,9 @@ void ResamplerTest::testDownsamplingTriangle()
     generateTriangularSignal();
 
     std::cout << "Test Downsampling Triangle" << std::endl;
-    SamplerateConverter converter(44100);
+    Resampler resampler(44100);
 
-    performDownsampling(converter);
+    performDownsampling(resampler);
 
     AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
     AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
@@ -151,9 +151,9 @@ void ResamplerTest::testUpsamplingSine()
     generateSineSignal();
 
     std::cout << "Test Upsampling Sine" << std::endl;
-    SamplerateConverter converter(44100);
+    Resampler resampler(44100);
 
-    performUpsampling(converter);
+    performUpsampling(resampler);
 
     AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
     AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
@@ -173,9 +173,9 @@ void ResamplerTest::testDownsamplingSine()
     generateSineSignal();
 
     std::cout << "Test Downsampling Sine" << std::endl;
-    SamplerateConverter converter(44100);
+    Resampler resampler(44100);
 
-    performDownsampling(converter);
+    performDownsampling(resampler);
 
     AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
     AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
@@ -210,26 +210,26 @@ void ResamplerTest::generateSineSignal()
         (*buf)[i] = (SFLAudioSample) (1000.0 * sin(i));
 }
 
-void ResamplerTest::performUpsampling(SamplerateConverter &converter)
+void ResamplerTest::performUpsampling(Resampler &resampler)
 {
     AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
     AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
 
     for (size_t i = 0, j = 0; i < (inputBuffer.frames() / 2); i += tmpInputBuffer.frames(), j += tmpOutputBuffer.frames()) {
         tmpInputBuffer.copy(inputBuffer, i);
-        converter.resample(tmpInputBuffer, tmpOutputBuffer);
+        resampler.resample(tmpInputBuffer, tmpOutputBuffer);
         outputBuffer.copy(tmpOutputBuffer, -1, 0, j);
     }
 }
 
-void ResamplerTest::performDownsampling(SamplerateConverter &converter)
+void ResamplerTest::performDownsampling(Resampler &resampler)
 {
     AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, AudioFormat(16000, 1));
     AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, AudioFormat::MONO);
 
     for (size_t i = 0, j = 0; i < inputBuffer.frames(); i += tmpInputBuffer.frames(), j += tmpOutputBuffer.frames()) {
         tmpInputBuffer.copy(inputBuffer, i);
-        converter.resample(tmpInputBuffer, tmpOutputBuffer);
+        resampler.resample(tmpInputBuffer, tmpOutputBuffer);
         outputBuffer.copy(tmpOutputBuffer, -1, 0, j);
     }
 }

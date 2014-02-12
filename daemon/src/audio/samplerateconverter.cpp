@@ -32,25 +32,25 @@
 #include "logger.h"
 #include "sfl_types.h"
 
-SamplerateConverter::SamplerateConverter(AudioFormat format) : floatBufferIn_(),
+Resampler::Resampler(AudioFormat format) : floatBufferIn_(),
     floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), src_state_(nullptr)
 {
     setFormat(format);
 }
 
-SamplerateConverter::SamplerateConverter(unsigned sample_rate, unsigned channels) : floatBufferIn_(),
+Resampler::Resampler(unsigned sample_rate, unsigned channels) : floatBufferIn_(),
     floatBufferOut_(), scratchBuffer_(), samples_(0), format_(sample_rate, channels), src_state_(nullptr)
 {
     setFormat(format_);
 }
 
-SamplerateConverter::~SamplerateConverter()
+Resampler::~Resampler()
 {
     src_delete(src_state_);
 }
 
 void
-SamplerateConverter::setFormat(AudioFormat format)
+Resampler::setFormat(AudioFormat format)
 {
     format_ = format;
     samples_ = (format.nb_channels * format.sample_rate * 20) / 1000; // start with 20 ms buffers
@@ -66,7 +66,7 @@ SamplerateConverter::setFormat(AudioFormat format)
 }
 
 void
-SamplerateConverter::Short2FloatArray(const SFLAudioSample *in, float *out, int len)
+Resampler::Short2FloatArray(const SFLAudioSample *in, float *out, int len)
 {
     // factor is 1/(2^15), used to rescale the short int range to the
     // [-1.0 - 1.0] float range.
@@ -76,7 +76,7 @@ SamplerateConverter::Short2FloatArray(const SFLAudioSample *in, float *out, int 
         out[len] = (float) in[len] * FACTOR;
 }
 
-void SamplerateConverter::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
+void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
 {
     const double inputFreq = dataIn.getSampleRate();
     const double outputFreq = dataOut.getSampleRate();

@@ -255,7 +255,7 @@ class AudioLayer {
         /**
          * Manage sampling rate conversion
          */
-        SamplerateConverter converter_;
+        Resampler resampler_;
 
     private:
 

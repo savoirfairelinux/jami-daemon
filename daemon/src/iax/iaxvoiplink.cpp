@@ -56,7 +56,7 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , resampledData_(RAW_BUFFER_SIZE * 4, AudioFormat::MONO)
     , encodedData_()
-    , converter_(44100)
+    , resampler_(44100)
     , initDone_(false)
     , accountID_(accountID)
     , evThread_(this)
@@ -213,7 +213,7 @@ IAXVoIPLink::sendAudioFromMic()
         if (audioRate != mainBufferSampleRate) {
             rawBuffer_.setSampleRate(audioRate);
             resampledData_.setSampleRate(mainBufferSampleRate);
-            converter_.resample(rawBuffer_, resampledData_);
+            resampler_.resample(rawBuffer_, resampledData_);
             in = &resampledData_;
             outSamples = 0;
         } else {
@@ -741,7 +741,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
         if (audioRate != mainBufferSampleRate) {
             rawBuffer_.setSampleRate(mainBufferSampleRate);
             resampledData_.setSampleRate(audioRate);
-            converter_.resample(rawBuffer_, resampledData_);
+            resampler_.resample(rawBuffer_, resampledData_);
             out = &resampledData_;
         }
     }

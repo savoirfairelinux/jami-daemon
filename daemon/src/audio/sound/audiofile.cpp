@@ -125,9 +125,9 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     const int rate = static_cast<int32_t>(sampleRate);
 
     if (fileHandle.samplerate() != rate) {
-        SamplerateConverter converter(std::max(fileHandle.samplerate(), rate), fileHandle.channels());
+        Resampler resampler(std::max(fileHandle.samplerate(), rate), fileHandle.channels());
         AudioBuffer * resampled = new AudioBuffer(nbFrames, AudioFormat(rate, fileHandle.channels()));
-        converter.resample(*buffer, *resampled);
+        resampler.resample(*buffer, *resampled);
         delete buffer;
         delete buffer_;
         buffer_ = resampled;

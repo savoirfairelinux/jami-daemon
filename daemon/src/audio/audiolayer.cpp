@@ -45,7 +45,7 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID, audioFormat_)
     , mutex_()
     , dcblocker_()
-    , converter_(audioFormat_.sample_rate)
+    , resampler_(audioFormat_.sample_rate)
     , lastNotificationTime_(0)
 {
     urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
@@ -61,7 +61,7 @@ void AudioLayer::hardwareFormatAvailable()
     DEBUG("hardwareFormatAvailable : %s", format.toString().c_str());
     audioFormat_ = format;
     urgentRingBuffer_.setFormat(format);
-    converter_.setFormat(format);
+    resampler_.setFormat(format);
     Manager::instance().hardwareAudioFormatChanged(format);
 }
 

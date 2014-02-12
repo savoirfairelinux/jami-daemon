@@ -45,7 +45,7 @@
 #include "audio/codecs/audiocodec.h"
 #include "audio/audiobuffer.h"
 
-class SamplerateConverter;
+class Resampler;
 class DSP;
 
 namespace sfl {
@@ -63,7 +63,7 @@ class AudioRtpContext {
     int frameSize;
     AudioFormat format;
     AudioBuffer resampledData;
-    std::unique_ptr<SamplerateConverter> resampler;
+    std::unique_ptr<Resampler> resampler;
 #if HAVE_SPEEXDSP
     void resetDSP();
     void applyDSP(AudioBuffer &rawBuffer);

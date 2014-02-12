@@ -150,7 +150,7 @@ void AudioRtpContext::resetResampler()
 {
     // initialize resampler using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
-    resampler.reset(new SamplerateConverter(format.sample_rate));
+    resampler.reset(new Resampler(format.sample_rate));
 }
 
 #if HAVE_SPEEXDSP

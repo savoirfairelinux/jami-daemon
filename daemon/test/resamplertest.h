@@ -123,12 +123,12 @@ private:
     /*
      * Perform upsampling on the whole input buffer
      */
-    void performUpsampling(SamplerateConverter &converter);
+    void performUpsampling(Resampler &resampler);
 
     /*
      * Perform downsampling on the whold input buffer
      */
-    void performDownsampling(SamplerateConverter &converter);
+    void performDownsampling(Resampler &resampler);
 
     /**
      * Used to store input samples
