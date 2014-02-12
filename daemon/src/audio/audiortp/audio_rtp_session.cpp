@@ -203,8 +203,20 @@ void AudioRtpSession::setSessionTimeouts()
     queue_.setExpireTimeout(expireTimeout);
 }
 
-void AudioRtpSession::setDestinationIpAddress()
+
+void AudioRtpSession::updateDestinationIpAddress()
 {
+    DEBUG("Update destination ip address");
+
+    // Destination address are stored in a list in ccrtp
+    // This method remove the current destination entry
+
+    if (!queue_.forgetDestination(remote_ip_, remote_port_))
+        DEBUG("Did not remove previous destination");
+
+    // new destination is stored in call
+    // we just need to recall this method
+
     // Store remote ip in case we would need to forget current destination
     remote_ip_ = ost::InetHostAddress(call_.getLocalSDP()->getRemoteIP().c_str());
 
@@ -224,21 +236,6 @@ void AudioRtpSession::setDestinationIpAddress()
         WARN("Can't add new destination to session!");
         return;
     }
-}
-
-void AudioRtpSession::updateDestinationIpAddress()
-{
-    DEBUG("Update destination ip address");
-
-    // Destination address are stored in a list in ccrtp
-    // This method remove the current destination entry
-
-    if (!queue_.forgetDestination(remote_ip_, remote_port_))
-        DEBUG("Did not remove previous destination");
-
-    // new destination is stored in call
-    // we just need to recall this method
-    setDestinationIpAddress();
 }
 
 

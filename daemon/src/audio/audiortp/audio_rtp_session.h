@@ -164,11 +164,6 @@ class AudioRtpSession {
         void setSessionTimeouts();
 
         /**
-         * Retreive destination address for this session. Stored in CALL
-         */
-        void setDestinationIpAddress();
-
-        /**
          * Receive data from peer
          */
         void receiveSpeakerData();
