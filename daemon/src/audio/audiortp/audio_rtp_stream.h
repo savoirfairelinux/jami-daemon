@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef AUDIO_RTP_RECORD_HANDLER_H__
-#define AUDIO_RTP_RECORD_HANDLER_H__
+#ifndef AUDIO_RTP_STREAM_H__
+#define AUDIO_RTP_STREAM_H__
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -148,4 +148,4 @@ class AudioRtpStream {
 };
 }
 
-#endif // AUDIO_RTP_RECORD_HANDLER_H__
+#endif // AUDIO_RTP_STREAM_H__

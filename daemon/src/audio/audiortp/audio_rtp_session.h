@@ -34,7 +34,7 @@
 #ifndef AUDIO_RTP_SESSION_H_
 #define AUDIO_RTP_SESSION_H_
 
-#include "audio_rtp_record_handler.h"
+#include "audio_rtp_stream.h"
 #include <ccrtp/rtp.h>
 #include <ccrtp/formats.h>
 #include "noncopyable.h"

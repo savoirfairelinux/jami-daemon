@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 
-#include "audio_rtp_record_handler.h"
+#include "audio_rtp_stream.h"
 #include <fstream>
 #include <algorithm>
 #include <cassert>
