@@ -39,7 +39,7 @@
 #include <vector>
 #include "ringbuffer.h"
 #include "dcblocker.h"
-#include "samplerateconverter.h"
+#include "resampler.h"
 #include "noncopyable.h"
 
 /**

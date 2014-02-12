@@ -39,7 +39,7 @@
 #include <sndfile.hh>
 
 #include "audiofile.h"
-#include "audio/samplerateconverter.h"
+#include "audio/resampler.h"
 #include "client/callmanager.h"
 #include "manager.h"
 

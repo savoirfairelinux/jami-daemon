@@ -43,7 +43,7 @@
 #include "audio/codecs/audiocodec.h" // for RAW_BUFFER_SIZE
 #include "sfl_types.h"
 #include "noncopyable.h"
-#include "audio/samplerateconverter.h"
+#include "audio/resampler.h"
 #include "eventthread.h"
 
 #include <iax-client.h>

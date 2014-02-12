@@ -36,7 +36,7 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include "audio/samplerateconverter.h"
+#include "audio/resampler.h"
 #include "noncopyable.h"
 
 #define MAX_BUFFER_LENGTH 40000

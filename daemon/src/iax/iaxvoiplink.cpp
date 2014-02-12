@@ -41,7 +41,7 @@
 #include "manager.h"
 #include "hooks/urlhook.h"
 #include "audio/audiolayer.h"
-#include "audio/samplerateconverter.h"
+#include "audio/resampler.h"
 #include "array_size.h"
 #include "map_utils.h"
 

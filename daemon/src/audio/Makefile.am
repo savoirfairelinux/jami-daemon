@@ -26,7 +26,7 @@ libaudio_la_SOURCES = \
 		audiorecorder.cpp \
 		recordable.cpp \
 		audiolayer.cpp \
-		samplerateconverter.cpp \
+		resampler.cpp \
 		$(SFL_SPEEXDSP_SRC) \
 		dcblocker.cpp
 
@@ -41,7 +41,7 @@ noinst_HEADERS = \
 	 	recordable.h \
 		$(SFL_SPEEXDSP_HEAD) \
 		dcblocker.h \
-		samplerateconverter.h
+		resampler.h
 
 libaudio_la_LIBADD = \
 	./audiortp/libaudiortp.la \

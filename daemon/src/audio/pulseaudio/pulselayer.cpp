@@ -36,7 +36,7 @@
 
 #include "audiostream.h"
 #include "pulselayer.h"
-#include "audio/samplerateconverter.h"
+#include "audio/resampler.h"
 #include "audio/dcblocker.h"
 #include "logger.h"
 #include "manager.h"

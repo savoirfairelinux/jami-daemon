@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 
-#include "samplerateconverter.h"
+#include "resampler.h"
 #include "logger.h"
 #include "sfl_types.h"
 

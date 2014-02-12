@@ -39,7 +39,7 @@
 #include "logger.h"
 #include "audio/audiolayer.h"
 #include "manager.h"
-#include "audio/samplerateconverter.h"
+#include "audio/resampler.h"
 #include "audio/dsp.h"
 
 namespace sfl {
