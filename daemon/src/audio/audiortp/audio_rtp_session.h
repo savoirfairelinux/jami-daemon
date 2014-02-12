@@ -126,7 +126,6 @@ class AudioRtpSession {
 
         NON_COPYABLE(AudioRtpSession);
         virtual void startReceiveThread() = 0;
-        void startSendThread();
 
         /**
          * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be

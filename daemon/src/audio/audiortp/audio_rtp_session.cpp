@@ -273,7 +273,8 @@ void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodec
     prepareRtpReceiveThread(audioCodecs);
     // implemented in subclasses
     startReceiveThread();
-    startSendThread();
+    // only in this class
+    rtpSendThread_.start();
 }
 
 AudioRtpSession::AudioRtpSendThread::AudioRtpSendThread(AudioRtpSession &session) :
@@ -318,12 +319,6 @@ void AudioRtpSession::AudioRtpSendThread::run()
 
         timer_.incTimer(rtpSession_.transportRate_);
     }
-}
-
-
-void AudioRtpSession::startSendThread()
-{
-    rtpSendThread_.start();
 }
 
 void AudioRtpSession::putDtmfEvent(char digit)
