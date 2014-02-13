@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "video_camera.h"
+#include "video_input.h"
 #include "video_decoder.h"
 #include "check.h"
 
@@ -44,7 +45,7 @@ namespace sfl_video {
 
 using std::string;
 
-VideoCamera::VideoCamera(const std::map<std::string, std::string> &args) :
+VideoInput::VideoInput(const std::map<std::string, std::string> &args) :
     VideoGenerator::VideoGenerator()
     , id_(SINK_ID)
     , args_(args)
@@ -54,13 +55,13 @@ VideoCamera::VideoCamera(const std::map<std::string, std::string> &args) :
     , sinkHeight_(0)
 { start(); }
 
-VideoCamera::~VideoCamera()
+VideoInput::~VideoInput()
 {
     stop();
     join();
 }
 
-bool VideoCamera::setup()
+bool VideoInput::setup()
 {
     // it's a v4l device if starting with /dev/video
     static const char * const V4L_PATH = "/dev/video";
@@ -111,10 +112,10 @@ bool VideoCamera::setup()
     return true;
 }
 
-void VideoCamera::process()
+void VideoInput::process()
 { captureFrame(); }
 
-void VideoCamera::cleanup()
+void VideoInput::cleanup()
 {
     if (detach(&sink_)) {
         Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
@@ -124,13 +125,13 @@ void VideoCamera::cleanup()
     delete decoder_;
 }
 
-int VideoCamera::interruptCb(void *data)
+int VideoInput::interruptCb(void *data)
 {
-    VideoCamera *context = static_cast<VideoCamera*>(data);
+    VideoInput *context = static_cast<VideoInput*>(data);
     return not context->isRunning();
 }
 
-bool VideoCamera::captureFrame()
+bool VideoInput::captureFrame()
 {
     VideoFrame& frame = getNewFrame();
     int ret = decoder_->decode(frame);
@@ -146,13 +147,13 @@ bool VideoCamera::captureFrame()
     return true;
 }
 
-int VideoCamera::getWidth() const
+int VideoInput::getWidth() const
 { return decoder_->getWidth(); }
 
-int VideoCamera::getHeight() const
+int VideoInput::getHeight() const
 { return decoder_->getHeight(); }
 
-int VideoCamera::getPixelFormat() const
+int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
 
 

@@ -40,7 +40,7 @@
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
 #include "client/video_controls.h"
-#include "video/video_camera.h"
+#include "video/video_input.h"
 #endif
 
 #include "logger.h"

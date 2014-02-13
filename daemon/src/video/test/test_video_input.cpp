@@ -29,29 +29,29 @@
  */
 
 #include <unistd.h> // for sleep
-#include "test_video_camera.h"
-#include "video_camera.h"
+#include "test_video_input.h"
+#include "video_input.h"
 #include <map>
 #include <string>
 
 using namespace std;
 
-void VideoCameraTest::testCamera()
+void VideoInputTest::testInput()
 {
     std::map<std::string, std::string> args;
     args["input"] = "/dev/video0";
     args["width"] = "640";
     args["height"] = "480";
 
-    sfl_video::VideoCamera camera(args);
+    sfl_video::VideoInput camera(args);
     sleep(1);
 }
 
 int main ()
 {
     for (int i = 0; i < 20; ++i) {
-        VideoCameraTest test;
-        test.testCamera();
+        VideoInputTest test;
+        test.testInput();
     }
     return 0;
 }

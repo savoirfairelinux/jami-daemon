@@ -32,7 +32,7 @@
 
 #include "video_controls.h"
 #include "video/libav_utils.h"
-#include "video/video_camera.h"
+#include "video/video_input.h"
 #include "account.h"
 #include "logger.h"
 #include "manager.h"
@@ -43,9 +43,9 @@ const char * const SERVER_PATH = "/org/sflphone/SFLphone/VideoControls";
 
 VideoControls::VideoControls(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
-    , videoCamera_()
+    , videoInput_()
     , videoPreference_()
-    , cameraClients_(0)
+    , inputClients_(0)
 {
     // initialize libav libraries
     libav_utils::sfl_avcodec_init();
@@ -160,8 +160,8 @@ VideoControls::getSettings() {
 void
 VideoControls::startCamera()
 {
-    cameraClients_++;
-    if (videoCamera_) {
+    inputClients_++;
+    if (videoInput_) {
         WARN("Video preview was already started!");
         return;
     }
@@ -170,17 +170,17 @@ VideoControls::startCamera()
     using std::string;
 
     map<string, string> args(videoPreference_.getSettings());
-    videoCamera_.reset(new sfl_video::VideoCamera(args));
+    videoInput_.reset(new sfl_video::VideoInput(args));
 }
 
 void
 VideoControls::stopCamera()
 {
-    if (videoCamera_) {
+    if (videoInput_) {
         DEBUG("Stopping video preview");
-        cameraClients_--;
-        if (cameraClients_ <= 0)
-            videoCamera_.reset();
+        inputClients_--;
+        if (inputClients_ <= 0)
+            videoInput_.reset();
     } else {
         WARN("Video preview was already stopped");
     }
@@ -189,14 +189,14 @@ VideoControls::stopCamera()
 std::weak_ptr<sfl_video::VideoFrameActiveWriter>
 VideoControls::getVideoCamera()
 {
-    return videoCamera_;
+    return videoInput_;
 }
 
 bool
 VideoControls::hasCameraStarted()
 {
     // see http://stackoverflow.com/a/7580064/21185
-    return static_cast<bool>(videoCamera_);
+    return static_cast<bool>(videoInput_);
 }
 
 std::string

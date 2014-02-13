@@ -1,6 +1,9 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2014 Savoir-Faire Linux Inc.
+ *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,12 +31,53 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_CAMERA_TEST_
-#define _VIDEO_CAMERA_TEST_
+#ifndef __VIDEO_INPUT_H__
+#define __VIDEO_INPUT_H__
 
-class VideoCameraTest {
+#include "noncopyable.h"
+#include "shm_sink.h"
+#include "video_decoder.h"
+#include "sflthread.h"
+
+#include <string>
+#include <map>
+
+
+namespace sfl_video {
+using std::string;
+
+class VideoInput :
+    public VideoGenerator,
+    public SFLThread
+{
 public:
-    void testCamera();
+    VideoInput(const std::map<string, string> &args);
+    ~VideoInput();
+
+    // as VideoGenerator
+    int getWidth() const;
+    int getHeight() const;
+    int getPixelFormat() const;
+
+private:
+    NON_COPYABLE(VideoInput);
+
+    std::string id_;
+    std::map<string, string> args_;
+    VideoDecoder *decoder_;
+    SHMSink sink_;
+    int sinkWidth_;
+    int sinkHeight_;
+
+    // as SFLThread
+    bool setup();
+    void process();
+    void cleanup();
+
+    static int interruptCb(void *ctx);
+    bool captureFrame();
 };
 
-#endif // _VIDEO_CAMERA_TEST_
+}
+
+#endif // __VIDEO_INPUT_H__

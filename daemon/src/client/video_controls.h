@@ -63,10 +63,10 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
-        std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoCamera_;
+        std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoInput_;
         VideoPreference videoPreference_;
         // Only modified from main thread
-        int cameraClients_;
+        int inputClients_;
 
     public:
 
