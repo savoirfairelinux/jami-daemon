@@ -135,11 +135,6 @@ class AudioRecord {
         AudioFormat sndFormat_;
 
         /**
-         * Maximum number of samples
-         */
-        static const int NB_SAMPLES_MAX = 3000;
-
-        /**
          * Recording flage
          */
         bool recordingEnabled_;
