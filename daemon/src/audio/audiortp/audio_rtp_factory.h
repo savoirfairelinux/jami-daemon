@@ -38,8 +38,6 @@
 #include "audio_srtp_session.h"
 #include "noncopyable.h"
 
-#include "sip/sdes_negotiator.h"
-
 class SdesNegotiator;
 class SIPCall;
 
