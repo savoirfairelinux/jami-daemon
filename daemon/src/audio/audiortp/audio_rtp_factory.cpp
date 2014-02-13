@@ -48,10 +48,6 @@ namespace sfl {
 
 AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(),
     audioRtpThreadMutex_(), srtpEnabled_(false), helloHashEnabled_(false),
-    cachedLocalMasterKey_(MAX_MASTER_KEY_LENGTH),
-    cachedLocalMasterSalt_(MAX_MASTER_SALT_LENGTH),
-    cachedRemoteMasterKey_(MAX_MASTER_KEY_LENGTH),
-    cachedRemoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
     remoteOfferIsSet_(false), call_(ca),
     keyExchangeProtocol_(NONE)
 {

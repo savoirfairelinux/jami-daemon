@@ -31,7 +31,6 @@
 #ifndef __AUDIO_RTP_FACTORY_H__
 #define __AUDIO_RTP_FACTORY_H__
 
-#include <ccrtp/CryptoContext.h>
 #include <stdexcept>
 #include <mutex>
 #include <memory>
@@ -161,18 +160,6 @@ class AudioRtpFactory {
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
         bool helloHashEnabled_;
-
-        /** local master key for outgoing packet encryption **/
-        std::vector<uint8> cachedLocalMasterKey_;
-
-        /** local master salt for outgoing packet encryption **/
-        std::vector<uint8> cachedLocalMasterSalt_;
-
-        /** remote master key for incoming packet decryption **/
-        std::vector<uint8> cachedRemoteMasterKey_;
-
-        /** remote master salt for incoming packet decryption **/
-        std::vector<uint8> cachedRemoteMasterSalt_;
 
         /** Used to make sure remote crypto context not initialized twice. */
         bool remoteOfferIsSet_;

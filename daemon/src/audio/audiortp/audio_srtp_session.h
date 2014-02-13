@@ -65,9 +65,6 @@ class SIPCall;
 
 namespace sfl {
 
-#define MAX_MASTER_KEY_LENGTH 16
-#define MAX_MASTER_SALT_LENGTH 14
-
 class AudioSrtpSession : public AudioSymmetricRtpSession {
     public:
 

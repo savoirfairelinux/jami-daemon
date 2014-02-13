@@ -127,6 +127,12 @@ void bufferFillMasterSalt(std::vector<uint8>& dest)
 }
 }
 
+namespace {
+    const unsigned MAX_MASTER_KEY_LENGTH = 16;
+    const unsigned MAX_MASTER_SALT_LENGTH = 14;
+}
+
+
 AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     AudioSymmetricRtpSession(call),
     remoteCryptoCtx_(0),
