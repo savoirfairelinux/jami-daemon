@@ -757,7 +757,7 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     if (resample) {
 		int outSamples = buffer.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
         AudioBuffer out(outSamples, mainBufferFormat);
-        converter_.resample(buffer, out);
+        resampler_.resample(buffer, out);
         dcblocker_.process(out);
         mbuffer.putData(out, MainBuffer::DEFAULT_ID);
     } else {
@@ -811,7 +811,7 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samples
         DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
         AudioBuffer out(buffer, false);
         out.setSampleRate(audioFormat_.sample_rate);
-        converter_.resample(buffer, out);
+        resampler_.resample(buffer, out);
         buffer = out;
     }
 
