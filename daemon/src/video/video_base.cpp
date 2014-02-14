@@ -347,7 +347,8 @@ int VideoFrame::mirror()
         case PIXEL_FORMAT(NONE):
             break;
         default:
-            ERROR("Unsupported pixel format");
+            ERROR("Unsupported pixel format %s",
+                  av_get_pix_fmt_name((AVPixelFormat) frame_->format));
             return -1;
     }
     return flipPlanarHorizontal(frame_);
