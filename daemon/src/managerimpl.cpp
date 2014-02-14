@@ -2171,7 +2171,17 @@ void ManagerImpl::setAudioManager(const std::string &api)
         }
     }
 
-    switchAudioManager();
+    {
+        std::lock_guard<std::mutex> lock(audioLayerMutex_);
+
+        bool wasStarted = audiodriver_->isStarted();
+        delete audiodriver_;
+        audioPreference.setAudioApi(api);
+        audiodriver_ = audioPreference.createAudioLayer();
+
+        if (wasStarted)
+            audiodriver_->startStream();
+    }
 
     saveConfig();
 }
@@ -2230,19 +2240,6 @@ void ManagerImpl::initAudioDriver()
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
     audiodriver_ = audioPreference.createAudioLayer();
 }
-
-void ManagerImpl::switchAudioManager()
-{
-    std::lock_guard<std::mutex> lock(audioLayerMutex_);
-
-    bool wasStarted = audiodriver_->isStarted();
-    delete audiodriver_;
-    audiodriver_ = audioPreference.switchAndCreateAudioLayer();
-
-    if (wasStarted)
-        audiodriver_->startStream();
-}
-
 
 void ManagerImpl::hardwareAudioFormatChanged(AudioFormat format)
 {

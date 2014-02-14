@@ -103,6 +103,22 @@ AS_IF([test "x$with_pulse" = "xyes"], [
 AC_DEFINE_UNQUOTED([HAVE_PULSE], `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have pulseaudio])
 AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes")
 
+AC_ARG_WITH([jack],
+    AS_HELP_STRING([--without-jack], [Ignore presence of jack and disable it]))
+
+AS_IF([test "x$with_jack" != "xno"],
+      [PKG_CHECK_MODULES(JACK, jack, [have_jack=yes], [have_jack=no])],
+      [have_jack=no])
+
+AS_IF([test "x$have_jack" = "xyes"],,
+      [AS_IF([test "x$with_jack" = "xyes"],
+             [AC_MSG_ERROR([jack requested but not found])
+      ])
+])
+
+AC_DEFINE_UNQUOTED([HAVE_JACK], `if test "x$have_jack" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have jack])
+AM_CONDITIONAL(BUILD_JACK, test "x$have_jack" = "xyes")
+
 dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development files]))
@@ -389,6 +405,7 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/audiortp/Makefile \
                  src/audio/pulseaudio/Makefile \
                  src/audio/alsa/Makefile \
+                 src/audio/jack/Makefile \
                  src/audio/sound/Makefile \
                  src/audio/codecs/Makefile \
                  src/config/Makefile \

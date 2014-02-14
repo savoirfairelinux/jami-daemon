@@ -12,6 +12,10 @@ if BUILD_PULSE
 SUBDIRS += pulseaudio
 endif
 
+if BUILD_JACK
+SUBDIRS += jack
+endif
+
 if BUILD_SPEEXDSP
 SFL_SPEEXDSP_SRC=dsp.cpp
 SFL_SPEEXDSP_HEAD=dsp.h
@@ -50,6 +54,11 @@ libaudio_la_LIBADD = \
 
 if BUILD_PULSE
 libaudio_la_LIBADD += ./pulseaudio/libpulselayer.la
+endif
+
+if BUILD_JACK
+libaudio_la_LIBADD += ./jack/libjacklayer.la
+libaudio_la_LDFLAGS = @JACK_LIBS@ -pthread
 endif
 
 if BUILD_ALSA

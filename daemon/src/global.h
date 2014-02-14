@@ -70,6 +70,7 @@ const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
 // Define the audio api
+#define JACK_API_STR                "jack"
 #define PULSEAUDIO_API_STR          "pulseaudio"
 #define ALSA_API_STR                "alsa"
 #if HAVE_PULSE

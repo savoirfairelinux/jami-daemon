@@ -41,6 +41,9 @@
 #if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
 #endif
+#if HAVE_JACK
+#include "audio/jack/jacklayer.h"
+#endif
 #if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
 #endif
@@ -366,10 +369,33 @@ void checkSoundCard(int &card, DeviceType type)
 #endif
 }
 
+#ifdef __ANDROID__
 AudioLayer* AudioPreference::createAudioLayer()
 {
-#ifdef __ANDROID__
     return new OpenSLLayer(*this);
+}
+#else
+
+AudioLayer* AudioPreference::createAudioLayer()
+{
+#if HAVE_JACK
+    if (audioApi_ == JACK_API_STR) {
+        if (system("jack_lsp > /dev/null") == 0) {
+            try {
+                return new JackLayer(*this);
+            } catch (const std::runtime_error &e) {
+                ERROR("%s", e.what());
+#if HAVE_PULSE
+                WARN("falling back to pulseaudio");
+                audioApi_ = PULSEAUDIO_API_STR;
+#elif HAVE_ALSA
+                audioApi_ = ALSA_API_STR;
+#else
+                throw;
+#endif
+            }
+        }
+    }
 #endif
 
 #if HAVE_PULSE
@@ -396,15 +422,7 @@ AudioLayer* AudioPreference::createAudioLayer()
 #endif
 }
 
-AudioLayer* AudioPreference::switchAndCreateAudioLayer()
-{
-    if (audioApi_ == PULSEAUDIO_API_STR)
-        audioApi_ = ALSA_API_STR;
-    else
-        audioApi_ = PULSEAUDIO_API_STR;
-
-    return createAudioLayer();
-}
+#endif // __ANDROID__
 
 void AudioPreference::serialize(Conf::YamlEmitter &emitter)
 {

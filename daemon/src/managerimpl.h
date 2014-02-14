@@ -655,8 +655,6 @@ class ManagerImpl {
          */
         void setAudioManager(const std::string &api);
 
-        void switchAudioManager();
-
         /**
          * Callback called when the audio layer initialised with its
          * preferred format.
