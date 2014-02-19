@@ -36,6 +36,9 @@
 #include "noncopyable.h"
 #include "client/configurationmanager.h"
 
+#include <thread>
+#include <atomic>
+
 class AlsaThread {
     public:
         AlsaThread(AlsaLayer *alsa);
@@ -46,16 +49,15 @@ class AlsaThread {
 
     private:
         void run();
-        static void *runCallback(void *context);
 
         NON_COPYABLE(AlsaThread);
-        pthread_t thread_;
+        std::thread thread_;
         AlsaLayer* alsa_;
-        bool running_;
+        std::atomic<bool> running_;
 };
 
 AlsaThread::AlsaThread(AlsaLayer *alsa)
-    : thread_(0), alsa_(alsa), running_(false)
+    : thread_(), alsa_(alsa), running_(false)
 {}
 
 bool AlsaThread::isRunning() const
@@ -67,22 +69,14 @@ AlsaThread::~AlsaThread()
 {
     running_ = false;
 
-    if (thread_)
-        pthread_join(thread_, NULL);
+    if(thread_.joinable())
+        thread_.join();
 }
 
 void AlsaThread::start()
 {
     running_ = true;
-    pthread_create(&thread_, NULL, &runCallback, this);
-}
-
-void *
-AlsaThread::runCallback(void *data)
-{
-    AlsaThread *context = static_cast<AlsaThread*>(data);
-    context->run();
-    return NULL;
+    thread_ = std::thread(&AlsaThread::run, this);
 }
 
 void AlsaThread::initAudioLayer(void)
@@ -150,9 +144,9 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , indexRing_(pref.getAlsaCardring())
     , watchdogTotalCount_(0)
     , watchdogTotalErr_(0)
-    , playbackHandle_(NULL)
-    , ringtoneHandle_(NULL)
-    , captureHandle_(NULL)
+    , playbackHandle_(nullptr)
+    , ringtoneHandle_(nullptr)
+    , captureHandle_(nullptr)
     , audioPlugin_(pref.getAlsaPlugin())
     , is_playback_prepared_(false)
     , is_capture_prepared_(false)
@@ -160,7 +154,7 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , is_capture_running_(false)
     , is_playback_open_(false)
     , is_capture_open_(false)
-    , audioThread_(NULL)
+    , audioThread_(nullptr)
 {}
 
 AlsaLayer::~AlsaLayer()
