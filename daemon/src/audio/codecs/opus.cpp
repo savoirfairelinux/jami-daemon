@@ -76,7 +76,7 @@ void Opus::setOptimalFormat(uint32_t sample_rate, uint8_t channels)
     clockRate_ = sample_rate;
     channel_ = channels;
 
-    std::cerr << "Opus switch mode: " << clockRate_ << "kHz, " << channel_ << "channels." << std::endl;
+    std::cerr << "Opus switch mode: " << clockRate_ << "kHz, " << (int) channel_ << " channels." << std::endl;
 
     int err;
     if (encoder_)
