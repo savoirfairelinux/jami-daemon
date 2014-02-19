@@ -915,9 +915,9 @@ void SIPAccount::registerVoIPLink()
     }
 
 #ifdef SFL_PRESENCE
-    if(presence_->isEnabled()) {
-        getPresence()->subscribeClient(getFromUri(), true); //self presence subscription
-        getPresence()->sendPresence(true,""); // try to publish whatever the status is.
+    if (presence_->isEnabled()) {
+        getPresence()->subscribeClient(getFromUri(), true); // self presence subscription
+        getPresence()->sendPresence(true, ""); // try to publish whatever the status is.
     }
 #endif
 }
