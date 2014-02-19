@@ -93,6 +93,9 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
 
         std::map<std::string, std::string>
+        getSettingsFor(const std::string& device);
+
+        std::map<std::string, std::string>
         getSettings();
 
         void

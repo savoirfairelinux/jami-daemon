@@ -153,6 +153,11 @@ VideoControls::setActiveDeviceRate(const std::string &rate)
 }
 
 std::map<std::string, std::string>
+VideoControls::getSettingsFor(const std::string& device) {
+    return videoPreference_.getSettingsFor(device);
+}
+
+std::map<std::string, std::string>
 VideoControls::getSettings() {
     return videoPreference_.getSettings();
 }

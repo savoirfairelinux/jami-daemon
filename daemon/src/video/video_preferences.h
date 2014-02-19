@@ -58,6 +58,7 @@ class VideoPreference : public Serializable
 
         virtual void unserialize(const Conf::YamlNode &map);
 
+        std::map<std::string, std::string> getSettingsFor(const std::string& device);
         std::map<std::string, std::string> getSettings();
 
         std::string getDevice() const {

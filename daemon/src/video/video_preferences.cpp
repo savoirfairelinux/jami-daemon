@@ -43,13 +43,13 @@ VideoPreference::VideoPreference() :
     v4l2_list_->start();
 }
 
-std::map<std::string, std::string> VideoPreference::getSettings()
+std::map<std::string, std::string> VideoPreference::getSettingsFor(const std::string& device)
 {
     std::map<std::string, std::string> args;
-    if (not device_.empty()) {
-        args["input"] = v4l2_list_->getDeviceNode(device_);
+    if (not device.empty()) {
+        args["input"] = v4l2_list_->getDeviceNode(device);
         std::stringstream ss;
-        ss << v4l2_list_->getChannelNum(device_, channel_);
+        ss << v4l2_list_->getChannelNum(device, channel_);
         args["channel"] = ss.str();
         args["video_size"] = size_;
         size_t x_pos = size_.find("x");
@@ -59,6 +59,11 @@ std::map<std::string, std::string> VideoPreference::getSettings()
     }
 
     return args;
+}
+
+std::map<std::string, std::string> VideoPreference::getSettings()
+{
+	return getSettingsFor(device_);
 }
 
 void VideoPreference::serialize(Conf::YamlEmitter &emitter)
