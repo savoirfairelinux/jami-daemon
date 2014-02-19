@@ -59,16 +59,10 @@ VideoInputSelector::update(Observable<std::shared_ptr<sfl_video::VideoFrame>>* /
 	notify(frame_ptr);
 }
 
-static const std::map<std::string, std::string>
-getSettings(const std::string& device)
-{
-	return Manager::instance().getVideoControls()->getSettingsFor(device);
-}
-
 void
 VideoInputSelector::openInput(const std::string& device)
 {
-	currentInput_ = new VideoInput(getSettings(device));
+	currentInput_ = new VideoInput(device);
 	currentInput_->attach(this);
 }
 

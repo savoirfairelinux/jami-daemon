@@ -43,17 +43,22 @@
 
 namespace sfl_video {
 
-using std::string;
-
-VideoInput::VideoInput(const std::map<std::string, std::string> &args) :
+VideoInput::VideoInput(const std::string& device) :
     VideoGenerator::VideoGenerator()
     , id_(SINK_ID)
-    , args_(args)
     , decoder_(0)
     , sink_()
-    , sinkWidth_(0)
-    , sinkHeight_(0)
-{ start(); }
+
+    , input_()
+    , format_()
+    , channel_()
+    , framerate_()
+    , video_size_()
+{
+    initCamera(device);
+
+    start();
+}
 
 VideoInput::~VideoInput()
 {
@@ -61,52 +66,45 @@ VideoInput::~VideoInput()
     join();
 }
 
+void VideoInput::initCamera(std::string device)
+{
+    std::map<std::string, std::string> map;
+
+    map = Manager::instance().getVideoControls()->getSettingsFor(device);
+
+    input_ = map["input"];
+    format_ = "video4linux2";
+    channel_ = map["channel"];
+    framerate_ = map["framerate"];
+    video_size_ = map["video_size"];
+}
+
 bool VideoInput::setup()
 {
-    // it's a v4l device if starting with /dev/video
-    static const char * const V4L_PATH = "/dev/video";
-
-    string format_str;
-    string input = args_["input"];
-
     decoder_ = new VideoDecoder();
 
-    if (args_["input"].find(V4L_PATH) != std::string::npos) {
-        DEBUG("Using v4l2 format");
-        format_str = "video4linux2";
-    }
-    if (!args_["framerate"].empty())
-        decoder_->setOption("framerate", args_["framerate"].c_str());
-    if (!args_["video_size"].empty())
-        decoder_->setOption("video_size", args_["video_size"].c_str());
-    if (!args_["channel"].empty())
-        decoder_->setOption("channel", args_["channel"].c_str());
+    if (!framerate_.empty())
+        decoder_->setOption("framerate", framerate_.c_str());
+    if (!video_size_.empty())
+        decoder_->setOption("video_size", video_size_.c_str());
+    if (!channel_.empty())
+        decoder_->setOption("channel", channel_.c_str());
 
     decoder_->setInterruptCallback(interruptCb, this);
 
-    EXIT_IF_FAIL(decoder_->openInput(input, format_str) >= 0,
-                 "Could not open input \"%s\"", input.c_str());
+    EXIT_IF_FAIL(decoder_->openInput(input_, format_) >= 0,
+                 "Could not open input \"%s\"", input_.c_str());
 
     /* Data available, finish the decoding */
-    EXIT_IF_FAIL(!decoder_->setupFromVideoData(),
-                 "decoder IO startup failed");
-
-    /* Preview frame size? (defaults from decoder) */
-    if (!args_["width"].empty())
-        sinkWidth_ = atoi(args_["width"].c_str());
-    else
-        sinkWidth_ = decoder_->getWidth();
-    if (!args_["height"].empty())
-        sinkHeight_ = atoi(args_["height"].c_str());
-    else
-        sinkHeight_ = decoder_->getHeight();
+    EXIT_IF_FAIL(!decoder_->setupFromVideoData(), "decoder IO startup failed");
 
     /* Sink setup */
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     if (attach(&sink_)) {
-        Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), sinkWidth_, sinkHeight_);
+        Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(),
+			decoder_->getWidth(), decoder_->getHeight());
         DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
-              sink_.openedName().c_str(), sinkWidth_, sinkHeight_);
+              sink_.openedName().c_str(), decoder_->getWidth(), decoder_->getHeight());
     }
 
     return true;
@@ -155,7 +153,5 @@ int VideoInput::getHeight() const
 
 int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
-
-
 
 } // end namespace sfl_video
