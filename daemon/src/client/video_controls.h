@@ -58,15 +58,16 @@
 #include <memory> // for shared_ptr
 #include "video/video_preferences.h"
 #include "video/video_base.h"
+#include "video/video_input_selector.h"
 
 class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
-        std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoInput_;
+        std::shared_ptr<sfl_video::VideoInputSelector> videoInputSelector_;
         VideoPreference videoPreference_;
         // Only modified from main thread
-        int inputClients_;
+        int inputClients_; // XXX necessary with the videoInputSelector_?
 
     public:
 
@@ -127,6 +128,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
 
         void startCamera();
         void stopCamera();
+        void switchInput(const std::string& device);
         bool hasCameraStarted();
         std::weak_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
 };

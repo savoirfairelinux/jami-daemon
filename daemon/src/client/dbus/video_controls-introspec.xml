@@ -110,6 +110,11 @@
         <method name="stopCamera" tp:name-for-bindings="stopCamera">
         </method>
 
+        <method name="switchInput" tp:name-for-bindings="switchInput">
+            <arg type="s" name="device" direction="in">
+            </arg>
+        </method>
+
         <method name="hasCameraStarted" tp:name-for-bindings="hasCameraStarted">
             <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="Bool"/>
             <arg type="b" name="started" direction="out">

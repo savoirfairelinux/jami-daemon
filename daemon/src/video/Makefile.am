@@ -15,6 +15,7 @@ libvideo_la_SOURCES = \
 	socket_pair.cpp socket_pair.h \
 	shm_sink.cpp shm_sink.h \
 	video_input.cpp video_input.h \
+	video_input_selector.cpp video_input_selector.h \
 	video_receive_thread.cpp video_receive_thread.h \
 	video_sender.cpp video_sender.h \
 	video_rtp_session.cpp video_rtp_session.h \

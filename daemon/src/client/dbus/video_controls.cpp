@@ -32,7 +32,7 @@
 
 #include "video_controls.h"
 #include "video/libav_utils.h"
-#include "video/video_input.h"
+#include "video/video_input_selector.h"
 #include "account.h"
 #include "logger.h"
 #include "manager.h"
@@ -43,7 +43,7 @@ const char * const SERVER_PATH = "/org/sflphone/SFLphone/VideoControls";
 
 VideoControls::VideoControls(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
-    , videoInput_()
+    , videoInputSelector_()
     , videoPreference_()
     , inputClients_(0)
 {
@@ -166,42 +166,46 @@ void
 VideoControls::startCamera()
 {
     inputClients_++;
-    if (videoInput_) {
+    if (videoInputSelector_) {
         WARN("Video preview was already started!");
         return;
     }
 
-    using std::map;
-    using std::string;
-
-    map<string, string> args(videoPreference_.getSettings());
-    videoInput_.reset(new sfl_video::VideoInput(args));
+    const std::string& device = videoPreference_.getDevice();
+    videoInputSelector_.reset(new sfl_video::VideoInputSelector(device));
 }
 
 void
 VideoControls::stopCamera()
 {
-    if (videoInput_) {
+    if (videoInputSelector_) {
         DEBUG("Stopping video preview");
         inputClients_--;
         if (inputClients_ <= 0)
-            videoInput_.reset();
+            videoInputSelector_.reset();
     } else {
         WARN("Video preview was already stopped");
     }
 }
 
+void
+VideoControls::switchInput(const std::string &device)
+{
+    DEBUG("Switching input device to %s", device.c_str());
+    videoInputSelector_->switchInput(device);
+}
+
 std::weak_ptr<sfl_video::VideoFrameActiveWriter>
 VideoControls::getVideoCamera()
 {
-    return videoInput_;
+    return videoInputSelector_;
 }
 
 bool
 VideoControls::hasCameraStarted()
 {
     // see http://stackoverflow.com/a/7580064/21185
-    return static_cast<bool>(videoInput_);
+    return static_cast<bool>(videoInputSelector_);
 }
 
 std::string
