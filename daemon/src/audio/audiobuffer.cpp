@@ -85,10 +85,10 @@ void AudioBuffer::setSampleRate(int sr)
 void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
 {
     const unsigned c = samples_.size();
-    n = std::max(1U, n);
-
     if (n == c)
         return;
+
+    n = std::max(1U, n);
 
     if (!mix or c == 0) {
         if (n < c)
@@ -163,6 +163,12 @@ size_t AudioBuffer::interleave(SFLAudioSample* out) const
     return frames() * channels();
 }
 
+size_t AudioBuffer::interleave(std::vector<SFLAudioSample>& out) const
+{
+    out.resize(capacity());
+    return interleave(out.data());
+}
+
 std::vector<SFLAudioSample> AudioBuffer::interleave() const
 {
     std::vector<SFLAudioSample> data(capacity());
@@ -179,18 +185,24 @@ size_t AudioBuffer::interleaveFloat(float* out) const
     return frames() * samples_.size();
 }
 
-void AudioBuffer::deinterleave(const SFLAudioSample* in, size_t sample_num, unsigned nb_channels)
+void AudioBuffer::deinterleave(const SFLAudioSample* in, size_t frame_num, unsigned nb_channels)
 {
     if (in == nullptr)
         return;
 
     // Resize buffer
     setChannelNum(nb_channels);
-    resize(sample_num);
+    resize(frame_num);
 
     for (unsigned i=0, f=frames(), c=channels(); i < f; i++)
         for (unsigned j = 0; j < c; j++)
             samples_[j][i] = *in++;
+}
+
+void AudioBuffer::deinterleave(const std::vector<SFLAudioSample>& in, AudioFormat format)
+{
+    sampleRate_ = format.sample_rate;
+    deinterleave(in.data(), in.size()/format.nb_channels, format.nb_channels);
 }
 
 size_t AudioBuffer::mix(const AudioBuffer& other, bool up /* = true */)

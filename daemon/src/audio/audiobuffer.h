@@ -62,11 +62,18 @@ typedef struct AudioFormat {
     }
 
     /**
+     * Returns bytes necessary to hold one frame of audio data.
+     */
+    inline size_t getBytesPerFrame() const {
+        return sizeof(SFLAudioSample)*nb_channels;
+    }
+
+    /**
      * Bytes per second (default), or bytes necessary
      * to hold delay_ms milliseconds of audio data.
      */
-    inline unsigned getBandwidth(unsigned delay_ms=1000) const {
-            return (sample_rate * nb_channels * delay_ms * sizeof(SFLAudioSample)) / 1000;
+    inline size_t getBandwidth(unsigned delay_ms=1000) const {
+        return (getBytesPerFrame() * sample_rate * delay_ms) / 1000;
     }
 
     static const unsigned DEFAULT_SAMPLE_RATE = 48000;
@@ -95,7 +102,7 @@ class AudioBuffer {
         AudioBuffer(const AudioBuffer& other, bool copy_content = false);
         
         /**
-         * Move contructor
+         * Move constructor
          */
         AudioBuffer(AudioBuffer&& other) : sampleRate_(other.sampleRate_), samples_( std::move(other.samples_) ) {};
         
@@ -214,12 +221,33 @@ class AudioBuffer {
         }
 
         /**
+         * Returns pointers to non-interleaved raw data.
+         * Caller should not store result because pointer validity is
+         * limited in time.
+         */
+        inline const std::vector<SFLAudioSample*> getDataRaw() {
+            const unsigned chans = samples_.size();
+            std::vector<SFLAudioSample*> raw_data(chans, nullptr);
+            for(unsigned i=0; i<chans; i++)
+                raw_data[i] = samples_[i].data();
+            return raw_data;
+        }
+
+        /**
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
          * The out buffer must be at least of size capacity()*sizeof(SFLAudioSample) bytes.
          *
          * @returns Number of samples writen.
          */
         size_t interleave(SFLAudioSample* out) const;
+
+        /**
+         * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
+         * The out buffer is resized to hold the full content of this buffer.
+         *
+         * @returns Number of samples writen.
+         */
+        size_t interleave(std::vector<SFLAudioSample>& out) const;
 
         /**
          * Returns vector of interleaved data (fixed-point 16-bits).
@@ -235,9 +263,16 @@ class AudioBuffer {
         size_t interleaveFloat(float* out) const;
 
         /**
-         * Import interleaved multichannel data. Internal buffer is resized as needed. Function will read sample_num*channel_num elements of the in buffer.
+         * Import interleaved multichannel data. Internal buffer is resized as needed.
+         * Function will read sample_num*channel_num elements of the in buffer.
          */
-        void deinterleave(const SFLAudioSample* in, size_t sample_num, unsigned nb_channels = 1);
+        void deinterleave(const SFLAudioSample* in, size_t frame_num, unsigned nb_channels = 1);
+
+        /**
+         * Import interleaved multichannel data. Internal buffer is resized as needed.
+         * Sample rate is set according to format.
+         */
+        void deinterleave(const std::vector<SFLAudioSample>& in, AudioFormat format);
 
         /**
          * In-place gain transformation.

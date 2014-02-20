@@ -198,19 +198,19 @@ class AlsaLayer : public AudioLayer {
         /**
          * Copy a data buffer in the internal ring buffer
          * ALSA Library API
-         * @param buffer The data to be copied
-         * @param length The size of the buffer
+         * @param buffer The non-interleaved data to be copied
+         * @param frames Frames in the buffer
          */
-        void write(void* buffer, int length, snd_pcm_t *handle);
+        void write(SFLAudioSample* buffer, int frames, snd_pcm_t *handle);
 
         /**
          * Read data from the internal ring buffer
          * ALSA Library API
          * @param buffer  The buffer to stock the read data
-         * @param toCopy  The number of bytes to get
+         * @param frames  The number of frames to get
          * @return int The number of frames actually read
          */
-        int read(void* buffer, int toCopy);
+        int read(SFLAudioSample* buffer, int frames);
 
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
@@ -239,6 +239,14 @@ class AlsaLayer : public AudioLayer {
 
         /** Vector to manage all soundcard index - description association of the system */
         // std::vector<HwIDPair> IDSoundCards_;
+
+        /** Non-interleaved audio buffers */
+        AudioBuffer playbackBuff_;
+        AudioBuffer captureBuff_;
+
+        /** Interleaved buffer */
+        std::vector<SFLAudioSample> playbackIBuff_;
+        std::vector<SFLAudioSample> captureIBuff_;
 
         bool is_playback_prepared_;
         bool is_capture_prepared_;
