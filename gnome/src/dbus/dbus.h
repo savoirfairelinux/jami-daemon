@@ -258,6 +258,13 @@ void
 dbus_set_video_codecs(const gchar *id, const GPtrArray *list);
 
 /**
+ * ConfigurationManager - Switch the video input
+ * @param device The video device name to switch to
+ */
+void
+dbus_switch_video_input(const gchar *device);
+
+/**
  * ConfigurationManager - Get the list of available output audio plugins
  * @return gchar** The list of plugins
  */

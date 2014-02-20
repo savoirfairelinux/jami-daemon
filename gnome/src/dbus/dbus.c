@@ -1423,6 +1423,14 @@ dbus_set_video_codecs(const gchar *accountID, const GPtrArray *list)
     org_sflphone_SFLphone_VideoControls_set_codecs(video_proxy, accountID, list, &error);
     check_error(error);
 }
+
+void
+dbus_switch_video_input(const gchar *device)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_switch_input(video_proxy, device, &error);
+    check_error(error);
+}
 #endif
 
 gchar **
