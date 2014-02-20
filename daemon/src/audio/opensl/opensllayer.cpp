@@ -179,7 +179,7 @@ OpenSLLayer::startStream()
     for(auto& buf : recordBufferStack_)
         buf.resize(hardwareBuffSize_);
 
-    hardwareFormatAvailable();
+    hardwareFormatAvailable(hardwareFormat_);
 
     if (audioThread_ == nullptr) {
         audioThread_ = new OpenSLThread(this);

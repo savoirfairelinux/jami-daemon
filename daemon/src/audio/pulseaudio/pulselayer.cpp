@@ -337,8 +337,6 @@ void PulseLayer::createStreams(pa_context* c)
 
     playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos);
 
-    hardwareFormatAvailable();
-
     pa_stream_set_write_callback(playback_->pulseStream(), playback_callback, this);
     pa_stream_set_moved_callback(playback_->pulseStream(), stream_moved_callback, this);
 
@@ -364,6 +362,8 @@ void PulseLayer::createStreams(pa_context* c)
     }
 
     ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos);
+
+    hardwareFormatAvailable(playback_->getFormat());
 
     pa_stream_set_write_callback(ringtone_->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone_->pulseStream(), stream_moved_callback, this);
@@ -419,14 +419,6 @@ PulseLayer::stopStream()
     }
 
     disconnectAudioStream();
-}
-
-AudioFormat
-PulseLayer::getPreferredAudioFormat() const
-{
-    if (!playback_)
-        return AudioLayer::getPreferredAudioFormat();
-    return playback_->getFormat();
 }
 
 void PulseLayer::writeToSpeaker()

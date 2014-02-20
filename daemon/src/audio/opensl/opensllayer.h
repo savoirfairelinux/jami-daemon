@@ -114,10 +114,6 @@ class OpenSLLayer : public AudioLayer {
             return "";
         }
 
-        AudioFormat getPreferredAudioFormat() const {
-            return hardwareFormat_;
-        }
-
     private:
         typedef std::vector<AudioBuffer> AudioBufferStack;
 
@@ -245,8 +241,8 @@ class OpenSLLayer : public AudioLayer {
 
         SLRecordItf recorderInterface_;
 
-		SLAudioIODeviceCapabilitiesItf AudioIODeviceCapabilitiesItf;
-		SLAudioInputDescriptor AudioInputDescriptor;
+        SLAudioIODeviceCapabilitiesItf AudioIODeviceCapabilitiesItf;
+        SLAudioInputDescriptor AudioInputDescriptor;
 
         /**
          * OpenSL playback buffer

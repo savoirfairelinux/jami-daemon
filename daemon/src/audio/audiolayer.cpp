@@ -54,15 +54,13 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
 AudioLayer::~AudioLayer()
 {}
 
-void AudioLayer::hardwareFormatAvailable()
+void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    AudioFormat format = getPreferredAudioFormat();
-    DEBUG("hardwareFormatAvailable : %s", format.toString().c_str());
-    audioFormat_ = format;
-    urgentRingBuffer_.setFormat(format);
-    resampler_.setFormat(format);
-    Manager::instance().hardwareAudioFormatChanged(format);
+    DEBUG("hardwareFormatAvailable : %s", playback.toString().c_str());
+    urgentRingBuffer_.setFormat(playback);
+    resampler_.setFormat(playback);
+    Manager::instance().hardwareAudioFormatChanged(playback);
 }
 
 void AudioLayer::flushMain()

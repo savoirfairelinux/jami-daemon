@@ -112,6 +112,8 @@ void AlsaThread::initAudioLayer(void)
                 Manager::instance().getClient()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
     }
 
+    alsa_->hardwareFormatAvailable(alsa_->getFormat());
+
     alsa_->prepareCaptureStream();
     alsa_->preparePlaybackStream();
 

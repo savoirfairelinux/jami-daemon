@@ -186,14 +186,6 @@ class AudioLayer {
         }
 
         /**
-         * Hardware-preferred audio format (sample rate and channel number)
-         * for playback. Should be available after outputStarted is called.
-         */
-        virtual AudioFormat getPreferredAudioFormat() const {
-            return AudioFormat::MONO;
-        }
-
-        /**
          * Emit an audio notification on incoming calls
          */
         void notifyIncomingCall();
@@ -204,7 +196,7 @@ class AudioLayer {
         /**
          * Callback to be called by derived classes when the audio output is opened.
          */
-        void hardwareFormatAvailable();
+        void hardwareFormatAvailable(AudioFormat playback);
 
         /**
          * True if capture is not to be used
@@ -233,7 +225,6 @@ class AudioLayer {
 
         /**
          * Sample Rate SFLphone should send sound data to the sound card
-         * The value can be set in the user config file- now: 44100HZ
          */
         AudioFormat audioFormat_;
 
