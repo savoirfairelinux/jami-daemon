@@ -56,7 +56,14 @@ VideoInput::VideoInput(const std::string& device) :
     , framerate_()
     , video_size_()
 {
-    initCamera(device);
+    /* TODO better check for the X11 display name */
+    if (device.find(':') != std::string::npos) {
+        DEBUG("Init screen display %s\n", device.c_str());
+        initX11(device);
+    } else {
+        DEBUG("Init camera %s\n", device.c_str());
+        initCamera(device);
+    }
 
     start();
 }
@@ -78,6 +85,25 @@ void VideoInput::initCamera(std::string device)
     channel_ = map["channel"];
     framerate_ = map["framerate"];
     video_size_ = map["video_size"];
+}
+
+void VideoInput::initX11(std::string device)
+{
+    size_t space = device.find(' ');
+
+    if (space != std::string::npos) {
+        video_size_ = device.substr(space + 1);
+        input_ = device.erase(space);
+    } else {
+        input_ = device;
+        video_size_ = "vga";
+    }
+
+    format_ = "x11grab";
+    framerate_ = "25";
+    mirror_ = false;
+
+    DEBUG("X11 display name %s (%s)", input_.c_str(), video_size_.c_str());
 }
 
 bool VideoInput::setup()

@@ -74,6 +74,7 @@ private:
     std::string video_size_;
 
     void initCamera(std::string device);
+    void initX11(std::string device);
 
     // as SFLThread
     bool setup();
