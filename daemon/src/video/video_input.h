@@ -65,6 +65,7 @@ private:
     std::string id_;
     VideoDecoder *decoder_;
     SHMSink sink_;
+    bool mirror_;
 
     std::string input_;
     std::string format_;

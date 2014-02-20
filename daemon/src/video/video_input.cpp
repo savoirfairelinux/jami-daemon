@@ -48,6 +48,7 @@ VideoInput::VideoInput(const std::string& device) :
     , id_(SINK_ID)
     , decoder_(0)
     , sink_()
+    , mirror_(true)
 
     , input_()
     , format_()
@@ -140,7 +141,8 @@ bool VideoInput::captureFrame()
         return false;
     }
 
-    frame.mirror();
+    if (mirror_)
+        frame.mirror();
     publishFrame();
     return true;
 }
