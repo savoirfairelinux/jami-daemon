@@ -50,6 +50,7 @@
     <toolitem name="OffHoldToolbar" action="OffHold"/>
     <toolitem name="TransferToolbar" action="Transfer"/>
     <toolitem name="InstantMessagingToolbar" action="InstantMessaging"/>
+    <toolitem name="ScreenSharingToolbar" action="ScreenSharing"/>
     <toolitem name="RecordToolbar" action="Record"/>
     <!-- FIXME: commented out because it is responsible for #7495 -->
     <!-- separator/-->

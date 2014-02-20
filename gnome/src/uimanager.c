@@ -88,6 +88,9 @@ static GtkAction * copyAction_;
 static GtkAction * pasteAction_;
 static GtkAction * recordAction_;
 static GtkAction * imAction_;
+#ifdef SFL_VIDEO
+static GtkAction * screenshareAction_;
+#endif
 
 static GtkWidget * pickUpWidget_;
 static GtkWidget * newCallWidget_;
@@ -99,6 +102,7 @@ static GtkWidget * transferToolbar_;
 static GtkWidget * recordWidget_;
 static GtkWidget * voicemailToolbar_;
 static GtkWidget * imToolbar_;
+static GtkWidget * screenshareToolbar_;
 
 static GtkWidget * editable_num_;
 static GtkWidget * edit_dialog_;
@@ -232,6 +236,9 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 gtk_widget_set_sensitive(transferToolbar_, TRUE);
                 if (instant_messaging_enabled)
                     gtk_action_set_sensitive(imAction_, TRUE);
+#ifdef SFL_VIDEO
+                gtk_action_set_sensitive(screenshareAction_, TRUE);
+#endif
 
                 pos = 1;
                 add_to_toolbar(toolbar, hangUpWidget_, pos++);
@@ -240,6 +247,9 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 add_to_toolbar(toolbar, recordWidget_, pos++);
                 if (instant_messaging_enabled)
                     add_to_toolbar(toolbar, imToolbar_, pos++);
+#ifdef SFL_VIDEO
+                add_to_toolbar(toolbar, screenshareToolbar_, pos++);
+#endif
 
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), dbus_get_is_recording(selectedCall));
@@ -376,6 +386,9 @@ update_actions(SFLPhoneClient *client)
     gtk_action_set_sensitive(recordAction_, FALSE);
     gtk_action_set_sensitive(copyAction_, FALSE);
     gtk_action_set_sensitive(imAction_, FALSE);
+#ifdef SFL_VIDEO
+    gtk_action_set_sensitive(screenshareAction_, FALSE);
+#endif
 
     gtk_widget_set_sensitive(holdMenu_, FALSE);
     gtk_widget_set_sensitive(holdToolbar_, FALSE);
@@ -392,6 +405,9 @@ update_actions(SFLPhoneClient *client)
     g_object_ref(transferToolbar_);
     g_object_ref(voicemailToolbar_);
     g_object_ref(imToolbar_);
+#ifdef SFL_VIDEO
+    g_object_ref(screenshareToolbar_);
+#endif
 
     if (addrbook)
         g_object_ref(contactButton_);
@@ -406,6 +422,7 @@ update_actions(SFLPhoneClient *client)
     remove_from_toolbar(toolbar, historyButton_);
     remove_from_toolbar(toolbar, voicemailToolbar_);
     remove_from_toolbar(toolbar, imToolbar_);
+    remove_from_toolbar(toolbar, screenshareToolbar_);
     remove_from_toolbar(toolbar, holdToolbar_);
     remove_from_toolbar(toolbar, offHoldToolbar_);
     remove_from_toolbar(toolbar, newCallWidget_);
@@ -659,6 +676,27 @@ call_im(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
         else
             g_warning("Sorry. Instant messaging is not allowed outside a call\n");
     }
+}
+
+static void
+call_screenshare(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+{
+#ifdef SFL_VIDEO
+    callable_obj_t *selectedCall = calltab_get_selected_call(current_calls_tab);
+    conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls_tab);
+
+    if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
+        if (selectedCall)
+            sflphone_toggle_screenshare();
+        else
+            g_warning("Sorry. Screen sharing is not allowed outside a call\n");
+    } else {
+        if (selectedConf)
+            g_warning("Sorry. Screen sharing is not allowed yet in conference\n");
+        else
+            g_warning("Sorry. Screen sharing is not allowed outside a call\n");
+    }
+#endif
 }
 
 static void
@@ -1010,6 +1048,10 @@ static const GtkActionEntry menu_entries[] = {
         N_("Send message"), G_CALLBACK(call_im)
     },
     {
+        "ScreenSharing", GTK_STOCK_FULLSCREEN, N_("Share screen"), "<control>X",
+        N_("Share screen"), G_CALLBACK(call_screenshare)
+    },
+    {
         "AccountAssistant", NULL, N_("Configuration _Assistant"), NULL,
         N_("Run the configuration assistant"), G_CALLBACK(call_configuration_assistant)
     },
@@ -1213,6 +1255,9 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
 {
     // TODO update the selection to make sure the call under the mouse is the call selected
     gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE, im = FALSE;
+#ifdef SFL_VIDEO
+    gboolean screenshare = FALSE;
+#endif
     gboolean accounts = FALSE;
 
     // conference type boolean
@@ -1250,6 +1295,9 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                     hold = TRUE;
                     record = TRUE;
                     im = TRUE;
+#ifdef SFL_VIDEO
+                    screenshare = TRUE;
+#endif
                     break;
                 case CALL_STATE_BUSY:
                 case CALL_STATE_FAILURE:
@@ -1377,6 +1425,23 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                 gtk_widget_show(menu_items);
             }
         }
+
+#ifdef SFL_VIDEO
+        if (screenshare) {
+            GtkWidget *menu_items = gtk_separator_menu_item_new();
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
+            gtk_widget_show(menu_items);
+
+            menu_items = gtk_image_menu_item_new_with_mnemonic(_("Share screen"));
+            GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_FULLSCREEN, GTK_ICON_SIZE_MENU);
+            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
+            g_signal_connect(G_OBJECT(menu_items), "activate",
+                    G_CALLBACK(call_screenshare),
+                    selectedCall);
+            gtk_widget_show(menu_items);
+        }
+#endif
     } else {
         g_debug("Build conf menus");
 
@@ -1639,6 +1704,9 @@ create_menus(GtkUIManager *ui, SFLPhoneClient *client)
     holdMenu_ = get_widget(ui, "/MenuBar/CallMenu/OnHoldMenu");
     recordAction_ = get_action(ui, "/MenuBar/CallMenu/Record");
     imAction_ = get_action(ui, "/MenuBar/CallMenu/InstantMessaging");
+#ifdef SFL_VIDEO
+    screenshareAction_ = get_action(ui, "/MenuBar/CallMenu/ScreenSharing");
+#endif
     copyAction_ = get_action(ui, "/MenuBar/EditMenu/Copy");
     pasteAction_ = get_action(ui, "/MenuBar/EditMenu/Paste");
     volumeToggle_ = get_action(ui, "/MenuBar/ViewMenu/VolumeControls");
@@ -1672,6 +1740,11 @@ create_toolbar_actions(GtkUIManager *ui, SFLPhoneClient *client)
     hangUpWidget_ = get_widget(ui, "/ToolbarActions/HangUpToolbar");
     recordWidget_ = get_widget(ui, "/ToolbarActions/RecordToolbar");
     imToolbar_ = get_widget(ui, "/ToolbarActions/InstantMessagingToolbar");
+    screenshareToolbar_ = get_widget(ui, "/ToolbarActions/ScreenSharingToolbar");
+/* Hide this widget if video support is disabled */
+#ifndef SFL_VIDEO
+    remove_from_toolbar(client->toolbar, screenshareToolbar_);
+#endif
     historyButton_ = get_widget(ui, "/ToolbarActions/HistoryToolbar");
     if (addrbook)
         contactButton_ = get_widget(ui, "/ToolbarActions/AddressbookToolbar");
