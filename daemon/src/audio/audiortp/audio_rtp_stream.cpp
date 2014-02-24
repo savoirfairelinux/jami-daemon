@@ -283,8 +283,7 @@ int AudioRtpStream::processDataEncode()
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         RETURN_IF_NULL(getCurrentEncoder(), 0, "Audio codec already destroyed");
-        unsigned char *micDataEncoded = encodedData_.data();
-        int encoded = getCurrentEncoder()->encode(micDataEncoded, out->getData(), encoder_.frameSize);
+        int encoded = getCurrentEncoder()->encode(encodedData_.data(), out->getData(), encodedData_.size());
         return encoded;
     }
 }
