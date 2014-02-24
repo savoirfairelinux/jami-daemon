@@ -86,10 +86,10 @@ int G729::decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size)
     return 160;
 }
 
-int G729::encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size)
+int G729::encode(unsigned char *dst, SFLAudioSample *src, size_t /* buffer_size */)
 {
     encoder_(encoderContext_, src, dst);
-    encoder_(encoderContext_, src + (buffer_size / 2), dst + 10);
+    encoder_(encoderContext_, src + (frameSize_ / 2), dst + 10);
     return 20;
 }
 

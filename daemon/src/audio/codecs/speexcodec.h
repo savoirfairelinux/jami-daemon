@@ -97,10 +97,10 @@ private:
             return frameSize_;
         }
 
-        virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buf_size) {
+        virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t /* buf_size */) {
             speex_bits_reset(&speex_enc_bits_);
             speex_encode_int(speex_enc_state_, src, &speex_enc_bits_);
-            return speex_bits_write(&speex_enc_bits_, (char*) dst, buf_size);
+            return speex_bits_write(&speex_enc_bits_, (char*) dst, frameSize_);
         }
 
         SpeexBits speex_dec_bits_;
