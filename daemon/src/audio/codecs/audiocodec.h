@@ -40,7 +40,7 @@
 #define STR(s) #s
 
 /* bump for each release, and bump the 0.0.0.xth digit for each binary change */
-#define AUDIO_CODEC_ENTRY create_1_3_0_1
+#define AUDIO_CODEC_ENTRY create_1_3_0_2
 #define AUDIO_CODEC_ENTRY_SYMBOL XSTR(AUDIO_CODEC_ENTRY)
 
 // Opus documentation:
@@ -70,14 +70,14 @@ class AudioCodec {
          * @param buffer_size : the size of the input buffer
          * @return the number of samples decoded
          */
-        virtual int decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size) = 0;
+        virtual int decode(SFLAudioSample* /* dst */, unsigned char* /* buf */, size_t /* buffer_size */) {};
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
          * @param buffer_size : the maximum size of encoded data buffer (dst)
          * @return the number of bytes encoded
          */
-        virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size) = 0;
+        virtual int encode(unsigned char* /* dst */, SFLAudioSample* /* src */, size_t /* buffer_size */) {};
 
         /**
          * Multichannel version of decode().
@@ -102,15 +102,42 @@ class AudioCodec {
          */
         bool hasDynamicPayload() const;
 
+        /**
+         * @returns maximum supported clock rate (sample rate).
+         */
         uint32_t getClockRate() const;
-        // clock-rate in SDP MAY be different than actual clock-rate (in derived classes)
+
+        /**
+         * @returns currently configured clock rate (sample rate).
+         */
+        uint32_t getCurrentClockRate() const;
+
+        /**
+         * Clock-rate in SDP MAY be different than actual clock-rate
+         * (in derived classes).
+         * @returns Clock-rate as it should be reported by SDP
+         *          during negociation.
+         */
         virtual uint32_t getSDPClockRate() const;
 
         double getBitRate() const;
 
-        unsigned getChannels() const;
-        // channels in SDP MAY be different than actual channels (in derived classes)
-        // Should be an empty string EXCEPT for Opus which returns "2".
+        /**
+         * @returns maximum supported channel number.
+         */
+        uint8_t getChannels() const;
+
+        /**
+         * @returns currently configured channel number.
+         */
+        uint8_t getCurrentChannels() const;
+
+        /**
+         * Channels in SDP MAY be different than actual channels.
+         * Should be an empty string EXCEPT for Opus which returns "2".
+         * @returns Supported channel number as it should be reported by SDP
+         *          during negociation.
+         */
         virtual const char * getSDPChannels() const;
 
         /**
@@ -130,10 +157,10 @@ class AudioCodec {
         std::string codecName_; // what we put inside sdp
 
         /** Clock rate or sample rate of the codec, in Hz */
-        uint32_t clockRate_;
+        uint32_t clockRate_, clockRateCur_;
 
-        /** Number of channel 1 = mono, 2 = stereo */
-        uint8_t channel_;
+        /** Number of channels 1 = mono, 2 = stereo */
+        uint8_t channels_, channelsCur_;
 
         /** codec frame size in samples*/
         unsigned frameSize_;

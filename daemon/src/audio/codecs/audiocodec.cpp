@@ -39,7 +39,9 @@ AudioCodec::AudioCodec(uint8_t payload, const std::string &codecName,
                        int clockRate, int frameSize, unsigned channels) :
     codecName_(codecName),
     clockRate_(clockRate),
-    channel_(channels),
+    clockRateCur_(clockRate),
+    channels_(channels),
+    channelsCur_(channels),
     frameSize_(frameSize),
     bitrate_(0.0),
     payload_(payload),
@@ -49,7 +51,9 @@ AudioCodec::AudioCodec(uint8_t payload, const std::string &codecName,
 AudioCodec::AudioCodec(const AudioCodec& c) :
     codecName_(c.codecName_),
     clockRate_(c.clockRate_),
-    channel_(c.channel_),
+    clockRateCur_(c.clockRateCur_),
+    channels_(c.channels_),
+    channelsCur_(c.channelsCur_),
     frameSize_(c.frameSize_),
     bitrate_(c.bitrate_),
     payload_(c.payload_),
@@ -88,6 +92,11 @@ uint32_t AudioCodec::getClockRate() const
     return clockRate_;
 }
 
+uint32_t AudioCodec::getCurrentClockRate() const
+{
+    return clockRateCur_;
+}
+
 uint32_t AudioCodec::getSDPClockRate() const
 {
     return clockRate_;
@@ -103,9 +112,14 @@ double AudioCodec::getBitRate() const
     return bitrate_;
 }
 
-unsigned AudioCodec::getChannels() const
+uint8_t AudioCodec::getChannels() const
 {
-    return channel_;
+    return channels_;
+}
+
+uint8_t AudioCodec::getCurrentChannels() const
+{
+    return channelsCur_;
 }
 
 const char *

@@ -114,13 +114,13 @@ bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
         if (*i and (*i)->getPayloadType() == newPt) {
             AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
             (*i)->setOptimalFormat(f.sample_rate, f.nb_channels);
-            decoder_.payloadType = (*i)->getPayloadType();
-            decoder_.format.sample_rate = (*i)->getClockRate();
-            decoder_.frameSize = (*i)->getFrameSize();
-            decoder_.format.nb_channels = (*i)->getChannels();
+            encoder_.payloadType = decoder_.payloadType = (*i)->getPayloadType();
+            encoder_.frameSize = decoder_.frameSize = (*i)->getFrameSize();
+            encoder_.format.sample_rate = decoder_.format.sample_rate = (*i)->getCurrentClockRate();
+            encoder_.format.nb_channels = decoder_.format.nb_channels = (*i)->getCurrentChannels();
             hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
             // FIXME: this is not reliable
-            currentDecoderIndex_ = std::distance(audioCodecs_.begin(), i);
+            currentEncoderIndex_ = currentDecoderIndex_ = std::distance(audioCodecs_.begin(), i);
             DEBUG("Switched payload type to %d", newPt);
             return true;
         }
@@ -210,12 +210,11 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     decoder_.payloadType = pt;
 
     encoder_.frameSize = decoder_.frameSize = audioCodecs[0]->getFrameSize();
-    encoder_.format.nb_channels = decoder_.format.nb_channels = audioCodecs[0]->getChannels();
+    encoder_.format.nb_channels = decoder_.format.nb_channels = audioCodecs[0]->getCurrentChannels();
 
     if (audioCodecs[0]->getClockRate() != decoder_.format.sample_rate or
         audioCodecs[0]->getClockRate() != encoder_.format.sample_rate) {
-        encoder_.format.sample_rate = decoder_.format.sample_rate = audioCodecs[0]->getClockRate();
-
+        encoder_.format.sample_rate = decoder_.format.sample_rate = audioCodecs[0]->getCurrentClockRate();
 #if HAVE_SPEEXDSP
         resetDSP();
 #endif

@@ -28,7 +28,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "opus_wrapper.h"
+#include "opuscodec.h"
 #include "sfl_types.h"
 #include <stdexcept>
 #include <iostream>
@@ -36,7 +36,7 @@
 
 constexpr uint32_t Opus::VALID_SAMPLING_RATE[];
 
-Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "opus", CLOCK_RATE, FRAME_SIZE, 1),
+Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
     encoder_(nullptr),
     decoder_(nullptr)
 {
@@ -70,24 +70,24 @@ void Opus::setOptimalFormat(uint32_t sample_rate, uint8_t channels)
     // Opus supports 1 or 2 channels.
     channels = std::max(std::min(channels, (uint8_t) 2), (uint8_t) 1);
 
-    if (not (!encoder_ || !decoder_ || sample_rate != clockRate_ || channels != channel_))
+    if (not (!encoder_ || !decoder_ || sample_rate != clockRateCur_ || channels != channelsCur_))
         return;
 
-    clockRate_ = sample_rate;
-    channel_ = channels;
+    clockRateCur_ = sample_rate;
+    channelsCur_ = channels;
 
-    std::cerr << "Opus switch mode: " << clockRate_ << "kHz, " << (int) channel_ << " channels." << std::endl;
+    std::cerr << "Opus switch mode: " << sample_rate << "kHz, " << (int) channels << " channels." << std::endl;
 
     int err;
     if (encoder_)
         opus_encoder_destroy(encoder_);
-    encoder_ = opus_encoder_create(clockRate_, channel_, OPUS_APPLICATION_VOIP, &err);
+    encoder_ = opus_encoder_create(sample_rate, channels, OPUS_APPLICATION_VOIP, &err);
     if (err)
         throw std::runtime_error("opus: could not create encoder");
 
     if (decoder_)
         opus_decoder_destroy(decoder_);
-    decoder_ = opus_decoder_create(clockRate_, channel_, &err);
+    decoder_ = opus_decoder_create(sample_rate, channels, &err);
     if (err)
         throw std::runtime_error("opus: could not create decoder");
 }
@@ -106,28 +106,12 @@ Opus::getSDPChannels() const
     return "2";
 }
 
-int Opus::decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size)
-{
-    const int ret = opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);
-    if (ret < 0)
-        std::cerr << opus_strerror(ret) << std::endl;
-    return ret;
-}
-
-int Opus::encode(unsigned char *dst, SFLAudioSample *src, size_t buffer_size)
-{
-    const int ret = opus_encode(encoder_, src, FRAME_SIZE, dst, buffer_size * 2);
-    if (ret < 0)
-        std::cerr << opus_strerror(ret) << std::endl;
-    return ret;
-}
-
 int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size)
 {
     if (buf == nullptr) return 0;
 
     int ret;
-    if(channel_ == 1) {
+    if(channelsCur_ == 1) {
         ret = opus_decode(decoder_, buf, buffer_size, dst[0].data(), MAX_PACKET_SIZE, 0);
     } else {
         std::array<SFLAudioSample, 2*MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
@@ -147,7 +131,7 @@ int Opus::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &
     if (dst == nullptr) return 0;
 
     int ret;
-    if(channel_ == 1) {
+    if(channelsCur_ == 1) {
         ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size);
     } else {
         std::array<SFLAudioSample, 2 * FRAME_SIZE> ibuf; // interleave on stack, 1.875KiB used;
