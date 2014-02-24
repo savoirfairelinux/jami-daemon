@@ -146,7 +146,7 @@ Call::getLocalVideoPort()
 bool
 Call::toggleRecording()
 {
-    const bool startRecording = Recordable::recAudio_.toggleRecording();
+    const bool startRecording = Recordable::toggleRecording();
     MainBuffer &mbuffer = Manager::instance().getMainBuffer();
     std::string process_id = Recordable::recorder_.getRecorderID();
 

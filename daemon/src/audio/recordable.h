@@ -50,8 +50,13 @@ class Recordable {
         /**
          * This method must be implemented for this interface as calls and conferences
          * have different behavior.
+         * Implementations must call the super method.
          */
-        virtual bool toggleRecording() = 0;
+        virtual bool toggleRecording() {
+            if(!isRecording())
+                recorder_.init();
+            return recAudio_.toggleRecording();
+        }
 
         /**
          * Stop recording

@@ -29,15 +29,18 @@
  */
 
 #include "audiorecorder.h"
+#include "audiorecord.h"
 #include "mainbuffer.h"
 #include "logger.h"
+
+#include <chrono>
 #include <sstream>
 #include <unistd.h>
 
 int AudioRecorder::count_ = 0;
 
 AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer &mb) :
-    recorderId_(), mbuffer_(mb), arecord_(arec), running_(false), thread_(0)
+    recorderId_(), mbuffer_(mb), arecord_(arec), running_(false), thread_()
 {
     ++count_;
 
@@ -56,22 +59,20 @@ AudioRecorder::~AudioRecorder()
 {
     running_ = false;
 
-    if (thread_)
-        pthread_join(thread_, NULL);
+    if (thread_.joinable())
+        thread_.join();
+}
+
+void AudioRecorder::init() {
+    if(!arecord_->isRecording()) {
+        arecord_->setSndFormat(mbuffer_.getInternalAudioFormat());
+    }
 }
 
 void AudioRecorder::start()
 {
     running_ = true;
-    pthread_create(&thread_, NULL, &runCallback, this);
-}
-
-void *
-AudioRecorder::runCallback(void *data)
-{
-    AudioRecorder *context = static_cast<AudioRecorder*>(data);
-    context->run();
-    return NULL;
+    thread_ = std::thread(&AudioRecorder::run, this);
 }
 
 /**
@@ -80,7 +81,9 @@ AudioRecorder::runCallback(void *data)
 void AudioRecorder::run()
 {
     static const size_t BUFFER_LENGTH = 10000;
-    AudioBuffer buffer(BUFFER_LENGTH, AudioFormat::MONO);
+    static const std::chrono::milliseconds SLEEP_TIME(20); // 20 ms
+
+    AudioBuffer buffer(BUFFER_LENGTH, mbuffer_.getInternalAudioFormat());
 
     while (running_) {
         const size_t availableSamples = mbuffer_.availableForGet(recorderId_);
@@ -90,6 +93,6 @@ void AudioRecorder::run()
         if (availableSamples > 0)
             arecord_->recData(buffer);
 
-        usleep(20000); // 20 ms
+        std::this_thread::sleep_for(SLEEP_TIME);
     }
 }

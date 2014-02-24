@@ -31,13 +31,13 @@
 #ifndef _AUDIO_RECORD_H
 #define _AUDIO_RECORD_H
 
-#include <string>
-#include <cstdlib>
-#include <memory>
-
+#include "audiobuffer.h"
 #include "sfl_types.h"
 #include "noncopyable.h"
-#include "audiobuffer.h"
+
+#include <memory>
+#include <string>
+#include <cstdlib>
 
 class SndfileHandle;
 

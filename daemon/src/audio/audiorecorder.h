@@ -31,12 +31,14 @@
 #ifndef AUDIORECORDER_H_
 #define AUDIORECORDER_H_
 
-#include <string>
-#include <pthread.h>
-#include "audiorecord.h"
 #include "noncopyable.h"
 
+#include <thread>
+#include <atomic>
+#include <string>
+
 class MainBuffer;
+class AudioRecord;
 
 class AudioRecorder {
 
@@ -47,19 +49,27 @@ class AudioRecorder {
             return recorderId_;
         }
 
+        /**
+         * Set the record to the current audio format.
+         * Should be called before start() at least once.
+         */
+        void init();
+
+        /**
+         * Call to start recording.
+         */
         void start();
 
     private:
         NON_COPYABLE(AudioRecorder);
         void run();
-        static void * runCallback(void *data);
 
         static int count_;
         std::string recorderId_;
         MainBuffer &mbuffer_;
         AudioRecord *arecord_;
-        bool running_;
-        pthread_t thread_;
+        std::atomic<bool> running_;
+        std::thread thread_;
 };
 
 #endif

@@ -33,13 +33,15 @@
 #endif
 
 #include "audiorecord.h"
-#include <sndfile.hh>
-#include <unistd.h>
-#include <sstream> // for stringstream
-#include <algorithm>
-#include <cstdio>
 #include "logger.h"
 #include "fileutils.h"
+
+#include <sndfile.hh>
+
+#include <algorithm>
+#include <sstream> // for stringstream
+#include <cstdio>
+#include <unistd.h>
 
 namespace {
 std::string
@@ -164,6 +166,7 @@ bool AudioRecord::openFile()
     const bool doAppend = fileExists();
     const int access = doAppend ? SFM_RDWR : SFM_WRITE;
 
+    DEBUG("Opening file %s with format %s", savePath_.c_str(), sndFormat_.toString().c_str());
     fileHandle_ = new SndfileHandle(savePath_.c_str(), access, SF_FORMAT_WAV | SF_FORMAT_PCM_16, sndFormat_.nb_channels, sndFormat_.sample_rate);
 
     // check overloaded boolean operator
