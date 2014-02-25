@@ -31,10 +31,11 @@
 #include "mainbuffer.h"
 #include "ringbuffer.h"
 #include "sfl_types.h" // for SIZEBUF
-#include <limits>
-#include <cstring>
-#include <utility> // for std::pair
 #include "logger.h"
+
+#include <limits>
+#include <utility> // for std::pair
+#include <cstring>
 
 const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
@@ -61,14 +62,6 @@ void MainBuffer::setInternalAudioFormat(AudioFormat format)
     if (format != internalAudioFormat_) {
         flushAllBuffers();
         internalAudioFormat_ = format;
-    }
-}
-
-void MainBuffer::setMinimumAudioFormat(AudioFormat format)
-{
-    if (format.sample_rate > internalAudioFormat_.sample_rate or
-        format.nb_channels > internalAudioFormat_.nb_channels) {
-        setInternalAudioFormat(format);
     }
 }
 

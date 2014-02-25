@@ -65,8 +65,6 @@ class MainBuffer {
 
         void setInternalAudioFormat(AudioFormat format);
 
-        void setMinimumAudioFormat(AudioFormat format);
-
         /**
          * Bind together two audio streams so taht a client will be able
          * to put and get data specifying its callid only.
