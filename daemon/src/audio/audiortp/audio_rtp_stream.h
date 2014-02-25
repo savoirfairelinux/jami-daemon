@@ -55,10 +55,16 @@ class AudioRtpContext {
     AudioRtpContext(AudioFormat f);
     ~AudioRtpContext();
 
+    /**
+     * Ramp in audio data to avoid audio click from peer
+     */
+    void fadeIn(AudioBuffer& buf);
+
     private:
     NON_COPYABLE(AudioRtpContext);
 
     void resetResampler();
+    double fadeFactor;
     int payloadType;
     int frameSize;
     AudioFormat format;
@@ -133,14 +139,9 @@ class AudioRtpStream {
         // FIXME: probably need one for pre-encoder data, one for post-decoder data
         AudioBuffer rawBuffer_;
         std::array<uint8_t, RAW_BUFFER_SIZE> encodedData_;
-        double fadeFactor_;
 
         bool isDead();
 
-        /**
-        * Ramp In audio data to avoid audio click from peer
-        */
-        void fadeInRawBuffer();
         NON_COPYABLE(AudioRtpStream);
         std::atomic<bool> dead_;
         size_t currentEncoderIndex_;

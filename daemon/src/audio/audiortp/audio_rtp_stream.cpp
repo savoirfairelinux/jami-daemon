@@ -56,7 +56,6 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
     , hasDynamicPayloadType_(false)
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , encodedData_()
-    , fadeFactor_(1.0 / 32000.0)
     , dead_(false)
     , currentEncoderIndex_(0)
     , currentDecoderIndex_(0)
@@ -134,8 +133,12 @@ bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
 }
 
 AudioRtpContext::AudioRtpContext(AudioFormat f) :
-    payloadType(0), frameSize(0), format(f),
-    resampledData(0, AudioFormat::MONO), resampler(nullptr)
+    fadeFactor(1.0 / 32000.0)
+    , payloadType(0)
+    , frameSize(0)
+    , format(f)
+    , resampledData(0, AudioFormat::MONO)
+    , resampler(nullptr)
 #if HAVE_SPEEXDSP
     , dsp()
     , dspMutex()
@@ -155,6 +158,16 @@ void AudioRtpContext::resetResampler()
     // initialize resampler using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
     resampler.reset(new Resampler(format.sample_rate));
+}
+
+void AudioRtpContext::fadeIn(AudioBuffer& buf)
+{
+    if (fadeFactor >= 1.0)
+        return;
+    buf.applyGain(fadeFactor);
+
+    static const double FADEIN_STEP_SIZE = 4.0;
+    fadeFactor *= FADEIN_STEP_SIZE;
 }
 
 #if HAVE_SPEEXDSP
@@ -263,8 +276,6 @@ size_t AudioRtpStream::processDataEncode()
         return 0;
     }
 
-    fadeInRawBuffer();
-
     AudioBuffer *out = &micData;
     if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(encoder_.resampler, 0, "Resampler already destroyed");
@@ -276,10 +287,10 @@ size_t AudioRtpStream::processDataEncode()
     if (encoder_.format.nb_channels != mainBuffFormat.nb_channels)
         out->setChannelNum(encoder_.format.nb_channels, true);
 
+    encoder_.fadeIn(*out);
 #if HAVE_SPEEXDSP
     encoder_.applyDSP(*out);
 #endif
-
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         RETURN_IF_NULL(getCurrentEncoder(), 0, "Audio codec already destroyed");
@@ -324,11 +335,10 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     decoder_.applyDSP(rawBuffer_);
 #endif
 
-    fadeInRawBuffer();
-
-    AudioBuffer *out = &rawBuffer_;
+    encoder_.fadeIn(rawBuffer_);
 
     // test if resampling or up/down-mixing is required
+    AudioBuffer *out = &rawBuffer_;
     AudioFormat decFormat = out->getFormat();
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
@@ -343,19 +353,6 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     Manager::instance().getMainBuffer().putData(*out, id_);
 }
 #undef RETURN_IF_NULL
-
-void AudioRtpStream::fadeInRawBuffer()
-{
-    // if factor reaches 1, this function should have no effect
-    if (fadeFactor_ >= 1.0)
-        return;
-
-    rawBuffer_.applyGain(fadeFactor_);
-
-    // Factor used to increase volume in fade in
-    const double FADEIN_STEP_SIZE = 4.0;
-    fadeFactor_ *= FADEIN_STEP_SIZE;
-}
 
 bool
 AudioRtpStream::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
