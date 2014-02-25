@@ -33,14 +33,17 @@
 #endif
 
 #include "audio_rtp_stream.h"
+
+#include "audio/audiolayer.h"
+#include "audio/resampler.h"
+#include "audio/dsp.h"
+
+#include "manager.h"
+#include "logger.h"
+
 #include <fstream>
 #include <algorithm>
 #include <cassert>
-#include "logger.h"
-#include "audio/audiolayer.h"
-#include "manager.h"
-#include "audio/resampler.h"
-#include "audio/dsp.h"
 
 namespace sfl {
 
@@ -122,6 +125,7 @@ bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
             // FIXME: this is not reliable
             currentEncoderIndex_ = currentDecoderIndex_ = std::distance(audioCodecs_.begin(), i);
             DEBUG("Switched payload type to %d", newPt);
+            Manager::instance().audioFormatUsed(encoder_.format);
             return true;
         }
 
@@ -206,20 +210,17 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     currentEncoderIndex_ = currentDecoderIndex_ = 0;
     // FIXME: this is probably not the right payload type
     const int pt = audioCodecs[0]->getPayloadType();
-    encoder_.payloadType = pt;
-    decoder_.payloadType = pt;
-
+    encoder_.payloadType = decoder_.payloadType = pt;
     encoder_.frameSize = decoder_.frameSize = audioCodecs[0]->getFrameSize();
-    encoder_.format.nb_channels = decoder_.format.nb_channels = audioCodecs[0]->getCurrentChannels();
 
-    if (audioCodecs[0]->getClockRate() != decoder_.format.sample_rate or
-        audioCodecs[0]->getClockRate() != encoder_.format.sample_rate) {
-        encoder_.format.sample_rate = decoder_.format.sample_rate = audioCodecs[0]->getCurrentClockRate();
+    AudioFormat codecFormat(audioCodecs[0]->getCurrentClockRate(), audioCodecs[0]->getCurrentChannels());
+    if (codecFormat != decoder_.format or codecFormat != encoder_.format) {
+        encoder_.format = decoder_.format = codecFormat;
 #if HAVE_SPEEXDSP
         resetDSP();
 #endif
     }
-
+    Manager::instance().audioFormatUsed(codecFormat);
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 

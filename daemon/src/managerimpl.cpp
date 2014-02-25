@@ -1098,11 +1098,7 @@ ManagerImpl::joinParticipant(const std::string& callId1, const std::string& call
     conf->setState(Conference::ACTIVE_ATTACHED);
 
     // set recording sampling rate
-    {
-        std::lock_guard<std::mutex> lock(audioLayerMutex_);
-        if (audiodriver_)
-            conf->setRecordingFormat(audiodriver_->getFormat());
-    }
+    conf->setRecordingFormat(mainBuffer_.getInternalAudioFormat());
 
     return true;
 }
@@ -1147,14 +1143,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     if (successCounter >= 2) {
         conferenceMap_[conf->getConfID()] = conf;
         client_.getCallManager()->conferenceCreated(conf->getConfID());
-
-        {
-            std::lock_guard<std::mutex> lock(audioLayerMutex_);
-
-            if (audiodriver_)
-                conf->setRecordingFormat(audiodriver_->getFormat());
-        }
-
+        conf->setRecordingFormat(mainBuffer_.getInternalAudioFormat());
     } else {
         delete conf;
     }
@@ -2257,8 +2246,14 @@ void ManagerImpl::switchAudioManager()
 
 void ManagerImpl::hardwareAudioFormatChanged(AudioFormat format)
 {
+    audioFormatUsed(format);
+}
+
+void ManagerImpl::audioFormatUsed(AudioFormat format)
+{
     AudioFormat currentFormat = mainBuffer_.getInternalAudioFormat();
-    format.nb_channels = std::min(2u, format.nb_channels); // max 2 channels.
+    format.nb_channels = std::max(currentFormat.nb_channels, std::min(format.nb_channels, 2u)); // max 2 channels.
+    format.sample_rate = std::max(currentFormat.sample_rate, format.sample_rate);
 
     if (currentFormat == format)
         return;

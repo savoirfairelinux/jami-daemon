@@ -658,9 +658,17 @@ class ManagerImpl {
         void switchAudioManager();
 
         /**
-         * Callback called when the audio layer initialised with its preferred format.
+         * Callback called when the audio layer initialised with its
+         * preferred format.
          */
         void hardwareAudioFormatChanged(AudioFormat format);
+
+        /**
+         * Should be called by any component dealing with an external
+         * audio source, indicating the format used so the mixer format
+         * can be eventually adapted.
+         */
+        void audioFormatUsed(AudioFormat format);
 
         /**
          * Change a specific value in the configuration tree.

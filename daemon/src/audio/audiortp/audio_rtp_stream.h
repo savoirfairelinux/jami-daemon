@@ -35,15 +35,15 @@
 #include "config.h"
 #endif
 
-#include <cstddef>
+#include "audio/codecs/audiocodec.h"
+#include "audio/audiobuffer.h"
+#include "noncopyable.h"
+
 #include <array>
 #include <mutex>
 #include <memory>
 #include <atomic>
-
-#include "noncopyable.h"
-#include "audio/codecs/audiocodec.h"
-#include "audio/audiobuffer.h"
+#include <cstddef>
 
 class Resampler;
 class DSP;
