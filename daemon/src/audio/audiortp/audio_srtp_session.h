@@ -35,6 +35,7 @@
 #include "noncopyable.h"
 
 #include <ccrtp/CryptoContext.h>
+#include <memory>
 #include <vector>
 
 class SdesNegotiator;
@@ -113,12 +114,12 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         /**
          * Remote srtp crypto context to be set into incoming data queue.
          */
-        ost::CryptoContext* remoteCryptoCtx_;
+        std::unique_ptr<ost::CryptoContext> remoteCryptoCtx_;
 
         /**
          * Local srtp crypto context to be set into outgoing data queue.
          */
-        ost::CryptoContext* localCryptoCtx_;
+        std::unique_ptr<ost::CryptoContext> localCryptoCtx_;
 
         /**
          * Init local master key according to current crypto context

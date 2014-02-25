@@ -135,8 +135,8 @@ namespace {
 
 AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     AudioSymmetricRtpSession(call),
-    remoteCryptoCtx_(0),
-    localCryptoCtx_(0),
+    remoteCryptoCtx_(),
+    localCryptoCtx_(),
     localCryptoSuite_(0),
     remoteCryptoSuite_(0),
     localMasterKey_(MAX_MASTER_KEY_LENGTH),
@@ -158,7 +158,7 @@ void AudioSrtpSession::initLocalCryptoInfo()
     // Set local crypto context in ccrtp
     localCryptoCtx_->deriveSrtpKeys(0);
 
-    setOutQueueCryptoContext(localCryptoCtx_);
+    setOutQueueCryptoContext(localCryptoCtx_.get());
 }
 
 void AudioSrtpSession::initLocalCryptoInfoOnOffhold()
@@ -171,7 +171,7 @@ void AudioSrtpSession::initLocalCryptoInfoOnOffhold()
     // Set local crypto context in ccrtp
     localCryptoCtx_->deriveSrtpKeys(0);
 
-    setOutQueueCryptoContext(localCryptoCtx_);
+    setOutQueueCryptoContext(localCryptoCtx_.get());
 }
 
 std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
@@ -221,8 +221,8 @@ void AudioSrtpSession::setRemoteCryptoInfo(const sfl::SdesNegotiator& nego)
         initializeRemoteCryptoContext();
 
         if (remoteCryptoCtx_) {
-            setInQueueCryptoContext(remoteCryptoCtx_);
-        }
+            setInQueueCryptoContext(remoteCryptoCtx_.get());
+       }
 
         remoteOfferIsSet_ = true;
     }
@@ -283,7 +283,7 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
-    remoteCryptoCtx_ = new ost::CryptoContext(0x0,
+    remoteCryptoCtx_.reset(new ost::CryptoContext(0x0,
             0,    // roc,
             0L,   // keydr,
             SrtpEncryptionAESCM,
@@ -295,7 +295,7 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
             crypto.encryptionKeyLength / BITS_PER_BYTE,
             crypto.srtpAuthKeyLength / BITS_PER_BYTE,
             crypto.masterSaltLength / BITS_PER_BYTE,
-            crypto.srtpAuthTagLength / BITS_PER_BYTE);
+            crypto.srtpAuthTagLength / BITS_PER_BYTE));
 
 }
 
@@ -305,7 +305,7 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
 
-    localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
+    localCryptoCtx_.reset(new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
             0,     // roc,
             0L,    // keydr,
             SrtpEncryptionAESCM,
@@ -317,7 +317,7 @@ void AudioSrtpSession::initializeLocalCryptoContext()
             crypto.encryptionKeyLength / BITS_PER_BYTE,
             crypto.srtpAuthKeyLength / BITS_PER_BYTE,
             crypto.masterSaltLength / BITS_PER_BYTE,
-            crypto.srtpAuthTagLength / BITS_PER_BYTE);
+            crypto.srtpAuthTagLength / BITS_PER_BYTE));
 }
 
 CachedAudioRtpState *
