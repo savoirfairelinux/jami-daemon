@@ -138,7 +138,7 @@ class AudioRtpStream {
         // a different codec than we are receiving (asymmetric RTP)
         bool hasDynamicPayloadType_;
         // FIXME: probably need one for pre-encoder data, one for post-decoder data
-        AudioBuffer rawBuffer_;
+        AudioBuffer rawBuffer_, micData_;
         std::array<uint8_t, RAW_BUFFER_SIZE> encodedData_;
 
         bool isDead();

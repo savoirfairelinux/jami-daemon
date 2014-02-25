@@ -55,6 +55,7 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
     , codecEncMutex_(), codecDecMutex_()
     , hasDynamicPayloadType_(false)
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
+    , micData_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , encodedData_()
     , dead_(false)
     , currentEncoderIndex_(0)
@@ -273,20 +274,21 @@ size_t AudioRtpStream::processDataEncode()
     if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
         return 0;
 
-    AudioBuffer micData(samplesToGet, mainBuffFormat);
-    const size_t samps = Manager::instance().getMainBuffer().getData(micData, id_);
+    micData_.setFormat(mainBuffFormat);
+    micData_.resize(samplesToGet);
+    const size_t samps = Manager::instance().getMainBuffer().getData(micData_, id_);
 
     if (samps != samplesToGet) {
         ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samps);
         return 0;
     }
 
-    AudioBuffer *out = &micData;
+    AudioBuffer *out = &micData_;
     if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
         RETURN_IF_NULL(encoder_.resampler, 0, "Resampler already destroyed");
         encoder_.resampledData.setChannelNum(mainBuffFormat.nb_channels);
         encoder_.resampledData.setSampleRate(encoder_.format.sample_rate);
-        encoder_.resampler->resample(micData, encoder_.resampledData);
+        encoder_.resampler->resample(micData_, encoder_.resampledData);
         out = &encoder_.resampledData;
     }
     if (encoder_.format.nb_channels != mainBuffFormat.nb_channels)
