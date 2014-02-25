@@ -106,16 +106,16 @@ Opus::getSDPChannels() const
     return "2";
 }
 
-int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size)
+int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buf_size)
 {
     if (buf == nullptr) return 0;
 
     int ret;
     if(channelsCur_ == 1) {
-        ret = opus_decode(decoder_, buf, buffer_size, dst[0].data(), MAX_PACKET_SIZE, 0);
+        ret = opus_decode(decoder_, buf, buf_size, dst[0].data(), MAX_PACKET_SIZE, 0);
     } else {
         std::array<SFLAudioSample, 2*MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
-        ret = opus_decode(decoder_, buf, buffer_size, ibuf.data(), MAX_PACKET_SIZE, 0);
+        ret = opus_decode(decoder_, buf, buf_size, ibuf.data(), MAX_PACKET_SIZE, 0);
         for(int i=0; i<ret; i++) {
             dst[0][i] = ibuf[2*i];
             dst[1][i] = ibuf[2*i+1];
@@ -126,23 +126,25 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *
     return ret;
 }
 
-int Opus::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size)
+size_t Opus::encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size)
 {
     if (dst == nullptr) return 0;
 
     int ret;
     if(channelsCur_ == 1) {
-        ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, buffer_size);
+        ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, dst_size);
     } else {
         std::array<SFLAudioSample, 2 * FRAME_SIZE> ibuf; // interleave on stack, 1.875KiB used;
         for (unsigned i = 0; i < FRAME_SIZE; i++) {
             ibuf[2 * i] = src[0][i];
             ibuf[2 * i + 1] = src[1][i];
         }
-        ret = opus_encode(encoder_, ibuf.data(), FRAME_SIZE, dst, buffer_size);
+        ret = opus_encode(encoder_, ibuf.data(), FRAME_SIZE, dst, dst_size);
     }
-    if (ret < 0)
+    if (ret < 0) {
         std::cerr << opus_strerror(ret) << std::endl;
+        ret = 0;
+    }
     return ret;
 }
 

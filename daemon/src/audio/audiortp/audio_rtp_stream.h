@@ -87,18 +87,19 @@ class AudioRtpStream {
         /**
          * Decode audio data received from peer
          */
-        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
+        void processDataDecode(uint8_t *spkrData, size_t size, int payloadType);
 
         /**
          * Encode audio data from mainbuffer
+         * @return size of encoded data, in bytes.
          */
-        int processDataEncode();
+        size_t processDataEncode();
 
         bool hasDynamicPayload() const {
             return hasDynamicPayloadType_;
         }
 
-        const unsigned char *getMicDataEncoded() const {
+        const uint8_t *getMicDataEncoded() const {
             return encodedData_.data();
         }
 
@@ -131,7 +132,7 @@ class AudioRtpStream {
         bool hasDynamicPayloadType_;
         // FIXME: probably need one for pre-encoder data, one for post-decoder data
         AudioBuffer rawBuffer_;
-        std::array<unsigned char, RAW_BUFFER_SIZE> encodedData_;
+        std::array<uint8_t, RAW_BUFFER_SIZE> encodedData_;
         double fadeFactor_;
 
         bool isDead();

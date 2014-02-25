@@ -221,7 +221,7 @@ IAXVoIPLink::sendAudioFromMic()
             in = &rawBuffer_;
         }
 
-        compSize = audioCodec->encode(encodedData_, in->getData(), RAW_BUFFER_SIZE);
+        compSize = audioCodec->encode(in->getData(), encodedData_, RAW_BUFFER_SIZE);
 
         if (currentCall->session and samples > 0) {
             std::lock_guard<std::mutex> lock(mutexIAX_);

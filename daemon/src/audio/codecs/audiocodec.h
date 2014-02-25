@@ -81,15 +81,16 @@ class AudioCodec {
 
         /**
          * Multichannel version of decode().
-         * Default implementation decode(short *, unsigned char *, size_t) to the first channel (assume 1 channel).
+         * Default implementation calls mono version
          */
-        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size);
+        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buf_size);
 
         /**
          * Multichannel version of encode().
          * Default implementation calls encode() on the first channel (assume 1 channel).
+         * @return the number of bytes encoded
          */
-        virtual int encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size);
+        virtual size_t encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size);
 
         uint8_t getPayloadType() const;
 

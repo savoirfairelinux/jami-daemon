@@ -173,7 +173,7 @@ void AudioRtpSession::receiveSpeakerData()
 
 void AudioRtpSession::sendMicData()
 {
-    int compSize = rtpStream_.processDataEncode();
+    size_t compSize = rtpStream_.processDataEncode();
 
     // if no data return
     if (compSize == 0)

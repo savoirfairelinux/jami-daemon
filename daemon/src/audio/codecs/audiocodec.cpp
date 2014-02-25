@@ -61,15 +61,15 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
 {}
 
 // Mono only, subclasses must implement multichannel support
-int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst, unsigned char *buf, size_t buffer_size)
+int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buf_size)
 {
-    return decode(dst[0].data(), buf, buffer_size);
+    return decode(dst[0].data(), buf, buf_size);
 }
 
 // Mono only, subclasses must implement multichannel support
-int AudioCodec::encode(unsigned char *dst, std::vector<std::vector<SFLAudioSample> > &src, size_t buffer_size)
+size_t AudioCodec::encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size)
 {
-    return encode(dst, src[0].data(), buffer_size);
+    return encode(dst, src[0].data(), dst_size);
 }
 
 std::string AudioCodec::getMimeSubtype() const

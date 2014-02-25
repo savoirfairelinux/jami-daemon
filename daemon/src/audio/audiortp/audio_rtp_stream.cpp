@@ -239,7 +239,7 @@ void AudioRtpStream::resetDSP()
 
 #define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }
 
-int AudioRtpStream::processDataEncode()
+size_t AudioRtpStream::processDataEncode()
 {
     if (isDead())
         return 0;
@@ -282,7 +282,7 @@ int AudioRtpStream::processDataEncode()
     {
         std::lock_guard<std::mutex> lock(audioCodecMutex_);
         RETURN_IF_NULL(getCurrentEncoder(), 0, "Audio codec already destroyed");
-        int encoded = getCurrentEncoder()->encode(encodedData_.data(), out->getData(), encodedData_.size());
+        size_t encoded = getCurrentEncoder()->encode(out->getData(), encodedData_.data(), encodedData_.size());
         return encoded;
     }
 }
