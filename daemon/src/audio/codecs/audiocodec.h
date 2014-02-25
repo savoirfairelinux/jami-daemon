@@ -70,14 +70,14 @@ class AudioCodec {
          * @param buffer_size : the size of the input buffer
          * @return the number of samples decoded
          */
-        virtual int decode(SFLAudioSample* /* dst */, unsigned char* /* buf */, size_t /* buffer_size */) {};
+        virtual int decode(SFLAudioSample* /* dst */, unsigned char* /* buf */, size_t /* buffer_size */);
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
          * @param buffer_size : the maximum size of encoded data buffer (dst)
          * @return the number of bytes encoded
          */
-        virtual int encode(unsigned char* /* dst */, SFLAudioSample* /* src */, size_t /* buffer_size */) {};
+        virtual int encode(unsigned char* /* dst */, SFLAudioSample* /* src */, size_t /* buffer_size */);
 
         /**
          * Multichannel version of decode().
