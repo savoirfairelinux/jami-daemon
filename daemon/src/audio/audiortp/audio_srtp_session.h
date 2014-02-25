@@ -75,6 +75,8 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         AudioSrtpSession(SIPCall &call);
 
+        ~AudioSrtpSession();
+
         /**
          * Used to get sdp crypto header to be included in sdp session. This
          * method must be called befor setRemoteCryptoInfo in case of an

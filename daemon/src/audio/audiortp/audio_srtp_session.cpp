@@ -132,7 +132,6 @@ namespace {
     const unsigned MAX_MASTER_SALT_LENGTH = 14;
 }
 
-
 AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     AudioSymmetricRtpSession(call),
     remoteCryptoCtx_(),
@@ -145,6 +144,14 @@ AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     remoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
     remoteOfferIsSet_(false)
 {}
+
+AudioSrtpSession::~AudioSrtpSession()
+{
+    if (remoteCryptoCtx_.get())
+        removeInQueueCryptoContext(remoteCryptoCtx_.get());
+    if (localCryptoCtx_.get())
+        removeOutQueueCryptoContext(localCryptoCtx_.get());
+}
 
 void AudioSrtpSession::initLocalCryptoInfo()
 {
@@ -283,6 +290,9 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
+    if (remoteCryptoCtx_.get())
+        removeInQueueCryptoContext(remoteCryptoCtx_.get());
+
     remoteCryptoCtx_.reset(new ost::CryptoContext(0x0,
             0,    // roc,
             0L,   // keydr,
@@ -296,7 +306,6 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
             crypto.srtpAuthKeyLength / BITS_PER_BYTE,
             crypto.masterSaltLength / BITS_PER_BYTE,
             crypto.srtpAuthTagLength / BITS_PER_BYTE));
-
 }
 
 void AudioSrtpSession::initializeLocalCryptoContext()
@@ -304,6 +313,9 @@ void AudioSrtpSession::initializeLocalCryptoContext()
     DEBUG("Initialize local crypto context");
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
+
+    if (localCryptoCtx_.get())
+        removeOutQueueCryptoContext(localCryptoCtx_.get());
 
     localCryptoCtx_.reset(new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
             0,     // roc,
