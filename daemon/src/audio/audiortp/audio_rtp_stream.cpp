@@ -52,7 +52,7 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
     , encoder_(AudioFormat::MONO)
     , decoder_(AudioFormat::MONO)
     , audioCodecs_()
-    , audioCodecMutex_()
+    , codecEncMutex_(), codecDecMutex_()
     , hasDynamicPayloadType_(false)
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , encodedData_()
@@ -67,7 +67,8 @@ AudioRtpStream::~AudioRtpStream()
     dead_ = true;
 
     {
-        std::lock_guard<std::mutex> lock(audioCodecMutex_);
+        std::lock_guard<std::mutex> lock_enc(codecEncMutex_);
+        std::lock_guard<std::mutex> lock_dec(codecDecMutex_);
         deleteCodecs();
     }
 }
@@ -112,6 +113,9 @@ AudioRtpStream::deleteCodecs()
 
 bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
 {
+    std::lock_guard<std::mutex> lock_enc(codecEncMutex_);
+    std::lock_guard<std::mutex> lock_dec(codecDecMutex_);
+
     for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
         if (*i and (*i)->getPayloadType() == newPt) {
             AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
@@ -206,7 +210,8 @@ void AudioRtpContext::applyDSP(AudioBuffer &buffer)
 
 void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    std::lock_guard<std::mutex> lock(audioCodecMutex_);
+    std::lock_guard<std::mutex> lock_enc(codecEncMutex_);
+    std::lock_guard<std::mutex> lock_dec(codecDecMutex_);
 
     deleteCodecs();
     // Set various codec info to reduce indirection
@@ -292,7 +297,7 @@ size_t AudioRtpStream::processDataEncode()
     encoder_.applyDSP(*out);
 #endif
     {
-        std::lock_guard<std::mutex> lock(audioCodecMutex_);
+        std::lock_guard<std::mutex> lock(codecEncMutex_);
         RETURN_IF_NULL(getCurrentEncoder(), 0, "Audio codec already destroyed");
         size_t encoded = getCurrentEncoder()->encode(out->getData(), encodedData_.data(), encodedData_.size());
         return encoded;
@@ -323,7 +328,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     }
 
     {
-        std::lock_guard<std::mutex> lock(audioCodecMutex_);
+        std::lock_guard<std::mutex> lock(codecDecMutex_);
         RETURN_IF_NULL(getCurrentDecoder(), "Audio codecs already destroyed");
         rawBuffer_.setFormat(decoder_.format);
         rawBuffer_.resize(RAW_BUFFER_SIZE);

@@ -132,7 +132,8 @@ class AudioRtpStream {
         sfl::AudioCodec* getCurrentDecoder() const;
 
         std::vector<AudioCodec*> audioCodecs_;
-        std::mutex audioCodecMutex_;
+        std::mutex codecEncMutex_;
+        std::mutex codecDecMutex_;
         // these will have the same value unless we are sending
         // a different codec than we are receiving (asymmetric RTP)
         bool hasDynamicPayloadType_;
