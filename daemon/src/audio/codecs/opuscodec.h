@@ -66,7 +66,7 @@ private:
    static constexpr size_t VALID_SAMPLING_RATE_NUM = sizeof(VALID_SAMPLING_RATE)/sizeof(uint32_t);
 
    static const unsigned CLOCK_RATE = 48000;
-   static const unsigned FRAME_SIZE = 10 * CLOCK_RATE / 1000; // 10ms
+   static const unsigned FRAME_SIZE = 20 * CLOCK_RATE / 1000; // 20ms
    static const unsigned CHANNELS   = 2;
 
    // Opus documentation:
