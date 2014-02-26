@@ -143,73 +143,44 @@ create_alsa_plugin_list_store()
     return list_store;
 }
 
+static const guint OUTPUT_INDEX = 0;
+static const guint INPUT_INDEX = 1;
+static const guint RINGTONE_INDEX = 2;
+
 static void
-select_active_output_audio_device(GtkWidget *output)
+select_active_audio_device(GtkWidget *widget, guint index)
 {
-    // Select active output device on server
+    // Select active device
     gchar **devices = dbus_get_current_audio_devices_index();
-    if (devices && devices[0]) {
+    if (!devices || !devices[index])
+        goto error;
 
-        int currentDeviceIndex = atoi(devices[0]);
-        g_strfreev(devices);
-        g_debug("audio device index for output = %d", currentDeviceIndex);
-        GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(output));
+    const gint currentDeviceIndex = atoi(devices[index]);
+    g_strfreev(devices);
+    GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(widget));
 
-        // Find the currently set output device
-        GtkTreeIter iter;
-        gtk_tree_model_get_iter_first(model, &iter);
-
-        do {
-            int deviceIndex;
-            gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-
-            if (deviceIndex == currentDeviceIndex) {
-                // Set current iteration the active one
-                gtk_combo_box_set_active_iter(GTK_COMBO_BOX(output), &iter);
-                return;
-            }
-        } while (gtk_tree_model_iter_next(model, &iter));
+    // Find the currently set device
+    GtkTreeIter iter;
+    if (!gtk_tree_model_get_iter_first(model, &iter)) {
+        g_warning("Tree is empty");
+        goto error;
     }
 
+    do {
+        int deviceIndex;
+        gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+
+        if (deviceIndex == currentDeviceIndex) {
+            // Set current iteration the active one
+            gtk_combo_box_set_active_iter(GTK_COMBO_BOX(widget), &iter);
+            return;
+        }
+    } while (gtk_tree_model_iter_next(model, &iter));
+
+error:
     // No index was found, select first one
-    g_warning("No active output device found");
-    gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
-}
-
-
-/**
- * Select active output audio device
- */
-static void
-select_active_ringtone_audio_device(GtkWidget *ringtone)
-{
-    // Select active ringtone device on server
-    gchar **devices = dbus_get_current_audio_devices_index();
-    if (devices && devices[2]) {
-        const gint currentDeviceIndex = atoi(devices[2]);
-        g_strfreev(devices);
-        g_debug("audio device index for ringtone = %d", currentDeviceIndex);
-        GtkTreeModel* model = gtk_combo_box_get_model(GTK_COMBO_BOX(ringtone));
-
-        // Find the currently set ringtone device
-        GtkTreeIter iter;
-        gtk_tree_model_get_iter_first(model, &iter);
-
-        do {
-            int deviceIndex;
-            gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-
-            if (deviceIndex == currentDeviceIndex) {
-                // Set current iteration the active one
-                gtk_combo_box_set_active_iter(GTK_COMBO_BOX(ringtone), &iter);
-                return;
-            }
-        } while (gtk_tree_model_iter_next(model, &iter));
-    }
-
-    // No index was found, select first one
-    g_warning("No active ringtone device found");
-    gtk_combo_box_set_active(GTK_COMBO_BOX(ringtone), 0);
+    g_warning("No active device found");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(widget), 0);
 }
 
 static GtkListStore*
@@ -224,37 +195,6 @@ create_input_list_store()
 {
     gchar **list = dbus_get_audio_input_device_list();
     return create_device_list_store(list);
-}
-
-static void
-select_active_input_audio_device(GtkWidget *input)
-{
-    // Select active input device on server
-    gchar **devices = dbus_get_current_audio_devices_index();
-    if (devices && devices[1]) {
-        int currentDeviceIndex = atoi(devices[1]);
-        g_strfreev(devices);
-        GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(input));
-
-        // Find the currently set input device
-        GtkTreeIter iter;
-        gtk_tree_model_get_iter_first(model, &iter);
-
-        do {
-            int deviceIndex;
-            gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-
-            if (deviceIndex == currentDeviceIndex) {
-                // Set current iteration the active one
-                gtk_combo_box_set_active_iter(GTK_COMBO_BOX(input), &iter);
-                return;
-            }
-        } while (gtk_tree_model_iter_next(model, &iter));
-    }
-
-    // No index was found, select first one
-    g_warning("No active input device found");
-    gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
 }
 
 static void
@@ -294,7 +234,10 @@ select_active_output_alsa_plugin(GtkWidget *alsa_plugin)
 
     // Find the current alsa plugin
     GtkTreeIter iter;
-    gtk_tree_model_get_iter_first(model, &iter);
+    if (!gtk_tree_model_get_iter_first(model, &iter)) {
+        g_warning("Tree is empty");
+        goto error;
+    }
 
     gchar *alsa_pluginname = dbus_get_current_audio_output_plugin();
     gchar *tmp = alsa_pluginname;
@@ -311,6 +254,7 @@ select_active_output_alsa_plugin(GtkWidget *alsa_plugin)
     } while (gtk_tree_model_iter_next(model, &iter));
     g_free(alsa_pluginname);
 
+error:
     // No index was found, select first one
     g_warning("No active output device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(alsa_plugin), 0);
@@ -625,7 +569,7 @@ static GtkWidget* alsa_box()
     // Set choices of output devices
     GtkListStore *outputlist = create_output_list_store();
     alsa_output = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputlist));
-    select_active_output_audio_device(alsa_output);
+    select_active_audio_device(alsa_output, OUTPUT_INDEX);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), alsa_output);
     g_signal_connect(G_OBJECT(alsa_output), "changed", G_CALLBACK(select_audio_output_device), NULL);
 
@@ -647,7 +591,7 @@ static GtkWidget* alsa_box()
     // Set choices of input devices
     GtkListStore *inputlist = create_input_list_store();
     alsa_input = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputlist));
-    select_active_input_audio_device(alsa_input);
+    select_active_audio_device(alsa_input, INPUT_INDEX);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), alsa_input);
     g_signal_connect(G_OBJECT(alsa_input), "changed", G_CALLBACK(select_audio_input_device), NULL);
 
@@ -666,7 +610,7 @@ static GtkWidget* alsa_box()
     // set choices of ringtone devices
     GtkListStore *ringtonelist = create_output_list_store();
     alsa_ringtone = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ringtonelist));
-    select_active_ringtone_audio_device(alsa_ringtone);
+    select_active_audio_device(alsa_ringtone, RINGTONE_INDEX);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), alsa_output);
     g_signal_connect(G_OBJECT(alsa_ringtone), "changed", G_CALLBACK(select_audio_ringtone_device), NULL);
 
@@ -707,7 +651,7 @@ static GtkWidget* pulse_box()
     // Set choices of output devices
     GtkListStore *outputlist = create_output_list_store();
     GtkWidget *pulse_output = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputlist));
-    select_active_output_audio_device(pulse_output);
+    select_active_audio_device(pulse_output, OUTPUT_INDEX);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), pulse_output);
     g_signal_connect(G_OBJECT(pulse_output), "changed", G_CALLBACK(select_audio_output_device), NULL);
 
@@ -729,7 +673,7 @@ static GtkWidget* pulse_box()
     // Set choices of output devices
     GtkListStore *inputlist = create_input_list_store();
     GtkWidget *pulse_input = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputlist));
-    select_active_input_audio_device(pulse_input);
+    select_active_audio_device(pulse_input, INPUT_INDEX);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), pulse_input);
     g_signal_connect(G_OBJECT(pulse_input), "changed", G_CALLBACK(select_audio_input_device), NULL);
 
@@ -748,7 +692,7 @@ static GtkWidget* pulse_box()
     // set choices of ringtone devices
     GtkListStore *ringtonelist = create_output_list_store();
     GtkWidget *ringtone = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ringtonelist));
-    select_active_ringtone_audio_device(ringtone);
+    select_active_audio_device(ringtone, RINGTONE_INDEX);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), pulse_output);
     g_signal_connect(G_OBJECT(ringtone), "changed", G_CALLBACK(select_audio_ringtone_device), NULL);
 
