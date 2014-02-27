@@ -280,8 +280,14 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 
     // copy master and slt respectively
     const std::vector<char>::iterator key_end = output.begin() + remoteMasterKey_.size();
+
+    if (key_end > output.end() or
+        (size_t) std::distance(key_end, output.end()) > remoteMasterSalt_.size())
+        THROW_ERROR(AudioSrtpException, "Out of bounds copy");
+
     std::copy(output.begin(), key_end, remoteMasterKey_.begin());
     std::copy(key_end, output.end(), remoteMasterSalt_.begin());
+
 }
 
 void AudioSrtpSession::initializeRemoteCryptoContext()

@@ -380,8 +380,14 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
             sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 
             if (sdesnego.negotiate()) {
-                call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
-                call->getAudioRtp().initLocalCryptoInfo();
+                try {
+                    call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
+                    call->getAudioRtp().initLocalCryptoInfo();
+                } catch (const AudioRtpFactoryException &e) {
+                    ERROR("%s", e.what());
+                    delete call;
+                    return PJ_FALSE;
+                }
             }
 
 #endif

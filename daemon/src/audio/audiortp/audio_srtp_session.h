@@ -65,6 +65,10 @@ class SIPCall;
 
 namespace sfl {
 
+struct AudioSrtpException : public std::runtime_error {
+    AudioSrtpException(const char *msg) : std::runtime_error(msg) {}
+};
+
 class AudioSrtpSession : public AudioSymmetricRtpSession {
     public:
 

@@ -212,7 +212,11 @@ void AudioRtpFactory::setRemoteCryptoInfo(SdesNegotiator& nego)
 
     if (keyExchangeProtocol_ == SDES) {
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_.get());
-        srtp->setRemoteCryptoInfo(nego);
+        try {
+            srtp->setRemoteCryptoInfo(nego);
+        } catch (const AudioSrtpException &e) {
+            throw AudioRtpFactoryException(e.what());
+        }
     } else {
         ERROR("Should not store remote crypto info for non-SDES sessions");
     }
