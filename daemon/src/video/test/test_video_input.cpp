@@ -38,12 +38,7 @@ using namespace std;
 
 void VideoInputTest::testInput()
 {
-    std::map<std::string, std::string> args;
-    args["input"] = "/dev/video0";
-    args["width"] = "640";
-    args["height"] = "480";
-
-    sfl_video::VideoInput camera(args);
+    sfl_video::VideoInput camera("/dev/video0");
     sleep(1);
 }
 
