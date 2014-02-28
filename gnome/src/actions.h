@@ -261,6 +261,8 @@ void sflphone_srtp_sdes_off(callable_obj_t * c, SFLPhoneClient *client);
 
 void sflphone_fill_conference_list(SFLPhoneClient *client);
 
+char *sflphone_get_display(void);
+
 void sflphone_toggle_screenshare(void);
 
 #endif

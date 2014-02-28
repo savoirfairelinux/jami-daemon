@@ -1014,8 +1014,8 @@ sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const
 }
 
 #ifdef SFL_VIDEO
-static char *
-get_display(void)
+char *
+sflphone_get_display(void)
 {
     int width = gdk_screen_width();
     int height = gdk_screen_height();
@@ -1033,7 +1033,7 @@ sflphone_toggle_screenshare(void)
     gchar *device;
 
     if (screenshare) {
-        device = get_display();
+        device = sflphone_get_display();
 
         g_debug("enabling screen sharing (%s)", device);
         dbus_switch_video_input(device);
