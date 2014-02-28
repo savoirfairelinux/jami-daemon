@@ -97,7 +97,7 @@ void strErr();
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 // No format strings/varargs allowed
-#define THROW_ERROR(EXCEPTION_CLASS, M) throw EXCEPTION_CLASS(FILE_NAME ":" TOSTRING(__LINE__) ":" M)
+#define THROW_ERROR(EXCEPTION_CLASS, M) throw EXCEPTION_CLASS(__FILE__ ":" TOSTRING(__LINE__) ":" M)
 
 #endif // LOGGER_H_
 
