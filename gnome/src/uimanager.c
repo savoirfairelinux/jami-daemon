@@ -682,22 +682,23 @@ static void
 call_screenshare(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
 #ifdef SFL_VIDEO
-    callable_obj_t *selectedCall = calltab_get_selected_call(current_calls_tab);
-    conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls_tab);
-
-    if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
-        if (selectedCall)
-            sflphone_toggle_screenshare();
-        else
-            g_warning("Sorry. Screen sharing is not allowed outside a call\n");
-    } else {
-        if (selectedConf)
-            g_warning("Sorry. Screen sharing is not allowed yet in conference\n");
-        else
-            g_warning("Sorry. Screen sharing is not allowed outside a call\n");
-    }
+    sflphone_toggle_screenshare();
 #endif
 }
+
+#ifdef SFL_VIDEO
+static void
+call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
+{
+    if (strcmp(device, "Screen") == 0) {
+        gchar *display = sflphone_get_display();
+        dbus_switch_video_input(display);
+        g_free(display);
+    } else {
+        dbus_switch_video_input(device);
+    }
+}
+#endif
 
 static void
 conference_hold(G_GNUC_UNUSED gpointer foo)
@@ -1250,13 +1251,25 @@ static void menu_popup_wrapper(GtkWidget *menu, GtkWidget *my_widget, GdkEventBu
                        gtk_get_current_event_time());
 }
 
+#ifdef SFL_VIDEO
+static void
+append_video_input_to_submenu(GtkWidget *submenu, const gchar *device)
+{
+    GtkWidget *item = gtk_image_menu_item_new_with_mnemonic(_(device));
+    gtk_menu_shell_append(GTK_MENU_SHELL(submenu), item);
+    g_signal_connect(G_OBJECT(item), "activate",
+            G_CALLBACK(call_switch_video_input), (gpointer) device);
+    gtk_widget_show(item);
+}
+#endif
+
 void
 show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *client)
 {
     // TODO update the selection to make sure the call under the mouse is the call selected
     gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE, im = FALSE;
 #ifdef SFL_VIDEO
-    gboolean screenshare = FALSE;
+    gboolean video_sources = FALSE;
 #endif
     gboolean accounts = FALSE;
 
@@ -1296,7 +1309,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                     record = TRUE;
                     im = TRUE;
 #ifdef SFL_VIDEO
-                    screenshare = TRUE;
+                    video_sources = TRUE;
 #endif
                     break;
                 case CALL_STATE_BUSY:
@@ -1427,19 +1440,30 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
         }
 
 #ifdef SFL_VIDEO
-        if (screenshare) {
-            GtkWidget *menu_items = gtk_separator_menu_item_new();
-            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
-            gtk_widget_show(menu_items);
+        if (video_sources) {
+            GtkWidget *video_sep, *video_item, *video_menu;
 
-            menu_items = gtk_image_menu_item_new_with_mnemonic(_("Share screen"));
-            GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_FULLSCREEN, GTK_ICON_SIZE_MENU);
-            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
-            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
-            g_signal_connect(G_OBJECT(menu_items), "activate",
-                    G_CALLBACK(call_screenshare),
-                    selectedCall);
-            gtk_widget_show(menu_items);
+            video_sep = gtk_separator_menu_item_new();
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), video_sep);
+            gtk_widget_show(video_sep);
+
+            /* Add a video sources menu */
+            video_item = gtk_image_menu_item_new_with_mnemonic(_("Video sources"));
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), video_item);
+            gtk_widget_show(video_item);
+
+            video_menu = gtk_menu_new();
+            gtk_menu_item_set_submenu(GTK_MENU_ITEM(video_item), video_menu);
+
+            /* Append sources to the submenu */
+            gchar **video_list = dbus_get_video_device_list();
+            while (*video_list) {
+                append_video_input_to_submenu(video_menu, *video_list);
+                //g_free(*video_list);
+                video_list++;
+            }
+            /* Add the special X11 device */
+            append_video_input_to_submenu(video_menu, "Screen");
         }
 #endif
     } else {
