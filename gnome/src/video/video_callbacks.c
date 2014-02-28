@@ -164,7 +164,7 @@ void started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
         gtk_widget_destroy(video_area);
     } else {
         ClutterColor stage_color = { 0x61, 0x64, 0x8c, 0xff };
-        clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color);
+        clutter_actor_set_background_color(CLUTTER_ACTOR(stage), &stage_color);
     }
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
