@@ -55,6 +55,8 @@
 #include <cstdlib>
 #include <array>
 #include <memory>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 
 #ifdef SFL_VIDEO
@@ -711,6 +713,23 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseInt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     parseString(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
     parseString(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+
+    DEBUG("Checking certificate");
+    FILE *fileCheck = fopen(tlsCaListFile_.c_str(), "r");
+    X509* x509 = PEM_read_X509(fileCheck, NULL, NULL, NULL);
+    if (x509 != NULL)
+    {
+        char* p = X509_NAME_oneline(X509_get_issuer_name(x509), 0, 0);
+        if (p)
+        {
+            DEBUG("NAME: %s\n", p);
+            OPENSSL_free(p);
+        }
+        X509_free(x509);
+    } else {
+        ERROR("Could not get certificate issuer");
+    }
+
     parseString(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
     parseString(details, CONFIG_TLS_PASSWORD, tlsPassword_);
     iter = details.find(CONFIG_TLS_METHOD);
