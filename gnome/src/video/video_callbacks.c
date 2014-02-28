@@ -170,7 +170,11 @@ void started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_add(GTK_CONTAINER(vbox), video_area);
 
-    gtk_widget_set_size_request(video_area, width, height);
+    if (video_is_local(id))
+        gtk_widget_set_size_request(video_area, 200, 150);
+    else
+        gtk_widget_set_size_request(video_area, width, height);
+
     if (handle) {
         gtk_container_add(GTK_CONTAINER(handle->window), vbox);
         gtk_widget_show_all(handle->window);
