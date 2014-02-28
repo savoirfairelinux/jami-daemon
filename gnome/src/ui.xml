@@ -7,6 +7,7 @@
       <menuitem action="HangUp"/>
       <menuitem name="OnHoldMenu" action="OnHold"/>
       <menuitem action="InstantMessaging"/>
+      <menuitem action="ScreenSharing"/>
       <menuitem action="Record"/>
       <separator/>
       <menuitem action="AccountAssistant"/>
