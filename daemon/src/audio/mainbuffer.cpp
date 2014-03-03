@@ -39,7 +39,7 @@
 
 const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
-MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalAudioFormat_(48000, 1)
+MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), stateLock_(), internalAudioFormat_(AudioFormat::MONO)
 {}
 
 MainBuffer::~MainBuffer()
@@ -68,12 +68,12 @@ void MainBuffer::setInternalAudioFormat(AudioFormat format)
 CallIDSet* MainBuffer::getCallIDSet(const std::string &call_id)
 {
     CallIDMap::iterator iter = callIDMap_.find(call_id);
-    return (iter != callIDMap_.end()) ? iter->second : NULL;
+    return (iter != callIDMap_.end()) ? iter->second : nullptr;
 }
 
 void MainBuffer::createCallIDSet(const std::string &set_id)
 {
-    if (getCallIDSet(set_id) == NULL)
+    if (getCallIDSet(set_id) == nullptr)
         callIDMap_[set_id] = new CallIDSet;
     else
         DEBUG("CallID set %s already exists, ignoring", set_id.c_str());
@@ -113,13 +113,13 @@ void MainBuffer::removeCallIDfromSet(const std::string &set_id, const std::strin
 RingBuffer* MainBuffer::getRingBuffer(const std::string & call_id)
 {
     RingBufferMap::iterator iter = ringBufferMap_.find(call_id);
-    return (iter != ringBufferMap_.end()) ? iter->second : NULL;
+    return (iter != ringBufferMap_.end()) ? iter->second : nullptr;
 }
 
 const RingBuffer* MainBuffer::getRingBuffer(const std::string & call_id) const
 {
     RingBufferMap::const_iterator iter = ringBufferMap_.find(call_id);
-    return (iter != ringBufferMap_.end()) ? iter->second : NULL;
+    return (iter != ringBufferMap_.end()) ? iter->second : nullptr;
 }
 
 void MainBuffer::createRingBuffer(const std::string &call_id)
@@ -143,7 +143,7 @@ void MainBuffer::removeRingBuffer(const std::string &call_id)
 
 void MainBuffer::bindCallID(const std::string & call_id1, const std::string & call_id2)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.write());
 
     createRingBuffer(call_id1);
     createCallIDSet(call_id1);
@@ -158,7 +158,7 @@ void MainBuffer::bindCallID(const std::string & call_id1, const std::string & ca
 
 void MainBuffer::bindHalfDuplexOut(const std::string & process_id, const std::string & call_id)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.write());
 
     // This method is used only for active calls, if this call does not exist, do nothing
     if (!getRingBuffer(call_id))
@@ -171,7 +171,7 @@ void MainBuffer::bindHalfDuplexOut(const std::string & process_id, const std::st
 
 void MainBuffer::unBindCallID(const std::string & call_id1, const std::string & call_id2)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.write());
 
     removeCallIDfromSet(call_id1, call_id2);
     removeCallIDfromSet(call_id2, call_id1);
@@ -201,7 +201,7 @@ void MainBuffer::unBindCallID(const std::string & call_id1, const std::string & 
 
 void MainBuffer::unBindHalfDuplexOut(const std::string & process_id, const std::string & call_id)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.write());
 
     removeCallIDfromSet(process_id, call_id);
 
@@ -229,7 +229,7 @@ void MainBuffer::unBindAll(const std::string & call_id)
 {
     CallIDSet* callid_set = getCallIDSet(call_id);
 
-    if (callid_set == NULL or callid_set->empty())
+    if (callid_set == nullptr or callid_set->empty())
         return;
 
     CallIDSet temp_set(*callid_set);
@@ -240,7 +240,7 @@ void MainBuffer::unBindAll(const std::string & call_id)
 
 void MainBuffer::putData(AudioBuffer& buffer, const std::string &call_id)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.read());
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
 
@@ -250,11 +250,11 @@ void MainBuffer::putData(AudioBuffer& buffer, const std::string &call_id)
 
 size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.read());
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
-    if (callid_set == NULL or callid_set->empty())
+    if (callid_set == nullptr or callid_set->empty())
         return 0;
 
     if (callid_set->size() == 1) {
@@ -284,6 +284,47 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
     }
 }
 
+size_t MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string &call_id)
+{
+    auto lock(stateLock_.read());
+
+    CallIDSet* callid_set = getCallIDSet(call_id);
+    if (callid_set == nullptr or callid_set->empty())
+        return 0;
+
+    if (callid_set->size() == 1) {
+        CallIDSet::iterator iter_id = callid_set->begin();
+        RingBuffer *const ringbuffer = getRingBuffer(*iter_id);
+        if(!ringbuffer) return 0;
+        return ringbuffer->get(buffer, call_id);
+    } else {
+        size_t availableSamples = std::numeric_limits<size_t>::max();
+        for (const auto &i : *callid_set) {
+            const RingBuffer* ringbuffer = getRingBuffer(i);
+            if(!ringbuffer) continue;
+            availableSamples = std::min(availableSamples, ringbuffer->availableForGet(i));
+        }
+        if(availableSamples == std::numeric_limits<size_t>::max())
+            return 0;
+        availableSamples = std::min(availableSamples, buffer.frames());
+        buffer.resize(availableSamples);
+        buffer.reset();
+        buffer.setFormat(internalAudioFormat_);
+
+        size_t size = 0;
+        AudioBuffer mixBuffer(buffer);
+
+        for (const auto &item_id : *callid_set) {
+            size = getDataByID(mixBuffer, item_id, call_id);
+            if (size > 0) {
+                buffer.mix(mixBuffer);
+            }
+        }
+
+        return availableSamples;
+    }
+}
+
 size_t MainBuffer::getDataByID(AudioBuffer& buffer, const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ring_buffer = getRingBuffer(call_id);
@@ -292,11 +333,11 @@ size_t MainBuffer::getDataByID(AudioBuffer& buffer, const std::string & call_id,
 
 size_t MainBuffer::availableForGet(const std::string &call_id)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.read());
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
-    if (callid_set == NULL or callid_set->empty())
+    if (callid_set == nullptr or callid_set->empty())
         return 0;
 
     if (callid_set->size() == 1) {
@@ -330,7 +371,7 @@ size_t MainBuffer::availableForGetByID(const std::string &call_id,
 
     const RingBuffer* ringbuffer = getRingBuffer(call_id);
 
-    if (ringbuffer == NULL) {
+    if (ringbuffer == nullptr) {
         ERROR("RingBuffer does not exist");
         return 0;
     } else
@@ -340,7 +381,7 @@ size_t MainBuffer::availableForGetByID(const std::string &call_id,
 
 size_t MainBuffer::discard(size_t toDiscard, const std::string &call_id)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.read());
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -363,11 +404,10 @@ void MainBuffer::discardByID(size_t toDiscard, const std::string & call_id, cons
 
 void MainBuffer::flush(const std::string & call_id)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
+    auto lock(stateLock_.read());
 
     CallIDSet* callid_set = getCallIDSet(call_id);
-
-    if (callid_set == NULL)
+    if (callid_set == nullptr)
         return;
 
     for (auto &item : *callid_set)
@@ -377,14 +417,14 @@ void MainBuffer::flush(const std::string & call_id)
 void MainBuffer::flushByID(const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ringbuffer = getRingBuffer(call_id);
-
     if (ringbuffer)
         ringbuffer->flush(reader_id);
 }
 
-
 void MainBuffer::flushAllBuffers()
 {
+    auto lock(stateLock_.read());
+
     for (auto &item : ringBufferMap_)
         item.second->flushAll();
 }

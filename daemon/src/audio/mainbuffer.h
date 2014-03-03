@@ -31,14 +31,15 @@
 #ifndef MAIN_BUFFER_H_
 #define MAIN_BUFFER_H_
 
+#include "audiobuffer.h"
+#include "mainbuffer.h"
+#include "rw_mutex.h"
+#include "noncopyable.h"
+
 #include <map>
 #include <set>
 #include <string>
 #include <mutex>
-
-#include "audiobuffer.h"
-#include "mainbuffer.h"
-#include "noncopyable.h"
 
 class RingBuffer;
 
@@ -93,6 +94,7 @@ class MainBuffer {
         void putData(AudioBuffer& buffer, const std::string &call_id);
 
         size_t getData(AudioBuffer& buffer, const std::string &call_id);
+        size_t getAvailableData(AudioBuffer& buffer, const std::string &call_id);
 
         size_t availableForGet(const std::string &call_id);
 
@@ -142,7 +144,7 @@ class MainBuffer {
         typedef std::map<std::string, CallIDSet*> CallIDMap;
         CallIDMap callIDMap_;
 
-        std::mutex mutex_;
+        sfl::rw_mutex stateLock_;
 
         AudioFormat internalAudioFormat_;
 
