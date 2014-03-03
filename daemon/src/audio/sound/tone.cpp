@@ -59,8 +59,8 @@ Tone::genBuffer(const std::string& definition)
     size_t size = 0;
     const int sampleRate = buffer_->getSampleRate();
 
-    std::vector<SFLAudioSample> buffer(SIZEBUF); // 1kb
-    SFLAudioSample* bufferPos = buffer.data();
+    std::vector<SFLAudioSample> buffer(SIZEBUF);
+    size_t bufferPos(0);
 
     // Number of format sections
     std::string::size_type posStart = 0; // position of precedent comma
@@ -113,7 +113,8 @@ Tone::genBuffer(const std::string& definition)
                 count = (sampleRate * time) / 1000;
 
             // Generate SAMPLING_RATE samples of sinus, buffer is the result
-            genSin(bufferPos, freq1, freq2, count);
+            buffer.resize(size+count);
+            genSin(&(*(buffer.begin()+bufferPos)), freq1, freq2, count);
 
             // To concatenate the different buffers for each section.
             size += count;
@@ -129,11 +130,11 @@ Tone::genBuffer(const std::string& definition)
 void
 Tone::fillWavetable()
 {
-    double tableSize = TABLE_LENGTH;
+    static const double TABLE_SZ = TABLE_LENGTH - 1.0;
     static const double TWO_PI = 2.0 * M_PI;
 
     for (int i = 0; i < TABLE_LENGTH; ++i)
-        wavetable_[i] = sin((i / (tableSize - 1.0)) * TWO_PI);
+        wavetable_[i] = sin((i / TABLE_SZ) * TWO_PI);
 }
 
 double
