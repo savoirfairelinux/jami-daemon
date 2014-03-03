@@ -86,7 +86,7 @@ AudioRtpStream::getCurrentEncoder() const
 {
     if (audioCodecs_.empty() or currentEncoderIndex_ >= audioCodecs_.size()) {
         ERROR("No codec found");
-        return 0;
+        return nullptr;
     }
 
     return audioCodecs_[currentEncoderIndex_];
@@ -97,7 +97,7 @@ AudioRtpStream::getCurrentDecoder() const
 {
     if (audioCodecs_.empty() or currentDecoderIndex_ >= audioCodecs_.size()) {
         ERROR("No codec found");
-        return 0;
+        return nullptr;
     }
 
     return audioCodecs_[currentDecoderIndex_];
@@ -257,8 +257,6 @@ void AudioRtpStream::resetDSP()
 }
 #endif
 
-#define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }
-
 size_t AudioRtpStream::processDataEncode()
 {
     if (isDead())
@@ -285,7 +283,10 @@ size_t AudioRtpStream::processDataEncode()
 
     AudioBuffer *out = &micData_;
     if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
-        RETURN_IF_NULL(encoder_.resampler, 0, "Resampler already destroyed");
+        if(!encoder_.resampler) {
+            ERROR("Resampler already destroyed");
+            return 0;
+        }
         encoder_.resampledData.setChannelNum(mainBuffFormat.nb_channels);
         encoder_.resampledData.setSampleRate(encoder_.format.sample_rate);
         encoder_.resampler->resample(micData_, encoder_.resampledData);
@@ -300,14 +301,15 @@ size_t AudioRtpStream::processDataEncode()
 #endif
     {
         std::lock_guard<std::mutex> lock(codecEncMutex_);
-        RETURN_IF_NULL(getCurrentEncoder(), 0, "Audio codec already destroyed");
-        size_t encoded = getCurrentEncoder()->encode(out->getData(), encodedData_.data(), encodedData_.size());
+        auto codec = getCurrentEncoder();
+        if(!codec) {
+            ERROR("Audio codec already destroyed");
+            return 0;
+        }
+        size_t encoded = codec->encode(out->getData(), encodedData_.data(), encodedData_.size());
         return encoded;
     }
 }
-#undef RETURN_IF_NULL
-
-#define RETURN_IF_NULL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return; }
 
 void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
@@ -329,12 +331,16 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
         }
     }
 
+    rawBuffer_.setFormat(decoder_.format);
+    rawBuffer_.resize(RAW_BUFFER_SIZE);
     {
         std::lock_guard<std::mutex> lock(codecDecMutex_);
-        RETURN_IF_NULL(getCurrentDecoder(), "Audio codecs already destroyed");
-        rawBuffer_.setFormat(decoder_.format);
-        rawBuffer_.resize(RAW_BUFFER_SIZE);
-        int decoded = getCurrentDecoder()->decode(rawBuffer_.getData(), spkrData, size);
+        auto codec = getCurrentDecoder();
+        if(!codec) {
+            ERROR("Audio codec already destroyed");
+            return;
+        }
+        int decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
         rawBuffer_.resize(decoded);
     }
 
@@ -342,14 +348,17 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     decoder_.applyDSP(rawBuffer_);
 #endif
 
-    encoder_.fadeIn(rawBuffer_);
+    decoder_.fadeIn(rawBuffer_);
 
     // test if resampling or up/down-mixing is required
     AudioBuffer *out = &rawBuffer_;
     AudioFormat decFormat = out->getFormat();
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
-        RETURN_IF_NULL(decoder_.resampler, "Resampler already destroyed");
+        if(!decoder_.resampler) {
+            ERROR("Resampler already destroyed");
+            return;
+        }
         decoder_.resampledData.setChannelNum(decFormat.nb_channels);
         decoder_.resampledData.setSampleRate(mainBuffFormat.sample_rate);
         decoder_.resampler->resample(rawBuffer_, decoder_.resampledData);
@@ -359,7 +368,6 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
         out->setChannelNum(mainBuffFormat.nb_channels, true);
     Manager::instance().getMainBuffer().putData(*out, id_);
 }
-#undef RETURN_IF_NULL
 
 bool
 AudioRtpStream::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
