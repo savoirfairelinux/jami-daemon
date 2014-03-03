@@ -55,8 +55,12 @@
 #include <cstdlib>
 #include <array>
 #include <memory>
+
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
 
 
 #ifdef SFL_VIDEO
@@ -1063,7 +1067,81 @@ void SIPAccount::initTlsConfiguration()
 
 void SIPAccount::verifySSLCertificate(const char* certificatePath)
 {
+    BIO *sbio;
+    SSL_CTX *ssl_ctx;
+    SSL *ssl;
+    X509 *server_cert;
+
+    // Initialize OpenSSL
+    SSL_library_init();
+    SSL_load_error_strings();
+
+    // Check OpenSSL PRNG
+    if(RAND_status() != 1) {
+        DEBUG("OpenSSL PRNG not seeded with enough data.");
+        EVP_cleanup();
+        ERR_free_strings();
+        return;
+    }
+
+    ssl_ctx = SSL_CTX_new(TLSv1_client_method());
+
+    // Enable certificate validation
+    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
+    // Configure the CA trust store to be used
+    if (SSL_CTX_load_verify_locations(ssl_ctx, certificatePath, NULL) != 1) {
+        DEBUG("Couldn't load certificate trust store.");
+        SSL_CTX_free(ssl_ctx);
+        return;
+    }
+
+    // Only support secure cipher suites
+    //if (SSL_CTX_set_cipher_list(ssl_ctx, SECURE_CIPHER_LIST) != 1)
+    //    return;
+
+    // Create the SSL connection
+    sbio = BIO_new_ssl_connect(ssl_ctx);
+    BIO_get_ssl(sbio, &ssl);
+    if(!ssl) {
+        DEBUG("Can't locate SSL pointer\n");
+        BIO_free_all(sbio);
+        return;
+    }
+
     DEBUG("Checking certificate");
+
+    BIO_set_conn_hostname(sbio, "192.95.9.63:5061");
+    if(SSL_do_handshake(ssl) <= 0) {
+        // SSL Handshake failed
+        long verify_err = SSL_get_verify_result(ssl);
+        if (verify_err != X509_V_OK) {
+            // It failed because the certificate chain validation failed
+            DEBUG("Certificate chain validation failed: %s", X509_verify_cert_error_string(verify_err));
+        }
+        else {
+            DEBUG("Boohoohoo, ssl handshake failed");
+            // It failed for another reason
+            ERR_print_errors_fp(stderr);
+        }
+        BIO_free_all(sbio);
+        return;
+    }
+
+    // Recover the server's certificate
+    server_cert =  SSL_get_peer_certificate(ssl);
+    if (server_cert == NULL) {
+        // The handshake was successful although the server did not provide a certificate
+        // Most likely using an insecure anonymous cipher suite... get out!
+
+        BIO_ssl_shutdown(sbio);
+        return;
+    }
+
+
+    DEBUG("Ok, we are good to go");
+
+
+
     FILE *fileCheck = fopen(certificatePath, "r");
     X509* x509 = PEM_read_X509(fileCheck, NULL, NULL, NULL);
     if (x509 != NULL)
@@ -1071,7 +1149,7 @@ void SIPAccount::verifySSLCertificate(const char* certificatePath)
         char* p = X509_NAME_oneline(X509_get_issuer_name(x509), 0, 0);
         if (p)
         {
-            DEBUG("NAME: %s\n", p);
+            DEBUG("NAME: %s", p);
             OPENSSL_free(p);
         }
         X509_free(x509);
