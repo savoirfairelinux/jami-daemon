@@ -28,101 +28,24 @@
  *  as that of the covered work.
  */
 
+#include "opensllayer.h"
+
+#include "client/configurationmanager.h"
+
+#include "manager.h"
+#include "mainbuffer.h"
+#include "audio/dcblocker.h"
+#include "logger.h"
+#include "array_size.h"
+
+#include <thread>
+#include <chrono>
 #include <cstdio>
 #include <cassert>
 #include <unistd.h>
 
-#include "logger.h"
-#include "array_size.h"
-#include "manager.h"
-#include "mainbuffer.h"
-#include "audio/dcblocker.h"
-
-#include "client/configurationmanager.h"
-
-#include "opensllayer.h"
-
 const int OpenSLLayer::NB_BUFFER_PLAYBACK_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 const int OpenSLLayer::NB_BUFFER_CAPTURE_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
-
-class OpenSLThread {
-    public:
-        OpenSLThread(OpenSLLayer *opensl);
-        ~OpenSLThread();
-        void initAudioLayer();
-        void start();
-        bool isRunning() const;
-
-    private:
-        void run();
-        static void *runCallback(void *context);
-
-        NON_COPYABLE(OpenSLThread);
-        pthread_t thread_;
-        OpenSLLayer* opensl_;
-        bool running_;
-};
-
-OpenSLThread::OpenSLThread(OpenSLLayer *opensl)
-    : thread_(0), opensl_(opensl), running_(false)
-{}
-
-bool
-OpenSLThread::isRunning() const
-{
-    return running_;
-}
-
-OpenSLThread::~OpenSLThread()
-{
-    running_ = false;
-    opensl_->shutdownAudioEngine();
-
-    if (thread_)
-        pthread_join(thread_, nullptr);
-}
-
-void
-OpenSLThread::start()
-{
-    running_ = true;
-    pthread_create(&thread_, nullptr, &runCallback, this);
-}
-
-void *
-OpenSLThread::runCallback(void *data)
-{
-    OpenSLThread *context = static_cast<OpenSLThread*>(data);
-    context->run();
-    return nullptr;
-}
-
-void
-OpenSLThread::initAudioLayer()
-{
-    opensl_->initAudioEngine();
-    opensl_->initAudioPlayback();
-    opensl_->initAudioCapture();
-
-    opensl_->flushMain();
-    opensl_->flushUrgent();
-}
-
-/**
- * Reimplementation of run()
- */
-void
-OpenSLThread::run()
-{
-    initAudioLayer();
-
-    opensl_->startAudioPlayback();
-    opensl_->startAudioCapture();
-    opensl_->isStarted_ = true;
-
-    while (opensl_->isStarted_)
-        usleep(20000); // 20 ms
-}
 
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
@@ -153,11 +76,21 @@ OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
 OpenSLLayer::~OpenSLLayer()
 {
     isStarted_ = false;
-    delete audioThread_;
 
     /* Then close the audio devices */
     stopAudioPlayback();
     stopAudioCapture();
+}
+
+void
+OpenSLLayer::init()
+{
+    initAudioEngine();
+    initAudioPlayback();
+    initAudioCapture();
+
+    flushMain();
+    flushUrgent();
 }
 
 void
@@ -181,13 +114,13 @@ OpenSLLayer::startStream()
 
     hardwareFormatAvailable(hardwareFormat_);
 
-    if (audioThread_ == nullptr) {
-        audioThread_ = new OpenSLThread(this);
-        audioThread_->start();
-    } else if (!audioThread_->isRunning()) {
-        audioThread_->start();
-    }
-
+    std::thread launcher([this](){
+        init();
+        startAudioPlayback();
+        startAudioCapture();
+        isStarted_ = true;
+    });
+    launcher.detach();
 }
 
 void
@@ -202,9 +135,6 @@ OpenSLLayer::stopStream()
     stopAudioCapture();
 
     isStarted_ = false;
-
-    delete audioThread_;
-    audioThread_ = nullptr;
 
     flushMain();
     flushUrgent();
@@ -652,42 +582,41 @@ void
 OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
     assert(nullptr != context);
+    auto start = std::chrono::high_resolution_clock::now();
     static_cast<OpenSLLayer*>(context)->playback(queue);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+    DEBUG("Took %d us\n", elapsed/1000);
 }
 
 void
 OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(nullptr != queue);
-
 	notifyIncomingCall();
 
     AudioBuffer &buffer = getNextPlaybackBuffer();
-
-    size_t samplesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
     size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
 	bufferIsFilled_ = false;
-	//DEBUG("samplesToGet:%d", samplesToGet);
-	//DEBUG("urgentSamplesToGet:%d", urgentSamplesToGet);
-
     if (urgentSamplesToGet > 0)
-        bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, urgentSamplesToGet);
+        bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, std::min(urgentSamplesToGet, hardwareBuffSize_));
     else {
-		if (samplesToGet > 0)
-			bufferIsFilled_ = audioPlaybackFillWithVoice(buffer, samplesToGet);
-        else {
+        auto& main_buffer = Manager::instance().getMainBuffer();
+        buffer.resize(hardwareBuffSize_);
+        size_t samplesToGet = audioPlaybackFillWithVoice(buffer);
+        if (samplesToGet == 0) {
             bufferIsFilled_ = audioPlaybackFillWithToneOrRingtone(buffer);
+        } else {
+            bufferIsFilled_ = true;
         }
 	}
 
     if (bufferIsFilled_) {
         SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
-
         if (SL_RESULT_SUCCESS != result) {
             DEBUG("Error could not enqueue buffers in playback callback\n");
         }
-
         incrementPlaybackIndex();
     } else {
 		DEBUG("Error buffer not filled in audio playback\n");
@@ -714,7 +643,6 @@ OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
     result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
-    
 
     audioCaptureFillBuffer(old_buffer);
 
@@ -799,14 +727,12 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
     return true;
 }
 
-bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
+size_t OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer)
 {
     MainBuffer &mainBuffer = Manager::instance().getMainBuffer();
-
-    buffer.resize(samplesAvail);
-    mainBuffer.getData(buffer, MainBuffer::DEFAULT_ID);
+    size_t got = mainBuffer.getAvailableData(buffer, MainBuffer::DEFAULT_ID);
+    buffer.resize(got);
     buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-
     if (audioFormat_.sample_rate != mainBuffer.getInternalSamplingRate()) {
         DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
         AudioBuffer out(buffer, false);
@@ -814,8 +740,7 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t samples
         resampler_.resample(buffer, out);
         buffer = out;
     }
-
-    return true;
+    return buffer.size();
 }
 
 void dumpAvailableEngineInterfaces()

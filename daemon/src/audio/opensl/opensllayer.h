@@ -44,7 +44,7 @@ class AudioPreference;
 class OpenSLThread;
 
 #define ANDROID_BUFFER_QUEUE_LENGTH 2U
-#define BUFFER_SIZE 64U
+#define BUFFER_SIZE 512U
 
 #define MAX_NUMBER_INTERFACES 5
 #define MAX_NUMBER_INPUT_DEVICES 3
@@ -90,6 +90,8 @@ class OpenSLLayer : public AudioLayer {
          */
         virtual std::vector<std::string> getPlaybackDeviceList() const;
 
+        void init();
+
         void initAudioEngine();
 
         void shutdownAudioEngine();
@@ -127,7 +129,7 @@ class OpenSLLayer : public AudioLayer {
 
         bool audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesAvail);
 
-        bool audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
+        size_t audioPlaybackFillWithVoice(AudioBuffer &buffer);
 
         void audioCaptureFillBuffer(AudioBuffer &buffer);
 
