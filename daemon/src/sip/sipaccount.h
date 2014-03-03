@@ -619,6 +619,11 @@ class SIPAccount : public Account {
          * great, so this function forces our cipher list to fit this constraint.
          */
         void trimCiphers();
+
+        /**
+         * Verify SSL certificate
+         */
+        void verifySSLCertificate(const char* certificatePath);
 #endif
 
         /**

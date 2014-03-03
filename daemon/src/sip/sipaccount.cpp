@@ -714,21 +714,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseString(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
     parseString(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
 
-    DEBUG("Checking certificate");
-    FILE *fileCheck = fopen(tlsCaListFile_.c_str(), "r");
-    X509* x509 = PEM_read_X509(fileCheck, NULL, NULL, NULL);
-    if (x509 != NULL)
-    {
-        char* p = X509_NAME_oneline(X509_get_issuer_name(x509), 0, 0);
-        if (p)
-        {
-            DEBUG("NAME: %s\n", p);
-            OPENSSL_free(p);
-        }
-        X509_free(x509);
-    } else {
-        ERROR("Could not get certificate issuer");
-    }
+    verifySSLCertificate(tlsCaListFile_.c_str());
 
     parseString(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
     parseString(details, CONFIG_TLS_PASSWORD, tlsPassword_);
@@ -1073,6 +1059,25 @@ void SIPAccount::initTlsConfiguration()
 
     tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
     tlsSetting_.qos_ignore_error = PJ_TRUE;
+}
+
+void SIPAccount::verifySSLCertificate(const char* certificatePath)
+{
+    DEBUG("Checking certificate");
+    FILE *fileCheck = fopen(certificatePath, "r");
+    X509* x509 = PEM_read_X509(fileCheck, NULL, NULL, NULL);
+    if (x509 != NULL)
+    {
+        char* p = X509_NAME_oneline(X509_get_issuer_name(x509), 0, 0);
+        if (p)
+        {
+            DEBUG("NAME: %s\n", p);
+            OPENSSL_free(p);
+        }
+        X509_free(x509);
+    } else {
+        ERROR("Could not get certificate issuer");
+    }
 }
 
 #endif
