@@ -1168,8 +1168,10 @@ void SIPAccount::verifySSLCertificate(std::string& certificatePath, std::string&
 SIPAccount::HostnameValidationResult SIPAccount::validate_hostname(std::string& hostname, const X509 *server_cert) {
     HostnameValidationResult result;
 
-    if(hostname.c_str() == nullptr || (server_cert == nullptr))
+    if(hostname.c_str() == nullptr || (server_cert == nullptr)) {
+        DEBUG("hostname.c_str() == nullptr || (server_cert == nullptr)");
         return Error;
+    }
 
     // First try the Subject Alternative Names extension
     result = matches_subject_alternative_name(hostname, server_cert);
@@ -1210,7 +1212,7 @@ SIPAccount::HostnameValidationResult SIPAccount::matches_common_name(std::string
     if (ASN1_STRING_length(common_name_asn1) != strlen(common_name_str)) {
         return MalformedCertificate;
     }
-
+    DEBUG("hostname = %s and extracted name is %s", hostname.c_str(), common_name_str);
     // Compare expected hostname with the CN
     if (strcasecmp(hostname.c_str(), common_name_str) == 0) {
         return MatchFound;
