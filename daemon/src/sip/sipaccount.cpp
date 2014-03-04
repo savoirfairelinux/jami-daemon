@@ -656,7 +656,6 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     // SIP specific account settings
 
     // general sip settings
-    parseString(details, CONFIG_DISPLAY_NAME, displayName_);
     parseString(details, CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
     parseString(details, CONFIG_LOCAL_INTERFACE, interface_);
     parseBool(details, CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);

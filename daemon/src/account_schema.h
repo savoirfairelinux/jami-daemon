@@ -84,7 +84,6 @@ static const char *const CONFIG_DEFAULT_PUBLISHED_PORT          = "5060";
 static const char *const CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL  = "true";
 static const char *const CONFIG_DEFAULT_INTERFACE               = "default";
 
-static const char *const CONFIG_DISPLAY_NAME                    = "Account.displayName";
 static const char *const CONFIG_DEFAULT_ADDRESS                 = "0.0.0.0";
 
 // SIP specific parameters

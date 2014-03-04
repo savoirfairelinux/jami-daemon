@@ -113,7 +113,6 @@ void IAXAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseString(details, CONFIG_ACCOUNT_PASSWORD, password_);
     parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
     parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
-    parseString(details, CONFIG_DISPLAY_NAME, displayName_);
     parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
 }
 
