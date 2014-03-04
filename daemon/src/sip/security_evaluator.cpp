@@ -46,12 +46,40 @@
 
 #if HAVE_TLS
 
+void SecurityEvaluator::checkPrivateKey(std::string& pemPath) {
+    // Check if it's a valid pem file
+    FILE *keyFile = fopen(pemPath.c_str(), "r");
+    RSA *rsa = PEM_read_RSAPrivateKey(keyFile, NULL, NULL, NULL);
+    if (rsa == NULL) {
+            printf("Badness has occured! Did not read key file\n");
+            return;
+    } else {
+            printf("Opened the key file OK!\n");
+    }
+}
+
 void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::string& host, const std::string& port)
 {
     BIO *sbio;
     SSL_CTX *ssl_ctx;
     SSL *ssl;
     X509 *server_cert;
+
+    // First check local Certificate Authority file
+    FILE *fileCheck = fopen(certificatePath.c_str(), "r");
+    X509* x509 = PEM_read_X509(fileCheck, nullptr, nullptr, nullptr);
+    if (x509 != nullptr)
+    {
+        char* p = X509_NAME_oneline(X509_get_issuer_name(x509), 0, 0);
+        if (p)
+        {
+            DEBUG("NAME: %s", p);
+            OPENSSL_free(p);
+        }
+        X509_free(x509);
+    } else {
+        ERROR("Could not get certificate issuer");
+    }
 
     // Initialize OpenSSL
     SSL_library_init();
@@ -89,9 +117,9 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
         return;
     }
 
-    DEBUG("Checking certificate");
+	std::string hostWithPort = host + ":" + port;
+	DEBUG("Checking certificate for %s", hostWithPort.c_str());
 
-    std::string hostWithPort = host + ":" + port;
     BIO_set_conn_hostname(sbio, hostWithPort.c_str());
     if(SSL_do_handshake(ssl) <= 0) {
         // SSL Handshake failed
@@ -127,21 +155,6 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
         return;
     }
     DEBUG("Hostname validation passed!");
-
-    FILE *fileCheck = fopen(certificatePath.c_str(), "r");
-    X509* x509 = PEM_read_X509(fileCheck, nullptr, nullptr, nullptr);
-    if (x509 != nullptr)
-    {
-        char* p = X509_NAME_oneline(X509_get_issuer_name(x509), 0, 0);
-        if (p)
-        {
-            DEBUG("NAME: %s", p);
-            OPENSSL_free(p);
-        }
-        X509_free(x509);
-    } else {
-        ERROR("Could not get certificate issuer");
-    }
 }
 
 SecurityEvaluator::HostnameValidationResult SecurityEvaluator::validate_hostname(std::string& hostname, const X509 *server_cert) {

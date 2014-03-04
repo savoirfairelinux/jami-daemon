@@ -44,12 +44,36 @@ public:
 #if HAVE_TLS
 
         typedef enum {
+          SRTP_DISABLED                  ,
+          TLS_DISABLED                   ,
+          CERTIFICATE_EXPIRED            ,
+          CERTIFICATE_SELF_SIGNED        ,
+          CA_CERTIFICATE_MISSING         ,
+          END_CERTIFICATE_MISSING        ,
+          PRIVATE_KEY_MISSING            ,
+          CERTIFICATE_MISMATCH           ,
+          CERTIFICATE_STORAGE_PERMISSION ,
+          CERTIFICATE_STORAGE_FOLDER     ,
+          CERTIFICATE_STORAGE_LOCATION   ,
+          OUTGOING_SERVER_MISMATCH       ,
+          VERIFY_INCOMING_DISABLED       ,
+          VERIFY_ANSWER_DISABLED         ,
+          REQUIRE_CERTIFICATE_DISABLED   ,
+       } SecurityFlaw;
+
+        typedef enum {
             MatchFound,
             MatchNotFound,
             NoSANPresent,
             MalformedCertificate,
             Error
         } HostnameValidationResult;
+
+        /**
+         * Check if the given .pem contains a private key
+         * This is necessary to show/hide fields in client
+         */
+        static void checkPrivateKey(std::string& pemPath);
 
         /**
          * Verify SSL certificate
