@@ -621,53 +621,6 @@ class SIPAccount : public Account {
          */
         void trimCiphers();
 
-        /**
-         * Verify SSL certificate
-         */
-        void verifySSLCertificate(std::string& certificatePath, std::string& host, const std::string& port);
-
-        typedef enum {
-            MatchFound,
-            MatchNotFound,
-            NoSANPresent,
-            MalformedCertificate,
-            Error
-        } HostnameValidationResult;
-
-        /**
-        * Validates the server's identity by looking for the expected hostname in the
-        * server's certificate. As described in RFC 6125, it first tries to find a match
-        * in the Subject Alternative Name extension. If the extension is not present in
-        * the certificate, it checks the Common Name instead.
-        *
-        * Returns MatchFound if a match was found.
-        * Returns MatchNotFound if no matches were found.
-        * Returns MalformedCertificate if any of the hostnames had a NUL character embedded in it.
-        * Returns Error if there was an error.
-        */
-        HostnameValidationResult validate_hostname(std::string& hostname, const X509 *server_cert);
-
-        /**
-        * Tries to find a match for hostname in the certificate's Common Name field.
-        *
-        * Returns MatchFound if a match was found.
-        * Returns MatchNotFound if no matches were found.
-        * Returns MalformedCertificate if the Common Name had a NUL character embedded in it.
-        * Returns Error if the Common Name could not be extracted.
-        */
-        HostnameValidationResult matches_common_name(std::string& hostname, const X509 *server_cert);
-
-        /**
-        * Tries to find a match for hostname in the certificate's Subject Alternative Name extension.
-        *
-        * Returns MatchFound if a match was found.
-        * Returns MatchNotFound if no matches were found.
-        * Returns MalformedCertificate if any of the hostnames had a NUL character embedded in it.
-        * Returns NoSANPresent if the SAN extension was not present in the certificate.
-        */
-        HostnameValidationResult matches_subject_alternative_name(std::string& hostname, const X509 *server_cert);
-
-
 #endif
 
         /**
