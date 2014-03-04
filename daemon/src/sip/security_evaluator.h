@@ -73,8 +73,18 @@ public:
          * Check if the given .pem contains a private key
          * This is necessary to show/hide fields in client
          */
-        static void checkPrivateKey(std::string& pemPath);
+        static bool containsPrivateKey(std::string& pemPath);
 
+        /**
+         * Check if the given .pem contains a private key
+         * This is necessary to show/hide fields in client
+         */
+        static bool certificateIsValid(std::string& pemPath);
+
+        /**
+         * Convert an extracted time (ASN1_TIME) in ISO-8601
+         */
+        static int convert_ASN1TIME(ASN1_TIME *t, char* buf, size_t len);
         /**
          * Verify SSL certificate
          */

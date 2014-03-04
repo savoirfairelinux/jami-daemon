@@ -713,7 +713,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseString(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
 
     SecurityEvaluator::verifySSLCertificate(tlsCaListFile_, hostname_, std::to_string(tlsListenerPort_));
-    SecurityEvaluator::checkPrivateKey(tlsCertificateFile_);
+    SecurityEvaluator::containsPrivateKey(tlsCertificateFile_);
 
     parseString(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
     parseString(details, CONFIG_TLS_PASSWORD, tlsPassword_);

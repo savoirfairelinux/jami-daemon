@@ -43,30 +43,28 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
+ #define DATE_LEN 128
+
 
 #if HAVE_TLS
 
-void SecurityEvaluator::checkPrivateKey(std::string& pemPath) {
-    // Check if it's a valid pem file
+bool SecurityEvaluator::containsPrivateKey(std::string& pemPath) {
+
     FILE *keyFile = fopen(pemPath.c_str(), "r");
     RSA *rsa = PEM_read_RSAPrivateKey(keyFile, NULL, NULL, NULL);
+
     if (rsa == NULL) {
-            printf("Badness has occured! Did not read key file\n");
-            return;
+        DEBUG("Bad file, or not containing private key");
+        return false;
     } else {
-            printf("Opened the key file OK!\n");
+        DEBUG("Valid private key file");
     }
+    return true;
 }
 
-void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::string& host, const std::string& port)
-{
-    BIO *sbio;
-    SSL_CTX *ssl_ctx;
-    SSL *ssl;
-    X509 *server_cert;
-
+bool SecurityEvaluator::certificateIsValid(std::string& pemPath) {
     // First check local Certificate Authority file
-    FILE *fileCheck = fopen(certificatePath.c_str(), "r");
+    FILE *fileCheck = fopen(pemPath.c_str(), "r");
     X509* x509 = PEM_read_X509(fileCheck, nullptr, nullptr, nullptr);
     if (x509 != nullptr)
     {
@@ -76,10 +74,36 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
             DEBUG("NAME: %s", p);
             OPENSSL_free(p);
         }
+        ASN1_TIME *not_before = X509_get_notBefore(x509);
+        ASN1_TIME *not_after = X509_get_notAfter(x509);
+
+        char not_after_str[DATE_LEN];
+        convert_ASN1TIME(not_after, not_after_str, DATE_LEN);
+
+        char not_before_str[DATE_LEN];
+        convert_ASN1TIME(not_before, not_before_str, DATE_LEN);
+
+        DEBUG("not_before : %s", not_before_str);
+        DEBUG("not_after : %s", not_after);
+
+        // Here perform checks and send callbacks
+
+
         X509_free(x509);
     } else {
-        ERROR("Could not get certificate issuer");
+        ERROR("Could not open certificate file");
+        return false;
     }
+}
+
+
+
+void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::string& host, const std::string& port)
+{
+    BIO *sbio;
+    SSL_CTX *ssl_ctx;
+    SSL *ssl;
+    X509 *server_cert;
 
     // Initialize OpenSSL
     SSL_library_init();
@@ -251,6 +275,26 @@ SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matches_subject_a
     sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
 
     return result;
+}
+
+int SecurityEvaluator::convert_ASN1TIME(ASN1_TIME *t, char* buf, size_t len)
+{
+        int rc;
+        BIO *b = BIO_new(BIO_s_mem());
+        rc = ASN1_TIME_print(b, t);
+        if (rc <= 0) {
+            ERROR("fetchdaemon", "ASN1_TIME_print failed or wrote no data.");
+            BIO_free(b);
+            return EXIT_FAILURE;
+        }
+        rc = BIO_gets(b, buf, len);
+        if (rc <= 0) {
+            ERROR("fetchdaemon", "BIO_gets call failed to transfer contents to buf");
+            BIO_free(b);
+            return EXIT_FAILURE;
+        }
+        BIO_free(b);
+        return EXIT_SUCCESS;
 }
 
 #endif
