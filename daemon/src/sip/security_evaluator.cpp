@@ -58,6 +58,7 @@ bool SecurityEvaluator::containsPrivateKey(std::string& pemPath) {
         return false;
     } else {
         DEBUG("Valid private key file");
+        // Then we should hide fields "Private key file and private key password"
     }
     return true;
 }
@@ -78,17 +79,17 @@ bool SecurityEvaluator::certificateIsValid(std::string& pemPath) {
         ASN1_TIME *not_after = X509_get_notAfter(x509);
 
         char not_after_str[DATE_LEN];
-        convert_ASN1TIME(not_after, not_after_str, DATE_LEN);
+        convertASN1TIME(not_after, not_after_str, DATE_LEN);
 
         char not_before_str[DATE_LEN];
-        convert_ASN1TIME(not_before, not_before_str, DATE_LEN);
+        convertASN1TIME(not_before, not_before_str, DATE_LEN);
 
         DEBUG("not_before : %s", not_before_str);
         DEBUG("not_after : %s", not_after);
 
         // Here perform checks and send callbacks
 
-
+        return true;
         X509_free(x509);
     } else {
         ERROR("Could not open certificate file");
@@ -173,7 +174,7 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
 
     DEBUG("Hostname validation...");
     // Validate the hostname
-    if (validate_hostname(host, server_cert) != MatchFound) {
+    if (validateHostname(host, server_cert) != MatchFound) {
         DEBUG("Hostname validation failed.");
         X509_free(server_cert);
         return;
@@ -181,7 +182,7 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
     DEBUG("Hostname validation passed!");
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::validate_hostname(std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::HostnameValidationResult SecurityEvaluator::validateHostname(std::string& hostname, const X509 *server_cert) {
     HostnameValidationResult result;
 
     if(hostname.c_str() == nullptr || (server_cert == nullptr)) {
@@ -190,16 +191,16 @@ SecurityEvaluator::HostnameValidationResult SecurityEvaluator::validate_hostname
     }
 
     // First try the Subject Alternative Names extension
-    result = matches_subject_alternative_name(hostname, server_cert);
+    result = matchSubjectAltName(hostname, server_cert);
     if (result == NoSANPresent) {
         // Extension was not found: try the Common Name
-        result = matches_common_name(hostname, server_cert);
+        result = matchCommonName(hostname, server_cert);
     }
 
     return result;
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matches_common_name(std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchCommonName(std::string& hostname, const X509 *server_cert) {
     int common_name_loc = -1;
     X509_NAME_ENTRY *common_name_entry = nullptr;
     ASN1_STRING *common_name_asn1 = nullptr;
@@ -238,7 +239,7 @@ SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matches_common_na
     }
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matches_subject_alternative_name(std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchSubjectAltName(std::string& hostname, const X509 *server_cert) {
     HostnameValidationResult result = MatchNotFound;
     int i;
     int san_names_nb = -1;
@@ -277,24 +278,34 @@ SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matches_subject_a
     return result;
 }
 
-int SecurityEvaluator::convert_ASN1TIME(ASN1_TIME *t, char* buf, size_t len)
+int SecurityEvaluator::convertASN1TIME(ASN1_TIME *t, char* buf, size_t len)
 {
-        int rc;
-        BIO *b = BIO_new(BIO_s_mem());
-        rc = ASN1_TIME_print(b, t);
-        if (rc <= 0) {
-            ERROR("fetchdaemon", "ASN1_TIME_print failed or wrote no data.");
-            BIO_free(b);
-            return EXIT_FAILURE;
-        }
-        rc = BIO_gets(b, buf, len);
-        if (rc <= 0) {
-            ERROR("fetchdaemon", "BIO_gets call failed to transfer contents to buf");
-            BIO_free(b);
-            return EXIT_FAILURE;
-        }
+    int rc;
+    BIO *b = BIO_new(BIO_s_mem());
+    rc = ASN1_TIME_print(b, t);
+    if (rc <= 0) {
+        ERROR("fetchdaemon", "ASN1_TIME_print failed or wrote no data.");
         BIO_free(b);
-        return EXIT_SUCCESS;
+        return EXIT_FAILURE;
+    }
+    rc = BIO_gets(b, buf, len);
+    if (rc <= 0) {
+        ERROR("fetchdaemon", "BIO_gets call failed to transfer contents to buf");
+        BIO_free(b);
+        return EXIT_FAILURE;
+    }
+    BIO_free(b);
+    return EXIT_SUCCESS;
+}
+
+void SecurityEvaluator::printCertificate(X509* cert)
+{
+    char subj[1024];
+    char issuer[1024];
+    X509_NAME_oneline(X509_get_subject_name(cert), subj, 1024);
+    X509_NAME_oneline(X509_get_issuer_name(cert), issuer, 1024);
+    DEBUG("Certificate: %s", subj);
+    DEBUG("\tIssuer: %s", issuer);
 }
 
 #endif

@@ -32,10 +32,8 @@
 #ifndef SECURITY_EVALUATOR_H
 #define SECURITY_EVALUATOR_H
 
- #include <openssl/x509v3.h>
- #include <string>
-
-
+#include <openssl/x509v3.h>
+#include <string>
 
 class SecurityEvaluator {
 
@@ -84,7 +82,7 @@ public:
         /**
          * Convert an extracted time (ASN1_TIME) in ISO-8601
          */
-        static int convert_ASN1TIME(ASN1_TIME *t, char* buf, size_t len);
+        static int convertASN1TIME(ASN1_TIME *t, char* buf, size_t len);
         /**
          * Verify SSL certificate
          */
@@ -101,7 +99,7 @@ public:
         * Returns MalformedCertificate if any of the hostnames had a NUL character embedded in it.
         * Returns Error if there was an error.
         */
-        static HostnameValidationResult validate_hostname(std::string& hostname, const X509 *server_cert);
+        static HostnameValidationResult validateHostname(std::string& hostname, const X509 *server_cert);
 
         /**
         * Tries to find a match for hostname in the certificate's Common Name field.
@@ -111,7 +109,7 @@ public:
         * Returns MalformedCertificate if the Common Name had a NUL character embedded in it.
         * Returns Error if the Common Name could not be extracted.
         */
-        static HostnameValidationResult matches_common_name(std::string& hostname, const X509 *server_cert);
+        static HostnameValidationResult matchCommonName(std::string& hostname, const X509 *server_cert);
 
         /**
         * Tries to find a match for hostname in the certificate's Subject Alternative Name extension.
@@ -121,7 +119,12 @@ public:
         * Returns MalformedCertificate if any of the hostnames had a NUL character embedded in it.
         * Returns NoSANPresent if the SAN extension was not present in the certificate.
         */
-        static HostnameValidationResult matches_subject_alternative_name(std::string& hostname, const X509 *server_cert);
+        static HostnameValidationResult matchSubjectAltName(std::string& hostname, const X509 *server_cert);
+
+        /**
+        * Prints certificate in logs
+        */
+        static void printCertificate(X509* cert);
 
 #endif
 
