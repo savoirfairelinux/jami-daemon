@@ -889,6 +889,8 @@ void SIPAccount::registerVoIPLink()
         DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
+    } else {
+        transportType_ = PJSIP_TRANSPORT_UNSPECIFIED;
     }
 
 #endif

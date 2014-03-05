@@ -351,7 +351,7 @@ class SIPAccount : public Account {
          * account is set to TLS.
          */
         bool isTlsEnabled() const {
-            return transportType_ == PJSIP_TRANSPORT_TLS;
+            return tlsEnable_;
         }
 
         /**
