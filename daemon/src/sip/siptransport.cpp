@@ -175,9 +175,14 @@ pjsip_tpfactory* SipTransport::createTlsListener(SIPAccount &account)
     pj_sockaddr_in_set_str_addr(&local_addr, &pjAddress);
     pj_sockaddr_in_set_port(&local_addr, account.getTlsListenerPort());
 
+    DEBUG("Creating Listener...");
+    DEBUG("CRT file : %s", account.getTlsSetting()->ca_list_file.ptr);
+    DEBUG("PEM file : %s", account.getTlsSetting()->cert_file.ptr);
+
     pjsip_tpfactory *listener = NULL;
     const pj_status_t status = pjsip_tls_transport_start(endpt_, account.getTlsSetting(), &local_addr, NULL, 1, &listener);
-    RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "Failed to start TLS listener");
+    sip_strerror(status);
+    RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "Failed to start TLS listener with code %d", status);
     return listener;
 }
 
@@ -206,18 +211,19 @@ SipTransport::createTlsTransport(SIPAccount &account)
     pj_sockaddr_in rem_addr;
     pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) port);
 
+    DEBUG("Get new tls transport/listener from transport manager");
     // The local tls listener
-    static pjsip_tpfactory *localTlsListener = NULL;
+    // FIXME: called only once as it is static -> that's why parameters are not saved
+    pjsip_tpfactory *localTlsListener = createTlsListener(account);
 
-    if (localTlsListener == NULL)
-        localTlsListener = createTlsListener(account);
-
-    DEBUG("Get new tls transport from transport manager");
     pjsip_transport *transport = NULL;
     pj_status_t status = pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
                                   sizeof rem_addr, NULL, &transport);
     RETURN_IF_FAIL(transport != NULL and status == PJ_SUCCESS, NULL,
                    "Could not create new TLS transport");
+
+    //pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
+    //transportMap_[transportMapKey(account.getLocalInterface(), port)] = transport;
     return transport;
 }
 #endif
@@ -233,8 +239,18 @@ std::string transportMapKey(const std::string &interface, int port)
 
 void SipTransport::createSipTransport(SIPAccount &account)
 {
+    std::map<std::string, pjsip_transport *>::iterator iter;
 #if HAVE_TLS
     if (account.isTlsEnabled()) {
+//        std::string key(transportMapKey(account.getLocalInterface(), account.getTlsListenerPort()));
+//        iter = transportMap_.find(key);
+        if (account.transport_ != nullptr) {
+            DEBUG("destroying old tls transport, and recreate it with new params");
+            const pj_status_t status = pjsip_transport_shutdown(account.transport_);
+            sip_strerror(status);
+            sip_strerror(pjsip_transport_dec_ref(account.transport_));
+        }
+
         account.transport_ = createTlsTransport(account);
     } else {
 #else
@@ -242,7 +258,7 @@ void SipTransport::createSipTransport(SIPAccount &account)
 #endif
         // if this transport already exists, reuse it
         std::string key(transportMapKey(account.getLocalInterface(), account.getLocalPort()));
-        std::map<std::string, pjsip_transport *>::iterator iter = transportMap_.find(key);
+        iter = transportMap_.find(key);
 
         if (iter != transportMap_.end()) {
             account.transport_ = iter->second;
