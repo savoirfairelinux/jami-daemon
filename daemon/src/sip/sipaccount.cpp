@@ -890,7 +890,7 @@ void SIPAccount::registerVoIPLink()
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     } else {
-        transportType_ = PJSIP_TRANSPORT_UNSPECIFIED;
+        transportType_ = PJSIP_TRANSPORT_UDP;
     }
 
 #endif
