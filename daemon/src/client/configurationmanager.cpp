@@ -42,11 +42,13 @@
 #include "manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/siptransport.h"
+#include "sip/security_evaluator.h"
 #include "logger.h"
 #include "fileutils.h"
 #include "sip/sipaccount.h"
 #include "history/historynamecache.h"
 #include "audio/audiolayer.h"
+
 
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
@@ -534,4 +536,19 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
     if (account)
         account->setCredentials(details);
+}
+
+void ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
+{
+    SecurityEvaluator::containsPrivateKey(std::string(pemPath));
+}
+
+void ConfigurationManager::checkCertificateValidity(const std::string& pemPath)
+{
+    SecurityEvaluator::certificateIsValid(std::string(pemPath));
+}
+
+void ConfigurationManager::checkHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
+{
+    SecurityEvaluator::verifyHostnameCertificate(certificatePath, host, port);
 }

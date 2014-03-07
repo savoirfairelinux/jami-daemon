@@ -48,7 +48,7 @@
 
 #if HAVE_TLS
 
-bool SecurityEvaluator::containsPrivateKey(std::string& pemPath) {
+bool SecurityEvaluator::containsPrivateKey(const std::string& pemPath) {
 
     FILE *keyFile = fopen(pemPath.c_str(), "r");
     RSA *rsa = PEM_read_RSAPrivateKey(keyFile, NULL, NULL, NULL);
@@ -60,10 +60,23 @@ bool SecurityEvaluator::containsPrivateKey(std::string& pemPath) {
         DEBUG("Valid private key file");
         // Then we should hide fields "Private key file and private key password"
     }
+
+ /*   int result = RSA_check_key(rsa);
+    DEBUG("RSA_check_key returned %d", result);
+
+    num = RSA_private_decrypt(num, ctext, ptext, rsa, RSA_PKCS1_PADDING);
+    if (num != plen || memcmp(ptext, ptext_ex, num) != 0) {
+        printf("PKCS#1 v1.5 decryption failed!\n");
+        err=1;
+    }
+    else
+        printf("PKCS #1 v1.5 encryption/decryption ok\n");
+*/
+
     return true;
 }
 
-bool SecurityEvaluator::certificateIsValid(std::string& pemPath) {
+bool SecurityEvaluator::certificateIsValid(const std::string& pemPath) {
     // First check local Certificate Authority file
     FILE *fileCheck = fopen(pemPath.c_str(), "r");
     X509* x509 = PEM_read_X509(fileCheck, nullptr, nullptr, nullptr);
@@ -99,7 +112,7 @@ bool SecurityEvaluator::certificateIsValid(std::string& pemPath) {
 
 
 
-void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::string& host, const std::string& port)
+bool SecurityEvaluator::verifyHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
 {
     BIO *sbio;
     SSL_CTX *ssl_ctx;
@@ -115,7 +128,7 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
         DEBUG("OpenSSL PRNG not seeded with enough data.");
         EVP_cleanup();
         ERR_free_strings();
-        return;
+        return false;
     }
 
     ssl_ctx = SSL_CTX_new(TLSv1_client_method());
@@ -126,7 +139,7 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
     if (SSL_CTX_load_verify_locations(ssl_ctx, certificatePath.c_str(), nullptr) != 1) {
         DEBUG("Couldn't load certificate trust store.");
         SSL_CTX_free(ssl_ctx);
-        return;
+        return false;
     }
 
     // Only support secure cipher suites
@@ -139,7 +152,7 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
     if(!ssl) {
         DEBUG("Can't locate SSL pointer\n");
         BIO_free_all(sbio);
-        return;
+        return false;
     }
 
 	std::string hostWithPort = host + ":" + port;
@@ -159,7 +172,7 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
             ERR_print_errors_fp(stderr);
         }
         BIO_free_all(sbio);
-        return;
+        return false;
     }
 
     // Recover the server's certificate
@@ -168,7 +181,7 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
         // The handshake was successful although the server did not provide a certificate
         // Most likely using an insecure anonymous cipher suite... get out!
         BIO_ssl_shutdown(sbio);
-        return;
+        return false;
     }
 
 
@@ -177,12 +190,13 @@ void SecurityEvaluator::verifySSLCertificate(std::string& certificatePath, std::
     if (validateHostname(host, server_cert) != MatchFound) {
         DEBUG("Hostname validation failed.");
         X509_free(server_cert);
-        return;
+        return false;
     }
     DEBUG("Hostname validation passed!");
+    return true;
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::validateHostname(std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::HostnameValidationResult SecurityEvaluator::validateHostname(const std::string& hostname, const X509 *server_cert) {
     HostnameValidationResult result;
 
     if(hostname.c_str() == nullptr || (server_cert == nullptr)) {
@@ -200,7 +214,7 @@ SecurityEvaluator::HostnameValidationResult SecurityEvaluator::validateHostname(
     return result;
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchCommonName(std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchCommonName(const std::string& hostname, const X509 *server_cert) {
     int common_name_loc = -1;
     X509_NAME_ENTRY *common_name_entry = nullptr;
     ASN1_STRING *common_name_asn1 = nullptr;
@@ -239,7 +253,7 @@ SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchCommonName(s
     }
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchSubjectAltName(std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchSubjectAltName(const std::string& hostname, const X509 *server_cert) {
     HostnameValidationResult result = MatchNotFound;
     int i;
     int san_names_nb = -1;

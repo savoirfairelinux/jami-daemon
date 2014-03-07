@@ -161,6 +161,13 @@ class ConfigurationManager
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
 
+        /*
+         * Security
+         */
+        void checkForPrivateKey(const std::string& pemPath);
+        void checkCertificateValidity(const std::string& pemPath);
+        void checkHostnameCertificate(const std::string& certificatePath, const  std::string& host, const std::string& port);
+
 #ifdef __ANDROID__
         void volumeChanged(const std::string& device, const int& value);
 

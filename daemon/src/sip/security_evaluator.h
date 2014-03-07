@@ -71,22 +71,26 @@ public:
          * Check if the given .pem contains a private key
          * This is necessary to show/hide fields in client
          */
-        static bool containsPrivateKey(std::string& pemPath);
+        static bool containsPrivateKey(const std::string& pemPath);
 
         /**
-         * Check if the given .pem contains a private key
-         * This is necessary to show/hide fields in client
+         * Performs check on the given .pem
+         * Try to open it, and read issuer name
+         * Expiration Date
          */
-        static bool certificateIsValid(std::string& pemPath);
+        static bool certificateIsValid(const std::string& pemPath);
 
         /**
-         * Convert an extracted time (ASN1_TIME) in ISO-8601
+         * Verify local hostname (General Settings) with the one provided by the serverà
+         * certificatePath is the local server .crt, passed as a parameter to create the SSL handshake.
+         * This check only works with DNS names, not IP (as stated in everything-you-wanted-to-know-about-openssl.pdf)
          */
-        static int convertASN1TIME(ASN1_TIME *t, char* buf, size_t len);
-        /**
-         * Verify SSL certificate
-         */
-        static void verifySSLCertificate(std::string& certificatePath, std::string& host, const std::string& port);
+        static bool verifyHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port);
+
+#endif
+
+
+private:
 
         /**
         * Validates the server's identity by looking for the expected hostname in the
@@ -99,7 +103,7 @@ public:
         * Returns MalformedCertificate if any of the hostnames had a NUL character embedded in it.
         * Returns Error if there was an error.
         */
-        static HostnameValidationResult validateHostname(std::string& hostname, const X509 *server_cert);
+        static HostnameValidationResult validateHostname(const std::string& hostname, const X509 *server_cert);
 
         /**
         * Tries to find a match for hostname in the certificate's Common Name field.
@@ -109,7 +113,7 @@ public:
         * Returns MalformedCertificate if the Common Name had a NUL character embedded in it.
         * Returns Error if the Common Name could not be extracted.
         */
-        static HostnameValidationResult matchCommonName(std::string& hostname, const X509 *server_cert);
+        static HostnameValidationResult matchCommonName(const std::string& hostname, const X509 *server_cert);
 
         /**
         * Tries to find a match for hostname in the certificate's Subject Alternative Name extension.
@@ -119,17 +123,17 @@ public:
         * Returns MalformedCertificate if any of the hostnames had a NUL character embedded in it.
         * Returns NoSANPresent if the SAN extension was not present in the certificate.
         */
-        static HostnameValidationResult matchSubjectAltName(std::string& hostname, const X509 *server_cert);
+        static HostnameValidationResult matchSubjectAltName(const std::string& hostname, const X509 *server_cert);
 
         /**
         * Prints certificate in logs
         */
         static void printCertificate(X509* cert);
 
-#endif
-
-
-private:
+        /**
+         * Convert an extracted time (ASN1_TIME) in ISO-8601
+         */
+        static int convertASN1TIME(ASN1_TIME *t, char* buf, size_t len);
 
         SecurityEvaluator() {}
         ~SecurityEvaluator() {}

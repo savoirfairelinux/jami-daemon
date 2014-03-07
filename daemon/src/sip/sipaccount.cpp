@@ -42,7 +42,6 @@
 #include "config/yamlemitter.h"
 #include "logger.h"
 #include "manager.h"
-#include "security_evaluator.h"
 
 #ifdef SFL_PRESENCE
 #include "sippresence.h"
@@ -711,9 +710,6 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseInt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     parseString(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
     parseString(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
-
-    SecurityEvaluator::verifySSLCertificate(tlsCaListFile_, hostname_, std::to_string(tlsListenerPort_));
-    SecurityEvaluator::containsPrivateKey(tlsCertificateFile_);
 
     parseString(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
     parseString(details, CONFIG_TLS_PASSWORD, tlsPassword_);
