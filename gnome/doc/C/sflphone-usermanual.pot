@@ -168,7 +168,7 @@ msgstr ""
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.
 #: sflphone.xml:979(None)
-msgid "@@image: 'figures/callshistory-settings.png'; md5=287d8aed7d7c71752257c64e89a9127d"
+msgid "@@image: 'figures/callhistory-settings.png'; md5=287d8aed7d7c71752257c64e89a9127d"
 msgstr ""
 
 #. When image changes, this message will be marked fuzzy or untranslated for you.
@@ -1088,7 +1088,7 @@ msgid "On startup, SFLphone will go directly on the system tray."
 msgstr ""
 
 #: sflphone.xml:975(title)
-msgid "Calls history options"
+msgid "Call history options"
 msgstr ""
 
 #: sflphone.xml:988(guilabel)

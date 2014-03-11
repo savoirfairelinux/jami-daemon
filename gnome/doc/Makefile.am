@@ -16,7 +16,7 @@ DOC_FIGURES =	figures/addressbook-button.png \
 				figures/voicemail.png				\
 				figures/rec-settings.png			\
 				figures/desktop-notif-settings.png		\
-				figures/callshistory-settings.png		\
+				figures/callhistory-settings.png		\
 				figures/configfile-settings.png			\
 				figures/notif-example.png			\
 				figures/systemtray-settings.png			\

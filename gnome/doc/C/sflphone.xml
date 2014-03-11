@@ -983,14 +983,14 @@
         </sect3>
 
 
-        <sect3><title>Calls history</title>
+        <sect3><title>Call history</title>
                 <!-- ==== Figure ==== -->
-            <figure id="callshistory-settings-fig">
-                <title>Calls history options</title>
+            <figure id="callhistory-settings-fig">
+                <title>Call history options</title>
                     <screenshot>
                         <mediaobject>
                             <imageobject>
-                                <imagedata fileref="figures/callshistory-settings.png" format="PNG"/>
+                                <imagedata fileref="figures/callhistory-settings.png" format="PNG"/>
                             </imageobject>
                             </mediaobject>
                     </screenshot>
