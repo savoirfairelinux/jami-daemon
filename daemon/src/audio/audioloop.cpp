@@ -80,7 +80,7 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
         return;
     }
 
-    while (total_samples > 0) {
+    while (total_samples != 0) {
         size_t samples = std::min(total_samples, buf_samples - pos);
 
         output.copy(*buffer_, samples, pos, output_pos);
