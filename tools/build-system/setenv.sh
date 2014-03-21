@@ -2,25 +2,38 @@
 #####################################################
 # File Name: setenv.sh
 #
-# Purpose :
+# Purpose : Export environment variables for launch-build-machine-jenkins.sh script.
+#           Fetch the latest KDE client code from KDE repository
 #
 # Author: Julien Bonjean (julien@bonjean.info)
 #
 # Creation Date: 2009-12-15
-# Last Modified: 2009-12-15 18:16:52 -0500
+# Last Modified: 2014-03-21 13:16:52 -0500
 #####################################################
 
 # home directory
 export ROOT_DIR=${HOME}
 
 # gpg passphrase file
-export GPG_FILE="${ROOT_DIR}/.gpg-sflphone"
+export GPG_FILE="${WORKSPACE}/.gpg-sflphone"
 
 export EDITOR="echo"
 
-export REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
+export REFERENCE_REPOSITORY="${WORKSPACE}"
 
-export WORKING_DIR="${ROOT_DIR}/sflphone-build-repository/tools/build-system"
+export WORKING_DIR="${WORKSPACE}/tools/build-system"
 export LAUNCHPAD_DIR="${WORKING_DIR}/launchpad"
-LAUNCHPAD_DISTRIBUTIONS=("oneiric" "precise" "quantal" "raring" "saucy" "trusty")
+LAUNCHPAD_DISTRIBUTIONS=("precise" "quantal" "saucy" "trusty")
 export LAUNCHPAD_DISTRIBUTIONS
+
+# Update KDE client
+cd ${WORKSPACE}
+rm -rf config.ini
+rm -rf kde
+curl https://projects.kde.org/projects/playground/network/sflphone-kde/repository/revisions/master/raw/data/config.ini > config.ini
+git clone git://anongit.kde.org/kde-dev-scripts
+ruby kde-dev-scripts/createtarball/create_tarball.rb -n -a sflphone-client-kde
+rm -rf kde-dev-scripts
+tar -xpvf sflphone-client-kde-*.tar.*
+rm -rf sflphone-client-kde-*.tar.*
+mv sflphone-client-kde-* kde

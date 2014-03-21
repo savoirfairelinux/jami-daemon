@@ -12,7 +12,7 @@
 
 set -x
 
-# . `dirname $0`/setenv.sh
+. `dirname $0`/setenv.sh
 
 IS_RELEASE=
 VERSION_INDEX="1"
@@ -25,8 +25,6 @@ TAG_NAME_PREFIX=
 VERSION_NUMBER="1.3.0"
 
 LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-client-gnome" "sflphone-plugins" "sflphone-common-video" "sflphone-client-gnome-video")
-#LAUNCHPAD_PACKAGES=("sflphone-common-video" "sflphone-client-gnome-video")
-# LAUNCHPAD_PACKAGES=("sflphone")
 
 echo
 echo "    /***********************\\"
