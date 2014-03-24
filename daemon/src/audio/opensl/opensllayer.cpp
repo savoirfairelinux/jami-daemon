@@ -582,11 +582,11 @@ void
 OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
     assert(nullptr != context);
-    auto start = std::chrono::high_resolution_clock::now();
+    //auto start = std::chrono::high_resolution_clock::now();
     static_cast<OpenSLLayer*>(context)->playback(queue);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-    DEBUG("Took %d us\n", elapsed/1000);
+    //auto end = std::chrono::high_resolution_clock::now();
+    //auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+    //DEBUG("Took %d us\n", elapsed/1000);
 }
 
 void

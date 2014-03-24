@@ -83,6 +83,12 @@ size_t AudioCodec::encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_
     return encode(dst, src[0].data(), dst_size);
 }
 
+int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst)
+{
+    dst.clear();
+    return frameSize_;
+}
+
 std::string AudioCodec::getMimeSubtype() const
 {
     return codecName_;

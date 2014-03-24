@@ -86,6 +86,12 @@ class AudioCodec {
         virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buf_size);
 
         /**
+         * Inform the codec of a lost packet and perform packet loss concealment.
+         * Default implementation fills dst with 0.
+         */
+        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst);
+
+        /**
          * Multichannel version of encode().
          * Default implementation calls encode() on the first channel (assume 1 channel).
          * @return the number of bytes encoded
@@ -149,7 +155,8 @@ class AudioCodec {
         /**
          * Set the sampling rate and channel number preffered by the core.
          * May or may not be considered by the codec.
-         * Use getClockRate() and getChannels() to get the format used by the codec.
+         * Use getCurrentClockRate() and getCurrentChannels() to get the format
+         * used by the codec.
          */
         virtual void setOptimalFormat(uint32_t /* sample_rate */ , uint8_t /* channels */ ) {}
 

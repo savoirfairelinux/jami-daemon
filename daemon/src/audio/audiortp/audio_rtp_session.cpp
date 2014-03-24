@@ -50,6 +50,9 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , remote_ip_()
     , remote_port_(0)
     , timestampCount_(0)
+    , packedSent(0)
+    , packedRcvd(0)
+    , packedRcvdLastSeqNum(0)
     , rtpSendThread_(*this)
     , dtmfQueue_()
     , rtpStream_(call.getCallId())
@@ -160,7 +163,22 @@ void AudioRtpSession::receiveSpeakerData()
     if (!adu)
         return;
 
-    unsigned char* spkrDataIn = (unsigned char*) adu->getData(); // data in char
+    packedRcvd++;
+
+    unsigned seqNum = adu->getSeqNum();
+    unsigned seqNumLast = packedRcvdLastSeqNum;
+    if(seqNum <= seqNumLast) {
+        DEBUG("Dropping out-of-order packet");
+        return;
+    }
+    if(seqNumLast && seqNum > seqNumLast+1) {
+        DEBUG("%d packets lost", seqNum-seqNumLast-1);
+        for(unsigned i=0, n=seqNum-seqNumLast-1; i<n; i++)
+            rtpStream_.processDataDecode(nullptr, 0, adu->getType());
+    }
+    packedRcvdLastSeqNum = seqNum;
+
+    uint8_t* spkrDataIn = (uint8_t*) adu->getData(); // data in char
     size_t size = adu->getSize(); // size in char
 
     // DTMF over RTP, size must be over 4 in order to process it as voice data
@@ -171,13 +189,16 @@ void AudioRtpSession::receiveSpeakerData()
 }
 
 
-void AudioRtpSession::sendMicData()
+size_t AudioRtpSession::sendMicData()
 {
     size_t compSize = rtpStream_.processDataEncode();
 
     // if no data return
-    if (compSize == 0)
-        return;
+    if (compSize == 0) {
+        return 0;
+    }
+
+    packedSent++;
 
     // Increment timestamp for outgoing packet
     timestamp_ += timestampIncrement_;
@@ -186,17 +207,22 @@ void AudioRtpSession::sendMicData()
 #if 0
     // this step is only needed for ZRTP
     queue_.putData(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
-#endif
-
+#else
     // putData puts the data on RTP queue, sendImmediate bypass this queue
     queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
+#endif
+
+    unsigned s=packedSent.load(), r=packedRcvd.load();
+    DEBUG("%d; %d; %d", s-r, s, r);
+
+    return compSize;
 }
 
 
 void AudioRtpSession::setSessionTimeouts()
 {
-    const int schedulingTimeout = 4000;
-    const int expireTimeout = 1000000;
+    const int schedulingTimeout = 1000;
+    const int expireTimeout = 4000;
     DEBUG("Set session scheduling timeout (%d) and expireTimeout (%d)",
           schedulingTimeout, expireTimeout);
 
@@ -279,45 +305,38 @@ void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodec
 }
 
 AudioRtpSession::AudioRtpSendThread::AudioRtpSendThread(AudioRtpSession &session) :
-    running_(false), rtpSession_(session), thread_(0), timer_()
+    running_(false), rtpSession_(session), thread_(), timer_()
 {}
 
 AudioRtpSession::AudioRtpSendThread::~AudioRtpSendThread()
 {
     running_ = false;
-
-    if (thread_)
-        pthread_join(thread_, NULL);
+    if (thread_.joinable())
+        thread_.join();
 }
 
 void AudioRtpSession::AudioRtpSendThread::start()
 {
     running_ = true;
-    pthread_create(&thread_, NULL, &runCallback, this);
-}
-
-void *
-AudioRtpSession::AudioRtpSendThread::runCallback(void *data)
-{
-    AudioRtpSession::AudioRtpSendThread *context = static_cast<AudioRtpSession::AudioRtpSendThread*>(data);
-    context->run();
-    return NULL;
+    thread_ = std::thread(&AudioRtpSendThread::run, this);
 }
 
 void AudioRtpSession::AudioRtpSendThread::run()
 {
     timer_.setTimer(rtpSession_.transportRate_);
-    const int MS_TO_USEC = 1000;
-
     while (running_) {
         // Send session
         if (rtpSession_.hasDTMFPending())
             rtpSession_.sendDtmfEvent();
-        else
+        else {
             rtpSession_.sendMicData();
-
-        usleep(timer_.getTimer() * MS_TO_USEC);
-
+            while(rtpSession_.sendMicData()) {
+                WARN("-- sendMicData()");
+            }
+        }
+        auto t = timer_.getTimer();
+        if(t > 1)
+            std::this_thread::sleep_for(std::chrono::milliseconds(timer_.getTimer()-1));
         timer_.incTimer(rtpSession_.transportRate_);
     }
 }

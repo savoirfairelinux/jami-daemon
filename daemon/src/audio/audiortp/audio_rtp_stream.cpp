@@ -311,6 +311,7 @@ size_t AudioRtpStream::processDataEncode()
     }
 }
 
+
 void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
     if (isDead())
@@ -340,7 +341,11 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
             ERROR("Audio codec already destroyed");
             return;
         }
-        int decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
+        int decoded;
+        if(spkrData)
+            decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
+        else // packet lost
+            decoded = codec->decode(rawBuffer_.getData());
         rawBuffer_.resize(decoded);
     }
 

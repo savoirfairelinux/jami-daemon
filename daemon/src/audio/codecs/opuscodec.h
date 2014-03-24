@@ -49,6 +49,8 @@ private:
    sfl::AudioCodec * clone();
 
    virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buffer_size);
+   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst);
+
    virtual size_t encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t buffer_size);
 
    virtual uint32_t getSDPClockRate() const;

@@ -37,6 +37,6 @@
 typedef int16_t SFLAudioSample;
 #define SFL_DATA_FORMAT_MAX SHRT_MAX
 
-static const size_t SIZEBUF = 48000; /** About 1s of buffering at 48kHz */
+static const size_t SIZEBUF = 2*48000; /** About 1s of buffering at 48kHz */
 
 #endif // SFL_TYPES_H_

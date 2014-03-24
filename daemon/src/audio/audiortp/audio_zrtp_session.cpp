@@ -107,13 +107,13 @@ void AudioZrtpSession::initializeZid()
         throw ZrtpZidException("zid initialization failed");
 }
 
-void AudioZrtpSession::sendMicData()
+size_t AudioZrtpSession::sendMicData()
 {
     int compSize = rtpStream_.processDataEncode();
 
     // if no data return
     if (compSize == 0)
-        return;
+        return 0;
 
     // Increment timestamp for outgoing packet
     timestamp_ += timestampIncrement_;
@@ -123,6 +123,8 @@ void AudioZrtpSession::sendMicData()
 
     // putData puts the data on RTP queue, sendImmediate bypasses this queue
     queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
+
+    return compSize;
 }
 
 int AudioZrtpSession::getIncrementForDTMF() const

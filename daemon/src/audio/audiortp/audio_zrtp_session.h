@@ -72,7 +72,7 @@ class AudioZrtpSession :
     private:
         NON_COPYABLE(AudioZrtpSession);
 
-        void sendMicData();
+        size_t sendMicData();
         void initializeZid();
         std::string zidFilename_;
 #if HAVE_ZRTP_CONFIGURE

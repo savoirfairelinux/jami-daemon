@@ -35,10 +35,15 @@
 #define AUDIO_RTP_SESSION_H_
 
 #include "audio_rtp_stream.h"
+#include "dtmf_event.h"
+#include "noncopyable.h"
+#include "logger.h"
+
 #include <ccrtp/rtp.h>
 #include <ccrtp/formats.h>
-#include "noncopyable.h"
-#include "dtmf_event.h"
+
+#include <thread>
+#include <atomic>
 
 class SIPCall;
 
@@ -138,7 +143,7 @@ class AudioRtpSession {
         /**
          * Send encoded data to peer
          */
-        virtual void sendMicData();
+        virtual size_t sendMicData();
 
 
         class AudioRtpSendThread {
@@ -149,11 +154,10 @@ class AudioRtpSession {
                 bool running_;
 
             private:
-                static void *runCallback(void *data);
                 void run();
                 NON_COPYABLE(AudioRtpSendThread);
                 AudioRtpSession &rtpSession_;
-                pthread_t thread_;
+                std::thread thread_;
                 ost::TimerPort timer_;
         };
 
@@ -181,6 +185,10 @@ class AudioRtpSession {
          * Timestamp reset frequency specified in number of packet sent
          */
         short timestampCount_;
+
+        std::atomic<unsigned> packedSent;
+        std::atomic<unsigned> packedRcvd;
+        std::atomic<unsigned> packedRcvdLastSeqNum;
 
         AudioRtpSendThread rtpSendThread_;
         std::list<DTMFEvent> dtmfQueue_;

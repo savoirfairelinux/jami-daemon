@@ -99,7 +99,6 @@ size_t RingBuffer::getReadPointer(const std::string &call_id) const
 {
     if (hasNoReadPointers())
         return 0;
-
     ReadPointer::const_iterator iter = readpointers_.find(call_id);
     return (iter != readpointers_.end()) ? iter->second : 0;
 }
@@ -109,7 +108,6 @@ RingBuffer::getSmallestReadPointer() const
 {
     if (hasNoReadPointers())
         return 0;
-
     size_t smallest = buffer_.frames();
     for(auto const& iter : readpointers_)
         smallest = std::min(smallest, iter.second);
@@ -275,11 +273,11 @@ RingBuffer::discard(size_t toDiscard, const std::string &call_id)
 size_t
 RingBuffer::discard(size_t toDiscard)
 {
-    DEBUG("Discarding: %d frames", toDiscard);
     const size_t buffer_size = buffer_.frames();
     for(auto& r : readpointers_) {
         size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
         if(dst < toDiscard) {
+            DEBUG("%s : discarding: %d frames", r.first.c_str(), toDiscard-dst);
             r.second = (r.second + toDiscard - dst) % buffer_size;
         }
     }
