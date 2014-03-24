@@ -106,7 +106,7 @@ Opus::getSDPChannels() const
     return "2";
 }
 
-int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buf_size)
+int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t *buf, size_t buf_size)
 {
     if (buf == nullptr) return 0;
 
@@ -123,6 +123,7 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, s
     }
     if (ret < 0)
         std::cerr << opus_strerror(ret) << std::endl;
+    lastDecodedFrameSize_ = ret;
     return ret;
 }
 
@@ -130,10 +131,10 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst)
 {
     int ret;
     if(channelsCur_ == 1) {
-        ret = opus_decode(decoder_, nullptr, 0, dst[0].data(), FRAME_SIZE, 0);
+        ret = opus_decode(decoder_, nullptr, 0, dst[0].data(), lastDecodedFrameSize_, 0);
     } else {
         std::array<SFLAudioSample, 2*MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
-        ret = opus_decode(decoder_, nullptr, 0, ibuf.data(), FRAME_SIZE, 0);
+        ret = opus_decode(decoder_, nullptr, 0, ibuf.data(), lastDecodedFrameSize_, 0);
         for(int i=0; i<ret; i++) {
             dst[0][i] = ibuf[2*i];
             dst[1][i] = ibuf[2*i+1];
@@ -144,7 +145,7 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst)
     return ret;
 }
 
-size_t Opus::encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size)
+size_t Opus::encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size)
 {
     if (dst == nullptr) return 0;
 

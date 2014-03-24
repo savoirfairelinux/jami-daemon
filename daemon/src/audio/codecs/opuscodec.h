@@ -48,10 +48,10 @@ public:
 private:
    sfl::AudioCodec * clone();
 
-   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buffer_size);
+   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t *buf, size_t buf_size);
    virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst);
 
-   virtual size_t encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t buffer_size);
+   virtual size_t encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size);
 
    virtual uint32_t getSDPClockRate() const;
    virtual const char *getSDPChannels() const;
@@ -62,6 +62,8 @@ private:
    //Attributes
    OpusEncoder *encoder_;
    OpusDecoder *decoder_;
+
+   unsigned lastDecodedFrameSize_;
 
    // Valid sampling rates allowed by the Opus library.
    static constexpr uint32_t VALID_SAMPLING_RATE[] = {8000, 12000, 16000, 24000, 48000};

@@ -35,8 +35,7 @@ using std::ptrdiff_t;
 
 namespace sfl {
 
-AudioCodec::AudioCodec(uint8_t payload, const std::string &codecName,
-                       int clockRate, int frameSize, unsigned channels) :
+AudioCodec::AudioCodec(uint8_t payload, const std::string &codecName, uint32_t clockRate, unsigned frameSize, uint8_t channels) :
     codecName_(codecName),
     clockRate_(clockRate),
     clockRateCur_(clockRate),
@@ -72,15 +71,15 @@ int AudioCodec::encode(unsigned char* /* dst */, SFLAudioSample* /* src */, size
 
 
 // Mono only, subclasses must implement multichannel support
-int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buf_size)
+int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t* buf, size_t buf_size)
 {
-    return decode(dst[0].data(), buf, buf_size);
+    return decode(dst[0].data(), const_cast<uint8_t*>(buf), buf_size);
 }
 
 // Mono only, subclasses must implement multichannel support
-size_t AudioCodec::encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size)
+size_t AudioCodec::encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size)
 {
-    return encode(dst, src[0].data(), dst_size);
+    return encode(dst, const_cast<SFLAudioSample*>(src[0].data()), dst_size);
 }
 
 int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst)

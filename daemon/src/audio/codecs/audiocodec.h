@@ -52,7 +52,7 @@ namespace sfl {
 
 class AudioCodec {
     public:
-        AudioCodec(uint8_t payload, const std::string &codecName, int clockRate, int frameSize, unsigned channels);
+        AudioCodec(uint8_t payload, const std::string &codecName, uint32_t clockRate, unsigned frameSize, uint8_t channels);
 
         /**
          * Copy constructor.
@@ -83,7 +83,7 @@ class AudioCodec {
          * Multichannel version of decode().
          * Default implementation calls mono version
          */
-        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, uint8_t *buf, size_t buf_size);
+        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t* buf, size_t buf_size);
 
         /**
          * Inform the codec of a lost packet and perform packet loss concealment.
@@ -96,7 +96,7 @@ class AudioCodec {
          * Default implementation calls encode() on the first channel (assume 1 channel).
          * @return the number of bytes encoded
          */
-        virtual size_t encode(std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size);
+        virtual size_t encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size);
 
         uint8_t getPayloadType() const;
 
