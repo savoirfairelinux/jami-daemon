@@ -1,89 +1,88 @@
-# Telugu translation for sflphone
-# Copyright (c) 2011 Rosetta Contributors and Canonical Ltd 2011
+# Estonian translation for sflphone
+# Copyright (c) 2013 Rosetta Contributors and Canonical Ltd 2013
 # This file is distributed under the same license as the sflphone package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2014-03-21 21:10-0400\n"
-"PO-Revision-Date: 2013-10-02 16:32+0000\n"
-"Last-Translator: Launchpad Translations Administrators <Unknown>\n"
-"Language-Team: Telugu <te@li.org>\n"
+"PO-Revision-Date: 2014-03-09 10:07+0000\n"
+"Last-Translator: Marko Silluste <marko.silluste@hot.ee>\n"
+"Language-Team: Estonian <et@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-03-23 06:20+0000\n"
+"X-Launchpad-Export-Date: 2014-03-23 06:19+0000\n"
 "X-Generator: Launchpad (build 16967)\n"
-"Language: te\n"
 
 #: ../src/accountlist.c:183
 msgid "Not Registered"
-msgstr ""
+msgstr "Ei ole registreeritud"
 
 #: ../src/accountlist.c:185
 msgid "Trying..."
-msgstr ""
+msgstr "Proovimine..."
 
 #: ../src/accountlist.c:187
 msgid "Registered"
-msgstr ""
+msgstr "Registreeritud"
 
 #: ../src/accountlist.c:189 ../src/sflnotify.c:171 ../src/sflnotify.c:184
 #, c-format
 msgid "Error"
-msgstr ""
+msgstr "Viga"
 
 #: ../src/accountlist.c:191
 msgid "Authentication Failed"
-msgstr "అధీకరణ విఫలమైంది"
+msgstr "Tõrge autentimisel"
 
 #: ../src/accountlist.c:193
 msgid "Network unreachable"
-msgstr ""
+msgstr "Võrk ei ole kättesaadav"
 
 #: ../src/accountlist.c:195
 msgid "Host unreachable"
-msgstr ""
+msgstr "Host ei ole kättesaadav"
 
 #: ../src/accountlist.c:197
 msgid "Service unavailable"
-msgstr ""
+msgstr "Teenus ei ole saadaval"
 
 #: ../src/accountlist.c:199
 msgid "Stun server invalid"
-msgstr ""
+msgstr "Stun server on vigane"
 
 #: ../src/accountlist.c:201
 msgid "Not acceptable"
-msgstr ""
+msgstr "Ei ole aksepteeritav"
 
 #: ../src/accountlist.c:203
 msgid "Ready"
-msgstr ""
+msgstr "Valmis"
 
 #: ../src/accountlist.c:206
 msgid "Invalid"
-msgstr ""
+msgstr "Vigane"
 
 #: ../src/actions.c:134
 msgid "(SIP)"
-msgstr ""
+msgstr "(SIP)"
 
 #: ../src/actions.c:135
 msgid "(IAX)"
-msgstr ""
+msgstr "(IAX)"
 
 #: ../src/actions.c:141
 #, c-format
 msgid "%s %s"
-msgstr ""
+msgstr "%s %s"
 
 #: ../src/actions.c:145
 #, c-format
 msgid "No registered accounts"
-msgstr "నమోదైన ఖాతాలు లేవు"
+msgstr "Ei ole registreeritud kontosi"
 
 #: ../src/actions.c:505
 #, c-format
@@ -94,72 +93,72 @@ msgstr ""
 #. less than 1 day
 #: ../src/callable_obj.c:254
 msgid "today at %R"
-msgstr "ఈరోజు %Rకి"
+msgstr "täna %R"
 
 #. less than 2 days
 #: ../src/callable_obj.c:257
 msgid "yesterday at %R"
-msgstr "నిన్న %Rకి"
+msgstr "eile %R"
 
 #. between 2 days and 1 week
 #: ../src/callable_obj.c:259
 msgid "%A at %R"
-msgstr ""
+msgstr "%A ja %R"
 
 #. more than 1 week
 #: ../src/callable_obj.c:263
 msgid "%x at %R"
-msgstr ""
+msgstr "%x ja %R"
 
 #: ../src/config/accountconfigdialog.c:241
 msgid "_Auto-answer calls"
-msgstr ""
+msgstr "Kõnede _automaatvastaja"
 
 #: ../src/config/accountconfigdialog.c:270
 msgid "Account Parameters"
-msgstr "ఖాతా పరామితులు"
+msgstr "Konto parameetrid"
 
 #. alias field
 #: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:305
 #: ../src/config/assistant.c:403
 msgid "_Alias"
-msgstr "మారుపేరు (_A)"
+msgstr "_Alias"
 
 #: ../src/config/accountconfigdialog.c:294
 msgid "_Protocol"
-msgstr ""
+msgstr "_Protokoll"
 
 #. Should never come here, add debug message.
 #: ../src/config/accountconfigdialog.c:311
 msgid "Unknown"
-msgstr ""
+msgstr "Teadmata"
 
 #. server field
 #: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:313
 #: ../src/config/assistant.c:411
 msgid "_Host name"
-msgstr ""
+msgstr "_Hostinimi"
 
 #. username field
 #: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:321
 #: ../src/config/assistant.c:419
 msgid "_User name"
-msgstr ""
+msgstr "_Kasutajanimi"
 
 #. password field
 #: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:331
 #: ../src/config/assistant.c:428
 msgid "_Password"
-msgstr "సంకేతపదం (_P)"
+msgstr "_Parool"
 
 #: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:340
 #: ../src/config/assistant.c:437
 msgid "Show password"
-msgstr "సంకేతపదాన్ని చూపించు"
+msgstr "Parooli näitamine"
 
 #: ../src/config/accountconfigdialog.c:381
 msgid "_Proxy"
-msgstr ""
+msgstr "_Proksi"
 
 #. voicemail number field
 #: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:345
@@ -177,15 +176,15 @@ msgstr ""
 
 #: ../src/config/accountconfigdialog.c:437
 msgid "_Enable"
-msgstr ""
+msgstr "_Lubamine"
 
 #: ../src/config/accountconfigdialog.c:511
 msgid "Authentication"
-msgstr "అధీకరణ"
+msgstr "Autentimine"
 
 #: ../src/config/accountconfigdialog.c:512
 msgid "Secret"
-msgstr "రహస్యం"
+msgstr "Salajane"
 
 #: ../src/config/accountconfigdialog.c:761
 msgid "Credential"
@@ -197,29 +196,29 @@ msgstr ""
 
 #: ../src/config/accountconfigdialog.c:804
 msgid "Password"
-msgstr "సంకేతపదం"
+msgstr "Parool"
 
 #: ../src/config/accountconfigdialog.c:856
 #: ../src/config/accountconfigdialog.c:1568
 msgid "Security"
-msgstr "భద్రత"
+msgstr "Turvalisus"
 
 #: ../src/config/accountconfigdialog.c:872
 msgid "Use TLS transport(sips)"
-msgstr ""
+msgstr "TLS transpordi kasutamine (sips)"
 
 #. ZRTP subsection
 #: ../src/config/accountconfigdialog.c:880
 msgid "SRTP key exchange"
-msgstr ""
+msgstr "SRTP võtmevahetus"
 
 #: ../src/config/accountconfigdialog.c:886
 msgid "Disabled"
-msgstr ""
+msgstr "Väjla lülitatud"
 
 #: ../src/config/accountconfigdialog.c:950
 msgid "Registration"
-msgstr "నమోదు"
+msgstr "Registreerimine"
 
 #: ../src/config/accountconfigdialog.c:954
 msgid "Registration expire"
@@ -227,16 +226,16 @@ msgstr ""
 
 #: ../src/config/accountconfigdialog.c:977
 msgid "Network Interface"
-msgstr ""
+msgstr "Võrguliides"
 
 #: ../src/config/accountconfigdialog.c:987
 msgid "Local address"
-msgstr "స్థానిక చిరునామా"
+msgstr "Lokaalne aadress"
 
 #. Local port widget
 #: ../src/config/accountconfigdialog.c:1020
 msgid "Local port"
-msgstr ""
+msgstr "Lokaalne port"
 
 #: ../src/config/accountconfigdialog.c:1061
 #: ../src/config/accountconfigdialog.c:1096
@@ -249,7 +248,7 @@ msgstr ""
 
 #: ../src/config/accountconfigdialog.c:1072
 msgid "STUN server URL"
-msgstr ""
+msgstr "STUN server URL"
 
 #: ../src/config/accountconfigdialog.c:1080
 msgid "Same as local parameters"
@@ -265,19 +264,19 @@ msgstr ""
 
 #: ../src/config/accountconfigdialog.c:1153
 msgid "Min"
-msgstr ""
+msgstr "Min"
 
 #: ../src/config/accountconfigdialog.c:1154
 msgid "Max"
-msgstr ""
+msgstr "Maks"
 
 #: ../src/config/accountconfigdialog.c:1177
 msgid "Audio RTP Port Range"
-msgstr ""
+msgstr "Audio RTP Pordivahemik"
 
 #: ../src/config/accountconfigdialog.c:1183
 msgid "Video RTP Port Range"
-msgstr ""
+msgstr "Video RTP Pordivahemik"
 
 #. Box for the audiocodecs
 #: ../src/config/accountconfigdialog.c:1226
@@ -331,15 +330,15 @@ msgstr ""
 
 #: ../src/config/accountconfigdialog.c:1519
 msgid "Account settings"
-msgstr "ఖాతా అమరికలు"
+msgstr ""
 
 #: ../src/config/accountconfigdialog.c:1547
 msgid "Basic"
-msgstr "ప్రాధమిక"
+msgstr ""
 
 #: ../src/config/accountconfigdialog.c:1564
 msgid "Advanced"
-msgstr "ఉన్నత"
+msgstr ""
 
 #: ../src/config/accountconfigdialog.c:1572
 msgid "Network"
@@ -366,11 +365,11 @@ msgstr ""
 
 #: ../src/config/accountlistconfigdialog.c:529
 msgid "Protocol"
-msgstr "ప్రొటోకాల్"
+msgstr ""
 
 #: ../src/config/accountlistconfigdialog.c:539
 msgid "Status"
-msgstr "స్థితి"
+msgstr ""
 
 #: ../src/config/accountlistconfigdialog.c:638
 #, c-format
@@ -379,7 +378,7 @@ msgstr ""
 
 #: ../src/config/accountlistconfigdialog.c:668
 msgid "Accounts"
-msgstr "ఖాతాలు"
+msgstr ""
 
 #: ../src/config/accountlistconfigdialog.c:677
 msgid "Configured Accounts"
@@ -392,7 +391,7 @@ msgstr ""
 #: ../src/config/addressbook-config.c:313
 #: ../src/config/preferencesdialog.c:412 ../src/config/shortcuts-config.c:117
 msgid "General"
-msgstr "సాధారణ"
+msgstr ""
 
 #. PHOTO DISPLAY
 #: ../src/config/addressbook-config.c:317
@@ -423,7 +422,7 @@ msgstr ""
 
 #: ../src/config/addressbook-config.c:353
 msgid "_Home"
-msgstr "ముంగిలి (_H)"
+msgstr ""
 
 #: ../src/config/addressbook-config.c:359
 msgid "_Mobile"
@@ -441,7 +440,7 @@ msgstr ""
 #: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:486
 #: ../src/config/videoconf.c:492
 msgid "Name"
-msgstr "పేరు"
+msgstr ""
 
 #: ../src/config/assistant.c:76
 msgid "This assistant is now finished."
@@ -455,19 +454,19 @@ msgstr ""
 
 #: ../src/config/assistant.c:81
 msgid "Alias"
-msgstr "మారుపేరు"
+msgstr ""
 
 #: ../src/config/assistant.c:82
 msgid "Server"
-msgstr "సేవిక"
+msgstr ""
 
 #: ../src/config/assistant.c:83
 msgid "Username"
-msgstr "వాడుకరిపేరు"
+msgstr ""
 
 #: ../src/config/assistant.c:84
 msgid "Security: "
-msgstr "భద్రత: "
+msgstr ""
 
 #: ../src/config/assistant.c:88
 msgid "SRTP/ZRTP draft-zimmermann"
@@ -495,7 +494,7 @@ msgstr ""
 
 #: ../src/config/assistant.c:264
 msgid "Select an account type"
-msgstr "ఖాతా రకాన్ని ఎంచుకోండి"
+msgstr ""
 
 #: ../src/config/assistant.c:266
 msgid "SIP (Session Initiation Protocol)"
@@ -507,7 +506,7 @@ msgstr ""
 
 #: ../src/config/assistant.c:280
 msgid "Account"
-msgstr "ఖాతా"
+msgstr ""
 
 #: ../src/config/assistant.c:280
 msgid "Please select one of the following options"
@@ -573,15 +572,15 @@ msgstr ""
 
 #: ../src/config/assistant.c:491
 msgid "Account Registration"
-msgstr "ఖాతా నమోదు"
+msgstr ""
 
 #: ../src/config/assistant.c:491
 msgid "Congratulations!"
-msgstr "అభినందనలు!"
+msgstr ""
 
 #: ../src/config/audioconf.c:491
 msgid "Frequency"
-msgstr "తరచుదనం"
+msgstr ""
 
 #: ../src/config/audioconf.c:496
 msgid "Bitrate"
@@ -627,7 +626,7 @@ msgstr ""
 #. Box for the ALSA configuration
 #: ../src/config/audioconf.c:831
 msgid "ALSA settings"
-msgstr "ALSA అమరికలు"
+msgstr ""
 
 #: ../src/config/audioconf.c:846
 msgid "Recordings"
@@ -636,12 +635,12 @@ msgstr ""
 #. label
 #: ../src/config/audioconf.c:850
 msgid "Destination folder"
-msgstr "గమ్యస్థాన సంచయం"
+msgstr ""
 
 #. folder chooser button
 #: ../src/config/audioconf.c:854
 msgid "Select a folder"
-msgstr "ఒక సంచయాన్ని ఎంచుకోండి"
+msgstr ""
 
 #: ../src/config/audioconf.c:865
 msgid "_Always recording"
@@ -746,7 +745,7 @@ msgstr ""
 
 #: ../src/config/preferencesdialog.c:254
 msgid "days"
-msgstr "రోజులు"
+msgstr ""
 
 #. INSTANT MESSAGING CONFIGURATION
 #: ../src/config/preferencesdialog.c:258
@@ -759,7 +758,7 @@ msgstr ""
 
 #: ../src/config/preferencesdialog.c:373
 msgid "Preferences"
-msgstr "అభీష్టాలు"
+msgstr ""
 
 #: ../src/config/preferencesdialog.c:430
 msgid "Hooks"
@@ -898,7 +897,7 @@ msgstr ""
 
 #: ../src/config/zrtpadvanceddialog.c:52
 msgid "ZRTP Options"
-msgstr "ZRTP ఎంపికలు"
+msgstr ""
 
 #: ../src/config/zrtpadvanceddialog.c:69
 msgid "Send Hello Hash in S_DP"
@@ -918,7 +917,7 @@ msgstr ""
 
 #: ../src/config/zrtpadvanceddialog.c:118
 msgid "SDES Options"
-msgstr "SDES ఎంపికలు"
+msgstr ""
 
 #: ../src/config/zrtpadvanceddialog.c:134
 msgid "Fallback on RTP on SDES failure"
@@ -984,7 +983,7 @@ msgstr ""
 
 #: ../src/mainwindow.c:506 ../src/mainwindow.c:532
 msgid "Continue"
-msgstr "కొనసాగించు"
+msgstr ""
 
 #: ../src/mainwindow.c:507 ../src/mainwindow.c:533 ../src/mainwindow.c:550
 msgid "Stop Call"
@@ -1014,7 +1013,7 @@ msgstr ""
 
 #: ../src/mainwindow.c:548
 msgid "Confirm"
-msgstr "నిర్ధారించు"
+msgstr ""
 
 #: ../src/presencewindow.c:486
 msgid "Field error"
@@ -1083,7 +1082,7 @@ msgstr ""
 #: ../src/sflnotify.c:116 ../src/sflnotify.c:136
 #, c-format
 msgid "%s account : %s"
-msgstr "%s ఖాతా : %s"
+msgstr ""
 
 #: ../src/sflnotify.c:121
 #, c-format
@@ -1171,7 +1170,7 @@ msgstr ""
 
 #: ../src/uimanager.c:582
 msgid "About SFLphone"
-msgstr "SFLphone గురించి"
+msgstr ""
 
 #: ../src/uimanager.c:977 ../src/uimanager.c:1060
 msgid "Voicemail"
@@ -1239,7 +1238,7 @@ msgstr ""
 
 #: ../src/uimanager.c:1064
 msgid "_Close"
-msgstr "మూసివేయి (_C)"
+msgstr ""
 
 #: ../src/uimanager.c:1065
 msgid "Minimize to system tray"
@@ -1284,7 +1283,7 @@ msgstr ""
 
 #: ../src/uimanager.c:1087
 msgid "_Accounts"
-msgstr "ఖాతాలు (_A)"
+msgstr ""
 
 #: ../src/uimanager.c:1088
 msgid "Edit your accounts"
@@ -1292,7 +1291,7 @@ msgstr ""
 
 #: ../src/uimanager.c:1091
 msgid "_Preferences"
-msgstr "అభీష్టాలు (_P)"
+msgstr ""
 
 #: ../src/uimanager.c:1092
 msgid "Change your preferences"
@@ -1306,7 +1305,7 @@ msgstr ""
 #. Help menu
 #: ../src/uimanager.c:1099
 msgid "_Help"
-msgstr "సహాయం (_H)"
+msgstr ""
 
 #: ../src/uimanager.c:1100
 msgid "Contents"
@@ -1362,7 +1361,7 @@ msgstr ""
 
 #: ../src/uimanager.c:1112
 msgid "_History"
-msgstr "చరిత్ర (_H)"
+msgstr ""
 
 #: ../src/uimanager.c:1112
 msgid "Call history"

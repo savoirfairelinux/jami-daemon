@@ -7,30 +7,30 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-10 10:41-0500\n"
+"POT-Creation-Date: 2014-03-21 21:10-0400\n"
 "PO-Revision-Date: 2013-10-02 16:32+0000\n"
 "Last-Translator: jarlaxl lamat <sztaasz@gmail.com>\n"
 "Language-Team: Greek <el@li.org>\n"
-"Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-01-10 15:36+0000\n"
-"X-Generator: Launchpad (build 16890)\n"
+"X-Launchpad-Export-Date: 2014-03-23 06:19+0000\n"
+"X-Generator: Launchpad (build 16967)\n"
+"Language: el\n"
 
 #: ../src/accountlist.c:183
-msgid "Registered"
-msgstr "Εγγεγραμμένος"
-
-#: ../src/accountlist.c:185
 msgid "Not Registered"
 msgstr "Μη εγγεγραμμένος"
 
-#: ../src/accountlist.c:187
+#: ../src/accountlist.c:185
 msgid "Trying..."
 msgstr "Προσπαθώ..."
 
-#: ../src/accountlist.c:189 ../src/sflnotify.c:170 ../src/sflnotify.c:183
+#: ../src/accountlist.c:187
+msgid "Registered"
+msgstr "Εγγεγραμμένος"
+
+#: ../src/accountlist.c:189 ../src/sflnotify.c:171 ../src/sflnotify.c:184
 #, c-format
 msgid "Error"
 msgstr "Σφάλμα"
@@ -52,18 +52,18 @@ msgid "Service unavailable"
 msgstr ""
 
 #: ../src/accountlist.c:199
-msgid "Not acceptable"
-msgstr ""
-
-#: ../src/accountlist.c:201
 msgid "Stun server invalid"
 msgstr "Ακυρος εξυπηρετητής STUN"
+
+#: ../src/accountlist.c:201
+msgid "Not acceptable"
+msgstr ""
 
 #: ../src/accountlist.c:203
 msgid "Ready"
 msgstr ""
 
-#: ../src/accountlist.c:205
+#: ../src/accountlist.c:206
 msgid "Invalid"
 msgstr "Μη έγκυρο"
 
@@ -85,29 +85,29 @@ msgstr ""
 msgid "No registered accounts"
 msgstr "Μη πιστοποιημένοι λογαριασμοί"
 
-#: ../src/actions.c:503
+#: ../src/actions.c:505
 #, c-format
 msgid "Direct SIP call"
 msgstr "Κλήση κατευθείαν SIP"
 
 #. less than 1 week
 #. less than 1 day
-#: ../src/callable_obj.c:306
+#: ../src/callable_obj.c:254
 msgid "today at %R"
 msgstr ""
 
 #. less than 2 days
-#: ../src/callable_obj.c:309
+#: ../src/callable_obj.c:257
 msgid "yesterday at %R"
 msgstr ""
 
 #. between 2 days and 1 week
-#: ../src/callable_obj.c:311
+#: ../src/callable_obj.c:259
 msgid "%A at %R"
 msgstr ""
 
 #. more than 1 week
-#: ../src/callable_obj.c:315
+#: ../src/callable_obj.c:263
 msgid "%x at %R"
 msgstr ""
 
@@ -377,16 +377,16 @@ msgstr ""
 msgid "Server returned \"%s\" (%d)"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:671
+#: ../src/config/accountlistconfigdialog.c:668
 msgid "Accounts"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:680
+#: ../src/config/accountlistconfigdialog.c:677
 msgid "Configured Accounts"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:708
-msgid "You have no active account"
+#: ../src/config/accountlistconfigdialog.c:705
+msgid "You have no active accounts"
 msgstr ""
 
 #: ../src/config/addressbook-config.c:313
@@ -438,7 +438,7 @@ msgstr ""
 msgid "Select which Evolution address books to use"
 msgstr ""
 
-#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:542
+#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:486
 #: ../src/config/videoconf.c:492
 msgid "Name"
 msgstr ""
@@ -579,92 +579,92 @@ msgstr ""
 msgid "Congratulations!"
 msgstr ""
 
-#: ../src/config/audioconf.c:547
+#: ../src/config/audioconf.c:491
 msgid "Frequency"
 msgstr ""
 
-#: ../src/config/audioconf.c:552
+#: ../src/config/audioconf.c:496
 msgid "Bitrate"
 msgstr ""
 
-#: ../src/config/audioconf.c:557
+#: ../src/config/audioconf.c:501
 msgid "Channels"
 msgstr ""
 
-#: ../src/config/audioconf.c:600
+#: ../src/config/audioconf.c:544
 msgid "ALSA plugin"
 msgstr ""
 
-#: ../src/config/audioconf.c:621 ../src/config/audioconf.c:702
+#: ../src/config/audioconf.c:565 ../src/config/audioconf.c:646
 msgid "Output"
 msgstr ""
 
-#: ../src/config/audioconf.c:642 ../src/config/audioconf.c:724
+#: ../src/config/audioconf.c:586 ../src/config/audioconf.c:668
 msgid "Input"
 msgstr ""
 
-#: ../src/config/audioconf.c:662 ../src/config/audioconf.c:744
+#: ../src/config/audioconf.c:606 ../src/config/audioconf.c:688
 msgid "Ringtone"
 msgstr ""
 
-#: ../src/config/audioconf.c:864
+#: ../src/config/audioconf.c:809
 msgid "Sound Manager"
 msgstr ""
 
-#: ../src/config/audioconf.c:871
+#: ../src/config/audioconf.c:816
 msgid "_Pulseaudio"
 msgstr ""
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:876
+#: ../src/config/audioconf.c:821
 msgid "Pulseaudio settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:880
+#: ../src/config/audioconf.c:825
 msgid "_ALSA"
 msgstr ""
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:886
+#: ../src/config/audioconf.c:831
 msgid "ALSA settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:901
+#: ../src/config/audioconf.c:846
 msgid "Recordings"
 msgstr ""
 
 #. label
-#: ../src/config/audioconf.c:905
+#: ../src/config/audioconf.c:850
 msgid "Destination folder"
 msgstr ""
 
 #. folder chooser button
-#: ../src/config/audioconf.c:909
+#: ../src/config/audioconf.c:854
 msgid "Select a folder"
 msgstr ""
 
-#: ../src/config/audioconf.c:920
+#: ../src/config/audioconf.c:865
 msgid "_Always recording"
 msgstr ""
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:927
+#: ../src/config/audioconf.c:872
 msgid "Voice enhancement settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:930
+#: ../src/config/audioconf.c:875
 msgid "_Noise Reduction"
 msgstr ""
 
-#: ../src/config/audioconf.c:937
+#: ../src/config/audioconf.c:882
 msgid "Automatic _Gain Control"
 msgstr ""
 
-#: ../src/config/audioconf.c:944
+#: ../src/config/audioconf.c:889
 msgid "Tone settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:947
+#: ../src/config/audioconf.c:892
 msgid "_Mute DTMF"
 msgstr ""
 
@@ -795,60 +795,60 @@ msgid ""
 "port, different one from each other\n"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:120
+#: ../src/config/tlsadvanceddialog.c:118
 msgid "Global TLS listener (all accounts)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:130
+#: ../src/config/tlsadvanceddialog.c:128
 msgid "Certificate of Authority list"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:133
+#: ../src/config/tlsadvanceddialog.c:131
 msgid "Choose a CA list file (optional)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:144
+#: ../src/config/tlsadvanceddialog.c:142
 msgid "Public endpoint certificate file"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:147
+#: ../src/config/tlsadvanceddialog.c:145
 msgid "Choose a public endpoint certificate (optional)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:165
+#: ../src/config/tlsadvanceddialog.c:163
 msgid "Choose a private key file (optional)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:180
+#: ../src/config/tlsadvanceddialog.c:178
 msgid "Password for the private key"
 msgstr ""
 
 #. TLS protocol methods
-#: ../src/config/tlsadvanceddialog.c:193
+#: ../src/config/tlsadvanceddialog.c:191
 msgid "TLS protocol method"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:216
+#: ../src/config/tlsadvanceddialog.c:214
 msgid "TLS cipher list"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:225
+#: ../src/config/tlsadvanceddialog.c:223
 msgid "Server name instance for outgoing TLS connection"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:233
-msgid "Negotiation timeout (sec:msec)"
+#: ../src/config/tlsadvanceddialog.c:231
+msgid "Negotiation timeout (seconds)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:250
+#: ../src/config/tlsadvanceddialog.c:243
 msgid "Verify incoming certificates, as a server"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:256
+#: ../src/config/tlsadvanceddialog.c:249
 msgid "Verify certificates from answer, as a client"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:262
+#: ../src/config/tlsadvanceddialog.c:255
 msgid "Require certificate for incoming tls connections"
 msgstr ""
 
@@ -945,19 +945,19 @@ msgstr ""
 msgid "Search by outgoing call"
 msgstr ""
 
-#: ../src/dbus/dbus.c:591
+#: ../src/dbus/dbus.c:590
 msgid "ALSA notification: Error while opening playback device"
 msgstr ""
 
-#: ../src/dbus/dbus.c:594
+#: ../src/dbus/dbus.c:593
 msgid "ALSA notification: Error while opening capture device"
 msgstr ""
 
-#: ../src/dbus/dbus.c:597
+#: ../src/dbus/dbus.c:596
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr ""
 
-#: ../src/dbus/dbus.c:600
+#: ../src/dbus/dbus.c:599
 msgid "Codecs notification: Codecs not found"
 msgstr ""
 
@@ -1031,7 +1031,7 @@ msgid "Remove buddy"
 msgstr ""
 
 #. popup
-#: ../src/presencewindow.c:755 ../src/uimanager.c:1153
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1196
 msgid "Add new buddy"
 msgstr ""
 
@@ -1040,7 +1040,7 @@ msgid "Add group"
 msgstr ""
 
 #. Call Menu
-#: ../src/presencewindow.c:802 ../src/uimanager.c:987
+#: ../src/presencewindow.c:802 ../src/uimanager.c:1026
 msgid "Call"
 msgstr "Κλήση"
 
@@ -1079,63 +1079,59 @@ msgstr ""
 msgid "- GNOME client for SFLPhone"
 msgstr ""
 
-#: ../src/sflnotify.c:93
+#: ../src/sflnotify.c:94
 #, c-format
 msgid "%s says:"
 msgstr ""
 
 #. the account is different from NULL
-#: ../src/sflnotify.c:115 ../src/sflnotify.c:135
+#: ../src/sflnotify.c:116 ../src/sflnotify.c:136
 #, c-format
 msgid "%s account : %s"
 msgstr "%s λογαριασμός %s"
 
-#: ../src/sflnotify.c:120
+#: ../src/sflnotify.c:121
 #, c-format
 msgid "<i>From</i> %s"
 msgstr "<i>Από</i> %s"
 
 #. the account is different from NULL
-#: ../src/sflnotify.c:153
+#: ../src/sflnotify.c:154
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
 msgstr "Κλήση μέ %s λογαριασμό <i>%s</i>"
 
-#: ../src/sflnotify.c:157
+#: ../src/sflnotify.c:158
 #, c-format
 msgid "Current account"
 msgstr "Τρέχων λογαριασμός"
 
-#: ../src/sflnotify.c:169
+#: ../src/sflnotify.c:170
 #, c-format
 msgid "You have no accounts set up"
 msgstr "Δεν έχετε θέσει λογαριασμούς"
 
-#: ../src/sflnotify.c:182
+#: ../src/sflnotify.c:183
 #, c-format
 msgid "You have no registered accounts"
 msgstr "Δεν έχετε κατοχυρομένους λογαριασμούς"
 
-#: ../src/sflnotify.c:196
+#: ../src/sflnotify.c:197
 #, c-format
-msgid ""
-"<i>With:</i> %s \n"
-"using %s"
+msgid "<i>With:</i> %s \n"
 msgstr ""
-"<i>Με:</i> %s \n"
-"χρηση: %s"
 
-#: ../src/sflnotify.c:210
+#: ../src/sflnotify.c:212
 #, c-format
 msgid "%s does not support ZRTP."
 msgstr "Ο %s δεν υποστηρίζει ZRTP"
 
-#: ../src/sflnotify.c:224
+#: ../src/sflnotify.c:226
 #, c-format
 msgid "ZRTP negotiation failed with %s"
 msgstr "Η ZRTP διαπραγμάτευση απέτυχε με %s"
 
-#: ../src/sflnotify.c:238
+#: ../src/sflnotify.c:240
 #, c-format
 msgid "<i>With:</i> %s"
 msgstr "<i>Με:</i> %s"
@@ -1152,8 +1148,8 @@ msgstr "Ενταση μικροφώνου"
 msgid "_Show main window"
 msgstr "Δείξε το βα_σικό παράθυρο"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:997 ../src/uimanager.c:1328
-#: ../src/uimanager.c:1384
+#: ../src/statusicon.c:139 ../src/uimanager.c:1036 ../src/uimanager.c:1389
+#: ../src/uimanager.c:1473
 msgid "_Hang up"
 msgstr "Κλείστο _Η"
 
@@ -1161,248 +1157,257 @@ msgstr "Κλείστο _Η"
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../src/uimanager.c:417
+#: ../src/uimanager.c:434
 msgid "No address book selected"
 msgstr "Κανένα βιβλίο διευθύνσεω δεν έχει επιλεχθεί"
 
-#: ../src/uimanager.c:437 ../src/uimanager.c:1070
+#: ../src/uimanager.c:454 ../src/uimanager.c:1113
 msgid "Address book"
 msgstr "Βιβλίο διευθύνσεων"
 
-#: ../src/uimanager.c:469
+#: ../src/uimanager.c:486
 #, c-format
 msgid "Voicemail(%i)"
 msgstr ""
 
-#: ../src/uimanager.c:562
+#: ../src/uimanager.c:579
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
 "Το SFLphone ειναι ένα προγραμμα πελάτης VoIP συμβατό με SIP και ΙΑΧ2 "
 "πρωτόκολλα"
 
-#: ../src/uimanager.c:565
+#: ../src/uimanager.c:582
 msgid "About SFLphone"
 msgstr "Σχετικά με το SFLphone"
 
-#: ../src/uimanager.c:938 ../src/uimanager.c:1017
+#: ../src/uimanager.c:977 ../src/uimanager.c:1060
 msgid "Voicemail"
 msgstr "Τηλεφωνητής"
 
-#: ../src/uimanager.c:989 ../src/uimanager.c:1491
+#: ../src/uimanager.c:1028 ../src/uimanager.c:1580
 msgid "_New call"
 msgstr "_Νέα κλήση"
 
-#: ../src/uimanager.c:990
+#: ../src/uimanager.c:1029
 msgid "Place a new call"
 msgstr "Κάντε μια νέα κλήση"
 
-#: ../src/uimanager.c:993 ../src/uimanager.c:1317
+#: ../src/uimanager.c:1032 ../src/uimanager.c:1378
 msgid "_Pick up"
 msgstr "Σήκωστο  _Π"
 
-#: ../src/uimanager.c:994
+#: ../src/uimanager.c:1033
 msgid "Answer the call"
 msgstr "Σηκώστε το τηλέφωνο"
 
-#: ../src/uimanager.c:998
+#: ../src/uimanager.c:1037
 msgid "Finish the call"
 msgstr "Κλέιστε το τηλέφωνο"
 
-#: ../src/uimanager.c:1001
+#: ../src/uimanager.c:1040
 msgid "O_n hold"
 msgstr "Σε α_ναμονή"
 
-#: ../src/uimanager.c:1002
+#: ../src/uimanager.c:1041
 msgid "Place the call on hold"
 msgstr "Βάλτε την κλήση σε αναμονή"
 
-#: ../src/uimanager.c:1005
+#: ../src/uimanager.c:1044
 msgid "O_ff hold"
 msgstr "Επανα_φορά"
 
-#: ../src/uimanager.c:1006
+#: ../src/uimanager.c:1045
 msgid "Place the call off hold"
 msgstr "Επαναφέρετε την κλήση σε αναμονή"
 
-#: ../src/uimanager.c:1009 ../src/uimanager.c:1370
+#: ../src/uimanager.c:1048 ../src/uimanager.c:1431
 msgid "Send _message"
 msgstr ""
 
-#: ../src/uimanager.c:1010
+#: ../src/uimanager.c:1049
 msgid "Send message"
 msgstr ""
 
-#: ../src/uimanager.c:1013
+#: ../src/uimanager.c:1052 ../src/uimanager.c:1053
+msgid "Share screen"
+msgstr ""
+
+#: ../src/uimanager.c:1056
 msgid "Configuration _Assistant"
 msgstr "Οδηγός Ρυθμίσεων _Α"
 
-#: ../src/uimanager.c:1014
+#: ../src/uimanager.c:1057
 msgid "Run the configuration assistant"
 msgstr "Εκτέλεση του οδηγού ρύθμισης"
 
-#: ../src/uimanager.c:1018
+#: ../src/uimanager.c:1061
 msgid "Call your voicemail"
 msgstr "Κλήση προς τον τηλεφωνητή σας"
 
-#: ../src/uimanager.c:1021
+#: ../src/uimanager.c:1064
 msgid "_Close"
 msgstr "_Κλείσιμο"
 
-#: ../src/uimanager.c:1022
+#: ../src/uimanager.c:1065
 msgid "Minimize to system tray"
 msgstr "Ελαχιστοποίηση στη περιοχή ειδοποιήσεων"
 
-#: ../src/uimanager.c:1025
+#: ../src/uimanager.c:1068
 msgid "_Quit"
 msgstr "Έξοδος"
 
-#: ../src/uimanager.c:1026
+#: ../src/uimanager.c:1069
 msgid "Quit the program"
 msgstr "Τερματισμός του προγράμματος"
 
 #. Edit Menu
-#: ../src/uimanager.c:1030
+#: ../src/uimanager.c:1073
 msgid "_Edit"
 msgstr "_Επεξεργασία"
 
-#: ../src/uimanager.c:1032
+#: ../src/uimanager.c:1075
 msgid "_Copy"
 msgstr "Αντέγρα_ψε"
 
-#: ../src/uimanager.c:1033
+#: ../src/uimanager.c:1076
 msgid "Copy the selection"
 msgstr "Αντιγραφή της επιλογής"
 
-#: ../src/uimanager.c:1036
+#: ../src/uimanager.c:1079
 msgid "_Paste"
 msgstr "Ε_πικόλληση"
 
-#: ../src/uimanager.c:1037
+#: ../src/uimanager.c:1080
 msgid "Paste the clipboard"
 msgstr "Επικόλληση των περιεχομένων του προχείρου (clipboard)"
 
-#: ../src/uimanager.c:1040
+#: ../src/uimanager.c:1083
 msgid "Clear _history"
 msgstr "Καθαρισμός ιστορικού κλ_ησεων"
 
-#: ../src/uimanager.c:1041
+#: ../src/uimanager.c:1084
 msgid "Clear the call history"
 msgstr "Καθαρισμός του ιστορικού κλησεων"
 
-#: ../src/uimanager.c:1044
+#: ../src/uimanager.c:1087
 msgid "_Accounts"
 msgstr "Λογαρι_ασμοί"
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1088
 msgid "Edit your accounts"
 msgstr "Επεξεργασία των λογαριασμών σας"
 
-#: ../src/uimanager.c:1048
+#: ../src/uimanager.c:1091
 msgid "_Preferences"
 msgstr "_Προτιμήσεις"
 
-#: ../src/uimanager.c:1049
+#: ../src/uimanager.c:1092
 msgid "Change your preferences"
 msgstr "Αλλαγή των προτιμήσεων σας"
 
 #. View Menu
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1096
 msgid "_View"
 msgstr "_Προβολή"
 
 #. Help menu
-#: ../src/uimanager.c:1056
+#: ../src/uimanager.c:1099
 msgid "_Help"
 msgstr "_Βο_ηθεια"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1100
 msgid "Contents"
 msgstr "Περιεχόμενα"
 
-#: ../src/uimanager.c:1058
+#: ../src/uimanager.c:1101
 msgid "Open the manual"
 msgstr "Άνοιγμα του εγχειριδίου"
 
-#: ../src/uimanager.c:1060
+#: ../src/uimanager.c:1103
 msgid "About this application"
 msgstr "Περί αυτής της εφαρμογής"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1107
 msgid "_Transfer"
 msgstr "Με_ταφορά"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1107
 msgid "Transfer the call"
 msgstr "Μεταφορά της κλήσης"
 
-#: ../src/uimanager.c:1065 ../src/uimanager.c:1350
+#: ../src/uimanager.c:1108 ../src/uimanager.c:1411
 msgid "_Record"
 msgstr "Καταγ_ραφή"
 
-#: ../src/uimanager.c:1065
+#: ../src/uimanager.c:1108
 msgid "Record the current conversation"
 msgstr "Καταγραψτε τη τρέχουσα συνομιλία"
 
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1109
 msgid "_Show toolbar"
 msgstr "Εμφάνι_ση γραμμής εργαλείων"
 
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1109
 msgid "Show the toolbar"
 msgstr "Εμφάνιση της γραμμής εργαλείων"
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1110
 msgid "_Dialpad"
 msgstr "Πληκτρολόγιο _δ"
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1110
 msgid "Show the dialpad"
 msgstr "Εμφάνιση του πληκτρολογίου"
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1111
 msgid "_Volume controls"
 msgstr "Ένταση ήχων"
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1111
 msgid "Show the volume controls"
 msgstr "Δείξε τις ρυθμίσεις για την ένταση ήχων"
 
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1112
 msgid "_History"
 msgstr "Ιστορικό _Η"
 
-#: ../src/uimanager.c:1069
-msgid "Calls history"
-msgstr "Ιστορικό κλήσεων"
+#: ../src/uimanager.c:1112
+msgid "Call history"
+msgstr ""
 
-#: ../src/uimanager.c:1070
+#: ../src/uimanager.c:1113
 msgid "_Address book"
 msgstr "Βιβλίο διευθύνσεων _Α"
 
-#: ../src/uimanager.c:1072
+#: ../src/uimanager.c:1115
 msgid "_Buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1072
+#: ../src/uimanager.c:1115
 msgid "Display the buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1339 ../src/uimanager.c:1393
+#: ../src/uimanager.c:1400 ../src/uimanager.c:1482
 msgid "On _Hold"
 msgstr "Κλ_ηση σε αναμονή"
 
-#: ../src/uimanager.c:1430
+#. Add a video sources menu
+#: ../src/uimanager.c:1451
+msgid "Video sources"
+msgstr ""
+
+#: ../src/uimanager.c:1519
 msgid "_Call back"
 msgstr "Κλήση"
 
-#: ../src/uimanager.c:1440 ../src/uimanager.c:1499
+#: ../src/uimanager.c:1529 ../src/uimanager.c:1588
 msgid "Follow status"
 msgstr ""
 
-#: ../src/uimanager.c:1560
+#: ../src/uimanager.c:1649
 msgid "Edit phone number"
 msgstr "Επεξεργσία τηελφωνικού αριθμού"
 
-#: ../src/uimanager.c:1571
+#: ../src/uimanager.c:1660
 msgid "Edit the phone number before making a call"
 msgstr "Επεξεργσία τηελφωνικού αριθμού προ της κλήσης"

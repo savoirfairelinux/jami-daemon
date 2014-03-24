@@ -7,30 +7,30 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-10 10:41-0500\n"
+"POT-Creation-Date: 2014-03-21 21:10-0400\n"
 "PO-Revision-Date: 2013-11-15 08:38+0000\n"
 "Last-Translator: Balazs Radak <Unknown>\n"
 "Language-Team: Hungarian <hu@li.org>\n"
-"Language: hu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-01-10 15:36+0000\n"
-"X-Generator: Launchpad (build 16890)\n"
+"X-Launchpad-Export-Date: 2014-03-23 06:19+0000\n"
+"X-Generator: Launchpad (build 16967)\n"
+"Language: hu\n"
 
 #: ../src/accountlist.c:183
-msgid "Registered"
-msgstr "Regisztrálva"
-
-#: ../src/accountlist.c:185
 msgid "Not Registered"
 msgstr "Nem regisztrált"
 
-#: ../src/accountlist.c:187
+#: ../src/accountlist.c:185
 msgid "Trying..."
 msgstr "Próbálkozás..."
 
-#: ../src/accountlist.c:189 ../src/sflnotify.c:170 ../src/sflnotify.c:183
+#: ../src/accountlist.c:187
+msgid "Registered"
+msgstr "Regisztrálva"
+
+#: ../src/accountlist.c:189 ../src/sflnotify.c:171 ../src/sflnotify.c:184
 #, c-format
 msgid "Error"
 msgstr "Hiba"
@@ -52,18 +52,18 @@ msgid "Service unavailable"
 msgstr "A szolgáltatás nem érhető el"
 
 #: ../src/accountlist.c:199
-msgid "Not acceptable"
-msgstr "Nem fogadható el"
-
-#: ../src/accountlist.c:201
 msgid "Stun server invalid"
 msgstr "Érvénytelen STUN szerver"
+
+#: ../src/accountlist.c:201
+msgid "Not acceptable"
+msgstr "Nem fogadható el"
 
 #: ../src/accountlist.c:203
 msgid "Ready"
 msgstr "Kész"
 
-#: ../src/accountlist.c:205
+#: ../src/accountlist.c:206
 msgid "Invalid"
 msgstr "Érvénytelen"
 
@@ -85,29 +85,29 @@ msgstr "%s %s"
 msgid "No registered accounts"
 msgstr "Nincs regisztrált fiók"
 
-#: ../src/actions.c:503
+#: ../src/actions.c:505
 #, c-format
 msgid "Direct SIP call"
 msgstr "Közvetlen SIP-hívás"
 
 #. less than 1 week
 #. less than 1 day
-#: ../src/callable_obj.c:306
+#: ../src/callable_obj.c:254
 msgid "today at %R"
 msgstr "Mai napon %R -kor"
 
 #. less than 2 days
-#: ../src/callable_obj.c:309
+#: ../src/callable_obj.c:257
 msgid "yesterday at %R"
 msgstr "Tegnap %R -kor"
 
 #. between 2 days and 1 week
-#: ../src/callable_obj.c:311
+#: ../src/callable_obj.c:259
 msgid "%A at %R"
 msgstr "%A %R -kor"
 
 #. more than 1 week
-#: ../src/callable_obj.c:315
+#: ../src/callable_obj.c:263
 msgid "%x at %R"
 msgstr "%x %R -kor"
 
@@ -377,17 +377,17 @@ msgstr "Állapot"
 msgid "Server returned \"%s\" (%d)"
 msgstr "Szerver üzenet: \"%s\" (%d)"
 
-#: ../src/config/accountlistconfigdialog.c:671
+#: ../src/config/accountlistconfigdialog.c:668
 msgid "Accounts"
 msgstr "Fiókok"
 
-#: ../src/config/accountlistconfigdialog.c:680
+#: ../src/config/accountlistconfigdialog.c:677
 msgid "Configured Accounts"
 msgstr "Beállított Fiókok"
 
-#: ../src/config/accountlistconfigdialog.c:708
-msgid "You have no active account"
-msgstr "Nincs aktív Fiók beállítva"
+#: ../src/config/accountlistconfigdialog.c:705
+msgid "You have no active accounts"
+msgstr ""
 
 #: ../src/config/addressbook-config.c:313
 #: ../src/config/preferencesdialog.c:412 ../src/config/shortcuts-config.c:117
@@ -438,7 +438,7 @@ msgstr "Címjegyzékek"
 msgid "Select which Evolution address books to use"
 msgstr "Válaassza ki, melyik Címjegyzéket kívánja használni"
 
-#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:542
+#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:486
 #: ../src/config/videoconf.c:492
 msgid "Name"
 msgstr "Név"
@@ -583,93 +583,92 @@ msgstr "Fiók Regisztráció"
 msgid "Congratulations!"
 msgstr "Gratulálunk!"
 
-#: ../src/config/audioconf.c:547
+#: ../src/config/audioconf.c:491
 msgid "Frequency"
 msgstr "Frekvencia"
 
-#: ../src/config/audioconf.c:552
+#: ../src/config/audioconf.c:496
 msgid "Bitrate"
 msgstr "Bitráta"
 
-#: ../src/config/audioconf.c:557
+#: ../src/config/audioconf.c:501
 msgid "Channels"
 msgstr "Csatornák"
 
-#: ../src/config/audioconf.c:600
+#: ../src/config/audioconf.c:544
 msgid "ALSA plugin"
 msgstr "ALSA beépülő"
 
-#: ../src/config/audioconf.c:621 ../src/config/audioconf.c:702
+#: ../src/config/audioconf.c:565 ../src/config/audioconf.c:646
 msgid "Output"
 msgstr "Kimenet"
 
-#: ../src/config/audioconf.c:642 ../src/config/audioconf.c:724
+#: ../src/config/audioconf.c:586 ../src/config/audioconf.c:668
 msgid "Input"
 msgstr "Bemenet"
 
-#: ../src/config/audioconf.c:662 ../src/config/audioconf.c:744
+#: ../src/config/audioconf.c:606 ../src/config/audioconf.c:688
 msgid "Ringtone"
 msgstr "Csengőhang"
 
-#: ../src/config/audioconf.c:864
+#: ../src/config/audioconf.c:809
 msgid "Sound Manager"
 msgstr "Hangkezelő"
 
-#: ../src/config/audioconf.c:871
+#: ../src/config/audioconf.c:816
 msgid "_Pulseaudio"
 msgstr "_Pulseaudio"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:876
+#: ../src/config/audioconf.c:821
 msgid "Pulseaudio settings"
 msgstr "Pulseaudio beállítások"
 
-#: ../src/config/audioconf.c:880
+#: ../src/config/audioconf.c:825
 msgid "_ALSA"
 msgstr "_ALSA"
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:886
+#: ../src/config/audioconf.c:831
 msgid "ALSA settings"
 msgstr "ALSA beállítások"
 
-#: ../src/config/audioconf.c:901
+#: ../src/config/audioconf.c:846
 msgid "Recordings"
 msgstr "Felvételek"
 
 #. label
-#: ../src/config/audioconf.c:905
+#: ../src/config/audioconf.c:850
 msgid "Destination folder"
 msgstr "Célmappa"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:909
+#: ../src/config/audioconf.c:854
 msgid "Select a folder"
 msgstr "Válasszon egy mappát"
 
-#: ../src/config/audioconf.c:920
+#: ../src/config/audioconf.c:865
 msgid "_Always recording"
 msgstr "Mindig rögzítsen"
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:927
+#: ../src/config/audioconf.c:872
 msgid "Voice enhancement settings"
 msgstr "Hangerősítési beállítások"
 
-#: ../src/config/audioconf.c:930
+#: ../src/config/audioconf.c:875
 msgid "_Noise Reduction"
 msgstr "Zajszűrő"
 
-#: ../src/config/audioconf.c:937
+#: ../src/config/audioconf.c:882
 msgid "Automatic _Gain Control"
 msgstr ""
 
-#: ../src/config/audioconf.c:944
-#, fuzzy
+#: ../src/config/audioconf.c:889
 msgid "Tone settings"
-msgstr "Fiók beállítások"
+msgstr ""
 
-#: ../src/config/audioconf.c:947
+#: ../src/config/audioconf.c:892
 msgid "_Mute DTMF"
 msgstr ""
 
@@ -802,60 +801,60 @@ msgid ""
 "port, different one from each other\n"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:120
+#: ../src/config/tlsadvanceddialog.c:118
 msgid "Global TLS listener (all accounts)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:130
+#: ../src/config/tlsadvanceddialog.c:128
 msgid "Certificate of Authority list"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:133
+#: ../src/config/tlsadvanceddialog.c:131
 msgid "Choose a CA list file (optional)"
 msgstr "Válassz egy CA lista fájlt (opcionálic)"
 
-#: ../src/config/tlsadvanceddialog.c:144
+#: ../src/config/tlsadvanceddialog.c:142
 msgid "Public endpoint certificate file"
 msgstr "Publikus végpont tanúsítvány"
 
-#: ../src/config/tlsadvanceddialog.c:147
+#: ../src/config/tlsadvanceddialog.c:145
 msgid "Choose a public endpoint certificate (optional)"
 msgstr "Válassz egy publikus végpont tanúsítványt (opcionális)"
 
-#: ../src/config/tlsadvanceddialog.c:165
+#: ../src/config/tlsadvanceddialog.c:163
 msgid "Choose a private key file (optional)"
 msgstr "Válassz egy privát kulcsot (opcionális)"
 
-#: ../src/config/tlsadvanceddialog.c:180
+#: ../src/config/tlsadvanceddialog.c:178
 msgid "Password for the private key"
 msgstr "Privát kulcs jelszava"
 
 #. TLS protocol methods
-#: ../src/config/tlsadvanceddialog.c:193
+#: ../src/config/tlsadvanceddialog.c:191
 msgid "TLS protocol method"
 msgstr "TLS protokoll eljárás"
 
-#: ../src/config/tlsadvanceddialog.c:216
+#: ../src/config/tlsadvanceddialog.c:214
 msgid "TLS cipher list"
 msgstr "TLS chiper lista"
 
-#: ../src/config/tlsadvanceddialog.c:225
+#: ../src/config/tlsadvanceddialog.c:223
 msgid "Server name instance for outgoing TLS connection"
 msgstr "A szerver neve kimenő TLS kapcsolatoknál"
 
-#: ../src/config/tlsadvanceddialog.c:233
-msgid "Negotiation timeout (sec:msec)"
+#: ../src/config/tlsadvanceddialog.c:231
+msgid "Negotiation timeout (seconds)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:250
+#: ../src/config/tlsadvanceddialog.c:243
 msgid "Verify incoming certificates, as a server"
 msgstr "Bejövő tanúsítványok ellenőrzése, mint szerver"
 
-#: ../src/config/tlsadvanceddialog.c:256
+#: ../src/config/tlsadvanceddialog.c:249
 msgid "Verify certificates from answer, as a client"
 msgstr "H ívás tanúsítványok ellenőrzése, mint kliens"
 
-#: ../src/config/tlsadvanceddialog.c:262
+#: ../src/config/tlsadvanceddialog.c:255
 msgid "Require certificate for incoming tls connections"
 msgstr "Tanúsítvány megkövetelése bejövő tls kapcsolatokhoz"
 
@@ -952,19 +951,19 @@ msgstr "Keresés a Bejövő hívások között"
 msgid "Search by outgoing call"
 msgstr "Keresés kimenő hívás szerint"
 
-#: ../src/dbus/dbus.c:591
+#: ../src/dbus/dbus.c:590
 msgid "ALSA notification: Error while opening playback device"
 msgstr "ALSA üzenet: Hiba a hangeszköz megnyitásakor"
 
-#: ../src/dbus/dbus.c:594
+#: ../src/dbus/dbus.c:593
 msgid "ALSA notification: Error while opening capture device"
 msgstr "ALSA üzenet: Hiba a felvevő eszköz megnyitásakor"
 
-#: ../src/dbus/dbus.c:597
+#: ../src/dbus/dbus.c:596
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr "Pulseaudio üzenet: nem fut a Pulseaudio"
 
-#: ../src/dbus/dbus.c:600
+#: ../src/dbus/dbus.c:599
 msgid "Codecs notification: Codecs not found"
 msgstr "Kodek üzenet: nem található kodek"
 
@@ -1035,7 +1034,7 @@ msgid "Remove buddy"
 msgstr ""
 
 #. popup
-#: ../src/presencewindow.c:755 ../src/uimanager.c:1153
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1196
 msgid "Add new buddy"
 msgstr ""
 
@@ -1044,7 +1043,7 @@ msgid "Add group"
 msgstr ""
 
 #. Call Menu
-#: ../src/presencewindow.c:802 ../src/uimanager.c:987
+#: ../src/presencewindow.c:802 ../src/uimanager.c:1026
 msgid "Call"
 msgstr "Hívás"
 
@@ -1086,61 +1085,59 @@ msgstr "Hibakeresés engedélyezése"
 msgid "- GNOME client for SFLPhone"
 msgstr ""
 
-#: ../src/sflnotify.c:93
+#: ../src/sflnotify.c:94
 #, c-format
 msgid "%s says:"
 msgstr "%s szerint:"
 
 #. the account is different from NULL
-#: ../src/sflnotify.c:115 ../src/sflnotify.c:135
+#: ../src/sflnotify.c:116 ../src/sflnotify.c:136
 #, c-format
 msgid "%s account : %s"
 msgstr "%s Fiók %s"
 
-#: ../src/sflnotify.c:120
+#: ../src/sflnotify.c:121
 #, c-format
 msgid "<i>From</i> %s"
 msgstr "%s<i>tól/től</i>"
 
 #. the account is different from NULL
-#: ../src/sflnotify.c:153
+#: ../src/sflnotify.c:154
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
 msgstr "Hívás a %s fiókkal <i>%s</i>"
 
-#: ../src/sflnotify.c:157
+#: ../src/sflnotify.c:158
 #, c-format
 msgid "Current account"
 msgstr "Jelenlegi Fiók"
 
-#: ../src/sflnotify.c:169
+#: ../src/sflnotify.c:170
 #, c-format
 msgid "You have no accounts set up"
 msgstr "Nics beállított Fiók"
 
-#: ../src/sflnotify.c:182
+#: ../src/sflnotify.c:183
 #, c-format
 msgid "You have no registered accounts"
 msgstr "nincs regisztrált Fiók"
 
-#: ../src/sflnotify.c:196
+#: ../src/sflnotify.c:197
 #, c-format
-msgid ""
-"<i>With:</i> %s \n"
-"using %s"
+msgid "<i>With:</i> %s \n"
 msgstr ""
 
-#: ../src/sflnotify.c:210
+#: ../src/sflnotify.c:212
 #, c-format
 msgid "%s does not support ZRTP."
 msgstr "%s nem támogatja a ZRTP-t."
 
-#: ../src/sflnotify.c:224
+#: ../src/sflnotify.c:226
 #, c-format
 msgid "ZRTP negotiation failed with %s"
 msgstr "ZRTP csatlakozási hiba %s"
 
-#: ../src/sflnotify.c:238
+#: ../src/sflnotify.c:240
 #, c-format
 msgid "<i>With:</i> %s"
 msgstr ""
@@ -1157,8 +1154,8 @@ msgstr "Mikrofon hangereje"
 msgid "_Show main window"
 msgstr "_Főablak megjelenítése"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:997 ../src/uimanager.c:1328
-#: ../src/uimanager.c:1384
+#: ../src/statusicon.c:139 ../src/uimanager.c:1036 ../src/uimanager.c:1389
+#: ../src/uimanager.c:1473
 msgid "_Hang up"
 msgstr "_Vonal bontása"
 
@@ -1166,246 +1163,255 @@ msgstr "_Vonal bontása"
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../src/uimanager.c:417
+#: ../src/uimanager.c:434
 msgid "No address book selected"
 msgstr "Nincs kiválasztva Címjegyzék"
 
-#: ../src/uimanager.c:437 ../src/uimanager.c:1070
+#: ../src/uimanager.c:454 ../src/uimanager.c:1113
 msgid "Address book"
 msgstr "Címjegyzék"
 
-#: ../src/uimanager.c:469
+#: ../src/uimanager.c:486
 #, c-format
 msgid "Voicemail(%i)"
 msgstr "Hangposta(%i)"
 
-#: ../src/uimanager.c:562
+#: ../src/uimanager.c:579
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "Az SFLphone egy SIP és IAX2 kompatibilis VoIP kliens."
 
-#: ../src/uimanager.c:565
+#: ../src/uimanager.c:582
 msgid "About SFLphone"
 msgstr "Az SFLphone-ról"
 
-#: ../src/uimanager.c:938 ../src/uimanager.c:1017
+#: ../src/uimanager.c:977 ../src/uimanager.c:1060
 msgid "Voicemail"
 msgstr "Hangposta"
 
-#: ../src/uimanager.c:989 ../src/uimanager.c:1491
+#: ../src/uimanager.c:1028 ../src/uimanager.c:1580
 msgid "_New call"
 msgstr "_Új hívás"
 
-#: ../src/uimanager.c:990
+#: ../src/uimanager.c:1029
 msgid "Place a new call"
 msgstr "Új hívás kezdeményezése"
 
-#: ../src/uimanager.c:993 ../src/uimanager.c:1317
+#: ../src/uimanager.c:1032 ../src/uimanager.c:1378
 msgid "_Pick up"
 msgstr "_Felvesz"
 
-#: ../src/uimanager.c:994
+#: ../src/uimanager.c:1033
 msgid "Answer the call"
 msgstr "Hívás fogadása"
 
-#: ../src/uimanager.c:998
+#: ../src/uimanager.c:1037
 msgid "Finish the call"
 msgstr "Hívás befejezése"
 
-#: ../src/uimanager.c:1001
+#: ../src/uimanager.c:1040
 msgid "O_n hold"
 msgstr "Tartás"
 
-#: ../src/uimanager.c:1002
+#: ../src/uimanager.c:1041
 msgid "Place the call on hold"
 msgstr "Hívás tartásba tétele"
 
-#: ../src/uimanager.c:1005
+#: ../src/uimanager.c:1044
 msgid "O_ff hold"
 msgstr "Hívás visszavétele"
 
-#: ../src/uimanager.c:1006
+#: ../src/uimanager.c:1045
 msgid "Place the call off hold"
 msgstr "Hívás visszavétele"
 
-#: ../src/uimanager.c:1009 ../src/uimanager.c:1370
+#: ../src/uimanager.c:1048 ../src/uimanager.c:1431
 msgid "Send _message"
 msgstr ""
 
-#: ../src/uimanager.c:1010
+#: ../src/uimanager.c:1049
 msgid "Send message"
 msgstr "Üzenet küldése"
 
-#: ../src/uimanager.c:1013
+#: ../src/uimanager.c:1052 ../src/uimanager.c:1053
+msgid "Share screen"
+msgstr ""
+
+#: ../src/uimanager.c:1056
 msgid "Configuration _Assistant"
 msgstr "Beállítóasszisztens"
 
-#: ../src/uimanager.c:1014
+#: ../src/uimanager.c:1057
 msgid "Run the configuration assistant"
 msgstr "A beállítóasszisztens futtatása"
 
-#: ../src/uimanager.c:1018
+#: ../src/uimanager.c:1061
 msgid "Call your voicemail"
 msgstr "Hangposta hívása"
 
-#: ../src/uimanager.c:1021
+#: ../src/uimanager.c:1064
 msgid "_Close"
 msgstr "_Bezár"
 
-#: ../src/uimanager.c:1022
+#: ../src/uimanager.c:1065
 msgid "Minimize to system tray"
 msgstr "Tálcára helyezés"
 
-#: ../src/uimanager.c:1025
+#: ../src/uimanager.c:1068
 msgid "_Quit"
 msgstr "_Kilépés"
 
-#: ../src/uimanager.c:1026
+#: ../src/uimanager.c:1069
 msgid "Quit the program"
 msgstr "Kilépés a programból"
 
 #. Edit Menu
-#: ../src/uimanager.c:1030
+#: ../src/uimanager.c:1073
 msgid "_Edit"
 msgstr "_Szerkesztés"
 
-#: ../src/uimanager.c:1032
+#: ../src/uimanager.c:1075
 msgid "_Copy"
 msgstr "_Másolás"
 
-#: ../src/uimanager.c:1033
+#: ../src/uimanager.c:1076
 msgid "Copy the selection"
 msgstr "Kijelölés másolása"
 
-#: ../src/uimanager.c:1036
+#: ../src/uimanager.c:1079
 msgid "_Paste"
 msgstr "_Beillesztés"
 
-#: ../src/uimanager.c:1037
+#: ../src/uimanager.c:1080
 msgid "Paste the clipboard"
 msgstr "A vágólap tartalmának beillesztése"
 
-#: ../src/uimanager.c:1040
+#: ../src/uimanager.c:1083
 msgid "Clear _history"
 msgstr "Előzmények törlése"
 
-#: ../src/uimanager.c:1041
+#: ../src/uimanager.c:1084
 msgid "Clear the call history"
 msgstr "Híváselőzmények törlése"
 
-#: ../src/uimanager.c:1044
+#: ../src/uimanager.c:1087
 msgid "_Accounts"
 msgstr "_Fiókok"
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1088
 msgid "Edit your accounts"
 msgstr "Felhasználói fiókok szerkesztése"
 
-#: ../src/uimanager.c:1048
+#: ../src/uimanager.c:1091
 msgid "_Preferences"
 msgstr "_Beállítások"
 
-#: ../src/uimanager.c:1049
+#: ../src/uimanager.c:1092
 msgid "Change your preferences"
 msgstr "Beállítások megváltoztatása"
 
 #. View Menu
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1096
 msgid "_View"
 msgstr "_Nézet"
 
 #. Help menu
-#: ../src/uimanager.c:1056
+#: ../src/uimanager.c:1099
 msgid "_Help"
 msgstr "_Súgó"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1100
 msgid "Contents"
 msgstr "Tartalom"
 
-#: ../src/uimanager.c:1058
+#: ../src/uimanager.c:1101
 msgid "Open the manual"
 msgstr "A kézikönyv megnyitása"
 
-#: ../src/uimanager.c:1060
+#: ../src/uimanager.c:1103
 msgid "About this application"
 msgstr "Az alkalmazás névjegye"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1107
 msgid "_Transfer"
 msgstr "_Átadás"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1107
 msgid "Transfer the call"
 msgstr "A hívás átadása"
 
-#: ../src/uimanager.c:1065 ../src/uimanager.c:1350
+#: ../src/uimanager.c:1108 ../src/uimanager.c:1411
 msgid "_Record"
 msgstr "_Felvétel"
 
-#: ../src/uimanager.c:1065
+#: ../src/uimanager.c:1108
 msgid "Record the current conversation"
 msgstr "A jelenlegi hívás rögzítése"
 
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1109
 msgid "_Show toolbar"
 msgstr "Látszódjon az eszköztár"
 
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1109
 msgid "Show the toolbar"
 msgstr "Látszódjon az eszköztár"
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1110
 msgid "_Dialpad"
 msgstr "Tárcsázó"
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1110
 msgid "Show the dialpad"
 msgstr "Tárcsázó megjelenítése"
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1111
 msgid "_Volume controls"
 msgstr "_Hangerőszabályzó"
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1111
 msgid "Show the volume controls"
 msgstr "Hangerőszabályzó megjelenítése"
 
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1112
 msgid "_History"
 msgstr "_Előzmények"
 
-#: ../src/uimanager.c:1069
-msgid "Calls history"
-msgstr "Híváselőzmények"
+#: ../src/uimanager.c:1112
+msgid "Call history"
+msgstr ""
 
-#: ../src/uimanager.c:1070
+#: ../src/uimanager.c:1113
 msgid "_Address book"
 msgstr "_Névjegyzék"
 
-#: ../src/uimanager.c:1072
+#: ../src/uimanager.c:1115
 msgid "_Buddy list"
 msgstr "_Buddy lista"
 
-#: ../src/uimanager.c:1072
+#: ../src/uimanager.c:1115
 msgid "Display the buddy list"
 msgstr "Buddy lista megjelenítése"
 
-#: ../src/uimanager.c:1339 ../src/uimanager.c:1393
+#: ../src/uimanager.c:1400 ../src/uimanager.c:1482
 msgid "On _Hold"
 msgstr "Tartásban"
 
-#: ../src/uimanager.c:1430
+#. Add a video sources menu
+#: ../src/uimanager.c:1451
+msgid "Video sources"
+msgstr ""
+
+#: ../src/uimanager.c:1519
 msgid "_Call back"
 msgstr "_Visszahívás"
 
-#: ../src/uimanager.c:1440 ../src/uimanager.c:1499
+#: ../src/uimanager.c:1529 ../src/uimanager.c:1588
 msgid "Follow status"
 msgstr ""
 
-#: ../src/uimanager.c:1560
+#: ../src/uimanager.c:1649
 msgid "Edit phone number"
 msgstr "Telefonszám szerkesztése"
 
-#: ../src/uimanager.c:1571
+#: ../src/uimanager.c:1660
 msgid "Edit the phone number before making a call"
 msgstr "Telefonszám hívás előtti szerkesztése"

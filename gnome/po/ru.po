@@ -7,30 +7,35 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-10 10:41-0500\n"
+"POT-Creation-Date: 2014-03-21 21:10-0400\n"
 "PO-Revision-Date: 2014-01-09 21:07+0000\n"
 "Last-Translator: Marat Gubaidullin <marat.gubaidullin@gmail.com>\n"
 "Language-Team: Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-01-10 15:36+0000\n"
-"X-Generator: Launchpad (build 16890)\n"
+"X-Launchpad-Export-Date: 2014-03-23 06:20+0000\n"
+"X-Generator: Launchpad (build 16967)\n"
+"Language: \n"
+
+#: ../src/config/accountlistconfigdialog.c:638
+#, c-format
+msgid "Server returned \"%s\" (%d)"
+msgstr "Ответ сервера \"%s\" (%d)"
 
 #: ../src/accountlist.c:183
-msgid "Registered"
-msgstr "Зарегистрирован"
-
-#: ../src/accountlist.c:185
 msgid "Not Registered"
 msgstr "Не зарегистрирован"
 
-#: ../src/accountlist.c:187
+#: ../src/accountlist.c:185
 msgid "Trying..."
 msgstr "Попытка..."
 
-#: ../src/accountlist.c:189 ../src/sflnotify.c:170 ../src/sflnotify.c:183
+#: ../src/accountlist.c:187
+msgid "Registered"
+msgstr "Зарегистрирован"
+
+#: ../src/accountlist.c:189 ../src/sflnotify.c:171 ../src/sflnotify.c:184
 #, c-format
 msgid "Error"
 msgstr "Ошибка"
@@ -52,18 +57,18 @@ msgid "Service unavailable"
 msgstr "Служба недоступна"
 
 #: ../src/accountlist.c:199
-msgid "Not acceptable"
-msgstr "Недопустимо"
-
-#: ../src/accountlist.c:201
 msgid "Stun server invalid"
 msgstr "Неверный сервер Stun"
+
+#: ../src/accountlist.c:201
+msgid "Not acceptable"
+msgstr "Недопустимо"
 
 #: ../src/accountlist.c:203
 msgid "Ready"
 msgstr "Готов"
 
-#: ../src/accountlist.c:205
+#: ../src/accountlist.c:206
 msgid "Invalid"
 msgstr "Неверный"
 
@@ -85,29 +90,29 @@ msgstr "%s %s"
 msgid "No registered accounts"
 msgstr "У вас нет зарегистрированных учетных записей"
 
-#: ../src/actions.c:503
+#: ../src/actions.c:505
 #, c-format
 msgid "Direct SIP call"
 msgstr "Прямой SIP вызов"
 
 #. less than 1 week
 #. less than 1 day
-#: ../src/callable_obj.c:306
+#: ../src/callable_obj.c:254
 msgid "today at %R"
 msgstr "сегодня в %R"
 
 #. less than 2 days
-#: ../src/callable_obj.c:309
+#: ../src/callable_obj.c:257
 msgid "yesterday at %R"
 msgstr "вчера в %R"
 
 #. between 2 days and 1 week
-#: ../src/callable_obj.c:311
+#: ../src/callable_obj.c:259
 msgid "%A at %R"
 msgstr "%A в %R"
 
 #. more than 1 week
-#: ../src/callable_obj.c:315
+#: ../src/callable_obj.c:263
 msgid "%x at %R"
 msgstr "%x в %R"
 
@@ -376,22 +381,17 @@ msgstr "Протокол"
 msgid "Status"
 msgstr "Статус"
 
-#: ../src/config/accountlistconfigdialog.c:638
-#, c-format
-msgid "Server returned \"%s\" (%d)"
-msgstr "Ответ сервера \"%s\" (%d)"
-
-#: ../src/config/accountlistconfigdialog.c:671
+#: ../src/config/accountlistconfigdialog.c:668
 msgid "Accounts"
 msgstr "Аккаунты"
 
-#: ../src/config/accountlistconfigdialog.c:680
+#: ../src/config/accountlistconfigdialog.c:677
 msgid "Configured Accounts"
 msgstr "Настройка аккаунтов"
 
-#: ../src/config/accountlistconfigdialog.c:708
-msgid "You have no active account"
-msgstr "У вас нет активного аккаунта"
+#: ../src/config/accountlistconfigdialog.c:705
+msgid "You have no active accounts"
+msgstr ""
 
 #: ../src/config/addressbook-config.c:313
 #: ../src/config/preferencesdialog.c:412 ../src/config/shortcuts-config.c:117
@@ -442,7 +442,7 @@ msgstr "Адресная книга"
 msgid "Select which Evolution address books to use"
 msgstr "Выбрать адресную книгу Evolution:"
 
-#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:542
+#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:486
 #: ../src/config/videoconf.c:492
 msgid "Name"
 msgstr "Имя"
@@ -590,93 +590,92 @@ msgstr "Регистрация аккаунта"
 msgid "Congratulations!"
 msgstr "Поздравляем!"
 
-#: ../src/config/audioconf.c:547
+#: ../src/config/audioconf.c:491
 msgid "Frequency"
 msgstr "Частота"
 
-#: ../src/config/audioconf.c:552
+#: ../src/config/audioconf.c:496
 msgid "Bitrate"
 msgstr "Битрейт"
 
-#: ../src/config/audioconf.c:557
+#: ../src/config/audioconf.c:501
 msgid "Channels"
 msgstr "Каналы"
 
-#: ../src/config/audioconf.c:600
+#: ../src/config/audioconf.c:544
 msgid "ALSA plugin"
 msgstr "ALSA-плагин"
 
-#: ../src/config/audioconf.c:621 ../src/config/audioconf.c:702
+#: ../src/config/audioconf.c:565 ../src/config/audioconf.c:646
 msgid "Output"
 msgstr "Выход"
 
-#: ../src/config/audioconf.c:642 ../src/config/audioconf.c:724
+#: ../src/config/audioconf.c:586 ../src/config/audioconf.c:668
 msgid "Input"
 msgstr "Вход"
 
-#: ../src/config/audioconf.c:662 ../src/config/audioconf.c:744
+#: ../src/config/audioconf.c:606 ../src/config/audioconf.c:688
 msgid "Ringtone"
 msgstr "Мелодия вызова"
 
-#: ../src/config/audioconf.c:864
+#: ../src/config/audioconf.c:809
 msgid "Sound Manager"
 msgstr "Менеджер звука"
 
-#: ../src/config/audioconf.c:871
+#: ../src/config/audioconf.c:816
 msgid "_Pulseaudio"
 msgstr "_Pulseaudio"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:876
+#: ../src/config/audioconf.c:821
 msgid "Pulseaudio settings"
 msgstr "Настройки Pulseaudio"
 
-#: ../src/config/audioconf.c:880
+#: ../src/config/audioconf.c:825
 msgid "_ALSA"
 msgstr "_ALSA"
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:886
+#: ../src/config/audioconf.c:831
 msgid "ALSA settings"
 msgstr "Настройка ALSA"
 
-#: ../src/config/audioconf.c:901
+#: ../src/config/audioconf.c:846
 msgid "Recordings"
 msgstr "Записи"
 
 #. label
-#: ../src/config/audioconf.c:905
+#: ../src/config/audioconf.c:850
 msgid "Destination folder"
 msgstr "Папка назначения"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:909
+#: ../src/config/audioconf.c:854
 msgid "Select a folder"
 msgstr "Выберите папку"
 
-#: ../src/config/audioconf.c:920
+#: ../src/config/audioconf.c:865
 msgid "_Always recording"
 msgstr "_Всегда записывать"
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:927
+#: ../src/config/audioconf.c:872
 msgid "Voice enhancement settings"
 msgstr "Расширенные голосовые настройки"
 
-#: ../src/config/audioconf.c:930
+#: ../src/config/audioconf.c:875
 msgid "_Noise Reduction"
 msgstr "_Подавление шума"
 
-#: ../src/config/audioconf.c:937
+#: ../src/config/audioconf.c:882
 msgid "Automatic _Gain Control"
 msgstr "Автоматическая регулировка звука"
 
-#: ../src/config/audioconf.c:944
-#, fuzzy
+#: ../src/config/audioconf.c:889
 msgid "Tone settings"
-msgstr "Настройки аккаунта"
+msgstr ""
 
-#: ../src/config/audioconf.c:947
+#: ../src/config/audioconf.c:892
 msgid "_Mute DTMF"
 msgstr ""
 
@@ -811,60 +810,60 @@ msgstr ""
 "каждого аккаунта (но каждый из них будет использовать свой выделенный "
 "порт).\n"
 
-#: ../src/config/tlsadvanceddialog.c:120
+#: ../src/config/tlsadvanceddialog.c:118
 msgid "Global TLS listener (all accounts)"
 msgstr "Global TLS listener (для всех аккаунтов)"
 
-#: ../src/config/tlsadvanceddialog.c:130
+#: ../src/config/tlsadvanceddialog.c:128
 msgid "Certificate of Authority list"
 msgstr "Список центров сертификации"
 
-#: ../src/config/tlsadvanceddialog.c:133
+#: ../src/config/tlsadvanceddialog.c:131
 msgid "Choose a CA list file (optional)"
 msgstr "Выберите файл Центра сертификации (необязательно)"
 
-#: ../src/config/tlsadvanceddialog.c:144
+#: ../src/config/tlsadvanceddialog.c:142
 msgid "Public endpoint certificate file"
 msgstr "Файл с публичным сертификатом"
 
-#: ../src/config/tlsadvanceddialog.c:147
+#: ../src/config/tlsadvanceddialog.c:145
 msgid "Choose a public endpoint certificate (optional)"
 msgstr "Выберите публичный сертификат (необязательно)"
 
-#: ../src/config/tlsadvanceddialog.c:165
+#: ../src/config/tlsadvanceddialog.c:163
 msgid "Choose a private key file (optional)"
 msgstr "Выберите файл с приватным ключом (необязательно)"
 
-#: ../src/config/tlsadvanceddialog.c:180
+#: ../src/config/tlsadvanceddialog.c:178
 msgid "Password for the private key"
 msgstr "Пароль для приватного ключа"
 
 #. TLS protocol methods
-#: ../src/config/tlsadvanceddialog.c:193
+#: ../src/config/tlsadvanceddialog.c:191
 msgid "TLS protocol method"
 msgstr "Метод протокола TLS"
 
-#: ../src/config/tlsadvanceddialog.c:216
+#: ../src/config/tlsadvanceddialog.c:214
 msgid "TLS cipher list"
 msgstr "Список шифров TLS"
 
-#: ../src/config/tlsadvanceddialog.c:225
+#: ../src/config/tlsadvanceddialog.c:223
 msgid "Server name instance for outgoing TLS connection"
 msgstr "Имя сервера для исходящих TLS-подключений"
 
-#: ../src/config/tlsadvanceddialog.c:233
-msgid "Negotiation timeout (sec:msec)"
-msgstr "Время ожидания соединения (сек:мсек)"
+#: ../src/config/tlsadvanceddialog.c:231
+msgid "Negotiation timeout (seconds)"
+msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:250
+#: ../src/config/tlsadvanceddialog.c:243
 msgid "Verify incoming certificates, as a server"
 msgstr "Проверять входящие сертификаты как сервер"
 
-#: ../src/config/tlsadvanceddialog.c:256
+#: ../src/config/tlsadvanceddialog.c:249
 msgid "Verify certificates from answer, as a client"
 msgstr "Проверять входящие сертификаты как клиент"
 
-#: ../src/config/tlsadvanceddialog.c:262
+#: ../src/config/tlsadvanceddialog.c:255
 msgid "Require certificate for incoming tls connections"
 msgstr "Требовать сертификат для входящих TLS-подключений"
 
@@ -961,19 +960,19 @@ msgstr "Поиск в входящих вызовах"
 msgid "Search by outgoing call"
 msgstr "Поиск в исходящих вызовах"
 
-#: ../src/dbus/dbus.c:591
+#: ../src/dbus/dbus.c:590
 msgid "ALSA notification: Error while opening playback device"
 msgstr "Сообщение ALSA: Ошибка запуска проигрывателя"
 
-#: ../src/dbus/dbus.c:594
+#: ../src/dbus/dbus.c:593
 msgid "ALSA notification: Error while opening capture device"
 msgstr "Сообщение ALSA: Ошибка запуска  устройства захвата"
 
-#: ../src/dbus/dbus.c:597
+#: ../src/dbus/dbus.c:596
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr "Сообщение Pulseaudio: Pulseaudio не запущено"
 
-#: ../src/dbus/dbus.c:600
+#: ../src/dbus/dbus.c:599
 msgid "Codecs notification: Codecs not found"
 msgstr "Сообщение Codecs: Codecs не найден"
 
@@ -1047,7 +1046,7 @@ msgid "Remove buddy"
 msgstr "Удалить собеседника"
 
 #. popup
-#: ../src/presencewindow.c:755 ../src/uimanager.c:1153
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1196
 msgid "Add new buddy"
 msgstr "Добавить нового собеседника"
 
@@ -1056,7 +1055,7 @@ msgid "Add group"
 msgstr "Добавить группу"
 
 #. Call Menu
-#: ../src/presencewindow.c:802 ../src/uimanager.c:987
+#: ../src/presencewindow.c:802 ../src/uimanager.c:1026
 msgid "Call"
 msgstr "_Вызов"
 
@@ -1097,63 +1096,59 @@ msgstr "Включить отладку"
 msgid "- GNOME client for SFLPhone"
 msgstr "Клиент GNOME для SFLPhone"
 
-#: ../src/sflnotify.c:93
+#: ../src/sflnotify.c:94
 #, c-format
 msgid "%s says:"
 msgstr "%s сказал:"
 
 #. the account is different from NULL
-#: ../src/sflnotify.c:115 ../src/sflnotify.c:135
+#: ../src/sflnotify.c:116 ../src/sflnotify.c:136
 #, c-format
 msgid "%s account : %s"
 msgstr "%s учетная запись: %s"
 
-#: ../src/sflnotify.c:120
+#: ../src/sflnotify.c:121
 #, c-format
 msgid "<i>From</i> %s"
 msgstr "<i>От:</i> %s"
 
 #. the account is different from NULL
-#: ../src/sflnotify.c:153
+#: ../src/sflnotify.c:154
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
 msgstr "Вызов %s с помощью учетной записи <i>%s</i>"
 
-#: ../src/sflnotify.c:157
+#: ../src/sflnotify.c:158
 #, c-format
 msgid "Current account"
 msgstr "Текущая учетная запись"
 
-#: ../src/sflnotify.c:169
+#: ../src/sflnotify.c:170
 #, c-format
 msgid "You have no accounts set up"
 msgstr "У вас нет настроенных учетных записей"
 
-#: ../src/sflnotify.c:182
+#: ../src/sflnotify.c:183
 #, c-format
 msgid "You have no registered accounts"
 msgstr "У вас нет зарегистрированных учетных записей"
 
-#: ../src/sflnotify.c:196
+#: ../src/sflnotify.c:197
 #, c-format
-msgid ""
-"<i>With:</i> %s \n"
-"using %s"
+msgid "<i>With:</i> %s \n"
 msgstr ""
-"<i>с:</i> %s\n"
-"используя %s"
 
-#: ../src/sflnotify.c:210
+#: ../src/sflnotify.c:212
 #, c-format
 msgid "%s does not support ZRTP."
 msgstr "%s не поддерживает ZRTP."
 
-#: ../src/sflnotify.c:224
+#: ../src/sflnotify.c:226
 #, c-format
 msgid "ZRTP negotiation failed with %s"
 msgstr "Обмен информации ZRTP не удался (%s)"
 
-#: ../src/sflnotify.c:238
+#: ../src/sflnotify.c:240
 #, c-format
 msgid "<i>With:</i> %s"
 msgstr "<i>с</i> %s"
@@ -1170,8 +1165,8 @@ msgstr "Чувствительность микрофона"
 msgid "_Show main window"
 msgstr "_Показать главное окно"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:997 ../src/uimanager.c:1328
-#: ../src/uimanager.c:1384
+#: ../src/statusicon.c:139 ../src/uimanager.c:1036 ../src/uimanager.c:1389
+#: ../src/uimanager.c:1473
 msgid "_Hang up"
 msgstr "_Положить трубку"
 
@@ -1179,246 +1174,255 @@ msgstr "_Положить трубку"
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../src/uimanager.c:417
+#: ../src/uimanager.c:434
 msgid "No address book selected"
 msgstr "Адресная книга не выбрана"
 
-#: ../src/uimanager.c:437 ../src/uimanager.c:1070
+#: ../src/uimanager.c:454 ../src/uimanager.c:1113
 msgid "Address book"
 msgstr "Адресная книга"
 
-#: ../src/uimanager.c:469
+#: ../src/uimanager.c:486
 #, c-format
 msgid "Voicemail(%i)"
 msgstr "Голосовое сообщение(%i)"
 
-#: ../src/uimanager.c:562
+#: ../src/uimanager.c:579
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone - SIP и IAX2-совместимый VoIP-клиент"
 
-#: ../src/uimanager.c:565
+#: ../src/uimanager.c:582
 msgid "About SFLphone"
 msgstr "О программе SFLphone"
 
-#: ../src/uimanager.c:938 ../src/uimanager.c:1017
+#: ../src/uimanager.c:977 ../src/uimanager.c:1060
 msgid "Voicemail"
 msgstr "Голосовая почта"
 
-#: ../src/uimanager.c:989 ../src/uimanager.c:1491
+#: ../src/uimanager.c:1028 ../src/uimanager.c:1580
 msgid "_New call"
 msgstr "_Новый вызов"
 
-#: ../src/uimanager.c:990
+#: ../src/uimanager.c:1029
 msgid "Place a new call"
 msgstr "Сделать новый вызов"
 
-#: ../src/uimanager.c:993 ../src/uimanager.c:1317
+#: ../src/uimanager.c:1032 ../src/uimanager.c:1378
 msgid "_Pick up"
 msgstr "_Взять трубку"
 
-#: ../src/uimanager.c:994
+#: ../src/uimanager.c:1033
 msgid "Answer the call"
 msgstr "Ответить на вызов"
 
-#: ../src/uimanager.c:998
+#: ../src/uimanager.c:1037
 msgid "Finish the call"
 msgstr "Завершить вызов"
 
-#: ../src/uimanager.c:1001
+#: ../src/uimanager.c:1040
 msgid "O_n hold"
 msgstr "_Удерживать вызов"
 
-#: ../src/uimanager.c:1002
+#: ../src/uimanager.c:1041
 msgid "Place the call on hold"
 msgstr "Поставить вызов на удержание"
 
-#: ../src/uimanager.c:1005
+#: ../src/uimanager.c:1044
 msgid "O_ff hold"
 msgstr "_Снять вызов с удержания"
 
-#: ../src/uimanager.c:1006
+#: ../src/uimanager.c:1045
 msgid "Place the call off hold"
 msgstr "Поставить вызов на удержание"
 
-#: ../src/uimanager.c:1009 ../src/uimanager.c:1370
+#: ../src/uimanager.c:1048 ../src/uimanager.c:1431
 msgid "Send _message"
 msgstr "Отправить _сообщение"
 
-#: ../src/uimanager.c:1010
+#: ../src/uimanager.c:1049
 msgid "Send message"
 msgstr "Отправить сообщение"
 
-#: ../src/uimanager.c:1013
+#: ../src/uimanager.c:1052 ../src/uimanager.c:1053
+msgid "Share screen"
+msgstr ""
+
+#: ../src/uimanager.c:1056
 msgid "Configuration _Assistant"
 msgstr "Мастер настройки"
 
-#: ../src/uimanager.c:1014
+#: ../src/uimanager.c:1057
 msgid "Run the configuration assistant"
 msgstr "Запустить мастер настройки"
 
-#: ../src/uimanager.c:1018
+#: ../src/uimanager.c:1061
 msgid "Call your voicemail"
 msgstr "Прослушивание голосовой почты"
 
-#: ../src/uimanager.c:1021
+#: ../src/uimanager.c:1064
 msgid "_Close"
 msgstr "_Закрыть"
 
-#: ../src/uimanager.c:1022
+#: ../src/uimanager.c:1065
 msgid "Minimize to system tray"
 msgstr "Свернуть в трей"
 
-#: ../src/uimanager.c:1025
+#: ../src/uimanager.c:1068
 msgid "_Quit"
 msgstr "В_ыход"
 
-#: ../src/uimanager.c:1026
+#: ../src/uimanager.c:1069
 msgid "Quit the program"
 msgstr "Выйти из программы"
 
 #. Edit Menu
-#: ../src/uimanager.c:1030
+#: ../src/uimanager.c:1073
 msgid "_Edit"
 msgstr "_Правка"
 
-#: ../src/uimanager.c:1032
+#: ../src/uimanager.c:1075
 msgid "_Copy"
 msgstr "_Копировать"
 
-#: ../src/uimanager.c:1033
+#: ../src/uimanager.c:1076
 msgid "Copy the selection"
 msgstr "Копировать выделенное"
 
-#: ../src/uimanager.c:1036
+#: ../src/uimanager.c:1079
 msgid "_Paste"
 msgstr "В_ставить"
 
-#: ../src/uimanager.c:1037
+#: ../src/uimanager.c:1080
 msgid "Paste the clipboard"
 msgstr "Вставить из буфера обмена"
 
-#: ../src/uimanager.c:1040
+#: ../src/uimanager.c:1083
 msgid "Clear _history"
 msgstr "Очистить журнал"
 
-#: ../src/uimanager.c:1041
+#: ../src/uimanager.c:1084
 msgid "Clear the call history"
 msgstr "Очистить журнал вызовов"
 
-#: ../src/uimanager.c:1044
+#: ../src/uimanager.c:1087
 msgid "_Accounts"
 msgstr "_Аккаунты"
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1088
 msgid "Edit your accounts"
 msgstr "Нстройка аккаунта"
 
-#: ../src/uimanager.c:1048
+#: ../src/uimanager.c:1091
 msgid "_Preferences"
 msgstr "_Настройки"
 
-#: ../src/uimanager.c:1049
+#: ../src/uimanager.c:1092
 msgid "Change your preferences"
 msgstr "Изменить ваши настройки"
 
 #. View Menu
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1096
 msgid "_View"
 msgstr "_Вид"
 
 #. Help menu
-#: ../src/uimanager.c:1056
+#: ../src/uimanager.c:1099
 msgid "_Help"
 msgstr "_Помощь"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1100
 msgid "Contents"
 msgstr "Содержание"
 
-#: ../src/uimanager.c:1058
+#: ../src/uimanager.c:1101
 msgid "Open the manual"
 msgstr "Открыть руководство пользователя"
 
-#: ../src/uimanager.c:1060
+#: ../src/uimanager.c:1103
 msgid "About this application"
 msgstr "О программе"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1107
 msgid "_Transfer"
 msgstr "Переадресация вызова"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1107
 msgid "Transfer the call"
 msgstr "Переадресовать вызов"
 
-#: ../src/uimanager.c:1065 ../src/uimanager.c:1350
+#: ../src/uimanager.c:1108 ../src/uimanager.c:1411
 msgid "_Record"
 msgstr "_Запись"
 
-#: ../src/uimanager.c:1065
+#: ../src/uimanager.c:1108
 msgid "Record the current conversation"
 msgstr "Записать текущий разговор"
 
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1109
 msgid "_Show toolbar"
 msgstr "Показать _панель инструментов"
 
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1109
 msgid "Show the toolbar"
 msgstr "Показывать панель инструментов"
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1110
 msgid "_Dialpad"
 msgstr "_Номеронабиратель"
 
-#: ../src/uimanager.c:1067
+#: ../src/uimanager.c:1110
 msgid "Show the dialpad"
 msgstr "Показывать _номеронабиратель"
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1111
 msgid "_Volume controls"
 msgstr "Настройки _громкости"
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1111
 msgid "Show the volume controls"
 msgstr "Показывать настройки _громкости"
 
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1112
 msgid "_History"
 msgstr "Журнал вызовов"
 
-#: ../src/uimanager.c:1069
-msgid "Calls history"
-msgstr "История вызовов"
+#: ../src/uimanager.c:1112
+msgid "Call history"
+msgstr ""
 
-#: ../src/uimanager.c:1070
+#: ../src/uimanager.c:1113
 msgid "_Address book"
 msgstr "Адресная книга"
 
-#: ../src/uimanager.c:1072
+#: ../src/uimanager.c:1115
 msgid "_Buddy list"
 msgstr "Список собеседников"
 
-#: ../src/uimanager.c:1072
+#: ../src/uimanager.c:1115
 msgid "Display the buddy list"
 msgstr "Показать список собеседников"
 
-#: ../src/uimanager.c:1339 ../src/uimanager.c:1393
+#: ../src/uimanager.c:1400 ../src/uimanager.c:1482
 msgid "On _Hold"
 msgstr "_Удерживать звонок"
 
-#: ../src/uimanager.c:1430
+#. Add a video sources menu
+#: ../src/uimanager.c:1451
+msgid "Video sources"
+msgstr ""
+
+#: ../src/uimanager.c:1519
 msgid "_Call back"
 msgstr "Обратный вызов"
 
-#: ../src/uimanager.c:1440 ../src/uimanager.c:1499
+#: ../src/uimanager.c:1529 ../src/uimanager.c:1588
 msgid "Follow status"
 msgstr "Следить за статусом"
 
-#: ../src/uimanager.c:1560
+#: ../src/uimanager.c:1649
 msgid "Edit phone number"
 msgstr "Изменить номер телефона"
 
-#: ../src/uimanager.c:1571
+#: ../src/uimanager.c:1660
 msgid "Edit the phone number before making a call"
 msgstr "Изменить номер телефона перед вызовом"
