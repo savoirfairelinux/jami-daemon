@@ -919,10 +919,12 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 
     gtk_widget_show_all(audio_vbox);
 
-    if (using_alsa)
+    if (using_alsa) {
         gtk_widget_show(alsa_conf);
-    else
+        gtk_widget_hide(pulse_conf);
+    } else {
         gtk_widget_hide(alsa_conf);
+    }
 
     return audio_vbox;
 }
