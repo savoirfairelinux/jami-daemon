@@ -69,6 +69,7 @@
 
 #define PULSEAUDIO_API_STR          "pulseaudio"
 #define ALSA_API_STR                "alsa"
+#define JACK_API_STR                "jack"
 
 /** Tone to play when no voice mails */
 #define TONE_WITHOUT_MESSAGE  0

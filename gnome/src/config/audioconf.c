@@ -771,6 +771,24 @@ pulse_toggled(GtkToggleButton *pulse_button, SFLPhoneClient *client)
 }
 
 static void
+jack_toggled(GtkToggleButton *jack_button)
+{
+    if (audio_api_in_use(JACK_API_STR))
+        return;
+
+    if (!gtk_toggle_button_get_active(jack_button))
+        return;
+
+    dbus_set_audio_manager(JACK_API_STR);
+
+    gtk_container_remove(GTK_CONTAINER(alsa_conf), alsabox);
+    gtk_widget_hide(alsa_conf);
+
+    gtk_container_remove(GTK_CONTAINER(pulse_conf), pulsebox);
+    gtk_widget_hide(pulse_conf);
+}
+
+static void
 active_noise_suppress(void)
 {
     dbus_set_noise_suppress_state(!dbus_get_noise_suppress_state());
@@ -832,7 +850,8 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     gtk_box_pack_start(GTK_BOX(audio_vbox), frame, FALSE, FALSE, 0);
 
     const gboolean using_pulse = audio_api_in_use(PULSEAUDIO_API_STR);
-    const gboolean using_alsa = using_pulse ? FALSE : audio_api_in_use(ALSA_API_STR);
+    const gboolean using_alsa = !using_pulse && audio_api_in_use(ALSA_API_STR);
+    const gboolean using_jack = !using_pulse && !using_alsa && audio_api_in_use(ALSA_API_STR);
 
     GtkWidget *pulse_button = gtk_radio_button_new_with_mnemonic(NULL , _("_Pulseaudio"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pulse_button), using_pulse);
@@ -848,6 +867,11 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(alsa_button), using_alsa);
     g_signal_connect(G_OBJECT(alsa_button), "toggled", G_CALLBACK(alsa_toggled), client);
     gtk_grid_attach(GTK_GRID(grid), alsa_button, 1, 0, 1, 1);
+
+    GtkWidget *jack_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse_button), _("_JACK"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jack_button), using_jack);
+    g_signal_connect(G_OBJECT(jack_button), "toggled", G_CALLBACK(jack_toggled), NULL);
+    gtk_grid_attach(GTK_GRID(grid), jack_button, 2, 0, 1, 1);
 
     // Box for the ALSA configuration
     alsa_conf = gnome_main_section_new(_("ALSA settings"));
