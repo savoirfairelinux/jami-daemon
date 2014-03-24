@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# Script to update translations from Launchpad, create a patch and send by email
+# @See git-format-patch
+# @See git-send-email
+#
+# Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+
+set -x
+
+# This is an environment variable provided by Jenkins. It points to the repository's root
+cd ${WORKSPACE}
+
+WORKING_DIR=${WORKSPACE}/gnome/po
+BZR_DIR=${WORKING_DIR}/tmp
+BZR=bzr
+MAKE=make
+BZR_BRANCH="lp:sflphone"
+EMAIL_TO="sflphone-dev@lists.savoirfairelinux.net"
+
+# Clone Bazaar branch that contains Launchpad translations
+cd ${WORKING_DIR}
+if [ -e $BZR_DIR ] ; then
+  # Remove the directory first
+  rm -rf $BZR_DIR
+fi
+$BZR branch $BZR_BRANCH $BZR_DIR
+
+# Update the po files with the latest translations
+cd ${WORKSPACE}/gnome
+./autogen.sh
+./configure --prefix=/usr
+cd ${WORKING_DIR}
+cp $BZR_DIR/sflphone/*.po ${WORKING_DIR}
+# Compile the po files
+$MAKE
+
+# Build the patch
+git status
+git add *.po
+git commit -a -m "[Launchpad (Rosetta)] Automatic translations update"
+git format-patch --to $EMAIL_TO HEAD~..HEAD
+# Send the patch
+git send-email \
+  --8bit-encoding "utf-8" \
+  --from "Jenkins CI <jenkins@savoirfairelinux.com>" \
+  --to "<emmanuel.milou@savoirfairelinux.com>" \
+  --confirm=never \
+  *.patch
+
+exit 0
