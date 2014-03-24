@@ -206,10 +206,21 @@ update_device_widget(const gchar *pluginName, GtkWidget *output, GtkWidget *inpu
     gtk_widget_set_sensitive(ringtone, !is_default);
 }
 
+
+static gboolean
+audio_api_in_use(const gchar *api)
+{
+    gchar *current_api = dbus_get_audio_manager();
+    int ret = g_strcmp0(current_api, api);
+    g_free(current_api);
+    return ret == 0;
+}
+
+
 static void
 select_output_alsa_plugin(GtkComboBox* widget, G_GNUC_UNUSED gpointer data)
 {
-    if (!must_show_alsa_conf())
+    if (!audio_api_in_use(ALSA_API_STR))
         return;
     const gint comboBoxIndex = gtk_combo_box_get_active(widget);
 
@@ -227,7 +238,7 @@ select_output_alsa_plugin(GtkComboBox* widget, G_GNUC_UNUSED gpointer data)
 static void
 select_active_output_alsa_plugin(GtkWidget *alsa_plugin)
 {
-    if (!must_show_alsa_conf())
+    if (!audio_api_in_use(ALSA_API_STR))
         return;
     // Select active output device on server
     GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(alsa_plugin));
@@ -712,7 +723,7 @@ static GtkWidget* pulse_box()
 static void
 select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
 {
-    if (!must_show_alsa_conf() && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(alsa_button))) {
+    if (!audio_api_in_use(ALSA_API_STR) && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(alsa_button))) {
         dbus_set_audio_manager(ALSA_API_STR);
         gtk_container_remove(GTK_CONTAINER(pulse_conf), pulsebox);
         gtk_widget_hide(pulse_conf);
@@ -728,7 +739,7 @@ select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
             gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
         }
 
-    } else if (must_show_alsa_conf() && !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(alsa_button))) {
+    } else if (audio_api_in_use(ALSA_API_STR) && !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(alsa_button))) {
         dbus_set_audio_manager(PULSEAUDIO_API_STR);
         gtk_container_remove(GTK_CONTAINER(alsa_conf), alsabox);
         gtk_widget_hide(alsa_conf);
@@ -809,9 +820,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     gnome_main_section_new_with_grid(_("Sound Manager"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(audio_vbox), frame, FALSE, FALSE, 0);
 
-    gchar *audio_manager = dbus_get_audio_manager();
-    const gboolean using_pulse = g_strcmp0(audio_manager, PULSEAUDIO_API_STR) == 0;
-    g_free(audio_manager);
+    const gboolean using_pulse = audio_api_in_use(PULSEAUDIO_API_STR);
 
     GtkWidget *pulse_button = gtk_radio_button_new_with_mnemonic(NULL , _("_Pulseaudio"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pulse_button), using_pulse);
@@ -832,7 +841,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     gtk_box_pack_start(GTK_BOX(audio_vbox), alsa_conf, FALSE, FALSE, 0);
     gtk_widget_show(alsa_conf);
 
-    if (must_show_alsa_conf()) {
+    if (audio_api_in_use(ALSA_API_STR)) {
         // Box for the ALSA configuration
         alsabox = alsa_box();
         gtk_container_add(GTK_CONTAINER(alsa_conf), alsabox);
@@ -903,15 +912,6 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
         gtk_widget_hide(alsa_conf);
 
     return audio_vbox;
-}
-
-/** Show/Hide the alsa configuration panel */
-gboolean must_show_alsa_conf()
-{
-    gchar *api = dbus_get_audio_manager();
-    int ret = g_strcmp0(api, ALSA_API_STR);
-    g_free(api);
-    return ret == 0;
 }
 
 gboolean
