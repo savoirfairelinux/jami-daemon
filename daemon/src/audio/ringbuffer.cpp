@@ -33,16 +33,17 @@
  *  as that of the covered work.
  */
 
+#include "ringbuffer.h"
+#include "logger.h"
+
+#include <chrono>
+#include <utility> // for std::pair
 #include <cstdlib>
 #include <cstring>
-#include <utility> // for std::pair
-
-#include "logger.h"
-#include "ringbuffer.h"
 
 namespace {
 // corresponds to 160 ms (about 5 rtp packets)
-const size_t MIN_BUFFER_SIZE = 1280;
+const size_t MIN_BUFFER_SIZE = 1024;
 }
 
 // Create  a ring buffer with 'size' bytes
@@ -110,13 +111,8 @@ RingBuffer::getSmallestReadPointer() const
         return 0;
 
     size_t smallest = buffer_.frames();
-
-    ReadPointer::const_iterator iter;
-
-    for (iter = readpointers_.begin(); iter != readpointers_.end(); ++iter)
-        if (iter->second < smallest)
-            smallest = iter->second;
-
+    for(auto const& iter : readpointers_)
+        smallest = std::min(smallest, iter.second);
     return smallest;
 }
 
@@ -135,6 +131,7 @@ RingBuffer::storeReadPointer(size_t pointer_value, const std::string &call_id)
 void
 RingBuffer::createReadPointer(const std::string &call_id)
 {
+    std::unique_lock<std::mutex> l(lock_);
     if (!hasThisReadPointer(call_id))
         readpointers_.insert(std::pair<std::string, int> (call_id, endPos_));
 }
@@ -143,6 +140,7 @@ RingBuffer::createReadPointer(const std::string &call_id)
 void
 RingBuffer::removeReadPointer(const std::string &call_id)
 {
+    std::unique_lock<std::mutex> l(lock_);
     ReadPointer::iterator iter = readpointers_.find(call_id);
 
     if (iter != readpointers_.end())
@@ -169,20 +167,20 @@ bool RingBuffer::hasNoReadPointers() const
 // This one puts some data inside the ring buffer.
 void RingBuffer::put(AudioBuffer& buf)
 {
-    const size_t len = putLength();
+    std::unique_lock<std::mutex> l(lock_);
     const size_t sample_num = buf.frames();
     const size_t buffer_size = buffer_.frames();
     if (buffer_size == 0)
         return;
 
+    size_t len = putLength();
+    if (buffer_size - len < sample_num)
+        discard(sample_num);
     size_t toCopy = sample_num;
 
     // Add more channels if the input buffer holds more channels than the ring.
     if (buffer_.channels() < buf.channels())
         buffer_.setChannelNum(buf.channels());
-
-    if (toCopy > buffer_size - len)
-        toCopy = buffer_size - len;
 
     size_t in_pos = 0;
     size_t pos = endPos_;
@@ -213,21 +211,26 @@ RingBuffer::availableForGet(const std::string &call_id) const
     return getLength(call_id);
 }
 
-// Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
 size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 {
+    std::unique_lock<std::mutex> l(lock_);
+
     if (hasNoReadPointers())
         return 0;
 
     if (not hasThisReadPointer(call_id))
         return 0;
 
-    const size_t len = getLength(call_id);
-    const size_t sample_num = buf.frames();
     const size_t buffer_size = buffer_.frames();
     if (buffer_size == 0)
         return 0;
+
+    size_t len = getLength(call_id);
+    const size_t sample_num = buf.frames();
     size_t toCopy = std::min(sample_num, len);
+    if (toCopy != sample_num) {
+        DEBUG("Partial get: %d/%d", toCopy, sample_num);
+    }
 
     const size_t copied = toCopy;
 
@@ -254,17 +257,30 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 size_t
 RingBuffer::discard(size_t toDiscard, const std::string &call_id)
 {
-    size_t len = getLength(call_id);
-
-    if (toDiscard > len)
-        toDiscard = len;
+    std::unique_lock<std::mutex> l(lock_);
 
     size_t buffer_size = buffer_.frames();
     if (buffer_size == 0)
         return 0;
+
+    size_t len = getLength(call_id);
+    if (toDiscard > len)
+        toDiscard = len;
+
     size_t startPos = (getReadPointer(call_id) + toDiscard) % buffer_size;
-
     storeReadPointer(startPos, call_id);
-
     return toDiscard;
+}
+
+size_t
+RingBuffer::discard(size_t toDiscard)
+{
+    DEBUG("Discarding: %d frames", toDiscard);
+    const size_t buffer_size = buffer_.frames();
+    for(auto& r : readpointers_) {
+        size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
+        if(dst < toDiscard) {
+            r.second = (r.second + toDiscard - dst) % buffer_size;
+        }
+    }
 }

@@ -26,6 +26,7 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <mutex>
 
 #include "noncopyable.h"
 #include "audiobuffer.h"
@@ -63,28 +64,6 @@ class RingBuffer {
         }
 
         /**
-         * Get read pointer coresponding to this call
-         */
-        size_t getReadPointer(const std::string &call_id) const;
-
-        /**
-         * Get the whole readpointer list for this ringbuffer
-         */
-        ReadPointer* getReadPointerList() {
-            return &readpointers_;
-        }
-
-        /**
-         * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
-         */
-        size_t getSmallestReadPointer() const;
-
-        /**
-         * Move readpointer forward by pointer_value
-         */
-        void storeReadPointer(size_t pointer_value, const std::string &call_id);
-
-        /**
          * Add a new readpointer for this ringbuffer
          */
         void createReadPointer(const std::string &call_id);
@@ -93,11 +72,6 @@ class RingBuffer {
          * Remove a readpointer for this ringbuffer
          */
         void removeReadPointer(const std::string &call_id);
-
-        /**
-         * Test if readpointer coresponding to this call is still active
-         */
-        bool hasThisReadPointer(const std::string &call_id) const;
 
         bool hasNoReadPointers() const;
 
@@ -137,19 +111,57 @@ class RingBuffer {
 
         size_t getLength(const std::string &call_id) const;
 
+        inline bool isFull() const {
+            return putLength() == buffer_.frames();
+        }
+
+        inline bool isEmpty() const {
+            return putLength() == 0;
+        }
+
+        std::mutex& getLock() {
+            return lock_;
+        }
+
         /**
          * Debug function print mEnd, mStart, mBufferSize
          */
         void debug();
 
     private:
-        /* POULET! */
         NON_COPYABLE(RingBuffer);
+
+        /**
+         * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
+         */
+        size_t getSmallestReadPointer() const;
+
+        /**
+         * Get read pointer coresponding to this call
+         */
+        size_t getReadPointer(const std::string &call_id) const;
+
+        /**
+         * Move readpointer forward by pointer_value
+         */
+        void storeReadPointer(size_t pointer_value, const std::string &call_id);
+
+        /**
+         * Test if readpointer coresponding to this call is still active
+         */
+        bool hasThisReadPointer(const std::string &call_id) const;
+
+        /**
+         * Discard data from all read pointers to make place for new data.
+         */
+        size_t discard(size_t toDiscard);
 
         /** Pointer on the last data */
         size_t endPos_;
         /** Data */
         AudioBuffer buffer_;
+
+        mutable std::mutex lock_;
 
         ReadPointer readpointers_;
         std::string buffer_id_;
