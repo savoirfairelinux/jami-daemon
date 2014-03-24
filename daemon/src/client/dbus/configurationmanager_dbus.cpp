@@ -31,6 +31,7 @@
  */
 
 #include "configurationmanager.h"
+#include "global.h"
 
 namespace {
     const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
@@ -39,3 +40,20 @@ namespace {
 ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
 {}
+
+
+std::vector<std::string>
+ConfigurationManager::getSupportedAudioManagers()
+{
+    return {
+#if HAVE_ALSA
+        ALSA_API_STR,
+#endif
+#if HAVE_PULSE
+        PULSEAUDIO_API_STR,
+#endif
+#if HAVE_JACK
+        JACK_API_STR,
+#endif
+    };
+}

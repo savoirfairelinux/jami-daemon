@@ -124,6 +124,7 @@ class ConfigurationManager
 
         std::string getAudioManager();
         void setAudioManager(const std::string& api);
+        std::vector<std::string> getSupportedAudioManagers();
 
         int32_t isIax2Enabled();
         std::string getRecordPath();

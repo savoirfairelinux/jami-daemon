@@ -73,3 +73,8 @@ std::vector< int32_t > ConfigurationManager::getHardwareAudioFormat()
 {
     return get_hardware_audio_format_wrapper();
 }
+
+std::vector<std::string> ConfigurationManager::getSupportedAudioManagers()
+{
+    return {"opensl"};
+}

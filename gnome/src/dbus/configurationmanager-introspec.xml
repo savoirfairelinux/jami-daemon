@@ -315,6 +315,14 @@
            </arg>
        </method>
 
+       <method name="getSupportedAudioManagers" tp:name-for-bindings="getSupportedAudioManagers">
+           <tp:docstring>
+               Returns a list of compiled audio backends.
+           </tp:docstring>
+           <arg type="as" name="api" direction="out">
+           </arg>
+       </method>
+
        <method name="getRecordPath" tp:name-for-bindings="getRecordPath">
            <arg type="s" name="rec" direction="out">
            </arg>
