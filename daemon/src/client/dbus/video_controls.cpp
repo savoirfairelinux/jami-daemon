@@ -166,7 +166,7 @@ void
 VideoControls::startCamera()
 {
     inputClients_++;
-    if (videoInputSelector_) {
+    if (hasCameraStarted()) {
         WARN("Video preview was already started!");
         return;
     }
@@ -178,7 +178,7 @@ VideoControls::startCamera()
 void
 VideoControls::stopCamera()
 {
-    if (videoInputSelector_) {
+    if (hasCameraStarted()) {
         DEBUG("Stopping video preview");
         inputClients_--;
         if (inputClients_ <= 0)
@@ -191,6 +191,10 @@ VideoControls::stopCamera()
 void
 VideoControls::switchInput(const std::string &device)
 {
+    if (not hasCameraStarted()) {
+        ERROR("Video input selector not initialized");
+        return;
+    }
     DEBUG("Switching input device to %s", device.c_str());
     videoInputSelector_->switchInput(device);
 }
