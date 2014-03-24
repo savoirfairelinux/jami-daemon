@@ -372,6 +372,8 @@ void dbus_set_history_limit(guint days);
  */
 gchar *dbus_get_audio_manager(void);
 
+gchar **dbus_get_supported_audio_managers(void);
+
 /**
  * ConfigurationManager - Set the audio manager
  * @param api	"alsa"

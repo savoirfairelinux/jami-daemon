@@ -1826,6 +1826,17 @@ dbus_get_audio_manager(void)
     return api;
 }
 
+gchar **
+dbus_get_supported_audio_managers()
+{
+    GError *error = NULL;
+    gchar **array = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_get_supported_audio_managers(config_proxy, &array, &error);
+    check_error(error);
+
+    return array;
+}
+
 #ifdef SFL_VIDEO
 gchar *
 dbus_get_active_video_device_channel()

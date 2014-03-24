@@ -837,6 +837,19 @@ mute_dtmf_toggled(GtkToggleButton *tb, G_GNUC_UNUSED gpointer data)
     return TRUE;
 }
 
+static gboolean
+is_jack_supported()
+{
+    gchar **backends = dbus_get_supported_audio_managers();
+    for (gchar **tmp = backends; tmp && *tmp; ++tmp) {
+        if (!g_strcmp0(*tmp, JACK_API_STR)) {
+            g_strfreev(backends);
+            return TRUE;
+        }
+    }
+    g_strfreev(backends);
+    return FALSE;
+}
 
 GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 {
@@ -868,10 +881,12 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     g_signal_connect(G_OBJECT(alsa_button), "toggled", G_CALLBACK(alsa_toggled), client);
     gtk_grid_attach(GTK_GRID(grid), alsa_button, 1, 0, 1, 1);
 
-    GtkWidget *jack_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse_button), _("_JACK"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jack_button), using_jack);
-    g_signal_connect(G_OBJECT(jack_button), "toggled", G_CALLBACK(jack_toggled), NULL);
-    gtk_grid_attach(GTK_GRID(grid), jack_button, 2, 0, 1, 1);
+    if (is_jack_supported()) {
+        GtkWidget *jack_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse_button), _("_JACK"));
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jack_button), using_jack);
+        g_signal_connect(G_OBJECT(jack_button), "toggled", G_CALLBACK(jack_toggled), NULL);
+        gtk_grid_attach(GTK_GRID(grid), jack_button, 2, 0, 1, 1);
+    }
 
     // Box for the ALSA configuration
     alsa_conf = gnome_main_section_new(_("ALSA settings"));
