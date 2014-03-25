@@ -62,6 +62,7 @@ class AudioRtpContext {
 
     private:
     NON_COPYABLE(AudioRtpContext);
+    static constexpr double FADEIN_STEP_SIZE = 4.0;
 
     void resetResampler();
     double fadeFactor;

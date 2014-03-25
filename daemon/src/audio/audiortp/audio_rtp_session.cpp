@@ -39,6 +39,9 @@
 #include <ccrtp/oqueue.h>
 #include "manager.h"
 
+#include <numeric>
+#include <algorithm>
+
 namespace sfl {
 AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     isStarted_(false)
@@ -49,10 +52,9 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , transportRate_(20)
     , remote_ip_()
     , remote_port_(0)
-    , timestampCount_(0)
-    , packedSent(0)
-    , packedRcvd(0)
-    , packedRcvdLastSeqNum(0)
+    , rxLast()
+    , rxLastSeqNum(0)
+    , rxJitters()
     , rtpSendThread_(*this)
     , dtmfQueue_()
     , rtpStream_(call.getCallId())
@@ -163,20 +165,39 @@ void AudioRtpSession::receiveSpeakerData()
     if (!adu)
         return;
 
-    packedRcvd++;
-
-    unsigned seqNum = adu->getSeqNum();
-    unsigned seqNumLast = packedRcvdLastSeqNum;
-    if(seqNum <= seqNumLast) {
-        DEBUG("Dropping out-of-order packet");
-        return;
+#if 0 // Compute and print RX jitter
+    auto rxTime = std::chrono::high_resolution_clock::now();
+    rxJitters.push_back(std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(rxTime - rxLast).count());
+    rxLast = rxTime;
+    static unsigned c=0;
+    if(++c == 100) {
+        if(rxJitters.size() > 1000)
+            rxJitters.erase(rxJitters.begin(), rxJitters.begin()+(rxJitters.size()-1000));
+        double jit_mean = std::accumulate(rxJitters.begin(), rxJitters.end(), 0.0)/rxJitters.size();
+        double jit_sq_sum = std::inner_product(rxJitters.begin(), rxJitters.end(), rxJitters.begin(), 0.0);
+        double jit_stdev = std::sqrt(jit_sq_sum / rxJitters.size() - jit_mean*jit_mean);
+        DEBUG("Jitter avg: %fms std dev %fms", jit_mean, jit_stdev);
+        c = 0;
     }
-    if(seqNumLast && seqNum > seqNumLast+1) {
-        DEBUG("%d packets lost", seqNum-seqNumLast-1);
-        for(unsigned i=0, n=seqNum-seqNumLast-1; i<n; i++)
+#endif
+
+    int seqNumDiff = adu->getSeqNum() - rxLastSeqNum;
+    if(abs(seqNumDiff) > 512) {
+        // Don't perform PLC if the delay can't be concealed without major distortion.
+        // Also skip PLC in case of timestamp reset.
+        rxLastSeqNum += seqNumDiff;
+        seqNumDiff = 1;
+    } else if(seqNumDiff < 0) {
+        DEBUG("Dropping out-of-order packet %d (last %d)", rxLastSeqNum+seqNumDiff, rxLastSeqNum);
+        return;
+    } else {
+        rxLastSeqNum += seqNumDiff;
+    }
+    if(rxLastSeqNum && seqNumDiff > 1) {
+        DEBUG("%d packets lost", seqNumDiff-1);
+        for(unsigned i=0, n=seqNumDiff-1; i<n; i++)
             rtpStream_.processDataDecode(nullptr, 0, adu->getType());
     }
-    packedRcvdLastSeqNum = seqNum;
 
     uint8_t* spkrDataIn = (uint8_t*) adu->getData(); // data in char
     size_t size = adu->getSize(); // size in char
@@ -198,7 +219,7 @@ size_t AudioRtpSession::sendMicData()
         return 0;
     }
 
-    packedSent++;
+    //packedSent++;
 
     // Increment timestamp for outgoing packet
     timestamp_ += timestampIncrement_;
@@ -212,8 +233,8 @@ size_t AudioRtpSession::sendMicData()
     queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 #endif
 
-    unsigned s=packedSent.load(), r=packedRcvd.load();
-    DEBUG("%d; %d; %d", s-r, s, r);
+    //unsigned s=packedSent.load(), r=packedRcvd.load();
+    //DEBUG("%d; %d; %d", s-r, s, r);
 
     return compSize;
 }
@@ -221,15 +242,14 @@ size_t AudioRtpSession::sendMicData()
 
 void AudioRtpSession::setSessionTimeouts()
 {
-    const int schedulingTimeout = 1000;
-    const int expireTimeout = 4000;
+    const unsigned schedulingTimeout = 4000;
+    const unsigned expireTimeout = 1000000;
     DEBUG("Set session scheduling timeout (%d) and expireTimeout (%d)",
           schedulingTimeout, expireTimeout);
 
     queue_.setSchedulingTimeout(schedulingTimeout);
     queue_.setExpireTimeout(expireTimeout);
 }
-
 
 void AudioRtpSession::updateDestinationIpAddress()
 {
@@ -270,6 +290,7 @@ void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &au
 {
     DEBUG("Preparing receiving thread");
     isStarted_ = true;
+    rxLast = std::chrono::high_resolution_clock::now();
     setSessionTimeouts();
     setSessionMedia(audioCodecs);
     rtpStream_.initBuffers();
@@ -328,12 +349,8 @@ void AudioRtpSession::AudioRtpSendThread::run()
         // Send session
         if (rtpSession_.hasDTMFPending())
             rtpSession_.sendDtmfEvent();
-        else {
+        else
             rtpSession_.sendMicData();
-            while(rtpSession_.sendMicData()) {
-                WARN("-- sendMicData()");
-            }
-        }
         auto t = timer_.getTimer();
         if(t > 1)
             std::this_thread::sleep_for(std::chrono::milliseconds(timer_.getTimer()-1));

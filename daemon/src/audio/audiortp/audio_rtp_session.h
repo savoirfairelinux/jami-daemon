@@ -43,7 +43,7 @@
 #include <ccrtp/formats.h>
 
 #include <thread>
-#include <atomic>
+#include <chrono>
 
 class SIPCall;
 
@@ -181,14 +181,9 @@ class AudioRtpSession {
         // this destination and update a new one
         unsigned short remote_port_;
 
-        /**
-         * Timestamp reset frequency specified in number of packet sent
-         */
-        short timestampCount_;
-
-        std::atomic<unsigned> packedSent;
-        std::atomic<unsigned> packedRcvd;
-        std::atomic<unsigned> packedRcvdLastSeqNum;
+        std::chrono::high_resolution_clock::time_point rxLast;
+        unsigned rxLastSeqNum;
+        std::vector<double> rxJitters;
 
         AudioRtpSendThread rtpSendThread_;
         std::list<DTMFEvent> dtmfQueue_;

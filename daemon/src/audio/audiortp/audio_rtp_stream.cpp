@@ -66,12 +66,10 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
 AudioRtpStream::~AudioRtpStream()
 {
     dead_ = true;
-
-    {
-        std::lock_guard<std::mutex> lock_enc(codecEncMutex_);
-        std::lock_guard<std::mutex> lock_dec(codecDecMutex_);
-        deleteCodecs();
-    }
+    std::lock(codecEncMutex_, codecDecMutex_);
+    deleteCodecs();
+    codecEncMutex_.unlock();
+    codecDecMutex_.unlock();
 }
 
 
@@ -114,9 +112,8 @@ AudioRtpStream::deleteCodecs()
 
 bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
 {
-    std::lock_guard<std::mutex> lock_enc(codecEncMutex_);
-    std::lock_guard<std::mutex> lock_dec(codecDecMutex_);
-
+    std::lock(codecEncMutex_, codecDecMutex_);
+    bool switched = false;
     for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
         if (*i and (*i)->getPayloadType() == newPt) {
             AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
@@ -130,11 +127,14 @@ bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
             currentEncoderIndex_ = currentDecoderIndex_ = std::distance(audioCodecs_.begin(), i);
             DEBUG("Switched payload type to %d", newPt);
             Manager::instance().audioFormatUsed(encoder_.format);
-            return true;
+            switched = true;
+            break;
         }
 
-    ERROR("Could not switch payload types");
-    return false;
+    codecEncMutex_.unlock();
+    codecDecMutex_.unlock();
+    if(!switched) ERROR("Could not switch payload types");
+    return switched;
 }
 
 AudioRtpContext::AudioRtpContext(AudioFormat f) :
@@ -170,8 +170,6 @@ void AudioRtpContext::fadeIn(AudioBuffer& buf)
     if (fadeFactor >= 1.0)
         return;
     buf.applyGain(fadeFactor);
-
-    static const double FADEIN_STEP_SIZE = 4.0;
     fadeFactor *= FADEIN_STEP_SIZE;
 }
 
@@ -211,14 +209,15 @@ void AudioRtpContext::applyDSP(AudioBuffer &buffer)
 
 void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    std::lock_guard<std::mutex> lock_enc(codecEncMutex_);
-    std::lock_guard<std::mutex> lock_dec(codecDecMutex_);
+    std::lock(codecEncMutex_, codecDecMutex_);
 
     deleteCodecs();
     // Set various codec info to reduce indirection
     audioCodecs_ = audioCodecs;
 
     if (audioCodecs.empty()) {
+        codecEncMutex_.unlock();
+        codecDecMutex_.unlock();
         ERROR("Audio codecs empty");
         return;
     }
@@ -241,6 +240,9 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     }
     Manager::instance().audioFormatUsed(codecFormat);
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
+
+    codecEncMutex_.unlock();
+    codecDecMutex_.unlock();
 }
 
 void AudioRtpStream::initBuffers()
@@ -274,10 +276,10 @@ size_t AudioRtpStream::processDataEncode()
 
     micData_.setFormat(mainBuffFormat);
     micData_.resize(samplesToGet);
-    const size_t samps = Manager::instance().getMainBuffer().getData(micData_, id_);
+    const size_t samples = Manager::instance().getMainBuffer().getData(micData_, id_);
 
-    if (samps != samplesToGet) {
-        ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samps);
+    if (samples != samplesToGet) {
+        ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samples);
         return 0;
     }
 
