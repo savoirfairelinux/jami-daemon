@@ -328,7 +328,7 @@ history_searchbar_new(GSettings *settings)
     menu = gtk_menu_new();
     gtk_menu_attach_to_widget(GTK_MENU(menu), searchbox, NULL);
 
-    GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_FIND, GTK_ICON_SIZE_MENU);
+    GtkWidget *image = gtk_image_new_from_icon_name("edit-find-symbolic", GTK_ICON_SIZE_MENU);
     GtkWidget *item = gtk_image_menu_item_new_with_label("Search all");
     gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
     g_signal_connect(item, "activate", G_CALLBACK(search_all), searchbox);

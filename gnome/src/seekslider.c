@@ -137,10 +137,10 @@ sfl_seekslider_init(SFLSeekSlider *seekslider)
     seekslider->priv->hscale = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, adjustment);
     seekslider->priv->hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
 
-    seekslider->priv->playRecordImage = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_BUTTON);
+    seekslider->priv->playRecordImage = gtk_image_new_from_icon_name("media-playback-start-symbolic", GTK_ICON_SIZE_BUTTON);
     seekslider->priv->playRecordWidget = gtk_button_new();
     gtk_button_set_image(GTK_BUTTON(seekslider->priv->playRecordWidget), seekslider->priv->playRecordImage);
-    seekslider->priv->stopRecordImage = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE, GTK_ICON_SIZE_BUTTON);
+    seekslider->priv->stopRecordImage = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_BUTTON);
 
     seekslider->priv->stopRecordWidget = gtk_button_new();
     gtk_button_set_image(GTK_BUTTON(seekslider->priv->stopRecordWidget), seekslider->priv->stopRecordImage);
