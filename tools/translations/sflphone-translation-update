@@ -17,7 +17,7 @@ BZR=bzr
 MAKE=make
 BZR_BRANCH="lp:sflphone"
 EMAIL_TO="emmanuel.milou@savoirfairelinux.com"
-COMMIT_MSG="Launchpad (Rosetta)] Automatic translations update"
+COMMIT_MSG="[Launchpad (Rosetta)] Automatic translations update"
 PATCH="0001-Launchpad-Rosetta-Automatic-translations-update.patch"
 
 # Clone Bazaar branch that contains Launchpad translations
