@@ -222,7 +222,7 @@ update_search_entry(GtkEntry *entry, const gchar *search_str,
 static void
 search_all(G_GNUC_UNUSED GtkWidget *item, GtkEntry *entry)
 {
-    gtk_entry_set_icon_from_stock(entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
+    gtk_entry_set_icon_from_icon_name(entry, GTK_ENTRY_ICON_PRIMARY, "edit-find-symbolic");
     update_search_entry(entry, _("Search all"),
                         _("Click here to change the search type"), SEARCH_ALL);
 }
@@ -309,7 +309,7 @@ history_searchbar_new(GSettings *settings)
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
     searchbox = gtk_entry_new();
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
+    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(searchbox), GTK_ENTRY_ICON_SECONDARY, "edit-clear-symbolic");
 
     missed_pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
     incoming_pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
@@ -427,8 +427,8 @@ contacts_searchbar_new(GSettings *settings)
     gchar *tooltip_text = g_strdup("Search is");
 
     addressbookentry = gtk_entry_new();
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
+    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_SECONDARY, "edit-clear-symbolic");
+    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_PRIMARY, "edit-find-symbolic");
     gtk_entry_set_icon_tooltip_text(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_PRIMARY,
                                     tooltip_text);
 

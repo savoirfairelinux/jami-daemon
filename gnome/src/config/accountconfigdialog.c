@@ -358,9 +358,9 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entry_password = gtk_entry_new();
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry_password),
-                                  GTK_ENTRY_ICON_PRIMARY,
-                                  GTK_STOCK_DIALOG_AUTHENTICATION);
+    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(entry_password),
+            GTK_ENTRY_ICON_PRIMARY, "dialog-password");
+
     gtk_entry_set_visibility(GTK_ENTRY(entry_password), FALSE);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_password);
     password = password ? password : "";

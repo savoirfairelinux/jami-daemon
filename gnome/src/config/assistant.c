@@ -332,7 +332,7 @@ GtkWidget* build_sip_account_configuration(void)
     gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->sip_password = gtk_entry_new();
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(wiz->sip_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
+    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(wiz->sip_password), GTK_ENTRY_ICON_PRIMARY, "dialog-password");
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->sip_password);
     gtk_entry_set_visibility(GTK_ENTRY(wiz->sip_password), FALSE);
     gtk_grid_attach(GTK_GRID(grid), wiz->sip_password, 1, 3, 1, 1);
@@ -429,7 +429,7 @@ GtkWidget* build_iax_account_configuration(void)
     gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->iax_password = gtk_entry_new();
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(wiz->iax_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
+    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(wiz->iax_password), GTK_ENTRY_ICON_PRIMARY, "dialog-password");
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_password);
     gtk_entry_set_visibility(GTK_ENTRY(wiz->iax_password), FALSE);
     gtk_grid_attach(GTK_GRID(grid), wiz->iax_password, 1, 3, 1, 1);

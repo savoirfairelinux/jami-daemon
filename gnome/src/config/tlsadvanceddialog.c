@@ -180,7 +180,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_grid_attach(GTK_GRID(grid), label, 0, 6, 1, 1);
     GtkWidget * privateKeyPasswordEntry;
     privateKeyPasswordEntry = gtk_entry_new();
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(privateKeyPasswordEntry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
+    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(privateKeyPasswordEntry),
+            GTK_ENTRY_ICON_PRIMARY, "dialog-password");
+
     gtk_entry_set_visibility(GTK_ENTRY(privateKeyPasswordEntry), FALSE);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), privateKeyPasswordEntry);
     gtk_entry_set_text(GTK_ENTRY(privateKeyPasswordEntry), tls_password);
