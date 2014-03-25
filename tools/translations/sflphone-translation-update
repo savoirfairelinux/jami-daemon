@@ -16,7 +16,9 @@ BZR_DIR=${WORKING_DIR}/tmp
 BZR=bzr
 MAKE=make
 BZR_BRANCH="lp:sflphone"
-EMAIL_TO="sflphone-dev@lists.savoirfairelinux.net"
+EMAIL_TO="emmanuel.milou@savoirfairelinux.com"
+COMMIT_MSG="[Launchpad (Rosetta)] Automatic translations update"
+PATCH="0001-Launchpad-Rosetta-Automatic-translations-update.patch"
 
 # Clone Bazaar branch that contains Launchpad translations
 cd ${WORKING_DIR}
@@ -37,15 +39,17 @@ $MAKE
 
 # Build the patch
 git status
-git add *.po
-git commit -a -m "[Launchpad (Rosetta)] Automatic translations update"
-git format-patch --to $EMAIL_TO HEAD~..HEAD
-# Send the patch
-git send-email \
-  --8bit-encoding "utf-8" \
-  --from "Jenkins CI <jenkins@savoirfairelinux.com>" \
-  --to "<emmanuel.milou@savoirfairelinux.com>" \
-  --confirm=never \
-  *.patch
+if git diff-index HEAD . ; then
+  git add *.po
+  git commit -a -m $COMMIT_MSG
+  git format-patch --to $EMAIL_TO HEAD~..HEAD
+  # Send the patch
+  git send-email \
+    --8bit-encoding "utf-8" \
+    --from "Jenkins CI <jenkins@savoirfairelinux.com>" \
+    --to "<emmanuel.milou@savoirfairelinux.com>" \
+    --confirm=never \
+    $PATCH
+fi
 
 exit 0
