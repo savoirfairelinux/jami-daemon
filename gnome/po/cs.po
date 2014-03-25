@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-03-21 21:10-0400\n"
+"POT-Creation-Date: 2014-03-24 21:10-0400\n"
 "PO-Revision-Date: 2014-01-14 13:48+0000\n"
 "Last-Translator: fri <pavelfric@seznam.cz>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-03-23 06:19+0000\n"
+"X-Launchpad-Export-Date: 2014-03-25 06:09+0000\n"
 "X-Generator: Launchpad (build 16967)\n"
 "Language: cs\n"
 "X-Language: cs_CZ\n"
@@ -444,7 +444,7 @@ msgstr "Knihy adres"
 msgid "Select which Evolution address books to use"
 msgstr "Vybrat používanou knihu adres Evolution"
 
-#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:486
+#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:497
 #: ../src/config/videoconf.c:492
 msgid "Name"
 msgstr "Název"
@@ -589,92 +589,96 @@ msgstr "Registrace účtu"
 msgid "Congratulations!"
 msgstr "Blahopřání!"
 
-#: ../src/config/audioconf.c:491
+#: ../src/config/audioconf.c:502
 msgid "Frequency"
 msgstr "Frekvence"
 
-#: ../src/config/audioconf.c:496
+#: ../src/config/audioconf.c:507
 msgid "Bitrate"
 msgstr "Datový tok"
 
-#: ../src/config/audioconf.c:501
+#: ../src/config/audioconf.c:512
 msgid "Channels"
 msgstr "Kanály"
 
-#: ../src/config/audioconf.c:544
+#: ../src/config/audioconf.c:555
 msgid "ALSA plugin"
 msgstr "Přídavný modul ALSA"
 
-#: ../src/config/audioconf.c:565 ../src/config/audioconf.c:646
+#: ../src/config/audioconf.c:576 ../src/config/audioconf.c:657
 msgid "Output"
 msgstr "Výstup"
 
-#: ../src/config/audioconf.c:586 ../src/config/audioconf.c:668
+#: ../src/config/audioconf.c:597 ../src/config/audioconf.c:679
 msgid "Input"
 msgstr "Vstup"
 
-#: ../src/config/audioconf.c:606 ../src/config/audioconf.c:688
+#: ../src/config/audioconf.c:617 ../src/config/audioconf.c:699
 msgid "Ringtone"
 msgstr "Vyzváněcí melodie"
 
-#: ../src/config/audioconf.c:809
+#: ../src/config/audioconf.c:862
 msgid "Sound Manager"
 msgstr "Správce zvuku"
 
-#: ../src/config/audioconf.c:816
+#: ../src/config/audioconf.c:869
 msgid "_Pulseaudio"
 msgstr "PulseAudio"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:821
+#: ../src/config/audioconf.c:875
 msgid "Pulseaudio settings"
 msgstr "Nastavení Pulseaudio"
 
-#: ../src/config/audioconf.c:825
+#: ../src/config/audioconf.c:879
 msgid "_ALSA"
 msgstr "ALSA"
 
+#: ../src/config/audioconf.c:885
+msgid "_JACK"
+msgstr ""
+
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:831
+#: ../src/config/audioconf.c:892
 msgid "ALSA settings"
 msgstr "Nastavení pro ALSA"
 
-#: ../src/config/audioconf.c:846
+#: ../src/config/audioconf.c:907
 msgid "Recordings"
 msgstr "Nahrávky"
 
 #. label
-#: ../src/config/audioconf.c:850
+#: ../src/config/audioconf.c:911
 msgid "Destination folder"
 msgstr "Cílová složka"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:854
+#: ../src/config/audioconf.c:915
 msgid "Select a folder"
 msgstr "Vybrat složku"
 
-#: ../src/config/audioconf.c:865
+#: ../src/config/audioconf.c:926
 msgid "_Always recording"
 msgstr "_Vždy nahrávat"
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:872
+#: ../src/config/audioconf.c:933
 msgid "Voice enhancement settings"
 msgstr "Nastavení k zlepšení hlasu"
 
-#: ../src/config/audioconf.c:875
+#: ../src/config/audioconf.c:936
 msgid "_Noise Reduction"
 msgstr "Potlačení šumu"
 
-#: ../src/config/audioconf.c:882
+#: ../src/config/audioconf.c:943
 msgid "Automatic _Gain Control"
 msgstr "Automatické řízení _zesílení"
 
-#: ../src/config/audioconf.c:889
+#: ../src/config/audioconf.c:950
 msgid "Tone settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:892
+#: ../src/config/audioconf.c:953
 msgid "_Mute DTMF"
 msgstr ""
 
