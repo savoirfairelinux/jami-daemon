@@ -87,6 +87,7 @@ void Opus::setOptimalFormat(uint32_t sample_rate, uint8_t channels)
 
     if (decoder_)
         opus_decoder_destroy(decoder_);
+    lastDecodedFrameSize_ = 0;
     decoder_ = opus_decoder_create(sample_rate, channels, &err);
     if (err)
         throw std::runtime_error("opus: could not create decoder");
@@ -129,6 +130,7 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t *
 
 int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst)
 {
+    if(!lastDecodedFrameSize_) return 0;
     int ret;
     if(channelsCur_ == 1) {
         ret = opus_decode(decoder_, nullptr, 0, dst[0].data(), lastDecodedFrameSize_, 0);
@@ -148,7 +150,6 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst)
 size_t Opus::encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size)
 {
     if (dst == nullptr) return 0;
-
     int ret;
     if(channelsCur_ == 1) {
         ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, dst_size);
