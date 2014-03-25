@@ -814,11 +814,11 @@ static GtkWidget* create_credential_widget(const account_t *account)
     /* 2x1 */
     gtk_grid_attach(GTK_GRID(grid), hbox, 0, 1, 2, 1);
 
-    GtkWidget *addButton = gtk_button_new_from_stock(GTK_STOCK_ADD);
+    GtkWidget *addButton = gtk_button_new_with_label(_("Add"));
     g_signal_connect(addButton, "clicked", G_CALLBACK(add_credential_cb), credential_store);
     gtk_box_pack_start(GTK_BOX(hbox), addButton, FALSE, FALSE, 0);
 
-    delete_cred_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
+    delete_cred_button = gtk_button_new_with_label(_("Remove"));
     g_signal_connect(delete_cred_button, "clicked", G_CALLBACK(delete_credential_cb), treeview_credential);
     gtk_box_pack_start(GTK_BOX(hbox), delete_cred_button, FALSE, FALSE, 0);
 
@@ -862,7 +862,7 @@ create_security_widget(account_t *account, SFLPhoneClient *client)
     OptionsData *options = g_new0(OptionsData, 1);
     options->account = account;
     options->client = client;
-    GtkWidget *sip_tls_advanced_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
+    GtkWidget *sip_tls_advanced_button = gtk_button_new_with_label(_("Edit"));
     gtk_grid_attach(GTK_GRID(grid), sip_tls_advanced_button, 2, 0, 1, 1);
     gtk_widget_set_sensitive(sip_tls_advanced_button, FALSE);
     g_signal_connect(G_OBJECT(sip_tls_advanced_button), "clicked",
@@ -885,7 +885,7 @@ create_security_widget(account_t *account, SFLPhoneClient *client)
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(key_exchange_combo), "SDES");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(key_exchange_combo), _("Disabled"));
 
-    zrtp_button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
+    zrtp_button = gtk_button_new_with_label(_("Preferences"));
     g_signal_connect(G_OBJECT(zrtp_button), "clicked",
                      G_CALLBACK(show_advanced_zrtp_options_cb),
                      options);

@@ -558,24 +558,24 @@ create_account_list(SFLPhoneClient *client)
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), GTK_BUTTONBOX_START);
     gtk_grid_attach(GTK_GRID(grid), button_box, 1, 0, 1, 1);
 
-    move_up_button = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
+    move_up_button = gtk_button_new_with_label(_("Up"));
     gtk_widget_set_sensitive(move_up_button, FALSE);
     gtk_box_pack_start(GTK_BOX(button_box), move_up_button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(move_up_button), "clicked",
                      G_CALLBACK(move_up_cb), tree_view);
 
-    move_down_button = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
+    move_down_button = gtk_button_new_with_label(_("Down"));
     gtk_widget_set_sensitive(move_down_button, FALSE);
     gtk_box_pack_start(GTK_BOX(button_box), move_down_button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(move_down_button), "clicked",
                      G_CALLBACK(move_down_cb), tree_view);
 
-    GtkWidget *add_button = gtk_button_new_from_stock(GTK_STOCK_ADD);
+    GtkWidget *add_button = gtk_button_new_with_label(_("Add"));
     g_signal_connect_swapped(G_OBJECT(add_button), "clicked",
                              G_CALLBACK(add_account_cb), client);
     gtk_box_pack_start(GTK_BOX(button_box), add_button, FALSE, FALSE, 0);
 
-    edit_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
+    edit_button = gtk_button_new_with_label(_("Edit"));
     gtk_widget_set_sensitive(edit_button, FALSE);
     EditData *edit_data = g_new0(EditData, 1);
     edit_data->view = GTK_TREE_VIEW(tree_view);
@@ -583,7 +583,7 @@ create_account_list(SFLPhoneClient *client)
     g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), edit_data);
     gtk_box_pack_start(GTK_BOX(button_box), edit_button, FALSE, FALSE, 0);
 
-    delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
+    delete_button = gtk_button_new_with_label(_("Remove"));
     gtk_widget_set_sensitive(delete_button, FALSE);
     g_object_set_data(G_OBJECT(delete_button), "window", client->win);
     g_signal_connect(G_OBJECT(delete_button), "clicked",
@@ -595,12 +595,12 @@ create_account_list(SFLPhoneClient *client)
     /* this element will be 2x1 cells */
     gtk_grid_attach(GTK_GRID(grid), buttonHbox, 0, 1, 2, 1);
 
-    GtkWidget * helpButton = gtk_button_new_from_stock(GTK_STOCK_HELP);
+    GtkWidget * helpButton = gtk_button_new_with_label(_("Help"));
     g_signal_connect_swapped(G_OBJECT(helpButton), "clicked",
                              G_CALLBACK(help_contents_cb), NULL);
     gtk_box_pack_start(GTK_BOX(buttonHbox), helpButton, FALSE, FALSE, 0);
 
-    GtkWidget * closeButton = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+    GtkWidget * closeButton = gtk_button_new_with_label(_("Close"));
     g_signal_connect_swapped(G_OBJECT(closeButton), "clicked",
                              G_CALLBACK(close_dialog_cb), NULL);
     gtk_box_pack_start(GTK_BOX(buttonHbox), closeButton, FALSE, FALSE, 0);

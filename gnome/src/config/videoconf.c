@@ -513,12 +513,12 @@ videocodecs_box(account_t *acc)
     gtk_container_set_border_width(GTK_CONTAINER(buttonBox), 10);
     gtk_box_pack_start(GTK_BOX(ret), buttonBox, FALSE, FALSE, 0);
 
-    codecMoveUpButton = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
+    codecMoveUpButton = gtk_button_new_with_label(_("Up"));
     gtk_widget_set_sensitive(GTK_WIDGET(codecMoveUpButton), FALSE);
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveUpButton, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(codecMoveUpButton), "clicked", G_CALLBACK(codec_move_up), acc);
 
-    codecMoveDownButton = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
+    codecMoveDownButton = gtk_button_new_with_label(_("Down"));
     gtk_widget_set_sensitive(GTK_WIDGET(codecMoveDownButton), FALSE);
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveDownButton, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(codecMoveDownButton), "clicked", G_CALLBACK(codec_move_down), acc);
