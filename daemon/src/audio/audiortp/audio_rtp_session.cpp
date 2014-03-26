@@ -36,8 +36,6 @@
 #include "logger.h"
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
-#include <ccrtp/oqueue.h>
-#include "manager.h"
 
 #ifdef JITTER_DEBUG
 #include <numeric>
