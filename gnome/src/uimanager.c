@@ -1348,21 +1348,20 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
     }
 
     GtkWidget *menu = gtk_menu_new();
+    gtk_menu_set_accel_group(menu, get_accel_group());
 
     if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         g_debug("Build call menu");
         if (copy) {
-            GtkWidget *menu_items = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY,
-                                    get_accel_group());
-            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
-            g_signal_connect(G_OBJECT(menu_items), "activate",
+            GtkWidget *copy = gtk_menu_item_new_with_mnemonic(_("_Copy"));
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), copy);
+            g_signal_connect(G_OBJECT(copy), "activate",
                              G_CALLBACK(edit_copy),
                              NULL);
-            gtk_widget_show(menu_items);
+            gtk_widget_show(copy);
         }
 
-        GtkWidget *paste = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE,
-                           get_accel_group());
+        GtkWidget *paste = gtk_menu_item_new_with_mnemonic(_("_Paste"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), paste);
         g_signal_connect(G_OBJECT(paste), "activate", G_CALLBACK(edit_paste),
                          client);
