@@ -873,7 +873,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 
     const gboolean using_pulse = audio_api_in_use(PULSEAUDIO_API_STR);
     const gboolean using_alsa = !using_pulse && audio_api_in_use(ALSA_API_STR);
-    const gboolean using_jack = !using_pulse && !using_alsa && audio_api_in_use(ALSA_API_STR);
+    const gboolean using_jack = !using_pulse && !using_alsa && audio_api_in_use(JACK_API_STR);
 
     GtkWidget *pulse_button = gtk_radio_button_new_with_mnemonic(NULL , _("_Pulseaudio"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pulse_button), using_pulse);
