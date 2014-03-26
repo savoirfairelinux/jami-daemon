@@ -719,24 +719,44 @@ static GtkWidget* pulse_box()
     return pulse_hbox;
 }
 
+static void
+show_audio_conf(GtkWidget *conf, GtkWidget *box)
+{
+    if (!GTK_IS_WIDGET(conf))
+        return;
+
+    if (!GTK_IS_WIDGET(box))
+        return;
+
+    gtk_container_add(GTK_CONTAINER(conf), box);
+    gtk_widget_show(conf);
+    gtk_widget_set_sensitive(conf, TRUE);
+
+}
+
+static void
+hide_audio_conf(GtkWidget *conf, GtkWidget *box)
+{
+    if (!GTK_IS_WIDGET(conf))
+        return;
+
+    if (GTK_IS_WIDGET(box))
+        gtk_container_remove(GTK_CONTAINER(conf), box);
+    gtk_widget_hide(conf);
+}
 
 static void
 alsa_toggled(GtkToggleButton *alsa_button, SFLPhoneClient *client)
 {
-    if (audio_api_in_use(ALSA_API_STR))
-        return;
-
     if (!gtk_toggle_button_get_active(alsa_button))
         return;
 
     dbus_set_audio_manager(ALSA_API_STR);
-    gtk_container_remove(GTK_CONTAINER(pulse_conf), pulsebox);
-    gtk_widget_hide(pulse_conf);
+
+    hide_audio_conf(pulse_conf, pulsebox);
 
     alsabox = alsa_box();
-    gtk_container_add(GTK_CONTAINER(alsa_conf), alsabox);
-    gtk_widget_show(alsa_conf);
-    gtk_widget_set_sensitive(alsa_conf, TRUE);
+    show_audio_conf(alsa_conf, alsabox);
 
     if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
         main_window_volume_controls(FALSE);
@@ -748,20 +768,15 @@ alsa_toggled(GtkToggleButton *alsa_button, SFLPhoneClient *client)
 static void
 pulse_toggled(GtkToggleButton *pulse_button, SFLPhoneClient *client)
 {
-    if (audio_api_in_use(PULSEAUDIO_API_STR))
-        return;
-
     if (!gtk_toggle_button_get_active(pulse_button))
         return;
 
     dbus_set_audio_manager(PULSEAUDIO_API_STR);
-    gtk_container_remove(GTK_CONTAINER(alsa_conf), alsabox);
-    gtk_widget_hide(alsa_conf);
+
+    hide_audio_conf(alsa_conf, alsabox);
 
     pulsebox = pulse_box();
-    gtk_container_add(GTK_CONTAINER(pulse_conf), pulsebox);
-    gtk_widget_show(pulse_conf);
-    gtk_widget_set_sensitive(pulse_conf, TRUE);
+    show_audio_conf(pulse_conf, pulsebox);
 
     if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
         main_window_volume_controls(FALSE);
@@ -773,19 +788,13 @@ pulse_toggled(GtkToggleButton *pulse_button, SFLPhoneClient *client)
 static void
 jack_toggled(GtkToggleButton *jack_button)
 {
-    if (audio_api_in_use(JACK_API_STR))
-        return;
-
     if (!gtk_toggle_button_get_active(jack_button))
         return;
 
     dbus_set_audio_manager(JACK_API_STR);
 
-    gtk_container_remove(GTK_CONTAINER(alsa_conf), alsabox);
-    gtk_widget_hide(alsa_conf);
-
-    gtk_container_remove(GTK_CONTAINER(pulse_conf), pulsebox);
-    gtk_widget_hide(pulse_conf);
+    hide_audio_conf(pulse_conf, pulsebox);
+    hide_audio_conf(alsa_conf, alsabox);
 }
 
 static void
