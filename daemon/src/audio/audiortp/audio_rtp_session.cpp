@@ -219,8 +219,6 @@ size_t AudioRtpSession::sendMicData()
         return 0;
     }
 
-    //packedSent++;
-
     // Increment timestamp for outgoing packet
     timestamp_ += timestampIncrement_;
 
@@ -232,9 +230,6 @@ size_t AudioRtpSession::sendMicData()
     // putData puts the data on RTP queue, sendImmediate bypass this queue
     queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 #endif
-
-    //unsigned s=packedSent.load(), r=packedRcvd.load();
-    //DEBUG("%d; %d; %d", s-r, s, r);
 
     return compSize;
 }
