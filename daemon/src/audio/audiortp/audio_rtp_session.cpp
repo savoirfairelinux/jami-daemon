@@ -39,8 +39,10 @@
 #include <ccrtp/oqueue.h>
 #include "manager.h"
 
+#ifdef JITTER_DEBUG
 #include <numeric>
 #include <algorithm>
+#endif
 
 namespace sfl {
 AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
@@ -52,9 +54,12 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , transportRate_(20)
     , remote_ip_()
     , remote_port_(0)
-    , rxLast()
-    , rxLastSeqNum(0)
-    , rxJitters()
+    , rxLast_()
+    , rxLastSeqNum_(0)
+#ifdef JITTER_DEBUG
+    , rxJitters_()
+    , jitterReportInterval_(0)
+#endif
     , rtpSendThread_(*this)
     , dtmfQueue_()
     , rtpStream_(call.getCallId())
@@ -165,37 +170,37 @@ void AudioRtpSession::receiveSpeakerData()
     if (!adu)
         return;
 
-#if 0 // Compute and print RX jitter
+#ifdef JITTER_DEBUG
+    // Compute and print RX jitter
     auto rxTime = std::chrono::high_resolution_clock::now();
-    rxJitters.push_back(std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(rxTime - rxLast).count());
-    rxLast = rxTime;
-    static unsigned c=0;
-    if(++c == 100) {
-        if(rxJitters.size() > 1000)
-            rxJitters.erase(rxJitters.begin(), rxJitters.begin()+(rxJitters.size()-1000));
-        double jit_mean = std::accumulate(rxJitters.begin(), rxJitters.end(), 0.0)/rxJitters.size();
-        double jit_sq_sum = std::inner_product(rxJitters.begin(), rxJitters.end(), rxJitters.begin(), 0.0);
-        double jit_stdev = std::sqrt(jit_sq_sum / rxJitters.size() - jit_mean*jit_mean);
+    rxJitters_.push_back(std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(rxTime - rxLast_).count());
+    rxLast_ = rxTime;
+    if (++jitterReportInterval_ == 100) {
+        if (rxJitters_.size() > 1000)
+            rxJitters_.erase(rxJitters_.begin(), rxJitters_.begin() + (rxJitters_.size() - 1000));
+        const double jit_mean = std::accumulate(rxJitters_.begin(), rxJitters_.end(), 0.0) / rxJitters_.size();
+        const double jit_sq_sum = std::inner_product(rxJitters_.begin(), rxJitters_.end(), rxJitters_.begin(), 0.0);
+        const double jit_stdev = std::sqrt(jit_sq_sum / rxJitters_.size() - jit_mean * jit_mean);
         DEBUG("Jitter avg: %fms std dev %fms", jit_mean, jit_stdev);
-        c = 0;
+        jitterReportInterval_ = 0;
     }
 #endif
 
-    int seqNumDiff = adu->getSeqNum() - rxLastSeqNum;
-    if(abs(seqNumDiff) > 512) {
+    int seqNumDiff = adu->getSeqNum() - rxLastSeqNum_;
+    if (abs(seqNumDiff) > 512) {
         // Don't perform PLC if the delay can't be concealed without major distortion.
         // Also skip PLC in case of timestamp reset.
-        rxLastSeqNum += seqNumDiff;
+        rxLastSeqNum_ += seqNumDiff;
         seqNumDiff = 1;
-    } else if(seqNumDiff < 0) {
-        DEBUG("Dropping out-of-order packet %d (last %d)", rxLastSeqNum+seqNumDiff, rxLastSeqNum);
+    } else if (seqNumDiff < 0) {
+        DEBUG("Dropping out-of-order packet %d (last %d)", rxLastSeqNum_ + seqNumDiff, rxLastSeqNum_);
         return;
     } else {
-        rxLastSeqNum += seqNumDiff;
+        rxLastSeqNum_ += seqNumDiff;
     }
-    if(rxLastSeqNum && seqNumDiff > 1) {
+    if (rxLastSeqNum_ && seqNumDiff > 1) {
         DEBUG("%d packets lost", seqNumDiff-1);
-        for(unsigned i=0, n=seqNumDiff-1; i<n; i++)
+        for (unsigned i = 0, n = seqNumDiff - 1; i < n; i++)
             rtpStream_.processDataDecode(nullptr, 0, adu->getType());
     }
 
@@ -285,7 +290,7 @@ void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &au
 {
     DEBUG("Preparing receiving thread");
     isStarted_ = true;
-    rxLast = std::chrono::high_resolution_clock::now();
+    rxLast_ = std::chrono::high_resolution_clock::now();
     setSessionTimeouts();
     setSessionMedia(audioCodecs);
     rtpStream_.initBuffers();
@@ -347,7 +352,7 @@ void AudioRtpSession::AudioRtpSendThread::run()
         else
             rtpSession_.sendMicData();
         auto t = timer_.getTimer();
-        if(t > 1)
+        if (t > 1)
             std::this_thread::sleep_for(std::chrono::milliseconds(timer_.getTimer()-1));
         timer_.incTimer(rtpSession_.transportRate_);
     }

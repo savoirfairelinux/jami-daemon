@@ -181,9 +181,12 @@ class AudioRtpSession {
         // this destination and update a new one
         unsigned short remote_port_;
 
-        std::chrono::high_resolution_clock::time_point rxLast;
-        unsigned rxLastSeqNum;
-        std::vector<double> rxJitters;
+        std::chrono::high_resolution_clock::time_point rxLast_;
+        unsigned rxLastSeqNum_;
+#ifdef JITTER_DEBUG
+        std::vector<double> rxJitters_;
+        unsigned jitterReportInterval_;
+#endif
 
         AudioRtpSendThread rtpSendThread_;
         std::list<DTMFEvent> dtmfQueue_;
