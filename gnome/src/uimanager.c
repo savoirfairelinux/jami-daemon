@@ -1374,14 +1374,15 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
         }
 
         if (pickup) {
-            GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Pick up"));
+            GtkWidget *pickup_item = gtk_image_menu_item_new_with_mnemonic(_("_Pick up"));
             GtkWidget *image = gtk_image_new_from_file(ICONS_DIR "/icon_accept.svg");
-            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
-            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
-            g_signal_connect(G_OBJECT(menu_items), "activate",
+            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(pickup_item), image);
+            gtk_image_menu_item_set_always_show_image(pickup_item, TRUE);
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), pickup_item);
+            g_signal_connect(G_OBJECT(pickup_item), "activate",
                              G_CALLBACK(call_pick_up),
                              client);
-            gtk_widget_show(menu_items);
+            gtk_widget_show(pickup_item);
         }
 
         if (hangup) {
