@@ -38,7 +38,8 @@ constexpr uint32_t Opus::VALID_SAMPLING_RATE[];
 
 Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
     encoder_(nullptr),
-    decoder_(nullptr)
+    decoder_(nullptr),
+    lastDecodedFrameSize_(0)
 {
     hasDynamicPayload_ = true;
     setOptimalFormat(CLOCK_RATE, 1);
