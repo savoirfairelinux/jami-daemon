@@ -113,14 +113,14 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t *
     if (buf == nullptr) return 0;
 
     int ret;
-    if(channelsCur_ == 1) {
+    if (channelsCur_ == 1) {
         ret = opus_decode(decoder_, buf, buf_size, dst[0].data(), MAX_PACKET_SIZE, 0);
     } else {
-        std::array<SFLAudioSample, 2*MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
+        std::array<SFLAudioSample, 2 * MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
         ret = opus_decode(decoder_, buf, buf_size, ibuf.data(), MAX_PACKET_SIZE, 0);
-        for(int i=0; i<ret; i++) {
-            dst[0][i] = ibuf[2*i];
-            dst[1][i] = ibuf[2*i+1];
+        for (int i = 0; i < ret; i++) {
+            dst[0][i] = ibuf[2 * i];
+            dst[1][i] = ibuf[2 * i + 1];
         }
     }
     if (ret < 0)
@@ -131,16 +131,16 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t *
 
 int Opus::decode(std::vector<std::vector<SFLAudioSample> > &dst)
 {
-    if(!lastDecodedFrameSize_) return 0;
+    if (!lastDecodedFrameSize_) return 0;
     int ret;
-    if(channelsCur_ == 1) {
+    if (channelsCur_ == 1) {
         ret = opus_decode(decoder_, nullptr, 0, dst[0].data(), lastDecodedFrameSize_, 0);
     } else {
-        std::array<SFLAudioSample, 2*MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
+        std::array<SFLAudioSample, 2 * MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
         ret = opus_decode(decoder_, nullptr, 0, ibuf.data(), lastDecodedFrameSize_, 0);
-        for(int i=0; i<ret; i++) {
-            dst[0][i] = ibuf[2*i];
-            dst[1][i] = ibuf[2*i+1];
+        for (int i = 0; i < ret; i++) {
+            dst[0][i] = ibuf[2 * i];
+            dst[1][i] = ibuf[2 * i + 1];
         }
     }
     if (ret < 0)
@@ -152,7 +152,7 @@ size_t Opus::encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_
 {
     if (dst == nullptr) return 0;
     int ret;
-    if(channelsCur_ == 1) {
+    if (channelsCur_ == 1) {
         ret = opus_encode(encoder_, src[0].data(), FRAME_SIZE, dst, dst_size);
     } else {
         std::array<SFLAudioSample, 2 * FRAME_SIZE> ibuf; // interleave on stack, 1.875KiB used;
