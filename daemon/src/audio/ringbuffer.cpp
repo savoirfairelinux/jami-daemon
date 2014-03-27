@@ -274,10 +274,10 @@ size_t
 RingBuffer::discard(size_t toDiscard)
 {
     const size_t buffer_size = buffer_.frames();
-    for(auto& r : readpointers_) {
+    for (auto & r : readpointers_) {
         size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
-        if(dst < toDiscard) {
-            DEBUG("%s : discarding: %d frames", r.first.c_str(), toDiscard-dst);
+        if (dst < toDiscard) {
+            DEBUG("%s : discarding: %d frames", r.first.c_str(), toDiscard - dst);
             r.second = (r.second + toDiscard - dst) % buffer_size;
         }
     }
