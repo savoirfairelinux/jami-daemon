@@ -281,4 +281,5 @@ RingBuffer::discard(size_t toDiscard)
             r.second = (r.second + toDiscard - dst) % buffer_size;
         }
     }
+    return toDiscard;
 }
