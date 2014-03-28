@@ -168,7 +168,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                 std::string account_host = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
                 std::string sub_host = sip_utils::getHostFromUri(pres_client->getURI());
 
-                if((!subscribe_allowed) && (account_host == sub_host))
+                if (not subscribe_allowed and account_host == sub_host)
                     pres_client->getPresence()->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, false);
 
             } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
@@ -410,7 +410,7 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
 void PresSubClient::enable(bool flag)
 {
     DEBUG("pres_client %s is %s monitored.",getURI().c_str(), flag? "":"NOT");
-    if(flag && !monitored_)
+    if (flag and not monitored_)
         pres_->addPresSubClient(this);
     monitored_ = flag;
 }
@@ -427,7 +427,7 @@ bool PresSubClient::lock()
 
     for(i=0; i<50; i++)
     {
-        if(!(pres_->tryLock())){
+        if (not pres_->tryLock()){
             pj_thread_sleep(i/10);
             continue;
         }
@@ -447,7 +447,7 @@ bool PresSubClient::lock()
 	pres_->unlock();
     }
 
-    if(lock_flag_ == 0)
+    if (lock_flag_ == 0)
     {
         DEBUG("pres_client failed to lock : timeout");
         return false;
@@ -466,7 +466,7 @@ void PresSubClient::unlock()
 
 bool PresSubClient::unsubscribe()
 {
-    if(!lock())
+    if (not lock())
         return false;
 
     monitored_ = false;
