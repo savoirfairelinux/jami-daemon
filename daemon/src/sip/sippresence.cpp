@@ -126,17 +126,17 @@ void SIPPresence::enable(bool enabled)
 
 void SIPPresence::support(int function, bool supported)
 {
-    if(function == PRESENCE_FUNCTION_PUBLISH)
+    if (function == PRESENCE_FUNCTION_PUBLISH)
         publish_supported_ = supported;
-    else if(function == PRESENCE_FUNCTION_SUBSCRIBE)
+    else if (function == PRESENCE_FUNCTION_SUBSCRIBE)
         subscribe_supported_ = supported;
 }
 
 bool SIPPresence::isSupported(int function)
 {
-    if(function == PRESENCE_FUNCTION_PUBLISH)
+    if (function == PRESENCE_FUNCTION_PUBLISH)
         return publish_supported_;
-    else if(function == PRESENCE_FUNCTION_SUBSCRIBE)
+    else if (function == PRESENCE_FUNCTION_SUBSCRIBE)
         return subscribe_supported_;
 
     return false;
@@ -198,8 +198,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
     DEBUG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s", uri.c_str(), acc_ID.c_str(), basic.c_str(), note.c_str());
 
-    if(uri == acc_->getFromUri())
-    {
+    if (uri == acc_->getFromUri()) {
         // save the status of our own account
         status_ = status->info[0].basic_open;
         note_ = note;
@@ -224,7 +223,7 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
     for (const auto & c : sub_client_list_) {
         if (c->getURI() == uri) {
             //DEBUG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
-            if(flag)
+            if (flag)
                 c->subscribe();
             else
                 c->unsubscribe();
