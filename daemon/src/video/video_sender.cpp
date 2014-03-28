@@ -45,8 +45,8 @@ namespace sfl_video {
 using std::string;
 
 VideoSender::VideoSender(const std::string &id,
-                                 const std::map<string, string> &args,
-                                 SocketPair& socketPair) :
+                         const std::map<string, string> &args,
+                         SocketPair& socketPair) :
     args_(args)
     , id_(id)
     , muxContext_(socketPair.createIOContext())
