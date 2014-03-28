@@ -190,12 +190,12 @@ OpenSLLayer::shutdownAudioEngine()
         outputMixer_ = nullptr;
     }
 
-	if(recorderObject_ != nullptr){
-		(*recorderObject_)->Destroy(recorderObject_);
-		recorderObject_ = nullptr;
-		recorderInterface_ = nullptr;
-		recorderBufferQueue_ = nullptr;
-	}
+    if (recorderObject_ != nullptr) {
+        (*recorderObject_)->Destroy(recorderObject_);
+        recorderObject_ = nullptr;
+        recorderInterface_ = nullptr;
+        recorderBufferQueue_ = nullptr;
+    }
 
     // destroy engine object, and invalidate all associated interfaces
     DEBUG("Shutdown audio engine\n");
@@ -246,10 +246,9 @@ OpenSLLayer::initAudioPlayback()
     SLDataSink audioSink = {&mixerLocation, nullptr};
 
     const SLInterfaceID ids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-                                SL_IID_VOLUME,
-                                SL_IID_ANDROIDCONFIGURATION,
-                                SL_IID_PLAY
-                                };
+                                 SL_IID_VOLUME,
+                                 SL_IID_ANDROIDCONFIGURATION,
+                                 SL_IID_PLAY};
     const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     const unsigned nbInterface = ARRAYSIZE(ids);
@@ -273,7 +272,7 @@ OpenSLLayer::initAudioPlayback()
                      &streamType, sizeof(SLint32));
     }
 
-	DEBUG("Realize audio player\n");
+    DEBUG("Realize audio player\n");
     result = (*playerObject_)->Realize(playerObject_, SL_BOOLEAN_FALSE);
     assert(SL_RESULT_SUCCESS == result);
 
@@ -323,8 +322,8 @@ OpenSLLayer::initAudioCapture()
                                            NB_BUFFER_CAPTURE_QUEUE
                                                            };
 
-	DEBUG("Capture-> Sampling Rate: %d", audioFormat_.sample_rate);
-	DEBUG("Capture-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
+    DEBUG("Capture-> Sampling Rate: %d", audioFormat_.sample_rate);
+    DEBUG("Capture-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
                                     audioFormat_.sample_rate * 1000,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
@@ -487,7 +486,7 @@ OpenSLLayer::stopAudioCapture()
 std::vector<std::string>
 OpenSLLayer::getCaptureDeviceList() const
 {
-	std::vector<std::string> captureDeviceList;
+    std::vector<std::string> captureDeviceList;
 
 
 
@@ -496,64 +495,60 @@ OpenSLLayer::getCaptureDeviceList() const
 // obtain or select proper one (SLAudioIODeviceCapabilitiesItf, the official interface
 // to obtain such an information)-> SL_FEATURE_UNSUPPORTED
 
-	SLuint32 InputDeviceIDs[MAX_NUMBER_INPUT_DEVICES];
-	SLint32 numInputs = 0;
-	SLboolean mic_available = SL_BOOLEAN_FALSE;
-	SLuint32 mic_deviceID = 0;
+    SLuint32 InputDeviceIDs[MAX_NUMBER_INPUT_DEVICES];
+    SLint32 numInputs = 0;
+    SLboolean mic_available = SL_BOOLEAN_FALSE;
+    SLuint32 mic_deviceID = 0;
 
-	SLresult res;
+    SLresult res;
 
-	initAudioEngine();
+    initAudioEngine();
     initAudioPlayback();
     initAudioCapture();
 
 
-	// Get the Audio IO DEVICE CAPABILITIES interface, implicit
-	DEBUG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
+    // Get the Audio IO DEVICE CAPABILITIES interface, implicit
+    DEBUG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
 
     res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&AudioIODeviceCapabilitiesItf);
     CheckErr(res);
 
-	DEBUG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
-	numInputs = MAX_NUMBER_INPUT_DEVICES;
+    DEBUG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
+    numInputs = MAX_NUMBER_INPUT_DEVICES;
 
-	res = (*AudioIODeviceCapabilitiesItf)->GetAvailableAudioInputs(AudioIODeviceCapabilitiesItf, &numInputs, InputDeviceIDs);
-	CheckErr(res);
+    res = (*AudioIODeviceCapabilitiesItf)->GetAvailableAudioInputs(AudioIODeviceCapabilitiesItf, &numInputs, InputDeviceIDs);
+    CheckErr(res);
 
-	int i;
-	// Search for either earpiece microphone or headset microphone input
-	// device - with a preference for the latter
-	for (i=0;i<numInputs; i++)
-	{
-		res = (*AudioIODeviceCapabilitiesItf)->QueryAudioInputCapabilities(AudioIODeviceCapabilitiesItf,
-																				InputDeviceIDs[i],
-																				&AudioInputDescriptor);
-		CheckErr(res);
+    // Search for either earpiece microphone or headset microphone input
+    // device - with a preference for the latter
+    for (int i = 0; i < numInputs; i++) {
+        res = (*AudioIODeviceCapabilitiesItf)->QueryAudioInputCapabilities(AudioIODeviceCapabilitiesItf,
+                                                                           InputDeviceIDs[i],
+                                                                           &AudioInputDescriptor);
+        CheckErr(res);
 
-		if((AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED) &&
-			(AudioInputDescriptor.deviceScope == SL_DEVSCOPE_USER) &&
-			(AudioInputDescriptor.deviceLocation == SL_DEVLOCATION_HEADSET))
-		{
-			DEBUG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i] );
-			mic_deviceID = InputDeviceIDs[i];
-			mic_available = SL_BOOLEAN_TRUE;
-			break;
-		} else if((AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_INTEGRATED) &&
-					(AudioInputDescriptor.deviceScope == SL_DEVSCOPE_USER) &&
-					(AudioInputDescriptor.deviceLocation == SL_DEVLOCATION_HANDSET))
-		{
-			DEBUG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i] );
-			mic_deviceID = InputDeviceIDs[i];
-			mic_available = SL_BOOLEAN_TRUE;
-			break;
-		}
-	}
+        if (AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED and
+            AudioInputDescriptor.deviceScope == SL_DEVSCOPE_USER and
+            AudioInputDescriptor.deviceLocation == SL_DEVLOCATION_HEADSET) {
+            DEBUG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i] );
+            mic_deviceID = InputDeviceIDs[i];
+            mic_available = SL_BOOLEAN_TRUE;
+            break;
+        } else if (AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_INTEGRATED and
+                   AudioInputDescriptor.deviceScope == SL_DEVSCOPE_USER and
+                   AudioInputDescriptor.deviceLocation == SL_DEVLOCATION_HANDSET) {
+            DEBUG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i] );
+            mic_deviceID = InputDeviceIDs[i];
+            mic_available = SL_BOOLEAN_TRUE;
+            break;
+        }
+    }
 
-	if (!mic_available) {
-		// Appropriate error message here
-		ERROR("No mic available quitting");
-		exit(1);
-	}
+    if (!mic_available) {
+        // Appropriate error message here
+        ERROR("No mic available quitting");
+        exit(1);
+    }
 
 
     return captureDeviceList;
@@ -563,11 +558,10 @@ OpenSLLayer::getCaptureDeviceList() const
 void
 OpenSLLayer::CheckErr( SLresult res )
 {
-	if ( res != SL_RESULT_SUCCESS )
-	{
-		// Debug printing to be placed here
-		exit(1);
-	}
+    if (res != SL_RESULT_SUCCESS) {
+        // Debug printing to be placed here
+        exit(1);
+    }
 }
 
 std::vector<std::string>
@@ -593,15 +587,15 @@ void
 OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
 {
     assert(nullptr != queue);
-	notifyIncomingCall();
+    notifyIncomingCall();
 
     AudioBuffer &buffer = getNextPlaybackBuffer();
     size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
-	bufferIsFilled_ = false;
-    if (urgentSamplesToGet > 0)
+    bufferIsFilled_ = false;
+    if (urgentSamplesToGet > 0) {
         bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, std::min(urgentSamplesToGet, hardwareBuffSize_));
-    else {
+    } else {
         auto& main_buffer = Manager::instance().getMainBuffer();
         buffer.resize(hardwareBuffSize_);
         size_t samplesToGet = audioPlaybackFillWithVoice(buffer);
@@ -610,7 +604,7 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
         } else {
             bufferIsFilled_ = true;
         }
-	}
+    }
 
     if (bufferIsFilled_) {
         SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(SFLAudioSample));
@@ -619,8 +613,8 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
         }
         incrementPlaybackIndex();
     } else {
-		DEBUG("Error buffer not filled in audio playback\n");
-	}
+        DEBUG("Error buffer not filled in audio playback\n");
+    }
 }
 
 void
@@ -683,7 +677,7 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     buffer.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     if (resample) {
-		int outSamples = buffer.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
+        int outSamples = buffer.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
         AudioBuffer out(outSamples, mainBufferFormat);
         resampler_.resample(buffer, out);
         dcblocker_.process(out);
