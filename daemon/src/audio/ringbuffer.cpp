@@ -50,6 +50,7 @@ const size_t MIN_BUFFER_SIZE = 1024;
 RingBuffer::RingBuffer(size_t size, const std::string &call_id, AudioFormat format /* = MONO */) :
     endPos_(0)
     , buffer_(std::max(size, MIN_BUFFER_SIZE), format)
+    , lock_()
     , readpointers_()
     , buffer_id_(call_id)
 {
