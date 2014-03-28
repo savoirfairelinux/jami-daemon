@@ -695,6 +695,7 @@ call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
         dbus_switch_video_input(display);
         g_free(display);
     } else {
+        dbus_set_active_video_device(device);
         dbus_switch_video_input(device);
     }
 }
