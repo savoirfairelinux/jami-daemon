@@ -373,7 +373,7 @@ void ConfigurationManager::setVolume(const std::string& device, const double& va
 {
     AudioLayer *audiolayer = Manager::instance().getAudioDriver();
 
-    if(!audiolayer) {
+    if (!audiolayer) {
         ERROR("Audio layer not valid while updating volume");
         return;
     }
