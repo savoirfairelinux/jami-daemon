@@ -55,7 +55,7 @@ void DcBlocker::doProcess(SFLAudioSample *out, SFLAudioSample *in, unsigned samp
 
 void DcBlocker::process(SFLAudioSample *out, SFLAudioSample *in, int samples)
 {
-    if(out == NULL or in == NULL or samples == 0) return;
+    if (out == NULL or in == NULL or samples == 0) return;
     doProcess(out, in, samples, &states[0]);
 }
 
@@ -63,7 +63,7 @@ void DcBlocker::process(AudioBuffer& buf)
 {
     const size_t chans = buf.channels();
     const size_t samples = buf.frames();
-    if(chans > states.size())
+    if (chans > states.size())
         states.resize(buf.channels(), (struct StreamState){0, 0, 0, 0});
 
     unsigned i;
