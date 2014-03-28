@@ -64,7 +64,7 @@ AudioRecorder::~AudioRecorder()
 }
 
 void AudioRecorder::init() {
-    if(!arecord_->isRecording()) {
+    if (!arecord_->isRecording()) {
         arecord_->setSndFormat(mbuffer_.getInternalAudioFormat());
     }
 }
