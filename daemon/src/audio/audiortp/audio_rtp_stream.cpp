@@ -133,7 +133,7 @@ bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
 
     codecEncMutex_.unlock();
     codecDecMutex_.unlock();
-    if(!switched) ERROR("Could not switch payload types");
+    if (!switched) ERROR("Could not switch payload types");
     return switched;
 }
 
@@ -285,7 +285,7 @@ size_t AudioRtpStream::processDataEncode()
 
     AudioBuffer *out = &micData_;
     if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
-        if(!encoder_.resampler) {
+        if (!encoder_.resampler) {
             ERROR("Resampler already destroyed");
             return 0;
         }
@@ -304,7 +304,7 @@ size_t AudioRtpStream::processDataEncode()
     {
         std::lock_guard<std::mutex> lock(codecEncMutex_);
         auto codec = getCurrentEncoder();
-        if(!codec) {
+        if (!codec) {
             ERROR("Audio codec already destroyed");
             return 0;
         }
@@ -339,12 +339,12 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     {
         std::lock_guard<std::mutex> lock(codecDecMutex_);
         auto codec = getCurrentDecoder();
-        if(!codec) {
+        if (!codec) {
             ERROR("Audio codec already destroyed");
             return;
         }
         int decoded;
-        if(spkrData)
+        if (spkrData)
             decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
         else // packet lost
             decoded = codec->decode(rawBuffer_.getData());
@@ -362,7 +362,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     AudioFormat decFormat = out->getFormat();
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
-        if(!decoder_.resampler) {
+        if (!decoder_.resampler) {
             ERROR("Resampler already destroyed");
             return;
         }
