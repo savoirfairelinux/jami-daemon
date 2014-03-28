@@ -53,7 +53,7 @@ class Recordable {
          * Implementations must call the super method.
          */
         virtual bool toggleRecording() {
-            if(!isRecording())
+            if (not isRecording())
                 recorder_.init();
             return recAudio_.toggleRecording();
         }
