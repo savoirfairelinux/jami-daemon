@@ -68,7 +68,7 @@ bool AlsaThread::isRunning() const
 AlsaThread::~AlsaThread()
 {
     running_ = false;
-    if(thread_.joinable())
+    if (thread_.joinable())
         thread_.join();
 }
 

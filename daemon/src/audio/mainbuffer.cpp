@@ -295,16 +295,16 @@ size_t MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string &call
     if (callid_set->size() == 1) {
         CallIDSet::iterator iter_id = callid_set->begin();
         RingBuffer *const ringbuffer = getRingBuffer(*iter_id);
-        if(!ringbuffer) return 0;
+        if (!ringbuffer) return 0;
         return ringbuffer->get(buffer, call_id);
     } else {
         size_t availableSamples = std::numeric_limits<size_t>::max();
         for (const auto &i : *callid_set) {
             const RingBuffer* ringbuffer = getRingBuffer(i);
-            if(!ringbuffer) continue;
+            if (!ringbuffer) continue;
             availableSamples = std::min(availableSamples, ringbuffer->availableForGet(i));
         }
-        if(availableSamples == std::numeric_limits<size_t>::max())
+        if (availableSamples == std::numeric_limits<size_t>::max())
             return 0;
         availableSamples = std::min(availableSamples, buffer.frames());
         buffer.resize(availableSamples);
