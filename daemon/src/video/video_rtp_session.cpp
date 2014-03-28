@@ -51,7 +51,7 @@ using std::string;
 
 VideoRtpSession::VideoRtpSession(const string &callID,
 								 const map<string, string> &txArgs) :
-    socketPair_(), sender_(), receiveThread_(), txArgs_(txArgs),
+    mutex_(), socketPair_(), sender_(), receiveThread_(), txArgs_(txArgs),
     rxArgs_(), sending_(false), receiving_(false), callID_(callID),
     videoMixerSP_(), videoLocal_()
 {}
@@ -61,6 +61,8 @@ VideoRtpSession::~VideoRtpSession()
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
+
     string desc(sdp.getIncomingVideoDescription());
     // if port has changed
     if (not desc.empty() and desc != rxArgs_["receiving_sdp"]) {
@@ -104,6 +106,7 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
 void VideoRtpSession::updateDestination(const string &destination,
                                         unsigned int port)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (destination.empty()) {
         ERROR("Destination is empty, ignoring");
         return;
@@ -129,6 +132,7 @@ void VideoRtpSession::updateDestination(const string &destination,
 
 void VideoRtpSession::start(int localPort)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (not sending_ and not receiving_)
         return;
 
@@ -194,6 +198,7 @@ void VideoRtpSession::start(int localPort)
 
 void VideoRtpSession::stop()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (auto shared = videoLocal_.lock())
         shared->detach(sender_.get());
 
@@ -215,34 +220,39 @@ void VideoRtpSession::stop()
 
 void VideoRtpSession::forceKeyFrame()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (sender_)
         sender_->forceKeyFrame();
 }
 
 void VideoRtpSession::addReceivingDetails(std::map<std::string, std::string> &details)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (receiveThread_)
         receiveThread_->addReceivingDetails(details);
 }
 
 void VideoRtpSession::setupConferenceVideoPipeline()
 {
-    if (sender_) {
-        videoMixerSP_->setDimensions(atol(txArgs_["width"].c_str()),
-                                     atol(txArgs_["height"].c_str()));
-        if (auto shared = videoLocal_.lock())
-            shared->detach(sender_.get());
-        videoMixerSP_->attach(sender_.get());
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!sender_)
+        return;
 
-        if (receiveThread_) {
-            receiveThread_->enterConference();
-            receiveThread_->attach(videoMixerSP_.get());
-        }
+    videoMixerSP_->setDimensions(atol(txArgs_["width"].c_str()),
+                                 atol(txArgs_["height"].c_str()));
+    if (auto shared = videoLocal_.lock())
+        shared->detach(sender_.get());
+    videoMixerSP_->attach(sender_.get());
+
+    if (receiveThread_) {
+        receiveThread_->enterConference();
+        receiveThread_->attach(videoMixerSP_.get());
     }
 }
 
 void VideoRtpSession::enterConference(Conference *conf)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     /* Detach from a possible previous conference */
     exitConference();
     videoMixerSP_ = std::move(conf->getVideoMixer());
@@ -252,6 +262,7 @@ void VideoRtpSession::enterConference(Conference *conf)
 
 void VideoRtpSession::exitConference()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (videoMixerSP_) {
         if (sender_)
             videoMixerSP_->detach(sender_.get());
