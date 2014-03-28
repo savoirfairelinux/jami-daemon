@@ -226,7 +226,7 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
     size_t len = getLength(call_id);
     const size_t sample_num = buf.frames();
     size_t toCopy = std::min(sample_num, len);
-    if (toCopy != sample_num) {
+    if (toCopy and toCopy != sample_num) {
         DEBUG("Partial get: %d/%d", toCopy, sample_num);
     }
 
