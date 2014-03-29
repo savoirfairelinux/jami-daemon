@@ -122,7 +122,7 @@ size_t AudioZrtpSession::sendMicData()
     queue_.putData(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 
     // putData puts the data on RTP queue, sendImmediate bypasses this queue
-    queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
+    //queue_.sendImmediate(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 
     return compSize;
 }

@@ -219,6 +219,7 @@ size_t AudioRtpSession::sendMicData()
 
     // if no data return
     if (compSize == 0) {
+        timestamp_ = queue_.getCurrentTimestamp();
         return 0;
     }
 
@@ -226,7 +227,7 @@ size_t AudioRtpSession::sendMicData()
     timestamp_ += timestampIncrement_;
 
     // TODO: TEST
-#if 0
+#if 1
     // this step is only needed for ZRTP
     queue_.putData(timestamp_, rtpStream_.getMicDataEncoded(), compSize);
 #else
@@ -315,6 +316,7 @@ void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodec
 {
     if (isStarted_)
         return;
+    timestamp_ = queue_.getCurrentTimestamp();
 
     prepareRtpReceiveThread(audioCodecs);
     // implemented in subclasses
