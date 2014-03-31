@@ -110,29 +110,29 @@ AudioRtpStream::deleteCodecs()
     audioCodecs_.clear();
 }
 
-bool AudioRtpStream::tryToSwitchPayloadTypes(int newPt)
+// Tries to change decoder (only) if we receive an unexpected payload type that we previously said
+// we could decode.
+bool AudioRtpStream::tryToSwitchDecoder(int newPt)
 {
-    std::lock(codecEncMutex_, codecDecMutex_);
+    std::lock_guard<std::mutex> lock(codecDecMutex_);
     bool switched = false;
-    for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
+    for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i) {
         if (*i and (*i)->getPayloadType() == newPt) {
             AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
             (*i)->setOptimalFormat(f.sample_rate, f.nb_channels);
-            encoder_.payloadType = decoder_.payloadType = (*i)->getPayloadType();
-            encoder_.frameSize = decoder_.frameSize = (*i)->getFrameSize();
-            encoder_.format.sample_rate = decoder_.format.sample_rate = (*i)->getCurrentClockRate();
-            encoder_.format.nb_channels = decoder_.format.nb_channels = (*i)->getCurrentChannels();
+            decoder_.payloadType = (*i)->getPayloadType();
+            decoder_.frameSize = (*i)->getFrameSize();
+            decoder_.format.sample_rate = (*i)->getCurrentClockRate();
+            decoder_.format.nb_channels = (*i)->getCurrentChannels();
             hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
             // FIXME: this is not reliable
-            currentEncoderIndex_ = currentDecoderIndex_ = std::distance(audioCodecs_.begin(), i);
+            currentDecoderIndex_ = std::distance(audioCodecs_.begin(), i);
             DEBUG("Switched payload type to %d", newPt);
-            Manager::instance().audioFormatUsed(encoder_.format);
             switched = true;
             break;
         }
+    }
 
-    codecEncMutex_.unlock();
-    codecDecMutex_.unlock();
     if (!switched) ERROR("Could not switch payload types");
     return switched;
 }
@@ -321,7 +321,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
 
     const int decPt = decoder_.payloadType;
     if (decPt != payloadType) {
-        const bool switched = tryToSwitchPayloadTypes(payloadType);
+        const bool switched = tryToSwitchDecoder(payloadType);
 
         if (not switched) {
             if (!warningInterval_) {

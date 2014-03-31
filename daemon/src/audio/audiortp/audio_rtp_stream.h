@@ -128,7 +128,7 @@ class AudioRtpStream {
         AudioRtpContext decoder_;
 
         void deleteCodecs();
-        bool tryToSwitchPayloadTypes(int newPt);
+        bool tryToSwitchDecoder(int newPt);
         sfl::AudioCodec* getCurrentEncoder() const;
         sfl::AudioCodec* getCurrentDecoder() const;
 
