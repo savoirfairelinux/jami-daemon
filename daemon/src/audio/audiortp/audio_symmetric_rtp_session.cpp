@@ -64,21 +64,44 @@ void AudioSymmetricRtpSession::startRTPLoop()
 void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks)
 {
     ost::SymmetricRTPSession::onGotRR(source, RR, blocks);
-    // TODO: do something with this data
-#if 0
-    std::cout << "I got an RR RTCP report from "
-        << std::hex << (int)source.getID() << "@"
-        << std::dec
-        << source.getNetworkAddress() << ":"
-        << source.getControlTransportPort() << std::endl;
-#endif
+    DEBUG("onGotRR");
+    DEBUG("Unpacking %d blocks",blocks);
+    for (int i = 0; i < blocks; ++i)
+    {
+        DEBUG("fractionLost : %hhu", RR.blocks[i].rinfo.fractionLost);
+        DEBUG("lostMSB : %hhu", RR.blocks[i].rinfo.lostMSB);
+        DEBUG("lostLSW : %hu", RR.blocks[i].rinfo.lostLSW);
+        DEBUG("highestSeqNum : %u", RR.blocks[i].rinfo.highestSeqNum);
+        DEBUG("jitter : %u", RR.blocks[i].rinfo.jitter);
+        DEBUG("lsr : %u", RR.blocks[i].rinfo.lsr);
+        DEBUG("dlsr : %u", RR.blocks[i].rinfo.dlsr);
+     }
 }
 
 // redefined from QueueRTCPManager
 void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks)
 {
+    DEBUG("onGotSR");
+
+    DEBUG("NTPMSW : %u", SR.sinfo.NTPMSW);
+    DEBUG("NTPLSW : %u", SR.sinfo.NTPLSW);
+    DEBUG("RTPTimestamp : %u", SR.sinfo.RTPTimestamp);
+    DEBUG("packetCount : %u", SR.sinfo.packetCount);
+    DEBUG("octetCount : %u", SR.sinfo.octetCount);
+
     ost::SymmetricRTPSession::onGotSR(source, SR, blocks);
-    // TODO: do something with this data
+    DEBUG("Unpacking %d blocks",blocks);
+    for (int i = 0; i < blocks; ++i)
+    {
+        DEBUG("fractionLost : %hhu", SR.blocks[i].rinfo.fractionLost);
+        DEBUG("lostMSB : %hhu", SR.blocks[i].rinfo.lostMSB);
+        DEBUG("lostLSW : %hu", SR.blocks[i].rinfo.lostLSW);
+        DEBUG("highestSeqNum : %u", SR.blocks[i].rinfo.highestSeqNum);
+        DEBUG("jitter : %u", SR.blocks[i].rinfo.jitter);
+        DEBUG("lsr : %u", SR.blocks[i].rinfo.lsr);
+        DEBUG("dlsr : %u", SR.blocks[i].rinfo.dlsr);
+    }
+
 }
 
 }
