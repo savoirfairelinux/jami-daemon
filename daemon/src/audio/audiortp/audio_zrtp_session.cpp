@@ -132,9 +132,9 @@ int AudioZrtpSession::getIncrementForDTMF() const
     return 160;
 }
 
-void AudioZrtpSession::startReceiveThread()
+void AudioZrtpSession::startRTPLoop()
 {
-    ost::SymmetricZRTPSession::start();
+    ost::SymmetricZRTPSession::startRunning();
 }
 
 }

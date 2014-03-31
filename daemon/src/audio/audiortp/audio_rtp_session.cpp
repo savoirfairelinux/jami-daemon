@@ -68,7 +68,7 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
 
 AudioRtpSession::~AudioRtpSession()
 {
-    queue_.disableStack();
+
 }
 
 void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
@@ -296,8 +296,6 @@ void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &au
 #if HAVE_SPEEXDSP
     rtpStream_.resetDSP();
 #endif
-
-    queue_.enableStack();
 }
 
 
@@ -320,7 +318,7 @@ void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodec
 
     prepareRtpReceiveThread(audioCodecs);
     // implemented in subclasses
-    startReceiveThread();
+    startRTPLoop();
     // only in this class
     rtpSendThread_.start();
 }

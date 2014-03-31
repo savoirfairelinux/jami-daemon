@@ -73,7 +73,8 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
         void onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks);
 
         NON_COPYABLE(AudioSymmetricRtpSession);
-        void startReceiveThread();
+
+        void startRTPLoop();
 };
 
 }

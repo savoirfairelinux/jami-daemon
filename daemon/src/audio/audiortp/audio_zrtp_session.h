@@ -78,7 +78,7 @@ class AudioZrtpSession :
 #if HAVE_ZRTP_CONFIGURE
         std::unique_ptr<ZrtpConfigure> zrtpConfigure_;
 #endif
-        void startReceiveThread();
+        void startRTPLoop();
         virtual int getIncrementForDTMF() const;
 };
 

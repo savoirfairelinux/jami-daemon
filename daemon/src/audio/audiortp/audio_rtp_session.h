@@ -130,7 +130,12 @@ class AudioRtpSession {
         unsigned int transportRate_;
 
         NON_COPYABLE(AudioRtpSession);
-        virtual void startReceiveThread() = 0;
+
+         /**
+         * Start ccRTP thread loop
+         * This thread will send AND receive rtp packets
+         */
+        virtual void startRTPLoop() = 0;
 
         /**
          * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be

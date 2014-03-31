@@ -55,9 +55,9 @@ AudioSymmetricRtpSession::getSocketDescriptors() const
     return result;
 }
 
-void AudioSymmetricRtpSession::startReceiveThread()
+void AudioSymmetricRtpSession::startRTPLoop()
 {
-    ost::SymmetricRTPSession::start();
+    ost::SymmetricRTPSession::startRunning();
 }
 
 // redefined from QueueRTCPManager
