@@ -59,6 +59,10 @@ SHMSink::SHMSink(const std::string &shm_name) :
     , shm_area_(static_cast<SHMHeader*>(MAP_FAILED))
     , shm_area_len_(0)
     , opened_name_()
+#ifdef DEBUG_FPS
+    , frameCount_(0u)
+    , lastFrameDebug_(std::chrono::system_clock::now())
+#endif
 {}
 
 SHMSink::~SHMSink()
@@ -209,6 +213,17 @@ void SHMSink::render_frame(VideoFrame& src)
 
     dst.setDestination(shm_area_->data);
     scaler.scale(src, dst);
+
+#ifdef DEBUG_FPS
+    const std::chrono::time_point<std::chrono::system_clock> currentTime = std::chrono::system_clock::now();
+    const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
+    frameCount_++;
+    if (seconds.count() > 1) {
+        DEBUG("%s: FPS %f", shm_name_.c_str(), frameCount_ / seconds.count());
+        frameCount_ = 0;
+        lastFrameDebug_ = currentTime;
+    }
+#endif
 
     shm_area_->buffer_size = bytes;
     shm_area_->buffer_gen++;

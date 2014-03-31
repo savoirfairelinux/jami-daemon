@@ -76,6 +76,10 @@ private:
     SHMHeader *shm_area_;
     size_t shm_area_len_;
     std::string opened_name_;
+#ifdef DEBUG_FPS
+    unsigned frameCount_;
+    std::chrono::time_point<std::chrono::system_clock> lastFrameDebug_;
+#endif
 };
 
 }
