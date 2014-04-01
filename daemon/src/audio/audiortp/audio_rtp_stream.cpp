@@ -374,17 +374,14 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
             int decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
             rawBuffer_.resize(decoded);
             if(plcDec_.size()) {
-                DEBUG("Feeding generic PLC");
                 for(unsigned i=0; i<decoder_.format.nb_channels; ++i) {
                     pjmedia_plc_save(plcDec_[i], rawBuffer_.getChannel(i)->data());
                 }
             }
         } else if(plcDec_.size() == 0) { // Packet loss concealment using codec
-            DEBUG("Using codec PLC");
             int decoded = codec->decode(rawBuffer_.getData());
             rawBuffer_.resize(decoded);
         } else { // Generic PJSIP Packet loss concealment using codec
-            DEBUG("Using generic PLC");
             rawBuffer_.resize(decoder_.frameSize);
             for(unsigned i=0; i<decoder_.format.nb_channels; ++i) {
                 pjmedia_plc_generate(plcDec_[i], rawBuffer_.getChannel(i)->data());
