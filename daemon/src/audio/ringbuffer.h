@@ -23,13 +23,15 @@
 #ifndef __RING_BUFFER__
 #define __RING_BUFFER__
 
-#include <fstream>
-#include <vector>
-#include <map>
-#include <mutex>
-
-#include "noncopyable.h"
 #include "audiobuffer.h"
+#include "noncopyable.h"
+
+#include <condition_variable>
+#include <mutex>
+#include <chrono>
+#include <map>
+#include <vector>
+#include <fstream>
 
 typedef std::map<std::string, size_t> ReadPointer;
 
@@ -124,6 +126,16 @@ class RingBuffer {
         }
 
         /**
+         * Blocks until min_data_length samples of data is available, or until deadline is missed.
+         *
+         * @param call_id The read pointer for which data should be available.
+         * @param min_data_length Minimum number of samples that should be vailable for the call to return
+         * @param deadline The call is garenteed to end after this time point. If no deadline is provided, the the call blocks indefinitely.
+         * @return available data for call_id after the call returned (same as calling getLength(call_id) ).
+         */
+        size_t waitForDataAvailable(const std::string &call_id, const size_t min_data_length = 0, const std::chrono::high_resolution_clock::time_point& deadline = std::chrono::high_resolution_clock::time_point() ) const;
+
+        /**
          * Debug function print mEnd, mStart, mBufferSize
          */
         void debug();
@@ -162,6 +174,7 @@ class RingBuffer {
         AudioBuffer buffer_;
 
         mutable std::mutex lock_;
+        mutable std::condition_variable not_empty_;
 
         ReadPointer readpointers_;
         std::string buffer_id_;
