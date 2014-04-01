@@ -199,6 +199,7 @@ class AudioRtpSession {
         AudioRtpStream rtpStream_;
     private:
         int dtmfPayloadType_;
+        bool firstPacket_;
 
 };
 }

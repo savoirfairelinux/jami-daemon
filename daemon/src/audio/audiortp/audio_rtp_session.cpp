@@ -62,6 +62,7 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , dtmfQueue_()
     , rtpStream_(call.getCallId())
     , dtmfPayloadType_(101) // same as Asterisk
+    , firstPacket_(true)
 {
     queue_.setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
@@ -218,9 +219,13 @@ size_t AudioRtpSession::sendMicData()
     size_t compSize = rtpStream_.processDataEncode();
 
     // if no data return
-    if (compSize == 0) {
-        timestamp_ = queue_.getCurrentTimestamp();
+    if (compSize == 0)
         return 0;
+
+    // initialize once
+    if (firstPacket_) {
+        firstPacket_ = false;
+        timestamp_ = queue_.getCurrentTimestamp();
     }
 
     // Increment timestamp for outgoing packet
@@ -306,7 +311,6 @@ void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodec
 {
     if (isStarted_)
         return;
-    timestamp_ = queue_.getCurrentTimestamp();
 
     prepareRtpReceiveThread(audioCodecs);
     // implemented in subclasses
