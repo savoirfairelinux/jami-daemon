@@ -150,7 +150,6 @@ class AudioRtpSession {
          */
         virtual size_t sendMicData();
 
-
         class AudioRtpSendThread {
             public:
                 AudioRtpSendThread(AudioRtpSession &session);
@@ -163,7 +162,6 @@ class AudioRtpSession {
                 NON_COPYABLE(AudioRtpSendThread);
                 AudioRtpSession &rtpSession_;
                 std::thread thread_;
-                ost::TimerPort timer_;
         };
 
         /**

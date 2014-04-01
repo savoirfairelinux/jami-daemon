@@ -320,7 +320,7 @@ void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodec
 }
 
 AudioRtpSession::AudioRtpSendThread::AudioRtpSendThread(AudioRtpSession &session) :
-    running_(false), rtpSession_(session), thread_(), timer_()
+    running_(false), rtpSession_(session), thread_()
 {}
 
 AudioRtpSession::AudioRtpSendThread::~AudioRtpSendThread()
@@ -338,17 +338,14 @@ void AudioRtpSession::AudioRtpSendThread::start()
 
 void AudioRtpSession::AudioRtpSendThread::run()
 {
-    timer_.setTimer(rtpSession_.transportRate_);
     while (running_) {
         // Send session
         if (rtpSession_.hasDTMFPending())
             rtpSession_.sendDtmfEvent();
         else
             rtpSession_.sendMicData();
-        auto t = timer_.getTimer();
-        if (t > 1)
-            std::this_thread::sleep_for(std::chrono::milliseconds(timer_.getTimer()-1));
-        timer_.incTimer(rtpSession_.transportRate_);
+
+        rtpSession_.rtpStream_.waitForDataEncode(std::chrono::milliseconds(rtpSession_.transportRate_));
     }
 }
 
