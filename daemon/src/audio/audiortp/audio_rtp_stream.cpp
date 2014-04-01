@@ -61,7 +61,12 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
     , currentEncoderIndex_(0)
     , currentDecoderIndex_(0)
     , warningInterval_(0)
-{}
+    , plcPool_(nullptr)
+    , plcDec_()
+{
+    pj_caching_pool_init(&plcCachePool_, &pj_pool_factory_default_policy, 0);
+    plcPool_ = pj_pool_create(&plcCachePool_.factory, "plc", 64, 1024, nullptr);
+}
 
 AudioRtpStream::~AudioRtpStream()
 {
@@ -70,8 +75,10 @@ AudioRtpStream::~AudioRtpStream()
     deleteCodecs();
     codecEncMutex_.unlock();
     codecDecMutex_.unlock();
+    plcDec_.clear();
+    pj_pool_release(plcPool_);
+    pj_caching_pool_destroy(&plcCachePool_);
 }
-
 
 // Call from processData*
 bool AudioRtpStream::isDead()
@@ -115,30 +122,39 @@ AudioRtpStream::deleteCodecs()
 bool AudioRtpStream::tryToSwitchDecoder(int newPt)
 {
     std::lock_guard<std::mutex> lock(codecDecMutex_);
-    bool switched = false;
-    for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i) {
-        if (*i and (*i)->getPayloadType() == newPt) {
-            AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
-            (*i)->setOptimalFormat(f.sample_rate, f.nb_channels);
-            decoder_.payloadType = (*i)->getPayloadType();
-            decoder_.frameSize = (*i)->getFrameSize();
-            decoder_.format.sample_rate = (*i)->getCurrentClockRate();
-            decoder_.format.nb_channels = (*i)->getCurrentChannels();
-            hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
-            // FIXME: this is not reliable
-            currentDecoderIndex_ = std::distance(audioCodecs_.begin(), i);
-            DEBUG("Switched payload type to %d", newPt);
-            switched = true;
-            break;
-        }
+    for (unsigned i=0, n=audioCodecs_.size(); i<n; i++) {
+        auto codec = audioCodecs_[i];
+        if(codec == nullptr || codec->getPayloadType() != newPt) continue;
+        AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
+        codec->setOptimalFormat(f.sample_rate, f.nb_channels);
+        decoder_.payloadType = codec->getPayloadType();
+        decoder_.frameSize = codec->getFrameSize();
+        decoder_.format.sample_rate = codec->getCurrentClockRate();
+        decoder_.format.nb_channels = codec->getCurrentChannels();
+        hasDynamicPayloadType_ = codec->hasDynamicPayload();
+        resetDecoderPLC(codec);
+        currentDecoderIndex_ = i; // FIXME: this is not reliable
+        DEBUG("Switched payload type to %d", newPt);
+        return true;
     }
+    ERROR("Could not switch payload types");
+    return false;
+}
 
-    if (!switched) ERROR("Could not switch payload types");
-    return switched;
+void AudioRtpStream::resetDecoderPLC(const sfl::AudioCodec * codec)
+{
+    if (!plcPool_) return;
+    pj_pool_reset(plcPool_);
+    plcDec_.clear();
+    if(!codec->supportsPacketLossConcealment()) {
+        plcDec_.insert(plcDec_.begin(), decoder_.format.nb_channels, nullptr);
+        for(unsigned i=0; i<decoder_.format.nb_channels; i++)
+            pjmedia_plc_create(plcPool_, decoder_.format.sample_rate, decoder_.frameSize, 0, &plcDec_[i]);
+    }
 }
 
 AudioRtpContext::AudioRtpContext(AudioFormat f) :
-    fadeFactor(1.0 / 32000.0)
+    fadeFactor(0.)
     , payloadType(0)
     , frameSize(0)
     , format(f)
@@ -169,8 +185,10 @@ void AudioRtpContext::fadeIn(AudioBuffer& buf)
 {
     if (fadeFactor >= 1.0)
         return;
+    // http://en.wikipedia.org/wiki/Smoothstep
+    double gain = fadeFactor*fadeFactor*(3. - 2.*fadeFactor);
     buf.applyGain(fadeFactor);
-    fadeFactor *= FADEIN_STEP_SIZE;
+    fadeFactor += buf.size() / (double)format.sample_rate;
 }
 
 #if HAVE_SPEEXDSP
@@ -240,8 +258,9 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     }
     Manager::instance().audioFormatUsed(codecFormat);
     hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
-
     codecEncMutex_.unlock();
+
+    resetDecoderPLC(audioCodecs[0]);
     codecDecMutex_.unlock();
 }
 
@@ -351,12 +370,26 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
             ERROR("Audio codec already destroyed");
             return;
         }
-        int decoded;
-        if (spkrData)
-            decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
-        else // packet lost
-            decoded = codec->decode(rawBuffer_.getData());
-        rawBuffer_.resize(decoded);
+        if (spkrData) { // Packet is available
+            int decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
+            rawBuffer_.resize(decoded);
+            if(plcDec_.size()) {
+                DEBUG("Feeding generic PLC");
+                for(unsigned i=0; i<decoder_.format.nb_channels; ++i) {
+                    pjmedia_plc_save(plcDec_[i], rawBuffer_.getChannel(i)->data());
+                }
+            }
+        } else if(plcDec_.size() == 0) { // Packet loss concealment using codec
+            DEBUG("Using codec PLC");
+            int decoded = codec->decode(rawBuffer_.getData());
+            rawBuffer_.resize(decoded);
+        } else { // Generic PJSIP Packet loss concealment using codec
+            DEBUG("Using generic PLC");
+            rawBuffer_.resize(decoder_.frameSize);
+            for(unsigned i=0; i<decoder_.format.nb_channels; ++i) {
+                pjmedia_plc_generate(plcDec_[i], rawBuffer_.getChannel(i)->data());
+            }
+        }
     }
 
 #if HAVE_SPEEXDSP

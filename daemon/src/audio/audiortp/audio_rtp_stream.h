@@ -39,6 +39,9 @@
 #include "audio/audiobuffer.h"
 #include "noncopyable.h"
 
+#include <pjmedia/plc.h>
+#include <pj/pool.h>
+
 #include <array>
 #include <mutex>
 #include <memory>
@@ -133,9 +136,12 @@ class AudioRtpStream {
         AudioRtpContext decoder_;
 
         void deleteCodecs();
-        bool tryToSwitchDecoder(int newPt);
         sfl::AudioCodec* getCurrentEncoder() const;
         sfl::AudioCodec* getCurrentDecoder() const;
+
+        // Decoder-specific methods
+        bool tryToSwitchDecoder(int newPt);
+        void resetDecoderPLC(const sfl::AudioCodec *);
 
         std::vector<AudioCodec*> audioCodecs_;
         std::mutex codecEncMutex_;
@@ -143,6 +149,12 @@ class AudioRtpStream {
         // these will have the same value unless we are sending
         // a different codec than we are receiving (asymmetric RTP)
         bool hasDynamicPayloadType_;
+
+        pj_caching_pool plcCachePool_;
+        pj_pool_t * plcPool_;
+        // PLC instances, one per channel
+        std::vector<pjmedia_plc*> plcDec_;
+
         // FIXME: probably need one for pre-encoder data, one for post-decoder data
         AudioBuffer rawBuffer_, micData_;
         std::array<uint8_t, RAW_BUFFER_SIZE> encodedData_;

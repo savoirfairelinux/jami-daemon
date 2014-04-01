@@ -45,6 +45,10 @@ public:
 
    static const uint8_t PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
 
+   virtual inline bool supportsPacketLossConcealment() const {
+      return true;
+   }
+
 private:
    sfl::AudioCodec * clone();
 

@@ -66,20 +66,6 @@ class AudioCodec {
         std::string getMimeSubtype() const;
 
         /**
-         * Decode an input buffer and fill the output buffer with the decoded data
-         * @param buffer_size : the size of the input buffer
-         * @return the number of samples decoded
-         */
-        virtual int decode(SFLAudioSample* /* dst */, unsigned char* /* buf */, size_t /* buffer_size */);
-
-        /**
-         * Encode an input buffer and fill the output buffer with the encoded data
-         * @param buffer_size : the maximum size of encoded data buffer (dst)
-         * @return the number of bytes encoded
-         */
-        virtual int encode(unsigned char* /* dst */, SFLAudioSample* /* src */, size_t /* buffer_size */);
-
-        /**
          * Multichannel version of decode().
          * Default implementation calls mono version
          */
@@ -108,6 +94,15 @@ class AudioCodec {
          * @return true if this payload is a dynamic one.
          */
         bool hasDynamicPayload() const;
+
+        /**
+         * Having Packet Loss Concealment (PLC) supported means decode(dst) won't
+         * fill the buffer with 0 but will rather try to conceal the loss.
+         * @return true if the codec supports PLC, false otherwise.
+         */
+        virtual inline bool supportsPacketLossConcealment() const {
+            return false;
+        }
 
         /**
          * @returns maximum supported clock rate (sample rate).
@@ -153,7 +148,7 @@ class AudioCodec {
         unsigned int getFrameSize() const;
 
         /**
-         * Set the sampling rate and channel number preffered by the core.
+         * Set the sampling rate and channel number preferred by the core.
          * May or may not be considered by the codec.
          * Use getCurrentClockRate() and getCurrentChannels() to get the format
          * used by the codec.
@@ -161,6 +156,20 @@ class AudioCodec {
         virtual void setOptimalFormat(uint32_t /* sample_rate */ , uint8_t /* channels */ ) {}
 
     protected:
+        /**
+         * Decode an input buffer and fill the output buffer with the decoded data
+         * @param buffer_size : the size of the input buffer
+         * @return the number of samples decoded
+         */
+        virtual int decode(SFLAudioSample* /* dst */, unsigned char* /* buf */, size_t /* buffer_size */);
+
+        /**
+         * Encode an input buffer and fill the output buffer with the encoded data
+         * @param buffer_size : the maximum size of encoded data buffer (dst)
+         * @return the number of bytes encoded
+         */
+        virtual int encode(unsigned char* /* dst */, SFLAudioSample* /* src */, size_t /* buffer_size */);
+
         /** Holds SDP-compliant codec name */
         std::string codecName_; // what we put inside sdp
 
