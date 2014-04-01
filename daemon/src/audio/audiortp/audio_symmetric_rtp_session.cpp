@@ -82,6 +82,12 @@ void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoun
 void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks)
 {
     DEBUG("onGotSR");
+    std::cout << "I got an SR RTCP report from "
+            << std::hex << (int)source.getID() << "@"
+            << std::dec
+            << source.getNetworkAddress() << ":"
+            << source.getControlTransportPort() << std::endl;
+
 
     DEBUG("NTPMSW : %u", SR.sinfo.NTPMSW);
     DEBUG("NTPLSW : %u", SR.sinfo.NTPLSW);
@@ -93,9 +99,12 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
     DEBUG("Unpacking %d blocks",blocks);
     for (int i = 0; i < blocks; ++i)
     {
-        DEBUG("fractionLost : %hhu", SR.blocks[i].rinfo.fractionLost);
-        DEBUG("lostMSB : %hhu", SR.blocks[i].rinfo.lostMSB);
-        DEBUG("lostLSW : %hu", SR.blocks[i].rinfo.lostLSW);
+        DEBUG("fractionLostBase10 : %f", (float)SR.blocks[i].rinfo.fractionLost * 100 / 256);
+
+        uint32 cumulativePacketLoss = SR.blocks[i].rinfo.lostMSB;
+        cumulativePacketLoss = SR.blocks[i].rinfo.lostMSB << 16 | SR.blocks[i].rinfo.lostLSW;
+
+        DEBUG("Cumulative packet loss : %d", cumulativePacketLoss);
         DEBUG("highestSeqNum : %u", SR.blocks[i].rinfo.highestSeqNum);
         DEBUG("jitter : %u", SR.blocks[i].rinfo.jitter);
         DEBUG("lsr : %u", SR.blocks[i].rinfo.lsr);
