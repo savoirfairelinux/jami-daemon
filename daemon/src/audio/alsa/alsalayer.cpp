@@ -143,8 +143,6 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
-    , watchdogTotalCount_(0)
-    , watchdogTotalErr_(0)
     , playbackHandle_(nullptr)
     , ringtoneHandle_(nullptr)
     , captureHandle_(nullptr)
@@ -415,8 +413,6 @@ AlsaLayer::write(SFLAudioSample* buffer, int frames, snd_pcm_t * handle)
     if (!frames)
         return;
 
-    watchdogTotalCount_++;
-
     int err = snd_pcm_writei(handle, (const void*)buffer, frames);
 
     if (err < 0)
@@ -424,8 +420,6 @@ AlsaLayer::write(SFLAudioSample* buffer, int frames, snd_pcm_t * handle)
 
     if (err >= 0)
         return;
-
-    watchdogTotalErr_++;
 
     switch (err) {
 
@@ -470,15 +464,6 @@ AlsaLayer::write(SFLAudioSample* buffer, int frames, snd_pcm_t * handle)
             ERROR("Unknown write error, dropping frames: %s", snd_strerror(err));
             stopPlaybackStream();
             break;
-    }
-
-    // Detect when something is going wrong. This can be caused by alsa bugs or
-    // faulty encoder on the other side
-    // TODO do something useful instead of just warning and flushing buffers
-    if (watchdogTotalErr_ > 0 && watchdogTotalCount_ / watchdogTotalErr_ >= 4 and watchdogTotalCount_ > 50) {
-        ERROR("%d errors out of %d frames", watchdogTotalErr_, watchdogTotalCount_);
-        flushUrgent();
-        flushMain();
     }
 }
 
