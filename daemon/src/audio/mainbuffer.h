@@ -32,7 +32,6 @@
 #define MAIN_BUFFER_H_
 
 #include "audiobuffer.h"
-#include "mainbuffer.h"
 #include "rw_mutex.h"
 #include "noncopyable.h"
 
@@ -93,10 +92,12 @@ class MainBuffer {
 
         void putData(AudioBuffer& buffer, const std::string &call_id);
 
+        bool waitForDataAvailable(const std::string &call_id, size_t min_data_length=0, const std::chrono::microseconds& max_wait = std::chrono::microseconds()) const;
+
         size_t getData(AudioBuffer& buffer, const std::string &call_id);
         size_t getAvailableData(AudioBuffer& buffer, const std::string &call_id);
 
-        size_t availableForGet(const std::string &call_id);
+        size_t availableForGet(const std::string &call_id) const;
 
         size_t discard(size_t toDiscard, const std::string &call_id);
 
@@ -108,6 +109,7 @@ class MainBuffer {
         NON_COPYABLE(MainBuffer);
 
         CallIDSet* getCallIDSet(const std::string &call_id);
+        const CallIDSet* getCallIDSet(const std::string &call_id) const;
 
         void createCallIDSet(const std::string &set_id);
 
@@ -144,7 +146,7 @@ class MainBuffer {
         typedef std::map<std::string, CallIDSet*> CallIDMap;
         CallIDMap callIDMap_;
 
-        sfl::rw_mutex stateLock_;
+        mutable sfl::rw_mutex stateLock_;
 
         AudioFormat internalAudioFormat_;
 

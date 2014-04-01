@@ -71,6 +71,12 @@ CallIDSet* MainBuffer::getCallIDSet(const std::string &call_id)
     return (iter != callIDMap_.end()) ? iter->second : nullptr;
 }
 
+const CallIDSet* MainBuffer::getCallIDSet(const std::string &call_id) const
+{
+    CallIDMap::const_iterator iter = callIDMap_.find(call_id);
+    return (iter != callIDMap_.end()) ? iter->second : nullptr;
+}
+
 void MainBuffer::createCallIDSet(const std::string &set_id)
 {
     if (getCallIDSet(set_id) == nullptr)
@@ -284,6 +290,23 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
     }
 }
 
+bool MainBuffer::waitForDataAvailable(const std::string &call_id, size_t min_frames, const std::chrono::microseconds& max_wait) const
+{
+    auto deadline = (max_wait == std::chrono::microseconds()) ?
+        std::chrono::high_resolution_clock::time_point() :
+        std::chrono::high_resolution_clock::now() + max_wait;
+    auto lock(stateLock_.read());
+    const CallIDSet* callid_set = getCallIDSet(call_id);
+    if (!callid_set or callid_set->empty()) return false;
+    for (const auto &i : *callid_set) {
+        RingBuffer const * const ringbuffer = getRingBuffer(i);
+        if (!ringbuffer) continue;
+        if (ringbuffer->waitForDataAvailable(call_id, min_frames, deadline) < min_frames) return false;
+    }
+    return true;
+}
+
+
 size_t MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string &call_id)
 {
     auto lock(stateLock_.read());
@@ -331,11 +354,11 @@ size_t MainBuffer::getDataByID(AudioBuffer& buffer, const std::string & call_id,
     return ring_buffer ? ring_buffer->get(buffer, reader_id) : 0;
 }
 
-size_t MainBuffer::availableForGet(const std::string &call_id)
+size_t MainBuffer::availableForGet(const std::string &call_id) const
 {
     auto lock(stateLock_.read());
 
-    CallIDSet* callid_set = getCallIDSet(call_id);
+    const CallIDSet* callid_set = getCallIDSet(call_id);
 
     if (callid_set == nullptr or callid_set->empty())
         return 0;
@@ -352,7 +375,7 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
 
         size_t availableSamples = std::numeric_limits<size_t>::max();
 
-        for (auto &i : *callid_set) {
+        for (const auto &i : *callid_set) {
             const size_t nbSamples = availableForGetByID(i, call_id);
 
             if (nbSamples != 0)
