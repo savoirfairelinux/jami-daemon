@@ -51,6 +51,7 @@ static gboolean
 video_is_local(const gchar *id)
 {
     static const gchar * const LOCAL_VIDEO_ID = "local";
+
     return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
 }
 
@@ -62,41 +63,57 @@ cleanup_handle(gpointer data)
         return;
 
     if (GTK_IS_WIDGET(h->window)) {
+
         gtk_widget_destroy(h->window);
+
         if (video_is_local(h->id))
             update_camera_button_label();
+
         g_free(h->id);
     }
+
     g_free(h);
 }
 
 static void
-video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
+video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget,
+                        G_GNUC_UNUSED gpointer data)
 {
-	if (dbus_has_video_camera_started())
-		dbus_stop_video_camera();
+    if (dbus_has_video_camera_started())
+        dbus_stop_video_camera();
 }
 
+/*
+ * Handle button event in the video window
+ */
 static void
-video_window_button_cb(GtkWindow *win, GdkEventButton *event, gpointer data)
+video_window_button_cb(GtkWindow *win,
+                       GdkEventButton *event,
+                       gpointer data)
 {
     VideoHandle *handle = (VideoHandle *) data;
+
     if (event->type == GDK_2BUTTON_PRESS) {
+
+        /* Fullscreen switch on/off */
         g_debug("TOGGLING FULL SCREEEN!");
         handle->fullscreen = !handle->fullscreen;
+
         if (handle->fullscreen)
             gtk_window_fullscreen(win);
         else
             gtk_window_unfullscreen(win);
-    }
-}
 
+    }
+
+}
 
 static VideoHandle*
 add_handle(const gchar *id)
 {
     if (!video_handles)
         video_handles = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, cleanup_handle);
+
     if (g_hash_table_lookup(video_handles, id)) {
         g_warning("Already created handle for video with id %s", id);
         return NULL;
@@ -106,9 +123,13 @@ add_handle(const gchar *id)
     handle->id = g_strdup(id);
     handle->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     handle->fullscreen = FALSE;
+
+    /* handle button event */
     g_signal_connect(handle->window, "button_press_event",
             G_CALLBACK(video_window_button_cb),
             handle);
+
+    /* handle delete event */
     g_signal_connect(handle->window, "delete-event",
             G_CALLBACK(video_window_deleted_cb),
             NULL);
@@ -120,6 +141,7 @@ add_handle(const gchar *id)
     }
 
     g_hash_table_insert(video_handles, g_strdup(id), handle);
+
     return handle;
 }
 
@@ -151,15 +173,21 @@ try_clutter_init()
 #undef PRINT_ERR
 }
 
-void started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
-        gchar *id, gchar *shm_path, gint width, gint height,
-        G_GNUC_UNUSED GError *error, G_GNUC_UNUSED gpointer userdata)
+void
+started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+                          gchar *id,
+                          gchar *shm_path,
+                          gint width,
+                          gint height,
+                          G_GNUC_UNUSED GError *error,
+                          G_GNUC_UNUSED gpointer userdata)
 {
     if (!id || !*id || !shm_path || !*shm_path)
         return;
 
     if (!try_clutter_init())
         return;
+
     VideoHandle *handle = add_handle(id);
     if (!handle)
         return;
