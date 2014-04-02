@@ -26,3 +26,4 @@ src/sflnotify.c
 src/sliders.c
 src/statusicon.c
 src/uimanager.c
+src/video/video_callbacks.c
