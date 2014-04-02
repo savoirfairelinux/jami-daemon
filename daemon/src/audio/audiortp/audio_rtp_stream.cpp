@@ -125,7 +125,7 @@ bool AudioRtpStream::tryToSwitchDecoder(int newPt)
     std::lock_guard<std::mutex> lock(codecDecMutex_);
     for (unsigned i=0, n=audioCodecs_.size(); i<n; i++) {
         auto codec = audioCodecs_[i];
-        if(codec == nullptr || codec->getPayloadType() != newPt) continue;
+        if (codec == nullptr || codec->getPayloadType() != newPt) continue;
         AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
         codec->setOptimalFormat(f.sample_rate, f.nb_channels);
         decoder_.payloadType = codec->getPayloadType();
@@ -147,9 +147,9 @@ void AudioRtpStream::resetDecoderPLC(const sfl::AudioCodec * codec)
     if (!plcPool_) return;
     pj_pool_reset(plcPool_);
     plcDec_.clear();
-    if(!codec->supportsPacketLossConcealment()) {
+    if (not codec->supportsPacketLossConcealment()) {
         plcDec_.insert(plcDec_.begin(), decoder_.format.nb_channels, nullptr);
-        for(unsigned i=0; i<decoder_.format.nb_channels; i++)
+        for (unsigned i = 0; i < decoder_.format.nb_channels; i++)
             pjmedia_plc_create(plcPool_, decoder_.format.sample_rate, decoder_.frameSize, 0, &plcDec_[i]);
     }
 }
@@ -187,9 +187,9 @@ void AudioRtpContext::fadeIn(AudioBuffer& buf)
     if (fadeFactor >= 1.0)
         return;
     // http://en.wikipedia.org/wiki/Smoothstep
-    double gain = fadeFactor*fadeFactor*(3. - 2.*fadeFactor);
+    double gain = fadeFactor * fadeFactor * (3. - 2. * fadeFactor);
     buf.applyGain(fadeFactor);
-    fadeFactor += buf.size() / (double)format.sample_rate;
+    fadeFactor += buf.size() / (double) format.sample_rate;
 }
 
 #if HAVE_SPEEXDSP
@@ -374,17 +374,17 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
         if (spkrData) { // Packet is available
             int decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
             rawBuffer_.resize(decoded);
-            if(plcDec_.size()) {
-                for(unsigned i=0; i<decoder_.format.nb_channels; ++i) {
+            if (not plcDec_.empty()) {
+                for (unsigned i = 0; i < decoder_.format.nb_channels; ++i) {
                     pjmedia_plc_save(plcDec_[i], rawBuffer_.getChannel(i)->data());
                 }
             }
-        } else if(plcDec_.size() == 0) { // Packet loss concealment using codec
+        } else if (plcDec_.empty()) { // Packet loss concealment using codec
             int decoded = codec->decode(rawBuffer_.getData());
             rawBuffer_.resize(decoded);
         } else { // Generic PJSIP Packet loss concealment using codec
             rawBuffer_.resize(decoder_.frameSize);
-            for(unsigned i=0; i<decoder_.format.nb_channels; ++i) {
+            for (unsigned i = 0; i < decoder_.format.nb_channels; ++i) {
                 pjmedia_plc_generate(plcDec_[i], rawBuffer_.getChannel(i)->data());
             }
         }
