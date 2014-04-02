@@ -101,11 +101,20 @@ static const gchar *const CAMERA_STOP_STR = "_Stop";
 static void
 camera_button_toggled(GtkButton *button, G_GNUC_UNUSED gpointer data)
 {
-    camera_button = GTK_WIDGET(button);
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)))
-        dbus_start_video_camera();
-    else
-        dbus_stop_video_camera();
+    gchar ** str = dbus_get_call_list();
+
+    /* we can toggle only if there is no call */
+    if (str == NULL || *str == NULL) {
+
+        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button))) {
+            dbus_start_video_camera();
+        } else {
+            dbus_stop_video_camera();
+        }
+
+    }
+
+    g_strfreev(str);
 
     update_camera_button_label();
 }

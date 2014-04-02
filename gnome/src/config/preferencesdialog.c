@@ -363,6 +363,22 @@ static GtkTreeModel* create_model(GtkWidget *widget)
     return GTK_TREE_MODEL(store);
 }
 
+/* Callback used to catch the destroy event send by pressing escape key or the
+ * close button in the preference dialog */
+static void
+dialog_destroy_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer user_data)
+{
+#ifdef SFL_VIDEO
+    gchar ** str = dbus_get_call_list();
+
+    /* we stop the video only if we are not currently in a call */
+    if (str == NULL || *str == NULL) {
+        dbus_stop_video_camera();
+    }
+
+    g_strfreev(str);
+#endif
+}
 
 /**
  * Show configuration window with tabs
@@ -392,6 +408,11 @@ show_preferences_dialog(SFLPhoneClient *client)
                   "columns", 1,
                   "margin", 10,
                   NULL);
+
+
+    /* Connect the callback when the dialog is destroy, ie: pressing escape key or the
+     * close button */
+    g_signal_connect(GTK_WIDGET(dialog), "destroy", G_CALLBACK(dialog_destroy_cb), NULL);
 
     // Connect the callback when clicking on an item
     g_signal_connect(G_OBJECT(iconview), "selection-changed", G_CALLBACK(selection_changed_cb), NULL);
