@@ -56,13 +56,13 @@ dialpad_cleanup(G_GNUC_UNUSED GtkWidget * widget, DialpadData *data)
 }
 
 GtkWidget *
-get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters, SFLPhoneClient *client)
+get_numpad_button(const gchar* number, const gchar * letters, SFLPhoneClient *client)
 {
     GtkWidget *button = gtk_button_new();
     GtkWidget *label = gtk_label_new("1");
     gtk_label_set_single_line_mode(GTK_LABEL(label), FALSE);
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-    gchar *markup = g_markup_printf_escaped("<big><b>%s</b></big>%s%s", number, (twolines == TRUE ? "\n": ""), letters);
+    gchar *markup = g_markup_printf_escaped("<big><b>%s</b></big>\n%s", number, letters);
     gtk_label_set_markup(GTK_LABEL(label), markup);
     gtk_container_add(GTK_CONTAINER(button), label);
     DialpadData * dialpad_data = g_new0(DialpadData, 1);
@@ -103,7 +103,7 @@ create_dialpad(SFLPhoneClient *client)
 
     for (int row = 0, entry = 0; row != ROWS; ++row)
         for (int col = 0; col != COLS; ++col) {
-            GtkWidget *button = get_numpad_button(key_strings[entry], TRUE, key_strings[entry + 1], client);
+            GtkWidget *button = get_numpad_button(key_strings[entry], key_strings[entry + 1], client);
             gtk_grid_attach(GTK_GRID(grid), button, col, row, 1, 1);
             entry += 2;
         }
