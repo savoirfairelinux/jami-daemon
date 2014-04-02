@@ -145,3 +145,8 @@ void CallManager::zrtpNegotiationFailed(const std::string& callID, const std::st
 {
     on_zrtp_negociation_failed_wrapper(callID, reason, severity);
 }
+
+void CallManager::onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats)
+{
+
+}

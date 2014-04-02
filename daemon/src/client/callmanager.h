@@ -184,6 +184,8 @@ class CallManager
         void showSAS(const std::string& callID, const std::string& sas, const bool& verified);
         void zrtpNotSuppOther(const std::string& callID);
         void zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3);
+
+        void onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats);
 #endif // __ANDROID__
 private:
 
