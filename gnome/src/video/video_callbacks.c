@@ -30,12 +30,14 @@
 
 #include "video_callbacks.h"
 #include "video_renderer.h"
+#include "config/videoconf.h"
 
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 
 #include <string.h>
-#include "config/videoconf.h"
+
+#include <glib/gi18n.h>
 
 typedef struct {
     gchar *id;
@@ -110,8 +112,12 @@ add_handle(const gchar *id)
     g_signal_connect(handle->window, "delete-event",
             G_CALLBACK(video_window_deleted_cb),
             NULL);
-    if (video_is_local(id))
+
+    /* Preview video */
+    if (video_is_local(id)) {
+        gtk_window_set_title(GTK_WINDOW(handle->window), _("Local View"));
         update_camera_button_label();
+    }
 
     g_hash_table_insert(video_handles, g_strdup(id), handle);
     return handle;
