@@ -35,6 +35,8 @@
 #include "audio_symmetric_rtp_session.h"
 #include "logger.h"
 #include "sip/sipcall.h"
+#include "manager.h"
+#include "client/callmanager.h"
 
 namespace sfl {
 
@@ -64,7 +66,7 @@ void AudioSymmetricRtpSession::startRTPLoop()
 void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks)
 {
     ost::SymmetricRTPSession::onGotRR(source, RR, blocks);
-    DEBUG("onGotRR");
+    /*DEBUG("onGotRR");
     DEBUG("Unpacking %d blocks",blocks);
     for (int i = 0; i < blocks; ++i)
     {
@@ -76,11 +78,13 @@ void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoun
         DEBUG("lsr : %u", RR.blocks[i].rinfo.lsr);
         DEBUG("dlsr : %u", RR.blocks[i].rinfo.dlsr);
      }
+     */
 }
 
 // redefined from QueueRTCPManager
 void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks)
 {
+    /*
     DEBUG("onGotSR");
     std::cout << "I got an SR RTCP report from "
             << std::hex << (int)source.getID() << "@"
@@ -94,23 +98,46 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
     DEBUG("RTPTimestamp : %u", SR.sinfo.RTPTimestamp);
     DEBUG("packetCount : %u", SR.sinfo.packetCount);
     DEBUG("octetCount : %u", SR.sinfo.octetCount);
+    */
 
+    std::map<std::string, int> stats;
     ost::SymmetricRTPSession::onGotSR(source, SR, blocks);
-    DEBUG("Unpacking %d blocks",blocks);
+    //DEBUG("Unpacking %d blocks",blocks);
     for (int i = 0; i < blocks; ++i)
     {
-        DEBUG("fractionLostBase10 : %f", (float)SR.blocks[i].rinfo.fractionLost * 100 / 256);
+        //DEBUG("fractionLostBase10 : %f", (float)SR.blocks[i].rinfo.fractionLost * 100 / 256);
 
-        uint32 cumulativePacketLoss = SR.blocks[i].rinfo.lostMSB;
-        cumulativePacketLoss = SR.blocks[i].rinfo.lostMSB << 16 | SR.blocks[i].rinfo.lostLSW;
+        uint32 cumulativePacketLoss = SR.blocks[i].rinfo.lostMSB << 16 | SR.blocks[i].rinfo.lostLSW;
 
+        /*
+        How to calculate RTT (Round Trip delay)
+        A : Reassemble NTP timestamp on 64 bits
+        lsr : The middle 32 bits out of 64 in the NTP timestamp (as explained in Section 4) received as part of the most
+        recent RTCP sender report (SR) packet from source SSRC_n. If no SR has been received yet, the field is set to zero.
+        dlsr : The delay, expressed in units of 1/65536 seconds, between receiving the last SR packet from source SSRC_n and
+        sending this reception report block. If no SR packet has been received yet from SSRC_n, the DLSR field is set to zero.
+        RTT = A - lsr - dlsr;
+        */
+
+        uint64 ntpTimeStamp = SR.sinfo.NTPMSW << 32 | SR.sinfo.NTPLSW;
+        uint32 rtt = SR.sinfo.NTPMSW - SR.blocks[i].rinfo.lsr - SR.blocks[i].rinfo.dlsr;
+
+        stats["PACKET_LOSS"] = (float)SR.blocks[i].rinfo.fractionLost * 100 / 256;
+        stats["CUMUL_PACKET_LOSS"] = cumulativePacketLoss;
+        stats["RTT"] = rtt;
+        stats["LATENCY"] = 0; //TODO
+        /*
         DEBUG("Cumulative packet loss : %d", cumulativePacketLoss);
         DEBUG("highestSeqNum : %u", SR.blocks[i].rinfo.highestSeqNum);
         DEBUG("jitter : %u", SR.blocks[i].rinfo.jitter);
+        DEBUG("RTT : %u", rtt);
         DEBUG("lsr : %u", SR.blocks[i].rinfo.lsr);
         DEBUG("dlsr : %u", SR.blocks[i].rinfo.dlsr);
+        */
     }
 
+    // We send the report only once but that should be for each RR blocks (each participant) //TODO
+    Manager::instance().getClient()->getCallManager()->onRtcpReportReceived(call_.getCallId(), stats);
 }
 
 }
