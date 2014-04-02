@@ -61,6 +61,7 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
     , currentEncoderIndex_(0)
     , currentDecoderIndex_(0)
     , warningInterval_(0)
+    , plcCachePool_()
     , plcPool_(nullptr)
     , plcDec_()
 {

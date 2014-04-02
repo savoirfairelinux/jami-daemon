@@ -149,12 +149,6 @@ class AudioRtpStream {
         // these will have the same value unless we are sending
         // a different codec than we are receiving (asymmetric RTP)
         bool hasDynamicPayloadType_;
-
-        pj_caching_pool plcCachePool_;
-        pj_pool_t * plcPool_;
-        // PLC instances, one per channel
-        std::vector<pjmedia_plc*> plcDec_;
-
         // FIXME: probably need one for pre-encoder data, one for post-decoder data
         AudioBuffer rawBuffer_, micData_;
         std::array<uint8_t, RAW_BUFFER_SIZE> encodedData_;
@@ -166,6 +160,12 @@ class AudioRtpStream {
         size_t currentEncoderIndex_;
         size_t currentDecoderIndex_;
         int warningInterval_;
+
+        pj_caching_pool plcCachePool_;
+        pj_pool_t * plcPool_;
+        // PLC instances, one per channel
+        std::vector<pjmedia_plc*> plcDec_;
+
 };
 }
 
