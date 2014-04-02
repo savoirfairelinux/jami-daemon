@@ -134,7 +134,6 @@ void AlsaThread::run()
 
     while (alsa_->isStarted_ and running_) {
         alsa_->audioCallback();
-        usleep(20000); // 20 ms
     }
 }
 
@@ -734,6 +733,8 @@ void AlsaLayer::playback(int maxFrames)
             tone->getNext(playbackBuff_, playbackGain_);
         else if (file_tone && !ringtoneHandle_)
             file_tone->getNext(playbackBuff_, playbackGain_);
+        else
+            playbackBuff_.reset();
 
         playbackBuff_.interleave(playbackIBuff_);
         write(playbackIBuff_.data(), playbackBuff_.frames(), playbackHandle_);
