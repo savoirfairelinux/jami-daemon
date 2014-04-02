@@ -722,7 +722,6 @@
 
         <signal name="showSAS" tp:name-for-bindings="showSAS">
             <tp:added version="0.9.7"/>
-            <tp:added version="0.9.7"/>
             <arg type="s" name="callID" />
             <arg type="s" name="sas"  />
             <arg type="b" name="verified"/>
@@ -753,5 +752,25 @@
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="accepted" direction="in"/>
         </method>
+
+        <signal name="onRtcpReportReceived" tp:name-for-bindings="onRtcpReportReceived">
+            <tp:added version="1.3.0"/>
+            <tp:docstring>
+                <p>Signal sent adter a RTCP report has been received and computed.</p>
+            </tp:docstring>
+            <arg type="s" name="callID" />
+            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{si}" name="report" direction="out" tp:type="String_Integer_Map">
+              <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+                <p>A map containing RTCP stats: </p>
+                <ul>
+                    <li>PACKET_LOSS</li>
+                    <li>CUMULATIVE_LOSS</li>
+                    <li>ROUND_TRIP_DELAY</li>
+                    <li>LATENCY</li>
+                </ul>
+            </tp:docstring>
+            </arg>
+        </signal>
     </interface>
 </node>
