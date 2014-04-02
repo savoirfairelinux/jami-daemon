@@ -570,6 +570,14 @@ zrtp_not_supported_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLP
 }
 
 static void
+on_rtcp_report_received_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
+                                                            const GHashTable *stats,
+                                                            SFLPhoneClient *client)
+{
+    g_debug("Daemon notification of new RTCP report for %s", callID);
+}
+
+static void
 sip_call_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                   const gchar *description, guint code, SFLPhoneClient *client)
 {
@@ -953,6 +961,20 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "sipCallStateChanged",
                                 G_CALLBACK(sip_call_state_cb), client, NULL);
+
+
+    /* Manually register this marshaller as we need to declare that the boxed type is in fact
+     * a GHashTable */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_BOXED, G_TYPE_NONE,
+            G_TYPE_STRING, G_TYPE_HASH_TABLE, G_TYPE_INVALID);
+
+    dbus_g_proxy_add_signal(call_proxy, "onRtcpReportReceived",
+                            G_TYPE_STRING,
+                            dbus_g_type_get_map("GHashTable", G_TYPE_STRING, G_TYPE_INT),
+                            G_TYPE_INVALID);
+
+    dbus_g_proxy_connect_signal(call_proxy, "onRtcpReportReceived",
+                                G_CALLBACK(on_rtcp_report_received_cb), client, NULL);
 
     g_debug("Adding configurationmanager Dbus signals");
 
