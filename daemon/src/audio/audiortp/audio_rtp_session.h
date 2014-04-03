@@ -186,7 +186,7 @@ class AudioRtpSession {
 
         std::chrono::high_resolution_clock::time_point rxLast_;
         unsigned rxLastSeqNum_;
-#ifdef JITTER_DEBUG
+#ifdef RTP_DEBUG
         std::vector<double> rxJitters_;
         unsigned jitterReportInterval_;
 #endif

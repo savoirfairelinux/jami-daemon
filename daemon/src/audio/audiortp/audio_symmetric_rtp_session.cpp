@@ -66,7 +66,8 @@ void AudioSymmetricRtpSession::startRTPLoop()
 void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks)
 {
     ost::SymmetricRTPSession::onGotRR(source, RR, blocks);
-    /*DEBUG("onGotRR");
+#ifdef RTP_DEBUG
+    DEBUG("onGotRR");
     DEBUG("Unpacking %d blocks",blocks);
     for (int i = 0; i < blocks; ++i)
     {
@@ -78,13 +79,13 @@ void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoun
         DEBUG("lsr : %u", RR.blocks[i].rinfo.lsr);
         DEBUG("dlsr : %u", RR.blocks[i].rinfo.dlsr);
      }
-     */
+#endif
 }
 
 // redefined from QueueRTCPManager
 void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks)
 {
-    /*
+#ifdef RTP_DEBUG
     DEBUG("onGotSR");
     std::cout << "I got an SR RTCP report from "
             << std::hex << (int)source.getID() << "@"
@@ -98,7 +99,7 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
     DEBUG("RTPTimestamp : %u", SR.sinfo.RTPTimestamp);
     DEBUG("packetCount : %u", SR.sinfo.packetCount);
     DEBUG("octetCount : %u", SR.sinfo.octetCount);
-    */
+#endif
 
     std::map<std::string, int> stats;
     ost::SymmetricRTPSession::onGotSR(source, SR, blocks);
@@ -122,18 +123,19 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
         uint64 ntpTimeStamp = SR.sinfo.NTPMSW << 32 | SR.sinfo.NTPLSW;
         uint32 rtt = SR.sinfo.NTPMSW - SR.blocks[i].rinfo.lsr - SR.blocks[i].rinfo.dlsr;
 
-        stats["PACKET_LOSS"] = (float)SR.blocks[i].rinfo.fractionLost * 100 / 256;
+        stats["PACKET_LOSS"] = (float) SR.blocks[i].rinfo.fractionLost * 100 / 256;
         stats["CUMUL_PACKET_LOSS"] = cumulativePacketLoss;
         stats["RTT"] = rtt;
         stats["LATENCY"] = 0; //TODO
-        /*
+
+#ifdef RTP_DEBUG
         DEBUG("Cumulative packet loss : %d", cumulativePacketLoss);
         DEBUG("highestSeqNum : %u", SR.blocks[i].rinfo.highestSeqNum);
         DEBUG("jitter : %u", SR.blocks[i].rinfo.jitter);
         DEBUG("RTT : %u", rtt);
         DEBUG("lsr : %u", SR.blocks[i].rinfo.lsr);
         DEBUG("dlsr : %u", SR.blocks[i].rinfo.dlsr);
-        */
+#endif
     }
 
     // We send the report only once but that should be for each RR blocks (each participant) //TODO

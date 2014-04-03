@@ -37,7 +37,7 @@
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
 
-#ifdef JITTER_DEBUG
+#ifdef RTP_DEBUG
 #include <numeric>
 #include <algorithm>
 #endif
@@ -54,7 +54,7 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , remote_port_(0)
     , rxLast_()
     , rxLastSeqNum_(0)
-#ifdef JITTER_DEBUG
+#ifdef RTP_DEBUG
     , rxJitters_()
     , jitterReportInterval_(0)
 #endif
@@ -169,7 +169,7 @@ void AudioRtpSession::receiveSpeakerData()
     if (!adu)
         return;
 
-#ifdef JITTER_DEBUG
+#ifdef RTP_DEBUG
     // Compute and print RX jitter
     auto rxTime = std::chrono::high_resolution_clock::now();
     rxJitters_.push_back(std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(rxTime - rxLast_).count());
