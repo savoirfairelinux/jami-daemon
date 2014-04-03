@@ -16,7 +16,7 @@ BZR_DIR=${WORKING_DIR}/tmp
 BZR=bzr
 MAKE=make
 BZR_BRANCH="lp:sflphone"
-EMAIL_TO="emmanuel.milou@savoirfairelinux.com"
+EMAIL_TO="sflphone-dev@lists.savoirfairelinux.net"
 COMMIT_MSG="intl: automatic translations update"
 PATCH="0001-intl-automatic-translations-update.patch"
 
