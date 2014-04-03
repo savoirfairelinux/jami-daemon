@@ -39,8 +39,8 @@
 #define XSTR(s) STR(s)
 #define STR(s) #s
 
-/* bump for each release, and bump the 0.0.0.xth digit for each binary change */
-#define AUDIO_CODEC_ENTRY create_1_3_0_2
+/* bump for each release, and bump the 0.0.0.xth digit for each API change */
+#define AUDIO_CODEC_ENTRY create_1_3_0_3
 #define AUDIO_CODEC_ENTRY_SYMBOL XSTR(AUDIO_CODEC_ENTRY)
 
 // Opus documentation:
