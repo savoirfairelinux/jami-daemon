@@ -538,17 +538,17 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
         account->setCredentials(details);
 }
 
-void ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
+bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 {
-    SecurityEvaluator::containsPrivateKey(std::string(pemPath));
+    return SecurityEvaluator::containsPrivateKey(std::string(pemPath));
 }
 
-void ConfigurationManager::checkCertificateValidity(const std::string& pemPath)
+bool ConfigurationManager::checkCertificateValidity(const std::string& pemPath)
 {
-    SecurityEvaluator::certificateIsValid(std::string(pemPath));
+    return SecurityEvaluator::certificateIsValid(std::string(pemPath));
 }
 
-void ConfigurationManager::checkHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
+bool ConfigurationManager::checkHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
 {
-    SecurityEvaluator::verifyHostnameCertificate(certificatePath, host, port);
+    return SecurityEvaluator::verifyHostnameCertificate(certificatePath, host, port);
 }

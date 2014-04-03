@@ -79,6 +79,9 @@ bool SecurityEvaluator::containsPrivateKey(const std::string& pemPath) {
 bool SecurityEvaluator::certificateIsValid(const std::string& pemPath) {
     // First check local Certificate Authority file
     FILE *fileCheck = fopen(pemPath.c_str(), "r");
+    if(fileCheck == nullptr)
+        return false;
+
     X509* x509 = PEM_read_X509(fileCheck, nullptr, nullptr, nullptr);
     if (x509 != nullptr)
     {

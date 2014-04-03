@@ -618,10 +618,14 @@
        <method name="checkForPrivateKey" tp:name-for-bindings="checkForPrivateKey">
            <arg type="s" name="pemPath" direction="in">
            </arg>
+           <arg type="b" name="containPrivateKey" direction="out">
+           </arg>
        </method>
 
        <method name="checkCertificateValidity" tp:name-for-bindings="checkCertificateValidity">
            <arg type="s" name="pemPath" direction="in">
+           </arg>
+           <arg type="b" name="isValid" direction="out">
            </arg>
        </method>
 
@@ -631,6 +635,8 @@
            <arg type="s" name="host" direction="in">
            </arg>
            <arg type="s" name="port" direction="in">
+           </arg>
+           <arg type="b" name="isValid" direction="out">
            </arg>
        </method>
    </interface>
