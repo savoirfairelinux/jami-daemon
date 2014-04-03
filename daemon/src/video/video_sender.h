@@ -77,7 +77,7 @@ private:
     std::unique_ptr<VideoEncoder> videoEncoder_;
 
     std::atomic<int> forceKeyFrame_;
-    int frameNumber_;
+    int64_t frameNumber_;
     std::string sdp_;
 };
 

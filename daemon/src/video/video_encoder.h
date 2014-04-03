@@ -55,7 +55,7 @@ public:
     int openOutput(const char *enc_name, const char *short_name,
                    const char *filename, const char *mime_type);
     int startIO();
-    int encode(VideoFrame &input, bool is_keyframe, int frame_number);
+    int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
     int flush();
     void print_sdp(std::string &sdp_);
 

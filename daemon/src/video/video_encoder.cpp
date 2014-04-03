@@ -196,7 +196,7 @@ int VideoEncoder::startIO()
     return 0;
 }
 
-int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int frame_number)
+int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_number)
 {
     int ret;
     AVFrame *frame = scaledFrame_.get();
