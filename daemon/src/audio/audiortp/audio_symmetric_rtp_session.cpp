@@ -120,7 +120,8 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
         RTT = A - lsr - dlsr;
         */
 
-        uint64 ntpTimeStamp = SR.sinfo.NTPMSW << 32 | SR.sinfo.NTPLSW;
+        uint64 ntpTimeStamp = SR.sinfo.NTPMSW;
+        ntpTimeStamp = (ntpTimeStamp << 32) | SR.sinfo.NTPLSW;
         uint32 rtt = SR.sinfo.NTPMSW - SR.blocks[i].rinfo.lsr - SR.blocks[i].rinfo.dlsr;
 
         stats["PACKET_LOSS"] = (float) SR.blocks[i].rinfo.fractionLost * 100 / 256;
