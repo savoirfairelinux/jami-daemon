@@ -503,10 +503,14 @@ gboolean dbus_get_is_recording(const callable_obj_t *);
 
 GHashTable *dbus_get_call_details(const gchar *callID);
 
+/* Returns a newly allocated list callIDs.
+ * Caller is responsible for freeing it with g_strfreev */
 gchar **dbus_get_call_list(void);
 
 GHashTable* dbus_get_conference_details(const gchar *confID);
 
+/* Returns a newly allocated list conferenceIDs.
+ * Caller is responsible for freeing it with g_strfreev */
 gchar **dbus_get_conference_list(void);
 
 void dbus_set_accounts_order(const gchar *order);
