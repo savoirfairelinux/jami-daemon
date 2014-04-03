@@ -237,8 +237,11 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int frame_number)
 
         // write the compressed frame
         ret = av_interleaved_write_frame(outputCtx_, &pkt);
-        if (ret)
-            ERROR("interleaved_write_frame failed");
+        if (ret) {
+            char errbuf[64];
+            av_strerror(ret, errbuf, sizeof(errbuf));
+            ERROR("interleaved_write_frame failed: %s", errbuf);
+        }
     }
 
 #else
