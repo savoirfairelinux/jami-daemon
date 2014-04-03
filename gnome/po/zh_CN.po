@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-03-24 21:10-0400\n"
+"POT-Creation-Date: 2014-04-02 21:10-0400\n"
 "PO-Revision-Date: 2013-10-02 16:32+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-03-25 06:11+0000\n"
+"X-Launchpad-Export-Date: 2014-04-03 05:34+0000\n"
 "X-Generator: Launchpad (build 16967)\n"
 "Language: \n"
 
@@ -200,10 +200,27 @@ msgstr "认证名称"
 msgid "Password"
 msgstr "密码"
 
+#: ../src/config/accountconfigdialog.c:817
+#: ../src/config/accountlistconfigdialog.c:573
+msgid "Add"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:821
+#: ../src/config/accountlistconfigdialog.c:123
+#: ../src/config/accountlistconfigdialog.c:586 ../src/presencewindow.c:666
+#: ../src/presencewindow.c:690
+msgid "Remove"
+msgstr ""
+
 #: ../src/config/accountconfigdialog.c:856
 #: ../src/config/accountconfigdialog.c:1568
 msgid "Security"
 msgstr "安全"
+
+#: ../src/config/accountconfigdialog.c:865
+#: ../src/config/accountlistconfigdialog.c:578
+msgid "Edit"
+msgstr ""
 
 #: ../src/config/accountconfigdialog.c:872
 msgid "Use TLS transport(sips)"
@@ -217,6 +234,11 @@ msgstr "SRTP 密钥交换"
 #: ../src/config/accountconfigdialog.c:886
 msgid "Disabled"
 msgstr "禁用"
+
+#: ../src/config/accountconfigdialog.c:888
+#: ../src/config/preferencesdialog.c:373
+msgid "Preferences"
+msgstr "首选项"
 
 #: ../src/config/accountconfigdialog.c:950
 msgid "Registration"
@@ -356,11 +378,6 @@ msgstr ""
 msgid "Are you sure want to delete account?"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:123 ../src/presencewindow.c:666
-#: ../src/presencewindow.c:690
-msgid "Remove"
-msgstr ""
-
 #: ../src/config/accountlistconfigdialog.c:125
 msgid "Remove account"
 msgstr ""
@@ -372,6 +389,24 @@ msgstr "协议"
 #: ../src/config/accountlistconfigdialog.c:539
 msgid "Status"
 msgstr "状态"
+
+#: ../src/config/accountlistconfigdialog.c:561 ../src/config/audioconf.c:522
+#: ../src/config/videoconf.c:516
+msgid "Up"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:567 ../src/config/audioconf.c:528
+#: ../src/config/videoconf.c:521
+msgid "Down"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:598
+msgid "Help"
+msgstr ""
+
+#: ../src/config/accountlistconfigdialog.c:603
+msgid "Close"
+msgstr ""
 
 #: ../src/config/accountlistconfigdialog.c:638
 #, c-format
@@ -608,68 +643,68 @@ msgstr "输入"
 msgid "Ringtone"
 msgstr "铃声"
 
-#: ../src/config/audioconf.c:862
+#: ../src/config/audioconf.c:871
 msgid "Sound Manager"
 msgstr "音频管理器"
 
-#: ../src/config/audioconf.c:869
+#: ../src/config/audioconf.c:878
 msgid "_Pulseaudio"
 msgstr "Pulseaudio"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:875
+#: ../src/config/audioconf.c:884
 msgid "Pulseaudio settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:879
+#: ../src/config/audioconf.c:888
 msgid "_ALSA"
 msgstr "ALSA"
 
-#: ../src/config/audioconf.c:885
+#: ../src/config/audioconf.c:894
 msgid "_JACK"
 msgstr ""
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:892
+#: ../src/config/audioconf.c:901
 msgid "ALSA settings"
 msgstr "ALSA设置"
 
-#: ../src/config/audioconf.c:907
+#: ../src/config/audioconf.c:916
 msgid "Recordings"
 msgstr "记录"
 
 #. label
-#: ../src/config/audioconf.c:911
+#: ../src/config/audioconf.c:920
 msgid "Destination folder"
 msgstr "目标文件夹"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:915
+#: ../src/config/audioconf.c:924
 msgid "Select a folder"
 msgstr "选择文件夹"
 
-#: ../src/config/audioconf.c:926
+#: ../src/config/audioconf.c:935
 msgid "_Always recording"
 msgstr ""
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:933
+#: ../src/config/audioconf.c:942
 msgid "Voice enhancement settings"
 msgstr "声音增强设置"
 
-#: ../src/config/audioconf.c:936
+#: ../src/config/audioconf.c:945
 msgid "_Noise Reduction"
 msgstr "噪音抑制(_N)"
 
-#: ../src/config/audioconf.c:943
+#: ../src/config/audioconf.c:952
 msgid "Automatic _Gain Control"
 msgstr ""
 
-#: ../src/config/audioconf.c:950
+#: ../src/config/audioconf.c:959
 msgid "Tone settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:953
+#: ../src/config/audioconf.c:962
 msgid "_Mute DTMF"
 msgstr ""
 
@@ -762,10 +797,6 @@ msgstr ""
 msgid "Enable instant messaging"
 msgstr ""
 
-#: ../src/config/preferencesdialog.c:373
-msgid "Preferences"
-msgstr "首选项"
-
 #: ../src/config/preferencesdialog.c:430
 msgid "Hooks"
 msgstr "钩键"
@@ -829,31 +860,31 @@ msgid "Password for the private key"
 msgstr "私钥密码"
 
 #. TLS protocol methods
-#: ../src/config/tlsadvanceddialog.c:191
+#: ../src/config/tlsadvanceddialog.c:193
 msgid "TLS protocol method"
 msgstr "TLS 协议方法"
 
-#: ../src/config/tlsadvanceddialog.c:214
+#: ../src/config/tlsadvanceddialog.c:216
 msgid "TLS cipher list"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:223
+#: ../src/config/tlsadvanceddialog.c:225
 msgid "Server name instance for outgoing TLS connection"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:231
+#: ../src/config/tlsadvanceddialog.c:233
 msgid "Negotiation timeout (seconds)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:243
+#: ../src/config/tlsadvanceddialog.c:245
 msgid "Verify incoming certificates, as a server"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:249
+#: ../src/config/tlsadvanceddialog.c:251
 msgid "Verify certificates from answer, as a client"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:255
+#: ../src/config/tlsadvanceddialog.c:257
 msgid "Require certificate for incoming tls connections"
 msgstr ""
 
@@ -938,15 +969,15 @@ msgstr "查询所有"
 msgid "Click here to change the search type"
 msgstr "请点击此处改变查询方式"
 
-#: ../src/contacts/searchbar.c:234
+#: ../src/contacts/searchbar.c:234 ../src/contacts/searchbar.c:337
 msgid "Search by missed call"
 msgstr "从未接电话中查询"
 
-#: ../src/contacts/searchbar.c:242
+#: ../src/contacts/searchbar.c:242 ../src/contacts/searchbar.c:343
 msgid "Search by incoming call"
 msgstr "从来电中查询"
 
-#: ../src/contacts/searchbar.c:250
+#: ../src/contacts/searchbar.c:250 ../src/contacts/searchbar.c:349
 msgid "Search by outgoing call"
 msgstr "从拨出电话中查询"
 
@@ -1031,7 +1062,7 @@ msgid "Remove buddy"
 msgstr ""
 
 #. popup
-#: ../src/presencewindow.c:755 ../src/uimanager.c:1196
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1197
 msgid "Add new buddy"
 msgstr ""
 
@@ -1040,7 +1071,7 @@ msgid "Add group"
 msgstr ""
 
 #. Call Menu
-#: ../src/presencewindow.c:802 ../src/uimanager.c:1026
+#: ../src/presencewindow.c:802 ../src/uimanager.c:1027
 msgid "Call"
 msgstr "电话(_C)"
 
@@ -1148,8 +1179,8 @@ msgstr "话筒音量"
 msgid "_Show main window"
 msgstr "显示主窗口(S)"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:1036 ../src/uimanager.c:1389
-#: ../src/uimanager.c:1473
+#: ../src/statusicon.c:139 ../src/uimanager.c:1037 ../src/uimanager.c:1390
+#: ../src/uimanager.c:1474
 msgid "_Hang up"
 msgstr "挂断(_H)"
 
@@ -1161,7 +1192,7 @@ msgstr "SFLphone"
 msgid "No address book selected"
 msgstr "地址簿"
 
-#: ../src/uimanager.c:454 ../src/uimanager.c:1113
+#: ../src/uimanager.c:454 ../src/uimanager.c:1114
 msgid "Address book"
 msgstr "地址簿"
 
@@ -1178,234 +1209,238 @@ msgstr "SFLphone是一个VoIP客户端，它兼容SIP和IAX2协议."
 msgid "About SFLphone"
 msgstr "关于SFLphone"
 
-#: ../src/uimanager.c:977 ../src/uimanager.c:1060
+#: ../src/uimanager.c:978 ../src/uimanager.c:1061
 msgid "Voicemail"
 msgstr "语音信箱"
 
-#: ../src/uimanager.c:1028 ../src/uimanager.c:1580
+#: ../src/uimanager.c:1029 ../src/uimanager.c:1581
 msgid "_New call"
 msgstr "新电话(_N)"
 
-#: ../src/uimanager.c:1029
+#: ../src/uimanager.c:1030
 msgid "Place a new call"
 msgstr "打一通电话"
 
-#: ../src/uimanager.c:1032 ../src/uimanager.c:1378
+#: ../src/uimanager.c:1033 ../src/uimanager.c:1378
 msgid "_Pick up"
 msgstr "接听(_P)"
 
-#: ../src/uimanager.c:1033
+#: ../src/uimanager.c:1034
 msgid "Answer the call"
 msgstr "接听"
 
-#: ../src/uimanager.c:1037
+#: ../src/uimanager.c:1038
 msgid "Finish the call"
 msgstr "完成呼叫"
 
-#: ../src/uimanager.c:1040
+#: ../src/uimanager.c:1041
 msgid "O_n hold"
 msgstr "保持(_H)"
 
-#: ../src/uimanager.c:1041
+#: ../src/uimanager.c:1042
 msgid "Place the call on hold"
 msgstr "挂起"
 
-#: ../src/uimanager.c:1044
+#: ../src/uimanager.c:1045
 msgid "O_ff hold"
 msgstr "恢复通话"
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1046
 msgid "Place the call off hold"
 msgstr "挂断"
 
-#: ../src/uimanager.c:1048 ../src/uimanager.c:1431
+#: ../src/uimanager.c:1049 ../src/uimanager.c:1432
 msgid "Send _message"
 msgstr ""
 
-#: ../src/uimanager.c:1049
+#: ../src/uimanager.c:1050
 msgid "Send message"
 msgstr ""
 
-#: ../src/uimanager.c:1052 ../src/uimanager.c:1053
+#: ../src/uimanager.c:1053 ../src/uimanager.c:1054
 msgid "Share screen"
 msgstr ""
 
-#: ../src/uimanager.c:1056
+#: ../src/uimanager.c:1057
 msgid "Configuration _Assistant"
 msgstr "配置助手(_A)"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1058
 msgid "Run the configuration assistant"
 msgstr "Stun配置有误"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1062
 msgid "Call your voicemail"
 msgstr "%d 个语音信息"
 
-#: ../src/uimanager.c:1064
+#: ../src/uimanager.c:1065
 msgid "_Close"
 msgstr "关闭(_C)"
 
-#: ../src/uimanager.c:1065
+#: ../src/uimanager.c:1066
 msgid "Minimize to system tray"
 msgstr "最小化到系统托盘"
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1069
 msgid "_Quit"
 msgstr "退出(_Q)"
 
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1070
 msgid "Quit the program"
 msgstr "退出程序"
 
 #. Edit Menu
-#: ../src/uimanager.c:1073
+#: ../src/uimanager.c:1074
 msgid "_Edit"
 msgstr "编辑(_E)"
 
-#: ../src/uimanager.c:1075
+#: ../src/uimanager.c:1076 ../src/uimanager.c:1357
 msgid "_Copy"
 msgstr "复制(_C)"
 
-#: ../src/uimanager.c:1076
+#: ../src/uimanager.c:1077
 msgid "Copy the selection"
 msgstr "删除所选账户"
 
-#: ../src/uimanager.c:1079
+#: ../src/uimanager.c:1080 ../src/uimanager.c:1365
 msgid "_Paste"
 msgstr "粘贴(_P)"
 
-#: ../src/uimanager.c:1080
+#: ../src/uimanager.c:1081
 msgid "Paste the clipboard"
 msgstr "粘贴剪贴板中的内容"
 
-#: ../src/uimanager.c:1083
+#: ../src/uimanager.c:1084
 msgid "Clear _history"
 msgstr "清空历史记录(_H)"
 
-#: ../src/uimanager.c:1084
+#: ../src/uimanager.c:1085
 msgid "Clear the call history"
 msgstr "清空历史记录"
 
-#: ../src/uimanager.c:1087
+#: ../src/uimanager.c:1088
 msgid "_Accounts"
 msgstr "账户(_A)"
 
-#: ../src/uimanager.c:1088
+#: ../src/uimanager.c:1089
 msgid "Edit your accounts"
 msgstr "当前帐户"
 
-#: ../src/uimanager.c:1091
+#: ../src/uimanager.c:1092
 msgid "_Preferences"
 msgstr "首选项(_P)"
 
-#: ../src/uimanager.c:1092
+#: ../src/uimanager.c:1093
 msgid "Change your preferences"
 msgstr "更改您的首选项"
 
 #. View Menu
-#: ../src/uimanager.c:1096
+#: ../src/uimanager.c:1097
 msgid "_View"
 msgstr "查看(_V)"
 
 #. Help menu
-#: ../src/uimanager.c:1099
+#: ../src/uimanager.c:1100
 msgid "_Help"
 msgstr "帮助(_H)"
 
-#: ../src/uimanager.c:1100
+#: ../src/uimanager.c:1101
 msgid "Contents"
 msgstr "继续"
 
-#: ../src/uimanager.c:1101
+#: ../src/uimanager.c:1102
 msgid "Open the manual"
 msgstr "打开手册"
 
-#: ../src/uimanager.c:1103
+#: ../src/uimanager.c:1104
 msgid "About this application"
 msgstr "关于本程序"
 
-#: ../src/uimanager.c:1107
+#: ../src/uimanager.c:1108
 msgid "_Transfer"
 msgstr "转接"
 
-#: ../src/uimanager.c:1107
+#: ../src/uimanager.c:1108
 msgid "Transfer the call"
 msgstr "转给:"
 
-#: ../src/uimanager.c:1108 ../src/uimanager.c:1411
+#: ../src/uimanager.c:1109 ../src/uimanager.c:1412
 msgid "_Record"
 msgstr "录音(_R)"
 
-#: ../src/uimanager.c:1108
+#: ../src/uimanager.c:1109
 msgid "Record the current conversation"
 msgstr "记录当前会话"
 
-#: ../src/uimanager.c:1109
+#: ../src/uimanager.c:1110
 msgid "_Show toolbar"
 msgstr "显示工具栏(_S)"
 
-#: ../src/uimanager.c:1109
+#: ../src/uimanager.c:1110
 msgid "Show the toolbar"
 msgstr "显示工具栏"
 
-#: ../src/uimanager.c:1110
+#: ../src/uimanager.c:1111
 msgid "_Dialpad"
 msgstr "禁用"
 
-#: ../src/uimanager.c:1110
+#: ../src/uimanager.c:1111
 msgid "Show the dialpad"
 msgstr "显示拨号键盘"
 
-#: ../src/uimanager.c:1111
+#: ../src/uimanager.c:1112
 msgid "_Volume controls"
 msgstr "音量控制(V)"
 
-#: ../src/uimanager.c:1111
+#: ../src/uimanager.c:1112
 msgid "Show the volume controls"
 msgstr "音量控制(V)"
 
-#: ../src/uimanager.c:1112
+#: ../src/uimanager.c:1113
 msgid "_History"
 msgstr "历史"
 
-#: ../src/uimanager.c:1112
+#: ../src/uimanager.c:1113
 msgid "Call history"
 msgstr ""
 
-#: ../src/uimanager.c:1113
+#: ../src/uimanager.c:1114
 msgid "_Address book"
 msgstr "地址簿"
 
-#: ../src/uimanager.c:1115
+#: ../src/uimanager.c:1116
 msgid "_Buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1115
+#: ../src/uimanager.c:1116
 msgid "Display the buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1400 ../src/uimanager.c:1482
+#: ../src/uimanager.c:1401 ../src/uimanager.c:1483
 msgid "On _Hold"
 msgstr "保持(_H)"
 
 #. Add a video sources menu
-#: ../src/uimanager.c:1451
+#: ../src/uimanager.c:1452
 msgid "Video sources"
 msgstr ""
 
-#: ../src/uimanager.c:1519
+#: ../src/uimanager.c:1520
 msgid "_Call back"
 msgstr "回叫(_C)"
 
-#: ../src/uimanager.c:1529 ../src/uimanager.c:1588
+#: ../src/uimanager.c:1530 ../src/uimanager.c:1589
 msgid "Follow status"
 msgstr ""
 
-#: ../src/uimanager.c:1649
+#: ../src/uimanager.c:1650
 msgid "Edit phone number"
 msgstr "编辑电话号码"
 
-#: ../src/uimanager.c:1660
+#: ../src/uimanager.c:1661
 msgid "Edit the phone number before making a call"
 msgstr "拨出电话前编辑电话号码"
+
+#: ../src/video/video_callbacks.c:139
+msgid "Local View"
+msgstr ""
