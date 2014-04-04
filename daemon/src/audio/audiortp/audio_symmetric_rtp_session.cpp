@@ -92,13 +92,6 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
             << std::dec
             << source.getNetworkAddress() << ":"
             << source.getControlTransportPort() << std::endl;
-
-
-    DEBUG("NTPMSW : %u", SR.sinfo.NTPMSW);
-    DEBUG("NTPLSW : %u", SR.sinfo.NTPLSW);
-    DEBUG("RTPTimestamp : %u", SR.sinfo.RTPTimestamp);
-    DEBUG("packetCount : %u", SR.sinfo.packetCount);
-    DEBUG("octetCount : %u", SR.sinfo.octetCount);
 #endif
 
     std::map<std::string, int> stats;
@@ -106,10 +99,11 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
     //DEBUG("Unpacking %d blocks",blocks);
     for (int i = 0; i < blocks; ++i)
     {
-        //DEBUG("fractionLostBase10 : %f", (float)SR.blocks[i].rinfo.fractionLost * 100 / 256);
+        // If this is the first report drop it, stats are not complete
+        if(SR.blocks[i].rinfo.lsr == 0 || SR.blocks[i].rinfo.dlsr == 0)
+            continue;
 
-        uint32 cumulativePacketLoss = SR.blocks[i].rinfo.lostMSB << 16 | SR.blocks[i].rinfo.lostLSW;
-
+        uint32 cumulativePacketLoss = SR.blocks[i].rinfo.lostMSB << 16 | htons(SR.blocks[i].rinfo.lostLSW);
         /*
         How to calculate RTT (Round Trip delay)
         A : Reassemble NTP timestamp on 64 bits
@@ -120,27 +114,34 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
         RTT = A - lsr - dlsr;
         */
 
-        uint64 ntpTimeStamp = SR.sinfo.NTPMSW;
-        ntpTimeStamp = (ntpTimeStamp << 32) | SR.sinfo.NTPLSW;
+        uint64 ntpTimeStamp = ntohl(SR.sinfo.NTPMSW);
+        ntpTimeStamp = ntohl((ntpTimeStamp << 32) | ntohl(SR.sinfo.NTPLSW));
         uint32 rtt = SR.sinfo.NTPMSW - SR.blocks[i].rinfo.lsr - SR.blocks[i].rinfo.dlsr;
 
-        stats["PACKET_LOSS"] = (float) SR.blocks[i].rinfo.fractionLost * 100 / 256;
+        stats["PACKET_COUNT"] = ntohl(SR.sinfo.packetCount);
+        stats["PACKET_LOSS"] = (float) ntohl(SR.blocks[i].rinfo.fractionLost) * 100 / 256;
         stats["CUMUL_PACKET_LOSS"] = cumulativePacketLoss;
         stats["RTT"] = rtt;
         stats["LATENCY"] = 0; //TODO
+        stats["HIGH_SEC_NUM"] =  ntohl(SR.blocks[i].rinfo.highestSeqNum);
+        stats["JITTER"] = ntohl(SR.blocks[i].rinfo.jitter);
+        stats["LSR"] =  ntohl(SR.blocks[i].rinfo.lsr);
+        stats["DLSR"] = ntohl(SR.blocks[i].rinfo.dlsr);
 
 #ifdef RTP_DEBUG
-        DEBUG("Cumulative packet loss : %d", cumulativePacketLoss);
-        DEBUG("highestSeqNum : %u", SR.blocks[i].rinfo.highestSeqNum);
-        DEBUG("jitter : %u", SR.blocks[i].rinfo.jitter);
-        DEBUG("RTT : %u", rtt);
-        DEBUG("lsr : %u", SR.blocks[i].rinfo.lsr);
-        DEBUG("dlsr : %u", SR.blocks[i].rinfo.dlsr);
+        DEBUG("lostMSB : %u", SR.blocks[i].rinfo.lostMSB);
+        DEBUG("lostLSB : %u", htons(SR.blocks[i].rinfo.lostLSW));
+        DEBUG("NTP timestamp : %llu", ntpTimeStamp);
+        DEBUG("fraction packet loss : %f", stats["PACKET_LOSS"]);
+        DEBUG("Cumulative packet loss : %d", stats["CUMUL_PACKET_LOSS"]);
+        DEBUG("highestSeqNum : %u", stats["HIGH_SEC_NUM"]);
+        DEBUG("jitter : %u", stats["JITTER"]);
+        DEBUG("RTT : %u", stats["RTT"]);
+        DEBUG("Delay since last report %f seconds", (float) stats["DLSR"] / (65536 * 1000));
+        DEBUG("last report timestamp : %f ", (float) stats["LSR"] / (65536 * 1000));
 #endif
+        Manager::instance().getClient()->getCallManager()->onRtcpReportReceived(call_.getCallId(), stats);
     }
-
-    // We send the report only once but that should be for each RR blocks (each participant) //TODO
-    Manager::instance().getClient()->getCallManager()->onRtcpReportReceived(call_.getCallId(), stats);
 }
 
 }
