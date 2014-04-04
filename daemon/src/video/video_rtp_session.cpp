@@ -250,12 +250,18 @@ void VideoRtpSession::setupConferenceVideoPipeline()
     }
 }
 
-void VideoRtpSession::enterConference(Conference *conf)
+void VideoRtpSession::getMixerFromConference(Conference &conf)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    videoMixerSP_ = std::move(conf.getVideoMixer());
+}
+
+void VideoRtpSession::enterConference(Conference *conf)
+{
     /* Detach from a possible previous conference */
     exitConference();
-    videoMixerSP_ = std::move(conf->getVideoMixer());
+
+    getMixerFromConference(*conf);
 
     setupConferenceVideoPipeline();
 }

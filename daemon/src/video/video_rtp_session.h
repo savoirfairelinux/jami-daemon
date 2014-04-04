@@ -34,7 +34,6 @@
 
 #include "video_base.h"
 #include "video_mixer.h"
-#include "conference.h"
 #include "noncopyable.h"
 
 #include <string>
@@ -43,6 +42,7 @@
 #include <mutex>
 
 class Sdp;
+class Conference;
 
 namespace sfl_video {
 
@@ -71,6 +71,8 @@ public:
 
 private:
     NON_COPYABLE(VideoRtpSession);
+
+    void getMixerFromConference(Conference &conf);
 
     // all public methods must be locked internally before use
     std::mutex mutex_;
