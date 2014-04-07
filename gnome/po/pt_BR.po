@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-02 21:10-0400\n"
+"POT-Creation-Date: 2014-04-04 21:10-0400\n"
 "PO-Revision-Date: 2014-03-29 17:56+0000\n"
 "Last-Translator: Habner Costa <habner@outlook.com>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-04-03 05:34+0000\n"
-"X-Generator: Launchpad (build 16967)\n"
+"X-Launchpad-Export-Date: 2014-04-06 06:32+0000\n"
+"X-Generator: Launchpad (build 16976)\n"
 "Language: pt_BR\n"
 
 #: ../src/config/accountlistconfigdialog.c:638
@@ -240,7 +240,7 @@ msgid "Disabled"
 msgstr "Desabilitado"
 
 #: ../src/config/accountconfigdialog.c:888
-#: ../src/config/preferencesdialog.c:373
+#: ../src/config/preferencesdialog.c:389
 msgid "Preferences"
 msgstr "Preferências"
 
@@ -309,7 +309,7 @@ msgstr "Faixa de portas RTP para Vídeo"
 #. Box for the audiocodecs
 #: ../src/config/accountconfigdialog.c:1226
 #: ../src/config/accountconfigdialog.c:1552
-#: ../src/config/preferencesdialog.c:418
+#: ../src/config/preferencesdialog.c:439
 msgid "Audio"
 msgstr "Áudio"
 
@@ -344,7 +344,7 @@ msgstr "Arquivos de áudio"
 #. Box for the videocodecs
 #: ../src/config/accountconfigdialog.c:1311
 #: ../src/config/accountconfigdialog.c:1557
-#: ../src/config/preferencesdialog.c:424
+#: ../src/config/preferencesdialog.c:445
 msgid "Video"
 msgstr "Vídeo"
 
@@ -399,12 +399,12 @@ msgid "Status"
 msgstr "Status"
 
 #: ../src/config/accountlistconfigdialog.c:561 ../src/config/audioconf.c:522
-#: ../src/config/videoconf.c:516
+#: ../src/config/videoconf.c:525
 msgid "Up"
 msgstr "Mover para cima"
 
 #: ../src/config/accountlistconfigdialog.c:567 ../src/config/audioconf.c:528
-#: ../src/config/videoconf.c:521
+#: ../src/config/videoconf.c:530
 msgid "Down"
 msgstr "Mover para baixo"
 
@@ -429,7 +429,7 @@ msgid "You have no active accounts"
 msgstr "Nenhuma conta ativa"
 
 #: ../src/config/addressbook-config.c:313
-#: ../src/config/preferencesdialog.c:412 ../src/config/shortcuts-config.c:117
+#: ../src/config/preferencesdialog.c:433 ../src/config/shortcuts-config.c:117
 msgid "General"
 msgstr "Geral"
 
@@ -478,7 +478,7 @@ msgid "Select which Evolution address books to use"
 msgstr "Selecione qual catálogo de endereços do Evolution deseja utilizar"
 
 #: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:497
-#: ../src/config/videoconf.c:492
+#: ../src/config/videoconf.c:501
 msgid "Name"
 msgstr "Nome"
 
@@ -807,15 +807,15 @@ msgstr "Mensagens instantâneas"
 msgid "Enable instant messaging"
 msgstr "Habilitar mensagens instantâneas"
 
-#: ../src/config/preferencesdialog.c:430
+#: ../src/config/preferencesdialog.c:451
 msgid "Hooks"
 msgstr "Ganchos"
 
-#: ../src/config/preferencesdialog.c:435
+#: ../src/config/preferencesdialog.c:456
 msgid "Shortcuts"
 msgstr "Atalhos"
 
-#: ../src/config/preferencesdialog.c:441
+#: ../src/config/preferencesdialog.c:462
 msgid "Address Book"
 msgstr "Catálogo de endereços"
 
@@ -906,47 +906,47 @@ msgstr "Verificar certificados de resposta, como um cliente"
 msgid "Require certificate for incoming tls connections"
 msgstr "Requer certificado para conexões tls entrantes"
 
-#: ../src/config/videoconf.c:499
+#: ../src/config/videoconf.c:508
 msgid "Bitrate (kbps)"
 msgstr "Bitrate (kbps)"
 
-#: ../src/config/videoconf.c:506
+#: ../src/config/videoconf.c:515
 msgid "Parameters"
 msgstr "Parâmetros:"
 
-#: ../src/config/videoconf.c:824
+#: ../src/config/videoconf.c:833
 msgid "No devices found"
 msgstr "Nenhum dispositivo encontrado"
 
 #. Set choices of input devices
-#: ../src/config/videoconf.c:835
+#: ../src/config/videoconf.c:844
 msgid "Device"
 msgstr "Dispositivo"
 
 #. Set choices of input
-#: ../src/config/videoconf.c:850
+#: ../src/config/videoconf.c:859
 msgid "Channel"
 msgstr "Canal"
 
 #. Set choices of sizes
-#: ../src/config/videoconf.c:864
+#: ../src/config/videoconf.c:873
 msgid "Size"
 msgstr "Tamanho"
 
 #. Set choices of rates
-#: ../src/config/videoconf.c:878
+#: ../src/config/videoconf.c:887
 msgid "Rate"
 msgstr "Taxa"
 
-#: ../src/config/videoconf.c:904
+#: ../src/config/videoconf.c:913
 msgid "Video Manager"
 msgstr "Gerenciador de Vídeo"
 
-#: ../src/config/videoconf.c:907
+#: ../src/config/videoconf.c:916
 msgid "Video4Linux2"
 msgstr "Video4Linux2"
 
-#: ../src/config/videoconf.c:913
+#: ../src/config/videoconf.c:922
 msgid "Camera"
 msgstr "Câmera"
 
@@ -999,19 +999,19 @@ msgstr "Buscar por chamadas recebidas"
 msgid "Search by outgoing call"
 msgstr "Buscar por chamadas feitas"
 
-#: ../src/dbus/dbus.c:590
+#: ../src/dbus/dbus.c:598
 msgid "ALSA notification: Error while opening playback device"
 msgstr "Notificação ALSA: Erro ao abrir dispositivo de reprodução"
 
-#: ../src/dbus/dbus.c:593
+#: ../src/dbus/dbus.c:601
 msgid "ALSA notification: Error while opening capture device"
 msgstr "Notificação ALSA: Erro ao abrir dispositivo de captura"
 
-#: ../src/dbus/dbus.c:596
+#: ../src/dbus/dbus.c:604
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr "Notificação Pulseaudio: Pulseaudio está parado"
 
-#: ../src/dbus/dbus.c:599
+#: ../src/dbus/dbus.c:607
 msgid "Codecs notification: Codecs not found"
 msgstr "Notificação Codecs: Codecs não encontrado"
 
