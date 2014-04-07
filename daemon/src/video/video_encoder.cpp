@@ -196,6 +196,15 @@ int VideoEncoder::startIO()
     return 0;
 }
 
+namespace {
+void print_averror(const char *funcname, int err)
+{
+    char errbuf[64];
+    av_strerror(err, errbuf, sizeof(errbuf));
+    ERROR("%s failed: %s", funcname, errbuf);
+}
+}
+
 int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_number)
 {
     int ret;
@@ -218,13 +227,14 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
     AVPacket pkt = {};
     av_init_packet(&pkt);
 
-#if (LIBAVCODEC_VERSION_MAJOR >= 54)
+#if LIBAVCODEC_VERSION_MAJOR >= 54
+
     int got_packet;
     ret = avcodec_encode_video2(encoderCtx_, &pkt, frame, &got_packet);
-    if (ret != 0) {
-        ERROR("avcodec_encode_video2 failed");
+    if (ret < 0) {
+        print_averror("avcodec_encode_video2", ret);
         av_free_packet(&pkt);
-        return -1;
+        return ret;
     }
 
     if (pkt.size and got_packet) {
@@ -237,18 +247,16 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
 
         // write the compressed frame
         ret = av_interleaved_write_frame(outputCtx_, &pkt);
-        if (ret) {
-            char errbuf[64];
-            av_strerror(ret, errbuf, sizeof(errbuf));
-            ERROR("interleaved_write_frame failed: %s", errbuf);
-        }
+        if (ret < 0)
+            print_averror("av_interleaved_write_frame", ret);
     }
 
 #else
+
     ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
                                encoderBufferSize_, frame);
     if (ret < 0) {
-        ERROR("avcodec_encode_video failed");
+        print_averror("avcodec_encode_video", ret);
         av_free_packet(&pkt);
         return ret;
     }
@@ -270,16 +278,15 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
      pkt.stream_index = stream_->index;
 
     // write the compressed frame
-     if ((ret = av_interleaved_write_frame(outputCtx_, &pkt)) < 0) {
-         char errbuf[64];
-         av_strerror(ret, errbuf, sizeof(errbuf));
-         ERROR("interleaved_write_frame failed: %s", errbuf);
-     }
+    ret = av_interleaved_write_frame(outputCtx_, &pkt);
+    if (ret < 0)
+        print_averror("av_interleaved_write_frame", ret);
 
-#endif
-     av_free_packet(&pkt);
+#endif  // LIBAVCODEC_VERSION_MAJOR >= 54
 
-     return ret;
+    av_free_packet(&pkt);
+
+    return ret;
 }
 
 int VideoEncoder::flush()
