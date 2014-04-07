@@ -47,5 +47,5 @@ void TlsTest::testCertificate()
     CPPUNIT_ASSERT(SecurityEvaluator::certificateIsValid(validCertificate));
 
     // This is a png
-    CPPUNIT_ASSERT_EQUAL(SecurityEvaluator::certificateIsValid(fakeCertificate), false);
+    CPPUNIT_ASSERT(not SecurityEvaluator::certificateIsValid(fakeCertificate));
 }
