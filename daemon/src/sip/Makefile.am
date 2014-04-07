@@ -9,15 +9,18 @@ libsiplink_la_SOURCES = \
         sipcall.cpp \
         sipvoiplink.cpp \
         siptransport.cpp \
-        security_evaluator.cpp \
         sdp.h \
         sipaccount.h \
         sipcall.h \
         sipvoiplink.h \
         siptransport.h \
-        security_evaluator.h \
         sip_utils.cpp \
         sip_utils.h
+
+if BUILD_TLS
+libsiplink_la_SOURCES+=security_evaluator.cpp \
+                       security_evaluator.h
+endif
 
 if SFL_PRESENCE
 libsiplink_la_SOURCES+=sippresence.cpp \

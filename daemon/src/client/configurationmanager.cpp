@@ -540,19 +540,32 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
         account->setCredentials(details);
 }
 
-#if HAVE_TLS
 bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 {
+#if HAVE_TLS
     return SecurityEvaluator::containsPrivateKey(std::string(pemPath));
+#else
+    WARN("TLS not supported");
+    return false;
+#endif
 }
 
 bool ConfigurationManager::checkCertificateValidity(const std::string& pemPath)
 {
+#if HAVE_TLS
     return SecurityEvaluator::certificateIsValid(std::string(pemPath));
+#else
+    WARN("TLS not supported");
+    return false;
+#endif
 }
 
 bool ConfigurationManager::checkHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
 {
+#if HAVE_TLS
     return SecurityEvaluator::verifyHostnameCertificate(certificatePath, host, port);
-}
+#else
+    WARN("TLS not supported");
+    return false;
 #endif
+}
