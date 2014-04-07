@@ -45,6 +45,11 @@ test_SOURCES+=instantmessagingtest.h \
 			   instantmessagingtest.cpp
 endif
 
+if BUILD_TLS
+test_SOURCES+=tlstest.h \
+				tlstest.cpp
+endif
+
 clean-local:
 	rm -rf cppunitresults.xml im:testfile1.txt im:testfile2.txt \
 		sample_echocancel_500ms_8kHz_16bit.raw

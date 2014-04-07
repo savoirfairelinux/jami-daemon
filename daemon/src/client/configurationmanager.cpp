@@ -42,7 +42,9 @@
 #include "manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/siptransport.h"
+#if HAVE_TLS
 #include "sip/security_evaluator.h"
+#endif
 #include "logger.h"
 #include "fileutils.h"
 #include "sip/sipaccount.h"
@@ -538,6 +540,7 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
         account->setCredentials(details);
 }
 
+#if HAVE_TLS
 bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 {
     return SecurityEvaluator::containsPrivateKey(std::string(pemPath));
@@ -552,3 +555,4 @@ bool ConfigurationManager::checkHostnameCertificate(const std::string& certifica
 {
     return SecurityEvaluator::verifyHostnameCertificate(certificatePath, host, port);
 }
+#endif

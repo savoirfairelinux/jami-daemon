@@ -164,9 +164,11 @@ class ConfigurationManager
         /*
          * Security
          */
+#if HAVE_TLS
         bool checkForPrivateKey(const std::string& pemPath);
         bool checkCertificateValidity(const std::string& pemPath);
         bool checkHostnameCertificate(const std::string& certificatePath, const  std::string& host, const std::string& port);
+#endif
 
 #ifdef __ANDROID__
         void volumeChanged(const std::string& device, const int& value);
