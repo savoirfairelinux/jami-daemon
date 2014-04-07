@@ -224,7 +224,8 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
         frame->pict_type = (AVPictureType) 0;
     }
 
-    AVPacket pkt = {};
+    AVPacket pkt;
+    memset(&pkt, 0, sizeof(pkt));
     av_init_packet(&pkt);
 
 #if LIBAVCODEC_VERSION_MAJOR >= 54
@@ -291,7 +292,8 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
 
 int VideoEncoder::flush()
 {
-    AVPacket pkt = {};
+    AVPacket pkt;
+    memset(&pkt, 0, sizeof(pkt));
     av_init_packet(&pkt);
 
     int ret;

@@ -204,6 +204,7 @@ int VideoDecoder::decode(VideoFrame& result)
 int VideoDecoder::flush(VideoFrame& result)
 {
     AVPacket inpacket;
+    memset(&inpacket, 0, sizeof(inpacket));
     av_init_packet(&inpacket);
     inpacket.data = NULL;
     inpacket.size = 0;

@@ -39,7 +39,7 @@ namespace sfl_video {
 
 /*=== VideoPacket  ===========================================================*/
 
-VideoPacket::VideoPacket() : packet_(static_cast<AVPacket *>(av_malloc(sizeof(AVPacket))))
+VideoPacket::VideoPacket() : packet_(static_cast<AVPacket *>(av_mallocz(sizeof(AVPacket))))
 {
     av_init_packet(packet_);
 }
