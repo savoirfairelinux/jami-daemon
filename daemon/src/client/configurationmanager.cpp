@@ -543,7 +543,7 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
 bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 {
 #if HAVE_TLS
-    return SecurityEvaluator::containsPrivateKey(std::string(pemPath));
+    return SecurityEvaluator::containsPrivateKey(pemPath);
 #else
     WARN("TLS not supported");
     return false;
@@ -553,7 +553,7 @@ bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 bool ConfigurationManager::checkCertificateValidity(const std::string& pemPath)
 {
 #if HAVE_TLS
-    return SecurityEvaluator::certificateIsValid(std::string(pemPath));
+    return SecurityEvaluator::certificateIsValid(pemPath);
 #else
     WARN("TLS not supported");
     return false;
