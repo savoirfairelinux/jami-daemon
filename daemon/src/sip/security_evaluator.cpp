@@ -102,8 +102,8 @@ SecurityEvaluator::certificateIsValid(const std::string& pemPath)
 
         // Here perform checks and send callbacks
 
-        return true;
         X509_free(x509);
+        return true;
     } else {
         ERROR("Could not open certificate file");
         return false;
