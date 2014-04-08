@@ -196,15 +196,13 @@ bool SecurityEvaluator::verifyHostnameCertificate(const std::string& certificate
 SecurityEvaluator::HostnameValidationResult
 SecurityEvaluator::validateHostname(const std::string& hostname, const X509 *server_cert)
 {
-    HostnameValidationResult result;
-
-    if (hostname.c_str() == nullptr || (server_cert == nullptr)) {
-        DEBUG("hostname.c_str() == nullptr || (server_cert == nullptr)");
+    if (hostname.empty() or server_cert == nullptr) {
+        DEBUG("hostname empty or server_cert is NULL");
         return Error;
     }
 
     // First try the Subject Alternative Names extension
-    result = matchSubjectAltName(hostname, server_cert);
+    HostnameValidationResult result = matchSubjectAltName(hostname, server_cert);
     if (result == NoSANPresent) {
         // Extension was not found: try the Common Name
         result = matchCommonName(hostname, server_cert);
