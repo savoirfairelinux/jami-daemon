@@ -43,13 +43,9 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
- #define DATE_LEN 128
-
-
-#if HAVE_TLS
-
-bool SecurityEvaluator::containsPrivateKey(const std::string& pemPath) {
-
+bool
+SecurityEvaluator::containsPrivateKey(const std::string& pemPath)
+{
     FILE *keyFile = fopen(pemPath.c_str(), "r");
     RSA *rsa = PEM_read_RSAPrivateKey(keyFile, NULL, NULL, NULL);
 
@@ -76,24 +72,25 @@ bool SecurityEvaluator::containsPrivateKey(const std::string& pemPath) {
     return true;
 }
 
-bool SecurityEvaluator::certificateIsValid(const std::string& pemPath) {
+bool
+SecurityEvaluator::certificateIsValid(const std::string& pemPath)
+{
     // First check local Certificate Authority file
     FILE *fileCheck = fopen(pemPath.c_str(), "r");
     if(fileCheck == nullptr)
         return false;
 
     X509* x509 = PEM_read_X509(fileCheck, nullptr, nullptr, nullptr);
-    if (x509 != nullptr)
-    {
+    if (x509 != nullptr) {
         char* p = X509_NAME_oneline(X509_get_issuer_name(x509), 0, 0);
-        if (p)
-        {
+        if (p) {
             DEBUG("NAME: %s", p);
             OPENSSL_free(p);
         }
         ASN1_TIME *not_before = X509_get_notBefore(x509);
         ASN1_TIME *not_after = X509_get_notAfter(x509);
 
+        static const int DATE_LEN = 128;
         char not_after_str[DATE_LEN];
         convertASN1TIME(not_after, not_after_str, DATE_LEN);
 
@@ -199,7 +196,8 @@ bool SecurityEvaluator::verifyHostnameCertificate(const std::string& certificate
     return true;
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::validateHostname(const std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::HostnameValidationResult
+SecurityEvaluator::validateHostname(const std::string& hostname, const X509 *server_cert) {
     HostnameValidationResult result;
 
     if(hostname.c_str() == nullptr || (server_cert == nullptr)) {
@@ -324,5 +322,3 @@ void SecurityEvaluator::printCertificate(X509* cert)
     DEBUG("Certificate: %s", subj);
     DEBUG("\tIssuer: %s", issuer);
 }
-
-#endif
