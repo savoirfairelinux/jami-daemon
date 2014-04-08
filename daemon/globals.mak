@@ -7,7 +7,7 @@ sflplugindir=$(sfllibdir)/plugins
 
 ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
-PJPROJECT_DIR=pjproject-2.1.0
+PJPROJECT_DIR=pjproject-2.2.1
 
 # for pjsip
 include $(src)/libs/$(PJPROJECT_DIR)/build.mak

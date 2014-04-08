@@ -425,5 +425,5 @@ AC_CONFIG_FILES([Makefile \
 # Go!
 AC_OUTPUT
 
-AC_CONFIG_SUBDIRS([libs/pjproject-2.1.0])
-AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-2.1.0) has already been compiled. Run `make' to build the software.]])
+AC_CONFIG_SUBDIRS([libs/pjproject-2.2.1])
+AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-2.2.1) has already been compiled. Run `make' to build the software.]])

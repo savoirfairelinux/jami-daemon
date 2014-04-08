@@ -583,13 +583,11 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
         outgoing_request_forked_cb,
         transaction_state_changed_cb,
         sdp_request_offer_cb,
-#ifdef __ANDROID__ // FIXME depends on pjsip
-        NULL,
-#endif
+        NULL /* on_rx_reinvite */,
         sdp_create_offer_cb,
         sdp_media_update_cb,
-        NULL,
-        NULL,
+        NULL /* on_send_ack */,
+        NULL /* on_redirected */,
     };
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 

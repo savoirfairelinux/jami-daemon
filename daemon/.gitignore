@@ -48,15 +48,15 @@ libs/dbus-c++/tools/.libs/
 libs/dbus-c++/tools/dbusxx-introspect
 libs/dbus-c++/tools/dbusxx-xml2cpp
 
-libs/pjproject-2.1.0/pjlib-util/build/os-auto.mak
-libs/pjproject-2.1.0/pjlib/build/os-auto.mak
-libs/pjproject-2.1.0/pjlib/include/pj/compat/m_auto.h
-libs/pjproject-2.1.0/pjlib/include/pj/compat/os_auto.h
-libs/pjproject-2.1.0/pjlib/include/pj/config_site.h
-libs/pjproject-2.1.0/pjmedia/build/os-auto.mak
-libs/pjproject-2.1.0/pjmedia/include/pjmedia-codec/config_auto.h
-libs/pjproject-2.1.0/pjmedia/include/pjmedia/config_auto.h
-libs/pjproject-2.1.0/pjsip/build/os-auto.mak
-libs/pjproject-2.1.0/pjsip/include/pjsip/sip_autoconf.h
-libs/pjproject-2.1.0/third_party/build/os-auto.mak
-libs/pjproject-2.1.0/third_party/build/portaudio/os-auto.mak
+libs/pjproject-2.2.1/pjlib-util/build/os-auto.mak
+libs/pjproject-2.2.1/pjlib/build/os-auto.mak
+libs/pjproject-2.2.1/pjlib/include/pj/compat/m_auto.h
+libs/pjproject-2.2.1/pjlib/include/pj/compat/os_auto.h
+libs/pjproject-2.2.1/pjlib/include/pj/config_site.h
+libs/pjproject-2.2.1/pjmedia/build/os-auto.mak
+libs/pjproject-2.2.1/pjmedia/include/pjmedia-codec/config_auto.h
+libs/pjproject-2.2.1/pjmedia/include/pjmedia/config_auto.h
+libs/pjproject-2.2.1/pjsip/build/os-auto.mak
+libs/pjproject-2.2.1/pjsip/include/pjsip/sip_autoconf.h
+libs/pjproject-2.2.1/third_party/build/os-auto.mak
+libs/pjproject-2.2.1/third_party/build/portaudio/os-auto.mak
