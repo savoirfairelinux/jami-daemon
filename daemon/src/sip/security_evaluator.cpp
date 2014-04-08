@@ -49,7 +49,7 @@ SecurityEvaluator::containsPrivateKey(const std::string& pemPath)
     FILE *keyFile = fopen(pemPath.c_str(), "r");
     RSA *rsa = PEM_read_RSAPrivateKey(keyFile, NULL, NULL, NULL);
 
-    if (rsa == NULL) {
+    if (rsa == nullptr) {
         DEBUG("Bad file, or not containing private key");
         return false;
     } else {
@@ -77,7 +77,7 @@ SecurityEvaluator::certificateIsValid(const std::string& pemPath)
 {
     // First check local Certificate Authority file
     FILE *fileCheck = fopen(pemPath.c_str(), "r");
-    if(fileCheck == nullptr)
+    if (fileCheck == nullptr)
         return false;
 
     X509* x509 = PEM_read_X509(fileCheck, nullptr, nullptr, nullptr);
@@ -114,9 +114,6 @@ SecurityEvaluator::certificateIsValid(const std::string& pemPath)
 
 bool SecurityEvaluator::verifyHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
 {
-    BIO *sbio;
-    SSL_CTX *ssl_ctx;
-    SSL *ssl;
     X509 *server_cert;
 
     // Initialize OpenSSL
@@ -124,14 +121,14 @@ bool SecurityEvaluator::verifyHostnameCertificate(const std::string& certificate
     SSL_load_error_strings();
 
     // Check OpenSSL PRNG
-    if(RAND_status() != 1) {
+    if (RAND_status() != 1) {
         DEBUG("OpenSSL PRNG not seeded with enough data.");
         EVP_cleanup();
         ERR_free_strings();
         return false;
     }
 
-    ssl_ctx = SSL_CTX_new(TLSv1_client_method());
+    SSL_CTX *ssl_ctx = SSL_CTX_new(TLSv1_client_method());
 
     // Enable certificate validation
     SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, nullptr);
@@ -147,27 +144,27 @@ bool SecurityEvaluator::verifyHostnameCertificate(const std::string& certificate
     //    return;
 
     // Create the SSL connection
-    sbio = BIO_new_ssl_connect(ssl_ctx);
+    BIO *sbio = BIO_new_ssl_connect(ssl_ctx);
+    SSL *ssl;
     BIO_get_ssl(sbio, &ssl);
-    if(!ssl) {
+    if (ssl == nullptr) {
         DEBUG("Can't locate SSL pointer\n");
         BIO_free_all(sbio);
         return false;
     }
 
-	std::string hostWithPort = host + ":" + port;
+	const std::string hostWithPort(host + ":" + port);
 	DEBUG("Checking certificate for %s", hostWithPort.c_str());
 
     BIO_set_conn_hostname(sbio, hostWithPort.c_str());
-    if(SSL_do_handshake(ssl) <= 0) {
+    if (SSL_do_handshake(ssl) <= 0) {
         // SSL Handshake failed
         long verify_err = SSL_get_verify_result(ssl);
         if (verify_err != X509_V_OK) {
             // It failed because the certificate chain validation failed
             DEBUG("Certificate chain validation failed: %s", X509_verify_cert_error_string(verify_err));
-        }
-        else {
-            DEBUG("Boohoohoo, ssl handshake failed");
+        } else {
+            DEBUG("SSL handshake failed");
             // It failed for another reason
             ERR_print_errors_fp(stderr);
         }
@@ -197,10 +194,11 @@ bool SecurityEvaluator::verifyHostnameCertificate(const std::string& certificate
 }
 
 SecurityEvaluator::HostnameValidationResult
-SecurityEvaluator::validateHostname(const std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::validateHostname(const std::string& hostname, const X509 *server_cert)
+{
     HostnameValidationResult result;
 
-    if(hostname.c_str() == nullptr || (server_cert == nullptr)) {
+    if (hostname.c_str() == nullptr || (server_cert == nullptr)) {
         DEBUG("hostname.c_str() == nullptr || (server_cert == nullptr)");
         return Error;
     }
@@ -215,60 +213,53 @@ SecurityEvaluator::validateHostname(const std::string& hostname, const X509 *ser
     return result;
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchCommonName(const std::string& hostname, const X509 *server_cert) {
-    int common_name_loc = -1;
-    X509_NAME_ENTRY *common_name_entry = nullptr;
-    ASN1_STRING *common_name_asn1 = nullptr;
-    char *common_name_str = nullptr;
-
+SecurityEvaluator::HostnameValidationResult
+SecurityEvaluator::matchCommonName(const std::string& hostname, const X509 *server_cert)
+{
     // Find the position of the CN field in the Subject field of the certificate
-    common_name_loc = X509_NAME_get_index_by_NID(X509_get_subject_name((X509 *) server_cert), NID_commonName, -1);
-    if (common_name_loc < 0) {
+    const int common_name_loc = X509_NAME_get_index_by_NID(X509_get_subject_name((X509 *) server_cert), NID_commonName, -1);
+    if (common_name_loc < 0)
         return Error;
-    }
 
     // Extract the CN field
-    common_name_entry = X509_NAME_get_entry(X509_get_subject_name((X509 *) server_cert), common_name_loc);
-    if (common_name_entry == nullptr) {
+    X509_NAME_ENTRY *common_name_entry = X509_NAME_get_entry(X509_get_subject_name((X509 *) server_cert), common_name_loc);
+    if (common_name_entry == nullptr)
         return Error;
-    }
 
     // Convert the CN field to a C string
-    common_name_asn1 = X509_NAME_ENTRY_get_data(common_name_entry);
-    if (common_name_asn1 == nullptr) {
+    ASN1_STRING *common_name_asn1 = X509_NAME_ENTRY_get_data(common_name_entry);
+    if (common_name_asn1 == nullptr)
         return Error;
-    }
-    common_name_str = (char *) ASN1_STRING_data(common_name_asn1);
+
+    char *common_name_str = (char *) ASN1_STRING_data(common_name_asn1);
 
     // Make sure there isn't an embedded NUL character in the CN
-    if (ASN1_STRING_length(common_name_asn1) != strlen(common_name_str)) {
+    if (ASN1_STRING_length(common_name_asn1) != strlen(common_name_str))
         return MalformedCertificate;
-    }
+
     DEBUG("hostname = %s and extracted name is %s", hostname.c_str(), common_name_str);
+
     // Compare expected hostname with the CN
-    if (strcasecmp(hostname.c_str(), common_name_str) == 0) {
+    if (strcasecmp(hostname.c_str(), common_name_str) == 0)
         return MatchFound;
-    }
-    else {
+    else
         return MatchNotFound;
-    }
 }
 
-SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchSubjectAltName(const std::string& hostname, const X509 *server_cert) {
+SecurityEvaluator::HostnameValidationResult
+SecurityEvaluator::matchSubjectAltName(const std::string& hostname, const X509 *server_cert)
+{
     HostnameValidationResult result = MatchNotFound;
-    int i;
-    int san_names_nb = -1;
-    STACK_OF(GENERAL_NAME) *san_names = nullptr;
 
     // Try to extract the names within the SAN extension from the certificate
-    san_names = static_cast<STACK_OF(GENERAL_NAME)*>(X509_get_ext_d2i((X509 *) server_cert, NID_subject_alt_name, nullptr, nullptr));
-    if (san_names == nullptr) {
+    STACK_OF(GENERAL_NAME) *san_names = static_cast<STACK_OF(GENERAL_NAME)*>(X509_get_ext_d2i((X509 *) server_cert, NID_subject_alt_name, nullptr, nullptr));
+    if (san_names == nullptr)
         return NoSANPresent;
-    }
-    san_names_nb = sk_GENERAL_NAME_num(san_names);
+
+    const int san_names_nb = sk_GENERAL_NAME_num(san_names);
 
     // Check each name within the extension
-    for (i=0; i<san_names_nb; i++) {
+    for (int i = 0; i < san_names_nb; i++) {
         const GENERAL_NAME *current_name = sk_GENERAL_NAME_value(san_names, i);
 
         if (current_name->type == GEN_DNS) {
@@ -279,8 +270,8 @@ SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchSubjectAltNa
             if (ASN1_STRING_length(current_name->d.dNSName) != strlen(dns_name)) {
                 result = MalformedCertificate;
                 break;
-            }
-            else { // Compare expected hostname with the DNS name
+            } else {
+                // Compare expected hostname with the DNS name
                 if (strcasecmp(hostname.c_str(), dns_name) == 0) {
                     result = MatchFound;
                     break;
@@ -293,19 +284,19 @@ SecurityEvaluator::HostnameValidationResult SecurityEvaluator::matchSubjectAltNa
     return result;
 }
 
-int SecurityEvaluator::convertASN1TIME(ASN1_TIME *t, char* buf, size_t len)
+int
+SecurityEvaluator::convertASN1TIME(ASN1_TIME *t, char* buf, size_t len)
 {
-    int rc;
     BIO *b = BIO_new(BIO_s_mem());
-    rc = ASN1_TIME_print(b, t);
+    int rc = ASN1_TIME_print(b, t);
     if (rc <= 0) {
-        ERROR("fetchdaemon", "ASN1_TIME_print failed or wrote no data.");
+        ERROR("fetchdaemon: ASN1_TIME_print failed or wrote no data.");
         BIO_free(b);
         return EXIT_FAILURE;
     }
     rc = BIO_gets(b, buf, len);
     if (rc <= 0) {
-        ERROR("fetchdaemon", "BIO_gets call failed to transfer contents to buf");
+        ERROR("fetchdaemon: BIO_gets call failed to transfer contents to buf");
         BIO_free(b);
         return EXIT_FAILURE;
     }
@@ -317,8 +308,8 @@ void SecurityEvaluator::printCertificate(X509* cert)
 {
     char subj[1024];
     char issuer[1024];
-    X509_NAME_oneline(X509_get_subject_name(cert), subj, 1024);
-    X509_NAME_oneline(X509_get_issuer_name(cert), issuer, 1024);
+    X509_NAME_oneline(X509_get_subject_name(cert), subj, sizeof subj);
+    X509_NAME_oneline(X509_get_issuer_name(cert), issuer, sizeof issuer);
     DEBUG("Certificate: %s", subj);
     DEBUG("\tIssuer: %s", issuer);
 }
