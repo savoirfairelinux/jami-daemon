@@ -31,4 +31,4 @@ OPTIONS="--disable-oss
         --disable-v4l2"
 # TODO: autotools should be doing this
 cd "`dirname $BASH_SOURCE`"/pjproject-2.2.1
-CFLAGS=-g $CONFIGURE $OPTIONS && $MAKE && echo "pjsip successfully compiled"
+CFLAGS=-g $CONFIGURE $OPTIONS && sh -c "$MAKE" && echo "pjsip successfully compiled"
