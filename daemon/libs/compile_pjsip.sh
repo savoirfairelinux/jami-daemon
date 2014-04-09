@@ -1,5 +1,20 @@
 #!/bin/bash
 
+if [ "$#" -eq  "0" ]
+then
+    CONFIGURE=./configure
+    # pjproject fails on parallel build, so force -j1 in case
+    MAKE="make dep && make -j1"
+elif [ "$1" == "-a" ]
+then
+    CONFIGURE=./configure-android
+    # android doesn't need make
+    MAKE="make dep"
+else
+    echo "Usage: $0 [or -a for android]"
+    exit 1
+fi
+
 OPTIONS="--disable-oss
         --disable-video
         --enable-ext-sound
@@ -16,4 +31,4 @@ OPTIONS="--disable-oss
         --disable-v4l2"
 # TODO: autotools should be doing this
 cd "`dirname $BASH_SOURCE`"/pjproject-2.2.1
-CFLAGS=-g ./configure $OPTIONS && make dep && make -j1 && echo "pjsip successfully compiled"
+CFLAGS=-g $CONFIGURE $OPTIONS && $MAKE && echo "pjsip successfully compiled"
