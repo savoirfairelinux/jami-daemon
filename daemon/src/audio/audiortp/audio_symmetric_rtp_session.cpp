@@ -38,8 +38,6 @@
 #include "manager.h"
 #include "client/callmanager.h"
 
-const uint32 NTP_EPOCH_OFFSET = static_cast<uint32>(2208992400ul);
-
 namespace sfl {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
@@ -98,7 +96,7 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
 
     std::map<std::string, int> stats;
     ost::SymmetricRTPSession::onGotSR(source, SR, blocks);
-    ost::RTCPSenderInfo report = SR.sinfo;
+    ost::RTCPSenderInfo report(SR.sinfo);
 
     for (int i = 0; i < blocks; ++i)
     {
@@ -106,7 +104,7 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
         if(SR.blocks[i].rinfo.lsr == 0 || SR.blocks[i].rinfo.dlsr == 0)
             continue;
 
-        ost::RTCPReceiverInfo receiver_report = SR.blocks[i].rinfo;
+        ost::RTCPReceiverInfo receiver_report(SR.blocks[i].rinfo);
         /*
         How to calculate RTT (Round Trip delay)
         A : NTP timestamp
