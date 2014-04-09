@@ -115,8 +115,16 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
         RTT = A - lsr - dlsr;
         */
 
-        uint16 rttMSW = ((uint16) report.getNTPTimestampInt() & 0x0000FFFF) - receiver_report.getLastSRNTPTimestampInt();
-        uint16 rttLSW = ((uint16) report.getNTPTimestampFrac() & 0xFFFF) - receiver_report.getLastSRNTPTimestampFrac();
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        const uint16 timestamp = (uint16) report.getNTPTimestampInt() & 0x0000FFFF;
+        const uint16 timestampFrac = (uint16) report.getNTPTimestampFrac() & 0xFFFF0000;
+#else
+        const uint16 timestamp = (uint16) report.getNTPTimestampInt() & 0xFFFF0000;
+        const uint16 timestampFrac = (uint16) report.getNTPTimestampFrac() & 0x0000FFFF;
+#endif
+        const uint16 rttMSW =  timestamp - receiver_report.getLastSRNTPTimestampInt();
+        const uint16 rttLSW = timestampFrac - receiver_report.getLastSRNTPTimestampFrac();
+
         uint32 rtt = rttMSW;
         rtt = rtt << 16 | rttLSW;
         rtt -= receiver_report.getDelayLastSR();
@@ -131,7 +139,7 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
 
 #ifdef RTP_DEBUG
         DEBUG("lastSR NTPTimestamp : %lu", receiver_report.getLastSRNTPTimestampFrac() << 16);
-        DEBUG("NTPTimestampFrac : %lu", (report.getNTPTimestampFrac() & 0xffff0000));
+        DEBUG("NTPTimestampFrac : %lu", timestampFrac);
         DEBUG("rttMSW : %u", rttMSW);
         DEBUG("rttLSW : %u", rttLSW);
         DEBUG("RTT recomposed: %lu", rtt);
