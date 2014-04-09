@@ -44,6 +44,7 @@ const gchar *toggle_to_string(GtkWidget *toggle)
     return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(toggle)) ? "true" : "false";
 }
 
+/* Caller must free returned string */
 static
 const gchar *get_filename(GtkWidget *chooser)
 {
@@ -264,13 +265,19 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     if (gtk_dialog_run(GTK_DIALOG(tlsDialog)) == GTK_RESPONSE_ACCEPT) {
         account_replace(account, CONFIG_TLS_LISTENER_PORT,
                         gtk_entry_get_text(GTK_ENTRY(tlsListenerPort)));
-        account_replace(account, CONFIG_TLS_CA_LIST_FILE, get_filename(caListFileChooser));
 
-        account_replace(account, CONFIG_TLS_CERTIFICATE_FILE,
-                        get_filename(certificateFileChooser));
+        gchar *ca_list_file = get_filename(caListFileChooser);
+        account_replace(account, CONFIG_TLS_CA_LIST_FILE, ca_list_file);
+        g_free(ca_list_file);
 
-        account_replace(account, CONFIG_TLS_PRIVATE_KEY_FILE,
-                        get_filename(privateKeyFileChooser));
+
+        gchar *certificate_file = get_filename(certificateFileChooser);
+        account_replace(account, CONFIG_TLS_CERTIFICATE_FILE, certificate_file);
+        g_free(certificate_file);
+
+        gchar *private_key_file = get_filename(privateKeyFileChooser);
+        account_replace(account, CONFIG_TLS_PRIVATE_KEY_FILE, private_key_file);
+        g_free(private_key_file);
 
         account_replace(account, CONFIG_TLS_PASSWORD, gtk_entry_get_text(GTK_ENTRY(privateKeyPasswordEntry)));
 
