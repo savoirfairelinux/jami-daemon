@@ -15,6 +15,22 @@ package=sflphone-common
 CXX = g++-4.0
 CFLAGS = -Wall -g
 DEB_INSTALL_MANPAGES_sflphone_common = sflphoned.1
+PJ_CONFIG_OPTIONS="--prefix=/usr
+                   --disable-oss
+                   --disable-sound
+                   --disable-video
+                   --enable-ext-sound
+                   --disable-speex-aec
+                   --disable-g711-codec
+                   --disable-l16-codec
+                   --disable-gsm-codec
+                   --disable-g722-codec
+                   --disable-g7221-codec
+                   --disable-speex-codec
+                   --disable-ilbc-codec
+                   --disable-sdl
+                   --disable-ffmpeg
+                   --disable-v4l2"
 
 configure: configure-stamp
 configure-stamp:
@@ -22,7 +38,7 @@ configure-stamp:
 	# Add here commands to configure the package.
 	./autogen.sh
 	./configure --prefix=/usr
-	cd libs/pjproject-2.2.1; CFLAGS=-fPIC ./configure
+	cd libs/pjproject-2.2.1; CFLAGS=-fPIC ./configure $(PJ_CONFIG_OPTIONS)
 	touch configure-stamp
 
 #Architecture

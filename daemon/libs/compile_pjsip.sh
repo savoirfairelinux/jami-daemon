@@ -16,6 +16,7 @@ else
 fi
 
 OPTIONS="--disable-oss
+        --disable-sound
         --disable-video
         --enable-ext-sound
         --disable-speex-aec
