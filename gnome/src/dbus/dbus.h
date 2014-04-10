@@ -560,6 +560,8 @@ void dbus_set_confirm_go_clear(const callable_obj_t *c);
  */
 gchar **dbus_get_supported_tls_method();
 
+gboolean dbus_check_certificate(const gchar *filepath);
+
 GHashTable* dbus_get_shortcuts(void);
 
 void dbus_set_shortcuts(GHashTable *shortcuts);

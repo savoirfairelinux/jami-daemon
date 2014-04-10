@@ -46,9 +46,47 @@ const gchar *toggle_to_string(GtkWidget *toggle)
 
 /* Caller must free returned string */
 static
-const gchar *get_filename(GtkWidget *chooser)
+gchar *
+get_filename(GtkWidget *chooser)
 {
     return gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
+}
+
+static gboolean
+confirm_certificate_use(GtkWidget *window)
+{
+    gchar *msg = g_markup_printf_escaped(_("Are you sure want to use this certificate?"));
+
+    /* Create the widgets */
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window),
+            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+            GTK_MESSAGE_WARNING,
+            GTK_BUTTONS_CANCEL,
+            "%s", msg);
+
+    gtk_dialog_add_buttons(GTK_DIALOG(dialog), _("Use anyway"), GTK_RESPONSE_OK, NULL);
+
+    gtk_window_set_title(GTK_WINDOW(dialog), _("Invalid certificate detected"));
+    const gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+
+    g_free(msg);
+
+    return response == GTK_RESPONSE_OK;
+}
+
+static void
+certificate_set_cb(GtkFileChooserButton *widget, G_GNUC_UNUSED gpointer user_data)
+{
+    gchar *filename = get_filename(GTK_WIDGET(widget));
+
+    const gboolean is_valid = dbus_check_certificate(filename);
+
+    /* If certificate is invalid, check if user really wants to use it */
+    if (!is_valid && !confirm_certificate_use(gtk_widget_get_toplevel(GTK_WIDGET(widget))))
+        gtk_file_chooser_unselect_filename(GTK_FILE_CHOOSER(widget), filename);
+
+    g_free(filename);
 }
 
 void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
@@ -144,6 +182,7 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1);
     GtkWidget * certificateFileChooser = gtk_file_chooser_button_new(_("Choose a public endpoint certificate (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
+    g_signal_connect(GTK_FILE_CHOOSER(certificateFileChooser), "file-set", G_CALLBACK(certificate_set_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), certificateFileChooser, 1, 4, 1, 1);
 
     if (!tls_certificate_file) {

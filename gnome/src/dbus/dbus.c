@@ -2158,6 +2158,17 @@ dbus_get_tls_settings_default(void)
     return results;
 }
 
+gboolean
+dbus_check_certificate(const gchar *filepath)
+{
+    GError *error = NULL;
+    gboolean result;
+    org_sflphone_SFLphone_ConfigurationManager_check_certificate_validity(config_proxy, filepath, &result, &error);
+    check_error(error);
+
+    return result;
+}
+
 gchar *
 dbus_get_address_from_interface_name(const gchar *interface)
 {
