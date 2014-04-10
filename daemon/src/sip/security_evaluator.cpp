@@ -97,20 +97,16 @@ SecurityEvaluator::certificateIsValid(const std::string& pemPath)
         char not_before_str[DATE_LEN];
         convertASN1TIME(not_before, not_before_str, DATE_LEN);
 
-        DEBUG("not_before : %s", not_before_str);
-        DEBUG("not_after : %s", not_after);
-
         // Here perform checks and send callbacks
+        bool result = checkCertLife(not_before, not_after);
 
         X509_free(x509);
-        return true;
+        return result;
     } else {
         ERROR("Could not open certificate file");
         return false;
     }
 }
-
-
 
 bool SecurityEvaluator::verifyHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
 {
@@ -281,6 +277,23 @@ SecurityEvaluator::matchSubjectAltName(const std::string& hostname, const X509 *
 
     return result;
 }
+
+bool SecurityEvaluator::checkCertLife(asn1_string_st *before, asn1_string_st *after)
+{
+    // Current date/time based on current system
+    time_t ct = time(0);
+    ASN1_UTCTIME *be=ASN1_STRING_dup(before),
+    *af=ASN1_STRING_dup(after);
+    bool bf;
+    if(ASN1_UTCTIME_cmp_time_t(be,ct)>=0||ASN1_UTCTIME_cmp_time_t(af,ct)<=0)
+        bf=false;
+    else
+        bf=true;
+    M_ASN1_UTCTIME_free(be);
+    M_ASN1_UTCTIME_free(af);
+    return bf;
+}
+
 
 int
 SecurityEvaluator::convertASN1TIME(ASN1_TIME *t, char* buf, size_t len)

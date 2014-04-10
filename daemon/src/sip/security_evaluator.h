@@ -125,6 +125,11 @@ namespace SecurityEvaluator {
          * Convert an extracted time (ASN1_TIME) in ISO-8601
          */
         int convertASN1TIME(ASN1_TIME *t, char* buf, size_t len);
+
+        /**
+        * Check validity period
+        */
+        bool checkCertLife(asn1_string_st *before, asn1_string_st *after);
 };
 
 #endif
