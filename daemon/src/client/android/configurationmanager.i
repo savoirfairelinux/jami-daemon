@@ -160,6 +160,11 @@ public:
 
     std::map<std::string, std::string> getShortcuts();
     void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
+
+    bool checkForPrivateKey(const std::string& pemPath);
+    bool checkCertificateValidity(const std::string& pemPath);
+    bool checkHostnameCertificate(const std::string& certificatePath, const  std::string& host, const std::string& port);
+
 };
 
 class ConfigurationCallback {
