@@ -47,7 +47,7 @@ bool
 SecurityEvaluator::containsPrivateKey(const std::string& pemPath)
 {
     FILE *keyFile = fopen(pemPath.c_str(), "r");
-    if(keyFile == nullptr)
+    if (keyFile == nullptr)
         return false;
 
     RSA *rsa = PEM_read_RSAPrivateKey(keyFile, NULL, NULL, NULL);
@@ -284,16 +284,15 @@ SecurityEvaluator::matchSubjectAltName(const std::string& hostname, const X509 *
 bool SecurityEvaluator::checkCertLife(asn1_string_st *before, asn1_string_st *after)
 {
     // Current date/time based on current system
-    time_t ct = time(0);
-    ASN1_UTCTIME *be=ASN1_STRING_dup(before),
-    *af=ASN1_STRING_dup(after);
-    bool bf;
-    if(ASN1_UTCTIME_cmp_time_t(be,ct)>=0||ASN1_UTCTIME_cmp_time_t(af,ct)<=0)
-        bf=false;
-    else
-        bf=true;
+    const time_t ct = time(0);
+    ASN1_UTCTIME *be = ASN1_STRING_dup(before),
+    *af = ASN1_STRING_dup(after);
+
+    const bool bf = ASN1_UTCTIME_cmp_time_t(be, ct) < 0 and ASN1_UTCTIME_cmp_time_t(af, ct) > 0;
+
     M_ASN1_UTCTIME_free(be);
     M_ASN1_UTCTIME_free(af);
+
     return bf;
 }
 
