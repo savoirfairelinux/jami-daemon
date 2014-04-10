@@ -115,13 +115,12 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
         RTT = A - lsr - dlsr;
         */
 
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        // integer portion of timestamp is in least significant 16-bits
         const uint16 timestamp = (uint16) report.getNTPTimestampInt() & 0x0000FFFF;
-        const uint16 timestampFrac = (uint16) report.getNTPTimestampFrac() & 0xFFFF0000;
-#else
-        const uint16 timestamp = (uint16) report.getNTPTimestampInt() & 0xFFFF0000;
-        const uint16 timestampFrac = (uint16) report.getNTPTimestampFrac() & 0x0000FFFF;
-#endif
+        // fractional portion of timestamp is in most significant 16-bits
+        const uint16 timestampFrac = (uint16) report.getNTPTimestampFrac() >> 16;
+
+
         const uint16 rttMSW =  timestamp - receiver_report.getLastSRNTPTimestampInt();
         const uint16 rttLSW = timestampFrac - receiver_report.getLastSRNTPTimestampFrac();
 
