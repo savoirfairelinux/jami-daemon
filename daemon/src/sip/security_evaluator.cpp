@@ -47,6 +47,9 @@ bool
 SecurityEvaluator::containsPrivateKey(const std::string& pemPath)
 {
     FILE *keyFile = fopen(pemPath.c_str(), "r");
+    if(keyFile == nullptr)
+        return false;
+
     RSA *rsa = PEM_read_RSAPrivateKey(keyFile, NULL, NULL, NULL);
 
     if (rsa == nullptr) {
