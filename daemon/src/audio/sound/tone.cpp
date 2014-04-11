@@ -80,7 +80,7 @@ Tone::genBuffer(const std::string& definition)
         /* begin scope */
         {
             // Sample string: "350+440" or "350+440/2000,244+655/2000"
-            int freq1, freq2, time;
+            int low, high, time;
             s = definition.substr(posStart, posEnd - posStart);
 
             // The 1st frequency is before the first + or the /
@@ -99,11 +99,11 @@ Tone::genBuffer(const std::string& definition)
 
             // without a plus = 1 frequency
             if (pos_plus == std::string::npos) {
-                freq1 = atoi(s.substr(0, endfrequency).c_str());
-                freq2 = 0;
+                low = atoi(s.substr(0, endfrequency).c_str());
+                high = 0;
             } else {
-                freq1 = atoi(s.substr(0, pos_plus).c_str());
-                freq2 = atoi(s.substr(pos_plus + 1, endfrequency - pos_plus - 1).c_str());
+                low = atoi(s.substr(0, pos_plus).c_str());
+                high = atoi(s.substr(pos_plus + 1, endfrequency - pos_plus - 1).c_str());
             }
 
             // If there is time or if it's unlimited
@@ -114,7 +114,7 @@ Tone::genBuffer(const std::string& definition)
 
             // Generate SAMPLING_RATE samples of sinus, buffer is the result
             buffer.resize(size+count);
-            genSin(&(*(buffer.begin()+bufferPos)), freq1, freq2, count);
+            genSin(&(*(buffer.begin()+bufferPos)), low, high, count);
 
             // To concatenate the different buffers for each section.
             size += count;
@@ -153,7 +153,7 @@ Tone::interpolate(double x) const
 }
 
 void
-Tone::genSin(SFLAudioSample* buffer, int frequency1, int frequency2, int nb)
+Tone::genSin(SFLAudioSample* buffer, int lowFrequency, int highFrequency, int nb)
 {
     xhigher_ = 0.0;
     xlower_ = 0.0;
@@ -161,17 +161,14 @@ Tone::genSin(SFLAudioSample* buffer, int frequency1, int frequency2, int nb)
     const double sr = (double)buffer_->getSampleRate();
     static const double tableSize = TABLE_LENGTH;
 
-    double N_h = sr / frequency1;
-    double N_l = sr / frequency2;
-
-    double dx_h = tableSize / N_h;
-    double dx_l = tableSize / N_l;
+    const double dx_h = lowFrequency and sr ? tableSize / (sr / lowFrequency) : 0.0;
+    const double dx_l = highFrequency and sr ? tableSize / (sr / highFrequency) : 0.0;
 
     double x_h = xhigher_;
     double x_l = xlower_;
 
     static const double DATA_AMPLITUDE = 2047;
-    double amp =  DATA_AMPLITUDE;
+    const double amp =  DATA_AMPLITUDE;
 
     for (int t = 0; t < nb; t ++) {
         buffer[t] = amp * (interpolate(x_h) + interpolate(x_l));
