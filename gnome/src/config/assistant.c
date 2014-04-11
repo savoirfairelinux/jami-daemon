@@ -38,10 +38,6 @@ struct _wizard *wiz;
 static int account_type;
 static account_t* current;
 static char *message;
-/**
- * Forward function
- */
-static gint forward_page_func(gint current_page, gpointer data);
 
 /**
  * Page template
@@ -192,43 +188,9 @@ void enable_stun(GtkWidget* widget)
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->addr), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
-void build_wizard(void)
-{
-    if (wiz)
-        return;
 
-    wiz = (struct _wizard*) g_malloc(sizeof(struct _wizard));
-    current = create_default_account();
-
-    if (current->properties == NULL) {
-        g_debug("Failed to get default values. Creating from scratch");
-        current->properties = g_hash_table_new(NULL, g_str_equal);
-    }
-
-    wiz->assistant = gtk_assistant_new();
-
-    gtk_window_set_title(GTK_WINDOW(wiz->assistant), _("SFLphone account registration wizard"));
-    gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
-    gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200, 200);
-
-    build_intro();
-    build_select_account();
-    build_sip_account_configuration();
-    build_nat_settings();
-    build_iax_account_configuration();
-    build_summary();
-
-    g_signal_connect(G_OBJECT(wiz->assistant), "close", G_CALLBACK(close_callback), NULL);
-
-    g_signal_connect(G_OBJECT(wiz->assistant), "cancel", G_CALLBACK(cancel_callback), NULL);
-
-    gtk_widget_show_all(wiz->assistant);
-
-    gtk_assistant_set_forward_page_func(GTK_ASSISTANT(wiz->assistant), (GtkAssistantPageFunc) forward_page_func, NULL, NULL);
-    gtk_assistant_update_buttons_state(GTK_ASSISTANT(wiz->assistant));
-}
-
-GtkWidget* build_intro()
+static void
+build_intro()
 {
     wiz->intro = create_vbox(GTK_ASSISTANT_PAGE_INTRO, "SFLphone GNOME client", _("Welcome to the account registration wizard for SFLphone!"));
     GtkWidget *label = gtk_label_new(_("This wizard will help you configure an existing account."));
@@ -237,11 +199,11 @@ GtkWidget* build_intro()
     gtk_widget_set_size_request(GTK_WIDGET(label), 380, -1);
     gtk_box_pack_start(GTK_BOX(wiz->intro), label, FALSE, TRUE, 0);
 
-    gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->intro, TRUE);
-    return wiz->intro;
+    gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), wiz->intro, TRUE);
 }
 
-GtkWidget* build_select_account()
+static void
+build_select_account()
 {
     wiz->protocols = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("VoIP Protocols"), _("Select an account type"));
 
@@ -252,12 +214,12 @@ GtkWidget* build_select_account()
 
     g_signal_connect(G_OBJECT(sip), "clicked", G_CALLBACK(set_account_type), NULL);
 
-    gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->protocols, TRUE);
-    return wiz->protocols;
+    gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), wiz->protocols, TRUE);
 }
 
 
-GtkWidget* build_sip_account_configuration(void)
+static void
+build_sip_account_configuration(void)
 {
     GtkWidget* label;
     GtkWidget * clearTextCheckbox;
@@ -322,12 +284,10 @@ GtkWidget* build_sip_account_configuration(void)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable), FALSE);
     gtk_grid_attach(GTK_GRID(grid), wiz->zrtp_enable, 0, 6, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->zrtp_enable), TRUE);
-
-    //gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->sip_account, TRUE);
-    return wiz->sip_account;
 }
 
-GtkWidget* build_iax_account_configuration(void)
+static void
+build_iax_account_configuration(void)
 {
     GtkWidget* label;
     GtkWidget * clearTextCheckbox;
@@ -389,11 +349,10 @@ GtkWidget* build_iax_account_configuration(void)
     current->state = ACCOUNT_STATE_UNREGISTERED;
 
     g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(iax_apply_callback), NULL);
-
-    return wiz->iax_account;
 }
 
-GtkWidget* build_nat_settings(void)
+static void
+build_nat_settings(void)
 {
     GtkWidget* label;
 
@@ -422,11 +381,10 @@ GtkWidget* build_nat_settings(void)
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->addr), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)));
 
     g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(sip_apply_callback), NULL);
-
-    return wiz->nat;
 }
 
-GtkWidget* build_summary()
+static void
+build_summary()
 {
     wiz->summary = create_vbox(GTK_ASSISTANT_PAGE_SUMMARY, _("Account Registration"), _("Congratulations!"));
 
@@ -438,25 +396,10 @@ GtkWidget* build_summary()
     gtk_misc_set_alignment(GTK_MISC(wiz->label_summary), 0, 0);
     gtk_label_set_line_wrap(GTK_LABEL(wiz->label_summary), TRUE);
     gtk_box_pack_start(GTK_BOX(wiz->summary), wiz->label_summary, FALSE, TRUE, 0);
-
-    return wiz->summary;
 }
 
-GtkWidget* build_registration_error()
-{
-    GtkWidget *label;
-    wiz->reg_failed = create_vbox(GTK_ASSISTANT_PAGE_SUMMARY, "Account Registration", "Registration error");
-
-    label = gtk_label_new(" Please correct the information.");
-    gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
-    gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
-    gtk_widget_set_size_request(GTK_WIDGET(label), 380, -1);
-    gtk_box_pack_start(GTK_BOX(wiz->reg_failed), label, FALSE, TRUE, 0);
-
-    return wiz->reg_failed;
-}
-
-void set_sip_infos_sentivite(gboolean b)
+static void
+sip_info_set_sensitive(gboolean b)
 {
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_alias), b);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_server), b);
@@ -482,9 +425,8 @@ static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
             next_page = PAGE_TYPE;
             break;
         case PAGE_TYPE:
-
             if (account_type == _SIP) {
-                set_sip_infos_sentivite(TRUE);
+                sip_info_set_sensitive(TRUE);
                 next_page = PAGE_SIP;
             } else {
                 next_page = PAGE_IAX;
@@ -511,7 +453,8 @@ static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
 }
 
 
-static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
+static GtkWidget*
+create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
 {
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 24);
@@ -542,4 +485,40 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
     }
 
     return vbox;
+}
+
+void build_wizard(void)
+{
+    if (wiz)
+        return;
+
+    wiz = g_malloc(sizeof(*wiz));
+    current = create_default_account();
+
+    if (current->properties == NULL) {
+        g_debug("Failed to get default values. Creating from scratch");
+        current->properties = g_hash_table_new(NULL, g_str_equal);
+    }
+
+    wiz->assistant = gtk_assistant_new();
+
+    gtk_window_set_title(GTK_WINDOW(wiz->assistant), _("SFLphone account registration wizard"));
+    gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
+    gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200, 200);
+
+    build_intro();
+    build_select_account();
+    build_sip_account_configuration();
+    build_nat_settings();
+    build_iax_account_configuration();
+    build_summary();
+
+    g_signal_connect(G_OBJECT(wiz->assistant), "close", G_CALLBACK(close_callback), NULL);
+
+    g_signal_connect(G_OBJECT(wiz->assistant), "cancel", G_CALLBACK(cancel_callback), NULL);
+
+    gtk_widget_show_all(wiz->assistant);
+
+    gtk_assistant_set_forward_page_func(GTK_ASSISTANT(wiz->assistant), (GtkAssistantPageFunc) forward_page_func, NULL, NULL);
+    gtk_assistant_update_buttons_state(GTK_ASSISTANT(wiz->assistant));
 }

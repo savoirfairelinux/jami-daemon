@@ -90,11 +90,4 @@ void enable_stun (GtkWidget *widget);
  * Related-pages function
  */
 void build_wizard();
-GtkWidget* build_intro (void);
-GtkWidget* build_select_account (void);
-GtkWidget* build_sip_account_configuration (void);
-GtkWidget* build_nat_settings (void);
-GtkWidget* build_iax_account_configuration (void);
-GtkWidget* build_summary (void);
-GtkWidget* build_registration_error (void);
 #endif
