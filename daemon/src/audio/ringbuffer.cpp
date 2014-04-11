@@ -262,7 +262,7 @@ size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const size_t
     if(buffer_size < min_data_length) return 0;
     ReadPointer::const_iterator read_ptr = readpointers_.find(call_id);
     if(read_ptr == readpointers_.end()) return 0;
-    size_t getl;
+    size_t getl = 0;
     if (deadline == std::chrono::high_resolution_clock::time_point()) {
         not_empty_.wait(l, [=, &getl]{
                 getl =  (endPos_ + buffer_size - read_ptr->second) % buffer_size;
