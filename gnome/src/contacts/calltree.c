@@ -38,6 +38,7 @@
 #include "calltree.h"
 #include "str_utils.h"
 #include "account_schema.h"
+#include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
@@ -365,10 +366,10 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type)
                                                  call->_state_code_description, call->_state_code);
             break;
         case DISPLAY_TYPE_CALL_TRANSFER:
-            suffix = g_markup_printf_escaped("\n<i>Transfer to:%s</i> ", call->_trsft_to);
+            suffix = g_markup_printf_escaped(_("\n<i>Transfer to:%s</i> "), call->_trsft_to);
             break;
         case DISPLAY_TYPE_SAS:
-            suffix = g_markup_printf_escaped("\n<i>Confirm SAS <b>%s</b> ?</i>", call->_sas);
+            suffix = g_markup_printf_escaped(_("\n<i>Confirm SAS <b>%s</b> ?</i>"), call->_sas);
             break;
         case DISPLAY_TYPE_HISTORY :
         default:

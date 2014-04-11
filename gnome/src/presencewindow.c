@@ -474,7 +474,7 @@ static gboolean
 field_error_dialog(const gchar *error_string)
 {
     gchar *msg;
-    msg = g_markup_printf_escaped("Field error %s.",error_string);// TODO: use _()
+    msg = g_markup_printf_escaped(_("Field error %s."), error_string);
 
     /* Create the widgets */
     GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(presence_window),
@@ -654,7 +654,7 @@ static gboolean
 confirm_buddy_deletion(buddy_t *b)
 {
     gchar *msg;
-    msg = g_markup_printf_escaped("Are you sure want to delete \"%s\"", b->alias);
+    msg = g_markup_printf_escaped(_("Are you sure want to delete \"%s\""), b->alias);
 
     /* Create the widgets */
     GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(presence_window),
@@ -678,7 +678,7 @@ static gboolean
 confirm_group_deletion(gchar *group)
 {
     gchar *msg;
-    msg = g_markup_printf_escaped("Do you really want to delete the group %s", group);
+    msg = g_markup_printf_escaped(_("Do you really want to delete the group %s"), group);
 
     /* Create the widgets */
     GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(presence_window),

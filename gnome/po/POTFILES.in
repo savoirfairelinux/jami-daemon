@@ -15,6 +15,7 @@ src/config/shortcuts-config.c
 src/config/tlsadvanceddialog.c
 src/config/videoconf.c
 src/config/zrtpadvanceddialog.c
+src/contacts/calltree.c
 src/contacts/searchbar.c
 src/dbus/dbus.c
 src/main.c

@@ -64,7 +64,7 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
         GtkWidget *dialog = gtk_message_dialog_new(NULL,
                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                 GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
-                                "Unable to initialize.\nMake sure the daemon is running.\nError: %s",
+                                _("Unable to initialize.\nMake sure the daemon is running.\nError: %s"),
                                 error->message);
 
         gtk_window_set_title(GTK_WINDOW(dialog), _("SFLphone Error"));

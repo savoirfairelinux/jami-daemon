@@ -108,7 +108,7 @@ notify_incoming_call(callable_obj_t* c, SFLPhoneClient *client)
     gchar* title;
 
     if (strlen(c->_accountID) == 0)
-        title = g_markup_printf_escaped("IP-to-IP call");
+        title = g_markup_printf_escaped(_("IP-to-IP call"));
     else {
         account_t *account = account_list_get_by_id(c->_accountID);
         g_return_if_fail(account != NULL);
@@ -193,7 +193,7 @@ void
 notify_secure_on(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
-    gchar *title = g_markup_printf_escaped("Secure mode on.");
+    gchar *title = g_markup_printf_escaped(_("Secure mode on."));
     gchar *callerid = g_markup_printf_escaped(_("<i>With:</i> %s \n") , c->_peer_number);
 
     create_new_gnome_notification(title,
@@ -208,7 +208,7 @@ void
 notify_zrtp_not_supported(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
-    gchar *title = g_markup_printf_escaped("ZRTP Error.");
+    gchar *title = g_markup_printf_escaped(_("ZRTP Error."));
     gchar *callerid = g_markup_printf_escaped(_("%s does not support ZRTP.") , c->_peer_number);
     create_new_gnome_notification(title,
                                   callerid,
@@ -222,7 +222,7 @@ void
 notify_zrtp_negotiation_failed(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
-    gchar *title = g_markup_printf_escaped("ZRTP Error.");
+    gchar *title = g_markup_printf_escaped(_("ZRTP Error."));
     gchar *callerid = g_markup_printf_escaped(_("ZRTP negotiation failed with %s"), c->_peer_number);
     create_new_gnome_notification(title,
                                   callerid,
@@ -236,7 +236,7 @@ void
 notify_secure_off(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
-    gchar *title = g_markup_printf_escaped("Secure mode is off.");
+    gchar *title = g_markup_printf_escaped(_("Secure mode is off."));
     gchar *callerid = g_markup_printf_escaped(_("<i>With:</i> %s"), c->_peer_number);
     create_new_gnome_notification(title,
                                   callerid,
