@@ -24,9 +24,7 @@ libconfig_la_SOURCES = \
   shortcuts-config.h \
   tlsadvanceddialog.h \
   utils.h \
-  zrtpadvanceddialog.h \
-  reqaccount.c \
-  reqaccount.h
+  zrtpadvanceddialog.h
 
 if SFL_VIDEO
 libconfig_la_SOURCES+=videoconf.c videoconf.h

@@ -1138,8 +1138,6 @@ dbus_stop_recorded_file_playback(const gchar *filepath)
 static void
 hang_up_reply_cb(G_GNUC_UNUSED DBusGProxy *proxy, gboolean is_hung_up, GError *error, G_GNUC_UNUSED gpointer userdata)
 {
-    if (!is_hung_up)
-        g_warning("Did not hang up properly");
     check_error(error);
 }
 

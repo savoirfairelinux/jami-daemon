@@ -49,7 +49,6 @@ struct _wizard {
     GtkWidget *account_type;
     GtkWidget *protocols;
     GtkWidget *sip;
-    GtkWidget *email;
     GtkWidget *iax;
     /** Page 2 - SIP account creation */
     GtkWidget *sip_account;
@@ -78,9 +77,6 @@ struct _wizard {
     GtkWidget *label_summary;
     /** Page 6 - Registration failed*/
     GtkWidget *reg_failed;
-
-    GtkWidget *sflphone_org;
-
 };
 
 /**
@@ -101,6 +97,4 @@ GtkWidget* build_nat_settings (void);
 GtkWidget* build_iax_account_configuration (void);
 GtkWidget* build_summary (void);
 GtkWidget* build_registration_error (void);
-GtkWidget* build_email_configuration (void);
-GtkWidget* build_sfl_or_account (void);
 #endif

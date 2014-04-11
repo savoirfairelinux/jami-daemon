@@ -32,14 +32,10 @@
 #include <glib/gi18n.h>
 #include "assistant.h"
 #include "dbus.h"
-#include "reqaccount.h"
 #include "account_schema.h"
-
-#define SFLPHONE_ORG_SERVER "sip.sflphone.org"
 
 struct _wizard *wiz;
 static int account_type;
-static gboolean use_sflphone_org = TRUE;
 static account_t* current;
 static char *message;
 /**
@@ -91,11 +87,6 @@ void getMessageSummary(const gchar * alias, const gchar * server, const gchar * 
     g_free(tmp);
 }
 
-void set_sflphone_org(GtkWidget* widget, G_GNUC_UNUSED gpointer data)
-{
-    use_sflphone_org = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-}
-
 /**
  * Callback when the close button of the dialog is clicked
  * Action : close the assistant widget and get back to sflphone main window
@@ -128,11 +119,6 @@ static void cancel_callback(void)
  */
 static void sip_apply_callback(void)
 {
-    if (use_sflphone_org) {
-        prefill_sip();
-        account_type = _SIP;
-    }
-
     if (account_type == _SIP) {
         account_insert(current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)));
         account_insert(current, CONFIG_ACCOUNT_ENABLE, "true");
@@ -208,8 +194,6 @@ void enable_stun(GtkWidget* widget)
 
 void build_wizard(void)
 {
-    use_sflphone_org = TRUE;
-
     if (wiz)
         return;
 
@@ -223,17 +207,15 @@ void build_wizard(void)
 
     wiz->assistant = gtk_assistant_new();
 
-    gtk_window_set_title(GTK_WINDOW(wiz->assistant), _("SFLphone account creation wizard"));
+    gtk_window_set_title(GTK_WINDOW(wiz->assistant), _("SFLphone account registration wizard"));
     gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200, 200);
 
     build_intro();
-    build_sfl_or_account();
     build_select_account();
     build_sip_account_configuration();
     build_nat_settings();
     build_iax_account_configuration();
-    build_email_configuration();
     build_summary();
 
     g_signal_connect(G_OBJECT(wiz->assistant), "close", G_CALLBACK(close_callback), NULL);
@@ -248,8 +230,8 @@ void build_wizard(void)
 
 GtkWidget* build_intro()
 {
-    wiz->intro = create_vbox(GTK_ASSISTANT_PAGE_INTRO, "SFLphone GNOME client", _("Welcome to the Account creation wizard of SFLphone!"));
-    GtkWidget *label = gtk_label_new(_("This installation wizard will help you configure an account."));
+    wiz->intro = create_vbox(GTK_ASSISTANT_PAGE_INTRO, "SFLphone GNOME client", _("Welcome to the account registration wizard for SFLphone!"));
+    GtkWidget *label = gtk_label_new(_("This wizard will help you configure an existing account."));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
     gtk_widget_set_size_request(GTK_WIDGET(label), 380, -1);
@@ -272,20 +254,6 @@ GtkWidget* build_select_account()
 
     gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->protocols, TRUE);
     return wiz->protocols;
-}
-
-
-GtkWidget* build_sfl_or_account()
-{
-    wiz->sflphone_org = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("Account"), _("Please select one of the following options"));
-
-    GtkWidget *sfl = gtk_radio_button_new_with_label(NULL, _("Create a free SIP/IAX2 account on sflphone.org \n(For testing purpose only)"));
-    gtk_box_pack_start(GTK_BOX(wiz->sflphone_org), sfl, TRUE, TRUE, 0);
-    GtkWidget *cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), _("Register an existing SIP or IAX2 account"));
-    gtk_box_pack_start(GTK_BOX(wiz->sflphone_org), cus, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(sfl), "clicked", G_CALLBACK(set_sflphone_org), NULL);
-
-    return wiz->sflphone_org;
 }
 
 
@@ -357,34 +325,6 @@ GtkWidget* build_sip_account_configuration(void)
 
     //gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->sip_account, TRUE);
     return wiz->sip_account;
-}
-
-GtkWidget* build_email_configuration(void)
-{
-    GtkWidget* label;
-
-    wiz->email = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("Optional email address"), _("This email address will be used to send your voicemail messages."));
-
-    GtkWidget *grid = gtk_grid_new();
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->email), grid, TRUE, TRUE, 0);
-
-    // email field
-    label = gtk_label_new_with_mnemonic(_("_Email address"));
-    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
-    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    wiz->mailbox = gtk_entry_new();
-    gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->mailbox);
-    gtk_grid_attach(GTK_GRID(grid), wiz->mailbox, 1, 0, 1, 1);
-
-    // Security options
-    wiz->zrtp_enable = gtk_check_button_new_with_mnemonic(_("Secure communications with _ZRTP"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable), FALSE);
-    gtk_grid_attach(GTK_GRID(grid), wiz->zrtp_enable, 0, 5, 1, 1);
-    gtk_widget_set_sensitive(GTK_WIDGET(wiz->zrtp_enable), TRUE);
-
-    return wiz->email;
 }
 
 GtkWidget* build_iax_account_configuration(void)
@@ -524,34 +464,12 @@ void set_sip_infos_sentivite(gboolean b)
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_password), b);
 }
 
-void prefill_sip(void)
-{
-    if (use_sflphone_org) {
-        char alias[300];
-        const char *email = gtk_entry_get_text(GTK_ENTRY(wiz->mailbox));
-        rest_account ra = get_rest_account(SFLPHONE_ORG_SERVER,email);
-
-        if (ra.success) {
-            set_sip_infos_sentivite(FALSE);
-            strcpy(alias,ra.user);
-            strcat(alias,"@");
-            strcat(alias,"sip.sflphone.org");
-            gtk_entry_set_text(GTK_ENTRY(wiz->sip_alias),alias);
-            gtk_entry_set_text(GTK_ENTRY(wiz->sip_server), SFLPHONE_ORG_SERVER);
-            gtk_entry_set_text(GTK_ENTRY(wiz->sip_username), ra.user);
-            gtk_entry_set_text(GTK_ENTRY(wiz->sip_password), ra.passwd);
-        }
-    }
-}
-
 typedef enum {
     PAGE_INTRO,
-    PAGE_SFL,
     PAGE_TYPE,
     PAGE_SIP,
     PAGE_STUN,
     PAGE_IAX,
-    PAGE_EMAIL,
     PAGE_SUMMARY
 } assistant_state;
 
@@ -561,15 +479,7 @@ static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
 
     switch (current_page) {
         case PAGE_INTRO:
-            next_page = PAGE_SFL;
-            break;
-        case PAGE_SFL:
-
-            if (use_sflphone_org)
-                next_page = PAGE_EMAIL;
-            else
-                next_page = PAGE_TYPE;
-
+            next_page = PAGE_TYPE;
             break;
         case PAGE_TYPE:
 
@@ -582,9 +492,6 @@ static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
 
             break;
         case PAGE_SIP:
-            next_page = PAGE_STUN;
-            break;
-        case PAGE_EMAIL:
             next_page = PAGE_STUN;
             break;
         case PAGE_STUN:
