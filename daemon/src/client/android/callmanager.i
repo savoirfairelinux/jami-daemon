@@ -90,6 +90,9 @@ typedef struct callmanager_callback
                                                 const std::string& reason,
                                                 const std::string& severity);
 
+    void (*on_rtcp_report_received) (const std::string& callID,
+                                    const std::map<std::string, int>& stats);
+
 } callmanager_callback_t;
 
 
@@ -128,10 +131,10 @@ public:
                                         const bool& state) {}
 
     virtual void newPresSubClientNotification(const std::string& uri,
-											const std::string& basic,
-											const std::string& note) {}
+                                                const std::string& basic,
+                                                const std::string& note) {}
 
-	virtual void newPresSubServerRequest(const std::string& remote) {}
+    virtual void newPresSubServerRequest(const std::string& remote) {}
 
     virtual void on_secure_sdes_on(const std::string& callID) {}
 
@@ -151,6 +154,9 @@ public:
     virtual void on_zrtp_negociation_failed(const std::string& callID,
                                                 const std::string& reason,
                                                 const std::string& severity) {}
+
+    virtual void on_rtcp_report_received (const std::string& callID,
+                                    const std::map<std::string, int>& stats) {}
 };
 
 
@@ -203,11 +209,11 @@ void on_recording_state_changed_wrapper(const std::string& callID, const bool& s
 }
 
 void on_newPresSubClientNotification_wrapper(const std::string& uri, const std::string& basic, const std::string& note) {
-	registeredCallbackObject->newPresSubClientNotification(uri, basic, note);
+    registeredCallbackObject->newPresSubClientNotification(uri, basic, note);
 }
 
 void on_newPresSubServerRequest_wrapper(const std::string& remote) {
-	registeredCallbackObject->newPresSubServerRequest(remote);
+    registeredCallbackObject->newPresSubServerRequest(remote);
 }
 
 void on_secure_sdes_on_wrapper(const std::string& callID){
@@ -238,6 +244,10 @@ void on_zrtp_negociation_failed_wrapper(const std::string& callID, const std::st
     registeredCallbackObject->on_zrtp_negociation_failed(callID, reason, severity);
 }
 
+void on_rtcp_report_received_wrapper (const std::string& callID, const std::map<std::string, int>& stats){
+    registeredCallbackObject->on_rtcp_report_received(callID, stats);
+}
+
 static struct callmanager_callback wrapper_callback_struct = {
     &on_new_call_created_wrapper,
     &on_call_state_changed_wrapper,
@@ -249,15 +259,16 @@ static struct callmanager_callback wrapper_callback_struct = {
     &on_incoming_message_wrapper,
     &on_record_playback_filepath_wrapper,
     &on_recording_state_changed_wrapper,
-	&on_newPresSubClientNotification_wrapper,
-	&on_newPresSubServerRequest_wrapper,
+    &on_newPresSubClientNotification_wrapper,
+    &on_newPresSubServerRequest_wrapper,
     &on_secure_sdes_on_wrapper,
     &on_secure_sdes_off_wrapper,
     &on_secure_zrtp_on_wrapper,
     &on_secure_zrtp_off_wrapper,
     &on_show_sas_wrapper,
     &on_zrtp_not_supported_wrapper,
-    &on_zrtp_negociation_failed_wrapper
+    &on_zrtp_negociation_failed_wrapper,
+    &on_rtcp_report_received_wrapper
 };
 
 void setCallbackObject(Callback* callback) {
@@ -357,10 +368,10 @@ public:
                                             const bool& state);
 
     virtual void newPresSubClientNotification(const std::string& uri,
-											const std::string& basic,
-											const std::string& note);
+                                            const std::string& basic,
+                                            const std::string& note);
 
-	virtual void newPresSubServerRequest(const std::string& remote);
+    virtual void newPresSubServerRequest(const std::string& remote);
 
     virtual void on_secure_sdes_on(const std::string& callID);
 
@@ -380,6 +391,9 @@ public:
     virtual void on_zrtp_negociation_failed(const std::string& callID,
                                                 const std::string& reason,
                                                 const std::string& severity);
+
+    virtual void on_rtcp_report_received (const std::string& callID,
+                                    const std::map<std::string, int>& stats);
 };
 
 static Callback* registeredCallbackObject = NULL;

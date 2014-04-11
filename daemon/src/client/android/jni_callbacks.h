@@ -27,6 +27,7 @@ void on_secure_zrtp_off_wrapper(const std::string& callID);
 void on_show_sas_wrapper(const std::string& callID, const std::string& sas, const bool& verified);
 void on_zrtp_not_supported_wrapper(const std::string& callID);
 void on_zrtp_negociation_failed_wrapper(const std::string& callID, const std::string& reason, const std::string& severity);
+void on_rtcp_report_received_wrapper(const std::string& callID, const std::map<std::basic_string<char>, int>& stats);
 
 extern struct configurationmanager_callback wrapper_configurationcallback_struct;
 extern void on_accounts_changed_wrapper ();
