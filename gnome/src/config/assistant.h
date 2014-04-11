@@ -28,66 +28,11 @@
  *  as that of the covered work.
  */
 
-#ifndef __ASSISTANT_H
-#define __ASSISTANT_H
-
-
-#include "accountlist.h"
-#include "actions.h"
-#include "sflphone_const.h"
-
-
-#define _SIP  0
-#define _IAX  1
-
-struct _wizard {
-    GtkWidget *window;
-    GtkWidget *assistant;
-    GdkPixbuf *logo;
-    GtkWidget *intro;
-    /** Page 1  - Protocol selection */
-    GtkWidget *account_type;
-    GtkWidget *protocols;
-    GtkWidget *sip;
-    GtkWidget *iax;
-    /** Page 2 - SIP account creation */
-    GtkWidget *sip_account;
-    GtkWidget *sip_alias;
-    GtkWidget *sip_server;
-    GtkWidget *sip_username;
-    GtkWidget *sip_password;
-    GtkWidget *sip_voicemail;
-    GtkWidget *test;
-    GtkWidget *state;
-    GtkWidget *mailbox;
-    GtkWidget *zrtp_enable;
-    /** Page 3 - IAX account creation */
-    GtkWidget *iax_account;
-    GtkWidget *iax_alias;
-    GtkWidget *iax_server;
-    GtkWidget *iax_username;
-    GtkWidget *iax_password;
-    GtkWidget *iax_voicemail;
-    /** Page 4 - Nat detection */
-    GtkWidget *nat;
-    GtkWidget *enable;
-    GtkWidget *addr;
-    /** Page 5 - Registration successful*/
-    GtkWidget *summary;
-    GtkWidget *label_summary;
-    /** Page 6 - Registration failed*/
-    GtkWidget *reg_failed;
-};
-
-/**
- * Callbacks functions
- */
-void set_account_type (GtkWidget* widget , gpointer data);
-
-void enable_stun (GtkWidget *widget);
+#ifndef ASSISTANT_H__
+#define ASSISTANT_H__
 
 /**
  * Related-pages function
  */
 void build_wizard();
-#endif
+#endif  // ASSISTANT_H__

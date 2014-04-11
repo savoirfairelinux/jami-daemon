@@ -31,8 +31,51 @@
 #include <string.h>
 #include <glib/gi18n.h>
 #include "assistant.h"
+#include "actions.h"
 #include "dbus.h"
 #include "account_schema.h"
+
+enum {_SIP, _IAX};
+
+struct _wizard {
+    GtkWidget *window;
+    GtkWidget *assistant;
+    GdkPixbuf *logo;
+    GtkWidget *intro;
+    /** Page 1  - Protocol selection */
+    GtkWidget *account_type;
+    GtkWidget *protocols;
+    GtkWidget *sip;
+    GtkWidget *iax;
+    /** Page 2 - SIP account creation */
+    GtkWidget *sip_account;
+    GtkWidget *sip_alias;
+    GtkWidget *sip_server;
+    GtkWidget *sip_username;
+    GtkWidget *sip_password;
+    GtkWidget *sip_voicemail;
+    GtkWidget *test;
+    GtkWidget *state;
+    GtkWidget *mailbox;
+    GtkWidget *zrtp_enable;
+    /** Page 3 - IAX account creation */
+    GtkWidget *iax_account;
+    GtkWidget *iax_alias;
+    GtkWidget *iax_server;
+    GtkWidget *iax_username;
+    GtkWidget *iax_password;
+    GtkWidget *iax_voicemail;
+    /** Page 4 - Nat detection */
+    GtkWidget *nat;
+    GtkWidget *enable;
+    GtkWidget *addr;
+    /** Page 5 - Registration successful*/
+    GtkWidget *summary;
+    GtkWidget *label_summary;
+    /** Page 6 - Registration failed*/
+    GtkWidget *reg_failed;
+};
+
 
 struct _wizard *wiz;
 static int account_type;
@@ -115,47 +158,48 @@ static void cancel_callback(void)
  */
 static void sip_apply_callback(void)
 {
-    if (account_type == _SIP) {
-        account_insert(current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)));
-        account_insert(current, CONFIG_ACCOUNT_ENABLE, "true");
-        account_insert(current, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail)));
-        account_insert(current, CONFIG_ACCOUNT_TYPE, "SIP");
-        account_insert(current, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)));
-        account_insert(current, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->sip_password)));
-        account_insert(current, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)));
-        account_insert(current, CONFIG_STUN_ENABLE, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)) ? "true" : "false");
-        account_insert(current, CONFIG_STUN_SERVER, gtk_entry_get_text(GTK_ENTRY(wiz->addr)));
+    if (account_type != _SIP)
+        return;
 
-        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)) == TRUE) {
-            account_insert(current, CONFIG_SRTP_ENABLE, "true");
-            account_insert(current, CONFIG_SRTP_KEY_EXCHANGE, ZRTP);
-            account_insert(current, CONFIG_ZRTP_DISPLAY_SAS, "true");
-            account_insert(current, CONFIG_ZRTP_NOT_SUPP_WARNING, "true");
-            account_insert(current, CONFIG_ZRTP_HELLO_HASH, "true");
-            account_insert(current, CONFIG_ZRTP_DISPLAY_SAS_ONCE, "false");
-        }
+    account_insert(current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)));
+    account_insert(current, CONFIG_ACCOUNT_ENABLE, "true");
+    account_insert(current, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail)));
+    account_insert(current, CONFIG_ACCOUNT_TYPE, "SIP");
+    account_insert(current, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)));
+    account_insert(current, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->sip_password)));
+    account_insert(current, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)));
+    account_insert(current, CONFIG_STUN_ENABLE, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)) ? "true" : "false");
+    account_insert(current, CONFIG_STUN_SERVER, gtk_entry_get_text(GTK_ENTRY(wiz->addr)));
 
-        // Add default interface info
-        gchar ** iface_list = NULL;
-        iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
-        gchar ** iface = NULL;
-
-        // select the first interface available
-        iface = iface_list;
-        g_debug("Selected interface %s", *iface);
-
-        account_insert(current, CONFIG_LOCAL_INTERFACE, *iface);
-        account_insert(current, CONFIG_PUBLISHED_ADDRESS, *iface);
-
-        dbus_add_account(current);
-        getMessageSummary(gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)),
-                          gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)),
-                          gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)),
-                          (gboolean)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)))
-                         );
-
-        gtk_label_set_text(GTK_LABEL(wiz->label_summary), message);
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)) == TRUE) {
+        account_insert(current, CONFIG_SRTP_ENABLE, "true");
+        account_insert(current, CONFIG_SRTP_KEY_EXCHANGE, ZRTP);
+        account_insert(current, CONFIG_ZRTP_DISPLAY_SAS, "true");
+        account_insert(current, CONFIG_ZRTP_NOT_SUPP_WARNING, "true");
+        account_insert(current, CONFIG_ZRTP_HELLO_HASH, "true");
+        account_insert(current, CONFIG_ZRTP_DISPLAY_SAS_ONCE, "false");
     }
+
+    // Add default interface info
+    gchar ** iface_list = NULL;
+    iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
+    gchar ** iface = NULL;
+
+    // select the first interface available
+    iface = iface_list;
+    g_debug("Selected interface %s", *iface);
+
+    account_insert(current, CONFIG_LOCAL_INTERFACE, *iface);
+    account_insert(current, CONFIG_PUBLISHED_ADDRESS, *iface);
+
+    dbus_add_account(current);
+    getMessageSummary(gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)),
+                      gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)),
+                      gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)),
+                      (gboolean)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)))
+                     );
+
+    gtk_label_set_text(GTK_LABEL(wiz->label_summary), message);
 }
 
 /**
