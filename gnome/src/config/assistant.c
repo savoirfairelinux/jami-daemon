@@ -35,15 +35,14 @@
 #include "dbus.h"
 #include "account_schema.h"
 
-enum {_SIP, _IAX};
+typedef enum {_SIP, _IAX} account_type_t;
 
-struct _wizard {
+typedef struct {
     GtkWidget *window;
-    GtkWidget *assistant;
+    GtkAssistant *assistant;
     GdkPixbuf *logo;
     GtkWidget *intro;
     /** Page 1  - Protocol selection */
-    GtkWidget *account_type;
     GtkWidget *protocols;
     GtkWidget *sip;
     GtkWidget *iax;
@@ -74,26 +73,26 @@ struct _wizard {
     GtkWidget *label_summary;
     /** Page 6 - Registration failed*/
     GtkWidget *reg_failed;
-};
+    /* Wizard context */
+    account_t* current;
+    char *message;
+    account_type_t account_type;
+} account_wizard_t;
 
 
-struct _wizard *wiz;
-static int account_type;
-static account_t* current;
-static char *message;
 
 /**
  * Page template
  */
-static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
+static GtkWidget* create_vbox(GtkAssistant *assistant, GtkAssistantPageType type, const gchar *title, const gchar *section, gboolean is_complete);
 void prefill_sip(void);
 
-void set_account_type(GtkWidget* widget, G_GNUC_UNUSED gpointer data)
+void set_account_type(GtkWidget* widget, account_wizard_t *wiz)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))
-        account_type = _SIP;
+        wiz->account_type = _SIP;
     else
-        account_type = _IAX;
+        wiz->account_type = _IAX;
 }
 
 static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
@@ -106,11 +105,12 @@ static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
  * Fills string message with the final message of account registration
  * with alias, server and username specified.
  */
-void getMessageSummary(const gchar * alias, const gchar * server, const gchar * username, const gboolean zrtp)
+static void
+get_message_summary(account_wizard_t *wiz, const gchar * alias, const gchar * server, const gchar * username, const gboolean zrtp)
 {
-    message = g_strdup(_("This assistant is now finished."));
+    wiz->message = g_strdup(_("This assistant is now finished."));
     gchar *tmp =
-    g_strconcat(message, "\n",
+    g_strconcat(wiz->message, "\n",
     _("You can at any time check your registration state or modify your "
       "accounts parameters in the Options/Accounts window."), "\n\n",
      _("Alias"), " :   ", alias, "\n",
@@ -120,9 +120,9 @@ void getMessageSummary(const gchar * alias, const gchar * server, const gchar * 
     NULL);
 
     if (zrtp)
-        message = g_strconcat(tmp, _("SRTP/ZRTP draft-zimmermann"), NULL);
+        wiz->message = g_strconcat(tmp, _("SRTP/ZRTP draft-zimmermann"), NULL);
     else
-        message = g_strconcat(tmp, _("None"), NULL);
+        wiz->message = g_strconcat(tmp, _("None"), NULL);
     g_free(tmp);
 }
 
@@ -130,11 +130,10 @@ void getMessageSummary(const gchar * alias, const gchar * server, const gchar * 
  * Callback when the close button of the dialog is clicked
  * Action : close the assistant widget and get back to sflphone main window
  */
-static void close_callback(void)
+static void close_callback(GtkWidget *widget, account_wizard_t *wiz)
 {
-    gtk_widget_destroy(wiz->assistant);
+    gtk_widget_destroy(widget);
     g_free(wiz);
-    wiz = NULL;
 
     status_bar_display_account();
 }
@@ -143,9 +142,9 @@ static void close_callback(void)
  * Callback when the cancel button of the dialog is clicked
  * Action : close the assistant widget and get back to sflphone main window
  */
-static void cancel_callback(void)
+static void cancel_callback(GtkWidget *widget, account_wizard_t *wiz)
 {
-    gtk_widget_destroy(wiz->assistant);
+    gtk_widget_destroy(widget);
     g_free(wiz);
     wiz = NULL;
 
@@ -156,28 +155,28 @@ static void cancel_callback(void)
  * Callback when the button apply is clicked
  * Action : Set the account parameters with the entries values and called dbus_add_account
  */
-static void sip_apply_callback(void)
+static void sip_apply_callback(G_GNUC_UNUSED GtkWidget *widget, account_wizard_t *wiz)
 {
-    if (account_type != _SIP)
+    if (wiz->account_type != _SIP)
         return;
 
-    account_insert(current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)));
-    account_insert(current, CONFIG_ACCOUNT_ENABLE, "true");
-    account_insert(current, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail)));
-    account_insert(current, CONFIG_ACCOUNT_TYPE, "SIP");
-    account_insert(current, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)));
-    account_insert(current, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->sip_password)));
-    account_insert(current, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)));
-    account_insert(current, CONFIG_STUN_ENABLE, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)) ? "true" : "false");
-    account_insert(current, CONFIG_STUN_SERVER, gtk_entry_get_text(GTK_ENTRY(wiz->addr)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_ENABLE, "true");
+    account_insert(wiz->current, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_TYPE, "SIP");
+    account_insert(wiz->current, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->sip_password)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)));
+    account_insert(wiz->current, CONFIG_STUN_ENABLE, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)) ? "true" : "false");
+    account_insert(wiz->current, CONFIG_STUN_SERVER, gtk_entry_get_text(GTK_ENTRY(wiz->addr)));
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)) == TRUE) {
-        account_insert(current, CONFIG_SRTP_ENABLE, "true");
-        account_insert(current, CONFIG_SRTP_KEY_EXCHANGE, ZRTP);
-        account_insert(current, CONFIG_ZRTP_DISPLAY_SAS, "true");
-        account_insert(current, CONFIG_ZRTP_NOT_SUPP_WARNING, "true");
-        account_insert(current, CONFIG_ZRTP_HELLO_HASH, "true");
-        account_insert(current, CONFIG_ZRTP_DISPLAY_SAS_ONCE, "false");
+        account_insert(wiz->current, CONFIG_SRTP_ENABLE, "true");
+        account_insert(wiz->current, CONFIG_SRTP_KEY_EXCHANGE, ZRTP);
+        account_insert(wiz->current, CONFIG_ZRTP_DISPLAY_SAS, "true");
+        account_insert(wiz->current, CONFIG_ZRTP_NOT_SUPP_WARNING, "true");
+        account_insert(wiz->current, CONFIG_ZRTP_HELLO_HASH, "true");
+        account_insert(wiz->current, CONFIG_ZRTP_DISPLAY_SAS_ONCE, "false");
     }
 
     // Add default interface info
@@ -189,54 +188,57 @@ static void sip_apply_callback(void)
     iface = iface_list;
     g_debug("Selected interface %s", *iface);
 
-    account_insert(current, CONFIG_LOCAL_INTERFACE, *iface);
-    account_insert(current, CONFIG_PUBLISHED_ADDRESS, *iface);
+    account_insert(wiz->current, CONFIG_LOCAL_INTERFACE, *iface);
+    account_insert(wiz->current, CONFIG_PUBLISHED_ADDRESS, *iface);
 
-    dbus_add_account(current);
-    getMessageSummary(gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)),
+    dbus_add_account(wiz->current);
+    get_message_summary(wiz,
+                      gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)),
                       gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)),
                       gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)),
                       (gboolean)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)))
                      );
 
-    gtk_label_set_text(GTK_LABEL(wiz->label_summary), message);
+    gtk_label_set_text(GTK_LABEL(wiz->label_summary), wiz->message);
 }
 
 /**
  * Callback when the button apply is clicked
  * Action : Set the account parameters with the entries values and called dbus_add_account
  */
-static void iax_apply_callback(void)
+static void iax_apply_callback(G_GNUC_UNUSED GtkWidget *widget, account_wizard_t *wiz)
 {
-    if (account_type == _IAX) {
-        account_insert(current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)));
-        account_insert(current, CONFIG_ACCOUNT_ENABLE, "true");
-        account_insert(current, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->iax_voicemail)));
-        account_insert(current, CONFIG_ACCOUNT_TYPE, "IAX");
-        account_insert(current, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_username)));
-        account_insert(current, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_server)));
-        account_insert(current, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->iax_password)));
+    if (wiz->account_type != _IAX)
+        return;
 
-        dbus_add_account(current);
-        getMessageSummary(gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)),
-                          gtk_entry_get_text(GTK_ENTRY(wiz->iax_server)),
-                          gtk_entry_get_text(GTK_ENTRY(wiz->iax_username)),
-                          FALSE);
+    account_insert(wiz->current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_ENABLE, "true");
+    account_insert(wiz->current, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->iax_voicemail)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_TYPE, "IAX");
+    account_insert(wiz->current, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_username)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_server)));
+    account_insert(wiz->current, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->iax_password)));
 
-        gtk_label_set_text(GTK_LABEL(wiz->label_summary), message);
-    }
+    dbus_add_account(wiz->current);
+    get_message_summary(wiz,
+                      gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)),
+                      gtk_entry_get_text(GTK_ENTRY(wiz->iax_server)),
+                      gtk_entry_get_text(GTK_ENTRY(wiz->iax_username)),
+                      FALSE);
+
+    gtk_label_set_text(GTK_LABEL(wiz->label_summary), wiz->message);
 }
 
-void enable_stun(GtkWidget* widget)
+void enable_stun(GtkWidget* widget, account_wizard_t *wiz)
 {
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->addr), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
 
 static void
-build_intro()
+build_intro(account_wizard_t *wiz)
 {
-    wiz->intro = create_vbox(GTK_ASSISTANT_PAGE_INTRO, "SFLphone GNOME client", _("Welcome to the account registration wizard for SFLphone!"));
+    wiz->intro = create_vbox(wiz->assistant, GTK_ASSISTANT_PAGE_INTRO, "SFLphone GNOME client", _("Welcome to the account registration wizard for SFLphone!"), TRUE);
     GtkWidget *label = gtk_label_new(_("This wizard will help you configure an existing account."));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
@@ -247,28 +249,28 @@ build_intro()
 }
 
 static void
-build_select_account()
+build_select_account(account_wizard_t *wiz)
 {
-    wiz->protocols = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("VoIP Protocols"), _("Select an account type"));
+    wiz->protocols = create_vbox(wiz->assistant, GTK_ASSISTANT_PAGE_CONTENT, _("VoIP Protocols"), _("Select an account type"), TRUE);
 
     GtkWidget *sip = gtk_radio_button_new_with_label(NULL, _("SIP (Session Initiation Protocol)"));
     gtk_box_pack_start(GTK_BOX(wiz->protocols), sip, TRUE, TRUE, 0);
     GtkWidget *iax = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sip), _("IAX2 (InterAsterix Exchange)"));
     gtk_box_pack_start(GTK_BOX(wiz->protocols), iax, TRUE, TRUE, 0);
 
-    g_signal_connect(G_OBJECT(sip), "clicked", G_CALLBACK(set_account_type), NULL);
+    g_signal_connect(G_OBJECT(sip), "clicked", G_CALLBACK(set_account_type), wiz);
 
     gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), wiz->protocols, TRUE);
 }
 
 
 static void
-build_sip_account_configuration(void)
+build_sip_account_configuration(account_wizard_t *wiz)
 {
     GtkWidget* label;
     GtkWidget * clearTextCheckbox;
 
-    wiz->sip_account = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("SIP account settings"), _("Please fill the following information"));
+    wiz->sip_account = create_vbox(wiz->assistant, GTK_ASSISTANT_PAGE_CONTENT, _("SIP account settings"), _("Please fill the following information"), TRUE);
     // grid
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
@@ -331,12 +333,12 @@ build_sip_account_configuration(void)
 }
 
 static void
-build_iax_account_configuration(void)
+build_iax_account_configuration(account_wizard_t *wiz)
 {
     GtkWidget* label;
     GtkWidget * clearTextCheckbox;
 
-    wiz->iax_account = create_vbox(GTK_ASSISTANT_PAGE_CONFIRM, _("IAX2 account settings"), _("Please fill the following information"));
+    wiz->iax_account = create_vbox(wiz->assistant, GTK_ASSISTANT_PAGE_CONFIRM, _("IAX2 account settings"), _("Please fill the following information"), TRUE);
 
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
@@ -390,17 +392,17 @@ build_iax_account_configuration(void)
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_voicemail);
     gtk_grid_attach(GTK_GRID(grid), wiz->iax_voicemail, 1, 5, 1, 1);
 
-    current->state = ACCOUNT_STATE_UNREGISTERED;
+    wiz->current->state = ACCOUNT_STATE_UNREGISTERED;
 
-    g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(iax_apply_callback), NULL);
+    g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(iax_apply_callback), wiz);
 }
 
 static void
-build_nat_settings(void)
+build_nat_settings(account_wizard_t *wiz)
 {
     GtkWidget* label;
 
-    wiz->nat = create_vbox(GTK_ASSISTANT_PAGE_CONFIRM, _("Network Address Translation (NAT)"), _("You should probably enable this if you are behind a firewall."));
+    wiz->nat = create_vbox(wiz->assistant, GTK_ASSISTANT_PAGE_CONFIRM, _("Network Address Translation (NAT)"), _("You should probably enable this if you are behind a firewall."), TRUE);
 
     // grid
     GtkWidget *grid = gtk_grid_new();
@@ -413,7 +415,7 @@ build_nat_settings(void)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->enable), FALSE);
     gtk_grid_attach(GTK_GRID(grid), wiz->enable, 0, 0, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->enable), TRUE);
-    g_signal_connect(G_OBJECT(GTK_TOGGLE_BUTTON(wiz->enable)), "toggled", G_CALLBACK(enable_stun), NULL);
+    g_signal_connect(G_OBJECT(GTK_TOGGLE_BUTTON(wiz->enable)), "toggled", G_CALLBACK(enable_stun), wiz);
 
     // server address
     label = gtk_label_new_with_mnemonic(_("_STUN server"));
@@ -424,18 +426,18 @@ build_nat_settings(void)
     gtk_grid_attach(GTK_GRID(grid), wiz->addr, 1, 1, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->addr), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)));
 
-    g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(sip_apply_callback), NULL);
+    g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(sip_apply_callback), wiz);
 }
 
 static void
-build_summary()
+build_summary(account_wizard_t *wiz)
 {
-    wiz->summary = create_vbox(GTK_ASSISTANT_PAGE_SUMMARY, _("Account Registration"), _("Congratulations!"));
+    wiz->summary = create_vbox(wiz->assistant, GTK_ASSISTANT_PAGE_SUMMARY, _("Account Registration"), _("Congratulations!"), TRUE);
 
-    if (message)
-        g_free(message);
-    message = g_strdup("");
-    wiz->label_summary = gtk_label_new(message);
+    if (wiz->message)
+        g_free(wiz->message);
+    wiz->message = g_strdup("");
+    wiz->label_summary = gtk_label_new(wiz->message);
     gtk_label_set_selectable(GTK_LABEL(wiz->label_summary), TRUE);
     gtk_misc_set_alignment(GTK_MISC(wiz->label_summary), 0, 0);
     gtk_label_set_line_wrap(GTK_LABEL(wiz->label_summary), TRUE);
@@ -443,7 +445,7 @@ build_summary()
 }
 
 static void
-sip_info_set_sensitive(gboolean b)
+sip_info_set_sensitive(account_wizard_t *wiz, gboolean b)
 {
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_alias), b);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_server), b);
@@ -460,7 +462,7 @@ typedef enum {
     PAGE_SUMMARY
 } assistant_state;
 
-static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
+static gint forward_page_func(gint current_page, account_wizard_t *wiz)
 {
     gint next_page = 0;
 
@@ -469,8 +471,8 @@ static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
             next_page = PAGE_TYPE;
             break;
         case PAGE_TYPE:
-            if (account_type == _SIP) {
-                sip_info_set_sensitive(TRUE);
+            if (wiz->account_type == _SIP) {
+                sip_info_set_sensitive(wiz, TRUE);
                 next_page = PAGE_SIP;
             } else {
                 next_page = PAGE_IAX;
@@ -498,18 +500,18 @@ static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
 
 
 static GtkWidget*
-create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
+create_vbox(GtkAssistant *assistant, GtkAssistantPageType type, const gchar *title, const gchar *section, gboolean is_complete)
 {
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 24);
 
-    gtk_assistant_append_page(GTK_ASSISTANT(wiz->assistant), vbox);
-    gtk_assistant_set_page_type(GTK_ASSISTANT(wiz->assistant), vbox, type);
+    gtk_assistant_append_page(assistant, vbox);
+    gtk_assistant_set_page_type(assistant, vbox, type);
     gchar *str = g_strdup_printf(" %s", title);
-    gtk_assistant_set_page_title(GTK_ASSISTANT(wiz->assistant), vbox, str);
+    gtk_assistant_set_page_title(assistant, vbox, str);
     g_free(str);
 
-    gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), vbox, TRUE);
+    gtk_assistant_set_page_complete(assistant, vbox, is_complete);
 
 #if 0
     /* FIXME */
@@ -533,36 +535,33 @@ create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
 
 void build_wizard(void)
 {
-    if (wiz)
-        return;
+    account_wizard_t *wiz = g_new0(account_wizard_t, 1);
+    wiz->current = create_default_account();
 
-    wiz = g_malloc(sizeof(*wiz));
-    current = create_default_account();
-
-    if (current->properties == NULL) {
+    if (wiz->current->properties == NULL) {
         g_debug("Failed to get default values. Creating from scratch");
-        current->properties = g_hash_table_new(NULL, g_str_equal);
+        wiz->current->properties = g_hash_table_new(NULL, g_str_equal);
     }
 
-    wiz->assistant = gtk_assistant_new();
+    wiz->assistant = GTK_ASSISTANT(gtk_assistant_new());
 
     gtk_window_set_title(GTK_WINDOW(wiz->assistant), _("SFLphone account registration wizard"));
     gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200, 200);
 
-    build_intro();
-    build_select_account();
-    build_sip_account_configuration();
-    build_nat_settings();
-    build_iax_account_configuration();
-    build_summary();
+    build_intro(wiz);
+    build_select_account(wiz);
+    build_sip_account_configuration(wiz);
+    build_nat_settings(wiz);
+    build_iax_account_configuration(wiz);
+    build_summary(wiz);
 
-    g_signal_connect(G_OBJECT(wiz->assistant), "close", G_CALLBACK(close_callback), NULL);
+    g_signal_connect(G_OBJECT(wiz->assistant), "close", G_CALLBACK(close_callback), wiz);
 
-    g_signal_connect(G_OBJECT(wiz->assistant), "cancel", G_CALLBACK(cancel_callback), NULL);
+    g_signal_connect(G_OBJECT(wiz->assistant), "cancel", G_CALLBACK(cancel_callback), wiz);
 
-    gtk_widget_show_all(wiz->assistant);
+    gtk_widget_show_all(GTK_WIDGET(wiz->assistant));
 
-    gtk_assistant_set_forward_page_func(GTK_ASSISTANT(wiz->assistant), (GtkAssistantPageFunc) forward_page_func, NULL, NULL);
+    gtk_assistant_set_forward_page_func(GTK_ASSISTANT(wiz->assistant), (GtkAssistantPageFunc) forward_page_func, wiz, NULL);
     gtk_assistant_update_buttons_state(GTK_ASSISTANT(wiz->assistant));
 }
