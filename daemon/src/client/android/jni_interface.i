@@ -60,6 +60,7 @@ namespace std {
     %template(StringMap) map<string, string>;
     %template(StringVect) vector<string>;
     %template(VectMap) vector< map<string,string> >;
+    %template(IntegerMap) map<string,int>;
     %template(IntVect) vector<int32_t>;
 }
 
