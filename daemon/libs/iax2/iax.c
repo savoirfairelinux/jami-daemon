@@ -78,7 +78,7 @@ void gettimeofday(struct timeval *tv, void /*struct timezone*/ *tz);
 
 #ifndef MACOSX
 #include <malloc.h>
-#ifndef SOLARIS
+#if !defined(SOLARIS) && !defined(__ANDROID__)
 #include <error.h>
 #endif
 #endif
