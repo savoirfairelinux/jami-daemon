@@ -33,6 +33,7 @@
 #endif
 
 #include "str_utils.h"
+#include "actions.h"
 #include "preferencesdialog.h"
 #include "icons/icon_factory.h"
 #include "dbus/dbus.h"
