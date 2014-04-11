@@ -263,6 +263,16 @@ build_select_account(account_wizard_t *wiz)
     gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), wiz->protocols, TRUE);
 }
 
+/* Don't allow user to click forward until alias has been set */
+static void
+alias_changed_cb(GtkEditable *editable, gpointer data)
+{
+    const gchar *alias = gtk_entry_get_text(GTK_ENTRY(editable));
+    account_wizard_t *wiz = data;
+    gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),
+            wiz->account_type ==  _SIP ? wiz->sip_account :
+            wiz->iax_account, strlen(alias));
+}
 
 static void
 build_sip_account_configuration(account_wizard_t *wiz)
@@ -282,6 +292,7 @@ build_sip_account_configuration(account_wizard_t *wiz)
     gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->sip_alias = gtk_entry_new();
+    g_signal_connect(wiz->sip_alias, "changed", G_CALLBACK(alias_changed_cb), wiz);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->sip_alias);
     gtk_grid_attach(GTK_GRID(grid), wiz->sip_alias, 1, 0, 1, 1);
 
@@ -350,6 +361,7 @@ build_iax_account_configuration(account_wizard_t *wiz)
     gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     wiz->iax_alias = gtk_entry_new();
+    g_signal_connect(wiz->iax_alias, "changed", G_CALLBACK(alias_changed_cb), wiz);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_alias);
     gtk_grid_attach(GTK_GRID(grid), wiz->iax_alias, 1, 0, 1, 1);
 
