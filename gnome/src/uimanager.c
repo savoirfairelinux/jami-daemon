@@ -680,7 +680,7 @@ call_im(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 }
 
 static void
-call_screenshare(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_screenshare(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED SFLPhoneClient *client)
 {
 #ifdef SFL_VIDEO
     sflphone_toggle_screenshare();
@@ -1350,17 +1350,17 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
     }
 
     GtkWidget *menu = gtk_menu_new();
-    gtk_menu_set_accel_group(menu, get_accel_group());
+    gtk_menu_set_accel_group(GTK_MENU(menu), get_accel_group());
 
     if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         g_debug("Build call menu");
         if (copy) {
-            GtkWidget *copy = gtk_menu_item_new_with_mnemonic(_("_Copy"));
-            gtk_menu_shell_append(GTK_MENU_SHELL(menu), copy);
-            g_signal_connect(G_OBJECT(copy), "activate",
+            GtkWidget *copy_item = gtk_menu_item_new_with_mnemonic(_("_Copy"));
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), copy_item);
+            g_signal_connect(G_OBJECT(copy_item), "activate",
                              G_CALLBACK(edit_copy),
                              NULL);
-            gtk_widget_show(copy);
+            gtk_widget_show(copy_item);
         }
 
         GtkWidget *paste = gtk_menu_item_new_with_mnemonic(_("_Paste"));
@@ -1379,7 +1379,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             GtkWidget *pickup_item = gtk_image_menu_item_new_with_mnemonic(_("_Pick up"));
             GtkWidget *image = gtk_image_new_from_file(ICONS_DIR "/icon_accept.svg");
             gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(pickup_item), image);
-            gtk_image_menu_item_set_always_show_image(pickup_item, TRUE);
+            gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(pickup_item), TRUE);
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), pickup_item);
             g_signal_connect(G_OBJECT(pickup_item), "activate",
                              G_CALLBACK(call_pick_up),
