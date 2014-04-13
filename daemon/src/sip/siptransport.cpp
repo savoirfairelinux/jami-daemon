@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,7 +69,7 @@ static const char * const DEFAULT_INTERFACE = "default";
 
 pj_sockaddr SipTransport::getSIPLocalIP(pj_uint16_t family)
 {
-    if (family == pj_AF_UNSPEC()) family = pj_AF_INET();
+    if (family == pj_AF_UNSPEC()) family = pj_AF_INET6();
     pj_sockaddr ip_addr;
     pj_status_t status = pj_gethostip(family, &ip_addr);
     if (status == PJ_SUCCESS) return ip_addr;
@@ -105,14 +106,16 @@ std::vector<std::string> SipTransport::getAllIpInterfaceByName()
     return ifaceList;
 }
 
-pj_sockaddr SipTransport::getInterfaceAddr(const std::string &ifaceName, bool forceIPv6)
+pj_sockaddr SipTransport::getInterfaceAddr(const std::string &ifaceName, pj_uint16_t family)
 {
+    ERROR("getInterfaceAddr: %s %d", ifaceName.c_str(), family);
     if (ifaceName == DEFAULT_INTERFACE)
-        return getSIPLocalIP(forceIPv6 ? pj_AF_INET6() : pj_AF_INET());
-    int fd = socket(AF_INET6, SOCK_DGRAM, 0);
-    if(!forceIPv6) {
-        int no = 0;
-        setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&no, sizeof(no));
+        return getSIPLocalIP(family);
+    auto unix_family = (family == pj_AF_INET()) ? AF_INET : AF_INET6;
+    int fd = socket(unix_family, SOCK_DGRAM, 0);
+    if(unix_family == AF_INET6) {
+        int val = (family == pj_AF_UNSPEC()) ? 0 : 1;
+        setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val));
     }
     pj_sockaddr saddr;
     if(fd < 0) {
@@ -126,7 +129,7 @@ pj_sockaddr SipTransport::getInterfaceAddr(const std::string &ifaceName, bool fo
     ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 
     memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-    ifr.ifr_addr.sa_family = AF_INET6;
+    ifr.ifr_addr.sa_family = unix_family;
 
     ioctl(fd, SIOCGIFADDR, &ifr);
     close(fd);
@@ -142,7 +145,7 @@ pj_sockaddr SipTransport::getInterfaceAddr(const std::string &ifaceName, bool fo
 
 std::string SipTransport::getInterfaceAddrFromName(const std::string &ifaceName, bool forceIPv6)
 {
-    return sip_utils::addrToStr(getInterfaceAddr(ifaceName, forceIPv6));
+    return ip_utils::addrToStr(getInterfaceAddr(ifaceName, forceIPv6 ? pj_AF_INET6() : pj_AF_INET()));
 }
 
 std::vector<std::string> SipTransport::getAllIpInterface()
@@ -163,53 +166,92 @@ std::vector<std::string> SipTransport::getAllIpInterface()
     return ifaceList;
 }
 
-SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool) : transportMap_(), cp_(cp), pool_(pool), endpt_(endpt)
-{}
+void tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* /* info */)
+{
+    SipTransport& this_ = *SIPVoIPLink::instance().sipTransport;
+    this_.transportStateChanged(tp, state);
+}
+
+SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool, std::function<void(pjsip_transport*)> transportDestroyed) :
+transportMap_(), transportDestroyedCb_(transportDestroyed), cp_(cp), pool_(pool), endpt_(endpt)
+{
+    auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), tp_state_callback);
+    if (status != PJ_SUCCESS) {
+        ERROR("Can't set transport callback");
+        sip_utils::sip_strerror(status);
+    }
+}
+
+SipTransport::~SipTransport()
+{
+    pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
+}
 
 namespace {
-std::string transportMapKey(const std::string &interface, int port)
+std::string transportMapKey(const std::string &interface, int port, pjsip_transport_type_e type)
 {
     std::ostringstream os;
-    os << interface << ":" << port;
+    char af_ver_num = (pjsip_transport_type_get_af(type) == pj_AF_INET6()) ? '6' : '4';
+    os << interface << ':' << port << ':' << pjsip_transport_get_type_name(type) << af_ver_num;
     return os.str();
 }
 }
 
-void SipTransport::createSipTransport(SIPAccount &account, pj_uint16_t family)
+void
+SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state state)
 {
+    WARN("SipTransport::transportStateChanged: {%s} is now in state %d", tp->info, state);
+    std::map<std::string, pjsip_transport*>::const_iterator transport_key = transportMap_.cend();
+    for (auto i = transportMap_.cbegin(); i != transportMap_.cend(); ++i) {
+        if (i->second == tp) {
+            transport_key = i;
+            break;
+        }
+    }
+    if (transport_key == transportMap_.cend()) {
+        ERROR("Transport not found.");
+        return;
+    }
+
+    if (state == PJSIP_TP_STATE_SHUTDOWN || state == PJSIP_TP_STATE_DESTROY) {
+        if (transportDestroyedCb_)
+            transportDestroyedCb_(transport_key->second);
+        transportMap_.erase(transport_key++);
+    }
+}
+
+void
+SipTransport::createSipTransport(SIPAccount &account)
+{
+    WARN("SipTransport::createSipTransport %s", account.getAccountID().c_str());
     if (account.transport_) {
         pjsip_transport_dec_ref(account.transport_);
-        //DEBUG("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
+        DEBUG("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
         account.transport_ = nullptr;
     }
+    auto type = account.getTransportType();
+    auto family = pjsip_transport_type_get_af(type);
     auto interface = account.getLocalInterface();
-    if (family == pj_AF_UNSPEC()) family = account.getPublishedIpAddress().addr.sa_family;
+    std::string key;
 
 #if HAVE_TLS
     if (account.isTlsEnabled()) {
-        std::string key(transportMapKey(interface, account.getTlsListenerPort()));
-        auto iter = transportMap_.find(key);
-
-        // if this transport already exists, reuse it
-        if (iter != transportMap_.end()) {
-            account.transport_ = iter->second;
-            auto status = pjsip_transport_add_ref(account.transport_);
-            if (status != PJ_SUCCESS)
-                account.transport_ = nullptr;
+        cleanupTransports();
+        key = transportMapKey(interface, account.getTlsListenerPort(), type);
+        if (transportMap_.find(key) != transportMap_.end()) {
+            throw std::runtime_error("TLS transport already exists");
         }
         if (!account.transport_) {
             account.transport_ = createTlsTransport(account);
-            transportMap_[key] = account.transport_;
         }
     } else {
 #else
     {
 #endif
         auto port = account.getLocalPort();
-        std::string key = transportMapKey(interface, port);
-        auto iter = transportMap_.find(key);
-
+        key = transportMapKey(interface, port, type);
         // if this transport already exists, reuse it
+        auto iter = transportMap_.find(key);
         if (iter != transportMap_.end()) {
             account.transport_ = iter->second;
             auto status = pjsip_transport_add_ref(account.transport_);
@@ -217,10 +259,12 @@ void SipTransport::createSipTransport(SIPAccount &account, pj_uint16_t family)
                 account.transport_ = nullptr;
         }
         if (!account.transport_) {
-            account.transport_ = createUdpTransport(interface, port);
-            transportMap_[key] = account.transport_;
+            account.transport_ = createUdpTransport(interface, port, family);
         }
     }
+
+    if (account.transport_)
+        transportMap_[key] = account.transport_;
 
     cleanupTransports();
 
@@ -232,6 +276,8 @@ void SipTransport::createSipTransport(SIPAccount &account, pj_uint16_t family)
 #endif
             throw std::runtime_error("Could not create new UDP transport");
     }
+
+    ERROR("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
 }
 
 pjsip_transport *
@@ -241,7 +287,7 @@ SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port,
     if (interface == DEFAULT_INTERFACE)
         listeningAddress = ip_utils::getAnyHostAddr(family);
     else
-        listeningAddress = getInterfaceAddr(interface, family == pj_AF_INET6());
+        listeningAddress = getInterfaceAddr(interface, family);
 
     RETURN_IF_FAIL(not listeningAddress.addr.sa_family == pj_AF_UNSPEC(), nullptr, "Could not determine ip address for this transport");
     RETURN_IF_FAIL(port != 0, nullptr, "Could not determine port for this transport");
@@ -347,10 +393,17 @@ SipTransport::createTlsTransport(SIPAccount &account)
 void
 SipTransport::cleanupTransports()
 {
+    ERROR("SipTransport::cleanupTransports");
     for (auto it = transportMap_.cbegin(); it != transportMap_.cend();) {
         pjsip_transport* t = (*it).second;
+        if (!t) {
+            ERROR("Null pointer found in transportMap_ for key %s", (*it).first.c_str());
+            transportMap_.erase(it++);
+            continue;
+        }
         pj_lock_acquire(t->lock);
-        if (pj_atomic_get(t->ref_cnt) == 0 || t->is_shutdown || t->is_destroying) {
+        auto ref_cnt = pj_atomic_get(t->ref_cnt);
+        if (ref_cnt == 0 || t->is_shutdown || t->is_destroying) {
             DEBUG("Removing transport for %s", t->info );
             bool is_shutdown = t->is_shutdown || t->is_destroying;
             transportMap_.erase(it++);
@@ -358,6 +411,7 @@ SipTransport::cleanupTransports()
             if (!is_shutdown)
                 pjsip_transport_destroy(t);
         } else {
+            DEBUG("Transport {%s} has refcount %d", t->info, ref_cnt);
             ++it;
             pj_lock_release(t->lock);
         }

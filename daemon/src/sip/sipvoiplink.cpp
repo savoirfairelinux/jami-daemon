@@ -550,7 +550,14 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
-    sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_));
+    sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_, [&](pjsip_transport* transport) {
+        for (auto& a : sipAccountMap_ ) {
+            SIPAccount* account = static_cast<SIPAccount*>(a.second);
+            if (account->transport_ == transport ) {
+                account->transport_ = nullptr;
+            }
+        }
+    }));
 
     if (SipTransport::getSIPLocalIP().addr.sa_family == pj_AF_UNSPEC())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -817,6 +824,9 @@ SIPVoIPLink::sendRegister(Account& a)
     }
 
     account.setRegistrationInfo(regc);
+    ERROR("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
+
+    sipTransport->cleanupTransports();
 }
 
 void SIPVoIPLink::sendUnregister(Account& a)
@@ -922,7 +932,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     call->setIPToIP(true);
     call->initRecFilename(to);
 
-    auto localAddress = SipTransport::getInterfaceAddr(account->getLocalInterface(), ipv6);
+    auto localAddress = SipTransport::getInterfaceAddr(account->getLocalInterface(), ipv6 ? pj_AF_INET6() : pj_AF_INET());
 
     setCallMediaLocal(call, localAddress);
 

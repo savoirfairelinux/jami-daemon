@@ -50,6 +50,8 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <functional>
+
 
 class SIPAccount;
 
@@ -60,7 +62,8 @@ class SIPAccount;
 
 class SipTransport {
     public:
-        SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool);
+        SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool, std::function<void(pjsip_transport*)> transportDestroyed = std::function<void(pjsip_transport*)>());
+        ~SipTransport();
 
         static pj_sockaddr getSIPLocalIP(pj_uint16_t family = pj_AF_UNSPEC());
 
@@ -69,7 +72,7 @@ class SipTransport {
          * @param forceIPv6 If IPv4 and IPv6 are available, will force to IPv6.
          */
         static std::string getInterfaceAddrFromName(const std::string &ifaceName, bool forceIPv6 = false);
-        static pj_sockaddr getInterfaceAddr(const std::string &ifaceName, bool forceIPv6 = false);
+        static pj_sockaddr getInterfaceAddr(const std::string &ifaceName, pj_uint16_t family = pj_AF_UNSPEC());
 
         /**
         * List all the interfaces on the system and return
@@ -96,7 +99,7 @@ class SipTransport {
          * transport type specified in account settings
          * @param account The account for which a transport must be created.
          */
-        void createSipTransport(SIPAccount &account, pj_uint16_t family = pj_AF_UNSPEC());
+        void createSipTransport(SIPAccount &account);
 
         /**
          * Initialize the transport selector
@@ -127,6 +130,13 @@ class SipTransport {
 
         void findLocalAddressFromSTUN(pjsip_transport *transport, pj_str_t *stunServerName,
                 int stunPort, std::string &address, pj_uint16_t &port) const;
+
+        /**
+         * Go through the transport list and remove unused ones.
+         */
+        void cleanupTransports();
+
+        void transportStateChanged(pjsip_transport* tp, pjsip_transport_state state);
 
     private:
         NON_COPYABLE(SipTransport);
@@ -163,15 +173,12 @@ class SipTransport {
                                             pj_uint16_t port, pj_uint16_t family = pj_AF_UNSPEC());
 
         /**
-         * Go through the transport list and remove unused ones.
-         */
-        void cleanupTransports();
-
-        /**
          * UDP Transports are stored in this map in order to retreive them in case
          * several accounts would share the same port number.
          */
         std::map<std::string, pjsip_transport*> transportMap_;
+
+        std::function<void(pjsip_transport*)> transportDestroyedCb_;
 
         pj_caching_pool& cp_;
         pj_pool_t& pool_;
