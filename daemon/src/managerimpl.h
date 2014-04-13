@@ -975,7 +975,7 @@ class ManagerImpl {
         IAXAccount *getIaxAccount(const std::string& accountID) const;
 #endif
 
-	/**
+        /**
          * Get a pointer to the IP2IP account
          * @return SIPAccount * Pointer to the IP2IP account
          */
@@ -994,6 +994,12 @@ class ManagerImpl {
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
         VoIPLink* getAccountLink(const std::string& accountID);
+
+        /**
+         * Free all ressources related to this account.
+         *   ***Current calls using this account are HANG-UP***
+         */
+        void freeAccount(const std::string& accountID);
 
         /**
          * Send registration to all enabled accounts

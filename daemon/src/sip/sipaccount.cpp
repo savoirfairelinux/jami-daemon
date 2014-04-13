@@ -897,6 +897,12 @@ void SIPAccount::registerVoIPLink()
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_) {
         DEBUG("TLS is enabled for account %s", accountID_.c_str());
+
+        // Dropping current calls already using the transport is currently required
+        // with TLS.
+        Manager::instance().freeAccount(accountID_);
+
+        // PJSIP does not currently support TLS over IPv6
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     } else {
@@ -1899,6 +1905,9 @@ SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
 void
 SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
 {
+    if (!isEnabled())
+        return;
+
     /* Cancel any re-registration timer */
     if (auto_rereg_.timer.id) {
         auto_rereg_.timer.id = PJ_FALSE;

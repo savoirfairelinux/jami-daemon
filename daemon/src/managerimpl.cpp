@@ -2842,6 +2842,18 @@ void ManagerImpl::startAudioDriverStream()
 }
 
 void
+ManagerImpl::freeAccount(const std::string& accountID)
+{
+    Account *account = getAccount(accountID);
+    if (!account)
+        return;
+    std::vector<Call*> account_calls(account->getVoIPLink()->getCalls(accountID));
+    for (const auto& call : account_calls)
+        hangupCall(call->getCallId());
+    account->unregisterVoIPLink();
+}
+
+void
 ManagerImpl::registerAccounts()
 {
     AccountMap allAccounts(getAllAccounts());
