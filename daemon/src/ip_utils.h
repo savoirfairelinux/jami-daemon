@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,39 +29,42 @@
  *  as that of the covered work.
  */
 
-#ifndef SIP_UTILS_H_
-#define SIP_UTILS_H_
+#ifndef IP_UTILS_H_
+#define IP_UTILS_H_
 
-#include <pjsip/sip_msg.h>
 #include <pjlib.h>
 
-#include <utility>
 #include <string>
 #include <vector>
 
-struct pjsip_msg;
-
-namespace sip_utils {
+namespace ip_utils {
     /**
-     * Helper function to parser header from incoming sip messages
-     * @return Header from SIP message
+     * Convert a binary IP address to a standard string representation.
      */
-    std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
+    std::string addrToStr(const pj_sockaddr& ip, bool include_port = false, bool force_ipv6_brackets = false);
 
-    pjsip_route_hdr *
-    createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
+    /**
+     * Format an IP address string. If formating the address fails, the original string is returned.
+     */
+    std::string addrToStr(const std::string& ip, bool include_port = false, bool force_ipv6_brackets = false);
 
-    void stripSipUriPrefix(std::string& sipUri);
+    /**
+     * Convert a string representation of an IP adress to its binary counterpart.
+     *
+     * Performs hostname resolution if necessary.
+     * If conversion fails, returned adress will have its family set to PJ_AF_UNSPEC.
+     */
+    pj_sockaddr strToAddr(const std::string& str);
 
-    std::string parseDisplayName(const char * buffer);
+    /**
+     * Returns true if address is a valid IPv6.
+     */
+    bool isIPv6(const std::string &address);
+    bool isValidAddr(const std::string &address, pj_uint16_t family = pj_AF_UNSPEC());
 
-    std::string getHostFromUri(const std::string& sipUri);
+    std::vector<pj_sockaddr> getAddrList(const std::string &name);
 
-    std::vector<std::string> getIPList(const std::string &name);
-
-    void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
-
-    void sip_strerror(pj_status_t code);
+    pj_sockaddr getAnyHostAddr(pj_uint16_t family = pj_AF_UNSPEC());
 }
 
-#endif // SIP_UTILS_H_
+#endif // IP_UTILS_H_

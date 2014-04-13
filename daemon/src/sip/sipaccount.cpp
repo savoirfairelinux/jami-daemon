@@ -31,21 +31,24 @@
 */
 
 #include "sipaccount.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "account_schema.h"
 #include "sipvoiplink.h"
-#include "config/yamlnode.h"
-#include "config/yamlemitter.h"
-#include "logger.h"
-#include "manager.h"
+#include "sip_utils.h"
 
 #ifdef SFL_PRESENCE
 #include "sippresence.h"
 #include "client/configurationmanager.h"
 #endif
+
+#include "account_schema.h"
+#include "config/yamlnode.h"
+#include "config/yamlemitter.h"
+#include "logger.h"
+#include "manager.h"
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
@@ -53,6 +56,7 @@
 
 #include <unistd.h>
 #include <pwd.h>
+
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -1237,8 +1241,8 @@ SIPAccount::getContactHeader()
         port = publishedPort_;
         DEBUG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
-        link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
-        setPublishedAddress(sip_utils::strToAddr(address));
+        link_.sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
+        setPublishedAddress(ip_utils::strToAddr(address));
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
     } else {
@@ -1258,8 +1262,8 @@ SIPAccount::getContactHeader()
     std::string transport;
 
     /* Enclose IPv6 address in square brackets */
-    if (transportType > PJSIP_TRANSPORT_IPV6 || sip_utils::isIPv6(address)) {
-        address = sip_utils::addrToStr(address, false, true);
+    if (transportType > PJSIP_TRANSPORT_IPV6 || ip_utils::isIPv6(address)) {
+        address = ip_utils::addrToStr(address, false, true);
     }
 
     if (transportType != PJSIP_TRANSPORT_UDP and transportType != PJSIP_TRANSPORT_UDP6) {

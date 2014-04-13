@@ -35,7 +35,7 @@
 #include "logger.h"
 
 #include "audio/recordable.h"
-#include "sip/sip_utils.h"
+#include "ip_utils.h"
 
 #include <mutex>
 #include <map>
@@ -189,7 +189,7 @@ class Call : public Recordable {
          */
         void setLocalIp(const pj_sockaddr& ip) {
             pj_sockaddr_cp(&localIPAddr_, &ip);
-            localIPAddress_ = sip_utils::addrToStr(localIPAddr_);
+            localIPAddress_ = ip_utils::addrToStr(localIPAddr_);
         }
 
         /**

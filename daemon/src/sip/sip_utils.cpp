@@ -33,13 +33,11 @@
 #include "logger.h"
 
 #include <pjsip.h>
-#include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 #include <pj/string.h>
-#include <pjsip/sip_msg.h>
 #include <pjsip/sip_types.h>
 #include <pjsip/sip_uri.h>
 #include <pj/list.h>
@@ -193,9 +191,11 @@ sip_utils::getIPList(const std::string &name)
     if (name.empty())
         return ipList;
 
+    //ERROR("sip_utils::getIPList %s", name.c_str());
+
     struct addrinfo *result;
-    struct addrinfo hints;
-    memset(&hints, '\0', sizeof(hints));
+    struct addrinfo hints = {};
+    hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_ADDRCONFIG;
     /* resolve the domain name into a list of addresses */
@@ -234,70 +234,6 @@ sip_utils::getIPList(const std::string &name)
     return ipList;
 }
 
-std::string
-sip_utils::addrToStr(const pj_sockaddr& ip, bool include_port, bool force_ipv6_brackets)
-{
-    std::string str(PJ_INET6_ADDRSTRLEN, (char)0);
-    if(include_port) force_ipv6_brackets = true;
-    pj_sockaddr_print(&ip, &(*str.begin()), PJ_INET6_ADDRSTRLEN, (include_port?1:0)|(force_ipv6_brackets?2:0));
-    return str;
-}
-
-std::string
-sip_utils::addrToStr(const std::string& ip_str, bool include_port, bool force_ipv6_brackets)
-{
-    pj_sockaddr ip = strToAddr(ip_str);
-    if (ip.addr.sa_family == pj_AF_UNSPEC())
-        return ip_str;
-    return addrToStr(ip, include_port, force_ipv6_brackets);
-}
-
-pj_sockaddr
-sip_utils::strToAddr(const std::string& str)
-{
-    pj_str_t pjstring;
-    pj_cstr(&pjstring, str.c_str());
-    pj_sockaddr ip;
-    auto status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &pjstring, &ip);
-    if (status != PJ_SUCCESS)
-        ip.addr.sa_family = pj_AF_UNSPEC();
-    return ip;
-}
-
-pj_sockaddr
-sip_utils::getAnyHostAddr(pj_uint16_t family)
-{
-    if (family == pj_AF_UNSPEC()) family = pj_AF_INET();
-    pj_sockaddr addr = {};
-    addr.addr.sa_family = family;
-    return addr;
-}
-
-bool
-sip_utils::isIPv6(const std::string &address)
-{
-    return isValidAddr(address, pj_AF_INET6());
-}
-
-bool
-sip_utils::isValidAddr(const std::string &address, pj_uint16_t family)
-{
-    pj_str_t pjstring;
-    pj_cstr(&pjstring, address.c_str());
-    pj_str_t ret_str;
-    pj_uint16_t ret_port;
-    int ret_family;
-    auto status = pj_sockaddr_parse2(pj_AF_UNSPEC(), 0, &pjstring, &ret_str, &ret_port, &ret_family);
-    if (status != PJ_SUCCESS || (family != pj_AF_UNSPEC() && ret_family != family))
-        return false;
-
-    char buf[PJ_INET6_ADDRSTRLEN];
-    pj_str_t addr_with_null = {buf, 0};
-    pj_strncpy_with_null(&addr_with_null, &ret_str, sizeof(buf));
-    struct sockaddr sa;
-    return inet_pton(ret_family==pj_AF_INET6()?AF_INET6:AF_INET, buf, &(sa.sa_data)) == 1;
-}
-
 void
 sip_utils::addContactHeader(const pj_str_t *contact_str, pjsip_tx_data *tdata)
 {
@@ -307,4 +243,13 @@ sip_utils::addContactHeader(const pj_str_t *contact_str, pjsip_tx_data *tdata)
     // remove old contact header (if present)
     pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
     pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+}
+
+
+void
+sip_utils::sip_strerror(pj_status_t code)
+{
+    char err_msg[PJ_ERR_MSG_SIZE];
+    pj_strerror(code, err_msg, sizeof err_msg);
+    ERROR("%d: %s", code, err_msg);
 }

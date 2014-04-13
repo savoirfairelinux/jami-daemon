@@ -75,8 +75,9 @@ class IAXVoIPLink : public VoIPLink {
 
 
         /* Returns a list of all callIDs */
-        static std::vector<std::string>
-        getCallIDs();
+        static std::vector<std::string> getCallIDs();
+
+        virtual std::vector<Call*> getCalls(const std::string &account_id) const;
 
         /**
          * Return the internal account map for all VOIP links

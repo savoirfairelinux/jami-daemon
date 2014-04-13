@@ -31,9 +31,12 @@
 
 #include "siptransport.h"
 #include "sipaccount.h"
+#include "sipvoiplink.h"
+#include "sip_utils.h"
 
 #include "manager.h"
 #include "client/configurationmanager.h"
+#include "ip_utils.h"
 
 #include <pjsip.h>
 #include <pjsip_ua.h>
@@ -236,7 +239,7 @@ SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port,
 {
     pj_sockaddr listeningAddress;
     if (interface == DEFAULT_INTERFACE)
-        listeningAddress = sip_utils::getAnyHostAddr(family);
+        listeningAddress = ip_utils::getAnyHostAddr(family);
     else
         listeningAddress = getInterfaceAddr(interface, family == pj_AF_INET6());
 
@@ -251,19 +254,19 @@ SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port,
         status = pjsip_udp_transport_start(endpt_, &listeningAddress.ipv4, nullptr, 1, &transport);
         if (status != PJ_SUCCESS) {
             ERROR("UDP IPV4 Transport did not start");
-            sip_strerror(status);
+            sip_utils::sip_strerror(status);
             return nullptr;
         }
     } else if (listeningAddress.addr.sa_family == pj_AF_INET6()) {
         status = pjsip_udp_transport_start6(endpt_, &listeningAddress.ipv6, nullptr, 1, &transport);
         if (status != PJ_SUCCESS) {
             ERROR("UDP IPV6 Transport did not start");
-            sip_strerror(status);
+            sip_utils::sip_strerror(status);
             return nullptr;
         }
     }
 
-    DEBUG("Created UDP transport on %s : %s", interface.c_str(), sip_utils::addrToStr(listeningAddress, true, true).c_str());
+    DEBUG("Created UDP transport on %s : %s", interface.c_str(), ip_utils::addrToStr(listeningAddress, true, true).c_str());
     // dump debug information to stdout
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
     return transport;
@@ -278,7 +281,7 @@ SipTransport::createTlsListener(SIPAccount &account, pj_uint16_t family)
     std::string interface(account.getLocalInterface());
     pj_sockaddr listeningAddress;
     if (interface == DEFAULT_INTERFACE)
-        listeningAddress = sip_utils::getAnyHostAddr(family);
+        listeningAddress = ip_utils::getAnyHostAddr(family);
     else
         listeningAddress = getInterfaceAddr(interface, family==pj_AF_INET6());
 
@@ -286,15 +289,15 @@ SipTransport::createTlsListener(SIPAccount &account, pj_uint16_t family)
 
     RETURN_IF_FAIL(not listeningAddress.addr.sa_family == pj_AF_UNSPEC(), nullptr, "Could not determine IP address for this transport");
 
-    DEBUG("Creating Listener...");
+    DEBUG("Creating Listener on %s...", ip_utils::addrToStr(listeningAddress).c_str());
     DEBUG("CRT file : %s", account.getTlsSetting()->ca_list_file.ptr);
     DEBUG("PEM file : %s", account.getTlsSetting()->cert_file.ptr);
 
     pjsip_tpfactory *listener = nullptr;
     const pj_status_t status = pjsip_tls_transport_start2(endpt_, account.getTlsSetting(), &listeningAddress, nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
-        ERROR("TLS IPv6 Transport did not start");
-        sip_strerror(status);
+        ERROR("TLS Transport did not start");
+        sip_utils::sip_strerror(status);
         return nullptr;
     }
     return listener;
@@ -478,10 +481,3 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
 }
 
 #undef RETURN_IF_NULL
-
-void sip_strerror(pj_status_t code)
-{
-    char err_msg[PJ_ERR_MSG_SIZE];
-    pj_strerror(code, err_msg, sizeof err_msg);
-    ERROR("%d: %s", code, err_msg);
-}

@@ -338,7 +338,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         peerNumber = remote_user + "@" + remote_hostname;
 
     //DEBUG("transaction_request_cb host %s userName %s addrToUse %s addrSdp %s remote_user %s remote_hostname %s" ,
-    //server.c_str(), userName.c_str(), sip_utils::addrToStr(addrToUse).c_str(), sip_utils::addrToStr(addrSdp).c_str(), remote_user.c_str(), remote_hostname.c_str());
+    //server.c_str(), userName.c_str(), ip_utils::addrToStr(addrToUse).c_str(), ip_utils::addrToStr(addrSdp).c_str(), remote_user.c_str(), remote_hostname.c_str());
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
@@ -727,7 +727,7 @@ bool SIPVoIPLink::getEvent()
     pj_status_t ret;
 
     if ((ret = pjsip_endpt_handle_events(endpt_, &timeout)) != PJ_SUCCESS)
-        sip_strerror(ret);
+        sip_utils::sip_strerror(ret);
 
 #ifdef SFL_VIDEO
     dequeKeyframeRequests();
@@ -830,7 +830,7 @@ SIPVoIPLink::sendRegister(Account& a)
     pj_status_t status;
 
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        sip_strerror(status);
+        sip_utils::sip_strerror(status);
         throw VoipLinkException("Unable to send account registration request");
     }
 
@@ -860,7 +860,7 @@ void SIPVoIPLink::sendUnregister(Account& a)
 
     pj_status_t status;
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        sip_strerror(status);
+        sip_utils::sip_strerror(status);
         throw VoipLinkException("Unable to send request to unregister sip account");
     }
 
@@ -914,7 +914,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
     sip_utils::stripSipUriPrefix(toCpy);
 
-    const bool IPToIP = sip_utils::isValidAddr(toCpy);
+    const bool IPToIP = ip_utils::isValidAddr(toCpy);
     Manager::instance().setIPToIPForCall(id, IPToIP);
 
     if (IPToIP) {
@@ -926,8 +926,8 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
 Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to_raw)
 {
-    bool ipv6 = sip_utils::isIPv6(to_raw);
-    const std::string& to = ipv6 ? sip_utils::addrToStr(to_raw, false, true) : to_raw;
+    bool ipv6 = ip_utils::isIPv6(to_raw);
+    const std::string& to = ipv6 ? ip_utils::addrToStr(to_raw, false, true) : to_raw;
     DEBUG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
 
     SIPAccount *account = Manager::instance().getIP2IPAccount();
@@ -1640,7 +1640,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     std::string account_id(call->getAccountId());
     SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
-    if (account == NULL) {
+    if (!account) {
         ERROR("Account is NULL in SIPStartCall");
         return false;
     }

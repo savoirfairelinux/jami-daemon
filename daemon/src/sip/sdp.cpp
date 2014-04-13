@@ -30,18 +30,16 @@
  *  as that of the covered work.
  */
 
+#include "sdp.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "sdp.h"
-#include "logger.h"
+#include "sipaccount.h"
 #include "manager.h"
-
-#include <algorithm>
-#include "sipaccount.h"
-#include "sipaccount.h"
-
+#include "logger.h"
+#include "ip_utils.h"
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
@@ -353,14 +351,14 @@ void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 void
 Sdp::setPublishedIP(const std::string &ip_addr)
 {
-    setPublishedIP(sip_utils::strToAddr(ip_addr));
+    setPublishedIP(ip_utils::strToAddr(ip_addr));
 }
 
 void
 Sdp::setPublishedIP(const pj_sockaddr& ip_addr)
 {
     publishedIpAddr_ = ip_addr;
-    publishedIpAddrStr_ = sip_utils::addrToStr(publishedIpAddr_);
+    publishedIpAddrStr_ = ip_utils::addrToStr(publishedIpAddr_);
 
     if (localSession_) {
         if (publishedIpAddr_.addr.sa_family == pj_AF_INET6())

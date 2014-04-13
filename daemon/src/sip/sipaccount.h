@@ -39,8 +39,7 @@
 #include "config.h"
 #endif
 #include "noncopyable.h"
-#include "account.h"
-#include "sip_utils.h"
+#include "ip_utils.h"
 
 #include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
@@ -477,7 +476,7 @@ class SIPAccount : public Account {
 
         void setPublishedAddress(const pj_sockaddr& ip_addr) {
             pj_sockaddr_cp(&publishedIp_, &ip_addr);
-            publishedIpAddress_ = sip_utils::addrToStr(ip_addr);
+            publishedIpAddress_ = ip_utils::addrToStr(ip_addr);
         }
 
         std::string getServiceRoute() const {
