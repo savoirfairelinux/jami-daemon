@@ -40,23 +40,24 @@
 #include "config.h"
 #endif
 
-#include <map>
-#include <mutex>
+#include "voiplink.h"
+#include "sipaccount.h"
+#include "siptransport.h"
 
-#include "pjsip.h"
-#include "pjlib.h"
-#include "pjsip_ua.h"
-#include "pjlib-util.h"
-#include "pjnath.h"
-#include "pjnath/stun_config.h"
+#include "eventthread.h"
+
+#include <pjsip.h>
+#include <pjlib.h>
+#include <pjsip_ua.h>
+#include <pjlib-util.h>
+#include <pjnath.h>
+#include <pjnath/stun_config.h>
+
 #ifdef SFL_VIDEO
 #include <queue>
 #endif
-
-#include "sipaccount.h"
-#include "voiplink.h"
-#include "siptransport.h"
-#include "eventthread.h"
+#include <map>
+#include <mutex>
 
 class SIPCall;
 class SIPAccount;
@@ -110,15 +111,18 @@ class SIPVoIPLink : public VoIPLink {
         AccountMap &
         getAccounts() { return sipAccountMap_; }
 
+        virtual std::vector<Call*> getCalls(const std::string &account_id) const;
+
         /**
          * Build and send SIP registration request
          */
-        virtual void sendRegister(Account *a);
+        virtual void sendRegister(Account& a);
 
         /**
          * Build and send SIP unregistration request
+         * @param destroy_transport If true, attempt to destroy the transport.
          */
-        virtual void sendUnregister(Account *a);
+        virtual void sendUnregister(Account& a);
 
         /**
          * Register a new keepalive registration timer to this endpoint

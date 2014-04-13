@@ -36,6 +36,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 class Call;
 class Account;
@@ -65,13 +66,14 @@ class VoIPLink {
          * Virtual method
          * Build and send account registration request
          */
-        virtual void sendRegister(Account *a) = 0;
+        virtual void sendRegister(Account& a) = 0;
 
         /**
          * Virtual method
          * Build and send account unregistration request
+         * Underlying ressources are released after unregistration
          */
-        virtual void sendUnregister(Account *a) = 0;
+        virtual void sendUnregister(Account& a) = 0;
 
         /**
          * Place a new call
@@ -82,6 +84,12 @@ class VoIPLink {
         virtual Call* newOutgoingCall(const std::string &id,
                                       const std::string &toUrl,
                                       const std::string &account_id) = 0;
+
+        /**
+         * Virtual method
+         * Returns calls involving this account.
+         */
+        virtual std::vector<Call*> getCalls(const std::string &account_id) const = 0;
 
         /**
          * Answer the call

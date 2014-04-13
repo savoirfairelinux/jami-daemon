@@ -140,7 +140,7 @@ void IAXAccount::registerVoIPLink()
 {
     try {
         link_.init();
-        link_.sendRegister(this);
+        link_.sendRegister(*this);
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
@@ -150,7 +150,7 @@ void
 IAXAccount::unregisterVoIPLink()
 {
     try {
-        link_.sendUnregister(this);
+        link_.sendUnregister(*this);
         link_.terminate();
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());

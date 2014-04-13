@@ -37,19 +37,19 @@
 #include "config.h"
 #endif
 
-#include "sip_utils.h"
-#include "array_size.h"
-#include "manager.h"
-#include "map_utils.h"
-#include "logger.h"
-
-#include "sip/sdp.h"
+#include "sdp.h"
 #include "sipcall.h"
-#include "eventthread.h"
+#include "sip_utils.h"
+
+#include "manager.h"
 #if HAVE_SDES
 #include "sdes_negotiator.h"
 #endif
+
+#include "logger.h"
 #include "array_size.h"
+#include "map_utils.h"
+#include "ip_utils.h"
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -66,13 +66,13 @@
 #include "client/callmanager.h"
 #include "client/configurationmanager.h"
 
-#include "pjsip/sip_endpoint.h"
-#include "pjsip/sip_uri.h"
-#include "pjnath.h"
+#include <pjsip/sip_endpoint.h>
+#include <pjsip/sip_uri.h>
+#include <pjnath.h>
 
 #ifdef SFL_PRESENCE
-#include "pjsip-simple/presence.h"
-#include "pjsip-simple/publish.h"
+#include <pjsip-simple/presence.h>
+#include <pjsip-simple/publish.h>
 #include "pres_sub_server.h"
 #endif
 
@@ -735,80 +735,84 @@ bool SIPVoIPLink::getEvent()
     return handlingEvents_;
 }
 
-void SIPVoIPLink::sendRegister(Account *a)
+std::vector<Call*>
+SIPVoIPLink::getCalls(const std::string &account_id) const
 {
-    SIPAccount *account = static_cast<SIPAccount*>(a);
+    std::vector<Call*> calls;
+    for (const auto & item : sipCallMap_) {
+        if (item.second->getAccountId() == account_id)
+            calls.push_back(item.second);
+    }
+    return calls;
+}
 
-    if (!account)
-        throw VoipLinkException("Account is NULL");
-    else if (not account->isEnabled()) {
+void
+SIPVoIPLink::sendRegister(Account& a)
+{
+    SIPAccount& account = static_cast<SIPAccount&>(a);
+    if (not account.isEnabled()) {
         WARN("Account must be enabled to register, ignoring");
         return;
     }
 
     try {
-        sipTransport->createSipTransport(*account);
+        sipTransport->createSipTransport(account);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
         throw VoipLinkException("Could not create or acquire SIP transport");
     }
 
-    account->setRegister(true);
-    account->setRegistrationState(RegistrationState::TRYING);
+    account.setRegister(true);
+    account.setRegistrationState(RegistrationState::TRYING);
 
-    pjsip_regc *regc = account->getRegistrationInfo();
-
-    if (pjsip_regc_create(endpt_, (void *) account, &registration_cb, &regc) != PJ_SUCCESS)
+    pjsip_regc *regc = nullptr;
+    if (pjsip_regc_create(endpt_, (void *) &account, &registration_cb, &regc) != PJ_SUCCESS)
         throw VoipLinkException("UserAgent: Unable to create regc structure.");
 
-    std::string srvUri(account->getServerUri());
-
-    // std::string address, port;
-    // findLocalAddressFromUri(srvUri, account->transport_, address, port);
+    std::string srvUri(account.getServerUri());
     pj_str_t pjSrv = pj_str((char*) srvUri.c_str());
 
     // Generate the FROM header
-    std::string from(account->getFromUri());
+    std::string from(account.getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
     // Get the received header
-    std::string received(account->getReceivedParameter());
+    std::string received(account.getReceivedParameter());
 
     // Get the contact header
-    const pj_str_t pjContact(account->getContactHeader());
+    const pj_str_t pjContact(account.getContactHeader());
 
-    if (account->transport_) {
-        if (not account->getPublishedSameasLocal() or (not received.empty() and received != account->getPublishedAddress())) {
-            pjsip_host_port *via = account->getViaAddr();
+    if (account.transport_) {
+        if (not account.getPublishedSameasLocal() or (not received.empty() and received != account.getPublishedAddress())) {
+            pjsip_host_port *via = account.getViaAddr();
             DEBUG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
 
-            if (pjsip_regc_set_via_sent_by(regc, via, account->transport_) != PJ_SUCCESS)
+            if (pjsip_regc_set_via_sent_by(regc, via, account.transport_) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
-        } else if (account->isStunEnabled()) {
-            if (pjsip_regc_set_via_sent_by(regc, account->getViaAddr(), account->transport_) != PJ_SUCCESS)
+        } else if (account.isStunEnabled()) {
+            if (pjsip_regc_set_via_sent_by(regc, account.getViaAddr(), account.transport_) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
         }
     }
 
     //DEBUG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
-    if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
+    if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account.getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
-    if (account->hasServiceRoute())
-        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(account->getServiceRoute(), pool_));
+    if (account.hasServiceRoute())
+        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(account.getServiceRoute(), pool_));
 
-    pjsip_regc_set_credentials(regc, account->getCredentialCount(), account->getCredInfo());
+    pjsip_regc_set_credentials(regc, account.getCredentialCount(), account.getCredInfo());
 
     pjsip_hdr hdr_list;
     pj_list_init(&hdr_list);
-    std::string useragent(account->getUserAgentName());
+    std::string useragent(account.getUserAgentName());
     pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
     const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(pool_, &STR_USER_AGENT, &pJuseragent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
     pjsip_regc_add_headers(regc, &hdr_list);
-
     pjsip_tx_data *tdata;
 
     if (pjsip_regc_register(regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
@@ -830,40 +834,47 @@ void SIPVoIPLink::sendRegister(Account *a)
         throw VoipLinkException("Unable to send account registration request");
     }
 
-    account->setRegistrationInfo(regc);
+    account.setRegistrationInfo(regc);
 }
 
-void SIPVoIPLink::sendUnregister(Account *a)
+void SIPVoIPLink::sendUnregister(Account& a)
 {
-    SIPAccount *account = static_cast<SIPAccount *>(a);
+    SIPAccount& account = static_cast<SIPAccount&>(a);
 
     // This may occurs if account failed to register and is in state INVALID
-    if (!account->isRegistered()) {
-        account->setRegistrationState(RegistrationState::UNREGISTERED);
+    if (!account.isRegistered()) {
+        account.setRegistrationState(RegistrationState::UNREGISTERED);
         return;
     }
 
     // Make sure to cancel any ongoing timers before unregister
-    account->stopKeepAliveTimer();
+    account.stopKeepAliveTimer();
 
-    pjsip_regc *regc = account->getRegistrationInfo();
-
+    pjsip_regc *regc = account.getRegistrationInfo();
     if (!regc)
         throw VoipLinkException("Registration structure is NULL");
 
-    pjsip_tx_data *tdata = NULL;
-
+    pjsip_tx_data *tdata = nullptr;
     if (pjsip_regc_unregister(regc, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to unregister sip account");
 
     pj_status_t status;
-
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
         sip_strerror(status);
         throw VoipLinkException("Unable to send request to unregister sip account");
     }
 
-    account->setRegister(false);
+    account.setRegister(false);
+
+    if (account.transport_) {
+        if (pj_atomic_get(account.transport_->ref_cnt) > 0)
+            pjsip_transport_dec_ref(account.transport_);
+        pjsip_regc_release_transport(regc); // FIXME: are we sure it is the same transport ?
+        DEBUG("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
+        account.transport_ = nullptr;
+    }
+
+    sipTransport->cleanupTransports();
 }
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
@@ -2245,14 +2256,14 @@ void checkNatAddress(pjsip_regc_cbparam &param, SIPAccount &account)
 
 void registration_cb(pjsip_regc_cbparam *param)
 {
-    if (param == NULL) {
-        ERROR("registration callback parameter is NULL");
+    if (!param) {
+        ERROR("registration callback parameter is null");
         return;
     }
 
     SIPAccount *account = static_cast<SIPAccount *>(param->token);
 
-    if (account == NULL) {
+    if (!account) {
         ERROR("account doesn't exist in registration callback");
         return;
     }
@@ -2349,7 +2360,6 @@ void registration_cb(pjsip_regc_cbparam *param)
         account->setRegistrationStateDetailed(details);
         account->setRegistrationExpire(param->expiration);
     }
-
 #undef FAILURE_MESSAGE
 }
 

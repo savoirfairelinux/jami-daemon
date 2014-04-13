@@ -915,7 +915,7 @@ void SIPAccount::registerVoIPLink()
         return;
 
     try {
-        link_->sendRegister(this);
+        link_.sendRegister(*this);
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
@@ -935,7 +935,7 @@ void SIPAccount::unregisterVoIPLink()
         return;
 
     try {
-        link_->sendUnregister(this);
+        link_.sendUnregister(*this);
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
     }

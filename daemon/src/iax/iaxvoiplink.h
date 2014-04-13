@@ -101,14 +101,14 @@ class IAXVoIPLink : public VoIPLink {
         /**
          * Send out registration
          */
-        virtual void sendRegister(Account *a);
+        virtual void sendRegister(Account& a);
 
         /**
          * Destroy registration session
          * @todo Send an IAX_COMMAND_REGREL to force unregistration upstream.
          *       Urgency: low
          */
-        virtual void sendUnregister(Account *a);
+        virtual void sendUnregister(Account& a);
 
         /**
          * Create a new outgoing call
