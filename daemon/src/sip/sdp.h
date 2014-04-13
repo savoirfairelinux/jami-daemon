@@ -32,6 +32,9 @@
 #ifndef SDP_H_
 #define SDP_H_
 
+#include "global.h"
+#include "noncopyable.h"
+
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
 #include <pjsip/sip_transport.h>
@@ -40,12 +43,10 @@
 #include <pjmedia/errno.h>
 #include <pj/pool.h>
 #include <pj/assert.h>
+
 #include <vector>
 #include <string>
 #include <stdexcept>
-
-#include "global.h"
-#include "noncopyable.h"
 
 namespace sfl {
 class AudioCodec;

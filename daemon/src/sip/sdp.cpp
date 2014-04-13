@@ -45,6 +45,8 @@
 #include "video/libav_utils.h"
 #endif
 
+#include <algorithm>
+
 using std::string;
 using std::map;
 using std::vector;
