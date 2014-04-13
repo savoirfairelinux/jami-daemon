@@ -2306,13 +2306,8 @@ std::vector<std::string> ManagerImpl::getAccountList() const
     vector<string> account_order(loadAccountOrder());
 
     // The IP2IP profile is always available, and first in the list
-    Account *account = getIP2IPAccount();
 
     vector<string> v;
-    if (account)
-        v.push_back(account->getAccountID());
-    else
-        ERROR("could not find IP2IP profile in getAccount list");
 
     // Concatenate all account pointers in a single map
     AccountMap allAccounts(getAllAccounts());
@@ -2338,6 +2333,12 @@ std::vector<std::string> ManagerImpl::getAccountList() const
                 v.push_back(account_iter->second->getAccountID());
         }
     }
+
+    Account *account = getIP2IPAccount();
+    if (account)
+        v.push_back(account->getAccountID());
+    else
+        ERROR("could not find IP2IP profile in getAccount list");
 
     return v;
 }
@@ -2856,10 +2857,10 @@ ManagerImpl::freeAccount(const std::string& accountID)
 void
 ManagerImpl::registerAccounts()
 {
-    AccountMap allAccounts(getAllAccounts());
+    auto allAccounts(getAccountList());
 
     for (auto &item : allAccounts) {
-        Account *a = item.second;
+        Account *a = getAccount(item);
 
         if (!a)
             continue;
