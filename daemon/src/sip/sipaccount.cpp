@@ -88,8 +88,8 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , registrationExpire_(MIN_REGISTRATION_TIME)
     , interface_("default")
     , publishedSameasLocal_(true)
-    , publishedIpAddress_()
     , publishedIp_()
+    , publishedIpAddress_()
     , localPort_(DEFAULT_SIP_PORT)
     , publishedPort_(DEFAULT_SIP_PORT)
     , serviceRoute_()
@@ -890,10 +890,13 @@ void SIPAccount::registerVoIPLink()
     if (hostname_.length() >= PJ_MAX_HOSTNAME)
         return;
 
-    DEBUG("SIPAccount::registerVoIPLink");
+    DEBUG("SIPAccount::registerVoIPLink %s ", hostname_.c_str());
+
+    auto IPs = ip_utils::getAddrList(hostname_);
+    for (const auto& ip : IPs)
+        DEBUG("--- %s ", ip_utils::addrToStr(ip).c_str());
 
 #if HAVE_TLS
-
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_) {
         DEBUG("TLS is enabled for account %s", accountID_.c_str());
@@ -905,11 +908,18 @@ void SIPAccount::registerVoIPLink()
         // PJSIP does not currently support TLS over IPv6
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
-    } else {
-        transportType_ = PJSIP_TRANSPORT_UDP;
-    }
-
+    } else
 #endif
+    {
+        bool IPv6 = false;
+        if (isIP2IP()) {
+            DEBUG("SIPAccount::registerVoIPLink isIP2IP.");
+            //IPv6 = SipTransport::getInterfaceAddr(interface_).addr.sa_family == pj_AF_INET6();
+        } else if (!IPs.empty())
+            IPv6 = IPs[0].addr.sa_family == pj_AF_INET6();
+
+        transportType_ = IPv6 ? PJSIP_TRANSPORT_UDP6  : PJSIP_TRANSPORT_UDP;
+    }
 
     // Init STUN settings for this account if the user selected it
     if (stunEnabled_) {

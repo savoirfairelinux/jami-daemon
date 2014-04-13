@@ -398,7 +398,6 @@ class SIPAccount : public Account {
 
         /**
          * Get the contact header for
-         * @param prefer_ipv6 If we are dual-stack, use IPv6 contact header.
          * @return pj_str_t The contact header based on account information
          */
         pj_str_t getContactHeader();
@@ -548,6 +547,10 @@ class SIPAccount : public Account {
          * Pointer to the transport used by this acccount
          */
         pjsip_transport* transport_;
+
+        pjsip_transport_type_e getTransportType() const {
+            return transportType_;
+        }
 
         /* Returns true if the username and/or hostname match this account */
         MatchRank matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
