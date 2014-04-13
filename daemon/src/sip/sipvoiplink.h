@@ -77,7 +77,7 @@ class SIPVoIPLink : public VoIPLink {
          * Singleton method. Enable to retrieve the unique static instance
          * @return SIPVoIPLink* A pointer on the object
          */
-        static SIPVoIPLink* instance();
+        static SIPVoIPLink& instance();
 
         /**
          * Destroy the singleton instance

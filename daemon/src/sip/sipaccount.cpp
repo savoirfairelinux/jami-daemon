@@ -976,7 +976,7 @@ void SIPAccount::startKeepAliveTimer()
 
     keepAliveTimerActive_ = true;
 
-    link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
+    link_.registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
 void SIPAccount::stopKeepAliveTimer()
@@ -984,7 +984,7 @@ void SIPAccount::stopKeepAliveTimer()
     if (keepAliveTimerActive_) {
         DEBUG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
         keepAliveTimerActive_ = false;
-        link_->cancelKeepAliveTimer(keepAliveTimer_);
+        link_.cancelKeepAliveTimer(keepAliveTimer_);
     }
 }
 
@@ -1230,7 +1230,7 @@ SIPAccount::getContactHeader()
     std::string address;
     pj_uint16_t port;
 
-    link_->sipTransport->findLocalAddressFromTransport(transport_, transportType, address, port);
+    link_.sipTransport->findLocalAddressFromTransport(transport_, transportType, address, port);
 
     if (not publishedSameasLocal_) {
         address = publishedIpAddress_;
@@ -1286,7 +1286,7 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
     std::string addr;
     pj_uint16_t port;
-    link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
+    link_.sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
     pjsip_host_port result;
     pj_strdup2(pool, &result.host, addr.c_str());
     result.host.slen = addr.length();
@@ -1522,7 +1522,7 @@ void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& detail
 
 VoIPLink* SIPAccount::getVoIPLink()
 {
-    return link_;
+    return &link_;
 }
 
 bool SIPAccount::isIP2IP() const
@@ -1791,7 +1791,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
     if (contactRewriteMethod_ == 1) {
         /* Unregister current contact */
-        link_->sendUnregister(this);
+        link_.sendUnregister(*this);
         destroyRegistrationInfo();
     }
 
@@ -1851,7 +1851,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
     //pjsua_acc_set_registration(acc->index, PJ_TRUE);
     /*  Perform new registration */
     try {
-        link_->sendRegister(this);
+        link_.sendRegister(*this);
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
     }
@@ -1864,7 +1864,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 void
 SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
 {
-    std::pair<SIPAccount *, pjsip_endpoint *> *context = static_cast<std::pair<SIPAccount *, pjsip_endpoint *> *>(te->user_data);
+    auto context = static_cast<std::pair<SIPAccount *, pjsip_endpoint *> *>(te->user_data);
     SIPAccount *acc = context->first;
     pjsip_endpoint *endpt = context->second;
 
@@ -1880,7 +1880,7 @@ SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
     /* Start re-registration */
     acc->auto_rereg_.attempt_cnt++;
     try {
-        acc->link_->sendRegister(acc);
+        acc->link_.sendRegister(*acc);
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         acc->scheduleReregistration(endpt);

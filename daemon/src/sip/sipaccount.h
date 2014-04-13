@@ -826,7 +826,7 @@ class SIPAccount : public Account {
         /**
          * Voice over IP Link contains a listener thread and calls
          */
-        SIPVoIPLink* link_;
+        SIPVoIPLink& link_;
 
         /**
          * Optional: "received" parameter from VIA header

@@ -243,7 +243,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    std::string account_id(SIPVoIPLink::instance()->guessAccountIdFromNameAndServer(userName, server));
+    std::string account_id(SIPVoIPLink::instance().guessAccountIdFromNameAndServer(userName, server));
 
     std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
 
@@ -360,7 +360,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     if (account->isStunEnabled())
-        updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance()->sipTransport);
+        updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance().sipTransport);
 
     if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
         std::string sdpOffer(static_cast<const char*>(body->data), body->len);
@@ -411,9 +411,9 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_dialog *dialog = 0;
 
-    if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, NULL, &dialog) != PJ_SUCCESS) {
+    if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
         delete call;
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, nullptr, nullptr, nullptr);
         return PJ_FALSE;
     }
 
@@ -504,7 +504,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
         call->setConnectionState(Call::RINGING);
 
-        SIPVoIPLink::instance()->addSipCall(call);
+        SIPVoIPLink::instance().addSipCall(call);
         Manager::instance().incomingCall(*call, account_id);
     }
 
@@ -643,14 +643,14 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_shutdown();
 }
 
-SIPVoIPLink* SIPVoIPLink::instance()
+SIPVoIPLink& SIPVoIPLink::instance()
 {
     if (!instance_) {
         DEBUG("creating SIPVoIPLink instance");
         instance_ = new SIPVoIPLink;
     }
 
-    return instance_;
+    return *instance_;
 }
 
 void SIPVoIPLink::destroy()
@@ -1017,7 +1017,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
         call->getAudioRtp().initSession();
 
         if (account->isStunEnabled())
-            updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance()->sipTransport);
+            updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance().sipTransport);
 
         call->getAudioRtp().initLocalCryptoInfo();
         call->getAudioRtp().start(audioCodecs);
@@ -1060,7 +1060,7 @@ SIPVoIPLink::answer(Call *call)
         sdp_create_offer_cb(sipCall->inv, &dummy);
 
         if (account->isStunEnabled())
-            updateSDPFromSTUN(*sipCall, *account, *SIPVoIPLink::instance()->sipTransport);
+            updateSDPFromSTUN(*sipCall, *account, *SIPVoIPLink::instance().sipTransport);
     }
 
     ERROR("answer getContactHeader");
@@ -1248,7 +1248,7 @@ SIPVoIPLink::offhold(const std::string& id)
         SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
         if (account and account->isStunEnabled())
-            updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance()->sipTransport);
+            updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance().sipTransport);
 
         call->getAudioRtp().restoreLocalContext();
         call->getAudioRtp().initLocalCryptoInfoOnOffHold();
@@ -1589,7 +1589,7 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
     const int tries = 10;
 
     for (int i = 0; !call and i < tries; ++i)
-        call = SIPVoIPLink::instance()->tryGetSIPCall(callID);
+        call = SIPVoIPLink::instance().tryGetSIPCall(callID);
 
     if (!call)
         return;
@@ -1779,14 +1779,14 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         }
     }
 
-    SIPVoIPLink *link = SIPVoIPLink::instance();
+    SIPVoIPLink& link = SIPVoIPLink::instance();
 
     if (inv->state == PJSIP_INV_STATE_EARLY and ev and ev->body.tsx_state.tsx and
             ev->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
         makeCallRing(*call);
     } else if (inv->state == PJSIP_INV_STATE_CONFIRMED and ev) {
         // After we sent or received a ACK - The connection is established
-        link->SIPCallAnswered(call, ev->body.tsx_state.src.rdata);
+        link.SIPCallAnswered(call, ev->body.tsx_state.src.rdata);
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
         std::string accId(call->getAccountId());
 
@@ -1794,7 +1794,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
                 // The call terminates normally - BYE / CANCEL
             case PJSIP_SC_OK:
             case PJSIP_SC_REQUEST_TERMINATED:
-                link->SIPCallClosed(call);
+                link.SIPCallClosed(call);
                 break;
 
             case PJSIP_SC_DECLINE:
@@ -1811,7 +1811,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             case PJSIP_SC_REQUEST_PENDING:
             case PJSIP_SC_ADDRESS_INCOMPLETE:
             default:
-                link->SIPCallServerFailure(call);
+                link.SIPCallServerFailure(call);
                 break;
         }
     }
@@ -1890,7 +1890,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
         WARN("Could not negotiate offer");
         const std::string callID(call->getCallId());
-        SIPVoIPLink::instance()->hangup(callID, reason);
+        SIPVoIPLink::instance().hangup(callID, reason);
         // call is now a dangling pointer after calling hangup
         call = 0;
         Manager::instance().callFailure(callID);
@@ -2021,7 +2021,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp().initSession();
 
             if (sipaccount->isStunEnabled())
-                updateSDPFromSTUN(*call, *sipaccount, *SIPVoIPLink::instance()->sipTransport);
+                updateSDPFromSTUN(*call, *sipaccount, *SIPVoIPLink::instance().sipTransport);
         }
     }
 
@@ -2370,7 +2370,7 @@ void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }
 
     try {
-        SIPVoIPLink::instance()->newOutgoingCall(Manager::instance().getNewCallID(),
+        SIPVoIPLink::instance().newOutgoingCall(Manager::instance().getNewCallID(),
                 std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen), currentCall->getAccountId());
         Manager::instance().hangupCall(currentCall->getCallId());
     } catch (const VoipLinkException &e) {
@@ -2429,7 +2429,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
                 return;
 
             std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
-            SIPCall *call = SIPVoIPLink::instance()->getSipCall(transferCallID[transferID]);
+            SIPCall *call = SIPVoIPLink::instance().getSipCall(transferCallID[transferID]);
 
             if (!call)
                 return;

@@ -134,7 +134,7 @@ namespace {
 namespace {
     void loadDefaultAccountMap()
     {
-        SIPVoIPLink::instance()->loadIP2IPSettings();
+        SIPVoIPLink::instance().loadIP2IPSettings();
     }
 }
 
@@ -485,10 +485,10 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     if (isIPToIP(callId)) {
         /* Direct IP to IP call */
         try {
-            Call * call = SIPVoIPLink::instance()->getSipCall(callId);
+            Call * call = SIPVoIPLink::instance().getSipCall(callId);
             if (call) {
                 history_.addCall(call, preferences.getHistoryLimit());
-                SIPVoIPLink::instance()->hangup(callId, 0);
+                SIPVoIPLink::instance().hangup(callId, 0);
                 checkAudio();
                 saveHistory();
             }
@@ -547,7 +547,7 @@ bool ManagerImpl::onHoldCall(const std::string& callId)
 
     try {
         if (isIPToIP(callId)) {
-            SIPVoIPLink::instance()->onhold(callId);
+            SIPVoIPLink::instance().onhold(callId);
         } else {
             /* Classic call, attached to an account */
             std::string account_id(getAccountFromCall(callId));
@@ -602,7 +602,7 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
 
     try {
         if (isIPToIP(callId))
-            SIPVoIPLink::instance()->offhold(callId);
+            SIPVoIPLink::instance().offhold(callId);
         else {
             /* Classic call, attached to an account */
             Call * call = getCallFromCallID(callId);
@@ -643,7 +643,7 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 
     // Direct IP to IP call
     if (isIPToIP(callId)) {
-        SIPVoIPLink::instance()->transfer(callId, to);
+        SIPVoIPLink::instance().transfer(callId, to);
     } else {
         std::string accountID(getAccountFromCall(callId));
 
@@ -673,7 +673,7 @@ void ManagerImpl::transferSucceeded()
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
     if (isIPToIP(transferID))
-        return SIPVoIPLink::instance()->attendedTransfer(transferID, targetID);
+        return SIPVoIPLink::instance().attendedTransfer(transferID, targetID);
 
     // Classic call, attached to an account
     std::string accountid(getAccountFromCall(transferID));
@@ -700,7 +700,7 @@ bool ManagerImpl::refuseCall(const std::string& id)
     /* Direct IP to IP call */
 
     if (isIPToIP(id))
-        SIPVoIPLink::instance()->refuse(id);
+        SIPVoIPLink::instance().refuse(id);
     else {
         /* Classic call, attached to an account */
         std::string accountid = getAccountFromCall(id);
@@ -992,7 +992,7 @@ ManagerImpl::getCallFromCallID(const std::string &callID)
 {
     Call *call = nullptr;
 
-    call = SIPVoIPLink::instance()->getSipCall(callID);
+    call = SIPVoIPLink::instance().getSipCall(callID);
 #if HAVE_IAX
     if (call != nullptr)
         return call;
@@ -1355,7 +1355,7 @@ void ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (auto &item : SIPVoIPLink::instance()->getAccounts())
+        for (auto &item : SIPVoIPLink::instance().getAccounts())
             item.second->serialize(emitter);
 
 #if HAVE_IAX
@@ -1665,10 +1665,10 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     /* Direct IP to IP call */
     if (isIPToIP(call_id)) {
-        Call * call = SIPVoIPLink::instance()->getSipCall(call_id);
+        Call * call = SIPVoIPLink::instance().getSipCall(call_id);
         if (call) {
             history_.addCall(call, preferences.getHistoryLimit());
-            SIPVoIPLink::instance()->hangup(call_id, 0);
+            SIPVoIPLink::instance().hangup(call_id, 0);
             saveHistory();
         }
     } else {
@@ -2423,7 +2423,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     if (accountType == "SIP") {
         newAccount = new SIPAccount(newAccountID, true);
-        SIPVoIPLink::instance()->getAccounts()[newAccountID] = newAccount;
+        SIPVoIPLink::instance().getAccounts()[newAccountID] = newAccount;
     }
 #if HAVE_IAX
     else if (accountType == "IAX") {
@@ -2463,7 +2463,7 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
     if (remAccount != nullptr) {
         remAccount->unregisterVoIPLink();
-        SIPVoIPLink::instance()->getAccounts().erase(accountID);
+        SIPVoIPLink::instance().getAccounts().erase(accountID);
 #if HAVE_IAX
         IAXVoIPLink::getAccounts().erase(accountID);
 #endif
@@ -2617,7 +2617,7 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     const std::string accountOrder = preferences.getAccountOrder();
 
-    AccountMap &sipAccounts = SIPVoIPLink::instance()->getAccounts();
+    AccountMap &sipAccounts = SIPVoIPLink::instance().getAccounts();
 #if HAVE_IAX
     AccountMap &iaxAccounts = IAXVoIPLink::getAccounts();
     for (auto &s : *seq)
@@ -2628,14 +2628,14 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 #endif
 
     // This must happen after account is loaded
-    SIPVoIPLink::instance()->loadIP2IPSettings();
+    SIPVoIPLink::instance().loadIP2IPSettings();
 
     return errorCount;
 }
 
 void ManagerImpl::registerAllAccounts()
 {
-    for (auto &a : SIPVoIPLink::instance()->getAccounts())
+    for (auto &a : SIPVoIPLink::instance().getAccounts())
         registerAccount(a);
 #if HAVE_IAX
     for (auto &a : IAXVoIPLink::getAccounts())
@@ -2645,7 +2645,7 @@ void ManagerImpl::registerAllAccounts()
 
 void ManagerImpl::unregisterAllAccounts()
 {
-    for (auto &a : SIPVoIPLink::instance()->getAccounts())
+    for (auto &a : SIPVoIPLink::instance().getAccounts())
         unregisterAccount(a);
 #if HAVE_IAX
     for (auto &a : IAXVoIPLink::getAccounts())
@@ -2657,7 +2657,7 @@ bool ManagerImpl::accountExists(const std::string &accountID)
 {
     bool ret = false;
 
-    ret = SIPVoIPLink::instance()->getAccounts().find(accountID) != SIPVoIPLink::instance()->getAccounts().end();
+    ret = SIPVoIPLink::instance().getAccounts().find(accountID) != SIPVoIPLink::instance().getAccounts().end();
 #if HAVE_IAX
     if (ret)
         return ret;
@@ -2671,8 +2671,8 @@ bool ManagerImpl::accountExists(const std::string &accountID)
 SIPAccount*
 ManagerImpl::getIP2IPAccount() const
 {
-    AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(SIPAccount::IP2IP_PROFILE);
-    if (iter == SIPVoIPLink::instance()->getAccounts().end())
+    AccountMap::const_iterator iter = SIPVoIPLink::instance().getAccounts().find(SIPAccount::IP2IP_PROFILE);
+    if (iter == SIPVoIPLink::instance().getAccounts().end())
         return nullptr;
 
     return static_cast<SIPAccount *>(iter->second);
@@ -2699,8 +2699,8 @@ ManagerImpl::getAccount(const std::string& accountID) const
 SIPAccount *
 ManagerImpl::getSipAccount(const std::string& accountID) const
 {
-    AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(accountID);
-    if (iter != SIPVoIPLink::instance()->getAccounts().end())
+    AccountMap::const_iterator iter = SIPVoIPLink::instance().getAccounts().find(accountID);
+    if (iter != SIPVoIPLink::instance().getAccounts().end())
         return static_cast<SIPAccount *>(iter->second);
 
     return nullptr;
@@ -2722,7 +2722,7 @@ AccountMap
 ManagerImpl::getAllAccounts() const
 {
     AccountMap all;
-    all.insert(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end());
+    all.insert(SIPVoIPLink::instance().getAccounts().begin(), SIPVoIPLink::instance().getAccounts().end());
 #if HAVE_IAX
     all.insert(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end());
 #endif
@@ -2768,7 +2768,7 @@ std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory()
 std::vector<std::string>
 ManagerImpl::getCallList() const
 {
-    std::vector<std::string> v(SIPVoIPLink::instance()->getCallIDs());
+    std::vector<std::string> v(SIPVoIPLink::instance().getCallIDs());
 #if HAVE_IAX
     const std::vector<std::string> iaxCalls(IAXVoIPLink::getCallIDs());
     v.insert(v.end(), iaxCalls.begin(), iaxCalls.end());
@@ -2865,14 +2865,14 @@ VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID)
     Account *account = getAccount(accountID);
     if (account == nullptr) {
         DEBUG("Could not find account for account %s, returning sip voip", accountID.c_str());
-        return SIPVoIPLink::instance();
+        return &SIPVoIPLink::instance();
     }
 
     if (not accountID.empty())
         return account->getVoIPLink();
     else {
         DEBUG("Account id is empty for voip link, returning sip voip");
-        return SIPVoIPLink::instance();
+        return &SIPVoIPLink::instance();
     }
 }
 
