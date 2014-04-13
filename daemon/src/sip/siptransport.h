@@ -100,12 +100,13 @@ class SipTransport {
 
         /**
          * Initialize the transport selector
-         * @param transport		A transport associated with an account
-         *
-         * @return          	A pointer to the transport selector structure
+         * @param transport     A transport associated with an account
+         * @return          	A transport selector structure
          */
-        pjsip_tpselector *
-        createTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const;
+        static inline pjsip_tpselector getTransportSelector(pjsip_transport *transport) {
+            pjsip_tpselector tp = {PJSIP_TPSELECTOR_TRANSPORT, {transport}};
+            return tp;
+        }
 
         /**
          * This function returns a list of STUN mapped sockets for

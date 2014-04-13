@@ -318,13 +318,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     auto addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                     ? account->getPublishedIpAddress() : addrToUse;
 
-    pjsip_tpselector *tp_sel = SIPVoIPLink::instance()->sipTransport->createTransportSelector(account->transport_, call->getMemoryPool());
-
-    if (!tp_sel) {
-        ERROR("Could not create transport selector");
-        delete call;
-        return PJ_FALSE;
-    }
+    pjsip_tpselector tp_sel  = SipTransport::getTransportSelector(account->transport_);
 
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
@@ -419,7 +413,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
 
-    if (!dialog or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
+    if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         ERROR("Could not set transport for dialog");
         delete call;
         return PJ_FALSE;
@@ -818,12 +812,8 @@ SIPVoIPLink::sendRegister(Account& a)
     if (pjsip_regc_register(regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize transaction data for account registration");
 
-    pjsip_tpselector *tp_sel = sipTransport->createTransportSelector(account->transport_, pool_);
-
-    if (tp_sel == NULL)
-        throw VoipLinkException("Unable to create transport selector");
-
-    if (pjsip_regc_set_transport(regc, tp_sel) != PJ_SUCCESS)
+    const pjsip_tpselector tp_sel = SipTransport::getTransportSelector(account.transport_);
+    if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
         throw VoipLinkException("Unable to set transport");
 
     // pjsip_regc_send increment the transport ref count by one,
@@ -1694,9 +1684,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         return false;
     }
 
-    pjsip_tpselector *tp_sel = sipTransport->createTransportSelector(account->transport_, call->inv->pool);
-
-    if (!tp_sel or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
+    const pjsip_tpselector tp_sel = SipTransport::getTransportSelector(account->transport_);
+    if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         ERROR("Unable to associate transport for invite session dialog");
         return false;
     }

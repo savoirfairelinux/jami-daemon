@@ -351,22 +351,17 @@ SipTransport::cleanupTransports()
         pjsip_transport* t = (*it).second;
         pj_lock_acquire(t->lock);
         if (pj_atomic_get(t->ref_cnt) == 0 || t->is_shutdown || t->is_destroying) {
-            DEBUG("Removing transport for %s (%s)", (*it).first.c_str(), pj_atomic_get(t->ref_cnt) );
+            DEBUG("Removing transport for %s", t->info );
+            bool is_shutdown = t->is_shutdown || t->is_destroying;
             transportMap_.erase(it++);
+            pj_lock_release(t->lock);
+            if (!is_shutdown)
+                pjsip_transport_destroy(t);
         } else {
             ++it;
+            pj_lock_release(t->lock);
         }
-        pj_lock_release(t->lock);
     }
-}
-
-pjsip_tpselector *SipTransport::createTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
-{
-    RETURN_IF_FAIL(transport != NULL, NULL, "Transport is not initialized");
-    pjsip_tpselector *tp = (pjsip_tpselector *) pj_pool_zalloc(tp_pool, sizeof(pjsip_tpselector));
-    tp->type = PJSIP_TPSELECTOR_TRANSPORT;
-    tp->u.transport = transport;
-    return tp;
 }
 
 std::vector<pj_sockaddr>
@@ -422,13 +417,8 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     pjsip_tpmgr *tpmgr = pjsip_endpt_get_tpmgr(endpt_);
     RETURN_IF_NULL(tpmgr, "Transport manager is NULL in findLocalAddress, using local address %s :%d", addr.c_str(), port);
 
-    // initialize a transport selector
-    // TODO Need to determine why we exclude TLS here...
-    // if (transportType == PJSIP_TRANSPORT_UDP and transport_)
-    pjsip_tpselector *tp_sel = createTransportSelector(transport, &pool_);
-    RETURN_IF_NULL(tp_sel, "Could not initialize transport selector, using local address %s :%d", addr.c_str(), port);
-
-    pjsip_tpmgr_fla2_param param = {transportType, tp_sel, {nullptr,0}, PJ_FALSE, {nullptr,0}, 0, nullptr};
+    pjsip_tpselector tp_sel = getTransportSelector(transport);
+    pjsip_tpmgr_fla2_param param = {transportType, &tp_sel, {nullptr, 0}, PJ_FALSE, {nullptr, 0}, 0, nullptr};
     if (pjsip_tpmgr_find_local_addr2(tpmgr, &pool_, &param) != PJ_SUCCESS) {
         WARN("Could not retrieve local address and port from transport, using %s :%d", addr.c_str(), port);
         return;
