@@ -32,30 +32,43 @@
 #ifndef SIPTRANSPORT_H_
 #define SIPTRANSPORT_H_
 
-#include <string>
-#include <vector>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include "noncopyable.h"
+#include "logger.h"
 
 #include <pjsip.h>
-#include <pjlib.h>
 #include <pjsip_ua.h>
+#include <pjlib.h>
 #include <pjlib-util.h>
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
-#include "noncopyable.h"
 
-#include "config.h"
+#include <map>
+#include <string>
+#include <vector>
+#include <memory>
 
 class SIPAccount;
 
+/* An IPv4 equivalent to IN6_IS_ADDR_UNSPECIFIED */
+#ifndef IN_IS_ADDR_UNSPECIFIED
+#define IN_IS_ADDR_UNSPECIFIED(a) (((long int) (a)->s_addr) == 0x00000000)
+#endif /* IN_IS_ADDR_UNSPECIFIED */
+
 class SipTransport {
     public:
-        SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool);
-        static std::string getSIPLocalIP();
+        SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool);
+
+        static pj_sockaddr getSIPLocalIP(pj_uint16_t family = pj_AF_UNSPEC());
 
         /**
          * Get the IP for the network interface named ifaceName
+         * @param forceIPv6 If IPv4 and IPv6 are available, will force to IPv6.
          */
-        static std::string getInterfaceAddrFromName(const std::string &ifaceName);
+        static std::string getInterfaceAddrFromName(const std::string &ifaceName, bool forceIPv6 = false);
+        static pj_sockaddr getInterfaceAddr(const std::string &ifaceName, bool forceIPv6 = false);
 
         /**
         * List all the interfaces on the system and return
@@ -69,10 +82,10 @@ class SipTransport {
 
         /**
          * List all the interfaces on the system and return
-         * a vector list containing their IPV4 address.
+         * a vector list containing their IP address.
          * @param void
          * @return std::vector<std::string> A std::string vector
-         * of IPV4 address available on all of the interfaces on
+         * of IP address available on all of the interfaces on
          * the system.
          */
         static std::vector<std::string> getAllIpInterface();
@@ -82,7 +95,7 @@ class SipTransport {
          * transport type specified in account settings
          * @param account The account for which a transport must be created.
          */
-        void createSipTransport(SIPAccount &account);
+        void createSipTransport(SIPAccount &account, pj_uint16_t family = pj_AF_UNSPEC());
 
         /**
          * Initialize the transport selector
@@ -96,7 +109,7 @@ class SipTransport {
         /**
          * This function returns a list of STUN mapped sockets for
          * a given set of socket file descriptors */
-        std::vector<pj_sockaddr_in>
+        std::vector<pj_sockaddr>
         getSTUNAddresses(const SIPAccount &account,
                          std::vector<long> &socks) const;
 
@@ -108,10 +121,10 @@ class SipTransport {
          * @param uri The uri from which we want to discover the address to use
          * @param transport The transport to use to discover the address
          */
-        void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
+        void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, pj_uint16_t &port) const;
 
         void findLocalAddressFromSTUN(pjsip_transport *transport, pj_str_t *stunServerName,
-                int stunPort, std::string &address, std::string &port) const;
+                int stunPort, std::string &address, pj_uint16_t &port) const;
 
     private:
         NON_COPYABLE(SipTransport);
@@ -131,18 +144,26 @@ class SipTransport {
          * Create The default TLS listener which is global to the application. This means that
          * only one TLS connection can be established for the momment.
          * @param the SIPAccount for which we are creating the TLS listener
+         * @param IP protocol version to use, can be pj_AF_INET() or pj_AF_INET6()
          * @return a pointer to the new listener
          */
         pjsip_tpfactory *
-        createTlsListener(SIPAccount &account);
+        createTlsListener(SIPAccount &account, pj_uint16_t family = pj_AF_UNSPEC());
 #endif
 
         /**
         * Create SIP UDP transport from account's setting
         * @param account The account for which a transport must be created.
+        * @param IP protocol version to use, can be pj_AF_INET() or pj_AF_INET6()
+        * @return a pointer to the new transport
         */
         pjsip_transport *createUdpTransport(const std::string &interface,
-                                            unsigned int port);
+                                            pj_uint16_t port, pj_uint16_t family = pj_AF_UNSPEC());
+
+        /**
+         * Go through the transport list and remove unused ones.
+         */
+        void cleanupTransports();
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case
@@ -150,9 +171,8 @@ class SipTransport {
          */
         std::map<std::string, pjsip_transport*> transportMap_;
 
-        pj_caching_pool *cp_;
-
-        pj_pool_t *pool_;
+        pj_caching_pool& cp_;
+        pj_pool_t& pool_;
 
         pjsip_endpoint *endpt_;
 };

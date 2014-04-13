@@ -31,7 +31,6 @@
 #ifndef EVENT_THREAD_H_
 #define EVENT_THREAD_H_
 
-#include "noncopyable.h"
 #include <thread>
 
 class VoIPLink;
@@ -43,16 +42,15 @@ class VoIPLink;
 
 class EventThread {
     public:
-        EventThread(VoIPLink* link);
+        EventThread(VoIPLink& link);
         ~EventThread();
         // spawns thread
         void start();
         void join();
 
     private:
-        NON_COPYABLE(EventThread);
         // VoIPLink is the object being called by getEvents() method
-        VoIPLink* link_;
+        VoIPLink& link_;
         std::thread thread_;
         void run();
 };

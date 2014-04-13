@@ -77,6 +77,40 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
         void startRTPLoop();
 };
 
+class AudioSymmetricRtpSessionIPv6 : public ost::SymmetricRTPSessionIPV6, public AudioRtpSession {
+    public:
+        /**
+        * Constructor
+        * @param call The SIP call
+        */
+        AudioSymmetricRtpSessionIPv6(SIPCall &call);
+
+        std::vector<long>
+        getSocketDescriptors() const;
+
+        virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
+            return AudioRtpSession::onRTPPacketRecv(pkt);
+        }
+
+    protected:
+        virtual size_t recvData(unsigned char*, size_t s, ost::IPV4Host&, ost::tpport_t&) {
+            ERROR("IPv4 dummy function recvData called in ipv6 stack, size %d", s);
+            //ost::SymmetricRTPSessionIPV6::recvData();
+        }
+
+        virtual size_t recvControl(unsigned char*, size_t s, ost::IPV4Host&, ost::tpport_t&) {
+            ERROR("IPv4 dummy function recvControl called in ipv6 stack, size %d", s);
+        }
+
+    private:
+        void onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks);
+        void onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks);
+
+        NON_COPYABLE(AudioSymmetricRtpSessionIPv6);
+
+        void startRTPLoop();
+};
+
 }
 #pragma GCC diagnostic warning "-Weffc++"
 #endif // AUDIO_SYMMETRIC_RTP_SESSION_H__

@@ -155,4 +155,50 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
     }
 }
 
+// IPv6
+
+AudioSymmetricRtpSessionIPv6::AudioSymmetricRtpSessionIPv6(SIPCall &call) :
+    ost::SymmetricRTPSessionIPV6(ost::IPV6Host(call.getLocalIp().c_str()), call.getLocalAudioPort())
+    , AudioRtpSession(call, *this)
+{
+    DEBUG("Setting new RTP/IPv6 session with destination %s:%d",
+          call_.getLocalIp().c_str(), call_.getLocalAudioPort());
+}
+
+std::vector<long>
+AudioSymmetricRtpSessionIPv6::getSocketDescriptors() const
+{
+    std::vector<long> result;
+    result.push_back(dso->getRecvSocket());
+    result.push_back(cso->getRecvSocket());
+    return result;
+}
+
+void AudioSymmetricRtpSessionIPv6::startRTPLoop()
+{
+    ost::SymmetricRTPSessionIPV6::startRunning();
+}
+
+// redefined from QueueRTCPManager
+void AudioSymmetricRtpSessionIPv6::onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks)
+{
+    ost::SymmetricRTPSessionIPV6::onGotRR(source, RR, blocks);
+    // TODO: do something with this data
+#if 0
+    std::cout << "I got an RR RTCP report from "
+        << std::hex << (int)source.getID() << "@"
+        << std::dec
+        << source.getNetworkAddress() << ":"
+        << source.getControlTransportPort() << std::endl;
+#endif
+}
+
+// redefined from QueueRTCPManager
+void AudioSymmetricRtpSessionIPv6::onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks)
+{
+    ost::SymmetricRTPSessionIPV6::onGotSR(source, SR, blocks);
+    // TODO: do something with this data
+}
+
+
 }

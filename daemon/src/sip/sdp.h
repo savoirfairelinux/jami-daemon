@@ -154,11 +154,12 @@ class Sdp {
          * Write accessor. Set the local IP address that will be used in the sdp session
          */
         void setPublishedIP(const std::string &ip_addr);
+        void setPublishedIP(const pj_sockaddr& ip_addr);
 
         /*
          * Read accessor. Get the local IP address
          */
-        std::string getPublishedIP() const {
+        pj_sockaddr getPublishedIP() const {
             return publishedIpAddr_;
         }
 
@@ -172,7 +173,7 @@ class Sdp {
             localVideoControlPort_ = port + 1;
         }
 
-        void updatePorts(const std::vector<pj_sockaddr_in> &sockets);
+        void updatePorts(const std::vector<pj_sockaddr> &sockets);
 
         /**
          * Return IP of destination
@@ -309,7 +310,8 @@ class Sdp {
         std::vector<sfl::AudioCodec *> sessionAudioMedia_;
         std::vector<std::string> sessionVideoMedia_;
 
-        std::string publishedIpAddr_;
+        pj_sockaddr publishedIpAddr_;
+        std::string publishedIpAddrStr_;
         std::string remoteIpAddr_;
 
         int localAudioDataPort_;

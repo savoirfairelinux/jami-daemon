@@ -29,6 +29,9 @@
  *  as that of the covered work.
  */
 
+#include "sip_utils.h"
+#include "logger.h"
+
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
@@ -40,16 +43,14 @@
 #include <pjsip/sip_types.h>
 #include <pjsip/sip_uri.h>
 #include <pj/list.h>
-#include "sip_utils.h"
 
-#include <vector>
-#include <algorithm>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "logger.h"
+#include <vector>
+#include <algorithm>
 
 std::string
 sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
@@ -198,24 +199,22 @@ sip_utils::getIPList(const std::string &name)
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_ADDRCONFIG;
     /* resolve the domain name into a list of addresses */
-    const int error = getaddrinfo(name.c_str(), NULL, &hints, &result);
+    const int error = getaddrinfo(name.c_str(), nullptr, &hints, &result);
     if (error != 0) {
         DEBUG("getaddrinfo on \"%s\" failed: %s", name.c_str(), gai_strerror(error));
         return ipList;
     }
 
-    for (struct addrinfo *res = result; res != NULL; res = res->ai_next) {
-
+    for (struct addrinfo *res = result; res != nullptr; res = res->ai_next) {
         void *ptr = 0;
         std::vector<char> addrstr;
-        static const int AF_INET_STRLEN = 16, AF_INET6_STRLEN = 40;
         switch (res->ai_family) {
             case AF_INET:
-                addrstr.resize(AF_INET_STRLEN);
+                addrstr.resize(INET_ADDRSTRLEN);
                 ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
                 break;
             case AF_INET6:
-                addrstr.resize(AF_INET6_STRLEN);
+                addrstr.resize(INET6_ADDRSTRLEN);
                 ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
                 break;
             default:
@@ -226,12 +225,77 @@ sip_utils::getIPList(const std::string &name)
         // don't add duplicates, and don't use an std::set because
         // we want this order preserved.
         const std::string tmp(addrstr.begin(), addrstr.end());
-        if (std::find(ipList.begin(), ipList.end(), tmp) == ipList.end())
+        if (std::find(ipList.begin(), ipList.end(), tmp) == ipList.end()) {
             ipList.push_back(tmp);
+        }
     }
 
     freeaddrinfo(result);
     return ipList;
+}
+
+std::string
+sip_utils::addrToStr(const pj_sockaddr& ip, bool include_port, bool force_ipv6_brackets)
+{
+    std::string str(PJ_INET6_ADDRSTRLEN, (char)0);
+    if(include_port) force_ipv6_brackets = true;
+    pj_sockaddr_print(&ip, &(*str.begin()), PJ_INET6_ADDRSTRLEN, (include_port?1:0)|(force_ipv6_brackets?2:0));
+    return str;
+}
+
+std::string
+sip_utils::addrToStr(const std::string& ip_str, bool include_port, bool force_ipv6_brackets)
+{
+    pj_sockaddr ip = strToAddr(ip_str);
+    if (ip.addr.sa_family == pj_AF_UNSPEC())
+        return ip_str;
+    return addrToStr(ip, include_port, force_ipv6_brackets);
+}
+
+pj_sockaddr
+sip_utils::strToAddr(const std::string& str)
+{
+    pj_str_t pjstring;
+    pj_cstr(&pjstring, str.c_str());
+    pj_sockaddr ip;
+    auto status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &pjstring, &ip);
+    if (status != PJ_SUCCESS)
+        ip.addr.sa_family = pj_AF_UNSPEC();
+    return ip;
+}
+
+pj_sockaddr
+sip_utils::getAnyHostAddr(pj_uint16_t family)
+{
+    if (family == pj_AF_UNSPEC()) family = pj_AF_INET();
+    pj_sockaddr addr = {};
+    addr.addr.sa_family = family;
+    return addr;
+}
+
+bool
+sip_utils::isIPv6(const std::string &address)
+{
+    return isValidAddr(address, pj_AF_INET6());
+}
+
+bool
+sip_utils::isValidAddr(const std::string &address, pj_uint16_t family)
+{
+    pj_str_t pjstring;
+    pj_cstr(&pjstring, address.c_str());
+    pj_str_t ret_str;
+    pj_uint16_t ret_port;
+    int ret_family;
+    auto status = pj_sockaddr_parse2(pj_AF_UNSPEC(), 0, &pjstring, &ret_str, &ret_port, &ret_family);
+    if (status != PJ_SUCCESS || (family != pj_AF_UNSPEC() && ret_family != family))
+        return false;
+
+    char buf[PJ_INET6_ADDRSTRLEN];
+    pj_str_t addr_with_null = {buf, 0};
+    pj_strncpy_with_null(&addr_with_null, &ret_str, sizeof(buf));
+    struct sockaddr sa;
+    return inet_pton(ret_family==pj_AF_INET6()?AF_INET6:AF_INET, buf, &(sa.sa_data)) == 1;
 }
 
 void

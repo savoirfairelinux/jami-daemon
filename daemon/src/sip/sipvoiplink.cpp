@@ -31,13 +31,13 @@
  *  as that of the covered work.
  */
 
+#include "sipvoiplink.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "sip_utils.h"
-
-#include "sipvoiplink.h"
 #include "array_size.h"
 #include "manager.h"
 #include "map_utils.h"
@@ -50,7 +50,6 @@
 #include "sdes_negotiator.h"
 #endif
 #include "array_size.h"
-
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -71,6 +70,12 @@
 #include "pjsip/sip_uri.h"
 #include "pjnath.h"
 
+#ifdef SFL_PRESENCE
+#include "pjsip-simple/presence.h"
+#include "pjsip-simple/publish.h"
+#include "pres_sub_server.h"
+#endif
+
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
@@ -79,15 +84,9 @@
 #include <utility> // for std::pair
 #include <algorithm>
 
-#ifdef SFL_PRESENCE
-#include "pjsip-simple/presence.h"
-#include "pjsip-simple/publish.h"
-#include "pres_sub_server.h"
-#endif
-
 using namespace sfl;
 
-SIPVoIPLink *SIPVoIPLink::instance_ = 0;
+SIPVoIPLink *SIPVoIPLink::instance_ = nullptr;
 
 namespace {
 
@@ -105,7 +104,7 @@ static std::map<std::string, std::string> transferCallID;
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  */
-void setCallMediaLocal(SIPCall* call, const std::string &localIP);
+void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP);
 
 static pj_caching_pool pool_cache, *cp_ = &pool_cache;
 static pj_pool_t *pool_;
@@ -197,12 +196,12 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
     std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
 
     try {
-        std::vector<pj_sockaddr_in> stunPorts(transport.getSTUNAddresses(account, socketDescriptors));
+        std::vector<pj_sockaddr> stunPorts(transport.getSTUNAddresses(account, socketDescriptors));
 
         // FIXME: get video sockets
         stunPorts.resize(4);
 
-        account.setPublishedAddress(pj_inet_ntoa(stunPorts[0].sin_addr));
+        account.setPublishedAddress(stunPorts[0]);
         // published IP MUST be updated first, since RTCP depends on it
         call.getLocalSDP()->setPublishedIP(account.getPublishedAddress());
         call.getLocalSDP()->updatePorts(stunPorts);
@@ -315,10 +314,9 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_, account_id);
 
     // May use the published address as well
-    std::string addrToUse = SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
-    std::string addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
-                          ? account->getPublishedAddress()
-                          : addrToUse;
+    auto addrToUse = SipTransport::getInterfaceAddr(account->getLocalInterface());
+    auto addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
+                    ? account->getPublishedIpAddress() : addrToUse;
 
     pjsip_tpselector *tp_sel = SIPVoIPLink::instance()->sipTransport->createTransportSelector(account->transport_, call->getMemoryPool());
 
@@ -338,6 +336,9 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
+
+    //DEBUG("transaction_request_cb host %s userName %s addrToUse %s addrSdp %s remote_user %s remote_hostname %s" ,
+    //server.c_str(), userName.c_str(), sip_utils::addrToStr(addrToUse).c_str(), sip_utils::addrToStr(addrSdp).c_str(), remote_user.c_str(), remote_hostname.c_str());
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
@@ -491,6 +492,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         // contactStr must stay in scope as long as tdata
+        ERROR("transaction_request_cb getContactHeader");
         const pj_str_t contactStr(account->getContactHeader());
         sip_utils::addContactHeader(&contactStr, tdata);
 
@@ -522,7 +524,7 @@ pjsip_module * SIPVoIPLink::getMod()
 }
 
 SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
-    sipCallMapMutex_(), sipCallMap_(), evThread_(this)
+    sipCallMapMutex_(), sipCallMap_(), evThread_(*this)
 #ifdef SFL_VIDEO
     , keyframeRequestsMutex_()
     , keyframeRequests_()
@@ -544,20 +546,20 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
     TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
-    pool_ = pj_pool_create(&cp_->factory, PACKAGE, 4000, 4000, NULL);
+    pool_ = pj_pool_create(&cp_->factory, PACKAGE, 4096, 4096, nullptr);
 
     if (!pool_)
         throw VoipLinkException("UserAgent: Could not initialize memory pool");
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
-    sipTransport.reset(new SipTransport(endpt_, cp_, pool_));
+    sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_));
 
-    if (SipTransport::getSIPLocalIP().empty())
+    if (SipTransport::getSIPLocalIP().addr.sa_family == pj_AF_UNSPEC())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
 
     TRY(pjsip_tsx_layer_init_module(endpt_));
-    TRY(pjsip_ua_init_module(endpt_, NULL));
+    TRY(pjsip_ua_init_module(endpt_, nullptr));
     TRY(pjsip_replaces_init_module(endpt_)); // See the Replaces specification in RFC 3891
     TRY(pjsip_100rel_init_module(endpt_));
 
@@ -583,11 +585,11 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
         outgoing_request_forked_cb,
         transaction_state_changed_cb,
         sdp_request_offer_cb,
-        NULL /* on_rx_reinvite */,
+        nullptr /* on_rx_reinvite */,
         sdp_create_offer_cb,
         sdp_media_update_cb,
-        NULL /* on_send_ack */,
-        NULL /* on_redirected */,
+        nullptr /* on_send_ack */,
+        nullptr /* on_redirected */,
     };
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
@@ -598,13 +600,13 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
         CONST_PJ_STR("PUBLISH"),
     };
 
-    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
+    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, nullptr, PJ_ARRAY_SIZE(allowed), allowed);
 
     static const pj_str_t text_plain = CONST_PJ_STR("text/plain");
-    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, NULL, 1, &text_plain);
+    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &text_plain);
 
     static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
-    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, NULL, 1, &accepted);
+    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &accepted);
 
     DEBUG("pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
 
@@ -627,18 +629,18 @@ SIPVoIPLink::~SIPVoIPLink()
 
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
+
+    for (auto & a : sipAccountMap_)
+        unloadAccount(a);
+    sipAccountMap_.clear();
+    clearSipCallMap();
+
     pjsip_endpt_destroy(endpt_);
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
 
-    for (auto & a : sipAccountMap_)
-        unloadAccount(a);
-
     pj_shutdown();
-    clearSipCallMap();
-
-    sipAccountMap_.clear();
 }
 
 SIPVoIPLink* SIPVoIPLink::instance()
@@ -654,7 +656,7 @@ SIPVoIPLink* SIPVoIPLink::instance()
 void SIPVoIPLink::destroy()
 {
     delete instance_;
-    instance_ = 0;
+    instance_ = nullptr;
 }
 
 std::string
@@ -788,6 +790,7 @@ void SIPVoIPLink::sendRegister(Account *a)
         }
     }
 
+    //DEBUG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
@@ -893,21 +896,6 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
     pjsip_endpt_cancel_timer(endpt_, &timer);
 }
 
-bool isValidIpAddress(const std::string &address)
-{
-    size_t pos = address.find(":");
-    std::string address_without_port(address);
-
-    if (pos != std::string::npos)
-        address_without_port = address.substr(0, pos);
-
-    DEBUG("Testing address %s", address_without_port.c_str());
-    struct sockaddr_in sa;
-    int result = inet_pton(AF_INET, address_without_port.data(), &(sa.sin_addr));
-    return result != 0;
-}
-
-
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id)
 {
     DEBUG("New outgoing call to %s", toUrl.c_str());
@@ -915,7 +903,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
     sip_utils::stripSipUriPrefix(toCpy);
 
-    const bool IPToIP = isValidIpAddress(toCpy);
+    const bool IPToIP = sip_utils::isValidAddr(toCpy);
     Manager::instance().setIPToIPForCall(id, IPToIP);
 
     if (IPToIP) {
@@ -925,9 +913,11 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     }
 }
 
-Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
+Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to_raw)
 {
-    DEBUG("New IP to IP call to %s", to.c_str());
+    bool ipv6 = sip_utils::isIPv6(to_raw);
+    const std::string& to = ipv6 ? sip_utils::addrToStr(to_raw, false, true) : to_raw;
+    DEBUG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
 
     SIPAccount *account = Manager::instance().getIP2IPAccount();
 
@@ -939,7 +929,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     call->setIPToIP(true);
     call->initRecFilename(to);
 
-    std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
+    auto localAddress = SipTransport::getInterfaceAddr(account->getLocalInterface(), ipv6);
 
     setCallMediaLocal(call, localAddress);
 
@@ -987,7 +977,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
 
     SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
-    if (account == NULL) // TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
+    if (account == nullptr) // TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
         throw VoipLinkException("Could not get account for this call");
 
     SIPCall* call = new SIPCall(id, Call::OUTGOING, cp_, account->getAccountID());
@@ -1002,20 +992,19 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
         toUri = account->getToUri(toUrl);
 
     call->setPeerNumber(toUri);
-    std::string localAddr(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
+    auto localAddr = SipTransport::getInterfaceAddr(account->getLocalInterface());
     setCallMediaLocal(call, localAddr);
 
     // May use the published address as well
-    std::string addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal()) ?
-                          account->getPublishedAddress() :
-                          SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
+    auto addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal()) ?
+                          account->getPublishedIpAddress() : localAddr;
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
-    if (ac == NULL) {
+    if (!ac) {
         delete call;
         throw VoipLinkException("Could not instantiate codec for early media");
     }
@@ -1074,6 +1063,7 @@ SIPVoIPLink::answer(Call *call)
             updateSDPFromSTUN(*sipCall, *account, *SIPVoIPLink::instance()->sipTransport);
     }
 
+    ERROR("answer getContactHeader");
     pj_str_t contact(account->getContactHeader());
     sipCall->setContactHeader(&contact);
     sipCall->answer();
@@ -1137,6 +1127,7 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
         return;
 
     // contactStr must stay in scope as long as tdata
+    ERROR("hangup getContactHeader");
     const pj_str_t contactStr(account->getContactHeader());
     sip_utils::addContactHeader(&contactStr, tdata);
 
@@ -1653,6 +1644,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     pj_str_t pjContact(account->getContactHeader());
 
+    ERROR("SIPStartCall getContactHeader %s / %s -> %s", std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str(), from.c_str(), toUri.c_str());
+
     pjsip_dialog *dialog = NULL;
 
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
@@ -1863,19 +1856,14 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     if (!account)
         return;
 
-    std::string address;
-
-    if (account->getPublishedSameasLocal())
-        address = SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
-    else
-        address = account->getPublishedAddress();
-
-    const std::string addrSdp(address);
+    auto address = account->getPublishedSameasLocal()
+                    ? SipTransport::getInterfaceAddr(account->getLocalInterface())
+                    : account->getPublishedIpAddress();
 
     setCallMediaLocal(call, address);
 
     Sdp *localSDP = call->getLocalSDP();
-    localSDP->setPublishedIP(addrSdp);
+    localSDP->setPublishedIP(address);
     const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
     if (created)
@@ -2467,7 +2455,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
     }
 }
 
-void setCallMediaLocal(SIPCall* call, const std::string &localIP)
+void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP)
 {
     std::string account_id(call->getAccountId());
     SIPAccount *account = Manager::instance().getSipAccount(account_id);

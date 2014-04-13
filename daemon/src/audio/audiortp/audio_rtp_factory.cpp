@@ -28,11 +28,12 @@
  *  as that of the covered work.
  */
 
+#include "audio_rtp_factory.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "audio_rtp_factory.h"
 #if HAVE_ZRTP
 #include "audio_zrtp_session.h"
 #endif
@@ -122,7 +123,11 @@ void AudioRtpFactory::initSession()
                 throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
     } else {
-        rtpSession_.reset(new AudioSymmetricRtpSession(*call_));
+        /*if (call_->isIPv6()) {
+            rtpSession_.reset(new AudioSymmetricRtpSessionIPv6(*call_));
+        } else */ {
+            rtpSession_.reset(new AudioSymmetricRtpSession(*call_));
+        }
     }
 }
 

@@ -38,17 +38,18 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include "noncopyable.h"
+#include "account.h"
+#include "sip_utils.h"
+
+#include <pjsip/sip_transport_tls.h>
+#include <pjsip/sip_types.h>
+#include <pjsip-ua/sip_regc.h>
+
+#include <openssl/x509v3.h>
 
 #include <vector>
 #include <map>
-
-#include "pjsip/sip_transport_tls.h"
-#include "pjsip/sip_types.h"
-#include "pjsip-ua/sip_regc.h"
-
-#include "noncopyable.h"
-#include "account.h"
-#include <openssl/x509v3.h>
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
@@ -279,12 +280,12 @@ class SIPAccount : public Account {
 
         /**
          * Registration flag
-	 */
+         */
         bool isRegistered() const {
             return bRegister_;
         }
 
-	/**
+        /**
          * Set registration flag
          */
         void setRegister(bool result) {
@@ -396,6 +397,7 @@ class SIPAccount : public Account {
 
         /**
          * Get the contact header for
+         * @param prefer_ipv6 If we are dual-stack, use IPv6 contact header.
          * @return pj_str_t The contact header based on account information
          */
         pj_str_t getContactHeader();
@@ -403,7 +405,7 @@ class SIPAccount : public Account {
         /**
          * Get the local interface name on which this account is bound.
          */
-        std::string getLocalInterface() const {
+        const std::string& getLocalInterface() const {
             return interface_;
         }
 
@@ -463,16 +465,20 @@ class SIPAccount : public Account {
          * Get the public IP address set by the user for this account.
          * If this setting is not provided, the local bound adddress
          * will be used.
-         * @return std::string The public IPV4 address formatted in the standard dot notation.
+         * @return std::string The public IPv4 or IPv6 address formatted in standard notation.
          */
         std::string getPublishedAddress() const {
             return publishedIpAddress_;
         }
 
-        void setPublishedAddress(const std::string &ip_addr) {
-            publishedIpAddress_ = ip_addr;
+        pj_sockaddr getPublishedIpAddress() const {
+            return publishedIp_;
         }
 
+        void setPublishedAddress(const pj_sockaddr& ip_addr) {
+            pj_sockaddr_cp(&publishedIp_, &ip_addr);
+            publishedIpAddress_ = sip_utils::addrToStr(ip_addr);
+        }
 
         std::string getServiceRoute() const {
             return serviceRoute_;
@@ -663,9 +669,10 @@ class SIPAccount : public Account {
         bool publishedSameasLocal_;
 
         /**
-         * Published IP address, ued only if defined by the user in account
+         * Published IP address, used only if defined by the user in account
          * configuration
          */
+        pj_sockaddr publishedIp_;
         std::string publishedIpAddress_;
 
         /**

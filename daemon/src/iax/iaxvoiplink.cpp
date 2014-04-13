@@ -59,7 +59,7 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     , resampler_(44100)
     , initDone_(false)
     , accountID_(accountID)
-    , evThread_(this)
+    , evThread_(*this)
 {
     srand(time(NULL));    // to get random number for RANDOM_PORT
 }

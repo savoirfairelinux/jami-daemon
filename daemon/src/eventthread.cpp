@@ -37,7 +37,7 @@
 #define YIELD pthread_yield
 #endif
 
-EventThread::EventThread(VoIPLink *link) : link_(link), thread_()
+EventThread::EventThread(VoIPLink &link) : link_(link), thread_()
 {}
 
 EventThread::~EventThread()
@@ -58,6 +58,6 @@ void EventThread::start()
 
 void EventThread::run()
 {
-    while (link_->getEvent())
+    while (link_.getEvent())
         YIELD();
 }

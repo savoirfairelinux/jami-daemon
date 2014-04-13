@@ -32,10 +32,14 @@
 #ifndef __CALL_H__
 #define __CALL_H__
 
-#include <sstream>
-#include <map>
-#include <mutex>
+#include "logger.h"
+
 #include "audio/recordable.h"
+#include "sip/sip_utils.h"
+
+#include <mutex>
+#include <map>
+#include <sstream>
 
 /*
  * @file call.h
@@ -183,8 +187,9 @@ class Call : public Recordable {
          * Set my IP [not protected]
          * @param ip  The local IP address
          */
-        void setLocalIp(const std::string& ip) {
-            localIPAddress_ = ip;
+        void setLocalIp(const pj_sockaddr& ip) {
+            pj_sockaddr_cp(&localIPAddr_, &ip);
+            localIPAddress_ = sip_utils::addrToStr(localIPAddr_);
         }
 
         /**
@@ -207,19 +212,21 @@ class Call : public Recordable {
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
-        std::string getLocalIp();
+        std::string getLocalIp() const;
+
+        pj_sockaddr getLocalIpAddr() const;
 
         /**
          * Return port used locally (for my machine) [mutex protected]
          * @return unsigned int  The local audio port
          */
-        unsigned int getLocalAudioPort();
+        unsigned int getLocalAudioPort() const;
 
         /**
          * Return port used locally (for my machine) [mutex protected]
          * @return unsigned int  The local video port
          */
-        unsigned int getLocalVideoPort();
+        unsigned int getLocalVideoPort() const;
 
         void time_stop();
         virtual std::map<std::string, std::string> getDetails();
@@ -233,12 +240,13 @@ class Call : public Recordable {
     private:
         std::string getTypeStr() const;
         /** Protect every attribute that can be changed by two threads */
-        std::mutex callMutex_;
+        mutable std::mutex callMutex_;
 
         // Informations about call socket / audio
 
         /** My IP address */
         std::string localIPAddress_;
+        pj_sockaddr localIPAddr_;
 
         /** Local audio port, as seen by me. */
         unsigned int localAudioPort_;

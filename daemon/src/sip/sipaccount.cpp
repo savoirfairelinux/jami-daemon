@@ -30,13 +30,12 @@
  *  as that of the covered work.
 */
 
+#include "sipaccount.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "account_schema.h"
-#include "sipaccount.h"
-#include "sip_utils.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
@@ -48,18 +47,17 @@
 #include "client/configurationmanager.h"
 #endif
 
-#include <unistd.h>
-#include <pwd.h>
-#include <sstream>
-#include <algorithm>
-#include <cstdlib>
-#include <array>
-#include <memory>
-
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
 #endif
 
+#include <unistd.h>
+#include <pwd.h>
+#include <algorithm>
+#include <array>
+#include <memory>
+#include <sstream>
+#include <cstdlib>
 
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
@@ -87,6 +85,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , interface_("default")
     , publishedSameasLocal_(true)
     , publishedIpAddress_()
+    , publishedIp_()
     , localPort_(DEFAULT_SIP_PORT)
     , publishedPort_(DEFAULT_SIP_PORT)
     , serviceRoute_()
@@ -138,7 +137,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , videoPortRange_({49152, (MAX_PORT) - 2})
 #endif
 #ifdef SFL_PRESENCE
-    , presence_(presenceEnabled ? new SIPPresence(this) : 0)
+    , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
 #endif
 {
     via_addr_.host.ptr = 0;
@@ -152,6 +151,11 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
 
 SIPAccount::~SIPAccount()
 {
+    if (transport_) {
+        pjsip_transport_dec_ref(transport_);
+        transport_ = nullptr;
+    }
+
 #ifdef SFL_PRESENCE
     delete presence_;
 #endif
@@ -882,6 +886,8 @@ void SIPAccount::registerVoIPLink()
     if (hostname_.length() >= PJ_MAX_HOSTNAME)
         return;
 
+    DEBUG("SIPAccount::registerVoIPLink");
+
 #if HAVE_TLS
 
     // Init TLS settings if the user wants to use TLS
@@ -1150,7 +1156,7 @@ std::string SIPAccount::getFromUri() const
     std::string hostname(hostname_);
 
     // UDP does not require the transport specification
-    if (transportType_ == PJSIP_TRANSPORT_TLS) {
+    if (transportType_ == PJSIP_TRANSPORT_TLS || transportType_ == PJSIP_TRANSPORT_TLS6) {
         scheme = "sips:";
         transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
     } else
@@ -1174,7 +1180,7 @@ std::string SIPAccount::getToUri(const std::string& username) const
     std::string hostname;
 
     // UDP does not require the transport specification
-    if (transportType_ == PJSIP_TRANSPORT_TLS) {
+    if (transportType_ == PJSIP_TRANSPORT_TLS || transportType_ == PJSIP_TRANSPORT_TLS6) {
         scheme = "sips:";
         transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
     } else
@@ -1197,12 +1203,11 @@ std::string SIPAccount::getServerUri() const
     std::string transport;
 
     // UDP does not require the transport specification
-    if (transportType_ == PJSIP_TRANSPORT_TLS) {
+    if (transportType_ == PJSIP_TRANSPORT_TLS || transportType_ == PJSIP_TRANSPORT_TLS6) {
         scheme = "sips:";
         transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
     } else {
         scheme = "sip:";
-        transport = "";
     }
 
     return "<" + scheme + hostname_ + transport + ">";
@@ -1222,20 +1227,19 @@ SIPAccount::getContactHeader()
         transportType = PJSIP_TRANSPORT_UDP;
 
     // Else we determine this infor based on transport information
-    std::string address, port;
-    std::ostringstream portstr;
+    std::string address;
+    pj_uint16_t port;
 
     link_->sipTransport->findLocalAddressFromTransport(transport_, transportType, address, port);
 
     if (not publishedSameasLocal_) {
         address = publishedIpAddress_;
-        portstr << publishedPort_;
-        port = portstr.str();
-        DEBUG("Using published address %s and port %s", address.c_str(), port.c_str());
+        port = publishedPort_;
+        DEBUG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
         link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
-        publishedIpAddress_ = address;
-        publishedPort_ = atoi(port.c_str());
+        setPublishedAddress(sip_utils::strToAddr(address));
+        publishedPort_ = port;
         usePublishedAddressPortInVIA();
     } else {
         if (!receivedParameter_.empty()) {
@@ -1244,9 +1248,8 @@ SIPAccount::getContactHeader()
         }
 
         if (rPort_ != -1 and rPort_ != 0) {
-            portstr << rPort_;
-            port = portstr.str();
-            DEBUG("Using received port %s", port.c_str());
+            port = rPort_;
+            DEBUG("Using received port %d", port);
         }
     }
 
@@ -1254,21 +1257,26 @@ SIPAccount::getContactHeader()
     std::string scheme;
     std::string transport;
 
-    if (transportType_ == PJSIP_TRANSPORT_TLS) {
+    /* Enclose IPv6 address in square brackets */
+    if (transportType > PJSIP_TRANSPORT_IPV6 || sip_utils::isIPv6(address)) {
+        address = sip_utils::addrToStr(address, false, true);
+    }
+
+    if (transportType != PJSIP_TRANSPORT_UDP and transportType != PJSIP_TRANSPORT_UDP6) {
         scheme = "sips:";
         transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType));
     } else
         scheme = "sip:";
 
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "%s%s<%s%s%s%s:%s%s>",
+                                     "%s%s<%s%s%s%s:%d%s>",
                                      displayName_.c_str(),
                                      (displayName_.empty() ? "" : " "),
                                      scheme.c_str(),
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
                                      address.c_str(),
-                                     port.c_str(),
+                                     port,
                                      transport.c_str());
     return contact_;
 }
@@ -1276,14 +1284,13 @@ SIPAccount::getContactHeader()
 pjsip_host_port
 SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
-    std::string addr, port;
+    std::string addr;
+    pj_uint16_t port;
     link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
     pjsip_host_port result;
     pj_strdup2(pool, &result.host, addr.c_str());
     result.host.slen = addr.length();
-    std::stringstream ss;
-    ss << port;
-    ss >> result.port;
+    result.port = port;
     return result;
 }
 
