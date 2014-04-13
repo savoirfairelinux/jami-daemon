@@ -38,6 +38,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include "account.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
 
@@ -308,6 +309,7 @@ class SIPAccount : public Account {
          * @return void
          */
         void setRegistrationInfo(pjsip_regc *regc) {
+            if (regc_) destroyRegistrationInfo();
             regc_ = regc;
         }
 
