@@ -2503,8 +2503,8 @@ void SIPVoIPLink::loadIP2IPSettings()
 
         SIPAccount *ip2ip = static_cast<SIPAccount*>(sipAccountMap_[SIPAccount::IP2IP_PROFILE]);
 
-        sipTransport->createSipTransport(*ip2ip);
         ip2ip->registerVoIPLink();
+        sipTransport->createSipTransport(*ip2ip);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }
