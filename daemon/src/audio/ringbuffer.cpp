@@ -51,6 +51,7 @@ RingBuffer::RingBuffer(size_t size, const std::string &call_id, AudioFormat form
     endPos_(0)
     , buffer_(std::max(size, MIN_BUFFER_SIZE), format)
     , lock_()
+    , not_empty_()
     , readpointers_()
     , buffer_id_(call_id)
 {
