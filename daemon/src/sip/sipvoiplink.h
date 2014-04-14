@@ -313,7 +313,7 @@ class SIPVoIPLink : public VoIPLink {
          */
         AccountMap sipAccountMap_;
 
-        std::mutex sipCallMapMutex_;
+        mutable std::mutex sipCallMapMutex_;
         SipCallMap sipCallMap_;
 
         /**

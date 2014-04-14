@@ -732,17 +732,6 @@ bool SIPVoIPLink::getEvent()
     return handlingEvents_;
 }
 
-std::vector<Call*>
-SIPVoIPLink::getCalls(const std::string &account_id) const
-{
-    std::vector<Call*> calls;
-    for (const auto & item : sipCallMap_) {
-        if (item.second->getAccountId() == account_id)
-            calls.push_back(item.second);
-    }
-    return calls;
-}
-
 void
 SIPVoIPLink::sendRegister(Account& a)
 {
@@ -1325,6 +1314,19 @@ SIPVoIPLink::getCallIDs()
 
     map_utils::vectorFromMapKeys(sipCallMap_, v);
     return v;
+}
+
+std::vector<Call*>
+SIPVoIPLink::getCalls(const std::string &account_id) const
+{
+    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
+
+    std::vector<Call*> calls;
+    for (const auto & item : sipCallMap_) {
+        if (item.second->getAccountId() == account_id)
+            calls.push_back(item.second);
+    }
+    return calls;
 }
 
 void SIPVoIPLink::addSipCall(SIPCall* call)
