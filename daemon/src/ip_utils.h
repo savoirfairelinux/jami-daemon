@@ -56,15 +56,22 @@ namespace ip_utils {
      */
     pj_sockaddr strToAddr(const std::string& str);
 
+    pj_sockaddr getAnyHostAddr(pj_uint16_t family = pj_AF_UNSPEC());
+
     /**
      * Returns true if address is a valid IPv6.
      */
     bool isIPv6(const std::string &address);
+
+    /**
+     * Return true if address is a valid IP address of specified family (if provided) or of any kind (default).
+     */
     bool isValidAddr(const std::string &address, pj_uint16_t family = pj_AF_UNSPEC());
 
     std::vector<pj_sockaddr> getAddrList(const std::string &name);
 
-    pj_sockaddr getAnyHostAddr(pj_uint16_t family = pj_AF_UNSPEC());
+    bool haveCommonAddr(const std::vector<pj_sockaddr>& a, const std::vector<pj_sockaddr>& b);
+
 }
 
 #endif // IP_UTILS_H_

@@ -70,6 +70,17 @@ ip_utils::getAddrList(const std::string &name)
     return ipList;
 }
 
+bool
+ip_utils::haveCommonAddr(const std::vector<pj_sockaddr>& a, const std::vector<pj_sockaddr>& b)
+{
+    for (const auto &i : a) {
+        for (const auto &j : b) {
+            if (pj_sockaddr_cmp(&i, &j) == 0) return true;
+        }
+    }
+    return false;
+}
+
 std::string
 ip_utils::addrToStr(const pj_sockaddr& ip, bool include_port, bool force_ipv6_brackets)
 {

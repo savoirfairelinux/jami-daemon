@@ -1146,20 +1146,18 @@ bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*e
 {
     if (hostname == hostname_)
         return true;
-
-    const std::vector<std::string> a(sip_utils::getIPList(hostname));
-    const std::vector<std::string> b(sip_utils::getIPList(hostname_));
-    return haveValueInCommon(a, b);
+    const auto a = ip_utils::getAddrList(hostname);
+    const auto b = ip_utils::getAddrList(hostname_);
+    return ip_utils::haveCommonAddr(a, b);
 }
 
 bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
 {
     if (hostname == serviceRoute_)
         return true;
-
-    const std::vector<std::string> a(sip_utils::getIPList(hostname));
-    const std::vector<std::string> b(sip_utils::getIPList(serviceRoute_));
-    return haveValueInCommon(a, b);
+    const auto a = ip_utils::getAddrList(hostname);
+    const auto b = ip_utils::getAddrList(hostname_);
+    return ip_utils::haveCommonAddr(a, b);
 }
 
 std::string SIPAccount::getLoginName()
