@@ -38,6 +38,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "siptransport.h"
 #include "account.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -543,13 +545,21 @@ class SIPAccount : public Account {
             return keepAliveEnabled_;
         }
 
-        /**
-         * Pointer to the transport used by this acccount
-         */
-        pjsip_transport* transport_;
+        inline pjsip_transport* getTransport() {
+            return transport_;
+        }
 
-        pjsip_transport_type_e getTransportType() const {
+        void setTransport(pjsip_transport* transport = nullptr, pjsip_tpfactory* lis = nullptr);
+
+        inline pjsip_transport_type_e getTransportType() const {
             return transportType_;
+        }
+
+        /**
+         * Shortcut for SipTransport::getTransportSelector(account.getTransport()).
+         */
+        inline pjsip_tpselector getTransportSelector() {
+            return SipTransport::getTransportSelector(transport_);
         }
 
         /* Returns true if the username and/or hostname match this account */
@@ -610,6 +620,16 @@ class SIPAccount : public Account {
          * Map of credential for this account
          */
         std::vector< std::map<std::string, std::string > > credentials_;
+
+        /**
+         * Pointer to the transport used by this acccount
+         */
+        pjsip_transport* transport_;
+
+        /**
+         * If a TLS tranport, pointer to the tls listener.
+         */
+        pjsip_tpfactory* tlsListener_;
 
 #if HAVE_TLS
         /**

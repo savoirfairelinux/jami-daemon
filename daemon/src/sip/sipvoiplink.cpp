@@ -321,7 +321,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     auto addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                     ? account->getPublishedIpAddress() : addrToUse;
 
-    pjsip_tpselector tp_sel  = SipTransport::getTransportSelector(account->transport_);
+    pjsip_tpselector tp_sel  = account->getTransportSelector();
 
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
@@ -553,8 +553,8 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
     sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_, [&](pjsip_transport* transport) {
         for (auto& a : sipAccountMap_ ) {
             SIPAccount* account = static_cast<SIPAccount*>(a.second);
-            if (account->transport_ == transport ) {
-                account->transport_ = nullptr;
+            if ( account->getTransport() == transport ) {
+                account->setTransport();
             }
         }
     }));
@@ -775,15 +775,16 @@ SIPVoIPLink::sendRegister(Account& a)
     // Get the contact header
     const pj_str_t pjContact(account.getContactHeader());
 
-    if (account.transport_) {
+    auto transport = account.getTransport();
+    if (transport) {
         if (not account.getPublishedSameasLocal() or (not received.empty() and received != account.getPublishedAddress())) {
             pjsip_host_port *via = account.getViaAddr();
             DEBUG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
 
-            if (pjsip_regc_set_via_sent_by(regc, via, account.transport_) != PJ_SUCCESS)
+            if (pjsip_regc_set_via_sent_by(regc, via, transport) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
         } else if (account.isStunEnabled()) {
-            if (pjsip_regc_set_via_sent_by(regc, account.getViaAddr(), account.transport_) != PJ_SUCCESS)
+            if (pjsip_regc_set_via_sent_by(regc, account.getViaAddr(), transport) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
         }
     }
@@ -811,7 +812,7 @@ SIPVoIPLink::sendRegister(Account& a)
     if (pjsip_regc_register(regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize transaction data for account registration");
 
-    const pjsip_tpselector tp_sel = SipTransport::getTransportSelector(account.transport_);
+    const pjsip_tpselector tp_sel = SipTransport::getTransportSelector(transport);
     if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
         throw VoipLinkException("Unable to set transport");
 
@@ -824,8 +825,6 @@ SIPVoIPLink::sendRegister(Account& a)
     }
 
     account.setRegistrationInfo(regc);
-    ERROR("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
-
     sipTransport->cleanupTransports();
 }
 
@@ -857,14 +856,7 @@ void SIPVoIPLink::sendUnregister(Account& a)
     }
 
     account.setRegister(false);
-
-    if (account.transport_) {
-        if (pj_atomic_get(account.transport_->ref_cnt) > 0)
-            pjsip_transport_dec_ref(account.transport_);
-        pjsip_regc_release_transport(regc); // FIXME: are we sure it is the same transport ?
-        DEBUG("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
-        account.transport_ = nullptr;
-    }
+    account.setTransport(); // remove the transport from the account
 
     sipTransport->cleanupTransports();
 }
@@ -1702,7 +1694,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         return false;
     }
 
-    const pjsip_tpselector tp_sel = SipTransport::getTransportSelector(account->transport_);
+    const pjsip_tpselector tp_sel = account->getTransportSelector();
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         ERROR("Unable to associate transport for invite session dialog");
         return false;

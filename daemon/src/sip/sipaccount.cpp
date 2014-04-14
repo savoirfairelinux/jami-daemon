@@ -80,9 +80,10 @@ bool SIPAccount::portsInUse_[HALF_MAX_PORT];
 
 SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     : Account(accountID)
-    , transport_(nullptr)
     , auto_rereg_()
     , credentials_()
+    , transport_(nullptr)
+    , tlsListener_(nullptr)
     , regc_(nullptr)
     , bRegister_(false)
     , registrationExpire_(MIN_REGISTRATION_TIME)
@@ -1366,6 +1367,24 @@ std::string computeMd5HashFromCredential(const std::string& username,
     return std::string(hash, 32);
 }
 } // anon namespace
+
+
+void
+SIPAccount::setTransport(pjsip_transport* transport, pjsip_tpfactory* lis)
+{
+    // release old transport
+    if (transport_ && transport_ != transport) {
+        if (regc_)
+            pjsip_regc_release_transport(regc_);
+        pjsip_transport_dec_ref(transport_);
+        DEBUG("Transport %s has count %d", transport_->info, pj_atomic_get(transport_->ref_cnt));
+    }
+    if (tlsListener_ && tlsListener_ != lis)
+        tlsListener_->destroy(tlsListener_);
+    // set new transport
+    transport_ = transport;
+    tlsListener_ = lis;
+}
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
 {

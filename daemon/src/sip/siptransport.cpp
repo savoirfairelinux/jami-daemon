@@ -115,11 +115,9 @@ void
 SipTransport::createSipTransport(SIPAccount &account)
 {
     WARN("SipTransport::createSipTransport %s", account.getAccountID().c_str());
-    if (account.transport_) {
-        pjsip_transport_dec_ref(account.transport_);
-        DEBUG("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
-        account.transport_ = nullptr;
-    }
+    // Remove any existing transport from the account
+    account.setTransport();
+
     auto type = account.getTransportType();
     auto family = pjsip_transport_type_get_af(type);
     auto interface = account.getLocalInterface();
@@ -132,9 +130,7 @@ SipTransport::createSipTransport(SIPAccount &account)
         if (transportMap_.find(key) != transportMap_.end()) {
             throw std::runtime_error("TLS transport already exists");
         }
-        if (!account.transport_) {
-            account.transport_ = createTlsTransport(account);
-        }
+        createTlsTransport(account);
     } else {
 #else
     {
@@ -144,22 +140,22 @@ SipTransport::createSipTransport(SIPAccount &account)
         // if this transport already exists, reuse it
         auto iter = transportMap_.find(key);
         if (iter != transportMap_.end()) {
-            account.transport_ = iter->second;
-            auto status = pjsip_transport_add_ref(account.transport_);
-            if (status != PJ_SUCCESS)
-                account.transport_ = nullptr;
+            auto status = pjsip_transport_add_ref(iter->second);
+            if (status == PJ_SUCCESS)
+                account.setTransport(iter->second);
         }
-        if (!account.transport_) {
-            account.transport_ = createUdpTransport(interface, port, family);
+        if (!account.getTransport()) {
+            account.setTransport(createUdpTransport(interface, port, family));
         }
     }
 
-    if (account.transport_)
-        transportMap_[key] = account.transport_;
+    auto new_transport = account.getTransport();
+    if (new_transport)
+        transportMap_[key] = new_transport;
 
     cleanupTransports();
 
-    if (!account.transport_) {
+    if (!new_transport) {
 #if HAVE_TLS
         if (account.isTlsEnabled())
             throw std::runtime_error("Could not create TLS connection");
@@ -233,7 +229,7 @@ SipTransport::createTlsListener(SIPAccount &account, pj_uint16_t family)
     pjsip_tpfactory *listener = nullptr;
     const pj_status_t status = pjsip_tls_transport_start2(endpt_, account.getTlsSetting(), &listeningAddress, nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
-        ERROR("TLS Transport did not start");
+        ERROR("TLS listener did not start");
         sip_utils::sip_strerror(status);
         return nullptr;
     }
@@ -249,7 +245,8 @@ SipTransport::createTlsTransport(SIPAccount &account)
     size_t trns = remoteSipUri.find(";transport");
     std::string remoteAddr(remoteSipUri.substr(sips, trns-sips));
     std::string ipAddr = "";
-    int port = DEFAULT_SIP_TLS_PORT;
+    const pjsip_transport_type_e transportType = PJSIP_TRANSPORT_TLS;
+    int port = pjsip_transport_get_default_port_for_type(transportType);
 
     // parse c string
     size_t pos = remoteAddr.find(":");
@@ -263,17 +260,22 @@ SipTransport::createTlsTransport(SIPAccount &account)
     pj_sockaddr_set_port(&rem_addr, port);
 
     DEBUG("Get new tls transport/listener from transport manager to %s", ip_utils::addrToStr(rem_addr, true, true).c_str());
-    // The local tls listener
-    // FIXME: called only once as it is static -> that's why parameters are not saved
+
+    // create listener
     pjsip_tpfactory *localTlsListener = createTlsListener(account, rem_addr.addr.sa_family);
 
+    // create transport
     pjsip_transport *transport = nullptr;
-    pj_status_t status = pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr, pj_sockaddr_get_len(&rem_addr), nullptr, &transport);
-    if (status != PJ_SUCCESS)
+    pj_status_t status = pjsip_endpt_acquire_transport(endpt_, transportType, &rem_addr, pj_sockaddr_get_len(&rem_addr), nullptr, &transport);
+    if (!transport || status != PJ_SUCCESS) {
+        if (localTlsListener)
+            localTlsListener->destroy(localTlsListener);
+        ERROR("Could not create new TLS transport");
         sip_utils::sip_strerror(status);
-    RETURN_IF_FAIL(transport != nullptr and status == PJ_SUCCESS, nullptr, "Could not create new TLS transport");
+        return nullptr;
+    }
 
-    //pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
+    account.setTransport(transport, localTlsListener);
     return transport;
 }
 #endif
