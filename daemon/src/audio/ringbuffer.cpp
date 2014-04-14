@@ -259,12 +259,12 @@ size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const size_t
 {
     std::unique_lock<std::mutex> l(lock_);
     const size_t buffer_size = buffer_.frames();
-    if(buffer_size < min_data_length) return 0;
+    if (buffer_size < min_data_length) return 0;
     ReadPointer::const_iterator read_ptr = readpointers_.find(call_id);
-    if(read_ptr == readpointers_.end()) return 0;
+    if (read_ptr == readpointers_.end()) return 0;
     size_t getl = 0;
     if (deadline == std::chrono::high_resolution_clock::time_point()) {
-        not_empty_.wait(l, [=, &getl]{
+        not_empty_.wait(l, [=, &getl] {
                 getl =  (endPos_ + buffer_size - read_ptr->second) % buffer_size;
                 return getl >= min_data_length;
         });
