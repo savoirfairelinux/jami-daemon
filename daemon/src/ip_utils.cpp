@@ -32,10 +32,13 @@
 #include "ip_utils.h"
 #include "logger.h"
 
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <net/if.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 std::vector<pj_sockaddr>
 ip_utils::getAddrList(const std::string &name)
@@ -114,10 +117,108 @@ ip_utils::strToAddr(const std::string& str)
 pj_sockaddr
 ip_utils::getAnyHostAddr(pj_uint16_t family)
 {
-    if (family == pj_AF_UNSPEC()) family = pj_AF_INET();
+    if (family == pj_AF_UNSPEC()) family = pj_AF_INET6();
     pj_sockaddr addr = {};
     addr.addr.sa_family = family;
     return addr;
+}
+
+pj_sockaddr
+ip_utils::getLocalAddr(pj_uint16_t family)
+{
+    if (family == pj_AF_UNSPEC()) family = pj_AF_INET6();
+    pj_sockaddr ip_addr;
+    pj_status_t status = pj_gethostip(family, &ip_addr);
+    if (status == PJ_SUCCESS) return ip_addr;
+    WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
+    family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
+    status = pj_gethostip(family, &ip_addr);
+    if (status == PJ_SUCCESS) return ip_addr;
+    ERROR("Could not get local IP");
+    ip_addr.addr.sa_family = pj_AF_UNSPEC();
+    return ip_addr;
+}
+
+pj_sockaddr
+ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
+{
+    ERROR("getInterfaceAddr: %s %d", interface.c_str(), family);
+    if (interface == DEFAULT_INTERFACE)
+        return getLocalAddr(family);
+    auto unix_family = (family == pj_AF_INET()) ? AF_INET : AF_INET6;
+    int fd = socket(unix_family, SOCK_DGRAM, 0);
+    if(unix_family == AF_INET6) {
+        int val = (family == pj_AF_UNSPEC()) ? 0 : 1;
+        setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val));
+    }
+    pj_sockaddr saddr;
+    if(fd < 0) {
+        ERROR("Could not open socket: %m", fd);
+        saddr.addr.sa_family = pj_AF_UNSPEC();
+        return saddr;
+    }
+    ifreq ifr;
+    strncpy(ifr.ifr_name, interface.c_str(), sizeof ifr.ifr_name);
+    // guarantee that ifr_name is NULL-terminated
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+
+    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+    ifr.ifr_addr.sa_family = unix_family;
+
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+
+    sockaddr* unix_addr = &ifr.ifr_addr;
+    memcpy(&saddr, &ifr.ifr_addr, sizeof(pj_sockaddr));
+    if ((ifr.ifr_addr.sa_family == AF_INET  &&  IN_IS_ADDR_UNSPECIFIED(&((sockaddr_in *)unix_addr)->sin_addr ))
+    || (ifr.ifr_addr.sa_family == AF_INET6 && IN6_IS_ADDR_UNSPECIFIED(&((sockaddr_in6*)unix_addr)->sin6_addr))) {
+        return getLocalAddr(saddr.addr.sa_family);
+    }
+    return saddr;
+}
+
+std::vector<std::string>
+ip_utils::getAllIpInterfaceByName()
+{
+    static ifreq ifreqs[20];
+    ifconf ifconf;
+
+    std::vector<std::string> ifaceList;
+    ifaceList.push_back("default");
+
+    ifconf.ifc_buf = (char*) (ifreqs);
+    ifconf.ifc_len = sizeof(ifreqs);
+
+    int sock = socket(AF_INET6, SOCK_STREAM, 0);
+
+    if (sock >= 0) {
+        if (ioctl(sock, SIOCGIFCONF, &ifconf) >= 0)
+            for (unsigned i = 0; i < ifconf.ifc_len / sizeof(ifreq); ++i)
+                ifaceList.push_back(std::string(ifreqs[i].ifr_name));
+
+        close(sock);
+    }
+
+    return ifaceList;
+}
+
+std::vector<std::string>
+ip_utils::getAllIpInterface()
+{
+    pj_sockaddr addrList[16];
+    unsigned addrCnt = PJ_ARRAY_SIZE(addrList);
+
+    std::vector<std::string> ifaceList;
+
+    if (pj_enum_ip_interface(pj_AF_UNSPEC(), &addrCnt, addrList) == PJ_SUCCESS) {
+        for (unsigned i = 0; i < addrCnt; i++) {
+            char addr[PJ_INET6_ADDRSTRLEN];
+            pj_sockaddr_print(&addrList[i], addr, sizeof(addr), 0);
+            ifaceList.push_back(std::string(addr));
+        }
+    }
+
+    return ifaceList;
 }
 
 bool

@@ -41,16 +41,15 @@
 #include "account_schema.h"
 #include "manager.h"
 #include "sip/sipvoiplink.h"
-#include "sip/siptransport.h"
 #if HAVE_TLS
 #include "sip/security_evaluator.h"
 #endif
 #include "logger.h"
 #include "fileutils.h"
+#include "ip_utils.h"
 #include "sip/sipaccount.h"
 #include "history/historynamecache.h"
 #include "audio/audiolayer.h"
-
 
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
@@ -495,17 +494,17 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistor
 std::string
 ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
-    return SipTransport::getInterfaceAddrFromName(interface);
+    return ip_utils::addrToStr(ip_utils::getInterfaceAddr(interface));
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface()
 {
-    return SipTransport::getAllIpInterface();
+    return ip_utils::getAllIpInterface();
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName()
 {
-    return SipTransport::getAllIpInterfaceByName();
+    return ip_utils::getAllIpInterfaceByName();
 }
 
 std::map<std::string, std::string> ConfigurationManager::getShortcuts()

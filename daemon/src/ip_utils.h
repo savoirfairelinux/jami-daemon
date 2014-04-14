@@ -37,7 +37,15 @@
 #include <string>
 #include <vector>
 
+
+/* An IPv4 equivalent to IN6_IS_ADDR_UNSPECIFIED */
+#ifndef IN_IS_ADDR_UNSPECIFIED
+#define IN_IS_ADDR_UNSPECIFIED(a) (((long int) (a)->s_addr) == 0x00000000)
+#endif /* IN_IS_ADDR_UNSPECIFIED */
+
 namespace ip_utils {
+    const std::string DEFAULT_INTERFACE = "default";
+
     /**
      * Convert a binary IP address to a standard string representation.
      */
@@ -56,21 +64,63 @@ namespace ip_utils {
      */
     pj_sockaddr strToAddr(const std::string& str);
 
+    /**
+     * Return the generic "any host" IP address of the specified family.
+     * If family is unspecified, default to pj_AF_INET6() (IPv6).
+     */
     pj_sockaddr getAnyHostAddr(pj_uint16_t family = pj_AF_UNSPEC());
 
     /**
-     * Returns true if address is a valid IPv6.
+     * Return the first host IP address of the specified family.
+     * If no address of the specified family is found, another family will
+     * be tried.
+     * Ex. : if family is pj_AF_INET6() (IPv6/default) and the system does not
+     * have an IPv6 address, an IPv4 address will be returned if available.
+     *
+     * If family is unspcified, default to pj_AF_INET6() (IPv6).
      */
-    bool isIPv6(const std::string &address);
+    pj_sockaddr getLocalAddr(pj_uint16_t family = pj_AF_UNSPEC());
+
+    /**
+     * Get the IP address of the network interface interface with the specified
+     * address family, or of any address family if unspecified (default).
+     */
+    pj_sockaddr getInterfaceAddr(const std::string &interface, pj_uint16_t family = pj_AF_UNSPEC());
+
+    /**
+    * List all the interfaces on the system and return
+    * a vector list containing their name (eth0, eth0:1 ...).
+    * @param void
+    * @return std::vector<std::string> A std::string vector
+    * of interface name available on all of the interfaces on
+    * the system.
+    */
+    std::vector<std::string> getAllIpInterfaceByName();
+
+    /**
+    * List all the interfaces on the system and return
+    * a vector list containing their IP address.
+    * @param void
+    * @return std::vector<std::string> A std::string vector
+    * of IP address available on all of the interfaces on
+    * the system.
+    */
+    std::vector<std::string> getAllIpInterface();
+
+    std::vector<pj_sockaddr> getAddrList(const std::string &name);
+
+    bool haveCommonAddr(const std::vector<pj_sockaddr>& a, const std::vector<pj_sockaddr>& b);
 
     /**
      * Return true if address is a valid IP address of specified family (if provided) or of any kind (default).
      */
     bool isValidAddr(const std::string &address, pj_uint16_t family = pj_AF_UNSPEC());
 
-    std::vector<pj_sockaddr> getAddrList(const std::string &name);
+    /**
+     * Return true if address is a valid IPv6.
+     */
+    bool isIPv6(const std::string &address);
 
-    bool haveCommonAddr(const std::vector<pj_sockaddr>& a, const std::vector<pj_sockaddr>& b);
 
 }
 

@@ -55,44 +55,11 @@
 
 class SIPAccount;
 
-/* An IPv4 equivalent to IN6_IS_ADDR_UNSPECIFIED */
-#ifndef IN_IS_ADDR_UNSPECIFIED
-#define IN_IS_ADDR_UNSPECIFIED(a) (((long int) (a)->s_addr) == 0x00000000)
-#endif /* IN_IS_ADDR_UNSPECIFIED */
 
 class SipTransport {
     public:
         SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool, std::function<void(pjsip_transport*)> transportDestroyed = std::function<void(pjsip_transport*)>());
         ~SipTransport();
-
-        static pj_sockaddr getSIPLocalIP(pj_uint16_t family = pj_AF_UNSPEC());
-
-        /**
-         * Get the IP for the network interface named ifaceName
-         * @param forceIPv6 If IPv4 and IPv6 are available, will force to IPv6.
-         */
-        static std::string getInterfaceAddrFromName(const std::string &ifaceName, bool forceIPv6 = false);
-        static pj_sockaddr getInterfaceAddr(const std::string &ifaceName, pj_uint16_t family = pj_AF_UNSPEC());
-
-        /**
-        * List all the interfaces on the system and return
-        * a vector list containing their name (eth0, eth0:1 ...).
-        * @param void
-        * @return std::vector<std::string> A std::string vector
-        * of interface name available on all of the interfaces on
-        * the system.
-        */
-        static std::vector<std::string> getAllIpInterfaceByName();
-
-        /**
-         * List all the interfaces on the system and return
-         * a vector list containing their IP address.
-         * @param void
-         * @return std::vector<std::string> A std::string vector
-         * of IP address available on all of the interfaces on
-         * the system.
-         */
-        static std::vector<std::string> getAllIpInterface();
 
         /**
          * General Sip transport creation method according to the
@@ -114,9 +81,7 @@ class SipTransport {
         /**
          * This function returns a list of STUN mapped sockets for
          * a given set of socket file descriptors */
-        std::vector<pj_sockaddr>
-        getSTUNAddresses(const SIPAccount &account,
-                         std::vector<long> &socks) const;
+        std::vector<pj_sockaddr> getSTUNAddresses(const SIPAccount &account, std::vector<long> &socks) const;
 
         /**
          * Get the correct address to use (ie advertised) from
@@ -171,6 +136,8 @@ class SipTransport {
         */
         pjsip_transport *createUdpTransport(const std::string &interface,
                                             pj_uint16_t port, pj_uint16_t family = pj_AF_UNSPEC());
+
+        static void tp_state_callback(pjsip_transport *, pjsip_transport_state, const pjsip_transport_state_info *);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case

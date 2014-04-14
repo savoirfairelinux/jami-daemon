@@ -50,132 +50,15 @@
 #include <pjlib.h>
 #include <pjlib-util.h>
 
-#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <resolv.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <unistd.h>
-
 #include <stdexcept>
 #include <sstream>
 
-static const char * const DEFAULT_INTERFACE = "default";
-
 #define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return (VAL); }
-
-pj_sockaddr SipTransport::getSIPLocalIP(pj_uint16_t family)
-{
-    if (family == pj_AF_UNSPEC()) family = pj_AF_INET6();
-    pj_sockaddr ip_addr;
-    pj_status_t status = pj_gethostip(family, &ip_addr);
-    if (status == PJ_SUCCESS) return ip_addr;
-    WARN("Could not get preferred IP version (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
-    family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
-    status = pj_gethostip(family, &ip_addr);
-    if (status == PJ_SUCCESS) return ip_addr;
-    ERROR("Could not get local IP");
-    ip_addr.addr.sa_family = pj_AF_UNSPEC();
-    return ip_addr;
-}
-
-std::vector<std::string> SipTransport::getAllIpInterfaceByName()
-{
-    static ifreq ifreqs[20];
-    ifconf ifconf;
-
-    std::vector<std::string> ifaceList;
-    ifaceList.push_back("default");
-
-    ifconf.ifc_buf = (char*) (ifreqs);
-    ifconf.ifc_len = sizeof(ifreqs);
-
-    int sock = socket(AF_INET6, SOCK_STREAM, 0);
-
-    if (sock >= 0) {
-        if (ioctl(sock, SIOCGIFCONF, &ifconf) >= 0)
-            for (unsigned i = 0; i < ifconf.ifc_len / sizeof(ifreq); ++i)
-                ifaceList.push_back(std::string(ifreqs[i].ifr_name));
-
-        close(sock);
-    }
-
-    return ifaceList;
-}
-
-pj_sockaddr SipTransport::getInterfaceAddr(const std::string &ifaceName, pj_uint16_t family)
-{
-    ERROR("getInterfaceAddr: %s %d", ifaceName.c_str(), family);
-    if (ifaceName == DEFAULT_INTERFACE)
-        return getSIPLocalIP(family);
-    auto unix_family = (family == pj_AF_INET()) ? AF_INET : AF_INET6;
-    int fd = socket(unix_family, SOCK_DGRAM, 0);
-    if(unix_family == AF_INET6) {
-        int val = (family == pj_AF_UNSPEC()) ? 0 : 1;
-        setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val));
-    }
-    pj_sockaddr saddr;
-    if(fd < 0) {
-        ERROR("Could not open socket: %m", fd);
-        saddr.addr.sa_family = pj_AF_UNSPEC();
-        return saddr;
-    }
-    ifreq ifr;
-    strncpy(ifr.ifr_name, ifaceName.c_str(), sizeof ifr.ifr_name);
-    // guarantee that ifr_name is NULL-terminated
-    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
-
-    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-    ifr.ifr_addr.sa_family = unix_family;
-
-    ioctl(fd, SIOCGIFADDR, &ifr);
-    close(fd);
-
-    sockaddr* unix_addr = &ifr.ifr_addr;
-    memcpy(&saddr, &ifr.ifr_addr, sizeof(pj_sockaddr));
-    if ((ifr.ifr_addr.sa_family == AF_INET  &&  IN_IS_ADDR_UNSPECIFIED(&((sockaddr_in *)unix_addr)->sin_addr ))
-    || (ifr.ifr_addr.sa_family == AF_INET6 && IN6_IS_ADDR_UNSPECIFIED(&((sockaddr_in6*)unix_addr)->sin6_addr))) {
-        return getSIPLocalIP(saddr.addr.sa_family);
-    }
-    return saddr;
-}
-
-std::string SipTransport::getInterfaceAddrFromName(const std::string &ifaceName, bool forceIPv6)
-{
-    return ip_utils::addrToStr(getInterfaceAddr(ifaceName, forceIPv6 ? pj_AF_INET6() : pj_AF_INET()));
-}
-
-std::vector<std::string> SipTransport::getAllIpInterface()
-{
-    pj_sockaddr addrList[16];
-    unsigned addrCnt = PJ_ARRAY_SIZE(addrList);
-
-    std::vector<std::string> ifaceList;
-
-    if (pj_enum_ip_interface(pj_AF_UNSPEC(), &addrCnt, addrList) == PJ_SUCCESS) {
-        for (unsigned i = 0; i < addrCnt; i++) {
-            char addr[PJ_INET6_ADDRSTRLEN];
-            pj_sockaddr_print(&addrList[i], addr, sizeof(addr), 0);
-            ifaceList.push_back(std::string(addr));
-        }
-    }
-
-    return ifaceList;
-}
-
-void tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* /* info */)
-{
-    SipTransport& this_ = *SIPVoIPLink::instance().sipTransport;
-    this_.transportStateChanged(tp, state);
-}
 
 SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool, std::function<void(pjsip_transport*)> transportDestroyed) :
 transportMap_(), transportDestroyedCb_(transportDestroyed), cp_(cp), pool_(pool), endpt_(endpt)
 {
-    auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), tp_state_callback);
+    auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), SipTransport::tp_state_callback);
     if (status != PJ_SUCCESS) {
         ERROR("Can't set transport callback");
         sip_utils::sip_strerror(status);
@@ -195,6 +78,14 @@ std::string transportMapKey(const std::string &interface, int port, pjsip_transp
     os << interface << ':' << port << ':' << pjsip_transport_get_type_name(type) << af_ver_num;
     return os.str();
 }
+}
+
+/** Static tranport state change callback */
+void
+SipTransport::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* /* info */)
+{
+    SipTransport& this_ = *SIPVoIPLink::instance().sipTransport;
+    this_.transportStateChanged(tp, state);
 }
 
 void
@@ -284,10 +175,10 @@ pjsip_transport *
 SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port, pj_uint16_t family)
 {
     pj_sockaddr listeningAddress;
-    if (interface == DEFAULT_INTERFACE)
+    if (interface == ip_utils::DEFAULT_INTERFACE)
         listeningAddress = ip_utils::getAnyHostAddr(family);
     else
-        listeningAddress = getInterfaceAddr(interface, family);
+        listeningAddress = ip_utils::getInterfaceAddr(interface, family);
 
     RETURN_IF_FAIL(not listeningAddress.addr.sa_family == pj_AF_UNSPEC(), nullptr, "Could not determine ip address for this transport");
     RETURN_IF_FAIL(port != 0, nullptr, "Could not determine port for this transport");
@@ -326,10 +217,10 @@ SipTransport::createTlsListener(SIPAccount &account, pj_uint16_t family)
 
     std::string interface(account.getLocalInterface());
     pj_sockaddr listeningAddress;
-    if (interface == DEFAULT_INTERFACE)
+    if (interface == ip_utils::DEFAULT_INTERFACE)
         listeningAddress = ip_utils::getAnyHostAddr(family);
     else
-        listeningAddress = getInterfaceAddr(interface, family==pj_AF_INET6());
+        listeningAddress = ip_utils::getInterfaceAddr(interface, family);
 
     pj_sockaddr_set_port(&listeningAddress, account.getTlsListenerPort());
 
@@ -368,22 +259,19 @@ SipTransport::createTlsTransport(SIPAccount &account)
     } else
         ipAddr = remoteAddr;
 
-    pj_str_t remote;
-    pj_cstr(&remote, ipAddr.c_str());
+    pj_sockaddr rem_addr = ip_utils::strToAddr(ipAddr);
+    pj_sockaddr_set_port(&rem_addr, port);
 
-    pj_sockaddr_in rem_addr;
-    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) port);
-
-    DEBUG("Get new tls transport/listener from transport manager");
+    DEBUG("Get new tls transport/listener from transport manager to %s", ip_utils::addrToStr(rem_addr, true, true).c_str());
     // The local tls listener
     // FIXME: called only once as it is static -> that's why parameters are not saved
-    pjsip_tpfactory *localTlsListener = createTlsListener(account);
+    pjsip_tpfactory *localTlsListener = createTlsListener(account, rem_addr.addr.sa_family);
 
     pjsip_transport *transport = nullptr;
-    pj_status_t status = pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
-                                  sizeof rem_addr, NULL, &transport);
-    RETURN_IF_FAIL(transport != nullptr and status == PJ_SUCCESS, nullptr,
-                   "Could not create new TLS transport");
+    pj_status_t status = pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr, pj_sockaddr_get_len(&rem_addr), nullptr, &transport);
+    if (status != PJ_SUCCESS)
+        sip_utils::sip_strerror(status);
+    RETURN_IF_FAIL(transport != nullptr and status == PJ_SUCCESS, nullptr, "Could not create new TLS transport");
 
     //pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
     return transport;
