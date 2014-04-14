@@ -313,8 +313,11 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_, account_id);
 
+    // FIXME : for now, use the same address family as the SIP tranport
+    auto family = pjsip_transport_type_get_af(account->getTransportType());
+    auto addrToUse = SipTransport::getInterfaceAddr(account->getLocalInterface(), family);
+
     // May use the published address as well
-    auto addrToUse = SipTransport::getInterfaceAddr(account->getLocalInterface());
     auto addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                     ? account->getPublishedIpAddress() : addrToUse;
 
@@ -993,7 +996,10 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
         toUri = account->getToUri(toUrl);
 
     call->setPeerNumber(toUri);
-    auto localAddr = SipTransport::getInterfaceAddr(account->getLocalInterface());
+
+    // FIXME : for now, use the same address family as the SIP tranport
+    auto family = pjsip_transport_type_get_af(account->getTransportType());
+    auto localAddr = SipTransport::getInterfaceAddr(account->getLocalInterface(), family);
     setCallMediaLocal(call, localAddr);
 
     // May use the published address as well
@@ -1856,8 +1862,10 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     if (!account)
         return;
 
+    // FIXME : for now, use the same address family as the SIP tranport
+    auto family = pjsip_transport_type_get_af(account->getTransportType());
     auto address = account->getPublishedSameasLocal()
-                    ? SipTransport::getInterfaceAddr(account->getLocalInterface())
+                    ? SipTransport::getInterfaceAddr(account->getLocalInterface(), family)
                     : account->getPublishedIpAddress();
 
     setCallMediaLocal(call, address);
