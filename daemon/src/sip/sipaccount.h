@@ -207,9 +207,9 @@ class SIPAccount : public Account {
         void registerVoIPLink();
 
         /**
-         * Send unregistration and clean all related stuff ( calls , thread )
+         * Send unregistration.
          */
-        void unregisterVoIPLink();
+        void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>());
 
         /**
          * Start the keep alive function, once started, the account will be registered periodically
@@ -367,7 +367,7 @@ class SIPAccount : public Account {
             return stunEnabled_;
         }
 
-        /*
+        /**
          * @return pj_str_t "From" uri based on account information.
          * From RFC3261: "The To header field first and foremost specifies the desired
          * logical" recipient of the request, or the address-of-record of the
@@ -378,7 +378,7 @@ class SIPAccount : public Account {
          */
         std::string getFromUri() const;
 
-        /*
+        /**
          * This method adds the correct scheme, hostname and append
          * the ;transport= parameter at the end of the uri, in accordance with RFC3261.
          * It is expected that "port" is present in the internal hostname_.
@@ -388,7 +388,7 @@ class SIPAccount : public Account {
          */
         std::string getToUri(const std::string& username) const;
 
-        /*
+        /**
          * In the current version of SFLPhone, "srv" uri is obtained in the preformated
          * way: hostname:port. This method adds the correct scheme and append
          * the ;transport= parameter at the end of the uri, in accordance with RFC3261.

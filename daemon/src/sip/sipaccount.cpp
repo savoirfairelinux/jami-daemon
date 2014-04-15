@@ -156,10 +156,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
 
 SIPAccount::~SIPAccount()
 {
-    if (transport_) {
-        pjsip_transport_dec_ref(transport_);
-        transport_ = nullptr;
-    }
+    setTransport();
 
 #ifdef SFL_PRESENCE
     delete presence_;
@@ -651,6 +648,8 @@ void parseInt(const std::map<std::string, std::string> &details, const char *key
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
+    ERROR("SIPAccount::setAccountDetails");
+
     // Account setting common to SIP and IAX
     parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
     parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
@@ -950,15 +949,21 @@ void SIPAccount::registerVoIPLink()
 #endif
 }
 
-void SIPAccount::unregisterVoIPLink()
+void SIPAccount::unregisterVoIPLink(std::function<void(bool)> released_cb)
 {
-    if (isIP2IP())
+    if (isIP2IP()) {
+        if (released_cb)
+            released_cb(false);
         return;
+    }
 
     try {
-        link_.sendUnregister(*this);
+        link_.sendUnregister(*this, released_cb);
     } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        ERROR("SIPAccount::unregisterVoIPLink %s", e.what());
+        setTransport();
+        if (released_cb)
+            released_cb(false);
     }
 }
 
@@ -1377,7 +1382,6 @@ SIPAccount::setTransport(pjsip_transport* transport, pjsip_tpfactory* lis)
         if (regc_)
             pjsip_regc_release_transport(regc_);
         pjsip_transport_dec_ref(transport_);
-        DEBUG("Transport %s has count %d", transport_->info, pj_atomic_get(transport_->ref_cnt));
     }
     if (tlsListener_ && tlsListener_ != lis)
         tlsListener_->destroy(tlsListener_);
@@ -1672,6 +1676,7 @@ SIPAccount::generateVideoPort() const
 void
 SIPAccount::destroyRegistrationInfo()
 {
+    if (!regc_) return;
     pjsip_regc_destroy(regc_);
     regc_ = nullptr;
 }

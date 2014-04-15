@@ -122,7 +122,7 @@ class SIPVoIPLink : public VoIPLink {
          * Build and send SIP unregistration request
          * @param destroy_transport If true, attempt to destroy the transport.
          */
-        virtual void sendUnregister(Account& a);
+        virtual void sendUnregister(Account& a, std::function<void(bool)> cb = std::function<void(bool)>());
 
         /**
          * Register a new keepalive registration timer to this endpoint

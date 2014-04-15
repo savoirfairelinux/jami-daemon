@@ -282,7 +282,7 @@ IAXVoIPLink::sendRegister(Account& a)
 }
 
 void
-IAXVoIPLink::sendUnregister(Account& a)
+IAXVoIPLink::sendUnregister(Account& a, std::function<void(bool)> cb)
 {
     if (regSession_) {
         std::lock_guard<std::mutex> lock(mutexIAX_);
@@ -293,6 +293,9 @@ IAXVoIPLink::sendUnregister(Account& a)
     nextRefreshStamp_ = 0;
 
     static_cast<IAXAccount&>(a).setRegistrationState(RegistrationState::UNREGISTERED);
+
+    if (cb)
+        cb(true);
 }
 
 Call*

@@ -32,13 +32,14 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
-#include <string>
-#include <vector>
-
 #include "noncopyable.h"
 #include "config/sfl_config.h"
 #include "config/serializable.h"
 #include "registration_states.h"
+
+#include <functional>
+#include <string>
+#include <vector>
 
 class Account;
 class VoIPLink;
@@ -97,7 +98,7 @@ class Account : public Serializable {
          * Unregister the underlying VoIPLink. Stop the event listener.
          * This should update the getRegistrationState() return value.
          */
-        virtual void unregisterVoIPLink() = 0;
+        virtual void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
 
         /**
          * Tell if the account is enable or not.

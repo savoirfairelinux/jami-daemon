@@ -54,7 +54,7 @@ class IAXAccount : public Account {
         void registerVoIPLink();
 
         // Unregister an account
-        void unregisterVoIPLink();
+        void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>());
 
         std::string getPassword() const {
             return password_;

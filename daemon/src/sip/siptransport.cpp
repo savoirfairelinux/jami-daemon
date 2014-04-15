@@ -37,6 +37,7 @@
 
 #include "manager.h"
 #include "client/configurationmanager.h"
+#include "map_utils.h"
 #include "ip_utils.h"
 
 #include <pjsip.h>
@@ -55,8 +56,8 @@
 
 #define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return (VAL); }
 
-SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool, std::function<void(pjsip_transport*)> transportDestroyed) :
-transportMap_(), transportDestroyedCb_(transportDestroyed), cp_(cp), pool_(pool), endpt_(endpt)
+SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool) :
+transportMap_(), transportMapMutex_(), transportDestroyedCv_(), cp_(cp), pool_(pool), endpt_(endpt)
 {
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), SipTransport::tp_state_callback);
     if (status != PJ_SUCCESS) {
@@ -91,68 +92,97 @@ SipTransport::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state
 void
 SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state state)
 {
-    WARN("SipTransport::transportStateChanged: {%s} is now in state %d", tp->info, state);
-    std::map<std::string, pjsip_transport*>::const_iterator transport_key = transportMap_.cend();
-    for (auto i = transportMap_.cbegin(); i != transportMap_.cend(); ++i) {
-        if (i->second == tp) {
-            transport_key = i;
-            break;
-        }
+    std::lock_guard<std::mutex> lock(transportMapMutex_);
+    auto transport_key = map_utils::findByValue(transportMap_, tp);
+    if (transport_key == transportMap_.cend())
+        return;
+    if (state == PJSIP_TP_STATE_SHUTDOWN || state == PJSIP_TP_STATE_DESTROY) {
+        WARN("Transport was destroyed: {%s}", tp->info);
+        transportMap_.erase(transport_key++);
+        transportDestroyedCv_.notify_all();
     }
-    if (transport_key == transportMap_.cend()) {
-        ERROR("Transport not found.");
+}
+
+void
+SipTransport::waitForReleased(pjsip_transport* tp, std::function<void(bool)> released_cb)
+{
+    if (!released_cb)
+        return;
+    if (!tp) {
+        released_cb(true);
         return;
     }
-
-    if (state == PJSIP_TP_STATE_SHUTDOWN || state == PJSIP_TP_STATE_DESTROY) {
-        if (transportDestroyedCb_)
-            transportDestroyedCb_(transport_key->second);
-        transportMap_.erase(transport_key++);
+    std::vector<pjsip_transport*> to_destroy_all;
+    bool destroyed = false;
+    {
+        std::unique_lock<std::mutex> lock(transportMapMutex_);
+        auto check_destroyed = [&](){
+            std::vector<pjsip_transport*> to_destroy = _cleanupTransports();
+            bool _destr = false;
+            for (auto t : to_destroy) {
+                if (t == tp) {
+                    _destr = true;
+                    break;
+                }
+            }
+            to_destroy_all.insert(to_destroy_all.end(), to_destroy.begin(), to_destroy.end());
+            return _destr;
+        };
+        destroyed = transportDestroyedCv_.wait_for(lock, std::chrono::milliseconds(50), check_destroyed);
+        if (!destroyed)
+            destroyed = check_destroyed();
     }
+    for (auto t : to_destroy_all) {
+        pj_lock_release(t->lock);
+        pjsip_transport_destroy(t);
+    }
+    released_cb(destroyed);
 }
 
 void
 SipTransport::createSipTransport(SIPAccount &account)
 {
-    WARN("SipTransport::createSipTransport %s", account.getAccountID().c_str());
     // Remove any existing transport from the account
     account.setTransport();
+    cleanupTransports();
 
     auto type = account.getTransportType();
     auto family = pjsip_transport_type_get_af(type);
     auto interface = account.getLocalInterface();
-    std::string key;
+    pjsip_transport* new_transport = nullptr;
 
-#if HAVE_TLS
-    if (account.isTlsEnabled()) {
-        cleanupTransports();
-        key = transportMapKey(interface, account.getTlsListenerPort(), type);
-        if (transportMap_.find(key) != transportMap_.end()) {
-            throw std::runtime_error("TLS transport already exists");
-        }
-        createTlsTransport(account);
-    } else {
-#else
     {
+        std::lock_guard<std::mutex> lock(transportMapMutex_);
+        std::string key;
+#if HAVE_TLS
+        if (account.isTlsEnabled()) {
+            key = transportMapKey(interface, account.getTlsListenerPort(), type);
+            if (transportMap_.find(key) != transportMap_.end()) {
+                throw std::runtime_error("TLS transport already exists");
+            }
+            createTlsTransport(account);
+        } else {
+#else
+        {
 #endif
-        auto port = account.getLocalPort();
-        key = transportMapKey(interface, port, type);
-        // if this transport already exists, reuse it
-        auto iter = transportMap_.find(key);
-        if (iter != transportMap_.end()) {
-            auto status = pjsip_transport_add_ref(iter->second);
-            if (status == PJ_SUCCESS)
-                account.setTransport(iter->second);
+            auto port = account.getLocalPort();
+            key = transportMapKey(interface, port, type);
+            // if this transport already exists, reuse it
+            auto iter = transportMap_.find(key);
+            if (iter != transportMap_.end()) {
+                auto status = pjsip_transport_add_ref(iter->second);
+                if (status == PJ_SUCCESS)
+                    account.setTransport(iter->second);
+            }
+            if (!account.getTransport()) {
+                account.setTransport(createUdpTransport(interface, port, family));
+            }
         }
-        if (!account.getTransport()) {
-            account.setTransport(createUdpTransport(interface, port, family));
-        }
+
+        new_transport = account.getTransport();
+        if (new_transport)
+            transportMap_[key] = new_transport;
     }
-
-    auto new_transport = account.getTransport();
-    if (new_transport)
-        transportMap_[key] = new_transport;
-
     cleanupTransports();
 
     if (!new_transport) {
@@ -163,8 +193,6 @@ SipTransport::createSipTransport(SIPAccount &account)
 #endif
             throw std::runtime_error("Could not create new UDP transport");
     }
-
-    ERROR("Transport %s has count %d", account.transport_->info, pj_atomic_get(account.transport_->ref_cnt));
 }
 
 pjsip_transport *
@@ -201,7 +229,7 @@ SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port,
 
     DEBUG("Created UDP transport on %s : %s", interface.c_str(), ip_utils::addrToStr(listeningAddress, true, true).c_str());
     // dump debug information to stdout
-    pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
+    //pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
     return transport;
 }
 
@@ -283,11 +311,24 @@ SipTransport::createTlsTransport(SIPAccount &account)
 void
 SipTransport::cleanupTransports()
 {
-    ERROR("SipTransport::cleanupTransports");
+    std::vector<pjsip_transport*> to_destroy;
+    {
+        std::lock_guard<std::mutex> lock(transportMapMutex_);
+        to_destroy = _cleanupTransports();
+    }
+    for (auto t : to_destroy) {
+        pj_lock_release(t->lock);
+        pjsip_transport_destroy(t);
+    }
+}
+
+std::vector<pjsip_transport*>
+SipTransport::_cleanupTransports()
+{
+    std::vector<pjsip_transport*> to_destroy;
     for (auto it = transportMap_.cbegin(); it != transportMap_.cend();) {
         pjsip_transport* t = (*it).second;
         if (!t) {
-            ERROR("Null pointer found in transportMap_ for key %s", (*it).first.c_str());
             transportMap_.erase(it++);
             continue;
         }
@@ -297,15 +338,16 @@ SipTransport::cleanupTransports()
             DEBUG("Removing transport for %s", t->info );
             bool is_shutdown = t->is_shutdown || t->is_destroying;
             transportMap_.erase(it++);
-            pj_lock_release(t->lock);
             if (!is_shutdown)
-                pjsip_transport_destroy(t);
+                to_destroy.push_back(t);
+            else
+                pj_lock_release(t->lock);
         } else {
-            DEBUG("Transport {%s} has refcount %d", t->info, ref_cnt);
             ++it;
             pj_lock_release(t->lock);
         }
     }
+    return to_destroy;
 }
 
 std::vector<pj_sockaddr>

@@ -147,7 +147,7 @@ void IAXAccount::registerVoIPLink()
 }
 
 void
-IAXAccount::unregisterVoIPLink()
+IAXAccount::unregisterVoIPLink(std::function<void(bool)> cb)
 {
     try {
         link_.sendUnregister(*this);
@@ -155,6 +155,8 @@ IAXAccount::unregisterVoIPLink()
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
+    if (cb)
+        cb(true);
 }
 
 void

@@ -2377,19 +2377,19 @@ void ManagerImpl::setAccountDetails(const std::string& accountID,
         return;
 
     // Unregister before modifying any account information
-    account->unregisterVoIPLink();
-    account->setAccountDetails(details);
+    account->unregisterVoIPLink([&](bool /* transport_free */) {
+        account->setAccountDetails(details);
+        // Serialize configuration to disk once it is done
+        saveConfig();
 
-    // Serialize configuration to disk once it is done
-    saveConfig();
+        if (account->isEnabled())
+            account->registerVoIPLink();
+        else
+            account->unregisterVoIPLink();
 
-    if (account->isEnabled())
-        account->registerVoIPLink();
-    else
-        account->unregisterVoIPLink();
-
-    // Update account details to the client side
-    client_.getConfigurationManager()->accountsChanged();
+        // Update account details to the client side
+        client_.getConfigurationManager()->accountsChanged();
+    });
 }
 
 std::string

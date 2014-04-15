@@ -550,14 +550,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
-    sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_, [&](pjsip_transport* transport) {
-        for (auto& a : sipAccountMap_ ) {
-            SIPAccount* account = static_cast<SIPAccount*>(a.second);
-            if ( account->getTransport() == transport ) {
-                account->setTransport();
-            }
-        }
-    }));
+    sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_));
 
     if (ip_utils::getLocalAddr().addr.sa_family == pj_AF_UNSPEC())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -828,13 +821,15 @@ SIPVoIPLink::sendRegister(Account& a)
     sipTransport->cleanupTransports();
 }
 
-void SIPVoIPLink::sendUnregister(Account& a)
+void SIPVoIPLink::sendUnregister(Account& a, std::function<void(bool)> released_cb)
 {
     SIPAccount& account = static_cast<SIPAccount&>(a);
 
     // This may occurs if account failed to register and is in state INVALID
     if (!account.isRegistered()) {
         account.setRegistrationState(RegistrationState::UNREGISTERED);
+        if (released_cb)
+            released_cb(true);
         return;
     }
 
@@ -856,9 +851,14 @@ void SIPVoIPLink::sendUnregister(Account& a)
     }
 
     account.setRegister(false);
-    account.setTransport(); // remove the transport from the account
 
+    // remove the transport from the account
+    pjsip_transport* transport_ = account.getTransport();
+    account.setTransport();
     sipTransport->cleanupTransports();
+    if (released_cb) {
+        sipTransport->waitForReleased(transport_, released_cb);
+    }
 }
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
@@ -2473,6 +2473,8 @@ void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP)
 
     if (!account)
         return;
+
+    ERROR("setCallMediaLocal %s", ip_utils::addrToStr(localIP).c_str());
 
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set

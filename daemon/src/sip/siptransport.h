@@ -46,19 +46,20 @@
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 
+#include <functional>
+#include <mutex>
+#include <condition_variable>
 #include <map>
 #include <string>
 #include <vector>
 #include <memory>
-#include <functional>
-
 
 class SIPAccount;
 
 
 class SipTransport {
     public:
-        SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool, std::function<void(pjsip_transport*)> transportDestroyed = std::function<void(pjsip_transport*)>());
+        SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool);
         ~SipTransport();
 
         /**
@@ -101,7 +102,13 @@ class SipTransport {
          */
         void cleanupTransports();
 
-        void transportStateChanged(pjsip_transport* tp, pjsip_transport_state state);
+        /**
+         * Call released_cb(success) when transport tp is destroyed, making the
+         * socket available for a new similar transport.
+         * success is true if the transport is actually released.
+         * TODO: make this call non-blocking.
+         */
+        void waitForReleased(pjsip_transport* tp, std::function<void(bool)> released_cb);
 
     private:
         NON_COPYABLE(SipTransport);
@@ -137,15 +144,23 @@ class SipTransport {
         pjsip_transport *createUdpTransport(const std::string &interface,
                                             pj_uint16_t port, pj_uint16_t family = pj_AF_UNSPEC());
 
+        /**
+         * Go through the transport list and remove unused ones.
+         * Returns a list of LOCKED transports that have to be processed and unlocked.
+         */
+        std::vector<pjsip_transport*> _cleanupTransports();
+
         static void tp_state_callback(pjsip_transport *, pjsip_transport_state, const pjsip_transport_state_info *);
+
+        void transportStateChanged(pjsip_transport* tp, pjsip_transport_state state);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case
          * several accounts would share the same port number.
          */
         std::map<std::string, pjsip_transport*> transportMap_;
-
-        std::function<void(pjsip_transport*)> transportDestroyedCb_;
+        std::mutex transportMapMutex_;
+        std::condition_variable transportDestroyedCv_;
 
         pj_caching_pool& cp_;
         pj_pool_t& pool_;

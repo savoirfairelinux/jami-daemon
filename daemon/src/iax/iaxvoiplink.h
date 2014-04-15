@@ -109,7 +109,7 @@ class IAXVoIPLink : public VoIPLink {
          * @todo Send an IAX_COMMAND_REGREL to force unregistration upstream.
          *       Urgency: low
          */
-        virtual void sendUnregister(Account& a);
+        virtual void sendUnregister(Account& a, std::function<void(bool)> cb = std::function<void(bool)>());
 
         /**
          * Create a new outgoing call

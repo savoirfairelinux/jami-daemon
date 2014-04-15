@@ -35,6 +35,7 @@
 #define __VOIP_LINK_H__
 
 #include <stdexcept>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -73,7 +74,7 @@ class VoIPLink {
          * Build and send account unregistration request
          * Underlying ressources are released after unregistration
          */
-        virtual void sendUnregister(Account& a) = 0;
+        virtual void sendUnregister(Account& a, std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
 
         /**
          * Place a new call
