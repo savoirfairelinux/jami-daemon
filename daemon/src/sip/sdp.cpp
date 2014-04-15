@@ -39,7 +39,6 @@
 #include "sipaccount.h"
 #include "manager.h"
 #include "logger.h"
-#include "ip_utils.h"
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
@@ -64,7 +63,7 @@ Sdp::Sdp(pj_pool_t *pool)
     , sessionAudioMedia_()
     , sessionVideoMedia_()
     , publishedIpAddr_()
-    , publishedIpAddrStr_()
+    , publishedIpAddrType_()
     , remoteIpAddr_()
     , localAudioDataPort_(0)
     , localAudioControlPort_(0)
@@ -342,8 +341,9 @@ Sdp::setMediaDescriptorLines(bool audio)
 
 void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 {
+    auto ip = ip_utils::strToAddr(publishedIpAddr_);
     pj_sockaddr outputAddr;
-    pj_sockaddr_cp(&outputAddr, &publishedIpAddr_);
+    pj_sockaddr_cp(&outputAddr, &ip);
     pj_sockaddr_set_port(&outputAddr, localAudioControlPort_);
     pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create_rtcp(memPool_, &outputAddr);
     if (attr)
@@ -351,27 +351,26 @@ void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 }
 
 void
-Sdp::setPublishedIP(const std::string &ip_addr)
+Sdp::setPublishedIP(const std::string &addr, pj_uint16_t addr_type)
 {
-    setPublishedIP(ip_utils::strToAddr(ip_addr));
+    publishedIpAddr_ = addr;
+    publishedIpAddrType_ = addr_type;
+    if (localSession_) {
+        if (addr_type == pj_AF_INET6())
+            localSession_->origin.addr_type = pj_str((char*) "IP6");
+        else
+            localSession_->origin.addr_type = pj_str((char*) "IP4");
+        localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
+        localSession_->conn->addr = localSession_->origin.addr;
+        if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
+            ERROR("Could not validate SDP");
+    }
 }
 
 void
 Sdp::setPublishedIP(const pj_sockaddr& ip_addr)
 {
-    publishedIpAddr_ = ip_addr;
-    publishedIpAddrStr_ = ip_utils::addrToStr(publishedIpAddr_);
-
-    if (localSession_) {
-        if (publishedIpAddr_.addr.sa_family == pj_AF_INET6())
-            localSession_->origin.addr_type = pj_str((char*) "IP6");
-        else
-            localSession_->origin.addr_type = pj_str((char*) "IP4");
-        localSession_->origin.addr = pj_str((char*) publishedIpAddrStr_.c_str());
-        localSession_->conn->addr = localSession_->origin.addr;
-        if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
-            ERROR("Could not validate SDP");
-    }
+    setPublishedIP(ip_utils::addrToStr(ip_addr), ip_addr.addr.sa_family);
 }
 
 void
@@ -474,11 +473,11 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     // Use Network Time Protocol format timestamp to ensure uniqueness.
     localSession_->origin.id = tv.sec + 2208988800UL;
     localSession_->origin.net_type = pj_str((char*) "IN");
-    if (publishedIpAddr_.addr.sa_family == pj_AF_INET6())
+    if (publishedIpAddrType_ == pj_AF_INET6())
         localSession_->origin.addr_type = pj_str((char*) "IP6");
     else
         localSession_->origin.addr_type = pj_str((char*) "IP4");
-    localSession_->origin.addr = pj_str((char*) publishedIpAddrStr_.c_str());
+    localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
 
     localSession_->name = pj_str((char*) PACKAGE);
 
