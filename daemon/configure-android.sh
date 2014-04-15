@@ -1,1 +1,1 @@
-./configure --without-dbus --without-alsa --without-pulse --without-iax2
+./configure --without-dbus --without-alsa --without-pulse --with-iax2
