@@ -283,7 +283,7 @@ RingBuffer::discard(size_t toDiscard, const std::string &call_id)
 {
     std::unique_lock<std::mutex> l(lock_);
 
-    size_t buffer_size = buffer_.frames();
+    const size_t buffer_size = buffer_.frames();
     if (buffer_size == 0)
         return 0;
 
@@ -300,6 +300,9 @@ size_t
 RingBuffer::discard(size_t toDiscard)
 {
     const size_t buffer_size = buffer_.frames();
+    if (buffer_size == 0)
+        return 0;
+
     for (auto & r : readpointers_) {
         size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
         if (dst < toDiscard) {
