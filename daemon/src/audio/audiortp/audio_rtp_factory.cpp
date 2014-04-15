@@ -123,7 +123,7 @@ void AudioRtpFactory::initSession()
                 throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
     } else {
-#ifdef CCXX_IPV6
+#if HAVE_IPV6
         /*if (call_->isIPv6()) {
             rtpSession_.reset(new AudioSymmetricRtpSessionIPv6(*call_));
         } else */

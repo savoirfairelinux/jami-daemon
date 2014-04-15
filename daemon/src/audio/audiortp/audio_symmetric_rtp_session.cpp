@@ -155,7 +155,7 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
     }
 }
 
-#ifdef CCXX_IPV6
+#if HAVE_IPV6
 
 AudioSymmetricRtpSessionIPv6::AudioSymmetricRtpSessionIPv6(SIPCall &call) :
     ost::SymmetricRTPSessionIPV6(ost::IPV6Host(call.getLocalIp().c_str()), call.getLocalAudioPort())
@@ -200,6 +200,6 @@ void AudioSymmetricRtpSessionIPv6::onGotSR(ost::SyncSource& source, ost::RTCPCom
     // TODO: do something with this data
 }
 
-#endif // CCXX_IPV6
+#endif // HAVE_IPV6
 
 }

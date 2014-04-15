@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
 AC_INIT([sflphone],[1.3.0],[sflphoneteam@savoirfairelinux.com],[sflphone])
 
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013]])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014]])
 AC_REVISION([$Revision$])
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -363,6 +363,12 @@ AC_ARG_WITH([networkmanager], [AS_HELP_STRING([--without-networkmanager],
             [with_networkmanager=yes])
 
 AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
+
+dnl IPv6 mode is default-disabled
+AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
+
+AC_DEFINE_UNQUOTED([HAVE_IPV6], `if test "x$with_ipv6" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have IPv6])
+AM_CONDITIONAL(BUILD_IPV6, test "x$with_ipv6" = "xyes" )
 
 
 # DOXYGEN

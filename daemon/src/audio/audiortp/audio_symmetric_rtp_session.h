@@ -77,7 +77,7 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
         void startRTPLoop();
 };
 
-#ifdef CCXX_IPV6
+#if HAVE_IPV6
 
 class AudioSymmetricRtpSessionIPv6 : public ost::SymmetricRTPSessionIPV6, public AudioRtpSession {
     public:
@@ -113,7 +113,7 @@ class AudioSymmetricRtpSessionIPv6 : public ost::SymmetricRTPSessionIPV6, public
         void startRTPLoop();
 };
 
-#endif // CCXX_IPV6
+#endif // HAVE_IPV6
 
 }
 #pragma GCC diagnostic warning "-Weffc++"
