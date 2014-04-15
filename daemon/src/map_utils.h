@@ -35,12 +35,30 @@
 #include <map>
 
 namespace map_utils {
+
 template <typename M, typename V>
 void vectorFromMapKeys(const M &m, V &v)
 {
     for (typename M::const_iterator it = m.begin(); it != m.end(); ++it)
         v.push_back(it->first);
 }
+
+template <typename M, typename V>
+void vectorFromMapValues(const M &m, V &v)
+{
+    for (typename M::const_iterator it = m.begin(); it != m.end(); ++it)
+        v.push_back(it->second);
+}
+
+template <typename M, typename V>
+typename M::const_iterator
+findByValue(const M &m, V &v) {
+    for (typename M::const_iterator it = m.begin(); it != m.end(); ++it)
+        if (it->second == v)
+            return it;
+    return m.cend();
+}
+
 }
 
 #endif  // MAP_UTILS_H_
