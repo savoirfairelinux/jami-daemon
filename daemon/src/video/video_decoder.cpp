@@ -181,7 +181,9 @@ int VideoDecoder::decode(VideoFrame& result)
     if (ret == AVERROR(EAGAIN)) {
         return 0;
     } else if (ret < 0) {
-        ERROR("Couldn't read frame: %s\n", strerror(ret));
+        char errbuf[64];
+        av_strerror(ret, errbuf, sizeof(errbuf));
+        ERROR("Couldn't read frame: %s\n", errbuf);
         return -1;
     }
 
