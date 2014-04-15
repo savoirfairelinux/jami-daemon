@@ -2195,7 +2195,7 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
     pjsip_rx_data *r_data = event->body.tsx_state.src.rdata;
 
     // Get the message inside the transaction
-    if (!r_data->msg_info.msg->body)
+    if (!r_data or !r_data->msg_info.msg->body)
         return;
 
     const char *formattedMsgPtr = static_cast<const char*>(r_data->msg_info.msg->body->data);
@@ -2229,9 +2229,6 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
             from = from.substr(1, from.size() - 2);
 
         Manager::instance().incomingMessage(call->getCallId(), from, findTextMessage(formattedMessage));
-
-        if (!event->body.tsx_state.src.rdata)
-            return;
 
         // Respond with a 200/OK
         sendOK(inv->dlg, r_data, tsx);
