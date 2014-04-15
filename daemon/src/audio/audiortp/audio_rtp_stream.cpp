@@ -188,7 +188,7 @@ void AudioRtpContext::fadeIn(AudioBuffer& buf)
         return;
     // http://en.wikipedia.org/wiki/Smoothstep
     double gain = fadeFactor * fadeFactor * (3. - 2. * fadeFactor);
-    buf.applyGain(fadeFactor);
+    buf.applyGain(gain);
     fadeFactor += buf.size() / (double) format.sample_rate;
 }
 
