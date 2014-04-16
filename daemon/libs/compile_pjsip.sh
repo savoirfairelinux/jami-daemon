@@ -3,8 +3,7 @@
 if [ "$#" -eq  "0" ]
 then
     CONFIGURE=./configure
-    # pjproject fails on parallel build, so force -j1 in case
-    MAKE="make dep && make -j1"
+    MAKE="make dep && make"
 elif [ "$1" == "-a" ]
 then
     CONFIGURE=./configure-android
