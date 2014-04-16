@@ -35,9 +35,13 @@
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 
-#include <string.h>
-
 #include <glib/gi18n.h>
+
+typedef enum {
+    IS_CALL,
+    IS_CONFERENCE,
+    IS_DESTROYED
+} call_type_t;
 
 typedef struct {
     gchar *id;
@@ -46,6 +50,39 @@ typedef struct {
 } VideoHandle;
 
 static GHashTable *video_handles;
+
+/* FIXME: this solution is a workaround, we must have this information from the
+ * daemon by receiving a dbus signal, or a new structure to handle ID */
+/* This function is an helper function to determine if the ID is a callID or a
+ * confID */
+static call_type_t
+is_call_or_conf(const gchar *id)
+{
+    /* get the call list and compare the id with all id in the list */
+    gchar **call_list = dbus_get_call_list();
+    for (gchar **call = call_list; call && *call; call++) {
+        /* if we found the same id, it's a call ID */
+        if (g_strcmp0(id, *call) == 0) {
+            g_strfreev(call_list);
+            return IS_CALL;
+        }
+    }
+    g_strfreev(call_list);
+
+    /* get the conference list and compare the id with all id in the list */
+    gchar **conference_list = dbus_get_conference_list();
+    for (gchar **conference = conference_list; conference && *conference; conference++) {
+        /* if we found the same id, it's a conf ID */
+        if (g_strcmp0(id, *conference) == 0) {
+            g_strfreev(conference_list);
+            return IS_CONFERENCE;
+        }
+    }
+    g_strfreev(conference_list);
+
+    return IS_DESTROYED;
+
+}
 
 static gboolean
 video_is_local(const gchar *id)
@@ -108,6 +145,7 @@ video_window_button_cb(GtkWindow *win,
 
 }
 
+
 static VideoHandle*
 add_handle(const gchar *id)
 {
@@ -136,8 +174,83 @@ add_handle(const gchar *id)
 
     /* Preview video */
     if (video_is_local(id)) {
+
         gtk_window_set_title(GTK_WINDOW(handle->window), _("Local View"));
         update_camera_button_label();
+
+    } else {
+
+        gchar *window_title = NULL;
+        gchar *title_prefix = NULL;
+        gchar *name = NULL;
+        call_type_t call_type = is_call_or_conf(id);
+
+        if (call_type == IS_DESTROYED)
+            return NULL;
+
+        if (call_type == IS_CONFERENCE) { /* on a conference call */
+
+            /* build the prefix title name */
+            title_prefix = _("Conference with");
+
+            /* get all the participants name */
+            gchar **participant_list = dbus_get_participant_list(id);
+            for (gchar **participant = participant_list; participant && *participant; participant++) {
+                g_debug("participant %s\n", *participant);
+
+                gchar *new_name = NULL;
+
+                /* create a new callable object to manipulate the id details */
+                callable_obj_t *c = create_new_call_from_details(*participant, dbus_get_call_details(*participant));
+
+                /* if no display name, we show the peer_number */
+                if (g_strcmp0(c->_display_name, "") != 0) {
+                    new_name = g_strdup(c->_display_name);
+                } else {
+                    new_name = g_strdup(c->_peer_number);
+                }
+
+                /* if name exists we must add the new name to the list */
+                if (name) {
+                    gchar *name_list = g_strdup_printf("%s, %s", name, new_name);
+                    g_free(name);
+                    name = name_list;
+                } else {
+                    name = g_strdup(new_name);
+                }
+
+                g_free(new_name);
+                g_free(c);
+            }
+
+         g_strfreev(participant_list);
+
+        } else if (call_type == IS_CALL) { /* on a simple call */
+
+            /* create a new callable object to manipulate the call details */
+            callable_obj_t *c = create_new_call_from_details(id, dbus_get_call_details(id));
+
+            /* build the prefix title name */
+            title_prefix = _("Call with");
+
+            /* if no display name, we show the peer_number */
+            if (g_strcmp0(c->_display_name, "") != 0) {
+                name = g_strdup(c->_display_name);
+            } else {
+                name = g_strdup(c->_peer_number);
+            }
+
+            g_free(c);
+        }
+
+        /* build the final title name */
+        window_title = g_strdup_printf("%s %s", title_prefix, name);
+
+        /* update the window title */
+        gtk_window_set_title(GTK_WINDOW(handle->window), window_title);
+
+        g_free(name);
+        g_free(window_title);
     }
 
     g_hash_table_insert(video_handles, g_strdup(id), handle);
@@ -173,6 +286,7 @@ try_clutter_init()
 #undef PRINT_ERR
 }
 
+/* TODO: this window must be created at startup */
 void
 started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
                           gchar *id,
