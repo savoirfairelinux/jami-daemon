@@ -75,7 +75,10 @@ namespace {
 std::string transportMapKey(const std::string &interface, int port, pjsip_transport_type_e type)
 {
     std::ostringstream os;
-    char af_ver_num = (pjsip_transport_type_get_af(type) == pj_AF_INET6()) ? '6' : '4';
+    auto family = pjsip_transport_type_get_af(type);
+    char af_ver_num = (family == pj_AF_INET6()) ? '6' : '4';
+    if (type == PJSIP_TRANSPORT_START_OTHER) // STUN
+        type = (family == pj_AF_INET6()) ?  PJSIP_TRANSPORT_UDP6 : PJSIP_TRANSPORT_UDP;
     os << interface << ':' << port << ':' << pjsip_transport_get_type_name(type) << af_ver_num;
     return os.str();
 }
