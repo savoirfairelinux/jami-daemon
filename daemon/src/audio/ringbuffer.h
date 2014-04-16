@@ -133,7 +133,7 @@ class RingBuffer {
          * @param deadline The call is garenteed to end after this time point. If no deadline is provided, the the call blocks indefinitely.
          * @return available data for call_id after the call returned (same as calling getLength(call_id) ).
          */
-        size_t waitForDataAvailable(const std::string &call_id, const size_t min_data_length = 0, const std::chrono::high_resolution_clock::time_point& deadline = std::chrono::high_resolution_clock::time_point() ) const;
+        size_t waitForDataAvailable(const std::string &call_id, const size_t min_data_length, const std::chrono::high_resolution_clock::time_point& deadline) const;
 
         /**
          * Debug function print mEnd, mStart, mBufferSize
