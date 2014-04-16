@@ -93,7 +93,13 @@ class AudioRtpStream {
         AudioRtpStream(const std::string &id);
         virtual ~AudioRtpStream();
         void initBuffers();
+
+        /**
+         * Set the list of codecs supported by this stream.
+         * The codec used for encoding must be first.
+         */
         void setRtpMedia(const std::vector<AudioCodec*> &codecs);
+
         /**
          * Decode audio data received from peer
          */

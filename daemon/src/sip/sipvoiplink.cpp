@@ -1964,8 +1964,8 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     DEBUG("Local active SDP Session:\n%s", buffer);
 
     // Set active SDP sessions
-    sdpSession->setActiveRemoteSdpSession(remoteSDP);
     sdpSession->setActiveLocalSdpSession(local_sdp);
+    sdpSession->setActiveRemoteSdpSession(remoteSDP);
 
     // Update internal field for
     sdpSession->setMediaTransportInfoFromRemoteSdp();
