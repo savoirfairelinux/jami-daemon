@@ -3,3 +3,4 @@ http://projects.savoirfairelinux.net/wiki/sflphone/Coding_Standards
 
 Gerrit code review
 Ask for code review: refs/for/master
+By pass: refs/heads/master
