@@ -123,6 +123,7 @@ void Account::loadDefaultCodecs()
     result.push_back("3");
     result.push_back("8");
     result.push_back("9");
+    result.push_back("104");
     result.push_back("110");
     result.push_back("111");
     result.push_back("112");
@@ -296,6 +297,7 @@ Account::getDefaultAudioCodecs()
     result.push_back(3);
     result.push_back(8);
     result.push_back(9);
+    result.push_back(104);
     result.push_back(110);
     result.push_back(111);
     result.push_back(112);
