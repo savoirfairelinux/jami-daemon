@@ -90,6 +90,7 @@ ip_utils::addrToStr(const pj_sockaddr& ip, bool include_port, bool force_ipv6_br
     std::string str(PJ_INET6_ADDRSTRLEN, (char)0);
     if(include_port) force_ipv6_brackets = true;
     pj_sockaddr_print(&ip, &(*str.begin()), PJ_INET6_ADDRSTRLEN, (include_port?1:0)|(force_ipv6_brackets?2:0));
+    str.resize(std::char_traits<char>::length(str.c_str()));
     return str;
 }
 
