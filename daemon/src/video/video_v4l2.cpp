@@ -29,6 +29,7 @@
  */
 
 #include <string>
+#include <cassert>
 #include <algorithm>
 #include <vector>
 #include <climits>
@@ -366,6 +367,7 @@ VideoV4l2Device::getChannel(const string &name) const
         if (item.name == name)
             return item;
 
+    assert(not channels_.empty());
     return channels_.back();
 }
 
