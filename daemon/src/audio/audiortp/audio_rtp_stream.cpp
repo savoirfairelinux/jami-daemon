@@ -248,7 +248,7 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
     codec.setOptimalFormat(f.sample_rate, f.nb_channels);
 
-    const int pt = encoder.getPayloadType();
+    const int pt = codec.getPayloadType();
     encoder_.payloadType = decoder_.payloadType = pt;
     encoder_.frameSize = decoder_.frameSize = codec.getFrameSize();
 
