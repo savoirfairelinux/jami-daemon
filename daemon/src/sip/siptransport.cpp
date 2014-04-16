@@ -436,11 +436,10 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
     // Update address and port with active transport
     RETURN_IF_NULL(transport, "Transport is NULL in findLocalAddress, using local address %s:%d", addr.c_str(), port);
 
-    pj_sockaddr_in mapped_addr;
+    pj_sockaddr mapped_addr;
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
     const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort, *stunServerName, stunPort};
-    const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory,
-            &stunOpt, 1, &sipSocket, &mapped_addr);
+    const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory, &stunOpt, 1, &sipSocket, &mapped_addr.ipv4);
 
     switch (stunStatus) {
         case PJLIB_UTIL_ESTUNNOTRESPOND:
@@ -449,14 +448,15 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
         case PJLIB_UTIL_ESTUNSYMMETRIC:
            ERROR("Different mapped addresses are returned by servers.");
            return;
+        case PJ_SUCCESS:
+            port = pj_sockaddr_get_port(&mapped_addr);
+            addr = ip_utils::addrToStr(mapped_addr);
         default:
            break;
     }
 
-    port = pj_sockaddr_get_port(&mapped_addr);
-
-    WARN("Using address %s:%d provided by STUN server %.*s",
-         addr.c_str(), port, stunServerName->slen, stunServerName->ptr);
+    WARN("Using address %s provided by STUN server %.*s",
+         ip_utils::addrToStr(mapped_addr, true, true).c_str(), stunServerName->slen, stunServerName->ptr);
 }
 
 #undef RETURN_IF_NULL
