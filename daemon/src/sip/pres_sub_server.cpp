@@ -50,8 +50,15 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
         return;
     }
 
-    PJ_UNUSED_ARG(event);
-    SIPPresence * pres = Manager::instance().getSipAccount("IP2IP")->getPresence();
+    SIPAccount *acc = Manager::instance().getIP2IPAccount();
+    assert(acc);
+
+    SIPPresence * pres = acc->getPresence();
+    if (!pres) {
+        ERROR("Presence not initialized");
+        return;
+    }
+
     pres->lock();
     PresSubServer *presSubServer = static_cast<PresSubServer *>(pjsip_evsub_get_mod_data(sub, pres->getModId()));
 
