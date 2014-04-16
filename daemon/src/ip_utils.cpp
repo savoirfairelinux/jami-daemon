@@ -104,12 +104,12 @@ ip_utils::addrToStr(const std::string& ip_str, bool include_port, bool force_ipv
 }
 
 pj_sockaddr
-ip_utils::strToAddr(const std::string& str)
+ip_utils::strToAddr(const std::string& str, pj_uint16_t family)
 {
     pj_str_t pjstring;
     pj_cstr(&pjstring, str.c_str());
     pj_sockaddr ip;
-    auto status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &pjstring, &ip);
+    auto status = pj_sockaddr_parse(family, 0, &pjstring, &ip);
     if (status != PJ_SUCCESS)
         ip.addr.sa_family = pj_AF_UNSPEC();
     return ip;

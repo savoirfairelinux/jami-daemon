@@ -59,10 +59,10 @@ namespace ip_utils {
     /**
      * Convert a string representation of an IP adress to its binary counterpart.
      *
-     * Performs hostname resolution if necessary.
+     * Performs hostname resolution if necessary (with given address family).
      * If conversion fails, returned adress will have its family set to PJ_AF_UNSPEC.
      */
-    pj_sockaddr strToAddr(const std::string& str);
+    pj_sockaddr strToAddr(const std::string& str, pj_uint16_t family = pj_AF_UNSPEC());
 
     /**
      * Return the generic "any host" IP address of the specified family.
