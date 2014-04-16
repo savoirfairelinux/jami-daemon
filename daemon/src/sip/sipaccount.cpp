@@ -235,11 +235,11 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode keepAliveEnabled(keepAliveEnabled_);
 
 #ifdef SFL_PRESENCE
-    std::string pres(presence_ and getPresence()->isEnabled() ? Conf::TRUE_STR : Conf::FALSE_STR);
+    std::string pres(presence_ and presence_->isEnabled() ? Conf::TRUE_STR : Conf::FALSE_STR);
     ScalarNode presenceEnabled(pres);
-    std::string presPub(presence_ and getPresence()->isSupported(PRESENCE_FUNCTION_PUBLISH) ? Conf::TRUE_STR : Conf::FALSE_STR);
+    std::string presPub(presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH) ? Conf::TRUE_STR : Conf::FALSE_STR);
     ScalarNode presencePublish(presPub);
-    std::string presSub(presence_ and getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE) ? Conf::TRUE_STR : Conf::FALSE_STR);
+    std::string presSub(presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE) ? Conf::TRUE_STR : Conf::FALSE_STR);
     ScalarNode presenceSubscribe(presSub);
 #endif
 
@@ -807,7 +807,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? Conf::TRUE_STR : Conf::FALSE_STR;
     // initialize status values
     a[CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? Conf::TRUE_STR : Conf::FALSE_STR;
-    a[CONFIG_PRESENCE_NOTE] = presence_? presence_->getNote() : " ";
+    a[CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
 #endif
 
     RegistrationState state = RegistrationState::UNREGISTERED;
@@ -942,9 +942,9 @@ void SIPAccount::registerVoIPLink()
     }
 
 #ifdef SFL_PRESENCE
-    if (presence_->isEnabled()) {
-        getPresence()->subscribeClient(getFromUri(), true); // self presence subscription
-        getPresence()->sendPresence(true, ""); // try to publish whatever the status is.
+    if (presence_ and presence_->isEnabled()) {
+        presence_->subscribeClient(getFromUri(), true); // self presence subscription
+        presence_->sendPresence(true, ""); // try to publish whatever the status is.
     }
 #endif
 }
@@ -1583,12 +1583,16 @@ SIPPresence * SIPAccount::getPresence() const
 void
 SIPAccount::enablePresence(const bool& enabled)
 {
-    DEBUG("Presence enable for %s : %s.",
-            accountID_.c_str(),
-            enabled? Conf::TRUE_STR : Conf::FALSE_STR);
+    if (!presence_) {
+        ERROR("Presence not initialized");
+        return;
+    }
 
-    if (presence_)
-        presence_->enable(enabled);
+    DEBUG("Presence enabled for %s : %s.",
+          accountID_.c_str(),
+          enabled? Conf::TRUE_STR : Conf::FALSE_STR);
+
+    presence_->enable(enabled);
 }
 
 /**
@@ -1598,18 +1602,22 @@ SIPAccount::enablePresence(const bool& enabled)
 void
 SIPAccount::supportPresence(int function, bool enabled)
 {
-    if (getPresence()->isSupported(function) == enabled)
+    if (!presence_) {
+        ERROR("Presence not initialized");
+        return;
+    }
+
+    if (presence_->isSupported(function) == enabled)
         return;
 
     DEBUG("Presence support for %s (%s: %s).", accountID_.c_str(),
           function == PRESENCE_FUNCTION_PUBLISH ? "publish" : "subscribe",
           enabled ? Conf::TRUE_STR : Conf::FALSE_STR);
-    if (presence_)
-        presence_->support(function, enabled);
+    presence_->support(function, enabled);
 
     // force presence to disable when nothing is supported
-    if (not getPresence()->isSupported(PRESENCE_FUNCTION_PUBLISH) and
-        not getPresence()->isSupported(PRESENCE_FUNCTION_SUBSCRIBE))
+    if (not presence_->isSupported(PRESENCE_FUNCTION_PUBLISH) and
+        not presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE))
         enablePresence(false);
 
     Manager::instance().saveConfig();
