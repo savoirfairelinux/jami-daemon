@@ -381,9 +381,8 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
 
     std::vector<pj_sockaddr> result(ip_num);
     for(size_t i=0; i<ip_num; i++) {
-        result[i].addr.sa_family = pj_AF_INET();
         result[i].ipv4 = ipv4[i];
-        WARN("STUN PORTS: %ld", pj_ntohs(ipv4[i].sin_port));
+        WARN("STUN PORTS: %ld", pj_sockaddr_get_port(&result[i]));
     }
     return result;
 }

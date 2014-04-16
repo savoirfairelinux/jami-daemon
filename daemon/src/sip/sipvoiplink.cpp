@@ -199,7 +199,7 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
         std::vector<pj_sockaddr> stunPorts(transport.getSTUNAddresses(account, socketDescriptors));
 
         // FIXME: get video sockets
-        stunPorts.resize(4);
+        //stunPorts.resize(4);
 
         account.setPublishedAddress(stunPorts[0]);
         // published IP MUST be updated first, since RTCP depends on it

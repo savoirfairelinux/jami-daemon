@@ -378,8 +378,13 @@ Sdp::updatePorts(const std::vector<pj_sockaddr> &sockets)
 {
     localAudioDataPort_     = pj_sockaddr_get_port(&sockets[0]);
     localAudioControlPort_  = pj_sockaddr_get_port(&sockets[1]);
-    localVideoDataPort_     = pj_sockaddr_get_port(&sockets[2]);
-    localVideoControlPort_  = pj_sockaddr_get_port(&sockets[3]);
+    if (sockets.size() > 3) {
+        localVideoDataPort_     = pj_sockaddr_get_port(&sockets[2]);
+        localVideoControlPort_  = pj_sockaddr_get_port(&sockets[3]);
+    } else {
+        localVideoDataPort_ = 0;
+        localVideoControlPort_ = 0;
+    }
 
     if (localSession_) {
         if (localSession_->media[0]) {
