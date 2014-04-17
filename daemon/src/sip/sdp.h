@@ -253,7 +253,6 @@ class Sdp {
 
         void setMediaTransportInfoFromRemoteSdp();
 
-        std::string getAudioCodecNames() const;
         std::string getSessionVideoCodec() const;
         std::vector<sfl::AudioCodec*> getSessionAudioMedia() const;
         // Sets @param settings with appropriate values and returns true if
@@ -313,7 +312,8 @@ class Sdp {
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
          */
-        std::vector<sfl::AudioCodec *> sessionAudioMedia_;
+        std::vector<sfl::AudioCodec *> sessionAudioMediaLocal_;
+        std::vector<sfl::AudioCodec *> sessionAudioMediaRemote_;
         std::vector<std::string> sessionVideoMedia_;
 
         std::string publishedIpAddr_;
