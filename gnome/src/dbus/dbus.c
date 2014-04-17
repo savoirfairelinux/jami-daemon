@@ -1069,7 +1069,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 void dbus_clean()
 {
 #ifdef SFL_VIDEO
-        g_object_unref(video_proxy);
+    g_object_unref(video_proxy);
 #endif
     g_object_unref(call_proxy);
     g_object_unref(config_proxy);
@@ -1634,12 +1634,7 @@ dbus_set_noise_suppress_state(gboolean state)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_noise_suppress_state(config_proxy, state, &error);
-
-    if (error) {
-        g_warning("Failed to call set_noise_suppress_state() on "
-              "ConfigurationManager: %s", error->message);
-        g_error_free(error);
-    }
+    check_error(error);
 }
 
 /**
@@ -1666,12 +1661,7 @@ dbus_set_agc_state(gboolean state)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_agc_state(config_proxy, state, &error);
-
-    if (error) {
-        g_warning("Failed to call set_agc_state() on "
-              "ConfigurationManager: %s", error->message);
-        g_error_free(error);
-    }
+    check_error(error);
 }
 
 int
@@ -1688,7 +1678,6 @@ dbus_is_iax2_enabled()
 void
 dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 {
-    g_debug("Join participant %s and %s\n", sel_callID, drag_callID);
     GError *error = NULL;
     gboolean result;
     org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID,
@@ -1699,7 +1688,6 @@ dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 void
 dbus_add_participant(const gchar *callID, const gchar *confID)
 {
-    g_debug("Add participant %s to %s\n", callID, confID);
     GError *error = NULL;
     gboolean result;
     org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID,
@@ -2051,7 +2039,6 @@ dbus_get_participant_list(const gchar *confID)
     GError *error = NULL;
     gchar **list = NULL;
 
-    g_debug("Get conference %s participant list", confID);
     org_sflphone_SFLphone_CallManager_get_participant_list(call_proxy, confID, &list, &error);
     check_error(error);
 
@@ -2336,12 +2323,10 @@ dbus_screensaver_uninhibit(void)
 {
     if (cookie == 0)
         return;
-    g_debug("uninhibit");
 
     GVariant *parameters = g_variant_new("(u)", cookie);
     if (parameters == NULL) {
-        g_warning("Could not create session manager uninhibit "
-               "parameters");
+        g_warning("Could not create session manager uninhibit parameters");
         return;
     }
 
@@ -2356,7 +2341,6 @@ void
 dbus_presence_publish(const gchar *accountID, gboolean status)
 {
     GError *error = NULL;
-    g_debug("DBus: publish presence status.");
     org_sflphone_SFLphone_PresenceManager_publish(presence_proxy, accountID,status, "Tout va bien.", NULL);
     check_error(error);
 }
@@ -2364,7 +2348,6 @@ dbus_presence_publish(const gchar *accountID, gboolean status)
 void
 dbus_presence_subscribe(const gchar *accountID, const gchar *uri, gboolean flag)
 {
-    g_debug("DBus: subscrbe presence status %s:%s.", uri, flag? "true" : "false");
     GError *error = NULL;
     org_sflphone_SFLphone_PresenceManager_subscribe_buddy(presence_proxy, accountID, uri, flag, NULL);
     check_error(error);
