@@ -30,6 +30,7 @@
 
 #include "video_callbacks.h"
 #include "video_renderer.h"
+#include "sflphone_client.h"    /* gsettings schema path */
 #include "config/videoconf.h"
 
 #include <clutter/clutter.h>
@@ -46,6 +47,7 @@ typedef enum {
 typedef struct {
     gchar *id;
     GtkWidget *window;
+    GSettings *settings;
     gboolean fullscreen;
 } VideoHandle;
 
@@ -109,9 +111,14 @@ cleanup_handle(gpointer data)
         g_free(h->id);
     }
 
+    g_object_unref(h->settings);
+
     g_free(h);
 }
 
+/*
+ * Handle destroy event in the video windows.
+ */
 static void
 video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget,
                         G_GNUC_UNUSED gpointer data)
@@ -121,7 +128,39 @@ video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget,
 }
 
 /*
- * Handle button event in the video window
+ * Handle resizing and moving event in the video windows.
+ * This is usefull to store the previous behaviour and restore the user
+ * preferences using gsettings.
+ */
+static gboolean
+video_window_configure_cb(GtkWidget *widget,
+                          GdkEventConfigure *event,
+                          gpointer data)
+{
+    VideoHandle *handle = (VideoHandle *) data;
+
+    gint pos_x, pos_y;
+
+    gtk_window_get_position(GTK_WINDOW(widget), &pos_x, &pos_y);
+
+    if (video_is_local(handle->id)) {
+        g_settings_set_int(handle->settings, "window-video-local-width", event->width);
+        g_settings_set_int(handle->settings, "window-video-local-height", event->height);
+        g_settings_set_int(handle->settings, "window-video-local-position-x", pos_x);
+        g_settings_set_int(handle->settings, "window-video-local-position-y", pos_y);
+    } else {
+        g_settings_set_int(handle->settings, "window-video-remote-width", event->width);
+        g_settings_set_int(handle->settings, "window-video-remote-height", event->height);
+        g_settings_set_int(handle->settings, "window-video-remote-position-x", pos_x);
+        g_settings_set_int(handle->settings, "window-video-remote-position-y", pos_y);
+    }
+
+    /* let the event propagate otherwise the video will not be re-scaled */
+    return FALSE;
+}
+
+/*
+ * Handle button event in the video windows.
  */
 static void
 video_window_button_cb(GtkWindow *win,
@@ -158,9 +197,29 @@ add_handle(const gchar *id)
     }
 
     VideoHandle *handle = g_new0(VideoHandle, 1);
+
     handle->id = g_strdup(id);
     handle->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    handle->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
     handle->fullscreen = FALSE;
+
+    /* Get configuration stored in GSettings */
+    gint width, height, pos_x, pos_y;
+    if (video_is_local(id)) {
+        width  = g_settings_get_int(handle->settings, "window-video-local-width");
+        height = g_settings_get_int(handle->settings, "window-video-local-height");
+        pos_x  = g_settings_get_int(handle->settings, "window-video-local-position-x");
+        pos_y  = g_settings_get_int(handle->settings, "window-video-local-position-y");
+    } else {
+        width  = g_settings_get_int(handle->settings, "window-video-remote-width");
+        height = g_settings_get_int(handle->settings, "window-video-remote-height");
+        pos_x  = g_settings_get_int(handle->settings, "window-video-remote-position-x");
+        pos_y  = g_settings_get_int(handle->settings, "window-video-remote-position-y");
+    }
+
+    /* Restore the previous setting for the video size and position */
+    gtk_window_set_default_size(GTK_WINDOW(handle->window), width, height);
+    gtk_window_move(GTK_WINDOW(handle->window), pos_x, pos_y);
 
     /* handle button event */
     g_signal_connect(handle->window, "button_press_event",
@@ -171,6 +230,11 @@ add_handle(const gchar *id)
     g_signal_connect(handle->window, "delete-event",
             G_CALLBACK(video_window_deleted_cb),
             NULL);
+
+    /* handle configure event */
+    g_signal_connect(handle->window, "configure-event",
+            G_CALLBACK(video_window_configure_cb),
+            handle);
 
     /* Preview video */
     if (video_is_local(id)) {
@@ -317,11 +381,6 @@ started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_add(GTK_CONTAINER(vbox), video_area);
-
-    if (video_is_local(id))
-        gtk_window_set_default_size(GTK_WINDOW(video_area), 200, 150);
-    else
-        gtk_window_set_default_size(GTK_WINDOW(video_area), width, height);
 
     if (handle) {
         gtk_container_add(GTK_CONTAINER(handle->window), vbox);
