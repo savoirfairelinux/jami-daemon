@@ -170,7 +170,10 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     close(fd);
 
     sockaddr* unix_addr = &ifr.ifr_addr;
-    memcpy(&saddr, &ifr.ifr_addr, sizeof(pj_sockaddr));
+
+    memcpy(&saddr, unix_addr, unix_addr->sa_family == AF_INET6 ?
+           sizeof saddr.ipv6 : sizeof saddr.ipv4);
+
     if ((ifr.ifr_addr.sa_family == AF_INET  &&  IN_IS_ADDR_UNSPECIFIED(&((sockaddr_in *)unix_addr)->sin_addr ))
     || (ifr.ifr_addr.sa_family == AF_INET6 && IN6_IS_ADDR_UNSPECIFIED(&((sockaddr_in6*)unix_addr)->sin6_addr))) {
         return getLocalAddr(saddr.addr.sa_family);
