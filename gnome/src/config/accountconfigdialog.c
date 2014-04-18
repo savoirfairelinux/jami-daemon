@@ -1569,7 +1569,7 @@ show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *c
     } else {
         /* Custom tab for the IP to IP profile */
         GtkWidget *ip_tab = create_direct_ip_calls_tab(account);
-        gtk_notebook_prepend_page(GTK_NOTEBOOK(notebook), ip_tab, gtk_label_new(_("Network")));
+        gtk_notebook_prepend_page(GTK_NOTEBOOK(notebook), ip_tab, gtk_label_new(_("General")));
     }
 
     // Emit signal to hide advanced and security tabs in case of IAX
