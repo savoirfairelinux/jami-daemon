@@ -35,6 +35,8 @@
 #include "manager.h"
 #include "client/video_controls.h"
 
+#include <unistd.h>
+
 #include <map>
 #include <string>
 
@@ -115,6 +117,12 @@ initFile(std::string path)
     size_t dot = path.find_last_of('.');
     std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
     std::map<std::string, std::string> map;
+
+    /* File exists? */
+    if (access(path.c_str(), R_OK) != 0) {
+        ERROR("file '%s' unavailable\n", path.c_str());
+        return map;
+    }
 
     /* Supported image? */
     if (ext == "jpeg" || ext == "jpg" || ext == "png") {
