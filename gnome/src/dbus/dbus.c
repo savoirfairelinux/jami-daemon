@@ -2060,6 +2060,18 @@ dbus_get_conference_list(void)
 }
 
 gchar **
+dbus_get_display_name_list(const gchar *confID)
+{
+    GError *error = NULL;
+    gchar **list = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_display_names(call_proxy, confID, &list, &error);
+    check_error(error);
+
+    return list;
+}
+
+gchar **
 dbus_get_participant_list(const gchar *confID)
 {
     GError *error = NULL;

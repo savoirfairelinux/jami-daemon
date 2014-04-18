@@ -258,57 +258,27 @@ add_handle(const gchar *id)
             title_prefix = _("Conference with");
 
             /* get all the participants name */
-            gchar **participant_list = dbus_get_participant_list(id);
-            for (gchar **participant = participant_list; participant && *participant; participant++) {
-                g_debug("participant %s\n", *participant);
-
-                gchar *new_name = NULL;
-
-                /* create a new callable object to manipulate the id details */
-                callable_obj_t *c = create_new_call_from_details(*participant, dbus_get_call_details(*participant));
-
-                /* if no display name, we show the peer_number */
-                if (g_strcmp0(c->_display_name, "") != 0) {
-                    new_name = g_strdup(c->_display_name);
-                } else {
-                    new_name = g_strdup(c->_peer_number);
-                }
-
-                /* if name exists we must add the new name to the list */
-                if (name) {
-                    gchar *name_list = g_strdup_printf("%s, %s", name, new_name);
-                    g_free(name);
-                    name = name_list;
-                } else {
-                    name = g_strdup(new_name);
-                }
-
-                g_free(new_name);
-                g_free(c);
-            }
-
-            g_strfreev(participant_list);
+            gchar **display_name_list = dbus_get_display_name_list(id);
+            name = g_strjoinv(", ", display_name_list);
+            g_strfreev(display_name_list);
 
         } else if (call_type == IS_CALL) { /* on a simple call */
 
-            /* create a new callable object to manipulate the call details */
-            callable_obj_t *c = create_new_call_from_details(id, dbus_get_call_details(id));
+            GHashTable *details = dbus_get_call_details(id);
 
             /* build the prefix title name */
             title_prefix = _("Call with");
 
             /* if no display name, we show the peer_number */
-            if (g_strcmp0(c->_display_name, "") != 0) {
-                name = g_strdup(c->_display_name);
-            } else {
-                name = g_strdup(c->_peer_number);
-            }
-
-            g_free(c);
+            const gchar *display_name = g_hash_table_lookup(details, "DISPLAY_NAME");
+            if (strlen(display_name) != 0)
+                name = g_strdup(display_name);
+            else
+                name = g_strdup(g_hash_table_lookup(details, "PEER_NUMBER"));
         }
 
         /* build the final title name */
-        window_title = g_strdup_printf("%s %s", title_prefix, name);
+        window_title = g_strjoin(" ", title_prefix, name, NULL);
 
         /* update the window title */
         gtk_window_set_title(GTK_WINDOW(handle->window), window_title);
