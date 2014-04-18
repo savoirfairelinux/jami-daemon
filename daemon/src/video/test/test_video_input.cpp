@@ -38,8 +38,12 @@ using namespace std;
 
 void VideoInputTest::testInput()
 {
-    sfl_video::VideoInput camera("/dev/video0");
-    sleep(1);
+    map<string, string> args;
+    args["input"] = "/dev/video0";
+    args["format"] = "video4linux2";
+    args["mirror"] = true;
+    sfl_video::VideoInput camera(args);
+    usleep(10000);
 }
 
 int main ()
