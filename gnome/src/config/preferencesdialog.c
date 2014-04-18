@@ -366,7 +366,8 @@ static GtkTreeModel* create_model(GtkWidget *widget)
 /* Callback used to catch the destroy event send by pressing escape key or the
  * close button in the preference dialog */
 static void
-dialog_destroy_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer user_data)
+dialog_destroy_cb(G_GNUC_UNUSED GtkWidget *widget,
+        G_GNUC_UNUSED gpointer user_data)
 {
 #ifdef SFL_VIDEO
     gchar ** str = dbus_get_call_list();

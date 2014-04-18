@@ -579,9 +579,10 @@ print_rtcp_stats(const gchar *key, gint value, G_GNUC_UNUSED gpointer data)
 #endif
 
 static void
-on_rtcp_report_received_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
-                                                            const GHashTable *stats,
-                                                            SFLPhoneClient *client)
+on_rtcp_report_received_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+        const gchar *callID,
+        G_GNUC_UNUSED const GHashTable *stats,
+        G_GNUC_UNUSED SFLPhoneClient *client)
 {
     g_debug("Daemon notification of new RTCP report for %s", callID);
 #ifdef RTCP_DEBUG
@@ -1148,7 +1149,10 @@ dbus_stop_recorded_file_playback(const gchar *filepath)
 }
 
 static void
-hang_up_reply_cb(G_GNUC_UNUSED DBusGProxy *proxy, gboolean is_hung_up, GError *error, G_GNUC_UNUSED gpointer userdata)
+hang_up_reply_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+        G_GNUC_UNUSED gboolean is_hung_up,
+        GError *error,
+        G_GNUC_UNUSED gpointer userdata)
 {
     check_error(error);
 }
