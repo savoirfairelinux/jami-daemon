@@ -1677,34 +1677,58 @@ dbus_is_iax2_enabled()
     return res;
 }
 
+static void
+dbus_join_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+                      gboolean result,
+                      GError *error,
+                      G_GNUC_UNUSED gpointer data)
+{
+    check_error(error);
+    if (!result)
+        g_warning("Failed to join participant");
+}
+
 void
 dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 {
-    GError *error = NULL;
-    gboolean result;
-    org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID,
-            drag_callID, &result, &error);
+    org_sflphone_SFLphone_CallManager_join_participant_async(call_proxy, sel_callID,
+            drag_callID, dbus_join_participant_async_cb, NULL);
+}
+
+static void
+dbus_add_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+                              gboolean result,
+                              GError *error,
+                              G_GNUC_UNUSED gpointer data)
+{
     check_error(error);
+    if (!result)
+        g_warning("Failed to add participant");
 }
 
 void
 dbus_add_participant(const gchar *callID, const gchar *confID)
 {
-    GError *error = NULL;
-    gboolean result;
-    org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID,
-            confID, &result, &error);
+    org_sflphone_SFLphone_CallManager_add_participant_async(call_proxy, callID,
+            confID, dbus_add_participant_async_cb, NULL);
+}
+
+static void
+dbus_add_main_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+                                   gboolean result,
+                                   GError *error,
+                                   G_GNUC_UNUSED gpointer data)
+{
     check_error(error);
+    if (!result)
+        g_warning("Failed to add main participant");
 }
 
 void
 dbus_add_main_participant(const gchar *confID)
 {
-    GError *error = NULL;
-    gboolean result;
-    org_sflphone_SFLphone_CallManager_add_main_participant(call_proxy, confID,
-            &result, &error);
-    check_error(error);
+    org_sflphone_SFLphone_CallManager_add_main_participant_async(call_proxy,
+            confID, dbus_add_main_participant_async_cb, NULL);
 }
 
 void
