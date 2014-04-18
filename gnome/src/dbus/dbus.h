@@ -432,7 +432,7 @@ void dbus_add_participant(const gchar *callID, const gchar *confID);
  * Return a list of display names for this conference (confID)
  */
 gchar **
-dbus_get_display_name_list(const gchar *confID);
+dbus_get_display_names(const gchar *confID);
 
 /**
  * Return a list of participant for this conference (confID)

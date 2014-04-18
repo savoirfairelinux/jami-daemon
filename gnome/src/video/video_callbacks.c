@@ -258,9 +258,9 @@ add_handle(const gchar *id)
             title_prefix = _("Conference with");
 
             /* get all the participants name */
-            gchar **display_name_list = dbus_get_display_name_list(id);
-            name = g_strjoinv(", ", display_name_list);
-            g_strfreev(display_name_list);
+            gchar **display_names = dbus_get_display_names(id);
+            name = g_strjoinv(", ", display_names);
+            g_strfreev(display_names);
 
         } else if (call_type == IS_CALL) { /* on a simple call */
 

@@ -2060,7 +2060,7 @@ dbus_get_conference_list(void)
 }
 
 gchar **
-dbus_get_display_name_list(const gchar *confID)
+dbus_get_display_names(const gchar *confID)
 {
     GError *error = NULL;
     gchar **list = NULL;
