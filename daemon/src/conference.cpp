@@ -139,6 +139,19 @@ ParticipantSet Conference::getParticipantList() const
     return participants_;
 }
 
+std::vector<std::string>
+Conference::getDisplayNames() const
+{
+    std::vector<std::string> result;
+
+    for (const auto &p : participants_) {
+        auto details = Manager::instance().getCallDetails(p);
+        const auto tmp = details["DISPLAY_NAME"];
+        result.push_back(tmp.empty() ? details["PEER_NUMBER"] : tmp);
+    }
+    return result;
+}
+
 bool Conference::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();

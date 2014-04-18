@@ -480,6 +480,12 @@ class ManagerImpl {
          */
         std::vector<std::string> getParticipantList(const std::string& confID) const;
 
+        /**
+         * Get a list of the display names for everyone in a conference
+         * @return std::vector<std::string> A list of display names
+         */
+        std::vector<std::string> getDisplayNames(const std::string& confID) const;
+
         std::string getConferenceId(const std::string& callID);
 
         /**
