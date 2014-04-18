@@ -489,7 +489,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         // contactStr must stay in scope as long as tdata
-        ERROR("transaction_request_cb getContactHeader");
         const pj_str_t contactStr(account->getContactHeader());
         sip_utils::addContactHeader(&contactStr, tdata);
 
@@ -1061,7 +1060,6 @@ SIPVoIPLink::answer(Call *call)
             updateSDPFromSTUN(*sipCall, *account, *SIPVoIPLink::instance().sipTransport);
     }
 
-    ERROR("answer getContactHeader");
     pj_str_t contact(account->getContactHeader());
     sipCall->setContactHeader(&contact);
     sipCall->answer();
@@ -1125,7 +1123,6 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
         return;
 
     // contactStr must stay in scope as long as tdata
-    ERROR("hangup getContactHeader");
     const pj_str_t contactStr(account->getContactHeader());
     sip_utils::addContactHeader(&contactStr, tdata);
 
@@ -1655,7 +1652,9 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     pj_str_t pjContact(account->getContactHeader());
 
-    ERROR("SIPStartCall getContactHeader %s / %s -> %s", std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str(), from.c_str(), toUri.c_str());
+    const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
+    DEBUG("contact header: %s / %s -> %s",
+          debugContactHeader.c_str(), from.c_str(), toUri.c_str());
 
     pjsip_dialog *dialog = NULL;
 
@@ -2473,8 +2472,6 @@ void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP)
 
     if (!account)
         return;
-
-    ERROR("setCallMediaLocal %s", ip_utils::addrToStr(localIP).c_str());
 
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set

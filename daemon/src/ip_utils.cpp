@@ -143,7 +143,6 @@ ip_utils::getLocalAddr(pj_uint16_t family)
 pj_sockaddr
 ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 {
-    ERROR("getInterfaceAddr: %s %d", interface.c_str(), family);
     if (interface == DEFAULT_INTERFACE)
         return getLocalAddr(family);
 
