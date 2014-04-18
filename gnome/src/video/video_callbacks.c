@@ -287,7 +287,7 @@ add_handle(const gchar *id)
                 g_free(c);
             }
 
-         g_strfreev(participant_list);
+            g_strfreev(participant_list);
 
         } else if (call_type == IS_CALL) { /* on a simple call */
 
