@@ -172,7 +172,6 @@ video_window_button_cb(GtkWindow *win,
     if (event->type == GDK_2BUTTON_PRESS) {
 
         /* Fullscreen switch on/off */
-        g_debug("TOGGLING FULL SCREEEN!");
         handle->fullscreen = !handle->fullscreen;
 
         if (handle->fullscreen)
