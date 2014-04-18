@@ -1020,31 +1020,38 @@ sflphone_get_display(void)
     int width = gdk_screen_width();
     int height = gdk_screen_height();
     char *display = getenv("DISPLAY");
-    char device[256];
+    char resource[256];
 
-    sprintf(device, "%s %dx%d", display, width, height);
-    return strdup(device);
+    sprintf(resource, "display://%s %dx%d", display, width, height);
+    return g_strdup(resource);
 }
 
 void
 sflphone_toggle_screenshare(void)
 {
-    static int screenshare = TRUE;
-    gchar *device;
+    static gboolean screenshare = TRUE;
+    gboolean switched;
+    gchar *resource;
 
     if (screenshare) {
-        device = sflphone_get_display();
-
-        g_debug("enabling screen sharing (%s)", device);
-        dbus_switch_video_input(device);
+        resource = sflphone_get_display();
+        g_debug("enabling screen sharing (with MRL '%s')", resource);
+        switched = dbus_switch_video_input(resource);
     } else {
-        device = dbus_get_active_video_device();
+        gchar *device;
 
-        g_debug("restoring camera \"%s\"", device);
-        dbus_switch_video_input(device);
+	device = dbus_get_active_video_device();
+	resource = g_strconcat("v4l2://", device, NULL);
+        g_debug("restoring camera '%s' (with MRL '%s'", device, resource);
+        switched = dbus_switch_video_input(device);
+	g_free(device);
     }
 
-    g_free(device);
-    screenshare = !screenshare;
+    if (switched)
+	    screenshare = !screenshare;
+    else
+	    g_error("failed to switch to resource '%s'\n", resource);
+
+    g_free(resource);
 }
 #endif

@@ -111,7 +111,18 @@
         </method>
 
         <method name="switchInput" tp:name-for-bindings="switchInput">
-            <arg type="s" name="device" direction="in">
+            <arg type="s" name="resource" direction="in">
+                <tp:docstring>
+                    A media resource locator (MRL).
+                    Currently, the following are supported:
+                    <ul>
+                        <li>v4l2://DEVICE</li>
+                        <li>display://DISPLAY_NAME[ WIDTHxHEIGHT]</li>
+                    </ul>
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="switched" direction="out">
+                <tp:docstring>Returns true if the input stream was successfully changed, false otherwise</tp:docstring>
             </arg>
         </method>
 

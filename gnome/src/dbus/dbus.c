@@ -1444,12 +1444,14 @@ dbus_set_video_codecs(const gchar *accountID, const GPtrArray *list)
     check_error(error);
 }
 
-void
-dbus_switch_video_input(const gchar *device)
+gboolean
+dbus_switch_video_input(const gchar *resource)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_switch_input(video_proxy, device, &error);
+    gboolean switched;
+    org_sflphone_SFLphone_VideoControls_switch_input(video_proxy, resource, &switched, &error);
     check_error(error);
+    return switched;
 }
 #endif
 

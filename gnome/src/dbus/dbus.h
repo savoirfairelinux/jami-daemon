@@ -259,10 +259,10 @@ dbus_set_video_codecs(const gchar *id, const GPtrArray *list);
 
 /**
  * ConfigurationManager - Switch the video input
- * @param device The video device name to switch to
+ * @param resource A media resource locator (MRL) to switch to
  */
-void
-dbus_switch_video_input(const gchar *device);
+gboolean
+dbus_switch_video_input(const gchar *resource);
 
 /**
  * ConfigurationManager - Get the list of available output audio plugins
