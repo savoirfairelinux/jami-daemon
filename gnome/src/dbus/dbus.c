@@ -569,12 +569,24 @@ zrtp_not_supported_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLP
     }
 }
 
+
+#ifdef RTCP_DEBUG
+static void
+print_rtcp_stats(const gchar *key, gint value, G_GNUC_UNUSED gpointer data)
+{
+    g_debug("%s: %d", key, value);
+}
+#endif
+
 static void
 on_rtcp_report_received_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                                                             const GHashTable *stats,
                                                             SFLPhoneClient *client)
 {
     g_debug("Daemon notification of new RTCP report for %s", callID);
+#ifdef RTCP_DEBUG
+    g_hash_table_foreach(stats, print_rtcp_stats, NULL);
+#endif
 }
 
 static void
