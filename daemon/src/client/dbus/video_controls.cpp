@@ -171,7 +171,7 @@ VideoControls::startCamera()
         return;
     }
 
-    const std::string& device = videoPreference_.getDevice();
+    const std::string device = "v4l2://" + videoPreference_.getDevice();
     videoInputSelector_.reset(new sfl_video::VideoInputSelector(device));
 }
 
@@ -188,15 +188,15 @@ VideoControls::stopCamera()
     }
 }
 
-void
-VideoControls::switchInput(const std::string &device)
+bool
+VideoControls::switchInput(const std::string &resource)
 {
     if (not hasCameraStarted()) {
-        ERROR("Video input selector not initialized");
-        return;
+        ERROR("Input selector not initialized");
+        return false;
     }
-    DEBUG("Switching input device to %s", device.c_str());
-    videoInputSelector_->switchInput(device);
+
+    return videoInputSelector_->switchInput(resource);
 }
 
 std::weak_ptr<sfl_video::VideoFrameActiveWriter>

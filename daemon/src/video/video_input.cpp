@@ -43,27 +43,40 @@
 
 namespace sfl_video {
 
-VideoInput::VideoInput(const std::string& device) :
+static std::string
+extract(const std::map<std::string, std::string>& map,
+        const std::string& key)
+{
+    const auto iter = map.find(key);
+
+    return iter == map.end() ? "" : iter->second;
+}
+
+VideoInput::VideoInput(const std::map<std::string, std::string>& map) :
     VideoGenerator::VideoGenerator()
     , id_(SINK_ID)
     , decoder_(0)
     , sink_()
-    , mirror_(true)
-
-    , input_()
-    , format_()
-    , channel_()
-    , framerate_()
-    , video_size_()
+    , mirror_(map.find("mirror") != map.end())
+    , input_(extract(map, "input"))
+    , format_(extract(map, "format"))
+    , channel_(extract(map, "channel"))
+    , framerate_(extract(map, "framerate"))
+    , video_size_(extract(map, "video_size"))
 {
-    /* TODO better check for the X11 display name */
-    if (device.find(':') != std::string::npos) {
-        DEBUG("Init screen display %s\n", device.c_str());
-        initX11(device);
-    } else {
-        DEBUG("Init camera %s\n", device.c_str());
-        initCamera(device);
-    }
+    DEBUG("initializing video input with: "
+            "mirror: %s, "
+            "input: '%s', "
+            "format: '%s', "
+            "channel: '%s', "
+            "framerate: '%s', "
+            "video_size: '%s'",
+            mirror_ ? "yes" : "no",
+            input_.c_str(),
+            format_.c_str(),
+            channel_.c_str(),
+            framerate_.c_str(),
+            video_size_.c_str());
 
     start();
 }
@@ -72,38 +85,6 @@ VideoInput::~VideoInput()
 {
     stop();
     join();
-}
-
-void VideoInput::initCamera(std::string device)
-{
-    std::map<std::string, std::string> map;
-
-    map = Manager::instance().getVideoControls()->getSettingsFor(device);
-
-    input_ = map["input"];
-    format_ = "video4linux2";
-    channel_ = map["channel"];
-    framerate_ = map["framerate"];
-    video_size_ = map["video_size"];
-}
-
-void VideoInput::initX11(std::string device)
-{
-    size_t space = device.find(' ');
-
-    if (space != std::string::npos) {
-        video_size_ = device.substr(space + 1);
-        input_ = device.erase(space);
-    } else {
-        input_ = device;
-        video_size_ = "vga";
-    }
-
-    format_ = "x11grab";
-    framerate_ = "25";
-    mirror_ = false;
-
-    DEBUG("X11 display name %s (%s)", input_.c_str(), video_size_.c_str());
 }
 
 bool VideoInput::setup()
