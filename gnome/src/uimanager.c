@@ -694,7 +694,10 @@ call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
     gboolean switched;
     gchar *resource;
 
-    if (g_strcmp0(device, "Screen") == 0) {
+    if (g_strcmp0(device, "None") == 0) {
+        resource = g_strconcat("file://", ICONS_DIR "/sflphone.png", NULL);
+        switched = dbus_switch_video_input(resource);
+    } else if (g_strcmp0(device, "Screen") == 0) {
         resource = sflphone_get_display();
         switched = dbus_switch_video_input(resource);
     } else {
@@ -1473,6 +1476,8 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             }
             /* Add the special X11 device */
             append_video_input_to_submenu(video_menu, "Screen");
+            /* Add a None entry, which will display the client logo */
+            append_video_input_to_submenu(video_menu, "None");
         }
 #endif
     } else {
