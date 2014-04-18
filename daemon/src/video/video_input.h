@@ -68,6 +68,7 @@ private:
     bool mirror_;
 
     std::string input_;
+    std::string loop_;
     std::string format_;
     std::string channel_;
     std::string framerate_;

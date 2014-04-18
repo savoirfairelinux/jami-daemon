@@ -59,6 +59,7 @@ VideoInput::VideoInput(const std::map<std::string, std::string>& map) :
     , sink_()
     , mirror_(map.find("mirror") != map.end())
     , input_(extract(map, "input"))
+    , loop_(extract(map, "loop"))
     , format_(extract(map, "format"))
     , channel_(extract(map, "channel"))
     , framerate_(extract(map, "framerate"))
@@ -97,6 +98,8 @@ bool VideoInput::setup()
         decoder_->setOption("video_size", video_size_.c_str());
     if (!channel_.empty())
         decoder_->setOption("channel", channel_.c_str());
+    if (!loop_.empty())
+        decoder_->setOption("loop", loop_.c_str());
 
     decoder_->setInterruptCallback(interruptCb, this);
 

@@ -109,6 +109,24 @@ initX11(std::string display)
     return map;
 }
 
+static std::map<std::string, std::string>
+initFile(std::string path)
+{
+    size_t dot = path.find_last_of('.');
+    std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
+    std::map<std::string, std::string> map;
+
+    /* Supported image? */
+    if (ext == "jpeg" || ext == "jpg" || ext == "png") {
+        map["input"] = path;
+        map["format"] = "image2";
+        map["framerate"] = "1";
+        map["loop"] = "1";
+    }
+
+    return map;
+}
+
 bool
 VideoInputSelector::switchInput(const std::string& resource)
 {
@@ -117,6 +135,7 @@ VideoInputSelector::switchInput(const std::string& resource)
     // Supported MRL schemes
     static const std::string v4l2("v4l2://");
     static const std::string display("display://");
+    static const std::string file("file://");
 
     std::map<std::string, std::string> map;
 
@@ -127,6 +146,10 @@ VideoInputSelector::switchInput(const std::string& resource)
     /* X11 display name */
     else if (resource.compare(0, display.size(), display) == 0)
         map = initX11(resource.substr(display.size()));
+
+    /* Pathname */
+    else if (resource.compare(0, file.size(), file) == 0)
+        map = initFile(resource.substr(file.size()));
 
     /* Unsupported MRL or failed initialization */
     if (map.empty()) {
