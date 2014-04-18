@@ -207,19 +207,6 @@ bool VideoReceiveThread::decodeFrame()
     return false;
 }
 
-void VideoReceiveThread::addReceivingDetails(
-    std::map<std::string, std::string> &details)
-{
-    if (isRunning() and dstWidth_ > 0 and dstHeight_ > 0) {
-        details["VIDEO_SHM_PATH"] = sink_.openedName();
-        std::ostringstream os;
-        os << dstWidth_;
-        details["VIDEO_WIDTH"] = os.str();
-        os.str("");
-        os << dstHeight_;
-        details["VIDEO_HEIGHT"] = os.str();
-    }
-}
 
 void VideoReceiveThread::enterConference()
 {

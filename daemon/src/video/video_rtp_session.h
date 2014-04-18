@@ -62,7 +62,6 @@ public:
                            unsigned int port);
     void updateSDP(const Sdp &sdp);
     void forceKeyFrame();
-    void addReceivingDetails(std::map<std::string, std::string> &details);
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
     void setupConferenceVideoPipeline();
