@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-04 21:10-0400\n"
+"POT-Creation-Date: 2014-04-18 21:29-0400\n"
 "PO-Revision-Date: 2013-10-02 16:32+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Telugu <te@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-04-06 06:31+0000\n"
-"X-Generator: Launchpad (build 16976)\n"
+"X-Launchpad-Export-Date: 2014-04-20 05:39+0000\n"
+"X-Generator: Launchpad (build 16985)\n"
 "Language: te\n"
 
 #: ../src/accountlist.c:183
@@ -120,8 +120,8 @@ msgid "Account Parameters"
 msgstr "ఖాతా పరామితులు"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:305
-#: ../src/config/assistant.c:403
+#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:291
+#: ../src/config/assistant.c:360
 msgid "_Alias"
 msgstr "మారుపేరు (_A)"
 
@@ -135,25 +135,25 @@ msgid "Unknown"
 msgstr ""
 
 #. server field
-#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:313
-#: ../src/config/assistant.c:411
+#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:300
+#: ../src/config/assistant.c:369
 msgid "_Host name"
 msgstr ""
 
 #. username field
-#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:321
-#: ../src/config/assistant.c:419
+#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:308
+#: ../src/config/assistant.c:377
 msgid "_User name"
 msgstr ""
 
 #. password field
-#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:331
-#: ../src/config/assistant.c:428
+#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:318
+#: ../src/config/assistant.c:386
 msgid "_Password"
 msgstr "సంకేతపదం (_P)"
 
-#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:340
-#: ../src/config/assistant.c:437
+#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:327
+#: ../src/config/assistant.c:395
 msgid "Show password"
 msgstr "సంకేతపదాన్ని చూపించు"
 
@@ -162,8 +162,8 @@ msgid "_Proxy"
 msgstr ""
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:345
-#: ../src/config/assistant.c:442
+#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:332
+#: ../src/config/assistant.c:400
 msgid "_Voicemail number"
 msgstr ""
 
@@ -364,8 +364,10 @@ msgid "Advanced"
 msgstr "ఉన్నత"
 
 #: ../src/config/accountconfigdialog.c:1572
-msgid "Network"
-msgstr ""
+#: ../src/config/addressbook-config.c:313
+#: ../src/config/preferencesdialog.c:433 ../src/config/shortcuts-config.c:117
+msgid "General"
+msgstr "సాధారణ"
 
 #: ../src/config/accountlistconfigdialog.c:112
 #, c-format
@@ -424,11 +426,6 @@ msgstr ""
 msgid "You have no active accounts"
 msgstr ""
 
-#: ../src/config/addressbook-config.c:313
-#: ../src/config/preferencesdialog.c:433 ../src/config/shortcuts-config.c:117
-msgid "General"
-msgstr "సాధారణ"
-
 #. PHOTO DISPLAY
 #: ../src/config/addressbook-config.c:317
 msgid "_Use Evolution address books"
@@ -478,141 +475,110 @@ msgstr ""
 msgid "Name"
 msgstr "పేరు"
 
-#: ../src/config/assistant.c:76
+#: ../src/config/assistant.c:111
 msgid "This assistant is now finished."
 msgstr ""
 
-#: ../src/config/assistant.c:79
+#: ../src/config/assistant.c:114
 msgid ""
 "You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
 msgstr ""
 
-#: ../src/config/assistant.c:81
+#: ../src/config/assistant.c:116
 msgid "Alias"
 msgstr "మారుపేరు"
 
-#: ../src/config/assistant.c:82
+#: ../src/config/assistant.c:117
 msgid "Server"
 msgstr "సేవిక"
 
-#: ../src/config/assistant.c:83
+#: ../src/config/assistant.c:118
 msgid "Username"
 msgstr "వాడుకరిపేరు"
 
-#: ../src/config/assistant.c:84
+#: ../src/config/assistant.c:119
 msgid "Security: "
 msgstr "భద్రత: "
 
-#: ../src/config/assistant.c:88
+#: ../src/config/assistant.c:123
 msgid "SRTP/ZRTP draft-zimmermann"
 msgstr ""
 
-#: ../src/config/assistant.c:90
+#: ../src/config/assistant.c:125
 msgid "None"
 msgstr ""
 
-#: ../src/config/assistant.c:226
-msgid "SFLphone account creation wizard"
+#: ../src/config/assistant.c:241
+msgid "Welcome to the account registration wizard for SFLphone!"
 msgstr ""
 
-#: ../src/config/assistant.c:251
-msgid "Welcome to the Account creation wizard of SFLphone!"
+#: ../src/config/assistant.c:242
+msgid "This wizard will help you configure an existing account."
 msgstr ""
 
-#: ../src/config/assistant.c:252
-msgid "This installation wizard will help you configure an account."
-msgstr ""
-
-#: ../src/config/assistant.c:264
+#: ../src/config/assistant.c:254
 msgid "VoIP Protocols"
 msgstr ""
 
-#: ../src/config/assistant.c:264
+#: ../src/config/assistant.c:254
 msgid "Select an account type"
 msgstr "ఖాతా రకాన్ని ఎంచుకోండి"
 
-#: ../src/config/assistant.c:266
+#: ../src/config/assistant.c:256
 msgid "SIP (Session Initiation Protocol)"
 msgstr ""
 
-#: ../src/config/assistant.c:268
+#: ../src/config/assistant.c:258
 msgid "IAX2 (InterAsterix Exchange)"
 msgstr ""
 
-#: ../src/config/assistant.c:280
-msgid "Account"
-msgstr "ఖాతా"
-
-#: ../src/config/assistant.c:280
-msgid "Please select one of the following options"
-msgstr ""
-
-#: ../src/config/assistant.c:282
-msgid ""
-"Create a free SIP/IAX2 account on sflphone.org \n"
-"(For testing purpose only)"
-msgstr ""
-
-#: ../src/config/assistant.c:284
-msgid "Register an existing SIP or IAX2 account"
-msgstr ""
-
-#: ../src/config/assistant.c:297
+#: ../src/config/assistant.c:283
 msgid "SIP account settings"
 msgstr ""
 
-#: ../src/config/assistant.c:297 ../src/config/assistant.c:395
+#: ../src/config/assistant.c:283 ../src/config/assistant.c:352
 msgid "Please fill the following information"
 msgstr ""
 
 #. Security options
-#: ../src/config/assistant.c:353 ../src/config/assistant.c:382
+#: ../src/config/assistant.c:340
 msgid "Secure communications with _ZRTP"
 msgstr ""
 
-#: ../src/config/assistant.c:366
-msgid "Optional email address"
-msgstr ""
-
-#: ../src/config/assistant.c:366
-msgid "This email address will be used to send your voicemail messages."
-msgstr ""
-
-#. email field
-#: ../src/config/assistant.c:374
-msgid "_Email address"
-msgstr ""
-
-#: ../src/config/assistant.c:395
+#: ../src/config/assistant.c:352
 msgid "IAX2 account settings"
 msgstr ""
 
-#: ../src/config/assistant.c:460
+#: ../src/config/assistant.c:417
 msgid "Network Address Translation (NAT)"
 msgstr ""
 
-#: ../src/config/assistant.c:460
+#: ../src/config/assistant.c:417
 msgid "You should probably enable this if you are behind a firewall."
 msgstr ""
 
 #. enable
-#: ../src/config/assistant.c:469
+#: ../src/config/assistant.c:426
 msgid "E_nable STUN"
 msgstr ""
 
 #. server address
-#: ../src/config/assistant.c:476
+#: ../src/config/assistant.c:433
 msgid "_STUN server"
 msgstr ""
 
-#: ../src/config/assistant.c:491
+#: ../src/config/assistant.c:447
 msgid "Account Registration"
 msgstr "ఖాతా నమోదు"
 
-#: ../src/config/assistant.c:491
+#: ../src/config/assistant.c:447
 msgid "Congratulations!"
 msgstr "అభినందనలు!"
+
+#: ../src/config/assistant.c:560
+msgid "SFLphone account registration wizard"
+msgstr ""
 
 #: ../src/config/audioconf.c:502
 msgid "Frequency"
@@ -812,15 +778,28 @@ msgstr ""
 msgid "Be careful: these shortcuts might override system-wide shortcuts."
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:55
+#: ../src/config/tlsadvanceddialog.c:58
+#, c-format
+msgid "Are you sure want to use this certificate?"
+msgstr ""
+
+#: ../src/config/tlsadvanceddialog.c:67
+msgid "Use anyway"
+msgstr ""
+
+#: ../src/config/tlsadvanceddialog.c:69
+msgid "Invalid certificate detected"
+msgstr ""
+
+#: ../src/config/tlsadvanceddialog.c:94
 msgid "Advanced options for TLS"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:72
+#: ../src/config/tlsadvanceddialog.c:111
 msgid "TLS transport"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:76
+#: ../src/config/tlsadvanceddialog.c:115
 #, c-format
 msgid ""
 "TLS transport can be used along with UDP for those calls that would\n"
@@ -830,60 +809,60 @@ msgid ""
 "port, different one from each other\n"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:118
+#: ../src/config/tlsadvanceddialog.c:157
 msgid "Global TLS listener (all accounts)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:128
+#: ../src/config/tlsadvanceddialog.c:167
 msgid "Certificate of Authority list"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:131
+#: ../src/config/tlsadvanceddialog.c:170
 msgid "Choose a CA list file (optional)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:142
+#: ../src/config/tlsadvanceddialog.c:181
 msgid "Public endpoint certificate file"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:145
+#: ../src/config/tlsadvanceddialog.c:184
 msgid "Choose a public endpoint certificate (optional)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:163
+#: ../src/config/tlsadvanceddialog.c:203
 msgid "Choose a private key file (optional)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:178
+#: ../src/config/tlsadvanceddialog.c:218
 msgid "Password for the private key"
 msgstr ""
 
 #. TLS protocol methods
-#: ../src/config/tlsadvanceddialog.c:193
+#: ../src/config/tlsadvanceddialog.c:233
 msgid "TLS protocol method"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:216
+#: ../src/config/tlsadvanceddialog.c:256
 msgid "TLS cipher list"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:225
+#: ../src/config/tlsadvanceddialog.c:265
 msgid "Server name instance for outgoing TLS connection"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:233
+#: ../src/config/tlsadvanceddialog.c:273
 msgid "Negotiation timeout (seconds)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:245
+#: ../src/config/tlsadvanceddialog.c:285
 msgid "Verify incoming certificates, as a server"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:251
+#: ../src/config/tlsadvanceddialog.c:291
 msgid "Verify certificates from answer, as a client"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:257
+#: ../src/config/tlsadvanceddialog.c:297
 msgid "Require certificate for incoming tls connections"
 msgstr ""
 
@@ -959,6 +938,20 @@ msgstr "SDES ఎంపికలు"
 msgid "Fallback on RTP on SDES failure"
 msgstr ""
 
+#: ../src/contacts/calltree.c:369
+#, c-format
+msgid ""
+"\n"
+"<i>Transfer to:%s</i> "
+msgstr ""
+
+#: ../src/contacts/calltree.c:372
+#, c-format
+msgid ""
+"\n"
+"<i>Confirm SAS <b>%s</b> ?</i>"
+msgstr ""
+
 #: ../src/contacts/searchbar.c:226
 msgid "Search all"
 msgstr ""
@@ -980,19 +973,19 @@ msgstr ""
 msgid "Search by outgoing call"
 msgstr ""
 
-#: ../src/dbus/dbus.c:598
+#: ../src/dbus/dbus.c:610
 msgid "ALSA notification: Error while opening playback device"
 msgstr ""
 
-#: ../src/dbus/dbus.c:601
+#: ../src/dbus/dbus.c:613
 msgid "ALSA notification: Error while opening capture device"
 msgstr ""
 
-#: ../src/dbus/dbus.c:604
+#: ../src/dbus/dbus.c:616
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr ""
 
-#: ../src/dbus/dbus.c:607
+#: ../src/dbus/dbus.c:619
 msgid "Codecs notification: Codecs not found"
 msgstr ""
 
@@ -1051,8 +1044,18 @@ msgstr ""
 msgid "Confirm"
 msgstr "నిర్ధారించు"
 
+#: ../src/presencewindow.c:477
+#, c-format
+msgid "Field error %s."
+msgstr ""
+
 #: ../src/presencewindow.c:486
 msgid "Field error"
+msgstr ""
+
+#: ../src/presencewindow.c:657
+#, c-format
+msgid "Are you sure want to delete \"%s\""
 msgstr ""
 
 #: ../src/presencewindow.c:667 ../src/presencewindow.c:691
@@ -1060,8 +1063,13 @@ msgstr ""
 msgid "Remove buddy"
 msgstr ""
 
+#: ../src/presencewindow.c:681
+#, c-format
+msgid "Do you really want to delete the group %s"
+msgstr ""
+
 #. popup
-#: ../src/presencewindow.c:755 ../src/uimanager.c:1197
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1208
 msgid "Add new buddy"
 msgstr ""
 
@@ -1070,7 +1078,7 @@ msgid "Add group"
 msgstr ""
 
 #. Call Menu
-#: ../src/presencewindow.c:802 ../src/uimanager.c:1027
+#: ../src/presencewindow.c:802 ../src/uimanager.c:1038
 msgid "Call"
 msgstr ""
 
@@ -1097,6 +1105,14 @@ msgid ""
 "Run '%s --help' to see a full list of available command line options.\n"
 msgstr ""
 
+#: ../src/sflphone_client.c:67
+#, c-format
+msgid ""
+"Unable to initialize.\n"
+"Make sure the daemon is running.\n"
+"Error: %s"
+msgstr ""
+
 #: ../src/sflphone_client.c:70
 msgid "SFLphone Error"
 msgstr ""
@@ -1112,6 +1128,11 @@ msgstr ""
 #: ../src/sflnotify.c:94
 #, c-format
 msgid "%s says:"
+msgstr ""
+
+#: ../src/sflnotify.c:111
+#, c-format
+msgid "IP-to-IP call"
 msgstr ""
 
 #. the account is different from NULL
@@ -1146,9 +1167,19 @@ msgstr ""
 msgid "You have no registered accounts"
 msgstr ""
 
+#: ../src/sflnotify.c:196
+#, c-format
+msgid "Secure mode on."
+msgstr ""
+
 #: ../src/sflnotify.c:197
 #, c-format
 msgid "<i>With:</i> %s \n"
+msgstr ""
+
+#: ../src/sflnotify.c:211 ../src/sflnotify.c:225
+#, c-format
+msgid "ZRTP Error."
 msgstr ""
 
 #: ../src/sflnotify.c:212
@@ -1159,6 +1190,11 @@ msgstr ""
 #: ../src/sflnotify.c:226
 #, c-format
 msgid "ZRTP negotiation failed with %s"
+msgstr ""
+
+#: ../src/sflnotify.c:239
+#, c-format
+msgid "Secure mode is off."
 msgstr ""
 
 #: ../src/sflnotify.c:240
@@ -1178,8 +1214,8 @@ msgstr ""
 msgid "_Show main window"
 msgstr ""
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:1037 ../src/uimanager.c:1390
-#: ../src/uimanager.c:1474
+#: ../src/statusicon.c:139 ../src/uimanager.c:1048 ../src/uimanager.c:1401
+#: ../src/uimanager.c:1487
 msgid "_Hang up"
 msgstr ""
 
@@ -1187,259 +1223,270 @@ msgstr ""
 msgid "SFLphone"
 msgstr ""
 
-#: ../src/uimanager.c:434
+#: ../src/uimanager.c:435
 msgid "No address book selected"
 msgstr ""
 
-#: ../src/uimanager.c:454 ../src/uimanager.c:1114
+#: ../src/uimanager.c:455 ../src/uimanager.c:1125
 msgid "Address book"
 msgstr ""
 
-#: ../src/uimanager.c:486
+#: ../src/uimanager.c:487
 #, c-format
 msgid "Voicemail(%i)"
 msgstr ""
 
-#: ../src/uimanager.c:579
+#: ../src/uimanager.c:580
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
 
-#: ../src/uimanager.c:582
+#: ../src/uimanager.c:583
 msgid "About SFLphone"
 msgstr "SFLphone గురించి"
 
-#: ../src/uimanager.c:978 ../src/uimanager.c:1061
+#: ../src/uimanager.c:989 ../src/uimanager.c:1072
 msgid "Voicemail"
 msgstr ""
 
-#: ../src/uimanager.c:1029 ../src/uimanager.c:1581
+#: ../src/uimanager.c:1040 ../src/uimanager.c:1594
 msgid "_New call"
 msgstr ""
 
-#: ../src/uimanager.c:1030
+#: ../src/uimanager.c:1041
 msgid "Place a new call"
 msgstr ""
 
-#: ../src/uimanager.c:1033 ../src/uimanager.c:1378
+#: ../src/uimanager.c:1044 ../src/uimanager.c:1389
 msgid "_Pick up"
 msgstr ""
 
-#: ../src/uimanager.c:1034
+#: ../src/uimanager.c:1045
 msgid "Answer the call"
 msgstr ""
 
-#: ../src/uimanager.c:1038
+#: ../src/uimanager.c:1049
 msgid "Finish the call"
 msgstr ""
 
-#: ../src/uimanager.c:1041
+#: ../src/uimanager.c:1052
 msgid "O_n hold"
 msgstr ""
 
-#: ../src/uimanager.c:1042
+#: ../src/uimanager.c:1053
 msgid "Place the call on hold"
 msgstr ""
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1056
 msgid "O_ff hold"
 msgstr ""
 
-#: ../src/uimanager.c:1046
+#: ../src/uimanager.c:1057
 msgid "Place the call off hold"
 msgstr ""
 
-#: ../src/uimanager.c:1049 ../src/uimanager.c:1432
+#: ../src/uimanager.c:1060 ../src/uimanager.c:1443
 msgid "Send _message"
 msgstr ""
 
-#: ../src/uimanager.c:1050
+#: ../src/uimanager.c:1061
 msgid "Send message"
 msgstr ""
 
-#: ../src/uimanager.c:1053 ../src/uimanager.c:1054
+#: ../src/uimanager.c:1064 ../src/uimanager.c:1065
 msgid "Share screen"
 msgstr ""
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1068
 msgid "Configuration _Assistant"
 msgstr ""
 
-#: ../src/uimanager.c:1058
+#: ../src/uimanager.c:1069
 msgid "Run the configuration assistant"
 msgstr ""
 
-#: ../src/uimanager.c:1062
+#: ../src/uimanager.c:1073
 msgid "Call your voicemail"
 msgstr ""
 
-#: ../src/uimanager.c:1065
+#: ../src/uimanager.c:1076
 msgid "_Close"
 msgstr "మూసివేయి (_C)"
 
-#: ../src/uimanager.c:1066
+#: ../src/uimanager.c:1077
 msgid "Minimize to system tray"
 msgstr ""
 
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1080
 msgid "_Quit"
 msgstr ""
 
-#: ../src/uimanager.c:1070
+#: ../src/uimanager.c:1081
 msgid "Quit the program"
 msgstr ""
 
 #. Edit Menu
-#: ../src/uimanager.c:1074
+#: ../src/uimanager.c:1085
 msgid "_Edit"
 msgstr ""
 
-#: ../src/uimanager.c:1076 ../src/uimanager.c:1357
+#: ../src/uimanager.c:1087 ../src/uimanager.c:1368
 msgid "_Copy"
 msgstr ""
 
-#: ../src/uimanager.c:1077
+#: ../src/uimanager.c:1088
 msgid "Copy the selection"
 msgstr ""
 
-#: ../src/uimanager.c:1080 ../src/uimanager.c:1365
+#: ../src/uimanager.c:1091 ../src/uimanager.c:1376
 msgid "_Paste"
 msgstr ""
 
-#: ../src/uimanager.c:1081
+#: ../src/uimanager.c:1092
 msgid "Paste the clipboard"
 msgstr ""
 
-#: ../src/uimanager.c:1084
+#: ../src/uimanager.c:1095
 msgid "Clear _history"
 msgstr ""
 
-#: ../src/uimanager.c:1085
+#: ../src/uimanager.c:1096
 msgid "Clear the call history"
 msgstr ""
 
-#: ../src/uimanager.c:1088
+#: ../src/uimanager.c:1099
 msgid "_Accounts"
 msgstr "ఖాతాలు (_A)"
 
-#: ../src/uimanager.c:1089
+#: ../src/uimanager.c:1100
 msgid "Edit your accounts"
 msgstr ""
 
-#: ../src/uimanager.c:1092
+#: ../src/uimanager.c:1103
 msgid "_Preferences"
 msgstr "అభీష్టాలు (_P)"
 
-#: ../src/uimanager.c:1093
+#: ../src/uimanager.c:1104
 msgid "Change your preferences"
 msgstr ""
 
 #. View Menu
-#: ../src/uimanager.c:1097
+#: ../src/uimanager.c:1108
 msgid "_View"
 msgstr ""
 
 #. Help menu
-#: ../src/uimanager.c:1100
+#: ../src/uimanager.c:1111
 msgid "_Help"
 msgstr "సహాయం (_H)"
 
-#: ../src/uimanager.c:1101
+#: ../src/uimanager.c:1112
 msgid "Contents"
 msgstr ""
 
-#: ../src/uimanager.c:1102
+#: ../src/uimanager.c:1113
 msgid "Open the manual"
 msgstr ""
 
-#: ../src/uimanager.c:1104
+#: ../src/uimanager.c:1115
 msgid "About this application"
 msgstr ""
 
-#: ../src/uimanager.c:1108
+#: ../src/uimanager.c:1119
 msgid "_Transfer"
 msgstr ""
 
-#: ../src/uimanager.c:1108
+#: ../src/uimanager.c:1119
 msgid "Transfer the call"
 msgstr ""
 
-#: ../src/uimanager.c:1109 ../src/uimanager.c:1412
+#: ../src/uimanager.c:1120 ../src/uimanager.c:1423
 msgid "_Record"
 msgstr ""
 
-#: ../src/uimanager.c:1109
+#: ../src/uimanager.c:1120
 msgid "Record the current conversation"
 msgstr ""
 
-#: ../src/uimanager.c:1110
+#: ../src/uimanager.c:1121
 msgid "_Show toolbar"
 msgstr ""
 
-#: ../src/uimanager.c:1110
+#: ../src/uimanager.c:1121
 msgid "Show the toolbar"
 msgstr ""
 
-#: ../src/uimanager.c:1111
+#: ../src/uimanager.c:1122
 msgid "_Dialpad"
 msgstr ""
 
-#: ../src/uimanager.c:1111
+#: ../src/uimanager.c:1122
 msgid "Show the dialpad"
 msgstr ""
 
-#: ../src/uimanager.c:1112
+#: ../src/uimanager.c:1123
 msgid "_Volume controls"
 msgstr ""
 
-#: ../src/uimanager.c:1112
+#: ../src/uimanager.c:1123
 msgid "Show the volume controls"
 msgstr ""
 
-#: ../src/uimanager.c:1113
+#: ../src/uimanager.c:1124
 msgid "_History"
 msgstr "చరిత్ర (_H)"
 
-#: ../src/uimanager.c:1113
+#: ../src/uimanager.c:1124
 msgid "Call history"
 msgstr ""
 
-#: ../src/uimanager.c:1114
+#: ../src/uimanager.c:1125
 msgid "_Address book"
 msgstr ""
 
-#: ../src/uimanager.c:1116
+#: ../src/uimanager.c:1127
 msgid "_Buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1116
+#: ../src/uimanager.c:1127
 msgid "Display the buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1401 ../src/uimanager.c:1483
+#: ../src/uimanager.c:1412 ../src/uimanager.c:1496
 msgid "On _Hold"
 msgstr ""
 
 #. Add a video sources menu
-#: ../src/uimanager.c:1452
+#: ../src/uimanager.c:1463
 msgid "Video sources"
 msgstr ""
 
-#: ../src/uimanager.c:1520
+#: ../src/uimanager.c:1533
 msgid "_Call back"
 msgstr ""
 
-#: ../src/uimanager.c:1530 ../src/uimanager.c:1589
+#: ../src/uimanager.c:1543 ../src/uimanager.c:1602
 msgid "Follow status"
 msgstr ""
 
-#: ../src/uimanager.c:1650
+#: ../src/uimanager.c:1663
 msgid "Edit phone number"
 msgstr ""
 
-#: ../src/uimanager.c:1661
+#: ../src/uimanager.c:1674
 msgid "Edit the phone number before making a call"
 msgstr ""
 
-#: ../src/video/video_callbacks.c:139
+#: ../src/video/video_callbacks.c:241
 msgid "Local View"
+msgstr ""
+
+#. on a conference call
+#. build the prefix title name
+#: ../src/video/video_callbacks.c:257
+msgid "Conference with"
+msgstr ""
+
+#. build the prefix title name
+#: ../src/video/video_callbacks.c:269
+msgid "Call with"
 msgstr ""
