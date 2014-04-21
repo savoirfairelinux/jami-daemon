@@ -44,18 +44,18 @@ class VideoInputSelector :
     public VideoFrameActiveWriter
 {
 public:
-    VideoInputSelector(const std::string& device);
+    VideoInputSelector(const std::string& resource);
     ~VideoInputSelector();
 
     /* as of VideoFrameActiveReader (Observer) */
     void update(Observable<std::shared_ptr<sfl_video::VideoFrame>>*, std::shared_ptr<VideoFrame>&);
 
-    void switchInput(const std::string& device);
+    bool switchInput(const std::string& resource);
 
 private:
     NON_COPYABLE(VideoInputSelector);
 
-    void openInput(const std::string& device);
+    void openInput(const std::map<std::string, std::string>& map);
     void closeInput(void);
 
     VideoInput *currentInput_;

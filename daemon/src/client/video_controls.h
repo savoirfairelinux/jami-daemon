@@ -128,7 +128,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
 
         void startCamera();
         void stopCamera();
-        void switchInput(const std::string& device);
+        bool switchInput(const std::string& resource);
         bool hasCameraStarted();
         std::weak_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
 };

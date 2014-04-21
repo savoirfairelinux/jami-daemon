@@ -113,9 +113,6 @@ class SIPCall : public Call {
         void setContactHeader(pj_str_t *contact);
 
     private:
-        // override of Call::getDetails
-        std::map<std::string, std::string>
-        getDetails();
 
         // override of Call::createHistoryEntry
         std::map<std::string, std::string>

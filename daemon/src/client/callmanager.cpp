@@ -186,6 +186,12 @@ CallManager::getParticipantList(const std::string& confID)
     return Manager::instance().getParticipantList(confID);
 }
 
+std::vector<std::string>
+CallManager::getDisplayNames(const std::string& confID)
+{
+    return Manager::instance().getDisplayNames(confID);
+}
+
 std::string
 CallManager::getConferenceId(const std::string& callID)
 {

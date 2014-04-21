@@ -30,6 +30,7 @@
 
 #include "video_callbacks.h"
 #include "video_renderer.h"
+#include "sflphone_client.h"    /* gsettings schema path */
 #include "config/videoconf.h"
 
 #include <clutter/clutter.h>
@@ -46,6 +47,7 @@ typedef enum {
 typedef struct {
     gchar *id;
     GtkWidget *window;
+    GSettings *settings;
     gboolean fullscreen;
 } VideoHandle;
 
@@ -109,9 +111,14 @@ cleanup_handle(gpointer data)
         g_free(h->id);
     }
 
+    g_object_unref(h->settings);
+
     g_free(h);
 }
 
+/*
+ * Handle destroy event in the video windows.
+ */
 static void
 video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget,
                         G_GNUC_UNUSED gpointer data)
@@ -121,7 +128,39 @@ video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget,
 }
 
 /*
- * Handle button event in the video window
+ * Handle resizing and moving event in the video windows.
+ * This is usefull to store the previous behaviour and restore the user
+ * preferences using gsettings.
+ */
+static gboolean
+video_window_configure_cb(GtkWidget *widget,
+                          GdkEventConfigure *event,
+                          gpointer data)
+{
+    VideoHandle *handle = (VideoHandle *) data;
+
+    gint pos_x, pos_y;
+
+    gtk_window_get_position(GTK_WINDOW(widget), &pos_x, &pos_y);
+
+    if (video_is_local(handle->id)) {
+        g_settings_set_int(handle->settings, "window-video-local-width", event->width);
+        g_settings_set_int(handle->settings, "window-video-local-height", event->height);
+        g_settings_set_int(handle->settings, "window-video-local-position-x", pos_x);
+        g_settings_set_int(handle->settings, "window-video-local-position-y", pos_y);
+    } else {
+        g_settings_set_int(handle->settings, "window-video-remote-width", event->width);
+        g_settings_set_int(handle->settings, "window-video-remote-height", event->height);
+        g_settings_set_int(handle->settings, "window-video-remote-position-x", pos_x);
+        g_settings_set_int(handle->settings, "window-video-remote-position-y", pos_y);
+    }
+
+    /* let the event propagate otherwise the video will not be re-scaled */
+    return FALSE;
+}
+
+/*
+ * Handle button event in the video windows.
  */
 static void
 video_window_button_cb(GtkWindow *win,
@@ -133,7 +172,6 @@ video_window_button_cb(GtkWindow *win,
     if (event->type == GDK_2BUTTON_PRESS) {
 
         /* Fullscreen switch on/off */
-        g_debug("TOGGLING FULL SCREEEN!");
         handle->fullscreen = !handle->fullscreen;
 
         if (handle->fullscreen)
@@ -158,9 +196,29 @@ add_handle(const gchar *id)
     }
 
     VideoHandle *handle = g_new0(VideoHandle, 1);
+
     handle->id = g_strdup(id);
     handle->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    handle->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
     handle->fullscreen = FALSE;
+
+    /* Get configuration stored in GSettings */
+    gint width, height, pos_x, pos_y;
+    if (video_is_local(id)) {
+        width  = g_settings_get_int(handle->settings, "window-video-local-width");
+        height = g_settings_get_int(handle->settings, "window-video-local-height");
+        pos_x  = g_settings_get_int(handle->settings, "window-video-local-position-x");
+        pos_y  = g_settings_get_int(handle->settings, "window-video-local-position-y");
+    } else {
+        width  = g_settings_get_int(handle->settings, "window-video-remote-width");
+        height = g_settings_get_int(handle->settings, "window-video-remote-height");
+        pos_x  = g_settings_get_int(handle->settings, "window-video-remote-position-x");
+        pos_y  = g_settings_get_int(handle->settings, "window-video-remote-position-y");
+    }
+
+    /* Restore the previous setting for the video size and position */
+    gtk_window_set_default_size(GTK_WINDOW(handle->window), width, height);
+    gtk_window_move(GTK_WINDOW(handle->window), pos_x, pos_y);
 
     /* handle button event */
     g_signal_connect(handle->window, "button_press_event",
@@ -171,6 +229,11 @@ add_handle(const gchar *id)
     g_signal_connect(handle->window, "delete-event",
             G_CALLBACK(video_window_deleted_cb),
             NULL);
+
+    /* handle configure event */
+    g_signal_connect(handle->window, "configure-event",
+            G_CALLBACK(video_window_configure_cb),
+            handle);
 
     /* Preview video */
     if (video_is_local(id)) {
@@ -194,57 +257,27 @@ add_handle(const gchar *id)
             title_prefix = _("Conference with");
 
             /* get all the participants name */
-            gchar **participant_list = dbus_get_participant_list(id);
-            for (gchar **participant = participant_list; participant && *participant; participant++) {
-                g_debug("participant %s\n", *participant);
-
-                gchar *new_name = NULL;
-
-                /* create a new callable object to manipulate the id details */
-                callable_obj_t *c = create_new_call_from_details(*participant, dbus_get_call_details(*participant));
-
-                /* if no display name, we show the peer_number */
-                if (g_strcmp0(c->_display_name, "") != 0) {
-                    new_name = g_strdup(c->_display_name);
-                } else {
-                    new_name = g_strdup(c->_peer_number);
-                }
-
-                /* if name exists we must add the new name to the list */
-                if (name) {
-                    gchar *name_list = g_strdup_printf("%s, %s", name, new_name);
-                    g_free(name);
-                    name = name_list;
-                } else {
-                    name = g_strdup(new_name);
-                }
-
-                g_free(new_name);
-                g_free(c);
-            }
-
-         g_strfreev(participant_list);
+            gchar **display_names = dbus_get_display_names(id);
+            name = g_strjoinv(", ", display_names);
+            g_strfreev(display_names);
 
         } else if (call_type == IS_CALL) { /* on a simple call */
 
-            /* create a new callable object to manipulate the call details */
-            callable_obj_t *c = create_new_call_from_details(id, dbus_get_call_details(id));
+            GHashTable *details = dbus_get_call_details(id);
 
             /* build the prefix title name */
             title_prefix = _("Call with");
 
             /* if no display name, we show the peer_number */
-            if (g_strcmp0(c->_display_name, "") != 0) {
-                name = g_strdup(c->_display_name);
-            } else {
-                name = g_strdup(c->_peer_number);
-            }
-
-            g_free(c);
+            const gchar *display_name = g_hash_table_lookup(details, "DISPLAY_NAME");
+            if (strlen(display_name) != 0)
+                name = g_strdup(display_name);
+            else
+                name = g_strdup(g_hash_table_lookup(details, "PEER_NUMBER"));
         }
 
         /* build the final title name */
-        window_title = g_strdup_printf("%s %s", title_prefix, name);
+        window_title = g_strjoin(" ", title_prefix, name, NULL);
 
         /* update the window title */
         gtk_window_set_title(GTK_WINDOW(handle->window), window_title);
@@ -317,11 +350,6 @@ started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_add(GTK_CONTAINER(vbox), video_area);
-
-    if (video_is_local(id))
-        gtk_window_set_default_size(GTK_WINDOW(video_area), 200, 150);
-    else
-        gtk_window_set_default_size(GTK_WINDOW(video_area), width, height);
 
     if (handle) {
         gtk_container_add(GTK_CONTAINER(handle->window), vbox);

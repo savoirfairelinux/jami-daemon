@@ -241,16 +241,18 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
         return;
     }
 
-    AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
-    audioCodecs[0]->setOptimalFormat(f.sample_rate, f.nb_channels);
     // FIXME: assuming right encoder/decoder are first?
     currentEncoderIndex_ = currentDecoderIndex_ = 0;
-    // FIXME: this is probably not the right payload type
-    const int pt = audioCodecs[0]->getPayloadType();
-    encoder_.payloadType = decoder_.payloadType = pt;
-    encoder_.frameSize = decoder_.frameSize = audioCodecs[0]->getFrameSize();
+    AudioCodec& codec = *audioCodecs[currentEncoderIndex_];
 
-    AudioFormat codecFormat(audioCodecs[0]->getCurrentClockRate(), audioCodecs[0]->getCurrentChannels());
+    AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    codec.setOptimalFormat(f.sample_rate, f.nb_channels);
+
+    const int pt = codec.getPayloadType();
+    encoder_.payloadType = decoder_.payloadType = pt;
+    encoder_.frameSize = decoder_.frameSize = codec.getFrameSize();
+
+    AudioFormat codecFormat(codec.getCurrentClockRate(), codec.getCurrentChannels());
     if (codecFormat != decoder_.format or codecFormat != encoder_.format) {
         encoder_.format = decoder_.format = codecFormat;
 #if HAVE_SPEEXDSP
@@ -258,10 +260,10 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 #endif
     }
     Manager::instance().audioFormatUsed(codecFormat);
-    hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
+    hasDynamicPayloadType_ = codec.hasDynamicPayload();
     codecEncMutex_.unlock();
 
-    resetDecoderPLC(audioCodecs[0]);
+    resetDecoderPLC(audioCodecs[currentDecoderIndex_]);
     codecDecMutex_.unlock();
 }
 

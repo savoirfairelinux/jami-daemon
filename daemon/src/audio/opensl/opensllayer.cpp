@@ -339,16 +339,35 @@ OpenSLLayer::initAudioCapture()
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
     DEBUG("Create audio recorder\n");
-    const SLInterfaceID id[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
-    const SLboolean req[] = {SL_BOOLEAN_TRUE};
+    const SLInterfaceID id[2] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
+                                SL_IID_ANDROIDCONFIGURATION};
+    const SLboolean req[2] ={SL_BOOLEAN_TRUE,
+                             SL_BOOLEAN_TRUE};
+    SLAndroidConfigurationItf recorderConfig;
 
     if (engineInterface_ != nullptr) {
         result = (*engineInterface_)->CreateAudioRecorder(engineInterface_,
-                 &recorderObject_, &audioSource, &audioSink, 1, id, req);
+                 &recorderObject_, &audioSource, &audioSink, 2, id, req);
     }
 
     if (SL_RESULT_SUCCESS != result) {
         DEBUG("Error: could not create audio recorder");
+        return;
+    }
+
+    /* Set Android configuration */
+    result = (*recorderObject_)->GetInterface(recorderObject_,
+                                                SL_IID_ANDROIDCONFIGURATION,
+                                                &recorderConfig);
+    if (result == SL_RESULT_SUCCESS) {
+       SLint32 streamType = SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
+       result = (*recorderConfig)->SetConfiguration(
+                recorderConfig, SL_ANDROID_KEY_RECORDING_PRESET,
+                &streamType, sizeof(SLint32));
+    }
+
+    if (result != SL_RESULT_SUCCESS) {
+        DEBUG("Warning: Unable to set android recorder configuration");
         return;
     }
 

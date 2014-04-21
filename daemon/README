@@ -1,6 +1,6 @@
 COPYRIGHT NOTICE
 
-Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,16 +32,16 @@ Introduction
 
 SFLPhone is a Voice-over-IP software phone. We want it to be:
 - user friendly (fast, sleek, easy to learn interface)
-- corporate grade (transfers, holds, perfect audio quality)
+- professional grade (transfers, holds, optimal audio quality)
 - fully compatible with Asterisk (SIP and IAX protocols)
 - customizable
 
 As the SIP/audio daemon and the user interface are separate processes,
-it is easy to provide different user interfaces. SFLPhone0.8 comes with
-a GTK graphical user interface, an interactive command line interface,
-and even scripts to control the daemon from the shell.
+it is easy to provide different user interfaces. SFLPhone comes with
+a GTK graphical user interface and even scripts to control the daemon from
+the shell.
 
-SFLPhone is actually used by the support team of Savoir-Faire Linux Inc.
+SFLPhone is currently used by the support team of Savoir-Faire Linux Inc.
 
 More information is available on the project homepage:
   http://www.sflphone.org/
@@ -50,15 +50,11 @@ More information is available on the project homepage:
 Short description of content of source tree
 -------------------------------------------
 
-- ringtones/ contains the different ringtones.
-- src/ is the core of SFLphone. It contains the main.cpp, managerimpl.cpp
-  files, audio and gui directories, and files about signalisation SIP. Later,
-  it should be better, when IAX will be implemented, that a directory groups
-  these protocols.
-  The ManagerImpl class is the intermediaire between all the layer in the tree.
-- src/audio/ is the audio layer. It contains all about tones, dtmf,
-  audiodriver, rtp layer, audio codec ulaw, alaw and gsm.
-- src/dbus, the dbus xml interfaces, and c++ bindings
+- src/ is the core of SFLphone. It contains main.cpp, the entry point and
+  managerimpl.cpp.
+  The ManagerImpl class is the intermediary between all the layers of the daemon.
+- src/client/dbus, the D-Bus xml interfaces, and c++ bindings
+- src/client/android, the JNI interfaces (Java bindings)
 
 
 About Savoir-Faire Linux
@@ -75,42 +71,33 @@ How to compile
 cd libs
 ./compile_pjsip.sh
 
-If you already have installed a different version of
-pjsip on your system, you will most likely have some errors
-such as :
-
-"ln: creating symbolic link `./libpjsip-sfl.a': File exists"
-
-after executing make install.
-
-Simply remove those files and run "make install" again.
+Note that pjsip need not be installed, just built in-tree.
 
 # Then the daemon
 cd ../..
 ./autogen.sh
 ./configure
 make
-sudo make install
+make install
 
 # And the GNOME client
 cd sflphone-client-gnome
 ./autogen.sh
 ./configure
 make
-sudo make install
+make install
 
 Done !
 
-Free SIP/IAx2 accounts
+More details available here:
+https://projects.savoirfairelinux.com/projects/sflphone/wiki/How_to_build
+
+
+SIP/IAx2 accounts
 ---------------------
 
-You may create a free SIP/IAX2 account through the account creation wizard in the both client (KDE and GNOME).
-By doing this, you will be able to call other account registered to the same server.
-Registered to this kind of account, you will be able to test your headset by dialing *100
-
-ECHO test
---------
-Dial *100, on sip.sflphone.org
+You may register an existing SIP/IAX2 account through the account wizard in both clients (KDE and GNOME).
+By doing this, you will be able to call other accounts known to this server.
 
 
 Contributing to SFLPhone
@@ -121,6 +108,13 @@ Of course we love patches. And contributions. And spring rolls.
 Development website: http://projects.savoirfairelinux.net/wiki/sflphone
 
 Do not hesitate to join us and post comments, suggestions, questions
-and general feedback on the forge.novell mailing-list.
+and general feedback on the SFLphone mailing-list:
+http://lists.savoirfairelinux.net/mailman/listinfo/sflphone
+
+Bug reports:
+https://projects.savoirfairelinux.com/projects/sflphone/wiki/BugReports
+
+IRC (on #freenode):
+#sflphone
 
   -- The SFLPhone Team

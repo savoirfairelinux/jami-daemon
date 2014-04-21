@@ -225,13 +225,6 @@ void VideoRtpSession::forceKeyFrame()
         sender_->forceKeyFrame();
 }
 
-void VideoRtpSession::addReceivingDetails(std::map<std::string, std::string> &details)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (receiveThread_)
-        receiveThread_->addReceivingDetails(details);
-}
-
 void VideoRtpSession::setupConferenceVideoPipeline()
 {
     std::lock_guard<std::mutex> lock(mutex_);

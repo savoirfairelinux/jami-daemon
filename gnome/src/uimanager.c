@@ -691,14 +691,24 @@ call_screenshare(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED SFLPhoneClient *
 static void
 call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
 {
-    if (strcmp(device, "Screen") == 0) {
-        gchar *display = sflphone_get_display();
-        dbus_switch_video_input(display);
-        g_free(display);
+    gboolean switched;
+    gchar *resource;
+
+    if (g_strcmp0(device, "None") == 0) {
+        resource = g_strconcat("file://", ICONS_DIR "/sflphone.png", NULL);
+        switched = dbus_switch_video_input(resource);
+    } else if (g_strcmp0(device, "Screen") == 0) {
+        resource = sflphone_get_display();
+        switched = dbus_switch_video_input(resource);
     } else {
         dbus_set_active_video_device(device);
-        dbus_switch_video_input(device);
+	resource = g_strconcat("v4l2://", device, NULL);
+        switched = dbus_switch_video_input(resource);
     }
+
+    if (!switched)
+	    g_warning("Failed to switch to '%s' (MRL '%s')\n", device, resource);
+    g_free(resource);
 }
 #endif
 
@@ -1466,6 +1476,8 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             }
             /* Add the special X11 device */
             append_video_input_to_submenu(video_menu, "Screen");
+            /* Add a None entry, which will display the client logo */
+            append_video_input_to_submenu(video_menu, "None");
         }
 #endif
     } else {

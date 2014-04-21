@@ -213,14 +213,34 @@ VideoV4l2ListThread::~VideoV4l2ListThread()
 
 void VideoV4l2ListThread::updateDefault()
 {
+    if (devices_.empty()) {
+        ERROR("No devices");
+        return;
+    }
+
     const std::string &name = devices_.back().name;
     auto controls = Manager::instance().getVideoControls();
     controls->setActiveDevice(name);
-    const auto channel = devices_.back().getChannelList()[0];
+
+    const auto channelList = devices_.back().getChannelList();
+    if (channelList.empty()) {
+        ERROR("No channel list present");
+        return;
+    }
+
+    const auto channel = channelList[0];
     controls->setActiveDeviceChannel(channel);
-    const auto size = devices_.back().getChannel(name).getSizeList()[0];
+
+    const auto sizeList = devices_.back().getChannel(name).getSizeList();
+    if (sizeList.empty()) {
+        ERROR("No size list present");
+        return;
+    }
+
+    const auto size = sizeList[0];
     controls->setActiveDeviceSize(size);
     const auto rateList(controls->getDeviceRateList(name, channel, size));
+
     // compare by integer value
     const auto highest = std::max_element(rateList.begin(), rateList.end(), []
             (const std::string &l, const std::string &r) {

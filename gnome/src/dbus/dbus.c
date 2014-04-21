@@ -569,12 +569,24 @@ zrtp_not_supported_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLP
     }
 }
 
+
+#ifdef RTCP_DEBUG
+static void
+print_rtcp_stats(const gchar *key, gint value, G_GNUC_UNUSED gpointer data)
+{
+    g_debug("%s: %d", key, value);
+}
+#endif
+
 static void
 on_rtcp_report_received_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                                                             const GHashTable *stats,
                                                             SFLPhoneClient *client)
 {
     g_debug("Daemon notification of new RTCP report for %s", callID);
+#ifdef RTCP_DEBUG
+    g_hash_table_foreach(stats, print_rtcp_stats, NULL);
+#endif
 }
 
 static void
@@ -1069,7 +1081,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 void dbus_clean()
 {
 #ifdef SFL_VIDEO
-        g_object_unref(video_proxy);
+    g_object_unref(video_proxy);
 #endif
     g_object_unref(call_proxy);
     g_object_unref(config_proxy);
@@ -1444,12 +1456,14 @@ dbus_set_video_codecs(const gchar *accountID, const GPtrArray *list)
     check_error(error);
 }
 
-void
-dbus_switch_video_input(const gchar *device)
+gboolean
+dbus_switch_video_input(const gchar *resource)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_switch_input(video_proxy, device, &error);
+    gboolean switched;
+    org_sflphone_SFLphone_VideoControls_switch_input(video_proxy, resource, &switched, &error);
     check_error(error);
+    return switched;
 }
 #endif
 
@@ -1634,12 +1648,7 @@ dbus_set_noise_suppress_state(gboolean state)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_noise_suppress_state(config_proxy, state, &error);
-
-    if (error) {
-        g_warning("Failed to call set_noise_suppress_state() on "
-              "ConfigurationManager: %s", error->message);
-        g_error_free(error);
-    }
+    check_error(error);
 }
 
 /**
@@ -1666,12 +1675,7 @@ dbus_set_agc_state(gboolean state)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_agc_state(config_proxy, state, &error);
-
-    if (error) {
-        g_warning("Failed to call set_agc_state() on "
-              "ConfigurationManager: %s", error->message);
-        g_error_free(error);
-    }
+    check_error(error);
 }
 
 int
@@ -1685,36 +1689,58 @@ dbus_is_iax2_enabled()
     return res;
 }
 
+static void
+dbus_join_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+                      gboolean result,
+                      GError *error,
+                      G_GNUC_UNUSED gpointer data)
+{
+    check_error(error);
+    if (!result)
+        g_warning("Failed to join participant");
+}
+
 void
 dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 {
-    g_debug("Join participant %s and %s\n", sel_callID, drag_callID);
-    GError *error = NULL;
-    gboolean result;
-    org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID,
-            drag_callID, &result, &error);
+    org_sflphone_SFLphone_CallManager_join_participant_async(call_proxy, sel_callID,
+            drag_callID, dbus_join_participant_async_cb, NULL);
+}
+
+static void
+dbus_add_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+                              gboolean result,
+                              GError *error,
+                              G_GNUC_UNUSED gpointer data)
+{
     check_error(error);
+    if (!result)
+        g_warning("Failed to add participant");
 }
 
 void
 dbus_add_participant(const gchar *callID, const gchar *confID)
 {
-    g_debug("Add participant %s to %s\n", callID, confID);
-    GError *error = NULL;
-    gboolean result;
-    org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID,
-            confID, &result, &error);
+    org_sflphone_SFLphone_CallManager_add_participant_async(call_proxy, callID,
+            confID, dbus_add_participant_async_cb, NULL);
+}
+
+static void
+dbus_add_main_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
+                                   gboolean result,
+                                   GError *error,
+                                   G_GNUC_UNUSED gpointer data)
+{
     check_error(error);
+    if (!result)
+        g_warning("Failed to add main participant");
 }
 
 void
 dbus_add_main_participant(const gchar *confID)
 {
-    GError *error = NULL;
-    gboolean result;
-    org_sflphone_SFLphone_CallManager_add_main_participant(call_proxy, confID,
-            &result, &error);
-    check_error(error);
+    org_sflphone_SFLphone_CallManager_add_main_participant_async(call_proxy,
+            confID, dbus_add_main_participant_async_cb, NULL);
 }
 
 void
@@ -2046,12 +2072,23 @@ dbus_get_conference_list(void)
 }
 
 gchar **
+dbus_get_display_names(const gchar *confID)
+{
+    GError *error = NULL;
+    gchar **list = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_display_names(call_proxy, confID, &list, &error);
+    check_error(error);
+
+    return list;
+}
+
+gchar **
 dbus_get_participant_list(const gchar *confID)
 {
     GError *error = NULL;
     gchar **list = NULL;
 
-    g_debug("Get conference %s participant list", confID);
     org_sflphone_SFLphone_CallManager_get_participant_list(call_proxy, confID, &list, &error);
     check_error(error);
 
@@ -2336,12 +2373,10 @@ dbus_screensaver_uninhibit(void)
 {
     if (cookie == 0)
         return;
-    g_debug("uninhibit");
 
     GVariant *parameters = g_variant_new("(u)", cookie);
     if (parameters == NULL) {
-        g_warning("Could not create session manager uninhibit "
-               "parameters");
+        g_warning("Could not create session manager uninhibit parameters");
         return;
     }
 
@@ -2356,7 +2391,6 @@ void
 dbus_presence_publish(const gchar *accountID, gboolean status)
 {
     GError *error = NULL;
-    g_debug("DBus: publish presence status.");
     org_sflphone_SFLphone_PresenceManager_publish(presence_proxy, accountID,status, "Tout va bien.", NULL);
     check_error(error);
 }
@@ -2364,7 +2398,6 @@ dbus_presence_publish(const gchar *accountID, gboolean status)
 void
 dbus_presence_subscribe(const gchar *accountID, const gchar *uri, gboolean flag)
 {
-    g_debug("DBus: subscrbe presence status %s:%s.", uri, flag? "true" : "false");
     GError *error = NULL;
     org_sflphone_SFLphone_PresenceManager_subscribe_buddy(presence_proxy, accountID, uri, flag, NULL);
     check_error(error);

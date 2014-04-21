@@ -101,6 +101,12 @@ class Conference : public Recordable {
         ParticipantSet getParticipantList() const;
 
         /**
+         * Get the display names or peer numbers for this conference
+         */
+        std::vector<std::string>
+        getDisplayNames() const;
+
+        /**
          * Start/stop recording toggle
          */
         virtual bool toggleRecording();

@@ -259,10 +259,10 @@ dbus_set_video_codecs(const gchar *id, const GPtrArray *list);
 
 /**
  * ConfigurationManager - Switch the video input
- * @param device The video device name to switch to
+ * @param resource A media resource locator (MRL) to switch to
  */
-void
-dbus_switch_video_input(const gchar *device);
+gboolean
+dbus_switch_video_input(const gchar *resource);
 
 /**
  * ConfigurationManager - Get the list of available output audio plugins
@@ -427,6 +427,12 @@ gint dbus_get_sip_address(void);
  * Add a participant (callID) to this conference (confID)
  */
 void dbus_add_participant(const gchar *callID, const gchar *confID);
+
+/**
+ * Return a list of display names for this conference (confID)
+ */
+gchar **
+dbus_get_display_names(const gchar *confID);
 
 /**
  * Return a list of participant for this conference (confID)

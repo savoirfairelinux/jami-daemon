@@ -104,12 +104,12 @@ ip_utils::addrToStr(const std::string& ip_str, bool include_port, bool force_ipv
 }
 
 pj_sockaddr
-ip_utils::strToAddr(const std::string& str)
+ip_utils::strToAddr(const std::string& str, pj_uint16_t family)
 {
     pj_str_t pjstring;
     pj_cstr(&pjstring, str.c_str());
     pj_sockaddr ip;
-    auto status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &pjstring, &ip);
+    auto status = pj_sockaddr_parse(family, 0, &pjstring, &ip);
     if (status != PJ_SUCCESS)
         ip.addr.sa_family = pj_AF_UNSPEC();
     return ip;
@@ -143,21 +143,30 @@ ip_utils::getLocalAddr(pj_uint16_t family)
 pj_sockaddr
 ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 {
-    ERROR("getInterfaceAddr: %s %d", interface.c_str(), family);
     if (interface == DEFAULT_INTERFACE)
         return getLocalAddr(family);
-    auto unix_family = (family == pj_AF_INET()) ? AF_INET : AF_INET6;
+
+    const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
+
     int fd = socket(unix_family, SOCK_DGRAM, 0);
-    if(unix_family == AF_INET6) {
-        int val = (family == pj_AF_UNSPEC()) ? 0 : 1;
-        setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val));
+
+    pj_sockaddr pj_saddr = {};
+
+    if (fd < 0) {
+        ERROR("Could not open socket: %m");
+        pj_saddr.addr.sa_family = pj_AF_UNSPEC();
+        return pj_saddr;
     }
-    pj_sockaddr saddr;
-    if(fd < 0) {
-        ERROR("Could not open socket: %m", fd);
-        saddr.addr.sa_family = pj_AF_UNSPEC();
-        return saddr;
+
+    if (unix_family == AF_INET6) {
+        int val = family != pj_AF_UNSPEC();
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &val, sizeof(val)) < 0) {
+            ERROR("Could not setsockopt: %m");
+            close(fd);
+            return pj_saddr;
+        }
     }
+
     ifreq ifr;
     strncpy(ifr.ifr_name, interface.c_str(), sizeof ifr.ifr_name);
     // guarantee that ifr_name is NULL-terminated
@@ -170,12 +179,16 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     close(fd);
 
     sockaddr* unix_addr = &ifr.ifr_addr;
-    memcpy(&saddr, &ifr.ifr_addr, sizeof(pj_sockaddr));
-    if ((ifr.ifr_addr.sa_family == AF_INET  &&  IN_IS_ADDR_UNSPECIFIED(&((sockaddr_in *)unix_addr)->sin_addr ))
-    || (ifr.ifr_addr.sa_family == AF_INET6 && IN6_IS_ADDR_UNSPECIFIED(&((sockaddr_in6*)unix_addr)->sin6_addr))) {
-        return getLocalAddr(saddr.addr.sa_family);
+
+    memcpy(&pj_saddr, unix_addr, unix_addr->sa_family == AF_INET6 ?
+           sizeof pj_saddr.ipv6 : sizeof pj_saddr.ipv4);
+
+    if ((unix_addr->sa_family == AF_INET and IN_IS_ADDR_UNSPECIFIED(&((sockaddr_in *) unix_addr)->sin_addr))
+        or (unix_addr->sa_family == AF_INET6 and IN6_IS_ADDR_UNSPECIFIED(&((sockaddr_in6*) unix_addr)->sin6_addr))) {
+        return getLocalAddr(pj_saddr.addr.sa_family);
     }
-    return saddr;
+
+    return pj_saddr;
 }
 
 std::vector<std::string>

@@ -35,17 +35,19 @@
 #include "manager.h"
 #include "client/video_controls.h"
 
+#include <unistd.h>
+
 #include <map>
 #include <string>
 
 namespace sfl_video {
 
-VideoInputSelector::VideoInputSelector(const std::string& device) :
+VideoInputSelector::VideoInputSelector(const std::string& resource) :
     VideoFramePassiveReader::VideoFramePassiveReader()
     , VideoFrameActiveWriter::VideoFrameActiveWriter()
-    , currentInput_()
+    , currentInput_(nullptr)
 {
-	openInput(device);
+	switchInput(resource);
 }
 
 VideoInputSelector::~VideoInputSelector()
@@ -60,25 +62,112 @@ VideoInputSelector::update(Observable<std::shared_ptr<sfl_video::VideoFrame>>* /
 }
 
 void
-VideoInputSelector::openInput(const std::string& device)
+VideoInputSelector::openInput(const std::map<std::string, std::string>& map)
 {
-	currentInput_ = new VideoInput(device);
+	currentInput_ = new VideoInput(map);
 	currentInput_->attach(this);
 }
 
 void
-VideoInputSelector::closeInput(void)
+VideoInputSelector::closeInput()
 {
-	currentInput_->detach(this);
-	delete currentInput_;
+    if (currentInput_ == nullptr)
+        return;
+
+    currentInput_->detach(this);
+    delete currentInput_;
+    currentInput_ = nullptr;
 }
 
-void
-VideoInputSelector::switchInput(const std::string& device)
+static std::map<std::string, std::string>
+initCamera(const std::string& device)
 {
-	DEBUG("Switching input to %s", device.c_str());
-	closeInput();
-	openInput(device);
+    std::map<std::string, std::string> map =
+        Manager::instance().getVideoControls()->getSettingsFor(device);
+
+    map["format"] = "video4linux2";
+    map["mirror"] = "true"; // only the key matters
+
+    return map;
+}
+
+static std::map<std::string, std::string>
+initX11(std::string display)
+{
+    std::map<std::string, std::string> map;
+    size_t space = display.find(' ');
+
+    if (space != std::string::npos) {
+        map["video_size"] = display.substr(space + 1);
+        map["input"] = display.erase(space);
+    } else {
+        map["input"] = display;
+        map["video_size"] = "vga";
+    }
+
+    map["format"] = "x11grab";
+    map["framerate"] = "25";
+
+    return map;
+}
+
+static std::map<std::string, std::string>
+initFile(std::string path)
+{
+    size_t dot = path.find_last_of('.');
+    std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
+    std::map<std::string, std::string> map;
+
+    /* File exists? */
+    if (access(path.c_str(), R_OK) != 0) {
+        ERROR("file '%s' unavailable\n", path.c_str());
+        return map;
+    }
+
+    /* Supported image? */
+    if (ext == "jpeg" || ext == "jpg" || ext == "png") {
+        map["input"] = path;
+        map["format"] = "image2";
+        map["framerate"] = "1";
+        map["loop"] = "1";
+    }
+
+    return map;
+}
+
+bool
+VideoInputSelector::switchInput(const std::string& resource)
+{
+    DEBUG("Switching input to MRL '%s'", resource.c_str());
+
+    // Supported MRL schemes
+    static const std::string v4l2("v4l2://");
+    static const std::string display("display://");
+    static const std::string file("file://");
+
+    std::map<std::string, std::string> map;
+
+    /* Video4Linux2 */
+    if (resource.compare(0, v4l2.size(), v4l2) == 0)
+        map = initCamera(resource.substr(v4l2.size()));
+
+    /* X11 display name */
+    else if (resource.compare(0, display.size(), display) == 0)
+        map = initX11(resource.substr(display.size()));
+
+    /* Pathname */
+    else if (resource.compare(0, file.size(), file) == 0)
+        map = initFile(resource.substr(file.size()));
+
+    /* Unsupported MRL or failed initialization */
+    if (map.empty()) {
+        ERROR("Failed to init input map for MRL '%s'\n", resource.c_str());
+        return false;
+    }
+
+    closeInput();
+    openInput(map);
+    return true;
 }
 
 } // end namespace sfl_video

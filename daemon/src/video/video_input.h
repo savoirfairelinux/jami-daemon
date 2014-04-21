@@ -51,7 +51,7 @@ class VideoInput :
     public SFLThread
 {
 public:
-    VideoInput(const std::string& device);
+    VideoInput(const std::map<std::string, std::string>& map);
     ~VideoInput();
 
     // as VideoGenerator
@@ -68,13 +68,11 @@ private:
     bool mirror_;
 
     std::string input_;
+    std::string loop_;
     std::string format_;
     std::string channel_;
     std::string framerate_;
     std::string video_size_;
-
-    void initCamera(std::string device);
-    void initX11(std::string device);
 
     // as SFLThread
     bool setup();

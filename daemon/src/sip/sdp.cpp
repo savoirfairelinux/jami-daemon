@@ -60,7 +60,8 @@ Sdp::Sdp(pj_pool_t *pool)
     , activeRemoteSession_(nullptr)
     , audio_codec_list_()
     , video_codec_list_()
-    , sessionAudioMedia_()
+    , sessionAudioMediaLocal_()
+    , sessionAudioMediaRemote_()
     , sessionVideoMedia_()
     , publishedIpAddr_()
     , publishedIpAddrType_()
@@ -123,6 +124,8 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 {
     activeLocalSession_ = (pjmedia_sdp_session*) sdp;
 
+    sessionAudioMediaLocal_.clear();
+
     for (unsigned i = 0; i < activeLocalSession_->media_count; ++i) {
         pjmedia_sdp_media *current = activeLocalSession_->media[i];
 
@@ -140,14 +143,14 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 
             if (!pj_stricmp2(&current->desc.media, "audio")) {
                 const unsigned long pt = pj_strtoul(&current->desc.fmt[fmt]);
-                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMedia_, pt)) {
+                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaLocal_, pt)) {
                     sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
                     if (codec)
-                        sessionAudioMedia_.push_back(codec);
+                        sessionAudioMediaLocal_.push_back(codec);
                     else {
                         codec = findCodecByName(rtpmapToString(rtpmap));
                         if (codec)
-                            sessionAudioMedia_.push_back(codec);
+                            sessionAudioMediaLocal_.push_back(codec);
                         else
                             ERROR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
@@ -170,6 +173,8 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
     }
 
     activeRemoteSession_ = (pjmedia_sdp_session*) sdp;
+
+    sessionAudioMediaRemote_.clear();
 
     bool parsedTelelphoneEvent = false;
     for (unsigned i = 0; i < sdp->media_count; i++) {
@@ -202,16 +207,16 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
                 pjmedia_sdp_attr_to_rtpmap(memPool_, rtpMapAttribute, &rtpmap);
 
                 const unsigned long pt = pj_strtoul(&r_media->desc.fmt[fmt]);
-                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMedia_, pt)) {
+                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaRemote_, pt)) {
                     sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
                     if (codec) {
                         DEBUG("Adding codec with new payload type %d", pt);
-                        sessionAudioMedia_.push_back(codec);
+                        sessionAudioMediaRemote_.push_back(codec);
                     } else {
                         // Search by codec name, clock rate and param (channel count)
                         codec = findCodecByName(rtpmapToString(rtpmap));
                         if (codec)
-                            sessionAudioMedia_.push_back(codec);
+                            sessionAudioMediaRemote_.push_back(codec);
                         else
                             ERROR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
@@ -219,7 +224,6 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
             }
         }
     }
-    DEBUG("Ready to decode %u audio codecs", sessionAudioMedia_.size());
 }
 
 string Sdp::getSessionVideoCodec() const
@@ -231,24 +235,31 @@ string Sdp::getSessionVideoCodec() const
     return sessionVideoMedia_[0];
 }
 
-string Sdp::getAudioCodecNames() const
-{
-    std::string result;
-    char sep = ' ';
-    for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionAudioMedia_.begin();
-         i != sessionAudioMedia_.end(); ++i) {
-        if (i == sessionAudioMedia_.end() - 1)
-            sep = '\0';
-        if (*i)
-            result += (*i)->getMimeSubtype() + sep;
-    }
-    return result;
-}
-
 std::vector<sfl::AudioCodec*>
 Sdp::getSessionAudioMedia() const
 {
-    return sessionAudioMedia_;
+    vector<sfl::AudioCodec*> codecs;
+
+    // Common codecs first
+    for (auto c : sessionAudioMediaLocal_) {
+        if (std::find(sessionAudioMediaRemote_.begin(), sessionAudioMediaRemote_.end(), c) != sessionAudioMediaRemote_.end())
+            codecs.push_back(c);
+    }
+    DEBUG("%u common audio codecs", codecs.size());
+
+    // Next, the other codecs we declared to be able to encode
+    for (auto c : sessionAudioMediaLocal_) {
+        if (std::find(codecs.begin(), codecs.end(), c) == codecs.end())
+            codecs.push_back(c);
+    }
+    // Finally, the remote codecs so we can decode them
+    for (auto c : sessionAudioMediaRemote_) {
+        if (std::find(codecs.begin(), codecs.end(), c) == codecs.end())
+            codecs.push_back(c);
+    }
+    DEBUG("Ready to decode %u audio codecs", codecs.size());
+
+    return codecs;
 }
 
 

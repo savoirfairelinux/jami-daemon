@@ -54,7 +54,6 @@ public:
 
     void addIOContext(SocketPair &socketPair);
     void setRequestKeyFrameCallback(void (*)(const std::string &));
-    void addReceivingDetails(std::map<std::string, std::string> &details);
     void enterConference();
     void exitConference();
 

@@ -2798,7 +2798,23 @@ std::vector<std::string> ManagerImpl::getConferenceList() const
     return v;
 }
 
-std::vector<std::string> ManagerImpl::getParticipantList(const std::string& confID) const
+std::vector<std::string>
+ManagerImpl::getDisplayNames(const std::string& confID) const
+{
+    std::vector<std::string> v;
+    ConferenceMap::const_iterator iter_conf = conferenceMap_.find(confID);
+
+    if (iter_conf != conferenceMap_.end()) {
+        return iter_conf->second->getDisplayNames();
+    } else {
+        WARN("Did not find conference %s", confID.c_str());
+    }
+
+    return v;
+}
+
+std::vector<std::string>
+ManagerImpl::getParticipantList(const std::string& confID) const
 {
     std::vector<std::string> v;
     ConferenceMap::const_iterator iter_conf = conferenceMap_.find(confID);
