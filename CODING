@@ -1,6 +1,17 @@
 Please follow our coding standards when developing
 http://projects.savoirfairelinux.net/wiki/sflphone/Coding_Standards
 
-Gerrit code review
-Ask for code review: refs/for/master
-By pass: refs/heads/master
+= Gerrit workflow =
+
+We are now using Gerrit as a code review tool.
+Wiki documentation: https://projects.savoirfairelinux.com/projects/sflphone/wiki/WorkingWithGerrit
+
+== commit-msg hook ==
+
+You may want to install the commis-msg hook that insert a Change-Id on commit messages:
+$ gitdir=$(git rev-parse --git-dir); scp -p -P 29420 username@gerrit-sflphone.savoirfairelinux.com:hooks/commit-msg ${gitdir}/hooks/
+
+Other documentation source:
+
+* http://strongspace.com/rtyler/public/gerrit-jenkins-notes.pdf
+* https://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger
