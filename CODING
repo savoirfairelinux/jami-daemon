@@ -1,6 +1,7 @@
 Please follow our coding standards when developing
 http://projects.savoirfairelinux.net/wiki/sflphone/Coding_Standards
 
-Gerrit code review
-Ask for code review: refs/for/master
-By pass: refs/heads/master
+= Gerrit workflow =
+
+We are now using Gerrit as a code review tool.
+Wiki documentation: https://projects.savoirfairelinux.com/projects/sflphone/wiki/WorkingWithGerrit
