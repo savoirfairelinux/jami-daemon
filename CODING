@@ -11,7 +11,7 @@ Wiki documentation: https://projects.savoirfairelinux.com/projects/sflphone/wiki
 
 == commit-msg hook ==
 
-You may want to install the commis-msg hook that insert a Change-Id on commit messages:
+You may want to install the commit-msg hook that inserts a Change-Id on commit messages:
 $ gitdir=$(git rev-parse --git-dir); scp -p -P 29420 username@gerrit-sflphone.savoirfairelinux.com:hooks/commit-msg ${gitdir}/hooks/
 
 Other documentation source:
