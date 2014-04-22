@@ -154,7 +154,7 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     }
 
 
-    label = gtk_label_new(_("Global TLS listener (all accounts)"));
+    label = gtk_label_new(_("TLS listener port"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1);
     GtkWidget * hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
