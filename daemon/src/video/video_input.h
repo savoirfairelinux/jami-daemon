@@ -31,6 +31,8 @@
  *  as that of the covered work.
  */
 
+#error foupoudav!
+
 #ifndef __VIDEO_INPUT_H__
 #define __VIDEO_INPUT_H__
 
