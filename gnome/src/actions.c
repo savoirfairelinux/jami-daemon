@@ -1030,27 +1030,22 @@ void
 sflphone_toggle_screenshare(void)
 {
     static gboolean screenshare = TRUE;
-    gboolean switched;
     gchar *resource;
 
     if (screenshare) {
         resource = sflphone_get_display();
-        g_debug("enabling screen sharing (with MRL '%s')", resource);
-        switched = dbus_switch_video_input(resource);
     } else {
-        gchar *device;
-
-	device = dbus_get_active_video_device();
-	resource = g_strconcat("v4l2://", device, NULL);
-        g_debug("restoring camera '%s' (with MRL '%s'", device, resource);
-        switched = dbus_switch_video_input(device);
-	g_free(device);
+        gchar *device = dbus_get_active_video_device();
+        resource = g_strconcat("v4l2://", device, NULL);
+        g_free(device);
     }
 
-    if (switched)
-	    screenshare = !screenshare;
-    else
-	    g_error("failed to switch to resource '%s'\n", resource);
+    if (dbus_switch_video_input(resource)) {
+        g_debug("switched video input to '%s'", resource);
+        screenshare = !screenshare;
+    } else {
+        g_error("failed to switch to resource '%s'\n", resource);
+    }
 
     g_free(resource);
 }
