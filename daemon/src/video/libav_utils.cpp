@@ -118,6 +118,9 @@ void init_once()
 
     av_lockmgr_register(avcodecManageMutex);
 
+    if (Logger::getDebugMode())
+        av_log_set_level(AV_LOG_VERBOSE);
+
     /* list of codecs tested and confirmed to work */
     encoders_["H264"]        = "libx264";
     encoders_["H263-2000"]   = "h263p";
