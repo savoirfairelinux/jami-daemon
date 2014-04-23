@@ -286,8 +286,14 @@ SipTransport::createTlsTransport(SIPAccount &account)
         port = atoi(remoteAddr.substr(pos + 1, remoteAddr.length() - pos).c_str());
     } else
         ipAddr = remoteAddr;
+    
+    DEBUG("createTlsTransport %s", ipAddr.c_str());
 
     pj_sockaddr rem_addr = ip_utils::strToAddr(ipAddr);
+    if (rem_addr.addr.sa_family == pj_AF_UNSPEC()) {
+      return nullptr;
+    }
+
     pj_sockaddr_set_port(&rem_addr, port);
 
     DEBUG("Get new tls transport/listener from transport manager to %s", ip_utils::addrToStr(rem_addr, true, true).c_str());
