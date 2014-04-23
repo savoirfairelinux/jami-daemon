@@ -36,7 +36,7 @@ dnl Define C++ as default language
 AC_LANG(C++)
 
 dnl Check for C++11 support
-AX_CXX_COMPILE_STDCXX_11(,[mandatory])
+AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 
 dnl Check for header files
 AC_FUNC_ALLOCA
