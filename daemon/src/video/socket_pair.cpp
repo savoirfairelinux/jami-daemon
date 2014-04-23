@@ -43,6 +43,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#if defined(__ANDROID__) && !defined(SOCK_NONBLOCK)
+#include <asm-generic/fcntl.h>
+# define SOCK_NONBLOCK O_NONBLOCK
+#endif
 
 namespace {
 
