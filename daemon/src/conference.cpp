@@ -51,7 +51,7 @@ Conference::Conference()
     , confState_(ACTIVE_ATTACHED)
     , participants_()
 #ifdef SFL_VIDEO
-    , videoMixer_(new sfl_video::VideoMixer(id_))
+    , videoMixer_(nullptr)
 #endif
 {
     Recordable::initRecFilename(id_);
@@ -184,6 +184,8 @@ std::string Conference::getConfID() const {
 #ifdef SFL_VIDEO
 std::shared_ptr<sfl_video::VideoMixer> Conference::getVideoMixer()
 {
+    if (!videoMixer_)
+        videoMixer_.reset(new sfl_video::VideoMixer(id_));
     return videoMixer_;
 }
 #endif

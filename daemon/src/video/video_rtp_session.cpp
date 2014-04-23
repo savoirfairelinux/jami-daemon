@@ -246,7 +246,8 @@ void VideoRtpSession::setupConferenceVideoPipeline()
 void VideoRtpSession::getMixerFromConference(Conference &conf)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    videoMixerSP_ = std::move(conf.getVideoMixer());
+    if (sending_ or receiving_)
+        videoMixerSP_ = std::move(conf.getVideoMixer());
 }
 
 void VideoRtpSession::enterConference(Conference *conf)
