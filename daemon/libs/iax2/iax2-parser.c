@@ -226,7 +226,6 @@ static void dump_prov_ies(char *output, int maxlen, unsigned char *iedata, int l
 		if (ielen + 2> len) {
 			snprintf(tmp, (int)sizeof(tmp), "Total Prov IE length of %d bytes exceeds remaining prov frame length of %d bytes\n", ielen + 2, len);
 			strncpy(output, tmp, maxlen - 1);
-			maxlen -= (int)strlen(output); output += strlen(output);
 			return;
 		}
 		found = 0;
