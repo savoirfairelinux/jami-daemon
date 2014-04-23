@@ -78,7 +78,7 @@ PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYP
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
 AC_ARG_WITH([alsa],
-	[ AS_HELP_STRING([--without-alsa], [disable support for alsa]) ],
+	[AS_HELP_STRING([--without-alsa], [disable support for alsa])],
 	[],
 	[with_alsa=yes])
 AS_IF([test "x$with_alsa" = "xyes"], [
@@ -92,7 +92,7 @@ AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
 AC_ARG_WITH([pulse],
-    [ AS_HELP_STRING([--without-pulse], [disable support for pulseaudio]) ],
+    [AS_HELP_STRING([--without-pulse], [disable support for pulseaudio])],
     [],
     [with_pulse=yes])
 
@@ -186,7 +186,7 @@ AS_IF([test "x$enable_presence" != "xno"], [
 # required dependency(ies): libssl
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
 AC_ARG_WITH([tls],
-    [ AS_HELP_STRING([--without-tls], [disable support for tls]) ],
+    [AS_HELP_STRING([--without-tls], [disable support for tls])],
     [],
     [with_tls=yes])
 AS_IF([test "x$with_tls" = "xyes"], [
@@ -201,7 +201,7 @@ AM_CONDITIONAL(BUILD_TLS, test "x$with_tls" = "xyes" )
 # required dependency(ies): libzrtp
 dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 AC_ARG_WITH([zrtp],
-    [ AS_HELP_STRING([--without-zrtp], [disable support for zrtp]) ],
+    [AS_HELP_STRING([--without-zrtp], [disable support for zrtp])],
     [],
     [with_zrtp=yes])
 AS_IF([test "x$with_zrtp" = "xyes"], [
@@ -231,7 +231,7 @@ AC_DEFINE_UNQUOTED([HAVE_DBUS], `if test "x$with_dbus" = "xyes"; then echo 1; el
 # Instant Messaging
 # required dependency(ies): libxpat
 AC_ARG_WITH([instant_messaging],
-    [ AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging]) ],
+    [AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging])],
     [],
     [with_instant_messaging=yes])
 AS_IF([test "x$with_instant_messaging" = "xyes"], [
@@ -251,7 +251,7 @@ AX_PTHREAD
 # SDES Key Exchange
 # required dependency(ies): libpcre
 AC_ARG_WITH([sdes],
-    [ AS_HELP_STRING([--without-sdes], [disable support for sdes key exchange]) ],
+    [AS_HELP_STRING([--without-sdes], [disable support for sdes key exchange])],
     [],
     [with_sdes=yes])
 AS_IF([test "x$with_sdes" = "xyes"], [
