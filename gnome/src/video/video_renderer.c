@@ -242,14 +242,7 @@ create_timeout()
 static gboolean
 shm_lock(SHMHeader *shm_area)
 {
-    const struct timespec timeout = create_timeout();
-    /* We need an upper limit on how long we'll wait to avoid locking the whole GUI */
-    if (sem_timedwait(&shm_area->mutex, &timeout) < 0) {
-        g_warning("%s", g_strerror(errno));
-        if (errno == ETIMEDOUT)
-            return FALSE;
-    }
-    return TRUE;
+    return sem_trywait(&shm_area->mutex) >= 0;
 }
 
 static void
@@ -295,13 +288,9 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
     // wait for a new buffer
     while (priv->buffer_gen == priv->shm_area->buffer_gen) {
         shm_unlock(priv->shm_area);
-        const struct timespec timeout = create_timeout();
-        // Could not decrement semaphore in time, returning
-        if (sem_timedwait(&priv->shm_area->notification, &timeout) < 0) {
-            if (errno == ETIMEDOUT)
-                g_warning("Renderer %s timed out waiting for notification", priv->shm_path);
+        // Could not decrement semaphore, returning
+        if (sem_trywait(&priv->shm_area->notification) < 0)
             return;
-        }
 
         if (!shm_lock(priv->shm_area))
             return;
