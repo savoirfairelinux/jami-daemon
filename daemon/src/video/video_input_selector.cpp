@@ -130,6 +130,8 @@ initFile(std::string path)
         map["format"] = "image2";
         map["framerate"] = "1";
         map["loop"] = "1";
+        // Not internally used by libavcodec, just our VideoDecoder
+        map["emulate_rate"] = "1";
     }
 
     return map;
