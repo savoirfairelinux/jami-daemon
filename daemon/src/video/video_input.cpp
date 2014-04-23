@@ -64,6 +64,7 @@ VideoInput::VideoInput(const std::map<std::string, std::string>& map) :
     , channel_(extract(map, "channel"))
     , framerate_(extract(map, "framerate"))
     , video_size_(extract(map, "video_size"))
+    , emulateRate_(map.find("emulate_rate") != map.end())
 {
     DEBUG("initializing video input with: "
             "mirror: %s, "
@@ -72,12 +73,14 @@ VideoInput::VideoInput(const std::map<std::string, std::string>& map) :
             "channel: '%s', "
             "framerate: '%s', "
             "video_size: '%s'",
+            "emulate_rate: '%s'",
             mirror_ ? "yes" : "no",
             input_.c_str(),
             format_.c_str(),
             channel_.c_str(),
             framerate_.c_str(),
-            video_size_.c_str());
+            video_size_.c_str(),
+            emulateRate_ ? "yes" : "no");
 
     start();
 }
@@ -100,6 +103,8 @@ bool VideoInput::setup()
         decoder_->setOption("channel", channel_.c_str());
     if (!loop_.empty())
         decoder_->setOption("loop", loop_.c_str());
+    if (emulateRate_)
+        decoder_->emulateRate();
 
     decoder_->setInterruptCallback(interruptCb, this);
 

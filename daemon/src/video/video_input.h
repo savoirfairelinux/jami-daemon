@@ -73,6 +73,7 @@ private:
     std::string channel_;
     std::string framerate_;
     std::string video_size_;
+    bool emulateRate_;
 
     // as SFLThread
     bool setup();
