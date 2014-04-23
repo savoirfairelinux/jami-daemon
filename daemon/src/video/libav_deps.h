@@ -31,12 +31,23 @@
 #ifndef __LIBAV_DEPS_H__
 #define __LIBAV_DEPS_H__
 
+/* LIBAVFORMAT_VERSION_CHECK checks for the right version of libav and FFmpeg
+ * a is the major version
+ * b and c the minor and micro versions of libav
+ * d and e the minor and micro versions of FFmpeg */
+#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
+    ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
+      (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 #include <libavutil/avutil.h>
+#if LIBAVFORMAT_VERSION_CHECK(54, 6, 0, 60, 100)
+#include <libavutil/time.h>
+#endif
 #include <libavutil/pixdesc.h>
 #include <libavutil/opt.h>
 #include <libavutil/mathematics.h> // for av_rescale_q (old libav support)
@@ -45,14 +56,6 @@ extern "C" {
 }
 
 #include "libav_utils.h"
-
-/* LIBAVFORMAT_VERSION_CHECK checks for the right version of libav and FFmpeg
- * a is the major version
- * b and c the minor and micro versions of libav
- * d and e the minor and micro versions of FFmpeg */
-#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
-    ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
-      (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
 
 /* LIBAVCODEC_VERSION_CHECK checks for the right version of libav and FFmpeg
  * a is the major version

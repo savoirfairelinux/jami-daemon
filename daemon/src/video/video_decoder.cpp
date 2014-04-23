@@ -45,6 +45,9 @@ VideoDecoder::VideoDecoder() :
     , decoderCtx_(0)
     , inputCtx_(avformat_alloc_context())
     , streamIndex_(-1)
+    , emulateRate_(false)
+    , startTime_(AV_NOPTS_VALUE)
+    , lastDts_(AV_NOPTS_VALUE)
 {
 }
 
@@ -158,6 +161,10 @@ int VideoDecoder::setupFromVideoData()
     }
 
     decoderCtx_->thread_count = 1;
+    if (emulateRate_) {
+        DEBUG("Using framerate emulation");
+        startTime_ = av_gettime();
+    }
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     ret = avcodec_open(decoderCtx_, inputDecoder_);
@@ -174,6 +181,19 @@ int VideoDecoder::setupFromVideoData()
 
 int VideoDecoder::decode(VideoFrame& result)
 {
+    if (emulateRate_) {
+        const int64_t pts = av_rescale(lastDts_, 1000000, AV_TIME_BASE);
+        const int64_t now = av_gettime() - startTime_;
+        if (pts > now) {
+#if LIBAVFORMAT_VERSION_CHECK(54, 6, 0, 60, 100)
+            av_usleep(10000);
+#else
+            usleep(10000);
+#endif
+            return 0;
+        }
+    }
+
     // Guarantee that we free the packet every iteration
     VideoPacket video_packet;
     AVPacket *inpacket = video_packet.get();
@@ -190,6 +210,9 @@ int VideoDecoder::decode(VideoFrame& result)
     // is this a packet from the video stream?
     if (inpacket->stream_index != streamIndex_)
         return 0;
+
+    if (inpacket->dts != AV_NOPTS_VALUE)
+        lastDts_ = av_rescale_q(inpacket->dts, decoderCtx_->time_base, AV_TIME_BASE_Q);
 
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, result.get(),

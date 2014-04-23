@@ -50,6 +50,7 @@ namespace sfl_video {
 		VideoDecoder();
 		~VideoDecoder();
 
+        void emulateRate() { emulateRate_ = true; }
 		void setInterruptCallback(int (*cb)(void*), void *opaque);
 		void setIOContext(VideoIOHandle *ioctx);
 		int openInput(const std::string &source_str,
@@ -69,6 +70,9 @@ namespace sfl_video {
 		AVCodecContext *decoderCtx_;
 		AVFormatContext *inputCtx_;
 		int streamIndex_;
+        bool emulateRate_;
+        int64_t startTime_;
+        int64_t lastDts_;
 	};
 }
 
