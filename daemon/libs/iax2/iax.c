@@ -499,7 +499,7 @@ int iax_get_netstats(struct iax_session *session, int *rtt, struct iax_netstat *
 {
 	jb_info stats;
 
-	if(!iax_session_valid(session)) return -1;
+	if(!session || !iax_session_valid(session)) return -1;
 
 	*rtt = session->pingtime;
 
@@ -1848,7 +1848,7 @@ static void send_ping(void *s)
 	struct iax_session *session = (struct iax_session *)s;
 
 	/* important, eh? */
-	if(!iax_session_valid(session)) return;
+	if(!session || !iax_session_valid(session)) return;
 
 	send_command(session, AST_FRAME_IAX, IAX_COMMAND_PING, 0, NULL, 0, -1);
 	session->pingid = iax_sched_add(NULL,NULL, send_ping, (void *)session, ping_time * 1000);
