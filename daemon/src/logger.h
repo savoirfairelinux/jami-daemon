@@ -39,13 +39,18 @@
 #include <syslog.h>
 #endif
 
+#include <cstring>
+
 namespace Logger {
 void log(const int, const char*, ...);
 
 void setConsoleLog(bool);
 void setDebugMode(bool);
 bool getDebugMode();
-void strErr();
+/**
+ * Thread-safe function to print the stringified contents of errno appended to a
+ * user defined message */
+void strErr(const char *message = "");
 };
 
 #define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, (unsigned long) pthread_self() & 0xffff, ##__VA_ARGS__
