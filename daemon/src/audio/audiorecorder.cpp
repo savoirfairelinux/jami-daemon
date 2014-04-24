@@ -71,6 +71,7 @@ void AudioRecorder::init() {
 
 void AudioRecorder::start()
 {
+    if (running_) return;
     running_ = true;
     thread_ = std::thread(&AudioRecorder::run, this);
 }
