@@ -62,7 +62,7 @@ VideoInput::VideoInput(const std::map<std::string, std::string>& map) :
     , loop_(extract(map, "loop"))
     , format_(extract(map, "format"))
     , channel_(extract(map, "channel"))
-    , framerate_(extract(map, "framerate"))
+    , frameRate_(extract(map, "framerate"))
     , videoSize_(extract(map, "video_size"))
     , emulateRate_(map.find("emulate_rate") != map.end())
 {
@@ -78,7 +78,7 @@ VideoInput::VideoInput(const std::map<std::string, std::string>& map) :
             input_.c_str(),
             format_.c_str(),
             channel_.c_str(),
-            framerate_.c_str(),
+            frameRate_.c_str(),
             videoSize_.c_str(),
             emulateRate_ ? "yes" : "no");
 
@@ -95,8 +95,8 @@ bool VideoInput::setup()
 {
     decoder_ = new VideoDecoder();
 
-    if (!framerate_.empty())
-        decoder_->setOption("framerate", framerate_.c_str());
+    if (!frameRate_.empty())
+        decoder_->setOption("framerate", frameRate_.c_str());
     if (!videoSize_.empty())
         decoder_->setOption("video_size", videoSize_.c_str());
     if (!channel_.empty())
