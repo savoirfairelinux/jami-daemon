@@ -45,35 +45,35 @@ class AVCodec;
 
 namespace sfl_video {
 
-	class VideoDecoder : public VideoCodec {
-	public:
-		VideoDecoder();
-		~VideoDecoder();
+    class VideoDecoder : public VideoCodec {
+    public:
+        VideoDecoder();
+        ~VideoDecoder();
 
         void emulateRate() { emulateRate_ = true; }
-		void setInterruptCallback(int (*cb)(void*), void *opaque);
-		void setIOContext(VideoIOHandle *ioctx);
-		int openInput(const std::string &source_str,
-					  const std::string &format_str);
-		int setupFromVideoData();
-		int decode(VideoFrame&);
-		int flush(VideoFrame&);
+        void setInterruptCallback(int (*cb)(void*), void *opaque);
+        void setIOContext(VideoIOHandle *ioctx);
+        int openInput(const std::string &source_str,
+                      const std::string &format_str);
+        int setupFromVideoData();
+        int decode(VideoFrame&);
+        int flush(VideoFrame&);
 
-		int getWidth() const;
-		int getHeight() const;
-		int getPixelFormat() const;
+        int getWidth() const;
+        int getHeight() const;
+        int getPixelFormat() const;
 
-	private:
-		NON_COPYABLE(VideoDecoder);
+    private:
+        NON_COPYABLE(VideoDecoder);
 
-		AVCodec *inputDecoder_;
-		AVCodecContext *decoderCtx_;
-		AVFormatContext *inputCtx_;
-		int streamIndex_;
+        AVCodec *inputDecoder_;
+        AVCodecContext *decoderCtx_;
+        AVFormatContext *inputCtx_;
+        int streamIndex_;
         bool emulateRate_;
         int64_t startTime_;
         int64_t lastDts_;
-	};
+    };
 }
 
 #endif // __VIDEO_DECODER_H__
