@@ -86,26 +86,33 @@ bool getDebugMode()
     return debugMode;
 }
 
-void strErr()
+void strErr(const char *msg)
 {
 #ifdef __GLIBC__
-    ERROR("%m");
+    if (strlen(msg))
+        ERROR("%s: %m", msg);
+    else
+        ERROR("%m");
 #else
     char buf[1000];
-    const char *msg;
+    const char *errstr;
 
-    switch (strerror_r(error, buf, sizeof(buf))) {
+    switch (strerror_r(errno, buf, sizeof(buf))) {
         case 0:
-            msg = buf;
+            errstr = buf;
             break;
         case ERANGE: /* should never happen */
-            msg = "unknown (too big to display)";
+            errstr = "unknown (too big to display)";
             break;
         default:
-            msg = "unknown (invalid error number)";
+            errstr = "unknown (invalid error number)";
             break;
     }
-    ERROR("%s", msg);
+
+    if (strlen(msg))
+        ERROR("%s: %s", msg, errstr);
+    else
+        ERROR("%s", errstr);
 #endif
 }
 }
