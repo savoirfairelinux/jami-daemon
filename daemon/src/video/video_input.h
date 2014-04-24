@@ -71,7 +71,7 @@ private:
     std::string loop_;
     std::string format_;
     std::string channel_;
-    std::string framerate_;
+    std::string frameRate_;
     std::string videoSize_;
     bool emulateRate_;
 
