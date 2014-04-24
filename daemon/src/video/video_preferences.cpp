@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,85 +29,270 @@
  *  as that of the covered work.
  */
 
+#include <sstream>
+
+#include "config/yamlemitter.h"
+#include "config/yamlnode.h"
+#include "logger.h"
 #include "video_preferences.h"
 #include "video_v4l2_list.h"
-#include "logger.h"
-#include "config/yamlnode.h"
-#include "config/yamlemitter.h"
-#include <sstream>
 
 using namespace sfl_video;
 
 VideoPreference::VideoPreference() :
-    v4l2_list_(new VideoV4l2ListThread), device_(), channel_(), size_(), rate_()
+    v4l2List_(new VideoV4l2ListThread),
+    deviceList_(),
+    active_(deviceList_.end())
 {
-    v4l2_list_->start();
+    v4l2List_->start();
 }
 
-std::map<std::string, std::string> VideoPreference::getSettingsFor(const std::string& device)
+/*
+ * V4L2 interface.
+ */
+
+std::vector<std::string>
+VideoPreference::getDeviceList()
 {
-    std::map<std::string, std::string> args;
-    if (not device.empty()) {
-        args["input"] = v4l2_list_->getDeviceNode(device);
-        std::stringstream ss;
-        ss << v4l2_list_->getChannelNum(device, channel_);
-        args["channel"] = ss.str();
-        args["video_size"] = size_;
-        size_t x_pos = size_.find("x");
-        args["width"] = size_.substr(0, x_pos);
-        args["height"] = size_.substr(x_pos + 1);
-        args["framerate"] = rate_;
+    return v4l2List_->getDeviceList();
+}
+
+std::vector<std::string>
+VideoPreference::getChannelList(const std::string &dev)
+{
+    return v4l2List_->getChannelList(dev);
+}
+
+std::vector<std::string>
+VideoPreference::getSizeList(const std::string &dev, const std::string &channel)
+{
+    return v4l2List_->getSizeList(dev, channel);
+}
+
+std::vector<std::string>
+VideoPreference::getRateList(const std::string &dev, const std::string &channel, const std::string &size)
+{
+    return v4l2List_->getRateList(dev, channel, size);
+}
+
+/*
+ * Interface for a single device.
+ */
+
+void
+VideoPreference::addDevice(const std::string &name)
+{
+    for (const auto &dev : deviceList_)
+        if (dev.name == name)
+            return;
+
+    VideoDevice dev;
+    dev.name = name;
+    deviceList_.push_back(dev);
+}
+
+std::vector<VideoPreference::VideoDevice>::iterator
+VideoPreference::lookupDevice(const std::string& name)
+{
+    std::vector<VideoDevice>::iterator iter;
+
+    for (iter = deviceList_.begin(); iter != deviceList_.end(); ++iter)
+        if ((*iter).name == name)
+            break;
+
+    return iter;
+}
+
+std::map<std::string, std::string>
+VideoPreference::deviceToSettings(const VideoDevice& dev)
+{
+    std::map<std::string, std::string> settings;
+
+    settings["input"] = v4l2List_->getDeviceNode(dev.name);
+
+    std::stringstream channel_index;
+    channel_index << v4l2List_->getChannelNum(dev.name, dev.channel);
+    settings["channel"] = channel_index.str();
+
+    settings["video_size"] = dev.size;
+    size_t x_pos = dev.size.find('x');
+    settings["width"] = dev.size.substr(0, x_pos);
+    settings["height"] = dev.size.substr(x_pos + 1);
+
+    settings["framerate"] = dev.rate;
+
+    return settings;
+}
+
+std::map<std::string, std::string>
+VideoPreference::getSettingsFor(const std::string& name)
+{
+    std::map<std::string, std::string> settings;
+
+    if (deviceList_.empty())
+        return settings;
+
+    const auto iter = lookupDevice(name);
+
+    if (iter != deviceList_.end())
+        settings = deviceToSettings(*iter);
+
+    return settings;
+}
+
+/*
+ * Interface with the "active" video device.
+ * This is the default used device when sending a video stream.
+ */
+
+std::string
+VideoPreference::getDevice() const {
+    if (active_ == deviceList_.end())
+        return "";
+
+    return (*active_).name;
+}
+
+void
+VideoPreference::setDevice(const std::string& name) {
+
+    /*
+     * This is actually a hack.
+     * v4l2List_ is calling setDevice() when it detects a new device.
+     * We addDevice() here until we make V4l2List use it.
+     */
+    addDevice(name);
+
+    const auto iter = lookupDevice(name);
+
+    if (iter != deviceList_.end())
+        active_ = iter;
+}
+
+std::string
+VideoPreference::getChannel() const {
+    if (active_ == deviceList_.end())
+        return "";
+
+    return (*active_).channel;
+}
+
+void
+VideoPreference::setChannel(const std::string& channel) {
+    if (active_ != deviceList_.end())
+        (*active_).channel = channel;
+}
+
+std::string
+VideoPreference::getSize() const {
+    if (active_ == deviceList_.end())
+        return "";
+
+    return (*active_).size;
+}
+
+void
+VideoPreference::setSize(const std::string& size) {
+    if (active_ != deviceList_.end())
+        (*active_).size = size;
+}
+
+std::string
+VideoPreference::getRate() const {
+    if (active_ == deviceList_.end())
+        return "";
+
+    return (*active_).rate;
+}
+
+void
+VideoPreference::setRate(const std::string& rate) {
+    if (active_ != deviceList_.end())
+        (*active_).rate = rate;
+}
+
+
+std::map<std::string, std::string>
+VideoPreference::getSettings()
+{
+    std::map<std::string, std::string> settings;
+
+    if (active_ != deviceList_.end())
+        settings = deviceToSettings(*active_);
+
+    return settings;
+}
+
+void
+VideoPreference::addDeviceToSequence(VideoDevice &dev, Conf::SequenceNode &seq)
+{
+    using namespace Conf;
+
+    MappingNode *node = new MappingNode(nullptr);
+
+    node->setKeyValue("name", new ScalarNode(dev.name));
+    node->setKeyValue("channel", new ScalarNode(dev.channel));
+    node->setKeyValue("size", new ScalarNode(dev.size));
+    node->setKeyValue("rate", new ScalarNode(dev.rate));
+
+    seq.addNode(node);
+}
+
+void
+VideoPreference::serialize(Conf::YamlEmitter &emitter)
+{
+    using namespace Conf;
+
+    MappingNode devices(nullptr);
+    SequenceNode sequence(nullptr);
+
+    if (!deviceList_.empty()) {
+        /* add active device first */
+        if (active_ != deviceList_.end())
+            addDeviceToSequence(*active_, sequence);
+
+        for (auto iter = deviceList_.begin(); iter != deviceList_.end(); iter++)
+            if (iter != active_)
+                addDeviceToSequence(*iter, sequence);
     }
 
-    return args;
+    devices.setKeyValue("devices", &sequence);
+
+    /* store the device list under the "video" YAML section */
+    emitter.serializePreference(&devices, "video");
 }
 
-std::map<std::string, std::string> VideoPreference::getSettings()
+void
+VideoPreference::unserialize(const Conf::YamlNode &node)
 {
-	return getSettingsFor(device_);
-}
+    using namespace Conf;
 
-void VideoPreference::serialize(Conf::YamlEmitter &emitter)
-{
-    Conf::MappingNode preferencemap(NULL);
+    /* load the device list from the "video" YAML section */
+    YamlNode *devicesNode(node.getValue("devices"));
 
-    Conf::ScalarNode device(device_);
-    Conf::ScalarNode channel(channel_);
-    Conf::ScalarNode size(size_);
-    Conf::ScalarNode rate(rate_);
+    if (!devicesNode || devicesNode->getType() != SEQUENCE) {
+        ERROR("No 'devices' sequence node! Old config?");
+    } else {
+        SequenceNode *seqNode = static_cast<SequenceNode *>(devicesNode);
+        Sequence *seq = seqNode->getSequence();
 
-    preferencemap.setKeyValue(videoDeviceKey, &device);
-    preferencemap.setKeyValue(videoChannelKey, &channel);
-    preferencemap.setKeyValue(videoSizeKey, &size);
-    preferencemap.setKeyValue(videoRateKey, &rate);
+        if (seq->empty()) {
+            WARN("Empty video device list");
+        } else {
+            for (const auto &iter : *seq) {
+                MappingNode *devnode = static_cast<MappingNode *>(iter);
+                VideoDevice device;
 
-    emitter.serializePreference(&preferencemap, "video");
-}
+                devnode->getValue("name", &device.name);
+                devnode->getValue("channel", &device.channel);
+                devnode->getValue("size", &device.size);
+                devnode->getValue("rate", &device.rate);
 
-void VideoPreference::unserialize(const Conf::YamlNode &map)
-{
-    map.getValue(videoDeviceKey, &device_);
-    map.getValue(videoChannelKey, &channel_);
-    map.getValue(videoSizeKey, &size_);
-    map.getValue(videoRateKey, &rate_);
-}
+                deviceList_.push_back(device);
+            }
 
-std::vector<std::string>
-VideoPreference::getDeviceList() {
-    return v4l2_list_->getDeviceList();
-}
-
-std::vector<std::string>
-VideoPreference::getChannelList(const std::string &dev) {
-    return v4l2_list_->getChannelList(dev);
-}
-
-std::vector<std::string>
-VideoPreference::getSizeList(const std::string &dev, const std::string &channel) {
-    return v4l2_list_->getSizeList(dev, channel);
-}
-
-std::vector<std::string>
-VideoPreference::getRateList(const std::string &dev, const std::string &channel, const std::string &size) {
-    return v4l2_list_->getRateList(dev, channel, size);
+            /* make first device active by default */
+            active_ = deviceList_.begin();
+        }
+    }
 }
