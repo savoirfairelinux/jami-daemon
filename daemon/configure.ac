@@ -61,6 +61,17 @@ AC_CHECK_TYPES([ptrdiff_t])
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
 
+dnl Check if we are using clang
+AC_MSG_CHECKING([if compiling with clang])
+AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([], [[
+#ifndef __clang__
+       not clang
+#endif
+]])],
+[CLANG=yes], [CLANG=no])
+
+AC_MSG_RESULT([$CLANG])
 
 dnl Check for uuid development package - name: uuid-dev
 UUID_MIN_VERSION=1.0
