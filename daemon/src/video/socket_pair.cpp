@@ -290,20 +290,27 @@ int SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
 
     int ret;
 
+retry:
     if (RTP_PT_IS_RTCP(buf[1])) {
         /* RTCP payload type */
         std::lock_guard<std::mutex> lock(context->rtcpWriteMutex_);
         ret = ff_network_wait_fd(context->rtcpHandle_);
-        if (ret < 0)
+        if (ret < 0) {
+            if (ret == -EAGAIN)
+                goto retry;
             return ret;
+        }
 
         ret = sendto(context->rtcpHandle_, buf, buf_size, 0,
                      (sockaddr*) &context->rtcpDestAddr_, context->rtcpDestAddrLen_);
     } else {
         /* RTP payload type */
         ret = ff_network_wait_fd(context->rtpHandle_);
-        if (ret < 0)
+        if (ret < 0) {
+            if (ret == -EAGAIN)
+                goto retry;
             return ret;
+        }
 
         ret = sendto(context->rtpHandle_, buf, buf_size, 0,
                      (sockaddr*) &context->rtpDestAddr_, context->rtpDestAddrLen_);
