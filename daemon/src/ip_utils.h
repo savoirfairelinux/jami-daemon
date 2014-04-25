@@ -77,7 +77,8 @@ namespace ip_utils {
      * Ex. : if family is pj_AF_INET6() (IPv6/default) and the system does not
      * have an IPv6 address, an IPv4 address will be returned if available.
      *
-     * If family is unspcified, default to pj_AF_INET6() (IPv6).
+     * If family is unspecified, default to pj_AF_INET6() (if configured
+     * with IPv6), or pj_AF_INET() otherwise.
      */
     pj_sockaddr getLocalAddr(pj_uint16_t family = pj_AF_UNSPEC());
 
