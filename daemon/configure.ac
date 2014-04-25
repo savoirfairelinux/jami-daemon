@@ -367,8 +367,8 @@ AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
 dnl IPv6 mode is default-disabled
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
 
-AC_DEFINE_UNQUOTED([HAVE_IPV6], `if test "x$with_ipv6" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have IPv6])
-AM_CONDITIONAL(BUILD_IPV6, test "x$with_ipv6" = "xyes" )
+AC_DEFINE_UNQUOTED([HAVE_IPV6], `if test "x$enable_ipv6" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have IPv6])
+AM_CONDITIONAL(BUILD_IPV6, test "x$enable_ipv6" = "xyes" )
 
 
 # DOXYGEN
