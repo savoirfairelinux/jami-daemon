@@ -9,6 +9,11 @@ then
     CONFIGURE=./configure-android
     # android doesn't need make
     MAKE="make dep"
+elif [ "$1" == "-c" ]
+then
+    export CC=clang
+    CONFIGURE=./configure
+    MAKE="make dep && make"
 else
     echo "Usage: $0 [or -a for android]"
     exit 1
