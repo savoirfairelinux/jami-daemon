@@ -213,8 +213,6 @@ PJ_DEF(pj_status_t) pjsip_regc_get_info( pjsip_regc *regc,
 	info->next_reg = 0;
     else if (regc->auto_reg == 0)
 	info->next_reg = 0;
-    else if (regc->expires < 0)
-	info->next_reg = regc->expires;
     else {
 	pj_time_val now, next_reg;
 

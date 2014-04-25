@@ -173,11 +173,6 @@ static void udp_on_read_complete( pj_ioqueue_key_t *key,
 		pjsip_tpmgr_receive_packet(rdata->tp_info.transport->tpmgr, 
 					   rdata);
 
-	    if (size_eaten < 0) {
-		pj_assert(!"It shouldn't happen!");
-		size_eaten = rdata->pkt_info.len;
-	    }
-
 	    /* Since this is UDP, the whole buffer is the message. */
 	    rdata->pkt_info.len = 0;
 

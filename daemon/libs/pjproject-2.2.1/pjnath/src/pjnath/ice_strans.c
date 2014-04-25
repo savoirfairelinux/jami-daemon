@@ -851,8 +851,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
      * type priority to ICE session so that SRFLX candidates will get
      * checked first.
      */
-    if (ice_st->comp[0]->default_cand >= 0 &&
-	ice_st->comp[0]->cand_list[ice_st->comp[0]->default_cand].type
+    if (ice_st->comp[0]->cand_list[ice_st->comp[0]->default_cand].type
 	    == PJ_ICE_CAND_TYPE_SRFLX)
     {
 	pj_ice_sess_set_prefs(ice_st->ice, srflx_pref_table);
