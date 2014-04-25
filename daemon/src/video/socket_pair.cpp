@@ -48,9 +48,10 @@
 # define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
-#define NET_POLL_TIMEOUT 100 /* poll() timeout in ms */
-
 namespace {
+
+static const int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
+
 
 int ff_network_wait_fd(int fd)
 {
