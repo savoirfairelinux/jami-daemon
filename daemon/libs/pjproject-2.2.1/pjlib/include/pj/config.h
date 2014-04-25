@@ -549,7 +549,7 @@
  * Default: 0 (disabled, for now)
  */
 #ifndef PJ_HAS_IPV6
-#  define PJ_HAS_IPV6		    0
+#  define PJ_HAS_IPV6		    1
 #endif
 
  /**
