@@ -178,10 +178,11 @@ audio:
   volumeMic: 100
   volumeSpkr: 100
 video:
-  v4l2Channel:
-  v4l2Dev:
-  v4l2Rate:
-  v4l2Size:
+  devices:
+  - channel: Camera 1
+    name: Integrated Camera
+    rate: 30
+    size: 640x480
 shortcuts:
   hangUp:
   pickUp:
