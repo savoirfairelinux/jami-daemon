@@ -34,7 +34,7 @@
 #include "check.h"
 
 #include <iostream>
-
+#include <unistd.h>
 
 namespace sfl_video {
 
