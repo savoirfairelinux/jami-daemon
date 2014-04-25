@@ -781,9 +781,14 @@ SIPVoIPLink::sendRegister(Account& a)
         }
     }
 
+
+    pj_status_t status;
+
     //DEBUG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
-    if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account.getRegistrationExpire()) != PJ_SUCCESS)
+    if ((status = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account.getRegistrationExpire())) != PJ_SUCCESS) {
+        sip_utils::sip_strerror(status);
         throw VoipLinkException("Unable to initialize account registration structure");
+    }
 
     if (account.hasServiceRoute())
         pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(account.getServiceRoute(), pool_));
@@ -809,8 +814,6 @@ SIPVoIPLink::sendRegister(Account& a)
         throw VoipLinkException("Unable to set transport");
 
     // pjsip_regc_send increment the transport ref count by one,
-    pj_status_t status;
-
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
         sip_utils::sip_strerror(status);
         throw VoipLinkException("Unable to send account registration request");
