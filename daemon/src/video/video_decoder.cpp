@@ -57,10 +57,10 @@ VideoDecoder::~VideoDecoder()
         avcodec_close(decoderCtx_);
 
     if (inputCtx_ and inputCtx_->nb_streams > 0) {
-#if LIBAVFORMAT_VERSION_MAJOR < 54
-        av_close_input_file(inputCtx_);
-#else
+#if LIBAVFORMAT_VERSION_CHECK(53, 17, 0, 25, 0)
         avformat_close_input(&inputCtx_);
+#else
+        av_close_input_file(inputCtx_);
 #endif
     }
 }
