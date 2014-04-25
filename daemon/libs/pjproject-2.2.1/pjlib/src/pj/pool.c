@@ -141,11 +141,7 @@ PJ_DEF(void*) pj_pool_allocate_find(pj_pool_t *pool, pj_size_t size)
 
     p = pj_pool_alloc_from_block(block, size);
     pj_assert(p != NULL);
-#if PJ_DEBUG
-    if (p == NULL) {
-	p = p;
-    }
-#endif
+
     return p;
 }
 
