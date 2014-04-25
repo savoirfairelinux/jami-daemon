@@ -118,7 +118,13 @@ ip_utils::strToAddr(const std::string& str, pj_uint16_t family)
 pj_sockaddr
 ip_utils::getAnyHostAddr(pj_uint16_t family)
 {
-    if (family == pj_AF_UNSPEC()) family = pj_AF_INET6();
+    if (family == pj_AF_UNSPEC()) {
+#if HAVE_IPV6
+        family = pj_AF_INET6();
+#else
+        family = pj_AF_INET();
+#endif
+    }
     pj_sockaddr addr = {};
     addr.addr.sa_family = family;
     return addr;
@@ -127,14 +133,22 @@ ip_utils::getAnyHostAddr(pj_uint16_t family)
 pj_sockaddr
 ip_utils::getLocalAddr(pj_uint16_t family)
 {
-    if (family == pj_AF_UNSPEC()) family = pj_AF_INET6();
+    if (family == pj_AF_UNSPEC()) {
+#if HAVE_IPV6
+        family = pj_AF_INET6();
+#else
+        family = pj_AF_INET();
+#endif
+    }
     pj_sockaddr ip_addr;
     pj_status_t status = pj_gethostip(family, &ip_addr);
     if (status == PJ_SUCCESS) return ip_addr;
+#if HAVE_IPV6
     WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
     family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
     status = pj_gethostip(family, &ip_addr);
     if (status == PJ_SUCCESS) return ip_addr;
+#endif
     ERROR("Could not get local IP");
     ip_addr.addr.sa_family = pj_AF_UNSPEC();
     return ip_addr;
@@ -147,11 +161,9 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
         return getLocalAddr(family);
 
     const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
-
-    int fd = socket(unix_family, SOCK_DGRAM, 0);
-
     pj_sockaddr pj_saddr = {};
 
+    int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
         ERROR("Could not open socket: %m");
         pj_saddr.addr.sa_family = pj_AF_UNSPEC();
