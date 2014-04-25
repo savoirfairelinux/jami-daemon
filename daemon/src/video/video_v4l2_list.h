@@ -58,7 +58,6 @@ class VideoV4l2ListThread {
 
     private:
         void run();
-        void updateDefault();
 
         std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
         NON_COPYABLE(VideoV4l2ListThread);
