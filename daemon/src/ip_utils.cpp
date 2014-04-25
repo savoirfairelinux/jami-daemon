@@ -165,11 +165,11 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 
     const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
     pj_sockaddr pj_saddr = {};
+    pj_saddr.addr.sa_family = pj_AF_UNSPEC();
 
     int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
         ERROR("Could not open socket: %m");
-        pj_saddr.addr.sa_family = pj_AF_UNSPEC();
         return pj_saddr;
     }
 
