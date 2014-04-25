@@ -12,6 +12,7 @@
  */
 
 #include <sys/socket.h>
+#include <netinet/in.h>
 
 #ifndef _ASTERISK_IAX_CLIENT_H
 #define _ASTERISK_IAX_CLIENT_H
@@ -162,8 +163,6 @@ extern int iax_auth_reply(struct iax_session *session, char *password,
 
 /* Free an event */
 extern void iax_event_free(struct iax_event *event);
-
-struct sockaddr_in;
 
 /* Front ends for sending events */
 extern int iax_send_dtmf(struct iax_session *session, char digit);
