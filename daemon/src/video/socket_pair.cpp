@@ -48,13 +48,15 @@
 # define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
+#define NET_POLL_TIMEOUT 100 /* poll() timeout in ms */
+
 namespace {
 
 int ff_network_wait_fd(int fd)
 {
     struct pollfd p = { fd, POLLOUT, 0 };
     int ret;
-    ret = poll(&p, 1, 100);
+    ret = poll(&p, 1, NET_POLL_TIMEOUT);
     return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : -EAGAIN;
 }
 
@@ -228,7 +230,7 @@ int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
         }
 
         /* build fdset to listen to RTP and RTCP packets */
-        n = poll(p, 2, 100);
+        n = poll(p, 2, NET_POLL_TIMEOUT);
         if (n > 0) {
             /* first try RTCP */
             if (p[1].revents & POLLIN) {
