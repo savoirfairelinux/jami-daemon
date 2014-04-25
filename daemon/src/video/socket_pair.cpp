@@ -232,6 +232,8 @@ int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
         /* build fdset to listen to RTP and RTCP packets */
         n = poll(p, 2, NET_POLL_TIMEOUT);
         if (n > 0) {
+// FIXME:WORKAROUND: prevent excessive packet loss
+#if 0
             /* first try RTCP */
             if (p[1].revents & POLLIN) {
                 from_len = sizeof(from);
@@ -248,6 +250,7 @@ int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
                 }
                 break;
             }
+#endif
             /* then RTP */
             if (p[0].revents & POLLIN) {
                 from_len = sizeof(from);
