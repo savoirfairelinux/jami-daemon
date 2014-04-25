@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,75 +43,76 @@
 namespace sfl_video {
     class VideoV4l2ListThread;
 }
-// video preferences
-static const char * const videoDeviceKey = "v4l2Dev";
-static const char * const videoChannelKey = "v4l2Channel";
-static const char * const videoSizeKey = "v4l2Size";
-static const char * const videoRateKey = "v4l2Rate";
+
+namespace Conf {
+    class SequenceNode;
+}
 
 class VideoPreference : public Serializable
 {
     public:
-
         VideoPreference();
 
-        virtual void serialize(Conf::YamlEmitter &emitter);
+        /*
+         * V4L2 interface.
+         */
+        std::vector<std::string> getDeviceList();
+        std::vector<std::string> getChannelList(const std::string& name);
+        std::vector<std::string> getSizeList(const std::string& name, const std::string& channel);
+        std::vector<std::string> getRateList(const std::string& name, const std::string& channel, const std::string& size);
 
-        virtual void unserialize(const Conf::YamlNode &map);
+        /*
+         * Interface for a single device.
+         */
+        std::map<std::string, std::string> getSettingsFor(const std::string& name);
 
-        std::map<std::string, std::string> getSettingsFor(const std::string& device);
+        /*
+         * Interface with the "active" video device.
+         * This is the default used device when sending a video stream.
+         */
         std::map<std::string, std::string> getSettings();
 
-        std::string getDevice() const {
-            return device_;
-        }
+        std::string getDevice() const;
+        void setDevice(const std::string& name);
 
-        void setDevice(const std::string &device) {
-            device_ = device;
-        }
+        std::string getChannel() const;
+        void setChannel(const std::string& channel);
 
-        std::string getChannel() const {
-            return channel_;
-        }
+        std::string getSize() const;
+        void setSize(const std::string& size);
 
-        void setChannel(const std::string & channel) {
-            channel_ = channel;
-        }
+        std::string getRate() const;
+        void setRate(const std::string& rate);
 
-        std::string getSize() const {
-            return size_;
-        }
-
-        void setSize(const std::string & size) {
-            size_ = size;
-        }
-
-        const std::string & getRate() const {
-            return rate_;
-        }
-
-        void setRate(const std::string & rate) {
-            rate_ = rate;
-        }
-
-        std::vector<std::string> getDeviceList();
-
-        std::vector<std::string> getChannelList(const std::string &dev);
-
-        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel);
-
-        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size);
+        /*
+         * Interface to load from/store to the (YAML) configuration file.
+         */
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::YamlNode &map);
 
     private:
         NON_COPYABLE(VideoPreference);
 
-        // V4L2 devices
-        std::shared_ptr<sfl_video::VideoV4l2ListThread> v4l2_list_;
+        struct VideoDevice {
+            std::string name;
+            std::string channel;
+            std::string size;
+            std::string rate;
+        };
 
-        std::string device_;
-        std::string channel_;
-        std::string size_;
-        std::string rate_;
+        std::shared_ptr<sfl_video::VideoV4l2ListThread> v4l2List_;
+
+        /*
+         * Vector containing the video devices in order of preference
+         * (the first is the active one).
+         */
+        std::vector<VideoDevice> deviceList_;
+        std::vector<VideoDevice>::iterator active_;
+        std::vector<VideoDevice>::iterator lookupDevice(const std::string& name);
+        std::map<std::string, std::string> deviceToSettings(const VideoDevice& dev);
+        static void addDeviceToSequence(VideoDevice &dev, Conf::SequenceNode &seq);
+
+        void addDevice(const std::string &name);
 };
 
-#endif
+#endif /* VIDEO_PREFERENCE_H__ */
