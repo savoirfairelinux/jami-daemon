@@ -63,7 +63,7 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 #include <libavutil/avutil.h>
-#if LIBAVFORMAT_VERSION_CHECK(54, 6, 0, 60, 100)
+#if LIBAVUTIL_VERSION_CHECK(51, 33, 0, 60, 100)
 #include <libavutil/time.h>
 #endif
 #include <libavutil/pixdesc.h>

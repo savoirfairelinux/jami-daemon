@@ -185,7 +185,7 @@ int VideoDecoder::decode(VideoFrame& result)
         const int64_t pts = av_rescale(lastDts_, 1000000, AV_TIME_BASE);
         const int64_t now = av_gettime() - startTime_;
         if (pts > now) {
-#if LIBAVFORMAT_VERSION_CHECK(54, 6, 0, 60, 100)
+#if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
             av_usleep(10000);
 #else
             usleep(10000);
