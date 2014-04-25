@@ -912,12 +912,13 @@ void SIPAccount::registerVoIPLink()
 #endif
     {
         bool IPv6 = false;
+#if HAVE_IPV6
         if (isIP2IP()) {
             DEBUG("SIPAccount::registerVoIPLink isIP2IP.");
             //IPv6 = SipTransport::getInterfaceAddr(interface_).addr.sa_family == pj_AF_INET6();
         } else if (!IPs.empty())
             IPv6 = IPs[0].addr.sa_family == pj_AF_INET6();
-
+#endif
         transportType_ = IPv6 ? PJSIP_TRANSPORT_UDP6  : PJSIP_TRANSPORT_UDP;
     }
 
@@ -1194,6 +1195,11 @@ std::string SIPAccount::getFromUri() const
     if (hostname_.empty())
         hostname = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
 
+#if HAVE_IPV6
+    if (ip_utils::isIPv6(hostname))
+        hostname = ip_utils::addrToStr(hostname, false, true);
+#endif
+
     return "<" + scheme + username + "@" + hostname + transport + ">";
 }
 
@@ -1218,6 +1224,11 @@ std::string SIPAccount::getToUri(const std::string& username) const
     if (username.find("@") == std::string::npos)
         hostname = hostname_;
 
+#if HAVE_IPV6
+    if (not hostname.empty() and ip_utils::isIPv6(hostname))
+        hostname = ip_utils::addrToStr(hostname, false, true);
+#endif
+
     return "<" + scheme + username + (hostname.empty() ? "" : "@") + hostname + transport + ">";
 }
 
@@ -1234,7 +1245,15 @@ std::string SIPAccount::getServerUri() const
         scheme = "sip:";
     }
 
-    return "<" + scheme + hostname_ + transport + ">";
+    std::string host;
+#if HAVE_IPV6
+    if (ip_utils::isIPv6(hostname_))
+        host = ip_utils::addrToStr(hostname_, false, true);
+    else
+#endif
+        host = hostname_;
+
+    return "<" + scheme + host + transport + ">";
 }
 
 
@@ -1281,10 +1300,12 @@ SIPAccount::getContactHeader()
     std::string scheme;
     std::string transport;
 
+#if HAVE_IPV6
     /* Enclose IPv6 address in square brackets */
-    if (transportType > PJSIP_TRANSPORT_IPV6 || ip_utils::isIPv6(address)) {
+    if (ip_utils::isIPv6(address)) {
         address = ip_utils::addrToStr(address, false, true);
     }
+#endif
 
     if (transportType != PJSIP_TRANSPORT_UDP and transportType != PJSIP_TRANSPORT_UDP6) {
         scheme = "sips:";
