@@ -72,7 +72,7 @@ VideoInput::VideoInput(const std::map<std::string, std::string>& map) :
             "format: '%s', "
             "channel: '%s', "
             "framerate: '%s', "
-            "video_size: '%s'",
+            "video_size: '%s', "
             "emulate_rate: '%s'",
             mirror_ ? "yes" : "no",
             input_.c_str(),
