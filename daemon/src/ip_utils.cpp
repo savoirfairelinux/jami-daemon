@@ -41,7 +41,7 @@
 #include <unistd.h>
 
 std::vector<pj_sockaddr>
-ip_utils::getAddrList(const std::string &name)
+ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
 {
     std::vector<pj_sockaddr> ipList;
     if (name.empty())
@@ -52,7 +52,7 @@ ip_utils::getAddrList(const std::string &name)
     unsigned addr_num = MAX_ADDR_NUM;
     pj_str_t pjname;
     pj_cstr(&pjname, name.c_str());
-    auto status = pj_getaddrinfo(pj_AF_UNSPEC(), &pjname, &addr_num, res);
+    auto status = pj_getaddrinfo(family, &pjname, &addr_num, res);
     if (status != PJ_SUCCESS) {
         ERROR("Error resolving %s :", name.c_str());
         //sip_strerror(status);

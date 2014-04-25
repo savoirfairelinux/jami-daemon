@@ -107,7 +107,7 @@ namespace ip_utils {
     */
     std::vector<std::string> getAllIpInterface();
 
-    std::vector<pj_sockaddr> getAddrList(const std::string &name);
+    std::vector<pj_sockaddr> getAddrList(const std::string &name, pj_uint16_t family = pj_AF_UNSPEC());
 
     bool haveCommonAddr(const std::vector<pj_sockaddr>& a, const std::vector<pj_sockaddr>& b);
 
