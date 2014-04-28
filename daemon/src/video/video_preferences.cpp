@@ -29,6 +29,7 @@
  *  as that of the covered work.
  */
 
+#include <algorithm>
 #include <sstream>
 
 #include "config/yamlemitter.h"
@@ -299,8 +300,17 @@ VideoPreference::unserialize(const Conf::YamlNode &node)
                 deviceList_.push_back(device);
             }
 
-            /* make first device active by default */
-            active_ = deviceList_.begin();
+            /*
+             * The first device in the configuration is the last active one.
+             * If it is unplugged, assign the next one.
+             */
+            const auto plugged = getDeviceList();
+            for (active_ = deviceList_.begin();
+                    active_ != deviceList_.end();
+                    ++active_)
+                if (std::find(plugged.begin(), plugged.end(), (*active_).name)
+                        != plugged.end())
+                    break;
         }
     }
 }
