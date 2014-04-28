@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,17 +28,42 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEO_CALLBACKS_H_
-#define VIDEO_CALLBACKS_H_
+#ifndef VIDEO_WIDGET_H__
+#define VIDEO_WIDGET_H__
 
-#include "dbus.h"
-#include "sflphone_client.h"
+#include <glib-object.h>
+#include <gtk/gtk.h>
 
-void started_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
-                               gint width, gint height, SFLPhoneClient *, GError *error,
-                               gpointer userdata);
+#define VIDEO_WIDGET_TYPE              (video_widget_get_type())
+#define VIDEO_WIDGET(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_WIDGET_TYPE, VideoWidget))
+#define VIDEO_WIDGET_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_WIDGET_TYPE, VideoWidgetClass))
+#define IS_VIDEO_WIDGET(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_WIDGET_TYPE))
+#define IS_VIDEO_WIDGET_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_WIDGET_TYPE))
 
-void stopped_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
-                               SFLPhoneClient *, GError *error, gpointer userdata);
+typedef struct _VideoWidgetPrivate VideoWidgetPrivate;
+typedef struct _VideoWidgetClass VideoWidgetClass;
+typedef struct _VideoWidget VideoWidget;
 
-#endif // VIDEO_CALLBACKS_H_
+typedef enum {
+    VIDEO_AREA_REMOTE,
+    VIDEO_AREA_LOCAL,
+    VIDEO_AREA_LAST
+} VIDEO_AREA_ID;
+
+struct _VideoWidgetClass {
+    GtkWindowClass parent_class;
+};
+
+struct _VideoWidget {
+    GtkWindow parent;
+    /* Private */
+    VideoWidgetPrivate *priv;
+};
+
+/* Public interface */
+GType video_widget_get_type(void) G_GNUC_CONST;
+GtkWidget *video_widget_new(/* gchar *, gchar *, gint, gint */);
+void video_widget_camera_start(GtkWidget *, VIDEO_AREA_ID, gchar *, gchar *, guint, guint);
+void video_widget_camera_stop(GtkWidget *self, VIDEO_AREA_ID);
+
+#endif // __VIDEO_WIDGET_H__
