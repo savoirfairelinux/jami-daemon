@@ -32,14 +32,12 @@
 #define VIDEO_CALLBACKS_H_
 
 #include "dbus.h"
-
-void video_cleanup();
+#include "sflphone_client.h"
 
 void started_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
-                               gint width, gint height, GError *error,
-                               gpointer userdata);
+                               gint width, gint height, gpointer userdata);
 
 void stopped_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
-                               GError *error, gpointer userdata);
+                               gpointer userdata);
 
 #endif // VIDEO_CALLBACKS_H_
