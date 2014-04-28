@@ -31,6 +31,10 @@
 #ifndef SFLPHONE_CLIENT_H_
 #define SFLPHONE_CLIENT_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <gtk/gtk.h>
 
 #define SFLPHONE_GSETTINGS_SCHEMA "org.sflphone.SFLphone"
@@ -46,6 +50,10 @@ typedef struct
     GtkWidget *win;
     /* Main toolbar */
     GtkWidget *toolbar;
+#ifdef SFL_VIDEO
+    /* Video window */
+    GtkWidget *video;
+#endif
 
 } SFLPhoneClient;
 
