@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,47 +28,42 @@
  *  as that of the covered work.
  */
 
-#include "video_callbacks.h"
-#include "video_widget.h"
+#ifndef VIDEO_WIDGET_H__
+#define VIDEO_WIDGET_H__
 
-static gboolean
-video_is_local(const gchar *id)
-{
-    static const gchar * const LOCAL_VIDEO_ID = "local";
+#include <glib-object.h>
+#include <gtk/gtk.h>
 
-    return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
-}
+#define VIDEO_WIDGET_TYPE              (video_widget_get_type())
+#define VIDEO_WIDGET(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_WIDGET_TYPE, VideoWidget))
+#define VIDEO_WIDGET_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_WIDGET_TYPE, VideoWidgetClass))
+#define IS_VIDEO_WIDGET(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_WIDGET_TYPE))
+#define IS_VIDEO_WIDGET_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_WIDGET_TYPE))
 
-void
-started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
-                          gchar *id,
-                          gchar *shm_path,
-                          gint width,
-                          gint height,
-                          gpointer userdata)
-{
-    if (!id || !*id || !shm_path || !*shm_path)
-        return;
+typedef struct _VideoWidgetPrivate VideoWidgetPrivate;
+typedef struct _VideoWidgetClass VideoWidgetClass;
+typedef struct _VideoWidget VideoWidget;
 
-    SFLPhoneClient * client = userdata;
+typedef enum {
+    VIDEO_AREA_REMOTE,
+    VIDEO_AREA_LOCAL,
+    VIDEO_AREA_LAST
+} VIDEO_AREA_ID;
 
-    video_widget_camera_start(client->video, video_is_local(id) ?
-            VIDEO_AREA_LOCAL : VIDEO_AREA_REMOTE, id, shm_path, width, height);
+struct _VideoWidgetClass {
+    GtkWindowClass parent_class;
+};
 
-    gtk_widget_show_all(client->video);
+struct _VideoWidget {
+    GtkWindow parent;
+    /* Private */
+    VideoWidgetPrivate *priv;
+};
 
-}
+/* Public interface */
+GType video_widget_get_type(void) G_GNUC_CONST;
+GtkWidget *video_widget_new(/* gchar *, gchar *, gint, gint */);
+void video_widget_camera_start(GtkWidget *, VIDEO_AREA_ID, gchar *, gchar *, guint, guint);
+void video_widget_camera_stop(GtkWidget *self, VIDEO_AREA_ID);
 
-void
-stopped_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
-                          gchar *id,
-                          G_GNUC_UNUSED gchar *shm_path,
-                          gpointer userdata)
-{
-    SFLPhoneClient * client = userdata;
-
-    gtk_widget_hide(client->video);
-
-    video_widget_camera_stop(client->video, (video_is_local(id)) ?
-            VIDEO_AREA_LOCAL : VIDEO_AREA_REMOTE);
-}
+#endif // __VIDEO_WIDGET_H__
