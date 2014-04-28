@@ -272,23 +272,15 @@ video_renderer_resize_shm(VideoRendererPrivate *priv)
 static void
 video_renderer_render_to_texture(VideoRendererPrivate *priv)
 {
+    usleep(10000);
+
     if (!shm_lock(priv->shm_area))
         return;
 
-    // wait for a new buffer
-    while (priv->buffer_gen == priv->shm_area->buffer_gen) {
+    // Just return if nothing ready yet
+    if (priv->buffer_gen == priv->shm_area->buffer_gen) {
         shm_unlock(priv->shm_area);
-        // Could not decrement semaphore, returning
-        int err = sem_trywait(&priv->shm_area->notification);
-        if (err < 0) {
-            if (errno != EAGAIN)
-                g_warning("Renderer %s: sem_trywait() failed, %s", priv->shm_path,
-                      strerror(errno));
-            return;
-        }
-
-        if (!shm_lock(priv->shm_area))
-            return;
+        return;
     }
 
     if (!video_renderer_resize_shm(priv)) {
