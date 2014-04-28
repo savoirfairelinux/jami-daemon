@@ -691,23 +691,20 @@ call_screenshare(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED SFLPhoneClient *
 static void
 call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
 {
-    gboolean switched;
-    gchar *resource;
+    gchar *resource = NULL;
 
     if (g_strcmp0(device, "None") == 0) {
-        resource = g_strconcat("file://", ICONS_DIR "/sflphone.png", NULL);
-        switched = dbus_switch_video_input(resource);
+        resource = sflphone_get_video_none();
     } else if (g_strcmp0(device, "Screen") == 0) {
         resource = sflphone_get_display();
-        switched = dbus_switch_video_input(resource);
     } else {
         dbus_set_active_video_device(device);
-	resource = g_strconcat("v4l2://", device, NULL);
-        switched = dbus_switch_video_input(resource);
+        resource = g_strconcat("v4l2://", device, NULL);
     }
 
-    if (!switched)
-	    g_warning("Failed to switch to '%s' (MRL '%s')\n", device, resource);
+    if (!dbus_switch_video_input(resource))
+        g_error("failed to switch to '%s' (MRL '%s')\n", device, resource);
+
     g_free(resource);
 }
 #endif

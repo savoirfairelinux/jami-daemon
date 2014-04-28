@@ -1014,30 +1014,42 @@ sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const
 }
 
 #ifdef SFL_VIDEO
-char *
+gchar *
 sflphone_get_display(void)
 {
     int width = gdk_screen_width();
     int height = gdk_screen_height();
     char *display = getenv("DISPLAY");
-    char resource[256];
 
-    sprintf(resource, "display://%s %dx%d", display, width, height);
-    return g_strdup(resource);
+    return g_strdup_printf("display://%s %dx%d", display, width, height);
+}
+
+gchar *
+sflphone_get_active_video(void)
+{
+    gchar *device = dbus_get_active_video_device();
+    gchar *resource = g_strconcat("v4l2://", device, NULL);
+    g_free(device);
+
+    return resource;
+}
+
+gchar *
+sflphone_get_video_none(void)
+{
+    return g_strconcat("file://", ICONS_DIR, "/sflphone.png", NULL);
 }
 
 void
 sflphone_toggle_screenshare(void)
 {
     static gboolean screenshare = TRUE;
-    gchar *resource;
+    gchar *resource = NULL;
 
     if (screenshare) {
         resource = sflphone_get_display();
     } else {
-        gchar *device = dbus_get_active_video_device();
-        resource = g_strconcat("v4l2://", device, NULL);
-        g_free(device);
+        resource = sflphone_get_active_video();
     }
 
     if (dbus_switch_video_input(resource)) {
@@ -1048,5 +1060,28 @@ sflphone_toggle_screenshare(void)
     }
 
     g_free(resource);
+}
+
+void
+sflphone_toggle_camera(void)
+{
+    static gboolean camera_toggle = TRUE;
+    gchar *resource = NULL;
+
+    if (camera_toggle) {
+        resource = sflphone_get_video_none();
+    } else {
+        resource = sflphone_get_active_video();
+    }
+
+    if (dbus_switch_video_input(resource)) {
+        g_debug("switched video input to '%s'", resource);
+        camera_toggle = !camera_toggle;
+    } else {
+        g_error("failed to switch to resource '%s'\n", resource);
+    }
+
+    g_free(resource);
+
 }
 #endif
