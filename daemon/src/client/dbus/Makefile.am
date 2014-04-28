@@ -1,6 +1,6 @@
 include $(top_srcdir)/globals.mak
 
-noinst_LTLIBRARIES = libclient.la
+noinst_LTLIBRARIES = libclient_dbus.la
 
 BUILT_SOURCES=                      \
     callmanager-glue.h              \
@@ -31,50 +31,37 @@ configurationmanager-glue.h: configurationmanager-introspec.xml Makefile.am
 instance-glue.h: instance-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
-libclient_la_SOURCES = \
+libclient_dbus_la_SOURCES = \
     callmanager_dbus.cpp \
-    ../callmanager.cpp \
     configurationmanager_dbus.cpp  \
-    ../configurationmanager.cpp  \
     instance.cpp  \
     client.cpp
 
 if SFL_PRESENCE
-libclient_la_SOURCES+=../presencemanager.cpp presencemanager_dbus.cpp
+libclient_dbus_la_SOURCES += presencemanager_dbus.cpp
 endif
 
 if SFL_VIDEO
-libclient_la_SOURCES+=video_controls.cpp
+libclient_dbus_la_SOURCES += video_controls.cpp
 endif
 
 if USE_NETWORKMANAGER
-libclient_la_SOURCES += networkmanager.cpp
+libclient_dbus_la_SOURCES += networkmanager.cpp
 NETWORKMANAGER=-DUSE_NETWORKMANAGER
 endif
 
-libclient_la_CXXFLAGS = -I../ \
+libclient_dbus_la_CXXFLAGS = -I../ \
             -DPREFIX=\"$(prefix)\" \
             -DPROGSHAREDIR=\"${datadir}/sflphone\" \
             $(NETWORKMANAGER) \
             $(DBUSCPP_CFLAGS)
 
 noinst_HEADERS =            \
-    ../callmanager.h        \
-    ../configurationmanager.h  \
     instance.h              \
-    ../client.h             \
     networkmanager_proxy.h  \
     networkmanager.h        \
     dbus_cpp.h        		\
     $(BUILT_SOURCES)
-
-if SFL_PRESENCE
-noinst_HEADERS+=../presencemanager.h
-endif
-
-if SFL_VIDEO
-noinst_HEADERS+=../video_controls.h
-endif
 
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services
