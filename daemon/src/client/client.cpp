@@ -28,6 +28,8 @@
  *  as that of the covered work.
  */
 
+/* Note: this file is compiled only when dbus is not available */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -40,7 +42,7 @@
 Client::Client() : callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
 #ifdef SFL_PRESENCE
-	, presenceManager_(new PresenceManager)
+    , presenceManager_(new PresenceManager)
 #endif
     , instanceManager_(0)
     , dispatcher_(0)
@@ -79,22 +81,26 @@ int Client::exit()
     return 0;
 }
 
-CallManager *
-Client::getCallManager()
+CallManager * Client::getCallManager()
 {
     return callManager_;
 }
 
-ConfigurationManager *
-Client::getConfigurationManager()
+ConfigurationManager * Client::getConfigurationManager()
 {
     return configurationManager_;
 }
 
 #ifdef SFL_PRESENCE
-PresenceManager *
-Client::getPresenceManager()
+PresenceManager * Client::getPresenceManager()
 {
     return presenceManager_;
+}
+#endif
+
+#ifdef SFL_VIDEO
+VideoControls * Client::getVideoControls()
+{
+    return videoControls_;
 }
 #endif
