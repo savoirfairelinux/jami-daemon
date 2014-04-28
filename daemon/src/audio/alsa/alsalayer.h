@@ -105,7 +105,7 @@ class AlsaLayer : public AudioLayer {
          * @param description The string description
          * @return	int	  Its index
          */
-        int getAudioDeviceIndex(const std::string &description) const;
+        int getAudioDeviceIndex(const std::string &description, DeviceType type) const;
         std::string getAudioDeviceName(int index, DeviceType type) const;
 
         void playback(int maxSamples);
