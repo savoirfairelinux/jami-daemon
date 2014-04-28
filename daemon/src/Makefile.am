@@ -41,7 +41,7 @@ libsflphone_la_LIBADD = \
 	$(IAX_LIB) \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
-	./client/dbus/libclient.la \
+	./client/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la $(SFL_VIDEO_LIB) $(IM_LIB)
