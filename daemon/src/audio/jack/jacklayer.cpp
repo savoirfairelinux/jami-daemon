@@ -399,7 +399,7 @@ JackLayer::getPlaybackDeviceList() const
 }
 
 int
-JackLayer::getAudioDeviceIndex(const std::string& /*name*/) const { return 0; }
+JackLayer::getAudioDeviceIndex(const std::string& /*name*/, DeviceType /*type*/) const { return 0; }
 
 std::string
 JackLayer::getAudioDeviceName(int /*index*/, DeviceType /*type*/) const { return ""; }
