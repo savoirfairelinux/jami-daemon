@@ -74,6 +74,7 @@ struct _VideoRendererPrivate {
     SHMHeader *shm_area;
     gsize shm_area_len;
     guint buffer_gen;
+    guint timeout_id;
 };
 
 static void
@@ -173,6 +174,7 @@ video_renderer_init(VideoRenderer *self)
     priv->shm_area = MAP_FAILED;
     priv->shm_area_len = 0;
     priv->buffer_gen = 0;
+    priv->timeout_id = 0;
 }
 
 static void
@@ -180,6 +182,9 @@ video_renderer_stop_shm(VideoRenderer *self)
 {
     g_return_if_fail(IS_VIDEO_RENDERER(self));
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(self);
+
+    g_source_remove(priv->timeout_id);
+
     if (priv->fd >= 0)
         close(priv->fd);
     priv->fd = -1;
@@ -346,10 +351,8 @@ update_texture(gpointer data)
 
     const gboolean ret = render_frame_from_shm(priv);
 
-    if (!ret) {
+    if (!ret)
         video_renderer_stop(data);
-        g_object_unref(G_OBJECT(data));
-    }
 
     return ret;
 }
@@ -397,9 +400,8 @@ video_renderer_run(VideoRenderer *self)
     clutter_actor_show_all(stage);
 
     /* frames are read and saved here */
-    g_object_ref(self);
     const gint FRAME_INTERVAL = 30; // ms
-    g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, FRAME_INTERVAL, update_texture, self, NULL);
+    priv->timeout_id = g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, FRAME_INTERVAL, update_texture, self, NULL);
 
     gtk_widget_show_all(GTK_WIDGET(priv->drawarea));
 
