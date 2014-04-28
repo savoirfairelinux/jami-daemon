@@ -34,13 +34,15 @@
 #ifndef AUDIO_LAYER_H_
 #define AUDIO_LAYER_H_
 
-#include <mutex>
-#include <sys/time.h>
-#include <vector>
+
 #include "ringbuffer.h"
 #include "dcblocker.h"
 #include "resampler.h"
 #include "noncopyable.h"
+
+#include <sys/time.h>
+#include <mutex>
+#include <vector>
 
 /**
  * @file  audiolayer.h
@@ -73,7 +75,7 @@ class AudioLayer {
         virtual std::vector<std::string> getCaptureDeviceList() const = 0;
         virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
 
-        virtual int getAudioDeviceIndex(const std::string& name) const = 0;
+        virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const = 0;
         virtual std::string getAudioDeviceName(int index, DeviceType type) const = 0;
         virtual int getIndexCapture() const = 0;
         virtual int getIndexPlayback() const = 0;
