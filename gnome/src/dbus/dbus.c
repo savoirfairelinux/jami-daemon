@@ -1602,11 +1602,25 @@ dbus_get_current_audio_devices_index()
  * Get index
  */
 int
-dbus_get_audio_device_index(const gchar *name)
+dbus_get_audio_output_device_index(const gchar *name)
 {
     int device_index = 0;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index(config_proxy, name, &device_index, &error);
+    org_sflphone_SFLphone_ConfigurationManager_get_audio_output_device_index(config_proxy, name, &device_index, &error);
+    check_error(error);
+
+    return device_index;
+}
+
+/**
+ * Get index
+ */
+int
+dbus_get_audio_input_device_index(const gchar *name)
+{
+    int device_index = 0;
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_get_audio_input_device_index(config_proxy, name, &device_index, &error);
     check_error(error);
 
     return device_index;
