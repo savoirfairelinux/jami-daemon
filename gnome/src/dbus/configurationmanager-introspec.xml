@@ -267,7 +267,7 @@
 
        <!-- For now only expose these two options to clients -->
        <method name="muteDtmf" tp:name-for-bindings="muteDtmf">
-           <arg type="b" name="muteDtmf" direction="in"/>
+           <arg type="b" name="mute" direction="in"/>
        </method>
        <method name="isDtmfMuted" tp:name-for-bindings="isDtmfMuted">
            <arg type="b" name="muted" direction="out"/>
@@ -424,7 +424,14 @@
            </arg>
        </method>
 
-       <method name="getAudioDeviceIndex" tp:name-for-bindings="getAudioDeviceIndex">
+       <method name="getAudioInputDeviceIndex" tp:name-for-bindings="getAudioInputDeviceIndex">
+           <arg type="s" name="name" direction="in">
+           </arg>
+           <arg type="i" name="index" direction="out">
+           </arg>
+       </method>
+
+       <method name="getAudioOutputDeviceIndex" tp:name-for-bindings="getAudioOutputDeviceIndex">
            <arg type="s" name="name" direction="in">
            </arg>
            <arg type="i" name="index" direction="out">

@@ -108,12 +108,14 @@ fill_codec_list(const account_t *account)
 }
 
 static GtkListStore *
-create_device_list_store(gchar **list)
+create_device_list_store(gchar **list, gboolean output)
 {
     GtkListStore *list_store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 
     for (gchar **tmp = list; tmp && *tmp; ++tmp) {
-        gint device_index = dbus_get_audio_device_index(*tmp);
+        gint device_index = output
+            ? dbus_get_audio_output_device_index(*tmp)
+            : dbus_get_audio_input_device_index(*tmp);
         GtkTreeIter iter;
         gtk_list_store_append(list_store, &iter);
         gtk_list_store_set(list_store, &iter, 0, *tmp, 1, device_index, -1);
@@ -187,14 +189,14 @@ static GtkListStore*
 create_output_list_store()
 {
     gchar **list = dbus_get_audio_output_device_list();
-    return create_device_list_store(list);
+    return create_device_list_store(list, TRUE);
 }
 
 static GtkListStore*
 create_input_list_store()
 {
     gchar **list = dbus_get_audio_input_device_list();
-    return create_device_list_store(list);
+    return create_device_list_store(list, FALSE);
 }
 
 static void

@@ -308,11 +308,18 @@ void dbus_set_audio_input_device(int index);
 gchar **dbus_get_current_audio_devices_index();
 
 /**
- * ConfigurationManager - Get the index of the specified audio device
+ * ConfigurationManager - Get the index of the specified output audio device
  * @param name The string description of the audio device
  * @return int The index of the device
  */
-int dbus_get_audio_device_index(const gchar *name);
+int dbus_get_audio_output_device_index(const gchar *name);
+
+/**
+ * ConfigurationManager - Get the index of the specified input audio device
+ * @param name The string description of the audio device
+ * @return int The index of the device
+ */
+int dbus_get_audio_input_device_index(const gchar *name);
 
 /**
  * ConfigurationManager - Get the current output audio plugin
