@@ -79,7 +79,7 @@ class JackLayer : public AudioLayer {
         std::vector<std::string> getCaptureDeviceList() const;
         std::vector<std::string> getPlaybackDeviceList() const;
 
-        int getAudioDeviceIndex(const std::string& name) const;
+        int getAudioDeviceIndex(const std::string& name, DeviceType type) const;
         std::string getAudioDeviceName(int index, DeviceType type) const;
         int getIndexCapture() const;
         int getIndexPlayback() const;

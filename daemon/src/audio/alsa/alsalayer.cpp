@@ -639,16 +639,11 @@ AlsaLayer::soundCardIndexExists(int card, DeviceType stream)
 }
 
 int
-AlsaLayer::getAudioDeviceIndex(const std::string &description) const
+AlsaLayer::getAudioDeviceIndex(const std::string &description, DeviceType type) const
 {
-    std::vector<HwIDPair> captureDevice(getAudioDeviceIndexMap(true));
-    std::vector<HwIDPair> playbackDevice(getAudioDeviceIndexMap(false));
+    std::vector<HwIDPair> devices = getAudioDeviceIndexMap(type == DeviceType::CAPTURE);
 
-    std::vector<HwIDPair> audioDeviceIndexMap;
-    audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), captureDevice.begin(), captureDevice.end());
-    audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), playbackDevice.begin(), playbackDevice.end());
-
-    for (const auto & dev : audioDeviceIndexMap)
+    for (const auto & dev : devices)
         if (dev.second == description)
             return dev.first;
 

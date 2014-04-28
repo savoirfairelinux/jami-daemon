@@ -258,15 +258,30 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
     return names;
 }
 
-int PulseLayer::getAudioDeviceIndex(const std::string& name) const
+int PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) const
 {
-    int index = std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::descrComparator(name)));
-
-    if (index == std::distance(sourceList_.begin(), sourceList_.end())) {
-        index = std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::descrComparator(name)));
+    switch (type) {
+    case DeviceType::PLAYBACK:
+    case DeviceType::RINGTONE:
+        return std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::descrComparator(descr)));
+    case DeviceType::CAPTURE:
+        return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::descrComparator(descr)));
+    default:
+        return 0;
     }
+}
 
-    return index;
+int PulseLayer::getAudioDeviceIndexByName(const std::string& name, DeviceType type) const
+{
+    switch (type) {
+    case DeviceType::PLAYBACK:
+    case DeviceType::RINGTONE:
+        return std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::nameComparator(name)));
+    case DeviceType::CAPTURE:
+        return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::nameComparator(name)));
+    default:
+        return 0;
+    }
 }
 
 const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::string& name) const
@@ -751,15 +766,15 @@ void PulseLayer::updatePreference(AudioPreference &preference, int index, Device
 
 int PulseLayer::getIndexCapture() const
 {
-    return getAudioDeviceIndex(preference_.getPulseDeviceRecord());
+    return getAudioDeviceIndexByName(preference_.getPulseDeviceRecord(), DeviceType::CAPTURE);
 }
 
 int PulseLayer::getIndexPlayback() const
 {
-    return getAudioDeviceIndex(preference_.getPulseDevicePlayback());
+    return getAudioDeviceIndexByName(preference_.getPulseDevicePlayback(), DeviceType::PLAYBACK);
 }
 
 int PulseLayer::getIndexRingtone() const
 {
-    return getAudioDeviceIndex(preference_.getPulseDeviceRingtone());
+    return getAudioDeviceIndexByName(preference_.getPulseDeviceRingtone(), DeviceType::RINGTONE);
 }

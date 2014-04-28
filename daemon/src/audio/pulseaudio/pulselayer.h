@@ -117,18 +117,16 @@ class PulseLayer : public AudioLayer {
         void writeToSpeaker();
         void ringtoneToSpeaker();
 
-
         void updateSinkList();
-
         void updateSourceList();
 
         bool inSinkList(const std::string &deviceName);
-
         bool inSourceList(const std::string &deviceName);
 
         virtual std::vector<std::string> getCaptureDeviceList() const;
         virtual std::vector<std::string> getPlaybackDeviceList() const;
-        int getAudioDeviceIndex(const std::string& name) const;
+        int getAudioDeviceIndex(const std::string& descr, DeviceType type) const;
+        int getAudioDeviceIndexByName(const std::string& name, DeviceType type) const;
 
         std::string getAudioDeviceName(int index, DeviceType type) const;
 
