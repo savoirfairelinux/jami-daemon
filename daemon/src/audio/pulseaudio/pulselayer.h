@@ -51,12 +51,23 @@ class AudioStream;
 typedef struct PaDeviceInfos {
         uint32_t index;
         std::string name;
+        std::string description;
         pa_sample_spec sample_spec;
         pa_channel_map channel_map;
 
-        PaDeviceInfos(unsigned idx, const char* ep_name, const pa_sample_spec &samp_spec, const pa_channel_map &chan_map)
-            : index(idx), name(ep_name), sample_spec(samp_spec), channel_map(chan_map) {}
-        virtual ~PaDeviceInfos() {}
+        PaDeviceInfos(const pa_source_info& source) :
+            index(source.index),
+            name(source.name),
+            description(source.description),
+            sample_spec(source.sample_spec),
+            channel_map(source.channel_map) {}
+
+        PaDeviceInfos(const pa_sink_info& source) :
+            index(source.index),
+            name(source.name),
+            description(source.description),
+            sample_spec(source.sample_spec),
+            channel_map(source.channel_map) {}
 
         /**
          * Unary function to search for a device by name in a list using std functions.
@@ -66,6 +77,16 @@ typedef struct PaDeviceInfos {
                 explicit nameComparator(const std::string &ref) : baseline(ref) {}
                 bool operator()(const PaDeviceInfos &arg) {
                     return arg.name == baseline;
+                }
+            private:
+                const std::string &baseline;
+        };
+
+        class descrComparator {
+            public:
+                explicit descrComparator(const std::string &ref) : baseline(ref) {}
+                bool operator()(const PaDeviceInfos &arg) {
+                    return arg.description == baseline;
                 }
             private:
                 const std::string &baseline;
@@ -112,7 +133,6 @@ class PulseLayer : public AudioLayer {
         std::string getAudioDeviceName(int index, DeviceType type) const;
 
         virtual void startStream();
-
         virtual void stopStream();
 
     private:
@@ -147,6 +167,11 @@ class PulseLayer : public AudioLayer {
         void disconnectAudioStream();
 
         /**
+         * Returns a pointer to the PaEndpointInfos with the given name in sourceList_, or nullptr if not found.
+         */
+        const PaDeviceInfos* getDeviceInfos(const std::vector<PaDeviceInfos>&, const std::string& name) const;
+
+        /**
          * A stream object to handle the pulseaudio playback stream
          */
         AudioStream* playback_;
@@ -170,11 +195,6 @@ class PulseLayer : public AudioLayer {
          * Contains the list of capture devices
          */
         std::vector<PaDeviceInfos> sourceList_;
-
-        /**
-         * Returns a pointer to the PaEndpointInfos with the given name in sourceList_, or nullptr if not found.
-         */
-        const PaDeviceInfos* getDeviceInfos(const std::vector<PaDeviceInfos>&, const std::string& name) const;
 
         /*
          * Buffers used to avoid doing malloc/free in the audio thread
