@@ -262,9 +262,14 @@ std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()
     return Manager::instance().getCurrentAudioDevicesIndex();
 }
 
-int32_t ConfigurationManager::getAudioDeviceIndex(const std::string& name)
+int32_t ConfigurationManager::getAudioInputDeviceIndex(const std::string& name)
 {
-    return Manager::instance().getAudioDeviceIndex(name);
+    return Manager::instance().getAudioInputDeviceIndex(name);
+}
+
+int32_t ConfigurationManager::getAudioOutputDeviceIndex(const std::string& name)
+{
+    return Manager::instance().getAudioOutputDeviceIndex(name);
 }
 
 std::string ConfigurationManager::getCurrentAudioOutputPlugin()

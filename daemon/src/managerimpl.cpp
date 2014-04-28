@@ -2192,18 +2192,28 @@ std::string ManagerImpl::getAudioManager() const
 }
 
 
-int ManagerImpl::getAudioDeviceIndex(const std::string &name)
+int ManagerImpl::getAudioInputDeviceIndex(const std::string &name)
 {
-    int soundCardIndex = 0;
-
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
     if (audiodriver_ == nullptr) {
         ERROR("Audio layer not initialized");
-        return soundCardIndex;
+        return 0;
     }
 
-    return audiodriver_->getAudioDeviceIndex(name);
+    return audiodriver_->getAudioDeviceIndex(name, DeviceType::CAPTURE);
+}
+
+int ManagerImpl::getAudioOutputDeviceIndex(const std::string &name)
+{
+    std::lock_guard<std::mutex> lock(audioLayerMutex_);
+
+    if (audiodriver_ == nullptr) {
+        ERROR("Audio layer not initialized");
+        return 0;
+    }
+
+    return audiodriver_->getAudioDeviceIndex(name, DeviceType::PLAYBACK);
 }
 
 std::string ManagerImpl::getCurrentAudioOutputPlugin() const
