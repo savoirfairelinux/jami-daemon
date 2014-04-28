@@ -50,8 +50,6 @@ endif
 if USE_NETWORKMANAGER
 libclient_la_SOURCES += networkmanager.cpp
 NETWORKMANAGER=-DUSE_NETWORKMANAGER
-else
-NETWORKMANAGER=
 endif
 
 libclient_la_CXXFLAGS = -I../ \
