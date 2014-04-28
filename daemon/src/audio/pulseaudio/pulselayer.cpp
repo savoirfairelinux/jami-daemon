@@ -231,7 +231,7 @@ void PulseLayer::updateSourceList()
 
 bool PulseLayer::inSinkList(const std::string &deviceName)
 {
-    const bool found = std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::nameComparator(deviceName)) != sinkList_.end();
+    const bool found = std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(deviceName)) != sinkList_.end();
 
     DEBUG("seeking for %s in sinks. %s found", deviceName.c_str(), found ? "" : "NOT");
     return found;
@@ -239,7 +239,7 @@ bool PulseLayer::inSinkList(const std::string &deviceName)
 
 bool PulseLayer::inSourceList(const std::string &deviceName)
 {
-    const bool found = std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::nameComparator(deviceName)) != sourceList_.end();
+    const bool found = std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(deviceName)) != sourceList_.end();
 
     DEBUG("seeking for %s in sources. %s found", deviceName.c_str(), found ? "" : "NOT");
     return found;
@@ -251,7 +251,7 @@ std::vector<std::string> PulseLayer::getCaptureDeviceList() const
     std::vector<std::string> names(n);
 
     for (unsigned i = 0; i < n; i++)
-        names[i] = sourceList_[i].name;
+        names[i] = sourceList_[i].description;
 
     return names;
 }
@@ -262,17 +262,17 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
     std::vector<std::string> names(n);
 
     for (unsigned i = 0; i < n; i++)
-        names[i] = sinkList_[i].name;
+        names[i] = sinkList_[i].description;
 
     return names;
 }
 
 int PulseLayer::getAudioDeviceIndex(const std::string& name) const
 {
-    int index = std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::nameComparator(name)));
+    int index = std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::DescriptionComparator(name)));
 
     if (index == std::distance(sourceList_.begin(), sourceList_.end())) {
-        index = std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::nameComparator(name)));
+        index = std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::DescriptionComparator(name)));
     }
 
     return index;
@@ -280,7 +280,7 @@ int PulseLayer::getAudioDeviceIndex(const std::string& name) const
 
 const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::string& name) const
 {
-    std::vector<PaDeviceInfos>::const_iterator dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::nameComparator(name));
+    std::vector<PaDeviceInfos>::const_iterator dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::NameComparator(name));
 
     if (dev_info == list.end()) return nullptr;
 
@@ -289,7 +289,6 @@ const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>
 
 std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
 {
-
     switch (type) {
         case DeviceType::PLAYBACK:
         case DeviceType::RINGTONE:
@@ -693,8 +692,7 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
           i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
     if (not context->inSourceList(i->name)) {
-        PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
-        context->sourceList_.push_back(ep_infos);
+        context->sourceList_.push_back(*i);
     }
 }
 
@@ -734,8 +732,7 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
           i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
     if (not context->inSinkList(i->name)) {
-        PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
-        context->sinkList_.push_back(ep_infos);
+        context->sinkList_.push_back(*i);
     }
 }
 
