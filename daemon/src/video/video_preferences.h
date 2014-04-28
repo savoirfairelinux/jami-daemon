@@ -94,10 +94,10 @@ class VideoPreference : public Serializable
         NON_COPYABLE(VideoPreference);
 
         struct VideoDevice {
-            std::string name;
-            std::string channel;
-            std::string size;
-            std::string rate;
+            std::string name = "";
+            std::string channel = "";
+            std::string size = "";
+            std::string rate = "";
         };
 
         std::shared_ptr<sfl_video::VideoV4l2ListThread> v4l2List_;
