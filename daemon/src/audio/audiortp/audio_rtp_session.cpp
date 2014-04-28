@@ -223,9 +223,10 @@ size_t AudioRtpSession::sendMicData()
         return 0;
 
     // initialize once
-    if (firstPacket_) {
+    int ccrtp_timestamp = queue_.getCurrentTimestamp();
+    if (firstPacket_ || std::abs(timestamp_-ccrtp_timestamp) > 2*timestampIncrement_) {
         firstPacket_ = false;
-        timestamp_ = queue_.getCurrentTimestamp();
+        timestamp_ = ccrtp_timestamp;
     }
 
     // Increment timestamp for outgoing packet
