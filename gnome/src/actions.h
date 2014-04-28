@@ -265,4 +265,6 @@ char *sflphone_get_display(void);
 
 void sflphone_toggle_screenshare(void);
 
+void sflphone_switch_video_none(void);
+
 #endif

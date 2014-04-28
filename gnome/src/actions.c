@@ -1049,4 +1049,13 @@ sflphone_toggle_screenshare(void)
 
     g_free(resource);
 }
+
+void
+sflphone_switch_video_none(void)
+{
+    static const gchar *none = "file://" ICONS_DIR "/sflphone.png";
+
+    if (!dbus_switch_video_input(none))
+        g_error("failed to switch to fake video device ('%s')\n", none);
+}
 #endif
