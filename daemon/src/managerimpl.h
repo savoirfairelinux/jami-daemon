@@ -548,7 +548,8 @@ class ManagerImpl {
          * @param name The string description of an audio device
          * @return int  His index
          */
-        int getAudioDeviceIndex(const std::string &name);
+        int getAudioInputDeviceIndex(const std::string &name);
+        int getAudioOutputDeviceIndex(const std::string &name);
 
         /**
          * Get current alsa plugin
