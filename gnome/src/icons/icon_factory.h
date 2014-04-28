@@ -31,22 +31,20 @@
 #ifndef ICON_FACTORY_H
 #define ICON_FACTORY_H
 
-#define GTK_STOCK_PICKUP				"gnome-stock-pickup"
-#define GTK_STOCK_HANGUP				"gnome-stock-hangup"
-#define GTK_STOCK_ONHOLD				"gnome-stock-onhold"
-#define GTK_STOCK_OFFHOLD				"gnome-stock-offhold"
-#define GTK_STOCK_IM					"gnome-stock-im"
+#define GTK_STOCK_PICKUP                "gnome-stock-pickup"
+#define GTK_STOCK_HANGUP                "gnome-stock-hangup"
+#define GTK_STOCK_ONHOLD                "gnome-stock-onhold"
+#define GTK_STOCK_OFFHOLD               "gnome-stock-offhold"
+#define GTK_STOCK_IM                    "gnome-stock-im"
 #define GTK_STOCK_TRANSFER              "gnome-stock-transfer"
 #define GTK_STOCK_DIAL                  "gnome-stock-dial"
 #define GTK_STOCK_CALL_CURRENT          "gnome-stock-call-current"
 #define GTK_STOCK_ADDRESSBOOK           "gnome-stock-addressbook"
-#define GTK_STOCK_CALLS					"gnome-stock-calls"
-#define GTK_STOCK_SFLPHONE				"gnome-stock-sflphone"
-#define GTK_STOCK_FAIL					"gnome-stock-fail"
-#define GTK_STOCK_USER					"gnome-stock-user"
+#define GTK_STOCK_CALLS                 "gnome-stock-calls"
+#define GTK_STOCK_SFLPHONE              "gnome-stock-sflphone"
+#define GTK_STOCK_FAIL                  "gnome-stock-fail"
+#define GTK_STOCK_USER                  "gnome-stock-user"
 #define GTK_STOCK_AUDIO_CARD            "audio-card"
-
-#define GTK_STOCK_AUDIO_CARD			"audio-card"
 
 void init_icon_factory();
 
