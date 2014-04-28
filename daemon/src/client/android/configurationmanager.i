@@ -109,7 +109,8 @@ public:
     void setAudioRingtoneDevice(const int32_t& index);
     std::vector< std::string > getAudioInputDeviceList();
     std::vector< std::string > getCurrentAudioDevicesIndex();
-    int32_t getAudioDeviceIndex(const std::string& name);
+    int32_t getAudioInputDeviceIndex(const std::string& name);
+    int32_t getAudioOutputDeviceIndex(const std::string& name);
     std::string getCurrentAudioOutputPlugin();
     bool getNoiseSuppressState();
     void setNoiseSuppressState(const bool& state);

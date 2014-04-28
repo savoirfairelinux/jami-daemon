@@ -108,7 +108,7 @@ class OpenSLLayer : public AudioLayer {
 
         void stopAudioCapture();
 
-        virtual int getAudioDeviceIndex(const std::string&) const {
+        virtual int getAudioDeviceIndex(const std::string&, DeviceType) const {
             return 0;
         }
 

@@ -29,11 +29,12 @@
  *  as that of the covered work.
  */
 
-#include <ctime>
 #include "audiolayer.h"
 #include "audio/dcblocker.h"
 #include "logger.h"
 #include "manager.h"
+
+#include <ctime>
 
 AudioLayer::AudioLayer(const AudioPreference &pref)
     : isCaptureMuted_(pref.getCaptureMuted())
