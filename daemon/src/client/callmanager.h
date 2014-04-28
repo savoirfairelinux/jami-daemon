@@ -160,7 +160,7 @@ class CallManager
 
         void recordPlaybackStopped(const std::string& path);
 
-        void voiceMailNotify(const std::string& callID, const std::string& nd_msg);
+        void voiceMailNotify(const std::string& callID, const int32_t& nd_msg);
 
         void incomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
 
