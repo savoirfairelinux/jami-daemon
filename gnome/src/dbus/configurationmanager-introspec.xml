@@ -425,14 +425,14 @@
        </method>
 
        <method name="getAudioInputDeviceIndex" tp:name-for-bindings="getAudioInputDeviceIndex">
-           <arg type="s" name="name" direction="in">
+           <arg type="s" name="devname" direction="in">
            </arg>
            <arg type="i" name="index" direction="out">
            </arg>
        </method>
 
        <method name="getAudioOutputDeviceIndex" tp:name-for-bindings="getAudioOutputDeviceIndex">
-           <arg type="s" name="name" direction="in">
+           <arg type="s" name="devname" direction="in">
            </arg>
            <arg type="i" name="index" direction="out">
            </arg>
