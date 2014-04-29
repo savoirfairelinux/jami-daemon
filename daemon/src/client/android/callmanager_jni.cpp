@@ -56,7 +56,7 @@ void CallManager::recordPlaybackStopped(const std::string& path)
 
 }
 
-void CallManager::voiceMailNotify(const std::string& callID, const std::string& nd_msg)
+void CallManager::voiceMailNotify(const std::string& callID, const int32_t& nd_msg)
 {
 
 }
