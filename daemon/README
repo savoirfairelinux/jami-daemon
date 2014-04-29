@@ -92,6 +92,19 @@ Done !
 More details available here:
 https://projects.savoirfairelinux.com/projects/sflphone/wiki/How_to_build
 
+Clang compatibility (developers only)
+-------------------------------------
+
+It is possible to compile sflphone with Clang by setting CC and CXX variables
+to 'clang' and 'clang++' respectively when calling ./configure.
+
+Currently it is not possible to use the DBus interface mechanism, and the
+interaction between daemon and client will not work; for each platform where
+dbus is not available the client should implement all the methods in the
+*_stub.cpp files.
+
+Note that you need a recent version of ucommon (>= 6.0.0) and of ccrtp
+compiled against it to use clang.
 
 SIP/IAx2 accounts
 ---------------------
