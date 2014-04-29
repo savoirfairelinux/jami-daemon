@@ -150,8 +150,9 @@ class CallManager
         void sendTextMessage(const std::string& callID, const std::string& message);
         void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 
-#ifdef __ANDROID__
-        // signals must be implemented manually for Android
+        /* the following signals must be implemented manually for any
+         * platform or configuration that does not supply dbus */
+#if !HAVE_DBUS
         void callStateChanged(const std::string& callID, const std::string& state);
 
         void transferFailed();
@@ -187,7 +188,8 @@ class CallManager
         void zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3);
 
         void onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats);
-#endif // __ANDROID__
+#endif // !HAVE_DBUS
+
 private:
 
 #if HAVE_ZRTP

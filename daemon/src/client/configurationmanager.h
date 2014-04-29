@@ -169,10 +169,11 @@ class ConfigurationManager
         bool checkCertificateValidity(const std::string& pemPath);
         bool checkHostnameCertificate(const std::string& certificatePath, const  std::string& host, const std::string& port);
 
-#ifdef __ANDROID__
+        /* the following signals must be implemented manually for any
+         * platform or configuration that does not supply dbus */
+#if !HAVE_DBUS
         void volumeChanged(const std::string& device, const int& value);
 
-        // signals must be implemented manually for Android
         void accountsChanged();
 
         void historyChanged();
@@ -184,7 +185,7 @@ class ConfigurationManager
         void errorAlert(const int& alert);
 
 	std::vector< int32_t > getHardwareAudioFormat();
-#endif  // __ANDROID__
+#endif  // !HAVE_DBUS
 };
 
 #endif //CONFIGURATIONMANAGER_H

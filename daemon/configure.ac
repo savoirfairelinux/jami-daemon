@@ -224,9 +224,12 @@ AC_ARG_WITH([dbus],
     [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"], [
        PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
+       AC_CONFIG_FILES([src/client/dbus/Makefile \
+                        doc/dbus-api/Makefile])
     ]);
 
 AC_DEFINE_UNQUOTED([HAVE_DBUS], `if test "x$with_dbus" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have dbus support])
+AM_CONDITIONAL(USE_DBUS, test "x$with_dbus" = "xyes" )
 
 # Instant Messaging
 # required dependency(ies): libxpat
@@ -416,7 +419,6 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/codecs/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
-                 src/client/dbus/Makefile \
                  src/hooks/Makefile \
                  src/history/Makefile \
                  src/video/Makefile \
@@ -425,7 +427,6 @@ AC_CONFIG_FILES([Makefile \
                  ringtones/Makefile \
                  man/Makefile \
                  doc/Makefile \
-                 doc/dbus-api/Makefile \
                  doc/doxygen/Makefile])
 
 # Go!
