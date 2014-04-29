@@ -133,7 +133,6 @@ ZrtpSessionCallback::showMessage(GnuZrtpCodes::MessageSeverity sev, int32_t subC
 {
     if (sev == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
-            subCode *= -1;
             DEBUG("Received an error packet from peer:");
         } else
             DEBUG("Sent error packet to peer:");

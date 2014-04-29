@@ -153,7 +153,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
         status = pjsip_dlg_create_response(dlg, rdata, code, NULL, &tdata);
 
         if (status == PJ_SUCCESS) {
-            status = pjsip_dlg_send_response(dlg, pjsip_rdata_get_tsx(rdata), tdata);
+            pjsip_dlg_send_response(dlg, pjsip_rdata_get_tsx(rdata), tdata);
         }
 
         pres->unlock();
@@ -208,7 +208,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     ev_state = PJSIP_EVSUB_STATE_ACTIVE;
 
     if (presSubServer->getExpires() == 0) {
-        ev_state = PJSIP_EVSUB_STATE_TERMINATED;
+        // PJSIP_EVSUB_STATE_TERMINATED
         pres->unlock();
         return PJ_TRUE;
     }
