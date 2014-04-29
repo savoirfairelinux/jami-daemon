@@ -43,7 +43,7 @@ using namespace sfl_video;
 VideoPreference::VideoPreference() :
     v4l2List_(new VideoV4l2ListThread),
     deviceList_(),
-    active_(deviceList_.end())
+    active_(-1)
 {
     v4l2List_->start();
 }
@@ -81,7 +81,7 @@ VideoPreference::getRateList(const std::string &dev, const std::string &channel,
  */
 
 void
-VideoPreference::addDevice(const std::string &name)
+VideoPreference::addDevice(const std::string &name, bool active)
 {
     for (const auto &dev : deviceList_)
         if (dev.name == name)
@@ -89,19 +89,18 @@ VideoPreference::addDevice(const std::string &name)
 
     VideoDevice dev;
     dev.name = name;
+    if (active)
+        active_ = deviceList_.size();
     deviceList_.push_back(dev);
 }
 
-std::vector<VideoPreference::VideoDevice>::iterator
+VideoPreference::VideoDevice*
 VideoPreference::lookupDevice(const std::string& name)
 {
-    std::vector<VideoDevice>::iterator iter;
-
-    for (iter = deviceList_.begin(); iter != deviceList_.end(); ++iter)
-        if ((*iter).name == name)
-            break;
-
-    return iter;
+    for (auto& dev : deviceList_)
+        if (dev.name == name)
+            return &dev;
+    return nullptr;
 }
 
 std::map<std::string, std::string>
@@ -133,10 +132,9 @@ VideoPreference::getSettingsFor(const std::string& name)
     if (deviceList_.empty())
         return settings;
 
-    const auto iter = lookupDevice(name);
-
-    if (iter != deviceList_.end())
-        settings = deviceToSettings(*iter);
+    auto dev = lookupDevice(name);
+    if (dev)
+        settings = deviceToSettings(*dev);
 
     return settings;
 }
@@ -149,75 +147,69 @@ VideoPreference::getSettingsFor(const std::string& name)
 std::string
 VideoPreference::getDevice() const
 {
-    if (active_ == deviceList_.end())
+    if (active_ < 0)
         return "";
 
-    return (*active_).name;
+    return deviceList_[active_].name;
 }
 
 void
 VideoPreference::setDevice(const std::string& name)
 {
-
     /*
      * This is actually a hack.
      * v4l2List_ is calling setDevice() when it detects a new device.
      * We addDevice() here until we make V4l2List use it.
      */
-    addDevice(name);
-
-    const auto iter = lookupDevice(name);
-
-    if (iter != deviceList_.end())
-        active_ = iter;
+    addDevice(name, true);
 }
 
 std::string
 VideoPreference::getChannel() const
 {
-    if (active_ == deviceList_.end())
+    if (active_ < 0)
         return "";
 
-    return (*active_).channel;
+    return deviceList_[active_].channel;
 }
 
 void
 VideoPreference::setChannel(const std::string& channel)
 {
-    if (active_ != deviceList_.end())
-        (*active_).channel = channel;
+    if (active_ >= 0)
+        deviceList_[active_].channel = channel;
 }
 
 std::string
 VideoPreference::getSize() const
 {
-    if (active_ == deviceList_.end())
+    if (active_ < 0)
         return "";
 
-    return (*active_).size;
+    return deviceList_[active_].size;
 }
 
 void
 VideoPreference::setSize(const std::string& size)
 {
-    if (active_ != deviceList_.end())
-        (*active_).size = size;
+    if (active_ >= 0)
+        deviceList_[active_].size = size;
 }
 
 std::string
 VideoPreference::getRate() const
 {
-    if (active_ == deviceList_.end())
+    if (deviceList_.empty())
         return "";
 
-    return (*active_).rate;
+    return deviceList_[active_].rate;
 }
 
 void
 VideoPreference::setRate(const std::string& rate)
 {
-    if (active_ != deviceList_.end())
-        (*active_).rate = rate;
+    if (active_ >= 0)
+        deviceList_[active_].rate = rate;
 }
 
 
@@ -226,14 +218,14 @@ VideoPreference::getSettings()
 {
     std::map<std::string, std::string> settings;
 
-    if (active_ != deviceList_.end())
-        settings = deviceToSettings(*active_);
+    if (active_ >= 0)
+        settings = deviceToSettings(deviceList_[active_]);
 
     return settings;
 }
 
 void
-VideoPreference::addDeviceToSequence(VideoDevice &dev, Conf::SequenceNode &seq)
+VideoPreference::addDeviceToSequence(const VideoDevice &dev, Conf::SequenceNode &seq)
 {
     using namespace Conf;
 
@@ -255,14 +247,14 @@ VideoPreference::serialize(Conf::YamlEmitter &emitter)
     MappingNode devices(nullptr);
     SequenceNode sequence(nullptr);
 
-    if (!deviceList_.empty()) {
-        /* add active device first */
-        if (active_ != deviceList_.end())
-            addDeviceToSequence(*active_, sequence);
+    /* add active device first */
+    if (active_ >= 0)
+        addDeviceToSequence(deviceList_[active_], sequence);
 
-        for (auto iter = deviceList_.begin(); iter != deviceList_.end(); iter++)
-            if (iter != active_)
-                addDeviceToSequence(*iter, sequence);
+    int i = 0;
+    for (const auto& dev : deviceList_) {
+        if (i++ != active_)
+            addDeviceToSequence(dev, sequence);
     }
 
     devices.setKeyValue("devices", &sequence);
@@ -305,12 +297,14 @@ VideoPreference::unserialize(const Conf::YamlNode &node)
              * If it is unplugged, assign the next one.
              */
             const auto plugged = getDeviceList();
-            for (active_ = deviceList_.begin();
-                 active_ != deviceList_.end();
-                 ++active_)
+            active_ = -1;
+            for (auto iter = deviceList_.begin(); iter != deviceList_.end(); ++iter) {
                 if (std::find(plugged.begin(), plugged.end(),
-                    (*active_).name) != plugged.end())
+                              (*iter).name) != plugged.end()) {
+                    active_ = iter - deviceList_.begin();
                     break;
+                }
+            }
         }
     }
 }
