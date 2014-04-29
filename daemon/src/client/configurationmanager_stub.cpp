@@ -68,6 +68,8 @@ void ConfigurationManager::errorAlert(const int& alertmsg)
 
 std::vector< int32_t > ConfigurationManager::getHardwareAudioFormat()
 {
+    std::vector<int32_t> stub;
+    return stub;
 }
 
 std::vector<std::string> ConfigurationManager::getSupportedAudioManagers()
