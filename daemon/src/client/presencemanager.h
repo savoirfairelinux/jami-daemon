@@ -76,14 +76,16 @@ class PresenceManager
         PresenceManager();
 #endif
 
-#ifdef __ANDROID__
+    /* the following signals must be implemented manually for any
+     * platform or configuration that does not supply dbus */
+#if !HAVE_DBUS
     void newServerSubscriptionRequest(const std::string& remote);
     void serverError(const std::string& accountID, const std::string& error, const std::string& msg);
     void newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
                               const bool& status, const std::string& lineStatus);
     void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
                               const bool& state);
-#endif //__ANDROID__
+#endif // !HAVE_DBUS
 
     /* Presence subscription/Notification. */
     void publish(const std::string& accountID, const bool& status, const std::string& note);

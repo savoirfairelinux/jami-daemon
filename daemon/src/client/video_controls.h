@@ -60,9 +60,13 @@
 #include "video/video_base.h"
 #include "video/video_input_selector.h"
 
-class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
+class VideoControls
+#if HAVE_DBUS
+    : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor {
+    public DBus::ObjectAdaptor
+#endif
+{
     private:
         std::shared_ptr<sfl_video::VideoInputSelector> videoInputSelector_;
         VideoPreference videoPreference_;
@@ -70,8 +74,11 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         int inputClients_; // XXX necessary with the videoInputSelector_?
 
     public:
-
+#if HAVE_DBUS
         VideoControls(DBus::Connection& connection);
+#else
+        VideoControls();
+#endif
         VideoPreference &getVideoPreferences();
 
         std::vector<std::map<std::string, std::string> >
@@ -131,6 +138,14 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         bool switchInput(const std::string& resource);
         bool hasCameraStarted();
         std::weak_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
+
+        /* the following signals must be implemented manually for any
+         * platform or configuration that does not supply dbus */
+#if !HAVE_DBUS
+        void deviceEvent();
+        void startedDecoding(const std::string &id, const std::string, int w, int h);
+        void stoppedDecoding(const std::string &id, const std::string);
+#endif // !HAVE_DBUS
 };
 
 #endif // VIDEO_CONTROLS_H_
