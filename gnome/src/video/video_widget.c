@@ -44,6 +44,7 @@ typedef struct _VideoArea {
 struct _VideoWidgetPrivate {
     GtkWidget *screen;
     GtkWidget *toolbar;
+    ClutterActor *container;
     VideoArea video_area[VIDEO_AREA_LAST];
 };
 
@@ -87,6 +88,7 @@ video_widget_init(VideoWidget *self)
 
     priv->screen = NULL;
     priv->toolbar = NULL;
+    priv->container = NULL;
     for (int i = 0; i < VIDEO_AREA_LAST; i++) {
         priv->video_area[i].texture = NULL;
         priv->video_area[i].video_id = NULL;
@@ -139,6 +141,19 @@ video_widget_redraw_screen(GtkWidget *self)
     guint local_x       = screen_width - local_width;
     guint local_y       = screen_height - local_height;
 
+#if CLUTTER_CHECK_VERSION(1, 18, 0)
+    if (!priv->container)
+        priv->container = stage;
+#else
+/* Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=711645 */
+    if (!priv->container)
+        priv->container = clutter_actor_new();
+    clutter_actor_add_constraint(priv->container,
+            clutter_bind_constraint_new(stage, CLUTTER_BIND_SIZE, 0.0));
+    clutter_actor_add_child(stage, priv->container);
+#endif
+
+
     /* Handle the remote camera behaviour */
     if (priv->video_area[VIDEO_AREA_REMOTE].show) {
 
@@ -148,18 +163,18 @@ video_widget_redraw_screen(GtkWidget *self)
         /* if the actor is not already in the stage */
         if (clutter_actor_contains(stage, camera_remote) == FALSE) {
             /* insert the new child under all other actor */
-            clutter_actor_insert_child_below(stage, camera_remote, NULL);
+            clutter_actor_insert_child_below(priv->container, camera_remote, NULL);
         } else {
             /* the remote camera must alway been the first child */
-            if (clutter_actor_get_first_child(stage) != camera_remote) {
-                clutter_actor_set_child_below_sibling(stage, camera_remote, NULL);
+            if (clutter_actor_get_first_child(priv->container) != camera_remote) {
+                clutter_actor_set_child_below_sibling(priv->container, camera_remote, NULL);
             }
         }
 
     } else {
 
-        if (clutter_actor_contains(stage, camera_remote)) {
-            clutter_actor_remove_child(stage, camera_remote);
+        if (clutter_actor_contains(priv->container, camera_remote)) {
+            clutter_actor_remove_child(priv->container, camera_remote);
         }
 	priv->video_area[VIDEO_AREA_REMOTE].texture = NULL;
 
@@ -172,14 +187,14 @@ video_widget_redraw_screen(GtkWidget *self)
         clutter_actor_set_size(camera_local, local_width, local_height);
         clutter_actor_set_position(camera_local, local_x, local_y);
 
-        if (clutter_actor_contains(stage, camera_local) == FALSE) {
-            clutter_actor_add_child(CLUTTER_CONTAINER(stage), camera_local);
+        if (clutter_actor_contains(priv->container, camera_local) == FALSE) {
+            clutter_actor_add_child(priv->container, camera_local);
         }
 
     } else {
 
-        if (clutter_actor_contains(stage, camera_local)) {
-            clutter_actor_remove_child(stage, camera_local);
+        if (clutter_actor_contains(priv->container, camera_local)) {
+            clutter_actor_remove_child(priv->container, camera_local);
         }
         priv->video_area[VIDEO_AREA_LOCAL].texture = NULL;
 
