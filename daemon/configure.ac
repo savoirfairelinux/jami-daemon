@@ -240,7 +240,10 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
        AC_CONFIG_FILES([src/client/dbus/Makefile \
                         doc/dbus-api/Makefile])
-    ]);
+       AS_IF([test "x$CLANG" = "xyes"], [
+             AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
+        ]);
+]);
 
 AC_DEFINE_UNQUOTED([HAVE_DBUS], `if test "x$with_dbus" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have dbus support])
 AM_CONDITIONAL(USE_DBUS, test "x$with_dbus" = "xyes" )
