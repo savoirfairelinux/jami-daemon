@@ -49,9 +49,11 @@ class PresenceManager;
 class VideoControls;
 #endif
 
+#if HAVE_DBUS
 namespace DBus {
     class BusDispatcher;
 }
+#endif
 
 class Client {
     public:
@@ -80,8 +82,10 @@ class Client {
 #ifdef SFL_PRESENCE
         PresenceManager*      presenceManager_;
 #endif
+#if HAVE_DBUS
         Instance*             instanceManager_;
         DBus::BusDispatcher*  dispatcher_;
+#endif
 #ifdef SFL_VIDEO
         VideoControls *videoControls_;
 #endif

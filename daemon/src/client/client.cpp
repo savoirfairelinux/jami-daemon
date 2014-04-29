@@ -44,8 +44,10 @@ Client::Client() : callManager_(new CallManager)
 #ifdef SFL_PRESENCE
     , presenceManager_(new PresenceManager)
 #endif
+#if HAVE_DBUS
     , instanceManager_(0)
     , dispatcher_(0)
+#endif
 #ifdef SFL_VIDEO
     , videoControls_(0)
 #endif
@@ -62,8 +64,10 @@ Client::~Client()
 #ifdef SFL_VIDEO
     delete videoControls_;
 #endif
+#if HAVE_DBUS
     delete dispatcher_;
     delete instanceManager_;
+#endif
     delete configurationManager_;
 #ifdef SFL_PRESENCE
     delete presenceManager_;
