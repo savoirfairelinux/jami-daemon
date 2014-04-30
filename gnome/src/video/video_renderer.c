@@ -69,7 +69,6 @@ struct _VideoRendererPrivate {
 
     ClutterActor *texture;
 
-    gpointer drawarea;
     gint fd;
     SHMHeader *shm_area;
     gsize shm_area_len;
@@ -87,8 +86,8 @@ video_renderer_class_init(VideoRendererClass *klass)
     gobject_class->get_property = video_renderer_get_property;
     gobject_class->set_property = video_renderer_set_property;
 
-    properties[PROP_DRAWAREA] = g_param_spec_pointer("drawarea", "DrawArea",
-                                                    "Pointer to the drawing area",
+    properties[PROP_DRAWAREA] = g_param_spec_pointer("texture", "Texture",
+                                                    "Pointer to the Clutter Texture area",
                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
 
     properties[PROP_WIDTH] = g_param_spec_int("width", "Width", "Width of video", G_MININT, G_MAXINT, 0,
@@ -114,7 +113,7 @@ video_renderer_get_property(GObject *object, guint prop_id,
 
     switch (prop_id) {
         case PROP_DRAWAREA:
-            g_value_set_pointer(value, priv->drawarea);
+            g_value_set_pointer(value, priv->texture);
             break;
         case PROP_WIDTH:
             g_value_set_int(value, priv->width);
@@ -140,7 +139,7 @@ video_renderer_set_property (GObject *object, guint prop_id,
 
     switch (prop_id) {
         case PROP_DRAWAREA:
-            priv->drawarea = g_value_get_pointer(value);
+            priv->texture = g_value_get_pointer(value);
             break;
         case PROP_WIDTH:
             priv->width = g_value_get_int(value);
@@ -169,7 +168,6 @@ video_renderer_init(VideoRenderer *self)
     priv->height = 0;
     priv->shm_path = NULL;
     priv->texture = NULL;
-    priv->drawarea = NULL;
     priv->fd = -1;
     priv->shm_area = MAP_FAILED;
     priv->shm_area_len = 0;
@@ -312,14 +310,9 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
 static gboolean
 render_frame_from_shm(VideoRendererPrivate *priv)
 {
-    if (!GTK_IS_WIDGET(priv->drawarea))
+    if (!priv || !CLUTTER_IS_ACTOR(priv->texture))
         return FALSE;
-    GtkWidget *parent = gtk_widget_get_parent(priv->drawarea);
-    if (!parent || !CLUTTER_IS_ACTOR(priv->texture))
-        return FALSE;
-    const gint parent_width = gtk_widget_get_allocated_width(parent);
-    const gint parent_height = gtk_widget_get_allocated_height(parent);
-    clutter_actor_set_size(priv->texture, parent_width, parent_height);
+
     video_renderer_render_to_texture(priv);
 
     return TRUE;
@@ -327,10 +320,6 @@ render_frame_from_shm(VideoRendererPrivate *priv)
 
 void video_renderer_stop(VideoRenderer *renderer)
 {
-    VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(renderer);
-    if (priv && priv->drawarea && GTK_IS_WIDGET(priv->drawarea))
-        gtk_widget_hide(GTK_WIDGET(priv->drawarea));
-
     g_object_unref(G_OBJECT(renderer));
 }
 
@@ -354,9 +343,9 @@ update_texture(gpointer data)
  * Create a new #VideoRenderer instance.
  */
 VideoRenderer *
-video_renderer_new(GtkWidget *drawarea, gint width, gint height, gchar *shm_path)
+video_renderer_new(ClutterActor *texture, gint width, gint height, gchar *shm_path)
 {
-    VideoRenderer *rend = g_object_new(VIDEO_RENDERER_TYPE, "drawarea", (gpointer) drawarea,
+    VideoRenderer *rend = g_object_new(VIDEO_RENDERER_TYPE, "texture", texture,
             "width", width, "height", height, "shm-path", shm_path, NULL);
     if (!video_renderer_start_shm(rend)) {
         g_warning("Could not start SHM");
@@ -372,29 +361,9 @@ video_renderer_run(VideoRenderer *self)
     VideoRendererPrivate * priv = VIDEO_RENDERER_GET_PRIVATE(self);
     g_return_val_if_fail(priv->fd > 0, FALSE);
 
-    GtkWindow *win = GTK_WINDOW(gtk_widget_get_toplevel(priv->drawarea));
-    GdkGeometry geom = {
-        .min_aspect = (gdouble) priv->width / priv->height,
-        .max_aspect = (gdouble) priv->width / priv->height,
-    };
-    gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
-
-    if (!GTK_CLUTTER_IS_EMBED(priv->drawarea))
-        g_warning("Drawing area is not a GtkClutterEmbed widget");
-
-    ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(priv->drawarea));
-    g_assert(stage);
-    priv->texture = clutter_texture_new();
-
-    /* Add ClutterTexture to the stage */
-    clutter_container_add(CLUTTER_CONTAINER(stage), priv->texture, NULL);
-    clutter_actor_show_all(stage);
-
     /* frames are read and saved here */
     const gint FRAME_INTERVAL = 30; // ms
     priv->timeout_id = g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, FRAME_INTERVAL, update_texture, self, NULL);
-
-    gtk_widget_show_all(GTK_WIDGET(priv->drawarea));
 
     return TRUE;
 }
