@@ -29,6 +29,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <glib/gi18n.h>
 #include "sflphone_client.h"
 #include "sflphone_options.h"
@@ -36,6 +40,9 @@
 #include "statusicon.h"
 #include "shortcuts.h"
 #include "mainwindow.h"
+#ifdef SFL_VIDEO
+#include "video/video_widget.h"
+#endif
 
 G_DEFINE_TYPE(SFLPhoneClient, sflphone_client, GTK_TYPE_APPLICATION);
 
@@ -110,6 +117,11 @@ static void
 sflphone_client_init(SFLPhoneClient *self)
 {
     self->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
+
+#ifdef SFL_VIDEO
+    self->video = video_widget_new();
+#endif
+
     self->win = 0;
     g_signal_connect(G_OBJECT(self), "command-line", G_CALLBACK(sflphone_client_command_line_handler), self);
 }
