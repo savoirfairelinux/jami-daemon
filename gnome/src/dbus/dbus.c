@@ -1050,14 +1050,12 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
             G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_BOOLEAN,
             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(video_proxy, "startedDecoding",
-            G_CALLBACK(started_decoding_video_cb), NULL,
-            NULL);
+            G_CALLBACK(started_decoding_video_cb), client, NULL);
 
     dbus_g_proxy_add_signal(video_proxy, "stoppedDecoding",
             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(video_proxy, "stoppedDecoding",
-            G_CALLBACK(stopped_decoding_video_cb),
-            NULL, NULL);
+            G_CALLBACK(stopped_decoding_video_cb), client, NULL);
 #endif
 
     /* Defines a default timeout for the proxies */
