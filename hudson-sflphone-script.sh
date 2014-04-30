@@ -160,8 +160,11 @@ function build_kde {
 
 
 if [ "$#" -eq 0 ]; then   # Script needs at least one command-line argument.
-    echo "Usage $0 -b select which one to build: daemon or gnome
-                  -t enable unit tests after build"
+    echo "$0 accepts the following options:
+    -b select 'daemon' or 'gnome' component
+    -v enable video support
+    -a run static code analysis after build
+    -t run unit tests after build"
     exit $E_OPTERR
 fi
 
@@ -171,20 +174,19 @@ git clean -f -d -x
 while getopts ":b: t a v" opt; do
     case $opt in
         b)
-            echo "-b was triggered. Parameter: $OPTARG" >&2
+            echo "-b is set with option $OPTARG" >&2
             BUILD=$OPTARG
             ;;
         t)
-            echo "-t was triggered. Tests will be run" >&2
+            echo "-t is set, unit tests will be run after build" >&2
             TEST=1
             ;;
         a)
-            echo "-a was triggered. Static code analysis will be run" >&2
+            echo "-a is set, static code analysis will be run after build" >&2
             CODE_ANALYSIS=1
             ;;
         v)
-            # Video support
-            echo "-v was triggered. Video support enabled" >&2
+            echo "-v is set, video support is enabled" >&2
             VIDEO=1
             ;;
         \?)
