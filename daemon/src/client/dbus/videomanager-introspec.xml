@@ -118,6 +118,7 @@
                     <ul>
                         <li>v4l2://DEVICE</li>
                         <li>display://DISPLAY_NAME[ WIDTHxHEIGHT]</li>
+                        <li>file://IMAGE_PATH</li>
                     </ul>
                 </tp:docstring>
             </arg>
