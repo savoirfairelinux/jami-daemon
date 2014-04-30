@@ -74,7 +74,7 @@
 #include "client/callmanager.h"
 
 #ifdef SFL_VIDEO
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 #endif
 
 #include "conference.h"
@@ -1370,7 +1370,7 @@ void ManagerImpl::saveConfig()
         hookPreference.serialize(emitter);
         audioPreference.serialize(emitter);
 #ifdef SFL_VIDEO
-        getVideoControls()->getVideoPreferences().serialize(emitter);
+        getVideoManager()->getVideoPreferences().serialize(emitter);
 #endif
         shortcutPreferences.serialize(emitter);
 
@@ -2615,7 +2615,7 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     int errorCount = 0;
 #ifdef SFL_VIDEO
-    VideoControls *controls(getVideoControls());
+    VideoManager *controls(getVideoManager());
     try {
         MappingNode *videoNode = parser.getVideoNode();
         if (videoNode)
@@ -2955,9 +2955,9 @@ ManagerImpl::getClient()
 }
 
 #ifdef SFL_VIDEO
-VideoControls *
-ManagerImpl::getVideoControls()
+VideoManager *
+ManagerImpl::getVideoManager()
 {
-    return client_.getVideoControls();
+    return client_.getVideoManager();
 }
 #endif

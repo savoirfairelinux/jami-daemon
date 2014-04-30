@@ -27,8 +27,8 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEO_CONTROLS_H_
-#define VIDEO_CONTROLS_H_
+#ifndef VIDEOMANAGER_H_
+#define VIDEOMANAGER_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -44,7 +44,7 @@
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "dbus/video_controls-glue.h"
+#include "dbus/videomanager-glue.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
@@ -60,9 +60,9 @@
 #include "video/video_base.h"
 #include "video/video_input_selector.h"
 
-class VideoControls
+class VideoManager
 #if HAVE_DBUS
-    : public org::sflphone::SFLphone::VideoControls_adaptor,
+    : public org::sflphone::SFLphone::VideoManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 #endif
@@ -75,9 +75,9 @@ class VideoControls
 
     public:
 #if HAVE_DBUS
-        VideoControls(DBus::Connection& connection);
+        VideoManager(DBus::Connection& connection);
 #else
-        VideoControls();
+        VideoManager();
 #endif
         VideoPreference &getVideoPreferences();
 
@@ -148,4 +148,4 @@ class VideoControls
 #endif // !HAVE_DBUS
 };
 
-#endif // VIDEO_CONTROLS_H_
+#endif // VIDEOMANAGER_H_

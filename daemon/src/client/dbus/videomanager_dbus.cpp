@@ -30,7 +30,7 @@
  *  as that of the covered work.
  */
 
-#include "video_controls.h"
+#include "videomanager.h"
 #include "video/libav_utils.h"
 #include "video/video_input_selector.h"
 #include "account.h"
@@ -38,10 +38,10 @@
 #include "manager.h"
 
 namespace {
-const char * const SERVER_PATH = "/org/sflphone/SFLphone/VideoControls";
+const char * const SERVER_PATH = "/org/sflphone/SFLphone/VideoManager";
 }
 
-VideoControls::VideoControls(DBus::Connection& connection) :
+VideoManager::VideoManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
     , videoInputSelector_()
     , videoPreference_()
@@ -52,13 +52,13 @@ VideoControls::VideoControls(DBus::Connection& connection) :
 }
 
 VideoPreference &
-VideoControls::getVideoPreferences()
+VideoManager::getVideoPreferences()
 {
     return videoPreference_;
 }
 
 std::vector<std::map<std::string, std::string> >
-VideoControls::getCodecs(const std::string &accountID)
+VideoManager::getCodecs(const std::string &accountID)
 {
     Account *acc = Manager::instance().getAccount(accountID);
 
@@ -69,7 +69,7 @@ VideoControls::getCodecs(const std::string &accountID)
 }
 
 void
-VideoControls::setCodecs(const std::string& accountID,
+VideoManager::setCodecs(const std::string& accountID,
                          const std::vector<std::map<std::string, std::string> > &details)
 {
     Account *acc = Manager::instance().getAccount(accountID);
@@ -80,90 +80,90 @@ VideoControls::setCodecs(const std::string& accountID,
 }
 
 std::vector<std::string>
-VideoControls::getDeviceList()
+VideoManager::getDeviceList()
 {
     return videoPreference_.getDeviceList();
 }
 
 std::vector<std::string>
-VideoControls::getDeviceChannelList(const std::string &dev)
+VideoManager::getDeviceChannelList(const std::string &dev)
 {
     return videoPreference_.getChannelList(dev);
 }
 
 std::vector<std::string>
-VideoControls::getDeviceSizeList(const std::string &dev, const std::string &channel)
+VideoManager::getDeviceSizeList(const std::string &dev, const std::string &channel)
 {
     return videoPreference_.getSizeList(dev, channel);
 }
 
 std::vector<std::string>
-VideoControls::getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
+VideoManager::getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
 {
     return videoPreference_.getRateList(dev, channel, size);
 }
 
 std::string
-VideoControls::getActiveDevice()
+VideoManager::getActiveDevice()
 {
     return videoPreference_.getDevice();
 }
 
 std::string
-VideoControls::getActiveDeviceChannel()
+VideoManager::getActiveDeviceChannel()
 {
     return videoPreference_.getChannel();
 }
 
 std::string
-VideoControls::getActiveDeviceSize()
+VideoManager::getActiveDeviceSize()
 {
     return videoPreference_.getSize();
 }
 
 std::string
-VideoControls::getActiveDeviceRate()
+VideoManager::getActiveDeviceRate()
 {
     return videoPreference_.getRate();
 }
 
 void
-VideoControls::setActiveDevice(const std::string &device)
+VideoManager::setActiveDevice(const std::string &device)
 {
     DEBUG("Setting device to %s", device.c_str());
     videoPreference_.setDevice(device);
 }
 
 void
-VideoControls::setActiveDeviceChannel(const std::string &channel)
+VideoManager::setActiveDeviceChannel(const std::string &channel)
 {
     videoPreference_.setChannel(channel);
 }
 
 void
-VideoControls::setActiveDeviceSize(const std::string &size)
+VideoManager::setActiveDeviceSize(const std::string &size)
 {
     videoPreference_.setSize(size);
 }
 
 void
-VideoControls::setActiveDeviceRate(const std::string &rate)
+VideoManager::setActiveDeviceRate(const std::string &rate)
 {
     videoPreference_.setRate(rate);
 }
 
 std::map<std::string, std::string>
-VideoControls::getSettingsFor(const std::string& device) {
+VideoManager::getSettingsFor(const std::string& device) {
     return videoPreference_.getSettingsFor(device);
 }
 
 std::map<std::string, std::string>
-VideoControls::getSettings() {
+VideoManager::getSettings() {
     return videoPreference_.getSettings();
 }
 
 void
-VideoControls::startCamera()
+VideoManager::startCamera()
 {
     inputClients_++;
     if (hasCameraStarted()) {
@@ -176,7 +176,7 @@ VideoControls::startCamera()
 }
 
 void
-VideoControls::stopCamera()
+VideoManager::stopCamera()
 {
     if (hasCameraStarted()) {
         DEBUG("Stopping video preview");
@@ -189,7 +189,7 @@ VideoControls::stopCamera()
 }
 
 bool
-VideoControls::switchInput(const std::string &resource)
+VideoManager::switchInput(const std::string &resource)
 {
     if (not hasCameraStarted()) {
         ERROR("Input selector not initialized");
@@ -200,20 +200,20 @@ VideoControls::switchInput(const std::string &resource)
 }
 
 std::weak_ptr<sfl_video::VideoFrameActiveWriter>
-VideoControls::getVideoCamera()
+VideoManager::getVideoCamera()
 {
     return videoInputSelector_;
 }
 
 bool
-VideoControls::hasCameraStarted()
+VideoManager::hasCameraStarted()
 {
     // see http://stackoverflow.com/a/7580064/21185
     return static_cast<bool>(videoInputSelector_);
 }
 
 std::string
-VideoControls::getCurrentCodecName(const std::string & /*callID*/)
+VideoManager::getCurrentCodecName(const std::string & /*callID*/)
 {
     return "";
 }

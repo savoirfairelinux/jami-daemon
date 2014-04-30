@@ -14,8 +14,8 @@ presencemanager-glue.h: presencemanager-introspec.xml Makefile.am
 endif
 
 if SFL_VIDEO
-BUILT_SOURCES+=video_controls-glue.h
-video_controls-glue.h: video_controls-introspec.xml Makefile.am
+BUILT_SOURCES+=videomanager-glue.h
+videomanager-glue.h: videomanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 endif
 
@@ -42,7 +42,7 @@ libclient_dbus_la_SOURCES += presencemanager_dbus.cpp
 endif
 
 if SFL_VIDEO
-libclient_dbus_la_SOURCES += video_controls.cpp
+libclient_dbus_la_SOURCES += videomanager_dbus.cpp
 endif
 
 if USE_NETWORKMANAGER
@@ -83,7 +83,7 @@ EXTRA_DIST += presencemanager-introspec.xml
 endif
 
 if SFL_VIDEO
-EXTRA_DIST += video_controls-introspec.xml
+EXTRA_DIST += videomanager-introspec.xml
 endif
 
 CLEANFILES= \

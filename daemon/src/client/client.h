@@ -46,7 +46,7 @@ class PresenceManager;
 #endif
 
 #ifdef SFL_VIDEO
-class VideoControls;
+class VideoManager;
 #endif
 
 namespace DBus {
@@ -67,7 +67,7 @@ class Client {
 #endif
 
 #ifdef SFL_VIDEO
-        VideoControls* getVideoControls();
+        VideoManager* getVideoManager();
 #endif
 
         int event_loop();
@@ -83,7 +83,7 @@ class Client {
         Instance*             instanceManager_;
         DBus::BusDispatcher*  dispatcher_;
 #ifdef SFL_VIDEO
-        VideoControls *videoControls_;
+        VideoManager *videoManager_;
 #endif
 #if USE_NETWORKMANAGER
         NetworkManager* networkManager_;

@@ -47,7 +47,7 @@ Client::Client() : callManager_(new CallManager)
     , instanceManager_(0)
     , dispatcher_(0)
 #ifdef SFL_VIDEO
-    , videoControls_(0)
+    , videoManager_(0)
 #endif
 #ifdef USE_NETWORKMANAGER
     , networkManager_(0)
@@ -60,7 +60,7 @@ Client::~Client()
     delete networkManager_;
 #endif
 #ifdef SFL_VIDEO
-    delete videoControls_;
+    delete videoManager_;
 #endif
     delete dispatcher_;
     delete instanceManager_;
@@ -99,8 +99,8 @@ PresenceManager * Client::getPresenceManager()
 #endif
 
 #ifdef SFL_VIDEO
-VideoControls * Client::getVideoControls()
+VideoManager * Client::getVideoManager()
 {
-    return videoControls_;
+    return videoManager_;
 }
 #endif

@@ -945,7 +945,7 @@ class ManagerImpl {
          */
         Client* getClient();
 #ifdef SFL_VIDEO
-        VideoControls * getVideoControls();
+        VideoManager * getVideoManager();
 #endif
 
         /**

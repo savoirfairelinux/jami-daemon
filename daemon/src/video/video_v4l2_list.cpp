@@ -51,7 +51,7 @@ extern "C" {
 
 #include "video_v4l2_list.h"
 #include "manager.h"
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 
 namespace sfl_video {
 
@@ -243,7 +243,7 @@ void VideoV4l2ListThread::run()
                         DEBUG("udev: adding %s", node);
                         try {
                             if (addDevice(node)) {
-                                Manager::instance().getVideoControls()->deviceEvent();
+                                Manager::instance().getVideoManager()->deviceEvent();
                             }
                         } catch (const std::runtime_error &e) {
                             ERROR("%s", e.what());
@@ -280,7 +280,7 @@ void VideoV4l2ListThread::delDevice(const string &node)
 
     if (itr != devices_.end()) {
         devices_.erase(itr);
-        Manager::instance().getVideoControls()->deviceEvent();
+        Manager::instance().getVideoManager()->deviceEvent();
     }
 }
 

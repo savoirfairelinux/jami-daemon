@@ -50,7 +50,7 @@
 #endif
 
 #ifdef SFL_VIDEO
-#include "video_controls.h"
+#include "videomanager.h"
 #endif
 
 struct DummyCallback : DBus::Callback_Base<void, DBus::DefaultTimeout&>
@@ -66,7 +66,7 @@ Client::Client() : callManager_(0)
     , instanceManager_(0)
     , dispatcher_(new DBus::BusDispatcher)
 #ifdef SFL_VIDEO
-    , videoControls_(0)
+    , videoManager_(0)
 #endif
 #ifdef USE_NETWORKMANAGER
     , networkManager_(0)
@@ -103,7 +103,7 @@ Client::Client() : callManager_(0)
         instanceManager_ = new Instance(sessionConnection);
 
 #ifdef SFL_VIDEO
-        videoControls_ = new VideoControls(sessionConnection);
+        videoManager_ = new VideoManager(sessionConnection);
 #endif
 
 #ifdef USE_NETWORKMANAGER
@@ -128,7 +128,7 @@ Client::~Client()
     delete networkManager_;
 #endif
 #ifdef SFL_VIDEO
-    delete videoControls_;
+    delete videoManager_;
 #endif
     delete instanceManager_;
 #ifdef SFL_PRESENCE
@@ -189,9 +189,9 @@ Client::getPresenceManager()
 #endif
 
 #ifdef SFL_VIDEO
-VideoControls*
-Client::getVideoControls()
+VideoManager*
+Client::getVideoManager()
 {
-    return videoControls_;
+    return videoManager_;
 }
 #endif

@@ -34,7 +34,7 @@
 #include "check.h"
 
 #include "manager.h"
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 
 #include <map>
 #include <string>
@@ -117,7 +117,7 @@ bool VideoInput::setup()
     /* Sink setup */
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     if (attach(&sink_)) {
-        Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(),
+        Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(),
 			decoder_->getWidth(), decoder_->getHeight());
         DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
               sink_.openedName().c_str(), decoder_->getWidth(), decoder_->getHeight());
@@ -132,7 +132,7 @@ void VideoInput::process()
 void VideoInput::cleanup()
 {
     if (detach(&sink_)) {
-        Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
         sink_.stop();
     }
 

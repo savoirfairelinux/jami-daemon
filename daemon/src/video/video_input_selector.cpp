@@ -33,7 +33,7 @@
 #include "check.h"
 
 #include "manager.h"
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 
 #include <unistd.h>
 
@@ -83,7 +83,7 @@ static std::map<std::string, std::string>
 initCamera(const std::string& device)
 {
     std::map<std::string, std::string> map =
-        Manager::instance().getVideoControls()->getSettingsFor(device);
+        Manager::instance().getVideoManager()->getSettingsFor(device);
 
     map["format"] = "video4linux2";
     map["mirror"] = "true"; // only the key matters

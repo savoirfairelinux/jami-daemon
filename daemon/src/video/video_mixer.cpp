@@ -32,7 +32,7 @@
 #include "libav_deps.h"
 #include "video_mixer.h"
 #include "check.h"
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 #include "manager.h"
 #include "logger.h"
 
@@ -51,7 +51,7 @@ VideoMixer::VideoMixer(const std::string &id) :
     , mutex_()
     , sink_(id + VIDEO_MIXER_SUFFIX)
 {
-    auto videoCtrl = Manager::instance().getVideoControls();
+    auto videoCtrl = Manager::instance().getVideoManager();
     if (!videoCtrl->hasCameraStarted()) {
         videoCtrl->startCamera();
         MYSLEEP(1);
@@ -64,7 +64,7 @@ VideoMixer::VideoMixer(const std::string &id) :
 
 VideoMixer::~VideoMixer()
 {
-    auto videoCtrl = Manager::instance().getVideoControls();
+    auto videoCtrl = Manager::instance().getVideoManager();
     if (auto shared = videoCtrl->getVideoCamera().lock())
         shared->detach(this);
     stop_sink();
@@ -144,7 +144,7 @@ void VideoMixer::start_sink()
 {
     if (sink_.start()) {
         if (this->attach(&sink_)) {
-            Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), width_, height_);
+            Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), width_, height_);
             DEBUG("MX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), width_, height_);
         }
@@ -155,7 +155,7 @@ void VideoMixer::start_sink()
 void VideoMixer::stop_sink()
 {
     if (this->detach(&sink_)) {
-        Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
         sink_.stop();
     }
 }
