@@ -37,7 +37,10 @@ TEST=0
 BUILD=
 CODE_ANALYSIS=0
 DOXYGEN=0
-VIDEO=0
+#daemon opts
+DOPTS="--prefix=/usr"
+#gnome opts
+GOPTS="--prefix=/usr"
 
 CONFIGDIR=~/.config
 SFLCONFDIR=${CONFIGDIR}/sflphone
@@ -116,11 +119,7 @@ function build_daemon {
     popd
 
     # Compile the daemon
-    # Check if video suppport should be enabled
-    if [ $VIDEO == 1 ]; then
-      OPTS="--enable-video"
-    fi
-    ./configure --prefix=/usr $OPTS
+    ./configure $DOPTS
     make clean
     make -j
     # Remove the previous XML test file
@@ -134,14 +133,14 @@ function build_gnome {
     # Compile the plugins
     pushd plugins
     ./autogen.sh || exit 1
-    ./configure --prefix=/usr
+    ./configure $GOPTS
     make -j
     popd
 
     # Compile the client
     pushd gnome
     ./autogen.sh || exit 1
-    ./configure --prefix=/usr
+    ./configure $GOPTS
     make clean
     make -j 1
     make check
@@ -187,7 +186,7 @@ while getopts ":b: t a v" opt; do
             ;;
         v)
             echo "-v is set, video support is enabled" >&2
-            VIDEO=1
+            DOPTS="--enable-video $DOPTS"
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
