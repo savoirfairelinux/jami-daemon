@@ -39,7 +39,7 @@
 #include "callmanager-glue.h"
 #include "configurationmanager-glue.h"
 #ifdef SFL_VIDEO
-#include "video_controls-glue.h"
+#include "videomanager-glue.h"
 #endif
 #include "instance-glue.h"
 #include "preferencesdialog.h"
@@ -1032,12 +1032,12 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 #endif
 
 #ifdef SFL_VIDEO
-    const gchar *videocontrols_object_instance = "/org/sflphone/SFLphone/VideoControls";
-    const gchar *videocontrols_interface = "org.sflphone.SFLphone.VideoControls";
+    const gchar *videomanager_object_instance = "/org/sflphone/SFLphone/VideoManager";
+    const gchar *videomanager_interface = "org.sflphone.SFLphone.VideoManager";
     video_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name,
-            videocontrols_object_instance, videocontrols_interface);
+            videomanager_object_instance, videomanager_interface);
     if (video_proxy == NULL) {
-        g_warning("Error: Failed to connect to %s", videocontrols_object_instance);
+        g_warning("Error: Failed to connect to %s", videomanager_object_instance);
         return FALSE;
     }
     /* Video related signals */
@@ -1447,7 +1447,7 @@ dbus_get_video_codecs(const gchar *accountID)
 {
     GError *error = NULL;
     GPtrArray *array = NULL;
-    org_sflphone_SFLphone_VideoControls_get_codecs(video_proxy, accountID, &array, &error);
+    org_sflphone_SFLphone_VideoManager_get_codecs(video_proxy, accountID, &array, &error);
     check_error(error);
     return array;
 }
@@ -1456,7 +1456,7 @@ void
 dbus_set_video_codecs(const gchar *accountID, const GPtrArray *list)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_codecs(video_proxy, accountID, list, &error);
+    org_sflphone_SFLphone_VideoManager_set_codecs(video_proxy, accountID, list, &error);
     check_error(error);
 }
 
@@ -1465,7 +1465,7 @@ dbus_switch_video_input(const gchar *resource)
 {
     GError *error = NULL;
     gboolean switched;
-    org_sflphone_SFLphone_VideoControls_switch_input(video_proxy, resource, &switched, &error);
+    org_sflphone_SFLphone_VideoManager_switch_input(video_proxy, resource, &switched, &error);
     check_error(error);
     return switched;
 }
@@ -1908,7 +1908,7 @@ dbus_get_active_video_device_channel()
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_active_device_channel(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoManager_get_active_device_channel(video_proxy, &str, &error);
     check_error(error);
 
     return str;
@@ -1920,7 +1920,7 @@ dbus_get_active_video_device_size()
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_active_device_size(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoManager_get_active_device_size(video_proxy, &str, &error);
     check_error(error);
 
     return str;
@@ -1932,7 +1932,7 @@ dbus_get_active_video_device_rate()
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_active_device_rate(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoManager_get_active_device_rate(video_proxy, &str, &error);
     check_error(error);
 
     return str;
@@ -1944,7 +1944,7 @@ dbus_get_active_video_device()
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_active_device(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoManager_get_active_device(video_proxy, &str, &error);
     check_error(error);
 
     return str;
@@ -1954,7 +1954,7 @@ void
 dbus_set_active_video_device(const gchar *device)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_active_device(video_proxy, device, &error);
+    org_sflphone_SFLphone_VideoManager_set_active_device(video_proxy, device, &error);
     check_error(error);
 }
 
@@ -1962,7 +1962,7 @@ void
 dbus_set_active_video_device_channel(const gchar *channel)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_active_device_channel(video_proxy, channel, &error);
+    org_sflphone_SFLphone_VideoManager_set_active_device_channel(video_proxy, channel, &error);
     check_error(error);
 }
 
@@ -1970,7 +1970,7 @@ void
 dbus_set_active_video_device_size(const gchar *size)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_active_device_size(video_proxy, size, &error);
+    org_sflphone_SFLphone_VideoManager_set_active_device_size(video_proxy, size, &error);
     check_error(error);
 }
 
@@ -1978,7 +1978,7 @@ void
 dbus_set_active_video_device_rate(const gchar *rate)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_active_device_rate(video_proxy, rate, &error);
+    org_sflphone_SFLphone_VideoManager_set_active_device_rate(video_proxy, rate, &error);
     check_error(error);
 }
 
@@ -1988,7 +1988,7 @@ dbus_get_video_device_list()
     gchar **array = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_device_list(video_proxy, &array, &error);
+    org_sflphone_SFLphone_VideoManager_get_device_list(video_proxy, &array, &error);
     check_error(error);
     return array;
 }
@@ -2001,7 +2001,7 @@ dbus_get_video_device_channel_list(const gchar *dev)
 {
     gchar **array = NULL;
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_get_device_channel_list(video_proxy, dev, &array, &error);
+    org_sflphone_SFLphone_VideoManager_get_device_channel_list(video_proxy, dev, &array, &error);
     check_error(error);
     return array;
 }
@@ -2015,7 +2015,7 @@ dbus_get_video_device_size_list(const gchar *dev, const gchar *channel)
     gchar **array = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_device_size_list(video_proxy, dev, channel, &array, &error);
+    org_sflphone_SFLphone_VideoManager_get_device_size_list(video_proxy, dev, channel, &array, &error);
     check_error(error);
     return array;
 }
@@ -2029,7 +2029,7 @@ dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gc
     gchar **array = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_device_rate_list(video_proxy, dev, channel, size, &array, &error);
+    org_sflphone_SFLphone_VideoManager_get_device_rate_list(video_proxy, dev, channel, size, &array, &error);
     check_error(error);
     return array;
 }
@@ -2298,14 +2298,14 @@ void
 dbus_start_video_camera()
 {
     set_camera_button_sensitivity(FALSE);
-    org_sflphone_SFLphone_VideoControls_start_camera_async(video_proxy, video_camera_async_cb, NULL);
+    org_sflphone_SFLphone_VideoManager_start_camera_async(video_proxy, video_camera_async_cb, NULL);
 }
 
 void
 dbus_stop_video_camera()
 {
     set_camera_button_sensitivity(FALSE);
-    org_sflphone_SFLphone_VideoControls_stop_camera_async(video_proxy, video_camera_async_cb, NULL);
+    org_sflphone_SFLphone_VideoManager_stop_camera_async(video_proxy, video_camera_async_cb, NULL);
 }
 
 gboolean
@@ -2313,7 +2313,7 @@ dbus_has_video_camera_started()
 {
     GError *error = NULL;
     gboolean started = FALSE;
-    org_sflphone_SFLphone_VideoControls_has_camera_started(video_proxy, &started, &error);
+    org_sflphone_SFLphone_VideoManager_has_camera_started(video_proxy, &started, &error);
     check_error(error);
     return started;
 }
