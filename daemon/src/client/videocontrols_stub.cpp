@@ -54,8 +54,7 @@ void VideoControls::stoppedDecoding(const std::string &id, const std::string)
 
 std::map<std::string, std::string> VideoControls::getSettings()
 {
-    std::map<std::string, std::string> stub;
-    return stub;
+    return std::map<std::string, std::string>();
 }
 
 bool VideoControls::hasCameraStarted()
@@ -73,6 +72,5 @@ void VideoControls::stopCamera()
 
 std::weak_ptr<sfl_video::VideoFrameActiveWriter> VideoControls::getVideoCamera()
 {
-    std::weak_ptr<sfl_video::VideoFrameActiveWriter> stub;
-    return stub;
+    return std::weak_ptr<sfl_video::VideoFrameActiveWriter>();
 }
