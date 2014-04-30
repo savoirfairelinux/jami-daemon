@@ -16,8 +16,8 @@ presencemanager-glue.h: presencemanager-introspec.xml Makefile.am
 endif
 
 if SFL_VIDEO
-BUILT_SOURCES+=video_controls-glue.h
-video_controls-glue.h: video_controls-introspec.xml Makefile.am
+BUILT_SOURCES+=videomanager-glue.h
+videomanager-glue.h: videomanager-introspec.xml Makefile.am
 	dbus-binding-tool --mode=glib-client $< > $@
 endif
 
