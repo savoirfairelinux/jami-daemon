@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,43 +28,46 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEO_RENDERER_H__
-#define VIDEO_RENDERER_H__
+#ifndef VIDEO_WIDGET_H__
+#define VIDEO_WIDGET_H__
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
-#include <clutter/clutter.h>
+#define VIDEO_WIDGET_TYPE              (video_widget_get_type())
+#define VIDEO_WIDGET(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_WIDGET_TYPE, VideoWidget))
+#define VIDEO_WIDGET_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_WIDGET_TYPE, VideoWidgetClass))
+#define IS_VIDEO_WIDGET(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_WIDGET_TYPE))
+#define IS_VIDEO_WIDGET_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_WIDGET_TYPE))
 
-#define VIDEO_RENDERER_TYPE              (video_renderer_get_type())
-#define VIDEO_RENDERER(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_RENDERER_TYPE, VideoRenderer))
-#define VIDEO_RENDERER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_RENDERER_TYPE, VideoRendererClass))
-#define IS_VIDEO_RENDERER(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_RENDERER_TYPE))
-#define IS_VIDEO_RENDERER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_RENDERER_TYPE))
+#define VIDEO_WIDGET_WIDTH             400
+#define VIDEO_WIDGET_HEIGHT            350
+#define VIDEO_LOCAL_HEIGHT             100
 
-typedef struct _VideoRenderer      VideoRenderer;
-typedef struct _VideoRendererClass VideoRendererClass;
+typedef struct _VideoWidgetPrivate VideoWidgetPrivate;
+typedef struct _VideoWidgetClass VideoWidgetClass;
+typedef struct _VideoWidget VideoWidget;
 
-typedef struct _VideoRendererPrivate VideoRendererPrivate;
+typedef enum {
+    VIDEO_AREA_REMOTE,
+    VIDEO_AREA_LOCAL,
+    VIDEO_AREA_LAST
+} VIDEO_AREA_ID;
 
-struct _VideoRenderer {
-    GObject parent;
-    /* Private */
-    VideoRendererPrivate *priv;
+struct _VideoWidgetClass {
+    GtkWindowClass parent_class;
 };
 
-struct _VideoRendererClass {
-    GObjectClass parent_class;
+struct _VideoWidget {
+    GtkWindow parent;
+    /* Private */
+    VideoWidgetPrivate *priv;
 };
 
 /* Public interface */
-VideoRenderer *
-video_renderer_new(ClutterActor *texture, gint width, gint height, gchar *shm_path);
+GType video_widget_get_type(void) G_GNUC_CONST;
+GtkWidget *video_widget_new(/* gchar *, gchar *, gint, gint */);
+void video_widget_video_start(GtkWidget *, VIDEO_AREA_ID, gchar *, gchar *, guint, guint);
+void video_widget_video_stop(GtkWidget *self, VIDEO_AREA_ID, gchar *);
 
-gboolean
-video_renderer_run(VideoRenderer *self);
-
-void
-video_renderer_stop(VideoRenderer *self);
-
-#endif // __VIDEO_RENDERER_H__
+#endif // __VIDEO_WIDGET_H__
