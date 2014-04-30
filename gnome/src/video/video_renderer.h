@@ -34,6 +34,8 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
+#include <clutter/clutter.h>
+
 #define VIDEO_RENDERER_TYPE              (video_renderer_get_type())
 #define VIDEO_RENDERER(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_RENDERER_TYPE, VideoRenderer))
 #define VIDEO_RENDERER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_RENDERER_TYPE, VideoRendererClass))
@@ -57,7 +59,7 @@ struct _VideoRendererClass {
 
 /* Public interface */
 VideoRenderer *
-video_renderer_new(GtkWidget *drawarea, gint width, gint height, gchar *shm_path);
+video_renderer_new(ClutterActor *texture, gint width, gint height, gchar *shm_path);
 
 gboolean
 video_renderer_run(VideoRenderer *self);
