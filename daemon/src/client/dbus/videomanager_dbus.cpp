@@ -45,7 +45,6 @@ VideoManager::VideoManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
     , videoInputSelector_()
     , videoPreference_()
-    , inputClients_(0)
 {
     // initialize libav libraries
     libav_utils::sfl_avcodec_init();
@@ -165,7 +164,6 @@ VideoManager::getSettings() {
 void
 VideoManager::startCamera()
 {
-    inputClients_++;
     if (hasCameraStarted()) {
         WARN("Video preview was already started!");
         return;
@@ -178,14 +176,12 @@ VideoManager::startCamera()
 void
 VideoManager::stopCamera()
 {
-    if (hasCameraStarted()) {
-        DEBUG("Stopping video preview");
-        inputClients_--;
-        if (inputClients_ <= 0)
-            videoInputSelector_.reset();
-    } else {
+    if (not hasCameraStarted()) {
         WARN("Video preview was already stopped");
+        return;
     }
+
+    videoInputSelector_.reset();
 }
 
 bool
