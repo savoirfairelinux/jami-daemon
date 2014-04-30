@@ -164,7 +164,7 @@ function build_kde {
 
 if [ "$#" -eq 0 ]; then   # Script needs at least one command-line argument.
     echo "$0 accepts the following options:
-    -b select 'daemon' or 'gnome' component
+    -b select 'daemon' or 'gnome' or 'kde' component
     -v enable video support
     -c use clang compiler
     -a run static code analysis after build
@@ -179,6 +179,11 @@ while getopts ":b: t a v c" opt; do
     case $opt in
         b)
             echo "-b is set with option $OPTARG" >&2
+            if [ ! -d $OPTARG ]
+            then
+                echo "$OPTARG directory is missing, exiting"
+                exit $E_OPTERR
+            fi
             BUILD=$OPTARG
             ;;
         t)
