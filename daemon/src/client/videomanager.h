@@ -70,8 +70,6 @@ class VideoManager
     private:
         std::shared_ptr<sfl_video::VideoInputSelector> videoInputSelector_;
         VideoPreference videoPreference_;
-        // Only modified from main thread
-        int inputClients_; // XXX necessary with the videoInputSelector_?
 
     public:
 #if HAVE_DBUS
