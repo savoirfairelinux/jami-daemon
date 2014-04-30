@@ -49,6 +49,11 @@ export CXX=g++
 CONFIGDIR=~/.config
 SFLCONFDIR=${CONFIGDIR}/sflphone
 
+function exit_clean {
+    popd
+    exit $1
+}
+
 function run_code_analysis {
     # Check if cppcheck is installed on the system
     if [ `which cppcheck &>/dev/null ; echo $?` -ne 1 ] ; then
@@ -116,7 +121,7 @@ function build_daemon {
         run_code_analysis
     fi
 
-    ./autogen.sh || exit 1
+    ./autogen.sh || exit_clean 1
     # Compile pjproject first
     pushd libs
     ./compile_pjsip.sh
@@ -136,14 +141,14 @@ function build_daemon {
 function build_gnome {
     # Compile the plugins
     pushd plugins
-    ./autogen.sh || exit 1
+    ./autogen.sh || exit_clean 1
     ./configure $GOPTS
     make -j
     popd
 
     # Compile the client
     pushd gnome
-    ./autogen.sh || exit 1
+    ./autogen.sh || exit_clean 1
     ./configure $GOPTS
     make clean
     make -j 1
@@ -172,7 +177,7 @@ if [ "$#" -eq 0 ]; then   # Script needs at least one command-line argument.
     exit $E_OPTERR
 fi
 
-
+pushd "$(git rev-parse --show-toplevel)"
 git clean -f -d -x
 
 while getopts ":b: t a v c" opt; do
@@ -182,7 +187,7 @@ while getopts ":b: t a v c" opt; do
             if [ ! -d $OPTARG ]
             then
                 echo "$OPTARG directory is missing, exiting"
-                exit $E_OPTERR
+                exit_clean $E_OPTERR
             fi
             BUILD=$OPTARG
             ;;
@@ -206,11 +211,11 @@ while getopts ":b: t a v c" opt; do
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
-            exit 1
+            exit_clean 1
             ;;
         :)
             echo "Option -$OPTARG requires an argument." >&2
-            exit 1
+            exit_clean 1
             ;;
         esac
 done
@@ -223,4 +228,4 @@ if [ $TEST == 1 ]; then
 fi
 
 # SUCCESS
-exit 0
+exit_clean 0
