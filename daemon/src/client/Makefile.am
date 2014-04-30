@@ -13,6 +13,7 @@ noinst_HEADERS += presencemanager.h
 endif
 
 if SFL_VIDEO
+VIDEO_SRC = videomanager.cpp
 VIDEO_STUB = videomanager_stub.cpp
 noinst_HEADERS += videomanager.h
 endif
@@ -32,6 +33,7 @@ endif
 libclient_la_SOURCES = callmanager.cpp           \
                        configurationmanager.cpp  \
                        $(PRESENCE_SRC)           \
+                       $(VIDEO_SRC)              \
                        $(STUB_SRC)
 
 libclient_la_CXXFLAGS = -I./ \
