@@ -179,6 +179,11 @@ while getopts ":b: t a v c" opt; do
     case $opt in
         b)
             echo "-b is set with option $OPTARG" >&2
+            if [ ! -d $OPTARG ]
+            then
+                echo "$OPTARG directory is missing, exiting"
+                exit $E_OPTERR
+            fi
             BUILD=$OPTARG
             ;;
         t)
