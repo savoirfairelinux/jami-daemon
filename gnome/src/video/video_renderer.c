@@ -277,7 +277,6 @@ video_renderer_resize_shm(VideoRendererPrivate *priv)
 static void
 video_renderer_render_to_texture(VideoRendererPrivate *priv)
 {
-    usleep(10000);
 
     if (!shm_lock(priv->shm_area))
         return;
