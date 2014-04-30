@@ -32,7 +32,7 @@
 #include "video_sender.h"
 #include "video_mixer.h"
 #include "socket_pair.h"
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 #include "check.h"
 #include "manager.h"
 

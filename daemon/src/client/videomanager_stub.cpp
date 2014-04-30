@@ -30,47 +30,47 @@
 
 #warning Using a stub file will produce a non working application
 
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 
-VideoControls::VideoControls()
+VideoManager::VideoManager()
 {}
 
-VideoPreference& VideoControls::getVideoPreferences()
+VideoPreference& VideoManager::getVideoPreferences()
 {
 }
 
-void VideoControls::deviceEvent()
+void VideoManager::deviceEvent()
 {
 }
 
-void VideoControls::startedDecoding(const std::string &id, const std::string,
+void VideoManager::startedDecoding(const std::string &id, const std::string,
                                     int w, int h)
 {
 }
 
-void VideoControls::stoppedDecoding(const std::string &id, const std::string)
+void VideoManager::stoppedDecoding(const std::string &id, const std::string)
 {
 }
 
-std::map<std::string, std::string> VideoControls::getSettings()
+std::map<std::string, std::string> VideoManager::getSettings()
 {
     return std::map<std::string, std::string>();
 }
 
-bool VideoControls::hasCameraStarted()
+bool VideoManager::hasCameraStarted()
 {
     return false;
 }
 
-void VideoControls::startCamera()
+void VideoManager::startCamera()
 {
 }
 
-void VideoControls::stopCamera()
+void VideoManager::stopCamera()
 {
 }
 
-std::weak_ptr<sfl_video::VideoFrameActiveWriter> VideoControls::getVideoCamera()
+std::weak_ptr<sfl_video::VideoFrameActiveWriter> VideoManager::getVideoCamera()
 {
     return std::weak_ptr<sfl_video::VideoFrameActiveWriter>();
 }

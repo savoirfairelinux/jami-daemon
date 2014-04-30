@@ -13,8 +13,8 @@ noinst_HEADERS += presencemanager.h
 endif
 
 if SFL_VIDEO
-VIDEO_STUB = videocontrols_stub.cpp
-noinst_HEADERS += video_controls.h
+VIDEO_STUB = videomanager_stub.cpp
+noinst_HEADERS += videomanager.h
 endif
 
 if USE_DBUS

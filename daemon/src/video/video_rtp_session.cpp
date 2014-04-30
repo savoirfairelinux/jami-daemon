@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 #include "video_rtp_session.h"
 #include "video_sender.h"
 #include "video_receive_thread.h"
@@ -145,7 +145,7 @@ void VideoRtpSession::start(int localPort)
 
 	if (sending_) {
         // Local video startup if needed
-        auto videoCtrl = Manager::instance().getVideoControls();
+        auto videoCtrl = Manager::instance().getVideoManager();
         const bool firstStart = not videoCtrl->hasCameraStarted();
         videoCtrl->startCamera();
         if (firstStart)
@@ -214,7 +214,7 @@ void VideoRtpSession::stop()
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
-    auto videoCtrl = Manager::instance().getVideoControls();
+    auto videoCtrl = Manager::instance().getVideoManager();
     videoCtrl->stopCamera();
 }
 

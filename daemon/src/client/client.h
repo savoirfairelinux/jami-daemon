@@ -46,7 +46,7 @@ class PresenceManager;
 #endif
 
 #ifdef SFL_VIDEO
-class VideoControls;
+class VideoManager;
 #endif
 
 #if HAVE_DBUS
@@ -69,7 +69,7 @@ class Client {
 #endif
 
 #ifdef SFL_VIDEO
-        VideoControls* getVideoControls();
+        VideoManager* getVideoManager();
 #endif
 
         int event_loop();
@@ -87,7 +87,7 @@ class Client {
         DBus::BusDispatcher*  dispatcher_;
 #endif
 #ifdef SFL_VIDEO
-        VideoControls *videoControls_;
+        VideoManager *videoManager_;
 #endif
 #if USE_NETWORKMANAGER
         NetworkManager* networkManager_;

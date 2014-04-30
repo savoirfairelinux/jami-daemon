@@ -35,7 +35,7 @@
 #include "video_receive_thread.h"
 #include "socket_pair.h"
 #include "manager.h"
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 #include "check.h"
 
 #include <unistd.h>
@@ -154,7 +154,7 @@ void VideoReceiveThread::process()
 void VideoReceiveThread::cleanup()
 {
     if (detach(&sink_))
-        Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
     sink_.stop();
 
     if (videoDecoder_)
@@ -214,7 +214,7 @@ void VideoReceiveThread::enterConference()
         return;
 
     if (detach(&sink_)) {
-        Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
         DEBUG("RX: shm sink <%s> detached", sink_.openedName().c_str());
     }
 }
@@ -226,7 +226,7 @@ void VideoReceiveThread::exitConference()
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
         if (attach(&sink_)) {
-            Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
+            Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
             DEBUG("RX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), dstWidth_, dstHeight_);
         }

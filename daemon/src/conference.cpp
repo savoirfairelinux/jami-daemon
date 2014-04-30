@@ -39,7 +39,7 @@
 #ifdef SFL_VIDEO
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 #include "video/video_input.h"
 #endif
 

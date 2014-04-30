@@ -59,7 +59,7 @@
 
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
-#include "client/video_controls.h"
+#include "client/videomanager.h"
 #endif
 
 #include "client/client.h"
