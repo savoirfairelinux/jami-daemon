@@ -42,8 +42,7 @@
 
 #define VIDEO_WIDGET_WIDTH             400
 #define VIDEO_WIDGET_HEIGHT            350
-#define VIDEO_LOCAL_WIDTH              100
-#define VIDEO_LOCAL_HEIGHT             125
+#define VIDEO_LOCAL_BASE_SIZE          100
 
 typedef struct _VideoWidgetPrivate VideoWidgetPrivate;
 typedef struct _VideoWidgetClass VideoWidgetClass;
