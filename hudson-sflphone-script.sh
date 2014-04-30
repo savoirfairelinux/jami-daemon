@@ -42,6 +42,10 @@ DOPTS="--prefix=/usr"
 #gnome opts
 GOPTS="--prefix=/usr"
 
+#compiler defaults
+export CC=gcc
+export CXX=g++
+
 CONFIGDIR=~/.config
 SFLCONFDIR=${CONFIGDIR}/sflphone
 
@@ -162,6 +166,7 @@ if [ "$#" -eq 0 ]; then   # Script needs at least one command-line argument.
     echo "$0 accepts the following options:
     -b select 'daemon' or 'gnome' component
     -v enable video support
+    -c use clang compiler
     -a run static code analysis after build
     -t run unit tests after build"
     exit $E_OPTERR
@@ -170,7 +175,7 @@ fi
 
 git clean -f -d -x
 
-while getopts ":b: t a v" opt; do
+while getopts ":b: t a v c" opt; do
     case $opt in
         b)
             echo "-b is set with option $OPTARG" >&2
@@ -187,6 +192,12 @@ while getopts ":b: t a v" opt; do
         v)
             echo "-v is set, video support is enabled" >&2
             DOPTS="--enable-video $DOPTS"
+            ;;
+        c)
+            echo "-c is set, clang compiler is used" >&2
+            export CC=clang
+            export CXX=clang++
+            DOPTS="--without-dbus $DOPTS"
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
