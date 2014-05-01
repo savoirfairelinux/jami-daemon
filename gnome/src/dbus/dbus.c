@@ -2222,6 +2222,17 @@ dbus_check_certificate(const gchar *filepath)
     return result;
 }
 
+gboolean
+dbus_certificate_contains_private_key(const gchar *filepath)
+{
+    GError *error = NULL;
+    gboolean result;
+    org_sflphone_SFLphone_ConfigurationManager_check_for_private_key(config_proxy, filepath, &result, &error);
+    check_error(error);
+
+    return result;
+}
+
 gchar *
 dbus_get_address_from_interface_name(const gchar *interface)
 {
