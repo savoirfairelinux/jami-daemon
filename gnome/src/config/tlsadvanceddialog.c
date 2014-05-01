@@ -76,15 +76,28 @@ confirm_certificate_use(GtkWidget *window)
 }
 
 static void
-certificate_set_cb(GtkFileChooserButton *widget, G_GNUC_UNUSED gpointer user_data)
+certificate_set_cb(GtkFileChooserButton *widget, gpointer user_data)
 {
     gchar *filename = get_filename(GTK_WIDGET(widget));
 
     const gboolean is_valid = dbus_check_certificate(filename);
 
+    gboolean contains_key = FALSE;
+    GtkWidget *private_key_chooser = user_data;
+
     /* If certificate is invalid, check if user really wants to use it */
-    if (!is_valid && !confirm_certificate_use(gtk_widget_get_toplevel(GTK_WIDGET(widget))))
+    if (!is_valid && !confirm_certificate_use(gtk_widget_get_toplevel(GTK_WIDGET(widget)))) {
         gtk_file_chooser_unselect_filename(GTK_FILE_CHOOSER(widget), filename);
+    } else {
+
+        /* disable private key file chooser if certificate contains key */
+        contains_key = dbus_certificate_contains_private_key(filename);
+        if (contains_key)
+            gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(private_key_chooser));
+    }
+
+    /* Defaults to sensitive if no key was found */
+    gtk_widget_set_sensitive(private_key_chooser, !contains_key);
 
     g_free(filename);
 }
@@ -182,8 +195,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1);
     GtkWidget * certificateFileChooser = gtk_file_chooser_button_new(_("Choose a public endpoint certificate (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    g_signal_connect(GTK_FILE_CHOOSER(certificateFileChooser), "file-set", G_CALLBACK(certificate_set_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), certificateFileChooser, 1, 4, 1, 1);
+
+    gboolean contains_key = FALSE;
 
     if (!tls_certificate_file) {
         gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
@@ -194,6 +208,7 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
             GFile * file = g_file_new_for_path(tls_certificate_file);
             gtk_file_chooser_set_file(GTK_FILE_CHOOSER(certificateFileChooser), file, NULL);
             g_object_unref(file);
+            contains_key = dbus_certificate_contains_private_key(tls_certificate_file);
         }
     }
 
@@ -203,10 +218,14 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     GtkWidget *privateKeyFileChooser = gtk_file_chooser_button_new(_("Choose a private key file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
     gtk_grid_attach(GTK_GRID(grid), privateKeyFileChooser, 1, 5, 1, 1);
 
-    if (!tls_private_key_file) {
+    /* if certificate contains private key file, disallow private
+     * key file selection */
+    g_signal_connect(GTK_FILE_CHOOSER(certificateFileChooser), "file-set", G_CALLBACK(certificate_set_cb), privateKeyFileChooser);
+
+    if (!tls_private_key_file || contains_key) {
         gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(privateKeyFileChooser));
     } else {
-        if (!*tls_private_key_file) {
+        if (!*tls_private_key_file || contains_key) {
             gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(privateKeyFileChooser));
         } else {
             GFile * file = g_file_new_for_path(tls_private_key_file);
@@ -214,6 +233,7 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
             g_object_unref(file);
         }
     }
+    gtk_widget_set_sensitive(privateKeyFileChooser, !contains_key);
 
     label = gtk_label_new_with_mnemonic(_("Password for the private key"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
