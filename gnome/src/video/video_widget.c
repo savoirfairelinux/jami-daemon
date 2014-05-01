@@ -39,6 +39,8 @@
 
 typedef struct _VideoArea {
     gboolean        show;
+    guint           width;
+    guint           height;
     ClutterActor    *texture;
     gchar           *video_id;
     VideoRenderer   *video_renderer;
@@ -94,12 +96,11 @@ video_widget_init(VideoWidget *self)
     priv->container = NULL;
     for (int i = 0; i < VIDEO_AREA_LAST; i++) {
         priv->video_area[i].texture = NULL;
+        priv->video_area[i].width  = 0;
+        priv->video_area[i].height = 0;
         priv->video_area[i].video_id = NULL;
         priv->video_area[i].video_renderer = NULL;
     }
-
-    gtk_window_set_default_size(GTK_WINDOW(self), VIDEO_WIDGET_WIDTH,
-            VIDEO_WIDGET_HEIGHT);
 
 }
 
@@ -119,7 +120,7 @@ video_widget_draw_screen(gint width, gint height)
 }
 
 static void
-video_widget_redraw_screen(GtkWidget *self)
+video_widget_redraw_screen(GtkWidget *self, guint width, guint height)
 {
     g_return_if_fail(IS_VIDEO_WIDGET(self));
 
@@ -130,19 +131,10 @@ video_widget_redraw_screen(GtkWidget *self)
     ClutterActor *camera_remote = priv->video_area[VIDEO_AREA_REMOTE].texture;
     ClutterActor *camera_local  = priv->video_area[VIDEO_AREA_LOCAL].texture;
 
-    /* window size */
-    guint window_width  = gtk_widget_get_allocated_width(self);
-    guint window_height = gtk_widget_get_allocated_height(self);
+    guint toolbar_height = 0;
 
-    /* screen size */
-    guint screen_width  = gtk_widget_get_allocated_width(priv->screen);
-    guint screen_height = gtk_widget_get_allocated_height(priv->screen);
-
-    /* local camera size & position */
-    guint local_width   = VIDEO_LOCAL_WIDTH;
-    guint local_height  = VIDEO_LOCAL_HEIGHT;
-    guint local_x       = screen_width - local_width;
-    guint local_y       = screen_height - local_height;
+    if (priv->toolbar)
+        toolbar_height = gtk_widget_get_allocated_height(priv->toolbar);
 
 #if !USE_CONTAINER_HACK
     if (!priv->container)
@@ -165,7 +157,7 @@ video_widget_redraw_screen(GtkWidget *self)
     if (priv->video_area[VIDEO_AREA_REMOTE].show) {
 
         /* the remote camera must always fit the screen size */
-        clutter_actor_set_size(camera_remote, screen_width, screen_height);
+        clutter_actor_set_size(camera_remote, width, height - toolbar_height);
 
         /* if the actor is not already in the stage */
         if (clutter_actor_contains(stage, camera_remote) == FALSE) {
@@ -193,10 +185,29 @@ video_widget_redraw_screen(GtkWidget *self)
     /* Handle the local camera behaviour */
     if (priv->video_area[VIDEO_AREA_LOCAL].show) {
 
-        /* the local camera must be placed */
-        clutter_actor_set_size(camera_local, local_width, local_height);
-        clutter_actor_set_position(camera_local, local_x, local_y);
+        /* if the remote camera is not show, we use all the space for the
+         * local camera */
+        if (!priv->video_area[VIDEO_AREA_REMOTE].show) {
 
+            clutter_actor_set_size(camera_local, width, height - toolbar_height);
+
+        } else {
+        /* else the local camera must be resize keeping the aspect ratio and placed */
+
+            gdouble aspect_ratio = (gdouble) priv->video_area[VIDEO_AREA_LOCAL].width /
+                    priv->video_area[VIDEO_AREA_LOCAL].height;
+
+            clutter_actor_set_size(camera_local,
+                    VIDEO_LOCAL_BASE_SIZE * aspect_ratio,
+                    VIDEO_LOCAL_BASE_SIZE);
+            clutter_actor_set_position(
+                    camera_local,
+                    width - (VIDEO_LOCAL_BASE_SIZE * aspect_ratio),
+                    height - VIDEO_LOCAL_BASE_SIZE - toolbar_height);
+
+        }
+
+        /* if the local camera is not already in the scene we add it */
         if (clutter_actor_contains(priv->container, camera_local) == FALSE) {
             clutter_actor_add_child(priv->container, camera_local);
         }
@@ -213,12 +224,52 @@ video_widget_redraw_screen(GtkWidget *self)
 
     }
 
+}
+
+void
+video_widget_resize(GtkWidget *self)
+{
+    g_return_if_fail(IS_VIDEO_WIDGET(self));
+
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+
+    int width  = 0;
+    int height = 0;
+    gdouble aspect_ratio;
+
+    /* Calculate the window size and aspect ration base on the bigger video_are
+     * to show the remote video is always bigger then the local one. */
+    if (priv->video_area[VIDEO_AREA_REMOTE].show == TRUE) {
+
+        width  = priv->video_area[VIDEO_AREA_REMOTE].width;
+        height = priv->video_area[VIDEO_AREA_REMOTE].height;
+
+    } else {
+
+        width  = priv->video_area[VIDEO_AREA_LOCAL].width;
+        height = priv->video_area[VIDEO_AREA_LOCAL].height;
+
+    }
+
+    aspect_ratio = (gdouble) width / height;
+
     /* The window must keep a fixed aspect ratio */
     GdkGeometry geom = {
-        .min_aspect = (gdouble) window_width / window_height,
-        .max_aspect = (gdouble) window_width / window_height,
+        .min_aspect = aspect_ratio,
+        .max_aspect = aspect_ratio,
     };
     gtk_window_set_geometry_hints(self, NULL, &geom, GDK_HINT_ASPECT);
+
+    /* If the toolbar is show, we must request a bigger size
+     * TODO: the toolbar can be a vertical widget so don't alway take the height
+     * value */
+    guint toolbar_height = 0;
+    if (priv->toolbar)
+        toolbar_height = gtk_widget_get_allocated_height(priv->toolbar);
+
+    gtk_widget_set_size_request(priv->screen, width, height + toolbar_height);
+
+    video_widget_redraw_screen(self, width, height + toolbar_height);
 
 }
 
@@ -239,6 +290,10 @@ video_widget_camera_start(GtkWidget *self,
 
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
+    /* store the video size */
+    priv->video_area[video_area_id].width  = width;
+    priv->video_area[video_area_id].height = height;
+
     /* store the video_id */
     priv->video_area[video_area_id].video_id = g_strdup(video_id);
 
@@ -256,9 +311,11 @@ video_widget_camera_start(GtkWidget *self,
         g_warning("Could not run video renderer");
     }
 
+    /* the video area must be show */
     priv->video_area[video_area_id].show = TRUE;
 
-    video_widget_redraw_screen(self);
+    /* when a new camera start, the window must be resize and redraw consequently */
+    video_widget_resize(self);
 
 }
 
@@ -273,11 +330,12 @@ video_widget_camera_stop(GtkWidget *self,
     g_free(priv->video_area[video_area_id].video_id);
     priv->video_area[video_area_id].video_id = NULL;
 
-    if (priv->video_area[video_area_id].video_renderer != NULL) {
-        video_renderer_stop(priv->video_area[video_area_id].video_renderer);
-        priv->video_area[video_area_id].show = FALSE;
-        video_widget_redraw_screen(self);
-    }
+    priv->video_area[video_area_id].show = FALSE;
+
+    video_renderer_stop(priv->video_area[video_area_id].video_renderer);
+
+    video_widget_resize(self);
+
 }
 
 static gboolean
@@ -290,7 +348,7 @@ on_configure_event_cb(GtkWidget *widget,
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
     /* redraw the screen on resize */
-    video_widget_redraw_screen(self);
+    video_widget_redraw_screen(self, event->width, event->height);
 
     /* return false to let the event propagate */
     return FALSE;
