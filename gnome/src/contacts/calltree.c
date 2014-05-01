@@ -71,9 +71,8 @@ typedef struct {
 
 static PopupData *popup_data = NULL;
 
-// Messages used in menu item
-static const gchar * const SFL_CREATE_CONFERENCE = "Create conference";
-static const gchar * const SFL_TRANSFER_CALL = "Transfer call to";
+#define SFL_CREATE_CONFERENCE _("Create conference")
+#define SFL_TRANSFER_CALL _("Transfer call to")
 
 static GtkWidget *calltree_popupmenu = NULL;
 static GtkWidget *calltree_menu_items = NULL;
