@@ -1,8 +1,9 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
- *  Copyright © 2009 Rémi Denis-Courmont
+ *  Copyright (C) 2009 Rémi Denis-Courmont
  *
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
+ *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,33 +31,68 @@
  *  as that of the covered work.
  */
 
-#include <cstdio>
-#include <stdexcept> // for std::runtime_error
-#include <sstream>
 #include <algorithm>
-#include <unistd.h>
-
-#include "logger.h"
-
-#include <libudev.h>
+#include <cerrno>
+#include <cstdio>
 #include <cstring>
+#include <libudev.h>
+#include <mutex>
+#include <sstream>
+#include <stdexcept> // for std::runtime_error
+#include <string>
+#include <thread>
+#include <unistd.h>
+#include <vector>
+
+#include "../video_preferences.h"
+#include "client/videomanager.h"
+#include "config/yamlemitter.h"
+#include "config/yamlnode.h"
+#include "logger.h"
+#include "manager.h"
+#include "noncopyable.h"
+#include "video_v4l2.h"
 
 extern "C" {
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 }
-
-#include <cerrno>
-
-#include "video_v4l2_list.h"
-#include "manager.h"
-#include "client/videomanager.h"
 
 namespace sfl_video {
 
 using std::vector;
 using std::string;
+
+class VideoDeviceMonitorImpl {
+    public:
+        VideoDeviceMonitorImpl();
+        ~VideoDeviceMonitorImpl();
+        void start();
+
+        std::vector<std::string> getDeviceList();
+        std::vector<std::string> getChannelList(const std::string &dev);
+        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel);
+        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size);
+
+        std::string getDeviceNode(const std::string &name);
+        unsigned getChannelNum(const std::string &dev, const std::string &name);
+
+    private:
+        void run();
+
+        std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
+        NON_COPYABLE(VideoDeviceMonitorImpl);
+        void delDevice(const std::string &node);
+        bool addDevice(const std::string &dev);
+        std::vector<VideoV4l2Device> devices_;
+        std::thread thread_;
+        std::mutex mutex_;
+
+        udev *udev_;
+        udev_monitor *udev_mon_;
+        bool probing_;
+};
 
 static int is_v4l2(struct udev_device *dev)
 {
@@ -65,7 +101,7 @@ static int is_v4l2(struct udev_device *dev)
     return version and strcmp(version, "1");
 }
 
-VideoV4l2ListThread::VideoV4l2ListThread() : devices_(),
+VideoDeviceMonitorImpl::VideoDeviceMonitorImpl() : devices_(),
     thread_(), mutex_(), udev_(0),
     udev_mon_(0), probing_(false)
 {
@@ -143,11 +179,10 @@ udev_failed:
     }
 }
 
-
-void VideoV4l2ListThread::start()
+void VideoDeviceMonitorImpl::start()
 {
     probing_ = true;
-    thread_ = std::thread(&VideoV4l2ListThread::run, this);
+    thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
 }
 
 namespace {
@@ -200,7 +235,7 @@ start:
     }
 } // end anonymous namespace
 
-VideoV4l2ListThread::~VideoV4l2ListThread()
+VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 {
     probing_ = false;
     if (thread_.joinable())
@@ -211,7 +246,7 @@ VideoV4l2ListThread::~VideoV4l2ListThread()
         udev_unref(udev_);
 }
 
-void VideoV4l2ListThread::run()
+void VideoDeviceMonitorImpl::run()
 {
     if (!udev_mon_) {
         probing_ = false;
@@ -271,7 +306,7 @@ void VideoV4l2ListThread::run()
     }
 }
 
-void VideoV4l2ListThread::delDevice(const string &node)
+void VideoDeviceMonitorImpl::delDevice(const string &node)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -284,7 +319,7 @@ void VideoV4l2ListThread::delDevice(const string &node)
     }
 }
 
-bool VideoV4l2ListThread::addDevice(const string &dev)
+bool VideoDeviceMonitorImpl::addDevice(const string &dev)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -305,7 +340,7 @@ bool VideoV4l2ListThread::addDevice(const string &dev)
 }
 
 vector<string>
-VideoV4l2ListThread::getChannelList(const string &dev)
+VideoDeviceMonitorImpl::getChannelList(const string &dev)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -316,7 +351,7 @@ VideoV4l2ListThread::getChannelList(const string &dev)
 }
 
 vector<string>
-VideoV4l2ListThread::getSizeList(const string &dev, const string &channel)
+VideoDeviceMonitorImpl::getSizeList(const string &dev, const string &channel)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -327,7 +362,7 @@ VideoV4l2ListThread::getSizeList(const string &dev, const string &channel)
 }
 
 vector<string>
-VideoV4l2ListThread::getRateList(const string &dev, const string &channel, const std::string &size)
+VideoDeviceMonitorImpl::getRateList(const string &dev, const string &channel, const std::string &size)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -337,7 +372,7 @@ VideoV4l2ListThread::getRateList(const string &dev, const string &channel, const
         return vector<string>();
 }
 
-vector<string> VideoV4l2ListThread::getDeviceList()
+vector<string> VideoDeviceMonitorImpl::getDeviceList()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     vector<string> v;
@@ -349,7 +384,7 @@ vector<string> VideoV4l2ListThread::getDeviceList()
 }
 
 Devices::const_iterator
-VideoV4l2ListThread::findDevice(const string &name) const
+VideoDeviceMonitorImpl::findDevice(const string &name) const
 {
     Devices::const_iterator iter(std::find_if(devices_.begin(), devices_.end(), DeviceComparator(name)));
     if (iter == devices_.end())
@@ -357,7 +392,7 @@ VideoV4l2ListThread::findDevice(const string &name) const
     return iter;
 }
 
-unsigned VideoV4l2ListThread::getChannelNum(const string &dev, const string &name)
+unsigned VideoDeviceMonitorImpl::getChannelNum(const string &dev, const string &name)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -367,7 +402,7 @@ unsigned VideoV4l2ListThread::getChannelNum(const string &dev, const string &nam
         return 0;
 }
 
-string VideoV4l2ListThread::getDeviceNode(const string &name)
+string VideoDeviceMonitorImpl::getDeviceNode(const string &name)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(name));
@@ -377,3 +412,69 @@ string VideoV4l2ListThread::getDeviceNode(const string &name)
         return "";
 }
 } // namespace sfl_video
+
+using namespace sfl_video;
+
+VideoPreference::VideoPreference() :
+    monitorImpl_(new VideoDeviceMonitorImpl),
+    deviceList_(),
+    active_(deviceList_.end())
+{
+    monitorImpl_->start();
+}
+
+VideoPreference::~VideoPreference()
+{}
+
+/*
+ * V4L2 interface.
+ */
+
+std::vector<std::string>
+VideoPreference::getDeviceList()
+{
+    return monitorImpl_->getDeviceList();
+}
+
+std::vector<std::string>
+VideoPreference::getChannelList(const std::string &dev)
+{
+    return monitorImpl_->getChannelList(dev);
+}
+
+std::vector<std::string>
+VideoPreference::getSizeList(const std::string &dev, const std::string &channel)
+{
+    return monitorImpl_->getSizeList(dev, channel);
+}
+
+std::vector<std::string>
+VideoPreference::getRateList(const std::string &dev, const std::string &channel, const std::string &size)
+{
+    return monitorImpl_->getRateList(dev, channel, size);
+}
+
+/*
+ * Interface for a single device.
+ */
+
+std::map<std::string, std::string>
+VideoPreference::deviceToSettings(const VideoDevice& dev)
+{
+    std::map<std::string, std::string> settings;
+
+    settings["input"] = monitorImpl_->getDeviceNode(dev.name);
+
+    std::stringstream channel_index;
+    channel_index << monitorImpl_->getChannelNum(dev.name, dev.channel);
+    settings["channel"] = channel_index.str();
+
+    settings["video_size"] = dev.size;
+    size_t x_pos = dev.size.find('x');
+    settings["width"] = dev.size.substr(0, x_pos);
+    settings["height"] = dev.size.substr(x_pos + 1);
+
+    settings["framerate"] = dev.rate;
+
+    return settings;
+}
