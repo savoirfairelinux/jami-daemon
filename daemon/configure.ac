@@ -73,6 +73,71 @@ AC_COMPILE_IFELSE(
 
 AC_MSG_RESULT([$CLANG])
 
+
+dnl
+dnl  Check for the contrib directory
+dnl
+AC_ARG_WITH(contrib,
+  [AS_HELP_STRING([--with-contrib[=DIR]],
+    [search for 3rd party libraries in DIR/include and DIR/lib])
+])
+AC_MSG_CHECKING([for 3rd party libraries path])
+AS_IF([test -z "${with_contrib}" || test "${with_contrib}" = "yes"], [
+  CONTRIB_DIR="${srcdir}/../contrib/${host}"
+  AS_IF([test ! -d "${CONTRIB_DIR}"], [
+    echo "${CONTRIB_DIR} not found" >&AS_MESSAGE_LOG_FD
+    CONTRIB_DIR="${srcdir}/../contrib/`$CC -dumpmachine`"
+    AS_IF([test ! -d "${CONTRIB_DIR}"], [
+      echo "${CONTRIB_DIR} not found" >&AS_MESSAGE_LOG_FD
+      CONTRIB_DIR=""
+      AC_MSG_RESULT([not found])
+    ])
+  ])
+], [
+  AS_IF([test "${with_contrib}" != "no"], [
+    CONTRIB_DIR="${with_contrib}"
+  ], [
+    CONTRIB_DIR=""
+    AC_MSG_RESULT([disabled])
+  ])
+])
+
+AS_IF([test -n "${CONTRIB_DIR}"], [
+  AS_IF([test -d "${CONTRIB_DIR}/lib"],[
+    CONTRIB_DIR=`cd "${CONTRIB_DIR}" && pwd`
+  ], [
+    echo "${CONTRIB_DIR}/lib not found" >&AS_MESSAGE_LOG_FD
+    CONTRIB_DIR=""
+    AC_MSG_RESULT([not usable])
+  ])
+])
+
+AS_IF([test -n "${CONTRIB_DIR}"], [
+  AC_MSG_RESULT([${CONTRIB_DIR}])
+  export PATH=${CONTRIB_DIR}/bin:$PATH
+  CPPFLAGS="${CPPFLAGS} -I${CONTRIB_DIR}/include"
+  CFLAGS="${CFLAGS} -I${CONTRIB_DIR}/include"
+  CXXFLAGS="${CXXFLAGS} -I${CONTRIB_DIR}/include"
+  OBJCFLAGS="${OBJCFLAGS} -I${CONTRIB_DIR}/include"
+  export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH"
+  LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib"
+
+  AS_IF([test "${SYS}" = "darwin"], [
+    export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
+    export DYLD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$DYLD_LIBRARY_PATH"
+  ])
+], [
+  AS_IF([test -n "${with_contrib}" && test "${with_contrib}" != "no"], [
+    AC_MSG_ERROR([Third party libraries not found!])
+  ])
+])
+AC_SUBST(CONTRIB_DIR)
+
+dnl Check for uuid development package - name: uuid-dev
+UUID_MIN_VERSION=1.0
+PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
+
+
 AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], [
        AC_MSG_ERROR([Unable to find yaml development files])])
 
