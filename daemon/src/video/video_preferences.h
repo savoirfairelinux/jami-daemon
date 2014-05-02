@@ -33,7 +33,7 @@
 #define VIDEO_PREFERENCE_H__
 
 #include "config/serializable.h"
-#include "video/video_v4l2.h"
+#include "video/v4l/video_v4l2.h"
 #include "noncopyable.h"
 
 #include <map>

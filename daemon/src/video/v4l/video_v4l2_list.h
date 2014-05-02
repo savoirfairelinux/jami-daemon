@@ -74,4 +74,4 @@ class VideoV4l2ListThread {
 
 } // namespace sfl_video
 
-#endif //__VIDEO_V4L2_LIST_H__ 
+#endif // __VIDEO_V4L2_LIST_H__
