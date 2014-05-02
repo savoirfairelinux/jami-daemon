@@ -109,4 +109,4 @@ class VideoV4l2Device {
 
 } // namespace sfl_video
 
-#endif //__VIDEO_V4L2_H__ 
+#endif // __VIDEO_V4L2_H__

@@ -36,7 +36,7 @@
 #include "config/yamlnode.h"
 #include "logger.h"
 #include "video_preferences.h"
-#include "video_v4l2_list.h"
+#include "v4l/video_v4l2_list.h"
 
 using namespace sfl_video;
 
