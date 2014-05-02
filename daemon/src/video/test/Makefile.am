@@ -1,7 +1,7 @@
 include ../../../globals.mak
 
-TESTS=test_video_endpoint test_v4l2 test_shm test_video_input test_video_rtp
-check_PROGRAMS=test_video_endpoint test_video_rtp test_video_input test_v4l2 test_shm
+TESTS=test_video_endpoint test_shm test_video_input test_video_rtp
+check_PROGRAMS=test_video_endpoint test_video_rtp test_video_input test_shm
 
 test_video_endpoint_SOURCES=test_video_endpoint.cpp test_video_endpoint.h
 test_video_endpoint_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la $(YAML_LIBS)
@@ -11,9 +11,6 @@ test_video_rtp_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/vide
 
 test_video_input_SOURCES=test_video_input.cpp test_video_input.h
 test_video_input_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la $(YAML_LIBS)
-
-test_v4l2_SOURCES=test_v4l2.cpp $(top_srcdir)/src/logger.cpp
-test_v4l2_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la $(YAML_LIBS)
 
 test_shm_SOURCES=test_shm.cpp shm_src.cpp shm_src.h
 test_shm_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la $(YAML_LIBS)

@@ -36,45 +36,8 @@
 #include "config/yamlnode.h"
 #include "logger.h"
 #include "video_preferences.h"
-#include "video_v4l2_list.h"
 
 using namespace sfl_video;
-
-VideoPreference::VideoPreference() :
-    v4l2List_(new VideoV4l2ListThread),
-    deviceList_(),
-    active_(deviceList_.end())
-{
-    v4l2List_->start();
-}
-
-/*
- * V4L2 interface.
- */
-
-std::vector<std::string>
-VideoPreference::getDeviceList()
-{
-    return v4l2List_->getDeviceList();
-}
-
-std::vector<std::string>
-VideoPreference::getChannelList(const std::string &dev)
-{
-    return v4l2List_->getChannelList(dev);
-}
-
-std::vector<std::string>
-VideoPreference::getSizeList(const std::string &dev, const std::string &channel)
-{
-    return v4l2List_->getSizeList(dev, channel);
-}
-
-std::vector<std::string>
-VideoPreference::getRateList(const std::string &dev, const std::string &channel, const std::string &size)
-{
-    return v4l2List_->getRateList(dev, channel, size);
-}
 
 /*
  * Interface for a single device.
@@ -102,27 +65,6 @@ VideoPreference::lookupDevice(const std::string& name)
             break;
 
     return iter;
-}
-
-std::map<std::string, std::string>
-VideoPreference::deviceToSettings(const VideoDevice& dev)
-{
-    std::map<std::string, std::string> settings;
-
-    settings["input"] = v4l2List_->getDeviceNode(dev.name);
-
-    std::stringstream channel_index;
-    channel_index << v4l2List_->getChannelNum(dev.name, dev.channel);
-    settings["channel"] = channel_index.str();
-
-    settings["video_size"] = dev.size;
-    size_t x_pos = dev.size.find('x');
-    settings["width"] = dev.size.substr(0, x_pos);
-    settings["height"] = dev.size.substr(x_pos + 1);
-
-    settings["framerate"] = dev.rate;
-
-    return settings;
 }
 
 std::map<std::string, std::string>
