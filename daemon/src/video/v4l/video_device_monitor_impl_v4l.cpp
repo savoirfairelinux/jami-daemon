@@ -49,7 +49,7 @@ extern "C" {
 
 #include <cerrno>
 
-#include "video_v4l2_list.h"
+#include "video_device_monitor_impl_v4l.h"
 #include "manager.h"
 #include "client/videomanager.h"
 
@@ -65,7 +65,7 @@ static int is_v4l2(struct udev_device *dev)
     return version and strcmp(version, "1");
 }
 
-VideoV4l2ListThread::VideoV4l2ListThread() : devices_(),
+VideoDeviceMonitorImpl::VideoDeviceMonitorImpl() : devices_(),
     thread_(), mutex_(), udev_(0),
     udev_mon_(0), probing_(false)
 {
@@ -144,10 +144,10 @@ udev_failed:
 }
 
 
-void VideoV4l2ListThread::start()
+void VideoDeviceMonitorImpl::start()
 {
     probing_ = true;
-    thread_ = std::thread(&VideoV4l2ListThread::run, this);
+    thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
 }
 
 namespace {
@@ -200,7 +200,7 @@ start:
     }
 } // end anonymous namespace
 
-VideoV4l2ListThread::~VideoV4l2ListThread()
+VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 {
     probing_ = false;
     if (thread_.joinable())
@@ -211,7 +211,7 @@ VideoV4l2ListThread::~VideoV4l2ListThread()
         udev_unref(udev_);
 }
 
-void VideoV4l2ListThread::run()
+void VideoDeviceMonitorImpl::run()
 {
     if (!udev_mon_) {
         probing_ = false;
@@ -271,7 +271,7 @@ void VideoV4l2ListThread::run()
     }
 }
 
-void VideoV4l2ListThread::delDevice(const string &node)
+void VideoDeviceMonitorImpl::delDevice(const string &node)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -284,7 +284,7 @@ void VideoV4l2ListThread::delDevice(const string &node)
     }
 }
 
-bool VideoV4l2ListThread::addDevice(const string &dev)
+bool VideoDeviceMonitorImpl::addDevice(const string &dev)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -305,7 +305,7 @@ bool VideoV4l2ListThread::addDevice(const string &dev)
 }
 
 vector<string>
-VideoV4l2ListThread::getChannelList(const string &dev)
+VideoDeviceMonitorImpl::getChannelList(const string &dev)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -316,7 +316,7 @@ VideoV4l2ListThread::getChannelList(const string &dev)
 }
 
 vector<string>
-VideoV4l2ListThread::getSizeList(const string &dev, const string &channel)
+VideoDeviceMonitorImpl::getSizeList(const string &dev, const string &channel)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -327,7 +327,7 @@ VideoV4l2ListThread::getSizeList(const string &dev, const string &channel)
 }
 
 vector<string>
-VideoV4l2ListThread::getRateList(const string &dev, const string &channel, const std::string &size)
+VideoDeviceMonitorImpl::getRateList(const string &dev, const string &channel, const std::string &size)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -337,7 +337,7 @@ VideoV4l2ListThread::getRateList(const string &dev, const string &channel, const
         return vector<string>();
 }
 
-vector<string> VideoV4l2ListThread::getDeviceList()
+vector<string> VideoDeviceMonitorImpl::getDeviceList()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     vector<string> v;
@@ -349,7 +349,7 @@ vector<string> VideoV4l2ListThread::getDeviceList()
 }
 
 Devices::const_iterator
-VideoV4l2ListThread::findDevice(const string &name) const
+VideoDeviceMonitorImpl::findDevice(const string &name) const
 {
     Devices::const_iterator iter(std::find_if(devices_.begin(), devices_.end(), DeviceComparator(name)));
     if (iter == devices_.end())
@@ -357,7 +357,7 @@ VideoV4l2ListThread::findDevice(const string &name) const
     return iter;
 }
 
-unsigned VideoV4l2ListThread::getChannelNum(const string &dev, const string &name)
+unsigned VideoDeviceMonitorImpl::getChannelNum(const string &dev, const string &name)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -367,7 +367,7 @@ unsigned VideoV4l2ListThread::getChannelNum(const string &dev, const string &nam
         return 0;
 }
 
-string VideoV4l2ListThread::getDeviceNode(const string &name)
+string VideoDeviceMonitorImpl::getDeviceNode(const string &name)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(name));

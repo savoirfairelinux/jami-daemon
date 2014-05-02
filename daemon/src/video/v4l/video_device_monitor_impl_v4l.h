@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_V4L2_LIST_H__
-#define __VIDEO_V4L2_LIST_H__
+#ifndef __VIDEO_DEVICE_MONITOR_IMPL_V4L_H__
+#define __VIDEO_DEVICE_MONITOR_IMPL_V4L_H__
 
 #include <string>
 #include <vector>
@@ -42,10 +42,10 @@
 
 namespace sfl_video {
 
-class VideoV4l2ListThread {
+class VideoDeviceMonitorImpl {
     public:
-        VideoV4l2ListThread();
-        ~VideoV4l2ListThread();
+        VideoDeviceMonitorImpl();
+        ~VideoDeviceMonitorImpl();
         void start();
 
         std::vector<std::string> getDeviceList();
@@ -60,7 +60,7 @@ class VideoV4l2ListThread {
         void run();
 
         std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
-        NON_COPYABLE(VideoV4l2ListThread);
+        NON_COPYABLE(VideoDeviceMonitorImpl);
         void delDevice(const std::string &node);
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices_;
@@ -74,4 +74,4 @@ class VideoV4l2ListThread {
 
 } // namespace sfl_video
 
-#endif //__VIDEO_V4L2_LIST_H__ 
+#endif // __VIDEO_DEVICE_MONITOR_IMPL_V4L_H__

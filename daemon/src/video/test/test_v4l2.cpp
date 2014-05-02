@@ -33,14 +33,14 @@
 #include <vector>
 #include <string>
 
-#include "video_v4l2_list.h"
+#include "v4l/video_device_monitor_impl_v4l.h"
 
 int main()
 {
     using namespace sfl_video;
     using namespace std;
 
-    VideoV4l2ListThread worker;
+    VideoDeviceMonitorImpl worker;
     worker.start();
     vector<string> devs(worker.getDeviceList());
 
