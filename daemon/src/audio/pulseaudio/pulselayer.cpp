@@ -340,15 +340,16 @@ void PulseLayer::createStreams(pa_context* c)
     std::string ringtoneDevice(preference_.getPulseDeviceRingtone());
     std::string defaultDevice = "";
 
-    DEBUG("Devices: playback: %s record: %s ringtone: %s",
-          playbackDevice.c_str(), captureDevice.c_str(), ringtoneDevice.c_str());
+    DEBUG("playback: %s record: %s ringtone: %s", playbackDevice.c_str(),
+          captureDevice.c_str(), ringtoneDevice.c_str());
 
     // Create playback stream
     const PaDeviceInfos* dev_infos = getDeviceInfos(sinkList_, playbackDevice);
 
     if (dev_infos == nullptr) {
         dev_infos = &sinkList_[0];
-        DEBUG("Prefered playback device not found in device list, selecting %s instead.", dev_infos->name.c_str());
+        WARN("Prefered playback device %s not found in device list, selecting %s instead.",
+             playbackDevice.c_str(), dev_infos->name.c_str());
     }
 
     playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos);
@@ -361,7 +362,8 @@ void PulseLayer::createStreams(pa_context* c)
 
     if (dev_infos == nullptr) {
         dev_infos = &sourceList_[0];
-        DEBUG("Prefered capture device not found in device list, selecting %s instead.", dev_infos->name.c_str());
+        WARN("Prefered capture device %s not found in device list, selecting %s instead.",
+             captureDevice.c_str(), dev_infos->name.c_str());
     }
 
     record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos);
@@ -374,7 +376,8 @@ void PulseLayer::createStreams(pa_context* c)
 
     if (dev_infos == nullptr) {
         dev_infos = &sinkList_[0];
-        DEBUG("Prefered ringtone device not found in device list, selecting %s instead.", dev_infos->name.c_str());
+        WARN("Prefered ringtone device %s not found in device list, selecting %s instead.",
+             ringtoneDevice.c_str(), dev_infos->name.c_str());
     }
 
     ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos);
