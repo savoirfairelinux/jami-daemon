@@ -31,6 +31,7 @@ OPTIONS="--disable-oss
         --disable-g7221-codec
         --disable-speex-codec
         --disable-ilbc-codec
+        --disable-opencore-amr
         --disable-sdl
         --disable-ffmpeg
         --disable-v4l2"
