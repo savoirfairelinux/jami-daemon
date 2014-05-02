@@ -5,7 +5,8 @@ libexec_PROGRAMS = sflphoned
 
 if SFL_VIDEO
 SFL_VIDEO_SUBDIR = video
-SFL_VIDEO_LIB=./video/libvideo.la
+SFL_VIDEO_LIBS=./video/libvideo.la \
+			   ./video/v4l2/libv4l2.la
 endif
 
 if BUILD_INSTANT_MESSAGING
@@ -44,7 +45,7 @@ libsflphone_la_LIBADD = \
 	./client/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
-	./history/libhistory.la $(SFL_VIDEO_LIB) $(IM_LIB)
+	./history/libhistory.la $(SFL_VIDEO_LIBS) $(IM_LIB)
 
 libsflphone_la_LDFLAGS = \
 		@CCGNU2_LIBS@ \

@@ -33,7 +33,6 @@
 #define VIDEO_PREFERENCE_H__
 
 #include "config/serializable.h"
-#include "video/video_v4l2.h"
 #include "noncopyable.h"
 
 #include <map>
@@ -41,7 +40,7 @@
 #include <memory>
 
 namespace sfl_video {
-    class VideoV4l2ListThread;
+    class VideoDeviceMonitorImpl;
 }
 
 namespace Conf {
@@ -52,9 +51,10 @@ class VideoPreference : public Serializable
 {
     public:
         VideoPreference();
+        ~VideoPreference();
 
         /*
-         * V4L2 interface.
+         * Video device monitoring specific interface.
          */
         std::vector<std::string> getDeviceList();
         std::vector<std::string> getChannelList(const std::string& name);
@@ -100,7 +100,7 @@ class VideoPreference : public Serializable
             std::string rate = "";
         };
 
-        std::shared_ptr<sfl_video::VideoV4l2ListThread> v4l2List_;
+        std::unique_ptr<sfl_video::VideoDeviceMonitorImpl> monitorImpl_;
 
         /*
          * Vector containing the video devices in order of preference
