@@ -9,6 +9,10 @@ http://projects.savoirfairelinux.net/wiki/sflphone/Coding_Standards
 We are now using Gerrit as a code review tool.
 Wiki documentation: https://projects.savoirfairelinux.com/projects/sflphone/wiki/WorkingWithGerrit
 
+== commit messages ==
+
+Use Issue: followed by the ticket number
+
 == commit-msg hook ==
 
 You may want to install the commit-msg hook that inserts a Change-Id on commit messages:
