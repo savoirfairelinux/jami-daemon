@@ -831,8 +831,6 @@ static int iax_reliable_xmit(struct iax_frame *f)
 	struct iax_frame *fc;
 	struct ast_iax2_full_hdr *fh;
 	fh = (struct ast_iax2_full_hdr *) f->data;
-	int res;
-
 	if (!fh->type) {
 		return -2;
 	}
@@ -856,10 +854,7 @@ static int iax_reliable_xmit(struct iax_frame *f)
 			}
 			memcpy(fc->data, f->data, f->datalen);
 			iax_sched_add(NULL, fc, NULL, NULL, fc->retrytime);
-			res = iax_xmit_frame(fc);
-			free(fc->data);
-			free(fc);
-			return res;
+			return iax_xmit_frame(fc);
 		}
 	} else
 		return -1;
