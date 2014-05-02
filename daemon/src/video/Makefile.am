@@ -1,11 +1,9 @@
 include $(top_srcdir)/globals.mak
 
-SUBDIRS=test
+SUBDIRS=v4l test
 
 noinst_LTLIBRARIES = libvideo.la
 libvideo_la_SOURCES = \
-	video_v4l2.cpp \
-	video_v4l2_list.cpp video_v4l2.h video_v4l2_list.h \
 	video_preferences.cpp video_preferences.h \
 	video_base.cpp video_base.h \
 	video_scaler.cpp video_scaler.h \
@@ -22,7 +20,7 @@ libvideo_la_SOURCES = \
 	check.h shm_header.h video_provider.h \
 	libav_utils.cpp libav_utils.h libav_deps.h
 
-libvideo_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@ @UDEV_LIBS@
+libvideo_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
 
 AM_CXXFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@ @UDEV_CFLAGS@
 AM_CFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@
