@@ -18,36 +18,6 @@ libs/libiax2/iax-config
 libs/libiax2/configure
 libs/libiax2/iax2-config
 
-## dbus-c++
-libs/dbus-c++/autom4te.cache/requests
-libs/dbus-c++/config.log
-libs/dbus-c++/autom4te.cache/requests
-libs/dbus-c++/config.log
-libs/dbus-c++/config.status
-libs/dbus-c++/configure
-libs/dbus-c++/dbus-c++-1-uninstalled.pc
-libs/dbus-c++/dbus-c++-1.pc
-libs/dbus-c++/doc/Doxyfile
-libs/dbus-c++/examples/echo/.libs/
-libs/dbus-c++/examples/echo/echo-client-glue.h
-libs/dbus-c++/examples/echo/echo-client-mt
-libs/dbus-c++/examples/echo/echo-server
-libs/dbus-c++/examples/echo/echo-server-glue.h
-libs/dbus-c++/examples/glib/dbus-glue.h
-libs/dbus-c++/examples/hal/.libs/
-libs/dbus-c++/examples/hal/hal-listen
-libs/dbus-c++/examples/properties/.libs/
-libs/dbus-c++/examples/properties/propsgs-client
-libs/dbus-c++/examples/properties/propsgs-glue-adaptor.h
-libs/dbus-c++/examples/properties/propsgs-glue-proxy.h
-libs/dbus-c++/examples/properties/propsgs-server
-libs/dbus-c++/include/dbus-c++/config.h
-libs/dbus-c++/include/dbus-c++/stamp-h1
-libs/dbus-c++/src/.libs/
-libs/dbus-c++/tools/.libs/
-libs/dbus-c++/tools/dbusxx-introspect
-libs/dbus-c++/tools/dbusxx-xml2cpp
-
 libs/pjproject-2.2.1/pjlib-util/build/os-auto.mak
 libs/pjproject-2.2.1/pjlib/build/os-auto.mak
 libs/pjproject-2.2.1/pjlib/include/pj/compat/m_auto.h
