@@ -22,20 +22,14 @@ SIP_CFLAGS=-I$(src)/libs/$(PJPROJECT_DIR)/pjsip/include \
 
 if BUILD_SPEEX
 SPEEXCODEC=-DHAVE_SPEEX_CODEC
-else
-SPEEXCODEC=
 endif
 
 if BUILD_OPUS
 OPUSCODEC=-DHAVE_OPUS
-else
-OPUSCODEC=
 endif
 
 if BUILD_GSM
 GSMCODEC=-DHAVE_GSM_CODEC
-else
-GSMCODEC=
 endif
 
 # Preprocessor flags
