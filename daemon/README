@@ -67,14 +67,15 @@ http://www.savoirfairelinux.com/
 How to compile
 --------------
 
-# Compile the PJSIP library
-cd libs
-./compile_pjsip.sh
-
-Note that pjsip need not be installed, just built in-tree.
+# Compile the dependencies
+cd ../contrib/
+mkdir native
+cd native
+../bootstrap
+make
 
 # Then the daemon
-cd ../..
+cd ../../daemon
 ./autogen.sh
 ./configure
 make
