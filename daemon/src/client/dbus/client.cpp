@@ -53,9 +53,13 @@
 #include "videomanager.h"
 #endif
 
-struct DummyCallback : DBus::Callback_Base<void, DBus::DefaultTimeout&>
+#include "sip/sipvoiplink.h"
+
+struct EventCallback : DBus::Callback_Base<void, DBus::DefaultTimeout&>
 {
-    void call(DBus::DefaultTimeout &) const {}
+    void call(DBus::DefaultTimeout &) const {
+        SIPVoIPLink::instance().getEvent();
+    }
 };
 
 Client::Client() : callManager_(0)
@@ -82,8 +86,8 @@ Client::Client() : callManager_(0)
         // timeout (the default is 10 seconds).
         // timeout and expired are deleted internally by dispatcher_'s
         // destructor, so we must NOT delete them ourselves.
-        DBus::DefaultTimeout *timeout = new DBus::DefaultTimeout(1000, true, dispatcher_);
-        timeout->expired = new DummyCallback;
+        DBus::DefaultTimeout *timeout = new DBus::DefaultTimeout(10, true, dispatcher_);
+        timeout->expired = new EventCallback;
 
         DEBUG("DBUS session connection to session bus");
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
