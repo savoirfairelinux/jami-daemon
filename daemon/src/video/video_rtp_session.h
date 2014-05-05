@@ -64,7 +64,6 @@ public:
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
-    void setupConferenceVideoPipeline();
     void enterConference(Conference *conf);
     void exitConference();
 
@@ -72,6 +71,7 @@ private:
     NON_COPYABLE(VideoRtpSession);
 
     void getMixerFromConference(Conference &conf);
+    void setupConferenceVideoPipeline();
 
     // all public methods must be locked internally before use
     std::mutex mutex_;
