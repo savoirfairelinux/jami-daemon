@@ -352,11 +352,9 @@ Sdp::setMediaDescriptorLines(bool audio)
 
 void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 {
-    auto ip = ip_utils::strToAddr(publishedIpAddr_);
-    pj_sockaddr outputAddr;
-    pj_sockaddr_cp(&outputAddr, &ip);
-    pj_sockaddr_set_port(&outputAddr, localAudioControlPort_);
-    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create_rtcp(memPool_, &outputAddr);
+    IpAddr outputAddr = publishedIpAddr_;
+    outputAddr.setPort(localAudioControlPort_);
+    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create_rtcp(memPool_, outputAddr.pjPtr());
     if (attr)
         pjmedia_sdp_attr_add(&med->attr_count, med->attr, attr);
 }
@@ -379,9 +377,9 @@ Sdp::setPublishedIP(const std::string &addr, pj_uint16_t addr_type)
 }
 
 void
-Sdp::setPublishedIP(const pj_sockaddr& ip_addr)
+Sdp::setPublishedIP(const IpAddr& ip_addr)
 {
-    setPublishedIP(ip_utils::addrToStr(ip_addr), ip_addr.addr.sa_family);
+    setPublishedIP(ip_addr, ip_addr.getFamily());
 }
 
 void

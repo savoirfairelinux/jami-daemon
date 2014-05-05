@@ -32,18 +32,19 @@
 #include "ip_utils.h"
 #include "logger.h"
 
+ #include "sip/sip_utils.h"
+
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <net/if.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-std::vector<pj_sockaddr>
+std::vector<IpAddr>
 ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
 {
-    std::vector<pj_sockaddr> ipList;
+    std::vector<IpAddr> ipList;
     if (name.empty())
         return ipList;
 
@@ -55,7 +56,7 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
     auto status = pj_getaddrinfo(family, &pjname, &addr_num, res);
     if (status != PJ_SUCCESS) {
         ERROR("Error resolving %s :", name.c_str());
-        //sip_strerror(status);
+        sip_utils::sip_strerror(status);
         return ipList;
     }
 
@@ -74,48 +75,17 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
 }
 
 bool
-ip_utils::haveCommonAddr(const std::vector<pj_sockaddr>& a, const std::vector<pj_sockaddr>& b)
+ip_utils::haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b)
 {
     for (const auto &i : a) {
         for (const auto &j : b) {
-            if (pj_sockaddr_cmp(&i, &j) == 0) return true;
+            if (i == j) return true;
         }
     }
     return false;
 }
 
-std::string
-ip_utils::addrToStr(const pj_sockaddr& ip, bool include_port, bool force_ipv6_brackets)
-{
-    std::string str(PJ_INET6_ADDRSTRLEN, (char)0);
-    if(include_port) force_ipv6_brackets = true;
-    pj_sockaddr_print(&ip, &(*str.begin()), PJ_INET6_ADDRSTRLEN, (include_port?1:0)|(force_ipv6_brackets?2:0));
-    str.resize(std::char_traits<char>::length(str.c_str()));
-    return str;
-}
-
-std::string
-ip_utils::addrToStr(const std::string& ip_str, bool include_port, bool force_ipv6_brackets)
-{
-    pj_sockaddr ip = strToAddr(ip_str);
-    if (ip.addr.sa_family == pj_AF_UNSPEC())
-        return ip_str;
-    return addrToStr(ip, include_port, force_ipv6_brackets);
-}
-
-pj_sockaddr
-ip_utils::strToAddr(const std::string& str, pj_uint16_t family)
-{
-    pj_str_t pjstring;
-    pj_cstr(&pjstring, str.c_str());
-    pj_sockaddr ip;
-    auto status = pj_sockaddr_parse(family, 0, &pjstring, &ip);
-    if (status != PJ_SUCCESS)
-        ip.addr.sa_family = pj_AF_UNSPEC();
-    return ip;
-}
-
-pj_sockaddr
+IpAddr
 ip_utils::getAnyHostAddr(pj_uint16_t family)
 {
     if (family == pj_AF_UNSPEC()) {
@@ -125,14 +95,13 @@ ip_utils::getAnyHostAddr(pj_uint16_t family)
         family = pj_AF_INET();
 #endif
     }
-    pj_sockaddr addr = {};
-    addr.addr.sa_family = family;
-    return addr;
+    return IpAddr(family);
 }
 
-pj_sockaddr
+IpAddr
 ip_utils::getLocalAddr(pj_uint16_t family)
 {
+    ERROR("ip_utils::getLocalAddr");
     if (family == pj_AF_UNSPEC()) {
 #if HAVE_IPV6
         family = pj_AF_INET6();
@@ -140,34 +109,36 @@ ip_utils::getLocalAddr(pj_uint16_t family)
         family = pj_AF_INET();
 #endif
     }
-    pj_sockaddr ip_addr;
-    pj_status_t status = pj_gethostip(family, &ip_addr);
-    if (status == PJ_SUCCESS) return ip_addr;
+    IpAddr ip_addr = {};
+    pj_status_t status = pj_gethostip(family, ip_addr.pjPtr());
+    if (status == PJ_SUCCESS) {
+        ERROR("ip_utils::getLocalAddr %s", ip_addr.toString().c_str());
+        return ip_addr;
+    }
 #if HAVE_IPV6
     WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
     family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
-    status = pj_gethostip(family, &ip_addr);
+    status = pj_gethostip(family, ip_addr);
     if (status == PJ_SUCCESS) return ip_addr;
 #endif
     ERROR("Could not get local IP");
-    ip_addr.addr.sa_family = pj_AF_UNSPEC();
     return ip_addr;
 }
 
-pj_sockaddr
+IpAddr
 ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 {
+    ERROR("ip_utils::getInterfaceAddr %s", interface.c_str());
     if (interface == DEFAULT_INTERFACE)
         return getLocalAddr(family);
 
     const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
-    pj_sockaddr pj_saddr = {};
-    pj_saddr.addr.sa_family = pj_AF_UNSPEC();
+    IpAddr addr = {};
 
     int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
         ERROR("Could not open socket: %m");
-        return pj_saddr;
+        return addr;
     }
 
     if (unix_family == AF_INET6) {
@@ -175,7 +146,7 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
         if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &val, sizeof(val)) < 0) {
             ERROR("Could not setsockopt: %m");
             close(fd);
-            return pj_saddr;
+            return addr;
         }
     }
 
@@ -190,17 +161,12 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     ioctl(fd, SIOCGIFADDR, &ifr);
     close(fd);
 
-    sockaddr* unix_addr = &ifr.ifr_addr;
+    addr = ifr.ifr_addr;
+    if (addr.isUnspecified())
+        return getLocalAddr(addr.getFamily());
 
-    memcpy(&pj_saddr, unix_addr, unix_addr->sa_family == AF_INET6 ?
-           sizeof pj_saddr.ipv6 : sizeof pj_saddr.ipv4);
-
-    if ((unix_addr->sa_family == AF_INET and IN_IS_ADDR_UNSPECIFIED(&((sockaddr_in *) unix_addr)->sin_addr))
-        or (unix_addr->sa_family == AF_INET6 and IN6_IS_ADDR_UNSPECIFIED(&((sockaddr_in6*) unix_addr)->sin6_addr))) {
-        return getLocalAddr(pj_saddr.addr.sa_family);
-    }
-
-    return pj_saddr;
+    ERROR("ip_utils::getInterfaceAddr %s %s", interface.c_str(), addr.toString().c_str());
+    return addr;
 }
 
 std::vector<std::string>
@@ -248,13 +214,7 @@ ip_utils::getAllIpInterface()
 }
 
 bool
-ip_utils::isIPv6(const std::string &address)
-{
-    return isValidAddr(address, pj_AF_INET6());
-}
-
-bool
-ip_utils::isValidAddr(const std::string &address, pj_uint16_t family)
+IpAddr::isValid(const std::string &address, pj_uint16_t family)
 {
     pj_str_t pjstring;
     pj_cstr(&pjstring, address.c_str());
@@ -270,4 +230,66 @@ ip_utils::isValidAddr(const std::string &address, pj_uint16_t family)
     pj_strncpy_with_null(&addr_with_null, &ret_str, sizeof(buf));
     struct sockaddr sa;
     return inet_pton(ret_family==pj_AF_INET6()?AF_INET6:AF_INET, buf, &(sa.sa_data)) == 1;
+}
+
+bool
+IpAddr::isUnspecified() const
+{
+    switch (addr.addr.sa_family) {
+    case AF_INET:
+        return IN_IS_ADDR_UNSPECIFIED(reinterpret_cast<const in_addr*>(&addr.ipv4.sin_addr));
+    case AF_INET6:
+        return IN6_IS_ADDR_UNSPECIFIED(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));
+    default:
+        return true;
+    }
+}
+
+bool
+IpAddr::isLoopback() const
+{
+    switch (addr.addr.sa_family) {
+    case AF_INET: {
+        uint8_t b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
+        return b1 == 127;
+    }
+    case AF_INET6:
+        return IN6_IS_ADDR_LOOPBACK(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));
+    default:
+        return false;
+    }
+}
+
+bool
+IpAddr::isPrivate() const
+{
+    ERROR("IpAddr::isPrivate: %s", toString().c_str());
+    if (isLoopback()) {
+        ERROR("IpAddr::isPrivate: %s LOOPBACK", toString().c_str());
+        return true;
+    }
+    switch (addr.addr.sa_family) {
+    case AF_INET:
+        uint8_t b1, b2;
+        b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
+        b2 = (uint8_t)((addr.ipv4.sin_addr.s_addr >> 16) & 0x0ff);
+        // 10.x.y.z
+        if (b1 == 10)
+            return true;
+        // 172.16.0.0 - 172.31.255.255
+        if ((b1 == 172) && (b2 >= 16) && (b2 <= 31))
+            return true;
+        // 192.168.0.0 - 192.168.255.255
+        if ((b1 == 192) && (b2 == 168))
+            return true;
+        return false;
+    case AF_INET6: {
+        const pj_uint8_t* addr6 = reinterpret_cast<const pj_uint8_t*>(&addr.ipv6.sin6_addr);
+        if (addr6[0] == 0xfc)
+            return true;
+        return false;
+    }
+    default:
+        return false;
+    }
 }

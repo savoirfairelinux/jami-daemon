@@ -499,7 +499,7 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistor
 std::string
 ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
-    return ip_utils::addrToStr(ip_utils::getInterfaceAddr(interface));
+    return ip_utils::getInterfaceAddr(interface);
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface()

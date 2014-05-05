@@ -894,7 +894,7 @@ void SIPAccount::registerVoIPLink()
 
     auto IPs = ip_utils::getAddrList(hostname_);
     for (const auto& ip : IPs)
-        DEBUG("--- %s ", ip_utils::addrToStr(ip).c_str());
+        DEBUG("--- %s ", ip.toString().c_str());
 
 #if HAVE_TLS
     // Init TLS settings if the user wants to use TLS
@@ -915,9 +915,9 @@ void SIPAccount::registerVoIPLink()
 #if HAVE_IPV6
         if (isIP2IP()) {
             DEBUG("SIPAccount::registerVoIPLink isIP2IP.");
-            //IPv6 = SipTransport::getInterfaceAddr(interface_).addr.sa_family == pj_AF_INET6();
+            IPv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
         } else if (!IPs.empty())
-            IPv6 = IPs[0].addr.sa_family == pj_AF_INET6();
+            IPv6 = IPs[0].isIpv6();
 #endif
         transportType_ = IPv6 ? PJSIP_TRANSPORT_UDP6  : PJSIP_TRANSPORT_UDP;
     }
@@ -1196,8 +1196,8 @@ std::string SIPAccount::getFromUri() const
         hostname = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
 
 #if HAVE_IPV6
-    if (ip_utils::isIPv6(hostname))
-        hostname = ip_utils::addrToStr(hostname, false, true);
+    if (IpAddr::isIpv6(hostname))
+        hostname = IpAddr(hostname).toString(false, true);
 #endif
 
     return "<" + scheme + username + "@" + hostname + transport + ">";
@@ -1225,8 +1225,8 @@ std::string SIPAccount::getToUri(const std::string& username) const
         hostname = hostname_;
 
 #if HAVE_IPV6
-    if (not hostname.empty() and ip_utils::isIPv6(hostname))
-        hostname = ip_utils::addrToStr(hostname, false, true);
+    if (not hostname.empty() and IpAddr::isIpv6(hostname))
+        hostname = IpAddr(hostname).toString(false, true);
 #endif
 
     return "<" + scheme + username + (hostname.empty() ? "" : "@") + hostname + transport + ">";
@@ -1247,8 +1247,8 @@ std::string SIPAccount::getServerUri() const
 
     std::string host;
 #if HAVE_IPV6
-    if (ip_utils::isIPv6(hostname_))
-        host = ip_utils::addrToStr(hostname_, false, true);
+    if (IpAddr::isIpv6(hostname_))
+        host = IpAddr(hostname_).toString(false, true);
     else
 #endif
         host = hostname_;
@@ -1281,7 +1281,7 @@ SIPAccount::getContactHeader()
         DEBUG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
         link_.sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
-        setPublishedAddress(ip_utils::strToAddr(address));
+        setPublishedAddress(address);
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
     } else {
@@ -1302,8 +1302,8 @@ SIPAccount::getContactHeader()
 
 #if HAVE_IPV6
     /* Enclose IPv6 address in square brackets */
-    if (ip_utils::isIPv6(address)) {
-        address = ip_utils::addrToStr(address, false, true);
+    if (IpAddr::isIpv6(address)) {
+        address = IpAddr(address).toString(false, true);
     }
 #endif
 
@@ -1717,26 +1717,6 @@ SIPAccount::resetAutoRegistration()
     auto_rereg_.attempt_cnt = 0;
 }
 
-/* Check if IP is private IP address */
-static pj_bool_t
-is_private_ip(const pj_str_t *addr)
-{
-    const pj_str_t private_net[] =
-    {
-    { (char*) "10.", 3 },
-    { (char*) "127.", 4 },
-    { (char*) "172.16.", 7 },
-    { (char*) "192.168.", 8 }
-    };
-
-    for (unsigned i = 0; i < PJ_ARRAY_SIZE(private_net); ++i)
-        if (pj_strncmp(addr, &private_net[i], private_net[i].slen) == 0)
-            return PJ_TRUE;
-
-    return PJ_FALSE;
-}
-
-
 /* Update NAT address from the REGISTER response */
 bool
 SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
@@ -1795,15 +1775,15 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
     /* Convert IP address strings into sockaddr for comparison.
      * (http://trac.pjsip.org/repos/ticket/863)
      */
-    pj_sockaddr contact_addr, recv_addr;
-    pj_status_t status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &uri->host, &contact_addr);
+    IpAddr contact_addr, recv_addr;
+    pj_status_t status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &uri->host, contact_addr.pjPtr());
     if (status == PJ_SUCCESS)
-        status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, via_addr, &recv_addr);
+        status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, via_addr, recv_addr.pjPtr());
 
     bool matched;
     if (status == PJ_SUCCESS) {
         // Compare the addresses as sockaddr according to the ticket above
-        matched = (uri->port == rport and pj_sockaddr_cmp(&contact_addr, &recv_addr) == 0);
+        matched = (uri->port == rport and contact_addr == recv_addr);
     } else {
         // Compare the addresses as string, as before
         matched = (uri->port == rport and pj_stricmp(&uri->host, via_addr) == 0);
@@ -1815,7 +1795,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
     }
 
     /* Get server IP */
-    pj_str_t srv_ip = pj_str(param->rdata->pkt_info.src_name);
+    IpAddr srv_ip = {std::string(param->rdata->pkt_info.src_name)};
 
     /* At this point we've detected that the address as seen by registrar.
      * has changed.
@@ -1830,8 +1810,10 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * to 2. In this case, the switch will always be done whenever there
      * is difference in the IP address in the response.
      */
-    if (allowContactRewrite_ != 2 && not is_private_ip(&uri->host) and
-        not is_private_ip(&srv_ip) and is_private_ip(via_addr)) {
+    if (allowContactRewrite_ != 2 and
+        not contact_addr.isPrivate() and
+        not srv_ip.isPrivate() and
+        recv_addr.isPrivate()) {
         /* Don't switch */
         return false;
     }
@@ -1840,21 +1822,26 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * the Via received address is private.
      * See http://trac.pjsip.org/repos/ticket/864
      */
-    if (allowContactRewrite_ != 2 and pj_sockaddr_cmp(&contact_addr, &recv_addr) == 0 and
-        is_private_ip(via_addr)) {
+    if (allowContactRewrite_ != 2 and contact_addr == recv_addr and recv_addr.isPrivate()) {
         /* Don't switch */
         return false;
     }
 
+    std::string via_addrstr(via_addr->ptr, via_addr->slen);
+#if HAVE_IPV6
+    /* Enclose IPv6 address in square brackets */
+    if (IpAddr::isIpv6(via_addrstr))
+        via_addrstr = IpAddr(via_addrstr).toString(false, true);
+#endif
+
     WARN("IP address change detected for account %s "
-         "(%.*s:%d --> %.*s:%d). Updating registration "
+         "(%.*s:%d --> %s:%d). Updating registration "
          "(using method %d)",
          accountID_.c_str(),
          (int) uri->host.slen,
          uri->host.ptr,
          uri->port,
-         (int) via_addr->slen,
-         via_addr->ptr,
+         via_addrstr.c_str(),
          rport,
          contactRewriteMethod_);
 
@@ -1871,17 +1858,8 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      */
     {
         char *tmp;
-        const char *beginquote, *endquote;
         char transport_param[32];
         int len;
-
-        /* Enclose IPv6 address in square brackets */
-        if (tp->key.type & PJSIP_TRANSPORT_IPV6) {
-            beginquote = "[";
-            endquote = "]";
-        } else {
-            beginquote = endquote = "";
-        }
 
         /* Don't add transport parameter if it's UDP */
         if (tp->key.type != PJSIP_TRANSPORT_UDP and
@@ -1896,13 +1874,10 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
         tmp = (char*) pj_pool_alloc(pool, PJSIP_MAX_URL_SIZE);
         len = pj_ansi_snprintf(tmp, PJSIP_MAX_URL_SIZE,
-                "<sip:%s%s%s%.*s%s:%d%s>",
+                "<sip:%s%s%s:%d%s>",
                 username_.c_str(),
                 (not username_.empty() ?  "@" : ""),
-                beginquote,
-                (int) via_addr->slen,
-                via_addr->ptr,
-                endquote,
+                via_addrstr.c_str(),
                 rport,
                 transport_param);
         if (len < 1) {

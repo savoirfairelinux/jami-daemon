@@ -49,20 +49,18 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , call_(call)
     , timestamp_(0)
     , timestampIncrement_(0)
+    , rtpStream_(call.getCallId())
     , transportRate_(20)
-    , remote_ip_()
-    , remote_port_(0)
-    , rxLast_()
+    , remoteIp_()
     , rxLastSeqNum_(0)
 #ifdef RTP_DEBUG
+    , rxLast_()
     , rxJitters_()
     , jitterReportInterval_(0)
 #endif
     , rtpSendThread_(*this)
     , dtmfQueue_()
-    , rtpStream_(call.getCallId())
     , dtmfPayloadType_(101) // same as Asterisk
-    , firstPacket_(true)
 {
     queue_.setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
@@ -224,8 +222,7 @@ size_t AudioRtpSession::sendMicData()
 
     // initialize once
     int ccrtpTimestamp = queue_.getCurrentTimestamp();
-    if (firstPacket_ || std::abs(timestamp_ - ccrtpTimestamp) > 2 * timestampIncrement_) {
-        firstPacket_ = false;
+    if (std::abs(timestamp_ - ccrtpTimestamp) > timestampIncrement_/2) {
         timestamp_ = ccrtpTimestamp;
     }
 
@@ -254,32 +251,41 @@ void AudioRtpSession::updateDestinationIpAddress()
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
+    if (!(remoteIp_.isIpv4()  && queue_.forgetDestination(static_cast<ost::IPV4Host>(remoteIp_), remoteIp_.getPort()))
+#if HAVE_IPV6
+     && !(remoteIp_.isIpv6() == AF_INET6 && queue_.forgetDestination(static_cast<ost::IPV6Host>(remoteIp_), remoteIp_.getPort()))
+#endif
+    ) DEBUG("Did not remove previous destination");
 
-    if (!queue_.forgetDestination(remote_ip_, remote_port_))
-        DEBUG("Did not remove previous destination");
+    IpAddr remote = {call_.getLocalSDP()->getRemoteIP()};
+    remote.setPort(call_.getLocalSDP()->getRemoteAudioPort());
+    DEBUG("New remote address for session: %s", remote.toString(true).c_str());
 
-    // new destination is stored in call
-    // we just need to recall this method
+    if (!remote) {
+        WARN("Target IP address (%s) is not correct!", call_.getLocalSDP()->getRemoteIP().c_str());
+        return;
+    }/*
 
     // Store remote ip in case we would need to forget current destination
-    remote_ip_ = ost::InetHostAddress(call_.getLocalSDP()->getRemoteIP().c_str());
-
-    if (!remote_ip_) {
-        WARN("Target IP address (%s) is not correct!",
-             call_.getLocalSDP()->getRemoteIP().data());
-        return;
+#if HAVE_IPV6
+#ifndef __ANDROID__
+    // Workaround for a bug in ucommoncpp
+    if (remote.isIpv6()) {
+        WARN("Using ucommoncpp workaround for IPv6 bug!");
+        remoteIp_ = IpAddr(call_.getLocalSDP()->getRemoteIP());
+        remoteIp_.setPort(call_.getLocalSDP()->getRemoteAudioPort());
+    } else
+#endif
+#endif*/
+    {
+        remoteIp_ = remote;
     }
 
-    // Store remote port in case we would need to forget current destination
-    remote_port_ = (unsigned short) call_.getLocalSDP()->getRemoteAudioPort();
-
-    DEBUG("New remote address for session: %s:%d",
-          call_.getLocalSDP()->getRemoteIP().data(), remote_port_);
-
-    if (!queue_.addDestination(remote_ip_, remote_port_)) {
-        WARN("Can't add new destination to session!");
-        return;
-    }
+    if (!(remoteIp_.isIpv4()  && queue_.addDestination(static_cast<ost::IPV4Host>(remoteIp_), remoteIp_.getPort()))
+#if HAVE_IPV6
+     && !(remoteIp_.isIpv6() && queue_.addDestination(static_cast<ost::IPV6Host>(remoteIp_), remoteIp_.getPort()))
+#endif
+    ) WARN("Can't add new destination to session!");
 }
 
 
@@ -287,7 +293,9 @@ void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &au
 {
     DEBUG("Preparing receiving thread");
     isStarted_ = true;
+#ifdef RTP_DEBUG
     rxLast_ = std::chrono::high_resolution_clock::now();
+#endif
     setSessionTimeouts();
     setSessionMedia(audioCodecs);
     rtpStream_.initBuffers();

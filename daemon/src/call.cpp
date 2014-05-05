@@ -35,8 +35,7 @@
 
 Call::Call(const std::string& id, Call::CallType type, const std::string &accountID)
     : callMutex_()
-    , localIPAddress_("")
-    , localIPAddr_()
+    , localAddr_()
     , localAudioPort_(0)
     , localVideoPort_(0)
     , id_(id)
@@ -122,19 +121,11 @@ Call::getStateStr()
     }
 }
 
-
-std::string
+IpAddr
 Call::getLocalIp() const
 {
     std::lock_guard<std::mutex> lock(callMutex_);
-    return localIPAddress_;
-}
-
-pj_sockaddr
-Call::getLocalIpAddr() const
-{
-    std::lock_guard<std::mutex> lock(callMutex_);
-    return localIPAddr_;
+    return localAddr_;
 }
 
 unsigned int

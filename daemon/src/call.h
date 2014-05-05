@@ -187,9 +187,8 @@ class Call : public Recordable {
          * Set my IP [not protected]
          * @param ip  The local IP address
          */
-        void setLocalIp(const pj_sockaddr& ip) {
-            pj_sockaddr_cp(&localIPAddr_, &ip);
-            localIPAddress_ = ip_utils::addrToStr(localIPAddr_);
+        void setLocalIp(const IpAddr& ip) {
+            localAddr_ = ip;
         }
 
         /**
@@ -212,9 +211,7 @@ class Call : public Recordable {
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
-        std::string getLocalIp() const;
-
-        pj_sockaddr getLocalIpAddr() const;
+        IpAddr getLocalIp() const;
 
         /**
          * Return port used locally (for my machine) [mutex protected]
@@ -245,8 +242,7 @@ class Call : public Recordable {
         // Informations about call socket / audio
 
         /** My IP address */
-        std::string localIPAddress_;
-        pj_sockaddr localIPAddr_;
+        IpAddr localAddr_;
 
         /** Local audio port, as seen by me. */
         unsigned int localAudioPort_;

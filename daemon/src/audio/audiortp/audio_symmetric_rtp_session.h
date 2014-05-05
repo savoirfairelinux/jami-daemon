@@ -34,20 +34,18 @@
 #ifndef AUDIO_SYMMETRIC_RTP_SESSION_H_
 #define AUDIO_SYMMETRIC_RTP_SESSION_H_
 
-#include <exception>
-#include <cassert>
-#include <cstddef>
-
 #include "global.h"
 #include "audio_rtp_session.h"
+#include "ip_utils.h"
 #include "noncopyable.h"
-
-using std::ptrdiff_t;
-
 
 #pragma GCC diagnostic ignored "-Weffc++"
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
+
+#include <exception>
+#include <cassert>
+#include <cstddef>
 
 class SIPCall;
 
@@ -95,14 +93,8 @@ class AudioSymmetricRtpSessionIPv6 : public ost::SymmetricRTPSessionIPV6, public
         }
 
     protected:
-        virtual size_t recvData(unsigned char*, size_t s, ost::IPV4Host&, ost::tpport_t&) {
-            ERROR("IPv4 dummy function recvData called in ipv6 stack, size %d", s);
-            //ost::SymmetricRTPSessionIPV6::recvData();
-        }
-
-        virtual size_t recvControl(unsigned char*, size_t s, ost::IPV4Host&, ost::tpport_t&) {
-            ERROR("IPv4 dummy function recvControl called in ipv6 stack, size %d", s);
-        }
+        virtual size_t recvData(unsigned char* buffer, size_t len, ost::IPV4Host&, ost::tpport_t& port);
+        virtual size_t recvControl(unsigned char* buffer, size_t len, ost::IPV4Host&, ost::tpport_t& port);
 
     private:
         void onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks);

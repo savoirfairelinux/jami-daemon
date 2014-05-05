@@ -36,6 +36,7 @@
 
 #include "audio_rtp_stream.h"
 #include "dtmf_event.h"
+#include "ip_utils.h"
 #include "noncopyable.h"
 #include "logger.h"
 
@@ -121,6 +122,8 @@ class AudioRtpSession {
          */
         int timestampIncrement_;
 
+        AudioRtpStream rtpStream_;
+
     private:
 
         /**
@@ -175,30 +178,20 @@ class AudioRtpSession {
         void receiveSpeakerData();
 
         // Main destination address for this rtp session.
-        // Stored in case or reINVITE, which may require to forget
+        // Stored in case of reINVITE, which may require to forget
         // this destination and update a new one.
-        ost::InetHostAddress remote_ip_;
+        IpAddr remoteIp_;
 
-        // Main destination port for this rtp session.
-        // Stored in case reINVITE, which may require to forget
-        // this destination and update a new one
-        unsigned short remote_port_;
-
-        std::chrono::high_resolution_clock::time_point rxLast_;
         unsigned rxLastSeqNum_;
 #ifdef RTP_DEBUG
+        std::chrono::high_resolution_clock::time_point rxLast_;
         std::vector<double> rxJitters_;
         unsigned jitterReportInterval_;
 #endif
 
         AudioRtpSendThread rtpSendThread_;
         std::list<DTMFEvent> dtmfQueue_;
-    protected:
-        AudioRtpStream rtpStream_;
-    private:
         int dtmfPayloadType_;
-        bool firstPacket_;
-
 };
 }
 #endif // AUDIO_RTP_SESSION_H__

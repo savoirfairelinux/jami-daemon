@@ -124,9 +124,9 @@ void AudioRtpFactory::initSession()
         }
     } else {
 #if HAVE_IPV6
-        /*if (call_->isIPv6()) {
+        if (call_->getLocalIp().isIpv6()) {
             rtpSession_.reset(new AudioSymmetricRtpSessionIPv6(*call_));
-        } else */
+        } else
 #endif
         {
             rtpSession_.reset(new AudioSymmetricRtpSession(*call_));

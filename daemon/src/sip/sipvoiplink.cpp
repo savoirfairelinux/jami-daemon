@@ -315,10 +315,10 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     // FIXME : for now, use the same address family as the SIP tranport
     auto family = pjsip_transport_type_get_af(account->getTransportType());
-    auto addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
+    IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
     // May use the published address as well
-    auto addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
+    IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                     ? account->getPublishedIpAddress() : addrToUse;
 
     pjsip_tpselector tp_sel  = account->getTransportSelector();
@@ -334,8 +334,8 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
 
-    //DEBUG("transaction_request_cb host %s userName %s addrToUse %s addrSdp %s remote_user %s remote_hostname %s" ,
-    //server.c_str(), userName.c_str(), ip_utils::addrToStr(addrToUse).c_str(), ip_utils::addrToStr(addrSdp).c_str(), remote_user.c_str(), remote_hostname.c_str());
+    //DEBUG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
+    //viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
@@ -551,7 +551,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
 
     sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_));
 
-    if (ip_utils::getLocalAddr().addr.sa_family == pj_AF_UNSPEC())
+    if (!ip_utils::getLocalAddr())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
 
     TRY(pjsip_tsx_layer_init_module(endpt_));
@@ -900,7 +900,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
     sip_utils::stripSipUriPrefix(toCpy);
 
-    const bool IPToIP = ip_utils::isValidAddr(toCpy);
+    const bool IPToIP = IpAddr::isValid(toCpy);
     Manager::instance().setIPToIPForCall(id, IPToIP);
 
     if (IPToIP) {
@@ -912,8 +912,11 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
 Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to_raw)
 {
-    bool ipv6 = ip_utils::isIPv6(to_raw);
-    const std::string& to = ipv6 ? ip_utils::addrToStr(to_raw, false, true) : to_raw;
+    bool ipv6 = false;
+#if HAVE_IPV6
+    ipv6 = IpAddr::isIpv6(to_raw);
+#endif
+    const std::string& to = ipv6 ? IpAddr(to_raw).toString(false, true) : to_raw;
     DEBUG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
 
     SIPAccount *account = Manager::instance().getIP2IPAccount();
@@ -926,7 +929,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     call->setIPToIP(true);
     call->initRecFilename(to);
 
-    auto localAddress = ip_utils::getInterfaceAddr(account->getLocalInterface(), ipv6 ? pj_AF_INET6() : pj_AF_INET());
+    IpAddr localAddress = ip_utils::getInterfaceAddr(account->getLocalInterface(), ipv6 ? pj_AF_INET6() : pj_AF_INET());
 
     setCallMediaLocal(call, localAddress);
 
@@ -992,11 +995,11 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
 
     // FIXME : for now, use the same address family as the SIP tranport
     auto family = pjsip_transport_type_get_af(account->getTransportType());
-    auto localAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
+    IpAddr localAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
     setCallMediaLocal(call, localAddr);
 
     // May use the published address as well
-    auto addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal()) ?
+    IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal()) ?
                           account->getPublishedIpAddress() : localAddr;
 
     // Initialize the session using ULAW as default codec in case of early media
@@ -1870,8 +1873,8 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     // FIXME : for now, use the same address family as the SIP tranport
     auto family = pjsip_transport_type_get_af(account->getTransportType());
-    auto address = account->getPublishedSameasLocal()
-                    ? ip_utils::getInterfaceAddr(account->getLocalInterface(), family)
+    IpAddr address = account->getPublishedSameasLocal()
+                    ? IpAddr(ip_utils::getInterfaceAddr(account->getLocalInterface(), family))
                     : account->getPublishedIpAddress();
 
     setCallMediaLocal(call, address);

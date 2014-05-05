@@ -156,13 +156,13 @@ class Sdp {
          * Write accessor. Set the local IP address that will be used in the sdp session
          */
         void setPublishedIP(const std::string &addr, pj_uint16_t addr_type =  pj_AF_UNSPEC());
-        void setPublishedIP(const pj_sockaddr& addr);
+        void setPublishedIP(const IpAddr& addr);
 
         /*
          * Read accessor. Get the local IP address
          */
-        pj_sockaddr getPublishedIPAddr() const {
-            return ip_utils::strToAddr(publishedIpAddr_);
+        IpAddr getPublishedIPAddr() const {
+            return publishedIpAddr_;
         }
 
         std::string getPublishedIP() const {

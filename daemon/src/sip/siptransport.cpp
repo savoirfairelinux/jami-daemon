@@ -201,28 +201,28 @@ SipTransport::createSipTransport(SIPAccount &account)
 pjsip_transport *
 SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port, pj_uint16_t family)
 {
-    pj_sockaddr listeningAddress;
+    IpAddr listeningAddress;
     if (interface == ip_utils::DEFAULT_INTERFACE)
         listeningAddress = ip_utils::getAnyHostAddr(family);
     else
         listeningAddress = ip_utils::getInterfaceAddr(interface, family);
 
-    RETURN_IF_FAIL(not listeningAddress.addr.sa_family == pj_AF_UNSPEC(), nullptr, "Could not determine ip address for this transport");
+    RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine ip address for this transport");
     RETURN_IF_FAIL(port != 0, nullptr, "Could not determine port for this transport");
 
-    pj_sockaddr_set_port(&listeningAddress, port);
+    listeningAddress.setPort(port);
     pj_status_t status;
     pjsip_transport *transport = nullptr;
 
-    if (listeningAddress.addr.sa_family == pj_AF_INET()) {
-        status = pjsip_udp_transport_start(endpt_, &listeningAddress.ipv4, nullptr, 1, &transport);
+    if (listeningAddress.isIpv4()) {
+        status = pjsip_udp_transport_start(endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress), nullptr, 1, &transport);
         if (status != PJ_SUCCESS) {
             ERROR("UDP IPV4 Transport did not start");
             sip_utils::sip_strerror(status);
             return nullptr;
         }
-    } else if (listeningAddress.addr.sa_family == pj_AF_INET6()) {
-        status = pjsip_udp_transport_start6(endpt_, &listeningAddress.ipv6, nullptr, 1, &transport);
+    } else if (listeningAddress.isIpv6()) {
+        status = pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress), nullptr, 1, &transport);
         if (status != PJ_SUCCESS) {
             ERROR("UDP IPV6 Transport did not start");
             sip_utils::sip_strerror(status);
@@ -230,7 +230,7 @@ SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port,
         }
     }
 
-    DEBUG("Created UDP transport on %s : %s", interface.c_str(), ip_utils::addrToStr(listeningAddress, true, true).c_str());
+    DEBUG("Created UDP transport on %s : %s", interface.c_str(), listeningAddress.toString(true).c_str());
     // dump debug information to stdout
     //pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
     return transport;
@@ -243,22 +243,22 @@ SipTransport::createTlsListener(SIPAccount &account, pj_uint16_t family)
     RETURN_IF_FAIL(account.getTlsSetting() != nullptr, nullptr, "TLS settings not specified");
 
     std::string interface(account.getLocalInterface());
-    pj_sockaddr listeningAddress;
+    IpAddr listeningAddress;
     if (interface == ip_utils::DEFAULT_INTERFACE)
         listeningAddress = ip_utils::getAnyHostAddr(family);
     else
         listeningAddress = ip_utils::getInterfaceAddr(interface, family);
 
-    pj_sockaddr_set_port(&listeningAddress, account.getTlsListenerPort());
+    listeningAddress.setPort(account.getTlsListenerPort());
 
-    RETURN_IF_FAIL(not listeningAddress.addr.sa_family == pj_AF_UNSPEC(), nullptr, "Could not determine IP address for this transport");
+    RETURN_IF_FAIL(not listeningAddress, nullptr, "Could not determine IP address for this transport");
 
-    DEBUG("Creating Listener on %s...", ip_utils::addrToStr(listeningAddress).c_str());
+    DEBUG("Creating Listener on %s...", listeningAddress.toString(true).c_str());
     DEBUG("CRT file : %s", account.getTlsSetting()->ca_list_file.ptr);
     DEBUG("PEM file : %s", account.getTlsSetting()->cert_file.ptr);
 
     pjsip_tpfactory *listener = nullptr;
-    const pj_status_t status = pjsip_tls_transport_start2(endpt_, account.getTlsSetting(), &listeningAddress, nullptr, 1, &listener);
+    const pj_status_t status = pjsip_tls_transport_start2(endpt_, account.getTlsSetting(), listeningAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
         ERROR("TLS listener did not start");
         sip_utils::sip_strerror(status);
@@ -274,30 +274,32 @@ SipTransport::createTlsTransport(SIPAccount &account)
     static const char SIPS_PREFIX[] = "<sips:";
     size_t sips = remoteSipUri.find(SIPS_PREFIX) + (sizeof SIPS_PREFIX) - 1;
     size_t trns = remoteSipUri.find(";transport");
-    std::string remoteAddr(remoteSipUri.substr(sips, trns-sips));
-    std::string ipAddr = "";
-    const pjsip_transport_type_e transportType = PJSIP_TRANSPORT_TLS;
+    IpAddr remoteAddr = remoteSipUri.substr(sips, trns-sips);
+    const pjsip_transport_type_e transportType =
+#if HAVE_IPV6
+        remoteAddr.isIpv6() ? PJSIP_TRANSPORT_TLS6 :
+#endif
+        PJSIP_TRANSPORT_TLS;
+
     int port = pjsip_transport_get_default_port_for_type(transportType);
+    if (remoteAddr.getPort() == 0)
+        remoteAddr.setPort(port);
 
-    // parse c string
-    size_t pos = remoteAddr.find(":");
-    if (pos != std::string::npos) {
-        ipAddr = remoteAddr.substr(0, pos);
-        port = atoi(remoteAddr.substr(pos + 1, remoteAddr.length() - pos).c_str());
-    } else
-        ipAddr = remoteAddr;
-
-    pj_sockaddr rem_addr = ip_utils::strToAddr(ipAddr);
-    pj_sockaddr_set_port(&rem_addr, port);
-
-    DEBUG("Get new tls transport/listener from transport manager to %s", ip_utils::addrToStr(rem_addr, true, true).c_str());
+    DEBUG("Get new tls transport/listener from transport manager to %s", remoteAddr.toString(true).c_str());
 
     // create listener
-    pjsip_tpfactory *localTlsListener = createTlsListener(account, rem_addr.addr.sa_family);
+    pjsip_tpfactory *localTlsListener = createTlsListener(account, remoteAddr.getFamily());
 
     // create transport
     pjsip_transport *transport = nullptr;
-    pj_status_t status = pjsip_endpt_acquire_transport(endpt_, transportType, &rem_addr, pj_sockaddr_get_len(&rem_addr), nullptr, &transport);
+    pj_status_t status = pjsip_endpt_acquire_transport(
+            endpt_,
+            transportType,
+            remoteAddr.pjPtr(),
+            pj_sockaddr_get_len(remoteAddr.pjPtr()),
+            nullptr,
+            &transport);
+
     if (!transport || status != PJ_SUCCESS) {
         if (localTlsListener)
             localTlsListener->destroy(localTlsListener);
@@ -435,10 +437,10 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
     // Update address and port with active transport
     RETURN_IF_NULL(transport, "Transport is NULL in findLocalAddress, using local address %s:%d", addr.c_str(), port);
 
-    pj_sockaddr mapped_addr;
+    IpAddr mapped_addr;
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
     const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort, *stunServerName, stunPort};
-    const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory, &stunOpt, 1, &sipSocket, &mapped_addr.ipv4);
+    const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory, &stunOpt, 1, &sipSocket, &static_cast<pj_sockaddr_in&>(mapped_addr));
 
     switch (stunStatus) {
         case PJLIB_UTIL_ESTUNNOTRESPOND:
@@ -448,14 +450,14 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
            ERROR("Different mapped addresses are returned by servers.");
            return;
         case PJ_SUCCESS:
-            port = pj_sockaddr_get_port(&mapped_addr);
-            addr = ip_utils::addrToStr(mapped_addr);
+            port = mapped_addr.getPort();
+            addr = mapped_addr.toString();
         default:
            break;
     }
 
     WARN("Using address %s provided by STUN server %.*s",
-         ip_utils::addrToStr(mapped_addr, true, true).c_str(), stunServerName->slen, stunServerName->ptr);
+         IpAddr(mapped_addr).toString(true).c_str(), stunServerName->slen, stunServerName->ptr);
 }
 
 #undef RETURN_IF_NULL

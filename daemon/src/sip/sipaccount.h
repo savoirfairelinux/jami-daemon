@@ -473,13 +473,13 @@ class SIPAccount : public Account {
             return publishedIpAddress_;
         }
 
-        pj_sockaddr getPublishedIpAddress() const {
+        IpAddr getPublishedIpAddress() const {
             return publishedIp_;
         }
 
-        void setPublishedAddress(const pj_sockaddr& ip_addr) {
-            pj_sockaddr_cp(&publishedIp_, &ip_addr);
-            publishedIpAddress_ = ip_utils::addrToStr(ip_addr);
+        void setPublishedAddress(const IpAddr& ip_addr) {
+            publishedIp_ = ip_addr;
+            publishedIpAddress_ = ip_addr.toString();
         }
 
         std::string getServiceRoute() const {
@@ -696,7 +696,7 @@ class SIPAccount : public Account {
          * Published IP address, used only if defined by the user in account
          * configuration
          */
-        pj_sockaddr publishedIp_;
+        IpAddr publishedIp_;
         std::string publishedIpAddress_;
 
         /**

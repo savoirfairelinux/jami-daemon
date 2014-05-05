@@ -41,11 +41,11 @@
 namespace sfl {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
-    ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
+    ost::SymmetricRTPSession(static_cast<ost::IPV4Host>(call.getLocalIp()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
 {
     DEBUG("Setting new RTP session with destination %s:%d",
-          call_.getLocalIp().c_str(), call_.getLocalAudioPort());
+          call_.getLocalIp().toString().c_str(), call_.getLocalAudioPort());
 }
 
 std::vector<long>
@@ -158,11 +158,11 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
 #if HAVE_IPV6
 
 AudioSymmetricRtpSessionIPv6::AudioSymmetricRtpSessionIPv6(SIPCall &call) :
-    ost::SymmetricRTPSessionIPV6(ost::IPV6Host(call.getLocalIp().c_str()), call.getLocalAudioPort())
+    ost::SymmetricRTPSessionIPV6(static_cast<ost::IPV6Host>(call.getLocalIp()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
 {
     DEBUG("Setting new RTP/IPv6 session with destination %s:%d",
-          call_.getLocalIp().c_str(), call_.getLocalAudioPort());
+          call_.getLocalIp().toString().c_str(), call_.getLocalAudioPort());
 }
 
 std::vector<long>
@@ -199,6 +199,26 @@ void AudioSymmetricRtpSessionIPv6::onGotSR(ost::SyncSource& source, ost::RTCPCom
     ost::SymmetricRTPSessionIPV6::onGotSR(source, SR, blocks);
     // TODO: do something with this data
 }
+
+size_t
+AudioSymmetricRtpSessionIPv6::recvData(unsigned char* buffer, size_t len, ost::IPV4Host&, ost::tpport_t& port)
+{
+    ost::IPV6Host hostv6 = call_.getLocalIp();
+    ERROR("recvData %d ", hostv6.getAddressCount());
+    size_t r = ost::SymmetricRTPSessionIPV6::recvData(buffer, len, hostv6, port);
+    ERROR("recvData from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
+    return r;
+}
+
+size_t
+AudioSymmetricRtpSessionIPv6::recvControl(unsigned char* buffer, size_t len, ost::IPV4Host&, ost::tpport_t& port)
+{
+    ost::IPV6Host hostv6 = call_.getLocalIp();
+    size_t r = ost::SymmetricRTPSessionIPV6::recvControl(buffer, len, hostv6, port);
+    ERROR("recvControl from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
+    return r;
+}
+
 
 #endif // HAVE_IPV6
 
