@@ -113,6 +113,15 @@ function launch_functional_test_daemon {
         popd
 }
 
+function build_contrib {
+    pushd contrib
+    mkdir -f native
+    pushd native
+    ../bootstrap
+    make
+    popd
+    popd
+}
 
 function build_daemon {
     pushd daemon
@@ -121,13 +130,8 @@ function build_daemon {
         run_code_analysis
     fi
 
-    ./autogen.sh || exit_clean 1
-    # Compile pjproject first
-    pushd libs
-    ./compile_pjsip.sh
-    popd
-
     # Compile the daemon
+    ./autogen.sh || exit_clean 1
     ./configure $DOPTS
     make clean
     make -j
@@ -220,6 +224,7 @@ while getopts ":b: t a v c" opt; do
         esac
 done
 
+build_contrib
 # Call appropriate build function, with parameters if needed
 build_$BUILD
 
