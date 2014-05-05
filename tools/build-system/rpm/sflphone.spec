@@ -42,14 +42,17 @@ protocols.
 %setup -q -n %{tarball}
 
 %build
+# Compile the dependencies
+pushd contrib
+mkdir -f native
+pushd native
+../bootstrap
+make
+popd
+popd
 # Compile the daemon
 pushd daemon
 ./autogen.sh
-# Compile pjproject first
-pushd libs
-./compile_pjsip.sh
-popd
-# Compile daemon
 %if %{with video}
 %configure --enable-video
 %else
