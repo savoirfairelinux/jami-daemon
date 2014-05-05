@@ -72,6 +72,8 @@ private:
 
     void getMixerFromConference(Conference &conf);
     void setupConferenceVideoPipeline();
+    void startSender();
+    void startReceiver();
 
     // all public methods must be locked internally before use
     std::recursive_mutex mutex_;

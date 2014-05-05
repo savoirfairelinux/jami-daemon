@@ -130,19 +130,8 @@ void VideoRtpSession::updateDestination(const string &destination,
     }
 }
 
-void VideoRtpSession::start(int localPort)
+void VideoRtpSession::startSender()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (not sending_ and not receiving_)
-        return;
-
-    try {
-        socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
-    } catch (const std::runtime_error &e) {
-        ERROR("Socket creation failed on port %d: %s", localPort, e.what());
-        return;
-    }
-
 	if (sending_) {
         // Local video startup if needed
         auto videoCtrl = Manager::instance().getVideoManager();
@@ -173,6 +162,10 @@ void VideoRtpSession::start(int localPort)
         sender_.reset();
     }
 
+}
+
+void VideoRtpSession::startReceiver()
+{
     if (receiving_) {
         if (receiveThread_)
             WARN("restarting video receiver");
@@ -186,6 +179,23 @@ void VideoRtpSession::start(int localPort)
             receiveThread_->detach(videoMixerSP_.get());
         receiveThread_.reset();
     }
+}
+
+void VideoRtpSession::start(int localPort)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (not sending_ and not receiving_)
+        return;
+
+    try {
+        socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
+    } catch (const std::runtime_error &e) {
+        ERROR("Socket creation failed on port %d: %s", localPort, e.what());
+        return;
+    }
+
+    startSender();
+    startReceiver();
 
     // Setup pipeline
     if (videoMixerSP_) {
