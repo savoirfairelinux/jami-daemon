@@ -74,7 +74,7 @@ private:
     void getMixerFromConference(Conference &conf);
 
     // all public methods must be locked internally before use
-    std::mutex mutex_;
+    std::recursive_mutex mutex_;
 
     std::shared_ptr<SocketPair> socketPair_;
     std::shared_ptr<VideoSender> sender_;

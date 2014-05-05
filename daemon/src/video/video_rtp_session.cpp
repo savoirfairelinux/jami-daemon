@@ -61,7 +61,7 @@ VideoRtpSession::~VideoRtpSession()
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     string desc(sdp.getIncomingVideoDescription());
     // if port has changed
@@ -106,7 +106,7 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
 void VideoRtpSession::updateDestination(const string &destination,
                                         unsigned int port)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (destination.empty()) {
         ERROR("Destination is empty, ignoring");
         return;
@@ -132,7 +132,7 @@ void VideoRtpSession::updateDestination(const string &destination,
 
 void VideoRtpSession::start(int localPort)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (not sending_ and not receiving_)
         return;
 
@@ -198,7 +198,7 @@ void VideoRtpSession::start(int localPort)
 
 void VideoRtpSession::stop()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (auto shared = videoLocal_.lock())
         shared->detach(sender_.get());
 
@@ -220,14 +220,13 @@ void VideoRtpSession::stop()
 
 void VideoRtpSession::forceKeyFrame()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sender_)
         sender_->forceKeyFrame();
 }
 
 void VideoRtpSession::setupConferenceVideoPipeline()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (!sender_)
         return;
 
@@ -245,13 +244,13 @@ void VideoRtpSession::setupConferenceVideoPipeline()
 
 void VideoRtpSession::getMixerFromConference(Conference &conf)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (sending_ or receiving_)
         videoMixerSP_ = std::move(conf.getVideoMixer());
 }
 
 void VideoRtpSession::enterConference(Conference *conf)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     /* Detach from a possible previous conference */
     exitConference();
 
@@ -262,7 +261,7 @@ void VideoRtpSession::enterConference(Conference *conf)
 
 void VideoRtpSession::exitConference()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (videoMixerSP_) {
         if (sender_)
             videoMixerSP_->detach(sender_.get());
