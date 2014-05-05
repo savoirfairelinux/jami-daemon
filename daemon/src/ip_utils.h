@@ -33,7 +33,7 @@
 #define IP_UTILS_H_
 
 #include <pjlib.h>
-#include <commoncpp/socket.h>
+#include <ccrtp/channel.h>
 
 #include <netinet/ip.h>
 
