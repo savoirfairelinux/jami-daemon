@@ -228,22 +228,21 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (method->id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata))
         return PJ_FALSE;
 
-    if (!rdata->msg_info.to or !rdata->msg_info.from) {
-        ERROR("NULL from/to fields");
+    if (!rdata->msg_info.to or !rdata->msg_info.from or !rdata->msg_info.via) {
+        ERROR("Missing From, To or Via fields");
         return PJ_FALSE;
     }
+    const pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
+    const pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
+    const pjsip_host_port& sip_via = rdata->msg_info.via->sent_by;
 
-    pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
-    pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
-
-    if (!sip_to_uri or !sip_from_uri) {
+    if (!sip_to_uri or !sip_from_uri or !sip_via.host.ptr) {
         ERROR("NULL uri");
         return PJ_FALSE;
     }
-
-    std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
-    std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    std::string account_id(SIPVoIPLink::instance().guessAccountIdFromNameAndServer(userName, server));
+    std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
+    std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
+    std::string account_id(SIPVoIPLink::instance().guessAccountIdFromNameAndServer(toUsername, viaHostname));
 
     std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
 
