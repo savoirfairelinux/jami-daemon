@@ -227,7 +227,6 @@ void VideoRtpSession::forceKeyFrame()
 
 void VideoRtpSession::setupConferenceVideoPipeline()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (!sender_)
         return;
 
@@ -257,7 +256,10 @@ void VideoRtpSession::enterConference(Conference *conf)
 
     getMixerFromConference(*conf);
 
-    setupConferenceVideoPipeline();
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        setupConferenceVideoPipeline();
+    }
 }
 
 void VideoRtpSession::exitConference()
