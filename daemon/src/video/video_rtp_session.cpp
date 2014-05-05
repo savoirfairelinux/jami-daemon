@@ -52,8 +52,8 @@ using std::string;
 VideoRtpSession::VideoRtpSession(const string &callID,
 								 const map<string, string> &txArgs) :
     mutex_(), socketPair_(), sender_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(), sending_(false), receiving_(false), callID_(callID),
-    videoMixerSP_(), videoLocal_()
+    rxArgs_(), sending_(false), receiving_(false), conference_(nullptr),
+    callID_(callID), videoMixerSP_(), videoLocal_()
 {}
 
 VideoRtpSession::~VideoRtpSession()
@@ -197,11 +197,12 @@ void VideoRtpSession::start(int localPort)
     startSender();
     startReceiver();
 
-    // Setup pipeline
-    if (videoMixerSP_) {
+    // Setup video pipeline
+    if (conference_)
         setupConferenceVideoPipeline();
-    } else if (auto shared = videoLocal_.lock()) {
-        if (sender_)
+    else {
+        auto shared = videoLocal_.lock();
+        if (sender_ && shared)
             shared->attach(sender_.get());
     }
 }
@@ -237,14 +238,17 @@ void VideoRtpSession::forceKeyFrame()
 
 void VideoRtpSession::setupConferenceVideoPipeline()
 {
-    if (!sender_)
-        return;
+    assert(conference_);
 
+    videoMixerSP_ = std::move(conference_->getVideoMixer());
     videoMixerSP_->setDimensions(atol(txArgs_["width"].c_str()),
                                  atol(txArgs_["height"].c_str()));
-    if (auto shared = videoLocal_.lock())
-        shared->detach(sender_.get());
-    videoMixerSP_->attach(sender_.get());
+
+    if (sender_) {
+        if (auto shared = videoLocal_.lock())
+            shared->detach(sender_.get());
+        videoMixerSP_->attach(sender_.get());
+    }
 
     if (receiveThread_) {
         receiveThread_->enterConference();
@@ -252,26 +256,21 @@ void VideoRtpSession::setupConferenceVideoPipeline()
     }
 }
 
-void VideoRtpSession::getMixerFromConference(Conference &conf)
-{
-    if (sending_ or receiving_)
-        videoMixerSP_ = std::move(conf.getVideoMixer());
-}
-
 void VideoRtpSession::enterConference(Conference *conf)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    /* Detach from a possible previous conference */
-    exitConference();
-
-    getMixerFromConference(*conf);
-
-    setupConferenceVideoPipeline();
+    if (conference_)
+        exitConference();
+    conference_ = conf;
+    if (sending_ or receiveThread_)
+        setupConferenceVideoPipeline();
 }
 
 void VideoRtpSession::exitConference()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    assert(conference_);
+
     if (videoMixerSP_) {
         if (sender_)
             videoMixerSP_->detach(sender_.get());
@@ -286,6 +285,7 @@ void VideoRtpSession::exitConference()
 
     if (auto shared = videoLocal_.lock())
         shared->attach(sender_.get());
+    conference_ = nullptr;
 }
 
 } // end namespace sfl_video

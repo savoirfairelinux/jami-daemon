@@ -70,7 +70,6 @@ public:
 private:
     NON_COPYABLE(VideoRtpSession);
 
-    void getMixerFromConference(Conference &conf);
     void setupConferenceVideoPipeline();
     void startSender();
     void startReceiver();
@@ -85,6 +84,7 @@ private:
     std::map<std::string, std::string> rxArgs_;
     bool sending_;
     bool receiving_;
+    Conference* conference_;
     const std::string callID_;
     std::shared_ptr<VideoMixer> videoMixerSP_;
     std::weak_ptr<VideoFrameActiveWriter> videoLocal_;
