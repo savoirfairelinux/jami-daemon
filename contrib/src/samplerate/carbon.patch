@@ -1,0 +1,10 @@
+--- a/examples/audio_out.c.orig	2014-06-26 21:09:44.000000000 -0400
++++ b/examples/audio_out.c	2014-06-26 21:09:58.000000000 -0400
+@@ -172,7 +172,6 @@
+ 
+ #if (defined (__MACH__) && defined (__APPLE__)) /* MacOSX */
+ 
+-#include <Carbon.h>
+ #include <CoreAudio/AudioHardware.h>
+ 
+ #define	MACOSX_MAGIC	MAKE_MAGIC ('M', 'a', 'c', ' ', 'O', 'S', ' ', 'X')
