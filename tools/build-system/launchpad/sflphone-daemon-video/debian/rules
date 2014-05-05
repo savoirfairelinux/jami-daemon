@@ -35,10 +35,16 @@ PJ_CONFIG_OPTIONS="--prefix=/usr \
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
+	pushd ../contrib
+	mkdir -f native
+	pushd native
+	../bootstrap
+	make
+	popd
+	popd
 	# Add here commands to configure the package.
 	./autogen.sh
-	./configure --prefix=/usr --enable-video
-	cd libs/pjproject-2.2.1; CFLAGS="-fPIC -O2 -DNDEBUG" ./configure $(PJ_CONFIG_OPTIONS)
+	./configure --prefix=/usr
 	touch configure-stamp
 
 #Architecture
@@ -48,7 +54,6 @@ build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp
 
     # Add here commands to compile the arch part of the package.
-	cd libs/pjproject-2.2.1; $(MAKE) dep; $(MAKE) clean; $(MAKE)
 	$(MAKE)
 	touch $@
 
