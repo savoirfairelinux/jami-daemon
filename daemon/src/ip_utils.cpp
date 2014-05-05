@@ -32,7 +32,7 @@
 #include "ip_utils.h"
 #include "logger.h"
 
- #include "sip/sip_utils.h"
+#include "sip/sip_utils.h"
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -47,6 +47,10 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
     std::vector<IpAddr> ipList;
     if (name.empty())
         return ipList;
+    if (IpAddr::isValid(name, family)) {
+        ipList.push_back(name);
+        return ipList;
+    }
 
     static const unsigned MAX_ADDR_NUM = 128;
     pj_addrinfo res[MAX_ADDR_NUM];
