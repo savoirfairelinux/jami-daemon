@@ -1273,7 +1273,7 @@ SIPAccount::getContactHeader()
     std::string address;
     pj_uint16_t port;
 
-    link_.sipTransport->findLocalAddressFromTransport(transport_, transportType, address, port);
+    link_.sipTransport->findLocalAddressFromTransport(transport_, transportType, hostname_, address, port);
 
     if (not publishedSameasLocal_) {
         address = publishedIpAddress_;

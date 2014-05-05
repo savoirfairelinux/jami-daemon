@@ -391,10 +391,10 @@ SipTransport::getSTUNAddresses(const SIPAccount &account,
 
 #define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { ERROR(M, ##__VA_ARGS__); return; }
 
-void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &addr, pj_uint16_t &port) const
+void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, const std::string &host, std::string &addr, pj_uint16_t &port) const
 {
     // Initialize the sip port with the default SIP port
-    port = DEFAULT_SIP_PORT;
+    port = pjsip_transport_get_default_port_for_type(transportType);
 
     // Initialize the sip address with the hostname
     const pj_str_t *pjMachineName = pj_gethostname();
@@ -407,8 +407,10 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     pjsip_tpmgr *tpmgr = pjsip_endpt_get_tpmgr(endpt_);
     RETURN_IF_NULL(tpmgr, "Transport manager is NULL in findLocalAddress, using local address %s :%d", addr.c_str(), port);
 
+    pj_str_t pjstring;
+    pj_cstr(&pjstring, host.c_str());
     pjsip_tpselector tp_sel = getTransportSelector(transport);
-    pjsip_tpmgr_fla2_param param = {transportType, &tp_sel, {nullptr, 0}, PJ_FALSE, {nullptr, 0}, 0, nullptr};
+    pjsip_tpmgr_fla2_param param = {transportType, &tp_sel, pjstring, PJ_FALSE, {nullptr, 0}, 0, nullptr};
     if (pjsip_tpmgr_find_local_addr2(tpmgr, &pool_, &param) != PJ_SUCCESS) {
         WARN("Could not retrieve local address and port from transport, using %s :%d", addr.c_str(), port);
         return;

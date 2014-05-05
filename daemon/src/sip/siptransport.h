@@ -92,7 +92,7 @@ class SipTransport {
          * @param uri The uri from which we want to discover the address to use
          * @param transport The transport to use to discover the address
          */
-        void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, pj_uint16_t &port) const;
+        void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, const std::string &host, std::string &address, pj_uint16_t &port) const;
 
         void findLocalAddressFromSTUN(pjsip_transport *transport, pj_str_t *stunServerName,
                 int stunPort, std::string &address, pj_uint16_t &port) const;
