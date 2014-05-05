@@ -31,7 +31,6 @@
 #include <string>
 #include "audiobuffertest.h"
 #include "audio/audiobuffer.h"
-#include "audio/ringbuffer.h"
 #include "logger.h"
 #include "test_utils.h"
 
