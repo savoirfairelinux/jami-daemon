@@ -72,6 +72,8 @@ private:
     NON_COPYABLE(VideoRtpSession);
 
     void getMixerFromConference(Conference &conf);
+    void startSender();
+    void startReceiver();
 
     // all public methods must be locked internally before use
     std::mutex mutex_;
