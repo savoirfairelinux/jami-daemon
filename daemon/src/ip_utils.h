@@ -69,6 +69,10 @@ public:
         addr.addr.sa_family = AF_INET6;
         memcpy(&addr.ipv6.sin6_addr, &ip, sizeof(in6_addr));
     }
+    IpAddr(const in_addr& ip) : addr() {
+        addr.addr.sa_family = AF_INET;
+        memcpy(&addr.ipv4.sin_addr, &ip, sizeof(in_addr));
+    }
 
     // From a string
     IpAddr(const std::string& str, pj_uint16_t family = AF_UNSPEC) : addr() {
@@ -130,8 +134,13 @@ public:
 
     inline operator ost::IPV6Host () const {
         assert(addr.addr.sa_family == AF_INET6);
+#ifndef __ANDROID__ // hack for the ucommoncpp bug (fixed in our Android repo)
+        ost::IPV6Host host = ost::IPV6Host(toString().c_str());
+        return host;
+#else
         const sockaddr_in6& ipv6_addr = *reinterpret_cast<const sockaddr_in6*>(&addr);
         return ost::IPV6Host(ipv6_addr.sin6_addr);
+#endif
     }
 
     inline operator std::string () const {
@@ -151,6 +160,8 @@ public:
     }
 
     inline uint16_t getPort() const {
+        if (not *this)
+            return 0;
         return pj_sockaddr_get_port(&addr);
     }
 
