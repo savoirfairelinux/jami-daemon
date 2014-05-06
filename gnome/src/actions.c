@@ -869,21 +869,30 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
     else
         g_queue_clear(account->acodecs);
 
+    GQueue *system_acodecs = get_audio_codecs_list();
+    if (!system_acodecs) {  // should never happen
+        g_warning("Couldn't get codec list in %s at %d", __FILE__, __LINE__);
+        return;
+    }
+
     /* First add the active codecs for this account */
     GArray *order = dbus_get_active_audio_codec_list(account->accountID);
-    GQueue *system_acodecs = get_audio_codecs_list();
-    for (guint i = 0; i < order->len; i++) {
-        gint payload = g_array_index(order, gint, i);
-        codec_t *orig = codec_list_get_by_payload(payload, system_acodecs);
-        codec_t *c = codec_create_new_from_caps(orig);
+    if (order) {
+        for (guint i = 0; i < order->len; i++) {
+            gint payload = g_array_index(order, gint, i);
+            codec_t *orig = codec_list_get_by_payload(payload, system_acodecs);
+            codec_t *c = codec_create_new_from_caps(orig);
 
-        if (c) {
-            c->is_active = TRUE;
-            g_queue_push_tail(account->acodecs, c);
-        } else
-            g_warning("Couldn't find codec %d %p", payload, orig);
+            if (c) {
+                c->is_active = TRUE;
+                g_queue_push_tail(account->acodecs, c);
+            } else
+                g_warning("Couldn't find codec %d %p", payload, orig);
+        }
+        g_array_unref(order);
+    } else {
+        g_warning("SFLphone: Error: order obj is NULL in %s at %d", __FILE__, __LINE__);
     }
-    g_array_unref(order);
 
     /* Here we add installed codecs that aren't active for the account */
     guint caps_size = g_queue_get_length(system_acodecs);
