@@ -89,11 +89,13 @@ void IpTest::testIpAddrOst()
 	TITLE();
 
 	const IpAddr ipv4 = {"8.8.8.8"};
-	const IpAddr ipv6 = {"2001:4860:4860::8888"};
 
 	ost::IPV4Host v4host = ipv4;
 	IpAddr ip = v4host.getAddress();
 	CPPUNIT_ASSERT(ipv4 == ip);
+
+#if HAVE_IPV6
+	const IpAddr ipv6 = {"2001:4860:4860::8888"};
 
 	ost::IPV6Host v6host = ipv6;
 	ip = v6host.getAddress();
@@ -106,24 +108,16 @@ void IpTest::testIpAddrOst()
 	ost::IPV6Host v6host3 = {};
 	ip = v6host3.getAddress();
 	CPPUNIT_ASSERT(ip);
-	WARN("%u addresses", v6host3.getAddressCount());
-	for (unsigned i=0; i<v6host3.getAddressCount(); i++)
-		WARN(" |-> %s", IpAddr(v6host3.getAddress(i)).toString().c_str());
 	CPPUNIT_ASSERT(v6host3.getAddressCount() > 0 && v6host3.getAddressCount() < 256);
-	WARN("OK0");
 
 	v6host3 = v6host;
 	CPPUNIT_ASSERT(IpAddr(v6host3.getAddress()) == ipv6);
 	CPPUNIT_ASSERT(v6host3.getAddressCount() == 1);
-	WARN("OK1");
 
-	//v6host3 = v6host2;
 	v6host3 = v6host2.getAddress();
-	WARN("OK2");
 	CPPUNIT_ASSERT(IpAddr(v6host3.getAddress()) == ipv6);
-	WARN("OK3");
 	CPPUNIT_ASSERT(v6host3.getAddressCount() == 1);
-	WARN("OK4");
+#endif
 }
 
 IpTest::IpTest() : CppUnit::TestCase("IP Tests") {}
