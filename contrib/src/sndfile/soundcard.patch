@@ -1,0 +1,16 @@
+--- a/programs/sndfile-play.c.orig	2014-06-12 16:00:39.348060215 -0400
++++ b/programs/sndfile-play.c	2014-06-12 16:01:05.660059438 -0400
+@@ -52,7 +52,12 @@
+ 	#include <sys/time.h>
+ #endif
+ 
+-#if defined (__linux__) || defined (__FreeBSD_kernel__) || defined (__FreeBSD__)
++#if defined(__ANDROID__)
++	#include 	<fcntl.h>
++	#include 	<sys/ioctl.h>
++	#include 	<linux/soundcard.h>
++
++#elif defined (__linux__) || defined (__FreeBSD_kernel__) || defined (__FreeBSD__)
+ 	#include 	<fcntl.h>
+ 	#include 	<sys/ioctl.h>
+ 	#include 	<sys/soundcard.h>
