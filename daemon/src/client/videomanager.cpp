@@ -32,7 +32,7 @@
 
 #include "videomanager.h"
 #include "video/libav_utils.h"
-#include "video/video_input_selector.h"
+#include "video/video_input.h"
 #include "video/video_preferences.h"
 #include "account.h"
 #include "logger.h"
@@ -158,7 +158,8 @@ VideoManager::startCamera()
     }
 
     const std::string device = "v4l2://" + videoPreference_.getDevice();
-    videoInputSelector_.reset(new sfl_video::VideoInputSelector(device));
+    videoInput_.reset(new sfl_video::VideoInput());
+    videoInput_->switchInput(device);
 }
 
 void
@@ -169,31 +170,31 @@ VideoManager::stopCamera()
         return;
     }
 
-    videoInputSelector_.reset();
+    videoInput_.reset();
 }
 
 bool
 VideoManager::switchInput(const std::string &resource)
 {
     if (not hasCameraStarted()) {
-        ERROR("Input selector not initialized");
+        ERROR("Video input not initialized");
         return false;
     }
 
-    return videoInputSelector_->switchInput(resource);
+    return videoInput_->switchInput(resource);
 }
 
 std::weak_ptr<sfl_video::VideoFrameActiveWriter>
 VideoManager::getVideoCamera()
 {
-    return videoInputSelector_;
+    return videoInput_;
 }
 
 bool
 VideoManager::hasCameraStarted()
 {
     // see http://stackoverflow.com/a/7580064/21185
-    return static_cast<bool>(videoInputSelector_);
+    return static_cast<bool>(videoInput_);
 }
 
 std::string
