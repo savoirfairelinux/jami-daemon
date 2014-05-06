@@ -871,6 +871,11 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
 
     /* First add the active codecs for this account */
     GArray *order = dbus_get_active_audio_codec_list(account->accountID);
+    if (!order) {
+        g_warning("SFLphone: Error: order obj is NULL in %s at %d", __FILE__, __LINE__);
+        return;
+    }
+
     GQueue *system_acodecs = get_audio_codecs_list();
     for (guint i = 0; i < order->len; i++) {
         gint payload = g_array_index(order, gint, i);
