@@ -872,7 +872,8 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
     /* First add the active codecs for this account */
     GArray *order = dbus_get_active_audio_codec_list(account->accountID);
     GQueue *system_acodecs = get_audio_codecs_list();
-    for (guint i = 0; i < order->len; i++) {
+
+    for (guint i = 0; order && i < order->len; i++) {
         gint payload = g_array_index(order, gint, i);
         codec_t *orig = codec_list_get_by_payload(payload, system_acodecs);
         codec_t *c = codec_create_new_from_caps(orig);
@@ -883,7 +884,9 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
         } else
             g_warning("Couldn't find codec %d %p", payload, orig);
     }
-    g_array_unref(order);
+
+    if (order)
+        g_array_unref(order);
 
     /* Here we add installed codecs that aren't active for the account */
     guint caps_size = g_queue_get_length(system_acodecs);
