@@ -41,6 +41,7 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <gtk/gtk.h>
 
 #include "dbus.h"
@@ -1169,6 +1170,20 @@ void calltree_display(calltab_t *tab, SFLPhoneClient *client)
     update_actions(client);
 }
 
+static void
+format_duration(guint32 seconds, char *timestr, size_t timestr_sz)
+{
+    const guint32 minutes = seconds / 60;
+    const guint32 hours = minutes / 60;
+    seconds %= 60;
+
+    if (hours)
+        g_snprintf(timestr, timestr_sz, "%u:%02u:%02u",
+                   hours, minutes, seconds);
+    else
+        g_snprintf(timestr, timestr_sz, "%02u:%02u",
+                   minutes, seconds);
+}
 
 gboolean calltree_update_clock(G_GNUC_UNUSED gpointer data)
 {
@@ -1177,10 +1192,10 @@ gboolean calltree_update_clock(G_GNUC_UNUSED gpointer data)
 
     char timestr[20];
     const gchar *msg = "";
-    long duration;
+    double duration;
     callable_obj_t *call = calltab_get_selected_call(current_calls_tab);
 
-    if (call)
+    if (call) {
         switch (call->_state) {
             case CALL_STATE_INVALID:
             case CALL_STATE_INCOMING:
@@ -1191,14 +1206,12 @@ gboolean calltree_update_clock(G_GNUC_UNUSED gpointer data)
                 break;
             default:
                 duration = difftime(time(NULL), call->_time_start);
-
-                if (duration < 0)
-                    duration = 0;
-
-                g_snprintf(timestr, sizeof(timestr), "%.2ld:%.2ld", duration / 60, duration % 60);
+                format_duration(CLAMP(duration, 0.0f, UINT32_MAX), timestr,
+                                sizeof(timestr));
                 msg = timestr;
                 break;
         }
+    }
 
     statusbar_update_clock(msg);
     return TRUE;
