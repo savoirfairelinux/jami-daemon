@@ -274,7 +274,10 @@ SipTransport::createTlsTransport(SIPAccount &account)
     static const char SIPS_PREFIX[] = "<sips:";
     size_t sips = remoteSipUri.find(SIPS_PREFIX) + (sizeof SIPS_PREFIX) - 1;
     size_t trns = remoteSipUri.find(";transport");
-    IpAddr remoteAddr = remoteSipUri.substr(sips, trns-sips);
+    IpAddr remoteAddr = {remoteSipUri.substr(sips, trns-sips)};
+    if (!remoteAddr)
+        return nullptr;
+
     const pjsip_transport_type_e transportType =
 #if HAVE_IPV6
         remoteAddr.isIpv6() ? PJSIP_TRANSPORT_TLS6 :
