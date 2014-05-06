@@ -197,6 +197,19 @@ sfl_seekslider_init(SFLSeekSlider *seekslider)
     seekslider->priv->file_path = NULL;
 }
 
+
+static void
+ensure_stop(SFLSeekSliderPrivate *priv)
+{
+    g_return_if_fail(priv && priv->file_path && strlen(priv->file_path) != 0);
+
+    if (priv->is_playing) {
+        dbus_stop_recorded_file_playback(priv->file_path);
+        g_debug("Stop file playback %s", priv->file_path);
+        priv->is_playing = FALSE;
+    }
+}
+
 static void
 sfl_seekslider_finalize(GObject *object)
 {
@@ -206,10 +219,9 @@ sfl_seekslider_finalize(GObject *object)
     g_return_if_fail(SFL_IS_SEEKSLIDER(object));
 
     seekslider = SFL_SEEKSLIDER(object);
-    g_return_if_fail(seekslider->priv != NULL);
 
     /* Ensure that we've stopped playback */
-    sfl_seekslider_stop_playback_record_cb(NULL, seekslider);
+    ensure_stop(seekslider->priv);
 
     G_OBJECT_CLASS(sfl_seekslider_parent_class)->finalize(object);
 }
@@ -365,14 +377,7 @@ static void sfl_seekslider_stop_playback_record_cb(GtkButton *button G_GNUC_UNUS
 {
     SFLSeekSlider *self = SFL_SEEKSLIDER(user_data);
 
-    if (self->priv->file_path == NULL || (*self->priv->file_path == 0))
-        return;
-
-    if (self->priv->is_playing) {
-        dbus_stop_recorded_file_playback(self->priv->file_path);
-        g_debug("Stop file playback %s", self->priv->file_path);
-        self->priv->is_playing = FALSE;
-    }
+    ensure_stop(self->priv);
 
     sfl_seekslider_set_display(self, SFL_SEEKSLIDER_DISPLAY_PLAY);
 }
