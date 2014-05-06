@@ -326,6 +326,7 @@ started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
                           gchar *shm_path,
                           gint width,
                           gint height,
+                          G_GNUC_UNUSED gboolean is_mixer,
                           G_GNUC_UNUSED GError *error,
                           G_GNUC_UNUSED gpointer userdata)
 {
@@ -372,6 +373,7 @@ void
 stopped_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
                           gchar *id,
                           G_GNUC_UNUSED gchar *shm_path,
+                          G_GNUC_UNUSED gboolean is_mixer,
                           G_GNUC_UNUSED GError *error,
                           G_GNUC_UNUSED gpointer userdata)
 {

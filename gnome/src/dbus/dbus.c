@@ -842,10 +842,11 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
         g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
 
-    /* Register STRING STRING INT INT Marshaller */
+    /* Register STRING STRING INT INT BOOL Marshaller */
     dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING_INT_INT, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+        g_cclosure_user_marshal_VOID__STRING_STRING_INT_INT_BOOLEAN, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_BOOLEAN,
+        G_TYPE_INVALID);
 
     /* Register STRING STRING BOOLEAN STRING Marshaller */
     dbus_g_object_register_marshaller(
@@ -1046,13 +1047,14 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
             G_CALLBACK(video_device_event_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal(video_proxy, "startedDecoding", G_TYPE_STRING,
-            G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+            G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_BOOLEAN,
+            G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(video_proxy, "startedDecoding",
             G_CALLBACK(started_decoding_video_cb), NULL,
             NULL);
 
     dbus_g_proxy_add_signal(video_proxy, "stoppedDecoding",
-            G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+            G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(video_proxy, "stoppedDecoding",
             G_CALLBACK(stopped_decoding_video_cb),
             NULL, NULL);

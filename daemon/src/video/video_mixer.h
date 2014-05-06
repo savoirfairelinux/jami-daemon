@@ -77,7 +77,6 @@ private:
     std::list<Observable<std::shared_ptr<VideoFrame> >*> sources_;
     std::mutex mutex_;
     SHMSink sink_;
-    static const char * VIDEO_MIXER_SUFFIX;
 };
 
 }

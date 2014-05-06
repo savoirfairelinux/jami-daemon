@@ -40,8 +40,6 @@
 
 namespace sfl_video {
 
-const char * VideoMixer::VIDEO_MIXER_SUFFIX = "_MX";
-
 VideoMixer::VideoMixer(const std::string &id) :
     VideoGenerator::VideoGenerator()
     , id_(id)
@@ -49,7 +47,7 @@ VideoMixer::VideoMixer(const std::string &id) :
     , height_(0)
     , sources_()
     , mutex_()
-    , sink_(id + VIDEO_MIXER_SUFFIX)
+    , sink_(id)
 {
     auto videoCtrl = Manager::instance().getVideoManager();
     if (!videoCtrl->hasCameraStarted()) {
@@ -144,7 +142,7 @@ void VideoMixer::start_sink()
 {
     if (sink_.start()) {
         if (this->attach(&sink_)) {
-            Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), width_, height_);
+            Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), width_, height_, true);
             DEBUG("MX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), width_, height_);
         }
@@ -155,7 +153,7 @@ void VideoMixer::start_sink()
 void VideoMixer::stop_sink()
 {
     if (this->detach(&sink_)) {
-        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
+        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), true);
         sink_.stop();
     }
 }

@@ -118,7 +118,7 @@ bool VideoInput::setup()
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     if (attach(&sink_)) {
         Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(),
-			decoder_->getWidth(), decoder_->getHeight());
+			decoder_->getWidth(), decoder_->getHeight(), false);
         DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
               sink_.openedName().c_str(), decoder_->getWidth(), decoder_->getHeight());
     }
@@ -132,7 +132,7 @@ void VideoInput::process()
 void VideoInput::cleanup()
 {
     if (detach(&sink_)) {
-        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
+        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), false);
         sink_.stop();
     }
 

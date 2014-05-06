@@ -57,7 +57,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , stream_(args_["receiving_sdp"])
     , sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this)
     , demuxContext_()
-    , sink_(id+"_RX")
+    , sink_(id)
     , requestKeyFrameCallback_(0)
 {}
 
@@ -154,7 +154,7 @@ void VideoReceiveThread::process()
 void VideoReceiveThread::cleanup()
 {
     if (detach(&sink_))
-        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
+        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), false);
     sink_.stop();
 
     if (videoDecoder_)
@@ -214,7 +214,7 @@ void VideoReceiveThread::enterConference()
         return;
 
     if (detach(&sink_)) {
-        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
+        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), false);
         DEBUG("RX: shm sink <%s> detached", sink_.openedName().c_str());
     }
 }
@@ -226,7 +226,7 @@ void VideoReceiveThread::exitConference()
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
         if (attach(&sink_)) {
-            Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
+            Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_, false);
             DEBUG("RX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), dstWidth_, dstHeight_);
         }

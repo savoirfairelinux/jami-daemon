@@ -36,10 +36,11 @@
 void video_cleanup();
 
 void started_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
-                               gint width, gint height, GError *error,
-                               gpointer userdata);
+                               gint width, gint height, gboolean is_mixer,
+                               GError *error, gpointer userdata);
 
 void stopped_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
-                               GError *error, gpointer userdata);
+                               gboolean is_mixer, GError *error,
+                               gpointer userdata);
 
 #endif // VIDEO_CALLBACKS_H_

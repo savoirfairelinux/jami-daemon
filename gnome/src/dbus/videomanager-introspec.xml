@@ -152,6 +152,9 @@
             <arg type="i" name="height">
               <tp:docstring>The height of the video in the shared memory</tp:docstring>
             </arg>
+            <arg type="b" name="isMixer">
+              <tp:docstring>Whether or not this texture belongs to a video mixer or is a single texture</tp:docstring>
+            </arg>
         </signal>
 
         <signal name="stoppedDecoding" tp:name-for-bindings="stoppedDecoding">
@@ -161,6 +164,9 @@
             </arg>
             <arg type="s" name="shmPath">
               <tp:docstring>The path of the newly created shared memory</tp:docstring>
+            </arg>
+            <arg type="b" name="isMixer">
+              <tp:docstring>Whether or not this texture belongs to a video mixer or is a single texture</tp:docstring>
             </arg>
         </signal>
 
