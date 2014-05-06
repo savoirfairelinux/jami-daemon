@@ -259,27 +259,12 @@ void AudioRtpSession::updateDestinationIpAddress()
 
     IpAddr remote = {call_.getLocalSDP()->getRemoteIP()};
     remote.setPort(call_.getLocalSDP()->getRemoteAudioPort());
-    DEBUG("New remote address for session: %s", remote.toString(true).c_str());
-
     if (!remote) {
         WARN("Target IP address (%s) is not correct!", call_.getLocalSDP()->getRemoteIP().c_str());
         return;
-    }/*
-
-    // Store remote ip in case we would need to forget current destination
-#if HAVE_IPV6
-#ifndef __ANDROID__
-    // Workaround for a bug in ucommoncpp
-    if (remote.isIpv6()) {
-        WARN("Using ucommoncpp workaround for IPv6 bug!");
-        remoteIp_ = IpAddr(call_.getLocalSDP()->getRemoteIP());
-        remoteIp_.setPort(call_.getLocalSDP()->getRemoteAudioPort());
-    } else
-#endif
-#endif*/
-    {
-        remoteIp_ = remote;
     }
+    remoteIp_ = remote;
+    DEBUG("New remote address for session: %s", remote.toString(true).c_str());
 
     if (!(remoteIp_.isIpv4()  && queue_.addDestination(static_cast<ost::IPV4Host>(remoteIp_), remoteIp_.getPort()))
 #if HAVE_IPV6
