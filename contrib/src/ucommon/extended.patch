@@ -1,0 +1,12 @@
+--- a/inc/ucommon/platform.h.orig	2014-07-03 16:24:54.711292341 -0400
++++ b/inc/ucommon/platform.h	2014-07-03 16:25:04.847292736 -0400
+@@ -86,9 +86,7 @@
+ 
+ // see if we are building for or using extended stdc++ runtime library support
+ 
+-#if defined(__ANDROID__) || defined(NEW_STDCPP) || defined(OLD_STDCPP)
+ #define _UCOMMON_EXTENDED_
+-#endif
+ 
+ // see if targeting legacy Microsoft windows platform
+ 

@@ -1,0 +1,54 @@
+https://github.com/dyfet/ucommon/issues/20
+
+--- a/inc/commoncpp/config.h.orig	2014-06-25 19:15:06.000000000 -0400
++++ b/inc/commoncpp/config.h	2014-06-25 19:15:21.000000000 -0400
+@@ -86,8 +86,9 @@
+  * @param string2 to compare.
+  * @return 0 if equal, > 0 if s2 > s1, < 0 if s2 < s1.
+  */
+-extern "C" inline int stricmp(const char *string1, const char *string2)
+-    {return ucommon::String::case_compare(string1, string2);}
++#ifndef stricmp
++#define stricmp(x,y) String::case_compare(x,y)
++#endif
+ 
+ /**
+  * Convenience function for case insensitive null terminated string compare.
+@@ -96,8 +97,9 @@
+  * @param max size of string to compare.
+  * @return 0 if equal, > 0 if s2 > s1, < 0 if s2 < s1.
+  */
+-extern "C" inline int strnicmp(const char *string1, const char *string2, size_t max)
+-    {return ucommon::String::case_compare(string1, string2, max);}
++#ifndef strnicmp
++#define strnicmp(x,y,z) String::case_compare(x,y,z)
++#endif
+ 
+ #endif
+ 
+--- a/inc/ucommon/string.h.orig	2014-06-25 19:16:20.000000000 -0400
++++ b/inc/ucommon/string.h	2014-06-25 19:16:27.000000000 -0400
+@@ -1627,8 +1627,9 @@
+  * @param string2 to compare.
+  * @return 0 if equal, > 0 if s2 > s1, < 0 if s2 < s1.
+  */
+-extern "C" inline int stricmp(const char *string1, const char *string2)
+-    {return String::case_compare(string1, string2);}
++#ifndef stricmp
++#define stricmp(x,y) String::case_compare(x,y)
++#endif
+ 
+ /**
+  * Convenience function for case insensitive null terminated string compare.
+@@ -1637,8 +1638,9 @@
+  * @param max size of string to compare.
+  * @return 0 if equal, > 0 if s2 > s1, < 0 if s2 < s1.
+  */
+-extern "C" inline int strnicmp(const char *string1, const char *string2, size_t max)
+-    {return String::case_compare(string1, string2, max);}
++#ifndef strnicmp
++#define strnicmp(x,y,z) String::case_compare(x,y,z)
++#endif
+ 
+ #endif
+ 
