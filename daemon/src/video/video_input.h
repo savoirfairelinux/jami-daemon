@@ -39,9 +39,9 @@
 #include "video_decoder.h"
 #include "sflthread.h"
 
-#include <string>
+#include <atomic>
 #include <map>
-
+#include <string>
 
 namespace sfl_video {
 using std::string;
@@ -51,7 +51,7 @@ class VideoInput :
     public SFLThread
 {
 public:
-    VideoInput(const std::map<std::string, std::string>& map);
+    VideoInput();
     ~VideoInput();
 
     // as VideoGenerator
@@ -59,21 +59,31 @@ public:
     int getHeight() const;
     int getPixelFormat() const;
 
+    bool switchInput(const string& resource);
+
 private:
     NON_COPYABLE(VideoInput);
 
-    std::string id_;
+    string id_;
     VideoDecoder *decoder_;
     SHMSink sink_;
-    bool mirror_;
+    std::atomic<bool> switchPending_;
 
-    std::string input_;
-    std::string loop_;
-    std::string format_;
-    std::string channel_;
-    std::string frameRate_;
-    std::string videoSize_;
+    bool mirror_;
+    string input_;
+    string loop_;
+    string format_;
+    string channel_;
+    string frameRate_;
+    string videoSize_;
     bool emulateRate_;
+
+    void createDecoder();
+    void deleteDecoder();
+
+    bool initCamera(const string& device);
+    bool initX11(string display);
+    bool initFile(string path);
 
     // as SFLThread
     bool setup();

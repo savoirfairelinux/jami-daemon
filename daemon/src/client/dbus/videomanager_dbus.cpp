@@ -32,12 +32,12 @@
 
 #include "videomanager.h"
 #include "video/libav_utils.h"
-#include "video/video_input_selector.h"
+#include "video/video_input.h"
 #include "video/video_preferences.h"
 
 VideoManager::VideoManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/VideoManager")
-    , videoInputSelector_()
+    , videoInput_()
     , videoPreference_()
 {
     // initialize libav libraries
