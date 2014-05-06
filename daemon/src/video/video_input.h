@@ -51,13 +51,15 @@ class VideoInput :
     public SFLThread
 {
 public:
-    VideoInput(const std::map<std::string, std::string>& map);
+    VideoInput(const std::string& resource);
     ~VideoInput();
 
     // as VideoGenerator
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
+
+    bool switchInput(const std::string& resource);
 
 private:
     NON_COPYABLE(VideoInput);
@@ -74,6 +76,13 @@ private:
     std::string frameRate_;
     std::string videoSize_;
     bool emulateRate_;
+
+    void createDecoder();
+    void deleteDecoder();
+
+    bool initCamera(const std::string& device);
+    bool initX11(std::string display);
+    bool initFile(std::string path);
 
     // as SFLThread
     bool setup();

@@ -58,7 +58,7 @@
 #include <memory> // for shared_ptr
 #include "video/video_preferences.h"
 #include "video/video_base.h"
-#include "video/video_input_selector.h"
+#include "video/video_input.h"
 
 class VideoManager
 #if HAVE_DBUS
@@ -68,7 +68,7 @@ class VideoManager
 #endif
 {
     private:
-        std::shared_ptr<sfl_video::VideoInputSelector> videoInputSelector_;
+        std::shared_ptr<sfl_video::VideoInput> videoInput_;
         VideoPreference videoPreference_;
 
     public:

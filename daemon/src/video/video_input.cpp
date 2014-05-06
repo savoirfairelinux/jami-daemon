@@ -43,46 +43,22 @@
 
 namespace sfl_video {
 
-static std::string
-extract(const std::map<std::string, std::string>& map,
-        const std::string& key)
-{
-    const auto iter = map.find(key);
-
-    return iter == map.end() ? "" : iter->second;
-}
-
-VideoInput::VideoInput(const std::map<std::string, std::string>& map) :
+VideoInput::VideoInput(const std::string& resource) :
     VideoGenerator::VideoGenerator()
     , id_(SINK_ID)
     , decoder_(0)
     , sink_()
-    , mirror_(map.find("mirror") != map.end())
-    , input_(extract(map, "input"))
-    , loop_(extract(map, "loop"))
-    , format_(extract(map, "format"))
-    , channel_(extract(map, "channel"))
-    , frameRate_(extract(map, "framerate"))
-    , videoSize_(extract(map, "video_size"))
-    , emulateRate_(map.find("emulate_rate") != map.end())
+    , channel_()
+    , emulateRate_()
+    , format_()
+    , frameRate_()
+    , input_()
+    , loop_()
+    , mirror_()
+    , videoSize_()
 {
-    DEBUG("initializing video input with: "
-            "mirror: %s, "
-            "input: '%s', "
-            "format: '%s', "
-            "channel: '%s', "
-            "framerate: '%s', "
-            "video_size: '%s', "
-            "emulate_rate: '%s'",
-            mirror_ ? "yes" : "no",
-            input_.c_str(),
-            format_.c_str(),
-            channel_.c_str(),
-            frameRate_.c_str(),
-            videoSize_.c_str(),
-            emulateRate_ ? "yes" : "no");
-
     start();
+    switchInput(resource);
 }
 
 VideoInput::~VideoInput()
@@ -93,35 +69,10 @@ VideoInput::~VideoInput()
 
 bool VideoInput::setup()
 {
-    decoder_ = new VideoDecoder();
-
-    if (!frameRate_.empty())
-        decoder_->setOption("framerate", frameRate_.c_str());
-    if (!videoSize_.empty())
-        decoder_->setOption("video_size", videoSize_.c_str());
-    if (!channel_.empty())
-        decoder_->setOption("channel", channel_.c_str());
-    if (!loop_.empty())
-        decoder_->setOption("loop", loop_.c_str());
-    if (emulateRate_)
-        decoder_->emulateRate();
-
-    decoder_->setInterruptCallback(interruptCb, this);
-
-    EXIT_IF_FAIL(decoder_->openInput(input_, format_) >= 0,
-                 "Could not open input \"%s\"", input_.c_str());
-
-    /* Data available, finish the decoding */
-    EXIT_IF_FAIL(!decoder_->setupFromVideoData(), "decoder IO startup failed");
-
     /* Sink setup */
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
-    if (attach(&sink_)) {
-        Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(),
-			decoder_->getWidth(), decoder_->getHeight());
-        DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
-              sink_.openedName().c_str(), decoder_->getWidth(), decoder_->getHeight());
-    }
+    if (not attach(&sink_))
+        WARN("Failed to attach sink");
 
     return true;
 }
@@ -131,12 +82,10 @@ void VideoInput::process()
 
 void VideoInput::cleanup()
 {
-    if (detach(&sink_)) {
-        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
-        sink_.stop();
-    }
+    deleteDecoder();
 
-    delete decoder_;
+    if (detach(&sink_))
+        sink_.stop();
 }
 
 int VideoInput::interruptCb(void *data)
@@ -159,6 +108,177 @@ bool VideoInput::captureFrame()
     if (mirror_)
         frame.mirror();
     publishFrame();
+    return true;
+}
+
+void
+VideoInput::createDecoder()
+{
+    DEBUG("decoder params:"
+            " channel:%s"
+            " emulate_rate:%s"
+            " format:%s"
+            " framerate:%s"
+            " input:%s"
+            " loop:%s"
+            " mirror:%s"
+            " video_size:%s",
+            channel_.c_str(),
+            emulateRate_ ? "yes" : "no",
+            format_.c_str(),
+            frameRate_.c_str(),
+            input_.c_str(),
+            loop_.c_str(),
+            mirror_ ? "yes" : "no",
+            videoSize_.c_str());
+
+    decoder_ = new VideoDecoder();
+
+    if (!frameRate_.empty())
+        decoder_->setOption("framerate", frameRate_.c_str());
+    if (!videoSize_.empty())
+        decoder_->setOption("video_size", videoSize_.c_str());
+    if (!channel_.empty())
+        decoder_->setOption("channel", channel_.c_str());
+    if (!loop_.empty())
+        decoder_->setOption("loop", loop_.c_str());
+    if (emulateRate_)
+        decoder_->emulateRate();
+
+    decoder_->setInterruptCallback(interruptCb, this);
+
+    EXIT_IF_FAIL(decoder_->openInput(input_, format_) >= 0,
+                 "Could not open input \"%s\"", input_.c_str());
+
+    /* Data available, finish the decoding */
+    EXIT_IF_FAIL(!decoder_->setupFromVideoData(), "decoder IO startup failed");
+
+    /* Signal the client about the new sink */
+    Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(),
+            decoder_->getWidth(), decoder_->getHeight());
+    DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
+            sink_.openedName().c_str(), decoder_->getWidth(), decoder_->getHeight());
+}
+
+void
+VideoInput::deleteDecoder()
+{
+    if (not decoder_)
+        return;
+
+    Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName());
+    delete decoder_;
+    decoder_ = nullptr;
+}
+
+bool
+VideoInput::initCamera(const std::string& device)
+{
+    std::map<std::string, std::string> map =
+        Manager::instance().getVideoManager()->getSettingsFor(device);
+
+    if (map.empty())
+        return false;
+
+    input_ = map["input"];
+    channel_ = map["channel"];
+    frameRate_ = map["framerate"];
+    videoSize_ = map["video_size"];
+
+    format_ = "video4linux2";
+    mirror_ = true;
+
+    return true;
+}
+
+bool
+VideoInput::initX11(std::string display)
+{
+    size_t space = display.find(' ');
+
+    if (space != std::string::npos) {
+        videoSize_ = display.substr(space + 1);
+        input_ = display.erase(space);
+    } else {
+        input_ = display;
+        videoSize_ = "vga";
+    }
+
+    format_ = "x11grab";
+    frameRate_ = "25";
+
+    return true;
+}
+
+bool
+VideoInput::initFile(std::string path)
+{
+    size_t dot = path.find_last_of('.');
+    std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
+
+    /* File exists? */
+    if (access(path.c_str(), R_OK) != 0) {
+        ERROR("file '%s' unavailable\n", path.c_str());
+        return false;
+    }
+
+    /* Supported image? */
+    if (ext == "jpeg" || ext == "jpg" || ext == "png") {
+        input_ = path;
+        format_ = "image2";
+        frameRate_ = "1";
+        loop_ = "1";
+        emulateRate_ = true;
+    } else {
+        ERROR("unsupported filetype '%s'\n", ext.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool
+VideoInput::switchInput(const std::string& resource)
+{
+    DEBUG("MRL: '%s'", resource.c_str());
+
+    // Supported MRL schemes
+    static const std::string v4l2("v4l2://");
+    static const std::string display("display://");
+    static const std::string file("file://");
+
+    bool valid = false;
+
+    // Reset attributes
+    channel_ = "";
+    emulateRate_ = false;
+    format_ = "";
+    frameRate_ = "";
+    input_ = "";
+    loop_ = "";
+    mirror_ = false;
+    videoSize_ = "";
+
+    /* Video4Linux2 */
+    if (resource.compare(0, v4l2.size(), v4l2) == 0)
+        valid = initCamera(resource.substr(v4l2.size()));
+
+    /* X11 display name */
+    else if (resource.compare(0, display.size(), display) == 0)
+        valid = initX11(resource.substr(display.size()));
+
+    /* Pathname */
+    else if (resource.compare(0, file.size(), file) == 0)
+        valid = initFile(resource.substr(file.size()));
+
+    /* Unsupported MRL or failed initialization */
+    if (not valid) {
+        ERROR("Failed to init input for MRL '%s'\n", resource.c_str());
+        return false;
+    }
+
+    deleteDecoder();
+    createDecoder();
     return true;
 }
 
