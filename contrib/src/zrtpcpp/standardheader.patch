@@ -1,0 +1,10 @@
+--- a/src/libzrtpcpp/crypto/gcrypt/InitializeGcrypt.cpp.orig	2014-06-25 20:40:20.000000000 -0400
++++ b/src/libzrtpcpp/crypto/gcrypt/InitializeGcrypt.cpp	2014-06-25 20:40:32.000000000 -0400
+@@ -17,7 +17,7 @@
+ 
+ #include <stdio.h>
+ 
+-#include <malloc.h>
++#include <stdlib.h>
+ #include <errno.h>
+ #include <gcrypt.h>

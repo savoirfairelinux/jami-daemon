@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt.orig   2014-05-06 19:35:46.443707232 -0400
++++ b/CMakeLists.txt    2014-05-06 19:13:04.235686028 -0400
+@@ -107,7 +107,7 @@
+ endif()
+ 
+ # now get info about crypto libraries
+-pkg_check_modules(OPENSSL libcrypto>=0.9.8)
++#pkg_check_modules(OPENSSL libcrypto>=0.9.8)
+ if (OPENSSL_FOUND)
+   set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${OPENSSL_INCLUDE_DIRS}) #update include files search directory
+   check_include_files(openssl/bn.h HAVE_OPENSSL_BN_H)

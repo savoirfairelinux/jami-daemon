@@ -1,0 +1,16 @@
+--- a/src/libzrtpcpp/crypto/gcrypt/InitializeGcrypt.cpp.orig	2014-06-12 17:36:14.367890764 -0400
++++ b/src/libzrtpcpp/crypto/gcrypt/InitializeGcrypt.cpp	2014-06-12 17:36:52.899889626 -0400
+@@ -68,9 +68,12 @@
+ }
+  
+ static struct gcry_thread_cbs gcry_threads = { 
+-    GCRY_THREAD_OPTION_PTHREAD, NULL,
++    GCRY_THREAD_OPTION_PTHREAD,
++#if 0
++    NULL,
+     gcry_thread_mutex_init, gcry_thread_mutex_destroy,
+     gcry_thread_mutex_lock, gcry_thread_mutex_unlock 
++#endif
+ };
+ 
+ #else
