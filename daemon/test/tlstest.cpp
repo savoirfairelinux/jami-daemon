@@ -33,19 +33,20 @@
 #endif
 #include "tlstest.h"
 #include "account.h"
-#include "sip/security_evaluator.h"
 #include "test_utils.h"
 #include "logger.h"
+
+#include "sip/tlsvalidation.h"
 
 void TlsTest::testCertificate()
 {
     TITLE();
 
-    std::string validCertificate = "tlsSample/ca.crt";
-    std::string fakeCertificate = "tlsSample/fake.crt";
+    const char *validCertificate = "tlsSample/ca.crt";
+    const char *fakeCertificate = "tlsSample/fake.crt";
 
-    CPPUNIT_ASSERT(SecurityEvaluator::certificateIsValid(validCertificate));
+    CPPUNIT_ASSERT(certificateIsValid(NULL, validCertificate) == 0);
 
     // This is a png
-    CPPUNIT_ASSERT(not SecurityEvaluator::certificateIsValid(fakeCertificate));
+    CPPUNIT_ASSERT(certificateIsValid(NULL, fakeCertificate) != 0);
 }
