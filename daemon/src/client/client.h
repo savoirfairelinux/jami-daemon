@@ -53,6 +53,9 @@ class VideoManager;
 namespace DBus {
     class BusDispatcher;
 }
+
+#include <functional>
+
 #endif
 
 class Client {
@@ -74,6 +77,10 @@ class Client {
 
         int event_loop();
         int exit();
+#ifdef HAVE_DBUS
+        // DBus provides our event loop
+        void registerCallback(const std::function<void()> &callback);
+#endif
 
     private:
         NON_COPYABLE(Client);
