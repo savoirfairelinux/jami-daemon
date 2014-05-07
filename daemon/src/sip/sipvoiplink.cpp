@@ -519,7 +519,7 @@ pjsip_module * SIPVoIPLink::getMod()
 }
 
 SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
-    sipCallMapMutex_(), sipCallMap_(), evThread_(*this)
+    sipCallMapMutex_(), sipCallMap_()
 #ifdef SFL_VIDEO
     , keyframeRequestsMutex_()
     , keyframeRequests_()
@@ -609,7 +609,6 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
 #undef TRY
 
     handlingEvents_ = true;
-    evThread_.start();
 }
 
 SIPVoIPLink::~SIPVoIPLink()
@@ -620,7 +619,6 @@ SIPVoIPLink::~SIPVoIPLink()
         sleep(1);
 
     handlingEvents_ = false;
-    evThread_.join();
 
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
@@ -629,6 +627,9 @@ SIPVoIPLink::~SIPVoIPLink()
         unloadAccount(a);
     sipAccountMap_.clear();
     clearSipCallMap();
+
+    // must be freed before then endpoint is released
+    sipTransport.reset();
 
     pjsip_endpt_destroy(endpt_);
 
