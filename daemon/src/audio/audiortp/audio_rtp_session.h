@@ -189,9 +189,11 @@ class AudioRtpSession {
         unsigned jitterReportInterval_;
 #endif
 
-        AudioRtpSendThread rtpSendThread_;
         std::list<DTMFEvent> dtmfQueue_;
         int dtmfPayloadType_;
+
+        // this must be last to ensure that it's destroyed first
+        AudioRtpSendThread rtpSendThread_;
 };
 }
 #endif // AUDIO_RTP_SESSION_H__
