@@ -155,6 +155,8 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
 
 SIPAccount::~SIPAccount()
 {
+    // ensure that no registration callbacks survive past this point
+    destroyRegistrationInfo();
     setTransport();
 
 #ifdef SFL_PRESENCE

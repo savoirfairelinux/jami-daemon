@@ -44,7 +44,6 @@
 #include "sfl_types.h"
 #include "noncopyable.h"
 #include "audio/resampler.h"
-#include "eventthread.h"
 
 #include <iax-client.h>
 
@@ -304,11 +303,6 @@ class IAXVoIPLink : public VoIPLink {
         bool initDone_;
 
         const std::string accountID_;
-
-        /**
-         * Threading object
-         */
-        EventThread evThread_;
 };
 
 #endif

@@ -44,8 +44,6 @@
 #include "sipaccount.h"
 #include "siptransport.h"
 
-#include "eventthread.h"
-
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
@@ -325,11 +323,6 @@ class SIPVoIPLink : public VoIPLink {
          * @return true if all is correct
          */
         bool SIPStartCall(std::shared_ptr<SIPCall>& call);
-
-        /**
-         * Threading object
-         */
-        EventThread evThread_;
 
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();
