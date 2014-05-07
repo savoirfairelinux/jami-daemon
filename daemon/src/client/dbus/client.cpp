@@ -53,9 +53,19 @@
 #include "videomanager.h"
 #endif
 
-struct DummyCallback : DBus::Callback_Base<void, DBus::DefaultTimeout&>
+struct EventCallback : DBus::Callback_Base<void, DBus::DefaultTimeout&>
 {
-    void call(DBus::DefaultTimeout &) const {}
+    EventCallback(const std::function<void()> &func) :
+        callback_(func)
+    {}
+
+    void call(DBus::DefaultTimeout &) const
+    {
+        callback_();
+    }
+
+private:
+    std::function<void()> callback_;
 };
 
 Client::Client() : callManager_(0)
@@ -77,13 +87,6 @@ Client::Client() : callManager_(0)
         DBus::_init_threading();
         DEBUG("DBUS instantiate default dispatcher");
         DBus::default_dispatcher = dispatcher_;
-
-        // This timeout is useless except that it shortens DBus' polling
-        // timeout (the default is 10 seconds).
-        // timeout and expired are deleted internally by dispatcher_'s
-        // destructor, so we must NOT delete them ourselves.
-        DBus::DefaultTimeout *timeout = new DBus::DefaultTimeout(1000, true, dispatcher_);
-        timeout->expired = new DummyCallback;
 
         DEBUG("DBUS session connection to session bus");
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
@@ -138,6 +141,18 @@ Client::~Client()
     delete callManager_;
     delete dispatcher_;
 }
+
+void
+Client::registerCallback(const std::function<void()> &callback)
+{
+        // timeout and expired are deleted internally by dispatcher_'s
+        // destructor, so we must NOT delete them ourselves.
+        DBus::DefaultTimeout *timeout = new DBus::DefaultTimeout(10 /* ms */,
+                                                                 true,
+                                                                 dispatcher_);
+        timeout->expired = new EventCallback(callback);
+}
+
 
 int Client::event_loop()
 {
