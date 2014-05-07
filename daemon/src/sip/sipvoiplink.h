@@ -44,8 +44,6 @@
 #include "sipaccount.h"
 #include "siptransport.h"
 
-#include "eventthread.h"
-
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
@@ -205,11 +203,6 @@ class SIPVoIPLink : public VoIPLink {
 
         mutable std::mutex sipCallMapMutex_;
         SipCallMap sipCallMap_;
-
-        /**
-         * Threading object
-         */
-        EventThread evThread_;
 
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();
