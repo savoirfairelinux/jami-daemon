@@ -34,7 +34,6 @@
 #include <algorithm>
 
 #include "iaxcall.h"
-#include "eventthread.h"
 #include "im/instant_messaging.h"
 #include "iaxaccount.h"
 #include "logger.h"
@@ -59,7 +58,6 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     , resampler_(44100)
     , initDone_(false)
     , accountID_(accountID)
-    , evThread_(*this)
 {
     srand(time(NULL));    // to get random number for RANDOM_PORT
 }
@@ -84,7 +82,6 @@ IAXVoIPLink::init()
     for (int port = IAX_DEFAULT_PORTNO, nbTry = 0; nbTry < 3 ; port = rand() % 64000 + 1024, nbTry++) {
         if (iax_init(port) >= 0) {
             handlingEvents_ = true;
-            evThread_.start();
             initDone_ = true;
             break;
         }
@@ -111,7 +108,6 @@ IAXVoIPLink::terminate()
     }
 
     iaxCallMap_.clear();
-    evThread_.join();
 
     initDone_ = false;
 }
