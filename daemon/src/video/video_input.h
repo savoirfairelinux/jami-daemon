@@ -62,7 +62,7 @@ public:
 private:
     NON_COPYABLE(VideoInput);
 
-    std::string id_         = "local";
+    std::string sinkID_     = "local";
 
     VideoDecoder *decoder_  = nullptr;
     SHMSink sink_;

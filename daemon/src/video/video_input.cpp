@@ -152,7 +152,7 @@ VideoInput::createDecoder()
     EXIT_IF_FAIL(!decoder_->setupFromVideoData(), "decoder IO startup failed");
 
     /* Signal the client about the new sink */
-    Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(),
+    Manager::instance().getVideoManager()->startedDecoding(sinkID_, sink_.openedName(),
             decoder_->getWidth(), decoder_->getHeight(), false);
     DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
             sink_.openedName().c_str(), decoder_->getWidth(), decoder_->getHeight());
@@ -164,7 +164,9 @@ VideoInput::deleteDecoder()
     if (not decoder_)
         return;
 
-    Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), false);
+    Manager::instance().getVideoManager()->stoppedDecoding(sinkID_,
+                                                           sink_.openedName(),
+                                                           false);
     delete decoder_;
     decoder_ = nullptr;
 }
