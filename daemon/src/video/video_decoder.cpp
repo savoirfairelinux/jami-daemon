@@ -179,7 +179,8 @@ int VideoDecoder::setupFromVideoData()
     return 0;
 }
 
-int VideoDecoder::decode(VideoFrame& result)
+VideoDecoder::Status
+VideoDecoder::decode(VideoFrame& result)
 {
     if (emulateRate_) {
         const int64_t pts = av_rescale(lastDts_, 1000000, AV_TIME_BASE);
@@ -190,7 +191,7 @@ int VideoDecoder::decode(VideoFrame& result)
 #else
             usleep(10000);
 #endif
-            return 0;
+            return Status::Success;
         }
     }
 
@@ -199,17 +200,17 @@ int VideoDecoder::decode(VideoFrame& result)
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
     if (ret == AVERROR(EAGAIN)) {
-        return 0;
+        return Status::Success;
     } else if (ret < 0) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
         ERROR("Couldn't read frame: %s\n", errbuf);
-        return -1;
+        return Status::ReadError;
     }
 
     // is this a packet from the video stream?
     if (inpacket->stream_index != streamIndex_)
-        return 0;
+        return Status::Success;
 
     if (inpacket->dts != AV_NOPTS_VALUE)
         lastDts_ = av_rescale_q(inpacket->dts, decoderCtx_->time_base, AV_TIME_BASE_Q);
@@ -218,15 +219,16 @@ int VideoDecoder::decode(VideoFrame& result)
     int len = avcodec_decode_video2(decoderCtx_, result.get(),
                                     &frameFinished, inpacket);
     if (len <= 0)
-        return -2;
+        return Status::DecodeError;
 
     if (frameFinished)
-        return 1;
+        return Status::FrameFinished;
 
-    return 0;
+    return Status::Success;
 }
 
-int VideoDecoder::flush(VideoFrame& result)
+VideoDecoder::Status
+VideoDecoder::flush(VideoFrame& result)
 {
     AVPacket inpacket;
     memset(&inpacket, 0, sizeof(inpacket));
@@ -238,12 +240,12 @@ int VideoDecoder::flush(VideoFrame& result)
     int len = avcodec_decode_video2(decoderCtx_, result.get(),
                                     &frameFinished, &inpacket);
     if (len <= 0)
-        return -2;
+        return Status::DecodeError;
 
     if (frameFinished)
-        return 1;
+        return Status::FrameFinished;
 
-    return 0;
+    return Status::Success;
 }
 
 int VideoDecoder::getWidth() const

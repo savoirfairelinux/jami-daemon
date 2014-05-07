@@ -47,6 +47,13 @@ namespace sfl_video {
 
     class VideoDecoder : public VideoCodec {
     public:
+        enum class Status {
+            Success,
+            FrameFinished,
+            ReadError,
+            DecodeError
+        };
+
         VideoDecoder();
         ~VideoDecoder();
 
@@ -56,8 +63,8 @@ namespace sfl_video {
         int openInput(const std::string &source_str,
                       const std::string &format_str);
         int setupFromVideoData();
-        int decode(VideoFrame&);
-        int flush(VideoFrame&);
+        Status decode(VideoFrame&);
+        Status flush(VideoFrame&);
 
         int getWidth() const;
         int getHeight() const;
