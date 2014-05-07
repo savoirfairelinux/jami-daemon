@@ -703,7 +703,7 @@ call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
     }
 
     if (!dbus_switch_video_input(resource))
-        g_error("failed to switch to '%s' (MRL '%s')\n", device, resource);
+        g_warning("failed to switch to '%s' (MRL '%s')\n", device, resource);
 
     g_free(resource);
 }

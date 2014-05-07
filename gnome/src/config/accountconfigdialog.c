@@ -1534,7 +1534,7 @@ show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *c
 
     account_t *account = account_list_get_by_id(accountID);
     if (!account) {
-        g_error("Invalid account %s", accountID);
+        g_warning("Invalid account %s", accountID);
         return NULL;
     }
 
