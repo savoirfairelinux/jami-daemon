@@ -228,6 +228,9 @@ void ManagerImpl::setPath(const std::string &path) {
 int ManagerImpl::run()
 {
     DEBUG("Starting client event loop");
+
+    client_.registerCallback(std::bind(&ManagerImpl::pollEvents, std::ref(*this)));
+
     return client_.event_loop();
 }
 
@@ -1337,6 +1340,20 @@ void ManagerImpl::removeStream(const std::string& call_id)
 {
     DEBUG("Remove audio stream %s", call_id.c_str());
     getMainBuffer().unBindAll(call_id);
+}
+
+// Must be invoked periodically by a timer from the main event loop
+void ManagerImpl::pollEvents()
+{
+    if (finished_)
+        return;
+
+    SIPVoIPLink::instance().getEvent();
+
+#if HAVE_IAX
+    for (auto &item : IAXVoIPLink::getAccounts())
+        item.second->getVoIPLink()->getEvent();
+#endif
 }
 
 //THREAD=Main

@@ -1008,6 +1008,11 @@ class ManagerImpl {
         void
         checkAudio();
 
+        /**
+         * Call periodically to poll for VoIP events */
+        void
+        pollEvents();
+
     private:
         NON_COPYABLE(ManagerImpl);
 
