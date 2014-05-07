@@ -36,7 +36,10 @@
 
 #include "audio/audiolayer.h"
 #include "audio/resampler.h"
+
+#if HAVE_SPEEXDSP
 #include "audio/dsp.h"
+#endif
 
 #include "manager.h"
 #include "logger.h"
