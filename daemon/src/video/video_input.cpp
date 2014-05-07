@@ -92,12 +92,18 @@ int VideoInput::interruptCb(void *data)
 bool VideoInput::captureFrame()
 {
     VideoFrame& frame = getNewFrame();
-    int ret = decoder_->decode(frame);
+    const auto ret = decoder_->decode(frame);
 
-    if (ret <= 0) {
-        if (ret < 0)
+    switch (ret) {
+        case VideoDecoder::Status::FrameFinished:
+            break;
+
+        case VideoDecoder::Status::ReadError:
+        case VideoDecoder::Status::DecodeError:
             stop();
-        return false;
+            // fallthrough
+        case VideoDecoder::Status::Success:
+            return false;
     }
 
     if (mirror_)
