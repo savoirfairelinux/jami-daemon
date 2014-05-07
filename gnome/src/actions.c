@@ -1065,7 +1065,7 @@ sflphone_toggle_screenshare(void)
         g_debug("switched video input to '%s'", resource);
         screenshare = !screenshare;
     } else {
-        g_error("failed to switch to resource '%s'\n", resource);
+        g_warning("failed to switch to resource '%s'\n", resource);
     }
 
     g_free(resource);
@@ -1087,7 +1087,7 @@ sflphone_toggle_camera(void)
         g_debug("switched video input to '%s'", resource);
         camera_toggle = !camera_toggle;
     } else {
-        g_error("failed to switch to resource '%s'\n", resource);
+        g_warning("failed to switch to resource '%s'\n", resource);
     }
 
     g_free(resource);
