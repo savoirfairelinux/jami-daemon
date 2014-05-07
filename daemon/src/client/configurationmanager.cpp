@@ -42,7 +42,7 @@
 #include "manager.h"
 #include "sip/sipvoiplink.h"
 #if HAVE_TLS
-#include "sip/security_evaluator.h"
+#include "sip/tlsvalidation.h"
 #endif
 #include "logger.h"
 #include "fileutils.h"
@@ -547,7 +547,7 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
 bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 {
 #if HAVE_TLS
-    return SecurityEvaluator::containsPrivateKey(pemPath);
+    return containsPrivateKey(pemPath.c_str());
 #else
     WARN("TLS not supported");
     return false;
@@ -557,7 +557,7 @@ bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 bool ConfigurationManager::checkCertificateValidity(const std::string& pemPath)
 {
 #if HAVE_TLS
-    return SecurityEvaluator::certificateIsValid(pemPath);
+    return certificateIsValid(NULL, pemPath.c_str());
 #else
     WARN("TLS not supported");
     return false;
@@ -567,7 +567,8 @@ bool ConfigurationManager::checkCertificateValidity(const std::string& pemPath)
 bool ConfigurationManager::checkHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
 {
 #if HAVE_TLS
-    return SecurityEvaluator::verifyHostnameCertificate(certificatePath, host, port);
+    return verifyHostnameCertificate(host.c_str(),
+                                     strtol(port.c_str(), NULL, 10));
 #else
     WARN("TLS not supported");
     return false;
