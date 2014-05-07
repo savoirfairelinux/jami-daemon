@@ -78,7 +78,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		preferences.cpp \
 		managerimpl.cpp \
 		manager.cpp \
-		eventthread.cpp \
 		call.cpp \
 		account.cpp \
 		logger.c \
@@ -94,7 +93,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		managerimpl.h \
 		manager.h \
 		global.h \
-		eventthread.h \
 		account.h \
 		call.h \
 		logger.h \
