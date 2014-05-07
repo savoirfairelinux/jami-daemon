@@ -105,7 +105,6 @@ ip_utils::getAnyHostAddr(pj_uint16_t family)
 IpAddr
 ip_utils::getLocalAddr(pj_uint16_t family)
 {
-    ERROR("ip_utils::getLocalAddr");
     if (family == pj_AF_UNSPEC()) {
 #if HAVE_IPV6
         family = pj_AF_INET6();
@@ -116,7 +115,6 @@ ip_utils::getLocalAddr(pj_uint16_t family)
     IpAddr ip_addr = {};
     pj_status_t status = pj_gethostip(family, ip_addr.pjPtr());
     if (status == PJ_SUCCESS) {
-        ERROR("ip_utils::getLocalAddr %s", ip_addr.toString().c_str());
         return ip_addr;
     }
 #if HAVE_IPV6
@@ -132,7 +130,6 @@ ip_utils::getLocalAddr(pj_uint16_t family)
 IpAddr
 ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 {
-    ERROR("ip_utils::getInterfaceAddr %s", interface.c_str());
     if (interface == DEFAULT_INTERFACE)
         return getLocalAddr(family);
 
@@ -267,7 +264,6 @@ IpAddr::isLoopback() const
 bool
 IpAddr::isPrivate() const
 {
-    ERROR("IpAddr::isPrivate: %s", toString().c_str());
     if (isLoopback()) {
         ERROR("IpAddr::isPrivate: %s LOOPBACK", toString().c_str());
         return true;
