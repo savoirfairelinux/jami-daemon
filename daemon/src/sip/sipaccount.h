@@ -48,8 +48,6 @@
 #include <pjsip/sip_types.h>
 #include <pjsip-ua/sip_regc.h>
 
-#include <openssl/x509v3.h>
-
 #include <vector>
 #include <map>
 
