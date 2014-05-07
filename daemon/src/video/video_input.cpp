@@ -39,24 +39,11 @@
 #include <map>
 #include <string>
 
-#define SINK_ID "local"
-
 namespace sfl_video {
 
 VideoInput::VideoInput() :
     VideoGenerator::VideoGenerator()
-    , id_(SINK_ID)
-    , switchPending_(false)
-    , channel_()
-    , decoder_(0)
-    , emulateRate_()
-    , format_()
-    , frameRate_()
-    , input_()
-    , loop_()
-    , mirror_()
     , sink_()
-    , videoSize_()
 {
     start();
 }

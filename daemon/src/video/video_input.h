@@ -62,19 +62,20 @@ public:
 private:
     NON_COPYABLE(VideoInput);
 
-    std::string id_;
-    VideoDecoder *decoder_;
-    SHMSink sink_;
-    bool switchPending_;
+    std::string id_         = "local";
 
-    bool mirror_;
-    std::string input_;
-    std::string loop_;
-    std::string format_;
-    std::string channel_;
-    std::string frameRate_;
-    std::string videoSize_;
-    bool emulateRate_;
+    VideoDecoder *decoder_  = nullptr;
+    SHMSink sink_;
+    bool switchPending_     = false;
+
+    bool mirror_            = false;
+    std::string input_      = "";
+    std::string loop_       = "";
+    std::string format_     = "";
+    std::string channel_    = "";
+    std::string frameRate_  = "";
+    std::string videoSize_  = "";
+    bool emulateRate_       = false;
 
     void createDecoder();
     void deleteDecoder();
