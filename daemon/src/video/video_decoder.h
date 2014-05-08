@@ -36,6 +36,7 @@
 #include "video_scaler.h"
 #include "noncopyable.h"
 
+#include <map>
 #include <string>
 
 class AVCodecContext;
@@ -45,7 +46,7 @@ class AVCodec;
 
 namespace sfl_video {
 
-    class VideoDecoder : public VideoCodec {
+    class VideoDecoder {
     public:
         enum class Status {
             Success,
@@ -70,16 +71,23 @@ namespace sfl_video {
         int getHeight() const;
         int getPixelFormat() const;
 
+        void setOptions(const std::map<std::string, std::string>& options);
+
     private:
         NON_COPYABLE(VideoDecoder);
 
-        AVCodec *inputDecoder_;
-        AVCodecContext *decoderCtx_;
-        AVFormatContext *inputCtx_;
-        int streamIndex_;
-        bool emulateRate_;
+        AVCodec *inputDecoder_ = nullptr;
+        AVCodecContext *decoderCtx_ = nullptr;
+        AVFormatContext *inputCtx_ = nullptr;
+        int streamIndex_ = -1;
+        bool emulateRate_ = false;
         int64_t startTime_;
         int64_t lastDts_;
+
+        void extract(const std::map<std::string, std::string>& map, const std::string& key);
+
+    protected:
+        AVDictionary *options_ = nullptr;
     };
 }
 

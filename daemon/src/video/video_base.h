@@ -171,20 +171,6 @@ private:
     unsigned char *buf_;
 };
 
-class VideoCodec {
-public:
-    VideoCodec();
-    virtual ~VideoCodec() {}
-
-    void setOption(const char *name, const char *value);
-
-private:
-    NON_COPYABLE(VideoCodec);
-
-protected:
-    AVDictionary *options_;
-};
-
 /*=== VideoFrame =============================================================*/
 
 class VideoFrame {

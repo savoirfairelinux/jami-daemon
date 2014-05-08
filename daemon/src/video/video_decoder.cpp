@@ -29,6 +29,7 @@
  *  as that of the covered work.
  */
 
+// libav_deps.h must be included first
 #include "libav_deps.h"
 #include "video_decoder.h"
 #include "check.h"
@@ -41,13 +42,9 @@ namespace sfl_video {
 using std::string;
 
 VideoDecoder::VideoDecoder() :
-    inputDecoder_(0)
-    , decoderCtx_(0)
-    , inputCtx_(avformat_alloc_context())
-    , streamIndex_(-1)
-    , emulateRate_(false)
-    , startTime_(AV_NOPTS_VALUE)
-    , lastDts_(AV_NOPTS_VALUE)
+    inputCtx_(avformat_alloc_context()),
+    startTime_(AV_NOPTS_VALUE),
+    lastDts_(AV_NOPTS_VALUE)
 {
 }
 
@@ -63,6 +60,27 @@ VideoDecoder::~VideoDecoder()
         av_close_input_file(inputCtx_);
 #endif
     }
+}
+
+void
+VideoDecoder::extract(const std::map<std::string, std::string>& map, const std::string& key)
+{
+    auto iter = map.find(key);
+
+    if (iter != map.end())
+        av_dict_set(&options_, key.c_str(), iter->second.c_str(), 0);
+}
+
+void
+VideoDecoder::setOptions(const std::map<std::string, std::string>& options)
+{
+    extract(options, "framerate");
+    extract(options, "video_size");
+    extract(options, "channel");
+    extract(options, "loop");
+#if HAVE_SDP_CUSTOM_IO
+    extract(options, "sdp_flags");
+#endif
 }
 
 int VideoDecoder::openInput(const std::string &source_str,
