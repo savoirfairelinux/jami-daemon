@@ -31,7 +31,6 @@
 
 #include "libav_deps.h"
 #include "video_mixer.h"
-#include "check.h"
 #include "client/videomanager.h"
 #include "manager.h"
 #include "logger.h"

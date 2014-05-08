@@ -28,13 +28,19 @@
  *  as that of the covered work.
  */
 
-#ifndef CHECK_H_
-#define CHECK_H_
+#ifndef THREAD_HELPERS_H_
+#define THREAD_HELPERS_H_
 
+#include <stdexcept>
 #include "logger.h"
+
+class ThreadExitException : public std::runtime_error {
+    public:
+        ThreadExitException() : std::runtime_error("Thread exit exception") {}
+};
 
 // If condition A is false, print the error message in M and exit thread
 #define EXIT_IF_FAIL(A, M, ...) if (!(A)) { \
         ERROR(M, ##__VA_ARGS__); this->exit(); }
 
-#endif // CHECK_H_
+#endif // THREAD_HELPERS_H_

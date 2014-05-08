@@ -16,7 +16,7 @@ libvideo_la_SOURCES = \
 	video_receive_thread.cpp video_receive_thread.h \
 	video_sender.cpp video_sender.h \
 	video_rtp_session.cpp video_rtp_session.h \
-	check.h shm_header.h video_provider.h \
+	thread_helpers.h shm_header.h video_provider.h \
 	libav_utils.cpp libav_utils.h libav_deps.h
 
 libvideo_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@

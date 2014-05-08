@@ -31,7 +31,7 @@
 
 #include "video_input.h"
 #include "video_decoder.h"
-#include "check.h"
+#include "thread_helpers.h"
 
 #include "manager.h"
 #include "client/videomanager.h"
@@ -65,9 +65,7 @@ void VideoInput::join()
 void VideoInput::exit()
 {
     running_ = false;
-    // FIXME: std::thread does not provide an equivalent, use appropriate
-    // function for other platforms (i.e. ExitThread)
-    pthread_exit(NULL);
+    throw ThreadExitException();
 }
 
 bool VideoInput::setup()
@@ -83,20 +81,24 @@ bool VideoInput::setup()
 
 void VideoInput::mainloop()
 {
-    if (setup()) {
-        while (running_) {
+    try {
+        if (setup()) {
+            while (running_) {
 
-            if (switchPending_) {
-                deleteDecoder();
-                createDecoder();
-                switchPending_ = false;
+                if (switchPending_) {
+                    deleteDecoder();
+                    createDecoder();
+                    switchPending_ = false;
+                }
+
+                captureFrame();
             }
-
-            captureFrame();
+            cleanup();
+        } else {
+            ERROR("setup failed");
         }
-        cleanup();
-    } else {
-        ERROR("setup failed");
+    } catch (const ThreadExitException &e) {
+        ERROR("%s", e.what());
     }
 }
 

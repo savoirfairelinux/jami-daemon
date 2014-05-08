@@ -36,7 +36,7 @@
 #include "socket_pair.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "check.h"
+#include "thread_helpers.h"
 
 #include <unistd.h>
 #include <map>
@@ -247,12 +247,16 @@ int VideoReceiveThread::getPixelFormat() const
 
 void VideoReceiveThread::mainloop()
 {
-    if (setup()) {
-        while (running_)
-            decodeFrame();
-        cleanup();
-    } else {
-        ERROR("setup failed");
+    try {
+        if (setup()) {
+            while (running_)
+                decodeFrame();
+            cleanup();
+        } else {
+            ERROR("setup failed");
+        }
+    } catch (const ThreadExitException &e) {
+        ERROR("%s", e.what());
     }
 }
 
@@ -273,9 +277,7 @@ void VideoReceiveThread::join()
 void VideoReceiveThread::exit()
 {
     running_ = false;
-    // FIXME: std::thread does not provide an equivalent, use appropriate
-    // function for other platforms (i.e. ExitThread)
-    pthread_exit(NULL);
+    throw ThreadExitException();
 }
 
 } // end namespace sfl_video

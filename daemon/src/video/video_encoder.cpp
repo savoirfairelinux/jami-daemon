@@ -31,7 +31,7 @@
 
 #include "libav_deps.h"
 #include "video_encoder.h"
-#include "check.h"
+#include "logger.h"
 
 #include <iostream>
 #include <sstream>
