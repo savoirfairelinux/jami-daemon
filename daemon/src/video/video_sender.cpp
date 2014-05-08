@@ -49,8 +49,7 @@ VideoSender::VideoSender(std::map<string, string>& args,
     muxContext_(socketPair.createIOContext())
     , videoEncoder_(new VideoEncoder)
     , forceKeyFrame_(0)
-    , frameNumber_(0)
-    , sdp_()
+
 {
     const char *enc_name = args["codec"].c_str();
 
