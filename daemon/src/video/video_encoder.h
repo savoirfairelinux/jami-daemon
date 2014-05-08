@@ -45,10 +45,12 @@ class AVCodec;
 
 namespace sfl_video {
 
-class VideoEncoder : public VideoCodec {
+class VideoEncoder {
 public:
     VideoEncoder();
     ~VideoEncoder();
+
+    void setOption(const char *name, const char *value);
 
     void setInterruptCallback(int (*cb)(void*), void *opaque);
     void setIOContext(const std::unique_ptr<VideoIOHandle> &ioctx);
@@ -88,6 +90,9 @@ private:
     uint8_t *encoderBuffer_ = nullptr;
     int encoderBufferSize_ = 0;
 #endif
+
+protected:
+    AVDictionary *options_ = nullptr;
 };
 
 }

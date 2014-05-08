@@ -62,6 +62,11 @@ VideoEncoder::~VideoEncoder()
 #endif
 }
 
+void VideoEncoder::setOption(const char *name, const char *value)
+{
+    av_dict_set(&options_, name, value, 0);
+}
+
 int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
                              const char *filename, const char *mime_type)
 {

@@ -58,6 +58,11 @@ VideoDecoder::~VideoDecoder()
     }
 }
 
+void VideoDecoder::setOption(const char *name, const char *value)
+{
+    av_dict_set(&options_, name, value, 0);
+}
+
 int VideoDecoder::openInput(const std::string &source_str,
                             const std::string &format_str)
 {

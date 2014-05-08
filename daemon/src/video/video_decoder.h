@@ -46,10 +46,12 @@ class AVCodec;
 
 namespace sfl_video {
 
-    class VideoDecoder : public VideoCodec {
+    class VideoDecoder {
     public:
         VideoDecoder();
         ~VideoDecoder();
+
+        void setOption(const char *name, const char *value);
 
         void emulateRate() { emulateRate_ = true; }
         void setInterruptCallback(int (*cb)(void*), void *opaque);
@@ -74,6 +76,9 @@ namespace sfl_video {
         bool emulateRate_ = false;
         int64_t startTime_ = AV_NOPTS_VALUE;
         int64_t lastDts_ = AV_NOPTS_VALUE;
+
+    protected:
+        AVDictionary *options_ = nullptr;
     };
 }
 
