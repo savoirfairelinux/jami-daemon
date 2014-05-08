@@ -69,12 +69,12 @@ private:
     void encodeAndSendVideo(VideoFrame&);
 
     // encoder MUST be deleted before muxContext
-    std::unique_ptr<VideoIOHandle> muxContext_;
-    std::unique_ptr<VideoEncoder> videoEncoder_;
+    std::unique_ptr<VideoIOHandle> muxContext_ = nullptr;
+    std::unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
 
-    std::atomic<int> forceKeyFrame_;
-    int64_t frameNumber_;
-    std::string sdp_;
+    std::atomic<int> forceKeyFrame_ = { 0 };
+    int64_t frameNumber_ = 0;
+    std::string sdp_ = "";
 };
 
 }
