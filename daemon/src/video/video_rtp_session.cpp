@@ -145,8 +145,8 @@ void VideoRtpSession::startSender()
             WARN("Restarting video sender");
 
         try {
-            sender_.reset(new VideoSender(callID_, txArgs_, *socketPair_));
-        } catch (const VideoSenderException &e) {
+            sender_.reset(new VideoSender(txArgs_, *socketPair_));
+        } catch (const VideoEncoderException &e) {
             ERROR("%s", e.what());
             sending_ = false;
         }

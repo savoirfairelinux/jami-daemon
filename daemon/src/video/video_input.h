@@ -69,13 +69,11 @@ private:
     SHMSink sink_;
     std::atomic<bool> switchPending_ = {false};
 
+    std::map<std::string, std::string> decOpts_ = {};
+
     bool mirror_            = false;
     std::string input_      = "";
-    std::string loop_       = "";
     std::string format_     = "";
-    std::string channel_    = "";
-    std::string frameRate_  = "";
-    std::string videoSize_  = "";
     bool emulateRate_       = false;
 
     void createDecoder();

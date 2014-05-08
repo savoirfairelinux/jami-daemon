@@ -32,6 +32,7 @@
 #ifndef __VIDEO_DECODER_H__
 #define __VIDEO_DECODER_H__
 
+#include "libav_deps.h"
 #include "video_base.h"
 #include "video_scaler.h"
 #include "noncopyable.h"
@@ -45,7 +46,7 @@ class AVCodec;
 
 namespace sfl_video {
 
-    class VideoDecoder : public VideoCodec {
+    class VideoDecoder {
     public:
         enum class Status {
             Success,
@@ -70,16 +71,23 @@ namespace sfl_video {
         int getHeight() const;
         int getPixelFormat() const;
 
+        void setOptions(const std::map<std::string, std::string>& options);
+
     private:
         NON_COPYABLE(VideoDecoder);
 
-        AVCodec *inputDecoder_;
-        AVCodecContext *decoderCtx_;
-        AVFormatContext *inputCtx_;
-        int streamIndex_;
-        bool emulateRate_;
-        int64_t startTime_;
-        int64_t lastDts_;
+        AVCodec *inputDecoder_ = nullptr;
+        AVCodecContext *decoderCtx_ = nullptr;
+        AVFormatContext *inputCtx_ = nullptr;
+        int streamIndex_ = -1;
+        bool emulateRate_ = false;
+        int64_t startTime_ = AV_NOPTS_VALUE;
+        int64_t lastDts_ = AV_NOPTS_VALUE;
+
+        void extract(const std::map<std::string, std::string>& map, const std::string& key);
+
+    protected:
+        AVDictionary *options_ = nullptr;
     };
 }
 

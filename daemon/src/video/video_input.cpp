@@ -115,37 +115,12 @@ bool VideoInput::captureFrame()
 void
 VideoInput::createDecoder()
 {
-    DEBUG("decoder params:"
-            " channel:%s"
-            " emulate_rate:%s"
-            " format:%s"
-            " framerate:%s"
-            " input:%s"
-            " loop:%s"
-            " mirror:%s"
-            " video_size:%s",
-            channel_.c_str(),
-            emulateRate_ ? "yes" : "no",
-            format_.c_str(),
-            frameRate_.c_str(),
-            input_.c_str(),
-            loop_.c_str(),
-            mirror_ ? "yes" : "no",
-            videoSize_.c_str());
-
     if (input_.empty())
         return;
 
     decoder_ = new VideoDecoder();
 
-    if (!frameRate_.empty())
-        decoder_->setOption("framerate", frameRate_.c_str());
-    if (!videoSize_.empty())
-        decoder_->setOption("video_size", videoSize_.c_str());
-    if (!channel_.empty())
-        decoder_->setOption("channel", channel_.c_str());
-    if (!loop_.empty())
-        decoder_->setOption("loop", loop_.c_str());
+    decoder_->setOptions(decOpts_);
     if (emulateRate_)
         decoder_->emulateRate();
 
@@ -187,11 +162,11 @@ VideoInput::initCamera(const std::string& device)
         return false;
 
     input_ = map["input"];
-    channel_ = map["channel"];
-    frameRate_ = map["framerate"];
-    videoSize_ = map["video_size"];
-
     format_ = "video4linux2";
+    decOpts_.clear();
+    decOpts_["channel"] = map["channel"];
+    decOpts_["framerate"] = map["framerate"];
+    decOpts_["video_size"] = map["video_size"];
     mirror_ = true;
 
     return true;
@@ -202,16 +177,18 @@ VideoInput::initX11(std::string display)
 {
     size_t space = display.find(' ');
 
+    format_ = "x11grab";
+    mirror_ = false;
+    decOpts_.clear();
+    decOpts_["framerate"] = "25";
+
     if (space != std::string::npos) {
-        videoSize_ = display.substr(space + 1);
+        decOpts_["video_size"] = display.substr(space + 1);
         input_ = display.erase(space);
     } else {
         input_ = display;
-        videoSize_ = "vga";
+        decOpts_["video_size"] = "vga";
     }
-
-    format_ = "x11grab";
-    frameRate_ = "25";
 
     return true;
 }
@@ -232,41 +209,34 @@ VideoInput::initFile(std::string path)
     if (ext == "jpeg" || ext == "jpg" || ext == "png") {
         input_ = path;
         format_ = "image2";
-        frameRate_ = "1";
-        loop_ = "1";
         emulateRate_ = true;
-    } else {
-        ERROR("unsupported filetype '%s'\n", ext.c_str());
-        return false;
+
+        decOpts_.clear();
+        decOpts_["framerate"] = "1";
+        decOpts_["loop"] = "1";
+        return true;
     }
 
-    return true;
+    ERROR("unsupported filetype '%s'\n", ext.c_str());
+    return false;
 }
 
 bool
 VideoInput::switchInput(const std::string& resource)
 {
+    DEBUG("MRL: '%s'", resource.c_str());
+
     if (switchPending_) {
         ERROR("Video switch already requested");
         return false;
     }
 
-    // Reset attributes
-    channel_ = "";
-    emulateRate_ = false;
-    format_ = "";
-    frameRate_ = "";
-    input_ = "";
-    loop_ = "";
-    mirror_ = false;
-    videoSize_ = "";
-
+    // Switch off video input?
     if (resource.empty()) {
+        input_.clear();
         switchPending_ = true;
         return true;
     }
-
-    DEBUG("MRL: '%s'", resource.c_str());
 
     // Supported MRL schemes
     static const std::string v4l2("v4l2://");
