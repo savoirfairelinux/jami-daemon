@@ -36,6 +36,7 @@
 #include "video_scaler.h"
 #include "noncopyable.h"
 
+#include <map>
 #include <string>
 
 class AVCodecContext;
@@ -45,16 +46,23 @@ class AVCodec;
 
 namespace sfl_video {
 
-class VideoEncoder : public VideoCodec {
+class VideoEncoderException : public std::runtime_error {
+    public:
+        VideoEncoderException(const char *msg) : std::runtime_error(msg) {}
+};
+
+class VideoEncoder {
 public:
     VideoEncoder();
     ~VideoEncoder();
 
+    void setOptions(const std::map<std::string, std::string>& options);
+
     void setInterruptCallback(int (*cb)(void*), void *opaque);
     void setIOContext(const std::unique_ptr<VideoIOHandle> &ioctx);
-    int openOutput(const char *enc_name, const char *short_name,
+    void openOutput(const char *enc_name, const char *short_name,
                    const char *filename, const char *mime_type);
-    int startIO();
+    void startIO();
     int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
     int flush();
     void print_sdp(std::string &sdp_);
@@ -72,22 +80,25 @@ private:
     void forcePresetX264();
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
 
-    AVCodec *outputEncoder_;
-    AVCodecContext *encoderCtx_;
-    AVFormatContext *outputCtx_;
-    AVStream *stream_;
+    AVCodec *outputEncoder_ = nullptr;
+    AVCodecContext *encoderCtx_ = nullptr;
+    AVFormatContext *outputCtx_ = nullptr;
+    AVStream *stream_ = nullptr;
     VideoScaler scaler_;
     VideoFrame scaledFrame_;
 
-    uint8_t *scaledFrameBuffer_;
-    int scaledFrameBufferSize_;
-    int streamIndex_;
-    int dstWidth_;
-    int dstHeight_;
+    uint8_t *scaledFrameBuffer_ = nullptr;
+    int scaledFrameBufferSize_ = 0;
+    int streamIndex_ = -1;
+    int dstWidth_ = 0;
+    int dstHeight_ = 0;
 #if (LIBAVCODEC_VERSION_MAJOR < 54)
-    uint8_t *encoderBuffer_;
-    int encoderBufferSize_;
+    uint8_t *encoderBuffer_ = nullptr;
+    int encoderBufferSize_ = 0;
 #endif
+
+protected:
+    AVDictionary *options_ = nullptr;
 };
 
 }
