@@ -40,6 +40,7 @@
 #include "sflthread.h"
 
 #include <map>
+#include <atomic>
 #include <string>
 
 namespace sfl_video {
@@ -66,7 +67,7 @@ private:
 
     VideoDecoder *decoder_  = nullptr;
     SHMSink sink_;
-    bool switchPending_     = false;
+    std::atomic<bool> switchPending_ = {false};
 
     bool mirror_            = false;
     std::string input_      = "";
