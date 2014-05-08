@@ -53,8 +53,7 @@ class SocketPair;
 class VideoSender : public VideoFramePassiveReader
 {
 public:
-    VideoSender(const std::string &id,
-                std::map<std::string, std::string>& args,
+    VideoSender(std::map<std::string, std::string>& args,
                 SocketPair& socketPair);
 
     std::string getSDP() const { return sdp_; }
@@ -68,8 +67,6 @@ private:
     NON_COPYABLE(VideoSender);
 
     void encodeAndSendVideo(VideoFrame&);
-
-    const std::string &id_;
 
     // encoder MUST be deleted before muxContext
     std::unique_ptr<VideoIOHandle> muxContext_;
