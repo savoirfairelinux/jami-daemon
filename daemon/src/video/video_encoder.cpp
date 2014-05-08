@@ -42,21 +42,9 @@ namespace sfl_video {
 using std::string;
 
 VideoEncoder::VideoEncoder() :
-    outputEncoder_(0)
-    , encoderCtx_(0)
-    , outputCtx_(avformat_alloc_context())
-    , stream_(0)
-    , scaler_()
-    , scaledFrame_()
-    , scaledFrameBuffer_(0)
-    , scaledFrameBufferSize_(0)
-    , streamIndex_(-1)
-    , dstWidth_(0)
-    , dstHeight_(0)
-#if (LIBAVCODEC_VERSION_MAJOR < 54)
-    , encoderBuffer_(0)
-    , encoderBufferSize_(0)
-#endif
+    outputCtx_(avformat_alloc_context()),
+    scaler_(),
+    scaledFrame_()
 {}
 
 VideoEncoder::~VideoEncoder()

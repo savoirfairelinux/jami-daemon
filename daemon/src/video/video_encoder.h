@@ -72,21 +72,21 @@ private:
     void forcePresetX264();
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
 
-    AVCodec *outputEncoder_;
-    AVCodecContext *encoderCtx_;
-    AVFormatContext *outputCtx_;
-    AVStream *stream_;
+    AVCodec *outputEncoder_ = nullptr;
+    AVCodecContext *encoderCtx_ = nullptr;
+    AVFormatContext *outputCtx_ = nullptr;
+    AVStream *stream_ = nullptr;
     VideoScaler scaler_;
     VideoFrame scaledFrame_;
 
-    uint8_t *scaledFrameBuffer_;
-    int scaledFrameBufferSize_;
-    int streamIndex_;
-    int dstWidth_;
-    int dstHeight_;
+    uint8_t *scaledFrameBuffer_ = nullptr;
+    int scaledFrameBufferSize_ = 0;
+    int streamIndex_ = -1;
+    int dstWidth_ = 0;
+    int dstHeight_ = 0;
 #if (LIBAVCODEC_VERSION_MAJOR < 54)
-    uint8_t *encoderBuffer_;
-    int encoderBufferSize_;
+    uint8_t *encoderBuffer_ = nullptr;
+    int encoderBufferSize_ = 0;
 #endif
 };
 
