@@ -32,6 +32,7 @@
 #ifndef __VIDEO_DECODER_H__
 #define __VIDEO_DECODER_H__
 
+#include "libav_deps.h"
 #include "video_base.h"
 #include "video_scaler.h"
 #include "noncopyable.h"
@@ -66,13 +67,13 @@ namespace sfl_video {
     private:
         NON_COPYABLE(VideoDecoder);
 
-        AVCodec *inputDecoder_;
-        AVCodecContext *decoderCtx_;
-        AVFormatContext *inputCtx_;
-        int streamIndex_;
-        bool emulateRate_;
-        int64_t startTime_;
-        int64_t lastDts_;
+        AVCodec *inputDecoder_ = nullptr;
+        AVCodecContext *decoderCtx_ = nullptr;
+        AVFormatContext *inputCtx_ = nullptr;
+        int streamIndex_ = -1;
+        bool emulateRate_ = false;
+        int64_t startTime_ = AV_NOPTS_VALUE;
+        int64_t lastDts_ = AV_NOPTS_VALUE;
     };
 }
 

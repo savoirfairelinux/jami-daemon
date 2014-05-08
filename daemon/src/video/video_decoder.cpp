@@ -29,7 +29,6 @@
  *  as that of the covered work.
  */
 
-#include "libav_deps.h"
 #include "video_decoder.h"
 #include "check.h"
 
@@ -41,13 +40,7 @@ namespace sfl_video {
 using std::string;
 
 VideoDecoder::VideoDecoder() :
-    inputDecoder_(0)
-    , decoderCtx_(0)
-    , inputCtx_(avformat_alloc_context())
-    , streamIndex_(-1)
-    , emulateRate_(false)
-    , startTime_(AV_NOPTS_VALUE)
-    , lastDts_(AV_NOPTS_VALUE)
+    inputCtx_(avformat_alloc_context())
 {
 }
 
