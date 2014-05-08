@@ -205,6 +205,7 @@ AC_ARG_WITH([tls],
     [with_tls=yes])
 AS_IF([test "x$with_tls" = "xyes"], [
        PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development files]))
+       PKG_CHECK_MODULES([GNUTLS], gnutls,, AC_MSG_ERROR([Missing GnuTLS development files]))
     ]);
 
 AC_DEFINE_UNQUOTED([HAVE_TLS], `if test "x$with_tls" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have tls support])
