@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# Copyright 2014 Savoir-Faire Linux Inc.
+# Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
+# Licensed under the terms of the GNU GPL v3, or at your option, any later version.
+#
+# You can install this script as a Git subcommand with one of the 2 methods below:
+#
+#   1) git config alias.gerrit '!tools/git-gerrit'
+#   2) or put this script in your $PATH
+
+usage () {
+  echo "Usage:"
+  echo "  $0 <url|open|fetch> [<git-rev>]"
+  echo "  $0 help"
+  echo
+  echo "Examples:"
+  echo "  git gerrit open"
+  echo "  git gerrit url HEAD~2"
+  echo "  git gerrit fetch ; git diff FETCH_HEAD"
+}
+
+test $# -ge 1 -a $# -le 2 || {
+  echo "Invalid syntax."
+  usage
+  exit 1
+}
+
+test "$1" = "help" && {
+  usage
+  exit
+}
+
+GERRIT_USER=`git config gerrit.user`
+GERRIT_HOST=`git config gerrit.host`
+GERRIT_PORT=`git config gerrit.port`
+
+test -n "$GERRIT_USER" -a -n "$GERRIT_HOST" -a -n "$GERRIT_PORT" || {
+  echo "You must configure your Gerrit host, e.g.:"
+  echo
+  echo "  git config gerrit.user vivien"
+  echo "  git config gerrit.host gerrit-sflphone.savoirfairelinux.com"
+  echo "  git config gerrit.port 29420"
+  echo
+  exit 1
+}
+
+alias _gerrit="ssh -p $GERRIT_PORT $GERRIT_HOST gerrit query"
+
+CHANGE_ID=`git show --summary --format=%b $2 | perl -n -e '/^Change-Id: (I[0-9a-f]+)$/ && print $1'`
+
+test -n "$CHANGE_ID" || {
+  echo "no Change ID!"
+  exit 1
+}
+
+test "$1" = "fetch" && {
+  GERRIT_REMOTE=`git config gerrit.remote`
+
+  test -n "$GERRIT_REMOTE" || {
+    echo "You must specify the Git remote pointing to Gerrit, e.g.:"
+    echo
+    echo "  git config gerrit.remote origin"
+    echo
+    exit 1
+  }
+
+  _gerrit --current-patch-set $CHANGE_ID | awk '/ref:/ { print $2 }' | while read ref ; do
+    git fetch $GERRIT_REMOTE $ref:$ref
+  done
+  exit
+}
+
+URL=`_gerrit $CHANGE_ID | awk '/url:/ { print $2 }'`
+
+case $1 in
+  url) echo $URL ;;
+  open) xdg-open $URL ;;
+  *) echo "Oops, bad command" ; usage ; exit 1 ;;
+esac
+
+exit
