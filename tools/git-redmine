@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# Copyright 2014 Savoir-Faire Linux Inc.
+# Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
+# Licensed under the terms of the GNU GPL v3, or at your option, any later version.
+#
+# You can install this script as a Git subcommand with one of the 2 methods below:
+#
+#   1) git config alias.redmine '!tools/git-redmine'
+#   2) or put this script in your $PATH
+
+usage () {
+  echo "Usage:"
+  echo "  $0 <url|open> [<git-rev>]"
+  echo "  $0 help"
+  echo
+  echo "Examples:"
+  echo "  git redmine open # open the Redmine ticket related to the current commit"
+  echo "  git redmine url HEAD~2"
+}
+
+test $# -ge 1 -a $# -le 2 || {
+  echo "Invalid syntax."
+  usage
+  exit 1
+}
+
+test "$1" = "help" && {
+  usage
+  exit
+}
+
+REDMINE_URL=`git config redmine.url`
+
+test -n "$REDMINE_URL" || {
+  echo "You must configure your Redmine URL, e.g.:"
+  echo
+  echo "  git config redmine.url https://projects.savoirfairelinux.com"
+  echo
+  exit 1
+}
+
+ISSUE=`git show --summary --format=%b $2 | perl -n -e '/^(Refs|Issue:) #(\d+)$/ && print $2'`
+
+test -n "$ISSUE" || {
+  echo "no issue ID!"
+  exit 1
+}
+
+URL=$REDMINE_URL/issues/$ISSUE
+
+case $1 in
+  url) echo $URL ;;
+  open) xdg-open $URL ;;
+  *) echo "Oops, bad command" ; usage ; exit 1 ;;
+esac
+
+exit
