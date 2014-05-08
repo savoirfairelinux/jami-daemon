@@ -43,18 +43,12 @@
 
 namespace sfl_video {
 
-class VideoSenderException : public std::runtime_error {
-    public:
-        VideoSenderException(const char *msg) : std::runtime_error(msg) {}
-};
-
 class SocketPair;
 
 class VideoSender : public VideoFramePassiveReader
 {
 public:
-    VideoSender(const std::string &id,
-                const std::map<std::string, std::string> &args,
+    VideoSender(std::map<std::string, std::string> args,
                 SocketPair& socketPair);
 
     std::string getSDP() const { return sdp_; }
@@ -69,16 +63,13 @@ private:
 
     void encodeAndSendVideo(VideoFrame&);
 
-    std::map<std::string, std::string> args_;
-    const std::string &id_;
-
     // encoder MUST be deleted before muxContext
-    std::unique_ptr<VideoIOHandle> muxContext_;
-    std::unique_ptr<VideoEncoder> videoEncoder_;
+    std::unique_ptr<VideoIOHandle> muxContext_ = nullptr;
+    std::unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
 
-    std::atomic<int> forceKeyFrame_;
-    int64_t frameNumber_;
-    std::string sdp_;
+    std::atomic<int> forceKeyFrame_ = { 0 };
+    int64_t frameNumber_ = 0;
+    std::string sdp_ = "";
 };
 
 }

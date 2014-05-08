@@ -42,21 +42,9 @@ namespace sfl_video {
 using std::string;
 
 VideoEncoder::VideoEncoder() :
-    outputEncoder_(0)
-    , encoderCtx_(0)
-    , outputCtx_(avformat_alloc_context())
-    , stream_(0)
-    , scaler_()
-    , scaledFrame_()
-    , scaledFrameBuffer_(0)
-    , scaledFrameBufferSize_(0)
-    , streamIndex_(-1)
-    , dstWidth_(0)
-    , dstHeight_(0)
-#if (LIBAVCODEC_VERSION_MAJOR < 54)
-    , encoderBuffer_(0)
-    , encoderBufferSize_(0)
-#endif
+    outputCtx_(avformat_alloc_context()),
+    scaler_(),
+    scaledFrame_()
 {}
 
 VideoEncoder::~VideoEncoder()
@@ -74,15 +62,56 @@ VideoEncoder::~VideoEncoder()
 #endif
 }
 
-int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
+static const char *
+extract(const std::map<std::string, std::string>& map, const std::string& key)
+{
+    auto iter = map.find(key);
+
+    if (iter == map.end())
+        return NULL;
+
+    return iter->second.c_str();
+}
+
+void VideoEncoder::setOptions(const std::map<std::string, std::string>& options)
+{
+    const char *value;
+
+    value = extract(options, "width");
+    if (!value)
+        throw std::runtime_error("width option not set");
+    av_dict_set(&options_, "width", value, 0);
+
+    value = extract(options, "height");
+    if (!value)
+        throw std::runtime_error("height option not set");
+    av_dict_set(&options_, "height", value, 0);
+
+    value = extract(options, "bitrate") ? : "";
+    av_dict_set(&options_, "bitrate", value, 0);
+
+    value = extract(options, "framerate");
+    if (value)
+        av_dict_set(&options_, "framerate", value, 0);
+
+    value = extract(options, "parameters");
+    if (value)
+        av_dict_set(&options_, "parameters", value, 0);
+
+    value = extract(options, "payload_type");
+    if (value)
+        av_dict_set(&options_, "payload_type", value, 0);
+}
+
+void
+VideoEncoder::openOutput(const char *enc_name, const char *short_name,
                              const char *filename, const char *mime_type)
 {
-    AVOutputFormat *oformat = av_guess_format(short_name, filename,
-                                              mime_type);
+    AVOutputFormat *oformat = av_guess_format(short_name, filename, mime_type);
 
     if (!oformat) {
         ERROR("Unable to find a suitable output format for %s", filename);
-        return -1;
+        throw VideoEncoderException("No output format");
     }
 
     outputCtx_->oformat = oformat;
@@ -94,7 +123,7 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     outputEncoder_ = avcodec_find_encoder_by_name(enc_name);
     if (!outputEncoder_) {
         ERROR("Encoder \"%s\" not found!", enc_name);
-        return -1;
+        throw VideoEncoderException("No output encoder");
     }
 
     prepareEncoderContext();
@@ -118,10 +147,8 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
 #else
     ret = avcodec_open2(encoderCtx_, outputEncoder_, NULL);
 #endif
-    if (ret) {
-        ERROR("Could not open encoder");
-        return -1;
-    }
+    if (ret)
+        throw VideoEncoderException("Could not open encoder");
 
     // add video stream to outputformat context
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
@@ -129,10 +156,9 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
 #else
     stream_ = avformat_new_stream(outputCtx_, 0);
 #endif
-    if (!stream_) {
-        ERROR("Could not allocate stream");
-        return -1;
-    }
+    if (!stream_)
+        throw VideoEncoderException("Could not allocate stream");
+
     stream_->codec = encoderCtx_;
 
     // allocate buffers for both scaled (pre-encoder) and encoded frames
@@ -140,29 +166,21 @@ int VideoEncoder::openOutput(const char *enc_name, const char *short_name,
                              libav_utils::sfl_pixel_format((int)encoderCtx_->pix_fmt));
     scaledFrameBufferSize_ = scaledFrame_.getSize();
 
-    if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE) {
-        ERROR(" buffer too small");
-        return -1;
-    }
+    if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
+        throw VideoEncoderException("buffer too small");
 
 #if (LIBAVCODEC_VERSION_MAJOR < 54)
     encoderBufferSize_ = scaledFrameBufferSize_; // seems to be ok
     encoderBuffer_ = (uint8_t*) av_malloc(encoderBufferSize_);
-    if (!encoderBuffer_) {
-        ERROR("encoderBuffer = av_malloc() failed");
-        return -1;
-    }
+    if (!encoderBuffer_)
+        throw VideoEncoderException("Could not allocate encoder buffer");
 #endif
 
     scaledFrameBuffer_ = (uint8_t*) av_malloc(scaledFrameBufferSize_);
-    if (!scaledFrameBuffer_) {
-        ERROR("scaledFrameBuffer = av_malloc() failed");
-        return -1;
-    }
+    if (!scaledFrameBuffer_)
+        throw VideoEncoderException("Could not allocate scaled frame buffer");
 
     scaledFrame_.setDestination(scaledFrameBuffer_);
-
-    return 0;
 }
 
 void VideoEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
@@ -181,19 +199,15 @@ void VideoEncoder::setIOContext(const std::unique_ptr<VideoIOHandle> &ioctx)
     outputCtx_->packet_size = outputCtx_->pb->buffer_size;
 }
 
-int VideoEncoder::startIO()
+void
+VideoEncoder::startIO()
 {
-    int ret = avformat_write_header(outputCtx_,
-                                    options_ ? &options_ : NULL);
-    if (ret) {
-        ERROR("Could not write header for output file..."
-              "check codec parameters");
-        return -1;
+    if (avformat_write_header(outputCtx_, options_ ? &options_ : NULL)) {
+        ERROR("Could not write header for output file... check codec parameters");
+        throw VideoEncoderException("Failed to write output file header");
     }
 
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
-
-    return 0;
 }
 
 namespace {

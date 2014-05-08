@@ -44,55 +44,19 @@ namespace sfl_video {
 
 using std::string;
 
-VideoSender::VideoSender(const std::string &id,
-                         const std::map<string, string> &args,
+VideoSender::VideoSender(std::map<string, string> args,
                          SocketPair& socketPair) :
-    args_(args)
-    , id_(id)
-    , muxContext_(socketPair.createIOContext())
-    , videoEncoder_(new VideoEncoder)
-    , forceKeyFrame_(0)
-    , frameNumber_(0)
-    , sdp_()
+    muxContext_(socketPair.createIOContext()),
+    videoEncoder_(new VideoEncoder)
 {
-    const char *enc_name = args_["codec"].c_str();
+    const char *enc_name = args["codec"].c_str();
+    const char *dest = args["destination"].c_str();
 
-    /* Encoder setup */
-    if (!args_["width"].empty()) {
-        const char *s = args_["width"].c_str();
-        videoEncoder_->setOption("width", s);
-    } else {
-        throw VideoSenderException("width option not set");
-    }
-
-    if (!args_["height"].empty()) {
-        const char *s = args_["height"].c_str();
-        videoEncoder_->setOption("height", s);
-    } else {
-        throw VideoSenderException("height option not set");
-    }
-
-    videoEncoder_->setOption("bitrate", args_["bitrate"].c_str());
-
-    if (!args_["framerate"].empty())
-        videoEncoder_->setOption("framerate", args_["framerate"].c_str());
-
-    if (!args_["parameters"].empty())
-        videoEncoder_->setOption("parameters", args_["parameters"].c_str());
-
-    if (!args_["payload_type"].empty()) {
-        DEBUG("Writing stream header for payload type %s",
-              args_["payload_type"].c_str());
-        videoEncoder_->setOption("payload_type", args_["payload_type"].c_str());
-    }
-
-    if (videoEncoder_->openOutput(enc_name, "rtp", args_["destination"].c_str(),
-                                  NULL))
-        throw VideoSenderException("encoder openOutput() failed");
-
+    /* Encoder setup (may throw VideoEncoderException) */
+    videoEncoder_->setOptions(args);
+    videoEncoder_->openOutput(enc_name, "rtp", dest, NULL);
     videoEncoder_->setIOContext(muxContext_);
-    if (videoEncoder_->startIO())
-        throw VideoSenderException("encoder start failed");
+    videoEncoder_->startIO();
 
     videoEncoder_->print_sdp(sdp_);
 }
