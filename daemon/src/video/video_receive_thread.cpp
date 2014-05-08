@@ -91,19 +91,12 @@ bool VideoReceiveThread::setup()
         input = args_["input"];
     }
 
-    if (!args_["framerate"].empty())
-        videoDecoder_->setOption("framerate", args_["framerate"].c_str());
-    if (!args_["video_size"].empty())
-        videoDecoder_->setOption("video_size", args_["video_size"].c_str());
-    if (!args_["channel"].empty())
-        videoDecoder_->setOption("channel", args_["channel"].c_str());
-
     videoDecoder_->setInterruptCallback(interruptCb, this);
 
     if (input == SDP_FILENAME) {
 #if HAVE_SDP_CUSTOM_IO
         // custom_io so the SDP demuxer will not open any UDP connections
-        videoDecoder_->setOption("sdp_flags", "custom_io");
+        args_["sdp_flags"] = "custom_io";
 #else
         WARN("libavformat too old for custom SDP demuxing");
 #endif
@@ -112,13 +105,14 @@ bool VideoReceiveThread::setup()
         videoDecoder_->setIOContext(&sdpContext_);
     }
 
+    videoDecoder_->setOptions(args_);
+
     EXIT_IF_FAIL(!videoDecoder_->openInput(input, format_str),
                  "Could not open input \"%s\"", input.c_str());
 
     if (input == SDP_FILENAME) {
 #if HAVE_SDP_CUSTOM_IO
-        // Now replace our custom AVIOContext with one that will read
-        // packets
+        // Now replace our custom AVIOContext with one that will read packets
         videoDecoder_->setIOContext(demuxContext_);
 #endif
     }

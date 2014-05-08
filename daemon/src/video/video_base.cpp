@@ -64,13 +64,6 @@ VideoIOHandle::VideoIOHandle(ssize_t buffer_size,
 
 VideoIOHandle::~VideoIOHandle() { av_free(ctx_); av_free(buf_); }
 
-VideoCodec::VideoCodec() : options_(0) {}
-
-void VideoCodec::setOption(const char *name, const char *value)
-{
-    av_dict_set(&options_, name, value, 0);
-}
-
 /*=== VideoFrame =============================================================*/
 
 VideoFrame::VideoFrame() : frame_(avcodec_alloc_frame()), allocated_(false) {}
