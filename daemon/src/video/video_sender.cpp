@@ -45,48 +45,47 @@ namespace sfl_video {
 using std::string;
 
 VideoSender::VideoSender(const std::string &id,
-                         const std::map<string, string> &args,
+                         std::map<string, string>& args,
                          SocketPair& socketPair) :
-    args_(args)
-    , id_(id)
+    id_(id)
     , muxContext_(socketPair.createIOContext())
     , videoEncoder_(new VideoEncoder)
     , forceKeyFrame_(0)
     , frameNumber_(0)
     , sdp_()
 {
-    const char *enc_name = args_["codec"].c_str();
+    const char *enc_name = args["codec"].c_str();
 
     /* Encoder setup */
-    if (!args_["width"].empty()) {
-        const char *s = args_["width"].c_str();
+    if (!args["width"].empty()) {
+        const char *s = args["width"].c_str();
         videoEncoder_->setOption("width", s);
     } else {
         throw VideoSenderException("width option not set");
     }
 
-    if (!args_["height"].empty()) {
-        const char *s = args_["height"].c_str();
+    if (!args["height"].empty()) {
+        const char *s = args["height"].c_str();
         videoEncoder_->setOption("height", s);
     } else {
         throw VideoSenderException("height option not set");
     }
 
-    videoEncoder_->setOption("bitrate", args_["bitrate"].c_str());
+    videoEncoder_->setOption("bitrate", args["bitrate"].c_str());
 
-    if (!args_["framerate"].empty())
-        videoEncoder_->setOption("framerate", args_["framerate"].c_str());
+    if (!args["framerate"].empty())
+        videoEncoder_->setOption("framerate", args["framerate"].c_str());
 
-    if (!args_["parameters"].empty())
-        videoEncoder_->setOption("parameters", args_["parameters"].c_str());
+    if (!args["parameters"].empty())
+        videoEncoder_->setOption("parameters", args["parameters"].c_str());
 
-    if (!args_["payload_type"].empty()) {
+    if (!args["payload_type"].empty()) {
         DEBUG("Writing stream header for payload type %s",
-              args_["payload_type"].c_str());
-        videoEncoder_->setOption("payload_type", args_["payload_type"].c_str());
+              args["payload_type"].c_str());
+        videoEncoder_->setOption("payload_type", args["payload_type"].c_str());
     }
 
-    if (videoEncoder_->openOutput(enc_name, "rtp", args_["destination"].c_str(),
+    if (videoEncoder_->openOutput(enc_name, "rtp", args["destination"].c_str(),
                                   NULL))
         throw VideoSenderException("encoder openOutput() failed");
 

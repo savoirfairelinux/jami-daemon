@@ -54,7 +54,7 @@ class VideoSender : public VideoFramePassiveReader
 {
 public:
     VideoSender(const std::string &id,
-                const std::map<std::string, std::string> &args,
+                std::map<std::string, std::string>& args,
                 SocketPair& socketPair);
 
     std::string getSDP() const { return sdp_; }
@@ -69,7 +69,6 @@ private:
 
     void encodeAndSendVideo(VideoFrame&);
 
-    std::map<std::string, std::string> args_;
     const std::string &id_;
 
     // encoder MUST be deleted before muxContext
