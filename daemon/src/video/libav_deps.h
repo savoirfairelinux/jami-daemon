@@ -71,6 +71,10 @@ extern "C" {
 #include <libavutil/mathematics.h> // for av_rescale_q (old libav support)
 #include <libavutil/imgutils.h>
 #include <libavutil/intreadwrite.h>
+#include <libavfilter/avfilter.h>
+#include <libavfilter/avfiltergraph.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
 }
 
 #include "libav_utils.h"

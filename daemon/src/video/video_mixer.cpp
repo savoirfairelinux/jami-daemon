@@ -48,6 +48,7 @@ VideoMixer::VideoMixer(const std::string &id) :
     , sources_()
     , mutex_()
     , sink_(id)
+    , vfilter_()
 {
     auto videoCtrl = Manager::instance().getVideoManager();
     if (!videoCtrl->hasCameraStarted()) {
@@ -117,6 +118,8 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
     const int cell_height = height_ / zoom;
     const int xoff = (index % zoom) * cell_width;
     const int yoff = (index / zoom) * cell_height;
+
+    vfilter_.process(input, input);
 
     scaler.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
 

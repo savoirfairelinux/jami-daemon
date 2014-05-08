@@ -172,6 +172,8 @@ AS_IF([test "x$enable_video" = "xyes"],
         dnl Check for libavutil development package - name: libavutil-dev
         PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil development files]))
 
+        PKG_CHECK_MODULES(LIBAVFILTER, libavfilter >= 3.42.103,, AC_MSG_ERROR([Missing libavfilter development files]))
+
         PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
     ],
     [AM_CONDITIONAL(SFL_VIDEO, false)]);

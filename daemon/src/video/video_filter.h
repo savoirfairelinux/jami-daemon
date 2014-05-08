@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2014 Savoir-Faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
@@ -29,58 +29,34 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_MIXER_H__
-#define __VIDEO_MIXER_H__
+#ifndef __VIDEO_FILTER_H__
+#define __VIDEO_FILTER_H__
 
 #include "noncopyable.h"
 #include "video_base.h"
-#include "video_scaler.h"
-#include "video_filter.h"
-#include "shm_sink.h"
-#include "sflthread.h"
 
-#include <mutex>
-#include <list>
-
+class AVFilterGraph;
+class AVFilterContext;
 
 namespace sfl_video {
 
-class VideoMixer :
-        public VideoGenerator,
-        public VideoFramePassiveReader
+class VideoFilter
 {
 public:
-    VideoMixer(const std::string &id);
-    virtual ~VideoMixer();
+    VideoFilter();
+    virtual ~VideoFilter();
 
-    void setDimensions(int width, int height);
-
-    int getWidth() const;
-    int getHeight() const;
-    int getPixelFormat() const;
-
-    // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                std::shared_ptr<VideoFrame> &v);
-    void attached(Observable<std::shared_ptr<VideoFrame> >* ob);
-    void detached(Observable<std::shared_ptr<VideoFrame> >* ob);
+    void process(VideoFrame& input, VideoFrame& output);
 
 private:
-    NON_COPYABLE(VideoMixer);
+    NON_COPYABLE(VideoFilter);
 
-    void render_frame(VideoFrame& input, const int index);
-    void start_sink();
-    void stop_sink();
-
-    const std::string id_;
-    int width_;
-    int height_;
-    std::list<Observable<std::shared_ptr<VideoFrame> >*> sources_;
-    std::mutex mutex_;
-    SHMSink sink_;
-    VideoFilter vfilter_;
+    AVFilterGraph *filterGraph_;
+    AVFilterContext *vbufferCtx_;
+    AVFilterContext *vnegateCtx_;
+    AVFilterContext *vbufferSinkCtx_;
 };
 
 }
 
-#endif // __VIDEO_MIXER_H__
+#endif // __VIDEO_FILTER_H__
