@@ -630,6 +630,9 @@ SIPVoIPLink::~SIPVoIPLink()
     sipAccountMap_.clear();
     clearSipCallMap();
 
+    // destroy SIP transport before endpoint
+    sipTransport.reset();
+
     pjsip_endpt_destroy(endpt_);
 
     pj_pool_release(pool_);
