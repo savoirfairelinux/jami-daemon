@@ -45,13 +45,29 @@ VideoInput::VideoInput() :
     VideoGenerator::VideoGenerator()
     , sink_()
 {
-    start();
+    thread_ = std::thread(&VideoInput::mainloop, this);
 }
 
 VideoInput::~VideoInput()
 {
-    stop();
-    join();
+    if (running_) {
+        running_ = false;
+        join();
+    }
+}
+
+void VideoInput::join()
+{
+    if (thread_.joinable())
+        thread_.join();
+}
+
+void VideoInput::exit()
+{
+    running_ = false;
+    // FIXME: std::thread does not provide an equivalent, use appropriate
+    // function for other platforms (i.e. ExitThread)
+    pthread_exit(NULL);
 }
 
 bool VideoInput::setup()
@@ -64,15 +80,24 @@ bool VideoInput::setup()
     return true;
 }
 
-void VideoInput::process()
-{
-    if (switchPending_) {
-        deleteDecoder();
-        createDecoder();
-        switchPending_ = false;
-    }
 
-    captureFrame();
+void VideoInput::mainloop()
+{
+    if (setup()) {
+        while (running_) {
+
+            if (switchPending_) {
+                deleteDecoder();
+                createDecoder();
+                switchPending_ = false;
+            }
+
+            captureFrame();
+        }
+        cleanup();
+    } else {
+        ERROR("setup failed");
+    }
 }
 
 void VideoInput::cleanup()
@@ -86,7 +111,7 @@ void VideoInput::cleanup()
 int VideoInput::interruptCb(void *data)
 {
     VideoInput *context = static_cast<VideoInput*>(data);
-    return not context->isRunning();
+    return not context->running_;
 }
 
 bool VideoInput::captureFrame()
@@ -96,7 +121,7 @@ bool VideoInput::captureFrame()
 
     if (ret <= 0) {
         if (ret < 0)
-            stop();
+            running_ = false;
         return false;
     }
 

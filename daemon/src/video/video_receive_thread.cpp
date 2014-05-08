@@ -63,8 +63,10 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    stop();
-    join();
+    if (running_) {
+        running_ = false;
+        join();
+    }
 }
 
 // We do this setup here instead of the constructor because we don't want the
@@ -148,9 +150,6 @@ bool VideoReceiveThread::setup()
     return true;
 }
 
-void VideoReceiveThread::process()
-{ decodeFrame(); }
-
 void VideoReceiveThread::cleanup()
 {
     if (detach(&sink_))
@@ -168,7 +167,7 @@ void VideoReceiveThread::cleanup()
 int VideoReceiveThread::interruptCb(void *data)
 {
     VideoReceiveThread *context = static_cast<VideoReceiveThread*>(data);
-    return not context->isRunning();
+    return not context->running_;
 }
 
 int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
@@ -201,7 +200,7 @@ bool VideoReceiveThread::decodeFrame()
         requestKeyFrameCallback_(id_);
     } else if (ret < 0) {
         ERROR("VideoDecoder fatal error, stopping it...");
-        stop();
+        running_ = false;
     }
 
     return false;
@@ -210,7 +209,7 @@ bool VideoReceiveThread::decodeFrame()
 
 void VideoReceiveThread::enterConference()
 {
-    if (!isRunning())
+    if (!running_)
         return;
 
     if (detach(&sink_)) {
@@ -221,7 +220,7 @@ void VideoReceiveThread::enterConference()
 
 void VideoReceiveThread::exitConference()
 {
-    if (!isRunning())
+    if (!running_)
         return;
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
@@ -245,5 +244,38 @@ int VideoReceiveThread::getHeight() const
 
 int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
+
+void VideoReceiveThread::mainloop()
+{
+    if (setup()) {
+        while (running_)
+            decodeFrame();
+        cleanup();
+    } else {
+        ERROR("setup failed");
+    }
+}
+
+void VideoReceiveThread::start()
+{
+    if (not running_) {
+        running_ = true;
+        thread_ = std::thread(&VideoReceiveThread::mainloop, this);
+    }
+}
+
+void VideoReceiveThread::join()
+{
+    if (thread_.joinable())
+        thread_.join();
+}
+
+void VideoReceiveThread::exit()
+{
+    running_ = false;
+    // FIXME: std::thread does not provide an equivalent, use appropriate
+    // function for other platforms (i.e. ExitThread)
+    pthread_exit(NULL);
+}
 
 } // end namespace sfl_video

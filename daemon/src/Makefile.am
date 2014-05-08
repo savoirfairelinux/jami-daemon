@@ -85,9 +85,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		logger.cpp \
 		numbercleaner.cpp \
 		fileutils.cpp \
-		sflthread.cpp \
 		ip_utils.cpp \
-		sflthread.h \
 		conference.h \
 		voiplink.h \
 		preferences.h \

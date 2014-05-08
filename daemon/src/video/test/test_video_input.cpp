@@ -41,7 +41,6 @@ void VideoInputTest::testInput()
     string resource = "display://" + string(getenv("DISPLAY") ? : ":0.0");
     sfl_video::VideoInput video;
     video.switchInput(resource);
-    usleep(10000);
 }
 
 int main ()

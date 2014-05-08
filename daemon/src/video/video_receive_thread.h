@@ -33,7 +33,6 @@
 
 #include "video_decoder.h"
 #include "shm_sink.h"
-#include "sflthread.h"
 #include "noncopyable.h"
 
 #include <map>
@@ -41,12 +40,14 @@
 #include <climits>
 #include <sstream>
 #include <memory>
+#include <atomic>
+#include <thread>
 
 namespace sfl_video {
 
 class SocketPair;
 
-class VideoReceiveThread : public VideoGenerator, public SFLThread  {
+class VideoReceiveThread : public VideoGenerator {
 public:
     VideoReceiveThread(const std::string &id,
                        const std::map<std::string, std::string> &args);
@@ -61,6 +62,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
+    void start();
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -85,11 +87,14 @@ private:
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
 
-
-    // as SFLThread
     bool setup();
-    void process();
+    void mainloop();
+    void join();
     void cleanup();
+    void exit();
+
+    std::atomic<bool> running_ = {false};
+    std::thread thread_ = {};
 };
 }
 
