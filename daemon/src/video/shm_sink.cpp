@@ -84,7 +84,7 @@ bool SHMSink::start()
         fd_ = shm_open(shm_name_.c_str(), flags, perms);
         if (fd_ < 0) {
             ERROR("could not open shm area \"%s\"", shm_name_.c_str());
-            Logger::strErr();
+            strErr();
             return false;
         }
     } else {
@@ -94,7 +94,7 @@ bool SHMSink::start()
             shm_name_ = name.str();
             fd_ = shm_open(shm_name_.c_str(), flags, perms);
             if (fd_ < 0 and errno != EEXIST) {
-                Logger::strErr();
+                strErr();
                 return false;
             }
         }
@@ -107,7 +107,7 @@ bool SHMSink::start()
 
     if (ftruncate(fd_, shm_area_len_)) {
         ERROR("Could not make shm area large enough for header");
-        Logger::strErr();
+        strErr();
         return false;
     }
 
@@ -133,7 +133,7 @@ bool SHMSink::start()
 bool SHMSink::stop()
 {
     if (fd_ >= 0 and close(fd_) == -1)
-        Logger::strErr();
+        strErr();
 
     fd_ = -1;
 
@@ -159,13 +159,13 @@ bool SHMSink::resize_area(size_t desired_length)
 
     if (munmap(shm_area_, shm_area_len_)) {
         ERROR("Could not unmap shared area");
-        Logger::strErr();
+        strErr();
         return false;
     }
 
     if (ftruncate(fd_, desired_length)) {
         ERROR("Could not resize shared area");
-        Logger::strErr();
+        strErr();
         return false;
     }
 

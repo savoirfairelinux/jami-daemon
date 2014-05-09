@@ -326,7 +326,7 @@ bool VideoDeviceMonitorImpl::addDevice(const string &dev)
     int fd = open(dev.c_str(), O_RDWR);
     if (fd == -1) {
         ERROR("Problem opening device");
-        Logger::strErr();
+        strErr();
         return false;
     }
 

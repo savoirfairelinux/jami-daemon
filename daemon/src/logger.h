@@ -28,32 +28,50 @@
  *  as that of the covered work.
  */
 
-#ifndef LOGGER_H_
-#define LOGGER_H_
+#ifndef H_LOGGER
+#define H_LOGGER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
 #include <pthread.h>
+
 #ifdef __ANDROID__
-#include <cstring>
 #include <android/log.h>
 #else
 #include <syslog.h>
 #endif
 
-#include <cstring>
-
-namespace Logger {
-void log(const int, const char*, ...);
-
-void setConsoleLog(bool);
-void setDebugMode(bool);
-bool getDebugMode();
 /**
- * Thread-safe function to print the stringified contents of errno appended to a
- * user defined message */
-void strErr(const char *message = "");
-};
+ * Print something, coloring it depending on the level
+ */
+void logger(const int level, const char *format, ...);
 
-#define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, (unsigned long) pthread_self() & 0xffff, ##__VA_ARGS__
+/**
+ * Allow writing on the console
+ */
+void setConsoleLog(int c);
+
+/**
+ * When debug mode is not set, logging will not print anything
+ */
+void setDebugMode(int d);
+
+/**
+ * Return the current mode
+ */
+int getDebugMode(void);
+
+/**
+ * Thread-safe function to print the stringified contents of errno
+ */
+void strErr();
+
+#define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, \
+                           (unsigned long) pthread_self() & 0xffff, \
+                           ##__VA_ARGS__
 
 #ifndef __ANDROID__
 
@@ -62,23 +80,24 @@ void strErr(const char *message = "");
 #define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
 #define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
 #define DEBUG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
-#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
+#define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
 
-#else /* ANDROID */
+#else /* __ANDROID__ */
 
 #ifndef APP_NAME
 #define APP_NAME "libsflphone"
-#endif
+#endif /* APP_NAME */
 
 // Avoid printing whole path on android
-#define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 \
+                                          : __FILE__)
 
 #define ERROR(M, ...)   LOGGER(M, ANDROID_LOG_ERROR, ##__VA_ARGS__)
 #define WARN(M, ...)    LOGGER(M, ANDROID_LOG_WARN, ##__VA_ARGS__)
 #define INFO(M, ...)    LOGGER(M, ANDROID_LOG_INFO, ##__VA_ARGS__)
 #define DEBUG(M, ...)   LOGGER(M, ANDROID_LOG_DEBUG, ##__VA_ARGS__)
 #define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, LOG_FORMAT(M, ##__VA_ARGS__))
-#endif /* ANDROID */
+#endif /* __ANDROID__ */
 
 #define BLACK "\033[22;30m"
 #define RED "\033[22;31m"
@@ -98,5 +117,8 @@ void strErr(const char *message = "");
 #define WHITE "\033[01;37m"
 #define END_COLOR "\033[0m"
 
-#endif // LOGGER_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif // H_LOGGER
