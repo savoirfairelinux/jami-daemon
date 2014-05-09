@@ -37,7 +37,7 @@
 #include "noncopyable.h"
 #include "shm_sink.h"
 #include "video_decoder.h"
-#include "sflthread.h"
+#include "threadloop.h"
 
 #include <map>
 #include <atomic>
@@ -45,9 +45,7 @@
 
 namespace sfl_video {
 
-class VideoInput :
-    public VideoGenerator,
-    public SFLThread
+class VideoInput : public VideoGenerator
 {
 public:
     VideoInput();
@@ -75,6 +73,7 @@ private:
     std::string input_      = "";
     std::string format_     = "";
     bool emulateRate_       = false;
+    ThreadLoop loop_;
 
     void createDecoder();
     void deleteDecoder();
@@ -83,7 +82,7 @@ private:
     bool initX11(std::string display);
     bool initFile(std::string path);
 
-    // as SFLThread
+    // for ThreadLoop
     bool setup();
     void process();
     void cleanup();

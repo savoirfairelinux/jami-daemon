@@ -59,12 +59,21 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , demuxContext_()
     , sink_(id)
     , requestKeyFrameCallback_(0)
+    , loop_(std::bind(&VideoReceiveThread::setup, this),
+            std::bind(&VideoReceiveThread::process, this),
+            std::bind(&VideoReceiveThread::cleanup, this))
 {}
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    stop();
-    join();
+    loop_.stop();
+    loop_.join();
+}
+
+void
+VideoReceiveThread::startLoop()
+{
+    loop_.start();
 }
 
 // We do this setup here instead of the constructor because we don't want the
@@ -162,7 +171,7 @@ void VideoReceiveThread::cleanup()
 int VideoReceiveThread::interruptCb(void *data)
 {
     VideoReceiveThread *context = static_cast<VideoReceiveThread*>(data);
-    return not context->isRunning();
+    return not context->loop_.isRunning();
 }
 
 int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
@@ -199,7 +208,7 @@ bool VideoReceiveThread::decodeFrame()
             // fallthrough if we can't request keyframe
         case VideoDecoder::Status::ReadError:
             ERROR("VideoDecoder fatal error, stopping it...");
-            stop();
+            loop_.stop();
 
         default:
             break;
@@ -211,7 +220,7 @@ bool VideoReceiveThread::decodeFrame()
 
 void VideoReceiveThread::enterConference()
 {
-    if (!isRunning())
+    if (!loop_.isRunning())
         return;
 
     if (detach(&sink_)) {
@@ -222,7 +231,7 @@ void VideoReceiveThread::enterConference()
 
 void VideoReceiveThread::exitConference()
 {
-    if (!isRunning())
+    if (!loop_.isRunning())
         return;
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
