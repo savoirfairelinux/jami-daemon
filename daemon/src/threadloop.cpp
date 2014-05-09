@@ -29,63 +29,67 @@
  *  as that of the covered work.
  */
 
-#include "sflthread.h"
+#include "threadloop.h"
 #include "logger.h"
 
-void* SFLThread::run_(void* data)
+void ThreadLoop::mainloop()
 {
-    SFLThread *obj = static_cast<SFLThread*>(data);
-    obj->mainloop_();
-    return nullptr;
+    try {
+        if (setup_()) {
+            while (running_)
+                process_();
+            cleanup_();
+        } else {
+            ERROR("setup failed");
+        }
+    } catch (const ThreadLoopException &e) {
+        ERROR("%s", e.what());
+    }
 }
 
-void SFLThread::mainloop_()
-{
-    if (setup()) {
-        while (running_)
-            process();
-        cleanup();
-    } else
-        ERROR("setup failed");
-}
-
-SFLThread::SFLThread() : thread_(), running_(false)
+ThreadLoop::ThreadLoop(const std::function<bool()> &setup,
+                       const std::function<void()> &process,
+                       const std::function<void()> &cleanup)
+    : setup_(setup), process_(process), cleanup_(cleanup)
 {}
 
-SFLThread::~SFLThread()
+ThreadLoop::~ThreadLoop()
 {
     if (isRunning()) {
-        stop();
+        ERROR("Thread not stopped by owner");
         join();
     }
 }
 
-void SFLThread::start()
+void ThreadLoop::start()
 {
     if (!running_) {
         running_ = true;
-        pthread_create(&thread_, NULL, &run_, this);
+        thread_ = std::thread(&ThreadLoop::mainloop, this);
+    } else {
+        ERROR("Thread already started");
     }
 }
 
-void SFLThread::stop()
+void ThreadLoop::stop()
 {
     running_ = false;
 }
 
-void SFLThread::join()
-{
-    if (thread_)
-        pthread_join(thread_, NULL);
-}
-
-void SFLThread::exit()
+void ThreadLoop::join()
 {
     stop();
-    pthread_exit(NULL);
+    if (thread_.joinable())
+        thread_.join();
 }
 
-bool SFLThread::isRunning()
+void ThreadLoop::exit()
+{
+    stop();
+    throw ThreadLoopException();
+}
+
+bool ThreadLoop::isRunning() const
 {
     return running_;
 }

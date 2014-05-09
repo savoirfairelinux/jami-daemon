@@ -33,7 +33,7 @@
 
 #include "video_decoder.h"
 #include "shm_sink.h"
-#include "sflthread.h"
+#include "threadloop.h"
 #include "noncopyable.h"
 
 #include <map>
@@ -46,11 +46,12 @@ namespace sfl_video {
 
 class SocketPair;
 
-class VideoReceiveThread : public VideoGenerator, public SFLThread  {
+class VideoReceiveThread : public VideoGenerator {
 public:
     VideoReceiveThread(const std::string &id,
                        const std::map<std::string, std::string> &args);
     ~VideoReceiveThread();
+    void startLoop();
 
     void addIOContext(SocketPair &socketPair);
     void setRequestKeyFrameCallback(void (*)(const std::string &));
@@ -86,7 +87,9 @@ private:
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
 
 
-    // as SFLThread
+    ThreadLoop loop_;
+
+    // used by ThreadLoop
     bool setup();
     void process();
     void cleanup();
