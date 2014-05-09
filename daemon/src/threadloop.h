@@ -37,6 +37,11 @@
 #include <functional>
 #include <stdexcept>
 
+// FIXME: this is ugly
+// If condition A is false, print the error message in M and exit thread
+#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { \
+        ERROR(M, ##__VA_ARGS__); loop_.exit(); }
+
 struct ThreadLoopException : public std::runtime_error {
     ThreadLoopException() : std::runtime_error("ThreadLoopException") {}
 };

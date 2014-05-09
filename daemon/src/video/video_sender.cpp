@@ -33,7 +33,7 @@
 #include "video_mixer.h"
 #include "socket_pair.h"
 #include "client/videomanager.h"
-#include "check.h"
+#include "logger.h"
 #include "manager.h"
 
 #include <map>

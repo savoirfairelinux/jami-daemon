@@ -36,7 +36,7 @@
 #include "socket_pair.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "check.h"
+#include "logger.h"
 
 #include <unistd.h>
 #include <map>

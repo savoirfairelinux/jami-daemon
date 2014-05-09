@@ -31,7 +31,7 @@
 
 #include "libav_deps.h"
 #include "video_scaler.h"
-#include "check.h"
+#include "logger.h"
 
 namespace sfl_video {
 

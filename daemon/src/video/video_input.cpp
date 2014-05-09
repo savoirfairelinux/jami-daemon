@@ -31,10 +31,10 @@
 
 #include "video_input.h"
 #include "video_decoder.h"
-#include "check.h"
 
 #include "manager.h"
 #include "client/videomanager.h"
+#include "logger.h"
 
 #include <map>
 #include <string>
