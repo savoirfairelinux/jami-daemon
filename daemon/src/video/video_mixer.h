@@ -36,7 +36,6 @@
 #include "video_base.h"
 #include "video_scaler.h"
 #include "shm_sink.h"
-#include "sflthread.h"
 
 #include <mutex>
 #include <list>

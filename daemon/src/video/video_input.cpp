@@ -44,14 +44,17 @@ namespace sfl_video {
 VideoInput::VideoInput() :
     VideoGenerator::VideoGenerator()
     , sink_()
+    , loop_(std::bind(&VideoInput::setup, this),
+            std::bind(&VideoInput::process, this),
+            std::bind(&VideoInput::cleanup, this))
 {
-    start();
+    loop_.start();
 }
 
 VideoInput::~VideoInput()
 {
-    stop();
-    join();
+    loop_.stop();
+    loop_.join();
 }
 
 bool VideoInput::setup()
@@ -86,7 +89,7 @@ void VideoInput::cleanup()
 int VideoInput::interruptCb(void *data)
 {
     VideoInput *context = static_cast<VideoInput*>(data);
-    return not context->isRunning();
+    return not context->loop_.isRunning();
 }
 
 bool VideoInput::captureFrame()
@@ -100,7 +103,7 @@ bool VideoInput::captureFrame()
 
         case VideoDecoder::Status::ReadError:
         case VideoDecoder::Status::DecodeError:
-            stop();
+            loop_.stop();
             // fallthrough
         case VideoDecoder::Status::Success:
             return false;

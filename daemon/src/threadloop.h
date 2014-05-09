@@ -29,35 +29,42 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFLTHREAD_H__
-#define __SFLTHREAD_H__
+#ifndef __THREADLOOP_H__
+#define __THREADLOOP_H__
 
-#include <pthread.h>
 #include <atomic>
+#include <thread>
+#include <functional>
+#include <stdexcept>
 
-class SFLThread {
+struct ThreadLoopException : public std::runtime_error {
+    ThreadLoopException() : std::runtime_error("ThreadLoopException") {}
+};
+
+class ThreadLoop {
 public:
-    SFLThread();
-    virtual ~SFLThread();
+    ThreadLoop(const std::function<bool()> &setup,
+               const std::function<void()> &process,
+               const std::function<void()> &cleanup);
+    ~ThreadLoop();
 
     void start();
 
-protected:
     void exit();
     void stop();
     void join();
     bool isRunning();
 
 private:
-    virtual bool setup() { return true; };
-    virtual void process() {};
-    virtual void cleanup() {};
+    // These must be provided by users of ThreadLoop
+    std::function<bool()> setup_;
+    std::function<void()> process_;
+    std::function<void()> cleanup_;
 
-    static void* run_(void*);
-    void mainloop_();
-    pthread_t thread_;
+    void mainloop();
 
-    std::atomic<bool> running_;
+    std::atomic<bool> running_ = {false};
+    std::thread thread_ = {};
 };
 
-#endif // __SFLTHREAD_H__
+#endif // __THREADLOOP_H__

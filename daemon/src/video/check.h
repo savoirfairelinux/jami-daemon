@@ -35,6 +35,6 @@
 
 // If condition A is false, print the error message in M and exit thread
 #define EXIT_IF_FAIL(A, M, ...) if (!(A)) { \
-        ERROR(M, ##__VA_ARGS__); this->exit(); }
+        ERROR(M, ##__VA_ARGS__); loop_.exit(); }
 
 #endif // CHECK_H_
