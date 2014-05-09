@@ -63,8 +63,8 @@ int main(int argc, char* argv[])
 {
     atexit(cleanup);
     printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2014\n\n");
-    Logger::setConsoleLog(true);
-    Logger::setDebugMode(true);
+    setConsoleLog(true);
+    setDebugMode(true);
     fileutils::FileHandle f(fileutils::create_pidfile());
     if (f.fd == -1) {
         fprintf(stderr, "An sflphoned instance is already running, quitting...\n");
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
         } else if (strcmp("--debug", argv[1]) == 0) {
             argvIndex++;
 
-            Logger::setDebugMode(true);
+            setDebugMode(true);
             INFO("Debug mode activated");
 
         } else if (strcmp("--xml", argv[1]) == 0) {

@@ -116,8 +116,8 @@ namespace {
             // We've always print the title/version, so we can just exit
             quit = true;
         } else {
-            Logger::setConsoleLog(consoleFlag);
-            Logger::setDebugMode(debugFlag);
+            setConsoleLog(consoleFlag);
+            setDebugMode(debugFlag);
         }
         return quit;
     }

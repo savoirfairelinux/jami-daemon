@@ -118,7 +118,7 @@ void init_once()
 
     av_lockmgr_register(avcodecManageMutex);
 
-    if (Logger::getDebugMode())
+    if (getDebugMode())
         av_log_set_level(AV_LOG_VERBOSE);
 
     /* list of codecs tested and confirmed to work */

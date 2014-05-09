@@ -63,7 +63,6 @@ libsflphone_la_LDFLAGS = \
 
 libsflphone_la_CFLAGS = \
 		@CCGNU2_CFLAGS@ \
-		@CCEXT2_CFLAGS@ \
 		@ZRTPCPP_CFLAGS@ \
 		$(PJSIP_CFLAGS) \
 		@CCRTP_CFLAGS@ \
@@ -82,7 +81,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		eventthread.cpp \
 		call.cpp \
 		account.cpp \
-		logger.cpp \
+		logger.c \
 		numbercleaner.cpp \
 		fileutils.cpp \
 		threadloop.cpp \

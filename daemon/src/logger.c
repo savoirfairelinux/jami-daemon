@@ -28,17 +28,16 @@
  *  as that of the covered work.
  */
 
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+
 #include "logger.h"
-#include <cstdarg>
-#include <string>
-#include <cstdio>
 
-namespace Logger {
+static int consoleLog;
+static int debugMode;
 
-bool consoleLog = false;
-bool debugMode = false;
-
-void log(const int level, const char* format, ...)
+void logger(const int level, const char* format, ...)
 {
     if (!debugMode && level == LOG_DEBUG)
         return;
@@ -71,28 +70,25 @@ void log(const int level, const char* format, ...)
     }
 }
 
-void setConsoleLog(bool c)
+void setConsoleLog(int c)
 {
     consoleLog = c;
 }
 
-void setDebugMode(bool d)
+void setDebugMode(int d)
 {
     debugMode = d;
 }
 
-bool getDebugMode()
+int getDebugMode(void)
 {
     return debugMode;
 }
 
-void strErr(const char *msg)
+void strErr(void)
 {
 #ifdef __GLIBC__
-    if (strlen(msg))
-        ERROR("%s: %m", msg);
-    else
-        ERROR("%m");
+    ERROR("%m");
 #else
     char buf[1000];
     const char *errstr;
@@ -109,10 +105,6 @@ void strErr(const char *msg)
             break;
     }
 
-    if (strlen(msg))
-        ERROR("%s: %s", msg, errstr);
-    else
-        ERROR("%s", errstr);
+    ERROR("%s", errstr);
 #endif
-}
 }

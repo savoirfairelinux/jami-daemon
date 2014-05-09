@@ -124,7 +124,7 @@ int udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len,
     // on local port
     if (bind(udp_fd, reinterpret_cast<sockaddr*>(addr), *addr_len) < 0) {
         ERROR("Bind failed");
-        Logger::strErr();
+        strErr();
         close(udp_fd);
         udp_fd = -1;
     }
@@ -168,9 +168,9 @@ void SocketPair::interrupt()
 void SocketPair::closeSockets()
 {
     if (rtcpHandle_ > 0 and close(rtcpHandle_))
-        Logger::strErr();
+        strErr();
     if (rtpHandle_ > 0 and close(rtpHandle_))
-        Logger::strErr();
+        strErr();
 }
 
 void SocketPair::openSockets(const char *uri, int local_rtp_port)
