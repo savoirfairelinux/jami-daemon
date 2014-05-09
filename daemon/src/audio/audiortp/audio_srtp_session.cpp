@@ -44,6 +44,10 @@
 #include <cstring>
 #include <cerrno>
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define THROW_ERROR(EXCEPTION_CLASS, M) throw EXCEPTION_CLASS(__FILE__ ":" TOSTRING(__LINE__) ":" M)
+
 namespace sfl {
 
 namespace {

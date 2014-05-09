@@ -98,11 +98,5 @@ void strErr(const char *message = "");
 #define WHITE "\033[01;37m"
 #define END_COLOR "\033[0m"
 
-
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
-// No format strings/varargs allowed
-#define THROW_ERROR(EXCEPTION_CLASS, M) throw EXCEPTION_CLASS(__FILE__ ":" TOSTRING(__LINE__) ":" M)
-
 #endif // LOGGER_H_
 
