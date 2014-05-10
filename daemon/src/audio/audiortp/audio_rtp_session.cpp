@@ -58,9 +58,9 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , rxJitters_()
     , jitterReportInterval_(0)
 #endif
-    , rtpSendThread_(*this)
     , dtmfQueue_()
     , dtmfPayloadType_(101) // same as Asterisk
+    , rtpSendThread_(*this)
 {
     queue_.setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
