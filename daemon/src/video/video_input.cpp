@@ -74,6 +74,12 @@ void VideoInput::process()
         switchPending_ = false;
     }
 
+    if (!decoder_) {
+        ERROR("No decoder");
+        loop_.stop();
+        return;
+    }
+
     captureFrame();
 }
 
