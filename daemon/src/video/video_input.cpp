@@ -248,15 +248,18 @@ VideoInput::switchInput(const std::string& resource)
     bool valid = false;
 
     /* Video4Linux2 */
-    if (resource.compare(0, v4l2.size(), v4l2) == 0)
+    if (resource.size() > v4l2.size() and
+        resource.compare(0, v4l2.size(), v4l2) == 0)
         valid = initCamera(resource.substr(v4l2.size()));
 
     /* X11 display name */
-    else if (resource.compare(0, display.size(), display) == 0)
+    else if (resource.size() > display.size() and
+             resource.compare(0, display.size(), display) == 0)
         valid = initX11(resource.substr(display.size()));
 
     /* Pathname */
-    else if (resource.compare(0, file.size(), file) == 0)
+    else if (resource.size() > file.size() and
+             resource.compare(0, file.size(), file) == 0)
         valid = initFile(resource.substr(file.size()));
 
     /* Unsupported MRL or failed initialization */
