@@ -241,23 +241,30 @@ VideoInput::switchInput(const std::string& resource)
     }
 
     // Supported MRL schemes
-    static const std::string v4l2("v4l2://");
-    static const std::string display("display://");
-    static const std::string file("file://");
+    static const std::string sep = "://";
+
+    const auto pos = resource.find(sep);
+    if (pos == std::string::npos)
+        return false;
+
+    const auto prefix = resource.substr(0, pos);
+    if ((prefix.size() + sep.size()) >= resource.size())
+        return false;
+
+    const auto suffix = resource.substr(prefix.size() + sep.size());
 
     bool valid = false;
 
-    /* Video4Linux2 */
-    if (resource.compare(0, v4l2.size(), v4l2) == 0)
-        valid = initCamera(resource.substr(v4l2.size()));
-
-    /* X11 display name */
-    else if (resource.compare(0, display.size(), display) == 0)
-        valid = initX11(resource.substr(display.size()));
-
-    /* Pathname */
-    else if (resource.compare(0, file.size(), file) == 0)
-        valid = initFile(resource.substr(file.size()));
+    if (prefix == "v4l2") {
+        /* Video4Linux2 */
+        valid = initCamera(suffix);
+    } else if (prefix == "display") {
+        /* X11 display name */
+        valid = initX11(suffix);
+    } else if (prefix == "file") {
+        /* Pathname */
+        valid = initFile(suffix);
+    }
 
     /* Unsupported MRL or failed initialization */
     if (valid)
