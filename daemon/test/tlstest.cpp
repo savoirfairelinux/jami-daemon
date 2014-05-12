@@ -38,6 +38,21 @@
 
 #include "sip/tlsvalidation.h"
 
+void TlsTest::testKey()
+{
+    TITLE();
+
+    const char *validKey = "tlsSample/keyonly.pem";
+    const char *validCertWithKey = "tlsSample/certwithkey.pem";
+    const char *corruptedKey = "tlsSample/corruptedkey.pem";
+
+    CPPUNIT_ASSERT(containsPrivateKey(validKey) == 0);
+
+    CPPUNIT_ASSERT(containsPrivateKey(validCertWithKey) == 0);
+
+    CPPUNIT_ASSERT(containsPrivateKey(corruptedKey) != 0);
+}
+
 void TlsTest::testCertificate()
 {
     TITLE();
