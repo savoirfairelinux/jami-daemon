@@ -67,4 +67,7 @@ void TlsTest::testCertificate()
 
     // This is a png
     CPPUNIT_ASSERT(certificateIsValid(NULL, fakeCertificate) != 0);
+
+    // This would need a CA to be valid
+    CPPUNIT_ASSERT(certificateIsValid(NULL, validCertificate) != 0);
 }
