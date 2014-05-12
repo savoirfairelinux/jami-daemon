@@ -36,12 +36,19 @@
 #include "video_base.h"
 #include "video_scaler.h"
 #include "shm_sink.h"
+#include "threadloop.h"
 
 #include <mutex>
 #include <list>
 
 
 namespace sfl_video {
+
+    struct VideoMixerSource {
+        bool dirty = 0;
+        Observable<std::shared_ptr<VideoFrame> >* source = nullptr;
+        std::shared_ptr<VideoFrame> frameShrPtr = {};
+    };
 
 class VideoMixer :
         public VideoGenerator,
@@ -70,12 +77,18 @@ private:
     void start_sink();
     void stop_sink();
 
+    bool setup();
+    void cleanup();
+    void process();
+
     const std::string id_;
     int width_;
     int height_;
-    std::list<Observable<std::shared_ptr<VideoFrame> >*> sources_;
+    std::list<VideoMixerSource *> sources_;
     std::mutex mutex_;
     SHMSink sink_;
+    ThreadLoop loop_;
+    std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
 };
 
 }
