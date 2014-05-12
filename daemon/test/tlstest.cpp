@@ -57,10 +57,13 @@ void TlsTest::testCertificate()
 {
     TITLE();
 
-    const char *validCertificate = "tlsSample/ca.crt";
+    const char *validCa = "tlsSample/ca.crt";
+    const char *validCertificate = "tlsSample/cert.crt";
     const char *fakeCertificate = "tlsSample/fake.crt";
 
-    CPPUNIT_ASSERT(certificateIsValid(NULL, validCertificate) == 0);
+    CPPUNIT_ASSERT(certificateIsValid(NULL, validCa) == 0);
+
+    CPPUNIT_ASSERT(certificateIsValid(validCa, validCertificate) == 0);
 
     // This is a png
     CPPUNIT_ASSERT(certificateIsValid(NULL, fakeCertificate) != 0);
