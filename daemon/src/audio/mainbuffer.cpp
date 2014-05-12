@@ -292,9 +292,9 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string &call_id)
 
 bool MainBuffer::waitForDataAvailable(const std::string &call_id, size_t min_frames, const std::chrono::microseconds& max_wait) const
 {
-    auto deadline = (max_wait == std::chrono::microseconds()) ?
-        std::chrono::high_resolution_clock::time_point() :
-        std::chrono::high_resolution_clock::now() + max_wait;
+    // convert to absolute time
+    const auto deadline = std::chrono::high_resolution_clock::now() + max_wait;
+
     auto lock(stateLock_.read());
     const CallIDSet* callid_set = getCallIDSet(call_id);
     if (!callid_set or callid_set->empty()) return false;
