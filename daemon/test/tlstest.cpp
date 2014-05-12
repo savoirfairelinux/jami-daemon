@@ -70,4 +70,7 @@ void TlsTest::testCertificate()
 
     // This would need a CA to be valid
     CPPUNIT_ASSERT(certificateIsValid(NULL, validCertificate) != 0);
+
+    // This is an invalid CA
+    CPPUNIT_ASSERT(certificateIsValid(validCertificate, validCertificate) != 0);
 }
