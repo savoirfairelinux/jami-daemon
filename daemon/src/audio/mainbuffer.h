@@ -92,7 +92,7 @@ class MainBuffer {
 
         void putData(AudioBuffer& buffer, const std::string &call_id);
 
-        bool waitForDataAvailable(const std::string &call_id, size_t min_data_length=0, const std::chrono::microseconds& max_wait = std::chrono::microseconds()) const;
+        bool waitForDataAvailable(const std::string &call_id, size_t min_data_length, const std::chrono::microseconds& max_wait) const;
 
         size_t getData(AudioBuffer& buffer, const std::string &call_id);
         size_t getAvailableData(AudioBuffer& buffer, const std::string &call_id);
