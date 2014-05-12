@@ -289,7 +289,7 @@ bool AudioRtpStream::waitForDataEncode(const std::chrono::milliseconds& max_wait
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format.sample_rate;
     const size_t samplesToGet = resampleFactor * encoder_.frameSize;
-    return Manager::instance().getMainBuffer().waitForDataAvailable(id_, samplesToGet, max_wait) >= samplesToGet;
+    return Manager::instance().getMainBuffer().waitForDataAvailable(id_, samplesToGet, max_wait);
 }
 
 size_t AudioRtpStream::processDataEncode()
