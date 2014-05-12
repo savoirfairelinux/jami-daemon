@@ -49,11 +49,12 @@ class TlsTest: public CppUnit::TestFixture {
          * Use cppunit library macros to add unit test the factory
          */
         CPPUNIT_TEST_SUITE(TlsTest);
+        CPPUNIT_TEST(testKey);
         CPPUNIT_TEST(testCertificate);
         CPPUNIT_TEST_SUITE_END();
 
     public:
-
+        void testKey();
         void testCertificate();
 };
 /* Register our test module */
