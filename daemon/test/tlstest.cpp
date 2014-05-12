@@ -60,6 +60,7 @@ void TlsTest::testCertificate()
     const char *validCa = "tlsSample/ca.crt";
     const char *validCertificate = "tlsSample/cert.crt";
     const char *fakeCertificate = "tlsSample/fake.crt";
+    const char *expiredCertificate = "tlsSample/expired.crt";
 
     CPPUNIT_ASSERT(certificateIsValid(NULL, validCa) == 0);
 
@@ -73,4 +74,7 @@ void TlsTest::testCertificate()
 
     // This is an invalid CA
     CPPUNIT_ASSERT(certificateIsValid(validCertificate, validCertificate) != 0);
+
+    // This certificate is expired
+    CPPUNIT_ASSERT(certificateIsValid(NULL, expiredCertificate) != 0);
 }
