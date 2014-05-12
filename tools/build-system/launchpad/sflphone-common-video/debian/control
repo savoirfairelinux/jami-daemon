@@ -8,7 +8,7 @@ Standards-Version: 3.7.3
 Package: sflphone-common-video
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libavcodec53 | libavcodec-extra-53, libdevice53 | libavdevice-extra-53, libavfilter2 | libavfilter-extra-2, libavformat53 | libavformat-extra-53, libswscale2 | libswscale-extra-2, libavutil51 | libavutil-extra-51
+Depends: ${shlibs:Depends}, ${misc:Depends}, libavcodec53 | libavcodec-extra-53, libdevice53 | libavdevice-extra-53, libavformat53 | libavformat-extra-53, libswscale2 | libswscale-extra-2, libavutil51 | libavutil-extra-51
 Replaces: sflphone
 Conflicts: sflphone-common
 Homepage: http://www.sflphone.org
