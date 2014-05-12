@@ -60,14 +60,16 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
 #endif
     , dtmfQueue_()
     , dtmfPayloadType_(101) // same as Asterisk
-    , rtpSendThread_(*this)
+    , loop_([] { return true; },
+            std::bind(&AudioRtpSession::process, this),
+            [] {})
 {
     queue_.setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
 
 AudioRtpSession::~AudioRtpSession()
 {
-
+    loop_.join();
 }
 
 void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
@@ -310,37 +312,18 @@ void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodec
     // implemented in subclasses
     startRTPLoop();
     // only in this class
-    rtpSendThread_.start();
+    loop_.start();
 }
 
-AudioRtpSession::AudioRtpSendThread::AudioRtpSendThread(AudioRtpSession &session) :
-    running_(false), rtpSession_(session), thread_()
-{}
-
-AudioRtpSession::AudioRtpSendThread::~AudioRtpSendThread()
+void AudioRtpSession::process()
 {
-    running_ = false;
-    if (thread_.joinable())
-        thread_.join();
-}
+    // Send session
+    if (hasDTMFPending())
+        sendDtmfEvent();
+    else
+        sendMicData();
 
-void AudioRtpSession::AudioRtpSendThread::start()
-{
-    running_ = true;
-    thread_ = std::thread(&AudioRtpSendThread::run, this);
-}
-
-void AudioRtpSession::AudioRtpSendThread::run()
-{
-    while (running_) {
-        // Send session
-        if (rtpSession_.hasDTMFPending())
-            rtpSession_.sendDtmfEvent();
-        else
-            rtpSession_.sendMicData();
-
-        rtpSession_.rtpStream_.waitForDataEncode(std::chrono::milliseconds(rtpSession_.transportRate_));
-    }
+    rtpStream_.waitForDataEncode(std::chrono::milliseconds(transportRate_));
 }
 
 void AudioRtpSession::putDtmfEvent(char digit)

@@ -39,11 +39,11 @@
 #include "ip_utils.h"
 #include "noncopyable.h"
 #include "logger.h"
+#include "threadloop.h"
 
 #include <ccrtp/rtp.h>
 #include <ccrtp/formats.h>
 
-#include <thread>
 #include <chrono>
 
 class SIPCall;
@@ -153,20 +153,6 @@ class AudioRtpSession {
          */
         virtual size_t sendMicData();
 
-        class AudioRtpSendThread {
-            public:
-                AudioRtpSendThread(AudioRtpSession &session);
-                ~AudioRtpSendThread();
-                void start();
-                bool running_;
-
-            private:
-                void run();
-                NON_COPYABLE(AudioRtpSendThread);
-                AudioRtpSession &rtpSession_;
-                std::thread thread_;
-        };
-
         /**
          * Set RTP Sockets send/receive timeouts
          */
@@ -176,6 +162,10 @@ class AudioRtpSession {
          * Receive data from peer
          */
         void receiveSpeakerData();
+
+        /**
+         * Used by loop_ */
+        void process();
 
         // Main destination address for this rtp session.
         // Stored in case of reINVITE, which may require to forget
@@ -193,7 +183,7 @@ class AudioRtpSession {
         int dtmfPayloadType_;
 
         // this must be last to ensure that it's destroyed first
-        AudioRtpSendThread rtpSendThread_;
+        ThreadLoop loop_;
 };
 }
 #endif // AUDIO_RTP_SESSION_H__
