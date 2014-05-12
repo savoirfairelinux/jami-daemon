@@ -108,7 +108,7 @@ class AudioRtpStream {
         /**
          * Wait for available data to be encoded from mainbuffer.
          */
-        bool waitForDataEncode(const std::chrono::milliseconds& max_wait);
+        bool waitForDataEncode(const std::chrono::milliseconds& max_wait) const;
 
         /**
          * Encode audio data from mainbuffer

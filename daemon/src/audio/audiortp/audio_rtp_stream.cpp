@@ -284,12 +284,14 @@ void AudioRtpStream::resetDSP()
 }
 #endif
 
-bool AudioRtpStream::waitForDataEncode(const std::chrono::milliseconds& max_wait)
+bool AudioRtpStream::waitForDataEncode(const std::chrono::milliseconds& max_wait) const
 {
-    AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
-    double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format.sample_rate;
+    const auto &mainBuffer = Manager::instance().getMainBuffer();
+    const AudioFormat mainBuffFormat = mainBuffer.getInternalAudioFormat();
+    const double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format.sample_rate;
     const size_t samplesToGet = resampleFactor * encoder_.frameSize;
-    return Manager::instance().getMainBuffer().waitForDataAvailable(id_, samplesToGet, max_wait);
+
+    return mainBuffer.waitForDataAvailable(id_, samplesToGet, max_wait);
 }
 
 size_t AudioRtpStream::processDataEncode()
