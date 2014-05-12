@@ -48,6 +48,9 @@ VideoMixer::VideoMixer(const std::string &id) :
     , sources_()
     , mutex_()
     , sink_(id)
+    , loop_(std::bind(&VideoMixer::setup, this),
+            std::bind(&VideoMixer::process, this),
+            std::bind(&VideoMixer::cleanup, this))
 {
     auto videoCtrl = Manager::instance().getVideoManager();
     if (!videoCtrl->hasCameraStarted()) {
@@ -58,6 +61,8 @@ VideoMixer::VideoMixer(const std::string &id) :
     // Local video camera is always attached
     if (auto shared = videoCtrl->getVideoCamera().lock())
         shared->attach(this);
+
+    loop_.start();
 }
 
 VideoMixer::~VideoMixer()
@@ -71,25 +76,69 @@ VideoMixer::~VideoMixer()
 void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    sources_.push_back(ob);
+    VideoMixerSource* src = new VideoMixerSource();
+    src->dirty = true;
+    src->source = ob;
+    sources_.push_back(src);
 }
 
 void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    sources_.remove(ob);
+    for (auto x : sources_) {
+        if (x->source == ob) {
+            sources_.remove(x);
+            delete x;
+            break;
+        }
+    }
 }
 
 void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
                         std::shared_ptr<VideoFrame>& frame_p)
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    int i=0;
     for (auto x : sources_) {
-        if (x == ob) break;
-        i++;
+        if (x->source == ob) {
+            x->frameShrPtr = frame_p;
+            x->dirty = true;
+            break;
+        }
     }
-    render_frame(*frame_p, i);
+}
+
+bool VideoMixer::setup()
+{
+    return true;
+}
+
+void VideoMixer::cleanup()
+{}
+
+void VideoMixer::process()
+{
+    const auto now = std::chrono::system_clock::now();
+    const std::chrono::duration<double> diff = now - lastProcess_;
+    const double delay = 1/30. - diff.count();
+    if (delay > 0)
+        usleep(delay * 1e6);
+    lastProcess_ = now;
+
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        int i=0;
+        for (auto x : sources_) {
+            if (!loop_.isRunning())
+                break;
+            if (x->dirty) {
+                VideoFrame* input = x->frameShrPtr.get();
+                if (input)
+                    render_frame(*input, i);
+                x->dirty = false;
+            }
+            i++;
+        }
+    }
 }
 
 void VideoMixer::render_frame(VideoFrame& input, const int index)
