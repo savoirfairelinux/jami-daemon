@@ -45,7 +45,7 @@ started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
                           gchar *shm_path,
                           gint width,
                           gint height,
-                          G_GNUC_UNUSED gboolean is_mixer,
+                          gboolean is_mixer,
                           gpointer userdata)
 {
     if (!id || !*id || !shm_path || !*shm_path)
@@ -54,7 +54,8 @@ started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
     SFLPhoneClient * client = userdata;
 
     video_widget_camera_start(client->video, video_is_local(id) ?
-            VIDEO_AREA_LOCAL : VIDEO_AREA_REMOTE, id, shm_path, width, height);
+            VIDEO_AREA_LOCAL : VIDEO_AREA_REMOTE, id, shm_path, width, height,
+            is_mixer);
 
     gtk_widget_show_all(client->video);
 

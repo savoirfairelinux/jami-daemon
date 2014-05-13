@@ -45,6 +45,7 @@ typedef struct _Video {
     guint           height;
     ClutterActor    *texture;
     VideoRenderer   *video_renderer;
+    gboolean        is_mixer;
 } Video;
 
 typedef struct _VideoArea {
@@ -81,6 +82,8 @@ static gboolean   is_video_in_screen                    (GtkWidget *, gchar *);
 static Video*     video_widget_retrieve_camera          (GtkWidget *, VIDEO_AREA_ID);
 static void       video_widget_add_camera_in_screen     (GtkWidget *, VIDEO_AREA_ID, Video *);
 static void       video_widget_remove_camera_in_screen  (GtkWidget *, VIDEO_AREA_ID);
+static void       video_widget_show_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
+static void       video_widget_hide_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
 static void       cleanup_video_handle                  (gpointer);
 
 
@@ -267,6 +270,11 @@ video_widget_redraw_screen(GtkWidget *self)
         /* the remote camera must always fit the screen size */
         constraint = clutter_bind_constraint_new(priv->video_screen.container, CLUTTER_BIND_SIZE, 0);
         clutter_actor_add_constraint(camera_remote->texture, constraint);
+
+        if (camera_remote->is_mixer && video_area_local->show)
+            video_widget_hide_camera_in_screen(self, VIDEO_AREA_LOCAL);
+        else if (!camera_remote->is_mixer)
+            video_widget_show_camera_in_screen(self, VIDEO_AREA_LOCAL);
 
     }
 
@@ -520,6 +528,73 @@ video_widget_remove_camera_in_screen(GtkWidget *self,
 
 
 /*
+ * video_widget_show_camera_in_screen()
+ *
+ * This function show the camera contains in the video_area_id.
+ * When showing, the camera is being render in the clutter scene
+ */
+static void
+video_widget_show_camera_in_screen(GtkWidget *self,
+                                   VIDEO_AREA_ID video_area_id)
+{
+    g_return_if_fail(IS_VIDEO_WIDGET(self));
+
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+
+    /* retrieve the camera in the video_area */
+    Video *video = video_widget_retrieve_camera(self, video_area_id);
+    if (video) {
+        /* if the camera is in the stage */
+        if (clutter_actor_contains(priv->video_screen.container, video->texture)) {
+            /* we show it, the camera will be re-render by clutter */
+            clutter_actor_show(video->texture);
+        }
+
+        /* show this video_area */
+        VideoArea *video_area = video_widget_video_area_get(self, video_area_id);
+        if (video_area) {
+            video_area->show = TRUE;
+        }
+    }
+
+}
+
+
+/*
+ * video_widget_hide_camera_in_screen()
+ *
+ * This function hide the camera contains in the video_area_id.
+ * When hiding, the camera stop being render in the clutter scene but don't stop the
+ * video_rendering so we can show it back later
+ */
+static void
+video_widget_hide_camera_in_screen(GtkWidget *self,
+                                   VIDEO_AREA_ID video_area_id)
+{
+    g_return_if_fail(IS_VIDEO_WIDGET(self));
+
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+
+    /* retrieve the camera in the video_area */
+    Video *video = video_widget_retrieve_camera(self, video_area_id);
+    if (video) {
+        /* if the camera is in the stage */
+        if (clutter_actor_contains(priv->video_screen.container, video->texture)) {
+            /* we hide it, the camera will stop being render by clutter */
+            clutter_actor_hide(video->texture);
+        }
+
+        /* hide this video_area */
+        VideoArea *video_area = video_widget_video_area_get(self, video_area_id);
+        if (video_area) {
+            video_area->show = FALSE;
+        }
+    }
+
+}
+
+
+/*
  * cleanup_video_handle()
  *
  * This function is the destroyer function called when removing a key from the
@@ -559,7 +634,8 @@ video_widget_camera_start(GtkWidget *self,
                           gchar *video_id,
                           gchar *shm_path,
                           guint width,
-                          guint height)
+                          guint height,
+                          gboolean is_mixer)
 {
     g_return_if_fail(IS_VIDEO_WIDGET(self));
 
@@ -586,9 +662,12 @@ video_widget_camera_start(GtkWidget *self,
         g_warning("Could not run video renderer");
     }
 
+    video->is_mixer = is_mixer;
+
     /* add the video to the video list */
     g_hash_table_insert(priv->video_handles, g_strdup(video_id), video);
 
+    /* add the camera to the screen */
     video_widget_add_camera_in_screen(self, video_area_id, video);
 
     /* when a new camera start, the screen must be redraw consequently */
