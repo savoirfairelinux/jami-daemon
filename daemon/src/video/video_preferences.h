@@ -66,6 +66,7 @@ class VideoPreference : public Serializable
          */
         std::map<std::string, std::string> getSettingsFor(const std::string& name);
         std::map<std::string, std::string> getPreferences(const std::string& name);
+        void setPreferences(const std::string& name, std::map<std::string, std::string> pref);
 
         /*
          * Interface with the "active" video device.
