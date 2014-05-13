@@ -63,6 +63,12 @@ std::map<std::string, std::string> VideoManager::getSettings()
     return std::map<std::string, std::string>();
 }
 
+std::map<std::string, std::string>
+VideoManager::getPreferences(const std::string& name)
+{
+    return std::map<std::string, std::string>();
+}
+
 bool VideoManager::hasCameraStarted()
 {
     return false;
