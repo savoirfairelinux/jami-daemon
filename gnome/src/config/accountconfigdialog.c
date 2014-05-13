@@ -249,7 +249,7 @@ alias_changed_cb(GtkEditable *editable, gpointer data)
 {
     const gchar *alias = gtk_entry_get_text(GTK_ENTRY(editable));
     GtkDialog *dialog = GTK_DIALOG(data);
-    gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_APPLY, strlen(alias));
+    gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_APPLY, !!strlen(alias));
 }
 
 
