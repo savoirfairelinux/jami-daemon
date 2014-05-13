@@ -61,6 +61,15 @@
             </arg>
         </method>
 
+        <method name="setPreferences" tp:name-for-bindings="setPreferences">
+            <tp:docstring>Set the preferences of a given device name</tp:docstring>
+            <arg type="s" name="name" direction="in">
+            </arg>
+            <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <arg type="a{ss}" name="pref" direction="in">
+            </arg>
+        </method>
+
         <method name="getActiveDevice" tp:name-for-bindings="getActiveDevice">
             <arg type="s" name="device" direction="out">
             </arg>

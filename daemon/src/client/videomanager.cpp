@@ -155,6 +155,13 @@ VideoManager::getPreferences(const std::string& name) {
 }
 
 void
+VideoManager::setPreferences(const std::string& name,
+        const std::map<std::string, std::string>& pref)
+{
+    videoPreference_.setPreferences(name, pref);
+}
+
+void
 VideoManager::startCamera()
 {
     if (hasCameraStarted()) {
