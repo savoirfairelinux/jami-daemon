@@ -192,7 +192,6 @@ public:
     int blit(VideoFrame& src, int xoff, int yoff);
     void copy(VideoFrame &src);
     void clear();
-    int mirror();
     void test();
 
 private:

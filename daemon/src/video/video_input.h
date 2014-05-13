@@ -69,7 +69,6 @@ private:
 
     std::map<std::string, std::string> decOpts_ = {};
 
-    bool mirror_            = false;
     std::string input_      = "";
     std::string format_     = "";
     bool emulateRate_       = false;
