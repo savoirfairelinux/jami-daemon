@@ -269,9 +269,10 @@ alias_changed_cb(GtkEditable *editable, gpointer data)
 {
     const gchar *alias = gtk_entry_get_text(GTK_ENTRY(editable));
     account_wizard_t *wiz = data;
+
     gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),
             wiz->account_type ==  _SIP ? wiz->sip_account :
-            wiz->iax_account, strlen(alias));
+            wiz->iax_account, !!strlen(alias));
 }
 
 static void
