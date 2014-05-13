@@ -149,6 +149,11 @@ VideoManager::getSettings() {
     return videoPreference_.getSettings();
 }
 
+std::map<std::string, std::string>
+VideoManager::getPreferences(const std::string& name) {
+    return videoPreference_.getPreferences(name);
+}
+
 void
 VideoManager::startCamera()
 {
