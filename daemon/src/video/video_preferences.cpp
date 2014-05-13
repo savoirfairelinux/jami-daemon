@@ -52,6 +52,17 @@ VideoPreference::addDevice(const std::string &name)
 
     VideoDevice dev;
     dev.name = name;
+
+    // Default preferences
+    auto list = getChannelList(name);
+    dev.channel = list.empty() ? "" : list[0];
+
+    list = getSizeList(dev.name, dev.channel);
+    dev.size = list.empty() ? "" : list[0];
+
+    list = getRateList(dev.name, dev.channel, dev.size);
+    dev.rate = list.empty() ? "" : list[0];
+
     deviceList_.push_back(dev);
 }
 
