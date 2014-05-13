@@ -56,7 +56,7 @@ ThreadLoop::ThreadLoop(const std::function<bool()> &setup,
 ThreadLoop::~ThreadLoop()
 {
     if (isRunning()) {
-        ERROR("Thread not stopped by owner");
+        ERROR("join() should be explicitly called in owner's destructor");
         join();
     }
 }
