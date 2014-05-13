@@ -78,3 +78,18 @@ void TlsTest::testCertificate()
     // This certificate is expired
     CPPUNIT_ASSERT(certificateIsValid(NULL, expiredCertificate) != 0);
 }
+
+void TlsTest::testHostname()
+{
+    TITLE();
+
+    const char *correctUrl = "www.savoirfairelinux.com";
+    const char *wrongUrl = "www..com";
+
+    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 443) == 0);
+
+    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 80) != 0);
+    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 0) != 0);
+    CPPUNIT_ASSERT(verifyHostnameCertificate(wrongUrl, 443) != 0);
+    CPPUNIT_ASSERT(verifyHostnameCertificate(NULL, 443) != 0);
+}
