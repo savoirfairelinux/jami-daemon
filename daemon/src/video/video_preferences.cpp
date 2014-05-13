@@ -94,6 +94,23 @@ VideoPreference::getSettingsFor(const std::string& name)
     return settings;
 }
 
+std::map<std::string, std::string>
+VideoPreference::getPreferences(const std::string& name)
+{
+    std::map<std::string, std::string> pref;
+    const auto iter = lookupDevice(name);
+
+    if (iter != deviceList_.end()) {
+        VideoDevice& dev = *iter;
+        pref["name"] = dev.name;
+        pref["channel"] = dev.channel;
+        pref["size"] = dev.size;
+        pref["rate"] = dev.rate;
+    }
+
+    return pref;
+}
+
 /*
  * Interface with the "active" video device.
  * This is the default used device when sending a video stream.
