@@ -69,6 +69,12 @@ VideoManager::getPreferences(const std::string& name)
     return std::map<std::string, std::string>();
 }
 
+void
+VideoManager::setPreferences(const std::string& name,
+        std::map<std::string, std::string> pref)
+{
+}
+
 bool VideoManager::hasCameraStarted()
 {
     return false;
