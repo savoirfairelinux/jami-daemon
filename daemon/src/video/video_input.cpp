@@ -114,8 +114,6 @@ bool VideoInput::captureFrame()
             return false;
     }
 
-    if (mirror_)
-        frame.mirror();
     publishFrame();
     return true;
 }
@@ -175,7 +173,6 @@ VideoInput::initCamera(const std::string& device)
     decOpts_["channel"] = map["channel"];
     decOpts_["framerate"] = map["framerate"];
     decOpts_["video_size"] = map["video_size"];
-    mirror_ = true;
 
     return true;
 }
@@ -186,7 +183,6 @@ VideoInput::initX11(std::string display)
     size_t space = display.find(' ');
 
     format_ = "x11grab";
-    mirror_ = false;
     decOpts_.clear();
     decOpts_["framerate"] = "25";
 
