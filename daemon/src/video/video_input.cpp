@@ -169,9 +169,9 @@ VideoInput::initCamera(const std::string& device)
     if (map.empty())
         return false;
 
+    clearOptions();
     input_ = map["input"];
     format_ = "video4linux2";
-    decOpts_.clear();
     decOpts_["channel"] = map["channel"];
     decOpts_["framerate"] = map["framerate"];
     decOpts_["video_size"] = map["video_size"];
@@ -185,9 +185,9 @@ VideoInput::initX11(std::string display)
 {
     size_t space = display.find(' ');
 
+    clearOptions();
     format_ = "x11grab";
     mirror_ = false;
-    decOpts_.clear();
     decOpts_["framerate"] = "25";
 
     if (space != std::string::npos) {
@@ -215,11 +215,12 @@ VideoInput::initFile(std::string path)
 
     /* Supported image? */
     if (ext == "jpeg" || ext == "jpg" || ext == "png") {
+        clearOptions();
+
         input_ = path;
         format_ = "image2";
         emulateRate_ = true;
 
-        decOpts_.clear();
         decOpts_["framerate"] = "1";
         decOpts_["loop"] = "1";
         return true;
@@ -241,7 +242,7 @@ VideoInput::switchInput(const std::string& resource)
 
     // Switch off video input?
     if (resource.empty()) {
-        input_.clear();
+        clearOptions();
         switchPending_ = true;
         return true;
     }
