@@ -35,6 +35,11 @@
 #include <clutter-gtk/clutter-gtk.h>
 
 
+#define VIDEO_LOCAL_HEIGHT              100
+#define VIDEO_LOCAL_CONSTRAINT_SIZE     "local-constraint-size"
+#define VIDEO_LOCAL_CONSTRAINT_POSITION "local-constraint-position"
+#define VIDEO_REMOTE_CONSTRAINT_SIZE    "remote-constraint-size"
+
 #define USE_CONTAINER_HACK CLUTTER_CHECK_VERSION(1, 16, 0) && \
                            !CLUTTER_CHECK_VERSION(1, 18, 0)
 
@@ -268,8 +273,10 @@ video_widget_redraw_screen(GtkWidget *self)
     if (video_area_remote && video_area_remote->show && camera_remote) {
 
         /* the remote camera must always fit the screen size */
-        constraint = clutter_bind_constraint_new(priv->video_screen.container, CLUTTER_BIND_SIZE, 0);
-        clutter_actor_add_constraint(camera_remote->texture, constraint);
+        constraint = clutter_bind_constraint_new(priv->video_screen.container,
+                CLUTTER_BIND_SIZE, 0);
+        clutter_actor_add_constraint_with_name(camera_remote->texture,
+                VIDEO_REMOTE_CONSTRAINT_SIZE, constraint);
 
         if (camera_remote->is_mixer && video_area_local->show)
             video_widget_hide_camera_in_screen(self, VIDEO_AREA_LOCAL);
@@ -288,8 +295,10 @@ video_widget_redraw_screen(GtkWidget *self)
             clutter_actor_clear_constraints(camera_local->texture);
 
             /* the local camera must always fit the screen size */
-            constraint = clutter_bind_constraint_new(priv->video_screen.container, CLUTTER_BIND_SIZE, 0);
-            clutter_actor_add_constraint(camera_local->texture, constraint);
+            constraint = clutter_bind_constraint_new(priv->video_screen.container,
+                    CLUTTER_BIND_SIZE, 0);
+            clutter_actor_add_constraint_with_name(camera_local->texture,
+                    VIDEO_LOCAL_CONSTRAINT_SIZE, constraint);
 
         } else {
         /* else the local camera must be resize keeping the aspect ratio and placed */
@@ -303,8 +312,10 @@ video_widget_redraw_screen(GtkWidget *self)
             clutter_actor_clear_constraints(camera_local->texture);
 
             /* the local camera must be set to the bottom right corner with a little space */
-            constraint = clutter_align_constraint_new(priv->video_screen.container, CLUTTER_ALIGN_BOTH, 0.99);
-            clutter_actor_add_constraint(camera_local->texture, constraint);
+            constraint = clutter_align_constraint_new(priv->video_screen.container,
+                    CLUTTER_ALIGN_BOTH, 0.99);
+            clutter_actor_add_constraint_with_name(camera_local->texture,
+                    VIDEO_LOCAL_CONSTRAINT_POSITION, constraint);
         }
 
     }
