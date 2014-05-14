@@ -75,6 +75,14 @@ private:
     bool emulateRate_       = false;
     ThreadLoop loop_;
 
+    void clearOptions() {
+        decOpts_.clear();
+        mirror_ = false;
+        input_.clear();
+        format_.clear();
+        emulateRate_ = false;
+    };
+
     void createDecoder();
     void deleteDecoder();
 
