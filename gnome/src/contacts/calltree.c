@@ -1173,7 +1173,7 @@ void calltree_display(calltab_t *tab, SFLPhoneClient *client)
 static void
 format_duration(guint32 seconds, char *timestr, size_t timestr_sz)
 {
-    const guint32 minutes = seconds / 60;
+    const guint32 minutes = (seconds / 60) % 60;
     const guint32 hours = minutes / 60;
     seconds %= 60;
 
