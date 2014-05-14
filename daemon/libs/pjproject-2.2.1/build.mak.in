@@ -12,11 +12,6 @@ export CROSS_COMPILE := @ac_cross_compile@
 export LINUX_POLL := @ac_linux_poll@ 
 export SHLIB_SUFFIX := @ac_shlib_suffix@
 
-export prefix := @prefix@
-export exec_prefix := @exec_prefix@
-export includedir := @includedir@
-export libdir := @libdir@
-
 LIB_SUFFIX = $(TARGET_NAME).a
 
 ifeq (@ac_shared_libraries@,1)
