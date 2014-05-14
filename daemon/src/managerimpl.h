@@ -131,14 +131,14 @@ class ManagerImpl {
 
         void setPath(const std::string &path);
 
-#ifdef HAVE_DBUS
         /**
-         * Enter Dbus mainloop
+         * Enter mainloop
          */
         int run();
-        // Interrupt Dbus mainloop
+        /**
+         * Interrupt mainloop
+         */
         int interrupt();
-#endif
 
         /*
          * Terminate all threads and exit DBus loop

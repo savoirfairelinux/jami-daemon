@@ -225,13 +225,11 @@ void ManagerImpl::setPath(const std::string &path) {
 	history_.setPath(path);
 }
 
-#if HAVE_DBUS
 int ManagerImpl::run()
 {
     DEBUG("Starting client event loop");
     return client_.event_loop();
 }
-#endif
 
 int ManagerImpl::interrupt()
 {
