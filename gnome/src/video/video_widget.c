@@ -510,6 +510,11 @@ video_widget_remove_camera_in_screen(GtkWidget *self,
     if (video) {
         /* if the camera is in the stage */
         if (clutter_actor_contains(priv->video_screen.container, video->texture)) {
+
+            /* Ensure that the rendering callback is stopped before destroying
+             * the actor */
+            video_renderer_stop(video->video_renderer);
+
             /* we remove it */
             clutter_actor_remove_child(priv->video_screen.container, video->texture);
         }
