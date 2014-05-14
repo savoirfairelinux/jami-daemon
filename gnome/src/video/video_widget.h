@@ -40,7 +40,10 @@
 #define IS_VIDEO_WIDGET(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_WIDGET_TYPE))
 #define IS_VIDEO_WIDGET_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_WIDGET_TYPE))
 
-#define VIDEO_LOCAL_HEIGHT             100
+#define VIDEO_LOCAL_HEIGHT              100
+#define VIDEO_LOCAL_CONSTRAINT_SIZE     "local-constraint-size"
+#define VIDEO_LOCAL_CONSTRAINT_POSITION "local-constraint-position"
+#define VIDEO_REMOTE_CONSTRAINT_SIZE    "remote-constraint-size"
 
 typedef struct _VideoWidgetPrivate VideoWidgetPrivate;
 typedef struct _VideoWidgetClass VideoWidgetClass;
