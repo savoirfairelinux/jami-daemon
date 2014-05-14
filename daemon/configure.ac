@@ -240,6 +240,12 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
        AC_CONFIG_FILES([src/client/dbus/Makefile \
                         doc/dbus-api/Makefile])
+
+       AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
+       if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
+           AC_MSG_ERROR([dbusxx-xml2cpp not found])
+       fi
+
        AS_IF([test "x$CLANG" = "xyes"], [
              AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
         ]);
