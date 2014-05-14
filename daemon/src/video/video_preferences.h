@@ -38,6 +38,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <vector>
 
 namespace sfl_video {
     class VideoDeviceMonitorImpl;
