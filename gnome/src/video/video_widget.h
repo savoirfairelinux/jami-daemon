@@ -40,8 +40,6 @@
 #define IS_VIDEO_WIDGET(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_WIDGET_TYPE))
 #define IS_VIDEO_WIDGET_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_WIDGET_TYPE))
 
-#define VIDEO_WIDGET_WIDTH             400
-#define VIDEO_WIDGET_HEIGHT            350
 #define VIDEO_LOCAL_HEIGHT             100
 
 typedef struct _VideoWidgetPrivate VideoWidgetPrivate;
