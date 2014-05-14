@@ -517,7 +517,7 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
     // TODO: this is ugly but temporary
     guint group_index = 0;
     guint group_count = 0;
-    GtkWidget * combo_group;
+    GtkWidget * combo_group = NULL;
     if (g_strcmp0(title, "Add new buddy") != 0)
     {
         label = gtk_label_new_with_mnemonic("_Group");
