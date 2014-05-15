@@ -136,12 +136,20 @@ VideoPreference::setPreferences(const std::string& name,
  */
 
 std::string
-VideoPreference::getDevice() const
+VideoPreference::getDevice()
 {
+    // No default device?
     if (active_ == deviceList_.end())
         return "";
 
-    return (*active_).name;
+    // Is the default device plugged?
+    for (const auto& plugged : getDeviceList())
+        if (plugged == active_->name)
+            return active_->name;
+
+    // The default device is not detected
+    DEBUG("default device '%s' not detected", active_->name.data());
+    return "";
 }
 
 void

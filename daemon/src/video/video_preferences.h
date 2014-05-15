@@ -74,7 +74,7 @@ class VideoPreference : public Serializable
          */
         std::map<std::string, std::string> getSettings();
 
-        std::string getDevice() const;
+        std::string getDevice();
         void setDevice(const std::string& name);
 
         std::string getChannel() const;
