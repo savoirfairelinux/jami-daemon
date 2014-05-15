@@ -57,8 +57,6 @@ started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
             VIDEO_AREA_LOCAL : VIDEO_AREA_REMOTE, id, shm_path, width, height,
             is_mixer);
 
-    gtk_widget_show_all(client->video);
-
 }
 
 void
@@ -69,8 +67,6 @@ stopped_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
                           gpointer userdata)
 {
     SFLPhoneClient * client = userdata;
-
-    gtk_widget_hide(client->video);
 
     video_widget_camera_stop(client->video, video_is_local(id) ?
             VIDEO_AREA_LOCAL : VIDEO_AREA_REMOTE, id);
