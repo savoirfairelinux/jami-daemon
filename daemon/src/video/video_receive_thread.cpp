@@ -197,16 +197,24 @@ bool VideoReceiveThread::decodeFrame()
             return true;
 
         case VideoDecoder::Status::DecodeError:
-            if (requestKeyFrameCallback_) {
-                WARN("VideoDecoder error, restarting it...");
-                EXIT_IF_FAIL(!videoDecoder_->setupFromVideoData(), "Setup failed");
-                requestKeyFrameCallback_(id_);
+            WARN("Video decoding failure, trying to reset the decoder...");
+            delete videoDecoder_;
+            if (!setup()) {
+                ERROR("VideoDecoder fatal error, Rx thread re-setup failed");
+                loop_.stop();
                 break;
             }
+            if (!videoDecoder_->setupFromVideoData()) {
+                ERROR("VideoDecoder fatal error, v-decoder setup failed");
+                loop_.stop();
+                break;
+            }
+            if (requestKeyFrameCallback_)
+                requestKeyFrameCallback_(id_);
+            break;
 
-            // fallthrough if we can't request keyframe
         case VideoDecoder::Status::ReadError:
-            ERROR("VideoDecoder fatal error, stopping it...");
+            ERROR("VideoDecoder fatal error, IO error");
             loop_.stop();
 
         default:
