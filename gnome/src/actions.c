@@ -1046,7 +1046,12 @@ sflphone_get_active_video(void)
 gchar *
 sflphone_get_video_none(void)
 {
-    return g_strconcat("file://", ICONS_DIR, "/sflphone.png", NULL);
+    static const gchar *logo = ICONS_DIR "/sflphone.png";
+
+    if (access(logo, R_OK) != 0)
+        return g_strdup("");
+    else
+        return g_strconcat("file://", logo, NULL);
 }
 
 void
