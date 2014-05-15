@@ -1031,7 +1031,13 @@ gchar *
 sflphone_get_active_video(void)
 {
     gchar *device = dbus_get_active_video_device();
-    gchar *resource = g_strconcat("v4l2://", device, NULL);
+    gchar *resource;
+
+    if (strlen(device) > 0)
+        resource = g_strconcat("v4l2://", device, NULL);
+    else
+        resource = sflphone_get_video_none();
+
     g_free(device);
 
     return resource;
