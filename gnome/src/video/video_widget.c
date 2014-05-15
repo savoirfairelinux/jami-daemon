@@ -689,6 +689,8 @@ video_widget_camera_start(GtkWidget *self,
     /* when a new camera start, the screen must be redraw consequently */
     video_widget_redraw_screen(self);
 
+    /* show the widget when at least one camera is started */
+    gtk_widget_show_all(self);
 }
 
 
@@ -725,5 +727,9 @@ video_widget_camera_stop(GtkWidget *self,
 
     /* remove the video from the video handle list */
     g_hash_table_remove(priv->video_handles, video_id);
+
+    /* hide the widget when there no video left */
+    if (!g_hash_table_size(priv->video_handles))
+        gtk_widget_hide(self);
 
 }
