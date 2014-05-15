@@ -47,9 +47,7 @@ VideoInput::VideoInput() :
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
-{
-    loop_.start();
-}
+{}
 
 VideoInput::~VideoInput()
 {
@@ -59,7 +57,10 @@ VideoInput::~VideoInput()
 bool VideoInput::setup()
 {
     /* Sink setup */
-    EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+    if (!sink_.start()) {
+        ERROR("Cannot start shared memory sink");
+        return false;
+    }
     if (not attach(&sink_))
         WARN("Failed to attach sink");
 
@@ -75,7 +76,6 @@ void VideoInput::process()
     }
 
     if (!decoder_) {
-        ERROR("No decoder");
         loop_.stop();
         return;
     }
@@ -132,11 +132,20 @@ VideoInput::createDecoder()
 
     decoder_->setInterruptCallback(interruptCb, this);
 
-    EXIT_IF_FAIL(decoder_->openInput(input_, format_) >= 0,
-                 "Could not open input \"%s\"", input_.c_str());
+    if (decoder_->openInput(input_, format_) < 0) {
+        ERROR("Could not open input \"%s\"", input_.c_str());
+        delete decoder_;
+        decoder_ = nullptr;
+        return;
+    }
 
     /* Data available, finish the decoding */
-    EXIT_IF_FAIL(!decoder_->setupFromVideoData(), "decoder IO startup failed");
+    if (decoder_->setupFromVideoData() < 0) {
+        ERROR("decoder IO startup failed");
+        delete decoder_;
+        decoder_ = nullptr;
+        return;
+    }
 
     /* Signal the client about the new sink */
     Manager::instance().getVideoManager()->startedDecoding(sinkID_, sink_.openedName(),
@@ -240,6 +249,8 @@ VideoInput::switchInput(const std::string& resource)
     if (resource.empty()) {
         clearOptions();
         switchPending_ = true;
+        if (!loop_.isRunning())
+            loop_.start();
         return true;
     }
 
@@ -270,8 +281,11 @@ VideoInput::switchInput(const std::string& resource)
     }
 
     /* Unsupported MRL or failed initialization */
-    if (valid)
+    if (valid) {
         switchPending_ = true;
+        if (!loop_.isRunning())
+            loop_.start();
+    }
     else
         ERROR("Failed to init input for MRL '%s'\n", resource.c_str());
 
