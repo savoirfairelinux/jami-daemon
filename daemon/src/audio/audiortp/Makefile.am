@@ -19,4 +19,5 @@ libaudiortp_la_SOURCES = \
 		audio_rtp_stream.h \
 		audio_rtp_factory.h \
 		audio_symmetric_rtp_session.h \
-		audio_srtp_session.h
+		audio_srtp_session.h \
+		base64.c base64.h
