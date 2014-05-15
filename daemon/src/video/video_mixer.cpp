@@ -53,10 +53,8 @@ VideoMixer::VideoMixer(const std::string &id) :
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
 {
     auto videoCtrl = Manager::instance().getVideoManager();
-    if (!videoCtrl->hasCameraStarted()) {
+    if (not videoCtrl->hasCameraStarted())
         videoCtrl->startCamera();
-        MYSLEEP(1);
-    }
 
     // Local video camera is always attached
     if (auto shared = videoCtrl->getVideoCamera().lock())
