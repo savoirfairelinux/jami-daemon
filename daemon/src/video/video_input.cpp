@@ -69,13 +69,12 @@ bool VideoInput::setup()
 
 void VideoInput::process()
 {
-    if (switchPending_) {
+    if (switchPending_.exchange(false)) {
         deleteDecoder();
         createDecoder();
-        switchPending_ = false;
     }
 
-    if (!decoder_) {
+    if (not decoder_) {
         loop_.stop();
         return;
     }
