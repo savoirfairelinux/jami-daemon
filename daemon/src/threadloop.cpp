@@ -63,8 +63,10 @@ ThreadLoop::~ThreadLoop()
 
 void ThreadLoop::start()
 {
-    if (!running_) {
-        running_ = true;
+    if (!running_.exchange(true)) {
+        // a previous stop() call may be pending
+        if (thread_.joinable())
+            thread_.join();
         thread_ = std::thread(&ThreadLoop::mainloop, this);
     } else {
         ERROR("Thread already started");
