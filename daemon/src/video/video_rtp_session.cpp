@@ -135,10 +135,7 @@ void VideoRtpSession::startSender()
 	if (sending_) {
         // Local video startup if needed
         auto videoCtrl = Manager::instance().getVideoManager();
-        const bool firstStart = not videoCtrl->hasCameraStarted();
         videoCtrl->startCamera();
-        if (firstStart)
-            MYSLEEP(1);
 
         videoLocal_ = videoCtrl->getVideoCamera();
         if (sender_)
