@@ -118,7 +118,7 @@ VideoPreference::setPreferences(const std::string& name,
     const auto it = lookupDevice(name);
 
     if (it == deviceList_.end()) {
-        ERROR("Device '%s' not found, ignoring", name.data());
+        ERROR("Device '%s' not found, ignoring", name.c_str());
         return;
     }
 
@@ -148,7 +148,7 @@ VideoPreference::getDevice()
             return active_->name;
 
     // The default device is not detected
-    DEBUG("default device '%s' not detected", active_->name.data());
+    DEBUG("default device '%s' not detected", active_->name.c_str());
     return "";
 }
 
