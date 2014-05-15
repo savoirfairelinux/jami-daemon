@@ -8,7 +8,7 @@ License:        GPLv3
 URL:            http://sflphone.org/
 Source0:        https://projects.savoirfairelinux.com/attachments/download/6423/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:      gettext openssl-devel desktop-file-utils perl libuuid-devel
+BuildRequires:      gettext gnutls-devel desktop-file-utils perl libuuid-devel
 BuildRequires:      libyaml-devel alsa-lib-devel pulseaudio-libs-devel
 BuildRequires:      ccrtp-devel libzrtpcpp-devel dbus-c++-devel pcre-devel
 BuildRequires:      gsm-devel speex-devel expat-devel libsamplerate-devel
