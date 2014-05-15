@@ -27,7 +27,7 @@ endif
 
 if BUILD_TLS
 TLS_LIB = @GNUTLS_LIBS@ @libssl_LIBS@ -lcrypto
-TLS_CFLAGS = @GNUTLS_CLFAGS@ @libssl_CFLAGS@
+TLS_CFLAGS = @GNUTLS_CFLAGS@ @libssl_CFLAGS@
 endif
 
 SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
