@@ -197,14 +197,13 @@ AS_IF([test "x$enable_presence" != "xno"], [
     AM_CONDITIONAL(SFL_PRESENCE, false))
 
 # TLS
-# required dependency(ies): libssl
+# required dependency(ies): GnuTLS
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
 AC_ARG_WITH([tls],
     [AS_HELP_STRING([--without-tls], [disable support for tls])],
     [],
     [with_tls=yes])
 AS_IF([test "x$with_tls" = "xyes"], [
-       PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development files]))
        PKG_CHECK_MODULES([GNUTLS], gnutls,, AC_MSG_ERROR([Missing GnuTLS development files]))
     ]);
 
