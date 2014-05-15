@@ -30,15 +30,10 @@
 #include "audio_srtp_session.h"
 #include "logger.h"
 #include "array_size.h"
+#include "base64.h"
 
 #include <algorithm>
-
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
-#include <openssl/rand.h>
+#include <random>
 
 #include <cstdio>
 #include <cstring>
@@ -51,53 +46,27 @@
 namespace sfl {
 
 namespace {
-std::string
-encodeBase64(unsigned char *input, int length)
+
+std::string encodeBase64(unsigned char *input, int length)
 {
-    // init decoder
-    BIO *b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-
-    // init internal buffer
-    BIO *bmem = BIO_new(BIO_s_mem());
-
-    // create decoder chain
-    b64 = BIO_push(b64, bmem);
-
-    BIO_write(b64, input, length);
-    // BIO_flush (b64);
-
-    // get pointer to data
-    BUF_MEM *bptr = 0;
-    BIO_get_mem_ptr(b64, &bptr);
-
-    std::string output(bptr->data, bptr->length);
-
-    BIO_free_all(bmem);
-
+    size_t output_length;
+    uint8_t *encoded_str = base64_encode(input, length, &output_length);
+    if (!encoded_str)
+        THROW_ERROR(AudioSrtpException, "Out of memory for base64 operation");
+    std::string output((const char *)encoded_str, output_length);
+    free(encoded_str);
     return output;
 }
 
-std::vector<char> decodeBase64(unsigned char *input, int length)
+std::string decodeBase64(unsigned char *input, int length)
 {
-    BIO *b64, *bmem;
-
-    // init decoder and read-only BIO buffer
-    b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-
-    // init internal buffer
-    bmem = BIO_new_mem_buf(input, length);
-
-    // create encoder chain
-    bmem = BIO_push(b64, bmem);
-
-    std::vector<char> buffer(length, 0);
-    BIO_read(bmem, buffer.data(), length);
-
-    BIO_free_all(bmem);
-
-    return buffer;
+    size_t output_length;
+    uint8_t *decoded_str = base64_decode(input, length, &output_length);
+    if (!decoded_str)
+        THROW_ERROR(AudioSrtpException, "Out of memory for base64 operation");
+    std::string output((const char *)decoded_str, output_length);
+    free(decoded_str);
+    return output;
 }
 
 // Fills the array dest with length random bytes
@@ -105,12 +74,16 @@ void bufferFillMasterKey(std::vector<uint8>& dest)
 {
     DEBUG("Init local master key");
 
+    // Prepare pseudo random generationusing Mersenne Twister
+    std::mt19937 eng;
+    std::uniform_int_distribution<uint8_t> dist(0, 255);
+
     // Allocate memory for key
     std::vector<unsigned char> random_key(dest.size());
 
-    // Generate ryptographically strong pseudo-random bytes
-    if (RAND_bytes(random_key.data(), dest.size()) != 1)
-        DEBUG("Error occured while generating cryptographically strong pseudo-random key");
+    // Fill the key
+    for (int i = 0; i < dest.size(); i++)
+        random_key[i] = dist(eng);
 
     std::copy(random_key.begin(), random_key.end(), dest.begin());
 }
@@ -118,14 +91,18 @@ void bufferFillMasterKey(std::vector<uint8>& dest)
 // Fills the array dest with length random bytes
 void bufferFillMasterSalt(std::vector<uint8>& dest)
 {
-    DEBUG("Init local master key");
+    DEBUG("Init local master salt");
+
+    // Prepare pseudo random generation using Mersenne Twister
+    std::mt19937 eng;
+    std::uniform_int_distribution<uint8_t> dist(0, 255);
 
     // Allocate memory for key
     std::vector<unsigned char> random_key(dest.size());
 
-    // Generate ryptographically strong pseudo-random bytes
-    if (RAND_bytes(random_key.data(), dest.size()) != 1)
-        DEBUG("Error occured while generating cryptographically strong pseudo-random key");
+    // Fill the key
+    for (int i = 0; i < dest.size(); i++)
+        random_key[i] = dist(eng);
 
     std::copy(random_key.begin(), random_key.end(), dest.begin());
 }
@@ -276,14 +253,11 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
     remoteMasterKey_.resize(sfl::CryptoSuites[remoteCryptoSuite_].masterKeyLength / BITS_PER_BYTE);
     remoteMasterSalt_.resize(sfl::CryptoSuites[remoteCryptoSuite_].masterSaltLength / BITS_PER_BYTE);
 
-    // pointer to binary data
-    char *dataptr = (char*) base64keys.data();
-
     // decode concatenated binary keys
-    std::vector<char> output(decodeBase64((unsigned char*) dataptr, strlen(dataptr)));
+    std::string output(decodeBase64((uint8_t *)base64keys.data(), base64keys.size()));
 
     // copy master and slt respectively
-    const std::vector<char>::iterator key_end = output.begin() + remoteMasterKey_.size();
+    const std::string::iterator key_end = output.begin() + remoteMasterKey_.size();
 
     if (key_end > output.end() or
         (size_t) std::distance(key_end, output.end()) > remoteMasterSalt_.size())
