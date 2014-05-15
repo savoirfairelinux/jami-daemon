@@ -83,6 +83,7 @@ namespace sfl_video {
         bool emulateRate_ = false;
         int64_t startTime_;
         int64_t lastDts_;
+	std::chrono::time_point<std::chrono::system_clock> lastFrameClock_ = {};
 
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
 

@@ -200,19 +200,6 @@ int VideoDecoder::setupFromVideoData()
 VideoDecoder::Status
 VideoDecoder::decode(VideoFrame& result)
 {
-    if (emulateRate_) {
-        const int64_t pts = av_rescale(lastDts_, 1000000, AV_TIME_BASE);
-        const int64_t now = av_gettime() - startTime_;
-        if (pts > now) {
-#if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
-            av_usleep(10000);
-#else
-            usleep(10000);
-#endif
-            return Status::Success;
-        }
-    }
-
     // Guarantee that we free the packet every iteration
     VideoPacket video_packet;
     AVPacket *inpacket = video_packet.get();
@@ -230,17 +217,34 @@ VideoDecoder::decode(VideoFrame& result)
     if (inpacket->stream_index != streamIndex_)
         return Status::Success;
 
-    if (inpacket->dts != AV_NOPTS_VALUE)
-        lastDts_ = av_rescale_q(inpacket->dts, decoderCtx_->time_base, AV_TIME_BASE_Q);
-
+    AVFrame *frame = result.get();
     int frameFinished = 0;
-    int len = avcodec_decode_video2(decoderCtx_, result.get(),
+    int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, inpacket);
     if (len <= 0)
         return Status::DecodeError;
 
-    if (frameFinished)
-        return Status::FrameFinished;
+    if (frameFinished) {
+      if (emulateRate_) {
+	if (frame->pkt_dts != AV_NOPTS_VALUE) {
+	  const auto now = std::chrono::system_clock::now();
+	  const std::chrono::duration<double> seconds = now - lastFrameClock_;
+	  const double dTB = av_q2d(inputCtx_->streams[streamIndex_]->time_base);
+	  const double dts_diff = dTB * (frame->pkt_dts - lastDts_);
+	  const double usDelay = 1e6 * (dts_diff - seconds.count());
+	  if (usDelay > 0.0) {
+#if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
+            av_usleep(usDelay);
+#else
+            usleep(usDelay);
+#endif
+	  }
+	  lastFrameClock_ = now;
+	  lastDts_ = frame->pkt_dts;
+	}
+      }
+      return Status::FrameFinished;
+    }
 
     return Status::Success;
 }
