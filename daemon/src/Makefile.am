@@ -25,6 +25,11 @@ if USE_NETWORKMANAGER
 NETWORKMANAGER=-DUSE_NETWORKMANAGER
 endif
 
+if BUILD_TLS
+TLS_LIB = @libssl_LIBS@ -lcrypto
+TLS_CFLAGS = @libssl_CFLAGS@
+endif
+
 SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
 
 sflphoned_SOURCES = main.cpp
@@ -35,7 +40,7 @@ sflphoned_CXXFLAGS = \
 
 # libsflphone
 
-sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto $(YAML_LIBS)
+sflphoned_LDADD = ./libsflphone.la $(YAML_LIBS)
 noinst_LTLIBRARIES = libsflphone.la
 
 libsflphone_la_LIBADD = \
@@ -57,7 +62,7 @@ libsflphone_la_LDFLAGS = \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		@SNDFILE_LIBS@ \
-		@libssl_LIBS@ \
+		$(TLS_LIB) \
 		@UUID_LIBS@ \
 		@DBUSCPP_LIBS@
 
@@ -69,7 +74,7 @@ libsflphone_la_CFLAGS = \
 		@ALSA_CFLAGS@ \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
-		@libssl_CFLAGS@ \
+		$(TLS_CLFAGS) \
 		@UUID_CFLAGS@ \
 		@DBUSCPP_CFLAGS@
 
