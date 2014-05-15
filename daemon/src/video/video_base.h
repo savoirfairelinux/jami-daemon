@@ -40,19 +40,6 @@
 #include <set>
 #include <mutex>
 
-// std::this_thread::sleep_for is by default supported since 4.8.1
-#define GCC_VERSION (__GNUC__ * 10000 \
-                     + __GNUC_MINOR__ * 100             \
-                     + __GNUC_PATCHLEVEL__)
-#if GCC_VERSION >= 40801
-#include <chrono>
-#include <thread>
-#define MYSLEEP(x) std::this_thread::sleep_for(std::chrono::seconds(x))
-#else
-#include <unistd.h>
-#define MYSLEEP(x) sleep(x)
-#endif
-
 class AVFrame;
 class AVPacket;
 class AVDictionary;
