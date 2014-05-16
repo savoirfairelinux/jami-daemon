@@ -55,13 +55,14 @@ namespace {
         std::cout << std::endl <<
         "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
         "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
+        "-p, --persistent \t- Stay alive after client quits" << std::endl <<
         "-h, --help \t- Print help" << std::endl;
     }
 
     // Parse command line arguments, setting debug options or printing a help
     // message accordingly.
     // returns true if we should quit (i.e. help was printed), false otherwise
-    bool parse_args(int argc, char *argv[])
+    bool parse_args(int argc, char *argv[], bool &persistent)
     {
         int consoleFlag = false;
         int debugFlag = false;
@@ -71,6 +72,7 @@ namespace {
             /* These options set a flag. */
             {"debug", no_argument, NULL, 'd'},
             {"console", no_argument, NULL, 'c'},
+            {"persistent", no_argument, NULL, 'p'},
             {"help", no_argument, NULL, 'h'},
             {"version", no_argument, NULL, 'v'},
             {0, 0, 0, 0} /* Sentinel */
@@ -79,7 +81,7 @@ namespace {
         while (true) {
             /* getopt_long stores the option index here. */
             int option_index = 0;
-            int c = getopt_long(argc, argv, "dchv", long_options, &option_index);
+            int c = getopt_long(argc, argv, "dcphv", long_options, &option_index);
 
             /* Detect the end of the options. */
             if (c == -1)
@@ -92,6 +94,10 @@ namespace {
 
                 case 'c':
                     consoleFlag = true;
+                    break;
+
+                case 'p':
+                    persistent = true;
                     break;
 
                 case 'h':
@@ -157,7 +163,9 @@ int main(int argc, char *argv [])
     fileutils::set_program_dir(writable.data());
 
     print_title();
-    if (parse_args(argc, argv))
+    bool persistent = false;
+
+    if (parse_args(argc, argv, persistent))
         return 0;
 
     fileutils::FileHandle f(fileutils::create_pidfile());
@@ -188,6 +196,7 @@ int main(int argc, char *argv [])
 #ifdef SFL_VIDEO
     WARN("Built with video support");
 #endif
+    Manager::instance().getClient()->setPersistent(persistent);
     ret = Manager::instance().run();
     Manager::instance().finish();
 
