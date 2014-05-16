@@ -43,18 +43,13 @@ using namespace sfl_video;
  * Interface for a single device.
  */
 
-void
-VideoPreference::addDevice(const std::string &name)
+VideoPreference::VideoDevice
+VideoPreference::defaultPreferences(const std::string& name)
 {
-    for (const auto &dev : deviceList_)
-        if (dev.name == name)
-            return;
-
     VideoDevice dev;
     dev.name = name;
 
-    // Default preferences
-    auto list = getChannelList(name);
+    auto list = getChannelList(dev.name);
     dev.channel = list.empty() ? "" : list[0];
 
     list = getSizeList(dev.name, dev.channel);
@@ -63,6 +58,17 @@ VideoPreference::addDevice(const std::string &name)
     list = getRateList(dev.name, dev.channel, dev.size);
     dev.rate = list.empty() ? "" : list[0];
 
+    return dev;
+}
+
+void
+VideoPreference::addDevice(const std::string &name)
+{
+    for (const auto &dev : deviceList_)
+        if (dev.name == name)
+            return;
+
+    VideoDevice dev = defaultPreferences(name);
     deviceList_.push_back(dev);
 }
 
@@ -293,6 +299,15 @@ VideoPreference::unserialize(const Conf::YamlNode &node)
                 devnode->getValue("channel", &device.channel);
                 devnode->getValue("size", &device.size);
                 devnode->getValue("rate", &device.rate);
+
+                // Overwrite empty values with default one
+                VideoDevice def = defaultPreferences(device.name);
+                if (device.channel.empty())
+                    device.channel = def.channel;
+                if (device.size.empty())
+                    device.size = def.size;
+                if (device.rate.empty())
+                    device.rate = def.rate;
 
                 deviceList_.push_back(device);
             }
