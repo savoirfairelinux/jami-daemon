@@ -13,7 +13,7 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR]) # required by automake 1.12
 AC_CONFIG_HEADERS([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
-#m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
