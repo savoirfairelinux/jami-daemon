@@ -31,10 +31,13 @@
 #include "video_widget.h"
 #include "video_renderer.h"
 
+#include "sflphone_client.h"    /* gsettings schema path */
+
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 
 
+#define VIDEO_HEIGHT_MIN                200
 #define VIDEO_LOCAL_HEIGHT              100
 #define VIDEO_LOCAL_CONSTRAINT_SIZE     "local-constraint-size"
 #define VIDEO_LOCAL_CONSTRAINT_POSITION "local-constraint-position"
@@ -68,6 +71,7 @@ struct _VideoWidgetPrivate {
     VideoScreen     video_screen;
     GtkWidget       *toolbar;
     GHashTable      *video_handles;
+    GSettings       *settings;
 };
 
 /* Define the VideoWidget type and inherit from GtkWindow */
@@ -81,7 +85,7 @@ static void       video_widget_draw                     (GtkWidget *);
 static GtkWidget* video_widget_draw_screen              (GtkWidget *);
 static void       video_widget_redraw_screen            (GtkWidget *);
 static void       video_widget_retrieve_screen_size     (GtkWidget *, guint *, guint *);
-static void       video_widget_set_aspect_ratio         (GtkWidget *, guint, guint);
+static void       video_widget_set_geometry             (GtkWidget *, guint, guint);
 static VideoArea* video_widget_video_area_get           (GtkWidget *, VIDEO_AREA_ID);
 static gboolean   is_video_in_screen                    (GtkWidget *, gchar *);
 static Video*     video_widget_retrieve_camera          (GtkWidget *, VIDEO_AREA_ID);
@@ -90,6 +94,8 @@ static void       video_widget_remove_camera_in_screen  (GtkWidget *, VIDEO_AREA
 static void       video_widget_show_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
 static void       video_widget_hide_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
 static void       cleanup_video_handle                  (gpointer);
+static gboolean   on_configure_event_cb                 (GtkWidget *, GdkEventConfigure *, gpointer);
+
 
 
 /*
@@ -145,6 +151,7 @@ video_widget_init(VideoWidget *self)
     /* init widget */
     priv->toolbar = NULL;
     priv->video_handles = NULL;
+    priv->settings = NULL;
 
     /* init video_screen */
     priv->video_screen.screen = NULL;
@@ -198,6 +205,13 @@ video_widget_draw(GtkWidget *self)
     gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(priv->video_screen.screen), 0, 0, 1, 1);
 
     gtk_container_add(GTK_CONTAINER(self), grid);
+
+    priv->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
+
+    /* handle configure event */
+    g_signal_connect(self, "configure-event",
+            G_CALLBACK(on_configure_event_cb),
+            NULL);
 
 }
 
@@ -257,12 +271,29 @@ video_widget_redraw_screen(GtkWidget *self)
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
     ClutterConstraint *constraint = NULL;
-    guint width  = 0;
-    guint height = 0;
+    guint width = 0, height = 0, pos_x = 0, pos_y = 0, screen_width = 0, screen_height = 0;
 
-    video_widget_retrieve_screen_size(self, &width, &height);
+    /* retrieve the previous windows settings */
+    width  = g_settings_get_int(priv->settings, "video-widget-width");
+    height = g_settings_get_int(priv->settings, "video-widget-height");
+    pos_x  = g_settings_get_int(priv->settings, "video-widget-position-x");
+    pos_y  = g_settings_get_int(priv->settings, "video-widget-position-y");
 
-    video_widget_set_aspect_ratio(self, width, height);
+    /* retrieve the stage size based on camera in the stage */
+    video_widget_retrieve_screen_size(self, &screen_width, &screen_height);
+
+    /* if no previous size have been define, we set the widget size to the
+     * remote camera size */
+    if (width == 0 || height == 0) {
+        width  = screen_width;
+        height = screen_height;
+    }
+    /* force to keep the aspect ratio and set a minimal size */
+    video_widget_set_geometry(self, screen_width, screen_height);
+
+    /* use the previous setting to set the default size and position */
+    gtk_window_set_default_size(GTK_WINDOW(self), width, height);
+    gtk_window_move(GTK_WINDOW(self), pos_x, pos_y);
 
     VideoArea *video_area_remote = video_widget_video_area_get(self, VIDEO_AREA_REMOTE);
     VideoArea *video_area_local = video_widget_video_area_get(self, VIDEO_AREA_LOCAL);
@@ -312,7 +343,7 @@ video_widget_redraw_screen(GtkWidget *self)
             clutter_actor_clear_constraints(camera_local->texture);
 
             /* the local camera must be set to the bottom right corner with a little space */
-            constraint = clutter_align_constraint_new(priv->video_screen.container,
+            constraint = clutter_align_constraint_new(camera_remote->texture,
                     CLUTTER_ALIGN_BOTH, 0.99);
             clutter_actor_add_constraint_with_name(camera_local->texture,
                     VIDEO_LOCAL_CONSTRAINT_POSITION, constraint);
@@ -320,7 +351,6 @@ video_widget_redraw_screen(GtkWidget *self)
 
     }
 
-    gtk_widget_set_size_request(priv->video_screen.screen, width, height);
 
 }
 
@@ -364,15 +394,15 @@ video_widget_retrieve_screen_size(GtkWidget *self,
 
 
 /*
- * video_widget_set_aspect_ratio
+ * video_widget_set_geometry
  *
  * This function is use to force the window behaviour to keep a
- * fixed aspect ratio.
+ * fixed aspect ratio and a minimal size.
  */
 static void
-video_widget_set_aspect_ratio(GtkWidget *self,
-                              guint width,
-                              guint height)
+video_widget_set_geometry(GtkWidget *self,
+                          guint width,
+                          guint height)
 {
     g_return_if_fail(IS_VIDEO_WIDGET(self));
 
@@ -382,8 +412,10 @@ video_widget_set_aspect_ratio(GtkWidget *self,
     GdkGeometry geom = {
         .min_aspect = aspect_ratio,
         .max_aspect = aspect_ratio,
+        .min_width  = VIDEO_HEIGHT_MIN * aspect_ratio,
+        .min_height = VIDEO_HEIGHT_MIN,
     };
-    gtk_window_set_geometry_hints(GTK_WINDOW(self), NULL, &geom, GDK_HINT_ASPECT);
+    gtk_window_set_geometry_hints(GTK_WINDOW(self), NULL, &geom, GDK_HINT_ASPECT |  GDK_HINT_MIN_SIZE);
 
 }
 
@@ -633,6 +665,30 @@ cleanup_video_handle(gpointer data)
     g_free(v);
 }
 
+/*
+ * on_configure_event_cb()
+ *
+ * Handle resizing and moving event in the video windows.
+ * This is usefull to store the previous behaviour and restore the user
+ * preferences using gsettings.
+ */
+static gboolean
+on_configure_event_cb(GtkWidget *self,
+                      GdkEventConfigure *event,
+                      G_GNUC_UNUSED gpointer data)
+{
+    g_return_val_if_fail(IS_VIDEO_WIDGET(self), FALSE);
+
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+
+    g_settings_set_int(priv->settings, "video-widget-width", event->width);
+    g_settings_set_int(priv->settings, "video-widget-height", event->height);
+    g_settings_set_int(priv->settings, "video-widget-position-x", event->x);
+    g_settings_set_int(priv->settings, "video-widget-position-y", event->y);
+
+    /* let the event propagate otherwise the video will not be re-scaled */
+    return FALSE;
+}
 
 /*
  * video_widget_camera_start()
