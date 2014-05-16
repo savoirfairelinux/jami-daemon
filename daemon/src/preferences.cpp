@@ -69,7 +69,6 @@ static const char * const HISTORY_MAX_CALLS_KEY = "historyMaxCalls";
 static const char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
 static const char * const PORT_NUM_KEY = "portNum";
 static const char * const SEARCH_BAR_DISPLAY_KEY = "searchBarDisplay";
-static const char * const ZEROCONF_ENABLE_KEY = "zeroConfenable";
 static const char * const MD5_HASH_KEY = "md5Hash";
 
 // voip preferences
@@ -131,7 +130,6 @@ Preferences::Preferences() :
     , registrationExpire_(180)
     , portNum_(5060)
     , searchBarDisplay_(true)
-    , zeroConfenable_(false)
     , md5Hash_(false)
 {}
 
@@ -200,7 +198,6 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     portstr << portNum_;
     Conf::ScalarNode portNum(portstr.str());
     Conf::ScalarNode searchBarDisplay(searchBarDisplay_);
-    Conf::ScalarNode zeroConfenable(zeroConfenable_);
     Conf::ScalarNode md5Hash(md5Hash_);
 
     preferencemap.setKeyValue(ORDER_KEY, &order);
@@ -210,7 +207,6 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     preferencemap.setKeyValue(REGISTRATION_EXPIRE_KEY, &registrationExpire);
     preferencemap.setKeyValue(PORT_NUM_KEY, &portNum);
     preferencemap.setKeyValue(SEARCH_BAR_DISPLAY_KEY, &searchBarDisplay);
-    preferencemap.setKeyValue(ZEROCONF_ENABLE_KEY, &zeroConfenable);
     preferencemap.setKeyValue(MD5_HASH_KEY, &md5Hash);
 
     emiter.serializePreference(&preferencemap, "preferences");
@@ -225,7 +221,6 @@ void Preferences::unserialize(const Conf::YamlNode &map)
     map.getValue(REGISTRATION_EXPIRE_KEY, &registrationExpire_);
     map.getValue(PORT_NUM_KEY, &portNum_);
     map.getValue(SEARCH_BAR_DISPLAY_KEY, &searchBarDisplay_);
-    map.getValue(ZEROCONF_ENABLE_KEY, &zeroConfenable_);
     map.getValue(MD5_HASH_KEY, &md5Hash_);
 }
 

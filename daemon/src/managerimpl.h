@@ -76,10 +76,6 @@ class History;
 class TelephoneTone;
 class VoIPLink;
 
-#ifdef USE_ZEROCONF
-class DNSService;
-#endif
-
 class Account;
 class SIPAccount;
 class IAXAccount;
@@ -806,11 +802,6 @@ class ManagerImpl {
          */
         std::string retrieveConfigPath() const;
 
-        /*
-         * Initialize zeroconf module and scanning
-         */
-        void initZeroconf();
-
         /**
          * Set current call ID to empty string
          */
@@ -891,12 +882,6 @@ class ManagerImpl {
          * Path of the ConfigFile
          */
         std::string path_;
-
-#ifdef USE_ZEROCONF
-        // DNSService contain every zeroconf services
-        //  configuration detected on the network
-        DNSService *DNSService_;
-#endif
 
         std::map<std::string, bool> IPToIPMap_;
 

@@ -144,7 +144,6 @@ preferences:
   portNum: 5060
   registrationexpire: 180
   searchBarDisplay: true
-  zeroConfenable: false
   zoneToneChoice: North America
 voipPreferences:
   playDtmf: true

@@ -110,13 +110,6 @@ class Preferences : public Serializable {
             searchBarDisplay_ = search;
         }
 
-        bool getZeroConfenable() const {
-            return zeroConfenable_;
-        }
-        void setZeroConfenable(bool enable) {
-            zeroConfenable_ = enable;
-        }
-
         bool getMd5Hash() const {
             return md5Hash_;
         }
@@ -132,7 +125,6 @@ class Preferences : public Serializable {
         int registrationExpire_;
         int portNum_;
         bool searchBarDisplay_;
-        bool zeroConfenable_;
         bool md5Hash_;
 };
 
