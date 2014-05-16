@@ -143,32 +143,6 @@ size_t VideoFrame::getSize(int width, int height, int format)
         (AVPixelFormat) libav_utils::libav_pixel_format(format), width, height);
 }
 
-// Only supports YUV_420P input and output
-int VideoFrame::blit(VideoFrame &src, int xoff, int yoff)
-{
-    const AVFrame *src_frame = src.get();
-
-    assert(src_frame->format == PIXEL_FORMAT(YUV420P) and
-           frame_->format == PIXEL_FORMAT(YUV420P));
-
-    auto copy_plane = [&] (unsigned idx) {
-        const unsigned divisor = idx == 0 ? 1 : 2;
-        ssize_t dst_stride = frame_->linesize[idx];
-        uint8_t *src_data = src_frame->data[idx];
-        uint8_t *dst_data = frame_->data[idx] + yoff / divisor * dst_stride + xoff / divisor;
-        for (unsigned i = 0; i < src_frame->height / divisor; i++) {
-            memcpy(dst_data, src_data, src_frame->linesize[idx]);
-            src_data += src_frame->linesize[idx];
-            dst_data += dst_stride;
-        }
-    };
-
-    for (unsigned plane = 0; plane < 3; ++plane)
-        copy_plane(plane);
-
-    return 0;
-}
-
 void VideoFrame::copy(VideoFrame &dst)
 {
     const AVFrame *dst_frame = dst.get();

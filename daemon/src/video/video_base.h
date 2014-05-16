@@ -175,8 +175,6 @@ public:
     static size_t getSize(int width, int height, int format);
     void setdefaults();
     bool allocBuffer(int width, int height, int pix_fmt);
-    // YUV_420P only!
-    int blit(VideoFrame& src, int xoff, int yoff);
     void copy(VideoFrame &src);
     void clear();
     void test();
