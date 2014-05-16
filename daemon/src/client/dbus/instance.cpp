@@ -50,5 +50,5 @@ Instance::Unregister(const int32_t& pid UNUSED)
     --count;
 
     if (count <= 0)
-        Manager::instance().getClient()->exit();
+        Manager::instance().getClient()->onLastUnregister();
 }
