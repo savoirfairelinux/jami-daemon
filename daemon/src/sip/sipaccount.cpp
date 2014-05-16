@@ -648,8 +648,6 @@ void parseInt(const std::map<std::string, std::string> &details, const char *key
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
-    ERROR("SIPAccount::setAccountDetails");
-
     // Account setting common to SIP and IAX
     parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
     parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
