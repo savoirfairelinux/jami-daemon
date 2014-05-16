@@ -121,9 +121,6 @@ class RingBuffer {
             return putLength() == 0;
         }
 
-        std::mutex& getLock() {
-            return lock_;
-        }
 
         /**
          * Blocks until min_data_length samples of data is available, or until deadline is missed.
