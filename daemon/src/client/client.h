@@ -75,6 +75,11 @@ class Client {
         int event_loop();
         int exit();
 
+#if HAVE_DBUS
+        void onLastUnregister();
+        void setPersistent(bool p) { isPersistent_ = p; }
+#endif
+
     private:
         NON_COPYABLE(Client);
         CallManager*          callManager_;
@@ -85,6 +90,7 @@ class Client {
 #if HAVE_DBUS
         Instance*             instanceManager_;
         DBus::BusDispatcher*  dispatcher_;
+        bool isPersistent_ = false;
 #endif
 #ifdef SFL_VIDEO
         VideoManager *videoManager_;

@@ -195,3 +195,10 @@ Client::getVideoManager()
     return videoManager_;
 }
 #endif
+
+void
+Client::onLastUnregister()
+{
+    if (not isPersistent_)
+        exit();
+}
