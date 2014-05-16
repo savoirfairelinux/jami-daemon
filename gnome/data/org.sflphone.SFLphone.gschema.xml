@@ -20,45 +20,25 @@
             <summary>Main window Y position</summary>
             <description>Main window Y position.</description>
         </key>
-        <key name="window-video-local-width" type="i">
-            <default>200</default>
+        <key name="video-widget-width" type="i">
+            <default>0</default>
             <summary>Local video window width</summary>
             <description>Local video window width.</description>
         </key>
-        <key name="window-video-local-height" type="i">
-            <default>150</default>
+        <key name="video-widget-height" type="i">
+            <default>0</default>
             <summary>Local video window height</summary>
             <description>Local video window height.</description>
         </key>
-        <key name="window-video-local-position-x" type="i">
-            <default>100</default>
+        <key name="video-widget-position-x" type="i">
+            <default>0</default>
             <summary>Local video window X position</summary>
             <description>Local video window X position.</description>
         </key>
-        <key name="window-video-local-position-y" type="i">
-            <default>250</default>
+        <key name="video-widget-position-y" type="i">
+            <default>0</default>
             <summary>Local video window Y position</summary>
             <description>Local video window Y position.</description>
-        </key>
-        <key name="window-video-remote-width" type="i">
-            <default>240</default>
-            <summary>Remote video window width</summary>
-            <description>Remote video window width.</description>
-        </key>
-        <key name="window-video-remote-height" type="i">
-            <default>320</default>
-            <summary>Remote video window height</summary>
-            <description>Remote video window height.</description>
-        </key>
-        <key name="window-video-remote-position-x" type="i">
-            <default>500</default>
-            <summary>Remote video window X position</summary>
-            <description>Remote video window X position.</description>
-        </key>
-        <key name="window-video-remote-position-y" type="i">
-            <default>250</default>
-            <summary>Remote video window Y position</summary>
-            <description>Remote video window Y position.</description>
         </key>
         <key name="show-dialpad" type="b">
             <default>true</default>
