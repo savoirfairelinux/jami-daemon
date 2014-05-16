@@ -302,6 +302,7 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
             BPP,
             CLUTTER_TEXTURE_RGB_FLAG_BGR,
             NULL);
+
     priv->buffer_gen = priv->shm_area->buffer_gen;
     shm_unlock(priv->shm_area);
 }
