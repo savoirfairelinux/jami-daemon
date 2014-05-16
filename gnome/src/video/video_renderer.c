@@ -302,6 +302,10 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
             BPP,
             CLUTTER_TEXTURE_RGB_FLAG_BGR,
             NULL);
+    /* clutter_texture_set_keep_aspect_ratio (CLUTTER_TEXTURE(priv->texture), TRUE); */
+    /* clutter_actor_set_request_mode (priv->texture, CLUTTER_REQUEST_HEIGHT_FOR_WIDTH); */
+    /* clutter_actor_set_width(priv->texture, priv->width); */
+
     priv->buffer_gen = priv->shm_area->buffer_gen;
     shm_unlock(priv->shm_area);
 }
