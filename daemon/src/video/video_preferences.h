@@ -114,6 +114,7 @@ class VideoPreference : public Serializable
         std::map<std::string, std::string> deviceToSettings(const VideoDevice& dev);
         static void addDeviceToSequence(VideoDevice &dev, Conf::SequenceNode &seq);
 
+        VideoDevice defaultPreferences(const std::string& name);
         void addDevice(const std::string &name);
 };
 
