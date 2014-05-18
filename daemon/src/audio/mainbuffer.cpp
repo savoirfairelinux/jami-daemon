@@ -295,13 +295,16 @@ bool MainBuffer::waitForDataAvailable(const std::string &call_id, size_t min_fra
     // convert to absolute time
     const auto deadline = std::chrono::high_resolution_clock::now() + max_wait;
 
-    auto lock(stateLock_.read());
+    auto lock(stateLock_.read(deadline));
+    if (!lock)
+        return false;
     const CallIDSet* callid_set = getCallIDSet(call_id);
     if (!callid_set or callid_set->empty()) return false;
     for (const auto &i : *callid_set) {
         RingBuffer const * const ringbuffer = getRingBuffer(i);
         if (!ringbuffer) continue;
-        if (ringbuffer->waitForDataAvailable(call_id, min_frames, deadline) < min_frames) return false;
+        if (ringbuffer->waitForDataAvailable(call_id, min_frames, deadline) < min_frames)
+            return false;
     }
     return true;
 }

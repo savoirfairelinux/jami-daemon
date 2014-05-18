@@ -36,6 +36,7 @@
 
 #include <mutex>
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <string>
 #include <sstream>
@@ -58,6 +59,13 @@ class rw_mutex {
 			canRead.wait(lck, [this]() { return !writing; });
 			readers++;
 		}
+		bool read_enter(const std::chrono::high_resolution_clock::time_point& deadline) {
+			std::unique_lock<std::mutex> lck(mutex);
+			if(!canRead.wait_until(lck, deadline, [this]() { return !writing; }))
+				return false;
+			readers++;
+			return true;
+		}
 		void read_exit() {
 			//std::unique_lock<std::mutex> lck(mutex);
 			readers--;
@@ -77,14 +85,22 @@ class rw_mutex {
 
 		struct read_lock {
 			public:
-				read_lock(rw_mutex& m) : sem(m) {
+				read_lock(rw_mutex& m) : sem(m), success(true) {
 					sem.read_enter();
 				}
+				read_lock(rw_mutex& m, const std::chrono::high_resolution_clock::time_point& deadline)
+				 : sem(m), success(sem.read_enter(deadline)) {
+				}
 				~read_lock() {
-					sem.read_exit();
+					if (success)
+						sem.read_exit();
+				}
+				operator bool() const {
+					return success;
 				}
 			private:
 				rw_mutex& sem;
+				bool success;
 		};
 
 		struct write_lock {
@@ -101,6 +117,9 @@ class rw_mutex {
 
 		read_lock read() {
 			return read_lock(*this);
+		}
+		read_lock read(const std::chrono::high_resolution_clock::time_point& deadline) {
+			return read_lock(*this, deadline);
 		}
 
 		write_lock write() {
