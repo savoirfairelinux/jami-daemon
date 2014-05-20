@@ -73,6 +73,7 @@ struct _VideoWidgetPrivate {
     GtkWidget       *toolbar;
     GHashTable      *video_handles;
     GSettings       *settings;
+    gboolean        fullscreen;
 };
 
 /* Define the VideoWidget type and inherit from GtkWindow */
@@ -96,6 +97,7 @@ static void       video_widget_show_camera_in_screen    (GtkWidget *, VIDEO_AREA
 static void       video_widget_hide_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
 static void       cleanup_video_handle                  (gpointer);
 static gboolean   on_configure_event_cb                 (GtkWidget *, GdkEventConfigure *, gpointer);
+static gboolean   on_button_press_in_screen_event_cb    (GtkWidget *, GdkEventButton *, gpointer);
 static gboolean   on_pointer_enter_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
 static gboolean   on_pointer_leave_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
 
@@ -161,6 +163,7 @@ video_widget_init(VideoWidget *self)
     priv->toolbar = NULL;
     priv->video_handles = NULL;
     priv->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
+    priv->fullscreen = FALSE;
 
     /* init video_screen */
     priv->video_screen.screen = NULL;
@@ -238,10 +241,10 @@ video_widget_draw_screen(GtkWidget *self)
     ClutterActor *stage;
     ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
 
-    GtkWidget *window = gtk_clutter_embed_new();
+    GtkWidget *screen = gtk_clutter_embed_new();
 
     /* create a stage with black background */
-    stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(window));
+    stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(screen));
     clutter_actor_set_background_color(stage, &stage_color);
 
 #if (USE_CONTAINER_HACK == 0)
@@ -260,7 +263,12 @@ video_widget_draw_screen(GtkWidget *self)
     }
 #endif
 
-    return window;
+    /* handle button event in screen */
+    g_signal_connect(screen, "button-press-event",
+            G_CALLBACK(on_button_press_in_screen_event_cb),
+            self);
+
+    return screen;
 }
 
 
@@ -698,6 +706,7 @@ cleanup_video_handle(gpointer data)
     g_free(v);
 }
 
+
 /*
  * on_configure_event_cb()
  *
@@ -720,6 +729,54 @@ on_configure_event_cb(GtkWidget *self,
 
     /* let the event propagate otherwise the video will not be re-scaled */
     return FALSE;
+}
+
+
+/*
+ * on_button_press_in_screen_event_cb()
+ *
+ * Handle button event in the video screen.
+ */
+static gboolean
+on_button_press_in_screen_event_cb(G_GNUC_UNUSED GtkWidget *widget,
+                                   GdkEventButton *event,
+                                   gpointer data)
+{
+    VideoWidget * self = (VideoWidget *) data;
+
+    g_return_val_if_fail(IS_VIDEO_WIDGET(self), FALSE);
+
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+
+    /* on double click */
+    if (event->type == GDK_2BUTTON_PRESS) {
+
+        /* Fullscreen switch on/off */
+        priv->fullscreen = !priv->fullscreen;
+
+        if (priv->fullscreen) {
+
+            gtk_window_fullscreen(GTK_WINDOW(self));
+
+            /* if there a toolbar we don't want it in the fullscreen,
+             * we only care about the video_screen */
+            if(priv->toolbar)
+                gtk_widget_hide(priv->toolbar);
+
+        } else {
+
+            gtk_window_unfullscreen(GTK_WINDOW(self));
+
+            /* re-show the toolbar */
+            if(priv->toolbar)
+                gtk_widget_show(priv->toolbar);
+
+        }
+
+    }
+
+    /* the event has been fully handle */
+    return TRUE;
 }
 
 
