@@ -704,11 +704,15 @@ static void set_published_addr_manually_cb(GtkWidget * widget, G_GNUC_UNUSED gpo
     }
 }
 
-static void use_stun_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
+static void
+use_stun_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
     /* Widgets have not been created yet */
-    if (!stun_server_label)
-        return;
+    g_return_if_fail(stun_server_label || stun_server_entry ||
+                     same_as_local_radio_button ||
+                     published_addr_radio_button || published_address_label ||
+                     published_port_label || published_address_entry ||
+                     published_port_spin_box);
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         g_debug("Showing stun options, hiding Local/Published info");
@@ -1065,9 +1069,6 @@ GtkWidget* create_published_address(const account_t *account)
     use_stun_check_box = gtk_check_button_new_with_mnemonic(_("Using STUN"));
     gtk_grid_attach(GTK_GRID(grid), use_stun_check_box, 0, 0, 1, 1);
     g_signal_connect(use_stun_check_box, "toggled", G_CALLBACK(use_stun_cb), NULL);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(use_stun_check_box),
-                                 utf8_case_equal(stun_enable, "true"));
-    gtk_widget_set_sensitive(use_stun_check_box, !utf8_case_equal(use_tls, "true"));
 
     stun_server_label = gtk_label_new_with_mnemonic(_("STUN server URL"));
     gtk_grid_attach(GTK_GRID(grid), stun_server_label, 0, 1, 1, 1);
@@ -1116,6 +1117,11 @@ GtkWidget* create_published_address(const account_t *account)
     g_signal_connect(local_address_combo, "changed", G_CALLBACK(local_interface_changed_cb), local_address_combo);
     g_signal_connect(same_as_local_radio_button, "toggled", G_CALLBACK(same_as_local_cb), same_as_local_radio_button);
     g_signal_connect(published_addr_radio_button, "toggled", G_CALLBACK(set_published_addr_manually_cb), published_addr_radio_button);
+
+    /* Now that widgets have been initialized it's safe to invoke this signal */
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(use_stun_check_box),
+                                 utf8_case_equal(stun_enable, "true"));
+    gtk_widget_set_sensitive(use_stun_check_box, !utf8_case_equal(use_tls, "true"));
 
     set_published_addr_manually_cb(published_addr_radio_button, NULL);
 
