@@ -39,6 +39,7 @@
 #include <set>
 #include <string>
 #include <mutex>
+#include <memory>
 
 class RingBuffer;
 
@@ -108,8 +109,8 @@ class MainBuffer {
     private:
         NON_COPYABLE(MainBuffer);
 
-        CallIDSet* getCallIDSet(const std::string &call_id);
-        const CallIDSet* getCallIDSet(const std::string &call_id) const;
+        std::shared_ptr<CallIDSet> getCallIDSet(const std::string &call_id);
+        const std::shared_ptr<CallIDSet> getCallIDSet(const std::string &call_id) const;
 
         void createCallIDSet(const std::string &set_id);
 
@@ -129,8 +130,11 @@ class MainBuffer {
 
         void removeRingBuffer(const std::string &call_id);
 
-        RingBuffer* getRingBuffer(const std::string &call_id);
-        const RingBuffer* getRingBuffer(const std::string & call_id) const;
+        std::shared_ptr<RingBuffer> getRingBuffer(const std::string &call_id);
+        const std::shared_ptr<RingBuffer> getRingBuffer(const std::string &call_id) const;
+
+        void removeReadPointerFromRingBuffer(const std::string & call_id1,
+                                             const std::string & call_id2);
 
         size_t getDataByID(AudioBuffer& buffer, const std::string &call_id, const std::string &reader_id);
 
@@ -140,13 +144,13 @@ class MainBuffer {
 
         void flushByID(const std::string &call_id, const std::string &reader_id);
 
-        typedef std::map<std::string, RingBuffer*> RingBufferMap;
+        typedef std::map<std::string, std::shared_ptr<RingBuffer> > RingBufferMap;
         RingBufferMap ringBufferMap_;
 
-        typedef std::map<std::string, CallIDSet*> CallIDMap;
+        typedef std::map<std::string, std::shared_ptr<CallIDSet> > CallIDMap;
         CallIDMap callIDMap_;
 
-        mutable sfl::rw_mutex stateLock_;
+        mutable std::recursive_mutex stateLock_ = {};
 
         AudioFormat internalAudioFormat_;
 
