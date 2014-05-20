@@ -44,7 +44,7 @@ using namespace sfl_video;
  */
 
 VideoPreference::VideoDevice
-VideoPreference::defaultPreferences(const std::string& name)
+VideoPreference::defaultPreferences(const std::string& name) const
 {
     VideoDevice dev;
     dev.name = name;
@@ -75,22 +75,46 @@ VideoPreference::addDevice(const std::string &name)
 std::vector<VideoPreference::VideoDevice>::iterator
 VideoPreference::lookupDevice(const std::string& name)
 {
-    std::vector<VideoDevice>::iterator iter;
-
-    for (iter = deviceList_.begin(); iter != deviceList_.end(); ++iter)
-        if ((*iter).name == name)
+    // Find the device in the cache of preferences
+    std::vector<VideoPreference::VideoDevice>::iterator it;
+    for (it = deviceList_.begin(); it != deviceList_.end(); ++it)
+        if (it->name == name)
             break;
 
-    return iter;
+    // Check if the device is detected
+    if (it != deviceList_.end())
+        for (const auto& plugged : getDeviceList())
+            if (plugged == it->name)
+                return it;
+
+    // Device not found
+    return deviceList_.end();
+}
+
+
+std::vector<VideoPreference::VideoDevice>::const_iterator
+VideoPreference::lookupDevice(const std::string& name) const
+{
+    // Find the device in the cache of preferences
+    std::vector<VideoPreference::VideoDevice>::const_iterator it;
+    for (it = deviceList_.begin(); it != deviceList_.end(); ++it)
+        if (it->name == name)
+            break;
+
+    // Check if the device is detected
+    if (it != deviceList_.end())
+        for (const auto& plugged : getDeviceList())
+            if (plugged == it->name)
+                return it;
+
+    // Device not found
+    return deviceList_.end();
 }
 
 std::map<std::string, std::string>
-VideoPreference::getSettingsFor(const std::string& name)
+VideoPreference::getSettingsFor(const std::string& name) const
 {
     std::map<std::string, std::string> settings;
-
-    if (deviceList_.empty())
-        return settings;
 
     const auto iter = lookupDevice(name);
 
@@ -101,39 +125,76 @@ VideoPreference::getSettingsFor(const std::string& name)
 }
 
 std::map<std::string, std::string>
-VideoPreference::getPreferences(const std::string& name)
+VideoPreference::getPreferences(const std::string& name) const
 {
     std::map<std::string, std::string> pref;
-    const auto iter = lookupDevice(name);
+    const auto it = lookupDevice(name);
 
-    if (iter != deviceList_.end()) {
-        VideoDevice& dev = *iter;
-        pref["name"] = dev.name;
-        pref["channel"] = dev.channel;
-        pref["size"] = dev.size;
-        pref["rate"] = dev.rate;
+    if (it != deviceList_.end()) {
+        pref["name"] = it->name;
+        pref["channel"] = it->channel;
+        pref["size"] = it->size;
+        pref["rate"] = it->rate;
     }
 
     return pref;
+}
+
+bool
+VideoPreference::validatePreference(const VideoDevice& dev) const
+{
+    DEBUG("prefs: name:%s channel:%s size:%s rate:%s", dev.name.data(),
+            dev.channel.data(), dev.size.data(), dev.rate.data());
+
+    // Validate the channel
+    const auto chans = getChannelList(dev.name);
+    if (std::find(chans.begin(), chans.end(), dev.channel) == chans.end()) {
+        DEBUG("Bad channel, ignoring");
+        return false;
+    }
+
+    // Validate the size
+    const auto sizes = getSizeList(dev.name, dev.channel);
+    if (std::find(sizes.begin(), sizes.end(), dev.size) == sizes.end()) {
+        DEBUG("Bad size, ignoring");
+        return false;
+    }
+
+    // Validate the rate
+    const auto rates = getRateList(dev.name, dev.channel, dev.size);
+    if (std::find(rates.begin(), rates.end(), dev.rate) == rates.end()) {
+        DEBUG("Bad rate, ignoring");
+        return false;
+    }
+
+    return true;
 }
 
 void
 VideoPreference::setPreferences(const std::string& name,
         std::map<std::string, std::string> pref)
 {
+    // Validate the name
     const auto it = lookupDevice(name);
-
     if (it == deviceList_.end()) {
-        ERROR("Device '%s' not found, ignoring", name.c_str());
+        DEBUG("Device not found, ignoring");
         return;
     }
 
-    if (not pref["channel"].empty())
-        it->channel = pref["channel"];
-    if (not pref["size"].empty())
-        it->size = pref["size"];
-    if (not pref["rate"].empty())
-        it->rate = pref["rate"];
+    VideoDevice dev;
+    dev.name = name;
+    dev.channel = pref["channel"];
+    dev.size = pref["size"];
+    dev.rate = pref["rate"];
+
+    if (!validatePreference(dev)) {
+        ERROR("invalid settings");
+        return;
+    }
+
+    it->channel = dev.channel;
+    it->size = dev.size;
+    it->rate = dev.rate;
 }
 
 /*
@@ -142,20 +203,13 @@ VideoPreference::setPreferences(const std::string& name,
  */
 
 std::string
-VideoPreference::getDevice()
+VideoPreference::getDevice() const
 {
-    // No default device?
-    if (active_ == deviceList_.end())
+    // Default device not set or not detected?
+    if (lookupDevice(default_) == deviceList_.end())
         return "";
 
-    // Is the default device plugged?
-    for (const auto& plugged : getDeviceList())
-        if (plugged == active_->name)
-            return active_->name;
-
-    // The default device is not detected
-    DEBUG("default device '%s' not detected", active_->name.c_str());
-    return "";
+    return default_;
 }
 
 void
@@ -169,74 +223,86 @@ VideoPreference::setDevice(const std::string& name)
      */
     addDevice(name);
 
-    const auto iter = lookupDevice(name);
-
-    if (iter != deviceList_.end())
-        active_ = iter;
+    if (lookupDevice(name) != deviceList_.end())
+        default_ = name;
 }
 
 std::string
 VideoPreference::getChannel() const
 {
-    if (active_ == deviceList_.end())
+    const auto it = lookupDevice(default_);
+
+    if (it == deviceList_.end())
         return "";
 
-    return (*active_).channel;
+    return it->channel;
 }
 
 void
 VideoPreference::setChannel(const std::string& channel)
 {
-    if (active_ != deviceList_.end())
-        (*active_).channel = channel;
+    auto it = lookupDevice(default_);
+
+    if (it != deviceList_.end())
+        it->channel = channel;
 }
 
 std::string
 VideoPreference::getSize() const
 {
-    if (active_ == deviceList_.end())
+    const auto it = lookupDevice(default_);
+
+    if (it == deviceList_.end())
         return "";
 
-    return (*active_).size;
+    return it->size;
 }
 
 void
 VideoPreference::setSize(const std::string& size)
 {
-    if (active_ != deviceList_.end())
-        (*active_).size = size;
+    auto it = lookupDevice(default_);
+
+    if (it != deviceList_.end())
+        it->size = size;
 }
 
 std::string
 VideoPreference::getRate() const
 {
-    if (active_ == deviceList_.end())
+    const auto it = lookupDevice(default_);
+
+    if (it == deviceList_.end())
         return "";
 
-    return (*active_).rate;
+    return it->rate;
 }
 
 void
 VideoPreference::setRate(const std::string& rate)
 {
-    if (active_ != deviceList_.end())
-        (*active_).rate = rate;
+    auto it = lookupDevice(default_);
+
+    if (it != deviceList_.end())
+        it->rate = rate;
 }
 
 
 std::map<std::string, std::string>
-VideoPreference::getSettings()
+VideoPreference::getSettings() const
 {
     std::map<std::string, std::string> settings;
 
-    if (active_ != deviceList_.end())
-        settings = deviceToSettings(*active_);
+    const auto it = lookupDevice(default_);
+    if (it != deviceList_.end() && validatePreference(*it))
+        settings = deviceToSettings(*it);
 
     return settings;
 }
 
 void
-VideoPreference::addDeviceToSequence(VideoDevice &dev, Conf::SequenceNode &seq)
+VideoPreference::addDeviceToSequence(const VideoDevice& dev,
+        Conf::SequenceNode& seq)
 {
     using namespace Conf;
 
@@ -260,12 +326,13 @@ VideoPreference::serialize(Conf::YamlEmitter &emitter)
 
     if (!deviceList_.empty()) {
         /* add active device first */
-        if (active_ != deviceList_.end())
-            addDeviceToSequence(*active_, sequence);
+        auto it = lookupDevice(default_);
+        if (it != deviceList_.end())
+            addDeviceToSequence(*it, sequence);
 
-        for (auto iter = deviceList_.begin(); iter != deviceList_.end(); iter++)
-            if (iter != active_)
-                addDeviceToSequence(*iter, sequence);
+        for (const auto& dev : deviceList_)
+            if (dev.name != default_)
+                addDeviceToSequence(dev, sequence);
     }
 
     devices.setKeyValue("devices", &sequence);
@@ -300,15 +367,6 @@ VideoPreference::unserialize(const Conf::YamlNode &node)
                 devnode->getValue("size", &device.size);
                 devnode->getValue("rate", &device.rate);
 
-                // Overwrite empty values with default one
-                VideoDevice def = defaultPreferences(device.name);
-                if (device.channel.empty())
-                    device.channel = def.channel;
-                if (device.size.empty())
-                    device.size = def.size;
-                if (device.rate.empty())
-                    device.rate = def.rate;
-
                 deviceList_.push_back(device);
             }
 
@@ -316,13 +374,12 @@ VideoPreference::unserialize(const Conf::YamlNode &node)
              * The first device in the configuration is the last active one.
              * If it is unplugged, assign the next one.
              */
-            const auto plugged = getDeviceList();
-            for (active_ = deviceList_.begin();
-                 active_ != deviceList_.end();
-                 ++active_)
-                if (std::find(plugged.begin(), plugged.end(),
-                    (*active_).name) != plugged.end())
+            for (const auto& pref : deviceList_) {
+                if (lookupDevice(pref.name) != deviceList_.end()) {
+                    default_ = pref.name;
                     break;
+                }
+            }
         }
     }
 }

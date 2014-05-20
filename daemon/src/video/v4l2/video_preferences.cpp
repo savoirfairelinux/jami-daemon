@@ -70,13 +70,13 @@ class VideoDeviceMonitorImpl {
         ~VideoDeviceMonitorImpl();
         void start();
 
-        std::vector<std::string> getDeviceList();
-        std::vector<std::string> getChannelList(const std::string &dev);
-        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel);
-        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size);
+        std::vector<std::string> getDeviceList() const;
+        std::vector<std::string> getChannelList(const std::string &dev) const;
+        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel) const;
+        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size) const;
 
-        std::string getDeviceNode(const std::string &name);
-        unsigned getChannelNum(const std::string &dev, const std::string &name);
+        std::string getDeviceNode(const std::string &name) const;
+        unsigned getChannelNum(const std::string &dev, const std::string &name) const;
 
     private:
         void run();
@@ -87,7 +87,7 @@ class VideoDeviceMonitorImpl {
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices_;
         std::thread thread_;
-        std::mutex mutex_;
+        mutable std::mutex mutex_;
 
         udev *udev_;
         udev_monitor *udev_mon_;
@@ -340,7 +340,7 @@ bool VideoDeviceMonitorImpl::addDevice(const string &dev)
 }
 
 vector<string>
-VideoDeviceMonitorImpl::getChannelList(const string &dev)
+VideoDeviceMonitorImpl::getChannelList(const string &dev) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -351,7 +351,7 @@ VideoDeviceMonitorImpl::getChannelList(const string &dev)
 }
 
 vector<string>
-VideoDeviceMonitorImpl::getSizeList(const string &dev, const string &channel)
+VideoDeviceMonitorImpl::getSizeList(const string &dev, const string &channel) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -362,7 +362,7 @@ VideoDeviceMonitorImpl::getSizeList(const string &dev, const string &channel)
 }
 
 vector<string>
-VideoDeviceMonitorImpl::getRateList(const string &dev, const string &channel, const std::string &size)
+VideoDeviceMonitorImpl::getRateList(const string &dev, const string &channel, const std::string &size) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -372,7 +372,7 @@ VideoDeviceMonitorImpl::getRateList(const string &dev, const string &channel, co
         return vector<string>();
 }
 
-vector<string> VideoDeviceMonitorImpl::getDeviceList()
+vector<string> VideoDeviceMonitorImpl::getDeviceList() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     vector<string> v;
@@ -392,7 +392,8 @@ VideoDeviceMonitorImpl::findDevice(const string &name) const
     return iter;
 }
 
-unsigned VideoDeviceMonitorImpl::getChannelNum(const string &dev, const string &name)
+unsigned
+VideoDeviceMonitorImpl::getChannelNum(const string &dev, const string &name) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
@@ -402,7 +403,8 @@ unsigned VideoDeviceMonitorImpl::getChannelNum(const string &dev, const string &
         return 0;
 }
 
-string VideoDeviceMonitorImpl::getDeviceNode(const string &name)
+string
+VideoDeviceMonitorImpl::getDeviceNode(const string &name) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     Devices::const_iterator iter(findDevice(name));
@@ -417,8 +419,7 @@ using namespace sfl_video;
 
 VideoPreference::VideoPreference() :
     monitorImpl_(new VideoDeviceMonitorImpl),
-    deviceList_(),
-    active_(deviceList_.end())
+    deviceList_()
 {
     monitorImpl_->start();
 }
@@ -431,25 +432,25 @@ VideoPreference::~VideoPreference()
  */
 
 std::vector<std::string>
-VideoPreference::getDeviceList()
+VideoPreference::getDeviceList() const
 {
     return monitorImpl_->getDeviceList();
 }
 
 std::vector<std::string>
-VideoPreference::getChannelList(const std::string &dev)
+VideoPreference::getChannelList(const std::string &dev) const
 {
     return monitorImpl_->getChannelList(dev);
 }
 
 std::vector<std::string>
-VideoPreference::getSizeList(const std::string &dev, const std::string &channel)
+VideoPreference::getSizeList(const std::string &dev, const std::string &channel) const
 {
     return monitorImpl_->getSizeList(dev, channel);
 }
 
 std::vector<std::string>
-VideoPreference::getRateList(const std::string &dev, const std::string &channel, const std::string &size)
+VideoPreference::getRateList(const std::string &dev, const std::string &channel, const std::string &size) const
 {
     return monitorImpl_->getRateList(dev, channel, size);
 }
@@ -459,7 +460,7 @@ VideoPreference::getRateList(const std::string &dev, const std::string &channel,
  */
 
 std::map<std::string, std::string>
-VideoPreference::deviceToSettings(const VideoDevice& dev)
+VideoPreference::deviceToSettings(const VideoDevice& dev) const
 {
     std::map<std::string, std::string> settings;
 
