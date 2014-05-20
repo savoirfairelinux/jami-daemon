@@ -49,6 +49,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <fcntl.h>
+#include <wordexp.h>
 #include <pwd.h>
 #include <cerrno>
 #include "fileutils.h"
@@ -158,6 +159,42 @@ create_pidfile()
     }
 
     return f;
+}
+
+std::string
+expand_path(const std::string &path)
+{
+    std::string result;
+
+    wordexp_t p;
+    int ret = wordexp(path.c_str(), &p, 0);
+
+    switch (ret) {
+        case WRDE_BADCHAR:
+            ERROR("Illegal occurrence of newline or one of |, &, ;, <, >, "
+                  "(, ), {, }.");
+            break;
+        case WRDE_BADVAL:
+            ERROR("An undefined shell variable was referenced");
+            break;
+        case WRDE_CMDSUB:
+            ERROR("Command substitution occurred");
+            break;
+        case WRDE_NOSPACE:
+            ERROR("Out of memory.");
+            break;
+        case WRDE_SYNTAX:
+            ERROR("Shell syntax error");
+            break;
+        default:
+            if (p.we_wordc > 0)
+                result = std::string(p.we_wordv[0]);
+            break;
+    }
+
+    wordfree(&p);
+
+    return result;
 }
 
 bool isDirectoryWritable(const std::string &directory)
