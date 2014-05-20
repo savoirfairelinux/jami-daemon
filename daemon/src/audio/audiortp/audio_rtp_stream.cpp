@@ -165,8 +165,8 @@ AudioRtpContext::AudioRtpContext(AudioFormat f) :
     , resampledData_(0, AudioFormat::MONO)
     , resampler_(nullptr)
 #if HAVE_SPEEXDSP
-    , dsp_()
     , dspMutex_()
+    , dsp_()
 #endif
 {}
 

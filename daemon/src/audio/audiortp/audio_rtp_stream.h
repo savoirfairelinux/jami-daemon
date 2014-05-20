@@ -77,8 +77,8 @@ class AudioRtpContext {
 #if HAVE_SPEEXDSP
     void resetDSP();
     void applyDSP(AudioBuffer &rawBuffer);
-    std::unique_ptr<DSP> dsp_;
     std::mutex dspMutex_;
+    std::unique_ptr<DSP> dsp_;
 #endif
 
     friend class AudioRtpStream;
