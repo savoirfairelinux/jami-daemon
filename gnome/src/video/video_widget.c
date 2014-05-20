@@ -72,6 +72,7 @@ struct _VideoWidgetPrivate {
     GtkWidget       *toolbar;
     GHashTable      *video_handles;
     GSettings       *settings;
+    gboolean        fullscreen;
 };
 
 /* Define the VideoWidget type and inherit from GtkWindow */
@@ -95,6 +96,7 @@ static void       video_widget_show_camera_in_screen    (GtkWidget *, VIDEO_AREA
 static void       video_widget_hide_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
 static void       cleanup_video_handle                  (gpointer);
 static gboolean   on_configure_event_cb                 (GtkWidget *, GdkEventConfigure *, gpointer);
+static void       on_button_press_event_cb              (GtkWidget *, GdkEventButton *, gpointer);
 
 
 
@@ -158,6 +160,7 @@ video_widget_init(VideoWidget *self)
     priv->toolbar = NULL;
     priv->video_handles = NULL;
     priv->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
+    priv->fullscreen = FALSE;
 
     /* init video_screen */
     priv->video_screen.screen = NULL;
@@ -215,6 +218,11 @@ video_widget_draw(GtkWidget *self)
     /* handle configure event */
     g_signal_connect(self, "configure-event",
             G_CALLBACK(on_configure_event_cb),
+            NULL);
+
+    /* handle button event */
+    g_signal_connect(self, "button_press_event",
+            G_CALLBACK(on_button_press_event_cb),
             NULL);
 
 }
@@ -670,6 +678,7 @@ cleanup_video_handle(gpointer data)
     g_free(v);
 }
 
+
 /*
  * on_configure_event_cb()
  *
@@ -693,6 +702,49 @@ on_configure_event_cb(GtkWidget *self,
     /* let the event propagate otherwise the video will not be re-scaled */
     return FALSE;
 }
+
+
+/*
+ * Handle button event in the video windows.
+ */
+static void
+on_button_press_event_cb(GtkWidget *self,
+                         GdkEventButton *event,
+                         gpointer data)
+{
+    g_return_if_fail(IS_VIDEO_WIDGET(self));
+
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+
+    /* on double click */
+    if (event->type == GDK_2BUTTON_PRESS) {
+
+        /* Fullscreen switch on/off */
+        priv->fullscreen = !priv->fullscreen;
+
+        if (priv->fullscreen) {
+
+            gtk_window_fullscreen(GTK_WINDOW(self));
+
+            /* if there a toolbar we don't want it in the fullscreen,
+             * we only care about the video_screen */
+            if(priv->toolbar)
+                gtk_widget_hide(priv->toolbar);
+
+        } else {
+
+            gtk_window_unfullscreen(GTK_WINDOW(self));
+
+            /* re-show the toolbar */
+            if(priv->toolbar)
+                gtk_widget_show(priv->toolbar);
+
+        }
+
+    }
+
+}
+
 
 /*
  * video_widget_camera_start()
