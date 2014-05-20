@@ -53,6 +53,7 @@ namespace fileutils {
     void set_program_dir(char *program_path);
     const char *get_program_dir();
     std::string get_data_dir();
+    std::string expand(const std::string &directory);
     bool isDirectoryWritable(const std::string &directory);
     struct FileHandle {
         int fd;

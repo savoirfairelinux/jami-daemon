@@ -160,6 +160,31 @@ create_pidfile()
     return f;
 }
 
+std::string expand(const std::string &in)
+{
+    std::string copy = in;
+    std::string::size_type tilde = copy.find ("~");
+    std::string::size_type slash;
+
+    if (tilde != std::string::npos) {
+        std::string home = get_home_dir();
+
+        // Convert: ~ --> /home/user
+        if (copy.length() == 1)
+            copy = home;
+        // Convert: ~/x --> /home/user/x
+        else if (copy.length() > tilde + 1 && copy[tilde + 1] == '/')
+            copy.replace(tilde, 1, home);
+        // Convert: ~foo/x --> /home/foo/x
+        else if ((slash = copy.find("/", tilde)) != std::string::npos) {
+            std::string name = copy.substr (tilde + 1, slash - tilde - 1);
+            copy.replace(tilde, slash - tilde, home);
+        }
+    }
+
+    return copy;
+}
+
 bool isDirectoryWritable(const std::string &directory)
 {
     return access(directory.c_str(), W_OK) == 0;
