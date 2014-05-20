@@ -55,8 +55,8 @@ namespace {
 
 void cleanup()
 {
-    std::cerr << "Killing all sipp processes" << std::endl;
-    system("killall sipp");
+    int ret = system("killall sipp");
+    std::cerr << "Killed all sip processes with status " << ret << std::endl;
 }
 
 int main(int argc, char* argv[])
