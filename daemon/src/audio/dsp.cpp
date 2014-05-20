@@ -34,16 +34,16 @@
 
 DSP::DSP(int smplPerFrame, int channels, int samplingRate) :
     smplPerFrame_(smplPerFrame),
-    noiseStates_(channels, nullptr)
+    dspStates_(channels, nullptr)
 {
-    for (auto &state : noiseStates_)
+    for (auto &state : dspStates_)
         state = speex_preprocess_state_init(smplPerFrame_, samplingRate);
 }
 
 void DSP::enableAGC()
 {
     // automatic gain control, range [1-32768]
-    for (auto &state : noiseStates_) {
+    for (auto state : dspStates_) {
         int enable = 1;
         speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC, &enable);
         int target = 16000;
@@ -53,7 +53,7 @@ void DSP::enableAGC()
 
 void DSP::disableAGC()
 {
-    for (auto &state : noiseStates_) {
+    for (auto state : dspStates_) {
         int enable = 0;
         speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_AGC, &enable);
     }
@@ -61,7 +61,7 @@ void DSP::disableAGC()
 
 void DSP::enableDenoise()
 {
-    for (auto &state : noiseStates_) {
+    for (auto state : dspStates_) {
         int enable = 1;
         speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
     }
@@ -69,7 +69,7 @@ void DSP::enableDenoise()
 
 void DSP::disableDenoise()
 {
-    for (auto &state : noiseStates_) {
+    for (auto state : dspStates_) {
         int enable = 0;
         speex_preprocess_ctl(state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
     }
@@ -77,7 +77,7 @@ void DSP::disableDenoise()
 
 DSP::~DSP()
 {
-    for (auto state : noiseStates_)
+    for (auto state : dspStates_)
         speex_preprocess_state_destroy(state);
 }
 
@@ -91,8 +91,8 @@ void DSP::process(AudioBuffer& buff, int samples)
     auto &channelData = buff.getData();
     size_t index = 0;
     for (auto &c : channelData) {
-        if (index < noiseStates_.size() and noiseStates_[index])
-            speex_preprocess_run(noiseStates_[index], c.data());
+        if (index < dspStates_.size() and dspStates_[index])
+            speex_preprocess_run(dspStates_[index], c.data());
         ++index;
     }
 }

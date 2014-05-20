@@ -52,7 +52,7 @@ class DSP {
 
         int smplPerFrame_;
         // one state per channel
-        std::vector<SpeexPreprocessState*> noiseStates_;
+        std::vector<SpeexPreprocessState*> dspStates_;
 };
 
 #endif // DSP_H_
