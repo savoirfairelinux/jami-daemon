@@ -47,6 +47,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <errno.h>
+#include <dirent.h>
 
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
@@ -190,6 +191,60 @@ out:
         gnutls_free(dt.data);
     gnutls_x509_crt_deinit(cert);
     return data;
+}
+
+/**
+ * Load all root CAs present in the system.
+ * Normally we should use gnutls_certificate_set_x509_system_trust(), but it requires
+ * GnuTLS 3.0 or later. As a workaround we iterate on the system trusted store folder
+ * and load every certificate available there.
+ */
+static int crypto_cert_load_trusted(gnutls_certificate_credentials_t cred)
+{
+    DIR *trust_store;
+    struct dirent *trust_ca;
+    struct stat statbuf;
+    int err, res = -1;
+    char ca_file[512];
+
+    trust_store = opendir("/etc/ssl/certs/");
+    if (!trust_store) {
+        ERROR("Failed to open system trusted store.");
+        goto out;
+    }
+    while ((trust_ca = readdir(trust_store)) != NULL) {
+        /* Prepare the string and check it is a regular file. */
+        err = snprintf(ca_file, sizeof(ca_file), "/etc/ssl/certs/%s", trust_ca->d_name);
+        if (err < 0) {
+            ERROR("snprintf() error");
+            goto out;
+        } else if (err >= sizeof(ca_file)) {
+            ERROR("File name too long '%s'.", trust_ca->d_name);
+            goto out;
+        }
+        err = stat(ca_file, &statbuf);
+        if (err < 0) {
+            ERROR("Failed to stat file '%s'.", ca_file);
+            goto out;
+        }
+        if (!S_ISREG(statbuf.st_mode))
+            continue;
+
+        /* Load the root CA. */
+        err = gnutls_certificate_set_x509_trust_file(cred, ca_file, GNUTLS_X509_FMT_PEM);
+        if (err == 0) {
+            ERROR("No trusted certificates found - %s", gnutls_strerror(err));
+            goto out;
+        } else if (err < 0) {
+            ERROR("Could not load trusted certificates - %s", gnutls_strerror(err));
+            goto out;
+        }
+    }
+
+    res = 0;
+out:
+    closedir(trust_store);
+    return res;
 }
 
 /**
@@ -373,8 +428,6 @@ out:
     return res;
 }
 
-#define TRUST_STORE_PATH "/etc/ssl/certs/ca-certificates.crt"
-
 /* mainly based on Fedora Defensive Coding tutorial
  * https://docs.fedoraproject.org/en-US/Fedora_Security_Team/html/Defensive_Coding/sect-Defensive_Coding-TLS-Client-GNUTLS.html
  */
@@ -388,6 +441,7 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     unsigned int certslen = 0;
     const gnutls_datum_t *certs = NULL;
     gnutls_x509_crt_t cert = NULL;
+
     char buf[4096];
     int sockfd;
     struct sockaddr_in name;
@@ -487,15 +541,9 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
         ERROR("Could not allocate credentials - %s", gnutls_strerror(err));
         goto out;
     }
-    /* gnutls_certificate_set_x509_system_trust needs GNUTLS version 3.0
-     * or newer, so we hard-code the path to the certificate store instead. */
-    err = gnutls_certificate_set_x509_trust_file(cred, TRUST_STORE_PATH,
-                                                 GNUTLS_X509_FMT_PEM);
-    if (err == 0) {
-        ERROR("No trusted certificates found - %s", gnutls_strerror(err));
-        goto out;
-    } else if (err < 0) {
-        ERROR("Could not load trusted certificates - %s", gnutls_strerror(err));
+    err = crypto_cert_load_trusted(cred);
+    if (err != GNUTLS_E_SUCCESS) {
+        ERROR("Could not load credentials.");
         goto out;
     }
 
