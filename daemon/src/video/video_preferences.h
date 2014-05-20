@@ -77,13 +77,13 @@ class VideoPreference : public Serializable
         std::string getDevice();
         void setDevice(const std::string& name);
 
-        std::string getChannel() const;
+        std::string getChannel();
         void setChannel(const std::string& channel);
 
-        std::string getSize() const;
+        std::string getSize();
         void setSize(const std::string& size);
 
-        std::string getRate() const;
+        std::string getRate();
         void setRate(const std::string& rate);
 
         /*
@@ -108,11 +108,12 @@ class VideoPreference : public Serializable
          * Vector containing the video devices in order of preference
          * (the first is the active one).
          */
+        std::string default_ = "";
         std::vector<VideoDevice> deviceList_;
-        std::vector<VideoDevice>::iterator active_;
         std::vector<VideoDevice>::iterator lookupDevice(const std::string& name);
+        bool validatePreference(const VideoDevice& dev);
         std::map<std::string, std::string> deviceToSettings(const VideoDevice& dev);
-        static void addDeviceToSequence(VideoDevice &dev, Conf::SequenceNode &seq);
+        static void addDeviceToSequence(const VideoDevice& dev, Conf::SequenceNode& seq);
 
         VideoDevice defaultPreferences(const std::string& name);
         void addDevice(const std::string &name);

@@ -417,8 +417,7 @@ using namespace sfl_video;
 
 VideoPreference::VideoPreference() :
     monitorImpl_(new VideoDeviceMonitorImpl),
-    deviceList_(),
-    active_(deviceList_.end())
+    deviceList_()
 {
     monitorImpl_->start();
 }
