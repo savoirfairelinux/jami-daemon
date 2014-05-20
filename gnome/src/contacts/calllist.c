@@ -206,6 +206,8 @@ calllist_get_nth(calltab_t* tab, guint n)
 callable_obj_t *
 calllist_get_call(calltab_t* tab, const gchar * callID)
 {
+    g_return_val_if_fail(tab, NULL);
+
     GList * c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL) {
