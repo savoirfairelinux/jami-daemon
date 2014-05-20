@@ -56,6 +56,17 @@ AS_IF([test "x$enable_presence" != "xno"], [
     AM_CONDITIONAL(SFL_PRESENCE, true)],
     AM_CONDITIONAL(SFL_PRESENCE, false))
 
+dnl --enable-debug is the default
+AC_ARG_ENABLE([debug], AS_HELP_STRING([--disable-debug],
+              [Disable assertions/debug symbols]))
+
+AS_IF([test "x$enable_debug" != "xno"],
+      [CFLAGS="$CFLAGS -ggdb"],
+      [
+       AH_TEMPLATE(NDEBUG, [Define to 1 if debug code should NOT be compiled])
+       AH_TEMPLATE(G_DISABLE_ASSERT, [Define to 1 if debug code should NOT be compiled])
+       AC_DEFINE(NDEBUG)
+       AC_DEFINE(G_DISABLE_ASSERT)])
 
 # Check for gtk+-3.0
 PKG_CHECK_MODULES(GTK, gtk+-3.0, [AC_MSG_NOTICE(Using gtk+-3.0)],
