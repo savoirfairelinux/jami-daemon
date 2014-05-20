@@ -307,7 +307,11 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
                        COLUMN_ACCOUNT_ID, &id, -1);
 
     account_t *account = account_list_get_by_id(id);
-    g_assert(account);
+    if (!account) {
+        g_warning("Invalid account %s", id);
+        return;
+    }
+
     enable = !enable;
 
     // Store value
