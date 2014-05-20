@@ -131,10 +131,10 @@ bool AudioRtpStream::tryToSwitchDecoder(int newPt)
         if (codec == nullptr || codec->getPayloadType() != newPt) continue;
         AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
         codec->setOptimalFormat(f.sample_rate, f.nb_channels);
-        decoder_.payloadType = codec->getPayloadType();
-        decoder_.frameSize = codec->getFrameSize();
-        decoder_.format.sample_rate = codec->getCurrentClockRate();
-        decoder_.format.nb_channels = codec->getCurrentChannels();
+        decoder_.payloadType_ = codec->getPayloadType();
+        decoder_.frameSize_ = codec->getFrameSize();
+        decoder_.format_.sample_rate = codec->getCurrentClockRate();
+        decoder_.format_.nb_channels = codec->getCurrentChannels();
         hasDynamicPayloadType_ = codec->hasDynamicPayload();
         resetDecoderPLC(codec);
         currentDecoderIndex_ = i; // FIXME: this is not reliable
@@ -151,30 +151,30 @@ void AudioRtpStream::resetDecoderPLC(const sfl::AudioCodec * codec)
     pj_pool_reset(plcPool_);
     plcDec_.clear();
     if (not codec->supportsPacketLossConcealment()) {
-        plcDec_.insert(plcDec_.begin(), decoder_.format.nb_channels, nullptr);
-        for (unsigned i = 0; i < decoder_.format.nb_channels; i++)
-            pjmedia_plc_create(plcPool_, decoder_.format.sample_rate, decoder_.frameSize, 0, &plcDec_[i]);
+        plcDec_.insert(plcDec_.begin(), decoder_.format_.nb_channels, nullptr);
+        for (unsigned i = 0; i < decoder_.format_.nb_channels; i++)
+            pjmedia_plc_create(plcPool_, decoder_.format_.sample_rate, decoder_.frameSize_, 0, &plcDec_[i]);
     }
 }
 
 AudioRtpContext::AudioRtpContext(AudioFormat f) :
-    fadeFactor(0.)
-    , payloadType(0)
-    , frameSize(0)
-    , format(f)
-    , resampledData(0, AudioFormat::MONO)
-    , resampler(nullptr)
+    fadeFactor_(0.)
+    , payloadType_(0)
+    , frameSize_(0)
+    , format_(f)
+    , resampledData_(0, AudioFormat::MONO)
+    , resampler_(nullptr)
 #if HAVE_SPEEXDSP
-    , dsp()
-    , dspMutex()
+    , dsp_()
+    , dspMutex_()
 #endif
 {}
 
 AudioRtpContext::~AudioRtpContext()
 {
 #if HAVE_SPEEXDSP
-    std::lock_guard<std::mutex> lock(dspMutex);
-    dsp.reset(nullptr);
+    std::lock_guard<std::mutex> lock(dspMutex_);
+    dsp_.reset(nullptr);
 #endif
 }
 
@@ -182,25 +182,25 @@ void AudioRtpContext::resetResampler()
 {
     // initialize resampler using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
-    resampler.reset(new Resampler(format.sample_rate));
+    resampler_.reset(new Resampler(format_.sample_rate));
 }
 
 void AudioRtpContext::fadeIn(AudioBuffer& buf)
 {
-    if (fadeFactor >= 1.0)
+    if (fadeFactor_ >= 1.0)
         return;
     // http://en.wikipedia.org/wiki/Smoothstep
-    double gain = fadeFactor * fadeFactor * (3. - 2. * fadeFactor);
+    const double gain = fadeFactor_ * fadeFactor_ * (3. - 2. * fadeFactor_);
     buf.applyGain(gain);
-    fadeFactor += buf.size() / (double) format.sample_rate;
+    fadeFactor_ += buf.size() / (double) format_.sample_rate;
 }
 
 #if HAVE_SPEEXDSP
 void AudioRtpContext::resetDSP()
 {
-    std::lock_guard<std::mutex> lock(dspMutex);
-    assert(frameSize);
-    dsp.reset(new DSP(frameSize, format.nb_channels, format.sample_rate));
+    std::lock_guard<std::mutex> lock(dspMutex_);
+    assert(frameSize_);
+    dsp_.reset(new DSP(frameSize_, format_.nb_channels, format_.sample_rate));
 }
 
 void AudioRtpContext::applyDSP(AudioBuffer &buffer)
@@ -209,21 +209,21 @@ void AudioRtpContext::applyDSP(AudioBuffer &buffer)
     const bool agc = Manager::instance().audioPreference.isAGCEnabled();
 
     if (denoise or agc) {
-        std::lock_guard<std::mutex> lock(dspMutex);
-        if (!dsp)
+        std::lock_guard<std::mutex> lock(dspMutex_);
+        if (!dsp_)
             return;
 
         if (denoise)
-            dsp->enableDenoise();
+            dsp_->enableDenoise();
         else
-            dsp->disableDenoise();
+            dsp_->disableDenoise();
 
         if (agc)
-            dsp->enableAGC();
+            dsp_->enableAGC();
         else
-            dsp->disableAGC();
+            dsp_->disableAGC();
 
-        dsp->process(buffer, frameSize);
+        dsp_->process(buffer, frameSize_);
     }
 }
 #endif
@@ -252,12 +252,12 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     codec.setOptimalFormat(f.sample_rate, f.nb_channels);
 
     const int pt = codec.getPayloadType();
-    encoder_.payloadType = decoder_.payloadType = pt;
-    encoder_.frameSize = decoder_.frameSize = codec.getFrameSize();
+    encoder_.payloadType_ = decoder_.payloadType_ = pt;
+    encoder_.frameSize_ = decoder_.frameSize_ = codec.getFrameSize();
 
     AudioFormat codecFormat(codec.getCurrentClockRate(), codec.getCurrentChannels());
-    if (codecFormat != decoder_.format or codecFormat != encoder_.format) {
-        encoder_.format = decoder_.format = codecFormat;
+    if (codecFormat != decoder_.format_ or codecFormat != encoder_.format_) {
+        encoder_.format_ = decoder_.format_ = codecFormat;
 #if HAVE_SPEEXDSP
         resetDSP();
 #endif
@@ -288,8 +288,8 @@ bool AudioRtpStream::waitForDataEncode(const std::chrono::milliseconds& max_wait
 {
     const auto &mainBuffer = Manager::instance().getMainBuffer();
     const AudioFormat mainBuffFormat = mainBuffer.getInternalAudioFormat();
-    const double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format.sample_rate;
-    const size_t samplesToGet = resampleFactor * encoder_.frameSize;
+    const double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format_.sample_rate;
+    const size_t samplesToGet = resampleFactor * encoder_.frameSize_;
 
     return mainBuffer.waitForDataAvailable(id_, samplesToGet, max_wait);
 }
@@ -301,10 +301,10 @@ size_t AudioRtpStream::processDataEncode()
 
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
 
-    double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format.sample_rate;
+    double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format_.sample_rate;
 
     // compute nb of byte to get corresponding to 1 audio frame
-    const size_t samplesToGet = resampleFactor * encoder_.frameSize;
+    const size_t samplesToGet = resampleFactor * encoder_.frameSize_;
 
     if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
         return 0;
@@ -319,18 +319,18 @@ size_t AudioRtpStream::processDataEncode()
     }
 
     AudioBuffer *out = &micData_;
-    if (encoder_.format.sample_rate != mainBuffFormat.sample_rate) {
-        if (!encoder_.resampler) {
+    if (encoder_.format_.sample_rate != mainBuffFormat.sample_rate) {
+        if (!encoder_.resampler_) {
             ERROR("Resampler already destroyed");
             return 0;
         }
-        encoder_.resampledData.setChannelNum(mainBuffFormat.nb_channels);
-        encoder_.resampledData.setSampleRate(encoder_.format.sample_rate);
-        encoder_.resampler->resample(micData_, encoder_.resampledData);
-        out = &encoder_.resampledData;
+        encoder_.resampledData_.setChannelNum(mainBuffFormat.nb_channels);
+        encoder_.resampledData_.setSampleRate(encoder_.format_.sample_rate);
+        encoder_.resampler_->resample(micData_, encoder_.resampledData_);
+        out = &encoder_.resampledData_;
     }
-    if (encoder_.format.nb_channels != mainBuffFormat.nb_channels)
-        out->setChannelNum(encoder_.format.nb_channels, true);
+    if (encoder_.format_.nb_channels != mainBuffFormat.nb_channels)
+        out->setChannelNum(encoder_.format_.nb_channels, true);
 
     encoder_.fadeIn(*out);
 #if HAVE_SPEEXDSP
@@ -354,7 +354,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     if (isDead())
         return;
 
-    const int decPt = decoder_.payloadType;
+    const int decPt = decoder_.payloadType_;
     if (decPt != payloadType) {
         const bool switched = tryToSwitchDecoder(payloadType);
 
@@ -369,7 +369,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
         }
     }
 
-    rawBuffer_.setFormat(decoder_.format);
+    rawBuffer_.setFormat(decoder_.format_);
     rawBuffer_.resize(RAW_BUFFER_SIZE);
     {
         std::lock_guard<std::mutex> lock(codecDecMutex_);
@@ -382,7 +382,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
             int decoded = codec->decode(rawBuffer_.getData(), spkrData, size);
             rawBuffer_.resize(decoded);
             if (not plcDec_.empty()) {
-                for (unsigned i = 0; i < decoder_.format.nb_channels; ++i) {
+                for (unsigned i = 0; i < decoder_.format_.nb_channels; ++i) {
                     pjmedia_plc_save(plcDec_[i], rawBuffer_.getChannel(i)->data());
                 }
             }
@@ -390,8 +390,8 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
             int decoded = codec->decode(rawBuffer_.getData());
             rawBuffer_.resize(decoded);
         } else { // Generic PJSIP Packet loss concealment using codec
-            rawBuffer_.resize(decoder_.frameSize);
-            for (unsigned i = 0; i < decoder_.format.nb_channels; ++i) {
+            rawBuffer_.resize(decoder_.frameSize_);
+            for (unsigned i = 0; i < decoder_.format_.nb_channels; ++i) {
                 pjmedia_plc_generate(plcDec_[i], rawBuffer_.getChannel(i)->data());
             }
         }
@@ -408,14 +408,14 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     AudioFormat decFormat = out->getFormat();
     AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
-        if (!decoder_.resampler) {
+        if (!decoder_.resampler_) {
             ERROR("Resampler already destroyed");
             return;
         }
-        decoder_.resampledData.setChannelNum(decFormat.nb_channels);
-        decoder_.resampledData.setSampleRate(mainBuffFormat.sample_rate);
-        decoder_.resampler->resample(rawBuffer_, decoder_.resampledData);
-        out = &decoder_.resampledData;
+        decoder_.resampledData_.setChannelNum(decFormat.nb_channels);
+        decoder_.resampledData_.setSampleRate(mainBuffFormat.sample_rate);
+        decoder_.resampler_->resample(rawBuffer_, decoder_.resampledData_);
+        out = &decoder_.resampledData_;
     }
     if (decFormat.nb_channels != mainBuffFormat.nb_channels)
         out->setChannelNum(mainBuffFormat.nb_channels, true);
@@ -450,20 +450,20 @@ AudioRtpStream::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
 int
 AudioRtpStream::getEncoderPayloadType() const
 {
-    return encoder_.payloadType;
+    return encoder_.payloadType_;
 }
 
 int
 AudioRtpStream::getEncoderFrameSize() const
 {
-    return encoder_.frameSize;
+    return encoder_.frameSize_;
 }
 
 
 int
 AudioRtpStream::getTransportRate() const
 {
-    const int transportRate = encoder_.frameSize / encoder_.format.sample_rate / 1000;
+    const int transportRate = encoder_.frameSize_ / encoder_.format_.sample_rate / 1000;
     return transportRate > 0 ? transportRate : 20;
 }
 

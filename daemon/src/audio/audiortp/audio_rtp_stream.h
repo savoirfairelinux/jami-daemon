@@ -68,17 +68,17 @@ class AudioRtpContext {
     static constexpr double FADEIN_STEP_SIZE = 4.0;
 
     void resetResampler();
-    double fadeFactor;
-    int payloadType;
-    int frameSize;
-    AudioFormat format;
-    AudioBuffer resampledData;
-    std::unique_ptr<Resampler> resampler;
+    double fadeFactor_;
+    int payloadType_;
+    int frameSize_;
+    AudioFormat format_;
+    AudioBuffer resampledData_;
+    std::unique_ptr<Resampler> resampler_;
 #if HAVE_SPEEXDSP
     void resetDSP();
     void applyDSP(AudioBuffer &rawBuffer);
-    std::unique_ptr<DSP> dsp;
-    std::mutex dspMutex;
+    std::unique_ptr<DSP> dsp_;
+    std::mutex dspMutex_;
 #endif
 
     friend class AudioRtpStream;
@@ -126,7 +126,7 @@ class AudioRtpStream {
 
         int getEncoderPayloadType() const;
         int getEncoderFrameSize() const;
-        AudioFormat getEncoderFormat() const { return encoder_.format; }
+        AudioFormat getEncoderFormat() const { return encoder_.format_; }
 
 #if HAVE_SPEEXDSP
         void initDSP();
