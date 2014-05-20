@@ -33,6 +33,7 @@
 
 #include <speex/speex_preprocess.h>
 #include <vector>
+#include <memory>
 #include "noncopyable.h"
 
 class AudioBuffer;
@@ -40,7 +41,6 @@ class AudioBuffer;
 class DSP {
     public:
         DSP(int smplPerFrame, int channels, int samplingRate);
-        ~DSP();
         void enableAGC();
         void disableAGC();
         void enableDenoise();
@@ -49,10 +49,12 @@ class DSP {
 
     private:
         NON_COPYABLE(DSP);
+        static void speexStateDeleter(SpeexPreprocessState *state);
+        typedef std::unique_ptr<SpeexPreprocessState, decltype(&speexStateDeleter)> SpeexStatePtr;
 
         int smplPerFrame_;
         // one state per channel
-        std::vector<SpeexPreprocessState*> noiseStates_;
+        std::vector<SpeexStatePtr> dspStates_;
 };
 
 #endif // DSP_H_
