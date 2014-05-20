@@ -492,11 +492,12 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
 bool
 AudioPreference::setRecordPath(const std::string &r)
 {
-    if (fileutils::isDirectoryWritable(r)) {
-        recordpath_ = r;
+    std::string path = fileutils::expand_path(r);
+    if (fileutils::isDirectoryWritable(path)) {
+        recordpath_ = path;
         return true;
     } else {
-        ERROR("%s is not writable, cannot be the recording path", r.c_str());
+        ERROR("%s is not writable, cannot be the recording path", path.c_str());
         return false;
     }
 }
