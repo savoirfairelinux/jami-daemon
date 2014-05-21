@@ -52,18 +52,18 @@ class MainBufferTest : public CppUnit::TestCase {
          */
         CPPUNIT_TEST_SUITE(MainBufferTest);
         CPPUNIT_TEST(testRingBufferCreation);
-        CPPUNIT_TEST(testRingBufferReadPointer);
+        CPPUNIT_TEST(testRingBufferOffset);
         CPPUNIT_TEST(testCallIDSet);
         CPPUNIT_TEST(testRingBufferInt);
         CPPUNIT_TEST(testRingBufferNonDefaultID);
         //CPPUNIT_TEST(testRingBufferFloat);
-        CPPUNIT_TEST(testTwoPointer);
+        CPPUNIT_TEST(testTwoOffset);
         CPPUNIT_TEST(testBindUnbindBuffer);
         CPPUNIT_TEST(testGetPutDataByID);
         CPPUNIT_TEST(testGetPutData);
         CPPUNIT_TEST(testDiscardFlush);
-        CPPUNIT_TEST(testReadPointerInit);
-        CPPUNIT_TEST(testRingBufferSeveralPointers);
+        CPPUNIT_TEST(testOffsetInit);
+        CPPUNIT_TEST(testRingBufferSeveralOffsets);
         CPPUNIT_TEST(testConference);
         CPPUNIT_TEST_SUITE_END();
 
@@ -73,7 +73,7 @@ class MainBufferTest : public CppUnit::TestCase {
 
         void testRingBufferCreation();
 
-        void testRingBufferReadPointer();
+        void testRingBufferOffset();
 
         void testCallIDSet();
 
@@ -83,7 +83,7 @@ class MainBufferTest : public CppUnit::TestCase {
 
         void testRingBufferFloat();
 
-        void testTwoPointer();
+        void testTwoOffset();
 
         void testBindUnbindBuffer();
 
@@ -95,9 +95,9 @@ class MainBufferTest : public CppUnit::TestCase {
 
         void testDiscardFlush();
 
-        void testReadPointerInit();
+        void testReadOffsetInit();
 
-        void testRingBufferSeveralPointers();
+        void testRingBufferSeveralOffsets();
 
         void testConference();
 

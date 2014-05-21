@@ -86,7 +86,7 @@ void MainBufferTest::testRingBufferCreation()
 }
 
 
-void MainBufferTest::testRingBufferReadPointer()
+void MainBufferTest::testRingBufferReadOffset()
 {
     TITLE();
     std::string call_id = "call id";
@@ -96,40 +96,40 @@ void MainBufferTest::testRingBufferReadPointer()
 
     RingBuffer* test_ring_buffer;
 
-    // test ring buffer read pointers (one per participant)
+    // test ring buffer read offsets (one per participant)
     mainbuffer_->createRingBuffer(call_id);
     test_ring_buffer = mainbuffer_->getRingBuffer(call_id).get();
-    CPPUNIT_ASSERT(test_ring_buffer->hasNoReadPointers());
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(read_id) == (int) NULL);
+    CPPUNIT_ASSERT(test_ring_buffer->hasNoReadOffsets());
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(read_id) == (int) NULL);
 
-    // create a read pointer
-    test_ring_buffer->createReadPointer(read_id);
-    CPPUNIT_ASSERT(!test_ring_buffer->hasNoReadPointers());
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(null_id) == (int) NULL);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(read_id) == 0);
+    // create a read offset
+    test_ring_buffer->createReadOffset(read_id);
+    CPPUNIT_ASSERT(!test_ring_buffer->hasNoReadOffsets());
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(null_id) == (int) NULL);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(read_id) == 0);
 
-    // store read pointer
-    test_ring_buffer->storeReadPointer(4, read_id);
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(read_id) == 4);
+    // store read offset
+    test_ring_buffer->storeReadOffset(4, read_id);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(read_id) == 4);
 
-    // recreate the same read pointer (should not add a pointer neither chage its value)
-    test_ring_buffer->createReadPointer(read_id);
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    test_ring_buffer->storeReadPointer(8, read_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(read_id) == 8);
+    // recreate the same read offset (should not add a offset neither chage its value)
+    test_ring_buffer->createReadOffset(read_id);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    test_ring_buffer->storeReadOffset(8, read_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(read_id) == 8);
 
-    // test getSmallest read pointer (to get the length available to put data in the buffer)
-    test_ring_buffer->createReadPointer(other_id);
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    test_ring_buffer->storeReadPointer(4, other_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getSmallestReadPointer() == 4);
+    // test getSmallest read offset (to get the length available to put data in the buffer)
+    test_ring_buffer->createReadOffset(other_id);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    test_ring_buffer->storeReadOffset(4, other_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getSmallestReadOffset() == 4);
 
-    // remove read pointers
-    test_ring_buffer->removeReadPointer(other_id);
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    test_ring_buffer->removeReadPointer(read_id);
-    CPPUNIT_ASSERT(test_ring_buffer->hasNoReadPointers());
+    // remove read offsets
+    test_ring_buffer->removeReadOffset(other_id);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    test_ring_buffer->removeReadOffset(read_id);
+    CPPUNIT_ASSERT(test_ring_buffer->hasNoReadOffsets());
 }
 
 
@@ -229,46 +229,46 @@ void MainBufferTest::testRingBufferInt()
 
     // initial state
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 0);
 
     // add some data
     test_ring_buffer->put(testbuf1); // +1 sample
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 0);
 
     // add some other data
     test_ring_buffer->put(testbuf2); // +3 samples
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 4);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 0);
 
     AudioBuffer testget(&testsample1, 1, AudioFormat::MONO);
 
-    // get some data (without any read pointers)
-    CPPUNIT_ASSERT(test_ring_buffer->hasNoReadPointers());
+    // get some data (without any read offsets)
+    CPPUNIT_ASSERT(test_ring_buffer->hasNoReadOffsets());
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(MainBuffer::DEFAULT_ID) == 4);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(MainBuffer::DEFAULT_ID) == 4);
     CPPUNIT_ASSERT(test_ring_buffer->get(testget, MainBuffer::DEFAULT_ID) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(MainBuffer::DEFAULT_ID) == 4);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(MainBuffer::DEFAULT_ID) == 4);
     CPPUNIT_ASSERT((*testget.getChannel(0))[0] == testsample1);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 0);
 
-    // get some data (with a read pointer)
-    CPPUNIT_ASSERT(test_ring_buffer->hasNoReadPointers());
-    test_ring_buffer->createReadPointer(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
+    // get some data (with a read offset)
+    CPPUNIT_ASSERT(test_ring_buffer->hasNoReadOffsets());
+    test_ring_buffer->createReadOffset(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(MainBuffer::DEFAULT_ID) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(MainBuffer::DEFAULT_ID) == 0);
 
     // add some data
     test_ring_buffer->put(testbuf1); // +1 sample
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 4);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 4);
 
     // add some other data
     test_ring_buffer->put(testbuf2); // +3 samples
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 4);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 4);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 4);
 
     CPPUNIT_ASSERT(test_ring_buffer->get(testget, MainBuffer::DEFAULT_ID) == 1);
 
@@ -279,7 +279,7 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(MainBuffer::DEFAULT_ID) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(MainBuffer::DEFAULT_ID) == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 9);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 9);
 
     // test flush data
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 0);
@@ -287,13 +287,13 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 1);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(MainBuffer::DEFAULT_ID) == 1);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(MainBuffer::DEFAULT_ID) == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 9);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 9);
 
     test_ring_buffer->discard(1, MainBuffer::DEFAULT_ID);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(MainBuffer::DEFAULT_ID) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(MainBuffer::DEFAULT_ID) == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 10);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 10);
 }
 
 
@@ -309,21 +309,21 @@ void MainBufferTest::testRingBufferNonDefaultID()
     AudioBuffer testbuf1(&testsample1, 1, AudioFormat::MONO); // 1 sample, 1 channel
     AudioBuffer testbuf2(testsample2, 3, AudioFormat::STEREO); // 3 samples, 2 channels
 
-    // test putData, getData with arbitrary read pointer id
+    // test putData, getData with arbitrary read offset id
     mainbuffer_->createRingBuffer(MainBuffer::DEFAULT_ID);
     RingBuffer* test_ring_buffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
-    test_ring_buffer->createReadPointer(test_id);
+    test_ring_buffer->createReadOffset(test_id);
 
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 0);
 
     test_ring_buffer->put(testbuf1);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 0);
 
     test_ring_buffer->put(testbuf2);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 4);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 0);
 
     AudioBuffer testget(1, AudioFormat::MONO);
     AudioBuffer testgetlarge(100, AudioFormat::MONO);
@@ -334,13 +334,13 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 3);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 3);
     CPPUNIT_ASSERT((*testget.getChannel(0))[0] == testsample1);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(test_id) == 1);
 
     CPPUNIT_ASSERT(test_ring_buffer->get(testgetlarge, test_id) == 3);
     CPPUNIT_ASSERT((*testgetlarge.getChannel(0))[1] == testsample2[2]);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 4);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(test_id) == 4);
 
 
     // test flush data
@@ -354,7 +354,7 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 5);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(test_id) == 5);
 
     // test flush data
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 0);
@@ -362,15 +362,15 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 1);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 1);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 5);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(test_id) == 5);
 
     test_ring_buffer->discard(1, test_id);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 6);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(test_id) == 6);
 
-    test_ring_buffer->removeReadPointer(test_id);
+    test_ring_buffer->removeReadOffset(test_id);
 }
 
 /*
@@ -382,7 +382,7 @@ void MainBufferTest::testRingBufferFloat()
 
     mainbuffer_->createRingBuffer(MainBuffer::DEFAULT_ID);
     RingBuffer* test_ring_buffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
-    test_ring_buffer->createReadPointer(MainBuffer::DEFAULT_ID);
+    test_ring_buffer->createReadOffset(MainBuffer::DEFAULT_ID);
 
 
     test_ring_buffer->put(&testfloat1, sizeof(float));
@@ -408,12 +408,12 @@ void MainBufferTest::testRingBufferFloat()
 }*/
 
 
-void MainBufferTest::testTwoPointer()
+void MainBufferTest::testTwoOffset()
 {
     TITLE();
     mainbuffer_->createRingBuffer(MainBuffer::DEFAULT_ID);
     RingBuffer* input_buffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
-    input_buffer->createReadPointer(MainBuffer::DEFAULT_ID);
+    input_buffer->createReadOffset(MainBuffer::DEFAULT_ID);
     RingBuffer* output_buffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
 
     SFLAudioSample test_sample = 12;
@@ -438,7 +438,7 @@ void MainBufferTest::testBindUnbindBuffer()
     CallIDMap::iterator iter_idset;
     CallIDSet::iterator iter_id;
 
-    ReadPointer::iterator iter_readpointer;
+    ReadOffset::iterator iter_readoffset;
 
     RingBuffer* ringbuffer;
 
@@ -477,17 +477,17 @@ void MainBufferTest::testBindUnbindBuffer()
 
     ringbuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id1).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
 
     // unbind test_id1 with MainBuffer::DEFAULT_ID
@@ -551,27 +551,27 @@ void MainBufferTest::testBindUnbindBuffer()
 
     ringbuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id1).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id2).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     // bind test_id1 with test_id2 (both testid1 and test_id2 already created)
     // calling it twice not supposed to break anything
@@ -616,33 +616,33 @@ void MainBufferTest::testBindUnbindBuffer()
 
     ringbuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id1).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id2).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     // unbind test_id1 with test_id2
     // calling it twice not supposed to break anything
@@ -683,27 +683,27 @@ void MainBufferTest::testBindUnbindBuffer()
 
     ringbuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id1).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id2).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
 
 
     DEBUG("ok1");
@@ -744,21 +744,21 @@ void MainBufferTest::testBindUnbindBuffer()
 
     ringbuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer == ringbuffer->readpointers_.end());
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset == ringbuffer->readoffsets_.end());
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id1).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer == ringbuffer->readpointers_.end());
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset == ringbuffer->readoffsets_.end());
 
     CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(test_id2) == NULL);
 
@@ -807,21 +807,21 @@ void MainBufferTest::testBindUnbindBuffer()
 
     ringbuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer == ringbuffer->readpointers_.end());
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset == ringbuffer->readoffsets_.end());
 
     ringbuffer = mainbuffer_->getRingBuffer(test_id1).get();
     CPPUNIT_ASSERT(ringbuffer != NULL);
-    CPPUNIT_ASSERT(not ringbuffer->hasNoReadPointers());
-    iter_readpointer = ringbuffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = ringbuffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer == ringbuffer->readpointers_.end());
+    CPPUNIT_ASSERT(not ringbuffer->hasNoReadOffsets());
+    iter_readoffset = ringbuffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = ringbuffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset == ringbuffer->readoffsets_.end());
 
 
 }
@@ -932,60 +932,60 @@ void MainBufferTest::testDiscardFlush()
     mainbuffer_->discard(1, test_id);
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 0);
 
-    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(test_id)->getReadPointer(MainBuffer::DEFAULT_ID) == 1);
-    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(test_id)->getReadPointer(test_id) == 0);
+    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(test_id)->getReadOffset(MainBuffer::DEFAULT_ID) == 1);
+    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(test_id)->getReadOffset(test_id) == 0);
 
 
-    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID)->getReadPointer(test_id) == 0);
+    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID)->getReadOffset(test_id) == 0);
     mainbuffer_->putData(test_input1, MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID)->getReadPointer(test_id) == 0);
+    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID)->getReadOffset(test_id) == 0);
 
     mainbuffer_->discard(1, test_id);
-    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID)->getReadPointer(test_id) == 1);
+    CPPUNIT_ASSERT(mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID)->getReadOffset(test_id) == 1);
 
     mainbuffer_->unBindCallID(test_id, MainBuffer::DEFAULT_ID);
 }
 
 
-void MainBufferTest::testReadPointerInit()
+void MainBufferTest::testReadOffsetInit()
 {
     TITLE();
-    std::string test_id = "test read pointer init";
+    std::string test_id = "test read offset init";
 
     mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
 
     RingBuffer* test_ring_buffer = mainbuffer_->getRingBuffer(test_id).get();
 
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 0);
-    test_ring_buffer->storeReadPointer(30, MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(MainBuffer::DEFAULT_ID) == 30);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 0);
+    test_ring_buffer->storeReadOffset(30, MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(MainBuffer::DEFAULT_ID) == 30);
 
-    test_ring_buffer->createReadPointer(test_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 0);
-    test_ring_buffer->storeReadPointer(10, test_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 10);
-    test_ring_buffer->removeReadPointer(test_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == (int) NULL);
-    test_ring_buffer->removeReadPointer("false id");
+    test_ring_buffer->createReadOffset(test_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(test_id) == 0);
+    test_ring_buffer->storeReadOffset(10, test_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(test_id) == 10);
+    test_ring_buffer->removeReadOffset(test_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadOffset(test_id) == (int) NULL);
+    test_ring_buffer->removeReadOffset("false id");
 
     // mainbuffer_->removeRingBuffer(test_id);
     mainbuffer_->unBindCallID(test_id, MainBuffer::DEFAULT_ID);
 }
 
 
-void MainBufferTest::testRingBufferSeveralPointers()
+void MainBufferTest::testRingBufferSeveralOffsets()
 {
     TITLE();
 
-    std::string test_id = "test multiple read pointer";
+    std::string test_id = "test multiple read offset";
     mainbuffer_->createRingBuffer(test_id);
     RingBuffer* test_ring_buffer = mainbuffer_->getRingBuffer(test_id).get();
 
-    std::string test_pointer1 = "test pointer 1";
-    std::string test_pointer2 = "test pointer 2";
+    std::string test_offset1 = "test offset 1";
+    std::string test_offset2 = "test offset 2";
 
-    test_ring_buffer->createReadPointer(test_pointer1);
-    test_ring_buffer->createReadPointer(test_pointer2);
+    test_ring_buffer->createReadOffset(test_offset1);
+    test_ring_buffer->createReadOffset(test_offset2);
 
     SFLAudioSample testint1 = 12;
     SFLAudioSample testint2 = 13;
@@ -1000,42 +1000,42 @@ void MainBufferTest::testRingBufferSeveralPointers()
 
     test_ring_buffer->put(test_input1);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_pointer1) == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_pointer2) == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer1) == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer2) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_offset1) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_offset2) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset1) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset2) == 1);
 
     test_ring_buffer->put(test_input2);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 2);
-    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_pointer1) == 2);
-    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_pointer2) == 2);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer1) == 2);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer2) == 2);
+    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_offset1) == 2);
+    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_offset2) == 2);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset1) == 2);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset2) == 2);
 
     test_ring_buffer->put(test_input3);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 3);
-    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_pointer1) == 3);
-    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_pointer2) == 3);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer1) == 3);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer2) == 3);
+    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_offset1) == 3);
+    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_offset2) == 3);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset1) == 3);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset2) == 3);
 
     test_ring_buffer->put(test_input4);
     CPPUNIT_ASSERT(test_ring_buffer->putLength() == 4);
-    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_pointer1) == 4);
-    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_pointer2) == 4);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer1) == 4);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer2) == 4);
+    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_offset1) == 4);
+    CPPUNIT_ASSERT(test_ring_buffer->getLength(test_offset2) == 4);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset1) == 4);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset2) == 4);
 
 
-    CPPUNIT_ASSERT(test_ring_buffer->get(test_output, test_pointer1) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->get(test_output, test_offset1) == 1);
     CPPUNIT_ASSERT((*test_output.getChannel(0))[0] == testint1);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer1) == 3);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer2) == 4);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset1) == 3);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset2) == 4);
 
-    CPPUNIT_ASSERT(test_ring_buffer->get(test_output, test_pointer2) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->get(test_output, test_offset2) == 1);
     CPPUNIT_ASSERT((*test_output.getChannel(0))[0] == testint1);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer1) == 3);
-    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_pointer2) == 3);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset1) == 3);
+    CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_offset2) == 3);
 
     // However, we should no be alowed to read in our own ring buffer
     // if we are either an AudioLayer or an RTP session
@@ -1049,11 +1049,11 @@ void MainBufferTest::testRingBufferSeveralPointers()
     // if we are either an AudioLayer or an RTP session
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(MainBuffer::DEFAULT_ID) == 4);
 
-    CPPUNIT_ASSERT(test_ring_buffer->discard(1, test_pointer1) == 1);
-    CPPUNIT_ASSERT(test_ring_buffer->discard(1, test_pointer2) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->discard(1, test_offset1) == 1);
+    CPPUNIT_ASSERT(test_ring_buffer->discard(1, test_offset2) == 1);
 
-    test_ring_buffer->removeReadPointer(test_pointer1);
-    test_ring_buffer->removeReadPointer(test_pointer2);
+    test_ring_buffer->removeReadOffset(test_offset1);
+    test_ring_buffer->removeReadOffset(test_offset2);
 
     mainbuffer_->removeRingBuffer(test_id);
 }
@@ -1068,7 +1068,7 @@ void MainBufferTest::testConference()
     std::string test_id2 = "participant B";
 
     RingBufferMap::iterator iter_ringbuffermap;
-    ReadPointer::iterator iter_readpointer;
+    ReadOffset::iterator iter_readoffset;
     CallIDMap::iterator iter_callidmap;
     CallIDSet::iterator iter_callidset;
 
@@ -1089,15 +1089,15 @@ void MainBufferTest::testConference()
     // ringbuffers
     CPPUNIT_ASSERT(mainbuffer_->ringBufferMap_.size() == 2);
     test_ring_buffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    iter_readpointer = test_ring_buffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    iter_readoffset = test_ring_buffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
     test_ring_buffer = mainbuffer_->getRingBuffer(test_id1).get();
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    iter_readpointer = test_ring_buffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    iter_readoffset = test_ring_buffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
     // callidmap
     CPPUNIT_ASSERT(mainbuffer_->callIDMap_.size() == 2);
     iter_callidmap = mainbuffer_->callIDMap_.find(MainBuffer::DEFAULT_ID);
@@ -1116,23 +1116,23 @@ void MainBufferTest::testConference()
     // ringbuffers
     CPPUNIT_ASSERT(mainbuffer_->ringBufferMap_.size() == 3);
     test_ring_buffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    iter_readpointer = test_ring_buffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = test_ring_buffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    iter_readoffset = test_ring_buffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = test_ring_buffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
     test_ring_buffer = mainbuffer_->getRingBuffer(test_id1).get();
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    iter_readpointer = test_ring_buffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    iter_readoffset = test_ring_buffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
     test_ring_buffer = mainbuffer_->getRingBuffer(test_id2).get();
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    iter_readpointer = test_ring_buffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    iter_readoffset = test_ring_buffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
     // callidmap
     CPPUNIT_ASSERT(mainbuffer_->callIDMap_.size() == 3);
     iter_callidmap = mainbuffer_->callIDMap_.find(MainBuffer::DEFAULT_ID);
@@ -1159,29 +1159,29 @@ void MainBufferTest::testConference()
     // ringbuffers
     CPPUNIT_ASSERT(mainbuffer_->ringBufferMap_.size() == 3);
     test_ring_buffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID).get();
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    iter_readpointer = test_ring_buffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = test_ring_buffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    iter_readoffset = test_ring_buffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = test_ring_buffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
     test_ring_buffer = mainbuffer_->getRingBuffer(test_id1).get();
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    iter_readpointer = test_ring_buffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = test_ring_buffer->readpointers_.find(test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    iter_readoffset = test_ring_buffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = test_ring_buffer->readoffsets_.find(test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id2);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
     test_ring_buffer = mainbuffer_->getRingBuffer(test_id2).get();
-    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadPointers());
-    iter_readpointer = test_ring_buffer->readpointers_.find(MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->first == MainBuffer::DEFAULT_ID);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
-    iter_readpointer = test_ring_buffer->readpointers_.find(test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(not test_ring_buffer->hasNoReadOffsets());
+    iter_readoffset = test_ring_buffer->readoffsets_.find(MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->first == MainBuffer::DEFAULT_ID);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
+    iter_readoffset = test_ring_buffer->readoffsets_.find(test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->first == test_id1);
+    CPPUNIT_ASSERT(iter_readoffset->second == 0);
     // callidmap
     CPPUNIT_ASSERT(mainbuffer_->callIDMap_.size() == 3);
     iter_callidmap = mainbuffer_->callIDMap_.find(MainBuffer::DEFAULT_ID);
