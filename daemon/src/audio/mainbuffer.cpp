@@ -185,7 +185,22 @@ void MainBuffer::removeReadOffsetFromRingBuffer(const std::string& call_id1,
                                                  const std::string& call_id2)
 {
     const auto ringbuffer_shared = getRingBuffer(call_id1);
-    if (ringbuffer_shared) {
+    if (!ringbuffer_shared) {
+        DEBUG("did not find ringbuffer %s", call_id1.c_str());
+        return;
+    }
+
+    /* Don't remove read offset if still in use (i.e. in wait ) */
+    if (ringbuffer_shared.use_count() >= 2) {
+
+        /* remove them from the maps, but owners will still have
+         * references to them */
+        if (ringbuffer_shared->readOffsetCount() <= 1) {
+            removeCallIDSet(call_id1);
+            removeRingBuffer(call_id1);
+        }
+    } else {
+
         ringbuffer_shared->removeReadOffset(call_id2);
 
         // Remove empty RingBuffer/CallIDSet
@@ -193,8 +208,6 @@ void MainBuffer::removeReadOffsetFromRingBuffer(const std::string& call_id1,
             removeCallIDSet(call_id1);
             removeRingBuffer(call_id1);
         }
-    } else {
-        DEBUG("did not find ringbuffer %s", call_id1.c_str());
     }
 }
 
