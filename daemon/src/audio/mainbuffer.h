@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@
 #include <set>
 #include <string>
 #include <mutex>
+#include <memory>
 
 class RingBuffer;
 
@@ -69,86 +70,91 @@ class MainBuffer {
          * Bind together two audio streams so taht a client will be able
          * to put and get data specifying its callid only.
          */
-        void bindCallID(const std::string &call_id1, const std::string &call_id2);
+        void bindCallID(const std::string& call_id1, const std::string& call_id2);
 
         /**
          * Add a new call_id to unidirectional outgoing stream
          * \param call_id New call id to be added for this stream
          * \param process_id Process that require this stream
          */
-        void bindHalfDuplexOut(const std::string &process_id, const std::string &call_id);
+        void bindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
 
         /**
          * Unbind two calls
          */
-        void unBindCallID(const std::string &call_id1, const std::string &call_id2);
+        void unBindCallID(const std::string& call_id1, const std::string& call_id2);
 
         /**
          * Unbind a unidirectional stream
          */
-        void unBindHalfDuplexOut(const std::string &process_id, const std::string &call_id);
+        void unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
 
-        void unBindAll(const std::string &call_id);
+        void unBindAll(const std::string& call_id);
 
-        void putData(AudioBuffer& buffer, const std::string &call_id);
+        void putData(AudioBuffer& buffer, const std::string& call_id);
 
-        bool waitForDataAvailable(const std::string &call_id, size_t min_data_length, const std::chrono::microseconds& max_wait) const;
+        bool waitForDataAvailable(const std::string& call_id, size_t min_data_length, const std::chrono::microseconds& max_wait) const;
 
-        size_t getData(AudioBuffer& buffer, const std::string &call_id);
-        size_t getAvailableData(AudioBuffer& buffer, const std::string &call_id);
+        size_t getData(AudioBuffer& buffer, const std::string& call_id);
+        size_t getAvailableData(AudioBuffer& buffer, const std::string& call_id);
 
-        size_t availableForGet(const std::string &call_id) const;
+        size_t availableForGet(const std::string& call_id) const;
 
-        size_t discard(size_t toDiscard, const std::string &call_id);
+        size_t discard(size_t toDiscard, const std::string& call_id);
 
-        void flush(const std::string &call_id);
+        void flush(const std::string& call_id);
 
         void flushAllBuffers();
 
     private:
         NON_COPYABLE(MainBuffer);
 
-        CallIDSet* getCallIDSet(const std::string &call_id);
-        const CallIDSet* getCallIDSet(const std::string &call_id) const;
+        bool hasCallIDSet(const std::string& call_id);
+        std::shared_ptr<CallIDSet> getCallIDSet(const std::string& call_id);
+        const std::shared_ptr<CallIDSet> getCallIDSet(const std::string& call_id) const;
 
-        void createCallIDSet(const std::string &set_id);
+        void createCallIDSet(const std::string& set_id);
 
-        void removeCallIDSet(const std::string &set_id);
+        void removeCallIDSet(const std::string& set_id);
 
         /**
          * Add a new call id to this set
          */
-        void addCallIDtoSet(const std::string &set_id, const std::string &call_id);
+        void addCallIDtoSet(const std::string& set_id, const std::string& call_id);
 
-        void removeCallIDfromSet(const std::string &set_id, const std::string &call_id);
+        void removeCallIDfromSet(const std::string& set_id, const std::string& call_id);
 
         /**
          * Create a new ringbuffer with default readpointer
          */
-        void createRingBuffer(const std::string &call_id);
+        void createRingBuffer(const std::string& call_id);
 
-        void removeRingBuffer(const std::string &call_id);
+        void removeRingBuffer(const std::string& call_id);
 
-        RingBuffer* getRingBuffer(const std::string &call_id);
-        const RingBuffer* getRingBuffer(const std::string & call_id) const;
+        bool hasRingBuffer(const std::string& call_id);
+        std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id);
+        const std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id) const;
 
-        size_t getDataByID(AudioBuffer& buffer, const std::string &call_id, const std::string &reader_id);
+        void removeReadPointerFromRingBuffer(const std::string& call_id1,
+                                             const std::string& call_id2);
 
-        size_t availableForGetByID(const std::string &call_id, const std::string &reader_id) const;
+        size_t getDataByID(AudioBuffer& buffer, const std::string& call_id, const std::string& reader_id);
 
-        void discardByID(size_t toDiscard, const std::string &call_id, const std::string &reader_id);
+        size_t availableForGetByID(const std::string& call_id, const std::string& reader_id) const;
 
-        void flushByID(const std::string &call_id, const std::string &reader_id);
+        void discardByID(size_t toDiscard, const std::string& call_id, const std::string& reader_id);
 
-        typedef std::map<std::string, RingBuffer*> RingBufferMap;
-        RingBufferMap ringBufferMap_;
+        void flushByID(const std::string& call_id, const std::string& reader_id);
 
-        typedef std::map<std::string, CallIDSet*> CallIDMap;
-        CallIDMap callIDMap_;
+        typedef std::map<std::string, std::shared_ptr<RingBuffer> > RingBufferMap;
+        RingBufferMap ringBufferMap_ = {};
 
-        mutable sfl::rw_mutex stateLock_;
+        typedef std::map<std::string, std::shared_ptr<CallIDSet> > CallIDMap;
+        CallIDMap callIDMap_ = {};
 
-        AudioFormat internalAudioFormat_;
+        mutable std::recursive_mutex stateLock_ = {};
+
+        AudioFormat internalAudioFormat_ = AudioFormat::MONO;
 
         friend class MainBufferTest;
 };
