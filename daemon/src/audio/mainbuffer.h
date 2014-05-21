@@ -110,7 +110,7 @@ class MainBuffer {
 
         bool hasCallIDSet(const std::string& call_id);
         std::shared_ptr<CallIDSet> getCallIDSet(const std::string& call_id);
-        const std::shared_ptr<CallIDSet> getCallIDSet(const std::string& call_id) const;
+        std::shared_ptr<CallIDSet> getCallIDSet(const std::string& call_id) const;
 
         void createCallIDSet(const std::string& set_id);
 
@@ -132,7 +132,7 @@ class MainBuffer {
 
         bool hasRingBuffer(const std::string& call_id);
         std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id);
-        const std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id) const;
+        std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id) const;
 
         void removeReadPointerFromRingBuffer(const std::string& call_id1,
                                              const std::string& call_id2);
