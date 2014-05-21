@@ -56,34 +56,34 @@ class VideoPreference : public Serializable
         /*
          * Video device monitoring specific interface.
          */
-        std::vector<std::string> getDeviceList();
-        std::vector<std::string> getChannelList(const std::string& name);
-        std::vector<std::string> getSizeList(const std::string& name, const std::string& channel);
-        std::vector<std::string> getRateList(const std::string& name, const std::string& channel, const std::string& size);
+        std::vector<std::string> getDeviceList() const;
+        std::vector<std::string> getChannelList(const std::string& name) const;
+        std::vector<std::string> getSizeList(const std::string& name, const std::string& channel) const;
+        std::vector<std::string> getRateList(const std::string& name, const std::string& channel, const std::string& size) const;
 
         /*
          * Interface for a single device.
          */
-        std::map<std::string, std::string> getSettingsFor(const std::string& name);
-        std::map<std::string, std::string> getPreferences(const std::string& name);
+        std::map<std::string, std::string> getSettingsFor(const std::string& name) const;
+        std::map<std::string, std::string> getPreferences(const std::string& name) const;
         void setPreferences(const std::string& name, std::map<std::string, std::string> pref);
 
         /*
          * Interface with the "active" video device.
          * This is the default used device when sending a video stream.
          */
-        std::map<std::string, std::string> getSettings();
+        std::map<std::string, std::string> getSettings() const;
 
-        std::string getDevice();
+        std::string getDevice() const;
         void setDevice(const std::string& name);
 
-        std::string getChannel();
+        std::string getChannel() const;
         void setChannel(const std::string& channel);
 
-        std::string getSize();
+        std::string getSize() const;
         void setSize(const std::string& size);
 
-        std::string getRate();
+        std::string getRate() const;
         void setRate(const std::string& rate);
 
         /*
@@ -110,12 +110,15 @@ class VideoPreference : public Serializable
          */
         std::string default_ = "";
         std::vector<VideoDevice> deviceList_;
+
         std::vector<VideoDevice>::iterator lookupDevice(const std::string& name);
-        bool validatePreference(const VideoDevice& dev);
-        std::map<std::string, std::string> deviceToSettings(const VideoDevice& dev);
+        std::vector<VideoDevice>::const_iterator lookupDevice(const std::string& name) const;
+
+        bool validatePreference(const VideoDevice& dev) const;
+        std::map<std::string, std::string> deviceToSettings(const VideoDevice& dev) const;
         static void addDeviceToSequence(const VideoDevice& dev, Conf::SequenceNode& seq);
 
-        VideoDevice defaultPreferences(const std::string& name);
+        VideoDevice defaultPreferences(const std::string& name) const;
         void addDevice(const std::string &name);
 };
 

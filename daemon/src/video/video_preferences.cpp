@@ -44,7 +44,7 @@ using namespace sfl_video;
  */
 
 VideoPreference::VideoDevice
-VideoPreference::defaultPreferences(const std::string& name)
+VideoPreference::defaultPreferences(const std::string& name) const
 {
     VideoDevice dev;
     dev.name = name;
@@ -91,8 +91,28 @@ VideoPreference::lookupDevice(const std::string& name)
     return deviceList_.end();
 }
 
+
+std::vector<VideoPreference::VideoDevice>::const_iterator
+VideoPreference::lookupDevice(const std::string& name) const
+{
+    // Find the device in the cache of preferences
+    std::vector<VideoPreference::VideoDevice>::const_iterator it;
+    for (it = deviceList_.begin(); it != deviceList_.end(); ++it)
+        if (it->name == name)
+            break;
+
+    // Check if the device is detected
+    if (it != deviceList_.end())
+        for (const auto& plugged : getDeviceList())
+            if (plugged == it->name)
+                return it;
+
+    // Device not found
+    return deviceList_.end();
+}
+
 std::map<std::string, std::string>
-VideoPreference::getSettingsFor(const std::string& name)
+VideoPreference::getSettingsFor(const std::string& name) const
 {
     std::map<std::string, std::string> settings;
 
@@ -105,7 +125,7 @@ VideoPreference::getSettingsFor(const std::string& name)
 }
 
 std::map<std::string, std::string>
-VideoPreference::getPreferences(const std::string& name)
+VideoPreference::getPreferences(const std::string& name) const
 {
     std::map<std::string, std::string> pref;
     const auto it = lookupDevice(name);
@@ -121,7 +141,7 @@ VideoPreference::getPreferences(const std::string& name)
 }
 
 bool
-VideoPreference::validatePreference(const VideoDevice& dev)
+VideoPreference::validatePreference(const VideoDevice& dev) const
 {
     DEBUG("prefs: name:%s channel:%s size:%s rate:%s", dev.name.data(),
             dev.channel.data(), dev.size.data(), dev.rate.data());
@@ -183,7 +203,7 @@ VideoPreference::setPreferences(const std::string& name,
  */
 
 std::string
-VideoPreference::getDevice()
+VideoPreference::getDevice() const
 {
     // Default device not set or not detected?
     if (lookupDevice(default_) == deviceList_.end())
@@ -208,7 +228,7 @@ VideoPreference::setDevice(const std::string& name)
 }
 
 std::string
-VideoPreference::getChannel()
+VideoPreference::getChannel() const
 {
     auto it = lookupDevice(default_);
 
@@ -228,7 +248,7 @@ VideoPreference::setChannel(const std::string& channel)
 }
 
 std::string
-VideoPreference::getSize()
+VideoPreference::getSize() const
 {
     auto it = lookupDevice(default_);
 
@@ -248,7 +268,7 @@ VideoPreference::setSize(const std::string& size)
 }
 
 std::string
-VideoPreference::getRate()
+VideoPreference::getRate() const
 {
     auto it = lookupDevice(default_);
 
@@ -269,7 +289,7 @@ VideoPreference::setRate(const std::string& rate)
 
 
 std::map<std::string, std::string>
-VideoPreference::getSettings()
+VideoPreference::getSettings() const
 {
     std::map<std::string, std::string> settings;
 
