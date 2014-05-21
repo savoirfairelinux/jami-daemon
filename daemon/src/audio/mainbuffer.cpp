@@ -80,7 +80,8 @@ std::shared_ptr<CallIDSet> MainBuffer::getCallIDSet(const std::string& call_id)
     return (iter != callIDMap_.end()) ? iter->second : nullptr;
 }
 
-const std::shared_ptr<CallIDSet> MainBuffer::getCallIDSet(const std::string& call_id) const
+std::shared_ptr<CallIDSet>
+MainBuffer::getCallIDSet(const std::string& call_id) const
 {
     CallIDMap::const_iterator iter = callIDMap_.find(call_id);
     return (iter != callIDMap_.end()) ? iter->second : nullptr;
@@ -131,7 +132,7 @@ std::shared_ptr<RingBuffer> MainBuffer::getRingBuffer(const std::string& call_id
     return (iter != ringBufferMap_.end()) ? iter->second : nullptr;
 }
 
-const std::shared_ptr<RingBuffer> MainBuffer::getRingBuffer(const std::string& call_id) const
+std::shared_ptr<RingBuffer> MainBuffer::getRingBuffer(const std::string& call_id) const
 {
     RingBufferMap::const_iterator iter = ringBufferMap_.find(call_id);
     return (iter != ringBufferMap_.end()) ? iter->second : nullptr;
