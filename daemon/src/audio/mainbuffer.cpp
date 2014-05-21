@@ -163,8 +163,8 @@ void MainBuffer::bindCallID(const std::string& call_id1, const std::string& call
     createRingBuffer(call_id2);
     createCallIDSet(call_id2);
 
-    getRingBuffer(call_id1)->createReadPointer(call_id2);
-    getRingBuffer(call_id2)->createReadPointer(call_id1);
+    getRingBuffer(call_id1)->createReadOffset(call_id2);
+    getRingBuffer(call_id2)->createReadOffset(call_id1);
     addCallIDtoSet(call_id1, call_id2);
     addCallIDtoSet(call_id2, call_id1);
 }
@@ -178,24 +178,25 @@ void MainBuffer::bindHalfDuplexOut(const std::string& process_id, const std::str
         return;
 
     createCallIDSet(process_id);
-    getRingBuffer(call_id)->createReadPointer(process_id);
+    getRingBuffer(call_id)->createReadOffset(process_id);
     addCallIDtoSet(process_id, call_id);
 }
 
-void MainBuffer::removeReadPointerFromRingBuffer(const std::string& call_id1,
+void MainBuffer::removeReadOffsetFromRingBuffer(const std::string& call_id1,
                                                  const std::string& call_id2)
 {
     const auto ringbuffer_shared = getRingBuffer(call_id1);
     if (ringbuffer_shared) {
-        ringbuffer_shared->removeReadPointer(call_id2);
+        ringbuffer_shared->removeReadOffset(call_id2);
 
         // Remove empty RingBuffer/CallIDSet
-        if (ringbuffer_shared->hasNoReadPointers()) {
+        if (ringbuffer_shared->hasNoReadOffsets()) {
             removeCallIDSet(call_id1);
             removeRingBuffer(call_id1);
         }
-    } else
-        DEBUG("did not found ringbuffer %s", call_id1.c_str());
+    } else {
+        DEBUG("did not find ringbuffer %s", call_id1.c_str());
+    }
 }
 
 void MainBuffer::unBindCallID(const std::string& call_id1, const std::string& call_id2)
@@ -205,8 +206,8 @@ void MainBuffer::unBindCallID(const std::string& call_id1, const std::string& ca
     removeCallIDfromSet(call_id1, call_id2);
     removeCallIDfromSet(call_id2, call_id1);
 
-    removeReadPointerFromRingBuffer(call_id1, call_id2);
-    removeReadPointerFromRingBuffer(call_id2, call_id1);
+    removeReadOffsetFromRingBuffer(call_id1, call_id2);
+    removeReadOffsetFromRingBuffer(call_id2, call_id1);
 }
 
 void MainBuffer::unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id)
@@ -214,7 +215,7 @@ void MainBuffer::unBindHalfDuplexOut(const std::string& process_id, const std::s
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     removeCallIDfromSet(process_id, call_id);
-    removeReadPointerFromRingBuffer(call_id, process_id);
+    removeReadOffsetFromRingBuffer(call_id, process_id);
 
     const auto callid_set_shared = getCallIDSet(process_id);
     if (callid_set_shared and callid_set_shared->empty())
@@ -385,7 +386,7 @@ size_t MainBuffer::availableForGetByID(const std::string& call_id,
                                        const std::string& reader_id) const
 {
     if (call_id != DEFAULT_ID and reader_id == call_id)
-        WARN("RingBuffer has a readpointer on itself");
+        WARN("RingBuffer has a readoffset on itself");
 
     const auto ringbuffer_shared = getRingBuffer(call_id);
     if (ringbuffer_shared)

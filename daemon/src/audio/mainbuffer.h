@@ -124,7 +124,7 @@ class MainBuffer {
         void removeCallIDfromSet(const std::string& set_id, const std::string& call_id);
 
         /**
-         * Create a new ringbuffer with default readpointer
+         * Create a new ringbuffer with default readoffset
          */
         void createRingBuffer(const std::string& call_id);
 
@@ -134,7 +134,7 @@ class MainBuffer {
         std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id);
         std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id) const;
 
-        void removeReadPointerFromRingBuffer(const std::string& call_id1,
+        void removeReadOffsetFromRingBuffer(const std::string& call_id1,
                                              const std::string& call_id2);
 
         size_t getDataByID(AudioBuffer& buffer, const std::string& call_id, const std::string& reader_id);

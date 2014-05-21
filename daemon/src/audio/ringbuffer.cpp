@@ -52,7 +52,7 @@ RingBuffer::RingBuffer(size_t size, const std::string &call_id, AudioFormat form
     , buffer_(std::max(size, MIN_BUFFER_SIZE), format)
     , lock_()
     , not_empty_()
-    , readpointers_()
+    , readoffsets_()
     , buffer_id_(call_id)
 {
 }
@@ -60,16 +60,16 @@ RingBuffer::RingBuffer(size_t size, const std::string &call_id, AudioFormat form
 void
 RingBuffer::flush(const std::string &call_id)
 {
-    storeReadPointer(endPos_, call_id);
+    storeReadOffset(endPos_, call_id);
 }
 
 
 void
 RingBuffer::flushAll()
 {
-    ReadPointer::iterator iter;
+    ReadOffset::iterator iter;
 
-    for (iter = readpointers_.begin(); iter != readpointers_.end(); ++iter)
+    for (iter = readoffsets_.begin(); iter != readoffsets_.end(); ++iter)
         iter->second = endPos_;
 }
 
@@ -79,7 +79,7 @@ RingBuffer::putLength() const
     const size_t buffer_size = buffer_.frames();
     if (buffer_size == 0)
         return 0;
-    const size_t startPos = (not readpointers_.empty()) ? getSmallestReadPointer() : 0;
+    const size_t startPos = (not readoffsets_.empty()) ? getSmallestReadOffset() : 0;
     return (endPos_ + buffer_size - startPos) % buffer_size;
 }
 
@@ -88,76 +88,76 @@ size_t RingBuffer::getLength(const std::string &call_id) const
     const size_t buffer_size = buffer_.frames();
     if (buffer_size == 0)
         return 0;
-    return (endPos_ + buffer_size - getReadPointer(call_id)) % buffer_size;
+    return (endPos_ + buffer_size - getReadOffset(call_id)) % buffer_size;
 }
 
 void
 RingBuffer::debug()
 {
-    DEBUG("Start=%d; End=%d; BufferSize=%d", getSmallestReadPointer(), endPos_, buffer_.frames());
+    DEBUG("Start=%d; End=%d; BufferSize=%d", getSmallestReadOffset(), endPos_, buffer_.frames());
 }
 
-size_t RingBuffer::getReadPointer(const std::string &call_id) const
+size_t RingBuffer::getReadOffset(const std::string &call_id) const
 {
-    if (hasNoReadPointers())
+    if (hasNoReadOffsets())
         return 0;
-    ReadPointer::const_iterator iter = readpointers_.find(call_id);
-    return (iter != readpointers_.end()) ? iter->second : 0;
+    ReadOffset::const_iterator iter = readoffsets_.find(call_id);
+    return (iter != readoffsets_.end()) ? iter->second : 0;
 }
 
 size_t
-RingBuffer::getSmallestReadPointer() const
+RingBuffer::getSmallestReadOffset() const
 {
-    if (hasNoReadPointers())
+    if (hasNoReadOffsets())
         return 0;
     size_t smallest = buffer_.frames();
-    for(auto const& iter : readpointers_)
+    for(auto const& iter : readoffsets_)
         smallest = std::min(smallest, iter.second);
     return smallest;
 }
 
 void
-RingBuffer::storeReadPointer(size_t pointer_value, const std::string &call_id)
+RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
 {
-    ReadPointer::iterator iter = readpointers_.find(call_id);
+    ReadOffset::iterator iter = readoffsets_.find(call_id);
 
-    if (iter != readpointers_.end())
-        iter->second = pointer_value;
+    if (iter != readoffsets_.end())
+        iter->second = offset;
     else
-        DEBUG("Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
+        DEBUG("Cannot find \"%s\" readOffset in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
 }
 
 
 void
-RingBuffer::createReadPointer(const std::string &call_id)
+RingBuffer::createReadOffset(const std::string &call_id)
 {
     std::unique_lock<std::mutex> l(lock_);
-    if (!hasThisReadPointer(call_id))
-        readpointers_.insert(std::pair<std::string, int> (call_id, endPos_));
+    if (!hasThisReadOffset(call_id))
+        readoffsets_.insert(std::pair<std::string, int> (call_id, endPos_));
 }
 
 
 void
-RingBuffer::removeReadPointer(const std::string &call_id)
+RingBuffer::removeReadOffset(const std::string &call_id)
 {
     std::unique_lock<std::mutex> l(lock_);
-    ReadPointer::iterator iter = readpointers_.find(call_id);
+    ReadOffset::iterator iter = readoffsets_.find(call_id);
 
-    if (iter != readpointers_.end())
-        readpointers_.erase(iter);
+    if (iter != readoffsets_.end())
+        readoffsets_.erase(iter);
 }
 
 
 bool
-RingBuffer::hasThisReadPointer(const std::string &call_id) const
+RingBuffer::hasThisReadOffset(const std::string &call_id) const
 {
-    return readpointers_.find(call_id) != readpointers_.end();
+    return readoffsets_.find(call_id) != readoffsets_.end();
 }
 
 
-bool RingBuffer::hasNoReadPointers() const
+bool RingBuffer::hasNoReadOffsets() const
 {
-    return readpointers_.empty();
+    return readoffsets_.empty();
 }
 
 //
@@ -216,10 +216,10 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 {
     std::unique_lock<std::mutex> l(lock_);
 
-    if (hasNoReadPointers())
+    if (hasNoReadOffsets())
         return 0;
 
-    if (not hasThisReadPointer(call_id))
+    if (not hasThisReadOffset(call_id))
         return 0;
 
     const size_t buffer_size = buffer_.frames();
@@ -236,7 +236,7 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
     const size_t copied = toCopy;
 
     size_t dest = 0;
-    size_t startPos = getReadPointer(call_id);
+    size_t startPos = getReadOffset(call_id);
 
     while (toCopy > 0) {
         size_t block = toCopy;
@@ -251,7 +251,7 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
         toCopy -= block;
     }
 
-    storeReadPointer(startPos, call_id);
+    storeReadOffset(startPos, call_id);
     return copied;
 }
 
@@ -261,8 +261,8 @@ size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const size_t
     std::unique_lock<std::mutex> l(lock_);
     const size_t buffer_size = buffer_.frames();
     if (buffer_size < min_data_length) return 0;
-    ReadPointer::const_iterator read_ptr = readpointers_.find(call_id);
-    if (read_ptr == readpointers_.end()) return 0;
+    ReadOffset::const_iterator read_ptr = readoffsets_.find(call_id);
+    if (read_ptr == readoffsets_.end()) return 0;
     size_t getl = 0;
     if (deadline == std::chrono::high_resolution_clock::time_point()) {
         not_empty_.wait(l, [=, &getl] {
@@ -291,8 +291,8 @@ RingBuffer::discard(size_t toDiscard, const std::string &call_id)
     if (toDiscard > len)
         toDiscard = len;
 
-    size_t startPos = (getReadPointer(call_id) + toDiscard) % buffer_size;
-    storeReadPointer(startPos, call_id);
+    size_t startPos = (getReadOffset(call_id) + toDiscard) % buffer_size;
+    storeReadOffset(startPos, call_id);
     return toDiscard;
 }
 
@@ -303,7 +303,7 @@ RingBuffer::discard(size_t toDiscard)
     if (buffer_size == 0)
         return 0;
 
-    for (auto & r : readpointers_) {
+    for (auto & r : readoffsets_) {
         size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
         if (dst < toDiscard) {
             DEBUG("%s : discarding: %d frames", r.first.c_str(), toDiscard - dst);

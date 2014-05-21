@@ -33,7 +33,7 @@
 #include <vector>
 #include <fstream>
 
-typedef std::map<std::string, size_t> ReadPointer;
+typedef std::map<std::string, size_t> ReadOffset;
 
 /**
  * A ring buffer for mutichannel audio samples
@@ -51,7 +51,7 @@ class RingBuffer {
         }
 
         /**
-         * Reset the counters to 0 for this read pointer
+         * Reset the counters to 0 for this read offset
          */
         void flush(const std::string &call_id);
 
@@ -66,16 +66,18 @@ class RingBuffer {
         }
 
         /**
-         * Add a new readpointer for this ringbuffer
+         * Add a new readoffset for this ringbuffer
          */
-        void createReadPointer(const std::string &call_id);
+        void createReadOffset(const std::string &call_id);
 
         /**
-         * Remove a readpointer for this ringbuffer
+         * Remove a readoffset for this ringbuffer
          */
-        void removeReadPointer(const std::string &call_id);
+        void removeReadOffset(const std::string &call_id);
 
-        bool hasNoReadPointers() const;
+        size_t readOffsetCount() const { return readoffsets_.size(); }
+
+        bool hasNoReadOffsets() const;
 
         /**
          * Write data in the ring buffer
@@ -125,7 +127,7 @@ class RingBuffer {
         /**
          * Blocks until min_data_length samples of data is available, or until deadline is missed.
          *
-         * @param call_id The read pointer for which data should be available.
+         * @param call_id The read offset for which data should be available.
          * @param min_data_length Minimum number of samples that should be vailable for the call to return
          * @param deadline The call is garenteed to end after this time point. If no deadline is provided, the the call blocks indefinitely.
          * @return available data for call_id after the call returned (same as calling getLength(call_id) ).
@@ -141,31 +143,31 @@ class RingBuffer {
         NON_COPYABLE(RingBuffer);
 
         /**
-         * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
+         * Return the smalest readoffset. Usefull to evaluate if ringbuffer is full
          */
-        size_t getSmallestReadPointer() const;
+        size_t getSmallestReadOffset() const;
 
         /**
-         * Get read pointer coresponding to this call
+         * Get read offset coresponding to this call
          */
-        size_t getReadPointer(const std::string &call_id) const;
+        size_t getReadOffset(const std::string &call_id) const;
 
         /**
-         * Move readpointer forward by pointer_value
+         * Move readoffset forward by offset
          */
-        void storeReadPointer(size_t pointer_value, const std::string &call_id);
+        void storeReadOffset(size_t offset, const std::string &call_id);
 
         /**
-         * Test if readpointer coresponding to this call is still active
+         * Test if readoffset coresponding to this call is still active
          */
-        bool hasThisReadPointer(const std::string &call_id) const;
+        bool hasThisReadOffset(const std::string &call_id) const;
 
         /**
-         * Discard data from all read pointers to make place for new data.
+         * Discard data from all read offsets to make place for new data.
          */
         size_t discard(size_t toDiscard);
 
-        /** Pointer on the last data */
+        /** Offset on the last data */
         size_t endPos_;
         /** Data */
         AudioBuffer buffer_;
@@ -173,7 +175,7 @@ class RingBuffer {
         mutable std::mutex lock_;
         mutable std::condition_variable not_empty_;
 
-        ReadPointer readpointers_;
+        ReadOffset readoffsets_;
         std::string buffer_id_;
 
         friend class MainBufferTest;
