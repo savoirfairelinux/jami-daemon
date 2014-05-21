@@ -43,6 +43,8 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
+#include "fileutils.h"
+
 class ConfigurationTest: public CppUnit::TestFixture {
 
         /*
@@ -50,11 +52,13 @@ class ConfigurationTest: public CppUnit::TestFixture {
          */
         CPPUNIT_TEST_SUITE(ConfigurationTest);
         CPPUNIT_TEST(testYamlEmitter);
+        CPPUNIT_TEST(test_expand_path);
         CPPUNIT_TEST_SUITE_END();
 
     public:
 
         void testYamlEmitter();
+        void test_expand_path();
 };
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConfigurationTest, "ConfigurationTest");

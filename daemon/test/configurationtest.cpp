@@ -169,3 +169,14 @@ void ConfigurationTest::testYamlEmitter()
        ERROR("ConfigTree: %s", e.what());
     }
 }
+
+void ConfigurationTest::test_expand_path(void){
+  const std::string pattern_1 = "~";
+  const std::string pattern_2 = "~/x";
+  const std::string pattern_3 = "~foo/x";
+  std::string home = fileutils::get_home_dir();
+
+  CPPUNIT_ASSERT(fileutils::expand(pattern_1) == home);
+  CPPUNIT_ASSERT(fileutils::expand(pattern_2) == home.append("/x"));
+  CPPUNIT_ASSERT(fileutils::expand(pattern_3) == "/home/foo/x");
+}
