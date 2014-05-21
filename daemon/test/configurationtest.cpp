@@ -169,3 +169,15 @@ void ConfigurationTest::testYamlEmitter()
        ERROR("ConfigTree: %s", e.what());
     }
 }
+
+void ConfigurationTest::test_expand_path(void){
+  const std::string pattern_1 = "~";
+  const std::string pattern_2 = "~/x";
+  const std::string pattern_3 = "~foo/x"; // deliberately broken,
+                                          // tilde should not be expanded
+  std::string home = fileutils::get_home_dir();
+
+  CPPUNIT_ASSERT(fileutils::expand_path(pattern_1) == home);
+  CPPUNIT_ASSERT(fileutils::expand_path(pattern_2) == home.append("/x"));
+  CPPUNIT_ASSERT(fileutils::expand_path(pattern_3) == "~foo/x");
+}
