@@ -39,6 +39,7 @@
 
 #define VIDEO_HEIGHT_MIN                200
 #define VIDEO_LOCAL_HEIGHT              100
+#define VIDEO_LOCAL_OPACITY_DEFAULT     150
 #define VIDEO_LOCAL_CONSTRAINT_SIZE     "local-constraint-size"
 #define VIDEO_LOCAL_CONSTRAINT_POSITION "local-constraint-position"
 #define VIDEO_REMOTE_CONSTRAINT_SIZE    "remote-constraint-size"
@@ -95,6 +96,8 @@ static void       video_widget_show_camera_in_screen    (GtkWidget *, VIDEO_AREA
 static void       video_widget_hide_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
 static void       cleanup_video_handle                  (gpointer);
 static gboolean   on_configure_event_cb                 (GtkWidget *, GdkEventConfigure *, gpointer);
+static gboolean   on_pointer_enter_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
+static gboolean   on_pointer_leave_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
 
 
 
@@ -357,8 +360,25 @@ video_widget_redraw_screen(GtkWidget *self)
             clutter_actor_add_constraint_with_name(camera_local->texture,
                     VIDEO_LOCAL_CONSTRAINT_POSITION, constraint);
 
+            /* apply an opacity effect on the local camera */
+            clutter_actor_set_opacity(camera_local->texture,
+                  VIDEO_LOCAL_OPACITY_DEFAULT);
+
             /* remove animation */
             clutter_actor_restore_easing_state(camera_local->texture);
+
+            /* the actor must react to event */
+            clutter_actor_set_reactive(camera_local->texture, TRUE);
+
+            /* handle pointer event on actor */
+            g_signal_connect(camera_local->texture,
+                             "enter-event",
+                             G_CALLBACK(on_pointer_enter_preview_cb),
+                             NULL);
+            g_signal_connect(camera_local->texture,
+                             "leave-event",
+                             G_CALLBACK(on_pointer_leave_preview_cb),
+                             NULL);
         }
 
     }
@@ -701,6 +721,43 @@ on_configure_event_cb(GtkWidget *self,
     /* let the event propagate otherwise the video will not be re-scaled */
     return FALSE;
 }
+
+
+/*
+ * on_pointer_enter_preview_cb()
+ *
+ * when we are hover the preview camera, we set the opacity to its max
+ * value.
+ */
+static gboolean
+on_pointer_enter_preview_cb(ClutterActor *actor,
+                            G_GNUC_UNUSED ClutterEvent *event,
+                            G_GNUC_UNUSED gpointer data)
+{
+   /* apply the max opacity */
+   clutter_actor_set_opacity(actor, 0xFF);
+
+   return CLUTTER_EVENT_STOP;
+}
+
+
+/*
+ * on_pointer_leave_preview_cb()
+ *
+ * when we leave the preview camera, we restore the opacity to its default
+ * value.
+ */
+static gboolean
+on_pointer_leave_preview_cb(ClutterActor *actor,
+                            G_GNUC_UNUSED ClutterEvent *event,
+                            G_GNUC_UNUSED gpointer data)
+{
+   /* restore the opacity */
+   clutter_actor_set_opacity(actor, VIDEO_LOCAL_OPACITY_DEFAULT);
+
+   return CLUTTER_EVENT_STOP;
+}
+
 
 /*
  * video_widget_camera_start()
