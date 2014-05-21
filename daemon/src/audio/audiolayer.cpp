@@ -49,7 +49,7 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , resampler_(audioFormat_.sample_rate)
     , lastNotificationTime_(0)
 {
-    urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
+    urgentRingBuffer_.createReadOffset(MainBuffer::DEFAULT_ID);
 }
 
 AudioLayer::~AudioLayer()
