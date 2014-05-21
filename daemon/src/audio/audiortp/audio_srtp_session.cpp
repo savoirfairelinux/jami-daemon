@@ -82,7 +82,7 @@ void bufferFillMasterKey(std::vector<uint8>& dest)
     std::vector<unsigned char> random_key(dest.size());
 
     // Fill the key
-    for (int i = 0; i < dest.size(); i++)
+    for (size_t i = 0; i < dest.size(); i++)
         random_key[i] = dist(eng);
 
     std::copy(random_key.begin(), random_key.end(), dest.begin());
@@ -101,7 +101,7 @@ void bufferFillMasterSalt(std::vector<uint8>& dest)
     std::vector<unsigned char> random_key(dest.size());
 
     // Fill the key
-    for (int i = 0; i < dest.size(); i++)
+    for (size_t i = 0; i < dest.size(); i++)
         random_key[i] = dist(eng);
 
     std::copy(random_key.begin(), random_key.end(), dest.begin());
