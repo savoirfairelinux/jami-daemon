@@ -33,7 +33,7 @@
 #include <vector>
 #include <fstream>
 
-typedef std::map<std::string, size_t> ReadPointer;
+typedef std::map<std::string, size_t> ReadOffset;
 
 /**
  * A ring buffer for mutichannel audio samples
@@ -68,14 +68,16 @@ class RingBuffer {
         /**
          * Add a new readpointer for this ringbuffer
          */
-        void createReadPointer(const std::string &call_id);
+        void createReadOffset(const std::string &call_id);
 
         /**
          * Remove a readpointer for this ringbuffer
          */
-        void removeReadPointer(const std::string &call_id);
+        void removeReadOffset(const std::string &call_id);
 
-        bool hasNoReadPointers() const;
+        size_t readOffsetCount() const { return readoffsets_.size(); }
+
+        bool hasNoReadOffsets() const;
 
         /**
          * Write data in the ring buffer
@@ -143,29 +145,29 @@ class RingBuffer {
         /**
          * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
          */
-        size_t getSmallestReadPointer() const;
+        size_t getSmallestReadOffset() const;
 
         /**
          * Get read pointer coresponding to this call
          */
-        size_t getReadPointer(const std::string &call_id) const;
+        size_t getReadOffset(const std::string &call_id) const;
 
         /**
          * Move readpointer forward by pointer_value
          */
-        void storeReadPointer(size_t pointer_value, const std::string &call_id);
+        void storeReadOffset(size_t pointer_value, const std::string &call_id);
 
         /**
          * Test if readpointer coresponding to this call is still active
          */
-        bool hasThisReadPointer(const std::string &call_id) const;
+        bool hasThisReadOffset(const std::string &call_id) const;
 
         /**
          * Discard data from all read pointers to make place for new data.
          */
         size_t discard(size_t toDiscard);
 
-        /** Pointer on the last data */
+        /** Offset on the last data */
         size_t endPos_;
         /** Data */
         AudioBuffer buffer_;
@@ -173,7 +175,7 @@ class RingBuffer {
         mutable std::mutex lock_;
         mutable std::condition_variable not_empty_;
 
-        ReadPointer readpointers_;
+        ReadOffset readoffsets_;
         std::string buffer_id_;
 
         friend class MainBufferTest;
