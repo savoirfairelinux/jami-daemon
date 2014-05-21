@@ -32,7 +32,6 @@
 #define MAIN_BUFFER_H_
 
 #include "audiobuffer.h"
-#include "rw_mutex.h"
 #include "noncopyable.h"
 
 #include <map>
