@@ -155,7 +155,7 @@ void MainBuffer::removeRingBuffer(const std::string& call_id)
 
 void MainBuffer::bindCallID(const std::string& call_id1, const std::string& call_id2)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     createRingBuffer(call_id1);
     createCallIDSet(call_id1);
@@ -170,7 +170,7 @@ void MainBuffer::bindCallID(const std::string& call_id1, const std::string& call
 
 void MainBuffer::bindHalfDuplexOut(const std::string& process_id, const std::string& call_id)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     // This method is used only for active calls, if this call does not exist, do nothing
     if (!hasRingBuffer(call_id))
@@ -210,7 +210,7 @@ void MainBuffer::unBindCallID(const std::string& call_id1, const std::string& ca
 
 void MainBuffer::unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     removeCallIDfromSet(process_id, call_id);
     removeReadPointerFromRingBuffer(call_id, process_id);
@@ -222,7 +222,7 @@ void MainBuffer::unBindHalfDuplexOut(const std::string& process_id, const std::s
 
 void MainBuffer::unBindAll(const std::string& call_id)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     const auto callid_set_shared = getCallIDSet(call_id);
     if (!callid_set_shared or callid_set_shared->empty())
@@ -235,7 +235,7 @@ void MainBuffer::unBindAll(const std::string& call_id)
 
 void MainBuffer::putData(AudioBuffer& buffer, const std::string& call_id)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     const auto ringbuffer_shared = getRingBuffer(call_id);
     if (ringbuffer_shared)
@@ -244,7 +244,7 @@ void MainBuffer::putData(AudioBuffer& buffer, const std::string& call_id)
 
 size_t MainBuffer::getData(AudioBuffer& buffer, const std::string& call_id)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     const auto callid_set_shared = getCallIDSet(call_id);
     if (!callid_set_shared or callid_set_shared->empty())
@@ -277,35 +277,32 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string& call_id)
 
 bool MainBuffer::waitForDataAvailable(const std::string& call_id, size_t min_frames, const std::chrono::microseconds& max_wait) const
 {
+    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+
     // convert to absolute time
     const auto deadline = std::chrono::high_resolution_clock::now() + max_wait;
     std::shared_ptr<CallIDSet> callid_set_shared;
 
-    {
-        std::unique_lock<std::recursive_mutex> lk(stateLock_);
-        callid_set_shared = getCallIDSet(call_id);
-        if (!callid_set_shared or callid_set_shared->empty())
-            return false;
-    }
+    callid_set_shared = getCallIDSet(call_id);
+    if (!callid_set_shared or callid_set_shared->empty())
+        return false;
 
     const auto callid_set_tmp = *callid_set_shared; // temporary copy of callid_set
     for (const auto &i : callid_set_tmp) {
-        std::shared_ptr<RingBuffer> ringbuffer_shared;
-        {
-            std::unique_lock<std::recursive_mutex> lk(stateLock_);
-            ringbuffer_shared = getRingBuffer(i);
-            if (!ringbuffer_shared)
-                continue;
-        }
+        const auto ringbuffer_shared = getRingBuffer(i);
+        if (!ringbuffer_shared)
+            continue;
+        lk.unlock();
         if (ringbuffer_shared->waitForDataAvailable(call_id, min_frames, deadline) < min_frames)
             return false;
+        lk.lock();
     }
     return true;
 }
 
 size_t MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string& call_id)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     const auto callid_set_shared = getCallIDSet(call_id);
     if (!callid_set_shared or callid_set_shared->empty())
@@ -357,7 +354,7 @@ size_t MainBuffer::getDataByID(AudioBuffer& buffer, const std::string& call_id, 
 
 size_t MainBuffer::availableForGet(const std::string& call_id) const
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     const auto callid_set_shared = getCallIDSet(call_id);
     if (!callid_set_shared or callid_set_shared->empty())
@@ -399,7 +396,7 @@ size_t MainBuffer::availableForGetByID(const std::string& call_id,
 
 size_t MainBuffer::discard(size_t toDiscard, const std::string& call_id)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     const auto callid_set_shared = getCallIDSet(call_id);
     if (!callid_set_shared or callid_set_shared->empty())
@@ -420,7 +417,7 @@ void MainBuffer::discardByID(size_t toDiscard, const std::string& call_id, const
 
 void MainBuffer::flush(const std::string& call_id)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     const auto callid_set_shared = getCallIDSet(call_id);
     if (!callid_set_shared)
@@ -439,7 +436,7 @@ void MainBuffer::flushByID(const std::string& call_id, const std::string& reader
 
 void MainBuffer::flushAllBuffers()
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     for (const auto& item : ringBufferMap_)
         item.second->flushAll();
