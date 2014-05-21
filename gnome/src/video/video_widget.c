@@ -339,18 +339,26 @@ video_widget_redraw_screen(GtkWidget *self)
         /* else the local camera must be resize keeping the aspect ratio and placed */
             gdouble aspect_ratio = (gdouble) camera_local->width / camera_local->height;
 
+            /* clean the previously constraints */
+            clutter_actor_clear_constraints(camera_local->texture);
+
+            /* Add linear animation for all transformation below */
+            clutter_actor_save_easing_state(camera_local->texture);
+            clutter_actor_set_easing_mode(camera_local->texture, CLUTTER_LINEAR);
+
+            /* resize the local camera */
             clutter_actor_set_size(camera_local->texture,
                     VIDEO_LOCAL_HEIGHT * aspect_ratio,
                     VIDEO_LOCAL_HEIGHT);
 
-            /* clean the previously constraints */
-            clutter_actor_clear_constraints(camera_local->texture);
-
-            /* the local camera must be set to the bottom right corner with a little space */
+            /* place the local camera in the bottom right corner with a little space */
             constraint = clutter_align_constraint_new(camera_remote->texture,
                     CLUTTER_ALIGN_BOTH, 0.99);
             clutter_actor_add_constraint_with_name(camera_local->texture,
                     VIDEO_LOCAL_CONSTRAINT_POSITION, constraint);
+
+            /* remove animation */
+            clutter_actor_restore_easing_state(camera_local->texture);
         }
 
     }
