@@ -70,6 +70,7 @@ void VideoScaler::scale_and_pad(VideoFrame &input, VideoFrame &output,
     AVFrame *output_frame = output.get();
     uint8_t *data[AV_NUM_DATA_POINTERS];
 
+    DEBUG("VF=%p F=%p", &input, input_frame);
     for (int i = 0; i < AV_NUM_DATA_POINTERS; i++) {
         if (output_frame->data[i]) {
             const unsigned divisor = i == 0 ? 1 : 2;
@@ -79,6 +80,7 @@ void VideoScaler::scale_and_pad(VideoFrame &input, VideoFrame &output,
             data[i] = 0;
     }
 
+    DEBUG("VF=%p F=%p", &input, input_frame);
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
                                 input_frame->height,

@@ -48,7 +48,6 @@ VideoMixer::VideoMixer(const std::string &id) :
     , width_(0)
     , height_(0)
     , sources_()
-    , mutex_()
     , sink_(id)
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
 {
@@ -74,7 +73,8 @@ VideoMixer::~VideoMixer()
 
 void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    auto lock(rwMutex_.write());
+
     VideoMixerSource* src = new VideoMixerSource;
     src->dirty = true;
     src->source = ob;
@@ -83,7 +83,8 @@ void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
 
 void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    auto lock(rwMutex_.write());
+
     for (auto x : sources_) {
         if (x->source == ob) {
             sources_.remove(x);
@@ -96,10 +97,13 @@ void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
                         std::shared_ptr<VideoFrame>& frame_p)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    auto lock(rwMutex_.read());
+
     for (auto x : sources_) {
         if (x->source == ob) {
             x->frameShrPtr = frame_p;
+            VideoFrame* vf = frame_p.get();
+            DEBUG("VF=%p F=%p", vf, vf->get());
             x->dirty = true;
             break;
         }
@@ -116,15 +120,16 @@ void VideoMixer::process()
     lastProcess_ = now;
 
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        auto lock(rwMutex_.read());
+
         int i = 0;
-        for (auto x : sources_) {
+        for (const auto& x : sources_) {
             if (!loop_.isRunning())
                 break;
             if (x->dirty) {
                 VideoFrame* input = x->frameShrPtr.get();
-                if (input)
-                    render_frame(*input, i);
+                DEBUG("VF=%p F=%p", input, input?input->get():nullptr);
+                render_frame(input, i);
                 x->dirty = false;
             }
             i++;
@@ -132,14 +137,19 @@ void VideoMixer::process()
     }
 }
 
-void VideoMixer::render_frame(VideoFrame& input, const int index)
+void VideoMixer::render_frame(VideoFrame* input, const int index)
 {
-    VideoScaler scaler;
-
-    if (!width_ or !height_)
+    if (!input or !width_ or !height_)
         return;
 
+    DEBUG("VF=%p F=%p (in)", input, input->get());
+    if (!input->get()){
+        ERROR("NULL input!");
+        return;
+    }
+
     VideoFrame &output = getNewFrame();
+    DEBUG("VF=%p F=%p (out)", &output, output.get());
 
     if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
         ERROR("VideoFrame::allocBuffer() failed");
@@ -147,9 +157,12 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
     }
 
     std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
-    if (previous_p)
-        previous_p->copy(output);
-    previous_p.reset();
+    VideoFrame *prev = previous_p.get();
+    if (previous_p) {
+        DEBUG("VF=%p F=%p (prev)", prev, prev->get());
+        //previous_p->copy(output);
+        //previous_p.reset();
+    }
 
     const int n = sources_.size();
     const int zoom = ceil(sqrt(n));
@@ -158,14 +171,17 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
     const int xoff = (index % zoom) * cell_width;
     const int yoff = (index / zoom) * cell_height;
 
-    scaler.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
+    VideoScaler scaler;
+    DEBUG("VF=%p F=%p", input, input->get());
+    scaler.scale_and_pad(*input, output, xoff, yoff, cell_width, cell_height);
 
     publishFrame();
 }
 
 void VideoMixer::setDimensions(int width, int height)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    auto lock(rwMutex_.write());
+
     width_ = width;
     height_ = height;
 

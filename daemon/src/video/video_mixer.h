@@ -37,6 +37,7 @@
 #include "video_scaler.h"
 #include "shm_sink.h"
 #include "threadloop.h"
+#include "rw_mutex.h"
 
 #include <mutex>
 #include <list>
@@ -74,7 +75,7 @@ public:
 private:
     NON_COPYABLE(VideoMixer);
 
-    void render_frame(VideoFrame& input, const int index);
+    void render_frame(VideoFrame* input, const int index);
     void start_sink();
     void stop_sink();
 
@@ -84,7 +85,7 @@ private:
     int width_;
     int height_;
     std::list<VideoMixerSource *> sources_;
-    std::mutex mutex_;
+    sfl::rw_mutex rwMutex_ = {};
     SHMSink sink_;
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
