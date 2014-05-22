@@ -59,7 +59,7 @@ class rw_mutex {
 			readers++;
 		}
 		void read_exit() {
-			//std::unique_lock<std::mutex> lck(mutex);
+			//std::lock_guard<std::mutex> lck(mutex);
 			readers--;
 			canWrite.notify_one();
 		}
@@ -69,7 +69,7 @@ class rw_mutex {
 			writing = true;
 		}
 		void write_exit() {
-			std::unique_lock<std::mutex> lck(mutex);
+			std::lock_guard<std::mutex> lck(mutex);
 			writing = false;
 			canWrite.notify_one();
 			canRead.notify_all();
