@@ -48,7 +48,7 @@ namespace sfl_video {
     struct VideoMixerSource {
         bool dirty = false;
         Observable<std::shared_ptr<VideoFrame> >* source = nullptr;
-        std::shared_ptr<VideoFrame> frameShrPtr = {};
+        std::shared_ptr<VideoFrame>* frameShrPtr = nullptr;
     };
 
 class VideoMixer :
@@ -67,14 +67,14 @@ public:
 
     // as VideoFramePassiveReader
     void update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                std::shared_ptr<VideoFrame> &v);
+                std::shared_ptr<VideoFrame>& v);
     void attached(Observable<std::shared_ptr<VideoFrame> >* ob);
     void detached(Observable<std::shared_ptr<VideoFrame> >* ob);
 
 private:
     NON_COPYABLE(VideoMixer);
 
-    void render_frame(VideoFrame& input, const int index);
+    void render_frame(VideoFrame* input, const int index);
     void start_sink();
     void stop_sink();
 
