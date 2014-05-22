@@ -37,6 +37,7 @@
 #include "video_scaler.h"
 #include "shm_sink.h"
 #include "threadloop.h"
+#include "rw_mutex.h"
 
 #include <mutex>
 #include <list>
