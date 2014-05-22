@@ -440,10 +440,10 @@ presence_callable_to_buddy(callable_obj_t *c, buddy_t *b)
 
     if (strlen(c->_display_name) == 0) {
         // extract a default alias from the uri
-        gchar *number = g_strrstr(c->_peer_number, ":") + 1;
+        gchar *number = g_strrstr(c->_peer_number, ":");
         gchar *end = g_strrstr(c->_peer_number, "@");
-        if (end && number)
-            b->alias = g_strndup(number, end - number);
+        if (end && number && number < end)
+            b->alias = g_strndup(number + 1, end - number - 1);
         else
             b->alias = g_strdup(c->_peer_number);
     } else {
