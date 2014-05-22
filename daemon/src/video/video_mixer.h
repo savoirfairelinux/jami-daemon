@@ -39,7 +39,6 @@
 #include "threadloop.h"
 #include "rw_mutex.h"
 
-#include <mutex>
 #include <list>
 #include <chrono>
 
@@ -85,7 +84,7 @@ private:
     int width_ = 0;
     int height_ = 0;
     std::list<VideoMixerSource *> sources_ = {};
-    std::mutex mutex_ = {};
+    sfl::rw_mutex rwMutex_ = {};
     SHMSink sink_;
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
