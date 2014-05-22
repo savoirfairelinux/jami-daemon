@@ -71,13 +71,13 @@ class Observable
 public:
     Observable() : observers_(), mutex_() {}
     virtual ~Observable() {
-        std::unique_lock<std::mutex> lk(mutex_);
+        std::lock_guard<std::mutex> lk(mutex_);
         for (auto &o : observers_)
             o->detached(this);
     };
 
     bool attach(Observer<T>* o) {
-        std::unique_lock<std::mutex> lk(mutex_);
+        std::lock_guard<std::mutex> lk(mutex_);
         if (o and observers_.insert(o).second) {
             o->attached(this);
             return true;
@@ -86,7 +86,7 @@ public:
     }
 
     bool detach(Observer<T>* o) {
-        std::unique_lock<std::mutex> lk(mutex_);
+        std::lock_guard<std::mutex> lk(mutex_);
         if (o and observers_.erase(o)) {
             o->detached(this);
             return true;
@@ -95,13 +95,13 @@ public:
     }
 
     void notify(T& data) {
-        std::unique_lock<std::mutex> lk(mutex_);
+        std::lock_guard<std::mutex> lk(mutex_);
         for (auto observer : observers_)
             observer->update(this, data);
     }
 
     int getObserversCount() {
-        std::unique_lock<std::mutex> lk(mutex_);
+        std::lock_guard<std::mutex> lk(mutex_);
         return observers_.size();
     }
 
