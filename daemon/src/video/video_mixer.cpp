@@ -48,7 +48,6 @@ VideoMixer::VideoMixer(const std::string &id) :
     , width_(0)
     , height_(0)
     , sources_()
-    , mutex_()
     , sink_(id)
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
 {
@@ -74,16 +73,17 @@ VideoMixer::~VideoMixer()
 
 void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    auto lock(rwMutex_.write());
+
     VideoMixerSource* src = new VideoMixerSource;
-    src->dirty = true;
     src->source = ob;
     sources_.push_back(src);
 }
 
 void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    auto lock(rwMutex_.write());
+
     for (auto x : sources_) {
         if (x->source == ob) {
             sources_.remove(x);
@@ -96,7 +96,8 @@ void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
                         std::shared_ptr<VideoFrame>& frame_p)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    auto lock(rwMutex_.read());
+
     for (const auto& x : sources_) {
         if (x->source == ob) {
             x->frameShrPtr = &frame_p;
@@ -116,7 +117,8 @@ void VideoMixer::process()
     lastProcess_ = now;
 
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        auto lock(rwMutex_.read());
+
         int i = 0;
         for (const auto& x : sources_) {
             if (!loop_.isRunning())
@@ -166,7 +168,8 @@ void VideoMixer::render_frame(VideoFrame* input, const int index)
 
 void VideoMixer::setDimensions(int width, int height)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    auto lock(rwMutex_.write());
+
     width_ = width;
     height_ = height;
 
