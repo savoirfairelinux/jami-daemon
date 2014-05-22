@@ -131,7 +131,7 @@ RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
 void
 RingBuffer::createReadOffset(const std::string &call_id)
 {
-    std::unique_lock<std::mutex> l(lock_);
+    std::lock_guard<std::mutex> l(lock_);
     if (!hasThisReadOffset(call_id))
         readoffsets_.insert(std::pair<std::string, int> (call_id, endPos_));
 }
@@ -140,7 +140,7 @@ RingBuffer::createReadOffset(const std::string &call_id)
 void
 RingBuffer::removeReadOffset(const std::string &call_id)
 {
-    std::unique_lock<std::mutex> l(lock_);
+    std::lock_guard<std::mutex> l(lock_);
     ReadOffset::iterator iter = readoffsets_.find(call_id);
 
     if (iter != readoffsets_.end())
@@ -167,7 +167,7 @@ bool RingBuffer::hasNoReadOffsets() const
 // This one puts some data inside the ring buffer.
 void RingBuffer::put(AudioBuffer& buf)
 {
-    std::unique_lock<std::mutex> l(lock_);
+    std::lock_guard<std::mutex> l(lock_);
     const size_t sample_num = buf.frames();
     const size_t buffer_size = buffer_.frames();
     if (buffer_size == 0)
@@ -214,7 +214,7 @@ RingBuffer::availableForGet(const std::string &call_id) const
 
 size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 {
-    std::unique_lock<std::mutex> l(lock_);
+    std::lock_guard<std::mutex> l(lock_);
 
     if (hasNoReadOffsets())
         return 0;
@@ -281,7 +281,7 @@ size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const size_t
 size_t
 RingBuffer::discard(size_t toDiscard, const std::string &call_id)
 {
-    std::unique_lock<std::mutex> l(lock_);
+    std::lock_guard<std::mutex> l(lock_);
 
     const size_t buffer_size = buffer_.frames();
     if (buffer_size == 0)

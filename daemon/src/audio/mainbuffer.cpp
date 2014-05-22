@@ -201,7 +201,7 @@ void MainBuffer::removeReadOffsetFromRingBuffer(const std::string& call_id1,
 
 void MainBuffer::unBindCallID(const std::string& call_id1, const std::string& call_id2)
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     removeCallIDfromSet(call_id1, call_id2);
     removeCallIDfromSet(call_id2, call_id1);
