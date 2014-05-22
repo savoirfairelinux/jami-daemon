@@ -45,10 +45,6 @@ namespace sfl_video {
 VideoMixer::VideoMixer(const std::string &id) :
     VideoGenerator::VideoGenerator()
     , id_(id)
-    , width_(0)
-    , height_(0)
-    , sources_()
-    , mutex_()
     , sink_(id)
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
 {

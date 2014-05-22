@@ -81,10 +81,10 @@ private:
     void process();
 
     const std::string id_;
-    int width_;
-    int height_;
-    std::list<VideoMixerSource *> sources_;
-    std::mutex mutex_;
+    int width_ = 0;
+    int height_ = 0;
+    std::list<VideoMixerSource *> sources_ = {};
+    std::mutex mutex_ = {};
     SHMSink sink_;
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
