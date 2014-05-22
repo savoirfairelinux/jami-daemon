@@ -233,8 +233,7 @@ static int crypto_cert_load_trusted(gnutls_certificate_credentials_t cred)
         /* Load the root CA. */
         err = gnutls_certificate_set_x509_trust_file(cred, ca_file, GNUTLS_X509_FMT_PEM);
         if (err == 0) {
-            ERROR("No trusted certificates found - %s", gnutls_strerror(err));
-            goto out;
+            WARN("No trusted certificates found - %s", gnutls_strerror(err));
         } else if (err < 0) {
             ERROR("Could not load trusted certificates - %s", gnutls_strerror(err));
             goto out;
