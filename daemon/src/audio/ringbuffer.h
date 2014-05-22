@@ -177,8 +177,6 @@ class RingBuffer {
 
         ReadOffset readoffsets_;
         std::string buffer_id_;
-
-        friend class MainBufferTest;
 };
 
 
