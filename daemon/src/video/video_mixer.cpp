@@ -76,7 +76,6 @@ void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     VideoMixerSource* src = new VideoMixerSource;
-    src->dirty = true;
     src->source = ob;
     sources_.push_back(src);
 }
@@ -97,11 +96,11 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
                         std::shared_ptr<VideoFrame>& frame_p)
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    for (auto x : sources_) {
+    for (const auto& x : sources_) {
         if (x->source == ob) {
-            x->frameShrPtr = frame_p;
+            x->frameShrPtr = &frame_p;
             x->dirty = true;
-            break;
+            return;
         }
     }
 }
@@ -118,13 +117,13 @@ void VideoMixer::process()
     {
         std::lock_guard<std::mutex> lk(mutex_);
         int i = 0;
-        for (auto x : sources_) {
+        for (const auto& x : sources_) {
             if (!loop_.isRunning())
                 break;
             if (x->dirty) {
-                VideoFrame* input = x->frameShrPtr.get();
-                if (input)
-                    render_frame(*input, i);
+                // increment VideoFrame refcnt during rendering
+                std::shared_ptr<VideoFrame> shared = *x->frameShrPtr;
+                render_frame(shared.get(), i);
                 x->dirty = false;
             }
             i++;
@@ -132,24 +131,24 @@ void VideoMixer::process()
     }
 }
 
-void VideoMixer::render_frame(VideoFrame& input, const int index)
+void VideoMixer::render_frame(VideoFrame* input, const int index)
 {
-    VideoScaler scaler;
-
-    if (!width_ or !height_)
+    if (!input or !width_ or !height_)
         return;
 
-    VideoFrame &output = getNewFrame();
+    assert(input->get()); // design check
 
+    VideoFrame &output = getNewFrame();
     if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
         ERROR("VideoFrame::allocBuffer() failed");
         return;
     }
 
     std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
-    if (previous_p)
+    if (previous_p) {
         previous_p->copy(output);
-    previous_p.reset();
+        previous_p.reset();
+    }
 
     const int n = sources_.size();
     const int zoom = ceil(sqrt(n));
@@ -158,7 +157,8 @@ void VideoMixer::render_frame(VideoFrame& input, const int index)
     const int xoff = (index % zoom) * cell_width;
     const int yoff = (index / zoom) * cell_height;
 
-    scaler.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
+    VideoScaler scaler;
+    scaler.scale_and_pad(*input, output, xoff, yoff, cell_width, cell_height);
 
     publishFrame();
 }
