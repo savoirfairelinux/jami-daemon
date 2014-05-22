@@ -154,8 +154,6 @@ class MainBuffer {
         mutable std::recursive_mutex stateLock_ = {};
 
         AudioFormat internalAudioFormat_ = AudioFormat::MONO;
-
-        friend class MainBufferTest;
 };
 
 #endif  // MainBuffer

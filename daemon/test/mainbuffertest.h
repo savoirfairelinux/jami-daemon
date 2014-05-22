@@ -51,19 +51,9 @@ class MainBufferTest : public CppUnit::TestCase {
          * Use cppunit library macros to add unit test the factory
          */
         CPPUNIT_TEST_SUITE(MainBufferTest);
-        CPPUNIT_TEST(testRingBufferCreation);
-        CPPUNIT_TEST(testRingBufferReadOffset);
-        CPPUNIT_TEST(testCallIDSet);
-        CPPUNIT_TEST(testRingBufferInt);
-        CPPUNIT_TEST(testRingBufferNonDefaultID);
-        //CPPUNIT_TEST(testRingBufferFloat);
-        CPPUNIT_TEST(testTwoOffset);
         CPPUNIT_TEST(testBindUnbindBuffer);
-        CPPUNIT_TEST(testGetPutDataByID);
         CPPUNIT_TEST(testGetPutData);
         CPPUNIT_TEST(testDiscardFlush);
-        CPPUNIT_TEST(testReadOffsetInit);
-        CPPUNIT_TEST(testRingBufferSeveralOffsets);
         CPPUNIT_TEST(testConference);
         CPPUNIT_TEST_SUITE_END();
 
@@ -71,33 +61,13 @@ class MainBufferTest : public CppUnit::TestCase {
 
         MainBufferTest();
 
-        void testRingBufferCreation();
-
-        void testRingBufferReadOffset();
-
-        void testCallIDSet();
-
-        void testRingBufferInt();
-
-        void testRingBufferNonDefaultID();
-
-        void testRingBufferFloat();
-
-        void testTwoOffset();
-
         void testBindUnbindBuffer();
-
-        void testGetPutDataByID();
 
         void testGetPutData();
 
-        void testAvailForGetPut();
+        void testGetAvailableData();
 
         void testDiscardFlush();
-
-        void testReadOffsetInit();
-
-        void testRingBufferSeveralOffsets();
 
         void testConference();
 
