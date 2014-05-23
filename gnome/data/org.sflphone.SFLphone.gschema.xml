@@ -22,23 +22,18 @@
         </key>
         <key name="video-widget-width" type="i">
             <default>0</default>
-            <summary>Local video window width</summary>
-            <description>Local video window width.</description>
-        </key>
-        <key name="video-widget-height" type="i">
-            <default>0</default>
-            <summary>Local video window height</summary>
-            <description>Local video window height.</description>
+            <summary>Video widget width</summary>
+            <description>Video widget width.</description>
         </key>
         <key name="video-widget-position-x" type="i">
-            <default>0</default>
-            <summary>Local video window X position</summary>
-            <description>Local video window X position.</description>
+            <default>50</default>
+            <summary>Video widget X position</summary>
+            <description>Video widget X position.</description>
         </key>
         <key name="video-widget-position-y" type="i">
-            <default>0</default>
-            <summary>Local video window Y position</summary>
-            <description>Local video window Y position.</description>
+            <default>50</default>
+            <summary>Video widget Y position</summary>
+            <description>Video widget Y position.</description>
         </key>
         <key name="show-dialpad" type="b">
             <default>true</default>
