@@ -35,7 +35,7 @@
 
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
-
+#include <assert.h>
 
 #define VIDEO_HEIGHT_MIN                200
 #define VIDEO_LOCAL_HEIGHT              100
@@ -86,7 +86,6 @@ G_DEFINE_TYPE(VideoWidget, video_widget, GTK_TYPE_WINDOW);
 static void       video_widget_draw                     (GtkWidget *);
 static GtkWidget* video_widget_draw_screen              (GtkWidget *);
 static void       video_widget_redraw_screen            (GtkWidget *);
-static void       video_widget_retrieve_screen_size     (GtkWidget *, guint *, guint *);
 static void       video_widget_set_geometry             (GtkWidget *, guint, guint);
 static VideoArea* video_widget_video_area_get           (GtkWidget *, VIDEO_AREA_ID);
 static gboolean   is_video_in_screen                    (GtkWidget *, gchar *);
@@ -286,37 +285,41 @@ video_widget_redraw_screen(GtkWidget *self)
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
     ClutterConstraint *constraint = NULL;
-    guint width = 0, height = 0, pos_x = 0, pos_y = 0, screen_width = 0, screen_height = 0;
-
-    /* retrieve the previous windows settings */
-    width  = g_settings_get_int(priv->settings, "video-widget-width");
-    height = g_settings_get_int(priv->settings, "video-widget-height");
-    pos_x  = g_settings_get_int(priv->settings, "video-widget-position-x");
-    pos_y  = g_settings_get_int(priv->settings, "video-widget-position-y");
-
-    /* retrieve the stage size based on camera in the stage */
-    video_widget_retrieve_screen_size(self, &screen_width, &screen_height);
-
-    /* if no previous size have been define, we set the widget size to the
-     * remote camera size */
-    if (width == 0 || height == 0) {
-        width  = screen_width;
-        height = screen_height;
-    }
-    /* force to keep the aspect ratio and set a minimal size */
-    video_widget_set_geometry(self, screen_width, screen_height);
-
-    /* use the previous setting to set the default size and position */
-    gtk_window_set_default_size(GTK_WINDOW(self), width, height);
-    gtk_window_move(GTK_WINDOW(self), pos_x, pos_y);
+    guint width = 0, height = 0, pos_x = 0, pos_y = 0;
+    gdouble aspect_ratio = 0;
 
     VideoArea *video_area_remote = video_widget_video_area_get(self, VIDEO_AREA_REMOTE);
     VideoArea *video_area_local = video_widget_video_area_get(self, VIDEO_AREA_LOCAL);
     Video *camera_remote = video_widget_retrieve_camera(self, VIDEO_AREA_REMOTE);
     Video *camera_local  = video_widget_retrieve_camera(self, VIDEO_AREA_LOCAL);
 
+    /* retrieve the previous windows settings */
+    pos_x  = g_settings_get_int(priv->settings, "video-widget-position-x");
+    pos_y  = g_settings_get_int(priv->settings, "video-widget-position-y");
+
+    /* place the window */
+    gtk_window_move(GTK_WINDOW(self), pos_x, pos_y);
+
     /* Handle the remote camera behaviour */
     if (video_area_remote && video_area_remote->show && camera_remote) {
+
+        width = g_settings_get_int(priv->settings, "video-widget-width");
+        if (width == 0)
+           width = camera_remote->width;
+
+        /* we recalculate the windows size based on the camera aspect ratio, so
+         * if the remote camera have a different aspect ratio we resize the
+         * window height based on the user prefered width */
+        assert(camera_remote->width  > 0);
+        assert(camera_remote->height > 0);
+        aspect_ratio = (gdouble) camera_remote->width / camera_remote->height;
+        height = width / aspect_ratio;
+
+        /* use the previous setting to set the default size and position */
+        gtk_window_set_default_size(GTK_WINDOW(self), width, height);
+
+        /* force to keep the aspect ratio and set a minimal size */
+        video_widget_set_geometry(self, camera_remote->width, camera_remote->height);
 
         /* the remote camera must always fit the screen size */
         constraint = clutter_bind_constraint_new(priv->video_screen.container,
@@ -337,6 +340,16 @@ video_widget_redraw_screen(GtkWidget *self)
         /* if the remote camera is not show, we use all the space for the local camera */
         if (!video_area_remote || !video_area_remote->show) {
 
+            /* use the previous setting to set the default size and position */
+            gtk_window_set_default_size(GTK_WINDOW(self), camera_local->width, camera_local->height);
+
+            /* TODO: fix the geometry problem
+             * change the geometry on the fly doesn't work, if we set the geometry here we will have
+             * problem later when a remote camera start...
+             * the only workaround found is to set the geometry only when the remote camera start,
+             * but the local camera will be lock with the same geometry if alone */
+            // video_widget_set_geometry(self, camera_local->width, camera_local->height);
+
             /* clean the previously constraints */
             clutter_actor_clear_constraints(camera_local->texture);
 
@@ -348,7 +361,7 @@ video_widget_redraw_screen(GtkWidget *self)
 
         } else {
         /* else the local camera must be resize keeping the aspect ratio and placed */
-            gdouble aspect_ratio = (gdouble) camera_local->width / camera_local->height;
+            aspect_ratio = (gdouble) camera_local->width / camera_local->height;
 
             /* clean the previously constraints */
             clutter_actor_clear_constraints(camera_local->texture);
@@ -391,44 +404,6 @@ video_widget_redraw_screen(GtkWidget *self)
 
     }
 
-
-}
-
-
-/*
- * video_widget_retrieve_screen_size()
- *
- * This function retrieve the screen size base on the camera size
- * if the remote camera is show we alway size the screen base on its values.
- */
-static void
-video_widget_retrieve_screen_size(GtkWidget *self,
-                                  guint *width,
-                                  guint *height)
-{
-    g_return_if_fail(IS_VIDEO_WIDGET(self));
-
-    VideoArea *video_area = NULL;
-    Video *camera = NULL;
-
-    *width  = 0;
-    *height = 0;
-
-    if ((video_area = video_widget_video_area_get(self, VIDEO_AREA_REMOTE)) &&
-         video_area->show &&
-         (camera = video_widget_retrieve_camera(self, VIDEO_AREA_REMOTE))) {
-
-        *width  = camera->width;
-        *height = camera->height;
-
-    } else if ((video_area = video_widget_video_area_get(self, VIDEO_AREA_LOCAL)) &&
-                video_area->show &&
-                (camera = video_widget_retrieve_camera(self, VIDEO_AREA_LOCAL))) {
-
-        *width  = camera->width;
-        *height = camera->height;
-
-    }
 
 }
 
@@ -723,9 +698,11 @@ on_configure_event_cb(GtkWidget *self,
 
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
-    /* we store the window size on each resize */
-    g_settings_set_int(priv->settings, "video-widget-width", event->width);
-    g_settings_set_int(priv->settings, "video-widget-height", event->height);
+    /* we store the window size on each resize when the remote camera is show */
+    VideoArea *video_area = video_widget_video_area_get(self, VIDEO_AREA_REMOTE);
+    if (video_area->show) {
+       g_settings_set_int(priv->settings, "video-widget-width", event->width);
+    }
 
     /* let the event propagate otherwise the video will not be re-scaled */
     return FALSE;
