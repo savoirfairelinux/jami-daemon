@@ -49,9 +49,13 @@
 #include <unistd.h>
 #include <cstring>
 #include <fcntl.h>
-#include <wordexp.h>
 #include <pwd.h>
 #include <cerrno>
+
+#ifndef __ANDROID__
+#   include <wordexp.h>
+#endif
+
 #include "fileutils.h"
 #include "logger.h"
 
@@ -164,6 +168,11 @@ create_pidfile()
 std::string
 expand_path(const std::string &path)
 {
+#ifdef __ANDROID__
+    ERROR("Path expansion not implemented, returning original");
+    return path;
+#else
+
     std::string result;
 
     wordexp_t p;
@@ -196,6 +205,7 @@ expand_path(const std::string &path)
     wordfree(&p);
 
     return result;
+#endif
 }
 
 bool isDirectoryWritable(const std::string &directory)
