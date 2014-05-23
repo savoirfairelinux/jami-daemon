@@ -173,18 +173,19 @@ expand_path(const std::string &path)
         case WRDE_BADCHAR:
             ERROR("Illegal occurrence of newline or one of |, &, ;, <, >, "
                   "(, ), {, }.");
-            break;
+            return result;
         case WRDE_BADVAL:
             ERROR("An undefined shell variable was referenced");
-            break;
+            return result;
         case WRDE_CMDSUB:
             ERROR("Command substitution occurred");
-            break;
-        case WRDE_NOSPACE:
-            ERROR("Out of memory.");
-            break;
+            return result;
         case WRDE_SYNTAX:
             ERROR("Shell syntax error");
+            return result;
+        case WRDE_NOSPACE:
+            ERROR("Out of memory.");
+            // This is the only error where we must call wordfree
             break;
         default:
             if (p.we_wordc > 0)
