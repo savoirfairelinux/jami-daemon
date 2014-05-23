@@ -31,38 +31,40 @@
 #ifndef __SFL_CALLMANAGER_H__
 #define __SFL_CALLMANAGER_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <vector>
+#include <map>
+#include <string>
+
+#include "dbus_cpp.h"
+
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "dbuscallmanager.adaptor.h"
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
+
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
+#pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
 #include <stdexcept>
-#include <map>
-#include <vector>
-#include <string>
 
-#include "sflphone.h"
-
-class CallManagerException: public std::runtime_error {
-    public:
-        CallManagerException(const std::string& str = "") :
-            std::runtime_error("A CallManagerException occured: " + str) {}
-};
-
-namespace sfl {
-class AudioZrtpSession;
-}
-
-class CallManager
+class DBusCallManager :
+    public org::sflphone::SFLphone::CallManager_adaptor,
+    public DBus::IntrospectableAdaptor,
+    public DBus::ObjectAdaptor
 {
     public:
-        CallManager();
-        void registerEvHandlers(struct sflph_call_ev_handlers* evHandlers);
+        DBusCallManager(DBus::Connection& connection);
 
-    // Methods
-    public:
-        /* Call related methods */
+        // Methods
         bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
-
         bool refuse(const std::string& callID);
         bool accept(const std::string& callID);
         bool hangUp(const std::string& callID);
@@ -72,8 +74,6 @@ class CallManager
         bool attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails(const std::string& callID);
         std::vector< std::string > getCallList();
-
-        /* Conference related methods */
         void removeConference(const std::string& conference_id);
         bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);
@@ -90,80 +90,21 @@ class CallManager
         std::vector<std::string> getDisplayNames(const std::string& confID);
         std::string getConferenceId(const std::string& callID);
         std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
-
-        /* File Playback methods */
         bool startRecordedFilePlayback(const std::string& filepath);
         void stopRecordedFilePlayback(const std::string& filepath);
-
-        /* General audio methods */
         bool toggleRecording(const std::string& callID);
-        /* DEPRECATED */
         void setRecording(const std::string& callID);
-
         void recordPlaybackSeek(const double& value);
         bool getIsRecording(const std::string& callID);
         std::string getCurrentAudioCodecName(const std::string& callID);
         void playDTMF(const std::string& key);
         void startTone(const int32_t& start, const int32_t& type);
-
-        /* Security related methods */
         void setSASVerified(const std::string& callID);
         void resetSASVerified(const std::string& callID);
         void setConfirmGoClear(const std::string& callID);
         void requestGoClear(const std::string& callID);
         void acceptEnrollment(const std::string& callID, const bool& accepted);
-
-        /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
-        void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
-
-    // Signals
-    public:
-        void callStateChanged(const std::string& callID, const std::string& state);
-
-        void transferFailed();
-
-        void transferSucceeded();
-
-        void recordPlaybackStopped(const std::string& path);
-
-        void voiceMailNotify(const std::string& callID, const int32_t& nd_msg);
-
-        void incomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
-
-        void incomingCall(const std::string& accountID, const std::string& callID, const std::string& from);
-
-        void recordPlaybackFilepath(const std::string& id, const std::string& filename);
-
-        void conferenceCreated(const std::string& confID);
-
-        void conferenceChanged(const std::string& confID,const std::string& state);
-
-        void updatePlaybackScale(const std::string&, const int32_t&, const int32_t&);
-        void conferenceRemoved(const std::string&);
-        void newCallCreated(const std::string&, const std::string&, const std::string&);
-        void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
-        void recordingStateChanged(const std::string& callID, const bool& state);
-        void secureSdesOn(const std::string& arg);
-        void secureSdesOff(const std::string& arg);
-
-        void secureZrtpOn(const std::string& callID, const std::string& cipher);
-        void secureZrtpOff(const std::string& callID);
-        void showSAS(const std::string& callID, const std::string& sas, const bool& verified);
-        void zrtpNotSuppOther(const std::string& callID);
-        void zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3);
-
-        void onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats);
-
-    private:
-
-#if HAVE_ZRTP
-        sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
-#endif
-
-    private:
-        // Event handlers; needed by the library API
-        struct sflph_call_ev_handlers evHandlers_;
 };
 
-#endif//CALLMANAGER_H
+#endif // __SFL_CALLMANAGER_H__

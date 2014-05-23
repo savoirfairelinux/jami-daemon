@@ -26,7 +26,6 @@ AM_CPPFLAGS = \
 	-I$(src)/src/config \
 	-I$(src)/test \
 	$(SIP_CFLAGS) \
-	@DBUSCPP_CFLAGS@ \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/sflphone\" \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \

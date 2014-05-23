@@ -36,6 +36,7 @@
 
 #include <cerrno>
 #include <sstream>
+#include <cstring>
 
 #include "configurationmanager.h"
 #include "account_schema.h"
@@ -49,6 +50,16 @@
 #include "sip/sipaccount.h"
 #include "history/historynamecache.h"
 #include "audio/audiolayer.h"
+
+ConfigurationManager::ConfigurationManager()
+{
+    std::memset(std::addressof(evHandlers_), 0, sizeof(evHandlers_));
+}
+
+void ConfigurationManager::registerEvHandlers(struct sflph_config_ev_handlers* evHandlers)
+{
+    evHandlers_ = *evHandlers;
+}
 
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
@@ -576,4 +587,59 @@ bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
     WARN("TLS not supported");
     return false;
 #endif
+}
+
+
+void ConfigurationManager::volumeChanged(const std::string& device, const int& value)
+{
+    if (evHandlers_.on_volume_change) {
+        evHandlers_.on_volume_change(device, value);
+    }
+}
+
+void ConfigurationManager::accountsChanged()
+{
+    if (evHandlers_.on_accounts_change) {
+        evHandlers_.on_accounts_change();
+    }
+}
+
+void ConfigurationManager::historyChanged()
+{
+    if (evHandlers_.on_history_change) {
+        evHandlers_.on_history_change();
+    }
+}
+
+void ConfigurationManager::stunStatusFailure(const std::string& accountID)
+{
+    if (evHandlers_.on_stun_status_fail) {
+        evHandlers_.on_stun_status_fail(accountID);
+    }
+}
+
+void ConfigurationManager::registrationStateChanged(const std::string& accountID, int const& state)
+{
+    if (evHandlers_.on_registration_state_change) {
+        evHandlers_.on_registration_state_change(accountID, state);
+    }
+}
+
+void ConfigurationManager::sipRegistrationStateChanged(const std::string& accountID, const std::string& state, const int32_t& code)
+{
+    if (evHandlers_.on_sip_registration_state_change) {
+        evHandlers_.on_sip_registration_state_change(accountID, state, code);
+    }
+}
+
+void ConfigurationManager::errorAlert(const int& alert)
+{
+    if (evHandlers_.on_error) {
+        evHandlers_.on_error(alert);
+    }
+}
+
+std::vector< int32_t > ConfigurationManager::getHardwareAudioFormat()
+{
+    return std::vector<int32_t> {};
 }

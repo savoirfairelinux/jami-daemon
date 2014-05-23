@@ -1,8 +1,6 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,14 +28,43 @@
  *  as that of the covered work.
  */
 
-#include "videomanager.h"
-#include "video/libav_utils.h"
-#include "video/video_input.h"
-#include "video/video_device_monitor.h"
+#ifndef __SFL_DBUSINSTANCE_H__
+#define __SFL_DBUSINSTANCE_H__
 
-VideoManager::VideoManager(DBus::Connection& connection) :
-    DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/VideoManager")
+#include <functional>
+
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+#include "dbus_cpp.h"
+
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "dbusinstance.adaptor.h"
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+#pragma GCC diagnostic warning "-Wunused-but-set-variable"
+#endif
+
+class DBusInstance :
+    public org::sflphone::SFLphone::Instance_adaptor,
+    public DBus::IntrospectableAdaptor,
+    public DBus::ObjectAdaptor
 {
-    // initialize libav libraries
-    libav_utils::sfl_avcodec_init();
-}
+    public:
+        typedef std::function<void ()> OnNoMoreClientFunc;
+
+    public:
+        DBusInstance(DBus::Connection& connection,
+                     const OnNoMoreClientFunc& onNoMoreClientFunc);
+
+        void Register(const int32_t& pid, const std::string& name);
+        void Unregister(const int32_t& pid);
+
+    private:
+        OnNoMoreClientFunc onNoMoreClientFunc_;
+        int count_;
+};
+
+#endif // __SFL_DBUSINSTANCE_H__

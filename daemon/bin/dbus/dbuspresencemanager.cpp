@@ -1,7 +1,6 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
+ *  Author: Philippe Proulx <philippe.proulx@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,8 +27,36 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "callmanager.h"
+#include <sflphone.h>
 
-CallManager::CallManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/CallManager")
-{}
+#include "dbuspresencemanager.h"
+
+DBusPresenceManager::DBusPresenceManager(DBus::Connection& connection)
+    : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/PresenceManager")
+{
+}
+
+void DBusPresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
+{
+    sflph_pres_publish(accountID, status, note);
+}
+
+void DBusPresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
+{
+    sflph_pres_answer_server_request(uri, flag);
+}
+
+void DBusPresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
+{
+    sflph_pres_subscribe_buddy(accountID, uri, flag);
+}
+
+std::vector<std::map<std::string, std::string> > DBusPresenceManager::getSubscriptions(const std::string& accountID)
+{
+    return sflph_pres_get_subscriptions(accountID);
+}
+
+void DBusPresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
+{
+    sflph_pres_set_subscriptions(accountID, uris);
+}

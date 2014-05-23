@@ -1,8 +1,5 @@
 include ../globals.mak
 
-libexecdir=$(libdir)/sflphone
-libexec_PROGRAMS = sflphoned
-
 if SFL_VIDEO
 SFL_VIDEO_SUBDIR = video
 SFL_VIDEO_LIBS=./video/libvideo.la \
@@ -32,16 +29,11 @@ endif
 
 SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
 
-sflphoned_SOURCES = main.cpp
-
-sflphoned_CXXFLAGS = \
-		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG) $(NETWORKMANAGER) \
-		-DVERSION=\"$(VERSION)\"
-
 # libsflphone
 
-sflphoned_LDADD = ./libsflphone.la $(YAML_LIBS) $(IAX_LIB)
-noinst_LTLIBRARIES = libsflphone.la
+include_HEADERS = sflphone.h
+
+lib_LTLIBRARIES = libsflphone.la
 
 libsflphone_la_LIBADD = \
 	./sip/libsiplink.la \
@@ -60,7 +52,8 @@ libsflphone_la_LDFLAGS = \
 		@SAMPLERATE_LIBS@ \
 		@SNDFILE_LIBS@ \
 		$(TLS_LIB) \
-		@DBUSCPP_LIBS@
+		@UUID_LIBS@ \
+		@YAML_LIBS@
 
 libsflphone_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
@@ -70,7 +63,7 @@ libsflphone_la_CFLAGS = \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
 		$(TLS_CFLAGS) \
-		@DBUSCPP_CFLAGS@
+		@UUID_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
 		account_factory.cpp \
@@ -105,4 +98,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		array_size.h \
 		account_schema.h \
 		registration_states.h \
-		map_utils.h
+		map_utils.h \
+		sflphone.h \
+		sflphone_api.cpp

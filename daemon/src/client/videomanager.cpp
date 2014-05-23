@@ -38,6 +38,17 @@
 #include "logger.h"
 #include "manager.h"
 
+VideoManager::VideoManager()
+{
+    std::memset(std::addressof(evHandlers_), 0, sizeof(evHandlers_));
+    libav_utils::sfl_avcodec_init();
+}
+
+void VideoManager::registerEvHandlers(struct sflph_video_ev_handlers* evHandlers)
+{
+    evHandlers_ = *evHandlers;
+}
+
 sfl_video::VideoDeviceMonitor &
 VideoManager::getVideoDeviceMonitor()
 {
@@ -154,4 +165,25 @@ std::string
 VideoManager::getCurrentCodecName(const std::string & /*callID*/)
 {
     return "";
+}
+
+void VideoManager::deviceEvent()
+{
+    if (evHandlers_.on_device_event) {
+        evHandlers_.on_device_event();
+    }
+}
+
+void VideoManager::startedDecoding(const std::string &id, const std::string& shmPath, int w, int h, bool isMixer)
+{
+    if (evHandlers_.on_start_decoding) {
+        evHandlers_.on_start_decoding(id, shmPath, w, h, isMixer);
+    }
+}
+
+void VideoManager::stoppedDecoding(const std::string &id, const std::string& shmPath, bool isMixer)
+{
+    if (evHandlers_.on_stop_decoding) {
+        evHandlers_.on_stop_decoding(id, shmPath, isMixer);
+    }
 }

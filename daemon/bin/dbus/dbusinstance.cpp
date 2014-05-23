@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -13,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -26,33 +27,30 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#include "global.h"
+#include "dbusinstance.h"
 
-/* %nodefaultctor ManagerImpl;
-%nodefaultdtor ManagerImpl; */
-%header %{
-#include <managerimpl.h>
-namespace Manager {
-extern ManagerImpl& instance();
-}
-%}
+DBusInstance::DBusInstance(DBus::Connection& connection,
+                           const OnNoMoreClientFunc& onNoMoreClientFunc) :
+    DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/Instance"),
+    onNoMoreClientFunc_(onNoMoreClientFunc),
+    count_(0)
+{}
 
-class ManagerImpl {
-public:
-    void init(const std::string &config_file);
-    void setPath(const std::string &path);
-    void pollEvents();
-    void finish();
-};
-
-//%rename(Manager_instance) Manager::instance;
-
-namespace Manager {
-
-ManagerImpl& Manager::instance()
+void
+DBusInstance::Register(const int32_t& pid UNUSED,
+                       const std::string& name UNUSED)
 {
-    // Meyers singleton
-    static ManagerImpl instance_;
-    return instance_;
+    ++count_;
 }
 
+
+void
+DBusInstance::Unregister(const int32_t& pid UNUSED)
+{
+    --count_;
+
+    if (count_ <= 0 && onNoMoreClientFunc_) {
+        onNoMoreClientFunc_();
+    }
 }

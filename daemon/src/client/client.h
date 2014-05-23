@@ -49,14 +49,6 @@ class PresenceManager;
 class VideoManager;
 #endif
 
-#include <functional>
-
-#if HAVE_DBUS
-namespace DBus {
-    class BusDispatcher;
-}
-#endif
-
 class Client {
     public:
         Client();
@@ -74,27 +66,12 @@ class Client {
         VideoManager* getVideoManager();
 #endif
 
-        int event_loop();
-        int exit();
-        // DBus provides our event loop
-        void registerCallback(const std::function<void()> &callback);
-
-#if HAVE_DBUS
-        void onLastUnregister();
-        void setPersistent(bool p) { isPersistent_ = p; }
-#endif
-
     private:
         NON_COPYABLE(Client);
         CallManager*          callManager_;
         ConfigurationManager* configurationManager_;
 #ifdef SFL_PRESENCE
         PresenceManager*      presenceManager_;
-#endif
-#if HAVE_DBUS
-        Instance*             instanceManager_;
-        DBus::BusDispatcher*  dispatcher_;
-        bool isPersistent_ = false;
 #endif
 #ifdef SFL_VIDEO
         VideoManager *videoManager_;

@@ -3,65 +3,56 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libclient_dbus.la
 
 BUILT_SOURCES=                      \
-    callmanager-glue.h              \
-    configurationmanager-glue.h     \
-    instance-glue.h
+    dbuscallmanager.adaptor.h       \
+    dbusconfigurationmanager.adaptor.h \
+    dbusinstance.adaptor.h
 
 if SFL_PRESENCE
-BUILT_SOURCES+=presencemanager-glue.h
-presencemanager-glue.h: presencemanager-introspec.xml Makefile.am
+BUILT_SOURCES+=dbuspresencemanager.adaptor.h
+dbuspresencemanager.adaptor.h: presencemanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 endif
 
 if SFL_VIDEO
-BUILT_SOURCES+=videomanager-glue.h
-videomanager-glue.h: videomanager-introspec.xml Makefile.am
+BUILT_SOURCES+=dbusvideomanager.adaptor.h
+dbusvideomanager.adaptor.h: videomanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 endif
 
 # Rule to generate the binding headers
-callmanager-glue.h: callmanager-introspec.xml Makefile.am
+dbuscallmanager.adaptor.h: callmanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 # Rule to generate the binding headers
-configurationmanager-glue.h: configurationmanager-introspec.xml Makefile.am
+dbusconfigurationmanager.adaptor.h: configurationmanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 # Rule to generate the binding headers
-instance-glue.h: instance-introspec.xml Makefile.am
+dbusinstance.adaptor.h: instance-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 libclient_dbus_la_SOURCES = \
-    callmanager_dbus.cpp \
-    configurationmanager_dbus.cpp  \
-    instance.cpp  \
-    client.cpp
+    dbuscallmanager.cpp \
+    dbusconfigurationmanager.cpp  \
+    dbusinstance.cpp  \
+    dbusclient.cpp \
+	dbusinstance.h \
+	dbus_cpp.h \
+	$(BUILT_SOURCES)
 
 if SFL_PRESENCE
-libclient_dbus_la_SOURCES += presencemanager_dbus.cpp
+libclient_dbus_la_SOURCES += dbuspresencemanager.cpp
 endif
 
 if SFL_VIDEO
-libclient_dbus_la_SOURCES += videomanager_dbus.cpp
-endif
-
-if USE_NETWORKMANAGER
-libclient_dbus_la_SOURCES += networkmanager.cpp
-NETWORKMANAGER=-DUSE_NETWORKMANAGER
+libclient_dbus_la_SOURCES += dbusvideomanager.cpp
 endif
 
 libclient_dbus_la_CXXFLAGS = -I../ \
+							 -I$(top_srcdir)/src \
             -DPREFIX=\"$(prefix)\" \
             -DPROGSHAREDIR=\"${datadir}/sflphone\" \
-            $(NETWORKMANAGER) \
             $(DBUSCPP_CFLAGS)
-
-noinst_HEADERS =            \
-    instance.h              \
-    networkmanager_proxy.h  \
-    networkmanager.h        \
-    dbus_cpp.h        		\
-    $(BUILT_SOURCES)
 
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services

@@ -237,22 +237,6 @@ ManagerImpl::setPath(const std::string &path)
     history_.setPath(path);
 }
 
-int
-ManagerImpl::run()
-{
-    DEBUG("Starting client event loop");
-
-    client_.registerCallback(std::bind(&ManagerImpl::pollEvents, std::ref(*this)));
-
-    return client_.event_loop();
-}
-
-int
-ManagerImpl::interrupt()
-{
-    return client_.exit();
-}
-
 void
 ManagerImpl::finish()
 {

@@ -31,27 +31,42 @@
  *  as that of the covered work.
  */
 
-#ifndef CONFIGURATIONMANAGER_H
-#define CONFIGURATIONMANAGER_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef __SFL_DBUSCONFIGURATIONMANAGER_H__
+#define __SFL_DBUSCONFIGURATIONMANAGER_H__
 
 #include <vector>
 #include <map>
 #include <string>
 
-#include "sflphone.h"
+#include "dbus_cpp.h"
 
-class ConfigurationManager
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "dbusconfigurationmanager.adaptor.h"
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
+
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
+#pragma GCC diagnostic warning "-Wunused-but-set-variable"
+#endif
+
+#include <stdexcept>
+
+class DBusConfigurationManager :
+    public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+    public DBus::IntrospectableAdaptor,
+    public DBus::ObjectAdaptor
 {
     public:
-        ConfigurationManager();
-        void registerEvHandlers(struct sflph_config_ev_handlers* evHandlers);
+        DBusConfigurationManager(DBus::Connection& connection);
 
-    // Methods
-    public:
+        // Methods
         std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
         void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
         std::map<std::string, std::string> getAccountTemplate();
@@ -60,16 +75,12 @@ class ConfigurationManager
         std::vector< std::string > getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
-
         std::map< std::string, std::string > getTlsSettingsDefault();
-
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();
         std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
         std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
-
         void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);
-
         std::vector< std::string > getAudioPluginList();
         void setAudioPlugin(const std::string& audioPlugin);
         std::vector< std::string > getAudioOutputDeviceList();
@@ -83,86 +94,45 @@ class ConfigurationManager
         std::string getCurrentAudioOutputPlugin();
         bool getNoiseSuppressState();
         void setNoiseSuppressState(const bool& state);
-
         bool isAgcEnabled();
         void setAgcState(const bool& enabled);
-
         void muteDtmf(const bool& mute);
         bool isDtmfMuted();
-
         bool isCaptureMuted();
         void muteCapture(const bool& mute);
         bool isPlaybackMuted();
         void mutePlayback(const bool& mute);
-
         std::map<std::string, std::string> getRingtoneList();
-
         std::string getAudioManager();
         bool setAudioManager(const std::string& api);
-
+        std::vector<std::string> getSupportedAudioManagers();
         int32_t isIax2Enabled();
         std::string getRecordPath();
         void setRecordPath(const std::string& recPath);
         bool getIsAlwaysRecording();
         void setIsAlwaysRecording(const bool& rec);
-
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
         void clearHistory();
-
         void setAccountsOrder(const std::string& order);
-
         std::map<std::string, std::string> getHookSettings();
         void setHookSettings(const std::map<std::string, std::string>& settings);
-
         std::vector<std::map<std::string, std::string> > getHistory();
-
         std::map<std::string, std::string> getTlsSettings();
         void setTlsSettings(const std::map< std::string, std::string >& details);
         std::map< std::string, std::string > getIp2IpDetails();
-
         std::vector< std::map< std::string, std::string > > getCredentials(const std::string& accountID);
         void setCredentials(const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details);
-
         std::string getAddrFromInterfaceName(const std::string& interface);
-
         std::vector<std::string> getAllIpInterface();
         std::vector<std::string> getAllIpInterfaceByName();
-
         std::map<std::string, std::string> getShortcuts();
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
-
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
-
-        /*
-         * Security
-         */
         bool checkForPrivateKey(const std::string& pemPath);
-        bool checkCertificateValidity(const std::string& caPath,
-                                      const std::string& pemPath);
-        bool checkHostnameCertificate(const std::string& host,
-                                      const std::string& port);
-
-    // Signals
-    public:
-        void volumeChanged(const std::string& device, const int& value);
-
-        void accountsChanged();
-
-        void historyChanged();
-
-        void stunStatusFailure(const std::string& accoundID);
-
-        void registrationStateChanged(const std::string& accoundID, int const& state);
-        void sipRegistrationStateChanged(const std::string&, const std::string&, const int32_t&);
-        void errorAlert(const int& alert);
-
-        std::vector< int32_t > getHardwareAudioFormat();
-
-    private:
-        // Event handlers; needed by the library API
-        struct sflph_config_ev_handlers evHandlers_;
+        bool checkCertificateValidity(const std::string& caPath, const std::string& pemPath);
+        bool checkHostnameCertificate(const  std::string& host, const std::string& port);
 };
 
-#endif //CONFIGURATIONMANAGER_H
+#endif // __SFL_DBUSCONFIGURATIONMANAGER_H__

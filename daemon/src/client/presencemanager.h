@@ -35,65 +35,38 @@
 #include "config.h"
 #endif
 
-#if HAVE_DBUS
-
-#include "dbus/dbus_cpp.h"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
-
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Weffc++"
-#include "dbus/presencemanager-glue.h"
-#pragma GCC diagnostic warning "-Wignored-qualifiers"
-#pragma GCC diagnostic warning "-Wunused-parameter"
-#pragma GCC diagnostic warning "-Weffc++"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-#pragma GCC diagnostic warning "-Wunused-but-set-variable"
-#endif
-
-#else
-// these includes normally come with DBus C++
 #include <vector>
-#include <map>
 #include <string>
-#endif // HAVE_DBUS
+
+#include "sflphone.h"
 
 class PresenceManager
-#if HAVE_DBUS
-    : public org::sflphone::SFLphone::PresenceManager_adaptor,
-    public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor
-#endif
 {
     public:
-#if HAVE_DBUS
-        PresenceManager(DBus::Connection& connection);
-#else
         PresenceManager();
-#endif
+        void registerEvHandlers(struct sflph_pres_ev_handlers* evHandlers);
 
-    /* the following signals must be implemented manually for any
-     * platform or configuration that does not supply dbus */
-#if !HAVE_DBUS
-    void newServerSubscriptionRequest(const std::string& remote);
-    void serverError(const std::string& accountID, const std::string& error, const std::string& msg);
-    void newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
-                              const bool& status, const std::string& lineStatus);
-    void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
-                              const bool& state);
-#endif // !HAVE_DBUS
+    // Methods
+    public:
+        /* Presence subscription/Notification. */
+        void publish(const std::string& accountID, const bool& status, const std::string& note);
+        void answerServerRequest(const std::string& uri, const bool& flag);
+        void subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag);
+        std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
+        void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 
-    /* Presence subscription/Notification. */
-    void publish(const std::string& accountID, const bool& status, const std::string& note);
-    void answerServerRequest(const std::string& uri, const bool& flag);
-    void subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag);
-    std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
-    void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
+    // Signals
+    public:
+        void newServerSubscriptionRequest(const std::string& remote);
+        void serverError(const std::string& accountID, const std::string& error, const std::string& msg);
+        void newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
+                                  const bool& status, const std::string& lineStatus);
+        void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
+                                  const bool& state);
 
+    private:
+        // Event handlers; needed by the library API
+        struct sflph_pres_ev_handlers evHandlers_;
 };
 
-#endif //CONFIGURATIONMANAGER_H
+#endif //PRESENCEINT_H

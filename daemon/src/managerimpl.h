@@ -126,15 +126,6 @@ class ManagerImpl {
 
         void setPath(const std::string &path);
 
-        /**
-         * Enter mainloop
-         */
-        int run();
-        /**
-         * Interrupt mainloop
-         */
-        int interrupt();
-
         /*
          * Terminate all threads and exit DBus loop
          */

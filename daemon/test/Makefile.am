@@ -6,7 +6,7 @@ check_PROGRAMS = test
 TESTS = run_tests.sh
 
 test_CXXFLAGS = -DWORKSPACE="$(top_srcdir)/test/" @PTHREAD_CFLAGS@
-test_LDADD = $(top_builddir)/src/libsflphone.la @ZRTPCPP_LIBS@ @LIBCRYPTO_LIBS@ @CPPUNIT_LIBS@ @YAML_LIBS@
+test_LDADD = $(top_builddir)/src/libsflphone.la $(top_builddir)/src/libsflphone_la-logger.lo @CPPUNIT_LIBS@
 
 EXTRA_DIST = sflphoned-sample.yml history-sample.tpl run_tests.sh
 test_SOURCES = constants.h \

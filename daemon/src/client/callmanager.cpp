@@ -29,6 +29,7 @@
  *  as that of the covered work.
  */
 #include <vector>
+#include <cstring>
 
 #include "global.h"
 #include "callmanager.h"
@@ -44,6 +45,16 @@
 
 #include "logger.h"
 #include "manager.h"
+
+CallManager::CallManager()
+{
+    std::memset(std::addressof(evHandlers_), 0, sizeof(evHandlers_));
+}
+
+void CallManager::registerEvHandlers(struct sflph_call_ev_handlers* evHandlers)
+{
+    evHandlers_ = *evHandlers;
+}
 
 bool CallManager::placeCall(const std::string& accountID,
                             const std::string& callID,
@@ -382,4 +393,165 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
 #else
     ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
 #endif
+}
+
+void CallManager::callStateChanged(const std::string& callID, const std::string& state)
+{
+    if (evHandlers_.on_state_change) {
+        evHandlers_.on_state_change(callID, state);
+    }
+}
+
+void CallManager::transferFailed()
+{
+    if (evHandlers_.on_transfer_fail) {
+        evHandlers_.on_transfer_fail();
+    }
+}
+
+void CallManager::transferSucceeded()
+{
+    if (evHandlers_.on_transfer_success) {
+        evHandlers_.on_transfer_success();
+    }
+}
+
+void CallManager::recordPlaybackStopped(const std::string& path)
+{
+    if (evHandlers_.on_record_playback_stopped) {
+        evHandlers_.on_record_playback_stopped(path);
+    }
+}
+
+void CallManager::voiceMailNotify(const std::string& callID, const int32_t& nd_msg)
+{
+    if (evHandlers_.on_voice_mail_notify) {
+        evHandlers_.on_voice_mail_notify(callID, nd_msg);
+    }
+}
+
+void CallManager::incomingMessage(const std::string& ID, const std::string& from, const std::string& msg)
+{
+    if (evHandlers_.on_incoming_message) {
+        evHandlers_.on_incoming_message(ID, from, msg);
+    }
+}
+
+void CallManager::incomingCall(const std::string& accountID, const std::string& callID, const std::string& from)
+{
+    if (evHandlers_.on_incoming_call) {
+        evHandlers_.on_incoming_call(accountID, callID, from);
+    }
+}
+
+void CallManager::recordPlaybackFilepath(const std::string& id, const std::string& filename)
+{
+    if (evHandlers_.on_record_playback_filepath) {
+        evHandlers_.on_record_playback_filepath(id, filename);
+    }
+}
+
+void CallManager::conferenceCreated(const std::string& confID)
+{
+    if (evHandlers_.on_conference_created) {
+        evHandlers_.on_conference_created(confID);
+    }
+}
+
+void CallManager::conferenceChanged(const std::string& confID,const std::string& state)
+{
+    if (evHandlers_.on_conference_changed) {
+        evHandlers_.on_conference_changed(confID, state);
+    }
+}
+
+void CallManager::updatePlaybackScale(const std::string& filepath, const int32_t& position, const int32_t& scale)
+{
+    if (evHandlers_.on_update_playback_scale) {
+        evHandlers_.on_update_playback_scale(filepath, position, scale);
+    }
+}
+
+void CallManager::conferenceRemoved(const std::string& confID)
+{
+    if (evHandlers_.on_conference_remove) {
+        evHandlers_.on_conference_remove(confID);
+    }
+}
+
+void CallManager::newCallCreated(const std::string& accountID, const std::string& callID, const std::string& to)
+{
+    if (evHandlers_.on_new_call) {
+        evHandlers_.on_new_call(accountID, callID, to);
+    }
+}
+
+void CallManager::sipCallStateChanged(const std::string& callID, const std::string& state, const int32_t& code)
+{
+    if (evHandlers_.on_sip_call_state_change) {
+        evHandlers_.on_sip_call_state_change(callID, state, code);
+    }
+}
+
+void CallManager::recordingStateChanged(const std::string& callID, const bool& state)
+{
+    if (evHandlers_.on_record_state_change) {
+        evHandlers_.on_record_state_change(callID, state);
+    }
+}
+
+void CallManager::secureSdesOn(const std::string& callID)
+{
+    if (evHandlers_.on_secure_sdes_on) {
+        evHandlers_.on_secure_sdes_on(callID);
+    }
+}
+
+void CallManager::secureSdesOff(const std::string& callID)
+{
+    if (evHandlers_.on_secure_sdes_off) {
+        evHandlers_.on_secure_sdes_off(callID);
+    }
+}
+
+void CallManager::secureZrtpOn(const std::string& callID, const std::string& cipher)
+{
+    if (evHandlers_.on_secure_zrtp_on) {
+        evHandlers_.on_secure_zrtp_on(callID, cipher);
+    }
+}
+
+void CallManager::secureZrtpOff(const std::string& callID)
+{
+    if (evHandlers_.on_secure_zrtp_off) {
+        evHandlers_.on_secure_zrtp_off(callID);
+    }
+}
+
+void CallManager::showSAS(const std::string& callID, const std::string& sas, const bool& verified)
+{
+    if (evHandlers_.on_show_sas) {
+        evHandlers_.on_show_sas(callID, sas, verified);
+    }
+}
+
+void CallManager::zrtpNotSuppOther(const std::string& callID)
+{
+    if (evHandlers_.on_zrtp_not_supp_other) {
+        evHandlers_.on_zrtp_not_supp_other(callID);
+    }
+}
+
+void CallManager::zrtpNegotiationFailed(const std::string& callID, const std::string& reason, const std::string& severity)
+{
+    if (evHandlers_.on_zrtp_negotiation_fail) {
+        evHandlers_.on_zrtp_negotiation_fail(callID, reason, severity);
+    }
+}
+
+void CallManager::onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats)
+{
+    if (evHandlers_.on_rtcp_receive_report) {
+        evHandlers_.on_rtcp_receive_report(callID, stats);
+    }
 }

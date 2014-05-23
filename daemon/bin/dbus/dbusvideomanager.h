@@ -1,6 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,38 +27,55 @@
  *  as that of the covered work.
  */
 
-#ifndef INSTANCE_H
-#define INSTANCE_H
+#ifndef __SFL_DBUSVIDEOMANAGER_H__
+#define __SFL_DBUSVIDEOMANAGER_H__
+
+#include <vector>
+#include <map>
+#include <string>
+
+#include "dbus_cpp.h"
 
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
-#include "dbus_cpp.h"
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "instance-glue.h"
+#include "dbusvideomanager.adaptor.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
+
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-class Instance
-    : public org::sflphone::SFLphone::Instance_adaptor,
-  public DBus::IntrospectableAdaptor,
-      public DBus::ObjectAdaptor {
-    private:
-        int count;
+#include <stdexcept>
 
+class DBusVideoManager :
+    public org::sflphone::SFLphone::VideoManager_adaptor,
+    public DBus::IntrospectableAdaptor,
+    public DBus::ObjectAdaptor
+{
     public:
-        Instance(DBus::Connection& connection);
-        static const char* SERVER_PATH;
+        DBusVideoManager(DBus::Connection& connection);
 
-        void Register(const int32_t& pid, const std::string& name);
-        void Unregister(const int32_t& pid);
-        int32_t getRegistrationCount();
-
+        // Methods
+        std::vector<std::map<std::string, std::string>> getCodecs(const std::string& accountID);
+        void setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string> > &details);
+        std::vector<std::string> getDeviceList();
+        std::map<std::string, std::map<std::string, std::vector<std::string>>> getCapabilities(const std::string& name);
+        std::map<std::string, std::string> getSettings(const std::string& name);
+        void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
+        void setDefaultDevice(const std::string &dev);
+        std::string getDefaultDevice();
+        std::string getCurrentCodecName(const std::string &callID);
+        void startCamera();
+        void stopCamera();
+        bool switchInput(const std::string& resource);
+        bool hasCameraStarted();
 };
 
-#endif // INSTANCE_H
+#endif // __SFL_DBUSVIDEOMANAGER_H__

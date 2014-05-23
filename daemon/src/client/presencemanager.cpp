@@ -36,6 +36,7 @@
 
 #include <cerrno>
 #include <sstream>
+#include <cstring>
 
 #include "logger.h"
 #include "manager.h"
@@ -47,6 +48,16 @@ constexpr static const char* STATUS_KEY     = "Status";
 constexpr static const char* LINESTATUS_KEY = "LineStatus";
 constexpr static const char* ONLINE_KEY     = "Online";
 constexpr static const char* OFFLINE_KEY    = "Offline";
+
+PresenceManager::PresenceManager()
+{
+    std::memset(std::addressof(evHandlers_), 0, sizeof(evHandlers_));
+}
+
+void PresenceManager::registerEvHandlers(struct sflph_pres_ev_handlers* evHandlers)
+{
+    evHandlers_ = *evHandlers;
+}
 
 /**
  * Un/subscribe to buddySipUri for an accountID
@@ -168,4 +179,34 @@ PresenceManager::setSubscriptions(const std::string& accountID, const std::vecto
 
     for (const auto &u : uris)
         pres->subscribeClient(u, true);
+}
+
+void PresenceManager::newServerSubscriptionRequest(const std::string& remote)
+{
+    if (evHandlers_.on_new_server_subscription_request) {
+        evHandlers_.on_new_server_subscription_request(remote);
+    }
+}
+
+void PresenceManager::serverError(const std::string& accountID, const std::string& error, const std::string& msg)
+{
+    if (evHandlers_.on_server_error) {
+        evHandlers_.on_server_error(accountID, error, msg);
+    }
+}
+
+void PresenceManager::newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
+                          const bool& status, const std::string& lineStatus)
+{
+    if (evHandlers_.on_new_buddy_notification) {
+        evHandlers_.on_new_buddy_notification(accountID, buddyUri, status, lineStatus);
+    }
+}
+
+void PresenceManager::subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
+                          const bool& state)
+{
+    if (evHandlers_.on_subscription_state_change) {
+        evHandlers_.on_subscription_state_change(accountID, buddyUri, state);
+    }
 }

@@ -237,6 +237,28 @@ AS_IF([test "x$enable_coverage" = "xyes"], [
         CXXFLAGS="${CXXFLAGS} --coverage"
         LDFLAGS="${LDFLAGS} --coverage"])
 
+# DBUSCPP
+dnl Check for dbuscpp, the C++ bindings for D-Bus
+AC_ARG_WITH([dbus],
+    [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
+    [],
+    [with_dbus=yes])
+AS_IF([test "x$with_dbus" = "xyes"], [
+       PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
+       AC_CONFIG_FILES([bin/Makefile \
+                        bin/dbus/Makefile])
+
+       AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
+       if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
+           AC_MSG_ERROR([dbusxx-xml2cpp not found])
+       fi
+
+       AS_IF([test "x$CLANG" = "xyes"], [
+             AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
+       ]);
+]);
+
+
 dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
@@ -258,8 +280,9 @@ AS_IF([test "x$enable_video" != "xno"],
 
         PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
     ],
-    [AM_CONDITIONAL(SFL_VIDEO, false)]);
-
+    [
+     AM_CONDITIONAL(SFL_VIDEO, false)
+     ]);
 
 LIBCCRTP_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
@@ -308,30 +331,6 @@ dnl This is a workaround until libzrtpcpp gets a version macro
 AC_DEFINE_UNQUOTED([HAVE_ZRTP], `if test "x$with_zrtp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp support])
 AC_DEFINE_UNQUOTED([HAVE_ZRTP_CONFIGURE], `if test "x$with_zrtp_configure" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp >= 2.3.0])
 AM_CONDITIONAL(BUILD_ZRTP, test "x$with_zrtp" = "xyes" )
-
-# DBUSCPP
-dnl Check for dbuscpp, the C++ bindings for D-Bus
-AC_ARG_WITH([dbus],
-    [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
-    [],
-    [with_dbus=yes])
-AS_IF([test "x$with_dbus" = "xyes"], [
-       PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
-       AC_CONFIG_FILES([src/client/dbus/Makefile \
-                        doc/dbus-api/Makefile])
-
-       AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
-       if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
-           AC_MSG_ERROR([dbusxx-xml2cpp not found])
-       fi
-
-       AS_IF([test "x$CLANG" = "xyes"], [
-             AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
-        ]);
-]);
-
-AC_DEFINE_UNQUOTED([HAVE_DBUS], `if test "x$with_dbus" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have dbus support])
-AM_CONDITIONAL(USE_DBUS, test "x$with_dbus" = "xyes" )
 
 # Instant Messaging
 # required dependency(ies): libxpat

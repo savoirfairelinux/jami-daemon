@@ -34,38 +34,18 @@
 #include "config.h"
 #endif
 
-#if HAVE_DBUS
-#include "dbus/dbus_cpp.h"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-/* This warning option only exists for gcc 4.6.0 and greater. */
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
-
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "dbus/videomanager-glue.h"
-#pragma GCC diagnostic warning "-Wignored-qualifiers"
-#pragma GCC diagnostic warning "-Wunused-parameter"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-/* This warning option only exists for gcc 4.6.0 and greater. */
-#pragma GCC diagnostic warning "-Wunused-but-set-variable"
-#endif
-
-#endif // HAVE_DBUS
-
 #include <memory> // for weak/shared_ptr
+#include <vector>
+#include <map>
+#include <string>
+
 #include "video/video_device_monitor.h"
 #include "video/video_base.h"
 #include "video/video_input.h"
 
+#include "sflphone.h"
+
 class VideoManager
-#if HAVE_DBUS
-    : public org::sflphone::SFLphone::VideoManager_adaptor,
-    public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor
-#endif
 {
     private:
         /* VideoManager acts as a cache of the active VideoInput.
@@ -81,13 +61,12 @@ class VideoManager
         sfl_video::VideoDeviceMonitor videoDeviceMonitor_ = {};
 
     public:
-#if HAVE_DBUS
-        VideoManager(DBus::Connection& connection);
-#else
         VideoManager();
-#endif
+        void registerEvHandlers(struct sflph_video_ev_handlers* evHandlers);
         sfl_video::VideoDeviceMonitor& getVideoDeviceMonitor();
 
+    // Methods
+    public:
         std::vector<std::map<std::string, std::string> >
         getCodecs(const std::string& accountID);
 
@@ -124,13 +103,14 @@ class VideoManager
         bool switchToCamera();
         std::shared_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
 
-        /* the following signals must be implemented manually for any
-         * platform or configuration that does not supply dbus */
-#if !HAVE_DBUS
+    // Signals
+    public:
         void deviceEvent();
-        void startedDecoding(const std::string &id, const std::string, int w, int h);
-        void stoppedDecoding(const std::string &id, const std::string);
-#endif // !HAVE_DBUS
+        void startedDecoding(const std::string &id, const std::string& shmPath, int w, int h, bool isMixer);
+        void stoppedDecoding(const std::string &id, const std::string& shmPath, bool isMixer);
+
+    private:
+        struct sflph_video_ev_handlers evHandlers_;
 };
 
 #endif // VIDEOMANAGER_H_

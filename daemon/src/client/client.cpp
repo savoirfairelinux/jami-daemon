@@ -28,28 +28,30 @@
  *  as that of the covered work.
  */
 
-/* Note: this file is compiled only when dbus is not available */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "client/client.h"
-#include "client/callmanager.h"
-#include "client/configurationmanager.h"
-#include "client/presencemanager.h"
+#include "client.h"
+#include "callmanager.h"
+#include "configurationmanager.h"
 
-Client::Client() : callManager_(new CallManager)
+#ifdef SFL_PRESENCE
+#include "presencemanager.h"
+#endif // SFL_PRESENCE
+
+#ifdef SFL_PRESENCE
+#include "videomanager.h"
+#endif // SFL_PRESENCE
+
+Client::Client() :
+    callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
 #ifdef SFL_PRESENCE
     , presenceManager_(new PresenceManager)
 #endif
-#if HAVE_DBUS
-    , instanceManager_(0)
-    , dispatcher_(0)
-#endif
 #ifdef SFL_VIDEO
-    , videoManager_(0)
+    , videoManager_(new VideoManager)
 #endif
 #ifdef USE_NETWORKMANAGER
     , networkManager_(0)
@@ -64,31 +66,11 @@ Client::~Client()
 #ifdef SFL_VIDEO
     delete videoManager_;
 #endif
-#if HAVE_DBUS
-    delete dispatcher_;
-    delete instanceManager_;
-#endif
     delete configurationManager_;
 #ifdef SFL_PRESENCE
     delete presenceManager_;
 #endif
     delete callManager_;
-}
-
-int Client::event_loop()
-{
-    return 0;
-}
-
-void
-Client::registerCallback(const std::function<void()> &callback)
-{
-
-}
-
-int Client::exit()
-{
-    return 0;
 }
 
 CallManager * Client::getCallManager()
