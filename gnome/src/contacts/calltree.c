@@ -1173,11 +1173,11 @@ void calltree_display(calltab_t *tab, SFLPhoneClient *client)
 static void
 format_duration(guint32 seconds, char *timestr, size_t timestr_sz)
 {
-    enum {SECONDS_PER_HOUR = 3600};
-    enum {SECONDS_PER_DAY = SECONDS_PER_HOUR * 24};
+    enum {HOURS_PER_DAY = 24, SECONDS_PER_HOUR = 3600,
+          SECONDS_PER_DAY = SECONDS_PER_HOUR * HOURS_PER_DAY};
 
     const guint32 days =  seconds / SECONDS_PER_DAY;
-    const guint32 hours = (seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR;
+    const guint32 hours = (seconds / SECONDS_PER_HOUR) % HOURS_PER_DAY;
     const guint32 minutes = (seconds / 60) % 60;
     seconds %= 60;
 
