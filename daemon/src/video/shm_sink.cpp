@@ -254,6 +254,9 @@ void SHMSink::shm_unlock()
 { sem_post(&shm_area_->mutex); }
 
 void SHMSink::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/, std::shared_ptr<VideoFrame> &frame_p)
-{ render_frame(*frame_p); }
+{
+    auto f = frame_p; // keep a local reference during rendering
+    render_frame(*f.get());
+}
 
 }
