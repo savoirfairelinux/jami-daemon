@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -37,8 +37,6 @@
 
 VideoManager::VideoManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/VideoManager")
-    , videoInput_()
-    , videoPreference_()
 {
     // initialize libav libraries
     libav_utils::sfl_avcodec_init();

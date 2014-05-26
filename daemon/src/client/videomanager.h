@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012-2014 Savoir-Faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,8 +68,15 @@ class VideoManager
 #endif
 {
     private:
-        std::shared_ptr<sfl_video::VideoInput> videoInput_;
-        VideoPreference videoPreference_;
+        /* VideoManager acts as a cache of the active VideoInput.
+         * When this input is needed, you must use getVideoCamera
+         * to create the instance if not done yet and obtain a shared pointer
+         * for your own usage.
+         * If no usage of this instance is made (i.e. no shared pointer owns it)
+         * the weak reference is disapear and the instance is destroyed.
+         */
+        std::weak_ptr<sfl_video::VideoInput> videoInput_ = {};
+        VideoPreference videoPreference_ = {};
 
     public:
 #if HAVE_DBUS
@@ -137,11 +144,12 @@ class VideoManager
         std::string
         getCurrentCodecName(const std::string &callID);
 
+        std::atomic_bool started_ = ATOMIC_VAR_INIT(false);
         void startCamera();
         void stopCamera();
-        bool switchInput(const std::string& resource);
         bool hasCameraStarted();
-        std::weak_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
+        bool switchInput(const std::string& resource);
+        std::shared_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
 
         /* the following signals must be implemented manually for any
          * platform or configuration that does not supply dbus */
