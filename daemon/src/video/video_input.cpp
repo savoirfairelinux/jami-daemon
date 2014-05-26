@@ -51,6 +51,7 @@ VideoInput::VideoInput() :
 
 VideoInput::~VideoInput()
 {
+    WARN("VideoInput deleted!");
     loop_.join();
 }
 

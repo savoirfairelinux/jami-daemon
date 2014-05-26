@@ -48,22 +48,28 @@ VideoMixer::VideoMixer(const std::string &id) :
     , sink_(id)
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
 {
-    auto videoCtrl = Manager::instance().getVideoManager();
-    videoCtrl->startCamera();
-
     // Local video camera is always attached
-    if (auto shared = videoCtrl->getVideoCamera().lock())
-        shared->attach(this);
+    auto videoCtrl = Manager::instance().getVideoManager();
+    videoLocal_ = videoCtrl->getVideoCamera();
+    if (videoLocal_) {
+        videoLocal_->attach(this);
+        videoCtrl->startCamera();
+    }
 
     loop_.start();
 }
 
 VideoMixer::~VideoMixer()
 {
-    auto videoCtrl = Manager::instance().getVideoManager();
-    if (auto shared = videoCtrl->getVideoCamera().lock())
-        shared->detach(this);
     stop_sink();
+
+    if (videoLocal_) {
+        videoLocal_->detach(this);
+
+        // prefer to release it now than after the next join
+        WARN("mixer: release video local (was %p)", videoLocal_.get());
+        videoLocal_.reset();
+    }
 
     loop_.join();
 }
@@ -143,11 +149,8 @@ void VideoMixer::render_frame(VideoFrame* input, const int index)
         return;
     }
 
-    std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
-    if (previous_p) {
+    if (auto previous_p = obtainLastFrame())
         previous_p->copy(output);
-        previous_p.reset();
-    }
 
     const int n = sources_.size();
     const int zoom = ceil(sqrt(n));
@@ -157,6 +160,10 @@ void VideoMixer::render_frame(VideoFrame* input, const int index)
     const int yoff = (index / zoom) * cell_height;
 
     VideoScaler scaler;
+    if (!input) {
+        ERROR("no frame");
+        return;
+    }
     scaler.scale_and_pad(*input, output, xoff, yoff, cell_width, cell_height);
 
     publishFrame();
