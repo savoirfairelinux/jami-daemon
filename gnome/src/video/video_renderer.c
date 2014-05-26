@@ -292,16 +292,22 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
 
     const gint BPP = 4;
     const gint ROW_STRIDE = BPP * priv->width;
-    /* update the clutter texture */
-    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(priv->texture),
-            (guchar*) priv->shm_area->data,
-            TRUE,
-            priv->width,
-            priv->height,
-            ROW_STRIDE,
-            BPP,
-            CLUTTER_TEXTURE_RGB_FLAG_BGR,
-            NULL);
+    const gint bytes_to_read = ROW_STRIDE * priv->height;
+    if (bytes_to_read <= priv->shm_area->buffer_size) {
+        /* update the clutter texture */
+        clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(priv->texture),
+                (guchar*) priv->shm_area->data,
+                TRUE,
+                priv->width,
+                priv->height,
+                ROW_STRIDE,
+                BPP,
+                CLUTTER_TEXTURE_RGB_FLAG_BGR,
+                NULL);
+    } else {
+        g_warning("Trying to read %d bytes from shared buffer of size %d bytes",
+                  bytes_to_read, priv->shm_area->buffer_size);
+    }
     priv->buffer_gen = priv->shm_area->buffer_gen;
     shm_unlock(priv->shm_area);
 }
