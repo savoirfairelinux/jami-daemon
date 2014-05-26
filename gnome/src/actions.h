@@ -271,4 +271,6 @@ void sflphone_toggle_screenshare(void);
 
 void sflphone_toggle_camera(void);
 
+void sflphone_switch_video_input(const gchar *resource);
+
 #endif
