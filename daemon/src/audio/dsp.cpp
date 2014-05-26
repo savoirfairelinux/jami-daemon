@@ -42,7 +42,7 @@ DSP::DSP(int smplPerFrame, int channels, int samplingRate) :
     smplPerFrame_(smplPerFrame),
     dspStates_()
 {
-    for (int c; c < channels; ++c)
+    for (int c = 0; c < channels; ++c)
         dspStates_.push_back(
                 {speex_preprocess_state_init(smplPerFrame_, samplingRate),
                  speexStateDeleter});
