@@ -69,9 +69,12 @@ bool VideoInput::setup()
 
 void VideoInput::process()
 {
+    bool newDecoderCreated = false;
+
     if (switchPending_.exchange(false)) {
         deleteDecoder();
         createDecoder();
+        newDecoderCreated = true;
     }
 
     if (not decoder_) {
@@ -80,6 +83,15 @@ void VideoInput::process()
     }
 
     captureFrame();
+
+    if (newDecoderCreated) {
+        /* Signal the client about the new sink */
+        Manager::instance().getVideoManager()->startedDecoding(sinkID_, sink_.openedName(),
+                decoder_->getWidth(), decoder_->getHeight(), false);
+        DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
+              sink_.openedName().c_str(), decoder_->getWidth(),
+              decoder_->getHeight());
+    }
 }
 
 void VideoInput::cleanup()
@@ -145,12 +157,6 @@ VideoInput::createDecoder()
         decoder_ = nullptr;
         return;
     }
-
-    /* Signal the client about the new sink */
-    Manager::instance().getVideoManager()->startedDecoding(sinkID_, sink_.openedName(),
-            decoder_->getWidth(), decoder_->getHeight(), false);
-    DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
-            sink_.openedName().c_str(), decoder_->getWidth(), decoder_->getHeight());
 }
 
 void
