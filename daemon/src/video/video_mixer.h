@@ -43,7 +43,6 @@
 #include <chrono>
 #include <memory>
 
-
 namespace sfl_video {
 
     struct VideoMixerSource {
@@ -89,6 +88,7 @@ private:
     SHMSink sink_;
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
+    std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
 };
 
 }

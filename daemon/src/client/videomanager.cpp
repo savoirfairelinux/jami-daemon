@@ -164,49 +164,43 @@ VideoManager::setPreferences(const std::string& name,
 void
 VideoManager::startCamera()
 {
-    if (hasCameraStarted()) {
-        WARN("Video preview was already started!");
-        return;
-    }
-
-    const std::string device = "v4l2://" + videoPreference_.getDevice();
-    videoInput_.reset(new sfl_video::VideoInput());
-    videoInput_->switchInput(device);
+    started_ = switchInput("v4l2://" + videoPreference_.getDevice());
 }
 
 void
 VideoManager::stopCamera()
 {
-    if (not hasCameraStarted()) {
-        WARN("Video preview was already stopped");
-        return;
-    }
-
-    videoInput_.reset();
+    if (switchInput(""))
+        started_ = false;
 }
 
 bool
 VideoManager::switchInput(const std::string &resource)
 {
-    if (not hasCameraStarted()) {
-        ERROR("Video input not initialized");
+    auto input = videoInput_.lock();;
+    if (!input) {
+        WARN("Video input not initialized");
         return false;
     }
-
-    return videoInput_->switchInput(resource);
+    return input->switchInput(resource);
 }
 
-std::weak_ptr<sfl_video::VideoFrameActiveWriter>
+std::shared_ptr<sfl_video::VideoFrameActiveWriter>
 VideoManager::getVideoCamera()
 {
-    return videoInput_;
+    auto input = videoInput_.lock();
+    if (!input) {
+        started_ = false;
+        input.reset(new sfl_video::VideoInput());
+        videoInput_ = input;
+    }
+    return input;
 }
 
 bool
 VideoManager::hasCameraStarted()
 {
-    // see http://stackoverflow.com/a/7580064/21185
-    return static_cast<bool>(videoInput_);
+    return started_;
 }
 
 std::string
