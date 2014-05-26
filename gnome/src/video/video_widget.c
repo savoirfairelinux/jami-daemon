@@ -30,6 +30,7 @@
 
 #include "video_widget.h"
 #include "video_renderer.h"
+#include "dbus/dbus.h"
 
 #include "sflphone_client.h"    /* gsettings schema path */
 
@@ -100,6 +101,7 @@ static gboolean   on_configure_event_cb                 (GtkWidget *, GdkEventCo
 static gboolean   on_button_press_in_screen_event_cb    (GtkWidget *, GdkEventButton *, gpointer);
 static gboolean   on_pointer_enter_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
 static gboolean   on_pointer_leave_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
+static void       on_drag_data_received_cb              (GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint info, guint32 time, gpointer data);
 
 
 
@@ -177,6 +179,11 @@ video_widget_init(VideoWidget *self)
         video_area->video_id = NULL;
     }
 
+    /* init drag & drop images */
+    gtk_drag_dest_set(GTK_WIDGET(self), GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY | GDK_ACTION_PRIVATE);
+    gtk_drag_dest_add_uri_targets(GTK_WIDGET(self));
+    g_signal_connect(GTK_WIDGET(self), "drag-data-received",
+            G_CALLBACK(on_drag_data_received_cb), NULL);
 }
 
 
@@ -704,6 +711,32 @@ cleanup_video_handle(gpointer data)
     g_free(v->video_id);
 
     g_free(v);
+}
+
+
+/*
+ * on_drag_data_received_cb()
+ *
+ * Handle dragged data in the video widget window.
+ * Dropping an image causes the client to switch the video input to that image.
+ */
+static void
+on_drag_data_received_cb(G_GNUC_UNUSED GtkWidget *self,
+        G_GNUC_UNUSED GdkDragContext *context,
+        G_GNUC_UNUSED gint x,
+        G_GNUC_UNUSED gint y,
+        GtkSelectionData *selection_data,
+        G_GNUC_UNUSED guint info,
+        G_GNUC_UNUSED guint32 time,
+        G_GNUC_UNUSED gpointer data)
+{
+    gchar **uris = gtk_selection_data_get_uris(selection_data);
+
+    /* We consider only the first selection */
+    if (uris && *uris && !dbus_switch_video_input(*uris))
+        g_warning("Failed to switch to dragged resource '%s'\n", *uris);
+
+    g_strfreev(uris);
 }
 
 
