@@ -1098,4 +1098,13 @@ sflphone_toggle_camera(void)
     g_free(resource);
 
 }
+
+void
+sflphone_switch_video_input(const gchar *resource)
+{
+    if (dbus_switch_video_input(resource))
+        g_debug("MRL: '%s'", resource);
+    else
+        g_warning("Failed to switch to MRL '%s'\n", resource);
+}
 #endif
