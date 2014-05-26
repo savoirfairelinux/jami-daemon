@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
@@ -51,9 +51,7 @@ using std::string;
 
 VideoRtpSession::VideoRtpSession(const string &callID,
 								 const map<string, string> &txArgs) :
-    mutex_(), socketPair_(), sender_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(), sending_(false), receiving_(false), conference_(nullptr),
-    callID_(callID), videoMixerSP_(), videoLocal_()
+    txArgs_(txArgs), callID_(callID)
 {}
 
 VideoRtpSession::~VideoRtpSession()
@@ -133,13 +131,13 @@ void VideoRtpSession::updateDestination(const string &destination,
 void VideoRtpSession::startSender()
 {
 	if (sending_) {
-        // Local video startup if needed
-        auto videoCtrl = Manager::instance().getVideoManager();
-        videoCtrl->startCamera();
-
-        videoLocal_ = videoCtrl->getVideoCamera();
-        if (sender_)
+        if (sender_) {
+            if (videoLocal_)
+                videoLocal_->detach(sender_.get());
+            if (videoMixer_)
+                videoMixer_->detach(sender_.get());
             WARN("Restarting video sender");
+        }
 
         try {
             sender_.reset(new VideoSender(txArgs_, *socketPair_));
@@ -148,17 +146,6 @@ void VideoRtpSession::startSender()
             sending_ = false;
         }
     }
-
-    /* sending may have been set to false in previous block */
-    if (not sending_) {
-        DEBUG("Video sending disabled");
-        if (auto shared = videoLocal_.lock())
-            shared->detach(sender_.get());
-        if (videoMixerSP_)
-            videoMixerSP_->detach(sender_.get());
-        sender_.reset();
-    }
-
 }
 
 void VideoRtpSession::startReceiver()
@@ -173,7 +160,7 @@ void VideoRtpSession::startReceiver()
     } else {
         DEBUG("Video receiving disabled");
         if (receiveThread_)
-            receiveThread_->detach(videoMixerSP_.get());
+            receiveThread_->detach(videoMixer_.get());
         receiveThread_.reset();
     }
 }
@@ -181,6 +168,7 @@ void VideoRtpSession::startReceiver()
 void VideoRtpSession::start(int localPort)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+
     if (not sending_ and not receiving_)
         return;
 
@@ -196,24 +184,28 @@ void VideoRtpSession::start(int localPort)
 
     // Setup video pipeline
     if (conference_)
-        setupConferenceVideoPipeline();
-    else {
-        auto shared = videoLocal_.lock();
-        if (sender_ && shared)
-            shared->attach(sender_.get());
+        setupConferenceVideoPipeline(conference_);
+    else if (sender_) {
+        auto videoCtrl = Manager::instance().getVideoManager();
+        videoLocal_ = videoCtrl->getVideoCamera();
+        if (videoLocal_ and videoLocal_->attach(sender_.get()))
+            videoCtrl->startCamera();
+    } else {
+        videoLocal_.reset();
     }
 }
 
 void VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (auto shared = videoLocal_.lock())
-        shared->detach(sender_.get());
 
-    if (videoMixerSP_) {
-        videoMixerSP_->detach(sender_.get());
+    if (videoLocal_)
+        videoLocal_->detach(sender_.get());
+
+    if (videoMixer_) {
+        videoMixer_->detach(sender_.get());
         if (receiveThread_)
-            receiveThread_->detach(videoMixerSP_.get());
+            receiveThread_->detach(videoMixer_.get());
     }
 
     if (socketPair_)
@@ -222,8 +214,8 @@ void VideoRtpSession::stop()
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
-    auto videoCtrl = Manager::instance().getVideoManager();
-    videoCtrl->stopCamera();
+    videoLocal_.reset();
+    conference_ = nullptr;
 }
 
 void VideoRtpSession::forceKeyFrame()
@@ -233,55 +225,59 @@ void VideoRtpSession::forceKeyFrame()
         sender_->forceKeyFrame();
 }
 
-void VideoRtpSession::setupConferenceVideoPipeline()
+void VideoRtpSession::setupConferenceVideoPipeline(Conference* conference)
 {
-    assert(conference_);
+    assert(conference);
 
-    videoMixerSP_ = std::move(conference_->getVideoMixer());
-    videoMixerSP_->setDimensions(atol(txArgs_["width"].c_str()),
-                                 atol(txArgs_["height"].c_str()));
+    videoMixer_ = std::move(conference->getVideoMixer());
+    assert(videoMixer_.get());
+    videoMixer_->setDimensions(atol(txArgs_["width"].c_str()),
+                               atol(txArgs_["height"].c_str()));
 
     if (sender_) {
-        if (auto shared = videoLocal_.lock())
-            shared->detach(sender_.get());
-        videoMixerSP_->attach(sender_.get());
+        // Swap sender from local video to conference video mixer
+        if (videoLocal_)
+            videoLocal_->detach(sender_.get());
+        videoMixer_->attach(sender_.get());
     }
 
     if (receiveThread_) {
         receiveThread_->enterConference();
-        receiveThread_->attach(videoMixerSP_.get());
+        receiveThread_->attach(videoMixer_.get());
     }
 }
 
-void VideoRtpSession::enterConference(Conference *conf)
+void VideoRtpSession::enterConference(Conference* conference)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (conference_)
-        exitConference();
-    conference_ = conf;
+
+    exitConference();
+
+    conference_ = conference;
     if (sending_ or receiveThread_)
-        setupConferenceVideoPipeline();
+        setupConferenceVideoPipeline(conference);
 }
 
 void VideoRtpSession::exitConference()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    assert(conference_);
 
-    if (videoMixerSP_) {
+
+    if (videoMixer_) {
         if (sender_)
-            videoMixerSP_->detach(sender_.get());
+            videoMixer_->detach(sender_.get());
 
         if (receiveThread_) {
-            receiveThread_->detach(videoMixerSP_.get());
+            receiveThread_->detach(videoMixer_.get());
             receiveThread_->exitConference();
         }
 
-        videoMixerSP_.reset();
+        videoMixer_.reset();
     }
 
-    if (auto shared = videoLocal_.lock())
-        shared->attach(sender_.get());
+    if (videoLocal_)
+        videoLocal_->attach(sender_.get());
+
     conference_ = nullptr;
 }
 
