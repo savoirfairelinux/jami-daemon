@@ -97,7 +97,7 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            x->frameShrPtr = &frame_p;
+            x->frame = frame_p;
             x->dirty = true;
             return;
         }
@@ -121,9 +121,8 @@ void VideoMixer::process()
             if (!loop_.isRunning())
                 break;
             if (x->dirty) {
-                // increment VideoFrame refcnt during rendering
-                std::shared_ptr<VideoFrame> shared = *x->frameShrPtr;
-                render_frame(shared.get(), i);
+                auto frame = x->frame; // inc refcnt to not be deleted by update() call
+                render_frame(frame.get(), i);
                 x->dirty = false;
             }
             i++;
