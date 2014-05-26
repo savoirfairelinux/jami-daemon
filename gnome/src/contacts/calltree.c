@@ -1173,15 +1173,23 @@ void calltree_display(calltab_t *tab, SFLPhoneClient *client)
 static void
 format_duration(guint32 seconds, char *timestr, size_t timestr_sz)
 {
+    enum {SECONDS_PER_HOUR = 3600};
+    enum {SECONDS_PER_DAY = SECONDS_PER_HOUR * 24};
+
+    const guint32 days =  seconds / SECONDS_PER_DAY;
+    const guint32 hours = (seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR;
     const guint32 minutes = (seconds / 60) % 60;
-    const guint32 hours = minutes / 60;
     seconds %= 60;
 
-    if (hours)
-        g_snprintf(timestr, timestr_sz, "%u:%02u:%02u",
-                   hours, minutes, seconds);
+    if (days)
+        g_snprintf(timestr, timestr_sz, _("%ud %02uh %02umn %02us"),
+                   days, hours, minutes, seconds);
     else
-        g_snprintf(timestr, timestr_sz, "%02u:%02u",
+        if (hours)
+            g_snprintf(timestr, timestr_sz, "%u:%02u:%02u",
+                   hours, minutes, seconds);
+        else
+            g_snprintf(timestr, timestr_sz, "%02u:%02u",
                    minutes, seconds);
 }
 
@@ -1190,7 +1198,7 @@ gboolean calltree_update_clock(G_GNUC_UNUSED gpointer data)
     if (calllist_empty(current_calls_tab))
         return TRUE;
 
-    char timestr[20];
+    char timestr[32];
     const gchar *msg = "";
     double duration;
     callable_obj_t *call = calltab_get_selected_call(current_calls_tab);
