@@ -41,6 +41,7 @@
 
 #include <list>
 #include <chrono>
+#include <memory>
 
 
 namespace sfl_video {
@@ -48,7 +49,7 @@ namespace sfl_video {
     struct VideoMixerSource {
         bool dirty = false;
         Observable<std::shared_ptr<VideoFrame> >* source = nullptr;
-        std::shared_ptr<VideoFrame>* frameShrPtr = nullptr;
+        std::shared_ptr<VideoFrame> frame = nullptr;
     };
 
 class VideoMixer :
