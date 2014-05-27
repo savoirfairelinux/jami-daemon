@@ -58,6 +58,7 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
         * @param call The SIP call
         */
         AudioSymmetricRtpSession(SIPCall &call);
+        ~AudioSymmetricRtpSession();
 
         std::vector<long>
         getSocketDescriptors() const;
@@ -84,6 +85,7 @@ class AudioSymmetricRtpSessionIPv6 : public ost::SymmetricRTPSessionIPV6, public
         * @param call The SIP call
         */
         AudioSymmetricRtpSessionIPv6(SIPCall &call);
+        ~AudioSymmetricRtpSessionIPv6();
 
         std::vector<long>
         getSocketDescriptors() const;

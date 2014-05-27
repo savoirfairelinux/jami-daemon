@@ -48,6 +48,17 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
           call_.getLocalIp().toString().c_str(), call_.getLocalAudioPort());
 }
 
+AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
+{
+    // This would normally be invoked in ost::~SymmetricRTPSession() BUT
+    // we must stop it here because onRTPPacketRecv() runs in the other thread
+    // and uses member variables that are destroyed here
+    if (ost::Thread::isRunning()) {
+        disableStack();
+        ost::Thread::join();
+    }
+}
+
 std::vector<long>
 AudioSymmetricRtpSession::getSocketDescriptors() const
 {
@@ -163,6 +174,15 @@ AudioSymmetricRtpSessionIPv6::AudioSymmetricRtpSessionIPv6(SIPCall &call) :
 {
     DEBUG("Setting new RTP/IPv6 session with destination %s:%d",
           call_.getLocalIp().toString().c_str(), call_.getLocalAudioPort());
+}
+
+AudioSymmetricRtpSessionIPv6::~AudioSymmetricRtpSessionIPv6()
+{
+    // see explanation in AudioSymmetricRtpSessionIPv6()
+    if (ost::Thread::isRunning()) {
+        disableStack();
+        ost::Thread::join();
+    }
 }
 
 std::vector<long>
