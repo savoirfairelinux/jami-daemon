@@ -76,7 +76,7 @@ class VideoManager
          * this video input instance: this instance is destroyed when the last
          * external user has released its shared pointer.
          */
-        std::weak_ptr<sfl_video::VideoInput> videoInput_ = {};
+        std::shared_ptr<sfl_video::VideoInput> videoInput_ = {};
         VideoPreference videoPreference_ = {};
 
     public:
