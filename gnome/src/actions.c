@@ -1077,9 +1077,12 @@ sflphone_toggle_screenshare(void)
 void
 sflphone_switch_video_input(const gchar *resource)
 {
-    if (dbus_switch_video_input(resource))
-        g_debug("MRL: '%s'", resource);
-    else
+    gchar *decoded = g_uri_unescape_string(resource, NULL);
+    g_debug("MRL: '%s'", decoded);
+
+    if (!dbus_switch_video_input(encoded))
         g_warning("Failed to switch to MRL '%s'\n", resource);
+
+    g_free(decoded);
 }
 #endif
