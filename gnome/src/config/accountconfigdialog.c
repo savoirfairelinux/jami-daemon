@@ -927,9 +927,13 @@ create_security_tab(account_t *account, SFLPhoneClient *client)
     GtkWidget * ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    // Credentials frame
-    GtkWidget * frame = create_credential_widget(account);
-    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+    GtkWidget *frame;
+
+    if (!account_is_IP2IP(account)) {
+        // Credentials frame
+        frame = create_credential_widget(account);
+        gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+    }
 
     // Security frame
     frame = create_security_widget(account, client);
@@ -1171,8 +1175,12 @@ GtkWidget* create_advanced_tab(const account_t *account)
 
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
-    GtkWidget *frame = create_registration_expire(account);
-    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+    GtkWidget *frame;
+
+    if (!account_is_IP2IP(account)) {
+        frame = create_registration_expire(account);
+        gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+    }
 
     frame = create_network(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
@@ -1344,9 +1352,6 @@ static GtkWidget* create_direct_ip_calls_tab(account_t *account)
     gtk_widget_set_size_request(label, 350, -1);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 
-    GtkWidget *frame = create_network(account);
-    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
-
     GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_box_pack_start(GTK_BOX(vbox), auto_answer_checkbox, FALSE, FALSE, 0);
 
@@ -1361,6 +1366,8 @@ static const gchar *bool_to_string(gboolean v)
 
 static void update_account_from_basic_tab(account_t *account)
 {
+    const gboolean IS_IP2IP = account_is_IP2IP(account);
+
     // Update protocol in case it changed
     gchar *proto;
     if (protocol_combo)
@@ -1369,11 +1376,14 @@ static void update_account_from_basic_tab(account_t *account)
         proto = g_strdup("SIP");
 
     if (g_strcmp0(proto, "SIP") == 0) {
-        account_replace(account, CONFIG_ACCOUNT_REGISTRATION_EXPIRE,
-                gtk_entry_get_text(GTK_ENTRY(expire_spin_box)));
 
-        account_replace(account, CONFIG_ACCOUNT_ROUTESET,
-                gtk_entry_get_text(GTK_ENTRY(entry_route_set)));
+        if (!IS_IP2IP) {
+            account_replace(account, CONFIG_ACCOUNT_REGISTRATION_EXPIRE,
+                    gtk_entry_get_text(GTK_ENTRY(expire_spin_box)));
+
+            account_replace(account, CONFIG_ACCOUNT_ROUTESET,
+                    gtk_entry_get_text(GTK_ENTRY(entry_route_set)));
+        }
 
         gboolean v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_stun_check_box));
         account_replace(account, CONFIG_STUN_ENABLE,
@@ -1397,9 +1407,11 @@ static void update_account_from_basic_tab(account_t *account)
 #endif
 
 #ifdef SFL_PRESENCE
-        v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
-        account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
-        // TODO enable/disable the presence window view
+        if (!IS_IP2IP) {
+            v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
+            account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
+            // TODO enable/disable the presence window view
+        }
 #endif
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
@@ -1436,13 +1448,17 @@ static void update_account_from_basic_tab(account_t *account)
     }
 
     account_replace(account, CONFIG_ACCOUNT_USERAGENT,
-                    gtk_entry_get_text(GTK_ENTRY(entry_user_agent)));
-    account_replace(account, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(entry_alias)));
-    account_replace(account, CONFIG_ACCOUNT_TYPE, proto);
-    account_replace(account, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(entry_hostname)));
-    account_replace(account, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(entry_username)));
-    account_replace(account, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entry_password)));
-    account_replace(account, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(entry_mailbox)));
+            gtk_entry_get_text(GTK_ENTRY(entry_user_agent)));
+
+    if (!IS_IP2IP) {
+        account_replace(account, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(entry_alias)));
+        account_replace(account, CONFIG_ACCOUNT_TYPE, proto);
+        account_replace(account, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(entry_hostname)));
+        account_replace(account, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(entry_username)));
+        account_replace(account, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entry_password)));
+        account_replace(account, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(entry_mailbox)));
+    }
+
     g_free(proto);
 }
 
@@ -1456,8 +1472,7 @@ void update_account_from_dialog(GtkWidget *dialog, const gchar *accountID)
         return;
 
     const gboolean IS_IP2IP = account_is_IP2IP(account);
-    if (!IS_IP2IP)
-        update_account_from_basic_tab(account);
+    update_account_from_basic_tab(account);
 
     if (account_is_SIP(account)) {
         if (IS_IP2IP ||
@@ -1563,20 +1578,19 @@ show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *c
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), videocodecs_tab, gtk_label_new(_("Video")));
 #endif
 
-    // Do not need advanced or security one for the IP2IP account
-    if (!IS_IP2IP) {
-        /* Advanced */
-        advanced_tab = create_advanced_tab(account);
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), advanced_tab, gtk_label_new(_("Advanced")));
-
-        /* Security */
-        security_tab = create_security_tab(account, client);
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
-    } else {
+    if (IS_IP2IP) {
         /* Custom tab for the IP to IP profile */
         GtkWidget *ip_tab = create_direct_ip_calls_tab(account);
         gtk_notebook_prepend_page(GTK_NOTEBOOK(notebook), ip_tab, gtk_label_new(_("General")));
     }
+
+    /* Advanced */
+    advanced_tab = create_advanced_tab(account);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), advanced_tab, gtk_label_new(_("Advanced")));
+
+    /* Security */
+    security_tab = create_security_tab(account, client);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
 
     // Emit signal to hide advanced and security tabs in case of IAX
     if (protocol_combo)
