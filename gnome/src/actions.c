@@ -1077,29 +1077,6 @@ sflphone_toggle_screenshare(void)
 }
 
 void
-sflphone_toggle_camera(void)
-{
-    static gboolean camera_toggle = TRUE;
-    gchar *resource = NULL;
-
-    if (camera_toggle) {
-        resource = sflphone_get_video_none();
-    } else {
-        resource = sflphone_get_active_video();
-    }
-
-    if (dbus_switch_video_input(resource)) {
-        g_debug("switched video input to '%s'", resource);
-        camera_toggle = !camera_toggle;
-    } else {
-        g_warning("failed to switch to resource '%s'\n", resource);
-    }
-
-    g_free(resource);
-
-}
-
-void
 sflphone_switch_video_input(const gchar *resource)
 {
     if (dbus_switch_video_input(resource))
