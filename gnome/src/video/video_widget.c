@@ -707,8 +707,12 @@ on_drag_data_received_cb(G_GNUC_UNUSED GtkWidget *self,
     gchar **uris = gtk_selection_data_get_uris(selection_data);
 
     /* We consider only the first selection */
-    if (uris && *uris)
-       sflphone_switch_video_input(*uris);
+    if (uris && *uris) {
+        gchar *decoded = g_uri_unescape_string(*uris, NULL);
+        if (decoded)
+           sflphone_switch_video_input(decoded);
+        g_free(decoded);
+    }
     g_strfreev(uris);
 }
 
