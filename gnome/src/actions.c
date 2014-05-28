@@ -1046,12 +1046,10 @@ sflphone_get_active_video(void)
 gchar *
 sflphone_get_video_none(void)
 {
-    static const gchar *logo = ICONS_DIR "/sflphone.png";
+    static const gchar * const logo = "file://" ICONS_DIR "/sflphone.png";
+    const gchar *none = access(logo, R_OK) ? "" : logo;
 
-    if (access(logo, R_OK) != 0)
-        return g_strdup("");
-    else
-        return g_strconcat("file://", logo, NULL);
+    return g_strdup(none);
 }
 
 void
