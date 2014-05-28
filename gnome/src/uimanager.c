@@ -691,7 +691,7 @@ call_screenshare(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED SFLPhoneClient *
 static void
 call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
 {
-    gchar *resource = NULL;
+    gchar *resource;
 
     if (g_strcmp0(device, "None") == 0) {
         resource = sflphone_get_video_none();
@@ -702,9 +702,7 @@ call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
         resource = g_strconcat("v4l2://", device, NULL);
     }
 
-    if (!dbus_switch_video_input(resource))
-        g_warning("failed to switch to '%s' (MRL '%s')\n", device, resource);
-
+    sflphone_switch_video_input(resource);
     g_free(resource);
 }
 #endif
