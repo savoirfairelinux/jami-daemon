@@ -1052,25 +1052,20 @@ sflphone_get_video_none(void)
     return g_strdup(none);
 }
 
+/*
+ * URI of previous resource
+ * FIXME when we'll validate the toggle alternatives, we might get rid of this.
+ */
+static gchar *last_uri;
+
 void
 sflphone_toggle_screenshare(void)
 {
-    static gboolean screenshare = TRUE;
-    gchar *resource = NULL;
+    gchar *resource = g_str_has_prefix(last_uri, "display://") ?
+        sflphone_get_active_video() :
+        sflphone_get_display();
 
-    if (screenshare) {
-        resource = sflphone_get_display();
-    } else {
-        resource = sflphone_get_active_video();
-    }
-
-    if (dbus_switch_video_input(resource)) {
-        g_debug("switched video input to '%s'", resource);
-        screenshare = !screenshare;
-    } else {
-        g_warning("failed to switch to resource '%s'\n", resource);
-    }
-
+    sflphone_switch_video_input(resource);
     g_free(resource);
 }
 
@@ -1080,8 +1075,12 @@ sflphone_switch_video_input(const gchar *resource)
     gchar *decoded = g_uri_unescape_string(resource, NULL);
     g_debug("MRL: '%s'", decoded);
 
-    if (!dbus_switch_video_input(encoded))
+    if (dbus_switch_video_input(decoded)) {
+        g_free(last_uri);
+        last_uri = g_strdup(resource);
+    } else {
         g_warning("Failed to switch to MRL '%s'\n", resource);
+    }
 
     g_free(decoded);
 }
