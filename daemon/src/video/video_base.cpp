@@ -98,7 +98,8 @@ bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
     }
 
     setGeometry(width, height, pix_fmt);
-    return !av_frame_get_buffer(frame_, 32);
+    allocated_ = not av_frame_get_buffer(frame_, 32);
+    return allocated_;
 }
 
 void VideoFrame::setdefaults()
