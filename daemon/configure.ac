@@ -164,10 +164,7 @@ AS_IF([test "x$enable_video" = "xyes"],
 
         PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice development files]))
 
-        dnl check for ffmpeg version, then check for libav version as it's lower
-        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 52.19.100,,
-                          [PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 52.8.0,,
-                           AC_MSG_ERROR([Missing libavutil development files]))])
+        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 52.0.0,, AC_MSG_ERROR([Missing libavutil development files]))
 
         PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
     ],
