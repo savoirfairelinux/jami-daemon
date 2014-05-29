@@ -166,7 +166,7 @@ public:
 
     ~VideoFrame();
 
-    AVFrame* get() { return frame_; };
+    AVFrame* get() const { return frame_; };
     int getPixelFormat() const;
     int getWidth() const;
     int getHeight() const;
