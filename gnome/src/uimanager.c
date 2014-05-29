@@ -687,6 +687,25 @@ call_screenshare(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED SFLPhoneClient *
 #endif
 }
 
+static gchar *
+choose_file(void)
+{
+    gchar *uri = NULL;
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(NULL, NULL,
+            GTK_FILE_CHOOSER_ACTION_OPEN,
+            _("_Cancel"), GTK_RESPONSE_CANCEL,
+            _("_Open"), GTK_RESPONSE_ACCEPT,
+            NULL);
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+        uri = gtk_file_chooser_get_uri(chooser);
+    }
+
+    gtk_widget_destroy(dialog);
+    return uri;
+}
+
 #ifdef SFL_VIDEO
 static void
 call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
@@ -695,6 +714,10 @@ call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
 
     if (g_strcmp0(device, _("Screen")) == 0) {
         resource = sflphone_get_display();
+    } else if (g_strcmp0(device, _("Choose file...")) == 0) {
+        resource = choose_file();
+        if (!resource)
+            return;
     } else {
         dbus_set_active_video_device(device);
         resource = g_strconcat("v4l2://", device, NULL);
@@ -1469,6 +1492,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             }
             /* Add the special X11 device */
             append_video_input_to_submenu(video_menu, _("Screen"));
+            append_video_input_to_submenu(video_menu, _("Choose file..."));
         }
 #endif
     } else {
