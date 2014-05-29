@@ -166,8 +166,15 @@ void VideoFrame::copy(VideoFrame &dst)
 
 void VideoFrame::clone(VideoFrame &dst)
 {
+#if USE_OLD_AVU
+    dst.allocBuffer(frame_->width, frame_->height, getPixelFormat());
+    av_picture_copy((AVPicture *)dst.frame_, (const AVPicture *)frame_,
+                    (AVPixelFormat)frame_->format, frame_->width,
+                    frame_->height);
+#else
     dst.setdefaults();
     av_frame_ref(dst.frame_, frame_);
+#endif
 }
 
 void VideoFrame::clear()
