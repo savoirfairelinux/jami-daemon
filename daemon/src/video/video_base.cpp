@@ -34,10 +34,8 @@
 #include "video_base.h"
 #include "logger.h"
 
-#if ! LIBAVUTIL_VERSION_CHECK(52, 8, 0, 19, 100)
 // Especially for Fedora < 20 and UBUNTU < 14.10
-#define USE_OLD_AVU 1
-#endif
+#define USE_OLD_AVU ! LIBAVUTIL_VERSION_CHECK(52, 8, 0, 19, 100)
 
 #if USE_OLD_AVU
 #define av_frame_alloc avcodec_alloc_frame
