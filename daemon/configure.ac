@@ -155,22 +155,19 @@ AS_IF([test "x$enable_video" = "xyes"],
         AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
         AM_CONDITIONAL(SFL_VIDEO, true)
 
-        dnl The libav versions correspond to the last libav release: 0.7
-        dnl Check for libavcodec development package - name: libavcodec-dev
         PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
         LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
 
-        dnl Check for libavformat development package - name: libavformat-dev
         PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat development files]))
 
-        dnl Check for libswscale development package - name: libswcale-dev
         PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale development files]))
 
-        dnl Check for libavdevice development package - name: libavdevice-dev
         PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice development files]))
 
-        dnl Check for libavutil development package - name: libavutil-dev
-        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil development files]))
+        dnl check for ffmpeg version, then check for libav version as it's lower
+        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 52.19.100,,
+                          [PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 52.8.0,,
+                           AC_MSG_ERROR([Missing libavutil development files]))])
 
         PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
     ],
