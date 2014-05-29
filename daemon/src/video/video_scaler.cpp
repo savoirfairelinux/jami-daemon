@@ -39,9 +39,9 @@ VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_FAST_BILINEAR) {}
 
 VideoScaler::~VideoScaler() { sws_freeContext(ctx_); }
 
-void VideoScaler::scale(VideoFrame &input, VideoFrame &output)
+void VideoScaler::scale(const VideoFrame &input, VideoFrame &output)
 {
-    AVFrame *input_frame = input.get();
+    const AVFrame *input_frame = input.get();
     AVFrame *output_frame = output.get();
 
     ctx_ = sws_getCachedContext(ctx_,
@@ -62,11 +62,11 @@ void VideoScaler::scale(VideoFrame &input, VideoFrame &output)
               input_frame->height, output_frame->data, output_frame->linesize);
 }
 
-void VideoScaler::scale_and_pad(VideoFrame &input, VideoFrame &output,
+void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
                                 unsigned xoff, unsigned yoff,
                                 unsigned dest_width, unsigned dest_height)
 {
-    AVFrame *input_frame = input.get();
+    const AVFrame *input_frame = input.get();
     AVFrame *output_frame = output.get();
     uint8_t *data[AV_NUM_DATA_POINTERS];
 

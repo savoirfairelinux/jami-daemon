@@ -44,9 +44,9 @@ class VideoScaler {
 public:
     VideoScaler();
     ~VideoScaler();
-    void scale(VideoFrame &input, VideoFrame &output);
+    void scale(const VideoFrame &input, VideoFrame &output);
     void reset();
-    void scale_and_pad(VideoFrame &input, VideoFrame &output,
+    void scale_and_pad(const VideoFrame &input, VideoFrame &output,
                        unsigned xoff, unsigned yoff,
                        unsigned dest_width, unsigned dest_height);
 

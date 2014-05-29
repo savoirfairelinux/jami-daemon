@@ -155,8 +155,8 @@ void VideoMixer::process()
     publishFrame();
 }
 
-void VideoMixer::render_frame(VideoFrame& output, VideoFrame& input,
-                              const int index)
+void VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
+                              int index)
 {
     if (!width_ or !height_)
         return;

@@ -74,7 +74,7 @@ public:
 private:
     NON_COPYABLE(VideoMixer);
 
-    void render_frame(VideoFrame& output, VideoFrame& input, const int index);
+    void render_frame(VideoFrame& output, const VideoFrame& input, int index);
     void start_sink();
     void stop_sink();
 
