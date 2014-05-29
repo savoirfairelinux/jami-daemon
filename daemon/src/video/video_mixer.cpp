@@ -48,14 +48,13 @@ VideoMixer::VideoMixer(const std::string &id) :
     , sink_(id)
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
 {
-    // Local video camera is always attached
+    // Local video camera is the main participant
     auto videoCtrl = Manager::instance().getVideoManager();
     videoLocal_ = videoCtrl->getVideoCamera();
     if (videoLocal_) {
-        videoLocal_->attach(this);
         videoCtrl->startCamera();
+        videoLocal_->attach(this);
     }
-
     loop_.start();
 }
 
@@ -65,7 +64,6 @@ VideoMixer::~VideoMixer()
 
     if (videoLocal_) {
         videoLocal_->detach(this);
-
         // prefer to release it now than after the next join
         videoLocal_.reset();
     }
@@ -102,8 +100,15 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            x->frame = frame_p;
-            x->dirty = true;
+            // check that our local frame is taken by renderer
+            if (!x->ready) {
+                x->frame.reset(new VideoFrame());
+                x->ready = true;
+            }
+            if (auto dst = std::move(x->frame)) {
+                frame_p->clone(*dst.get());
+                x->frame = std::move(dst); // make it available for process()
+            }
             return;
         }
     }
@@ -118,41 +123,43 @@ void VideoMixer::process()
         usleep(delay * 1e6);
     lastProcess_ = now;
 
-    {
-        auto lock(rwMutex_.read());
-
-        int i = 0;
-        for (const auto& x : sources_) {
-            if (!loop_.isRunning())
-                break;
-            if (x->dirty) {
-                auto frame = x->frame; // inc refcnt to not be deleted by update() call
-                render_frame(frame.get(), i);
-                x->dirty = false;
-            }
-            i++;
-        }
-    }
-}
-
-void VideoMixer::render_frame(VideoFrame* input, const int index)
-{
-    if (!input or !width_ or !height_)
-        return;
-
-    assert(input->get()); // design check
-
-    VideoFrame &output = getNewFrame();
+    VideoFrame& output = getNewFrame();
     if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
         ERROR("VideoFrame::allocBuffer() failed");
         return;
     }
 
-    std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
-    if (previous_p) {
-        previous_p->copy(output);
-        previous_p.reset();
+    if (auto previous = obtainLastFrame())
+        previous->copy(output);
+    else
+        output.clear();
+
+    {
+        auto lock(rwMutex_.read());
+
+        int i = 0;
+        for (const auto& x : sources_) {
+            /* thread stop pending? */
+            if (!loop_.isRunning())
+                return;
+
+            // make frame unavailable for update() to avoid concurrent access
+            if (auto input = std::move(x->frame)) {
+                render_frame(output, *input, i);
+                x->frame = std::move(input); // make it available for update()
+            }
+            ++i;
+        }
     }
+
+    publishFrame();
+}
+
+void VideoMixer::render_frame(VideoFrame& output, VideoFrame& input,
+                              const int index)
+{
+    if (!width_ or !height_)
+        return;
 
     const int n = sources_.size();
     const int zoom = ceil(sqrt(n));
@@ -162,9 +169,7 @@ void VideoMixer::render_frame(VideoFrame* input, const int index)
     const int yoff = (index / zoom) * cell_height;
 
     VideoScaler scaler;
-    scaler.scale_and_pad(*input, output, xoff, yoff, cell_width, cell_height);
-
-    publishFrame();
+    scaler.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
 }
 
 void VideoMixer::setDimensions(int width, int height)
