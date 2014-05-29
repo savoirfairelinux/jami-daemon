@@ -100,15 +100,11 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            // check that our local frame is taken by renderer
-            if (!x->ready) {
-                x->frame.reset(new VideoFrame());
-                x->ready = true;
-            }
-            if (auto dst = std::move(x->frame)) {
-                frame_p->clone(*dst.get());
-                x->frame = std::move(dst); // make it available for process()
-            }
+            if (!x->update_frame)
+                x->update_frame.reset(new VideoFrame);
+            // clone the input frame and make it available to the renderer
+            frame_p->clone(*x->update_frame.get());
+            x->render_frame.swap(x->update_frame);
             return;
         }
     }
@@ -129,10 +125,7 @@ void VideoMixer::process()
         return;
     }
 
-    if (auto previous = obtainLastFrame())
-        previous->copy(output);
-    else
-        output.clear();
+    output.clear();
 
     {
         auto lock(rwMutex_.read());
@@ -143,11 +136,13 @@ void VideoMixer::process()
             if (!loop_.isRunning())
                 return;
 
-            // make frame unavailable for update() to avoid concurrent access
-            if (auto input = std::move(x->frame)) {
+            // make rendered frame temporarily unavailable for update()
+            // to avoid concurrent access.
+            if (auto input = std::move(x->render_frame)) {
                 render_frame(output, *input, i);
-                x->frame = std::move(input); // make it available for update()
+                x->render_frame = std::move(input);
             }
+
             ++i;
         }
     }
@@ -168,8 +163,7 @@ void VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     const int xoff = (index % zoom) * cell_width;
     const int yoff = (index / zoom) * cell_height;
 
-    VideoScaler scaler;
-    scaler.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
+    scaler_.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
 }
 
 void VideoMixer::setDimensions(int width, int height)
