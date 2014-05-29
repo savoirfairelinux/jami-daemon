@@ -47,8 +47,8 @@ namespace sfl_video {
 
     struct VideoMixerSource {
         Observable<std::shared_ptr<VideoFrame> >* source = nullptr;
-        std::unique_ptr<VideoFrame> frame = nullptr;
-        bool ready = false;
+        std::unique_ptr<VideoFrame> update_frame = nullptr;
+        std::unique_ptr<VideoFrame> render_frame = nullptr;
     };
 
 class VideoMixer :
@@ -89,6 +89,7 @@ private:
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
+    VideoScaler scaler_ = {};
 };
 
 }
