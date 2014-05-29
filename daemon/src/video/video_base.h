@@ -163,6 +163,7 @@ private:
 class VideoFrame {
 public:
     VideoFrame();
+
     ~VideoFrame();
 
     AVFrame* get() { return frame_; };
@@ -175,14 +176,14 @@ public:
     static size_t getSize(int width, int height, int format);
     void setdefaults();
     bool allocBuffer(int width, int height, int pix_fmt);
-    void copy(VideoFrame &src);
+    void copy(VideoFrame &dst);
     void clear();
-    void test();
+    void clone(VideoFrame &dst);
 
 private:
     NON_COPYABLE(VideoFrame);
-    AVFrame *frame_;
-    bool allocated_;
+    AVFrame *frame_ = nullptr;
+    bool allocated_ = false;
 };
 
 class VideoFrameActiveWriter : public Observable<std::shared_ptr<VideoFrame> >
@@ -196,7 +197,7 @@ class VideoFramePassiveReader : public Observer<std::shared_ptr<VideoFrame> >
 class VideoGenerator : public VideoFrameActiveWriter
 {
 public:
-    VideoGenerator() : writableFrame_(), lastFrame_(), mutex_() {}
+    VideoGenerator() { }
 
     virtual int getWidth() const = 0;
     virtual int getHeight() const = 0;
@@ -210,9 +211,9 @@ protected:
     void publishFrame();
 
 private:
-    std::shared_ptr<VideoFrame> writableFrame_;
-    std::shared_ptr<VideoFrame> lastFrame_;
-    std::mutex mutex_; // lock writableFrame_/lastFrame_ access
+    std::shared_ptr<VideoFrame> writableFrame_ = nullptr;
+    std::shared_ptr<VideoFrame> lastFrame_ = nullptr;
+    std::mutex mutex_ = {}; // lock writableFrame_/lastFrame_ access
 };
 
 }

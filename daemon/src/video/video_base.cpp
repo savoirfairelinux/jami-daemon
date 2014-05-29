@@ -66,13 +66,14 @@ VideoIOHandle::~VideoIOHandle() { av_free(ctx_); av_free(buf_); }
 
 /*=== VideoFrame =============================================================*/
 
-VideoFrame::VideoFrame() : frame_(avcodec_alloc_frame()), allocated_(false) {}
+VideoFrame::VideoFrame()
+{
+    frame_ = av_frame_alloc(); // FIXME: error handling
+}
 
 VideoFrame::~VideoFrame()
 {
-    if (allocated_)
-        avpicture_free((AVPicture *) frame_);
-    avcodec_free_frame(&frame_);
+    av_frame_free(&frame_);
 }
 
 int VideoFrame::getPixelFormat() const
@@ -93,22 +94,16 @@ bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
             and height == frame_->height
             and libav_pix_fmt == frame_->format)
             return true;
-        avpicture_free((AVPicture *) frame_);
+        av_frame_unref(frame_);
     }
 
-    allocated_ = not avpicture_alloc((AVPicture *) frame_,
-                                     libav_pix_fmt, width, height);
-    if (allocated_) {
-        setGeometry(width, height, pix_fmt);
-        clear();
-    }
-
-    return allocated_;
+    setGeometry(width, height, pix_fmt);
+    return !av_frame_get_buffer(frame_, 32);
 }
 
 void VideoFrame::setdefaults()
 {
-    avcodec_get_frame_defaults(frame_);
+    av_frame_unref(frame_);
 }
 
 void VideoFrame::setGeometry(int width, int height, int pix_fmt)
@@ -121,7 +116,7 @@ void VideoFrame::setGeometry(int width, int height, int pix_fmt)
 void VideoFrame::setDestination(void *data)
 {
     if (allocated_) {
-        avpicture_free((AVPicture *) frame_);
+        av_frame_unref(frame_);
         allocated_ = false;
     }
 
@@ -151,6 +146,12 @@ void VideoFrame::copy(VideoFrame &dst)
                     frame_->height);
 }
 
+void VideoFrame::clone(VideoFrame &dst)
+{
+    dst.setdefaults();
+    av_frame_ref(dst.frame_, frame_);
+}
+
 void VideoFrame::clear()
 {
     // FIXME: beurk!!!!
@@ -159,12 +160,6 @@ void VideoFrame::clear()
     // 128 is the black level for U/V channels
     memset(frame_->data[1], 128, frame_->linesize[1]*frame_->height/2);
     memset(frame_->data[2], 128, frame_->linesize[2]*frame_->height/2);
-}
-
-
-void VideoFrame::test()
-{
-    memset(frame_->data[0], 0xaa, frame_->linesize[0]*frame_->height/2);
 }
 
 /*=== VideoGenerator =========================================================*/
