@@ -693,7 +693,7 @@ call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
 {
     gchar *resource;
 
-    if (g_strcmp0(device, "Screen") == 0) {
+    if (g_strcmp0(device, _("Screen")) == 0) {
         resource = sflphone_get_display();
     } else {
         dbus_set_active_video_device(device);
@@ -1468,7 +1468,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                 video_list++;
             }
             /* Add the special X11 device */
-            append_video_input_to_submenu(video_menu, "Screen");
+            append_video_input_to_submenu(video_menu, _("Screen"));
         }
 #endif
     } else {
