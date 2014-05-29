@@ -75,8 +75,10 @@ void VideoScaler::scale_and_pad(VideoFrame &input, VideoFrame &output,
             const unsigned divisor = i == 0 ? 1 : 2;
             unsigned offset = (yoff * output_frame->linesize[i] + xoff) / divisor;
             data[i] = output_frame->data[i] + offset;
-        } else
+        } else {
             data[i] = 0;
+            break;
+        }
     }
 
     ctx_ = sws_getCachedContext(ctx_,
