@@ -34,6 +34,19 @@
 #include "video_base.h"
 #include "logger.h"
 
+#if ! LIBAVUTIL_VERSION_CHECK(52, 8, 0, 19, 100)
+// Especially for Fedora < 20 and UBUNTU < 14.10
+#define USE_OLD_AVU 1
+#endif
+
+#if USE_OLD_AVU
+#define av_frame_alloc avcodec_alloc_frame
+#define av_frame_free avcodec_free_frame
+#define av_frame_unref avcodec_get_frame_defaults
+#define av_frame_get_buffer(x, y) avpicture_alloc((AVPicture *)(x), \
+                                                  (AVPixelFormat)(x)->format, \
+                                                  (x)->width, (x)->height)
+#endif
 
 namespace sfl_video {
 
@@ -94,7 +107,11 @@ bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
             and height == frame_->height
             and libav_pix_fmt == frame_->format)
             return true;
+#if USE_OLD_AVU
+        avpicture_free((AVPicture *) frame_);
+#else
         av_frame_unref(frame_);
+#endif
     }
 
     setGeometry(width, height, pix_fmt);
