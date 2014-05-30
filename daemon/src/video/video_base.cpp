@@ -120,6 +120,7 @@ bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
 void VideoFrame::setdefaults()
 {
     av_frame_unref(frame_);
+    allocated_ = false;
 }
 
 void VideoFrame::setGeometry(int width, int height, int pix_fmt)
@@ -131,11 +132,7 @@ void VideoFrame::setGeometry(int width, int height, int pix_fmt)
 
 void VideoFrame::setDestination(void *data)
 {
-    if (allocated_) {
-        av_frame_unref(frame_);
-        allocated_ = false;
-    }
-
+    setdefaults();
     avpicture_fill((AVPicture *) frame_, (uint8_t *) data,
                    (AVPixelFormat) frame_->format, frame_->width,
                    frame_->height);
