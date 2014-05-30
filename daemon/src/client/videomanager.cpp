@@ -90,6 +90,12 @@ VideoManager::getDeviceRateList(const std::string &dev, const std::string &chann
     return videoPreference_.getRateList(dev, channel, size);
 }
 
+std::map<std::string, std::map<std::string, std::vector<std::string>>>
+VideoManager::getCapabilities(const std::string& name)
+{
+    return videoPreference_.getCapabilities(name);
+}
+
 std::string
 VideoManager::getActiveDevice()
 {
