@@ -47,6 +47,8 @@ namespace Conf {
     class SequenceNode;
 }
 
+typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
+
 class VideoPreference : public Serializable
 {
     public:
@@ -60,6 +62,9 @@ class VideoPreference : public Serializable
         std::vector<std::string> getChannelList(const std::string& name) const;
         std::vector<std::string> getSizeList(const std::string& name, const std::string& channel) const;
         std::vector<std::string> getRateList(const std::string& name, const std::string& channel, const std::string& size) const;
+
+        VideoCapabilities
+        getCapabilities(const std::string& name);
 
         /*
          * Interface for a single device.
