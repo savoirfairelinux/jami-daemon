@@ -43,6 +43,18 @@ using namespace sfl_video;
  * Interface for a single device.
  */
 
+std::map<std::string, std::map<std::string, std::vector<std::string>>>
+VideoPreference::getCapabilities(const std::string& name)
+{
+    std::map<std::string, std::map<std::string, std::vector<std::string>>> cap;
+
+    for (const auto& chan : getChannelList(name))
+        for (const auto& size : getSizeList(name, chan))
+            cap[chan][size] = getRateList(name, chan, size);
+
+    return cap;
+}
+
 VideoPreference::VideoDevice
 VideoPreference::defaultPreferences(const std::string& name) const
 {

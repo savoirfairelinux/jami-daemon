@@ -61,6 +61,8 @@ class VideoPreference : public Serializable
         std::vector<std::string> getSizeList(const std::string& name, const std::string& channel) const;
         std::vector<std::string> getRateList(const std::string& name, const std::string& channel, const std::string& size) const;
 
+        std::map<std::string, std::map<std::string, std::vector<std::string>>> getCapabilities(const std::string& name);
+
         /*
          * Interface for a single device.
          */
