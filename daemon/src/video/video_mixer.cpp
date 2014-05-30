@@ -52,7 +52,7 @@ VideoMixer::VideoMixer(const std::string &id) :
     auto videoCtrl = Manager::instance().getVideoManager();
     videoLocal_ = videoCtrl->getVideoCamera();
     if (videoLocal_) {
-        videoCtrl->startCamera();
+        videoCtrl->switchToCamera();
         videoLocal_->attach(this);
     }
     loop_.start();

@@ -189,7 +189,7 @@ void VideoRtpSession::start(int localPort)
         auto videoCtrl = Manager::instance().getVideoManager();
         videoLocal_ = videoCtrl->getVideoCamera();
         if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            videoCtrl->startCamera();
+            videoCtrl->switchToCamera();
     } else {
         videoLocal_.reset();
     }

@@ -55,7 +55,7 @@
 
 #endif // HAVE_DBUS
 
-#include <memory> // for shared_ptr
+#include <memory> // for weak/shared_ptr
 #include "video/video_preferences.h"
 #include "video/video_base.h"
 #include "video/video_input.h"
@@ -77,6 +77,7 @@ class VideoManager
          * external user has released its shared pointer.
          */
         std::weak_ptr<sfl_video::VideoInput> videoInput_ = {};
+        std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoPreview_ = nullptr;
         VideoPreference videoPreference_ = {};
 
     public:
@@ -150,6 +151,7 @@ class VideoManager
         void stopCamera();
         bool hasCameraStarted();
         bool switchInput(const std::string& resource);
+        bool switchToCamera();
         std::shared_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
 
         /* the following signals must be implemented manually for any

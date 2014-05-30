@@ -164,7 +164,8 @@ VideoManager::setPreferences(const std::string& name,
 void
 VideoManager::startCamera()
 {
-    started_ = switchInput("v4l2://" + videoPreference_.getDevice());
+    videoPreview_ = getVideoCamera();
+    started_ = switchToCamera();
 }
 
 void
@@ -172,17 +173,24 @@ VideoManager::stopCamera()
 {
     if (switchInput(""))
         started_ = false;
+    videoPreview_.reset();
 }
 
 bool
 VideoManager::switchInput(const std::string &resource)
 {
-    auto input = videoInput_.lock();;
+    auto input = videoInput_.lock();
     if (!input) {
         WARN("Video input not initialized");
         return false;
     }
     return input->switchInput(resource);
+}
+
+bool
+VideoManager::switchToCamera()
+{
+    return switchInput("v4l2://" + videoPreference_.getDevice());
 }
 
 std::shared_ptr<sfl_video::VideoFrameActiveWriter>
