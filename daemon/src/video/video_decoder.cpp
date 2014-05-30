@@ -187,7 +187,9 @@ int VideoDecoder::setupFromVideoData()
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     ret = avcodec_open(decoderCtx_, inputDecoder_);
 #else
+#   if LIBAVCODEC_VERSION_MAJOR >= 55
     decoderCtx_->refcounted_frames = 1;
+#   endif
     ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
 #endif
     if (ret) {
