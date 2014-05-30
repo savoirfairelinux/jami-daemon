@@ -107,6 +107,9 @@ class VideoManager
         std::vector<std::string>
         getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
 
+        std::map<std::string, std::map<std::string, std::vector<std::string>>>
+        getCapabilities(const std::string& name);
+
         std::map<std::string, std::string>
         getSettingsFor(const std::string& device);
 
