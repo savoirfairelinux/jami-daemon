@@ -204,6 +204,13 @@ void VideoGenerator::publishFrame()
     notify(lastFrame_);
 }
 
+void VideoGenerator::flushFrames()
+{
+    std::lock_guard<std::mutex> lk(mutex_);
+    writableFrame_.reset();
+    lastFrame_.reset();
+}
+
 std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
 {
     std::lock_guard<std::mutex> lk(mutex_);

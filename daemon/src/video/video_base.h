@@ -209,6 +209,7 @@ protected:
     // getNewFrame and publishFrame must be called by the same thread only
     VideoFrame& getNewFrame();
     void publishFrame();
+    void flushFrames();
 
 private:
     std::shared_ptr<VideoFrame> writableFrame_ = nullptr;

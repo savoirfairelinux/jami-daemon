@@ -168,6 +168,7 @@ VideoInput::deleteDecoder()
     Manager::instance().getVideoManager()->stoppedDecoding(sinkID_,
                                                            sink_.openedName(),
                                                            false);
+    flushFrames();
     delete decoder_;
     decoder_ = nullptr;
 }
