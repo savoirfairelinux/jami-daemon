@@ -23,7 +23,7 @@ export REFERENCE_REPOSITORY="${WORKSPACE}"
 
 export WORKING_DIR="${WORKSPACE}/tools/build-system"
 export LAUNCHPAD_DIR="${WORKING_DIR}/launchpad"
-LAUNCHPAD_DISTRIBUTIONS=("precise" "quantal" "saucy" "trusty")
+LAUNCHPAD_DISTRIBUTIONS=("quantal" "saucy" "trusty")
 export LAUNCHPAD_DISTRIBUTIONS
 
 # Update KDE client
