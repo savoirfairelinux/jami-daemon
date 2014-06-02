@@ -426,13 +426,20 @@ new_text_message_conf(conference_obj_t* conf, const gchar* message,const gchar* 
 message_tab *
 create_messaging_tab(callable_obj_t* call, SFLPhoneClient *client)
 {
-    const gchar *confID = dbus_get_conference_id(call->_callID);
+    gchar *confID = dbus_get_conference_id(call->_callID);
+
     if (strlen(confID) > 0 && ((tabs && force_lookup(confID) == NULL) || !tabs)) {
-        return create_messaging_tab_common(confID, "Conference", client);
+        message_tab *result = create_messaging_tab_common(confID, "Conference", client);
+        g_free(confID);
+        return result;
+    } else if (strlen(confID) > 0 && tabs) {
+        message_tab *result = force_lookup(confID);
+        g_free(confID);
+        return result;
+    } else {
+        g_free(confID);
     }
-    else if (strlen(confID) > 0 && tabs) {
-        return force_lookup(confID);
-    }
+
     gchar* label_text;
     if (strcmp(call->_display_name,""))
        label_text = call->_display_name;
