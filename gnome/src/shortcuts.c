@@ -202,33 +202,18 @@ remove_bindings()
     if (!accelerators_list)
         return;
 
-    GdkDisplay *display = NULL;
-    GdkScreen *screen = NULL;
-    GdkWindow *root = NULL;
-    int i, j = 0;
+    GdkDisplay *display = gdk_display_get_default();
+    GdkScreen *screen = gdk_display_get_default_screen(display);
 
-    display = gdk_display_get_default();
+    if (screen) {
+        GdkWindow *root = gdk_screen_get_root_window(screen);
+        gdk_window_remove_filter(root, (GdkFilterFunc) filter_keys, NULL);
 
-    for (i = 0; i < gdk_display_get_n_screens(display); i++) {
-        screen = gdk_display_get_screen(display, i);
-
-        if (screen != NULL) {
-            j = 0;
-            root = gdk_screen_get_root_window(screen);
-
-            // remove filter
-            gdk_window_remove_filter(root, (GdkFilterFunc) filter_keys, NULL);
-
-            // unbind shortcuts
-            while (accelerators_list[j].action != NULL) {
-                if (accelerators_list[j].key != 0) {
-                    ungrab_key(accelerators_list[j].key,
-                               accelerators_list[j].mask, root);
-                }
-
-                j++;
-            }
-        }
+        /* Unbind shortcuts */
+        for (int i = 0; accelerators_list[i].action != NULL; ++i)
+            if (accelerators_list[i].key != 0)
+                ungrab_key(accelerators_list[i].key, accelerators_list[i].mask,
+                        root);
     }
 }
 
@@ -238,33 +223,18 @@ remove_bindings()
 static void
 create_bindings()
 {
-    GdkDisplay *display;
-    GdkScreen *screen;
-    GdkWindow *root;
-    int i, j = 0;
+    GdkDisplay *display = gdk_display_get_default();
+    GdkScreen *screen = gdk_display_get_default_screen(display);
 
-    display = gdk_display_get_default();
+    if (screen) {
+        GdkWindow *root = gdk_screen_get_root_window(screen);
+        gdk_window_add_filter(root, (GdkFilterFunc) filter_keys, NULL);
 
-    for (i = 0; i < gdk_display_get_n_screens(display); i++) {
-        screen = gdk_display_get_screen(display, i);
-
-        if (screen != NULL) {
-            j = 0;
-            root = gdk_screen_get_root_window(screen);
-
-            // add filter
-            gdk_window_add_filter(root, (GdkFilterFunc) filter_keys, NULL);
-
-            // bind shortcuts
-            while (accelerators_list[j].action != NULL) {
-                if (accelerators_list[j].key != 0) {
-                    grab_key(accelerators_list[j].key,
-                             accelerators_list[j].mask, root);
-                }
-
-                j++;
-            }
-        }
+        /* bind shortcuts */
+        for (int i = 0; accelerators_list[i].action != NULL; ++i)
+            if (accelerators_list[i].key != 0)
+                grab_key(accelerators_list[i].key, accelerators_list[i].mask,
+                        root);
     }
 }
 
