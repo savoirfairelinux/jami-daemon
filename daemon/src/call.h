@@ -69,7 +69,7 @@ class Call : public Recordable {
         /**
          * The Call State.
          */
-        enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, CONFERENCING, REFUSED, ERROR};
+        enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, REFUSED, ERROR};
 
         /**
          * Constructor of a call
