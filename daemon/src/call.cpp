@@ -112,8 +112,6 @@ Call::getStateStr()
                     return "INACTIVE";
             }
 
-        case CONFERENCING:
-            return "CONFERENCING";
         case REFUSED:
         case ERROR:
         default:
