@@ -162,10 +162,10 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     stream_->codec = encoderCtx_;
 
     // allocate buffers for both scaled (pre-encoder) and encoded frames
-    scaledFrame_.setGeometry(encoderCtx_->width, encoderCtx_->height,
-                             libav_utils::sfl_pixel_format((int)encoderCtx_->pix_fmt));
-    scaledFrameBufferSize_ = scaledFrame_.getSize();
-
+    const int width = encoderCtx_->width;
+    const int height = encoderCtx_->height;
+    const int format = libav_utils::sfl_pixel_format((int)encoderCtx_->pix_fmt);
+    scaledFrameBufferSize_ = scaledFrame_.getSize(width, height, format);
     if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
         throw VideoEncoderException("buffer too small");
 
@@ -180,7 +180,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     if (!scaledFrameBuffer_)
         throw VideoEncoderException("Could not allocate scaled frame buffer");
 
-    scaledFrame_.setDestination(scaledFrameBuffer_);
+    scaledFrame_.setDestination(scaledFrameBuffer_, width, height, format);
 }
 
 void VideoEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
