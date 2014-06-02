@@ -153,7 +153,7 @@ void dbus_get_credentials(account_t *a);
 /**
  * ConfigurationManager - Get the details for the ip2ip profile
  */
-GHashTable *dbus_get_ip2_ip_details(void);
+GHashTable *dbus_get_ip2ip_details(void);
 
 /**
  * ConfigurationManager - Send registration request

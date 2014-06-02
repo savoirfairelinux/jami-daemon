@@ -278,7 +278,7 @@ gboolean sflphone_init(GError **error, SFLPhoneClient *client)
 
 void sflphone_fill_ip2ip_profile(void)
 {
-    ip2ip_profile = (GHashTable *) dbus_get_ip2_ip_details();
+    ip2ip_profile = (GHashTable *) dbus_get_ip2ip_details();
 }
 
 GHashTable *sflphone_get_ip2ip_properties(void)
