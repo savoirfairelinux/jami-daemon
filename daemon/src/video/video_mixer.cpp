@@ -102,8 +102,8 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
         if (x->source == ob) {
             if (!x->update_frame)
                 x->update_frame.reset(new VideoFrame);
-            // clone the input frame and make it available to the renderer
-            frame_p->clone(*x->update_frame.get());
+            // copy the input frame and make it available to the renderer
+            frame_p->copy(*x->update_frame.get());
             x->render_frame.swap(x->update_frame);
             return;
         }
@@ -153,7 +153,7 @@ void VideoMixer::process()
 void VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
                               int index)
 {
-    if (!width_ or !height_)
+    if (!width_ or !height_ or !input.get())
         return;
 
     const int n = sources_.size();
