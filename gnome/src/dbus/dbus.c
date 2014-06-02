@@ -2033,6 +2033,18 @@ dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gc
     check_error(error);
     return array;
 }
+
+GHashTable *
+dbus_get_video_capabilities(const gchar *name)
+{
+    GError *error = NULL;
+    GHashTable *cap = NULL;
+
+    org_sflphone_SFLphone_VideoManager_get_capabilities(video_proxy, name, &cap, &error);
+    check_error(error);
+
+    return cap;
+}
 #endif
 
 
