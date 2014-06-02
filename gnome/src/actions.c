@@ -585,7 +585,7 @@ sflphone_new_call(SFLPhoneClient *client)
     callable_obj_t *selected_call = calllist_empty(current_calls_tab) ? NULL :
         calltab_get_selected_call(current_calls_tab);
 
-    if (selected_call != NULL) {
+    if (selected_call != NULL && selected_call->_callID) {
         gchar *confID = dbus_get_conference_id(selected_call->_callID);
         if(g_strcmp0(confID, "") != 0) {
             sflphone_on_hold();
