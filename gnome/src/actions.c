@@ -909,9 +909,9 @@ void sflphone_fill_call_list(void)
     gchar **call_list = dbus_get_call_list();
 
     for (gchar **callp = call_list; callp && *callp; ++callp) {
-        gchar *callID = *callp;
+        const gchar *callID = *callp;
         if (!calllist_get_call(current_calls_tab, callID)) {
-            callable_obj_t *call = create_new_call_from_details(*callp, dbus_get_call_details(*callp));
+            callable_obj_t *call = create_new_call_from_details(callID, dbus_get_call_details(callID));
             call->_zrtp_confirmed = FALSE;
             calllist_add_call(current_calls_tab, call);
 
