@@ -448,8 +448,9 @@ dbus_get_display_names(const gchar *confID);
 gchar **dbus_get_participant_list(const gchar *confID);
 
 /**
- * If thsi call participate to a conference, return the conference id
- * Return an empty string elsewhere
+ * If this call is part of a conference, return the conference id,
+ * otherwise return an empty string.
+ * Result must be freed by caller.
  */
 gchar *dbus_get_conference_id(const gchar *callID);
 

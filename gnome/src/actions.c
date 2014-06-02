@@ -587,9 +587,9 @@ sflphone_new_call(SFLPhoneClient *client)
 
     if (selected_call != NULL && selected_call->_callID) {
         gchar *confID = dbus_get_conference_id(selected_call->_callID);
-        if(g_strcmp0(confID, "") != 0) {
+        if (g_strcmp0(confID, "") != 0)
             sflphone_on_hold();
-        }
+        g_free(confID);
     }
 
     // Play a tone when creating a new call
@@ -915,10 +915,11 @@ void sflphone_fill_call_list(void)
             call->_zrtp_confirmed = FALSE;
             calllist_add_call(current_calls_tab, call);
 
-            // add in treeview only if does not participate to a conference
+            // only add in treeview if this call is NOT in a conference
             gchar *confID = dbus_get_conference_id(call->_callID);
-            if(g_strcmp0(confID, "") == 0)
+            if (g_strcmp0(confID, "") == 0)
                 calltree_add_call(current_calls_tab, call, NULL);
+            g_free(confID);
         }
     }
 
