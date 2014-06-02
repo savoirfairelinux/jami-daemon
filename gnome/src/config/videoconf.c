@@ -844,7 +844,6 @@ v4l2_box()
     GtkWidget *item = gtk_label_new(_("Device"));
     v4l2DeviceList = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
     v4l2Device = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2DeviceList));
-    gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Device);
 
     g_signal_connect(G_OBJECT(v4l2Device), "changed", G_CALLBACK(select_video_input_device_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), item, 0, 0, 1, 1);
@@ -859,7 +858,6 @@ v4l2_box()
     item = gtk_label_new(_("Channel"));
     v4l2ChannelList = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
     v4l2Channel = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2ChannelList));
-    gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Channel);
     g_signal_connect(G_OBJECT(v4l2Channel), "changed", G_CALLBACK(select_video_input_device_channel_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), item, 0, 1, 1, 1);
 
@@ -873,7 +871,6 @@ v4l2_box()
     item = gtk_label_new(_("Size"));
     v4l2SizeList = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
     v4l2Size = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2SizeList));
-    gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Size);
     g_signal_connect(G_OBJECT(v4l2Size), "changed", G_CALLBACK(select_video_input_device_size_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), item, 0, 2, 1, 1);
 
@@ -887,7 +884,6 @@ v4l2_box()
     item = gtk_label_new(_("Rate"));
     v4l2RateList = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
     v4l2Rate = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2RateList));
-    gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Rate);
     g_signal_connect(G_OBJECT(v4l2Rate), "changed", G_CALLBACK(select_video_input_device_rate_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), item, 0, 3, 1, 1);
 
