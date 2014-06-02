@@ -43,6 +43,15 @@
            </arg>
         </method>
 
+        <method name="getCapabilities" tp:name-for-bindings="getCapabilities">
+           <tp:docstring>Returns a map of map of array of strings, containing the capabilities (channel, size, rate) of a device</tp:docstring>
+            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringMapStringVectorString"/>
+            <arg type="s" name="name" direction="in">
+            </arg>
+            <arg type="a{sa{sas}}" name="cap" direction="out">
+            </arg>
+        </method>
+
         <method name="getSettingsFor" tp:name-for-bindings="getSettingsFor">
            <tp:docstring>Returns a map of settings for the given device name</tp:docstring>
             <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
