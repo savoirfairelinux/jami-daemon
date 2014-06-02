@@ -1309,6 +1309,7 @@ handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *des
                 sflphone_add_participant(source_ID, conf_ID);
                 result = TRUE;
             }
+            g_free(conf_ID);
         }
     }
     g_value_unset(&source_val);
