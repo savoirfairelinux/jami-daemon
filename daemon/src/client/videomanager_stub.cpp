@@ -52,10 +52,10 @@ void VideoManager::stoppedDecoding(const std::string &id, const std::string)
 {
 }
 
-std::map<std::string, std::map<std::string, std::vector<std::string>>>
+VideoCapabilities
 VideoManager::getCapabilities(const std::string& name);
 {
-    return std::map<std::string, std::map<std::string, std::vector<std::string>>>();
+    return VideoCapabilities();
 }
 
 std::map<std::string, std::string>
