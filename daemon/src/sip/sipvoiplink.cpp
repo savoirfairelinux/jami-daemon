@@ -1198,7 +1198,8 @@ SIPVoIPLink::onhold(const std::string& id)
     sdpSession->addAttributeToLocalVideoMedia("inactive");
 #endif
 
-    SIPSessionReinvite(call);
+    if (SIPSessionReinvite(call) != PJ_SUCCESS)
+        WARN("Reinvite failed");
 }
 
 void
