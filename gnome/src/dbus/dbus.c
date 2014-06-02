@@ -1276,7 +1276,7 @@ dbus_get_credentials(account_t *a)
 }
 
 GHashTable *
-dbus_get_ip2_ip_details(void)
+dbus_get_ip2ip_details(void)
 {
     GError *error = NULL;
     GHashTable *details = NULL;
