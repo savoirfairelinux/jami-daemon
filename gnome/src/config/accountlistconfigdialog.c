@@ -39,6 +39,7 @@
 #include "mainwindow.h"
 #include "utils.h"
 #include "presence.h"
+#include "presencewindow.h"
 #include <glib/gi18n.h>
 #include <string.h>
 
