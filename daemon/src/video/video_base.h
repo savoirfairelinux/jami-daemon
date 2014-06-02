@@ -171,7 +171,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     void setGeometry(int width, int height, int pix_fmt);
-    void setDestination(void *data);
+    void setDestination(void *data, int width, int height, int pix_fmt);
     size_t getSize();
     static size_t getSize(int width, int height, int format);
     void setdefaults();

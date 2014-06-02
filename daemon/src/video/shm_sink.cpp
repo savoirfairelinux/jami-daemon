@@ -201,8 +201,10 @@ void SHMSink::render_frame(VideoFrame& src)
     VideoFrame dst;
     VideoScaler scaler;
 
-    dst.setGeometry(src.getWidth(), src.getHeight(), VIDEO_PIXFMT_BGRA);
-    size_t bytes = dst.getSize();
+    const int width = src.getWidth();
+    const int height = src.getHeight();
+    const int format = VIDEO_PIXFMT_BGRA;
+    size_t bytes = dst.getSize(width, height, format);
 
     shm_lock();
 
@@ -211,7 +213,7 @@ void SHMSink::render_frame(VideoFrame& src)
         return;
     }
 
-    dst.setDestination(shm_area_->data);
+    dst.setDestination(shm_area_->data, width, height, format);
     scaler.scale(src, dst);
 
 #ifdef DEBUG_FPS

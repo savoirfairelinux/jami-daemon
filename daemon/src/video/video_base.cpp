@@ -130,11 +130,12 @@ void VideoFrame::setGeometry(int width, int height, int pix_fmt)
     frame_->height = height;
 }
 
-void VideoFrame::setDestination(void *data)
+void VideoFrame::setDestination(void *data, int width, int height, int pix_fmt)
 {
     setdefaults();
-    avpicture_fill((AVPicture *) frame_, (uint8_t *) data,
-                   (AVPixelFormat) frame_->format, frame_->width,
+    setGeometry(width, height, pix_fmt);
+    avpicture_fill((AVPicture *)frame_, (uint8_t *)data,
+                   (AVPixelFormat)frame_->format, frame_->width,
                    frame_->height);
 }
 
@@ -154,6 +155,7 @@ size_t VideoFrame::getSize(int width, int height, int format)
 void VideoFrame::copy(VideoFrame &dst)
 {
     const AVFrame *dst_frame = dst.get();
+    dst.allocBuffer(frame_->width, frame_->height, getPixelFormat());
     av_picture_copy((AVPicture *)dst_frame, (AVPicture *)frame_,
                     (AVPixelFormat)frame_->format, frame_->width,
                     frame_->height);
@@ -162,10 +164,7 @@ void VideoFrame::copy(VideoFrame &dst)
 void VideoFrame::clone(VideoFrame &dst)
 {
 #if USE_OLD_AVU
-    dst.allocBuffer(frame_->width, frame_->height, getPixelFormat());
-    av_picture_copy((AVPicture *)dst.frame_, (const AVPicture *)frame_,
-                    (AVPixelFormat)frame_->format, frame_->width,
-                    frame_->height);
+    copy(dst);
 #else
     dst.setdefaults();
     av_frame_ref(dst.frame_, frame_);
