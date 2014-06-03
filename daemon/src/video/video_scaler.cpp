@@ -68,17 +68,12 @@ void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
 {
     const AVFrame *input_frame = input.get();
     AVFrame *output_frame = output.get();
-    uint8_t *data[AV_NUM_DATA_POINTERS];
+    uint8_t *data[AV_NUM_DATA_POINTERS] = {nullptr};
 
-    for (int i = 0; i < AV_NUM_DATA_POINTERS; i++) {
-        if (output_frame->data[i]) {
-            const unsigned divisor = i == 0 ? 1 : 2;
-            unsigned offset = (yoff * output_frame->linesize[i] + xoff) / divisor;
-            data[i] = output_frame->data[i] + offset;
-        } else {
-            data[i] = 0;
-            break;
-        }
+    for (unsigned i = 0; i < AV_NUM_DATA_POINTERS and output_frame->data[i]; i++) {
+        const unsigned divisor = i == 0 ? 1 : 2;
+        unsigned offset = (yoff * output_frame->linesize[i] + xoff) / divisor;
+        data[i] = output_frame->data[i] + offset;
     }
 
     ctx_ = sws_getCachedContext(ctx_,
