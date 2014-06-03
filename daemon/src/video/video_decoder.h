@@ -51,6 +51,7 @@ namespace sfl_video {
         enum class Status {
             Success,
             FrameFinished,
+            EOFError,
             ReadError,
             DecodeError
         };

@@ -88,10 +88,8 @@ int VideoDecoder::openInput(const std::string &source_str,
 {
     AVInputFormat *iformat = av_find_input_format(format_str.c_str());
 
-    if (!iformat) {
-        ERROR("Cannot find format \"%s\"", format_str.c_str());
-        return -1;
-    }
+    if (!iformat)
+        WARN("Cannot find format \"%s\"", format_str.c_str());
 
     int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
                                   options_ ? &options_ : NULL);
@@ -128,11 +126,6 @@ int VideoDecoder::setupFromVideoData()
         avcodec_close(decoderCtx_);
 
     DEBUG("Finding stream info");
-    if (!inputCtx_->streams[0]->info)  {
-        ERROR("Stream info is NULL");
-        return -1;
-    }
-
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
@@ -209,6 +202,8 @@ VideoDecoder::decode(VideoFrame& result)
     int ret = av_read_frame(inputCtx_, inpacket);
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
+    } else if (ret == AVERROR_EOF) {
+        return Status::EOFError;
     } else if (ret < 0) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
