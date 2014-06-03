@@ -166,8 +166,9 @@ class Call : public Recordable {
         /**
          * Set the state of the call (protected by mutex)
          * @param state The call state
+         * @return true if the requested state change was valid, false otherwise
          */
-        void setState(CallState state);
+        bool setState(CallState state);
 
         /**
          * Get the call state of the call (protected by mutex)
@@ -235,6 +236,8 @@ class Call : public Recordable {
         virtual bool toggleRecording();
 
     private:
+        bool validTransition(CallState newState);
+
         std::string getTypeStr() const;
         /** Protect every attribute that can be changed by two threads */
         mutable std::mutex callMutex_;
