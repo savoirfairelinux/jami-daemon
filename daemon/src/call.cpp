@@ -70,11 +70,51 @@ Call::getConnectionState()
     return connectionState_;
 }
 
-void
+bool
+Call::validTransition(CallState newState)
+{
+    switch (callState_) {
+        case INACTIVE:
+            switch (newState) {
+                case INACTIVE:
+                    return false;
+                default:
+                    return true;
+            }
+
+        case ACTIVE:
+            switch (newState) {
+                case HOLD:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case HOLD:
+            switch (newState) {
+                case ACTIVE:
+                    return true;
+                default:
+                    return false;
+            }
+
+        default:
+            return false;
+    }
+}
+
+bool
 Call::setState(CallState state)
 {
     std::lock_guard<std::mutex> lock(callMutex_);
+    if (not validTransition(state)) {
+        ERROR("Invalid call state transition from %d to %d",
+              callState_, state);
+        return false;
+    }
+
     callState_ = state;
+    return true;
 }
 
 Call::CallState
