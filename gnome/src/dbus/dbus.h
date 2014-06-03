@@ -393,6 +393,7 @@ void dbus_set_active_video_device_channel(const gchar *channel);
 void dbus_set_active_video_device_size(const gchar *size);
 void dbus_set_active_video_device_rate(const gchar *rate);
 GHashTable *dbus_get_video_preferences(const gchar *name);
+void dbus_set_video_preferences(const gchar *name, GHashTable *pref);
 gchar *dbus_get_active_video_device();
 gchar *dbus_get_active_video_device_channel();
 gchar *dbus_get_active_video_device_size();
