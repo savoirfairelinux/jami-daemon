@@ -112,7 +112,6 @@ Call::getStateStr()
                     return "INACTIVE";
             }
 
-        case REFUSED:
         case ERROR:
         default:
             return "FAILURE";
