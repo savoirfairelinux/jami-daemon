@@ -127,6 +127,9 @@ int SIPSessionReinvite(SIPCall *call)
 void
 SIPCall::offhold(const std::function<void()> &SDPUpdateFunc)
 {
+    if (not setState(Call::ACTIVE))
+        return;
+
     if (local_sdp_ == NULL)
         throw SdpException("Could not find sdp session");
 
@@ -179,14 +182,18 @@ SIPCall::offhold(const std::function<void()> &SDPUpdateFunc)
     local_sdp_->addAttributeToLocalVideoMedia("sendrecv");
 #endif
 
-    if (SIPSessionReinvite(this) == PJ_SUCCESS)
-        setState(Call::ACTIVE);
+    if (SIPSessionReinvite(this) != PJ_SUCCESS) {
+        WARN("Reinvite failed, resuming hold");
+        onhold();
+    }
 }
 
 void
 SIPCall::onhold()
 {
-    setState(Call::HOLD);
+    if (not setState(Call::HOLD))
+        return;
+
     audiortp_.saveLocalContext();
     audiortp_.stop();
 #ifdef SFL_VIDEO
