@@ -59,7 +59,7 @@ class Call : public Recordable {
         /**
          * Tell where we're at with the call. The call gets Connected when we know
          * from the other end what happened with out call. A call can be 'Connected'
-         * even if the call state is Busy, Refused, or Error.
+         * even if the call state is Busy, or Error.
          *
          * Audio should be transmitted when ConnectionState = Connected AND
          * CallState = Active.
@@ -69,7 +69,7 @@ class Call : public Recordable {
         /**
          * The Call State.
          */
-        enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, REFUSED, ERROR};
+        enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, ERROR};
 
         /**
          * Constructor of a call
@@ -265,7 +265,7 @@ class Call : public Recordable {
         /** Disconnected/Progressing/Trying/Ringing/Connected */
         ConnectionState connectionState_;
 
-        /** Inactive/Active/Hold/Busy/Refused/Error */
+        /** Inactive/Active/Hold/Busy/Error */
         CallState callState_;
 
         /** Direct IP-to-IP or classic call */
