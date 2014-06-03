@@ -136,7 +136,7 @@ int VideoDecoder::setupFromVideoData()
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
-    ret = avformat_find_stream_info(inputCtx_, options_ ? &options_ : NULL);
+    ret = avformat_find_stream_info(inputCtx_, NULL);
 #endif
 
     if (ret < 0) {
