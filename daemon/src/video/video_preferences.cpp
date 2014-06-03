@@ -183,8 +183,8 @@ VideoPreference::validatePreference(const VideoDevice& dev) const
 }
 
 void
-VideoPreference::setPreferences(const std::string& name,
-        std::map<std::string, std::string> pref)
+VideoPreference::setPreferences(const std::string& name, const std::string&
+        channel, const std::string& size, const std::string& rate)
 {
     // Validate the name
     const auto it = lookupDevice(name);
@@ -195,9 +195,9 @@ VideoPreference::setPreferences(const std::string& name,
 
     VideoDevice dev;
     dev.name = name;
-    dev.channel = pref["channel"];
-    dev.size = pref["size"];
-    dev.rate = pref["rate"];
+    dev.channel = channel;
+    dev.size = size;
+    dev.rate = rate;
 
     if (!validatePreference(dev)) {
         ERROR("invalid settings");

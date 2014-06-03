@@ -161,10 +161,10 @@ VideoManager::getPreferences(const std::string& name) {
 }
 
 void
-VideoManager::setPreferences(const std::string& name,
-        const std::map<std::string, std::string>& pref)
+VideoManager::setPreferences(const std::string& name, const std::string&
+        channel, const std::string& size, const std::string& rate)
 {
-    videoPreference_.setPreferences(name, pref);
+    videoPreference_.setPreferences(name, channel, size, rate);
 }
 
 void
