@@ -224,21 +224,23 @@ VideoInput::initFile(std::string path)
         return false;
     }
 
-    /* Supported image? */
+    clearOptions();
+    input_ = path;
+    emulateRate_ = true;
+    decOpts_["loop"] = "1";
+
+    // Force 1fps for static image
     if (ext == "jpeg" || ext == "jpg" || ext == "png") {
-        clearOptions();
-
-        input_ = path;
         format_ = "image2";
-        emulateRate_ = true;
-
         decOpts_["framerate"] = "1";
-        decOpts_["loop"] = "1";
-        return true;
+    } else {
+        WARN("Guessing file type for %s", path.c_str());
+        // FIXME: proper parsing of FPS etc. should be done in
+        // VideoDecoder, not here.
+        decOpts_["framerate"] = "25";
     }
 
-    ERROR("unsupported filetype '%s'\n", ext.c_str());
-    return false;
+    return true;
 }
 
 bool

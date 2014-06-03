@@ -88,10 +88,8 @@ int VideoDecoder::openInput(const std::string &source_str,
 {
     AVInputFormat *iformat = av_find_input_format(format_str.c_str());
 
-    if (!iformat) {
-        ERROR("Cannot find format \"%s\"", format_str.c_str());
-        return -1;
-    }
+    if (!iformat)
+        WARN("Cannot find format \"%s\"", format_str.c_str());
 
     int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
                                   options_ ? &options_ : NULL);
