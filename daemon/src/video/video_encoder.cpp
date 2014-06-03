@@ -224,7 +224,31 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
     int ret;
     AVFrame *frame = scaledFrame_.get();
 
-    scaler_.scale(input, scaledFrame_);
+    /* Corrections to respect input frame ratio */
+    int xoff, yoff, width, height;
+    const float local_ratio = (float)dstWidth_ / dstHeight_;
+    const float input_ratio = (float)input.getWidth() / input.getHeight();
+
+    if (local_ratio == input_ratio) {
+        xoff = 0;
+        yoff = 0;
+        width = dstWidth_;
+        height = dstHeight_;
+    } else if (local_ratio > input_ratio) {
+        width = dstWidth_ * input_ratio;
+        height = dstHeight_;
+        xoff = (dstWidth_ * (1. - input_ratio)) / 2;
+        yoff = 0;
+        scaledFrame_.clear();
+    } else {
+        width = dstWidth_;
+        height = dstWidth_ / input_ratio;
+        xoff = 0;
+        yoff = (dstHeight_ - height) / 2;
+        scaledFrame_.clear();
+    }
+
+    scaler_.scale_and_pad(input, scaledFrame_, xoff, yoff, width, height);
     frame->pts = frame_number;
 
     if (is_keyframe) {

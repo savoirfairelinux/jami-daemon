@@ -164,9 +164,9 @@ void VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     int yoff = (index / zoom) * cell_height;
 
     /* Corrections to respect input frame ratio */
-    const float local_ratio = width_ / height_;
-    const float input_ratio = input.getWidth() / input.getHeight();
-    if (local_ratio >= input_ratio) {
+    const float local_ratio = (float)width_ / height_;
+    const float input_ratio = (float)input.getWidth() / input.getHeight();
+    if (local_ratio > input_ratio) {
         xoff += (cell_width * (1. - input_ratio)) / 2;
         cell_width *= input_ratio;
     } else {
