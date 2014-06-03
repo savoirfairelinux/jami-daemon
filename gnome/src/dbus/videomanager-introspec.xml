@@ -74,8 +74,11 @@
             <tp:docstring>Set the preferences of a given device name</tp:docstring>
             <arg type="s" name="name" direction="in">
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
-            <arg type="a{ss}" name="pref" direction="in">
+            <arg type="s" name="channel" direction="in">
+            </arg>
+            <arg type="s" name="size" direction="in">
+            </arg>
+            <arg type="s" name="rate" direction="in">
             </arg>
         </method>
 

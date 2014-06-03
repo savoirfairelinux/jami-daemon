@@ -1982,6 +1982,14 @@ dbus_set_active_video_device_rate(const gchar *rate)
     check_error(error);
 }
 
+void
+dbus_set_video_preferences(const gchar *name, const gchar *channel, const gchar *size, const gchar *rate)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoManager_set_preferences(video_proxy, name, channel, size, rate, &error);
+    check_error(error);
+}
+
 gchar **
 dbus_get_video_device_list()
 {
