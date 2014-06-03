@@ -102,3 +102,110 @@ SIPCall::createHistoryEntry() const
     std::map<std::string, std::string> entry(Call::createHistoryEntry());
     return entry;
 }
+
+namespace {
+
+/**
+ * Send a reINVITE inside an active dialog to modify its state
+ * Local SDP session should be modified before calling this method
+ * @param sip call
+ */
+
+int SIPSessionReinvite(SIPCall *call)
+{
+    pjmedia_sdp_session *local_sdp = call->getLocalSDP()->getLocalSdpSession();
+    pjsip_tx_data *tdata;
+
+    if (local_sdp and call->inv and call->inv->pool_prov and
+            pjsip_inv_reinvite(call->inv, NULL, local_sdp, &tdata) == PJ_SUCCESS)
+        return pjsip_inv_send_msg(call->inv, tdata);
+
+    return !PJ_SUCCESS;
+}
+}
+
+void
+SIPCall::offhold(const std::function<void()> &SDPUpdateFunc)
+{
+    if (local_sdp_ == NULL)
+        throw SdpException("Could not find sdp session");
+
+    std::vector<sfl::AudioCodec*> sessionMedia(local_sdp_->getSessionAudioMedia());
+
+    if (sessionMedia.empty()) {
+        WARN("Session media is empty");
+        return;
+    }
+
+    std::vector<sfl::AudioCodec*> audioCodecs;
+
+    for (auto & i : sessionMedia) {
+
+        if (!i)
+            continue;
+
+        // Create a new instance for this codec
+        sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
+
+        if (ac == NULL) {
+            ERROR("Could not instantiate codec %d", i->getPayloadType());
+            throw std::runtime_error("Could not instantiate codec");
+        }
+
+        audioCodecs.push_back(ac);
+    }
+
+    if (audioCodecs.empty()) {
+        throw std::runtime_error("Could not instantiate any codecs");
+    }
+
+    audiortp_.initConfig();
+    audiortp_.initSession();
+
+    // Invoke closure
+    SDPUpdateFunc();
+
+    audiortp_.restoreLocalContext();
+    audiortp_.initLocalCryptoInfoOnOffHold();
+    audiortp_.start(audioCodecs);
+
+    local_sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
+    local_sdp_->removeAttributeFromLocalAudioMedia("sendonly");
+    local_sdp_->addAttributeToLocalAudioMedia("sendrecv");
+
+#ifdef SFL_VIDEO
+    local_sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
+    local_sdp_->removeAttributeFromLocalVideoMedia("sendonly");
+    local_sdp_->addAttributeToLocalVideoMedia("sendrecv");
+#endif
+
+    if (SIPSessionReinvite(this) == PJ_SUCCESS)
+        setState(Call::ACTIVE);
+}
+
+void
+SIPCall::onhold()
+{
+    setState(Call::HOLD);
+    audiortp_.saveLocalContext();
+    audiortp_.stop();
+#ifdef SFL_VIDEO
+    videortp_.stop();
+#endif
+
+    if (!local_sdp_)
+        throw SdpException("Could not find sdp session");
+
+    local_sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
+    local_sdp_->removeAttributeFromLocalAudioMedia("sendonly");
+    local_sdp_->addAttributeToLocalAudioMedia("sendonly");
+
+#ifdef SFL_VIDEO
+    local_sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
+    local_sdp_->removeAttributeFromLocalVideoMedia("inactive");
+    local_sdp_->addAttributeToLocalVideoMedia("inactive");
+#endif
+
+    if (SIPSessionReinvite(this) != PJ_SUCCESS)
+        WARN("Reinvite failed");
+}

@@ -124,13 +124,6 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata) ;
 void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
 /**
- * Send a reINVITE inside an active dialog to modify its state
- * Local SDP session should be modified before calling this method
- * @param sip call
- */
-int SIPSessionReinvite(SIPCall *);
-
-/**
  * Helper function to process refer function on call transfer
  */
 void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
@@ -1176,30 +1169,7 @@ SIPVoIPLink::onhold(const std::string& id)
     if (!call)
         return;
 
-    call->setState(Call::HOLD);
-    call->getAudioRtp().saveLocalContext();
-    call->getAudioRtp().stop();
-#ifdef SFL_VIDEO
-    call->getVideoRtp().stop();
-#endif
-
-    Sdp *sdpSession = call->getLocalSDP();
-
-    if (!sdpSession)
-        throw VoipLinkException("Could not find sdp session");
-
-    sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
-    sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
-    sdpSession->addAttributeToLocalAudioMedia("sendonly");
-
-#ifdef SFL_VIDEO
-    sdpSession->removeAttributeFromLocalVideoMedia("sendrecv");
-    sdpSession->removeAttributeFromLocalVideoMedia("inactive");
-    sdpSession->addAttributeToLocalVideoMedia("inactive");
-#endif
-
-    if (SIPSessionReinvite(call) != PJ_SUCCESS)
-        WARN("Reinvite failed");
+    call->onhold();
 }
 
 void
@@ -1210,53 +1180,14 @@ SIPVoIPLink::offhold(const std::string& id)
     if (!call)
         return;
 
-    Sdp *sdpSession = call->getLocalSDP();
-
-    if (sdpSession == NULL)
-        throw VoipLinkException("Could not find sdp session");
+    SIPAccount *account = Manager::instance().getSipAccount(call->getAccountId());
 
     try {
-        std::vector<sfl::AudioCodec*> sessionMedia(sdpSession->getSessionAudioMedia());
-
-        if (sessionMedia.empty()) {
-            WARN("Session media is empty");
-            return;
-        }
-
-        std::vector<sfl::AudioCodec*> audioCodecs;
-
-        for (auto & i : sessionMedia) {
-
-            if (!i)
-                continue;
-
-            // Create a new instance for this codec
-            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
-
-            if (ac == NULL) {
-                ERROR("Could not instantiate codec %d", i->getPayloadType());
-                throw VoipLinkException("Could not instantiate codec");
-            }
-
-            audioCodecs.push_back(ac);
-        }
-
-        if (audioCodecs.empty()) {
-            throw VoipLinkException("Could not instantiate any codecs");
-        }
-
-        call->getAudioRtp().initConfig();
-        call->getAudioRtp().initSession();
-
-        const std::string account_id(call->getAccountId());
-        SIPAccount *account = Manager::instance().getSipAccount(account_id);
-
         if (account and account->isStunEnabled())
-            updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance().sipTransport);
+            call->offhold([&] { updateSDPFromSTUN(*call, *account, *sipTransport); });
+        else
+            call->offhold([] {});
 
-        call->getAudioRtp().restoreLocalContext();
-        call->getAudioRtp().initLocalCryptoInfoOnOffHold();
-        call->getAudioRtp().start(audioCodecs);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
         throw VoipLinkException("SDP issue in offhold");
@@ -1267,19 +1198,6 @@ SIPVoIPLink::offhold(const std::string& id)
     } catch (const AudioRtpFactoryException &) {
         throw VoipLinkException("Socket problem in offhold");
     }
-
-    sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
-    sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
-    sdpSession->addAttributeToLocalAudioMedia("sendrecv");
-
-#ifdef SFL_VIDEO
-    sdpSession->removeAttributeFromLocalVideoMedia("sendrecv");
-    sdpSession->removeAttributeFromLocalVideoMedia("sendonly");
-    sdpSession->addAttributeToLocalVideoMedia("sendrecv");
-#endif
-
-    if (SIPSessionReinvite(call) == PJ_SUCCESS)
-        call->setState(Call::ACTIVE);
 }
 
 #if HAVE_INSTANT_MESSAGING
@@ -1755,17 +1673,6 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data * /*rdata*/)
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace {
-int SIPSessionReinvite(SIPCall *call)
-{
-    pjmedia_sdp_session *local_sdp = call->getLocalSDP()->getLocalSdpSession();
-    pjsip_tx_data *tdata;
-
-    if (local_sdp and call->inv and call->inv->pool_prov and
-            pjsip_inv_reinvite(call->inv, NULL, local_sdp, &tdata) == PJ_SUCCESS)
-        return pjsip_inv_send_msg(call->inv, tdata);
-
-    return !PJ_SUCCESS;
-}
 
 void makeCallRing(SIPCall &call)
 {

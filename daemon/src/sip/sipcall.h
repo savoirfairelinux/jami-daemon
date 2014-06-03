@@ -112,6 +112,9 @@ class SIPCall : public Call {
 
         void setContactHeader(pj_str_t *contact);
 
+        void onhold();
+        void offhold(const std::function<void()> &SDPUpdateFunc);
+
     private:
 
         // override of Call::createHistoryEntry
