@@ -1994,6 +1994,14 @@ dbus_get_video_preferences(const gchar *name)
     return pref;
 }
 
+void
+dbus_set_video_preferences(const gchar *name, GHashTable *pref)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoManager_set_preferences(video_proxy, name, pref, &error);
+    check_error(error);
+}
+
 gchar **
 dbus_get_video_device_list()
 {
