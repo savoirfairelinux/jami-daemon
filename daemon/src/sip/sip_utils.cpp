@@ -96,6 +96,14 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     return route_set;
 }
 
+static bool
+isValidUtf8(const std::string &str)
+{
+    std::wstring ws(str.size(), u' ');
+    const size_t wideSize = mbstowcs(&ws[0], str.c_str(), str.size());
+    return wideSize != std::wstring::npos;
+}
+
 // FIXME: replace with regex
 std::string
 sip_utils::parseDisplayName(const char * buffer)
@@ -124,6 +132,9 @@ sip_utils::parseDisplayName(const char * buffer)
       end_displayName = temp.find("<");
       if (end_displayName != std::string::npos) {
           begin_displayName = temp.find_first_not_of(" ", temp.find(":"));
+          if (begin_displayName == std::string::npos)
+              return "";
+
           // omit trailing/leading spaces
           begin_displayName++;
           end_displayName--;
@@ -136,6 +147,12 @@ sip_utils::parseDisplayName(const char * buffer)
 
     std::string displayName = temp.substr(begin_displayName + 1,
                                           end_displayName - begin_displayName - 1);
+
+    // Filter out invalid UTF-8 sequences to avoid getting kicked from D-Bus
+    if (not isValidUtf8(displayName)) {
+        ERROR("Invalid UTF-8 sequence detected: %s", displayName.c_str());
+        return "";
+    }
 
     static const size_t MAX_DISPLAY_NAME_SIZE = 25;
     if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
