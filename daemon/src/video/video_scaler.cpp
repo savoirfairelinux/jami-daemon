@@ -62,24 +62,33 @@ void VideoScaler::scale(const VideoFrame &input, VideoFrame &output)
               input_frame->height, output_frame->data, output_frame->linesize);
 }
 
+/* from ffmpeg/imgconvert.c */
+static inline int is_yuv_planar(const AVPixFmtDescriptor *desc)
+{
+    int i;
+    int planes[4] = { 0 };
+
+    if (     desc->flags & PIX_FMT_RGB
+             || !(desc->flags & PIX_FMT_PLANAR))
+        return 0;
+
+    /* set the used planes */
+    for (i = 0; i < desc->nb_components; i++)
+        planes[desc->comp[i].plane] = 1;
+
+    /* if there is an unused plane, the format is not planar */
+    for (i = 0; i < desc->nb_components; i++)
+        if (!planes[i])
+            return 0;
+    return 1;
+}
+
 void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
                                 unsigned xoff, unsigned yoff,
                                 unsigned dest_width, unsigned dest_height)
 {
     const AVFrame *input_frame = input.get();
     AVFrame *output_frame = output.get();
-    uint8_t *data[AV_NUM_DATA_POINTERS];
-
-    for (int i = 0; i < AV_NUM_DATA_POINTERS; i++) {
-        if (output_frame->data[i]) {
-            const unsigned divisor = i == 0 ? 1 : 2;
-            unsigned offset = (yoff * output_frame->linesize[i] + xoff) / divisor;
-            data[i] = output_frame->data[i] + offset;
-        } else {
-            data[i] = 0;
-            break;
-        }
-    }
 
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
@@ -95,8 +104,29 @@ void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
         return;
     }
 
+    // Make an offset'ed copy of output data from xoff and yoff
+    // WARN: no buffer overflow checks, must be done by the caller
+    const AVPixFmtDescriptor *out_desc = av_pix_fmt_desc_get((AVPixelFormat)output_frame->format);
+    unsigned nb_comp = out_desc->nb_components;
+    if (nb_comp != 1 and nb_comp != 3) {
+        ERROR("unsupported number of components: %u", nb_comp);
+        return;
+    }
+
+    if (is_yuv_planar(out_desc)) {
+        unsigned x_shift = out_desc->log2_chroma_w;
+        unsigned y_shift = out_desc->log2_chroma_h;
+
+        tmp_data_[0] = output_frame->data[0] + yoff * output_frame->linesize[0] + xoff;
+        tmp_data_[1] = output_frame->data[1] + (yoff >> y_shift) * output_frame->linesize[1] + (xoff >> x_shift);
+        tmp_data_[2] = output_frame->data[2] + (yoff >> y_shift) * output_frame->linesize[2] + (xoff >> x_shift);
+    } else {
+        tmp_data_[0] = output_frame->data[0] + yoff * output_frame->linesize[0] + xoff;
+        tmp_data_[1] = tmp_data_[2] = nullptr;
+    }
+
     sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
-              input_frame->height, data, output_frame->linesize);
+              input_frame->height, tmp_data_, output_frame->linesize);
 }
 
 void VideoScaler::reset()

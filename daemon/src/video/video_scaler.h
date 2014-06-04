@@ -54,6 +54,7 @@ private:
     NON_COPYABLE(VideoScaler);
     SwsContext *ctx_;
     int mode_;
+    uint8_t *tmp_data_[3]; // used by scale_and_pad
 };
 
 }
