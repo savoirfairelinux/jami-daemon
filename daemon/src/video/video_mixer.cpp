@@ -163,19 +163,7 @@ void VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     int xoff = (index % zoom) * cell_width;
     int yoff = (index / zoom) * cell_height;
 
-    /* Corrections to respect input frame ratio */
-    const float local_ratio = width_ / height_;
-    const float input_ratio = input.getWidth() / input.getHeight();
-    if (local_ratio >= input_ratio) {
-        xoff += (cell_width * (1. - input_ratio)) / 2;
-        cell_width *= input_ratio;
-    } else {
-        const int fixed_height = cell_width / input_ratio;
-        yoff += (cell_height - fixed_height) / 2;
-        cell_height = fixed_height;
-    }
-
-    scaler_.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height);
+    scaler_.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height, true);
 }
 
 void VideoMixer::setDimensions(int width, int height)

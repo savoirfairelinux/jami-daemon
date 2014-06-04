@@ -33,6 +33,8 @@
 #include "video_scaler.h"
 #include "logger.h"
 
+#include <assert.h>
+
 namespace sfl_video {
 
 VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_FAST_BILINEAR) {}
@@ -59,27 +61,62 @@ void VideoScaler::scale(const VideoFrame &input, VideoFrame &output)
     }
 
     sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
-              input_frame->height, output_frame->data, output_frame->linesize);
+              input_frame->height, output_frame->data,
+              output_frame->linesize);
+}
+
+void VideoScaler::scale_with_aspect(const VideoFrame &input, VideoFrame &output)
+{
+    AVFrame *output_frame = output.get();
+    scale_and_pad(input, output, 0, 0, output_frame->width,
+                  output_frame->height, true);
+}
+
+static inline bool is_yuv_planar(const AVPixFmtDescriptor *desc)
+{
+    unsigned used_bit_mask = (1u << desc->nb_components) - 1;
+
+    if (not (desc->flags & PIX_FMT_PLANAR)
+        or desc->flags & PIX_FMT_RGB)
+        return false;
+
+    /* not regular if a plane is not used */
+    for (unsigned i = 0; i < desc->nb_components; ++i)
+        used_bit_mask &= ~(1u << desc->comp[i].plane);
+
+    return not used_bit_mask;
 }
 
 void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
                                 unsigned xoff, unsigned yoff,
-                                unsigned dest_width, unsigned dest_height)
+                                unsigned dest_width, unsigned dest_height,
+                                bool keep_aspect)
 {
     const AVFrame *input_frame = input.get();
     AVFrame *output_frame = output.get();
-    uint8_t *data[AV_NUM_DATA_POINTERS];
 
-    for (int i = 0; i < AV_NUM_DATA_POINTERS; i++) {
-        if (output_frame->data[i]) {
-            const unsigned divisor = i == 0 ? 1 : 2;
-            unsigned offset = (yoff * output_frame->linesize[i] + xoff) / divisor;
-            data[i] = output_frame->data[i] + offset;
+    /* Correct destination width/height and offset if we need to keep input
+     * frame aspect.
+     */
+    if (keep_aspect) {
+        const float local_ratio = (float)dest_width / dest_height;
+        const float input_ratio = (float)input_frame->width / input_frame->height;
+
+        if (local_ratio > input_ratio) {
+            auto old_dest_width = dest_width;
+            dest_width = dest_height * input_ratio;
+            xoff += (old_dest_width - dest_width) / 2;
         } else {
-            data[i] = 0;
-            break;
+            auto old_dest_heigth = dest_height;
+            dest_height = dest_width / input_ratio;
+            yoff += (old_dest_heigth - dest_height) / 2;
         }
     }
+
+    // buffer overflow checks
+    assert(xoff + dest_width <= (unsigned)output_frame->width);
+    assert(yoff + dest_height <= (unsigned)output_frame->height);
+    DEBUG("%u,%u %ux%u", xoff, yoff, dest_width, dest_height);
 
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
@@ -95,8 +132,23 @@ void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
         return;
     }
 
+    // Make an offset'ed copy of output data from xoff and yoff
+    const AVPixFmtDescriptor *out_desc = av_pix_fmt_desc_get((AVPixelFormat)output_frame->format);
+    if (is_yuv_planar(out_desc)) {
+        unsigned x_shift = out_desc->log2_chroma_w;
+        unsigned y_shift = out_desc->log2_chroma_h;
+
+        tmp_data_[0] = output_frame->data[0] + yoff * output_frame->linesize[0] + xoff;
+        tmp_data_[1] = output_frame->data[1] + (yoff >> y_shift) * output_frame->linesize[1] + (xoff >> x_shift);
+        tmp_data_[2] = output_frame->data[2] + (yoff >> y_shift) * output_frame->linesize[2] + (xoff >> x_shift);
+        tmp_data_[3] = nullptr;
+    } else {
+        memcpy(tmp_data_, output_frame->data, sizeof(tmp_data_));
+        tmp_data_[0] += yoff * output_frame->linesize[0] + xoff;
+    }
+
     sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
-              input_frame->height, data, output_frame->linesize);
+              input_frame->height, tmp_data_, output_frame->linesize);
 }
 
 void VideoScaler::reset()
