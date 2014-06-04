@@ -125,10 +125,6 @@ bool VideoReceiveThread::setup()
 #endif
     }
 
-    // FIXME: this is a hack because our peer sends us RTP before
-    // we're ready for it, and we miss the SPS/PPS. We should be
-    // ready earlier.
-    sleep(1);
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
 
