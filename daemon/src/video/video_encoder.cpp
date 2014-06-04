@@ -221,10 +221,13 @@ void print_averror(const char *funcname, int err)
 
 int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_number)
 {
-    int ret;
-    AVFrame *frame = scaledFrame_.get();
+    /* Prepare a frame suitable to our encoder frame format,
+     * keeping also the input aspect ratio.
+     */
+    scaledFrame_.clear(); // to fill blank space left by the "keep aspect"
+    scaler_.scale_with_aspect(input, scaledFrame_);
 
-    scaler_.scale(input, scaledFrame_);
+    AVFrame *frame = scaledFrame_.get();
     frame->pts = frame_number;
 
     if (is_keyframe) {
@@ -245,7 +248,7 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
 #if LIBAVCODEC_VERSION_MAJOR >= 54
 
     int got_packet;
-    ret = avcodec_encode_video2(encoderCtx_, &pkt, frame, &got_packet);
+    int ret = avcodec_encode_video2(encoderCtx_, &pkt, frame, &got_packet);
     if (ret < 0) {
         print_averror("avcodec_encode_video2", ret);
         av_free_packet(&pkt);
