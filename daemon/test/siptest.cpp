@@ -383,6 +383,8 @@ void SIPTest::testParseDisplayName()
     {"\nFrom: <sip:6926666@4.4.4.4>;tag=4421-D9700", ""},
     {"\nFrom: <sip:pinger@sipwise.local>;tag=01f516a4", ""},
     {"\nFrom: sip:pinger@sipwise.local;tag=01f516a4", ""},
+    {"\nFrom: ", ""},
+    {"\nFrom: \"±\"", ""},
     {"\nFrom: sip:+1212555@server.example.com;tag=887s", ""}};
 
     for (const auto &t : test_set) {
