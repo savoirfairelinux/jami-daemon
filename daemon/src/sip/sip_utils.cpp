@@ -124,6 +124,9 @@ sip_utils::parseDisplayName(const char * buffer)
       end_displayName = temp.find("<");
       if (end_displayName != std::string::npos) {
           begin_displayName = temp.find_first_not_of(" ", temp.find(":"));
+          if (begin_displayName == std::string::npos)
+              return "";
+
           // omit trailing/leading spaces
           begin_displayName++;
           end_displayName--;
@@ -136,6 +139,14 @@ sip_utils::parseDisplayName(const char * buffer)
 
     std::string displayName = temp.substr(begin_displayName + 1,
                                           end_displayName - begin_displayName - 1);
+
+    // Filter out invalid unicode sequences to avoid getting kicked from D-Bus
+    std::wstring ws(displayName.size(), L' ');
+    const size_t wideSize = mbstowcs(&ws[0], displayName.c_str(), displayName.size());
+    if (wideSize == std::wstring::npos) {
+        WARN("Invalid unicode sequence detected: %s", displayName.c_str());
+        return "";
+    }
 
     static const size_t MAX_DISPLAY_NAME_SIZE = 25;
     if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
