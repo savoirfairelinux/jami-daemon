@@ -44,16 +44,19 @@ class VideoScaler {
 public:
     VideoScaler();
     ~VideoScaler();
-    void scale(const VideoFrame &input, VideoFrame &output);
     void reset();
+    void scale(const VideoFrame &input, VideoFrame &output);
+    void scale_with_aspect(const VideoFrame &input, VideoFrame &output);
     void scale_and_pad(const VideoFrame &input, VideoFrame &output,
                        unsigned xoff, unsigned yoff,
-                       unsigned dest_width, unsigned dest_height);
+                       unsigned dest_width, unsigned dest_height,
+                       bool keep_aspect);
 
 private:
     NON_COPYABLE(VideoScaler);
     SwsContext *ctx_;
     int mode_;
+    uint8_t *tmp_data_[4]; // used by scale_and_pad
 };
 
 }
