@@ -274,8 +274,10 @@ class SIPVoIPLink : public VoIPLink {
         void clearSipCallMap();
         void addSipCall(SIPCall* call);
 
+#warning Not thread safe! The SIPCall may be deleted at any time after being returned
         SIPCall* getSipCall(const std::string& id);
         SIPCall* tryGetSipCall(const std::string& id);
+
         void removeSipCall(const std::string &id);
 
         /**
