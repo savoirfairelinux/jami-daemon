@@ -554,10 +554,12 @@ bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 #endif
 }
 
-bool ConfigurationManager::checkCertificateValidity(const std::string& pemPath)
+bool ConfigurationManager::checkCertificateValidity(const std::string& caPath,
+                                                    const std::string& pemPath)
 {
 #if HAVE_TLS
-    return certificateIsValid(NULL, pemPath.c_str()) == 0;
+    return certificateIsValid(caPath.size() > 0 ? caPath.c_str() : NULL,
+                              pemPath.c_str()) == 0;
 #else
     WARN("TLS not supported");
     return false;
