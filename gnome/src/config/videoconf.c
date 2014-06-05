@@ -35,6 +35,9 @@
 #include "utils.h"
 #include "dbus.h"
 #include "codeclist.h"
+#include "video/video_device.h"
+
+static VideoDevice *video_device;
 
 static GtkComboBoxText *v4l2Device;
 static GtkComboBoxText *v4l2Channel;
@@ -533,7 +536,6 @@ videocodecs_box(account_t *acc)
     return ret;
 }
 
-
 static void
 reset_combo_box(GtkComboBoxText *combo, gchar **entries, const gchar *prefered)
 {
@@ -550,145 +552,87 @@ reset_combo_box(GtkComboBoxText *combo, gchar **entries, const gchar *prefered)
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), index);
 }
 
-
-/**
- * Fill video input device rate store
- */
 static void
 preferences_dialog_fill_video_input_device_rate_list()
 {
-    gchar** list = NULL;
+    gchar *chan = video_device_get_prefered_channel(video_device);
+    gchar *size = video_device_get_prefered_size(video_device);
 
-    gchar *dev  = gtk_combo_box_text_get_active_text(v4l2Device);
-    gchar *chan = gtk_combo_box_text_get_active_text(v4l2Channel);
-    gchar *size = gtk_combo_box_text_get_active_text(v4l2Size);
+    gchar **rates = video_device_get_rates(video_device, chan, size);
 
-    if (dev && chan && size)
-        list = dbus_get_video_device_rate_list(dev, chan, size);
+    gchar *rate = video_device_get_prefered_rate(video_device);
+    reset_combo_box(v4l2Rate, rates, rate);
+    g_strfreev(rates);
 
-    g_free(size);
-    g_free(chan);
-    g_free(dev);
-
-    // For each device name included in list
-    if (list && *list) {
-        gchar *rate = dbus_get_active_video_device_rate();
-        reset_combo_box(v4l2Rate, list, rate);
-        g_strfreev(list);
-        g_free(rate);
-
-        rate = gtk_combo_box_text_get_active_text(v4l2Rate);
-        dbus_set_active_video_device_rate(rate);
-        g_free(rate);
-    }
+    rate = gtk_combo_box_text_get_active_text(v4l2Rate);
+    video_device_set_prefered_rate(video_device, rate);
+    g_free(rate);
 }
 
-
-/**
- * Set the video input device rate on the server
- */
 static void
-select_video_input_device_rate_cb(GtkComboBoxText* combo, G_GNUC_UNUSED gpointer data)
+combo_box_rate_changed_cb(GtkComboBoxText* combo, G_GNUC_UNUSED gpointer data)
 {
-    gchar *str = gtk_combo_box_text_get_active_text(combo);
-    if (str)
-        dbus_set_active_video_device_rate(str);
-    g_free(str);
+    gchar *rate = gtk_combo_box_text_get_active_text(combo);
+    video_device_set_prefered_rate(video_device, rate);
+    g_free(rate);
+
+    video_device_save_preferences(video_device);
 }
 
-/**
- * Fill video input device size store
- */
 static void
 preferences_dialog_fill_video_input_device_size_list()
 {
-    gchar *dev  = gtk_combo_box_text_get_active_text(v4l2Device);
-    gchar *chan = gtk_combo_box_text_get_active_text(v4l2Channel);
+    gchar *chan = video_device_get_prefered_channel(video_device);
+    gchar *size = video_device_get_prefered_size(video_device);
+    gchar** sizes = video_device_get_sizes(video_device, chan);
 
-    gchar** list = NULL;
+    reset_combo_box(v4l2Size, sizes, size);
+    g_strfreev(sizes);
 
-    if (dev && chan)
-        list = dbus_get_video_device_size_list(dev, chan);
-
-    g_free(chan);
-    g_free(dev);
-
-    if (list && *list) {
-        gchar *size = dbus_get_active_video_device_size();
-        reset_combo_box(v4l2Size, list, size);
-        g_free(size);
-
-        size = gtk_combo_box_text_get_active_text(v4l2Size);
-        dbus_set_active_video_device_size(size);
-        g_free(size);
-    }
+    size = gtk_combo_box_text_get_active_text(v4l2Size);
+    video_device_set_prefered_size(video_device, size);
+    g_free(size);
 }
 
-/**
- * Set the video input device size on the server
- */
 static void
-select_video_input_device_size_cb(GtkComboBoxText* combo, G_GNUC_UNUSED gpointer data)
+combo_box_size_changed_cb(GtkComboBoxText* combo, G_GNUC_UNUSED gpointer data)
 {
-    gchar *str = gtk_combo_box_text_get_active_text(combo);
-    if (str) {
-        dbus_set_active_video_device_size(str);
-        preferences_dialog_fill_video_input_device_rate_list();
-        g_free(str);
-    }
+    gchar *size = gtk_combo_box_text_get_active_text(combo);
+    video_device_set_prefered_size(video_device, size);
+    g_free(size);
+
+    preferences_dialog_fill_video_input_device_rate_list();
 }
 
-/**
- * Fill video input device input store
- */
 static void
 preferences_dialog_fill_video_input_device_channel_list()
 {
-    gchar *name = gtk_combo_box_text_get_active_text(v4l2Device);
-    gchar **channels = NULL;
-
-    if (name) {
-        channels = dbus_get_video_device_channel_list(name);
-        g_free(name);
-    }
-
-    if (!channels) {
-       g_warning("no channel");
-       return;
-    }
-
-    gchar *channel = dbus_get_active_video_device_channel();
+    gchar **channels = video_device_get_channels(video_device);
+    gchar *channel = video_device_get_prefered_channel(video_device);
     reset_combo_box(v4l2Channel, channels, channel);
     g_strfreev(channels);
-    g_free(channel);
 
     channel = gtk_combo_box_text_get_active_text(v4l2Channel);
-    dbus_set_active_video_device_channel(channel);
+    video_device_set_prefered_channel(video_device, channel);
     g_free(channel);
 }
 
-/**
- * Set the video input device input on the server
- */
 static void
-select_video_input_device_channel_cb(GtkComboBoxText* combo, G_GNUC_UNUSED gpointer data)
+combo_box_channel_changed_cb(GtkComboBoxText* combo, G_GNUC_UNUSED gpointer data)
 {
-    gchar *str = gtk_combo_box_text_get_active_text(combo);
-    if (str) {
-        dbus_set_active_video_device_channel(str);
-        preferences_dialog_fill_video_input_device_size_list();
-        g_free(str);
-    }
+    gchar *channel = gtk_combo_box_text_get_active_text(combo);
+    video_device_set_prefered_channel(video_device, channel);
+    g_free(channel);
+
+    preferences_dialog_fill_video_input_device_size_list();
 }
 
-/**
- * Fill video input device store
- */
 static gboolean
 preferences_dialog_fill_video_input_device_list()
 {
     gchar **devices = dbus_get_video_device_list();
 
+    /* FIXME !devices should not be possible */
     if (!devices || !*devices) {
         g_warning("no entries");
         return FALSE;
@@ -702,23 +646,24 @@ preferences_dialog_fill_video_input_device_list()
     /* Save the (new?) default device */
     default_device = gtk_combo_box_text_get_active_text(v4l2Device);
     dbus_set_active_video_device(default_device);
+
+    g_free(video_device);
+    video_device = video_device_new(default_device);
+
     g_free(default_device);
 
     return TRUE;
 }
 
-/**
- * Set the video input device on the server
- */
 static void
-select_video_input_device_cb(GtkComboBoxText* combo, G_GNUC_UNUSED gpointer data)
+combo_box_device_changed_cb(GtkComboBoxText* combo, G_GNUC_UNUSED gpointer data)
 {
     gchar *name = gtk_combo_box_text_get_active_text(combo);
-    if (name) {
-        dbus_set_active_video_device(name);
-        preferences_dialog_fill_video_input_device_channel_list();
-        g_free(name);
-    }
+    g_free(video_device);
+    video_device = video_device_new(name);
+    g_free(name);
+
+    preferences_dialog_fill_video_input_device_channel_list();
 }
 
 static void
@@ -772,10 +717,10 @@ v4l2_box()
     gtk_grid_set_column_spacing(GTK_GRID(grid), 40);
     gtk_box_pack_start(GTK_BOX(v4l2_hbox), grid, TRUE, TRUE, 1);
 
-    v4l2Device = attach_combo_box(GTK_GRID(grid), 0, "Device", G_CALLBACK(select_video_input_device_cb));
-    v4l2Channel = attach_combo_box(GTK_GRID(grid), 1, "Channel", G_CALLBACK(select_video_input_device_channel_cb));
-    v4l2Size = attach_combo_box(GTK_GRID(grid), 2, "Size", G_CALLBACK(select_video_input_device_size_cb));
-    v4l2Rate = attach_combo_box(GTK_GRID(grid), 3, "Rate", G_CALLBACK(select_video_input_device_rate_cb));
+    v4l2Device = attach_combo_box(GTK_GRID(grid), 0, "Device", G_CALLBACK(combo_box_device_changed_cb));
+    v4l2Channel = attach_combo_box(GTK_GRID(grid), 1, "Channel", G_CALLBACK(combo_box_channel_changed_cb));
+    v4l2Size = attach_combo_box(GTK_GRID(grid), 2, "Size", G_CALLBACK(combo_box_size_changed_cb));
+    v4l2Rate = attach_combo_box(GTK_GRID(grid), 3, "Rate", G_CALLBACK(combo_box_rate_changed_cb));
 
     return ret;
 }
