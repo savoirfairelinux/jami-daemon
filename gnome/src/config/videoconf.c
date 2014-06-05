@@ -594,12 +594,12 @@ preferences_dialog_fill_video_input_device_rate_list()
     gchar *size = get_active_text(GTK_COMBO_BOX(v4l2Size));
 
     // Call dbus to retreive list
-    if (dev && chan && size) {
+    if (dev && chan && size)
         list = dbus_get_video_device_rate_list(dev, chan, size);
-        g_free(size);
-        g_free(chan);
-        g_free(dev);
-    }
+
+    g_free(size);
+    g_free(chan);
+    g_free(dev);
 
     // For each device name included in list
     if (list && *list) {
@@ -652,11 +652,11 @@ preferences_dialog_fill_video_input_device_size_list()
 
     gchar** list = NULL;
     // Call dbus to retrieve list
-    if (dev && chan) {
+    if (dev && chan)
         list = dbus_get_video_device_size_list(dev, chan);
-        g_free(chan);
-        g_free(dev);
-    }
+
+    g_free(chan);
+    g_free(dev);
 
     if (list && *list) {
         // For each device name included in list
