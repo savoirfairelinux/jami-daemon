@@ -97,7 +97,7 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual bool getEvent();
+        virtual bool handleEvents();
 
         /* Returns a list of all callIDs */
         std::vector<std::string>

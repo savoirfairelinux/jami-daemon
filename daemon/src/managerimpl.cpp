@@ -1348,11 +1348,11 @@ void ManagerImpl::pollEvents()
     if (finished_)
         return;
 
-    SIPVoIPLink::instance().getEvent();
+    SIPVoIPLink::instance().handleEvents();
 
 #if HAVE_IAX
     for (auto &item : IAXVoIPLink::getAccounts())
-        item.second->getVoIPLink()->getEvent();
+        item.second->getVoIPLink()->handleEvents();
 #endif
 }
 
