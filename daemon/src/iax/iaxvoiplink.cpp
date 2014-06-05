@@ -112,7 +112,7 @@ IAXVoIPLink::terminate()
 }
 
 bool
-IAXVoIPLink::getEvent()
+IAXVoIPLink::handleEvents()
 {
     iax_event *event = NULL;
 

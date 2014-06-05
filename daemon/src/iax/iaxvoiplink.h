@@ -72,7 +72,7 @@ class IAXVoIPLink : public VoIPLink {
         /**
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
-        virtual bool getEvent();
+        virtual bool handleEvents();
 
 
         /* Returns a list of all callIDs */

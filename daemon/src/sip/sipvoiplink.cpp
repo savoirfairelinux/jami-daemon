@@ -696,7 +696,7 @@ void SIPVoIPLink::setSipLogLevel()
 }
 
 // Called from EventThread::run (not main thread)
-bool SIPVoIPLink::getEvent()
+bool SIPVoIPLink::handleEvents()
 {
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {

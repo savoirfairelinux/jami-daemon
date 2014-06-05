@@ -62,7 +62,7 @@ class VoIPLink {
          * Virtual method
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual bool getEvent() = 0;
+        virtual bool handleEvents() = 0;
 
         /**
          * Virtual method
