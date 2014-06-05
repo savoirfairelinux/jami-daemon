@@ -2224,11 +2224,11 @@ dbus_get_tls_settings_default(void)
 }
 
 gboolean
-dbus_check_certificate(const gchar *filepath)
+dbus_check_certificate(const gchar *capath, const gchar *certpath)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_ConfigurationManager_check_certificate_validity(config_proxy, filepath, &result, &error);
+    org_sflphone_SFLphone_ConfigurationManager_check_certificate_validity(config_proxy, capath, certpath, &result, &error);
     check_error(error);
 
     return result;

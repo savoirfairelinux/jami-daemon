@@ -79,8 +79,9 @@ static void
 certificate_set_cb(GtkFileChooserButton *widget, gpointer user_data)
 {
     gchar *filename = get_filename(GTK_WIDGET(widget));
+    gchar *caname = get_filename(GTK_WIDGET(g_object_get_data((GObject *)GTK_WIDGET(widget), "ca")));
 
-    const gboolean is_valid = dbus_check_certificate(filename);
+    const gboolean is_valid = dbus_check_certificate(caname, filename);
 
     gboolean contains_key = FALSE;
     GtkWidget *private_key_chooser = user_data;
@@ -198,6 +199,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_grid_attach(GTK_GRID(grid), certificateFileChooser, 1, 4, 1, 1);
 
     gboolean contains_key = FALSE;
+
+    /* save the ca path in order to use it when validating the certificate */
+    g_object_set_data((GObject *)certificateFileChooser, "ca", GTK_WIDGET(caListFileChooser));
 
     if (!tls_certificate_file) {
         gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
