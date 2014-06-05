@@ -578,7 +578,8 @@ void dbus_set_confirm_go_clear(const callable_obj_t *c);
 gchar **dbus_get_supported_tls_method();
 
 gboolean dbus_certificate_contains_private_key(const gchar *filepath);
-gboolean dbus_check_certificate(const gchar *filepath);
+gboolean dbus_check_certificate(const gchar *capath,
+                                const gchar *certpath);
 
 GHashTable* dbus_get_shortcuts(void);
 
