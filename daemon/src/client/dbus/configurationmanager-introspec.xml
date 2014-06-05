@@ -630,6 +630,8 @@
        </method>
 
        <method name="checkCertificateValidity" tp:name-for-bindings="checkCertificateValidity">
+           <arg type="s" name="caPath" direction="in">
+           </arg>
            <arg type="s" name="pemPath" direction="in">
            </arg>
            <arg type="b" name="isValid" direction="out">
