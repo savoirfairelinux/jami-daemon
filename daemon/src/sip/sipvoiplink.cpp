@@ -2160,21 +2160,6 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 #endif
 }
 
-void checkNatAddress(pjsip_regc_cbparam &param, SIPAccount &account)
-{
-    if (!param.rdata or !param.rdata->msg_info.via)
-        return;
-
-    pj_str_t receivedValue = param.rdata->msg_info.via->recvd_param;
-
-    if (receivedValue.slen) {
-        std::string publicIpFromReceived(receivedValue.ptr, receivedValue.slen);
-        account.setReceivedParameter(publicIpFromReceived);
-    }
-
-    account.setRPort(param.rdata->msg_info.via->rport_param);
-}
-
 void registration_cb(pjsip_regc_cbparam *param)
 {
     if (!param) {
