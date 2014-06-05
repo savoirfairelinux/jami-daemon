@@ -1272,12 +1272,17 @@ void SIPVoIPLink::addSipCall(SIPCall* call)
 
 void SIPVoIPLink::removeSipCall(const std::string& id)
 {
-    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-
     DEBUG("Removing call %s from list", id.c_str());
 
-    delete sipCallMap_[id];
-    sipCallMap_.erase(id);
+    SIPCall *call;
+
+    {
+        std::lock_guard<std::mutex> lock(sipCallMapMutex_);
+        call = sipCallMap_[id];
+        sipCallMap_.erase(id);
+    }
+
+    delete call;
 }
 
 SIPCall*
