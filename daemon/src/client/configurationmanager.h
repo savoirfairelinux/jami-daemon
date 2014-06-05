@@ -168,7 +168,8 @@ class ConfigurationManager
         bool checkForPrivateKey(const std::string& pemPath);
         bool checkCertificateValidity(const std::string& caPath,
                                       const std::string& pemPath);
-        bool checkHostnameCertificate(const std::string& certificatePath, const  std::string& host, const std::string& port);
+        bool checkHostnameCertificate(const std::string& host,
+                                      const std::string& port);
 
         /* the following signals must be implemented manually for any
          * platform or configuration that does not supply dbus */
