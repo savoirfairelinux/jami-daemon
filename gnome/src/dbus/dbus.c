@@ -1982,6 +1982,18 @@ dbus_set_active_video_device_rate(const gchar *rate)
     check_error(error);
 }
 
+GHashTable *
+dbus_get_video_preferences(const gchar *name)
+{
+    GError *error = NULL;
+    GHashTable *pref = NULL;
+
+    org_sflphone_SFLphone_VideoManager_get_preferences(video_proxy, name, &pref, &error);
+    check_error(error);
+
+    return pref;
+}
+
 void
 dbus_set_video_preferences(const gchar *name, const gchar *channel, const gchar *size, const gchar *rate)
 {
