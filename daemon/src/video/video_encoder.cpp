@@ -271,8 +271,8 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
 
 #else
 
-    ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
-                               encoderBufferSize_, frame);
+    int ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
+                                   encoderBufferSize_, frame);
     if (ret < 0) {
         print_averror("avcodec_encode_video", ret);
         av_free_packet(&pkt);
