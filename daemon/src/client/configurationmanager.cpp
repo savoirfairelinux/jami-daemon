@@ -566,7 +566,8 @@ bool ConfigurationManager::checkCertificateValidity(const std::string& caPath,
 #endif
 }
 
-bool ConfigurationManager::checkHostnameCertificate(const std::string& certificatePath, const std::string& host, const std::string& port)
+bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
+                                                    const std::string& port)
 {
 #if HAVE_TLS
     return verifyHostnameCertificate(host.c_str(),
