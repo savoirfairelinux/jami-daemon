@@ -639,8 +639,6 @@
        </method>
 
        <method name="checkHostnameCertificate" tp:name-for-bindings="checkHostnameCertificate">
-           <arg type="s" name="pemPath" direction="in">
-           </arg>
            <arg type="s" name="host" direction="in">
            </arg>
            <arg type="s" name="port" direction="in">
