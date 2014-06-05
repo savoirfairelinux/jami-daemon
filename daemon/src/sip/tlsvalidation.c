@@ -147,7 +147,7 @@ static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
 {
     gnutls_x509_crt_t cert;
     unsigned char *data = NULL;
-    gnutls_datum dt;
+    gnutls_datum_t dt;
     size_t fsize = 0;
     int err;
 
@@ -322,7 +322,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
 {
     gnutls_x509_crt_t ca = NULL;
     gnutls_x509_crt_t cert = NULL;
-    gnutls_datum ca_dt = {}, cert_dt = {};
+    gnutls_datum_t ca_dt = {}, cert_dt = {};
     size_t bufsize;
     unsigned int output;
     int err, self_signed;
