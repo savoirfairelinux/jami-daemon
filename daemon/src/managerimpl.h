@@ -46,6 +46,9 @@
 #include <memory>
 #include <mutex>
 
+
+#include "plugin_manager.h"
+
 #include "client/client.h"
 
 #include "config/sfl_config.h"
@@ -1032,5 +1035,7 @@ class ManagerImpl {
           */
         sfl::History history_;
         bool finished_;
+
+        PluginManager pluginManager_ = {};
 };
 #endif // MANAGER_IMPL_H_
