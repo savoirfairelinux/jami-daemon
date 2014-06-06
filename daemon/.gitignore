@@ -17,16 +17,3 @@ libs/libiax2/ltmain.sh
 libs/libiax2/iax-config
 libs/libiax2/configure
 libs/libiax2/iax2-config
-
-libs/pjproject-2.2.1/pjlib-util/build/os-auto.mak
-libs/pjproject-2.2.1/pjlib/build/os-auto.mak
-libs/pjproject-2.2.1/pjlib/include/pj/compat/m_auto.h
-libs/pjproject-2.2.1/pjlib/include/pj/compat/os_auto.h
-libs/pjproject-2.2.1/pjlib/include/pj/config_site.h
-libs/pjproject-2.2.1/pjmedia/build/os-auto.mak
-libs/pjproject-2.2.1/pjmedia/include/pjmedia-codec/config_auto.h
-libs/pjproject-2.2.1/pjmedia/include/pjmedia/config_auto.h
-libs/pjproject-2.2.1/pjsip/build/os-auto.mak
-libs/pjproject-2.2.1/pjsip/include/pjsip/sip_autoconf.h
-libs/pjproject-2.2.1/third_party/build/os-auto.mak
-libs/pjproject-2.2.1/third_party/build/portaudio/os-auto.mak
