@@ -48,7 +48,7 @@
 #include "config.h"
 
 #if HAVE_IAX
-#include <iax-client.h>
+#include <iax/iax-client.h>
 #endif
 
 #define EMPTY_MESSAGE   pj_str((char*)"")

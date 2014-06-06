@@ -42,7 +42,7 @@
 #include "sfl_types.h"
 #include "audio/resampler.h"
 
-#include <iax-client.h>
+#include <iax/iax-client.h>
 
 #include <mutex>
 #include <memory>

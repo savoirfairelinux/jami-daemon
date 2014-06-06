@@ -476,8 +476,6 @@ AS_IF([test "x$enable_debug" = "xyes"],
 dnl What Makefiles to generate
 
 AC_CONFIG_FILES([Makefile \
-                 libs/Makefile \
-                 libs/iax2/Makefile \
                  src/Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \

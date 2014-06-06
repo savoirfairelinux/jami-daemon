@@ -22,8 +22,6 @@ endif
 
 # Preprocessor flags
 AM_CPPFLAGS = \
-	-I$(src)/libs \
-	-I$(src)/libs/iax2 \
 	-I$(src)/src \
 	-I$(src)/src/config \
 	-I$(src)/test \

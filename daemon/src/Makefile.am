@@ -18,7 +18,7 @@ endif
 if USE_IAX
 IAX_SUBDIR=iax
 IAX_CXXFLAG=-DUSE_IAX
-IAX_LIB=./iax/libiaxlink.la $(top_builddir)/libs/iax2/libiax2.la
+IAX_LIB=./iax/libiaxlink.la -liax
 endif
 
 if USE_NETWORKMANAGER
@@ -40,11 +40,10 @@ sflphoned_CXXFLAGS = \
 
 # libsflphone
 
-sflphoned_LDADD = ./libsflphone.la $(YAML_LIBS)
+sflphoned_LDADD = ./libsflphone.la $(YAML_LIBS) $(IAX_LIB)
 noinst_LTLIBRARIES = libsflphone.la
 
 libsflphone_la_LIBADD = \
-	$(IAX_LIB) \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
 	./client/libclient.la \

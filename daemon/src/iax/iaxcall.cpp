@@ -32,8 +32,8 @@
 
 #include <cstring>
 #include <sys/socket.h>
-#include <iax-client.h>
-#include <frame.h>
+#include <iax/iax-client.h>
+#include <iax/frame.h>
 
 #include "iaxcall.h"
 #include "logger.h"
