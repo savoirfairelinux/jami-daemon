@@ -54,7 +54,7 @@ libsflphone_la_LIBADD = \
 
 libsflphone_la_LDFLAGS = \
 		@ZRTPCPP_LIBS@ \
-		$(PJSIP_LIBS) \
+		@PJPROJECT_LIBS@ \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
@@ -65,7 +65,7 @@ libsflphone_la_LDFLAGS = \
 
 libsflphone_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
-		$(PJSIP_CFLAGS) \
+		@PJPROJECT_CFLAGS@ \
 		@CCRTP_CFLAGS@ \
 		@ALSA_CFLAGS@ \
 		@PULSEAUDIO_CFLAGS@ \

@@ -7,18 +7,6 @@ sflplugindir=$(sfllibdir)/plugins
 
 ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
-PJPROJECT_DIR=pjproject-2.2.1
-
-# for pjsip
-include $(src)/libs/$(PJPROJECT_DIR)/build.mak
-PJSIP_LIBS=$(APP_LDFLAGS) $(APP_LDLIBS)
-
-SIP_CFLAGS=-I$(src)/libs/$(PJPROJECT_DIR)/pjsip/include \
-		   -I$(src)/libs/$(PJPROJECT_DIR)/pjlib/include \
-		   -I$(src)/libs/$(PJPROJECT_DIR)/pjlib-util/include \
-		   -I$(src)/libs/$(PJPROJECT_DIR)/pjmedia/include \
-		   -I$(src)/libs/$(PJPROJECT_DIR)/pjnath/include \
-		   -DPJ_AUTOCONF=1
 
 if BUILD_SPEEX
 SPEEXCODEC=-DHAVE_SPEEX_CODEC
@@ -36,7 +24,6 @@ endif
 AM_CPPFLAGS = \
 	-I$(src)/libs \
 	-I$(src)/libs/iax2 \
-	-I$(src)/libs/$(PJPROJECT_DIR) \
 	-I$(src)/src \
 	-I$(src)/src/config \
 	-I$(src)/test \

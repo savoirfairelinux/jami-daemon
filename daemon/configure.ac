@@ -133,6 +133,10 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
 ])
 AC_SUBST(CONTRIB_DIR)
 
+
+dnl Check for pjproject
+PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
+
 dnl Check for uuid development package - name: uuid-dev
 UUID_MIN_VERSION=1.0
 PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
@@ -500,6 +504,3 @@ AC_CONFIG_FILES([Makefile \
 
 # Go!
 AC_OUTPUT
-
-AC_CONFIG_SUBDIRS([libs/pjproject-2.2.1])
-AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-2.2.1) has already been compiled. Run `make' to build the software.]])
