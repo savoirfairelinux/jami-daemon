@@ -91,6 +91,11 @@ libsflphone_la_SOURCES = conference.cpp \
 		fileutils.cpp \
 		threadloop.cpp \
 		ip_utils.cpp \
+		plugin_manager.cpp \
+		plugin_loader_dl.cpp \
+		plugin.h \
+		plugin_loader.h \
+		plugin_manager.h \
 		threadloop.h \
 		conference.h \
 		voiplink.h \
