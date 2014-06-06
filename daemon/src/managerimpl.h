@@ -47,6 +47,9 @@
 #include <memory>
 #include <mutex>
 
+
+#include "plugin_manager.h"
+
 #include "client/client.h"
 
 #include "conference.h"
@@ -993,6 +996,8 @@ class ManagerImpl {
 
         void loadAccount(const YAML::Node &item, int &errorCount,
                          const std::string &accountOrder);
+
+        PluginManager pluginManager_ = {};
 };
 
 #endif // MANAGER_IMPL_H_
