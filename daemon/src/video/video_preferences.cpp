@@ -46,7 +46,7 @@ using namespace sfl_video;
 VideoCapabilities
 VideoPreference::getCapabilities(const std::string& name)
 {
-    std::map<std::string, std::map<std::string, std::vector<std::string>>> cap;
+    VideoCapabilities cap;
 
     for (const auto& chan : getChannelList(name))
         for (const auto& size : getSizeList(name, chan))
