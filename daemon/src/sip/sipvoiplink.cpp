@@ -1285,6 +1285,7 @@ void SIPVoIPLink::removeSipCall(const std::string& id)
     delete call;
 }
 
+#warning Not thread safe! The SIPCall may be deleted at any time after being returned
 SIPCall*
 SIPVoIPLink::getSipCall(const std::string& id)
 {
