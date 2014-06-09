@@ -1953,47 +1953,6 @@ dbus_get_video_device_list()
     return array;
 }
 
-/**
- * Get the list of channels supported by the given device
- */
-gchar **
-dbus_get_video_device_channel_list(const gchar *dev)
-{
-    gchar **array = NULL;
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_get_device_channel_list(video_proxy, dev, &array, &error);
-    check_error(error);
-    return array;
-}
-
-/**
- * Get the list of resolutions supported by the given channel of the given device
- */
-gchar **
-dbus_get_video_device_size_list(const gchar *dev, const gchar *channel)
-{
-    gchar **array = NULL;
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_VideoManager_get_device_size_list(video_proxy, dev, channel, &array, &error);
-    check_error(error);
-    return array;
-}
-
-/**
- * Get the list of frame rates supported by the given resolution of the given channel of the given device
- */
-gchar **
-dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size)
-{
-    gchar **array = NULL;
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_VideoManager_get_device_rate_list(video_proxy, dev, channel, size, &array, &error);
-    check_error(error);
-    return array;
-}
-
 GHashTable *
 dbus_get_video_capabilities(const gchar *name)
 {
