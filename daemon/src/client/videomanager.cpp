@@ -72,24 +72,6 @@ VideoManager::getDeviceList()
     return videoPreference_.getDeviceList();
 }
 
-std::vector<std::string>
-VideoManager::getDeviceChannelList(const std::string &dev)
-{
-    return videoPreference_.getChannelList(dev);
-}
-
-std::vector<std::string>
-VideoManager::getDeviceSizeList(const std::string &dev, const std::string &channel)
-{
-    return videoPreference_.getSizeList(dev, channel);
-}
-
-std::vector<std::string>
-VideoManager::getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
-{
-    return videoPreference_.getRateList(dev, channel, size);
-}
-
 VideoCapabilities
 VideoManager::getCapabilities(const std::string& name)
 {

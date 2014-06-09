@@ -10,39 +10,6 @@
             </arg>
         </method>
 
-        <method name="getDeviceChannelList" tp:name-for-bindings="getDeviceChannelList">
-            <tp:docstring>Returns a list of the channels available for a given v4l2 device</tp:docstring>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-            <arg type="s" name="device" direction="in">
-            </arg>
-            <arg type="as" name="list" direction="out">
-            </arg>
-        </method>
-
-        <method name="getDeviceSizeList" tp:name-for-bindings="getDeviceSizeList">
-            <tp:docstring>Returns a list of the resolutions available for a given channel of a given v4l2 device</tp:docstring>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-            <arg type="s" name="device" direction="in">
-            </arg>
-            <arg type="s" name="channel" direction="in">
-            </arg>
-            <arg type="as" name="list" direction="out">
-            </arg>
-        </method>
-
-        <method name="getDeviceRateList" tp:name-for-bindings="getDeviceRateList">
-           <tp:docstring>Returns a list of the framerates available for a given resolution of a given channel of a given v4l2 device</tp:docstring>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="s" name="device" direction="in">
-           </arg>
-           <arg type="s" name="channel" direction="in">
-           </arg>
-           <arg type="s" name="size" direction="in">
-           </arg>
-           <arg type="as" name="list" direction="out">
-           </arg>
-        </method>
-
         <method name="getCapabilities" tp:name-for-bindings="getCapabilities">
            <tp:docstring>Returns a map of map of array of strings, containing the capabilities (channel, size, rate) of a device</tp:docstring>
             <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringMapStringVectorString"/>
