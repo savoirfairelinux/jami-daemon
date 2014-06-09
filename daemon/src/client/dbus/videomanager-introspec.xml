@@ -84,38 +84,8 @@
             </arg>
         </method>
 
-        <method name="getActiveDeviceChannel" tp:name-for-bindings="getActiveDeviceChannel">
-            <arg type="s" name="channel" direction="out">
-            </arg>
-        </method>
-
-        <method name="getActiveDeviceSize" tp:name-for-bindings="getActiveDeviceSize">
-            <arg type="s" name="size" direction="out">
-            </arg>
-        </method>
-
-        <method name="getActiveDeviceRate" tp:name-for-bindings="getActiveDeviceRate">
-            <arg type="s" name="rate" direction="out">
-            </arg>
-        </method>
-
         <method name="setActiveDevice" tp:name-for-bindings="setActiveDevice">
             <arg type="s" name="device" direction="in">
-            </arg>
-        </method>
-
-        <method name="setActiveDeviceChannel" tp:name-for-bindings="setActiveDeviceChannel">
-            <arg type="s" name="channel" direction="in">
-            </arg>
-        </method>
-
-        <method name="setActiveDeviceSize" tp:name-for-bindings="setActiveDeviceSize">
-            <arg type="s" name="size" direction="in">
-            </arg>
-        </method>
-
-        <method name="setActiveDeviceRate" tp:name-for-bindings="setActiveDeviceRate">
-            <arg type="s" name="rate" direction="in">
             </arg>
         </method>
 

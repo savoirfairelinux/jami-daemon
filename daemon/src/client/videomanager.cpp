@@ -102,47 +102,11 @@ VideoManager::getActiveDevice()
     return videoPreference_.getDevice();
 }
 
-std::string
-VideoManager::getActiveDeviceChannel()
-{
-    return videoPreference_.getChannel();
-}
-
-std::string
-VideoManager::getActiveDeviceSize()
-{
-    return videoPreference_.getSize();
-}
-
-std::string
-VideoManager::getActiveDeviceRate()
-{
-    return videoPreference_.getRate();
-}
-
 void
 VideoManager::setActiveDevice(const std::string &device)
 {
     DEBUG("Setting device to %s", device.c_str());
     videoPreference_.setDevice(device);
-}
-
-void
-VideoManager::setActiveDeviceChannel(const std::string &channel)
-{
-    videoPreference_.setChannel(channel);
-}
-
-void
-VideoManager::setActiveDeviceSize(const std::string &size)
-{
-    videoPreference_.setSize(size);
-}
-
-void
-VideoManager::setActiveDeviceRate(const std::string &rate)
-{
-    videoPreference_.setRate(rate);
 }
 
 std::map<std::string, std::string>
