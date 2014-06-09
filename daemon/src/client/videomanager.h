@@ -125,26 +125,8 @@ class VideoManager
         void
         setActiveDevice(const std::string &dev);
 
-        void
-        setActiveDeviceChannel(const std::string &channel);
-
-        void
-        setActiveDeviceSize(const std::string &size);
-
-        void
-        setActiveDeviceRate(const std::string &rate);
-
         std::string
         getActiveDevice();
-
-        std::string
-        getActiveDeviceChannel();
-
-        std::string
-        getActiveDeviceSize();
-
-        std::string
-        getActiveDeviceRate();
 
         std::string
         getCurrentCodecName(const std::string &callID);
