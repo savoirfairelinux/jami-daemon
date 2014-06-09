@@ -389,7 +389,9 @@ void SIPTest::testParseDisplayName()
 
     for (const auto &t : test_set) {
         const std::string str(sip_utils::parseDisplayName(t[0]));
-        CPPUNIT_ASSERT(str == t[1]);
+        CPPUNIT_ASSERT_MESSAGE(std::string("\"") + str + "\" should be \"" +
+                               t[1] + "\", input on next line: " + t[0],
+                               str == t[1]);
     }
 }
 
