@@ -1903,42 +1903,6 @@ dbus_get_supported_audio_managers()
 
 #ifdef SFL_VIDEO
 gchar *
-dbus_get_active_video_device_channel()
-{
-    gchar *str = NULL;
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_VideoManager_get_active_device_channel(video_proxy, &str, &error);
-    check_error(error);
-
-    return str;
-}
-
-gchar *
-dbus_get_active_video_device_size()
-{
-    gchar *str = NULL;
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_VideoManager_get_active_device_size(video_proxy, &str, &error);
-    check_error(error);
-
-    return str;
-}
-
-gchar *
-dbus_get_active_video_device_rate()
-{
-    gchar *str = NULL;
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_VideoManager_get_active_device_rate(video_proxy, &str, &error);
-    check_error(error);
-
-    return str;
-}
-
-gchar *
 dbus_get_active_video_device()
 {
     gchar *str = NULL;
@@ -1955,30 +1919,6 @@ dbus_set_active_video_device(const gchar *device)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_VideoManager_set_active_device(video_proxy, device, &error);
-    check_error(error);
-}
-
-void
-dbus_set_active_video_device_channel(const gchar *channel)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_set_active_device_channel(video_proxy, channel, &error);
-    check_error(error);
-}
-
-void
-dbus_set_active_video_device_size(const gchar *size)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_set_active_device_size(video_proxy, size, &error);
-    check_error(error);
-}
-
-void
-dbus_set_active_video_device_rate(const gchar *rate)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_set_active_device_rate(video_proxy, rate, &error);
     check_error(error);
 }
 
