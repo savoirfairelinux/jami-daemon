@@ -239,67 +239,6 @@ VideoPreference::setDevice(const std::string& name)
         default_ = name;
 }
 
-std::string
-VideoPreference::getChannel() const
-{
-    const auto it = lookupDevice(default_);
-
-    if (it == deviceList_.end())
-        return "";
-
-    return it->channel;
-}
-
-void
-VideoPreference::setChannel(const std::string& channel)
-{
-    auto it = lookupDevice(default_);
-
-    if (it != deviceList_.end())
-        it->channel = channel;
-}
-
-std::string
-VideoPreference::getSize() const
-{
-    const auto it = lookupDevice(default_);
-
-    if (it == deviceList_.end())
-        return "";
-
-    return it->size;
-}
-
-void
-VideoPreference::setSize(const std::string& size)
-{
-    auto it = lookupDevice(default_);
-
-    if (it != deviceList_.end())
-        it->size = size;
-}
-
-std::string
-VideoPreference::getRate() const
-{
-    const auto it = lookupDevice(default_);
-
-    if (it == deviceList_.end())
-        return "";
-
-    return it->rate;
-}
-
-void
-VideoPreference::setRate(const std::string& rate)
-{
-    auto it = lookupDevice(default_);
-
-    if (it != deviceList_.end())
-        it->rate = rate;
-}
-
-
 std::map<std::string, std::string>
 VideoPreference::getSettings() const
 {
