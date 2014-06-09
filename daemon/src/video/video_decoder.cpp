@@ -194,10 +194,8 @@ int VideoDecoder::setupFromVideoData()
 }
 
 VideoDecoder::Status
-VideoDecoder::decode(VideoFrame& result)
+VideoDecoder::decode(VideoFrame& result, VideoPacket& video_packet)
 {
-    // Guarantee that we free the packet every iteration
-    VideoPacket video_packet;
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
     if (ret == AVERROR(EAGAIN)) {
