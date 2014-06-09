@@ -60,8 +60,7 @@ class VideoPreference : public Serializable
          */
         std::vector<std::string> getDeviceList() const;
 
-        VideoCapabilities
-        getCapabilities(const std::string& name);
+        VideoCapabilities getCapabilities(const std::string& name);
 
         /*
          * Interface for a single device.
