@@ -82,15 +82,6 @@ class VideoPreference : public Serializable
         std::string getDevice() const;
         void setDevice(const std::string& name);
 
-        std::string getChannel() const;
-        void setChannel(const std::string& channel);
-
-        std::string getSize() const;
-        void setSize(const std::string& size);
-
-        std::string getRate() const;
-        void setRate(const std::string& rate);
-
         /*
          * Interface to load from/store to the (YAML) configuration file.
          */
