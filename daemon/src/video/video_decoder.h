@@ -65,7 +65,7 @@ namespace sfl_video {
         int openInput(const std::string &source_str,
                       const std::string &format_str);
         int setupFromVideoData();
-        Status decode(VideoFrame&);
+        Status decode(VideoFrame&, VideoPacket&);
         Status flush(VideoFrame&);
 
         int getWidth() const;
