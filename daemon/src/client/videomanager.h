@@ -98,15 +98,6 @@ class VideoManager
         std::vector<std::string>
         getDeviceList();
 
-        std::vector<std::string>
-        getDeviceChannelList(const std::string &dev);
-
-        std::vector<std::string>
-        getDeviceSizeList(const std::string &dev, const std::string &channel);
-
-        std::vector<std::string>
-        getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
-
         VideoCapabilities
         getCapabilities(const std::string& name);
 
