@@ -59,9 +59,6 @@ class VideoPreference : public Serializable
          * Video device monitoring specific interface.
          */
         std::vector<std::string> getDeviceList() const;
-        std::vector<std::string> getChannelList(const std::string& name) const;
-        std::vector<std::string> getSizeList(const std::string& name, const std::string& channel) const;
-        std::vector<std::string> getRateList(const std::string& name, const std::string& channel, const std::string& size) const;
 
         VideoCapabilities
         getCapabilities(const std::string& name);
@@ -109,6 +106,10 @@ class VideoPreference : public Serializable
 
         std::vector<VideoDevice>::iterator lookupDevice(const std::string& name);
         std::vector<VideoDevice>::const_iterator lookupDevice(const std::string& name) const;
+
+        std::vector<std::string> getChannelList(const std::string& name) const;
+        std::vector<std::string> getSizeList(const std::string& name, const std::string& channel) const;
+        std::vector<std::string> getRateList(const std::string& name, const std::string& channel, const std::string& size) const;
 
         bool validatePreference(const VideoDevice& dev) const;
         std::map<std::string, std::string> deviceToSettings(const VideoDevice& dev) const;
