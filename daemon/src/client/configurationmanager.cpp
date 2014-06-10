@@ -134,7 +134,7 @@ void ConfigurationManager::sendRegister(const std::string& accountID, const bool
 
 void ConfigurationManager::registerAllAccounts()
 {
-    Manager::instance().registerAllAccounts();
+    Manager::instance().registerAccounts();
 }
 
 ///This function is used as a base for new accounts for clients that support it

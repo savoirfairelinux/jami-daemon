@@ -416,16 +416,6 @@ class ManagerImpl {
         void sendRegister(const std::string& accountId, bool enable);
 
         /**
-         * Register all account in accountMap_
-         */
-        void registerAllAccounts();
-
-        /**
-         * Unregister all account in accountMap_
-         */
-        void unregisterAllAccounts();
-
-        /**
          * Get account list
          * @return std::vector<std::string> A list of accoundIDs
          */
@@ -994,9 +984,10 @@ class ManagerImpl {
         void freeAccount(const std::string& accountID);
 
         /**
-         * Send registration to all enabled accounts
+         * Send registration for all enabled accounts
          */
         void registerAccounts();
+
         void saveHistory();
 
         /**
@@ -1010,6 +1001,11 @@ class ManagerImpl {
 
     private:
         NON_COPYABLE(ManagerImpl);
+
+        /**
+         * Send unregister for all enabled accounts
+         */
+        void unregisterAccounts();
 
         /**
          * Play the dtmf-associated sound
