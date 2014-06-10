@@ -35,7 +35,7 @@
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "logger.h"
-#include "video_preferences.h"
+#include "video_device_monitor.h"
 
 using namespace sfl_video;
 
@@ -44,7 +44,7 @@ using namespace sfl_video;
  */
 
 VideoCapabilities
-VideoPreference::getCapabilities(const std::string& name)
+VideoDeviceMonitor::getCapabilities(const std::string& name)
 {
     VideoCapabilities cap;
 
@@ -55,8 +55,8 @@ VideoPreference::getCapabilities(const std::string& name)
     return cap;
 }
 
-VideoPreference::VideoDevice
-VideoPreference::defaultPreferences(const std::string& name) const
+VideoDeviceMonitor::VideoDevice
+VideoDeviceMonitor::defaultPreferences(const std::string& name) const
 {
     VideoDevice dev;
     dev.name = name;
@@ -74,7 +74,7 @@ VideoPreference::defaultPreferences(const std::string& name) const
 }
 
 void
-VideoPreference::addDevice(const std::string &name)
+VideoDeviceMonitor::addDevice(const std::string &name)
 {
     for (const auto &dev : deviceList_)
         if (dev.name == name)
@@ -84,11 +84,11 @@ VideoPreference::addDevice(const std::string &name)
     deviceList_.push_back(dev);
 }
 
-std::vector<VideoPreference::VideoDevice>::iterator
-VideoPreference::lookupDevice(const std::string& name)
+std::vector<VideoDeviceMonitor::VideoDevice>::iterator
+VideoDeviceMonitor::lookupDevice(const std::string& name)
 {
     // Find the device in the cache of preferences
-    std::vector<VideoPreference::VideoDevice>::iterator it;
+    std::vector<VideoDeviceMonitor::VideoDevice>::iterator it;
     for (it = deviceList_.begin(); it != deviceList_.end(); ++it)
         if (it->name == name)
             break;
@@ -104,11 +104,11 @@ VideoPreference::lookupDevice(const std::string& name)
 }
 
 
-std::vector<VideoPreference::VideoDevice>::const_iterator
-VideoPreference::lookupDevice(const std::string& name) const
+std::vector<VideoDeviceMonitor::VideoDevice>::const_iterator
+VideoDeviceMonitor::lookupDevice(const std::string& name) const
 {
     // Find the device in the cache of preferences
-    std::vector<VideoPreference::VideoDevice>::const_iterator it;
+    std::vector<VideoDeviceMonitor::VideoDevice>::const_iterator it;
     for (it = deviceList_.begin(); it != deviceList_.end(); ++it)
         if (it->name == name)
             break;
@@ -124,7 +124,7 @@ VideoPreference::lookupDevice(const std::string& name) const
 }
 
 std::map<std::string, std::string>
-VideoPreference::getSettingsFor(const std::string& name) const
+VideoDeviceMonitor::getSettingsFor(const std::string& name) const
 {
     std::map<std::string, std::string> settings;
 
@@ -137,7 +137,7 @@ VideoPreference::getSettingsFor(const std::string& name) const
 }
 
 std::map<std::string, std::string>
-VideoPreference::getPreferences(const std::string& name) const
+VideoDeviceMonitor::getPreferences(const std::string& name) const
 {
     std::map<std::string, std::string> pref;
     const auto it = lookupDevice(name);
@@ -153,7 +153,7 @@ VideoPreference::getPreferences(const std::string& name) const
 }
 
 bool
-VideoPreference::validatePreference(const VideoDevice& dev) const
+VideoDeviceMonitor::validatePreference(const VideoDevice& dev) const
 {
     DEBUG("prefs: name:%s channel:%s size:%s rate:%s", dev.name.data(),
             dev.channel.data(), dev.size.data(), dev.rate.data());
@@ -183,7 +183,7 @@ VideoPreference::validatePreference(const VideoDevice& dev) const
 }
 
 void
-VideoPreference::setPreferences(const std::string& name,
+VideoDeviceMonitor::setPreferences(const std::string& name,
         std::map<std::string, std::string> pref)
 {
     // Validate the name
@@ -215,7 +215,7 @@ VideoPreference::setPreferences(const std::string& name,
  */
 
 std::string
-VideoPreference::getDevice() const
+VideoDeviceMonitor::getDevice() const
 {
     // Default device not set or not detected?
     if (lookupDevice(default_) == deviceList_.end())
@@ -225,7 +225,7 @@ VideoPreference::getDevice() const
 }
 
 void
-VideoPreference::setDevice(const std::string& name)
+VideoDeviceMonitor::setDevice(const std::string& name)
 {
 
     /*
@@ -240,7 +240,7 @@ VideoPreference::setDevice(const std::string& name)
 }
 
 std::map<std::string, std::string>
-VideoPreference::getSettings() const
+VideoDeviceMonitor::getSettings() const
 {
     std::map<std::string, std::string> settings;
 
@@ -252,7 +252,7 @@ VideoPreference::getSettings() const
 }
 
 void
-VideoPreference::addDeviceToSequence(const VideoDevice& dev,
+VideoDeviceMonitor::addDeviceToSequence(const VideoDevice& dev,
         Conf::SequenceNode& seq)
 {
     using namespace Conf;
@@ -268,7 +268,7 @@ VideoPreference::addDeviceToSequence(const VideoDevice& dev,
 }
 
 void
-VideoPreference::serialize(Conf::YamlEmitter &emitter)
+VideoDeviceMonitor::serialize(Conf::YamlEmitter &emitter)
 {
     using namespace Conf;
 
@@ -293,7 +293,7 @@ VideoPreference::serialize(Conf::YamlEmitter &emitter)
 }
 
 void
-VideoPreference::unserialize(const Conf::YamlNode &node)
+VideoDeviceMonitor::unserialize(const Conf::YamlNode &node)
 {
     using namespace Conf;
 

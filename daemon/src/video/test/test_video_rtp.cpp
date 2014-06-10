@@ -34,12 +34,12 @@
 #include <map>
 #include <string>
 #include "video_rtp_session.h"
-#include "video_preferences.h"
+#include "video_device_monitor.h"
 
 int main ()
 {
-    VideoPreference preference;
-    sfl_video::VideoRtpSession session("test", preference.getSettings());
+    VideoDeviceMonitor monitor;
+    sfl_video::VideoRtpSession session("test", monitor.getSettings());
     session.start(12345);
     sleep(5);
     session.stop();

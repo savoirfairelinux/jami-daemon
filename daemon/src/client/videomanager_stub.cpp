@@ -35,7 +35,7 @@
 VideoManager::VideoManager()
 {}
 
-VideoPreference& VideoManager::getVideoPreferences()
+VideoDeviceMonitor& VideoManager::getVideoDeviceMonitor()
 {
 }
 
