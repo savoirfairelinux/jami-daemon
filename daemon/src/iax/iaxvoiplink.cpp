@@ -101,12 +101,11 @@ IAXVoIPLink::terminate()
     handlingEvents_ = false;
 
     for (auto & item : iaxCallMap_) {
-        IAXCall *call = static_cast<IAXCall*>(item.second);
-
+        auto& call = item.second;
         if (call) {
             std::lock_guard<std::mutex> lock(mutexIAX_);
             iax_hangup(call->session, const_cast<char*>("Dumped Call"));
-            delete call;
+            call.reset();
         }
     }
 
@@ -178,10 +177,10 @@ IAXVoIPLink::getCallIDs()
     return v;
 }
 
-std::vector<Call*>
+std::vector<std::shared_ptr<Call> >
 IAXVoIPLink::getCalls(const std::string &account_id) const
 {
-    std::vector<Call*> calls;
+    std::vector<std::shared_ptr<Call> > calls;
     for (const auto & item : iaxCallMap_) {
         if (item.second->getAccountId() == account_id)
             calls.push_back(item.second);
@@ -193,7 +192,7 @@ void
 IAXVoIPLink::sendAudioFromMic()
 {
     for (const auto & item : iaxCallMap_) {
-        IAXCall *currentCall = static_cast<IAXCall*>(item.second);
+        auto& currentCall = item.second;
 
         if (!currentCall or currentCall->getState() != Call::ACTIVE)
             continue;
@@ -246,7 +245,7 @@ IAXVoIPLink::sendAudioFromMic()
     }
 }
 
-IAXCall*
+std::shared_ptr<IAXCall>
 IAXVoIPLink::getIAXCall(const std::string& id)
 {
     return getIaxCall(id);
@@ -338,8 +337,8 @@ IAXVoIPLink::hangup(const std::string& id, int reason UNUSED)
 
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall* call = getIAXCall(id);
-        if (call == nullptr)
+        auto call = getIAXCall(id);
+        if (!call)
             throw VoipLinkException("Could not find call");
 
         {
@@ -360,8 +359,8 @@ IAXVoIPLink::peerHungup(const std::string& id)
 
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall* call = getIAXCall(id);
-        if (call == NULL)
+        auto call = getIAXCall(id);
+        if (!call)
             throw VoipLinkException("Could not find call");
 
         call->session = NULL;
@@ -379,8 +378,8 @@ IAXVoIPLink::onhold(const std::string& id)
 
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall* call = getIAXCall(id);
-        if (call == NULL)
+        auto call = getIAXCall(id);
+        if (!call)
             throw VoipLinkException("Could not find call");
         {
             std::lock_guard<std::mutex> lock(mutexIAX_);
@@ -398,8 +397,8 @@ IAXVoIPLink::offhold(const std::string& id)
 
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall* call = getIAXCall(id);
-        if (call == NULL)
+        auto call = getIAXCall(id);
+        if (!call)
             throw VoipLinkException("Could not find call");
 
         {
@@ -421,8 +420,8 @@ IAXVoIPLink::transfer(const std::string& id, const std::string& to)
 
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall* call = getIAXCall(id);
-        if (call == NULL)
+        auto call = getIAXCall(id);
+        if (!call)
             return;
         {
             std::lock_guard<std::mutex> lock(mutexIAX_);
@@ -442,8 +441,8 @@ IAXVoIPLink::refuse(const std::string& id)
 {
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall* call = getIAXCall(id);
-        if (call == NULL)
+        auto call = getIAXCall(id);
+        if (!call)
             return;
         {
             std::lock_guard<std::mutex> lock(mutexIAX_);
@@ -458,8 +457,8 @@ void
 IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-    IAXCall* call = getIAXCall(id);
-    if (call == NULL)
+    auto call = getIAXCall(id);
+    if (!call)
         return;
 
     {
@@ -475,8 +474,8 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
                              const std::string& /*from*/)
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-    IAXCall* call = getIAXCall(callID);
-    if (call == nullptr)
+    auto call = getIAXCall(callID);
+    if (!call)
         return;
 
     {
@@ -490,12 +489,7 @@ void
 IAXVoIPLink::clearIaxCallMap()
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-
-    for (const auto & item : iaxCallMap_)
-        delete item.second;
-
     iaxCallMap_.clear();
-
 }
 
 void
@@ -505,8 +499,8 @@ IAXVoIPLink::addIaxCall(IAXCall* call)
         return;
 
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-    if (getIaxCall(call->getCallId()) == NULL)
-        iaxCallMap_[call->getCallId()] = call;
+    if (!getIaxCall(call->getCallId()))
+        iaxCallMap_[call->getCallId()] = std::shared_ptr<IAXCall>(call);
 }
 
 void
@@ -515,13 +509,11 @@ IAXVoIPLink::removeIaxCall(const std::string& id)
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
 
     DEBUG("Removing call %s from list", id.c_str());
-
-    delete iaxCallMap_[id];
     iaxCallMap_.erase(id);
 }
 
 
-IAXCall*
+std::shared_ptr<IAXCall>
 IAXVoIPLink::getIaxCall(const std::string& id)
 {
     IAXCallMap::iterator iter = iaxCallMap_.find(id);
@@ -557,7 +549,7 @@ IAXVoIPLink::iaxFindCallIDBySession(iax_session* session)
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
 
     for (const auto & item : iaxCallMap_) {
-        IAXCall* call = static_cast<IAXCall*>(item.second);
+        auto& call = item.second;
 
         if (call and call->session == session)
             return call->getCallId();
@@ -571,8 +563,7 @@ IAXVoIPLink::handleReject(const std::string &id)
 {
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall *call = getIAXCall(id);
-        if (call) {
+        if (auto call = getIAXCall(id)) {
             call->setConnectionState(Call::CONNECTED);
             call->setState(Call::ERROR);
         }
@@ -586,8 +577,7 @@ IAXVoIPLink::handleAccept(iax_event* event, const std::string &id)
 {
     if (event->ies.format) {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall *call = getIAXCall(id);
-        if (call)
+        if (auto call = getIAXCall(id))
             call->format = event->ies.format;
     }
 }
@@ -597,7 +587,7 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, const std::string &id)
 {
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall *call = getIAXCall(id);
+        auto call = getIAXCall(id);
         if (!call or call->getConnectionState() == Call::CONNECTED)
             return;
 
@@ -620,8 +610,8 @@ IAXVoIPLink::handleBusy(const std::string &id)
 {
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall *call = getIAXCall(id);
-        if (call == nullptr)
+        auto call = getIAXCall(id);
+        if (!call)
             return;
         call->setConnectionState(Call::CONNECTED);
         call->setState(Call::BUSY);
@@ -636,8 +626,8 @@ IAXVoIPLink::handleMessage(iax_event* event, const std::string &id)
     std::string peerNumber;
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall *call = getIAXCall(id);
-        if (call == nullptr)
+        auto call = getIAXCall(id);
+        if (!call)
             return;
         peerNumber = call->getPeerNumber();
     }
@@ -650,8 +640,8 @@ IAXVoIPLink::handleRinging(const std::string &id)
 {
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall *call = getIAXCall(id);
-        if (call == nullptr)
+        auto call = getIAXCall(id);
+        if (!call)
             return;
         call->setConnectionState(Call::RINGING);
     }
@@ -725,8 +715,8 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
 
     {
         std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        IAXCall* call = getIAXCall(id);
-        if (call == nullptr)
+        auto call = getIAXCall(id);
+        if (!call)
             throw VoipLinkException("Could not find call");
 
         sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec()));
