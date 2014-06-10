@@ -33,7 +33,7 @@
 #include "videomanager.h"
 #include "video/libav_utils.h"
 #include "video/video_input.h"
-#include "video/video_preferences.h"
+#include "video/video_device_monitor.h"
 
 VideoManager::VideoManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/VideoManager")

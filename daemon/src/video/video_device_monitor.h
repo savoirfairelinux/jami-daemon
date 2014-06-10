@@ -49,11 +49,11 @@ namespace Conf {
 
 typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
 
-class VideoPreference : public Serializable
+class VideoDeviceMonitor : public Serializable
 {
     public:
-        VideoPreference();
-        ~VideoPreference();
+        VideoDeviceMonitor();
+        ~VideoDeviceMonitor();
 
         /*
          * Video device monitoring specific interface.
@@ -85,7 +85,7 @@ class VideoPreference : public Serializable
         virtual void unserialize(const Conf::YamlNode &map);
 
     private:
-        NON_COPYABLE(VideoPreference);
+        NON_COPYABLE(VideoDeviceMonitor);
 
         struct VideoDevice {
             std::string name = "";

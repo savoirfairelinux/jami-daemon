@@ -1368,7 +1368,7 @@ void ManagerImpl::saveConfig()
         hookPreference.serialize(emitter);
         audioPreference.serialize(emitter);
 #ifdef SFL_VIDEO
-        getVideoManager()->getVideoPreferences().serialize(emitter);
+        getVideoManager()->getVideoDeviceMonitor().serialize(emitter);
 #endif
         shortcutPreferences.serialize(emitter);
 
@@ -2617,7 +2617,7 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     try {
         MappingNode *videoNode = parser.getVideoNode();
         if (videoNode)
-            controls->getVideoPreferences().unserialize(*videoNode);
+            controls->getVideoDeviceMonitor().unserialize(*videoNode);
     } catch (const YamlParserException &e) {
         ERROR("No video node in config file");
         ++errorCount;

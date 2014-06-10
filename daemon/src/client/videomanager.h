@@ -56,7 +56,7 @@
 #endif // HAVE_DBUS
 
 #include <memory> // for weak/shared_ptr
-#include "video/video_preferences.h"
+#include "video/video_device_monitor.h"
 #include "video/video_base.h"
 #include "video/video_input.h"
 
@@ -78,7 +78,7 @@ class VideoManager
          */
         std::weak_ptr<sfl_video::VideoInput> videoInput_ = {};
         std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoPreview_ = nullptr;
-        VideoPreference videoPreference_ = {};
+        VideoDeviceMonitor videoDeviceMonitor_ = {};
 
     public:
 #if HAVE_DBUS
@@ -86,7 +86,7 @@ class VideoManager
 #else
         VideoManager();
 #endif
-        VideoPreference &getVideoPreferences();
+        VideoDeviceMonitor &getVideoDeviceMonitor();
 
         std::vector<std::map<std::string, std::string> >
         getCodecs(const std::string& accountID);
