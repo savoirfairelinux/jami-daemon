@@ -84,7 +84,7 @@ class VideoDeviceMonitorImpl {
         std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
         NON_COPYABLE(VideoDeviceMonitorImpl);
         void delDevice(const std::string &node);
-        bool addDevice(const std::string &dev);
+        void addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices_;
         std::thread thread_;
         mutable std::mutex mutex_;
@@ -170,8 +170,7 @@ udev_failed:
         std::stringstream ss;
         ss << "/dev/video" << idx;
         try {
-            if (!addDevice(ss.str()))
-                return;
+            addDevice(ss.str());
         } catch (const std::runtime_error &e) {
             ERROR("%s", e.what());
             return;
@@ -277,9 +276,8 @@ void VideoDeviceMonitorImpl::run()
                     if (!strcmp(action, "add")) {
                         DEBUG("udev: adding %s", node);
                         try {
-                            if (addDevice(node)) {
-                                Manager::instance().getVideoManager()->deviceEvent();
-                            }
+                            addDevice(node);
+                            Manager::instance().getVideoManager()->deviceEvent();
                         } catch (const std::runtime_error &e) {
                             ERROR("%s", e.what());
                         }
@@ -319,24 +317,13 @@ void VideoDeviceMonitorImpl::delDevice(const string &node)
     }
 }
 
-bool VideoDeviceMonitorImpl::addDevice(const string &dev)
+void VideoDeviceMonitorImpl::addDevice(const string &dev)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    int fd = open(dev.c_str(), O_RDWR);
-    if (fd == -1) {
-        ERROR("Problem opening device");
-        strErr();
-        return false;
-    }
-
-    const string s(dev);
-    VideoV4l2Device v(fd, s);
+    VideoV4l2Device v(dev);
     giveUniqueName(v, devices_);
     devices_.push_back(v);
-
-    ::close(fd);
-    return true;
 }
 
 vector<string>

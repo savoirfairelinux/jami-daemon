@@ -328,9 +328,13 @@ VideoV4l2Size VideoV4l2Channel::getSize(const string &name) const
 }
 
 
-VideoV4l2Device::VideoV4l2Device(int fd, const string &device) :
+VideoV4l2Device::VideoV4l2Device(const string &device) :
     device(device), name(), channels_()
 {
+    int fd = open(device.c_str(), O_RDWR);
+    if (fd == -1)
+        throw std::runtime_error("could not open device");
+
     v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
         throw std::runtime_error("could not query capabilities");
@@ -356,6 +360,8 @@ VideoV4l2Device::VideoV4l2Device(int fd, const string &device) :
 
         input.index = ++idx;
     }
+
+    ::close(fd);
 }
 
 vector<string> VideoV4l2Device::getChannelList() const

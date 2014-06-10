@@ -94,7 +94,7 @@ class VideoV4l2Device {
         /**
          * @throw std::runtime_error
          */
-        VideoV4l2Device(int fd, const std::string &device);
+        VideoV4l2Device(const std::string &device);
 
         std::string device;
         std::string name;
