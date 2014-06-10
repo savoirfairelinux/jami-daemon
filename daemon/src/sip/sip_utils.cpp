@@ -31,6 +31,7 @@
 
 #include "sip_utils.h"
 #include "logger.h"
+#include "utf8_utils.h"
 
 #include <pjsip.h>
 #include <pjsip_ua.h>
@@ -96,14 +97,6 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     return route_set;
 }
 
-static bool
-isValidUtf8(const std::string &str)
-{
-    std::wstring ws(str.size(), u' ');
-    const size_t wideSize = mbstowcs(&ws[0], str.c_str(), str.size());
-    return wideSize != std::wstring::npos;
-}
-
 // FIXME: replace with regex
 std::string
 sip_utils::parseDisplayName(const char * buffer)
@@ -148,10 +141,9 @@ sip_utils::parseDisplayName(const char * buffer)
     std::string displayName = temp.substr(begin_displayName + 1,
                                           end_displayName - begin_displayName - 1);
 
-    // Filter out invalid UTF-8 sequences to avoid getting kicked from D-Bus
-    if (not isValidUtf8(displayName)) {
-        ERROR("Invalid UTF-8 sequence detected: %s", displayName.c_str());
-        return "";
+    // Filter out invalid UTF-8 characters to avoid getting kicked from D-Bus
+    if (not utf8_validate(displayName)) {
+        return utf8_make_valid(displayName);
     }
 
     static const size_t MAX_DISPLAY_NAME_SIZE = 25;
