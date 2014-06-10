@@ -1081,8 +1081,7 @@ void stopRtpIfCurrent(const std::string &id, SIPCall &call)
 void
 SIPVoIPLink::hangup(const std::string& id, int reason)
 {
-    SIPCall *call = getSipCall(id);
-
+    auto call = getSipCall(id);
     if (!call)
         return;
 
@@ -1140,8 +1139,7 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
 void
 SIPVoIPLink::peerHungup(const std::string& id)
 {
-    SIPCall *call = getSipCall(id);
-
+    auto call = getSipCall(id);
     if (!call)
         return;
 
@@ -1164,8 +1162,7 @@ SIPVoIPLink::peerHungup(const std::string& id)
 void
 SIPVoIPLink::onhold(const std::string& id)
 {
-    SIPCall *call = getSipCall(id);
-
+    auto call = getSipCall(id);
     if (!call)
         return;
 
@@ -1175,8 +1172,7 @@ SIPVoIPLink::onhold(const std::string& id)
 void
 SIPVoIPLink::offhold(const std::string& id)
 {
-    SIPCall *call = getSipCall(id);
-
+    auto call = getSipCall(id);
     if (!call)
         return;
 
@@ -1206,8 +1202,7 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
                                   const std::string &from)
 {
     using namespace sfl::InstantMessaging;
-    SIPCall *call = getSipCall(callID);
-
+    auto call = getSipCall(callID);
     if (!call)
         return;
 
@@ -1224,10 +1219,6 @@ void
 SIPVoIPLink::clearSipCallMap()
 {
     std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-
-    for (const auto & item : sipCallMap_)
-        delete item.second;
-
     sipCallMap_.clear();
 }
 
@@ -1242,12 +1233,12 @@ SIPVoIPLink::getCallIDs()
     return v;
 }
 
-std::vector<Call*>
+std::vector<std::shared_ptr<Call> >
 SIPVoIPLink::getCalls(const std::string &account_id) const
 {
     std::lock_guard<std::mutex> lock(sipCallMapMutex_);
 
-    std::vector<Call*> calls;
+    std::vector<std::shared_ptr<Call> > calls;
     for (const auto & item : sipCallMap_) {
         if (item.second->getAccountId() == account_id)
             calls.push_back(item.second);
@@ -1265,28 +1256,20 @@ void SIPVoIPLink::addSipCall(SIPCall* call)
     std::lock_guard<std::mutex> lock(sipCallMapMutex_);
 
     if (sipCallMap_.find(id) == sipCallMap_.end())
-        sipCallMap_[id] = call;
+        sipCallMap_[id] = std::shared_ptr<SIPCall>(call);
     else
         ERROR("Call %s is already in the call map", id.c_str());
 }
 
 void SIPVoIPLink::removeSipCall(const std::string& id)
 {
+    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
+
     DEBUG("Removing call %s from list", id.c_str());
-
-    SIPCall *call;
-
-    {
-        std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-        call = sipCallMap_[id];
-        sipCallMap_.erase(id);
-    }
-
-    delete call;
+    sipCallMap_.erase(id);
 }
 
-#warning Not thread safe! The SIPCall may be deleted at any time after being returned
-SIPCall*
+std::shared_ptr<SIPCall>
 SIPVoIPLink::getSipCall(const std::string& id)
 {
     std::lock_guard<std::mutex> lock(sipCallMapMutex_);
@@ -1297,14 +1280,14 @@ SIPVoIPLink::getSipCall(const std::string& id)
         return iter->second;
     else {
         DEBUG("No SIP call with ID %s", id.c_str());
-        return NULL;
+        return nullptr;
     }
 }
 
-SIPCall*
-SIPVoIPLink::tryGetSIPCall(const std::string &id)
+std::shared_ptr<SIPCall>
+SIPVoIPLink::tryGetSIPCall(const std::string& id)
 {
-    SIPCall *call = 0;
+    std::shared_ptr<SIPCall> call;
 
     if (sipCallMapMutex_.try_lock()) {
         SipCallMap::iterator iter = sipCallMap_.find(id);
@@ -1363,8 +1346,7 @@ SIPVoIPLink::transferCommon(SIPCall *call, pj_str_t *dst)
 void
 SIPVoIPLink::transfer(const std::string& id, const std::string& to)
 {
-    SIPCall *call = getSipCall(id);
-
+    auto call = getSipCall(id);
     if (!call)
         return;
 
@@ -1383,14 +1365,13 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
     pj_cstr(&dst, toUri.c_str());
     DEBUG("Transferring to %.*s", dst.slen, dst.ptr);
 
-    if (!transferCommon(call, &dst))
+    if (!transferCommon(call.get(), &dst))
         throw VoipLinkException("Couldn't transfer");
 }
 
 bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& to)
 {
-    SIPCall *toCall = getSipCall(to);
-
+    auto toCall = getSipCall(id);
     if (!toCall)
         return false;
 
@@ -1417,19 +1398,17 @@ bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& to)
                                  (int)target_dlg->local.info->tag.slen,
                                  target_dlg->local.info->tag.ptr);
 
-    SIPCall *call = getSipCall(id);
-
+    auto call = getSipCall(id);
     if (!call)
         return false;
 
-    return transferCommon(call, &dst);
+    return transferCommon(call.get(), &dst);
 }
 
 void
 SIPVoIPLink::refuse(const std::string& id)
 {
-    SIPCall *call = getSipCall(id);
-
+    auto call = getSipCall(id);
     if (!call)
         return;
 
@@ -1526,7 +1505,7 @@ SIPVoIPLink::dequeKeyframeRequests()
 void
 SIPVoIPLink::requestKeyframe(const std::string &callID)
 {
-    SIPCall *call = 0;
+    std::shared_ptr<SIPCall> call;
     const int tries = 10;
 
     for (int i = 0; !call and i < tries; ++i)
@@ -1549,8 +1528,7 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
 void
 SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
-    SIPCall *call = getSipCall(id);
-
+    auto call = getSipCall(id);
     if (!call)
         return;
 
@@ -2346,8 +2324,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
                 return;
 
             std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
-            SIPCall *call = SIPVoIPLink::instance().getSipCall(transferCallID[transferID]);
-
+            auto call = SIPVoIPLink::instance().getSipCall(transferCallID[transferID]);
             if (!call)
                 return;
 
