@@ -31,6 +31,7 @@
 
 #include "sip_utils.h"
 #include "logger.h"
+#include "utf8_utils.h"
 
 #include <pjsip.h>
 #include <pjsip_ua.h>
@@ -148,10 +149,9 @@ sip_utils::parseDisplayName(const char * buffer)
     std::string displayName = temp.substr(begin_displayName + 1,
                                           end_displayName - begin_displayName - 1);
 
-    // Filter out invalid UTF-8 sequences to avoid getting kicked from D-Bus
-    if (not isValidUtf8(displayName)) {
-        ERROR("Invalid UTF-8 sequence detected: %s", displayName.c_str());
-        return "";
+    // Filter out invalid UTF-8 characters to avoid getting kicked from D-Bus
+    if (not utf8_validate(displayName.c_str())) {
+        return utf8_make_valid(displayName.c_str());
     }
 
     static const size_t MAX_DISPLAY_NAME_SIZE = 25;

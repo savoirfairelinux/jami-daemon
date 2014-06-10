@@ -91,6 +91,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		fileutils.cpp \
 		threadloop.cpp \
 		ip_utils.cpp \
+		utf8_utils.cpp \
 		threadloop.h \
 		conference.h \
 		voiplink.h \
@@ -105,6 +106,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		numbercleaner.h \
 		fileutils.h \
 		noncopyable.h \
+		utf8_utils.h \
 		sfl_types.h \
 		array_size.h \
 		account_schema.h \
