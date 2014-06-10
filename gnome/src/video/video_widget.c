@@ -195,6 +195,9 @@ video_widget_new(void)
 {
     GtkWidget *self = g_object_new(VIDEO_WIDGET_TYPE, NULL);
 
+    g_signal_connect(self, "delete-event",
+                     G_CALLBACK(gtk_widget_hide_on_delete), NULL);
+
     video_widget_draw(self);
 
     return self;
