@@ -98,11 +98,15 @@ int VideoDecoder::openInput(const std::string &source_str,
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
         ERROR("avformat_open_input failed: %s", errbuf);
-    } else {
-        DEBUG("Using format %s", format_str.c_str());
+        return ret;
     }
 
-    return ret;
+    DEBUG("Using format %s", format_str.c_str());
+
+    // Force to fifteen seconds the stream analysis
+    inputCtx_->max_analyze_duration = 15 * AV_TIME_BASE;
+
+    return 0;
 }
 
 void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
