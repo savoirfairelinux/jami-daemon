@@ -253,7 +253,7 @@ void ManagerImpl::finish()
 
         saveConfig();
 
-        unregisterAllAccounts();
+        unregisterAccounts();
 
         SIPVoIPLink::destroy();
 #if HAVE_IAX
@@ -2585,16 +2585,6 @@ namespace {
             }
         }
     }
-
-    void registerAccount(std::pair<const std::string, Account*> &item)
-    {
-        item.second->registerVoIPLink();
-    }
-
-    void unregisterAccount(std::pair<const std::string, Account*> &item)
-    {
-        item.second->unregisterVoIPLink();
-    }
 } // end anonymous namespace
 
 int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
@@ -2640,26 +2630,6 @@ int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     SIPVoIPLink::instance().loadIP2IPSettings();
 
     return errorCount;
-}
-
-void ManagerImpl::registerAllAccounts()
-{
-    for (auto &a : SIPVoIPLink::instance().getAccounts())
-        registerAccount(a);
-#if HAVE_IAX
-    for (auto &a : IAXVoIPLink::getAccounts())
-        registerAccount(a);
-#endif
-}
-
-void ManagerImpl::unregisterAllAccounts()
-{
-    for (auto &a : SIPVoIPLink::instance().getAccounts())
-        unregisterAccount(a);
-#if HAVE_IAX
-    for (auto &a : IAXVoIPLink::getAccounts())
-        unregisterAccount(a);
-#endif
 }
 
 bool ManagerImpl::accountExists(const std::string &accountID)
@@ -2893,6 +2863,20 @@ ManagerImpl::registerAccounts()
 
         if (a->isEnabled())
             a->registerVoIPLink();
+    }
+}
+
+void
+ManagerImpl::unregisterAccounts()
+{
+    for (auto &item : getAccountList()) {
+        Account *a = getAccount(item);
+
+        if (!a)
+            continue;
+
+        if (a->isEnabled())
+            a->unregisterVoIPLink();
     }
 }
 
