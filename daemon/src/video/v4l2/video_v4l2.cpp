@@ -34,6 +34,7 @@
 #include <vector>
 #include <climits>
 #include <stdexcept>
+#include <cstring>
 
 #include "logger.h"
 
@@ -44,6 +45,8 @@ extern "C" {
 }
 
 #include "video_v4l2.h"
+
+#define ZEROVAR(x) memset(&(x), 0, sizeof(x))
 
 namespace sfl_video
 {
@@ -148,7 +151,8 @@ vector<string> VideoV4l2Size::getRateList()
 
 void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
 {
-    v4l2_frmivalenum frmival = {0};
+    v4l2_frmivalenum frmival;
+    ZEROVAR(frmival);
     frmival.pixel_format = pixel_format;
     frmival.width = width;
     frmival.height = height;
@@ -213,7 +217,8 @@ vector<string> VideoV4l2Channel::getSizeList() const
 unsigned int
 VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
 {
-    v4l2_frmsizeenum frmsize = {0};
+    v4l2_frmsizeenum frmsize;
+    ZEROVAR(frmsize);
     frmsize.index = 0;
     frmsize.pixel_format = pixelformat;
     if (!ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize)) {
@@ -241,7 +246,8 @@ VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
         }
     }
 
-    v4l2_format fmt = {(v4l2_buf_type) 0};
+    v4l2_format fmt;
+    ZEROVAR(fmt);
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
         throw std::runtime_error("Could not get format");
@@ -276,7 +282,8 @@ void VideoV4l2Channel::getFormat(int fd)
     if (ioctl(fd, VIDIOC_S_INPUT, &idx))
         throw std::runtime_error("VIDIOC_S_INPUT failed");
 
-    v4l2_fmtdesc fmt = {0};
+    v4l2_fmtdesc fmt;
+    ZEROVAR(fmt);
     unsigned fmt_index;
     fmt.index = fmt_index = 0;
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -333,7 +340,8 @@ VideoV4l2Device::VideoV4l2Device(int fd, const string &device) :
 
     name = string(reinterpret_cast<const char*>(cap.card));
 
-    v4l2_input input = {0};
+    v4l2_input input;
+    ZEROVAR(input);
     unsigned idx;
     input.index = idx = 0;
     while (!ioctl(fd, VIDIOC_ENUMINPUT, &input)) {
