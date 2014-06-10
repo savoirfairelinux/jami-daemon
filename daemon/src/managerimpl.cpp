@@ -383,9 +383,9 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 bool ManagerImpl::answerCall(const std::string& call_id)
 {
     bool result = true;
-    Call *call = getCallFromCallID(call_id);
 
-    if (call == nullptr) {
+    auto call = getCallFromCallID(call_id);
+    if (!call) {
         ERROR("Call %s is NULL", call_id.c_str());
         return false;
     }
@@ -414,7 +414,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     try {
         VoIPLink *link = getAccountLink(call->getAccountId());
         if (link)
-            link->answer(call);
+            link->answer(call.get());
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
         result = false;
@@ -483,9 +483,8 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     if (isIPToIP(callId)) {
         /* Direct IP to IP call */
         try {
-            Call * call = SIPVoIPLink::instance().getSipCall(callId);
-            if (call) {
-                history_.addCall(call, preferences.getHistoryLimit());
+            if (auto call = SIPVoIPLink::instance().getSipCall(callId)) {
+                history_.addCall(call.get(), preferences.getHistoryLimit());
                 SIPVoIPLink::instance().hangup(callId, 0);
                 checkAudio();
                 saveHistory();
@@ -495,9 +494,8 @@ bool ManagerImpl::hangupCall(const std::string& callId)
             return false;
         }
     } else {
-        Call * call = getCallFromCallID(callId);
-        if (call) {
-            history_.addCall(call, preferences.getHistoryLimit());
+        if (auto call = getCallFromCallID(callId)) {
+            history_.addCall(call.get(), preferences.getHistoryLimit());
             VoIPLink *link = getAccountLink(call->getAccountId());
             link->hangup(callId, 0);
             checkAudio();
@@ -603,8 +601,7 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
             SIPVoIPLink::instance().offhold(callId);
         else {
             /* Classic call, attached to an account */
-            Call * call = getCallFromCallID(callId);
-
+            auto call = getCallFromCallID(callId);
             if (call)
                 getAccountLink(call->getAccountId())->offhold(callId);
             else
@@ -618,7 +615,7 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
     client_.getCallManager()->callStateChanged(callId, "UNHOLD");
 
     if (isConferenceParticipant(callId)) {
-        Call *call = getCallFromCallID(callId);
+        auto call = getCallFromCallID(callId);
         if (call)
             switchCall(call->getConfId());
         else
@@ -782,7 +779,7 @@ void ManagerImpl::removeConference(const std::string& conference_id)
 Conference*
 ManagerImpl::getConferenceFromCallID(const std::string& call_id)
 {
-    Call *call = getCallFromCallID(call_id);
+    auto call = getCallFromCallID(call_id);
     if (!call)
         return nullptr;
 
@@ -839,8 +836,7 @@ ManagerImpl::unHoldConference(const std::string& id)
     ParticipantSet participants(conf->getParticipantList());
 
     for (const auto &item : participants) {
-        Call *call = getCallFromCallID(item);
-        if (call) {
+        if (auto call = getCallFromCallID(item)) {
             // if one call is currently recording, the conference is in state recording
             isRec |= call->isRecording();
 
@@ -863,7 +859,7 @@ bool ManagerImpl::isConference(const std::string& id) const
 
 bool ManagerImpl::isConferenceParticipant(const std::string& call_id)
 {
-    Call *call(getCallFromCallID(call_id));
+    auto call = getCallFromCallID(call_id);
     return call and not call->getConfId().empty();
 }
 
@@ -878,8 +874,8 @@ ManagerImpl::addParticipant(const std::string& callId, const std::string& confer
         return false;
     }
 
-    Call *call = getCallFromCallID(callId);
-    if (call == nullptr) {
+    auto call = getCallFromCallID(callId);
+    if (!call) {
         ERROR("Call id %s is not valid", callId.c_str());
         return false;
     }
@@ -985,14 +981,12 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
     return true;
 }
 
-Call *
+std::shared_ptr<Call>
 ManagerImpl::getCallFromCallID(const std::string &callID)
 {
-    Call *call = nullptr;
-
-    call = SIPVoIPLink::instance().getSipCall(callID);
+    std::shared_ptr<Call> call = SIPVoIPLink::instance().getSipCall(callID);
 #if HAVE_IAX
-    if (call != nullptr)
+    if (call)
         return call;
 
     call = IAXVoIPLink::getIaxCall(callID);
@@ -1010,17 +1004,15 @@ ManagerImpl::joinParticipant(const std::string& callId1, const std::string& call
     }
 
     // Set corresponding conference ids for call 1
-    Call *call1 = getCallFromCallID(callId1);
-
-    if (call1 == nullptr) {
+    auto call1 = getCallFromCallID(callId1);
+    if (!call1) {
         ERROR("Could not find call %s", callId1.c_str());
         return false;
     }
 
     // Set corresponding conderence details
-    Call *call2 = getCallFromCallID(callId2);
-
-    if (call2 == nullptr) {
+    auto call2 = getCallFromCallID(callId2);
+    if (!call2) {
         ERROR("Could not find call %s", callId2.c_str());
         return false;
     }
@@ -1153,9 +1145,8 @@ ManagerImpl::detachParticipant(const std::string& call_id)
     const std::string current_call_id(getCurrentCallId());
 
     if (call_id != MainBuffer::DEFAULT_ID) {
-        Call *call = getCallFromCallID(call_id);
-
-        if (call == nullptr) {
+        auto call = getCallFromCallID(call_id);
+        if (!call) {
             ERROR("Could not find call %s", call_id.c_str());
             return false;
         }
@@ -1219,8 +1210,8 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     DEBUG("Remove participant %s", call_id.c_str());
 
     // this call is no longer a conference participant
-    Call *call(getCallFromCallID(call_id));
-    if (call == 0) {
+    auto call = getCallFromCallID(call_id);
+    if (!call) {
         ERROR("Call not found");
         return;
     }
@@ -1262,8 +1253,7 @@ void ManagerImpl::processRemainingParticipants(Conference &conf)
         // the conference is over
         ParticipantSet::iterator p = participants.begin();
 
-        Call *call = getCallFromCallID(*p);
-        if (call) {
+        if (auto call = getCallFromCallID(*p)) {
             call->setConfId("");
             // if we are not listening to this conference
             if (current_call_id != conf.getConfID())
@@ -1307,8 +1297,7 @@ ManagerImpl::joinConference(const std::string& conf_id1,
 void ManagerImpl::addStream(const std::string& call_id)
 {
     DEBUG("Add audio stream %s", call_id.c_str());
-    Call *call = getCallFromCallID(call_id);
-
+    auto call = getCallFromCallID(call_id);
     if (call and isConferenceParticipant(call_id)) {
         DEBUG("Add stream to conference");
 
@@ -1663,17 +1652,15 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     /* Direct IP to IP call */
     if (isIPToIP(call_id)) {
-        Call * call = SIPVoIPLink::instance().getSipCall(call_id);
-        if (call) {
-            history_.addCall(call, preferences.getHistoryLimit());
+        if (auto call = SIPVoIPLink::instance().getSipCall(call_id)) {
+            history_.addCall(call.get(), preferences.getHistoryLimit());
             SIPVoIPLink::instance().hangup(call_id, 0);
             saveHistory();
         }
     } else {
-        Call * call = getCallFromCallID(call_id);
-        if (call) {
+        if (auto call = getCallFromCallID(call_id)) {
             VoIPLink *link = getAccountLink(call->getAccountId());
-            history_.addCall(call, preferences.getHistoryLimit());
+            history_.addCall(call.get(), preferences.getHistoryLimit());
             link->peerHungup(call_id);
             saveHistory();
         }
@@ -2044,16 +2031,18 @@ void ManagerImpl::setIsAlwaysRecording(bool isAlwaysRec)
 
 bool ManagerImpl::toggleRecordingCall(const std::string& id)
 {
-    Recordable* rec = nullptr;
+    std::shared_ptr<Call> call;
+    Recordable* rec;
 
     ConferenceMap::const_iterator it(conferenceMap_.find(id));
     if (it == conferenceMap_.end()) {
         DEBUG("toggle recording for call %s", id.c_str());
-        rec = getCallFromCallID(id);
+        getCallFromCallID(id);
+        call = getCallFromCallID(id);
+        rec = call.get();
     } else {
         DEBUG("toggle recording for conference %s", id.c_str());
         Conference *conf = it->second;
-
         if (conf) {
             rec = conf;
             if (rec->isRecording())
@@ -2063,7 +2052,7 @@ bool ManagerImpl::toggleRecordingCall(const std::string& id)
         }
     }
 
-    if (rec == nullptr) {
+    if (!rec) {
         ERROR("Could not find recordable instance %s", id.c_str());
         return false;
     }
@@ -2076,8 +2065,8 @@ bool ManagerImpl::toggleRecordingCall(const std::string& id)
 
 bool ManagerImpl::isRecording(const std::string& id)
 {
-    Recordable* rec = getCallFromCallID(id);
-    return rec and rec->isRecording();
+    auto call = getCallFromCallID(id);
+    return call and (static_cast<Recordable*>(call.get()))->isRecording();
 }
 
 bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
@@ -2490,8 +2479,7 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
 std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 {
-    Call *call = getCallFromCallID(callID);
-    if (call)
+    if (auto call = getCallFromCallID(callID))
         return call->getAccountId();
     else
         return "";
@@ -2501,8 +2489,7 @@ std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 // a Call will still exist after this has been called.
 bool ManagerImpl::isValidCall(const std::string& callID)
 {
-    Call *call = getCallFromCallID(callID);
-    return call != 0;
+    return static_cast<bool>(getCallFromCallID(callID));
 }
 
 std::string ManagerImpl::getNewCallID()
@@ -2758,9 +2745,7 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
     // But to achieve that, we need to get the account the call was made with
 
     // Then the VoIP link this account is linked with (IAX2 or SIP)
-    Call *call = getCallFromCallID(callID);
-
-    if (call) {
+    if (auto call = getCallFromCallID(callID)) {
         return call->getDetails();
     } else {
         ERROR("Call is NULL");
@@ -2838,13 +2823,11 @@ ManagerImpl::getParticipantList(const std::string& confID) const
 
 std::string ManagerImpl::getConferenceId(const std::string& callID)
 {
-    Call *call = getCallFromCallID(callID);
-    if (call == nullptr) {
-        ERROR("Call is NULL");
-        return "";
-    }
+    if (auto call = getCallFromCallID(callID))
+        return call->getConfId();
 
-    return call->getConfId();
+    ERROR("Call is NULL");
+    return "";
 }
 
 void ManagerImpl::saveHistory()
@@ -2872,8 +2855,7 @@ ManagerImpl::freeAccount(const std::string& accountID)
     Account *account = getAccount(accountID);
     if (!account)
         return;
-    std::vector<Call*> account_calls(account->getVoIPLink()->getCalls(accountID));
-    for (const auto& call : account_calls)
+    for (const auto& call : account->getVoIPLink()->getCalls(accountID))
         hangupCall(call->getCallId());
     account->unregisterVoIPLink();
 }
