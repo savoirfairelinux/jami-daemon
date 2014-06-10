@@ -44,7 +44,7 @@
 #include <unistd.h>
 #include <vector>
 
-#include "../video_preferences.h"
+#include "../video_device_monitor.h"
 #include "client/videomanager.h"
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
@@ -417,14 +417,14 @@ VideoDeviceMonitorImpl::getDeviceNode(const string &name) const
 
 using namespace sfl_video;
 
-VideoPreference::VideoPreference() :
+VideoDeviceMonitor::VideoDeviceMonitor() :
     monitorImpl_(new VideoDeviceMonitorImpl),
     deviceList_()
 {
     monitorImpl_->start();
 }
 
-VideoPreference::~VideoPreference()
+VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
 /*
@@ -432,25 +432,25 @@ VideoPreference::~VideoPreference()
  */
 
 std::vector<std::string>
-VideoPreference::getDeviceList() const
+VideoDeviceMonitor::getDeviceList() const
 {
     return monitorImpl_->getDeviceList();
 }
 
 std::vector<std::string>
-VideoPreference::getChannelList(const std::string &dev) const
+VideoDeviceMonitor::getChannelList(const std::string &dev) const
 {
     return monitorImpl_->getChannelList(dev);
 }
 
 std::vector<std::string>
-VideoPreference::getSizeList(const std::string &dev, const std::string &channel) const
+VideoDeviceMonitor::getSizeList(const std::string &dev, const std::string &channel) const
 {
     return monitorImpl_->getSizeList(dev, channel);
 }
 
 std::vector<std::string>
-VideoPreference::getRateList(const std::string &dev, const std::string &channel, const std::string &size) const
+VideoDeviceMonitor::getRateList(const std::string &dev, const std::string &channel, const std::string &size) const
 {
     return monitorImpl_->getRateList(dev, channel, size);
 }
@@ -460,7 +460,7 @@ VideoPreference::getRateList(const std::string &dev, const std::string &channel,
  */
 
 std::map<std::string, std::string>
-VideoPreference::deviceToSettings(const VideoDevice& dev) const
+VideoDeviceMonitor::deviceToSettings(const VideoDevice& dev) const
 {
     std::map<std::string, std::string> settings;
 

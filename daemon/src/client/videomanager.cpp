@@ -33,15 +33,15 @@
 #include "videomanager.h"
 #include "video/libav_utils.h"
 #include "video/video_input.h"
-#include "video/video_preferences.h"
+#include "video/video_device_monitor.h"
 #include "account.h"
 #include "logger.h"
 #include "manager.h"
 
-VideoPreference &
-VideoManager::getVideoPreferences()
+VideoDeviceMonitor &
+VideoManager::getVideoDeviceMonitor()
 {
-    return videoPreference_;
+    return videoDeviceMonitor_;
 }
 
 std::vector<std::map<std::string, std::string> >
@@ -69,48 +69,48 @@ VideoManager::setCodecs(const std::string& accountID,
 std::vector<std::string>
 VideoManager::getDeviceList()
 {
-    return videoPreference_.getDeviceList();
+    return videoDeviceMonitor_.getDeviceList();
 }
 
 VideoCapabilities
 VideoManager::getCapabilities(const std::string& name)
 {
-    return videoPreference_.getCapabilities(name);
+    return videoDeviceMonitor_.getCapabilities(name);
 }
 
 std::string
 VideoManager::getActiveDevice()
 {
-    return videoPreference_.getDevice();
+    return videoDeviceMonitor_.getDevice();
 }
 
 void
 VideoManager::setActiveDevice(const std::string &device)
 {
     DEBUG("Setting device to %s", device.c_str());
-    videoPreference_.setDevice(device);
+    videoDeviceMonitor_.setDevice(device);
 }
 
 std::map<std::string, std::string>
 VideoManager::getSettingsFor(const std::string& device) {
-    return videoPreference_.getSettingsFor(device);
+    return videoDeviceMonitor_.getSettingsFor(device);
 }
 
 std::map<std::string, std::string>
 VideoManager::getSettings() {
-    return videoPreference_.getSettings();
+    return videoDeviceMonitor_.getSettings();
 }
 
 std::map<std::string, std::string>
 VideoManager::getPreferences(const std::string& name) {
-    return videoPreference_.getPreferences(name);
+    return videoDeviceMonitor_.getPreferences(name);
 }
 
 void
 VideoManager::setPreferences(const std::string& name,
         const std::map<std::string, std::string>& pref)
 {
-    videoPreference_.setPreferences(name, pref);
+    videoDeviceMonitor_.setPreferences(name, pref);
 }
 
 void
@@ -142,7 +142,7 @@ VideoManager::switchInput(const std::string &resource)
 bool
 VideoManager::switchToCamera()
 {
-    return switchInput("v4l2://" + videoPreference_.getDevice());
+    return switchInput("v4l2://" + videoDeviceMonitor_.getDevice());
 }
 
 std::shared_ptr<sfl_video::VideoFrameActiveWriter>
