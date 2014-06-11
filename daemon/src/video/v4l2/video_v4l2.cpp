@@ -136,7 +136,7 @@ unsigned int pixelformat_score(unsigned pixelformat)
 VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) :
     height(height), width(width), rates_() {}
 
-vector<string> VideoV4l2Size::getRateList()
+vector<string> VideoV4l2Size::getRateList() const
 {
     vector<string> v;
 
