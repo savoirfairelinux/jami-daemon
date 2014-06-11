@@ -424,27 +424,21 @@ VideoDeviceMonitor::getDeviceList() const
     return monitorImpl_->getDeviceList();
 }
 
-std::vector<std::string>
-VideoDeviceMonitor::getChannelList(const std::string &dev) const
-{
-    return monitorImpl_->getChannelList(dev);
-}
-
-std::vector<std::string>
-VideoDeviceMonitor::getSizeList(const std::string &dev, const std::string &channel) const
-{
-    return monitorImpl_->getSizeList(dev, channel);
-}
-
-std::vector<std::string>
-VideoDeviceMonitor::getRateList(const std::string &dev, const std::string &channel, const std::string &size) const
-{
-    return monitorImpl_->getRateList(dev, channel, size);
-}
-
 /*
  * Interface for a single device.
  */
+
+VideoCapabilities
+VideoDeviceMonitor::getCapabilities(const std::string& name) const
+{
+    VideoCapabilities cap;
+
+    for (const auto& chan : monitorImpl_->getChannelList(name))
+        for (const auto& size : monitorImpl_->getSizeList(name, chan))
+            cap[chan][size] = monitorImpl_->getRateList(name, chan, size);
+
+    return cap;
+}
 
 std::map<std::string, std::string>
 VideoDeviceMonitor::deviceToSettings(const VideoDevice& dev) const

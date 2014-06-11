@@ -44,18 +44,6 @@ using namespace sfl_video;
  * Interface for a single device.
  */
 
-VideoCapabilities
-VideoDeviceMonitor::getCapabilities(const std::string& name) const
-{
-    VideoCapabilities cap;
-
-    for (const auto& chan : getChannelList(name))
-        for (const auto& size : getSizeList(name, chan))
-            cap[chan][size] = getRateList(name, chan, size);
-
-    return cap;
-}
-
 VideoDeviceMonitor::VideoDevice
 VideoDeviceMonitor::defaultPreferences(const std::string& name) const
 {
