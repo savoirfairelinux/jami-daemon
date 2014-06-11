@@ -547,6 +547,8 @@ videocodecs_box(account_t *acc)
 static void
 reset_combo_box(GtkComboBoxText *combo, gchar **entries, const gchar *preferred)
 {
+    g_return_if_fail(GTK_IS_WIDGET(combo));
+
     guint index = 0; /* first one if not found */
 
     /* Temporarily deactivate the "changed" signal to clear the list */
