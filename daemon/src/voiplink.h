@@ -38,6 +38,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <memory>
 
 class Call;
 class Account;
@@ -90,7 +91,7 @@ class VoIPLink {
          * Virtual method
          * Returns calls involving this account.
          */
-        virtual std::vector<Call*> getCalls(const std::string &account_id) const = 0;
+        virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
         /**
          * Answer the call
