@@ -787,7 +787,7 @@ class ManagerImpl {
         /**
          * Get the Call referred to by callID. If the Call does not exist, return NULL
          */
-        Call *getCallFromCallID(const std::string &callID);
+        std::shared_ptr<Call> getCallFromCallID(const std::string &callID);
 
         /**
          * Process remaining participant given a conference and the current call id.
