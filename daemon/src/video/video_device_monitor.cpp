@@ -30,6 +30,7 @@
  */
 
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 
 #include "config/yamlemitter.h"
@@ -58,17 +59,19 @@ VideoDeviceMonitor::getCapabilities(const std::string& name) const
 VideoDeviceMonitor::VideoDevice
 VideoDeviceMonitor::defaultPreferences(const std::string& name) const
 {
+    VideoCapabilities cap = getCapabilities(name);
+
     VideoDevice dev;
     dev.name = name;
 
-    auto list = getChannelList(dev.name);
-    dev.channel = list.empty() ? "" : list[0];
+    assert(!cap.empty());
+    dev.channel = cap.begin()->first;
 
-    list = getSizeList(dev.name, dev.channel);
-    dev.size = list.empty() ? "" : list[0];
+    assert(!cap[dev.channel].empty());
+    dev.size = cap[dev.channel].begin()->first;
 
-    list = getRateList(dev.name, dev.channel, dev.size);
-    dev.rate = list.empty() ? "" : list[0];
+    assert(!cap[dev.channel][dev.size].empty());
+    dev.rate = cap[dev.channel][dev.size][0];
 
     return dev;
 }
@@ -158,22 +161,22 @@ VideoDeviceMonitor::validatePreference(const VideoDevice& dev) const
     DEBUG("prefs: name:%s channel:%s size:%s rate:%s", dev.name.data(),
             dev.channel.data(), dev.size.data(), dev.rate.data());
 
+    VideoCapabilities cap = getCapabilities(dev.name);
+
     // Validate the channel
-    const auto chans = getChannelList(dev.name);
-    if (std::find(chans.begin(), chans.end(), dev.channel) == chans.end()) {
+    if (cap[dev.channel].empty()) {
         DEBUG("Bad channel, ignoring");
         return false;
     }
 
     // Validate the size
-    const auto sizes = getSizeList(dev.name, dev.channel);
-    if (std::find(sizes.begin(), sizes.end(), dev.size) == sizes.end()) {
+    if (cap[dev.channel][dev.size].empty()) {
         DEBUG("Bad size, ignoring");
         return false;
     }
 
     // Validate the rate
-    const auto rates = getRateList(dev.name, dev.channel, dev.size);
+    const auto rates = cap[dev.channel][dev.size];
     if (std::find(rates.begin(), rates.end(), dev.rate) == rates.end()) {
         DEBUG("Bad rate, ignoring");
         return false;
