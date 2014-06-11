@@ -58,11 +58,12 @@
 #endif
 #include <map>
 #include <mutex>
+#include <memory>
 
 class SIPCall;
 class SIPAccount;
 
-typedef std::map<std::string, SIPCall*> SipCallMap;
+typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
@@ -111,7 +112,7 @@ class SIPVoIPLink : public VoIPLink {
         AccountMap &
         getAccounts() { return sipAccountMap_; }
 
-        virtual std::vector<Call*> getCalls(const std::string &account_id) const;
+        virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const;
 
         /**
          * Build and send SIP registration request
@@ -140,21 +141,23 @@ class SIPVoIPLink : public VoIPLink {
          * @param toUrl  The Sip address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
+        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
 
         /**
          * Start a new SIP call using the IP2IP profile
          * @param The call id
          * @param The target sip uri
          */
-        Call *SIPNewIpToIpCall(const std::string& id, const std::string& to);
+        std::shared_ptr<Call> SIPNewIpToIpCall(const std::string& id, const std::string& to);
 
         /**
          * Place a call using the currently selected account
          * @param The call id
          * @param The target sip uri
          */
-        Call *newRegisteredAccountCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
+        std::shared_ptr<Call> newRegisteredAccountCall(const std::string& id,
+                                                       const std::string& toUrl,
+                                                       const std::string &account_id);
 
         /**
          * Answer the call
@@ -245,16 +248,6 @@ class SIPVoIPLink : public VoIPLink {
         pj_caching_pool *getMemoryPoolFactory();
 
         /**
-         * A non-blocking SIPCall accessor
-         *
-         * Will return NULL if the callMapMutex could not be locked
-         *
-         * @param id  The call identifier
-         * @return SIPCall* A pointer to the SIPCall object
-         */
-        SIPCall* tryGetSIPCall(const std::string &id);
-
-        /**
          * Retrive useragent name from account
          */
         std::string getUseragentName(SIPAccount *) const;
@@ -272,10 +265,19 @@ class SIPVoIPLink : public VoIPLink {
                              const std::string& from);
 #endif
         void clearSipCallMap();
-        void addSipCall(SIPCall* call);
+        void addSipCall(std::shared_ptr<SIPCall>& call);
 
-        SIPCall* getSipCall(const std::string& id);
-        SIPCall* tryGetSipCall(const std::string& id);
+        std::shared_ptr<SIPCall> getSipCall(const std::string& id);
+
+        /**
+         * A non-blocking SIPCall accessor
+         *
+         * Will return NULL if the callMapMutex could not be locked
+         *
+         * @param id  The call identifier
+         * @return SIPCall* A pointer to the SIPCall object
+         */
+        std::shared_ptr<SIPCall> tryGetSIPCall(const std::string &id);
 
         void removeSipCall(const std::string &id);
 
@@ -322,7 +324,7 @@ class SIPVoIPLink : public VoIPLink {
          * @param call  The current call
          * @return true if all is correct
          */
-        bool SIPStartCall(SIPCall* call);
+        bool SIPStartCall(std::shared_ptr<SIPCall>& call);
 
         /**
          * Threading object

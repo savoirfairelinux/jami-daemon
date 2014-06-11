@@ -48,13 +48,15 @@
 
 #include <iax-client.h>
 
+#include <memory>
+
 class IAXCall;
 class IAXAccount;
 
 class AudioCodec;
 class AudioLayer;
 
-typedef std::map<std::string, IAXCall*> IAXCallMap;
+typedef std::map<std::string, std::shared_ptr<IAXCall> > IAXCallMap;
 
 /**
  * @file iaxvoiplink.h
@@ -77,7 +79,7 @@ class IAXVoIPLink : public VoIPLink {
         /* Returns a list of all callIDs */
         static std::vector<std::string> getCallIDs();
 
-        virtual std::vector<Call*> getCalls(const std::string &account_id) const;
+        virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const;
 
         /**
          * Return the internal account map for all VOIP links
@@ -117,7 +119,7 @@ class IAXVoIPLink : public VoIPLink {
          * @param toUrl The address to call
          * @return Call*  A pointer on the call
          */
-        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
+        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
 
         /**
          * Answer a call
@@ -192,9 +194,9 @@ class IAXVoIPLink : public VoIPLink {
         virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 #endif
         static void clearIaxCallMap();
-        static void addIaxCall(IAXCall* call);
+        static void addIaxCall(std::shared_ptr<IAXCall>& call);
         // must be called while holding iaxCallMapMutex
-        static IAXCall* getIaxCall(const std::string& id);
+        static std::shared_ptr<IAXCall> getIaxCall(const std::string& id);
         static void removeIaxCall(const std::string &id);
 
     private:
@@ -230,7 +232,7 @@ class IAXVoIPLink : public VoIPLink {
          * @param id CallId
          * @return IAXCall pointer or 0
          */
-        IAXCall* getIAXCall(const std::string& id);
+        std::shared_ptr<IAXCall> getIAXCall(const std::string& id);
 
         /**
          * Find a iaxcall by iax session number
