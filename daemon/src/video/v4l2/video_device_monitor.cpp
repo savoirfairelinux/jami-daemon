@@ -71,21 +71,19 @@ class VideoDeviceMonitorImpl {
         void start();
 
         std::vector<std::string> getDeviceList() const;
-        std::vector<std::string> getChannelList(const std::string &dev) const;
-        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel) const;
-        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size) const;
 
         std::string getDeviceNode(const std::string &name) const;
         unsigned getChannelNum(const std::string &dev, const std::string &name) const;
 
+        std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
+        std::vector<VideoV4l2Device> devices_;
+
     private:
         void run();
 
-        std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
         NON_COPYABLE(VideoDeviceMonitorImpl);
         void delDevice(const std::string &node);
         void addDevice(const std::string &dev);
-        std::vector<VideoV4l2Device> devices_;
         std::thread thread_;
         mutable std::mutex mutex_;
 
@@ -326,39 +324,6 @@ void VideoDeviceMonitorImpl::addDevice(const string &dev)
     devices_.push_back(v);
 }
 
-vector<string>
-VideoDeviceMonitorImpl::getChannelList(const string &dev) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    Devices::const_iterator iter(findDevice(dev));
-    if (iter != devices_.end())
-        return iter->getChannelList();
-    else
-        return vector<string>();
-}
-
-vector<string>
-VideoDeviceMonitorImpl::getSizeList(const string &dev, const string &channel) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    Devices::const_iterator iter(findDevice(dev));
-    if (iter != devices_.end())
-        return iter->getChannel(channel).getSizeList();
-    else
-        return vector<string>();
-}
-
-vector<string>
-VideoDeviceMonitorImpl::getRateList(const string &dev, const string &channel, const std::string &size) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    Devices::const_iterator iter(findDevice(dev));
-    if (iter != devices_.end())
-        return iter->getChannel(channel).getSize(size).getRateList();
-    else
-        return vector<string>();
-}
-
 vector<string> VideoDeviceMonitorImpl::getDeviceList() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -431,13 +396,11 @@ VideoDeviceMonitor::getDeviceList() const
 VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const std::string& name) const
 {
-    VideoCapabilities cap;
-
-    for (const auto& chan : monitorImpl_->getChannelList(name))
-        for (const auto& size : monitorImpl_->getSizeList(name, chan))
-            cap[chan][size] = monitorImpl_->getRateList(name, chan, size);
-
-    return cap;
+    Devices::const_iterator iter(monitorImpl_->findDevice(name));
+    if (iter != monitorImpl_->devices_.end())
+        return iter->getCapabilities();
+    else
+        return VideoCapabilities();
 }
 
 std::map<std::string, std::string>

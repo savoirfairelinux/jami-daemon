@@ -136,7 +136,7 @@ unsigned int pixelformat_score(unsigned pixelformat)
 VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) :
     height(height), width(width), rates_() {}
 
-vector<string> VideoV4l2Size::getRateList()
+vector<string> VideoV4l2Size::getRateList() const
 {
     vector<string> v;
 
@@ -374,6 +374,18 @@ vector<string> VideoV4l2Device::getChannelList() const
     return v;
 }
 
+vector<string>
+VideoV4l2Device::getSizeList(const std::string& channel) const
+{
+    return getChannel(channel).getSizeList();
+}
+
+vector<string>
+VideoV4l2Device::getRateList(const std::string& channel, const std::string& size) const
+{
+    return getChannel(channel).getSize(size).getRateList();
+}
+
 const VideoV4l2Channel &
 VideoV4l2Device::getChannel(const string &name) const
 {
@@ -383,6 +395,18 @@ VideoV4l2Device::getChannel(const string &name) const
 
     assert(not channels_.empty());
     return channels_.back();
+}
+
+VideoCapabilities
+VideoV4l2Device::getCapabilities() const
+{
+    VideoCapabilities cap;
+
+    for (const auto& chan : getChannelList())
+        for (const auto& size : getSizeList(chan))
+            cap[chan][size] = getRateList(chan, size);
+
+    return cap;
 }
 
 } // end namespace sfl

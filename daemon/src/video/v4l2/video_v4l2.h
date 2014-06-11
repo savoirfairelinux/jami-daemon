@@ -32,6 +32,7 @@
 #define __VIDEO_V4L2_H__
 
 #include <string>
+#include <map>
 #include <vector>
 #include <sstream>
 
@@ -52,7 +53,7 @@ class VideoV4l2Size {
          * @throw std::runtime_error
          */
         void getFrameRates(int fd, unsigned int pixel_format);
-        std::vector<std::string> getRateList();
+        std::vector<std::string> getRateList() const;
 
         unsigned height;
         unsigned width;
@@ -89,6 +90,8 @@ class VideoV4l2Channel {
         char fourcc_[5];
 };
 
+typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
+
 class VideoV4l2Device {
     public:
         /**
@@ -99,12 +102,16 @@ class VideoV4l2Device {
         std::string device;
         std::string name;
 
-        std::vector<std::string> getChannelList() const;
+        VideoCapabilities getCapabilities() const;
 
         const VideoV4l2Channel &getChannel(const std::string &name) const;
 
     private:
         std::vector<VideoV4l2Channel> channels_;
+
+        std::vector<std::string> getChannelList() const;
+        std::vector<std::string> getSizeList(const std::string& channel) const;
+        std::vector<std::string> getRateList(const std::string& channel, const std::string& size) const;
 };
 
 } // namespace sfl_video
