@@ -38,6 +38,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <memory>
 
 class Call;
 class Account;
@@ -82,15 +83,15 @@ class VoIPLink {
          * @param toUrl  The address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall(const std::string &id,
-                                      const std::string &toUrl,
-                                      const std::string &account_id) = 0;
+        virtual std::shared_ptr<Call> newOutgoingCall(const std::string &id,
+                                                      const std::string &toUrl,
+                                                      const std::string &account_id) = 0;
 
         /**
          * Virtual method
          * Returns calls involving this account.
          */
-        virtual std::vector<Call*> getCalls(const std::string &account_id) const = 0;
+        virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
         /**
          * Answer the call
