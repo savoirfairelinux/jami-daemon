@@ -52,7 +52,7 @@ class VideoV4l2Size {
          * @throw std::runtime_error
          */
         void getFrameRates(int fd, unsigned int pixel_format);
-        std::vector<std::string> getRateList();
+        std::vector<std::string> getRateList() const;
 
         unsigned height;
         unsigned width;
