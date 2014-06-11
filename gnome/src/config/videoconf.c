@@ -547,6 +547,8 @@ videocodecs_box(account_t *acc)
 static void
 reset_combo_box(GtkComboBoxText *combo, gchar **entries, const gchar *preferred)
 {
+    g_assert(GTK_IS_WIDGET(combo));
+
     guint index = 0; /* first one if not found */
 
     /* Temporarily deactivate the "changed" signal to clear the list */
@@ -673,6 +675,8 @@ combo_box_rate_changed_cb(G_GNUC_UNUSED GtkComboBoxText *combo, gpointer data)
 void
 video_device_event_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED gpointer foo)
 {
+    /* FIXME: get rid of these global widgets */
+    g_return_if_fail(GTK_IS_WIDGET(v4l2Device));
     fill_devices();
 }
 
