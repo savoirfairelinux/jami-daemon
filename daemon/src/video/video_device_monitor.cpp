@@ -44,7 +44,7 @@ using namespace sfl_video;
  */
 
 VideoCapabilities
-VideoDeviceMonitor::getCapabilities(const std::string& name)
+VideoDeviceMonitor::getCapabilities(const std::string& name) const
 {
     VideoCapabilities cap;
 

@@ -60,7 +60,7 @@ class VideoDeviceMonitor : public Serializable
          */
         std::vector<std::string> getDeviceList() const;
 
-        VideoCapabilities getCapabilities(const std::string& name);
+        VideoCapabilities getCapabilities(const std::string& name) const;
 
         /*
          * Interface for a single device.
