@@ -2222,7 +2222,8 @@ void registration_cb(pjsip_regc_cbparam *param)
              */
             // update_rfc5626_status(acc, param->rdata);
 
-            account->checkNATAddress(param, pool_);
+            if (account->checkNATAddress(param, pool_))
+                WARN("Contact overwritten");
 
             /* TODO Check and update Service-Route header */
             if (account->hasServiceRoute())
