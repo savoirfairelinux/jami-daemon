@@ -136,6 +136,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , contactRewriteMethod_(2)
     , allowViaRewrite_(true)
     , allowContactRewrite_(1)
+    , contactOverwritten_(false)
     , via_tp_(nullptr)
     , audioPortRange_({16384, 32766})
 #ifdef SFL_VIDEO
@@ -1261,6 +1262,9 @@ SIPAccount::getContactHeader()
     if (transport_ == nullptr)
         ERROR("Transport not created yet");
 
+    if (contact_.slen and contactOverwritten_)
+        return contact_;
+
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
 
@@ -1887,19 +1891,25 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         pj_strncpy_with_null(&contact_, &tmp_str, PJSIP_MAX_URL_SIZE);
     }
 
-    if (contactRewriteMethod_ == 2 && regc_ != nullptr)
+    if (contactRewriteMethod_ == 2 && regc_ != nullptr) {
+        contactOverwritten_ = true;
+
+        /*  Unregister old contact */
+        try {
+            link_.sendUnregister(*this);
+        } catch (const VoipLinkException &e) {
+            ERROR("%s", e.what());
+        }
+
         pjsip_regc_update_contact(regc_, 1, &contact_);
 
-#if 0
-    /* TODO: Perform new registration */
-    //pjsua_acc_set_registration(acc->index, PJ_TRUE);
-    /*  Perform new registration */
-    try {
-        link_.sendRegister(*this);
-    } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        /*  Perform new registration */
+        try {
+            link_.sendRegister(*this);
+        } catch (const VoipLinkException &e) {
+            ERROR("%s", e.what());
+        }
     }
-#endif
 
     return true;
 }

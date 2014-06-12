@@ -871,6 +871,7 @@ class SIPAccount : public Account {
         bool allowViaRewrite_;
         /* Undocumented feature in pjsip, this can == 2 */
         int allowContactRewrite_;
+        bool contactOverwritten_;
         pjsip_transport *via_tp_;
 
         /*
