@@ -40,8 +40,9 @@ static void append_sizes_and_rates(gpointer key, gpointer value, gpointer data);
 static void append_channels_and_sizes(gpointer key, gpointer value, gpointer data);
 static gboolean free_node(GNode *node, G_GNUC_UNUSED gpointer data);
 static GNode *find_child(GNode *parent, const gchar *data);
-static int cmpstringp(const void *p1, const void *p2);
-static gchar **children_as_strv(GNode *node);
+static gint alphacmp(gconstpointer p1, gconstpointer p2, gpointer data);
+static gint intcmp(gconstpointer p1, gconstpointer p2, gpointer data);
+static gchar **children_as_strv(GNode *node, GCompareDataFunc compar);
 
 VideoCapabilities *
 video_capabilities_new(const gchar *name)
@@ -65,7 +66,7 @@ gchar **
 video_capabilities_get_channels(VideoCapabilities *cap)
 {
     GNode *root = (GNode *) cap;
-    return children_as_strv(root);
+    return children_as_strv(root, alphacmp);
 }
 
 gchar **
@@ -74,7 +75,7 @@ video_capabilities_get_sizes(VideoCapabilities *cap, const gchar *channel)
     GNode *root = (GNode *) cap;
     GNode *chan_node = find_child(root, channel);
     g_assert(chan_node);
-    return children_as_strv(chan_node);
+    return children_as_strv(chan_node, intcmp);
 }
 
 gchar **
@@ -85,7 +86,7 @@ video_capabilities_get_rates(VideoCapabilities *cap, const gchar *channel, const
     g_assert(chan_node);
     GNode *size_node = find_child(chan_node, size);
     g_assert(size_node);
-    return children_as_strv(size_node);
+    return children_as_strv(size_node, intcmp);
 }
 
 static void
@@ -130,8 +131,8 @@ find_child(GNode *parent, const gchar *data)
     return child;
 }
 
-static int
-cmpstringp(const void *p1, const void *p2)
+static gint
+alphacmp(gconstpointer p1, gconstpointer p2, G_GNUC_UNUSED gpointer data)
 {
     /*
      * The actual arguments to this function are "pointers to pointers to char",
@@ -141,8 +142,17 @@ cmpstringp(const void *p1, const void *p2)
     return g_strcmp0(* (gchar * const *) p1, * (gchar * const *) p2);
 }
 
+static gint
+intcmp(gconstpointer p1, gconstpointer p2, G_GNUC_UNUSED gpointer data)
+{
+    const gint i1 = atoi(* (gchar * const *) p1);
+    const gint i2 = atoi(* (gchar * const *) p2);
+
+    return i1 - i2;
+}
+
 static gchar **
-children_as_strv(GNode *node)
+children_as_strv(GNode *node, GCompareDataFunc compar)
 {
     const guint n = g_node_n_children(node);
     gchar *array[n + 1];
@@ -152,8 +162,8 @@ children_as_strv(GNode *node)
         array[i] = g_node_nth_child(node, i)->data;
     array[i] = NULL;
 
-    /* Quick sort the array (adapted from man qsort(3)) */
-    qsort(array, n, sizeof(gchar *), cmpstringp);
+    if (compar)
+        g_qsort_with_data(array, n, sizeof(gchar *), compar, NULL);
 
     return g_strdupv(array);
 }
