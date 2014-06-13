@@ -146,10 +146,6 @@ sip_utils::parseDisplayName(const char * buffer)
         return utf8_make_valid(displayName);
     }
 
-    static const size_t MAX_DISPLAY_NAME_SIZE = 25;
-    if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
-        return displayName.substr(0, MAX_DISPLAY_NAME_SIZE);
-
     return displayName;
 }
 
