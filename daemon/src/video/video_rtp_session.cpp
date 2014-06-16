@@ -169,8 +169,10 @@ void VideoRtpSession::start(int localPort)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not sending_ and not receiving_)
+    if (not sending_ and not receiving_) {
+        stop();
         return;
+    }
 
     try {
         socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
