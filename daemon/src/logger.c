@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 
 #include "logger.h"
 

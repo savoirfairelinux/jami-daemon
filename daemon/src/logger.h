@@ -38,12 +38,6 @@ extern "C" {
 #include <stdint.h>
 #include <pthread.h>
 
-#ifdef __ANDROID__
-#include <android/log.h>
-#else
-#include <syslog.h>
-#endif
-
 /**
  * Print something, coloring it depending on the level
  */
@@ -73,16 +67,9 @@ void strErr();
                            (unsigned long) pthread_self() & 0xffff, \
                            ##__VA_ARGS__
 
-#ifndef __ANDROID__
+#ifdef __ANDROID__
 
-#define FILE_NAME __FILE__
-#define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
-#define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
-#define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
-#define DEBUG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
-#define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
-
-#else /* __ANDROID__ */
+#include <android/log.h>
 
 #ifndef APP_NAME
 #define APP_NAME "libsflphone"
@@ -92,12 +79,29 @@ void strErr();
 #define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 \
                                           : __FILE__)
 
-#define ERROR(M, ...)   LOGGER(M, ANDROID_LOG_ERROR, ##__VA_ARGS__)
-#define WARN(M, ...)    LOGGER(M, ANDROID_LOG_WARN, ##__VA_ARGS__)
-#define INFO(M, ...)    LOGGER(M, ANDROID_LOG_INFO, ##__VA_ARGS__)
-#define DEBUG(M, ...)   LOGGER(M, ANDROID_LOG_DEBUG, ##__VA_ARGS__)
-#define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, LOG_FORMAT(M, ##__VA_ARGS__))
+// because everyone likes reimplementing the wheel
+#define LOG_ERR     ANDROID_LOG_ERROR
+#define LOG_WARNING ANDROID_LOG_WARN
+#define LOG_INFO    ANDROID_LOG_INFO
+#define LOG_DEBUG   ANDROID_LOG_DEBUG
+
+#define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, \
+                                                  LOG_FORMAT(M, ##__VA_ARGS__))
+#else /* __ANDROID__ */
+
+#include <syslog.h>
+
+#define FILE_NAME __FILE__
+
+#define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
+
 #endif /* __ANDROID__ */
+
+#define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
+#define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
+#define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
+#define DEBUG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
+
 
 #define BLACK "\033[22;30m"
 #define RED "\033[22;31m"
