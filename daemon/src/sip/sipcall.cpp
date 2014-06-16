@@ -179,6 +179,7 @@ SIPCall::offhold(const std::function<void()> &SDPUpdateFunc)
 #ifdef SFL_VIDEO
     local_sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
     local_sdp_->removeAttributeFromLocalVideoMedia("sendonly");
+    local_sdp_->removeAttributeFromLocalVideoMedia("inactive");
     local_sdp_->addAttributeToLocalVideoMedia("sendrecv");
 #endif
 
