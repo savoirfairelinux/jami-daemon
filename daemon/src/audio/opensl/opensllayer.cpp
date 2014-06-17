@@ -148,12 +148,12 @@ OpenSLLayer::stopStream()
 }
 
 void
-OpenSLLayer::initAudioEngine()
+OpenSLLayer::initAudioEngine() const
 {
     SLresult result;
 
     DEBUG("Create Audio Engine\n");
-    result = slCreateEngine(&engineObject_, 0, nullptr, 0, nullptr, nullptr);
+    result = slCreateEngine((const SLObjectItf_ * const **)&engineObject_, 0, nullptr, 0, nullptr, nullptr);
     assert(SL_RESULT_SUCCESS == result);
 
     DEBUG("Realize Audio Engine\n");
@@ -161,11 +161,14 @@ OpenSLLayer::initAudioEngine()
     assert(SL_RESULT_SUCCESS == result);
 
     DEBUG("Create Audio Engine Interface\n");
-    result = (*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_);
+    result = (*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE,
+                                            (void *)&engineInterface_);
     assert(SL_RESULT_SUCCESS == result);
 
     DEBUG("Create Output Mixer\n");
-    result = (*engineInterface_)->CreateOutputMix(engineInterface_, &outputMixer_, 0, nullptr, nullptr);
+    result = (*engineInterface_)->CreateOutputMix(engineInterface_,
+                                                  (const SLObjectItf_ * const **)&outputMixer_,
+                                                  0, nullptr, nullptr);
     assert(SL_RESULT_SUCCESS == result);
 
     DEBUG("Realize Output Mixer\n");
@@ -214,7 +217,7 @@ OpenSLLayer::shutdownAudioEngine()
 }
 
 void
-OpenSLLayer::initAudioPlayback()
+OpenSLLayer::initAudioPlayback() const
 {
     assert(nullptr != engineObject_);
     assert(nullptr != engineInterface_);
@@ -244,7 +247,8 @@ OpenSLLayer::initAudioPlayback()
     SLDataSource audioSource = {&bufferLocation, &audioFormat};
 
     DEBUG("Get Output Mixer interface\n");
-    result = (*outputMixer_)->GetInterface(outputMixer_, SL_IID_OUTPUTMIX, &outputMixInterface_);
+    result = (*outputMixer_)->GetInterface(outputMixer_, SL_IID_OUTPUTMIX,
+                                           (void *)&outputMixInterface_);
     CheckErr(result);
 
     // Cofiguration fo the audio sink as an output mixer
@@ -262,7 +266,12 @@ OpenSLLayer::initAudioPlayback()
 
     // create audio player
     DEBUG("Create audio player\n");
-    result = (*engineInterface_)->CreateAudioPlayer(engineInterface_, &playerObject_, &audioSource, &audioSink, nbInterface, ids, req);
+    result = (*engineInterface_)->CreateAudioPlayer(engineInterface_,
+                                                    (const SLObjectItf_ * const **)&playerObject_,
+                                                    &audioSource,
+                                                    &audioSink,
+                                                    nbInterface,
+                                                    ids, req);
     assert(SL_RESULT_SUCCESS == result);
 
     SLAndroidConfigurationItf playerConfig;
@@ -271,7 +280,7 @@ OpenSLLayer::initAudioPlayback()
 
     result = (*playerObject_)->GetInterface(playerObject_,
                                             SL_IID_ANDROIDCONFIGURATION,
-                                            &playerConfig);
+                                            (void *)&playerConfig);
 
     if (result == SL_RESULT_SUCCESS && playerConfig) {
         result = (*playerConfig)->SetConfiguration(
@@ -289,24 +298,28 @@ OpenSLLayer::initAudioPlayback()
 
     // create audio interface
     DEBUG("Create audio player interface\n");
-    result = (*playerObject_)->GetInterface(playerObject_, SL_IID_PLAY, &playerInterface_);
+    result = (*playerObject_)->GetInterface(playerObject_, SL_IID_PLAY,
+                                            (void *)&playerInterface_);
     assert(SL_RESULT_SUCCESS == result);
 
     // create the buffer queue interface
     DEBUG("Create buffer queue interface\n");
-    result = (*playerObject_)->GetInterface(playerObject_, SL_IID_BUFFERQUEUE, &playbackBufferQueue_);
+    result = (*playerObject_)->GetInterface(playerObject_, SL_IID_BUFFERQUEUE,
+                                            (void *)&playbackBufferQueue_);
     assert(SL_RESULT_SUCCESS == result);
 
     // register the buffer queue on the buffer object
     DEBUG("Register audio callback\n");
-    result = (*playbackBufferQueue_)->RegisterCallback(playbackBufferQueue_, audioPlaybackCallback, this);
+    result = (*playbackBufferQueue_)->RegisterCallback(playbackBufferQueue_,
+                                                       audioPlaybackCallback,
+                                                       (void *)this);
     assert(SL_RESULT_SUCCESS == result);
 
     DEBUG("Audio Playback Initialization Done\n");
 }
 
 void
-OpenSLLayer::initAudioCapture()
+OpenSLLayer::initAudioCapture() const
 {
     SLresult result;
 
@@ -354,7 +367,10 @@ OpenSLLayer::initAudioCapture()
 
     if (engineInterface_ != nullptr) {
         result = (*engineInterface_)->CreateAudioRecorder(engineInterface_,
-                 &recorderObject_, &audioSource, &audioSink, 2, id, req);
+                                                          (const SLObjectItf_ * const **)&recorderObject_,
+                                                          &audioSource,
+                                                          &audioSink,
+                                                          2, id, req);
     }
 
     if (SL_RESULT_SUCCESS != result) {
@@ -365,7 +381,7 @@ OpenSLLayer::initAudioCapture()
     /* Set Android configuration */
     result = (*recorderObject_)->GetInterface(recorderObject_,
                                                 SL_IID_ANDROIDCONFIGURATION,
-                                                &recorderConfig);
+                                                (void *)&recorderConfig);
     if (result == SL_RESULT_SUCCESS) {
        SLint32 streamType = SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
        result = (*recorderConfig)->SetConfiguration(
@@ -389,18 +405,22 @@ OpenSLLayer::initAudioCapture()
 
     // get the record interface
     DEBUG("Create the record interface\n");
-    result = (*recorderObject_)->GetInterface(recorderObject_, SL_IID_RECORD, &recorderInterface_);
+    result = (*recorderObject_)->GetInterface(recorderObject_,
+                                              SL_IID_RECORD,
+                                              (void *)&recorderInterface_);
     assert(SL_RESULT_SUCCESS == result);
 
     // get the buffer queue interface
     DEBUG("Create the buffer queue interface\n");
     result = (*recorderObject_)->GetInterface(recorderObject_, SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-             &recorderBufferQueue_);
+             (void *)&recorderBufferQueue_);
     assert(SL_RESULT_SUCCESS == result);
 
     // register callback on the buffer queue
     DEBUG("Register the audio capture callback\n");
-    result = (*recorderBufferQueue_)->RegisterCallback(recorderBufferQueue_, audioCaptureCallback, this);
+    result = (*recorderBufferQueue_)->RegisterCallback(recorderBufferQueue_,
+                                                       audioCaptureCallback,
+                                                       (void *)this);
     assert(SL_RESULT_SUCCESS == result);
 
     DEBUG("Audio capture initialized\n");
@@ -550,7 +570,7 @@ OpenSLLayer::getCaptureDeviceList() const
     for (int i = 0; i < numInputs; i++) {
         res = (*AudioIODeviceCapabilitiesItf)->QueryAudioInputCapabilities(AudioIODeviceCapabilitiesItf,
                                                                            InputDeviceIDs[i],
-                                                                           &AudioInputDescriptor);
+                                                                           (SLAudioInputDescriptor *)&AudioInputDescriptor);
         CheckErr(res);
 
         if (AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED and
@@ -582,7 +602,7 @@ OpenSLLayer::getCaptureDeviceList() const
 
 /* Checks for error. If any errors exit the application! */
 void
-OpenSLLayer::CheckErr( SLresult res )
+OpenSLLayer::CheckErr( SLresult res ) const
 {
     if (res != SL_RESULT_SUCCESS) {
         // Debug printing to be placed here

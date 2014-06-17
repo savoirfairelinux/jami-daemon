@@ -92,13 +92,13 @@ class OpenSLLayer : public AudioLayer {
 
         void init();
 
-        void initAudioEngine();
+        void initAudioEngine() const;
 
         void shutdownAudioEngine();
 
-        void initAudioPlayback();
+        void initAudioPlayback() const;
 
-        void initAudioCapture();
+        void initAudioCapture() const;
 
         void startAudioPlayback();
 
@@ -187,7 +187,7 @@ class OpenSLLayer : public AudioLayer {
             recordBufferIndex_ = (recordBufferIndex_ + 1) % NB_BUFFER_CAPTURE_QUEUE;
         }
 
-        void CheckErr( SLresult res );
+        void CheckErr( SLresult res ) const;
 
         void playback(SLAndroidSimpleBufferQueueItf queue);
         void capture(SLAndroidSimpleBufferQueueItf queue);
