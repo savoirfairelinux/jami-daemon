@@ -84,6 +84,10 @@ VideoFrame::VideoFrame()
 
 VideoFrame::~VideoFrame()
 {
+#if USE_OLD_AVU
+    if (allocated_)
+        avpicture_free((AVPicture *) frame_);
+#endif
     av_frame_free(&frame_);
 }
 
@@ -120,7 +124,9 @@ bool VideoFrame::allocBuffer(int width, int height, int pix_fmt)
 void VideoFrame::setdefaults()
 {
     av_frame_unref(frame_);
+#if !USE_OLD_AVU
     allocated_ = false;
+#endif
 }
 
 void VideoFrame::setGeometry(int width, int height, int pix_fmt)
