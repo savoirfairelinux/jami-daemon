@@ -84,6 +84,9 @@ VideoFrame::VideoFrame()
 
 VideoFrame::~VideoFrame()
 {
+#if USE_OLD_AVU
+    avpicture_free((AVPicture *) frame_);
+#endif
     av_frame_free(&frame_);
 }
 
