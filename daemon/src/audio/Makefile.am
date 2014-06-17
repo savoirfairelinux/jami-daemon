@@ -4,6 +4,10 @@ noinst_LTLIBRARIES = libaudio.la
 
 SUBDIRS = codecs audiortp sound
 
+if BUILD_OPENSL
+SUBDIRS += opensl
+endif
+
 if BUILD_ALSA
 SUBDIRS += alsa
 endif
@@ -63,4 +67,8 @@ endif
 
 if BUILD_ALSA
 libaudio_la_LIBADD += ./alsa/libalsalayer.la
+endif
+
+if BUILD_OPENSL
+libaudio_la_LIBADD += ./opensl/libopensl.la
 endif

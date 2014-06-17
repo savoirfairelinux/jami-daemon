@@ -35,7 +35,7 @@
 #include "preferences.h"
 #include "logger.h"
 #include "audio/audiolayer.h"
-#ifdef __ANDROID__
+#if HAVE_OPENSL
 #include "audio/opensl/opensllayer.h"
 #else
 #if HAVE_ALSA
@@ -47,7 +47,7 @@
 #if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
 #endif
-#endif
+#endif /* HAVE_OPENSL */
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "hooks/urlhook.h"
@@ -361,15 +361,12 @@ checkSoundCard(int &card, DeviceType type)
 }
 #endif
 
-#ifdef __ANDROID__
 AudioLayer* AudioPreference::createAudioLayer()
 {
+#if HAVE_OPENSL
     return new OpenSLLayer(*this);
-}
 #else
 
-AudioLayer* AudioPreference::createAudioLayer()
-{
 #if HAVE_JACK
     if (audioApi_ == JACK_API_STR) {
         if (system("jack_lsp > /dev/null") == 0) {
@@ -413,9 +410,9 @@ AudioLayer* AudioPreference::createAudioLayer()
 #else
     return NULL;
 #endif
-}
 
 #endif // __ANDROID__
+}
 
 void AudioPreference::serialize(Conf::YamlEmitter &emitter)
 {

@@ -162,6 +162,23 @@ AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], 
 LIBCRYPTO_MIN_VERSION=1.0
 PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYPTO=true, HAVE_LIBCRYPTO=false);
 
+if test "xSANDROID" = "xyes"; then
+    dnl Check for OpenSL
+    AC_ARG_WITH([opensl],
+                AS_HELP_STRING([--without-opensl],
+                               [Ignore presence of opensl and disable it]))
+
+    AS_IF([test "x$with_opensl" != "xno"],
+          [AC_CHECK_HEADER(["SLES/OpenSLES.h"],
+                           [have_opensl=yes], [have_opensl=no])],
+          [have_opensl=no])
+
+    AC_DEFINE_UNQUOTED([HAVE_OPENSL],
+                       `if test "x$have_opensl" = "xyes"; then echo 1; else echo 0; fi`,
+                       [Define if you have OpenSL])
+fi
+AM_CONDITIONAL([BUILD_OPENSL], test "x$have_opensl" = "xyes")
+
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
 AC_ARG_WITH([alsa],
@@ -500,6 +517,7 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/audiortp/Makefile \
                  src/audio/pulseaudio/Makefile \
                  src/audio/alsa/Makefile \
+                 src/audio/opensl/Makefile \
                  src/audio/jack/Makefile \
                  src/audio/sound/Makefile \
                  src/audio/codecs/Makefile \

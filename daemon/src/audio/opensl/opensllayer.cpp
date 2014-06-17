@@ -33,7 +33,7 @@
 #include "client/configurationmanager.h"
 
 #include "manager.h"
-#include "mainbuffer.h"
+#include "audio/mainbuffer.h"
 #include "audio/dcblocker.h"
 #include "logger.h"
 #include "array_size.h"
