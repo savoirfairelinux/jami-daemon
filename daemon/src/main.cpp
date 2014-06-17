@@ -196,7 +196,9 @@ int main(int argc, char *argv [])
 #ifdef SFL_VIDEO
     WARN("Built with video support");
 #endif
+#if HAVE_DBUS
     Manager::instance().getClient()->setPersistent(persistent);
+#endif
     ret = Manager::instance().run();
     Manager::instance().finish();
 
