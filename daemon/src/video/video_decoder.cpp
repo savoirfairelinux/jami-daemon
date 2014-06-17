@@ -39,6 +39,9 @@
 
 namespace sfl_video {
 
+// Increase analyse time to solve synchronisazion isses between callers.
+static const unsigned MAX_ANALYSE_DURATION = 30; // time in secondes
+
 using std::string;
 
 VideoDecoder::VideoDecoder() :
@@ -124,6 +127,8 @@ int VideoDecoder::setupFromVideoData()
 
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
+
+    inputCtx_->max_analyze_duration = MAX_ANALYSE_DURATION * AV_TIME_BASE;
 
     DEBUG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
