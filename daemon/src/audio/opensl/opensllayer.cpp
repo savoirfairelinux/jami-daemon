@@ -44,6 +44,13 @@
 #include <cassert>
 #include <unistd.h>
 
+#include "SLES/OpenSLES_AndroidConfiguration.h"
+
+/* available only from api 14 */
+#ifndef SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION
+#define SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION ((SLuint32) 0x00000004)
+#endif
+
 const int OpenSLLayer::NB_BUFFER_PLAYBACK_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 const int OpenSLLayer::NB_BUFFER_CAPTURE_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 
