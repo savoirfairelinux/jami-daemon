@@ -74,6 +74,19 @@ AC_COMPILE_IFELSE(
 AC_MSG_RESULT([$CLANG])
 
 
+dnl Check if we are compiling for android
+AC_MSG_CHECKING([if compiling for android])
+AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([], [[
+#ifndef __ANDROID__
+       not android
+#endif
+]])],
+[ANDROID=yes], [ANDROID=no])
+
+AC_MSG_RESULT([$ANDROID])
+AM_CONDITIONAL([USE_ANDROID], test "x$ANDROID" = "xyes")
+
 dnl
 dnl  Check for the contrib directory
 dnl
@@ -475,6 +488,7 @@ AS_IF([test "x$enable_debug" = "xyes"],
 
 dnl What Makefiles to generate
 
+#TODO: split this list across where the relevant check is performed
 AC_CONFIG_FILES([Makefile \
                  src/Makefile \
                  src/sip/Makefile \
@@ -489,6 +503,7 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/codecs/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
+                 src/client/android/Makefile \
                  src/hooks/Makefile \
                  src/history/Makefile \
                  src/video/Makefile \

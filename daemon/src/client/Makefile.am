@@ -18,6 +18,11 @@ VIDEO_STUB = videomanager_stub.cpp
 noinst_HEADERS += videomanager.h
 endif
 
+if USE_ANDROID
+SUBDIRS=android
+
+libclient_la_LIBADD = android/libclient_android.la
+else
 if USE_DBUS
 SUBDIRS=dbus
 
@@ -29,6 +34,7 @@ STUB_SRC = client.cpp                      \
            $(PRESENCE_STUB)                \
            $(VIDEO_STUB)
 endif
+endif # USE_ANDROID
 
 libclient_la_SOURCES = callmanager.cpp           \
                        configurationmanager.cpp  \
