@@ -1238,10 +1238,17 @@ void SIPVoIPLink::addSipCall(std::shared_ptr<SIPCall>& call)
 
     std::lock_guard<std::mutex> lock(sipCallMapMutex_);
 
-    if (sipCallMap_.find(id) == sipCallMap_.end())
-        sipCallMap_.emplace(id, call);
-    else
+    // emplace C++11 method has been implemented in GCC 4.8.0
+    // see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=44436
+#if !defined(__GNUC__) or (__GNUC__ >= 4 && __GNUC_MINOR__ >= 8)
+    if (not sipCallMap_.emplace(id, call).second)
+#else
+    if (sipCallMap_.find(id) == sipCallMap_.end()) {
+        sipCallMap_[id] = call;
+    } else
+#endif
         ERROR("Call %s is already in the call map", id.c_str());
+
 }
 
 void SIPVoIPLink::removeSipCall(const std::string& id)
