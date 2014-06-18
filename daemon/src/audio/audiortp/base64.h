@@ -45,8 +45,8 @@ extern "C" {
  *
  * @note callers should free the returned memory
  */
-uint8_t *base64_encode(const uint8_t *data,
-                       size_t input_length, size_t *output_length);
+uint8_t *sfl_base64_encode(const uint8_t *data,
+                           size_t input_length, size_t *output_length);
 
 /**
  * Decode a base64 buffer.
@@ -58,8 +58,8 @@ uint8_t *base64_encode(const uint8_t *data,
  *
  * @note callers should free the returned memory
  */
-uint8_t *base64_decode(const uint8_t *data,
-                       size_t input_length, size_t *output_length);
+uint8_t *sfl_base64_decode(const uint8_t *data,
+                           size_t input_length, size_t *output_length);
 
 #ifdef __cplusplus
 }

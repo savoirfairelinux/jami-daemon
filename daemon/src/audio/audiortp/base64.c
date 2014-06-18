@@ -43,8 +43,8 @@ static const uint8_t encoding_table[] = {
 
 static const int mod_table[] = { 0, 2, 1 };
 
-uint8_t *base64_encode(const uint8_t *data,
-                       size_t input_length, size_t *output_length)
+uint8_t *sfl_base64_encode(const uint8_t *data,
+                           size_t input_length, size_t *output_length)
 {
     int i, j;
     uint8_t *encoded_data;
@@ -73,8 +73,8 @@ uint8_t *base64_encode(const uint8_t *data,
     return encoded_data;
 }
 
-uint8_t *base64_decode(const uint8_t *data,
-                       size_t input_length, size_t *output_length)
+uint8_t *sfl_base64_decode(const uint8_t *data,
+                           size_t input_length, size_t *output_length)
 {
     int i, j;
     uint8_t decoding_table[256];

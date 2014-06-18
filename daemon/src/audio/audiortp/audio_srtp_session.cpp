@@ -49,7 +49,7 @@ static std::string
 encodeBase64(unsigned char *input, int length)
 {
     size_t output_length;
-    uint8_t *encoded_str = base64_encode(input, length, &output_length);
+    uint8_t *encoded_str = sfl_base64_encode(input, length, &output_length);
     if (!encoded_str)
         THROW_ERROR(AudioSrtpException, "Out of memory for base64 operation");
     std::string output((const char *)encoded_str, output_length);
@@ -61,7 +61,7 @@ static std::string
 decodeBase64(unsigned char *input, int length)
 {
     size_t output_length;
-    uint8_t *decoded_str = base64_decode(input, length, &output_length);
+    uint8_t *decoded_str = sfl_base64_decode(input, length, &output_length);
     if (!decoded_str)
         THROW_ERROR(AudioSrtpException, "Out of memory for base64 operation");
     std::string output((const char *)decoded_str, output_length);
