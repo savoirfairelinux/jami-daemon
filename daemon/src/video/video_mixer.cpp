@@ -104,7 +104,7 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
                 x->update_frame.reset(new VideoFrame);
             // copy the input frame and make it available to the renderer
             frame_p->copy(*x->update_frame.get());
-            x->render_frame.swap(x->update_frame);
+            x->atomic_swap_render(x->update_frame);
             return;
         }
     }
@@ -138,11 +138,13 @@ void VideoMixer::process()
 
             // make rendered frame temporarily unavailable for update()
             // to avoid concurrent access.
-            if (auto input = std::move(x->render_frame)) {
-                render_frame(output, *input, i);
-                x->render_frame = std::move(input);
-            }
+            std::unique_ptr<VideoFrame> input;
+            x->atomic_swap_render(input);
 
+            if (input)
+                render_frame(output, *input, i);
+
+            x->atomic_swap_render(input);
             ++i;
         }
     }

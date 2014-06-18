@@ -49,6 +49,12 @@ namespace sfl_video {
         Observable<std::shared_ptr<VideoFrame> >* source = nullptr;
         std::unique_ptr<VideoFrame> update_frame = nullptr;
         std::unique_ptr<VideoFrame> render_frame = nullptr;
+        void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            render_frame.swap(other);
+        }
+    private:
+        std::mutex mutex_ = {};
     };
 
 class VideoMixer :
