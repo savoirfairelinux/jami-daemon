@@ -78,7 +78,7 @@ class VideoManager
          */
         std::weak_ptr<sfl_video::VideoInput> videoInput_ = {};
         std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoPreview_ = nullptr;
-        VideoDeviceMonitor videoDeviceMonitor_ = {};
+        sfl_video::VideoDeviceMonitor videoDeviceMonitor_ = {};
 
     public:
 #if HAVE_DBUS
@@ -86,7 +86,7 @@ class VideoManager
 #else
         VideoManager();
 #endif
-        VideoDeviceMonitor &getVideoDeviceMonitor();
+        sfl_video::VideoDeviceMonitor& getVideoDeviceMonitor();
 
         std::vector<std::map<std::string, std::string> >
         getCodecs(const std::string& accountID);
@@ -98,7 +98,7 @@ class VideoManager
         std::vector<std::string>
         getDeviceList();
 
-        VideoCapabilities
+        sfl_video::VideoCapabilities
         getCapabilities(const std::string& name);
 
         std::map<std::string, std::string>
