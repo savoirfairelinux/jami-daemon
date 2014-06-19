@@ -4,6 +4,7 @@ SUBDIRS=v4l2 test
 
 noinst_LTLIBRARIES = libvideo.la
 libvideo_la_SOURCES = \
+	video_device.cpp video_device.h \
 	video_device_monitor.cpp video_device_monitor.h \
 	video_base.cpp video_base.h \
 	video_scaler.cpp video_scaler.h \
