@@ -191,7 +191,7 @@ VideoInput::initCamera(const std::string& device)
     clearOptions();
     input_ = map["input"];
     format_ = "video4linux2";
-    decOpts_["channel"] = map["channel"];
+    decOpts_["channel"] = map["channel_num"];
     decOpts_["framerate"] = map["framerate"];
     decOpts_["video_size"] = map["video_size"];
 
