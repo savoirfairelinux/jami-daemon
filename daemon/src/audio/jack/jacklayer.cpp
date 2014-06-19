@@ -500,7 +500,7 @@ JackLayer::startStream()
 }
 
 void
-JackLayer::onShutdown(void *data)
+JackLayer::onShutdown(void * /* data */)
 {
     WARN("JACK server shutdown");
     // FIXME: handle this safely
