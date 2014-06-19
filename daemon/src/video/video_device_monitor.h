@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEO_PREFERENCE_H__
-#define VIDEO_PREFERENCE_H__
+#ifndef VIDEO_DEVICE_MONITOR_H__
+#define VIDEO_DEVICE_MONITOR_H__
 
 #include "config/serializable.h"
 #include "noncopyable.h"
@@ -39,15 +39,15 @@
 #include <string>
 #include <memory>
 
-namespace sfl_video {
-    class VideoDeviceMonitorImpl;
-}
+#include "video_device.h"
 
 namespace Conf {
     class SequenceNode;
 }
 
-typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
+namespace sfl_video {
+
+class VideoDeviceMonitorImpl;
 
 class VideoDeviceMonitor : public Serializable
 {
@@ -55,28 +55,17 @@ class VideoDeviceMonitor : public Serializable
         VideoDeviceMonitor();
         ~VideoDeviceMonitor();
 
-        /*
-         * Video device monitoring specific interface.
-         */
         std::vector<std::string> getDeviceList() const;
 
         VideoCapabilities getCapabilities(const std::string& name) const;
-
-        /*
-         * Interface for a single device.
-         */
-        std::map<std::string, std::string> getSettingsFor(const std::string& name) const;
-        std::map<std::string, std::string> getPreferences(const std::string& name) const;
-        void setPreferences(const std::string& name, std::map<std::string, std::string> pref);
-
-        /*
-         * Interface with the "active" video device.
-         * This is the default used device when sending a video stream.
-         */
-        std::map<std::string, std::string> getSettings() const;
+        VideoSettings getSettings(const std::string& name);
+        void applySettings(const std::string& name, VideoSettings settings);
 
         std::string getDevice() const;
         void setDevice(const std::string& name);
+
+        void addDevice(const std::string &node);
+        void removeDevice(const std::string &node);
 
         /*
          * Interface to load from/store to the (YAML) configuration file.
@@ -87,31 +76,29 @@ class VideoDeviceMonitor : public Serializable
     private:
         NON_COPYABLE(VideoDeviceMonitor);
 
-        struct VideoDevice {
-            std::string name = "";
-            std::string channel = "";
-            std::string size = "";
-            std::string rate = "";
-        };
+        /*
+         * User preferred settings for a device,
+         * as loaded from (and stored to) the configuration file.
+         */
+        std::vector<VideoSettings> preferences_;
 
-        std::unique_ptr<sfl_video::VideoDeviceMonitorImpl> monitorImpl_;
+        void storePreferences(VideoSettings settings);
+        std::vector<VideoSettings>::iterator findPreferencesByName(const std::string& name);
 
         /*
-         * Vector containing the video devices in order of preference
-         * (the first is the active one).
+         * Vector containing the video devices.
          */
-        std::string default_ = "";
-        std::vector<VideoDevice> deviceList_;
+        std::vector<VideoDevice> devices_;
+        std::string defaultDevice_ = "";
 
-        std::vector<VideoDevice>::iterator lookupDevice(const std::string& name);
-        std::vector<VideoDevice>::const_iterator lookupDevice(const std::string& name) const;
+        std::vector<VideoDevice>::iterator findDeviceByName(const std::string& name);
+        std::vector<VideoDevice>::const_iterator findDeviceByName(const std::string& name) const;
+        std::vector<VideoDevice>::iterator findDeviceByNode(const std::string& node);
+        std::vector<VideoDevice>::const_iterator findDeviceByNode(const std::string& node) const;
 
-        bool validatePreference(const VideoDevice& dev) const;
-        std::map<std::string, std::string> deviceToSettings(const VideoDevice& dev) const;
-        static void addDeviceToSequence(const VideoDevice& dev, Conf::SequenceNode& seq);
-
-        VideoDevice defaultPreferences(const std::string& name) const;
-        void addDevice(const std::string &name);
+        std::unique_ptr<VideoDeviceMonitorImpl> monitorImpl_;
 };
 
-#endif /* VIDEO_PREFERENCE_H__ */
+} // namespace sfl_video
+
+#endif /* VIDEO_DEVICE_MONITOR_H__ */
