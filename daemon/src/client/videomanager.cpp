@@ -38,7 +38,7 @@
 #include "logger.h"
 #include "manager.h"
 
-VideoDeviceMonitor &
+sfl_video::VideoDeviceMonitor &
 VideoManager::getVideoDeviceMonitor()
 {
     return videoDeviceMonitor_;
@@ -72,7 +72,7 @@ VideoManager::getDeviceList()
     return videoDeviceMonitor_.getDeviceList();
 }
 
-VideoCapabilities
+sfl_video::VideoCapabilities
 VideoManager::getCapabilities(const std::string& name)
 {
     return videoDeviceMonitor_.getCapabilities(name);
@@ -93,24 +93,24 @@ VideoManager::setActiveDevice(const std::string &device)
 
 std::map<std::string, std::string>
 VideoManager::getSettingsFor(const std::string& device) {
-    return videoDeviceMonitor_.getSettingsFor(device);
+    return videoDeviceMonitor_.getSettings(device);
 }
 
 std::map<std::string, std::string>
 VideoManager::getSettings() {
-    return videoDeviceMonitor_.getSettings();
+    return videoDeviceMonitor_.getSettings(getActiveDevice());
 }
 
 std::map<std::string, std::string>
 VideoManager::getPreferences(const std::string& name) {
-    return videoDeviceMonitor_.getPreferences(name);
+    return videoDeviceMonitor_.getSettings(name);
 }
 
 void
 VideoManager::setPreferences(const std::string& name,
         const std::map<std::string, std::string>& pref)
 {
-    videoDeviceMonitor_.setPreferences(name, pref);
+    videoDeviceMonitor_.trySettings(name, pref);
 }
 
 void

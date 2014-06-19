@@ -45,13 +45,10 @@
 #include <vector>
 
 #include "../video_device_monitor.h"
-#include "client/videomanager.h"
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "logger.h"
-#include "manager.h"
 #include "noncopyable.h"
-#include "video_v4l2.h"
 
 extern "C" {
 #include <fcntl.h>
@@ -66,26 +63,25 @@ using std::string;
 
 class VideoDeviceMonitorImpl {
     public:
-        VideoDeviceMonitorImpl();
+        /*
+         * This is the only restriction to the pImpl design:
+         * as the Linux implementation has a thread, it needs a way to notify
+         * devices addition and deletion.
+         *
+         * This class should maybe inherit from VideoDeviceMonitor instead of
+         * being its pImpl.
+         */
+        VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
         ~VideoDeviceMonitorImpl();
+
         void start();
 
-        std::vector<std::string> getDeviceList() const;
-        std::vector<std::string> getChannelList(const std::string &dev) const;
-        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel) const;
-        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size) const;
-
-        std::string getDeviceNode(const std::string &name) const;
-        unsigned getChannelNum(const std::string &dev, const std::string &name) const;
-
     private:
-        void run();
-
-        std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
         NON_COPYABLE(VideoDeviceMonitorImpl);
-        void delDevice(const std::string &node);
-        void addDevice(const std::string &dev);
-        std::vector<VideoV4l2Device> devices_;
+
+        VideoDeviceMonitor* monitor_;
+
+        void run();
         std::thread thread_;
         mutable std::mutex mutex_;
 
@@ -101,9 +97,11 @@ static int is_v4l2(struct udev_device *dev)
     return version and strcmp(version, "1");
 }
 
-VideoDeviceMonitorImpl::VideoDeviceMonitorImpl() : devices_(),
-    thread_(), mutex_(), udev_(0),
-    udev_mon_(0), probing_(false)
+VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
+    monitor_(monitor),
+    thread_(), mutex_(),
+    udev_(0), udev_mon_(0),
+    probing_(false)
 {
     udev_list_entry *devlist;
     udev_enumerate *devenum;
@@ -142,7 +140,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl() : devices_(),
             const char *devpath = udev_device_get_devnode(dev);
             if (devpath) {
                 try {
-                    addDevice(devpath);
+                    monitor_->addDevice(string(devpath));
                 } catch (const std::runtime_error &e) {
                     ERROR("%s", e.what());
                 }
@@ -170,7 +168,7 @@ udev_failed:
         std::stringstream ss;
         ss << "/dev/video" << idx;
         try {
-            addDevice(ss.str());
+            monitor_->addDevice(ss.str());
         } catch (const std::runtime_error &e) {
             ERROR("%s", e.what());
             return;
@@ -183,56 +181,6 @@ void VideoDeviceMonitorImpl::start()
     probing_ = true;
     thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
 }
-
-namespace {
-
-    typedef std::vector<VideoV4l2Device> Devices;
-    struct DeviceComparator {
-        explicit DeviceComparator(const std::string &name) : name_(name) {}
-        inline bool operator()(const VideoV4l2Device &d) const { return d.name == name_; }
-        private:
-        const std::string name_;
-    };
-
-    int getNumber(const string &name, size_t *sharp)
-    {
-        size_t len = name.length();
-        // name is too short to be numbered
-        if (len < 3)
-            return -1;
-
-        for (size_t c = len; c; --c) {
-            if (name[c] == '#') {
-                unsigned i;
-                if (sscanf(name.substr(c).c_str(), "#%u", &i) != 1)
-                    return -1;
-                *sharp = c;
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    void giveUniqueName(VideoV4l2Device &dev, const vector<VideoV4l2Device> &devices)
-    {
-start:
-        for (auto &item : devices) {
-            if (dev.name == item.name) {
-                size_t sharp;
-                int num = getNumber(dev.name, &sharp);
-                if (num < 0) // not numbered
-                    dev.name += " #0";
-                else {
-                    std::stringstream ss;
-                    ss  << num + 1;
-                    dev.name.replace(sharp + 1, ss.str().length(), ss.str());
-                }
-                goto start; // we changed the name, let's look again if it is unique
-            }
-        }
-    }
-} // end anonymous namespace
 
 VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 {
@@ -276,14 +224,13 @@ void VideoDeviceMonitorImpl::run()
                     if (!strcmp(action, "add")) {
                         DEBUG("udev: adding %s", node);
                         try {
-                            addDevice(node);
-                            Manager::instance().getVideoManager()->deviceEvent();
+                            monitor_->addDevice(node);
                         } catch (const std::runtime_error &e) {
                             ERROR("%s", e.what());
                         }
                     } else if (!strcmp(action, "remove")) {
                         DEBUG("udev: removing %s", node);
-                        delDevice(string(node));
+                        monitor_->delDevice(string(node));
                     }
                     udev_device_unref(dev);
                     break;
@@ -304,109 +251,9 @@ void VideoDeviceMonitorImpl::run()
     }
 }
 
-void VideoDeviceMonitorImpl::delDevice(const string &node)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    const auto itr = std::find_if(devices_.begin(), devices_.end(),
-            [&] (const VideoV4l2Device &d) { return d.device == node; });
-
-    if (itr != devices_.end()) {
-        devices_.erase(itr);
-        Manager::instance().getVideoManager()->deviceEvent();
-    }
-}
-
-void VideoDeviceMonitorImpl::addDevice(const string &dev)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    VideoV4l2Device v(dev);
-    giveUniqueName(v, devices_);
-    devices_.push_back(v);
-}
-
-vector<string>
-VideoDeviceMonitorImpl::getChannelList(const string &dev) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    Devices::const_iterator iter(findDevice(dev));
-    if (iter != devices_.end())
-        return iter->getChannelList();
-    else
-        return vector<string>();
-}
-
-vector<string>
-VideoDeviceMonitorImpl::getSizeList(const string &dev, const string &channel) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    Devices::const_iterator iter(findDevice(dev));
-    if (iter != devices_.end())
-        return iter->getChannel(channel).getSizeList();
-    else
-        return vector<string>();
-}
-
-vector<string>
-VideoDeviceMonitorImpl::getRateList(const string &dev, const string &channel, const std::string &size) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    Devices::const_iterator iter(findDevice(dev));
-    if (iter != devices_.end())
-        return iter->getChannel(channel).getSize(size).getRateList();
-    else
-        return vector<string>();
-}
-
-vector<string> VideoDeviceMonitorImpl::getDeviceList() const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    vector<string> v;
-
-    for (const auto &itr : devices_)
-       v.push_back(itr.name.empty() ? itr.device : itr.name);
-
-    return v;
-}
-
-Devices::const_iterator
-VideoDeviceMonitorImpl::findDevice(const string &name) const
-{
-    Devices::const_iterator iter(std::find_if(devices_.begin(), devices_.end(), DeviceComparator(name)));
-    if (iter == devices_.end())
-        ERROR("Device %s not found", name.c_str());
-    return iter;
-}
-
-unsigned
-VideoDeviceMonitorImpl::getChannelNum(const string &dev, const string &name) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    Devices::const_iterator iter(findDevice(dev));
-    if (iter != devices_.end())
-        return iter->getChannel(name).idx;
-    else
-        return 0;
-}
-
-string
-VideoDeviceMonitorImpl::getDeviceNode(const string &name) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    Devices::const_iterator iter(findDevice(name));
-    if (iter != devices_.end())
-        return iter->device;
-    else
-        return "";
-}
-} // namespace sfl_video
-
-using namespace sfl_video;
-
 VideoDeviceMonitor::VideoDeviceMonitor() :
-    monitorImpl_(new VideoDeviceMonitorImpl),
-    deviceList_()
+    preferences_(), devices_(),
+    monitorImpl_(new VideoDeviceMonitorImpl(this))
 {
     monitorImpl_->start();
 }
@@ -414,49 +261,4 @@ VideoDeviceMonitor::VideoDeviceMonitor() :
 VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
-/*
- * V4L2 interface.
- */
-
-std::vector<std::string>
-VideoDeviceMonitor::getDeviceList() const
-{
-    return monitorImpl_->getDeviceList();
-}
-
-/*
- * Interface for a single device.
- */
-
-VideoCapabilities
-VideoDeviceMonitor::getCapabilities(const std::string& name) const
-{
-    VideoCapabilities cap;
-
-    for (const auto& chan : monitorImpl_->getChannelList(name))
-        for (const auto& size : monitorImpl_->getSizeList(name, chan))
-            cap[chan][size] = monitorImpl_->getRateList(name, chan, size);
-
-    return cap;
-}
-
-std::map<std::string, std::string>
-VideoDeviceMonitor::deviceToSettings(const VideoDevice& dev) const
-{
-    std::map<std::string, std::string> settings;
-
-    settings["input"] = monitorImpl_->getDeviceNode(dev.name);
-
-    std::stringstream channel_index;
-    channel_index << monitorImpl_->getChannelNum(dev.name, dev.channel);
-    settings["channel"] = channel_index.str();
-
-    settings["video_size"] = dev.size;
-    size_t x_pos = dev.size.find('x');
-    settings["width"] = dev.size.substr(0, x_pos);
-    settings["height"] = dev.size.substr(x_pos + 1);
-
-    settings["framerate"] = dev.rate;
-
-    return settings;
-}
+} // namespace sfl_video
