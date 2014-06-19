@@ -35,8 +35,14 @@
 // we could forward declare ManagerImpl BUT anyone who will call instance
 // will need this include.
 #include "managerimpl.h"
+#include <atomic>
 
 namespace Manager {
+
+    // Protect self calls during instantiation
+    // FIXME this is a hack!
+    static std::atomic<bool> instantiated = {};
+
     ManagerImpl& instance();
 }
 

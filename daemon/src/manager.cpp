@@ -34,5 +34,6 @@ ManagerImpl& Manager::instance()
 {
     // Meyers singleton
     static ManagerImpl instance_;
+    instantiated = true;
     return instance_;
 }
