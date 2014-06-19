@@ -33,171 +33,189 @@
 #include <cassert>
 #include <sstream>
 
+#include "manager.h"
+#include "client/videomanager.h"
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "logger.h"
 #include "video_device_monitor.h"
 
-using namespace sfl_video;
+namespace sfl_video {
 
-/*
- * Interface for a single device.
- */
+using std::map;
+using std::string;
+using std::stringstream;;
+using std::vector;
 
-VideoDeviceMonitor::VideoDevice
-VideoDeviceMonitor::defaultPreferences(const std::string& name) const
+vector<string>
+VideoDeviceMonitor::getDeviceList() const
 {
-    VideoCapabilities cap = getCapabilities(name);
+    vector<string> names;
 
-    VideoDevice dev;
-    dev.name = name;
+    for (const auto& dev : devices_)
+       names.push_back(dev.name);
 
-    assert(!cap.empty());
-    dev.channel = cap.begin()->first;
-
-    assert(!cap[dev.channel].empty());
-    dev.size = cap[dev.channel].begin()->first;
-
-    assert(!cap[dev.channel][dev.size].empty());
-    dev.rate = cap[dev.channel][dev.size][0];
-
-    return dev;
+    return names;
 }
 
 void
-VideoDeviceMonitor::addDevice(const std::string &name)
+VideoDeviceMonitor::trySettings(const string& name, VideoSettings settings)
 {
-    for (const auto &dev : deviceList_)
-        if (dev.name == name)
-            return;
-
-    VideoDevice dev = defaultPreferences(name);
-    deviceList_.push_back(dev);
+    const auto iter = findDeviceByName(name);
+    if (iter != devices_.end())
+        iter->trySettings(settings);
 }
 
-std::vector<VideoDeviceMonitor::VideoDevice>::iterator
-VideoDeviceMonitor::lookupDevice(const std::string& name)
+VideoSettings
+VideoDeviceMonitor::getSettings(const string& name) const
 {
-    // Find the device in the cache of preferences
-    std::vector<VideoDeviceMonitor::VideoDevice>::iterator it;
-    for (it = deviceList_.begin(); it != deviceList_.end(); ++it)
-        if (it->name == name)
-            break;
-
-    // Check if the device is detected
-    if (it != deviceList_.end())
-        for (const auto& plugged : getDeviceList())
-            if (plugged == it->name)
-                return it;
-
-    // Device not found
-    return deviceList_.end();
+    const auto iter = findDeviceByName(name);
+    if (iter != devices_.end())
+        return iter->getSettings();
+    else
+        return VideoSettings();
 }
 
-
-std::vector<VideoDeviceMonitor::VideoDevice>::const_iterator
-VideoDeviceMonitor::lookupDevice(const std::string& name) const
+VideoCapabilities
+VideoDeviceMonitor::getCapabilities(const string& name) const
 {
-    // Find the device in the cache of preferences
-    std::vector<VideoDeviceMonitor::VideoDevice>::const_iterator it;
-    for (it = deviceList_.begin(); it != deviceList_.end(); ++it)
-        if (it->name == name)
-            break;
-
-    // Check if the device is detected
-    if (it != deviceList_.end())
-        for (const auto& plugged : getDeviceList())
-            if (plugged == it->name)
-                return it;
-
-    // Device not found
-    return deviceList_.end();
+    const auto iter = findDeviceByName(name);
+    if (iter != devices_.end())
+        return iter->getCapabilities();
+    else
+        return VideoCapabilities();
 }
 
-std::map<std::string, std::string>
-VideoDeviceMonitor::getSettingsFor(const std::string& name) const
+static int
+getNumber(const string &name, size_t *sharp)
 {
-    std::map<std::string, std::string> settings;
+    size_t len = name.length();
+    // name is too short to be numbered
+    if (len < 3)
+        return -1;
 
-    const auto iter = lookupDevice(name);
-
-    if (iter != deviceList_.end())
-        settings = deviceToSettings(*iter);
-
-    return settings;
-}
-
-std::map<std::string, std::string>
-VideoDeviceMonitor::getPreferences(const std::string& name) const
-{
-    std::map<std::string, std::string> pref;
-    const auto it = lookupDevice(name);
-
-    if (it != deviceList_.end()) {
-        pref["name"] = it->name;
-        pref["channel"] = it->channel;
-        pref["size"] = it->size;
-        pref["rate"] = it->rate;
+    for (size_t c = len; c; --c) {
+        if (name[c] == '#') {
+            unsigned i;
+            if (sscanf(name.substr(c).c_str(), "#%u", &i) != 1)
+                return -1;
+            *sharp = c;
+            return i;
+        }
     }
 
-    return pref;
+    return -1;
 }
 
-bool
-VideoDeviceMonitor::validatePreference(const VideoDevice& dev) const
+static void
+giveUniqueName(VideoDevice &dev, const vector<VideoDevice> &devices)
 {
-    DEBUG("prefs: name:%s channel:%s size:%s rate:%s", dev.name.data(),
-            dev.channel.data(), dev.size.data(), dev.rate.data());
+start:
+    for (auto &item : devices) {
+        if (dev.name == item.name) {
+            size_t sharp;
+            int num = getNumber(dev.name, &sharp);
+            if (num < 0) // not numbered
+                dev.name += " #0";
+            else {
+                stringstream ss;
+                ss  << num + 1;
+                dev.name.replace(sharp + 1, ss.str().length(), ss.str());
+            }
+            goto start; // we changed the name, let's look again if it is unique
+        }
+    }
+}
 
-    VideoCapabilities cap = getCapabilities(dev.name);
-
-    // Validate the channel
-    if (cap[dev.channel].empty()) {
-        DEBUG("Bad channel, ignoring");
-        return false;
+static void
+notify()
+{
+    if (!ManagerImpl::initialized) {
+        WARN("Manager not initialized yet");
+        return;
     }
 
-    // Validate the size
-    if (cap[dev.channel][dev.size].empty()) {
-        DEBUG("Bad size, ignoring");
-        return false;
-    }
-
-    // Validate the rate
-    const auto rates = cap[dev.channel][dev.size];
-    if (std::find(rates.begin(), rates.end(), dev.rate) == rates.end()) {
-        DEBUG("Bad rate, ignoring");
-        return false;
-    }
-
-    return true;
+    Manager::instance().getVideoManager()->deviceEvent();
 }
 
 void
-VideoDeviceMonitor::setPreferences(const std::string& name,
-        std::map<std::string, std::string> pref)
+VideoDeviceMonitor::addDevice(const string &node)
 {
-    // Validate the name
-    const auto it = lookupDevice(name);
-    if (it == deviceList_.end()) {
-        DEBUG("Device not found, ignoring");
+    if (findDeviceByNode(node) != devices_.end())
         return;
+
+    VideoDevice dev(node);
+    giveUniqueName(dev, devices_);
+
+    for (auto& pref : preferences_) {
+        if (pref["name"] == dev.name) {
+            dev.trySettings(pref);
+            break;
+        }
     }
 
-    VideoDevice dev;
-    dev.name = name;
-    dev.channel = pref["channel"];
-    dev.size = pref["size"];
-    dev.rate = pref["rate"];
+    devices_.push_back(dev);
+    notify();
+}
 
-    if (!validatePreference(dev)) {
-        ERROR("invalid settings");
+void
+VideoDeviceMonitor::delDevice(const string &node)
+{
+    const auto it = findDeviceByNode(node);
+
+    if (it == devices_.end())
         return;
-    }
 
-    it->channel = dev.channel;
-    it->size = dev.size;
-    it->rate = dev.rate;
+    devices_.erase(it);
+    notify();
+}
+
+vector<VideoDevice>::iterator
+VideoDeviceMonitor::findDeviceByName(const string& name)
+{
+    vector<VideoDevice>::iterator it;
+
+    for (it = devices_.begin(); it != devices_.end(); ++it)
+        if (it->name == name)
+            break;
+
+    return it;
+}
+
+vector<VideoDevice>::const_iterator
+VideoDeviceMonitor::findDeviceByName(const string& name) const
+{
+    vector<VideoDevice>::const_iterator it;
+
+    for (it = devices_.cbegin(); it != devices_.cend(); ++it)
+        if (it->name == name)
+            break;
+
+    return it;
+}
+
+vector<VideoDevice>::iterator
+VideoDeviceMonitor::findDeviceByNode(const string& node)
+{
+    vector<VideoDevice>::iterator it;
+
+    for (it = devices_.begin(); it != devices_.end(); ++it)
+        if (it->getNode() == node)
+            break;
+
+    return it;
+}
+
+vector<VideoDevice>::const_iterator
+VideoDeviceMonitor::findDeviceByNode(const string& node) const
+{
+    vector<VideoDevice>::const_iterator it;
+
+    for (it = devices_.cbegin(); it != devices_.cend(); ++it)
+        if (it->getNode() == node)
+            break;
+
+    return it;
 }
 
 /*
@@ -205,57 +223,22 @@ VideoDeviceMonitor::setPreferences(const std::string& name,
  * This is the default used device when sending a video stream.
  */
 
-std::string
+string
 VideoDeviceMonitor::getDevice() const
 {
-    // Default device not set or not detected?
-    if (lookupDevice(default_) == deviceList_.end())
+    if (default_ == nullptr)
         return "";
 
-    return default_;
+    return default_->name;
 }
 
 void
-VideoDeviceMonitor::setDevice(const std::string& name)
+VideoDeviceMonitor::setDevice(const string& name)
 {
+    const auto it = findDeviceByName(name);
 
-    /*
-     * This is actually a hack.
-     * v4l2List_ is calling setDevice() when it detects a new device.
-     * We addDevice() here until we make V4l2List use it.
-     */
-    addDevice(name);
-
-    if (lookupDevice(name) != deviceList_.end())
-        default_ = name;
-}
-
-std::map<std::string, std::string>
-VideoDeviceMonitor::getSettings() const
-{
-    std::map<std::string, std::string> settings;
-
-    const auto it = lookupDevice(default_);
-    if (it != deviceList_.end() && validatePreference(*it))
-        settings = deviceToSettings(*it);
-
-    return settings;
-}
-
-void
-VideoDeviceMonitor::addDeviceToSequence(const VideoDevice& dev,
-        Conf::SequenceNode& seq)
-{
-    using namespace Conf;
-
-    MappingNode *node = new MappingNode(nullptr);
-
-    node->setKeyValue("name", new ScalarNode(dev.name));
-    node->setKeyValue("channel", new ScalarNode(dev.channel));
-    node->setKeyValue("size", new ScalarNode(dev.size));
-    node->setKeyValue("rate", new ScalarNode(dev.rate));
-
-    seq.addNode(node);
+    if (it != devices_.end())
+        default_ = &(*it);
 }
 
 void
@@ -263,18 +246,47 @@ VideoDeviceMonitor::serialize(Conf::YamlEmitter &emitter)
 {
     using namespace Conf;
 
+    vector<VideoSettings> sorted;
+
+    // Store preferences of plugged devices.
+    for (const auto& dev : devices_) {
+        VideoSettings pref = dev.getSettings();
+
+        // Remove old preferences, if any.
+        auto it = preferences_.begin();
+        while (it != preferences_.end()) {
+            if ((*it)["name"] == pref["name"]) {
+                preferences_.erase(it);
+                break;
+            }
+            it++;
+        }
+
+        // Put the default device at first position.
+        if (&dev == default_)
+            sorted.insert(sorted.begin(), pref);
+        else
+            sorted.push_back(pref);
+    }
+
+    // Store the remaining preferences (old or unplugged devices).
+    for (const auto& pref : preferences_)
+        sorted.push_back(pref);
+
+    preferences_.clear();
+
     MappingNode devices(nullptr);
     SequenceNode sequence(nullptr);
 
-    if (!deviceList_.empty()) {
-        /* add active device first */
-        auto it = lookupDevice(default_);
-        if (it != deviceList_.end())
-            addDeviceToSequence(*it, sequence);
+    for (auto& pref : sorted) {
+        MappingNode *node = new MappingNode(nullptr);
 
-        for (const auto& dev : deviceList_)
-            if (dev.name != default_)
-                addDeviceToSequence(dev, sequence);
+        node->setKeyValue("name", new ScalarNode(pref["name"]));
+        node->setKeyValue("channel", new ScalarNode(pref["channel"]));
+        node->setKeyValue("size", new ScalarNode(pref["size"]));
+        node->setKeyValue("rate", new ScalarNode(pref["rate"]));
+
+        sequence.addNode(node);
     }
 
     devices.setKeyValue("devices", &sequence);
@@ -302,26 +314,34 @@ VideoDeviceMonitor::unserialize(const Conf::YamlNode &node)
         } else {
             for (const auto &iter : *seq) {
                 MappingNode *devnode = static_cast<MappingNode *>(iter);
-                VideoDevice device;
+                VideoSettings pref;
 
-                devnode->getValue("name", &device.name);
-                devnode->getValue("channel", &device.channel);
-                devnode->getValue("size", &device.size);
-                devnode->getValue("rate", &device.rate);
+                devnode->getValue("name", &pref["name"]);
+                devnode->getValue("channel", &pref["channel"]);
+                devnode->getValue("size", &pref["size"]);
+                devnode->getValue("rate", &pref["rate"]);
 
-                deviceList_.push_back(device);
+                preferences_.push_back(pref);
             }
 
             /*
              * The first device in the configuration is the last active one.
              * If it is unplugged, assign the next one.
              */
-            for (const auto& pref : deviceList_) {
-                if (lookupDevice(pref.name) != deviceList_.end()) {
-                    default_ = pref.name;
+            for (auto& pref : preferences_) {
+                auto it = findDeviceByName(pref["name"]);
+                if (it != devices_.end()) {
+                    default_ = &(*it);
+                    it->trySettings(pref);
                     break;
                 }
             }
+
+            // If no preferred device is found, use to the first one (if any).
+            if (default_ == nullptr)
+                default_ = devices_.data();
         }
     }
 }
+
+} // namespace sfl_video
