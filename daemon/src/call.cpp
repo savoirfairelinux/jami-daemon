@@ -218,13 +218,12 @@ std::string Call::getTypeStr() const
     }
 }
 
-namespace {
-    std::string timestamp_to_string(const time_t &timestamp)
-    {
-        std::stringstream time_str;
-        time_str << timestamp;
-        return time_str.str();
-    }
+static std::string
+timestamp_to_string(const time_t &timestamp)
+{
+    std::stringstream time_str;
+    time_str << timestamp;
+    return time_str.str();
 }
 
 std::map<std::string, std::string> Call::createHistoryEntry() const

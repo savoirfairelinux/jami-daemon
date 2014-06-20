@@ -33,15 +33,14 @@
 #include "array_size.h"
 #include "logger.h"
 
-namespace {
-    const char *stateAsString(uint32_t state)
-    {
-        static const char * STATES[] = {"unknown", "asleep", "connecting",
-            "connected", "disconnected"};
+static const
+char *stateAsString(uint32_t state)
+{
+    static const char * STATES[] = {"unknown", "asleep", "connecting",
+                                    "connected", "disconnected"};
 
-        const size_t idx = state < ARRAYSIZE(STATES) ? state : 0;
-        return STATES[idx];
-    }
+    const size_t idx = state < ARRAYSIZE(STATES) ? state : 0;
+    return STATES[idx];
 }
 
 void NetworkManager::StateChanged(const uint32_t &state)

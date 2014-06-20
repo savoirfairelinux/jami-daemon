@@ -122,15 +122,14 @@ static const unsigned pixelformats_supported[] = {
  *
  */
 
-namespace {
-unsigned int pixelformat_score(unsigned pixelformat)
+static unsigned int
+pixelformat_score(unsigned pixelformat)
 {
     for (const auto &item : pixelformats_supported)
         if (item == pixelformat)
             return item;
 
     return UINT_MAX - 1;
-}
 }
 
 VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) :
@@ -259,13 +258,12 @@ VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
     return fmt.fmt.pix.pixelformat;
 }
 
-namespace {
-    bool isCIF(const VideoV4l2Size &size)
-    {
-        const unsigned CIF_WIDTH = 352;
-        const unsigned CIF_HEIGHT = 288;
-        return size.width == CIF_WIDTH and size.height == CIF_HEIGHT;
-    }
+static bool
+isCIF(const VideoV4l2Size &size)
+{
+    const unsigned CIF_WIDTH = 352;
+    const unsigned CIF_HEIGHT = 288;
+    return size.width == CIF_WIDTH and size.height == CIF_HEIGHT;
 }
 
 // Put CIF resolution (352x288) first in the list since it is more prevalent in
@@ -326,7 +324,6 @@ VideoV4l2Size VideoV4l2Channel::getSize(const string &name) const
     // fallback to last size
     return sizes_.back();
 }
-
 
 VideoV4l2Device::VideoV4l2Device(const string &device) :
     device(device), name(), channels_()
