@@ -43,12 +43,10 @@
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
 
-namespace {
-    constexpr static const char* STATUS_KEY     = "Status";
-    constexpr static const char* LINESTATUS_KEY = "LineStatus";
-    constexpr static const char* ONLINE_KEY     = "Online";
-    constexpr static const char* OFFLINE_KEY    = "Offline";
-}
+constexpr static const char* STATUS_KEY     = "Status";
+constexpr static const char* LINESTATUS_KEY = "LineStatus";
+constexpr static const char* ONLINE_KEY     = "Online";
+constexpr static const char* OFFLINE_KEY    = "Offline";
 
 /**
  * Un/subscribe to buddySipUri for an accountID

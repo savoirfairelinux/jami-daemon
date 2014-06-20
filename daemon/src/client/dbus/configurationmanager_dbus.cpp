@@ -33,14 +33,11 @@
 #include "configurationmanager.h"
 #include "global.h"
 
-namespace {
-    const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
-}
+static const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
 
 ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
 {}
-
 
 std::vector<std::string>
 ConfigurationManager::getSupportedAudioManagers()
