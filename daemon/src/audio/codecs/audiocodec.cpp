@@ -59,32 +59,32 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     hasDynamicPayload_(c.hasDynamicPayload_)
 {}
 
-int AudioCodec::decode(SFLAudioSample* /* dst */, unsigned char* /* buf */, size_t /* buffer_size */)
+int AudioCodec::decode(SFLAudioSample* /* pcm */, unsigned char* /* data */, size_t /* len */)
 {
     return 0;
 }
 
-int AudioCodec::encode(unsigned char* /* dst */, SFLAudioSample* /* src */, size_t /* buffer_size */)
+int AudioCodec::encode(unsigned char* /* data */, SFLAudioSample* /* pcm */, size_t /* max_data_bytes */)
 {
     return 0;
 }
 
 
 // Mono only, subclasses must implement multichannel support
-int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t* buf, size_t buf_size)
+int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t* data, size_t len)
 {
-    return decode(dst[0].data(), const_cast<uint8_t*>(buf), buf_size);
+    return decode(pcm[0].data(), const_cast<uint8_t*>(data), len);
 }
 
 // Mono only, subclasses must implement multichannel support
-size_t AudioCodec::encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size)
+size_t AudioCodec::encode(const std::vector<std::vector<SFLAudioSample> > &pcm, uint8_t *data, size_t len)
 {
-    return encode(dst, const_cast<SFLAudioSample*>(src[0].data()), dst_size);
+    return encode(data, const_cast<SFLAudioSample*>(pcm[0].data()), len);
 }
 
-int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &dst)
+int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &pcm)
 {
-    dst.clear();
+    pcm.clear();
     return frameSize_;
 }
 
