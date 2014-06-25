@@ -69,20 +69,20 @@ class AudioCodec {
          * Multichannel version of decode().
          * Default implementation calls mono version
          */
-        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t* buf, size_t buf_size);
+        virtual int decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t* data, size_t len);
 
         /**
          * Inform the codec of a lost packet and perform packet loss concealment.
          * Default implementation fills dst with 0.
          */
-        virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst);
+        virtual int decode(std::vector<std::vector<SFLAudioSample> > &pcm);
 
         /**
          * Multichannel version of encode().
          * Default implementation calls encode() on the first channel (assume 1 channel).
          * @return the number of bytes encoded
          */
-        virtual size_t encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size);
+        virtual size_t encode(const std::vector<std::vector<SFLAudioSample> > &pcm, uint8_t *data, size_t len);
 
         uint8_t getPayloadType() const;
 
@@ -158,17 +158,21 @@ class AudioCodec {
     protected:
         /**
          * Decode an input buffer and fill the output buffer with the decoded data
-         * @param buffer_size : the size of the input buffer
+         * @param pcm: output signal
+         * @param data: input buffer to decode
+         * @param len: length of input buffer
          * @return the number of samples decoded
          */
-        virtual int decode(SFLAudioSample* /* dst */, unsigned char* /* buf */, size_t /* buffer_size */);
+        virtual int decode(SFLAudioSample *pcm, unsigned char *data, size_t len);
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
-         * @param buffer_size : the maximum size of encoded data buffer (dst)
+         * @param data: output buffer, must be at least as big as max_data_bytes
+         * @param pcm: input signal
+         * @param max_data_bytes: the maximum size of the encoded data buffer (data)
          * @return the number of bytes encoded
          */
-        virtual int encode(unsigned char* /* dst */, SFLAudioSample* /* src */, size_t /* buffer_size */);
+        virtual int encode(unsigned char *data, SFLAudioSample *pcm, size_t max_data_bytes);
 
         /** Holds SDP-compliant codec name */
         std::string codecName_; // what we put inside sdp
