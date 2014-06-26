@@ -52,10 +52,10 @@ public:
 private:
    sfl::AudioCodec * clone();
 
-   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst, const uint8_t *buf, size_t buf_size);
-   virtual int decode(std::vector<std::vector<SFLAudioSample> > &dst);
+   virtual int decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t *data, size_t len);
+   virtual int decode(std::vector<std::vector<SFLAudioSample> > &pcm);
 
-   virtual size_t encode(const std::vector<std::vector<SFLAudioSample> > &src, uint8_t *dst, size_t dst_size);
+   virtual size_t encode(const std::vector<std::vector<SFLAudioSample> > &pcm, uint8_t *data, size_t len);
 
    virtual uint32_t getSDPClockRate() const;
    virtual const char *getSDPChannels() const;
