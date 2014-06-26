@@ -119,6 +119,10 @@ class ManagerImpl {
          */
         ShortcutPreferences shortcutPreferences;
 
+        // Manager should not be accessed until initialized.
+        // FIXME this is an evil hack!
+        static std::atomic_bool initialized;
+
         /**
          * Initialisation of thread (sound) and map.
          * Init a new VoIPLink, audio codec and audio driver

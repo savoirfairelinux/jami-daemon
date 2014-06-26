@@ -34,5 +34,7 @@ ManagerImpl& Manager::instance()
 {
     // Meyers singleton
     static ManagerImpl instance_;
+    if (not ManagerImpl::initialized)
+        WARN("Not initialized");
     return instance_;
 }
