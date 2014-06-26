@@ -49,27 +49,30 @@ class Alaw : public sfl::AudioCodec {
             return new Alaw;
         }
 
-        int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size)
+        int decode(SFLAudioSample *pcm, unsigned char *data, size_t len)
         {
-            for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
-                *dst = ALawDecode(*src);
+            for (unsigned char* end = data + len; data < end; ++data, ++pcm)
+                *pcm = ALawDecode(*data);
 
-            return buf_size;
+            return len;
         }
 
-        int encode(unsigned char *dst, SFLAudioSample *src, size_t /* buf_size */)
+        int encode(unsigned char *data, SFLAudioSample *pcm, size_t max_data_bytes)
         {
-            for (unsigned char *end = dst + frameSize_; dst < end; ++src, ++dst)
-                *dst = ALawEncode(*src);
+            unsigned char *end = std::min(data + frameSize_, data + max_data_bytes);
+            unsigned char *tmp = data;
 
-            return frameSize_;
+            for (; tmp < end; ++pcm, ++tmp)
+                *tmp = ALawEncode(*pcm);
+
+            return end - data;
         }
 
-        static int ALawDecode(uint8_t alaw) {
+        static SFLAudioSample ALawDecode(unsigned char alaw) {
             return alaw_to_linear(alaw);
         }
 
-        static uint8_t ALawEncode(SFLAudioSample pcm16) {
+        static unsigned char ALawEncode(SFLAudioSample pcm16) {
             return linear_to_alaw(pcm16);
         }
 };
