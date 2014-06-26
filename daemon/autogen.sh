@@ -15,8 +15,11 @@ fi
 
 LIBTOOLIZE=`which libtoolize`
 if test -z $LIBTOOLIZE; then
+    LIBTOOLIZE=`which glibtoolize`
+    if test -z $LIBTOOLIZE; then
         echo "*** No libtool found, please install it ***"
         exit 1
+    fi
 fi
 
 # Workaround for http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=565663
