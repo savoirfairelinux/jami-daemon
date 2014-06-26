@@ -57,14 +57,14 @@ class G722 : public sfl::AudioCodec {
             return new G722;
         }
 
-        int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size)
+        int decode(SFLAudioSample *pcm, unsigned char *data, size_t len)
         {
-            return g722_decode(dst, src, buf_size);
+            return g722_decode(pcm, data, len);
         }
 
-        int encode(unsigned char *dst, SFLAudioSample *src, size_t /*buf_size*/)
+        int encode(unsigned char *data, SFLAudioSample *pcm, size_t max_data_bytes)
         {
-            int out = g722_encode(dst, src, frameSize_);
+            int out = g722_encode(data, pcm, std::min<size_t>(frameSize_, max_data_bytes));
             return out;
         }
 
