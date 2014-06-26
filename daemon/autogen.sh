@@ -13,7 +13,7 @@ if test -z $PKGCONFIG; then
         # by configure, not autogen.sh
 fi
 
-LIBTOOLIZE=`which libtoolize`
+LIBTOOLIZE=`which libtoolize || which glibtoolize`
 if test -z $LIBTOOLIZE; then
         echo "*** No libtool found, please install it ***"
         exit 1
