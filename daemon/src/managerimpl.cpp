@@ -89,6 +89,8 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 
+std::atomic_bool ManagerImpl::initialized = {false};
+
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
@@ -171,6 +173,9 @@ bool ManagerImpl::parseConfiguration()
 
 void ManagerImpl::init(const std::string &config_file)
 {
+    // FIXME: this is no good
+    initialized = true;
+
     path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
 
