@@ -34,5 +34,11 @@ ManagerImpl& Manager::instance()
 {
     // Meyers singleton
     static ManagerImpl instance_;
+
+    // This will give a warning that can be ignored the first time instance()
+    // is called...subsequent warnings are more serious
+    if (not ManagerImpl::initialized)
+        WARN("Not initialized");
+
     return instance_;
 }
