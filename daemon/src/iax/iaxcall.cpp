@@ -38,6 +38,7 @@
 #include "logger.h"
 #include "account.h"
 #include "manager.h"
+#include "iaxvoiplink.h"
 
 static int
 codecToASTFormat(int c)
@@ -60,8 +61,9 @@ codecToASTFormat(int c)
     }
 }
 
-IAXCall::IAXCall(const std::string& id, Call::CallType type, const std::string &account_id) : Call(id, type, account_id),
-    format(0), session(NULL)
+IAXCall::IAXCall(const std::string& id, Call::CallType type,
+                 const std::string& account_id, IAXVoIPLink* link) :
+    Call(id, type, account_id), format(0), session(NULL), link_(link)
 {}
 
 int IAXCall::getSupportedFormat(const std::string &accountID) const
@@ -126,3 +128,7 @@ void IAXCall::answer()
 {
     iax_answer(session);
 }
+
+VoIPLink*
+IAXCall::getVoIPLink() const
+{ return link_; }

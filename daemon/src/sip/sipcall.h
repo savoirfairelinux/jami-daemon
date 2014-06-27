@@ -115,6 +115,8 @@ class SIPCall : public Call {
         void onhold();
         void offhold(const std::function<void()> &SDPUpdateFunc);
 
+        VoIPLink* getVoIPLink() const;
+
     private:
 
         // override of Call::createHistoryEntry
