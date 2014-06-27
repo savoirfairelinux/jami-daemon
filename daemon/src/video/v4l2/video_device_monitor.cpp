@@ -186,53 +186,56 @@ void VideoDeviceMonitorImpl::start()
 
 namespace {
 
-    typedef std::vector<VideoV4l2Device> Devices;
-    struct DeviceComparator {
-        explicit DeviceComparator(const std::string &name) : name_(name) {}
-        inline bool operator()(const VideoV4l2Device &d) const { return d.name == name_; }
-        private:
-        const std::string name_;
-    };
+typedef std::vector<VideoV4l2Device> Devices;
+struct DeviceComparator {
+    explicit DeviceComparator(const std::string &name) : name_(name) {}
+    inline bool operator()(const VideoV4l2Device &d) const { return d.name == name_; }
+private:
+    const std::string name_;
+};
 
-    int getNumber(const string &name, size_t *sharp)
-    {
-        size_t len = name.length();
-        // name is too short to be numbered
-        if (len < 3)
-            return -1;
+}
 
-        for (size_t c = len; c; --c) {
-            if (name[c] == '#') {
-                unsigned i;
-                if (sscanf(name.substr(c).c_str(), "#%u", &i) != 1)
-                    return -1;
-                *sharp = c;
-                return i;
-            }
-        }
-
+static int
+getNumber(const string &name, size_t *sharp)
+{
+    size_t len = name.length();
+    // name is too short to be numbered
+    if (len < 3)
         return -1;
-    }
 
-    void giveUniqueName(VideoV4l2Device &dev, const vector<VideoV4l2Device> &devices)
-    {
-start:
-        for (auto &item : devices) {
-            if (dev.name == item.name) {
-                size_t sharp;
-                int num = getNumber(dev.name, &sharp);
-                if (num < 0) // not numbered
-                    dev.name += " #0";
-                else {
-                    std::stringstream ss;
-                    ss  << num + 1;
-                    dev.name.replace(sharp + 1, ss.str().length(), ss.str());
-                }
-                goto start; // we changed the name, let's look again if it is unique
-            }
+    for (size_t c = len; c; --c) {
+        if (name[c] == '#') {
+            unsigned i;
+            if (sscanf(name.substr(c).c_str(), "#%u", &i) != 1)
+                return -1;
+            *sharp = c;
+            return i;
         }
     }
-} // end anonymous namespace
+
+    return -1;
+}
+
+static void
+giveUniqueName(VideoV4l2Device &dev, const vector<VideoV4l2Device> &devices)
+{
+start:
+    for (auto &item : devices) {
+        if (dev.name == item.name) {
+            size_t sharp;
+            int num = getNumber(dev.name, &sharp);
+            if (num < 0) // not numbered
+                dev.name += " #0";
+            else {
+                std::stringstream ss;
+                ss  << num + 1;
+                dev.name.replace(sharp + 1, ss.str().length(), ss.str());
+            }
+            goto start; // we changed the name, let's look again if it is unique
+        }
+    }
+}
 
 VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 {
