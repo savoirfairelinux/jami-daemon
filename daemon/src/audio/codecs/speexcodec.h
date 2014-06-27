@@ -91,16 +91,17 @@ private:
 
         NON_COPYABLE(Speex);
 
-        virtual int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size) {
-            speex_bits_read_from(&speex_dec_bits_, (char*) src, buf_size);
-            speex_decode_int(speex_dec_state_, &speex_dec_bits_, dst);
+        virtual int decode(SFLAudioSample *pcm, unsigned char *data, size_t len) {
+            speex_bits_read_from(&speex_dec_bits_, (char*) data, len);
+            speex_decode_int(speex_dec_state_, &speex_dec_bits_, pcm);
             return frameSize_;
         }
 
-        virtual int encode(unsigned char *dst, SFLAudioSample *src, size_t /* buf_size */) {
+        virtual int encode(unsigned char *data, SFLAudioSample *pcm, size_t max_data_bytes) {
             speex_bits_reset(&speex_enc_bits_);
-            speex_encode_int(speex_enc_state_, src, &speex_enc_bits_);
-            return speex_bits_write(&speex_enc_bits_, (char*) dst, frameSize_);
+            speex_encode_int(speex_enc_state_, pcm, &speex_enc_bits_);
+            return speex_bits_write(&speex_enc_bits_, (char*) data,
+                                    std::min<size_t>(frameSize_, max_data_bytes));
         }
 
         SpeexBits speex_dec_bits_;
