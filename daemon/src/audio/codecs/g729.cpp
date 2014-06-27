@@ -79,17 +79,17 @@ G729::clone()
     return new G729;
 }
 
-int G729::decode(SFLAudioSample *dst, unsigned char *buf, size_t buffer_size)
+int G729::decode(SFLAudioSample *pcm, unsigned char *data, size_t len)
 {
-    decoder_(decoderContext_, buf, false, dst);
-    decoder_(decoderContext_, buf + (buffer_size / 2), false, dst + 80);
+    decoder_(decoderContext_, data, false, pcm);
+    decoder_(decoderContext_, data + (len / 2), false, pcm + 80);
     return 160;
 }
 
-int G729::encode(unsigned char *dst, SFLAudioSample *src, size_t /* buffer_size */)
+int G729::encode(unsigned char *data, SFLAudioSample *pcm, size_t)
 {
-    encoder_(encoderContext_, src, dst);
-    encoder_(encoderContext_, src + (frameSize_ / 2), dst + 10);
+    encoder_(encoderContext_, pcm, data);
+    encoder_(encoderContext_, pcm + (frameSize_ / 2), data + 10);
     return 20;
 }
 
