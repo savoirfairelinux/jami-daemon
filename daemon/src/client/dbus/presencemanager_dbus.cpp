@@ -30,13 +30,11 @@
 
 #include "presencemanager.h"
 
-namespace {
-    constexpr static const char* SERVER_PATH    = "/org/sflphone/SFLphone/PresenceManager";
-    constexpr static const char* STATUS_KEY     = "Status";
-    constexpr static const char* LINESTATUS_KEY = "LineStatus";
-    constexpr static const char* ONLINE_KEY     = "Online";
-    constexpr static const char* OFFLINE_KEY    = "Offline";
-}
+constexpr static const char* SERVER_PATH    = "/org/sflphone/SFLphone/PresenceManager";
+constexpr static const char* STATUS_KEY     = "Status";
+constexpr static const char* LINESTATUS_KEY = "LineStatus";
+constexpr static const char* ONLINE_KEY     = "Online";
+constexpr static const char* OFFLINE_KEY    = "Offline";
 
 PresenceManager::PresenceManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
