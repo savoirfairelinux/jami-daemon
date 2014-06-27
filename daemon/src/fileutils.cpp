@@ -99,10 +99,8 @@ get_data_dir()
     return std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
 }
 
-namespace {
-
 /* Lock a file region */
-int
+static int
 lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
 {
     struct flock fl;
@@ -115,11 +113,10 @@ lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
     return fcntl(fd, cmd, &fl);
 }
 
-int /* Lock a file region using nonblocking F_SETLK */
+static int /* Lock a file region using nonblocking F_SETLK */
 lockRegion(int fd, int type, int whence, int start, int len)
 {
     return lockReg(fd, F_SETLK, type, whence, start, len);
-}
 }
 
 FileHandle
