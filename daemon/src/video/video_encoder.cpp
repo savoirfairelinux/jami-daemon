@@ -210,13 +210,12 @@ VideoEncoder::startIO()
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
 }
 
-namespace {
-void print_averror(const char *funcname, int err)
+static void
+print_averror(const char *funcname, int err)
 {
     char errbuf[64];
     av_strerror(err, errbuf, sizeof(errbuf));
     ERROR("%s failed: %s", funcname, errbuf);
-}
 }
 
 int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_number)

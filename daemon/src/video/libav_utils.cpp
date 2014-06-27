@@ -39,18 +39,13 @@
 #include <string>
 #include <iostream>
 
+std::map<std::string, std::string> encoders_;
+std::vector<std::string> installed_video_codecs_;
 
-namespace {
-using std::string;
-using std::map;
-using std::vector;
-
-map<string, string> encoders_;
-vector<string> installed_video_codecs_;
-
-void findInstalledVideoCodecs()
+static void
+findInstalledVideoCodecs()
 {
-    vector<string> libav_codecs;
+    std::vector<std::string> libav_codecs;
     AVCodec *p = NULL;
     while ((p = av_codec_next(p)))
         if (p->type == AVMEDIA_TYPE_VIDEO)
@@ -64,20 +59,18 @@ void findInstalledVideoCodecs()
     }
 }
 
-} // end anon namespace
-
 namespace libav_utils {
 
-vector<string> getVideoCodecList()
+std::vector<std::string> getVideoCodecList()
 {
     if (installed_video_codecs_.empty())
         findInstalledVideoCodecs();
     return installed_video_codecs_;
 }
 
-namespace {
 // protect libav/ffmpeg access with pthreads
-int avcodecManageMutex(void **data, enum AVLockOp op)
+static int
+avcodecManageMutex(void **data, enum AVLockOp op)
 {
     pthread_mutex_t **mutex = reinterpret_cast<pthread_mutex_t**>(data);
     int ret = 0;
@@ -108,7 +101,12 @@ int avcodecManageMutex(void **data, enum AVLockOp op)
     return AVERROR(ret);
 }
 
-void init_once()
+std::map<std::string, std::string> encodersMap()
+{
+    return encoders_;
+}
+
+static void init_once()
 {
     av_register_all();
     avdevice_register_all();
@@ -139,13 +137,6 @@ void init_once()
     //encoders["H263"]          = "h263";
 
     findInstalledVideoCodecs();
-}
-
-}
-
-map<string, string> encodersMap()
-{
-    return encoders_;
 }
 
 static pthread_once_t already_called = PTHREAD_ONCE_INIT;
