@@ -480,27 +480,17 @@ bool ManagerImpl::hangupCall(const std::string& callId)
             unsetCurrentCall();
     }
 
-    if (isIPToIP(callId)) {
-        /* Direct IP to IP call */
-        try {
-            if (auto call = SIPVoIPLink::instance().getSipCall(callId)) {
-                history_.addCall(call.get(), preferences.getHistoryLimit());
-                SIPVoIPLink::instance().hangup(callId, 0);
-                checkAudio();
-                saveHistory();
-            }
-        } catch (const VoipLinkException &e) {
-            ERROR("%s", e.what());
-            return false;
-        }
-    } else {
+    try {
         if (auto call = getCallFromCallID(callId)) {
             history_.addCall(call.get(), preferences.getHistoryLimit());
-            VoIPLink *link = getAccountLink(call->getAccountId());
+            auto link = getAccountLink(call->getAccountId());
             link->hangup(callId, 0);
             checkAudio();
             saveHistory();
         }
+    } catch (const VoipLinkException &e) {
+        ERROR("%s", e.what());
+        return false;
     }
 
     return true;
@@ -531,7 +521,6 @@ bool ManagerImpl::hangupConference(const std::string& id)
     return true;
 }
 
-
 //THREAD=Main
 bool ManagerImpl::onHoldCall(const std::string& callId)
 {
@@ -542,19 +531,12 @@ bool ManagerImpl::onHoldCall(const std::string& callId)
     std::string current_call_id(getCurrentCallId());
 
     try {
-        if (isIPToIP(callId)) {
-            SIPVoIPLink::instance().onhold(callId);
-        } else {
-            /* Classic call, attached to an account */
-            std::string account_id(getAccountFromCall(callId));
-
-            if (account_id.empty()) {
-                DEBUG("Account ID %s or callid %s doesn't exist in call onHold", account_id.c_str(), callId.c_str());
-                return false;
-            }
-
-            getAccountLink(account_id)->onhold(callId);
+        std::string account_id(getAccountFromCall(callId));
+        if (account_id.empty()) {
+            DEBUG("Account ID %s or callid %s doesn't exist in call onHold", account_id.c_str(), callId.c_str());
+            return false;
         }
+        getAccountLink(account_id)->onhold(callId);
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         result = false;
@@ -597,16 +579,10 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
     }
 
     try {
-        if (isIPToIP(callId))
-            SIPVoIPLink::instance().offhold(callId);
-        else {
-            /* Classic call, attached to an account */
-            auto call = getCallFromCallID(callId);
-            if (call)
-                getAccountLink(call->getAccountId())->offhold(callId);
-            else
-                result = false;
-        }
+        if (auto call = getCallFromCallID(callId))
+            getAccountLink(call->getAccountId())->offhold(callId);
+        else
+            result = false;
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         return false;
@@ -636,18 +612,10 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
     } else if (not isConference(getCurrentCallId()))
         unsetCurrentCall();
 
-    // Direct IP to IP call
-    if (isIPToIP(callId)) {
-        SIPVoIPLink::instance().transfer(callId, to);
-    } else {
-        std::string accountID(getAccountFromCall(callId));
-
-        if (accountID.empty())
-            return false;
-
-        VoIPLink *link = getAccountLink(accountID);
-        link->transfer(callId, to);
-    }
+    std::string accountID(getAccountFromCall(callId));
+    if (accountID.empty())
+        return false;
+    getAccountLink(accountID)->transfer(callId, to);
 
     // remove waiting call in case we make transfer without even answer
     removeWaitingCall(callId);
@@ -667,15 +635,9 @@ void ManagerImpl::transferSucceeded()
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    if (isIPToIP(transferID))
-        return SIPVoIPLink::instance().attendedTransfer(transferID, targetID);
-
-    // Classic call, attached to an account
     std::string accountid(getAccountFromCall(transferID));
-
     if (accountid.empty())
         return false;
-
     return getAccountLink(accountid)->attendedTransfer(transferID, targetID);
 }
 
@@ -692,21 +654,12 @@ bool ManagerImpl::refuseCall(const std::string& id)
         audiodriver_->stopStream();
     }
 
-    /* Direct IP to IP call */
+    std::string accountid = getAccountFromCall(id);
+    if (accountid.empty())
+        return false;
+    getAccountLink(accountid)->refuse(id);
 
-    if (isIPToIP(id))
-        SIPVoIPLink::instance().refuse(id);
-    else {
-        /* Classic call, attached to an account */
-        std::string accountid = getAccountFromCall(id);
-
-        if (accountid.empty())
-            return false;
-
-        getAccountLink(accountid)->refuse(id);
-
-        checkAudio();
-    }
+    checkAudio();
 
     removeWaitingCall(id);
 
@@ -1650,20 +1603,10 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         unsetCurrentCall();
     }
 
-    /* Direct IP to IP call */
-    if (isIPToIP(call_id)) {
-        if (auto call = SIPVoIPLink::instance().getSipCall(call_id)) {
-            history_.addCall(call.get(), preferences.getHistoryLimit());
-            SIPVoIPLink::instance().hangup(call_id, 0);
-            saveHistory();
-        }
-    } else {
-        if (auto call = getCallFromCallID(call_id)) {
-            VoIPLink *link = getAccountLink(call->getAccountId());
-            history_.addCall(call.get(), preferences.getHistoryLimit());
-            link->peerHungup(call_id);
-            saveHistory();
-        }
+    if (auto call = getCallFromCallID(call_id)) {
+        history_.addCall(call.get(), preferences.getHistoryLimit());
+        getAccountLink(call->getAccountId())->peerHungup(call_id);
+        saveHistory();
     }
 
     client_.getCallManager()->callStateChanged(call_id, "HUNGUP");
