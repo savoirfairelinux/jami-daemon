@@ -85,40 +85,39 @@ Sdp::~Sdp()
 #endif
 }
 
-namespace {
-    bool hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)
-    {
-        for (const auto &i : codecs)
-            if (i and i->getPayloadType() == pt)
-                return true;
-        return false;
-    }
-
-    bool hasCodec(const std::vector<std::string> &codecs, const std::string &codec)
-    {
-        return std::find(codecs.begin(), codecs.end(), codec) != codecs.end();
-    }
-
-    std::string
-    rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
-    {
-        std::ostringstream os;
-        const std::string enc(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
-        const std::string param(rtpmap->param.ptr, rtpmap->param.slen);
-        os << enc << "/" << rtpmap->clock_rate;
-        if (not param.empty())
-            os << "/" << param;
-        return os.str();
-    }
-
-    sfl::AudioCodec *
-    findCodecByName(const std::string &codec)
-    {
-        // try finding by name
-        return Manager::instance().audioCodecFactory.getCodec(codec);
-    }
+static bool
+hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)
+{
+    for (const auto &i : codecs)
+        if (i and i->getPayloadType() == pt)
+            return true;
+    return false;
 }
 
+static bool
+hasCodec(const std::vector<std::string> &codecs, const std::string &codec)
+{
+    return std::find(codecs.begin(), codecs.end(), codec) != codecs.end();
+}
+
+static std::string
+rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
+{
+    std::ostringstream os;
+    const std::string enc(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
+    const std::string param(rtpmap->param.ptr, rtpmap->param.slen);
+    os << enc << "/" << rtpmap->clock_rate;
+    if (not param.empty())
+        os << "/" << param;
+    return os.str();
+}
+
+static sfl::AudioCodec *
+findCodecByName(const std::string &codec)
+{
+    // try finding by name
+    return Manager::instance().audioCodecFactory.getCodec(codec);
+}
 
 void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 {
@@ -460,14 +459,13 @@ void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
     }
 }
 
-namespace {
-    void printSession(const pjmedia_sdp_session *session)
-    {
-        char buffer[2048];
-        size_t size = pjmedia_sdp_print(session, buffer, sizeof(buffer));
-        string sessionStr(buffer, std::min(size, sizeof(buffer)));
-        DEBUG("%s", sessionStr.c_str());
-    }
+static void
+printSession(const pjmedia_sdp_session *session)
+{
+    char buffer[2048];
+    size_t size = pjmedia_sdp_print(session, buffer, sizeof(buffer));
+    string sessionStr(buffer, std::min(size, sizeof(buffer)));
+    DEBUG("%s", sessionStr.c_str());
 }
 
 int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector<map<string, string> > &selectedVideoCodecs)
@@ -671,17 +669,15 @@ std::string Sdp::getOutgoingVideoCodec() const
     return string(codec_buf);
 }
 
-namespace {
-    vector<map<string, string> >::const_iterator
-        findCodecInList(const vector<map<string, string> > &codecs, const string &codec)
-        {
-            for (vector<map<string, string> >::const_iterator i = codecs.begin(); i != codecs.end(); ++i) {
-                map<string, string>::const_iterator name = i->find("name");
-                if (name != i->end() and (codec == name->second))
-                    return i;
-            }
-            return codecs.end();
-        }
+static vector<map<string, string> >::const_iterator
+findCodecInList(const vector<map<string, string> > &codecs, const string &codec)
+{
+    for (vector<map<string, string> >::const_iterator i = codecs.begin(); i != codecs.end(); ++i) {
+        map<string, string>::const_iterator name = i->find("name");
+        if (name != i->end() and (codec == name->second))
+            return i;
+    }
+    return codecs.end();
 }
 
 std::string
@@ -747,23 +743,22 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
         throw SdpException("Could not add zrtp attribute to media");
 }
 
-namespace {
-    // Returns index of desired media attribute, or -1 if not found */
-    int getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)
-    {
-        if (!session) {
-            ERROR("Session is NULL when looking for \"%s\" attribute", type);
-            return -1;
-        }
-        size_t i = 0;
-        while (i < session->media_count and pj_stricmp2(&session->media[i]->desc.media, type) != 0)
-            ++i;
-
-        if (i == session->media_count)
-            return -1;
-        else
-            return i;
+// Returns index of desired media attribute, or -1 if not found */
+static int
+getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)
+{
+    if (!session) {
+        ERROR("Session is NULL when looking for \"%s\" attribute", type);
+        return -1;
     }
+    size_t i = 0;
+    while (i < session->media_count and pj_stricmp2(&session->media[i]->desc.media, type) != 0)
+        ++i;
+
+    if (i == session->media_count)
+        return -1;
+    else
+        return i;
 }
 
 void Sdp::addAttributeToLocalAudioMedia(const char *attr)
