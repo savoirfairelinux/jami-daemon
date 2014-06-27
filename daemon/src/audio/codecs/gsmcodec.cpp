@@ -76,17 +76,17 @@ private:
             return new Gsm;
         }
 
-        int decode(SFLAudioSample * dst, unsigned char * src, size_t /*buf_size*/)
+        int decode(SFLAudioSample *pcm, unsigned char *data, size_t)
         {
-            if (gsm_decode(decode_gsmhandle_, (gsm_byte*) src, (gsm_signal*) dst) < 0)
+            if (gsm_decode(decode_gsmhandle_, (gsm_byte*) data, (gsm_signal*) pcm) < 0)
                 throw std::runtime_error("ERROR: gsm_decode\n");
 
             return frameSize_;
         }
 
-        int encode(unsigned char * dst, SFLAudioSample * src, size_t /*buf_size*/)
+        int encode(unsigned char * data, SFLAudioSample * pcm, size_t)
         {
-            gsm_encode(encode_gsmhandle_, (gsm_signal*) src, (gsm_byte*) dst);
+            gsm_encode(encode_gsmhandle_, (gsm_signal*) pcm, (gsm_byte*) data);
             return sizeof(gsm_frame);
         }
 
