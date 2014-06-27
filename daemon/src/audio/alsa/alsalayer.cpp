@@ -521,8 +521,8 @@ AlsaLayer::buildDeviceTopo(const std::string &plugin, int card)
     return pcm + ss.str();
 }
 
-namespace {
-bool safeUpdate(snd_pcm_t *handle, int &samples)
+static bool
+safeUpdate(snd_pcm_t *handle, int &samples)
 {
     samples = snd_pcm_avail_update(handle);
 
@@ -538,7 +538,7 @@ bool safeUpdate(snd_pcm_t *handle, int &samples)
     return true;
 }
 
-std::vector<std::string>
+static std::vector<std::string>
 getValues(const std::vector<HwIDPair> &deviceMap)
 {
     std::vector<std::string> audioDeviceList;
@@ -547,7 +547,6 @@ getValues(const std::vector<HwIDPair> &deviceMap)
         audioDeviceList.push_back(dev.second);
 
     return audioDeviceList;
-}
 }
 
 std::vector<std::string>
