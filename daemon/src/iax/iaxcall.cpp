@@ -39,8 +39,8 @@
 #include "account.h"
 #include "manager.h"
 
-namespace {
-int codecToASTFormat(int c)
+static int
+codecToASTFormat(int c)
 {
     switch (c) {
         case PAYLOAD_CODEC_ULAW:
@@ -58,7 +58,6 @@ int codecToASTFormat(int c)
             ERROR("Codec %d not supported!", c);
             return 0;
     }
-}
 }
 
 IAXCall::IAXCall(const std::string& id, Call::CallType type, const std::string &account_id) : Call(id, type, account_id),

@@ -68,12 +68,10 @@ const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 const char * const SIPAccount::ACCOUNT_TYPE = "SIP";
 
-namespace {
-const int MIN_REGISTRATION_TIME = 60;
-const int DEFAULT_REGISTRATION_TIME = 3600;
-const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
-const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
-}
+static const int MIN_REGISTRATION_TIME = 60;
+static const int DEFAULT_REGISTRATION_TIME = 3600;
+static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
+static const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
 
 // we force RTP ports to be even, so we only need HALF_MAX_PORT booleans
 bool SIPAccount::portsInUse_[HALF_MAX_PORT];
@@ -165,8 +163,7 @@ SIPAccount::~SIPAccount()
 }
 
 
-namespace {
-std::array<std::unique_ptr<Conf::ScalarNode>, 2>
+static std::array<std::unique_ptr<Conf::ScalarNode>, 2>
 serializeRange(Conf::MappingNode &accountMap, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
 {
     using namespace Conf;
@@ -185,8 +182,8 @@ serializeRange(Conf::MappingNode &accountMap, const char *minKey, const char *ma
     return result;
 }
 
-
-void updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
+static void
+updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
 {
     if (min > 0 and (max > min) and max <= MAX_PORT - 2) {
         range.first = min;
@@ -194,7 +191,7 @@ void updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
     }
 }
 
-void
+static void
 unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *maxKey, std::pair<uint16_t, uint16_t> &range)
 {
     int tmpMin = 0;
@@ -203,9 +200,6 @@ unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *
     mapNode.getValue(maxKey, &tmpMax);
     updateRange(tmpMin, tmpMax, range);
 }
-}
-
-
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
@@ -418,10 +412,9 @@ void SIPAccount::usePublishedAddressPortInVIA()
     via_addr_.port = publishedPort_;
 }
 
-namespace {
 template <typename T>
-void validate(std::string &member, const std::string &param,
-              const T& valid)
+static void
+validate(std::string &member, const std::string &param, const T& valid)
 {
     const auto begin = std::begin(valid);
     const auto end = std::end(valid);
@@ -429,7 +422,6 @@ void validate(std::string &member, const std::string &param,
         member = param;
     else
         ERROR("Invalid parameter \"%s\"", param.c_str());
-}
 }
 
 void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
@@ -632,10 +624,9 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 #endif
 }
 
-namespace {
-
 template <typename T>
-void parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
+static void
+parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
@@ -643,8 +634,6 @@ void parseInt(const std::map<std::string, std::string> &details, const char *key
         return;
     }
     i = atoi(iter->second.c_str());
-}
-
 }
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
@@ -1137,15 +1126,14 @@ bool SIPAccount::userMatch(const std::string& username) const
     return !username.empty() and username == username_;
 }
 
-namespace {
-bool haveValueInCommon(const std::vector<std::string> &a, const std::vector<std::string> &b)
+static bool
+haveValueInCommon(const std::vector<std::string> &a, const std::vector<std::string> &b)
 {
     for (const auto &i : a)
         if (std::find(b.begin(), b.end(), i) != b.end())
             return true;
 
     return false;
-}
 }
 
 bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
@@ -1366,10 +1354,10 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
         sipAccount->registerVoIPLink();
 }
 
-namespace {
-std::string computeMd5HashFromCredential(const std::string& username,
-        const std::string& password,
-        const std::string& realm)
+static std::string
+computeMd5HashFromCredential(const std::string& username,
+                             const std::string& password,
+                             const std::string& realm)
 {
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
@@ -1394,8 +1382,6 @@ std::string computeMd5HashFromCredential(const std::string& username,
 
     return std::string(hash, 32);
 }
-} // anon namespace
-
 
 void
 SIPAccount::setTransport(pjsip_transport* transport, pjsip_tpfactory* lis)
@@ -1541,8 +1527,8 @@ std::map<std::string, std::string> SIPAccount::getTlsSettings() const
     return tlsSettings;
 }
 
-namespace {
-void set_opt(const std::map<std::string, std::string> &details, const char *key, std::string &val)
+static void
+set_opt(const std::map<std::string, std::string> &details, const char *key, std::string &val)
 {
     std::map<std::string, std::string>::const_iterator it = details.find(key);
 
@@ -1550,7 +1536,8 @@ void set_opt(const std::map<std::string, std::string> &details, const char *key,
         val = it->second;
 }
 
-void set_opt(const std::map<std::string, std::string> &details, const char *key, bool &val)
+static void
+set_opt(const std::map<std::string, std::string> &details, const char *key, bool &val)
 {
     std::map<std::string, std::string>::const_iterator it = details.find(key);
 
@@ -1558,14 +1545,14 @@ void set_opt(const std::map<std::string, std::string> &details, const char *key,
         val = it->second == Conf::TRUE_STR;
 }
 
-void set_opt(const std::map<std::string, std::string> &details, const char *key, pj_uint16_t &val)
+static void
+set_opt(const std::map<std::string, std::string> &details, const char *key, pj_uint16_t &val)
 {
     std::map<std::string, std::string>::const_iterator it = details.find(key);
 
     if (it != details.end())
         val = atoi(it->second.c_str());
 }
-} //anon namespace
 
 void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& details)
 {

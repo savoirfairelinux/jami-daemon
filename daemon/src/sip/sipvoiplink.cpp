@@ -88,8 +88,6 @@ using namespace sfl;
 
 SIPVoIPLink *SIPVoIPLink::instance_ = nullptr;
 
-namespace {
-
 /** Environment variable used to set pjsip's logging level */
 #define SIPLOGLEVEL "SIPLOGLEVEL"
 
@@ -104,31 +102,30 @@ static std::map<std::string, std::string> transferCallID;
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  */
-void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP);
+static void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP);
 
 static pj_caching_pool pool_cache, *cp_ = &pool_cache;
 static pj_pool_t *pool_;
 static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
 
-void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status);
-void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
-void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
-void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
-void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
-void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
-void registration_cb(pjsip_regc_cbparam *param);
-pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
-pj_bool_t transaction_response_cb(pjsip_rx_data *rdata) ;
+static void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status);
+static void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
+static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
+static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
+static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
+static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
+static void registration_cb(pjsip_regc_cbparam *param);
 
-void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
+static void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
 /**
  * Helper function to process refer function on call transfer
  */
-void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
+static void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
 
-void handleIncomingOptions(pjsip_rx_data *rdata)
+static void
+handleIncomingOptions(pjsip_rx_data *rdata)
 {
     pjsip_tx_data *tdata;
 
@@ -156,7 +153,8 @@ void handleIncomingOptions(pjsip_rx_data *rdata)
 
 // return PJ_FALSE so that eventuall other modules will handle these requests
 // TODO: move Voicemail to separate module
-pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
+static pj_bool_t
+transaction_response_cb(pjsip_rx_data *rdata)
 {
     pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
 
@@ -184,7 +182,8 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
-void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
+static void
+updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
 {
     std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
 
@@ -203,7 +202,8 @@ void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &t
     }
 }
 
-pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
+static pj_bool_t
+transaction_request_cb(pjsip_rx_data *rdata)
 {
     if (!rdata or !rdata->msg_info.msg) {
         ERROR("rx_data is NULL");
@@ -488,7 +488,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     return PJ_FALSE;
 }
-} // end anonymous namespace
 
 /*************************************************************************************************/
 pjsip_endpoint * SIPVoIPLink::getEndpoint()
@@ -1049,8 +1048,8 @@ SIPVoIPLink::answer(Call *call)
     sipCall->answer();
 }
 
-namespace {
-void stopRtpIfCurrent(const std::string &id, SIPCall &call)
+static void
+stopRtpIfCurrent(const std::string &id, SIPCall &call)
 {
     if (Manager::instance().isCurrentCall(id)) {
         call.getAudioRtp().stop();
@@ -1058,7 +1057,6 @@ void stopRtpIfCurrent(const std::string &id, SIPCall &call)
         call.getVideoRtp().stop();
 #endif
     }
-}
 }
 
 void
@@ -1427,8 +1425,8 @@ SIPVoIPLink::refuse(const std::string& id)
     removeSipCall(id);
 }
 
-namespace {
-void sendSIPInfo(const SIPCall &call, const char *const body, const char *const subtype)
+static void
+sendSIPInfo(const SIPCall &call, const char *const body, const char *const subtype)
 {
     pj_str_t methodName = CONST_PJ_STR("INFO");
     pjsip_method method;
@@ -1456,7 +1454,7 @@ void sendSIPInfo(const SIPCall &call, const char *const body, const char *const 
         pjsip_dlg_send_request(call.inv->dlg, tdata, mod_ua_.id, NULL);
 }
 
-void
+static void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
     if (dtmf == SIPAccount::OVERRTP_STR) {
@@ -1471,7 +1469,6 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
     char dtmf_body[1000];
     snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
     sendSIPInfo(call, dtmf_body, "dtmf-relay");
-}
 }
 
 #ifdef SFL_VIDEO
@@ -1652,15 +1649,15 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data * /*rdata*/)
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace {
-
-void makeCallRing(SIPCall &call)
+static void
+makeCallRing(SIPCall &call)
 {
     call.setConnectionState(Call::RINGING);
     Manager::instance().peerRingingCall(call.getCallId());
 }
 
-void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
+static void
+invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 {
     if (!inv)
         return;
@@ -1721,7 +1718,8 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
     }
 }
 
-void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
+static void
+sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
 {
     if (!inv)
         return;
@@ -1742,7 +1740,8 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
     pjsip_inv_set_sdp_answer(call->inv, call->getLocalSDP()->getLocalSdpSession());
 }
 
-void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
+static void
+sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 {
     if (!inv or !p_offer)
         return;
@@ -1775,7 +1774,8 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 }
 
 // This callback is called after SDP offer/answer session has completed.
-void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
+static void
+sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 {
     if (!inv)
         return;
@@ -1966,10 +1966,12 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 }
 
-void outgoing_request_forked_cb(pjsip_inv_session * /*inv*/, pjsip_event * /*e*/)
+static void
+outgoing_request_forked_cb(pjsip_inv_session * /*inv*/, pjsip_event * /*e*/)
 {}
 
-bool handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_event *event)
+static bool
+handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_event *event)
 {
     /*
      * Incoming INFO request for media control.
@@ -2013,7 +2015,8 @@ bool handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip
     return false;
 }
 
-void sendOK(pjsip_dialog *dlg, pjsip_rx_data *r_data, pjsip_transaction *tsx)
+static void
+sendOK(pjsip_dialog *dlg, pjsip_rx_data *r_data, pjsip_transaction *tsx)
 {
     pjsip_tx_data* t_data;
 
@@ -2021,8 +2024,9 @@ void sendOK(pjsip_dialog *dlg, pjsip_rx_data *r_data, pjsip_transaction *tsx)
         pjsip_dlg_send_response(dlg, tsx, t_data);
 }
 
-void transaction_state_changed_cb(pjsip_inv_session * inv,
-                                  pjsip_transaction *tsx, pjsip_event *event)
+static void
+transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
+                             pjsip_event *event)
 {
     if (!tsx or !event or !inv or tsx->role != PJSIP_ROLE_UAS or
             tsx->state != PJSIP_TSX_STATE_TRYING)
@@ -2131,7 +2135,8 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 #endif
 }
 
-void registration_cb(pjsip_regc_cbparam *param)
+static void
+registration_cb(pjsip_regc_cbparam *param)
 {
     if (!param) {
         ERROR("registration callback parameter is null");
@@ -2241,7 +2246,8 @@ void registration_cb(pjsip_regc_cbparam *param)
 #undef FAILURE_MESSAGE
 }
 
-void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
+static void
+onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 {
     SIPCall *currentCall = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
@@ -2266,7 +2272,8 @@ void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }
 }
 
-void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
+static void
+transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 {
     switch (pjsip_evsub_get_state(sub)) {
         case PJSIP_EVSUB_STATE_ACCEPTED:
@@ -2342,7 +2349,8 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
     }
 }
 
-void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP)
+static void
+setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP)
 {
     std::string account_id(call->getAccountId());
     SIPAccount *account = Manager::instance().getSipAccount(account_id);
@@ -2374,7 +2382,6 @@ void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP)
 
 #endif
 }
-} // end anonymous namespace
 
 int SIPVoIPLink::getModId()
 {

@@ -40,10 +40,8 @@
 #include "client/videomanager.h"
 #endif
 
-namespace {
-    static const int INITIAL_SIZE = 16384;
-    static const int INCREMENT_SIZE = INITIAL_SIZE;
-}
+static const int INITIAL_SIZE = 16384;
+static const int INCREMENT_SIZE = INITIAL_SIZE;
 
 SIPCall::SIPCall(const std::string& id, Call::CallType type,
         pj_caching_pool *caching_pool, const std::string &account_id) :
@@ -103,15 +101,14 @@ SIPCall::createHistoryEntry() const
     return entry;
 }
 
-namespace {
-
 /**
  * Send a reINVITE inside an active dialog to modify its state
  * Local SDP session should be modified before calling this method
  * @param sip call
  */
 
-int SIPSessionReinvite(SIPCall *call)
+static int
+SIPSessionReinvite(SIPCall *call)
 {
     pjmedia_sdp_session *local_sdp = call->getLocalSDP()->getLocalSdpSession();
     pjsip_tx_data *tdata;
@@ -121,7 +118,6 @@ int SIPSessionReinvite(SIPCall *call)
         return pjsip_inv_send_msg(call->inv, tdata);
 
     return !PJ_SUCCESS;
-}
 }
 
 void
