@@ -84,4 +84,3 @@ void init_icon_factory(void)
     register_sflphone_stock_icons(icon_factory);
     gtk_icon_factory_add_default(icon_factory);
 }
-

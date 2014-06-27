@@ -488,11 +488,11 @@ update_voicemail_status()
                       current_account_get_message_number());
 
     if (current_account_has_new_message())
-        gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(voicemailToolbar_),
-                                      "mail-message-new");
+        gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(voicemailToolbar_),
+                                      GTK_STOCK_NEWVOICEMAIL);
     else
-        gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(voicemailToolbar_),
-                                      "mail-read");
+        gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(voicemailToolbar_),
+                                      GTK_STOCK_VOICEMAIL);
 
     gtk_tool_button_set_label(GTK_TOOL_BUTTON(voicemailToolbar_), messages);
     g_free(messages);
@@ -1077,7 +1077,7 @@ static const GtkActionEntry menu_entries[] = {
         N_("Send message"), G_CALLBACK(call_im)
     },
     {
-        "ScreenSharing", GTK_STOCK_FULLSCREEN, N_("Share screen"), "<control>X",
+        "ScreenSharing", GTK_STOCK_SCREENSHARING, N_("Share screen"), "<control>X",
         N_("Share screen"), G_CALLBACK(call_screenshare)
     },
     {
@@ -1133,11 +1133,11 @@ static const GtkActionEntry menu_entries[] = {
 
 static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL, TRUE },
-    { "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
+    { "Record", GTK_STOCK_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
     { "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL, TRUE },
     { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK(dialpad_bar_cb), TRUE },
     { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK(volume_bar_cb), TRUE },
-    { "History", "appointment-soon", N_("_History"), NULL, N_("Call history"), G_CALLBACK(toggle_history_cb), FALSE },
+    { "History", GTK_STOCK_HISTORY, N_("_History"), NULL, N_("Call history"), G_CALLBACK(toggle_history_cb), FALSE },
     { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK(toggle_addressbook_cb), FALSE },
 #ifdef SFL_PRESENCE
     { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), G_CALLBACK(toggle_presence_window_cb), FALSE},
@@ -1437,7 +1437,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
 
         if (record) {
             GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-            GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_MEDIA_RECORD,
+            GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_RECORD,
                                GTK_ICON_SIZE_MENU);
             gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);

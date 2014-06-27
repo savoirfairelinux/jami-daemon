@@ -1891,7 +1891,6 @@ static const guint8 gnome_stock_history[] =
   "\326TTT\352TTT\353TTT\327TTT\271TTTjRRR\31\0\0\0\0\0\0\0\0\0\0\0\0\0"
   "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"};
 
-
 /* GdkPixbuf RGBA C-Source image dump */
 
 #ifdef __SUNPRO_C
