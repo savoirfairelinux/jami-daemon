@@ -413,7 +413,7 @@ shortcuts_initialize_bindings(SFLPhoneClient *client)
 }
 
 /*
- * Initialize bindings with configuration retrieved from dbus
+ * Destroy bindings (called on exit)
  */
 void
 shortcuts_destroy_bindings()
@@ -432,6 +432,7 @@ shortcuts_destroy_bindings()
     }
 
     free(accelerators_list);
+    g_hash_table_destroy(shortcutsMap);
 }
 
 Accelerator*
