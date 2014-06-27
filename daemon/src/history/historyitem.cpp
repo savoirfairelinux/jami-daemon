@@ -60,11 +60,10 @@ const char * const HistoryItem::OUTGOING_STRING =       "outgoing";
 using std::map;
 using std::string;
 
-namespace {
-    bool file_exists(const std::string &str)
-    {
-        return access(str.c_str(), F_OK) != -1;
-    }
+static bool
+file_exists(const std::string &str)
+{
+    return access(str.c_str(), F_OK) != -1;
 }
 
 HistoryItem::HistoryItem(const map<string, string> &args) : entryMap_(args),

@@ -33,8 +33,7 @@
 #include "logger.h"
 #include <expat.h>
 
-namespace {
-void XMLCALL
+static void XMLCALL
 startElementCallback(void *userData, const char *name, const char **atts)
 {
     if (strcmp(name, "entry"))
@@ -48,9 +47,9 @@ startElementCallback(void *userData, const char *name, const char **atts)
     static_cast<sfl::InstantMessaging::UriList *>(userData)->push_back(entry);
 }
 
-void XMLCALL endElementCallback(void * /*userData*/, const char * /*name*/)
+static void XMLCALL
+endElementCallback(void * /*userData*/, const char * /*name*/)
 {}
-} // end anonymous namespace
 
 namespace sfl {
 bool InstantMessaging::saveMessage(const std::string &message, const std::string &author, const std::string &id, int mode)
