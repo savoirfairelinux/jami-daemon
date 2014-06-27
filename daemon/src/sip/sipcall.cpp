@@ -46,6 +46,7 @@ getSettings()
     return videoman->getSettings(videoman->getDefaultDevice());
 }
 #endif
+#include "sipvoiplink.h"
 
 static const int INITIAL_SIZE = 16384;
 static const int INCREMENT_SIZE = INITIAL_SIZE;
@@ -220,3 +221,7 @@ SIPCall::onhold()
     if (SIPSessionReinvite(this) != PJ_SUCCESS)
         WARN("Reinvite failed");
 }
+
+VoIPLink*
+SIPCall::getVoIPLink() const
+{ return &SIPVoIPLink::instance(); }

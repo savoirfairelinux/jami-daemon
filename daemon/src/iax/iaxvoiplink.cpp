@@ -300,7 +300,7 @@ IAXVoIPLink::sendUnregister(Account& a, std::function<void(bool)> cb)
 std::shared_ptr<Call>
 IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id)
 {
-    std::shared_ptr<IAXCall> call(new IAXCall(id, Call::OUTGOING, account_id));
+    std::shared_ptr<IAXCall> call(new IAXCall(id, Call::OUTGOING, account_id, this));
 
     call->setPeerNumber(toUrl);
     call->initRecFilename(toUrl);
@@ -785,7 +785,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
         case IAX_EVENT_CONNECT:
             id = Manager::instance().getNewCallID();
 
-            call = std::make_shared<IAXCall>(id, Call::INCOMING, accountID_);
+            call = std::make_shared<IAXCall>(id, Call::INCOMING, accountID_, this);
 
             call->session = event->session;
             call->setConnectionState(Call::PROGRESSING);
