@@ -49,12 +49,7 @@
 #define GTK_STOCK_HISTORY               "gnome-stock-history"
 #define GTK_STOCK_VOICEMAIL             "gnome-stock-voicemail"
 #define GTK_STOCK_NEWVOICEMAIL          "gnome-stock-newvoicemail"
-#define GTK_STOCK_PREFS                 "gnome-stock-prefs"
-#define GTK_STOCK_PREFS_AUDIO           "gnome-stock-prefs-audio"
-#define GTK_STOCK_PREFS_VIDEO           "gnome-stock-prefs-video"
-#define GTK_STOCK_PREFS_SHORTCUT        "gnome-stock-prefs-shortcut"
-#define GTK_STOCK_PREFS_HOOK            "gnome-stock-prefs-hook"
-#define GTK_STOCK_PREFS_ADDRESSBOOK     "gnome-stock-prefs-addressbook"
+#define GTK_STOCK_AUDIO_CARD            "audio-card"
 
 void init_icon_factory();
 
