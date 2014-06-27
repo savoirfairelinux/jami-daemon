@@ -71,8 +71,8 @@ SipTransport::~SipTransport()
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
 }
 
-namespace {
-std::string transportMapKey(const std::string &interface, int port, pjsip_transport_type_e type)
+static std::string
+transportMapKey(const std::string &interface, int port, pjsip_transport_type_e type)
 {
     std::ostringstream os;
     auto family = pjsip_transport_type_get_af(type);
@@ -81,7 +81,6 @@ std::string transportMapKey(const std::string &interface, int port, pjsip_transp
         type = (family == pj_AF_INET6()) ?  PJSIP_TRANSPORT_UDP6 : PJSIP_TRANSPORT_UDP;
     os << interface << ':' << port << ':' << pjsip_transport_get_type_name(type) << af_ver_num;
     return os.str();
-}
 }
 
 /** Static tranport state change callback */
