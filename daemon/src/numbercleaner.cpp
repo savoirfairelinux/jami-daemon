@@ -34,12 +34,11 @@
 
 #define INVALID_CHAR " -()"
 
-namespace {
-void strip_chars(const std::string &to_strip, std::string &num)
+static void
+strip_chars(const std::string &to_strip, std::string &num)
 {
     for (const auto &item : to_strip)
         num.erase(std::remove(num.begin(), num.end(), item), num.end());
-}
 }
 
 std::string NumberCleaner::clean(std::string to_clean, const std::string &prefix)
@@ -55,5 +54,4 @@ std::string NumberCleaner::clean(std::string to_clean, const std::string &prefix
       strip_chars(INVALID_CHAR, high);
       return high+to_clean.substr(pos+1);
    }
-
 }
