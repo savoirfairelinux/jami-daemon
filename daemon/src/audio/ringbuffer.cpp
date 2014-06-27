@@ -41,10 +41,8 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace {
 // corresponds to 160 ms (about 5 rtp packets)
-const size_t MIN_BUFFER_SIZE = 1024;
-}
+static const size_t MIN_BUFFER_SIZE = 1024;
 
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer(size_t size, const std::string &call_id, AudioFormat format /* = MONO */) :

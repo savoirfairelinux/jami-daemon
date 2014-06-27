@@ -45,9 +45,8 @@
 
 namespace sfl {
 
-namespace {
-
-std::string encodeBase64(unsigned char *input, int length)
+static std::string
+encodeBase64(unsigned char *input, int length)
 {
     size_t output_length;
     uint8_t *encoded_str = base64_encode(input, length, &output_length);
@@ -58,7 +57,8 @@ std::string encodeBase64(unsigned char *input, int length)
     return output;
 }
 
-std::string decodeBase64(unsigned char *input, int length)
+static std::string
+decodeBase64(unsigned char *input, int length)
 {
     size_t output_length;
     uint8_t *decoded_str = base64_decode(input, length, &output_length);
@@ -70,7 +70,8 @@ std::string decodeBase64(unsigned char *input, int length)
 }
 
 // Fills the array dest with length random bytes
-void bufferFillMasterKey(std::vector<uint8>& dest)
+static void
+bufferFillMasterKey(std::vector<uint8>& dest)
 {
     DEBUG("Init local master key");
 
@@ -89,7 +90,8 @@ void bufferFillMasterKey(std::vector<uint8>& dest)
 }
 
 // Fills the array dest with length random bytes
-void bufferFillMasterSalt(std::vector<uint8>& dest)
+static void
+bufferFillMasterSalt(std::vector<uint8>& dest)
 {
     DEBUG("Init local master salt");
 
@@ -106,12 +108,9 @@ void bufferFillMasterSalt(std::vector<uint8>& dest)
 
     std::copy(random_key.begin(), random_key.end(), dest.begin());
 }
-}
 
-namespace {
-    const unsigned MAX_MASTER_KEY_LENGTH = 16;
-    const unsigned MAX_MASTER_SALT_LENGTH = 14;
-}
+static const unsigned MAX_MASTER_KEY_LENGTH = 16;
+static const unsigned MAX_MASTER_SALT_LENGTH = 14;
 
 AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     AudioSymmetricRtpSession(call),
@@ -216,9 +215,7 @@ void AudioSrtpSession::setRemoteCryptoInfo(const sfl::SdesNegotiator& nego)
     }
 }
 
-namespace {
 static const size_t BITS_PER_BYTE = 8;
-}
 
 void AudioSrtpSession::initializeLocalMasterKey()
 {

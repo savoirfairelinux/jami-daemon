@@ -43,8 +43,7 @@
 #include <cstdio>
 #include <unistd.h>
 
-namespace {
-std::string
+static std::string
 createFilename()
 {
     time_t rawtime = time(NULL);
@@ -88,8 +87,6 @@ createFilename()
     out << timeinfo->tm_sec;
     return out.str();
 }
-}
-
 
 AudioRecord::AudioRecord() : fileHandle_(nullptr)
     , sndFormat_(AudioFormat::MONO)
@@ -125,20 +122,18 @@ void AudioRecord::setRecordingOptions(AudioFormat format, const std::string &pat
     savePath_ = (*filePath.rbegin() == DIR_SEPARATOR_CH) ? filePath : filePath + DIR_SEPARATOR_STR;
 }
 
-namespace {
-bool
+static bool
 nonFilenameCharacter(char c)
 {
     return not(std::isalnum(c) or c == '_' or c == '.');
 }
 
 // Replace any character that is inappropriate for a filename with '_'
-std::string
+static std::string
 sanitize(std::string s)
 {
     std::replace_if(s.begin(), s.end(), nonFilenameCharacter, '_');
     return s;
-}
 }
 
 void AudioRecord::initFilename(const std::string &peerNumber)

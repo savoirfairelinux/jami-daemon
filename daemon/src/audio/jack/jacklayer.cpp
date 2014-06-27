@@ -169,27 +169,27 @@ JackLayer::capture()
     }
 }
 
-namespace {
-    void convertToFloat(const std::vector<SFLAudioSample> &src, std::vector<float> &dest)
-    {
-        static const float INV_SHORT_MAX = 1 / (float) SHRT_MAX;
-        if (dest.size() != src.size()) {
-            ERROR("MISMATCH");
-            return;
-        }
-        for (size_t i = 0; i < dest.size(); ++i)
-            dest[i] = src[i] * INV_SHORT_MAX;
+static void
+convertToFloat(const std::vector<SFLAudioSample> &src, std::vector<float> &dest)
+{
+    static const float INV_SHORT_MAX = 1 / (float) SHRT_MAX;
+    if (dest.size() != src.size()) {
+        ERROR("MISMATCH");
+        return;
     }
+    for (size_t i = 0; i < dest.size(); ++i)
+        dest[i] = src[i] * INV_SHORT_MAX;
+}
 
-    void convertFromFloat(std::vector<float> &src, std::vector<SFLAudioSample> &dest)
-    {
-        if (dest.size() != src.size()) {
-            ERROR("MISMATCH");
-            return;
-        }
-        for (size_t i = 0; i < dest.size(); ++i)
-            dest[i] = src[i] * SHRT_MAX;
+static void
+convertFromFloat(std::vector<float> &src, std::vector<SFLAudioSample> &dest)
+{
+    if (dest.size() != src.size()) {
+        ERROR("MISMATCH");
+        return;
     }
+    for (size_t i = 0; i < dest.size(); ++i)
+        dest[i] = src[i] * SHRT_MAX;
 }
 
 void
