@@ -1,0 +1,15 @@
+To add a svg icon as a stock icon:
+
+1. Dump the raw data from the svg:
+gdk-pixbuf-csource --raw --name=gnome_stock_example example.svg
+
+2. Copy the output in the file pixmap_data.h
+
+3. Create the alias in icon_factory.h:
+   #define GTK_STOCK_EXAMPLE "gnome-stock-example"
+
+4. Add the icon to the factory:
+   in icon_factory.c, function init_icon_factory(), add a line:
+   add_icon(factory, GTK_STOCK_EXAMPLE, gnome_stock_example, GTK_ICON_SIZE_SMALL_TOOLBAR);
+
+  You may now use this icon in the code just like a GTK stock icon, the stock id being GTK_STOCK_EXAMPLE.
