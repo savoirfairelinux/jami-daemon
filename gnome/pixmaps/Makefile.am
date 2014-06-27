@@ -34,20 +34,17 @@ buttons_DATA = current.svg \
 				icon_rec.svg \
 				rec_call.svg \
 				contact_default.svg \
-				face-monkey.svg \
 				users.svg \
 				usersAttached.svg \
 				usersDetached.svg \
 				usersAttachedRec.svg \
 				usersDetachedRec.svg \
-				home.svg \
 				wait-on.gif \
 				lock_certified.svg \
 				lock_confirmed.svg \
 				lock_error.svg \
 				lock_off.svg \
 				lock_unconfirmed.svg \
-				phone.svg		\
 				im.svg
 
 buttonsdir   = $(datadir)/sflphone
