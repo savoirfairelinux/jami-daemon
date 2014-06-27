@@ -41,6 +41,8 @@
 #include <map>
 #include <sstream>
 
+class VoIPLink;
+
 /*
  * @file call.h
  * @brief A call is the base class for protocol-based calls
@@ -234,6 +236,8 @@ class Call : public Recordable {
         createHistoryEntry() const;
 
         virtual bool toggleRecording();
+
+        virtual VoIPLink* getVoIPLink() const = 0;
 
     private:
         bool validTransition(CallState newState);
