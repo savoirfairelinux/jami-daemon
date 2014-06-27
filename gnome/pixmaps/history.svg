@@ -16,7 +16,7 @@
    sodipodi:version="0.32"
    inkscape:version="0.48.4 r9939"
    version="1.0"
-   sodipodi:docname="history.svg"
+   sodipodi:docname="sharescreen.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    sodipodi:modified="true">
   <defs
@@ -199,25 +199,15 @@
        rx="0.14408804"
        height="16"
        width="16" />
-    <rect
-       style="color:#bebebe;fill:none;stroke:none;stroke-width:2;marker:none;visibility:visible;display:inline;overflow:visible"
-       id="rect35598-3"
-       width="16"
-       height="16"
-       x="3.3125002"
-       y="1.125" />
     <path
        inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccc"
-       id="path35600-10"
-       d="M 3.5024872,6.3432079 12.017107,13.155015 20.531706,6.3432931"
-       style="fill:none;stroke:#545454;stroke-width:3.4058435;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
-    <rect
-       y="4.6404223"
-       x="1.7995628"
-       height="15.326299"
-       width="20.435064"
-       id="rect35604-1"
-       style="color:#000000;fill:none;stroke:#545454;stroke-width:3.40584421;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+       d="M 12.017863,0.08247 C 5.4222054,0.08247 0.0625,5.4421594 0.0625,12.037833 c 0,6.595658 5.3597054,11.955347 11.955363,11.955347 6.595658,0 11.955347,-5.359689 11.955347,-11.955347 0,-6.5956736 -5.359689,-11.955363 -11.955347,-11.955363 z m 0,3.1510179 c 4.869601,0 8.804329,3.9347441 8.804329,8.8043451 0,4.869601 -3.934728,8.804329 -8.804329,8.804329 -4.869601,0 -8.8043451,-3.934728 -8.8043451,-8.804329 0,-4.869601 3.9347441,-8.8043451 8.8043451,-8.8043451 z"
+       id="path3869-0"
+       style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#545454;fill-opacity:1;stroke:none;stroke-width:2.15384625999999990;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans" />
+    <path
+       inkscape:connector-curvature="0"
+       d="M 16.658852,6.4486691 A 0.79852954,0.79852954 0 0 0 16.259627,6.6981847 L 12.017863,10.939949 9.3729984,8.2950841 A 0.79852954,0.79852954 0 1 0 8.27513,9.3929524 l 3.193799,3.1937986 a 0.79852954,0.79852954 0 0 0 1.097868,0 L 17.357495,7.796053 A 0.79852954,0.79852954 0 0 0 16.658852,6.4486691 z"
+       id="path4639-6"
+       style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#545454;fill-opacity:1;stroke:none;stroke-width:1;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans" />
   </g>
 </svg>
