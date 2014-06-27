@@ -137,62 +137,65 @@ void Account::loadDefaultCodecs()
 }
 
 #ifdef SFL_VIDEO
-namespace {
-    bool isPositiveInteger(const string &s)
-    {
-        string::const_iterator it = s.begin();
-        while (it != s.end() and std::isdigit(*it))
-            ++it;
-        return not s.empty() and it == s.end();
-    }
+static bool
+isPositiveInteger(const string &s)
+{
+    string::const_iterator it = s.begin();
+    while (it != s.end() and std::isdigit(*it))
+        ++it;
+    return not s.empty() and it == s.end();
+}
 
-    bool isBoolean(const string &s)
-    {
-        return s == "true" or s == "false";
-    }
+static bool
+isBoolean(const string &s)
+{
+    return s == "true" or s == "false";
+}
 
-    template <typename Predicate>
-    bool isFieldValid(const map<string, string> &codec, const char *field, Predicate p)
-    {
-        map<string, string>::const_iterator key(codec.find(field));
-        return key != codec.end() and p(key->second);
-    }
+template <typename Predicate>
+static bool
+isFieldValid(const map<string, string> &codec, const char *field, Predicate p)
+{
+    map<string, string>::const_iterator key(codec.find(field));
+    return key != codec.end() and p(key->second);
+}
 
-    bool isCodecValid(const map<string, string> &codec, const vector<map<string, string> > &defaults)
-    {
-        const map<string, string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
-        if (name == codec.end()) {
-            ERROR("Field \"name\" missing in codec specification");
-            return false;
-        }
-
-        // check that it's in the list of valid codecs and that it has all the required fields
-        for (const auto &i : defaults) {
-            const auto defaultName = i.find(Account::VIDEO_CODEC_NAME);
-            if (defaultName->second == name->second) {
-                return isFieldValid(codec, Account::VIDEO_CODEC_BITRATE, isPositiveInteger)
-                    and isFieldValid(codec, Account::VIDEO_CODEC_ENABLED, isBoolean);
-            }
-        }
-        ERROR("Codec %s not supported", name->second.c_str());
+static bool
+isCodecValid(const map<string, string> &codec, const vector<map<string, string> > &defaults)
+{
+    const map<string, string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
+    if (name == codec.end()) {
+        ERROR("Field \"name\" missing in codec specification");
         return false;
     }
 
-    bool isCodecListValid(const vector<map<string, string> > &list)
-    {
-        const auto defaults(libav_utils::getDefaultCodecs());
-        if (list.size() != defaults.size()) {
-            ERROR("New codec list has a different length than the list of supported codecs");
-            return false;
+    // check that it's in the list of valid codecs and that it has all the required fields
+    for (const auto &i : defaults) {
+        const auto defaultName = i.find(Account::VIDEO_CODEC_NAME);
+        if (defaultName->second == name->second) {
+            return isFieldValid(codec, Account::VIDEO_CODEC_BITRATE, isPositiveInteger)
+                and isFieldValid(codec, Account::VIDEO_CODEC_ENABLED, isBoolean);
         }
-
-        // make sure that all codecs are present
-        for (const auto &i : list) {
-            if (not isCodecValid(i, defaults))
-                return false;
-        }
-        return true;
     }
+    ERROR("Codec %s not supported", name->second.c_str());
+    return false;
+}
+
+static bool
+isCodecListValid(const vector<map<string, string> > &list)
+{
+    const auto defaults(libav_utils::getDefaultCodecs());
+    if (list.size() != defaults.size()) {
+        ERROR("New codec list has a different length than the list of supported codecs");
+        return false;
+    }
+
+    // make sure that all codecs are present
+    for (const auto &i : list) {
+        if (not isCodecValid(i, defaults))
+            return false;
+    }
+    return true;
 }
 #endif
 
@@ -206,18 +209,15 @@ void Account::setVideoCodecs(const vector<map<string, string> > &list)
 #endif
 }
 
-namespace {
-
 // Convert a list of payloads in a special format, readable by the server.
 // Required format: payloads separated by slashes.
 // @return std::string The serializable string
-
-std::string join_string(const std::vector<std::string> &v)
+static std::string
+join_string(const std::vector<std::string> &v)
 {
     std::ostringstream os;
     std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
     return os.str();
-}
 }
 
 std::vector<std::string>
@@ -282,12 +282,11 @@ Account::getAllVideoCodecs() const
     return videoCodecList_;
 }
 
-namespace {
-    bool is_inactive(const map<string, string> &codec)
-    {
-        map<string, string>::const_iterator iter = codec.find(Account::VIDEO_CODEC_ENABLED);
-        return iter == codec.end() or iter->second != "true";
-    }
+static bool
+is_inactive(const map<string, string> &codec)
+{
+    map<string, string>::const_iterator iter = codec.find(Account::VIDEO_CODEC_ENABLED);
+    return iter == codec.end() or iter->second != "true";
 }
 
 vector<int>

@@ -60,7 +60,6 @@
 const char * const Preferences::DFT_ZONE = "North America";
 const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
 
-namespace {
 // general preferences
 static const char * const ORDER_KEY = "order";
 static const char * const AUDIO_API_KEY = "audioApi";
@@ -120,7 +119,6 @@ static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
 static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
 static const char * const ALSA_DFT_CARD    = "0";          /** Default sound card index */
-} // end anonymous namespace
 
 Preferences::Preferences() :
     accountOrder_("")
@@ -352,9 +350,9 @@ AudioPreference::AudioPreference() :
     , playbackMuted_(false)
 {}
 
-namespace {
 #if HAVE_ALSA
-void checkSoundCard(int &card, DeviceType type)
+static void
+checkSoundCard(int &card, DeviceType type)
 {
     if (not AlsaLayer::soundCardIndexExists(card, type)) {
         WARN(" Card with index %d doesn't exist or is unusable.", card);
@@ -362,7 +360,6 @@ void checkSoundCard(int &card, DeviceType type)
     }
 }
 #endif
-}
 
 #ifdef __ANDROID__
 AudioLayer* AudioPreference::createAudioLayer()
