@@ -48,12 +48,10 @@
 # define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
-namespace {
-
 static const int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 
-
-int ff_network_wait_fd(int fd)
+static int
+ff_network_wait_fd(int fd)
 {
     struct pollfd p = { fd, POLLOUT, 0 };
     int ret;
@@ -61,7 +59,8 @@ int ff_network_wait_fd(int fd)
     return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : -EAGAIN;
 }
 
-struct addrinfo* udp_resolve_host(const char *node, int service)
+static struct
+addrinfo* udp_resolve_host(const char *node, int service)
 {
     struct addrinfo hints, *res = 0;
     int error;
@@ -81,8 +80,8 @@ struct addrinfo* udp_resolve_host(const char *node, int service)
     return res;
 }
 
-unsigned udp_set_url(struct sockaddr_storage *addr,
-            const char *hostname, int port)
+static unsigned
+udp_set_url(struct sockaddr_storage *addr, const char *hostname, int port)
 {
     struct addrinfo *res0;
     int addr_len;
@@ -96,8 +95,8 @@ unsigned udp_set_url(struct sockaddr_storage *addr,
     return addr_len;
 }
 
-int udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len,
-                  int local_port)
+static int
+udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
 {
     int udp_fd = -1;
     struct addrinfo *res0 = NULL, *res = NULL;
@@ -135,11 +134,9 @@ int udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len,
     return udp_fd;
 }
 
-const int RTP_BUFFER_SIZE = 1472;
-
-}
-
 namespace sfl_video {
+
+static const int RTP_BUFFER_SIZE = 1472;
 
 SocketPair::SocketPair(const char *uri, int localPort) :
            rtcpWriteMutex_(),

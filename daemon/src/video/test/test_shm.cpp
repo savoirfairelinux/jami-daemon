@@ -39,18 +39,18 @@
 #include <cstring>
 #include <cassert>
 
-namespace {
+static std::atomic<bool> done(false);
 
-std::atomic<bool> done(false);
-
-void signal_handler(int /*sig*/)
+static void
+signal_handler(int /*sig*/)
 {
     done = true;
 }
 
-const char test_data[] = "abcdefghijklmnopqrstuvwxyz";
+static const char test_data[] = "abcdefghijklmnopqrstuvwxyz";
 
-void sink_thread()
+static void
+sink_thread()
 {
     sfl_video::SHMSink sink("bob");;
     if (!sink.start())
@@ -66,7 +66,8 @@ void sink_thread()
     std::cerr << "Exitting sink thread" << std::endl;
 }
 
-void run_client()
+static void
+run_client()
 {
     SHMSrc src("bob");;
     bool started = false;
@@ -92,7 +93,8 @@ void run_client()
     std::cerr << "Got characters, exitting client process" << std::endl;
 }
 
-void run_daemon()
+static void
+run_daemon()
 {
     std::thread bob(sink_thread);
     /* Wait for child process. */
@@ -116,9 +118,6 @@ void run_daemon()
     // wait for thread
     bob.join();
 }
-
-} // end anonymous namespace
-
 int main()
 {
     signal(SIGINT, signal_handler);
