@@ -89,6 +89,37 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 
+static void
+copy_over(const std::string &srcPath, const std::string &destPath)
+{
+    std::ifstream src(srcPath.c_str());
+    std::ofstream dest(destPath.c_str());
+    dest << src.rdbuf();
+    src.close();
+    dest.close();
+}
+
+// Creates a backup of the file at "path" with a .bak suffix appended
+static void
+make_backup(const std::string &path)
+{
+    const std::string backup_path(path + ".bak");
+    copy_over(path, backup_path);
+}
+// Restore last backup of the configuration file
+static void
+restore_backup(const std::string &path)
+{
+    const std::string backup_path(path + ".bak");
+    copy_over(backup_path, path);
+}
+
+static void
+loadDefaultAccountMap()
+{
+    SIPVoIPLink::instance().loadIP2IPSettings();
+}
+
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
@@ -105,37 +136,6 @@ ManagerImpl::ManagerImpl() :
 
 ManagerImpl::~ManagerImpl()
 {
-}
-
-namespace {
-
-    void copy_over(const std::string &srcPath, const std::string &destPath)
-    {
-        std::ifstream src(srcPath.c_str());
-        std::ofstream dest(destPath.c_str());
-        dest << src.rdbuf();
-        src.close();
-        dest.close();
-    }
-    // Creates a backup of the file at "path" with a .bak suffix appended
-    void make_backup(const std::string &path)
-    {
-        const std::string backup_path(path + ".bak");
-        copy_over(path, backup_path);
-    }
-    // Restore last backup of the configuration file
-    void restore_backup(const std::string &path)
-    {
-        const std::string backup_path(path + ".bak");
-        copy_over(backup_path, path);
-    }
-}
-
-namespace {
-    void loadDefaultAccountMap()
-    {
-        SIPVoIPLink::instance().loadIP2IPSettings();
-    }
 }
 
 bool ManagerImpl::parseConfiguration()
@@ -2514,65 +2514,56 @@ std::vector<std::string> ManagerImpl::loadAccountOrder() const
     return Account::split_string(preferences.getAccountOrder());
 }
 
-namespace {
-    bool isIP2IP(const Conf::YamlNode *node)
-    {
-        if (!node)
-            return false;
-
-        std::string id;
-        node->getValue("id", &id);
-        return id == "IP2IP";
+#if HAVE_IAX
+static void
+loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap,
+            AccountMap &iaxAccountMap, int &errorCount,
+            const std::string &accountOrder)
+#else
+static void
+loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap,
+            int &errorCount, const std::string &accountOrder)
+#endif
+{
+    if (!item) {
+        ERROR("Could not load account");
+        ++errorCount;
+        return;
     }
 
+    std::string accountType;
+    item->getValue("type", &accountType);
+
+    std::string accountid;
+    item->getValue("id", &accountid);
+
+    std::string accountAlias;
+    item->getValue("alias", &accountAlias);
+    const auto inAccountOrder = [&] (const std::string &id) {
+        return accountOrder.find(id + "/") != std::string::npos; };
+
+    if (!accountid.empty() and !accountAlias.empty()) {
+        if (not inAccountOrder(accountid) and accountid != SIPAccount::IP2IP_PROFILE) {
+            WARN("Dropping account %s, which is not in account order", accountid.c_str());
+        } else if (accountType == "SIP") {
+            Account *a = new SIPAccount(accountid, true);
+            sipAccountMap[accountid] = a;
+            a->unserialize(*item);
+        } else if (accountType == "IAX") {
 #if HAVE_IAX
-    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap,
-                     AccountMap &iaxAccountMap, int &errorCount, const std::string &accountOrder)
+            Account *a = new IAXAccount(accountid);
+            iaxAccountMap[accountid] = a;
+            a->unserialize(*item);
 #else
-    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, int &errorCount,
-                     const std::string &accountOrder)
-#endif
-    {
-        if (!item) {
-            ERROR("Could not load account");
+            ERROR("Ignoring IAX account");
             ++errorCount;
-            return;
-        }
-
-        std::string accountType;
-        item->getValue("type", &accountType);
-
-        std::string accountid;
-        item->getValue("id", &accountid);
-
-        std::string accountAlias;
-        item->getValue("alias", &accountAlias);
-        const auto inAccountOrder = [&] (const std::string &id) {
-            return accountOrder.find(id + "/") != std::string::npos; };
-
-        if (!accountid.empty() and !accountAlias.empty()) {
-            if (not inAccountOrder(accountid) and accountid != SIPAccount::IP2IP_PROFILE) {
-                WARN("Dropping account %s, which is not in account order", accountid.c_str());
-            } else if (accountType == "SIP") {
-                Account *a = new SIPAccount(accountid, true);
-                sipAccountMap[accountid] = a;
-                a->unserialize(*item);
-            } else if (accountType == "IAX") {
-#if HAVE_IAX
-                Account *a = new IAXAccount(accountid);
-                iaxAccountMap[accountid] = a;
-                a->unserialize(*item);
-#else
-                ERROR("Ignoring IAX account");
-                ++errorCount;
 #endif
-            } else {
-                ERROR("Ignoring unknown account type \"%s\"", accountType.c_str());
-                ++errorCount;
-            }
+        } else {
+            ERROR("Ignoring unknown account type \"%s\"", accountType.c_str());
+            ++errorCount;
         }
     }
-} // end anonymous namespace
+}
 
 int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
