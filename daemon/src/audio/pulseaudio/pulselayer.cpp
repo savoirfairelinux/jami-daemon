@@ -45,29 +45,29 @@
 #include <cstdlib>
 #include <fstream>
 
-namespace {
-
-void playback_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
+static void
+playback_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
     static_cast<PulseLayer*>(userdata)->writeToSpeaker();
 }
 
-void capture_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
+static void
+capture_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
     static_cast<PulseLayer*>(userdata)->readFromMic();
 }
 
-void ringtone_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
+static void
+ringtone_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
     static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
 }
 
-void stream_moved_callback(pa_stream *s, void *userdata UNUSED)
+static void
+stream_moved_callback(pa_stream *s, void *userdata UNUSED)
 {
     DEBUG("stream %d to %d", pa_stream_get_index(s), pa_stream_get_device_index(s));
 }
-
-} // end anonymous namespace
 
 PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop), destroyLoop_(false)
 {
@@ -393,16 +393,13 @@ void PulseLayer::createStreams(pa_context* c)
     flushUrgent();
 }
 
-namespace {
 // Delete stream and zero out its pointer
-void
+static void
 cleanupStream(AudioStream *&stream)
 {
     delete stream;
     stream = 0;
 }
-}
-
 
 void PulseLayer::disconnectAudioStream()
 {
