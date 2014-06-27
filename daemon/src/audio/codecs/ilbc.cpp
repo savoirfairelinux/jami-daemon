@@ -56,14 +56,14 @@ class Ilbc: public sfl::AudioCodec {
         }
 
         // iLBC expects floating point data, so we have to convert
-        int decode(SFLAudioSample *dst, unsigned char *src, size_t /*buf_size*/) {
+        int decode(SFLAudioSample *pcm, unsigned char *data, size_t) {
             const int NORMAL_MODE = 1;
-            iLBC_decode(dst, reinterpret_cast<WebRtc_UWord16*>(src), &ilbc_dec_, NORMAL_MODE);
+            iLBC_decode(pcm, reinterpret_cast<WebRtc_UWord16*>(data), &ilbc_dec_, NORMAL_MODE);
             return frameSize_;
         }
 
-        int encode(unsigned char *dst, SFLAudioSample * src, size_t /*buf_size*/) {
-            iLBC_encode(reinterpret_cast<WebRtc_UWord16*>(dst), src, &ilbc_enc_);
+        int encode(unsigned char *data, SFLAudioSample *pcm, size_t) {
+            iLBC_encode(reinterpret_cast<WebRtc_UWord16*>(data), pcm, &ilbc_enc_);
             return frameSize_;
         }
 
