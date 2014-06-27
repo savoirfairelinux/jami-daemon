@@ -76,12 +76,6 @@ void register_sflphone_stock_icons(GtkIconFactory *factory)
     add_icon(factory, GTK_STOCK_HISTORY, gnome_stock_history, GTK_ICON_SIZE_SMALL_TOOLBAR);
     add_icon(factory, GTK_STOCK_VOICEMAIL, gnome_stock_voicemail, GTK_ICON_SIZE_SMALL_TOOLBAR);
     add_icon(factory, GTK_STOCK_NEWVOICEMAIL, gnome_stock_newvoicemail, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(factory, GTK_STOCK_PREFS, gnome_stock_prefs, GTK_ICON_SIZE_LARGE_TOOLBAR);
-    add_icon(factory, GTK_STOCK_PREFS_AUDIO, gnome_stock_prefs_audio, GTK_ICON_SIZE_LARGE_TOOLBAR);
-    add_icon(factory, GTK_STOCK_PREFS_VIDEO, gnome_stock_prefs_video, GTK_ICON_SIZE_LARGE_TOOLBAR);
-    add_icon(factory, GTK_STOCK_PREFS_SHORTCUT, gnome_stock_prefs_shortcut, GTK_ICON_SIZE_LARGE_TOOLBAR);
-    add_icon(factory, GTK_STOCK_PREFS_HOOK, gnome_stock_prefs_hook, GTK_ICON_SIZE_LARGE_TOOLBAR);
-    add_icon(factory, GTK_STOCK_PREFS_ADDRESSBOOK, gnome_stock_prefs_addressbook, GTK_ICON_SIZE_LARGE_TOOLBAR);
 }
 
 void init_icon_factory(void)
@@ -90,4 +84,3 @@ void init_icon_factory(void)
     register_sflphone_stock_icons(icon_factory);
     gtk_icon_factory_add_default(icon_factory);
 }
-

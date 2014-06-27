@@ -325,17 +325,17 @@ static GtkTreeModel* create_model(GtkWidget *widget)
         gchar* icon_name;
         gint page_number;
     } browser_entries_full[] = {
-        {"General", GTK_STOCK_PREFERENCES, 0},
-        {"Audio", GTK_STOCK_AUDIO_CARD, 1},
+        {"General", GTK_STOCK_PREFS, 0},
+        {"Audio", GTK_STOCK_PREFS_AUDIO, 1},
 #ifdef SFL_VIDEO
-        {"Video", "camera-web", 2},
-        {"Hooks", "applications-development", 3},
-        {"Shortcuts", "preferences-desktop-keyboard", 4},
-        {"Address Book", GTK_STOCK_ADDRESSBOOK, 5},
+        {"Video", GTK_STOCK_PREFS_VIDEO, 2},
+        {"Hooks", GTK_STOCK_PREFS_HOOK, 3},
+        {"Shortcuts", GTK_STOCK_PREFS_SHORTCUT, 4},
+        {"Address Book", GTK_STOCK_PREFS_ADDRESSBOOK, 5},
 #else
-        {"Hooks", "applications-development", 2},
-        {"Shortcuts", "preferences-desktop-keyboard", 3},
-        {"Address Book", GTK_STOCK_ADDRESSBOOK, 4},
+        {"Hooks", GTK_STOCK_PREFS_HOOK,, 2},
+        {"Shortcuts", GTK_STOCK_PREFS_SHORTCUT,, 3},
+        {"Address Book", GTK_STOCK_PREFS_ADDRESSBOOK, 4},
 #endif
     };
     GdkPixbuf *pixbuf;
