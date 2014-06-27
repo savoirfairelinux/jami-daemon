@@ -42,117 +42,118 @@
 #include "logger.h"
 #include "manager.h"
 
-namespace {
-    void print_title()
-    {
-        std::cout << "SFLphone Daemon " << VERSION <<
-            ", by Savoir-Faire Linux 2004-2014" << std::endl <<
-            "http://www.sflphone.org/" << std::endl;
-    }
+static void
+print_title()
+{
+    std::cout << "SFLphone Daemon " << VERSION <<
+        ", by Savoir-Faire Linux 2004-2014" << std::endl <<
+        "http://www.sflphone.org/" << std::endl;
+}
 
-    void print_usage()
-    {
-        std::cout << std::endl <<
+static void
+print_usage()
+{
+    std::cout << std::endl <<
         "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
         "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
         "-p, --persistent \t- Stay alive after client quits" << std::endl <<
         "-h, --help \t- Print help" << std::endl;
-    }
-
-    // Parse command line arguments, setting debug options or printing a help
-    // message accordingly.
-    // returns true if we should quit (i.e. help was printed), false otherwise
-    bool parse_args(int argc, char *argv[], bool &persistent)
-    {
-        int consoleFlag = false;
-        int debugFlag = false;
-        int helpFlag = false;
-        int versionFlag = false;
-        static const struct option long_options[] = {
-            /* These options set a flag. */
-            {"debug", no_argument, NULL, 'd'},
-            {"console", no_argument, NULL, 'c'},
-            {"persistent", no_argument, NULL, 'p'},
-            {"help", no_argument, NULL, 'h'},
-            {"version", no_argument, NULL, 'v'},
-            {0, 0, 0, 0} /* Sentinel */
-        };
-
-        while (true) {
-            /* getopt_long stores the option index here. */
-            int option_index = 0;
-            int c = getopt_long(argc, argv, "dcphv", long_options, &option_index);
-
-            /* Detect the end of the options. */
-            if (c == -1)
-                break;
-
-            switch (c) {
-                case 'd':
-                    debugFlag = true;
-                    break;
-
-                case 'c':
-                    consoleFlag = true;
-                    break;
-
-                case 'p':
-                    persistent = true;
-                    break;
-
-                case 'h':
-                case '?':
-                    helpFlag = true;
-                    break;
-
-                case 'v':
-                    versionFlag = true;
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        bool quit = false;
-        if (helpFlag) {
-            print_usage();
-            quit = true;
-        } else if (versionFlag) {
-            // We've always print the title/version, so we can just exit
-            quit = true;
-        } else {
-            setConsoleLog(consoleFlag);
-            setDebugMode(debugFlag);
-        }
-        return quit;
-    }
 }
 
-namespace {
-    void signal_handler(int code)
-    {
-        // Unset signal handlers
-        signal(SIGHUP, SIG_DFL);
-        signal(SIGINT, SIG_DFL);
-        signal(SIGTERM, SIG_DFL);
+// Parse command line arguments, setting debug options or printing a help
+// message accordingly.
+// returns true if we should quit (i.e. help was printed), false otherwise
+static bool
+parse_args(int argc, char *argv[], bool &persistent)
+{
+    int consoleFlag = false;
+    int debugFlag = false;
+    int helpFlag = false;
+    int versionFlag = false;
+    static const struct option long_options[] = {
+        /* These options set a flag. */
+        {"debug", no_argument, NULL, 'd'},
+        {"console", no_argument, NULL, 'c'},
+        {"persistent", no_argument, NULL, 'p'},
+        {"help", no_argument, NULL, 'h'},
+        {"version", no_argument, NULL, 'v'},
+        {0, 0, 0, 0} /* Sentinel */
+    };
 
-        // Stop manager in new thread since we don't know what
-        // this handler is interrupting (e.g. a mutex might be held in the
-        // interrupted function)
-        std::thread th([code] {
+    while (true) {
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+        int c = getopt_long(argc, argv, "dcphv", long_options, &option_index);
+
+        /* Detect the end of the options. */
+        if (c == -1)
+            break;
+
+        switch (c) {
+            case 'd':
+                debugFlag = true;
+                break;
+
+            case 'c':
+                consoleFlag = true;
+                break;
+
+            case 'p':
+                persistent = true;
+                break;
+
+            case 'h':
+            case '?':
+                helpFlag = true;
+                break;
+
+            case 'v':
+                versionFlag = true;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    bool quit = false;
+    if (helpFlag) {
+        print_usage();
+        quit = true;
+    } else if (versionFlag) {
+        // We've always print the title/version, so we can just exit
+        quit = true;
+    } else {
+        setConsoleLog(consoleFlag);
+        setDebugMode(debugFlag);
+    }
+    return quit;
+}
+
+static void
+signal_handler(int code)
+{
+    // Unset signal handlers
+    signal(SIGHUP, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
+
+    // Stop manager in new thread since we don't know what
+    // this handler is interrupting (e.g. a mutex might be held in the
+    // interrupted function)
+    std::thread th([code] {
             Manager::instance().interrupt();
             std::cerr << "Caught signal " << strsignal(code)
                       << ", terminating..." << std::endl;
         });
 
-        // Detach thread and leave signal handler so that interrupted thread
-        // can continue
-        th.detach();
-    }
+    // Detach thread and leave signal handler so that interrupted thread
+    // can continue
+    th.detach();
 }
 
-int main(int argc, char *argv [])
+int
+main(int argc, char *argv [])
 {
     // make a copy as we don't want to modify argv[0], copy it to a vector to
     // guarantee that memory is correctly managed/exception safe
