@@ -67,7 +67,8 @@ static GHashTable* shortcutsMap;
  * filter used when an event is catched
  */
 static GdkFilterReturn
-filter_keys(const GdkXEvent *xevent, G_GNUC_UNUSED const GdkEvent *event, G_GNUC_UNUSED gpointer data)
+filter_keys(const GdkXEvent *xevent, G_GNUC_UNUSED const GdkEvent *event,
+            G_GNUC_UNUSED gpointer data)
 {
     if (((XEvent *) xevent)->type != KeyPress)
         return GDK_FILTER_CONTINUE;
@@ -75,11 +76,13 @@ filter_keys(const GdkXEvent *xevent, G_GNUC_UNUSED const GdkEvent *event, G_GNUC
     XKeyEvent *key = (XKeyEvent *) xevent;
     GdkModifierType keystate = key->state & ~(Mod2Mask | Mod5Mask | LockMask);
 
-    for (int i = 0; accelerators_list[i].action; ++i)
-        if (accelerators_list[i].key == key->keycode && accelerators_list[i].mask == keystate) {
+    for (guint i = 0; accelerators_list[i].action; ++i) {
+        if (accelerators_list[i].key == key->keycode &&
+            accelerators_list[i].mask == keystate) {
             accelerators_list[i].callback(accelerators_list[i].data);
             return GDK_FILTER_REMOVE;
         }
+    }
 
     return GDK_FILTER_CONTINUE;
 }
@@ -90,13 +93,13 @@ filter_keys(const GdkXEvent *xevent, G_GNUC_UNUSED const GdkEvent *event, G_GNUC
 static void
 toggle_pick_up_hang_up_callback(SFLPhoneClient *client)
 {
-    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree_tab);
-    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
+    callable_obj_t *call = calltab_get_selected_call(active_calltree_tab);
+    conference_obj_t *conf = calltab_get_selected_conf(active_calltree_tab);
 
     g_debug("Shortcuts: Toggle pickup/hangup callback");
 
-    if (selectedCall) {
-        switch (selectedCall->_state) {
+    if (call) {
+        switch (call->_state) {
             case CALL_STATE_INCOMING:
             case CALL_STATE_TRANSFER:
                 sflphone_pick_up(client);
@@ -110,10 +113,11 @@ toggle_pick_up_hang_up_callback(SFLPhoneClient *client)
             default:
                 break;
         }
-    } else if (selectedConf) {
-        dbus_hang_up_conference(selectedConf);
-    } else
+    } else if (conf) {
+        dbus_hang_up_conference(conf);
+    } else {
         sflphone_pick_up(client);
+    }
 }
 
 static void
@@ -131,11 +135,11 @@ hang_up_callback(gpointer data)
 static void
 toggle_hold_callback(G_GNUC_UNUSED gpointer data)
 {
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
-    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
+    callable_obj_t *call = calltab_get_selected_call(current_calls_tab);
+    conference_obj_t *conf = calltab_get_selected_conf(active_calltree_tab);
 
-    if (selectedCall) {
-        switch (selectedCall->_state) {
+    if (call) {
+        switch (call->_state) {
             case CALL_STATE_CURRENT:
                 sflphone_on_hold();
                 break;
@@ -145,9 +149,9 @@ toggle_hold_callback(G_GNUC_UNUSED gpointer data)
             default:
                 break;
         }
-    } else if (selectedConf)
-        dbus_hold_conference(selectedConf);
-    else {
+    } else if (conf) {
+        dbus_hold_conference(conf);
+    } else {
         g_warning("Shortcuts: Error: No callable object selected");
     }
 }
@@ -205,16 +209,16 @@ remove_bindings()
     GdkDisplay *display = gdk_display_get_default();
     GdkScreen *screen = gdk_display_get_default_screen(display);
 
-    if (screen) {
-        GdkWindow *root = gdk_screen_get_root_window(screen);
-        gdk_window_remove_filter(root, (GdkFilterFunc) filter_keys, NULL);
+    if (!screen)
+        return;
 
-        /* Unbind shortcuts */
-        for (int i = 0; accelerators_list[i].action != NULL; ++i)
-            if (accelerators_list[i].key != 0)
-                ungrab_key(accelerators_list[i].key, accelerators_list[i].mask,
-                        root);
-    }
+    GdkWindow *root = gdk_screen_get_root_window(screen);
+    gdk_window_remove_filter(root, (GdkFilterFunc) filter_keys, NULL);
+
+    /* Unbind shortcuts */
+    for (Accelerator *acl = accelerators_list; acl->action != NULL; ++acl)
+        if (acl->key != 0)
+            ungrab_key(acl->key, acl->mask, root);
 }
 
 /*
@@ -226,16 +230,16 @@ create_bindings()
     GdkDisplay *display = gdk_display_get_default();
     GdkScreen *screen = gdk_display_get_default_screen(display);
 
-    if (screen) {
-        GdkWindow *root = gdk_screen_get_root_window(screen);
-        gdk_window_add_filter(root, (GdkFilterFunc) filter_keys, NULL);
+    if (!screen)
+        return;
 
-        /* bind shortcuts */
-        for (int i = 0; accelerators_list[i].action != NULL; ++i)
-            if (accelerators_list[i].key != 0)
-                grab_key(accelerators_list[i].key, accelerators_list[i].mask,
-                        root);
-    }
+    GdkWindow *root = gdk_screen_get_root_window(screen);
+    gdk_window_add_filter(root, (GdkFilterFunc) filter_keys, NULL);
+
+    /* bind shortcuts */
+    for (Accelerator *acl = accelerators_list; acl->action != NULL; ++acl)
+        if (acl->key != 0)
+            grab_key(acl->key, acl->mask, root);
 }
 
 /*
@@ -244,15 +248,11 @@ create_bindings()
 static void
 initialize_binding(const gchar* action, guint key, GdkModifierType mask)
 {
-    int i = 0;
+    guint i;
 
-    while (accelerators_list[i].action != NULL) {
-        if (g_strcmp0(action, accelerators_list[i].action) == 0) {
-            break;
-        }
-
-        i++;
-    }
+    for (i = 0; accelerators_list[i].action != NULL &&
+         g_strcmp0(action, accelerators_list[i].action) != 0; ++i)
+        /* noop */;
 
     if (accelerators_list[i].action == NULL) {
         g_warning("Shortcut: Error: Cannot find corresponding action");
@@ -273,17 +273,14 @@ initialize_binding(const gchar* action, guint key, GdkModifierType mask)
 static void
 initialize_accelerators_list(SFLPhoneClient *client)
 {
-    GList* shortcutsKeysElement, *shortcutsKeys;
-    int i = 0;
+    GList *shortcutsKeys = g_hash_table_get_keys(shortcutsMap);
 
-    shortcutsKeys = g_hash_table_get_keys(shortcutsMap);
+    /* contains zero-initialized sentinel element at end of list */
+    accelerators_list = g_new0(Accelerator, g_list_length(shortcutsKeys) + 1);
 
-    accelerators_list = (Accelerator*) malloc(
-                            (g_list_length(shortcutsKeys) + 1) * sizeof(Accelerator));
-
-    for (shortcutsKeysElement = shortcutsKeys; shortcutsKeysElement; shortcutsKeysElement
-            = shortcutsKeysElement->next) {
-        gchar* action = shortcutsKeysElement->data;
+    guint i = 0;
+    for (GList *elem = shortcutsKeys; elem; elem = elem->next) {
+        gchar* action = elem->data;
 
         accelerators_list[i].action = g_strdup(action);
         accelerators_list[i].callback = get_action_callback(action);
@@ -295,12 +292,6 @@ initialize_accelerators_list(SFLPhoneClient *client)
     }
 
     g_list_free(shortcutsKeys);
-
-    // last element must be null
-    accelerators_list[i].action = 0;
-    accelerators_list[i].callback = 0;
-    accelerators_list[i].mask = 0;
-    accelerators_list[i].key = 0;
 }
 
 static void
@@ -314,13 +305,12 @@ update_shortcuts_map(const gchar* action, guint key, GdkModifierType mask)
 static void
 update_bindings_data(guint accel_index, guint key, GdkModifierType mask)
 {
-    int i = 0;
-
     // we need to be sure this code is not already affected
     // to another action
-    while (accelerators_list[i].action != NULL) {
-        if (accelerators_list[i].key == key && accelerators_list[i].mask == mask
-                && accelerators_list[i].key != 0) {
+    for (guint i = 0; accelerators_list[i].action != NULL; ++i) {
+        if (accelerators_list[i].key == key &&
+            accelerators_list[i].mask == mask &&
+            accelerators_list[i].key != 0) {
             g_debug("Shortcuts: Existing mapping found %d+%d", mask, key);
 
             // disable old binding
@@ -330,8 +320,6 @@ update_bindings_data(guint accel_index, guint key, GdkModifierType mask)
             // update config table
             update_shortcuts_map(accelerators_list[i].action, 0, 0);
         }
-
-        i++;
     }
 
     // store new key
@@ -352,13 +340,13 @@ update_bindings_data(guint accel_index, guint key, GdkModifierType mask)
  * Update current bindings with a new value
  */
 void
-shortcuts_update_bindings(guint shortcut_index, guint key, GdkModifierType mask)
+shortcuts_update_bindings(guint shortcut_idx, guint key, GdkModifierType mask)
 {
     // first remove all existing bindings
     remove_bindings();
 
     // update data
-    update_bindings_data(shortcut_index, key, mask);
+    update_bindings_data(shortcut_idx, key, mask);
 
     // recreate all bindings
     create_bindings();
@@ -373,7 +361,6 @@ shortcuts_update_bindings(guint shortcut_index, guint key, GdkModifierType mask)
 void
 shortcuts_initialize_bindings(SFLPhoneClient *client)
 {
-    GList* shortcutsKeys, *shortcutsKeysElement = NULL;
     gchar* action, *maskAndKey, *token1, *token2 = NULL;
     guint mask, key = 0;
 
@@ -386,11 +373,10 @@ shortcuts_initialize_bindings(SFLPhoneClient *client)
     initialize_accelerators_list(client);
 
     // iterate through keys to initialize bindings
-    shortcutsKeys = g_hash_table_get_keys(shortcutsMap);
+    GList *shortcutsKeys = g_hash_table_get_keys(shortcutsMap);
 
-    for (shortcutsKeysElement = shortcutsKeys; shortcutsKeysElement; shortcutsKeysElement
-            = shortcutsKeysElement->next) {
-        action = shortcutsKeysElement->data;
+    for (GList *elem = shortcutsKeys; elem; elem = elem->next) {
+        action = elem->data;
         maskAndKey = g_hash_table_lookup(shortcutsMap, action);
 
         token1 = strtok(maskAndKey, "x");
@@ -418,7 +404,6 @@ shortcuts_initialize_bindings(SFLPhoneClient *client)
 void
 shortcuts_destroy_bindings()
 {
-    int i = 0;
     if (!accelerators_list)
         return;
 
@@ -426,16 +411,14 @@ shortcuts_destroy_bindings()
     remove_bindings();
 
     // free pointers
-    while (accelerators_list[i].action != NULL) {
+    for (guint i = 0; accelerators_list[i].action != NULL; ++i)
         g_free(accelerators_list[i].action);
-        i++;
-    }
 
     free(accelerators_list);
     g_hash_table_destroy(shortcutsMap);
 }
 
-Accelerator*
+Accelerator *
 shortcuts_get_list()
 {
     return accelerators_list;
@@ -453,7 +436,7 @@ ungrab_key(guint key, GdkModifierType mask, GdkWindow *root)
     Display *d = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
     XID x = GDK_WINDOW_XID(root);
 
-    XUngrabKey(d, key, mask | 0, x);
+    XUngrabKey(d, key, mask           , x);
     XUngrabKey(d, key, mask | Mod2Mask, x);
     XUngrabKey(d, key, mask | Mod5Mask, x);
     XUngrabKey(d, key, mask | LockMask, x);
@@ -482,7 +465,7 @@ grab_key(guint key, GdkModifierType mask, GdkWindow *root)
     Display *d = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
     XID x = GDK_WINDOW_XID(root);
 
-    XGrabKey(d, key, mask | 0, x, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(d, key, mask           , x, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(d, key, mask | Mod2Mask, x, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(d, key, mask | Mod5Mask, x, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(d, key, mask | LockMask, x, True, GrabModeAsync, GrabModeAsync);
