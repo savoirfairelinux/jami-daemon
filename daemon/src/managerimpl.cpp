@@ -2149,17 +2149,17 @@ int ManagerImpl::getHistoryLimit() const
     return preferences.getHistoryLimit();
 }
 
-void ManagerImpl::setAudioManager(const std::string &api)
+bool ManagerImpl::setAudioManager(const std::string &api)
 {
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
         if (!audiodriver_)
-            return;
+            return false;
 
         if (api == audioPreference.getAudioApi()) {
             DEBUG("Audio manager chosen already in use. No changes made. ");
-            return;
+            return true;
         }
     }
 
@@ -2176,6 +2176,9 @@ void ManagerImpl::setAudioManager(const std::string &api)
     }
 
     saveConfig();
+
+    // ensure that we completed the transition (i.e. no fallback was used)
+    return api == audioPreference.getAudioApi();
 }
 
 std::string ManagerImpl::getAudioManager() const

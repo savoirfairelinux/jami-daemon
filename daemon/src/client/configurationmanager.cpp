@@ -367,9 +367,9 @@ void ConfigurationManager::setHistoryLimit(const int32_t& days)
     Manager::instance().setHistoryLimit(days);
 }
 
-void ConfigurationManager::setAudioManager(const std::string& api)
+bool ConfigurationManager::setAudioManager(const std::string& api)
 {
-    Manager::instance().setAudioManager(api);
+    return Manager::instance().setAudioManager(api);
 }
 
 std::string ConfigurationManager::getAudioManager()

@@ -649,8 +649,9 @@ class ManagerImpl {
 
         /**
          * Set the audio manager
+         * @return true if api is now in use, false otherwise
          */
-        void setAudioManager(const std::string &api);
+        bool setAudioManager(const std::string &api);
 
         /**
          * Callback called when the audio layer initialised with its

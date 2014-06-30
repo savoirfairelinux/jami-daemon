@@ -313,6 +313,8 @@
        <method name="setAudioManager" tp:name-for-bindings="setAudioManager">
            <arg type="s" name="api" direction="in">
            </arg>
+           <arg type="b" name="successful" direction="out">
+           </arg>
        </method>
 
        <method name="getSupportedAudioManagers" tp:name-for-bindings="getSupportedAudioManagers">

@@ -128,7 +128,7 @@ public:
     std::map<std::string, std::string> getRingtoneList();
 
     std::string getAudioManager();
-    void setAudioManager(const std::string& api);
+    bool setAudioManager(const std::string& api);
 
     int32_t isIax2Enabled();
     std::string getRecordPath();

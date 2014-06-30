@@ -1871,12 +1871,14 @@ dbus_clear_history(void)
     check_error(error);
 }
 
-void
+gboolean
 dbus_set_audio_manager(const gchar *api)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_audio_manager(config_proxy, api, &error);
+    gboolean result;
+    org_sflphone_SFLphone_ConfigurationManager_set_audio_manager(config_proxy, api, &result, &error);
     check_error(error);
+    return result;
 }
 
 gchar *

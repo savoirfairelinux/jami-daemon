@@ -386,7 +386,7 @@ gchar **dbus_get_supported_audio_managers(void);
  * @param api	"alsa"
  *		"pulseaudio"
  */
-void dbus_set_audio_manager(const gchar *api);
+gboolean dbus_set_audio_manager(const gchar *api);
 
 void dbus_set_active_video_device(const gchar *dev);
 GHashTable *dbus_get_video_preferences(const gchar *name);
