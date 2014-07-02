@@ -63,6 +63,10 @@ libsflphone_la_LDFLAGS = \
 		$(TLS_LIB) \
 		@DBUSCPP_LIBS@
 
+if BUILD_INSTANT_MESSAGING
+libsflphone_la_LDFLAGS += @EXPAT_LIBS@
+endif
+
 libsflphone_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
 		$(PJSIP_CFLAGS) \

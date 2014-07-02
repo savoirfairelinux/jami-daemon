@@ -240,10 +240,12 @@ AC_ARG_WITH([instant_messaging],
     [AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging])],
     [],
     [with_instant_messaging=yes])
-AS_IF([test "x$with_instant_messaging" = "xyes"], [
-    AX_LIB_EXPAT([1.95.0])
-    AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([Missing libexpat development files])], [])
+    AS_IF([test "x$with_instant_messaging" = "xyes"], [
+        PKG_CHECK_MODULES([EXPAT], expat >= 2.0.0, [with_instant_messaging=yes],
+           dnl Fallback to older version
+           [with_instant_messaging=no])
     ]);
+AS_IF([test "$with_instant_messaging" != "yes"], [AC_MSG_ERROR([Missing libexpat development files])], [])
 
 AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
 AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes" )
