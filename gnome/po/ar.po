@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-18 21:29-0400\n"
+"POT-Creation-Date: 2014-07-01 21:28-0400\n"
 "PO-Revision-Date: 2014-01-13 14:45+0000\n"
 "Last-Translator: Jihed Amine Maaref <jihedamine@gmail.com>\n"
 "Language-Team: Arabic <ar@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-04-20 05:38+0000\n"
-"X-Generator: Launchpad (build 16985)\n"
+"X-Launchpad-Export-Date: 2014-07-02 05:59+0000\n"
+"X-Generator: Launchpad (build 17082)\n"
 "Language: ar\n"
 
 #: ../src/accountlist.c:183
@@ -67,25 +67,25 @@ msgstr "جاهز"
 msgid "Invalid"
 msgstr "غير صالح"
 
-#: ../src/actions.c:134
+#: ../src/actions.c:131
 msgid "(SIP)"
 msgstr "(SIP)"
 
-#: ../src/actions.c:135
+#: ../src/actions.c:132
 msgid "(IAX)"
 msgstr "(IAX)"
 
-#: ../src/actions.c:141
+#: ../src/actions.c:138
 #, c-format
 msgid "%s %s"
 msgstr "%s% s"
 
-#: ../src/actions.c:145
+#: ../src/actions.c:142
 #, c-format
 msgid "No registered accounts"
 msgstr "لا حسابات مسجلة"
 
-#: ../src/actions.c:505
+#: ../src/actions.c:499
 #, c-format
 msgid "Direct SIP call"
 msgstr "مكالمة SIP مباشرة"
@@ -120,8 +120,8 @@ msgid "Account Parameters"
 msgstr "مواصفات الحساب"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:291
-#: ../src/config/assistant.c:360
+#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:292
+#: ../src/config/assistant.c:361
 msgid "_Alias"
 msgstr "_إسم مستعار"
 
@@ -135,25 +135,25 @@ msgid "Unknown"
 msgstr "مجهول"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:300
-#: ../src/config/assistant.c:369
+#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:301
+#: ../src/config/assistant.c:370
 msgid "_Host name"
 msgstr "_اسم المضيف"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:308
-#: ../src/config/assistant.c:377
+#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:309
+#: ../src/config/assistant.c:378
 msgid "_User name"
 msgstr "_اسم المستخدم"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:318
-#: ../src/config/assistant.c:386
+#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:319
+#: ../src/config/assistant.c:387
 msgid "_Password"
 msgstr "_كلمة السر"
 
-#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:327
-#: ../src/config/assistant.c:395
+#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:328
+#: ../src/config/assistant.c:396
 msgid "Show password"
 msgstr "أظهر كلمة السر"
 
@@ -162,8 +162,8 @@ msgid "_Proxy"
 msgstr "_الوكيل (proxy)"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:332
-#: ../src/config/assistant.c:400
+#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:333
+#: ../src/config/assistant.c:401
 msgid "_Voicemail number"
 msgstr "_رقم البريد الصوتي"
 
@@ -187,163 +187,163 @@ msgstr "التوثيق"
 msgid "Secret"
 msgstr "سرّي"
 
-#: ../src/config/accountconfigdialog.c:761
+#: ../src/config/accountconfigdialog.c:765
 msgid "Credential"
 msgstr "بيانات الاعتماد"
 
-#: ../src/config/accountconfigdialog.c:793
+#: ../src/config/accountconfigdialog.c:797
 msgid "Authentication name"
 msgstr "اسم المصادقة"
 
-#: ../src/config/accountconfigdialog.c:804
+#: ../src/config/accountconfigdialog.c:808
 msgid "Password"
 msgstr "كلمة السّر"
 
-#: ../src/config/accountconfigdialog.c:817
-#: ../src/config/accountlistconfigdialog.c:573
+#: ../src/config/accountconfigdialog.c:821
+#: ../src/config/accountlistconfigdialog.c:578
 msgid "Add"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:821
-#: ../src/config/accountlistconfigdialog.c:123
-#: ../src/config/accountlistconfigdialog.c:586 ../src/presencewindow.c:666
+#: ../src/config/accountconfigdialog.c:825
+#: ../src/config/accountlistconfigdialog.c:124
+#: ../src/config/accountlistconfigdialog.c:591 ../src/presencewindow.c:666
 #: ../src/presencewindow.c:690
 msgid "Remove"
 msgstr "حذف"
 
-#: ../src/config/accountconfigdialog.c:856
-#: ../src/config/accountconfigdialog.c:1568
+#: ../src/config/accountconfigdialog.c:860
+#: ../src/config/accountconfigdialog.c:1593
 msgid "Security"
 msgstr "الأمن"
 
-#: ../src/config/accountconfigdialog.c:865
-#: ../src/config/accountlistconfigdialog.c:578
+#: ../src/config/accountconfigdialog.c:869
+#: ../src/config/accountlistconfigdialog.c:583
 msgid "Edit"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:872
+#: ../src/config/accountconfigdialog.c:876
 msgid "Use TLS transport(sips)"
 msgstr "استخدم النقل ‎TLS‏ ‏(‎sips)"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:880
+#: ../src/config/accountconfigdialog.c:884
 msgid "SRTP key exchange"
 msgstr "تبادل المفاتيح SRTP"
 
-#: ../src/config/accountconfigdialog.c:886
+#: ../src/config/accountconfigdialog.c:890
 msgid "Disabled"
 msgstr "غير مفعل"
 
-#: ../src/config/accountconfigdialog.c:888
+#: ../src/config/accountconfigdialog.c:892
 #: ../src/config/preferencesdialog.c:389
 msgid "Preferences"
 msgstr "الخيارات"
 
-#: ../src/config/accountconfigdialog.c:950
+#: ../src/config/accountconfigdialog.c:958
 msgid "Registration"
 msgstr "التسجيل"
 
-#: ../src/config/accountconfigdialog.c:954
+#: ../src/config/accountconfigdialog.c:962
 msgid "Registration expire"
 msgstr "انتهاء صلاحية التسجيل"
 
-#: ../src/config/accountconfigdialog.c:977
+#: ../src/config/accountconfigdialog.c:985
 msgid "Network Interface"
 msgstr "واجهة الشبكة"
 
-#: ../src/config/accountconfigdialog.c:987
+#: ../src/config/accountconfigdialog.c:995
 msgid "Local address"
 msgstr "عنوان محلي"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:1020
+#: ../src/config/accountconfigdialog.c:1028
 msgid "Local port"
 msgstr "منفذ (port) محلي"
 
-#: ../src/config/accountconfigdialog.c:1061
-#: ../src/config/accountconfigdialog.c:1096
+#: ../src/config/accountconfigdialog.c:1069
+#: ../src/config/accountconfigdialog.c:1101
 msgid "Published address"
 msgstr "العنوان المنشور"
 
-#: ../src/config/accountconfigdialog.c:1065
+#: ../src/config/accountconfigdialog.c:1073
 msgid "Using STUN"
 msgstr "باستخدام STUN"
 
-#: ../src/config/accountconfigdialog.c:1072
+#: ../src/config/accountconfigdialog.c:1077
 msgid "STUN server URL"
 msgstr "URL خادم STUN"
 
-#: ../src/config/accountconfigdialog.c:1080
+#: ../src/config/accountconfigdialog.c:1085
 msgid "Same as local parameters"
 msgstr "مثل المعلمات المحلية"
 
-#: ../src/config/accountconfigdialog.c:1084
+#: ../src/config/accountconfigdialog.c:1089
 msgid "Set published address and port:"
 msgstr "تعيين العنوان المنشورة والمنفذ (port):"
 
-#: ../src/config/accountconfigdialog.c:1105
+#: ../src/config/accountconfigdialog.c:1110
 msgid "Published port"
 msgstr "المنفذ المنشور"
 
-#: ../src/config/accountconfigdialog.c:1153
+#: ../src/config/accountconfigdialog.c:1163
 msgid "Min"
 msgstr "الحد الأدنى"
 
-#: ../src/config/accountconfigdialog.c:1154
+#: ../src/config/accountconfigdialog.c:1164
 msgid "Max"
 msgstr "الحد الأقصى"
 
-#: ../src/config/accountconfigdialog.c:1177
+#: ../src/config/accountconfigdialog.c:1191
 msgid "Audio RTP Port Range"
 msgstr "نطاق منفذ (port) الصوت"
 
-#: ../src/config/accountconfigdialog.c:1183
+#: ../src/config/accountconfigdialog.c:1197
 msgid "Video RTP Port Range"
 msgstr "نطاق منفذ (port) الفيديو"
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1226
-#: ../src/config/accountconfigdialog.c:1552
+#: ../src/config/accountconfigdialog.c:1240
+#: ../src/config/accountconfigdialog.c:1573
 #: ../src/config/preferencesdialog.c:439
 msgid "Audio"
 msgstr "صوت"
 
-#: ../src/config/accountconfigdialog.c:1238
+#: ../src/config/accountconfigdialog.c:1252
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1242
+#: ../src/config/accountconfigdialog.c:1256
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1248
+#: ../src/config/accountconfigdialog.c:1262
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1256
+#: ../src/config/accountconfigdialog.c:1270
 msgid "Ringtones"
 msgstr "نغمات"
 
-#: ../src/config/accountconfigdialog.c:1259
+#: ../src/config/accountconfigdialog.c:1273
 msgid "Choose a ringtone"
 msgstr "اختيار نغمة"
 
-#: ../src/config/accountconfigdialog.c:1262
+#: ../src/config/accountconfigdialog.c:1276
 msgid "_Enable ringtones"
 msgstr "_تفعيل النغمات"
 
-#: ../src/config/accountconfigdialog.c:1280
+#: ../src/config/accountconfigdialog.c:1294
 msgid "Audio Files"
 msgstr "ملفات صوتية"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1311
-#: ../src/config/accountconfigdialog.c:1557
+#: ../src/config/accountconfigdialog.c:1325
+#: ../src/config/accountconfigdialog.c:1578
 #: ../src/config/preferencesdialog.c:445
 msgid "Video"
 msgstr "فيديو"
 
-#: ../src/config/accountconfigdialog.c:1328
+#: ../src/config/accountconfigdialog.c:1342
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -354,78 +354,78 @@ msgstr ""
 "<b>sip:remotepeer</b>. الإعدادات التي تحدد هنا ستستخدم أيضا إذا تعذر التطابق "
 "بين أي حساب و مكالمة صادرة أو واردة."
 
-#: ../src/config/accountconfigdialog.c:1519
+#: ../src/config/accountconfigdialog.c:1540
 msgid "Account settings"
 msgstr "إعدادات الحساب"
 
-#: ../src/config/accountconfigdialog.c:1547
+#: ../src/config/accountconfigdialog.c:1568
 msgid "Basic"
 msgstr "أساسي"
 
-#: ../src/config/accountconfigdialog.c:1564
-msgid "Advanced"
-msgstr "مُتقدم"
-
-#: ../src/config/accountconfigdialog.c:1572
+#: ../src/config/accountconfigdialog.c:1584
 #: ../src/config/addressbook-config.c:313
 #: ../src/config/preferencesdialog.c:433 ../src/config/shortcuts-config.c:117
 msgid "General"
 msgstr "عام"
 
-#: ../src/config/accountlistconfigdialog.c:112
+#: ../src/config/accountconfigdialog.c:1589
+msgid "Advanced"
+msgstr "مُتقدم"
+
+#: ../src/config/accountlistconfigdialog.c:113
 #, c-format
 msgid "Are you sure want to delete \"%s\"?"
 msgstr "هل تريد فعلا حذف \"%s\" ؟"
 
-#: ../src/config/accountlistconfigdialog.c:114
+#: ../src/config/accountlistconfigdialog.c:115
 #, c-format
 msgid "Are you sure want to delete account?"
 msgstr "هل تريد فعلا حذف الحساب ؟"
 
-#: ../src/config/accountlistconfigdialog.c:125
+#: ../src/config/accountlistconfigdialog.c:126
 msgid "Remove account"
 msgstr "حذف الحساب"
 
-#: ../src/config/accountlistconfigdialog.c:529
+#: ../src/config/accountlistconfigdialog.c:534
 msgid "Protocol"
 msgstr "بروتوكول"
 
-#: ../src/config/accountlistconfigdialog.c:539
+#: ../src/config/accountlistconfigdialog.c:544
 msgid "Status"
 msgstr "الحالة"
 
-#: ../src/config/accountlistconfigdialog.c:561 ../src/config/audioconf.c:522
-#: ../src/config/videoconf.c:525
+#: ../src/config/accountlistconfigdialog.c:566 ../src/config/audioconf.c:524
+#: ../src/config/videoconf.c:532
 msgid "Up"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:567 ../src/config/audioconf.c:528
-#: ../src/config/videoconf.c:530
+#: ../src/config/accountlistconfigdialog.c:572 ../src/config/audioconf.c:530
+#: ../src/config/videoconf.c:537
 msgid "Down"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:598
+#: ../src/config/accountlistconfigdialog.c:603
 msgid "Help"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:603
+#: ../src/config/accountlistconfigdialog.c:608
 msgid "Close"
 msgstr ""
 
-#: ../src/config/accountlistconfigdialog.c:638
+#: ../src/config/accountlistconfigdialog.c:643
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr "إجابة الخادم \"‎%s\"‏ (‎%d)"
 
-#: ../src/config/accountlistconfigdialog.c:668
+#: ../src/config/accountlistconfigdialog.c:673
 msgid "Accounts"
 msgstr "الحسابات"
 
-#: ../src/config/accountlistconfigdialog.c:677
+#: ../src/config/accountlistconfigdialog.c:682
 msgid "Configured Accounts"
 msgstr "الحسابات المهيئة"
 
-#: ../src/config/accountlistconfigdialog.c:705
+#: ../src/config/accountlistconfigdialog.c:710
 msgid "You have no active accounts"
 msgstr ""
 
@@ -473,8 +473,8 @@ msgstr "دفاتر العناوين"
 msgid "Select which Evolution address books to use"
 msgstr "حدد دفتر العناوين Evolution المستخدم"
 
-#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:497
-#: ../src/config/videoconf.c:501
+#: ../src/config/addressbook-config.c:402 ../src/config/audioconf.c:499
+#: ../src/config/videoconf.c:508
 msgid "Name"
 msgstr "الإسم"
 
@@ -538,143 +538,143 @@ msgstr "(SIP (Session Initiation Protocol"
 msgid "IAX2 (InterAsterix Exchange)"
 msgstr "(IAX2 (InterAsterix Exchange"
 
-#: ../src/config/assistant.c:283
+#: ../src/config/assistant.c:284
 msgid "SIP account settings"
 msgstr "إعدادات الحساب SIP"
 
-#: ../src/config/assistant.c:283 ../src/config/assistant.c:352
+#: ../src/config/assistant.c:284 ../src/config/assistant.c:353
 msgid "Please fill the following information"
 msgstr "الرجاء تقديم المعلومات التالية"
 
 #. Security options
-#: ../src/config/assistant.c:340
+#: ../src/config/assistant.c:341
 msgid "Secure communications with _ZRTP"
 msgstr "اتصالات آمنة مع _ZRTP"
 
-#: ../src/config/assistant.c:352
+#: ../src/config/assistant.c:353
 msgid "IAX2 account settings"
 msgstr "إعدادات الحساب IAX2"
 
-#: ../src/config/assistant.c:417
+#: ../src/config/assistant.c:418
 msgid "Network Address Translation (NAT)"
 msgstr "ترجمة عنوان الشبكة (NAT)"
 
-#: ../src/config/assistant.c:417
+#: ../src/config/assistant.c:418
 msgid "You should probably enable this if you are behind a firewall."
 msgstr "ربما يجب عليك تمكين هذا إذا كنت خلف جدار حماية (firewall)."
 
 #. enable
-#: ../src/config/assistant.c:426
+#: ../src/config/assistant.c:427
 msgid "E_nable STUN"
 msgstr "_تمكين STUN"
 
 #. server address
-#: ../src/config/assistant.c:433
+#: ../src/config/assistant.c:434
 msgid "_STUN server"
 msgstr "_خادم STUN"
 
-#: ../src/config/assistant.c:447
+#: ../src/config/assistant.c:448
 msgid "Account Registration"
 msgstr "تسجيل الحساب"
 
-#: ../src/config/assistant.c:447
+#: ../src/config/assistant.c:448
 msgid "Congratulations!"
 msgstr "تهانينا!"
 
-#: ../src/config/assistant.c:560
+#: ../src/config/assistant.c:561
 msgid "SFLphone account registration wizard"
 msgstr ""
 
-#: ../src/config/audioconf.c:502
+#: ../src/config/audioconf.c:504
 msgid "Frequency"
 msgstr "التردد"
 
-#: ../src/config/audioconf.c:507
+#: ../src/config/audioconf.c:509
 msgid "Bitrate"
 msgstr "معدّل البِت"
 
-#: ../src/config/audioconf.c:512
+#: ../src/config/audioconf.c:514
 msgid "Channels"
 msgstr "قنوات"
 
-#: ../src/config/audioconf.c:555
+#: ../src/config/audioconf.c:557
 msgid "ALSA plugin"
 msgstr "المكون الإضافي ALSA"
 
-#: ../src/config/audioconf.c:576 ../src/config/audioconf.c:657
+#: ../src/config/audioconf.c:578 ../src/config/audioconf.c:659
 msgid "Output"
 msgstr "المخرجات"
 
-#: ../src/config/audioconf.c:597 ../src/config/audioconf.c:679
+#: ../src/config/audioconf.c:599 ../src/config/audioconf.c:681
 msgid "Input"
 msgstr "المدخلات"
 
-#: ../src/config/audioconf.c:617 ../src/config/audioconf.c:699
+#: ../src/config/audioconf.c:619 ../src/config/audioconf.c:701
 msgid "Ringtone"
 msgstr "الرنة"
 
-#: ../src/config/audioconf.c:871
+#: ../src/config/audioconf.c:873
 msgid "Sound Manager"
 msgstr "إدارة الصوت"
 
-#: ../src/config/audioconf.c:878
+#: ../src/config/audioconf.c:880
 msgid "_Pulseaudio"
 msgstr "Pulseaudio_"
 
 #. Box for the Pulse configuration
-#: ../src/config/audioconf.c:884
+#: ../src/config/audioconf.c:886
 msgid "Pulseaudio settings"
 msgstr "إعدادات Pulseaudio"
 
-#: ../src/config/audioconf.c:888
+#: ../src/config/audioconf.c:890
 msgid "_ALSA"
 msgstr "ALSA_"
 
-#: ../src/config/audioconf.c:894
+#: ../src/config/audioconf.c:896
 msgid "_JACK"
 msgstr ""
 
 #. Box for the ALSA configuration
-#: ../src/config/audioconf.c:901
+#: ../src/config/audioconf.c:903
 msgid "ALSA settings"
 msgstr "إعدادات ALSA"
 
-#: ../src/config/audioconf.c:916
+#: ../src/config/audioconf.c:918
 msgid "Recordings"
 msgstr "التسجيلات"
 
 #. label
-#: ../src/config/audioconf.c:920
+#: ../src/config/audioconf.c:922
 msgid "Destination folder"
 msgstr "المجلد المرسل اليه"
 
 #. folder chooser button
-#: ../src/config/audioconf.c:924
+#: ../src/config/audioconf.c:926
 msgid "Select a folder"
 msgstr "اختر مجلدًا"
 
-#: ../src/config/audioconf.c:935
+#: ../src/config/audioconf.c:937
 msgid "_Always recording"
 msgstr "ال_تسجيل بإستمرار"
 
 #. Box for the voice enhancement configuration
-#: ../src/config/audioconf.c:942
+#: ../src/config/audioconf.c:944
 msgid "Voice enhancement settings"
 msgstr "إعدادات تحسين الصوت"
 
-#: ../src/config/audioconf.c:945
+#: ../src/config/audioconf.c:947
 msgid "_Noise Reduction"
 msgstr "الحد من ال_ضجيج"
 
-#: ../src/config/audioconf.c:952
+#: ../src/config/audioconf.c:954
 msgid "Automatic _Gain Control"
 msgstr "_تعديل تلقائي لمستوى الصوت"
 
-#: ../src/config/audioconf.c:959
+#: ../src/config/audioconf.c:961
 msgid "Tone settings"
 msgstr ""
 
-#: ../src/config/audioconf.c:962
+#: ../src/config/audioconf.c:964
 msgid "_Mute DTMF"
 msgstr ""
 
@@ -710,60 +710,60 @@ msgstr "إرسال الرسائل"
 msgid "Open URL in"
 msgstr "فتح الرابط في"
 
-#: ../src/config/preferencesdialog.c:179
+#: ../src/config/preferencesdialog.c:178
 msgid "Desktop Notifications"
 msgstr "تنبيهات سطح المكتب"
 
 #. Notification All
-#: ../src/config/preferencesdialog.c:183
+#: ../src/config/preferencesdialog.c:182
 msgid "_Enable notifications"
 msgstr "_تمكين التبليغات"
 
 #. Window Behaviour frame
-#: ../src/config/preferencesdialog.c:189
+#: ../src/config/preferencesdialog.c:188
 msgid "Window Behaviour"
 msgstr "تصرف النافذة"
 
-#: ../src/config/preferencesdialog.c:196
+#: ../src/config/preferencesdialog.c:195
 msgid "Bring SFLphone to foreground on incoming calls"
 msgstr "جلب SFLphone للصدارة عند ورود مكالمات"
 
 #. System Tray option frame
-#: ../src/config/preferencesdialog.c:203
+#: ../src/config/preferencesdialog.c:202
 msgid "System Tray Icon (Legacy)"
 msgstr "أيقونة شريط المهام (موروث)"
 
-#: ../src/config/preferencesdialog.c:210
+#: ../src/config/preferencesdialog.c:209
 msgid "Show SFLphone in the system tray"
 msgstr "إظهار SFLphone في شريط المهام"
 
-#: ../src/config/preferencesdialog.c:216
+#: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
 msgstr "_جلب النافذة الرئيسية للصدارة عند ورود مكالمات"
 
-#: ../src/config/preferencesdialog.c:221
+#: ../src/config/preferencesdialog.c:220
 msgid "Ne_ver popup main window"
 msgstr "_عدم جلب النافذة الرئيسية للصدارة في جميع الحالات"
 
 #. HISTORY CONFIGURATION
-#: ../src/config/preferencesdialog.c:237
+#: ../src/config/preferencesdialog.c:236
 msgid "Calls History"
 msgstr "تاريخ المكالمات"
 
-#: ../src/config/preferencesdialog.c:241
+#: ../src/config/preferencesdialog.c:240
 msgid "_Keep my history for at least"
 msgstr "الحفاظ على _سجلي الزمني على الأقل لمدة"
 
-#: ../src/config/preferencesdialog.c:254
+#: ../src/config/preferencesdialog.c:253
 msgid "days"
 msgstr "الايام"
 
 #. INSTANT MESSAGING CONFIGURATION
-#: ../src/config/preferencesdialog.c:258
+#: ../src/config/preferencesdialog.c:257
 msgid "Instant Messaging"
 msgstr "الرسائل الفورية"
 
-#: ../src/config/preferencesdialog.c:262
+#: ../src/config/preferencesdialog.c:261
 msgid "Enable instant messaging"
 msgstr "تفعيل المراسلة الفورية"
 
@@ -796,15 +796,15 @@ msgstr ""
 msgid "Invalid certificate detected"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:94
+#: ../src/config/tlsadvanceddialog.c:108
 msgid "Advanced options for TLS"
 msgstr "الخيارات المتقدمة TLS"
 
-#: ../src/config/tlsadvanceddialog.c:111
+#: ../src/config/tlsadvanceddialog.c:125
 msgid "TLS transport"
 msgstr "نقل TLS"
 
-#: ../src/config/tlsadvanceddialog.c:115
+#: ../src/config/tlsadvanceddialog.c:129
 #, c-format
 msgid ""
 "TLS transport can be used along with UDP for those calls that would\n"
@@ -818,104 +818,84 @@ msgstr ""
 "\n"
 "لكل حساب,‏ بيد أن كل منهم سيشتغل على منفذ مخصص له، مختلف عن الآخرين.\n"
 
-#: ../src/config/tlsadvanceddialog.c:157
-msgid "Global TLS listener (all accounts)"
-msgstr "مستمع TLS شامل (كل الحسابات)"
+#: ../src/config/tlsadvanceddialog.c:171
+msgid "TLS listener port"
+msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:167
+#: ../src/config/tlsadvanceddialog.c:181
 msgid "Certificate of Authority list"
 msgstr "قائمة الشهادات من هيئة"
 
-#: ../src/config/tlsadvanceddialog.c:170
+#: ../src/config/tlsadvanceddialog.c:184
 msgid "Choose a CA list file (optional)"
 msgstr "اختيار ملف لقائمة الشهادات من هيئة (اختياري)"
 
-#: ../src/config/tlsadvanceddialog.c:181
+#: ../src/config/tlsadvanceddialog.c:195
 msgid "Public endpoint certificate file"
 msgstr "ملف شهادة نقطة نهاية عامة"
 
-#: ../src/config/tlsadvanceddialog.c:184
+#: ../src/config/tlsadvanceddialog.c:198
 msgid "Choose a public endpoint certificate (optional)"
 msgstr "اختيار شهادة نقطة نهاية عامة (اختياري)"
 
-#: ../src/config/tlsadvanceddialog.c:203
+#: ../src/config/tlsadvanceddialog.c:222
 msgid "Choose a private key file (optional)"
 msgstr "اختيار ملف مفتاح خاص (اختياري)"
 
-#: ../src/config/tlsadvanceddialog.c:218
+#: ../src/config/tlsadvanceddialog.c:242
 msgid "Password for the private key"
 msgstr "كلمة السر للمفتاح الخاص"
 
 #. TLS protocol methods
-#: ../src/config/tlsadvanceddialog.c:233
+#: ../src/config/tlsadvanceddialog.c:257
 msgid "TLS protocol method"
 msgstr "أسلوب البروتوكول TLS"
 
-#: ../src/config/tlsadvanceddialog.c:256
+#: ../src/config/tlsadvanceddialog.c:280
 msgid "TLS cipher list"
 msgstr "قائمة الشفرات TLS"
 
-#: ../src/config/tlsadvanceddialog.c:265
+#: ../src/config/tlsadvanceddialog.c:289
 msgid "Server name instance for outgoing TLS connection"
 msgstr "اسم خادم للاتصال الصادر TLS"
 
-#: ../src/config/tlsadvanceddialog.c:273
+#: ../src/config/tlsadvanceddialog.c:297
 msgid "Negotiation timeout (seconds)"
 msgstr ""
 
-#: ../src/config/tlsadvanceddialog.c:285
+#: ../src/config/tlsadvanceddialog.c:309
 msgid "Verify incoming certificates, as a server"
 msgstr "تحقق من الشهادات الواردة، كخادم"
 
-#: ../src/config/tlsadvanceddialog.c:291
+#: ../src/config/tlsadvanceddialog.c:315
 msgid "Verify certificates from answer, as a client"
 msgstr "تحقق من الشهادات من الإجابة، كمستخدم"
 
-#: ../src/config/tlsadvanceddialog.c:297
+#: ../src/config/tlsadvanceddialog.c:321
 msgid "Require certificate for incoming tls connections"
 msgstr "يقتضي شهادة للإتصالات الواردة TLS"
 
-#: ../src/config/videoconf.c:508
+#: ../src/config/videoconf.c:515
 msgid "Bitrate (kbps)"
 msgstr "معدل إرسال البتات (kbps)"
 
-#: ../src/config/videoconf.c:515
+#: ../src/config/videoconf.c:522
 msgid "Parameters"
 msgstr "المحددات"
 
-#: ../src/config/videoconf.c:833
+#: ../src/config/videoconf.c:703
 msgid "No devices found"
 msgstr "لم توجد أي أجهزة"
 
-#. Set choices of input devices
-#: ../src/config/videoconf.c:844
-msgid "Device"
-msgstr "جهاز"
-
-#. Set choices of input
-#: ../src/config/videoconf.c:859
-msgid "Channel"
-msgstr "القناة"
-
-#. Set choices of sizes
-#: ../src/config/videoconf.c:873
-msgid "Size"
-msgstr "الحجم"
-
-#. Set choices of rates
-#: ../src/config/videoconf.c:887
-msgid "Rate"
-msgstr "المعدل"
-
-#: ../src/config/videoconf.c:913
+#: ../src/config/videoconf.c:732
 msgid "Video Manager"
 msgstr "مدير الفيديو"
 
-#: ../src/config/videoconf.c:916
+#: ../src/config/videoconf.c:735
 msgid "Video4Linux2"
 msgstr "فديو4 لنكس2"
 
-#: ../src/config/videoconf.c:922
+#: ../src/config/videoconf.c:741
 msgid "Camera"
 msgstr "آلة تصوير"
 
@@ -947,6 +927,14 @@ msgstr "الخيارات SDES"
 msgid "Fallback on RTP on SDES failure"
 msgstr "الاستعاضة بRTP عند إخفاق SDES"
 
+#: ../src/contacts/calltree.c:75
+msgid "Create conference"
+msgstr ""
+
+#: ../src/contacts/calltree.c:76
+msgid "Transfer call to"
+msgstr ""
+
 #: ../src/contacts/calltree.c:369
 #, c-format
 msgid ""
@@ -959,6 +947,11 @@ msgstr ""
 msgid ""
 "\n"
 "<i>Confirm SAS <b>%s</b> ?</i>"
+msgstr ""
+
+#: ../src/contacts/calltree.c:1185
+#, c-format
+msgid "%ud %02uh %02umn %02us"
 msgstr ""
 
 #: ../src/contacts/searchbar.c:226
@@ -982,19 +975,19 @@ msgstr "البحث حسب المكالمات الواردة"
 msgid "Search by outgoing call"
 msgstr "البحث حسب المكالمات الصادرة"
 
-#: ../src/dbus/dbus.c:610
+#: ../src/dbus/dbus.c:611
 msgid "ALSA notification: Error while opening playback device"
 msgstr "إعلام ALSA: خطأ أثناء فتح جهاز القراءة"
 
-#: ../src/dbus/dbus.c:613
+#: ../src/dbus/dbus.c:614
 msgid "ALSA notification: Error while opening capture device"
 msgstr "إعلام ALSA: خطأ أثناء فتح جهاز التسجيل"
 
-#: ../src/dbus/dbus.c:616
+#: ../src/dbus/dbus.c:617
 msgid "Pulseaudio notification: Pulseaudio is not running"
 msgstr "إعلام Pulseaudio: Pulseaudio لا يعمل"
 
-#: ../src/dbus/dbus.c:619
+#: ../src/dbus/dbus.c:620
 msgid "Codecs notification: Codecs not found"
 msgstr "إعلام كوديك: كوديك غير موجود"
 
@@ -1082,7 +1075,7 @@ msgid "Do you really want to delete the group %s"
 msgstr ""
 
 #. popup
-#: ../src/presencewindow.c:755 ../src/uimanager.c:1208
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1224
 msgid "Add new buddy"
 msgstr "إضافة صديق جديد"
 
@@ -1091,7 +1084,7 @@ msgid "Add group"
 msgstr "إضافة مجموعة"
 
 #. Call Menu
-#: ../src/presencewindow.c:802 ../src/uimanager.c:1038
+#: ../src/presencewindow.c:802 ../src/uimanager.c:1054
 msgid "Call"
 msgstr "المكالمة"
 
@@ -1111,7 +1104,7 @@ msgstr "الحالة:"
 msgid "SFLphone Presence"
 msgstr "حالة التواجد على SFLphone"
 
-#: ../src/sflphone_client.c:53
+#: ../src/sflphone_client.c:60
 #, c-format
 msgid ""
 "%s\n"
@@ -1121,7 +1114,7 @@ msgstr ""
 "شغّل الأمر '‎%s --help ' لرؤية القائمة الكاملة لخيارات الأوامر السطرية "
 "المتاحة.\n"
 
-#: ../src/sflphone_client.c:67
+#: ../src/sflphone_client.c:74
 #, c-format
 msgid ""
 "Unable to initialize.\n"
@@ -1129,7 +1122,7 @@ msgid ""
 "Error: %s"
 msgstr ""
 
-#: ../src/sflphone_client.c:70
+#: ../src/sflphone_client.c:77
 msgid "SFLphone Error"
 msgstr "خطأ SFLphone"
 
@@ -1234,8 +1227,8 @@ msgstr "حجم صوت الميكروفون"
 msgid "_Show main window"
 msgstr "_إظهار النافذة الرئيسية"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:1048 ../src/uimanager.c:1401
-#: ../src/uimanager.c:1487
+#: ../src/statusicon.c:139 ../src/uimanager.c:1064 ../src/uimanager.c:1417
+#: ../src/uimanager.c:1502
 msgid "_Hang up"
 msgstr "إ_نهاء المكالمة"
 
@@ -1247,7 +1240,7 @@ msgstr "SFLphone"
 msgid "No address book selected"
 msgstr "لم تختر دفتر عناوين"
 
-#: ../src/uimanager.c:455 ../src/uimanager.c:1125
+#: ../src/uimanager.c:455 ../src/uimanager.c:1141
 msgid "Address book"
 msgstr "دفتر العناوين"
 
@@ -1266,249 +1259,251 @@ msgstr ""
 msgid "About SFLphone"
 msgstr "حول ‏SFLphone"
 
-#: ../src/uimanager.c:989 ../src/uimanager.c:1072
+#: ../src/uimanager.c:696
+msgid "_Cancel"
+msgstr ""
+
+#: ../src/uimanager.c:697
+msgid "_Open"
+msgstr ""
+
+#. Add the special X11 device
+#: ../src/uimanager.c:715 ../src/uimanager.c:1494
+msgid "Screen"
+msgstr ""
+
+#: ../src/uimanager.c:717 ../src/uimanager.c:1495
+msgid "Choose file..."
+msgstr ""
+
+#: ../src/uimanager.c:1005 ../src/uimanager.c:1088
 msgid "Voicemail"
 msgstr "البريد الصوتي"
 
-#: ../src/uimanager.c:1040 ../src/uimanager.c:1594
+#: ../src/uimanager.c:1056 ../src/uimanager.c:1609
 msgid "_New call"
 msgstr "_مكالمة جديدة"
 
-#: ../src/uimanager.c:1041
+#: ../src/uimanager.c:1057
 msgid "Place a new call"
 msgstr "إحداث مكالمة جديدة"
 
-#: ../src/uimanager.c:1044 ../src/uimanager.c:1389
+#: ../src/uimanager.c:1060 ../src/uimanager.c:1405
 msgid "_Pick up"
 msgstr "ت_ناول"
 
-#: ../src/uimanager.c:1045
+#: ../src/uimanager.c:1061
 msgid "Answer the call"
 msgstr "الرد على المكالمة"
 
-#: ../src/uimanager.c:1049
+#: ../src/uimanager.c:1065
 msgid "Finish the call"
 msgstr "إنهاء المكالمة"
 
-#: ../src/uimanager.c:1052
+#: ../src/uimanager.c:1068
 msgid "O_n hold"
 msgstr "في الانت_ظار"
 
-#: ../src/uimanager.c:1053
+#: ../src/uimanager.c:1069
 msgid "Place the call on hold"
 msgstr "وضع المكالمة قيد الانتظار"
 
-#: ../src/uimanager.c:1056
+#: ../src/uimanager.c:1072
 msgid "O_ff hold"
 msgstr "تفعيل المكالمة التي في قيد الانتظار"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1073
 msgid "Place the call off hold"
 msgstr "تفعيل المكالمة التي في قيد الانتظار"
 
-#: ../src/uimanager.c:1060 ../src/uimanager.c:1443
+#: ../src/uimanager.c:1076 ../src/uimanager.c:1459
 msgid "Send _message"
 msgstr "إرسال _رسالة"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1077
 msgid "Send message"
 msgstr "إرسال رسالة"
 
-#: ../src/uimanager.c:1064 ../src/uimanager.c:1065
+#: ../src/uimanager.c:1080 ../src/uimanager.c:1081
 msgid "Share screen"
 msgstr ""
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1084
 msgid "Configuration _Assistant"
 msgstr "مساعد ال_تهيئة"
 
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1085
 msgid "Run the configuration assistant"
 msgstr "شغّل مساعد الإعداد"
 
-#: ../src/uimanager.c:1073
+#: ../src/uimanager.c:1089
 msgid "Call your voicemail"
 msgstr "الاتصال بالبريد الصوتي"
 
-#: ../src/uimanager.c:1076
+#: ../src/uimanager.c:1092
 msgid "_Close"
 msgstr "إ_غلاق"
 
-#: ../src/uimanager.c:1077
+#: ../src/uimanager.c:1093
 msgid "Minimize to system tray"
 msgstr "تصغير إلى شريط المهام"
 
-#: ../src/uimanager.c:1080
+#: ../src/uimanager.c:1096
 msgid "_Quit"
 msgstr "ا_خرج"
 
-#: ../src/uimanager.c:1081
+#: ../src/uimanager.c:1097
 msgid "Quit the program"
 msgstr "اخرج من البرنامج"
 
 #. Edit Menu
-#: ../src/uimanager.c:1085
+#: ../src/uimanager.c:1101
 msgid "_Edit"
 msgstr "ت_حرير"
 
-#: ../src/uimanager.c:1087 ../src/uimanager.c:1368
+#: ../src/uimanager.c:1103 ../src/uimanager.c:1384
 msgid "_Copy"
 msgstr "_نسخ"
 
-#: ../src/uimanager.c:1088
+#: ../src/uimanager.c:1104
 msgid "Copy the selection"
 msgstr "نسخ النص المختار"
 
-#: ../src/uimanager.c:1091 ../src/uimanager.c:1376
+#: ../src/uimanager.c:1107 ../src/uimanager.c:1392
 msgid "_Paste"
 msgstr "إل_صاق"
 
-#: ../src/uimanager.c:1092
+#: ../src/uimanager.c:1108
 msgid "Paste the clipboard"
 msgstr "ألصق محتويات الحافظة"
 
-#: ../src/uimanager.c:1095
+#: ../src/uimanager.c:1111
 msgid "Clear _history"
 msgstr "مسح ال_سجل"
 
-#: ../src/uimanager.c:1096
+#: ../src/uimanager.c:1112
 msgid "Clear the call history"
 msgstr "مسح سجل المكالمات"
 
-#: ../src/uimanager.c:1099
+#: ../src/uimanager.c:1115
 msgid "_Accounts"
 msgstr "ال_حسابات"
 
-#: ../src/uimanager.c:1100
+#: ../src/uimanager.c:1116
 msgid "Edit your accounts"
 msgstr "تحرير حساباتك"
 
-#: ../src/uimanager.c:1103
+#: ../src/uimanager.c:1119
 msgid "_Preferences"
 msgstr "ال_خيارات"
 
-#: ../src/uimanager.c:1104
+#: ../src/uimanager.c:1120
 msgid "Change your preferences"
 msgstr "غيّر خياراتك"
 
 #. View Menu
-#: ../src/uimanager.c:1108
+#: ../src/uimanager.c:1124
 msgid "_View"
 msgstr "_عرض"
 
 #. Help menu
-#: ../src/uimanager.c:1111
+#: ../src/uimanager.c:1127
 msgid "_Help"
 msgstr "م_ساعدة"
 
-#: ../src/uimanager.c:1112
+#: ../src/uimanager.c:1128
 msgid "Contents"
 msgstr "المحتوى"
 
-#: ../src/uimanager.c:1113
+#: ../src/uimanager.c:1129
 msgid "Open the manual"
 msgstr "إفتح كتيّب الإرشادات"
 
-#: ../src/uimanager.c:1115
+#: ../src/uimanager.c:1131
 msgid "About this application"
 msgstr "حول هذا البرنامج"
 
-#: ../src/uimanager.c:1119
+#: ../src/uimanager.c:1135
 msgid "_Transfer"
 msgstr "_نقل"
 
-#: ../src/uimanager.c:1119
+#: ../src/uimanager.c:1135
 msgid "Transfer the call"
 msgstr "نقل المكالمة"
 
-#: ../src/uimanager.c:1120 ../src/uimanager.c:1423
+#: ../src/uimanager.c:1136 ../src/uimanager.c:1439
 msgid "_Record"
 msgstr "س_جّل"
 
-#: ../src/uimanager.c:1120
+#: ../src/uimanager.c:1136
 msgid "Record the current conversation"
 msgstr "سجّل المكالمة الحالية"
 
-#: ../src/uimanager.c:1121
+#: ../src/uimanager.c:1137
 msgid "_Show toolbar"
 msgstr "إظهار _شريط الأدوات"
 
-#: ../src/uimanager.c:1121
+#: ../src/uimanager.c:1137
 msgid "Show the toolbar"
 msgstr "إظهار شريط الأدوات"
 
-#: ../src/uimanager.c:1122
+#: ../src/uimanager.c:1138
 msgid "_Dialpad"
 msgstr "_لوحة الاتصال"
 
-#: ../src/uimanager.c:1122
+#: ../src/uimanager.c:1138
 msgid "Show the dialpad"
 msgstr "إظهار لوحة الاتصال"
 
-#: ../src/uimanager.c:1123
+#: ../src/uimanager.c:1139
 msgid "_Volume controls"
 msgstr "التحكم بحجم ال_صوت"
 
-#: ../src/uimanager.c:1123
+#: ../src/uimanager.c:1139
 msgid "Show the volume controls"
 msgstr "إظهار عناصر التحكم بحجم الصوت"
 
-#: ../src/uimanager.c:1124
+#: ../src/uimanager.c:1140
 msgid "_History"
 msgstr "ال_سجل"
 
-#: ../src/uimanager.c:1124
+#: ../src/uimanager.c:1140
 msgid "Call history"
 msgstr ""
 
-#: ../src/uimanager.c:1125
+#: ../src/uimanager.c:1141
 msgid "_Address book"
 msgstr "_دفتر العناوين"
 
-#: ../src/uimanager.c:1127
+#: ../src/uimanager.c:1143
 msgid "_Buddy list"
 msgstr "قائمة الأ_صدقاء"
 
-#: ../src/uimanager.c:1127
+#: ../src/uimanager.c:1143
 msgid "Display the buddy list"
 msgstr "عرض قائمة الأصدقاء"
 
-#: ../src/uimanager.c:1412 ../src/uimanager.c:1496
+#: ../src/uimanager.c:1428 ../src/uimanager.c:1511
 msgid "On _Hold"
 msgstr "في الانت_ظار"
 
 #. Add a video sources menu
-#: ../src/uimanager.c:1463
+#: ../src/uimanager.c:1479
 msgid "Video sources"
 msgstr ""
 
-#: ../src/uimanager.c:1533
+#: ../src/uimanager.c:1548
 msgid "_Call back"
 msgstr "إ_عادة الاتصال"
 
-#: ../src/uimanager.c:1543 ../src/uimanager.c:1602
+#: ../src/uimanager.c:1558 ../src/uimanager.c:1617
 msgid "Follow status"
 msgstr "متابعة حالة التواجد"
 
-#: ../src/uimanager.c:1663
+#: ../src/uimanager.c:1678
 msgid "Edit phone number"
 msgstr "تحرير رقم الهاتف"
 
-#: ../src/uimanager.c:1674
+#: ../src/uimanager.c:1689
 msgid "Edit the phone number before making a call"
 msgstr "تحرير رقم الهاتف قبل إجراء مكالمة هاتفية"
-
-#: ../src/video/video_callbacks.c:241
-msgid "Local View"
-msgstr ""
-
-#. on a conference call
-#. build the prefix title name
-#: ../src/video/video_callbacks.c:257
-msgid "Conference with"
-msgstr ""
-
-#. build the prefix title name
-#: ../src/video/video_callbacks.c:269
-msgid "Call with"
-msgstr ""
