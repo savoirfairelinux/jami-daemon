@@ -100,6 +100,7 @@ static GtkWidget *ringtone_seekslider;
 static GtkWidget *audio_port_min_spin_box;
 static GtkWidget *audio_port_max_spin_box;
 #ifdef SFL_VIDEO
+static GtkWidget *enable_video_button;
 static GtkWidget *video_port_min_spin_box;
 static GtkWidget *video_port_max_spin_box;
 #endif
@@ -1328,6 +1329,13 @@ create_videocodecs_configuration(const account_t *a)
     gtk_widget_show(videocodecs);
     gtk_container_add(GTK_CONTAINER (videocodecs), box);
 
+    /* Check button to enable/disable video for an account */
+    gpointer ptr = account_lookup(a, CONFIG_VIDEO_ENABLED);
+    enable_video_button = gtk_check_button_new_with_mnemonic(_("_Enable video"));
+    const gboolean video_enabled = g_strcmp0(ptr, "true") == 0;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enable_video_button), video_enabled);
+    gtk_box_pack_start(GTK_BOX(vbox), enable_video_button, FALSE, FALSE, 0);
+
     gtk_widget_show_all(vbox);
 
     return vbox;
@@ -1498,6 +1506,12 @@ void update_account_from_dialog(GtkWidget *dialog, const gchar *accountID)
 
     const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
     account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
+
+#ifdef SFL_VIDEO
+    const gboolean video_enabled =
+        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_video_button));
+    account_replace(account, CONFIG_VIDEO_ENABLED, bool_to_string(video_enabled));
+#endif
 
     gchar *ringtone_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser));
     account_replace(account, CONFIG_RINGTONE_PATH, ringtone_path);
