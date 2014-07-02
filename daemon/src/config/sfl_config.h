@@ -46,7 +46,49 @@ namespace Conf {
 static const char * const TRUE_STR = "true";
 static const char * const FALSE_STR = "false";
 
-class ConfigTreeItem;
+class ConfigTreeItem {
+
+    public:
+        ConfigTreeItem() : name_(""), value_(""), defaultValue_(""), type_("string") {}
+
+        // defaultvalue = value
+        ConfigTreeItem(const std::string& name, const std::string& value, const std::string& type) :
+            name_(name), value_(value),
+            defaultValue_(value), type_(type) {}
+
+        ConfigTreeItem(const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) :
+            name_(name), value_(value),
+            defaultValue_(defaultValue), type_(type) {}
+
+        void setValue(const std::string& value) {
+            value_ = value;
+        }
+
+        std::string getName() const {
+            return name_;
+        }
+
+        std::string getValue() const  {
+            return value_;
+        }
+
+        std::string getDefaultValue() const  {
+            return defaultValue_;
+        }
+
+        std::string getType() const  {
+            return type_;
+        }
+
+    private:
+        std::string name_;
+        std::string value_;
+        std::string defaultValue_;
+        std::string type_;
+};
+
+
+
 typedef std::map<std::string, ConfigTreeItem> ItemMap;
 typedef std::map<std::string, ItemMap> SectionMap;
 
@@ -150,47 +192,6 @@ class ConfigTree {
         friend class ConfigTreeIterator;
 
         NON_COPYABLE(ConfigTree);
-};
-
-class ConfigTreeItem {
-
-    public:
-        ConfigTreeItem() : name_(""), value_(""), defaultValue_(""), type_("string") {}
-
-        // defaultvalue = value
-        ConfigTreeItem(const std::string& name, const std::string& value, const std::string& type) :
-            name_(name), value_(value),
-            defaultValue_(value), type_(type) {}
-
-        ConfigTreeItem(const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) :
-            name_(name), value_(value),
-            defaultValue_(defaultValue), type_(type) {}
-
-        void setValue(const std::string& value) {
-            value_ = value;
-        }
-
-        std::string getName() const {
-            return name_;
-        }
-
-        std::string getValue() const  {
-            return value_;
-        }
-
-        std::string getDefaultValue() const  {
-            return defaultValue_;
-        }
-
-        std::string getType() const  {
-            return type_;
-        }
-
-    private:
-        std::string name_;
-        std::string value_;
-        std::string defaultValue_;
-        std::string type_;
 };
 
 } // end namespace ConfigTree
