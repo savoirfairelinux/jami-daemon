@@ -155,9 +155,6 @@ AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], 
        AC_MSG_ERROR([Unable to find yaml development files])])
 
 
-LIBCRYPTO_MIN_VERSION=1.0
-PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYPTO=true, HAVE_LIBCRYPTO=false);
-
 if test "xSANDROID" = "xyes"; then
     dnl Check for OpenSL
     AC_ARG_WITH([opensl],
