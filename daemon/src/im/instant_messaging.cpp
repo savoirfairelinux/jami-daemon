@@ -57,7 +57,7 @@ bool InstantMessaging::saveMessage(const std::string &message, const std::string
 {
     std::ofstream File;
     std::string filename = "im:" + id;
-    File.open(filename.c_str(), (std::_Ios_Openmode) mode);
+    File.open(filename.c_str(), mode);
 
     if (!File.good() || !File.is_open())
         return false;
