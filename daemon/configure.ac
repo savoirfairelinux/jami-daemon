@@ -73,12 +73,39 @@ AC_COMPILE_IFELSE(
 
 AC_MSG_RESULT([$CLANG])
 
+dnl Check if we are compiling for android
+AC_MSG_CHECKING([if compiling for android])
+AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([], [[
+#ifndef __ANDROID__
+       not android
+#endif
+]])],
+[ANDROID=yes], [ANDROID=no])
+
+AC_MSG_RESULT([$ANDROID])
+AM_CONDITIONAL([USE_ANDROID], test "x$ANDROID" = "xyes")
+
 AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], [
        AC_MSG_ERROR([Unable to find yaml development files])])
 
 
-LIBCRYPTO_MIN_VERSION=1.0
-PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYPTO=true, HAVE_LIBCRYPTO=false);
+if test "xSANDROID" = "xyes"; then
+    dnl Check for OpenSL
+    AC_ARG_WITH([opensl],
+                AS_HELP_STRING([--without-opensl],
+                               [Ignore presence of opensl and disable it]))
+
+    AS_IF([test "x$with_opensl" != "xno"],
+          [AC_CHECK_HEADER(["SLES/OpenSLES.h"],
+                           [have_opensl=yes], [have_opensl=no])],
+          [have_opensl=no])
+
+    AC_DEFINE_UNQUOTED([HAVE_OPENSL],
+                       `if test "x$have_opensl" = "xyes"; then echo 1; else echo 0; fi`,
+                       [Define if you have OpenSL])
+fi
+AM_CONDITIONAL([BUILD_OPENSL], test "x$have_opensl" = "xyes")
 
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
