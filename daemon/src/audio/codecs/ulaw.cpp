@@ -48,16 +48,20 @@ class Ulaw : public sfl::AudioCodec {
             return new Ulaw;
         }
 
-        int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size) {
-            for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
-                *dst = ULawDecode(*src);
+        int decode(SFLAudioSample *pcm, unsigned char *data, size_t len)
+        {
+            for (unsigned char *end = data + len; data < end;
+                 ++data, ++pcm)
+                *pcm = ULawDecode(*data);
 
-            return buf_size;
+            return len;
         }
 
-        int encode(unsigned char *dst, SFLAudioSample *src, size_t /* buf_size */) {
-            for (unsigned char * end = dst + frameSize_; dst < end; ++src, ++dst)
-                *dst = ULawEncode(*src);
+        int encode(unsigned char *data, SFLAudioSample *pcm, size_t /* max_data_bytes */)
+        {
+            for (unsigned char *end = data + frameSize_; data < end;
+                 ++data, ++pcm)
+                *data = ULawEncode(*pcm);
 
             return frameSize_;
         }
