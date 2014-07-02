@@ -33,6 +33,9 @@
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
 #define YIELD std::this_thread::yield
+#elif __llvm__
+#include <sched.h>
+#define YIELD sched_yield
 #else
 #define YIELD pthread_yield
 #endif
