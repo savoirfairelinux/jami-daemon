@@ -67,7 +67,8 @@ private:
     SHMSink sink_;
     std::atomic<bool> switchPending_ = {false};
 
-    std::map<std::string, std::string> decOpts_ = {};
+    std::map<std::string, std::string> decOpts_ =
+        std::map<std::string, std::string>{};
 
     std::string input_      = "";
     std::string format_     = "";
