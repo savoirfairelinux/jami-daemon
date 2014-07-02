@@ -50,7 +50,7 @@ class Ulaw : public sfl::AudioCodec {
 
         int decode(SFLAudioSample *pcm, unsigned char *data, size_t len)
         {
-            for (unsigned char *end = data + len; data < end;
+            for (const unsigned char *end = data + len; data < end;
                  ++data, ++pcm)
                 *pcm = ULawDecode(*data);
 
@@ -59,7 +59,7 @@ class Ulaw : public sfl::AudioCodec {
 
         int encode(unsigned char *data, SFLAudioSample *pcm, size_t /* max_data_bytes */)
         {
-            for (unsigned char *end = data + frameSize_; data < end;
+            for (const unsigned char *end = data + frameSize_; data < end;
                  ++data, ++pcm)
                 *data = ULawEncode(*pcm);
 
