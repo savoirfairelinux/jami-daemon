@@ -216,6 +216,7 @@ class Account : public Serializable {
         static const char * const VIDEO_CODECS_KEY;
         static const char * const RINGTONE_PATH_KEY;
         static const char * const RINGTONE_ENABLED_KEY;
+        static const char * const VIDEO_ENABLED_KEY;
         static const char * const DISPLAY_NAME_KEY;
         static const char * const ALIAS_KEY;
         static const char * const TYPE_KEY;
@@ -289,6 +290,12 @@ class Account : public Serializable {
          * Ringtone .au file used for this account
          */
         std::string ringtonePath_;
+
+        /**
+         * Allows user to temporarily disable video calling
+         */
+
+        bool videoEnabled_ = true;
 
         /**
          * Play ringtone when receiving a call

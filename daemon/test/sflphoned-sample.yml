@@ -63,6 +63,9 @@ accounts:
     enabled: true
     name: VP8
     parameters:
+  videoEnabled: true
+  videoPortMax: 65534
+  videoPortMin: 49152
   zrtp:
     displaySas: true
     displaySasOnce: false
@@ -131,6 +134,9 @@ accounts:
     enabled: true
     name: VP8
     parameters:
+  videoEnabled: true
+  videoPortMax: 65534
+  videoPortMin: 49152
   zrtp:
     displaySas: true
     displaySasOnce: false

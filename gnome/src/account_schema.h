@@ -51,6 +51,7 @@ static const char *const CONFIG_CREDENTIAL_NUMBER               = "Credential.co
 static const char *const CONFIG_ACCOUNT_DTMF_TYPE               = "Account.dtmfType";
 static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringtonePath";
 static const char *const CONFIG_RINGTONE_ENABLED                = "Account.ringtoneEnabled";
+static const char *const CONFIG_VIDEO_ENABLED                   = "Account.videoEnabled";
 static const char *const CONFIG_KEEP_ALIVE_ENABLED              = "Account.keepAliveEnabled";
 static const char *const CONFIG_PRESENCE_ENABLED                = "Account.presenceEnabled";
 static const char *const CONFIG_PRESENCE_PUBLISH_SUPPORTED      = "Account.presencePublishSupported";

@@ -270,6 +270,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 
     ScalarNode ringtonePath(ringtonePath_);
     ScalarNode ringtoneEnabled(ringtoneEnabled_);
+    ScalarNode videoEnabled(videoEnabled_);
     ScalarNode stunServer(stunServer_);
     ScalarNode stunEnabled(stunEnabled_);
     ScalarNode displayName(displayName_);
@@ -326,6 +327,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(AUDIO_CODECS_KEY, &audioCodecs);
     accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
     accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
+    accountmap.setKeyValue(VIDEO_ENABLED_KEY, &videoEnabled);
     accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
 #ifdef SFL_PRESENCE
     accountmap.setKeyValue(PRESENCE_ENABLED_KEY, &presenceEnabled);
@@ -490,6 +492,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 
     mapNode.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
     mapNode.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
+    mapNode.getValue(VIDEO_ENABLED_KEY, &videoEnabled_);
 
     if (not isIP2IP()) mapNode.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
 
@@ -657,6 +660,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseBool(details, CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
     parseString(details, CONFIG_RINGTONE_PATH, ringtonePath_);
     parseBool(details, CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
+    parseBool(details, CONFIG_VIDEO_ENABLED, videoEnabled_);
     parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
 
     // SIP specific account settings
@@ -799,6 +803,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? Conf::TRUE_STR : Conf::FALSE_STR;
+    a[CONFIG_VIDEO_ENABLED] = videoEnabled_ ? Conf::TRUE_STR : Conf::FALSE_STR;
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 #ifdef SFL_PRESENCE
     a[CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? Conf::TRUE_STR : Conf::FALSE_STR;

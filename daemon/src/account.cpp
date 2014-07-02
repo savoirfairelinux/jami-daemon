@@ -53,6 +53,7 @@ const char * const Account::VIDEO_CODEC_PARAMETERS      = "parameters";
 const char * const Account::VIDEO_CODEC_BITRATE         = "bitrate";
 const char * const Account::RINGTONE_PATH_KEY           = "ringtonePath";
 const char * const Account::RINGTONE_ENABLED_KEY        = "ringtoneEnabled";
+const char * const Account::VIDEO_ENABLED_KEY           = "videoEnabled";
 const char * const Account::DISPLAY_NAME_KEY            = "displayName";
 const char * const Account::ALIAS_KEY                   = "alias";
 const char * const Account::TYPE_KEY                    = "type";
@@ -308,6 +309,9 @@ Account::getDefaultAudioCodecs()
 vector<map<string, string> >
 Account::getActiveVideoCodecs() const
 {
+    if (not videoEnabled_)
+        return vector<map<string, string>>();
+
     // FIXME: validate video codec details first
     vector<map<string, string> > result(videoCodecList_);
     result.erase(std::remove_if(result.begin(), result.end(), is_inactive), result.end());
