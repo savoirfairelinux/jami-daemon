@@ -146,10 +146,10 @@ class MainBuffer {
         void flushByID(const std::string& call_id, const std::string& reader_id);
 
         typedef std::map<std::string, std::shared_ptr<RingBuffer> > RingBufferMap;
-        RingBufferMap ringBufferMap_ = {};
+        RingBufferMap ringBufferMap_ = std::map<std::string, std::shared_ptr<RingBuffer> >{};
 
         typedef std::map<std::string, std::shared_ptr<CallIDSet> > CallIDMap;
-        CallIDMap callIDMap_ = {};
+        CallIDMap callIDMap_ = std::map<std::string, std::shared_ptr<CallIDSet> >{};
 
         mutable std::recursive_mutex stateLock_ = {};
 
