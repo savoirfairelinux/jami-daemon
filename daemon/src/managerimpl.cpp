@@ -59,7 +59,7 @@
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 
-#ifndef __ANDROID__
+#if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
 #endif
 
