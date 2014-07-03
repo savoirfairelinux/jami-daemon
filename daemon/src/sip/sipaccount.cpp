@@ -1131,16 +1131,6 @@ bool SIPAccount::userMatch(const std::string& username) const
     return !username.empty() and username == username_;
 }
 
-static bool
-haveValueInCommon(const std::vector<std::string> &a, const std::vector<std::string> &b)
-{
-    for (const auto &i : a)
-        if (std::find(b.begin(), b.end(), i) != b.end())
-            return true;
-
-    return false;
-}
-
 bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
 {
     if (hostname == hostname_)
