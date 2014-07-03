@@ -14,6 +14,8 @@ test_SOURCES = constants.h \
 			   main.cpp \
 			   accounttest.h \
 			   accounttest.cpp \
+			   audiocodectest.h \
+			   audiocodectest.cpp \
 			   audiolayertest.h \
 			   audiolayertest.cpp \
 			   configurationtest.h \
