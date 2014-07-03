@@ -62,8 +62,9 @@ class Ulaw : public sfl::AudioCodec {
             const unsigned char *end = data +
                 std::min<size_t>(frameSize_, max_data_bytes);
 
-            for (; data < end; ++data, ++pcm)
-                *data = ULawEncode(*pcm);
+            unsigned char *tmp = data;
+            for (; tmp < end; ++tmp, ++pcm)
+                *tmp = ULawEncode(*pcm);
 
             return end - data;
         }
