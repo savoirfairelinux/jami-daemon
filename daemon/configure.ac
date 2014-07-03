@@ -147,6 +147,21 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
 AC_SUBST(CONTRIB_DIR)
 
 
+#TODO: convert this in proper autoconf/autotool tests
+AC_CANONICAL_HOST
+case $host_os in
+    linux*)
+        # Necessary for linking .a to a .so
+        LDFLAGS+=" -Wl,-Bsymbolic"
+    ;;
+    darwin*)
+        # Link with the old C++ ABI
+        # (equivalent to setting minimum osx target to 10.8)
+        LDFLAGS+=" -lstdc++"
+    ;;
+esac
+
+
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
 
