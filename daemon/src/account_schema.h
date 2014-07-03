@@ -47,7 +47,6 @@ static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE     = "Account.regis
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS     = "Account.registrationStatus";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_DESC = "Account.registrationDescription";
-static const char *const CONFIG_CREDENTIAL_NUMBER               = "Credential.count";
 static const char *const CONFIG_ACCOUNT_DTMF_TYPE               = "Account.dtmfType";
 static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringtonePath";
 static const char *const CONFIG_RINGTONE_ENABLED                = "Account.ringtoneEnabled";
@@ -59,15 +58,11 @@ static const char *const CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED    = "Account.prese
 static const char *const CONFIG_PRESENCE_STATUS                 = "Account.presenceStatus";
 static const char *const CONFIG_PRESENCE_NOTE                   = "Account.presenceNote";
 
-static const char *const CONFIG_DEFAULT_REGISTRATION_EXPIRE     = "60";
-static const char *const CONFIG_DEFAULT_RINGTONE_ENABLED        = "true";
-
 static const char *const CONFIG_ACCOUNT_HOSTNAME                = "Account.hostname";
 static const char *const CONFIG_ACCOUNT_USERNAME                = "Account.username";
 static const char *const CONFIG_ACCOUNT_ROUTESET                = "Account.routeset";
 static const char *const CONFIG_ACCOUNT_PASSWORD                = "Account.password";
 static const char *const CONFIG_ACCOUNT_REALM                   = "Account.realm";
-static const char *const CONFIG_ACCOUNT_DEFAULT_REALM           = "*";
 static const char *const CONFIG_ACCOUNT_USERAGENT               = "Account.useragent";
 static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MIN          = "Account.audioPortMin";
 static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MAX          = "Account.audioPortMax";
@@ -75,17 +70,10 @@ static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MIN          = "Account.video
 static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MAX          = "Account.videoPortMax";
 
 static const char *const CONFIG_LOCAL_INTERFACE                 = "Account.localInterface";
-static const char *const CONFIG_INTERFACE                       = "Account.interface";
 static const char *const CONFIG_PUBLISHED_SAMEAS_LOCAL          = "Account.publishedSameAsLocal";
 static const char *const CONFIG_LOCAL_PORT                      = "Account.localPort";
 static const char *const CONFIG_PUBLISHED_PORT                  = "Account.publishedPort";
 static const char *const CONFIG_PUBLISHED_ADDRESS               = "Account.publishedAddress";
-static const char *const CONFIG_DEFAULT_LOCAL_PORT              = "5060";
-static const char *const CONFIG_DEFAULT_PUBLISHED_PORT          = "5060";
-static const char *const CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL  = "true";
-static const char *const CONFIG_DEFAULT_INTERFACE               = "default";
-
-static const char *const CONFIG_DEFAULT_ADDRESS                 = "0.0.0.0";
 
 // SIP specific parameters
 static const char *const CONFIG_STUN_SERVER                     = "STUN.server";
@@ -94,7 +82,6 @@ static const char *const CONFIG_STUN_ENABLE                     = "STUN.enable";
 // SRTP specific parameters
 static const char *const CONFIG_SRTP_ENABLE                     = "SRTP.enable";
 static const char *const CONFIG_SRTP_KEY_EXCHANGE               = "SRTP.keyExchange";
-static const char *const CONFIG_SRTP_ENCRYPTION_ALGO            = "SRTP.encryptionAlgorithm";  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8
 static const char *const CONFIG_SRTP_RTP_FALLBACK               = "SRTP.rtpFallback";
 static const char *const CONFIG_ZRTP_HELLO_HASH                 = "ZRTP.helloHashEnable";
 static const char *const CONFIG_ZRTP_DISPLAY_SAS                = "ZRTP.displaySAS";
