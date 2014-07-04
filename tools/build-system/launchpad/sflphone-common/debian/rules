@@ -37,7 +37,7 @@ configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
 	./autogen.sh
-	./configure --prefix=/usr
+	./configure --prefix=/usr --disable-video
 	cd libs/pjproject-2.2.1; CFLAGS="-fPIC -O2 -DNDEBUG" ./configure $(PJ_CONFIG_OPTIONS)
 	touch configure-stamp
 
