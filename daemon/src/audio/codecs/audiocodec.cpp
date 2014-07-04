@@ -31,6 +31,7 @@
  */
 
 #include "audiocodec.h"
+#include <cassert>
 using std::ptrdiff_t;
 
 namespace sfl {
@@ -61,11 +62,15 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
 
 int AudioCodec::decode(SFLAudioSample *, unsigned char *, size_t)
 {
+    // Unimplemented!
+    assert(false);
     return 0;
 }
 
 int AudioCodec::encode(unsigned char *, SFLAudioSample *, size_t)
 {
+    // Unimplemented!
+    assert(false);
     return 0;
 }
 
