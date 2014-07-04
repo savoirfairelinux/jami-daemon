@@ -21,7 +21,7 @@ configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
 	./autogen.sh
-	./configure --prefix=/usr
+	./configure --prefix=/usr --disable-video
 	touch configure-stamp
 
 
