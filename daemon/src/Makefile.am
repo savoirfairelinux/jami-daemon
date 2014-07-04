@@ -8,14 +8,16 @@ endif
 
 if BUILD_INSTANT_MESSAGING
 INSTANT_MESSAGING_SUBDIR = im
-IM_LIB=./im/libim.la
+IM_LIBA=./im/libim.la
+IM_LIB=@EXPAT_LIBS@
 endif
 
 # Redefine the USE_IAX variable here, so that it could be used in managerimpl
 if USE_IAX
 IAX_SUBDIR=iax
 IAX_CXXFLAG=-DUSE_IAX
-IAX_LIB=./iax/libiaxlink.la -liax
+IAX_LIBA=./iax/libiaxlink.la
+IAX_LIB=-liax
 endif
 
 if USE_NETWORKMANAGER
@@ -41,7 +43,10 @@ libsflphone_la_LIBADD = \
 	./client/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
-	./history/libhistory.la $(SFL_VIDEO_LIBS) $(IM_LIB)
+	./history/libhistory.la \
+	$(IAX_LIBA) \
+	$(IM_LIBA) \
+	$(SFL_VIDEO_LIBS)
 
 libsflphone_la_LDFLAGS = \
 		@ZRTPCPP_LIBS@ \
@@ -51,8 +56,10 @@ libsflphone_la_LDFLAGS = \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		@SNDFILE_LIBS@ \
+		@YAML_LIBS@ \
 		$(TLS_LIB) \
-		@YAML_LIBS@
+		$(IAX_LIB) \
+		$(IM_LIB)
 
 libsflphone_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
