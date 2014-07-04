@@ -200,8 +200,8 @@ while getopts ":b: t a v c" opt; do
             CODE_ANALYSIS=1
             ;;
         v)
-            echo "-v is set, video support is enabled" >&2
-            DOPTS="--enable-video $DOPTS"
+            echo "-v is set, video support is disabled" >&2
+            DOPTS="--disable-video $DOPTS"
             ;;
         c)
             echo "-c is set, clang compiler is used" >&2
