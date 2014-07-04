@@ -147,10 +147,10 @@ AS_IF([test "x$enable_coverage" = "xyes"], [
         CXXFLAGS="${CXXFLAGS} --coverage"
         LDFLAGS="${LDFLAGS} --coverage"])
 
-dnl Video is default-disabled
-AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
+dnl Video is default-enabled
+AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
-AS_IF([test "x$enable_video" = "xyes"],
+AS_IF([test "x$enable_video" != "xno"],
       [
         AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
         AM_CONDITIONAL(SFL_VIDEO, true)
