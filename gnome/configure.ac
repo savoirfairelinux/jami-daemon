@@ -37,9 +37,9 @@ if echo "$LIBNOTIFY_LIBS" | grep -q gtk+-x11-2.0; then
     exit 1
 fi
 
-dnl Video is default-disabled
-AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
-AS_IF([test "x$enable_video" = "xyes"], [
+dnl Video is default-enabled
+AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
+AS_IF([test "x$enable_video" != "xno"], [
     AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
     PKG_CHECK_MODULES(CLUTTER, clutter-1.0)
     PKG_CHECK_MODULES(CLUTTERGTK, clutter-gtk-1.0)
