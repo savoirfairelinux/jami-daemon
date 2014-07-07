@@ -218,3 +218,63 @@ SIPCall::onhold()
 VoIPLink*
 SIPCall::getVoIPLink() const
 { return &SIPVoIPLink::instance(); }
+
+void
+SIPCall::hangup(int reason)
+{
+    const std::string account_id(getAccountId());
+
+    SIPAccount *account = Manager::instance().getSipAccount(account_id);
+    if (not account)
+        throw VoipLinkException("Could not find account for this call");
+
+    if (not inv)
+        throw VoipLinkException("No invite session for this call");
+
+    pjsip_route_hdr *route = inv->dlg->route_set.next;
+    while (route and route != &inv->dlg->route_set) {
+        char buf[1024];
+        int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
+
+        if (printed >= 0) {
+            buf[printed] = '\0';
+            DEBUG("Route header %s", buf);
+        }
+
+        route = route->next;
+    }
+
+    pjsip_tx_data *tdata = NULL;
+
+    const int status = reason ? reason :
+                       inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
+                       PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
+                       inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE :
+                       0;
+
+    // User hangup current call. Notify peer
+    if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
+        return;
+
+    // contactStr must stay in scope as long as tdata
+    const pj_str_t contactStr(account->getContactHeader());
+    sip_utils::addContactHeader(&contactStr, tdata);
+
+    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+        return;
+
+    auto& siplink = SIPVoIPLink::instance();
+
+    // Make sure user data is NULL in callbacks
+    inv->mod_data[siplink.getMod()->id] = NULL;
+
+    // Stop all RTP streams
+    if (Manager::instance().isCurrentCall(getCallId())) {
+        getAudioRtp().stop();
+#ifdef SFL_VIDEO
+        getVideoRtp().stop();
+#endif
+    }
+
+    siplink.removeSipCall(getCallId());
+}

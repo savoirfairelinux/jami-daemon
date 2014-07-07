@@ -128,12 +128,6 @@ class IAXVoIPLink : public VoIPLink {
         virtual void answer(Call *c);
 
         /**
-         * Hangup a call
-         * @param id The ID of the call
-         */
-        virtual void hangup(const std::string& id, int reason);
-
-        /**
          * Peer Hungup a call
          * @param id The ID of the call
          */
