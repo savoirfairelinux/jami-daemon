@@ -165,12 +165,6 @@ class IAXVoIPLink : public VoIPLink {
         virtual bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 
         /**
-         * Refuse a call
-         * @param id The ID of the call
-         */
-        virtual void refuse(const std::string& id);
-
-        /**
          * Send DTMF
          * @param id The ID of the call
          * @param code  The code of the DTMF

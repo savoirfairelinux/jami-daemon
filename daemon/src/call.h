@@ -248,6 +248,11 @@ class Call : public Recordable {
          */
         virtual void hangup(int reason) = 0;
 
+        /**
+         * Refuse incoming call
+         */
+        virtual void refuse() = 0;
+
     private:
         bool validTransition(CallState newState);
 
