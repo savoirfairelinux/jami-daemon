@@ -16,6 +16,7 @@ Makefile
 *.pod
 .libs
 .deps
+*.spec
 
 autom4te.cache
 config.guess
