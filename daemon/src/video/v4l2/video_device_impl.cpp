@@ -133,7 +133,7 @@ class VideoDeviceImpl {
 static const unsigned pixelformats_supported[] = {
     /* pixel format        depth  description   */
 
-    /* prefered formats, they can be fed directly to the video encoder */
+    /* preferred formats, they can be fed directly to the video encoder */
     V4L2_PIX_FMT_YUV420,   /* 12  YUV 4:2:0     */
     V4L2_PIX_FMT_YUV422P,  /* 16  YVU422 planar */
     V4L2_PIX_FMT_YUV444,   /* 16  xxxxyyyy uuuuvvvv */
