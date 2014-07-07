@@ -283,6 +283,12 @@ class Call : public Recordable {
          */
         virtual void peerHungup() = 0;
 
+        /**
+         * Send DTMF
+         * @param code  The char code
+         */
+        virtual void carryingDTMFdigits(char code) = 0;
+
     private:
         bool validTransition(CallState newState);
 

@@ -1144,65 +1144,6 @@ SIPVoIPLink::tryGetSIPCall(const std::string& id)
     return call;
 }
 
-static void
-sendSIPInfo(const SIPCall &call, const char *const body, const char *const subtype)
-{
-    pj_str_t methodName = CONST_PJ_STR("INFO");
-    pjsip_method method;
-    pjsip_method_init_np(&method, &methodName);
-
-    /* Create request message. */
-    pjsip_tx_data *tdata;
-
-    if (pjsip_dlg_create_request(call.inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
-        ERROR("Could not create dialog");
-        return;
-    }
-
-    /* Create "application/<subtype>" message body. */
-    pj_str_t content;
-    pj_cstr(&content, body);
-    const pj_str_t type = CONST_PJ_STR("application");
-    pj_str_t pj_subtype;
-    pj_cstr(&pj_subtype, subtype);
-    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
-
-    if (tdata->msg->body == NULL)
-        pjsip_tx_data_dec_ref(tdata);
-    else
-        pjsip_dlg_send_request(call.inv->dlg, tdata, mod_ua_.id, NULL);
-}
-
-static void
-dtmfSend(SIPCall &call, char code, const std::string &dtmf)
-{
-    if (dtmf == SIPAccount::OVERRTP_STR) {
-        call.getAudioRtp().sendDtmfDigit(code);
-        return;
-    } else if (dtmf != SIPAccount::SIPINFO_STR) {
-        WARN("Unknown DTMF type %s, defaulting to %s instead",
-             dtmf.c_str(), SIPAccount::SIPINFO_STR);
-    } // else : dtmf == SIPINFO
-
-    int duration = Manager::instance().voipPreferences.getPulseLength();
-    char dtmf_body[1000];
-
-    const char *normal_str= "Signal=%c\r\nDuration=%d\r\n";
-    const char *flash_str = "Signal=%d\r\nDuration=%d\r\n";
-    const char *str;
-
-    // handle flash code
-    if (code == '!') {
-        str = flash_str;
-        code = 16;
-    } else {
-        str = normal_str;
-    }
-
-    snprintf(dtmf_body, sizeof dtmf_body - 1, str, code, duration);
-    sendSIPInfo(call, dtmf_body, "dtmf-relay");
-}
-
 #ifdef SFL_VIDEO
 // Called from a video thread
 void
@@ -1246,26 +1187,9 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
         "</to_encoder></vc_primitive></media_control>";
 
     DEBUG("Sending video keyframe request via SIP INFO");
-    sendSIPInfo(*call, BODY, "media_control+xml");
+    call->sendSIPInfo(BODY, "media_control+xml");
 }
 #endif
-
-void
-SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
-{
-    auto call = getSipCall(id);
-    if (!call)
-        return;
-
-    const std::string accountID(call->getAccountId());
-    SIPAccount *account = Manager::instance().getSipAccount(accountID);
-
-    if (!account)
-        return;
-
-    dtmfSend(*call, code, account->getDtmfType());
-}
-
 
 bool
 SIPVoIPLink::SIPStartCall(std::shared_ptr<SIPCall>& call)
