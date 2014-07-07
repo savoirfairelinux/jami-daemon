@@ -90,6 +90,10 @@ class IAXCall : public Call {
 
         bool attendedTransfer(const std::string& to);
 
+        void onhold();
+
+        void offhold();
+
     private:
         NON_COPYABLE(IAXCall);
 

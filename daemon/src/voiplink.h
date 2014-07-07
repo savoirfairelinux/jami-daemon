@@ -100,20 +100,6 @@ class VoIPLink {
         virtual void peerHungup(const std::string &id) = 0;
 
         /**
-         * Put a call on hold
-         * @param id The call identifier
-         * @return bool True on success
-         */
-        virtual void onhold(const std::string &id) = 0;
-
-        /**
-         * Resume a call from hold state
-         * @param id The call identifier
-         * @return bool True on success
-         */
-        virtual void offhold(const std::string &id) = 0;
-
-        /**
          * Send DTMF
          * @param id The call identifier
          * @param code  The char code
