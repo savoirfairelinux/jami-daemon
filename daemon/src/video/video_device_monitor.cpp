@@ -101,13 +101,13 @@ VideoDeviceMonitor::applySettings(const string& name, VideoSettings settings)
 }
 
 string
-VideoDeviceMonitor::getDevice() const
+VideoDeviceMonitor::getDefaultDevice() const
 {
     return defaultDevice_;
 }
 
 void
-VideoDeviceMonitor::setDevice(const string& name)
+VideoDeviceMonitor::setDefaultDevice(const string& name)
 {
     const auto it = findDeviceByName(name);
 
