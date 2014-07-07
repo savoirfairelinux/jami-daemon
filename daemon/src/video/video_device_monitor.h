@@ -61,8 +61,8 @@ class VideoDeviceMonitor : public Serializable
         VideoSettings getSettings(const std::string& name);
         void applySettings(const std::string& name, VideoSettings settings);
 
-        std::string getDevice() const;
-        void setDevice(const std::string& name);
+        std::string getDefaultDevice() const;
+        void setDefaultDevice(const std::string& name);
 
         void addDevice(const std::string &node);
         void removeDevice(const std::string &node);
