@@ -396,23 +396,6 @@ IAXVoIPLink::attendedTransfer(const std::string& /*transferID*/, const std::stri
 }
 
 void
-IAXVoIPLink::refuse(const std::string& id)
-{
-    {
-        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        auto call = getIAXCall(id);
-        if (!call)
-            return;
-        {
-            std::lock_guard<std::mutex> lock(mutexIAX_);
-            iax_reject(call->session, (char*) "Call rejected manually.");
-        }
-    }
-    removeIaxCall(id);
-}
-
-
-void
 IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);

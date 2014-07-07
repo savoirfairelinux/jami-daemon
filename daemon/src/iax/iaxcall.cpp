@@ -155,3 +155,14 @@ IAXCall::hangup(int reason UNUSED)
 
     link_->removeIaxCall(getCallId());
 }
+
+void
+IAXCall::refuse()
+{
+    {
+        //std::lock_guard<std::mutex> lock(mutexIAX_);
+        iax_reject(session, (char*) "Call rejected manually.");
+    }
+
+    link_->removeIaxCall(getCallId());
+}

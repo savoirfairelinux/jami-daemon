@@ -325,3 +325,27 @@ SIPCall::hangup(int reason)
 
     siplink.removeSipCall(getCallId());
 }
+
+void
+SIPCall::refuse()
+{
+    if (!isIncoming() or getConnectionState() == Call::CONNECTED or !inv)
+        return;
+
+    getAudioRtp().stop();
+
+    pjsip_tx_data *tdata;
+
+    if (pjsip_inv_end_session(inv, PJSIP_SC_DECLINE, NULL, &tdata) != PJ_SUCCESS)
+        return;
+
+    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+        return;
+
+    auto& siplink = SIPVoIPLink::instance();
+
+    // Make sure the pointer is NULL in callbacks
+    inv->mod_data[siplink.getMod()->id] = NULL;
+
+    siplink.removeSipCall(getCallId());
+}
