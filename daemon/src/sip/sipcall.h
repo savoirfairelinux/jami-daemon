@@ -103,8 +103,6 @@ class SIPCall : public Call {
             return pool_;
         }
 
-        void answer();
-
         /**
          * The invite session to be reused in case of transfer
          */
@@ -116,6 +114,8 @@ class SIPCall : public Call {
         void offhold(const std::function<void()> &SDPUpdateFunc);
 
         VoIPLink* getVoIPLink() const;
+
+        void answer();
 
         void hangup(int reason);
 
