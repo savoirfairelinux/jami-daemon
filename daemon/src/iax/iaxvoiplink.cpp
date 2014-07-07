@@ -313,20 +313,6 @@ IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, co
     return call;
 }
 
-void
-IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
-{
-    std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-    auto call = getIAXCall(id);
-    if (!call)
-        return;
-
-    {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
-        iax_send_dtmf(call->session, code);
-    }
-}
-
 #if HAVE_INSTANT_MESSAGING
 void
 IAXVoIPLink::sendTextMessage(const std::string& callID,
