@@ -8,15 +8,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-07-01 21:28-0400\n"
+"POT-Creation-Date: 2014-07-04 21:28-0400\n"
 "PO-Revision-Date: 2014-01-14 13:48+0000\n"
 "Last-Translator: fri <pavelfric@seznam.cz>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-07-02 05:59+0000\n"
-"X-Generator: Launchpad (build 17082)\n"
+"X-Launchpad-Export-Date: 2014-07-06 05:40+0000\n"
+"X-Generator: Launchpad (build 17086)\n"
 "Language: cs\n"
 "X-Language: cs_CZ\n"
 "X-Source-Language: C\n"
@@ -114,239 +114,243 @@ msgstr "%A v %R"
 msgid "%x at %R"
 msgstr "%x v %R"
 
-#: ../src/config/accountconfigdialog.c:241
+#: ../src/config/accountconfigdialog.c:242
 msgid "_Auto-answer calls"
 msgstr "_Autotomatická odpověď na volání"
 
-#: ../src/config/accountconfigdialog.c:270
+#: ../src/config/accountconfigdialog.c:271
 msgid "Account Parameters"
 msgstr "Nastavení účtu"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:292
+#: ../src/config/accountconfigdialog.c:280 ../src/config/assistant.c:292
 #: ../src/config/assistant.c:361
 msgid "_Alias"
 msgstr "_Přezdívka"
 
-#: ../src/config/accountconfigdialog.c:294
+#: ../src/config/accountconfigdialog.c:295
 msgid "_Protocol"
 msgstr "_Protokol"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:311
+#: ../src/config/accountconfigdialog.c:312
 msgid "Unknown"
 msgstr "Neznámý"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:301
+#: ../src/config/accountconfigdialog.c:327 ../src/config/assistant.c:301
 #: ../src/config/assistant.c:370
 msgid "_Host name"
 msgstr "Název _počítače"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:309
+#: ../src/config/accountconfigdialog.c:337 ../src/config/assistant.c:309
 #: ../src/config/assistant.c:378
 msgid "_User name"
 msgstr "Jméno _uživatele"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:319
+#: ../src/config/accountconfigdialog.c:358 ../src/config/assistant.c:319
 #: ../src/config/assistant.c:387
 msgid "_Password"
 msgstr "_Heslo"
 
-#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:328
+#: ../src/config/accountconfigdialog.c:377 ../src/config/assistant.c:328
 #: ../src/config/assistant.c:396
 msgid "Show password"
 msgstr "Ukázat heslo"
 
-#: ../src/config/accountconfigdialog.c:381
+#: ../src/config/accountconfigdialog.c:382
 msgid "_Proxy"
 msgstr "_Proxy"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:333
+#: ../src/config/accountconfigdialog.c:392 ../src/config/assistant.c:333
 #: ../src/config/assistant.c:401
 msgid "_Voicemail number"
 msgstr "Volací číslo _hlasové schránky"
 
-#: ../src/config/accountconfigdialog.c:402
+#: ../src/config/accountconfigdialog.c:403
 msgid "_User-agent"
 msgstr "_User-agent"
 
-#: ../src/config/accountconfigdialog.c:428
+#: ../src/config/accountconfigdialog.c:429
 msgid "Presence notifications"
 msgstr "Oznámení přítomnosti"
 
-#: ../src/config/accountconfigdialog.c:437
+#: ../src/config/accountconfigdialog.c:438
 msgid "_Enable"
 msgstr "_Povolit"
 
-#: ../src/config/accountconfigdialog.c:511
+#: ../src/config/accountconfigdialog.c:512
 msgid "Authentication"
 msgstr "Ověření"
 
-#: ../src/config/accountconfigdialog.c:512
+#: ../src/config/accountconfigdialog.c:513
 msgid "Secret"
 msgstr "Tajné"
 
-#: ../src/config/accountconfigdialog.c:765
+#: ../src/config/accountconfigdialog.c:766
 msgid "Credential"
 msgstr "Přístupové údaje"
 
-#: ../src/config/accountconfigdialog.c:797
+#: ../src/config/accountconfigdialog.c:798
 msgid "Authentication name"
 msgstr "Uživatelské jméno"
 
-#: ../src/config/accountconfigdialog.c:808
+#: ../src/config/accountconfigdialog.c:809
 msgid "Password"
 msgstr "Heslo"
 
-#: ../src/config/accountconfigdialog.c:821
+#: ../src/config/accountconfigdialog.c:822
 #: ../src/config/accountlistconfigdialog.c:578
 msgid "Add"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:825
+#: ../src/config/accountconfigdialog.c:826
 #: ../src/config/accountlistconfigdialog.c:124
 #: ../src/config/accountlistconfigdialog.c:591 ../src/presencewindow.c:666
 #: ../src/presencewindow.c:690
 msgid "Remove"
 msgstr "Odstranit"
 
-#: ../src/config/accountconfigdialog.c:860
-#: ../src/config/accountconfigdialog.c:1593
+#: ../src/config/accountconfigdialog.c:861
+#: ../src/config/accountconfigdialog.c:1607
 msgid "Security"
 msgstr "Bezpečnost"
 
-#: ../src/config/accountconfigdialog.c:869
+#: ../src/config/accountconfigdialog.c:870
 #: ../src/config/accountlistconfigdialog.c:583
 msgid "Edit"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:876
+#: ../src/config/accountconfigdialog.c:877
 msgid "Use TLS transport(sips)"
 msgstr "Použít přenos TLS (SIPS)"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:884
+#: ../src/config/accountconfigdialog.c:885
 msgid "SRTP key exchange"
 msgstr "Výměna klíče SRTP"
 
-#: ../src/config/accountconfigdialog.c:890
+#: ../src/config/accountconfigdialog.c:891
 msgid "Disabled"
 msgstr "Vypnuto"
 
-#: ../src/config/accountconfigdialog.c:892
+#: ../src/config/accountconfigdialog.c:893
 #: ../src/config/preferencesdialog.c:389
 msgid "Preferences"
 msgstr "Nastavení"
 
-#: ../src/config/accountconfigdialog.c:958
+#: ../src/config/accountconfigdialog.c:959
 msgid "Registration"
 msgstr "Registrace"
 
-#: ../src/config/accountconfigdialog.c:962
+#: ../src/config/accountconfigdialog.c:963
 msgid "Registration expire"
 msgstr "Vypršení registrace"
 
-#: ../src/config/accountconfigdialog.c:985
+#: ../src/config/accountconfigdialog.c:986
 msgid "Network Interface"
 msgstr "Síťové rozhraní"
 
-#: ../src/config/accountconfigdialog.c:995
+#: ../src/config/accountconfigdialog.c:996
 msgid "Local address"
 msgstr "Místní adresa"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:1028
+#: ../src/config/accountconfigdialog.c:1029
 msgid "Local port"
 msgstr "Místní přípojka"
 
-#: ../src/config/accountconfigdialog.c:1069
-#: ../src/config/accountconfigdialog.c:1101
+#: ../src/config/accountconfigdialog.c:1070
+#: ../src/config/accountconfigdialog.c:1102
 msgid "Published address"
 msgstr "Zveřejněná adresa"
 
-#: ../src/config/accountconfigdialog.c:1073
+#: ../src/config/accountconfigdialog.c:1074
 msgid "Using STUN"
 msgstr "Použít STUN"
 
-#: ../src/config/accountconfigdialog.c:1077
+#: ../src/config/accountconfigdialog.c:1078
 msgid "STUN server URL"
 msgstr "Adresa (URL) serveru STUN"
 
-#: ../src/config/accountconfigdialog.c:1085
+#: ../src/config/accountconfigdialog.c:1086
 msgid "Same as local parameters"
 msgstr "Odpovídající místnímu nastavení"
 
-#: ../src/config/accountconfigdialog.c:1089
+#: ../src/config/accountconfigdialog.c:1090
 msgid "Set published address and port:"
 msgstr "Nastavit adresu a přípojku ke zveřejnění:"
 
-#: ../src/config/accountconfigdialog.c:1110
+#: ../src/config/accountconfigdialog.c:1111
 msgid "Published port"
 msgstr "Zveřejněná přípojka"
 
-#: ../src/config/accountconfigdialog.c:1163
+#: ../src/config/accountconfigdialog.c:1164
 msgid "Min"
 msgstr "Nejméně"
 
-#: ../src/config/accountconfigdialog.c:1164
+#: ../src/config/accountconfigdialog.c:1165
 msgid "Max"
 msgstr "Nejvíce"
 
-#: ../src/config/accountconfigdialog.c:1191
+#: ../src/config/accountconfigdialog.c:1192
 msgid "Audio RTP Port Range"
 msgstr "Rozsah přípojky audio RTP"
 
-#: ../src/config/accountconfigdialog.c:1197
+#: ../src/config/accountconfigdialog.c:1198
 msgid "Video RTP Port Range"
 msgstr "Rozsah přípojky video RTP"
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1240
-#: ../src/config/accountconfigdialog.c:1573
+#: ../src/config/accountconfigdialog.c:1241
+#: ../src/config/accountconfigdialog.c:1587
 #: ../src/config/preferencesdialog.c:439
 msgid "Audio"
 msgstr "Zvuk"
 
-#: ../src/config/accountconfigdialog.c:1252
+#: ../src/config/accountconfigdialog.c:1253
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1256
+#: ../src/config/accountconfigdialog.c:1257
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1262
+#: ../src/config/accountconfigdialog.c:1263
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1270
+#: ../src/config/accountconfigdialog.c:1271
 msgid "Ringtones"
 msgstr "Vyzváněcí melodie"
 
-#: ../src/config/accountconfigdialog.c:1273
+#: ../src/config/accountconfigdialog.c:1274
 msgid "Choose a ringtone"
 msgstr "Vybrat vyzváněcí melodii"
 
-#: ../src/config/accountconfigdialog.c:1276
+#: ../src/config/accountconfigdialog.c:1277
 msgid "_Enable ringtones"
 msgstr "_Povolit vyzváněcí melodie"
 
-#: ../src/config/accountconfigdialog.c:1294
+#: ../src/config/accountconfigdialog.c:1295
 msgid "Audio Files"
 msgstr "Zvukové soubory"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1325
-#: ../src/config/accountconfigdialog.c:1578
+#: ../src/config/accountconfigdialog.c:1326
+#: ../src/config/accountconfigdialog.c:1592
 #: ../src/config/preferencesdialog.c:445
 msgid "Video"
 msgstr "Video"
 
-#: ../src/config/accountconfigdialog.c:1342
+#: ../src/config/accountconfigdialog.c:1334
+msgid "_Enable video"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1350
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -357,21 +361,21 @@ msgstr ""
 "URI, jako například <b>sip:remotepeer</b>. Zde stanovená nastavení se budou "
 "používat, i když nelze příchozímu nebo odchozímu volání přiřadit žádný účet."
 
-#: ../src/config/accountconfigdialog.c:1540
+#: ../src/config/accountconfigdialog.c:1554
 msgid "Account settings"
 msgstr "Nastavení účtu"
 
-#: ../src/config/accountconfigdialog.c:1568
+#: ../src/config/accountconfigdialog.c:1582
 msgid "Basic"
 msgstr "Základní"
 
-#: ../src/config/accountconfigdialog.c:1584
+#: ../src/config/accountconfigdialog.c:1598
 #: ../src/config/addressbook-config.c:313
 #: ../src/config/preferencesdialog.c:433 ../src/config/shortcuts-config.c:117
 msgid "General"
 msgstr "Obecné"
 
-#: ../src/config/accountconfigdialog.c:1589
+#: ../src/config/accountconfigdialog.c:1603
 msgid "Advanced"
 msgstr "Pokročilé"
 

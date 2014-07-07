@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-07-01 21:28-0400\n"
+"POT-Creation-Date: 2014-07-04 21:28-0400\n"
 "PO-Revision-Date: 2014-01-08 16:56+0000\n"
 "Last-Translator: Tho Duy Nguyen <nguyenduytho@gmail.com>\n"
 "Language-Team: Vietnamese <vi@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-07-02 06:00+0000\n"
-"X-Generator: Launchpad (build 17082)\n"
+"X-Launchpad-Export-Date: 2014-07-06 05:40+0000\n"
+"X-Generator: Launchpad (build 17086)\n"
 "Language: vi\n"
 
 #: ../src/accountlist.c:183
@@ -111,239 +111,243 @@ msgstr "%A lúc %R"
 msgid "%x at %R"
 msgstr "%x lúc %R"
 
-#: ../src/config/accountconfigdialog.c:241
+#: ../src/config/accountconfigdialog.c:242
 msgid "_Auto-answer calls"
 msgstr "Tự động trả lời cuộc gọi"
 
-#: ../src/config/accountconfigdialog.c:270
+#: ../src/config/accountconfigdialog.c:271
 msgid "Account Parameters"
 msgstr "Tham số tài khoản"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:292
+#: ../src/config/accountconfigdialog.c:280 ../src/config/assistant.c:292
 #: ../src/config/assistant.c:361
 msgid "_Alias"
 msgstr "Bí d_anh:"
 
-#: ../src/config/accountconfigdialog.c:294
+#: ../src/config/accountconfigdialog.c:295
 msgid "_Protocol"
 msgstr "_Phương thức"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:311
+#: ../src/config/accountconfigdialog.c:312
 msgid "Unknown"
 msgstr "Không rõ"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:301
+#: ../src/config/accountconfigdialog.c:327 ../src/config/assistant.c:301
 #: ../src/config/assistant.c:370
 msgid "_Host name"
 msgstr "_Tên máy chủ"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:309
+#: ../src/config/accountconfigdialog.c:337 ../src/config/assistant.c:309
 #: ../src/config/assistant.c:378
 msgid "_User name"
 msgstr "_Tên người dùng"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:319
+#: ../src/config/accountconfigdialog.c:358 ../src/config/assistant.c:319
 #: ../src/config/assistant.c:387
 msgid "_Password"
 msgstr "Mật _khẩu"
 
-#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:328
+#: ../src/config/accountconfigdialog.c:377 ../src/config/assistant.c:328
 #: ../src/config/assistant.c:396
 msgid "Show password"
 msgstr "Hiển thị mật khẩu"
 
-#: ../src/config/accountconfigdialog.c:381
+#: ../src/config/accountconfigdialog.c:382
 msgid "_Proxy"
 msgstr "_Proxy"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:333
+#: ../src/config/accountconfigdialog.c:392 ../src/config/assistant.c:333
 #: ../src/config/assistant.c:401
 msgid "_Voicemail number"
 msgstr "_Số hộp thư thoại"
 
-#: ../src/config/accountconfigdialog.c:402
+#: ../src/config/accountconfigdialog.c:403
 msgid "_User-agent"
 msgstr "_User-agent"
 
-#: ../src/config/accountconfigdialog.c:428
+#: ../src/config/accountconfigdialog.c:429
 msgid "Presence notifications"
 msgstr "Thông báo có mặt"
 
-#: ../src/config/accountconfigdialog.c:437
+#: ../src/config/accountconfigdialog.c:438
 msgid "_Enable"
 msgstr "_Kích hoạt"
 
-#: ../src/config/accountconfigdialog.c:511
+#: ../src/config/accountconfigdialog.c:512
 msgid "Authentication"
 msgstr "Xác thực"
 
-#: ../src/config/accountconfigdialog.c:512
+#: ../src/config/accountconfigdialog.c:513
 msgid "Secret"
 msgstr "Bí mật"
 
-#: ../src/config/accountconfigdialog.c:765
+#: ../src/config/accountconfigdialog.c:766
 msgid "Credential"
 msgstr "Ủy nhiệm"
 
-#: ../src/config/accountconfigdialog.c:797
+#: ../src/config/accountconfigdialog.c:798
 msgid "Authentication name"
 msgstr "Tên xác thực"
 
-#: ../src/config/accountconfigdialog.c:808
+#: ../src/config/accountconfigdialog.c:809
 msgid "Password"
 msgstr "Mật khẩu"
 
-#: ../src/config/accountconfigdialog.c:821
+#: ../src/config/accountconfigdialog.c:822
 #: ../src/config/accountlistconfigdialog.c:578
 msgid "Add"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:825
+#: ../src/config/accountconfigdialog.c:826
 #: ../src/config/accountlistconfigdialog.c:124
 #: ../src/config/accountlistconfigdialog.c:591 ../src/presencewindow.c:666
 #: ../src/presencewindow.c:690
 msgid "Remove"
 msgstr "Xóa"
 
-#: ../src/config/accountconfigdialog.c:860
-#: ../src/config/accountconfigdialog.c:1593
+#: ../src/config/accountconfigdialog.c:861
+#: ../src/config/accountconfigdialog.c:1607
 msgid "Security"
 msgstr "Bảo mật"
 
-#: ../src/config/accountconfigdialog.c:869
+#: ../src/config/accountconfigdialog.c:870
 #: ../src/config/accountlistconfigdialog.c:583
 msgid "Edit"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:876
+#: ../src/config/accountconfigdialog.c:877
 msgid "Use TLS transport(sips)"
 msgstr "Dùng giao thức TLS (SIPS)"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:884
+#: ../src/config/accountconfigdialog.c:885
 msgid "SRTP key exchange"
 msgstr "Trao đổi mã SRTP"
 
-#: ../src/config/accountconfigdialog.c:890
+#: ../src/config/accountconfigdialog.c:891
 msgid "Disabled"
 msgstr "Tắt"
 
-#: ../src/config/accountconfigdialog.c:892
+#: ../src/config/accountconfigdialog.c:893
 #: ../src/config/preferencesdialog.c:389
 msgid "Preferences"
 msgstr "Tùy chọn"
 
-#: ../src/config/accountconfigdialog.c:958
+#: ../src/config/accountconfigdialog.c:959
 msgid "Registration"
 msgstr "Đăng ký"
 
-#: ../src/config/accountconfigdialog.c:962
+#: ../src/config/accountconfigdialog.c:963
 msgid "Registration expire"
 msgstr "Đăng ký đã hết hạn"
 
-#: ../src/config/accountconfigdialog.c:985
+#: ../src/config/accountconfigdialog.c:986
 msgid "Network Interface"
 msgstr "Giao diện mạng"
 
-#: ../src/config/accountconfigdialog.c:995
+#: ../src/config/accountconfigdialog.c:996
 msgid "Local address"
 msgstr "Địa chỉ cục bộ"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:1028
+#: ../src/config/accountconfigdialog.c:1029
 msgid "Local port"
 msgstr "Cổng mạng cục bộ"
 
-#: ../src/config/accountconfigdialog.c:1069
-#: ../src/config/accountconfigdialog.c:1101
+#: ../src/config/accountconfigdialog.c:1070
+#: ../src/config/accountconfigdialog.c:1102
 msgid "Published address"
 msgstr "Địa chỉ công cộng"
 
-#: ../src/config/accountconfigdialog.c:1073
+#: ../src/config/accountconfigdialog.c:1074
 msgid "Using STUN"
 msgstr "Sử dụng STUN"
 
-#: ../src/config/accountconfigdialog.c:1077
+#: ../src/config/accountconfigdialog.c:1078
 msgid "STUN server URL"
 msgstr "URL máy chủ STUN"
 
-#: ../src/config/accountconfigdialog.c:1085
+#: ../src/config/accountconfigdialog.c:1086
 msgid "Same as local parameters"
 msgstr "Giống như tham số cục bộ"
 
-#: ../src/config/accountconfigdialog.c:1089
+#: ../src/config/accountconfigdialog.c:1090
 msgid "Set published address and port:"
 msgstr "Thiết lập địa chỉ và cổng mạng công cộng"
 
-#: ../src/config/accountconfigdialog.c:1110
+#: ../src/config/accountconfigdialog.c:1111
 msgid "Published port"
 msgstr "Cổng mạng công khai"
 
-#: ../src/config/accountconfigdialog.c:1163
+#: ../src/config/accountconfigdialog.c:1164
 msgid "Min"
 msgstr "Nhỏ nhất"
 
-#: ../src/config/accountconfigdialog.c:1164
+#: ../src/config/accountconfigdialog.c:1165
 msgid "Max"
 msgstr "Lớn nhất"
 
-#: ../src/config/accountconfigdialog.c:1191
+#: ../src/config/accountconfigdialog.c:1192
 msgid "Audio RTP Port Range"
 msgstr "Dãy dành cho cổng âm thanh RTP"
 
-#: ../src/config/accountconfigdialog.c:1197
+#: ../src/config/accountconfigdialog.c:1198
 msgid "Video RTP Port Range"
 msgstr "Dãy dành cho cổng video RTP"
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1240
-#: ../src/config/accountconfigdialog.c:1573
+#: ../src/config/accountconfigdialog.c:1241
+#: ../src/config/accountconfigdialog.c:1587
 #: ../src/config/preferencesdialog.c:439
 msgid "Audio"
 msgstr "Âm thanh"
 
-#: ../src/config/accountconfigdialog.c:1252
+#: ../src/config/accountconfigdialog.c:1253
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1256
+#: ../src/config/accountconfigdialog.c:1257
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1262
+#: ../src/config/accountconfigdialog.c:1263
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1270
+#: ../src/config/accountconfigdialog.c:1271
 msgid "Ringtones"
 msgstr "Nhạc chuông"
 
-#: ../src/config/accountconfigdialog.c:1273
+#: ../src/config/accountconfigdialog.c:1274
 msgid "Choose a ringtone"
 msgstr "Chọn nhạc chuông"
 
-#: ../src/config/accountconfigdialog.c:1276
+#: ../src/config/accountconfigdialog.c:1277
 msgid "_Enable ringtones"
 msgstr "_Bật nhạc chuông"
 
-#: ../src/config/accountconfigdialog.c:1294
+#: ../src/config/accountconfigdialog.c:1295
 msgid "Audio Files"
 msgstr "Tệp âm thanh"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1325
-#: ../src/config/accountconfigdialog.c:1578
+#: ../src/config/accountconfigdialog.c:1326
+#: ../src/config/accountconfigdialog.c:1592
 #: ../src/config/preferencesdialog.c:445
 msgid "Video"
 msgstr "Phim"
 
-#: ../src/config/accountconfigdialog.c:1342
+#: ../src/config/accountconfigdialog.c:1334
+msgid "_Enable video"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1350
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -354,21 +358,21 @@ msgstr ""
 "<b>sip:remotepeer</b>. Các thiết lập mà bạn định ra ở đây cũng được dùng nếu "
 "như không có tài khỏan tương ứng với các cuộc gọi đi và đến."
 
-#: ../src/config/accountconfigdialog.c:1540
+#: ../src/config/accountconfigdialog.c:1554
 msgid "Account settings"
 msgstr "Các thiết lập tài khoản"
 
-#: ../src/config/accountconfigdialog.c:1568
+#: ../src/config/accountconfigdialog.c:1582
 msgid "Basic"
 msgstr "Cơ bản"
 
-#: ../src/config/accountconfigdialog.c:1584
+#: ../src/config/accountconfigdialog.c:1598
 #: ../src/config/addressbook-config.c:313
 #: ../src/config/preferencesdialog.c:433 ../src/config/shortcuts-config.c:117
 msgid "General"
 msgstr "General"
 
-#: ../src/config/accountconfigdialog.c:1589
+#: ../src/config/accountconfigdialog.c:1603
 msgid "Advanced"
 msgstr "Tiên tiến"
 

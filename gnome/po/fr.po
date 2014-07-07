@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.8\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-07-01 21:28-0400\n"
-"PO-Revision-Date: 2014-03-24 14:56+0000\n"
+"POT-Creation-Date: 2014-07-04 21:28-0400\n"
+"PO-Revision-Date: 2014-07-02 20:01+0000\n"
 "Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-07-02 05:59+0000\n"
-"X-Generator: Launchpad (build 17082)\n"
+"X-Launchpad-Export-Date: 2014-07-06 05:40+0000\n"
+"X-Generator: Launchpad (build 17086)\n"
 "Language: \n"
 
 #: ../src/accountlist.c:183
@@ -113,239 +113,243 @@ msgstr "%A, à %R"
 msgid "%x at %R"
 msgstr "%x, à %R"
 
-#: ../src/config/accountconfigdialog.c:241
+#: ../src/config/accountconfigdialog.c:242
 msgid "_Auto-answer calls"
 msgstr "_Décroche automatiquement l'appel"
 
-#: ../src/config/accountconfigdialog.c:270
+#: ../src/config/accountconfigdialog.c:271
 msgid "Account Parameters"
 msgstr "Paramètres du Compte"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:279 ../src/config/assistant.c:292
+#: ../src/config/accountconfigdialog.c:280 ../src/config/assistant.c:292
 #: ../src/config/assistant.c:361
 msgid "_Alias"
 msgstr "A_lias"
 
-#: ../src/config/accountconfigdialog.c:294
+#: ../src/config/accountconfigdialog.c:295
 msgid "_Protocol"
 msgstr "P_rotocole"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:311
+#: ../src/config/accountconfigdialog.c:312
 msgid "Unknown"
 msgstr "Inconnu"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:326 ../src/config/assistant.c:301
+#: ../src/config/accountconfigdialog.c:327 ../src/config/assistant.c:301
 #: ../src/config/assistant.c:370
 msgid "_Host name"
 msgstr "_Serveur"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:336 ../src/config/assistant.c:309
+#: ../src/config/accountconfigdialog.c:337 ../src/config/assistant.c:309
 #: ../src/config/assistant.c:378
 msgid "_User name"
 msgstr "Usa_ger"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:357 ../src/config/assistant.c:319
+#: ../src/config/accountconfigdialog.c:358 ../src/config/assistant.c:319
 #: ../src/config/assistant.c:387
 msgid "_Password"
 msgstr "_Mot de passe"
 
-#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:328
+#: ../src/config/accountconfigdialog.c:377 ../src/config/assistant.c:328
 #: ../src/config/assistant.c:396
 msgid "Show password"
 msgstr "Afficher le mot de passe"
 
-#: ../src/config/accountconfigdialog.c:381
+#: ../src/config/accountconfigdialog.c:382
 msgid "_Proxy"
 msgstr "_Proxy"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:391 ../src/config/assistant.c:333
+#: ../src/config/accountconfigdialog.c:392 ../src/config/assistant.c:333
 #: ../src/config/assistant.c:401
 msgid "_Voicemail number"
 msgstr "_Boite vocale #"
 
-#: ../src/config/accountconfigdialog.c:402
+#: ../src/config/accountconfigdialog.c:403
 msgid "_User-agent"
 msgstr "_User-agent"
 
-#: ../src/config/accountconfigdialog.c:428
+#: ../src/config/accountconfigdialog.c:429
 msgid "Presence notifications"
 msgstr "Notifications de présence"
 
-#: ../src/config/accountconfigdialog.c:437
+#: ../src/config/accountconfigdialog.c:438
 msgid "_Enable"
 msgstr "_Activer"
 
-#: ../src/config/accountconfigdialog.c:511
+#: ../src/config/accountconfigdialog.c:512
 msgid "Authentication"
 msgstr "Identification"
 
-#: ../src/config/accountconfigdialog.c:512
+#: ../src/config/accountconfigdialog.c:513
 msgid "Secret"
 msgstr "Mot de passe"
 
-#: ../src/config/accountconfigdialog.c:765
+#: ../src/config/accountconfigdialog.c:766
 msgid "Credential"
 msgstr "Informations"
 
-#: ../src/config/accountconfigdialog.c:797
+#: ../src/config/accountconfigdialog.c:798
 msgid "Authentication name"
 msgstr "Nom d'authentification"
 
-#: ../src/config/accountconfigdialog.c:808
+#: ../src/config/accountconfigdialog.c:809
 msgid "Password"
 msgstr "Mot de passe"
 
-#: ../src/config/accountconfigdialog.c:821
+#: ../src/config/accountconfigdialog.c:822
 #: ../src/config/accountlistconfigdialog.c:578
 msgid "Add"
-msgstr ""
+msgstr "Ajouter"
 
-#: ../src/config/accountconfigdialog.c:825
+#: ../src/config/accountconfigdialog.c:826
 #: ../src/config/accountlistconfigdialog.c:124
 #: ../src/config/accountlistconfigdialog.c:591 ../src/presencewindow.c:666
 #: ../src/presencewindow.c:690
 msgid "Remove"
 msgstr "Enlever"
 
-#: ../src/config/accountconfigdialog.c:860
-#: ../src/config/accountconfigdialog.c:1593
+#: ../src/config/accountconfigdialog.c:861
+#: ../src/config/accountconfigdialog.c:1607
 msgid "Security"
 msgstr "Sécurité"
 
-#: ../src/config/accountconfigdialog.c:869
+#: ../src/config/accountconfigdialog.c:870
 #: ../src/config/accountlistconfigdialog.c:583
 msgid "Edit"
-msgstr ""
+msgstr "Modifier"
 
-#: ../src/config/accountconfigdialog.c:876
+#: ../src/config/accountconfigdialog.c:877
 msgid "Use TLS transport(sips)"
 msgstr "Utiliser le transport TLS (sips)"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:884
+#: ../src/config/accountconfigdialog.c:885
 msgid "SRTP key exchange"
 msgstr "Échange de clé SRTP"
 
-#: ../src/config/accountconfigdialog.c:890
+#: ../src/config/accountconfigdialog.c:891
 msgid "Disabled"
 msgstr "Désactivé"
 
-#: ../src/config/accountconfigdialog.c:892
+#: ../src/config/accountconfigdialog.c:893
 #: ../src/config/preferencesdialog.c:389
 msgid "Preferences"
 msgstr "Préférences"
 
-#: ../src/config/accountconfigdialog.c:958
+#: ../src/config/accountconfigdialog.c:959
 msgid "Registration"
 msgstr "Expiration d'enregistrement"
 
-#: ../src/config/accountconfigdialog.c:962
+#: ../src/config/accountconfigdialog.c:963
 msgid "Registration expire"
 msgstr "Expiration d'enregistrement"
 
-#: ../src/config/accountconfigdialog.c:985
+#: ../src/config/accountconfigdialog.c:986
 msgid "Network Interface"
 msgstr "Interface réseau"
 
-#: ../src/config/accountconfigdialog.c:995
+#: ../src/config/accountconfigdialog.c:996
 msgid "Local address"
 msgstr "Adresse locale"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:1028
+#: ../src/config/accountconfigdialog.c:1029
 msgid "Local port"
 msgstr "Port local"
 
-#: ../src/config/accountconfigdialog.c:1069
-#: ../src/config/accountconfigdialog.c:1101
+#: ../src/config/accountconfigdialog.c:1070
+#: ../src/config/accountconfigdialog.c:1102
 msgid "Published address"
 msgstr "Adresse de publication"
 
-#: ../src/config/accountconfigdialog.c:1073
+#: ../src/config/accountconfigdialog.c:1074
 msgid "Using STUN"
 msgstr "Utiliser STUN"
 
-#: ../src/config/accountconfigdialog.c:1077
+#: ../src/config/accountconfigdialog.c:1078
 msgid "STUN server URL"
 msgstr "URL du serveur STUN"
 
-#: ../src/config/accountconfigdialog.c:1085
+#: ../src/config/accountconfigdialog.c:1086
 msgid "Same as local parameters"
 msgstr "Identique aux paramètres locaux"
 
-#: ../src/config/accountconfigdialog.c:1089
+#: ../src/config/accountconfigdialog.c:1090
 msgid "Set published address and port:"
 msgstr "Configurer l'adresse et le port à publier"
 
-#: ../src/config/accountconfigdialog.c:1110
+#: ../src/config/accountconfigdialog.c:1111
 msgid "Published port"
 msgstr "Port de publication"
 
-#: ../src/config/accountconfigdialog.c:1163
+#: ../src/config/accountconfigdialog.c:1164
 msgid "Min"
 msgstr "Min"
 
-#: ../src/config/accountconfigdialog.c:1164
+#: ../src/config/accountconfigdialog.c:1165
 msgid "Max"
 msgstr "Max"
 
-#: ../src/config/accountconfigdialog.c:1191
+#: ../src/config/accountconfigdialog.c:1192
 msgid "Audio RTP Port Range"
 msgstr "Plage de port RTP pour l'audio"
 
-#: ../src/config/accountconfigdialog.c:1197
+#: ../src/config/accountconfigdialog.c:1198
 msgid "Video RTP Port Range"
 msgstr "Plage de port RTP pour la vidéo"
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1240
-#: ../src/config/accountconfigdialog.c:1573
+#: ../src/config/accountconfigdialog.c:1241
+#: ../src/config/accountconfigdialog.c:1587
 #: ../src/config/preferencesdialog.c:439
 msgid "Audio"
 msgstr "Audio"
 
-#: ../src/config/accountconfigdialog.c:1252
+#: ../src/config/accountconfigdialog.c:1253
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1256
+#: ../src/config/accountconfigdialog.c:1257
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1262
+#: ../src/config/accountconfigdialog.c:1263
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1270
+#: ../src/config/accountconfigdialog.c:1271
 msgid "Ringtones"
 msgstr "Sonneries"
 
-#: ../src/config/accountconfigdialog.c:1273
+#: ../src/config/accountconfigdialog.c:1274
 msgid "Choose a ringtone"
 msgstr "Sélectionner une sonnerie"
 
-#: ../src/config/accountconfigdialog.c:1276
+#: ../src/config/accountconfigdialog.c:1277
 msgid "_Enable ringtones"
 msgstr "_Activer les sonneries"
 
-#: ../src/config/accountconfigdialog.c:1294
+#: ../src/config/accountconfigdialog.c:1295
 msgid "Audio Files"
 msgstr "Fichier Audio"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1325
-#: ../src/config/accountconfigdialog.c:1578
+#: ../src/config/accountconfigdialog.c:1326
+#: ../src/config/accountconfigdialog.c:1592
 #: ../src/config/preferencesdialog.c:445
 msgid "Video"
 msgstr "Vidéo"
 
-#: ../src/config/accountconfigdialog.c:1342
+#: ../src/config/accountconfigdialog.c:1334
+msgid "_Enable video"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:1350
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -357,21 +361,21 @@ msgstr ""
 "sont aussi utilisé si aucun compte ne peut être attribué à un appel entrant "
 "ou sortant."
 
-#: ../src/config/accountconfigdialog.c:1540
+#: ../src/config/accountconfigdialog.c:1554
 msgid "Account settings"
 msgstr "Paramètre des comptes"
 
-#: ../src/config/accountconfigdialog.c:1568
+#: ../src/config/accountconfigdialog.c:1582
 msgid "Basic"
 msgstr "Général"
 
-#: ../src/config/accountconfigdialog.c:1584
+#: ../src/config/accountconfigdialog.c:1598
 #: ../src/config/addressbook-config.c:313
 #: ../src/config/preferencesdialog.c:433 ../src/config/shortcuts-config.c:117
 msgid "General"
 msgstr "Général"
 
-#: ../src/config/accountconfigdialog.c:1589
+#: ../src/config/accountconfigdialog.c:1603
 msgid "Advanced"
 msgstr "Avancé"
 
@@ -400,20 +404,20 @@ msgstr "Statut"
 #: ../src/config/accountlistconfigdialog.c:566 ../src/config/audioconf.c:524
 #: ../src/config/videoconf.c:532
 msgid "Up"
-msgstr ""
+msgstr "Vers le haut"
 
 #: ../src/config/accountlistconfigdialog.c:572 ../src/config/audioconf.c:530
 #: ../src/config/videoconf.c:537
 msgid "Down"
-msgstr ""
+msgstr "Vers le bas"
 
 #: ../src/config/accountlistconfigdialog.c:603
 msgid "Help"
-msgstr ""
+msgstr "Aide"
 
 #: ../src/config/accountlistconfigdialog.c:608
 msgid "Close"
-msgstr ""
+msgstr "Fermer"
 
 #: ../src/config/accountlistconfigdialog.c:643
 #, c-format
@@ -519,11 +523,12 @@ msgstr "Aucun"
 
 #: ../src/config/assistant.c:241
 msgid "Welcome to the account registration wizard for SFLphone!"
-msgstr ""
+msgstr "Bienvenue dans l'assistant de configuration de compte de SFLphone!"
 
 #: ../src/config/assistant.c:242
 msgid "This wizard will help you configure an existing account."
 msgstr ""
+"Cet assistant va vous guider dans la configuration d'un compte existant."
 
 #: ../src/config/assistant.c:254
 msgid "VoIP Protocols"
@@ -588,7 +593,7 @@ msgstr "Félicitations!"
 
 #: ../src/config/assistant.c:561
 msgid "SFLphone account registration wizard"
-msgstr ""
+msgstr "Assistant de configuration de compte de SFLphone!"
 
 #: ../src/config/audioconf.c:504
 msgid "Frequency"
@@ -637,7 +642,7 @@ msgstr "_ALSA"
 
 #: ../src/config/audioconf.c:896
 msgid "_JACK"
-msgstr ""
+msgstr "_JACK"
 
 #. Box for the ALSA configuration
 #: ../src/config/audioconf.c:903
@@ -792,15 +797,15 @@ msgstr ""
 #: ../src/config/tlsadvanceddialog.c:58
 #, c-format
 msgid "Are you sure want to use this certificate?"
-msgstr ""
+msgstr "Etes-vous sûr(e) de vouloir utiliser ce certificat ?"
 
 #: ../src/config/tlsadvanceddialog.c:67
 msgid "Use anyway"
-msgstr ""
+msgstr "Utiliser quand même"
 
 #: ../src/config/tlsadvanceddialog.c:69
 msgid "Invalid certificate detected"
-msgstr ""
+msgstr "Certificat invalide détecté"
 
 #: ../src/config/tlsadvanceddialog.c:108
 msgid "Advanced options for TLS"
@@ -826,7 +831,7 @@ msgstr ""
 
 #: ../src/config/tlsadvanceddialog.c:171
 msgid "TLS listener port"
-msgstr ""
+msgstr "Port TLS"
 
 #: ../src/config/tlsadvanceddialog.c:181
 msgid "Certificate of Authority list"
@@ -867,7 +872,7 @@ msgstr "Instance du serveur pour les connections TLS sortantes"
 
 #: ../src/config/tlsadvanceddialog.c:297
 msgid "Negotiation timeout (seconds)"
-msgstr ""
+msgstr "Expiration de la négociation (secondes)"
 
 #: ../src/config/tlsadvanceddialog.c:309
 msgid "Verify incoming certificates, as a server"
@@ -935,11 +940,11 @@ msgstr "Recourrir à RTP si SDES échoue"
 
 #: ../src/contacts/calltree.c:75
 msgid "Create conference"
-msgstr ""
+msgstr "Créer une conférence"
 
 #: ../src/contacts/calltree.c:76
 msgid "Transfer call to"
-msgstr ""
+msgstr "Transférer l'appel"
 
 #: ../src/contacts/calltree.c:369
 #, c-format
@@ -947,6 +952,8 @@ msgid ""
 "\n"
 "<i>Transfer to:%s</i> "
 msgstr ""
+"\n"
+"<i>Transférer à: %s</i> "
 
 #: ../src/contacts/calltree.c:372
 #, c-format
@@ -954,11 +961,13 @@ msgid ""
 "\n"
 "<i>Confirm SAS <b>%s</b> ?</i>"
 msgstr ""
+"\n"
+"<i>Confirmer le SAS <b>%s</b> ?</i>"
 
 #: ../src/contacts/calltree.c:1185
 #, c-format
 msgid "%ud %02uh %02umn %02us"
-msgstr ""
+msgstr "%ud %02uh %02umn %02us"
 
 #: ../src/contacts/searchbar.c:226
 msgid "Search all"
@@ -1061,7 +1070,7 @@ msgstr "Confirmer"
 #: ../src/presencewindow.c:477
 #, c-format
 msgid "Field error %s."
-msgstr ""
+msgstr "Erreur dans le champs %s."
 
 #: ../src/presencewindow.c:486
 msgid "Field error"
@@ -1070,7 +1079,7 @@ msgstr "Erreur de champs"
 #: ../src/presencewindow.c:657
 #, c-format
 msgid "Are you sure want to delete \"%s\""
-msgstr ""
+msgstr "Êtes-vous sûr(e) de vouloir supprimer \"%s\""
 
 #: ../src/presencewindow.c:667 ../src/presencewindow.c:691
 #: ../src/presencewindow.c:817
@@ -1080,7 +1089,7 @@ msgstr "Supprimer l'URI SIP"
 #: ../src/presencewindow.c:681
 #, c-format
 msgid "Do you really want to delete the group %s"
-msgstr ""
+msgstr "Voulez-vous vraiment supprimer le groupe %s"
 
 #. popup
 #: ../src/presencewindow.c:755 ../src/uimanager.c:1224
@@ -1129,6 +1138,9 @@ msgid ""
 "Make sure the daemon is running.\n"
 "Error: %s"
 msgstr ""
+"Impossible d'initialiser.\n"
+"Assurez-vous que le démon est en cours d'exécution.\n"
+"Erreur: %s"
 
 #: ../src/sflphone_client.c:77
 msgid "SFLphone Error"
@@ -1150,7 +1162,7 @@ msgstr "%s dit:"
 #: ../src/sflnotify.c:111
 #, c-format
 msgid "IP-to-IP call"
-msgstr ""
+msgstr "Appel IP-à-IP"
 
 #. the account is different from NULL
 #: ../src/sflnotify.c:116 ../src/sflnotify.c:136
@@ -1187,17 +1199,17 @@ msgstr "Vous n'avez aucun compte enregistré"
 #: ../src/sflnotify.c:196
 #, c-format
 msgid "Secure mode on."
-msgstr ""
+msgstr "Mode sécurisé active."
 
 #: ../src/sflnotify.c:197
 #, c-format
 msgid "<i>With:</i> %s \n"
-msgstr ""
+msgstr "<i>Avec:</i> %s \n"
 
 #: ../src/sflnotify.c:211 ../src/sflnotify.c:225
 #, c-format
 msgid "ZRTP Error."
-msgstr ""
+msgstr "Erreur ZRTP"
 
 #: ../src/sflnotify.c:212
 #, c-format
@@ -1212,7 +1224,7 @@ msgstr "La négociation ZRTP avec %s a échoué"
 #: ../src/sflnotify.c:239
 #, c-format
 msgid "Secure mode is off."
-msgstr ""
+msgstr "Mode sécurisé désactivé."
 
 #: ../src/sflnotify.c:240
 #, c-format
@@ -1264,20 +1276,20 @@ msgstr "A propos de SFLphone"
 
 #: ../src/uimanager.c:696
 msgid "_Cancel"
-msgstr ""
+msgstr "_Annuler"
 
 #: ../src/uimanager.c:697
 msgid "_Open"
-msgstr ""
+msgstr "_Ouvrir"
 
 #. Add the special X11 device
 #: ../src/uimanager.c:715 ../src/uimanager.c:1494
 msgid "Screen"
-msgstr ""
+msgstr "Écran"
 
 #: ../src/uimanager.c:717 ../src/uimanager.c:1495
 msgid "Choose file..."
-msgstr ""
+msgstr "Sélectionner un fichier ..."
 
 #: ../src/uimanager.c:1005 ../src/uimanager.c:1088
 msgid "Voicemail"
@@ -1329,7 +1341,7 @@ msgstr "Envoyer le message."
 
 #: ../src/uimanager.c:1080 ../src/uimanager.c:1081
 msgid "Share screen"
-msgstr ""
+msgstr "Partager l'écran"
 
 #: ../src/uimanager.c:1084
 msgid "Configuration _Assistant"
