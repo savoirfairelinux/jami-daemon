@@ -166,3 +166,18 @@ IAXCall::refuse()
 
     link_->removeIaxCall(getCallId());
 }
+
+void
+IAXCall::transfer(const std::string& to)
+{
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+    char callto[to.length() + 1];
+    strcpy(callto, to.c_str());
+    iax_transfer(session, callto);
+}
+
+bool
+IAXCall::attendedTransfer(const std::string& /*targetID*/)
+{
+    return false; // TODO
+}

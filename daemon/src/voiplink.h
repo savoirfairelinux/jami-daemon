@@ -114,21 +114,6 @@ class VoIPLink {
         virtual void offhold(const std::string &id) = 0;
 
         /**
-         * Transfer a call to specified URI
-         * @param id The call identifier
-         * @param to The recipient of the call
-         */
-        virtual void transfer(const std::string &id, const std::string &to) = 0;
-
-        /**
-         * Attended transfer
-         * @param The transfered call id
-         * @param The target call id
-         * @return True on success
-         */
-        virtual bool attendedTransfer(const std::string&, const std::string&) = 0;
-
-        /**
          * Send DTMF
          * @param id The call identifier
          * @param code  The char code
