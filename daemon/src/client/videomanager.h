@@ -108,10 +108,10 @@ class VideoManager
         applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
 
         void
-        setActiveDevice(const std::string &dev);
+        setDefaultDevice(const std::string& name);
 
         std::string
-        getActiveDevice();
+        getDefaultDevice();
 
         std::string
         getCurrentCodecName(const std::string &callID);
