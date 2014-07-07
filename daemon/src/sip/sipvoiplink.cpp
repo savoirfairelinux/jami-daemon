@@ -1025,32 +1025,12 @@ stopRtpIfCurrent(const std::string &id, SIPCall &call)
     }
 }
 
-#if HAVE_INSTANT_MESSAGING
-void SIPVoIPLink::sendTextMessage(const std::string &callID,
-                                  const std::string &message,
-                                  const std::string &from)
-{
-    using namespace sfl::InstantMessaging;
-    auto call = getSipCall(callID);
-    if (!call)
-        return;
-
-    /* Send IM message */
-    UriList list;
-    UriEntry entry;
-    entry[sfl::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
-    list.push_front(entry);
-    send_sip_message(call->inv, callID, appendUriList(message, list));
-}
-#endif // HAVE_INSTANT_MESSAGING
-
 void
 SIPVoIPLink::clearSipCallMap()
 {
     std::lock_guard<std::mutex> lock(sipCallMapMutex_);
     sipCallMap_.clear();
 }
-
 
 std::vector<std::string>
 SIPVoIPLink::getCallIDs()

@@ -187,18 +187,6 @@ class SIPVoIPLink : public VoIPLink {
          */
         std::string getUseragentName(SIPAccount *) const;
 
-        /**
-         * Send a SIP message to a call identified by its callid
-         *
-         * @param The Id of the call to send the message to
-         * @param The actual message to be transmitted
-         * @param The sender of this message (could be another participant of a conference)
-         */
-#if HAVE_INSTANT_MESSAGING
-        void sendTextMessage(const std::string& callID,
-                             const std::string& message,
-                             const std::string& from);
-#endif
         void clearSipCallMap();
         void addSipCall(std::shared_ptr<SIPCall>& call);
 

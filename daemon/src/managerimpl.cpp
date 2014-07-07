@@ -1467,18 +1467,14 @@ void ManagerImpl::incomingMessage(const std::string& callID,
             if (item_p == callID)
                 continue;
 
-            std::string accountId(getAccountFromCall(item_p));
+            DEBUG("Send message to %s", item_p.c_str());
 
-            DEBUG("Send message to %s, (%s)", item_p.c_str(), accountId.c_str());
-
-            Account *account = getAccount(accountId);
-
-            if (!account) {
-                ERROR("Failed to get account while sending instant message");
+            if (auto call = getCallFromCallID(item_p)) {
+                call->sendTextMessage(message, from);
+            } else {
+                ERROR("Failed to get call while sending instant message");
                 return;
             }
-
-            account->getVoIPLink()->sendTextMessage(callID, message, from);
         }
 
         // in case of a conference we must notify client using conference id
@@ -1505,18 +1501,14 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (const auto &participant : participants) {
+        for (const auto &participant_id : participants) {
 
-            std::string accountId = getAccountFromCall(participant);
-
-            Account *account = getAccount(accountId);
-
-            if (!account) {
-                DEBUG("Failed to get account while sending instant message");
+            if (auto call = getCallFromCallID(participant_id)) {
+                call->sendTextMessage(message, from);
+            } else {
+                ERROR("Failed to get call while sending instant message");
                 return false;
             }
-
-            account->getVoIPLink()->sendTextMessage(participant, message, from);
         }
 
         return true;
@@ -1531,28 +1523,22 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
 
         ParticipantSet participants(conf->getParticipantList());
 
-        for (const auto &item_p : participants) {
+        for (const auto &participant_id : participants) {
 
-            const std::string accountId(getAccountFromCall(item_p));
-
-            Account *account = getAccount(accountId);
-
-            if (!account) {
-                DEBUG("Failed to get account while sending instant message");
+            if (auto call = getCallFromCallID(participant_id)) {
+                call->sendTextMessage(message, from);
+            } else {
+                ERROR("Failed to get call while sending instant message");
                 return false;
             }
-
-            account->getVoIPLink()->sendTextMessage(item_p, message, from);
         }
     } else {
-        Account *account = getAccount(getAccountFromCall(callID));
-
-        if (!account) {
-            DEBUG("Failed to get account while sending instant message");
+        if (auto call = getCallFromCallID(callID)) {
+            call->sendTextMessage(message, from);
+        } else {
+            ERROR("Failed to get call while sending instant message");
             return false;
         }
-
-        account->getVoIPLink()->sendTextMessage(callID, message, from);
     }
     return true;
 }

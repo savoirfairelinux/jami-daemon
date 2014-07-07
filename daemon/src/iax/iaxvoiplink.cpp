@@ -35,7 +35,6 @@
 
 #include "iaxcall.h"
 #include "eventthread.h"
-#include "im/instant_messaging.h"
 #include "iaxaccount.h"
 #include "logger.h"
 #include "manager.h"
@@ -312,24 +311,6 @@ IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, co
 
     return call;
 }
-
-#if HAVE_INSTANT_MESSAGING
-void
-IAXVoIPLink::sendTextMessage(const std::string& callID,
-                             const std::string& message,
-                             const std::string& /*from*/)
-{
-    std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-    auto call = getIAXCall(callID);
-    if (!call)
-        return;
-
-    {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
-        sfl::InstantMessaging::send_iax_message(call->session, callID, message.c_str());
-    }
-}
-#endif
 
 void
 IAXVoIPLink::clearIaxCallMap()
