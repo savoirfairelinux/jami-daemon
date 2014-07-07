@@ -1905,22 +1905,22 @@ dbus_get_supported_audio_managers()
 
 #ifdef SFL_VIDEO
 gchar *
-dbus_get_active_video_device()
+dbus_video_get_default_device()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoManager_get_active_device(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoManager_get_default_device(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
 void
-dbus_set_active_video_device(const gchar *device)
+dbus_video_set_default_device(const gchar *name)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_set_active_device(video_proxy, device, &error);
+    org_sflphone_SFLphone_VideoManager_set_default_device(video_proxy, name, &error);
     check_error(error);
 }
 

@@ -37,13 +37,13 @@
             </arg>
         </method>
 
-        <method name="getActiveDevice" tp:name-for-bindings="getActiveDevice">
-            <arg type="s" name="device" direction="out">
+        <method name="getDefaultDevice" tp:name-for-bindings="getDefaultDevice">
+            <arg type="s" name="name" direction="out">
             </arg>
         </method>
 
-        <method name="setActiveDevice" tp:name-for-bindings="setActiveDevice">
-            <arg type="s" name="device" direction="in">
+        <method name="setDefaultDevice" tp:name-for-bindings="setDefaultDevice">
+            <arg type="s" name="name" direction="in">
             </arg>
         </method>
 

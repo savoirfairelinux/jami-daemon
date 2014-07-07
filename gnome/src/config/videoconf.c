@@ -575,7 +575,7 @@ fill_devices(void)
     g_assert(devices);
 
     if (*devices) {
-        gchar *default_device = dbus_get_active_video_device();
+        gchar *default_device = dbus_video_get_default_device();
         reset_combo_box(v4l2Device, devices, default_device);
         g_free(default_device);
 
@@ -663,7 +663,7 @@ combo_box_rate_changed_cb(G_GNUC_UNUSED GtkComboBoxText *combo, gpointer data)
     dev->rate = rate;
 
     /* End of the cascade, save the default device and its settings */
-    dbus_set_active_video_device(dev->name);
+    dbus_video_set_default_device(dev->name);
     GHashTable *hash = g_hash_table_new(g_str_hash, g_str_equal);
     g_hash_table_insert(hash, "channel", dev->chan);
     g_hash_table_insert(hash, "size", dev->size);
