@@ -121,6 +121,10 @@ class SIPCall : public Call {
 
         void refuse();
 
+        void transfer(const std::string& to);
+
+        bool attendedTransfer(const std::string& to);
+
     private:
 
         // override of Call::createHistoryEntry
@@ -128,6 +132,11 @@ class SIPCall : public Call {
         createHistoryEntry() const;
 
         NON_COPYABLE(SIPCall);
+
+        /**
+         * Transfer method used for both type of transfer
+         */
+        bool transferCommon(pj_str_t *dst);
 
         /**
          * Audio Rtp Session factory

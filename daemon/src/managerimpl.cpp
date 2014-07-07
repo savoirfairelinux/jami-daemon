@@ -615,10 +615,10 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
     } else if (not isConference(getCurrentCallId()))
         unsetCurrentCall();
 
-    std::string accountID(getAccountFromCall(callId));
-    if (accountID.empty())
+    if (auto call = getCallFromCallID(callId))
+        call->transfer(to);
+    else
         return false;
-    getAccountLink(accountID)->transfer(callId, to);
 
     // remove waiting call in case we make transfer without even answer
     removeWaitingCall(callId);
@@ -638,10 +638,9 @@ void ManagerImpl::transferSucceeded()
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    std::string accountid(getAccountFromCall(transferID));
-    if (accountid.empty())
-        return false;
-    return getAccountLink(accountid)->attendedTransfer(transferID, targetID);
+    if (auto call = getCallFromCallID(transferID))
+        return call->attendedTransfer(targetID);
+    return false;
 }
 
 //THREAD=Main : Call:Incoming
