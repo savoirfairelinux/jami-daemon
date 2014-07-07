@@ -134,22 +134,6 @@ class IAXVoIPLink : public VoIPLink {
         virtual void cancel(const std::string& /*id*/) {}
 
         /**
-         * Put a call on hold
-         * @param id The ID of the call
-         * @return bool true on success
-         *		  false otherwise
-         */
-        virtual void onhold(const std::string& id);
-
-        /**
-         * Put a call off hold
-         * @param id The ID of the call
-         * @return bool true on success
-         *		  false otherwise
-         */
-        virtual void offhold(const std::string& id);
-
-        /**
          * Send DTMF
          * @param id The ID of the call
          * @param code  The code of the DTMF

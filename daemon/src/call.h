@@ -266,6 +266,18 @@ class Call : public Recordable {
          */
         virtual bool attendedTransfer(const std::string& to) = 0;
 
+        /**
+         * Put a call on hold
+         * @return bool True on success
+         */
+        virtual void onhold() = 0;
+
+        /**
+         * Resume a call from hold state
+         * @return bool True on success
+         */
+        virtual void offhold() = 0;
+
     private:
         bool validTransition(CallState newState);
 
