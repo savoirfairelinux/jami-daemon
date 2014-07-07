@@ -40,6 +40,10 @@
 
 #include "audio/audiortp/audio_rtp_factory.h" // for AudioRtpFactoryException
 
+#if HAVE_INSTANT_MESSAGING
+#include "im/instant_messaging.h"
+#endif
+
 #ifdef SFL_VIDEO
 #include "client/videomanager.h"
 #endif
@@ -629,3 +633,18 @@ SIPCall::carryingDTMFdigits(char code)
 
     dtmfSend(*this, code, account->getDtmfType());
 }
+
+#if HAVE_INSTANT_MESSAGING
+void
+SIPCall::sendTextMessage(const std::string &message, const std::string &from)
+{
+    using namespace sfl::InstantMessaging;
+
+    /* Send IM message */
+    UriList list;
+    UriEntry entry;
+    entry[sfl::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
+    list.push_front(entry);
+    send_sip_message(inv, getCallId(), appendUriList(message, list));
+}
+#endif // HAVE_INSTANT_MESSAGING

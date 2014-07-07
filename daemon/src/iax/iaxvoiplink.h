@@ -127,9 +127,6 @@ class IAXVoIPLink : public VoIPLink {
          */
         virtual void cancel(const std::string& /*id*/) {}
 
-#if HAVE_INSTANT_MESSAGING
-        virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
-#endif
         static void clearIaxCallMap();
         static void addIaxCall(std::shared_ptr<IAXCall>& call);
         // must be called while holding iaxCallMapMutex

@@ -132,6 +132,11 @@ class SIPCall : public Call {
 
         void carryingDTMFdigits(char code);
 
+#if HAVE_INSTANT_MESSAGING
+        void sendTextMessage(const std::string& message,
+                             const std::string& from);
+#endif
+
     private:
 
         // override of Call::createHistoryEntry
