@@ -160,12 +160,6 @@ class SIPVoIPLink : public VoIPLink {
                                                        const std::string &account_id);
 
         /**
-         * Answer the call
-         * @param c The call
-         */
-        virtual void answer(Call *c);
-
-        /**
          * Hang up the call
          * @param id The call identifier
          */
@@ -282,6 +276,9 @@ class SIPVoIPLink : public VoIPLink {
 
     public:
         void loadIP2IPSettings();
+
+        static void createSDPOffer(pjsip_inv_session *inv,
+                                   pjmedia_sdp_session **p_offer);
 
         /**
          * Instance that maintain and manage transport (UDP, TLS)
