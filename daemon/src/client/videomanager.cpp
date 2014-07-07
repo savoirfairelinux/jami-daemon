@@ -97,10 +97,10 @@ VideoManager::getSettings(const std::string& name) {
 }
 
 void
-VideoManager::setPreferences(const std::string& name,
-        const std::map<std::string, std::string>& pref)
+VideoManager::applySettings(const std::string& name,
+        const std::map<std::string, std::string>& settings)
 {
-    videoDeviceMonitor_.applySettings(name, pref);
+    videoDeviceMonitor_.applySettings(name, settings);
 }
 
 void
