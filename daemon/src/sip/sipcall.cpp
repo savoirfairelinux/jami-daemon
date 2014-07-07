@@ -36,6 +36,7 @@
 #include "logger.h" // for _debug
 #include "sdp.h"
 #include "manager.h"
+#include "array_size.h"
 
 #include "audio/audiortp/audio_rtp_factory.h" // for AudioRtpFactoryException
 
@@ -87,6 +88,35 @@ stopRtpIfCurrent(SIPCall& call)
         call.getVideoRtp().stop();
 #endif
     }
+}
+
+static void
+dtmfSend(SIPCall &call, char code, const std::string &dtmf)
+{
+    if (dtmf == SIPAccount::OVERRTP_STR) {
+        call.getAudioRtp().sendDtmfDigit(code);
+        return;
+    } else if (dtmf != SIPAccount::SIPINFO_STR) {
+        WARN("Unknown DTMF type %s, defaulting to %s instead",
+             dtmf.c_str(), SIPAccount::SIPINFO_STR);
+    } // else : dtmf == SIPINFO
+
+    int duration = Manager::instance().voipPreferences.getPulseLength();
+    char dtmf_body[1000];
+    const char *normal_str= "Signal=%c\r\nDuration=%d\r\n";
+    const char *flash_str = "Signal=%d\r\nDuration=%d\r\n";
+    const char *str;
+
+    // handle flash code
+    if (code == '!') {
+        str = flash_str;
+        code = 16;
+    } else {
+        str = normal_str;
+    }
+
+    snprintf(dtmf_body, sizeof dtmf_body - 1, str, code, duration);
+    call.sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
 SIPCall::SIPCall(const std::string& id, Call::CallType type,
@@ -146,6 +176,35 @@ SIPSessionReinvite(SIPCall *call)
 VoIPLink*
 SIPCall::getVoIPLink() const
 { return &SIPVoIPLink::instance(); }
+
+void
+SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
+{
+    pj_str_t methodName = CONST_PJ_STR("INFO");
+    pjsip_method method;
+    pjsip_method_init_np(&method, &methodName);
+
+    /* Create request message. */
+    pjsip_tx_data *tdata;
+
+    if (pjsip_dlg_create_request(inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
+        ERROR("Could not create dialog");
+        return;
+    }
+
+    /* Create "application/<subtype>" message body. */
+    pj_str_t content;
+    pj_cstr(&content, body);
+    const pj_str_t type = CONST_PJ_STR("application");
+    pj_str_t pj_subtype;
+    pj_cstr(&pj_subtype, subtype);
+    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
+
+    if (tdata->msg->body == NULL)
+        pjsip_tx_data_dec_ref(tdata);
+    else
+        pjsip_dlg_send_request(inv->dlg, tdata, SIPVoIPLink::instance().getMod()->id, NULL);
+}
 
 void SIPCall::answer()
 {
@@ -577,4 +636,15 @@ SIPCall::peerHungup()
     stopRtpIfCurrent(*this);
 
     siplink.removeSipCall(getCallId());
+}
+
+void
+SIPCall::carryingDTMFdigits(char code)
+{
+    const std::string accountID(getAccountId());
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
+    if (!account)
+        return;
+
+    dtmfSend(*this, code, account->getDtmfType());
 }

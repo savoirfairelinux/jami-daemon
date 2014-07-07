@@ -1331,8 +1331,8 @@ void ManagerImpl::sendDtmf(const std::string& id, char code)
     if (id.empty())
         return;
 
-    std::string accountid(getAccountFromCall(id));
-    getAccountLink(accountid)->carryingDTMFdigits(id, code);
+    if (auto call = getCallFromCallID(id))
+        call->carryingDTMFdigits(code);
 }
 
 //THREAD=Main | VoIPLink

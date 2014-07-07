@@ -96,6 +96,8 @@ class IAXCall : public Call {
 
         void peerHungup();
 
+        void carryingDTMFdigits(char code);
+
     private:
         NON_COPYABLE(IAXCall);
 

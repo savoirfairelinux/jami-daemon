@@ -160,13 +160,6 @@ class SIPVoIPLink : public VoIPLink {
                                                        const std::string &account_id);
 
         /**
-         * Send DTMF refering to account configuration
-         * @param id The call identifier
-         * @param code  The char code
-         */
-        virtual void carryingDTMFdigits(const std::string& id, char code);
-
-        /**
          * Tell the user that the call was answered
          * @param
          */
