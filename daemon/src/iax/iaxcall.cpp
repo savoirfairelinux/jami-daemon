@@ -124,14 +124,25 @@ int IAXCall::getAudioCodec() const
     }
 }
 
-void IAXCall::answer()
-{
-    iax_answer(session);
-}
-
 VoIPLink*
 IAXCall::getVoIPLink() const
 { return link_; }
+
+void
+IAXCall::answer()
+{
+    Manager::instance().addStream(getCallId());
+
+    {
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+        iax_answer(session);
+    }
+
+    setState(Call::ACTIVE);
+    setConnectionState(Call::CONNECTED);
+
+    Manager::instance().getMainBuffer().flushAllBuffers();
+}
 
 void
 IAXCall::hangup(int reason UNUSED)

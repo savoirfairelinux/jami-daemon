@@ -184,8 +184,6 @@ class Call : public Recordable {
             isIPToIP_ = IPToIP;
         }
 
-        virtual void answer() = 0;
-
         /**
          * Set my IP [not protected]
          * @param ip  The local IP address
@@ -238,6 +236,11 @@ class Call : public Recordable {
         virtual bool toggleRecording();
 
         virtual VoIPLink* getVoIPLink() const = 0;
+
+        /**
+         * Answer the call
+         */
+        virtual void answer() = 0;
 
         /**
          * Hang up the call

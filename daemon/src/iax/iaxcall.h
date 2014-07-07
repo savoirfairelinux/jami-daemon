@@ -80,11 +80,11 @@ class IAXCall : public Call {
 
         VoIPLink* getVoIPLink() const;
 
+        void answer();
+
         void hangup(int reason);
 
     private:
-        void answer();
-
         NON_COPYABLE(IAXCall);
 
         IAXVoIPLink* link_;

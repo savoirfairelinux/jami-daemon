@@ -418,7 +418,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     }
 
     try {
-        call->getVoIPLink()->answer(call.get());
+        call->answer();
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
         result = false;

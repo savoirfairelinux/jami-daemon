@@ -94,12 +94,6 @@ class VoIPLink {
         virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
         /**
-         * Answer the call
-         * @param c The call
-         */
-        virtual void answer(Call *c) = 0;
-
-        /**
         * Peer Hung up a call
         * @param id The call identifier
         */

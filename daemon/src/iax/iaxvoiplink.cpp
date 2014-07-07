@@ -313,24 +313,6 @@ IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, co
     return call;
 }
 
-
-void
-IAXVoIPLink::answer(Call *call)
-{
-    Manager::instance().addStream(call->getCallId());
-
-    {
-        std::lock_guard<std::mutex> lock(mutexIAX);
-        call->answer();
-    }
-
-    call->setState(Call::ACTIVE);
-    call->setConnectionState(Call::CONNECTED);
-
-    Manager::instance().getMainBuffer().flushAllBuffers();
-}
-
-
 void
 IAXVoIPLink::peerHungup(const std::string& id)
 {
@@ -347,8 +329,6 @@ IAXVoIPLink::peerHungup(const std::string& id)
 
     removeIaxCall(id);
 }
-
-
 
 void
 IAXVoIPLink::onhold(const std::string& id)

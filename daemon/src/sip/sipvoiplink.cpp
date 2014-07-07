@@ -1020,34 +1020,6 @@ std::shared_ptr<Call> SIPVoIPLink::newRegisteredAccountCall(const std::string& i
     return call;
 }
 
-void
-SIPVoIPLink::answer(Call *call)
-{
-    if (!call)
-        return;
-
-    SIPCall *sipCall = static_cast<SIPCall*>(call);
-    SIPAccount *account = Manager::instance().getSipAccount(sipCall->getAccountId());
-
-    if (!account) {
-        ERROR("Could not find account %s", sipCall->getAccountId().c_str());
-        return;
-    }
-
-    if (!sipCall->inv->neg) {
-        WARN("Negotiator is NULL, we've received an INVITE without an SDP");
-        pjmedia_sdp_session *dummy = 0;
-        sdp_create_offer_cb(sipCall->inv, &dummy);
-
-        if (account->isStunEnabled())
-            updateSDPFromSTUN(*sipCall, *account, *SIPVoIPLink::instance().sipTransport);
-    }
-
-    pj_str_t contact(account->getContactHeader());
-    sipCall->setContactHeader(&contact);
-    sipCall->answer();
-}
-
 static void
 stopRtpIfCurrent(const std::string &id, SIPCall &call)
 {
@@ -2359,3 +2331,6 @@ void SIPVoIPLink::loadIP2IPSettings()
         ERROR("%s", e.what());
     }
 }
+
+void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
+{ sdp_create_offer_cb(inv, p_offer); }
