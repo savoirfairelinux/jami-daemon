@@ -219,3 +219,11 @@ IAXCall::peerHungup()
 
     link_->removeIaxCall(getCallId());
 }
+
+
+void
+IAXCall::carryingDTMFdigits(char code)
+{
+    //std::lock_guard<std::mutex> lock(mutexIAX_);
+    iax_send_dtmf(session, code);
+}
