@@ -44,6 +44,26 @@
 static const int INITIAL_SIZE = 16384;
 static const int INCREMENT_SIZE = INITIAL_SIZE;
 
+static void
+updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
+{
+    std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
+
+    try {
+        std::vector<pj_sockaddr> stunPorts(transport.getSTUNAddresses(account, socketDescriptors));
+
+        // FIXME: get video sockets
+        //stunPorts.resize(4);
+
+        account.setPublishedAddress(stunPorts[0]);
+        // published IP MUST be updated first, since RTCP depends on it
+        call.getLocalSDP()->setPublishedIP(account.getPublishedAddress());
+        call.getLocalSDP()->updatePorts(stunPorts);
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
+    }
+}
+
 SIPCall::SIPCall(const std::string& id, Call::CallType type,
         pj_caching_pool *caching_pool, const std::string &account_id) :
     Call(id, type, account_id)
@@ -68,29 +88,6 @@ SIPCall::~SIPCall()
 void SIPCall::setContactHeader(pj_str_t *contact)
 {
     pj_strcpy(&contactHeader_, contact);
-}
-
-void SIPCall::answer()
-{
-    pjsip_tx_data *tdata;
-    if (!inv->last_answer)
-        throw std::runtime_error("Should only be called for initial answer");
-
-    // answer with SDP if no SDP was given in initial invite (i.e. inv->neg is NULL)
-    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, !inv->neg ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
-        throw std::runtime_error("Could not init invite request answer (200 OK)");
-
-    // contactStr must stay in scope as long as tdata
-    if (contactHeader_.slen) {
-        DEBUG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
-        sip_utils::addContactHeader(&contactHeader_, tdata);
-    }
-
-    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
-        throw std::runtime_error("Could not send invite request answer (200 OK)");
-
-    setConnectionState(CONNECTED);
-    setState(ACTIVE);
 }
 
 std::map<std::string, std::string>
@@ -218,6 +215,49 @@ SIPCall::onhold()
 VoIPLink*
 SIPCall::getVoIPLink() const
 { return &SIPVoIPLink::instance(); }
+
+void SIPCall::answer()
+{
+    SIPAccount *account = Manager::instance().getSipAccount(getAccountId());
+    if (!account) {
+        ERROR("Could not find account %s", getAccountId().c_str());
+        return;
+    }
+
+    if (!inv->neg) {
+        SIPVoIPLink& siplink = SIPVoIPLink::instance();
+
+        WARN("Negotiator is NULL, we've received an INVITE without an SDP");
+        pjmedia_sdp_session *dummy = 0;
+        siplink.createSDPOffer(inv, &dummy);
+
+        if (account->isStunEnabled())
+            updateSDPFromSTUN(*this, *account, *siplink.sipTransport);
+    }
+
+    pj_str_t contact(account->getContactHeader());
+    setContactHeader(&contact);
+
+    pjsip_tx_data *tdata;
+    if (!inv->last_answer)
+        throw std::runtime_error("Should only be called for initial answer");
+
+    // answer with SDP if no SDP was given in initial invite (i.e. inv->neg is NULL)
+    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, !inv->neg ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
+        throw std::runtime_error("Could not init invite request answer (200 OK)");
+
+    // contactStr must stay in scope as long as tdata
+    if (contactHeader_.slen) {
+        DEBUG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
+        sip_utils::addContactHeader(&contactHeader_, tdata);
+    }
+
+    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+        throw std::runtime_error("Could not send invite request answer (200 OK)");
+
+    setConnectionState(CONNECTED);
+    setState(ACTIVE);
+}
 
 void
 SIPCall::hangup(int reason)
