@@ -86,6 +86,10 @@ class IAXCall : public Call {
 
         void refuse();
 
+        void transfer(const std::string& to);
+
+        bool attendedTransfer(const std::string& to);
+
     private:
         NON_COPYABLE(IAXCall);
 
