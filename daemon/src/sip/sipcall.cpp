@@ -38,6 +38,13 @@
 #include "manager.h"
 #ifdef SFL_VIDEO
 #include "client/videomanager.h"
+
+static sfl_video::VideoSettings
+getSettings()
+{
+    const auto videoman = Manager::instance().getClient()->getVideoManager();
+    return videoman->getSettings(videoman->getActiveDevice());
+}
 #endif
 
 static const int INITIAL_SIZE = 16384;
@@ -50,7 +57,7 @@ SIPCall::SIPCall(const std::string& id, Call::CallType type,
     , audiortp_(this)
 #ifdef SFL_VIDEO
     // The ID is used to associate video streams to calls
-    , videortp_(id, Manager::instance().getClient()->getVideoManager()->getSettings())
+    , videortp_(id, getSettings())
 #endif
     , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))

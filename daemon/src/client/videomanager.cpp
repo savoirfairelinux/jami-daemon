@@ -92,17 +92,7 @@ VideoManager::setActiveDevice(const std::string &device)
 }
 
 std::map<std::string, std::string>
-VideoManager::getSettingsFor(const std::string& device) {
-    return videoDeviceMonitor_.getSettings(device);
-}
-
-std::map<std::string, std::string>
-VideoManager::getSettings() {
-    return videoDeviceMonitor_.getSettings(getActiveDevice());
-}
-
-std::map<std::string, std::string>
-VideoManager::getPreferences(const std::string& name) {
+VideoManager::getSettings(const std::string& name) {
     return videoDeviceMonitor_.getSettings(name);
 }
 
