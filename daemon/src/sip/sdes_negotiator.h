@@ -209,7 +209,7 @@ class SdesNegotiator {
         /**
          * A vector list containing the remote attributes.
          * Multiple crypto lines can be sent, and the
-         * prefered method is then chosen from that list.
+         * preferred method is then chosen from that list.
          */
         std::vector<std::string> remoteAttribute_;
 
