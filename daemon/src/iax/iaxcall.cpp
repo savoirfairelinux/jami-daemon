@@ -181,3 +181,31 @@ IAXCall::attendedTransfer(const std::string& /*targetID*/)
 {
     return false; // TODO
 }
+
+void
+IAXCall::onhold()
+{
+    Manager::instance().getMainBuffer().unBindAll(getCallId());
+
+    {
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+        iax_quelch_moh(session, true);
+    }
+
+    setState(Call::HOLD);
+}
+
+void
+IAXCall::offhold()
+{
+    Manager::instance().addStream(getCallId());
+
+    {
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+        iax_unquelch(session);
+    }
+
+    setState(Call::ACTIVE);
+
+    Manager::instance().startAudioDriverStream();
+}
