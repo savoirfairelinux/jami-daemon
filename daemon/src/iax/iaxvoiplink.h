@@ -122,12 +122,6 @@ class IAXVoIPLink : public VoIPLink {
         virtual std::shared_ptr<Call> newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
 
         /**
-         * Peer Hungup a call
-         * @param id The ID of the call
-         */
-        virtual void peerHungup(const std::string& id);
-
-        /**
          * Cancel a call
          * @param id The ID of the call
          */
