@@ -1484,7 +1484,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             gtk_menu_item_set_submenu(GTK_MENU_ITEM(video_item), video_menu);
 
             /* Append sources to the submenu */
-            gchar **video_list = dbus_get_video_device_list();
+            gchar **video_list = dbus_video_get_device_list();
             while (*video_list) {
                 append_video_input_to_submenu(video_menu, *video_list);
                 //g_free(*video_list);

@@ -571,7 +571,7 @@ reset_combo_box(GtkComboBoxText *combo, gchar **entries, const gchar *preferred)
 static void
 fill_devices(void)
 {
-    gchar **devices = dbus_get_video_device_list();
+    gchar **devices = dbus_video_get_device_list();
     g_assert(devices);
 
     if (*devices) {

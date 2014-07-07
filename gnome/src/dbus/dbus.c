@@ -1945,7 +1945,7 @@ dbus_video_apply_settings(const gchar *name, GHashTable *settings)
 }
 
 gchar **
-dbus_get_video_device_list()
+dbus_video_get_device_list()
 {
     gchar **array = NULL;
     GError *error = NULL;
