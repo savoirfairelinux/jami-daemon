@@ -160,12 +160,6 @@ class SIPVoIPLink : public VoIPLink {
                                                        const std::string &account_id);
 
         /**
-         * Hang up the call
-         * @param id The call identifier
-         */
-        virtual void peerHungup(const std::string& id);
-
-        /**
          * Send DTMF refering to account configuration
          * @param id The call identifier
          * @param code  The char code

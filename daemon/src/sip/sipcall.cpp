@@ -78,6 +78,17 @@ updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transp
     }
 }
 
+static void
+stopRtpIfCurrent(SIPCall& call)
+{
+    if (Manager::instance().isCurrentCall(call.getCallId())) {
+        call.getAudioRtp().stop();
+#ifdef SFL_VIDEO
+        call.getVideoRtp().stop();
+#endif
+    }
+}
+
 SIPCall::SIPCall(const std::string& id, Call::CallType type,
         pj_caching_pool *caching_pool, const std::string &account_id) :
     Call(id, type, account_id)
@@ -229,12 +240,7 @@ SIPCall::hangup(int reason)
     inv->mod_data[siplink.getMod()->id] = NULL;
 
     // Stop all RTP streams
-    if (Manager::instance().isCurrentCall(getCallId())) {
-        getAudioRtp().stop();
-#ifdef SFL_VIDEO
-        getVideoRtp().stop();
-#endif
-    }
+    stopRtpIfCurrent(*this);
 
     siplink.removeSipCall(getCallId());
 }
@@ -548,4 +554,27 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
         WARN("Reinvite failed, resuming hold");
         onhold();
     }
+}
+
+void
+SIPCall::peerHungup()
+{
+    // User hangup current call. Notify peer
+    pjsip_tx_data *tdata = NULL;
+
+    if (pjsip_inv_end_session(inv, 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
+        return;
+
+    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+        return;
+
+    auto& siplink = SIPVoIPLink::instance();
+
+    // Make sure user data is NULL in callbacks
+    inv->mod_data[siplink.getMod()->id ] = NULL;
+
+    // Stop all RTP streams
+    stopRtpIfCurrent(*this);
+
+    siplink.removeSipCall(getCallId());
 }

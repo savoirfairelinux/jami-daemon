@@ -126,6 +126,8 @@ class SIPCall : public Call {
 
         void offhold();
 
+        void peerHungup();
+
     private:
 
         // override of Call::createHistoryEntry
