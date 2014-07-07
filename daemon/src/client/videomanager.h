@@ -105,7 +105,7 @@ class VideoManager
         getSettings(const std::string& name);
 
         void
-        setPreferences(const std::string& name, const std::map<std::string, std::string>& pref);
+        applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
 
         void
         setActiveDevice(const std::string &dev);
