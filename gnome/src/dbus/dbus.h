@@ -392,7 +392,7 @@ gchar *dbus_video_get_default_device();
 void dbus_video_set_default_device(const gchar *name);
 GHashTable *dbus_video_get_settings(const gchar *name);
 void dbus_video_apply_settings(const gchar *name, GHashTable *settings);
-gchar **dbus_get_video_device_list();
+gchar **dbus_video_get_device_list();
 GHashTable *dbus_get_video_capabilities(const gchar *name);
 
 /**
