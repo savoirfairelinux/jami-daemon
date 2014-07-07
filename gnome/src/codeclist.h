@@ -76,10 +76,10 @@ void codecs_unload (void);
 codec_t * codec_list_get_by_name(gconstpointer name, GQueue *q);
 
 /**
- * Set the prefered codec first in the codec list
- * @param index The position in the list of the prefered codec
+ * Set the preferred codec first in the codec list
+ * @param index The position in the list of the preferred codec
  */
-void codec_set_prefered_order(guint index, GQueue *q);
+void codec_set_preferred_order(guint index, GQueue *q);
 
 /**
  * Notify modifications on codecs to the server

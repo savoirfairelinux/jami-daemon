@@ -175,11 +175,11 @@ codec_t* codec_list_get_nth(guint codec_index, GQueue *q)
     return g_queue_peek_nth(q, codec_index);
 }
 
-void codec_set_prefered_order(guint codec_index, GQueue *q)
+void codec_set_preferred_order(guint codec_index, GQueue *q)
 {
-    codec_t * prefered = codec_list_get_nth(codec_index, q);
+    codec_t * preferred = codec_list_get_nth(codec_index, q);
     g_queue_pop_nth(q, codec_index);
-    g_queue_push_head(q, prefered);
+    g_queue_push_head(q, preferred);
 }
 
 void codec_list_move_codec_up(guint codec_index, GQueue **q)
