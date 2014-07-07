@@ -253,6 +253,19 @@ class Call : public Recordable {
          */
         virtual void refuse() = 0;
 
+        /**
+         * Transfer a call to specified URI
+         * @param to The recipient of the call
+         */
+        virtual void transfer(const std::string &to) = 0;
+
+        /**
+         * Attended transfer
+         * @param The target call id
+         * @return True on success
+         */
+        virtual bool attendedTransfer(const std::string& to) = 0;
+
     private:
         bool validTransition(CallState newState);
 

@@ -44,6 +44,10 @@
 static const int INITIAL_SIZE = 16384;
 static const int INCREMENT_SIZE = INITIAL_SIZE;
 
+/** A map to retreive SFLphone internal call id
+ *  Given a SIP call ID (usefull for transaction sucha as transfer)*/
+static std::map<std::string, std::string> transferCallID;
+
 static void
 updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
 {
@@ -341,4 +345,174 @@ SIPCall::refuse()
     inv->mod_data[siplink.getMod()->id] = NULL;
 
     siplink.removeSipCall(getCallId());
+}
+
+static void
+transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
+{
+    auto mod_ua_id = SIPVoIPLink::instance().getMod()->id;
+
+    switch (pjsip_evsub_get_state(sub)) {
+        case PJSIP_EVSUB_STATE_ACCEPTED:
+            if (!event)
+                return;
+
+            pj_assert(event->type == PJSIP_EVENT_TSX_STATE && event->body.tsx_state.type == PJSIP_EVENT_RX_MSG);
+            break;
+
+        case PJSIP_EVSUB_STATE_TERMINATED:
+            pjsip_evsub_set_mod_data(sub, mod_ua_id, NULL);
+            break;
+
+        case PJSIP_EVSUB_STATE_ACTIVE: {
+            if (!event)
+                return;
+
+            pjsip_rx_data* r_data = event->body.rx_msg.rdata;
+
+            if (!r_data)
+                return;
+
+            std::string request(pjsip_rx_data_get_info(r_data));
+
+            pjsip_status_line status_line = { 500, *pjsip_get_status_text(500) };
+
+            if (!r_data->msg_info.msg)
+                return;
+
+            if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD and
+                    request.find("NOTIFY") != std::string::npos) {
+                pjsip_msg_body *body = r_data->msg_info.msg->body;
+
+                if (!body)
+                    return;
+
+                if (pj_stricmp2(&body->content_type.type, "message") or
+                        pj_stricmp2(&body->content_type.subtype, "sipfrag"))
+                    return;
+
+                if (pjsip_parse_status_line((char*) body->data, body->len, &status_line) != PJ_SUCCESS)
+                    return;
+            }
+
+            if (!r_data->msg_info.cid)
+                return;
+
+            auto call = static_cast<SIPCall *>(pjsip_evsub_get_mod_data(sub, mod_ua_id));
+            if (!call)
+                return;
+
+            if (status_line.code / 100 == 2) {
+                pjsip_tx_data *tdata;
+
+                if (!call->inv)
+                    return;
+
+                if (pjsip_inv_end_session(call->inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS)
+                    pjsip_inv_send_msg(call->inv, tdata);
+
+                Manager::instance().hangupCall(call->getCallId());
+                pjsip_evsub_set_mod_data(sub, mod_ua_id, NULL);
+            }
+
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+bool
+SIPCall::transferCommon(pj_str_t *dst)
+{
+    if (!inv)
+        return false;
+
+    pjsip_evsub_user xfer_cb;
+    pj_bzero(&xfer_cb, sizeof(xfer_cb));
+    xfer_cb.on_evsub_state = &transfer_client_cb;
+
+    pjsip_evsub *sub;
+
+    if (pjsip_xfer_create_uac(inv->dlg, &xfer_cb, &sub) != PJ_SUCCESS)
+        return false;
+
+    auto& siplink = SIPVoIPLink::instance();
+
+    /* Associate this voiplink of call with the client subscription
+     * We can not just associate call with the client subscription
+     * because after this function, we can no find the cooresponding
+     * voiplink from the call any more. But the voiplink is useful!
+     */
+    pjsip_evsub_set_mod_data(sub, siplink.getMod()->id, this);
+
+    /*
+     * Create REFER request.
+     */
+    pjsip_tx_data *tdata;
+
+    if (pjsip_xfer_initiate(sub, dst, &tdata) != PJ_SUCCESS)
+        return false;
+
+    // Put SIP call id in map in order to retrieve call during transfer callback
+    std::string callidtransfer(inv->dlg->call_id->id.ptr, inv->dlg->call_id->id.slen);
+    transferCallID[callidtransfer] = getCallId();
+
+    /* Send. */
+    if (pjsip_xfer_send_request(sub, tdata) != PJ_SUCCESS)
+        return false;
+
+    return true;
+}
+
+void
+SIPCall::transfer(const std::string& to)
+{
+    stopRecording();
+
+    std::string account_id(getAccountId());
+    SIPAccount *account = Manager::instance().getSipAccount(account_id);
+
+    if (account == NULL)
+        throw VoipLinkException("Could not find account");
+
+    std::string toUri;
+    pj_str_t dst = { 0, 0 };
+
+    toUri = account->getToUri(to);
+    pj_cstr(&dst, toUri.c_str());
+    DEBUG("Transferring to %.*s", dst.slen, dst.ptr);
+
+    if (!transferCommon(&dst))
+        throw VoipLinkException("Couldn't transfer");
+}
+
+bool
+SIPCall::attendedTransfer(const std::string& /*to*/)
+{
+    if (!inv or !inv->dlg)
+        throw VoipLinkException("Couldn't get invite dialog");
+
+    pjsip_dialog *target_dlg = inv->dlg;
+    pjsip_uri *uri = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
+
+    char str_dest_buf[PJSIP_MAX_URL_SIZE * 2] = { '<' };
+    pj_str_t dst = { str_dest_buf, 1 };
+
+    dst.slen += pjsip_uri_print(PJSIP_URI_IN_REQ_URI, uri, str_dest_buf + 1, sizeof(str_dest_buf) - 1);
+    dst.slen += pj_ansi_snprintf(str_dest_buf + dst.slen,
+                                 sizeof(str_dest_buf) - dst.slen,
+                                 "?"
+                                 "Replaces=%.*s"
+                                 "%%3Bto-tag%%3D%.*s"
+                                 "%%3Bfrom-tag%%3D%.*s>",
+                                 (int)target_dlg->call_id->id.slen,
+                                 target_dlg->call_id->id.ptr,
+                                 (int)target_dlg->remote.info->tag.slen,
+                                 target_dlg->remote.info->tag.ptr,
+                                 (int)target_dlg->local.info->tag.slen,
+                                 target_dlg->local.info->tag.ptr);
+
+    return transferCommon(&dst);
 }

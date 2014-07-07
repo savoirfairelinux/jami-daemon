@@ -150,21 +150,6 @@ class IAXVoIPLink : public VoIPLink {
         virtual void offhold(const std::string& id);
 
         /**
-         * Transfer a call
-         * @param id The ID of the call
-         * @param to The recipient of the transfer
-         */
-        virtual void transfer(const std::string& id, const std::string& to);
-
-        /**
-         * Perform attended transfer
-         * @param Transfered call ID
-         * @param Target call ID
-         * @return true on success
-         */
-        virtual bool attendedTransfer(const std::string& transferID, const std::string& targetID);
-
-        /**
          * Send DTMF
          * @param id The ID of the call
          * @param code  The code of the DTMF
