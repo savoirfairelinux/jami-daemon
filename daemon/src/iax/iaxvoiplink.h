@@ -127,14 +127,6 @@ class IAXVoIPLink : public VoIPLink {
          */
         virtual void cancel(const std::string& /*id*/) {}
 
-        /**
-         * Send DTMF
-         * @param id The ID of the call
-         * @param code  The code of the DTMF
-         */
-        virtual void carryingDTMFdigits(const std::string& id, char code);
-
-
 #if HAVE_INSTANT_MESSAGING
         virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 #endif
