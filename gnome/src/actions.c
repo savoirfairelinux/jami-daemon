@@ -1031,7 +1031,7 @@ sflphone_get_display(void)
 gchar *
 sflphone_get_active_video(void)
 {
-    gchar *device = dbus_get_active_video_device();
+    gchar *device = dbus_video_get_default_device();
     gchar *resource;
 
     if (strlen(device) > 0)
