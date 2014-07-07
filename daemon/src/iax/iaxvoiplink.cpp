@@ -372,30 +372,6 @@ IAXVoIPLink::offhold(const std::string& id)
 }
 
 void
-IAXVoIPLink::transfer(const std::string& id, const std::string& to)
-{
-    char callto[to.length() + 1];
-    strcpy(callto, to.c_str());
-
-    {
-        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        auto call = getIAXCall(id);
-        if (!call)
-            return;
-        {
-            std::lock_guard<std::mutex> lock(mutexIAX_);
-            iax_transfer(call->session, callto);
-        }
-    }
-}
-
-bool
-IAXVoIPLink::attendedTransfer(const std::string& /*transferID*/, const std::string& /*targetID*/)
-{
-    return false; // TODO
-}
-
-void
 IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);

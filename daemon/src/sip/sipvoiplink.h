@@ -180,26 +180,6 @@ class SIPVoIPLink : public VoIPLink {
         virtual void offhold(const std::string& id);
 
         /**
-         * Transfer method used for both type of transfer
-         */
-        bool transferCommon(SIPCall *call, pj_str_t *dst);
-
-        /**
-         * Transfer the call
-         * @param id The call identifier
-         * @param to The recipient of the transfer
-         */
-        virtual void transfer(const std::string& id, const std::string& to);
-
-        /**
-         * Attended transfer
-         * @param The transfered call id
-         * @param The target call id
-         * @return True on success
-         */
-        virtual bool attendedTransfer(const std::string&, const std::string&);
-
-        /**
          * Send DTMF refering to account configuration
          * @param id The call identifier
          * @param code  The char code
