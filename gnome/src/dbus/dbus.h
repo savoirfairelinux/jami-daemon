@@ -390,7 +390,7 @@ gboolean dbus_set_audio_manager(const gchar *api);
 
 void dbus_set_active_video_device(const gchar *dev);
 GHashTable *dbus_video_get_settings(const gchar *name);
-void dbus_set_video_preferences(const gchar *name, GHashTable *pref);
+void dbus_video_apply_settings(const gchar *name, GHashTable *settings);
 gchar *dbus_get_active_video_device();
 gchar **dbus_get_video_device_list();
 GHashTable *dbus_get_video_capabilities(const gchar *name);

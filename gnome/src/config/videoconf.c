@@ -668,7 +668,7 @@ combo_box_rate_changed_cb(G_GNUC_UNUSED GtkComboBoxText *combo, gpointer data)
     g_hash_table_insert(hash, "channel", dev->chan);
     g_hash_table_insert(hash, "size", dev->size);
     g_hash_table_insert(hash, "rate", dev->rate);
-    dbus_set_video_preferences(dev->name, hash);
+    dbus_video_apply_settings(dev->name, hash);
     g_hash_table_destroy(hash);
 }
 
