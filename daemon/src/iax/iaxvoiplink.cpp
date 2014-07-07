@@ -314,23 +314,6 @@ IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, co
 }
 
 void
-IAXVoIPLink::peerHungup(const std::string& id)
-{
-    Manager::instance().getMainBuffer().unBindAll(id);
-
-    {
-        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        auto call = getIAXCall(id);
-        if (!call)
-            throw VoipLinkException("Could not find call");
-
-        call->session = NULL;
-    }
-
-    removeIaxCall(id);
-}
-
-void
 IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
