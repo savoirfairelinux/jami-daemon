@@ -16,9 +16,11 @@
    sodipodi:version="0.32"
    inkscape:version="0.48.4 r9939"
    version="1.0"
-   sodipodi:docname="fail.svg"
+   sodipodi:docname="refuse.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    sodipodi:modified="true">
+  <title
+     id="title3001">refuse.svg</title>
   <defs
      id="defs4">
     <linearGradient
@@ -91,7 +93,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="22.627417"
-     inkscape:cx="13.860164"
+     inkscape:cx="-0.67971919"
      inkscape:cy="12.018537"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -99,10 +101,10 @@
      height="32px"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1301"
+     inkscape:window-width="1313"
      inkscape:window-height="744"
-     inkscape:window-x="65"
-     inkscape:window-y="456"
+     inkscape:window-x="337"
+     inkscape:window-y="1224"
      showgrid="false"
      inkscape:window-maximized="1" />
   <metadata
@@ -113,8 +115,50 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title>refuse.svg</dc:title>
+        <dc:date>2014/06/24</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Gabrielle Maheux-Leclerc &lt;gabrielle.maheux@savoirfairelinux.com&gt;</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Savoir-faire Linux Inc.</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>Savoir-faire Linux Inc.</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:source>http://sflphone.org/download/source-code</dc:source>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>gnome</rdf:li>
+            <rdf:li>voip</rdf:li>
+            <rdf:li>sip</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+        <dc:coverage>SFLphone project</dc:coverage>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/3.0/" />
       </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/3.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
     </rdf:RDF>
   </metadata>
   <g

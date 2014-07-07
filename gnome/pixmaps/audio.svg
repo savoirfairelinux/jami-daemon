@@ -19,6 +19,8 @@
    sodipodi:docname="audio.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    sodipodi:modified="true">
+  <title
+     id="title3014">audio.svg</title>
   <defs
      id="defs4">
     <linearGradient
@@ -91,7 +93,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6568545"
-     inkscape:cx="5.953805"
+     inkscape:cx="-43.366891"
      inkscape:cy="35.098216"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -99,12 +101,12 @@
      height="32px"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1301"
-     inkscape:window-height="744"
-     inkscape:window-x="347"
-     inkscape:window-y="1224"
+     inkscape:window-width="1029"
+     inkscape:window-height="1148"
+     inkscape:window-x="992"
+     inkscape:window-y="24"
      showgrid="false"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -113,7 +115,32 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title>audio.svg</dc:title>
+        <dc:date>2014/06/24</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Gabrielle Maheux-Leclerc &lt;gabrielle.maheux@savoirfairelinux.com&gt;</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Savoir-faire Linux Inc.</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>Savoir-faire Linux Inc.</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:source>http://sflphone.org/download/source-code</dc:source>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>gnome</rdf:li>
+            <rdf:li>voip</rdf:li>
+            <rdf:li>sip</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+        <dc:coverage>SFLphone project</dc:coverage>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -218,7 +245,7 @@
     </g>
     <path
        transform="matrix(3.0659904,0,0,3.2079304,-1049.1349,-550.8831)"
-       d="m 348.42686,174.17094 a 2.4306796,2.4306796 0 1 1 -4.86135,0 2.4306796,2.4306796 0 1 1 4.86135,0 z"
+       d="m 348.42686,174.17094 c 0,1.34243 -1.08825,2.43068 -2.43067,2.43068 -1.34243,0 -2.43068,-1.08825 -2.43068,-2.43068 0,-1.34242 1.08825,-2.43068 2.43068,-2.43068 1.34242,0 2.43067,1.08826 2.43067,2.43068 z"
        sodipodi:ry="2.4306796"
        sodipodi:rx="2.4306796"
        sodipodi:cy="174.17094"
@@ -228,7 +255,7 @@
        sodipodi:type="arc" />
     <path
        transform="matrix(3.0659904,0,0,3.2079304,-1025.2872,-550.8831)"
-       d="m 348.42686,174.17094 a 2.4306796,2.4306796 0 1 1 -4.86135,0 2.4306796,2.4306796 0 1 1 4.86135,0 z"
+       d="m 348.42686,174.17094 c 0,1.34243 -1.08825,2.43068 -2.43067,2.43068 -1.34243,0 -2.43068,-1.08825 -2.43068,-2.43068 0,-1.34242 1.08825,-2.43068 2.43068,-2.43068 1.34242,0 2.43067,1.08826 2.43067,2.43068 z"
        sodipodi:ry="2.4306796"
        sodipodi:rx="2.4306796"
        sodipodi:cy="174.17094"
