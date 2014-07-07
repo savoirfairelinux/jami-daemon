@@ -31,6 +31,10 @@
 #ifndef IAXCALL_H
 #define IAXCALL_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "call.h"
 #include "noncopyable.h"
 
@@ -97,6 +101,11 @@ class IAXCall : public Call {
         void peerHungup();
 
         void carryingDTMFdigits(char code);
+
+#if HAVE_INSTANT_MESSAGING
+        void sendTextMessage(const std::string& message,
+                             const std::string& from);
+#endif
 
     private:
         NON_COPYABLE(IAXCall);

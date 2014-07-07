@@ -40,6 +40,10 @@
 #include "manager.h"
 #include "iaxvoiplink.h"
 
+#if HAVE_INSTANT_MESSAGING
+#include "im/instant_messaging.h"
+#endif
+
 static int
 codecToASTFormat(int c)
 {
@@ -226,3 +230,12 @@ IAXCall::carryingDTMFdigits(char code)
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
     iax_send_dtmf(session, code);
 }
+
+#if HAVE_INSTANT_MESSAGING
+void
+IAXCall::sendTextMessage(const std::string& message, const std::string& /*from*/)
+{
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+    sfl::InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
+}
+#endif
