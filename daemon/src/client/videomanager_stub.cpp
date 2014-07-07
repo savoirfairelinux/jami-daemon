@@ -64,8 +64,8 @@ std::map<std::string, std::string> VideoManager::getSettings(const std::string& 
 }
 
 void
-VideoManager::setPreferences(const std::string& name,
-        std::map<std::string, std::string> pref)
+VideoManager::applySettings(const std::string& name,
+        std::map<std::string, std::string> settings)
 {
 }
 
