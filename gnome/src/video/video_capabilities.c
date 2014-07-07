@@ -48,7 +48,7 @@ VideoCapabilities *
 video_capabilities_new(const gchar *name)
 {
     GNode *root = g_node_new(g_strdup(name));
-    GHashTable *hash = dbus_get_video_capabilities(name);
+    GHashTable *hash = dbus_video_get_capabilities(name);
     g_assert(hash);
     g_hash_table_foreach(hash, append_channels_and_sizes, root);
     return root;
