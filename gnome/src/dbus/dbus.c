@@ -1937,10 +1937,10 @@ dbus_video_get_settings(const gchar *name)
 }
 
 void
-dbus_set_video_preferences(const gchar *name, GHashTable *pref)
+dbus_video_apply_settings(const gchar *name, GHashTable *settings)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_set_preferences(video_proxy, name, pref, &error);
+    org_sflphone_SFLphone_VideoManager_apply_settings(video_proxy, name, settings, &error);
     check_error(error);
 }
 
