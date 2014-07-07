@@ -119,6 +119,8 @@ class SIPCall : public Call {
 
         void hangup(int reason);
 
+        void refuse();
+
     private:
 
         // override of Call::createHistoryEntry

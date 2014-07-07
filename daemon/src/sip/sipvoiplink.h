@@ -200,12 +200,6 @@ class SIPVoIPLink : public VoIPLink {
         virtual bool attendedTransfer(const std::string&, const std::string&);
 
         /**
-         * Refuse the call
-         * @param id The call identifier
-         */
-        virtual void refuse(const std::string& id);
-
-        /**
          * Send DTMF refering to account configuration
          * @param id The call identifier
          * @param code  The char code
