@@ -19,19 +19,10 @@
             </arg>
         </method>
 
-        <method name="getSettingsFor" tp:name-for-bindings="getSettingsFor">
+        <method name="getSettings" tp:name-for-bindings="getSettings">
            <tp:docstring>Returns a map of settings for the given device name</tp:docstring>
             <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="s" name="device" direction="in">
-            </arg>
-            <arg type="a{ss}" name="map" direction="out">
-            </arg>
-        </method>
-
-        <method name="getPreferences" tp:name-for-bindings="getPreferences">
-           <tp:docstring>Returns a map of user preferences for the given device name</tp:docstring>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="s" name="name" direction="in">
             </arg>
             <arg type="a{ss}" name="map" direction="out">
             </arg>
