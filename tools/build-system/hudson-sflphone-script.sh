@@ -40,7 +40,7 @@ DOXYGEN=0
 #daemon opts
 DOPTS="--prefix=/usr"
 #gnome opts
-GOPTS="--prefix=/usr"
+GOPTS="--prefix=/usr --enable-video"
 
 #compiler defaults
 export CC=gcc
