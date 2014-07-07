@@ -1025,29 +1025,6 @@ stopRtpIfCurrent(const std::string &id, SIPCall &call)
     }
 }
 
-void
-SIPVoIPLink::peerHungup(const std::string& id)
-{
-    auto call = getSipCall(id);
-    if (!call)
-        return;
-
-    // User hangup current call. Notify peer
-    pjsip_tx_data *tdata = NULL;
-
-    if (pjsip_inv_end_session(call->inv, 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
-        return;
-
-    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
-        return;
-
-    // Make sure user data is NULL in callbacks
-    call->inv->mod_data[mod_ua_.id ] = NULL;
-
-    stopRtpIfCurrent(id, *call);
-    removeSipCall(id);
-}
-
 #if HAVE_INSTANT_MESSAGING
 void SIPVoIPLink::sendTextMessage(const std::string &callID,
                                   const std::string &message,

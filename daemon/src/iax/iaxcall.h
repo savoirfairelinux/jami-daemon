@@ -94,6 +94,8 @@ class IAXCall : public Call {
 
         void offhold();
 
+        void peerHungup();
+
     private:
         NON_COPYABLE(IAXCall);
 

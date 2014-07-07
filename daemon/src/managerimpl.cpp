@@ -1607,7 +1607,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     if (auto call = getCallFromCallID(call_id)) {
         history_.addCall(call.get(), preferences.getHistoryLimit());
-        call->getVoIPLink()->peerHungup(call_id);
+        call->peerHungup();
         saveHistory();
     }
 
