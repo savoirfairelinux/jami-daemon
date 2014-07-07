@@ -719,7 +719,7 @@ call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
         if (!resource)
             return;
     } else {
-        dbus_set_active_video_device(device);
+        dbus_video_set_default_device(device);
         resource = g_strconcat("v4l2://", device, NULL);
     }
 
