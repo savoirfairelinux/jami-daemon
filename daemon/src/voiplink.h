@@ -93,19 +93,6 @@ class VoIPLink {
          */
         virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
-        /**
-         * Send a message to a call identified by its callid
-         *
-         * @param The Id of the call to send the message to
-         * @param The actual message to be transmitted
-         * @param The sender of this message (could be another participant of a conference)
-         */
-#if HAVE_INSTANT_MESSAGING
-        virtual void sendTextMessage(const std::string &callID,
-                                     const std::string &message,
-                                     const std::string &from) = 0;
-#endif
-
     protected:
         static void unloadAccount(std::pair<const std::string, Account*> &item);
         bool handlingEvents_;

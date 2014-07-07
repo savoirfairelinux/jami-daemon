@@ -289,6 +289,17 @@ class Call : public Recordable {
          */
         virtual void carryingDTMFdigits(char code) = 0;
 
+#if HAVE_INSTANT_MESSAGING
+        /**
+         * Send a message to a call identified by its callid
+         *
+         * @param The actual message to be transmitted
+         * @param The sender of this message (could be another participant of a conference)
+         */
+        virtual void sendTextMessage(const std::string &message,
+                                     const std::string &from) = 0;
+#endif
+
     private:
         bool validTransition(CallState newState);
 
