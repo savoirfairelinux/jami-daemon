@@ -1956,7 +1956,7 @@ dbus_video_get_device_list()
 }
 
 GHashTable *
-dbus_get_video_capabilities(const gchar *name)
+dbus_video_get_capabilities(const gchar *name)
 {
     GError *error = NULL;
     GHashTable *cap = NULL;
