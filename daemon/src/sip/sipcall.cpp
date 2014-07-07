@@ -42,7 +42,7 @@
 static sfl_video::VideoSettings
 getSettings() {
     const auto videoman = Manager::instance().getClient()->getVideoManager();
-    return videoman->getSettings(videoman->getActiveDevice());
+    return videoman->getSettings(videoman->getDefaultDevice());
 }
 #endif
 

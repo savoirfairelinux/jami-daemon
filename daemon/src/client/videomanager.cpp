@@ -79,16 +79,16 @@ VideoManager::getCapabilities(const std::string& name)
 }
 
 std::string
-VideoManager::getActiveDevice()
+VideoManager::getDefaultDevice()
 {
-    return videoDeviceMonitor_.getDevice();
+    return videoDeviceMonitor_.getDefaultDevice();
 }
 
 void
-VideoManager::setActiveDevice(const std::string &device)
+VideoManager::setDefaultDevice(const std::string &name)
 {
-    DEBUG("Setting device to %s", device.c_str());
-    videoDeviceMonitor_.setDevice(device);
+    DEBUG("Setting device to %s", name.c_str());
+    videoDeviceMonitor_.setDefaultDevice(name);
 }
 
 std::map<std::string, std::string>
@@ -132,7 +132,7 @@ VideoManager::switchInput(const std::string &resource)
 bool
 VideoManager::switchToCamera()
 {
-    return switchInput("v4l2://" + videoDeviceMonitor_.getDevice());
+    return switchInput("v4l2://" + videoDeviceMonitor_.getDefaultDevice());
 }
 
 std::shared_ptr<sfl_video::VideoFrameActiveWriter>

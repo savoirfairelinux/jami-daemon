@@ -40,7 +40,7 @@ int main ()
 {
     sfl_video::VideoDeviceMonitor monitor;
     sfl_video::VideoRtpSession session("test",
-            monitor.getSettings(monitor.getDevice()));
+            monitor.getSettings(monitor.getDefaultDevice()));
     session.start(12345);
     sleep(5);
     session.stop();
