@@ -1925,15 +1925,15 @@ dbus_set_active_video_device(const gchar *device)
 }
 
 GHashTable *
-dbus_get_video_preferences(const gchar *name)
+dbus_video_get_settings(const gchar *name)
 {
     GError *error = NULL;
-    GHashTable *pref = NULL;
+    GHashTable *settings = NULL;
 
-    org_sflphone_SFLphone_VideoManager_get_preferences(video_proxy, name, &pref, &error);
+    org_sflphone_SFLphone_VideoManager_get_settings(video_proxy, name, &settings, &error);
     check_error(error);
 
-    return pref;
+    return settings;
 }
 
 void
