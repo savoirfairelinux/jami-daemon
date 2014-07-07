@@ -28,12 +28,12 @@
             </arg>
         </method>
 
-        <method name="setPreferences" tp:name-for-bindings="setPreferences">
-            <tp:docstring>Set the preferences of a given device name</tp:docstring>
+        <method name="applySettings" tp:name-for-bindings="applySettings">
+            <tp:docstring>Set the preferred settings for a given device name</tp:docstring>
             <arg type="s" name="name" direction="in">
             </arg>
             <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
-            <arg type="a{ss}" name="pref" direction="in">
+            <arg type="a{ss}" name="settings" direction="in">
             </arg>
         </method>
 
