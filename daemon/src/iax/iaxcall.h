@@ -84,6 +84,8 @@ class IAXCall : public Call {
 
         void hangup(int reason);
 
+        void refuse();
+
     private:
         NON_COPYABLE(IAXCall);
 

@@ -1313,32 +1313,6 @@ bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& /*t
     return transferCommon(call.get(), &dst);
 }
 
-void
-SIPVoIPLink::refuse(const std::string& id)
-{
-    auto call = getSipCall(id);
-    if (!call)
-        return;
-
-    if (!call->isIncoming() or call->getConnectionState() == Call::CONNECTED or !call->inv)
-        return;
-
-    call->getAudioRtp().stop();
-
-    pjsip_tx_data *tdata;
-
-    if (pjsip_inv_end_session(call->inv, PJSIP_SC_DECLINE, NULL, &tdata) != PJ_SUCCESS)
-        return;
-
-    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
-        return;
-
-    // Make sure the pointer is NULL in callbacks
-    call->inv->mod_data[mod_ua_.id] = NULL;
-
-    removeSipCall(id);
-}
-
 static void
 sendSIPInfo(const SIPCall &call, const char *const body, const char *const subtype)
 {
