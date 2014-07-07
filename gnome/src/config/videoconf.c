@@ -611,7 +611,7 @@ combo_box_device_changed_cb(G_GNUC_UNUSED GtkComboBoxText* combo, gpointer data)
     dev->cap = video_capabilities_new(name);
 
     /* Fetch user preferences for this device */
-    GHashTable *hash = dbus_get_video_preferences(name);
+    GHashTable *hash = dbus_video_get_settings(name);
     dev->chan = g_strdup(g_hash_table_lookup(hash, "channel"));
     dev->size = g_strdup(g_hash_table_lookup(hash, "size"));
     dev->rate = g_strdup(g_hash_table_lookup(hash, "rate"));
