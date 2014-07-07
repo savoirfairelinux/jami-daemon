@@ -657,10 +657,10 @@ bool ManagerImpl::refuseCall(const std::string& id)
         audiodriver_->stopStream();
     }
 
-    std::string accountid = getAccountFromCall(id);
-    if (accountid.empty())
+    auto call = getCallFromCallID(id);
+    if (!call)
         return false;
-    getAccountLink(accountid)->refuse(id);
+    call->refuse();
 
     checkAudio();
 

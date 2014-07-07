@@ -129,12 +129,6 @@ class VoIPLink {
         virtual bool attendedTransfer(const std::string&, const std::string&) = 0;
 
         /**
-         * Refuse incoming call
-         * @param id The call identifier
-         */
-        virtual void refuse(const std::string &id) = 0;
-
-        /**
          * Send DTMF
          * @param id The call identifier
          * @param code  The char code
