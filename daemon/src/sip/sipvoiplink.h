@@ -166,20 +166,6 @@ class SIPVoIPLink : public VoIPLink {
         virtual void peerHungup(const std::string& id);
 
         /**
-         * Put the call on hold
-         * @param id The call identifier
-         * @return bool True on success
-         */
-        virtual void onhold(const std::string& id);
-
-        /**
-         * Put the call off hold
-         * @param id The call identifier
-         * @return bool True on success
-         */
-        virtual void offhold(const std::string& id);
-
-        /**
          * Send DTMF refering to account configuration
          * @param id The call identifier
          * @param code  The char code

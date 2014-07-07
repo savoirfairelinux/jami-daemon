@@ -110,9 +110,6 @@ class SIPCall : public Call {
 
         void setContactHeader(pj_str_t *contact);
 
-        void onhold();
-        void offhold(const std::function<void()> &SDPUpdateFunc);
-
         VoIPLink* getVoIPLink() const;
 
         void answer();
@@ -124,6 +121,10 @@ class SIPCall : public Call {
         void transfer(const std::string& to);
 
         bool attendedTransfer(const std::string& to);
+
+        void onhold();
+
+        void offhold();
 
     private:
 
@@ -137,6 +138,8 @@ class SIPCall : public Call {
          * Transfer method used for both type of transfer
          */
         bool transferCommon(pj_str_t *dst);
+
+        void internalOffHold(const std::function<void()> &SDPUpdateFunc);
 
         /**
          * Audio Rtp Session factory

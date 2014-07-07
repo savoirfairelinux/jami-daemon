@@ -534,12 +534,12 @@ bool ManagerImpl::onHoldCall(const std::string& callId)
     std::string current_call_id(getCurrentCallId());
 
     try {
-        std::string account_id(getAccountFromCall(callId));
-        if (account_id.empty()) {
-            DEBUG("Account ID %s or callid %s doesn't exist in call onHold", account_id.c_str(), callId.c_str());
+        if (auto call = getCallFromCallID(callId)) {
+            call->onhold();
+        } else {
+            DEBUG("CallID %s doesn't exist in call onHold", callId.c_str());
             return false;
         }
-        getAccountLink(account_id)->onhold(callId);
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         result = false;
@@ -583,7 +583,7 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
 
     try {
         if (auto call = getCallFromCallID(callId))
-            call->getVoIPLink()->offhold(callId);
+            call->offhold();
         else
             result = false;
     } catch (const VoipLinkException &e) {
