@@ -1,14 +1,21 @@
 %bcond_with video
 Name:           sflphone
 Version:        1.3.0
-Release:        1%{?dist}
+%if 0%{?nightly}
+%define rel rc%{nightly}
+%define tarball %{name}-%{version}-rc%{nightly}
+%else
+%define rel 1
+%define tarball %{name}-%{version}
+%endif
+Release:        %{rel}%{?dist}
 Summary:        SIP/IAX2 compatible enterprise-class software phone
 Group:          Applications/Internet
 License:        GPLv3
 URL:            http://sflphone.org/
-Source0:        https://projects.savoirfairelinux.com/attachments/download/6423/%{name}-%{version}.tar.gz
+Source0:        https://projects.savoirfairelinux.com/attachments/download/6423/%{tarball}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:      gettext openssl-devel gnutls-devel desktop-file-utils perl libuuid-devel
+BuildRequires:      gettext openssl-devel desktop-file-utils perl libuuid-devel
 BuildRequires:      libyaml-devel alsa-lib-devel pulseaudio-libs-devel
 BuildRequires:      ccrtp-devel libzrtpcpp-devel dbus-c++-devel pcre-devel
 BuildRequires:      gsm-devel speex-devel expat-devel libsamplerate-devel
@@ -34,7 +41,7 @@ several hundreds of calls a day. It supports both SIP and IAX2
 protocols.
 
 %prep
-%setup -q
+%setup -q -n %{tarball}
 
 %build
 # Compile the daemon
@@ -181,6 +188,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/%{name}.desktop
 pushd kde/build
 make install DESTDIR=$RPM_BUILD_ROOT
 popd
+%find_lang sflphone-client-kde --with-kde -f sflphone-client-kde
+%find_lang sflphone-kde --with-kde -f sflphone-kde
 %endif
 
 %if %{with video}
@@ -217,7 +226,7 @@ fi
 %files common
 %endif
 %defattr(-,root,root,-)
-%doc AUTHORS COPYING NEWS README
+%doc daemon/AUTHORS COPYING NEWS README
 %{_libdir}/%{name}/*
 %{_datadir}/dbus-1/services/org.%{name}.SFLphone.service
 %{_mandir}/man1/sflphoned.1.gz*
@@ -243,12 +252,12 @@ fi
 %{_libdir}/sflphone/plugins/libevladdrbook.so
 
 %if ! %{with video}
-%files kde
+%files kde -f sflphone-kde -f sflphone-client-kde
 %{_bindir}/sflphone-client-kde
 %{_datadir}/kde4/apps/sflphone-client-kde
 %{_datadir}/config.kcfg/sflphone-client-kde.kcfg
 %{_datadir}/applications/kde4
-%doc %{_datadir}/doc/HTML/*/sflphone-client-kde
+#%doc %{_datadir}/doc/HTML/*/sflphone-client-kde
 %doc %{_mandir}/man1/*kde*
 %{_datadir}/icons/hicolor
 %{_libdir}/libksflphone.so*
@@ -258,6 +267,15 @@ fi
 %endif
 
 %changelog
+* Mon Jul 07 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.3.0-n
+- Support both nightly and release
+
+* Thu May 15 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.3.0-rc%{nightly}
+- Adapt for nightly builds
+
+* Tue Jan 21 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.3.0-2
+- Fix "Fix KDE paths"
+
 * Mon Jan 13 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.3.0-1
 - Update to 1.3.0
 - Fix KDE paths (tested on f20)
