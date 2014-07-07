@@ -1048,43 +1048,6 @@ SIPVoIPLink::peerHungup(const std::string& id)
     removeSipCall(id);
 }
 
-void
-SIPVoIPLink::onhold(const std::string& id)
-{
-    auto call = getSipCall(id);
-    if (!call)
-        return;
-
-    call->onhold();
-}
-
-void
-SIPVoIPLink::offhold(const std::string& id)
-{
-    auto call = getSipCall(id);
-    if (!call)
-        return;
-
-    SIPAccount *account = Manager::instance().getSipAccount(call->getAccountId());
-
-    try {
-        if (account and account->isStunEnabled())
-            call->offhold([&] { updateSDPFromSTUN(*call, *account, *sipTransport); });
-        else
-            call->offhold([] {});
-
-    } catch (const SdpException &e) {
-        ERROR("%s", e.what());
-        throw VoipLinkException("SDP issue in offhold");
-    } catch (const ost::Socket::Error &e) {
-        throw VoipLinkException("Socket problem in offhold");
-    } catch (const ost::Socket *) {
-        throw VoipLinkException("Socket problem in offhold");
-    } catch (const AudioRtpFactoryException &) {
-        throw VoipLinkException("Socket problem in offhold");
-    }
-}
-
 #if HAVE_INSTANT_MESSAGING
 void SIPVoIPLink::sendTextMessage(const std::string &callID,
                                   const std::string &message,

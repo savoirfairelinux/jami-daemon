@@ -331,47 +331,6 @@ IAXVoIPLink::peerHungup(const std::string& id)
 }
 
 void
-IAXVoIPLink::onhold(const std::string& id)
-{
-    Manager::instance().getMainBuffer().unBindAll(id);
-
-    {
-        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        auto call = getIAXCall(id);
-        if (!call)
-            throw VoipLinkException("Could not find call");
-        {
-            std::lock_guard<std::mutex> lock(mutexIAX);
-            iax_quelch_moh(call->session, true);
-        }
-        call->setState(Call::HOLD);
-    }
-
-}
-
-void
-IAXVoIPLink::offhold(const std::string& id)
-{
-    Manager::instance().addStream(id);
-
-    {
-        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        auto call = getIAXCall(id);
-        if (!call)
-            throw VoipLinkException("Could not find call");
-
-        {
-            std::lock_guard<std::mutex> lock(mutexIAX);
-            iax_unquelch(call->session);
-        }
-
-        call->setState(Call::ACTIVE);
-    }
-
-    Manager::instance().startAudioDriverStream();
-}
-
-void
 IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
