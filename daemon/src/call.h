@@ -278,6 +278,11 @@ class Call : public Recordable {
          */
         virtual void offhold() = 0;
 
+        /**
+         * Peer Hung up a call
+         */
+        virtual void peerHungup() = 0;
+
     private:
         bool validTransition(CallState newState);
 
