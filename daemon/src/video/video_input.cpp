@@ -183,7 +183,7 @@ bool
 VideoInput::initCamera(const std::string& device)
 {
     std::map<std::string, std::string> map =
-        Manager::instance().getVideoManager()->getSettingsFor(device);
+        Manager::instance().getVideoManager()->getSettings(device);
 
     if (map.empty())
         return false;

@@ -102,13 +102,7 @@ class VideoManager
         getCapabilities(const std::string& name);
 
         std::map<std::string, std::string>
-        getSettingsFor(const std::string& device);
-
-        std::map<std::string, std::string>
-        getSettings();
-
-        std::map<std::string, std::string>
-        getPreferences(const std::string& name);
+        getSettings(const std::string& name);
 
         void
         setPreferences(const std::string& name, const std::map<std::string, std::string>& pref);
