@@ -94,13 +94,6 @@ class VoIPLink {
         virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
         /**
-         * Send DTMF
-         * @param id The call identifier
-         * @param code  The char code
-         */
-        virtual void carryingDTMFdigits(const std::string &id, char code) = 0;
-
-        /**
          * Send a message to a call identified by its callid
          *
          * @param The Id of the call to send the message to

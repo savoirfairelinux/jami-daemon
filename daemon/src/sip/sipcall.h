@@ -112,6 +112,8 @@ class SIPCall : public Call {
 
         VoIPLink* getVoIPLink() const;
 
+        void sendSIPInfo(const char *const body, const char *const subtype);
+
         void answer();
 
         void hangup(int reason);
@@ -127,6 +129,8 @@ class SIPCall : public Call {
         void offhold();
 
         void peerHungup();
+
+        void carryingDTMFdigits(char code);
 
     private:
 
