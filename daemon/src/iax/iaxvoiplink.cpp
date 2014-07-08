@@ -47,11 +47,11 @@
 AccountMap IAXVoIPLink::iaxAccountMap_;
 IAXCallMap IAXVoIPLink::iaxCallMap_;
 std::mutex IAXVoIPLink::iaxCallMapMutex_;
+std::mutex IAXVoIPLink::mutexIAX = {};
 
 IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     regSession_(NULL)
     , nextRefreshStamp_(0)
-    , mutexIAX_()
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , resampledData_(RAW_BUFFER_SIZE * 4, AudioFormat::MONO)
     , encodedData_()
@@ -102,7 +102,7 @@ IAXVoIPLink::terminate()
     for (auto & item : iaxCallMap_) {
         auto& call = item.second;
         if (call) {
-            std::lock_guard<std::mutex> lock(mutexIAX_);
+            std::lock_guard<std::mutex> lock(mutexIAX);
             iax_hangup(call->session, const_cast<char*>("Dumped Call"));
             call.reset();
         }
@@ -120,7 +120,7 @@ IAXVoIPLink::getEvent()
     iax_event *event = NULL;
 
     {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
+        std::lock_guard<std::mutex> lock(mutexIAX);
         event = iax_get_event(0);
     }
 
@@ -128,7 +128,7 @@ IAXVoIPLink::getEvent()
 
         // If we received an 'ACK', libiax2 tells apps to ignore them.
         if (event->etype == IAX_EVENT_NULL) {
-            std::lock_guard<std::mutex> lock(mutexIAX_);
+            std::lock_guard<std::mutex> lock(mutexIAX);
             iax_event_free(event);
             event = iax_get_event(0);
             continue;
@@ -147,7 +147,7 @@ IAXVoIPLink::getEvent()
         }
 
         {
-            std::lock_guard<std::mutex> lock(mutexIAX_);
+            std::lock_guard<std::mutex> lock(mutexIAX);
             iax_event_free(event);
             event = iax_get_event(0);
         }
@@ -236,7 +236,7 @@ IAXVoIPLink::sendAudioFromMic()
         compSize = audioCodec->encode(in->getData(), encodedData_, RAW_BUFFER_SIZE);
 
         if (currentCall->session and samples > 0) {
-            std::lock_guard<std::mutex> lock(mutexIAX_);
+            std::lock_guard<std::mutex> lock(mutexIAX);
 
             if (iax_send_voice(currentCall->session, currentCall->format, encodedData_, compSize, outSamples) == -1)
                 ERROR("IAX: Error sending voice data.");
@@ -265,7 +265,7 @@ IAXVoIPLink::sendRegister(Account& a)
     if (account.getUsername().empty())
         throw VoipLinkException("Account username is empty");
 
-    std::lock_guard<std::mutex> lock(mutexIAX_);
+    std::lock_guard<std::mutex> lock(mutexIAX);
 
     if (regSession_)
         iax_destroy(regSession_);
@@ -283,7 +283,7 @@ void
 IAXVoIPLink::sendUnregister(Account& a, std::function<void(bool)> cb)
 {
     if (regSession_) {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
+        std::lock_guard<std::mutex> lock(mutexIAX);
         iax_destroy(regSession_);
         regSession_ = NULL;
     }
@@ -353,7 +353,7 @@ IAXVoIPLink::getIaxCall(const std::string& id)
 void
 IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 {
-    std::lock_guard<std::mutex> lock(mutexIAX_);
+    std::lock_guard<std::mutex> lock(mutexIAX);
 
     call->session = iax_session_new();
 
@@ -591,7 +591,7 @@ void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
         return;
 
     {
-        std::lock_guard<std::mutex> lock(mutexIAX_);
+        std::lock_guard<std::mutex> lock(mutexIAX);
         iax_destroy(regSession_);
         regSession_ = NULL;
     }
