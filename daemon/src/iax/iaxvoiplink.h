@@ -199,6 +199,10 @@ class IAXVoIPLink : public VoIPLink {
         static std::shared_ptr<IAXCall> getIaxCall(const std::string& id);
         static void removeIaxCall(const std::string &id);
 
+        /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
+         * iax_stuff inside this class. */
+        static std::mutex mutexIAX;
+
     private:
         NON_COPYABLE(IAXVoIPLink);
 
@@ -285,10 +289,6 @@ class IAXVoIPLink : public VoIPLink {
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
          * to force a registration. */
         int nextRefreshStamp_;
-
-        /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
-         * iax_stuff inside this class. */
-        std::mutex mutexIAX_;
 
         /** encoder/decoder/resampler buffers */
         AudioBuffer rawBuffer_;
