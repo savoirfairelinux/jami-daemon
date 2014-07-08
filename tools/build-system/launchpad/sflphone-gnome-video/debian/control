@@ -1,0 +1,22 @@
+Source: sflphone-gnome-video
+Maintainer: SavoirFaireLinux Inc <julien.bonjean@savoirfairelinux.com>
+Section: gnome
+Priority: optional
+Build-Depends: debhelper, libgcc1, intltool, autopoint, autoconf, automake, libtool, libgtk-3-dev, libdbus-glib-1-dev, libnotify4-dev | libnotify-dev (>= 0.7), check, gnome-doc-utils, rarian-compat, librsvg2-common, gnome-common, yelp-tools, libclutter-1.0-dev, libclutter-gtk-1.0-dev
+Standards-Version: 3.7.3
+
+Package: sflphone-gnome-video
+Priority: optional
+Architecture: any
+Depends: sflphone-daemon-video (=${source:Version}), ${shlibs:Depends}, ${misc:Depends}
+Replaces: sflphone
+Conflicts: sflphone-client-gnome, sflphone-gnome
+Provides: sflphone-client-gnome-video
+Replaces: sflphone-client-gnome-video
+Homepage: http://www.sflphone.org
+Description: GNOME client for SFLphone, with video support
+ Provide a GNOME client for SFLphone.
+ SFLphone is meant to be a robust enterprise-class desktop phone.
+ SFLphone is released under the GNU General Public License.
+ SFLphone is being developed by the global community, and maintained by
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.

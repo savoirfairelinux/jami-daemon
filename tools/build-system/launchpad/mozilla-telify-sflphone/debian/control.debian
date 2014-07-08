@@ -9,7 +9,7 @@ Standards-Version: 3.8.3
 DM-Upload-Allowed: yes
 
 Package: mozilla-telify-sflphone
-Depends: iceweasel-gnome-support, sflphone-client-gnome
+Depends: iceweasel-gnome-support, sflphone-gnome
 Architecture: all
 Description: This package provides telify firefox plugin and handler for SFLphone.
  Telify recognizes phone numbers on web pages and converts them to clickable links.

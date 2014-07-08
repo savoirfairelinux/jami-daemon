@@ -3,7 +3,7 @@ Version: 0.4.7.3
 Architecture: all
 Maintainer: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
 Installed-Size: 1296
-Depends: firefox-gnome-support, sflphone-client-gnome
+Depends: firefox-gnome-support, sflphone-gnome
 Section: web
 Priority: optional
 Homepage: http://www.sflphone.org

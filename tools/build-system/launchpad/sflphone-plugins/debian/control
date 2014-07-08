@@ -8,7 +8,7 @@ Standards-Version: 3.7.3
 Package: sflphone-plugins
 Priority: optional
 Architecture: any
-Depends: sflphone-client-gnome (=${source:Version}) | sflphone-client-gnome-video (=${source:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: sflphone-gnome (=${source:Version}) | sflphone-gnome-video (=${source:Version}), ${shlibs:Depends}, ${misc:Depends}
 Replaces: sflphone
 Conflicts: sflphone
 Homepage: http://www.sflphone.org

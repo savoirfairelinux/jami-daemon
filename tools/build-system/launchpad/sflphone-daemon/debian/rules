@@ -1,0 +1,109 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+export DH_OPTIONS
+
+package=sflphone-daemon
+
+CXX = g++-4.0
+CFLAGS = -Wall -g
+DEB_INSTALL_MANPAGES_sflphone_common = sflphoned.1
+PJ_CONFIG_OPTIONS="--prefix=/usr \
+                   --disable-oss \
+                   --disable-sound \
+                   --disable-video \
+                   --enable-ext-sound \
+                   --disable-speex-aec \
+                   --disable-g711-codec \
+                   --disable-l16-codec \
+                   --disable-gsm-codec \
+                   --disable-g722-codec \
+                   --disable-g7221-codec \
+                   --disable-speex-codec \
+                   --disable-ilbc-codec \
+                   --disable-sdl \
+                   --disable-ffmpeg \
+                   --disable-v4l2"
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+	./autogen.sh
+	./configure --prefix=/usr --disable-video
+	cd libs/pjproject-2.2.1; CFLAGS="-fPIC -O2 -DNDEBUG" ./configure $(PJ_CONFIG_OPTIONS)
+	touch configure-stamp
+
+#Architecture
+build: build-arch
+
+build-arch: build-arch-stamp
+build-arch-stamp: configure-stamp
+
+    # Add here commands to compile the arch part of the package.
+	cd libs/pjproject-2.2.1; $(MAKE) dep; $(MAKE) clean; $(MAKE)
+	$(MAKE)
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-arch-stamp configure-stamp
+	# Add here commands to clean up after the build process.
+	[ ! -f Makefile ] || $(MAKE) distclean
+
+ifneq "$(wildcard /usr/share/misc/config.sub)" ""
+	cp -f /usr/share/misc/config.sub config.sub
+endif
+ifneq "$(wildcard /usr/share/misc/config.guess)" ""
+	cp -f /usr/share/misc/config.guess config.guess
+endif
+	dh_clean
+
+install: install-arch
+
+install-arch:
+	dh_testdir
+	dh_testroot
+	dh_clean -k -s
+	dh_installdirs -s
+	# Add here commands to install the arch part of the package into
+	# debian/tmp.
+	$(MAKE) DESTDIR=$(CURDIR)/debian/$(package) install
+	rm -rf $(CURDIR)/debian/$(package)/usr/include
+	dh_install -s
+
+binary-common:
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs ChangeLog
+	dh_installdocs
+	dh_installexamples
+	dh_installman
+	dh_link
+	dh_strip --dbg-package=sflphone-daemon-dbg
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture dependant packages using the common target.
+binary-arch: build-arch install-arch
+	$(MAKE) -f debian/rules DH_OPTIONS=-s binary-common
+
+override_dh_strip:
+	dh_strip --dbg-package=sflphone-daemon-dbg
+
+binary: binary-arch
+.PHONY: build clean binary-arch binary install install-arch configure override_dh_strip

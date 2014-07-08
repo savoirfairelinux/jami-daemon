@@ -2,7 +2,7 @@ Package: sflphone-video
 Section: gnome
 Priority: optional
 Architecture: all
-Depends: sflphone-common-video, sflphone-client-gnome-video
+Depends: sflphone-daemon-video, sflphone-gnome-video
 Maintainer: Savoir-faire Linux Inc <emmanuel.milou@savoirfairelinux.com>
 Description: GNOME client for SFLphone, with video support
  Provide a GNOME client for SFLphone.

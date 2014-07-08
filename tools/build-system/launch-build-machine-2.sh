@@ -24,7 +24,7 @@ SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
 VERSION_NUMBER="1.1.0"
 
-LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" "sflphone-client-kde" "sflphone-plugins")
+LAUNCHPAD_PACKAGES=( "sflphone-gnome" "sflphone-daemon" "sflphone-kde" "sflphone-plugins")
 
 echo
 echo "    /***********************\\"
@@ -116,7 +116,7 @@ echo "Retrieve build info"
 # retrieve info we may need
 if [ ${IS_KDE_CLIENT} ]; then
 	TAG_NAME_PREFIX="kde."
-	LAUNCHPAD_PACKAGES=( "sflphone-client-kde" )
+	LAUNCHPAD_PACKAGES=( "sflphone-kde" )
 fi
 CURRENT_RELEASE_TAG_NAME=`git describe --tags --abbrev=0`
 PREVIOUS_RELEASE_TAG_NAME=`git describe --tags --abbrev=0 ${CURRENT_RELEASE_TAG_NAME}^`
@@ -159,16 +159,16 @@ git clean -f -x ${LAUNCHPAD_DIR}/* >/dev/null
 
 get_dir_name() {
     case $1 in
-        sflphone-common)
+        sflphone-daemon)
         echo daemon
         ;;
         sflphone-plugins)
         echo plugins
         ;;
-        sflphone-client-gnome)
+        sflphone-gnome)
         echo gnome
         ;;
-        sflphone-client-kde)
+        sflphone-kde)
         echo kde
         ;;
         *)
@@ -218,10 +218,10 @@ END
 		exit -1
 	fi
 
-	if [ "${LAUNCHPAD_PACKAGE}"  == "sflphone-client-kde" ]; then
+	if [ "${LAUNCHPAD_PACKAGE}"  == "sflphone-kde" ]; then
 		version_kde=$(echo ${VERSION}  | grep -e '[0-9]*\.[0-9.]*' -o | head -n1)
 		sed -i -e "s/Standards-Version: [0-9.A-Za-z]*/Standards-Version: ${version_kde}/" ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/debian/control
-		tar -C ${LAUNCHPAD_DIR}/ -cjf ${LAUNCHPAD_DIR}/sflphone-client-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_PACKAGE}
+		tar -C ${LAUNCHPAD_DIR}/ -cjf ${LAUNCHPAD_DIR}/sflphone-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_PACKAGE}
 	fi
 
 	rm -f ${WORKING_DIR}/sfl-git-dch.conf >/dev/null 2>&1

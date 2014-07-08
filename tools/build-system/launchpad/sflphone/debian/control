@@ -2,7 +2,7 @@ Package: sflphone
 Section: gnome
 Priority: optional
 Architecture: all
-Depends: sflphone-common, sflphone-client-gnome
+Depends: sflphone-gnome, sflphone-gnome
 Maintainer: Savoir-faire Linux Inc <emmanuel.milou@savoirfairelinux.com>
 Description: metapackage providing the GNOME client for SFLphone
  Provide a GNOME client for SFLphone.

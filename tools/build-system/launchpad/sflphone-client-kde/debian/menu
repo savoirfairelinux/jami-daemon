@@ -1,6 +1,0 @@
-?package(filelight):needs="X11" \
-        section="Applications/Multimedia" \
-        hints="KDE, Phone, Sip,Call" \
-        command="sflphone-client-kde" \
-        title="SFLPhone Client KDE" \
-        longtitle="SFLPhone Client KDE: Enterprise class softphone for KDE"
