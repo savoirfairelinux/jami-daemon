@@ -138,7 +138,7 @@ IAXCall::answer()
     Manager::instance().addStream(getCallId());
 
     {
-        //std::lock_guard<std::mutex> lock(mutexIAX_);
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
         iax_answer(session);
     }
 
@@ -153,9 +153,11 @@ IAXCall::hangup(int reason UNUSED)
 {
     Manager::instance().getMainBuffer().unBindAll(getCallId());
 
-    //std::lock_guard<std::mutex> lock(mutexIAX_);
-    iax_hangup(session, (char*) "Dumped Call");
-    session = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+        iax_hangup(session, (char*) "Dumped Call");
+        session = nullptr;
+    }
 
     link_->removeIaxCall(getCallId());
 }
@@ -164,7 +166,7 @@ void
 IAXCall::refuse()
 {
     {
-        //std::lock_guard<std::mutex> lock(mutexIAX_);
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
         iax_reject(session, (char*) "Call rejected manually.");
     }
 
@@ -174,7 +176,7 @@ IAXCall::refuse()
 void
 IAXCall::transfer(const std::string& to)
 {
-    //std::lock_guard<std::mutex> lock(mutexIAX_);
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
     char callto[to.length() + 1];
     strcpy(callto, to.c_str());
     iax_transfer(session, callto);
@@ -192,7 +194,7 @@ IAXCall::onhold()
     Manager::instance().getMainBuffer().unBindAll(getCallId());
 
     {
-        //std::lock_guard<std::mutex> lock(mutexIAX_);
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
         iax_quelch_moh(session, true);
     }
 
@@ -205,7 +207,7 @@ IAXCall::offhold()
     Manager::instance().addStream(getCallId());
 
     {
-        //std::lock_guard<std::mutex> lock(mutexIAX_);
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
         iax_unquelch(session);
     }
 
@@ -227,7 +229,7 @@ IAXCall::peerHungup()
 void
 IAXCall::carryingDTMFdigits(char code)
 {
-    //std::lock_guard<std::mutex> lock(mutexIAX_);
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
     iax_send_dtmf(session, code);
 }
 
@@ -235,7 +237,7 @@ IAXCall::carryingDTMFdigits(char code)
 void
 IAXCall::sendTextMessage(const std::string& message, const std::string& /*from*/)
 {
-    //std::lock_guard<std::mutex> lock(mutexIAX_);
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
     sfl::InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
 }
 #endif
