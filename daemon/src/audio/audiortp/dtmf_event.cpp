@@ -47,6 +47,10 @@ DTMFEvent::DTMFEvent(char digit) : payload(), newevent(true), length(1000)
     */
 
     switch (digit) {
+        case '!':
+            digit = 16;
+            break;
+
         case '*':
             digit = 10;
             break;
