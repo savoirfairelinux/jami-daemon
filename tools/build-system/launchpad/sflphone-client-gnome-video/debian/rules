@@ -20,7 +20,7 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh
+	NOCONFIGURE=1 ./autogen.sh
 	./configure --prefix=/usr --enable-video
 	touch configure-stamp
 
