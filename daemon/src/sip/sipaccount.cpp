@@ -370,6 +370,9 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode userAgent(userAgent_);
     accountmap.setKeyValue(USER_AGENT_KEY, &userAgent);
 
+    ScalarNode hasCustomUserAgent(hasCustomUserAgent_);
+    accountmap.setKeyValue(HAS_CUSTOM_USER_AGENT_KEY, &hasCustomUserAgent);
+
     auto audioPortNodes(serializeRange(accountmap, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_));
 #ifdef SFL_VIDEO
     auto videoPortNodes(serializeRange(accountmap, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_));
@@ -620,6 +623,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutSec_);
     }
     mapNode.getValue(USER_AGENT_KEY, &userAgent_);
+    mapNode.getValue(HAS_CUSTOM_USER_AGENT_KEY, &userAgent_);
 
     unserializeRange(mapNode, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
 #ifdef SFL_VIDEO
@@ -673,7 +677,12 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     if (registrationExpire_ < MIN_REGISTRATION_TIME)
         registrationExpire_ = MIN_REGISTRATION_TIME;
 
-    parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
+    parseBool(details, CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
+    if (hasCustomUserAgent_)
+        parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
+    else
+        userAgent_ = DEFAULT_USER_AGENT;
+
     parseBool(details, CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
 #ifdef SFL_PRESENCE
     bool presenceEnabled = false;
@@ -824,7 +833,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     // Add sip specific details
     a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
-    a[CONFIG_ACCOUNT_USERAGENT] = userAgent_;
+    a[CONFIG_ACCOUNT_USERAGENT] = hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT;
+    a[CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT] = hasCustomUserAgent_ ? Conf::TRUE_STR : Conf::FALSE_STR;
 
     addRangeToDetails(a, CONFIG_ACCOUNT_AUDIO_PORT_MIN, CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
 #ifdef SFL_VIDEO
@@ -1472,7 +1482,9 @@ SIPAccount::getCredentials() const
 
 std::string SIPAccount::getUserAgentName() const
 {
-    return userAgent_.empty() ? DEFAULT_USER_AGENT : userAgent_;
+    if (not hasCustomUserAgent_ or userAgent_.empty())
+        return DEFAULT_USER_AGENT;
+    return userAgent_;
 }
 
 std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const

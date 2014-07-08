@@ -67,6 +67,7 @@ const char * const Account::ACCOUNT_AUTOANSWER_KEY      = "autoAnswer";
 const char * const Account::MAILBOX_KEY                 = "mailbox";
 const char * const Account::DEFAULT_USER_AGENT          = "SFLphone/" PACKAGE_VERSION;
 const char * const Account::USER_AGENT_KEY              = "useragent";
+const char * const Account::HAS_CUSTOM_USER_AGENT_KEY   = "hasCustomUserAgent";
 const char * const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
 
 using std::map;
@@ -89,6 +90,7 @@ Account::Account(const string &accountID) :
     , ringtoneEnabled_(true)
     , displayName_("")
     , userAgent_(DEFAULT_USER_AGENT)
+    , hasCustomUserAgent_(false)
     , mailBox_()
 {
     // Initialize the codec order, used when creating a new account

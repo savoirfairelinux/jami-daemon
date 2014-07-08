@@ -10,6 +10,7 @@ accounts:
   displayName:
   dtmfType: overrtp
   enable: false
+  hasCustomUserAgent: true
   hostname: localhost
   id: Account:1334389473
   interface: default
@@ -81,6 +82,7 @@ accounts:
   displayName:
   dtmfType: true
   enable: true
+  hasCustomUserAgent: true
   hostname:
   id: IP2IP
   interface: default

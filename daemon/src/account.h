@@ -229,6 +229,7 @@ class Account : public Serializable {
         static const char * const ACCOUNT_AUTOANSWER_KEY;
         static const char * const MAILBOX_KEY;
         static const char * const USER_AGENT_KEY;
+        static const char * const HAS_CUSTOM_USER_AGENT_KEY;
         static const char * const DEFAULT_USER_AGENT;
         static const char * const PRESENCE_MODULE_ENABLED_KEY;
 
@@ -311,6 +312,9 @@ class Account : public Serializable {
          * Useragent used for registration
          */
         std::string userAgent_;
+
+        //  true if user has overridden default
+        bool hasCustomUserAgent_;
 
         /**
              * Account mail box
