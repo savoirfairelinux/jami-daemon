@@ -134,6 +134,22 @@ static void add_to_toolbar(GtkWidget *toolbar, GtkWidget *item, gint pos)
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item), pos);
 }
 
+#ifdef SFL_VIDEO
+static gboolean
+is_video_call(callable_obj_t *call)
+{
+    gboolean video_enabled = FALSE;
+    account_t *account = account_list_get_by_id(call->_accountID);
+
+    if (account) {
+        gchar *ptr = (gchar *) account_lookup(account, CONFIG_VIDEO_ENABLED);
+        video_enabled = g_strcmp0(ptr, "true") == 0;
+    }
+
+    return video_enabled;
+}
+#endif
+
 static void
 update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging_enabled, SFLPhoneClient *client)
 {
@@ -226,6 +242,10 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         }
         case CALL_STATE_CURRENT:
         {
+#ifdef SFL_VIDEO
+            const gboolean video_enabled = is_video_call(selectedCall);
+#endif
+
                 g_debug("Call State Current");
                 g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 g_signal_handler_block(recordWidget_, recordButtonConnId_);
@@ -238,7 +258,8 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 if (instant_messaging_enabled)
                     gtk_action_set_sensitive(imAction_, TRUE);
 #ifdef SFL_VIDEO
-                gtk_action_set_sensitive(screenshareAction_, TRUE);
+                if (video_enabled)
+                    gtk_action_set_sensitive(screenshareAction_, TRUE);
 #endif
 
                 pos = 1;
@@ -249,7 +270,8 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 if (instant_messaging_enabled)
                     add_to_toolbar(toolbar, imToolbar_, pos++);
 #ifdef SFL_VIDEO
-                add_to_toolbar(toolbar, screenshareToolbar_, pos++);
+                if (video_enabled)
+                    add_to_toolbar(toolbar, screenshareToolbar_, pos++);
 #endif
 
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
@@ -1337,7 +1359,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                     record = TRUE;
                     im = TRUE;
 #ifdef SFL_VIDEO
-                    video_sources = TRUE;
+                    video_sources = is_video_call(selectedCall);
 #endif
                     break;
                 case CALL_STATE_BUSY:
