@@ -64,17 +64,6 @@ static const int INCREMENT_SIZE = INITIAL_SIZE;
 static std::map<std::string, std::string> transferCallID;
 
 static void
-stopRtpIfCurrent(SIPCall& call)
-{
-    if (Manager::instance().isCurrentCall(call.getCallId())) {
-        call.getAudioRtp().stop();
-#ifdef SFL_VIDEO
-        call.getVideoRtp().stop();
-#endif
-    }
-}
-
-static void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
     if (dtmf == SIPAccount::OVERRTP_STR) {
@@ -123,6 +112,17 @@ SIPCall::~SIPCall()
 {
     delete local_sdp_;
     pj_pool_release(pool_);
+}
+
+void
+SIPCall::stopRtpIfCurrent()
+{
+    if (Manager::instance().isCurrentCall(getCallId())) {
+        getAudioRtp().stop();
+#ifdef SFL_VIDEO
+        getVideoRtp().stop();
+#endif
+    }
 }
 
 SIPAccount&
@@ -331,7 +331,7 @@ SIPCall::hangup(int reason)
     inv->mod_data[siplink.getMod()->id] = NULL;
 
     // Stop all RTP streams
-    stopRtpIfCurrent(*this);
+    stopRtpIfCurrent();
 
     siplink.removeSipCall(getCallId());
 }
@@ -661,7 +661,7 @@ SIPCall::peerHungup()
     inv->mod_data[siplink.getMod()->id ] = NULL;
 
     // Stop all RTP streams
-    stopRtpIfCurrent(*this);
+    stopRtpIfCurrent();
 
     siplink.removeSipCall(getCallId());
 }
@@ -686,3 +686,33 @@ SIPCall::sendTextMessage(const std::string &message, const std::string &from)
     send_sip_message(inv, getCallId(), appendUriList(message, list));
 }
 #endif // HAVE_INSTANT_MESSAGING
+
+void
+SIPCall::onServerFailure()
+{
+    const std::string id(getCallId());
+    Manager::instance().callFailure(id);
+    SIPVoIPLink::instance().removeSipCall(id);
+}
+
+void
+SIPCall::onClosed()
+{
+    const std::string id(getCallId());
+
+    stopRtpIfCurrent();
+
+    Manager::instance().peerHungupCall(id);
+    SIPVoIPLink::instance().removeSipCall(id);
+    Manager::instance().checkAudio();
+}
+
+void
+SIPCall::onAnswered()
+{
+    if (getConnectionState() != Call::CONNECTED) {
+        setConnectionState(Call::CONNECTED);
+        setState(Call::ACTIVE);
+        Manager::instance().peerAnsweredCall(getCallId());
+    }
+}
