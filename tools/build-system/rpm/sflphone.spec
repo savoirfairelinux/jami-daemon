@@ -15,7 +15,7 @@ License:        GPLv3
 URL:            http://sflphone.org/
 Source0:        https://projects.savoirfairelinux.com/attachments/download/6423/%{tarball}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:      gettext openssl-devel desktop-file-utils perl libuuid-devel
+BuildRequires:      gettext openssl-devel desktop-file-utils perl
 BuildRequires:      libyaml-devel alsa-lib-devel pulseaudio-libs-devel
 BuildRequires:      ccrtp-devel libzrtpcpp-devel dbus-c++-devel pcre-devel
 BuildRequires:      gsm-devel speex-devel expat-devel libsamplerate-devel
@@ -267,6 +267,9 @@ fi
 %endif
 
 %changelog
+* Wed Jul 9 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.3.0-5
+- Drop uuid dependency
+
 * Mon Jul 07 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.3.0-n
 - Support both nightly and release
 
