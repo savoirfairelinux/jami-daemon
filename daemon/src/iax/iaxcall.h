@@ -40,6 +40,7 @@
 
 class VoIPLink;
 class IAXVoIPLink;
+class IAXAccount;
 
 /**
  * @file: iaxcall.h
@@ -55,7 +56,7 @@ class IAXCall : public Call {
          * @param type  The type of the call
          */
         IAXCall(const std::string& id, Call::CallType type,
-                const std::string& account_id, IAXVoIPLink* link);
+                IAXAccount& account, IAXVoIPLink* link);
 
         /**
          * @return int  The bitwise list of supported formats

@@ -98,8 +98,6 @@ SIPVoIPLink *SIPVoIPLink::instance_ = nullptr;
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  */
-static void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP);
-
 static pj_caching_pool pool_cache;
 static pj_pool_t *pool_;
 static pjsip_endpoint *endpt_;
@@ -178,26 +176,6 @@ transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
-static void
-updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
-{
-    std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
-
-    try {
-        std::vector<pj_sockaddr> stunPorts(transport.getSTUNAddresses(account, socketDescriptors));
-
-        // FIXME: get video sockets
-        //stunPorts.resize(4);
-
-        account.setPublishedAddress(stunPorts[0]);
-        // published IP MUST be updated first, since RTCP depends on it
-        call.getLocalSDP()->setPublishedIP(account.getPublishedAddress());
-        call.getLocalSDP()->updatePorts(stunPorts);
-    } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
-    }
-}
-
 static pj_bool_t
 transaction_request_cb(pjsip_rx_data *rdata)
 {
@@ -269,7 +247,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    SIPAccount *account = Manager::instance().getSipAccount(account_id);
+    auto account = Manager::instance().getSipAccount(account_id);
 
     if (!account) {
         ERROR("Could not find account %s", account_id.c_str());
@@ -298,7 +276,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = std::make_shared<SIPCall>(Manager::instance().getNewCallID(), Call::INCOMING, SIPVoIPLink::instance().getCachingPool(), account_id);
+    auto call = std::make_shared<SIPCall>(Manager::instance().getNewCallID(),
+                                          Call::INCOMING, *account);
 
     // FIXME : for now, use the same address family as the SIP tranport
     auto family = pjsip_transport_type_get_af(account->getTransportType());
@@ -328,11 +307,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->setPeerNumber(peerNumber);
     call->setDisplayName(displayName);
     call->initRecFilename(peerNumber);
-
-    setCallMediaLocal(call.get(), addrToUse);
-
+    call->setCallMediaLocal(addrToUse);
     call->getLocalSDP()->setPublishedIP(addrSdp);
-
     call->getAudioRtp().initConfig();
 
     try {
@@ -343,7 +319,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     if (account->isStunEnabled())
-        updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance().sipTransport);
+        call->updateSDPFromSTUN();
 
     if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
         std::string sdpOffer(static_cast<const char*>(body->data), body->len);
@@ -873,149 +849,6 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
     pjsip_endpt_cancel_timer(endpt_, &timer);
 }
 
-std::shared_ptr<Call> SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id)
-{
-    DEBUG("New outgoing call to %s", toUrl.c_str());
-    std::string toCpy = toUrl;
-
-    sip_utils::stripSipUriPrefix(toCpy);
-
-    const bool IPToIP = IpAddr::isValid(toCpy);
-    Manager::instance().setIPToIPForCall(id, IPToIP);
-
-    if (IPToIP) {
-        return SIPNewIpToIpCall(id, toCpy);
-    } else {
-        return newRegisteredAccountCall(id, toUrl, account_id);
-    }
-}
-
-std::shared_ptr<Call> SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to_raw)
-{
-    bool ipv6 = false;
-#if HAVE_IPV6
-    ipv6 = IpAddr::isIpv6(to_raw);
-#endif
-    const std::string& to = ipv6 ? IpAddr(to_raw).toString(false, true) : to_raw;
-    DEBUG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
-
-    SIPAccount *account = Manager::instance().getIP2IPAccount();
-
-    if (!account)
-        throw VoipLinkException("Could not retrieve default account for IP2IP call");
-
-    auto call = std::make_shared<SIPCall>(id, Call::OUTGOING, cp_, SIPAccount::IP2IP_PROFILE);
-
-    call->setIPToIP(true);
-    call->initRecFilename(to);
-
-    IpAddr localAddress = ip_utils::getInterfaceAddr(account->getLocalInterface(), ipv6 ? pj_AF_INET6() : pj_AF_INET());
-
-    setCallMediaLocal(call.get(), localAddress);
-
-    std::string toUri = account->getToUri(to);
-    call->setPeerNumber(toUri);
-
-    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
-
-    if (!ac)
-        throw VoipLinkException("Could not instantiate codec");
-
-    std::vector<sfl::AudioCodec *> audioCodecs;
-    audioCodecs.push_back(ac);
-
-    // Audio Rtp Session must be initialized before creating initial offer in SDP session
-    // since SDES require crypto attribute.
-    call->getAudioRtp().initConfig();
-    call->getAudioRtp().initSession();
-    call->getAudioRtp().initLocalCryptoInfo();
-    call->getAudioRtp().start(audioCodecs);
-
-    // Building the local SDP offer
-    Sdp *localSDP = call->getLocalSDP();
-
-    if (account->getPublishedSameasLocal())
-        localSDP->setPublishedIP(localAddress);
-    else
-        localSDP->setPublishedIP(account->getPublishedAddress());
-
-    const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-
-    if (not created or not SIPStartCall(call))
-        throw VoipLinkException("Could not create new call");
-
-    return call;
-}
-
-std::shared_ptr<Call> SIPVoIPLink::newRegisteredAccountCall(const std::string& id,
-                                                            const std::string& toUrl,
-                                                            const std::string &account_id)
-{
-    DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
-
-    SIPAccount *account = Manager::instance().getSipAccount(account_id);
-
-    if (account == nullptr) // TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
-        throw VoipLinkException("Could not get account for this call");
-
-    auto call = std::make_shared<SIPCall>(id, Call::OUTGOING, cp_, account->getAccountID());
-
-    // If toUri is not a well formatted sip URI, use account information to process it
-    std::string toUri;
-
-    if (toUrl.find("sip:") != std::string::npos or
-            toUrl.find("sips:") != std::string::npos)
-        toUri = toUrl;
-    else
-        toUri = account->getToUri(toUrl);
-
-    call->setPeerNumber(toUri);
-
-    // FIXME : for now, use the same address family as the SIP tranport
-    auto family = pjsip_transport_type_get_af(account->getTransportType());
-    IpAddr localAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
-    setCallMediaLocal(call.get(), localAddr);
-
-    // May use the published address as well
-    IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal()) ?
-                          account->getPublishedIpAddress() : localAddr;
-
-    // Initialize the session using ULAW as default codec in case of early media
-    // The session should be ready to receive media once the first INVITE is sent, before
-    // the session initialization is completed
-    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
-
-    if (!ac)
-        throw VoipLinkException("Could not instantiate codec for early media");
-
-    std::vector<sfl::AudioCodec *> audioCodecs;
-    audioCodecs.push_back(ac);
-
-    try {
-        call->getAudioRtp().initConfig();
-        call->getAudioRtp().initSession();
-
-        if (account->isStunEnabled())
-            updateSDPFromSTUN(*call, *account, *SIPVoIPLink::instance().sipTransport);
-
-        call->getAudioRtp().initLocalCryptoInfo();
-        call->getAudioRtp().start(audioCodecs);
-    } catch (...) {
-        throw VoipLinkException("Could not start rtp session for early media");
-    }
-
-    call->initRecFilename(toUrl);
-
-    Sdp *localSDP = call->getLocalSDP();
-    localSDP->setPublishedIP(addrSdp);
-    const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-
-    if (not created or not SIPStartCall(call))
-        throw VoipLinkException("Could not send outgoing INVITE request for new call");
-
-    return call;
-}
-
 static void
 stopRtpIfCurrent(const std::string &id, SIPCall &call)
 {
@@ -1173,86 +1006,6 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
 }
 #endif
 
-bool
-SIPVoIPLink::SIPStartCall(std::shared_ptr<SIPCall>& call)
-{
-    std::string account_id(call->getAccountId());
-    SIPAccount *account = Manager::instance().getSipAccount(account_id);
-
-    if (!account) {
-        ERROR("Account is NULL in SIPStartCall");
-        return false;
-    }
-
-    std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
-
-    pj_str_t pjTo = pj_str((char*) toUri.c_str());
-
-    // Create the from header
-    std::string from(account->getFromUri());
-    pj_str_t pjFrom = pj_str((char*) from.c_str());
-
-    pj_str_t pjContact(account->getContactHeader());
-
-    const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
-    DEBUG("contact header: %s / %s -> %s",
-          debugContactHeader.c_str(), from.c_str(), toUri.c_str());
-
-    pjsip_dialog *dialog = NULL;
-
-    if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
-        ERROR("Unable to create SIP dialogs for user agent client when "
-              "calling %s", toUri.c_str());
-        return false;
-    }
-
-    pj_str_t subj_hdr_name = CONST_PJ_STR("Subject");
-    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
-
-    pj_list_push_back(&dialog->inv_hdr, subj_hdr);
-
-    if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
-        ERROR("Unable to create invite session for user agent client");
-        return false;
-    }
-
-    account->updateDialogViaSentBy(dialog);
-
-    if (account->hasServiceRoute())
-        pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
-
-    if (account->hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {
-        ERROR("Could not initialize credentials for invite session authentication");
-        return false;
-    }
-
-    call->inv->mod_data[mod_ua_.id] = call.get();
-
-    pjsip_tx_data *tdata;
-
-    if (pjsip_inv_invite(call->inv, &tdata) != PJ_SUCCESS) {
-        ERROR("Could not initialize invite messager for this call");
-        return false;
-    }
-
-    const pjsip_tpselector tp_sel = account->getTransportSelector();
-    if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        ERROR("Unable to associate transport for invite session dialog");
-        return false;
-    }
-
-    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
-        ERROR("Unable to send invite message for this call");
-        return false;
-    }
-
-    call->setConnectionState(Call::PROGRESSING);
-    call->setState(Call::ACTIVE);
-    addSipCall(call);
-
-    return true;
-}
-
 void
 SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
 {
@@ -1401,7 +1154,7 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
                     ? IpAddr(ip_utils::getInterfaceAddr(account->getLocalInterface(), family))
                     : account->getPublishedIpAddress();
 
-    setCallMediaLocal(call, address);
+    call->setCallMediaLocal(address);
 
     Sdp *localSDP = call->getLocalSDP();
     localSDP->setPublishedIP(address);
@@ -1562,7 +1315,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp().initSession();
 
             if (sipaccount->isStunEnabled())
-                updateSDPFromSTUN(*call, *sipaccount, *SIPVoIPLink::instance().sipTransport);
+                call->updateSDPFromSTUN();
         }
     }
 
@@ -1902,46 +1655,13 @@ onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }
 
     try {
-        SIPVoIPLink::instance().newOutgoingCall(Manager::instance().getNewCallID(),
-                std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen), currentCall->getAccountId());
+        currentCall->getSIPAccount().newOutgoingCall(Manager::instance().getNewCallID(),
+                                                     std::string(refer_to->hvalue.ptr,
+                                                                 refer_to->hvalue.slen));
         Manager::instance().hangupCall(currentCall->getCallId());
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
     }
-}
-
-static void
-setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP)
-{
-    std::string account_id(call->getAccountId());
-    SIPAccount *account = Manager::instance().getSipAccount(account_id);
-
-    if (!account)
-        return;
-
-    // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
-    // We only want to set ports to new values if they haven't been set
-    if (call->getLocalAudioPort() == 0) {
-        const unsigned callLocalAudioPort = account->generateAudioPort();
-        call->setLocalAudioPort(callLocalAudioPort);
-        call->getLocalSDP()->setLocalPublishedAudioPort(callLocalAudioPort);
-    }
-
-    call->setLocalIp(localIP);
-
-#ifdef SFL_VIDEO
-
-    if (call->getLocalVideoPort() == 0) {
-        // https://projects.savoirfairelinux.com/issues/17498
-        const unsigned int callLocalVideoPort = account->generateVideoPort();
-        // this should already be guaranteed by SIPAccount
-        assert(call->getLocalAudioPort() != callLocalVideoPort);
-
-        call->setLocalVideoPort(callLocalVideoPort);
-        call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
-    }
-
-#endif
 }
 
 int SIPVoIPLink::getModId()
