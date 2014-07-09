@@ -77,14 +77,6 @@ VideoDeviceMonitor::getSettings(const string& name)
     if (itd == devices_.end())
         return VideoSettings();
 
-    /*
-     * Unserialization of device preferences is done after plugged devices were
-     * added. If preferences are stored for this device, apply them first.
-     */
-    auto itp = findPreferencesByName(name);
-    if (itp != preferences_.end())
-        itd->applySettings(*itp);
-
     return itd->getSettings();
 }
 
@@ -97,7 +89,7 @@ VideoDeviceMonitor::applySettings(const string& name, VideoSettings settings)
         return;
 
     iter->applySettings(settings);
-    storePreferences(iter->getSettings());
+    overwritePreferences(iter->getSettings());
 }
 
 string
@@ -173,8 +165,20 @@ VideoDeviceMonitor::addDevice(const string& node)
     if (findDeviceByNode(node) != devices_.end())
         return;
 
+    // instanciate a new unique device
     VideoDevice dev(node);
     giveUniqueName(dev, devices_);
+
+    // restore its preferences if any, or store the defaults
+    auto it = findPreferencesByName(dev.name);
+    if (it != preferences_.end())
+        dev.applySettings(*it);
+    else
+        preferences_.push_back(dev.getSettings());
+
+    // in case there is no default device on a fresh run
+    if (defaultDevice_.empty())
+        defaultDevice_ = dev.name;
 
     devices_.push_back(dev);
     notify();
@@ -256,7 +260,7 @@ VideoDeviceMonitor::findPreferencesByName(const string& name)
 }
 
 void
-VideoDeviceMonitor::storePreferences(VideoSettings settings)
+VideoDeviceMonitor::overwritePreferences(VideoSettings settings)
 {
     auto it = findPreferencesByName(settings["name"]);
     if (it != preferences_.end())
@@ -305,37 +309,41 @@ VideoDeviceMonitor::unserialize(const Conf::YamlNode &node)
 
     if (!devicesNode || devicesNode->getType() != SEQUENCE) {
         ERROR("No 'devices' sequence node! Old config?");
-    } else {
-        SequenceNode *seqNode = static_cast<SequenceNode *>(devicesNode);
-        Sequence *seq = seqNode->getSequence();
-
-        if (seq->empty()) {
-            WARN("Empty video device list");
-        } else {
-            for (const auto &iter : *seq) {
-                MappingNode *devnode = static_cast<MappingNode *>(iter);
-                VideoSettings pref;
-
-                devnode->getValue("name", &pref["name"]);
-                devnode->getValue("channel", &pref["channel"]);
-                devnode->getValue("size", &pref["size"]);
-                devnode->getValue("rate", &pref["rate"]);
-
-                storePreferences(pref);
-
-                // Update the default device if it is plugged
-                if (defaultDevice_.empty()) {
-                    auto it = findDeviceByName(pref["name"]);
-                    if (it != devices_.end())
-                        defaultDevice_ = it->name;
-                }
-            }
-
-            // If no default device, use to the first plugged one
-            if (defaultDevice_.empty() && !devices_.empty())
-                defaultDevice_ = devices_[0].name;
-        }
+        return;
     }
+
+    SequenceNode *seqNode = static_cast<SequenceNode *>(devicesNode);
+    Sequence *seq = seqNode->getSequence();
+
+    if (seq->empty()) {
+        WARN("Empty video device list");
+        return;
+    }
+
+    for (const auto &iter : *seq) {
+        MappingNode *devnode = static_cast<MappingNode *>(iter);
+        VideoSettings pref;
+
+        devnode->getValue("name", &pref["name"]);
+        devnode->getValue("channel", &pref["channel"]);
+        devnode->getValue("size", &pref["size"]);
+        devnode->getValue("rate", &pref["rate"]);
+
+        overwritePreferences(pref);
+
+        // Restore the device preferences if present
+        auto itd = findDeviceByName(pref["name"]);
+        if (itd != devices_.end())
+            itd->applySettings(pref);
+    }
+
+    // Restore the default device if present, or select the first one
+    const string pref = preferences_.empty() ? "" : preferences_[0]["name"];
+    const string first = devices_.empty() ? "" : devices_[0].name;
+    if (findDeviceByName(pref) != devices_.end())
+        defaultDevice_ = pref;
+    else
+        defaultDevice_ = first;
 }
 
 } // namespace sfl_video
