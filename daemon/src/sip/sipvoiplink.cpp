@@ -100,7 +100,7 @@ SIPVoIPLink *SIPVoIPLink::instance_ = nullptr;
  */
 static void setCallMediaLocal(SIPCall* call, const pj_sockaddr& localIP);
 
-static pj_caching_pool pool_cache, *cp_ = &pool_cache;
+static pj_caching_pool pool_cache;
 static pj_pool_t *pool_;
 static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
@@ -112,6 +112,8 @@ static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event 
 static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
 static void registration_cb(pjsip_regc_cbparam *param);
+
+pj_caching_pool* SIPVoIPLink::cp_ = &pool_cache;
 
 /**
  * Helper function to process refer function on call transfer
@@ -296,7 +298,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = std::make_shared<SIPCall>(Manager::instance().getNewCallID(), Call::INCOMING, cp_, account_id);
+    auto call = std::make_shared<SIPCall>(Manager::instance().getNewCallID(), Call::INCOMING, SIPVoIPLink::instance().getCachingPool(), account_id);
 
     // FIXME : for now, use the same address family as the SIP tranport
     auto family = pjsip_transport_type_get_af(account->getTransportType());

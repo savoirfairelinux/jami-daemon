@@ -230,6 +230,11 @@ class SIPVoIPLink : public VoIPLink {
         int getModId();
         pjsip_endpoint * getEndpoint();
         pjsip_module * getMod();
+
+        pj_caching_pool* getCachingPool() const {
+            return cp_;
+        }
+
     private:
 
         NON_COPYABLE(SIPVoIPLink);
@@ -265,6 +270,8 @@ class SIPVoIPLink : public VoIPLink {
 #endif
 
         static SIPVoIPLink * instance_;
+
+        static pj_caching_pool* cp_;
 
         friend class SIPTest;
 };
