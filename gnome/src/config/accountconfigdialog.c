@@ -146,6 +146,15 @@ auto_answer_cb(GtkToggleButton *widget, account_t *account)
                     gtk_toggle_button_get_active(widget) ? "true" : "false");
 }
 
+static void
+user_agent_checkbox_cb(GtkToggleButton *widget, account_t *account)
+{
+    const gboolean is_active = gtk_toggle_button_get_active(widget);
+    account_replace(account, CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT,
+                    is_active ? "true" : "false");
+    gtk_widget_set_sensitive(entry_user_agent, is_active);
+}
+
 /*
  * Display / Hide the password
  */
@@ -243,6 +252,15 @@ create_auto_answer_checkbox(const account_t *account)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
     g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
     return auto_answer_checkbox;
+}
+
+static GtkWidget*
+create_user_agent_checkbox(const account_t *account)
+{
+    GtkWidget *user_agent_checkbox = gtk_check_button_new_with_mnemonic(_("_Use custom user-agent"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(user_agent_checkbox), account_has_custom_user_agent(account));
+    g_signal_connect(user_agent_checkbox, "toggled", G_CALLBACK(user_agent_checkbox_cb), (gpointer) account);
+    return user_agent_checkbox;
 }
 
 static void
@@ -408,6 +426,12 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     gchar *user_agent = account_lookup(account, CONFIG_ACCOUNT_USERAGENT);
     gtk_entry_set_text(GTK_ENTRY(entry_user_agent), user_agent);
     gtk_grid_attach(GTK_GRID(grid), entry_user_agent, 1, row, 1, 1);
+
+    gtk_widget_set_sensitive(entry_user_agent, account_has_custom_user_agent(account));
+
+    row++;
+    GtkWidget *user_agent_checkbox = create_user_agent_checkbox(account);
+    gtk_grid_attach(GTK_GRID(grid), user_agent_checkbox, 0, row, 1, 1);
 
     row++;
     GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);

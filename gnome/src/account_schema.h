@@ -64,6 +64,7 @@ static const char *const CONFIG_ACCOUNT_ROUTESET                = "Account.route
 static const char *const CONFIG_ACCOUNT_PASSWORD                = "Account.password";
 static const char *const CONFIG_ACCOUNT_REALM                   = "Account.realm";
 static const char *const CONFIG_ACCOUNT_USERAGENT               = "Account.useragent";
+static const char *const CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT    = "Account.hasCustomUserAgent";
 static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MIN          = "Account.audioPortMin";
 static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MAX          = "Account.audioPortMax";
 static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MIN          = "Account.videoPortMin";
