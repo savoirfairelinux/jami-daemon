@@ -38,6 +38,7 @@
 #include "iaxaccount.h"
 #include "account_schema.h"
 #include "iaxvoiplink.h"
+#include "iaxcall.h"
 #include "logger.h"
 #include "manager.h"
 #include "config/yamlnode.h"
@@ -46,7 +47,7 @@
 const char * const IAXAccount::ACCOUNT_TYPE = "IAX";
 
 IAXAccount::IAXAccount(const std::string& accountID)
-    : Account(accountID), password_(), link_(accountID)
+    : Account(accountID), password_(), link_(*this)
 {}
 
 void IAXAccount::serialize(Conf::YamlEmitter &emitter)
@@ -171,4 +172,41 @@ IAXAccount::loadConfig()
 VoIPLink* IAXAccount::getVoIPLink()
 {
     return &link_;
+}
+
+std::shared_ptr<Call>
+IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+{
+    std::shared_ptr<IAXCall> call(new IAXCall(id, Call::OUTGOING, *this, &link_));
+
+    call->setPeerNumber(toUrl);
+    call->initRecFilename(toUrl);
+
+    iaxOutgoingInvite(call.get());
+
+    call->setConnectionState(Call::PROGRESSING);
+    call->setState(Call::ACTIVE);
+
+    IAXVoIPLink::addIaxCall(call);
+
+    return call;
+}
+
+void
+IAXAccount::iaxOutgoingInvite(IAXCall* call)
+{
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+
+    call->session = iax_session_new();
+
+    std::string username(getUsername());
+    std::string strNum(username + ":" + getPassword() + "@" + getHostname() + "/" + call->getPeerNumber());
+
+    /** @todo Make preference dynamic, and configurable */
+    const auto accountID = getAccountID();
+    int audio_format_preferred = call->getFirstMatchingFormat(call->getSupportedFormat(accountID), accountID);
+    int audio_format_capability = call->getSupportedFormat(accountID);
+
+    iax_call(call->session, username.c_str(), username.c_str(), strNum.c_str(),
+             NULL, 0, audio_format_preferred, audio_format_capability);
 }

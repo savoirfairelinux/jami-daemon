@@ -352,17 +352,17 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
     DEBUG("Selecting account %s", account_id.c_str());
 
     // fallback using the default sip account if the specied doesn't exist
-    std::string use_account_id;
-    if (!accountExists(account_id)) {
+    Account* account = getAccount(account_id);
+    if (!account) {
         WARN("Account does not exist, trying with default SIP account");
-        use_account_id = SIPAccount::IP2IP_PROFILE;
-    }
-    else {
-        use_account_id = account_id;
-    }
+        account = getAccount(SIPAccount::IP2IP_PROFILE);
+        setIPToIPForCall(call_id, true);
+    } else
+        setIPToIPForCall(call_id, false);
 
     try {
-        auto call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned, use_account_id);
+        DEBUG("New outgoing call to %s", to_cleaned.c_str());
+        auto call = account->newOutgoingCall(call_id, to_cleaned);
 
         // try to reverse match the peer name using the cache
         if (call->getDisplayName().empty()) {

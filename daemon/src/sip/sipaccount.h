@@ -113,6 +113,7 @@ namespace Conf {
 
 class SIPVoIPLink;
 class SIPPresence;
+class SIPCall;
 
 
 /**
@@ -136,6 +137,15 @@ class SIPAccount : public Account {
          */
         SIPAccount(const std::string& accountID, bool presenceEnabled);
         ~SIPAccount();
+
+        /**
+         * Create a new outgoing call
+         * @param id  The ID of the call
+         * @param toUrl The address to call
+         * @return Call*  A pointer on the call
+         */
+        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                              const std::string& toUrl);
 
         virtual VoIPLink* getVoIPLink();
 
@@ -598,6 +608,16 @@ class SIPAccount : public Account {
         void setAccountDetails(const std::map<std::string, std::string> &details);
 
         NON_COPYABLE(SIPAccount);
+
+        std::shared_ptr<Call> newRegisteredAccountCall(const std::string& id,
+                                                       const std::string& toUrl);
+
+        /**
+         * Start a SIP Call
+         * @param call  The current call
+         * @return true if all is correct
+         */
+        bool SIPStartCall(std::shared_ptr<SIPCall>& call);
 
         void usePublishedAddressPortInVIA();
         bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
