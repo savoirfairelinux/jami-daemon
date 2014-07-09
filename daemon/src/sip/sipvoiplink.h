@@ -136,28 +136,11 @@ class SIPVoIPLink : public VoIPLink {
         void cancelKeepAliveTimer(pj_timer_entry& timer);
 
         /**
-         * Place a new call
-         * @param id  The call identifier
-         * @param toUrl  The Sip address of the recipient of the call
-         * @return Call* The current call
-         */
-        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
-
-        /**
          * Start a new SIP call using the IP2IP profile
          * @param The call id
          * @param The target sip uri
          */
         std::shared_ptr<Call> SIPNewIpToIpCall(const std::string& id, const std::string& to);
-
-        /**
-         * Place a call using the currently selected account
-         * @param The call id
-         * @param The target sip uri
-         */
-        std::shared_ptr<Call> newRegisteredAccountCall(const std::string& id,
-                                                       const std::string& toUrl,
-                                                       const std::string &account_id);
 
         /**
          * Tell the user that the call was answered
@@ -249,13 +232,6 @@ class SIPVoIPLink : public VoIPLink {
 
         mutable std::mutex sipCallMapMutex_;
         SipCallMap sipCallMap_;
-
-        /**
-         * Start a SIP Call
-         * @param call  The current call
-         * @return true if all is correct
-         */
-        bool SIPStartCall(std::shared_ptr<SIPCall>& call);
 
         /**
          * Threading object
