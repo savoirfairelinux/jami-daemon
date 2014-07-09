@@ -42,6 +42,7 @@
 #include <sstream>
 
 class VoIPLink;
+class Account;
 
 /*
  * @file call.h
@@ -78,7 +79,7 @@ class Call : public Recordable {
          * @param id Unique identifier of the call
          * @param type set definitely this call as incoming/outgoing
          */
-        Call(const std::string& id, Call::CallType type, const std::string &accountID);
+        Call(const std::string& id, Call::CallType type, Account& account);
         virtual ~Call();
 
         /**
@@ -101,9 +102,8 @@ class Call : public Recordable {
             confID_ = id;
         }
 
-        std::string getAccountId() const {
-            return accountID_;
-        }
+        Account& getAccount() const { return account_; }
+        const std::string getAccountId() const;
 
         CallType getCallType() const {
             return type_;
@@ -328,7 +328,7 @@ class Call : public Recordable {
         CallType type_;
 
         /** Associate account ID */
-        std::string accountID_;
+        Account& account_;
 
         /** Disconnected/Progressing/Trying/Ringing/Connected */
         ConnectionState connectionState_;
