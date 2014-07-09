@@ -145,6 +145,24 @@ class SIPCall : public Call {
 
         void updateSDPFromSTUN();
 
+        /**
+         * Tell the user that the call was answered
+         * @param
+         */
+        void onAnswered();
+
+        /**
+         * Handling 5XX/6XX error
+         * @param
+         */
+        void onServerFailure();
+
+        /**
+         * Peer close the connection
+         * @param
+         */
+        void onClosed();
+
     private:
 
         // override of Call::createHistoryEntry
@@ -152,6 +170,8 @@ class SIPCall : public Call {
         createHistoryEntry() const;
 
         NON_COPYABLE(SIPCall);
+
+        void stopRtpIfCurrent();
 
         /**
          * Transfer method used for both type of transfer
