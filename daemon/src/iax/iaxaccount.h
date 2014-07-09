@@ -42,6 +42,15 @@ class IAXAccount : public Account {
     public:
         IAXAccount(const std::string& accountID);
 
+        /**
+         * Create a new outgoing call
+         * @param id  The ID of the call
+         * @param toUrl The address to call
+         * @return Call*  A pointer on the call
+         */
+        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                              const std::string& toUrl);
+
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
 
@@ -62,6 +71,12 @@ class IAXAccount : public Account {
 
     private:
         void setAccountDetails(const std::map<std::string, std::string> &details);
+
+        /**
+         * Send an outgoing call invite to iax
+         * @param call An IAXCall pointer
+         */
+        void iaxOutgoingInvite(IAXCall* call);
 
          // Account login information: password
         std::string password_;
