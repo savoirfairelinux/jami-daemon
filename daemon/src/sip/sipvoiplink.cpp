@@ -849,17 +849,6 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
     pjsip_endpt_cancel_timer(endpt_, &timer);
 }
 
-static void
-stopRtpIfCurrent(const std::string &id, SIPCall &call)
-{
-    if (Manager::instance().isCurrentCall(id)) {
-        call.getAudioRtp().stop();
-#ifdef SFL_VIDEO
-        call.getVideoRtp().stop();
-#endif
-    }
-}
-
 void
 SIPVoIPLink::clearSipCallMap()
 {
@@ -1006,36 +995,6 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
 }
 #endif
 
-void
-SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
-{
-    std::string id(call->getCallId());
-    Manager::instance().callFailure(id);
-    removeSipCall(id);
-}
-
-void
-SIPVoIPLink::SIPCallClosed(SIPCall *call)
-{
-    const std::string id(call->getCallId());
-
-    stopRtpIfCurrent(id, *call);
-
-    Manager::instance().peerHungupCall(id);
-    removeSipCall(id);
-    Manager::instance().checkAudio();
-}
-
-void
-SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data * /*rdata*/)
-{
-    if (call->getConnectionState() != Call::CONNECTED) {
-        call->setConnectionState(Call::CONNECTED);
-        call->setState(Call::ACTIVE);
-        Manager::instance().peerAnsweredCall(call->getCallId());
-    }
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
@@ -1071,14 +1030,12 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         }
     }
 
-    SIPVoIPLink& link = SIPVoIPLink::instance();
-
     if (inv->state == PJSIP_INV_STATE_EARLY and ev and ev->body.tsx_state.tsx and
             ev->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
         makeCallRing(*call);
     } else if (inv->state == PJSIP_INV_STATE_CONFIRMED and ev) {
         // After we sent or received a ACK - The connection is established
-        link.SIPCallAnswered(call, ev->body.tsx_state.src.rdata);
+        call->onAnswered();
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
         std::string accId(call->getAccountId());
 
@@ -1086,7 +1043,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
                 // The call terminates normally - BYE / CANCEL
             case PJSIP_SC_OK:
             case PJSIP_SC_REQUEST_TERMINATED:
-                link.SIPCallClosed(call);
+                call->onClosed();
                 break;
 
             case PJSIP_SC_DECLINE:
@@ -1103,7 +1060,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             case PJSIP_SC_REQUEST_PENDING:
             case PJSIP_SC_ADDRESS_INCOMPLETE:
             default:
-                link.SIPCallServerFailure(call);
+                call->onServerFailure();
                 break;
         }
     }
