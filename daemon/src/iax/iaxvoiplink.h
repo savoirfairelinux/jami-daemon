@@ -67,7 +67,7 @@ typedef std::map<std::string, std::shared_ptr<IAXCall> > IAXCallMap;
 class IAXVoIPLink : public VoIPLink {
     public:
 
-        IAXVoIPLink(const std::string& accountID);
+        IAXVoIPLink(IAXAccount& account);
         ~IAXVoIPLink();
 
         /**
@@ -112,14 +112,6 @@ class IAXVoIPLink : public VoIPLink {
          *       Urgency: low
          */
         virtual void sendUnregister(Account& a, std::function<void(bool)> cb = std::function<void(bool)>());
-
-        /**
-         * Create a new outgoing call
-         * @param id  The ID of the call
-         * @param toUrl The address to call
-         * @return Call*  A pointer on the call
-         */
-        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
 
         /**
          * Cancel a call
@@ -210,12 +202,6 @@ class IAXVoIPLink : public VoIPLink {
          */
         void sendAudioFromMic();
 
-        /**
-         * Send an outgoing call invite to iax
-         * @param call An IAXCall pointer
-         */
-        void iaxOutgoingInvite(IAXCall* call);
-
         /** registration session : 0 if not register */
         iax_session* regSession_;
 
@@ -237,7 +223,7 @@ class IAXVoIPLink : public VoIPLink {
          */
         bool initDone_;
 
-        const std::string accountID_;
+        IAXAccount& account_;
 
         /**
          * Threading object

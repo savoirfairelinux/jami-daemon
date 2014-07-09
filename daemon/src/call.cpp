@@ -33,7 +33,7 @@
 #include "audio/mainbuffer.h"
 #include "history/historyitem.h"
 
-Call::Call(const std::string& id, Call::CallType type, const std::string &accountID)
+Call::Call(const std::string& id, Call::CallType type, Account& account)
     : callMutex_()
     , localAddr_()
     , localAudioPort_(0)
@@ -41,7 +41,7 @@ Call::Call(const std::string& id, Call::CallType type, const std::string &accoun
     , id_(id)
     , confID_()
     , type_(type)
-    , accountID_(accountID)
+    , account_(account)
     , connectionState_(Call::DISCONNECTED)
     , callState_(Call::INACTIVE)
     , isIPToIP_(false)
@@ -55,6 +55,11 @@ Call::Call(const std::string& id, Call::CallType type, const std::string &accoun
 
 Call::~Call()
 {}
+
+std::string Call::getAccountId() const
+{
+    return account_.getAccountID();
+}
 
 void
 Call::setConnectionState(ConnectionState state)
@@ -231,7 +236,7 @@ std::map<std::string, std::string> Call::createHistoryEntry() const
     using sfl::HistoryItem;
     std::map<std::string, std::string> result;
 
-    result[HistoryItem::ACCOUNT_ID_KEY] = accountID_;
+    result[HistoryItem::ACCOUNT_ID_KEY] = getAccountId();
     result[HistoryItem::CONFID_KEY] = confID_;
     result[HistoryItem::CALLID_KEY] = id_;
     result[HistoryItem::DISPLAY_NAME_KEY] = displayName_;
@@ -268,7 +273,7 @@ Call::getDetails()
     details["CALL_STATE"] = getStateStr();
     details["CONF_ID"] = confID_;
     details["TIMESTAMP_START"] = timestamp_to_string(timestamp_start_);
-    details["ACCOUNTID"] = accountID_;
+    details["ACCOUNTID"] = getAccountId();
     return details;
 }
 
