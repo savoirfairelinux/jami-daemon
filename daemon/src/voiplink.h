@@ -78,16 +78,6 @@ class VoIPLink {
         virtual void sendUnregister(Account& a, std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
 
         /**
-         * Place a new call
-         * @param id  The call identifier
-         * @param toUrl  The address of the recipient of the call
-         * @return Call* The current call
-         */
-        virtual std::shared_ptr<Call> newOutgoingCall(const std::string &id,
-                                                      const std::string &toUrl,
-                                                      const std::string &account_id) = 0;
-
-        /**
          * Virtual method
          * Returns calls involving this account.
          */

@@ -50,7 +50,9 @@ struct pjsip_evsub;
 struct pj_caching_pool;
 struct pj_pool_t;
 struct pjsip_inv_session;
+
 class Sdp;
+class SIPAccount;
 
 /**
  * @file sipcall.h
@@ -66,7 +68,7 @@ class SIPCall : public Call {
          *						 Outgoing
          */
         SIPCall(const std::string& id, Call::CallType type,
-                pj_caching_pool *caching_pool, const std::string &account_id);
+                SIPAccount& account);
 
         /**
          * Destructor
@@ -108,6 +110,8 @@ class SIPCall : public Call {
          */
         pjsip_inv_session *inv;
 
+        void setCallMediaLocal(const pj_sockaddr& localIP);
+
         void setContactHeader(pj_str_t *contact);
 
         VoIPLink* getVoIPLink() const;
@@ -136,6 +140,10 @@ class SIPCall : public Call {
         void sendTextMessage(const std::string& message,
                              const std::string& from);
 #endif
+
+        SIPAccount& getSIPAccount() const;
+
+        void updateSDPFromSTUN();
 
     private:
 

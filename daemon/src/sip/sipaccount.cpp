@@ -36,8 +36,11 @@
 #include "config.h"
 #endif
 
+#include "sdp.h"
 #include "sipvoiplink.h"
+#include "sipcall.h"
 #include "sip_utils.h"
+#include "array_size.h"
 
 #ifdef SFL_PRESENCE
 #include "sippresence.h"
@@ -152,7 +155,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
         alias_ = IP2IP_PROFILE;
 }
 
-
 SIPAccount::~SIPAccount()
 {
     setTransport();
@@ -161,7 +163,6 @@ SIPAccount::~SIPAccount()
     delete presence_;
 #endif
 }
-
 
 static std::array<std::unique_ptr<Conf::ScalarNode>, 2>
 serializeRange(Conf::MappingNode &accountMap, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
@@ -199,6 +200,165 @@ unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *
     mapNode.getValue(minKey, &tmpMin);
     mapNode.getValue(maxKey, &tmpMax);
     updateRange(tmpMin, tmpMax, range);
+}
+
+std::shared_ptr<Call>
+SIPAccount::newOutgoingCall(const std::string& id,
+                            const std::string& toUrl)
+{
+    std::string to;
+    std::string toUri;
+    int family;
+
+    if (isIP2IP()) {
+        bool ipv6 = false;
+#if HAVE_IPV6
+        ipv6 = IpAddr::isIpv6(toUrl);
+#endif
+        to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
+        toUri = getToUri(to);
+        family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
+
+        DEBUG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
+    }
+    else {
+        to = toUrl;
+
+        // If toUrl is not a well formatted sip URI, use account information to process it
+        if (toUrl.find("sip:") != std::string::npos or
+            toUrl.find("sips:") != std::string::npos)
+            toUri = toUrl;
+        else
+            toUri = getToUri(to);
+
+        // FIXME : for now, use the same address family as the SIP tranport
+        family = pjsip_transport_type_get_af(getTransportType());
+
+        DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
+    }
+
+    auto call = std::make_shared<SIPCall>(id, Call::OUTGOING, *this);
+
+    call->setIPToIP(isIP2IP());
+    call->setPeerNumber(toUri);
+    call->initRecFilename(to);
+
+    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
+    call->setCallMediaLocal(localAddress);
+
+    // May use the published address as well
+    const auto addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ?
+        getPublishedIpAddress() : localAddress;
+
+    // Initialize the session using ULAW as default codec in case of early media
+    // The session should be ready to receive media once the first INVITE is sent, before
+    // the session initialization is completed
+    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    if (!ac)
+        throw VoipLinkException("Could not instantiate codec for early media");
+
+    std::vector<sfl::AudioCodec *> audioCodecs;
+    audioCodecs.push_back(ac);
+
+    try {
+        call->getAudioRtp().initConfig();
+        call->getAudioRtp().initSession();
+
+        if (isStunEnabled())
+            call->updateSDPFromSTUN();
+
+        call->getAudioRtp().initLocalCryptoInfo();
+        call->getAudioRtp().start(audioCodecs);
+    } catch (...) {
+        throw VoipLinkException("Could not start rtp session for early media");
+    }
+
+    // Building the local SDP offer
+    auto localSDP = call->getLocalSDP();
+
+    if (getPublishedSameasLocal())
+        localSDP->setPublishedIP(addrSdp);
+    else
+        localSDP->setPublishedIP(getPublishedAddress());
+
+    const bool created = localSDP->createOffer(getActiveAudioCodecs(), getActiveVideoCodecs());
+
+    if (not created or not SIPStartCall(call))
+        throw VoipLinkException("Could not send outgoing INVITE request for new call");
+
+    return call;
+}
+
+bool
+SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
+{
+    std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
+
+    pj_str_t pjTo = pj_str((char*) toUri.c_str());
+
+    // Create the from header
+    std::string from(getFromUri());
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
+
+    pj_str_t pjContact(getContactHeader());
+
+    const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
+    DEBUG("contact header: %s / %s -> %s",
+          debugContactHeader.c_str(), from.c_str(), toUri.c_str());
+
+    pjsip_dialog *dialog = NULL;
+
+    if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
+        ERROR("Unable to create SIP dialogs for user agent client when "
+              "calling %s", toUri.c_str());
+        return false;
+    }
+
+    pj_str_t subj_hdr_name = CONST_PJ_STR("Subject");
+    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
+
+    pj_list_push_back(&dialog->inv_hdr, subj_hdr);
+
+    if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
+        ERROR("Unable to create invite session for user agent client");
+        return false;
+    }
+
+    updateDialogViaSentBy(dialog);
+
+    if (hasServiceRoute())
+        pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(), call->inv->pool));
+
+    if (hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo()) != PJ_SUCCESS) {
+        ERROR("Could not initialize credentials for invite session authentication");
+        return false;
+    }
+
+    call->inv->mod_data[SIPVoIPLink::instance().getMod()->id] = call.get();
+
+    pjsip_tx_data *tdata;
+
+    if (pjsip_inv_invite(call->inv, &tdata) != PJ_SUCCESS) {
+        ERROR("Could not initialize invite messager for this call");
+        return false;
+    }
+
+    const pjsip_tpselector tp_sel = getTransportSelector();
+    if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
+        ERROR("Unable to associate transport for invite session dialog");
+        return false;
+    }
+
+    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+        ERROR("Unable to send invite message for this call");
+        return false;
+    }
+
+    call->setConnectionState(Call::PROGRESSING);
+    call->setState(Call::ACTIVE);
+    SIPVoIPLink::instance().addSipCall(call);
+
+    return true;
 }
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)

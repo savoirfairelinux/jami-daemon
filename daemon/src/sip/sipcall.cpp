@@ -64,26 +64,6 @@ static const int INCREMENT_SIZE = INITIAL_SIZE;
 static std::map<std::string, std::string> transferCallID;
 
 static void
-updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
-{
-    std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
-
-    try {
-        std::vector<pj_sockaddr> stunPorts(transport.getSTUNAddresses(account, socketDescriptors));
-
-        // FIXME: get video sockets
-        //stunPorts.resize(4);
-
-        account.setPublishedAddress(stunPorts[0]);
-        // published IP MUST be updated first, since RTCP depends on it
-        call.getLocalSDP()->setPublishedIP(account.getPublishedAddress());
-        call.getLocalSDP()->updatePorts(stunPorts);
-    } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
-    }
-}
-
-static void
 stopRtpIfCurrent(SIPCall& call)
 {
     if (Manager::instance().isCurrentCall(call.getCallId())) {
@@ -124,15 +104,16 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 }
 
 SIPCall::SIPCall(const std::string& id, Call::CallType type,
-        pj_caching_pool *caching_pool, const std::string &account_id) :
-    Call(id, type, account_id)
+                 SIPAccount& account) :
+    Call(id, type, account)
     , inv(NULL)
     , audiortp_(this)
 #ifdef SFL_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(id, getSettings())
 #endif
-    , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
+    , pool_(pj_pool_create(&SIPVoIPLink::instance().getCachingPool()->factory,
+                           id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))
     , contactBuffer_()
     , contactHeader_{contactBuffer_, 0}
@@ -142,6 +123,40 @@ SIPCall::~SIPCall()
 {
     delete local_sdp_;
     pj_pool_release(pool_);
+}
+
+SIPAccount&
+SIPCall::getSIPAccount() const
+{
+    return static_cast<SIPAccount&>(getAccount());
+}
+
+void
+SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
+{
+    auto& account = getSIPAccount();
+
+    // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
+    // We only want to set ports to new values if they haven't been set
+    if (getLocalAudioPort() == 0) {
+        const unsigned callLocalAudioPort = account.generateAudioPort();
+        setLocalAudioPort(callLocalAudioPort);
+        getLocalSDP()->setLocalPublishedAudioPort(callLocalAudioPort);
+    }
+
+    setLocalIp(localIP);
+
+#ifdef SFL_VIDEO
+    if (getLocalVideoPort() == 0) {
+        // https://projects.savoirfairelinux.com/issues/17498
+        const unsigned int callLocalVideoPort = account.generateVideoPort();
+        // this should already be guaranteed by SIPAccount
+        assert(getLocalAudioPort() != callLocalVideoPort);
+
+        setLocalVideoPort(callLocalVideoPort);
+        getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
+    }
+#endif
 }
 
 void SIPCall::setContactHeader(pj_str_t *contact)
@@ -210,13 +225,30 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
         pjsip_dlg_send_request(inv->dlg, tdata, SIPVoIPLink::instance().getMod()->id, NULL);
 }
 
+void
+SIPCall::updateSDPFromSTUN()
+{
+    auto& account = getSIPAccount();
+    std::vector<long> socketDescriptors(getAudioRtp().getSocketDescriptors());
+
+    try {
+        std::vector<pj_sockaddr> stunPorts(SIPVoIPLink::instance().sipTransport->getSTUNAddresses(account, socketDescriptors));
+
+        // FIXME: get video sockets
+        //stunPorts.resize(4);
+
+        account.setPublishedAddress(stunPorts[0]);
+        // published IP MUST be updated first, since RTCP depends on it
+        getLocalSDP()->setPublishedIP(account.getPublishedAddress());
+        getLocalSDP()->updatePorts(stunPorts);
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
+    }
+}
+
 void SIPCall::answer()
 {
-    SIPAccount *account = Manager::instance().getSipAccount(getAccountId());
-    if (!account) {
-        ERROR("Could not find account %s", getAccountId().c_str());
-        return;
-    }
+    auto& account = getSIPAccount();
 
     if (!inv->neg) {
         SIPVoIPLink& siplink = SIPVoIPLink::instance();
@@ -225,11 +257,11 @@ void SIPCall::answer()
         pjmedia_sdp_session *dummy = 0;
         siplink.createSDPOffer(inv, &dummy);
 
-        if (account->isStunEnabled())
-            updateSDPFromSTUN(*this, *account, *siplink.sipTransport);
+        if (account.isStunEnabled())
+            updateSDPFromSTUN();
     }
 
-    pj_str_t contact(account->getContactHeader());
+    pj_str_t contact(account.getContactHeader());
     setContactHeader(&contact);
 
     pjsip_tx_data *tdata;
@@ -256,11 +288,7 @@ void SIPCall::answer()
 void
 SIPCall::hangup(int reason)
 {
-    const std::string account_id(getAccountId());
-
-    SIPAccount *account = Manager::instance().getSipAccount(account_id);
-    if (not account)
-        throw VoipLinkException("Could not find account for this call");
+    auto& account = getSIPAccount();
 
     if (not inv)
         throw VoipLinkException("No invite session for this call");
@@ -291,7 +319,7 @@ SIPCall::hangup(int reason)
         return;
 
     // contactStr must stay in scope as long as tdata
-    const pj_str_t contactStr(account->getContactHeader());
+    const pj_str_t contactStr(account.getContactHeader());
     sip_utils::addContactHeader(&contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
@@ -454,18 +482,14 @@ SIPCall::transferCommon(pj_str_t *dst)
 void
 SIPCall::transfer(const std::string& to)
 {
+    auto& account = getSIPAccount();
+
     stopRecording();
-
-    std::string account_id(getAccountId());
-    SIPAccount *account = Manager::instance().getSipAccount(account_id);
-
-    if (account == NULL)
-        throw VoipLinkException("Could not find account");
 
     std::string toUri;
     pj_str_t dst = { 0, 0 };
 
-    toUri = account->getToUri(to);
+    toUri = account.getToUri(to);
     pj_cstr(&dst, toUri.c_str());
     DEBUG("Transferring to %.*s", dst.slen, dst.ptr);
 
@@ -534,11 +558,11 @@ SIPCall::onhold()
 void
 SIPCall::offhold()
 {
-    SIPAccount *account = Manager::instance().getSipAccount(getAccountId());
+    auto& account = getSIPAccount();
 
     try {
-        if (account and account->isStunEnabled())
-            internalOffHold([&] { updateSDPFromSTUN(*this, *account, *SIPVoIPLink::instance().sipTransport); });
+        if (account.isStunEnabled())
+            internalOffHold([&] { updateSDPFromSTUN(); });
         else
             internalOffHold([] {});
 
@@ -645,12 +669,7 @@ SIPCall::peerHungup()
 void
 SIPCall::carryingDTMFdigits(char code)
 {
-    const std::string accountID(getAccountId());
-    SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    if (!account)
-        return;
-
-    dtmfSend(*this, code, account->getDtmfType());
+    dtmfSend(*this, code, getSIPAccount().getDtmfType());
 }
 
 #if HAVE_INSTANT_MESSAGING
