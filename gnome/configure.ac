@@ -45,7 +45,7 @@ AS_IF([test "x$enable_video" != "xno"], [
     PKG_CHECK_MODULES(CLUTTERGTK, clutter-gtk-1.0)
     ]);
 
-AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
+AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" != "xno")
 
 dnl Presence is a default-enabled feature
 AC_ARG_ENABLE([presence],
