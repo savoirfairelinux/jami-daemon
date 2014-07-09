@@ -73,11 +73,6 @@ AC_COMPILE_IFELSE(
 
 AC_MSG_RESULT([$CLANG])
 
-dnl Check for uuid development package - name: uuid-dev
-UUID_MIN_VERSION=1.0
-PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
-
-
 AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], [
        AC_MSG_ERROR([Unable to find yaml development files])])
 
