@@ -143,24 +143,6 @@ class SIPVoIPLink : public VoIPLink {
         std::shared_ptr<Call> SIPNewIpToIpCall(const std::string& id, const std::string& to);
 
         /**
-         * Tell the user that the call was answered
-         * @param
-         */
-        void SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata);
-
-        /**
-         * Handling 5XX/6XX error
-         * @param
-         */
-        void SIPCallServerFailure(SIPCall *call);
-
-        /**
-         * Peer close the connection
-         * @param
-         */
-        void SIPCallClosed(SIPCall *call);
-
-        /**
          * Get the memory pool factory since each calls has its own memory pool
          */
         pj_caching_pool *getMemoryPoolFactory();
