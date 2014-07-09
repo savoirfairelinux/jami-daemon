@@ -63,7 +63,6 @@ libsflphone_la_LDFLAGS = \
 		@SAMPLERATE_LIBS@ \
 		@SNDFILE_LIBS@ \
 		$(TLS_LIB) \
-		@UUID_LIBS@ \
 		@DBUSCPP_LIBS@
 
 libsflphone_la_CFLAGS = \
@@ -75,7 +74,6 @@ libsflphone_la_CFLAGS = \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
 		$(TLS_CFLAGS) \
-		@UUID_CFLAGS@ \
 		@DBUSCPP_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
