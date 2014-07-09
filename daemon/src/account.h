@@ -40,9 +40,11 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <memory>
 
 class Account;
 class VoIPLink;
+class Call;
 
 /** Define a type for a AccountMap container */
 typedef std::map<std::string, Account*> AccountMap;
@@ -99,6 +101,15 @@ class Account : public Serializable {
          * This should update the getRegistrationState() return value.
          */
         virtual void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
+
+        /**
+         * Create a new outgoing call
+         * @param id  The ID of the call
+         * @param toUrl The address to call
+         * @return Call*  A pointer on the call
+         */
+        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                                      const std::string& toUrl) = 0;
 
         /**
          * Tell if the account is enable or not.

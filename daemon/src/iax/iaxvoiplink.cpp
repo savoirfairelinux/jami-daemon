@@ -49,7 +49,7 @@ IAXCallMap IAXVoIPLink::iaxCallMap_;
 std::mutex IAXVoIPLink::iaxCallMapMutex_;
 std::mutex IAXVoIPLink::mutexIAX = {};
 
-IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
+IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
     regSession_(NULL)
     , nextRefreshStamp_(0)
     , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
@@ -57,7 +57,7 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     , encodedData_()
     , resampler_(44100)
     , initDone_(false)
-    , accountID_(accountID)
+    , account_(account)
     , evThread_(*this)
 {
     srand(time(NULL));    // to get random number for RANDOM_PORT
@@ -153,11 +153,8 @@ IAXVoIPLink::getEvent()
         }
     }
 
-    if (nextRefreshStamp_ and nextRefreshStamp_ < time(NULL)) {
-        auto account = Manager::instance().getIaxAccount(accountID_);
-        if (account)
-            sendRegister(*account);
-    }
+    if (nextRefreshStamp_ and nextRefreshStamp_ < time(NULL))
+        sendRegister(account_);
 
     sendAudioFromMic();
 
@@ -349,26 +346,6 @@ IAXVoIPLink::getIaxCall(const std::string& id)
     else
         return nullptr;
 }
-
-void
-IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
-{
-    std::lock_guard<std::mutex> lock(mutexIAX);
-
-    call->session = iax_session_new();
-
-    IAXAccount *account = Manager::instance().getIaxAccount(accountID_);
-    std::string username(account->getUsername());
-    std::string strNum(username + ":" + account->getPassword() + "@" + account->getHostname() + "/" + call->getPeerNumber());
-
-    /** @todo Make preference dynamic, and configurable */
-    int audio_format_preferred = call->getFirstMatchingFormat(call->getSupportedFormat(accountID_), accountID_);
-    int audio_format_capability = call->getSupportedFormat(accountID_);
-
-    iax_call(call->session, username.c_str(), username.c_str(), strNum.c_str(),
-             NULL, 0, audio_format_preferred, audio_format_capability);
-}
-
 
 std::string
 IAXVoIPLink::iaxFindCallIDBySession(iax_session* session)
@@ -585,8 +562,6 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
  */
 void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 {
-    IAXAccount *account = Manager::instance().getIaxAccount(accountID_);
-
     if (event->etype != IAX_EVENT_REGREJ && event->etype != IAX_EVENT_REGACK)
         return;
 
@@ -596,7 +571,7 @@ void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
         regSession_ = NULL;
     }
 
-    account->setRegistrationState((event->etype == IAX_EVENT_REGREJ) ? RegistrationState::ERROR_AUTH : RegistrationState::REGISTERED);
+    account_.setRegistrationState((event->etype == IAX_EVENT_REGREJ) ? RegistrationState::ERROR_AUTH : RegistrationState::REGISTERED);
 
     if (event->etype == IAX_EVENT_REGACK)
         nextRefreshStamp_ = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
@@ -604,6 +579,7 @@ void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 
 void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 {
+    const auto accountID = account_.getAccountID();
     std::shared_ptr<IAXCall> call;
     std::string id;
     int format;
@@ -612,7 +588,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
         case IAX_EVENT_CONNECT:
             id = Manager::instance().getNewCallID();
 
-            call = std::make_shared<IAXCall>(id, Call::INCOMING, accountID_, this);
+            call = std::make_shared<IAXCall>(id, Call::INCOMING, account_, this);
 
             call->session = event->session;
             call->setConnectionState(Call::PROGRESSING);
@@ -627,12 +603,12 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             if (event->ies.calling_number)
                 call->initRecFilename(std::string(event->ies.calling_number));
 
-            Manager::instance().incomingCall(*call, accountID_);
+            Manager::instance().incomingCall(*call, accountID);
 
-            format = call->getFirstMatchingFormat(event->ies.format, accountID_);
+            format = call->getFirstMatchingFormat(event->ies.format, accountID);
 
             if (!format)
-                format = call->getFirstMatchingFormat(event->ies.capability, accountID_);
+                format = call->getFirstMatchingFormat(event->ies.capability, accountID);
 
             iax_accept(event->session, format);
             iax_ring_announce(event->session);

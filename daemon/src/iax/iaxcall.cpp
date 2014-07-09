@@ -36,8 +36,8 @@
 
 #include "iaxcall.h"
 #include "logger.h"
-#include "account.h"
 #include "manager.h"
+#include "iaxaccount.h"
 #include "iaxvoiplink.h"
 
 #if HAVE_INSTANT_MESSAGING
@@ -66,8 +66,8 @@ codecToASTFormat(int c)
 }
 
 IAXCall::IAXCall(const std::string& id, Call::CallType type,
-                 const std::string& account_id, IAXVoIPLink* link) :
-    Call(id, type, account_id), format(0), session(NULL), link_(link)
+                 IAXAccount& account, IAXVoIPLink* link) :
+    Call(id, type, account), format(0), session(NULL), link_(link)
 {}
 
 int IAXCall::getSupportedFormat(const std::string &accountID) const
