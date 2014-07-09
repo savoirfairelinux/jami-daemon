@@ -82,7 +82,7 @@ class VideoDeviceMonitor : public Serializable
          */
         std::vector<VideoSettings> preferences_;
 
-        void storePreferences(VideoSettings settings);
+        void overwritePreferences(VideoSettings settings);
         std::vector<VideoSettings>::iterator findPreferencesByName(const std::string& name);
 
         /*
