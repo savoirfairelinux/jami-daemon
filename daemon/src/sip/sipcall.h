@@ -180,6 +180,8 @@ class SIPCall : public Call {
 
         void internalOffHold(const std::function<void()> &SDPUpdateFunc);
 
+        int SIPSessionReinvite();
+
         /**
          * Audio Rtp Session factory
          */
