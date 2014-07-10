@@ -131,7 +131,7 @@ ManagerImpl::ManagerImpl() :
     currentCallId_(), currentCallMutex_(), audiodriver_(nullptr), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
-    IPToIPMap_(), mainBuffer_(), conferenceMap_(), history_(), finished_(false)
+    mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
     // initialize random generator for call id
     srand(time(nullptr));
@@ -354,11 +354,9 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
     // fallback using the default sip account if the specied doesn't exist
     Account* account = getAccount(account_id);
     if (!account) {
-        WARN("Account does not exist, trying with default SIP account");
+        WARN("Account does not exist, trying with default IP2IP SIP account");
         account = getAccount(SIPAccount::IP2IP_PROFILE);
-        setIPToIPForCall(call_id, true);
-    } else
-        setIPToIPForCall(call_id, false);
+    }
 
     try {
         DEBUG("New outgoing call to %s", to_cleaned.c_str());
@@ -467,8 +465,9 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     client_.getCallManager()->callStateChanged(callId, "HUNGUP");
 
     /* We often get here when the call was hungup before being created */
-    if (not isValidCall(callId) and not isIPToIP(callId)) {
-        DEBUG("Could not hang up call %s, call not valid", callId.c_str());
+    auto call = getCallFromCallID(callId);
+    if (not call) {
+        WARN("Could not hang up non-existant call %s", callId.c_str());
         checkAudio();
         return false;
     }
@@ -485,12 +484,10 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     }
 
     try {
-        if (auto call = getCallFromCallID(callId)) {
-            history_.addCall(call.get(), preferences.getHistoryLimit());
-            call->hangup(0);
-            checkAudio();
-            saveHistory();
-        }
+        history_.addCall(call.get(), preferences.getHistoryLimit());
+        call->hangup(0);
+        checkAudio();
+        saveHistory();
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         return false;
@@ -1423,7 +1420,7 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
     const std::string callID(call.getCallId());
 
     if (accountId.empty())
-        setIPToIPForCall(callID, true);
+        call.setIPToIP(true);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history (if call is IAX, do nothing)
@@ -2618,19 +2615,6 @@ ManagerImpl::getAllAccounts() const
     all.insert(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end());
 #endif
     return all;
-}
-
-
-void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)
-{
-    if (not isIPToIP(callID)) // no IPToIP calls with the same ID
-        IPToIPMap_[callID] = IPToIP;
-}
-
-bool ManagerImpl::isIPToIP(const std::string& callID) const
-{
-    std::map<std::string, bool>::const_iterator iter = IPToIPMap_.find(callID);
-    return iter != IPToIPMap_.end() and iter->second;
 }
 
 std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string &callID)
