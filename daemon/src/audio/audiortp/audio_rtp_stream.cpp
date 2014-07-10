@@ -343,6 +343,18 @@ size_t AudioRtpStream::processDataEncode()
             ERROR("Audio codec already destroyed");
             return 0;
         }
+
+        const auto frameSize = out->frames();
+        const auto codecFrameSize = codec->getFrameSize();
+        if (codecFrameSize > frameSize) {
+            // PCM too small (underflow), add zero padding to avoid reading past
+            // end of buffer when encoding, for every channel
+            for (auto &c : out->getData()) {
+                c.resize(codecFrameSize);
+                std::fill(c.begin() + frameSize, c.end(), 0);
+            }
+        }
+
         size_t encoded = codec->encode(out->getData(), encodedData_.data(), encodedData_.size());
         return encoded;
     }
