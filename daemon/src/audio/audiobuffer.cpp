@@ -129,8 +129,9 @@ void AudioBuffer::resize(size_t sample_num)
     if (frames() == sample_num)
         return;
 
-    for (unsigned i = 0; i < samples_.size(); i++)
-        samples_[i].resize(sample_num);
+    // will add zero padding if buffer is growing
+    for (auto &s : samples_)
+        s.resize(sample_num, 0);
 }
 
 std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
