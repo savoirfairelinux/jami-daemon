@@ -66,19 +66,6 @@ class VoIPLink {
 
         /**
          * Virtual method
-         * Build and send account registration request
-         */
-        virtual void sendRegister(Account& a) = 0;
-
-        /**
-         * Virtual method
-         * Build and send account unregistration request
-         * Underlying ressources are released after unregistration
-         */
-        virtual void sendUnregister(Account& a, std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
-
-        /**
-         * Virtual method
          * Returns calls involving this account.
          */
         virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;

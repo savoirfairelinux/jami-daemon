@@ -147,7 +147,7 @@ class SIPAccount : public Account {
         std::shared_ptr<Call> newOutgoingCall(const std::string& id,
                                               const std::string& toUrl);
 
-        virtual VoIPLink* getVoIPLink();
+        VoIPLink* getVoIPLink();
 
         pjsip_host_port getHostPortFromSTUN(pj_pool_t *pool);
 
@@ -231,6 +231,16 @@ class SIPAccount : public Account {
          */
         void stopKeepAliveTimer();
 
+        /**
+         * Build and send SIP registration request
+         */
+        void sendRegister();
+
+        /**
+         * Build and send SIP unregistration request
+         * @param destroy_transport If true, attempt to destroy the transport.
+         */
+        void sendUnregister(std::function<void(bool)> cb = std::function<void(bool)>());
 
         const pjsip_cred_info* getCredInfo() const {
             return cred_.data();
