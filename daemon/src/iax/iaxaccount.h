@@ -33,6 +33,7 @@
 
 #include "account.h"
 #include "iaxvoiplink.h"
+#include "noncopyable.h"
 
 /**
  * @file: iaxaccount.h
@@ -56,6 +57,10 @@ class IAXAccount : public Account {
 
         std::map<std::string, std::string> getAccountDetails() const;
 
+        void setNextRefreshStamp(int value) {
+            nextRefreshStamp_ = value;
+        }
+
         // Actually useless, since config loading is done in init()
         void loadConfig();
 
@@ -65,11 +70,33 @@ class IAXAccount : public Account {
         // Unregister an account
         void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>());
 
+        /**
+         * Send out registration
+         */
+        void sendRegister();
+
+        /**
+         * Destroy registration session
+         * @todo Send an IAX_COMMAND_REGREL to force unregistration upstream.
+         *       Urgency: low
+         */
+        void sendUnregister(std::function<void(bool)> cb = std::function<void(bool)>());
+
         std::string getPassword() const {
             return password_;
         }
 
+        iax_session* getRegSession() const {
+            return regSession_;
+        }
+
+        void destroyRegSession();
+
+        void checkRegister();
+
     private:
+        NON_COPYABLE(IAXAccount);
+
         void setAccountDetails(const std::map<std::string, std::string> &details);
 
         /**
@@ -78,11 +105,19 @@ class IAXAccount : public Account {
          */
         void iaxOutgoingInvite(IAXCall* call);
 
+        /** registration session : nullptr if not register */
+        iax_session* regSession_ = nullptr;
+
          // Account login information: password
         std::string password_;
         IAXVoIPLink link_;
-        virtual VoIPLink* getVoIPLink();
+        VoIPLink* getVoIPLink();
         static const char * const ACCOUNT_TYPE;
+
+        /** Timestamp of when we should refresh the registration up with
+         * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
+         * to force a registration. */
+        int nextRefreshStamp_ = 0;
 };
 
 #endif

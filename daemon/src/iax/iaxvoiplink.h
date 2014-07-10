@@ -102,18 +102,6 @@ class IAXVoIPLink : public VoIPLink {
         void terminate();
 
         /**
-         * Send out registration
-         */
-        virtual void sendRegister(Account& a);
-
-        /**
-         * Destroy registration session
-         * @todo Send an IAX_COMMAND_REGREL to force unregistration upstream.
-         *       Urgency: low
-         */
-        virtual void sendUnregister(Account& a, std::function<void(bool)> cb = std::function<void(bool)>());
-
-        /**
          * Cancel a call
          * @param id The ID of the call
          */
@@ -201,14 +189,6 @@ class IAXVoIPLink : public VoIPLink {
          * Work out the audio data from Microphone to IAX2 channel
          */
         void sendAudioFromMic();
-
-        /** registration session : 0 if not register */
-        iax_session* regSession_;
-
-        /** Timestamp of when we should refresh the registration up with
-         * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
-         * to force a registration. */
-        int nextRefreshStamp_;
 
         /** encoder/decoder/resampler buffers */
         AudioBuffer rawBuffer_;
