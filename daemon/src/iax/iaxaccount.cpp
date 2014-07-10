@@ -141,7 +141,7 @@ void IAXAccount::registerVoIPLink()
 {
     try {
         link_.init();
-        link_.sendRegister(*this);
+        sendRegister();
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
@@ -151,7 +151,7 @@ void
 IAXAccount::unregisterVoIPLink(std::function<void(bool)> cb)
 {
     try {
-        link_.sendUnregister(*this);
+        sendUnregister();
         link_.terminate();
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
@@ -177,7 +177,7 @@ VoIPLink* IAXAccount::getVoIPLink()
 std::shared_ptr<Call>
 IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
-    std::shared_ptr<IAXCall> call(new IAXCall(id, Call::OUTGOING, *this, &link_));
+    auto call = std::make_shared<IAXCall>(id, Call::OUTGOING, *this, &link_);
 
     call->setPeerNumber(toUrl);
     call->initRecFilename(toUrl);
@@ -209,4 +209,64 @@ IAXAccount::iaxOutgoingInvite(IAXCall* call)
 
     iax_call(call->session, username.c_str(), username.c_str(), strNum.c_str(),
              NULL, 0, audio_format_preferred, audio_format_capability);
+}
+
+void
+IAXAccount::sendRegister()
+{
+    if (not isEnabled()) {
+        WARN("Account must be enabled to register, ignoring");
+        return;
+    }
+
+    if (getHostname().empty())
+        throw VoipLinkException("Account hostname is empty");
+
+    if (getUsername().empty())
+        throw VoipLinkException("Account username is empty");
+
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+
+    if (regSession_)
+        iax_destroy(regSession_);
+
+    regSession_ = iax_session_new();
+
+    if (regSession_) {
+        iax_register(regSession_, getHostname().data(), getUsername().data(), getPassword().data(), 120);
+        nextRefreshStamp_ = time(NULL) + 10;
+        setRegistrationState(RegistrationState::TRYING);
+    }
+}
+
+void
+IAXAccount::sendUnregister(std::function<void(bool)> cb)
+{
+    if (regSession_) {
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+        iax_destroy(regSession_);
+        regSession_ = NULL;
+    }
+
+    nextRefreshStamp_ = 0;
+
+    setRegistrationState(RegistrationState::UNREGISTERED);
+
+    if (cb)
+        cb(true);
+}
+
+void
+IAXAccount::destroyRegSession()
+{
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+    iax_destroy(regSession_);
+    regSession_ = nullptr;
+}
+
+void
+IAXAccount::checkRegister()
+{
+    if (nextRefreshStamp_ and nextRefreshStamp_ < time(NULL))
+        sendRegister();
 }

@@ -115,17 +115,6 @@ class SIPVoIPLink : public VoIPLink {
         virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const;
 
         /**
-         * Build and send SIP registration request
-         */
-        virtual void sendRegister(Account& a);
-
-        /**
-         * Build and send SIP unregistration request
-         * @param destroy_transport If true, attempt to destroy the transport.
-         */
-        virtual void sendUnregister(Account& a, std::function<void(bool)> cb = std::function<void(bool)>());
-
-        /**
          * Register a new keepalive registration timer to this endpoint
          */
         void registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay);
@@ -199,6 +188,8 @@ class SIPVoIPLink : public VoIPLink {
         pj_caching_pool* getCachingPool() const {
            return cp_;
         }
+
+        pj_pool_t* getPool() const;
 
     private:
 

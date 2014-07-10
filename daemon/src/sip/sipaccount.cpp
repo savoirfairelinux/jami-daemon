@@ -79,6 +79,116 @@ static const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
 // we force RTP ports to be even, so we only need HALF_MAX_PORT booleans
 bool SIPAccount::portsInUse_[HALF_MAX_PORT];
 
+static void
+registration_cb(pjsip_regc_cbparam *param)
+{
+    if (!param) {
+        ERROR("registration callback parameter is null");
+        return;
+    }
+
+    auto account = static_cast<SIPAccount *>(param->token);
+    if (!account) {
+        ERROR("account doesn't exist in registration callback");
+        return;
+    }
+
+    if (param->regc != account->getRegistrationInfo())
+        return;
+
+    const std::string accountID = account->getAccountID();
+
+    if (param->status != PJ_SUCCESS) {
+        ERROR("SIP registration error %d", param->status);
+        account->destroyRegistrationInfo();
+        account->stopKeepAliveTimer();
+    } else if (param->code < 0 || param->code >= 300) {
+        ERROR("SIP registration failed, status=%d (%.*s)",
+              param->code, (int)param->reason.slen, param->reason.ptr);
+        account->destroyRegistrationInfo();
+        account->stopKeepAliveTimer();
+        switch (param->code) {
+            case PJSIP_SC_FORBIDDEN:
+                account->setRegistrationState(RegistrationState::ERROR_AUTH);
+                break;
+            case PJSIP_SC_NOT_FOUND:
+                account->setRegistrationState(RegistrationState::ERROR_HOST);
+                break;
+            case PJSIP_SC_REQUEST_TIMEOUT:
+                account->setRegistrationState(RegistrationState::ERROR_HOST);
+                break;
+            case PJSIP_SC_SERVICE_UNAVAILABLE:
+                account->setRegistrationState(RegistrationState::ERROR_SERVICE_UNAVAILABLE);
+                break;
+            default:
+                account->setRegistrationState(RegistrationState::ERROR_GENERIC);
+        }
+    } else if (PJSIP_IS_STATUS_IN_CLASS(param->code, 200)) {
+
+        // Update auto registration flag
+        account->resetAutoRegistration();
+
+        if (param->expiration < 1) {
+            account->destroyRegistrationInfo();
+            /* Stop keep-alive timer if any. */
+            account->stopKeepAliveTimer();
+            DEBUG("Unregistration success");
+            account->setRegistrationState(RegistrationState::UNREGISTERED);
+        } else {
+            /* TODO Check and update SIP outbound status first, since the result
+             * will determine if we should update re-registration
+             */
+            // update_rfc5626_status(acc, param->rdata);
+
+            if (account->checkNATAddress(param, SIPVoIPLink::instance().getPool()))
+                WARN("Contact overwritten");
+
+            /* TODO Check and update Service-Route header */
+            if (account->hasServiceRoute())
+                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(account->getServiceRoute(), SIPVoIPLink::instance().getPool()));
+
+            // start the periodic registration request based on Expire header
+            // account determines itself if a keep alive is required
+            if (account->isKeepAliveEnabled())
+                account->startKeepAliveTimer();
+
+            account->setRegistrationState(RegistrationState::REGISTERED);
+        }
+    }
+
+    /* Check if we need to auto retry registration. Basically, registration
+     * failure codes triggering auto-retry are those of temporal failures
+     * considered to be recoverable in relatively short term.
+     */
+    switch (param->code) {
+        case PJSIP_SC_REQUEST_TIMEOUT:
+        case PJSIP_SC_INTERNAL_SERVER_ERROR:
+        case PJSIP_SC_BAD_GATEWAY:
+        case PJSIP_SC_SERVICE_UNAVAILABLE:
+        case PJSIP_SC_SERVER_TIMEOUT:
+            account->scheduleReregistration(SIPVoIPLink::instance().getEndpoint());
+            break;
+
+        default:
+            /* Global failure */
+            if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
+                account->scheduleReregistration(SIPVoIPLink::instance().getEndpoint());
+    }
+
+    const pj_str_t *description = pjsip_get_status_text(param->code);
+
+    if (param->code && description) {
+        std::string state(description->ptr, description->slen);
+
+        Manager::instance().getClient()->getConfigurationManager()->sipRegistrationStateChanged(accountID, state, param->code);
+        std::pair<int, std::string> details(param->code, state);
+        // TODO: there id a race condition for this ressource when closing the application
+        account->setRegistrationStateDetailed(details);
+        account->setRegistrationExpire(param->expiration);
+    }
+#undef FAILURE_MESSAGE
+}
+
 SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     : Account(accountID)
     , auto_rereg_()
@@ -334,7 +444,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    call->inv->mod_data[SIPVoIPLink::instance().getMod()->id] = call.get();
+    call->inv->mod_data[link_.getMod()->id] = call.get();
 
     pjsip_tx_data *tdata;
 
@@ -356,7 +466,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     call->setConnectionState(Call::PROGRESSING);
     call->setState(Call::ACTIVE);
-    SIPVoIPLink::instance().addSipCall(call);
+    link_.addSipCall(call);
 
     return true;
 }
@@ -1099,7 +1209,7 @@ void SIPAccount::registerVoIPLink()
         return;
 
     try {
-        link_.sendRegister(*this);
+        sendRegister();
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
@@ -1122,7 +1232,7 @@ void SIPAccount::unregisterVoIPLink(std::function<void(bool)> released_cb)
     }
 
     try {
-        link_.sendUnregister(*this, released_cb);
+        sendUnregister(released_cb);
     } catch (const VoipLinkException &e) {
         ERROR("SIPAccount::unregisterVoIPLink %s", e.what());
         setTransport();
@@ -1176,6 +1286,133 @@ void SIPAccount::stopKeepAliveTimer()
         keepAliveTimerActive_ = false;
         link_.cancelKeepAliveTimer(keepAliveTimer_);
     }
+}
+
+void
+SIPAccount::sendRegister()
+{
+    if (not isEnabled()) {
+        WARN("Account must be enabled to register, ignoring");
+        return;
+    }
+
+    try {
+        link_.sipTransport->createSipTransport(*this);
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
+        throw VoipLinkException("Could not create or acquire SIP transport");
+    }
+
+    setRegister(true);
+    setRegistrationState(RegistrationState::TRYING);
+
+    pjsip_regc *regc = nullptr;
+    if (pjsip_regc_create(link_.getEndpoint(), (void *) this, &registration_cb, &regc) != PJ_SUCCESS)
+        throw VoipLinkException("UserAgent: Unable to create regc structure.");
+
+    std::string srvUri(getServerUri());
+    pj_str_t pjSrv = pj_str((char*) srvUri.c_str());
+
+    // Generate the FROM header
+    std::string from(getFromUri());
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
+
+    // Get the received header
+    std::string received(getReceivedParameter());
+
+    // Get the contact header
+    const pj_str_t pjContact(getContactHeader());
+
+    if (transport_) {
+        if (not getPublishedSameasLocal() or (not received.empty() and received != getPublishedAddress())) {
+            pjsip_host_port *via = getViaAddr();
+            DEBUG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
+
+            if (pjsip_regc_set_via_sent_by(regc, via, transport_) != PJ_SUCCESS)
+                throw VoipLinkException("Unable to set the \"sent-by\" field");
+        } else if (isStunEnabled()) {
+            if (pjsip_regc_set_via_sent_by(regc, getViaAddr(), transport_) != PJ_SUCCESS)
+                throw VoipLinkException("Unable to set the \"sent-by\" field");
+        }
+    }
+
+    pj_status_t status;
+
+    //DEBUG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
+    if ((status = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, getRegistrationExpire())) != PJ_SUCCESS) {
+        sip_utils::sip_strerror(status);
+        throw VoipLinkException("Unable to initialize account registration structure");
+    }
+
+    if (hasServiceRoute())
+        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(getServiceRoute(), link_.getPool()));
+
+    pjsip_regc_set_credentials(regc, getCredentialCount(), getCredInfo());
+
+    pjsip_hdr hdr_list;
+    pj_list_init(&hdr_list);
+    std::string useragent(getUserAgentName());
+    pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
+    const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
+
+    pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(link_.getPool(), &STR_USER_AGENT, &pJuseragent);
+    pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
+    pjsip_regc_add_headers(regc, &hdr_list);
+    pjsip_tx_data *tdata;
+
+    if (pjsip_regc_register(regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
+        throw VoipLinkException("Unable to initialize transaction data for account registration");
+
+    const pjsip_tpselector tp_sel = SipTransport::getTransportSelector(transport_);
+    if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
+        throw VoipLinkException("Unable to set transport");
+
+    // pjsip_regc_send increment the transport ref count by one,
+    if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
+        sip_utils::sip_strerror(status);
+        throw VoipLinkException("Unable to send account registration request");
+    }
+
+    setRegistrationInfo(regc);
+    link_.sipTransport->cleanupTransports();
+}
+
+void
+SIPAccount::sendUnregister(std::function<void(bool)> released_cb)
+{
+    // This may occurs if account failed to register and is in state INVALID
+    if (!isRegistered()) {
+        setRegistrationState(RegistrationState::UNREGISTERED);
+        if (released_cb)
+            released_cb(true);
+        return;
+    }
+
+    // Make sure to cancel any ongoing timers before unregister
+    stopKeepAliveTimer();
+
+    pjsip_regc *regc = getRegistrationInfo();
+    if (!regc)
+        throw VoipLinkException("Registration structure is NULL");
+
+    pjsip_tx_data *tdata = nullptr;
+    if (pjsip_regc_unregister(regc, &tdata) != PJ_SUCCESS)
+        throw VoipLinkException("Unable to unregister sip account");
+
+    pj_status_t status;
+    if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
+        sip_utils::sip_strerror(status);
+        throw VoipLinkException("Unable to send request to unregister sip account");
+    }
+
+    setRegister(false);
+
+    // remove the transport from the account
+    auto transport = getTransport();
+    setTransport();
+    link_.sipTransport->cleanupTransports();
+    if (released_cb)
+        link_.sipTransport->waitForReleased(transport, released_cb);
 }
 
 #if HAVE_TLS
@@ -2005,7 +2242,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
     if (contactRewriteMethod_ == 1) {
         /* Unregister current contact */
-        link_.sendUnregister(*this);
+        sendUnregister();
         destroyRegistrationInfo();
     }
 
@@ -2050,7 +2287,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
         /*  Unregister old contact */
         try {
-            link_.sendUnregister(*this);
+            sendUnregister();
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
         }
@@ -2059,7 +2296,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
         /*  Perform new registration */
         try {
-            link_.sendRegister(*this);
+            sendRegister();
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
         }
@@ -2088,7 +2325,7 @@ SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
     /* Start re-registration */
     acc->auto_rereg_.attempt_cnt++;
     try {
-        acc->link_.sendRegister(*acc);
+        acc->sendRegister();
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         acc->scheduleReregistration(endpt);
