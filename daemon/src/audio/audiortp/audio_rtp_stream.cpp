@@ -344,13 +344,11 @@ size_t AudioRtpStream::processDataEncode()
             return 0;
         }
 
-        const auto frameSize = out->frames();
         const auto codecFrameSize = codec->getFrameSize();
-        if (codecFrameSize > frameSize) {
+        if (codecFrameSize > out->frames()) {
             // PCM too small (underflow), add zero padding to avoid reading past
             // end of buffer when encoding, for every channel
-            for (auto &c : out->getData())
-                c.resize(codecFrameSize, 0);
+            out->resize(codecFrameSize);
         }
 
         size_t encoded = codec->encode(out->getData(), encodedData_.data(), encodedData_.size());
