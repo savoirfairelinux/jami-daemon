@@ -50,9 +50,7 @@ std::mutex IAXVoIPLink::iaxCallMapMutex_;
 std::mutex IAXVoIPLink::mutexIAX = {};
 
 IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
-    regSession_(NULL)
-    , nextRefreshStamp_(0)
-    , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
+    rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
     , resampledData_(RAW_BUFFER_SIZE * 4, AudioFormat::MONO)
     , encodedData_()
     , resampler_(44100)
@@ -66,7 +64,6 @@ IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
 
 IAXVoIPLink::~IAXVoIPLink()
 {
-    regSession_ = NULL; // shall not delete it // XXX: but why?
     terminate();
 
     // This is our last account
@@ -138,7 +135,7 @@ IAXVoIPLink::getEvent()
 
         if (not id.empty()) {
             iaxHandleCallEvent(event, id);
-        } else if (event->session && event->session == regSession_) {
+        } else if (event->session && event->session == account_.getRegSession()) {
             // This is a registration session, deal with it
             iaxHandleRegReply(event);
         } else {
@@ -153,8 +150,7 @@ IAXVoIPLink::getEvent()
         }
     }
 
-    if (nextRefreshStamp_ and nextRefreshStamp_ < time(NULL))
-        sendRegister(account_);
+    account_.checkRegister();
 
     sendAudioFromMic();
 
@@ -248,68 +244,6 @@ IAXVoIPLink::getIAXCall(const std::string& id)
 }
 
 void
-IAXVoIPLink::sendRegister(Account& a)
-{
-    IAXAccount& account = static_cast<IAXAccount&>(a);
-    if (not account.isEnabled()) {
-        WARN("Account must be enabled to register, ignoring");
-        return;
-    }
-
-    if (account.getHostname().empty())
-        throw VoipLinkException("Account hostname is empty");
-
-    if (account.getUsername().empty())
-        throw VoipLinkException("Account username is empty");
-
-    std::lock_guard<std::mutex> lock(mutexIAX);
-
-    if (regSession_)
-        iax_destroy(regSession_);
-
-    regSession_ = iax_session_new();
-
-    if (regSession_) {
-        iax_register(regSession_, account.getHostname().data(), account.getUsername().data(), account.getPassword().data(), 120);
-        nextRefreshStamp_ = time(NULL) + 10;
-        account.setRegistrationState(RegistrationState::TRYING);
-    }
-}
-
-void
-IAXVoIPLink::sendUnregister(Account& a, std::function<void(bool)> cb)
-{
-    if (regSession_) {
-        std::lock_guard<std::mutex> lock(mutexIAX);
-        iax_destroy(regSession_);
-        regSession_ = NULL;
-    }
-
-    nextRefreshStamp_ = 0;
-
-    static_cast<IAXAccount&>(a).setRegistrationState(RegistrationState::UNREGISTERED);
-
-    if (cb)
-        cb(true);
-}
-
-std::shared_ptr<Call>
-IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id)
-{
-    auto call = std::make_shared<IAXCall>(id, Call::OUTGOING, account_id, this);
-
-    call->setPeerNumber(toUrl);
-    call->initRecFilename(toUrl);
-
-    iaxOutgoingInvite(call.get());
-    call->setConnectionState(Call::PROGRESSING);
-    call->setState(Call::ACTIVE);
-    addIaxCall(call);
-
-    return call;
-}
-
-void
 IAXVoIPLink::clearIaxCallMap()
 {
     std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
@@ -335,7 +269,6 @@ IAXVoIPLink::removeIaxCall(const std::string& id)
     DEBUG("Removing call %s from list", id.c_str());
     iaxCallMap_.erase(id);
 }
-
 
 std::shared_ptr<IAXCall>
 IAXVoIPLink::getIaxCall(const std::string& id)
@@ -407,7 +340,6 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, const std::string &id)
     Manager::instance().startAudioDriverStream();
     Manager::instance().getMainBuffer().flushAllBuffers();
 }
-
 
 void
 IAXVoIPLink::handleBusy(const std::string &id)
@@ -560,21 +492,17 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
 /**
  * Handle the registration process
  */
-void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
+void
+IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 {
     if (event->etype != IAX_EVENT_REGREJ && event->etype != IAX_EVENT_REGACK)
         return;
 
-    {
-        std::lock_guard<std::mutex> lock(mutexIAX);
-        iax_destroy(regSession_);
-        regSession_ = NULL;
-    }
-
+    account_.destroyRegSession();
     account_.setRegistrationState((event->etype == IAX_EVENT_REGREJ) ? RegistrationState::ERROR_AUTH : RegistrationState::REGISTERED);
 
     if (event->etype == IAX_EVENT_REGACK)
-        nextRefreshStamp_ = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
+        account_.setNextRefreshStamp(time(NULL) + (event->ies.refresh ? event->ies.refresh : 60));
 }
 
 void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
