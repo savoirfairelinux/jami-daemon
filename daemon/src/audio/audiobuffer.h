@@ -187,7 +187,10 @@ class AudioBuffer {
         }
 
         /**
-         * Resize the buffer to make it able to hold sample_num multichannel samples.
+         * Resize the buffer to make it able to hold sample_num
+         * multichannel samples.
+         * If the requested size is larger than the current buffer size,
+         * the new samples are set to zero.
          */
         void resize(size_t sample_num);
 
