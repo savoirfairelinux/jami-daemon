@@ -221,7 +221,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (tdata->msg->body == NULL)
         pjsip_tx_data_dec_ref(tdata);
     else
-        pjsip_dlg_send_request(inv->dlg, tdata, SIPVoIPLink::instance().getMod()->id, NULL);
+        pjsip_dlg_send_request(inv->dlg, tdata, SIPVoIPLink::instance().getModId(), NULL);
 }
 
 void
@@ -327,7 +327,7 @@ SIPCall::hangup(int reason)
     auto& siplink = SIPVoIPLink::instance();
 
     // Make sure user data is NULL in callbacks
-    inv->mod_data[siplink.getMod()->id] = NULL;
+    inv->mod_data[siplink.getModId()] = NULL;
 
     // Stop all RTP streams
     stopRtpIfCurrent();
@@ -354,7 +354,7 @@ SIPCall::refuse()
     auto& siplink = SIPVoIPLink::instance();
 
     // Make sure the pointer is NULL in callbacks
-    inv->mod_data[siplink.getMod()->id] = NULL;
+    inv->mod_data[siplink.getModId()] = NULL;
 
     siplink.removeSipCall(getCallId());
 }
@@ -362,7 +362,7 @@ SIPCall::refuse()
 static void
 transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 {
-    auto mod_ua_id = SIPVoIPLink::instance().getMod()->id;
+    auto mod_ua_id = SIPVoIPLink::instance().getModId();
 
     switch (pjsip_evsub_get_state(sub)) {
         case PJSIP_EVSUB_STATE_ACCEPTED:
@@ -457,7 +457,7 @@ SIPCall::transferCommon(pj_str_t *dst)
      * because after this function, we can no find the cooresponding
      * voiplink from the call any more. But the voiplink is useful!
      */
-    pjsip_evsub_set_mod_data(sub, siplink.getMod()->id, this);
+    pjsip_evsub_set_mod_data(sub, siplink.getModId(), this);
 
     /*
      * Create REFER request.
@@ -657,7 +657,7 @@ SIPCall::peerHungup()
     auto& siplink = SIPVoIPLink::instance();
 
     // Make sure user data is NULL in callbacks
-    inv->mod_data[siplink.getMod()->id ] = NULL;
+    inv->mod_data[siplink.getModId()] = NULL;
 
     // Stop all RTP streams
     stopRtpIfCurrent();
