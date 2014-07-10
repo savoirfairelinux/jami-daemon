@@ -66,6 +66,10 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
 
     g_option_context_free(context);
 
+    /* Override theme since we don't have appropriate icons for a dark them (yet) */
+	GtkSettings *gtk_settings = gtk_settings_get_default ();
+	g_object_set(G_OBJECT(gtk_settings), "gtk-application-prefer-dark-theme", FALSE, NULL);
+
     if (!sflphone_init(&error, client)) {
         g_warning("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(NULL,
