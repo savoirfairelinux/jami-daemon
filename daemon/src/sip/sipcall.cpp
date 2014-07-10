@@ -176,18 +176,17 @@ SIPCall::createHistoryEntry() const
 /**
  * Send a reINVITE inside an active dialog to modify its state
  * Local SDP session should be modified before calling this method
- * @param sip call
  */
 
-static int
-SIPSessionReinvite(SIPCall *call)
+int
+SIPCall::SIPSessionReinvite()
 {
-    pjmedia_sdp_session *local_sdp = call->getLocalSDP()->getLocalSdpSession();
+    pjmedia_sdp_session *local_sdp = getLocalSDP()->getLocalSdpSession();
     pjsip_tx_data *tdata;
 
-    if (local_sdp and call->inv and call->inv->pool_prov and
-            pjsip_inv_reinvite(call->inv, NULL, local_sdp, &tdata) == PJ_SUCCESS)
-        return pjsip_inv_send_msg(call->inv, tdata);
+    if (local_sdp and inv and inv->pool_prov and
+            pjsip_inv_reinvite(inv, NULL, local_sdp, &tdata) == PJ_SUCCESS)
+        return pjsip_inv_send_msg(inv, tdata);
 
     return !PJ_SUCCESS;
 }
@@ -551,7 +550,7 @@ SIPCall::onhold()
     local_sdp_->addAttributeToLocalVideoMedia("inactive");
 #endif
 
-    if (SIPSessionReinvite(this) != PJ_SUCCESS)
+    if (SIPSessionReinvite() != PJ_SUCCESS)
         WARN("Reinvite failed");
 }
 
@@ -637,7 +636,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
     local_sdp_->addAttributeToLocalVideoMedia("sendrecv");
 #endif
 
-    if (SIPSessionReinvite(this) != PJ_SUCCESS) {
+    if (SIPSessionReinvite() != PJ_SUCCESS) {
         WARN("Reinvite failed, resuming hold");
         onhold();
     }
