@@ -878,10 +878,6 @@ class ManagerImpl {
          */
         std::string path_;
 
-        std::map<std::string, bool> IPToIPMap_;
-
-        bool isIPToIP(const std::string& callID) const;
-
         /**
          * Load the account map from configuration
          */
@@ -897,8 +893,6 @@ class ManagerImpl {
         MainBuffer mainBuffer_;
 
     public:
-
-        void setIPToIPForCall(const std::string& callID, bool IPToIP);
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in
