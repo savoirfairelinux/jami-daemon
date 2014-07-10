@@ -444,7 +444,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    call->inv->mod_data[link_.getMod()->id] = call.get();
+    call->inv->mod_data[link_.getModId()] = call.get();
 
     pjsip_tx_data *tdata;
 
