@@ -246,7 +246,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    auto account = Manager::instance().getSipAccount(account_id);
+    SIPAccount* account = nullptr;
+    const auto iter = SIPVoIPLink::instance().getAccounts().find(account_id);
+    if (iter != SIPVoIPLink::instance().getAccounts().end())
+        account = static_cast<SIPAccount *>(iter->second);
 
     if (!account) {
         ERROR("Could not find account %s", account_id.c_str());
