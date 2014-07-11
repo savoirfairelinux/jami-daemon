@@ -102,7 +102,7 @@ static unsigned char *crypto_file_read(const char *path, size_t *out_len)
             goto out;
         }
         *out_len += bytes_read;
-    } while ((bytes_read > 0) && (*out_len <= file_size));
+    } while ((bytes_read > 0) && (*out_len < file_size));
 
 out:
     close(fd);
