@@ -248,7 +248,7 @@
                 The conference ID
               </tp:docstring>
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="infos" direction="out">
               <tp:docstring>
                 A map containing the ID of the conferences
@@ -377,7 +377,7 @@
                 The call ID.
               </tp:docstring>
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="infos" direction="out" tp:type="String_String_Map">
               <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
                 <p>A map containing the call details: </p>
@@ -776,7 +776,7 @@
                 <p>Signal sent adter a RTCP report has been received and computed.</p>
             </tp:docstring>
             <arg type="s" name="callID" />
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringInt"/>
             <arg type="a{si}" name="report" direction="out" tp:type="String_Integer_Map">
               <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
                 <p>A map containing RTCP stats: </p>
