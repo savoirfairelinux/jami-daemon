@@ -7,7 +7,7 @@
         </tp:docstring>
 
         <method name="getAccountTemplate" tp:name-for-bindings="getAccountTemplate">
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
             </arg>
         </method>
@@ -21,7 +21,7 @@
                     The account ID
                 </tp:docstring>
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
                 <tp:docstring>
                     The available keys / parameters are:
@@ -77,7 +77,7 @@
                 <tp:rationale>Account settings are written to the configuration file when sflphone properly quits.</tp:rationale>
                 <tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
             </tp:docstring>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="s" name="accountID" direction="in">
             </arg>
             <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
@@ -87,7 +87,7 @@
         <method name="setCredentials" tp:name-for-bindings="setCredentials">
             <arg type="s" name="accountID" direction="in">
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
             </arg>
         </method>
@@ -96,7 +96,7 @@
             <tp:docstring>
             Get configuration settings of the IP2IP_PROFILE. They are sligthly different from account settings since no VoIP accounts are involved.
             </tp:docstring>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
             <tp:docstring>
             Available parameters are:
@@ -131,7 +131,7 @@
        <method name="getCredentials" tp:name-for-bindings="getCredentials">
            <arg type="s" name="accountID" direction="in">
            </arg>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
            <arg type="aa{ss}" name="credentialInformation" direction="out">
            </arg>
        </method>
@@ -142,7 +142,7 @@
                <tp:rationale>If no details are specified, the default parameters are used.</tp:rationale>
                <tp:rationale>The core tries to register the account as soon it is created.</tp:rationale>
            </tp:docstring>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="in"  tp:type="String_String_Map">
                <tp:docstring>
                     The new account settings
@@ -182,7 +182,7 @@
            <tp:docstring>
                 Get a list of all created accounts, as stored by the core.
            </tp:docstring>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
                <tp:docstring>
                    A list of account IDs
@@ -350,7 +350,7 @@
        <!-- Codecs-related methods -->
 
        <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
            <arg type="ai" name="list" direction="out">
            </arg>
        </method>
@@ -358,13 +358,13 @@
        <method name="getAudioCodecDetails" tp:name-for-bindings="getAudioCodecDetails">
            <arg type="i" name="payload" direction="in">
            </arg>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="details" direction="out">
            </arg>
        </method>
 
        <method name="getActiveAudioCodecList" tp:name-for-bindings="getActiveAudioCodecList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
            <arg type="s" name="accountID" direction="in">
            </arg>
            <arg type="ai" name="list" direction="out">
@@ -372,7 +372,7 @@
        </method>
 
        <method name="setActiveAudioCodecList" tp:name-for-bindings="setActiveAudioCodecList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="VectorString"/>
            <arg type="as" name="list" direction="in">
            </arg>
            <arg type="s" name="accountID" direction="in">
@@ -382,7 +382,7 @@
        <!-- Audio devices methods -->
 
        <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
            </arg>
        </method>
@@ -393,7 +393,7 @@
        </method>
 
        <method name="getAudioOutputDeviceList" tp:name-for-bindings="getAudioOutputDeviceList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
            </arg>
        </method>
@@ -414,14 +414,14 @@
        </method>
 
        <method name="getAudioInputDeviceList" tp:name-for-bindings="getAudioInputDeviceList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
            </arg>
        </method>
 
 
        <method name="getCurrentAudioDevicesIndex" tp:name-for-bindings="getCurrentAudioDevicesIndex">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
            </arg>
        </method>
@@ -447,7 +447,7 @@
 
        <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
            <tp:added version="1.1.1"/>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <tp:docstring>
                 Get a map [Path,Filename] of available ringtone. Note, set the ringtone with the complete path
            </tp:docstring>
@@ -496,19 +496,19 @@
 
        <!-- Hook configuration -->
        <method name="getHookSettings" tp:name-for-bindings="getHookSettings">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="settings" direction="out">
            </arg>
        </method>
 
        <method name="setHookSettings" tp:name-for-bindings="setHookSettings">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
            <arg type="a{ss}" name="settings" direction="in">
            </arg>
        </method>
 
        <method name="getHistory" tp:name-for-bindings="getHistory">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
            <!-- Return a List of type Dict<string, string> >...a List of Dicts -->
            <arg type="aa{ss}" name="entries" direction="out"/>
        </method>
@@ -569,25 +569,25 @@
 
        <!-- TLS Methods -->
        <method name="getSupportedTlsMethod" tp:name-for-bindings="getSupportedTlsMethod">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
            </arg>
        </method>
 
        <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+                   <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="out">
            </arg>
        </method>
 
        <method name="getTlsSettings" tp:name-for-bindings="getTlsSettings">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="out">
            </arg>
        </method>
 
        <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="in">
            </arg>
        </method>
@@ -600,25 +600,25 @@
        </method>
 
        <method name="getAllIpInterface" tp:name-for-bindings="getAllIpInterface">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
            </arg>
        </method>
 
        <method name="getAllIpInterfaceByName" tp:name-for-bindings="getAllIpInterfaceByName">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
            </arg>
        </method>
 
        <method name="getShortcuts" tp:name-for-bindings="getShortcuts">
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+                   <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="shortcutsMap" direction="out">
            </arg>
        </method>
 
        <method name="setShortcuts" tp:name-for-bindings="setShortcuts">
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+                   <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
            <arg type="a{ss}" name="shortcutsMap" direction="in">
            </arg>
        </method>

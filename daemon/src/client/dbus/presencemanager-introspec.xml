@@ -65,12 +65,12 @@
                 New clients connecting to existing daemon need to be aware of active
                 subscriptions.
             </tp:rationale>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="VectorMapStringString">
                 While there is more status than "Online" or "Offline", only those
             </annotation>
             <arg type="s" name="accountID" direction="in">
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="credentialInformation" direction="out" tp:type="String_String_Map">
                 <tp:docstring>
                    List of hashes map with the following key-value pairs:
@@ -85,13 +85,13 @@
             <tp:rationale>Calling "subscribeClient" in a loop is too slow</tp:rationale>
             <arg type="s" name="accountID" direction="in">
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorString"/>
             <arg type="as" name="uriList" direction="in">
                 <tp:docstring>
                    A list of SIP URIs
                </tp:docstring>
            </arg>
-            <!--TODO<annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <!--TODO<annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
             <arg type="as" name="invalidUris" direction="out">
                 <tp:docstring>
                    List of invalid URIs. An URI must be a valid SIP URI. Clients should purge
