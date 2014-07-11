@@ -41,6 +41,7 @@
 #include "contacts/calltree.h"
 #include "dbus.h"
 #include <unistd.h>
+#include <stdint.h>
 
 gint get_state_callstruct(gconstpointer a, gconstpointer b)
 {
@@ -193,12 +194,40 @@ gchar* get_peer_info(const gchar* const number, const gchar* const name)
 
 gchar* get_call_duration(callable_obj_t *obj)
 {
-    long duration = difftime(obj->_time_stop, obj->_time_start);
+    char time_str[32];
+    format_duration(obj, obj->_time_stop, time_str, sizeof time_str);
 
-    if (duration < 0)
-        duration = 0;
+    return g_strdup_printf("<small>Duration:</small> %s", time_str);
+}
 
-    return g_strdup_printf("<small>Duration:</small> %.2ld:%.2ld" , duration/60 , duration%60);
+void
+format_duration(callable_obj_t *obj, time_t end, char *timestr, size_t timestr_sz)
+{
+    const gdouble diff = difftime(end, obj->_time_start);
+    guint32 seconds = CLAMP(diff, 0.0f, UINT32_MAX);
+
+    enum {HOURS_PER_DAY = 24, DAYS_PER_YEAR = 365, SECONDS_PER_HOUR = 3600,
+          SECONDS_PER_DAY = SECONDS_PER_HOUR * HOURS_PER_DAY,
+          SECONDS_PER_YEAR = DAYS_PER_YEAR * SECONDS_PER_DAY};
+
+    const guint32 years =  seconds / SECONDS_PER_YEAR;
+    const guint32 days =  (seconds / SECONDS_PER_DAY) % DAYS_PER_YEAR;
+    const guint32 hours = (seconds / SECONDS_PER_HOUR) % HOURS_PER_DAY;
+    const guint32 minutes = (seconds / 60) % 60;
+    seconds %= 60;
+
+    if (years)
+        g_snprintf(timestr, timestr_sz, _("%uy %ud %02uh %02umn %02us"),
+                years, days, hours, minutes, seconds);
+    else if (days)
+        g_snprintf(timestr, timestr_sz, _("%ud %02uh %02umn %02us"),
+                days, hours, minutes, seconds);
+    else if (hours)
+        g_snprintf(timestr, timestr_sz, "%u:%02u:%02u",
+                hours, minutes, seconds);
+    else
+        g_snprintf(timestr, timestr_sz, "%02u:%02u",
+                minutes, seconds);
 }
 
 static
