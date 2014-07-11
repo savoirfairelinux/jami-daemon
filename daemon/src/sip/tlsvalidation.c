@@ -293,13 +293,16 @@ int containsPrivateKey(const char *pemPath)
     err = gnutls_global_init();
     if (err != GNUTLS_E_SUCCESS) {
         ERROR("Could not init GnuTLS - %s", gnutls_strerror(err));
-        goto out;
+        free(dt.data);
+        return res;
     }
 
     err = gnutls_x509_privkey_init(&key);
     if (err != GNUTLS_E_SUCCESS) {
         ERROR("Could not init key - %s", gnutls_strerror(err));
-        goto out;
+        free(dt.data);
+        gnutls_global_deinit();
+        return res;
     }
 
     err = gnutls_x509_privkey_import(key, &dt, GNUTLS_X509_FMT_PEM);
