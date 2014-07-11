@@ -271,7 +271,7 @@ done
 
 
 # Archive source tarball for Debian maintainer
-. `dirname $0`/build_tarball.sh ${SOFTWARE_VERSION}
+. ${WORKING_DIR}/build_tarball.sh ${SOFTWARE_VERSION}
 
 
 # close file descriptor
