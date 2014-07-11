@@ -181,6 +181,7 @@ static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
     err = gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, data, out_len);
     if (err != GNUTLS_E_SUCCESS) {
         free(data);
+        data = NULL;
         *out_len = 0;
         ERROR("Certificate %s could not be exported - %s.\n",
               path, gnutls_strerror(err));
