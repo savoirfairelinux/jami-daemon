@@ -1981,7 +1981,7 @@ void ManagerImpl::setIsAlwaysRecording(bool isAlwaysRec)
 bool ManagerImpl::toggleRecordingCall(const std::string& id)
 {
     std::shared_ptr<Call> call;
-    Recordable* rec;
+    Recordable* rec = nullptr;
 
     ConferenceMap::const_iterator it(conferenceMap_.find(id));
     if (it == conferenceMap_.end()) {
