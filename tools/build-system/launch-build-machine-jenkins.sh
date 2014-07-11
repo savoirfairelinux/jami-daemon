@@ -12,6 +12,30 @@
 
 set -x
 
+#Check dependencies
+
+# Download the KDE client release script
+if  ! command -v curl ; then
+   echo Please install curl
+   exit 1
+fi
+# Merge the KDE translation files
+if  ! command -v ruby ; then
+   echo Please install ruby
+   exit 1
+fi
+# Download the KDE client and scripts
+if  ! command -v git ; then
+   echo Please install git
+   exit 1
+fi
+# Fetch KDE translations, the gnome client use bzr
+if  ! command -v svn ; then
+   echo Please install svn
+   exit 1
+fi
+
+
 . `dirname $0`/setenv.sh
 
 IS_RELEASE=
@@ -31,6 +55,7 @@ echo "    /***********************\\"
 echo "    | SFLPhone build system |"
 echo "    \\***********************/"
 echo
+
 
 for PARAMETER in $*
 do
