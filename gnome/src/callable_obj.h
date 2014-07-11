@@ -197,6 +197,8 @@ gchar* get_call_duration(callable_obj_t *obj);
 
 gchar* get_formatted_start_timestamp(time_t);
 
+void format_duration(callable_obj_t *obj, time_t end, char *timestr, size_t timestr_sz);
+
 gboolean call_was_outgoing(callable_obj_t * obj);
 
 void restore_call(const gchar *id);
