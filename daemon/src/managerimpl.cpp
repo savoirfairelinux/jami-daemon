@@ -1596,6 +1596,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     client_.getCallManager()->callStateChanged(call_id, "HUNGUP");
 
+    checkAudio();
     removeWaitingCall(call_id);
     if (not incomingCallsWaiting())
         stopTone();

@@ -220,8 +220,6 @@ IAXCall::peerHungup()
     Manager::instance().getMainBuffer().unBindAll(getCallId());
 
     session = nullptr;
-
-    link_->removeIaxCall(getCallId());
 }
 
 void

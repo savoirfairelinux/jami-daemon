@@ -651,8 +651,8 @@ SIPCall::peerHungup()
     if (pjsip_inv_end_session(inv, 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
-    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
-        return;
+    if (auto ret = pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+        sip_utils::sip_strerror(ret);
 
     auto& siplink = SIPVoIPLink::instance();
 
@@ -661,8 +661,6 @@ SIPCall::peerHungup()
 
     // Stop all RTP streams
     stopRtpIfCurrent();
-
-    siplink.removeSipCall(getCallId());
 }
 
 void
@@ -698,12 +696,8 @@ void
 SIPCall::onClosed()
 {
     const std::string id(getCallId());
-
-    stopRtpIfCurrent();
-
     Manager::instance().peerHungupCall(id);
     SIPVoIPLink::instance().removeSipCall(id);
-    Manager::instance().checkAudio();
 }
 
 void
