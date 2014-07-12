@@ -1022,9 +1022,9 @@ class ManagerImpl {
         AccountMap getAllAccounts() const;
 
         /**
-          * To handle the persistent history
-          * TODO: move this to ConfigurationManager
-          */
+         * To handle the persistent history
+         * TODO: move this to ConfigurationManager
+         */
         sfl::History history_;
         bool finished_;
 };
