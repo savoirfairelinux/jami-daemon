@@ -93,14 +93,18 @@ VideoManager::setDefaultDevice(const std::string &name)
 
 std::map<std::string, std::string>
 VideoManager::getSettings(const std::string& name) {
-    return videoDeviceMonitor_.getSettings(name);
+    videoDeviceMonitor_.getSettings(name).print(); // DEBUG
+    return videoDeviceMonitor_.getSettings(name).toMap();
 }
 
 void
 VideoManager::applySettings(const std::string& name,
         const std::map<std::string, std::string>& settings)
 {
-    videoDeviceMonitor_.applySettings(name, settings);
+    sfl_video::VideoSettings vs;
+    vs.fromMap(settings);
+    vs.print(); // DEBUG
+    videoDeviceMonitor_.applySettings(name, vs);
 }
 
 void
