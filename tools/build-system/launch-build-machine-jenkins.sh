@@ -48,7 +48,8 @@ SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
 VERSION_NUMBER="1.3.0"
 
-LAUNCHPAD_PACKAGES=("sflphone-daemon" "sflphone-kde" "sflphone-gnome" "sflphone-plugins" "sflphone-daemon-video" "sflphone-gnome-video")
+#LAUNCHPAD_PACKAGES=("sflphone-daemon" "sflphone-kde" "sflphone-gnome" "sflphone-plugins" "sflphone-daemon-video" "sflphone-gnome-video")
+LAUNCHPAD_PACKAGES=("sflphone-gnome-video")
 
 echo
 echo "    /***********************\\"
