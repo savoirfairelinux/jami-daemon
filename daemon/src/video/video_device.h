@@ -39,8 +39,20 @@
 namespace sfl_video {
 
 typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
-typedef std::map<std::string, std::string> VideoSettings;
-// FIXME move VideoSettings in video_base since video_decoder (and encoder?) may use it.
+
+struct VideoSettings {
+    std::string name = "";
+    std::string node = "";
+    std::string channel = "";
+    unsigned channel_num = 0;
+    unsigned width = 0;
+    unsigned height = 0;
+    unsigned rate = 0;
+
+    std::map<std::string, std::string> toMap() const;
+    void fromMap(const std::map<std::string, std::string>& map);
+    void print() const;
+};
 
 class VideoDeviceImpl;
 
@@ -76,21 +88,16 @@ public:
     VideoCapabilities getCapabilities() const;
 
     /*
-     * Get the string/string map of settings for the device.
-     * The keys are:
-     *   - "channel"
-     *   - "size"
-     *   - "rate"
-     *   - TODO ...
+     * Get the video settings for the device.
      */
     VideoSettings getSettings() const;
 
     /*
-     * Setup the device with the preferences listed in the "settings" map.
-     * The expected map should be similar to the result of getSettings().
+     * Setup the device with the preferences described in the settings object.
+     * The expected object should be similar to the result of getSettings().
      *
-     * If a key is missing, a valid default value is choosen. Thus, calling
-     * this function with an empty map will reset the device to default.
+     * If a value is empty, a valid default is chosen. Thus, calling this
+     * function with an empty object will reset the device to default.
      */
     void applySettings(VideoSettings settings);
 
