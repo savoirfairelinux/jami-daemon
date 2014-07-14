@@ -39,7 +39,7 @@
 #ifdef SFL_VIDEO
 #include "client/videomanager.h"
 
-static sfl_video::VideoSettings
+static std::map<std::string, std::string>
 getSettings()
 {
     const auto videoman = Manager::instance().getClient()->getVideoManager();
