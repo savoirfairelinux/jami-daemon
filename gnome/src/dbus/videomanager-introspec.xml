@@ -5,14 +5,14 @@
 
         <method name="getDeviceList" tp:name-for-bindings="getDeviceList">
             <tp:docstring>Returns a list of the detected v4l2 devices</tp:docstring>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
             <arg type="as" name="list" direction="out">
             </arg>
         </method>
 
         <method name="getCapabilities" tp:name-for-bindings="getCapabilities">
            <tp:docstring>Returns a map of map of array of strings, containing the capabilities (channel, size, rate) of a device</tp:docstring>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringMapStringVectorString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringMapStringVectorString"/>
             <arg type="s" name="name" direction="in">
             </arg>
             <arg type="a{sa{sas}}" name="cap" direction="out">
@@ -21,7 +21,7 @@
 
         <method name="getSettings" tp:name-for-bindings="getSettings">
            <tp:docstring>Returns a map of settings for the given device name</tp:docstring>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="s" name="device" direction="in">
             </arg>
             <arg type="a{ss}" name="map" direction="out">
@@ -32,7 +32,7 @@
             <tp:docstring>Set the preferred settings for a given device name</tp:docstring>
             <arg type="s" name="name" direction="in">
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="a{ss}" name="settings" direction="in">
             </arg>
         </method>
@@ -53,7 +53,7 @@
             <tp:docstring>Gets the hashtable describing all the codecs and their parameters for a given account</tp:docstring>
             <arg type="s" name="accountID" direction="in">
             </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="details" direction="out">
             </arg>
         </method>
@@ -62,7 +62,7 @@
            <tp:docstring>Sets a vector of hashtables describing codecs and their parameters for a given account, one hashtable per codec</tp:docstring>
            <arg type="s" name="accountID" direction="in">
            </arg>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
            <arg type="aa{ss}" name="details" direction="in">
            </arg>
         </method>
@@ -92,7 +92,7 @@
         </method>
 
         <method name="hasCameraStarted" tp:name-for-bindings="hasCameraStarted">
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="Bool"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
             <arg type="b" name="started" direction="out">
             <tp:docstring>Returns true if the camera has already started, false otherwise</tp:docstring>
             </arg>
