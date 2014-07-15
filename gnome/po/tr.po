@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-07-04 21:28-0400\n"
+"POT-Creation-Date: 2014-07-14 21:27-0400\n"
 "PO-Revision-Date: 2013-10-02 16:32+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2014-07-06 05:40+0000\n"
-"X-Generator: Launchpad (build 17086)\n"
+"X-Launchpad-Export-Date: 2014-07-15 04:54+0000\n"
+"X-Generator: Launchpad (build 17111)\n"
 "Language: tr\n"
 
 #: ../src/accountlist.c:183
@@ -111,243 +111,247 @@ msgstr ""
 msgid "%x at %R"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:242
+#: ../src/config/accountconfigdialog.c:251
 msgid "_Auto-answer calls"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:271
+#: ../src/config/accountconfigdialog.c:260
+msgid "_Use custom user-agent"
+msgstr ""
+
+#: ../src/config/accountconfigdialog.c:289
 msgid "Account Parameters"
 msgstr "Hesap Parametreleri"
 
 #. alias field
-#: ../src/config/accountconfigdialog.c:280 ../src/config/assistant.c:292
+#: ../src/config/accountconfigdialog.c:298 ../src/config/assistant.c:292
 #: ../src/config/assistant.c:361
 msgid "_Alias"
 msgstr "T_akma isim"
 
-#: ../src/config/accountconfigdialog.c:295
+#: ../src/config/accountconfigdialog.c:313
 msgid "_Protocol"
 msgstr "_Protokol"
 
 #. Should never come here, add debug message.
-#: ../src/config/accountconfigdialog.c:312
+#: ../src/config/accountconfigdialog.c:330
 msgid "Unknown"
 msgstr "Bilinmiyor"
 
 #. server field
-#: ../src/config/accountconfigdialog.c:327 ../src/config/assistant.c:301
+#: ../src/config/accountconfigdialog.c:345 ../src/config/assistant.c:301
 #: ../src/config/assistant.c:370
 msgid "_Host name"
 msgstr "Sunucu adı"
 
 #. username field
-#: ../src/config/accountconfigdialog.c:337 ../src/config/assistant.c:309
+#: ../src/config/accountconfigdialog.c:355 ../src/config/assistant.c:309
 #: ../src/config/assistant.c:378
 msgid "_User name"
 msgstr "_Kullanıcı adı"
 
 #. password field
-#: ../src/config/accountconfigdialog.c:358 ../src/config/assistant.c:319
+#: ../src/config/accountconfigdialog.c:376 ../src/config/assistant.c:319
 #: ../src/config/assistant.c:387
 msgid "_Password"
 msgstr "_Parola"
 
-#: ../src/config/accountconfigdialog.c:377 ../src/config/assistant.c:328
+#: ../src/config/accountconfigdialog.c:395 ../src/config/assistant.c:328
 #: ../src/config/assistant.c:396
 msgid "Show password"
 msgstr "Parolayı göster"
 
-#: ../src/config/accountconfigdialog.c:382
+#: ../src/config/accountconfigdialog.c:400
 msgid "_Proxy"
 msgstr "_Proxy"
 
 #. voicemail number field
-#: ../src/config/accountconfigdialog.c:392 ../src/config/assistant.c:333
+#: ../src/config/accountconfigdialog.c:410 ../src/config/assistant.c:333
 #: ../src/config/assistant.c:401
 msgid "_Voicemail number"
 msgstr "Sesli posta numarası"
 
-#: ../src/config/accountconfigdialog.c:403
+#: ../src/config/accountconfigdialog.c:421
 msgid "_User-agent"
 msgstr "_User-agent"
 
-#: ../src/config/accountconfigdialog.c:429
+#: ../src/config/accountconfigdialog.c:453
 msgid "Presence notifications"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:438
+#: ../src/config/accountconfigdialog.c:462
 msgid "_Enable"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:512
+#: ../src/config/accountconfigdialog.c:536
 msgid "Authentication"
 msgstr "Kimlik Doğrulama"
 
-#: ../src/config/accountconfigdialog.c:513
+#: ../src/config/accountconfigdialog.c:537
 msgid "Secret"
 msgstr "Gizli"
 
-#: ../src/config/accountconfigdialog.c:766
+#: ../src/config/accountconfigdialog.c:790
 msgid "Credential"
 msgstr "Kimlik bilgileri"
 
-#: ../src/config/accountconfigdialog.c:798
+#: ../src/config/accountconfigdialog.c:822
 msgid "Authentication name"
 msgstr "Kimlik doğrulama ismi"
 
-#: ../src/config/accountconfigdialog.c:809
+#: ../src/config/accountconfigdialog.c:833
 msgid "Password"
 msgstr "Parola"
 
-#: ../src/config/accountconfigdialog.c:822
+#: ../src/config/accountconfigdialog.c:846
 #: ../src/config/accountlistconfigdialog.c:578
 msgid "Add"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:826
+#: ../src/config/accountconfigdialog.c:850
 #: ../src/config/accountlistconfigdialog.c:124
 #: ../src/config/accountlistconfigdialog.c:591 ../src/presencewindow.c:666
 #: ../src/presencewindow.c:690
 msgid "Remove"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:861
-#: ../src/config/accountconfigdialog.c:1607
+#: ../src/config/accountconfigdialog.c:885
+#: ../src/config/accountconfigdialog.c:1631
 msgid "Security"
 msgstr "Güvenlik"
 
-#: ../src/config/accountconfigdialog.c:870
+#: ../src/config/accountconfigdialog.c:894
 #: ../src/config/accountlistconfigdialog.c:583
 msgid "Edit"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:877
+#: ../src/config/accountconfigdialog.c:901
 msgid "Use TLS transport(sips)"
 msgstr "TLS naklini(sips) kullan"
 
 #. ZRTP subsection
-#: ../src/config/accountconfigdialog.c:885
+#: ../src/config/accountconfigdialog.c:909
 msgid "SRTP key exchange"
 msgstr "SRTP anahtar değişimi"
 
-#: ../src/config/accountconfigdialog.c:891
+#: ../src/config/accountconfigdialog.c:915
 msgid "Disabled"
 msgstr "Pasif"
 
-#: ../src/config/accountconfigdialog.c:893
+#: ../src/config/accountconfigdialog.c:917
 #: ../src/config/preferencesdialog.c:389
 msgid "Preferences"
 msgstr "Tercihler"
 
-#: ../src/config/accountconfigdialog.c:959
+#: ../src/config/accountconfigdialog.c:983
 msgid "Registration"
 msgstr "Kayıt"
 
-#: ../src/config/accountconfigdialog.c:963
+#: ../src/config/accountconfigdialog.c:987
 msgid "Registration expire"
 msgstr "Kayıt zaman aşımı"
 
-#: ../src/config/accountconfigdialog.c:986
+#: ../src/config/accountconfigdialog.c:1010
 msgid "Network Interface"
 msgstr "Ağ Arayüzü"
 
-#: ../src/config/accountconfigdialog.c:996
+#: ../src/config/accountconfigdialog.c:1020
 msgid "Local address"
 msgstr "Yerel adres"
 
 #. Local port widget
-#: ../src/config/accountconfigdialog.c:1029
+#: ../src/config/accountconfigdialog.c:1053
 msgid "Local port"
 msgstr "Yerel port"
 
-#: ../src/config/accountconfigdialog.c:1070
-#: ../src/config/accountconfigdialog.c:1102
+#: ../src/config/accountconfigdialog.c:1094
+#: ../src/config/accountconfigdialog.c:1126
 msgid "Published address"
 msgstr "Açık adres"
 
-#: ../src/config/accountconfigdialog.c:1074
+#: ../src/config/accountconfigdialog.c:1098
 msgid "Using STUN"
 msgstr "STUN kullanımı"
 
-#: ../src/config/accountconfigdialog.c:1078
+#: ../src/config/accountconfigdialog.c:1102
 msgid "STUN server URL"
 msgstr "STUN sunucu adresi"
 
-#: ../src/config/accountconfigdialog.c:1086
+#: ../src/config/accountconfigdialog.c:1110
 msgid "Same as local parameters"
 msgstr "Yerel parametrelerle aynı"
 
-#: ../src/config/accountconfigdialog.c:1090
+#: ../src/config/accountconfigdialog.c:1114
 msgid "Set published address and port:"
 msgstr "Yayındaki adres ve port ayarı:"
 
-#: ../src/config/accountconfigdialog.c:1111
+#: ../src/config/accountconfigdialog.c:1135
 msgid "Published port"
 msgstr "Yayındaki port"
 
-#: ../src/config/accountconfigdialog.c:1164
+#: ../src/config/accountconfigdialog.c:1188
 msgid "Min"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1165
+#: ../src/config/accountconfigdialog.c:1189
 msgid "Max"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1192
+#: ../src/config/accountconfigdialog.c:1216
 msgid "Audio RTP Port Range"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1198
+#: ../src/config/accountconfigdialog.c:1222
 msgid "Video RTP Port Range"
 msgstr ""
 
 #. Box for the audiocodecs
-#: ../src/config/accountconfigdialog.c:1241
-#: ../src/config/accountconfigdialog.c:1587
+#: ../src/config/accountconfigdialog.c:1265
+#: ../src/config/accountconfigdialog.c:1611
 #: ../src/config/preferencesdialog.c:439
 msgid "Audio"
 msgstr "Ses"
 
-#: ../src/config/accountconfigdialog.c:1253
+#: ../src/config/accountconfigdialog.c:1277
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../src/config/accountconfigdialog.c:1257
+#: ../src/config/accountconfigdialog.c:1281
 msgid "RTP"
 msgstr "RTP"
 
-#: ../src/config/accountconfigdialog.c:1263
+#: ../src/config/accountconfigdialog.c:1287
 msgid "SIP"
 msgstr "SIP"
 
-#: ../src/config/accountconfigdialog.c:1271
+#: ../src/config/accountconfigdialog.c:1295
 msgid "Ringtones"
 msgstr "Melodiler"
 
-#: ../src/config/accountconfigdialog.c:1274
+#: ../src/config/accountconfigdialog.c:1298
 msgid "Choose a ringtone"
 msgstr "Bir melodi seç"
 
-#: ../src/config/accountconfigdialog.c:1277
+#: ../src/config/accountconfigdialog.c:1301
 msgid "_Enable ringtones"
 msgstr "Melodiler aktif"
 
-#: ../src/config/accountconfigdialog.c:1295
+#: ../src/config/accountconfigdialog.c:1319
 msgid "Audio Files"
 msgstr "Ses Dosyaları"
 
 #. Box for the videocodecs
-#: ../src/config/accountconfigdialog.c:1326
-#: ../src/config/accountconfigdialog.c:1592
+#: ../src/config/accountconfigdialog.c:1350
+#: ../src/config/accountconfigdialog.c:1616
 #: ../src/config/preferencesdialog.c:445
 msgid "Video"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1334
+#: ../src/config/accountconfigdialog.c:1358
 msgid "_Enable video"
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1350
+#: ../src/config/accountconfigdialog.c:1374
 #, c-format
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
@@ -355,21 +359,21 @@ msgid ""
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
 
-#: ../src/config/accountconfigdialog.c:1554
+#: ../src/config/accountconfigdialog.c:1578
 msgid "Account settings"
 msgstr "Hesap ayarları"
 
-#: ../src/config/accountconfigdialog.c:1582
+#: ../src/config/accountconfigdialog.c:1606
 msgid "Basic"
 msgstr "Basit"
 
-#: ../src/config/accountconfigdialog.c:1598
+#: ../src/config/accountconfigdialog.c:1622
 #: ../src/config/addressbook-config.c:313
 #: ../src/config/preferencesdialog.c:433 ../src/config/shortcuts-config.c:117
 msgid "General"
 msgstr "Genel"
 
-#: ../src/config/accountconfigdialog.c:1603
+#: ../src/config/accountconfigdialog.c:1627
 msgid "Advanced"
 msgstr "Gelişmiş"
 
@@ -1074,7 +1078,7 @@ msgid "Do you really want to delete the group %s"
 msgstr ""
 
 #. popup
-#: ../src/presencewindow.c:755 ../src/uimanager.c:1224
+#: ../src/presencewindow.c:755 ../src/uimanager.c:1246
 msgid "Add new buddy"
 msgstr ""
 
@@ -1083,7 +1087,7 @@ msgid "Add group"
 msgstr ""
 
 #. Call Menu
-#: ../src/presencewindow.c:802 ../src/uimanager.c:1054
+#: ../src/presencewindow.c:802 ../src/uimanager.c:1076
 msgid "Call"
 msgstr "Çağrı"
 
@@ -1110,7 +1114,7 @@ msgid ""
 "Run '%s --help' to see a full list of available command line options.\n"
 msgstr ""
 
-#: ../src/sflphone_client.c:74
+#: ../src/sflphone_client.c:79
 #, c-format
 msgid ""
 "Unable to initialize.\n"
@@ -1118,7 +1122,7 @@ msgid ""
 "Error: %s"
 msgstr ""
 
-#: ../src/sflphone_client.c:77
+#: ../src/sflphone_client.c:82
 msgid "SFLphone Error"
 msgstr "SFLphone Hatası"
 
@@ -1219,8 +1223,8 @@ msgstr "Mikrofon ses ayarı"
 msgid "_Show main window"
 msgstr "Ana pencereyi _Göster"
 
-#: ../src/statusicon.c:139 ../src/uimanager.c:1064 ../src/uimanager.c:1417
-#: ../src/uimanager.c:1502
+#: ../src/statusicon.c:139 ../src/uimanager.c:1086 ../src/uimanager.c:1439
+#: ../src/uimanager.c:1524
 msgid "_Hang up"
 msgstr ""
 
@@ -1228,272 +1232,272 @@ msgstr ""
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../src/uimanager.c:435
+#: ../src/uimanager.c:457
 msgid "No address book selected"
 msgstr "Hiçbir adres defteri seçilmedi"
 
-#: ../src/uimanager.c:455 ../src/uimanager.c:1141
+#: ../src/uimanager.c:477 ../src/uimanager.c:1163
 msgid "Address book"
 msgstr "Adres Defteri"
 
-#: ../src/uimanager.c:487
+#: ../src/uimanager.c:509
 #, c-format
 msgid "Voicemail(%i)"
 msgstr "Sesli posta(%i)"
 
-#: ../src/uimanager.c:580
+#: ../src/uimanager.c:602
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone SIP ve IAX2 protokolleri ile uyumlu bir VoIP istemcisidir."
 
-#: ../src/uimanager.c:583
+#: ../src/uimanager.c:605
 msgid "About SFLphone"
 msgstr "SFLphone Hakkında"
 
-#: ../src/uimanager.c:696
+#: ../src/uimanager.c:718
 msgid "_Cancel"
 msgstr ""
 
-#: ../src/uimanager.c:697
+#: ../src/uimanager.c:719
 msgid "_Open"
 msgstr ""
 
 #. Add the special X11 device
-#: ../src/uimanager.c:715 ../src/uimanager.c:1494
+#: ../src/uimanager.c:737 ../src/uimanager.c:1516
 msgid "Screen"
 msgstr ""
 
-#: ../src/uimanager.c:717 ../src/uimanager.c:1495
+#: ../src/uimanager.c:739 ../src/uimanager.c:1517
 msgid "Choose file..."
 msgstr ""
 
-#: ../src/uimanager.c:1005 ../src/uimanager.c:1088
+#: ../src/uimanager.c:1027 ../src/uimanager.c:1110
 msgid "Voicemail"
 msgstr "Sesli mesaj"
 
-#: ../src/uimanager.c:1056 ../src/uimanager.c:1609
+#: ../src/uimanager.c:1078 ../src/uimanager.c:1631
 msgid "_New call"
 msgstr "_Yeni çağrı"
 
-#: ../src/uimanager.c:1057
+#: ../src/uimanager.c:1079
 msgid "Place a new call"
 msgstr "Yeni bir arama yap"
 
-#: ../src/uimanager.c:1060 ../src/uimanager.c:1405
+#: ../src/uimanager.c:1082 ../src/uimanager.c:1427
 msgid "_Pick up"
 msgstr "Ceva_pla"
 
-#: ../src/uimanager.c:1061
+#: ../src/uimanager.c:1083
 msgid "Answer the call"
 msgstr "Aramayı cevapla"
 
-#: ../src/uimanager.c:1065
+#: ../src/uimanager.c:1087
 msgid "Finish the call"
 msgstr "Aramayı sonlandır"
 
-#: ../src/uimanager.c:1068
+#: ../src/uimanager.c:1090
 msgid "O_n hold"
 msgstr "Beklemede"
 
-#: ../src/uimanager.c:1069
+#: ../src/uimanager.c:1091
 msgid "Place the call on hold"
 msgstr "Aramayı beklemeye al"
 
-#: ../src/uimanager.c:1072
+#: ../src/uimanager.c:1094
 msgid "O_ff hold"
 msgstr ""
 
-#: ../src/uimanager.c:1073
+#: ../src/uimanager.c:1095
 msgid "Place the call off hold"
 msgstr ""
 
-#: ../src/uimanager.c:1076 ../src/uimanager.c:1459
+#: ../src/uimanager.c:1098 ../src/uimanager.c:1481
 msgid "Send _message"
 msgstr "İleti yolla"
 
-#: ../src/uimanager.c:1077
+#: ../src/uimanager.c:1099
 msgid "Send message"
 msgstr "İleti yolla"
 
-#: ../src/uimanager.c:1080 ../src/uimanager.c:1081
+#: ../src/uimanager.c:1102 ../src/uimanager.c:1103
 msgid "Share screen"
 msgstr ""
 
-#: ../src/uimanager.c:1084
+#: ../src/uimanager.c:1106
 msgid "Configuration _Assistant"
 msgstr ""
 
-#: ../src/uimanager.c:1085
+#: ../src/uimanager.c:1107
 msgid "Run the configuration assistant"
 msgstr "Yapılandırma sihirbazını çalıştır"
 
-#: ../src/uimanager.c:1089
+#: ../src/uimanager.c:1111
 msgid "Call your voicemail"
 msgstr ""
 
-#: ../src/uimanager.c:1092
+#: ../src/uimanager.c:1114
 msgid "_Close"
 msgstr "_Kapat"
 
-#: ../src/uimanager.c:1093
+#: ../src/uimanager.c:1115
 msgid "Minimize to system tray"
 msgstr "Sistem çubuğuna küçült"
 
-#: ../src/uimanager.c:1096
+#: ../src/uimanager.c:1118
 msgid "_Quit"
 msgstr "_Çık"
 
-#: ../src/uimanager.c:1097
+#: ../src/uimanager.c:1119
 msgid "Quit the program"
 msgstr "Programdan çık"
 
 #. Edit Menu
-#: ../src/uimanager.c:1101
+#: ../src/uimanager.c:1123
 msgid "_Edit"
 msgstr "_Düzenle"
 
-#: ../src/uimanager.c:1103 ../src/uimanager.c:1384
+#: ../src/uimanager.c:1125 ../src/uimanager.c:1406
 msgid "_Copy"
 msgstr "_Kopyala"
 
-#: ../src/uimanager.c:1104
+#: ../src/uimanager.c:1126
 msgid "Copy the selection"
 msgstr "Seçimi kopyala"
 
-#: ../src/uimanager.c:1107 ../src/uimanager.c:1392
+#: ../src/uimanager.c:1129 ../src/uimanager.c:1414
 msgid "_Paste"
 msgstr "_Yapıştır"
 
-#: ../src/uimanager.c:1108
+#: ../src/uimanager.c:1130
 msgid "Paste the clipboard"
 msgstr "Panoya yapıştır"
 
-#: ../src/uimanager.c:1111
+#: ../src/uimanager.c:1133
 msgid "Clear _history"
 msgstr "_Geçmişi sil"
 
-#: ../src/uimanager.c:1112
+#: ../src/uimanager.c:1134
 msgid "Clear the call history"
 msgstr "Arama geçmişini sil"
 
-#: ../src/uimanager.c:1115
+#: ../src/uimanager.c:1137
 msgid "_Accounts"
 msgstr "_Hesaplar"
 
-#: ../src/uimanager.c:1116
+#: ../src/uimanager.c:1138
 msgid "Edit your accounts"
 msgstr "Hesaplarınızı düzenleyin"
 
-#: ../src/uimanager.c:1119
+#: ../src/uimanager.c:1141
 msgid "_Preferences"
 msgstr "_Tercihler"
 
-#: ../src/uimanager.c:1120
+#: ../src/uimanager.c:1142
 msgid "Change your preferences"
 msgstr "Tercihlerinizi değiştirin"
 
 #. View Menu
-#: ../src/uimanager.c:1124
+#: ../src/uimanager.c:1146
 msgid "_View"
 msgstr "_Göster"
 
 #. Help menu
-#: ../src/uimanager.c:1127
+#: ../src/uimanager.c:1149
 msgid "_Help"
 msgstr "_Yardım"
 
-#: ../src/uimanager.c:1128
+#: ../src/uimanager.c:1150
 msgid "Contents"
 msgstr "İçerikler"
 
-#: ../src/uimanager.c:1129
+#: ../src/uimanager.c:1151
 msgid "Open the manual"
 msgstr "Kılavuzu aç"
 
-#: ../src/uimanager.c:1131
+#: ../src/uimanager.c:1153
 msgid "About this application"
 msgstr "Bu uygulama hakkında"
 
-#: ../src/uimanager.c:1135
+#: ../src/uimanager.c:1157
 msgid "_Transfer"
 msgstr "_Transfer"
 
-#: ../src/uimanager.c:1135
+#: ../src/uimanager.c:1157
 msgid "Transfer the call"
 msgstr "Aramayı aktar"
 
-#: ../src/uimanager.c:1136 ../src/uimanager.c:1439
+#: ../src/uimanager.c:1158 ../src/uimanager.c:1461
 msgid "_Record"
 msgstr "_Kayıt"
 
-#: ../src/uimanager.c:1136
+#: ../src/uimanager.c:1158
 msgid "Record the current conversation"
 msgstr "Şuanki görüşmeyi kaydet"
 
-#: ../src/uimanager.c:1137
+#: ../src/uimanager.c:1159
 msgid "_Show toolbar"
 msgstr "_Araç çubuğunu göster"
 
-#: ../src/uimanager.c:1137
+#: ../src/uimanager.c:1159
 msgid "Show the toolbar"
 msgstr "Araç çubuğunu göster"
 
-#: ../src/uimanager.c:1138
+#: ../src/uimanager.c:1160
 msgid "_Dialpad"
 msgstr "_Dialpad"
 
-#: ../src/uimanager.c:1138
+#: ../src/uimanager.c:1160
 msgid "Show the dialpad"
 msgstr ""
 
-#: ../src/uimanager.c:1139
+#: ../src/uimanager.c:1161
 msgid "_Volume controls"
 msgstr "_Ses ayarları"
 
-#: ../src/uimanager.c:1139
+#: ../src/uimanager.c:1161
 msgid "Show the volume controls"
 msgstr "_Ses ayarlarını göster"
 
-#: ../src/uimanager.c:1140
+#: ../src/uimanager.c:1162
 msgid "_History"
 msgstr "_Geçmiş"
 
-#: ../src/uimanager.c:1140
+#: ../src/uimanager.c:1162
 msgid "Call history"
 msgstr ""
 
-#: ../src/uimanager.c:1141
+#: ../src/uimanager.c:1163
 msgid "_Address book"
 msgstr "_Adres defteri"
 
-#: ../src/uimanager.c:1143
+#: ../src/uimanager.c:1165
 msgid "_Buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1143
+#: ../src/uimanager.c:1165
 msgid "Display the buddy list"
 msgstr ""
 
-#: ../src/uimanager.c:1428 ../src/uimanager.c:1511
+#: ../src/uimanager.c:1450 ../src/uimanager.c:1533
 msgid "On _Hold"
 msgstr ""
 
 #. Add a video sources menu
-#: ../src/uimanager.c:1479
+#: ../src/uimanager.c:1501
 msgid "Video sources"
 msgstr ""
 
-#: ../src/uimanager.c:1548
+#: ../src/uimanager.c:1570
 msgid "_Call back"
 msgstr "_Tekrar ara"
 
-#: ../src/uimanager.c:1558 ../src/uimanager.c:1617
+#: ../src/uimanager.c:1580 ../src/uimanager.c:1639
 msgid "Follow status"
 msgstr ""
 
-#: ../src/uimanager.c:1678
+#: ../src/uimanager.c:1700
 msgid "Edit phone number"
 msgstr "Telefon numarasını düzelt"
 
-#: ../src/uimanager.c:1689
+#: ../src/uimanager.c:1711
 msgid "Edit the phone number before making a call"
 msgstr "Arama yapmadan önce telefon numarasını düzelt"
