@@ -119,7 +119,7 @@ msgstr "_Décroche automatiquement l'appel"
 
 #: ../src/config/accountconfigdialog.c:260
 msgid "_Use custom user-agent"
-msgstr ""
+msgstr "_Utiliser un agent utilisateur personnalisé"
 
 #: ../src/config/accountconfigdialog.c:289
 msgid "Account Parameters"
@@ -351,7 +351,7 @@ msgstr "Vidéo"
 
 #: ../src/config/accountconfigdialog.c:1358
 msgid "_Enable video"
-msgstr ""
+msgstr "_Activer la vidéo"
 
 #: ../src/config/accountconfigdialog.c:1374
 #, c-format
