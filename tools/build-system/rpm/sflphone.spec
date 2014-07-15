@@ -1,6 +1,6 @@
 %bcond_with video
 Name:           sflphone
-Version:        1.3.0
+Version:        1.4.0
 %if 0%{?nightly}
 %define rel rc%{nightly}
 %define tarball %{name}-%{version}-rc%{nightly}
@@ -267,6 +267,9 @@ fi
 %endif
 
 %changelog
+* Tue Jul 15 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.0-1
+- Update to 1.4.0
+
 * Wed Jul 9 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.3.0-5
 - Drop uuid dependency
 
