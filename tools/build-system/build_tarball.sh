@@ -34,7 +34,8 @@ rm -rf $BUILDDIR
 rm -f *.tar.gz
 
 rm -rf lang/
-sed /^Version/s/[0-9].*/$SOFTWARE_VERSION/ tools/build-system/rpm/sflphone.spec > sflphone.spec
+# No dash in Version:
+sed /^Version/s/[0-9].*/${SOFTWARE_VERSION%%-*}/ tools/build-system/rpm/sflphone.spec > sflphone.spec
 rm -rf tools/
 #rm -rf kde/
 
