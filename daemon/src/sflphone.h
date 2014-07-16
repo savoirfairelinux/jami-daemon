@@ -38,6 +38,9 @@
 #include <string>
 #include <map>
 
+const char *
+sflph_version();
+
 /* presence events */
 #ifdef SFL_PRESENCE
 struct sflph_pres_ev_handlers

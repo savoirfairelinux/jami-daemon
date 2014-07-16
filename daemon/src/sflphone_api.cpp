@@ -83,6 +83,12 @@ namespace {
     struct sflph_ev_handlers _evHandlers;
 }
 
+const char *
+sflph_version()
+{
+    return PACKAGE_VERSION;
+}
+
 int sflph_init(struct sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 {
     // Ignore initialization if already done

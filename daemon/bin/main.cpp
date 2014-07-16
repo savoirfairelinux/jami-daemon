@@ -42,7 +42,7 @@ static std::unique_ptr<DBusClient> dbusClient;
 
 static void print_title()
 {
-	std::cout << "SFLphone Daemon " << VERSION <<
+	std::cout << "SFLphone Daemon " << sflph_version() <<
 		", by Savoir-Faire Linux 2004-2014" << std::endl <<
 		"http://www.sflphone.org/" << std::endl;
 }
