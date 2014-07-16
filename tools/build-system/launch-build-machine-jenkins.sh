@@ -131,11 +131,7 @@ fi
 cd ${REFERENCE_REPOSITORY}
 
 echo "Update reference sources"
-if [ ${IS_RELEASE} ]; then
-        git checkout . && git checkout -f release && git pull
-else
-        git checkout . && git checkout -f master && git pull
-fi
+git checkout . && git checkout -f master && git pull
 
 echo "Retrieve build info"
 # retrieve info we may need
@@ -143,8 +139,16 @@ if [ ${IS_KDE_CLIENT} ]; then
 	TAG_NAME_PREFIX="kde."
 	LAUNCHPAD_PACKAGES=( "sflphone-kde" )
 fi
+
+# Get the version
 CURRENT_RELEASE_TAG_NAME=`git describe --tags --abbrev=0`
 PREVIOUS_RELEASE_TAG_NAME=`git describe --tags --abbrev=0 ${CURRENT_RELEASE_TAG_NAME}^`
+
+# If release, checkout the latest tag
+if [ ${IS_RELEASE} ]; then
+  git checkout ${CURRENT_RELEASE_TAG_NAME}
+fi
+
 CURRENT_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${CURRENT_RELEASE_TAG_NAME} | tail -n 1`
 PREVIOUS_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
 CURRENT_COMMIT=`git show --pretty=format:"%H"  -s | tail -n 1`
