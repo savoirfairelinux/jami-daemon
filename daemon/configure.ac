@@ -80,10 +80,6 @@ AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], 
 LIBCRYPTO_MIN_VERSION=1.0
 PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYPTO=true, HAVE_LIBCRYPTO=false);
 
-AS_IF([test "x$CLANG" = "xyes"], [
-        PKG_CHECK_MODULES(UCOMMON, ucommon >= 6.0.0,, AC_MSG_ERROR([ucommon is found but is too old to support clang]))
-        ]);
-
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
 AC_ARG_WITH([alsa],
@@ -165,11 +161,6 @@ AS_IF([test "x$enable_video" != "xno"],
     ],
     [AM_CONDITIONAL(SFL_VIDEO, false)]);
 
-
-LIBCCGNU2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION},,
-                  [PKG_CHECK_MODULES([CCGNU2], [libccgnu2] >= ${LIBCCGNU2_MIN_VERSION},,
-                                     AC_MSG_ERROR([Missing commoncpp development files]))])
 
 LIBCCRTP_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
