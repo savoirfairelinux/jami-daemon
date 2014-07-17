@@ -228,7 +228,7 @@ void ManagerImpl::init(const std::string &config_file)
 }
 
 void ManagerImpl::setPath(const std::string &path) {
-	history_.setPath(path);
+    history_.setPath(path);
 }
 
 int ManagerImpl::run()
@@ -418,9 +418,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     }
 
     try {
-        VoIPLink *link = getAccountLink(call->getAccountId());
-        if (link)
-            link->answer(call.get());
+        call->getVoIPLink()->answer(call.get());
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
         result = false;
@@ -489,8 +487,7 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     try {
         if (auto call = getCallFromCallID(callId)) {
             history_.addCall(call.get(), preferences.getHistoryLimit());
-            auto link = getAccountLink(call->getAccountId());
-            link->hangup(callId, 0);
+            call->getVoIPLink()->hangup(callId, 0);
             checkAudio();
             saveHistory();
         }
@@ -586,7 +583,7 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
 
     try {
         if (auto call = getCallFromCallID(callId))
-            getAccountLink(call->getAccountId())->offhold(callId);
+            call->getVoIPLink()->offhold(callId);
         else
             result = false;
     } catch (const VoipLinkException &e) {
@@ -1611,7 +1608,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     if (auto call = getCallFromCallID(call_id)) {
         history_.addCall(call.get(), preferences.getHistoryLimit());
-        getAccountLink(call->getAccountId())->peerHungup(call_id);
+        call->getVoIPLink()->peerHungup(call_id);
         saveHistory();
     }
 

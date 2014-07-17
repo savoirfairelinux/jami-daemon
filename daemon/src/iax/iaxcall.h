@@ -34,6 +34,9 @@
 #include "call.h"
 #include "noncopyable.h"
 
+class VoIPLink;
+class IAXVoIPLink;
+
 /**
  * @file: iaxcall.h
  * @brief IAXCall are IAX implementation of a normal Call
@@ -47,7 +50,8 @@ class IAXCall : public Call {
          * @param id  The unique ID of the call
          * @param type  The type of the call
          */
-        IAXCall(const std::string& id, Call::CallType type, const std::string &account_id);
+        IAXCall(const std::string& id, Call::CallType type,
+                const std::string& account_id, IAXVoIPLink* link);
 
         /**
          * @return int  The bitwise list of supported formats
@@ -73,10 +77,15 @@ class IAXCall : public Call {
 
         int format;
         iax_session* session;
+
+        VoIPLink* getVoIPLink() const;
+
     private:
         void answer();
 
         NON_COPYABLE(IAXCall);
+
+        IAXVoIPLink* link_;
 };
 
 #endif
