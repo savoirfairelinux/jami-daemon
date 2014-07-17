@@ -78,8 +78,8 @@ class SIPCall : public Call {
         /**
          * Return the local SDP session
          */
-        Sdp* getLocalSDP() {
-            return local_sdp_;
+        Sdp& getLocalSDP() {
+            return *local_sdp_;
         }
 
         /**
@@ -202,7 +202,7 @@ class SIPCall : public Call {
         /**
          * The SDP session
          */
-        Sdp *local_sdp_;
+        Sdp* local_sdp_;
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE];
         pj_str_t contactHeader_;

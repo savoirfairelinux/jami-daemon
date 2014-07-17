@@ -384,14 +384,14 @@ SIPAccount::newOutgoingCall(const std::string& id,
     }
 
     // Building the local SDP offer
-    auto localSDP = call->getLocalSDP();
+    auto& localSDP = call->getLocalSDP();
 
     if (getPublishedSameasLocal())
-        localSDP->setPublishedIP(addrSdp);
+        localSDP.setPublishedIP(addrSdp);
     else
-        localSDP->setPublishedIP(getPublishedAddress());
+        localSDP.setPublishedIP(getPublishedAddress());
 
-    const bool created = localSDP->createOffer(getActiveAudioCodecs(), getActiveVideoCodecs());
+    const bool created = localSDP.createOffer(getActiveAudioCodecs(), getActiveVideoCodecs());
 
     if (not created or not SIPStartCall(call))
         throw VoipLinkException("Could not send outgoing INVITE request for new call");
@@ -429,7 +429,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 
-    if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
+    if (pjsip_inv_create_uac(dialog, call->getLocalSDP().getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
         ERROR("Unable to create invite session for user agent client");
         return false;
     }

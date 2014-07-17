@@ -141,7 +141,7 @@ SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
     if (getLocalAudioPort() == 0) {
         const unsigned callLocalAudioPort = account.generateAudioPort();
         setLocalAudioPort(callLocalAudioPort);
-        getLocalSDP()->setLocalPublishedAudioPort(callLocalAudioPort);
+        local_sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
     }
 
     setLocalIp(localIP);
@@ -154,7 +154,7 @@ SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
         assert(getLocalAudioPort() != callLocalVideoPort);
 
         setLocalVideoPort(callLocalVideoPort);
-        getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
+        local_sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
     }
 #endif
 }
@@ -181,7 +181,7 @@ SIPCall::createHistoryEntry() const
 int
 SIPCall::SIPSessionReinvite()
 {
-    pjmedia_sdp_session *local_sdp = getLocalSDP()->getLocalSdpSession();
+    pjmedia_sdp_session *local_sdp = local_sdp_->getLocalSdpSession();
     pjsip_tx_data *tdata;
 
     if (local_sdp and inv and inv->pool_prov and
@@ -238,8 +238,8 @@ SIPCall::updateSDPFromSTUN()
 
         account.setPublishedAddress(stunPorts[0]);
         // published IP MUST be updated first, since RTCP depends on it
-        getLocalSDP()->setPublishedIP(account.getPublishedAddress());
-        getLocalSDP()->updatePorts(stunPorts);
+        local_sdp_->setPublishedIP(account.getPublishedAddress());
+        local_sdp_->updatePorts(stunPorts);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }
@@ -537,9 +537,6 @@ SIPCall::onhold()
     videortp_.stop();
 #endif
 
-    if (!local_sdp_)
-        throw SdpException("Could not find sdp session");
-
     local_sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
     local_sdp_->removeAttributeFromLocalAudioMedia("sendonly");
     local_sdp_->addAttributeToLocalAudioMedia("sendonly");
@@ -582,9 +579,6 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
 {
     if (not setState(Call::ACTIVE))
         return;
-
-    if (local_sdp_ == NULL)
-        throw SdpException("Could not find sdp session");
 
     std::vector<sfl::AudioCodec*> sessionMedia(local_sdp_->getSessionAudioMedia());
 
