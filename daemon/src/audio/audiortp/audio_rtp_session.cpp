@@ -259,10 +259,10 @@ void AudioRtpSession::updateDestinationIpAddress()
 #endif
     ) DEBUG("Did not remove previous destination");
 
-    IpAddr remote = {call_.getLocalSDP()->getRemoteIP()};
-    remote.setPort(call_.getLocalSDP()->getRemoteAudioPort());
+    IpAddr remote = {call_.getLocalSDP().getRemoteIP()};
+    remote.setPort(call_.getLocalSDP().getRemoteAudioPort());
     if (!remote) {
-        WARN("Target IP address (%s) is not correct!", call_.getLocalSDP()->getRemoteIP().c_str());
+        WARN("Target IP address (%s) is not correct!", call_.getLocalSDP().getRemoteIP().c_str());
         return;
     }
     remoteIp_ = remote;

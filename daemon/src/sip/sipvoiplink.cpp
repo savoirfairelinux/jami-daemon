@@ -310,7 +310,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->setDisplayName(displayName);
     call->initRecFilename(peerNumber);
     call->setCallMediaLocal(addrToUse);
-    call->getLocalSDP()->setPublishedIP(addrSdp);
+    call->getLocalSDP().setPublishedIP(addrSdp);
     call->getAudioRtp().initConfig();
 
     try {
@@ -355,7 +355,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->getLocalSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -376,7 +376,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
+    pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP().getLocalSdpSession(), 0, &call->inv);
 
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         ERROR("Could not set transport for dialog");
@@ -952,11 +952,12 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
         return;
 
     auto& account = call->getSIPAccount();
+    auto& localSDP = call->getLocalSDP();
 
-    call->getLocalSDP()->receiveOffer(offer, account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
-    call->getLocalSDP()->startNegotiation();
+    localSDP.receiveOffer(offer, account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
+    localSDP.startNegotiation();
 
-    pjsip_inv_set_sdp_answer(call->inv, call->getLocalSDP()->getLocalSdpSession());
+    pjsip_inv_set_sdp_answer(call->inv, localSDP.getLocalSdpSession());
 }
 
 static void
@@ -979,12 +980,12 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     call->setCallMediaLocal(address);
 
-    Sdp *localSDP = call->getLocalSDP();
-    localSDP->setPublishedIP(address);
-    const bool created = localSDP->createOffer(account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
+    auto& localSDP = call->getLocalSDP();
+    localSDP.setPublishedIP(address);
+    const bool created = localSDP.createOffer(account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
 
     if (created)
-        *p_offer = localSDP->getLocalSdpSession();
+        *p_offer = localSDP.getLocalSdpSession();
 }
 
 // This callback is called after SDP offer/answer session has completed.
@@ -1020,12 +1021,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 
     // Retreive SDP session for this call
-    Sdp *sdpSession = call->getLocalSDP();
-
-    if (!sdpSession) {
-        ERROR("No SDP session");
-        return;
-    }
+    auto& sdpSession = call->getLocalSDP();
 
     // Get active session sessions
     const pjmedia_sdp_session *remoteSDP = 0;
@@ -1069,11 +1065,11 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     DEBUG("Local active SDP Session:\n%s", buffer);
 
     // Set active SDP sessions
-    sdpSession->setActiveLocalSdpSession(local_sdp);
-    sdpSession->setActiveRemoteSdpSession(remoteSDP);
+    sdpSession.setActiveLocalSdpSession(local_sdp);
+    sdpSession.setActiveRemoteSdpSession(remoteSDP);
 
     // Update internal field for
-    sdpSession->setMediaTransportInfoFromRemoteSdp();
+    sdpSession.setMediaTransportInfoFromRemoteSdp();
 
     try {
         call->getAudioRtp().updateDestinationIpAddress();
@@ -1081,19 +1077,19 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         ERROR("%s", e.what());
     }
 
-    call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
+    call->getAudioRtp().setDtmfPayloadType(sdpSession.getTelephoneEventType());
 #ifdef SFL_VIDEO
-    call->getVideoRtp().updateSDP(*call->getLocalSDP());
-    call->getVideoRtp().updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
-    auto localPort = call->getLocalSDP()->getLocalVideoPort();
+    call->getVideoRtp().updateSDP(sdpSession);
+    call->getVideoRtp().updateDestination(call->getLocalSDP().getRemoteIP(), sdpSession.getRemoteVideoPort());
+    auto localPort = sdpSession.getLocalVideoPort();
     if (!localPort)
-        localPort = call->getLocalSDP()->getRemoteVideoPort();
+        localPort = sdpSession.getRemoteVideoPort();
     call->getVideoRtp().start(localPort);
 #endif
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
-    call->getLocalSDP()->getRemoteSdpCryptoFromOffer(remoteSDP, crypto_offer);
+    call->getLocalSDP().getRemoteSdpCryptoFromOffer(remoteSDP, crypto_offer);
 
 #if HAVE_SDES
     bool nego_success = false;
@@ -1141,7 +1137,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
 #endif // HAVE_SDES
 
-    std::vector<sfl::AudioCodec*> sessionMedia(sdpSession->getSessionAudioMedia());
+    std::vector<sfl::AudioCodec*> sessionMedia(sdpSession.getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
         WARN("Session media is empty");
