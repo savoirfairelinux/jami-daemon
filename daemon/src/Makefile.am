@@ -53,8 +53,6 @@ libsflphone_la_LIBADD = \
 	./history/libhistory.la $(SFL_VIDEO_LIBS) $(IM_LIB)
 
 libsflphone_la_LDFLAGS = \
-		@CCGNU2_LIBS@ \
-		@CCEXT2_LIBS@ \
 		@ZRTPCPP_LIBS@ \
 		$(PJSIP_LIBS) \
 		@CCRTP_LIBS@ \
@@ -66,7 +64,6 @@ libsflphone_la_LDFLAGS = \
 		@DBUSCPP_LIBS@
 
 libsflphone_la_CFLAGS = \
-		@CCGNU2_CFLAGS@ \
 		@ZRTPCPP_CFLAGS@ \
 		$(PJSIP_CFLAGS) \
 		@CCRTP_CFLAGS@ \
