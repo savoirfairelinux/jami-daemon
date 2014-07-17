@@ -330,27 +330,6 @@ IAXVoIPLink::answer(Call *call)
     Manager::instance().getMainBuffer().flushAllBuffers();
 }
 
-void
-IAXVoIPLink::hangup(const std::string& id, int reason UNUSED)
-{
-    Manager::instance().getMainBuffer().unBindAll(id);
-
-    {
-        std::lock_guard<std::mutex> lock(iaxCallMapMutex_);
-        auto call = getIAXCall(id);
-        if (!call)
-            throw VoipLinkException("Could not find call");
-
-        {
-            std::lock_guard<std::mutex> lock(mutexIAX);
-            iax_hangup(call->session, (char*) "Dumped Call");
-        }
-        call->session = NULL;
-    }
-
-    removeIaxCall(id);
-}
-
 
 void
 IAXVoIPLink::peerHungup(const std::string& id)

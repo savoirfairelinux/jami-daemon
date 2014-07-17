@@ -117,6 +117,8 @@ class SIPCall : public Call {
 
         VoIPLink* getVoIPLink() const;
 
+        void hangup(int reason);
+
     private:
 
         // override of Call::createHistoryEntry

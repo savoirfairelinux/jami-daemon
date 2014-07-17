@@ -132,3 +132,15 @@ void IAXCall::answer()
 VoIPLink*
 IAXCall::getVoIPLink() const
 { return link_; }
+
+void
+IAXCall::hangup(int reason UNUSED)
+{
+    Manager::instance().getMainBuffer().unBindAll(getCallId());
+
+    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+    iax_hangup(session, (char*) "Dumped Call");
+    session = nullptr;
+
+    link_->removeIaxCall(getCallId());
+}

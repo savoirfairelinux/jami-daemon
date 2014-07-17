@@ -1060,64 +1060,6 @@ stopRtpIfCurrent(const std::string &id, SIPCall &call)
 }
 
 void
-SIPVoIPLink::hangup(const std::string& id, int reason)
-{
-    auto call = getSipCall(id);
-    if (!call)
-        return;
-
-    std::string account_id(call->getAccountId());
-    SIPAccount *account = Manager::instance().getSipAccount(account_id);
-
-    if (account == NULL)
-        throw VoipLinkException("Could not find account for this call");
-
-    pjsip_inv_session *inv = call->inv;
-
-    if (inv == NULL)
-        throw VoipLinkException("No invite session for this call");
-
-    pjsip_route_hdr *route = inv->dlg->route_set.next;
-
-    while (route and route != &inv->dlg->route_set) {
-        char buf[1024];
-        int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
-
-        if (printed >= 0) {
-            buf[printed] = '\0';
-            DEBUG("Route header %s", buf);
-        }
-
-        route = route->next;
-    }
-
-    pjsip_tx_data *tdata = NULL;
-
-    const int status = reason ? reason :
-                       inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
-                       PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
-                       inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE :
-                       0;
-
-    // User hangup current call. Notify peer
-    if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
-        return;
-
-    // contactStr must stay in scope as long as tdata
-    const pj_str_t contactStr(account->getContactHeader());
-    sip_utils::addContactHeader(&contactStr, tdata);
-
-    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
-        return;
-
-    // Make sure user data is NULL in callbacks
-    inv->mod_data[mod_ua_.id] = NULL;
-
-    stopRtpIfCurrent(id, *call);
-    removeSipCall(id);
-}
-
-void
 SIPVoIPLink::peerHungup(const std::string& id)
 {
     auto call = getSipCall(id);
@@ -1806,9 +1748,9 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
         WARN("Could not negotiate offer");
         const std::string callID(call->getCallId());
-        SIPVoIPLink::instance().hangup(callID, reason);
-        // call is now a dangling pointer after calling hangup
-        call = 0;
+        call->hangup(reason);
+        // This will probably invoke call's destructor
+        call = nullptr;
         Manager::instance().callFailure(callID);
         return;
     }

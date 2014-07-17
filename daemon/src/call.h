@@ -239,6 +239,12 @@ class Call : public Recordable {
 
         virtual VoIPLink* getVoIPLink() const = 0;
 
+        /**
+         * Hang up the call
+         * @param reason
+         */
+        virtual void hangup(int reason) = 0;
+
     private:
         bool validTransition(CallState newState);
 

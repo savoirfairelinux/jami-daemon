@@ -100,12 +100,6 @@ class VoIPLink {
         virtual void answer(Call *c) = 0;
 
         /**
-         * Hang up a call
-         * @param id The call identifier
-         */
-        virtual void hangup(const std::string &id, int reason) = 0;
-
-        /**
         * Peer Hung up a call
         * @param id The call identifier
         */
