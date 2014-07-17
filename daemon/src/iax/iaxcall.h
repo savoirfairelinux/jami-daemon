@@ -80,6 +80,8 @@ class IAXCall : public Call {
 
         VoIPLink* getVoIPLink() const;
 
+        void hangup(int reason);
+
     private:
         void answer();
 

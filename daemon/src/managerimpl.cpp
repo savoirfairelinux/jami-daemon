@@ -487,7 +487,7 @@ bool ManagerImpl::hangupCall(const std::string& callId)
     try {
         if (auto call = getCallFromCallID(callId)) {
             history_.addCall(call.get(), preferences.getHistoryLimit());
-            call->getVoIPLink()->hangup(callId, 0);
+            call->hangup(0);
             checkAudio();
             saveHistory();
         }
