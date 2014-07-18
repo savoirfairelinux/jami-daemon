@@ -110,7 +110,8 @@ SIPCall::SIPCall(const std::string& id, Call::CallType type,
 
 SIPCall::~SIPCall()
 {
-    delete local_sdp_;
+    // local sdp must be destroyed before pool
+    local_sdp_.reset();
     pj_pool_release(pool_);
 }
 
