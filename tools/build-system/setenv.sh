@@ -28,7 +28,7 @@ fi
 
 export WORKING_DIR="${WORKSPACE}/tools/build-system"
 export LAUNCHPAD_DIR="${WORKING_DIR}/launchpad"
-LAUNCHPAD_DISTRIBUTIONS=("trusty")
+LAUNCHPAD_DISTRIBUTIONS=("trusty utopic")
 export LAUNCHPAD_DISTRIBUTIONS
 
 # Update KDE client
