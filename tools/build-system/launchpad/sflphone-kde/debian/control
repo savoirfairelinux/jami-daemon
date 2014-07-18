@@ -7,7 +7,7 @@ Homepage: http://www.sfphone.org/
 
 Package: sflphone-kde
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libqt4-dbus, libqt4-opengl , sflphone-data
+Depends: sflphone-daemon-video (=${source:Version}), ${shlibs:Depends}, ${misc:Depends}, libqt4-dbus, libqt4-opengl
 Provides: sflphone-client-kde
 Replaces: sflphone-client-kde
 Description:KDE client for the sflphone-daemon SIP/IAX softphone
