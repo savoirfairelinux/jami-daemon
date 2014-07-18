@@ -46,6 +46,8 @@
 
 #include "pjsip/sip_config.h"
 
+#include <memory>
+
 struct pjsip_evsub;
 struct pj_caching_pool;
 struct pj_pool_t;
@@ -202,7 +204,7 @@ class SIPCall : public Call {
         /**
          * The SDP session
          */
-        Sdp* local_sdp_;
+        std::unique_ptr<Sdp> local_sdp_;
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE];
         pj_str_t contactHeader_;
