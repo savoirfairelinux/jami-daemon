@@ -154,7 +154,17 @@ fi
 
 # If release, checkout the latest tag
 if [ ${IS_RELEASE} ]; then
-  git checkout ${CURRENT_RELEASE_TAG_NAME}
+	git checkout ${CURRENT_RELEASE_TAG_NAME}
+
+    # When we need to apply an emergency patch for the release builds
+    # This should only be used to temporarily patch packaging tools, not
+    # daemon/client code (or anything else that build_tarball would grab).
+    if [ -d /tmp/sflphone_release_patch ]; then
+        echo "Applying patch(es) to packaging tools..."
+        git apply /tmp/sflphone_release_patch/*
+        rm -rf /tmp/sflphone_release_patch
+        REQUIRE_RESET=1
+    fi
 fi
 
 echo "Retrieve build info"
@@ -303,6 +313,10 @@ done
 # Archive source tarball for Debian maintainer
 . ${WORKING_DIR}/build_tarball.sh ${SOFTWARE_VERSION}
 
+# Undo any modifications caused by temporary patches
+if [ "$REQUIRE_RESET" == "1" ]; then
+	git reset --hard
+fi
 
 # close file descriptor
 exec 3>&-
