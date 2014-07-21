@@ -35,8 +35,6 @@
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
-#include "sip/sipaccount.h"
-#include "sip/sippresence.h"
 #include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h"
 #if HAVE_ZRTP
@@ -278,8 +276,11 @@ CallManager::startTone(const int32_t& start , const int32_t& type)
 sfl::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
+    // TODO: remove SIP dependency
+
     // IP2IP profile is associated with IP2IP profile anyway
-    SIPVoIPLink * link = static_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(SIPAccount::IP2IP_PROFILE));
+    const auto& ip2ipAccount = Manager::instance().getIP2IPAccount();
+    auto link = static_cast<SIPVoIPLink *>(ip2ipAccount->getVoIPLink());
 
     if (!link)
         throw CallManagerException("Failed to get sip link");
