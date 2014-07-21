@@ -59,7 +59,7 @@ namespace sfl_video {
 
 class VideoV4l2Size {
     public:
-        VideoV4l2Size(unsigned height, unsigned width);
+        VideoV4l2Size(const unsigned width, const unsigned height);
 
         /**
          * @throw std::runtime_error
@@ -214,7 +214,7 @@ using std::vector;
 using std::string;
 using std::stringstream;
 
-VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) :
+VideoV4l2Size::VideoV4l2Size(const unsigned width, const unsigned height) :
     height(height), width(width), rates_() {}
 
 vector<string> VideoV4l2Size::getRateList() const
@@ -322,7 +322,7 @@ VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
         switch (frmsize.type) {
             case V4L2_FRMSIZE_TYPE_DISCRETE:
                 do {
-                    VideoV4l2Size size(frmsize.discrete.height, frmsize.discrete.width);
+                    VideoV4l2Size size(frmsize.discrete.width, frmsize.discrete.height);
                     size.getFrameRates(fd, frmsize.pixel_format);
                     sizes_.push_back(size);
                     ++frmsize.index;
@@ -348,7 +348,7 @@ VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
     if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
         throw std::runtime_error("Could not get format");
 
-    VideoV4l2Size size(fmt.fmt.pix.height, fmt.fmt.pix.width);
+    VideoV4l2Size size(fmt.fmt.pix.width, fmt.fmt.pix.height);
     size.getFrameRates(fd, fmt.fmt.pix.pixelformat);
     sizes_.push_back(size);
 
