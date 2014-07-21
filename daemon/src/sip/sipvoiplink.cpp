@@ -1009,8 +1009,6 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         WARN("Could not negotiate offer");
         const std::string callID(call->getCallId());
         call->hangup(reason);
-        // This will probably invoke call's destructor
-        call = nullptr;
         Manager::instance().callFailure(callID);
         return;
     }
