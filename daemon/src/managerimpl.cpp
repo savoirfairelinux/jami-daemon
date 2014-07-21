@@ -2865,24 +2865,6 @@ ManagerImpl::unregisterAccounts()
     }
 }
 
-
-VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID)
-{
-    Account *account = getAccount(accountID);
-    if (account == nullptr) {
-        DEBUG("Could not find account for account %s, returning sip voip", accountID.c_str());
-        return &SIPVoIPLink::instance();
-    }
-
-    if (not accountID.empty())
-        return account->getVoIPLink();
-    else {
-        DEBUG("Account id is empty for voip link, returning sip voip");
-        return &SIPVoIPLink::instance();
-    }
-}
-
-
 void
 ManagerImpl::sendRegister(const std::string& accountID, bool enable)
 {
