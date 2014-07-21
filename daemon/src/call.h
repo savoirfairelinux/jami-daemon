@@ -83,6 +83,19 @@ class Call : public Recordable {
         virtual ~Call();
 
         /**
+         * Create a new outgoing call
+         * @param id  The ID of the call
+         * @param toUrl The address to call
+         * @param preferredAccountId The IP of preferred account to use.
+         *   This is not necessary the account used.
+         * @return Call*  A shared pointer on a valid call.
+         * @note This function raises VoipLinkException() on errors.
+         */
+        static std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                                     const std::string& toUrl,
+                                                     const std::string& preferredAccountId);
+
+        /**
          * Return a copy of the call id
          * @return call id
          */

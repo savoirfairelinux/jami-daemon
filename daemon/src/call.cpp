@@ -33,6 +33,10 @@
 #include "audio/mainbuffer.h"
 #include "history/historyitem.h"
 
+#include "sip/sipaccount.h"
+#include "sip/sip_utils.h"
+#include "ip_utils.h"
+
 Call::Call(const std::string& id, Call::CallType type, Account& account)
     : callMutex_()
     , localAddr_()
@@ -289,4 +293,25 @@ Call::getNullDetails()
     details["TIMESTAMP_START"] = "";
     details["ACCOUNTID"] = "";
     return details;
+}
+
+std::shared_ptr<Call>
+Call::newOutgoingCall(const std::string& id,
+                      const std::string& toUrl,
+                      const std::string& preferredAccountId)
+{
+    std::shared_ptr<Call> call;
+    std::string toIP = toUrl;
+    sip_utils::stripSipUriPrefix(toIP);
+
+    if (!IpAddr::isValid(toIP)) {
+        auto account = Manager::instance().getAccount(preferredAccountId);
+        if (account)
+            return account->newOutgoingCall(id, toUrl);
+        else
+            WARN("Preferred account %s doesn't exist, using IP2IP account", preferredAccountId.c_str());
+    } else
+        WARN("IP Url detected, using IP2IP account");
+
+    return Manager::instance().getIP2IPAccount()->newOutgoingCall(id, toIP);
 }
