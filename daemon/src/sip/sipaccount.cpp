@@ -321,11 +321,14 @@ SIPAccount::newOutgoingCall(const std::string& id,
     int family;
 
     if (isIP2IP()) {
+        std::string toIP = toUrl;
+        sip_utils::stripSipUriPrefix(toIP);
+
         bool ipv6 = false;
 #if HAVE_IPV6
-        ipv6 = IpAddr::isIpv6(toUrl);
+        ipv6 = IpAddr::isIpv6(toIP);
 #endif
-        to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
+        to = ipv6 ? IpAddr(toIP).toString(false, true) : toIP;
         toUri = getToUri(to);
         family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
 
