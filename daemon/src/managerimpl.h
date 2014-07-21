@@ -970,11 +970,7 @@ class ManagerImpl {
         std::string getAccountFromCall(const std::string& callID);
 
         /**
-         * Get the voip link from the account pointer
-         * @param accountID	  Account ID to get
-         * @return VoIPLink*   The voip link from the account pointer or 0
          */
-        VoIPLink* getAccountLink(const std::string& accountID);
 
         /**
          * Free all ressources related to this account.
