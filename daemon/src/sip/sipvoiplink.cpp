@@ -1359,9 +1359,10 @@ onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }
 
     try {
-        currentCall->getSIPAccount().newOutgoingCall(Manager::instance().getNewCallID(),
-                                                     std::string(refer_to->hvalue.ptr,
-                                                                 refer_to->hvalue.slen));
+        Call::newOutgoingCall(Manager::instance().getNewCallID(),
+                              std::string(refer_to->hvalue.ptr,
+                                          refer_to->hvalue.slen),
+                              currentCall->getAccountId());
         Manager::instance().hangupCall(currentCall->getCallId());
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());

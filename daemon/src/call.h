@@ -83,6 +83,18 @@ class Call : public Recordable {
         virtual ~Call();
 
         /**
+         * Create a new outgoing call
+         * @param id  The ID of the call
+         * @param toUrl The address to call
+         * @param preferedAccountId The IP of prefered account to use.
+         *   This is not necessary the account used.
+         * @return Call*  A pointer on the call
+         */
+        static std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                                     const std::string& toUrl,
+                                                     const std::string& preferedAccountId);
+
+        /**
          * Return a copy of the call id
          * @return call id
          */
