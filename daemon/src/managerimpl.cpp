@@ -325,7 +325,7 @@ void ManagerImpl::switchCall(const std::string& id)
 /* Main Thread */
 
 bool
-ManagerImpl::outgoingCall(const std::string& account_id,
+ManagerImpl::outgoingCall(const std::string& prefered_account_id,
                           const std::string& call_id,
                           const std::string& to,
                           const std::string& conf_id)
@@ -362,18 +362,12 @@ ManagerImpl::outgoingCall(const std::string& account_id,
             detachParticipant(MainBuffer::DEFAULT_ID);
     }
 
-    DEBUG("Selecting account %s", account_id.c_str());
-
-    // fallback using the default sip account if the specied doesn't exist
-    Account* account = getAccount(account_id);
-    if (!account) {
-        WARN("Account does not exist, trying with default IP2IP SIP account");
-        account = getAccount(SIPAccount::IP2IP_PROFILE);
-    }
-
     try {
+        /* WARN: after this call the account_id is obsolete
+         * as the factory may decide to use another account (like IP2IP).
+         */
         DEBUG("New outgoing call to %s", to_cleaned.c_str());
-        auto call = account->newOutgoingCall(call_id, to_cleaned);
+        auto call = Call::newOutgoingCall(call_id, to_cleaned, prefered_account_id);
 
         // try to reverse match the peer name using the cache
         if (call->getDisplayName().empty()) {
