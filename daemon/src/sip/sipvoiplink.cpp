@@ -202,6 +202,24 @@ updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transp
     }
 }
 
+static pj_status_t
+try_respond_stateless(pjsip_endpoint *endpt, pjsip_rx_data *rdata, int st_code,
+                      const pj_str_t *st_text, const pjsip_hdr *hdr_list,
+                      const pjsip_msg_body *body)
+{
+    /* Check that no UAS transaction has been created for this request.
+     * If UAS transaction has been created for this request, application
+     * MUST send the response statefully using that transaction.
+     */
+    if (!pjsip_rdata_get_tsx(rdata))
+        return pjsip_endpt_respond_stateless(endpt, rdata, st_code, st_text, hdr_list, body);
+    else
+        ERROR("Transaction has been created for this request, send response "
+              "statefully instead");
+
+    return !PJ_SUCCESS;
+}
+
 static pj_bool_t
 transaction_request_cb(pjsip_rx_data *rdata)
 {
@@ -254,22 +272,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
             }
         }
 
-        /* Check that no UAS transaction has been created for this request.
-         * If UAS transaction has been created for this request, application
-         * MUST send the response statefully using that transaction.
-         */
-
-        if (!pjsip_rdata_get_tsx(rdata))
-            pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
-        else
-            ERROR("Transaction has been created for this request, send response statefully instead");
+        try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
 
         return PJ_FALSE;
     } else if (method->id == PJSIP_OPTIONS_METHOD) {
         handleIncomingOptions(rdata);
         return PJ_FALSE;
     } else if (method->id != PJSIP_INVITE_METHOD && method->id != PJSIP_ACK_METHOD) {
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
+        try_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
         return PJ_FALSE;
     }
 
@@ -286,9 +296,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
         r_sdp = NULL;
 
     if (account->getActiveAudioCodecs().empty()) {
-        pjsip_endpt_respond_stateless(endpt_, rdata,
-                                      PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
-                                      NULL);
+        try_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, NULL);
+
         return PJ_FALSE;
     }
 
@@ -296,7 +305,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     unsigned options = 0;
 
     if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
+        try_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
         return PJ_FALSE;
     }
 
@@ -398,7 +407,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
         call.reset();
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, nullptr, nullptr, nullptr);
+        try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, nullptr, nullptr, nullptr);
         return PJ_FALSE;
     }
 
@@ -431,8 +440,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             pjsip_endpt_send_response(endpt_, &res_addr, response,
                                       NULL, NULL);
         } else {
-            pjsip_endpt_respond_stateless(endpt_, rdata,
-                                          PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
+            try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
         }
 
         return PJ_FALSE;
