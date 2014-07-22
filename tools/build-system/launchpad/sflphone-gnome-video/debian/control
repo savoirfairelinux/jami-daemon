@@ -11,7 +11,7 @@ Architecture: any
 Depends: sflphone-daemon-video (=${source:Version}), ${shlibs:Depends}, ${misc:Depends}
 Provides: sflphone-client-gnome-video
 Replaces: sflphone-client-gnome-video, sflphone
-Conflicts: sflphone-client-gnome, sflphone-gnome
+Conflicts: sflphone-client-gnome, sflphone-gnome, sflphone-data
 Homepage: http://www.sflphone.org
 Description: GNOME client for SFLphone, with video support
  Provide a GNOME client for SFLphone.
