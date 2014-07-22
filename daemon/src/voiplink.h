@@ -55,8 +55,8 @@ class VoipLinkException : public std::runtime_error {
  */
 class VoIPLink {
     public:
-        VoIPLink();
-        virtual ~VoIPLink();
+        VoIPLink() {};
+        virtual ~VoIPLink() {};
 
         /**
          * Virtual method
@@ -72,7 +72,7 @@ class VoIPLink {
 
     protected:
         static void unloadAccount(std::pair<const std::string, Account*> &item);
-        bool handlingEvents_;
+        bool handlingEvents_ = false;
 };
 
 #endif // __VOIP_LINK_H__
