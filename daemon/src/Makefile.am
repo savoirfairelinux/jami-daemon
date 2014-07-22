@@ -74,6 +74,7 @@ libsflphone_la_CFLAGS = \
 		@DBUSCPP_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
+		account_factory.cpp \
 		voiplink.cpp \
 		preferences.cpp \
 		managerimpl.cpp \
@@ -89,6 +90,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		utf8_utils.cpp \
 		threadloop.h \
 		conference.h \
+		account factory.h \
 		voiplink.h \
 		preferences.h \
 		managerimpl.h \
