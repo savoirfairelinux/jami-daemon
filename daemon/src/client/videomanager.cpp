@@ -47,9 +47,8 @@ VideoManager::getVideoDeviceMonitor()
 std::vector<std::map<std::string, std::string> >
 VideoManager::getCodecs(const std::string &accountID)
 {
-    Account *acc = Manager::instance().getAccount(accountID);
-
-    if (acc != NULL)
+    const auto& acc = Manager::instance().getAccount(accountID);
+    if (acc)
         return acc->getAllVideoCodecs();
     else
         return std::vector<std::map<std::string, std::string> >();
@@ -57,10 +56,10 @@ VideoManager::getCodecs(const std::string &accountID)
 
 void
 VideoManager::setCodecs(const std::string& accountID,
-                         const std::vector<std::map<std::string, std::string> > &details)
+                        const std::vector<std::map<std::string, std::string> > &details)
 {
-    Account *acc = Manager::instance().getAccount(accountID);
-    if (acc != NULL) {
+    auto acc = Manager::instance().getAccount(accountID);
+    if (acc) {
         acc->setVideoCodecs(details);
         Manager::instance().saveConfig();
     }

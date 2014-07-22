@@ -64,6 +64,7 @@ class SIPCall;
 class SIPAccount;
 
 typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
+
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
@@ -103,16 +104,9 @@ class SIPVoIPLink : public VoIPLink {
         virtual bool getEvent();
 
         /* Returns a list of all callIDs */
-        std::vector<std::string>
-        getCallIDs();
+        std::vector<std::string> getCallIDs();
 
-        /**
-         * Return the internal account map for this VOIP link
-         */
-        AccountMap &
-        getAccounts() { return sipAccountMap_; }
-
-        virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const;
+        std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const;
 
         /**
          * Register a new keepalive registration timer to this endpoint
@@ -163,9 +157,9 @@ class SIPVoIPLink : public VoIPLink {
          */
         void createDefaultSipUdpTransport();
 
-    public:
-        void loadIP2IPSettings();
+        static void loadIP2IPSettings();
 
+    public:
         static void createSDPOffer(pjsip_inv_session *inv,
                                    pjmedia_sdp_session **p_offer);
 
@@ -178,9 +172,9 @@ class SIPVoIPLink : public VoIPLink {
         static void enqueueKeyframeRequest(const std::string &callID);
 #endif
 
-        std::string
-        guessAccountIdFromNameAndServer(const std::string &userName,
-                                        const std::string &server) const;
+        std::shared_ptr<Account>
+        guessAccountFromNameAndServer(const std::string &userName,
+                                      const std::string &server) const;
         int getModId();
         pjsip_endpoint * getEndpoint();
         pjsip_module * getMod();
@@ -197,11 +191,6 @@ class SIPVoIPLink : public VoIPLink {
 
         SIPVoIPLink();
         ~SIPVoIPLink();
-
-        /**
-         * Contains a list of all SIP account
-         */
-        AccountMap sipAccountMap_;
 
         mutable std::mutex sipCallMapMutex_;
         SipCallMap sipCallMap_;

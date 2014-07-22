@@ -37,12 +37,3 @@
 VoIPLink::VoIPLink() : handlingEvents_(false) {}
 
 VoIPLink::~VoIPLink() {}
-
-void VoIPLink::unloadAccount(std::pair<const std::string, Account*> &item)
-{
-    // avoid deleting a nameless account twice
-    if (not item.first.empty()) {
-        delete item.second;
-        item.second = nullptr;
-    }
-}
