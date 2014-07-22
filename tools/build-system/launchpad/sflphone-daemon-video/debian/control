@@ -10,7 +10,7 @@ Priority: optional
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libavcodec54 | libavcodec-extra-54 | libavcodec53 | libavcodec-extra-53, libavdevice53 | libavdevice-extra-53, libavformat54 | libavformat-extra-54 | libavformat53 | libavformat-extra-53, libswscale2 | libswscale-extra-2, libavutil52 | libavutil-extra-52 | libavutil51 | libavutil-extra-51
 Replaces: sflphone, sflphone-common-video
-Conflicts: sflphone-common, sflphone-daemon
+Conflicts: sflphone-common, sflphone-daemon, sflphone-data
 Provides: sflphone-common-video
 Homepage: http://www.sflphone.org
 Description: SIP and IAX2 compatible softphone - Core with video support
