@@ -40,7 +40,8 @@ class ManagerImpl {
 public:
     void init(const std::string &config_file);
     void setPath(const std::string &path);
-	void finish();
+    void pollEvents();
+    void finish();
 };
 
 //%rename(Manager_instance) Manager::instance;

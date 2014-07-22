@@ -49,13 +49,12 @@ class PresenceManager;
 class VideoManager;
 #endif
 
+#include <functional>
+
 #if HAVE_DBUS
 namespace DBus {
     class BusDispatcher;
 }
-
-#include <functional>
-
 #endif
 
 class Client {
@@ -77,10 +76,8 @@ class Client {
 
         int event_loop();
         int exit();
-#ifdef HAVE_DBUS
         // DBus provides our event loop
         void registerCallback(const std::function<void()> &callback);
-#endif
 
 #if HAVE_DBUS
         void onLastUnregister();
