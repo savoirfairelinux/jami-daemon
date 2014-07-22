@@ -78,17 +78,7 @@ class IAXVoIPLink : public VoIPLink {
         /* Returns a list of all callIDs */
         static std::vector<std::string> getCallIDs();
 
-        virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const;
-
-        /**
-         * Return the internal account map for all VOIP links
-         */
-        static AccountMap &getAccounts() { return iaxAccountMap_; }
-
-        /**
-         * Empty the account map for all VOIP links
-         */
-        static void unloadAccountMap();
+        std::vector<std::shared_ptr<Call> > getCalls(const std::string &accountId) const;
 
         /**
          * Init the voip link
@@ -125,11 +115,6 @@ class IAXVoIPLink : public VoIPLink {
         void handleAnswerTransfer(iax_event* event, const std::string &id);
         void handleBusy(const std::string &id);
         void handleMessage(iax_event* event, const std::string &id);
-
-        /**
-         * Contains a list of all IAX account
-         */
-        static AccountMap iaxAccountMap_;
 
         static std::mutex iaxCallMapMutex_;
         static IAXCallMap iaxCallMap_;

@@ -40,7 +40,6 @@
 #include "configurationmanager.h"
 #include "account_schema.h"
 #include "manager.h"
-#include "sip/sipvoiplink.h"
 #if HAVE_TLS
 #include "sip/tlsvalidation.h"
 #endif
@@ -53,7 +52,8 @@
 
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
-    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
+    const auto& account = Manager::instance().getIP2IPAccount();
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
         ERROR("Could not find IP2IP account");
@@ -96,7 +96,8 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 {
     std::map<std::string, std::string> tlsSettings;
 
-    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
+    const auto& account = Manager::instance().getIP2IPAccount();
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount)
         return tlsSettings;
@@ -106,7 +107,8 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 
 void ConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
+    auto account = Manager::instance().getIP2IPAccount();
+    auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
         DEBUG("No valid account in set TLS settings");
@@ -195,7 +197,7 @@ std::vector<std::string> ConfigurationManager::getAudioCodecDetails(const int32_
 
 std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
 {
-    Account *acc = Manager::instance().getAccount(accountID);
+    const auto& acc = Manager::instance().getAccount(accountID);
 
     if (acc)
         return acc->getActiveAudioCodecs();
@@ -207,7 +209,7 @@ std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::st
 
 void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string>& list, const std::string& accountID)
 {
-    Account *acc = Manager::instance().getAccount(accountID);
+    auto acc = Manager::instance().getAccount(accountID);
 
     if (acc) {
         acc->setActiveAudioCodecs(list);
@@ -527,21 +529,25 @@ void ConfigurationManager::setShortcuts(
 std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials(
     const std::string& accountID)
 {
-    SIPAccount *account = Manager::instance().getSipAccount(accountID);
+    const auto& account = Manager::instance().getAccount("SIP", accountID);
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+
     std::vector<std::map<std::string, std::string> > credentialInformation;
 
-    if (!account)
+    if (!sipaccount)
         return credentialInformation;
     else
-        return account->getCredentials();
+        return sipaccount->getCredentials();
 }
 
 void ConfigurationManager::setCredentials(const std::string& accountID,
         const std::vector<std::map<std::string, std::string> >& details)
 {
-    SIPAccount *account = Manager::instance().getSipAccount(accountID);
-    if (account)
-        account->setCredentials(details);
+    auto account = Manager::instance().getAccount("SIP", accountID);
+    auto sipaccount = static_cast<SIPAccount *>(account.get());
+
+    if (sipaccount)
+        sipaccount->setCredentials(details);
 }
 
 bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
