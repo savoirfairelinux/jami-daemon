@@ -5,6 +5,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,12 +46,13 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <utility>
 
 #include "client/client.h"
 
 #include "config/sfl_config.h"
 
-#include "account.h"
+#include "account_factory.h"
 
 #include "call.h"
 #include "conference.h"
@@ -895,14 +897,6 @@ class ManagerImpl {
     public:
 
         /**
-         * Test if call is a valid call, i.e. have been created and stored in
-         * call-account map
-         * @param callID the std::string to be tested
-         * @return true if call is created and present in the call-account map
-         */
-        bool isValidCall(const std::string& callID);
-
-        /**
          * Return a pointer to the  instance of the mainbuffer
          */
         MainBuffer &getMainBuffer();
@@ -922,52 +916,49 @@ class ManagerImpl {
         VideoManager * getVideoManager();
 #endif
 
-        /**
-        * Tell if an account exists
-        * @param accountID account ID check
-        * @return bool True if the account exists
-        *		  false otherwise
-        */
-        bool accountExists(const std::string& accountID);
-
         std::vector<std::map<std::string, std::string> > getHistory();
         void clearHistory();
 
         /**
          * Get an account pointer, looks for both SIP and IAX
          * @param accountID account ID to get
-         * @return Account*	 The account pointer or 0
+         * @return std::shared_ptr<Account> Shared pointer on an Account instance or nullptr if not found
          */
-        Account* getAccount(const std::string& accountID) const;
+        std::shared_ptr<Account> getAccount(const std::string& accountID) const {
+            return accountFactory_.getAccount(accountID);
+        }
+
+        std::shared_ptr<Account> getAccount(const std::string& accountType,
+                                            const std::string& accountID) const {
+            return accountFactory_.getAccount(accountType, accountID);
+        }
+
+        std::shared_ptr<Account> createAccount(const std::string& accountType,
+                                               const std::string& accountID) {
+            return accountFactory_.createAccount(accountType, accountID);
+        }
+
+        std::shared_ptr<Account> getIP2IPAccount() const {
+            return accountFactory_.getIP2IPAccount();
+        }
+
+        AccountMap getAllAccounts() const {
+            return accountFactory_.getAllAccounts();
+        }
+
+        AccountMap getAllAccounts(const std::string& accountType) const {
+            return accountFactory_.getAllAccounts(accountType);
+        }
 
         /**
-         * Get a SIP account pointer
-         * @param accountID account ID to get
-         * @return SIPAccount* The account pointer or 0
+         * Tell if an account exists
+         * @param accountID account ID check
+         * @return bool True if the account exists
+         *		  false otherwise
          */
-        SIPAccount *getSipAccount(const std::string& accontID) const;
-
-#if HAVE_IAX
-        /**
-         * Get an IAX account pointer
-         * @param accountID account ID to get
-         * @return IAXAccount* The account pointer or 0
-         */
-        IAXAccount *getIaxAccount(const std::string& accountID) const;
-#endif
-
-        /**
-         * Get a pointer to the IP2IP account
-         * @return SIPAccount * Pointer to the IP2IP account
-         */
-        SIPAccount *getIP2IPAccount() const;
-
-        /** Return the std::string from a CallID
-         * Protected by mutex
-         * @param callID the CallID in the list
-         * @return std::string  The accountID associated or "" if the callID is not found
-         */
-        std::string getAccountFromCall(const std::string& callID);
+        bool accountExists(const std::string& accountID) {
+            return accountFactory_.hasAccount(accountID);
+        }
 
         /**
          * Get the voip link from the account pointer
@@ -995,8 +986,7 @@ class ManagerImpl {
          * See:
          * https://projects.savoirfairelinux.com/issues/7037
         */
-        void
-        checkAudio();
+        void checkAudio();
 
         /**
          * Call periodically to poll for VoIP events */
@@ -1005,6 +995,14 @@ class ManagerImpl {
 
     private:
         NON_COPYABLE(ManagerImpl);
+
+        /**
+         * Test if call is a valid call, i.e. have been created and stored in
+         * call-account map
+         * @param callID the std::string to be tested
+         * @return true if call is created and present in the call-account map
+         */
+        bool isValidCall(const std::string& callID);
 
         /**
          * Send unregister for all enabled accounts
@@ -1022,15 +1020,17 @@ class ManagerImpl {
         ConferenceMap conferenceMap_;
 
         /**
-         * Get a map with all the current SIP and IAX accounts
-         */
-        AccountMap getAllAccounts() const;
-
-        /**
          * To handle the persistent history
          * TODO: move this to ConfigurationManager
          */
         sfl::History history_;
         bool finished_;
+
+        AccountFactory accountFactory_ = {};
+
+        void loadDefaultAccountMap();
+
+        void loadAccount(const Conf::YamlNode *item, int &errorCount,
+                         const std::string &accountOrder);
 };
 #endif // MANAGER_IMPL_H_

@@ -71,7 +71,6 @@ class VoIPLink {
         virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
     protected:
-        static void unloadAccount(std::pair<const std::string, Account*> &item);
         bool handlingEvents_;
 };
 

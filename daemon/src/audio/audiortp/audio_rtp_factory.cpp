@@ -42,7 +42,6 @@
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
 #include "sip/sipaccount.h"
-#include "sip/sdes_negotiator.h"
 #include "logger.h"
 
 namespace sfl {
@@ -65,11 +64,12 @@ void AudioRtpFactory::initConfig()
 
     const std::string accountId(call_->getAccountId());
 
-    SIPAccount *account = Manager::instance().getSipAccount(accountId);
+    const auto& account = Manager::instance().getAccount("SIP", accountId);
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
-    if (account) {
-        srtpEnabled_ = account->getSrtpEnabled();
-        std::string key(account->getSrtpKeyExchange());
+    if (sipaccount) {
+        srtpEnabled_ = sipaccount->getSrtpEnabled();
+        std::string key(sipaccount->getSrtpKeyExchange());
 
         if (srtpEnabled_) {
 #if HAVE_ZRTP
@@ -86,7 +86,7 @@ void AudioRtpFactory::initConfig()
             keyExchangeProtocol_ = NONE;
         }
 
-        helloHashEnabled_ = account->getZrtpHelloHash();
+        helloHashEnabled_ = sipaccount->getZrtpHelloHash();
     } else {
         srtpEnabled_ = false;
         keyExchangeProtocol_ = NONE;
