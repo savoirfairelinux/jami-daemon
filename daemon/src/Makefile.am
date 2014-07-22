@@ -74,7 +74,6 @@ libsflphone_la_CFLAGS = \
 		@DBUSCPP_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
-		voiplink.cpp \
 		preferences.cpp \
 		managerimpl.cpp \
 		manager.cpp \

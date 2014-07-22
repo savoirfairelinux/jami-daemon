@@ -73,8 +73,7 @@ class IAXVoIPLink : public VoIPLink {
         /**
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
-        virtual bool getEvent();
-
+        bool getEvent();
 
         /* Returns a list of all callIDs */
         static std::vector<std::string> getCallIDs();
