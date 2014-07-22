@@ -152,20 +152,6 @@ else
 	PREVIOUS_VERSION=${PREVIOUS_RELEASE_TAG_NAME}
 fi
 
-# If release, checkout the latest tag
-if [ ${IS_RELEASE} ]; then
-	git checkout ${CURRENT_RELEASE_TAG_NAME}
-
-    # When we need to apply an emergency patch for the release builds
-    # This should only be used to temporarily patch packaging tools, not
-    # daemon/client code (or anything else that build_tarball would grab).
-    if [ -d /tmp/sflphone_release_patch ]; then
-        echo "Applying patch(es) to packaging tools..."
-        git apply /tmp/sflphone_release_patch/*
-        rm -rf /tmp/sflphone_release_patch
-        REQUIRE_RESET=1
-    fi
-fi
 
 echo "Retrieve build info"
 # retrieve info we may need
@@ -196,6 +182,22 @@ VERSION="${SOFTWARE_VERSION}~ppa${VERSION_INDEX}~SYSTEM"
 
 echo "Clean build directory"
 git clean -f -x ${LAUNCHPAD_DIR}/* >/dev/null
+git checkout ${LAUNCHPAD_DIR}
+
+# If release, checkout the latest tag
+if [ ${IS_RELEASE} ]; then
+	git checkout ${CURRENT_RELEASE_TAG_NAME}
+
+    # When we need to apply an emergency patch for the release builds
+    # This should only be used to temporarily patch packaging tools, not
+    # daemon/client code (or anything else that build_tarball would grab).
+    if [ -d /tmp/sflphone_release_patch ]; then
+        echo "Applying patch(es) to packaging tools..."
+        git apply --verbose /tmp/sflphone_release_patch/*
+        rm -rf /tmp/sflphone_release_patch
+        REQUIRE_RESET=1
+    fi
+fi
 
 get_dir_name() {
     case $1 in
@@ -223,6 +225,7 @@ get_dir_name() {
     esac
 }
 
+# Looping over the packages
 for LAUNCHPAD_PACKAGE in ${LAUNCHPAD_PACKAGES[*]}
 do
 	echo " Package: ${LAUNCHPAD_PACKAGE}"
@@ -231,9 +234,6 @@ do
 	git clean -f -x ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/* >/dev/null
 
 	DEBIAN_DIR="${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/debian"
-
-	echo "  --> Clean debian directory"
-	git checkout ${DEBIAN_DIR}
 
 	echo "  --> Retrieve new sources"
 	DIRNAME=`get_dir_name ${LAUNCHPAD_PACKAGE}`
