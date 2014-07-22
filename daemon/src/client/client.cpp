@@ -80,6 +80,12 @@ int Client::event_loop()
     return 0;
 }
 
+void
+Client::registerCallback(const std::function<void()> &callback)
+{
+
+}
+
 int Client::exit()
 {
     return 0;
