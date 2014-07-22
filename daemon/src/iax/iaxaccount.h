@@ -94,6 +94,8 @@ class IAXAccount : public Account {
 
         void checkRegister();
 
+        bool isIP2IP() const { return false; }
+
     private:
         NON_COPYABLE(IAXAccount);
 
