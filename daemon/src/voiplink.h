@@ -55,8 +55,8 @@ class VoipLinkException : public std::runtime_error {
  */
 class VoIPLink {
     public:
-        VoIPLink();
-        virtual ~VoIPLink();
+        VoIPLink() {};
+        virtual ~VoIPLink() {};
 
         /**
          * Virtual method
@@ -71,7 +71,7 @@ class VoIPLink {
         virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
     protected:
-        bool handlingEvents_;
+        bool handlingEvents_ = false;
 };
 
 #endif // __VOIP_LINK_H__
