@@ -98,7 +98,7 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual bool handleEvents();
+        bool handleEvents();
 
         /* Returns a list of all callIDs */
         std::vector<std::string>
@@ -133,11 +133,6 @@ class SIPVoIPLink : public VoIPLink {
          * Get the memory pool factory since each calls has its own memory pool
          */
         pj_caching_pool *getMemoryPoolFactory();
-
-        /**
-         * Retrive useragent name from account
-         */
-        std::string getUseragentName(SIPAccount *) const;
 
         void clearSipCallMap();
         void addSipCall(std::shared_ptr<SIPCall>& call);

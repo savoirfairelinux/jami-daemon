@@ -34,6 +34,8 @@
 #ifndef __VOIP_LINK_H__
 #define __VOIP_LINK_H__
 
+#include "account.h"
+
 #include <stdexcept>
 #include <functional>
 #include <string>
@@ -55,8 +57,8 @@ class VoipLinkException : public std::runtime_error {
  */
 class VoIPLink {
     public:
-        VoIPLink();
-        virtual ~VoIPLink();
+        VoIPLink() {};
+        virtual ~VoIPLink() {};
 
         /**
          * Virtual method
@@ -71,8 +73,15 @@ class VoIPLink {
         virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
     protected:
-        static void unloadAccount(std::pair<const std::string, Account*> &item);
-        bool handlingEvents_;
+        static void unloadAccount(std::pair<const std::string, Account*> &item) {
+            // avoid deleting a nameless account twice
+            if (not item.first.empty()) {
+                delete item.second;
+                item.second = nullptr;
+            }
+        }
+
+        bool handlingEvents_ = false;
 };
 
 #endif // __VOIP_LINK_H__
