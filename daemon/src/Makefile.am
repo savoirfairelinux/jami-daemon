@@ -75,7 +75,6 @@ libsflphone_la_CFLAGS = \
 
 libsflphone_la_SOURCES = conference.cpp \
 		account_factory.cpp \
-		voiplink.cpp \
 		preferences.cpp \
 		managerimpl.cpp \
 		manager.cpp \
