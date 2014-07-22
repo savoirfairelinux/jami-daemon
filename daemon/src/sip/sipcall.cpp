@@ -693,6 +693,7 @@ SIPCall::onClosed()
     const std::string id(getCallId());
     Manager::instance().peerHungupCall(id);
     SIPVoIPLink::instance().removeSipCall(id);
+    Manager::instance().checkAudio();
 }
 
 void
