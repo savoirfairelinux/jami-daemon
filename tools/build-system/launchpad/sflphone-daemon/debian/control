@@ -11,7 +11,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Replaces: sflphone, sflphone-common
 Provides: sflphone-common
-Conflicts: sflphone-common-video, sflphone-daemon-video
+Conflicts: sflphone-common-video, sflphone-daemon-video, sflphone-data
 Homepage: http://www.sflphone.org
 Description: SIP and IAX2 compatible softphone - Core
  SFLphone is meant to be a robust enterprise-class desktop phone.
