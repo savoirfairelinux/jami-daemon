@@ -31,10 +31,6 @@
 #include "audiobuffer.h"
 #include "logger.h"
 
-
-const AudioFormat AudioFormat::MONO = AudioFormat(AudioFormat::DEFAULT_SAMPLE_RATE, 1);
-const AudioFormat AudioFormat::STEREO = AudioFormat(AudioFormat::DEFAULT_SAMPLE_RATE, 2);
-
 std::ostream& operator <<(std::ostream& stream, const AudioFormat& f) {
     stream << f.toString();
     return stream;

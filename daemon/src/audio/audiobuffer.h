@@ -77,8 +77,9 @@ typedef struct AudioFormat {
     }
 
     static const unsigned DEFAULT_SAMPLE_RATE = 48000;
-    static const AudioFormat MONO;
-    static const AudioFormat STEREO;
+    static const AudioFormat MONO() { return AudioFormat{DEFAULT_SAMPLE_RATE, 1}; }
+    static const AudioFormat STEREO() { return AudioFormat{DEFAULT_SAMPLE_RATE, 2}; }
+
 } AudioFormat;
 
 std::ostream& operator <<(std::ostream& stream, const AudioFormat& f);

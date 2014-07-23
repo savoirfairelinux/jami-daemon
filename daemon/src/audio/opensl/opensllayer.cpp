@@ -65,10 +65,10 @@ OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     , recorderBufferQueue_(nullptr)
     , playbackBufferIndex_(0)
     , recordBufferIndex_(0)
-    , hardwareFormat_(AudioFormat::MONO)
+    , hardwareFormat_(AudioFormat::MONO())
     , hardwareBuffSize_(BUFFER_SIZE)
-    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO))
-    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO))
+    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO()))
+    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO()))
 {
 }
 

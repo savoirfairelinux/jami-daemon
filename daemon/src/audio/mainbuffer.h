@@ -153,7 +153,7 @@ class MainBuffer {
 
         mutable std::recursive_mutex stateLock_ = {};
 
-        AudioFormat internalAudioFormat_ = AudioFormat::MONO;
+        AudioFormat internalAudioFormat_ = AudioFormat::MONO();
 };
 
 #endif  // MainBuffer
