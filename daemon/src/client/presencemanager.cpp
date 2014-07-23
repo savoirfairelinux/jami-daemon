@@ -38,8 +38,8 @@
 #include <sstream>
 
 #include "logger.h"
-#include "sip/sipaccount.h"
 #include "manager.h"
+#include "sip/sipaccount.h"
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
 
@@ -54,13 +54,16 @@ constexpr static const char* OFFLINE_KEY    = "Offline";
 void
 PresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
 {
-    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    const auto account = Manager::instance().getAccount("SIP", accountID);
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+
     if (!sipaccount) {
-        ERROR("Could not find account %s",accountID.c_str());
+        ERROR("Could not find account %s", accountID.c_str());
         return;
     }
 
-    SIPPresence *pres = sipaccount->getPresence();
+    auto pres = sipaccount->getPresence();
+
     if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
         DEBUG("%subscribePresence (acc:%s, buddy:%s)", flag ? "S" : "Uns",
               accountID.c_str(), uri.c_str());
@@ -75,13 +78,16 @@ PresenceManager::subscribeBuddy(const std::string& accountID, const std::string&
 void
 PresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
 {
-    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    const auto account = Manager::instance().getAccount("SIP", accountID);
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+
     if (!sipaccount) {
-        ERROR("Could not find account %s.",accountID.c_str());
+        ERROR("Could not find account %s.", accountID.c_str());
         return;
     }
 
-    SIPPresence *pres = sipaccount->getPresence();
+    auto pres = sipaccount->getPresence();
+
     if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
         DEBUG("Send Presence (acc:%s, status %s).", accountID.c_str(),
               status ? "online" : "offline");
@@ -95,7 +101,9 @@ PresenceManager::publish(const std::string& accountID, const bool& status, const
 void
 PresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
 {
-    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
+    const auto account = Manager::instance().getIP2IPAccount();
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+
     if (!sipaccount) {
         ERROR("Could not find account IP2IP");
         return;
@@ -103,7 +111,15 @@ PresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
 
     DEBUG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
           flag ? "true" : "false");
-    sipaccount->getPresence()->approvePresSubServer(uri, flag);
+
+    auto pres = sipaccount->getPresence();
+
+    if (!pres) {
+        ERROR("Presence not initialized");
+        return;
+    }
+
+    pres->approvePresSubServer(uri, flag);
 }
 
 /**
@@ -113,15 +129,25 @@ std::vector<std::map<std::string, std::string> >
 PresenceManager::getSubscriptions(const std::string& accountID)
 {
     std::vector<std::map<std::string, std::string> > ret;
-    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    const auto account = Manager::instance().getAccount("SIP", accountID);
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+
     if (sipaccount) {
-        for (auto s : sipaccount->getPresence()->getClientSubscriptions()) {
+        const auto pres = sipaccount->getPresence();
+
+        if (!pres) {
+            ERROR("Presence not initialized");
+            return ret;
+        }
+
+        for (const auto& s : pres->getClientSubscriptions()) {
             std::map<std::string, std::string> sub;
             sub[ STATUS_KEY     ] = s->isPresent() ? ONLINE_KEY : OFFLINE_KEY;
             sub[ LINESTATUS_KEY ] = s->getLineStatus();
             ret.push_back(sub);
         }
     }
+
     return ret;
 }
 
@@ -131,10 +157,19 @@ PresenceManager::getSubscriptions(const std::string& accountID)
 void
 PresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
-    SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+    const auto account = Manager::instance().getAccount("SIP", accountID);
+    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+
     if (!sipaccount)
         return;
 
+    auto pres = sipaccount->getPresence();
+
+    if (!pres) {
+        ERROR("Presence not initialized");
+        return;
+    }
+
     for (const auto &u : uris)
-        sipaccount->getPresence()->subscribeClient(u, true);
+        pres->subscribeClient(u, true);
 }
