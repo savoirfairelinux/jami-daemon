@@ -34,7 +34,7 @@
 Recordable::Recordable() : recAudio_(), recorder_(&recAudio_, Manager::instance().getMainBuffer())
 {
     DEBUG("Set recording options: %s", Manager::instance().audioPreference.getRecordPath().c_str());
-    recAudio_.setRecordingOptions(AudioFormat::MONO, Manager::instance().audioPreference.getRecordPath());
+    recAudio_.setRecordingOptions(AudioFormat::MONO(), Manager::instance().audioPreference.getRecordPath());
 }
 
 Recordable::~Recordable()

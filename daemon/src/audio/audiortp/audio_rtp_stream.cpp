@@ -52,13 +52,13 @@ namespace sfl {
 
 AudioRtpStream::AudioRtpStream(const std::string &id) :
     id_(id)
-    , encoder_(AudioFormat::MONO)
-    , decoder_(AudioFormat::MONO)
+    , encoder_(AudioFormat::MONO())
+    , decoder_(AudioFormat::MONO())
     , audioCodecs_()
     , codecEncMutex_(), codecDecMutex_()
     , hasDynamicPayloadType_(false)
-    , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
-    , micData_(RAW_BUFFER_SIZE, AudioFormat::MONO)
+    , rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO())
+    , micData_(RAW_BUFFER_SIZE, AudioFormat::MONO())
     , encodedData_()
     , dead_(false)
     , currentEncoderIndex_(0)
@@ -162,7 +162,7 @@ AudioRtpContext::AudioRtpContext(AudioFormat f) :
     , payloadType_(0)
     , frameSize_(0)
     , format_(f)
-    , resampledData_(0, AudioFormat::MONO)
+    , resampledData_(0, AudioFormat::MONO())
     , resampler_(nullptr)
 #if HAVE_SPEEXDSP
     , dspMutex_()

@@ -87,9 +87,9 @@ void MainBufferTest::testGetPutData()
     SFLAudioSample test_sample1 = 12;
     SFLAudioSample test_sample2 = 13;
 
-    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO);
-    AudioBuffer test_input2(&test_sample2, 1, AudioFormat::MONO);
-    AudioBuffer test_output(100, AudioFormat::MONO);
+    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO());
+    AudioBuffer test_input2(&test_sample2, 1, AudioFormat::MONO());
+    AudioBuffer test_output(100, AudioFormat::MONO());
 
     // get by test_id without preleminary put
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output, test_id) == 0);
@@ -122,10 +122,10 @@ void MainBufferTest::testGetAvailableData()
     SFLAudioSample test_sample1 = 12;
     SFLAudioSample test_sample2 = 13;
 
-    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO);
-    AudioBuffer test_input2(&test_sample2, 1, AudioFormat::MONO);
-    AudioBuffer test_output(1, AudioFormat::MONO);
-    AudioBuffer test_output_large(100, AudioFormat::MONO);
+    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO());
+    AudioBuffer test_input2(&test_sample2, 1, AudioFormat::MONO());
+    AudioBuffer test_output(1, AudioFormat::MONO());
+    AudioBuffer test_output_large(100, AudioFormat::MONO());
 
     // put by MainBuffer::DEFAULT_ID get by test_id without preleminary put
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 0);
@@ -163,7 +163,7 @@ void MainBufferTest::testDiscardFlush()
     mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
 
     SFLAudioSample test_sample1 = 12;
-    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO);
+    AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO());
 
     mainbuffer_->putData(test_input1, test_id);
     mainbuffer_->discard(1, MainBuffer::DEFAULT_ID);
@@ -193,7 +193,7 @@ void MainBufferTest::testConference()
     mainbuffer_->bindCallID(test_id1, test_id2);
     // test putData default
     SFLAudioSample testint = 12;
-    AudioBuffer testbuf(&testint, 1, AudioFormat::MONO);
+    AudioBuffer testbuf(&testint, 1, AudioFormat::MONO());
 
     // put data test ring buffers
     mainbuffer_->putData(testbuf, MainBuffer::DEFAULT_ID);

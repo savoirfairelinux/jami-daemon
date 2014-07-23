@@ -49,8 +49,8 @@ std::mutex IAXVoIPLink::iaxCallMapMutex_;
 std::mutex IAXVoIPLink::mutexIAX = {};
 
 IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
-    rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO)
-    , resampledData_(RAW_BUFFER_SIZE * 4, AudioFormat::MONO)
+    rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO())
+    , resampledData_(RAW_BUFFER_SIZE * 4, AudioFormat::MONO())
     , encodedData_()
     , resampler_(44100)
     , initDone_(false)

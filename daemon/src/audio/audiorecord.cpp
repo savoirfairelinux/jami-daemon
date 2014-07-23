@@ -89,7 +89,7 @@ createFilename()
 }
 
 AudioRecord::AudioRecord() : fileHandle_(nullptr)
-    , sndFormat_(AudioFormat::MONO)
+    , sndFormat_(AudioFormat::MONO())
     , recordingEnabled_(false)
     , filename_(createFilename())
     , savePath_()
