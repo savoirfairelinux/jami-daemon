@@ -24,9 +24,7 @@ BuildRequires:      libnotify-devel check-devel rarian-compat ilbc-devel
 BuildRequires:      evolution-data-server-devel gnome-common libsndfile-devel
 # KDE requires
 BuildRequires:      cmake kdepimlibs-devel
-%if 0%{?fedora} > 18
 BuildRequires:      perl-podlators
-%endif
 %if %{with video} && 0%{?fedora} < 18
 BuildRequires:      libudev-devel
 %endif
@@ -66,14 +64,12 @@ pushd plugins
 make %{?_smp_mflags}
 popd
 # Compile kde client (only without video)
-%if ! %{with video}
 pushd kde
 sed -i '/^[^#]add_subdirectory.*test/s/^[^#]/#/' src/CMakeLists.txt
 ./config.sh --prefix=%{_prefix}
 cd build
 make %{?_smp_mflags}
 popd
-%endif
 # Compile gnome client
 pushd gnome
 ./autogen.sh
@@ -139,19 +135,19 @@ protocols.
 
 This package includes the Gnome client
 
+%endif
 
-%package kde
+%package kde-video
 Summary:        KDE interface for SFLphone
 Group:          Applications/Internet
 Requires:       %{name}-common
-%description kde
+%description kde-video
 SFLphone is a robust standards-compliant enterprise software phone,
 for desktop and embedded systems. It is designed to handle
 several hundreds of calls a day. It supports both SIP and IAX2
 protocols.
 
 This package includes the KDE client
-%endif
 
 %package plugins
 Summary:        Plugins (address book) for SFLphone
@@ -164,7 +160,6 @@ several hundreds of calls a day. It supports both SIP and IAX2
 protocols.
 
 This package includes the address book plugin.
-
 
 %install
 rm -rf %{buildroot}
@@ -183,14 +178,12 @@ popd
 %find_lang sflphone --with-gnome
 # Handling desktop file
 desktop-file-validate %{buildroot}%{_datadir}/applications/%{name}.desktop
-%if ! %{with video}
 # KDE install
 pushd kde/build
 make install DESTDIR=$RPM_BUILD_ROOT
 popd
 %find_lang sflphone-client-kde --with-kde -f sflphone-client-kde
 %find_lang sflphone-kde --with-kde -f sflphone-kde
-%endif
 
 %if %{with video}
 %pre gnome-video
@@ -219,6 +212,9 @@ if [ "$1" -eq 0 ] ; then
     glib-compile-schemas %{_datadir}/glib-2.0/schemas &>/dev/null
 fi
 %endif
+
+%post kde-video -p /usr/sbin/ldconfig
+%postun kde-video -p /usr/sbin/ldconfig
 
 %if %{with video}
 %files common-video
@@ -251,22 +247,22 @@ fi
 %files plugins
 %{_libdir}/sflphone/plugins/libevladdrbook.so
 
-%if ! %{with video}
-%files kde -f sflphone-kde -f sflphone-client-kde
+%files kde-video -f sflphone-kde -f sflphone-client-kde
 %{_bindir}/sflphone-client-kde
 %{_datadir}/kde4/apps/sflphone-client-kde
 %{_datadir}/config.kcfg/sflphone-client-kde.kcfg
 %{_datadir}/applications/kde4
-#%doc %{_datadir}/doc/HTML/*/sflphone-client-kde
 %doc %{_mandir}/man1/*kde*
 %{_datadir}/icons/hicolor
 %{_libdir}/libksflphone.so*
 %{_libdir}/libqtsflphone.so*
 %exclude %{_includedir}/kde4/ksflphone/*.h
 %exclude %{_includedir}/qtsflphone/*.h
-%endif
 
 %changelog
+* Wed Jul 23 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.4.1-2
+- Always build kde package
+
 * Tue Jul 15 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.1-1
 - Start development of 1.4.1
 
