@@ -135,7 +135,7 @@ class SIPAccount : public Account {
          * Constructor
          * @param accountID The account identifier
          */
-        SIPAccount(const std::string& accountID, bool presenceEnabled);
+        SIPAccount(const std::string& accountID, bool presenceEnabled=true);
         ~SIPAccount();
 
         /**

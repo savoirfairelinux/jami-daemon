@@ -43,7 +43,6 @@
 #include "array_size.h"
 #include "map_utils.h"
 
-AccountMap IAXVoIPLink::iaxAccountMap_;
 IAXCallMap IAXVoIPLink::iaxCallMap_;
 std::mutex IAXVoIPLink::iaxCallMapMutex_;
 std::mutex IAXVoIPLink::mutexIAX = {};
@@ -59,13 +58,12 @@ IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
     srand(time(NULL));    // to get random number for RANDOM_PORT
 }
 
-
 IAXVoIPLink::~IAXVoIPLink()
 {
     terminate();
 
     // This is our last account
-    if (iaxAccountMap_.size() == 1)
+    if (Manager::instance().accountCount("IAX") == 1)
         clearIaxCallMap();
 }
 
@@ -435,7 +433,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, const std::string &id)
     }
 }
 
-
 /* Handle audio event, VOICE packet received */
 void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
 {
@@ -562,12 +559,4 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
         default:
             break;
     }
-}
-
-void
-IAXVoIPLink::unloadAccountMap()
-{
-    for (auto &a : iaxAccountMap_)
-        unloadAccount(a);
-    iaxAccountMap_.clear();
 }
