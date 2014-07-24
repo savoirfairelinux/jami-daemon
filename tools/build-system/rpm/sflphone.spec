@@ -124,7 +124,11 @@ This package includes the SFLPhone common
 %package gnome
 Summary:        Gnome interface for SFLphone
 Group:          Applications/Internet
-Requires:       %{name}-common
+%if %{with video}
+Requires:       %{name}-common-video = %{version}
+%else
+Requires:       %{name}-common = %{version}
+%endif
 Obsoletes:      sflphone < 1.2.2-2
 Conflicts:      sflphone-video
 %description gnome
@@ -140,7 +144,11 @@ This package includes the Gnome client
 %package kde-video
 Summary:        KDE interface for SFLphone
 Group:          Applications/Internet
-Requires:       %{name}-common
+%if %{with video}
+Requires:       %{name}-common-video = %{version}
+%else
+Requires:       %{name}-common = %{version}
+%endif
 %description kde-video
 SFLphone is a robust standards-compliant enterprise software phone,
 for desktop and embedded systems. It is designed to handle
@@ -152,7 +160,11 @@ This package includes the KDE client
 %package plugins
 Summary:        Plugins (address book) for SFLphone
 Group:          Applications/Internet
-Requires:       %{name}-common
+%if %{with video}
+Requires:       %{name}-common-video = %{version}
+%else
+Requires:       %{name}-common = %{version}
+%endif
 %description plugins
 SFLphone is a robust standards-compliant enterprise software phone,
 for desktop and embedded systems. It is designed to handle
