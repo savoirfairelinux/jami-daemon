@@ -1063,7 +1063,7 @@ static gchar *last_uri;
 void
 sflphone_toggle_screenshare(void)
 {
-    gchar *resource = g_str_has_prefix(last_uri, "display://") ?
+    gchar *resource = last_uri && g_str_has_prefix(last_uri, "display://") ?
         sflphone_get_active_video() :
         sflphone_get_display();
 
