@@ -36,6 +36,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
+#include "array_size.h"
 
 Call::Call(const std::string& id, Call::CallType type, Account& account)
     : callMutex_()
@@ -117,8 +118,11 @@ Call::setState(CallState state)
 {
     std::lock_guard<std::mutex> lock(callMutex_);
     if (not validTransition(state)) {
-        ERROR("Invalid call state transition from %d to %d",
-              callState_, state);
+        static const char *states[] = {"INACTIVE", "ACTIVE", "HOLD", "BUSY", "ERROR"};
+        assert(callState_ < ARRAYSIZE(states) and state < ARRAYSIZE(states));
+
+        ERROR("Invalid call state transition from %s to %s",
+              states[callState_], states[state]);
         return false;
     }
 
