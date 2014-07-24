@@ -67,6 +67,8 @@
 #include "messaging/message_tab.h"
 #include "history_loader.h"
 
+extern void xrectsel(unsigned *, unsigned *, unsigned *, unsigned *);
+
 static GHashTable * ip2ip_profile;
 
 void
@@ -1021,11 +1023,20 @@ sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const
 gchar *
 sflphone_get_display(void)
 {
-    int width = gdk_screen_width();
-    int height = gdk_screen_height();
+    unsigned x, y;
+    unsigned width, height;
     char *display = getenv("DISPLAY");
 
-    return g_strdup_printf("display://%s %dx%d", display, width, height);
+    x = y = width = height = 0;
+
+    xrectsel(&x, &y, &width, &height);
+
+    if (!width || !height) {
+        width = gdk_screen_width();
+        height = gdk_screen_height();
+    }
+
+    return g_strdup_printf("display://%s+%d,%d %dx%d", display, x, y, width, height);
 }
 
 gchar *
