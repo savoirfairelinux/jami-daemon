@@ -1032,6 +1032,7 @@ sflphone_get_display(void)
     xrectsel(&x, &y, &width, &height);
 
     if (!width || !height) {
+        x = y = 0;
         width = gdk_screen_width();
         height = gdk_screen_height();
     }
