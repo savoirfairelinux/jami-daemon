@@ -44,8 +44,6 @@
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
 
-const char * const IAXAccount::ACCOUNT_TYPE = "IAX";
-
 IAXAccount::IAXAccount(const std::string& accountID)
     : Account(accountID), password_(), link_(*this)
 {}
