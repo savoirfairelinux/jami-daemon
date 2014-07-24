@@ -41,13 +41,10 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 
-class Account;
 class VoIPLink;
 class Call;
-
-/** Define a type for a AccountMap container */
-typedef std::map<std::string, Account*> AccountMap;
 
 /**
  * @file account.h
@@ -59,7 +56,6 @@ typedef std::map<std::string, Account*> AccountMap;
 class Account : public Serializable {
 
     public:
-
         Account(const std::string& accountID);
 
         /**
@@ -80,9 +76,14 @@ class Account : public Serializable {
          * Get the account ID
          * @return constant account id
          */
-        std::string getAccountID() const {
+        const std::string& getAccountID() const {
             return accountID_;
         }
+
+        /**
+         * Returns true if this is the IP2IP account
+         */
+        virtual bool isIP2IP() const { return false; }
 
         /**
          * Get the voiplink pointer
@@ -201,8 +202,7 @@ class Account : public Serializable {
             mailBox_ = mb;
         }
 
-        static std::vector<std::string>
-        split_string(std::string s);
+        static std::vector<std::string> split_string(std::string s);
 
         static const char * const VIDEO_CODEC_ENABLED;
         static const char * const VIDEO_CODEC_NAME;
@@ -328,7 +328,7 @@ class Account : public Serializable {
         bool hasCustomUserAgent_;
 
         /**
-             * Account mail box
+         * Account mail box
          */
         std::string mailBox_;
 
