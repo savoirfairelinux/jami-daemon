@@ -11,7 +11,7 @@
 #include <string.h>
 
 void
-xrectsel(unsigned *_x, unsigned *_y, unsigned *_w, unsigned *_h)
+xrectsel(unsigned *x_sel, unsigned *y_sel, unsigned *w_sel, unsigned *h_sel)
 {
     Display *dpy = XOpenDisplay(NULL);
     if (!dpy)
@@ -49,10 +49,8 @@ xrectsel(unsigned *_x, unsigned *_y, unsigned *_w, unsigned *_h)
             x = start_x = ev.xbutton.x_root;
             y = start_y = ev.xbutton.y_root;
             width = height = 0;
-            continue;
-        }
 
-        if (ev.type == MotionNotify) {
+        } else if (ev.type == MotionNotify) {
             if (!btn_pressed)
                 continue; /* Draw only if button is pressed */
 
@@ -79,10 +77,8 @@ xrectsel(unsigned *_x, unsigned *_y, unsigned *_w, unsigned *_h)
             /* Draw Rectangle */
             XDrawRectangle(dpy, root, sel_gc, x, y, width, height);
             XFlush(dpy);
-            continue;
-        }
 
-        if (ev.type == ButtonRelease)
+        } else if (ev.type == ButtonRelease)
             break;
     }
 
@@ -95,10 +91,10 @@ xrectsel(unsigned *_x, unsigned *_y, unsigned *_w, unsigned *_h)
     XFreeGC(dpy, sel_gc);
     XSync(dpy, 1);
 
-    *_x = x;
-    *_y = y;
-    *_w = width;
-    *_h = height;
+    *x_sel = x;
+    *y_sel = y;
+    *w_sel = width;
+    *h_sel = height;
 
     XCloseDisplay(dpy);
 }
