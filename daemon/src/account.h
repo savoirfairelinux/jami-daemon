@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,6 +81,8 @@ class Account : public Serializable {
             return accountID_;
         }
 
+        virtual const char* getAccountType() const = 0;
+
         /**
          * Returns true if this is the IP2IP account
          */
@@ -103,14 +106,16 @@ class Account : public Serializable {
          */
         virtual void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
 
-        /**
-         * Create a new outgoing call
-         * @param id  The ID of the call
-         * @param toUrl The address to call
-         * @return Call*  A pointer on the call
-         */
         virtual std::shared_ptr<Call> newOutgoingCall(const std::string& id,
                                                       const std::string& toUrl) = 0;
+
+        virtual std::shared_ptr<Call> newIncomingCall(const std::string& id) = 0;
+
+        void attachCall(std::shared_ptr<Call> call);
+
+        void detachCall(std::string& id);
+
+        std::vector<std::shared_ptr<Call> > getCalls();
 
         /**
          * Tell if the account is enable or not.
@@ -208,6 +213,7 @@ class Account : public Serializable {
         static const char * const VIDEO_CODEC_NAME;
         static const char * const VIDEO_CODEC_PARAMETERS;
         static const char * const VIDEO_CODEC_BITRATE;
+
     private:
         NON_COPYABLE(Account);
 
@@ -215,6 +221,8 @@ class Account : public Serializable {
          * Helper function used to load the default codec order from the codec factory
          */
         void loadDefaultCodecs();
+
+        std::map<std::string, std::weak_ptr<Call> > callMap_;
 
     protected:
 
@@ -331,7 +339,6 @@ class Account : public Serializable {
          * Account mail box
          */
         std::string mailBox_;
-
 };
 
 #endif

@@ -32,6 +32,7 @@
 
 #include "global.h"
 #include "callmanager.h"
+#include "call_factory.h"
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
@@ -285,7 +286,7 @@ CallManager::getAudioZrtpSession(const std::string& callID)
     if (!link)
         throw CallManagerException("Failed to get sip link");
 
-    auto call = link->getSipCall(callID);
+    const auto call = Manager::instance().callFactory->getCall<SIPCall>(callID);
     if (!call)
         throw CallManagerException("Call id " + callID + " is not valid");
 
