@@ -29,6 +29,7 @@
  */
 
 #include "video_widget.h"
+#include "video_aspect_frame.h"
 #include "video_renderer.h"
 #include "actions.h"
 
@@ -37,15 +38,11 @@
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 
-#define VIDEO_HEIGHT_MIN                200
 #define VIDEO_LOCAL_HEIGHT              100
 #define VIDEO_LOCAL_OPACITY_DEFAULT     150
 #define VIDEO_LOCAL_CONSTRAINT_SIZE     "local-constraint-size"
 #define VIDEO_LOCAL_CONSTRAINT_POSITION "local-constraint-position"
 #define VIDEO_REMOTE_CONSTRAINT_SIZE    "remote-constraint-size"
-
-#define USE_CONTAINER_HACK CLUTTER_CHECK_VERSION(1, 16, 0) && \
-                           !CLUTTER_CHECK_VERSION(1, 18, 0)
 
 
 typedef struct _Video {
@@ -69,11 +66,12 @@ typedef struct _VideoScreen {
 } VideoScreen;
 
 struct _VideoWidgetPrivate {
-    VideoScreen     video_screen;
-    GtkWidget       *toolbar;
-    GHashTable      *video_handles;
-    GSettings       *settings;
-    gboolean        fullscreen;
+    ClutterActor     *video_aspect_frame;
+    VideoScreen      video_screen;
+    GtkWidget        *toolbar;
+    GHashTable       *video_handles;
+    GSettings        *settings;
+    gboolean         fullscreen;
 };
 
 /* Define the VideoWidget type and inherit from GtkWindow */
@@ -86,7 +84,6 @@ G_DEFINE_TYPE(VideoWidget, video_widget, GTK_TYPE_WINDOW);
 static void       video_widget_draw                     (GtkWidget *);
 static GtkWidget* video_widget_draw_screen              (GtkWidget *);
 static void       video_widget_redraw_screen            (GtkWidget *);
-static void       video_widget_set_geometry             (GtkWidget *, guint, guint);
 static VideoArea* video_widget_video_area_get           (GtkWidget *, VIDEO_AREA_ID);
 static gboolean   is_video_in_screen                    (GtkWidget *, gchar *);
 static Video*     video_widget_retrieve_camera          (GtkWidget *, VIDEO_AREA_ID);
@@ -137,7 +134,6 @@ video_widget_class_init(VideoWidgetClass *klass)
 
     /* override method */
     object_class->finalize = video_widget_finalize;
-
 }
 
 
@@ -230,7 +226,6 @@ video_widget_draw(GtkWidget *self)
     g_signal_connect(self, "configure-event",
             G_CALLBACK(on_configure_event_cb),
             NULL);
-
 }
 
 
@@ -246,30 +241,31 @@ video_widget_draw_screen(GtkWidget *self)
 
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
+    GtkWidget *screen;
     ClutterActor *stage;
     ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
 
-    GtkWidget *screen = gtk_clutter_embed_new();
+    screen = gtk_clutter_embed_new();
 
     /* create a stage with black background */
     stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(screen));
     clutter_actor_set_background_color(stage, &stage_color);
 
-#if (USE_CONTAINER_HACK == 0)
-    if (!priv->video_screen.container)
-        priv->video_screen.container = stage;
-#else
-/* Use an intermediate container in between the textures and the stage.
-   This is a workaround for older Clutter (before 1.18), see:
-   https://bugzilla.gnome.org/show_bug.cgi?id=711645 */
+    /* layout manager is used to arrange children in space, here we ask clutter
+     * to align children to fill the space when resizing the window */
+    clutter_actor_set_layout_manager(stage,
+          clutter_bin_layout_new(CLUTTER_BIN_ALIGNMENT_FILL, CLUTTER_BIN_ALIGNMENT_FILL));
 
-    if (!priv->video_screen.container) {
-        priv->video_screen.container = clutter_actor_new();
-        clutter_actor_add_constraint(priv->video_screen.container,
-                clutter_bind_constraint_new(stage, CLUTTER_BIND_SIZE, 0.0));
-        clutter_actor_add_child(stage, priv->video_screen.container);
-    }
-#endif
+    /* add an aspect frame actor to preserve the child actors aspect ratio */
+    priv->video_aspect_frame = video_aspect_frame_new();
+    clutter_actor_add_child(stage, priv->video_aspect_frame);
+
+    /* add a scene container where we can add and remove our actors */
+    priv->video_screen.container = clutter_actor_new();
+    clutter_actor_add_child(priv->video_aspect_frame, priv->video_screen.container);
+
+    /* set the minimal size for the window */
+    gtk_widget_set_size_request(self, 450, 300);
 
     /* handle button event in screen */
     g_signal_connect(screen, "button-press-event",
@@ -294,8 +290,8 @@ video_widget_redraw_screen(GtkWidget *self)
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
     ClutterConstraint *constraint = NULL;
+    gfloat aspect_ratio = 0.0f;
     guint width = 0, height = 0, pos_x = 0, pos_y = 0;
-    gdouble aspect_ratio = 0;
 
     VideoArea *video_area_remote = video_widget_video_area_get(self, VIDEO_AREA_REMOTE);
     VideoArea *video_area_local = video_widget_video_area_get(self, VIDEO_AREA_LOCAL);
@@ -305,32 +301,17 @@ video_widget_redraw_screen(GtkWidget *self)
     /* retrieve the previous windows settings */
     pos_x  = g_settings_get_int(priv->settings, "video-widget-position-x");
     pos_y  = g_settings_get_int(priv->settings, "video-widget-position-y");
+    width  = g_settings_get_int(priv->settings, "video-widget-width");
+    height = g_settings_get_int(priv->settings, "video-widget-height");
 
-    /* place the window */
+    /* place  and resize the window according the users preferences */
     gtk_window_move(GTK_WINDOW(self), pos_x, pos_y);
+    gtk_window_resize(GTK_WINDOW(self), width, height);
 
     /* Handle the remote camera behaviour */
     if (video_area_remote && video_area_remote->show && camera_remote) {
 
-        width = g_settings_get_int(priv->settings, "video-widget-width");
-        if (width == 0)
-           width = camera_remote->width;
-
-        /* we recalculate the window size based on the camera aspect ratio, so
-         * if the remote camera has a different aspect ratio we resize the
-         * window height based on the user's preferred width */
-        g_assert(camera_remote->width  > 0);
-        g_assert(camera_remote->height > 0);
-        aspect_ratio = (gdouble) camera_remote->width / camera_remote->height;
-        height = width / aspect_ratio;
-
-        /* use the previous setting to set the default size and position */
-        gtk_window_set_default_size(GTK_WINDOW(self), width, height);
-
-        /* force aspect ratio preservation and set a minimal size */
-        video_widget_set_geometry(self, camera_remote->width, camera_remote->height);
-
-        /* the remote camera must always fit the screen size */
+        /* the remote camera must always fill the container size */
         constraint = clutter_bind_constraint_new(priv->video_screen.container,
                 CLUTTER_BIND_SIZE, 0);
         clutter_actor_add_constraint_with_name(camera_remote->texture,
@@ -349,20 +330,10 @@ video_widget_redraw_screen(GtkWidget *self)
         /* if the remote camera is not show, we use all the space for the local camera */
         if (!video_area_remote || !video_area_remote->show) {
 
-            /* use the previous setting to set the default size and position */
-            gtk_window_set_default_size(GTK_WINDOW(self), camera_local->width, camera_local->height);
-
-            /* TODO: fix the geometry problem
-             * changing the geometry on the fly doesn't work, if we set the geometry here we will have
-             * problems later when a remote camera starts...
-             * the only workaround so far is to set the geometry only when the remote camera starts,
-             * but the local camera will be locked with the same geometry if alone */
-            // video_widget_set_geometry(self, camera_local->width, camera_local->height);
-
             /* clean the previously constraints */
             clutter_actor_clear_constraints(camera_local->texture);
 
-            /* the local camera must always fit the screen size */
+            /* the local camera must always fill the container size */
             constraint = clutter_bind_constraint_new(priv->video_screen.container,
                     CLUTTER_BIND_SIZE, 0);
             clutter_actor_add_constraint_with_name(camera_local->texture,
@@ -413,35 +384,6 @@ video_widget_redraw_screen(GtkWidget *self)
 
     }
 
-
-}
-
-
-/*
- * video_widget_set_geometry
- *
- * This function is use to force the window behaviour to keep a
- * fixed aspect ratio and a minimal size.
- */
-static void
-video_widget_set_geometry(GtkWidget *self,
-                          guint width,
-                          guint height)
-{
-    g_return_if_fail(IS_VIDEO_WIDGET(self));
-
-    /* Set widget geometry behaviour */
-    gdouble aspect_ratio = (gdouble) width / height;
-    /* The window must keep a fixed aspect ratio */
-    GdkGeometry geom = {
-        .min_aspect = aspect_ratio,
-        .max_aspect = aspect_ratio,
-        .min_width  = VIDEO_HEIGHT_MIN * aspect_ratio,
-        .min_height = VIDEO_HEIGHT_MIN,
-    };
-    gtk_window_set_geometry_hints(GTK_WINDOW(self), NULL, &geom,
-            GDK_HINT_ASPECT | GDK_HINT_MIN_SIZE);
-
 }
 
 
@@ -487,7 +429,6 @@ is_video_in_screen(GtkWidget *self,
     }
 
     return FALSE;
-
 }
 
 
@@ -518,7 +459,6 @@ video_widget_retrieve_camera(GtkWidget *self,
         g_warning("This video doesn't exist !\n");
 
     return video;
-
 }
 
 
@@ -555,7 +495,6 @@ video_widget_add_camera_in_screen(GtkWidget *self,
         video_area->video_id = g_strdup(video->video_id);
         video_area->show = TRUE;
     }
-
 }
 
 
@@ -596,7 +535,6 @@ video_widget_remove_camera_in_screen(GtkWidget *self,
         }
 
     }
-
 }
 
 
@@ -629,7 +567,6 @@ video_widget_show_camera_in_screen(GtkWidget *self,
             video_area->show = TRUE;
         }
     }
-
 }
 
 
@@ -663,7 +600,6 @@ video_widget_hide_camera_in_screen(GtkWidget *self,
             video_area->show = FALSE;
         }
     }
-
 }
 
 
@@ -732,10 +668,11 @@ on_configure_event_cb(GtkWidget *self,
 
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
-    /* we store the window size on each resize when the remote camera is show */
+    /* we store the window size and position on each resize when the remote camera is show */
     VideoArea *video_area = video_widget_video_area_get(self, VIDEO_AREA_REMOTE);
     if (video_area->show) {
-       g_settings_set_int(priv->settings, "video-widget-width", event->width);
+        g_settings_set_int(priv->settings, "video-widget-width",  event->width);
+        g_settings_set_int(priv->settings, "video-widget-height", event->height);
     }
 
     /* let the event propagate otherwise the video will not be re-scaled */
@@ -913,7 +850,6 @@ video_widget_camera_stop(GtkWidget *self,
     /* if video is draw on screen */
     if (is_video_in_screen(self, video_id)) {
 
-        /* we store the window position with decoration before removing it */
         gint pos_x, pos_y;
         gtk_window_get_position(GTK_WINDOW(self), &pos_x, &pos_y);
         g_settings_set_int(priv->settings, "video-widget-position-x", pos_x);
@@ -921,6 +857,7 @@ video_widget_camera_stop(GtkWidget *self,
 
         /* we remove it */
         video_widget_remove_camera_in_screen(self, video_area_id);
+
         /* and redraw the clutter scene */
         video_widget_redraw_screen(self);
     }
@@ -931,5 +868,4 @@ video_widget_camera_stop(GtkWidget *self,
     /* hide the widget when there no video left */
     if (!g_hash_table_size(priv->video_handles))
         gtk_widget_hide(self);
-
 }
