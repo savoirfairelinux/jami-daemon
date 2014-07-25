@@ -1,7 +1,7 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- *
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,11 +37,12 @@
 #include "audio/mainbuffer.h"
 
 #ifdef SFL_VIDEO
-#include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
 #include "client/videomanager.h"
 #include "video/video_input.h"
 #endif
+
+#include "call_factory.h"
 
 #include "logger.h"
 
@@ -61,7 +62,7 @@ Conference::~Conference()
 {
 #ifdef SFL_VIDEO
     for (const auto &participant_id : participants_) {
-        if (auto call = SIPVoIPLink::instance().getSipCall(participant_id))
+        if (auto call = Manager::instance().callFactory->getCall<SIPCall>(participant_id))
             call->getVideoRtp().exitConference();
     }
 #endif // SFL_VIDEO
@@ -81,7 +82,7 @@ void Conference::add(const std::string &participant_id)
 {
     if (participants_.insert(participant_id).second) {
 #ifdef SFL_VIDEO
-        if (auto call = SIPVoIPLink::instance().getSipCall(participant_id))
+        if (auto call = Manager::instance().callFactory->getCall<SIPCall>(participant_id))
             call->getVideoRtp().enterConference(this);
 #endif // SFL_VIDEO
     }
@@ -91,7 +92,7 @@ void Conference::remove(const std::string &participant_id)
 {
     if (participants_.erase(participant_id)) {
 #ifdef SFL_VIDEO
-        if (auto call = SIPVoIPLink::instance().getSipCall(participant_id))
+        if (auto call = Manager::instance().callFactory->getCall<SIPCall>(participant_id))
             call->getVideoRtp().exitConference();
 #endif // SFL_VIDEO
     }

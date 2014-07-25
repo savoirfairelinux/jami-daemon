@@ -52,8 +52,8 @@
 
 #include "config/sfl_config.h"
 
-#include "call.h"
 #include "conference.h"
+
 #include "account_factory.h"
 
 #include "audio/audiolayer.h"
@@ -80,6 +80,8 @@ class VoIPLink;
 class Account;
 class SIPAccount;
 class IAXAccount;
+
+class CallFactory;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -987,6 +989,21 @@ class ManagerImpl {
         void
         pollEvents();
 
+        /**
+         * Create a new outgoing call
+         * @param id  The ID of the call
+         * @param toUrl The address to call
+         * @param preferredAccountId The IP of preferred account to use.
+         *   This is not necessary the account used.
+         * @return Call*  A shared pointer on a valid call.
+         * @note This function raises VoipLinkException() on errors.
+         */
+        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                              const std::string& toUrl,
+                                              const std::string& preferredAccountId);
+
+        std::unique_ptr<CallFactory> callFactory;
+
     private:
         NON_COPYABLE(ManagerImpl);
 
@@ -1020,7 +1037,7 @@ class ManagerImpl {
         sfl::History history_;
         bool finished_;
 
-        std::unique_ptr<AccountFactory> accountFactory_ = nullptr;
+        std::unique_ptr<AccountFactory> accountFactory_;
 
         void loadDefaultAccountMap();
 

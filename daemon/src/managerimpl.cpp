@@ -1,11 +1,12 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,9 +48,13 @@
 #include "voiplink.h"
 #include "account.h"
 
+#include "call_factory.h"
+
 // FIXME: remove this dependencies
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
+#include "sip/sip_utils.h"
+
 #if HAVE_IAX
 #include "iax/iaxvoiplink.h"
 #include "iax/iaxcall.h"
@@ -131,11 +136,13 @@ ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), client_(),
-	config_(),
+    config_(),
     currentCallId_(), currentCallMutex_(), audiodriver_(nullptr), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
-    mainBuffer_(), conferenceMap_(), history_(), finished_(false)
+    mainBuffer_(), callFactory(new CallFactory), conferenceMap_(), history_(),
+    finished_(false), accountFactory_(new AccountFactory())
+
 {
     // initialize random generator for call id
     srand(time(nullptr));
@@ -182,8 +189,6 @@ ManagerImpl::init(const std::string &config_file)
 {
     // FIXME: this is no good
     initialized = true;
-
-    accountFactory_.reset(new AccountFactory());
 
     path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
@@ -278,6 +283,7 @@ ManagerImpl::finish()
         saveConfig();
 
         unregisterAccounts();
+
         accountFactory_.reset(); // before any VoIP stack removal
 
         SIPVoIPLink::destroy();
@@ -373,7 +379,7 @@ ManagerImpl::outgoingCall(const std::string& prefered_account_id,
          * as the factory may decide to use another account (like IP2IP).
          */
         DEBUG("New outgoing call to %s", to_cleaned.c_str());
-        auto call = Call::newOutgoingCall(call_id, to_cleaned, prefered_account_id);
+        auto call = newOutgoingCall(call_id, to_cleaned, prefered_account_id);
 
         // try to reverse match the peer name using the cache
         if (call->getDisplayName().empty()) {
@@ -963,13 +969,7 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
 std::shared_ptr<Call>
 ManagerImpl::getCallFromCallID(const std::string& callID)
 {
-    auto call = std::dynamic_pointer_cast<Call>(SIPVoIPLink::instance().getSipCall(callID));
-#if HAVE_IAX
-    if (!call)
-        call = std::dynamic_pointer_cast<Call>(IAXVoIPLink::getIaxCall(callID));
-#endif
-
-    return call;
+    return callFactory->getCall(callID);
 }
 
 bool
@@ -2618,12 +2618,7 @@ ManagerImpl::getHistory()
 std::vector<std::string>
 ManagerImpl::getCallList() const
 {
-    std::vector<std::string> v(SIPVoIPLink::instance().getCallIDs());
-#if HAVE_IAX
-    const std::vector<std::string> iaxCalls(IAXVoIPLink::getCallIDs());
-    v.insert(v.end(), iaxCalls.begin(), iaxCalls.end());
-#endif
-    return v;
+    return callFactory->getCallIDs();
 }
 
 std::map<std::string, std::string>
@@ -2714,15 +2709,11 @@ ManagerImpl::startAudioDriverStream()
 void
 ManagerImpl::freeAccount(const std::string& accountID)
 {
-    const auto account = getAccount(accountID);
-
-    if (!account)
-        return;
-
-    for (const auto& call : account->getVoIPLink()->getCalls(accountID))
-        hangupCall(call->getCallId());
-
-    account->unregisterVoIPLink();
+    if (const auto account = getAccount(accountID)) {
+        for (const auto& call : account->getCalls())
+            hangupCall(call->getCallId());
+        account->unregisterVoIPLink();
+    }
 }
 
 void
@@ -2796,3 +2787,30 @@ ManagerImpl::getVideoManager()
     return client_.getVideoManager();
 }
 #endif
+
+std::shared_ptr<Call>
+ManagerImpl::newOutgoingCall(const std::string& id,
+                             const std::string& toUrl,
+                             const std::string& preferredAccountId)
+{
+    std::shared_ptr<Account> account = Manager::instance().getIP2IPAccount();
+    std::string finalToUrl = toUrl;
+    sip_utils::stripSipUriPrefix(finalToUrl);
+
+    if (!IpAddr::isValid(finalToUrl)) {
+        account = getAccount(preferredAccountId);
+        if (account)
+            finalToUrl = toUrl;
+        else
+            WARN("Preferred account %s doesn't exist, using IP2IP account",
+                 preferredAccountId.c_str());
+    } else
+        WARN("IP Url detected, using IP2IP account");
+
+    if (!account) {
+        ERROR("No suitable account found to create outgoing call");
+        return nullptr;
+    }
+
+    return account->newOutgoingCall(id, finalToUrl);
+}
