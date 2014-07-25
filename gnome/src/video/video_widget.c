@@ -31,6 +31,7 @@
 #include "video_widget.h"
 #include "video_renderer.h"
 #include "actions.h"
+#include "totem-aspect-frame.h"
 
 #include "sflphone_client.h"    /* gsettings schema path */
 
@@ -69,11 +70,12 @@ typedef struct _VideoScreen {
 } VideoScreen;
 
 struct _VideoWidgetPrivate {
-    VideoScreen     video_screen;
-    GtkWidget       *toolbar;
-    GHashTable      *video_handles;
-    GSettings       *settings;
-    gboolean        fullscreen;
+    TotemAspectFrame video_aspect_frame;
+    VideoScreen      video_screen;
+    GtkWidget        *toolbar;
+    GHashTable       *video_handles;
+    GSettings        *settings;
+    gboolean         fullscreen;
 };
 
 /* Define the VideoWidget type and inherit from GtkWindow */
@@ -101,6 +103,7 @@ static gboolean   on_pointer_enter_preview_cb           (ClutterActor *, Clutter
 static gboolean   on_pointer_leave_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
 static void       on_drag_data_received_cb              (GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint32, gpointer);
 
+ClutterActor *tmp;
 
 
 /*
@@ -254,22 +257,32 @@ video_widget_draw_screen(GtkWidget *self)
     /* create a stage with black background */
     stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(screen));
     clutter_actor_set_background_color(stage, &stage_color);
+    clutter_actor_set_layout_manager (stage, clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_FILL, CLUTTER_BIN_ALIGNMENT_FILL));
 
-#if (USE_CONTAINER_HACK == 0)
-    if (!priv->video_screen.container)
-        priv->video_screen.container = stage;
-#else
-/* Use an intermediate container in between the textures and the stage.
-   This is a workaround for older Clutter (before 1.18), see:
-   https://bugzilla.gnome.org/show_bug.cgi?id=711645 */
+    priv->video_screen.container = totem_aspect_frame_new();
+    clutter_actor_add_child (stage, priv->video_screen.container);
 
-    if (!priv->video_screen.container) {
-        priv->video_screen.container = clutter_actor_new();
-        clutter_actor_add_constraint(priv->video_screen.container,
-                clutter_bind_constraint_new(stage, CLUTTER_BIND_SIZE, 0.0));
-        clutter_actor_add_child(stage, priv->video_screen.container);
-    }
-#endif
+    tmp = clutter_actor_new();
+
+    /* clutter_actor_add_constraint(tmp, */
+    /*             clutter_bind_constraint_new(priv->video_screen.container, CLUTTER_BIND_SIZE, 0)); */
+    totem_aspect_frame_set_child (TOTEM_ASPECT_FRAME (priv->video_screen.container), tmp);
+
+/* #if (USE_CONTAINER_HACK == 0) */
+/*     if (!priv->video_screen.container) */
+/*         priv->video_screen.container = stage; */
+/* #else */
+/* #<{(| Use an intermediate container in between the textures and the stage. */
+/*    This is a workaround for older Clutter (before 1.18), see: */
+/*    https://bugzilla.gnome.org/show_bug.cgi?id=711645 |)}># */
+/*  */
+/*     if (!priv->video_screen.container) { */
+/*         priv->video_screen.container = clutter_actor_new(); */
+/*         clutter_actor_add_constraint(priv->video_screen.container, */
+/*                 clutter_bind_constraint_new(stage, CLUTTER_BIND_SIZE, 0.0)); */
+/*         clutter_actor_add_child(stage, priv->video_screen.container); */
+/*     } */
+/* #endif */
 
     /* handle button event in screen */
     g_signal_connect(screen, "button-press-event",
@@ -327,11 +340,12 @@ video_widget_redraw_screen(GtkWidget *self)
         /* use the previous setting to set the default size and position */
         gtk_window_set_default_size(GTK_WINDOW(self), width, height);
 
+        //totem_aspect_frame_set_child (TOTEM_ASPECT_FRAME (priv->video_screen.container), camera_remote->texture);
         /* force aspect ratio preservation and set a minimal size */
-        video_widget_set_geometry(self, camera_remote->width, camera_remote->height);
+        //video_widget_set_geometry(self, camera_remote->width, camera_remote->height);
 
         /* the remote camera must always fit the screen size */
-        constraint = clutter_bind_constraint_new(priv->video_screen.container,
+        constraint = clutter_bind_constraint_new(tmp,
                 CLUTTER_BIND_SIZE, 0);
         clutter_actor_add_constraint_with_name(camera_remote->texture,
                 VIDEO_REMOTE_CONSTRAINT_SIZE, constraint);
@@ -362,8 +376,10 @@ video_widget_redraw_screen(GtkWidget *self)
             /* clean the previously constraints */
             clutter_actor_clear_constraints(camera_local->texture);
 
+            //totem_aspect_frame_set_child (TOTEM_ASPECT_FRAME (priv->video_screen.container), camera_local->texture);
+
             /* the local camera must always fit the screen size */
-            constraint = clutter_bind_constraint_new(priv->video_screen.container,
+            constraint = clutter_bind_constraint_new(tmp,
                     CLUTTER_BIND_SIZE, 0);
             clutter_actor_add_constraint_with_name(camera_local->texture,
                     VIDEO_LOCAL_CONSTRAINT_SIZE, constraint);
@@ -545,9 +561,9 @@ video_widget_add_camera_in_screen(GtkWidget *self,
 
     /* insert the new actor in the stage */
     if (video_area_id == VIDEO_AREA_REMOTE)
-        clutter_actor_insert_child_below(priv->video_screen.container, video->texture, NULL);
+        clutter_actor_insert_child_below(tmp, video->texture, NULL);
     else
-        clutter_actor_insert_child_above(priv->video_screen.container, video->texture, NULL);
+        clutter_actor_insert_child_above(tmp, video->texture, NULL);
 
     /* fill this video_area with the new camera */
     VideoArea *video_area = video_widget_video_area_get(self, video_area_id);
@@ -577,14 +593,14 @@ video_widget_remove_camera_in_screen(GtkWidget *self,
     Video *video = video_widget_retrieve_camera(self, video_area_id);
     if (video) {
         /* if the camera is in the stage */
-        if (clutter_actor_contains(priv->video_screen.container, video->texture)) {
+        if (clutter_actor_contains(tmp, video->texture)) {
 
             /* Ensure that the rendering callback is stopped before destroying
              * the actor */
             video_renderer_stop(video->video_renderer);
 
             /* we remove it */
-            clutter_actor_remove_child(priv->video_screen.container, video->texture);
+            clutter_actor_remove_child(tmp, video->texture);
         }
 
         /* free this video_area */
@@ -618,7 +634,7 @@ video_widget_show_camera_in_screen(GtkWidget *self,
     Video *video = video_widget_retrieve_camera(self, video_area_id);
     if (video) {
         /* if the camera is in the stage */
-        if (clutter_actor_contains(priv->video_screen.container, video->texture)) {
+        if (clutter_actor_contains(tmp, video->texture)) {
             /* we show it, the camera will be re-render by clutter */
             clutter_actor_show(video->texture);
         }
@@ -652,7 +668,7 @@ video_widget_hide_camera_in_screen(GtkWidget *self,
     Video *video = video_widget_retrieve_camera(self, video_area_id);
     if (video) {
         /* if the camera is in the stage */
-        if (clutter_actor_contains(priv->video_screen.container, video->texture)) {
+        if (clutter_actor_contains(tmp, video->texture)) {
             /* we hide it, the camera will stop being render by clutter */
             clutter_actor_hide(video->texture);
         }
