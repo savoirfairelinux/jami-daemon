@@ -28,42 +28,35 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_WIDGET_H__
-#define __VIDEO_WIDGET_H__
+#ifndef __VIDEO_ASPECT_FRAME_H__
+#define __VIDEO_ASPECT_FRAME_H__
 
 #include <glib-object.h>
-#include <gtk/gtk.h>
+#include <clutter/clutter.h>
 
-#define VIDEO_WIDGET_TYPE              (video_widget_get_type())
-#define VIDEO_WIDGET(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_WIDGET_TYPE, VideoWidget))
-#define VIDEO_WIDGET_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_WIDGET_TYPE, VideoWidgetClass))
-#define IS_VIDEO_WIDGET(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_WIDGET_TYPE))
-#define IS_VIDEO_WIDGET_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_WIDGET_TYPE))
+G_BEGIN_DECLS
 
-typedef struct _VideoWidgetPrivate VideoWidgetPrivate;
-typedef struct _VideoWidgetClass VideoWidgetClass;
-typedef struct _VideoWidget VideoWidget;
+#define VIDEO_ASPECT_FRAME_TYPE			video_aspect_frame_get_type()
+#define VIDEO_ASPECT_FRAME(obj)			(G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_ASPECT_FRAME_TYPE, VideoAspectFrame))
+#define VIDEO_ASPECT_FRAME_CLASS(klass)		(G_TYPE_CHECK_CLASS_CAST((klass),  VIDEO_ASPECT_FRAME_TYPE, VideoAspectFrameClass))
+#define IS_VIDEO_ASPECT_FRAME(obj)		(G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_ASPECT_FRAME_TYPE))
+#define IS_VIDEO_ASPECT_FRAME_CLASS(klass)	(G_TYPE_CHECK_CLASS_TYPE((klass),  VIDEO_ASPECT_FRAME_TYPE))
 
-typedef enum {
-    VIDEO_AREA_REMOTE,
-    VIDEO_AREA_LOCAL,
-    VIDEO_AREA_LAST
-} VIDEO_AREA_ID;
+typedef struct _VideoAspectFrameClass VideoAspectFrameClass;
+typedef struct _VideoAspectFrame VideoAspectFrame;
 
-struct _VideoWidgetClass {
-    GtkWindowClass parent_class;
+struct _VideoAspectFrameClass
+{
+    ClutterActorClass parent_class;
 };
 
-struct _VideoWidget {
-    GtkWindow parent;
-    /* Private */
-    VideoWidgetPrivate *priv;
+struct _VideoAspectFrame
+{
+    ClutterActor parent;
 };
 
 /* Public interface */
-GType           video_widget_get_type           (void) G_GNUC_CONST;
-GtkWidget*      video_widget_new                (void);
-void            video_widget_camera_start       (GtkWidget *, VIDEO_AREA_ID, gchar *, gchar *, guint, guint, gboolean);
-void            video_widget_camera_stop        (GtkWidget *self, VIDEO_AREA_ID, gchar *);
+GType           video_aspect_frame_get_type     (void) G_GNUC_CONST;
+ClutterActor*   video_aspect_frame_new          (void);
 
-#endif // __VIDEO_WIDGET_H__
+#endif // __VIDEO_ASPECT_FRAME_H__

@@ -21,9 +21,14 @@
             <description>Main window Y position.</description>
         </key>
         <key name="video-widget-width" type="i">
-            <default>0</default>
+            <default>450</default>
             <summary>Video widget width</summary>
             <description>Video widget width.</description>
+        </key>
+        <key name="video-widget-height" type="i">
+            <default>300</default>
+            <summary>Video widget height</summary>
+            <description>Video widget height.</description>
         </key>
         <key name="video-widget-position-x" type="i">
             <default>50</default>
