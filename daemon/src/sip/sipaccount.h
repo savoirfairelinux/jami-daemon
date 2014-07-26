@@ -136,6 +136,7 @@ class SIPAccount : public Account {
          * @param accountID The account identifier
          */
         SIPAccount(const std::string& accountID, bool presenceEnabled=true);
+
         ~SIPAccount();
 
         /**
@@ -144,8 +145,19 @@ class SIPAccount : public Account {
          * @param toUrl The address to call
          * @return Call*  A pointer on the call
          */
+        std::shared_ptr<SIPCall> newOutgoingSIPCall(const std::string& id,
+                                                    const std::string& toUrl);
+
+        std::shared_ptr<SIPCall> newIncomingSIPCall(const std::string& id);
+
         std::shared_ptr<Call> newOutgoingCall(const std::string& id,
                                               const std::string& toUrl);
+
+        std::shared_ptr<Call> newIncomingCall(const std::string& id);
+
+        const char* getAccountType() const {
+            return ACCOUNT_TYPE;
+        }
 
         VoIPLink* getVoIPLink();
 
