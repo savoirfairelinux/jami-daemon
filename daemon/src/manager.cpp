@@ -29,6 +29,7 @@
  */
 
 #include "manager.h"
+#include "logger.h"
 
 ManagerImpl& Manager::instance()
 {
