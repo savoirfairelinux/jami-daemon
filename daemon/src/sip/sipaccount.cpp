@@ -1,22 +1,23 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
-*
-*  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
-*  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
-*
-*  This program is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 3 of the License, or
-*  (at your option) any later version.
-*
-*  This program is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with this program; if not, write to the Free Software
-*  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,7 +29,7 @@
  *  Corresponding Source for a non-source form of such a combination
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
-*/
+ */
 
 #include "sipaccount.h"
 
@@ -41,6 +42,8 @@
 #include "sipcall.h"
 #include "sip_utils.h"
 #include "array_size.h"
+
+#include "call_factory.h"
 
 #ifdef SFL_PRESENCE
 #include "sippresence.h"
@@ -309,9 +312,26 @@ unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *
     updateRange(tmpMin, tmpMax, range);
 }
 
+std::shared_ptr<SIPCall>
+SIPAccount::newIncomingSIPCall(const std::string& id)
+{
+    return Manager::instance().callFactory.newCall<SIPCall, SIPAccount>(*this, id, Call::INCOMING);
+}
+
 std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(const std::string& id,
-                            const std::string& toUrl)
+SIPAccount::newIncomingCall(const std::string& id)
+{
+    return newIncomingSIPCall(id);
+}
+
+std::shared_ptr<Call>
+SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+{
+    return newOutgoingSIPCall(id, toUrl);
+}
+
+std::shared_ptr<SIPCall>
+SIPAccount::newOutgoingSIPCall(const std::string& id, const std::string& toUrl)
 {
     std::string to;
     std::string toUri;
@@ -344,7 +364,7 @@ SIPAccount::newOutgoingCall(const std::string& id,
         DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
     }
 
-    auto call = std::make_shared<SIPCall>(id, Call::OUTGOING, *this);
+    auto call = Manager::instance().callFactory.newCall<SIPCall, SIPAccount>(*this, id, Call::OUTGOING);
 
     call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
@@ -463,7 +483,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     call->setConnectionState(Call::PROGRESSING);
     call->setState(Call::ACTIVE);
-    link_.addSipCall(call);
 
     return true;
 }

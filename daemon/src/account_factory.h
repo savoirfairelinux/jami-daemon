@@ -89,7 +89,7 @@ class AccountGenerator : public AccountGeneratorBase {
 
         virtual std::shared_ptr<Account>
         createAccount(const std::string& accountID) {
-            auto account = std::dynamic_pointer_cast<Account>(std::make_shared<T>(accountID));
+            auto account = std::make_shared<T>(accountID);
             accountMap.insert(std::make_pair(accountID, account));
             return account;
         }

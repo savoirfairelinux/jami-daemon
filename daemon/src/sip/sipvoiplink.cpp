@@ -1,9 +1,10 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +42,8 @@
 #include "sipcall.h"
 #include "sip_utils.h"
 
+#include "call_factory.h"
+
 #include "manager.h"
 #if HAVE_SDES
 #include "sdes_negotiator.h"
@@ -48,7 +51,6 @@
 
 #include "logger.h"
 #include "array_size.h"
-#include "map_utils.h"
 #include "ip_utils.h"
 
 #if HAVE_INSTANT_MESSAGING
@@ -283,8 +285,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = std::make_shared<SIPCall>(Manager::instance().getNewCallID(),
-                                          Call::INCOMING, *sipaccount);
+    auto call = sipaccount->newIncomingSIPCall(Manager::instance().getNewCallID());
 
     // FIXME : for now, use the same address family as the SIP tranport
     auto family = pjsip_transport_type_get_af(sipaccount->getTransportType());
@@ -460,7 +461,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
         call->setConnectionState(Call::RINGING);
 
-        SIPVoIPLink::instance().addSipCall(call);
         Manager::instance().incomingCall(*call, account_id);
     }
 
@@ -483,8 +483,8 @@ pj_pool_t* SIPVoIPLink::getPool() const
     return pool_;
 }
 
-SIPVoIPLink::SIPVoIPLink() : sipTransport(),
-    sipCallMapMutex_(), sipCallMap_()
+SIPVoIPLink::SIPVoIPLink()
+    : sipTransport()
 #ifdef SFL_VIDEO
     , keyframeRequestsMutex_()
     , keyframeRequests_()
@@ -588,7 +588,8 @@ SIPVoIPLink::~SIPVoIPLink()
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
 
-    clearSipCallMap();
+    if (!Manager::instance().callFactory.empty<SIPCall>())
+        ERROR("SIP calls remains!");
 
     // destroy SIP transport before endpoint
     sipTransport.reset();
@@ -723,105 +724,6 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
     pjsip_endpt_cancel_timer(endpt_, &timer);
 }
 
-void
-SIPVoIPLink::clearSipCallMap()
-{
-    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-    sipCallMap_.clear();
-}
-
-std::vector<std::string>
-SIPVoIPLink::getCallIDs()
-{
-    std::vector<std::string> v;
-    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-
-    map_utils::vectorFromMapKeys(sipCallMap_, v);
-    return v;
-}
-
-std::vector<std::shared_ptr<Call> >
-SIPVoIPLink::getCalls(const std::string &account_id) const
-{
-    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-
-    std::vector<std::shared_ptr<Call> > calls;
-    for (const auto & item : sipCallMap_) {
-        if (item.second->getAccountId() == account_id)
-            calls.push_back(item.second);
-    }
-    return calls;
-}
-
-void SIPVoIPLink::addSipCall(std::shared_ptr<SIPCall>& call)
-{
-    if (!call)
-        return;
-
-    const std::string id(call->getCallId());
-
-    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-
-    // emplace C++11 method has been implemented in GCC 4.8.0
-    // see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=44436
-#if !defined(__GNUC__) or (__GNUC__ >= 4 && __GNUC_MINOR__ >= 8)
-    if (not sipCallMap_.emplace(id, call).second)
-#else
-    if (sipCallMap_.find(id) == sipCallMap_.end()) {
-        sipCallMap_[id] = call;
-    } else
-#endif
-        ERROR("Call %s is already in the call map", id.c_str());
-
-}
-
-void SIPVoIPLink::removeSipCall(const std::string& id)
-{
-    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-
-    DEBUG("Removing call %s from list", id.c_str());
-    SipCallMap::iterator iter = sipCallMap_.find(id);
-    if (iter != sipCallMap_.end()) {
-        auto count = iter->second.use_count();
-        if (count > 1)
-            WARN("removing a used SIPCall (by %d holders)", count);
-    }
-    sipCallMap_.erase(id);
-}
-
-std::shared_ptr<SIPCall>
-SIPVoIPLink::getSipCall(const std::string& id)
-{
-    std::lock_guard<std::mutex> lock(sipCallMapMutex_);
-
-    SipCallMap::iterator iter = sipCallMap_.find(id);
-
-    if (iter != sipCallMap_.end())
-        return iter->second;
-    else {
-        DEBUG("No SIP call with ID %s", id.c_str());
-        return nullptr;
-    }
-}
-
-std::shared_ptr<SIPCall>
-SIPVoIPLink::tryGetSIPCall(const std::string& id)
-{
-    std::shared_ptr<SIPCall> call;
-
-    if (sipCallMapMutex_.try_lock()) {
-        SipCallMap::iterator iter = sipCallMap_.find(id);
-
-        if (iter != sipCallMap_.end())
-            call = iter->second;
-
-        sipCallMapMutex_.unlock();
-    } else
-        ERROR("Could not acquire SIPCallMap mutex");
-
-    return call;
-}
-
 #ifdef SFL_VIDEO
 // Called from a video thread
 void
@@ -853,7 +755,7 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
     const int tries = 10;
 
     for (int i = 0; !call and i < tries; ++i)
-        call = SIPVoIPLink::instance().tryGetSIPCall(callID);
+        call = Manager::instance().callFactory.getCall<SIPCall>(callID); // fixme: need a try version
 
     if (!call)
         return;
@@ -1356,10 +1258,10 @@ onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }
 
     try {
-        Call::newOutgoingCall(Manager::instance().getNewCallID(),
-                              std::string(refer_to->hvalue.ptr,
-                                          refer_to->hvalue.slen),
-                              currentCall->getAccountId());
+        Manager::instance().newOutgoingCall(Manager::instance().getNewCallID(),
+                                            std::string(refer_to->hvalue.ptr,
+                                                        refer_to->hvalue.slen),
+                                            currentCall->getAccountId());
         Manager::instance().hangupCall(currentCall->getCallId());
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
