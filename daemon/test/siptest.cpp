@@ -41,6 +41,7 @@
 #include "manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sip_utils.h"
+#include "sip/sipcall.h"
 
 // anonymous namespace
 namespace {
@@ -176,15 +177,12 @@ void SIPTest::testSimpleIncomingIpCall()
     // the incoming invite.
     sleep(2);
 
-    // gtrab call id from sipvoiplink
-    SIPVoIPLink& siplink = SIPVoIPLink::instance();
-
-    CPPUNIT_ASSERT(siplink.sipCallMap_.size() == 1);
-    SipCallMap::iterator iterCallId = siplink.sipCallMap_.begin();
-    std::string testcallid = iterCallId->first;
+    CPPUNIT_ASSERT(Manager::instance().callFactory.callCount<SIPCall>() == 1);
 
     // Answer this call
-    CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
+    const auto& calls = Manager::instance().callFactory.getAllCalls<SIPCall>();
+    const auto call = *calls.cbegin();
+    CPPUNIT_ASSERT(Manager::instance().answerCall(call->getCallId()));
 
     sleep(1);
 
@@ -284,15 +282,13 @@ void SIPTest::testTwoIncomingIpCall()
     // the incoming invite.
     sleep(1);
 
-    // gtrab call id from sipvoiplink
-    SIPVoIPLink& sipLink = SIPVoIPLink::instance();
-
-    CPPUNIT_ASSERT(sipLink.sipCallMap_.size() == 1);
-    SipCallMap::iterator iterCallId = sipLink.sipCallMap_.begin();
-    std::string firstCallID = iterCallId->first;
+    CPPUNIT_ASSERT(Manager::instance().callFactory.callCount<SIPCall>() == 1);
 
     // Answer this call
-    CPPUNIT_ASSERT(Manager::instance().answerCall(firstCallID));
+    auto calls = Manager::instance().callFactory.getCallIDs<SIPCall>();
+    auto iterCallId = calls.cbegin();
+    const auto& firstCallId = *iterCallId;
+    CPPUNIT_ASSERT(Manager::instance().answerCall(firstCallId));
 
     sleep(1);
     pthread_t secondCallThread;
@@ -303,13 +299,13 @@ void SIPTest::testTwoIncomingIpCall()
 
     sleep(1);
 
-    CPPUNIT_ASSERT(sipLink.sipCallMap_.size() == 2);
-    iterCallId = sipLink.sipCallMap_.begin();
-
-    if (iterCallId->first == firstCallID)
+    CPPUNIT_ASSERT(Manager::instance().callFactory.callCount<SIPCall>() == 2);
+    calls = Manager::instance().callFactory.getCallIDs<SIPCall>();
+    iterCallId = calls.cbegin();
+    if (*iterCallId == firstCallId)
         ++iterCallId;
 
-    std::string secondCallID(iterCallId->first);
+    std::string secondCallID(*iterCallId);
 
     CPPUNIT_ASSERT(Manager::instance().answerCall(secondCallID));
 
@@ -411,19 +407,16 @@ void SIPTest::testIncomingIpCallSdp()
     // the incoming invite.
     sleep(2);
 
-    // gtrab call id from sipvoiplink
-    SIPVoIPLink& siplink = SIPVoIPLink::instance();
+    CPPUNIT_ASSERT(Manager::instance().callFactory.callCount<SIPCall>() == 1);
 
-    CPPUNIT_ASSERT(siplink.sipCallMap_.size() == 1);
-    SipCallMap::iterator iterCallId = siplink.sipCallMap_.begin();
-    std::string testcallid = iterCallId->first;
+    // Answer this call
+    const auto& calls = Manager::instance().callFactory.getAllCalls<SIPCall>();
 
     // TODO: hmmm, should IP2IP call be stored in call list....
     CPPUNIT_ASSERT(Manager::instance().getCallList().empty());
 
     // Answer this call
-    CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
-
+    CPPUNIT_ASSERT(Manager::instance().answerCall((*calls.cbegin())->getCallId()));
 
     sleep(1);
 
