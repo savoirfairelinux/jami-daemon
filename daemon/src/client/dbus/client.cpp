@@ -161,9 +161,6 @@ int Client::event_loop()
     } catch (const DBus::Error &err) {
         ERROR("%s: %s, quitting\n", err.name(), err.what());
         return 1;
-    } catch (const std::exception &err) {
-        ERROR("%s: quitting\n", err.what());
-        return 1;
     }
 
     return 0;
