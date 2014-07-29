@@ -52,9 +52,9 @@ void show_advanced_zrtp_options(account_t *account, SFLPhoneClient *client)
     GtkDialog *securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("ZRTP Options"),
                                            GTK_WINDOW(client->win),
                                            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                           GTK_STOCK_CANCEL,
+                                           "_Cancel",
                                            GTK_RESPONSE_CANCEL,
-                                           GTK_STOCK_SAVE,
+                                           "_Save",
                                            GTK_RESPONSE_ACCEPT,
                                            NULL));
     gtk_window_set_resizable(GTK_WINDOW(securityDialog), FALSE);
@@ -118,8 +118,8 @@ void show_advanced_sdes_options(account_t *account, SFLPhoneClient *client)
     GtkDialog *securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("SDES Options"),
                                            GTK_WINDOW(client->win),
                                            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                           GTK_STOCK_CANCEL,
-                                           GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE,
+                                           "_Save",
+                                           GTK_RESPONSE_CANCEL, "_Save",
                                            GTK_RESPONSE_ACCEPT, NULL));
 
     gtk_window_set_resizable(GTK_WINDOW(securityDialog), FALSE);
