@@ -1099,7 +1099,7 @@ static const GtkActionEntry menu_entries[] = {
         N_("Send message"), G_CALLBACK(call_im)
     },
     {
-        "ScreenSharing", GTK_STOCK_SCREENSHARING, N_("Share screen"), "<control>X",
+        "ScreenSharing", "view-fullscreen", N_("Share screen"), "<control>X",
         N_("Share screen"), G_CALLBACK(call_screenshare)
     },
     {
@@ -1111,26 +1111,26 @@ static const GtkActionEntry menu_entries[] = {
         N_("Call your voicemail"), G_CALLBACK(call_mailbox_cb)
     },
     {
-        "Close", GTK_STOCK_CLOSE, N_("_Close"), "<control>W",
+        "Close", "_Close", N_("_Close"), "<control>W",
         N_("Minimize to system tray"), G_CALLBACK(call_minimize)
     },
     {
-        "Quit", GTK_STOCK_CLOSE, N_("_Quit"), "<control>Q",
+        "Quit", "_Close", N_("_Quit"), "<control>Q",
         N_("Quit the program"), G_CALLBACK(call_quit)
     },
 
     // Edit Menu
-    { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },
+    { "_Edit", NULL, N_("_Edit"), NULL, NULL, NULL },
     {
-        "Copy", GTK_STOCK_COPY, N_("_Copy"), "<control>C",
+        "Copy", "_Copy", N_("_Copy"), "<control>C",
         N_("Copy the selection"), G_CALLBACK(edit_copy)
     },
     {
-        "Paste", GTK_STOCK_PASTE, N_("_Paste"), "<control>V",
+        "Paste", "_Paste", N_("_Paste"), "<control>V",
         N_("Paste the clipboard"), G_CALLBACK(edit_paste)
     },
     {
-        "ClearHistory", GTK_STOCK_CLEAR, N_("Clear _history"), NULL,
+        "ClearHistory", "edit-clear", N_("Clear _history"), NULL,
         N_("Clear the call history"), G_CALLBACK(clear_history)
     },
     {
@@ -1138,7 +1138,7 @@ static const GtkActionEntry menu_entries[] = {
         N_("Edit your accounts"), G_CALLBACK(edit_accounts)
     },
     {
-        "Preferences", GTK_STOCK_PREFERENCES, N_("_Preferences"), NULL,
+        "Preferences", "_Preferences", N_("_Preferences"), NULL,
         N_("Change your preferences"), G_CALLBACK(edit_preferences)
     },
 
@@ -1147,15 +1147,15 @@ static const GtkActionEntry menu_entries[] = {
 
     // Help menu
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
-    { "HelpContents", GTK_STOCK_HELP, N_("Contents"), "F1",
+    { "HelpContents", "help-browser", N_("Contents"), "F1",
       N_("Open the manual"), G_CALLBACK(help_contents_cb) },
-    { "About", GTK_STOCK_ABOUT, NULL, NULL,
+    { "About", "_About", NULL, NULL,
       N_("About this application"), G_CALLBACK(help_about) }
 };
 
 static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL, TRUE },
-    { "Record", GTK_STOCK_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
+    { "Record", "_Record", N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
     { "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL, TRUE },
     { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK(dialpad_bar_cb), TRUE },
     { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK(volume_bar_cb), TRUE },
@@ -1459,7 +1459,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
 
         if (record) {
             GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-            GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_RECORD,
+            GtkWidget *image = gtk_image_new_from_stock("_Record",
                                GTK_ICON_SIZE_MENU);
             gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
@@ -1591,7 +1591,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
     gtk_widget_show(separator);
 
     if (edit) {
-        GtkWidget *menu_items = gtk_image_menu_item_new_from_stock(GTK_STOCK_EDIT,
+        GtkWidget *menu_items = gtk_image_menu_item_new_from_stock("_Edit",
                                 get_accel_group());
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
         EditNumberData *edit_number_data = g_new0(EditNumberData, 1);
@@ -1602,7 +1602,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
     }
 
     if (add_remove_button) {
-        GtkWidget *menu_items = gtk_image_menu_item_new_from_stock(GTK_STOCK_DELETE,
+        GtkWidget *menu_items = gtk_image_menu_item_new_from_stock("_Delete",
                                 get_accel_group());
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
 
@@ -1646,7 +1646,7 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
         gtk_widget_show(presence);
 #endif
 
-        GtkWidget *edit = gtk_image_menu_item_new_from_stock(GTK_STOCK_EDIT,
+        GtkWidget *edit = gtk_image_menu_item_new_from_stock("Edit",
                           get_accel_group());
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), edit);
         EditNumberData *edit_number_data = g_new0(EditNumberData, 1);

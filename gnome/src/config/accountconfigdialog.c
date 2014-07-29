@@ -1578,9 +1578,9 @@ show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *c
     GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Account settings"),
                         GTK_WINDOW(parent),
                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                        GTK_STOCK_CANCEL,
+                        "_Cancel",
                         GTK_RESPONSE_CANCEL,
-                        GTK_STOCK_APPLY,
+                        "_Apply",
                         GTK_RESPONSE_APPLY,
                         NULL);
 
