@@ -2764,8 +2764,13 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 					/* so a full voice frame is sent on the
 					   next voice output */
 					session->svoiceformat = -1;
-					session->transfer = *e->ies.apparent_addr;
+
+                    /* don't shallow copy struct by assignment (this avoids
+                     * unaligned accesses) */
+                    session->transfer.sin_port = e->ies.apparent_addr.sin_port;
+                    session->transfer.sin_addr = e->ies.apparent_addr.sin_addr;
 					session->transfer.sin_family = AF_INET;
+
 					session->transfercallno = e->ies.callno;
 					session->transferring = TRANSFER_BEGIN;
 					session->transferid = e->ies.transferid;
