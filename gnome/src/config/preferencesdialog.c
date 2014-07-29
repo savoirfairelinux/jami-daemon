@@ -325,7 +325,7 @@ static GtkTreeModel* create_model(GtkWidget *widget)
         gchar* icon_name;
         gint page_number;
     } browser_entries_full[] = {
-        {"General", GTK_STOCK_PREFS, 0},
+        {"General", "_Preferences", 0},
         {"Audio", GTK_STOCK_PREFS_AUDIO, 1},
 #ifdef SFL_VIDEO
         {"Video", GTK_STOCK_PREFS_VIDEO, 2},
@@ -389,7 +389,7 @@ show_preferences_dialog(SFLPhoneClient *client)
     GtkDialog *dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Preferences"),
                                    GTK_WINDOW(client->win),
                                    GTK_DIALOG_DESTROY_WITH_PARENT,
-                                   GTK_STOCK_CLOSE,
+                                   "_Close",
                                    GTK_RESPONSE_ACCEPT,
                                    NULL));
 
