@@ -345,7 +345,7 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label, SFLPhoneCl
     GtkWidget *tab_label        = gtk_label_new           ( label                              );
     GtkWidget *tab_label_vbox   = gtk_box_new             ( GTK_ORIENTATION_HORIZONTAL, 0      );
     GtkWidget *tab_close_button = gtk_button_new          (                                    );
-    GtkWidget *button_image     = gtk_image_new_from_stock( GTK_STOCK_CLOSE,GTK_ICON_SIZE_MENU );
+    GtkWidget *button_image     = gtk_image_new_from_stock( "_Close", GTK_ICON_SIZE_MENU );
     gtk_box_set_spacing (GTK_BOX(tab_label_vbox),0);
 
     /*TODO make it work*/
