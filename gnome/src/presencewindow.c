@@ -262,7 +262,7 @@ create_and_fill_presence_tree (void)
                         COLUMN_OVERVIEW, "",
                         COLUMN_ALIAS, buddy->alias,
                         COLUMN_GROUP, buddy->group,
-                        COLUMN_STATUS, (buddy->status)? GTK_STOCK_YES : GTK_STOCK_NO,
+                        COLUMN_STATUS, (buddy->status)? GTK_STOCK_YES : "_Record",
                         COLUMN_NOTE,  buddy->note,
                         COLUMN_URI,  buddy->uri,
                         COLUMN_ACCOUNTID, buddy->acc,
@@ -499,9 +499,9 @@ show_buddy_info_dialog(const gchar *title, buddy_t *b)
     GtkWidget *dialog = gtk_dialog_new_with_buttons((title),
                         GTK_WINDOW(presence_window),
                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                        GTK_STOCK_CANCEL,
+                        "_Cancel",
                         GTK_RESPONSE_CANCEL,
-                        GTK_STOCK_APPLY,
+                        "_Apply",
                         GTK_RESPONSE_APPLY,
                         NULL);
 
@@ -605,9 +605,9 @@ show_group_info_dialog(const gchar *title, gchar **group)
     GtkWidget *dialog = gtk_dialog_new_with_buttons((title),
                         GTK_WINDOW(presence_window),
                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                        GTK_STOCK_CANCEL,
+                        "_Cancel",
                         GTK_RESPONSE_CANCEL,
-                        GTK_STOCK_APPLY,
+                        "_Apply",
                         GTK_RESPONSE_APPLY,
                         NULL);
 
