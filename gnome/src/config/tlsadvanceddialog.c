@@ -108,9 +108,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     GtkDialog *tlsDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Advanced options for TLS"),
                                       GTK_WINDOW(client->win),
                                       GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                      GTK_STOCK_CANCEL,
+                                      "_Cancel",
                                       GTK_RESPONSE_CANCEL,
-                                      GTK_STOCK_SAVE,
+                                      "_Save",
                                       GTK_RESPONSE_ACCEPT,
                                       NULL));
 
