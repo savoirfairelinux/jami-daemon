@@ -1,8 +1,9 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +30,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
 #ifndef __SIPCALL_H__
 #define __SIPCALL_H__
 
@@ -60,18 +62,21 @@ class SIPAccount;
  * @file sipcall.h
  * @brief SIPCall are SIP implementation of a normal Call
  */
-class SIPCall : public Call {
+class SIPCall : public Call
+{
     public:
+        static const char* const LINK_TYPE;
 
+    protected:
         /**
-         * Constructor
+         * Constructor (protected)
          * @param id	The call identifier
          * @param type  The type of the call. Could be Incoming
          *						 Outgoing
          */
-        SIPCall(const std::string& id, Call::CallType type,
-                SIPAccount& account);
+        SIPCall(SIPAccount& account, const std::string& id, Call::CallType type);
 
+    public:
         /**
          * Destructor
          */
@@ -166,12 +171,11 @@ class SIPCall : public Call {
         void onClosed();
 
     private:
+        NON_COPYABLE(SIPCall);
 
         // override of Call::createHistoryEntry
         std::map<std::string, std::string>
         createHistoryEntry() const;
-
-        NON_COPYABLE(SIPCall);
 
         void stopRtpIfCurrent();
 

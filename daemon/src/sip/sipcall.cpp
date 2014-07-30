@@ -1,9 +1,10 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +32,7 @@
  *  as that of the covered work.
  */
 
+#include "call_factory.h"
 #include "sipcall.h"
 #include "sip_utils.h"
 #include "logger.h" // for _debug
@@ -63,6 +65,8 @@ static const int INCREMENT_SIZE = INITIAL_SIZE;
  *  Given a SIP call ID (usefull for transaction sucha as transfer)*/
 static std::map<std::string, std::string> transferCallID;
 
+const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
+
 static void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
@@ -92,9 +96,9 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
     call.sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
-SIPCall::SIPCall(const std::string& id, Call::CallType type,
-                 SIPAccount& account) :
-    Call(id, type, account)
+SIPCall::SIPCall(SIPAccount& account, const std::string& id,
+                 Call::CallType type)
+    : Call(account, id, type)
     , inv(NULL)
     , audiortp_(this)
 #ifdef SFL_VIDEO
@@ -110,6 +114,16 @@ SIPCall::SIPCall(const std::string& id, Call::CallType type,
 
 SIPCall::~SIPCall()
 {
+    const auto mod_ua_id = SIPVoIPLink::instance().getModId();
+
+    // prevent this from getting accessed in callbacks
+    if (inv->mod_data[mod_ua_id]) {
+        WARN("Call was not properly removed from invite callbacks");
+
+        // WARN: this assignation is not thread-safe!
+        inv->mod_data[mod_ua_id] = nullptr;
+    }
+
     // local sdp must be destroyed before pool
     local_sdp_.reset();
     pj_pool_release(pool_);
@@ -333,7 +347,7 @@ SIPCall::hangup(int reason)
     // Stop all RTP streams
     stopRtpIfCurrent();
 
-    siplink.removeSipCall(getCallId());
+    removeCall();
 }
 
 void
@@ -357,7 +371,7 @@ SIPCall::refuse()
     // Make sure the pointer is NULL in callbacks
     inv->mod_data[siplink.getModId()] = NULL;
 
-    siplink.removeSipCall(getCallId());
+    removeCall();
 }
 
 static void
@@ -684,7 +698,7 @@ SIPCall::onServerFailure()
 {
     const std::string id(getCallId());
     Manager::instance().callFailure(id);
-    SIPVoIPLink::instance().removeSipCall(id);
+    removeCall();
 }
 
 void
@@ -692,7 +706,7 @@ SIPCall::onClosed()
 {
     const std::string id(getCallId());
     Manager::instance().peerHungupCall(id);
-    SIPVoIPLink::instance().removeSipCall(id);
+    removeCall();
     Manager::instance().checkAudio();
 }
 

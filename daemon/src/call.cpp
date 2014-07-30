@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,8 +39,10 @@
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
 #include "array_size.h"
+#include "map_utils.h"
+#include "call_factory.h"
 
-Call::Call(const std::string& id, Call::CallType type, Account& account)
+Call::Call(Account& account, const std::string& id, Call::CallType type)
     : callMutex_()
     , localAddr_()
     , localAudioPort_(0)
@@ -57,12 +60,22 @@ Call::Call(const std::string& id, Call::CallType type, Account& account)
     , timestamp_stop_(0)
 {
     time(&timestamp_start_);
+    account_.attachCall(id_);
 }
 
 Call::~Call()
-{}
+{
+    account_.detachCall(id_);
+}
 
-std::string Call::getAccountId() const
+void
+Call::removeCall()
+{
+    Manager::instance().callFactory.removeCall(*this);
+}
+
+const std::string&
+Call::getAccountId() const
 {
     return account_.getAccountID();
 }
@@ -298,25 +311,4 @@ Call::getNullDetails()
     details["TIMESTAMP_START"] = "";
     details["ACCOUNTID"] = "";
     return details;
-}
-
-std::shared_ptr<Call>
-Call::newOutgoingCall(const std::string& id,
-                      const std::string& toUrl,
-                      const std::string& preferredAccountId)
-{
-    std::shared_ptr<Call> call;
-    std::string toIP = toUrl;
-    sip_utils::stripSipUriPrefix(toIP);
-
-    if (!IpAddr::isValid(toIP)) {
-        auto account = Manager::instance().getAccount(preferredAccountId);
-        if (account)
-            return account->newOutgoingCall(id, toUrl);
-        else
-            WARN("Preferred account %s doesn't exist, using IP2IP account", preferredAccountId.c_str());
-    } else
-        WARN("IP Url detected, using IP2IP account");
-
-    return Manager::instance().getIP2IPAccount()->newOutgoingCall(id, toIP);
 }
