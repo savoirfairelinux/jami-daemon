@@ -66,11 +66,6 @@
 #include <sstream>
 #include <cstdlib>
 
-const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
-const char * const SIPAccount::OVERRTP_STR = "overrtp";
-const char * const SIPAccount::SIPINFO_STR = "sipinfo";
-const char * const SIPAccount::ACCOUNT_TYPE = "SIP";
-
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
@@ -93,100 +88,7 @@ registration_cb(pjsip_regc_cbparam *param)
         return;
     }
 
-    if (param->regc != account->getRegistrationInfo())
-        return;
-
-    const std::string accountID = account->getAccountID();
-
-    if (param->status != PJ_SUCCESS) {
-        ERROR("SIP registration error %d", param->status);
-        account->destroyRegistrationInfo();
-        account->stopKeepAliveTimer();
-    } else if (param->code < 0 || param->code >= 300) {
-        ERROR("SIP registration failed, status=%d (%.*s)",
-              param->code, (int)param->reason.slen, param->reason.ptr);
-        account->destroyRegistrationInfo();
-        account->stopKeepAliveTimer();
-        switch (param->code) {
-            case PJSIP_SC_FORBIDDEN:
-                account->setRegistrationState(RegistrationState::ERROR_AUTH);
-                break;
-            case PJSIP_SC_NOT_FOUND:
-                account->setRegistrationState(RegistrationState::ERROR_HOST);
-                break;
-            case PJSIP_SC_REQUEST_TIMEOUT:
-                account->setRegistrationState(RegistrationState::ERROR_HOST);
-                break;
-            case PJSIP_SC_SERVICE_UNAVAILABLE:
-                account->setRegistrationState(RegistrationState::ERROR_SERVICE_UNAVAILABLE);
-                break;
-            default:
-                account->setRegistrationState(RegistrationState::ERROR_GENERIC);
-        }
-    } else if (PJSIP_IS_STATUS_IN_CLASS(param->code, 200)) {
-
-        // Update auto registration flag
-        account->resetAutoRegistration();
-
-        if (param->expiration < 1) {
-            account->destroyRegistrationInfo();
-            /* Stop keep-alive timer if any. */
-            account->stopKeepAliveTimer();
-            DEBUG("Unregistration success");
-            account->setRegistrationState(RegistrationState::UNREGISTERED);
-        } else {
-            /* TODO Check and update SIP outbound status first, since the result
-             * will determine if we should update re-registration
-             */
-            // update_rfc5626_status(acc, param->rdata);
-
-            if (account->checkNATAddress(param, SIPVoIPLink::instance().getPool()))
-                WARN("Contact overwritten");
-
-            /* TODO Check and update Service-Route header */
-            if (account->hasServiceRoute())
-                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(account->getServiceRoute(), SIPVoIPLink::instance().getPool()));
-
-            // start the periodic registration request based on Expire header
-            // account determines itself if a keep alive is required
-            if (account->isKeepAliveEnabled())
-                account->startKeepAliveTimer();
-
-            account->setRegistrationState(RegistrationState::REGISTERED);
-        }
-    }
-
-    /* Check if we need to auto retry registration. Basically, registration
-     * failure codes triggering auto-retry are those of temporal failures
-     * considered to be recoverable in relatively short term.
-     */
-    switch (param->code) {
-        case PJSIP_SC_REQUEST_TIMEOUT:
-        case PJSIP_SC_INTERNAL_SERVER_ERROR:
-        case PJSIP_SC_BAD_GATEWAY:
-        case PJSIP_SC_SERVICE_UNAVAILABLE:
-        case PJSIP_SC_SERVER_TIMEOUT:
-            account->scheduleReregistration(SIPVoIPLink::instance().getEndpoint());
-            break;
-
-        default:
-            /* Global failure */
-            if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
-                account->scheduleReregistration(SIPVoIPLink::instance().getEndpoint());
-    }
-
-    const pj_str_t *description = pjsip_get_status_text(param->code);
-
-    if (param->code && description) {
-        std::string state(description->ptr, description->slen);
-
-        Manager::instance().getClient()->getConfigurationManager()->sipRegistrationStateChanged(accountID, state, param->code);
-        std::pair<int, std::string> details(param->code, state);
-        // TODO: there id a race condition for this ressource when closing the application
-        account->setRegistrationStateDetailed(details);
-        account->setRegistrationExpire(param->expiration);
-    }
-#undef FAILURE_MESSAGE
+    account->onRegister(param);
 }
 
 SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
@@ -1178,7 +1080,7 @@ void SIPAccount::registerVoIPLink()
 
         // Dropping current calls already using the transport is currently required
         // with TLS.
-        Manager::instance().freeAccount(accountID_);
+        freeAccount();
 
         // PJSIP does not currently support TLS over IPv6
         transportType_ = PJSIP_TRANSPORT_TLS;
@@ -1377,6 +1279,102 @@ SIPAccount::sendRegister()
 
     setRegistrationInfo(regc);
     link_.sipTransport->cleanupTransports();
+}
+
+void
+SIPAccount::onRegister(pjsip_regc_cbparam *param)
+{
+    if (param->regc != getRegistrationInfo())
+        return;
+
+    if (param->status != PJ_SUCCESS) {
+        ERROR("SIP registration error %d", param->status);
+        destroyRegistrationInfo();
+        stopKeepAliveTimer();
+    } else if (param->code < 0 || param->code >= 300) {
+        ERROR("SIP registration failed, status=%d (%.*s)",
+              param->code, (int)param->reason.slen, param->reason.ptr);
+        destroyRegistrationInfo();
+        stopKeepAliveTimer();
+        switch (param->code) {
+            case PJSIP_SC_FORBIDDEN:
+                setRegistrationState(RegistrationState::ERROR_AUTH);
+                break;
+            case PJSIP_SC_NOT_FOUND:
+                setRegistrationState(RegistrationState::ERROR_HOST);
+                break;
+            case PJSIP_SC_REQUEST_TIMEOUT:
+                setRegistrationState(RegistrationState::ERROR_HOST);
+                break;
+            case PJSIP_SC_SERVICE_UNAVAILABLE:
+                setRegistrationState(RegistrationState::ERROR_SERVICE_UNAVAILABLE);
+                break;
+            default:
+                setRegistrationState(RegistrationState::ERROR_GENERIC);
+        }
+    } else if (PJSIP_IS_STATUS_IN_CLASS(param->code, 200)) {
+
+        // Update auto registration flag
+        resetAutoRegistration();
+
+        if (param->expiration < 1) {
+            destroyRegistrationInfo();
+            /* Stop keep-alive timer if any. */
+            stopKeepAliveTimer();
+            DEBUG("Unregistration success");
+            setRegistrationState(RegistrationState::UNREGISTERED);
+        } else {
+            /* TODO Check and update SIP outbound status first, since the result
+             * will determine if we should update re-registration
+             */
+            // update_rfc5626_status(acc, param->rdata);
+
+            if (checkNATAddress(param, SIPVoIPLink::instance().getPool()))
+                WARN("Contact overwritten");
+
+            /* TODO Check and update Service-Route header */
+            if (hasServiceRoute())
+                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(getServiceRoute(), SIPVoIPLink::instance().getPool()));
+
+            // start the periodic registration request based on Expire header
+            // account determines itself if a keep alive is required
+            if (isKeepAliveEnabled())
+                startKeepAliveTimer();
+
+            setRegistrationState(RegistrationState::REGISTERED);
+        }
+    }
+
+    /* Check if we need to auto retry registration. Basically, registration
+     * failure codes triggering auto-retry are those of temporal failures
+     * considered to be recoverable in relatively short term.
+     */
+    switch (param->code) {
+        case PJSIP_SC_REQUEST_TIMEOUT:
+        case PJSIP_SC_INTERNAL_SERVER_ERROR:
+        case PJSIP_SC_BAD_GATEWAY:
+        case PJSIP_SC_SERVICE_UNAVAILABLE:
+        case PJSIP_SC_SERVER_TIMEOUT:
+            scheduleReregistration(link_.getEndpoint());
+            break;
+
+        default:
+            /* Global failure */
+            if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
+                scheduleReregistration(link_.getEndpoint());
+    }
+
+    const pj_str_t *description = pjsip_get_status_text(param->code);
+
+    if (param->code && description) {
+        std::string state(description->ptr, description->slen);
+
+        Manager::instance().getClient()->getConfigurationManager()->sipRegistrationStateChanged(getAccountID(), state, param->code);
+        std::pair<int, std::string> details(param->code, state);
+        // TODO: there id a race condition for this ressource when closing the application
+        setRegistrationStateDetailed(details);
+        setRegistrationExpire(param->expiration);
+    }
 }
 
 void
