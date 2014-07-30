@@ -387,7 +387,7 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
     SIPAccount * acc = pres_->getAccount();
 
     if (timer_.id) {
-        pjsip_endpt_cancel_timer(((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint(), &timer_);
+        pjsip_endpt_cancel_timer(acc->getSIPVoIPLink()->getEndpoint(), &timer_);
         timer_.id = PJ_FALSE;
     }
 
@@ -401,7 +401,7 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
         delay.msec = msec;
         pj_time_val_normalize(&delay);
 
-        if (pjsip_endpt_schedule_timer(((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint(), &timer_, &delay) == PJ_SUCCESS) {
+        if (pjsip_endpt_schedule_timer(acc->getSIPVoIPLink()->getEndpoint(), &timer_, &delay) == PJ_SUCCESS) {
             timer_.id = PJ_TRUE;
         }
     }

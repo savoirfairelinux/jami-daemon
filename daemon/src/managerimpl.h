@@ -977,6 +977,16 @@ class ManagerImpl {
 
         CallFactory callFactory;
 
+        static std::set<std::shared_ptr<VoIPLink> >& getAllVoIPLink();
+
+        /**
+         * Return a reference on specific VoIPLink concrete class.
+         * This template function has to be instancied in the concrete class
+         * definition code.
+         */
+        template <class T>
+        std::shared_ptr<T> getVoIPLink() const;
+
     private:
         NON_COPYABLE(ManagerImpl);
 
@@ -1017,4 +1027,9 @@ class ManagerImpl {
         void loadAccount(const Conf::YamlNode *item, int &errorCount,
                          const std::string &accountOrder);
 };
+
+/* Not possible overload of getVoIPLink */
+template <>
+std::shared_ptr<VoIPLink> ManagerImpl::getVoIPLink() const = delete;
+
 #endif // MANAGER_IMPL_H_

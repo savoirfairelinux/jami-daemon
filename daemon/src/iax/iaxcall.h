@@ -39,8 +39,6 @@
 #include "call.h"
 #include "noncopyable.h"
 
-class VoIPLink;
-class IAXVoIPLink;
 class IAXAccount;
 
 /**
@@ -88,8 +86,6 @@ class IAXCall : public Call
         int format;
         iax_session* session;
 
-        VoIPLink* getVoIPLink() const;
-
         void answer();
 
         void hangup(int reason);
@@ -115,8 +111,6 @@ class IAXCall : public Call
 
     private:
         NON_COPYABLE(IAXCall);
-
-        IAXVoIPLink* link_;
 };
 
 #endif

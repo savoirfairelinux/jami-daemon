@@ -121,8 +121,6 @@ class SIPCall : public Call
 
         void setContactHeader(pj_str_t *contact);
 
-        VoIPLink* getVoIPLink() const;
-
         void sendSIPInfo(const char *const body, const char *const subtype);
 
         void answer();

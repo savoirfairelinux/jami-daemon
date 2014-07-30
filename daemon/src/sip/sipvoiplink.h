@@ -41,6 +41,7 @@
 #include "config.h"
 #endif
 
+#include "managerimpl.h"
 #include "voiplink.h"
 #include "sipaccount.h"
 #include "siptransport.h"
@@ -64,6 +65,9 @@ class SIPAccount;
 
 typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
 
+template <>
+std::shared_ptr<SIPVoIPLink> ManagerImpl::getVoIPLink() const;
+
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
@@ -72,19 +76,8 @@ typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
  */
 
 class SIPVoIPLink : public VoIPLink {
-
     public:
-
-        /**
-         * Singleton method. Enable to retrieve the unique static instance
-         * @return SIPVoIPLink* A pointer on the object
-         */
-        static SIPVoIPLink& instance();
-
-        /**
-         * Destroy the singleton instance
-         */
-        static void destroy();
+        static constexpr const char* const VOIPLINK_NAME = "sip";
 
         /**
          * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
@@ -96,6 +89,9 @@ class SIPVoIPLink : public VoIPLink {
 #ifdef __ANDROID__
         static void setSipLogger();
 #endif
+
+        SIPVoIPLink();
+        ~SIPVoIPLink();
 
         /**
          * Event listener. Each event send by the call manager is received and handled from here
@@ -164,17 +160,12 @@ class SIPVoIPLink : public VoIPLink {
 
         NON_COPYABLE(SIPVoIPLink);
 
-        SIPVoIPLink();
-        ~SIPVoIPLink();
-
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
         std::mutex keyframeRequestsMutex_;
         std::queue<std::string> keyframeRequests_;
 #endif
-
-        static SIPVoIPLink * instance_;
 
         static pj_caching_pool* cp_;
 

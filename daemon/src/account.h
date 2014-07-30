@@ -99,7 +99,7 @@ class Account : public Serializable {
          * Get the voiplink pointer
          * @return VoIPLink* the pointer or 0
          */
-        virtual VoIPLink* getVoIPLink() = 0;
+        virtual std::shared_ptr<VoIPLink> getVoIPLink() = 0;
 
         /**
          * Register the underlying VoIPLink. Launch the event listener.

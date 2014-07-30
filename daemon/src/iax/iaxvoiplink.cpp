@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,10 +35,10 @@
 #include <cmath>
 #include <algorithm>
 
+#include "manager.h"
 #include "iaxcall.h"
 #include "iaxaccount.h"
 #include "logger.h"
-#include "manager.h"
 #include "hooks/urlhook.h"
 #include "audio/audiolayer.h"
 #include "audio/resampler.h"
@@ -48,6 +48,24 @@
 
 std::mutex IAXVoIPLink::mutexIAX = {};
 
+struct IAXVoIPMainLink : VoIPLink {
+        bool handleEvents() {
+            bool state = false;
+            for (auto account : Manager::instance().getAllAccounts<IAXAccount>())
+                state |= account->getVoIPLink()->handleEvents();
+            return state;
+        }
+};
+
+template <>
+std::shared_ptr<IAXVoIPMainLink>
+ManagerImpl::getVoIPLink() const
+{
+    static auto link = std::make_shared<IAXVoIPMainLink>();
+    getAllVoIPLink().insert(link);
+    return link;
+}
+
 IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
     rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO())
     , resampledData_(RAW_BUFFER_SIZE * 4, AudioFormat::MONO())
@@ -56,6 +74,11 @@ IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
     , initDone_(false)
     , account_(account)
 {
+    /* This call force theIAXVoIPMainLink to be constructed and added to the manager.
+     * A weak ptr is used here as we don't use the variable.
+     */
+    static const std::weak_ptr<IAXVoIPMainLink> mainlink = Manager::instance().getVoIPLink<IAXVoIPMainLink>();
+
     srand(time(NULL));    // to get random number for RANDOM_PORT
 }
 
