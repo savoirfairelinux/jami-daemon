@@ -66,11 +66,6 @@
 #include <sstream>
 #include <cstdlib>
 
-const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
-const char * const SIPAccount::OVERRTP_STR = "overrtp";
-const char * const SIPAccount::SIPINFO_STR = "sipinfo";
-const char * const SIPAccount::ACCOUNT_TYPE = "SIP";
-
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
@@ -1178,7 +1173,7 @@ void SIPAccount::registerVoIPLink()
 
         // Dropping current calls already using the transport is currently required
         // with TLS.
-        Manager::instance().freeAccount(accountID_);
+        freeAccount();
 
         // PJSIP does not currently support TLS over IPv6
         transportType_ = PJSIP_TRANSPORT_TLS;
