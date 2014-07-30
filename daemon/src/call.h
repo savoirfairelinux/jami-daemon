@@ -235,8 +235,6 @@ class Call : public Recordable {
 
         virtual bool toggleRecording();
 
-        virtual VoIPLink* getVoIPLink() const = 0;
-
         /**
          * Answer the call
          */
