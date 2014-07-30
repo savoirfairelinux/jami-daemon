@@ -1,0 +1,169 @@
+/*
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
+ */
+
+#ifndef ACCOUNT_FACTORY_H
+#define ACCOUNT_FACTORY_H
+
+#include <string>
+#include <map>
+#include <vector>
+#include <memory>
+#include <mutex>
+#include <utility>
+
+class Account;
+class AccountGeneratorBase;
+
+template <class T> using AccountMap = std::map<std::string, std::shared_ptr<T> >;
+
+class AccountFactory {
+    public:
+        static const char* const DEFAULT_ACCOUNT_TYPE;
+
+        AccountFactory();
+
+        bool isSupportedType(const std::string& accountType) const;
+
+        std::shared_ptr<Account> createAccount(const std::string& accountType,
+                                               const std::string& id);
+
+        void removeAccount(Account& account);
+
+        void removeAccount(const std::string& id);
+
+        template <class T=Account>
+        bool hasAccount(const std::string& id) const {
+            std::lock_guard<std::recursive_mutex> lk(mutex_);
+
+            const auto map = getMap_<T>();
+            return map and map->find(id) != map->cend();
+        }
+
+        template <class T=Account>
+        void clear() {
+            std::lock_guard<std::recursive_mutex> lk(mutex_);
+
+            auto map = getMap_<T>();
+            if (!map) return;
+
+            map->clear();
+        }
+
+        template <class T=Account>
+        bool empty() const {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+            const auto map = getMap_<T>();
+            return map and map->empty();
+        }
+
+        template <class T=Account>
+        std::size_t accountCount() const {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+            const auto map = getMap_<T>();
+            if (!map) return 0;
+
+            return map->size();
+        }
+
+        template <class T=Account>
+        std::shared_ptr<T>
+        getAccount(const std::string& id) const {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+            const auto map = getMap_<T>();
+            if (!map) return nullptr;
+
+            const auto& it = map->find(id);
+            if (it == map->cend())
+                return nullptr;
+
+            return std::static_pointer_cast<T>(it->second);
+        }
+
+        template <class T=Account>
+        std::vector<std::shared_ptr<T> > getAllAccounts() const {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+            std::vector<std::shared_ptr<T> > v;
+
+            const auto map = getMap_<T>();
+            if (map) {
+                for (const auto& it : *map)
+                    v.push_back(std::static_pointer_cast<T>(it.second));
+            }
+
+            v.shrink_to_fit();
+            return v;
+        }
+
+        std::shared_ptr<Account> getIP2IPAccount() const;
+
+        void initIP2IPAccount();
+
+    private:
+        mutable std::recursive_mutex mutex_ = {};
+        std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)> > generators_ = {};
+        std::map<std::string, AccountMap<Account> > accountMaps_ = {};
+        std::weak_ptr<Account> ip2ip_account_ = {}; //! cached pointer on IP2IP account
+
+        const AccountMap<Account>* getMap_(const std::string& name) const;
+
+        template <class T>
+        const AccountMap<Account>* getMap_() const {
+            return getMap_(T::ACCOUNT_TYPE);
+        }
+};
+
+template <>
+bool
+AccountFactory::hasAccount(const std::string& id) const;
+
+template <>
+void
+AccountFactory::clear();
+
+template <>
+std::vector<std::shared_ptr<Account> >
+AccountFactory::getAllAccounts() const;
+
+template <>
+std::shared_ptr<Account>
+AccountFactory::getAccount(const std::string& accountId) const;
+
+template <>
+bool
+AccountFactory::empty() const;
+
+template <>
+std::size_t
+AccountFactory::accountCount() const;
+
+#endif // ACCOUNT_FACTORY_H

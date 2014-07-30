@@ -50,10 +50,16 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
         return;
     }
 
-    SIPAccount *acc = Manager::instance().getIP2IPAccount();
-    assert(acc);
+    auto account = Manager::instance().getIP2IPAccount();
+    auto sipaccount = static_cast<SIPAccount *>(account.get());
 
-    SIPPresence * pres = acc->getPresence();
+    if (!sipaccount) {
+        ERROR("Could not find account IP2IP");
+        return;
+    }
+
+    auto pres = sipaccount->getPresence();
+
     if (!pres) {
         ERROR("Presence not initialized");
         return;
@@ -113,15 +119,19 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
           , server.c_str());
 
     /* get parents*/
-    SIPAccount *acc = Manager::instance().getIP2IPAccount();
-    assert(acc);
+    auto account = Manager::instance().getIP2IPAccount();
+    auto sipaccount = static_cast<SIPAccount *>(account.get());
+    if (!sipaccount) {
+        ERROR("Could not find account IP2IP");
+        return PJ_FALSE;
+    }
 
-    pjsip_endpoint *endpt = ((SIPVoIPLink*) acc->getVoIPLink())->getEndpoint();
-    SIPPresence * pres = acc->getPresence();
+    pjsip_endpoint *endpt = ((SIPVoIPLink*) sipaccount->getVoIPLink())->getEndpoint();
+    SIPPresence * pres = sipaccount->getPresence();
     pres->lock();
 
     /* Create UAS dialog: */
-    const pj_str_t contact(acc->getContactHeader());
+    const pj_str_t contact(sipaccount->getContactHeader());
     status = pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, &contact, &dlg);
 
     if (status != PJ_SUCCESS) {
