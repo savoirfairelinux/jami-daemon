@@ -50,14 +50,7 @@
 
 #include "call_factory.h"
 
-// FIXME: remove these dependencies
-#include "sip/sipvoiplink.h"
 #include "sip/sip_utils.h"
-
-#if HAVE_IAX
-#include "iax/iaxvoiplink.h"
-#include "iax/iaxaccount.h"
-#endif
 
 #include "im/instant_messaging.h"
 
@@ -97,6 +90,7 @@
 #include <memory>
 
 std::atomic_bool ManagerImpl::initialized = {false};
+std::vector<ManagerImpl::VoIPLinkGenerator> ManagerImpl::voipStackInitFunctions_ = {};
 
 static void
 copy_over(const std::string &srcPath, const std::string &destPath)
@@ -187,6 +181,10 @@ ManagerImpl::init(const std::string &config_file)
 {
     // FIXME: this is no good
     initialized = true;
+
+    // Initialise VoIPLink stack
+    for (auto& generator : voipStackInitFunctions_)
+        voipStackInstances_.push_back(generator());
 
     path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
@@ -287,7 +285,7 @@ ManagerImpl::finish()
         // Disconnect accounts, close link stacks and free allocated ressources
         unregisterAccounts();
         accountFactory_.clear();
-        SIPVoIPLink::destroy();
+        voipStackInstances_.clear();
 
         {
             std::lock_guard<std::mutex> lock(audioLayerMutex_);
@@ -1316,12 +1314,8 @@ void ManagerImpl::pollEvents()
     if (finished_)
         return;
 
-    SIPVoIPLink::instance().handleEvents();
-
-#if HAVE_IAX
-    for (auto &item : accountFactory_.getAllAccounts(IAXAccount::ACCOUNT_TYPE))
-        item.second->getVoIPLink()->handleEvents();
-#endif
+    for (auto& linkPtr : voipStackInstances_)
+        linkPtr->handleEvents();
 }
 
 //THREAD=Main

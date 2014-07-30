@@ -50,6 +50,7 @@
 
 #include "config/sfl_config.h"
 
+#include <voiplink.h>
 #include "conference.h"
 
 #include "account_factory.h"
@@ -991,6 +992,12 @@ class ManagerImpl {
 
         CallFactory callFactory;
 
+        typedef std::function<std::unique_ptr<VoIPLink>()> VoIPLinkGenerator;
+        static bool registerVoIPLink(VoIPLinkGenerator&& generator) {
+            voipStackInitFunctions_.push_back(std::forward<VoIPLinkGenerator>(generator));
+            return true;
+        }
+
     private:
         NON_COPYABLE(ManagerImpl);
 
@@ -1030,5 +1037,8 @@ class ManagerImpl {
 
         void loadAccount(const Conf::YamlNode *item, int &errorCount,
                          const std::string &accountOrder);
+
+        static std::vector<VoIPLinkGenerator> voipStackInitFunctions_;
+        std::vector<std::unique_ptr<VoIPLink> > voipStackInstances_ = {};
 };
 #endif // MANAGER_IMPL_H_
