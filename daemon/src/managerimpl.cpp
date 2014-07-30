@@ -1,11 +1,13 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -43,17 +45,19 @@
 #include "global.h"
 #include "fileutils.h"
 #include "map_utils.h"
-#include "sip/sipvoiplink.h"
-#include "sip/sipaccount.h"
-#include "sip/sipcall.h"
-#include "im/instant_messaging.h"
-#include "sip/sippresence.h"
+#include "voiplink.h"
+#include "account.h"
 
+// FIXME: remove these dependencies
+#include "sip/sipvoiplink.h"
+#include "sip/sipcall.h"
 #if HAVE_IAX
-#include "iax/iaxaccount.h"
-#include "iax/iaxcall.h"
 #include "iax/iaxvoiplink.h"
+#include "iax/iaxcall.h"
+#include "iax/iaxaccount.h"
 #endif
+
+#include "im/instant_messaging.h"
 
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
@@ -88,7 +92,7 @@
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
-
+#include <memory>
 
 std::atomic_bool ManagerImpl::initialized = {false};
 
@@ -118,21 +122,23 @@ restore_backup(const std::string &path)
     copy_over(backup_path, path);
 }
 
-static void
-loadDefaultAccountMap()
+void
+ManagerImpl::loadDefaultAccountMap()
 {
-    SIPVoIPLink::instance().loadIP2IPSettings();
+    accountFactory_.initIP2IPAccount();
 }
 
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), client_(),
-	config_(),
+    config_(),
     currentCallId_(), currentCallMutex_(), audiodriver_(nullptr), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
-    mainBuffer_(), conferenceMap_(), history_(), finished_(false)
+    mainBuffer_(), conferenceMap_(), history_(),
+    finished_(false), accountFactory_()
+
 {
     // initialize random generator for call id
     srand(time(nullptr));
@@ -273,11 +279,8 @@ ManagerImpl::finish()
         saveConfig();
 
         unregisterAccounts();
-
+        accountFactory_.clear();
         SIPVoIPLink::destroy();
-#if HAVE_IAX
-        IAXVoIPLink::unloadAccountMap();
-#endif
 
         {
             std::lock_guard<std::mutex> lock(audioLayerMutex_);
@@ -665,7 +668,8 @@ ManagerImpl::attendedTransfer(const std::string& transferID,
 bool
 ManagerImpl::refuseCall(const std::string& id)
 {
-    if (!isValidCall(id))
+    auto call = getCallFromCallID(id);
+    if (!call)
         return false;
 
     stopTone();
@@ -675,9 +679,6 @@ ManagerImpl::refuseCall(const std::string& id)
         audiodriver_->stopStream();
     }
 
-    auto call = getCallFromCallID(id);
-    if (!call)
-        return false;
     call->refuse();
 
     checkAudio();
@@ -960,14 +961,12 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
 }
 
 std::shared_ptr<Call>
-ManagerImpl::getCallFromCallID(const std::string &callID)
+ManagerImpl::getCallFromCallID(const std::string& callID)
 {
     std::shared_ptr<Call> call = SIPVoIPLink::instance().getSipCall(callID);
 #if HAVE_IAX
-    if (call)
-        return call;
-
-    call = IAXVoIPLink::getIaxCall(callID);
+    if (!call)
+        call = IAXVoIPLink::getIaxCall(callID);
 #endif
 
     return call;
@@ -1321,8 +1320,8 @@ void ManagerImpl::pollEvents()
     SIPVoIPLink::instance().handleEvents();
 
 #if HAVE_IAX
-    for (auto &item : IAXVoIPLink::getAccounts())
-        item.second->getVoIPLink()->handleEvents();
+    for (auto account : accountFactory_.getAllAccounts<IAXAccount>())
+        account->getVoIPLink()->handleEvents();
 #endif
 }
 
@@ -1342,13 +1341,8 @@ ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (auto &item : SIPVoIPLink::instance().getAccounts())
-            item.second->serialize(emitter);
-
-#if HAVE_IAX
-        for (auto &item : IAXVoIPLink::getAccounts())
-            item.second->serialize(emitter);
-#endif
+        for (const auto& account : accountFactory_.getAllAccounts())
+            account->serialize(emitter);
 
         // FIXME: this is a hack until we get rid of accountOrder
         preferences.verifyAccountOrder(getAccountList());
@@ -1806,7 +1800,7 @@ ManagerImpl::updateAudioFile(const std::string &file, int sampleRate)
 void
 ManagerImpl::playRingtone(const std::string& accountID)
 {
-    Account *account = getAccount(accountID);
+    const auto account = getAccount(accountID);
 
     if (!account) {
         WARN("Invalid account in ringtone");
@@ -2002,7 +1996,7 @@ ManagerImpl::getCurrentAudioDevicesIndex()
 int
 ManagerImpl::isRingtoneEnabled(const std::string& id)
 {
-    Account *account = getAccount(id);
+    const auto account = getAccount(id);
 
     if (!account) {
         WARN("Invalid account in ringtone enabled");
@@ -2015,7 +2009,7 @@ ManagerImpl::isRingtoneEnabled(const std::string& id)
 void
 ManagerImpl::ringtoneEnabled(const std::string& id)
 {
-    Account *account = getAccount(id);
+    const auto account = getAccount(id);
 
     if (!account) {
         WARN("Invalid account in ringtone enabled");
@@ -2327,6 +2321,8 @@ ManagerImpl::setAccountsOrder(const std::string& order)
 std::vector<std::string>
 ManagerImpl::getAccountList() const
 {
+    // TODO: this code looks weird. need further investigation!
+
     using std::vector;
     using std::string;
     vector<string> account_order(loadAccountOrder());
@@ -2336,31 +2332,27 @@ ManagerImpl::getAccountList() const
     vector<string> v;
 
     // Concatenate all account pointers in a single map
-    AccountMap allAccounts(getAllAccounts());
+    const auto& allAccounts = accountFactory_.getAllAccounts();
 
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        for (const auto &item : allAccounts) {
-            if (item.first == SIPAccount::IP2IP_PROFILE || item.first.empty())
+        for (const auto &account : allAccounts) {
+            if (account->isIP2IP())
                 continue;
-
-            if (item.second)
-                v.push_back(item.second->getAccountID());
+            v.push_back(account->getAccountID());
         }
     } else {
-        for (const auto &item : account_order) {
-            if (item == SIPAccount::IP2IP_PROFILE or item.empty())
+        const auto& ip2ipAccountID = getIP2IPAccount()->getAccountID();
+        for (const auto& id : account_order) {
+            if (id.empty() or id == ip2ipAccountID)
                 continue;
 
-            AccountMap::const_iterator account_iter = allAccounts.find(item);
-
-            if (account_iter != allAccounts.end() and account_iter->second)
-                v.push_back(account_iter->second->getAccountID());
+            if (accountFactory_.hasAccount(id))
+                v.push_back(id);
         }
     }
 
-    Account *account = getIP2IPAccount();
-    if (account)
+    if (const auto& account = getIP2IPAccount())
         v.push_back(account->getAccountID());
     else
         ERROR("could not find IP2IP profile in getAccount list");
@@ -2371,7 +2363,7 @@ ManagerImpl::getAccountList() const
 std::map<std::string, std::string>
 ManagerImpl::getAccountDetails(const std::string& accountID) const
 {
-    Account * account = getAccount(accountID);
+    const auto account = getAccount(accountID);
 
     if (account) {
         return account->getAccountDetails();
@@ -2391,7 +2383,7 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
 {
     DEBUG("Set account details for %s", accountID.c_str());
 
-    Account* account = getAccount(accountID);
+    const auto account = getAccount(accountID);
 
     if (account == nullptr) {
         ERROR("Could not find account %s", accountID.c_str());
@@ -2437,28 +2429,15 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     // Get the type
 
     std::string accountType;
-    if (details.find(CONFIG_ACCOUNT_TYPE) == details.end())
-        accountType = "SIP";
-    else
+    if (details.find(CONFIG_ACCOUNT_TYPE) != details.end())
         accountType = ((*details.find(CONFIG_ACCOUNT_TYPE)).second);
+    else
+        accountType = AccountFactory::DEFAULT_ACCOUNT_TYPE;
 
     DEBUG("Adding account %s", newAccountID.c_str());
 
-    /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
-
-    Account* newAccount = nullptr;
-
-    if (accountType == "SIP") {
-        newAccount = new SIPAccount(newAccountID, true);
-        SIPVoIPLink::instance().getAccounts()[newAccountID] = newAccount;
-    }
-#if HAVE_IAX
-    else if (accountType == "IAX") {
-        newAccount = new IAXAccount(newAccountID);
-        IAXVoIPLink::getAccounts()[newAccountID] = newAccount;
-    }
-#endif
-    else {
+    auto newAccount = accountFactory_.createAccount(accountType, newAccountID);
+    if (!newAccount) {
         ERROR("Unknown %s param when calling addAccount(): %s",
               CONFIG_ACCOUNT_TYPE, accountType.c_str());
         return "";
@@ -2486,16 +2465,9 @@ void ManagerImpl::removeAccounts()
 void ManagerImpl::removeAccount(const std::string& accountID)
 {
     // Get it down and dying
-    Account* remAccount = getAccount(accountID);
-
-    if (remAccount != nullptr) {
+    if (const auto& remAccount = getAccount(accountID)) {
         remAccount->unregisterVoIPLink();
-        SIPVoIPLink::instance().getAccounts().erase(accountID);
-#if HAVE_IAX
-        IAXVoIPLink::getAccounts().erase(accountID);
-#endif
-        // http://projects.savoirfairelinux.net/issues/show/2355
-        // delete remAccount;
+        accountFactory_.removeAccount(*remAccount);
     }
 
     preferences.removeAccount(accountID);
@@ -2506,16 +2478,6 @@ void ManagerImpl::removeAccount(const std::string& accountID)
     client_.getConfigurationManager()->accountsChanged();
 }
 
-std::string ManagerImpl::getAccountFromCall(const std::string& callID)
-{
-    if (auto call = getCallFromCallID(callID))
-        return call->getAccountId();
-    else
-        return "";
-}
-
-// FIXME: get rid of this, there's no guarantee that
-// a Call will still exist after this has been called.
 bool
 ManagerImpl::isValidCall(const std::string& callID)
 {
@@ -2546,16 +2508,9 @@ ManagerImpl::loadAccountOrder() const
     return Account::split_string(preferences.getAccountOrder());
 }
 
-#if HAVE_IAX
-static void
-loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap,
-            AccountMap &iaxAccountMap, int &errorCount,
-            const std::string &accountOrder)
-#else
-static void
-loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap,
-            int &errorCount, const std::string &accountOrder)
-#endif
+void
+ManagerImpl::loadAccount(const Conf::YamlNode *item, int &errorCount,
+                         const std::string &accountOrder)
 {
     if (!item) {
         ERROR("Could not load account");
@@ -2576,21 +2531,21 @@ loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap,
     };
 
     if (!accountid.empty() and !accountAlias.empty()) {
-        if (not inAccountOrder(accountid) and accountid != SIPAccount::IP2IP_PROFILE) {
+        const auto& ip2ipAccountID = getIP2IPAccount()->getAccountID();
+        if (not inAccountOrder(accountid) and accountid != ip2ipAccountID) {
             WARN("Dropping account %s, which is not in account order", accountid.c_str());
-        } else if (accountType == "SIP") {
-            Account *a = new SIPAccount(accountid, true);
-            sipAccountMap[accountid] = a;
-            a->unserialize(*item);
-        } else if (accountType == "IAX") {
-#if HAVE_IAX
-            Account *a = new IAXAccount(accountid);
-            iaxAccountMap[accountid] = a;
-            a->unserialize(*item);
-#else
-            ERROR("Ignoring IAX account");
-            ++errorCount;
-#endif
+        } else if (accountFactory_.isSupportedType(accountType)) {
+            std::shared_ptr<Account> a;
+            if (accountid != ip2ipAccountID)
+                a = accountFactory_.createAccount(accountType, accountid);
+            else
+                a = accountFactory_.getIP2IPAccount();
+            if (a) {
+                a->unserialize(*item);
+            } else {
+                ERROR("Failed to create account type \"%s\"", accountType.c_str());
+                ++errorCount;
+            }
         } else {
             ERROR("Ignoring unknown account type \"%s\"", accountType.c_str());
             ++errorCount;
@@ -2602,6 +2557,8 @@ int
 ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
+
+    accountFactory_.initIP2IPAccount();
 
     // load saved preferences for IP2IP account from configuration file
     Sequence *seq = parser.getAccountSequence()->getSequence();
@@ -2628,96 +2585,10 @@ ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     const std::string accountOrder = preferences.getAccountOrder();
 
-    AccountMap &sipAccounts = SIPVoIPLink::instance().getAccounts();
-#if HAVE_IAX
-    AccountMap &iaxAccounts = IAXVoIPLink::getAccounts();
     for (auto &s : *seq)
-        loadAccount(s, sipAccounts, iaxAccounts, errorCount, accountOrder);
-#else
-    for (auto &s : *seq)
-        loadAccount(s, sipAccounts, errorCount, accountOrder);
-#endif
-
-    // This must happen after account is loaded
-    SIPVoIPLink::instance().loadIP2IPSettings();
+        loadAccount(s, errorCount, accountOrder);
 
     return errorCount;
-}
-
-bool ManagerImpl::accountExists(const std::string &accountID)
-{
-    bool ret = false;
-
-    ret = SIPVoIPLink::instance().getAccounts().find(accountID) != SIPVoIPLink::instance().getAccounts().end();
-#if HAVE_IAX
-    if (ret)
-        return ret;
-
-    ret = IAXVoIPLink::getAccounts().find(accountID) != IAXVoIPLink::getAccounts().end();
-#endif
-
-    return ret;
-}
-
-SIPAccount*
-ManagerImpl::getIP2IPAccount() const
-{
-    AccountMap::const_iterator iter = SIPVoIPLink::instance().getAccounts().find(SIPAccount::IP2IP_PROFILE);
-    if (iter == SIPVoIPLink::instance().getAccounts().end())
-        return nullptr;
-
-    return static_cast<SIPAccount *>(iter->second);
-}
-
-Account*
-ManagerImpl::getAccount(const std::string& accountID) const
-{
-    Account *account = nullptr;
-
-    account = getSipAccount(accountID);
-    if (account != nullptr)
-        return account;
-
-#if HAVE_IAX
-    account = getIaxAccount(accountID);
-    if (account != nullptr)
-        return account;
-#endif
-
-    return nullptr;
-}
-
-SIPAccount *
-ManagerImpl::getSipAccount(const std::string& accountID) const
-{
-    AccountMap::const_iterator iter = SIPVoIPLink::instance().getAccounts().find(accountID);
-    if (iter != SIPVoIPLink::instance().getAccounts().end())
-        return static_cast<SIPAccount *>(iter->second);
-
-    return nullptr;
-}
-
-#if HAVE_IAX
-IAXAccount *
-ManagerImpl::getIaxAccount(const std::string& accountID) const
-{
-    AccountMap::const_iterator iter = IAXVoIPLink::getAccounts().find(accountID);
-    if (iter != IAXVoIPLink::getAccounts().end())
-        return static_cast<IAXAccount *>(iter->second);
-
-    return nullptr;
-}
-#endif
-
-AccountMap
-ManagerImpl::getAllAccounts() const
-{
-    AccountMap all;
-    all.insert(SIPVoIPLink::instance().getAccounts().begin(), SIPVoIPLink::instance().getAccounts().end());
-#if HAVE_IAX
-    all.insert(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end());
-#endif
-    return all;
 }
 
 std::map<std::string, std::string>
@@ -2840,23 +2711,12 @@ ManagerImpl::startAudioDriverStream()
 }
 
 void
-ManagerImpl::freeAccount(const std::string& accountID)
-{
-    Account *account = getAccount(accountID);
-    if (!account)
-        return;
-    for (const auto& call : account->getVoIPLink()->getCalls(accountID))
-        hangupCall(call->getCallId());
-    account->unregisterVoIPLink();
-}
-
-void
 ManagerImpl::registerAccounts()
 {
     auto allAccounts(getAccountList());
 
     for (auto &item : allAccounts) {
-        Account *a = getAccount(item);
+        const auto a = getAccount(item);
 
         if (!a)
             continue;
@@ -2871,21 +2731,16 @@ ManagerImpl::registerAccounts()
 void
 ManagerImpl::unregisterAccounts()
 {
-    for (auto &item : getAccountList()) {
-        Account *a = getAccount(item);
-
-        if (!a)
-            continue;
-
-        if (a->isEnabled())
-            a->unregisterVoIPLink();
+    for (const auto& account : getAllAccounts()) {
+        if (account->isEnabled())
+            account->unregisterVoIPLink();
     }
 }
 
 void
 ManagerImpl::sendRegister(const std::string& accountID, bool enable)
 {
-    Account* acc = getAccount(accountID);
+    const auto acc = getAccount(accountID);
     if (!acc)
         return;
 
