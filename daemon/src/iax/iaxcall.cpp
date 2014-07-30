@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,6 +45,8 @@
 #include "im/instant_messaging.h"
 #endif
 
+const char* const IAXCall::LINK_TYPE = IAXAccount::ACCOUNT_TYPE;
+
 static int
 codecToASTFormat(int c)
 {
@@ -65,9 +68,11 @@ codecToASTFormat(int c)
     }
 }
 
-IAXCall::IAXCall(const std::string& id, Call::CallType type,
-                 IAXAccount& account, IAXVoIPLink* link) :
-    Call(id, type, account), format(0), session(NULL), link_(link)
+IAXCall::IAXCall(IAXAccount& account, const std::string& id, Call::CallType type)
+    : Call(account, id, type),
+      format(0),
+      session(NULL),
+      link_(static_cast<IAXVoIPLink*>(account.getVoIPLink()))
 {}
 
 int IAXCall::getSupportedFormat(const std::string &accountID) const
@@ -157,7 +162,7 @@ IAXCall::hangup(int reason UNUSED)
     iax_hangup(session, (char*) "Dumped Call");
     session = nullptr;
 
-    link_->removeIaxCall(getCallId());
+    removeCall();
 }
 
 void
@@ -168,7 +173,7 @@ IAXCall::refuse()
         iax_reject(session, (char*) "Call rejected manually.");
     }
 
-    link_->removeIaxCall(getCallId());
+    removeCall();
 }
 
 void
