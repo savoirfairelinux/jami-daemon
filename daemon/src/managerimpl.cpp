@@ -48,12 +48,14 @@
 #include "voiplink.h"
 #include "account.h"
 
+#include "call_factory.h"
+
 // FIXME: remove these dependencies
 #include "sip/sipvoiplink.h"
-#include "sip/sipcall.h"
+#include "sip/sip_utils.h"
+
 #if HAVE_IAX
 #include "iax/iaxvoiplink.h"
-#include "iax/iaxcall.h"
 #include "iax/iaxaccount.h"
 #endif
 
@@ -136,7 +138,7 @@ ManagerImpl::ManagerImpl() :
     currentCallId_(), currentCallMutex_(), audiodriver_(nullptr), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
-    mainBuffer_(), conferenceMap_(), history_(),
+    mainBuffer_(), callFactory(), conferenceMap_(), history_(),
     finished_(false), accountFactory_()
 
 {
@@ -269,15 +271,20 @@ ManagerImpl::finish()
     finished_ = true;
 
     try {
+        // Forbid call creation
+        callFactory.forbid();
 
-        std::vector<std::string> callList(getCallList());
-        DEBUG("Hangup %zu remaining call(s)", callList.size());
+        // Hangup all remaining active calls
+        DEBUG("Hangup %zu remaining call(s)", callFactory.callCount());
+        for (const auto call : callFactory.getAllCalls())
+            hangupCall(call->getCallId());
+        callFactory.clear();
 
-        for (const auto &item : callList)
-            hangupCall(item);
-
+        // Save accounts config and call's history
         saveConfig();
+        saveHistory();
 
+        // Disconnect accounts, close link stacks and free allocated ressources
         unregisterAccounts();
         accountFactory_.clear();
         SIPVoIPLink::destroy();
@@ -288,8 +295,6 @@ ManagerImpl::finish()
             delete audiodriver_;
             audiodriver_ = nullptr;
         }
-
-        saveHistory();
     } catch (const VoipLinkException &err) {
         ERROR("%s", err.what());
     }
@@ -331,7 +336,7 @@ void ManagerImpl::switchCall(const std::string& id)
 /* Main Thread */
 
 bool
-ManagerImpl::outgoingCall(const std::string& prefered_account_id,
+ManagerImpl::outgoingCall(const std::string& preferred_account_id,
                           const std::string& call_id,
                           const std::string& to,
                           const std::string& conf_id)
@@ -373,7 +378,7 @@ ManagerImpl::outgoingCall(const std::string& prefered_account_id,
          * as the factory may decide to use another account (like IP2IP).
          */
         DEBUG("New outgoing call to %s", to_cleaned.c_str());
-        auto call = Call::newOutgoingCall(call_id, to_cleaned, prefered_account_id);
+        auto call = newOutgoingCall(call_id, to_cleaned, preferred_account_id);
 
         // try to reverse match the peer name using the cache
         if (call->getDisplayName().empty()) {
@@ -963,13 +968,7 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
 std::shared_ptr<Call>
 ManagerImpl::getCallFromCallID(const std::string& callID)
 {
-    std::shared_ptr<Call> call = SIPVoIPLink::instance().getSipCall(callID);
-#if HAVE_IAX
-    if (!call)
-        call = IAXVoIPLink::getIaxCall(callID);
-#endif
-
-    return call;
+    return callFactory.getCall(callID);
 }
 
 bool
@@ -2594,11 +2593,6 @@ ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 std::map<std::string, std::string>
 ManagerImpl::getCallDetails(const std::string &callID)
 {
-    // We need here to retrieve the call information attached to the call ID
-    // To achieve that, we need to get the voip link attached to the call
-    // But to achieve that, we need to get the account the call was made with
-
-    // Then the VoIP link this account is linked with (IAX2 or SIP)
     if (auto call = getCallFromCallID(callID)) {
         return call->getDetails();
     } else {
@@ -2617,12 +2611,7 @@ ManagerImpl::getHistory()
 std::vector<std::string>
 ManagerImpl::getCallList() const
 {
-    std::vector<std::string> v(SIPVoIPLink::instance().getCallIDs());
-#if HAVE_IAX
-    const std::vector<std::string> iaxCalls(IAXVoIPLink::getCallIDs());
-    v.insert(v.end(), iaxCalls.begin(), iaxCalls.end());
-#endif
-    return v;
+    return callFactory.getCallIDs();
 }
 
 std::map<std::string, std::string>
@@ -2780,3 +2769,32 @@ ManagerImpl::getVideoManager()
     return client_.getVideoManager();
 }
 #endif
+
+std::shared_ptr<Call>
+ManagerImpl::newOutgoingCall(const std::string& id,
+                             const std::string& toUrl,
+                             const std::string& preferredAccountId)
+{
+    std::shared_ptr<Account> account = Manager::instance().getIP2IPAccount();
+    std::string finalToUrl = toUrl;
+
+    // FIXME: have a generic version to remove sip dependency
+    sip_utils::stripSipUriPrefix(finalToUrl);
+
+    if (!IpAddr::isValid(finalToUrl)) {
+        account = getAccount(preferredAccountId);
+        if (account)
+            finalToUrl = toUrl;
+        else
+            WARN("Preferred account %s doesn't exist, using IP2IP account",
+                 preferredAccountId.c_str());
+    } else
+        WARN("IP Url detected, using IP2IP account");
+
+    if (!account) {
+        ERROR("No suitable account found to create outgoing call");
+        return nullptr;
+    }
+
+    return account->newOutgoingCall(id, finalToUrl);
+}
