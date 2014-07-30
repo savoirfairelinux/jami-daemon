@@ -1,8 +1,9 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +30,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
 #ifndef __CALL_H__
 #define __CALL_H__
 
@@ -40,9 +42,13 @@
 #include <mutex>
 #include <map>
 #include <sstream>
+#include <memory>
+#include <vector>
 
 class VoIPLink;
 class Account;
+
+template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
 /*
  * @file call.h
@@ -74,32 +80,13 @@ class Call : public Recordable {
          */
         enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, ERROR};
 
-        /**
-         * Constructor of a call
-         * @param id Unique identifier of the call
-         * @param type set definitely this call as incoming/outgoing
-         */
-        Call(const std::string& id, Call::CallType type, Account& account);
         virtual ~Call();
 
         /**
-         * Create a new outgoing call
-         * @param id  The ID of the call
-         * @param toUrl The address to call
-         * @param preferredAccountId The IP of preferred account to use.
-         *   This is not necessary the account used.
-         * @return Call*  A shared pointer on a valid call.
-         * @note This function raises VoipLinkException() on errors.
-         */
-        static std::shared_ptr<Call> newOutgoingCall(const std::string& id,
-                                                     const std::string& toUrl,
-                                                     const std::string& preferredAccountId);
-
-        /**
-         * Return a copy of the call id
+         * Return a reference on the call id
          * @return call id
          */
-        std::string getCallId() const {
+        const std::string& getCallId() const {
             return id_;
         }
 
@@ -107,7 +94,7 @@ class Call : public Recordable {
          * Return a reference on the conference id
          * @return call id
          */
-        std::string getConfId() const {
+        const std::string& getConfId() const {
             return confID_;
         }
 
@@ -116,7 +103,7 @@ class Call : public Recordable {
         }
 
         Account& getAccount() const { return account_; }
-        std::string getAccountId() const;
+        const std::string& getAccountId() const;
 
         CallType getCallType() const {
             return type_;
@@ -312,6 +299,16 @@ class Call : public Recordable {
         virtual void sendTextMessage(const std::string &message,
                                      const std::string &from) = 0;
 #endif
+
+        void removeCall();
+
+    protected:
+        /**
+         * Constructor of a call
+         * @param id Unique identifier of the call
+         * @param type set definitely this call as incoming/outgoing
+         */
+        Call(Account& account, const std::string& id, Call::CallType type);
 
     private:
         bool validTransition(CallState newState);
