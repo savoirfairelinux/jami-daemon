@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,16 +49,20 @@ class IAXAccount;
  */
 class iax_session;
 
-class IAXCall : public Call {
+class IAXCall : public Call
+{
     public:
+        static const char* const LINK_TYPE;
+
+    protected:
         /**
          * Constructor
          * @param id  The unique ID of the call
          * @param type  The type of the call
          */
-        IAXCall(const std::string& id, Call::CallType type,
-                IAXAccount& account, IAXVoIPLink* link);
+        IAXCall(IAXAccount& account, const std::string& id, Call::CallType type);
 
+    public:
         /**
          * @return int  The bitwise list of supported formats
          */
