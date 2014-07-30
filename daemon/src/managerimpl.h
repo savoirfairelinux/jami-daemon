@@ -50,9 +50,10 @@
 
 #include "config/sfl_config.h"
 
-#include "call.h"
 #include "conference.h"
+
 #include "account_factory.h"
+#include "call_factory.h"
 
 #include "audio/audiolayer.h"
 #include "audio/sound/tone.h"  // for Tone::TONEID declaration
@@ -152,7 +153,7 @@ class ManagerImpl {
         /**
          * Functions which occur with a user's action
          * Place a new call
-         * @param accountId	The account to make tha call with
+         * @param accountId	The account to make the call with
          * @param call_id  The call identifier
          * @param to  The recipient of the call
          * @param conf_id The conference identifier if any
@@ -974,6 +975,21 @@ class ManagerImpl {
          * Call periodically to poll for VoIP events */
         void
         pollEvents();
+
+        /**
+         * Create a new outgoing call
+         * @param id  The ID of the call
+         * @param toUrl The address to call
+         * @param preferredAccountId The IP of preferred account to use.
+         *   This is not necessary the account used.
+         * @return Call*  A shared pointer on a valid call.
+         * @note This function raises VoipLinkException() on errors.
+         */
+        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                              const std::string& toUrl,
+                                              const std::string& preferredAccountId);
+
+        CallFactory callFactory;
 
     private:
         NON_COPYABLE(ManagerImpl);

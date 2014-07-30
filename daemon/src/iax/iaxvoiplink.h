@@ -1,8 +1,9 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +37,6 @@
 #include "config.h"
 #endif
 
-#include <mutex>
 #include "account.h"
 #include "voiplink.h"
 #include "audio/audiobuffer.h"
@@ -47,15 +47,12 @@
 
 #include <iax-client.h>
 
+#include <mutex>
 #include <memory>
 
-class IAXCall;
 class IAXAccount;
-
 class AudioCodec;
 class AudioLayer;
-
-typedef std::map<std::string, std::shared_ptr<IAXCall> > IAXCallMap;
 
 /**
  * @file iaxvoiplink.h
@@ -75,11 +72,6 @@ class IAXVoIPLink : public VoIPLink {
         bool handleEvents();
 
 
-        /* Returns a list of all callIDs */
-        static std::vector<std::string> getCallIDs();
-
-        std::vector<std::shared_ptr<Call> > getCalls(const std::string &accountId) const;
-
         /**
          * Init the voip link
          */
@@ -96,12 +88,6 @@ class IAXVoIPLink : public VoIPLink {
          */
         virtual void cancel(const std::string& /*id*/) {}
 
-        static void clearIaxCallMap();
-        static void addIaxCall(std::shared_ptr<IAXCall>& call);
-        // must be called while holding iaxCallMapMutex
-        static std::shared_ptr<IAXCall> getIaxCall(const std::string& id);
-        static void removeIaxCall(const std::string &id);
-
         /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
          * iax_stuff inside this class. */
         static std::mutex mutexIAX;
@@ -115,9 +101,7 @@ class IAXVoIPLink : public VoIPLink {
         void handleAnswerTransfer(iax_event* event, const std::string &id);
         void handleBusy(const std::string &id);
         void handleMessage(iax_event* event, const std::string &id);
-
-        static std::mutex iaxCallMapMutex_;
-        static IAXCallMap iaxCallMap_;
+        void handleHangup(const std::string &id);
 
         /*
          * Decode the message count IAX send.
@@ -128,13 +112,6 @@ class IAXVoIPLink : public VoIPLink {
          */
         int processIAXMsgCount(int msgcount);
 
-
-        /**
-         * Get IAX Call from an id
-         * @param id CallId
-         * @return IAXCall pointer or 0
-         */
-        std::shared_ptr<IAXCall> getIAXCall(const std::string& id);
 
         /**
          * Find a iaxcall by iax session number
