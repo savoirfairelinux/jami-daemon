@@ -50,14 +50,7 @@
 
 #include "call_factory.h"
 
-// FIXME: remove these dependencies
-#include "sip/sipvoiplink.h"
 #include "sip/sip_utils.h"
-
-#if HAVE_IAX
-#include "iax/iaxvoiplink.h"
-#include "iax/iaxaccount.h"
-#endif
 
 #include "im/instant_messaging.h"
 
@@ -124,6 +117,19 @@ restore_backup(const std::string &path)
     copy_over(backup_path, path);
 }
 
+static std::vector<ManagerImpl::VoIPLinkGenerator>&
+getVoIPLinkGenerators()
+{
+    static std::vector<ManagerImpl::VoIPLinkGenerator> voipGenerators = {};
+    return voipGenerators;
+}
+
+bool
+ManagerImpl::registerVoIPLink(VoIPLinkGenerator&& generator) {
+    getVoIPLinkGenerators().push_back(std::forward<VoIPLinkGenerator>(generator));
+    return true;
+}
+
 void
 ManagerImpl::loadDefaultAccountMap()
 {
@@ -140,7 +146,6 @@ ManagerImpl::ManagerImpl() :
     waitingCalls_(), waitingCallsMutex_(), path_(),
     mainBuffer_(), callFactory(), conferenceMap_(), history_(),
     finished_(false), accountFactory_()
-
 {
     // initialize random generator for call id
     srand(time(nullptr));
@@ -187,6 +192,10 @@ ManagerImpl::init(const std::string &config_file)
 {
     // FIXME: this is no good
     initialized = true;
+
+    // Initialise VoIPLink stack
+    for (auto& generator : getVoIPLinkGenerators())
+        voipStackInstances_.push_back(generator());
 
     path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
@@ -287,7 +296,7 @@ ManagerImpl::finish()
         // Disconnect accounts, close link stacks and free allocated ressources
         unregisterAccounts();
         accountFactory_.clear();
-        SIPVoIPLink::destroy();
+        voipStackInstances_.clear();
 
         {
             std::lock_guard<std::mutex> lock(audioLayerMutex_);
@@ -1316,12 +1325,8 @@ void ManagerImpl::pollEvents()
     if (finished_)
         return;
 
-    SIPVoIPLink::instance().handleEvents();
-
-#if HAVE_IAX
-    for (auto account : accountFactory_.getAllAccounts<IAXAccount>())
-        account->getVoIPLink()->handleEvents();
-#endif
+    for (auto& linkPtr : voipStackInstances_)
+        linkPtr->handleEvents();
 }
 
 //THREAD=Main
