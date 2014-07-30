@@ -278,14 +278,6 @@ sfl::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
     // TODO: remove SIP dependency
-
-    // IP2IP profile is associated with IP2IP profile anyway
-    const auto& ip2ipAccount = Manager::instance().getIP2IPAccount();
-    auto link = static_cast<SIPVoIPLink *>(ip2ipAccount->getVoIPLink());
-
-    if (!link)
-        throw CallManagerException("Failed to get sip link");
-
     const auto call = Manager::instance().callFactory.getCall<SIPCall>(callID);
     if (!call)
         throw CallManagerException("Call id " + callID + " is not valid");
