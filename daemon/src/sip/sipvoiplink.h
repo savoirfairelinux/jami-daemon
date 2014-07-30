@@ -72,20 +72,7 @@ typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
  */
 
 class SIPVoIPLink : public VoIPLink {
-
     public:
-
-        /**
-         * Singleton method. Enable to retrieve the unique static instance
-         * @return SIPVoIPLink* A pointer on the object
-         */
-        static SIPVoIPLink& instance();
-
-        /**
-         * Destroy the singleton instance
-         */
-        static void destroy();
-
         /**
          * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
          * SIPLOGLEVEL = 0 minimum logging
@@ -96,6 +83,9 @@ class SIPVoIPLink : public VoIPLink {
 #ifdef __ANDROID__
         static void setSipLogger();
 #endif
+
+        SIPVoIPLink();
+        ~SIPVoIPLink();
 
         /**
          * Event listener. Each event send by the call manager is received and handled from here
@@ -164,9 +154,6 @@ class SIPVoIPLink : public VoIPLink {
 
         NON_COPYABLE(SIPVoIPLink);
 
-        SIPVoIPLink();
-        ~SIPVoIPLink();
-
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
@@ -174,11 +161,13 @@ class SIPVoIPLink : public VoIPLink {
         std::queue<std::string> keyframeRequests_;
 #endif
 
-        static SIPVoIPLink * instance_;
-
         static pj_caching_pool* cp_;
+
+        static bool linkRegistered_;
 
         friend class SIPTest;
 };
+
+extern SIPVoIPLink* siplink;
 
 #endif // SIPVOIPLINK_H_
