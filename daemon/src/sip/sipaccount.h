@@ -126,10 +126,10 @@ enum class MatchRank {NONE, PARTIAL, FULL};
 
 class SIPAccount : public Account {
     public:
-        static const char * const IP2IP_PROFILE;
-        static const char * const OVERRTP_STR;
-        static const char * const SIPINFO_STR;
-        static const char * const ACCOUNT_TYPE;
+        constexpr static const char * const IP2IP_PROFILE = "IP2IP";
+        constexpr static const char * const OVERRTP_STR = "overrtp";
+        constexpr static const char * const SIPINFO_STR = "sipinfo";
+        constexpr static const char * const ACCOUNT_TYPE = "SIP";
 
         /**
          * Constructor
@@ -137,6 +137,10 @@ class SIPAccount : public Account {
          */
         SIPAccount(const std::string& accountID, bool presenceEnabled);
         ~SIPAccount();
+
+        const char* getAccountType() const {
+            return ACCOUNT_TYPE;
+        }
 
         /**
          * Create a new outgoing call
@@ -609,6 +613,8 @@ class SIPAccount : public Account {
 #endif
 
         void scheduleReregistration(pjsip_endpoint *endpt);
+
+        void onRegister(pjsip_regc_cbparam *param);
 
     private:
         /**
