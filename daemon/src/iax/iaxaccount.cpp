@@ -44,7 +44,7 @@
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
 
-const char * const IAXAccount::ACCOUNT_TYPE = "IAX";
+constexpr const char * const IAXAccount::ACCOUNT_TYPE;
 
 IAXAccount::IAXAccount(const std::string& accountID)
     : Account(accountID), password_(), link_(*this)
@@ -167,11 +167,6 @@ IAXAccount::loadConfig()
 #if !HAVE_IAX
     enabled_ = false;
 #endif
-}
-
-VoIPLink* IAXAccount::getVoIPLink()
-{
-    return &link_;
 }
 
 std::shared_ptr<Call>
