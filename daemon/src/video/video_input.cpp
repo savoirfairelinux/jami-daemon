@@ -38,6 +38,8 @@
 
 #include <map>
 #include <string>
+#include <cassert>
+#include <unistd.h>
 
 namespace sfl_video {
 
