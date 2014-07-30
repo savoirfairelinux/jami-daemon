@@ -43,6 +43,7 @@
 #include "account.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
+#include "sfl_types.h" // enable_if_base_of
 
 #include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
@@ -136,20 +137,12 @@ class SIPAccount : public Account {
          * @param accountID The account identifier
          */
         SIPAccount(const std::string& accountID, bool presenceEnabled);
+
         ~SIPAccount();
 
         const char* getAccountType() const {
             return ACCOUNT_TYPE;
         }
-
-        /**
-         * Create a new outgoing call
-         * @param id  The ID of the call
-         * @param toUrl The address to call
-         * @return Call*  A pointer on the call
-         */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
-                                              const std::string& toUrl);
 
         VoIPLink* getVoIPLink();
 
@@ -613,6 +606,36 @@ class SIPAccount : public Account {
 #endif
 
         void scheduleReregistration(pjsip_endpoint *endpt);
+
+        /**
+         * Implementation of Account::newOutgoingCall()
+         * Note: keep declaration before newOutgoingCall template.
+         */
+        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                              const std::string& toUrl);
+
+        /**
+         * Create outgoing SIPCall.
+         * @param[in] id The ID of the call
+         * @param[in] toUrl The address to call
+         * @return std::shared_ptr<T> A shared pointer on the created call.
+         *      The type of this instance is given in template argument.
+         *      This type can be any base class of SIPCall class (included).
+         */
+        template <class T=SIPCall>
+        std::shared_ptr<enable_if_base_of<T, SIPCall> >
+        newOutgoingCall(const std::string& id, const std::string& toUrl);
+
+        /**
+         * Create incoming SIPCall.
+         * @param[in] id The ID of the call
+         * @return std::shared_ptr<T> A shared pointer on the created call.
+         *      The type of this instance is given in template argument.
+         *      This type can be any base class of SIPCall class (included).
+         */
+        template <class T=SIPCall>
+        std::shared_ptr<enable_if_base_of<T, SIPCall> >
+        newIncomingCall(const std::string& id);
 
         void onRegister(pjsip_regc_cbparam *param);
 

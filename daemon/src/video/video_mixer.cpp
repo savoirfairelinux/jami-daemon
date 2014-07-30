@@ -37,6 +37,7 @@
 #include "logger.h"
 
 #include <cmath>
+#include <unistd.h>
 
 static const double FRAME_DURATION = 1/30.;
 
