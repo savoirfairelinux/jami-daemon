@@ -48,6 +48,25 @@
 
 std::mutex IAXVoIPLink::mutexIAX = {};
 
+struct IAXVoIPLinkManager : VoIPLink {
+        bool handleEvents() {
+            bool state = false;
+            for (auto account : Manager::instance().getAllAccounts<IAXAccount>())
+                state |= account->getVoIPLink()->handleEvents();
+            return state;
+        }
+
+        static bool registered;
+};
+
+IAXVoIPLinkManager* iaxlinkmgr = nullptr;
+
+bool IAXVoIPLinkManager::registered = ManagerImpl::registerVoIPLink(
+    []() {
+        iaxlinkmgr = new IAXVoIPLinkManager;
+        return std::unique_ptr<IAXVoIPLinkManager>(iaxlinkmgr);
+    } );
+
 IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
     rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO())
     , resampledData_(RAW_BUFFER_SIZE * 4, AudioFormat::MONO())

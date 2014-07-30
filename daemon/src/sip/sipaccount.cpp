@@ -143,7 +143,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , keepAliveEnabled_(false)
     , keepAliveTimer_()
     , keepAliveTimerActive_(false)
-    , link_(SIPVoIPLink::instance())
+    , link_(*siplink)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
@@ -1344,12 +1344,12 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
              */
             // update_rfc5626_status(acc, param->rdata);
 
-            if (checkNATAddress(param, SIPVoIPLink::instance().getPool()))
+            if (checkNATAddress(param, siplink->getPool()))
                 WARN("Contact overwritten");
 
             /* TODO Check and update Service-Route header */
             if (hasServiceRoute())
-                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(getServiceRoute(), SIPVoIPLink::instance().getPool()));
+                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(getServiceRoute(),siplink->getPool()));
 
             // start the periodic registration request based on Expire header
             // account determines itself if a keep alive is required
