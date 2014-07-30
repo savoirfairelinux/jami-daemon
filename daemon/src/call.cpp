@@ -28,12 +28,13 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
 #include "call.h"
+#include "account.h"
 #include "manager.h"
 #include "audio/mainbuffer.h"
 #include "history/historyitem.h"
 
-#include "sip/sipaccount.h"
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
 #include "array_size.h"
