@@ -105,7 +105,7 @@ SIPCall::SIPCall(SIPAccount& account, const std::string& id,
     // The ID is used to associate video streams to calls
     , videortp_(id, getSettings())
 #endif
-    , pool_(pj_pool_create(&SIPVoIPLink::instance().getCachingPool()->factory,
+    , pool_(pj_pool_create(&siplink->getCachingPool()->factory,
                            id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))
     , contactBuffer_()
@@ -198,7 +198,7 @@ SIPCall::SIPSessionReinvite()
 
 VoIPLink*
 SIPCall::getVoIPLink() const
-{ return &SIPVoIPLink::instance(); }
+{ return siplink; }
 
 void
 SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
@@ -226,7 +226,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (tdata->msg->body == NULL)
         pjsip_tx_data_dec_ref(tdata);
     else
-        pjsip_dlg_send_request(inv->dlg, tdata, SIPVoIPLink::instance().getModId(), NULL);
+        pjsip_dlg_send_request(inv->dlg, tdata, siplink->getModId(), NULL);
 }
 
 void
@@ -236,7 +236,7 @@ SIPCall::updateSDPFromSTUN()
     std::vector<long> socketDescriptors(getAudioRtp().getSocketDescriptors());
 
     try {
-        std::vector<pj_sockaddr> stunPorts(SIPVoIPLink::instance().sipTransport->getSTUNAddresses(account, socketDescriptors));
+        std::vector<pj_sockaddr> stunPorts(siplink->sipTransport->getSTUNAddresses(account, socketDescriptors));
 
         // FIXME: get video sockets
         //stunPorts.resize(4);
@@ -255,11 +255,9 @@ void SIPCall::answer()
     auto& account = getSIPAccount();
 
     if (!inv->neg) {
-        SIPVoIPLink& siplink = SIPVoIPLink::instance();
-
         WARN("Negotiator is NULL, we've received an INVITE without an SDP");
         pjmedia_sdp_session *dummy = 0;
-        siplink.createSDPOffer(inv, &dummy);
+        siplink->createSDPOffer(inv, &dummy);
 
         if (account.isStunEnabled())
             updateSDPFromSTUN();
@@ -329,10 +327,8 @@ SIPCall::hangup(int reason)
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
 
-    auto& siplink = SIPVoIPLink::instance();
-
     // Make sure user data is NULL in callbacks
-    inv->mod_data[siplink.getModId()] = NULL;
+    inv->mod_data[siplink->getModId()] = NULL;
 
     // Stop all RTP streams
     stopRtpIfCurrent();
@@ -356,10 +352,8 @@ SIPCall::refuse()
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
 
-    auto& siplink = SIPVoIPLink::instance();
-
     // Make sure the pointer is NULL in callbacks
-    inv->mod_data[siplink.getModId()] = NULL;
+    inv->mod_data[siplink->getModId()] = NULL;
 
     removeCall();
 }
@@ -367,7 +361,7 @@ SIPCall::refuse()
 static void
 transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 {
-    auto mod_ua_id = SIPVoIPLink::instance().getModId();
+    auto mod_ua_id = siplink->getModId();
 
     switch (pjsip_evsub_get_state(sub)) {
         case PJSIP_EVSUB_STATE_ACCEPTED:
@@ -455,14 +449,12 @@ SIPCall::transferCommon(pj_str_t *dst)
     if (pjsip_xfer_create_uac(inv->dlg, &xfer_cb, &sub) != PJ_SUCCESS)
         return false;
 
-    auto& siplink = SIPVoIPLink::instance();
-
     /* Associate this voiplink of call with the client subscription
      * We can not just associate call with the client subscription
      * because after this function, we can no find the cooresponding
      * voiplink from the call any more. But the voiplink is useful!
      */
-    pjsip_evsub_set_mod_data(sub, siplink.getModId(), this);
+    pjsip_evsub_set_mod_data(sub, siplink->getModId(), this);
 
     /*
      * Create REFER request.
@@ -653,10 +645,8 @@ SIPCall::peerHungup()
     if (auto ret = pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         sip_utils::sip_strerror(ret);
 
-    auto& siplink = SIPVoIPLink::instance();
-
     // Make sure user data is NULL in callbacks
-    inv->mod_data[siplink.getModId()] = NULL;
+    inv->mod_data[siplink->getModId()] = NULL;
 
     // Stop all RTP streams
     stopRtpIfCurrent();
