@@ -45,19 +45,11 @@
 #include "global.h"
 #include "fileutils.h"
 #include "map_utils.h"
-#include "voiplink.h"
 #include "account.h"
 
 #include "call_factory.h"
 
-// FIXME: remove these dependencies
-#include "sip/sipvoiplink.h"
 #include "sip/sip_utils.h"
-
-#if HAVE_IAX
-#include "iax/iaxvoiplink.h"
-#include "iax/iaxaccount.h"
-#endif
 
 #include "im/instant_messaging.h"
 
@@ -140,7 +132,6 @@ ManagerImpl::ManagerImpl() :
     waitingCalls_(), waitingCallsMutex_(), path_(),
     mainBuffer_(), callFactory(), conferenceMap_(), history_(),
     finished_(false), accountFactory_()
-
 {
     // initialize random generator for call id
     srand(time(nullptr));
@@ -287,7 +278,6 @@ ManagerImpl::finish()
         // Disconnect accounts, close link stacks and free allocated ressources
         unregisterAccounts();
         accountFactory_.clear();
-        SIPVoIPLink::destroy();
 
         {
             std::lock_guard<std::mutex> lock(audioLayerMutex_);
@@ -1310,18 +1300,33 @@ ManagerImpl::removeStream(const std::string& call_id)
     getMainBuffer().unBindAll(call_id);
 }
 
+
+void
+ManagerImpl::registerLoopEvent(size_t eventId, std::function<bool()> f)
+{
+    loopEvents_[eventId] = f;
+}
+
+bool
+ManagerImpl::unregisterLoopEvent(size_t eventId)
+{
+    auto it = loopEvents_.find(eventId);
+    if (it != loopEvents_.end()) {
+        loopEvents_.erase(it);
+        return true;
+    }
+    return false;
+}
+
 // Must be invoked periodically by a timer from the main event loop
 void ManagerImpl::pollEvents()
 {
     if (finished_)
         return;
 
-    SIPVoIPLink::instance().handleEvents();
-
-#if HAVE_IAX
-    for (auto account : accountFactory_.getAllAccounts<IAXAccount>())
-        account->getVoIPLink()->handleEvents();
-#endif
+    for (auto& p : loopEvents_) {
+        p.second();
+    }
 }
 
 //THREAD=Main

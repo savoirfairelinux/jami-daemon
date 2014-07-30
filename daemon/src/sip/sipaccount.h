@@ -116,7 +116,6 @@ class SIPVoIPLink;
 class SIPPresence;
 class SIPCall;
 
-
 /**
  * @file sipaccount.h
  * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
@@ -144,7 +143,9 @@ class SIPAccount : public Account {
             return ACCOUNT_TYPE;
         }
 
-        VoIPLink* getVoIPLink();
+        std::shared_ptr<SIPVoIPLink> getSIPVoIPLink() {
+            return link_;
+        }
 
         pjsip_host_port getHostPortFromSTUN(pj_pool_t *pool);
 
@@ -907,7 +908,7 @@ class SIPAccount : public Account {
         /**
          * Voice over IP Link contains a listener thread and calls
          */
-        SIPVoIPLink& link_;
+        std::shared_ptr<SIPVoIPLink> link_;
 
         /**
          * Optional: "received" parameter from VIA header

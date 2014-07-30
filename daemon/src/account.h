@@ -45,7 +45,6 @@
 #include <map>
 #include <set>
 
-class VoIPLink;
 class Call;
 
 /**
@@ -54,6 +53,13 @@ class Call;
  * It can be enable on loading or activate after.
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */
+
+
+class VoipLinkException : public std::runtime_error {
+    public:
+        VoipLinkException(const std::string &str = "") :
+            std::runtime_error("VoipLinkException occured: " + str) {}
+};
 
 class Account : public Serializable {
 
@@ -94,12 +100,6 @@ class Account : public Serializable {
          * Returns true if this is the IP2IP account
          */
         virtual bool isIP2IP() const { return false; }
-
-        /**
-         * Get the voiplink pointer
-         * @return VoIPLink* the pointer or 0
-         */
-        virtual VoIPLink* getVoIPLink() = 0;
 
         /**
          * Register the underlying VoIPLink. Launch the event listener.

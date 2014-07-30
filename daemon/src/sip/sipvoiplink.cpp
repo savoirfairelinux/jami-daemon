@@ -88,7 +88,6 @@
 
 using namespace sfl;
 
-SIPVoIPLink *SIPVoIPLink::instance_ = nullptr;
 
 /** Environment variable used to set pjsip's logging level */
 #define SIPLOGLEVEL "SIPLOGLEVEL"
@@ -228,7 +227,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
 
-    auto sipaccount(SIPVoIPLink::instance().guessAccountFromNameAndServer(toUsername, viaHostname));
+    auto sipaccount(SIPVoIPLink::instance()->guessAccountFromNameAndServer(toUsername, viaHostname));
     if (!sipaccount) {
         ERROR("NULL account");
         return PJ_FALSE;
@@ -489,6 +488,7 @@ SIPVoIPLink::SIPVoIPLink()
     , keyframeRequests_()
 #endif
 {
+    DEBUG("creating SIPVoIPLink instance");
 
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -572,17 +572,19 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY
 
-    handlingEvents_ = true;
+    Manager::instance().registerLoopEvent((size_t)this, std::bind(&SIPVoIPLink::handleEvents, this));
 }
 
 SIPVoIPLink::~SIPVoIPLink()
 {
+    DEBUG("destroying SIPVoIPLink instance");
+
     const int MAX_TIMEOUT_ON_LEAVING = 5;
 
     for (int timeout = 0; pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING; timeout++)
         sleep(1);
 
-    handlingEvents_ = false;
+    Manager::instance().unregisterLoopEvent((size_t)this);
 
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
@@ -600,22 +602,6 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_caching_pool_destroy(cp_);
 
     pj_shutdown();
-}
-
-SIPVoIPLink& SIPVoIPLink::instance()
-{
-    if (!instance_) {
-        DEBUG("creating SIPVoIPLink instance");
-        instance_ = new SIPVoIPLink;
-    }
-
-    return *instance_;
-}
-
-void SIPVoIPLink::destroy()
-{
-    delete instance_;
-    instance_ = nullptr;
 }
 
 std::shared_ptr<SIPAccount>
@@ -689,7 +675,7 @@ bool SIPVoIPLink::handleEvents()
 #ifdef SFL_VIDEO
     dequeKeyframeRequests();
 #endif
-    return handlingEvents_;
+    return true;
 }
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
@@ -727,8 +713,9 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 void
 SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 {
-    std::lock_guard<std::mutex> lock(instance_->keyframeRequestsMutex_);
-    instance_->keyframeRequests_.push(id);
+    auto link = SIPVoIPLink::instance();
+    std::lock_guard<std::mutex> lock(link->keyframeRequestsMutex_);
+    link->keyframeRequests_.push(id);
 }
 
 // Called from SIP event thread
@@ -1284,7 +1271,7 @@ SIPVoIPLink::loadIP2IPSettings()
             return;
         }
         account->registerVoIPLink();
-        SIPVoIPLink::instance().sipTransport->createSipTransport((SIPAccount&)*account);
+        SIPVoIPLink::instance()->sipTransport->createSipTransport((SIPAccount&)*account);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }

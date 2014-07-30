@@ -87,7 +87,7 @@ transportMapKey(const std::string &interface, int port, pjsip_transport_type_e t
 void
 SipTransport::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* /* info */)
 {
-    SipTransport& this_ = *SIPVoIPLink::instance().sipTransport;
+    SipTransport& this_ = *SIPVoIPLink::instance()->sipTransport;
     this_.transportStateChanged(tp, state);
 }
 

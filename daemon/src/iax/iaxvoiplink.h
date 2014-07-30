@@ -37,8 +37,8 @@
 #include "config.h"
 #endif
 
+#include "managerimpl.h"
 #include "account.h"
-#include "voiplink.h"
 #include "audio/audiobuffer.h"
 #include "audio/codecs/audiocodec.h" // for RAW_BUFFER_SIZE
 #include "sfl_types.h"
@@ -60,9 +60,8 @@ class AudioLayer;
  * and contains IAX Call related functions
  */
 
-class IAXVoIPLink : public VoIPLink {
+class IAXVoIPLink {
     public:
-
         IAXVoIPLink(IAXAccount& account);
         ~IAXVoIPLink();
 
@@ -70,7 +69,6 @@ class IAXVoIPLink : public VoIPLink {
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
         bool handleEvents();
-
 
         /**
          * Init the voip link

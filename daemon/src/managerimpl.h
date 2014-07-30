@@ -45,6 +45,8 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <functional>
+#include <utility>
 
 #include "client/client.h"
 
@@ -977,6 +979,9 @@ class ManagerImpl {
 
         CallFactory callFactory;
 
+        void registerLoopEvent(size_t eventId, std::function<bool()> f);
+        bool unregisterLoopEvent(size_t eventId);
+
     private:
         NON_COPYABLE(ManagerImpl);
 
@@ -1016,5 +1021,7 @@ class ManagerImpl {
 
         void loadAccount(const Conf::YamlNode *item, int &errorCount,
                          const std::string &accountOrder);
+
+        std::map<size_t, std::function<bool()>> loopEvents_ = {};
 };
 #endif // MANAGER_IMPL_H_

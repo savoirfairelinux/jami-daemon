@@ -365,7 +365,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    call->inv->mod_data[link_.getModId()] = call.get();
+    call->inv->mod_data[link_->getModId()] = call.get();
 
     pjsip_tx_data *tdata;
 
@@ -1196,7 +1196,7 @@ void SIPAccount::startKeepAliveTimer()
 
     keepAliveTimerActive_ = true;
 
-    link_.registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
+    link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
 void SIPAccount::stopKeepAliveTimer()
@@ -1204,7 +1204,7 @@ void SIPAccount::stopKeepAliveTimer()
     if (keepAliveTimerActive_) {
         DEBUG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
         keepAliveTimerActive_ = false;
-        link_.cancelKeepAliveTimer(keepAliveTimer_);
+        link_->cancelKeepAliveTimer(keepAliveTimer_);
     }
 }
 
@@ -1217,7 +1217,7 @@ SIPAccount::sendRegister()
     }
 
     try {
-        link_.sipTransport->createSipTransport(*this);
+        link_->sipTransport->createSipTransport(*this);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
         throw VoipLinkException("Could not create or acquire SIP transport");
@@ -1227,7 +1227,7 @@ SIPAccount::sendRegister()
     setRegistrationState(RegistrationState::TRYING);
 
     pjsip_regc *regc = nullptr;
-    if (pjsip_regc_create(link_.getEndpoint(), (void *) this, &registration_cb, &regc) != PJ_SUCCESS)
+    if (pjsip_regc_create(link_->getEndpoint(), (void *) this, &registration_cb, &regc) != PJ_SUCCESS)
         throw VoipLinkException("UserAgent: Unable to create regc structure.");
 
     std::string srvUri(getServerUri());
@@ -1265,7 +1265,7 @@ SIPAccount::sendRegister()
     }
 
     if (hasServiceRoute())
-        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(getServiceRoute(), link_.getPool()));
+        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(getServiceRoute(), link_->getPool()));
 
     pjsip_regc_set_credentials(regc, getCredentialCount(), getCredInfo());
 
@@ -1275,7 +1275,7 @@ SIPAccount::sendRegister()
     pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
     const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
-    pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(link_.getPool(), &STR_USER_AGENT, &pJuseragent);
+    pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(link_->getPool(), &STR_USER_AGENT, &pJuseragent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
     pjsip_regc_add_headers(regc, &hdr_list);
     pjsip_tx_data *tdata;
@@ -1294,7 +1294,7 @@ SIPAccount::sendRegister()
     }
 
     setRegistrationInfo(regc);
-    link_.sipTransport->cleanupTransports();
+    link_->sipTransport->cleanupTransports();
 }
 
 void
@@ -1345,12 +1345,12 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
              */
             // update_rfc5626_status(acc, param->rdata);
 
-            if (checkNATAddress(param, SIPVoIPLink::instance().getPool()))
+            if (checkNATAddress(param, link_->getPool()))
                 WARN("Contact overwritten");
 
             /* TODO Check and update Service-Route header */
             if (hasServiceRoute())
-                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(getServiceRoute(), SIPVoIPLink::instance().getPool()));
+                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(getServiceRoute(), link_->getPool()));
 
             // start the periodic registration request based on Expire header
             // account determines itself if a keep alive is required
@@ -1371,13 +1371,13 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
         case PJSIP_SC_BAD_GATEWAY:
         case PJSIP_SC_SERVICE_UNAVAILABLE:
         case PJSIP_SC_SERVER_TIMEOUT:
-            scheduleReregistration(link_.getEndpoint());
+            scheduleReregistration(link_->getEndpoint());
             break;
 
         default:
             /* Global failure */
             if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
-                scheduleReregistration(link_.getEndpoint());
+                scheduleReregistration(link_->getEndpoint());
     }
 
     const pj_str_t *description = pjsip_get_status_text(param->code);
@@ -1426,9 +1426,9 @@ SIPAccount::sendUnregister(std::function<void(bool)> released_cb)
     // remove the transport from the account
     auto transport = getTransport();
     setTransport();
-    link_.sipTransport->cleanupTransports();
+    link_->sipTransport->cleanupTransports();
     if (released_cb)
-        link_.sipTransport->waitForReleased(transport, released_cb);
+        link_->sipTransport->waitForReleased(transport, released_cb);
 }
 
 #if HAVE_TLS
@@ -1681,14 +1681,14 @@ SIPAccount::getContactHeader()
     std::string address;
     pj_uint16_t port;
 
-    link_.sipTransport->findLocalAddressFromTransport(transport_, transportType, hostname_, address, port);
+    link_->sipTransport->findLocalAddressFromTransport(transport_, transportType, hostname_, address, port);
 
     if (not publishedSameasLocal_) {
         address = publishedIpAddress_;
         port = publishedPort_;
         DEBUG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
-        link_.sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
+        link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
         setPublishedAddress(address);
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
@@ -1739,7 +1739,7 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
     std::string addr;
     pj_uint16_t port;
-    link_.sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
+    link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
     pjsip_host_port result;
     pj_strdup2(pool, &result.host, addr.c_str());
     result.host.slen = addr.length();
@@ -1989,11 +1989,6 @@ void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& detail
     set_opt(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
     set_opt(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
     set_opt(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
-}
-
-VoIPLink* SIPAccount::getVoIPLink()
-{
-    return &link_;
 }
 
 bool SIPAccount::isIP2IP() const
