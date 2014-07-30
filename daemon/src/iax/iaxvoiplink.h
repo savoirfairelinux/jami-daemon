@@ -38,7 +38,6 @@
 #endif
 
 #include "account.h"
-#include "voiplink.h"
 #include "audio/audiobuffer.h"
 #include "audio/codecs/audiocodec.h" // for RAW_BUFFER_SIZE
 #include "sfl_types.h"
@@ -60,22 +59,20 @@ class AudioLayer;
  * and contains IAX Call related functions
  */
 
-class IAXVoIPLink : public VoIPLink {
+class IAXVoIPLink {
     public:
-
         IAXVoIPLink(IAXAccount& account);
         ~IAXVoIPLink();
 
         /**
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
-        bool handleEvents();
-
+        void handleEvents();
 
         /**
          * Init the voip link
          */
-        virtual void init();
+        void init();
 
         /**
          * Terminate a voip link by clearing the call list
@@ -86,7 +83,7 @@ class IAXVoIPLink : public VoIPLink {
          * Cancel a call
          * @param id The ID of the call
          */
-        virtual void cancel(const std::string& /*id*/) {}
+        void cancel(const std::string& /*id*/) {}
 
         /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
          * iax_stuff inside this class. */

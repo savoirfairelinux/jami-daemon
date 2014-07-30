@@ -44,9 +44,15 @@
 #include <memory>
 #include <map>
 #include <set>
+#include <stdexcept>
 
-class VoIPLink;
 class Call;
+
+class VoipLinkException : public std::runtime_error {
+    public:
+        VoipLinkException(const std::string &str = "") :
+            std::runtime_error("VoipLinkException occured: " + str) {}
+};
 
 /**
  * @file account.h
@@ -94,12 +100,6 @@ class Account : public Serializable {
          * Returns true if this is the IP2IP account
          */
         virtual bool isIP2IP() const { return false; }
-
-        /**
-         * Get the voiplink pointer
-         * @return VoIPLink* the pointer or 0
-         */
-        virtual VoIPLink* getVoIPLink() = 0;
 
         /**
          * Register the underlying VoIPLink. Launch the event listener.

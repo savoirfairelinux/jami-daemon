@@ -74,7 +74,6 @@ class AudioFile;
 class AudioLayer;
 class History;
 class TelephoneTone;
-class VoIPLink;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -977,8 +976,25 @@ class ManagerImpl {
 
         CallFactory callFactory;
 
+        using EventHandler = std::function<void()>;
+
+        /**
+         * Install an event handler called periodically by pollEvents().
+         * @param handlerId an unique identifier for the handler.
+         * @param handler the event handler function.
+         */
+        void registerEventHandler(uintptr_t handlerId, EventHandler handler);
+
+        /**
+         * Remove a previously registered event handler.
+         * @param handlerId id of handler to remove.
+         */
+        void unregisterEventHandler(uintptr_t handlerId);
+
     private:
         NON_COPYABLE(ManagerImpl);
+
+        std::map<uintptr_t, EventHandler> eventHandlerMap_{};
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in
@@ -1017,4 +1033,5 @@ class ManagerImpl {
         void loadAccount(const Conf::YamlNode *item, int &errorCount,
                          const std::string &accountOrder);
 };
+
 #endif // MANAGER_IMPL_H_

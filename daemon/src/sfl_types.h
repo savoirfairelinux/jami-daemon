@@ -34,6 +34,7 @@
 #include <cstddef> // for size_t
 #include <stdint.h>
 #include <type_traits>
+#include <memory>
 
 typedef int16_t SFLAudioSample;
 #define SFL_DATA_FORMAT_MAX SHRT_MAX
@@ -46,5 +47,26 @@ static const size_t SIZEBUF = 32000; /** About 1s of buffering at 48kHz */
  */
 template <class T, class U>
 using enable_if_base_of = typename std::enable_if<std::is_base_of<T, U>::value, T>::type;
+
+/**
+ * Return a shared pointer on an auto-generated global instance of class T.
+ * This instance is created only at usage and destroyed when not,
+ * as we keep only a weak reference on it.
+ * But when created it's always the same object until all holders release their sharing.
+ */
+template <class T>
+std::shared_ptr<T>
+getGlobalInstance()
+{
+    static std::weak_ptr<T> wlink;
+
+    if (wlink.expired()) {
+        auto link = std::make_shared<T>();
+        wlink = link;
+        return link;
+    }
+
+    return wlink.lock();
+}
 
 #endif // SFL_TYPES_H_

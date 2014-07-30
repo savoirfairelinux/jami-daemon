@@ -83,12 +83,9 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <istream>
-#include <utility> // for std::pair
 #include <algorithm>
 
 using namespace sfl;
-
-SIPVoIPLink *SIPVoIPLink::instance_ = nullptr;
 
 /** Environment variable used to set pjsip's logging level */
 #define SIPLOGLEVEL "SIPLOGLEVEL"
@@ -113,6 +110,8 @@ static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
 
 pj_caching_pool* SIPVoIPLink::cp_ = &pool_cache;
+
+decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
 
 /**
  * Helper function to process refer function on call transfer
@@ -228,7 +227,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
 
-    auto sipaccount(SIPVoIPLink::instance().guessAccountFromNameAndServer(toUsername, viaHostname));
+    auto sipaccount(getSIPVoIPLink()->guessAccountFromNameAndServer(toUsername, viaHostname));
     if (!sipaccount) {
         ERROR("NULL account");
         return PJ_FALSE;
@@ -467,6 +466,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 }
 
 /*************************************************************************************************/
+
 pjsip_endpoint * SIPVoIPLink::getEndpoint()
 {
     return endpt_;
@@ -489,6 +489,7 @@ SIPVoIPLink::SIPVoIPLink()
     , keyframeRequests_()
 #endif
 {
+    DEBUG("creating SIPVoIPLink instance");
 
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -572,17 +573,20 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY
 
-    handlingEvents_ = true;
+    // ready to handle events
+    Manager::instance().registerEventHandler((uintptr_t)this, std::bind(&SIPVoIPLink::handleEvents, this));
 }
 
 SIPVoIPLink::~SIPVoIPLink()
 {
+    DEBUG("destroying SIPVoIPLink instance");
+
     const int MAX_TIMEOUT_ON_LEAVING = 5;
 
     for (int timeout = 0; pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING; timeout++)
         sleep(1);
 
-    handlingEvents_ = false;
+    Manager::instance().unregisterEventHandler((uintptr_t)this);
 
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
@@ -600,22 +604,6 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_caching_pool_destroy(cp_);
 
     pj_shutdown();
-}
-
-SIPVoIPLink& SIPVoIPLink::instance()
-{
-    if (!instance_) {
-        DEBUG("creating SIPVoIPLink instance");
-        instance_ = new SIPVoIPLink;
-    }
-
-    return *instance_;
-}
-
-void SIPVoIPLink::destroy()
-{
-    delete instance_;
-    instance_ = nullptr;
 }
 
 std::shared_ptr<SIPAccount>
@@ -665,7 +653,8 @@ void SIPVoIPLink::setSipLogLevel()
 }
 
 // Called from EventThread::run (not main thread)
-bool SIPVoIPLink::handleEvents()
+void
+SIPVoIPLink::handleEvents()
 {
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {
@@ -689,7 +678,6 @@ bool SIPVoIPLink::handleEvents()
 #ifdef SFL_VIDEO
     dequeKeyframeRequests();
 #endif
-    return handlingEvents_;
 }
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
@@ -727,8 +715,9 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 void
 SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 {
-    std::lock_guard<std::mutex> lock(instance_->keyframeRequestsMutex_);
-    instance_->keyframeRequests_.push(id);
+    auto link = getSIPVoIPLink();
+    std::lock_guard<std::mutex> lock(link->keyframeRequestsMutex_);
+    link->keyframeRequests_.push(id);
 }
 
 // Called from SIP event thread
@@ -1284,7 +1273,7 @@ SIPVoIPLink::loadIP2IPSettings()
             return;
         }
         account->registerVoIPLink();
-        SIPVoIPLink::instance().sipTransport->createSipTransport((SIPAccount&)*account);
+        getSIPVoIPLink()->sipTransport->createSipTransport((SIPAccount&)*account);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }

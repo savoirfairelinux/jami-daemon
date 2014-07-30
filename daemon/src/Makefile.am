@@ -91,7 +91,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		conference.h \
 		account factory.h \
 		call factory.h \
-		voiplink.h \
 		preferences.h \
 		managerimpl.h \
 		manager.h \

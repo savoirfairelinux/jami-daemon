@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,16 +35,17 @@
 #include <cmath>
 #include <algorithm>
 
+#include "manager.h"
 #include "iaxcall.h"
 #include "iaxaccount.h"
 #include "logger.h"
-#include "manager.h"
 #include "hooks/urlhook.h"
 #include "audio/audiolayer.h"
 #include "audio/resampler.h"
 #include "array_size.h"
 #include "map_utils.h"
 #include "call_factory.h"
+#include "sfl_types.h"
 
 std::mutex IAXVoIPLink::mutexIAX = {};
 
@@ -72,7 +73,7 @@ IAXVoIPLink::init()
 
     for (int port = IAX_DEFAULT_PORTNO, nbTry = 0; nbTry < 3 ; port = rand() % 64000 + 1024, nbTry++) {
         if (iax_init(port) >= 0) {
-            handlingEvents_ = true;
+            Manager::instance().registerEventHandler((uintptr_t)this, std::bind(&IAXVoIPLink::handleEvents, this));
             initDone_ = true;
             break;
         }
@@ -85,7 +86,7 @@ IAXVoIPLink::terminate()
     if (!initDone_)
         return;
 
-    handlingEvents_ = false;
+    Manager::instance().unregisterEventHandler((uintptr_t)this);
 
     for (const auto& call : Manager::instance().callFactory.getAllCalls<IAXCall>()) {
         std::lock_guard<std::mutex> lock(mutexIAX);
@@ -106,7 +107,7 @@ iaxGetCallFromSession(iax_session* session)
     return nullptr;
 }
 
-bool
+void
 IAXVoIPLink::handleEvents()
 {
     iax_event *event = NULL;
@@ -146,10 +147,6 @@ IAXVoIPLink::handleEvents()
     account_.checkRegister();
 
     sendAudioFromMic();
-
-    // thread wait 3 millisecond
-    usleep(3000);
-    return handlingEvents_;
 }
 
 void

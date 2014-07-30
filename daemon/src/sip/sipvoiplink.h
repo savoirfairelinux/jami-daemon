@@ -41,7 +41,7 @@
 #include "config.h"
 #endif
 
-#include "voiplink.h"
+#include "sfl_types.h"
 #include "sipaccount.h"
 #include "siptransport.h"
 
@@ -64,6 +64,8 @@ class SIPAccount;
 
 typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
 
+extern decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink;
+
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
@@ -71,21 +73,8 @@ typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
  *          One SIPVoIPLink can handle multiple SIP accounts, but all the SIP accounts have all the same SIPVoIPLink
  */
 
-class SIPVoIPLink : public VoIPLink {
-
+class SIPVoIPLink {
     public:
-
-        /**
-         * Singleton method. Enable to retrieve the unique static instance
-         * @return SIPVoIPLink* A pointer on the object
-         */
-        static SIPVoIPLink& instance();
-
-        /**
-         * Destroy the singleton instance
-         */
-        static void destroy();
-
         /**
          * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
          * SIPLOGLEVEL = 0 minimum logging
@@ -97,10 +86,13 @@ class SIPVoIPLink : public VoIPLink {
         static void setSipLogger();
 #endif
 
+        SIPVoIPLink();
+        ~SIPVoIPLink();
+
         /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        bool handleEvents();
+        void handleEvents();
 
         /* Returns a list of all callIDs */
         std::vector<std::string> getCallIDs();
@@ -164,17 +156,12 @@ class SIPVoIPLink : public VoIPLink {
 
         NON_COPYABLE(SIPVoIPLink);
 
-        SIPVoIPLink();
-        ~SIPVoIPLink();
-
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
         std::mutex keyframeRequestsMutex_;
         std::queue<std::string> keyframeRequests_;
 #endif
-
-        static SIPVoIPLink * instance_;
 
         static pj_caching_pool* cp_;
 

@@ -96,10 +96,6 @@ class IAXAccount : public Account {
 
         void checkRegister();
 
-        VoIPLink* getVoIPLink() {
-            return &link_;
-        }
-
         /**
          * Implementation of Account::newOutgoingCall()
          * Note: keep declaration before newOutgoingCall template.
@@ -146,7 +142,7 @@ class IAXAccount : public Account {
 
          // Account login information: password
         std::string password_;
-        IAXVoIPLink link_;
+        std::unique_ptr<IAXVoIPLink> link_;
 
         /** Timestamp of when we should refresh the registration up with
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1

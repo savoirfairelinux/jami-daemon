@@ -44,7 +44,6 @@
 
 #include "logger.h"
 #include "manager.h"
-#include "voiplink.h"
 
 #include "client/configurationmanager.h"
 

@@ -49,7 +49,7 @@
 constexpr const char * const IAXAccount::ACCOUNT_TYPE;
 
 IAXAccount::IAXAccount(const std::string& accountID)
-    : Account(accountID), password_(), link_(*this)
+    : Account(accountID), password_(), link_(new IAXVoIPLink(*this))
 {}
 
 void IAXAccount::serialize(Conf::YamlEmitter &emitter)
@@ -142,7 +142,7 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 void IAXAccount::registerVoIPLink()
 {
     try {
-        link_.init();
+        link_->init();
         sendRegister();
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
@@ -154,7 +154,7 @@ IAXAccount::unregisterVoIPLink(std::function<void(bool)> cb)
 {
     try {
         sendUnregister();
-        link_.terminate();
+        link_->terminate();
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
