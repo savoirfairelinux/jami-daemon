@@ -41,6 +41,8 @@
  */
 class IAXAccount : public Account {
     public:
+        constexpr static const char * const ACCOUNT_TYPE = "IAX";
+
         IAXAccount(const std::string& accountID);
 
         /**
@@ -112,7 +114,6 @@ class IAXAccount : public Account {
         std::string password_;
         IAXVoIPLink link_;
         VoIPLink* getVoIPLink();
-        static const char * const ACCOUNT_TYPE;
 
         /** Timestamp of when we should refresh the registration up with
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
