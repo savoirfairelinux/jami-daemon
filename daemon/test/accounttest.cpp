@@ -49,9 +49,9 @@ void AccountTest::TestAddRemove()
 
     std::string accountId = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(not accountId.empty());
-    CPPUNIT_ASSERT(Manager::instance().accountExists(accountId));
+    CPPUNIT_ASSERT(Manager::instance().hasAccount(accountId));
 
     Manager::instance().removeAccount(accountId);
 
-    CPPUNIT_ASSERT(!Manager::instance().accountExists(accountId));
+    CPPUNIT_ASSERT(!Manager::instance().hasAccount(accountId));
 }

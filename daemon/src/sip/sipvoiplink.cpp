@@ -225,10 +225,15 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
-    std::string account_id(SIPVoIPLink::instance().guessAccountIdFromNameAndServer(toUsername, viaHostname));
 
+    auto sipaccount(SIPVoIPLink::instance().guessAccountFromNameAndServer(toUsername, viaHostname));
+    if (!sipaccount) {
+        ERROR("NULL account");
+        return PJ_FALSE;
+    }
+
+    const auto& account_id = sipaccount->getAccountID();
     std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
-
     pjsip_msg_body *body = rdata->msg_info.msg->body;
 
     if (method->id == PJSIP_OTHER_METHOD) {
@@ -256,22 +261,12 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    SIPAccount* account = nullptr;
-    const auto iter = SIPVoIPLink::instance().getAccounts().find(account_id);
-    if (iter != SIPVoIPLink::instance().getAccounts().end())
-        account = static_cast<SIPAccount *>(iter->second);
-
-    if (!account) {
-        ERROR("Could not find account %s", account_id.c_str());
-        return PJ_FALSE;
-    }
-
     pjmedia_sdp_session *r_sdp;
 
     if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
         r_sdp = NULL;
 
-    if (account->getActiveAudioCodecs().empty()) {
+    if (sipaccount->getActiveAudioCodecs().empty()) {
         try_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, NULL);
 
         return PJ_FALSE;
@@ -288,17 +283,17 @@ transaction_request_cb(pjsip_rx_data *rdata)
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
     auto call = std::make_shared<SIPCall>(Manager::instance().getNewCallID(),
-                                          Call::INCOMING, *account);
+                                          Call::INCOMING, *sipaccount);
 
     // FIXME : for now, use the same address family as the SIP tranport
-    auto family = pjsip_transport_type_get_af(account->getTransportType());
-    IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
+    auto family = pjsip_transport_type_get_af(sipaccount->getTransportType());
+    IpAddr addrToUse = ip_utils::getInterfaceAddr(sipaccount->getLocalInterface(), family);
 
     // May use the published address as well
-    IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
-                    ? account->getPublishedIpAddress() : addrToUse;
+    IpAddr addrSdp = sipaccount->isStunEnabled() or (not sipaccount->getPublishedSameasLocal())
+                    ? sipaccount->getPublishedIpAddress() : addrToUse;
 
-    pjsip_tpselector tp_sel  = account->getTransportSelector();
+    pjsip_tpselector tp_sel  = sipaccount->getTransportSelector();
 
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
@@ -329,7 +324,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    if (account->isStunEnabled())
+    if (sipaccount->isStunEnabled())
         call->updateSDPFromSTUN();
 
     if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
@@ -364,7 +359,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    call->getLocalSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->getLocalSDP().receiveOffer(r_sdp, sipaccount->getActiveAudioCodecs(), sipaccount->getActiveVideoCodecs());
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -454,7 +449,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         // contactStr must stay in scope as long as tdata
-        const pj_str_t contactStr(account->getContactHeader());
+        const pj_str_t contactStr(sipaccount->getContactHeader());
         sip_utils::addContactHeader(&contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
@@ -487,7 +482,7 @@ pj_pool_t* SIPVoIPLink::getPool() const
     return pool_;
 }
 
-SIPVoIPLink::SIPVoIPLink() : sipTransport(), sipAccountMap_(),
+SIPVoIPLink::SIPVoIPLink() : sipTransport(),
     sipCallMapMutex_(), sipCallMap_()
 #ifdef SFL_VIDEO
     , keyframeRequestsMutex_()
@@ -592,9 +587,6 @@ SIPVoIPLink::~SIPVoIPLink()
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
 
-    for (auto & a : sipAccountMap_)
-        unloadAccount(a);
-    sipAccountMap_.clear();
     clearSipCallMap();
 
     // destroy SIP transport before endpoint
@@ -624,30 +616,28 @@ void SIPVoIPLink::destroy()
     instance_ = nullptr;
 }
 
-std::string
-SIPVoIPLink::guessAccountIdFromNameAndServer(const std::string &userName,
-        const std::string &server) const
+std::shared_ptr<SIPAccount>
+SIPVoIPLink::guessAccountFromNameAndServer(const std::string &userName,
+                                           const std::string &server) const
 {
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
-    std::string result(SIPAccount::IP2IP_PROFILE);
+    auto result = std::static_pointer_cast<SIPAccount>(Manager::instance().getIP2IPAccount()); // default result
     MatchRank best = MatchRank::NONE;
 
-    for (const auto & item : sipAccountMap_) {
-        SIPAccount *account = static_cast<SIPAccount*>(item.second);
-
-        if (!account)
+    for (const auto& sipaccount : Manager::instance().getAllAccounts<SIPAccount>()) {
+        if (!sipaccount)
             continue;
 
-        const MatchRank match(account->matches(userName, server, endpt_, pool_));
+        const MatchRank match(sipaccount->matches(userName, server, endpt_, pool_));
 
         // return right away if this is a full match
         if (match == MatchRank::FULL) {
-            return item.first;
+            return sipaccount;
         } else if (match > best) {
             best = match;
-            result = item.first;
+            result = sipaccount;
         }
     }
 
@@ -957,7 +947,7 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
     if (!call)
         return;
 
-    auto& account = call->getSIPAccount();
+    const auto& account = call->getSIPAccount();
     auto& localSDP = call->getLocalSDP();
 
     localSDP.receiveOffer(offer, account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
@@ -976,7 +966,7 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     if (!call)
         return;
 
-    auto& account = call->getSIPAccount();
+    const auto& account = call->getSIPAccount();
 
     // FIXME : for now, use the same address family as the SIP tranport
     auto family = pjsip_transport_type_get_af(account.getTransportType());
@@ -1130,7 +1120,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         call->getAudioRtp().stop();
         call->getAudioRtp().setSrtpEnabled(false);
 
-        auto& account = call->getSIPAccount();
+        const auto& account = call->getSIPAccount();
         if (account.getSrtpFallback()) {
             call->getAudioRtp().initSession();
 
@@ -1378,22 +1368,21 @@ int SIPVoIPLink::getModId()
     return mod_ua_.id;
 }
 
-void SIPVoIPLink::loadIP2IPSettings()
+void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
+{ sdp_create_offer_cb(inv, p_offer); }
+
+void
+SIPVoIPLink::loadIP2IPSettings()
 {
     try {
-        const auto iter = sipAccountMap_.find(SIPAccount::IP2IP_PROFILE);
-        // if IP2IP doesn't exist yet, create it
-        if (iter == sipAccountMap_.end())
-            sipAccountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE, true);
-
-        SIPAccount *ip2ip = static_cast<SIPAccount*>(sipAccountMap_[SIPAccount::IP2IP_PROFILE]);
-
-        ip2ip->registerVoIPLink();
-        sipTransport->createSipTransport(*ip2ip);
+        auto account = Manager::instance().getIP2IPAccount();
+        if (!account) {
+            ERROR("No existing IP2IP account");
+            return;
+        }
+        account->registerVoIPLink();
+        SIPVoIPLink::instance().sipTransport->createSipTransport((SIPAccount&)*account);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }
 }
-
-void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
-{ sdp_create_offer_cb(inv, p_offer); }
