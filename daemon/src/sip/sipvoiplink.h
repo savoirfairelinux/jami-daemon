@@ -1,10 +1,11 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -104,8 +105,6 @@ class SIPVoIPLink : public VoIPLink {
         /* Returns a list of all callIDs */
         std::vector<std::string> getCallIDs();
 
-        std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const;
-
         /**
          * Register a new keepalive registration timer to this endpoint
          */
@@ -127,23 +126,6 @@ class SIPVoIPLink : public VoIPLink {
          * Get the memory pool factory since each calls has its own memory pool
          */
         pj_caching_pool *getMemoryPoolFactory();
-
-        void clearSipCallMap();
-        void addSipCall(std::shared_ptr<SIPCall>& call);
-
-        std::shared_ptr<SIPCall> getSipCall(const std::string& id);
-
-        /**
-         * A non-blocking SIPCall accessor
-         *
-         * Will return NULL if the callMapMutex could not be locked
-         *
-         * @param id  The call identifier
-         * @return SIPCall* A pointer to the SIPCall object
-         */
-        std::shared_ptr<SIPCall> tryGetSIPCall(const std::string &id);
-
-        void removeSipCall(const std::string &id);
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
@@ -184,9 +166,6 @@ class SIPVoIPLink : public VoIPLink {
 
         SIPVoIPLink();
         ~SIPVoIPLink();
-
-        mutable std::mutex sipCallMapMutex_;
-        SipCallMap sipCallMap_;
 
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();

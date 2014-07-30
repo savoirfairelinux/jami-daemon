@@ -1,9 +1,10 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,6 +44,7 @@
 #include "manager.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
+#include "call_factory.h"
 
 IAXAccount::IAXAccount(const std::string& accountID)
     : Account(accountID), password_(), link_(*this)
@@ -167,10 +169,18 @@ IAXAccount::loadConfig()
 #endif
 }
 
-std::shared_ptr<Call>
+template <>
+std::shared_ptr<IAXCall>
+IAXAccount::newIncomingCall(const std::string& id)
+{
+    return Manager::instance().callFactory.newCall<IAXCall, IAXAccount>(*this, id, Call::INCOMING);
+}
+
+template <>
+std::shared_ptr<IAXCall>
 IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
-    auto call = std::make_shared<IAXCall>(id, Call::OUTGOING, *this, &link_);
+    auto call = Manager::instance().callFactory.newCall<IAXCall, IAXAccount>(*this, id, Call::OUTGOING);
 
     call->setPeerNumber(toUrl);
     call->initRecFilename(toUrl);
@@ -180,9 +190,13 @@ IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     call->setConnectionState(Call::PROGRESSING);
     call->setState(Call::ACTIVE);
 
-    IAXVoIPLink::addIaxCall(call);
-
     return call;
+}
+
+std::shared_ptr<Call>
+IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+{
+    return newOutgoingCall<IAXCall>(id, toUrl);
 }
 
 void
