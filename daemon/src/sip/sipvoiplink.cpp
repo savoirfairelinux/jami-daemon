@@ -88,7 +88,13 @@
 
 using namespace sfl;
 
-SIPVoIPLink *SIPVoIPLink::instance_ = nullptr;
+SIPVoIPLink* siplink = nullptr;
+
+static auto link_generator = []() {
+    siplink = new SIPVoIPLink;
+    return std::unique_ptr<SIPVoIPLink>(siplink);
+};
+bool SIPVoIPLink::linkRegistered_ = ManagerImpl::registerVoIPLink(link_generator);
 
 /** Environment variable used to set pjsip's logging level */
 #define SIPLOGLEVEL "SIPLOGLEVEL"
@@ -228,7 +234,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
 
-    auto account(SIPVoIPLink::instance().guessAccountFromNameAndServer(toUsername, viaHostname));
+    auto account(siplink->guessAccountFromNameAndServer(toUsername, viaHostname));
     SIPAccount* sipaccount = static_cast<SIPAccount*>(account.get());
     if (!sipaccount) {
         ERROR("NULL account");
@@ -600,22 +606,7 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_caching_pool_destroy(cp_);
 
     pj_shutdown();
-}
-
-SIPVoIPLink& SIPVoIPLink::instance()
-{
-    if (!instance_) {
-        DEBUG("creating SIPVoIPLink instance");
-        instance_ = new SIPVoIPLink;
-    }
-
-    return *instance_;
-}
-
-void SIPVoIPLink::destroy()
-{
-    delete instance_;
-    instance_ = nullptr;
+    siplink = nullptr;
 }
 
 std::shared_ptr<Account>
@@ -729,8 +720,8 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 void
 SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 {
-    std::lock_guard<std::mutex> lock(instance_->keyframeRequestsMutex_);
-    instance_->keyframeRequests_.push(id);
+    std::lock_guard<std::mutex> lock(siplink->keyframeRequestsMutex_);
+    siplink->keyframeRequests_.push(id);
 }
 
 // Called from SIP event thread
@@ -1286,7 +1277,7 @@ SIPVoIPLink::loadIP2IPSettings()
             return;
         }
         account->registerVoIPLink();
-        SIPVoIPLink::instance().sipTransport->createSipTransport((SIPAccount&)*account);
+        siplink->sipTransport->createSipTransport((SIPAccount&)*account);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }
