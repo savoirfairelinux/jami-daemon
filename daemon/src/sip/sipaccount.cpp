@@ -138,12 +138,12 @@ registration_cb(pjsip_regc_cbparam *param)
              */
             // update_rfc5626_status(acc, param->rdata);
 
-            if (account->checkNATAddress(param, SIPVoIPLink::instance().getPool()))
+            if (account->checkNATAddress(param, siplink->getPool()))
                 WARN("Contact overwritten");
 
             /* TODO Check and update Service-Route header */
             if (account->hasServiceRoute())
-                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(account->getServiceRoute(), SIPVoIPLink::instance().getPool()));
+                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(account->getServiceRoute(), siplink->getPool()));
 
             // start the periodic registration request based on Expire header
             // account determines itself if a keep alive is required
@@ -164,13 +164,13 @@ registration_cb(pjsip_regc_cbparam *param)
         case PJSIP_SC_BAD_GATEWAY:
         case PJSIP_SC_SERVICE_UNAVAILABLE:
         case PJSIP_SC_SERVER_TIMEOUT:
-            account->scheduleReregistration(SIPVoIPLink::instance().getEndpoint());
+            account->scheduleReregistration(siplink->getEndpoint());
             break;
 
         default:
             /* Global failure */
             if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
-                account->scheduleReregistration(SIPVoIPLink::instance().getEndpoint());
+                account->scheduleReregistration(siplink->getEndpoint());
     }
 
     const pj_str_t *description = pjsip_get_status_text(param->code);
@@ -236,7 +236,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , keepAliveEnabled_(false)
     , keepAliveTimer_()
     , keepAliveTimerActive_(false)
-    , link_(SIPVoIPLink::instance())
+    , link_(*siplink)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
