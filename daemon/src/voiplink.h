@@ -1,9 +1,10 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,16 +35,8 @@
 #ifndef __VOIP_LINK_H__
 #define __VOIP_LINK_H__
 
-#include "account.h"
-
 #include <stdexcept>
-#include <functional>
 #include <string>
-#include <vector>
-#include <memory>
-
-class Call;
-class Account;
 
 class VoipLinkException : public std::runtime_error {
     public:
@@ -65,12 +58,6 @@ class VoIPLink {
          * Event listener. Each event send by the call manager is received and handled from here
          */
         virtual bool handleEvents() = 0;
-
-        /**
-         * Virtual method
-         * Returns calls involving this account.
-         */
-        virtual std::vector<std::shared_ptr<Call> > getCalls(const std::string &account_id) const = 0;
 
     protected:
         bool handlingEvents_ = false;
