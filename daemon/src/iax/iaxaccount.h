@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,12 +29,16 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
 #ifndef IAXACCOUNT_H
 #define IAXACCOUNT_H
 
 #include "account.h"
 #include "iaxvoiplink.h"
 #include "noncopyable.h"
+#include "sfl_types.h" // restrict_to_base_of
+
+class IAXCall;
 
 /**
  * @file: iaxaccount.h
@@ -45,14 +50,9 @@ class IAXAccount : public Account {
 
         IAXAccount(const std::string& accountID);
 
-        /**
-         * Create a new outgoing call
-         * @param id  The ID of the call
-         * @param toUrl The address to call
-         * @return Call*  A pointer on the call
-         */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
-                                              const std::string& toUrl);
+        const char* getAccountType() const {
+            return ACCOUNT_TYPE;
+        }
 
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
@@ -96,6 +96,40 @@ class IAXAccount : public Account {
 
         void checkRegister();
 
+        VoIPLink* getVoIPLink() {
+            return &link_;
+        }
+
+        /**
+         * Implementation of Account::newOutgoingCall()
+         * Note: keep declaration before newOutgoingCall template.
+         */
+        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                              const std::string& toUrl);
+
+        /**
+         * Create outgoing IAXCall.
+         * @param[in] id The ID of the call
+         * @param[in] toUrl The address to call
+         * @return std::shared_ptr<T> A shared pointer on the created call.
+         *      The type of this instance is given in template argument.
+         *      This type can be any base class of IAXCall class (included).
+         */
+        template <class T=IAXCall>
+        std::shared_ptr<restrict_to_base_of<T, IAXCall> >
+        newOutgoingCall(const std::string& id, const std::string& toUrl);
+
+        /**
+         * Create incoming IAXCall.
+         * @param[in] id The ID of the call
+         * @return std::shared_ptr<T> A shared pointer on the created call.
+         *      The type of this instance is given in template argument.
+         *      This type can be any base class of IAXCall class (included).
+         */
+        template <class T=IAXCall>
+        std::shared_ptr<restrict_to_base_of<T, IAXCall> >
+        newIncomingCall(const std::string& id);
+
     private:
         NON_COPYABLE(IAXAccount);
 
@@ -113,7 +147,6 @@ class IAXAccount : public Account {
          // Account login information: password
         std::string password_;
         IAXVoIPLink link_;
-        VoIPLink* getVoIPLink();
 
         /** Timestamp of when we should refresh the registration up with
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
