@@ -109,10 +109,22 @@ Account::~Account()
 {}
 
 void
+Account::attachCall(const string& id)
+{
+    callIDSet_.insert(id);
+}
+
+void
+Account::detachCall(const string& id)
+{
+    callIDSet_.erase(id);
+}
+
+void
 Account::freeAccount()
 {
-    for (const auto& call : getVoIPLink()->getCalls(accountID_))
-        Manager::instance().hangupCall(call->getCallId());
+    for (const auto& id : callIDSet_)
+        Manager::instance().hangupCall(id);
     unregisterVoIPLink();
 }
 
