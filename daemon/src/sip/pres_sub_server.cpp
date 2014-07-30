@@ -126,7 +126,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    pjsip_endpoint *endpt = ((SIPVoIPLink*) sipaccount->getVoIPLink())->getEndpoint();
+    pjsip_endpoint *endpt = sipaccount->getSIPVoIPLink()->getEndpoint();
     SIPPresence * pres = sipaccount->getPresence();
     pres->lock();
 

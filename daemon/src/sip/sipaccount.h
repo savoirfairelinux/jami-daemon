@@ -112,10 +112,10 @@ namespace Conf {
 #endif
 }
 
+class VoIPLink;
 class SIPVoIPLink;
 class SIPPresence;
 class SIPCall;
-
 
 /**
  * @file sipaccount.h
@@ -144,7 +144,11 @@ class SIPAccount : public Account {
             return ACCOUNT_TYPE;
         }
 
-        VoIPLink* getVoIPLink();
+        std::shared_ptr<SIPVoIPLink> getSIPVoIPLink() {
+            return link_;
+        }
+
+        std::shared_ptr<VoIPLink> getVoIPLink();
 
         pjsip_host_port getHostPortFromSTUN(pj_pool_t *pool);
 
@@ -907,7 +911,7 @@ class SIPAccount : public Account {
         /**
          * Voice over IP Link contains a listener thread and calls
          */
-        SIPVoIPLink& link_;
+        std::shared_ptr<SIPVoIPLink> link_;
 
         /**
          * Optional: "received" parameter from VIA header
