@@ -1,8 +1,9 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
+ *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +30,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -42,6 +44,7 @@
 
 #include "logger.h"
 #include "manager.h"
+#include "call.h"
 
 #include "client/configurationmanager.h"
 
@@ -75,8 +78,9 @@ using std::string;
 using std::vector;
 
 
-Account::Account(const string &accountID) :
-    accountID_(accountID)
+Account::Account(const string &accountID)
+    : callMap_()
+    , accountID_(accountID)
     , username_()
     , hostname_()
     , alias_()
@@ -104,6 +108,31 @@ Account::Account(const string &accountID) :
 
 Account::~Account()
 {}
+
+void
+Account::attachCall(std::shared_ptr<Call>& call)
+{
+    assert(&call->getAccount() == this);
+    callMap_.insert(std::make_pair(call->getCallId(), std::weak_ptr<Call>(call)));
+}
+
+void
+Account::detachCall(const std::string& id)
+{
+    callMap_.erase(id);
+}
+
+std::vector<std::shared_ptr<Call> >
+Account::getCalls()
+{
+    std::vector<std::shared_ptr<Call> > v;
+
+    for (const auto& item : callMap_)
+        if (auto shared = item.second.lock())
+            v.push_back(shared);
+
+    return v;
+}
 
 void Account::setRegistrationState(RegistrationState state)
 {

@@ -136,16 +136,12 @@ class SIPAccount : public Account {
          * @param accountID The account identifier
          */
         SIPAccount(const std::string& accountID, bool presenceEnabled=true);
+
         ~SIPAccount();
 
-        /**
-         * Create a new outgoing call
-         * @param id  The ID of the call
-         * @param toUrl The address to call
-         * @return Call*  A pointer on the call
-         */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
-                                              const std::string& toUrl);
+        const char* getAccountType() const {
+            return ACCOUNT_TYPE;
+        }
 
         VoIPLink* getVoIPLink();
 
@@ -609,6 +605,16 @@ class SIPAccount : public Account {
 #endif
 
         void scheduleReregistration(pjsip_endpoint *endpt);
+
+        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
+                                              const std::string& toUrl);
+
+        template <class CT=SIPCall>
+        std::shared_ptr<CT> newOutgoingCall(const std::string& id,
+                                            const std::string& toUrl);
+
+        template <class CT=SIPCall>
+        std::shared_ptr<CT> newIncomingCall(const std::string& id);
 
     private:
         /**
