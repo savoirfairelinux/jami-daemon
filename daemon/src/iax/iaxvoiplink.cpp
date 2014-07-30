@@ -35,10 +35,10 @@
 #include <cmath>
 #include <algorithm>
 
+#include "manager.h"
 #include "iaxcall.h"
 #include "iaxaccount.h"
 #include "logger.h"
-#include "manager.h"
 #include "hooks/urlhook.h"
 #include "audio/audiolayer.h"
 #include "audio/resampler.h"
@@ -47,6 +47,24 @@
 #include "call_factory.h"
 
 std::mutex IAXVoIPLink::mutexIAX = {};
+
+struct IAXVoIPMainLink : VoIPLink {
+        bool handleEvents() {
+            bool state = false;
+            for (auto account : Manager::instance().getAllAccounts<IAXAccount>())
+                state |= account->getVoIPLink()->handleEvents();
+            return state;
+        }
+};
+
+template <>
+std::shared_ptr<IAXVoIPMainLink>
+ManagerImpl::getVoIPLink() const
+{
+    static auto link = std::make_shared<IAXVoIPMainLink>();
+    getAllVoIPLink().insert(link);
+    return link;
+}
 
 IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
     rawBuffer_(RAW_BUFFER_SIZE, AudioFormat::MONO())

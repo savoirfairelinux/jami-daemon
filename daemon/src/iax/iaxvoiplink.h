@@ -37,6 +37,7 @@
 #include "config.h"
 #endif
 
+#include "managerimpl.h"
 #include "account.h"
 #include "voiplink.h"
 #include "audio/audiobuffer.h"
@@ -53,6 +54,10 @@
 class IAXAccount;
 class AudioCodec;
 class AudioLayer;
+struct IAXVoIPMainLink;
+
+template <>
+std::shared_ptr<IAXVoIPMainLink> ManagerImpl::getVoIPLink() const;
 
 /**
  * @file iaxvoiplink.h
@@ -62,6 +67,7 @@ class AudioLayer;
 
 class IAXVoIPLink : public VoIPLink {
     public:
+        static constexpr const char* const VOIPLINK_NAME = "iax";
 
         IAXVoIPLink(IAXAccount& account);
         ~IAXVoIPLink();
@@ -70,7 +76,6 @@ class IAXVoIPLink : public VoIPLink {
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
         bool handleEvents();
-
 
         /**
          * Init the voip link
