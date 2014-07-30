@@ -2456,6 +2456,14 @@ static void iax_handle_vnak(struct iax_session *session, struct ast_iax2_full_hd
 	}
 }
 
+static void
+copy_sockaddr_in(struct sockaddr_in *dest, struct sockaddr_in *src)
+{
+    dest->sin_port = src->sin_port;
+    dest->sin_addr = src->sin_addr;
+    dest->sin_family = AF_INET; /* it's always AF_INET */
+}
+
 static struct iax_event *iax_header_to_event(struct iax_session *session, struct ast_iax2_full_hdr *fh, int datalen, struct sockaddr_in *sin)
 {
 	struct iax_event *e;
@@ -2767,9 +2775,7 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 
                     /* don't shallow copy struct by assignment (this avoids
                      * unaligned accesses) */
-                    session->transfer.sin_port = e->ies.apparent_addr->sin_port;
-                    session->transfer.sin_addr = e->ies.apparent_addr->sin_addr;
-					session->transfer.sin_family = AF_INET;
+                    copy_sockaddr_in(&session->transfer, e->ies.apparent_addr);
 
 					session->transfercallno = e->ies.callno;
 					session->transferring = TRANSFER_BEGIN;
@@ -2786,7 +2792,7 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 				break;
 			case IAX_COMMAND_TXCNT:
 				if (session->transferring)  {
-					session->transfer = *sin;
+					copy_sockaddr_in(&session->transfer, sin);
 					iax_send_txaccept(session);
 				}
 				free(e);
