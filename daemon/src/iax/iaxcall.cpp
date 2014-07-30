@@ -71,8 +71,7 @@ codecToASTFormat(int c)
 IAXCall::IAXCall(IAXAccount& account, const std::string& id, Call::CallType type)
     : Call(account, id, type),
       format(0),
-      session(NULL),
-      link_(static_cast<IAXVoIPLink*>(account.getVoIPLink()))
+      session(NULL)
 {}
 
 int IAXCall::getSupportedFormat(const std::string &accountID) const
@@ -132,10 +131,6 @@ int IAXCall::getAudioCodec() const
             return -1;
     }
 }
-
-VoIPLink*
-IAXCall::getVoIPLink() const
-{ return link_; }
 
 void
 IAXCall::answer()
