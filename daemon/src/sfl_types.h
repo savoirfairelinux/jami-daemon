@@ -33,10 +33,18 @@
 
 #include <cstddef> // for size_t
 #include <stdint.h>
+#include <type_traits>
 
 typedef int16_t SFLAudioSample;
 #define SFL_DATA_FORMAT_MAX SHRT_MAX
 
 static const size_t SIZEBUF = 32000; /** About 1s of buffering at 48kHz */
+
+/**
+ * This meta-function is used to enable a template overload
+ * if given class T is a base of class U
+ */
+template <class T, class U> using restrict_to_base_of =
+    typename std::enable_if<std::is_base_of<T, U>::value, T>::type;
 
 #endif // SFL_TYPES_H_
