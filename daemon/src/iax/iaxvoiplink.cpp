@@ -57,6 +57,7 @@ IAXVoIPLink::IAXVoIPLink(IAXAccount& account) :
     , account_(account)
 {
     srand(time(NULL));    // to get random number for RANDOM_PORT
+    ManagerImpl::registerVoIPLink([this](){return std::unique_ptr<IAXVoIPLink>(this);});
 }
 
 IAXVoIPLink::~IAXVoIPLink()
