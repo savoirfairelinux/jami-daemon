@@ -45,180 +45,143 @@
 
 const char* const AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;
 
-AccountFactory::AccountFactory() : generators_()
+AccountFactory::AccountFactory()
 {
-    auto sip_gen = new AccountGenerator<SIPAccount>(SIPAccount::ACCOUNT_TYPE);
-    generators_.push_back(std::unique_ptr<AccountGeneratorBase>(sip_gen));
-
+    auto sipfunc = [](const std::string& id){ return std::make_shared<SIPAccount>(id); };
+    generators_.insert(std::make_pair("SIP", sipfunc));
 #if HAVE_IAX
-    auto iax_gen = new AccountGenerator<IAXAccount>(IAXAccount::ACCOUNT_TYPE);
-    generators_.push_back(std::unique_ptr<AccountGeneratorBase>(iax_gen));
+    auto iaxfunc = [](const std::string& id){ return std::make_shared<SIPAccount>(id); };
+    generators_.insert(std::make_pair("IAX", iaxfunc));
 #endif
-}
-
-const AccountGeneratorBase&
-AccountFactory::getGenerator(const std::string& name) const
-{
-    for (const auto& gen : generators_)
-        if (gen->getTypename() == name)
-            return *gen;
-
-    throw std::invalid_argument("Unknown Account generator");
-}
-
-AccountGeneratorBase&
-AccountFactory::getGenerator(const std::string& name)
-{
-    for (const auto& gen : generators_)
-        if (gen->getTypename() == name)
-            return *gen;
-
-    throw std::invalid_argument("Unknown Account generator");
-}
-
-bool
-AccountFactory::isSupportedType(const std::string& name) const
-{
-    for (const auto& gen : generators_)
-        if (gen->getTypename() == name)
-            return true;
-
-    return false;
-}
-
-bool
-AccountFactory::hasAccount(const std::string& accountId) const
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    for (const auto& gen : generators_)
-        if (gen->hasAccount(accountId))
-            return true;
-
-    return false;
 }
 
 std::shared_ptr<Account>
 AccountFactory::createAccount(const std::string& accountType,
-                              const std::string& accountId)
+                              const std::string& id)
+{
+     if (hasAccount(id)) {
+         ERROR("Existing account %s", id.c_str());
+         return nullptr;
+     }
+
+     auto account = generators_.at(accountType)(id);
+
+     {
+         std::lock_guard<std::recursive_mutex> lock(mutex_);
+         accountMaps_[accountType].insert(std::make_pair(id, account));
+     }
+
+     return account;
+ }
+
+bool
+AccountFactory::isSupportedType(const std::string& name) const
+{
+    return generators_.find(name) != generators_.cend();
+}
+
+void
+AccountFactory::removeAccount(Account& account)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    const auto& id = account.getAccountID();
+    DEBUG("Removing account %s", id.c_str());
+    auto& map = accountMaps_.at(account.getAccountType());
+    map.erase(id);
+    DEBUG("Remaining %u %s account(s)", map.size(), account.getAccountType());
+}
+
+void
+AccountFactory::removeAccount(const std::string& id)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    // Could be in any generator
-    if (hasAccount(accountId)) {
-        ERROR("Existing account %s", accountId.c_str());
-        return nullptr;
+    if (auto account = getAccount(id)) {
+        removeAccount(*account);
+    } else
+        ERROR("No account with ID %s", id.c_str());
+}
+
+template <> bool
+AccountFactory::hasAccount(const std::string& id) const
+{
+    std::lock_guard<std::recursive_mutex> lk(mutex_);
+
+    for (const auto& item : accountMaps_) {
+        const auto& map = item.second;
+        if (map.find(id) != map.cend())
+            return true;
     }
 
-    return getGenerator(accountType).createAccount(accountId);
+    return false;
 }
 
-void
-AccountFactory::removeAccount(const std::string& accountId)
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    for (const auto& gen : generators_)
-        gen->accountMap.erase(accountId);
-}
-
-void
-AccountFactory::removeAccount(std::shared_ptr<Account> account)
-{
-    removeAccount(account->getAccountID());
-}
-
-void
+template <> void
 AccountFactory::clear()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    for (const auto& gen : generators_)
-        gen->clear();
+    std::lock_guard<std::recursive_mutex> lk(mutex_);
+    accountMaps_.clear();
 }
 
-AccountMap
+template <>
+std::vector<std::shared_ptr<Account> >
 AccountFactory::getAllAccounts() const
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    AccountMap all_accounts;
+    std::vector<std::shared_ptr<Account> > v;
 
-    for (const auto& gen : generators_)
-        all_accounts.insert(gen->accountMap.cbegin(),
-                            gen->accountMap.cend());
+    for (const auto& itemmap : accountMaps_) {
+        const auto& map = itemmap.second;
+        for (const auto item : map)
+            v.push_back(item.second);
+    }
 
-    return all_accounts;
+    v.shrink_to_fit();
+    return v;
 }
 
-AccountMap
-AccountFactory::getAllAccounts(const std::string& accountType) const
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    return getGenerator(accountType).accountMap;
-}
-
+template <>
 std::shared_ptr<Account>
-AccountFactory::getAccount(const std::string& accountId) const
+AccountFactory::getAccount(const std::string& id) const
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    for (const auto& gen : generators_) {
-        auto account = gen->getAccount(accountId);
-        if (account)
-            return account;
+    for (const auto& item : accountMaps_) {
+        const auto& map = item.second;
+        const auto& iter = map.find(id);
+        if (iter != map.cend())
+            return iter->second;
     }
 
     return nullptr;
 }
 
-std::shared_ptr<Account>
-AccountFactory::getAccount(const std::string& accountType,
-                           const std::string& accountId) const
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    return getGenerator(accountType).getAccount(accountId);
-}
-
+template <>
 bool
 AccountFactory::empty() const
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    for (const auto& gen : generators_)
-        if (!gen->accountMap.empty())
+    for (const auto& item : accountMaps_) {
+        const auto& map = item.second;
+        if (!map.empty())
             return false;
+    }
 
     return true;
 }
 
-bool
-AccountFactory::empty(const std::string& accountType) const
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    return getGenerator(accountType).accountMap.empty();
-}
-
-int
+template <>
+std::size_t
 AccountFactory::accountCount() const
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    int count = 0;
+    std::size_t count = 0;
 
-    for (const auto& gen : generators_)
-        count += gen->accountMap.size();
+    for (const auto& it : accountMaps_)
+        count += it.second.size();
 
     return count;
-}
-
-int
-AccountFactory::accountCount(const std::string& accountType) const
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    return getGenerator(accountType).accountMap.size();
 }
 
 std::shared_ptr<Account>

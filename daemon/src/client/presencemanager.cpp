@@ -54,8 +54,7 @@ constexpr static const char* OFFLINE_KEY    = "Offline";
 void
 PresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
 {
-    const auto account = Manager::instance().getAccount(SIPAccount::ACCOUNT_TYPE, accountID);
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount) {
         ERROR("Could not find account %s", accountID.c_str());
@@ -78,8 +77,7 @@ PresenceManager::subscribeBuddy(const std::string& accountID, const std::string&
 void
 PresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
 {
-    const auto account = Manager::instance().getAccount(SIPAccount::ACCOUNT_TYPE, accountID);
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount) {
         ERROR("Could not find account %s.", accountID.c_str());
@@ -129,8 +127,7 @@ std::vector<std::map<std::string, std::string> >
 PresenceManager::getSubscriptions(const std::string& accountID)
 {
     std::vector<std::map<std::string, std::string> > ret;
-    const auto account = Manager::instance().getAccount(SIPAccount::ACCOUNT_TYPE, accountID);
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (sipaccount) {
         const auto pres = sipaccount->getPresence();
@@ -157,8 +154,7 @@ PresenceManager::getSubscriptions(const std::string& accountID)
 void
 PresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
-    const auto account = Manager::instance().getAccount(SIPAccount::ACCOUNT_TYPE, accountID);
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount)
         return;

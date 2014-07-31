@@ -167,11 +167,6 @@ IAXAccount::loadConfig()
 #endif
 }
 
-VoIPLink* IAXAccount::getVoIPLink()
-{
-    return &link_;
-}
-
 std::shared_ptr<Call>
 IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {

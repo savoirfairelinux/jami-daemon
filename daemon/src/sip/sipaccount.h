@@ -138,6 +138,10 @@ class SIPAccount : public Account {
         SIPAccount(const std::string& accountID, bool presenceEnabled=true);
         ~SIPAccount();
 
+        const char* getAccountType() const {
+            return ACCOUNT_TYPE;
+        }
+
         /**
          * Create a new outgoing call
          * @param id  The ID of the call

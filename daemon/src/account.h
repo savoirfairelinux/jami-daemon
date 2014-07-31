@@ -86,6 +86,8 @@ class Account : public Serializable {
             return accountID_;
         }
 
+        virtual const char* getAccountType() const = 0;
+
         /**
          * Returns true if this is the IP2IP account
          */
@@ -337,7 +339,6 @@ class Account : public Serializable {
          * Account mail box
          */
         std::string mailBox_;
-
 };
 
 #endif

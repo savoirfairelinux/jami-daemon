@@ -28,6 +28,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
 #ifndef IAXACCOUNT_H
 #define IAXACCOUNT_H
 
@@ -44,6 +45,10 @@ class IAXAccount : public Account {
         constexpr static const char * const ACCOUNT_TYPE = "IAX";
 
         IAXAccount(const std::string& accountID);
+
+        const char* getAccountType() const {
+            return ACCOUNT_TYPE;
+        }
 
         /**
          * Create a new outgoing call
@@ -96,6 +101,10 @@ class IAXAccount : public Account {
 
         void checkRegister();
 
+        VoIPLink* getVoIPLink() {
+            return &link_;
+        }
+
     private:
         NON_COPYABLE(IAXAccount);
 
@@ -113,7 +122,6 @@ class IAXAccount : public Account {
          // Account login information: password
         std::string password_;
         IAXVoIPLink link_;
-        VoIPLink* getVoIPLink();
 
         /** Timestamp of when we should refresh the registration up with
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1

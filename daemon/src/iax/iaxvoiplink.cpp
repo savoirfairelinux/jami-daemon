@@ -63,7 +63,7 @@ IAXVoIPLink::~IAXVoIPLink()
     terminate();
 
     // This is our last account
-    if (Manager::instance().accountCount(IAXAccount::ACCOUNT_TYPE) == 1)
+    if (Manager::instance().accountCount<IAXAccount>() == 1)
         clearIaxCallMap();
 }
 

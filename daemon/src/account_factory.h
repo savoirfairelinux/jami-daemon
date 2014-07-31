@@ -31,6 +31,8 @@
 #ifndef ACCOUNT_FACTORY_H
 #define ACCOUNT_FACTORY_H
 
+#include "logger.h"
+
 #include <string>
 #include <map>
 #include <vector>
@@ -41,59 +43,7 @@
 class Account;
 class AccountGeneratorBase;
 
-/** Account container.
- * Used to store accounts using ID as key.
- */
-typedef std::map<std::string, std::shared_ptr<Account> > AccountMap;
-
-class AccountGeneratorBase {
-    public:
-        AccountMap accountMap = {};
-
-        AccountGeneratorBase(const std::string& tname) : tname_(tname) {}
-
-        virtual ~AccountGeneratorBase() {};
-
-        virtual std::shared_ptr<Account>
-        createAccount(const std::string& accountID) = 0;
-
-        bool hasAccount(const std::string& accountID) const {
-            return accountMap.find(accountID) != accountMap.end();
-        }
-
-        std::shared_ptr<Account>
-        getAccount(const std::string& accountID) const {
-            const auto& iter = accountMap.find(accountID);
-            if (iter != accountMap.cend())
-                return iter->second;
-            return nullptr;
-        }
-
-        const std::string& getTypename() const {
-            return tname_;
-        }
-
-        void clear() {
-            accountMap.clear();
-        }
-
-    private:
-        const std::string tname_;
-};
-
-template <typename T>
-class AccountGenerator : public AccountGeneratorBase {
-    public:
-        AccountGenerator<T>(const std::string& tname)
-        : AccountGeneratorBase(tname) {}
-
-        virtual std::shared_ptr<Account>
-        createAccount(const std::string& accountID) {
-            auto account = std::dynamic_pointer_cast<Account>(std::make_shared<T>(accountID));
-            accountMap.insert(std::make_pair(accountID, account));
-            return account;
-        }
-};
+template <class T> using AccountMap = std::map<std::string, std::shared_ptr<T> >;
 
 class AccountFactory {
     public:
@@ -104,39 +54,127 @@ class AccountFactory {
         bool isSupportedType(const std::string& accountType) const;
 
         std::shared_ptr<Account> createAccount(const std::string& accountType,
-                                               const std::string& accountId);
+                                               const std::string& id);
 
-        bool hasAccount(const std::string& accountId) const;
+        void removeAccount(Account& account);
 
-        void removeAccount(const std::string& accountId);
-        void removeAccount(std::shared_ptr<Account> account);
+        void removeAccount(const std::string& id);
 
-        void clear();
+        template <class T=Account>
+        bool hasAccount(const std::string& id) const {
+            std::lock_guard<std::recursive_mutex> lk(mutex_);
 
-        AccountMap getAllAccounts() const;
-        AccountMap getAllAccounts(const std::string& accountType) const;
+            const auto map = getMap_<T>();
+            return map and map->find(id) != map->cend();
+        }
 
-        std::shared_ptr<Account> getAccount(const std::string& accountId) const;
-        std::shared_ptr<Account> getAccount(const std::string& accountType,
-                                            const std::string& accountId) const;
+        template <class T=Account>
+        void clear() {
+            std::lock_guard<std::recursive_mutex> lk(mutex_);
 
-        bool empty() const;
-        bool empty(const std::string& accountType) const;
+            auto map = getMap_<T>();
+            if (!map) return;
 
-        int accountCount() const;
-        int accountCount(const std::string& accountType) const;
+            map->clear();
+        }
+
+        template <class T=Account>
+        bool empty() const {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+            const auto map = getMap_<T>();
+            return map and map->empty();
+        }
+
+        template <class T=Account>
+        std::size_t accountCount() const {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+            const auto map = getMap_<T>();
+            if (!map) return 0;
+
+            return map->size();
+        }
+
+        template <class T=Account>
+        std::shared_ptr<T>
+        getAccount(const std::string& id) const {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+            const auto map = getMap_<T>();
+            if (!map) return nullptr;
+
+            const auto& it = map->find(id);
+            if (it == map->cend())
+                return nullptr;
+
+            return std::static_pointer_cast<T>(it->second);
+        }
+
+        template <class T=Account>
+        std::vector<std::shared_ptr<T> > getAllAccounts() const {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+            std::vector<std::shared_ptr<T> > v;
+
+            const auto map = getMap_<T>();
+            if (map) {
+                for (const auto& it : *map)
+                    v.push_back(std::static_pointer_cast<T>(it.second));
+            }
+
+            v.shrink_to_fit();
+            return v;
+        }
 
         std::shared_ptr<Account> getIP2IPAccount() const;
 
         void initIP2IPAccount();
 
     private:
-        const AccountGeneratorBase& getGenerator(const std::string& name) const;
-        AccountGeneratorBase& getGenerator(const std::string& name);
-
         mutable std::recursive_mutex mutex_ = {};
-        std::vector<std::unique_ptr<AccountGeneratorBase> > generators_;
+        std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)> > generators_ = {};
+        std::map<std::string, AccountMap<Account> > accountMaps_ = {};
         std::weak_ptr<Account> ip2ip_account_ = {}; //! cached pointer on IP2IP account
+
+        const AccountMap<Account>* getMap_(const std::string& name) const {
+            const auto& itermap = accountMaps_.find(name);
+
+            if (itermap != accountMaps_.cend())
+                return &itermap->second;
+            else
+                WARN("unknown account type %s", name.c_str());
+
+            return nullptr;
+        }
+
+        template <class T>
+        const AccountMap<Account>* getMap_() const {
+            return getMap_(T::ACCOUNT_TYPE);
+        }
 };
+
+template <>
+bool
+AccountFactory::hasAccount(const std::string& id) const;
+
+template <>
+void
+AccountFactory::clear();
+
+template <>
+std::vector<std::shared_ptr<Account> >
+AccountFactory::getAllAccounts() const;
+
+template <>
+std::shared_ptr<Account>
+AccountFactory::getAccount(const std::string& accountId) const;
+
+template <>
+bool
+AccountFactory::empty() const;
+
+template <>
+std::size_t
+AccountFactory::accountCount() const;
 
 #endif // ACCOUNT_FACTORY_H

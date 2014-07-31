@@ -1320,8 +1320,8 @@ void ManagerImpl::pollEvents()
     SIPVoIPLink::instance().handleEvents();
 
 #if HAVE_IAX
-    for (auto &item : accountFactory_.getAllAccounts(IAXAccount::ACCOUNT_TYPE))
-        item.second->getVoIPLink()->handleEvents();
+    for (auto account : accountFactory_.getAllAccounts<IAXAccount>())
+        account->getVoIPLink()->handleEvents();
 #endif
 }
 
@@ -1341,8 +1341,8 @@ ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (const auto& item : accountFactory_.getAllAccounts())
-            item.second->serialize(emitter);
+        for (const auto& account : accountFactory_.getAllAccounts())
+            account->serialize(emitter);
 
         // FIXME: this is a hack until we get rid of accountOrder
         preferences.verifyAccountOrder(getAccountList());
@@ -2321,6 +2321,8 @@ ManagerImpl::setAccountsOrder(const std::string& order)
 std::vector<std::string>
 ManagerImpl::getAccountList() const
 {
+    // TODO: this code looks weird. need further investigation!
+
     using std::vector;
     using std::string;
     vector<string> account_order(loadAccountOrder());
@@ -2330,30 +2332,27 @@ ManagerImpl::getAccountList() const
     vector<string> v;
 
     // Concatenate all account pointers in a single map
-    const AccountMap& allAccounts = accountFactory_.getAllAccounts();
+    const auto& allAccounts = accountFactory_.getAllAccounts();
 
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        for (const auto &item : allAccounts) {
-            if (item.second->isIP2IP())
+        for (const auto &account : allAccounts) {
+            if (account->isIP2IP())
                 continue;
-            v.push_back(item.second->getAccountID());
+            v.push_back(account->getAccountID());
         }
     } else {
         const auto& ip2ipAccountID = getIP2IPAccount()->getAccountID();
-        for (const auto& item : account_order) {
-            if (item.empty() or item == ip2ipAccountID)
+        for (const auto& id : account_order) {
+            if (id.empty() or id == ip2ipAccountID)
                 continue;
 
-            AccountMap::const_iterator account_iter = allAccounts.find(item);
-
-            if (account_iter != allAccounts.end() and account_iter->second)
-                v.push_back(account_iter->second->getAccountID());
+            if (accountFactory_.hasAccount(id))
+                v.push_back(id);
         }
     }
 
-    const auto account = getIP2IPAccount();
-    if (account)
+    if (const auto& account = getIP2IPAccount())
         v.push_back(account->getAccountID());
     else
         ERROR("could not find IP2IP profile in getAccount list");
@@ -2437,7 +2436,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     DEBUG("Adding account %s", newAccountID.c_str());
 
-    auto newAccount = createAccount(accountType, newAccountID);
+    auto newAccount = accountFactory_.createAccount(accountType, newAccountID);
     if (!newAccount) {
         ERROR("Unknown %s param when calling addAccount(): %s",
               CONFIG_ACCOUNT_TYPE, accountType.c_str());
@@ -2466,9 +2465,9 @@ void ManagerImpl::removeAccounts()
 void ManagerImpl::removeAccount(const std::string& accountID)
 {
     // Get it down and dying
-    if (const auto remAccount = getAccount(accountID)) {
+    if (const auto& remAccount = getAccount(accountID)) {
         remAccount->unregisterVoIPLink();
-        accountFactory_.removeAccount(remAccount);
+        accountFactory_.removeAccount(*remAccount);
     }
 
     preferences.removeAccount(accountID);
@@ -2732,8 +2731,7 @@ ManagerImpl::registerAccounts()
 void
 ManagerImpl::unregisterAccounts()
 {
-    for (const auto& item : getAllAccounts()) {
-        auto account = item.second;
+    for (const auto& account : getAllAccounts()) {
         if (account->isEnabled())
             account->unregisterVoIPLink();
     }
