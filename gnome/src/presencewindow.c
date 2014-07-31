@@ -46,30 +46,27 @@
 #include "dbus.h"
 #include "str_utils.h"
 #include "statusicon.h"
+#include "icons/icon_factory.h"
 
-static GtkWidget *presence_window;
-static GtkTreeView *buddy_list_tree_view;
-static GtkToggleAction *toggle_action;
-static GtkWidget *presence_status_combo;
-static GtkWidget *presence_status_bar;
-
-static GtkTreeModel *create_and_fill_presence_tree(void);
+//prototypes
 static GtkTreeView *create_presence_view(void);
 gboolean selection_changed(GtkTreeSelection *selection);
 static gboolean presence_view_row_is_buddy(GtkTreeView *treeview, GtkTreePath *path);
 static buddy_t *presence_view_row_get_buddy(GtkTreeView *treeview, GtkTreePath *path);
 static gchar *presence_view_row_get_group(GtkTreeView *treeview, GtkTreePath *path);
-
+// main widgets
+static GtkWidget *presence_window;
+static GtkTreeView *buddy_list_tree_view;
+static GtkToggleAction *toggle_action;
+static GtkWidget *presence_status_combo;
+static GtkWidget *presence_status_bar;
+// datas tructures
 static SFLPhoneClient *presence_client;
 static buddy_t *tmp_buddy;
 static gboolean show_all;
-
-enum
-{
-    POPUP_MENU_TYPE_DEFAULT,
-    POPUP_MENU_TYPE_BUDDY,
-    POPUP_MENU_TYPE_GROUP
-};
+// status icons
+static GdkPixbuf * pixbuf_offline;
+static GdkPixbuf * pixbuf_online;
 
 /***************************** tree view **********************************/
 
@@ -77,12 +74,12 @@ enum
 {
     COLUMN_OVERVIEW,
     COLUMN_ALIAS,
+    COLUMN_GROUP,
     COLUMN_STATUS,
     COLUMN_NOTE,
     COLUMN_URI,
-    COLUMN_SUBSCRIBED,
     COLUMN_ACCOUNTID,
-    COLUMN_GROUP,
+    COLUMN_SUBSCRIBED,
     N_COLUMN
 };
 
@@ -187,99 +184,6 @@ void on_buddy_drag_data_received(GtkWidget *widget,
     update_presence_view();
 }
 
-static GtkTreeModel *
-create_and_fill_presence_tree (void)
-{
-    GtkTreeStore *treestore;
-    GtkTreeIter toplevel, child;
-    GList * buddy_list = g_object_get_data(G_OBJECT(presence_window), "Buddy-List");
-    buddy_t * buddy;
-
-    treestore = gtk_tree_store_new(N_COLUMN, G_TYPE_STRING, // Group + photo
-                                             G_TYPE_STRING, // Alias
-                                             G_TYPE_STRING, // Group
-                                             G_TYPE_STRING, // Status
-                                             G_TYPE_STRING, // Note
-                                             G_TYPE_STRING, // URI
-                                             G_TYPE_STRING, // AccID
-                                             G_TYPE_STRING);// subscribed
-
-    // then display buddies with no group (==' ')
-    for (guint j =  0; j < presence_buddy_list_get_size(buddy_list); j++) {
-        buddy = presence_buddy_list_get_nth(j);
-        account_t *acc = account_list_get_by_id(buddy->acc);
-        if (acc == NULL)
-            continue;
-
-        if ((g_strcmp0(buddy->group, " ") == 0) &&
-            ((g_strcmp0(buddy->note,"Not found") != 0) || show_all)) {
-            gtk_tree_store_append(treestore, &toplevel, NULL);
-            gtk_tree_store_set(treestore, &toplevel,
-                    COLUMN_OVERVIEW, " ", // to be on the top of the sorted list
-                    COLUMN_ALIAS, buddy->alias,
-                    COLUMN_GROUP, buddy->group,
-                    COLUMN_STATUS, (buddy->status)? GTK_STOCK_YES : GTK_STOCK_NO,
-                    COLUMN_NOTE,  buddy->note,
-                    COLUMN_URI,  buddy->uri,
-                    COLUMN_ACCOUNTID, buddy->acc,
-                    COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
-                    -1);
-        }
-    }
-
-    // then display the groups
-    for (guint i = 0; i < presence_group_list_get_size(); i++) {
-        gchar *group = presence_group_list_get_nth(i);
-        gchar *tmp = g_markup_printf_escaped("<b>%s</b>", group);
-
-        // display buddy with no group after
-        if (g_strcmp0(group, " ") == 0)
-            continue;
-
-        gtk_tree_store_append(treestore, &toplevel, NULL);
-        gtk_tree_store_set(treestore, &toplevel,
-                COLUMN_OVERVIEW, tmp,
-                COLUMN_ALIAS, "",
-                COLUMN_GROUP, group,
-                COLUMN_STATUS, "",
-                COLUMN_NOTE, "",
-                COLUMN_URI, "",
-                COLUMN_ACCOUNTID, "",
-                COLUMN_SUBSCRIBED, "",
-                -1);
-        g_free(tmp);
-
-        for (guint j =  0; j < presence_buddy_list_get_size(buddy_list); j++) {
-            buddy = presence_buddy_list_get_nth(j);
-            account_t *acc = account_list_get_by_id(buddy->acc);
-            if (acc == NULL)
-                continue;
-
-            if ((g_strcmp0(buddy->group, group) == 0) &&
-               ((g_strcmp0(buddy->note,"Not found") != 0) || show_all)) {
-                gtk_tree_store_append(treestore, &child, &toplevel);
-                gtk_tree_store_set(treestore, &child,
-                        COLUMN_OVERVIEW, "",
-                        COLUMN_ALIAS, buddy->alias,
-                        COLUMN_GROUP, buddy->group,
-                        COLUMN_STATUS, (buddy->status)? GTK_STOCK_YES : "_Record",
-                        COLUMN_NOTE,  buddy->note,
-                        COLUMN_URI,  buddy->uri,
-                        COLUMN_ACCOUNTID, buddy->acc,
-                        COLUMN_SUBSCRIBED, (buddy->subscribed) ? "yes" : "no",
-                        -1);
-            }
-        }
-    }
-
-    // sort the groups and their buddies by name
-    GtkTreeSortable * sortable = GTK_TREE_SORTABLE(treestore);
-    gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_OVERVIEW, GTK_SORT_ASCENDING);
-    //gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_ALIAS, GTK_SORT_ASCENDING);
-
-    return GTK_TREE_MODEL(treestore);
-}
-
 void presence_view_cell_edited(G_GNUC_UNUSED GtkCellRendererText *renderer,
         gchar *path_str,
         gchar *new_text,
@@ -357,29 +261,101 @@ void cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
     g_free(group);
 }
 
-void icon_cell_data_func(G_GNUC_UNUSED GtkTreeViewColumn *col,
-                           GtkCellRenderer   *renderer,
-                           GtkTreeModel      *model,
-                           GtkTreeIter       *iter,
-                           G_GNUC_UNUSED gpointer userdata)
-{
-    GValue val;
-    memset(&val, 0, sizeof(val));
-    gtk_tree_model_get_value(model, iter, COLUMN_STATUS, &val);
-    gchar *icon_name = g_value_dup_string(&val);
-    g_value_unset(&val);
-    g_object_set(renderer, "icon-name", icon_name, NULL);
-}
-
 void
 update_presence_view()
 {
     if (!buddy_list_tree_view)
-        return; // presence window not opend
+        return; // presence window not open
 
-    GtkTreeModel * model = create_and_fill_presence_tree();
-    gtk_tree_view_set_model(buddy_list_tree_view, model);
-    g_object_unref(model);
+    GtkTreeStore *treestore;
+    GtkTreeIter toplevel, child;
+    GList * buddy_list = g_object_get_data(G_OBJECT(presence_window), "Buddy-List");
+    buddy_t * buddy;
+
+    treestore = gtk_tree_store_new(N_COLUMN,
+            G_TYPE_STRING, // Group + photo
+            G_TYPE_STRING, // Alias
+            G_TYPE_STRING, // Group
+            GDK_TYPE_PIXBUF, // Status
+            G_TYPE_STRING, // Note
+            G_TYPE_STRING, // URI
+            G_TYPE_STRING, // AccID
+            G_TYPE_STRING);// subscribed
+
+    // then display buddies with no group (==' ')
+    for (guint j =  0; j < presence_buddy_list_get_size(buddy_list); j++) {
+        buddy = presence_buddy_list_get_nth(j);
+        account_t *acc = account_list_get_by_id(buddy->acc);
+        if (acc == NULL)
+            continue;
+
+        if ((g_strcmp0(buddy->group, " ") == 0) &&
+            ((g_strcmp0(buddy->note,"Not found") != 0) || show_all)) {
+            gtk_tree_store_append(treestore, &toplevel, NULL);
+            gtk_tree_store_set(treestore, &toplevel,
+                    COLUMN_OVERVIEW, " ", // to be on the top of the sorted list
+                    COLUMN_ALIAS, buddy->alias,
+                    COLUMN_GROUP, buddy->group,
+                    COLUMN_STATUS, (buddy->status)? pixbuf_online : pixbuf_offline,
+                    COLUMN_NOTE,  buddy->note,
+                    COLUMN_URI,  buddy->uri,
+                    COLUMN_ACCOUNTID, buddy->acc,
+                    COLUMN_SUBSCRIBED, (buddy->subscribed)? "yes":"no",
+                    -1);
+        }
+    }
+
+    // then display the groups
+    for (guint i = 0; i < presence_group_list_get_size(); i++) {
+        gchar *group = presence_group_list_get_nth(i);
+        gchar *tmp = g_markup_printf_escaped("<b>%s</b>", group);
+
+        // display buddy with no group after
+        if (g_strcmp0(group, " ") == 0)
+            continue;
+
+        gtk_tree_store_append(treestore, &toplevel, NULL);
+        gtk_tree_store_set(treestore, &toplevel,
+                COLUMN_OVERVIEW, tmp,
+                COLUMN_ALIAS, "",
+                COLUMN_GROUP, group,
+                COLUMN_STATUS, NULL,
+                COLUMN_NOTE, "",
+                COLUMN_URI, "",
+                COLUMN_ACCOUNTID, "",
+                COLUMN_SUBSCRIBED, "",
+                -1);
+        g_free(tmp);
+
+        for (guint j =  0; j < presence_buddy_list_get_size(buddy_list); j++) {
+            buddy = presence_buddy_list_get_nth(j);
+            account_t *acc = account_list_get_by_id(buddy->acc);
+            if (acc == NULL)
+                continue;
+
+            if ((g_strcmp0(buddy->group, group) == 0) &&
+               ((g_strcmp0(buddy->note,"Not found") != 0) || show_all)) {
+                gtk_tree_store_append(treestore, &child, &toplevel);
+                gtk_tree_store_set(treestore, &child,
+                        COLUMN_OVERVIEW, "",
+                        COLUMN_ALIAS, buddy->alias,
+                        COLUMN_GROUP, buddy->group,
+                        COLUMN_STATUS, (buddy->status)? pixbuf_online : pixbuf_offline,
+                        COLUMN_NOTE,  buddy->note,
+                        COLUMN_URI,  buddy->uri,
+                        COLUMN_ACCOUNTID, buddy->acc,
+                        COLUMN_SUBSCRIBED, (buddy->subscribed) ? "yes" : "no",
+                        -1);
+            }
+        }
+    }
+
+    // sort the groups and their buddies by name
+    GtkTreeSortable * sortable = GTK_TREE_SORTABLE(treestore);
+    gtk_tree_sortable_set_sort_column_id(sortable, COLUMN_OVERVIEW, GTK_SORT_ASCENDING);
+
+    gtk_tree_view_set_model(buddy_list_tree_view, GTK_TREE_MODEL(treestore));
+    g_object_unref(treestore);
     gtk_tree_view_expand_all(buddy_list_tree_view);
 #ifdef PRESENCE_DEBUG
     g_debug("Presence: view updated.");
@@ -414,14 +390,11 @@ create_presence_view (void)
             cell_data_func, GINT_TO_POINTER(COLUMN_ALIAS), NULL);
 
     GtkCellRenderer * status_icon_renderer  = gtk_cell_renderer_pixbuf_new();
+    gtk_cell_renderer_set_fixed_size(status_icon_renderer, 24, 24); // status icone size
     col = gtk_tree_view_column_new_with_attributes("Status",
-            status_icon_renderer, "text", COLUMN_STATUS, NULL);
-    // FIXME: set type to "text" instead of "pixbuf". this is a work around because
-    // the gtk stock icon is referenced as a string BUT there is still a warning
+            status_icon_renderer, "pixbuf", COLUMN_STATUS, NULL);
     gtk_tree_view_append_column(view, col);
     gtk_tree_view_column_pack_start(col, renderer, TRUE);
-    gtk_tree_view_column_set_cell_data_func(col, status_icon_renderer,
-            icon_cell_data_func, GINT_TO_POINTER(COLUMN_STATUS), NULL);
 
     col = gtk_tree_view_column_new();
     gtk_tree_view_column_set_title(col, "Note");
@@ -469,6 +442,12 @@ create_presence_view (void)
 
 /***************************** dialog win **********************************/
 
+enum
+{
+    POPUP_MENU_TYPE_DEFAULT,
+    POPUP_MENU_TYPE_BUDDY,
+    POPUP_MENU_TYPE_GROUP
+};
 
 static gboolean
 field_error_dialog(const gchar *error_string)
@@ -1150,16 +1129,14 @@ destroy_presence_window()
     buddy_list_tree_view = NULL;
     presence_status_bar = NULL;
     gtk_widget_destroy(presence_window);
-
     gtk_toggle_action_set_active(toggle_action, FALSE);
-    //presence_buddy_list_flush();
 }
 
 void
 create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
 {
-    static const int PRESENCE_WINDOW_WIDTH = 280;
-    static const int PRESENCE_WINDOW_HEIGHT = 320;
+    static const int PRESENCE_WINDOW_WIDTH = 320;
+    static const int PRESENCE_WINDOW_HEIGHT = 480;
 
     /* keep track of the widget which opened that window and the SFL client */
     toggle_action = action;
@@ -1220,6 +1197,10 @@ create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
             (gpointer) presence_buddy_list_get());
     update_presence_view();
     tmp_buddy = presence_buddy_create();
+
+    /*------------------------- Status Icons  -------------------------*/
+    pixbuf_offline = gdk_pixbuf_new_from_file(ICONS_DIR "/stock_person.svg", NULL);
+    pixbuf_online = gdk_pixbuf_new_from_file(ICONS_DIR "/stock_person_online.svg", NULL);
 
     /*------------------ Timer to refresh the subscription------------ */
     g_timeout_add_seconds(120, (GSourceFunc) buddy_subsribe_timer_cb, NULL);
