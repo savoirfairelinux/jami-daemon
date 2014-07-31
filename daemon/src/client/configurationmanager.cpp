@@ -525,8 +525,7 @@ void ConfigurationManager::setShortcuts(
 std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials(
     const std::string& accountID)
 {
-    const auto account = Manager::instance().getAccount(SIPAccount::ACCOUNT_TYPE, accountID);
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     std::vector<std::map<std::string, std::string> > credentialInformation;
 
@@ -539,8 +538,7 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getCreden
 void ConfigurationManager::setCredentials(const std::string& accountID,
         const std::vector<std::map<std::string, std::string> >& details)
 {
-    const auto account = Manager::instance().getAccount(SIPAccount::ACCOUNT_TYPE, accountID);
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
+    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (sipaccount)
         sipaccount->setCredentials(details);

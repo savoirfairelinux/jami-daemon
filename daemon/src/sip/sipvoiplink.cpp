@@ -228,8 +228,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
 
-    auto account(SIPVoIPLink::instance().guessAccountFromNameAndServer(toUsername, viaHostname));
-    SIPAccount* sipaccount = static_cast<SIPAccount*>(account.get());
+    auto sipaccount(SIPVoIPLink::instance().guessAccountFromNameAndServer(toUsername, viaHostname));
     if (!sipaccount) {
         ERROR("NULL account");
         return PJ_FALSE;
@@ -361,7 +360,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    call->getLocalSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->getLocalSDP().receiveOffer(r_sdp, sipaccount->getActiveAudioCodecs(), sipaccount->getActiveVideoCodecs());
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -619,30 +618,28 @@ void SIPVoIPLink::destroy()
     instance_ = nullptr;
 }
 
-std::shared_ptr<Account>
+std::shared_ptr<SIPAccount>
 SIPVoIPLink::guessAccountFromNameAndServer(const std::string &userName,
                                            const std::string &server) const
 {
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
-    auto result = Manager::instance().getIP2IPAccount(); // default result
+    auto result = std::static_pointer_cast<SIPAccount>(Manager::instance().getIP2IPAccount()); // default result
     MatchRank best = MatchRank::NONE;
 
-    for (const auto& item : Manager::instance().getAllAccounts(SIPAccount::ACCOUNT_TYPE)) {
-        auto account = item.second;
-        if (!account)
+    for (const auto& sipaccount : Manager::instance().getAllAccounts<SIPAccount>()) {
+        if (!sipaccount)
             continue;
 
-        const auto sipaccount = static_cast<const SIPAccount *>(account.get());
         const MatchRank match(sipaccount->matches(userName, server, endpt_, pool_));
 
         // return right away if this is a full match
         if (match == MatchRank::FULL) {
-            return account;
+            return sipaccount;
         } else if (match > best) {
             best = match;
-            result = account;
+            result = sipaccount;
         }
     }
 

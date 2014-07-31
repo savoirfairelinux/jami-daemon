@@ -918,41 +918,22 @@ class ManagerImpl {
          * @param accountID account ID to get
          * @return std::shared_ptr<Account> Shared pointer on an Account instance or nullptr if not found
          */
-        std::shared_ptr<Account> getAccount(const std::string& accountID) const {
-            return accountFactory_.getAccount(accountID);
+        template <class T=Account>
+        std::shared_ptr<T> getAccount(const std::string& accountID) const {
+            return accountFactory_.getAccount<T>(accountID);
         }
 
-        std::shared_ptr<Account> getAccount(const std::string& accountType,
-                                            const std::string& accountID) const {
-            return accountFactory_.getAccount(accountType, accountID);
-        }
-
-        std::shared_ptr<Account> createAccount(const std::string& accountType,
-                                               const std::string& accountID) {
-            return accountFactory_.createAccount(accountType, accountID);
+        template <class T=Account>
+        std::vector<std::shared_ptr<T> > getAllAccounts() const {
+            return accountFactory_.getAllAccounts<T>();
         }
 
         std::shared_ptr<Account> getIP2IPAccount() const {
             return accountFactory_.getIP2IPAccount();
         }
 
-        AccountMap getAllAccounts() const {
-            return accountFactory_.getAllAccounts();
-        }
-
-        AccountMap getAllAccounts(const std::string& accountType) const {
-            return accountFactory_.getAllAccounts(accountType);
-        }
-
-        bool accountCount() const {
-            return accountFactory_.accountCount();
-        }
-
-        bool accountCount(const std::string& accountType) const {
-            return accountFactory_.accountCount(accountType);
-        }
-
-        bool accountExists(const std::string& accountID) {
+        // only used by test framework
+        bool hasAccount(const std::string& accountID) {
             return accountFactory_.hasAccount(accountID);
         }
 

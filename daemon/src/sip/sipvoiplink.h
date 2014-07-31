@@ -147,7 +147,7 @@ class SIPVoIPLink : public VoIPLink {
         static void enqueueKeyframeRequest(const std::string &callID);
 #endif
 
-        std::shared_ptr<Account>
+        std::shared_ptr<SIPAccount>
         guessAccountFromNameAndServer(const std::string &userName,
                                       const std::string &server) const;
         int getModId();
