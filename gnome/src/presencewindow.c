@@ -46,7 +46,7 @@
 #include "dbus.h"
 #include "str_utils.h"
 #include "statusicon.h"
-#include "icons/icon_factory.h"
+#include "icons/icon_theme.h"
 
 //prototypes
 static GtkTreeView *create_presence_view(void);

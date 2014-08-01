@@ -61,7 +61,7 @@
 #include "contacts/calltab.h"
 #include "contacts/searchbar.h"
 #include "contacts/addrbookfactory.h"
-#include "icons/icon_factory.h"
+#include "icons/icon_theme.h"
 #include "statusicon.h"
 #include "sliders.h"
 #include "messaging/message_tab.h"
@@ -259,8 +259,8 @@ gboolean sflphone_init(GError **error, SFLPhoneClient *client)
 
     abook_init();
 
-    // Init icons factory
-    init_icon_factory();
+    // Init icons theme
+    init_icon_theme();
 
     current_calls_tab = calltab_init(FALSE, CURRENT_CALLS, client);
     contacts_tab = calltab_init(TRUE, CONTACTS, client);
