@@ -2,8 +2,8 @@ include ../../globals.mak
 
 noinst_LTLIBRARIES = libicons.la
 
-libicons_la_SOURCES = icon_factory.c \
-					  icon_factory.h \
+libicons_la_SOURCES = icon_theme.c \
+					  icon_theme.h \
 					  pixmap_data.h
 
 libicons_la_LDFLAGS = $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \

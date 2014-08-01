@@ -35,7 +35,7 @@
 #include "str_utils.h"
 #include "actions.h"
 #include "preferencesdialog.h"
-#include "icons/icon_factory.h"
+#include "icons/icon_theme.h"
 #include "dbus/dbus.h"
 #include "mainwindow.h"
 #include "assistant.h"
@@ -1459,8 +1459,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
 
         if (record) {
             GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-            GtkWidget *image = gtk_image_new_from_stock("_Record",
-                               GTK_ICON_SIZE_MENU);
+            GtkWidget *image = gtk_image_new_from_icon_name("_Record", GTK_ICON_SIZE_MENU);
             gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
             g_signal_connect(G_OBJECT(menu_items), "activate",
@@ -1479,7 +1478,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                 gtk_widget_show(menu_items);
 
                 menu_items = gtk_image_menu_item_new_with_mnemonic(_("Send _message"));
-                GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_IM, GTK_ICON_SIZE_MENU);
+                GtkWidget *image = gtk_image_new_from_icon_name(GTK_STOCK_IM, GTK_ICON_SIZE_MENU);
                 gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
                 gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
                 g_signal_connect(G_OBJECT(menu_items), "activate",
