@@ -51,6 +51,7 @@
 #include <memory>
 
 class IAXAccount;
+class IAXCall;
 class AudioCodec;
 class AudioLayer;
 
@@ -95,13 +96,13 @@ class IAXVoIPLink : public VoIPLink {
     private:
         NON_COPYABLE(IAXVoIPLink);
 
-        void handleAccept(iax_event* event, const std::string &id);
-        void handleReject(const std::string &id);
-        void handleRinging(const std::string &id);
-        void handleAnswerTransfer(iax_event* event, const std::string &id);
-        void handleBusy(const std::string &id);
-        void handleMessage(iax_event* event, const std::string &id);
-        void handleHangup(const std::string &id);
+        void handleAccept(iax_event* event, IAXCall& call);
+        void handleReject(IAXCall& call);
+        void handleRinging(IAXCall& call);
+        void handleAnswerTransfer(iax_event* event, IAXCall& call);
+        void handleBusy(IAXCall& call);
+        void handleMessage(iax_event* event, IAXCall& call);
+        void handleHangup(IAXCall& call);
 
         /*
          * Decode the message count IAX send.
@@ -125,14 +126,14 @@ class IAXVoIPLink : public VoIPLink {
          * @param event An iax_event pointer
          * @param call  An IAXCall pointer
          */
-        void iaxHandleCallEvent(iax_event* event, const std::string &id);
+        void iaxHandleCallEvent(iax_event* event, IAXCall& call);
 
         /**
          * Handle the VOICE events specifically
          * @param event The iax_event containing the IAX_EVENT_VOICE
          * @param call  The associated IAXCall
          */
-        void iaxHandleVoiceEvent(iax_event* event, const std::string &id);
+        void iaxHandleVoiceEvent(iax_event* event, IAXCall& call);
 
         /**
          * Handle IAX Registration Reply event
