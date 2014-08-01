@@ -90,7 +90,7 @@ endif
 ifdef HAVE_ANDROID
 # vpx configure.sh overrides our sysroot and it looks for it itself, and
 # uses that path to look for the compiler (which we already know)
-VPX_CONF += --sdk-path=$(shell dirname $(shell which $(HOST)-gcc))
+VPX_CONF += --sdk-path=$(ANDROID_NDK)
 # needed for cpu-features.h
 VPX_CONF += --extra-cflags="-I $(ANDROID_NDK)/sources/cpufeatures/"
 endif

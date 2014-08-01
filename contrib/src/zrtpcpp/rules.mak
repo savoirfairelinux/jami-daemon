@@ -23,6 +23,7 @@ zrtpcpp: libzrtpcpp-$(ZRTPCPP_VERSION).tar.gz .sum-zrtpcpp
 	$(APPLY) $(SRC)/zrtpcpp/forcegcrypt.patch
 	$(APPLY) $(SRC)/zrtpcpp/threadcbsupdate.patch
 	$(APPLY) $(SRC)/zrtpcpp/standardheader.patch
+	$(APPLY) $(SRC)/zrtpcpp/nodemo.patch
 	$(MOVE)
 
 .zrtpcpp: zrtpcpp toolchain.cmake

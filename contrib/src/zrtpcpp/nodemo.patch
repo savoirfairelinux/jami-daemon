@@ -1,0 +1,13 @@
+--- zrtpcpp/CMakeLists.txt.orig	2014-08-01 13:09:30.402259035 -0400
++++ zrtpcpp/CMakeLists.txt	2014-08-01 13:09:35.089304129 -0400
+@@ -167,10 +167,6 @@
+
+ add_subdirectory(src)
+
+-if (enable_ccrtp)
+-    add_subdirectory(demo)
+-endif()
+-
+ if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/package/)
+     MESSAGE(STATUS "package dir not found")
+     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/package/)
