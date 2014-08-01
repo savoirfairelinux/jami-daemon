@@ -114,6 +114,13 @@ SIPCall::SIPCall(SIPAccount& account, const std::string& id,
 
 SIPCall::~SIPCall()
 {
+    const auto mod_ua_id = siplink->getModId();
+    // prevent this from getting accessed in callbacks
+    if (inv->mod_data[mod_ua_id]) {
+        WARN("Call was not properly removed from invite callbacks");
+        inv->mod_data[mod_ua_id] = nullptr;
+    }
+
     // local sdp must be destroyed before pool
     local_sdp_.reset();
     pj_pool_release(pool_);
