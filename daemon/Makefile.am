@@ -19,7 +19,11 @@ unittest:
 endif
 
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = src ringtones man $(TESTS_DIR) doc bin
+SUBDIRS = src ringtones man $(TESTS_DIR) doc
+
+if SFL_DBUS
+SUBDIRS += bin
+endif
 
 EXTRA_DIST = m4/libtool.m4 \
 			 m4/lt~obsolete.m4 \

@@ -264,7 +264,9 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AS_IF([test "x$CLANG" = "xyes"], [
              AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
        ]);
-]);
+
+       AM_CONDITIONAL(SFL_DBUS, true)],
+       AM_CONDITIONAL(SFL_DBUS, false));
 
 
 dnl Video is default-enabled
