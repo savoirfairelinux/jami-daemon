@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef ICON_FACTORY_H
-#define ICON_FACTORY_H
+#ifndef ICON_THEME_H
+#define ICON_THEME_H
 
 #define GTK_STOCK_PICKUP                "gnome-stock-pickup"
 #define GTK_STOCK_HANGUP                "gnome-stock-hangup"
@@ -56,6 +56,6 @@
 #define GTK_STOCK_PREFS_HOOK            "gnome-stock-prefs-hook"
 #define GTK_STOCK_PREFS_ADDRESSBOOK     "gnome-stock-prefs-addressbook"
 
-void init_icon_factory();
+void init_icon_theme();
 
 #endif
