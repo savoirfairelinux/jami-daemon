@@ -36,7 +36,7 @@
 #include "config.h"
 #endif
 
-#include "icons/icon_factory.h"
+#include "icons/icon_theme.h"
 
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>

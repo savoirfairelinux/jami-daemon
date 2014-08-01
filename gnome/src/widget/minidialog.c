@@ -220,9 +220,9 @@ pidgin_mini_dialog_get_property(GObject *object,
             g_value_set_string(value, gtk_label_get_text(priv->desc));
             break;
         case PROP_ICON_NAME: {
-            gchar *icon_name = NULL;
+            const gchar *icon_name = NULL; // FIXME
             GtkIconSize size;
-            gtk_image_get_stock(priv->icon, &icon_name, &size);
+            gtk_image_get_icon_name(priv->icon, &icon_name, &size);
             g_value_set_string(value, icon_name);
             break;
         }
@@ -293,7 +293,7 @@ pidgin_mini_dialog_set_property(GObject *object,
             mini_dialog_set_description(self, g_value_get_string(value));
             break;
         case PROP_ICON_NAME:
-            gtk_image_set_from_stock(priv->icon, g_value_get_string(value),
+            gtk_image_set_from_icon_name(priv->icon, g_value_get_string(value),
                                      GTK_ICON_SIZE_BUTTON);
             break;
         default:
