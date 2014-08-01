@@ -145,7 +145,7 @@ IAXVoIPLink::handleEvents()
         }
 
         if (auto raw_call_ptr = iaxGetCallFromSession(event->session)) {
-            iaxHandleCallEvent(event, raw_call_ptr->getCallId());
+            iaxHandleCallEvent(event, *raw_call_ptr);
         } else if (event->session && event->session == account_.getRegSession()) {
             // This is a registration session, deal with it
             iaxHandleRegReply(event);
@@ -226,38 +226,34 @@ IAXVoIPLink::sendAudioFromMic()
 }
 
 void
-IAXVoIPLink::handleReject(const std::string &id)
+IAXVoIPLink::handleReject(IAXCall& call)
 {
-    if (auto call = Manager::instance().callFactory.getCall<IAXCall>(id)) {
-        call->setConnectionState(Call::CONNECTED);
-        call->setState(Call::ERROR);
-        Manager::instance().callFailure(id);
-        call->removeCall();
-    }
+    call.setConnectionState(Call::CONNECTED);
+    call.setState(Call::ERROR);
+    Manager::instance().callFailure(call.getCallId());
+    call.removeCall();
 }
 
 void
-IAXVoIPLink::handleAccept(iax_event* event, const std::string &id)
+IAXVoIPLink::handleAccept(iax_event* event, IAXCall& call)
 {
-    if (event->ies.format) {
-        if (auto call = Manager::instance().callFactory.getCall<IAXCall>(id))
-            call->format = event->ies.format;
-    }
+    if (event->ies.format)
+        call.format = event->ies.format;
 }
 
 void
-IAXVoIPLink::handleAnswerTransfer(iax_event* event, const std::string &id)
+IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
 {
-    auto call = Manager::instance().callFactory.getCall<IAXCall>(id);
-    if (!call or call->getConnectionState() == Call::CONNECTED)
+    if (call.getConnectionState() == Call::CONNECTED)
         return;
 
-    call->setConnectionState(Call::CONNECTED);
-    call->setState(Call::ACTIVE);
+    call.setConnectionState(Call::CONNECTED);
+    call.setState(Call::ACTIVE);
 
     if (event->ies.format)
-        call->format = event->ies.format;
+        call.format = event->ies.format;
 
+    const auto& id = call.getCallId();
     Manager::instance().addStream(id);
     Manager::instance().peerAnsweredCall(id);
     Manager::instance().startAudioDriverStream();
@@ -265,92 +261,73 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, const std::string &id)
 }
 
 void
-IAXVoIPLink::handleBusy(const std::string &id)
+IAXVoIPLink::handleBusy(IAXCall& call)
 {
-    auto call = Manager::instance().callFactory.getCall<IAXCall>(id);
-    if (!call)
-        return;
+    call.setConnectionState(Call::CONNECTED);
+    call.setState(Call::BUSY);
 
-    call->setConnectionState(Call::CONNECTED);
-    call->setState(Call::BUSY);
-
-    Manager::instance().callBusy(id);
-    call->removeCall();
+    Manager::instance().callBusy(call.getCallId());
+    call.removeCall();
 }
 
 void
-IAXVoIPLink::handleMessage(iax_event* event, const std::string &id)
+IAXVoIPLink::handleMessage(iax_event* event, IAXCall& call)
 {
-    std::string peerNumber;
-
-    auto call = Manager::instance().callFactory.getCall<IAXCall>(id);
-    if (!call)
-        return;
-
-    peerNumber = call->getPeerNumber();
-
-    Manager::instance().incomingMessage(id, peerNumber, std::string((const char*) event->data));
+    Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
+                                        std::string((const char*) event->data));
 }
 
 void
-IAXVoIPLink::handleRinging(const std::string &id)
+IAXVoIPLink::handleRinging(IAXCall& call)
 {
-    auto call = Manager::instance().callFactory.getCall<IAXCall>(id);
-    if (!call)
-        return;
-
-    call->setConnectionState(Call::RINGING);
-    Manager::instance().peerRingingCall(id);
+    call.setConnectionState(Call::RINGING);
+    Manager::instance().peerRingingCall(call.getCallId());
 }
 
 void
-IAXVoIPLink::handleHangup(const std::string &id)
+IAXVoIPLink::handleHangup(IAXCall& call)
 {
-    auto call = Manager::instance().callFactory.getCall<IAXCall>(id);
-    if (!call)
-        return;
-
-    Manager::instance().peerHungupCall(id);
-    call->removeCall();
+    Manager::instance().peerHungupCall(call.getCallId());
+    call.removeCall();
 }
 
 void
-IAXVoIPLink::iaxHandleCallEvent(iax_event* event, const std::string& id)
+IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall& call)
 {
     switch (event->etype) {
         case IAX_EVENT_HANGUP:
-            handleHangup(id);
+            handleHangup(call);
             break;
 
         case IAX_EVENT_REJECT:
-            handleReject(id);
+            handleReject(call);
             break;
 
         case IAX_EVENT_ACCEPT:
-            handleAccept(event, id);
+            handleAccept(event, call);
             break;
 
         case IAX_EVENT_ANSWER:
         case IAX_EVENT_TRANSFER:
-            handleAnswerTransfer(event, id);
+            handleAnswerTransfer(event, call);
             break;
 
         case IAX_EVENT_BUSY:
-            handleBusy(id);
+            handleBusy(call);
             break;
 
         case IAX_EVENT_VOICE:
-            iaxHandleVoiceEvent(event, id);
+            iaxHandleVoiceEvent(event, call);
             break;
 
         case IAX_EVENT_TEXT:
 #if HAVE_INSTANT_MESSAGING
-            handleMessage(event, id);
+            handleMessage(event, call);
 #endif
             break;
 
         case IAX_EVENT_RINGA:
-            handleRinging(id);
+            handleRinging(call);
             break;
 
         case IAX_IE_MSGCOUNT:
@@ -369,20 +346,14 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, const std::string& id)
 }
 
 /* Handle audio event, VOICE packet received */
-void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
+void
+IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
 {
     // Skip this empty packet.
     if (!event->datalen)
         return;
 
-    AudioBuffer *out;
-
-    auto call = Manager::instance().callFactory.getCall<IAXCall>(id);
-    if (!call)
-        throw VoipLinkException("Could not find call");
-
-    sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec()));
-
+    auto audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(call.getAudioCodec()));
     if (!audioCodec)
         return;
 
@@ -390,7 +361,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
 
     if (event->subclass)
-        call->format = event->subclass;
+        call.format = event->subclass;
 
     unsigned char *data = (unsigned char*) event->data;
     unsigned int size = event->datalen;
@@ -401,7 +372,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
         size = max;
 
     audioCodec->decode(rawBuffer_.getData(), data , size);
-    out = &rawBuffer_;
+    AudioBuffer *out = &rawBuffer_;
     unsigned int audioRate = audioCodec->getClockRate();
 
     if (audioRate != mainBufferSampleRate) {
@@ -411,7 +382,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, const std::string &id)
         out = &resampledData_;
     }
 
-    Manager::instance().getMainBuffer().putData(*out, id);
+    Manager::instance().getMainBuffer().putData(*out, call.getCallId());
 }
 
 /**
@@ -442,6 +413,11 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             id = Manager::instance().getNewCallID();
 
             call = account_.newIncomingCall<IAXCall>(id);
+            if (!call) {
+                ERROR("failed to create an incoming IAXCall from account %s",
+                      accountID.c_str());
+                return;
+            }
 
             call->session = event->session;
             call->setConnectionState(Call::PROGRESSING);
