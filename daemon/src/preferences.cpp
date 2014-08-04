@@ -393,10 +393,11 @@ AudioLayer* AudioPreference::createAudioLayer()
 #if HAVE_PULSE
 
     if (audioApi_ == PULSEAUDIO_API_STR) {
-        if (system("pactl info > /dev/null") == 0)
+        try {
             return new PulseLayer(*this);
-        else
-            WARN("pulseaudio daemon not running, falling back to ALSA");
+        } catch (const std::runtime_error &e) {
+            WARN("Could not create pulseaudio layer, falling back to ALSA");
+        }
     }
 
 #endif
