@@ -54,165 +54,165 @@ bool CallManager::placeCall(const std::string& accountID,
         DEBUG("No number entered - Call stopped");
         return false;
     } else {
-        return Manager::instance().outgoingCall(accountID, callID, to);
+        return manager_.outgoingCall(accountID, callID, to);
     }
 }
 
 bool
 CallManager::refuse(const std::string& callID)
 {
-    return Manager::instance().refuseCall(callID);
+    return manager_.refuseCall(callID);
 }
 
 bool
 CallManager::accept(const std::string& callID)
 {
-    return Manager::instance().answerCall(callID);
+    return manager_.answerCall(callID);
 }
 
 bool
 CallManager::hangUp(const std::string& callID)
 {
-    return Manager::instance().hangupCall(callID);
+    return manager_.hangupCall(callID);
 }
 
 bool
 CallManager::hangUpConference(const std::string& confID)
 {
-    return Manager::instance().hangupConference(confID);
+    return manager_.hangupConference(confID);
 }
 
 bool
 CallManager::hold(const std::string& callID)
 {
-    return Manager::instance().onHoldCall(callID);
+    return manager_.onHoldCall(callID);
 }
 
 bool
 CallManager::unhold(const std::string& callID)
 {
-    return Manager::instance().offHoldCall(callID);
+    return manager_.offHoldCall(callID);
 }
 
 bool
 CallManager::transfer(const std::string& callID, const std::string& to)
 {
-    return Manager::instance().transferCall(callID, to);
+    return manager_.transferCall(callID, to);
 }
 
 bool
 CallManager::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    return Manager::instance().attendedTransfer(transferID, targetID);
+    return manager_.attendedTransfer(transferID, targetID);
 }
 
 bool
 CallManager::joinParticipant(const std::string& sel_callID,
                              const std::string& drag_callID)
 {
-    return Manager::instance().joinParticipant(sel_callID, drag_callID);
+    return manager_.joinParticipant(sel_callID, drag_callID);
 }
 
 void
 CallManager::createConfFromParticipantList(const std::vector<std::string>& participants)
 {
-    Manager::instance().createConfFromParticipantList(participants);
+    manager_.createConfFromParticipantList(participants);
 }
 
 bool
 CallManager::isConferenceParticipant(const std::string& callID)
 {
-    return  Manager::instance().isConferenceParticipant(callID);
+    return  manager_.isConferenceParticipant(callID);
 }
 
 void
 CallManager::removeConference(const std::string& conference_id)
 {
-    Manager::instance().removeConference(conference_id);
+    manager_.removeConference(conference_id);
 }
 
 bool
 CallManager::addParticipant(const std::string& callID, const std::string& confID)
 {
-    return  Manager::instance().addParticipant(callID, confID);
+    return  manager_.addParticipant(callID, confID);
 }
 
 bool
 CallManager::addMainParticipant(const std::string& confID)
 {
-    return Manager::instance().addMainParticipant(confID);
+    return manager_.addMainParticipant(confID);
 }
 
 bool
 CallManager::detachParticipant(const std::string& callID)
 {
-    return Manager::instance().detachParticipant(callID);
+    return manager_.detachParticipant(callID);
 }
 
 bool
 CallManager::joinConference(const std::string& sel_confID, const std::string& drag_confID)
 {
-    return Manager::instance().joinConference(sel_confID, drag_confID);
+    return manager_.joinConference(sel_confID, drag_confID);
 }
 
 bool
 CallManager::holdConference(const std::string& confID)
 {
-    return Manager::instance().holdConference(confID);
+    return manager_.holdConference(confID);
 }
 
 bool
 CallManager::unholdConference(const std::string& confID)
 {
-    return Manager::instance().unHoldConference(confID);
+    return manager_.unHoldConference(confID);
 }
 
 std::map<std::string, std::string>
 CallManager::getConferenceDetails(const std::string& callID)
 {
-    return Manager::instance().getConferenceDetails(callID);
+    return manager_.getConferenceDetails(callID);
 }
 
 std::vector<std::string>
 CallManager::getConferenceList()
 {
-    return Manager::instance().getConferenceList();
+    return manager_.getConferenceList();
 }
 
 std::vector<std::string>
 CallManager::getParticipantList(const std::string& confID)
 {
-    return Manager::instance().getParticipantList(confID);
+    return manager_.getParticipantList(confID);
 }
 
 std::vector<std::string>
 CallManager::getDisplayNames(const std::string& confID)
 {
-    return Manager::instance().getDisplayNames(confID);
+    return manager_.getDisplayNames(confID);
 }
 
 std::string
 CallManager::getConferenceId(const std::string& callID)
 {
-    return Manager::instance().getConferenceId(callID);
+    return manager_.getConferenceId(callID);
 }
 
 bool
 CallManager::startRecordedFilePlayback(const std::string& filepath)
 {
-    return Manager::instance().startRecordedFilePlayback(filepath);
+    return manager_.startRecordedFilePlayback(filepath);
 }
 
 void
 CallManager::stopRecordedFilePlayback(const std::string& filepath)
 {
-    Manager::instance().stopRecordedFilePlayback(filepath);
+    manager_.stopRecordedFilePlayback(filepath);
 }
 
 bool
 CallManager::toggleRecording(const std::string& callID)
 {
-    return Manager::instance().toggleRecordingCall(callID);
+    return manager_.toggleRecordingCall(callID);
 }
 
 void
@@ -224,13 +224,13 @@ CallManager::setRecording(const std::string& callID)
 void
 CallManager::recordPlaybackSeek(const double& value)
 {
-    Manager::instance().recordingPlaybackSeek(value);
+    manager_.recordingPlaybackSeek(value);
 }
 
 bool
 CallManager::getIsRecording(const std::string& callID)
 {
-    return Manager::instance().isRecording(callID);
+    return manager_.isRecording(callID);
 }
 
 std::string CallManager::getCurrentAudioCodecName(const std::string& /*callID*/)
@@ -242,19 +242,19 @@ std::string CallManager::getCurrentAudioCodecName(const std::string& /*callID*/)
 std::map<std::string, std::string>
 CallManager::getCallDetails(const std::string& callID)
 {
-    return Manager::instance().getCallDetails(callID);
+    return manager_.getCallDetails(callID);
 }
 
 std::vector<std::string>
 CallManager::getCallList()
 {
-    return Manager::instance().getCallList();
+    return manager_.getCallList();
 }
 
 void
 CallManager::playDTMF(const std::string& key)
 {
-    Manager::instance().sendDtmf(Manager::instance().getCurrentCallId(), key.data()[0]);
+    manager_.sendDtmf(manager_.getCurrentCallId(), key.data()[0]);
 }
 
 void
@@ -262,11 +262,11 @@ CallManager::startTone(const int32_t& start , const int32_t& type)
 {
     if (start) {
         if (type == 0)
-            Manager::instance().playTone();
+            manager_.playTone();
         else
-            Manager::instance().playToneWithMessage();
+            manager_.playToneWithMessage();
     } else
-        Manager::instance().stopTone();
+        manager_.stopTone();
 }
 
 // TODO: this will have to be adapted
@@ -280,13 +280,13 @@ CallManager::getAudioZrtpSession(const std::string& callID)
     // TODO: remove SIP dependency
 
     // IP2IP profile is associated with IP2IP profile anyway
-    const auto& ip2ipAccount = Manager::instance().getIP2IPAccount();
+    const auto& ip2ipAccount = manager_.getIP2IPAccount();
     auto link = static_cast<SIPVoIPLink *>(ip2ipAccount->getVoIPLink());
 
     if (!link)
         throw CallManagerException("Failed to get sip link");
 
-    const auto call = Manager::instance().callFactory.getCall<SIPCall>(callID);
+    const auto call = manager_.callFactory.getCall<SIPCall>(callID);
     if (!call)
         throw CallManagerException("Call id " + callID + " is not valid");
 
@@ -377,7 +377,7 @@ CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
 void CallManager::sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
 {
 #if HAVE_INSTANT_MESSAGING
-    Manager::instance().sendTextMessage(callID, message, from);
+    manager_.sendTextMessage(callID, message, from);
 #endif
 }
 
@@ -385,7 +385,7 @@ void
 CallManager::sendTextMessage(const std::string& callID, const std::string& message)
 {
 #if HAVE_INSTANT_MESSAGING
-    if (!Manager::instance().sendTextMessage(callID, message, "Me"))
+    if (!manager_.sendTextMessage(callID, message, "Me"))
         throw CallManagerException();
 #else
     ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());

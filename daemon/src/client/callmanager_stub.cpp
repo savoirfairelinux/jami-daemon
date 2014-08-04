@@ -31,8 +31,9 @@
 #warning Using a stub file will produce a non working application
 
 #include "client/callmanager.h"
+#include "manager.h"
 
-CallManager::CallManager()
+CallManager::CallManager() : manager_(Manager::instance())
 {}
 
 void CallManager::callStateChanged(const std::string& callID,
