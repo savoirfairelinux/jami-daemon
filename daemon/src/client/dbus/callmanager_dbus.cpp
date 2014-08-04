@@ -28,8 +28,11 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
 #include "callmanager.h"
+#include "manager.h"
 
 CallManager::CallManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/CallManager")
+    , manager_(Manager::instance())
 {}

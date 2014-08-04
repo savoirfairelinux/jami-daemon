@@ -74,6 +74,8 @@ namespace sfl {
 class AudioZrtpSession;
 }
 
+class ManagerImpl;
+
 class CallManager
 #if HAVE_DBUS
     : public org::sflphone::SFLphone::CallManager_adaptor,
@@ -191,6 +193,7 @@ class CallManager
 #endif // !HAVE_DBUS
 
 private:
+        ManagerImpl& manager_;
 
 #if HAVE_ZRTP
         sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
