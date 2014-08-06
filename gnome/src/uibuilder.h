@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Patrick Keroulas  <patrick.keroulas@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,40 +29,15 @@
  *  as that of the covered work.
  */
 
-#ifndef SFLPHONE_CLIENT_H_
-#define SFLPHONE_CLIENT_H_
+#ifndef UI_BUILDER_H
+#define UI_BUILDER_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "sflphone_client.h"
 
-#include <gtk/gtk.h>
 
-#define SFLPHONE_GSETTINGS_SCHEMA "org.sflphone.SFLphone"
-#define SFLPHONE_TYPE_CLIENT (sflphone_client_get_type())
-#define SFLPHONE_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), SFLPHONE_TYPE_CLIENT, SFLPhoneClient))
+GtkBuilder *uibuilder_new(const gchar* filename);
+void uibuilder_build(SFLPhoneClient *client);
+GtkWidget *uibuilder_get_widget(SFLPhoneClient *client, const gchar* widget_name);
 
-typedef struct
-{
-    GtkApplication parent;
-    /* TODO: hide implementation */
-    GSettings *settings;
-    /* Main window */
-    GtkWidget *win;
-    /* UI definition from xml */
-    GtkBuilder *builder;
-    /* Main toolbar */
-    GtkWidget *toolbar;
-#ifdef SFL_VIDEO
-    /* Video window */
-    GtkWidget *video;
-#endif
-
-} SFLPhoneClient;
-
-typedef GtkApplicationClass SFLPhoneClientClass;
-
-SFLPhoneClient *
-sflphone_client_new();
-
+void uibuilder_action_update(SFLPhoneClient *client);
 #endif
