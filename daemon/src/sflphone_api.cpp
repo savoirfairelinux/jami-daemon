@@ -51,37 +51,35 @@
 #include "client/videomanager.h"
 #endif // SFL_VIDEO
 
-namespace {
-    // This manager pointer is only set after proper library initialization.
-    ManagerImpl* _manager = nullptr;
+// This manager pointer is only set after proper library initialization.
+static ManagerImpl* _manager = nullptr;
 
-    CallManager* _getCallManager()
-    {
-        return _manager->getClient()->getCallManager();
-    }
+static CallManager* _getCallManager()
+{
+    return _manager->getClient()->getCallManager();
+}
 
-    ConfigurationManager* _getConfigurationManager()
+static ConfigurationManager* _getConfigurationManager()
     {
         return _manager->getClient()->getConfigurationManager();
     }
 
 #ifdef SFL_PRESENCE
-    PresenceManager* _getPresenceManager()
-    {
-        return _manager->getClient()->getPresenceManager();
-    }
+static PresenceManager* _getPresenceManager()
+{
+    return _manager->getClient()->getPresenceManager();
+}
 #endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
-    VideoManager* _getVideoManager()
-    {
-        return _manager->getClient()->getVideoManager();
-    }
+static VideoManager* _getVideoManager()
+{
+    return _manager->getClient()->getVideoManager();
+}
 #endif // SFL_VIDEO
 
     // User handlers of library events
-    struct sflph_ev_handlers _evHandlers;
-}
+static sflph_ev_handlers _evHandlers;
 
 const char *
 sflph_version()
@@ -89,7 +87,7 @@ sflph_version()
     return PACKAGE_VERSION;
 }
 
-int sflph_init(struct sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
+int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 {
     // Ignore initialization if already done
     if (_manager) {
