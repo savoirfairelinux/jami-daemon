@@ -53,7 +53,7 @@
 
 ConfigurationManager::ConfigurationManager()
 {
-    std::memset(std::addressof(evHandlers_), 0, sizeof(evHandlers_));
+    evHandlers_ = {};
 }
 
 void ConfigurationManager::registerEvHandlers(struct sflph_config_ev_handlers* evHandlers)

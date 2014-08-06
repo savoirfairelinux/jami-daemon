@@ -105,7 +105,7 @@ int sflph_init(struct sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags
 
     // Create manager
     try {
-        _manager = std::addressof(Manager::instance());
+        _manager = &(Manager::instance());
     } catch (...) {
         return -SFLPH_ERR_MANAGER_INIT;
     }

@@ -48,7 +48,7 @@
 
 CallManager::CallManager()
 {
-    std::memset(std::addressof(evHandlers_), 0, sizeof(evHandlers_));
+    evHandlers_ = {};
 }
 
 void CallManager::registerEvHandlers(struct sflph_call_ev_handlers* evHandlers)

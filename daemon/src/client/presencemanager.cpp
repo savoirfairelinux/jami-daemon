@@ -51,7 +51,7 @@ constexpr static const char* OFFLINE_KEY    = "Offline";
 
 PresenceManager::PresenceManager()
 {
-    std::memset(std::addressof(evHandlers_), 0, sizeof(evHandlers_));
+    evHandlers_ = {};
 }
 
 void PresenceManager::registerEvHandlers(struct sflph_pres_ev_handlers* evHandlers)

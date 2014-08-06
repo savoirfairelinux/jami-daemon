@@ -40,7 +40,7 @@
 
 VideoManager::VideoManager()
 {
-    std::memset(std::addressof(evHandlers_), 0, sizeof(evHandlers_));
+    evHandlers_ = {};
     libav_utils::sfl_avcodec_init();
 }
 
