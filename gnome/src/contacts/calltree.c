@@ -51,6 +51,7 @@
 #include "history.h"
 #include "calltree.h"
 #include "uimanager.h"
+#include "uibuilder.h"
 #include "actions.h"
 #include "searchbar.h"
 #include "sflphone_client.h"
@@ -151,7 +152,7 @@ call_selected_cb(GtkTreeSelection *sel, SFLPhoneClient *client)
         }
     }
 
-    update_actions(client);
+    uibuilder_action_update(client);
 }
 
 /* A row is activated when it is double clicked */
@@ -778,7 +779,7 @@ calltree_update_call(calltab_t* tab, callable_obj_t * call, SFLPhoneClient *clie
     GtkTreeStore *store = tab->store;
     GtkTreeModel *model = GTK_TREE_MODEL(store);
     gtk_tree_model_foreach(model, update_call, (gpointer) &ctx);
-    update_actions(client);
+    uibuilder_action_update(client);
 }
 
 void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *parent)
@@ -1065,7 +1066,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf, SFLPhoneCl
 
     gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls_tab->view), path, FALSE);
 
-    update_actions(client);
+    uibuilder_action_update(client);
 }
 
 static
@@ -1126,7 +1127,7 @@ void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf, SF
     GtkTreeModel *model = GTK_TREE_MODEL(store);
     gtk_tree_model_foreach(model, remove_conference, (gpointer) &context);
 
-    update_actions(client);
+    uibuilder_action_update(client);
     g_debug("Finished removing conference %s", conf->_confID);
 }
 
@@ -1167,7 +1168,7 @@ void calltree_display(calltab_t *tab, SFLPhoneClient *client)
 
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(active_calltree_tab->view));
     g_signal_emit_by_name(sel, "changed");
-    update_actions(client);
+    uibuilder_action_update(client);
 }
 
 gboolean calltree_update_clock(G_GNUC_UNUSED gpointer data)
@@ -1373,7 +1374,7 @@ menuitem_response(gchar * string)
                               popup_data->dest_ID);
         calltree_remove_call(current_calls_tab, popup_data->source_ID);
         calltree_remove_call(current_calls_tab, popup_data->dest_ID);
-        update_actions(popup_data->client);
+        uibuilder_action_update(popup_data->client);
     } else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
         callable_obj_t * source_call = calllist_get_call(current_calls_tab, popup_data->source_ID);
         callable_obj_t * dest_call = calllist_get_call(current_calls_tab, popup_data->dest_ID);
