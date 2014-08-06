@@ -38,6 +38,7 @@
 
 #include "str_utils.h"
 #include "uimanager.h"
+#include "uibuilder.h"
 #include "mainwindow.h"
 #include "calltree.h"
 #include <glib.h>
@@ -191,7 +192,7 @@ sflphone_hung_up(callable_obj_t * c, SFLPhoneClient *client)
     calltree_remove_call(current_calls_tab, c->_callID);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors(c);
-    update_actions(client);
+    uibuilder_action_update(client);
 
     status_tray_icon_blink(FALSE);
 
@@ -461,7 +462,7 @@ sflphone_set_transfer(SFLPhoneClient *client)
         c->_trsft_to = g_strdup("");
         calltree_update_call(current_calls_tab, c, client);
     } else {
-        update_actions(client);
+        uibuilder_action_update(client);
     }
 }
 
@@ -476,7 +477,7 @@ sflphone_unset_transfer(SFLPhoneClient *client)
         c->_trsft_to = g_strdup("");
         calltree_update_call(current_calls_tab, c, client);
     } else {
-        update_actions(client);
+        uibuilder_action_update(client);
     }
 }
 
@@ -493,7 +494,7 @@ sflphone_incoming_call(callable_obj_t * c, SFLPhoneClient *client)
     calllist_add_call(current_calls_tab, c);
     calltree_add_call(current_calls_tab, c, NULL);
 
-    update_actions(client);
+    uibuilder_action_update(client);
     calltree_display(current_calls_tab, client);
 
     // Change the status bar if we are dealing with a direct SIP call
@@ -604,7 +605,7 @@ sflphone_new_call(SFLPhoneClient *client)
 
     calllist_add_call(current_calls_tab, c);
     calltree_add_call(current_calls_tab, c, NULL);
-    update_actions(client);
+    uibuilder_action_update(client);
 
     return c;
 }
@@ -852,7 +853,7 @@ sflphone_rec_call(SFLPhoneClient *client)
         /* This calls update actions */
         calltree_add_conference_to_current_calls(selectedConf, client);
     } else {
-        update_actions(client);
+        uibuilder_action_update(client);
     }
     return result;
 }

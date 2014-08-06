@@ -48,6 +48,7 @@
 #include "assistant.h"
 #include "widget/minidialog.h"
 #include "uimanager.h"
+#include "uibuilder.h"
 #include "config/audioconf.h"
 #include "str_utils.h"
 #include "seekslider.h"
@@ -236,7 +237,7 @@ create_main_window(SFLPhoneClient *client)
     int position_x =  g_settings_get_int(client->settings, "window-position-x");
     int position_y =  g_settings_get_int(client->settings, "window-position-y");
 
-    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    GtkWidget *window = gtk_application_window_new(GTK_APPLICATION(client));
 
     gtk_container_set_border_width(GTK_CONTAINER(window), 0);
 
@@ -264,15 +265,20 @@ create_main_window(SFLPhoneClient *client)
                      G_CALLBACK(window_configure_cb), client);
 
 
-    GtkUIManager *ui_manager = uimanager_new(client);
-    if (!ui_manager) {
+    client->builder = uibuilder_new(client);
+    if (!client->builder) {
         g_warning("Could not load xml GUI\n");
         exit(1);
     }
+    uibuilder_create_menubar(client);
+    uibuilder_create_toolbar(client);
 
+#if 0
+    GtkUIManager *ui_manager = uimanager_new(client);
     /* Create an accel group for window's shortcuts */
     gtk_window_add_accel_group(GTK_WINDOW(window), gtk_ui_manager_get_accel_group(ui_manager));
 
+#endif
     /* Instantiate vbox, subvbox as homogeneous */
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
@@ -284,12 +290,8 @@ create_main_window(SFLPhoneClient *client)
     GtkWidget *tab_widget = get_tab_box();
     gtk_widget_show (tab_widget);
 
-    /* Populate the main window */
-    GtkWidget *widget = create_menus(ui_manager, client);
-    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
-
-    create_toolbar_actions(ui_manager, client);
-    pack_main_window_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
+//     gtk_box_pack_start(GTK_BOX(vbox), client->, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
 
     /* Setup call main widget*/
     GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
@@ -364,9 +366,6 @@ create_main_window(SFLPhoneClient *client)
     gtk_widget_set_sensitive(seekslider, FALSE);
     main_window_hide_playback_scale();
 
-    /* don't show waiting layer */
-    gtk_widget_hide(waitingLayer);
-
     g_timeout_add_seconds(1, calltree_update_clock, NULL);
 
     // Configuration wizard
@@ -375,7 +374,6 @@ create_main_window(SFLPhoneClient *client)
 
     // Restore position according to the configuration stored in gconf
     gtk_window_move(GTK_WINDOW(window), position_x, position_y);
-    client->win = window;
 }
 
 GtkAccelGroup *
