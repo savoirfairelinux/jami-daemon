@@ -88,7 +88,6 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
     }
 
     create_main_window(client);
-    gtk_application_add_window(GTK_APPLICATION(client), GTK_WINDOW(client->win));
 
     const gboolean show_status = g_settings_get_boolean(client->settings, "show-status-icon");
     if (show_status)
