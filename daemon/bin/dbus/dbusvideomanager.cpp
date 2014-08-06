@@ -53,7 +53,7 @@ std::vector<std::string> DBusVideoManager::getDeviceList()
 
 std::map<std::string, std::map<std::string, std::vector<std::string>>> DBusVideoManager::getCapabilities(const std::string& name)
 {
-	return sflph_video_get_capabilities(name);
+    return sflph_video_get_capabilities(name);
 }
 
 std::map<std::string, std::string> DBusVideoManager::getSettings(const std::string& name)
@@ -63,7 +63,7 @@ std::map<std::string, std::string> DBusVideoManager::getSettings(const std::stri
 
 void DBusVideoManager::applySettings(const std::string& name, const std::map<std::string, std::string>& settings)
 {
-	sflph_video_apply_settings(name, settings);
+    sflph_video_apply_settings(name, settings);
 }
 
 void DBusVideoManager::setDefaultDevice(const std::string &dev)

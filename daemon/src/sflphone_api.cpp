@@ -778,12 +778,12 @@ bool sflph_video_is_camera_started(void)
 
 void sflph_video_apply_settings(const std::string& name, const std::map<std::string, std::string>& settings)
 {
-	getVideoManager()->applySettings(name, settings);
+    getVideoManager()->applySettings(name, settings);
 }
 
 std::map<std::string, std::map<std::string, std::vector<std::string>>> sflph_video_get_capabilities(const std::string& name)
 {
-	return getVideoManager()->getCapabilities(name);
+    return getVideoManager()->getCapabilities(name);
 }
 
 #endif // SFL_VIDEO
