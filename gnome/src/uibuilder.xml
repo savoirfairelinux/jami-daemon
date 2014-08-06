@@ -1,0 +1,68 @@
+<interface>
+    <menu id="menu-bar">
+        <submenu>
+            <attribute name="label" translatable="yes">_Call</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_New call</attribute>
+                    <attribute name="action">app.call-new</attribute>
+                    <attribute name="accel">&lt;Primary&gt;N</attribute>
+                    <attribute name="icon">gnome-stock-dial</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Pick up</attribute>
+                    <attribute name="action">app.new-pickup</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Hang up</attribute>
+                    <attribute name="action">app.new-hangup</attribute>
+                    <attribute name="accel">&lt;Primary&gt;S</attribute>
+                </item>
+            </section>
+        </submenu>
+    </menu>
+    <menu id="menu-status">
+        <submenu>
+            <attribute name="label" translatable="yes">_Call</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Status show</attribute>
+                    <attribute name="action">app.status-show</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Hang up</attribute>
+                    <attribute name="action">app.status-hangup</attribute>
+                    <attribute name="icon">gnome-stock-hangup</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Quit</attribute>
+                    <attribute name="action">app.status-quit</attribute>
+                    <attribute name="icon">_Quit</attribute>
+                </item>
+            </section>
+        </submenu>
+    </menu>
+    <object class="GtkToolbar" id="toolbar">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <!--
+        <child>
+                <object class="GtkToolButton" id="DialButton">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Call</property>
+                <property name="icon_name">gnome-stock-dial</property>
+                <property name="can_focus">False</property>
+                <signal name="clicked" handler="user_function" swapped="no"/>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+            -->
+    </object>
+</interface>

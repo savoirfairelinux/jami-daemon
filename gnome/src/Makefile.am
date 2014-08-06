@@ -19,6 +19,7 @@ noinst_LTLIBRARIES = libsflphone_client.la
 
 libsflphone_client_la_SOURCES = \
   uimanager.c \
+  uibuilder.c \
   sflnotify.c \
   mainwindow.c \
   dialpad.c \
@@ -39,6 +40,7 @@ libsflphone_client_la_SOURCES = \
   codeclist.h \
   sflphone_const.h \
   uimanager.h \
+  uibuilder.h \
   accountlist.h \
   sliders.h \
   statusicon.h \

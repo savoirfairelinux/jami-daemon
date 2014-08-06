@@ -45,6 +45,7 @@
 #include <string.h>
 
 #include "uimanager.h"
+#include "uibuilder.h" // FIXME:tmp
 #include "statusicon.h"
 #include "config/audioconf.h"
 #include "uimanager.h"
@@ -403,6 +404,7 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
 void
 update_actions(SFLPhoneClient *client)
 {
+
     gtk_action_set_sensitive(newCallAction_, TRUE);
     gtk_action_set_sensitive(pickUpAction_, FALSE);
     gtk_action_set_sensitive(hangUpAction_, FALSE);

@@ -49,24 +49,24 @@ void add_icon(GtkIconTheme *theme, const gchar *icon_name, const guint8 *icon_da
 
 void register_sflphone_stock_icons(GtkIconTheme *theme)
 {
-    add_icon(theme, GTK_STOCK_PICKUP, gnome_stock_pickup, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_HANGUP, gnome_stock_hangup, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_DIAL, gnome_stock_dial, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_TRANSFER, gnome_stock_transfer, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_ONHOLD, gnome_stock_onhold, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_OFFHOLD, gnome_stock_offhold, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_IM, gnome_stock_im, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_CALL_CURRENT, gnome_stock_call_current, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_ADDRESSBOOK, gnome_stock_addressbook, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_CALLS, gnome_stock_calls, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_SFLPHONE, gnome_stock_sflphone, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_FAIL, gnome_stock_fail, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_USER, gnome_stock_user, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_SCREENSHARING, gnome_stock_screensharing, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_RECORD, gnome_stock_record, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_HISTORY, gnome_stock_history, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_VOICEMAIL, gnome_stock_voicemail, GTK_ICON_SIZE_SMALL_TOOLBAR);
-    add_icon(theme, GTK_STOCK_NEWVOICEMAIL, gnome_stock_newvoicemail, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon(theme, GTK_STOCK_PICKUP, gnome_stock_pickup, 0);
+    add_icon(theme, GTK_STOCK_HANGUP, gnome_stock_hangup, 0);
+    add_icon(theme, GTK_STOCK_DIAL, gnome_stock_dial, 0);
+    add_icon(theme, GTK_STOCK_TRANSFER, gnome_stock_transfer, 0);
+    add_icon(theme, GTK_STOCK_ONHOLD, gnome_stock_onhold, 0);
+    add_icon(theme, GTK_STOCK_OFFHOLD, gnome_stock_offhold, 0);
+    add_icon(theme, GTK_STOCK_IM, gnome_stock_im, 0);
+    add_icon(theme, GTK_STOCK_CALL_CURRENT, gnome_stock_call_current, 0);
+    add_icon(theme, GTK_STOCK_ADDRESSBOOK, gnome_stock_addressbook, 0);
+    add_icon(theme, GTK_STOCK_CALLS, gnome_stock_calls, 0);
+    add_icon(theme, GTK_STOCK_SFLPHONE, gnome_stock_sflphone, 0);
+    add_icon(theme, GTK_STOCK_FAIL, gnome_stock_fail, 0);
+    add_icon(theme, GTK_STOCK_USER, gnome_stock_user, 0);
+    add_icon(theme, GTK_STOCK_SCREENSHARING, gnome_stock_screensharing, 0);
+    add_icon(theme, GTK_STOCK_RECORD, gnome_stock_record, 0);
+    add_icon(theme, GTK_STOCK_HISTORY, gnome_stock_history, 0);
+    add_icon(theme, GTK_STOCK_VOICEMAIL, gnome_stock_voicemail, 0);
+    add_icon(theme, GTK_STOCK_NEWVOICEMAIL, gnome_stock_newvoicemail, 0);
     add_icon(theme, GTK_STOCK_PREFS, gnome_stock_prefs, GTK_ICON_SIZE_LARGE_TOOLBAR);
     add_icon(theme, GTK_STOCK_PREFS_AUDIO, gnome_stock_prefs_audio, GTK_ICON_SIZE_LARGE_TOOLBAR);
     add_icon(theme, GTK_STOCK_PREFS_VIDEO, gnome_stock_prefs_video, GTK_ICON_SIZE_LARGE_TOOLBAR);
