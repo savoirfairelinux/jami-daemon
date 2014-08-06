@@ -208,8 +208,7 @@ int DBusClient::initLibrary(int sflphFlags)
 #endif // SFL_VIDEO
 
     // All event handlers
-    sflph_ev_handlers evHandlers;
-    std::memset(std::addressof(evHandlers), 0, sizeof(evHandlers));
+    sflph_ev_handlers evHandlers = {};
 
     evHandlers.call_ev_handlers = callEvHandlers;
     evHandlers.config_ev_handlers = configEvHandlers;
