@@ -135,7 +135,7 @@ ManagerImpl::ManagerImpl() :
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), client_(),
     config_(),
-    currentCallId_(), currentCallMutex_(), audiodriver_(nullptr), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
+    currentCallMutex_(), audiodriver_(nullptr), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
     mainBuffer_(), callFactory(), conferenceMap_(), history_(),
@@ -300,33 +300,48 @@ ManagerImpl::finish()
 }
 
 bool
-ManagerImpl::isCurrentCall(const std::string& callId) const
+ManagerImpl::isCurrentCall(const Call& call) const
 {
-    return currentCallId_ == callId;
+    return currentCall_.get() == &call;
 }
 
 bool
 ManagerImpl::hasCurrentCall() const
 {
-    return not currentCallId_.empty();
+    return static_cast<bool>(currentCall_);
 }
 
-std::string
+std::shared_ptr<Call>
+ManagerImpl::getCurrentCall() const
+{
+    return currentCall_;
+}
+
+const std::string
 ManagerImpl::getCurrentCallId() const
 {
-    return currentCallId_;
+    return currentCall_ ? currentCall_->getCallId() : "";
 }
 
-void ManagerImpl::unsetCurrentCall()
+/**
+ * Set current call ID to empty string
+ */
+void
+ManagerImpl::unsetCurrentCall()
 {
-    switchCall("");
+    currentCall_.reset();
 }
 
-void ManagerImpl::switchCall(const std::string& id)
+/**
+ * Switch of current call id
+ * @param id The new callid
+ */
+void
+ManagerImpl::switchCall(std::shared_ptr<Call> call)
 {
     std::lock_guard<std::mutex> m(currentCallMutex_);
-    DEBUG("----- Switch current call id to %s -----", id.c_str());
-    currentCallId_ = id;
+    DEBUG("----- Switch current call id to %s -----", call->getCallId().c_str());
+    currentCall_ = call;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -385,7 +400,7 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
             if (not pseudo_contact_name.empty())
                 call->setDisplayName(pseudo_contact_name);
         }
-        switchCall(call_id);
+        switchCall(call);
         call->setConfId(conf_id);
     } catch (const VoipLinkException &e) {
         callFailure(call_id);
@@ -445,9 +460,9 @@ ManagerImpl::answerCall(const std::string& call_id)
 
     // if we dragged this call into a conference already
     if (isConferenceParticipant(call_id))
-        switchCall(call->getConfId());
+        switchCall(callFactory.getCall(call->getConfId()));
     else
-        switchCall(call_id);
+        switchCall(call);
 
     // Connect streams
     addStream(call_id);
@@ -600,8 +615,10 @@ ManagerImpl::offHoldCall(const std::string& callId)
             detachParticipant(MainBuffer::DEFAULT_ID);
     }
 
+    std::shared_ptr<Call> call;
     try {
-        if (auto call = getCallFromCallID(callId))
+        call = getCallFromCallID(callId);
+        if (call)
             call->offhold();
         else
             result = false;
@@ -612,14 +629,10 @@ ManagerImpl::offHoldCall(const std::string& callId)
 
     client_.getCallManager()->callStateChanged(callId, "UNHOLD");
 
-    if (isConferenceParticipant(callId)) {
-        auto call = getCallFromCallID(callId);
-        if (call)
-            switchCall(call->getConfId());
-        else
-            result = false;
-    } else
-        switchCall(callId);
+    if (isConferenceParticipant(callId))
+        switchCall(getCallFromCallID(call->getConfId()));
+    else
+        switchCall(call);
 
     addStream(callId);
 
@@ -788,7 +801,7 @@ ManagerImpl::holdConference(const std::string& id)
     ParticipantSet participants(conf->getParticipantList());
 
     for (const auto &item : participants) {
-        switchCall(item);
+        switchCall(getCallFromCallID(item));
         onHoldCall(item);
     }
 
@@ -820,7 +833,7 @@ ManagerImpl::unHoldConference(const std::string& id)
             // if one call is currently recording, the conference is in state recording
             isRec |= call->isRecording();
 
-            switchCall(item);
+            switchCall(call);
             offHoldCall(item);
         }
     }
@@ -887,7 +900,7 @@ ManagerImpl::addParticipant(const std::string& callId,
     addMainParticipant(conferenceId);
 
     Conference* conf = iter->second;
-    switchCall(conf->getConfID());
+    switchCall(getCallFromCallID(conf->getConfID()));
 
     // Add coresponding IDs in conf and call
     call->setConfId(conf->getConfID());
@@ -960,7 +973,7 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
         client_.getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
     }
 
-    switchCall(conference_id);
+    switchCall(getCallFromCallID(conference_id));
     return true;
 }
 
@@ -1060,7 +1073,7 @@ ManagerImpl::joinParticipant(const std::string& callId1,
         WARN("Call state not recognized");
 
     // Switch current call id to this conference
-    switchCall(conf->getConfID());
+    switchCall(getCallFromCallID(conf->getConfID()));
     conf->setState(Conference::ACTIVE_ATTACHED);
 
     // set recording sampling rate
@@ -1078,7 +1091,7 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
         return;
     }
 
-    Conference *conf = new Conference;
+    Conference* conf = new Conference;
 
     int successCounter = 0;
 
@@ -1238,7 +1251,7 @@ ManagerImpl::processRemainingParticipants(Conference &conf)
             if (current_call_id != conf.getConfID())
                 onHoldCall(call->getCallId());
             else
-                switchCall(*p);
+                switchCall(call);
         }
 
         DEBUG("No remaining participants, remove conference");
@@ -1590,10 +1603,12 @@ ManagerImpl::sendTextMessage(const std::string& callID,
 void
 ManagerImpl::peerAnsweredCall(const std::string& id)
 {
+    auto call = getCallFromCallID(id);
+    if (!call) return;
     DEBUG("Peer answered call %s", id.c_str());
 
     // The if statement is usefull only if we sent two calls at the same time.
-    if (isCurrentCall(id))
+    if (isCurrentCall(*call))
         stopTone();
 
     // Connect audio streams
@@ -1615,9 +1630,11 @@ ManagerImpl::peerAnsweredCall(const std::string& id)
 void
 ManagerImpl::peerRingingCall(const std::string& id)
 {
+    auto call = getCallFromCallID(id);
+    if (!call) return;
     DEBUG("Peer call %s ringing", id.c_str());
 
-    if (isCurrentCall(id))
+    if (isCurrentCall(*call))
         ringback();
 
     client_.getCallManager()->callStateChanged(id, "RINGING");
@@ -1627,20 +1644,21 @@ ManagerImpl::peerRingingCall(const std::string& id)
 void
 ManagerImpl::peerHungupCall(const std::string& call_id)
 {
+    auto call = getCallFromCallID(call_id);
+    if (!call) return;
+
     DEBUG("Peer hungup call %s", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
         removeParticipant(call_id);
-    } else if (isCurrentCall(call_id)) {
+    } else if (isCurrentCall(*call)) {
         stopTone();
         unsetCurrentCall();
     }
 
-    if (auto call = getCallFromCallID(call_id)) {
-        history_.addCall(call.get(), preferences.getHistoryLimit());
-        call->peerHungup();
-        saveHistory();
-    }
+    history_.addCall(call.get(), preferences.getHistoryLimit());
+    call->peerHungup();
+    saveHistory();
 
     client_.getCallManager()->callStateChanged(call_id, "HUNGUP");
 
@@ -1656,9 +1674,12 @@ ManagerImpl::peerHungupCall(const std::string& call_id)
 void
 ManagerImpl::callBusy(const std::string& id)
 {
+    auto call = getCallFromCallID(id);
+    if (!call) return;
+
     client_.getCallManager()->callStateChanged(id, "BUSY");
 
-    if (isCurrentCall(id)) {
+    if (isCurrentCall(*call)) {
         playATone(Tone::TONE_BUSY);
         unsetCurrentCall();
     }
@@ -1671,9 +1692,12 @@ ManagerImpl::callBusy(const std::string& id)
 void
 ManagerImpl::callFailure(const std::string& call_id)
 {
+    auto call = getCallFromCallID(call_id);
+    if (!call) return;
+
     client_.getCallManager()->callStateChanged(call_id, "FAILURE");
 
-    if (isCurrentCall(call_id)) {
+    if (isCurrentCall(*call)) {
         playATone(Tone::TONE_BUSY);
         unsetCurrentCall();
     }
