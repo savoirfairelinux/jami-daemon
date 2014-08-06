@@ -132,7 +132,7 @@ SIPCall::~SIPCall()
 void
 SIPCall::stopRtpIfCurrent()
 {
-    if (Manager::instance().isCurrentCall(getCallId())) {
+    if (Manager::instance().isCurrentCall(*this)) {
         getAudioRtp().stop();
 #ifdef SFL_VIDEO
         getVideoRtp().stop();

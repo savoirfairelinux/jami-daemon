@@ -743,17 +743,23 @@ class ManagerImpl {
         std::string getNewCallID();
 
         /**
+         * Get the current call
+         * @return std::shared_ptr<Call> A call shared pointer (could be empty)
+         */
+        std::shared_ptr<Call> getCurrentCall() const;
+
+        /**
          * Get the current call id
          * @return std::string	The call id or ""
          */
-        std::string getCurrentCallId() const;
+        const std::string getCurrentCallId() const;
 
         /**
          * Check if a call is the current one
-         * @param callId the new callid
-         * @return bool   True if the id is the current call
+         * @param call the new call
+         * @return bool True if the call is the current
          */
-        bool isCurrentCall(const std::string& callId) const;
+        bool isCurrentCall(const Call& call) const;
 
         void initAudioDriver();
 
@@ -792,16 +798,9 @@ class ManagerImpl {
          */
         std::string retrieveConfigPath() const;
 
-        /**
-         * Set current call ID to empty string
-         */
         void unsetCurrentCall();
 
-        /**
-         * Switch of current call id
-         * @param id The new callid
-         */
-        void switchCall(const std::string& id);
+        void switchCall(std::shared_ptr<Call> call);
 
         /*
          * Play one tone
@@ -815,7 +814,7 @@ class ManagerImpl {
         Conf::ConfigTree config_;
 
         /** Current Call ID */
-        std::string currentCallId_;
+        std::shared_ptr<Call> currentCall_ = nullptr;
 
         /** Protected current call access */
         std::mutex currentCallMutex_;
