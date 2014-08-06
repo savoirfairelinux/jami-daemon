@@ -98,8 +98,8 @@ int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
     _evHandlers = *ev_handlers;
 
     // Handle flags
-    setDebugMode((flags & SFLPH_FLAG_DEBUG) ? true : false);
-    setConsoleLog((flags & SFLPH_FLAG_CONSOLE_LOG) ? true : false);
+    setDebugMode(flags & SFLPH_FLAG_DEBUG);
+    setConsoleLog(flags & SFLPH_FLAG_CONSOLE_LOG);
 
     // Create manager
     try {
