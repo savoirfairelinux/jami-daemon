@@ -52,34 +52,34 @@
 #endif // SFL_VIDEO
 
 // This manager pointer is only set after proper library initialization.
-static ManagerImpl* _manager = nullptr;
+static ManagerImpl* manager_ = nullptr;
 
-static CallManager* _getCallManager()
+static CallManager* getCallManager()
 {
-    return _manager->getClient()->getCallManager();
+    return manager_->getClient()->getCallManager();
 }
 
-static ConfigurationManager* _getConfigurationManager()
+static ConfigurationManager* getConfigurationManager()
     {
-        return _manager->getClient()->getConfigurationManager();
+        return manager_->getClient()->getConfigurationManager();
     }
 
 #ifdef SFL_PRESENCE
-static PresenceManager* _getPresenceManager()
+static PresenceManager* getPresenceManager()
 {
-    return _manager->getClient()->getPresenceManager();
+    return manager_->getClient()->getPresenceManager();
 }
 #endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
-static VideoManager* _getVideoManager()
+static VideoManager* getVideoManager()
 {
-    return _manager->getClient()->getVideoManager();
+    return manager_->getClient()->getVideoManager();
 }
 #endif // SFL_VIDEO
 
-    // User handlers of library events
-static sflph_ev_handlers _evHandlers;
+// User handlers of library events
+static sflph_ev_handlers evHandlers_;
 
 const char *
 sflph_version()
@@ -90,12 +90,12 @@ sflph_version()
 int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 {
     // Ignore initialization if already done
-    if (_manager) {
+    if (manager_) {
         return 0;
     }
 
     // Copy user event handlers
-    _evHandlers = *ev_handlers;
+    evHandlers_ = *ev_handlers;
 
     // Handle flags
     setDebugMode(flags & SFLPH_FLAG_DEBUG);
@@ -103,28 +103,28 @@ int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 
     // Create manager
     try {
-        _manager = &(Manager::instance());
+        manager_ = &(Manager::instance());
     } catch (...) {
         return -SFLPH_ERR_MANAGER_INIT;
     }
 
     // Register user event handlers
-    _getCallManager()->registerEvHandlers(&_evHandlers.call_ev_handlers);
-    _getConfigurationManager()->registerEvHandlers(&_evHandlers.config_ev_handlers);
+    getCallManager()->registerEvHandlers(&evHandlers_.call_ev_handlers);
+    getConfigurationManager()->registerEvHandlers(&evHandlers_.config_ev_handlers);
 
 #ifdef SFL_PRESENCE
-    _getPresenceManager()->registerEvHandlers(&_evHandlers.pres_ev_handlers);
+    getPresenceManager()->registerEvHandlers(&evHandlers_.pres_ev_handlers);
 #endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
-    _getVideoManager()->registerEvHandlers(&_evHandlers.video_ev_handlers);
+    getVideoManager()->registerEvHandlers(&evHandlers_.video_ev_handlers);
 #endif // SFL_VIDEO
 
     // Initialize manager now
     try {
-        _manager->init("");
+        manager_->init("");
     } catch (...) {
-        _manager = nullptr;
+        manager_ = nullptr;
         return -SFLPH_ERR_MANAGER_INIT;
     }
 
@@ -134,413 +134,413 @@ int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 void sflph_fini(void)
 {
     // Ignore if not yet initialized
-    if (!_manager) {
+    if (!manager_) {
         return;
     }
 
     // Finish manager
-    _manager->finish();
-    _manager = nullptr;
+    manager_->finish();
+    manager_ = nullptr;
 }
 
 void sflph_poll_events()
 {
-    _manager->pollEvents();
+    manager_->pollEvents();
 }
 
 bool sflph_call_place(const std::string& account_id, const std::string& call_id, const std::string& to)
 {
-    return _getCallManager()->placeCall(account_id, call_id, to);
+    return getCallManager()->placeCall(account_id, call_id, to);
 }
 
 bool sflph_call_refuse(const std::string& call_id)
 {
-    return _getCallManager()->refuse(call_id);
+    return getCallManager()->refuse(call_id);
 }
 
 bool sflph_call_accept(const std::string& call_id)
 {
-    return _getCallManager()->accept(call_id);
+    return getCallManager()->accept(call_id);
 }
 
 bool sflph_call_hang_up(const std::string& call_id)
 {
-    return _getCallManager()->hangUp(call_id);
+    return getCallManager()->hangUp(call_id);
 }
 
 bool sflph_call_hold(const std::string& call_id)
 {
-    return _getCallManager()->hold(call_id);
+    return getCallManager()->hold(call_id);
 }
 
 bool sflph_call_unhold(const std::string& call_id)
 {
-    return _getCallManager()->unhold(call_id);
+    return getCallManager()->unhold(call_id);
 }
 
 bool sflph_call_transfer(const std::string& call_id, const std::string& to)
 {
-    return _getCallManager()->transfer(call_id, to);
+    return getCallManager()->transfer(call_id, to);
 }
 
 bool sflph_call_attended_transfer(const std::string& transfer_id, const std::string& target_id)
 {
-    return _getCallManager()->attendedTransfer(transfer_id, target_id);
+    return getCallManager()->attendedTransfer(transfer_id, target_id);
 }
 
 std::map<std::string, std::string> sflph_call_get_call_details(const std::string& call_id)
 {
-    return _getCallManager()->getCallDetails(call_id);
+    return getCallManager()->getCallDetails(call_id);
 }
 
 std::vector<std::string> sflph_call_get_call_list(void)
 {
-    return _getCallManager()->getCallList();
+    return getCallManager()->getCallList();
 }
 
 void sflph_call_remove_conference(const std::string& conf_id)
 {
-    _getCallManager()->removeConference(conf_id);
+    getCallManager()->removeConference(conf_id);
 }
 
 bool sflph_call_join_participant(const std::string& sel_call_id, const std::string& drag_call_id)
 {
-    return _getCallManager()->joinParticipant(sel_call_id, drag_call_id);
+    return getCallManager()->joinParticipant(sel_call_id, drag_call_id);
 }
 
 void sflph_call_create_conf_from_participant_list(const std::vector<std::string>& participants)
 {
-    _getCallManager()->createConfFromParticipantList(participants);
+    getCallManager()->createConfFromParticipantList(participants);
 }
 
 bool sflph_call_is_conference_participant(const std::string& call_id)
 {
-    return _getCallManager()->isConferenceParticipant(call_id);
+    return getCallManager()->isConferenceParticipant(call_id);
 }
 
 bool sflph_call_add_participant(const std::string& call_id, const std::string& conf_id)
 {
-    return _getCallManager()->addParticipant(call_id, conf_id);
+    return getCallManager()->addParticipant(call_id, conf_id);
 }
 
 bool sflph_call_add_main_participant(const std::string& conf_id)
 {
-    return _getCallManager()->addMainParticipant(conf_id);
+    return getCallManager()->addMainParticipant(conf_id);
 }
 
 bool sflph_call_detach_participant(const std::string& call_id)
 {
-    return _getCallManager()->detachParticipant(call_id);
+    return getCallManager()->detachParticipant(call_id);
 }
 
 bool sflph_call_join_conference(const std::string& sel_conf_id, const std::string& drag_conf_id)
 {
-    return _getCallManager()->joinConference(sel_conf_id, drag_conf_id);
+    return getCallManager()->joinConference(sel_conf_id, drag_conf_id);
 }
 
 bool sflph_call_hang_up_conference(const std::string& conf_id)
 {
-    return _getCallManager()->hangUpConference(conf_id);
+    return getCallManager()->hangUpConference(conf_id);
 }
 
 bool sflph_call_hold_conference(const std::string& conf_id)
 {
-    return _getCallManager()->holdConference(conf_id);
+    return getCallManager()->holdConference(conf_id);
 }
 
 bool sflph_call_unhold_conference(const std::string& conf_id)
 {
-    return _getCallManager()->unholdConference(conf_id);
+    return getCallManager()->unholdConference(conf_id);
 }
 
 std::vector<std::string> sflph_call_get_conference_list(void)
 {
-    return _getCallManager()->getConferenceList();
+    return getCallManager()->getConferenceList();
 }
 
 std::vector<std::string> sflph_call_get_participant_list(const std::string& conf_id)
 {
-    return _getCallManager()->getParticipantList(conf_id);
+    return getCallManager()->getParticipantList(conf_id);
 }
 
 std::vector<std::string> sflph_call_get_display_names(const std::string& conf_id)
 {
-    return _getCallManager()->getDisplayNames(conf_id);
+    return getCallManager()->getDisplayNames(conf_id);
 }
 
 std::string sflph_call_get_conference_id(const std::string& call_id)
 {
-    return _getCallManager()->getConferenceId(call_id);
+    return getCallManager()->getConferenceId(call_id);
 }
 
 std::map<std::string, std::string> sflph_call_get_conference_details(const std::string& call_id)
 {
-    return _getCallManager()->getConferenceDetails(call_id);
+    return getCallManager()->getConferenceDetails(call_id);
 }
 
 bool sflph_call_play_recorded_file(const std::string& path)
 {
-    return _getCallManager()->startRecordedFilePlayback(path);
+    return getCallManager()->startRecordedFilePlayback(path);
 }
 
 void sflph_call_stop_recorded_file(const std::string& path)
 {
-    _getCallManager()->stopRecordedFilePlayback(path);
+    getCallManager()->stopRecordedFilePlayback(path);
 }
 
 bool sflph_call_toggle_recording(const std::string& call_id)
 {
-    return _getCallManager()->toggleRecording(call_id);
+    return getCallManager()->toggleRecording(call_id);
 }
 
 void sflph_call_set_recording(const std::string& call_id)
 {
-    _getCallManager()->setRecording(call_id);
+    getCallManager()->setRecording(call_id);
 }
 
 void sflph_call_record_playback_seek(double pos)
 {
-    _getCallManager()->recordPlaybackSeek(pos);
+    getCallManager()->recordPlaybackSeek(pos);
 }
 
 bool sflph_call_is_recording(const std::string& call_id)
 {
-    return _getCallManager()->getIsRecording(call_id);
+    return getCallManager()->getIsRecording(call_id);
 }
 
 std::string sflph_call_get_current_audio_codec_name(const std::string& call_id)
 {
-    return _getCallManager()->getCurrentAudioCodecName(call_id);
+    return getCallManager()->getCurrentAudioCodecName(call_id);
 }
 
 void sflph_call_play_dtmf(const std::string& key)
 {
-    _getCallManager()->playDTMF(key);
+    getCallManager()->playDTMF(key);
 }
 
 void sflph_call_start_tone(int start, int type)
 {
-    _getCallManager()->startTone(start, type);
+    getCallManager()->startTone(start, type);
 }
 
 void sflph_call_set_sas_verified(const std::string& call_id)
 {
-    _getCallManager()->setSASVerified(call_id);
+    getCallManager()->setSASVerified(call_id);
 }
 
 void sflph_call_reset_sas_verified(const std::string& call_id)
 {
-    _getCallManager()->resetSASVerified(call_id);
+    getCallManager()->resetSASVerified(call_id);
 }
 
 void sflph_call_set_confirm_go_clear(const std::string& call_id)
 {
-    _getCallManager()->setConfirmGoClear(call_id);
+    getCallManager()->setConfirmGoClear(call_id);
 }
 
 void sflph_call_request_go_clear(const std::string& call_id)
 {
-    _getCallManager()->requestGoClear(call_id);
+    getCallManager()->requestGoClear(call_id);
 }
 
 void sflph_call_accept_enrollment(const std::string& call_id, bool accepted)
 {
-    _getCallManager()->acceptEnrollment(call_id, accepted);
+    getCallManager()->acceptEnrollment(call_id, accepted);
 }
 
 void sflph_call_send_text_message(const std::string& call_id, const std::string& message)
 {
-    _getCallManager()->sendTextMessage(call_id, message);
+    getCallManager()->sendTextMessage(call_id, message);
 }
 
 std::map<std::string, std::string> sflph_config_get_account_details(const std::string& account_id)
 {
-    return _getConfigurationManager()->getAccountDetails(account_id);
+    return getConfigurationManager()->getAccountDetails(account_id);
 }
 
 void sflph_config_set_account_details(const std::string& account_id, const std::map<std::string, std::string>& details)
 {
-    _getConfigurationManager()->setAccountDetails(account_id, details);
+    getConfigurationManager()->setAccountDetails(account_id, details);
 }
 
 std::map<std::string, std::string> sflph_config_get_account_template(void)
 {
-    return _getConfigurationManager()->getAccountTemplate();
+    return getConfigurationManager()->getAccountTemplate();
 }
 
 std::string sflph_config_add_account(const std::map<std::string, std::string>& details)
 {
-    return _getConfigurationManager()->addAccount(details);
+    return getConfigurationManager()->addAccount(details);
 }
 
 void sflph_config_remove_account(const std::string& account_id)
 {
-    _getConfigurationManager()->removeAccount(account_id);
+    getConfigurationManager()->removeAccount(account_id);
 }
 
 std::vector<std::string> sflph_config_get_account_list(void)
 {
-    return _getConfigurationManager()->getAccountList();
+    return getConfigurationManager()->getAccountList();
 }
 
 void sflph_config_send_register(const std::string& account_id, bool enable)
 {
-    _getConfigurationManager()->sendRegister(account_id, enable);
+    getConfigurationManager()->sendRegister(account_id, enable);
 }
 
 void sflph_config_register_all_accounts(void)
 {
-    _getConfigurationManager()->registerAllAccounts();
+    getConfigurationManager()->registerAllAccounts();
 }
 
 std::map<std::string, std::string> sflph_config_get_tls_default_settings(void)
 {
-    return _getConfigurationManager()->getTlsSettingsDefault();
+    return getConfigurationManager()->getTlsSettingsDefault();
 }
 
 std::vector<int> sflph_config_get_audio_codec_list(void)
 {
-    return _getConfigurationManager()->getAudioCodecList();
+    return getConfigurationManager()->getAudioCodecList();
 }
 
 std::vector<std::string> sflph_config_get_supported_tls_method(void)
 {
-    return _getConfigurationManager()->getSupportedTlsMethod();
+    return getConfigurationManager()->getSupportedTlsMethod();
 }
 
 std::vector<std::string> sflph_config_get_audio_codec_details(int payload)
 {
-    return _getConfigurationManager()->getAudioCodecDetails(payload);
+    return getConfigurationManager()->getAudioCodecDetails(payload);
 }
 
 std::vector<int> sflph_config_get_active_audio_codec_list(const std::string& account_id)
 {
-    return _getConfigurationManager()->getActiveAudioCodecList(account_id);
+    return getConfigurationManager()->getActiveAudioCodecList(account_id);
 }
 
 void sflph_config_set_active_audio_codec_list(const std::vector<std::string>& list, const std::string& account_id)
 {
-    _getConfigurationManager()->setActiveAudioCodecList(list, account_id);
+    getConfigurationManager()->setActiveAudioCodecList(list, account_id);
 }
 
 std::vector<std::string> sflph_config_get_audio_plugin_list(void)
 {
-    return _getConfigurationManager()->getAudioPluginList();
+    return getConfigurationManager()->getAudioPluginList();
 }
 
 void sflph_config_set_audio_plugin(const std::string& audio_plugin)
 {
-    _getConfigurationManager()->setAudioPlugin(audio_plugin);
+    getConfigurationManager()->setAudioPlugin(audio_plugin);
 }
 
 std::vector<std::string> sflph_config_get_audio_output_device_list()
 {
-    return _getConfigurationManager()->getAudioOutputDeviceList();
+    return getConfigurationManager()->getAudioOutputDeviceList();
 }
 
 void sflph_config_set_audio_output_device(int index)
 {
-    _getConfigurationManager()->setAudioOutputDevice(index);
+    getConfigurationManager()->setAudioOutputDevice(index);
 }
 
 void sflph_config_set_audio_input_device(int index)
 {
-    _getConfigurationManager()->setAudioInputDevice(index);
+    getConfigurationManager()->setAudioInputDevice(index);
 }
 
 void sflph_config_set_audio_ringtone_device(int index)
 {
-    _getConfigurationManager()->setAudioRingtoneDevice(index);
+    getConfigurationManager()->setAudioRingtoneDevice(index);
 }
 
 std::vector<std::string> sflph_config_get_audio_input_device_list(void)
 {
-    return _getConfigurationManager()->getAudioInputDeviceList();
+    return getConfigurationManager()->getAudioInputDeviceList();
 }
 
 std::vector<std::string> sflph_config_get_current_audio_devices_index(void)
 {
-    return _getConfigurationManager()->getCurrentAudioDevicesIndex();
+    return getConfigurationManager()->getCurrentAudioDevicesIndex();
 }
 
 int sflph_config_get_audio_input_device_index(const std::string& name)
 {
-    return _getConfigurationManager()->getAudioInputDeviceIndex(name);
+    return getConfigurationManager()->getAudioInputDeviceIndex(name);
 }
 
 int sflph_config_get_audio_output_device_index(const std::string& name)
 {
-    return _getConfigurationManager()->getAudioOutputDeviceIndex(name);
+    return getConfigurationManager()->getAudioOutputDeviceIndex(name);
 }
 
 std::string sflph_config_get_current_audio_output_plugin(void)
 {
-    return _getConfigurationManager()->getCurrentAudioOutputPlugin();
+    return getConfigurationManager()->getCurrentAudioOutputPlugin();
 }
 
 bool sflph_config_get_noise_suppress_state(void)
 {
-    return _getConfigurationManager()->getNoiseSuppressState();
+    return getConfigurationManager()->getNoiseSuppressState();
 }
 
 void sflph_config_set_noise_suppress_state(bool state)
 {
-    _getConfigurationManager()->setNoiseSuppressState(state);
+    getConfigurationManager()->setNoiseSuppressState(state);
 }
 
 bool sflph_config_is_agc_enabled(void)
 {
-    return _getConfigurationManager()->isAgcEnabled();
+    return getConfigurationManager()->isAgcEnabled();
 }
 
 void sflph_config_enable_agc(bool enabled)
 {
-    _getConfigurationManager()->setAgcState(enabled);
+    getConfigurationManager()->setAgcState(enabled);
 }
 
 void sflph_config_mute_dtmf(bool mute)
 {
-    _getConfigurationManager()->muteDtmf(mute);
+    getConfigurationManager()->muteDtmf(mute);
 }
 
 bool sflph_config_is_dtmf_muted(void)
 {
-    return _getConfigurationManager()->isDtmfMuted();
+    return getConfigurationManager()->isDtmfMuted();
 }
 
 bool sflph_config_is_capture_muted(void)
 {
-    return _getConfigurationManager()->isCaptureMuted();
+    return getConfigurationManager()->isCaptureMuted();
 }
 
 void sflph_config_mute_capture(bool mute)
 {
-    _getConfigurationManager()->muteCapture(mute);
+    getConfigurationManager()->muteCapture(mute);
 }
 
 bool sflph_config_is_playback_muted(void)
 {
-    return _getConfigurationManager()->isPlaybackMuted();
+    return getConfigurationManager()->isPlaybackMuted();
 }
 
 void sflph_config_mute_playback(int mute)
 {
-    _getConfigurationManager()->mutePlayback(mute);
+    getConfigurationManager()->mutePlayback(mute);
 }
 
 std::map<std::string, std::string> sflph_config_get_ringtone_list(void)
 {
-    return _getConfigurationManager()->getRingtoneList();
+    return getConfigurationManager()->getRingtoneList();
 }
 
 std::string sflph_config_get_audio_manager(void)
 {
-    return _getConfigurationManager()->getAudioManager();
+    return getConfigurationManager()->getAudioManager();
 }
 
 bool sflph_config_set_audio_manager(const std::string& api)
 {
-    return _getConfigurationManager()->setAudioManager(api);
+    return getConfigurationManager()->setAudioManager(api);
 }
 
 std::vector<std::string> sflph_config_get_supported_audio_managers(void)
@@ -560,230 +560,230 @@ std::vector<std::string> sflph_config_get_supported_audio_managers(void)
 
 int sflph_config_is_iax2_enabled(void)
 {
-    return _getConfigurationManager()->isIax2Enabled();
+    return getConfigurationManager()->isIax2Enabled();
 }
 
 std::string sflph_config_get_record_path(void)
 {
-    return _getConfigurationManager()->getRecordPath();
+    return getConfigurationManager()->getRecordPath();
 }
 
 void sflph_config_set_record_path(const std::string& path)
 {
-    _getConfigurationManager()->setRecordPath(path);
+    getConfigurationManager()->setRecordPath(path);
 }
 
 bool sflph_config_is_always_recording(void)
 {
-    return _getConfigurationManager()->getIsAlwaysRecording();
+    return getConfigurationManager()->getIsAlwaysRecording();
 }
 
 void sflph_config_set_always_recording(bool rec)
 {
-    _getConfigurationManager()->setIsAlwaysRecording(rec);
+    getConfigurationManager()->setIsAlwaysRecording(rec);
 }
 
 void sflph_config_set_history_limit(int days)
 {
-    _getConfigurationManager()->setHistoryLimit(days);
+    getConfigurationManager()->setHistoryLimit(days);
 }
 
 int sflph_config_get_history_limit(void)
 {
-    return _getConfigurationManager()->getHistoryLimit();
+    return getConfigurationManager()->getHistoryLimit();
 }
 
 void sflph_config_clear_history(void)
 {
-    _getConfigurationManager()->clearHistory();
+    getConfigurationManager()->clearHistory();
 }
 
 void sflph_config_set_accounts_order(const std::string& order)
 {
-    _getConfigurationManager()->setAccountsOrder(order);
+    getConfigurationManager()->setAccountsOrder(order);
 }
 
 std::map<std::string, std::string> sflph_config_get_hook_settings(void)
 {
-    return _getConfigurationManager()->getHookSettings();
+    return getConfigurationManager()->getHookSettings();
 }
 
 void sflph_config_set_hook_settings(const std::map<std::string, std::string>& settings)
 {
-    _getConfigurationManager()->setHookSettings(settings);
+    getConfigurationManager()->setHookSettings(settings);
 }
 
 std::vector<std::map<std::string, std::string>> sflph_config_get_history(void)
 {
-    return _getConfigurationManager()->getHistory();
+    return getConfigurationManager()->getHistory();
 }
 
 std::map<std::string, std::string> sflph_config_get_tls_settings()
 {
-    return _getConfigurationManager()->getTlsSettings();
+    return getConfigurationManager()->getTlsSettings();
 }
 
 void sflph_config_set_tls_settings(const std::map< std::string, std::string >& settings)
 {
-    _getConfigurationManager()->setTlsSettings(settings);
+    getConfigurationManager()->setTlsSettings(settings);
 }
 
 std::map<std::string, std::string> sflph_config_get_ip2ip_details(void)
 {
-    return _getConfigurationManager()->getIp2IpDetails();
+    return getConfigurationManager()->getIp2IpDetails();
 }
 
 std::vector<std::map<std::string, std::string>> sflph_config_get_credentials(const std::string& account_id)
 {
-    return _getConfigurationManager()->getCredentials(account_id);
+    return getConfigurationManager()->getCredentials(account_id);
 }
 
 void sflph_config_set_credentials(const std::string& account_id, const std::vector<std::map<std::string, std::string>>& details)
 {
-    _getConfigurationManager()->setCredentials(account_id, details);
+    getConfigurationManager()->setCredentials(account_id, details);
 }
 
 std::string sflph_config_get_addr_from_interface_name(const std::string& interface)
 {
-    return _getConfigurationManager()->getAddrFromInterfaceName(interface);
+    return getConfigurationManager()->getAddrFromInterfaceName(interface);
 }
 
 std::vector<std::string> sflph_config_get_all_ip_interface(void)
 {
-    return _getConfigurationManager()->getAllIpInterface();
+    return getConfigurationManager()->getAllIpInterface();
 }
 
 std::vector<std::string> sflph_config_get_all_ip_interface_by_name(void)
 {
-    return _getConfigurationManager()->getAllIpInterfaceByName();
+    return getConfigurationManager()->getAllIpInterfaceByName();
 }
 
 std::map<std::string, std::string> sflph_config_get_shortcuts()
 {
-    return _getConfigurationManager()->getShortcuts();
+    return getConfigurationManager()->getShortcuts();
 }
 
 void sflph_config_set_shortcuts(const std::map<std::string, std::string>& shortcuts)
 {
-    _getConfigurationManager()->setShortcuts(shortcuts);
+    getConfigurationManager()->setShortcuts(shortcuts);
 }
 
 void sflph_config_set_volume(const std::string& device, double value)
 {
-    _getConfigurationManager()->setVolume(device, value);
+    getConfigurationManager()->setVolume(device, value);
 }
 
 double sflph_config_get_volume(const std::string& device)
 {
-    return _getConfigurationManager()->getVolume(device);
+    return getConfigurationManager()->getVolume(device);
 }
 
 bool sflph_config_check_for_private_key(const std::string& pem_path)
 {
-    return _getConfigurationManager()->checkForPrivateKey(pem_path);
+    return getConfigurationManager()->checkForPrivateKey(pem_path);
 }
 
 bool sflph_config_check_certificate_validity(const std::string& ca_path, const std::string& pem_path)
 {
-    return _getConfigurationManager()->checkCertificateValidity(ca_path, pem_path);
+    return getConfigurationManager()->checkCertificateValidity(ca_path, pem_path);
 }
 
 bool sflph_config_check_hostname_certificate(const std::string& host, const std::string& port)
 {
-    return _getConfigurationManager()->checkHostnameCertificate(host, port);
+    return getConfigurationManager()->checkHostnameCertificate(host, port);
 }
 
 #ifdef SFL_PRESENCE
 void sflph_pres_publish(const std::string& account_id, int status, const std::string& note)
 {
-    _getPresenceManager()->publish(account_id, status, note);
+    getPresenceManager()->publish(account_id, status, note);
 }
 
 void sflph_pres_answer_server_request(const std::string& uri, int flag)
 {
-    _getPresenceManager()->answerServerRequest(uri, flag);
+    getPresenceManager()->answerServerRequest(uri, flag);
 }
 
 void sflph_pres_subscribe_buddy(const std::string& account_id, const std::string& uri, int flag)
 {
-    _getPresenceManager()->subscribeBuddy(account_id, uri, flag);
+    getPresenceManager()->subscribeBuddy(account_id, uri, flag);
 }
 
 std::vector<std::map<std::string, std::string>> sflph_pres_get_subscriptions(const std::string& account_id)
 {
-    return _getPresenceManager()->getSubscriptions(account_id);
+    return getPresenceManager()->getSubscriptions(account_id);
 }
 
 void sflph_pres_set_subscriptions(const std::string& account_id, const std::vector<std::string>& uris)
 {
-    _getPresenceManager()->setSubscriptions(account_id, uris);
+    getPresenceManager()->setSubscriptions(account_id, uris);
 }
 #endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
 std::vector<std::map<std::string, std::string>> sflph_video_get_codecs(const std::string& account_id)
 {
-    return _getVideoManager()->getCodecs(account_id);
+    return getVideoManager()->getCodecs(account_id);
 }
 
 void sflph_video_set_codecs(const std::string& account_id, const std::vector<std::map<std::string, std::string>>& details)
 {
-    _getVideoManager()->setCodecs(account_id, details);
+    getVideoManager()->setCodecs(account_id, details);
 }
 
 std::vector<std::string> sflph_video_get_device_list(void)
 {
-    return _getVideoManager()->getDeviceList();
+    return getVideoManager()->getDeviceList();
 }
 
 std::map<std::string, std::string> sflph_video_get_settings(const std::string& name)
 {
-    return _getVideoManager()->getSettings(name);
+    return getVideoManager()->getSettings(name);
 }
 
 void sflph_video_set_default_device(const std::string& dev)
 {
-    _getVideoManager()->setDefaultDevice(dev);
+    getVideoManager()->setDefaultDevice(dev);
 }
 
 std::string sflph_video_get_default_device(void)
 {
-    return _getVideoManager()->getDefaultDevice();
+    return getVideoManager()->getDefaultDevice();
 }
 
 std::string sflph_video_get_current_codec_name(const std::string& call_id)
 {
-    return _getVideoManager()->getCurrentCodecName(call_id);
+    return getVideoManager()->getCurrentCodecName(call_id);
 }
 
 void sflph_video_start_camera(void)
 {
-    _getVideoManager()->startCamera();
+    getVideoManager()->startCamera();
 }
 
 void sflph_video_stop_camera(void)
 {
-    _getVideoManager()->stopCamera();
+    getVideoManager()->stopCamera();
 }
 
 bool sflph_video_switch_input(const std::string& resource)
 {
-    return _getVideoManager()->switchInput(resource);
+    return getVideoManager()->switchInput(resource);
 }
 
 bool sflph_video_is_camera_started(void)
 {
-    return _getVideoManager()->hasCameraStarted();
+    return getVideoManager()->hasCameraStarted();
 }
 
 void sflph_video_apply_settings(const std::string& name, const std::map<std::string, std::string>& settings)
 {
-	_getVideoManager()->applySettings(name, settings);
+	getVideoManager()->applySettings(name, settings);
 }
 
 std::map<std::string, std::map<std::string, std::vector<std::string>>> sflph_video_get_capabilities(const std::string& name)
 {
-	return _getVideoManager()->getCapabilities(name);
+	return getVideoManager()->getCapabilities(name);
 }
 
 #endif // SFL_VIDEO
