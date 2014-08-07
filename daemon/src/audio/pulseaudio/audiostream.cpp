@@ -98,6 +98,8 @@ AudioStream::~AudioStream()
     // make sure we don't get any further callback
     pa_stream_set_state_callback(audiostream_, NULL, NULL);
     pa_stream_set_write_callback(audiostream_, NULL, NULL);
+    pa_stream_set_read_callback(audiostream_, NULL, NULL);
+    pa_stream_set_moved_callback(audiostream_, NULL, NULL);
     pa_stream_set_underflow_callback(audiostream_, NULL, NULL);
     pa_stream_set_overflow_callback(audiostream_, NULL, NULL);
 
