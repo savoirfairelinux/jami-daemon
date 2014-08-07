@@ -166,6 +166,7 @@ PulseLayer::~PulseLayer()
         PulseMainLoopLock lock(mainloop_);
 
         pa_context_set_state_callback(context_, NULL, NULL);
+        pa_context_set_subscribe_callback(context_, NULL, NULL);
         pa_context_disconnect(context_);
         pa_context_unref(context_);
     }
