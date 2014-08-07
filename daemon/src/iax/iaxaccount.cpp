@@ -234,15 +234,19 @@ IAXAccount::sendRegister()
     if (getUsername().empty())
         throw VoipLinkException("Account username is empty");
 
-    std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-
-    if (regSession_)
-        iax_destroy(regSession_);
-
-    regSession_ = iax_session_new();
+    {
+        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+        regSession_.reset(iax_session_new());
+    }
 
     if (regSession_) {
-        iax_register(regSession_, getHostname().data(), getUsername().data(), getPassword().data(), 120);
+        {
+            std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
+            DEBUG("register IAXAccount %s", getHostname().c_str());
+            iax_register(regSession_.get(), getHostname().data(),
+                         getUsername().data(), getPassword().data(), 120);
+        }
+
         nextRefreshStamp_ = time(NULL) + 10;
         setRegistrationState(RegistrationState::TRYING);
     }
@@ -251,14 +255,10 @@ IAXAccount::sendRegister()
 void
 IAXAccount::sendUnregister(std::function<void(bool)> cb)
 {
-    if (regSession_) {
-        std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-        iax_destroy(regSession_);
-        regSession_ = NULL;
-    }
+    DEBUG("unregister IAXAccount %s", getHostname().c_str());
+    destroyRegSession();
 
     nextRefreshStamp_ = 0;
-
     setRegistrationState(RegistrationState::UNREGISTERED);
 
     if (cb)
@@ -269,8 +269,7 @@ void
 IAXAccount::destroyRegSession()
 {
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-    iax_destroy(regSession_);
-    regSession_ = nullptr;
+    regSession_.reset();
 }
 
 void
@@ -278,4 +277,10 @@ IAXAccount::checkRegister()
 {
     if (nextRefreshStamp_ and nextRefreshStamp_ < time(NULL))
         sendRegister();
+}
+
+bool
+IAXAccount::matchRegSession(const iax_session* session) const
+{
+    return regSession_.get() == session;
 }
