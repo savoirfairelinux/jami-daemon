@@ -128,7 +128,7 @@ int VideoDecoder::setupFromVideoData()
     // Increase analyze time to solve synchronization issues between callers.
     static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
 
-    inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
+    inputCtx_->max_analyze_duration2 = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
     DEBUG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
