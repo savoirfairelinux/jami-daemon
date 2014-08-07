@@ -145,7 +145,7 @@ IAXVoIPLink::handleEvents()
 
         if (auto raw_call_ptr = iaxGetCallFromSession(event->session)) {
             iaxHandleCallEvent(event, *raw_call_ptr);
-        } else if (event->session && event->session == account_.getRegSession()) {
+        } else if (event->session && account_.matchRegSession(event->session)) {
             // This is a registration session, deal with it
             iaxHandleRegReply(event);
         } else {

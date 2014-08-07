@@ -88,9 +88,7 @@ class IAXAccount : public Account {
             return password_;
         }
 
-        iax_session* getRegSession() const {
-            return regSession_;
-        }
+        bool matchRegSession(const iax_session* session) const;
 
         void destroyRegSession();
 
@@ -144,7 +142,10 @@ class IAXAccount : public Account {
         void iaxOutgoingInvite(IAXCall* call);
 
         /** registration session : nullptr if not register */
-        iax_session* regSession_ = nullptr;
+        struct RegSessionDeleter {
+                void operator()(iax_session* session) { iax_destroy(session); }
+        };
+        std::unique_ptr<iax_session, RegSessionDeleter> regSession_ = nullptr;
 
          // Account login information: password
         std::string password_;
