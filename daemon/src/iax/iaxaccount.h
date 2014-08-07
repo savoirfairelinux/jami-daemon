@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,6 @@
 
 #include "account.h"
 #include "iaxvoiplink.h"
-#include "noncopyable.h"
 #include "sfl_types.h" // enable_if_base_of
 
 class IAXCall;
@@ -125,8 +124,6 @@ class IAXAccount : public Account {
         newIncomingCall(const std::string& id);
 
     private:
-        NON_COPYABLE(IAXAccount);
-
         void setAccountDetails(const std::map<std::string, std::string> &details);
 
         /**
@@ -142,7 +139,7 @@ class IAXAccount : public Account {
         std::unique_ptr<iax_session, RegSessionDeleter> regSession_ = nullptr;
 
          // Account login information: password
-        std::string password_;
+        std::string password_{};
         std::unique_ptr<IAXVoIPLink> link_;
 
         /** Timestamp of when we should refresh the registration up with

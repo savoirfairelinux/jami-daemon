@@ -4,7 +4,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@
 constexpr const char * const IAXAccount::ACCOUNT_TYPE;
 
 IAXAccount::IAXAccount(const std::string& accountID)
-    : Account(accountID), password_(), link_(new IAXVoIPLink(*this))
+    : Account(accountID), link_(new IAXVoIPLink(*this))
 {}
 
 void IAXAccount::serialize(Conf::YamlEmitter &emitter)
