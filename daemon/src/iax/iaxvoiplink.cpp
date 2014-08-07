@@ -65,6 +65,7 @@ IAXVoIPLink::init()
     if (initDone_)
         return;
 
+    std::lock_guard<std::mutex> lock(mutexIAX);
     for (int port = IAX_DEFAULT_PORTNO, nbTry = 0; nbTry < 3 ; port = rand() % 64000 + 1024, nbTry++) {
         if (iax_init(port) >= 0) {
             Manager::instance().registerEventHandler((uintptr_t)this, std::bind(&IAXVoIPLink::handleEvents, this));
@@ -379,7 +380,6 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
     const auto accountID = account_.getAccountID();
     std::shared_ptr<IAXCall> call;
     std::string id;
-    int format;
 
     switch (event->etype) {
         case IAX_EVENT_CONNECT:
@@ -407,14 +407,15 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 
             Manager::instance().incomingCall(*call, accountID);
 
-            format = call->getFirstMatchingFormat(event->ies.format, accountID);
+            call->format = call->getFirstMatchingFormat(event->ies.format, accountID);
+            if (!call->format)
+                call->format = call->getFirstMatchingFormat(event->ies.capability, accountID);
 
-            if (!format)
-                format = call->getFirstMatchingFormat(event->ies.capability, accountID);
-
-            iax_accept(event->session, format);
-            iax_ring_announce(event->session);
-            call->format = format;
+            {
+                std::lock_guard<std::mutex> lock(mutexIAX);
+                iax_accept(event->session, call->format);
+                iax_ring_announce(event->session);
+            }
 
             break;
 
