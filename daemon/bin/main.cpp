@@ -147,23 +147,15 @@ static void interrupt()
 
 static void signal_handler(int code)
 {
+    std::cerr << "Caught signal " << strsignal(code)
+				  << ", terminating..." << std::endl;
+
 	// Unset signal handlers
 	signal(SIGHUP, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
 
-	// Stop manager in new thread since we don't know what
-	// this handler is interrupting (e.g. a mutex might be held in the
-	// interrupted function)
-	std::thread th([code] {
-		interrupt();
-		std::cerr << "Caught signal " << strsignal(code)
-				  << ", terminating..." << std::endl;
-	});
-
-	// Detach thread and leave signal handler so that interrupted thread
-	// can continue
-	th.detach();
+    interrupt();
 }
 
 int main(int argc, char *argv [])

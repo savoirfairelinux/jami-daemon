@@ -63,8 +63,6 @@ private:
     std::function<void()> callback_;
 };
 
-DBusClient* DBusClient::_lastDbusClient = nullptr;
-
 DBusClient::DBusClient(int sflphFlags, bool persistent) :
     callManager_(nullptr)
     , configurationManager_(nullptr)
@@ -76,6 +74,7 @@ DBusClient::DBusClient(int sflphFlags, bool persistent) :
 #ifdef SFL_VIDEO
     , videoManager_(nullptr)
 #endif
+    , timeout_(nullptr)
 {
     try {
         DBus::_init_threading();
@@ -83,11 +82,9 @@ DBusClient::DBusClient(int sflphFlags, bool persistent) :
 
         // timeout and expired are deleted internally by dispatcher_'s
         // destructor, so we must NOT delete them ourselves.
-        DBus::DefaultTimeout *timeout = new DBus::DefaultTimeout(10 /* ms */,
-                                                                 true,
-                                                                 dispatcher_);
+        timeout_ = new DBus::DefaultTimeout(10 /* ms */, true, dispatcher_);
         // Poll for SIP/IAX events
-        timeout->expired = new EventCallback(sflph_poll_events);
+        timeout_->expired = new EventCallback(sflph_poll_events);
 
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
         sessionConnection.request_name("org.sflphone.SFLphone");
@@ -140,70 +137,74 @@ DBusClient::~DBusClient()
     delete configurationManager_;
     delete callManager_;
     delete dispatcher_;
-
-    finiLibrary();
 }
 
 int DBusClient::initLibrary(int sflphFlags)
 {
-    if (!_lastDbusClient) {
-        _lastDbusClient = this;
-    }
+    using namespace std::placeholders;
+    using std::bind;
+
+    auto callM = callManager_; // just an alias
 
     // Call event handlers
     sflph_call_ev_handlers callEvHandlers = {
-        callOnStateChange,
-        callOnTransferFail,
-        callOnTransferSuccess,
-        callOnRecordPlaybackStopped,
-        callOnVoiceMailNotify,
-        callOnIncomingMessage,
-        callOnIncomingCall,
-        callOnRecordPlaybackFilepath,
-        callOnConferenceCreated,
-        callOnConferenceChanged,
-        callOnUpdatePlaybackScale,
-        callOnConferenceRemove,
-        callOnNewCall,
-        callOnSipCallStateChange,
-        callOnRecordStateChange,
-        callOnSecureSdesOn,
-        callOnSecureSdesOff,
-        callOnSecureZrtpOn,
-        callOnSecureZrtpOff,
-        callOnShowSas,
-        callOnZrtpNotSuppOther,
-        callOnZrtpNegotiationFail,
-        callOnRtcpReceiveReport,
+        bind(&DBusCallManager::callStateChanged, callM, _1, _2),
+        bind(&DBusCallManager::transferFailed, callM),
+        bind(&DBusCallManager::transferSucceeded, callM),
+        bind(&DBusCallManager::recordPlaybackStopped, callM, _1),
+        bind(&DBusCallManager::voiceMailNotify, callM, _1, _2),
+        bind(&DBusCallManager::incomingMessage, callM, _1, _2, _3),
+        bind(&DBusCallManager::incomingCall, callM, _1, _2, _3),
+        bind(&DBusCallManager::recordPlaybackFilepath, callM, _1, _2),
+        bind(&DBusCallManager::conferenceCreated, callM, _1),
+        bind(&DBusCallManager::conferenceChanged, callM, _1, _2),
+        bind(&DBusCallManager::updatePlaybackScale, callM, _1, _2, _3),
+        bind(&DBusCallManager::conferenceRemoved, callM, _1),
+        bind(&DBusCallManager::newCallCreated, callM, _1, _2, _3),
+        bind(&DBusCallManager::sipCallStateChanged, callM, _1, _2, _3),
+        bind(&DBusCallManager::recordingStateChanged, callM, _1, _2),
+        bind(&DBusCallManager::secureSdesOn, callM, _1),
+        bind(&DBusCallManager::secureSdesOff, callM, _1),
+        bind(&DBusCallManager::secureZrtpOn, callM, _1, _2),
+        bind(&DBusCallManager::secureZrtpOff, callM, _1),
+        bind(&DBusCallManager::showSAS, callM, _1, _2, _3),
+        bind(&DBusCallManager::zrtpNotSuppOther, callM, _1),
+        bind(&DBusCallManager::zrtpNegotiationFailed, callM, _1, _2, _3),
+        bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)
     };
+
+    auto confM = configurationManager_; // just an alias
 
     // Configuration event handlers
     sflph_config_ev_handlers configEvHandlers = {
-        configOnVolumeChange,
-        configOnAccountsChange,
-        configOnHistoryChange,
-        configOnStunStatusFail,
-        configOnRegistrationStateChange,
-        configOnSipRegistrationStateChange,
-        configOnError,
+        bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2),
+        bind(&DBusConfigurationManager::accountsChanged, confM),
+        bind(&DBusConfigurationManager::historyChanged, confM),
+        bind(&DBusConfigurationManager::stunStatusFailure, confM, _1),
+        bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2),
+        bind(&DBusConfigurationManager::sipRegistrationStateChanged, confM, _1, _2, _3),
+        bind(&DBusConfigurationManager::errorAlert, confM, _1),
     };
 
 #ifdef SFL_PRESENCE
+    auto presM = presenceManager_;
     // Presence event handlers
     sflph_pres_ev_handlers presEvHandlers = {
-        presOnNewServerSubscriptionRequest,
-        presOnServerError,
-        presOnNewBuddyNotification,
-        presOnSubscriptionStateChange,
+        bind(&DBusPresenceManager::newServerSubscriptionRequest, presM, _1),
+        bind(&DBusPresenceManager::serverError, presM, _1, _2, _3),
+        bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4),
+        bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)
     };
 #endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
+    auto videoM = videoManager_;
+
     // Video event handlers
     sflph_video_ev_handlers videoEvHandlers = {
-        videoOnDeviceEvent,
-        videoOnStartDecoding,
-        videoOnStopDecoding,
+        bind(&DBusVideoManager::deviceEvent, videoM),
+        bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5),
+        bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)
     };
 #endif // SFL_VIDEO
 
@@ -247,11 +248,10 @@ int DBusClient::event_loop()
 
 int DBusClient::exit()
 {
-    // Avoid libsflphone events from now on
-    _lastDbusClient = nullptr;
-
     try {
         dispatcher_->leave();
+        timeout_->expired = new EventCallback([] {});
+        finiLibrary();
     } catch (const DBus::Error &err) {
         std::cerr << "quitting: " << err.name() << ": " << err.what() << std::endl;
         return 1;
@@ -262,290 +262,3 @@ int DBusClient::exit()
 
     return 0;
 }
-
-DBusCallManager* DBusClient::getCallManager()
-{
-    return callManager_;
-}
-
-DBusConfigurationManager* DBusClient::getConfigurationManager()
-{
-    return configurationManager_;
-}
-
-#ifdef SFL_PRESENCE
-DBusPresenceManager* DBusClient::getPresenceManager()
-{
-    return presenceManager_;
-}
-#endif
-
-#ifdef SFL_VIDEO
-DBusVideoManager* DBusClient::getVideoManager()
-{
-    return videoManager_;
-}
-#endif
-
-void DBusClient::callOnStateChange(const std::string& call_id, const std::string& state)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->callStateChanged(call_id, state);
-    }
-}
-
-void DBusClient::callOnTransferFail(void)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->transferFailed();
-    }
-}
-
-void DBusClient::callOnTransferSuccess(void)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->transferSucceeded();
-    }
-}
-
-void DBusClient::callOnRecordPlaybackStopped(const std::string& path)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->recordPlaybackStopped(path);
-    }
-}
-
-void DBusClient::callOnVoiceMailNotify(const std::string& call_id, int nd_msg)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->voiceMailNotify(call_id, nd_msg);
-    }
-}
-
-void DBusClient::callOnIncomingMessage(const std::string& id, const std::string& from, const std::string& msg)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->incomingMessage(id, from, msg);
-    }
-}
-
-void DBusClient::callOnIncomingCall(const std::string& account_id, const std::string& call_id, const std::string& from)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->incomingCall(account_id, call_id, from);
-    }
-}
-
-void DBusClient::callOnRecordPlaybackFilepath(const std::string& id, const std::string& filename)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->recordPlaybackFilepath(id, filename);
-    }
-}
-
-void DBusClient::callOnConferenceCreated(const std::string& conf_id)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->conferenceCreated(conf_id);
-    }
-}
-
-void DBusClient::callOnConferenceChanged(const std::string& conf_id, const std::string& state)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->conferenceChanged(conf_id, state);
-    }
-}
-
-void DBusClient::callOnUpdatePlaybackScale(const std::string& filepath, int position, int scale)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->updatePlaybackScale(filepath, position, scale);
-    }
-}
-
-void DBusClient::callOnConferenceRemove(const std::string& conf_id)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->conferenceRemoved(conf_id);
-    }
-}
-
-void DBusClient::callOnNewCall(const std::string& account_id, const std::string& call_id, const std::string& to)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->newCallCreated(account_id, call_id, to);
-    }
-}
-
-void DBusClient::callOnSipCallStateChange(const std::string& call_id, const std::string& state, int code)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->sipCallStateChanged(call_id, state, code);
-    }
-}
-
-void DBusClient::callOnRecordStateChange(const std::string& call_id, int state)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->recordingStateChanged(call_id, state);
-    }
-}
-
-void DBusClient::callOnSecureSdesOn(const std::string& call_id)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->secureSdesOn(call_id);
-    }
-}
-
-void DBusClient::callOnSecureSdesOff(const std::string& call_id)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->secureSdesOff(call_id);
-    }
-}
-
-void DBusClient::callOnSecureZrtpOn(const std::string& call_id, const std::string& cipher)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->secureZrtpOn(call_id, cipher);
-    }
-}
-
-void DBusClient::callOnSecureZrtpOff(const std::string& call_id)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->secureZrtpOff(call_id);
-    }
-}
-
-void DBusClient::callOnShowSas(const std::string& call_id, const std::string& sas, int verified)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->showSAS(call_id, sas, verified);
-    }
-}
-
-void DBusClient::callOnZrtpNotSuppOther(const std::string& call_id)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->zrtpNotSuppOther(call_id);
-    }
-}
-
-void DBusClient::callOnZrtpNegotiationFail(const std::string& call_id, const std::string& reason, const std::string& severity)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->zrtpNegotiationFailed(call_id, reason, severity);
-    }
-}
-
-void DBusClient::callOnRtcpReceiveReport(const std::string& call_id, const std::map<std::string, int>& stats)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getCallManager()->onRtcpReportReceived(call_id, stats);
-    }
-}
-
-void DBusClient::configOnVolumeChange(const std::string& device, int value)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getConfigurationManager()->volumeChanged(device, value);
-    }
-}
-
-void DBusClient::configOnAccountsChange(void)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getConfigurationManager()->accountsChanged();
-    }
-}
-
-void DBusClient::configOnHistoryChange(void)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getConfigurationManager()->historyChanged();
-    }
-}
-
-void DBusClient::configOnStunStatusFail(const std::string& account_id)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getConfigurationManager()->stunStatusFailure(account_id);
-    }
-}
-
-void DBusClient::configOnRegistrationStateChange(const std::string& account_id, int state)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getConfigurationManager()->registrationStateChanged(account_id, state);
-    }
-}
-
-void DBusClient::configOnSipRegistrationStateChange(const std::string& account_id, const std::string& state, int code)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getConfigurationManager()->sipRegistrationStateChanged(account_id, state, code);
-    }
-}
-
-void DBusClient::configOnError(int alert)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getConfigurationManager()->errorAlert(alert);
-    }
-}
-
-#ifdef SFL_PRESENCE
-void DBusClient::presOnNewServerSubscriptionRequest(const std::string& remote)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getPresenceManager()->newServerSubscriptionRequest(remote);
-    }
-}
-
-void DBusClient::presOnServerError(const std::string& account_id, const std::string& error, const std::string& msg)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getPresenceManager()->serverError(account_id, error, msg);
-    }
-}
-
-void DBusClient::presOnNewBuddyNotification(const std::string& account_id, const std::string& buddy_uri, int status, const std::string& line_status)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getPresenceManager()->newBuddyNotification(account_id, buddy_uri, status, line_status);
-    }
-}
-
-void DBusClient::presOnSubscriptionStateChange(const std::string& account_id, const std::string& buddy_uri, int state)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getPresenceManager()->subscriptionStateChanged(account_id, buddy_uri, state);
-    }
-}
-#endif // SFL_PRESENCE
-
-#ifdef SFL_VIDEO
-void DBusClient::videoOnDeviceEvent(void)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getVideoManager()->deviceEvent();
-    }
-}
-
-void DBusClient::videoOnStartDecoding(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getVideoManager()->startedDecoding(id, shm_path, w, h, is_mixer);
-    }
-}
-
-void DBusClient::videoOnStopDecoding(const std::string& id, const std::string& shm_path, bool is_mixer)
-{
-    if (_lastDbusClient) {
-        _lastDbusClient->getVideoManager()->stoppedDecoding(id, shm_path, is_mixer);
-    }
-}
-#endif // SFL_VIDEO

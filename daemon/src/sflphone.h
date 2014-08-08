@@ -35,6 +35,7 @@
 #endif
 
 #include <vector>
+#include <functional>
 #include <string>
 #include <map>
 
@@ -45,60 +46,60 @@ sflph_version();
 #ifdef SFL_PRESENCE
 struct sflph_pres_ev_handlers
 {
-    void (*on_new_server_subscription_request)(const std::string& remote);
-    void (*on_server_error)(const std::string& account_id, const std::string& error, const std::string& msg);
-    void (*on_new_buddy_notification)(const std::string& account_id, const std::string& buddy_uri, int status, const std::string& line_status);
-    void (*on_subscription_state_change)(const std::string& account_id, const std::string& buddy_uri, int state);
+    std::function<void (const std::string& /*remote*/)> on_new_server_subscription_request;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*error*/, const std::string& /*msg*/)> on_server_error;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/)> on_new_buddy_notification;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/)> on_subscription_state_change;
 };
 #endif /* SFL_PRESENCE */
 
 /* configuration events */
 struct sflph_config_ev_handlers
 {
-    void (*on_volume_change)(const std::string& device, int value);
-    void (*on_accounts_change)(void);
-    void (*on_history_change)(void);
-    void (*on_stun_status_fail)(const std::string& account_id);
-    void (*on_registration_state_change)(const std::string& account_id, int state);
-    void (*on_sip_registration_state_change)(const std::string& account_id, const std::string& state, int code);
-    void (*on_error)(int alert);
+    std::function<void (const std::string& /*device*/, int /*value*/)> on_volume_change;
+    std::function<void ()> on_accounts_change;
+    std::function<void ()> on_history_change;
+    std::function<void (const std::string& /*account_id*/)> on_stun_status_fail;
+    std::function<void (const std::string& /*account_id*/, int /*state*/)> on_registration_state_change;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/)> on_sip_registration_state_change;
+    std::function<void (int /*alert*/)> on_error;
 };
 
 /* call events */
 struct sflph_call_ev_handlers
 {
-    void (*on_state_change)(const std::string& call_id, const std::string& state);
-    void (*on_transfer_fail)(void);
-    void (*on_transfer_success)(void);
-    void (*on_record_playback_stopped)(const std::string& path);
-    void (*on_voice_mail_notify)(const std::string& call_id, int nd_msg);
-    void (*on_incoming_message)(const std::string& id, const std::string& from, const std::string& msg);
-    void (*on_incoming_call)(const std::string& account_id, const std::string& call_id, const std::string& from);
-    void (*on_record_playback_filepath)(const std::string& id, const std::string& filename);
-    void (*on_conference_created)(const std::string& conf_id);
-    void (*on_conference_changed)(const std::string& conf_id, const std::string& state);
-    void (*on_update_playback_scale)(const std::string& filepath, int position, int scale);
-    void (*on_conference_remove)(const std::string& conf_id);
-    void (*on_new_call)(const std::string& account_id, const std::string& call_id, const std::string& to);
-    void (*on_sip_call_state_change)(const std::string& call_id, const std::string& state, int code);
-    void (*on_record_state_change)(const std::string& call_id, int state);
-    void (*on_secure_sdes_on)(const std::string& call_id);
-    void (*on_secure_sdes_off)(const std::string& call_id);
-    void (*on_secure_zrtp_on)(const std::string& call_id, const std::string& cipher);
-    void (*on_secure_zrtp_off)(const std::string& call_id);
-    void (*on_show_sas)(const std::string& call_id, const std::string& sas, int verified);
-    void (*on_zrtp_not_supp_other)(const std::string& call_id);
-    void (*on_zrtp_negotiation_fail)(const std::string& call_id, const std::string& reason, const std::string& severity);
-    void (*on_rtcp_receive_report)(const std::string& call_id, const std::map<std::string, int>& stats);
+    std::function<void (const std::string& /*call_id*/, const std::string& /*state*/)> on_state_change;
+    std::function<void ()> on_transfer_fail;
+    std::function<void ()> on_transfer_success;
+    std::function<void (const std::string& /*path*/)> on_record_playback_stopped;
+    std::function<void (const std::string& /*call_id*/, int /*nd_msg*/)> on_voice_mail_notify;
+    std::function<void (const std::string& /*id*/, const std::string& /*from*/, const std::string& /*msg*/)> on_incoming_message;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*call_id*/, const std::string& /*from*/)> on_incoming_call;
+    std::function<void (const std::string& /*id*/, const std::string& /*filename*/)> on_record_playback_filepath;
+    std::function<void (const std::string& /*conf_id*/)> on_conference_created;
+    std::function<void (const std::string& /*conf_id*/, const std::string& /*state*/)> on_conference_changed;
+    std::function<void (const std::string& /*filepath*/, int /*position*/, int /*scale*/)> on_update_playback_scale;
+    std::function<void (const std::string& /*conf_id*/)> on_conference_remove;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*call_id*/, const std::string& /*to*/)> on_new_call;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*state*/, int /*code*/)> on_sip_call_state_change;
+    std::function<void (const std::string& /*call_id*/, int /*state*/)> on_record_state_change;
+    std::function<void (const std::string& /*call_id*/)> on_secure_sdes_on;
+    std::function<void (const std::string& /*call_id*/)> on_secure_sdes_off;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*cipher*/)> on_secure_zrtp_on;
+    std::function<void (const std::string& /*call_id*/)> on_secure_zrtp_off;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*sas*/, int /*verified*/)> on_show_sas;
+    std::function<void (const std::string& /*call_id*/)> on_zrtp_not_supp_other;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*reason*/, const std::string& /*severity*/)> on_zrtp_negotiation_fail;
+    std::function<void (const std::string& /*call_id*/, const std::map<std::string, int>& /*stats*/)> on_rtcp_receive_report;
 };
 
 /* video events */
 #ifdef SFL_VIDEO
 struct sflph_video_ev_handlers
 {
-    void (*on_device_event)(void);
-    void (*on_start_decoding)(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer);
-    void (*on_stop_decoding)(const std::string& id, const std::string& shm_path, bool is_mixer);
+    std::function<void ()> on_device_event;
+    std::function<void (const std::string& /*id*/, const std::string& /*shm_path*/, int /*w*/, int /*h*/, bool /*is_mixer*/)> on_start_decoding;
+    std::function<void (const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/)> on_stop_decoding;
 };
 #endif /* SFL_VIDEO */
 
