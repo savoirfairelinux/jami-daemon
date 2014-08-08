@@ -350,10 +350,18 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 
-    if (pjsip_inv_create_uac(dialog, call->getLocalSDP().getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
+    pjsip_inv_session* inv = nullptr;
+    if (pjsip_inv_create_uac(dialog, call->getLocalSDP().getLocalSdpSession(), 0, &inv) != PJ_SUCCESS) {
         ERROR("Unable to create invite session for user agent client");
         return false;
     }
+
+    if (!inv) {
+        ERROR("Call invite is not initialized");
+        return PJ_FALSE;
+    }
+
+    call->inv.reset(inv);
 
     updateDialogViaSentBy(dialog);
 
@@ -369,7 +377,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     pjsip_tx_data *tdata;
 
-    if (pjsip_inv_invite(call->inv, &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_invite(call->inv.get(), &tdata) != PJ_SUCCESS) {
         ERROR("Could not initialize invite messager for this call");
         return false;
     }
@@ -380,7 +388,8 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
+        call->inv.reset();
         ERROR("Unable to send invite message for this call");
         return false;
     }

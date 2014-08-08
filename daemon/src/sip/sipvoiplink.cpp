@@ -380,19 +380,21 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP().getLocalSdpSession(), 0, &call->inv);
-
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         ERROR("Could not set transport for dialog");
         return PJ_FALSE;
     }
 
-    if (!call->inv) {
+    pjsip_inv_session* inv = nullptr;
+    pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP().getLocalSdpSession(), 0, &inv);
+
+    if (!inv) {
         ERROR("Call invite is not initialized");
         return PJ_FALSE;
     }
 
-    call->inv->mod_data[mod_ua_.id] = call.get();
+    inv->mod_data[mod_ua_.id] = call.get();
+    call->inv.reset(inv);
 
     // Check whether Replaces header is present in the request and process accordingly.
     pjsip_dialog *replaced_dlg;
@@ -421,29 +423,34 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // If Replace header present
     if (replaced_dlg) {
         // Always answer the new INVITE with 200 if the replaced call is in early or confirmed state.
-        if (pjsip_inv_answer(call->inv, PJSIP_SC_OK, NULL, NULL, &response) == PJ_SUCCESS)
-            pjsip_inv_send_msg(call->inv, response);
+        if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_OK, NULL, NULL, &response) == PJ_SUCCESS) {
+            if (pjsip_inv_send_msg(call->inv.get(), response) != PJ_SUCCESS)
+                call->inv.reset();
+        }
 
         // Get the INVITE session associated with the replaced dialog.
         pjsip_inv_session *replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
 
         // Disconnect the "replaced" INVITE session.
-        if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
-            pjsip_inv_send_msg(replaced_inv, tdata);
+        if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata) {
+            if (pjsip_inv_send_msg(replaced_inv, tdata))
+                call->inv.reset();
+        }
     } else { // Proceed with normal call flow
-        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+        if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             ERROR("Could not answer invite");
             return PJ_FALSE;
         }
 
-        if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+        if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
+            call->inv.reset();
             return PJ_FALSE;
         }
 
         call->setConnectionState(Call::TRYING);
 
-        if (pjsip_inv_answer(call->inv, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+        if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             ERROR("Could not answer invite");
             return PJ_FALSE;
         }
@@ -452,8 +459,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
         const pj_str_t contactStr(sipaccount->getContactHeader());
         sip_utils::addContactHeader(&contactStr, tdata);
 
-        if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+        if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
+            call->inv.reset();
             return PJ_FALSE;
         }
 
@@ -845,7 +853,7 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
     localSDP.receiveOffer(offer, account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
     localSDP.startNegotiation();
 
-    pjsip_inv_set_sdp_answer(call->inv, localSDP.getLocalSdpSession());
+    pjsip_inv_set_sdp_answer(inv, localSDP.getLocalSdpSession());
 }
 
 static void

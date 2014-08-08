@@ -99,7 +99,6 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 SIPCall::SIPCall(SIPAccount& account, const std::string& id,
                  Call::CallType type)
     : Call(account, id, type)
-    , inv(NULL)
     , audiortp_(this)
 #ifdef SFL_VIDEO
     // The ID is used to associate video streams to calls
@@ -118,9 +117,8 @@ SIPCall::~SIPCall()
 
     // prevent this from getting accessed in callbacks
     // WARN: this is not thread-safe!
-    if (inv->mod_data[mod_ua_id]) {
+    if (inv && inv->mod_data[mod_ua_id]) {
         WARN("Call was not properly removed from invite callbacks");
-
         inv->mod_data[mod_ua_id] = nullptr;
     }
 
@@ -199,9 +197,13 @@ SIPCall::SIPSessionReinvite()
     pjmedia_sdp_session *local_sdp = local_sdp_->getLocalSdpSession();
     pjsip_tx_data *tdata;
 
-    if (local_sdp and inv and inv->pool_prov and
-            pjsip_inv_reinvite(inv, NULL, local_sdp, &tdata) == PJ_SUCCESS)
-        return pjsip_inv_send_msg(inv, tdata);
+    if (local_sdp and inv and inv->pool_prov
+        and pjsip_inv_reinvite(inv.get(), NULL, local_sdp, &tdata) == PJ_SUCCESS) {
+        if (pjsip_inv_send_msg(inv.get(), tdata) == PJ_SUCCESS)
+            return PJ_SUCCESS;
+        else
+            inv.reset();
+    }
 
     return !PJ_SUCCESS;
 }
@@ -209,6 +211,9 @@ SIPCall::SIPSessionReinvite()
 void
 SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 {
+    if (not inv or not inv->dlg)
+        throw VoipLinkException("Couldn't get invite dialog");
+
     pj_str_t methodName = CONST_PJ_STR("INFO");
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
@@ -260,10 +265,13 @@ void SIPCall::answer()
 {
     auto& account = getSIPAccount();
 
+    if (not inv)
+        throw VoipLinkException("No invite session for this call");
+
     if (!inv->neg) {
         WARN("Negotiator is NULL, we've received an INVITE without an SDP");
         pjmedia_sdp_session *dummy = 0;
-        getSIPVoIPLink()->createSDPOffer(inv, &dummy);
+        getSIPVoIPLink()->createSDPOffer(inv.get(), &dummy);
 
         if (account.isStunEnabled())
             updateSDPFromSTUN();
@@ -277,7 +285,7 @@ void SIPCall::answer()
         throw std::runtime_error("Should only be called for initial answer");
 
     // answer with SDP if no SDP was given in initial invite (i.e. inv->neg is NULL)
-    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, !inv->neg ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
+    if (pjsip_inv_answer(inv.get(), PJSIP_SC_OK, NULL, !inv->neg ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     // contactStr must stay in scope as long as tdata
@@ -286,8 +294,10 @@ void SIPCall::answer()
         sip_utils::addContactHeader(&contactHeader_, tdata);
     }
 
-    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+    if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
+        inv.reset();
         throw std::runtime_error("Could not send invite request answer (200 OK)");
+    }
 
     setConnectionState(CONNECTED);
     setState(ACTIVE);
@@ -296,10 +306,10 @@ void SIPCall::answer()
 void
 SIPCall::hangup(int reason)
 {
-    auto& account = getSIPAccount();
-
-    if (not inv)
+    if (not inv or not inv->dlg)
         throw VoipLinkException("No invite session for this call");
+
+    auto& account = getSIPAccount();
 
     pjsip_route_hdr *route = inv->dlg->route_set.next;
     while (route and route != &inv->dlg->route_set) {
@@ -323,15 +333,17 @@ SIPCall::hangup(int reason)
                        0;
 
     // User hangup current call. Notify peer
-    if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
+    if (pjsip_inv_end_session(inv.get(), status, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
     // contactStr must stay in scope as long as tdata
     const pj_str_t contactStr(account.getContactHeader());
     sip_utils::addContactHeader(&contactStr, tdata);
 
-    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+    if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
+        inv.reset();
         return;
+    }
 
     // Make sure user data is NULL in callbacks
     inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
@@ -352,11 +364,13 @@ SIPCall::refuse()
 
     pjsip_tx_data *tdata;
 
-    if (pjsip_inv_end_session(inv, PJSIP_SC_DECLINE, NULL, &tdata) != PJ_SUCCESS)
+    if (pjsip_inv_end_session(inv.get(), PJSIP_SC_DECLINE, NULL, &tdata) != PJ_SUCCESS)
         return;
 
-    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+    if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
+        inv.reset();
         return;
+    }
 
     // Make sure the pointer is NULL in callbacks
     inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
@@ -425,8 +439,10 @@ transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
                 if (!call->inv)
                     return;
 
-                if (pjsip_inv_end_session(call->inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS)
-                    pjsip_inv_send_msg(call->inv, tdata);
+                if (pjsip_inv_end_session(call->inv.get(), PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS) {
+                    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS)
+                        call->inv.reset();
+                }
 
                 Manager::instance().hangupCall(call->getCallId());
                 pjsip_evsub_set_mod_data(sub, mod_ua_id, NULL);
@@ -443,7 +459,7 @@ transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 bool
 SIPCall::transferCommon(pj_str_t *dst)
 {
-    if (!inv)
+    if (not inv or not inv->dlg)
         return false;
 
     pjsip_evsub_user xfer_cb;
@@ -502,8 +518,8 @@ SIPCall::transfer(const std::string& to)
 bool
 SIPCall::attendedTransfer(const std::string& /*to*/)
 {
-    if (!inv or !inv->dlg)
-        throw VoipLinkException("Couldn't get invite dialog");
+    if (not inv or not inv->dlg)
+        return false;
 
     pjsip_dialog *target_dlg = inv->dlg;
     pjsip_uri *uri = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
@@ -642,17 +658,22 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
 void
 SIPCall::peerHungup()
 {
+    if (not inv)
+        throw VoipLinkException("No invite session for this call");
+
     // User hangup current call. Notify peer
     pjsip_tx_data *tdata = NULL;
 
-    if (pjsip_inv_end_session(inv, 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
+    if (pjsip_inv_end_session(inv.get(), 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
-    if (auto ret = pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+    if (auto ret = pjsip_inv_send_msg(inv.get(), tdata) == PJ_SUCCESS) {
+        // Make sure user data is NULL in callbacks
+        inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
+    } else {
+        inv.reset();
         sip_utils::sip_strerror(ret);
-
-    // Make sure user data is NULL in callbacks
-    inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
+    }
 
     // Stop all RTP streams
     stopRtpIfCurrent();
@@ -670,12 +691,15 @@ SIPCall::sendTextMessage(const std::string &message, const std::string &from)
 {
     using namespace sfl::InstantMessaging;
 
+    if (not inv)
+        throw VoipLinkException("No invite session for this call");
+
     /* Send IM message */
     UriList list;
     UriEntry entry;
     entry[sfl::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
     list.push_front(entry);
-    send_sip_message(inv, getCallId(), appendUriList(message, list));
+    send_sip_message(inv.get(), getCallId(), appendUriList(message, list));
 }
 #endif // HAVE_INSTANT_MESSAGING
 
