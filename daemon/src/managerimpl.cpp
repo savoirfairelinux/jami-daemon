@@ -127,7 +127,7 @@ ManagerImpl::ManagerImpl() :
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), client_(),
     config_(),
-    currentCallMutex_(), audiodriver_(nullptr), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
+    currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
     mainBuffer_(), callFactory(), conferenceMap_(), history_(),
@@ -282,8 +282,7 @@ ManagerImpl::finish()
         {
             std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-            delete audiodriver_;
-            audiodriver_ = nullptr;
+            audiodriver_.reset();
         }
     } catch (const VoipLinkException &err) {
         ERROR("%s", err.what());
@@ -1341,7 +1340,7 @@ ManagerImpl::saveConfig()
 {
     DEBUG("Saving Configuration to XDG directory %s", path_.c_str());
 
-    if (audiodriver_ != nullptr) {
+    if (audiodriver_) {
         audioPreference.setVolumemic(audiodriver_->getCaptureGain());
         audioPreference.setVolumespkr(audiodriver_->getPlaybackGain());
         audioPreference.setCaptureMuted(audiodriver_->isCaptureMuted());
@@ -1410,7 +1409,7 @@ ManagerImpl::playDtmf(char code)
     //                = number of seconds * SAMPLING_RATE by SECONDS
 
     // fast return, no sound, so no dtmf
-    if (audiodriver_ == nullptr or not dtmfKey_) {
+    if (not audiodriver_ or not dtmfKey_) {
         DEBUG("No audio layer...");
         return;
     }
@@ -1735,7 +1734,7 @@ ManagerImpl::playATone(Tone::TONEID toneId)
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-        if (audiodriver_ == nullptr) {
+        if (not audiodriver_) {
             ERROR("Audio layer not initialized");
             return;
         }
@@ -1846,7 +1845,7 @@ ManagerImpl::playRingtone(const std::string& accountID)
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-        if (!audiodriver_) {
+        if (not audiodriver_) {
             ERROR("no audio layer in ringtone");
             return;
         }
@@ -1942,10 +1941,9 @@ ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
     bool wasStarted = audiodriver_->isStarted();
 
     // Recreate audio driver with new settings
-    delete audiodriver_;
-    audiodriver_ = audioPreference.createAudioLayer();
+    audiodriver_.reset(audioPreference.createAudioLayer());
 
-    if (wasStarted)
+    if (audiodriver_ and wasStarted)
         audiodriver_->startStream();
 }
 
@@ -1957,7 +1955,7 @@ ManagerImpl::setAudioDevice(int index, DeviceType type)
 {
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-    if (!audiodriver_) {
+    if (not audiodriver_) {
         ERROR("Audio driver not initialized");
         return ;
     }
@@ -1966,10 +1964,9 @@ ManagerImpl::setAudioDevice(int index, DeviceType type)
     audiodriver_->updatePreference(audioPreference, index, type);
 
     // Recreate audio driver with new settings
-    delete audiodriver_;
-    audiodriver_ = audioPreference.createAudioLayer();
+    audiodriver_.reset(audioPreference.createAudioLayer());
 
-    if (wasStarted)
+    if (audiodriver_ and wasStarted)
         audiodriver_->startStream();
 }
 
@@ -2103,7 +2100,7 @@ ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-        if (!audiodriver_) {
+        if (not audiodriver_) {
             ERROR("No audio layer in start recorded file playback");
             return false;
         }
@@ -2176,7 +2173,7 @@ ManagerImpl::setAudioManager(const std::string &api)
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-        if (!audiodriver_)
+        if (not audiodriver_)
             return false;
 
         if (api == audioPreference.getAudioApi()) {
@@ -2189,11 +2186,10 @@ ManagerImpl::setAudioManager(const std::string &api)
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
         bool wasStarted = audiodriver_->isStarted();
-        delete audiodriver_;
         audioPreference.setAudioApi(api);
-        audiodriver_ = audioPreference.createAudioLayer();
+        audiodriver_.reset(audioPreference.createAudioLayer());
 
-        if (wasStarted)
+        if (audiodriver_ and wasStarted)
             audiodriver_->startStream();
     }
 
@@ -2214,7 +2210,7 @@ ManagerImpl::getAudioInputDeviceIndex(const std::string &name)
 {
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-    if (audiodriver_ == nullptr) {
+    if (not audiodriver_) {
         ERROR("Audio layer not initialized");
         return 0;
     }
@@ -2227,7 +2223,7 @@ ManagerImpl::getAudioOutputDeviceIndex(const std::string &name)
 {
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-    if (audiodriver_ == nullptr) {
+    if (not audiodriver_) {
         ERROR("Audio layer not initialized");
         return 0;
     }
@@ -2272,7 +2268,7 @@ void
 ManagerImpl::initAudioDriver()
 {
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
-    audiodriver_ = audioPreference.createAudioLayer();
+    audiodriver_.reset(audioPreference.createAudioLayer());
 }
 
 void
@@ -2766,7 +2762,7 @@ ManagerImpl::sendRegister(const std::string& accountID, bool enable)
         acc->unregisterVoIPLink();
 }
 
-AudioLayer*
+std::shared_ptr<AudioLayer>
 ManagerImpl::getAudioDriver()
 {
     return audiodriver_;
