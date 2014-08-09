@@ -377,7 +377,7 @@ std::string ConfigurationManager::getAudioManager()
 
 void ConfigurationManager::setVolume(const std::string& device, const double& value)
 {
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+    auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
         ERROR("Audio layer not valid while updating volume");
@@ -398,7 +398,7 @@ void ConfigurationManager::setVolume(const std::string& device, const double& va
 double
 ConfigurationManager::getVolume(const std::string& device)
 {
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+    auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
         ERROR("Audio layer not valid while updating volume");
@@ -427,7 +427,7 @@ void ConfigurationManager::muteDtmf(const bool &mute)
 
 bool ConfigurationManager::isCaptureMuted()
 {
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+    auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
         ERROR("Audio layer not valid");
@@ -439,7 +439,7 @@ bool ConfigurationManager::isCaptureMuted()
 
 void ConfigurationManager::muteCapture(const bool &mute)
 {
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+    auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
         ERROR("Audio layer not valid");
@@ -451,7 +451,7 @@ void ConfigurationManager::muteCapture(const bool &mute)
 
 bool ConfigurationManager::isPlaybackMuted()
 {
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+    auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
         ERROR("Audio layer not valid");
@@ -463,7 +463,7 @@ bool ConfigurationManager::isPlaybackMuted()
 
 void ConfigurationManager::mutePlayback(const bool &mute)
 {
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+    auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
         ERROR("Audio layer not valid");

@@ -145,7 +145,7 @@ class ManagerImpl {
          * it's multi-thread and use mutex internally
          * @return AudioLayer*  The audio layer object
          */
-        AudioLayer* getAudioDriver();
+        std::shared_ptr<AudioLayer> getAudioDriver();
 
         void startAudioDriverStream();
 
@@ -820,7 +820,7 @@ class ManagerImpl {
         std::mutex currentCallMutex_;
 
         /** Audio layer */
-        AudioLayer* audiodriver_;
+        std::shared_ptr<AudioLayer> audiodriver_{nullptr};
 
         // Main thread
         std::unique_ptr<DTMF> dtmfKey_;

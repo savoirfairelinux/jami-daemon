@@ -68,7 +68,7 @@ void AudioLayerTest::testAudioLayerSwitch()
 {
     TITLE();
 
-    bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
+    bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver().get()) != 0;
 
     for (int i = 0; i < 2; i++) {
         DEBUG("iter - %i", i);
@@ -78,11 +78,11 @@ void AudioLayerTest::testAudioLayerSwitch()
             Manager::instance().setAudioManager(ALSA_API_STR);
 
         if (wasAlsa)
-            CPPUNIT_ASSERT(dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver()));
+            CPPUNIT_ASSERT(dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver().get()));
         else
-            CPPUNIT_ASSERT(dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
+            CPPUNIT_ASSERT(dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver().get()));
 
-        wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
+        wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver().get()) != 0;
         const struct timespec req = {0, 100000000};
         nanosleep(&req, 0);
     }
@@ -92,13 +92,13 @@ void AudioLayerTest::testPulseConnect()
 {
     TITLE();
 
-    if (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver())) {
+    if (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver().get())) {
         Manager::instance().setAudioManager(PULSEAUDIO_API_STR);
         const struct timespec req = {0, 100000000};
         nanosleep(&req, 0);
     }
 
-    pulselayer_ = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());
+    pulselayer_ = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver().get());
 
     CPPUNIT_ASSERT(pulselayer_);
 }
