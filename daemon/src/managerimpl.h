@@ -79,7 +79,7 @@ class TelephoneTone;
 typedef std::list<std::string> TokenList;
 
 /** To store conference objects by conference ids */
-typedef std::map<std::string, Conference*> ConferenceMap;
+typedef std::map<std::string, std::shared_ptr<Conference> > ConferenceMap;
 
 static const char * const default_conf = "conf";
 
@@ -234,7 +234,8 @@ class ManagerImpl {
          * @param the first participant ID
          * @param the second participant ID
          */
-        Conference* createConference(const std::string& id1, const std::string& id2);
+        std::shared_ptr<Conference>
+        createConference(const std::string& id1, const std::string& id2);
 
         /**
          * Delete this conference
@@ -246,7 +247,8 @@ class ManagerImpl {
          * Return the conference id for which this call is attached
          * @ param the call id
          */
-        Conference* getConferenceFromCallID(const std::string& call_id);
+        std::shared_ptr<Conference>
+        getConferenceFromCallID(const std::string& call_id);
 
         /**
          * Hold every participant to a conference

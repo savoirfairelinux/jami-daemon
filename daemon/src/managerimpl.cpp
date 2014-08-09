@@ -528,7 +528,7 @@ ManagerImpl::hangupConference(const std::string& id)
     ConferenceMap::iterator iter_conf = conferenceMap_.find(id);
 
     if (iter_conf != conferenceMap_.end()) {
-        Conference *conf = iter_conf->second;
+        auto conf = iter_conf->second;
 
         if (conf) {
             ParticipantSet participants(conf->getParticipantList());
@@ -700,12 +700,12 @@ ManagerImpl::refuseCall(const std::string& id)
     return true;
 }
 
-Conference*
+std::shared_ptr<Conference>
 ManagerImpl::createConference(const std::string& id1, const std::string& id2)
 {
     DEBUG("Create conference with call %s and %s", id1.c_str(), id2.c_str());
 
-    Conference* conf = new Conference;
+    auto conf = std::make_shared<Conference>();
 
     conf->add(id1);
     conf->add(id2);
@@ -725,12 +725,12 @@ ManagerImpl::removeConference(const std::string& conference_id)
     DEBUG("number of participants: %u", conferenceMap_.size());
     ConferenceMap::iterator iter = conferenceMap_.find(conference_id);
 
-    Conference* conf = 0;
+    std::shared_ptr<Conference> conf;
 
     if (iter != conferenceMap_.end())
         conf = iter->second;
 
-    if (conf == 0) {
+    if (not conf) {
         ERROR("Conference not found");
         return;
     }
@@ -755,11 +755,9 @@ ManagerImpl::removeConference(const std::string& conference_id)
         DEBUG("Conference %s removed successfully", conference_id.c_str());
     else
         ERROR("Cannot remove conference: %s", conference_id.c_str());
-
-    delete conf;
 }
 
-Conference*
+std::shared_ptr<Conference>
 ManagerImpl::getConferenceFromCallID(const std::string& call_id)
 {
     auto call = getCallFromCallID(call_id);
@@ -782,7 +780,7 @@ ManagerImpl::holdConference(const std::string& id)
     if (iter_conf == conferenceMap_.end())
         return false;
 
-    Conference *conf = iter_conf->second;
+    auto conf = iter_conf->second;
 
     bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
                  conf->getState() == Conference::ACTIVE_DETACHED_REC or
@@ -810,7 +808,7 @@ ManagerImpl::unHoldConference(const std::string& id)
     if (iter_conf == conferenceMap_.end() or iter_conf->second == 0)
         return false;
 
-    Conference *conf = iter_conf->second;
+    auto conf = iter_conf->second;
 
     bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
         conf->getState() == Conference::ACTIVE_DETACHED_REC or
@@ -889,7 +887,7 @@ ManagerImpl::addParticipant(const std::string& callId,
     // Add main participant
     addMainParticipant(conferenceId);
 
-    Conference* conf = iter->second;
+    auto conf = iter->second;
     switchCall(getCallFromCallID(conf->getConfID()));
 
     // Add coresponding IDs in conf and call
@@ -941,7 +939,7 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
         if (iter == conferenceMap_.end() or iter->second == 0)
             return false;
 
-        Conference *conf = iter->second;
+        auto conf = iter->second;
 
         ParticipantSet participants(conf->getParticipantList());
 
@@ -1018,7 +1016,7 @@ ManagerImpl::joinParticipant(const std::string& callId1,
     }
 
 
-    Conference *conf = createConference(callId1, callId2);
+    auto conf = createConference(callId1, callId2);
 
     call1->setConfId(conf->getConfID());
     getMainBuffer().unBindAll(callId1);
@@ -1081,7 +1079,7 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
         return;
     }
 
-    Conference* conf = new Conference;
+    auto conf = std::make_shared<Conference>();
 
     int successCounter = 0;
 
@@ -1114,8 +1112,6 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
         conferenceMap_[conf->getConfID()] = conf;
         client_.getCallManager()->conferenceCreated(conf->getConfID());
         conf->setRecordingFormat(mainBuffer_.getInternalAudioFormat());
-    } else {
-        delete conf;
     }
 }
 
@@ -1131,7 +1127,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
             return false;
         }
 
-        Conference *conf = getConferenceFromCallID(call_id);
+        auto conf = getConferenceFromCallID(call_id);
 
         if (conf == nullptr) {
             ERROR("Call is not conferencing, cannot detach");
@@ -1163,7 +1159,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
 
         ConferenceMap::iterator iter = conferenceMap_.find(current_call_id);
 
-        Conference *conf = iter->second;
+        auto conf = iter->second;
         if (iter == conferenceMap_.end() or conf == 0) {
             DEBUG("Conference is NULL");
             return false;
@@ -1199,7 +1195,7 @@ ManagerImpl::removeParticipant(const std::string& call_id)
 
     ConferenceMap::const_iterator iter = conferenceMap_.find(call->getConfId());
 
-    Conference *conf = iter->second;
+    auto conf = iter->second;
     if (iter == conferenceMap_.end() or conf == 0) {
         ERROR("No conference with id %s, cannot remove participant", call->getConfId().c_str());
         return;
@@ -1267,7 +1263,7 @@ ManagerImpl::joinConference(const std::string& conf_id1,
         return false;
     }
 
-    Conference *conf = conferenceMap_.find(conf_id1)->second;
+    auto conf = conferenceMap_.find(conf_id1)->second;
     ParticipantSet participants(conf->getParticipantList());
 
     for (const auto &p : participants)
@@ -1288,7 +1284,7 @@ ManagerImpl::addStream(const std::string& call_id)
         ConferenceMap::iterator iter = conferenceMap_.find(call->getConfId());
 
         if (iter != conferenceMap_.end() and iter->second) {
-            Conference* conf = iter->second;
+            auto conf = iter->second;
 
             conf->bindParticipant(call_id);
         }
@@ -1512,7 +1508,7 @@ ManagerImpl::incomingMessage(const std::string& callID,
                              const std::string& message)
 {
     if (isConferenceParticipant(callID)) {
-        Conference *conf = getConferenceFromCallID(callID);
+        auto conf = getConferenceFromCallID(callID);
 
         ParticipantSet participants(conf->getParticipantList());
 
@@ -1551,7 +1547,7 @@ ManagerImpl::sendTextMessage(const std::string& callID,
         if (it == conferenceMap_.end())
             return false;
 
-        Conference *conf = it->second;
+        auto conf = it->second;
 
         if (!conf)
             return false;
@@ -1573,7 +1569,7 @@ ManagerImpl::sendTextMessage(const std::string& callID,
 
     if (isConferenceParticipant(callID)) {
         DEBUG("Call is participant in a conference, send instant message to everyone");
-        Conference *conf = getConferenceFromCallID(callID);
+        auto conf = getConferenceFromCallID(callID);
 
         if (!conf)
             return false;
@@ -2052,21 +2048,18 @@ ManagerImpl::setIsAlwaysRecording(bool isAlwaysRec)
 bool
 ManagerImpl::toggleRecordingCall(const std::string& id)
 {
-    std::shared_ptr<Call> call;
-    Recordable* rec = nullptr;
+    std::shared_ptr<Recordable> rec;
 
     ConferenceMap::const_iterator it(conferenceMap_.find(id));
     if (it == conferenceMap_.end()) {
         DEBUG("toggle recording for call %s", id.c_str());
-        getCallFromCallID(id);
-        call = getCallFromCallID(id);
-        rec = call.get();
+        rec = getCallFromCallID(id);
     } else {
         DEBUG("toggle recording for conference %s", id.c_str());
-        Conference *conf = it->second;
+        auto conf = it->second;
         if (conf) {
             rec = conf;
-            if (rec->isRecording())
+            if (conf->isRecording())
                 conf->setState(Conference::ACTIVE_ATTACHED);
             else
                 conf->setState(Conference::ACTIVE_ATTACHED_REC);
