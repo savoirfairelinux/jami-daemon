@@ -139,7 +139,7 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
     return a;
 }
 
-void IAXAccount::registerVoIPLink()
+void IAXAccount::registerAccount()
 {
     try {
         link_->init();
@@ -150,7 +150,7 @@ void IAXAccount::registerVoIPLink()
 }
 
 void
-IAXAccount::unregisterVoIPLink(std::function<void(bool)> cb)
+IAXAccount::unregister(std::function<void(bool)> cb)
 {
     try {
         sendUnregister();
