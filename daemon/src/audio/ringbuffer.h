@@ -44,11 +44,7 @@ class RingBuffer {
          * Constructor
          * @param size  Size of the buffer to create
          */
-        RingBuffer(size_t size, const std::string &call_id, AudioFormat format=AudioFormat::MONO());
-
-        std::string getBufferId() const {
-            return buffer_id_;
-        }
+        RingBuffer(size_t size, AudioFormat format=AudioFormat::MONO());
 
         /**
          * Reset the counters to 0 for this read offset
@@ -176,7 +172,6 @@ class RingBuffer {
         mutable std::condition_variable not_empty_;
 
         ReadOffset readoffsets_;
-        std::string buffer_id_;
 };
 
 
