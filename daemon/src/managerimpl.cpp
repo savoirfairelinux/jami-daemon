@@ -331,7 +331,8 @@ void
 ManagerImpl::switchCall(std::shared_ptr<Call> call)
 {
     std::lock_guard<std::mutex> m(currentCallMutex_);
-    DEBUG("----- Switch current call id to %s -----", call->getCallId().c_str());
+    DEBUG("----- Switch current call id to '%s' -----",
+          call ? call->getCallId().c_str() : "<nullptr>");
     currentCall_ = call;
 }
 
