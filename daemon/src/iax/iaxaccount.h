@@ -66,10 +66,10 @@ class IAXAccount : public Account {
         void loadConfig();
 
         // Register an account
-        void registerVoIPLink();
+        void doRegister();
 
         // Unregister an account
-        void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>());
+        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>());
 
         /**
          * Send out registration

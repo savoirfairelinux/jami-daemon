@@ -102,16 +102,16 @@ class Account : public Serializable {
         virtual bool isIP2IP() const { return false; }
 
         /**
-         * Register the underlying VoIPLink. Launch the event listener.
+         * Register the account. Launch the event listener.
          * This should update the getRegistrationState() return value.
          */
-        virtual void registerVoIPLink() = 0;
+        virtual void doRegister() = 0;
 
         /**
          * Unregister the underlying VoIPLink. Stop the event listener.
          * This should update the getRegistrationState() return value.
          */
-        virtual void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
+        virtual void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
 
         /**
          * Create a new outgoing call.
