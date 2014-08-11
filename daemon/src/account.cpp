@@ -124,7 +124,7 @@ Account::freeAccount()
 {
     for (const auto& id : callIDSet_)
         Manager::instance().hangupCall(id);
-    unregisterVoIPLink();
+    doUnregister();
 }
 
 void Account::setRegistrationState(RegistrationState state)

@@ -206,12 +206,12 @@ class SIPAccount : public Account {
         /**
          * Initialize the SIP voip link with the account parameters and send registration
          */
-        void registerVoIPLink();
+        void doRegister();
 
         /**
          * Send unregistration.
          */
-        void unregisterVoIPLink(std::function<void(bool)> cb = std::function<void(bool)>());
+        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>());
 
         /**
          * Start the keep alive function, once started, the account will be registered periodically

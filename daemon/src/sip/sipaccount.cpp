@@ -1087,12 +1087,12 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     return a;
 }
 
-void SIPAccount::registerVoIPLink()
+void SIPAccount::doRegister()
 {
     if (hostname_.length() >= PJ_MAX_HOSTNAME)
         return;
 
-    DEBUG("SIPAccount::registerVoIPLink %s ", hostname_.c_str());
+    DEBUG("doRegister %s ", hostname_.c_str());
 
     auto IPs = ip_utils::getAddrList(hostname_);
     for (const auto& ip : IPs)
@@ -1116,7 +1116,7 @@ void SIPAccount::registerVoIPLink()
         bool IPv6 = false;
 #if HAVE_IPV6
         if (isIP2IP()) {
-            DEBUG("SIPAccount::registerVoIPLink isIP2IP.");
+            DEBUG("doRegister isIP2IP.");
             IPv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
         } else if (!IPs.empty())
             IPv6 = IPs[0].isIpv6();
@@ -1152,7 +1152,7 @@ void SIPAccount::registerVoIPLink()
 #endif
 }
 
-void SIPAccount::unregisterVoIPLink(std::function<void(bool)> released_cb)
+void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     if (isIP2IP()) {
         if (released_cb)
@@ -1163,7 +1163,7 @@ void SIPAccount::unregisterVoIPLink(std::function<void(bool)> released_cb)
     try {
         sendUnregister(released_cb);
     } catch (const VoipLinkException &e) {
-        ERROR("SIPAccount::unregisterVoIPLink %s", e.what());
+        ERROR("doUnregister %s", e.what());
         setTransport();
         if (released_cb)
             released_cb(false);
@@ -1778,7 +1778,7 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
     sipAccount->stopKeepAliveTimer();
 
     if (sipAccount->isRegistered())
-        sipAccount->registerVoIPLink();
+        sipAccount->doRegister();
 }
 
 static std::string
