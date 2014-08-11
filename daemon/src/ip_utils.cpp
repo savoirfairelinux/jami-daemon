@@ -166,7 +166,6 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     if (addr.isUnspecified())
         return getLocalAddr(addr.getFamily());
 
-    ERROR("ip_utils::getInterfaceAddr %s %s", interface.c_str(), addr.toString().c_str());
     return addr;
 }
 
@@ -265,7 +264,6 @@ bool
 IpAddr::isPrivate() const
 {
     if (isLoopback()) {
-        ERROR("IpAddr::isPrivate: %s LOOPBACK", toString().c_str());
         return true;
     }
     switch (addr.addr.sa_family) {
