@@ -65,6 +65,7 @@ public:
     IpAddr(const sockaddr& ip) : addr() {
         memcpy(&addr, &ip, ip.sa_family == AF_INET6 ? sizeof addr.ipv6 : sizeof addr.ipv4);
     }
+    IpAddr(const sockaddr_storage& ip) : IpAddr(*reinterpret_cast<const sockaddr*>(&ip)) {}
     IpAddr(const in6_addr& ip) : addr() {
         addr.addr.sa_family = AF_INET6;
         memcpy(&addr.ipv6.sin6_addr, &ip, sizeof(in6_addr));
