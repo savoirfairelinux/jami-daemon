@@ -2416,15 +2416,15 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
         return;
 
     // Unregister before modifying any account information
-    account->unregisterVoIPLink([&](bool /* transport_free */) {
+    account->unregister([&](bool /* transport_free */) {
         account->setAccountDetails(details);
         // Serialize configuration to disk once it is done
         saveConfig();
 
         if (account->isEnabled())
-            account->registerVoIPLink();
+            account->registerAccount();
         else
-            account->unregisterVoIPLink();
+            account->unregister();
 
         // Update account details to the client side
         client_.getConfigurationManager()->accountsChanged();
@@ -2468,7 +2468,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     preferences.addAccount(newAccountID);
 
-    newAccount->registerVoIPLink();
+    newAccount->registerAccount();
 
     saveConfig();
 
@@ -2487,7 +2487,7 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 {
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
-        remAccount->unregisterVoIPLink();
+        remAccount->unregister();
         accountFactory_.removeAccount(*remAccount);
     }
 
@@ -2735,7 +2735,7 @@ ManagerImpl::registerAccounts()
         a->loadConfig();
 
         if (a->isEnabled())
-            a->registerVoIPLink();
+            a->registerAccount();
     }
 }
 
@@ -2744,7 +2744,7 @@ ManagerImpl::unregisterAccounts()
 {
     for (const auto& account : getAllAccounts()) {
         if (account->isEnabled())
-            account->unregisterVoIPLink();
+            account->unregister();
     }
 }
 
@@ -2761,9 +2761,9 @@ ManagerImpl::sendRegister(const std::string& accountID, bool enable)
     Manager::instance().saveConfig();
 
     if (acc->isEnabled())
-        acc->registerVoIPLink();
+        acc->registerAccount();
     else
-        acc->unregisterVoIPLink();
+        acc->unregister();
 }
 
 AudioLayer*

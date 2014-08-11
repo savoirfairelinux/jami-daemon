@@ -1280,7 +1280,7 @@ SIPVoIPLink::loadIP2IPSettings()
             ERROR("No existing IP2IP account");
             return;
         }
-        account->registerVoIPLink();
+        account->registerAccount();
         getSIPVoIPLink()->sipTransport->createSipTransport((SIPAccount&)*account);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
