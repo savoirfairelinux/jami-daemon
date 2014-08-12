@@ -36,6 +36,7 @@
 
 #include "audio/audiolayer.h"
 #include "audio/resampler.h"
+#include "audio/ringbuffer.h"
 
 #if HAVE_SPEEXDSP
 #include "audio/dsp.h"
@@ -68,6 +69,7 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
     , plcPool_(nullptr)
     , plcDec_()
 {
+    ringbuffer_ = Manager::instance().getMainBuffer().createRingBuffer(id_);
     pj_caching_pool_init(&plcCachePool_, &pj_pool_factory_default_policy, 0);
     plcPool_ = pj_pool_create(&plcCachePool_.factory, "plc", 64, 1024, nullptr);
 }
@@ -427,7 +429,8 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     }
     if (decFormat.nb_channels != mainBuffFormat.nb_channels)
         out->setChannelNum(mainBuffFormat.nb_channels, true);
-    Manager::instance().getMainBuffer().putData(*out, id_);
+
+    ringbuffer_->put(*out);
 }
 
 bool

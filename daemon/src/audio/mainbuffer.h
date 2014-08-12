@@ -105,6 +105,11 @@ class MainBuffer {
 
         void flushAllBuffers();
 
+        /**
+         * Create a new ringbuffer with default readoffset
+         */
+        std::shared_ptr<RingBuffer> createRingBuffer(const std::string& call_id);
+
     private:
         NON_COPYABLE(MainBuffer);
 
@@ -117,21 +122,17 @@ class MainBuffer {
          */
         void addCallIDtoSet(const std::string& set_id, const std::string& call_id);
 
-        /**
-         * Create a new ringbuffer with default readoffset
-         */
-        void createRingBuffer(const std::string& call_id);
-
-        void removeRingBuffer(const std::string& call_id);
-
-        bool hasRingBuffer(const std::string& call_id);
-
         std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id) const;
+
+        void bindOneSide(RingBuffer& rbuf, const std::string& rbuf_id,
+                         const std::string& reader_id);
 
         void unBindOneSide(const std::string& call_id1,
                            const std::string& call_id2);
 
-        size_t getDataByID(AudioBuffer& buffer, const std::string& call_id, const std::string& reader_id);
+        size_t getDataFromRingBuffer(AudioBuffer& buffer,
+                                     const std::string& rbuf_id,
+                                     const std::string& reader_id);
 
         size_t availableForGetByID(const std::string& call_id, const std::string& reader_id) const;
 
@@ -139,7 +140,7 @@ class MainBuffer {
 
         void flushByID(const std::string& call_id, const std::string& reader_id);
 
-        typedef std::map<std::string, std::shared_ptr<RingBuffer> > RingBufferMap;
+        typedef std::map<std::string, std::weak_ptr<RingBuffer> > RingBufferMap;
         RingBufferMap ringBufferMap_ = RingBufferMap{};
 
         typedef std::map<std::string, std::shared_ptr<CallIDSet> > CallIDMap;
@@ -148,6 +149,8 @@ class MainBuffer {
         mutable std::recursive_mutex stateLock_ = {};
 
         AudioFormat internalAudioFormat_ = AudioFormat::MONO();
+
+        std::shared_ptr<RingBuffer> defaultRingBuffer{};
 };
 
 #endif  // MainBuffer
