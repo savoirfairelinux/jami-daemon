@@ -109,7 +109,6 @@ class MainBuffer {
         NON_COPYABLE(MainBuffer);
 
         bool hasCallIDSet(const std::string& call_id);
-        std::shared_ptr<CallIDSet> getCallIDSet(const std::string& call_id);
         std::shared_ptr<CallIDSet> getCallIDSet(const std::string& call_id) const;
 
         void createCallIDSet(const std::string& set_id);
@@ -131,7 +130,7 @@ class MainBuffer {
         void removeRingBuffer(const std::string& call_id);
 
         bool hasRingBuffer(const std::string& call_id);
-        std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id);
+
         std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id) const;
 
         void removeReadOffsetFromRingBuffer(const std::string& call_id1,
