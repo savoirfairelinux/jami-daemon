@@ -40,7 +40,6 @@
 
 VideoManager::VideoManager()
 {
-    evHandlers_ = {};
     libav_utils::sfl_avcodec_init();
 }
 

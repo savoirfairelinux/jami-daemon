@@ -51,11 +51,6 @@
 #include "history/historynamecache.h"
 #include "audio/audiolayer.h"
 
-ConfigurationManager::ConfigurationManager()
-{
-    evHandlers_ = {};
-}
-
 void ConfigurationManager::registerEvHandlers(struct sflph_config_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;

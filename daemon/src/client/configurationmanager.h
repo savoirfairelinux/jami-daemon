@@ -47,7 +47,6 @@
 class ConfigurationManager
 {
     public:
-        ConfigurationManager();
         void registerEvHandlers(struct sflph_config_ev_handlers* evHandlers);
 
     // Methods
@@ -162,7 +161,7 @@ class ConfigurationManager
 
     private:
         // Event handlers; needed by the library API
-        struct sflph_config_ev_handlers evHandlers_;
+        sflph_config_ev_handlers evHandlers_{};
 };
 
 #endif //CONFIGURATIONMANAGER_H

@@ -55,7 +55,6 @@ class AudioZrtpSession;
 class CallManager
 {
     public:
-        CallManager();
         void registerEvHandlers(struct sflph_call_ev_handlers* evHandlers);
 
     // Methods
@@ -163,7 +162,7 @@ class CallManager
 
     private:
         // Event handlers; needed by the library API
-        struct sflph_call_ev_handlers evHandlers_;
+        sflph_call_ev_handlers evHandlers_{};
 };
 
 #endif//CALLMANAGER_H

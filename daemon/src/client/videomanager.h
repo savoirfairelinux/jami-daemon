@@ -110,9 +110,7 @@ class VideoManager
         void stoppedDecoding(const std::string &id, const std::string& shmPath, bool isMixer);
 
     private:
-#ifdef SFL_VIDEO
-        struct sflph_video_ev_handlers evHandlers_;
-#endif
+        sflph_video_ev_handlers evHandlers_{};
 };
 
 #endif // VIDEOMANAGER_H_

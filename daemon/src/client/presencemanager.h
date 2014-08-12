@@ -43,7 +43,6 @@
 class PresenceManager
 {
     public:
-        PresenceManager();
         void registerEvHandlers(struct sflph_pres_ev_handlers* evHandlers);
 
     // Methods
@@ -66,7 +65,7 @@ class PresenceManager
 
     private:
         // Event handlers; needed by the library API
-        struct sflph_pres_ev_handlers evHandlers_;
+        struct sflph_pres_ev_handlers evHandlers_{};
 };
 
 #endif //PRESENCEINT_H

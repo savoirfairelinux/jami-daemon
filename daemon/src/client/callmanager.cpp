@@ -46,11 +46,6 @@
 #include "logger.h"
 #include "manager.h"
 
-CallManager::CallManager()
-{
-    evHandlers_ = {};
-}
-
 void CallManager::registerEvHandlers(struct sflph_call_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
