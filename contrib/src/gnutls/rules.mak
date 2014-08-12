@@ -36,6 +36,7 @@ GNUTLS_CONF := \
 	--disable-cxx \
 	--disable-srp-authentication \
 	--disable-psk-authentication-FIXME \
+	--with-included-libtasn1 \
 	--disable-openpgp-authentication \
 	--disable-openssl-compatibility \
 	--disable-guile \
