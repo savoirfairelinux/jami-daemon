@@ -56,7 +56,7 @@ struct pj_pool_t;
 struct pjsip_inv_session;
 
 class Sdp;
-class SIPAccount;
+class SIPAccountBase;
 
 /**
  * @file sipcall.h
@@ -74,7 +74,7 @@ class SIPCall : public Call
          * @param type  The type of the call. Could be Incoming
          *						 Outgoing
          */
-        SIPCall(SIPAccount& account, const std::string& id, Call::CallType type);
+        SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type);
 
     public:
         /**
@@ -147,7 +147,7 @@ class SIPCall : public Call
                              const std::string& from);
 #endif
 
-        SIPAccount& getSIPAccount() const;
+        SIPAccountBase& getSIPAccount() const;
 
         void updateSDPFromSTUN();
 
