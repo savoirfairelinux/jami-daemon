@@ -39,7 +39,12 @@
 #include "client/configurationmanager.h"
 #include "client/presencemanager.h"
 
-Client::Client() : callManager_(new CallManager)
+#ifdef SFL_VIDEO
+#include "videomanager.h"
+#endif // SFL_VIDEO
+
+Client::Client() :
+    callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
 #ifdef SFL_PRESENCE
     , presenceManager_(new PresenceManager)
