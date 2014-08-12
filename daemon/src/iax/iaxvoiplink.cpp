@@ -356,7 +356,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
         out = &resampledData_;
     }
 
-    Manager::instance().getMainBuffer().putData(*out, call.getCallId());
+    call.putAudioData(*out);
 }
 
 /**
