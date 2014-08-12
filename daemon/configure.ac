@@ -532,7 +532,6 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/codecs/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
-                 src/client/android/Makefile \
                  src/hooks/Makefile \
                  src/history/Makefile \
                  src/video/Makefile \
