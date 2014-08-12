@@ -69,77 +69,58 @@ void MainBuffer::setInternalAudioFormat(AudioFormat format)
     }
 }
 
-bool MainBuffer::hasCallIDSet(const std::string& call_id)
+bool
+MainBuffer::hasCallIDSet(const std::string& call_id) const
 {
-    return callIDMap_.find(call_id) != callIDMap_.end();
+    return callIDMap_.find(call_id) != callIDMap_.cend();
 }
 
 std::shared_ptr<CallIDSet>
 MainBuffer::getCallIDSet(const std::string& call_id) const
 {
-    CallIDMap::const_iterator iter = callIDMap_.find(call_id);
-    return (iter != callIDMap_.end()) ? iter->second : nullptr;
+    const auto& iter = callIDMap_.find(call_id);
+    return iter != callIDMap_.cend() ? iter->second : nullptr;
 }
 
-void MainBuffer::createCallIDSet(const std::string& set_id)
+void
+MainBuffer::removeCallIDSet(const std::string& set_id)
 {
-    if (!hasCallIDSet(set_id))
-        callIDMap_[set_id] = std::make_shared<CallIDSet>();
-    else
-        DEBUG("CallID set %s already exists", set_id.c_str());
+    callIDMap_.erase(set_id);
 }
 
-void MainBuffer::removeCallIDSet(const std::string& set_id)
+void
+MainBuffer::addCallIDtoSet(const std::string& set_id, const std::string& call_id)
 {
-    if (hasCallIDSet(set_id)) {
-        callIDMap_.erase(set_id);
-    } else
-        WARN("CallID set %s does not exist!", set_id.c_str());
-}
+    auto callid_set_shared = getCallIDSet(set_id);
 
-void MainBuffer::addCallIDtoSet(const std::string& set_id, const std::string& call_id)
-{
-    const auto callid_set_shared = getCallIDSet(set_id);
-    if (callid_set_shared)
-        callid_set_shared->insert(call_id);
-    else
-        WARN("CallIDSet %s does not exist!", set_id.c_str());
-}
+    if (not callid_set_shared) {
+        const auto& iter = callIDMap_.insert(std::make_pair(set_id, std::make_shared<CallIDSet>()));
+        callid_set_shared = iter.first->second;
+    }
 
-void MainBuffer::removeCallIDfromSet(const std::string& set_id, const std::string& call_id)
-{
-    const auto callid_set_shared = getCallIDSet(set_id);
-    if (callid_set_shared)
-        callid_set_shared->erase(call_id);
-    else
-        WARN("CallIDSet %s does not exist!", set_id.c_str());
+    callid_set_shared->insert(call_id);
 }
 
 bool MainBuffer::hasRingBuffer(const std::string& call_id)
 {
-    return ringBufferMap_.find(call_id) != ringBufferMap_.end();
+    return ringBufferMap_.find(call_id) != ringBufferMap_.cend();
 }
 
 std::shared_ptr<RingBuffer> MainBuffer::getRingBuffer(const std::string& call_id) const
 {
-    RingBufferMap::const_iterator iter = ringBufferMap_.find(call_id);
-    return (iter != ringBufferMap_.end()) ? iter->second : nullptr;
+    return ringBufferMap_.find(call_id)->second;
 }
 
 void MainBuffer::createRingBuffer(const std::string& call_id)
 {
-    if (!hasRingBuffer(call_id))
-        ringBufferMap_[call_id] = std::make_shared<RingBuffer>(SIZEBUF);
-    else
+    const auto& iter = ringBufferMap_.insert(std::make_pair(call_id, std::make_shared<RingBuffer>(SIZEBUF)));
+    if (not iter.second)
         DEBUG("Ringbuffer already exists for call_id %s", call_id.c_str());
 }
 
 void MainBuffer::removeRingBuffer(const std::string& call_id)
 {
-    if (hasRingBuffer(call_id)) {
-        ringBufferMap_.erase(call_id);
-    } else
-        WARN("Ringbuffer %s does not exist!", call_id.c_str());
+    ringBufferMap_.erase(call_id);
 }
 
 void MainBuffer::bindCallID(const std::string& call_id1, const std::string& call_id2)
@@ -147,9 +128,7 @@ void MainBuffer::bindCallID(const std::string& call_id1, const std::string& call
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     createRingBuffer(call_id1);
-    createCallIDSet(call_id1);
     createRingBuffer(call_id2);
-    createCallIDSet(call_id2);
 
     getRingBuffer(call_id1)->createReadOffset(call_id2);
     getRingBuffer(call_id2)->createReadOffset(call_id1);
@@ -162,17 +141,21 @@ void MainBuffer::bindHalfDuplexOut(const std::string& process_id, const std::str
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
     // This method is used only for active calls, if this call does not exist, do nothing
-    if (!hasRingBuffer(call_id))
-        return;
-
-    createCallIDSet(process_id);
-    getRingBuffer(call_id)->createReadOffset(process_id);
-    addCallIDtoSet(process_id, call_id);
+    if (const auto rb = getRingBuffer(call_id)) {
+        rb->createReadOffset(process_id);
+        addCallIDtoSet(process_id, call_id);
+    }
 }
 
-void MainBuffer::removeReadOffsetFromRingBuffer(const std::string& call_id1,
-                                                 const std::string& call_id2)
+void
+MainBuffer::unBindOneSide(const std::string& call_id1,
+                          const std::string& call_id2)
 {
+    if (const auto callid_set_shared = getCallIDSet(call_id2))
+        callid_set_shared->erase(call_id1);
+    else
+        WARN("CallIDSet %s does not exist!", call_id2.c_str());
+
     const auto ringbuffer_shared = getRingBuffer(call_id1);
     if (!ringbuffer_shared) {
         DEBUG("did not find ringbuffer %s", call_id1.c_str());
@@ -204,19 +187,16 @@ void MainBuffer::unBindCallID(const std::string& call_id1, const std::string& ca
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    removeCallIDfromSet(call_id1, call_id2);
-    removeCallIDfromSet(call_id2, call_id1);
 
-    removeReadOffsetFromRingBuffer(call_id1, call_id2);
-    removeReadOffsetFromRingBuffer(call_id2, call_id1);
+    unBindOneSide(call_id1, call_id2);
+    unBindOneSide(call_id2, call_id1);
 }
 
 void MainBuffer::unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    removeCallIDfromSet(process_id, call_id);
-    removeReadOffsetFromRingBuffer(call_id, process_id);
+    unBindOneSide(call_id, process_id);
 
     const auto callid_set_shared = getCallIDSet(process_id);
     if (callid_set_shared and callid_set_shared->empty())
@@ -284,9 +264,8 @@ bool MainBuffer::waitForDataAvailable(const std::string& call_id, size_t min_fra
 
     // convert to absolute time
     const auto deadline = std::chrono::high_resolution_clock::now() + max_wait;
-    std::shared_ptr<CallIDSet> callid_set_shared;
 
-    callid_set_shared = getCallIDSet(call_id);
+    const auto callid_set_shared = getCallIDSet(call_id);
     if (!callid_set_shared or callid_set_shared->empty())
         return false;
 
@@ -312,7 +291,7 @@ size_t MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string& call
         return 0;
 
     if (callid_set_shared->size() == 1) {
-        CallIDSet::iterator iter_id = callid_set_shared->begin();
+        const auto& iter_id = callid_set_shared->begin();
         const auto ringbuffer_shared = getRingBuffer(*iter_id);
         if (!ringbuffer_shared)
             return 0;
@@ -364,7 +343,7 @@ size_t MainBuffer::availableForGet(const std::string& call_id) const
         return 0;
 
     if (callid_set_shared->size() == 1) {
-        CallIDSet::iterator iter_id = callid_set_shared->begin();
+        const auto& iter_id = callid_set_shared->begin();
 
         if ((call_id != DEFAULT_ID) && (*iter_id == call_id))
             DEBUG("This problem should not occur since we have %ld elements", callid_set_shared->size());
