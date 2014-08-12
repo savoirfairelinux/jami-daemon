@@ -40,9 +40,9 @@
 #include "presencemanager.h"
 #endif // SFL_PRESENCE
 
-#ifdef SFL_PRESENCE
+#ifdef SFL_VIDEO
 #include "videomanager.h"
-#endif // SFL_PRESENCE
+#endif // SFL_VIDEO
 
 Client::Client() :
     callManager_(new CallManager)
