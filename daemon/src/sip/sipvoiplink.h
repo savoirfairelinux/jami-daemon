@@ -42,7 +42,6 @@
 #endif
 
 #include "sfl_types.h"
-#include "sipaccount.h"
 #include "siptransport.h"
 
 #include <pjsip.h>
@@ -60,7 +59,8 @@
 #include <memory>
 
 class SIPCall;
-class SIPAccount;
+class SIPAccountBase;
+class SIPVoIPLink;
 
 typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
 
@@ -108,13 +108,6 @@ class SIPVoIPLink {
         void cancelKeepAliveTimer(pj_timer_entry& timer);
 
         /**
-         * Start a new SIP call using the IP2IP profile
-         * @param The call id
-         * @param The target sip uri
-         */
-        std::shared_ptr<Call> SIPNewIpToIpCall(const std::string& id, const std::string& to);
-
-        /**
          * Get the memory pool factory since each calls has its own memory pool
          */
         pj_caching_pool *getMemoryPoolFactory();
@@ -139,9 +132,14 @@ class SIPVoIPLink {
         static void enqueueKeyframeRequest(const std::string &callID);
 #endif
 
-        std::shared_ptr<SIPAccount>
-        guessAccountFromNameAndServer(const std::string &userName,
-                                      const std::string &server) const;
+        /**
+         * Guess the account related to an incoming SIP call.
+         */
+        std::shared_ptr<SIPAccountBase>
+        guessAccount(const std::string& userName,
+                     const std::string& server,
+                     const std::string& fromUri) const;
+
         int getModId();
         pjsip_endpoint * getEndpoint();
         pjsip_module * getMod();

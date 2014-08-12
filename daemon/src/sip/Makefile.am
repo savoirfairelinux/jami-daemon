@@ -4,11 +4,13 @@ noinst_LTLIBRARIES = libsiplink.la
 libsiplink_la_CXXFLAGS = @CXXFLAGS@
 
 libsiplink_la_SOURCES = \
+        sipaccountbase.cpp \
         sdp.cpp \
         sipaccount.cpp \
         sipcall.cpp \
         sipvoiplink.cpp \
         siptransport.cpp \
+        sipaccountbase.h \
         sdp.h \
         sipaccount.h \
         sipcall.h \
