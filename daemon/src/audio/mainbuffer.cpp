@@ -242,10 +242,11 @@ size_t MainBuffer::getData(AudioBuffer& buffer, const std::string& call_id)
         AudioBuffer mixBuffer(buffer);
 
         for (const auto &item_id : *callid_set_shared) {
-            // FIXME: size is not cumulated
-            size = getDataByID(mixBuffer, item_id, call_id);
-            if (size > 0)
+            auto tmp_size = getDataByID(mixBuffer, item_id, call_id);
+            if (tmp_size > 0) {
                 buffer.mix(mixBuffer);
+                size += tmp_size;
+            }
         }
 
         return size;
@@ -311,10 +312,10 @@ size_t MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string& call
         AudioBuffer mixBuffer(buffer);
 
         for (const auto &item_id : *callid_set_shared) {
-            // FIXME: size is not cumulated
-            size = getDataByID(mixBuffer, item_id, call_id);
-            if (size > 0) {
+            auto tmp_size = getDataByID(mixBuffer, item_id, call_id);
+            if (tmp_size > 0) {
                 buffer.mix(mixBuffer);
+                size += tmp_size;
             }
         }
 
