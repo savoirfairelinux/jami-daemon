@@ -75,9 +75,6 @@ static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SS
 static const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
 
-// we force RTP ports to be even, so we only need HALF_MAX_PORT booleans
-bool SIPAccount::portsInUse_[HALF_MAX_PORT];
-
 static void
 registration_cb(pjsip_regc_cbparam *param)
 {
@@ -96,30 +93,16 @@ registration_cb(pjsip_regc_cbparam *param)
 }
 
 SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
-    : Account(accountID)
+    : SIPAccountBase(accountID)
     , auto_rereg_()
     , credentials_()
-    , transport_(nullptr)
-    , tlsListener_(nullptr)
     , regc_(nullptr)
     , bRegister_(false)
     , registrationExpire_(MIN_REGISTRATION_TIME)
-    , interface_("default")
-    , publishedSameasLocal_(true)
-    , publishedIp_()
-    , publishedIpAddress_()
-    , localPort_(DEFAULT_SIP_PORT)
-    , publishedPort_(DEFAULT_SIP_PORT)
     , serviceRoute_()
-    , tlsListenerPort_(DEFAULT_SIP_TLS_PORT)
-    , transportType_(PJSIP_TRANSPORT_UNSPECIFIED)
     , cred_()
     , tlsSetting_()
     , ciphers_(100)
-    , stunServerName_()
-    , stunPort_(PJ_STUN_PORT)
-    , dtmfType_(OVERRTP_STR)
-    , tlsEnable_(false)
     , tlsCaListFile_()
     , tlsCertificateFile_()
     , tlsPrivateKeyFile_()
@@ -131,11 +114,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , tlsVerifyClient_(true)
     , tlsRequireClientCertificate_(true)
     , tlsNegotiationTimeoutSec_("2")
-    , stunServer_("")
-    , stunEnabled_(false)
-    , srtpEnabled_(false)
-    , srtpKeyExchange_("")
-    , srtpFallback_(false)
     , zrtpDisplaySas_(true)
     , zrtpDisplaySasOnce_(false)
     , zrtpHelloHash_(true)
@@ -144,7 +122,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , keepAliveEnabled_(false)
     , keepAliveTimer_()
     , keepAliveTimerActive_(false)
-    , link_(getSIPVoIPLink())
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
@@ -155,10 +132,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , allowContactRewrite_(1)
     , contactOverwritten_(false)
     , via_tp_(nullptr)
-    , audioPortRange_({16384, 32766})
-#ifdef SFL_VIDEO
-    , videoPortRange_({49152, (MAX_PORT) - 2})
-#endif
 #ifdef SFL_PRESENCE
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
 #endif
@@ -220,7 +193,6 @@ unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *
     updateRange(tmpMin, tmpMax, range);
 }
 
-template <>
 std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& id)
 {
@@ -234,6 +206,8 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     std::string to;
     std::string toUri;
     int family;
+
+    auto call = Manager::instance().callFactory.newCall<SIPCall, SIPAccount>(*this, id, Call::OUTGOING);
 
     if (isIP2IP()) {
         bool ipv6 = false;
@@ -262,8 +236,13 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
     }
 
-    auto call = Manager::instance().callFactory.newCall<SIPCall, SIPAccount>(*this, id, Call::OUTGOING);
+    createOutgoingCall(call, to, toUri, family);
 
+    return call;
+}
+
+void
+SIPAccount::createOutgoingCall (std::shared_ptr<SIPCall> call, const std::string& to, const std::string& toUri, int family) {
     call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
     call->initRecFilename(to);
@@ -310,8 +289,6 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 
     if (not created or not SIPStartCall(call))
         throw VoipLinkException("Could not send outgoing INVITE request for new call");
-
-    return call;
 }
 
 std::shared_ptr<Call>
@@ -403,9 +380,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
     using namespace Conf;
-    using std::vector;
-    using std::string;
-    using std::map;
     MappingNode accountmap(nullptr);
     MappingNode srtpmap(nullptr);
     MappingNode zrtpmap(nullptr);
@@ -962,16 +936,7 @@ static std::string retrievePassword(const std::map<std::string, std::string>& ma
     return "";
 }
 
-void
-addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
-{
-    std::ostringstream os;
-    os << range.first;
-    a[minKey] = os.str();
-    os.str("");
-    os << range.second;
-    a[maxKey] = os.str();
-}
+
 
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
@@ -2079,41 +2044,6 @@ SIPAccount::matches(const std::string &userName, const std::string &server,
         return MatchRank::NONE;
     }
 }
-
-// returns even number in range [lower, upper]
-uint16_t
-SIPAccount::getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range)
-{
-    const uint16_t halfUpper = range.second * 0.5;
-    const uint16_t halfLower = range.first * 0.5;
-    uint16_t result;
-    do {
-        result = 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
-    } while (portsInUse_[result / 2]);
-
-    portsInUse_[result / 2] = true;
-    return result;
-}
-
-void
-SIPAccount::releasePort(uint16_t port)
-{
-    portsInUse_[port / 2] = false;
-}
-
-uint16_t
-SIPAccount::generateAudioPort() const
-{
-    return getRandomEvenNumber(audioPortRange_);
-}
-
-#ifdef SFL_VIDEO
-uint16_t
-SIPAccount::generateVideoPort() const
-{
-    return getRandomEvenNumber(videoPortRange_);
-}
-#endif
 
 void
 SIPAccount::destroyRegistrationInfo()
