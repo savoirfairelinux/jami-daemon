@@ -49,7 +49,7 @@ MainBuffer::~MainBuffer()
     for (const auto& item : ringBufferMap_) {
         const auto& shared = item.second;
         if (shared.use_count() > 1)
-            WARN("Leaking RingBuffer %s", shared->getBufferId().c_str());
+            WARN("Leaking RingBuffer %s", item.first.c_str());
     }
 }
 
@@ -141,7 +141,7 @@ std::shared_ptr<RingBuffer> MainBuffer::getRingBuffer(const std::string& call_id
 void MainBuffer::createRingBuffer(const std::string& call_id)
 {
     if (!hasRingBuffer(call_id))
-        ringBufferMap_[call_id] = std::make_shared<RingBuffer>(SIZEBUF, call_id);
+        ringBufferMap_[call_id] = std::make_shared<RingBuffer>(SIZEBUF);
     else
         DEBUG("Ringbuffer already exists for call_id %s", call_id.c_str());
 }

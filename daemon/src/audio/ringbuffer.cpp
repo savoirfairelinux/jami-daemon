@@ -45,13 +45,12 @@
 static const size_t MIN_BUFFER_SIZE = 1024;
 
 // Create  a ring buffer with 'size' bytes
-RingBuffer::RingBuffer(size_t size, const std::string &call_id, AudioFormat format /* = MONO */) :
+RingBuffer::RingBuffer(size_t size, AudioFormat format /* = MONO */) :
     endPos_(0)
     , buffer_(std::max(size, MIN_BUFFER_SIZE), format)
     , lock_()
     , not_empty_()
     , readoffsets_()
-    , buffer_id_(call_id)
 {
 }
 
@@ -122,7 +121,7 @@ RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
     if (iter != readoffsets_.end())
         iter->second = offset;
     else
-        DEBUG("Cannot find \"%s\" readOffset in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
+        ERROR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
 }
 
 
