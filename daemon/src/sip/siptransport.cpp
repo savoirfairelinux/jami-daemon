@@ -142,7 +142,7 @@ SipTransport::waitForReleased(pjsip_transport* tp, std::function<void(bool)> rel
 }
 
 void
-SipTransport::createSipTransport(SIPAccount &account)
+SipTransport::createSipTransport(SIPAccountBase &account)
 {
     // Remove any existing transport from the account
     account.setTransport();
@@ -237,7 +237,7 @@ SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port,
 
 #if HAVE_TLS
 pjsip_tpfactory*
-SipTransport::createTlsListener(SIPAccount &account, pj_uint16_t family)
+SipTransport::createTlsListener(SIPAccountBase &account, pj_uint16_t family)
 {
     RETURN_IF_FAIL(account.getTlsSetting() != nullptr, nullptr, "TLS settings not specified");
 
@@ -267,7 +267,7 @@ SipTransport::createTlsListener(SIPAccount &account, pj_uint16_t family)
 }
 
 pjsip_transport *
-SipTransport::createTlsTransport(SIPAccount &account)
+SipTransport::createTlsTransport(SIPAccountBase &account)
 {
     std::string remoteSipUri(account.getServerUri());
     static const char SIPS_PREFIX[] = "<sips:";
@@ -358,7 +358,7 @@ SipTransport::_cleanupTransports()
 }
 
 std::vector<pj_sockaddr>
-SipTransport::getSTUNAddresses(const SIPAccount &account,
+SipTransport::getSTUNAddresses(const SIPAccountBase &account,
         std::vector<long> &socketDescriptors) const
 {
     const pj_str_t serverName = account.getStunServerName();
