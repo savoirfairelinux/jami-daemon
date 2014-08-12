@@ -40,6 +40,7 @@
 #include "manager.h"
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
+#include "audio/ringbuffer.h"
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -69,10 +70,12 @@ codecToASTFormat(int c)
 }
 
 IAXCall::IAXCall(IAXAccount& account, const std::string& id, Call::CallType type)
-    : Call(account, id, type),
-      format(0),
-      session(NULL)
-{}
+    : Call(account, id, type)
+    , format(0)
+    , session(NULL)
+{
+    ringbuffer_ = Manager::instance().getMainBuffer().createRingBuffer(getCallId());
+}
 
 int IAXCall::getSupportedFormat(const std::string &accountID) const
 {
@@ -237,3 +240,9 @@ IAXCall::sendTextMessage(const std::string& message, const std::string& /*from*/
     sfl::InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
 }
 #endif
+
+void
+IAXCall::putAudioData(AudioBuffer& buf)
+{
+    ringbuffer_->put(buf);
+}
