@@ -54,7 +54,7 @@
 #include <vector>
 #include <memory>
 
-class SIPAccount;
+class SIPAccountBase;
 
 
 class SipTransport {
@@ -67,7 +67,7 @@ class SipTransport {
          * transport type specified in account settings
          * @param account The account for which a transport must be created.
          */
-        void createSipTransport(SIPAccount &account);
+        void createSipTransport(SIPAccountBase &account);
 
         /**
          * Initialize the transport selector
@@ -82,7 +82,7 @@ class SipTransport {
         /**
          * This function returns a list of STUN mapped sockets for
          * a given set of socket file descriptors */
-        std::vector<pj_sockaddr> getSTUNAddresses(const SIPAccount &account, std::vector<long> &socks) const;
+        std::vector<pj_sockaddr> getSTUNAddresses(const SIPAccountBase &account, std::vector<long> &socks) const;
 
         /**
          * Get the correct address to use (ie advertised) from
@@ -122,7 +122,7 @@ class SipTransport {
          * @param the account that is creating the TLS transport
          */
         pjsip_transport *
-        createTlsTransport(SIPAccount &account);
+        createTlsTransport(SIPAccountBase &account);
 
         /**
          * Create The default TLS listener which is global to the application. This means that
@@ -132,7 +132,7 @@ class SipTransport {
          * @return a pointer to the new listener
          */
         pjsip_tpfactory *
-        createTlsListener(SIPAccount &account, pj_uint16_t family = pj_AF_UNSPEC());
+        createTlsListener(SIPAccountBase &account, pj_uint16_t family = pj_AF_UNSPEC());
 #endif
 
         /**

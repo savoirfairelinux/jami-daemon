@@ -32,6 +32,7 @@
 
 #include "pjsip/sip_multipart.h"
 
+#include "sipaccount.h"
 #include "sipvoiplink.h"
 #include "manager.h"
 #include "sippresence.h"

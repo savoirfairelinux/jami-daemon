@@ -40,6 +40,7 @@
 
 #include "sdp.h"
 #include "sipcall.h"
+#include "sipaccount.h"
 #include "sip_utils.h"
 
 #include "call_factory.h"
@@ -225,9 +226,12 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
+    std::string toHost(sip_to_uri->host.ptr, sip_to_uri->host.slen);
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
+    const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
+    const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
 
-    auto sipaccount(getSIPVoIPLink()->guessAccountFromNameAndServer(toUsername, viaHostname));
+    auto sipaccount(getSIPVoIPLink()->guessAccount(toUsername, viaHostname, remote_hostname));
     if (!sipaccount) {
         ERROR("NULL account");
         return PJ_FALSE;
@@ -299,9 +303,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, std::min(length, sizeof tmp));
     sip_utils::stripSipUriPrefix(peerNumber);
-
-    const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
-    const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
 
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
@@ -614,14 +615,15 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_shutdown();
 }
 
-std::shared_ptr<SIPAccount>
-SIPVoIPLink::guessAccountFromNameAndServer(const std::string &userName,
-                                           const std::string &server) const
+std::shared_ptr<SIPAccountBase>
+SIPVoIPLink::guessAccount(const std::string& userName,
+                           const std::string& server,
+                           const std::string& fromUri) const
 {
-    DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
+    DEBUG("username = %s, server = %s, from = %s", userName.c_str(), server.c_str(), fromUri.c_str());
     // Try to find the account id from username and server name by full match
 
-    auto result = std::static_pointer_cast<SIPAccount>(Manager::instance().getIP2IPAccount()); // default result
+    auto result = std::static_pointer_cast<SIPAccountBase>(Manager::instance().getIP2IPAccount()); // default result
     MatchRank best = MatchRank::NONE;
 
     for (const auto& sipaccount : Manager::instance().getAllAccounts<SIPAccount>()) {
@@ -632,7 +634,7 @@ SIPVoIPLink::guessAccountFromNameAndServer(const std::string &userName,
 
         // return right away if this is a full match
         if (match == MatchRank::FULL) {
-            return sipaccount;
+            return std::static_pointer_cast<SIPAccountBase>(sipaccount);
         } else if (match > best) {
             best = match;
             result = sipaccount;

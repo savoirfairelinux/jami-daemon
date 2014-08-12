@@ -34,6 +34,8 @@
 
 #include "call_factory.h"
 #include "sipcall.h"
+#include "sipaccount.h" // for SIPAccount::ACCOUNT_TYPE
+#include "sipaccountbase.h"
 #include "sipvoiplink.h"
 #include "sip_utils.h"
 #include "logger.h" // for _debug
@@ -96,7 +98,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
     call.sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
-SIPCall::SIPCall(SIPAccount& account, const std::string& id,
+SIPCall::SIPCall(SIPAccountBase& account, const std::string& id,
                  Call::CallType type)
     : Call(account, id, type)
     , audiortp_(this)
@@ -138,10 +140,10 @@ SIPCall::stopRtpIfCurrent()
     }
 }
 
-SIPAccount&
+SIPAccountBase&
 SIPCall::getSIPAccount() const
 {
-    return static_cast<SIPAccount&>(getAccount());
+    return static_cast<SIPAccountBase&>(getAccount());
 }
 
 void
