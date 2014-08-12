@@ -74,12 +74,6 @@ bool MainBuffer::hasCallIDSet(const std::string& call_id)
     return callIDMap_.find(call_id) != callIDMap_.end();
 }
 
-std::shared_ptr<CallIDSet> MainBuffer::getCallIDSet(const std::string& call_id)
-{
-    CallIDMap::iterator iter = callIDMap_.find(call_id);
-    return (iter != callIDMap_.end()) ? iter->second : nullptr;
-}
-
 std::shared_ptr<CallIDSet>
 MainBuffer::getCallIDSet(const std::string& call_id) const
 {
@@ -124,12 +118,6 @@ void MainBuffer::removeCallIDfromSet(const std::string& set_id, const std::strin
 bool MainBuffer::hasRingBuffer(const std::string& call_id)
 {
     return ringBufferMap_.find(call_id) != ringBufferMap_.end();
-}
-
-std::shared_ptr<RingBuffer> MainBuffer::getRingBuffer(const std::string& call_id)
-{
-    RingBufferMap::iterator iter = ringBufferMap_.find(call_id);
-    return (iter != ringBufferMap_.end()) ? iter->second : nullptr;
 }
 
 std::shared_ptr<RingBuffer> MainBuffer::getRingBuffer(const std::string& call_id) const
