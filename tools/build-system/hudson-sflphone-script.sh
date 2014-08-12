@@ -115,7 +115,7 @@ function launch_functional_test_daemon {
 
 function build_contrib {
     pushd contrib
-    mkdir -f native
+    mkdir -p native
     pushd native
     ../bootstrap
     make
