@@ -51,35 +51,29 @@
 #include "client/videomanager.h"
 #endif // SFL_VIDEO
 
-// This manager pointer is only set after proper library initialization.
-static ManagerImpl* manager_ = nullptr;
-
 static CallManager* getCallManager()
 {
-    return manager_->getClient()->getCallManager();
+    return Manager::instance().getClient()->getCallManager();
 }
 
 static ConfigurationManager* getConfigurationManager()
-    {
-        return manager_->getClient()->getConfigurationManager();
-    }
+{
+    return Manager::instance().getClient()->getConfigurationManager();
+}
 
 #ifdef SFL_PRESENCE
 static PresenceManager* getPresenceManager()
 {
-    return manager_->getClient()->getPresenceManager();
+    return Manager::instance().getClient()->getPresenceManager();
 }
 #endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
 static VideoManager* getVideoManager()
 {
-    return manager_->getClient()->getVideoManager();
+    return Manager::instance().getClient()->getVideoManager();
 }
 #endif // SFL_VIDEO
-
-// User handlers of library events
-static sflph_ev_handlers evHandlers_;
 
 const char *
 sflph_version()
@@ -89,10 +83,9 @@ sflph_version()
 
 int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 {
-    // Ignore initialization if already done
-    if (manager_) {
-        return 0;
-    }
+    // User handlers of library events
+    // FIXME: static evil
+    static sflph_ev_handlers evHandlers_;
 
     // Copy user event handlers
     evHandlers_ = *ev_handlers;
@@ -103,7 +96,11 @@ int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 
     // Create manager
     try {
-        manager_ = &(Manager::instance());
+        // FIXME: static evil
+        static ManagerImpl *manager;
+        // ensure that we haven't been in this function before
+        assert(!manager);
+        manager = &(Manager::instance());
     } catch (...) {
         return -SFLPH_ERR_MANAGER_INIT;
     }
@@ -122,9 +119,8 @@ int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 
     // Initialize manager now
     try {
-        manager_->init("");
+        Manager::instance().init("");
     } catch (...) {
-        manager_ = nullptr;
         return -SFLPH_ERR_MANAGER_INIT;
     }
 
@@ -133,19 +129,13 @@ int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
 
 void sflph_fini(void)
 {
-    // Ignore if not yet initialized
-    if (!manager_) {
-        return;
-    }
-
     // Finish manager
-    manager_->finish();
-    manager_ = nullptr;
+    Manager::instance().finish();
 }
 
 void sflph_poll_events()
 {
-    manager_->pollEvents();
+    Manager::instance().pollEvents();
 }
 
 bool sflph_call_place(const std::string& account_id, const std::string& call_id, const std::string& to)
