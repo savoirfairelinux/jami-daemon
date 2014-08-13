@@ -1022,7 +1022,7 @@ class ManagerImpl {
 
         void loadDefaultAccountMap();
 
-        void loadAccount(const Conf::YamlNode *item, int &errorCount,
+        void loadAccount(const std::shared_ptr<Conf::YamlNode> item, int &errorCount,
                          const std::string &accountOrder);
 };
 

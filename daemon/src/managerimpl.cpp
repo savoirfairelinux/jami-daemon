@@ -2504,7 +2504,7 @@ ManagerImpl::loadAccountOrder() const
 }
 
 void
-ManagerImpl::loadAccount(const Conf::YamlNode *item, int &errorCount,
+ManagerImpl::loadAccount(const std::shared_ptr<Conf::YamlNode> item, int &errorCount,
                          const std::string &accountOrder)
 {
     if (!item) {
