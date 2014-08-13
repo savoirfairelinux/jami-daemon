@@ -279,24 +279,24 @@ VideoDeviceMonitor::serialize(Conf::YamlEmitter &emitter)
     if (def != preferences_.end())
         std::iter_swap(preferences_.begin(), def);
 
-    MappingNode devices(nullptr);
-    SequenceNode sequence(nullptr);
+    auto devices = std::make_shared<MappingNode>();
+    auto sequence = std::make_shared<SequenceNode>();
 
     for (auto& pref : preferences_) {
-        MappingNode *node = new MappingNode(nullptr);
+        auto node = std::make_shared<MappingNode>();
 
-        node->setKeyValue("name", new ScalarNode(pref["name"]));
-        node->setKeyValue("channel", new ScalarNode(pref["channel"]));
-        node->setKeyValue("size", new ScalarNode(pref["size"]));
-        node->setKeyValue("rate", new ScalarNode(pref["rate"]));
+        node->setKeyValue("name", ScalarNode(pref.at("name")));
+        node->setKeyValue("channel", ScalarNode(pref.at("channel")));
+        node->setKeyValue("size", ScalarNode(pref.at("size")));
+        node->setKeyValue("rate", ScalarNode(pref.at("rate")));
 
-        sequence.addNode(node);
+        sequence->addNode(node);
     }
 
-    devices.setKeyValue("devices", &sequence);
+    devices->setKeyValue("devices", sequence);
 
     /* store the device list under the "video" YAML section */
-    emitter.serializePreference(&devices, "video");
+    emitter.serializePreference(devices.get(), "video");
 }
 
 void
@@ -305,14 +305,14 @@ VideoDeviceMonitor::unserialize(const Conf::YamlNode &node)
     using namespace Conf;
 
     /* load the device list from the "video" YAML section */
-    YamlNode *devicesNode(node.getValue("devices"));
+    auto devicesNode(node.getValue("devices"));
 
     if (!devicesNode || devicesNode->getType() != SEQUENCE) {
         ERROR("No 'devices' sequence node! Old config?");
         return;
     }
 
-    SequenceNode *seqNode = static_cast<SequenceNode *>(devicesNode);
+    auto seqNode = std::static_pointer_cast<SequenceNode>(devicesNode);
     Sequence *seq = seqNode->getSequence();
 
     if (seq->empty()) {
@@ -321,7 +321,7 @@ VideoDeviceMonitor::unserialize(const Conf::YamlNode &node)
     }
 
     for (const auto &iter : *seq) {
-        MappingNode *devnode = static_cast<MappingNode *>(iter);
+        auto devnode = std::static_pointer_cast<MappingNode>(iter);
         VideoSettings pref;
 
         devnode->getValue("name", &pref["name"]);
