@@ -29,20 +29,20 @@
  */
 
 #include "yamlnode.h"
-#include <cstdlib>
 #include "logger.h"
+
+#include <cstdlib>
 
 namespace Conf {
 
-void YamlDocument::addNode(YamlNode *node)
+void YamlDocument::addNode(const std::shared_ptr<YamlNode>& node)
 {
-    Sequence::iterator it = doc_.end();
-    doc_.insert(it, node);
+    doc_.insert(doc_.end(), node);
 }
 
-YamlNode *YamlDocument::popNode()
+std::shared_ptr<YamlNode> YamlDocument::popNode()
 {
-    YamlNode *node = doc_.front();
+    std::shared_ptr<YamlNode> node = doc_.front();
 
     //removed element's destructor is called
     doc_.pop_front();
@@ -52,22 +52,16 @@ YamlNode *YamlDocument::popNode()
 
 void YamlDocument::deleteChildNodes()
 {
-    for (auto &it : doc_) {
-        YamlNode *yamlNode = static_cast<YamlNode *>(it);
-
-        yamlNode->deleteChildNodes();
-        delete yamlNode;
-        yamlNode = NULL;
-    }
+    doc_.clear();
 }
 
-void MappingNode::addNode(YamlNode *node)
+void MappingNode::addNode(const std::shared_ptr<YamlNode>& node)
 {
     setKeyValue(tmpKey_, node);
 }
 
 
-void MappingNode::setKeyValue(const std::string &key, YamlNode *value)
+void MappingNode::setKeyValue(const std::string &key, const std::shared_ptr<YamlNode>& value)
 {
     map_[key] = value;
 }
@@ -78,19 +72,19 @@ void MappingNode::removeKeyValue(const std::string &key)
     map_.erase(it);
 }
 
-YamlNode *MappingNode::getValue(const std::string &key) const
+std::shared_ptr<YamlNode> MappingNode::getValue(const std::string &key) const
 {
     YamlNodeMap::const_iterator it = map_.find(key);
 
     if (it != map_.end())
         return it->second;
     else
-        return NULL;
+        return nullptr;
 }
 
 void MappingNode::getValue(const std::string &key, bool *b) const
 {
-    ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
+    std::shared_ptr<ScalarNode> node = std::static_pointer_cast<ScalarNode>(getValue(key));
     if (!node)
         return;
 
@@ -100,7 +94,7 @@ void MappingNode::getValue(const std::string &key, bool *b) const
 
 void MappingNode::getValue(const std::string &key, int *i) const
 {
-    ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
+    std::shared_ptr<ScalarNode> node = std::static_pointer_cast<ScalarNode>(getValue(key));
     if (!node) {
         ERROR("node %s not found", key.c_str());
         return;
@@ -111,7 +105,7 @@ void MappingNode::getValue(const std::string &key, int *i) const
 
 void MappingNode::getValue(const std::string &key, double *d) const
 {
-    ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
+    std::shared_ptr<ScalarNode> node = std::static_pointer_cast<ScalarNode>(getValue(key));
     if (!node) {
         ERROR("node %s not found", key.c_str());
         return;
@@ -122,7 +116,7 @@ void MappingNode::getValue(const std::string &key, double *d) const
 
 void MappingNode::getValue(const std::string &key, std::string *v) const
 {
-    ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
+    std::shared_ptr<ScalarNode> node = std::static_pointer_cast<ScalarNode>(getValue(key));
 
     if (!node) {
         ERROR("node %s not found", key.c_str());
@@ -135,33 +129,17 @@ void MappingNode::getValue(const std::string &key, std::string *v) const
 
 void MappingNode::deleteChildNodes()
 {
-    for (auto &it : map_) {
-        YamlNode *yamlNode = static_cast<YamlNode *>(it.second);
-
-        if (!yamlNode)
-            continue;
-
-        yamlNode->deleteChildNodes();
-        delete yamlNode;
-        yamlNode = NULL;
-    }
+    map_.clear();
 }
 
-void SequenceNode::addNode(YamlNode *node)
+void SequenceNode::addNode(const std::shared_ptr<YamlNode>& node)
 {
-    Sequence::iterator it = seq_.end();
-    seq_.insert(it, node);
+    seq_.insert(seq_.end(), node);
 }
 
 void SequenceNode::deleteChildNodes()
 {
-    for (auto &it : seq_) {
-        YamlNode *yamlNode = static_cast<YamlNode *>(it);
-
-        yamlNode->deleteChildNodes();
-        delete yamlNode;
-        yamlNode = NULL;
-    }
+    seq_.clear();
 }
 
 }

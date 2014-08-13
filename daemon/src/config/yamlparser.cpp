@@ -41,20 +41,6 @@
 namespace Conf {
 
 YamlParser::YamlParser(FILE *fd) : fd_(fd)
-    , parser_()
-    , events_()
-    , eventNumber_(0)
-    , doc_(NULL)
-    , eventIndex_(0)
-    , accountSequence_(NULL)
-    , preferenceNode_(NULL)
-    , audioNode_(NULL)
-#ifdef SFL_VIDEO
-    , videoNode_(NULL)
-#endif
-    , hooksNode_(NULL)
-    , voiplinkNode_(NULL)
-    , shortcutNode_(NULL)
 {
     if (!fd_)
         throw YamlParserException("Could not open file descriptor");
@@ -75,45 +61,45 @@ YamlParser::YamlParser(FILE *fd) : fd_(fd)
 SequenceNode *
 YamlParser::getAccountSequence()
 {
-    CHECK_AND_RETURN(accountSequence_);
+    CHECK_AND_RETURN(accountSequence_.get());
 }
 
 MappingNode *
 YamlParser::getPreferenceNode()
 {
-    CHECK_AND_RETURN(preferenceNode_);
+    CHECK_AND_RETURN(preferenceNode_.get());
 }
 
 MappingNode *
 YamlParser::getAudioNode()
 {
-    CHECK_AND_RETURN(audioNode_);
+    CHECK_AND_RETURN(audioNode_.get());
 }
 
 #ifdef SFL_VIDEO
 MappingNode *
 YamlParser::getVideoNode()
 {
-    CHECK_AND_RETURN(videoNode_);
+    CHECK_AND_RETURN(videoNode_.get());
 }
 #endif
 
 MappingNode *
 YamlParser::getHookNode()
 {
-    CHECK_AND_RETURN(hooksNode_);
+    CHECK_AND_RETURN(hooksNode_.get());
 }
 
 MappingNode *
 YamlParser::getVoipPreferenceNode()
 {
-    CHECK_AND_RETURN(voiplinkNode_);
+    CHECK_AND_RETURN(voiplinkNode_.get());
 }
 
 MappingNode *
 YamlParser::getShortcutNode()
 {
-    CHECK_AND_RETURN(shortcutNode_);
+    CHECK_AND_RETURN(shortcutNode_.get());
 }
 
 #undef CHECK_AND_RETURN
@@ -126,7 +112,7 @@ YamlParser::~YamlParser()
     for (int i = 0; i < eventNumber_; ++i)
         yaml_event_delete(&events_[i]);
 
-    doc_.deleteChildNodes();
+    doc_->deleteChildNodes();
 }
 
 void YamlParser::serializeEvents()
@@ -271,16 +257,18 @@ void YamlParser::processDocument()
 {
     assert(eventNumber_ > 0);
 
+    doc_ = std::make_shared<YamlDocument>();
+
     for (; (eventIndex_ < eventNumber_) and (events_[eventIndex_].type != YAML_DOCUMENT_END_EVENT); ++eventIndex_) {
         switch (events_[eventIndex_].type) {
             case YAML_SCALAR_EVENT:
-                processScalar(&doc_);
+                processScalar(doc_);
                 break;
             case YAML_SEQUENCE_START_EVENT:
-                processSequence(&doc_);
+                processSequence(doc_);
                 break;
             case YAML_MAPPING_START_EVENT:
-                processMapping(&doc_);
+                processMapping(doc_);
                 break;
             default:
                 break;
@@ -292,23 +280,22 @@ void YamlParser::processDocument()
 }
 
 
-void YamlParser::processScalar(YamlNode *topNode)
+void YamlParser::processScalar(const std::shared_ptr<YamlNode>& topNode)
 {
     if (!topNode)
         throw YamlParserException("No container for scalar");
 
-    ScalarNode *sclr = new ScalarNode(std::string((const char*) events_[eventIndex_].data.scalar.value), topNode);
-
+    ScalarNode sclr(std::string((const char*) events_[eventIndex_].data.scalar.value), topNode);
     topNode->addNode(sclr);
 }
 
 
-void YamlParser::processSequence(YamlNode *topNode)
+void YamlParser::processSequence(const std::shared_ptr<YamlNode>& topNode)
 {
     if (!topNode)
         throw YamlParserException("No container for sequence");
 
-    SequenceNode *seq = new SequenceNode(topNode);
+    auto seq = std::make_shared<SequenceNode>(topNode);
 
     topNode->addNode(seq);
 
@@ -335,12 +322,12 @@ void YamlParser::processSequence(YamlNode *topNode)
 
 }
 
-void YamlParser::processMapping(YamlNode *topNode)
+void YamlParser::processMapping(const std::shared_ptr<YamlNode>& topNode)
 {
     if (!topNode)
         throw YamlParserException("No container for mapping");
 
-    MappingNode *map = new MappingNode(topNode);
+    auto map = std::make_shared<MappingNode>(topNode);
 
     topNode->addNode(map);
 
@@ -378,11 +365,10 @@ void YamlParser::processMapping(YamlNode *topNode)
 
 void YamlParser::constructNativeData()
 {
-    Sequence *seq = doc_.getSequence();
+    Sequence *seq = doc_->getSequence();
 
-    for (const auto &item : *seq) {
-        YamlNode *yamlNode = static_cast<YamlNode *>(item);
-        if (yamlNode == NULL) {
+    for (const auto &yamlNode : *seq) {
+        if (!yamlNode) {
             ERROR("Could not retrieve yaml node from document sequence");
             continue;
         }
@@ -390,7 +376,7 @@ void YamlParser::constructNativeData()
         NodeType nodeType = yamlNode->getType();
         switch (nodeType) {
             case MAPPING: {
-                MappingNode *map = static_cast<MappingNode *>(yamlNode);
+                std::shared_ptr<MappingNode> map = std::static_pointer_cast<MappingNode>(yamlNode);
                 mainNativeDataMapping(map);
                 break;
             }
@@ -403,19 +389,19 @@ void YamlParser::constructNativeData()
     }
 }
 
-void YamlParser::mainNativeDataMapping(MappingNode *map)
+void YamlParser::mainNativeDataMapping(const std::shared_ptr<MappingNode>& map)
 {
-    std::map<std::string, YamlNode*> &mapping = map->getMapping();
+    std::map<std::string, std::shared_ptr<YamlNode>> &mapping = map->getMapping();
 
-    accountSequence_    = static_cast<SequenceNode*>(mapping["accounts"]);
-    audioNode_          = static_cast<MappingNode *>(mapping["audio"]);
+    accountSequence_    = std::static_pointer_cast<SequenceNode>(mapping["accounts"]);
+    audioNode_          = std::static_pointer_cast<MappingNode>(mapping["audio"]);
 #ifdef SFL_VIDEO
-    videoNode_          = static_cast<MappingNode *>(mapping["video"]);
+    videoNode_          = std::static_pointer_cast<MappingNode>(mapping["video"]);
 #endif
-    hooksNode_          = static_cast<MappingNode *>(mapping["hooks"]);
-    preferenceNode_     = static_cast<MappingNode *>(mapping["preferences"]);
-    voiplinkNode_       = static_cast<MappingNode *>(mapping["voipPreferences"]);
-    shortcutNode_       = static_cast<MappingNode *>(mapping["shortcuts"]);
+    hooksNode_          = std::static_pointer_cast<MappingNode>(mapping["hooks"]);
+    preferenceNode_     = std::static_pointer_cast<MappingNode>(mapping["preferences"]);
+    voiplinkNode_       = std::static_pointer_cast<MappingNode>(mapping["voipPreferences"]);
+    shortcutNode_       = std::static_pointer_cast<MappingNode>(mapping["shortcuts"]);
 }
 }
 
