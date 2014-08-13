@@ -148,10 +148,10 @@ void YamlEmitter::addMappingItems(int mappingID, YamlNodeMap &iMap)
         addMappingItem(mappingID, i.first, i.second);
 }
 
-void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode *node)
+void YamlEmitter::addMappingItem(int mappingid, const std::string &key, const std::shared_ptr<YamlNode>& node)
 {
     if (node->getType() == SCALAR) {
-        ScalarNode *sclr = static_cast<ScalarNode *>(node);
+        const auto& sclr = std::static_pointer_cast<ScalarNode>(node);
 
         int temp1;
         if ((temp1 = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
@@ -165,7 +165,7 @@ void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode
             throw YamlEmitterException("Could not append mapping pair to mapping");
 
     } else if (node->getType() == MAPPING) {
-        MappingNode *map = static_cast<MappingNode *>(node);
+        const auto& map = std::static_pointer_cast<MappingNode>(node);
 
         int temp1;
         if ((temp1 = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
@@ -181,7 +181,7 @@ void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode
         addMappingItems(temp2, map->getMapping());
 
     } else if (node->getType() == SEQUENCE) {
-        SequenceNode *seqnode = static_cast<SequenceNode *>(node);
+        const auto& seqnode = std::static_pointer_cast<SequenceNode>(node);
 
         int temp1;
         if ((temp1 = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
@@ -196,7 +196,6 @@ void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode
 
         Sequence *seq = seqnode->getSequence();
         for (const auto &it : *seq) {
-            YamlNode *yamlNode = it;
             int id;
             if ((id = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
                 throw YamlEmitterException("Could not add account mapping to document");
@@ -204,7 +203,7 @@ void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode
             if (yaml_document_append_sequence_item(&document_, temp2, id) == 0)
                 throw YamlEmitterException("Could not append account mapping to sequence");
 
-            MappingNode *mapnode = static_cast<MappingNode*>(yamlNode);
+            const auto& mapnode = std::static_pointer_cast<MappingNode>(it);
             addMappingItems(id, mapnode->getMapping());
         }
     } else
