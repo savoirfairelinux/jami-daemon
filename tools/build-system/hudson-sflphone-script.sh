@@ -118,6 +118,8 @@ function build_contrib {
     mkdir -p native
     pushd native
     ../bootstrap
+    # list dependencies which will be added
+    make list
     make
     popd
     popd
