@@ -236,7 +236,7 @@ account_list_move_up(guint account_index)
 void
 account_list_move_down(guint account_index)
 {
-    if (account_index != accountQueue->length) {
+    if (account_index < accountQueue->length-1) {
         gpointer acc = g_queue_pop_nth(accountQueue, account_index);
         g_queue_push_nth(accountQueue, acc, account_index + 1);
     }
