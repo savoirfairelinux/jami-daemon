@@ -1,7 +1,7 @@
 build-aux/
 aclocal.m4
 build-aux
-
 configure
-src/client/dbus/org.sflphone.SFLphone.service
-src/sflphoned
+bin/dbus/*.adaptor.h
+bin/dbus/org.sflphone.SFLphone.service
+bin/sflphoned
