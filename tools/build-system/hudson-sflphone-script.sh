@@ -135,7 +135,7 @@ function build_daemon {
     # Compile the daemon
     ./autogen.sh || exit_clean 1
     #FIXME: this is a temporary hack around linking failure on jenkins
-    LDFLAGS=-gcrypt ./configure $DOPTS
+    LDFLAGS=-lgcrypt ./configure $DOPTS
     make clean
     make -j
     # Remove the previous XML test file
