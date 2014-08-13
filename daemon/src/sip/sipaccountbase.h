@@ -62,7 +62,6 @@ namespace Conf {
     const char *const PUBLISH_PORT_KEY = "publishPort";
     const char *const SAME_AS_LOCAL_KEY = "sameasLocal";
     const char *const DTMF_TYPE_KEY = "dtmfType";
-    const char *const SERVICE_ROUTE_KEY = "serviceRoute";
     const char *const PRESENCE_ENABLED_KEY = "presenceEnabled";
     const char *const PRESENCE_PUBLISH_SUPPORTED_KEY = "presencePublishSupported";
     const char *const PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSupported";
@@ -132,6 +131,10 @@ public:
     SIPAccountBase(const std::string& accountID);
 
     virtual ~SIPAccountBase() = default;
+
+    void toYaml(Conf::MappingNode& accountmap) const;
+
+    void fromYaml(const Conf::YamlNode& map);
 
     /**
      * Create incoming SIPCall.
@@ -288,6 +291,12 @@ public:
 
 
 protected:
+    /**
+     * Set the internal state for this account, mainly used to manage account details from the client application.
+     * @param The map containing the account information.
+     */
+    void setAccountDetails(const std::map<std::string, std::string> &details);
+
     /**
      * Voice over IP Link contains a listener thread and calls
      */

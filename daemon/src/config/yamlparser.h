@@ -96,13 +96,13 @@ class YamlParser {
 
         void processDocument();
 
-        void processScalar(YamlNode *topNode);
+        void processScalar(const std::shared_ptr<YamlNode>& topNode);
 
-        void processSequence(YamlNode *topNode);
+        void processSequence(const std::shared_ptr<YamlNode>& topNode);
 
-        void processMapping(YamlNode *topNode);
+        void processMapping(const std::shared_ptr<YamlNode>& topNode);
 
-        void mainNativeDataMapping(MappingNode *map);
+        void mainNativeDataMapping(const std::shared_ptr<MappingNode>& map);
 
         /**
          * Configuration file descriptor
@@ -112,31 +112,31 @@ class YamlParser {
         /**
          * The parser structure.
          */
-        yaml_parser_t parser_;
+        yaml_parser_t parser_ {};
 
         /**
          * The event structure array.
          */
-        YamlEventVector events_;
+        YamlEventVector events_ {};
 
         /**
          * Number of event actually parsed
          */
-        int eventNumber_;
+        int eventNumber_ {0};
 
-        YamlDocument doc_;
+        std::shared_ptr<YamlDocument> doc_ {};
 
-        int eventIndex_;
+        int eventIndex_ {0};
 
-        SequenceNode *accountSequence_;
-        MappingNode *preferenceNode_;
-        MappingNode *audioNode_;
+        std::shared_ptr<SequenceNode> accountSequence_ {};
+        std::shared_ptr<MappingNode> preferenceNode_ {};
+        std::shared_ptr<MappingNode> audioNode_ {};
 #ifdef SFL_VIDEO
-        MappingNode *videoNode_;
+        std::shared_ptr<MappingNode> videoNode_ {};
 #endif
-        MappingNode *hooksNode_;
-        MappingNode *voiplinkNode_;
-        MappingNode *shortcutNode_;
+        std::shared_ptr<MappingNode> hooksNode_ {};
+        std::shared_ptr<MappingNode> voiplinkNode_ {};
+        std::shared_ptr<MappingNode> shortcutNode_ {};
 };
 }
 
