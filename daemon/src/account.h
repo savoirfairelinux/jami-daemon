@@ -38,6 +38,8 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 
+#include "logger.h"
+
 #include <functional>
 #include <string>
 #include <vector>
@@ -246,6 +248,17 @@ class Account : public Serializable {
     protected:
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
         static void parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b);
+
+        template <typename T>
+        static void parseInt(const std::map<std::string, std::string> &details, const char *key, T &i) {
+            const auto iter = details.find(key);
+            if (iter == details.end()) {
+                ERROR("Couldn't find key %s", key);
+                return;
+            }
+            i = atoi(iter->second.c_str());
+        }
+
 
         friend class ConfigurationTest;
         // General configuration keys for accounts

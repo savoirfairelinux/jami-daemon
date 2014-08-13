@@ -1331,19 +1331,28 @@ ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (const auto& account : accountFactory_.getAllAccounts())
-            account->serialize(emitter);
+        for (const auto& account : accountFactory_.getAllAccounts()) {
+            try {
+                account->serialize(emitter);
+            } catch (const std::exception &e) {
+                ERROR("Account serialisation error %s", e.what());
+            }
+        }
 
-        // FIXME: this is a hack until we get rid of accountOrder
-        preferences.verifyAccountOrder(getAccountList());
-        preferences.serialize(emitter);
-        voipPreferences.serialize(emitter);
-        hookPreference.serialize(emitter);
-        audioPreference.serialize(emitter);
+        try {
+            // FIXME: this is a hack until we get rid of accountOrder
+            preferences.verifyAccountOrder(getAccountList());
+            preferences.serialize(emitter);
+            voipPreferences.serialize(emitter);
+            hookPreference.serialize(emitter);
+            audioPreference.serialize(emitter);
 #ifdef SFL_VIDEO
-        getVideoManager()->getVideoDeviceMonitor().serialize(emitter);
+            getVideoManager()->getVideoDeviceMonitor().serialize(emitter);
 #endif
-        shortcutPreferences.serialize(emitter);
+            shortcutPreferences.serialize(emitter);
+        } catch (const std::exception &e) {
+            ERROR("Preference serialisation error %s", e.what());
+        }
 
         emitter.serializeData();
     } catch (const Conf::YamlEmitterException &e) {
@@ -2504,7 +2513,7 @@ ManagerImpl::loadAccountOrder() const
 }
 
 void
-ManagerImpl::loadAccount(const Conf::YamlNode *item, int &errorCount,
+ManagerImpl::loadAccount(const std::shared_ptr<Conf::YamlNode>& item, int &errorCount,
                          const std::string &accountOrder)
 {
     if (!item) {

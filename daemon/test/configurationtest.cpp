@@ -43,11 +43,11 @@
 void ConfigurationTest::testYamlEmitter()
 {
     using namespace Conf;
-    MappingNode accountmap(NULL);
-    MappingNode credentialmap(NULL);
-    MappingNode srtpmap(NULL);
-    MappingNode zrtpmap(NULL);
-    MappingNode tlsmap(NULL);
+    MappingNode accountmap;
+    MappingNode credentialmap;
+    MappingNode srtpmap;
+    MappingNode zrtpmap;
+    MappingNode tlsmap;
 
     ScalarNode id("Account:1278432417");
     ScalarNode username("181");
@@ -94,37 +94,37 @@ void ConfigurationTest::testYamlEmitter()
     ScalarNode verifyclient(true);
     ScalarNode verifyserver(true);
 
-    accountmap.setKeyValue(Account::ALIAS_KEY, &alias);
-    accountmap.setKeyValue(Account::TYPE_KEY, &type);
-    accountmap.setKeyValue(Account::ID_KEY, &id);
-    accountmap.setKeyValue(Account::USERNAME_KEY, &username);
-    accountmap.setKeyValue(Account::PASSWORD_KEY, &password);
-    accountmap.setKeyValue(Account::HOSTNAME_KEY, &hostname);
-    accountmap.setKeyValue(Account::ACCOUNT_ENABLE_KEY, &enable);
-    accountmap.setKeyValue(Account::MAILBOX_KEY, &mailbox);
-    accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, &expire);
-    accountmap.setKeyValue(INTERFACE_KEY, &interface);
-    accountmap.setKeyValue(PORT_KEY, &port);
-    accountmap.setKeyValue(PUBLISH_ADDR_KEY, &publishAddr);
-    accountmap.setKeyValue(PUBLISH_PORT_KEY, &publishPort);
-    accountmap.setKeyValue(SAME_AS_LOCAL_KEY, &sameasLocal);
-    accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
-    accountmap.setKeyValue(Account::DISPLAY_NAME_KEY, &displayName);
+    accountmap.setKeyValue(Account::ALIAS_KEY, alias);
+    accountmap.setKeyValue(Account::TYPE_KEY, type);
+    accountmap.setKeyValue(Account::ID_KEY, id);
+    accountmap.setKeyValue(Account::USERNAME_KEY, username);
+    accountmap.setKeyValue(Account::PASSWORD_KEY, password);
+    accountmap.setKeyValue(Account::HOSTNAME_KEY, hostname);
+    accountmap.setKeyValue(Account::ACCOUNT_ENABLE_KEY, enable);
+    accountmap.setKeyValue(Account::MAILBOX_KEY, mailbox);
+    accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, expire);
+    accountmap.setKeyValue(INTERFACE_KEY, interface);
+    accountmap.setKeyValue(PORT_KEY, port);
+    accountmap.setKeyValue(PUBLISH_ADDR_KEY, publishAddr);
+    accountmap.setKeyValue(PUBLISH_PORT_KEY, publishPort);
+    accountmap.setKeyValue(SAME_AS_LOCAL_KEY, sameasLocal);
+    accountmap.setKeyValue(DTMF_TYPE_KEY, dtmfType);
+    accountmap.setKeyValue(Account::DISPLAY_NAME_KEY, displayName);
 
-    accountmap.setKeyValue(SRTP_KEY, &srtpmap);
-    srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
-    srtpmap.setKeyValue(KEY_EXCHANGE_KEY, &keyExchange);
-    srtpmap.setKeyValue(RTP_FALLBACK_KEY, &rtpFallback);
+    accountmap.setKeyValue(SRTP_KEY, srtpmap);
+    srtpmap.setKeyValue(SRTP_ENABLE_KEY, srtpenabled);
+    srtpmap.setKeyValue(KEY_EXCHANGE_KEY, keyExchange);
+    srtpmap.setKeyValue(RTP_FALLBACK_KEY, rtpFallback);
 
-    accountmap.setKeyValue(ZRTP_KEY, &zrtpmap);
-    zrtpmap.setKeyValue(DISPLAY_SAS_KEY, &displaySas);
-    zrtpmap.setKeyValue(DISPLAY_SAS_ONCE_KEY, &displaySasOnce);
-    zrtpmap.setKeyValue(HELLO_HASH_ENABLED_KEY, &helloHashEnabled);
-    zrtpmap.setKeyValue(NOT_SUPP_WARNING_KEY, &notSuppWarning);
+    accountmap.setKeyValue(ZRTP_KEY, zrtpmap);
+    zrtpmap.setKeyValue(DISPLAY_SAS_KEY, displaySas);
+    zrtpmap.setKeyValue(DISPLAY_SAS_ONCE_KEY, displaySasOnce);
+    zrtpmap.setKeyValue(HELLO_HASH_ENABLED_KEY, helloHashEnabled);
+    zrtpmap.setKeyValue(NOT_SUPP_WARNING_KEY, notSuppWarning);
 
-    accountmap.setKeyValue(CRED_KEY, &credentialmap);
-    SequenceNode credentialseq(NULL);
-    accountmap.setKeyValue(CRED_KEY, &credentialseq);
+    accountmap.setKeyValue(CRED_KEY, credentialmap);
+    SequenceNode credentialseq;
+    accountmap.setKeyValue(CRED_KEY, credentialseq);
 
     MappingNode credmap1(NULL);
     MappingNode credmap2(NULL);
@@ -134,29 +134,29 @@ void ConfigurationTest::testYamlEmitter()
     ScalarNode user2("john");
     ScalarNode pass2("doe");
     ScalarNode realm2("fbi");
-    credmap1.setKeyValue(CONFIG_ACCOUNT_USERNAME, &user1);
-    credmap1.setKeyValue(CONFIG_ACCOUNT_PASSWORD, &pass1);
-    credmap1.setKeyValue(CONFIG_ACCOUNT_REALM, &realm1);
-    credmap2.setKeyValue(CONFIG_ACCOUNT_USERNAME, &user2);
-    credmap2.setKeyValue(CONFIG_ACCOUNT_PASSWORD, &pass2);
-    credmap2.setKeyValue(CONFIG_ACCOUNT_REALM, &realm2);
-    credentialseq.addNode(&credmap1);
-    credentialseq.addNode(&credmap2);
+    credmap1.setKeyValue(CONFIG_ACCOUNT_USERNAME, user1);
+    credmap1.setKeyValue(CONFIG_ACCOUNT_PASSWORD, pass1);
+    credmap1.setKeyValue(CONFIG_ACCOUNT_REALM, realm1);
+    credmap2.setKeyValue(CONFIG_ACCOUNT_USERNAME, user2);
+    credmap2.setKeyValue(CONFIG_ACCOUNT_PASSWORD, pass2);
+    credmap2.setKeyValue(CONFIG_ACCOUNT_REALM, realm2);
+    credentialseq.addNode(credmap1);
+    credentialseq.addNode(credmap2);
 
-    accountmap.setKeyValue(TLS_KEY, &tlsmap);
-    tlsmap.setKeyValue(TLS_PORT_KEY, &tlsport);
-    tlsmap.setKeyValue(CERTIFICATE_KEY, &certificate);
-    tlsmap.setKeyValue(CALIST_KEY, &calist);
-    tlsmap.setKeyValue(CIPHERS_KEY, &ciphers);
-    tlsmap.setKeyValue(TLS_ENABLE_KEY, &tlsenabled);
-    tlsmap.setKeyValue(METHOD_KEY, &tlsmethod);
-    tlsmap.setKeyValue(TIMEOUT_KEY, &timeout);
-    tlsmap.setKeyValue(TLS_PASSWORD_KEY, &tlspassword);
-    tlsmap.setKeyValue(PRIVATE_KEY_KEY, &privatekey);
-    tlsmap.setKeyValue(REQUIRE_CERTIF_KEY, &requirecertif);
-    tlsmap.setKeyValue(SERVER_KEY, &server);
-    tlsmap.setKeyValue(VERIFY_CLIENT_KEY, &verifyclient);
-    tlsmap.setKeyValue(VERIFY_SERVER_KEY, &verifyserver);
+    accountmap.setKeyValue(TLS_KEY, tlsmap);
+    tlsmap.setKeyValue(TLS_PORT_KEY, tlsport);
+    tlsmap.setKeyValue(CERTIFICATE_KEY, certificate);
+    tlsmap.setKeyValue(CALIST_KEY, calist);
+    tlsmap.setKeyValue(CIPHERS_KEY, ciphers);
+    tlsmap.setKeyValue(TLS_ENABLE_KEY, tlsenabled);
+    tlsmap.setKeyValue(METHOD_KEY, tlsmethod);
+    tlsmap.setKeyValue(TIMEOUT_KEY, timeout);
+    tlsmap.setKeyValue(TLS_PASSWORD_KEY, tlspassword);
+    tlsmap.setKeyValue(PRIVATE_KEY_KEY, privatekey);
+    tlsmap.setKeyValue(REQUIRE_CERTIF_KEY, requirecertif);
+    tlsmap.setKeyValue(SERVER_KEY, server);
+    tlsmap.setKeyValue(VERIFY_CLIENT_KEY, verifyclient);
+    tlsmap.setKeyValue(VERIFY_SERVER_KEY, verifyserver);
 
     try {
         YamlEmitter emitter("/tmp/ymlEmiter.txt");
