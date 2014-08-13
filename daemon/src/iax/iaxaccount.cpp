@@ -54,7 +54,8 @@ IAXAccount::IAXAccount(const std::string& accountID)
 
 void IAXAccount::serialize(Conf::YamlEmitter &emitter)
 {
-    Conf::MappingNode accountmap(NULL);
+    auto accountmap_ptr = std::make_shared<Conf::MappingNode>();
+    Conf::MappingNode& accountmap = *accountmap_ptr.get();
 
     Conf::ScalarNode id(accountID_);
     Conf::ScalarNode username(username_);
@@ -68,20 +69,20 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode codecs(audioCodecStr_);
     Conf::ScalarNode displayName(displayName_);
 
-    accountmap.setKeyValue(ALIAS_KEY, &alias);
-    accountmap.setKeyValue(TYPE_KEY, &type);
-    accountmap.setKeyValue(ID_KEY, &id);
-    accountmap.setKeyValue(USERNAME_KEY, &username);
-    accountmap.setKeyValue(PASSWORD_KEY, &password);
-    accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
-    accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
-    accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
+    accountmap.setKeyValue(ALIAS_KEY, alias);
+    accountmap.setKeyValue(TYPE_KEY, type);
+    accountmap.setKeyValue(ID_KEY, id);
+    accountmap.setKeyValue(USERNAME_KEY, username);
+    accountmap.setKeyValue(PASSWORD_KEY, password);
+    accountmap.setKeyValue(HOSTNAME_KEY, hostname);
+    accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, enable);
+    accountmap.setKeyValue(MAILBOX_KEY, mailbox);
 
-    accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
-    accountmap.setKeyValue(AUDIO_CODECS_KEY, &codecs);
+    accountmap.setKeyValue(DISPLAY_NAME_KEY, displayName);
+    accountmap.setKeyValue(AUDIO_CODECS_KEY, codecs);
 
     Conf::ScalarNode userAgent(userAgent_);
-    accountmap.setKeyValue(USER_AGENT_KEY, &userAgent);
+    accountmap.setKeyValue(USER_AGENT_KEY, userAgent);
 
     try {
         emitter.serializeAccount(&accountmap);

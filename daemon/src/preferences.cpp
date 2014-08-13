@@ -179,7 +179,7 @@ void Preferences::removeAccount(const std::string &oldAccountID)
 
 void Preferences::serialize(Conf::YamlEmitter &emiter)
 {
-    Conf::MappingNode preferencemap(NULL);
+    auto preferencemap = std::make_shared<Conf::MappingNode>();
 
     Conf::ScalarNode order(accountOrder_);
     std::stringstream histlimitstr;
@@ -198,16 +198,16 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     Conf::ScalarNode searchBarDisplay(searchBarDisplay_);
     Conf::ScalarNode md5Hash(md5Hash_);
 
-    preferencemap.setKeyValue(ORDER_KEY, &order);
-    preferencemap.setKeyValue(HISTORY_LIMIT_KEY, &historyLimit);
-    preferencemap.setKeyValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls);
-    preferencemap.setKeyValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice);
-    preferencemap.setKeyValue(REGISTRATION_EXPIRE_KEY, &registrationExpire);
-    preferencemap.setKeyValue(PORT_NUM_KEY, &portNum);
-    preferencemap.setKeyValue(SEARCH_BAR_DISPLAY_KEY, &searchBarDisplay);
-    preferencemap.setKeyValue(MD5_HASH_KEY, &md5Hash);
+    preferencemap->setKeyValue(ORDER_KEY, order);
+    preferencemap->setKeyValue(HISTORY_LIMIT_KEY, historyLimit);
+    preferencemap->setKeyValue(HISTORY_MAX_CALLS_KEY, historyMaxCalls);
+    preferencemap->setKeyValue(ZONE_TONE_CHOICE_KEY, zoneToneChoice);
+    preferencemap->setKeyValue(REGISTRATION_EXPIRE_KEY, registrationExpire);
+    preferencemap->setKeyValue(PORT_NUM_KEY, portNum);
+    preferencemap->setKeyValue(SEARCH_BAR_DISPLAY_KEY, searchBarDisplay);
+    preferencemap->setKeyValue(MD5_HASH_KEY, md5Hash);
 
-    emiter.serializePreference(&preferencemap, "preferences");
+    emiter.serializePreference(preferencemap.get(), "preferences");
 }
 
 void Preferences::unserialize(const Conf::YamlNode &map)
@@ -232,7 +232,7 @@ VoipPreference::VoipPreference() :
 
 void VoipPreference::serialize(Conf::YamlEmitter &emitter)
 {
-    Conf::MappingNode preferencemap(NULL);
+    auto preferencemap = std::make_shared<Conf::MappingNode>();
 
     Conf::ScalarNode playDtmf(playDtmf_);
     Conf::ScalarNode playTones(playTones_);
@@ -242,13 +242,13 @@ void VoipPreference::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode symmetricRtp(symmetricRtp_);
     Conf::ScalarNode zidFile(zidFile_.c_str());
 
-    preferencemap.setKeyValue(PLAY_DTMF_KEY, &playDtmf);
-    preferencemap.setKeyValue(PLAY_TONES_KEY, &playTones);
-    preferencemap.setKeyValue(PULSE_LENGTH_KEY, &pulseLength);
-    preferencemap.setKeyValue(SYMMETRIC_RTP_KEY, &symmetricRtp);
-    preferencemap.setKeyValue(ZID_FILE_KEY, &zidFile);
+    preferencemap->setKeyValue(PLAY_DTMF_KEY, playDtmf);
+    preferencemap->setKeyValue(PLAY_TONES_KEY, playTones);
+    preferencemap->setKeyValue(PULSE_LENGTH_KEY, pulseLength);
+    preferencemap->setKeyValue(SYMMETRIC_RTP_KEY, symmetricRtp);
+    preferencemap->setKeyValue(ZID_FILE_KEY, zidFile);
 
-    emitter.serializePreference(&preferencemap, "voipPreferences");
+    emitter.serializePreference(preferencemap.get(), "voipPreferences");
 }
 
 void VoipPreference::unserialize(const Conf::YamlNode &map)
@@ -293,7 +293,7 @@ std::map<std::string, std::string> HookPreference::toMap() const
 
 void HookPreference::serialize(Conf::YamlEmitter &emitter)
 {
-    Conf::MappingNode preferencemap(NULL);
+    auto preferencemap = std::make_shared<Conf::MappingNode>();
 
     Conf::ScalarNode iax2Enabled(iax2Enabled_);
     Conf::ScalarNode numberAddPrefix(numberAddPrefix_);
@@ -302,14 +302,14 @@ void HookPreference::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode urlCommand(urlCommand_);
     Conf::ScalarNode urlSipField(urlSipField_);
 
-    preferencemap.setKeyValue(IAX2_ENABLED_KEY, &iax2Enabled);
-    preferencemap.setKeyValue(NUMBER_ADD_PREFIX_KEY, &numberAddPrefix);
-    preferencemap.setKeyValue(NUMBER_ENABLED_KEY, &numberEnabled);
-    preferencemap.setKeyValue(SIP_ENABLED_KEY, &sipEnabled);
-    preferencemap.setKeyValue(URL_COMMAND_KEY, &urlCommand);
-    preferencemap.setKeyValue(URL_SIP_FIELD_KEY, &urlSipField);
+    preferencemap->setKeyValue(IAX2_ENABLED_KEY, iax2Enabled);
+    preferencemap->setKeyValue(NUMBER_ADD_PREFIX_KEY, numberAddPrefix);
+    preferencemap->setKeyValue(NUMBER_ENABLED_KEY, numberEnabled);
+    preferencemap->setKeyValue(SIP_ENABLED_KEY, sipEnabled);
+    preferencemap->setKeyValue(URL_COMMAND_KEY, urlCommand);
+    preferencemap->setKeyValue(URL_SIP_FIELD_KEY, urlSipField);
 
-    emitter.serializePreference(&preferencemap, "hooks");
+    emitter.serializePreference(preferencemap.get(), "hooks");
 }
 
 void HookPreference::unserialize(const Conf::YamlNode &map)
@@ -439,7 +439,7 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
 
     // general preference
     Conf::ScalarNode audioapi(audioApi_);
-    Conf::ScalarNode recordpath(recordpath_); //: /home/msavard/Bureau
+    Conf::ScalarNode recordpath(recordpath_);
     Conf::ScalarNode alwaysRecording(alwaysRecording_);
     std::ostringstream micstr;
     micstr << volumemic_;
@@ -452,36 +452,36 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode captureMuted(captureMuted_);
     Conf::ScalarNode playbackMuted(playbackMuted_);
 
-    Conf::MappingNode preferencemap(NULL);
-    preferencemap.setKeyValue(AUDIO_API_KEY, &audioapi);
-    preferencemap.setKeyValue(RECORDPATH_KEY, &recordpath);
-    preferencemap.setKeyValue(ALWAYS_RECORDING_KEY, &alwaysRecording);
-    preferencemap.setKeyValue(VOLUMEMIC_KEY, &volumemic);
-    preferencemap.setKeyValue(VOLUMESPKR_KEY, &volumespkr);
-    preferencemap.setKeyValue(CAPTURE_MUTED_KEY, &captureMuted);
-    preferencemap.setKeyValue(PLAYBACK_MUTED_KEY, &playbackMuted);
+    auto preferencemap = std::make_shared<Conf::MappingNode>();
+    preferencemap->setKeyValue(AUDIO_API_KEY, audioapi);
+    preferencemap->setKeyValue(RECORDPATH_KEY, recordpath);
+    preferencemap->setKeyValue(ALWAYS_RECORDING_KEY, alwaysRecording);
+    preferencemap->setKeyValue(VOLUMEMIC_KEY, volumemic);
+    preferencemap->setKeyValue(VOLUMESPKR_KEY, volumespkr);
+    preferencemap->setKeyValue(CAPTURE_MUTED_KEY, captureMuted);
+    preferencemap->setKeyValue(PLAYBACK_MUTED_KEY, playbackMuted);
 
-    Conf::MappingNode alsapreferencemap(NULL);
 #if HAVE_ALSA
-    preferencemap.setKeyValue(ALSAMAP_KEY, &alsapreferencemap);
-    alsapreferencemap.setKeyValue(CARDIN_KEY, &cardin);
-    alsapreferencemap.setKeyValue(CARDOUT_KEY, &cardout);
-    alsapreferencemap.setKeyValue(CARDRING_KEY, &cardring);
-    alsapreferencemap.setKeyValue(PLUGIN_KEY, &plugin);
-    alsapreferencemap.setKeyValue(SMPLRATE_KEY, &alsaSmplrate);
+    auto alsapreferencemap = std::make_shared<Conf::MappingNode>();
+    preferencemap->setKeyValue(ALSAMAP_KEY, alsapreferencemap);
+    alsapreferencemap->setKeyValue(CARDIN_KEY, cardin);
+    alsapreferencemap->setKeyValue(CARDOUT_KEY, cardout);
+    alsapreferencemap->setKeyValue(CARDRING_KEY, cardring);
+    alsapreferencemap->setKeyValue(PLUGIN_KEY, plugin);
+    alsapreferencemap->setKeyValue(SMPLRATE_KEY, alsaSmplrate);
 #endif
 
 #if HAVE_PULSE
-    Conf::MappingNode pulsepreferencemap(NULL);
-    preferencemap.setKeyValue(PULSEMAP_KEY, &pulsepreferencemap);
-    pulsepreferencemap.setKeyValue(DEVICE_PLAYBACK_KEY, &pulseDevicePlayback);
-    pulsepreferencemap.setKeyValue(DEVICE_RECORD_KEY, &pulseDeviceRecord);
-    pulsepreferencemap.setKeyValue(DEVICE_RINGTONE_KEY, &pulseDeviceRingtone);
+    auto pulsepreferencemap = std::make_shared<Conf::MappingNode>();
+    preferencemap->setKeyValue(PULSEMAP_KEY, pulsepreferencemap);
+    pulsepreferencemap->setKeyValue(DEVICE_PLAYBACK_KEY, pulseDevicePlayback);
+    pulsepreferencemap->setKeyValue(DEVICE_RECORD_KEY, pulseDeviceRecord);
+    pulsepreferencemap->setKeyValue(DEVICE_RINGTONE_KEY, pulseDeviceRingtone);
 #endif
 
-    preferencemap.setKeyValue(NOISE_REDUCE_KEY, &denoise);
-    preferencemap.setKeyValue(AGC_KEY, &agc);
-    emitter.serializePreference(&preferencemap, "audio");
+    preferencemap->setKeyValue(NOISE_REDUCE_KEY, denoise);
+    preferencemap->setKeyValue(AGC_KEY, agc);
+    emitter.serializePreference(preferencemap.get(), "audio");
 }
 
 bool
@@ -521,7 +521,7 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     map.getValue(CAPTURE_MUTED_KEY, &captureMuted_);
     map.getValue(PLAYBACK_MUTED_KEY, &playbackMuted_);
 
-    Conf::MappingNode *alsamap = (Conf::MappingNode *) map.getValue("alsa");
+    auto alsamap = std::static_pointer_cast<Conf::MappingNode>(map.getValue("alsa"));
 
     if (alsamap) {
         alsamap->getValue(CARDIN_KEY, &alsaCardin_);
@@ -532,7 +532,7 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     }
 
 #if HAVE_PULSE
-    Conf::MappingNode *pulsemap = (Conf::MappingNode *)(map.getValue("pulse"));
+    auto pulsemap = std::static_pointer_cast<Conf::MappingNode>(map.getValue("pulse"));
 
     if (pulsemap) {
         pulsemap->getValue(DEVICE_PLAYBACK_KEY, &pulseDevicePlayback_);
@@ -571,7 +571,7 @@ void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 
 void ShortcutPreferences::serialize(Conf::YamlEmitter &emitter)
 {
-    Conf::MappingNode preferencemap(NULL);
+    auto preferencemap = std::make_shared<Conf::MappingNode>();
 
     Conf::ScalarNode hangup(hangup_);
     Conf::ScalarNode pickup(pickup_);
@@ -579,13 +579,13 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode toggleHold(toggleHold_);
     Conf::ScalarNode togglePickupHangup(togglePickupHangup_);
 
-    preferencemap.setKeyValue(HANGUP_SHORT_KEY, &hangup);
-    preferencemap.setKeyValue(PICKUP_SHORT_KEY, &pickup);
-    preferencemap.setKeyValue(POPUP_SHORT_KEY, &popup);
-    preferencemap.setKeyValue(TOGGLE_HOLD_SHORT_KEY, &toggleHold);
-    preferencemap.setKeyValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, &togglePickupHangup);
+    preferencemap->setKeyValue(HANGUP_SHORT_KEY, hangup);
+    preferencemap->setKeyValue(PICKUP_SHORT_KEY, pickup);
+    preferencemap->setKeyValue(POPUP_SHORT_KEY, popup);
+    preferencemap->setKeyValue(TOGGLE_HOLD_SHORT_KEY, toggleHold);
+    preferencemap->setKeyValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup);
 
-    emitter.serializePreference(&preferencemap, "shortcuts");
+    emitter.serializePreference(preferencemap.get(), "shortcuts");
 }
 
 void ShortcutPreferences::unserialize(const Conf::YamlNode &map)

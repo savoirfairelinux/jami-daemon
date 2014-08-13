@@ -55,6 +55,7 @@ typedef std::vector<pj_ssl_cipher> CipherArray;
 
 namespace Conf {
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
+    const char *const SERVICE_ROUTE_KEY = "serviceRoute";
 }
 
 class SIPPresence;
@@ -296,14 +297,6 @@ class SIPAccount : public SIPAccountBase {
          */
         pj_uint16_t getStunPort() const {
             return stunPort_;
-        }
-
-        /**
-         * @return bool Tells if current transport for that
-         * account is set to TLS.
-         */
-        bool isTlsEnabled() const {
-            return tlsEnable_;
         }
 
         /**

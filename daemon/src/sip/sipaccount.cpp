@@ -155,44 +155,6 @@ SIPAccount::~SIPAccount()
 #endif
 }
 
-static std::array<std::unique_ptr<Conf::ScalarNode>, 2>
-serializeRange(Conf::MappingNode &accountMap, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
-{
-    using namespace Conf;
-    std::array<std::unique_ptr<ScalarNode>, 2> result;
-
-    std::ostringstream os;
-    os << range.first;
-    result[0].reset(new ScalarNode(os.str()));
-    os.str("");
-    accountMap.setKeyValue(minKey, result[0].get());
-
-    os << range.second;
-    ScalarNode portMax(os.str());
-    result[1].reset(new ScalarNode(os.str()));
-    accountMap.setKeyValue(maxKey, result[1].get());
-    return result;
-}
-
-static void
-updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
-{
-    if (min > 0 and (max > min) and max <= MAX_PORT - 2) {
-        range.first = min;
-        range.second = max;
-    }
-}
-
-static void
-unserializeRange(const Conf::YamlNode &mapNode, const char *minKey, const char *maxKey, std::pair<uint16_t, uint16_t> &range)
-{
-    int tmpMin = 0;
-    int tmpMax = 0;
-    mapNode.getValue(minKey, &tmpMin);
-    mapNode.getValue(maxKey, &tmpMax);
-    updateRange(tmpMin, tmpMax, range);
-}
-
 std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& id)
 {
@@ -380,25 +342,15 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
     using namespace Conf;
-    MappingNode accountmap(nullptr);
-    MappingNode srtpmap(nullptr);
-    MappingNode zrtpmap(nullptr);
-    MappingNode tlsmap(nullptr);
 
-    ScalarNode id(Account::accountID_);
-    ScalarNode username(Account::username_);
-    ScalarNode alias(Account::alias_);
+    auto accountmap_ptr = std::make_shared<MappingNode>();
+    MappingNode& accountmap = *accountmap_ptr.get();
+    SIPAccountBase::toYaml(accountmap);
+
     ScalarNode hostname(Account::hostname_);
-    ScalarNode enable(enabled_);
-    ScalarNode autoAnswer(autoAnswerEnabled_);
-    ScalarNode type(ACCOUNT_TYPE);
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
     ScalarNode expire(registrationExpireStr.str());
-    ScalarNode interface(interface_);
-    std::stringstream portstr;
-    portstr << localPort_;
-    ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
     ScalarNode keepAliveEnabled(keepAliveEnabled_);
 
@@ -411,52 +363,19 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode presenceSubscribe(presSub);
 #endif
 
-    ScalarNode mailbox(mailBox_);
-    ScalarNode publishAddr(publishedIpAddress_);
-    std::stringstream publicportstr;
-    publicportstr << publishedPort_;
-
-    ScalarNode publishPort(publicportstr.str());
-
-    ScalarNode sameasLocal(publishedSameasLocal_);
-    ScalarNode audioCodecs(audioCodecStr_);
-#ifdef SFL_VIDEO
-    SequenceNode videoCodecs(nullptr);
-    accountmap.setKeyValue(VIDEO_CODECS_KEY, &videoCodecs);
-
-    for (auto &codec : videoCodecList_) {
-        MappingNode *mapNode = new MappingNode(nullptr);
-        mapNode->setKeyValue(VIDEO_CODEC_NAME, new ScalarNode(codec[VIDEO_CODEC_NAME]));
-        mapNode->setKeyValue(VIDEO_CODEC_BITRATE, new ScalarNode(codec[VIDEO_CODEC_BITRATE]));
-        mapNode->setKeyValue(VIDEO_CODEC_ENABLED, new ScalarNode(codec[VIDEO_CODEC_ENABLED]));
-        mapNode->setKeyValue(VIDEO_CODEC_PARAMETERS, new ScalarNode(codec[VIDEO_CODEC_PARAMETERS]));
-        videoCodecs.addNode(mapNode);
-    }
-
-#endif
-
-    ScalarNode ringtonePath(ringtonePath_);
-    ScalarNode ringtoneEnabled(ringtoneEnabled_);
-    ScalarNode videoEnabled(videoEnabled_);
     ScalarNode stunServer(stunServer_);
     ScalarNode stunEnabled(stunEnabled_);
-    ScalarNode displayName(displayName_);
-    ScalarNode dtmfType(dtmfType_);
 
     std::stringstream countstr;
     countstr << 0;
     ScalarNode count(countstr.str());
-
-    ScalarNode srtpenabled(srtpEnabled_);
-    ScalarNode keyExchange(srtpKeyExchange_);
-    ScalarNode rtpFallback(srtpFallback_);
 
     ScalarNode displaySas(zrtpDisplaySas_);
     ScalarNode displaySasOnce(zrtpDisplaySasOnce_);
     ScalarNode helloHashEnabled(zrtpHelloHash_);
     ScalarNode notSuppWarning(zrtpNotSuppWarning_);
 
-    portstr.str("");
+    std::stringstream portstr;
     portstr << tlsListenerPort_;
     ScalarNode tlsport(portstr.str());
     ScalarNode certificate(tlsCertificateFile_);
@@ -472,115 +391,57 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode verifyclient(tlsVerifyServer_);
     ScalarNode verifyserver(tlsVerifyClient_);
 
-    accountmap.setKeyValue(ALIAS_KEY, &alias);
-    accountmap.setKeyValue(TYPE_KEY, &type);
-    accountmap.setKeyValue(ID_KEY, &id);
-    accountmap.setKeyValue(USERNAME_KEY, &username);
-    accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
-    accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
-    accountmap.setKeyValue(ACCOUNT_AUTOANSWER_KEY, &autoAnswer);
-    accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
-    accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, &expire);
-    accountmap.setKeyValue(INTERFACE_KEY, &interface);
-    accountmap.setKeyValue(PORT_KEY, &port);
-    accountmap.setKeyValue(STUN_SERVER_KEY, &stunServer);
-    accountmap.setKeyValue(STUN_ENABLED_KEY, &stunEnabled);
-    accountmap.setKeyValue(PUBLISH_ADDR_KEY, &publishAddr);
-    accountmap.setKeyValue(PUBLISH_PORT_KEY, &publishPort);
-    accountmap.setKeyValue(SAME_AS_LOCAL_KEY, &sameasLocal);
-    accountmap.setKeyValue(SERVICE_ROUTE_KEY, &serviceRoute);
-    accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
-    accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
-    accountmap.setKeyValue(AUDIO_CODECS_KEY, &audioCodecs);
-    accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
-    accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
-    accountmap.setKeyValue(VIDEO_ENABLED_KEY, &videoEnabled);
-    accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
+    accountmap.setKeyValue(HOSTNAME_KEY, hostname);
+    accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, expire);
+    accountmap.setKeyValue(STUN_SERVER_KEY, stunServer);
+    accountmap.setKeyValue(STUN_ENABLED_KEY, stunEnabled);
+    accountmap.setKeyValue(SERVICE_ROUTE_KEY, serviceRoute);
+    accountmap.setKeyValue(KEEP_ALIVE_ENABLED, keepAliveEnabled);
 #ifdef SFL_PRESENCE
-    accountmap.setKeyValue(PRESENCE_ENABLED_KEY, &presenceEnabled);
-    accountmap.setKeyValue(PRESENCE_PUBLISH_SUPPORTED_KEY, &presencePublish);
-    accountmap.setKeyValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, &presenceSubscribe);
+    accountmap.setKeyValue(PRESENCE_ENABLED_KEY, presenceEnabled);
+    accountmap.setKeyValue(PRESENCE_PUBLISH_SUPPORTED_KEY, presencePublish);
+    accountmap.setKeyValue(PRESENCE_SUBSCRIBE_SUPPORTED_KEY, presenceSubscribe);
 #endif
 
-    accountmap.setKeyValue(SRTP_KEY, &srtpmap);
-    srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
-    srtpmap.setKeyValue(KEY_EXCHANGE_KEY, &keyExchange);
-    srtpmap.setKeyValue(RTP_FALLBACK_KEY, &rtpFallback);
+    auto zrtpmap = std::make_shared<MappingNode>();
+    zrtpmap->setKeyValue(DISPLAY_SAS_KEY, displaySas);
+    zrtpmap->setKeyValue(DISPLAY_SAS_ONCE_KEY, displaySasOnce);
+    zrtpmap->setKeyValue(HELLO_HASH_ENABLED_KEY, helloHashEnabled);
+    zrtpmap->setKeyValue(NOT_SUPP_WARNING_KEY, notSuppWarning);
+    accountmap.setKeyValue(ZRTP_KEY, zrtpmap);
 
-    accountmap.setKeyValue(ZRTP_KEY, &zrtpmap);
-    zrtpmap.setKeyValue(DISPLAY_SAS_KEY, &displaySas);
-    zrtpmap.setKeyValue(DISPLAY_SAS_ONCE_KEY, &displaySasOnce);
-    zrtpmap.setKeyValue(HELLO_HASH_ENABLED_KEY, &helloHashEnabled);
-    zrtpmap.setKeyValue(NOT_SUPP_WARNING_KEY, &notSuppWarning);
-
-    SequenceNode credentialseq(nullptr);
-    accountmap.setKeyValue(CRED_KEY, &credentialseq);
-
+    auto credentialseq = std::make_shared<SequenceNode>();
     for (const auto &it : credentials_) {
         std::map<std::string, std::string> cred = it;
-        MappingNode *map = new MappingNode(nullptr);
-        map->setKeyValue(CONFIG_ACCOUNT_USERNAME, new ScalarNode(cred[CONFIG_ACCOUNT_USERNAME]));
-        map->setKeyValue(CONFIG_ACCOUNT_PASSWORD, new ScalarNode(cred[CONFIG_ACCOUNT_PASSWORD]));
-        map->setKeyValue(CONFIG_ACCOUNT_REALM, new ScalarNode(cred[CONFIG_ACCOUNT_REALM]));
-        credentialseq.addNode(map);
+        MappingNode map;
+        map.setKeyValue(CONFIG_ACCOUNT_USERNAME, ScalarNode(cred.find(CONFIG_ACCOUNT_USERNAME)->second));
+        map.setKeyValue(CONFIG_ACCOUNT_PASSWORD, ScalarNode(cred.find(CONFIG_ACCOUNT_PASSWORD)->second));
+        map.setKeyValue(CONFIG_ACCOUNT_REALM, ScalarNode(cred.find(CONFIG_ACCOUNT_REALM)->second));
+        credentialseq->addNode(map);
     }
+    accountmap.setKeyValue(CRED_KEY, credentialseq);
 
-    accountmap.setKeyValue(TLS_KEY, &tlsmap);
-    tlsmap.setKeyValue(TLS_PORT_KEY, &tlsport);
-    tlsmap.setKeyValue(CERTIFICATE_KEY, &certificate);
-    tlsmap.setKeyValue(CALIST_KEY, &calist);
-    tlsmap.setKeyValue(CIPHERS_KEY, &ciphersNode);
-    tlsmap.setKeyValue(TLS_ENABLE_KEY, &tlsenabled);
-    tlsmap.setKeyValue(METHOD_KEY, &tlsmethod);
-    tlsmap.setKeyValue(TIMEOUT_KEY, &timeout);
-    tlsmap.setKeyValue(TLS_PASSWORD_KEY, &tlspassword);
-    tlsmap.setKeyValue(PRIVATE_KEY_KEY, &privatekey);
-    tlsmap.setKeyValue(REQUIRE_CERTIF_KEY, &requirecertif);
-    tlsmap.setKeyValue(SERVER_KEY, &server);
-    tlsmap.setKeyValue(VERIFY_CLIENT_KEY, &verifyclient);
-    tlsmap.setKeyValue(VERIFY_SERVER_KEY, &verifyserver);
-
-    ScalarNode userAgent(userAgent_);
-    accountmap.setKeyValue(USER_AGENT_KEY, &userAgent);
-
-    ScalarNode hasCustomUserAgent(hasCustomUserAgent_);
-    accountmap.setKeyValue(HAS_CUSTOM_USER_AGENT_KEY, &hasCustomUserAgent);
-
-    auto audioPortNodes(serializeRange(accountmap, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_));
-#ifdef SFL_VIDEO
-    auto videoPortNodes(serializeRange(accountmap, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_));
-#endif
+    auto tlsmap = std::make_shared<MappingNode>();
+    tlsmap->setKeyValue(TLS_PORT_KEY, tlsport);
+    tlsmap->setKeyValue(CERTIFICATE_KEY, certificate);
+    tlsmap->setKeyValue(CALIST_KEY, calist);
+    tlsmap->setKeyValue(CIPHERS_KEY, ciphersNode);
+    tlsmap->setKeyValue(TLS_ENABLE_KEY, tlsenabled);
+    tlsmap->setKeyValue(METHOD_KEY, tlsmethod);
+    tlsmap->setKeyValue(TIMEOUT_KEY, timeout);
+    tlsmap->setKeyValue(TLS_PASSWORD_KEY, tlspassword);
+    tlsmap->setKeyValue(PRIVATE_KEY_KEY, privatekey);
+    tlsmap->setKeyValue(REQUIRE_CERTIF_KEY, requirecertif);
+    tlsmap->setKeyValue(SERVER_KEY, server);
+    tlsmap->setKeyValue(VERIFY_CLIENT_KEY, verifyclient);
+    tlsmap->setKeyValue(VERIFY_SERVER_KEY, verifyserver);
+    accountmap.setKeyValue(TLS_KEY, tlsmap);
 
     try {
         emitter.serializeAccount(&accountmap);
     } catch (const YamlEmitterException &e) {
         ERROR("%s", e.what());
     }
-
-    // Cleanup
-    Sequence *credSeq = credentialseq.getSequence();
-
-    for (const auto &seqit : *credSeq) {
-        MappingNode *node = static_cast<MappingNode*>(seqit);
-        delete node->getValue(CONFIG_ACCOUNT_USERNAME);
-        delete node->getValue(CONFIG_ACCOUNT_PASSWORD);
-        delete node->getValue(CONFIG_ACCOUNT_REALM);
-        delete node;
-    }
-
-#ifdef SFL_VIDEO
-    Sequence *videoCodecSeq = videoCodecs.getSequence();
-
-    for (auto &i : *videoCodecSeq) {
-        MappingNode *node = static_cast<MappingNode*>(i);
-        delete node->getValue(VIDEO_CODEC_NAME);
-        delete node->getValue(VIDEO_CODEC_BITRATE);
-        delete node->getValue(VIDEO_CODEC_ENABLED);
-        delete node->getValue(VIDEO_CODEC_PARAMETERS);
-        delete node;
-    }
-
-#endif
 }
 
 void SIPAccount::usePublishedAddressPortInVIA()
@@ -609,6 +470,8 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     using std::map;
     using std::string;
 
+    SIPAccountBase::fromYaml(mapNode);
+
     mapNode.getValue(ALIAS_KEY, &alias_);
     mapNode.getValue(USERNAME_KEY, &username_);
 
@@ -623,10 +486,10 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     // Update codec list which one is used for SDP offer
     setActiveAudioCodecs(split_string(audioCodecStr_));
 #ifdef SFL_VIDEO
-    YamlNode *videoCodecsNode(mapNode.getValue(VIDEO_CODECS_KEY));
+    auto videoCodecsNode = mapNode.getValue(VIDEO_CODECS_KEY);
 
     if (videoCodecsNode and videoCodecsNode->getType() == SEQUENCE) {
-        SequenceNode *videoCodecs = static_cast<SequenceNode *>(videoCodecsNode);
+        auto videoCodecs = std::static_pointer_cast<SequenceNode>(videoCodecsNode);
         Sequence *seq = videoCodecs->getSequence();
 
         if (seq->empty()) {
@@ -637,7 +500,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
             vector<map<string, string> > videoCodecDetails;
 
             for (const auto &it : *seq) {
-                MappingNode *codec = static_cast<MappingNode *>(it);
+                auto codec = std::static_pointer_cast<MappingNode>(it);
                 map<string, string> codecMap;
                 codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
                 codec->getValue(VIDEO_CODEC_BITRATE, &codecMap[VIDEO_CODEC_BITRATE]);
@@ -708,18 +571,18 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 
     std::vector<std::map<std::string, std::string> > creds;
 
-    YamlNode *credNode = mapNode.getValue(CRED_KEY);
+    auto credNode = mapNode.getValue(CRED_KEY);
 
     /* We check if the credential key is a sequence
      * because it was a mapping in a previous version of
      * the configuration file.
      */
     if (credNode && credNode->getType() == SEQUENCE) {
-        SequenceNode *credSeq = static_cast<SequenceNode *>(credNode);
+        auto credSeq = std::static_pointer_cast<SequenceNode>(credNode);
         Sequence *seq = credSeq->getSequence();
 
         for (const auto &it : *seq) {
-            MappingNode *cred = static_cast<MappingNode *>(it);
+            auto cred = std::static_pointer_cast<MappingNode>(it);
             std::string user;
             std::string pass;
             std::string realm;
@@ -750,7 +613,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     setCredentials(creds);
 
     // get srtp submap
-    MappingNode *srtpMap = static_cast<MappingNode *>(mapNode.getValue(SRTP_KEY));
+    auto srtpMap = std::static_pointer_cast<MappingNode>(mapNode.getValue(SRTP_KEY));
 
     if (srtpMap) {
         srtpMap->getValue(SRTP_ENABLE_KEY, &srtpEnabled_);
@@ -761,7 +624,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     }
 
     // get zrtp submap
-    MappingNode *zrtpMap = static_cast<MappingNode *>(mapNode.getValue(ZRTP_KEY));
+    auto zrtpMap = std::static_pointer_cast<MappingNode>(mapNode.getValue(ZRTP_KEY));
 
     if (zrtpMap) {
         zrtpMap->getValue(DISPLAY_SAS_KEY, &zrtpDisplaySas_);
@@ -771,7 +634,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     }
 
     // get tls submap
-    MappingNode *tlsMap = static_cast<MappingNode *>(mapNode.getValue(TLS_KEY));
+    auto tlsMap = std::static_pointer_cast<MappingNode>(mapNode.getValue(TLS_KEY));
 
     if (tlsMap) {
         tlsMap->getValue(TLS_ENABLE_KEY, &tlsEnable_);
@@ -798,46 +661,19 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     mapNode.getValue(USER_AGENT_KEY, &userAgent_);
     mapNode.getValue(HAS_CUSTOM_USER_AGENT_KEY, &userAgent_);
 
-    unserializeRange(mapNode, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
-#ifdef SFL_VIDEO
-    unserializeRange(mapNode, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_);
-#endif
-}
-
-template <typename T>
-static void
-parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
-{
-    const auto iter = details.find(key);
-    if (iter == details.end()) {
-        ERROR("Couldn't find key %s", key);
-        return;
-    }
-    i = atoi(iter->second.c_str());
 }
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
+    SIPAccountBase::setAccountDetails(details);
+
     // Account setting common to SIP and IAX
-    parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
-    parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
     parseString(details, CONFIG_ACCOUNT_HOSTNAME, hostname_);
-    parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
-    parseBool(details, CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
-    parseString(details, CONFIG_RINGTONE_PATH, ringtonePath_);
-    parseBool(details, CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
-    parseBool(details, CONFIG_VIDEO_ENABLED, videoEnabled_);
-    parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
 
     // SIP specific account settings
 
     // general sip settings
     parseString(details, CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
-    parseString(details, CONFIG_LOCAL_INTERFACE, interface_);
-    parseBool(details, CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
-    parseString(details, CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
-    parseInt(details, CONFIG_LOCAL_PORT, localPort_);
-    parseInt(details, CONFIG_PUBLISHED_PORT, publishedPort_);
 
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
@@ -863,18 +699,6 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     enablePresence(presenceEnabled);
 #endif
 
-    int tmpMin = -1;
-    parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
-    int tmpMax = -1;
-    parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
-    updateRange(tmpMin, tmpMax, audioPortRange_);
-#ifdef SFL_VIDEO
-    tmpMin = -1;
-    parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
-    tmpMax = -1;
-    parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
-    updateRange(tmpMin, tmpMax, videoPortRange_);
-#endif
 
     // srtp settings
     parseBool(details, CONFIG_SRTP_ENABLE, srtpEnabled_);

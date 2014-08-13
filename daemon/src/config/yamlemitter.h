@@ -35,13 +35,15 @@
 #include "config.h"
 #endif
 
+#include "yamlnode.h"
+#include "noncopyable.h"
+
 #include <yaml.h>
+
 #include <stdexcept>
 #include <string>
 #include <map>
-
-#include "yamlnode.h"
-#include "noncopyable.h"
+#include <memory>
 
 namespace Conf {
 
@@ -81,7 +83,11 @@ class YamlEmitter {
 
         NON_COPYABLE(YamlEmitter);
         void addMappingItems(int mappingid, YamlNodeMap &iMap);
-        void addMappingItem(int mappingid, const std::string &key, YamlNode *node);
+        void addMappingItem(int mappingid, const std::string &key, const std::shared_ptr<YamlNode>& node);
+        template <class T=YamlNode>
+        void addMappingItem(int mappingid, const std::string &key, const T& node) {
+            addMappingItem(mappingid, key, std::make_shared<T>(node));
+        }
 
         std::string filename_;
 
