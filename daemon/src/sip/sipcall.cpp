@@ -516,12 +516,16 @@ SIPCall::transfer(const std::string& to)
 }
 
 bool
-SIPCall::attendedTransfer(const std::string& /*to*/)
+SIPCall::attendedTransfer(const std::string& to)
 {
-    if (not inv or not inv->dlg)
+    const auto toCall = Manager::instance().callFactory.getCall<SIPCall>(to);
+    if (!toCall)
         return false;
 
-    pjsip_dialog *target_dlg = inv->dlg;
+    if (not toCall->inv or not toCall->inv->dlg)
+        return false;
+
+    pjsip_dialog *target_dlg = toCall->inv->dlg;
     pjsip_uri *uri = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
 
     char str_dest_buf[PJSIP_MAX_URL_SIZE * 2] = { '<' };
