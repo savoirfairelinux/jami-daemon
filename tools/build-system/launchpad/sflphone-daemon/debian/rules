@@ -19,13 +19,12 @@ DEB_INSTALL_MANPAGES_sflphone_common = sflphoned.1
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
-	pushd ../contrib
-	mkdir -f native
-	pushd native
+	cd ../contrib
+	mkdir native
+	cd native
 	../bootstrap
 	make
-	popd
-	popd
+	cd ../..
 	# Add here commands to configure the package.
 	./autogen.sh
 	./configure --prefix=/usr
