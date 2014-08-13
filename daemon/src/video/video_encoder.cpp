@@ -79,12 +79,12 @@ void VideoEncoder::setOptions(const std::map<std::string, std::string>& options)
 
     value = extract(options, "width");
     if (!value)
-        throw std::runtime_error("width option not set");
+        throw VideoEncoderException("width option not set");
     av_dict_set(&options_, "width", value, 0);
 
     value = extract(options, "height");
     if (!value)
-        throw std::runtime_error("height option not set");
+        throw VideoEncoderException("height option not set");
     av_dict_set(&options_, "height", value, 0);
 
     value = extract(options, "bitrate") ? : "";
