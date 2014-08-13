@@ -354,7 +354,7 @@ account_move(gboolean move_up, gpointer data)
 
     GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
     gint *indices = gtk_tree_path_get_indices(tree_path);
-    const gint pos = indices[0];
+    const gint pos = indices[0] - 1; /* black magic : gtk tree order is not account queue order */
 
     // Depending on button direction get new path
     if (move_up)
