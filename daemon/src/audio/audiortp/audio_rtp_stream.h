@@ -50,6 +50,7 @@
 
 class Resampler;
 class DSP;
+class RingBuffer;
 
 namespace sfl {
 
@@ -140,6 +141,8 @@ class AudioRtpStream {
 
         AudioRtpContext encoder_;
         AudioRtpContext decoder_;
+
+        std::shared_ptr<RingBuffer> ringbuffer_{};
 
         void deleteCodecs();
         sfl::AudioCodec* getCurrentEncoder() const;

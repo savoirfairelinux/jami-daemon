@@ -38,6 +38,7 @@
 #include "pulselayer.h"
 #include "audio/resampler.h"
 #include "audio/dcblocker.h"
+#include "audio/ringbuffer.h"
 #include "logger.h"
 #include "manager.h"
 
@@ -102,6 +103,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , enumeratingSinks_(false)
     , enumeratingSources_(false)
     , preference_(pref)
+    , mainRingBuffer_(Manager::instance().getMainBuffer().getRingBuffer(MainBuffer::DEFAULT_ID))
 {
     setCaptureGain(pref.getVolumemic());
     setPlaybackGain(pref.getVolumespkr());
@@ -582,7 +584,7 @@ void PulseLayer::readFromMic()
 
     dcblocker_.process(*out);
     out->applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-    Manager::instance().getMainBuffer().putData(*out, MainBuffer::DEFAULT_ID);
+    mainRingBuffer_->put(*out);
 
     if (pa_stream_drop(record_->pulseStream()) < 0)
         ERROR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
