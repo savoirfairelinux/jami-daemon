@@ -31,7 +31,7 @@
 #ifndef __DBUSCLIENT_H__
 #define __DBUSCLIENT_H__
 
-#include <sflphone.h>
+#include "sflphone.h"
 #include "noncopyable.h"
 
 class DBusConfigurationManager;
