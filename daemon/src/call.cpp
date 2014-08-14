@@ -33,7 +33,7 @@
 #include "call.h"
 #include "account.h"
 #include "manager.h"
-#include "audio/mainbuffer.h"
+#include "audio/ringbuffermanager.h"
 #include "history/historyitem.h"
 
 #include "sip/sip_utils.h"
@@ -210,17 +210,17 @@ bool
 Call::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
-    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+    RingBufferManager &mbuffer = Manager::instance().getRingBufferManager();
     std::string process_id = Recordable::recorder_.getRecorderID();
 
     if (startRecording) {
         mbuffer.bindHalfDuplexOut(process_id, id_);
-        mbuffer.bindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
+        mbuffer.bindHalfDuplexOut(process_id, RingBufferManager::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         mbuffer.unBindHalfDuplexOut(process_id, id_);
-        mbuffer.unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
+        mbuffer.unBindHalfDuplexOut(process_id, RingBufferManager::DEFAULT_ID);
     }
 
     return startRecording;
