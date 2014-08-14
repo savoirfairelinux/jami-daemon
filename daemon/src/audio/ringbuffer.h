@@ -44,7 +44,8 @@ class RingBuffer {
          * Constructor
          * @param size  Size of the buffer to create
          */
-        RingBuffer(size_t size, AudioFormat format=AudioFormat::MONO());
+        RingBuffer(const std::string& id, size_t size,
+                   AudioFormat format=AudioFormat::MONO());
 
         /**
          * Reset the counters to 0 for this read offset
@@ -135,6 +136,8 @@ class RingBuffer {
          */
         void debug();
 
+        const std::string& id;
+
     private:
         NON_COPYABLE(RingBuffer);
 
@@ -165,6 +168,7 @@ class RingBuffer {
 
         /** Offset on the last data */
         size_t endPos_;
+
         /** Data */
         AudioBuffer buffer_;
 
