@@ -40,6 +40,10 @@
 #include "noncopyable.h"
 #include "audio/audiolayer.h"
 
+#include <memory>
+
+class RingBuffer;
+
 class JackLayer : public AudioLayer {
 
     private:
@@ -59,6 +63,7 @@ class JackLayer : public AudioLayer {
         AudioBuffer captureBuffer_;
         std::vector<float> captureFloatBuffer_;
         size_t hardwareBufferSize_;
+        std::shared_ptr<RingBuffer> mainRingBuffer_;
 
         static int process_capture(jack_nframes_t frames, void *arg);
         static int process_playback(jack_nframes_t frames, void *arg);

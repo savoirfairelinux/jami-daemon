@@ -40,15 +40,17 @@
 const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
 MainBuffer::MainBuffer()
-{}
+{
+    defaultRingBuffer = createRingBuffer(DEFAULT_ID);
+}
 
 MainBuffer::~MainBuffer()
 {
-    // Delete any ring buffers that didn't get removed.
+    // Verify ringbuffer not removed yet
     // XXXX: With a good design this should never happen! :-P
     for (const auto& item : ringBufferMap_) {
-        const auto& shared = item.second;
-        if (shared.use_count() > 1)
+        const auto& weak = item.second;
+        if (not weak.expired())
             WARN("Leaking RingBuffer %s", item.first.c_str());
     }
 }
@@ -100,57 +102,84 @@ MainBuffer::addCallIDtoSet(const std::string& set_id,
     callid_set_shared->insert(call_id);
 }
 
-bool
-MainBuffer::hasRingBuffer(const std::string& call_id)
+std::shared_ptr<RingBuffer>
+MainBuffer::getRingBuffer(const std::string& id)
 {
-    return ringBufferMap_.find(call_id) != ringBufferMap_.cend();
+    const auto& it = ringBufferMap_.find(id);
+    if (it != ringBufferMap_.cend()) {
+        if (const auto& sptr = it->second.lock())
+            return sptr;
+        ringBufferMap_.erase(it);
+    }
+
+    return nullptr;
 }
 
 std::shared_ptr<RingBuffer>
-MainBuffer::getRingBuffer(const std::string& call_id) const
+MainBuffer::getRingBuffer(const std::string& id) const
 {
-    return ringBufferMap_.find(call_id)->second;
+    const auto& it = ringBufferMap_.find(id);
+    if (it != ringBufferMap_.cend())
+        return it->second.lock();
+
+    return nullptr;
+}
+
+std::shared_ptr<RingBuffer>
+MainBuffer::createRingBuffer(const std::string& id)
+{
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+
+    auto rbuf = getRingBuffer(id);
+    if (rbuf) {
+        DEBUG("Ringbuffer already exists for id '%s'", id.c_str());
+        return rbuf;
+    }
+
+    rbuf.reset(new RingBuffer(SIZEBUF));
+    DEBUG("Ringbuffer created with id '%s'", id.c_str());
+    ringBufferMap_.insert(std::make_pair(id, std::weak_ptr<RingBuffer>(rbuf)));
+    return rbuf;
 }
 
 void
-MainBuffer::createRingBuffer(const std::string& call_id)
+MainBuffer::bindOneSide(RingBuffer& rbuf, const std::string& rbuf_id,
+                        const std::string& reader_id)
 {
-    const auto& iter = ringBufferMap_.insert(std::make_pair(call_id, std::make_shared<RingBuffer>(SIZEBUF)));
-    if (not iter.second)
-        DEBUG("Ringbuffer already exists for call_id %s", call_id.c_str());
-}
-
-void
-MainBuffer::removeRingBuffer(const std::string& call_id)
-{
-    if (not ringBufferMap_.erase(call_id))
-        WARN("Ringbuffer %s does not exist!", call_id.c_str());
+    rbuf.createReadOffset(reader_id);
+    addCallIDtoSet(reader_id, rbuf_id);
 }
 
 void
 MainBuffer::bindCallID(const std::string& call_id1, const std::string& call_id2)
 {
+    const auto& rb1 = getRingBuffer(call_id1);
+    if (not rb1) {
+        ERROR("No ringbuffer associated to call '%s'", call_id1.c_str());
+        return;
+    }
+
+    const auto& rb2 = getRingBuffer(call_id2);
+    if (not rb2) {
+        ERROR("No ringbuffer associated to call '%s'", call_id2.c_str());
+        return;
+    }
+
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    createRingBuffer(call_id1);
-    createRingBuffer(call_id2);
-
-    getRingBuffer(call_id1)->createReadOffset(call_id2);
-    getRingBuffer(call_id2)->createReadOffset(call_id1);
-    addCallIDtoSet(call_id1, call_id2);
-    addCallIDtoSet(call_id2, call_id1);
+    bindOneSide(*rb1, call_id1, call_id2);
+    bindOneSide(*rb2, call_id2, call_id1);
 }
 
 void
 MainBuffer::bindHalfDuplexOut(const std::string& process_id,
                               const std::string& call_id)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
-
     // This method is used only for active calls, if this call does not exist, do nothing
     if (const auto rb = getRingBuffer(call_id)) {
-        rb->createReadOffset(process_id);
-        addCallIDtoSet(process_id, call_id);
+        std::lock_guard<std::recursive_mutex> lk(stateLock_);
+
+        bindOneSide(*rb, call_id, process_id);
     }
 }
 
@@ -176,7 +205,6 @@ MainBuffer::unBindOneSide(const std::string& call_id1,
          * references to them */
         if (ringbuffer_shared->readOffsetCount() <= 1) {
             removeCallIDSet(call_id1);
-            removeRingBuffer(call_id1);
         }
     } else {
 
@@ -185,7 +213,6 @@ MainBuffer::unBindOneSide(const std::string& call_id1,
         // Remove empty RingBuffer/CallIDSet
         if (ringbuffer_shared->hasNoReadOffsets()) {
             removeCallIDSet(call_id1);
-            removeRingBuffer(call_id1);
         }
     }
 }
@@ -227,48 +254,32 @@ MainBuffer::unBindAll(const std::string& call_id)
         unBindCallID(call_id, item_set);
 }
 
-void
-MainBuffer::putData(AudioBuffer& buffer, const std::string& call_id)
-{
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
-
-    const auto ringbuffer_shared = getRingBuffer(call_id);
-    if (ringbuffer_shared)
-        ringbuffer_shared->put(buffer);
-}
-
 size_t
 MainBuffer::getData(AudioBuffer& buffer, const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    const auto callid_set_shared = getCallIDSet(call_id);
-    if (!callid_set_shared or callid_set_shared->empty())
+    const auto rbuf_set = getCallIDSet(call_id);
+    if (!rbuf_set or rbuf_set->empty())
         return 0;
 
-    if (callid_set_shared->size() == 1) {
-        CallIDSet::iterator iter_id = callid_set_shared->begin();
+    if (rbuf_set->size() == 1)
+        return getDataFromRingBuffer(buffer, *rbuf_set->cbegin(), call_id);
 
-        if (iter_id != callid_set_shared->end())
-            return getDataByID(buffer, *iter_id, call_id);
-        else
-            return 0;
-    } else {
-        buffer.reset();
-        buffer.setFormat(internalAudioFormat_);
+    buffer.reset();
+    buffer.setFormat(internalAudioFormat_);
 
-        size_t size = 0;
-        AudioBuffer mixBuffer(buffer);
+    size_t size = 0;
+    AudioBuffer mixBuffer(buffer);
 
-        for (const auto &item_id : *callid_set_shared) {
-            // FIXME: size is not cumulated
-            size = getDataByID(mixBuffer, item_id, call_id);
-            if (size > 0)
-                buffer.mix(mixBuffer);
-        }
-
-        return size;
+    for (const auto &rbuf_id : *rbuf_set) {
+        // FIXME: size is not cumulated
+        size = getDataFromRingBuffer(mixBuffer, rbuf_id, call_id);
+        if (size > 0)
+            buffer.mix(mixBuffer);
     }
+
+    return size;
 }
 
 bool
@@ -332,9 +343,9 @@ MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string& call_id)
         size_t size = 0;
         AudioBuffer mixBuffer(buffer);
 
-        for (const auto &item_id : *callid_set_shared) {
+        for (const auto &rbuf_id : *callid_set_shared) {
             // FIXME: size is not cumulated
-            size = getDataByID(mixBuffer, item_id, call_id);
+            size = getDataFromRingBuffer(mixBuffer, rbuf_id, call_id);
             if (size > 0) {
                 buffer.mix(mixBuffer);
             }
@@ -345,11 +356,12 @@ MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string& call_id)
 }
 
 size_t
-MainBuffer::getDataByID(AudioBuffer& buffer, const std::string& call_id,
-                        const std::string& reader_id)
+MainBuffer::getDataFromRingBuffer(AudioBuffer& buffer,
+                                  const std::string& rbuf_id,
+                                  const std::string& reader_id)
 {
-    const auto ringbuffer_shared = getRingBuffer(call_id);
-    return ringbuffer_shared ? ringbuffer_shared->get(buffer, reader_id) : 0;
+    const auto ringbuffer = getRingBuffer(rbuf_id);
+    return ringbuffer ? ringbuffer->get(buffer, reader_id) : 0;
 }
 
 size_t
@@ -447,6 +459,8 @@ MainBuffer::flushAllBuffers()
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    for (const auto& item : ringBufferMap_)
-        item.second->flushAll();
+    for (const auto& item : ringBufferMap_) {
+        if (const auto rb = item.second.lock())
+            rb->flushAll();
+    }
 }

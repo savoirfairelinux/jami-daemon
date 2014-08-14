@@ -35,6 +35,7 @@
 #include "manager.h"
 #include "noncopyable.h"
 #include "client/configurationmanager.h"
+#include "audio/ringbuffer.h"
 
 #include <thread>
 #include <atomic>
@@ -157,6 +158,7 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , is_playback_open_(false)
     , is_capture_open_(false)
     , audioThread_(nullptr)
+    , mainRingBuffer_(Manager::instance().getMainBuffer().getRingBuffer(MainBuffer::DEFAULT_ID))
 {}
 
 AlsaLayer::~AlsaLayer()
@@ -702,10 +704,10 @@ void AlsaLayer::capture()
         AudioBuffer rsmpl_in(outFrames, mainBufferFormat);
         resampler_.resample(captureBuff_, rsmpl_in);
         dcblocker_.process(rsmpl_in);
-        Manager::instance().getMainBuffer().putData(rsmpl_in, MainBuffer::DEFAULT_ID);
+        mainRingBuffer_->put(rsmpl_in);
     } else {
         dcblocker_.process(captureBuff_);
-        Manager::instance().getMainBuffer().putData(captureBuff_, MainBuffer::DEFAULT_ID);
+        mainRingBuffer_->put(captureBuff_);
     }
 }
 

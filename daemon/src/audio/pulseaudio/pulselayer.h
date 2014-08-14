@@ -1,3 +1,4 @@
+
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -42,8 +43,11 @@
 #include "noncopyable.h"
 #include "logger.h"
 
+#include <memory>
+
 class AudioPreference;
 class AudioStream;
+class RingBuffer;
 
 /**
  * Convenience structure to hold PulseAudio device propreties such as supported channel number etc.
@@ -205,6 +209,7 @@ class PulseLayer : public AudioLayer {
         bool enumeratingSinks_;
         bool enumeratingSources_;
         AudioPreference &preference_;
+        std::shared_ptr<RingBuffer> mainRingBuffer_;
 
         friend class AudioLayerTest;
 };
