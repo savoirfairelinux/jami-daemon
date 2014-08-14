@@ -49,7 +49,7 @@
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
 
-class MainBuffer;
+class RingBufferManager;
 class AudioPreference;
 
 namespace ost {
