@@ -207,7 +207,7 @@ private:
 };
 
 namespace ip_utils {
-    const std::string DEFAULT_INTERFACE = "default";
+    static const char *const DEFAULT_INTERFACE = "default";
 
     /**
      * Return the generic "any host" IP address of the specified family.
