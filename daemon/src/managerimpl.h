@@ -81,6 +81,8 @@ typedef std::list<std::string> TokenList;
 /** To store conference objects by conference ids */
 typedef std::map<std::string, std::shared_ptr<Conference> > ConferenceMap;
 
+typedef std::set<std::string> CallIDSet;
+
 static const char * const default_conf = "conf";
 
 /** Manager (controller) of sflphone daemon */

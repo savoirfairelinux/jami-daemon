@@ -41,7 +41,10 @@ class AudioPreference;
 
 #include "noncopyable.h"
 
+#include <memory>
+
 class OpenSLThread;
+class RingBuffer;
 
 #define ANDROID_BUFFER_QUEUE_LENGTH 2U
 #define BUFFER_SIZE 512U
@@ -261,7 +264,7 @@ class OpenSLLayer : public AudioLayer {
 
         AudioBufferStack playbackBufferStack_;
         AudioBufferStack recordBufferStack_;
-
+        std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
 
 #endif // _OPENSL_LAYER_H_
