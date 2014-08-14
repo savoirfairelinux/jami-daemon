@@ -103,20 +103,24 @@ struct sflph_video_ev_handlers
 };
 #endif /* SFL_VIDEO */
 
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 /* all handlers */
 struct sflph_ev_handlers
 {
-    struct sflph_call_ev_handlers call_ev_handlers;
-    struct sflph_config_ev_handlers config_ev_handlers;
+    sflph_call_ev_handlers call_ev_handlers;
+    sflph_config_ev_handlers config_ev_handlers;
 
 #ifdef SFL_PRESENCE
-    struct sflph_pres_ev_handlers pres_ev_handlers;
+    sflph_pres_ev_handlers pres_ev_handlers;
 #endif /* SFL_PRESENCE */
 
 #ifdef SFL_VIDEO
-    struct sflph_video_ev_handlers video_ev_handlers;
+    sflph_video_ev_handlers video_ev_handlers;
 #endif /* SFL_VIDEO */
 };
+
+#pragma GCC diagnostic warning "-Wmissing-field-initializers"
 
 /* error codes returned by functions of this API */
 enum sflph_error {
