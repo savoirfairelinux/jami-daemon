@@ -31,7 +31,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
-#include <sflphone.h>
+#include "sflphone.h"
 
 #include "dbusclient.h"
 #include "dbus_cpp.h"
