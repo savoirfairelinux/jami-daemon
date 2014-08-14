@@ -32,6 +32,7 @@
 #define __DBUSCLIENT_H__
 
 #include <sflphone.h>
+#include "noncopyable.h"
 
 class DBusConfigurationManager;
 class DBusCallManager;
@@ -60,6 +61,7 @@ class DBusClient {
         int exit();
 
     private:
+        NON_COPYABLE(DBusClient);
 
         int initLibrary(int sflphFlags);
         void finiLibrary();
