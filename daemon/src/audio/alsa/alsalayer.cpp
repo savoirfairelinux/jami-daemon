@@ -35,6 +35,7 @@
 #include "manager.h"
 #include "noncopyable.h"
 #include "client/configurationmanager.h"
+#include "audio/ringbuffermanager.h"
 #include "audio/ringbuffer.h"
 
 #include <thread>
@@ -158,7 +159,7 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , is_playback_open_(false)
     , is_capture_open_(false)
     , audioThread_(nullptr)
-    , mainRingBuffer_(Manager::instance().getMainBuffer().getRingBuffer(MainBuffer::DEFAULT_ID))
+    , mainRingBuffer_(Manager::instance().getRingBufferManager().getRingBuffer(RingBufferManager::DEFAULT_ID))
 {}
 
 AlsaLayer::~AlsaLayer()
@@ -674,7 +675,7 @@ AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
 
 void AlsaLayer::capture()
 {
-    AudioFormat mainBufferFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    AudioFormat mainBufferFormat = Manager::instance().getRingBufferManager().getInternalAudioFormat();
 
     int toGetFrames = snd_pcm_avail_update(captureHandle_);
 
@@ -713,7 +714,7 @@ void AlsaLayer::capture()
 
 void AlsaLayer::playback(int maxFrames)
 {
-    unsigned framesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
+    unsigned framesToGet = Manager::instance().getRingBufferManager().availableForGet(RingBufferManager::DEFAULT_ID);
 
     // no audio available, play tone or silence
     if (framesToGet <= 0) {
@@ -736,7 +737,7 @@ void AlsaLayer::playback(int maxFrames)
         write(playbackIBuff_.data(), playbackBuff_.frames(), playbackHandle_);
     } else {
         // play the regular sound samples
-        const AudioFormat mainBufferFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+        const AudioFormat mainBufferFormat = Manager::instance().getRingBufferManager().getInternalAudioFormat();
         const bool resample = audioFormat_.sample_rate != mainBufferFormat.sample_rate;
 
         double resampleFactor = 1.0;
@@ -752,7 +753,7 @@ void AlsaLayer::playback(int maxFrames)
         playbackBuff_.setFormat(mainBufferFormat);
         playbackBuff_.resize(framesToGet);
 
-        Manager::instance().getMainBuffer().getData(playbackBuff_, MainBuffer::DEFAULT_ID);
+        Manager::instance().getRingBufferManager().getData(playbackBuff_, RingBufferManager::DEFAULT_ID);
         playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
         if (audioFormat_.nb_channels != mainBufferFormat.nb_channels) {
@@ -785,19 +786,19 @@ void AlsaLayer::audioCallback()
     if (not safeUpdate(playbackHandle_, playbackAvailFrames))
         return;
 
-    unsigned framesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+    unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferManager::DEFAULT_ID);
 
     if (framesToGet > 0) {
         // Urgent data (dtmf, incoming call signal) come first.
         framesToGet = std::min(framesToGet, (unsigned)playbackAvailFrames);
         playbackBuff_.setFormat(audioFormat_);
         playbackBuff_.resize(framesToGet);
-        urgentRingBuffer_.get(playbackBuff_, MainBuffer::DEFAULT_ID);
+        urgentRingBuffer_.get(playbackBuff_, RingBufferManager::DEFAULT_ID);
         playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         playbackBuff_.interleave(playbackIBuff_);
         write(playbackIBuff_.data(), framesToGet, playbackHandle_);
         // Consume the regular one as well (same amount of frames)
-        Manager::instance().getMainBuffer().discard(framesToGet, MainBuffer::DEFAULT_ID);
+        Manager::instance().getRingBufferManager().discard(framesToGet, RingBufferManager::DEFAULT_ID);
     } else {
         // regular audio data
         playback(playbackAvailFrames);

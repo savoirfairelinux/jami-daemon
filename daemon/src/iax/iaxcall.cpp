@@ -40,6 +40,7 @@
 #include "manager.h"
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
+#include "audio/ringbuffermanager.h"
 #include "audio/ringbuffer.h"
 
 #if HAVE_INSTANT_MESSAGING
@@ -74,7 +75,7 @@ IAXCall::IAXCall(IAXAccount& account, const std::string& id, Call::CallType type
       format(0),
       session(NULL)
 {
-    ringbuffer_ = Manager::instance().getMainBuffer().createRingBuffer(getCallId());
+    ringbuffer_ = Manager::instance().getRingBufferManager().createRingBuffer(getCallId());
 }
 
 int IAXCall::getSupportedFormat(const std::string &accountID) const
@@ -148,13 +149,13 @@ IAXCall::answer()
     setState(Call::ACTIVE);
     setConnectionState(Call::CONNECTED);
 
-    Manager::instance().getMainBuffer().flushAllBuffers();
+    Manager::instance().getRingBufferManager().flushAllBuffers();
 }
 
 void
 IAXCall::hangup(int reason UNUSED)
 {
-    Manager::instance().getMainBuffer().unBindAll(getCallId());
+    Manager::instance().getRingBufferManager().unBindAll(getCallId());
 
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
     iax_hangup(session, (char*) "Dumped Call");
@@ -192,7 +193,7 @@ IAXCall::attendedTransfer(const std::string& /*targetID*/)
 void
 IAXCall::onhold()
 {
-    Manager::instance().getMainBuffer().unBindAll(getCallId());
+    Manager::instance().getRingBufferManager().unBindAll(getCallId());
 
     {
         std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
@@ -220,7 +221,7 @@ IAXCall::offhold()
 void
 IAXCall::peerHungup()
 {
-    Manager::instance().getMainBuffer().unBindAll(getCallId());
+    Manager::instance().getRingBufferManager().unBindAll(getCallId());
 
     session = nullptr;
 }

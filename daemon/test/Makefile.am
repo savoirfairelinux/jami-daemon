@@ -28,8 +28,8 @@ test_SOURCES = constants.h \
 			   siptest.cpp \
 			   sdptest.h \
 			   sdptest.cpp \
-			   mainbuffertest.h \
-			   mainbuffertest.cpp \
+			   ringbuffermanagertest.h \
+			   ringbuffermanagertest.cpp \
 			   resamplertest.h \
 			   resamplertest.cpp \
 			   hooktest.h \
