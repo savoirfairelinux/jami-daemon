@@ -45,14 +45,15 @@
 static const size_t MIN_BUFFER_SIZE = 1024;
 
 // Create  a ring buffer with 'size' bytes
-RingBuffer::RingBuffer(size_t size, AudioFormat format /* = MONO */) :
-    endPos_(0)
+RingBuffer::RingBuffer(const std::string& rbuf_id, size_t size,
+                       AudioFormat format /* = MONO */)
+    : id(rbuf_id)
+    , endPos_(0)
     , buffer_(std::max(size, MIN_BUFFER_SIZE), format)
     , lock_()
     , not_empty_()
     , readoffsets_()
-{
-}
+{}
 
 void
 RingBuffer::flush(const std::string &call_id)
