@@ -209,18 +209,18 @@ int DBusClient::initLibrary(int sflphFlags)
 #endif // SFL_VIDEO
 
     // All event handlers
-    sflph_ev_handlers evHandlers = {};
-
-    evHandlers.call_ev_handlers = callEvHandlers;
-    evHandlers.config_ev_handlers = configEvHandlers;
+    sflph_ev_handlers evHandlers = {
+        .call_ev_handlers = callEvHandlers,
+        .config_ev_handlers = configEvHandlers,
 
 #ifdef SFL_PRESENCE
-    evHandlers.pres_ev_handlers = presEvHandlers;
+        .pres_ev_handlers = presEvHandlers,
 #endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
-    evHandlers.video_ev_handlers = videoEvHandlers;
+        .video_ev_handlers = videoEvHandlers
 #endif // SFL_VIDEO
+    };
 
     // Initialize now
     return sflph_init(&evHandlers, static_cast<sflph_init_flag>(sflphFlags));

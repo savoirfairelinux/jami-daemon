@@ -110,7 +110,9 @@ class VideoManager
         void stoppedDecoding(const std::string &id, const std::string& shmPath, bool isMixer);
 
     private:
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         sflph_video_ev_handlers evHandlers_{};
+#pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 
 #endif // VIDEOMANAGER_H_

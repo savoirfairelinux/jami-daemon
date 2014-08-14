@@ -160,8 +160,10 @@ class ConfigurationManager
         std::vector< int32_t > getHardwareAudioFormat();
 
     private:
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
         sflph_config_ev_handlers evHandlers_{};
+#pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 
 #endif //CONFIGURATIONMANAGER_H

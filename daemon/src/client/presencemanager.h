@@ -64,8 +64,10 @@ class PresenceManager
                                   const bool& state);
 
     private:
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
-        struct sflph_pres_ev_handlers evHandlers_{};
+        sflph_pres_ev_handlers evHandlers_{};
+#pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 
 #endif //PRESENCEINT_H
