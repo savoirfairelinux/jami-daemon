@@ -37,6 +37,7 @@
 #include <climits>
 #include "logger.h"
 #include "audio/mainbuffer.h"
+#include "audio/ringbuffer.h"
 #include "manager.h"
 #include "array_size.h"
 
@@ -151,8 +152,7 @@ JackLayer::capture()
     // get audio from jack ringbuffer
     read(captureBuffer_);
 
-    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
-    const AudioFormat mainBufferFormat = mbuffer.getInternalAudioFormat();
+    const AudioFormat mainBufferFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
     const bool resample = mainBufferFormat.sample_rate != audioFormat_.sample_rate;
 
     captureBuffer_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
@@ -162,10 +162,10 @@ JackLayer::capture()
         AudioBuffer out(outSamples, mainBufferFormat);
         resampler_.resample(captureBuffer_, out);
         dcblocker_.process(out);
-        mbuffer.putData(out, MainBuffer::DEFAULT_ID);
+        mainRingBuffer_->put(out);
     } else {
         dcblocker_.process(captureBuffer_);
-        mbuffer.putData(captureBuffer_, MainBuffer::DEFAULT_ID);
+        mainRingBuffer_->put(captureBuffer_);
     }
 }
 
@@ -325,7 +325,8 @@ JackLayer::JackLayer(const AudioPreference &p) :
     playbackFloatBuffer_(),
     captureBuffer_(0, audioFormat_),
     captureFloatBuffer_(),
-    hardwareBufferSize_(0)
+    hardwareBufferSize_(0),
+    mainRingBuffer_(Manager::instance().getMainBuffer().getRingBuffer(MainBuffer::DEFAULT_ID))
 {
     playbackClient_ = jack_client_open(PACKAGE_NAME,
             (jack_options_t) (JackNullOption | JackNoStartServer), NULL);
