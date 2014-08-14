@@ -42,8 +42,6 @@
 
 class RingBuffer;
 
-typedef std::set<std::string> CallIDSet;
-
 class MainBuffer {
 
     public:
@@ -69,32 +67,37 @@ class MainBuffer {
          * Bind together two audio streams so taht a client will be able
          * to put and get data specifying its callid only.
          */
-        void bindCallID(const std::string& call_id1, const std::string& call_id2);
+        void bindCallID(const std::string& call_id1,
+                        const std::string& call_id2);
 
         /**
          * Add a new call_id to unidirectional outgoing stream
          * \param call_id New call id to be added for this stream
          * \param process_id Process that require this stream
          */
-        void bindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
+        void bindHalfDuplexOut(const std::string& process_id,
+                               const std::string& call_id);
 
         /**
          * Unbind two calls
          */
-        void unBindCallID(const std::string& call_id1, const std::string& call_id2);
+        void unBindCallID(const std::string& call_id1,
+                          const std::string& call_id2);
 
         /**
          * Unbind a unidirectional stream
          */
-        void unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
+        void unBindHalfDuplexOut(const std::string& process_id,
+                                 const std::string& call_id);
 
         void unBindAll(const std::string& call_id);
 
-        void putData(AudioBuffer& buffer, const std::string& call_id);
-
-        bool waitForDataAvailable(const std::string& call_id, size_t min_data_length, const std::chrono::microseconds& max_wait) const;
+        bool waitForDataAvailable(const std::string& call_id,
+                                  size_t min_data_length,
+                                  const std::chrono::microseconds& max_wait) const;
 
         size_t getData(AudioBuffer& buffer, const std::string& call_id);
+
         size_t getAvailableData(AudioBuffer& buffer, const std::string& call_id);
 
         size_t availableForGet(const std::string& call_id) const;
@@ -105,49 +108,57 @@ class MainBuffer {
 
         void flushAllBuffers();
 
+        /**
+         * Create a new ringbuffer with a default readoffset.
+         * This class keeps a weak reference on returned pointer,
+         * so the caller is responsible of the refered instance.
+         */
+        std::shared_ptr<RingBuffer> createRingBuffer(const std::string& id);
+
+        /**
+         * Obtain a shared pointer on a RingBuffer given by its ID.
+         * If the ID doesn't match to any RingBuffer, the shared pointer
+         * is empty. This non-const version flushes internal weak pointers
+         * if the ID was used and the associated RingBuffer has been deleted.
+         */
+        std::shared_ptr<RingBuffer> getRingBuffer(const std::string& id);
+
+        /**
+         * Works as non-const getRingBuffer, without the weak reference flush.
+         */
+        std::shared_ptr<RingBuffer> getRingBuffer(const std::string& id) const;
+
     private:
         NON_COPYABLE(MainBuffer);
 
-        std::shared_ptr<CallIDSet> getCallIDSet(const std::string& call_id) const;
+        // A set of RingBuffers readable by a call
+        typedef std::set<std::shared_ptr<RingBuffer>,
+            std::owner_less<std::shared_ptr<RingBuffer>> > ReadBindings;
 
-        void removeCallIDSet(const std::string& set_id);
+        const MainBuffer::ReadBindings*
+        getReadBindings(const std::string& call_id) const;
 
-        /**
-         * Add a new call id to this set (created if not existant yet)
-         */
-        void addCallIDtoSet(const std::string& set_id, const std::string& call_id);
+        MainBuffer::ReadBindings* getReadBindings(const std::string& call_id);
 
-        /**
-         * Create a new ringbuffer with default readoffset
-         */
-        void createRingBuffer(const std::string& call_id);
+        void removeReadBindings(const std::string& call_id);
 
-        void removeRingBuffer(const std::string& call_id);
+        void addReaderToRingBuffer(std::shared_ptr<RingBuffer> rbuf,
+                                   const std::string& call_id);
 
-        bool hasRingBuffer(const std::string& call_id);
+        void removeReaderFromRingBuffer(std::shared_ptr<RingBuffer> rbuf,
+                                        const std::string& call_id);
 
-        std::shared_ptr<RingBuffer> getRingBuffer(const std::string& call_id) const;
+        // A cache of created RingBuffers listed by IDs.
+        std::map<std::string, std::weak_ptr<RingBuffer> > ringBufferMap_ {};
 
-        void unBindOneSide(const std::string& call_id1,
-                           const std::string& call_id2);
+        // A map of which RingBuffers a call has some ReadOffsets
+        std::map<std::string, ReadBindings> readBindingsMap_ {};
 
-        size_t getDataByID(AudioBuffer& buffer, const std::string& call_id, const std::string& reader_id);
+        mutable std::recursive_mutex stateLock_ {};
 
-        size_t availableForGetByID(const std::string& call_id, const std::string& reader_id) const;
+        AudioFormat internalAudioFormat_ {AudioFormat::MONO()};
 
-        void discardByID(size_t toDiscard, const std::string& call_id, const std::string& reader_id);
-
-        void flushByID(const std::string& call_id, const std::string& reader_id);
-
-        typedef std::map<std::string, std::shared_ptr<RingBuffer> > RingBufferMap;
-        RingBufferMap ringBufferMap_ = RingBufferMap{};
-
-        typedef std::map<std::string, std::shared_ptr<CallIDSet> > CallIDMap;
-        CallIDMap callIDMap_ = CallIDMap{};
-
-        mutable std::recursive_mutex stateLock_ = {};
-
-        AudioFormat internalAudioFormat_ = AudioFormat::MONO();
+        std::shared_ptr<RingBuffer> defaultRingBuffer_;
 };
 
 #endif  // MainBuffer

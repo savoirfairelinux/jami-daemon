@@ -33,6 +33,7 @@
 
 #include "mainbuffertest.h"
 #include "audio/mainbuffer.h"
+#include "audio/ringbuffer.h"
 #include "logger.h"
 #include "test_utils.h"
 
@@ -43,7 +44,7 @@ void MainBufferTest::testBindUnbindBuffer()
     std::string test_id1 = "bind unbind 1";
     std::string test_id2 = "bind unbind 2";
 
-    // bind test_id1 with MainBuffer::DEFAULT_ID (both buffers not already created)
+    // bind test_id1 with MainBuffer::DEFAULT_ID (test_id1 not already created)
     mainbuffer_->bindCallID(test_id1, MainBuffer::DEFAULT_ID);
 
     // unbind test_id1 with MainBuffer::DEFAULT_ID
@@ -82,6 +83,9 @@ void MainBufferTest::testGetPutData()
 
     std::string test_id = "incoming rtp session";
 
+    auto mainRingBuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
+    auto testRingBuffer = mainbuffer_->createRingBuffer(test_id);
+
     mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
 
     SFLAudioSample test_sample1 = 12;
@@ -95,7 +99,7 @@ void MainBufferTest::testGetPutData()
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output, test_id) == 0);
 
     // put by MainBuffer::DEFAULT_ID, get by test_id
-    mainbuffer_->putData(test_input1, MainBuffer::DEFAULT_ID);
+    mainRingBuffer->put(test_input1);
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output, test_id) == 1);
     CPPUNIT_ASSERT(test_sample1 == (*test_output.getChannel(0))[0]);
 
@@ -103,12 +107,11 @@ void MainBufferTest::testGetPutData()
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output, MainBuffer::DEFAULT_ID) == 0);
 
     // put by test_id, get by MainBuffer::DEFAULT_ID
-    mainbuffer_->putData(test_input2, test_id);
+    testRingBuffer->put(test_input2);
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output, MainBuffer::DEFAULT_ID) == 1);
     CPPUNIT_ASSERT(test_sample2 == (*test_output.getChannel(0))[0]);
 
     mainbuffer_->unBindCallID(test_id, MainBuffer::DEFAULT_ID);
-
 }
 
 void MainBufferTest::testGetAvailableData()
@@ -116,6 +119,9 @@ void MainBufferTest::testGetAvailableData()
     TITLE();
     std::string test_id = "getData putData";
     std::string false_id = "false id";
+
+    auto mainRingBuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
+    auto testRingBuffer = mainbuffer_->createRingBuffer(test_id);
 
     mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
 
@@ -132,7 +138,7 @@ void MainBufferTest::testGetAvailableData()
     CPPUNIT_ASSERT(mainbuffer_->getAvailableData(test_output, test_id) == 0);
 
     // put by MainBuffer::DEFAULT_ID, get by test_id
-    mainbuffer_->putData(test_input1, MainBuffer::DEFAULT_ID);
+    mainRingBuffer->put(test_input1);
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 1);
 
     // get by MainBuffer::DEFAULT_ID without preliminary input
@@ -140,37 +146,37 @@ void MainBufferTest::testGetAvailableData()
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output_large, test_id) == 0);
 
     // put by test_id get by test_id
-    mainbuffer_->putData(test_input2, test_id);
+    testRingBuffer->put(test_input2);
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 1);
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output_large, test_id) == 1);
     CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 0);
     CPPUNIT_ASSERT((*test_output_large.getChannel(0))[0] == test_sample2);
 
-    // put/get by false id
-    mainbuffer_->putData(test_input2, false_id);
+    // get by false id
     CPPUNIT_ASSERT(mainbuffer_->getData(test_output_large, false_id) == 0);
 
     mainbuffer_->unBindCallID(test_id, MainBuffer::DEFAULT_ID);
 }
-
-
 
 void MainBufferTest::testDiscardFlush()
 {
     TITLE();
     std::string test_id = "flush discard";
 
+    auto mainRingBuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
+    auto testRingBuffer = mainbuffer_->createRingBuffer(test_id);
+
     mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
 
     SFLAudioSample test_sample1 = 12;
     AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO());
 
-    mainbuffer_->putData(test_input1, test_id);
+    testRingBuffer->put(test_input1);
     mainbuffer_->discard(1, MainBuffer::DEFAULT_ID);
 
     mainbuffer_->discard(1, test_id);
 
-    mainbuffer_->putData(test_input1, MainBuffer::DEFAULT_ID);
+    mainRingBuffer->put(test_input1);
 
     mainbuffer_->discard(1, test_id);
 
@@ -184,23 +190,28 @@ void MainBufferTest::testConference()
     std::string test_id1 = "participant A";
     std::string test_id2 = "participant B";
 
+    auto mainRingBuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
+    auto testRingBuffer1 = mainbuffer_->createRingBuffer(test_id1);
+    auto testRingBuffer2 = mainbuffer_->createRingBuffer(test_id2);
+
     // test bind Participant A with default
     mainbuffer_->bindCallID(test_id1, MainBuffer::DEFAULT_ID);
 
     // test bind Participant B with default
     mainbuffer_->bindCallID(test_id2, MainBuffer::DEFAULT_ID);
+
     // test bind Participant A with Participant B
     mainbuffer_->bindCallID(test_id1, test_id2);
-    // test putData default
+
     SFLAudioSample testint = 12;
     AudioBuffer testbuf(&testint, 1, AudioFormat::MONO());
 
     // put data test ring buffers
-    mainbuffer_->putData(testbuf, MainBuffer::DEFAULT_ID);
-    //putdata test ring buffers
-    mainbuffer_->putData(testbuf, test_id1);
+    mainRingBuffer->put(testbuf);
 
-    mainbuffer_->putData(testbuf, test_id2);
+    // put data test ring buffers
+    testRingBuffer1->put(testbuf);
+    testRingBuffer2->put(testbuf);
 }
 
 MainBufferTest::MainBufferTest() : CppUnit::TestCase("Audio Layer Tests"), mainbuffer_(new MainBuffer) {}

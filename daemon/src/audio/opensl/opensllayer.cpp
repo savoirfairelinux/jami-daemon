@@ -34,6 +34,7 @@
 
 #include "manager.h"
 #include "audio/mainbuffer.h"
+#include "audio/ringbuffer.h"
 #include "audio/dcblocker.h"
 #include "logger.h"
 #include "array_size.h"
@@ -76,6 +77,7 @@ OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     , hardwareBuffSize_(BUFFER_SIZE)
     , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO()))
     , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO()))
+    , mainRingBuffer_(Manager::instance().getMainBuffer().getRingBuffer(MainBuffer::DEFAULT_ID))
 {
 }
 
@@ -727,10 +729,10 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
         AudioBuffer out(outSamples, mainBufferFormat);
         resampler_.resample(buffer, out);
         dcblocker_.process(out);
-        mbuffer.putData(out, MainBuffer::DEFAULT_ID);
+        mainRingBuffer_->put(out);
     } else {
         dcblocker_.process(buffer);
-        mbuffer.putData(buffer, MainBuffer::DEFAULT_ID);
+        mainRingBuffer_->put(buffer);
     }
 }
 
