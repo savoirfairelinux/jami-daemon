@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 #include <iostream>
-#include <sflphone.h>
+#include "sflphone.h"
 
 #include "dbuscallmanager.h"
 

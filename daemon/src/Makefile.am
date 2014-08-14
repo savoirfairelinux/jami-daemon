@@ -33,8 +33,6 @@ SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGIN
 
 # libsflphone
 
-include_HEADERS = sflphone.h
-
 lib_LTLIBRARIES = libsflphone.la
 
 libsflphone_la_LIBADD = \

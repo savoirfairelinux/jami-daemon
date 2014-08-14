@@ -27,7 +27,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <sflphone.h>
+#include "sflphone.h"
 
 #include "dbuspresencemanager.h"
 
