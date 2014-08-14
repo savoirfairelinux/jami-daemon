@@ -32,61 +32,61 @@
 #include <memory>
 
 #include "mainbuffertest.h"
-#include "audio/mainbuffer.h"
+#include "audio/ringbuffermanager.h"
 #include "audio/ringbuffer.h"
 #include "logger.h"
 #include "test_utils.h"
 
-void MainBufferTest::testBindUnbindBuffer()
+void RingBufferManagerTest::testBindUnbindBuffer()
 {
     TITLE();
 
     std::string test_id1 = "bind unbind 1";
     std::string test_id2 = "bind unbind 2";
 
-    // bind test_id1 with MainBuffer::DEFAULT_ID (test_id1 not already created)
-    mainbuffer_->bindCallID(test_id1, MainBuffer::DEFAULT_ID);
+    // bind test_id1 with RingBufferManager::DEFAULT_ID (test_id1 not already created)
+    rbm_->bindCallID(test_id1, RingBufferManager::DEFAULT_ID);
 
-    // unbind test_id1 with MainBuffer::DEFAULT_ID
-    mainbuffer_->unBindCallID(test_id1, MainBuffer::DEFAULT_ID);
+    // unbind test_id1 with RingBufferManager::DEFAULT_ID
+    rbm_->unBindCallID(test_id1, RingBufferManager::DEFAULT_ID);
 
-    mainbuffer_->bindCallID(test_id1, MainBuffer::DEFAULT_ID);
-    mainbuffer_->bindCallID(test_id1, MainBuffer::DEFAULT_ID);
+    rbm_->bindCallID(test_id1, RingBufferManager::DEFAULT_ID);
+    rbm_->bindCallID(test_id1, RingBufferManager::DEFAULT_ID);
 
-    mainbuffer_->bindCallID(test_id2, MainBuffer::DEFAULT_ID);
-    mainbuffer_->bindCallID(test_id2, MainBuffer::DEFAULT_ID);
+    rbm_->bindCallID(test_id2, RingBufferManager::DEFAULT_ID);
+    rbm_->bindCallID(test_id2, RingBufferManager::DEFAULT_ID);
 
     // bind test_id1 with test_id2 (both testid1 and test_id2 already created)
     // calling it twice not supposed to break anything
-    mainbuffer_->bindCallID(test_id1, test_id2);
-    mainbuffer_->bindCallID(test_id1, test_id2);
+    rbm_->bindCallID(test_id1, test_id2);
+    rbm_->bindCallID(test_id1, test_id2);
 
-    mainbuffer_->unBindCallID(test_id1, test_id2);
-    mainbuffer_->unBindCallID(test_id1, test_id2);
+    rbm_->unBindCallID(test_id1, test_id2);
+    rbm_->unBindCallID(test_id1, test_id2);
 
-    mainbuffer_->unBindCallID(MainBuffer::DEFAULT_ID, test_id2);
-    mainbuffer_->unBindCallID(MainBuffer::DEFAULT_ID, test_id2);
+    rbm_->unBindCallID(RingBufferManager::DEFAULT_ID, test_id2);
+    rbm_->unBindCallID(RingBufferManager::DEFAULT_ID, test_id2);
 
-    mainbuffer_->unBindCallID(MainBuffer::DEFAULT_ID, test_id1);
+    rbm_->unBindCallID(RingBufferManager::DEFAULT_ID, test_id1);
 
     // test unbind all function
-    mainbuffer_->bindCallID(MainBuffer::DEFAULT_ID, test_id1);
-    mainbuffer_->bindCallID(MainBuffer::DEFAULT_ID, test_id2);
-    mainbuffer_->bindCallID(test_id1, test_id2);
+    rbm_->bindCallID(RingBufferManager::DEFAULT_ID, test_id1);
+    rbm_->bindCallID(RingBufferManager::DEFAULT_ID, test_id2);
+    rbm_->bindCallID(test_id1, test_id2);
 
-    mainbuffer_->unBindAll(test_id2);
+    rbm_->unBindAll(test_id2);
 }
 
-void MainBufferTest::testGetPutData()
+void RingBufferManagerTest::testGetPutData()
 {
     TITLE();
 
     std::string test_id = "incoming rtp session";
 
-    auto mainRingBuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
-    auto testRingBuffer = mainbuffer_->createRingBuffer(test_id);
+    auto mainRingBuffer = rbm_->getRingBuffer(RingBufferManager::DEFAULT_ID);
+    auto testRingBuffer = rbm_->createRingBuffer(test_id);
 
-    mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
+    rbm_->bindCallID(test_id, RingBufferManager::DEFAULT_ID);
 
     SFLAudioSample test_sample1 = 12;
     SFLAudioSample test_sample2 = 13;
@@ -96,34 +96,34 @@ void MainBufferTest::testGetPutData()
     AudioBuffer test_output(100, AudioFormat::MONO());
 
     // get by test_id without preleminary put
-    CPPUNIT_ASSERT(mainbuffer_->getData(test_output, test_id) == 0);
+    CPPUNIT_ASSERT(rbm_->getData(test_output, test_id) == 0);
 
-    // put by MainBuffer::DEFAULT_ID, get by test_id
+    // put by RingBufferManager::DEFAULT_ID, get by test_id
     mainRingBuffer->put(test_input1);
-    CPPUNIT_ASSERT(mainbuffer_->getData(test_output, test_id) == 1);
+    CPPUNIT_ASSERT(rbm_->getData(test_output, test_id) == 1);
     CPPUNIT_ASSERT(test_sample1 == (*test_output.getChannel(0))[0]);
 
-    // get by MainBuffer::DEFAULT_ID without preleminary put
-    CPPUNIT_ASSERT(mainbuffer_->getData(test_output, MainBuffer::DEFAULT_ID) == 0);
+    // get by RingBufferManager::DEFAULT_ID without preleminary put
+    CPPUNIT_ASSERT(rbm_->getData(test_output, RingBufferManager::DEFAULT_ID) == 0);
 
-    // put by test_id, get by MainBuffer::DEFAULT_ID
+    // put by test_id, get by RingBufferManager::DEFAULT_ID
     testRingBuffer->put(test_input2);
-    CPPUNIT_ASSERT(mainbuffer_->getData(test_output, MainBuffer::DEFAULT_ID) == 1);
+    CPPUNIT_ASSERT(rbm_->getData(test_output, RingBufferManager::DEFAULT_ID) == 1);
     CPPUNIT_ASSERT(test_sample2 == (*test_output.getChannel(0))[0]);
 
-    mainbuffer_->unBindCallID(test_id, MainBuffer::DEFAULT_ID);
+    rbm_->unBindCallID(test_id, RingBufferManager::DEFAULT_ID);
 }
 
-void MainBufferTest::testGetAvailableData()
+void RingBufferManagerTest::testGetAvailableData()
 {
     TITLE();
     std::string test_id = "getData putData";
     std::string false_id = "false id";
 
-    auto mainRingBuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
-    auto testRingBuffer = mainbuffer_->createRingBuffer(test_id);
+    auto mainRingBuffer = rbm_->getRingBuffer(RingBufferManager::DEFAULT_ID);
+    auto testRingBuffer = rbm_->createRingBuffer(test_id);
 
-    mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
+    rbm_->bindCallID(test_id, RingBufferManager::DEFAULT_ID);
 
     SFLAudioSample test_sample1 = 12;
     SFLAudioSample test_sample2 = 13;
@@ -133,75 +133,75 @@ void MainBufferTest::testGetAvailableData()
     AudioBuffer test_output(1, AudioFormat::MONO());
     AudioBuffer test_output_large(100, AudioFormat::MONO());
 
-    // put by MainBuffer::DEFAULT_ID get by test_id without preleminary put
-    CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 0);
-    CPPUNIT_ASSERT(mainbuffer_->getAvailableData(test_output, test_id) == 0);
+    // put by RingBufferManager::DEFAULT_ID get by test_id without preleminary put
+    CPPUNIT_ASSERT(rbm_->availableForGet(test_id) == 0);
+    CPPUNIT_ASSERT(rbm_->getAvailableData(test_output, test_id) == 0);
 
-    // put by MainBuffer::DEFAULT_ID, get by test_id
+    // put by RingBufferManager::DEFAULT_ID, get by test_id
     mainRingBuffer->put(test_input1);
-    CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 1);
+    CPPUNIT_ASSERT(rbm_->availableForGet(test_id) == 1);
 
-    // get by MainBuffer::DEFAULT_ID without preliminary input
-    CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 0);
-    CPPUNIT_ASSERT(mainbuffer_->getData(test_output_large, test_id) == 0);
+    // get by RingBufferManager::DEFAULT_ID without preliminary input
+    CPPUNIT_ASSERT(rbm_->availableForGet(test_id) == 0);
+    CPPUNIT_ASSERT(rbm_->getData(test_output_large, test_id) == 0);
 
     // put by test_id get by test_id
     testRingBuffer->put(test_input2);
-    CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 1);
-    CPPUNIT_ASSERT(mainbuffer_->getData(test_output_large, test_id) == 1);
-    CPPUNIT_ASSERT(mainbuffer_->availableForGet(test_id) == 0);
+    CPPUNIT_ASSERT(rbm_->availableForGet(test_id) == 1);
+    CPPUNIT_ASSERT(rbm_->getData(test_output_large, test_id) == 1);
+    CPPUNIT_ASSERT(rbm_->availableForGet(test_id) == 0);
     CPPUNIT_ASSERT((*test_output_large.getChannel(0))[0] == test_sample2);
 
     // get by false id
-    CPPUNIT_ASSERT(mainbuffer_->getData(test_output_large, false_id) == 0);
+    CPPUNIT_ASSERT(rbm_->getData(test_output_large, false_id) == 0);
 
-    mainbuffer_->unBindCallID(test_id, MainBuffer::DEFAULT_ID);
+    rbm_->unBindCallID(test_id, RingBufferManager::DEFAULT_ID);
 }
 
-void MainBufferTest::testDiscardFlush()
+void RingBufferManagerTest::testDiscardFlush()
 {
     TITLE();
     std::string test_id = "flush discard";
 
-    auto mainRingBuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
-    auto testRingBuffer = mainbuffer_->createRingBuffer(test_id);
+    auto mainRingBuffer = rbm_->getRingBuffer(RingBufferManager::DEFAULT_ID);
+    auto testRingBuffer = rbm_->createRingBuffer(test_id);
 
-    mainbuffer_->bindCallID(test_id, MainBuffer::DEFAULT_ID);
+    rbm_->bindCallID(test_id, RingBufferManager::DEFAULT_ID);
 
     SFLAudioSample test_sample1 = 12;
     AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO());
 
     testRingBuffer->put(test_input1);
-    mainbuffer_->discard(1, MainBuffer::DEFAULT_ID);
+    rbm_->discard(1, RingBufferManager::DEFAULT_ID);
 
-    mainbuffer_->discard(1, test_id);
+    rbm_->discard(1, test_id);
 
     mainRingBuffer->put(test_input1);
 
-    mainbuffer_->discard(1, test_id);
+    rbm_->discard(1, test_id);
 
-    mainbuffer_->unBindCallID(test_id, MainBuffer::DEFAULT_ID);
+    rbm_->unBindCallID(test_id, RingBufferManager::DEFAULT_ID);
 }
 
-void MainBufferTest::testConference()
+void RingBufferManagerTest::testConference()
 {
     TITLE();
 
     std::string test_id1 = "participant A";
     std::string test_id2 = "participant B";
 
-    auto mainRingBuffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
-    auto testRingBuffer1 = mainbuffer_->createRingBuffer(test_id1);
-    auto testRingBuffer2 = mainbuffer_->createRingBuffer(test_id2);
+    auto mainRingBuffer = rbm_->getRingBuffer(RingBufferManager::DEFAULT_ID);
+    auto testRingBuffer1 = rbm_->createRingBuffer(test_id1);
+    auto testRingBuffer2 = rbm_->createRingBuffer(test_id2);
 
     // test bind Participant A with default
-    mainbuffer_->bindCallID(test_id1, MainBuffer::DEFAULT_ID);
+    rbm_->bindCallID(test_id1, RingBufferManager::DEFAULT_ID);
 
     // test bind Participant B with default
-    mainbuffer_->bindCallID(test_id2, MainBuffer::DEFAULT_ID);
+    rbm_->bindCallID(test_id2, RingBufferManager::DEFAULT_ID);
 
     // test bind Participant A with Participant B
-    mainbuffer_->bindCallID(test_id1, test_id2);
+    rbm_->bindCallID(test_id1, test_id2);
 
     SFLAudioSample testint = 12;
     AudioBuffer testbuf(&testint, 1, AudioFormat::MONO());
@@ -214,4 +214,4 @@ void MainBufferTest::testConference()
     testRingBuffer2->put(testbuf);
 }
 
-MainBufferTest::MainBufferTest() : CppUnit::TestCase("Audio Layer Tests"), mainbuffer_(new MainBuffer) {}
+RingBufferManagerTest::RingBufferManagerTest() : CppUnit::TestCase("Audio Layer Tests"), rbm_(new RingBufferManager) {}

@@ -31,7 +31,7 @@
 #include "manager.h"
 #include "logger.h"
 
-Recordable::Recordable() : recAudio_(), recorder_(&recAudio_, Manager::instance().getMainBuffer())
+Recordable::Recordable() : recAudio_(), recorder_(&recAudio_, Manager::instance().getRingBufferManager())
 {
     DEBUG("Set recording options: %s", Manager::instance().audioPreference.getRecordPath().c_str());
     recAudio_.setRecordingOptions(AudioFormat::MONO(), Manager::instance().audioPreference.getRecordPath());
