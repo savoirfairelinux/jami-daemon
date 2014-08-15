@@ -44,7 +44,7 @@ protocols.
 %build
 # Compile the dependencies
 pushd contrib
-mkdir -f native
+mkdir -p native
 pushd native
 ../bootstrap
 make
