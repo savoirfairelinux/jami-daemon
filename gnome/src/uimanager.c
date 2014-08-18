@@ -1099,7 +1099,7 @@ static const GtkActionEntry menu_entries[] = {
         N_("Send message"), G_CALLBACK(call_im)
     },
     {
-        "ScreenSharing", "view-fullscreen", N_("Share screen"), "<control>X",
+        "ScreenSharing", GTK_STOCK_SCREENSHARING, N_("Share screen"), "<control>X",
         N_("Share screen"), G_CALLBACK(call_screenshare)
     },
     {
@@ -1155,7 +1155,7 @@ static const GtkActionEntry menu_entries[] = {
 
 static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL, TRUE },
-    { "Record", "_Record", N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
+    { "Record", "media-record", N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
     { "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL, TRUE },
     { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK(dialpad_bar_cb), TRUE },
     { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK(volume_bar_cb), TRUE },

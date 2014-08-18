@@ -325,7 +325,7 @@ static GtkTreeModel* create_model(GtkWidget *widget)
         gchar* icon_name;
         gint page_number;
     } browser_entries_full[] = {
-        {"General", "_Preferences", 0},
+        {"General", GTK_STOCK_PREFS, 0},
         {"Audio", GTK_STOCK_PREFS_AUDIO, 1},
 #ifdef SFL_VIDEO
         {"Video", GTK_STOCK_PREFS_VIDEO, 2},
