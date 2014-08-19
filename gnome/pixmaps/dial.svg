@@ -16,11 +16,9 @@
    sodipodi:version="0.32"
    inkscape:version="0.48.4 r9939"
    version="1.0"
-   sodipodi:docname="dial.svg"
+   sodipodi:docname="current.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    sodipodi:modified="true">
-  <title
-     id="title3009">dial.svg</title>
   <defs
      id="defs4">
     <linearGradient
@@ -93,7 +91,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="16"
-     inkscape:cx="-10.260191"
+     inkscape:cx="10.302309"
      inkscape:cy="16.452644"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -101,10 +99,10 @@
      height="32px"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1313"
+     inkscape:window-width="1301"
      inkscape:window-height="744"
-     inkscape:window-x="337"
-     inkscape:window-y="1224"
+     inkscape:window-x="65"
+     inkscape:window-y="456"
      showgrid="false"
      inkscape:window-maximized="1" />
   <metadata
@@ -115,50 +113,8 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title>dial.svg</dc:title>
-        <dc:date>2014/06/24</dc:date>
-        <dc:creator>
-          <cc:Agent>
-            <dc:title>Gabrielle Maheux-Leclerc &lt;gabrielle.maheux@savoirfairelinux.com&gt;</dc:title>
-          </cc:Agent>
-        </dc:creator>
-        <dc:rights>
-          <cc:Agent>
-            <dc:title>Savoir-faire Linux Inc.</dc:title>
-          </cc:Agent>
-        </dc:rights>
-        <dc:publisher>
-          <cc:Agent>
-            <dc:title>Savoir-faire Linux Inc.</dc:title>
-          </cc:Agent>
-        </dc:publisher>
-        <dc:source>http://sflphone.org/download/source-code</dc:source>
-        <dc:subject>
-          <rdf:Bag>
-            <rdf:li>gnome</rdf:li>
-            <rdf:li>voip</rdf:li>
-            <rdf:li>sip</rdf:li>
-          </rdf:Bag>
-        </dc:subject>
-        <dc:coverage>SFLphone project</dc:coverage>
-        <cc:license
-           rdf:resource="http://creativecommons.org/licenses/by-sa/3.0/" />
+        <dc:title></dc:title>
       </cc:Work>
-      <cc:License
-         rdf:about="http://creativecommons.org/licenses/by-sa/3.0/">
-        <cc:permits
-           rdf:resource="http://creativecommons.org/ns#Reproduction" />
-        <cc:permits
-           rdf:resource="http://creativecommons.org/ns#Distribution" />
-        <cc:requires
-           rdf:resource="http://creativecommons.org/ns#Notice" />
-        <cc:requires
-           rdf:resource="http://creativecommons.org/ns#Attribution" />
-        <cc:permits
-           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
-        <cc:requires
-           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
-      </cc:License>
     </rdf:RDF>
   </metadata>
   <g
@@ -199,76 +155,89 @@
        id="rect43299-7-0"
        style="color:#bebebe;fill:none;stroke:none;stroke-width:1;marker:none;visibility:visible;display:inline;overflow:visible"
        transform="matrix(-0.25881905,0.96592583,-0.96592583,-0.25881905,0,0)" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039"
-       width="6.0952015"
-       height="6.0952015"
-       x="0.027045399"
-       y="-0.010613666" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039-1"
-       width="6.0952015"
-       height="6.0952015"
-       x="8.9604664"
-       y="-6.089498"
-       transform="scale(1,-1)" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039-1-6"
-       width="6.0952015"
-       height="6.0952015"
-       x="17.87727"
-       y="-6.0845666"
-       transform="scale(1,-1)" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039-1-6-8"
-       width="6.0952015"
-       height="6.0952015"
-       x="17.87727"
-       y="-15.009726"
-       transform="scale(1,-1)" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039-1-6-8-1"
-       width="6.0952015"
-       height="6.0952015"
-       x="9.0610094"
-       y="-14.900689"
-       transform="scale(1,-1)" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039-1-6-8-2"
-       width="6.0952015"
-       height="6.0952015"
-       x="-0.081806898"
-       y="-15.118394"
-       transform="scale(1,-1)" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039-1-6-8-16"
-       width="6.0952015"
-       height="6.0952015"
-       x="-0.081806898"
-       y="-24.043734"
-       transform="scale(1,-1)" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039-1-6-8-6"
-       width="6.0952015"
-       height="6.0952015"
-       x="8.9521122"
-       y="-24.043552"
-       transform="scale(1,-1)" />
-    <rect
-       style="fill:#545454;fill-opacity:1;stroke:none"
-       id="rect4039-1-6-8-67"
-       width="6.0952015"
-       height="6.0952015"
-       x="17.87727"
-       y="-23.934881"
-       transform="scale(1,-1)" />
+    <g
+       transform="matrix(2.1681981,0,0,2.1681981,-280.4028,-1203.9792)"
+       id="g4148"
+       style="fill:#545454;fill-opacity:1">
+      <rect
+         y="555.31415"
+         x="130.90933"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-557.35272"
+         x="133.89476"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-557.35107"
+         x="136.87463"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1-6"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-560.33374"
+         x="136.87463"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1-6-8"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-560.2973"
+         x="133.92836"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1-6-8-1"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-560.37006"
+         x="130.87296"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1-6-8-2"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-563.35278"
+         x="130.87296"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1-6-8-16"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-563.35272"
+         x="133.89197"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1-6-8-6"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-563.31641"
+         x="136.87463"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1-6-8-67"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+      <rect
+         transform="scale(1,-1)"
+         y="-566.33539"
+         x="133.92834"
+         height="2.0369332"
+         width="2.0369332"
+         id="rect4039-1-6-8-3"
+         style="fill:#545454;fill-opacity:1;stroke:none" />
+    </g>
   </g>
 </svg>
