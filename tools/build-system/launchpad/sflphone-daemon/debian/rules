@@ -19,15 +19,9 @@ DEB_INSTALL_MANPAGES_sflphone_common = sflphoned.1
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
-	cd ../contrib
-	mkdir native
-	cd native
-	../bootstrap
-	make
-	cd ../..
 	# Add here commands to configure the package.
 	./autogen.sh
-	./configure --prefix=/usr
+	./configure --prefix=/usr --disable-video --without-iax2
 	touch configure-stamp
 
 #Architecture

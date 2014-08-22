@@ -15,35 +15,13 @@ package=sflphone-daemon-video
 CXX = g++-4.0
 CFLAGS = -Wall -g
 DEB_INSTALL_MANPAGES_sflphone_daemon_video = sflphoned.1
-PJ_CONFIG_OPTIONS="--prefix=/usr \
-                   --disable-oss \
-                   --disable-sound \
-                   --disable-video \
-                   --enable-ext-sound \
-                   --disable-speex-aec \
-                   --disable-g711-codec \
-                   --disable-l16-codec \
-                   --disable-gsm-codec \
-                   --disable-g722-codec \
-                   --disable-g7221-codec \
-                   --disable-speex-codec \
-                   --disable-ilbc-codec \
-                   --disable-sdl \
-                   --disable-ffmpeg \
-                   --disable-v4l2"
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
-	cd ../contrib
-	mkdir native
-	cd native
-	../bootstrap
-	make
-	cd ../..
 	# Add here commands to configure the package.
 	./autogen.sh
-	./configure --prefix=/usr
+	./configure --prefix=/usr --without-iax2
 	touch configure-stamp
 
 #Architecture
