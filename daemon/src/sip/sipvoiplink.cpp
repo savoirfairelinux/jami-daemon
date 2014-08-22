@@ -553,7 +553,9 @@ SIPVoIPLink::SIPVoIPLink()
         outgoing_request_forked_cb,
         transaction_state_changed_cb,
         sdp_request_offer_cb,
+#if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
         nullptr /* on_rx_reinvite */,
+#endif
         sdp_create_offer_cb,
         sdp_media_update_cb,
         nullptr /* on_send_ack */,
