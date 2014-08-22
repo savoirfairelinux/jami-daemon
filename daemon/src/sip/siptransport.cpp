@@ -98,7 +98,11 @@ SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state s
     auto transport_key = map_utils::findByValue(transportMap_, tp);
     if (transport_key == transportMap_.cend())
         return;
+#if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
     if (state == PJSIP_TP_STATE_SHUTDOWN || state == PJSIP_TP_STATE_DESTROY) {
+#else
+    if (tp->is_shutdown || tp->is_destroying) {
+#endif
         WARN("Transport was destroyed: {%s}", tp->info);
         transportMap_.erase(transport_key++);
         transportDestroyedCv_.notify_all();
