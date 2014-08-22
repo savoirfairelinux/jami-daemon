@@ -126,6 +126,9 @@ function build_contrib {
 }
 
 function build_daemon {
+    # Build dependencies first
+    build_contrib
+
     pushd daemon
     # Run static analysis code tool
     if [ $CODE_ANALYSIS == 1 ]; then
@@ -227,7 +230,6 @@ while getopts ":b: t a v c" opt; do
         esac
 done
 
-build_contrib
 # Call appropriate build function, with parameters if needed
 build_$BUILD
 
