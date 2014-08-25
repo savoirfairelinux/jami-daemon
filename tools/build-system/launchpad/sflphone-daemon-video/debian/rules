@@ -20,8 +20,10 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
+	# build iax with contrib since it is not packaged
+	cd contrib && mkdir -p native && cd native && ../bootstrap && make .iax && cd ../..
 	./autogen.sh
-	./configure --prefix=/usr --without-iax2
+	./configure --prefix=/usr
 	touch configure-stamp
 
 #Architecture
