@@ -3,7 +3,7 @@
 GCRYPT_VERSION := 1.6.1
 GCRYPT_URL := ftp://ftp.gnupg.org/gcrypt/libgcrypt/libgcrypt-$(GCRYPT_VERSION).tar.bz2
 
-ifeq ($(call need_pkg," >= 1.5.0"),)
+ifeq ($(call need_pkg,"gcrypt >= 1.5.0"),)
 PKGS_FOUND += gcrypt
 endif
 
