@@ -5,3 +5,7 @@ configure
 bin/dbus/*.adaptor.h
 bin/dbus/org.sflphone.SFLphone.service
 bin/sflphoned
+
+# Ignore contrib-generated files and directories
+contrib/native
+contrib/x86_64-*
