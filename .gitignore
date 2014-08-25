@@ -81,3 +81,7 @@ nbproject
 *_wrap.cpp
 *_wrap.h
 *_loader.c
+
+# Ignore contrib-generated files and directories
+/daemon/contrib/native
+/daemon/contrib/x86_64-redhat-linux/
