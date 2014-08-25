@@ -126,10 +126,11 @@ function build_contrib {
 }
 
 function build_daemon {
+    pushd daemon
+
     # Build dependencies first
     build_contrib
 
-    pushd daemon
     # Run static analysis code tool
     if [ $CODE_ANALYSIS == 1 ]; then
         run_code_analysis
