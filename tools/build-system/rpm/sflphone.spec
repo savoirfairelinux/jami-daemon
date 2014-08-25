@@ -42,13 +42,11 @@ protocols.
 %setup -q -n %{tarball}
 
 %build
-# Compile the dependencies
-pushd contrib
-mkdir -p native
-pushd native
+# Build some dependencies with contrib since no Fedora packages exist (yet)
+mkdir -p daemon/contrib/native
+pushd daemon/contrib/native
 ../bootstrap
-make
-popd
+make .iax .pjproject
 popd
 # Compile the daemon
 pushd daemon
@@ -275,6 +273,9 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
+* Mon Aug 25 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.1-3
+- Build iax and pjproject with contrib
+
 * Wed Jul 23 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.4.1-2
 - Always build kde package
 
