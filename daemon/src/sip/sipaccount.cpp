@@ -791,7 +791,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutSec_);
     }
     mapNode.getValue(USER_AGENT_KEY, &userAgent_);
-    mapNode.getValue(HAS_CUSTOM_USER_AGENT_KEY, &userAgent_);
+    mapNode.getValue(HAS_CUSTOM_USER_AGENT_KEY, &hasCustomUserAgent_);
 
     unserializeRange(mapNode, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
 #ifdef SFL_VIDEO
