@@ -1,19 +1,21 @@
 #IAX
 
-IAX_URL = https://gitlab.savoirfairelinux.com/sflphone/libiax2.git
+IAX_URL = https://gitlab.savoirfairelinux.com/sflphone/libiax2/repository/archive.tar.gz
 
 PKGS += iax
 
-$(TARBALLS)/iax-git.tar.xz:
-	$(call download_git,$(IAX_URL))
+$(TARBALLS)/iax-git.tar.gz:
+	$(call download,$(IAX_URL))
 
-.sum-iax: iax-git.tar.xz
+.sum-iax: iax-git.tar.gz
 	$(warning $@ not implemented)
 	touch $@
 
-iax: iax-git.tar.xz .sum-iax
+iax: iax-git.tar.gz .sum-iax
 	$(UNPACK)
-	$(MOVE)
+	mv libiax2.git $@
+	touch $@
+
 
 .iax: iax
 	$(RECONF)
