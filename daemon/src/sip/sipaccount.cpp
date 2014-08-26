@@ -50,6 +50,8 @@
 #include "client/configurationmanager.h"
 #endif
 
+#include <yaml-cpp/yaml.h>
+
 #include "account_schema.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
@@ -576,6 +578,101 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     }
 
 #endif
+    serialize2();
+}
+
+void SIPAccount::serialize2()
+{
+    using namespace Conf;
+
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
+    out << YAML::Key << AUDIO_CODECS_KEY << YAML::Value << audioCodecStr_;
+    out << YAML::Key << AUDIO_PORT_MAX_KEY << YAML::Value << audioPortRange_.second;
+    out << YAML::Key << AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange_.first;
+    out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
+    // each credential is a map, and we can have multiple credentials
+    out << YAML::Key << CRED_KEY << YAML::Value << credentials_;
+
+    out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
+    out << YAML::Key << DTMF_TYPE_KEY << YAML::Value << dtmfType_;
+    out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
+    out << YAML::Key << HAS_CUSTOM_USER_AGENT_KEY << YAML::Value << hasCustomUserAgent_;
+    out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
+    out << YAML::Key << ID_KEY << YAML::Value << accountID_;
+    out << YAML::Key << INTERFACE_KEY << YAML::Value << interface_;
+    out << YAML::Key << KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
+    out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
+    out << YAML::Key << PORT_KEY << YAML::Value << localPort_;
+
+#ifdef SFL_PRESENCE
+    out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value << (presence_ and presence_->isEnabled());
+    out << YAML::Key << PRESENCE_PUBLISH_SUPPORTED_KEY << YAML::Value << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH));
+    out << YAML::Key << PRESENCE_SUBSCRIBE_SUPPORTED_KEY << YAML::Value << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE));
+#else
+    out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value << false;
+    out << YAML::Key << PRESENCE_PUBLISH_SUPPORTED_KEY << YAML::Value << false;
+    out << YAML::Key << PRESENCE_SUBSCRIBE_SUPPORTED_KEY << YAML::Value << false;
+#endif
+
+    out << YAML::Key << PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
+    out << YAML::Key << PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
+    out << YAML::Key << Preferences::REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
+    out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
+    out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
+    out << YAML::Key << SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
+    out << YAML::Key << SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
+
+    // srtp submap
+    out << YAML::Key << SRTP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << SRTP_ENABLE_KEY << YAML::Value << srtpEnabled_;
+    out << YAML::Key << KEY_EXCHANGE_KEY << YAML::Value << srtpKeyExchange_;
+    out << YAML::Key << RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
+    out << YAML::EndMap;
+
+    out << YAML::Key << STUN_ENABLED_KEY << YAML::Value << stunEnabled_;
+    out << YAML::Key << STUN_SERVER_KEY << YAML::Value << stunServer_;
+
+    // tls submap
+    out << YAML::Key << TLS_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << CALIST_KEY << YAML::Value << tlsCaListFile_;
+    out << YAML::Key << CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
+    out << YAML::Key << CIPHERS_KEY << YAML::Value << tlsCiphers_;
+    out << YAML::Key << TLS_ENABLE_KEY << YAML::Value << tlsEnable_;
+    out << YAML::Key << METHOD_KEY << YAML::Value << tlsMethod_;
+    out << YAML::Key << TLS_PASSWORD_KEY << YAML::Value << tlsPassword_;
+    out << YAML::Key << PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile_;
+    out << YAML::Key << REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate_;
+    out << YAML::Key << SERVER_KEY << YAML::Value << tlsServerName_;
+    out << YAML::Key << TIMEOUT_KEY << YAML::Value << tlsNegotiationTimeoutSec_;
+    out << YAML::Key << TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
+    out << YAML::Key << VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient_;
+    out << YAML::Key << VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
+    out << YAML::EndMap;
+
+    out << YAML::Key << TYPE_KEY << YAML::Value << ACCOUNT_TYPE;
+    out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
+    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
+
+    out << YAML::Key << VIDEO_CODECS_KEY << YAML::Value << videoCodecList_;
+
+    out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
+    out << YAML::Key << VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
+    out << YAML::Key << VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
+
+    // zrtp submap
+    out << YAML::Key << ZRTP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << DISPLAY_SAS_KEY << YAML::Value << zrtpDisplaySas_;
+    out << YAML::Key << DISPLAY_SAS_ONCE_KEY << YAML::Value << zrtpDisplaySasOnce_;
+    out << YAML::Key << HELLO_HASH_ENABLED_KEY << YAML::Value << zrtpHelloHash_;
+    out << YAML::Key << NOT_SUPP_WARNING_KEY << YAML::Value << zrtpNotSuppWarning_;
+    out << YAML::EndMap;
+
+    out << YAML::EndMap;
+
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << out.c_str() << std::endl;
 }
 
 void SIPAccount::usePublishedAddressPortInVIA()

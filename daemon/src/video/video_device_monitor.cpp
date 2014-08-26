@@ -33,6 +33,8 @@
 #include <cassert>
 #include <sstream>
 
+#include <yaml-cpp/yaml.h>
+
 #include "manager.h"
 #include "client/videomanager.h"
 #include "config/yamlemitter.h"
@@ -297,6 +299,18 @@ VideoDeviceMonitor::serialize(Conf::YamlEmitter &emitter)
 
     /* store the device list under the "video" YAML section */
     emitter.serializePreference(&devices, "video");
+    serialize2();
+}
+
+void
+VideoDeviceMonitor::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << "devices" << YAML::Value << preferences_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "video:\n" << out.c_str() << std::endl;
 }
 
 void
