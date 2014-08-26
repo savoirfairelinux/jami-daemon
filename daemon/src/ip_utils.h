@@ -65,6 +65,7 @@ public:
     IpAddr(const sockaddr& ip) : addr() {
         memcpy(&addr, &ip, ip.sa_family == AF_INET6 ? sizeof addr.ipv6 : sizeof addr.ipv4);
     }
+    IpAddr(const sockaddr_storage& ip) : IpAddr(*reinterpret_cast<const sockaddr*>(&ip)) {}
     IpAddr(const in6_addr& ip) : addr() {
         addr.addr.sa_family = AF_INET6;
         memcpy(&addr.ipv6.sin6_addr, &ip, sizeof(in6_addr));
@@ -122,6 +123,12 @@ public:
         return reinterpret_cast<sockaddr&>(addr);
     }
 
+    inline operator sockaddr_storage (){
+        sockaddr_storage ss {};
+        memcpy(&ss, &addr, getLength());
+        return ss;
+    }
+
     inline pj_sockaddr* pjPtr() {
         return &addr;
     }
@@ -163,6 +170,10 @@ public:
         if (not *this)
             return 0;
         return pj_sockaddr_get_port(&addr);
+    }
+
+    inline socklen_t getLength() const {
+        return pj_sockaddr_get_len(&addr);
     }
 
     inline uint16_t getFamily() const {
@@ -222,8 +233,8 @@ namespace ip_utils {
      * Ex. : if family is pj_AF_INET6() (IPv6/default) and the system does not
      * have an IPv6 address, an IPv4 address will be returned if available.
      *
-     * If family is unspecified, default to pj_AF_INET6() (if configured
-     * with IPv6), or pj_AF_INET() otherwise.
+     * If family is unspecified, default to pj_AF_INET6() if compiled
+     * with IPv6, or pj_AF_INET() otherwise.
      */
     IpAddr getLocalAddr(pj_uint16_t family = pj_AF_UNSPEC());
 
