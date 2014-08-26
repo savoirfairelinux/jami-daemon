@@ -359,7 +359,7 @@ void
 Account::parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b)
 {
     find_iter();
-    b = iter->second == Conf::TRUE_STR;
+    b = iter->second == TRUE_STR;
 }
 
 #undef find_iter

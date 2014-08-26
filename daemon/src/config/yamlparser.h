@@ -31,113 +31,16 @@
 #ifndef __YAMLPARSER_H__
 #define __YAMLPARSER_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <yaml-cpp/yaml.h>
 
-#include "yamlnode.h"
-#include <yaml.h>
-#include <cstdio>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include "noncopyable.h"
-
-namespace Conf {
-
-#define PARSER_BUFFERSIZE 65536
-
-typedef std::vector<yaml_event_t> YamlEventVector;
-
-class YamlParserException : public std::runtime_error {
-    public:
-        YamlParserException(const char *err) : std::runtime_error(err) {}
-};
-
-
-class YamlParser {
-
-    public:
-
-        YamlParser(FILE *fd);
-
-        ~YamlParser();
-
-        void serializeEvents();
-
-        void composeEvents();
-
-        void constructNativeData();
-
-        SequenceNode *getAccountSequence();
-
-        MappingNode *getPreferenceNode();
-
-        MappingNode *getAudioNode();
-
-#ifdef SFL_VIDEO
-        MappingNode *getVideoNode();
-#endif
-        MappingNode *getHookNode();
-
-        MappingNode *getVoipPreferenceNode();
-
-        MappingNode *getShortcutNode();
-
-    private:
-        NON_COPYABLE(YamlParser);
-
-        /**
-         * Copy yaml parser event in event_to according to their type.
-         */
-        void copyEvent(yaml_event_t *event_to, yaml_event_t *event_from);
-
-        void processStream();
-
-        void processDocument();
-
-        void processScalar(YamlNode *topNode);
-
-        void processSequence(YamlNode *topNode);
-
-        void processMapping(YamlNode *topNode);
-
-        void mainNativeDataMapping(MappingNode *map);
-
-        /**
-         * Configuration file descriptor
-         */
-        FILE *fd_;
-
-        /**
-         * The parser structure.
-         */
-        yaml_parser_t parser_;
-
-        /**
-         * The event structure array.
-         */
-        YamlEventVector events_;
-
-        /**
-         * Number of event actually parsed
-         */
-        int eventNumber_;
-
-        YamlDocument doc_;
-
-        int eventIndex_;
-
-        SequenceNode *accountSequence_;
-        MappingNode *preferenceNode_;
-        MappingNode *audioNode_;
-#ifdef SFL_VIDEO
-        MappingNode *videoNode_;
-#endif
-        MappingNode *hooksNode_;
-        MappingNode *voiplinkNode_;
-        MappingNode *shortcutNode_;
-};
+namespace yaml_utils {
+// set T to the value stored at key, or leaves T unchanged
+// if no value is stored.
+template <typename T>
+void parseValue(const YAML::Node &node, const char *key, T &value)
+{
+    value = node[key].as<T>(value);
+}
 }
 
 #endif

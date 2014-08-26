@@ -45,8 +45,6 @@
 #include <vector>
 
 #include "../video_device_monitor.h"
-#include "config/yamlemitter.h"
-#include "config/yamlnode.h"
 #include "logger.h"
 #include "noncopyable.h"
 

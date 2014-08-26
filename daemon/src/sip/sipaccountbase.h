@@ -53,8 +53,6 @@
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
 namespace Conf {
-    class YamlEmitter;
-    class MappingNode;
     // SIP specific configuration keys
     const char *const INTERFACE_KEY = "interface";
     const char *const PORT_KEY = "port";
