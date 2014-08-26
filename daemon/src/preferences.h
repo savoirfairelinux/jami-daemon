@@ -118,6 +118,7 @@ class Preferences : public Serializable {
         }
 
     private:
+        void serialize2();
         std::string accountOrder_;
         int historyLimit_;
         int historyMaxCalls_;
@@ -175,6 +176,7 @@ class VoipPreference : public Serializable {
 
     private:
 
+        void serialize2();
         bool playDtmf_;
         bool playTones_;
         int pulseLength_;
@@ -203,6 +205,7 @@ class HookPreference : public Serializable {
         void runHook(pjsip_msg *msg);
 
     private:
+        void serialize2();
         bool iax2Enabled_;
         std::string numberAddPrefix_;
         bool numberEnabled_;
