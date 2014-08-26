@@ -46,6 +46,8 @@
 #include "config/yamlemitter.h"
 #include "call_factory.h"
 
+#include <yaml-cpp/yaml.h>
+
 constexpr const char * const IAXAccount::ACCOUNT_TYPE;
 
 IAXAccount::IAXAccount(const std::string& accountID)
@@ -88,6 +90,28 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
     } catch (const Conf::YamlEmitterException &e) {
         ERROR("ConfigTree: %s", e.what());
     }
+    try {
+    serialize2();
+    } catch (...){}
+}
+
+void IAXAccount::serialize2()
+{
+    using namespace Conf;
+
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
+    out << YAML::Key << AUDIO_CODECS_KEY << YAML::Value << audioCodecStr_;
+    out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
+    out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
+    out << YAML::Key << PASSWORD_KEY << YAML::Value << password_;
+    out << YAML::Key << TYPE_KEY << YAML::Value << ACCOUNT_TYPE;
+    out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
+    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << out.c_str() << std::endl;
 }
 
 void IAXAccount::unserialize(const Conf::YamlNode &map)
