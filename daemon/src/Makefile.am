@@ -56,7 +56,7 @@ libsflphone_la_LDFLAGS = \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		@SNDFILE_LIBS@ \
-		@YAML_LIBS@ \
+		@YAMLCPP_LIBS@ \
 		$(TLS_LIB) \
 		$(IAX_LIB) \
 		$(IM_LIB)

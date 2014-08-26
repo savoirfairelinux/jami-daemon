@@ -38,6 +38,11 @@
 
 class AudioLayer;
 
+namespace YAML {
+    class Emitter;
+    class Node;
+}
+
 class Preferences : public Serializable {
     public:
         static const char * const DFT_ZONE;
@@ -45,8 +50,8 @@ class Preferences : public Serializable {
 
         Preferences();
 
-        virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &in);
 
         std::string getAccountOrder() const {
             return accountOrder_;
@@ -126,14 +131,15 @@ class Preferences : public Serializable {
         int portNum_;
         bool searchBarDisplay_;
         bool md5Hash_;
+        constexpr static const char * const CONFIG_LABEL = "preferences";
 };
 
 class VoipPreference : public Serializable {
     public:
         VoipPreference();
 
-        virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &in);
 
         bool getPlayDtmf() const {
             return playDtmf_;
@@ -174,12 +180,12 @@ class VoipPreference : public Serializable {
         }
 
     private:
-
         bool playDtmf_;
         bool playTones_;
         int pulseLength_;
         bool symmetricRtp_;
         std::string zidFile_;
+        constexpr static const char * const CONFIG_LABEL = "voipPreferences";
 };
 
 struct pjsip_msg;
@@ -189,8 +195,8 @@ class HookPreference : public Serializable {
         HookPreference();
         HookPreference(const std::map<std::string, std::string> &settings);
 
-        virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &in);
 
         std::string getNumberAddPrefix() const {
             if (numberEnabled_)
@@ -198,6 +204,9 @@ class HookPreference : public Serializable {
             else
                 return "";
         }
+
+        bool getIax2Enabled() const { return iax2Enabled_; }
+        const std::string & getUrlCommand() const { return urlCommand_; }
 
         std::map<std::string, std::string> toMap() const;
         void runHook(pjsip_msg *msg);
@@ -209,6 +218,7 @@ class HookPreference : public Serializable {
         bool sipEnabled_;
         std::string urlCommand_;
         std::string urlSipField_;
+        constexpr static const char * const CONFIG_LABEL = "hooks";
 };
 
 class AudioPreference : public Serializable {
@@ -225,8 +235,8 @@ class AudioPreference : public Serializable {
             audioApi_ = api;
         }
 
-        virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &in);
 
         // alsa preference
         int getAlsaCardin() const {
@@ -378,13 +388,14 @@ class AudioPreference : public Serializable {
         bool agcEnabled_;
         bool captureMuted_;
         bool playbackMuted_;
+        constexpr static const char * const CONFIG_LABEL = "audio";
 };
 
 class ShortcutPreferences : public Serializable {
     public:
         ShortcutPreferences();
-        virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &in);
 
         void setShortcuts(std::map<std::string, std::string> shortcuts);
         std::map<std::string, std::string> getShortcuts() const;
@@ -435,6 +446,7 @@ class ShortcutPreferences : public Serializable {
         std::string popup_;
         std::string toggleHold_;
         std::string togglePickupHangup_;
+        constexpr static const char * const CONFIG_LABEL = "shortcuts";
 };
 
 #endif
