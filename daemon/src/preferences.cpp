@@ -48,8 +48,9 @@
 #include "audio/pulseaudio/pulselayer.h"
 #endif
 #endif /* HAVE_OPENSL */
-#include "config/yamlemitter.h"
-#include "config/yamlnode.h"
+
+#include <yaml-cpp/yaml.h>
+#include "config/yamlparser.h"
 #include "hooks/urlhook.h"
 #include "sip/sip_utils.h"
 #include <sstream>
@@ -177,49 +178,33 @@ void Preferences::removeAccount(const std::string &oldAccountID)
         accountOrder_.erase(start, oldAccountID.length() + 1);
 }
 
-void Preferences::serialize(Conf::YamlEmitter &emiter)
+void Preferences::serialize(YAML::Emitter &out)
 {
-    Conf::MappingNode preferencemap(NULL);
+    out << YAML::Key << "preferences" << YAML::Value << YAML::BeginMap;
 
-    Conf::ScalarNode order(accountOrder_);
-    std::stringstream histlimitstr;
-    histlimitstr << historyLimit_;
-    Conf::ScalarNode historyLimit(histlimitstr.str());
-    std::stringstream histmaxstr;
-    histmaxstr << historyMaxCalls_;
-    Conf::ScalarNode historyMaxCalls(histmaxstr.str());
-    Conf::ScalarNode zoneToneChoice(zoneToneChoice_);
-    std::stringstream expirestr;
-    expirestr << registrationExpire_;
-    Conf::ScalarNode registrationExpire(expirestr.str());
-    std::stringstream portstr;
-    portstr << portNum_;
-    Conf::ScalarNode portNum(portstr.str());
-    Conf::ScalarNode searchBarDisplay(searchBarDisplay_);
-    Conf::ScalarNode md5Hash(md5Hash_);
-
-    preferencemap.setKeyValue(ORDER_KEY, &order);
-    preferencemap.setKeyValue(HISTORY_LIMIT_KEY, &historyLimit);
-    preferencemap.setKeyValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls);
-    preferencemap.setKeyValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice);
-    preferencemap.setKeyValue(REGISTRATION_EXPIRE_KEY, &registrationExpire);
-    preferencemap.setKeyValue(PORT_NUM_KEY, &portNum);
-    preferencemap.setKeyValue(SEARCH_BAR_DISPLAY_KEY, &searchBarDisplay);
-    preferencemap.setKeyValue(MD5_HASH_KEY, &md5Hash);
-
-    emiter.serializePreference(&preferencemap, "preferences");
+    out << YAML::Key << HISTORY_LIMIT_KEY << YAML::Value << historyLimit_;
+    out << YAML::Key << HISTORY_MAX_CALLS_KEY << YAML::Value << historyMaxCalls_;
+    out << YAML::Key << MD5_HASH_KEY << YAML::Value << md5Hash_;
+    out << YAML::Key << ORDER_KEY << YAML::Value << accountOrder_;
+    out << YAML::Key << PORT_NUM_KEY << YAML::Value << portNum_;
+    out << YAML::Key << REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
+    out << YAML::Key << SEARCH_BAR_DISPLAY_KEY << YAML::Value << searchBarDisplay_;
+    out << YAML::Key << ZONE_TONE_CHOICE_KEY << YAML::Value << zoneToneChoice_;
+    out << YAML::EndMap;
 }
 
-void Preferences::unserialize(const Conf::YamlNode &map)
+void Preferences::unserialize(const YAML::Node &node)
 {
-    map.getValue(ORDER_KEY, &accountOrder_);
-    map.getValue(HISTORY_LIMIT_KEY, &historyLimit_);
-    map.getValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls_);
-    map.getValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice_);
-    map.getValue(REGISTRATION_EXPIRE_KEY, &registrationExpire_);
-    map.getValue(PORT_NUM_KEY, &portNum_);
-    map.getValue(SEARCH_BAR_DISPLAY_KEY, &searchBarDisplay_);
-    map.getValue(MD5_HASH_KEY, &md5Hash_);
+    using namespace yaml_utils;
+
+    parseValue(node, ORDER_KEY, accountOrder_);
+    parseValue(node, HISTORY_LIMIT_KEY, historyLimit_);
+    parseValue(node, HISTORY_MAX_CALLS_KEY, historyMaxCalls_);
+    parseValue(node, ZONE_TONE_CHOICE_KEY, zoneToneChoice_);
+    parseValue(node, REGISTRATION_EXPIRE_KEY, registrationExpire_);
+    parseValue(node, PORT_NUM_KEY, portNum_);
+    parseValue(node, SEARCH_BAR_DISPLAY_KEY, searchBarDisplay_);
+    parseValue(node, MD5_HASH_KEY, md5Hash_);
 }
 
 VoipPreference::VoipPreference() :
@@ -230,34 +215,25 @@ VoipPreference::VoipPreference() :
     , zidFile_(ZRTP_ZIDFILE)
 {}
 
-void VoipPreference::serialize(Conf::YamlEmitter &emitter)
+void VoipPreference::serialize(YAML::Emitter &out)
 {
-    Conf::MappingNode preferencemap(NULL);
-
-    Conf::ScalarNode playDtmf(playDtmf_);
-    Conf::ScalarNode playTones(playTones_);
-    std::stringstream pulselengthstr;
-    pulselengthstr << pulseLength_;
-    Conf::ScalarNode pulseLength(pulselengthstr.str());
-    Conf::ScalarNode symmetricRtp(symmetricRtp_);
-    Conf::ScalarNode zidFile(zidFile_.c_str());
-
-    preferencemap.setKeyValue(PLAY_DTMF_KEY, &playDtmf);
-    preferencemap.setKeyValue(PLAY_TONES_KEY, &playTones);
-    preferencemap.setKeyValue(PULSE_LENGTH_KEY, &pulseLength);
-    preferencemap.setKeyValue(SYMMETRIC_RTP_KEY, &symmetricRtp);
-    preferencemap.setKeyValue(ZID_FILE_KEY, &zidFile);
-
-    emitter.serializePreference(&preferencemap, "voipPreferences");
+    out << YAML::Key << "voipPreferences" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << PLAY_DTMF_KEY << YAML::Value << playDtmf_;
+    out << YAML::Key << PLAY_TONES_KEY << YAML::Value << playTones_;
+    out << YAML::Key << PULSE_LENGTH_KEY << YAML::Value << pulseLength_;
+    out << YAML::Key << SYMMETRIC_RTP_KEY << YAML::Value << symmetricRtp_;
+    out << YAML::Key << ZID_FILE_KEY << YAML::Value << zidFile_;
+    out << YAML::EndMap;
 }
 
-void VoipPreference::unserialize(const Conf::YamlNode &map)
+void VoipPreference::unserialize(const YAML::Node &node)
 {
-    map.getValue(PLAY_DTMF_KEY, &playDtmf_);
-    map.getValue(PLAY_TONES_KEY, &playTones_);
-    map.getValue(PULSE_LENGTH_KEY, &pulseLength_);
-    map.getValue(SYMMETRIC_RTP_KEY, &symmetricRtp_);
-    map.getValue(ZID_FILE_KEY, &zidFile_);
+    using namespace yaml_utils;
+    parseValue(node, PLAY_DTMF_KEY, playDtmf_);
+    parseValue(node, PLAY_TONES_KEY, playTones_);
+    parseValue(node, PULSE_LENGTH_KEY, pulseLength_);
+    parseValue(node, SYMMETRIC_RTP_KEY, symmetricRtp_);
+    parseValue(node, ZID_FILE_KEY, zidFile_);
 }
 
 HookPreference::HookPreference() :
@@ -291,35 +267,26 @@ std::map<std::string, std::string> HookPreference::toMap() const
     return settings;
 }
 
-void HookPreference::serialize(Conf::YamlEmitter &emitter)
+void HookPreference::serialize(YAML::Emitter &out)
 {
-    Conf::MappingNode preferencemap(NULL);
-
-    Conf::ScalarNode iax2Enabled(iax2Enabled_);
-    Conf::ScalarNode numberAddPrefix(numberAddPrefix_);
-    Conf::ScalarNode numberEnabled(numberEnabled_);
-    Conf::ScalarNode sipEnabled(sipEnabled_);
-    Conf::ScalarNode urlCommand(urlCommand_);
-    Conf::ScalarNode urlSipField(urlSipField_);
-
-    preferencemap.setKeyValue(IAX2_ENABLED_KEY, &iax2Enabled);
-    preferencemap.setKeyValue(NUMBER_ADD_PREFIX_KEY, &numberAddPrefix);
-    preferencemap.setKeyValue(NUMBER_ENABLED_KEY, &numberEnabled);
-    preferencemap.setKeyValue(SIP_ENABLED_KEY, &sipEnabled);
-    preferencemap.setKeyValue(URL_COMMAND_KEY, &urlCommand);
-    preferencemap.setKeyValue(URL_SIP_FIELD_KEY, &urlSipField);
-
-    emitter.serializePreference(&preferencemap, "hooks");
+    out << YAML::Key << "hooks" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << IAX2_ENABLED_KEY << YAML::Value << iax2Enabled_;
+    out << YAML::Key << NUMBER_ADD_PREFIX_KEY << YAML::Value << numberAddPrefix_;
+    out << YAML::Key << SIP_ENABLED_KEY << YAML::Value << sipEnabled_;
+    out << YAML::Key << URL_COMMAND_KEY << YAML::Value << urlCommand_;
+    out << YAML::Key << URL_SIP_FIELD_KEY << YAML::Value << urlSipField_;
+    out << YAML::EndMap;
 }
 
-void HookPreference::unserialize(const Conf::YamlNode &map)
+void HookPreference::unserialize(const YAML::Node &node)
 {
-    map.getValue(IAX2_ENABLED_KEY, &iax2Enabled_);
-    map.getValue(NUMBER_ADD_PREFIX_KEY, &numberAddPrefix_);
-    map.getValue(NUMBER_ENABLED_KEY, &numberEnabled_);
-    map.getValue(SIP_ENABLED_KEY, &sipEnabled_);
-    map.getValue(URL_COMMAND_KEY, &urlCommand_);
-    map.getValue(URL_SIP_FIELD_KEY, &urlSipField_);
+    using namespace yaml_utils;
+
+    parseValue(node, IAX2_ENABLED_KEY, iax2Enabled_);
+    parseValue(node, NUMBER_ADD_PREFIX_KEY, numberAddPrefix_);
+    parseValue(node, SIP_ENABLED_KEY, sipEnabled_);
+    parseValue(node, URL_COMMAND_KEY, urlCommand_);
+    parseValue(node, URL_SIP_FIELD_KEY, urlSipField_);
 }
 
 void HookPreference::runHook(pjsip_msg *msg)
@@ -414,74 +381,39 @@ AudioLayer* AudioPreference::createAudioLayer()
 #endif // __ANDROID__
 }
 
-void AudioPreference::serialize(Conf::YamlEmitter &emitter)
+void AudioPreference::serialize(YAML::Emitter &out)
 {
-    // alsa preference
-    std::stringstream instr;
-    instr << alsaCardin_;
-    Conf::ScalarNode cardin(instr.str());
-    std::stringstream outstr;
-    outstr << alsaCardout_;
-    Conf::ScalarNode cardout(outstr.str());
-    std::stringstream ringstr;
-    ringstr << alsaCardring_;
-    Conf::ScalarNode cardring(ringstr.str());
-    Conf::ScalarNode plugin(alsaPlugin_);
+    out << YAML::Key << "audio" << YAML::Value << YAML::BeginMap;
+    // alsa submap
+    out << YAML::Key << ALSAMAP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << CARDIN_KEY << YAML::Value << alsaCardin_;
+    out << YAML::Key << CARDOUT_KEY << YAML::Value << alsaCardout_;
+    out << YAML::Key << CARDRING_KEY << YAML::Value << alsaCardring_;
+    out << YAML::Key << PLUGIN_KEY << YAML::Value << alsaPlugin_;
+    out << YAML::Key << SMPLRATE_KEY << YAML::Value << alsaSmplrate_;
+    out << YAML::EndMap;
 
-    std::stringstream ratestr;
-    ratestr << alsaSmplrate_;
-    Conf::ScalarNode alsaSmplrate(ratestr.str());
+    // common options
+    out << YAML::Key << ALWAYS_RECORDING_KEY << YAML::Value << alwaysRecording_;
+    out << YAML::Key << AUDIO_API_KEY << YAML::Value << audioApi_;
+    out << YAML::Key << AGC_KEY << YAML::Value << agcEnabled_;
+    out << YAML::Key << CAPTURE_MUTED_KEY << YAML::Value << captureMuted_;
+    out << YAML::Key << NOISE_REDUCE_KEY << YAML::Value << denoise_;
+    out << YAML::Key << PLAYBACK_MUTED_KEY << YAML::Value << playbackMuted_;
 
-    //pulseaudio preference
-    Conf::ScalarNode pulseDevicePlayback(pulseDevicePlayback_);
-    Conf::ScalarNode pulseDeviceRecord(pulseDeviceRecord_);
-    Conf::ScalarNode pulseDeviceRingtone(pulseDeviceRingtone_);
+    // pulse submap
+    out << YAML::Key << PULSEMAP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << DEVICE_PLAYBACK_KEY << YAML::Value << pulseDevicePlayback_;
+    out << YAML::Key << DEVICE_RECORD_KEY << YAML::Value << pulseDeviceRecord_;
+    out << YAML::Key << DEVICE_RINGTONE_KEY << YAML::Value << pulseDeviceRingtone_;
+    out << YAML::Key << YAML::EndMap;
 
-    // general preference
-    Conf::ScalarNode audioapi(audioApi_);
-    Conf::ScalarNode recordpath(recordpath_); //: /home/msavard/Bureau
-    Conf::ScalarNode alwaysRecording(alwaysRecording_);
-    std::ostringstream micstr;
-    micstr << volumemic_;
-    Conf::ScalarNode volumemic(micstr.str()); //:  100
-    std::ostringstream spkrstr;
-    spkrstr << volumespkr_;
-    Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
-    Conf::ScalarNode denoise(denoise_);
-    Conf::ScalarNode agc(agcEnabled_);
-    Conf::ScalarNode captureMuted(captureMuted_);
-    Conf::ScalarNode playbackMuted(playbackMuted_);
+    // more common options!
+    out << YAML::Key << RECORDPATH_KEY << YAML::Value << recordpath_;
+    out << YAML::Key << VOLUMEMIC_KEY << YAML::Value << volumemic_;
+    out << YAML::Key << VOLUMESPKR_KEY << YAML::Value << volumespkr_;
 
-    Conf::MappingNode preferencemap(NULL);
-    preferencemap.setKeyValue(AUDIO_API_KEY, &audioapi);
-    preferencemap.setKeyValue(RECORDPATH_KEY, &recordpath);
-    preferencemap.setKeyValue(ALWAYS_RECORDING_KEY, &alwaysRecording);
-    preferencemap.setKeyValue(VOLUMEMIC_KEY, &volumemic);
-    preferencemap.setKeyValue(VOLUMESPKR_KEY, &volumespkr);
-    preferencemap.setKeyValue(CAPTURE_MUTED_KEY, &captureMuted);
-    preferencemap.setKeyValue(PLAYBACK_MUTED_KEY, &playbackMuted);
-
-    Conf::MappingNode alsapreferencemap(NULL);
-#if HAVE_ALSA
-    preferencemap.setKeyValue(ALSAMAP_KEY, &alsapreferencemap);
-    alsapreferencemap.setKeyValue(CARDIN_KEY, &cardin);
-    alsapreferencemap.setKeyValue(CARDOUT_KEY, &cardout);
-    alsapreferencemap.setKeyValue(CARDRING_KEY, &cardring);
-    alsapreferencemap.setKeyValue(PLUGIN_KEY, &plugin);
-    alsapreferencemap.setKeyValue(SMPLRATE_KEY, &alsaSmplrate);
-#endif
-
-#if HAVE_PULSE
-    Conf::MappingNode pulsepreferencemap(NULL);
-    preferencemap.setKeyValue(PULSEMAP_KEY, &pulsepreferencemap);
-    pulsepreferencemap.setKeyValue(DEVICE_PLAYBACK_KEY, &pulseDevicePlayback);
-    pulsepreferencemap.setKeyValue(DEVICE_RECORD_KEY, &pulseDeviceRecord);
-    pulsepreferencemap.setKeyValue(DEVICE_RINGTONE_KEY, &pulseDeviceRingtone);
-#endif
-
-    preferencemap.setKeyValue(NOISE_REDUCE_KEY, &denoise);
-    preferencemap.setKeyValue(AGC_KEY, &agc);
-    emitter.serializePreference(&preferencemap, "audio");
+    out << YAML::EndMap;
 }
 
 bool
@@ -497,50 +429,37 @@ AudioPreference::setRecordPath(const std::string &r)
     }
 }
 
-void AudioPreference::unserialize(const Conf::YamlNode &map)
+void AudioPreference::unserialize(const YAML::Node &node)
 {
-    map.getValue(AUDIO_API_KEY, &audioApi_);
-    std::string tmpRecordPath;
-    map.getValue(RECORDPATH_KEY, &tmpRecordPath);
+    using namespace yaml_utils;
 
-    if (not setRecordPath(tmpRecordPath))
-        setRecordPath(fileutils::get_home_dir());
+    // alsa submap
+    const auto &alsa = node[ALSAMAP_KEY];
 
-    map.getValue(ALWAYS_RECORDING_KEY, &alwaysRecording_);
-    map.getValue(VOLUMEMIC_KEY, &volumemic_);
+    parseValue(alsa, CARDIN_KEY, alsaCardin_);
+    parseValue(alsa, CARDOUT_KEY, alsaCardout_);
+    parseValue(alsa, CARDRING_KEY, alsaCardring_);
+    parseValue(alsa, PLUGIN_KEY, alsaPlugin_);
+    parseValue(alsa, SMPLRATE_KEY, alsaSmplrate_);
 
-    const auto clamp = [] (double min, double max, double val) {
-        return std::min(max, std::max(min, val));
-    };
+    // common options
+    parseValue(node, ALWAYS_RECORDING_KEY, alwaysRecording_);
+    parseValue(node, AUDIO_API_KEY, audioApi_);
+    parseValue(node, AGC_KEY, agcEnabled_);
+    parseValue(node, CAPTURE_MUTED_KEY, captureMuted_);
+    parseValue(node, NOISE_REDUCE_KEY, denoise_);
+    parseValue(node, PLAYBACK_MUTED_KEY, playbackMuted_);
 
-    volumemic_ = clamp(-1.0, 1.0, volumemic_);
-    map.getValue(VOLUMESPKR_KEY, &volumespkr_);
-    volumespkr_ = clamp(-1.0, 1.0, volumespkr_);
-    map.getValue(NOISE_REDUCE_KEY, &denoise_);
-    map.getValue(AGC_KEY, &agcEnabled_);
-    map.getValue(CAPTURE_MUTED_KEY, &captureMuted_);
-    map.getValue(PLAYBACK_MUTED_KEY, &playbackMuted_);
+    // pulse submap
+    const auto &pulse = node[PULSEMAP_KEY];
+    parseValue(pulse, DEVICE_PLAYBACK_KEY, pulseDevicePlayback_);
+    parseValue(pulse, DEVICE_RECORD_KEY, pulseDeviceRecord_);
+    parseValue(pulse, DEVICE_RINGTONE_KEY, pulseDeviceRingtone_);
 
-    Conf::MappingNode *alsamap = (Conf::MappingNode *) map.getValue("alsa");
-
-    if (alsamap) {
-        alsamap->getValue(CARDIN_KEY, &alsaCardin_);
-        alsamap->getValue(CARDOUT_KEY, &alsaCardout_);
-        alsamap->getValue(CARDRING_KEY, &alsaCardring_);
-        alsamap->getValue(SMPLRATE_KEY, &alsaSmplrate_);
-        alsamap->getValue(PLUGIN_KEY, &alsaPlugin_);
-    }
-
-#if HAVE_PULSE
-    Conf::MappingNode *pulsemap = (Conf::MappingNode *)(map.getValue("pulse"));
-
-    if (pulsemap) {
-        pulsemap->getValue(DEVICE_PLAYBACK_KEY, &pulseDevicePlayback_);
-        pulsemap->getValue(DEVICE_RECORD_KEY, &pulseDeviceRecord_);
-        pulsemap->getValue(DEVICE_RINGTONE_KEY, &pulseDeviceRingtone_);
-    }
-
-#endif
+    // more common options!
+    parseValue(node, RECORDPATH_KEY, recordpath_);
+    parseValue(node, VOLUMEMIC_KEY, volumemic_);
+    parseValue(node, VOLUMESPKR_KEY, volumespkr_);
 }
 
 ShortcutPreferences::ShortcutPreferences() : hangup_(), pickup_(), popup_(),
@@ -569,31 +488,25 @@ void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 }
 
 
-void ShortcutPreferences::serialize(Conf::YamlEmitter &emitter)
+void ShortcutPreferences::serialize(YAML::Emitter &out)
 {
-    Conf::MappingNode preferencemap(NULL);
-
-    Conf::ScalarNode hangup(hangup_);
-    Conf::ScalarNode pickup(pickup_);
-    Conf::ScalarNode popup(popup_);
-    Conf::ScalarNode toggleHold(toggleHold_);
-    Conf::ScalarNode togglePickupHangup(togglePickupHangup_);
-
-    preferencemap.setKeyValue(HANGUP_SHORT_KEY, &hangup);
-    preferencemap.setKeyValue(PICKUP_SHORT_KEY, &pickup);
-    preferencemap.setKeyValue(POPUP_SHORT_KEY, &popup);
-    preferencemap.setKeyValue(TOGGLE_HOLD_SHORT_KEY, &toggleHold);
-    preferencemap.setKeyValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, &togglePickupHangup);
-
-    emitter.serializePreference(&preferencemap, "shortcuts");
+    out << YAML::Key << "shortcuts" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << HANGUP_SHORT_KEY << YAML::Value << hangup_;
+    out << YAML::Key << PICKUP_SHORT_KEY << YAML::Value << pickup_;
+    out << YAML::Key << POPUP_SHORT_KEY << YAML::Value << popup_;
+    out << YAML::Key << TOGGLE_HOLD_SHORT_KEY << YAML::Value << toggleHold_;
+    out << YAML::Key << TOGGLE_PICKUP_HANGUP_SHORT_KEY << YAML::Value << togglePickupHangup_;
+    out << YAML::EndMap;
 }
 
-void ShortcutPreferences::unserialize(const Conf::YamlNode &map)
+void ShortcutPreferences::unserialize(const YAML::Node &node)
 {
-    map.getValue(HANGUP_SHORT_KEY, &hangup_);
-    map.getValue(PICKUP_SHORT_KEY, &pickup_);
-    map.getValue(POPUP_SHORT_KEY, &popup_);
-    map.getValue(TOGGLE_HOLD_SHORT_KEY, &toggleHold_);
-    map.getValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, &togglePickupHangup_);
+    using namespace yaml_utils;
+
+    parseValue(node, HANGUP_SHORT_KEY, hangup_);
+    parseValue(node, PICKUP_SHORT_KEY, pickup_);
+    parseValue(node, POPUP_SHORT_KEY, popup_);
+    parseValue(node, TOGGLE_HOLD_SHORT_KEY, toggleHold_);
+    parseValue(node, TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup_);
 }
 
