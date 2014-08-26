@@ -785,8 +785,8 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
         tlsMap->getValue(PRIVATE_KEY_KEY, &tlsPrivateKeyFile_);
         tlsMap->getValue(REQUIRE_CERTIF_KEY, &tlsRequireClientCertificate_);
         tlsMap->getValue(SERVER_KEY, &tlsServerName_);
-        tlsMap->getValue(VERIFY_CLIENT_KEY, &tlsVerifyServer_);
-        tlsMap->getValue(VERIFY_SERVER_KEY, &tlsVerifyClient_);
+        tlsMap->getValue(VERIFY_CLIENT_KEY, &tlsVerifyClient_);
+        tlsMap->getValue(VERIFY_SERVER_KEY, &tlsVerifyServer_);
         // FIXME
         tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutSec_);
     }
