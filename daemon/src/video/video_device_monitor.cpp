@@ -33,8 +33,11 @@
 #include <cassert>
 #include <sstream>
 
+#include <yaml-cpp/yaml.h>
+
 #include "manager.h"
 #include "client/videomanager.h"
+#include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "logger.h"
@@ -270,65 +273,24 @@ VideoDeviceMonitor::overwritePreferences(VideoSettings settings)
 }
 
 void
-VideoDeviceMonitor::serialize(Conf::YamlEmitter &emitter)
+VideoDeviceMonitor::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
-
-    // Put the default in first position
-    auto def = findPreferencesByName(defaultDevice_);
-    if (def != preferences_.end())
-        std::iter_swap(preferences_.begin(), def);
-
-    MappingNode devices(nullptr);
-    SequenceNode sequence(nullptr);
-
-    for (auto& pref : preferences_) {
-        MappingNode *node = new MappingNode(nullptr);
-
-        node->setKeyValue("name", new ScalarNode(pref["name"]));
-        node->setKeyValue("channel", new ScalarNode(pref["channel"]));
-        node->setKeyValue("size", new ScalarNode(pref["size"]));
-        node->setKeyValue("rate", new ScalarNode(pref["rate"]));
-
-        sequence.addNode(node);
-    }
-
-    devices.setKeyValue("devices", &sequence);
-
-    /* store the device list under the "video" YAML section */
-    emitter.serializePreference(&devices, "video");
+    out << YAML::BeginMap;
+    out << YAML::Key << "devices" << YAML::Value << preferences_;
+    out << YAML::EndMap;
 }
 
 void
-VideoDeviceMonitor::unserialize(const Conf::YamlNode &node)
+VideoDeviceMonitor::unserialize(const YAML::Node &node)
 {
     using namespace Conf;
 
     /* load the device list from the "video" YAML section */
-    YamlNode *devicesNode(node.getValue("devices"));
+    auto tmp = preferences_;
+    yaml_utils::parseValue(node, "devices", tmp);
 
-    if (!devicesNode || devicesNode->getType() != SEQUENCE) {
-        ERROR("No 'devices' sequence node! Old config?");
-        return;
-    }
-
-    SequenceNode *seqNode = static_cast<SequenceNode *>(devicesNode);
-    Sequence *seq = seqNode->getSequence();
-
-    if (seq->empty()) {
-        WARN("Empty video device list");
-        return;
-    }
-
-    for (const auto &iter : *seq) {
-        MappingNode *devnode = static_cast<MappingNode *>(iter);
-        VideoSettings pref;
-
-        devnode->getValue("name", &pref["name"]);
-        devnode->getValue("channel", &pref["channel"]);
-        devnode->getValue("size", &pref["size"]);
-        devnode->getValue("rate", &pref["rate"]);
-
+    for (const auto &iter : tmp) {
+        VideoSettings pref = iter;
         overwritePreferences(pref);
 
         // Restore the device preferences if present

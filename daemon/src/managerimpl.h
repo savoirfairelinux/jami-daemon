@@ -48,8 +48,6 @@
 
 #include "client/client.h"
 
-#include "config/sfl_config.h"
-
 #include "conference.h"
 
 #include "account_factory.h"
@@ -655,37 +653,6 @@ class ManagerImpl {
         void audioFormatUsed(AudioFormat format);
 
         /**
-         * Change a specific value in the configuration tree.
-         * This value will then be saved in the user config file sflphonedrc
-         * @param section	The section name
-         * @param name	The parameter name
-         * @param value	The new string value
-         * @return bool	true on success
-         *		      false otherwise
-         */
-        void setConfig(const std::string& section, const std::string& name, const std::string& value);
-
-        /**
-         * Change a specific value in the configuration tree.
-         * This value will then be saved in the user config file sflphonedrc
-         * @param section	The section name
-         * @param name	The parameter name
-         * @param value	The new int value
-         * @return bool	true on success
-         *		      false otherwise
-         */
-        void setConfig(const std::string& section, const std::string& name, int value);
-
-        /**
-         * Get a string from the configuration tree
-         * Throw an Conf::ConfigTreeItemException if not found
-         * @param section The section name to look in
-         * @param name    The parameter name
-         * @return sdt::string    The string value
-         */
-        std::string getConfigString(const std::string& section, const std::string& name) const;
-
-        /**
          * Handle audio sounds heard by a caller while they wait for their
          * connection to a called party to be completed.
          */
@@ -803,9 +770,6 @@ class ManagerImpl {
 
         Client client_;
 
-        /** The configuration tree. It contains accounts parameters, general user settings ,audio settings, ... */
-        Conf::ConfigTree config_;
-
         /** Current Call ID */
         std::shared_ptr<Call> currentCall_ = nullptr;
 
@@ -868,7 +832,7 @@ class ManagerImpl {
         /**
          * Load the account map from configuration
          */
-        int loadAccountMap(Conf::YamlParser &parser);
+        int loadAccountMap(YAML::Node &node);
 
         /**
          * Instance of the MainBuffer for the whole application
@@ -1022,7 +986,7 @@ class ManagerImpl {
 
         void loadDefaultAccountMap();
 
-        void loadAccount(const Conf::YamlNode *item, int &errorCount,
+        void loadAccount(const YAML::Node &item, int &errorCount,
                          const std::string &accountOrder);
 };
 

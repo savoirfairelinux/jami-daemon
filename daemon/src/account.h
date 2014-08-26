@@ -34,7 +34,6 @@
 #define ACCOUNT_H
 
 #include "noncopyable.h"
-#include "config/sfl_config.h"
 #include "config/serializable.h"
 #include "registration_states.h"
 

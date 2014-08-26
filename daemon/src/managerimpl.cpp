@@ -55,7 +55,6 @@
 
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
-#include "config/yamlemitter.h"
 
 #if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
@@ -145,29 +144,17 @@ ManagerImpl::parseConfiguration()
 {
     bool result = true;
 
-    FILE *file = fopen(path_.c_str(), "rb");
-
     try {
-        if (file) {
-            Conf::YamlParser parser(file);
-            parser.serializeEvents();
-            parser.composeEvents();
-            parser.constructNativeData();
-            const int error_count = loadAccountMap(parser);
-            fclose(file);
+        YAML::Node parsedFile = YAML::LoadFile(path_);
+        const int error_count = loadAccountMap(parsedFile);
 
-            if (error_count > 0) {
-                WARN("Errors while parsing %s", path_.c_str());
-                result = false;
-            }
-        } else {
-            WARN("Config file not found: creating default account map");
-            loadDefaultAccountMap();
+        if (error_count > 0) {
+            WARN("Errors while parsing %s", path_.c_str());
+            result = false;
         }
-    } catch (const Conf::YamlParserException &e) {
-        // we only want to close the local file here and then rethrow the exception
-        fclose(file);
-        throw;
+    } catch (const YAML::BadFile &e) {
+        WARN("Could not open config file: creating default account map");
+        loadDefaultAccountMap();
     }
 
     return result;
@@ -189,7 +176,7 @@ ManagerImpl::init(const std::string &config_file)
 
     try {
         no_errors = parseConfiguration();
-    } catch (const Conf::YamlParserException &e) {
+    } catch (const YAML::Exception &e) {
         ERROR("%s", e.what());
         no_errors = false;
     }
@@ -206,7 +193,7 @@ ManagerImpl::init(const std::string &config_file)
             removeAccounts();
             restore_backup(path_);
             parseConfiguration();
-        } catch (const Conf::YamlParserException &e) {
+        } catch (const YAML::Exception &e) {
             ERROR("%s", e.what());
             WARN("Restoring backup failed, creating default account map");
             loadDefaultAccountMap();
@@ -1329,25 +1316,33 @@ ManagerImpl::saveConfig()
     }
 
     try {
-        Conf::YamlEmitter emitter(path_.c_str());
+        YAML::Emitter out;
 
-        for (const auto& account : accountFactory_.getAllAccounts())
-            account->serialize(emitter);
+        // FIXME maybe move this into accountFactory?
+        out << YAML::BeginMap << YAML::Key << "accounts" << YAML::BeginSeq;
+
+        for (const auto& account : accountFactory_.getAllAccounts()) {
+            account->serialize(out);
+        }
+        out << YAML::EndSeq;
 
         // FIXME: this is a hack until we get rid of accountOrder
         preferences.verifyAccountOrder(getAccountList());
-        preferences.serialize(emitter);
-        voipPreferences.serialize(emitter);
-        hookPreference.serialize(emitter);
-        audioPreference.serialize(emitter);
+        preferences.serialize(out);
+        voipPreferences.serialize(out);
+        hookPreference.serialize(out);
+        audioPreference.serialize(out);
 #ifdef SFL_VIDEO
-        getVideoManager()->getVideoDeviceMonitor().serialize(emitter);
+        getVideoManager()->getVideoDeviceMonitor().serialize(out);
 #endif
-        shortcutPreferences.serialize(emitter);
+        shortcutPreferences.serialize(out);
 
-        emitter.serializeData();
-    } catch (const Conf::YamlEmitterException &e) {
-        ERROR("ConfigTree: %s", e.what());
+        std::ofstream fout(path_);
+        fout << out.c_str();
+    } catch (const YAML::Exception &e) {
+        ERROR("%s", e.what());
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
     }
 }
 
@@ -2504,23 +2499,18 @@ ManagerImpl::loadAccountOrder() const
 }
 
 void
-ManagerImpl::loadAccount(const Conf::YamlNode *item, int &errorCount,
+ManagerImpl::loadAccount(const YAML::Node &node, int &errorCount,
                          const std::string &accountOrder)
 {
-    if (!item) {
-        ERROR("Could not load account");
-        ++errorCount;
-        return;
-    }
-
+    using namespace yaml_utils;
     std::string accountType;
-    item->getValue("type", &accountType);
+    parseValue(node, "type", accountType);
 
     std::string accountid;
-    item->getValue("id", &accountid);
+    parseValue(node, "id", accountid);
 
     std::string accountAlias;
-    item->getValue("alias", &accountAlias);
+    parseValue(node, "alias", accountAlias);
     const auto inAccountOrder = [&](const std::string & id) {
         return accountOrder.find(id + "/") != std::string::npos;
     };
@@ -2536,7 +2526,7 @@ ManagerImpl::loadAccount(const Conf::YamlNode *item, int &errorCount,
             else
                 a = accountFactory_.getIP2IPAccount();
             if (a) {
-                a->unserialize(*item);
+                a->unserialize(node);
             } else {
                 ERROR("Failed to create account type \"%s\"", accountType.c_str());
                 ++errorCount;
@@ -2549,39 +2539,37 @@ ManagerImpl::loadAccount(const Conf::YamlNode *item, int &errorCount,
 }
 
 int
-ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
+ManagerImpl::loadAccountMap(YAML::Node &node)
 {
     using namespace Conf;
 
     accountFactory_.initIP2IPAccount();
 
-    // load saved preferences for IP2IP account from configuration file
-    Sequence *seq = parser.getAccountSequence()->getSequence();
-
     // build preferences
-    preferences.unserialize(*parser.getPreferenceNode());
-    voipPreferences.unserialize(*parser.getVoipPreferenceNode());
-    hookPreference.unserialize(*parser.getHookNode());
-    audioPreference.unserialize(*parser.getAudioNode());
-    shortcutPreferences.unserialize(*parser.getShortcutNode());
+    preferences.unserialize(node["preferences"]);
+    voipPreferences.unserialize(node["voipPreferences"]);
+    hookPreference.unserialize(node["hooks"]);
+    audioPreference.unserialize(node["audio"]);
+    shortcutPreferences.unserialize(node["shortcuts"]);
 
     int errorCount = 0;
-#ifdef SFL_VIDEO
-    VideoManager *controls(getVideoManager());
     try {
-        MappingNode *videoNode = parser.getVideoNode();
-        if (videoNode)
-            controls->getVideoDeviceMonitor().unserialize(*videoNode);
-    } catch (const YamlParserException &e) {
-        ERROR("No video node in config file");
+#ifdef SFL_VIDEO
+        VideoManager *controls(getVideoManager());
+        controls->getVideoDeviceMonitor().unserialize(node["video"]);
+#endif
+    } catch (const YAML::Exception &e) {
+        ERROR("%s: No video node in config file", e.what());
         ++errorCount;
     }
-#endif
 
     const std::string accountOrder = preferences.getAccountOrder();
 
-    for (auto &s : *seq)
-        loadAccount(s, errorCount, accountOrder);
+    // load saved preferences for IP2IP account from configuration file
+    const auto &accountList = node["accounts"];
+
+    for (auto &a : accountList)
+        loadAccount(a, errorCount, accountOrder);
 
     return errorCount;
 }
