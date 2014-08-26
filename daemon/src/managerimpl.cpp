@@ -1331,23 +1331,44 @@ ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (const auto& account : accountFactory_.getAllAccounts())
+        YAML::Emitter out;
+
+        // FIXME maybe move this into accountFactory?
+        out << YAML::BeginMap << YAML::Key << "accounts" << YAML::BeginSeq;
+
+        for (const auto& account : accountFactory_.getAllAccounts()) {
             account->serialize(emitter);
+            account->serialize(out);
+        }
+        out << YAML::EndSeq;
 
         // FIXME: this is a hack until we get rid of accountOrder
         preferences.verifyAccountOrder(getAccountList());
         preferences.serialize(emitter);
+        preferences.serialize(out);
         voipPreferences.serialize(emitter);
+        voipPreferences.serialize(out);
         hookPreference.serialize(emitter);
+        hookPreference.serialize(out);
         audioPreference.serialize(emitter);
+        audioPreference.serialize(out);
 #ifdef SFL_VIDEO
         getVideoManager()->getVideoDeviceMonitor().serialize(emitter);
+        getVideoManager()->getVideoDeviceMonitor().serialize(out);
 #endif
         shortcutPreferences.serialize(emitter);
+        shortcutPreferences.serialize(out);
 
         emitter.serializeData();
+
+        std::ofstream fout(path_ + "_new.yml");
+        fout << out.c_str();
     } catch (const Conf::YamlEmitterException &e) {
         ERROR("ConfigTree: %s", e.what());
+    } catch (const YAML::Exception &e) {
+        ERROR("%s", e.what());
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
     }
 }
 

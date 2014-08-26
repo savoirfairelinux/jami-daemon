@@ -46,6 +46,9 @@
 #include "config/yamlemitter.h"
 #include "call_factory.h"
 
+#include "config/yamlparser.h"
+#include <yaml-cpp/yaml.h>
+
 constexpr const char * const IAXAccount::ACCOUNT_TYPE;
 
 IAXAccount::IAXAccount(const std::string& accountID)
@@ -90,6 +93,22 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
     }
 }
 
+void IAXAccount::serialize(YAML::Emitter &out)
+{
+    using namespace Conf;
+
+    out << YAML::BeginMap;
+    out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
+    out << YAML::Key << AUDIO_CODECS_KEY << YAML::Value << audioCodecStr_;
+    out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
+    out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
+    out << YAML::Key << PASSWORD_KEY << YAML::Value << password_;
+    out << YAML::Key << TYPE_KEY << YAML::Value << ACCOUNT_TYPE;
+    out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
+    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
+    out << YAML::EndMap;
+}
+
 void IAXAccount::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(ALIAS_KEY, &alias_);
@@ -105,6 +124,24 @@ void IAXAccount::unserialize(const Conf::YamlNode &map)
     map.getValue(DISPLAY_NAME_KEY, &displayName_);
 
     map.getValue(USER_AGENT_KEY, &userAgent_);
+}
+
+void IAXAccount::unserialize(const YAML::Node &node)
+{
+    using namespace yaml_utils;
+    parseValue(node, ALIAS_KEY, alias_);
+    parseValue(node, USERNAME_KEY, username_);
+    parseValue(node, PASSWORD_KEY, password_);
+    parseValue(node, HOSTNAME_KEY, hostname_);
+    parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
+    parseValue(node, MAILBOX_KEY, mailBox_);
+    parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
+
+    // Update codec list which one is used for SDP offer
+    setActiveAudioCodecs(split_string(audioCodecStr_));
+    parseValue(node, DISPLAY_NAME_KEY, displayName_);
+
+    parseValue(node, USER_AGENT_KEY, userAgent_);
 }
 
 void IAXAccount::setAccountDetails(const std::map<std::string, std::string> &details)

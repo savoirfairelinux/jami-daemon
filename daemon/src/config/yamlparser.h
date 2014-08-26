@@ -43,6 +43,19 @@
 #include <vector>
 #include "noncopyable.h"
 
+#include <yaml-cpp/yaml.h>
+
+namespace yaml_utils {
+// set T to the value stored at key, or leaves T unchanged
+// if no value is stored.
+template <typename T>
+void parseValue(const YAML::Node &node, const char *key, T &value)
+{
+    value = node[key].as<T>(value);
+}
+}
+
+
 namespace Conf {
 
 #define PARSER_BUFFERSIZE 65536

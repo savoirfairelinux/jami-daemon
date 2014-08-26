@@ -38,6 +38,11 @@
 
 class AudioLayer;
 
+namespace YAML {
+    class Emitter;
+    class Node;
+}
+
 class Preferences : public Serializable {
     public:
         static const char * const DFT_ZONE;
@@ -47,6 +52,8 @@ class Preferences : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
 
         std::string getAccountOrder() const {
             return accountOrder_;
@@ -134,6 +141,8 @@ class VoipPreference : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
 
         bool getPlayDtmf() const {
             return playDtmf_;
@@ -174,7 +183,6 @@ class VoipPreference : public Serializable {
         }
 
     private:
-
         bool playDtmf_;
         bool playTones_;
         int pulseLength_;
@@ -191,6 +199,8 @@ class HookPreference : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
 
         std::string getNumberAddPrefix() const {
             if (numberEnabled_)
@@ -227,6 +237,8 @@ class AudioPreference : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
 
         // alsa preference
         int getAlsaCardin() const {
@@ -385,6 +397,8 @@ class ShortcutPreferences : public Serializable {
         ShortcutPreferences();
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
 
         void setShortcuts(std::map<std::string, std::string> shortcuts);
         std::map<std::string, std::string> getShortcuts() const;
