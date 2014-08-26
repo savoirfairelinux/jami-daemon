@@ -31,17 +31,17 @@
 #ifndef SERIALIZABLE_H__
 #define SERIALIZABLE_H__
 
-namespace Conf {
-    class YamlEmitter;
-    class YamlNode;
+namespace YAML {
+    class Emitter;
+    class Node;
 }
 
 class Serializable {
 
     public:
         virtual ~Serializable() {};
-        virtual void serialize(Conf::YamlEmitter &emitter) = 0;
-        virtual void unserialize(const Conf::YamlNode &map) = 0;
+        virtual void serialize(YAML::Emitter &out) = 0;
+        virtual void unserialize(const YAML::Node &node) = 0;
 };
 
 #endif

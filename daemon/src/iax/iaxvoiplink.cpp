@@ -314,8 +314,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall& call)
 
         case IAX_EVENT_URL:
 
-            if (Manager::instance().getConfigString("Hooks", "Hooks.iax2_enabled") == "1")
-                UrlHook::runAction(Manager::instance().getConfigString("Hooks", "Hooks.url_command"), (char*) event->data);
+            if (Manager::instance().hookPreference.getIax2Enabled())
+                UrlHook::runAction(Manager::instance().hookPreference.getUrlCommand(), (char*) event->data);
 
             break;
     }
