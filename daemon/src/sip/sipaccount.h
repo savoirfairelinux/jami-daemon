@@ -57,6 +57,11 @@ namespace Conf {
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
 }
 
+namespace YAML {
+    class Node;
+    class Emitter;
+}
+
 class SIPPresence;
 class SIPCall;
 
@@ -100,15 +105,15 @@ class SIPAccount : public SIPAccountBase {
 
         /**
          * Serialize internal state of this account for configuration
-         * @param YamlEmitter the configuration engine which generate the configuration file
+         * @param out Emitter to which state will be saved
          */
-        virtual void serialize(Conf::YamlEmitter &emitter);
+        void serialize(YAML::Emitter &out);
 
         /**
          * Populate the internal state for this account based on info stored in the configuration file
          * @param The configuration node for this account
          */
-        virtual void unserialize(const Conf::YamlNode &map);
+        virtual void unserialize(const YAML::Node &node);
 
         /**
          * Return an map containing the internal state of this account. Client application can use this method to manage
