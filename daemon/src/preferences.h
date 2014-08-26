@@ -38,6 +38,11 @@
 
 class AudioLayer;
 
+namespace YAML {
+    class Emitter;
+    class Node;
+}
+
 class Preferences : public Serializable {
     public:
         static const char * const DFT_ZONE;
@@ -118,6 +123,8 @@ class Preferences : public Serializable {
         }
 
     private:
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
         std::string accountOrder_;
         int historyLimit_;
         int historyMaxCalls_;
@@ -175,6 +182,8 @@ class VoipPreference : public Serializable {
 
     private:
 
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
         bool playDtmf_;
         bool playTones_;
         int pulseLength_;
@@ -203,6 +212,8 @@ class HookPreference : public Serializable {
         void runHook(pjsip_msg *msg);
 
     private:
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
         bool iax2Enabled_;
         std::string numberAddPrefix_;
         bool numberEnabled_;
@@ -354,6 +365,8 @@ class AudioPreference : public Serializable {
         }
 
     private:
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
         std::string audioApi_;
 
         // alsa preference
@@ -430,6 +443,8 @@ class ShortcutPreferences : public Serializable {
         }
 
     private:
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
         std::string hangup_;
         std::string pickup_;
         std::string popup_;

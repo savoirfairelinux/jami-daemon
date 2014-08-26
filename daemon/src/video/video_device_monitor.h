@@ -45,6 +45,11 @@ namespace Conf {
     class SequenceNode;
 }
 
+namespace YAML {
+    class Emitter;
+    class Node;
+}
+
 namespace sfl_video {
 
 class VideoDeviceMonitorImpl;
@@ -72,9 +77,11 @@ class VideoDeviceMonitor : public Serializable
          */
         virtual void serialize(Conf::YamlEmitter &emitter);
         virtual void unserialize(const Conf::YamlNode &map);
+        virtual void unserialize(const YAML::Node &map);
 
     private:
         NON_COPYABLE(VideoDeviceMonitor);
+        void serialize(YAML::Emitter &out);
 
         /*
          * User preferred settings for a device,

@@ -37,6 +37,11 @@
 #include "iaxvoiplink.h"
 #include "sfl_types.h" // enable_if_base_of
 
+namespace YAML {
+    class Emitter;
+    class Node;
+}
+
 class IAXCall;
 
 /**
@@ -124,6 +129,8 @@ class IAXAccount : public Account {
         newIncomingCall(const std::string& id);
 
     private:
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &node);
         void setAccountDetails(const std::map<std::string, std::string> &details);
 
         /**
