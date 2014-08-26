@@ -56,16 +56,6 @@ HistoryNameCache& HistoryNameCache::getInstance()
     return instance_;
 }
 
-void HistoryNameCache::serialize(Conf::YamlEmitter &emitter UNUSED)
-{
-    //TODO
-}
-
-void HistoryNameCache::unserialize(const Conf::YamlNode &map UNUSED)
-{
-    //TODO
-}
-
 std::string HistoryNameCache::getNameFromHistory(const std::string &number, const std::string &accountid)
 {
     return hNameCache_[accountid][number];
