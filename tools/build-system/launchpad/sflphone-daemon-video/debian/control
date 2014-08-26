@@ -2,7 +2,7 @@ Source: sflphone-daemon-video
 Maintainer: SavoirFaireLinux Inc <julien.bonjean@savoirfairelinux.com>
 Section: gnome
 Priority: optional
-Build-Depends: debhelper (>= 7.0.50), libgcc1, autoconf, automake, libpulse-dev, libsamplerate0-dev, libccrtp-dev, libgsm1-dev, libspeex-dev, libtool, libdbus-1-dev, libasound2-dev, libspeexdsp-dev, libexpat1-dev, libzrtpcpp-dev, libssl-dev, libgnutls-dev, libpcre3-dev, libyaml-dev, libdbus-c++-dev, libsndfile1-dev, libavcodec-dev, libavformat-dev, libswscale-dev, libavdevice-dev, libavutil-dev, libudev-dev, libpjproject-dev
+Build-Depends: debhelper (>= 7.0.50), libgcc1, autoconf, automake, libpulse-dev, libsamplerate0-dev, libccrtp-dev, libgsm1-dev, libspeex-dev, libtool, libdbus-1-dev, libasound2-dev, libspeexdsp-dev, libexpat1-dev, libzrtpcpp-dev, libssl-dev, libgnutls-dev, libpcre3-dev, libyaml-dev, libdbus-c++-dev, libsndfile1-dev, libavcodec-dev, libavformat-dev, libswscale-dev, libavdevice-dev, libavutil-dev, libudev-dev, libpjproject-dev, libsrtp-dev, ca-certificates, curl
 Standards-Version: 3.7.3
 
 Package: sflphone-daemon-video
