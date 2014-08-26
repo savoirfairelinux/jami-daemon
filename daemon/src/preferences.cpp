@@ -50,6 +50,8 @@
 #endif /* HAVE_OPENSL */
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
+
+#include <yaml-cpp/yaml.h>
 #include "hooks/urlhook.h"
 #include "sip/sip_utils.h"
 #include <sstream>
@@ -208,6 +210,24 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     preferencemap.setKeyValue(MD5_HASH_KEY, &md5Hash);
 
     emiter.serializePreference(&preferencemap, "preferences");
+    serialize2();
+}
+
+void Preferences::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << HISTORY_LIMIT_KEY << YAML::Value << historyLimit_;
+    out << YAML::Key << HISTORY_MAX_CALLS_KEY << YAML::Value << historyMaxCalls_;
+    out << YAML::Key << MD5_HASH_KEY << YAML::Value << md5Hash_;
+    out << YAML::Key << ORDER_KEY << YAML::Value << accountOrder_;
+    out << YAML::Key << PORT_NUM_KEY << YAML::Value << portNum_;
+    out << YAML::Key << REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
+    out << YAML::Key << SEARCH_BAR_DISPLAY_KEY << YAML::Value << searchBarDisplay_;
+    out << YAML::Key << ZONE_TONE_CHOICE_KEY << YAML::Value << zoneToneChoice_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "Preferences:\n" << out.c_str() << std::endl;
 }
 
 void Preferences::unserialize(const Conf::YamlNode &map)
@@ -249,6 +269,21 @@ void VoipPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(ZID_FILE_KEY, &zidFile);
 
     emitter.serializePreference(&preferencemap, "voipPreferences");
+    serialize2();
+}
+
+void VoipPreference::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << PLAY_DTMF_KEY << YAML::Value << playDtmf_;
+    out << YAML::Key << PLAY_TONES_KEY << YAML::Value << playTones_;
+    out << YAML::Key << PULSE_LENGTH_KEY << YAML::Value << pulseLength_;
+    out << YAML::Key << SYMMETRIC_RTP_KEY << YAML::Value << symmetricRtp_;
+    out << YAML::Key << ZID_FILE_KEY << YAML::Value << zidFile_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "VoipPreferences:\n" << out.c_str() << std::endl;
 }
 
 void VoipPreference::unserialize(const Conf::YamlNode &map)

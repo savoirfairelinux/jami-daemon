@@ -165,6 +165,7 @@ esac
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
 
+PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp],, AC_MSG_ERROR([yaml-cpp not found]))
 
 AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], [
        AC_MSG_ERROR([Unable to find yaml development files])])
