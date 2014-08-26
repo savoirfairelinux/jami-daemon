@@ -124,6 +124,7 @@ class IAXAccount : public Account {
         newIncomingCall(const std::string& id);
 
     private:
+        void serialize2();
         void setAccountDetails(const std::map<std::string, std::string> &details);
 
         /**

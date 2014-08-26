@@ -168,6 +168,7 @@ class SIPAccount : public Account {
          * @param YamlEmitter the configuration engine which generate the configuration file
          */
         virtual void serialize(Conf::YamlEmitter &emitter);
+        void serialize2();
 
         /**
          * Populate the internal state for this account based on info stored in the configuration file
