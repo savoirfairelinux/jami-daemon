@@ -33,8 +33,11 @@
 #include <cassert>
 #include <sstream>
 
+#include <yaml-cpp/yaml.h>
+
 #include "manager.h"
 #include "client/videomanager.h"
+#include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "logger.h"
@@ -297,6 +300,20 @@ VideoDeviceMonitor::serialize(Conf::YamlEmitter &emitter)
 
     /* store the device list under the "video" YAML section */
     emitter.serializePreference(&devices, "video");
+    try {
+    serialize2();
+    } catch (...){}
+}
+
+void
+VideoDeviceMonitor::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << "devices" << YAML::Value << preferences_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "video:\n" << out.c_str() << std::endl;
 }
 
 void
@@ -329,6 +346,34 @@ VideoDeviceMonitor::unserialize(const Conf::YamlNode &node)
         devnode->getValue("size", &pref["size"]);
         devnode->getValue("rate", &pref["rate"]);
 
+        overwritePreferences(pref);
+
+        // Restore the device preferences if present
+        auto itd = findDeviceByName(pref["name"]);
+        if (itd != devices_.end())
+            itd->applySettings(pref);
+    }
+
+    // Restore the default device if present, or select the first one
+    const string pref = preferences_.empty() ? "" : preferences_[0]["name"];
+    const string first = devices_.empty() ? "" : devices_[0].name;
+    if (findDeviceByName(pref) != devices_.end())
+        defaultDevice_ = pref;
+    else
+        defaultDevice_ = first;
+}
+
+void
+VideoDeviceMonitor::unserialize(const YAML::Node &node)
+{
+    using namespace Conf;
+
+    /* load the device list from the "video" YAML section */
+    auto tmp = preferences_;
+    yaml_utils::parseValue(node, "devices", tmp);
+
+    for (const auto &iter : tmp) {
+        VideoSettings pref = iter;
         overwritePreferences(pref);
 
         // Restore the device preferences if present
