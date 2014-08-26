@@ -75,6 +75,7 @@ class VideoDeviceMonitor : public Serializable
 
     private:
         NON_COPYABLE(VideoDeviceMonitor);
+        void serialize2();
 
         /*
          * User preferred settings for a device,

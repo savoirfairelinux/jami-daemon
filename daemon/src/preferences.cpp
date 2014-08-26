@@ -50,10 +50,13 @@
 #endif /* HAVE_OPENSL */
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
+
+#include <yaml-cpp/yaml.h>
 #include "hooks/urlhook.h"
 #include "sip/sip_utils.h"
 #include <sstream>
 #include <algorithm>
+#include <yaml-cpp/yaml.h>
 #include "global.h"
 #include "fileutils.h"
 
@@ -208,6 +211,24 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     preferencemap.setKeyValue(MD5_HASH_KEY, &md5Hash);
 
     emiter.serializePreference(&preferencemap, "preferences");
+    serialize2();
+}
+
+void Preferences::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << HISTORY_LIMIT_KEY << YAML::Value << historyLimit_;
+    out << YAML::Key << HISTORY_MAX_CALLS_KEY << YAML::Value << historyMaxCalls_;
+    out << YAML::Key << MD5_HASH_KEY << YAML::Value << md5Hash_;
+    out << YAML::Key << ORDER_KEY << YAML::Value << accountOrder_;
+    out << YAML::Key << PORT_NUM_KEY << YAML::Value << portNum_;
+    out << YAML::Key << REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
+    out << YAML::Key << SEARCH_BAR_DISPLAY_KEY << YAML::Value << searchBarDisplay_;
+    out << YAML::Key << ZONE_TONE_CHOICE_KEY << YAML::Value << zoneToneChoice_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "Preferences:\n" << out.c_str() << std::endl;
 }
 
 void Preferences::unserialize(const Conf::YamlNode &map)
@@ -249,6 +270,21 @@ void VoipPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(ZID_FILE_KEY, &zidFile);
 
     emitter.serializePreference(&preferencemap, "voipPreferences");
+    serialize2();
+}
+
+void VoipPreference::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << PLAY_DTMF_KEY << YAML::Value << playDtmf_;
+    out << YAML::Key << PLAY_TONES_KEY << YAML::Value << playTones_;
+    out << YAML::Key << PULSE_LENGTH_KEY << YAML::Value << pulseLength_;
+    out << YAML::Key << SYMMETRIC_RTP_KEY << YAML::Value << symmetricRtp_;
+    out << YAML::Key << ZID_FILE_KEY << YAML::Value << zidFile_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "VoipPreferences:\n" << out.c_str() << std::endl;
 }
 
 void VoipPreference::unserialize(const Conf::YamlNode &map)
@@ -310,6 +346,22 @@ void HookPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(URL_SIP_FIELD_KEY, &urlSipField);
 
     emitter.serializePreference(&preferencemap, "hooks");
+
+    serialize2();
+}
+
+void HookPreference::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << IAX2_ENABLED_KEY << YAML::Value << iax2Enabled_;
+    out << YAML::Key << NUMBER_ADD_PREFIX_KEY << YAML::Value << numberAddPrefix_;
+    out << YAML::Key << SIP_ENABLED_KEY << YAML::Value << sipEnabled_;
+    out << YAML::Key << URL_COMMAND_KEY << YAML::Value << urlCommand_;
+    out << YAML::Key << URL_SIP_FIELD_KEY << YAML::Value << urlSipField_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "hooks:\n" << out.c_str() << std::endl;
 }
 
 void HookPreference::unserialize(const Conf::YamlNode &map)
@@ -482,6 +534,46 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(NOISE_REDUCE_KEY, &denoise);
     preferencemap.setKeyValue(AGC_KEY, &agc);
     emitter.serializePreference(&preferencemap, "audio");
+    serialize2();
+}
+
+void AudioPreference::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    // alsa submap
+    out << YAML::Key << ALSAMAP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << CARDIN_KEY << YAML::Value << alsaCardin_;
+    out << YAML::Key << CARDOUT_KEY << YAML::Value << alsaCardout_;
+    out << YAML::Key << CARDRING_KEY << YAML::Value << alsaCardring_;
+    out << YAML::Key << PLUGIN_KEY << YAML::Value << alsaPlugin_;
+    out << YAML::Key << SMPLRATE_KEY << YAML::Value << alsaSmplrate_;
+    out << YAML::EndMap;
+
+    // common options
+    out << YAML::Key << ALWAYS_RECORDING_KEY << YAML::Value << alwaysRecording_;
+    out << YAML::Key << AUDIO_API_KEY << YAML::Value << audioApi_;
+    out << YAML::Key << AGC_KEY << YAML::Value << agcEnabled_;
+    out << YAML::Key << CAPTURE_MUTED_KEY << YAML::Value << captureMuted_;
+    out << YAML::Key << NOISE_REDUCE_KEY << YAML::Value << denoise_;
+    out << YAML::Key << PLAYBACK_MUTED_KEY << YAML::Value << playbackMuted_;
+
+    // pulse submap
+    out << YAML::Key << PULSEMAP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << DEVICE_PLAYBACK_KEY << YAML::Value << pulseDevicePlayback_;
+    out << YAML::Key << DEVICE_RECORD_KEY << YAML::Value << pulseDeviceRecord_;
+    out << YAML::Key << DEVICE_RINGTONE_KEY << YAML::Value << pulseDeviceRingtone_;
+    out << YAML::Key << YAML::EndMap;
+
+    // more common options!
+    out << YAML::Key << RECORDPATH_KEY << YAML::Value << recordpath_;
+    out << YAML::Key << VOLUMEMIC_KEY << YAML::Value << volumemic_;
+    out << YAML::Key << VOLUMESPKR_KEY << YAML::Value << volumespkr_;
+
+    out << YAML::EndMap;
+
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "audio:\n" << out.c_str() << std::endl;
 }
 
 bool
@@ -586,6 +678,21 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, &togglePickupHangup);
 
     emitter.serializePreference(&preferencemap, "shortcuts");
+    serialize2();
+}
+
+void ShortcutPreferences::serialize2()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << HANGUP_SHORT_KEY << YAML::Value << hangup_;
+    out << YAML::Key << PICKUP_SHORT_KEY << YAML::Value << pickup_;
+    out << YAML::Key << POPUP_SHORT_KEY << YAML::Value << popup_;
+    out << YAML::Key << TOGGLE_HOLD_SHORT_KEY << YAML::Value << toggleHold_;
+    out << YAML::Key << TOGGLE_PICKUP_HANGUP_SHORT_KEY << YAML::Value << togglePickupHangup_;
+    out << YAML::EndMap;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "shortcuts:\n" << out.c_str() << std::endl;
 }
 
 void ShortcutPreferences::unserialize(const Conf::YamlNode &map)
