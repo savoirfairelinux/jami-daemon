@@ -31,14 +31,11 @@
 #ifndef HISTORYNAMECACHE_H_
 #define HISTORYNAMECACHE_H_
 
-#include "config/serializable.h"
 #include <iostream>
 #include <map>
 
-class HistoryNameCache : public Serializable {
+class HistoryNameCache {
 public:
-   virtual void serialize(Conf::YamlEmitter &emitter);
-   virtual void unserialize(const Conf::YamlNode &map);
    static HistoryNameCache& getInstance();
    std::string getNameFromHistory(const std::string &number, const std::string &accountid);
 private:
