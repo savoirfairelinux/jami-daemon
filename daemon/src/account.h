@@ -34,7 +34,6 @@
 #define ACCOUNT_H
 
 #include "noncopyable.h"
-#include "config/sfl_config.h"
 #include "config/serializable.h"
 #include "registration_states.h"
 
@@ -64,6 +63,9 @@ class VoipLinkException : public std::runtime_error {
 class Account : public Serializable {
 
     public:
+        constexpr static const char *TRUE_STR = "true";
+        constexpr static const char *FALSE_STR = "false";
+
         Account(const std::string& accountID);
 
         /**

@@ -55,13 +55,6 @@ const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 #define PCM_DSNOOP	"plug:dsnoop"		/** Alsa plugin for microphone sharing */
 #define PCM_DMIX_DSNOOP "dmix/dsnoop"           /** Audio profile using Alsa dmix/dsnoop */
 
-#define RINGTONE_ENABLED	      TRUE_STR		/** Custom ringtone enable or not */
-#define DISPLAY_DIALPAD		      TRUE_STR		/** Display dialpad or not */
-#define DISPLAY_VOLUME_CONTROLS	  TRUE_STR		/** Display the volume controls or not */
-#define START_HIDDEN		      TRUE_STR		/** SFlphone starts hidden at start-up or not */
-#define WINDOW_POPUP		      TRUE_STR		/** Popup mode */
-#define NOTIFY_ALL		          TRUE_STR		/** Desktop notification level 0: never notify */
-
 // Error codes for error handling
 #define NO_ERROR		            0x0000	/** No error - Everything alright */
 #define ALSA_CAPTURE_DEVICE         0x0001	/** Error while opening capture device */
