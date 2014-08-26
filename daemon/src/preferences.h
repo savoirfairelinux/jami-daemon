@@ -118,6 +118,8 @@ class Preferences : public Serializable {
         }
 
     private:
+        void serialize2();
+        void unserialize2();
         std::string accountOrder_;
         int historyLimit_;
         int historyMaxCalls_;
@@ -175,6 +177,8 @@ class VoipPreference : public Serializable {
 
     private:
 
+        void serialize2();
+        void unserialize2();
         bool playDtmf_;
         bool playTones_;
         int pulseLength_;
@@ -203,6 +207,8 @@ class HookPreference : public Serializable {
         void runHook(pjsip_msg *msg);
 
     private:
+        void serialize2();
+        void unserialize2();
         bool iax2Enabled_;
         std::string numberAddPrefix_;
         bool numberEnabled_;
@@ -354,6 +360,8 @@ class AudioPreference : public Serializable {
         }
 
     private:
+        void serialize2();
+        void unserialize2();
         std::string audioApi_;
 
         // alsa preference
@@ -430,6 +438,8 @@ class ShortcutPreferences : public Serializable {
         }
 
     private:
+        void serialize2();
+        void unserialize2();
         std::string hangup_;
         std::string pickup_;
         std::string popup_;
