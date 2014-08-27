@@ -67,6 +67,10 @@ if BUILD_INSTANT_MESSAGING
 libsflphone_la_LDFLAGS += @EXPAT_LIBS@
 endif
 
+if BUILD_SDES
+libsflphone_la_LDFLAGS += @PCRE_LIBS@
+endif
+
 libsflphone_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
 		$(PJSIP_CFLAGS) \

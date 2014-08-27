@@ -288,9 +288,7 @@ AC_ARG_WITH([sdes],
     [],
     [with_sdes=yes])
 AS_IF([test "x$with_sdes" = "xyes"], [
-    AX_PATH_LIB_PCRE
-        ]);
-
+      PKG_CHECK_MODULES(PCRE, [libpcre],,AC_MSG_ERROR([libpcre not found]))]);
 
 AC_DEFINE_UNQUOTED([HAVE_SDES], `if test "x$with_sdes" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have sdes support])
 AM_CONDITIONAL(BUILD_SDES, test "x$with_sdes" = "xyes" )
