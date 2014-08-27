@@ -86,9 +86,7 @@ AC_COMPILE_IFELSE(
 AC_MSG_RESULT([$ANDROID])
 AM_CONDITIONAL([USE_ANDROID], test "x$ANDROID" = "xyes")
 
-AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], [
-       AC_MSG_ERROR([Unable to find yaml development files])])
-
+PKG_CHECK_MODULES(YAML, [yaml-0.1],, AC_MSG_ERROR([Unable to find yaml]))
 
 if test "xSANDROID" = "xyes"; then
     dnl Check for OpenSL
