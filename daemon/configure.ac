@@ -161,14 +161,10 @@ case $host_os in
     ;;
 esac
 
-
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
 
-
-AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [AC_SUBST(YAML_LIBS, -lyaml)], [
-       AC_MSG_ERROR([Unable to find yaml development files])])
-
+PKG_CHECK_MODULES(YAML, [yaml-0.1],, AC_MSG_ERROR([Unable to find yaml]))
 
 if test "xSANDROID" = "xyes"; then
     dnl Check for OpenSL
