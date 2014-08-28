@@ -77,6 +77,10 @@ public:
 
     // From a string
     IpAddr(const std::string& str, pj_uint16_t family = AF_UNSPEC) : addr() {
+        if (str.empty()) {
+            addr.addr.sa_family = AF_UNSPEC;
+            return;
+        }
         pj_str_t pjstring;
         pj_cstr(&pjstring, str.c_str());
         auto status = pj_sockaddr_parse(family, 0, &pjstring, &addr);
