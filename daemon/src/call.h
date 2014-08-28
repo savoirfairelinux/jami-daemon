@@ -313,24 +313,24 @@ class Call : public Recordable {
 
         std::string getTypeStr() const;
         /** Protect every attribute that can be changed by two threads */
-        mutable std::mutex callMutex_;
+        mutable std::mutex callMutex_ {};
 
         // Informations about call socket / audio
 
         /** My IP address */
-        IpAddr localAddr_;
+        IpAddr localAddr_ {};
 
         /** Local audio port, as seen by me. */
-        unsigned int localAudioPort_;
+        unsigned int localAudioPort_ {0};
 
         /** Local video port, as seen by me. */
-        unsigned int localVideoPort_;
+        unsigned int localVideoPort_ {0};
 
         /** Unique ID of the call */
         std::string id_;
 
         /** Unique conference ID, used exclusively in case of a conferece */
-        std::string confID_;
+        std::string confID_ {};
 
         /** Type of the call */
         CallType type_;
@@ -339,22 +339,22 @@ class Call : public Recordable {
         Account& account_;
 
         /** Disconnected/Progressing/Trying/Ringing/Connected */
-        ConnectionState connectionState_;
+        ConnectionState connectionState_ {Call::DISCONNECTED};
 
         /** Inactive/Active/Hold/Busy/Error */
-        CallState callState_;
+        CallState callState_ {Call::INACTIVE};
 
         /** Direct IP-to-IP or classic call */
-        bool isIPToIP_;
+        bool isIPToIP_ {false};
 
         /** Number of the peer */
-        std::string peerNumber_;
+        std::string peerNumber_ {};
 
         /** Display Name */
-        std::string displayName_;
+        std::string displayName_ {};
 
-        time_t timestamp_start_;
-        time_t timestamp_stop_;
+        time_t timestamp_start_ {0};
+        time_t timestamp_stop_ {0};
 };
 
 #endif // __CALL_H__

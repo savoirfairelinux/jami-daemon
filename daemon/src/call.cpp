@@ -44,20 +44,10 @@
 
 Call::Call(Account& account, const std::string& id, Call::CallType type)
     : callMutex_()
-    , localAddr_()
-    , localAudioPort_(0)
-    , localVideoPort_(0)
     , id_(id)
     , confID_()
     , type_(type)
     , account_(account)
-    , connectionState_(Call::DISCONNECTED)
-    , callState_(Call::INACTIVE)
-    , isIPToIP_(false)
-    , peerNumber_()
-    , displayName_()
-    , timestamp_start_(0)
-    , timestamp_stop_(0)
 {
     time(&timestamp_start_);
     account_.attachCall(id_);
