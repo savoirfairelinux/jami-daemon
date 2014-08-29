@@ -124,7 +124,7 @@ public:
     }
 
     inline operator sockaddr_storage (){
-        sockaddr_storage ss {};
+        sockaddr_storage ss;
         memcpy(&ss, &addr, getLength());
         return ss;
     }
