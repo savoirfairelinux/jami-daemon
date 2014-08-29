@@ -38,6 +38,7 @@
 #include "audio_rtp_session.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
+#include "ice_socket.h"
 
 #pragma GCC diagnostic ignored "-Weffc++"
 #include <ccrtp/rtp.h>
@@ -51,7 +52,9 @@ class SIPCall;
 
 namespace sfl {
 
-class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRtpSession {
+typedef ost::SingleThreadRTPSession<RTPOverICEChannel, RTPOverICEChannel> SymmetricICERTPSession;
+
+class AudioSymmetricRtpSession : public SymmetricICERTPSession, public AudioRtpSession {
     public:
         /**
         * Constructor
