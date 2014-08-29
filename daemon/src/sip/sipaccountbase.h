@@ -147,7 +147,7 @@ public:
         return false;
     }
 
-    virtual pj_str_t getStunServerName() const { return pj_str_t {}; };
+    virtual pj_str_t getStunServerName() const { return pj_str_t {0, 0}; };
 
     virtual pj_uint16_t getStunPort() const { return 0; };
 

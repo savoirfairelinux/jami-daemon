@@ -582,7 +582,7 @@ class SIPAccount : public SIPAccountBase {
         /**
          * The STUN server name (hostname)
          */
-        pj_str_t stunServerName_ {};
+        pj_str_t stunServerName_ {0, 0};
 
         /**
          * The STUN server port
