@@ -36,6 +36,7 @@
 #include <getopt.h>
 
 #include "dbus/dbusclient.h"
+#include "src/fileutils.h"
 
 static int sflphFlags = 0;
 static std::unique_ptr<DBusClient> dbusClient;
@@ -167,6 +168,8 @@ int main(int argc, char *argv [])
     std::string programName(argv[0]);
     std::vector<char> writable(programName.size() + 1);
     std::copy(programName.begin(), programName.end(), writable.begin());
+
+    fileutils::set_program_dir(writable.data());
 
 #ifdef TOP_BUILDDIR
     if (!getenv("CODECS_PATH"))
