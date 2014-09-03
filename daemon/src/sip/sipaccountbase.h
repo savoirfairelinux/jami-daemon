@@ -131,6 +131,14 @@ public:
 
     virtual ~SIPAccountBase() = default;
 
+    virtual void serialize(YAML::Emitter &out);
+    virtual void unserialize(const YAML::Node &node);
+
+    virtual void setAccountDetails(const std::map<std::string, std::string> &details);
+
+    virtual std::map<std::string, std::string> getAccountDetails() const;
+
+
     /**
      * Create incoming SIPCall.
      * @param[in] id The ID of the call
