@@ -131,6 +131,7 @@ public:
 
     virtual ~SIPAccountBase() = default;
 
+
     /**
      * Create incoming SIPCall.
      * @param[in] id The ID of the call
@@ -286,6 +287,13 @@ public:
 
 
 protected:
+    virtual void serialize(YAML::Emitter &out);
+    virtual void unserialize(const YAML::Node &node);
+
+    virtual void setAccountDetails(const std::map<std::string, std::string> &details);
+
+    virtual std::map<std::string, std::string> getAccountDetails() const;
+
     /**
      * Voice over IP Link contains a listener thread and calls
      */
