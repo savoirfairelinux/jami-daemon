@@ -43,18 +43,18 @@ static std::unique_ptr<DBusClient> dbusClient;
 
 static void print_title()
 {
-	std::cout << "SFLphone Daemon " << sflph_version() <<
-		", by Savoir-Faire Linux 2004-2014" << std::endl <<
-		"http://www.sflphone.org/" << std::endl;
+    std::cout << "SFLphone Daemon " << sflph_version() <<
+        ", by Savoir-Faire Linux 2004-2014" << std::endl <<
+        "http://www.sflphone.org/" << std::endl;
 }
 
 static void print_usage()
 {
-	std::cout << std::endl <<
-	"-c, --console \t- Log in console (instead of syslog)" << std::endl <<
-	"-d, --debug \t- Debug mode (more verbose)" << std::endl <<
-	"-p, --persistent \t- Stay alive after client quits" << std::endl <<
-	"-h, --help \t- Print help" << std::endl;
+    std::cout << std::endl <<
+    "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
+    "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
+    "-p, --persistent \t- Stay alive after client quits" << std::endl <<
+    "-h, --help \t- Print help" << std::endl;
 }
 
 // Parse command line arguments, setting debug options or printing a help
@@ -62,99 +62,99 @@ static void print_usage()
 // returns true if we should quit (i.e. help was printed), false otherwise
 static bool parse_args(int argc, char *argv[], bool &persistent)
 {
-	int consoleFlag = false;
-	int debugFlag = false;
-	int helpFlag = false;
-	int versionFlag = false;
-	static const struct option long_options[] = {
-		/* These options set a flag. */
-		{"debug", no_argument, NULL, 'd'},
-		{"console", no_argument, NULL, 'c'},
-		{"persistent", no_argument, NULL, 'p'},
-		{"help", no_argument, NULL, 'h'},
-		{"version", no_argument, NULL, 'v'},
-		{0, 0, 0, 0} /* Sentinel */
-	};
+    int consoleFlag = false;
+    int debugFlag = false;
+    int helpFlag = false;
+    int versionFlag = false;
+    static const struct option long_options[] = {
+        /* These options set a flag. */
+        {"debug", no_argument, NULL, 'd'},
+        {"console", no_argument, NULL, 'c'},
+        {"persistent", no_argument, NULL, 'p'},
+        {"help", no_argument, NULL, 'h'},
+        {"version", no_argument, NULL, 'v'},
+        {0, 0, 0, 0} /* Sentinel */
+    };
 
-	while (true) {
-		/* getopt_long stores the option index here. */
-		int option_index = 0;
-		int c = getopt_long(argc, argv, "dcphv", long_options, &option_index);
+    while (true) {
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+        int c = getopt_long(argc, argv, "dcphv", long_options, &option_index);
 
-		/* Detect the end of the options. */
-		if (c == -1)
-			break;
+        /* Detect the end of the options. */
+        if (c == -1)
+            break;
 
-		switch (c) {
-			case 'd':
-				debugFlag = true;
-				break;
+        switch (c) {
+            case 'd':
+                debugFlag = true;
+                break;
 
-			case 'c':
-				consoleFlag = true;
-				break;
+            case 'c':
+                consoleFlag = true;
+                break;
 
-			case 'p':
-				persistent = true;
-				break;
+            case 'p':
+                persistent = true;
+                break;
 
-			case 'h':
-			case '?':
-				helpFlag = true;
-				break;
+            case 'h':
+            case '?':
+                helpFlag = true;
+                break;
 
-			case 'v':
-				versionFlag = true;
-				break;
+            case 'v':
+                versionFlag = true;
+                break;
 
-			default:
-				break;
-		}
-	}
+            default:
+                break;
+        }
+    }
 
-	bool quit = false;
-	if (helpFlag) {
-		print_usage();
-		quit = true;
-	} else if (versionFlag) {
-		// We've always print the title/version, so we can just exit
-		quit = true;
-	} else {
-		if (consoleFlag) {
-			sflphFlags |= SFLPH_FLAG_CONSOLE_LOG;
-		}
-		if (debugFlag) {
-			sflphFlags |= SFLPH_FLAG_DEBUG;
-		}
-	}
-	return quit;
+    bool quit = false;
+    if (helpFlag) {
+        print_usage();
+        quit = true;
+    } else if (versionFlag) {
+        // We've always print the title/version, so we can just exit
+        quit = true;
+    } else {
+        if (consoleFlag) {
+            sflphFlags |= SFLPH_FLAG_CONSOLE_LOG;
+        }
+        if (debugFlag) {
+            sflphFlags |= SFLPH_FLAG_DEBUG;
+        }
+    }
+    return quit;
 }
 
 static int run()
 {
-	if (dbusClient) {
-		return dbusClient->event_loop();
-	}
+    if (dbusClient) {
+        return dbusClient->event_loop();
+    }
 
-	return 1;
+    return 1;
 }
 
 static void interrupt()
 {
-	if (dbusClient) {
-		dbusClient->exit();
-	}
+    if (dbusClient) {
+        dbusClient->exit();
+    }
 }
 
 static void signal_handler(int code)
 {
     std::cerr << "Caught signal " << strsignal(code)
-				  << ", terminating..." << std::endl;
+                  << ", terminating..." << std::endl;
 
-	// Unset signal handlers
-	signal(SIGHUP, SIG_DFL);
-	signal(SIGINT, SIG_DFL);
-	signal(SIGTERM, SIG_DFL);
+    // Unset signal handlers
+    signal(SIGHUP, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
 
     interrupt();
 }
