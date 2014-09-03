@@ -73,7 +73,6 @@
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
-static const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
 
 static void
@@ -165,15 +164,6 @@ updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
     }
 }
 
-static void
-unserializeRange(const YAML::Node &node, const char *minKey, const char *maxKey, std::pair<uint16_t, uint16_t> &range)
-{
-    int tmpMin = 0;
-    int tmpMax = 0;
-    yaml_utils::parseValue(node, minKey, tmpMin);
-    yaml_utils::parseValue(node, maxKey, tmpMax);
-    updateRange(tmpMin, tmpMax, range);
-}
 
 std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& id)
@@ -359,24 +349,11 @@ void SIPAccount::serialize(YAML::Emitter &out)
     using namespace Conf;
 
     out << YAML::BeginMap;
-    out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
-    out << YAML::Key << AUDIO_CODECS_KEY << YAML::Value << audioCodecStr_;
-    out << YAML::Key << AUDIO_PORT_MAX_KEY << YAML::Value << audioPortRange_.second;
-    out << YAML::Key << AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange_.first;
-    out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
+    SIPAccountBase::serialize(out);
+
     // each credential is a map, and we can have multiple credentials
     out << YAML::Key << CRED_KEY << YAML::Value << credentials_;
-
-    out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
-    out << YAML::Key << DTMF_TYPE_KEY << YAML::Value << dtmfType_;
-    out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
-    out << YAML::Key << HAS_CUSTOM_USER_AGENT_KEY << YAML::Value << hasCustomUserAgent_;
-    out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
-    out << YAML::Key << ID_KEY << YAML::Value << accountID_;
-    out << YAML::Key << INTERFACE_KEY << YAML::Value << interface_;
     out << YAML::Key << KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
-    out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
-    out << YAML::Key << PORT_KEY << YAML::Value << localPort_;
 
 #ifdef SFL_PRESENCE
     out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value << (presence_ and presence_->isEnabled());
@@ -387,21 +364,8 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << PRESENCE_PUBLISH_SUPPORTED_KEY << YAML::Value << false;
     out << YAML::Key << PRESENCE_SUBSCRIBE_SUPPORTED_KEY << YAML::Value << false;
 #endif
-
-    out << YAML::Key << PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
-    out << YAML::Key << PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
     out << YAML::Key << Preferences::REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
-    out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
-    out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
-    out << YAML::Key << SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
     out << YAML::Key << SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
-
-    // srtp submap
-    out << YAML::Key << SRTP_KEY << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << SRTP_ENABLE_KEY << YAML::Value << srtpEnabled_;
-    out << YAML::Key << KEY_EXCHANGE_KEY << YAML::Value << srtpKeyExchange_;
-    out << YAML::Key << RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
-    out << YAML::EndMap;
 
     out << YAML::Key << STUN_ENABLED_KEY << YAML::Value << stunEnabled_;
     out << YAML::Key << STUN_SERVER_KEY << YAML::Value << stunServer_;
@@ -422,16 +386,6 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient_;
     out << YAML::Key << VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
     out << YAML::EndMap;
-
-    out << YAML::Key << TYPE_KEY << YAML::Value << ACCOUNT_TYPE;
-    out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
-    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
-
-    out << YAML::Key << VIDEO_CODECS_KEY << YAML::Value << videoCodecList_;
-
-    out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
-    out << YAML::Key << VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
-    out << YAML::Key << VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
 
     // zrtp submap
     out << YAML::Key << ZRTP_KEY << YAML::Value << YAML::BeginMap;
@@ -467,50 +421,12 @@ void SIPAccount::unserialize(const YAML::Node &node)
 {
     using namespace Conf;
     using namespace yaml_utils;
-    parseValue(node, ALIAS_KEY, alias_);
-    parseValue(node, USERNAME_KEY, username_);
 
-    if (not isIP2IP()) parseValue(node, HOSTNAME_KEY, hostname_);
-
-    parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
-    parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
-
-    if (not isIP2IP()) parseValue(node, MAILBOX_KEY, mailBox_);
-
-    parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
-    // Update codec list which one is used for SDP offer
-    setActiveAudioCodecs(split_string(audioCodecStr_));
-    const auto &vCodecNode = node[VIDEO_CODECS_KEY];
-    auto tmp = parseVectorMap(vCodecNode, {VIDEO_CODEC_BITRATE,
-            VIDEO_CODEC_ENABLED, VIDEO_CODEC_NAME, VIDEO_CODEC_PARAMETERS});
-
-#ifdef SFL_VIDEO
-    if (tmp.empty()) {
-        // Video codecs are an empty list
-        WARN("Loading default video codecs");
-        tmp = libav_utils::getDefaultCodecs();
-    }
-#endif
-    // validate it
-    setVideoCodecs(tmp);
-
-    parseValue(node, RINGTONE_PATH_KEY, ringtonePath_);
-    parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
-    parseValue(node, VIDEO_ENABLED_KEY, videoEnabled_);
-
-    if (not isIP2IP()) parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
-
-    parseValue(node, INTERFACE_KEY, interface_);
-    int port = DEFAULT_SIP_PORT;
-    parseValue(node, PORT_KEY, port);
-    localPort_ = port;
-    parseValue(node, PUBLISH_ADDR_KEY, publishedIpAddress_);
-    parseValue(node, PUBLISH_PORT_KEY, port);
-    publishedPort_ = port;
-    parseValue(node, SAME_AS_LOCAL_KEY, publishedSameasLocal_);
-
+    SIPAccountBase::unserialize(node);
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
+
+    if (not isIP2IP()) parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
 
     if (not isIP2IP()) parseValue(node, KEEP_ALIVE_ENABLED, keepAliveEnabled_);
 
@@ -528,34 +444,19 @@ void SIPAccount::unserialize(const YAML::Node &node)
     }
 #endif
 
-    parseValue(node, DTMF_TYPE_KEY, dtmfType_);
-
     if (not isIP2IP()) parseValue(node, SERVICE_ROUTE_KEY, serviceRoute_);
 
     // stun enabled
     if (not isIP2IP()) parseValue(node, STUN_ENABLED_KEY, stunEnabled_);
-
     if (not isIP2IP()) parseValue(node, STUN_SERVER_KEY, stunServer_);
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
 
-    parseValue(node, DISPLAY_NAME_KEY, displayName_);
-
     const auto &credsNode = node[CRED_KEY];
     const auto creds = parseVectorMap(credsNode, {CONFIG_ACCOUNT_PASSWORD,
             CONFIG_ACCOUNT_REALM, CONFIG_ACCOUNT_USERNAME});
     setCredentials(creds);
-
-    // get srtp submap
-    const auto &srtpMap = node[SRTP_KEY];
-
-    parseValue(srtpMap, SRTP_ENABLE_KEY, srtpEnabled_);
-
-    std::string tmpKey;
-    parseValue(srtpMap, KEY_EXCHANGE_KEY, tmpKey);
-    validate(srtpKeyExchange_, tmpKey, VALID_SRTP_KEY_EXCHANGES);
-    parseValue(srtpMap, RTP_FALLBACK_KEY, srtpFallback_);
 
     // get zrtp submap
     const auto &zrtpMap = node[ZRTP_KEY];
@@ -587,13 +488,6 @@ void SIPAccount::unserialize(const YAML::Node &node)
     // FIXME
     parseValue(tlsMap, TIMEOUT_KEY, tlsNegotiationTimeoutSec_);
 
-    parseValue(node, USER_AGENT_KEY, userAgent_);
-    parseValue(node, HAS_CUSTOM_USER_AGENT_KEY, hasCustomUserAgent_);
-
-    unserializeRange(node, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
-#ifdef SFL_VIDEO
-    unserializeRange(node, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_);
-#endif
 }
 
 template <typename T>
@@ -610,43 +504,20 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
-    // Account setting common to SIP and IAX
-    parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
-    parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
-    parseString(details, CONFIG_ACCOUNT_HOSTNAME, hostname_);
-    parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
-    parseBool(details, CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
-    parseString(details, CONFIG_RINGTONE_PATH, ringtonePath_);
-    parseBool(details, CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
-    parseBool(details, CONFIG_VIDEO_ENABLED, videoEnabled_);
-    parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
+	SIPAccountBase::setAccountDetails(details);
 
     // SIP specific account settings
-
-    // general sip settings
     parseString(details, CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
-    parseString(details, CONFIG_LOCAL_INTERFACE, interface_);
-    parseBool(details, CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
-    parseString(details, CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
-    parseInt(details, CONFIG_LOCAL_PORT, localPort_);
-    parseInt(details, CONFIG_PUBLISHED_PORT, publishedPort_);
 
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
     parseString(details, CONFIG_STUN_SERVER, stunServer_);
     parseBool(details, CONFIG_STUN_ENABLE, stunEnabled_);
-    parseString(details, CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
     parseInt(details, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire_);
 
     if (registrationExpire_ < MIN_REGISTRATION_TIME)
         registrationExpire_ = MIN_REGISTRATION_TIME;
-
-    parseBool(details, CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
-    if (hasCustomUserAgent_)
-        parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
-    else
-        userAgent_ = DEFAULT_USER_AGENT;
 
     parseBool(details, CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
 #ifdef SFL_PRESENCE
@@ -655,29 +526,11 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     enablePresence(presenceEnabled);
 #endif
 
-    int tmpMin = -1;
-    parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
-    int tmpMax = -1;
-    parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
-    updateRange(tmpMin, tmpMax, audioPortRange_);
-#ifdef SFL_VIDEO
-    tmpMin = -1;
-    parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
-    tmpMax = -1;
-    parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
-    updateRange(tmpMin, tmpMax, videoPortRange_);
-#endif
-
     // srtp settings
-    parseBool(details, CONFIG_SRTP_ENABLE, srtpEnabled_);
-    parseBool(details, CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
     parseBool(details, CONFIG_ZRTP_DISPLAY_SAS, zrtpDisplaySas_);
     parseBool(details, CONFIG_ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce_);
     parseBool(details, CONFIG_ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning_);
     parseBool(details, CONFIG_ZRTP_HELLO_HASH, zrtpHelloHash_);
-    auto iter = details.find(CONFIG_SRTP_KEY_EXCHANGE);
-    if (iter != details.end())
-        validate(srtpKeyExchange_, iter->second, VALID_SRTP_KEY_EXCHANGES);
 
     // TLS settings
     parseBool(details, CONFIG_TLS_ENABLE, tlsEnable_);
@@ -687,7 +540,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
 
     parseString(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
     parseString(details, CONFIG_TLS_PASSWORD, tlsPassword_);
-    iter = details.find(CONFIG_TLS_METHOD);
+    auto iter = details.find(CONFIG_TLS_METHOD);
     if (iter != details.end())
         validate(tlsMethod_, iter->second, VALID_TLS_METHODS);
     parseString(details, CONFIG_TLS_CIPHERS, tlsCiphers_);
@@ -728,25 +581,12 @@ static std::string retrievePassword(const std::map<std::string, std::string>& ma
     return "";
 }
 
-
-
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
-    std::map<std::string, std::string> a;
+    std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
 
-    // note: The IP2IP profile will always have IP2IP as an alias
-    a[CONFIG_ACCOUNT_ALIAS] = alias_;
-
-    a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ACCOUNT_AUTOANSWER] = autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ACCOUNT_TYPE] = ACCOUNT_TYPE;
-    a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
-    a[CONFIG_ACCOUNT_USERNAME] = username_;
-    // get password for this username
     a[CONFIG_ACCOUNT_PASSWORD] = "";
-
     if (hasCredentials()) {
-
         for (const auto &vect_item : credentials_) {
             const std::string password = retrievePassword(vect_item, username_);
 
@@ -755,10 +595,20 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         }
     }
 
-    a[CONFIG_RINGTONE_PATH] = ringtonePath_;
-    a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_VIDEO_ENABLED] = videoEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
+    std::string registrationStateCode;
+    std::string registrationStateDescription;
+    if (isIP2IP())
+        registrationStateDescription = "Direct IP call";
+    else {
+        int code = registrationStateDetailed_.first;
+        std::stringstream out;
+        out << code;
+        registrationStateCode = out.str();
+        registrationStateDescription = registrationStateDetailed_.second;
+    }
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
+
 #ifdef SFL_PRESENCE
     a[CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR;
     a[CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? TRUE_STR : FALSE_STR;
@@ -768,56 +618,16 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
 #endif
 
-    RegistrationState state = RegistrationState::UNREGISTERED;
-    std::string registrationStateCode;
-    std::string registrationStateDescription;
-
-    if (isIP2IP())
-        registrationStateDescription = "Direct IP call";
-    else {
-        state = registrationState_;
-        int code = registrationStateDetailed_.first;
-        std::stringstream out;
-        out << code;
-        registrationStateCode = out.str();
-        registrationStateDescription = registrationStateDetailed_.second;
-    }
-
-    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(state);
-    a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
-    a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
-
     // Add sip specific details
     a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
-    a[CONFIG_ACCOUNT_USERAGENT] = hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT;
-    a[CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT] = hasCustomUserAgent_ ? TRUE_STR : FALSE_STR;
-
-    addRangeToDetails(a, CONFIG_ACCOUNT_AUDIO_PORT_MIN, CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
-#ifdef SFL_VIDEO
-    addRangeToDetails(a, CONFIG_ACCOUNT_VIDEO_PORT_MIN, CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
-#endif
 
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
-    a[CONFIG_LOCAL_INTERFACE] = interface_;
-    a[CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
 
-    std::stringstream localport;
-    localport << localPort_;
-    a[CONFIG_LOCAL_PORT] = localport.str();
-    std::stringstream publishedport;
-    publishedport << publishedPort_;
-    a[CONFIG_PUBLISHED_PORT] = publishedport.str();
     a[CONFIG_STUN_ENABLE] = stunEnabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_STUN_SERVER] = stunServer_;
-    a[CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
     a[CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? TRUE_STR : FALSE_STR;
-
-    a[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
 
     a[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
