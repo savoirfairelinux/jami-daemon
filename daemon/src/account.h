@@ -53,6 +53,11 @@ class VoipLinkException : public std::runtime_error {
             std::runtime_error("VoipLinkException occured: " + str) {}
 };
 
+namespace YAML {
+    class Emitter;
+    class Node;
+}
+
 /**
  * @file account.h
  * @brief Interface to protocol account (SIPAccount, IAXAccount)
@@ -79,14 +84,17 @@ class Account : public Serializable {
          */
         void freeAccount();
 
-        virtual void setAccountDetails(const std::map<std::string, std::string> &details) = 0;
+        virtual void setAccountDetails(const std::map<std::string, std::string> &details);
 
-        virtual std::map<std::string, std::string> getAccountDetails() const = 0;
+        virtual std::map<std::string, std::string> getAccountDetails() const;
 
         /**
          * Load the settings for this account.
          */
         virtual void loadConfig() = 0;
+
+        virtual void serialize(YAML::Emitter &out);
+        virtual void unserialize(const YAML::Node &node);
 
         /**
          * Get the account ID
