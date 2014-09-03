@@ -46,6 +46,10 @@
 #include "manager.h"
 
 #include "client/configurationmanager.h"
+#include "account_schema.h"
+#include "config/yamlparser.h"
+
+#include <yaml-cpp/yaml.h>
 
 const char * const Account::AUDIO_CODECS_KEY            = "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY            = "videoCodecs";
@@ -158,6 +162,92 @@ void Account::loadDefaultCodecs()
     // we don't need to validate via setVideoCodecs, since these are defaults
     videoCodecList_ = libav_utils::getDefaultCodecs();
 #endif
+}
+
+
+void Account::serialize(YAML::Emitter &out)
+{
+    using namespace Conf;
+
+    out << YAML::Key << ID_KEY << YAML::Value << accountID_;
+    out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
+    out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
+    out << YAML::Key << TYPE_KEY << YAML::Value << getAccountType();
+    out << YAML::Key << AUDIO_CODECS_KEY << YAML::Value << audioCodecStr_;
+    out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
+    out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
+    out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
+    out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
+    out << YAML::Key << HAS_CUSTOM_USER_AGENT_KEY << YAML::Value << hasCustomUserAgent_;
+    out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
+    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
+    out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
+    out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
+}
+
+void Account::unserialize(const YAML::Node &node)
+{
+    using namespace yaml_utils;
+    parseValue(node, ALIAS_KEY, alias_);
+    parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
+    parseValue(node, USERNAME_KEY, username_);
+    parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
+    //parseValue(node, PASSWORD_KEY, password_);
+
+    parseValue(node, MAILBOX_KEY, mailBox_);
+    parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
+
+    // Update codec list which one is used for SDP offer
+    setActiveAudioCodecs(split_string(audioCodecStr_));
+    parseValue(node, DISPLAY_NAME_KEY, displayName_);
+    parseValue(node, HOSTNAME_KEY, hostname_);
+
+    parseValue(node, HAS_CUSTOM_USER_AGENT_KEY, hasCustomUserAgent_);
+    parseValue(node, USER_AGENT_KEY, userAgent_);
+    parseValue(node, RINGTONE_PATH_KEY, ringtonePath_);
+    parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
+}
+
+void Account::setAccountDetails(const std::map<std::string, std::string> &details)
+{
+    // Account setting common to SIP and IAX
+    parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
+    parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
+    parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
+    parseString(details, CONFIG_ACCOUNT_HOSTNAME, hostname_);
+    parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
+    parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
+    parseBool(details, CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
+    parseBool(details, CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
+    parseString(details, CONFIG_RINGTONE_PATH, ringtonePath_);
+    parseBool(details, CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
+    if (hasCustomUserAgent_)
+        parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
+    else
+        userAgent_ = DEFAULT_USER_AGENT;
+}
+
+std::map<std::string, std::string> Account::getAccountDetails() const
+{
+    std::map<std::string, std::string> a;
+
+    a[CONFIG_ACCOUNT_ALIAS] = alias_;
+    a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
+    a[CONFIG_ACCOUNT_TYPE] = getAccountType();
+    a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
+    a[CONFIG_ACCOUNT_USERNAME] = username_;
+    a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
+
+    RegistrationState state(registrationState_);
+
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_USERAGENT] = hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT;
+    a[CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT] = hasCustomUserAgent_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ACCOUNT_AUTOANSWER] = autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_RINGTONE_PATH] = ringtonePath_;
+
+    return a;
 }
 
 #ifdef SFL_VIDEO
