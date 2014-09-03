@@ -153,7 +153,7 @@ class ConfigurationManager
 
         void stunStatusFailure(const std::string& accoundID);
 
-        void registrationStateChanged(const std::string& accoundID, int const& state);
+        void registrationStateChanged(const std::string& accoundID, const int &state);
         void sipRegistrationStateChanged(const std::string&, const std::string&, const int32_t&);
         void errorAlert(const int& alert);
 

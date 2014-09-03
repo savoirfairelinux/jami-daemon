@@ -613,7 +613,7 @@ void ConfigurationManager::stunStatusFailure(const std::string& accountID)
     }
 }
 
-void ConfigurationManager::registrationStateChanged(const std::string& accountID, int const& state)
+void ConfigurationManager::registrationStateChanged(const std::string& accountID, const int& state)
 {
     if (evHandlers_.on_registration_state_change) {
         evHandlers_.on_registration_state_change(accountID, state);
