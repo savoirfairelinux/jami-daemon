@@ -349,7 +349,6 @@ AC_ARG_WITH([instant_messaging],
            dnl Fallback to older version
            [with_instant_messaging=no])
     ]);
-AS_IF([test "$with_instant_messaging" != "yes"], [AC_MSG_ERROR([Missing libexpat development files])], [])
 
 AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
 AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes" )

@@ -94,7 +94,9 @@ class IAXVoIPLink {
         void handleRinging(IAXCall& call);
         void handleAnswerTransfer(iax_event* event, IAXCall& call);
         void handleBusy(IAXCall& call);
+#if HAVE_INSTANT_MESSAGING
         void handleMessage(iax_event* event, IAXCall& call);
+#endif
         void handleHangup(IAXCall& call);
 
         /*
