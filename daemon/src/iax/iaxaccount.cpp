@@ -58,64 +58,29 @@ void IAXAccount::serialize(YAML::Emitter &out)
     using namespace Conf;
 
     out << YAML::BeginMap;
-    out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
-    out << YAML::Key << AUDIO_CODECS_KEY << YAML::Value << audioCodecStr_;
-    out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
-    out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
+    Account::serialize(out);
     out << YAML::Key << PASSWORD_KEY << YAML::Value << password_;
-    out << YAML::Key << TYPE_KEY << YAML::Value << ACCOUNT_TYPE;
-    out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
-    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
     out << YAML::EndMap;
 }
 
 void IAXAccount::unserialize(const YAML::Node &node)
 {
     using namespace yaml_utils;
-    parseValue(node, ALIAS_KEY, alias_);
-    parseValue(node, USERNAME_KEY, username_);
+    Account::unserialize(node);
     parseValue(node, PASSWORD_KEY, password_);
-    parseValue(node, HOSTNAME_KEY, hostname_);
-    parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
-    parseValue(node, MAILBOX_KEY, mailBox_);
-    parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
-
-    // Update codec list which one is used for SDP offer
-    setActiveAudioCodecs(split_string(audioCodecStr_));
-    parseValue(node, DISPLAY_NAME_KEY, displayName_);
-
-    parseValue(node, USER_AGENT_KEY, userAgent_);
 }
 
 void IAXAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     // Account setting common to SIP and IAX
-    parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
-    parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
-    parseString(details, CONFIG_ACCOUNT_HOSTNAME, hostname_);
+    Account::setAccountDetails(details);
     parseString(details, CONFIG_ACCOUNT_PASSWORD, password_);
-    parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
-    parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
-    parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
 }
 
 std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 {
-    std::map<std::string, std::string> a;
-
-    a[CONFIG_ACCOUNT_ALIAS] = alias_;
-    a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
-    a[CONFIG_ACCOUNT_TYPE] = ACCOUNT_TYPE;
-    a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
-    a[CONFIG_ACCOUNT_USERNAME] = username_;
+    std::map<std::string, std::string> a = Account::getAccountDetails();
     a[CONFIG_ACCOUNT_PASSWORD] = password_;
-    a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
-
-    RegistrationState state(registrationState_);
-
-    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
-    a[CONFIG_ACCOUNT_USERAGENT] = userAgent_;
-
     return a;
 }
 
