@@ -244,12 +244,14 @@ IAXVoIPLink::handleBusy(IAXCall& call)
     call.removeCall();
 }
 
+#if HAVE_INSTANT_MESSAGING
 void
 IAXVoIPLink::handleMessage(iax_event* event, IAXCall& call)
 {
     Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
                                         std::string((const char*) event->data));
 }
+#endif
 
 void
 IAXVoIPLink::handleRinging(IAXCall& call)
