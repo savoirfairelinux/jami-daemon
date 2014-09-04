@@ -61,7 +61,11 @@ libsflphone_la_LDFLAGS = \
 		@SAMPLERATE_LIBS@ \
 		@SNDFILE_LIBS@ \
 		$(TLS_LIB) \
-		@DBUSCPP_LIBS@
+		@DBUSCPP_LIBS@ \
+		@YAML_LIBS@ \
+		$(IAX_LIB) \
+		$(IM_LIB) \
+		$(PCRE_LIBS)
 
 if BUILD_INSTANT_MESSAGING
 libsflphone_la_LDFLAGS += @EXPAT_LIBS@
