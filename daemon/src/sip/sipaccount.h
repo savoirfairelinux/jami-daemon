@@ -50,6 +50,7 @@
 
 #include <vector>
 #include <map>
+#include <atomic>
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
@@ -60,6 +61,10 @@ namespace Conf {
 namespace YAML {
     class Node;
     class Emitter;
+}
+
+namespace sfl {
+class ICETransport;
 }
 
 class SIPPresence;
@@ -679,6 +684,11 @@ class SIPAccount : public SIPAccountBase {
          */
         SIPPresence * presence_;
 #endif
+
+        std::atomic_bool sip_register_ {false};
+        std::atomic_bool ice_complete_ {false};
+        std::unique_ptr<sfl::ICETransport> ice_tr_;
+        void onICETransportComplete(sfl::ICETransport& tr);
 };
 
 #endif

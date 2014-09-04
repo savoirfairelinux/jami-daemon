@@ -56,6 +56,7 @@
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "manager.h"
+#include "ice_transport.h"
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
@@ -136,6 +137,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
 #ifdef SFL_PRESENCE
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
 #endif
+    , ice_tr_()
 {
     via_addr_.host.ptr = 0;
     via_addr_.host.slen = 0;
@@ -222,12 +224,10 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     call->setPeerNumber(toUri);
     call->initRecFilename(to);
 
-    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
+    //  Start a new ICE session for this call
+    //ice_tr_->setInitiatorSession();
+    const auto localAddress = ice_tr_->getLocalAddress();
     call->setCallMediaLocal(localAddress);
-
-    // May use the published address as well
-    const auto addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ?
-        getPublishedIpAddress() : localAddress;
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
@@ -240,11 +240,15 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     audioCodecs.push_back(ac);
 
     try {
+        call->setCallMediaLocal(localAddress);
+
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
 
-        if (isStunEnabled())
-            call->updateSDPFromSTUN();
+        setPublishedAddress(localAddress);
+        auto& localSDP = call->getLocalSDP();
+        localSDP.setPublishedIP(localAddress);
+        localSDP.updatePorts(ice_tr_->getLocalPorts());
 
         call->getAudioRtp().initLocalCryptoInfo();
         call->getAudioRtp().start(audioCodecs);
@@ -253,14 +257,21 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     }
 
     // Building the local SDP offer
-    auto& localSDP = call->getLocalSDP();
+    const bool created = call->getLocalSDP().createOffer(getActiveAudioCodecs(),
+                                                         getActiveVideoCodecs());
 
-    if (getPublishedSameasLocal())
-        localSDP.setPublishedIP(addrSdp);
-    else
-        localSDP.setPublishedIP(getPublishedAddress());
+    const auto& ice_attrs = ice_tr_->getICEAttributes();
+    call->getLocalSDP().addICEAttributes(ice_attrs[0], ice_attrs[1]);
 
-    const bool created = localSDP.createOffer(getActiveAudioCodecs(), getActiveVideoCodecs());
+    const auto& localSDPSession = call->getLocalSDP().getLocalSdpSession();
+
+    const auto& audio_ice_cands = ice_tr_->getICECandidates(0);
+    call->getLocalSDP().addICECanditates(localSDPSession->media[0], audio_ice_cands);
+
+#ifdef SFL_VIDEO
+    const auto& video_ice_cands = ice_tr_->getICECandidates(1);
+    call->getLocalSDP().addICECanditates(localSDPSession->media[1], video_ice_cands);
+#endif
 
     if (not created or not SIPStartCall(call))
         throw VoipLinkException("Could not send outgoing INVITE request for new call");
@@ -975,6 +986,14 @@ void SIPAccount::stopKeepAliveTimer()
 }
 
 void
+SIPAccount::onICETransportComplete(sfl::ICETransport& /*tr*/)
+{
+    ice_complete_  = true;
+    if (sip_register_)
+        setRegistrationState(RegistrationState::REGISTERED);
+}
+
+void
 SIPAccount::sendRegister()
 {
     if (not isEnabled()) {
@@ -988,6 +1007,10 @@ SIPAccount::sendRegister()
         ERROR("%s", e.what());
         throw VoipLinkException("Could not create or acquire SIP transport");
     }
+
+    auto& ice_tp = Manager::instance().getICETransportPool();
+    ice_tr_.reset(ice_tp.createTransport(getAccountID().c_str(), 2,
+                                         [this](sfl::ICETransport& tr) { onICETransportComplete(tr); }));
 
     setRegister(true);
     setRegistrationState(RegistrationState::TRYING);
@@ -1103,6 +1126,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             destroyRegistrationInfo();
             /* Stop keep-alive timer if any. */
             stopKeepAliveTimer();
+            sip_register_ = false;
             DEBUG("Unregistration success");
             setRegistrationState(RegistrationState::UNREGISTERED);
         } else {
@@ -1123,7 +1147,9 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             if (isKeepAliveEnabled())
                 startKeepAliveTimer();
 
-            setRegistrationState(RegistrationState::REGISTERED);
+            sip_register_ = true;
+            if (ice_complete_)
+                setRegistrationState(RegistrationState::REGISTERED);
         }
     }
 
@@ -1164,6 +1190,9 @@ SIPAccount::sendUnregister(std::function<void(bool)> released_cb)
 {
     // This may occurs if account failed to register and is in state INVALID
     if (!isRegistered()) {
+        sip_register_ = false;
+        ice_complete_ = false;
+        ice_tr_.reset();
         setRegistrationState(RegistrationState::UNREGISTERED);
         if (released_cb)
             released_cb(true);

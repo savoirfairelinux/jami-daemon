@@ -75,6 +75,9 @@
 #endif
 
 #include "conference.h"
+#include "ice_transport.h"
+
+#include <pjnath.h>
 
 #include <cerrno>
 #include <algorithm>
@@ -88,6 +91,8 @@
 #include <memory>
 
 std::atomic_bool ManagerImpl::initialized = {false};
+
+using namespace sfl;
 
 static void
 copy_over(const std::string &srcPath, const std::string &destPath)
@@ -121,6 +126,11 @@ ManagerImpl::loadDefaultAccountMap()
     accountFactory_.initIP2IPAccount();
 }
 
+#define TRY(ret) do {      \
+        if (ret != PJ_SUCCESS)                               \
+            throw std::runtime_error(#ret " failed");        \
+    } while (0)
+
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
@@ -129,7 +139,7 @@ ManagerImpl::ManagerImpl() :
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_(),
     mainBuffer_(), callFactory(), conferenceMap_(), history_(),
-    finished_(false), accountFactory_()
+    finished_(false), accountFactory_(), ice_tpool_()
 {
     // initialize random generator for call id
     srand(time(nullptr));
@@ -164,6 +174,13 @@ ManagerImpl::init(const std::string &config_file)
 {
     // FIXME: this is no good
     initialized = true;
+
+    // Our PJSIP dependency (SIP and ICE)
+    TRY(pj_init());
+    TRY(pjlib_util_init());
+    TRY(pjnath_init());
+
+    ice_tpool_.reset(new ICETransportPool());
 
     path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
@@ -254,6 +271,9 @@ ManagerImpl::finish()
 
             audiodriver_.reset();
         }
+
+        ice_tpool_.reset();
+        pj_shutdown();
     } catch (const VoipLinkException &err) {
         ERROR("%s", err.what());
     }

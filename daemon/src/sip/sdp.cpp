@@ -731,7 +731,6 @@ void Sdp::addSdesAttribute(const vector<std::string>& crypto)
     }
 }
 
-
 void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 {
     /* Format: ":version value" */
@@ -741,6 +740,49 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 
     if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
         throw SdpException("Could not add zrtp attribute to media");
+}
+
+void
+Sdp::addICECanditates(pjmedia_sdp_media* media, const std::vector<std::string>& cands)
+{
+    for (const auto &item : cands) {
+        pj_str_t val = { (char*) item.c_str(), static_cast<pj_ssize_t>(item.size()) };
+        pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "candidate", &val);
+
+        if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
+            throw SdpException("Could not add ICE candidates attribute to media");
+    }
+}
+
+void
+Sdp::addICEAttributes(std::string ufrag, std::string pwd)
+{
+    pj_str_t value;
+    pjmedia_sdp_attr *attr;
+
+    value = { (char*)ufrag.c_str(), static_cast<pj_ssize_t>(ufrag.size()) };
+    attr = pjmedia_sdp_attr_create(memPool_, "ice-ufrag", &value);
+
+    if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
+        throw SdpException("Could not add ICE.ufrag attribute to local SDP");
+
+    value = { (char*)pwd.c_str(), static_cast<pj_ssize_t>(pwd.size()) };
+    attr = pjmedia_sdp_attr_create(memPool_, "ice-pwd", &value);
+
+    if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
+        throw SdpException("Could not add ICE.pwd attribute to local SDP");
+}
+
+void
+Sdp::getICEAttributes(std::string& ufrag, std::string& pwd)
+{
+    for (unsigned i=0; i < activeRemoteSession_->attr_count; i++) {
+        pjmedia_sdp_attr *attribute = activeRemoteSession_->attr[i];
+        if (pj_stricmp2(&attribute->name, "ice-ufrag") == 0)
+            ufrag.assign(attribute->value.ptr, attribute->value.slen);
+        else if (pj_stricmp2(&attribute->name, "ice-pwd") == 0)
+            pwd.assign(attribute->value.ptr, attribute->value.slen);
+    }
 }
 
 // Returns index of desired media attribute, or -1 if not found */

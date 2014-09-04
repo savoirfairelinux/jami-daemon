@@ -84,6 +84,8 @@ libsflphone_la_SOURCES = conference.cpp \
 		threadloop.cpp \
 		ip_utils.cpp \
 		utf8_utils.cpp \
+		ice_transport.cpp \
+		ice_transport.h \
 		threadloop.h \
 		conference.h \
 		account factory.h \

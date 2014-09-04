@@ -41,7 +41,7 @@
 namespace sfl {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
-    ost::SymmetricRTPSession(static_cast<ost::IPV4Host>(call.getLocalIp()), call.getLocalAudioPort())
+    SymmetricICERTPSession(static_cast<ost::IPV4Host>(call.getLocalIp()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
 {
     DEBUG("Setting new RTP session with destination %s:%d",
@@ -70,13 +70,13 @@ AudioSymmetricRtpSession::getSocketDescriptors() const
 
 void AudioSymmetricRtpSession::startRTPLoop()
 {
-    ost::SymmetricRTPSession::startRunning();
+    SymmetricICERTPSession::startRunning();
 }
 
 // redefined from QueueRTCPManager
 void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoundHandler::RecvReport& RR, uint8 blocks)
 {
-    ost::SymmetricRTPSession::onGotRR(source, RR, blocks);
+    SymmetricICERTPSession::onGotRR(source, RR, blocks);
 #ifdef RTP_DEBUG
     DEBUG("onGotRR");
     DEBUG("Unpacking %d blocks",blocks);
@@ -106,7 +106,7 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
 #endif
 
     std::map<std::string, int> stats;
-    ost::SymmetricRTPSession::onGotSR(source, SR, blocks);
+    SymmetricICERTPSession::onGotSR(source, SR, blocks);
     ost::RTCPSenderInfo report(SR.sinfo);
 
     for (int i = 0; i < blocks; ++i)

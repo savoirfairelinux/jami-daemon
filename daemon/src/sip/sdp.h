@@ -259,7 +259,14 @@ class Sdp {
         // we are sending video, false otherwise
         bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
 
+        void addICEAttributes(std::string ufrag, std::string pwd);
+        void getICEAttributes(std::string& ufrag, std::string& pwd);
+
+        void addICECanditates(pjmedia_sdp_media* media,
+                              const std::vector<std::string>& cands);
+
     private:
+
         NON_COPYABLE(Sdp);
         friend class SDPTest;
 
