@@ -16,7 +16,7 @@ URL:            http://sflphone.org/
 Source0:        https://projects.savoirfairelinux.com/attachments/download/6423/%{tarball}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:      gettext gnutls-devel desktop-file-utils perl libuuid-devel
-BuildRequires:      libyaml-devel alsa-lib-devel pulseaudio-libs-devel
+BuildRequires:      yaml-cpp-devel alsa-lib-devel pulseaudio-libs-devel
 BuildRequires:      ccrtp-devel libzrtpcpp-devel dbus-c++-devel pcre-devel
 BuildRequires:      gsm-devel speex-devel expat-devel libsamplerate-devel
 BuildRequires:      gnome-doc-utils libtool libsexy-devel intltool yelp-tools
@@ -273,6 +273,9 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
+* Thu Sep 4 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.1-4
+- Depend on yaml-cpp-devel instead of libyaml-devel
+
 * Mon Aug 25 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.1-3
 - Build iax and pjproject with contrib
 
