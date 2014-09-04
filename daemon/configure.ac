@@ -538,6 +538,7 @@ AC_CONFIG_FILES([Makefile \
                  src/video/v4l2/Makefile \
                  src/video/test/Makefile \
                  test/Makefile \
+                 tools/Makefile \
                  ringtones/Makefile \
                  man/Makefile \
                  doc/Makefile \
