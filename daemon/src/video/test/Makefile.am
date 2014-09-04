@@ -13,7 +13,7 @@ test_video_input_SOURCES=test_video_input.cpp test_video_input.h
 test_video_input_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la $(YAML_LIBS)
 
 test_shm_SOURCES=test_shm.cpp shm_src.cpp shm_src.h
-test_shm_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la $(YAML_LIBS)
+test_shm_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la $(YAML_LIBS) -lrt
 test_shm_CXXFLAGS=$(AM_CXXFLAGS)
 
 AM_CXXFLAGS=-I$(top_builddir)/src/video -I$(top_builddir)/src
