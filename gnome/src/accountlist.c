@@ -364,6 +364,11 @@ gboolean account_is_IAX(const account_t *account)
     return is_type(account, "IAX");
 }
 
+gboolean account_is_DHT(const account_t *account)
+{
+    return is_type(account, "DHT");
+}
+
 account_t *create_default_account()
 {
     account_t *account = g_new0(account_t, 1);
