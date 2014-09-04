@@ -1660,13 +1660,13 @@ std::vector<Dht::NodeExport>
 Dht::getNodes()
 {
     std::vector<NodeExport> nodes;
-    auto b4 = buckets.findBucket(myid);
+    const auto b4 = buckets.findBucket(myid);
     if (b4 != buckets.end()) {
         for (auto& n : b4->nodes)
             if (n.isGood(now.tv_sec))
                 nodes.push_back(n.exportNode());
     }
-    auto b6 = buckets.findBucket(myid);
+    const auto b6 = buckets6.findBucket(myid);
     if (b6 != buckets6.end()) {
         for (auto& n : b6->nodes)
             if (n.isGood(now.tv_sec))
