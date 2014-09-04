@@ -98,12 +98,7 @@ void History::ensurePath()
 #ifdef __ANDROID__
 		path_ = fileutils::get_home_dir() + DIR_SEPARATOR_STR  + "history";
 #else
-        const string xdg_data = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
-                                ".local/share/sflphone";
-        // If the environment variable is set (not null and not empty), we'll use it to save the history
-        // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOME/.local/share/sflphone
-        string xdg_env(XDG_DATA_HOME);
-        const string userdata = not xdg_env.empty() ? xdg_env : xdg_data;
+        const string userdata = fileutils::get_data_dir();
 
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed

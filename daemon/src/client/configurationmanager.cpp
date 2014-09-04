@@ -302,7 +302,7 @@ void ConfigurationManager::setAgcState(const bool& enabled)
 std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 {
     std::map<std::string, std::string> ringToneList;
-    std::string r_path(fileutils::get_data_dir());
+    std::string r_path(fileutils::get_ringtone_dir());
     struct dirent **namelist;
     int n = scandir(r_path.c_str(), &namelist, 0, alphasort);
     if (n == -1) {
