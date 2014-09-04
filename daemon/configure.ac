@@ -463,6 +463,13 @@ AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
 AC_DEFINE_UNQUOTED([HAVE_IAX], `if test "x$with_iax2" = "xyes"; then echo 1; else echo 0;fi`, [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
+# DHT
+dnl Check for DHT
+AC_ARG_WITH([dht], [AS_HELP_STRING([--without-dht],
+            [disable support for the dht])], [], [with_dht=yes])
+
+AC_DEFINE_UNQUOTED([HAVE_DHT], `if test "x$with_dht" = "xyes"; then echo 1; else echo 0;fi`, [Define if you use dht])
+AM_CONDITIONAL(USE_DHT, test "x$with_dht" = "xyes" )
 
 # NETWORK MANAGER
 # required dependency(ies): libiax2 (static)
@@ -515,6 +522,7 @@ AC_CONFIG_FILES([Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
                  src/iax/Makefile \
+                 src/dht/dhtcpp/Makefile \
                  src/audio/Makefile \
                  src/audio/audiortp/Makefile \
                  src/audio/pulseaudio/Makefile \
