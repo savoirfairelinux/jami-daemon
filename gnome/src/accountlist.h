@@ -197,6 +197,7 @@ gboolean account_has_autoanswer_on(const account_t *account);
 gboolean account_is_IP2IP(const account_t *account);
 gboolean account_is_SIP(const account_t *account);
 gboolean account_is_IAX(const account_t *account);
+gboolean account_is_DHT(const account_t *account);
 
 account_t *create_default_account();
 account_t *create_account_with_ID(const gchar *ID);
