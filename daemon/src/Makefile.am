@@ -20,6 +20,12 @@ IAX_LIBA=./iax/libiaxlink.la
 IAX_LIB=-liax
 endif
 
+if USE_DHT
+DHT_SUBDIR=dht
+DHT_CXXFLAG=-DUSE_DHT
+DHT_LIBA=./dht/libdht.la
+endif
+
 if USE_NETWORKMANAGER
 NETWORKMANAGER=-DUSE_NETWORKMANAGER
 endif
@@ -29,7 +35,7 @@ TLS_LIB = @GNUTLS_LIBS@
 TLS_CFLAGS = @GNUTLS_CFLAGS@
 endif
 
-SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
+SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(DHT_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
 
 # libsflphone
 
@@ -44,6 +50,7 @@ libsflphone_la_LIBADD = \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la \
+	$(DHT_LIBA) \
 	$(IAX_LIBA) \
 	$(IM_LIBA) \
 	$(SFL_VIDEO_LIBS)
