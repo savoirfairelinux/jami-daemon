@@ -31,6 +31,10 @@ endif
 
 SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
 
+if USE_DHT
+SUBDIRS += dht
+endif
+
 # libsflphone
 
 include_HEADERS = sflphone.h
