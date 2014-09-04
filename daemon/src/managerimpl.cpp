@@ -46,6 +46,9 @@
 #include "fileutils.h"
 #include "map_utils.h"
 #include "account.h"
+#if USE_DHT
+#include "dht/dhtaccount.h"
+#endif
 
 #include "call_factory.h"
 
@@ -2734,6 +2737,15 @@ ManagerImpl::newOutgoingCall(const std::string& id,
 {
     std::shared_ptr<Account> account = Manager::instance().getIP2IPAccount();
     std::string finalToUrl = toUrl;
+
+#if USE_DHT
+    if (toUrl.find("dht:") != std::string::npos) {
+        WARN("DHT call detected");
+        auto dhtAcc = getAllAccounts<DHTAccount>();
+        if (not dhtAcc.empty())
+            return dhtAcc.front()->newOutgoingCall(id, finalToUrl);
+    }
+#endif
 
     // FIXME: have a generic version to remove sip dependency
     sip_utils::stripSipUriPrefix(finalToUrl);
