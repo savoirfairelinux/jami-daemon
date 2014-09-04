@@ -59,7 +59,8 @@ libsflphone_la_LDFLAGS = \
 		@YAMLCPP_LIBS@ \
 		$(TLS_LIB) \
 		$(IAX_LIB) \
-		$(IM_LIB)
+		$(IM_LIB) \
+		$(PCRE_LIBS)
 
 libsflphone_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
