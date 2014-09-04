@@ -1,0 +1,133 @@
+
+#include "dhtcpp/dhtrunner.h"
+#include "dhtcpp/dht.h"
+
+#include <sys/socket.h>
+
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <chrono>
+
+using namespace Dht;
+
+int
+main(int argc, char **argv)
+{
+    gnutls_global_init();
+    if (argc < 2) {
+        std::cerr << "Entrez un port" << std::endl;
+        return 1;
+    }
+
+    int i = 1;
+    int p = atoi(argv[i++]);
+    if (p <= 0 || p >= 0x10000) {
+        std::cerr << "Port invalide : " << p << std::endl;
+        return 1;
+    }
+    in_port_t port = p;
+
+    std::vector<sockaddr_storage> bootstrap_nodes {};
+    while (i < argc) {
+        addrinfo hints{};
+        addrinfo *info = nullptr, *infop = nullptr;
+        hints.ai_socktype = SOCK_DGRAM;
+        /*if(!ipv6)
+            hints.ai_family = AF_INET;
+        else if(!ipv4)
+            hints.ai_family = AF_INET6;
+        else
+            hints.ai_family = 0;*/
+        int rc = getaddrinfo(argv[i], argv[i + 1], &hints, &info);
+        if(rc != 0) {
+            fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rc));
+            exit(1);
+        }
+
+        i++;
+        if(i >= argc)
+            break;
+
+        infop = info;
+        while(infop) {
+            sockaddr_storage tmp;
+            memcpy(&tmp, infop->ai_addr, infop->ai_addrlen);
+            bootstrap_nodes.push_back(tmp);
+            infop = infop->ai_next;
+        }
+        freeaddrinfo(info);
+
+        i++;
+    }
+
+    DhtRunner dht;
+    dht.run(port, SecureDht::generateIdentity(), [](Dht::Dht::Status ipv4, Dht::Dht::Status ipv6) {
+        std::cout << (int)ipv4 << (int)ipv6 << std::endl;
+    }, true);
+
+    dht.bootstrap(bootstrap_nodes);
+
+#if 0
+    Dht::InfoHash id = Dht::InfoHash::get("coucou");
+
+    i = 0;
+    while (true)
+    {
+        std::vector<uint8_t> data (16,i+1);
+        dht.put(id, Dht::Value{data}, [i](bool ok) {
+            std::cout << "Announce done ! %d" << std::hex << (i+1) << std::dec << std::endl;
+        });
+
+        i++;
+        std::this_thread::sleep_for( std::chrono::milliseconds( 2000 ) );
+    }
+#else
+    while (true)
+    {
+        std::string line;
+        std::getline(std::cin, line);
+        std::istringstream iss(line);
+        std::string op, idstr, value;
+        iss >> op >> idstr;
+
+        if (op == "x") {
+            break;
+        }
+
+        Dht::InfoHash id {idstr};
+
+        if (op == "g") {
+            dht.get(id, [](const std::vector<std::shared_ptr<Value>>& values) {
+                std::cout << "Get - found values : " << std::endl;
+                for (const auto& a : values) {
+                    std::cout << "\t" << *a << std::endl;
+                }
+                return true;
+            });
+        }
+        else if (op == "p") {
+            std::string v;
+            iss >> v;
+            std::vector<uint8_t> data(v.begin(), v.end());
+            Dht::Value value{Dht::Value::Type::UserData, data};
+            dht.put(id, value, [](bool ok) {
+                std::cout << "Put done !" << ok << std::endl;
+            });
+        }
+        else if (op == "a") {
+            in_port_t port;
+            iss >> port;
+            dht.put(id, Dht::Value{port}, [](bool ok) {
+                std::cout << "Announce done !" << ok << std::endl;
+            });
+        }
+    }
+#endif
+
+    dht.join();
+
+    gnutls_global_deinit();
+
+    return 0;
+}
