@@ -38,6 +38,9 @@
 #if HAVE_IAX
 #include "iax/iaxaccount.h"
 #endif
+#if HAVE_DHT
+#include "dht/dhtaccount.h"
+#endif
 
 #include "sip/sipvoiplink.h" // for SIPVoIPLink::loadIP2IPSettings
 
@@ -54,6 +57,11 @@ AccountFactory::AccountFactory()
     auto iaxfunc = [](const std::string& id){ return std::make_shared<IAXAccount>(id); };
     generators_.insert(std::make_pair(IAXAccount::ACCOUNT_TYPE, iaxfunc));
     DEBUG("registered %s account", IAXAccount::ACCOUNT_TYPE);
+#endif
+#if HAVE_DHT
+    auto dhtfunc = [](const std::string& id){ return std::make_shared<DHTAccount>(id, false); };
+    generators_.insert(std::make_pair(DHTAccount::ACCOUNT_TYPE, dhtfunc));
+    DEBUG("registered %s account", DHTAccount::ACCOUNT_TYPE);
 #endif
 }
 
