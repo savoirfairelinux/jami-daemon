@@ -310,25 +310,27 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     gtk_grid_attach(GTK_GRID(grid), entry_alias, 1, row, 1, 1);
 
     row++;
-    label = gtk_label_new_with_mnemonic(_("_Protocol"));
+    label = gtk_label_new_with_mnemonic(_("_Type"));
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     protocol_combo = gtk_combo_box_text_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), protocol_combo);
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), "SIP");
-
     if (dbus_is_iax2_enabled())
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), "IAX");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), "DHT");
 
     if (account_is_SIP(account))
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 0);
     else if (account_is_IAX(account))
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 1);
+    else if (account_is_DHT(account))
+        gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 2);
     else {
         g_warning("Account protocol not valid");
         /* Should never come here, add debug message. */
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), _("Unknown"));
-        gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 2);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 3);
     }
 
     /* Can't change account type after creation */
@@ -341,6 +343,7 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed",
                      G_CALLBACK(change_protocol_cb), account);
 
+    // TODO:DHT
     row++;
     label = gtk_label_new_with_mnemonic(_("_Host name"));
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
@@ -1407,9 +1410,9 @@ static void update_account_from_basic_tab(account_t *account)
     else
         proto = g_strdup("SIP");
 
-    if (g_strcmp0(proto, "SIP") == 0) {
+    if (g_strcmp0(proto, "SIP") == 0 || g_strcmp0(proto, "DHT") == 0) {
 
-        if (!IS_IP2IP) {
+        if (!IS_IP2IP && g_strcmp0(proto, "DHT") != 0) {
             account_replace(account, CONFIG_ACCOUNT_REGISTRATION_EXPIRE,
                     gtk_entry_get_text(GTK_ENTRY(expire_spin_box)));
 
@@ -1439,7 +1442,7 @@ static void update_account_from_basic_tab(account_t *account)
 #endif
 
 #ifdef SFL_PRESENCE
-        if (!IS_IP2IP) {
+        if (!IS_IP2IP && g_strcmp0(proto, "DHT") != 0) {
             v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
             account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
             // TODO enable/disable the presence window view
@@ -1486,9 +1489,11 @@ static void update_account_from_basic_tab(account_t *account)
         account_replace(account, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(entry_alias)));
         account_replace(account, CONFIG_ACCOUNT_TYPE, proto);
         account_replace(account, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(entry_hostname)));
-        account_replace(account, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(entry_username)));
-        account_replace(account, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entry_password)));
-        account_replace(account, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(entry_mailbox)));
+        if (g_strcmp0(proto, "DHT") != 0) {
+            account_replace(account, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(entry_username)));
+            account_replace(account, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entry_password)));
+            account_replace(account, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(entry_mailbox)));
+        }
     }
 
     g_free(proto);
