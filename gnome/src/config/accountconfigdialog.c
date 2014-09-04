@@ -65,7 +65,7 @@
  * Local variables
  */
 static GtkWidget *entry_alias;
-static GtkWidget *protocol_combo;
+static GtkWidget *type_combo;
 static GtkWidget *entry_username;
 static GtkWidget *entry_route_set;
 static GtkWidget *entry_hostname;
@@ -73,6 +73,9 @@ static GtkWidget *entry_password;
 static GtkWidget *entry_mailbox;
 static GtkWidget *entry_user_agent;
 static GtkWidget *expire_spin_box;
+static GtkWidget *clearTextcheck_box;
+static GtkWidget *auto_answer_checkbox;
+static GtkWidget *user_agent_checkbox;
 static GtkListStore *credential_store;
 static GtkWidget *delete_cred_button;
 static GtkWidget *treeview_credential;
@@ -130,7 +133,7 @@ enum {
 static void reset()
 {
     entry_alias = NULL;
-    protocol_combo = NULL;
+    type_combo = NULL;
     entry_hostname = NULL;
     entry_username = NULL;
     entry_password = NULL;
@@ -163,37 +166,53 @@ static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
     gtk_entry_set_visibility(GTK_ENTRY(data), !gtk_entry_get_visibility(GTK_ENTRY(data)));
 }
 
-/* Signal to protocol_combo 'changed' */
-static void change_protocol_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
+/* Signal to type_combo 'changed' */
+static void change_type_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
 {
-    gchar *protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
+    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type_combo));
+    account_t * account = data;
+
+    if(!account)
+        return;
+
     // Only if tabs are not NULL
     if (security_tab && advanced_tab) {
-        if (utf8_case_equal(protocol, "IAX")) {
+        if (utf8_case_equal(type, "IAX")) {
             gtk_widget_hide(security_tab);
             gtk_widget_hide(advanced_tab);
-#ifdef SFL_PRESENCE
-            gtk_widget_set_sensitive(presence_check_box, FALSE);
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),FALSE);
-#endif
         } else {
             gtk_widget_show(security_tab);
             gtk_widget_show(advanced_tab);
-#ifdef SFL_PRESENCE
-            if (data) {
-                account_t * account = data;
-                // the presence can be enabled when at least 1 presence feature is supported by the PBX
-                // OR when the account is new
-                gtk_widget_set_sensitive(presence_check_box,
-                        !g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") ||
-                        !g_strcmp0(account_lookup(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED), "true") ||
-                        is_account_new);
-            }
-#endif
         }
     }
 
-    g_free(protocol);
+    gboolean is_dht = utf8_case_equal(type, "DHT")? TRUE : FALSE;
+    gtk_widget_set_sensitive(entry_username, !is_dht);
+    gtk_widget_set_sensitive(entry_password, !is_dht);
+    gtk_widget_set_sensitive(entry_route_set, !is_dht);
+    gtk_widget_set_sensitive(entry_mailbox, !is_dht);
+    gtk_widget_set_sensitive(entry_user_agent,
+            (!is_dht && account_has_custom_user_agent(account)));
+    gtk_widget_set_sensitive(clearTextcheck_box, !is_dht);
+    gtk_widget_set_sensitive(auto_answer_checkbox, !is_dht);
+    gtk_widget_set_sensitive(user_agent_checkbox, !is_dht);
+
+#ifdef SFL_PRESENCE
+    if (utf8_case_equal(type, "SIP")) {
+        // the presence can be enabled when at least 1 presence feature is supported by the PBX
+        // OR when the account is new
+        gtk_widget_set_sensitive(presence_check_box,
+                !g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") ||
+                !g_strcmp0(account_lookup(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED), "true") ||
+                is_account_new);
+    }
+    else{
+        gtk_widget_set_sensitive(presence_check_box, FALSE);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),FALSE);
+    }
+#endif
+
+    g_free(type);
 }
 
 void
@@ -248,7 +267,7 @@ static void update_credential_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 static GtkWidget*
 create_auto_answer_checkbox(const account_t *account)
 {
-    GtkWidget *auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
+    auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
     g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
     return auto_answer_checkbox;
@@ -257,7 +276,7 @@ create_auto_answer_checkbox(const account_t *account)
 static GtkWidget*
 create_user_agent_checkbox(const account_t *account)
 {
-    GtkWidget *user_agent_checkbox = gtk_check_button_new_with_mnemonic(_("_Use custom user-agent"));
+    user_agent_checkbox = gtk_check_button_new_with_mnemonic(_("_Use custom user-agent"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(user_agent_checkbox), account_has_custom_user_agent(account));
     g_signal_connect(user_agent_checkbox, "toggled", G_CALLBACK(user_agent_checkbox_cb), (gpointer) account);
     return user_agent_checkbox;
@@ -313,37 +332,36 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     label = gtk_label_new_with_mnemonic(_("_Type"));
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    protocol_combo = gtk_combo_box_text_new();
-    gtk_label_set_mnemonic_widget(GTK_LABEL(label), protocol_combo);
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), "SIP");
+    type_combo = gtk_combo_box_text_new();
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), type_combo);
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(type_combo), "SIP");
     if (dbus_is_iax2_enabled())
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), "IAX");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), "DHT");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(type_combo), "IAX");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(type_combo), "DHT");
 
     if (account_is_SIP(account))
-        gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 0);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(type_combo), 0);
     else if (account_is_IAX(account))
-        gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 1);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(type_combo), 1);
     else if (account_is_DHT(account))
-        gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 2);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(type_combo), 2);
     else {
-        g_warning("Account protocol not valid");
+        g_warning("Account type not valid");
         /* Should never come here, add debug message. */
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), _("Unknown"));
-        gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 3);
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(type_combo), _("Unknown"));
+        gtk_combo_box_set_active(GTK_COMBO_BOX(type_combo), 3);
     }
 
     /* Can't change account type after creation */
     if (!is_new)
-        gtk_widget_set_sensitive(protocol_combo, FALSE);
+        gtk_widget_set_sensitive(type_combo, FALSE);
 
-    gtk_grid_attach(GTK_GRID(grid), protocol_combo, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), type_combo, 1, row, 1, 1);
 
     /* Link signal 'changed' */
-    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed",
-                     G_CALLBACK(change_protocol_cb), account);
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(type_combo)), "changed",
+                     G_CALLBACK(change_type_cb), account);
 
-    // TODO:DHT
     row++;
     label = gtk_label_new_with_mnemonic(_("_Host name"));
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
@@ -353,6 +371,7 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     const gchar *hostname = account_lookup(account, CONFIG_ACCOUNT_HOSTNAME);
     gtk_entry_set_text(GTK_ENTRY(entry_hostname), hostname);
     gtk_grid_attach(GTK_GRID(grid), entry_hostname, 1, row, 1, 1);
+
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_User name"));
@@ -395,7 +414,7 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     }
 
     row++;
-    GtkWidget *clearTextcheck_box = gtk_check_button_new_with_mnemonic(_("Show password"));
+    clearTextcheck_box = gtk_check_button_new_with_mnemonic(_("Show password"));
     g_signal_connect(clearTextcheck_box, "toggled", G_CALLBACK(show_password_cb), entry_password);
     gtk_grid_attach(GTK_GRID(grid), clearTextcheck_box, 1, row, 1, 1);
 
@@ -440,7 +459,6 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), auto_answer_checkbox, 0, row, 1, 1);
 
-
     gtk_widget_show_all(grid);
     gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
 
@@ -466,7 +484,7 @@ create_presence_checkbox(const account_t *account)
 
     gboolean enabled = (g_strcmp0(account_lookup(account, CONFIG_PRESENCE_ENABLED), "true")==0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),enabled);
-    // sensitivity is set later in change_protocol_cb
+    // sensitivity is set later in change_type_cb
 
     gtk_grid_attach(GTK_GRID(grid), presence_check_box, 0, 0, 1, 1);
 
@@ -1403,10 +1421,10 @@ static void update_account_from_basic_tab(account_t *account)
 {
     const gboolean IS_IP2IP = account_is_IP2IP(account);
 
-    // Update protocol in case it changed
+    // Update type in case it changed
     gchar *proto;
-    if (protocol_combo)
-        proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
+    if (type_combo)
+        proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type_combo));
     else
         proto = g_strdup("SIP");
 
@@ -1546,14 +1564,14 @@ void update_account_from_dialog(GtkWidget *dialog, const gchar *accountID)
     account_replace(account, CONFIG_RINGTONE_PATH, ringtone_path);
     g_free(ringtone_path);
 
-    // Get current protocol for this account
-    gchar *current_protocol;
-    if (protocol_combo)
-        current_protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
+    // Get current type for this account
+    gchar *current_type;
+    if (type_combo)
+        current_type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type_combo));
     else
-        current_protocol = g_strdup("SIP");
+        current_type = g_strdup("SIP");
 
-    if (!IS_IP2IP && g_strcmp0(current_protocol, "SIP") == 0)
+    if (!IS_IP2IP && g_strcmp0(current_type, "SIP") == 0)
         account->credential_information = get_new_credential();
 
     /** @todo Verify if it's the best condition to check */
@@ -1570,7 +1588,7 @@ void update_account_from_dialog(GtkWidget *dialog, const gchar *accountID)
     // propagate changes to the daemon
     codec_list_update_to_daemon(account);
 
-    g_free(current_protocol);
+    g_free(current_type);
     gtk_widget_destroy(dialog);
 }
 
@@ -1636,8 +1654,8 @@ show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *c
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
 
     // Emit signal to hide advanced and security tabs in case of IAX
-    if (protocol_combo)
-        g_signal_emit_by_name(protocol_combo, "changed", NULL);
+    if (type_combo)
+        g_signal_emit_by_name(type_combo, "changed", NULL);
 
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
 
