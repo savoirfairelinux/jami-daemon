@@ -166,7 +166,7 @@ PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject file
 
 PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp],, AC_MSG_ERROR([yaml-cpp not found]))
 
-if test "xSANDROID" = "xyes"; then
+if test "x$ANDROID" = "xyes"; then
     dnl Check for OpenSL
     AC_ARG_WITH([opensl],
                 AS_HELP_STRING([--without-opensl],
@@ -176,7 +176,6 @@ if test "xSANDROID" = "xyes"; then
           [AC_CHECK_HEADER(["SLES/OpenSLES.h"],
                            [have_opensl=yes], [have_opensl=no])],
           [have_opensl=no])
-
     AC_DEFINE_UNQUOTED([HAVE_OPENSL],
                        `if test "x$have_opensl" = "xyes"; then echo 1; else echo 0; fi`,
                        [Define if you have OpenSL])
