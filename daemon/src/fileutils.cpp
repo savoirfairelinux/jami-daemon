@@ -274,8 +274,10 @@ get_data_dir()
     const std::string data_home(XDG_DATA_HOME);
     if (not data_home.empty())
         return data_home + DIR_SEPARATOR_STR + PACKAGE;
-    // "If $XDG_DATA_HOME is either not set or empty, a default equal to $HOME/.local/share should be used."
-    return get_home_dir()+DIR_SEPARATOR_STR".local"DIR_SEPARATOR_STR"share"DIR_SEPARATOR_STR + PACKAGE;
+    // "If $XDG_DATA_HOME is either not set or empty, a default equal to
+    // $HOME/.local/share should be used."
+    return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR
+        "share" DIR_SEPARATOR_STR + PACKAGE;
 }
 
 }
