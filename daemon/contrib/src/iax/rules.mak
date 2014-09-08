@@ -4,17 +4,22 @@ IAX_URL = https://gitlab.savoirfairelinux.com/sflphone/libiax2/repository/archiv
 
 PKGS += iax
 
-$(TARBALLS)/iax-git.tar.gz:
+$(TARBALLS)/libiax2.tar.gz:
 	$(call download,$(IAX_URL))
 
-.sum-iax: iax-git.tar.gz
+.sum-iax: libiax2.tar.gz
 	$(warning $@ not implemented)
 	touch $@
 
-iax: iax-git.tar.gz .sum-iax
+iax: libiax2.tar.gz .sum-iax
 	$(UNPACK)
-	mv libiax2.git $@
+	mv libiax2.git libiax2
+ifdef HAVE_WIN32
+	$(APPLY) $(SRC)/iax/iax-win32.patch
+endif
+	mv libiax2 $@
 	touch $@
+
 
 
 .iax: iax
