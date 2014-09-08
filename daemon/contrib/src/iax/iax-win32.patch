@@ -1,0 +1,17 @@
+--- libiax2/src/iax-client.h	2014-08-26 16:12:26.000000000 -0400
++++ libiax2/src/iax-client-win.h	2014-09-05 13:41:51.688715137 -0400
+@@ -19,13 +19,10 @@
+ #pragma warning(disable:4200)
+ #endif
+
+-#ifdef WIN32
++#ifndef LINUX
+ #define socklen_t int
+ #endif
+
+-#include <sys/socket.h>
+-#include <netinet/in.h>
+-
+ #include "frame.h"
+ #include "iax2.h"
+ #include "iax2-parser.h"
