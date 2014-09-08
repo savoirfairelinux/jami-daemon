@@ -8,7 +8,9 @@ $(TARBALLS)/boost-headers.tar.gz:
 
 boost-headers: boost-headers.tar.gz .sum-boost-headers
 	$(UNPACK)
-	mv boost-headers.git boost
+	rm -rf boost-headers.git
+	cp -r boost ../$(HOST)/include
+
 
 .boost-headers: boost-headers
 	touch $@
