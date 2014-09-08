@@ -1,4 +1,4 @@
-# speex
+ # speex
 
 SPEEX_VERSION := git
 SPEEX_HASH := HEAD
@@ -22,7 +22,7 @@ speex: speex-$(SPEEX_VERSION).tar.gz .sum-speex
 	$(ZCAT) "$<" | (cd $@-git && tar xv --strip-components=1)
 	$(MOVE)
 
-SPEEX_CONF := --disable-binaries
+SPEEX_CONF := --disable-binaries --enable-shared --without-ogg
 ifndef HAVE_FPU
 SPEEX_CONF += --enable-fixed-point
 ifeq ($(ARCH),arm)
