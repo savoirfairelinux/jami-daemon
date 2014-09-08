@@ -17,6 +17,9 @@ $(TARBALLS)/ucommon-$(UCOMMON_VERSION).tar.gz:
 
 ucommon: ucommon-$(UCOMMON_VERSION).tar.gz .sum-ucommon
 	$(UNPACK)
+ifdef HAVE_WIN32
+	$(APPLY) $(SRC)/ucommon/windows_platform.patch
+endif
 	$(APPLY) $(SRC)/ucommon/extended.patch
 	$(APPLY) $(SRC)/ucommon/usedefines.patch
 	$(APPLY) $(SRC)/ucommon/any-addr-and-overloads.patch
