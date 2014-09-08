@@ -6,11 +6,13 @@ if test -z $AUTORECONF; then
         exit 1
 fi
 
-PKGCONFIG=`which pkg-config`
-if test -z $PKGCONFIG; then
-        echo "*** No pkg-config found, please install it ***"
-        # warn without exiting, since pkg-config is only needed
-        # by configure, not autogen.sh
+if test -z PKGCONFIG; then #Test if empty so we don't override mingw pkg-config directory.
+    PKGCONFIG=`which pkg-config`
+    if test -z $PKGCONFIG; then
+            echo "*** No pkg-config found, please install it ***"
+            # warn without exiting, since pkg-config is only needed
+            # by configure, not autogen.sh
+    fi
 fi
 
 LIBTOOLIZE=`which libtoolize || which glibtoolize`

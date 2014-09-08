@@ -73,6 +73,90 @@ AC_COMPILE_IFELSE(
 
 AC_MSG_RESULT([$CLANG])
 
+dnl
+dnl  Check the operating system
+dnl
+HAVE_WIN64="0"
+HAVE_IOS="0"
+HAVE_OSX="0"
+
+YASMFLAGS=""
+case "${host}" in
+    i?86*)
+    YASMFLAGS="-f elf32"
+        ;;
+    x86_64*)
+    YASMFLAGS="-f elf64"
+        ;;
+esac
+
+
+case "${host_os}" in
+  "")
+    SYS=unknown
+    ;;
+  linux*)
+    SYS=linux
+    ;;
+  bsdi*)
+    SYS=bsdi
+    CFLAGS="${CFLAGS} -pthread"
+    ;;
+  freebsd*)
+    SYS=freebsd
+    CFLAGS="${CFLAGS} -pthread"
+    CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+    LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+    ;;
+  openbsd*)
+    SYS=openbsd
+    CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/usr/X11R6/include"
+    LDFLAGS="${LDFLAGS} -L/usr/local/lib -L/usr/X11R6/lib/"
+    ;;
+  netbsd*)
+    SYS=netbsd
+    ;;
+  darwin*)
+    SYS=darwin
+    ;;
+  mingw32*)
+    SYS=mingw32
+    AC_CHECK_TOOL(WINDRES, windres, :)
+    AC_CHECK_TOOL(OBJCOPY, objcopy, :)
+    AH_TOP([#if defined(_WIN32) && !defined(_WIN32_WINNT)])
+    AH_TOP([# define _WIN32_WINNT 0x0502 /* Windows XP SP2 */])
+    AH_TOP([#endif])
+    AC_DEFINE([_WIN32_IE], 0x0600, [Define to '0x0600' for IE 6.0 (and shell) APIs.])
+    AC_DEFINE([_UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
+    AC_DEFINE([UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
+    AC_DEFINE([_ISOC99_SOURCE], [1], [Extensions to ISO C89 from ISO C99.])
+    AC_DEFINE([_ISOC11_SOURCE], [1], [Extensions to ISO C99 from ISO C11.])
+    AC_DEFINE([_POSIX_SOURCE], [1], [IEEE Std 1003.1.])
+    AC_DEFINE([_POSIX_C_SOURCE], [200809L], [IEEE Std 1003.1.])
+    AC_DEFINE([_XOPEN_SOURCE], [700], [POSIX and XPG 7th edition])
+    AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [XPG things and X/Open Unix extensions.])
+    AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
+    AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
+
+    CPPFLAGS="${CPPFLAGS} -DBOOST_USE_WINDOWS_H"
+    LDFLAGS="${LDFLAGS} -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase"
+    ac_default_prefix="`pwd`/_win32"
+    DESTDIR="`pwd`/_win32/"
+    AC_SUBST(WINDOWS_ARCH)
+    AC_SUBST(PROGRAMFILES)
+    ;;
+  *)
+    SYS="${host_os}"
+    ;;
+esac
+AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
+AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
+AM_CONDITIONAL(HAVE_OS2,     test "${SYS}" = "os2")
+AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
+AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
+AM_CONDITIONAL(HAVE_SYMBIAN, test "${SYS}" = "symbian")
+AM_CONDITIONAL(HAVE_IOS,   test "${HAVE_IOS}" = "1")
+AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
 
 dnl Check if we are compiling for android
 AC_MSG_CHECKING([if compiling for android])
@@ -160,6 +244,26 @@ case $host_os in
         LDFLAGS+=" -lstdc++"
     ;;
 esac
+
+dnl
+dnl  Libtool
+dnl  It's very bad, but our former custom system was worst
+dnl  -- Courmisch
+dnl
+
+dnl override platform specific check for dependent libraries
+dnl otherwise libtool linking of shared libraries will
+dnl fail on anything other than pass_all.
+AC_CACHE_VAL(lt_cv_deplibs_check_method,
+    [lt_cv_deplibs_check_method=pass_all])
+
+LT_INIT([dlopen win32-dll shared disable-static])
+LT_LANG([C++])
+LT_LANG([Windows Resource])
+
+DOLT
+
+lt_cv_deplibs_check_method=pass_all
 
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))

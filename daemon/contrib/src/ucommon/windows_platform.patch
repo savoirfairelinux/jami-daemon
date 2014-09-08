@@ -1,0 +1,11 @@
+--- ucommon/inc/ucommon/platform.h.orig	2014-09-09 15:45:10.488481802 -0400
++++ ucommon/inc/ucommon/platform.h	2014-09-09 15:45:39.268482233 -0400
+@@ -161,7 +161,7 @@
+ #if defined(UCOMMON_RUNTIME) || defined(UCOMMON_STATIC)
+ #define __SHARED
+ #else
+-#define __SHARED __EXPORT
++#define __SHARED __declspec(dllimport) //Fix compile error.
+ #endif
+
+ #elif UCOMMON_VISIBILITY > 0
