@@ -20,7 +20,9 @@ ccrtp: ccrtp-$(CCRTP_VERSION).tar.gz .sum-ccrtp
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
+CCRTP_CONF :=
+
 .ccrtp: ccrtp
-	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) $(CCRTP_CONF)
 	cd $< && $(MAKE) install
 	touch $@
