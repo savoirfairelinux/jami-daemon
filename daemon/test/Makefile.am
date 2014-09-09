@@ -34,8 +34,8 @@ test_SOURCES = constants.h \
 			   siptest.cpp \
 			   sdptest.h \
 			   sdptest.cpp \
-			   mainbuffertest.h \
-			   mainbuffertest.cpp \
+			   ringbufferpooltest.h \
+			   ringbufferpooltest.cpp \
 			   resamplertest.h \
 			   resamplertest.cpp \
 			   hooktest.h \
