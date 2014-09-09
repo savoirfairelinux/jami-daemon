@@ -37,13 +37,13 @@
 #include <atomic>
 #include <string>
 
-class MainBuffer;
+class RingBufferPool;
 class AudioRecord;
 
 class AudioRecorder {
 
     public:
-        AudioRecorder(AudioRecord  *arec, MainBuffer &mb);
+        AudioRecorder(AudioRecord  *arec, RingBufferPool &rbp);
         ~AudioRecorder();
         std::string getRecorderID() const {
             return recorderId_;
@@ -66,7 +66,7 @@ class AudioRecorder {
 
         static int count_;
         std::string recorderId_;
-        MainBuffer &mbuffer_;
+        RingBufferPool &ringBufferPool_;
         AudioRecord *arecord_;
         std::atomic<bool> running_;
         std::thread thread_;

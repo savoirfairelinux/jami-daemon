@@ -57,7 +57,6 @@
 #include "audio/audiolayer.h"
 #include "audio/sound/tone.h"  // for Tone::TONEID declaration
 #include "audio/codecs/audiocodecfactory.h"
-#include "audio/mainbuffer.h"
 
 #include "preferences.h"
 #include "history/history.h"
@@ -73,6 +72,7 @@ class AudioFile;
 class AudioLayer;
 class History;
 class TelephoneTone;
+class RingBufferPool;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -83,6 +83,8 @@ typedef std::map<std::string, std::shared_ptr<Conference> > ConferenceMap;
 typedef std::set<std::string> CallIDSet;
 
 static const char * const default_conf = "conf";
+
+typedef std::set<std::string> CallIDSet;
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl {
@@ -838,20 +840,20 @@ class ManagerImpl {
         int loadAccountMap(const YAML::Node &node);
 
         /**
-         * Instance of the MainBuffer for the whole application
+         * Instance of the RingBufferPool for the whole application
          *
-         * In order to send signal to other parts of the application, one must pass through the mainbuffer.
-         * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+         * In order to send signal to other parts of the application, one must pass through the RingBufferMananger.
+         * Audio instances must be registered into the RingBufferMananger and bound together via the ManagerImpl.
          *
          */
-        MainBuffer mainBuffer_;
+        std::unique_ptr<RingBufferPool> ringbufferpool_;
 
     public:
 
         /**
-         * Return a pointer to the  instance of the mainbuffer
+         * Return a pointer to the instance of the RingBufferPool
          */
-        MainBuffer &getMainBuffer();
+        RingBufferPool& getRingBufferPool() { return *ringbufferpool_; }
 
         /**
          * Tell if there is a current call processed
