@@ -42,6 +42,7 @@
 #include "hooks/urlhook.h"
 #include "audio/audiolayer.h"
 #include "audio/resampler.h"
+#include "audio/ringbufferpool.h"
 #include "array_size.h"
 #include "map_utils.h"
 #include "call_factory.h"
@@ -157,20 +158,20 @@ IAXVoIPLink::sendAudioFromMic()
         if (!audioCodec)
             continue;
 
-        Manager::instance().getMainBuffer().setInternalSamplingRate(audioCodec->getClockRate());
+        Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->getClockRate());
 
-        unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
+        unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
 
         // we have to get 20ms of data from the mic *20/1000 = /50
         // rate/50 shall be lower than IAX__20S_48KHZ_MAX
         size_t samples = mainBufferSampleRate * 20 / 1000;
 
-        if (Manager::instance().getMainBuffer().availableForGet(currentCall->getCallId()) < samples)
+        if (Manager::instance().getRingBufferPool().availableForGet(currentCall->getCallId()) < samples)
             continue;
 
         // Get bytes from micRingBuffer to data_from_mic
         rawBuffer_.resize(samples);
-        samples = Manager::instance().getMainBuffer().getData(rawBuffer_, currentCall->getCallId());
+        samples = Manager::instance().getRingBufferPool().getData(rawBuffer_, currentCall->getCallId());
 
         int compSize;
         unsigned int audioRate = audioCodec->getClockRate();
@@ -231,7 +232,7 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
     Manager::instance().addStream(id);
     Manager::instance().peerAnsweredCall(id);
     Manager::instance().startAudioDriverStream();
-    Manager::instance().getMainBuffer().flushAllBuffers();
+    Manager::instance().getRingBufferPool().flushAllBuffers();
 }
 
 void
@@ -333,8 +334,8 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     if (!audioCodec)
         return;
 
-    Manager::instance().getMainBuffer().setInternalSamplingRate(audioCodec->getClockRate());
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
+    Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->getClockRate());
+    unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
 
     if (event->subclass)
         call.format = event->subclass;

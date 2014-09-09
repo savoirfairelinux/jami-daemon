@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
- *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef MAIN_BUFFER_H_
-#define MAIN_BUFFER_H_
+#ifndef RING_BUFFER_POOL_H_
+#define RING_BUFFER_POOL_H_
 
 #include "audiobuffer.h"
 #include "noncopyable.h"
@@ -42,14 +43,14 @@
 
 class RingBuffer;
 
-class MainBuffer {
+class RingBufferPool {
 
     public:
         static const char * const DEFAULT_ID;
 
-        MainBuffer();
+        RingBufferPool();
 
-        ~MainBuffer();
+        ~RingBufferPool();
 
         int getInternalSamplingRate() const {
             return internalAudioFormat_.sample_rate;
@@ -123,14 +124,14 @@ class MainBuffer {
         std::shared_ptr<RingBuffer> getRingBuffer(const std::string& id) const;
 
     private:
-        NON_COPYABLE(MainBuffer);
+        NON_COPYABLE(RingBufferPool);
 
         // A set of ring buffer readable by a call
         typedef std::set<std::shared_ptr<RingBuffer>, std::owner_less<std::shared_ptr<RingBuffer>> > ReadBindings;
 
-        const MainBuffer::ReadBindings* getReadBindings(const std::string& call_id) const;
+        const RingBufferPool::ReadBindings* getReadBindings(const std::string& call_id) const;
 
-        MainBuffer::ReadBindings* getReadBindings(const std::string& call_id);
+        RingBufferPool::ReadBindings* getReadBindings(const std::string& call_id);
 
         void removeReadBindings(const std::string& call_id);
 
@@ -153,4 +154,4 @@ class MainBuffer {
         std::shared_ptr<RingBuffer> defaultRingBuffer{};
 };
 
-#endif  // MainBuffer
+#endif  // RING_BUFFER_POOL_H_
