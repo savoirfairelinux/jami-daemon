@@ -33,7 +33,7 @@
 #include "client/configurationmanager.h"
 
 #include "manager.h"
-#include "audio/mainbuffer.h"
+#include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "audio/dcblocker.h"
 #include "logger.h"
@@ -77,7 +77,7 @@ OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     , hardwareBuffSize_(BUFFER_SIZE)
     , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO()))
     , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO()))
-    , mainRingBuffer_(Manager::instance().getMainBuffer().getRingBuffer(MainBuffer::DEFAULT_ID))
+    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
 }
 
@@ -345,7 +345,7 @@ OpenSLLayer::initAudioCapture() const
                                                            };
 
     DEBUG("Capture-> Sampling Rate: %d", audioFormat_.sample_rate);
-    DEBUG("Capture-> getInternalSamplingRate: %d", Manager::instance().getMainBuffer().getInternalSamplingRate());
+    DEBUG("Capture-> getInternalSamplingRate: %d", Manager::instance().getRingBufferPool().getInternalSamplingRate());
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
                                     audioFormat_.sample_rate * 1000,
                                     SL_PCMSAMPLEFORMAT_FIXED_16,
@@ -638,13 +638,13 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
     notifyIncomingCall();
 
     AudioBuffer &buffer = getNextPlaybackBuffer();
-    size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+    size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
 
     bufferIsFilled_ = false;
     if (urgentSamplesToGet > 0) {
         bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, std::min(urgentSamplesToGet, hardwareBuffSize_));
     } else {
-        auto& main_buffer = Manager::instance().getMainBuffer();
+        auto& main_buffer = Manager::instance().getRingBufferPool();
         buffer.resize(hardwareBuffSize_);
         size_t samplesToGet = audioPlaybackFillWithVoice(buffer);
         if (samplesToGet == 0) {
@@ -716,7 +716,7 @@ OpenSLLayer::updatePreference(AudioPreference &preference, int index, DeviceType
 
 void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
 {
-    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+    RingBufferPool &mbuffer = Manager::instance().getRingBufferPool();
 
     //const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
     const AudioFormat mainBufferFormat = mbuffer.getInternalAudioFormat();
@@ -760,19 +760,19 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t sample
     // Urgent data (dtmf, incoming call signal) come first.
     samplesToGet = std::min(samplesToGet, hardwareBuffSize_);
     buffer.resize(samplesToGet);
-    urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
+    urgentRingBuffer_.get(buffer, RingBufferPool::DEFAULT_ID);
     buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
     // Consume the regular one as well (same amount of samples)
-    Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
+    Manager::instance().getRingBufferPool().discard(samplesToGet, RingBufferPool::DEFAULT_ID);
 
     return true;
 }
 
 size_t OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer)
 {
-    MainBuffer &mainBuffer = Manager::instance().getMainBuffer();
-    size_t got = mainBuffer.getAvailableData(buffer, MainBuffer::DEFAULT_ID);
+    RingBufferPool &mainBuffer = Manager::instance().getRingBufferPool();
+    size_t got = mainBuffer.getAvailableData(buffer, RingBufferPool::DEFAULT_ID);
     buffer.resize(got);
     buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
     if (audioFormat_.sample_rate != mainBuffer.getInternalSamplingRate()) {

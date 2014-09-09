@@ -38,6 +38,7 @@
 #include "pulselayer.h"
 #include "audio/resampler.h"
 #include "audio/dcblocker.h"
+#include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "logger.h"
 #include "manager.h"
@@ -103,7 +104,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , enumeratingSinks_(false)
     , enumeratingSources_(false)
     , preference_(pref)
-    , mainRingBuffer_(Manager::instance().getMainBuffer().getRingBuffer(MainBuffer::DEFAULT_ID))
+    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
     setCaptureGain(pref.getVolumemic());
     setPlaybackGain(pref.getVolumespkr());
@@ -464,7 +465,7 @@ void PulseLayer::writeToSpeaker()
 
     notifyIncomingCall();
 
-    size_t urgentSamples = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+    size_t urgentSamples = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
     size_t urgentBytes = urgentSamples * sample_size;
 
     if (urgentSamples > writableSamples) {
@@ -477,12 +478,12 @@ void PulseLayer::writeToSpeaker()
     if (urgentBytes) {
         AudioBuffer linearbuff(urgentSamples, format);
         pa_stream_begin_write(s, (void**)&data, &urgentBytes);
-        urgentRingBuffer_.get(linearbuff, MainBuffer::DEFAULT_ID); // retrive only the first sample_spec->channels channels
+        urgentRingBuffer_.get(linearbuff, RingBufferPool::DEFAULT_ID); // retrive only the first sample_spec->channels channels
         linearbuff.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         linearbuff.interleave(data);
         pa_stream_write(s, data, urgentBytes, nullptr, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of samples)
-        Manager::instance().getMainBuffer().discard(urgentSamples, MainBuffer::DEFAULT_ID);
+        Manager::instance().getRingBufferPool().discard(urgentSamples, RingBufferPool::DEFAULT_ID);
         return;
     }
 
@@ -504,7 +505,7 @@ void PulseLayer::writeToSpeaker()
 
     flushUrgent(); // flush remaining samples in _urgentRingBuffer
 
-    size_t availSamples = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
+    size_t availSamples = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
 
     if (availSamples == 0) {
         pa_stream_begin_write(s, (void**)&data, &writableBytes);
@@ -518,7 +519,7 @@ void PulseLayer::writeToSpeaker()
 
     double resampleFactor = 1.;
 
-    AudioFormat mainBufferAudioFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    AudioFormat mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     bool resample = audioFormat_.sample_rate != mainBufferAudioFormat.sample_rate;
 
     if (resample) {
@@ -533,7 +534,7 @@ void PulseLayer::writeToSpeaker()
     pa_stream_begin_write(s, (void**)&data, &resampledBytes);
 
     AudioBuffer linearbuff(readableSamples, format);
-    Manager::instance().getMainBuffer().getData(linearbuff, MainBuffer::DEFAULT_ID);
+    Manager::instance().getRingBufferPool().getData(linearbuff, RingBufferPool::DEFAULT_ID);
 
     if (resample) {
         AudioBuffer rsmpl_out(nResampled, format);
@@ -569,7 +570,7 @@ void PulseLayer::readFromMic()
     AudioBuffer in(samples, format);
     in.deinterleave((SFLAudioSample*)data, samples, format.nb_channels);
 
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
     bool resample = audioFormat_.sample_rate != mainBufferSampleRate;
 
     in.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);

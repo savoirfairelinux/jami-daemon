@@ -133,9 +133,11 @@ class AudioRtpFactory {
         void setDtmfPayloadType(unsigned int);
 
         /**
-         * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
-         * incremented as if it was microphone audio. This function change the payload type of the rtp session,
-         * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
+         * Send DTMF over RTP (RFC2833).
+         * The timestamp and sequence number must be incremented
+         * as if it was microphone audio. This function change the payload type
+         * of the rtp session, send the appropriate DTMF digit using
+         * this payload, discard corresponding data from RingBufferPool and get
          * back the codec payload for further audio processing.
          */
         void sendDtmfDigit(int digit);

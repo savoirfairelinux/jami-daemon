@@ -33,6 +33,7 @@
 #include "audio/dcblocker.h"
 #include "logger.h"
 #include "manager.h"
+#include "audio/ringbufferpool.h"
 
 #include <ctime>
 
@@ -42,14 +43,14 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
     , isStarted_(false)
-    , audioFormat_(Manager::instance().getMainBuffer().getInternalAudioFormat())
+    , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
     , mutex_()
     , dcblocker_()
     , resampler_(audioFormat_.sample_rate)
     , lastNotificationTime_(0)
 {
-    urgentRingBuffer_.createReadOffset(MainBuffer::DEFAULT_ID);
+    urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 }
 
 AudioLayer::~AudioLayer()
@@ -68,7 +69,7 @@ void AudioLayer::flushMain()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     // should pass call id
-    Manager::instance().getMainBuffer().flushAllBuffers();
+    Manager::instance().getRingBufferPool().flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent()
