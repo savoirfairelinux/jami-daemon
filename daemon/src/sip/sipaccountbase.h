@@ -101,10 +101,8 @@ namespace Conf {
     const char *const CRED_KEY = "credential";
     const char *const AUDIO_PORT_MIN_KEY = "audioPortMin";
     const char *const AUDIO_PORT_MAX_KEY = "audioPortMax";
-#ifdef SFL_VIDEO
     const char *const VIDEO_PORT_MIN_KEY = "videoPortMin";
     const char *const VIDEO_PORT_MAX_KEY = "videoPortMax";
-#endif
 }
 
 class SIPVoIPLink;
@@ -385,12 +383,10 @@ protected:
      */
     std::pair<uint16_t, uint16_t> audioPortRange_ {16384, 32766};
 
-#ifdef SFL_VIDEO
     /**
      * Port range for video RTP ports
      */
     std::pair<uint16_t, uint16_t> videoPortRange_ {49152, (MAX_PORT) - 2};
-#endif
 
     static bool portsInUse_[HALF_MAX_PORT];
     static uint16_t getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range);

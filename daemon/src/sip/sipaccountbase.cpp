@@ -161,9 +161,7 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     parseValue(srtpMap, RTP_FALLBACK_KEY, srtpFallback_);
 
     unserializeRange(node, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
-#ifdef SFL_VIDEO
     unserializeRange(node, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_);
-#endif
 }
 
 
