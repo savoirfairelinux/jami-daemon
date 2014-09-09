@@ -48,6 +48,7 @@ find -name .settings -type d -exec rm -rf {} \;
 
 pushd daemon
 ./autogen.sh
+find -name \*.spec -delete
 popd
 
 pushd gnome
