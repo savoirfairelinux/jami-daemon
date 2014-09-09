@@ -29,7 +29,7 @@ libaudio_la_SOURCES = \
 		audiobuffer.cpp \
 		audioloop.cpp \
 		ringbuffer.cpp \
-		mainbuffer.cpp \
+		ringbufferpool.cpp \
 		audiorecord.cpp \
 		audiorecorder.cpp \
 		recordable.cpp \
@@ -42,7 +42,7 @@ noinst_HEADERS = \
 		audiobuffer.h \
 		audioloop.h \
 		ringbuffer.h \
-		mainbuffer.h \
+		ringbufferpool.h \
 		audiorecord.h \
 		audiorecorder.h \
 		audiolayer.h \

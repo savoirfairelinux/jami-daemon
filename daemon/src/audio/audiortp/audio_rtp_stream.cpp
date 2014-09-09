@@ -36,6 +36,7 @@
 
 #include "audio/audiolayer.h"
 #include "audio/resampler.h"
+#include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 
 #if HAVE_SPEEXDSP
@@ -69,7 +70,7 @@ AudioRtpStream::AudioRtpStream(const std::string &id) :
     , plcPool_(nullptr)
     , plcDec_()
 {
-    ringbuffer_ = Manager::instance().getMainBuffer().createRingBuffer(id_);
+    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(id_);
     pj_caching_pool_init(&plcCachePool_, &pj_pool_factory_default_policy, 0);
     plcPool_ = pj_pool_create(&plcCachePool_.factory, "plc", 64, 1024, nullptr);
 }
@@ -131,7 +132,7 @@ bool AudioRtpStream::tryToSwitchDecoder(int newPt)
     for (unsigned i=0, n=audioCodecs_.size(); i<n; i++) {
         auto codec = audioCodecs_[i];
         if (codec == nullptr || codec->getPayloadType() != newPt) continue;
-        AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
+        AudioFormat f = Manager::instance().getRingBufferPool().getInternalAudioFormat();
         codec->setOptimalFormat(f.sample_rate, f.nb_channels);
         decoder_.payloadType_ = codec->getPayloadType();
         decoder_.frameSize_ = codec->getFrameSize();
@@ -250,7 +251,7 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     currentEncoderIndex_ = currentDecoderIndex_ = 0;
     AudioCodec& codec = *audioCodecs[currentEncoderIndex_];
 
-    AudioFormat f = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    AudioFormat f = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     codec.setOptimalFormat(f.sample_rate, f.nb_channels);
 
     const int pt = codec.getPayloadType();
@@ -288,7 +289,7 @@ void AudioRtpStream::resetDSP()
 
 bool AudioRtpStream::waitForDataEncode(const std::chrono::milliseconds& max_wait) const
 {
-    const auto &mainBuffer = Manager::instance().getMainBuffer();
+    const auto &mainBuffer = Manager::instance().getRingBufferPool();
     const AudioFormat mainBuffFormat = mainBuffer.getInternalAudioFormat();
     const double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format_.sample_rate;
     const size_t samplesToGet = resampleFactor * encoder_.frameSize_;
@@ -301,22 +302,23 @@ size_t AudioRtpStream::processDataEncode()
     if (isDead())
         return 0;
 
-    AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
 
     double resampleFactor = (double) mainBuffFormat.sample_rate / encoder_.format_.sample_rate;
 
     // compute nb of byte to get corresponding to 1 audio frame
     const size_t samplesToGet = resampleFactor * encoder_.frameSize_;
 
-    if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
+    if (Manager::instance().getRingBufferPool().availableForGet(id_) < samplesToGet)
         return 0;
 
     micData_.setFormat(mainBuffFormat);
     micData_.resize(samplesToGet);
-    const size_t samples = Manager::instance().getMainBuffer().getData(micData_, id_);
+    const size_t samples = Manager::instance().getRingBufferPool().getData(micData_, id_);
 
     if (samples != samplesToGet) {
-        ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samples);
+        ERROR("Asked for %d samples from bindings on call '%s', got %d",
+              samplesToGet, id_.c_str(), samples);
         return 0;
     }
 
@@ -416,7 +418,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     // test if resampling or up/down-mixing is required
     AudioBuffer *out = &rawBuffer_;
     AudioFormat decFormat = out->getFormat();
-    AudioFormat mainBuffFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
         if (!decoder_.resampler_) {
             ERROR("Resampler already destroyed");

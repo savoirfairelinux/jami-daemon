@@ -107,12 +107,12 @@ class AudioRtpStream {
         void processDataDecode(uint8_t *spkrData, size_t size, int payloadType);
 
         /**
-         * Wait for available data to be encoded from mainbuffer.
+         * Wait for available data to be encoded from RingBufferPool.
          */
         bool waitForDataEncode(const std::chrono::milliseconds& max_wait) const;
 
         /**
-         * Encode audio data from mainbuffer
+         * Encode audio data from RingBufferPool
          * @return size of encoded data, in bytes.
          */
         size_t processDataEncode();
