@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
- *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "mainbuffer.h"
+#include "ringbufferpool.h"
 #include "ringbuffer.h"
 #include "sfl_types.h" // for SIZEBUF
 #include "logger.h"
@@ -37,14 +38,14 @@
 #include <utility> // for std::pair
 #include <cstring>
 
-const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
+const char * const RingBufferPool::DEFAULT_ID = "audiolayer_id";
 
-MainBuffer::MainBuffer()
+RingBufferPool::RingBufferPool()
 {
     defaultRingBuffer = createRingBuffer(DEFAULT_ID);
 }
 
-MainBuffer::~MainBuffer()
+RingBufferPool::~RingBufferPool()
 {
     readBindingsMap_.clear();
     defaultRingBuffer.reset();
@@ -59,7 +60,7 @@ MainBuffer::~MainBuffer()
 }
 
 void
-MainBuffer::setInternalSamplingRate(unsigned sr)
+RingBufferPool::setInternalSamplingRate(unsigned sr)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -70,7 +71,7 @@ MainBuffer::setInternalSamplingRate(unsigned sr)
 }
 
 void
-MainBuffer::setInternalAudioFormat(AudioFormat format)
+RingBufferPool::setInternalAudioFormat(AudioFormat format)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -81,7 +82,7 @@ MainBuffer::setInternalAudioFormat(AudioFormat format)
 }
 
 std::shared_ptr<RingBuffer>
-MainBuffer::getRingBuffer(const std::string& id)
+RingBufferPool::getRingBuffer(const std::string& id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -96,7 +97,7 @@ MainBuffer::getRingBuffer(const std::string& id)
 }
 
 std::shared_ptr<RingBuffer>
-MainBuffer::getRingBuffer(const std::string& id) const
+RingBufferPool::getRingBuffer(const std::string& id) const
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -108,7 +109,7 @@ MainBuffer::getRingBuffer(const std::string& id) const
 }
 
 std::shared_ptr<RingBuffer>
-MainBuffer::createRingBuffer(const std::string& id)
+RingBufferPool::createRingBuffer(const std::string& id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -124,22 +125,22 @@ MainBuffer::createRingBuffer(const std::string& id)
     return rbuf;
 }
 
-const MainBuffer::ReadBindings*
-MainBuffer::getReadBindings(const std::string& call_id) const
+const RingBufferPool::ReadBindings*
+RingBufferPool::getReadBindings(const std::string& call_id) const
 {
     const auto& iter = readBindingsMap_.find(call_id);
     return iter != readBindingsMap_.cend() ? &iter->second : nullptr;
 }
 
-MainBuffer::ReadBindings*
-MainBuffer::getReadBindings(const std::string& call_id)
+RingBufferPool::ReadBindings*
+RingBufferPool::getReadBindings(const std::string& call_id)
 {
     const auto& iter = readBindingsMap_.find(call_id);
     return iter != readBindingsMap_.cend() ? &iter->second : nullptr;
 }
 
 void
-MainBuffer::removeReadBindings(const std::string& call_id)
+RingBufferPool::removeReadBindings(const std::string& call_id)
 {
     if (not readBindingsMap_.erase(call_id))
         ERROR("CallID set %s does not exist!", call_id.c_str());
@@ -149,7 +150,7 @@ MainBuffer::removeReadBindings(const std::string& call_id)
  * Make given call ID a reader of given ring buffer
  */
 void
-MainBuffer::addReaderToRingBuffer(std::shared_ptr<RingBuffer> rbuf,
+RingBufferPool::addReaderToRingBuffer(std::shared_ptr<RingBuffer> rbuf,
                                   const std::string& call_id)
 {
     if (call_id != DEFAULT_ID and rbuf->id == call_id)
@@ -161,7 +162,7 @@ MainBuffer::addReaderToRingBuffer(std::shared_ptr<RingBuffer> rbuf,
 }
 
 void
-MainBuffer::removeReaderFromRingBuffer(std::shared_ptr<RingBuffer> rbuf,
+RingBufferPool::removeReaderFromRingBuffer(std::shared_ptr<RingBuffer> rbuf,
                                        const std::string& call_id)
 {
     if (auto bindings = getReadBindings(call_id)) {
@@ -174,7 +175,7 @@ MainBuffer::removeReaderFromRingBuffer(std::shared_ptr<RingBuffer> rbuf,
 }
 
 void
-MainBuffer::bindCallID(const std::string& call_id1, const std::string& call_id2)
+RingBufferPool::bindCallID(const std::string& call_id1, const std::string& call_id2)
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
@@ -195,7 +196,7 @@ MainBuffer::bindCallID(const std::string& call_id1, const std::string& call_id2)
 }
 
 void
-MainBuffer::bindHalfDuplexOut(const std::string& process_id,
+RingBufferPool::bindHalfDuplexOut(const std::string& process_id,
                               const std::string& call_id)
 {
     // This method is used only for active calls, if this call does not exist, do nothing
@@ -207,7 +208,7 @@ MainBuffer::bindHalfDuplexOut(const std::string& process_id,
 }
 
 void
-MainBuffer::unBindCallID(const std::string& call_id1,
+RingBufferPool::unBindCallID(const std::string& call_id1,
                          const std::string& call_id2)
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
@@ -229,7 +230,7 @@ MainBuffer::unBindCallID(const std::string& call_id1,
 }
 
 void
-MainBuffer::unBindHalfDuplexOut(const std::string& process_id,
+RingBufferPool::unBindHalfDuplexOut(const std::string& process_id,
                                 const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
@@ -242,7 +243,7 @@ MainBuffer::unBindHalfDuplexOut(const std::string& process_id,
 }
 
 void
-MainBuffer::unBindAll(const std::string& call_id)
+RingBufferPool::unBindAll(const std::string& call_id)
 {
     const auto& rb_call = getRingBuffer(call_id);
     if (not rb_call) {
@@ -264,7 +265,7 @@ MainBuffer::unBindAll(const std::string& call_id)
 }
 
 size_t
-MainBuffer::getData(AudioBuffer& buffer, const std::string& call_id)
+RingBufferPool::getData(AudioBuffer& buffer, const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -293,7 +294,7 @@ MainBuffer::getData(AudioBuffer& buffer, const std::string& call_id)
 }
 
 bool
-MainBuffer::waitForDataAvailable(const std::string& call_id, size_t min_frames,
+RingBufferPool::waitForDataAvailable(const std::string& call_id, size_t min_frames,
                                  const std::chrono::microseconds& max_wait) const
 {
     std::unique_lock<std::recursive_mutex> lk(stateLock_);
@@ -316,7 +317,7 @@ MainBuffer::waitForDataAvailable(const std::string& call_id, size_t min_frames,
 }
 
 size_t
-MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string& call_id)
+RingBufferPool::getAvailableData(AudioBuffer& buffer, const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -354,7 +355,7 @@ MainBuffer::getAvailableData(AudioBuffer& buffer, const std::string& call_id)
 }
 
 size_t
-MainBuffer::availableForGet(const std::string& call_id) const
+RingBufferPool::availableForGet(const std::string& call_id) const
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -379,7 +380,7 @@ MainBuffer::availableForGet(const std::string& call_id) const
 }
 
 size_t
-MainBuffer::discard(size_t toDiscard, const std::string& call_id)
+RingBufferPool::discard(size_t toDiscard, const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -394,7 +395,7 @@ MainBuffer::discard(size_t toDiscard, const std::string& call_id)
 }
 
 void
-MainBuffer::flush(const std::string& call_id)
+RingBufferPool::flush(const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -407,7 +408,7 @@ MainBuffer::flush(const std::string& call_id)
 }
 
 void
-MainBuffer::flushAllBuffers()
+RingBufferPool::flushAllBuffers()
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 

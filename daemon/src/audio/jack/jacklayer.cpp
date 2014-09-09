@@ -36,7 +36,7 @@
 #include <cassert>
 #include <climits>
 #include "logger.h"
-#include "audio/mainbuffer.h"
+#include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "manager.h"
 #include "array_size.h"
@@ -83,19 +83,19 @@ void JackLayer::fillWithUrgent(AudioBuffer &buffer, size_t samplesToGet)
     // Urgent data (dtmf, incoming call signal) come first.
     samplesToGet = std::min(samplesToGet, hardwareBufferSize_);
     buffer.resize(samplesToGet);
-    urgentRingBuffer_.get(buffer, MainBuffer::DEFAULT_ID);
+    urgentRingBuffer_.get(buffer, RingBufferPool::DEFAULT_ID);
     buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
     // Consume the regular one as well (same amount of samples)
-    Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
+    Manager::instance().getRingBufferPool().discard(samplesToGet, RingBufferPool::DEFAULT_ID);
 }
 
 void JackLayer::fillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
 {
-    MainBuffer &mainBuffer = Manager::instance().getMainBuffer();
+    RingBufferPool &mainBuffer = Manager::instance().getRingBufferPool();
 
     buffer.resize(samplesAvail);
-    mainBuffer.getData(buffer, MainBuffer::DEFAULT_ID);
+    mainBuffer.getData(buffer, RingBufferPool::DEFAULT_ID);
     buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
     if (audioFormat_.sample_rate != (unsigned) mainBuffer.getInternalSamplingRate()) {
@@ -129,8 +129,8 @@ JackLayer::playback()
 {
     notifyIncomingCall();
 
-    const size_t samplesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
-    const size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+    const size_t samplesToGet = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
+    const size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
 
     if (urgentSamplesToGet > 0) {
         fillWithUrgent(playbackBuffer_, urgentSamplesToGet);
@@ -152,7 +152,7 @@ JackLayer::capture()
     // get audio from jack ringbuffer
     read(captureBuffer_);
 
-    const AudioFormat mainBufferFormat = Manager::instance().getMainBuffer().getInternalAudioFormat();
+    const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     const bool resample = mainBufferFormat.sample_rate != audioFormat_.sample_rate;
 
     captureBuffer_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
@@ -326,7 +326,7 @@ JackLayer::JackLayer(const AudioPreference &p) :
     captureBuffer_(0, audioFormat_),
     captureFloatBuffer_(),
     hardwareBufferSize_(0)
-    , mainRingBuffer_(Manager::instance().getMainBuffer().getRingBuffer(MainBuffer::DEFAULT_ID))
+    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
     playbackClient_ = jack_client_open(PACKAGE_NAME,
             (jack_options_t) (JackNullOption | JackNoStartServer), NULL);

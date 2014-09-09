@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef MAINBUFFER_TEST_
-#define MAINBUFFER_TEST_
+#ifndef RINGBUFFERPOOL_TEST_
+#define RINGBUFFERPOOL_TEST_
 
 // Cppunit import
 #include <cppunit/extensions/HelperMacros.h>
@@ -39,18 +39,19 @@
 
 #include <memory>
 
-class MainBuffer;
+class RingBufferPool;
+
 /*
  * @file audiorecorderTest.cpp
  * @brief       Regroups unit tests related to the main buffer.
  */
 
-class MainBufferTest : public CppUnit::TestCase {
+class RingBufferPoolTest : public CppUnit::TestCase {
 
         /*
          * Use cppunit library macros to add unit test the factory
          */
-        CPPUNIT_TEST_SUITE(MainBufferTest);
+        CPPUNIT_TEST_SUITE(RingBufferPoolTest);
         CPPUNIT_TEST(testBindUnbindBuffer);
         CPPUNIT_TEST(testGetPutData);
         CPPUNIT_TEST(testDiscardFlush);
@@ -59,7 +60,7 @@ class MainBufferTest : public CppUnit::TestCase {
 
     public:
 
-        MainBufferTest();
+        RingBufferPoolTest();
 
         void testBindUnbindBuffer();
 
@@ -73,11 +74,11 @@ class MainBufferTest : public CppUnit::TestCase {
 
     private:
 
-        std::unique_ptr<MainBuffer> mainbuffer_;
+        std::unique_ptr<RingBufferPool> rbm_;
 };
 
 /* Register our test module */
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MainBufferTest, "MainBufferTest");
-CPPUNIT_TEST_SUITE_REGISTRATION(MainBufferTest);
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RingBufferPoolTest, "RingBufferPoolTest");
+CPPUNIT_TEST_SUITE_REGISTRATION(RingBufferPoolTest);
 
-#endif  // MAINBUFFER_TEST_
+#endif  // RINGBUFFERPOOL_TEST_

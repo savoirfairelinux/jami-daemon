@@ -34,7 +34,7 @@
 #include "conference.h"
 #include "manager.h"
 #include "audio/audiolayer.h"
-#include "audio/mainbuffer.h"
+#include "audio/ringbufferpool.h"
 
 #ifdef SFL_VIDEO
 #include "sip/sipcall.h"
@@ -100,16 +100,16 @@ void Conference::remove(const std::string &participant_id)
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-    auto &mainBuffer = Manager::instance().getMainBuffer();
+    auto &rbm = Manager::instance().getRingBufferPool();
 
     for (const auto &item : participants_) {
         if (participant_id != item)
-            mainBuffer.bindCallID(participant_id, item);
-        mainBuffer.flush(item);
+            rbm.bindCallID(participant_id, item);
+        rbm.flush(item);
     }
 
-    mainBuffer.bindCallID(participant_id, MainBuffer::DEFAULT_ID);
-    mainBuffer.flush(MainBuffer::DEFAULT_ID);
+    rbm.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
+    rbm.flush(RingBufferPool::DEFAULT_ID);
 }
 
 std::string Conference::getStateStr() const
@@ -153,23 +153,23 @@ Conference::getDisplayNames() const
 bool Conference::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
-    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+    auto& rbm = Manager::instance().getRingBufferPool();
 
     std::string process_id(Recordable::recorder_.getRecorderID());
 
     // start recording
     if (startRecording) {
         for (const auto &item : participants_)
-            mbuffer.bindHalfDuplexOut(process_id, item);
+            rbm.bindHalfDuplexOut(process_id, item);
 
-        mbuffer.bindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
+        rbm.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         for (const auto &item : participants_)
-            mbuffer.unBindHalfDuplexOut(process_id, item);
+            rbm.unBindHalfDuplexOut(process_id, item);
 
-        mbuffer.unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
+        rbm.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
     }
 
     return startRecording;

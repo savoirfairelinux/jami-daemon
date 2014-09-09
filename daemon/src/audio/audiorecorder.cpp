@@ -30,7 +30,7 @@
 
 #include "audiorecorder.h"
 #include "audiorecord.h"
-#include "mainbuffer.h"
+#include "ringbufferpool.h"
 #include "logger.h"
 
 #include <chrono>
@@ -39,8 +39,8 @@
 
 int AudioRecorder::count_ = 0;
 
-AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer &mb) :
-    recorderId_(), mbuffer_(mb), arecord_(arec), running_(false), thread_()
+AudioRecorder::AudioRecorder(AudioRecord  *arec, RingBufferPool &rbp) :
+    recorderId_(), rbp_(rbp), arecord_(arec), running_(false), thread_()
 {
     ++count_;
 
@@ -65,7 +65,7 @@ AudioRecorder::~AudioRecorder()
 
 void AudioRecorder::init() {
     if (!arecord_->isRecording()) {
-        arecord_->setSndFormat(mbuffer_.getInternalAudioFormat());
+        arecord_->setSndFormat(rbp_.getInternalAudioFormat());
     }
 }
 
@@ -84,12 +84,12 @@ void AudioRecorder::run()
     static const size_t BUFFER_LENGTH = 10000;
     static const std::chrono::milliseconds SLEEP_TIME(20); // 20 ms
 
-    AudioBuffer buffer(BUFFER_LENGTH, mbuffer_.getInternalAudioFormat());
+    AudioBuffer buffer(BUFFER_LENGTH, rbp_.getInternalAudioFormat());
 
     while (running_) {
-        const size_t availableSamples = mbuffer_.availableForGet(recorderId_);
+        const size_t availableSamples = rbp_.availableForGet(recorderId_);
         buffer.resize(std::min(availableSamples, BUFFER_LENGTH));
-        mbuffer_.getData(buffer, recorderId_);
+        rbp_.getData(buffer, recorderId_);
 
         if (availableSamples > 0)
             arecord_->recData(buffer);
