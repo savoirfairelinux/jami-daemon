@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libcodecdescriptor.la
 
-libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp audiocodec.h audiocodecfactory.h
+libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp ../../dlfcnWin32.h ../../dlfcnWin32.c audiocodec.h audiocodecfactory.h
 libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 
 if BUILD_GSM
@@ -41,7 +41,7 @@ if BUILD_OPUS
 OPUS_LIB = libcodec_opus.so
 libcodec_opus_so_SOURCES  = opuscodec.cpp opuscodec.h
 libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall $(opus_CFLAGS)
-libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++ $(opus_LIBS)
+libcodec_opus_so_LDFLAGS  = --shared -lc -lstdc++ $(opus_LIBS)
 libcodec_opus_so_LDADD    = libcodecdescriptor.la
 INSTALL_OPUS_RULE = install-libcodec_opus_so
 endif
@@ -76,7 +76,7 @@ libcodec_g722_so_LDFLAGS = --shared -lc
 libcodec_g729_so_SOURCES = g729.cpp g729.h
 libcodec_g729_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g729_so_LDADD = libcodecdescriptor.la
-libcodec_g729_so_LDFLAGS = --shared -lc -ldl -lstdc++
+libcodec_g729_so_LDFLAGS = --shared -lc -lstdc++
 
 install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so $(INSTALL_OPUS_RULE) $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
 uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_g729_so uninstall-libcodec_opus_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so uninstall-libcodec_ilbc_so
