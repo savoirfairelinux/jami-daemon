@@ -62,13 +62,16 @@
 #endif
 
 #include <unistd.h>
-#include <pwd.h>
-
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <sstream>
 #include <cstdlib>
+
+#ifdef _WIN32
+#else
+	#include <pwd.h>
+#endif
 
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
@@ -79,13 +82,13 @@ static void
 registration_cb(pjsip_regc_cbparam *param)
 {
     if (!param) {
-        ERROR("registration callback parameter is null");
+        LOG_ERROR("registration callback parameter is null");
         return;
     }
 
     auto account = static_cast<SIPAccount *>(param->token);
     if (!account) {
-        ERROR("account doesn't exist in registration callback");
+        LOG_ERROR("account doesn't exist in registration callback");
         return;
     }
 
@@ -284,7 +287,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     pjsip_dialog *dialog = NULL;
 
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
-        ERROR("Unable to create SIP dialogs for user agent client when "
+        LOG_ERROR("Unable to create SIP dialogs for user agent client when "
               "calling %s", toUri.c_str());
         return false;
     }
@@ -296,12 +299,12 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     pjsip_inv_session* inv = nullptr;
     if (pjsip_inv_create_uac(dialog, call->getLocalSDP().getLocalSdpSession(), 0, &inv) != PJ_SUCCESS) {
-        ERROR("Unable to create invite session for user agent client");
+        LOG_ERROR("Unable to create invite session for user agent client");
         return false;
     }
 
     if (!inv) {
-        ERROR("Call invite is not initialized");
+        LOG_ERROR("Call invite is not initialized");
         return PJ_FALSE;
     }
 
@@ -313,7 +316,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(), call->inv->pool));
 
     if (hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo()) != PJ_SUCCESS) {
-        ERROR("Could not initialize credentials for invite session authentication");
+        LOG_ERROR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
@@ -322,19 +325,19 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     pjsip_tx_data *tdata;
 
     if (pjsip_inv_invite(call->inv.get(), &tdata) != PJ_SUCCESS) {
-        ERROR("Could not initialize invite messager for this call");
+        LOG_ERROR("Could not initialize invite messager for this call");
         return false;
     }
 
     const pjsip_tpselector tp_sel = getTransportSelector();
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        ERROR("Unable to associate transport for invite session dialog");
+        LOG_ERROR("Unable to associate transport for invite session dialog");
         return false;
     }
 
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
         call->inv.reset();
-        ERROR("Unable to send invite message for this call");
+        LOG_ERROR("Unable to send invite message for this call");
         return false;
     }
 
@@ -414,7 +417,7 @@ validate(std::string &member, const std::string &param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        ERROR("Invalid parameter \"%s\"", param.c_str());
+        LOG_ERROR("Invalid parameter \"%s\"", param.c_str());
 }
 
 void SIPAccount::unserialize(const YAML::Node &node)
@@ -496,7 +499,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
-        ERROR("Couldn't find key %s", key);
+        LOG_ERROR("Couldn't find key %s", key);
         return;
     }
     i = atoi(iter->second.c_str());
@@ -707,7 +710,7 @@ void SIPAccount::doRegister()
     try {
         sendRegister();
     } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 
@@ -730,7 +733,7 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     try {
         sendUnregister(released_cb);
     } catch (const VoipLinkException &e) {
-        ERROR("doUnregister %s", e.what());
+        LOG_ERROR("doUnregister %s", e.what());
         setTransport();
         if (released_cb)
             released_cb(false);
@@ -795,7 +798,7 @@ SIPAccount::sendRegister()
     try {
         link_->sipTransport->createSipTransport(*this);
     } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         throw VoipLinkException("Could not create or acquire SIP transport");
     }
 
@@ -880,11 +883,11 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
         return;
 
     if (param->status != PJ_SUCCESS) {
-        ERROR("SIP registration error %d", param->status);
+        LOG_ERROR("SIP registration error %d", param->status);
         destroyRegistrationInfo();
         stopKeepAliveTimer();
     } else if (param->code < 0 || param->code >= 300) {
-        ERROR("SIP registration failed, status=%d (%.*s)",
+        LOG_ERROR("SIP registration failed, status=%d (%.*s)",
               param->code, (int)param->reason.slen, param->reason.ptr);
         destroyRegistrationInfo();
         stopKeepAliveTimer();
@@ -1054,7 +1057,7 @@ void SIPAccount::initTlsConfiguration()
     cipherNum = ciphers_.size();
 
     if (pj_ssl_cipher_get_availables(&ciphers_.front(), &cipherNum) != PJ_SUCCESS)
-        ERROR("Could not determine cipher list on this system");
+        LOG_ERROR("Could not determine cipher list on this system");
 
     ciphers_.resize(cipherNum);
 
@@ -1150,8 +1153,22 @@ bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endp
 
 std::string SIPAccount::getLoginName()
 {
+#ifdef _WIN32
+	LPTSTR name = new TCHAR[256];
+	DWORD effWin = sizeof(name);
+	LPDWORD size = &effWin;
+	GetUserNameW(name, size);
+
+
+	std::wstring temp(name);
+	std::string ret;
+	ret.assign(temp.begin(), temp.end());
+	return ret;
+
+#else
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
+#endif
 }
 
 std::string SIPAccount::getFromUri() const
@@ -1242,7 +1259,7 @@ pj_str_t
 SIPAccount::getContactHeader()
 {
     if (transport_ == nullptr)
-        ERROR("Transport not created yet");
+        LOG_ERROR("Transport not created yet");
 
     if (contact_.slen and contactOverwritten_)
         return contact_;
@@ -1328,11 +1345,11 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
     if (sipAccount == nullptr) {
-        ERROR("SIP account is nullptr while registering a new keep alive timer");
+        LOG_ERROR("SIP account is nullptr while registering a new keep alive timer");
         return;
     }
 
-    ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
+    LOG_ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
 
     // IP2IP default does not require keep-alive
     if (sipAccount->isIP2IP())
@@ -1397,7 +1414,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
 {
     // we can not authenticate without credentials
     if (creds.empty()) {
-        ERROR("Cannot authenticate with empty credentials list");
+        LOG_ERROR("Cannot authenticate with empty credentials list");
         return;
     }
 
@@ -1585,7 +1602,7 @@ void
 SIPAccount::enablePresence(const bool& enabled)
 {
     if (!presence_) {
-        ERROR("Presence not initialized");
+        LOG_ERROR("Presence not initialized");
         return;
     }
 
@@ -1604,7 +1621,7 @@ void
 SIPAccount::supportPresence(int function, bool enabled)
 {
     if (!presence_) {
-        ERROR("Presence not initialized");
+        LOG_ERROR("Presence not initialized");
         return;
     }
 
@@ -1826,7 +1843,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
                 rport,
                 transport_param);
         if (len < 1) {
-            ERROR("URI too long");
+            LOG_ERROR("URI too long");
             return false;
         }
 
@@ -1841,7 +1858,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         try {
             sendUnregister();
         } catch (const VoipLinkException &e) {
-            ERROR("%s", e.what());
+            LOG_ERROR("%s", e.what());
         }
 
         pjsip_regc_update_contact(regc_, 1, &contact_);
@@ -1850,7 +1867,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         try {
             sendRegister();
         } catch (const VoipLinkException &e) {
-            ERROR("%s", e.what());
+            LOG_ERROR("%s", e.what());
         }
     }
 
@@ -1879,7 +1896,7 @@ SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
     try {
         acc->sendRegister();
     } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         acc->scheduleReregistration(endpt);
     }
     delete context;
