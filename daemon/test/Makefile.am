@@ -8,7 +8,7 @@ TESTS = run_tests.sh
 test_CXXFLAGS = -DWORKSPACE="$(top_srcdir)/test/" @PTHREAD_CFLAGS@
 test_LDADD = $(top_builddir)/src/libsflphone.la \
              $(top_builddir)/src/libsflphone_la-logger.lo \
-             @CPPUNIT_LIBS@ @YAMLCPP_LIBS@ @CCRTP_LIBS@
+             @CPPUNIT_LIBS@ @YAMLCPP_LIBS@ @CCRTP_LIBS@ @PJPROJECT_LIBS@
 
 if BUILD_INSTANT_MESSAGING
 test_LDADD += @EXPAT_LIBS@
