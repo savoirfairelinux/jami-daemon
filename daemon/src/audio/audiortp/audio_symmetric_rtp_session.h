@@ -60,7 +60,7 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
         AudioSymmetricRtpSession(SIPCall &call);
         ~AudioSymmetricRtpSession();
 
-        std::vector<long>
+        std::vector<long long>
         getSocketDescriptors() const;
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
@@ -110,6 +110,6 @@ class AudioSymmetricRtpSessionIPv6 : public ost::SymmetricRTPSessionIPV6, public
 #endif // HAVE_IPV6
 
 }
-#pragma GCC diagnostic warning "-Weffc++"
+// #pragma GCC diagnostic warning "-Weffc++"
 #endif // AUDIO_SYMMETRIC_RTP_SESSION_H__
 

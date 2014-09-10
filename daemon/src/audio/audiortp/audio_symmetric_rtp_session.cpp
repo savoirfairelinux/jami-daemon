@@ -59,10 +59,10 @@ AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
     }
 }
 
-std::vector<long>
+std::vector<long long>
 AudioSymmetricRtpSession::getSocketDescriptors() const
 {
-    std::vector<long> result;
+    std::vector<long long> result;
     result.push_back(dso->getRecvSocket());
     result.push_back(cso->getRecvSocket());
     return result;
@@ -224,9 +224,9 @@ size_t
 AudioSymmetricRtpSessionIPv6::recvData(unsigned char* buffer, size_t len, ost::IPV4Host&, ost::tpport_t& port)
 {
     ost::IPV6Host hostv6 = call_.getLocalIp();
-    ERROR("recvData %d ", hostv6.getAddressCount());
+    LOG_ERROR("recvData %d ", hostv6.getAddressCount());
     size_t r = ost::SymmetricRTPSessionIPV6::recvData(buffer, len, hostv6, port);
-    ERROR("recvData from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
+    LOG_ERROR("recvData from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
     return r;
 }
 
@@ -235,7 +235,7 @@ AudioSymmetricRtpSessionIPv6::recvControl(unsigned char* buffer, size_t len, ost
 {
     ost::IPV6Host hostv6 = call_.getLocalIp();
     size_t r = ost::SymmetricRTPSessionIPV6::recvControl(buffer, len, hostv6, port);
-    ERROR("recvControl from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
+    LOG_ERROR("recvControl from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
     return r;
 }
 
