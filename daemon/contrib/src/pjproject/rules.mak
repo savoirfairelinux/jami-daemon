@@ -25,10 +25,10 @@ PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
 endif
 
 PKGS += pjproject
-# nominally 2.2.0 is enough, but it has to be patched for gnutls
-#ifeq ($(call need_pkg,'libpjproject >= 2.2.0'),)
-#PKGS_FOUND += pjproject
-#endif
+# FIXME: nominally 2.2.0 is enough, but it has to be patched for gnutls
+ifeq ($(call need_pkg,'libpjproject'),)
+PKGS_FOUND += pjproject
+endif
 
 DEPS_pjproject += gnutls
 ifndef HAVE_MACOSX
