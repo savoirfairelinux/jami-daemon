@@ -97,7 +97,7 @@ int VideoDecoder::openInput(const std::string &source_str,
     if (ret) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        ERROR("avformat_open_input failed: %s", errbuf);
+        LOG_ERROR("avformat_open_input failed: %s", errbuf);
     } else {
         DEBUG("Using format %s", format_str.c_str());
     }
@@ -148,7 +148,7 @@ int VideoDecoder::setupFromVideoData()
             errBuf[0] = '\0';
 
         // always fail here
-        ERROR("Could not find stream info: %s", errBuf);
+        LOG_ERROR("Could not find stream info: %s", errBuf);
         return -1;
     }
 
@@ -158,21 +158,21 @@ int VideoDecoder::setupFromVideoData()
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
-        ERROR("Could not find video stream");
+        LOG_ERROR("Could not find video stream");
         return -1;
     }
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
     if (decoderCtx_ == 0) {
-        ERROR("Decoder context is NULL");
+        LOG_ERROR("Decoder context is NULL");
         return -1;
     }
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
     if (!inputDecoder_) {
-        ERROR("Unsupported codec");
+        LOG_ERROR("Unsupported codec");
         return -1;
     }
 
@@ -191,7 +191,7 @@ int VideoDecoder::setupFromVideoData()
     ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
 #endif
     if (ret) {
-        ERROR("Could not open codec");
+        LOG_ERROR("Could not open codec");
         return -1;
     }
 
@@ -210,7 +210,7 @@ VideoDecoder::decode(VideoFrame& result, VideoPacket& video_packet)
     } else if (ret < 0) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        ERROR("Couldn't read frame: %s\n", errbuf);
+        LOG_ERROR("Couldn't read frame: %s\n", errbuf);
         return Status::ReadError;
     }
 

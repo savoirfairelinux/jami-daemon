@@ -62,7 +62,7 @@ AccountFactory::createAccount(const char* const accountType,
                               const std::string& id)
 {
      if (hasAccount(id)) {
-         ERROR("Existing account %s", id.c_str());
+         LOG_ERROR("Existing account %s", id.c_str());
          return nullptr;
      }
 
@@ -108,7 +108,7 @@ AccountFactory::removeAccount(const std::string& id)
     if (auto account = getAccount(id)) {
         removeAccount(*account);
     } else
-        ERROR("No account with ID %s", id.c_str());
+        LOG_ERROR("No account with ID %s", id.c_str());
 }
 
 template <> bool

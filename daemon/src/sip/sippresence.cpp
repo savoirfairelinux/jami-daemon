@@ -93,7 +93,7 @@ SIPPresence::~SIPPresence()
     sub_server_list_.clear();
 
     if (mutex_ and pj_mutex_destroy(mutex_) != PJ_SUCCESS)
-        ERROR("Error destroying mutex");
+        LOG_ERROR("Error destroying mutex");
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(&cp_);
@@ -379,7 +379,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
         if (param->status != PJ_SUCCESS) {
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));
-            ERROR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
+            LOG_ERROR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
             Manager::instance().getClient()->getPresenceManager()->serverError(
                     pres->getAccount()->getAccountID(),
                     error,
@@ -442,7 +442,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     pj_str_t from = pj_strdup3(pres->pool_, acc->getFromUri().c_str());
 
     if (status != PJ_SUCCESS) {
-        ERROR("Error creating PUBLISH request", status);
+        LOG_ERROR("Error creating PUBLISH request", status);
         goto on_error;
     }
 
@@ -468,7 +468,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     pres_msg_data msg_data;
 
     if (status != PJ_SUCCESS) {
-        ERROR("Error creating PIDF for PUBLISH request");
+        LOG_ERROR("Error creating PIDF for PUBLISH request");
         pjsip_tx_data_dec_ref(tdata);
         goto on_error;
     }
@@ -486,7 +486,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     if (status == PJ_EPENDING) {
         WARN("Previous request is in progress, ");
     } else if (status != PJ_SUCCESS) {
-        ERROR("Error sending PUBLISH request");
+        LOG_ERROR("Error sending PUBLISH request");
         goto on_error;
     }
 
@@ -521,7 +521,7 @@ SIPPresence::publish(SIPPresence *pres)
 
     if (status != PJ_SUCCESS) {
         pres->publish_sess_ = NULL;
-        ERROR("Failed to create a publish seesion.");
+        LOG_ERROR("Failed to create a publish seesion.");
         return status;
     }
 
@@ -530,14 +530,14 @@ SIPPresence::publish(SIPPresence *pres)
     status = pjsip_publishc_init(pres->publish_sess_, &STR_PRESENCE, &from, &from, &from, 0xFFFF);
 
     if (status != PJ_SUCCESS) {
-        ERROR("Failed to init a publish session");
+        LOG_ERROR("Failed to init a publish session");
         pres->publish_sess_ = NULL;
         return status;
     }
 
     /* Add credential for authentication */
     if (acc->hasCredentials() and pjsip_publishc_set_credentials(pres->publish_sess_, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
-        ERROR("Could not initialize credentials for invite session authentication");
+        LOG_ERROR("Could not initialize credentials for invite session authentication");
         return status;
     }
 
