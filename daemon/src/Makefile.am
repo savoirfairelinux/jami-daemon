@@ -106,4 +106,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		registration_states.h \
 		map_utils.h \
 		sflphone.h \
-		sflphone_api.cpp
+		sflphone_api.cpp \
+		dlfcnWin32.h \
+		dlfcnWin32.c
