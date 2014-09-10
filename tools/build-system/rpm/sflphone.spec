@@ -250,6 +250,10 @@ fi
 %defattr(-,root,root,-)
 %{_bindir}/sflphone
 %{_bindir}/sflphone-client-gnome
+%{_libdir}/libsflphone.so*
+%exclude %{_includedir}/sflphone.h
+%exclude %{_libdir}/libsflphone.a
+%exclude %{_libdir}/libsflphone.la
 %{_datadir}/glib-2.0/schemas/org.sflphone.SFLphone.gschema.xml
 %{_datadir}/applications/%{name}.desktop
 %{_mandir}/man1/sflphone.1.gz
