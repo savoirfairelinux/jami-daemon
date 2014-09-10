@@ -335,13 +335,13 @@ void AudioRtpSession::putDtmfEvent(char digit)
 CachedAudioRtpState *
 AudioRtpSession::saveState() const
 {
-    ERROR("Not implemented");
+    LOG_ERROR("Not implemented");
     return nullptr;
 }
 
 void
 AudioRtpSession::restoreState(const CachedAudioRtpState &state UNUSED)
 {
-    ERROR("Not implemented");
+    LOG_ERROR("Not implemented");
 }
 }
