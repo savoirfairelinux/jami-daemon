@@ -59,7 +59,7 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
     pj_cstr(&pjname, name.c_str());
     auto status = pj_getaddrinfo(family, &pjname, &addr_num, res);
     if (status != PJ_SUCCESS) {
-        ERROR("Error resolving %s :", name.c_str());
+        LOG_ERROR("Error resolving %s :", name.c_str());
         sip_utils::sip_strerror(status);
         return ipList;
     }
@@ -123,7 +123,7 @@ ip_utils::getLocalAddr(pj_uint16_t family)
     status = pj_gethostip(family, ip_addr);
     if (status == PJ_SUCCESS) return ip_addr;
 #endif
-    ERROR("Could not get local IP");
+    LOG_ERROR("Could not get local IP");
     return ip_addr;
 }
 
@@ -138,14 +138,14 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 
     int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
-        ERROR("Could not open socket: %m");
+        LOG_ERROR("Could not open socket: %m");
         return addr;
     }
 
     if (unix_family == AF_INET6) {
         int val = family != pj_AF_UNSPEC();
         if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &val, sizeof(val)) < 0) {
-            ERROR("Could not setsockopt: %m");
+            LOG_ERROR("Could not setsockopt: %m");
             close(fd);
             return addr;
         }

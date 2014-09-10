@@ -196,7 +196,7 @@ sip_utils::getIPList(const std::string &name)
     if (name.empty())
         return ipList;
 
-    //ERROR("sip_utils::getIPList %s", name.c_str());
+    //LOG_ERROR("sip_utils::getIPList %s", name.c_str());
 
     struct addrinfo *result;
     struct addrinfo hints;
@@ -224,7 +224,7 @@ sip_utils::getIPList(const std::string &name)
                 ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
                 break;
             default:
-                ERROR("Unexpected address family type, skipping.");
+                LOG_ERROR("Unexpected address family type, skipping.");
                 continue;
         }
         inet_ntop(res->ai_family, ptr, addrstr.data(), addrstr.size());
@@ -257,5 +257,5 @@ sip_utils::sip_strerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
     pj_strerror(code, err_msg, sizeof err_msg);
-    ERROR("%d: %s", code, err_msg);
+    LOG_ERROR("%d: %s", code, err_msg);
 }

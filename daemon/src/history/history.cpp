@@ -1,4 +1,4 @@
-/*
+ /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -100,7 +100,11 @@ void History::ensurePath()
 #else
         const string userdata = fileutils::get_data_dir();
 
+#ifndef _WIN32 /* TODO: WINDOWS, this is ugly as hell. */
         if (mkdir(userdata.data(), 0755) != 0) {
+#else
+        if (mkdir(userdata.data()) != 0) {
+#endif
             // If directory	creation failed
             if (errno != EEXIST) {
                 DEBUG("Cannot create directory: %s", userdata.c_str());
@@ -132,7 +136,7 @@ void History::setPath(const std::string &path)
 void History::addCall(Call *call, int limit)
 {
     if (!call) {
-        ERROR("Call is NULL, ignoring");
+        LOG_ERROR("Call is NULL, ignoring");
         return;
     }
     call->time_stop();

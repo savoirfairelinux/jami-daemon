@@ -138,7 +138,6 @@ case "${host_os}" in
     AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
     AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
 
-    CPPFLAGS="${CPPFLAGS} -DBOOST_USE_WINDOWS_H"
     LDFLAGS="${LDFLAGS} -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase"
     ac_default_prefix="`pwd`/_win32"
     DESTDIR="`pwd`/_win32/"
