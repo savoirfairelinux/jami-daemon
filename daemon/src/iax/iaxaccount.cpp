@@ -125,7 +125,7 @@ void IAXAccount::doRegister()
         link_->init();
         sendRegister();
     } catch (const VoipLinkException &e) {
-        ERROR("IAXAccount: %s", e.what());
+        LOG_ERROR("IAXAccount: %s", e.what());
     }
 }
 
@@ -136,7 +136,7 @@ IAXAccount::doUnregister(std::function<void(bool)> cb)
         sendUnregister();
         link_->terminate();
     } catch (const VoipLinkException &e) {
-        ERROR("IAXAccount: %s", e.what());
+        LOG_ERROR("IAXAccount: %s", e.what());
     }
     if (cb)
         cb(true);

@@ -194,7 +194,7 @@ IAXVoIPLink::sendAudioFromMic()
             std::lock_guard<std::mutex> lock(mutexIAX);
 
             if (iax_send_voice(currentCall->session, currentCall->format, encodedData_, compSize, outSamples) == -1)
-                ERROR("IAX: Error sending voice data.");
+                LOG_ERROR("IAX: Error sending voice data.");
         }
     }
 }
@@ -203,7 +203,7 @@ void
 IAXVoIPLink::handleReject(IAXCall& call)
 {
     call.setConnectionState(Call::CONNECTED);
-    call.setState(Call::ERROR);
+    call.setState(Call::LOG_ERROR);
     Manager::instance().callFailure(call.getCallId());
     call.removeCall();
 }
@@ -389,7 +389,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 
             call = account_.newIncomingCall<IAXCall>(id);
             if (!call) {
-                ERROR("failed to create an incoming IAXCall from account %s",
+                LOG_ERROR("failed to create an incoming IAXCall from account %s",
                       accountID.c_str());
                 return;
             }

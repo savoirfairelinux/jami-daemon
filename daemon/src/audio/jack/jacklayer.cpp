@@ -57,12 +57,12 @@ void connectPorts(jack_client_t *client, int portType, const std::vector<jack_po
         const char *port = jack_port_name(ports[i]);
         if (portType & JackPortIsInput) {
             if (jack_connect(client, port, physical_ports[i])) {
-                ERROR("Can't connect %s to %s", port, physical_ports[i]);
+                LOG_ERROR("Can't connect %s to %s", port, physical_ports[i]);
                 break;
             }
         } else {
             if (jack_connect(client, physical_ports[i], port)) {
-                ERROR("Can't connect port %s to %s", physical_ports[i], port);
+                LOG_ERROR("Can't connect port %s to %s", physical_ports[i], port);
                 break;
             }
         }
@@ -174,7 +174,7 @@ convertToFloat(const std::vector<SFLAudioSample> &src, std::vector<float> &dest)
 {
     static const float INV_SHORT_MAX = 1 / (float) SHRT_MAX;
     if (dest.size() != src.size()) {
-        ERROR("MISMATCH");
+        LOG_ERROR("MISMATCH");
         return;
     }
     for (size_t i = 0; i < dest.size(); ++i)
@@ -185,7 +185,7 @@ static void
 convertFromFloat(std::vector<float> &src, std::vector<SFLAudioSample> &dest)
 {
     if (dest.size() != src.size()) {
-        ERROR("MISMATCH");
+        LOG_ERROR("MISMATCH");
         return;
     }
     for (size_t i = 0; i < dest.size(); ++i)
@@ -346,7 +346,7 @@ JackLayer::JackLayer(const AudioPreference &p) :
     const auto playRate = jack_get_sample_rate(playbackClient_);
     const auto captureRate = jack_get_sample_rate(captureClient_);
     if (playRate != captureRate)
-        ERROR("Mismatch between capture rate %u and playback rate %u", playRate, captureRate);
+        LOG_ERROR("Mismatch between capture rate %u and playback rate %u", playRate, captureRate);
 
     hardwareBufferSize_ = jack_get_buffer_size(playbackClient_);
 
@@ -372,9 +372,9 @@ JackLayer::~JackLayer()
         jack_port_unregister(captureClient_, p);
 
     if (jack_client_close(playbackClient_))
-        ERROR("JACK client could not close");
+        LOG_ERROR("JACK client could not close");
     if (jack_client_close(captureClient_))
-        ERROR("JACK client could not close");
+        LOG_ERROR("JACK client could not close");
 
     for (auto r : out_ringbuffers_)
         jack_ringbuffer_free(r);
@@ -486,7 +486,7 @@ JackLayer::startStream()
     ringbuffer_thread_ = std::thread(&JackLayer::ringbuffer_worker, this);
 
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
-        ERROR("Could not activate JACK client");
+        LOG_ERROR("Could not activate JACK client");
         workerAlive_ = false;
         ringbuffer_thread_.join();
         isStarted_ = false;
@@ -519,7 +519,7 @@ JackLayer::stopStream()
     }
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
-        ERROR("JACK client could not deactivate");
+        LOG_ERROR("JACK client could not deactivate");
     }
 
     isStarted_ = false;

@@ -127,23 +127,23 @@ create_pidfile()
     char buf[100];
     f.fd = open(f.name.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (f.fd == -1) {
-        ERROR("Could not open PID file %s", f.name.c_str());
+        LOG_ERROR("Could not open PID file %s", f.name.c_str());
         return f;
     }
 
     if (lockRegion(f.fd, F_WRLCK, SEEK_SET, 0, 0) == -1) {
         if (errno  == EAGAIN or errno == EACCES)
-            ERROR("PID file '%s' is locked; probably "
+            LOG_ERROR("PID file '%s' is locked; probably "
                     "'%s' is already running", f.name.c_str(), PACKAGE_NAME);
         else
-            ERROR("Unable to lock PID file '%s'", f.name.c_str());
+            LOG_ERROR("Unable to lock PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
     }
 
     if (ftruncate(f.fd, 0) == -1) {
-        ERROR("Could not truncate PID file '%s'", f.name.c_str());
+        LOG_ERROR("Could not truncate PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
@@ -153,7 +153,7 @@ create_pidfile()
 
     const int buf_strlen = strlen(buf);
     if (write(f.fd, buf, buf_strlen) != buf_strlen) {
-        ERROR("Problem writing to PID file '%s'", f.name.c_str());
+        LOG_ERROR("Problem writing to PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
@@ -166,7 +166,7 @@ std::string
 expand_path(const std::string &path)
 {
 #ifdef __ANDROID__
-    ERROR("Path expansion not implemented, returning original");
+    LOG_ERROR("Path expansion not implemented, returning original");
     return path;
 #else
 
@@ -177,20 +177,20 @@ expand_path(const std::string &path)
 
     switch (ret) {
         case WRDE_BADCHAR:
-            ERROR("Illegal occurrence of newline or one of |, &, ;, <, >, "
+            LOG_ERROR("Illegal occurrence of newline or one of |, &, ;, <, >, "
                   "(, ), {, }.");
             return result;
         case WRDE_BADVAL:
-            ERROR("An undefined shell variable was referenced");
+            LOG_ERROR("An undefined shell variable was referenced");
             return result;
         case WRDE_CMDSUB:
-            ERROR("Command substitution occurred");
+            LOG_ERROR("Command substitution occurred");
             return result;
         case WRDE_SYNTAX:
-            ERROR("Shell syntax error");
+            LOG_ERROR("Shell syntax error");
             return result;
         case WRDE_NOSPACE:
-            ERROR("Out of memory.");
+            LOG_ERROR("Out of memory.");
             // This is the only error where we must call wordfree
             break;
         default:
@@ -219,7 +219,7 @@ FileHandle::~FileHandle()
     if (fd != -1) {
         close(fd);
         if (unlink(name.c_str()) == -1)
-            ERROR("%s", strerror(errno));
+            LOG_ERROR("%s", strerror(errno));
     }
 }
 

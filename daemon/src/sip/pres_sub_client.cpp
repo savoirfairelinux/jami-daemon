@@ -537,13 +537,13 @@ bool PresSubClient::subscribe()
     status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from, &contact_, &uri_, NULL, &dlg_);
 
     if (status != PJ_SUCCESS) {
-        ERROR("Unable to create dialog \n");
+        LOG_ERROR("Unable to create dialog \n");
         return false;
     }
 
     /* Add credential for auth. */
     if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
-        ERROR("Could not initialize credentials for subscribe session authentication");
+        LOG_ERROR("Could not initialize credentials for subscribe session authentication");
     }
 
     /* Increment the dialog's lock otherwise when presence session creation
@@ -569,7 +569,7 @@ bool PresSubClient::subscribe()
 
     /* Add credential for authentication */
     if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
-        ERROR("Could not initialize credentials for invite session authentication");
+        LOG_ERROR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
