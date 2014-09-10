@@ -295,7 +295,7 @@ OpenSLLayer::initAudioPlayback() const
     assert(SL_RESULT_SUCCESS == result);
 
     if (result != SL_RESULT_SUCCESS) {
-        ERROR("Unable to set android player configuration");
+        LOG_ERROR("Unable to set android player configuration");
     }
 
     // create audio interface
@@ -594,7 +594,7 @@ OpenSLLayer::getCaptureDeviceList() const
 
     if (!mic_available) {
         // Appropriate error message here
-        ERROR("No mic available quitting");
+        LOG_ERROR("No mic available quitting");
         exit(1);
     }
 

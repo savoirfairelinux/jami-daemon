@@ -110,7 +110,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     AVOutputFormat *oformat = av_guess_format(short_name, filename, mime_type);
 
     if (!oformat) {
-        ERROR("Unable to find a suitable output format for %s", filename);
+        LOG_ERROR("Unable to find a suitable output format for %s", filename);
         throw VideoEncoderException("No output format");
     }
 
@@ -122,7 +122,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     /* find the video encoder */
     outputEncoder_ = avcodec_find_encoder_by_name(enc_name);
     if (!outputEncoder_) {
-        ERROR("Encoder \"%s\" not found!", enc_name);
+        LOG_ERROR("Encoder \"%s\" not found!", enc_name);
         throw VideoEncoderException("No output encoder");
     }
 
@@ -203,7 +203,7 @@ void
 VideoEncoder::startIO()
 {
     if (avformat_write_header(outputCtx_, options_ ? &options_ : NULL)) {
-        ERROR("Could not write header for output file... check codec parameters");
+        LOG_ERROR("Could not write header for output file... check codec parameters");
         throw VideoEncoderException("Failed to write output file header");
     }
 
@@ -215,7 +215,7 @@ print_averror(const char *funcname, int err)
 {
     char errbuf[64];
     av_strerror(err, errbuf, sizeof(errbuf));
-    ERROR("%s failed: %s", funcname, errbuf);
+    LOG_ERROR("%s failed: %s", funcname, errbuf);
 }
 
 int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_number)
@@ -319,7 +319,7 @@ int VideoEncoder::flush()
 
     ret = avcodec_encode_video2(encoderCtx_, &pkt, NULL, &got_packet);
     if (ret != 0) {
-        ERROR("avcodec_encode_video failed");
+        LOG_ERROR("avcodec_encode_video failed");
         av_free_packet(&pkt);
         return -1;
     }
@@ -328,13 +328,13 @@ int VideoEncoder::flush()
         // write the compressed frame
         ret = av_write_frame(outputCtx_, &pkt);
         if (ret < 0)
-            ERROR("write_frame failed");
+            LOG_ERROR("write_frame failed");
     }
 #else
     ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
                                encoderBufferSize_, NULL);
     if (ret < 0) {
-        ERROR("avcodec_encode_video failed");
+        LOG_ERROR("avcodec_encode_video failed");
         av_free_packet(&pkt);
         return ret;
     }
@@ -345,7 +345,7 @@ int VideoEncoder::flush()
     // write the compressed frame
     ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0)
-        ERROR("write_frame failed");
+        LOG_ERROR("write_frame failed");
 #endif
     av_free_packet(&pkt);
 
