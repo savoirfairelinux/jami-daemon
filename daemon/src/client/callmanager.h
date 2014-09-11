@@ -99,18 +99,18 @@ class CallManager
         /* DEPRECATED */
         void setRecording(const std::string& callID);
 
-        void recordPlaybackSeek(const double& value);
+        void recordPlaybackSeek(double value);
         bool getIsRecording(const std::string& callID);
         std::string getCurrentAudioCodecName(const std::string& callID);
         void playDTMF(const std::string& key);
-        void startTone(const int32_t& start, const int32_t& type);
+        void startTone(int32_t start, int32_t type);
 
         /* Security related methods */
         void setSASVerified(const std::string& callID);
         void resetSASVerified(const std::string& callID);
         void setConfirmGoClear(const std::string& callID);
         void requestGoClear(const std::string& callID);
-        void acceptEnrollment(const std::string& callID, const bool& accepted);
+        void acceptEnrollment(const std::string& callID, bool accepted);
 
         /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
@@ -126,7 +126,7 @@ class CallManager
 
         void recordPlaybackStopped(const std::string& path);
 
-        void voiceMailNotify(const std::string& callID, const int32_t& nd_msg);
+        void voiceMailNotify(const std::string& callID, int32_t nd_msg);
 
         void incomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
 
@@ -138,17 +138,17 @@ class CallManager
 
         void conferenceChanged(const std::string& confID,const std::string& state);
 
-        void updatePlaybackScale(const std::string&, const int32_t&, const int32_t&);
+        void updatePlaybackScale(const std::string&, int32_t, int32_t);
         void conferenceRemoved(const std::string&);
         void newCallCreated(const std::string&, const std::string&, const std::string&);
-        void sipCallStateChanged(const std::string&, const std::string&, const int32_t&);
-        void recordingStateChanged(const std::string& callID, const bool& state);
+        void sipCallStateChanged(const std::string&, const std::string&, int32_t);
+        void recordingStateChanged(const std::string& callID, bool state);
         void secureSdesOn(const std::string& arg);
         void secureSdesOff(const std::string& arg);
 
         void secureZrtpOn(const std::string& callID, const std::string& cipher);
         void secureZrtpOff(const std::string& callID);
-        void showSAS(const std::string& callID, const std::string& sas, const bool& verified);
+        void showSAS(const std::string& callID, const std::string& sas, bool verified);
         void zrtpNotSuppOther(const std::string& callID);
         void zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3);
 
