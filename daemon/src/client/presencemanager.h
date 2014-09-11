@@ -48,9 +48,9 @@ class PresenceManager
     // Methods
     public:
         /* Presence subscription/Notification. */
-        void publish(const std::string& accountID, const bool& status, const std::string& note);
-        void answerServerRequest(const std::string& uri, const bool& flag);
-        void subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag);
+        void publish(const std::string& accountID, bool status, const std::string& note);
+        void answerServerRequest(const std::string& uri, bool flag);
+        void subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag);
         std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
         void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 
@@ -59,9 +59,8 @@ class PresenceManager
         void newServerSubscriptionRequest(const std::string& remote);
         void serverError(const std::string& accountID, const std::string& error, const std::string& msg);
         void newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
-                                  const bool& status, const std::string& lineStatus);
-        void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
-                                  const bool& state);
+                                  bool status, const std::string& lineStatus);
+        void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri, bool state);
 
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"

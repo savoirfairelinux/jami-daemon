@@ -58,7 +58,7 @@ void PresenceManager::registerEvHandlers(struct sflph_pres_ev_handlers* evHandle
  * Un/subscribe to buddySipUri for an accountID
  */
 void
-PresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
+PresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
 {
     const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
@@ -81,7 +81,7 @@ PresenceManager::subscribeBuddy(const std::string& accountID, const std::string&
  * Notify for IP2IP account and publish for PBX account
  */
 void
-PresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
+PresenceManager::publish(const std::string& accountID, bool status, const std::string& note)
 {
     const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
@@ -103,7 +103,7 @@ PresenceManager::publish(const std::string& accountID, const bool& status, const
  * Accept or not a PresSubServer request for IP2IP account
  */
 void
-PresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
+PresenceManager::answerServerRequest(const std::string& uri, bool flag)
 {
     const auto account = Manager::instance().getIP2IPAccount();
     const auto sipaccount = static_cast<SIPAccount *>(account.get());
@@ -191,7 +191,7 @@ void PresenceManager::serverError(const std::string& accountID, const std::strin
 }
 
 void PresenceManager::newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
-                          const bool& status, const std::string& lineStatus)
+                          bool status, const std::string& lineStatus)
 {
     if (evHandlers_.on_new_buddy_notification) {
         evHandlers_.on_new_buddy_notification(accountID, buddyUri, status, lineStatus);
@@ -199,7 +199,7 @@ void PresenceManager::newBuddyNotification(const std::string& accountID, const s
 }
 
 void PresenceManager::subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
-                          const bool& state)
+                          bool state)
 {
     if (evHandlers_.on_subscription_state_change) {
         evHandlers_.on_subscription_state_change(accountID, buddyUri, state);
