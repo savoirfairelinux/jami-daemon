@@ -38,11 +38,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -55,6 +50,19 @@
 
 #include "logger.h"
 #include "tlsvalidation.h"
+
+#ifdef _WIN32
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+	#define F_GETFD   1 /* Get file descriptor flags.  */
+	#define F_SETFD   2 /* Set file descriptor flags.  */
+#else
+	#include <sys/socket.h>
+	#include <sys/un.h>
+	#include <netinet/tcp.h>
+	#include <netinet/in.h>
+	#include <netdb.h>
+#endif
 
 /**
  * Load the content of a file and return the data pointer to it.
@@ -465,12 +473,22 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
         return res;
     }
     /* Set non-blocking so we can dected timeouts. */
+#ifdef _WIN32
+	unsigned long winSockMode = 1; // Non-blocking.
+	arg = ioctlsocket(sockfd, FIONBIO, &winSockMode);
+	if (arg != 0)
+	{
+		WSAGetLastError();
+		goto out;
+	}
+#else
     arg = fcntl(sockfd, F_GETFL, NULL);
     if (arg < 0)
         goto out;
     arg |= O_NONBLOCK;
     if (fcntl(sockfd, F_SETFL, arg) < 0)
         goto out;
+#endif
 
     /* Give the socket a name. */
     memset(&name, 0, sizeof(name));
@@ -519,12 +537,22 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
         }
     }
     /* Set the socked blocking again. */
+#ifdef _WIN32
+	winSockMode = 0; // Blocking.
+	arg = ioctlsocket(sockfd, FIONBIO, &winSockMode);
+	if (arg != 0)
+	{
+		WSAGetLastError();
+		goto out;
+	}
+#else
     arg = fcntl(sockfd, F_GETFL, NULL);
     if (arg < 0)
         goto out;
     arg &= ~O_NONBLOCK;
     if (fcntl(sockfd, F_SETFL, arg) < 0)
         goto out;
+#endif
 
     /* Disable Nagle algorithm that slows down the SSL handshake. */
     err = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
