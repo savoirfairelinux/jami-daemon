@@ -228,7 +228,7 @@ CallManager::setRecording(const std::string& callID)
 }
 
 void
-CallManager::recordPlaybackSeek(const double& value)
+CallManager::recordPlaybackSeek(double value)
 {
     Manager::instance().recordingPlaybackSeek(value);
 }
@@ -264,7 +264,7 @@ CallManager::playDTMF(const std::string& key)
 }
 
 void
-CallManager::startTone(const int32_t& start , const int32_t& type)
+CallManager::startTone(int32_t start, int32_t type)
 {
     if (start) {
         if (type == 0)
@@ -358,7 +358,7 @@ CallManager::requestGoClear(const std::string& callID)
 }
 
 void
-CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
+CallManager::acceptEnrollment(const std::string& callID, bool accepted)
 {
 #if HAVE_ZRTP
     try {
@@ -418,7 +418,7 @@ void CallManager::recordPlaybackStopped(const std::string& path)
     }
 }
 
-void CallManager::voiceMailNotify(const std::string& callID, const int32_t& nd_msg)
+void CallManager::voiceMailNotify(const std::string& callID, int32_t nd_msg)
 {
     if (evHandlers_.on_voice_mail_notify) {
         evHandlers_.on_voice_mail_notify(callID, nd_msg);
@@ -453,14 +453,14 @@ void CallManager::conferenceCreated(const std::string& confID)
     }
 }
 
-void CallManager::conferenceChanged(const std::string& confID,const std::string& state)
+void CallManager::conferenceChanged(const std::string& confID, const std::string& state)
 {
     if (evHandlers_.on_conference_changed) {
         evHandlers_.on_conference_changed(confID, state);
     }
 }
 
-void CallManager::updatePlaybackScale(const std::string& filepath, const int32_t& position, const int32_t& scale)
+void CallManager::updatePlaybackScale(const std::string& filepath, int32_t position, int32_t scale)
 {
     if (evHandlers_.on_update_playback_scale) {
         evHandlers_.on_update_playback_scale(filepath, position, scale);
@@ -481,14 +481,14 @@ void CallManager::newCallCreated(const std::string& accountID, const std::string
     }
 }
 
-void CallManager::sipCallStateChanged(const std::string& callID, const std::string& state, const int32_t& code)
+void CallManager::sipCallStateChanged(const std::string& callID, const std::string& state, int32_t code)
 {
     if (evHandlers_.on_sip_call_state_change) {
         evHandlers_.on_sip_call_state_change(callID, state, code);
     }
 }
 
-void CallManager::recordingStateChanged(const std::string& callID, const bool& state)
+void CallManager::recordingStateChanged(const std::string& callID, bool state)
 {
     if (evHandlers_.on_record_state_change) {
         evHandlers_.on_record_state_change(callID, state);
@@ -523,7 +523,7 @@ void CallManager::secureZrtpOff(const std::string& callID)
     }
 }
 
-void CallManager::showSAS(const std::string& callID, const std::string& sas, const bool& verified)
+void CallManager::showSAS(const std::string& callID, const std::string& sas, bool verified)
 {
     if (evHandlers_.on_show_sas) {
         evHandlers_.on_show_sas(callID, sas, verified);
