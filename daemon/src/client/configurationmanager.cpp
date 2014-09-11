@@ -135,7 +135,7 @@ void ConfigurationManager::setAccountDetails(const std::string& accountID, const
     Manager::instance().setAccountDetails(accountID, details);
 }
 
-void ConfigurationManager::sendRegister(const std::string& accountID, const bool& enable)
+void ConfigurationManager::sendRegister(const std::string& accountID, bool enable)
 {
     Manager::instance().sendRegister(accountID, enable);
 }
@@ -191,7 +191,7 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
     return method;
 }
 
-std::vector<std::string> ConfigurationManager::getAudioCodecDetails(const int32_t& payload)
+std::vector<std::string> ConfigurationManager::getAudioCodecDetails(int32_t payload)
 {
     std::vector<std::string> result(Manager::instance().audioCodecFactory.getCodecSpecifications(payload));
 
@@ -246,17 +246,17 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
     return Manager::instance().getAudioInputDeviceList();
 }
 
-void ConfigurationManager::setAudioOutputDevice(const int32_t& index)
+void ConfigurationManager::setAudioOutputDevice(int32_t index)
 {
     return Manager::instance().setAudioDevice(index, DeviceType::PLAYBACK);
 }
 
-void ConfigurationManager::setAudioInputDevice(const int32_t& index)
+void ConfigurationManager::setAudioInputDevice(int32_t index)
 {
     return Manager::instance().setAudioDevice(index, DeviceType::CAPTURE);
 }
 
-void ConfigurationManager::setAudioRingtoneDevice(const int32_t& index)
+void ConfigurationManager::setAudioRingtoneDevice(int32_t index)
 {
     return Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
 }
@@ -288,7 +288,7 @@ bool ConfigurationManager::getNoiseSuppressState()
     return Manager::instance().getNoiseSuppressState();
 }
 
-void ConfigurationManager::setNoiseSuppressState(const bool& state)
+void ConfigurationManager::setNoiseSuppressState(bool state)
 {
     Manager::instance().setNoiseSuppressState(state);
 }
@@ -298,7 +298,7 @@ bool ConfigurationManager::isAgcEnabled()
     return Manager::instance().isAGCEnabled();
 }
 
-void ConfigurationManager::setAgcState(const bool& enabled)
+void ConfigurationManager::setAgcState(bool enabled)
 {
     Manager::instance().setAGCState(enabled);
 }
@@ -351,7 +351,7 @@ bool ConfigurationManager::getIsAlwaysRecording()
     return Manager::instance().getIsAlwaysRecording();
 }
 
-void ConfigurationManager::setIsAlwaysRecording(const bool& rec)
+void ConfigurationManager::setIsAlwaysRecording(bool rec)
 {
     Manager::instance().setIsAlwaysRecording(rec);
 }
@@ -366,7 +366,7 @@ void ConfigurationManager::clearHistory()
     return Manager::instance().clearHistory();
 }
 
-void ConfigurationManager::setHistoryLimit(const int32_t& days)
+void ConfigurationManager::setHistoryLimit(int32_t days)
 {
     Manager::instance().setHistoryLimit(days);
 }
@@ -381,7 +381,7 @@ std::string ConfigurationManager::getAudioManager()
     return Manager::instance().getAudioManager();
 }
 
-void ConfigurationManager::setVolume(const std::string& device, const double& value)
+void ConfigurationManager::setVolume(const std::string& device, double value)
 {
     auto audiolayer = Manager::instance().getAudioDriver();
 
@@ -426,7 +426,7 @@ bool ConfigurationManager::isDtmfMuted()
     return not Manager::instance().voipPreferences.getPlayDtmf();
 }
 
-void ConfigurationManager::muteDtmf(const bool &mute)
+void ConfigurationManager::muteDtmf(bool mute)
 {
     Manager::instance().voipPreferences.setPlayDtmf(not mute);
 }
@@ -443,7 +443,7 @@ bool ConfigurationManager::isCaptureMuted()
     return audiolayer->isCaptureMuted();
 }
 
-void ConfigurationManager::muteCapture(const bool &mute)
+void ConfigurationManager::muteCapture(bool mute)
 {
     auto audiolayer = Manager::instance().getAudioDriver();
 
@@ -467,7 +467,7 @@ bool ConfigurationManager::isPlaybackMuted()
     return audiolayer->isPlaybackMuted();
 }
 
-void ConfigurationManager::mutePlayback(const bool &mute)
+void ConfigurationManager::mutePlayback(bool mute)
 {
     auto audiolayer = Manager::instance().getAudioDriver();
 
@@ -585,7 +585,7 @@ bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
 }
 
 
-void ConfigurationManager::volumeChanged(const std::string& device, const int& value)
+void ConfigurationManager::volumeChanged(const std::string& device, int value)
 {
     if (evHandlers_.on_volume_change) {
         evHandlers_.on_volume_change(device, value);
@@ -613,21 +613,21 @@ void ConfigurationManager::stunStatusFailure(const std::string& accountID)
     }
 }
 
-void ConfigurationManager::registrationStateChanged(const std::string& accountID, int const& state)
+void ConfigurationManager::registrationStateChanged(const std::string& accountID, int state)
 {
     if (evHandlers_.on_registration_state_change) {
         evHandlers_.on_registration_state_change(accountID, state);
     }
 }
 
-void ConfigurationManager::sipRegistrationStateChanged(const std::string& accountID, const std::string& state, const int32_t& code)
+void ConfigurationManager::sipRegistrationStateChanged(const std::string& accountID, const std::string& state, int32_t code)
 {
     if (evHandlers_.on_sip_registration_state_change) {
         evHandlers_.on_sip_registration_state_change(accountID, state, code);
     }
 }
 
-void ConfigurationManager::errorAlert(const int& alert)
+void ConfigurationManager::errorAlert(int alert)
 {
     if (evHandlers_.on_error) {
         evHandlers_.on_error(alert);
