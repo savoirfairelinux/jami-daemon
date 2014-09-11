@@ -57,14 +57,14 @@ class ConfigurationManager
         std::string addAccount(const std::map< std::string, std::string >& details);
         void removeAccount(const std::string& accoundID);
         std::vector< std::string > getAccountList();
-        void sendRegister(const std::string& accoundID, const bool& enable);
+        void sendRegister(const std::string& accoundID, bool enable);
         void registerAllAccounts(void);
 
         std::map< std::string, std::string > getTlsSettingsDefault();
 
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();
-        std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
+        std::vector< std::string > getAudioCodecDetails(int32_t payload);
         std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
 
         void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);
@@ -72,27 +72,27 @@ class ConfigurationManager
         std::vector< std::string > getAudioPluginList();
         void setAudioPlugin(const std::string& audioPlugin);
         std::vector< std::string > getAudioOutputDeviceList();
-        void setAudioOutputDevice(const int32_t& index);
-        void setAudioInputDevice(const int32_t& index);
-        void setAudioRingtoneDevice(const int32_t& index);
+        void setAudioOutputDevice(int32_t index);
+        void setAudioInputDevice(int32_t index);
+        void setAudioRingtoneDevice(int32_t index);
         std::vector< std::string > getAudioInputDeviceList();
         std::vector< std::string > getCurrentAudioDevicesIndex();
         int32_t getAudioInputDeviceIndex(const std::string& name);
         int32_t getAudioOutputDeviceIndex(const std::string& name);
         std::string getCurrentAudioOutputPlugin();
         bool getNoiseSuppressState();
-        void setNoiseSuppressState(const bool& state);
+        void setNoiseSuppressState(bool state);
 
         bool isAgcEnabled();
-        void setAgcState(const bool& enabled);
+        void setAgcState(bool enabled);
 
-        void muteDtmf(const bool& mute);
+        void muteDtmf(bool mute);
         bool isDtmfMuted();
 
         bool isCaptureMuted();
-        void muteCapture(const bool& mute);
+        void muteCapture(bool mute);
         bool isPlaybackMuted();
-        void mutePlayback(const bool& mute);
+        void mutePlayback(bool mute);
 
         std::map<std::string, std::string> getRingtoneList();
 
@@ -103,9 +103,9 @@ class ConfigurationManager
         std::string getRecordPath();
         void setRecordPath(const std::string& recPath);
         bool getIsAlwaysRecording();
-        void setIsAlwaysRecording(const bool& rec);
+        void setIsAlwaysRecording(bool rec);
 
-        void setHistoryLimit(const int32_t& days);
+        void setHistoryLimit(int32_t days);
         int32_t getHistoryLimit();
         void clearHistory();
 
@@ -131,7 +131,7 @@ class ConfigurationManager
         std::map<std::string, std::string> getShortcuts();
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
 
-        void setVolume(const std::string& device, const double& value);
+        void setVolume(const std::string& device, double value);
         double getVolume(const std::string& device);
 
         /*
@@ -145,7 +145,7 @@ class ConfigurationManager
 
     // Signals
     public:
-        void volumeChanged(const std::string& device, const int& value);
+        void volumeChanged(const std::string& device, int value);
 
         void accountsChanged();
 
@@ -153,9 +153,9 @@ class ConfigurationManager
 
         void stunStatusFailure(const std::string& accoundID);
 
-        void registrationStateChanged(const std::string& accoundID, int const& state);
-        void sipRegistrationStateChanged(const std::string&, const std::string&, const int32_t&);
-        void errorAlert(const int& alert);
+        void registrationStateChanged(const std::string& accoundID, int state);
+        void sipRegistrationStateChanged(const std::string&, const std::string&, int32_t state);
+        void errorAlert(int alert);
 
         std::vector< int32_t > getHardwareAudioFormat();
 
