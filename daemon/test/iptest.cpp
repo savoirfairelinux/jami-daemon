@@ -66,6 +66,7 @@ void IpTest::testIpAddr()
 	pj_sockaddr_set_port(ip.pjPtr(), 5042);
 	CPPUNIT_ASSERT(ip.getPort() == 5042);
 
+#if HAVE_IPV6
 	const in6_addr native_ip = {{
 		0x3f, 0xfe, 0x05, 0x01,
 		0x00, 0x08, 0x00, 0x00,
@@ -82,6 +83,7 @@ void IpTest::testIpAddr()
 	CPPUNIT_ASSERT(IpAddr::isValid("[3ffe:0501:0008:0000:0260:97ff:fe40:efab]"));
 	CPPUNIT_ASSERT(IpAddr::isValid("[3ffe:0501:0008:0000:0260:97ff:fe40:efab]:4242"));
 	CPPUNIT_ASSERT(IpAddr::isValid("[3ffe:501:8::260:97ff:fe40:efab]:4242"));
+#endif
 }
 
 void IpTest::testIpAddrOst()
