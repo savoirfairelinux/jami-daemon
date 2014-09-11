@@ -1895,7 +1895,11 @@ ManagerImpl::retrieveConfigPath() const
     if (not xdg_env.empty())
         configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
 
-    if (mkdir(configdir.data(), 0700) != 0) {
+#ifndef _WIN32 /* TODO: WINDOWS, this is ugly as hell. */
+	if (mkdir(configdir.data(), 0700) != 0) {
+#else
+	if (mkdir(configdir.data()) != 0) {
+#endif
         // If directory creation failed
         if (errno != EEXIST)
             DEBUG("Cannot create directory: %s!", configdir.c_str());
