@@ -135,7 +135,7 @@ Call::setState(CallState state)
         static const char *states[] = {"INACTIVE", "ACTIVE", "HOLD", "BUSY", "MERROR"};
         assert(callState_ < ARRAYSIZE(states) and state < ARRAYSIZE(states));
 
-        MERROR("Invalid call state transition from %s to %s",
+        LOG_ERROR("Invalid call state transition from %s to %s",
               states[callState_], states[state]);
         return false;
     }

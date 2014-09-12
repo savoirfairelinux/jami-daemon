@@ -38,6 +38,10 @@
 #include "dbus/dbusclient.h"
 #include "src/fileutils.h"
 
+#ifdef _WIN32 /* TODO: WINDOWS, create a signal.c and check all signals. */
+	#define strsignal std::to_string
+#endif
+
 static int sflphFlags = 0;
 static std::unique_ptr<DBusClient> dbusClient;
 
@@ -152,7 +156,9 @@ static void signal_handler(int code)
                   << ", terminating..." << std::endl;
 
     // Unset signal handlers
+#ifndef _WIN32 // Windows doesn't support SIGHUP.
     signal(SIGHUP, SIG_DFL);
+#endif
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
 
@@ -173,7 +179,11 @@ int main(int argc, char *argv [])
 
 #ifdef TOP_BUILDDIR
     if (!getenv("CODECS_PATH"))
+	#ifdef _WIN32
+        _putenv_s("CODECS_PATH", TOP_BUILDDIR "/src/audio/codecs");
+	#else
         setenv("CODECS_PATH", TOP_BUILDDIR "/src/audio/codecs", 1);
+	#endif
 #endif
 
     print_title();
@@ -193,8 +203,10 @@ int main(int argc, char *argv [])
 
     // TODO: Block signals for all threads but the main thread, decide how/if we should
     // handle other signals
-    signal(SIGINT, signal_handler);
+#ifndef _WIN32
     signal(SIGHUP, signal_handler);
+#endif
+    signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
 #ifdef SFL_VIDEO
