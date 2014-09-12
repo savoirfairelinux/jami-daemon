@@ -90,10 +90,10 @@ void strErr();
 
 /* TODO: WINDOWS, Actually implement logging system. */
 #elif defined _WIN32
-#define LOG_ERR     WINDOWS_LOG_ERROR
-#define LOG_WARNING WINDOWS_LOG_WARN
-#define LOG_INFO    WINDOWS_LOG_INFO
-#define LOG_DEBUG   WINDOWS_LOG_DEBUG
+#define LOG_ERR     0
+#define LOG_WARNING 1
+#define LOG_INFO    2
+#define LOG_DEBUG   3
 
 #define LOGGER(M, LEVEL, ...) printf(M, ##__VA_ARGS__)
 

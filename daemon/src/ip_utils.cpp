@@ -31,15 +31,24 @@
 
 #include "ip_utils.h"
 #include "logger.h"
-
 #include "sip/sip_utils.h"
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <net/if.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
+
+#ifdef _WIN32
+	#include <ws2tcpip.h>
+	#include <winsock2.h>
+	#include <inaddr.h>
+
+	#define InetPtonA inet_pton
+	WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pAddr);
+#else
+	#include <arpa/inet.h>
+	#include <netdb.h>
+	#include <net/if.h>
+	#include <sys/ioctl.h>
+#endif
 
 std::vector<IpAddr>
 ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
@@ -144,13 +153,20 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 
     if (unix_family == AF_INET6) {
         int val = family != pj_AF_UNSPEC();
-        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &val, sizeof(val)) < 0) {
+#ifdef _WIN32
+		char* valPtr = (char *) &val;
+#else
+		void* valPtr = (void *) &val;
+#endif
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, valPtr, sizeof(val)) < 0) {
             LOG_ERROR("Could not setsockopt: %m");
             close(fd);
             return addr;
         }
     }
 
+#ifdef _WIN32 /* TODO: WINDOWS, implement address info. */
+#else
     ifreq ifr;
     strncpy(ifr.ifr_name, interface.c_str(), sizeof ifr.ifr_name);
     // guarantee that ifr_name is NULL-terminated
@@ -165,18 +181,20 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     addr = ifr.ifr_addr;
     if (addr.isUnspecified())
         return getLocalAddr(addr.getFamily());
-
+#endif
     return addr;
 }
 
 std::vector<std::string>
 ip_utils::getAllIpInterfaceByName()
 {
-    static ifreq ifreqs[20];
-    ifconf ifconf;
-
     std::vector<std::string> ifaceList;
     ifaceList.push_back("default");
+
+#ifdef _WIN32 /* TODO: WINDOWS, implement ifacelists. */
+#else
+    static ifreq ifreqs[20];
+    ifconf ifconf;
 
     ifconf.ifc_buf = (char*) (ifreqs);
     ifconf.ifc_len = sizeof(ifreqs);
@@ -190,7 +208,7 @@ ip_utils::getAllIpInterfaceByName()
 
         close(sock);
     }
-
+#endif
     return ifaceList;
 }
 
@@ -250,7 +268,11 @@ IpAddr::isLoopback() const
 {
     switch (addr.addr.sa_family) {
     case AF_INET: {
+#ifdef _WIN32 /* TODO: WINDOWS, pjSip ARGGHHHHHHHH */
+		uint8_t b1 = 42;
+#else
         uint8_t b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
+#endif
         return b1 == 127;
     }
     case AF_INET6:
@@ -269,8 +291,12 @@ IpAddr::isPrivate() const
     switch (addr.addr.sa_family) {
     case AF_INET:
         uint8_t b1, b2;
+#ifdef _WIN32 /* TODO: WINDOWS, pjSIP ARGGHHHHHHHH */
+		b1 = b2 = 42;
+#else
         b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
         b2 = (uint8_t)((addr.ipv4.sin_addr.s_addr >> 16) & 0x0ff);
+#endif
         // 10.x.y.z
         if (b1 == 10)
             return true;
