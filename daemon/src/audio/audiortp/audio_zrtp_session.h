@@ -30,7 +30,6 @@
 #ifndef __AUDIO_ZRTP_SESSION_H__
 #define __AUDIO_ZRTP_SESSION_H__
 
-#pragma GCC diagnostic ignored "-Weffc++"
 #include <cstddef>
 #include <stdexcept>
 
