@@ -39,7 +39,6 @@
 #include "ip_utils.h"
 #include "noncopyable.h"
 
-#pragma GCC diagnostic ignored "-Weffc++"
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
 
@@ -110,6 +109,5 @@ class AudioSymmetricRtpSessionIPv6 : public ost::SymmetricRTPSessionIPV6, public
 #endif // HAVE_IPV6
 
 }
-#pragma GCC diagnostic warning "-Weffc++"
 #endif // AUDIO_SYMMETRIC_RTP_SESSION_H__
 

@@ -33,11 +33,9 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Weffc++"
 #include <dbus-c++/dbus.h>
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wshadow"
 #pragma GCC diagnostic warning "-Wunused-parameter"
-#pragma GCC diagnostic warning "-Weffc++"
 
 #endif // DBUS_CPP_WRAPPER_H_
