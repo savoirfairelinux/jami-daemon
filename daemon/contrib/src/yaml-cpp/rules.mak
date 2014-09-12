@@ -12,7 +12,7 @@ DEPS_yaml-cpp = boost-headers $(DEPS_boost-headers)
 
 YAML_CPP_CMAKECONF := -DBUILD_STATIC:BOOL=ON \
                       -DBUILD_SHARED:BOOL=OFF \
-                      -DBoost_INCLUDE_DIR=../ \
+                      -DBoost_INCLUDE_DIR=../../$(HOST)/include \
                       -DBUILD_SHARED_LIBS:BOOL=OFF
 
 $(TARBALLS)/yaml-cpp-$(YAML_CPP_VERSION).tar.gz:
