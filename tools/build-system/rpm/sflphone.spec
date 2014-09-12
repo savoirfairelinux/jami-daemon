@@ -18,7 +18,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:      gettext gnutls-devel desktop-file-utils perl libuuid-devel
 BuildRequires:      yaml-cpp-devel alsa-lib-devel pulseaudio-libs-devel
 BuildRequires:      ccrtp-devel libzrtpcpp-devel dbus-c++-devel pcre-devel
-BuildRequires:      gsm-devel speex-devel expat-devel libsamplerate-devel
+BuildRequires:      gsm-devel opus-devel speex-devel expat-devel libsamplerate-devel
 BuildRequires:      gnome-doc-utils libtool libsexy-devel intltool yelp-tools
 BuildRequires:      libnotify-devel check-devel rarian-compat ilbc-devel
 BuildRequires:      evolution-data-server-devel gnome-common libsndfile-devel
@@ -277,6 +277,9 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
+* Fri Sep 12 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.1-5
+- Enable opus
+
 * Thu Sep 4 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.1-4
 - Depend on yaml-cpp-devel instead of libyaml-devel
 
