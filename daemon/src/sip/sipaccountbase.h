@@ -42,13 +42,12 @@
 #include "ip_utils.h"
 //#include "sfl_types.h" // enable_if_base_of
 
-#include "global.h"
-
 #include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
 
 #include <vector>
 #include <map>
+#include <sstream>
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
 

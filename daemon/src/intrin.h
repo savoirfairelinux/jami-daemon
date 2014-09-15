@@ -1,10 +1,8 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author : Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
- *
- * 	Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
- *  Portions Copyright (c) 2004 Wirlab <kphone@wirlab.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,40 +30,9 @@
  *  as that of the covered work.
  */
 
-#ifndef __DTMF_H_
-#define __DTMF_H_
+#ifndef UNUSED_H_
+#define UNUSED_H_
 
-#include "dtmfgenerator.h"
+#define UNUSED __attribute__((__unused__))
 
-/**
- * @file dtmf.h
- * @brief DMTF library to generate a dtmf sample
- */
-class DTMF {
-    public:
-        /**
-         * Create a new DTMF.
-         * @param sampleRate frequency of the sample (ex: 8000 hz)
-         */
-        DTMF(unsigned int sampleRate);
-
-        /**
-         * Start the done for th given dtmf
-         * @param code  The DTMF code
-         */
-        void startTone(char code);
-
-        /**
-         * Copy the sound inside the sampling* buffer
-         * @param buffer : a vector of SFLAudioSample
-         */
-        bool generateDTMF(std::vector<SFLAudioSample> &buffer);
-
-    private:
-        char currentTone_;
-        char newTone_;
-
-        DTMFGenerator dtmfgenerator_;
-};
-
-#endif // __KEY_DTMF_H_
+#endif // UNUSED_H_

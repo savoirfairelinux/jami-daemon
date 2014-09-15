@@ -37,7 +37,6 @@
 #include <vector>
 #include <dirent.h>
 
-#include "global.h"
 #include "audiocodec.h"
 
 /*

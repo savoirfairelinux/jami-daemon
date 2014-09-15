@@ -34,6 +34,7 @@
 #include <algorithm> // for std::find
 #include <stdexcept>
 
+#include "intrin.h"
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "audio/resampler.h"

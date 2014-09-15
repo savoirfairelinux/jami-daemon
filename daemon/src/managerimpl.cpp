@@ -42,7 +42,6 @@
 #include "managerimpl.h"
 #include "account_schema.h"
 
-#include "global.h"
 #include "fileutils.h"
 #include "map_utils.h"
 #include "account.h"
