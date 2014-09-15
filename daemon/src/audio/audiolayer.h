@@ -49,6 +49,15 @@
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
 
+// Define the audio api
+#define PULSEAUDIO_API_STR          "pulseaudio"
+#define ALSA_API_STR                "alsa"
+#define JACK_API_STR                "jack"
+
+#define PCM_DEFAULT "default"         // Default ALSA plugin
+#define PCM_DSNOOP  "plug:dsnoop"     // Alsa plugin for microphone sharing
+#define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
+
 class AudioPreference;
 
 namespace ost {

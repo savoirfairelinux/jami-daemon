@@ -42,7 +42,6 @@ using std::ptrdiff_t;
 #include <memory>
 #endif
 
-#include "global.h"
 #include "audio_rtp_session.h"
 
 class SIPCall;

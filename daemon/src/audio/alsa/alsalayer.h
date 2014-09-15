@@ -39,6 +39,13 @@
 
 #include <memory>
 
+#define PCM_DMIX       "plug:dmix"             /** Alsa plugin for software mixing */
+
+// Error codes for error handling
+#define ALSA_CAPTURE_DEVICE         0x0001     /** Error while opening capture device */
+#define ALSA_PLAYBACK_DEVICE        0x0010     /** Error while opening playback device */
+
+
 /**
  * @file  AlsaLayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware.

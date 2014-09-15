@@ -55,7 +55,6 @@
 #include "sip/sip_utils.h"
 #include <sstream>
 #include <algorithm>
-#include "global.h"
 #include "fileutils.h"
 
 constexpr const char * const Preferences::CONFIG_LABEL;
@@ -326,6 +325,9 @@ AudioPreference::AudioPreference() :
 {}
 
 #if HAVE_ALSA
+
+static const int ALSA_DFT_CARD_ID = 0; // Index of the default soundcard
+
 static void
 checkSoundCard(int &card, DeviceType type)
 {
