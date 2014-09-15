@@ -51,6 +51,8 @@
 #include "history/historynamecache.h"
 #include "audio/audiolayer.h"
 
+#define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
+
 void ConfigurationManager::registerEvHandlers(struct sflph_config_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;

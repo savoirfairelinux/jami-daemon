@@ -29,7 +29,6 @@
  *  as that of the covered work.
  */
 
-#include "global.h"
 #include "sfl_types.h"
 #include "audiocodec.h"
 #include "noncopyable.h"

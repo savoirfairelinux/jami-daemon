@@ -36,6 +36,7 @@
 #include "logger.h"
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
+#include "unused.h"
 
 #ifdef RTP_DEBUG
 #include <numeric>

@@ -37,6 +37,8 @@
 #include "config.h"
 #endif
 
+#include "unused.h"
+
 #include "sdp.h"
 #include "sipvoiplink.h"
 #include "sipcall.h"

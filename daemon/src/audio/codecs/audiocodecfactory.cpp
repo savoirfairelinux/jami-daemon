@@ -41,6 +41,7 @@
 #include <algorithm> // for std::find
 #include <dlfcn.h>
 #include <stdexcept>
+#include <sstream>
 
 #include "audiocodec.h"
 #include "audiocodecfactory.h"

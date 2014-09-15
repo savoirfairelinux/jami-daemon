@@ -31,7 +31,6 @@
 #include <vector>
 #include <cstring>
 
-#include "global.h"
 #include "callmanager.h"
 #include "call_factory.h"
 

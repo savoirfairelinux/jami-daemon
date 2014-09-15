@@ -55,7 +55,6 @@
 #include <pjlib.h>
 #include <pjsip_ua.h>
 
-#include "global.h"
 #include "sip/sdp.h"
 #include "noncopyable.h"
 

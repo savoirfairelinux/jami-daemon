@@ -54,6 +54,9 @@
 #include <vector>
 #include <memory>
 
+#define DEFAULT_SIP_PORT    5060
+#define DEFAULT_SIP_TLS_PORT 5061
+
 class SIPAccountBase;
 
 

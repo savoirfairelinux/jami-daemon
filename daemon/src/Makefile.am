@@ -92,7 +92,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		preferences.h \
 		managerimpl.h \
 		manager.h \
-		global.h \
 		account.h \
 		call.h \
 		logger.h \

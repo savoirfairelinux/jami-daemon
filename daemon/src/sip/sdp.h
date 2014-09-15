@@ -32,7 +32,6 @@
 #ifndef SDP_H_
 #define SDP_H_
 
-#include "global.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
 
@@ -45,6 +44,7 @@
 #include <pj/pool.h>
 #include <pj/assert.h>
 
+#include <map>
 #include <vector>
 #include <string>
 #include <stdexcept>
