@@ -34,7 +34,6 @@
 #ifndef AUDIO_SYMMETRIC_RTP_SESSION_H_
 #define AUDIO_SYMMETRIC_RTP_SESSION_H_
 
-#include "global.h"
 #include "audio_rtp_session.h"
 #include "ip_utils.h"
 #include "noncopyable.h"

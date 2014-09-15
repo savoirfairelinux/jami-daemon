@@ -1,12 +1,14 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -27,58 +29,10 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __AUDIO_ZRTP_SESSION_H__
-#define __AUDIO_ZRTP_SESSION_H__
 
-#include <cstddef>
-#include <stdexcept>
+#ifndef UNUSED_H_
+#define UNUSED_H_
 
-using std::ptrdiff_t;
-#include <ccrtp/rtp.h>
-#include <libzrtpcpp/zrtpccrtp.h>
+#define UNUSED __attribute__((__unused__))
 
-#if HAVE_ZRTP_CONFIGURE
-#include <memory>
-#endif
-
-#include "audio_rtp_session.h"
-
-class SIPCall;
-class AudioCodec;
-
-namespace sfl {
-
-class ZrtpZidException : public std::runtime_error {
-    public:
-        ZrtpZidException(const char *str):
-            std::runtime_error(str) {}
-};
-
-class AudioZrtpSession :
-    public ost::SymmetricZRTPSession,
-    public AudioRtpSession {
-    public:
-        AudioZrtpSession(SIPCall &call, const std::string& zidFilename, const std::string &localIP);
-
-        std::vector<long>
-        getSocketDescriptors() const;
-
-        virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
-            return AudioRtpSession::onRTPPacketRecv(pkt);
-        }
-
-    private:
-        NON_COPYABLE(AudioZrtpSession);
-
-        void initializeZid();
-        std::string zidFilename_;
-#if HAVE_ZRTP_CONFIGURE
-        std::unique_ptr<ZrtpConfigure> zrtpConfigure_;
-#endif
-        void startRTPLoop();
-        virtual int getIncrementForDTMF() const;
-};
-
-}
-
-#endif // __AUDIO_ZRTP_SESSION_H__
+#endif // UNUSED_H_
