@@ -1371,9 +1371,9 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
         throw VoipLinkException("Couldn't transfer");
 }
 
-bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& /*to*/)
+bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& to)
 {
-    auto toCall = getSipCall(id);
+    const auto toCall = getSipCall(to);
     if (!toCall)
         return false;
 
