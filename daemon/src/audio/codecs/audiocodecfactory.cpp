@@ -36,10 +36,14 @@
 #include "config.h"
 #endif
 
+#ifdef _WIN32
+	#include "dlfcnwin32.h"
+#else
+	#include <dlfcn.h>
+#endif
+
 #include <cstdlib>
-#include <dlfcn.h>
 #include <algorithm> // for std::find
-#include <dlfcn.h>
 #include <stdexcept>
 
 #include "audiocodec.h"
