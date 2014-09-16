@@ -62,6 +62,14 @@
 #include <cerrno>
 #include <cstddef>
 
+#include <cerrno>
+
+#ifdef _WIN32
+/* TODO: WINDOWS, Implement windows files, locks etc! */
+    // Just placeholder values
+    #define F_WRLCK 0
+#endif
+
 namespace fileutils {
 // returns true if directory exists
 bool check_dir(const char *path)

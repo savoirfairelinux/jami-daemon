@@ -87,6 +87,14 @@
 #include <istream>
 #include <algorithm>
 
+#ifdef _WIN32
+#else
+    #include <netinet/in.h>
+    #include <arpa/nameser.h>
+    #include <arpa/inet.h>
+    #include <resolv.h>
+#endif
+
 using namespace sfl;
 
 /** Environment variable used to set pjsip's logging level */
