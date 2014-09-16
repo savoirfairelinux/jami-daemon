@@ -106,7 +106,7 @@ bool VideoReceiveThread::setup()
         // custom_io so the SDP demuxer will not open any UDP connections
         args_["sdp_flags"] = "custom_io";
 #else
-        WARN("libavformat too old for custom SDP demuxing");
+        SFL_WARN("libavformat too old for custom SDP demuxing");
 #endif
 
         EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
@@ -198,15 +198,15 @@ bool VideoReceiveThread::decodeFrame()
             return true;
 
         case VideoDecoder::Status::DecodeError:
-            WARN("decoding failure, trying to reset decoder...");
+            SFL_WARN("decoding failure, trying to reset decoder...");
             delete videoDecoder_;
             if (!setup()) {
-                ERROR("fatal error, rx thread re-setup failed");
+                SFL_ERR("fatal error, rx thread re-setup failed");
                 loop_.stop();
                 break;
             }
             if (!videoDecoder_->setupFromVideoData()) {
-                ERROR("fatal error, v-decoder setup failed");
+                SFL_ERR("fatal error, v-decoder setup failed");
                 loop_.stop();
                 break;
             }
@@ -215,7 +215,7 @@ bool VideoReceiveThread::decodeFrame()
             break;
 
         case VideoDecoder::Status::ReadError:
-            ERROR("fatal error, read failed");
+            SFL_ERR("fatal error, read failed");
             loop_.stop();
 
         default:
@@ -233,7 +233,7 @@ void VideoReceiveThread::enterConference()
 
     if (detach(&sink_)) {
         Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), false);
-        DEBUG("RX: shm sink <%s> detached", sink_.openedName().c_str());
+        SFL_DBG("RX: shm sink <%s> detached", sink_.openedName().c_str());
     }
 }
 
@@ -245,7 +245,7 @@ void VideoReceiveThread::exitConference()
     if (dstWidth_ > 0 && dstHeight_ > 0) {
         if (attach(&sink_)) {
             Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_, false);
-            DEBUG("RX: shm sink <%s> started: size = %dx%d",
+            SFL_DBG("RX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), dstWidth_, dstHeight_);
         }
     }

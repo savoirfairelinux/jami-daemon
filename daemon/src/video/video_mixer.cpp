@@ -122,7 +122,7 @@ void VideoMixer::process()
 
     VideoFrame& output = getNewFrame();
     if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
-        ERROR("VideoFrame::allocBuffer() failed");
+        SFL_ERR("VideoFrame::allocBuffer() failed");
         return;
     }
 
@@ -190,11 +190,11 @@ void VideoMixer::start_sink()
     if (sink_.start()) {
         if (this->attach(&sink_)) {
             Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), width_, height_, true);
-            DEBUG("MX: shm sink <%s> started: size = %dx%d",
+            SFL_DBG("MX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), width_, height_);
         }
     } else
-        WARN("MX: sink startup failed");
+        SFL_WARN("MX: sink startup failed");
 }
 
 void VideoMixer::stop_sink()

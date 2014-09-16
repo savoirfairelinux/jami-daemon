@@ -65,35 +65,35 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     // if port has changed
     if (not desc.empty() and desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
-        DEBUG("Updated incoming SDP to:\n%s",
+        SFL_DBG("Updated incoming SDP to:\n%s",
               rxArgs_["receiving_sdp"].c_str());
     }
 
     if (desc.empty()) {
-        DEBUG("Video is inactive");
+        SFL_DBG("Video is inactive");
         receiving_ = false;
         sending_ = false;
     } else if (desc.find("sendrecv") != string::npos) {
-        DEBUG("Sending and receiving video");
+        SFL_DBG("Sending and receiving video");
         receiving_ = true;
         sending_ = true;
     } else if (desc.find("inactive") != string::npos) {
-        DEBUG("Video is inactive");
+        SFL_DBG("Video is inactive");
         receiving_ = false;
         sending_ = false;
     } else if (desc.find("sendonly") != string::npos) {
-        DEBUG("Receiving video disabled, video set to sendonly");
+        SFL_DBG("Receiving video disabled, video set to sendonly");
         receiving_ = false;
         sending_ = true;
     } else if (desc.find("recvonly") != string::npos) {
-        DEBUG("Sending video disabled, video set to recvonly");
+        SFL_DBG("Sending video disabled, video set to recvonly");
         sending_ = false;
         receiving_ = true;
     }
     // even if it says sendrecv or recvonly, our peer may disable video by
     // setting the port to 0
     if (desc.find("m=video 0") != string::npos) {
-        DEBUG("Receiving video disabled, port was set to 0");
+        SFL_DBG("Receiving video disabled, port was set to 0");
         receiving_ = false;
     }
 
@@ -106,7 +106,7 @@ void VideoRtpSession::updateDestination(const string &destination,
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (destination.empty()) {
-        ERROR("Destination is empty, ignoring");
+        SFL_ERR("Destination is empty, ignoring");
         return;
     }
 
@@ -115,15 +115,15 @@ void VideoRtpSession::updateDestination(const string &destination,
     // if destination has changed
     if (tmp.str() != txArgs_["destination"]) {
         if (sender_) {
-            ERROR("Video is already being sent");
+            SFL_ERR("Video is already being sent");
             return;
         }
         txArgs_["destination"] = tmp.str();
-        DEBUG("updated dest to %s",  txArgs_["destination"].c_str());
+        SFL_DBG("updated dest to %s",  txArgs_["destination"].c_str());
     }
 
     if (port == 0) {
-        DEBUG("Sending video disabled, port was set to 0");
+        SFL_DBG("Sending video disabled, port was set to 0");
         sending_ = false;
     }
 }
@@ -136,13 +136,13 @@ void VideoRtpSession::startSender()
                 videoLocal_->detach(sender_.get());
             if (videoMixer_)
                 videoMixer_->detach(sender_.get());
-            WARN("Restarting video sender");
+            SFL_WARN("Restarting video sender");
         }
 
         try {
             sender_.reset(new VideoSender(txArgs_, *socketPair_));
         } catch (const VideoEncoderException &e) {
-            ERROR("%s", e.what());
+            SFL_ERR("%s", e.what());
             sending_ = false;
         }
     }
@@ -152,13 +152,13 @@ void VideoRtpSession::startReceiver()
 {
     if (receiving_) {
         if (receiveThread_)
-            WARN("restarting video receiver");
+            SFL_WARN("restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
     } else {
-        DEBUG("Video receiving disabled");
+        SFL_DBG("Video receiving disabled");
         if (receiveThread_)
             receiveThread_->detach(videoMixer_.get());
         receiveThread_.reset();
@@ -177,7 +177,7 @@ void VideoRtpSession::start(int localPort)
     try {
         socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
     } catch (const std::runtime_error &e) {
-        ERROR("Socket creation failed on port %d: %s", localPort, e.what());
+        SFL_ERR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
     }
 

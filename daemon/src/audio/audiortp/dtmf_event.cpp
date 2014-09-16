@@ -68,7 +68,7 @@ DTMFEvent::DTMFEvent(char digit) : payload(), newevent(true), length(1000)
             break;
 
         default:
-            ERROR("Unexpected DTMF %c", digit);
+            SFL_ERR("Unexpected DTMF %c", digit);
     }
 
     payload.event = digit;

@@ -39,7 +39,7 @@ ManagerImpl& Manager::instance()
     // This will give a warning that can be ignored the first time instance()
     // is called...subsequent warnings are more serious
     if (not ManagerImpl::initialized)
-        WARN("Not initialized");
+        SFL_WARN("Not initialized");
 
     return instance_;
 }
