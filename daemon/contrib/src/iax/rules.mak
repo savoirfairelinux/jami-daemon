@@ -16,6 +16,7 @@ iax: libiax2.tar.gz .sum-iax
 	mv libiax2.git libiax2
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/iax/iax-win32.patch
+	$(APPLY) $(SRC)/iax/iax-client.patch
 endif
 	mv libiax2 $@
 	touch $@
