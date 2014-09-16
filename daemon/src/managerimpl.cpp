@@ -178,7 +178,7 @@ ManagerImpl::init(const std::string &config_file)
     try {
         no_errors = parseConfiguration();
     } catch (const YAML::Exception &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         no_errors = false;
     }
 
@@ -195,7 +195,7 @@ ManagerImpl::init(const std::string &config_file)
             restore_backup(path_);
             parseConfiguration();
         } catch (const YAML::Exception &e) {
-            ERROR("%s", e.what());
+            LOG_ERROR("%s", e.what());
             WARN("Restoring backup failed, creating default account map");
             loadDefaultAccountMap();
         }
@@ -257,7 +257,7 @@ ManagerImpl::finish()
             audiodriver_.reset();
         }
     } catch (const VoipLinkException &err) {
-        ERROR("%s", err.what());
+        LOG_ERROR("%s", err.what());
     }
 }
 
@@ -325,7 +325,7 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
 
     // Call ID must be unique
     if (isValidCall(call_id)) {
-        ERROR("Call id already exists in outgoing call");
+        LOG_ERROR("Call id already exists in outgoing call");
         return false;
     }
 
@@ -367,11 +367,11 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
         call->setConfId(conf_id);
     } catch (const VoipLinkException &e) {
         callFailure(call_id);
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         return false;
     } catch (ost::Socket *) {
         callFailure(call_id);
-        ERROR("Could not bind socket");
+        LOG_ERROR("Could not bind socket");
         return false;
     }
 
@@ -386,7 +386,7 @@ ManagerImpl::answerCall(const std::string& call_id)
 
     auto call = getCallFromCallID(call_id);
     if (!call) {
-        ERROR("Call %s is NULL", call_id.c_str());
+        LOG_ERROR("Call %s is NULL", call_id.c_str());
         return false;
     }
 
@@ -414,7 +414,7 @@ ManagerImpl::answerCall(const std::string& call_id)
     try {
         call->answer();
     } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         result = false;
     }
 
@@ -486,7 +486,7 @@ ManagerImpl::hangupCall(const std::string& callId)
         checkAudio();
         saveHistory();
     } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         return false;
     }
 
@@ -509,7 +509,7 @@ ManagerImpl::hangupConference(const std::string& id)
             for (const auto &item : participants)
                 hangupCall(item);
         } else {
-            ERROR("No such conference %s", id.c_str());
+            LOG_ERROR("No such conference %s", id.c_str());
             return false;
         }
     }
@@ -537,7 +537,7 @@ ManagerImpl::onHoldCall(const std::string& callId)
             return false;
         }
     } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         result = false;
     }
 
@@ -586,7 +586,7 @@ ManagerImpl::offHoldCall(const std::string& callId)
         else
             result = false;
     } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         return false;
     }
 
@@ -704,7 +704,7 @@ ManagerImpl::removeConference(const std::string& conference_id)
         conf = iter->second;
 
     if (not conf) {
-        ERROR("Conference not found");
+        LOG_ERROR("Conference not found");
         return;
     }
 
@@ -727,7 +727,7 @@ ManagerImpl::removeConference(const std::string& conference_id)
     if (conferenceMap_.erase(conference_id))
         DEBUG("Conference %s removed successfully", conference_id.c_str());
     else
-        ERROR("Cannot remove conference: %s", conference_id.c_str());
+        LOG_ERROR("Cannot remove conference: %s", conference_id.c_str());
 }
 
 std::shared_ptr<Conference>
@@ -827,13 +827,13 @@ ManagerImpl::addParticipant(const std::string& callId,
     ConferenceMap::iterator iter = conferenceMap_.find(conferenceId);
 
     if (iter == conferenceMap_.end()) {
-        ERROR("Conference id is not valid");
+        LOG_ERROR("Conference id is not valid");
         return false;
     }
 
     auto call = getCallFromCallID(callId);
     if (!call) {
-        ERROR("Call id %s is not valid", callId.c_str());
+        LOG_ERROR("Call id %s is not valid", callId.c_str());
         return false;
     }
 
@@ -885,7 +885,7 @@ ManagerImpl::addParticipant(const std::string& callId,
     ParticipantSet participants(conf->getParticipantList());
 
     if (participants.empty())
-        ERROR("Participant list is empty for this conference");
+        LOG_ERROR("Participant list is empty for this conference");
 
     // Connect stream
     addStream(callId);
@@ -949,21 +949,21 @@ ManagerImpl::joinParticipant(const std::string& callId1,
                              const std::string& callId2)
 {
     if (callId1 == callId2) {
-        ERROR("Cannot join participant %s to itself", callId1.c_str());
+        LOG_ERROR("Cannot join participant %s to itself", callId1.c_str());
         return false;
     }
 
     // Set corresponding conference ids for call 1
     auto call1 = getCallFromCallID(callId1);
     if (!call1) {
-        ERROR("Could not find call %s", callId1.c_str());
+        LOG_ERROR("Could not find call %s", callId1.c_str());
         return false;
     }
 
     // Set corresponding conderence details
     auto call2 = getCallFromCallID(callId2);
     if (!call2) {
-        ERROR("Could not find call %s", callId2.c_str());
+        LOG_ERROR("Could not find call %s", callId2.c_str());
         return false;
     }
 
@@ -1048,7 +1048,7 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
 {
     // we must at least have 2 participant for a conference
     if (participantList.size() <= 1) {
-        ERROR("Participant number must be higher or equal to 2");
+        LOG_ERROR("Participant number must be higher or equal to 2");
         return;
     }
 
@@ -1096,14 +1096,14 @@ ManagerImpl::detachParticipant(const std::string& call_id)
     if (call_id != RingBufferPool::DEFAULT_ID) {
         auto call = getCallFromCallID(call_id);
         if (!call) {
-            ERROR("Could not find call %s", call_id.c_str());
+            LOG_ERROR("Could not find call %s", call_id.c_str());
             return false;
         }
 
         auto conf = getConferenceFromCallID(call_id);
 
         if (conf == nullptr) {
-            ERROR("Call is not conferencing, cannot detach");
+            LOG_ERROR("Call is not conferencing, cannot detach");
             return false;
         }
 
@@ -1111,7 +1111,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
         std::map<std::string, std::string>::iterator iter_details(call_details.find("CALL_STATE"));
 
         if (iter_details == call_details.end()) {
-            ERROR("Could not find CALL_STATE");
+            LOG_ERROR("Could not find CALL_STATE");
             return false;
         }
 
@@ -1126,7 +1126,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
         getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
 
         if (not isConference(current_call_id)) {
-            ERROR("Current call id (%s) is not a conference", current_call_id.c_str());
+            LOG_ERROR("Current call id (%s) is not a conference", current_call_id.c_str());
             return false;
         }
 
@@ -1162,7 +1162,7 @@ ManagerImpl::removeParticipant(const std::string& call_id)
     // this call is no longer a conference participant
     auto call = getCallFromCallID(call_id);
     if (!call) {
-        ERROR("Call not found");
+        LOG_ERROR("Call not found");
         return;
     }
 
@@ -1170,7 +1170,7 @@ ManagerImpl::removeParticipant(const std::string& call_id)
 
     auto conf = iter->second;
     if (iter == conferenceMap_.end() or conf == 0) {
-        ERROR("No conference with id %s, cannot remove participant", call->getConfId().c_str());
+        LOG_ERROR("No conference with id %s, cannot remove participant", call->getConfId().c_str());
         return;
     }
 
@@ -1227,12 +1227,12 @@ ManagerImpl::joinConference(const std::string& conf_id1,
                             const std::string& conf_id2)
 {
     if (conferenceMap_.find(conf_id1) == conferenceMap_.end()) {
-        ERROR("Not a valid conference ID: %s", conf_id1.c_str());
+        LOG_ERROR("Not a valid conference ID: %s", conf_id1.c_str());
         return false;
     }
 
     if (conferenceMap_.find(conf_id2) == conferenceMap_.end()) {
-        ERROR("Not a valid conference ID: %s", conf_id2.c_str());
+        LOG_ERROR("Not a valid conference ID: %s", conf_id2.c_str());
         return false;
     }
 
@@ -1341,9 +1341,9 @@ ManagerImpl::saveConfig()
         std::ofstream fout(path_);
         fout << out.c_str();
     } catch (const YAML::Exception &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
     } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
     }
 }
 
@@ -1503,7 +1503,7 @@ ManagerImpl::incomingMessage(const std::string& callID,
             if (auto call = getCallFromCallID(item_p)) {
                 call->sendTextMessage(message, from);
             } else {
-                ERROR("Failed to get call while sending instant message");
+                LOG_ERROR("Failed to get call while sending instant message");
                 return;
             }
         }
@@ -1540,7 +1540,7 @@ ManagerImpl::sendTextMessage(const std::string& callID,
             if (auto call = getCallFromCallID(participant_id)) {
                 call->sendTextMessage(message, from);
             } else {
-                ERROR("Failed to get call while sending instant message");
+                LOG_ERROR("Failed to get call while sending instant message");
                 return false;
             }
         }
@@ -1562,7 +1562,7 @@ ManagerImpl::sendTextMessage(const std::string& callID,
             if (auto call = getCallFromCallID(participant_id)) {
                 call->sendTextMessage(message, from);
             } else {
-                ERROR("Failed to get call while sending instant message");
+                LOG_ERROR("Failed to get call while sending instant message");
                 return false;
             }
         }
@@ -1570,7 +1570,7 @@ ManagerImpl::sendTextMessage(const std::string& callID,
         if (auto call = getCallFromCallID(callID)) {
             call->sendTextMessage(message, from);
         } else {
-            ERROR("Failed to get call while sending instant message");
+            LOG_ERROR("Failed to get call while sending instant message");
             return false;
         }
     }
@@ -1712,7 +1712,7 @@ ManagerImpl::playATone(Tone::TONEID toneId)
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
         if (not audiodriver_) {
-            ERROR("Audio layer not initialized");
+            LOG_ERROR("Audio layer not initialized");
             return;
         }
 
@@ -1823,7 +1823,7 @@ ManagerImpl::playRingtone(const std::string& accountID)
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
         if (not audiodriver_) {
-            ERROR("no audio layer in ringtone");
+            LOG_ERROR("no audio layer in ringtone");
             return;
         }
 
@@ -1933,7 +1933,7 @@ ManagerImpl::setAudioDevice(int index, DeviceType type)
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
     if (not audiodriver_) {
-        ERROR("Audio driver not initialized");
+        LOG_ERROR("Audio driver not initialized");
         return ;
     }
 
@@ -2048,7 +2048,7 @@ ManagerImpl::toggleRecordingCall(const std::string& id)
     }
 
     if (!rec) {
-        ERROR("Could not find recordable instance %s", id.c_str());
+        LOG_ERROR("Could not find recordable instance %s", id.c_str());
         return false;
     }
 
@@ -2075,7 +2075,7 @@ ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
         if (not audiodriver_) {
-            ERROR("No audio layer in start recorded file playback");
+            LOG_ERROR("No audio layer in start recorded file playback");
             return false;
         }
 
@@ -2185,7 +2185,7 @@ ManagerImpl::getAudioInputDeviceIndex(const std::string &name)
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
     if (not audiodriver_) {
-        ERROR("Audio layer not initialized");
+        LOG_ERROR("Audio layer not initialized");
         return 0;
     }
 
@@ -2198,7 +2198,7 @@ ManagerImpl::getAudioOutputDeviceIndex(const std::string &name)
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
     if (not audiodriver_) {
-        ERROR("Audio layer not initialized");
+        LOG_ERROR("Audio layer not initialized");
         return 0;
     }
 
@@ -2320,7 +2320,7 @@ ManagerImpl::getAccountList() const
     if (const auto& account = getIP2IPAccount())
         v.push_back(account->getAccountID());
     else
-        ERROR("could not find IP2IP profile in getAccount list");
+        LOG_ERROR("could not find IP2IP profile in getAccount list");
 
     return v;
 }
@@ -2333,7 +2333,7 @@ ManagerImpl::getAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getAccountDetails();
     } else {
-        ERROR("Could not get account details on a non-existing accountID %s", accountID.c_str());
+        LOG_ERROR("Could not get account details on a non-existing accountID %s", accountID.c_str());
         // return an empty map since we can't throw an exception to D-Bus
         return std::map<std::string, std::string>();
     }
@@ -2351,7 +2351,7 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
     const auto account = getAccount(accountID);
 
     if (account == nullptr) {
-        ERROR("Could not find account %s", accountID.c_str());
+        LOG_ERROR("Could not find account %s", accountID.c_str());
         return;
     }
 
@@ -2403,7 +2403,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     auto newAccount = accountFactory_.createAccount(accountType, newAccountID);
     if (!newAccount) {
-        ERROR("Unknown %s param when calling addAccount(): %s",
+        LOG_ERROR("Unknown %s param when calling addAccount(): %s",
               CONFIG_ACCOUNT_TYPE, accountType);
         return "";
     }
@@ -2502,11 +2502,11 @@ ManagerImpl::loadAccount(const YAML::Node &node, int &errorCount,
             if (a) {
                 a->unserialize(node);
             } else {
-                ERROR("Failed to create account type \"%s\"", accountType.c_str());
+                LOG_ERROR("Failed to create account type \"%s\"", accountType.c_str());
                 ++errorCount;
             }
         } else {
-            ERROR("Ignoring unknown account type \"%s\"", accountType.c_str());
+            LOG_ERROR("Ignoring unknown account type \"%s\"", accountType.c_str());
             ++errorCount;
         }
     }
@@ -2533,7 +2533,7 @@ ManagerImpl::loadAccountMap(const YAML::Node &node)
         controls->getVideoDeviceMonitor().unserialize(node);
 #endif
     } catch (const YAML::Exception &e) {
-        ERROR("%s: No video node in config file", e.what());
+        LOG_ERROR("%s: No video node in config file", e.what());
         ++errorCount;
     }
 
@@ -2555,7 +2555,7 @@ ManagerImpl::getCallDetails(const std::string &callID)
     if (auto call = getCallFromCallID(callID)) {
         return call->getDetails();
     } else {
-        ERROR("Call is NULL");
+        LOG_ERROR("Call is NULL");
         // FIXME: is this even useful?
         return Call::getNullDetails();
     }
@@ -2632,7 +2632,7 @@ ManagerImpl::getConferenceId(const std::string& callID)
     if (auto call = getCallFromCallID(callID))
         return call->getConfId();
 
-    ERROR("Call is NULL");
+    LOG_ERROR("Call is NULL");
     return "";
 }
 
@@ -2640,7 +2640,7 @@ void
 ManagerImpl::saveHistory()
 {
     if (!history_.save())
-        ERROR("Could not save history!");
+        LOG_ERROR("Could not save history!");
     else
         client_.getConfigurationManager()->historyChanged();
 }
@@ -2745,7 +2745,7 @@ ManagerImpl::newOutgoingCall(const std::string& id,
         WARN("IP Url detected, using IP2IP account");
 
     if (!account) {
-        ERROR("No suitable account found to create outgoing call");
+        LOG_ERROR("No suitable account found to create outgoing call");
         return nullptr;
     }
 

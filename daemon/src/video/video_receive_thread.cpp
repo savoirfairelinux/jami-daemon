@@ -201,12 +201,12 @@ bool VideoReceiveThread::decodeFrame()
             WARN("decoding failure, trying to reset decoder...");
             delete videoDecoder_;
             if (!setup()) {
-                ERROR("fatal error, rx thread re-setup failed");
+                LOG_ERROR("fatal error, rx thread re-setup failed");
                 loop_.stop();
                 break;
             }
             if (!videoDecoder_->setupFromVideoData()) {
-                ERROR("fatal error, v-decoder setup failed");
+                LOG_ERROR("fatal error, v-decoder setup failed");
                 loop_.stop();
                 break;
             }
@@ -215,7 +215,7 @@ bool VideoReceiveThread::decodeFrame()
             break;
 
         case VideoDecoder::Status::ReadError:
-            ERROR("fatal error, read failed");
+            LOG_ERROR("fatal error, read failed");
             loop_.stop();
 
         default:
