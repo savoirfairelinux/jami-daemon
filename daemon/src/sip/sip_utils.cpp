@@ -43,10 +43,24 @@
 #include <pjsip/sip_uri.h>
 #include <pj/list.h>
 
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#ifdef _WIN32
+
+	#include <ws2tcpip.h>
+
+	extern WINSOCK_API_LINKAGE const char WSAAPI inet_ntop(int af, void* src, char *dst, socklen_t size);
+
+	#ifndef AI_ADDRCONFIG
+		#define AI_ADDRCONFIG 0
+	#endif
+	#ifndef INET6_ADDRSTRLEN
+		#define INET6_ADDRSTRLEN 46
+	#endif
+#else /* POSIX */
+	#include <netdb.h>
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
+#endif
 
 #include <vector>
 #include <algorithm>
