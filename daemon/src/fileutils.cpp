@@ -35,6 +35,9 @@
 #include "config.h"
 #endif
 
+#include "fileutils.h"
+#include "logger.h"
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <libgen.h>
@@ -49,15 +52,16 @@
 #include <unistd.h>
 #include <cstring>
 #include <fcntl.h>
-#include <pwd.h>
 #include <cerrno>
 
-#ifndef __ANDROID__
-#   include <wordexp.h>
+#ifdef _WIN32
+/* TODO: WINDOWS, Implement windows files, locks etc! */
+	// Just placeholder values
+	#define F_WRLCK 0
+#else
+	#include <wordexp.h>
+	#include <pwd.h>
 #endif
-
-#include "fileutils.h"
-#include "logger.h"
 
 namespace fileutils {
 // returns true if directory exists

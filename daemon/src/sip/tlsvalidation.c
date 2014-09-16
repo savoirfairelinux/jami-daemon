@@ -38,11 +38,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -55,6 +50,19 @@
 
 #include "logger.h"
 #include "tlsvalidation.h"
+
+#ifdef _WIN32
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+	#define F_GETFD   1 /* Get file descriptor flags.  */
+	#define F_SETFD   2 /* Set file descriptor flags.  */
+#else
+	#include <sys/socket.h>
+	#include <sys/un.h>
+	#include <netinet/tcp.h>
+	#include <netinet/in.h>
+	#include <netdb.h>
+#endif
 
 /**
  * Load the content of a file and return the data pointer to it.
