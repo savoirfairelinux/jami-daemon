@@ -206,7 +206,7 @@ void PulseLayer::context_state_callback(pa_context* c, void *user_data)
 
         case PA_CONTEXT_FAILED:
         default:
-            ERROR("%s" , pa_strerror(pa_context_errno(c)));
+            LOG_ERROR("%s" , pa_strerror(pa_context_errno(c)));
             pa_threaded_mainloop_signal(pulse->mainloop_, 0);
             break;
     }
@@ -280,7 +280,7 @@ int PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) c
     case DeviceType::CAPTURE:
         return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
     default:
-        ERROR("Unexpected device type");
+        LOG_ERROR("Unexpected device type");
         return 0;
     }
 }
@@ -294,7 +294,7 @@ int PulseLayer::getAudioDeviceIndexByName(const std::string& name, DeviceType ty
     case DeviceType::CAPTURE:
         return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(name)));
     default:
-        ERROR("Unexpected device type");
+        LOG_ERROR("Unexpected device type");
         return 0;
     }
 }
@@ -314,7 +314,7 @@ std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
         case DeviceType::PLAYBACK:
         case DeviceType::RINGTONE:
             if (index < 0 or static_cast<size_t>(index) >= sinkList_.size()) {
-                ERROR("Index %d out of range", index);
+                LOG_ERROR("Index %d out of range", index);
                 return "";
             }
 
@@ -322,14 +322,14 @@ std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
 
         case DeviceType::CAPTURE:
             if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
-                ERROR("Index %d out of range", index);
+                LOG_ERROR("Index %d out of range", index);
                 return "";
             }
 
             return sourceList_[index].name;
         default:
             // Should never happen
-            ERROR("Unexpected type");
+            LOG_ERROR("Unexpected type");
             return "";
     }
 }
@@ -455,7 +455,7 @@ void PulseLayer::writeToSpeaker()
     int ret = pa_stream_writable_size(s);
 
     if (ret < 0) {
-        ERROR("Playback error : %s", pa_strerror(ret));
+        LOG_ERROR("Playback error : %s", pa_strerror(ret));
         return;
     } else if (ret == 0)
         return;
@@ -588,7 +588,7 @@ void PulseLayer::readFromMic()
     mainRingBuffer_->put(*out);
 
     if (pa_stream_drop(record_->pulseStream()) < 0)
-        ERROR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
+        LOG_ERROR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
 }
 
 
@@ -603,7 +603,7 @@ void PulseLayer::ringtoneToSpeaker()
     int writable = pa_stream_writable_size(s);
 
     if (writable < 0)
-        ERROR("Ringtone error : %s", pa_strerror(writable));
+        LOG_ERROR("Ringtone error : %s", pa_strerror(writable));
 
     if (writable <= 0)
         return;

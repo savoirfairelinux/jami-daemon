@@ -308,7 +308,7 @@ CallManager::setSASVerified(const std::string& callID)
     } catch (...) {
     }
 #else
-    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    LOG_ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -323,7 +323,7 @@ CallManager::resetSASVerified(const std::string& callID)
     } catch (...) {
     }
 #else
-    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    LOG_ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -338,7 +338,7 @@ CallManager::setConfirmGoClear(const std::string& callID)
     } catch (...) {
     }
 #else
-    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    LOG_ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -353,7 +353,7 @@ CallManager::requestGoClear(const std::string& callID)
     } catch (...) {
     }
 #else
-    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    LOG_ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -368,7 +368,7 @@ CallManager::acceptEnrollment(const std::string& callID, bool accepted)
     } catch (...) {
     }
 #else
-    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    LOG_ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -386,7 +386,7 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
     if (!Manager::instance().sendTextMessage(callID, message, "Me"))
         throw CallManagerException();
 #else
-    ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
+    LOG_ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
 #endif
 }
 

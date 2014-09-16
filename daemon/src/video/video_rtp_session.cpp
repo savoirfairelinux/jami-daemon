@@ -106,7 +106,7 @@ void VideoRtpSession::updateDestination(const string &destination,
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (destination.empty()) {
-        ERROR("Destination is empty, ignoring");
+        LOG_ERROR("Destination is empty, ignoring");
         return;
     }
 
@@ -115,7 +115,7 @@ void VideoRtpSession::updateDestination(const string &destination,
     // if destination has changed
     if (tmp.str() != txArgs_["destination"]) {
         if (sender_) {
-            ERROR("Video is already being sent");
+            LOG_ERROR("Video is already being sent");
             return;
         }
         txArgs_["destination"] = tmp.str();
@@ -142,7 +142,7 @@ void VideoRtpSession::startSender()
         try {
             sender_.reset(new VideoSender(txArgs_, *socketPair_));
         } catch (const VideoEncoderException &e) {
-            ERROR("%s", e.what());
+            LOG_ERROR("%s", e.what());
             sending_ = false;
         }
     }
@@ -177,7 +177,7 @@ void VideoRtpSession::start(int localPort)
     try {
         socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
     } catch (const std::runtime_error &e) {
-        ERROR("Socket creation failed on port %d: %s", localPort, e.what());
+        LOG_ERROR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
     }
 
