@@ -35,7 +35,10 @@
 #include <pjlib.h>
 #include <ccrtp/channel.h> // For ost::IPV*Address
 
+#ifdef __WIN32__
+#else
 #include <netinet/ip.h>
+#endif
 
 #include <string>
 #include <vector>
