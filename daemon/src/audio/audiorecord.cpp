@@ -94,7 +94,7 @@ AudioRecord::AudioRecord() : fileHandle_(nullptr)
     , filename_(createFilename())
     , savePath_()
 {
-    WARN("Generate filename for this call %s ", filename_.c_str());
+    SFL_WARN("Generate filename for this call %s ", filename_.c_str());
 }
 
 AudioRecord::~AudioRecord()
@@ -142,7 +142,7 @@ void AudioRecord::initFilename(const std::string &peerNumber)
     fName.append("-" + sanitize(peerNumber) + "-" PACKAGE);
 
     if (filename_.find(".wav") == std::string::npos) {
-        DEBUG("Concatenate .wav file extension: name : %s", filename_.c_str());
+        SFL_DBG("Concatenate .wav file extension: name : %s", filename_.c_str());
         fName.append(".wav");
     }
 
@@ -161,19 +161,19 @@ bool AudioRecord::openFile()
     const bool doAppend = fileExists();
     const int access = doAppend ? SFM_RDWR : SFM_WRITE;
 
-    DEBUG("Opening file %s with format %s", savePath_.c_str(), sndFormat_.toString().c_str());
+    SFL_DBG("Opening file %s with format %s", savePath_.c_str(), sndFormat_.toString().c_str());
     fileHandle_ = new SndfileHandle(savePath_.c_str(), access, SF_FORMAT_WAV | SF_FORMAT_PCM_16, sndFormat_.nb_channels, sndFormat_.sample_rate);
 
     // check overloaded boolean operator
     if (!*fileHandle_) {
-        WARN("Could not open WAV file!");
+        SFL_WARN("Could not open WAV file!");
         delete fileHandle_;
         fileHandle_ = 0;
         return false;
     }
 
     if (doAppend and fileHandle_->seek(0, SEEK_END) < 0)
-        WARN("Couldn't seek to the end of the file ");
+        SFL_WARN("Couldn't seek to the end of the file ");
 
     return result;
 }
@@ -213,7 +213,7 @@ bool AudioRecord::toggleRecording()
 
 void AudioRecord::stopRecording()
 {
-    DEBUG("Stop recording");
+    SFL_DBG("Stop recording");
     recordingEnabled_ = false;
 }
 
@@ -223,14 +223,14 @@ void AudioRecord::recData(AudioBuffer& buffer)
         return;
 
     if (fileHandle_ == 0) {
-        DEBUG("Can't record data, a file has not yet been opened!");
+        SFL_DBG("Can't record data, a file has not yet been opened!");
         return;
     }
 
     auto interleaved = buffer.interleave();
     const int nSamples = interleaved.size();
     if (fileHandle_->write(interleaved.data(), nSamples) != nSamples) {
-        WARN("Could not record data!");
+        SFL_WARN("Could not record data!");
     } else {
         fileHandle_->writeSync();
     }

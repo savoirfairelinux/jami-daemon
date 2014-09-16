@@ -92,7 +92,7 @@ size_t RingBuffer::getLength(const std::string &call_id) const
 void
 RingBuffer::debug()
 {
-    DEBUG("Start=%d; End=%d; BufferSize=%d", getSmallestReadOffset(), endPos_, buffer_.frames());
+    SFL_DBG("Start=%d; End=%d; BufferSize=%d", getSmallestReadOffset(), endPos_, buffer_.frames());
 }
 
 size_t RingBuffer::getReadOffset(const std::string &call_id) const
@@ -122,7 +122,7 @@ RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
     if (iter != readoffsets_.end())
         iter->second = offset;
     else
-        ERROR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
+        SFL_ERR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
 }
 
 
@@ -228,7 +228,7 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
     const size_t sample_num = buf.frames();
     size_t toCopy = std::min(sample_num, len);
     if (toCopy and toCopy != sample_num) {
-        DEBUG("Partial get: %d/%d", toCopy, sample_num);
+        SFL_DBG("Partial get: %d/%d", toCopy, sample_num);
     }
 
     const size_t copied = toCopy;
@@ -304,7 +304,7 @@ RingBuffer::discard(size_t toDiscard)
     for (auto & r : readoffsets_) {
         size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
         if (dst < toDiscard) {
-            DEBUG("%s : discarding: %d frames", r.first.c_str(), toDiscard - dst);
+            SFL_DBG("%s : discarding: %d frames", r.first.c_str(), toDiscard - dst);
             r.second = (r.second + toDiscard - dst) % buffer_size;
         }
     }

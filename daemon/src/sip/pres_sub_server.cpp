@@ -47,7 +47,7 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
     pjsip_rx_data *rdata = event->body.rx_msg.rdata;
 
     if (!rdata) {
-        DEBUG("Presence_subscription_server estate has changed but no rdata.");
+        SFL_DBG("Presence_subscription_server estate has changed but no rdata.");
         return;
     }
 
@@ -55,14 +55,14 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
     auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
-        ERROR("Could not find account IP2IP");
+        SFL_ERR("Could not find account IP2IP");
         return;
     }
 
     auto pres = sipaccount->getPresence();
 
     if (!pres) {
-        ERROR("Presence not initialized");
+        SFL_ERR("Presence not initialized");
         return;
     }
 
@@ -70,7 +70,7 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
     PresSubServer *presSubServer = static_cast<PresSubServer *>(pjsip_evsub_get_mod_data(sub, pres->getModId()));
 
     if (presSubServer) {
-        DEBUG("Presence_subscription_server to %s is %s",
+        SFL_DBG("Presence_subscription_server to %s is %s",
               presSubServer->remote_, pjsip_evsub_get_state_name(sub));
         pjsip_evsub_state state;
 
@@ -114,7 +114,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     /* debug msg */
     std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
     std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
-    DEBUG("Incoming pres_on_rx_subscribe_request for %s, name:%s, server:%s."
+    SFL_DBG("Incoming pres_on_rx_subscribe_request for %s, name:%s, server:%s."
           , request.c_str()
           , name.c_str()
           , server.c_str());
@@ -123,7 +123,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
     if (!sipaccount) {
-        ERROR("Could not find account IP2IP");
+        SFL_ERR("Could not find account IP2IP");
         return PJ_FALSE;
     }
 
@@ -138,7 +138,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        WARN("Unable to create UAS dialog for subscription: %s [status=%d]", errmsg, status);
+        SFL_WARN("Unable to create UAS dialog for subscription: %s [status=%d]", errmsg, status);
         pres->unlock();
         pjsip_endpt_respond_stateless(endpt, rdata, 400, NULL, NULL, NULL);
         return PJ_TRUE;
@@ -155,7 +155,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
         int code = PJSIP_ERRNO_TO_SIP_STATUS(status);
         pjsip_tx_data *tdata;
 
-        WARN("Unable to create server subscription %d", status);
+        SFL_WARN("Unable to create server subscription %d", status);
 
         if (code == 599 || code > 699 || code < 300) {
             code = 400;
@@ -209,7 +209,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     status = pjsip_pres_accept(sub, rdata, st_code, &msg_data.hdr_list);
 
     if (status != PJ_SUCCESS) {
-        WARN("Unable to accept presence subscription %d", status);
+        SFL_WARN("Unable to accept presence subscription %d", status);
         pjsip_pres_terminate(sub, PJ_FALSE);
         pres->unlock();
         return PJ_FALSE;
@@ -254,7 +254,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     }
 
     if (status != PJ_SUCCESS) {
-        WARN("Unable to create/send NOTIFY %d", status);
+        SFL_WARN("Unable to create/send NOTIFY %d", status);
         pjsip_pres_terminate(sub, PJ_FALSE);
         pres->unlock();
         return status;
@@ -316,7 +316,7 @@ bool PresSubServer::matches(const char *s) const
 void PresSubServer::approve(bool flag)
 {
     approved_ = flag;
-    DEBUG("Approve Presence_subscription_server for %s: %s.", remote_, flag ? "true" : "false");
+    SFL_DBG("Approve Presence_subscription_server for %s: %s.", remote_, flag ? "true" : "false");
     // attach the real status data
     pjsip_pres_set_status(sub_, pres_->getStatus());
 }
@@ -331,7 +331,7 @@ void PresSubServer::notify()
     * the user accepted the request.
     */
     if ((pjsip_evsub_get_state(sub_) == PJSIP_EVSUB_STATE_ACTIVE) && (approved_)) {
-        DEBUG("Notifying %s.", remote_);
+        SFL_DBG("Notifying %s.", remote_);
 
         pjsip_tx_data *tdata;
         pjsip_pres_set_status(sub_, pres_->getStatus());
@@ -341,7 +341,7 @@ void PresSubServer::notify()
             pres_->fillDoc(tdata, NULL);
             pjsip_pres_send_request(sub_, tdata);
         } else {
-            WARN("Unable to create/send NOTIFY");
+            SFL_WARN("Unable to create/send NOTIFY");
             pjsip_pres_terminate(sub_, PJ_FALSE);
         }
     }

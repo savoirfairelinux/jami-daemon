@@ -57,7 +57,7 @@ validate(std::string &member, const std::string &param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        ERROR("Invalid parameter \"%s\"", param.c_str());
+        SFL_ERR("Invalid parameter \"%s\"", param.c_str());
 }
 
 static void
@@ -85,7 +85,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
-        ERROR("Couldn't find key %s", key);
+        SFL_ERR("Couldn't find key %s", key);
         return;
     }
     i = atoi(iter->second.c_str());
@@ -133,7 +133,7 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 #ifdef SFL_VIDEO
     if (tmp.empty()) {
         // Video codecs are an empty list
-        WARN("Loading default video codecs");
+        SFL_WARN("Loading default video codecs");
         tmp = libav_utils::getDefaultCodecs();
     }
 #endif
