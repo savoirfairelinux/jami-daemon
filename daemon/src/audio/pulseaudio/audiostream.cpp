@@ -57,7 +57,7 @@ AudioStream::AudioStream(pa_context *c,
     audiostream_ = pa_stream_new(c, desc, &sample_spec, &channel_map);
 
     if (!audiostream_) {
-        ERROR("%s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
+        LOG_ERROR("%s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
         throw std::runtime_error("Could not create stream\n");
     }
 
@@ -136,7 +136,7 @@ AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 
         case PA_STREAM_FAILED:
         default:
-            ERROR("Sink/Source doesn't exists: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+            LOG_ERROR("Sink/Source doesn't exists: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
             break;
     }
 }
