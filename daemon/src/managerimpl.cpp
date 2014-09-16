@@ -90,6 +90,9 @@
 #include <memory>
 
 using namespace sfl;
+#ifdef _WIN32
+	#include <direct.h>
+#endif
 
 std::atomic_bool ManagerImpl::initialized = {false};
 

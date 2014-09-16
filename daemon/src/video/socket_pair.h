@@ -34,7 +34,12 @@
 
 #include "video_base.h"
 
-#include <sys/socket.h>
+#ifdef __WIN32__
+# include <winsock2.h>
+#else
+# include <sys/socket.h>
+#endif
+
 #include <mutex>
 #include <stdint.h>
 
