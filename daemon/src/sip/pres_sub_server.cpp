@@ -55,14 +55,14 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
     auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
-        ERROR("Could not find account IP2IP");
+        LOG_ERROR("Could not find account IP2IP");
         return;
     }
 
     auto pres = sipaccount->getPresence();
 
     if (!pres) {
-        ERROR("Presence not initialized");
+        LOG_ERROR("Presence not initialized");
         return;
     }
 
@@ -123,7 +123,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
     if (!sipaccount) {
-        ERROR("Could not find account IP2IP");
+        LOG_ERROR("Could not find account IP2IP");
         return PJ_FALSE;
     }
 

@@ -135,7 +135,7 @@ std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
     if (chan < samples_.size())
         return &samples_[chan];
 
-    ERROR("Audio channel %u out of range", chan);
+    LOG_ERROR("Audio channel %u out of range", chan);
     return nullptr;
 }
 
