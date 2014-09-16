@@ -54,14 +54,14 @@
 #include <stdexcept>
 #include <sstream>
 
-#define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return (VAL); }
+#define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { SFL_ERR(M, ##__VA_ARGS__); return (VAL); }
 
 SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool) :
 transportMap_(), transportMapMutex_(), transportDestroyedCv_(), cp_(cp), pool_(pool), endpt_(endpt)
 {
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), SipTransport::tp_state_callback);
     if (status != PJ_SUCCESS) {
-        ERROR("Can't set transport callback");
+        SFL_ERR("Can't set transport callback");
         sip_utils::sip_strerror(status);
     }
 }
@@ -111,7 +111,7 @@ SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state s
             description = pjsip_strerror(info->status, err_msg, sizeof(err_msg));
         }
 
-        WARN("Transport was destroyed: {%s} %.*s",
+        SFL_WARN("Transport was destroyed: {%s} %.*s",
              tp->info,
              info && description.slen > 0 ? description.slen : 0, err_msg);
         transportMap_.erase(transport_key++);
@@ -230,20 +230,20 @@ SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port,
     if (listeningAddress.isIpv4()) {
         status = pjsip_udp_transport_start(endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress), nullptr, 1, &transport);
         if (status != PJ_SUCCESS) {
-            ERROR("UDP IPV4 Transport did not start");
+            SFL_ERR("UDP IPV4 Transport did not start");
             sip_utils::sip_strerror(status);
             return nullptr;
         }
     } else if (listeningAddress.isIpv6()) {
         status = pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress), nullptr, 1, &transport);
         if (status != PJ_SUCCESS) {
-            ERROR("UDP IPV6 Transport did not start");
+            SFL_ERR("UDP IPV6 Transport did not start");
             sip_utils::sip_strerror(status);
             return nullptr;
         }
     }
 
-    DEBUG("Created UDP transport on %s : %s", interface.c_str(), listeningAddress.toString(true).c_str());
+    SFL_DBG("Created UDP transport on %s : %s", interface.c_str(), listeningAddress.toString(true).c_str());
     // dump debug information to stdout
     //pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
     return transport;
@@ -266,14 +266,14 @@ SipTransport::createTlsListener(SIPAccountBase &account, pj_uint16_t family)
 
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
 
-    DEBUG("Creating Listener on %s...", listeningAddress.toString(true).c_str());
-    DEBUG("CRT file : %s", account.getTlsSetting()->ca_list_file.ptr);
-    DEBUG("PEM file : %s", account.getTlsSetting()->cert_file.ptr);
+    SFL_DBG("Creating Listener on %s...", listeningAddress.toString(true).c_str());
+    SFL_DBG("CRT file : %s", account.getTlsSetting()->ca_list_file.ptr);
+    SFL_DBG("PEM file : %s", account.getTlsSetting()->cert_file.ptr);
 
     pjsip_tpfactory *listener = nullptr;
     const pj_status_t status = pjsip_tls_transport_start2(endpt_, account.getTlsSetting(), listeningAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
-        ERROR("TLS listener did not start");
+        SFL_ERR("TLS listener did not start");
         sip_utils::sip_strerror(status);
         return nullptr;
     }
@@ -301,7 +301,7 @@ SipTransport::createTlsTransport(SIPAccountBase &account)
     if (remoteAddr.getPort() == 0)
         remoteAddr.setPort(port);
 
-    DEBUG("Get new tls transport/listener from transport manager to %s", remoteAddr.toString(true).c_str());
+    SFL_DBG("Get new tls transport/listener from transport manager to %s", remoteAddr.toString(true).c_str());
 
     // create listener
     pjsip_tpfactory *localTlsListener = createTlsListener(account, remoteAddr.getFamily());
@@ -319,7 +319,7 @@ SipTransport::createTlsTransport(SIPAccountBase &account)
     if (!transport || status != PJ_SUCCESS) {
         if (localTlsListener)
             localTlsListener->destroy(localTlsListener);
-        ERROR("Could not create new TLS transport");
+        SFL_ERR("Could not create new TLS transport");
         sip_utils::sip_strerror(status);
         return nullptr;
     }
@@ -356,7 +356,7 @@ SipTransport::_cleanupTransports()
         pj_lock_acquire(t->lock);
         auto ref_cnt = pj_atomic_get(t->ref_cnt);
         if (ref_cnt == 0 || t->is_shutdown || t->is_destroying) {
-            DEBUG("Removing transport for %s", t->info );
+            SFL_DBG("Removing transport for %s", t->info );
             bool is_shutdown = t->is_shutdown || t->is_destroying;
             transportMap_.erase(it++);
             if (!is_shutdown)
@@ -380,16 +380,18 @@ SipTransport::getSTUNAddresses(const SIPAccountBase &account,
     const size_t ip_num = socketDescriptors.size();
     pj_sockaddr_in ipv4[ip_num];
 
-    pj_status_t ret;
-    if ((ret = pjstun_get_mapped_addr(&cp_.factory, socketDescriptors.size(), &socketDescriptors[0],
-                    &serverName, port, &serverName, port, ipv4)) != PJ_SUCCESS) {
-        ERROR("STUN query to server \"%.*s\" failed", serverName.slen, serverName.ptr);
+    pj_status_t ret = pjstun_get_mapped_addr(&cp_.factory,
+		socketDescriptors.size(), &socketDescriptors[0],
+		&serverName, port, &serverName, port, ipv4);
+
+    if (ret != PJ_SUCCESS) {
+        SFL_ERR("STUN query to server \"%.*s\" failed", serverName.slen, serverName.ptr);
         switch (ret) {
             case PJLIB_UTIL_ESTUNNOTRESPOND:
-                ERROR("No response from STUN server(s)");
+                SFL_ERR("No response from STUN server(s)");
                 break;
             case PJLIB_UTIL_ESTUNSYMMETRIC:
-                ERROR("Different mapped addresses are returned by servers.");
+                SFL_ERR("Different mapped addresses are returned by servers.");
                 break;
             default:
                 break;
@@ -400,12 +402,12 @@ SipTransport::getSTUNAddresses(const SIPAccountBase &account,
     std::vector<pj_sockaddr> result(ip_num);
     for(size_t i=0; i<ip_num; i++) {
         result[i].ipv4 = ipv4[i];
-        WARN("STUN PORTS: %ld", pj_sockaddr_get_port(&result[i]));
+        SFL_WARN("STUN PORTS: %ld", pj_sockaddr_get_port(&result[i]));
     }
     return result;
 }
 
-#define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { ERROR(M, ##__VA_ARGS__); return; }
+#define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { SFL_ERR(M, ##__VA_ARGS__); return; }
 
 void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, const std::string &host, std::string &addr, pj_uint16_t &port) const
 {
@@ -428,7 +430,7 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     pjsip_tpselector tp_sel = getTransportSelector(transport);
     pjsip_tpmgr_fla2_param param = {transportType, &tp_sel, pjstring, PJ_FALSE, {nullptr, 0}, 0, nullptr};
     if (pjsip_tpmgr_find_local_addr2(tpmgr, &pool_, &param) != PJ_SUCCESS) {
-        WARN("Could not retrieve local address and port from transport, using %s :%d", addr.c_str(), port);
+        SFL_WARN("Could not retrieve local address and port from transport, using %s :%d", addr.c_str(), port);
         return;
     }
 
@@ -462,10 +464,10 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
 
     switch (stunStatus) {
         case PJLIB_UTIL_ESTUNNOTRESPOND:
-           ERROR("No response from STUN server %.*s", stunServerName->slen, stunServerName->ptr);
+           SFL_ERR("No response from STUN server %.*s", stunServerName->slen, stunServerName->ptr);
            return;
         case PJLIB_UTIL_ESTUNSYMMETRIC:
-           ERROR("Different mapped addresses are returned by servers.");
+           SFL_ERR("Different mapped addresses are returned by servers.");
            return;
         case PJ_SUCCESS:
             port = mapped_addr.getPort();
@@ -474,7 +476,7 @@ SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
            break;
     }
 
-    WARN("Using address %s provided by STUN server %.*s",
+    SFL_WARN("Using address %s provided by STUN server %.*s",
          IpAddr(mapped_addr).toString(true).c_str(), stunServerName->slen, stunServerName->ptr);
 }
 

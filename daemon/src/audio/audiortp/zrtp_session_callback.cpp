@@ -103,28 +103,28 @@ ZrtpSessionCallback::ZrtpSessionCallback(SIPCall &call) : call_(call)
 void
 ZrtpSessionCallback::secureOn(std::string cipher)
 {
-    DEBUG("Secure mode is on with cipher %s", cipher.c_str());
+    SFL_DBG("Secure mode is on with cipher %s", cipher.c_str());
     Manager::instance().getClient()->getCallManager()->secureZrtpOn(call_.getCallId(), cipher);
 }
 
 void
 ZrtpSessionCallback::secureOff()
 {
-    DEBUG("Secure mode is off");
+    SFL_DBG("Secure mode is off");
     Manager::instance().getClient()->getCallManager()->secureZrtpOff(call_.getCallId());
 }
 
 void
 ZrtpSessionCallback::showSAS(std::string sas, bool verified)
 {
-    DEBUG("SAS is: %s", sas.c_str());
+    SFL_DBG("SAS is: %s", sas.c_str());
     Manager::instance().getClient()->getCallManager()->showSAS(call_.getCallId(), sas, verified);
 }
 
 void
 ZrtpSessionCallback::zrtpNotSuppOther()
 {
-    DEBUG("Callee does not support ZRTP");
+    SFL_DBG("Callee does not support ZRTP");
     Manager::instance().getClient()->getCallManager()->zrtpNotSuppOther(call_.getCallId());
 }
 
@@ -133,9 +133,9 @@ ZrtpSessionCallback::showMessage(GnuZrtpCodes::MessageSeverity sev, int32_t subC
 {
     if (sev == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
-            DEBUG("Received an error packet from peer:");
+            SFL_DBG("Received an error packet from peer:");
         } else
-            DEBUG("Sent error packet to peer:");
+            SFL_DBG("Sent error packet to peer:");
     }
 }
 
@@ -145,21 +145,21 @@ ZrtpSessionCallback::zrtpNegotiationFailed(MessageSeverity severity, int subCode
     if (severity == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
             subCode *= -1;
-            DEBUG("Received error packet: ");
+            SFL_DBG("Received error packet: ");
         } else
-            DEBUG("Sent error packet: ");
+            SFL_DBG("Sent error packet: ");
 
         std::map<int32, std::string>::const_iterator iter = zrtpMap_.find(subCode);
 
         if (iter != zrtpMap_.end()) {
-            DEBUG("%s", iter->second.c_str());
+            SFL_DBG("%s", iter->second.c_str());
             Manager::instance().getClient()->getCallManager()->zrtpNegotiationFailed(call_.getCallId(), iter->second, "ZRTP");
         }
     } else {
         std::map<int32, std::string>::const_iterator iter = severeMap_.find(subCode);
 
         if (iter != severeMap_.end()) {
-            DEBUG("%s", iter->second.c_str());
+            SFL_DBG("%s", iter->second.c_str());
             Manager::instance().getClient()->getCallManager()->zrtpNegotiationFailed(call_.getCallId(), iter->second, "severe");
         }
     }
@@ -168,7 +168,7 @@ ZrtpSessionCallback::zrtpNegotiationFailed(MessageSeverity severity, int subCode
 void
 ZrtpSessionCallback::confirmGoClear()
 {
-    DEBUG("Received go clear message. Until confirmation, ZRTP won't send any data");
+    SFL_DBG("Received go clear message. Until confirmation, ZRTP won't send any data");
     Manager::instance().getClient()->getCallManager()->zrtpNotSuppOther(call_.getCallId());
 }
 

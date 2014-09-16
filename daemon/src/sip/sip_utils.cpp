@@ -91,7 +91,7 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     pj_strdup2(hdr_pool, &url->host, host.c_str());
     url->port = port;
 
-    DEBUG("Adding route %s", host.c_str());
+    SFL_DBG("Adding route %s", host.c_str());
     pj_list_push_back(route_set, pjsip_hdr_clone(hdr_pool, routing));
 
     return route_set;
@@ -196,7 +196,7 @@ sip_utils::getIPList(const std::string &name)
     if (name.empty())
         return ipList;
 
-    //ERROR("sip_utils::getIPList %s", name.c_str());
+    //SFL_ERR("sip_utils::getIPList %s", name.c_str());
 
     struct addrinfo *result;
     struct addrinfo hints;
@@ -207,7 +207,7 @@ sip_utils::getIPList(const std::string &name)
     /* resolve the domain name into a list of addresses */
     const int error = getaddrinfo(name.c_str(), nullptr, &hints, &result);
     if (error != 0) {
-        DEBUG("getaddrinfo on \"%s\" failed: %s", name.c_str(), gai_strerror(error));
+        SFL_DBG("getaddrinfo on \"%s\" failed: %s", name.c_str(), gai_strerror(error));
         return ipList;
     }
 
@@ -224,7 +224,7 @@ sip_utils::getIPList(const std::string &name)
                 ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
                 break;
             default:
-                ERROR("Unexpected address family type, skipping.");
+                SFL_ERR("Unexpected address family type, skipping.");
                 continue;
         }
         inet_ntop(res->ai_family, ptr, addrstr.data(), addrstr.size());
@@ -257,5 +257,5 @@ sip_utils::sip_strerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
     pj_strerror(code, err_msg, sizeof err_msg);
-    ERROR("%d: %s", code, err_msg);
+    SFL_ERR("%d: %s", code, err_msg);
 }

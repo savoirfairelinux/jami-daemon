@@ -52,7 +52,7 @@ AudioFile::onBufferFinish()
     const int divisor = buffer_->getSampleRate() / 1000;
 
     if (divisor == 0) {
-        ERROR("Error cannot update playback slider, sampling rate is 0");
+        SFL_ERR("Error cannot update playback slider, sampling rate is 0");
         return;
     }
 
@@ -85,7 +85,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     } else if (filepath_.find(".ogg") != std::string::npos) {
         format = SF_FORMAT_OGG;
     } else {
-        WARN("No file extension, guessing WAV");
+        SFL_WARN("No file extension, guessing WAV");
         format = SF_FORMAT_WAV;
     }
 
@@ -95,7 +95,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     if (!fileHandle)
         throw AudioFileException("File handle " + fileName + " could not be created");
     if (fileHandle.error()) {
-        ERROR("%s", fileHandle.strError());
+        SFL_ERR("%s", fileHandle.strError());
         throw AudioFileException("File " + fileName + " doesn't exist");
     }
 

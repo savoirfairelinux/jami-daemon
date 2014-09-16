@@ -151,7 +151,7 @@ InstantMessaging::parseXmlUriList(const std::string &urilist)
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
 
     if (XML_Parse(parser, urilist.c_str(), urilist.size(), 1) == XML_STATUS_ERROR) {
-        ERROR("%s at line %lu\n", XML_ErrorString(XML_GetErrorCode(parser)),
+        SFL_ERR("%s at line %lu\n", XML_ErrorString(XML_GetErrorCode(parser)),
                XML_GetCurrentLineNumber(parser));
         throw InstantMessageException("Error while parsing uri-list xml content");
     }

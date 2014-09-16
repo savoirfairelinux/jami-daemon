@@ -71,24 +71,24 @@ static unsigned char *crypto_file_read(const char *path, size_t *out_len)
 
     fd = open(path, O_RDONLY);
     if (fd < 0) {
-        ERROR("Failed to open file '%s'.", path);
+        SFL_ERR("Failed to open file '%s'.", path);
         return NULL;
     }
 
     if (fstat(fd, &st) < 0) {
-        ERROR("Failed to stat file '%s'.", path);
+        SFL_ERR("Failed to stat file '%s'.", path);
         goto out;
     }
 
     if (st.st_size <= 0 || st.st_size > INT_MAX) {
-        ERROR("Invalid file '%s' length %ld.", path, st.st_size);
+        SFL_ERR("Invalid file '%s' length %ld.", path, st.st_size);
         goto out;
     }
 
     file_size = st.st_size;
     data = (unsigned char *)malloc(file_size);
     if (!data) {
-        ERROR("Not enough memory to read file '%s'.", path);
+        SFL_ERR("Not enough memory to read file '%s'.", path);
         goto out;
     }
 
@@ -98,7 +98,7 @@ static unsigned char *crypto_file_read(const char *path, size_t *out_len)
             free(data);
             data = NULL;
             *out_len = 0;
-            ERROR("Failed to read file '%s'.", path);
+            SFL_ERR("Failed to read file '%s'.", path);
             goto out;
         }
         *out_len += bytes_read;
@@ -119,21 +119,21 @@ static int crypto_cert_check_date(gnutls_x509_crt_t cert)
 
     activationTime = gnutls_x509_crt_get_activation_time(cert);
     if (activationTime == -1) {
-        ERROR("Could not retrieve activation time.");
+        SFL_ERR("Could not retrieve activation time.");
         return -1;
     }
     if (now < activationTime) {
-        ERROR("Certificate not yet activated.");
+        SFL_ERR("Certificate not yet activated.");
         return -1;
     }
 
     expirationTime = gnutls_x509_crt_get_expiration_time(cert);
     if (expirationTime == -1) {
-        ERROR("Could not errrieve expiration time.");
+        SFL_ERR("Could not errrieve expiration time.");
         return -2;
     }
     if (now > expirationTime) {
-        ERROR("Certificate expired.");
+        SFL_ERR("Certificate expired.");
         return -2;
     }
 
@@ -157,7 +157,7 @@ static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
 
     dt.size = (unsigned int) fsize;
     if (gnutls_x509_crt_init(&cert) != GNUTLS_E_SUCCESS) {
-        ERROR("Not enough memory for certificate.");
+        SFL_ERR("Not enough memory for certificate.");
         goto out;
     }
 
@@ -165,7 +165,7 @@ static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
     if (err != GNUTLS_E_SUCCESS)
         err = gnutls_x509_crt_import(cert, &dt, GNUTLS_X509_FMT_DER);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not import certificate %s - %s", path, gnutls_strerror(err));
+        SFL_ERR("Could not import certificate %s - %s", path, gnutls_strerror(err));
         goto out;
     }
 
@@ -183,7 +183,7 @@ static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
         free(data);
         data = NULL;
         *out_len = 0;
-        ERROR("Certificate %s could not be exported - %s.\n",
+        SFL_ERR("Certificate %s could not be exported - %s.\n",
               path, gnutls_strerror(err));
     }
 
@@ -210,22 +210,22 @@ static int crypto_cert_load_trusted(gnutls_certificate_credentials_t cred)
 
     trust_store = opendir("/etc/ssl/certs/");
     if (!trust_store) {
-        ERROR("Failed to open system trusted store.");
+        SFL_ERR("Failed to open system trusted store.");
         goto out;
     }
     while ((trust_ca = readdir(trust_store)) != NULL) {
         /* Prepare the string and check it is a regular file. */
         err = snprintf(ca_file, sizeof(ca_file), "/etc/ssl/certs/%s", trust_ca->d_name);
         if (err < 0) {
-            ERROR("snprintf() error");
+            SFL_ERR("snprintf() error");
             goto out;
         } else if (err >= sizeof(ca_file)) {
-            ERROR("File name too long '%s'.", trust_ca->d_name);
+            SFL_ERR("File name too long '%s'.", trust_ca->d_name);
             goto out;
         }
         err = stat(ca_file, &statbuf);
         if (err < 0) {
-            ERROR("Failed to stat file '%s'.", ca_file);
+            SFL_ERR("Failed to stat file '%s'.", ca_file);
             goto out;
         }
         if (!S_ISREG(statbuf.st_mode))
@@ -234,9 +234,9 @@ static int crypto_cert_load_trusted(gnutls_certificate_credentials_t cred)
         /* Load the root CA. */
         err = gnutls_certificate_set_x509_trust_file(cred, ca_file, GNUTLS_X509_FMT_PEM);
         if (err == 0) {
-            WARN("No trusted certificates found - %s", gnutls_strerror(err));
+            SFL_WARN("No trusted certificates found - %s", gnutls_strerror(err));
         } else if (err < 0) {
-            ERROR("Could not load trusted certificates - %s", gnutls_strerror(err));
+            SFL_ERR("Could not load trusted certificates - %s", gnutls_strerror(err));
             goto out;
         }
     }
@@ -265,14 +265,14 @@ static int crypto_cert_print_issuer(gnutls_x509_crt_t cert,
     name_size = sizeof(name);
     gnutls_x509_crt_get_dn(cert, name, &name_size);
 
-    DEBUG("Subject: %s", name);
-    DEBUG("Issuer: %s", issuer_name);
+    SFL_DBG("Subject: %s", name);
+    SFL_DBG("Issuer: %s", issuer_name);
 
     if (issuer != NULL) {
         issuer_name_size = sizeof(issuer_name);
         gnutls_x509_crt_get_dn(issuer, issuer_name, &issuer_name_size);
 
-        DEBUG("Verified against: %s", issuer_name);
+        SFL_DBG("Verified against: %s", issuer_name);
     }
 
     return 0;
@@ -292,14 +292,14 @@ int containsPrivateKey(const char *pemPath)
 
     err = gnutls_global_init();
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not init GnuTLS - %s", gnutls_strerror(err));
+        SFL_ERR("Could not init GnuTLS - %s", gnutls_strerror(err));
         free(dt.data);
         return res;
     }
 
     err = gnutls_x509_privkey_init(&key);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not init key - %s", gnutls_strerror(err));
+        SFL_ERR("Could not init key - %s", gnutls_strerror(err));
         free(dt.data);
         gnutls_global_deinit();
         return res;
@@ -309,12 +309,12 @@ int containsPrivateKey(const char *pemPath)
     if (err != GNUTLS_E_SUCCESS)
         err = gnutls_x509_privkey_import(key, &dt, GNUTLS_X509_FMT_DER);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not read key - %s", gnutls_strerror(err));
+        SFL_ERR("Could not read key - %s", gnutls_strerror(err));
         goto out;
     }
 
     res = 0;
-    DEBUG("Key from %s seems valid.", pemPath);
+    SFL_DBG("Key from %s seems valid.", pemPath);
 out:
     free(dt.data);
     gnutls_x509_privkey_deinit(key);
@@ -334,7 +334,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
 
     err = gnutls_global_init();
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not init GnuTLS - %s", gnutls_strerror(err));
+        SFL_ERR("Could not init GnuTLS - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -345,7 +345,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
 
     err = gnutls_x509_crt_init(&cert);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not init certificate - %s", gnutls_strerror(err));
+        SFL_ERR("Could not init certificate - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -353,7 +353,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
     if (err != GNUTLS_E_SUCCESS)
         err = gnutls_x509_crt_import(cert, &cert_dt, GNUTLS_X509_FMT_DER);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not read certificate - %s", gnutls_strerror(err));
+        SFL_ERR("Could not read certificate - %s", gnutls_strerror(err));
         goto out;
     }
     free(cert_dt.data);
@@ -362,7 +362,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
     /* check if cert is self signed */
     self_signed = gnutls_x509_crt_check_issuer(cert, cert);
     if (!self_signed && !caPath) {
-        ERROR("Certificate is not self-signed, and CA is not provided.");
+        SFL_ERR("Certificate is not self-signed, and CA is not provided.");
         goto out;
     }
     if (caPath) {
@@ -373,7 +373,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
 
         err = gnutls_x509_crt_init(&ca);
         if (err != GNUTLS_E_SUCCESS) {
-            ERROR("Could not init CA - %s", gnutls_strerror(err));
+            SFL_ERR("Could not init CA - %s", gnutls_strerror(err));
             goto out;
         }
 
@@ -381,7 +381,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
         if (err != GNUTLS_E_SUCCESS)
             err = gnutls_x509_crt_import(ca, &ca_dt, GNUTLS_X509_FMT_DER);
         if (err != GNUTLS_E_SUCCESS) {
-            ERROR("Could not read CA - %s", gnutls_strerror(err));
+            SFL_ERR("Could not read CA - %s", gnutls_strerror(err));
             goto out;
         }
         free(ca_dt.data);
@@ -390,33 +390,33 @@ int certificateIsValid(const char *caPath, const char *certPath)
         /* Check if the CA is the issuer of certificate. */
         self_signed = gnutls_x509_crt_check_issuer(cert, ca);
         if (!self_signed) {
-            ERROR("Certificate is not issued by the provided CA.");
+            SFL_ERR("Certificate is not issued by the provided CA.");
             goto out;
         }
 
         /* Verify the certificate with its issuer. */
         err = gnutls_x509_crt_verify(cert, &ca, 1, 0, &output);
         if (err < 0) {
-            ERROR("Could not verify cert: %s", gnutls_strerror(err));
+            SFL_ERR("Could not verify cert: %s", gnutls_strerror(err));
             goto out;
         }
         if (output & GNUTLS_CERT_INVALID) {
-            ERROR("Verification failed.");
+            SFL_ERR("Verification failed.");
             if (output & GNUTLS_CERT_SIGNER_NOT_FOUND)
-                ERROR("The certificate hasn't got a known issuer.");
+                SFL_ERR("The certificate hasn't got a known issuer.");
             if (output & GNUTLS_CERT_SIGNER_NOT_CA)
-                ERROR("The certificate issuer is not a CA.");
+                SFL_ERR("The certificate issuer is not a CA.");
             if (output & GNUTLS_CERT_REVOKED)
-                ERROR("The certificate has been revoked.");
+                SFL_ERR("The certificate has been revoked.");
             if (output & GNUTLS_CERT_EXPIRED)
-                ERROR("The certificate has expired.");
+                SFL_ERR("The certificate has expired.");
             if (output & GNUTLS_CERT_NOT_ACTIVATED)
-                ERROR("The certificate is not yet activated.");
+                SFL_ERR("The certificate is not yet activated.");
             goto out;
         }
     }
 
-    DEBUG("Certificate from %s seems valid.", certPath);
+    SFL_DBG("Certificate from %s seems valid.", certPath);
     crypto_cert_print_issuer(cert, ca);
     res = 0;
 out:
@@ -454,14 +454,14 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     struct timeval tv;
 
     if (!host || !port) {
-        ERROR("Wrong parameters used - host %s, port %d.", host, port);
+        SFL_ERR("Wrong parameters used - host %s, port %d.", host, port);
         return res;
     }
 
     /* Create the socket. */
     sockfd = socket (PF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        ERROR("Could not create socket.");
+        SFL_ERR("Could not create socket.");
         return res;
     }
     /* Set non-blocking so we can dected timeouts. */
@@ -478,7 +478,7 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     name.sin_port = htons(port);
     hostinfo = gethostbyname(host);
     if (hostinfo == NULL) {
-        ERROR("Unknown host %s.", host);
+        SFL_ERR("Unknown host %s.", host);
         goto out;
     }
     name.sin_addr = *(struct in_addr *)hostinfo->h_addr;
@@ -494,7 +494,7 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
                 tv.tv_usec = 0;
                 err = select(sockfd + 1, NULL, &fdset, NULL, &tv);
                 if (err < 0 && errno != EINTR) {
-                    ERROR("Could not connect to hostname %s at port %d",
+                    SFL_ERR("Could not connect to hostname %s at port %d",
                           host, port);
                     goto out;
                 } else if (err > 0) {
@@ -504,17 +504,17 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
                     getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
                     if (so_error) {
-                        ERROR("Connection delayed.");
+                        SFL_ERR("Connection delayed.");
                         goto out;
                     }
                     break;  // exit do-while loop
                 } else {
-                    ERROR("Connection timeout.");
+                    SFL_ERR("Connection timeout.");
                     goto out;
                 }
             } while(1);
         } else {
-            ERROR("Could not connect to hostname %s at port %d", host, port);
+            SFL_ERR("Could not connect to hostname %s at port %d", host, port);
             goto out;
         }
     }
@@ -529,45 +529,45 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     /* Disable Nagle algorithm that slows down the SSL handshake. */
     err = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
     if (err < 0) {
-        ERROR("Could not set TCP_NODELAY.");
+        SFL_ERR("Could not set TCP_NODELAY.");
         goto out;
     }
 
     err = gnutls_global_init();
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not init GnuTLS - %s", gnutls_strerror(err));
+        SFL_ERR("Could not init GnuTLS - %s", gnutls_strerror(err));
         goto out;
     }
     /* Load the trusted CA certificates. */
     err = gnutls_certificate_allocate_credentials(&cred);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not allocate credentials - %s", gnutls_strerror(err));
+        SFL_ERR("Could not allocate credentials - %s", gnutls_strerror(err));
         goto out;
     }
     err = crypto_cert_load_trusted(cred);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not load credentials.");
+        SFL_ERR("Could not load credentials.");
         goto out;
     }
 
     /* Create the session object. */
     err = gnutls_init(&session, GNUTLS_CLIENT);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not init session -%s\n", gnutls_strerror(err));
+        SFL_ERR("Could not init session -%s\n", gnutls_strerror(err));
         goto out;
     }
 
     /* Configure the cipher preferences. The default set should be good enough. */
     err = gnutls_priority_set_direct(session, "NORMAL", &errptr);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not set up ciphers - %s (%s)", gnutls_strerror(err), errptr);
+        SFL_ERR("Could not set up ciphers - %s (%s)", gnutls_strerror(err), errptr);
         goto out;
     }
 
     /* Install the trusted certificates. */
     err = gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, cred);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not set up credentials - %s", gnutls_strerror(err));
+        SFL_ERR("Could not set up credentials - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -575,28 +575,28 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t) (uintptr_t) sockfd);
     err = gnutls_server_name_set(session, GNUTLS_NAME_DNS, host, strlen(host));
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not set server name - %s", gnutls_strerror(err));
+        SFL_ERR("Could not set server name - %s", gnutls_strerror(err));
         goto out;
     }
 
     /* Establish the connection. */
     err = gnutls_handshake(session);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Handshake failed - %s", gnutls_strerror(err));
+        SFL_ERR("Handshake failed - %s", gnutls_strerror(err));
         goto out;
     }
     /* Obtain the server certificate chain. The server certificate
      * itself is stored in the first element of the array. */
     certs = gnutls_certificate_get_peers(session, &certslen);
     if (certs == NULL || certslen == 0) {
-        ERROR("Could not obtain peer certificate - %s", gnutls_strerror(err));
+        SFL_ERR("Could not obtain peer certificate - %s", gnutls_strerror(err));
         goto out;
     }
 
     /* Validate the certificate chain. */
     err = gnutls_certificate_verify_peers2(session, &status);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not verify the certificate chain - %s", gnutls_strerror(err));
+        SFL_ERR("Could not verify the certificate chain - %s", gnutls_strerror(err));
         goto out;
     }
     if (status != 0) {
@@ -608,11 +608,11 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
         err = -1;
 #endif
         if (err == 0) {
-            ERROR("Certificate validation failed - %s\n", msg.data);
+            SFL_ERR("Certificate validation failed - %s\n", msg.data);
             gnutls_free(msg.data);
             goto out;
         } else {
-            ERROR("Certificate validation failed with code 0x%x.", status);
+            SFL_ERR("Certificate validation failed with code 0x%x.", status);
             goto out;
         }
     }
@@ -624,7 +624,7 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
 
     err = gnutls_x509_crt_init(&cert);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not init certificate - %s", gnutls_strerror(err));
+        SFL_ERR("Could not init certificate - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -633,13 +633,13 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     if (err != GNUTLS_E_SUCCESS)
         err = gnutls_x509_crt_import(cert, certs, GNUTLS_X509_FMT_DER);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not read peer certificate - %s", gnutls_strerror(err));
+        SFL_ERR("Could not read peer certificate - %s", gnutls_strerror(err));
         goto out;
     }
     /* Finally check if the hostnames match. */
     err = gnutls_x509_crt_check_hostname(cert, host);
     if (err == 0) {
-        ERROR("Hostname %s does not match certificate.", host);
+        SFL_ERR("Hostname %s does not match certificate.", host);
         goto out;
     }
 
@@ -647,16 +647,16 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     snprintf(buf, sizeof(buf), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", host);
     err = gnutls_record_send(session, buf, strlen(buf));
     if (err < 0) {
-        ERROR("Send failed - %s", gnutls_strerror(err));
+        SFL_ERR("Send failed - %s", gnutls_strerror(err));
         goto out;
     }
     err = gnutls_record_recv(session, buf, sizeof(buf));
     if (err < 0) {
-        ERROR("Recv failed - %s", gnutls_strerror(err));
+        SFL_ERR("Recv failed - %s", gnutls_strerror(err));
         goto out;
     }
 
-    DEBUG("Hostname %s seems to point to a valid server.", host);
+    SFL_DBG("Hostname %s seems to point to a valid server.", host);
     res = 0;
 out:
     if (session) {

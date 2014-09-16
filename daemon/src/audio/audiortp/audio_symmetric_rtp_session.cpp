@@ -44,7 +44,7 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     ost::SymmetricRTPSession(static_cast<ost::IPV4Host>(call.getLocalIp()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
 {
-    DEBUG("Setting new RTP session with destination %s:%d",
+    SFL_DBG("Setting new RTP session with destination %s:%d",
           call_.getLocalIp().toString().c_str(), call_.getLocalAudioPort());
 }
 
@@ -78,17 +78,17 @@ void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoun
 {
     ost::SymmetricRTPSession::onGotRR(source, RR, blocks);
 #ifdef RTP_DEBUG
-    DEBUG("onGotRR");
-    DEBUG("Unpacking %d blocks",blocks);
+    SFL_DBG("onGotRR");
+    SFL_DBG("Unpacking %d blocks",blocks);
     for (int i = 0; i < blocks; ++i)
     {
-        DEBUG("fractionLost : %hhu", RR.blocks[i].rinfo.fractionLost);
-        DEBUG("lostMSB : %hhu", RR.blocks[i].rinfo.lostMSB);
-        DEBUG("lostLSW : %hu", RR.blocks[i].rinfo.lostLSW);
-        DEBUG("highestSeqNum : %u", RR.blocks[i].rinfo.highestSeqNum);
-        DEBUG("jitter : %u", RR.blocks[i].rinfo.jitter);
-        DEBUG("lsr : %u", RR.blocks[i].rinfo.lsr);
-        DEBUG("dlsr : %u", RR.blocks[i].rinfo.dlsr);
+        SFL_DBG("fractionLost : %hhu", RR.blocks[i].rinfo.fractionLost);
+        SFL_DBG("lostMSB : %hhu", RR.blocks[i].rinfo.lostMSB);
+        SFL_DBG("lostLSW : %hu", RR.blocks[i].rinfo.lostLSW);
+        SFL_DBG("highestSeqNum : %u", RR.blocks[i].rinfo.highestSeqNum);
+        SFL_DBG("jitter : %u", RR.blocks[i].rinfo.jitter);
+        SFL_DBG("lsr : %u", RR.blocks[i].rinfo.lsr);
+        SFL_DBG("dlsr : %u", RR.blocks[i].rinfo.dlsr);
      }
 #endif
 }
@@ -97,7 +97,7 @@ void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoun
 void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks)
 {
 #ifdef RTP_DEBUG
-    DEBUG("onGotSR");
+    SFL_DBG("onGotSR");
     std::cout << "I got an SR RTCP report from "
             << std::hex << (int)source.getID() << "@"
             << std::dec
@@ -148,19 +148,19 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
         stats["DLSR"] = receiver_report.getDelayLastSR();
 
 #ifdef RTP_DEBUG
-        DEBUG("lastSR NTPTimestamp : %lu", receiver_report.getLastSRNTPTimestampFrac() << 16);
-        DEBUG("NTPTimestampFrac : %lu", timestampFrac);
-        DEBUG("rttMSW : %u", rttMSW);
-        DEBUG("rttLSW : %u", rttLSW);
-        DEBUG("RTT recomposed: %lu", rtt);
-        DEBUG("LDSR: %lu", receiver_report.getDelayLastSR());
-        DEBUG("Packet count : %u", stats["PACKET_COUNT"]);
-        DEBUG("Fraction packet loss : %.2f", (double) stats["PACKET_LOSS"] * 100 / 256);
-        DEBUG("Cumulative packet loss : %d", stats["CUMUL_PACKET_LOSS"]);
-        DEBUG("HighestSeqNum : %u", stats["HIGH_SEC_NUM"]);
-        DEBUG("Jitter : %u", stats["JITTER"]);
-        DEBUG("RTT : %.2f", (double) stats["RTT"] / 65536);
-        DEBUG("Delay since last report %.2f seconds", (double) stats["DLSR"] / 65536.0);
+        SFL_DBG("lastSR NTPTimestamp : %lu", receiver_report.getLastSRNTPTimestampFrac() << 16);
+        SFL_DBG("NTPTimestampFrac : %lu", timestampFrac);
+        SFL_DBG("rttMSW : %u", rttMSW);
+        SFL_DBG("rttLSW : %u", rttLSW);
+        SFL_DBG("RTT recomposed: %lu", rtt);
+        SFL_DBG("LDSR: %lu", receiver_report.getDelayLastSR());
+        SFL_DBG("Packet count : %u", stats["PACKET_COUNT"]);
+        SFL_DBG("Fraction packet loss : %.2f", (double) stats["PACKET_LOSS"] * 100 / 256);
+        SFL_DBG("Cumulative packet loss : %d", stats["CUMUL_PACKET_LOSS"]);
+        SFL_DBG("HighestSeqNum : %u", stats["HIGH_SEC_NUM"]);
+        SFL_DBG("Jitter : %u", stats["JITTER"]);
+        SFL_DBG("RTT : %.2f", (double) stats["RTT"] / 65536);
+        SFL_DBG("Delay since last report %.2f seconds", (double) stats["DLSR"] / 65536.0);
 #endif
         Manager::instance().getClient()->getCallManager()->onRtcpReportReceived(call_.getCallId(), stats);
     }
@@ -172,7 +172,7 @@ AudioSymmetricRtpSessionIPv6::AudioSymmetricRtpSessionIPv6(SIPCall &call) :
     ost::SymmetricRTPSessionIPV6(static_cast<ost::IPV6Host>(call.getLocalIp()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
 {
-    DEBUG("Setting new RTP/IPv6 session with destination %s:%d",
+    SFL_DBG("Setting new RTP/IPv6 session with destination %s:%d",
           call_.getLocalIp().toString().c_str(), call_.getLocalAudioPort());
 }
 
@@ -224,9 +224,9 @@ size_t
 AudioSymmetricRtpSessionIPv6::recvData(unsigned char* buffer, size_t len, ost::IPV4Host&, ost::tpport_t& port)
 {
     ost::IPV6Host hostv6 = call_.getLocalIp();
-    ERROR("recvData %d ", hostv6.getAddressCount());
+    SFL_ERR("recvData %d ", hostv6.getAddressCount());
     size_t r = ost::SymmetricRTPSessionIPV6::recvData(buffer, len, hostv6, port);
-    ERROR("recvData from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
+    SFL_ERR("recvData from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
     return r;
 }
 
@@ -235,7 +235,7 @@ AudioSymmetricRtpSessionIPv6::recvControl(unsigned char* buffer, size_t len, ost
 {
     ost::IPV6Host hostv6 = call_.getLocalIp();
     size_t r = ost::SymmetricRTPSessionIPV6::recvControl(buffer, len, hostv6, port);
-    ERROR("recvControl from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
+    SFL_ERR("recvControl from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
     return r;
 }
 

@@ -56,7 +56,7 @@ void VideoScaler::scale(const VideoFrame &input, VideoFrame &output)
                                 mode_,
                                 NULL, NULL, NULL);
     if (!ctx_) {
-        ERROR("Unable to create a scaler context");
+        SFL_ERR("Unable to create a scaler context");
         return;
     }
 
@@ -127,7 +127,7 @@ void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
                                 mode_,
                                 NULL, NULL, NULL);
     if (!ctx_) {
-        ERROR("Unable to create a scaler context");
+        SFL_ERR("Unable to create a scaler context");
         return;
     }
 

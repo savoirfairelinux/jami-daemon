@@ -33,6 +33,6 @@
 
 #include "logger.h"
 
-#define TITLE() DEBUG("Starting test..."); fflush(stderr)
+#define TITLE() SFL_DBG("Starting test..."); fflush(stderr)
 
 #endif // TEST_UTILS_H_
