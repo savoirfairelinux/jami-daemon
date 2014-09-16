@@ -89,7 +89,7 @@ int VideoDecoder::openInput(const std::string &source_str,
     AVInputFormat *iformat = av_find_input_format(format_str.c_str());
 
     if (!iformat)
-        WARN("Cannot find format \"%s\"", format_str.c_str());
+        SFL_WARN("Cannot find format \"%s\"", format_str.c_str());
 
     int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
                                   options_ ? &options_ : NULL);
@@ -97,9 +97,9 @@ int VideoDecoder::openInput(const std::string &source_str,
     if (ret) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        ERROR("avformat_open_input failed: %s", errbuf);
+        SFL_ERR("avformat_open_input failed: %s", errbuf);
     } else {
-        DEBUG("Using format %s", format_str.c_str());
+        SFL_DBG("Using format %s", format_str.c_str());
     }
 
     return ret;
@@ -130,7 +130,7 @@ int VideoDecoder::setupFromVideoData()
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
-    DEBUG("Finding stream info");
+    SFL_DBG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
@@ -148,7 +148,7 @@ int VideoDecoder::setupFromVideoData()
             errBuf[0] = '\0';
 
         // always fail here
-        ERROR("Could not find stream info: %s", errBuf);
+        SFL_ERR("Could not find stream info: %s", errBuf);
         return -1;
     }
 
@@ -158,27 +158,27 @@ int VideoDecoder::setupFromVideoData()
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
-        ERROR("Could not find video stream");
+        SFL_ERR("Could not find video stream");
         return -1;
     }
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
     if (decoderCtx_ == 0) {
-        ERROR("Decoder context is NULL");
+        SFL_ERR("Decoder context is NULL");
         return -1;
     }
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
     if (!inputDecoder_) {
-        ERROR("Unsupported codec");
+        SFL_ERR("Unsupported codec");
         return -1;
     }
 
     decoderCtx_->thread_count = 1;
     if (emulateRate_) {
-        DEBUG("Using framerate emulation");
+        SFL_DBG("Using framerate emulation");
         startTime_ = av_gettime();
     }
 
@@ -191,7 +191,7 @@ int VideoDecoder::setupFromVideoData()
     ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
 #endif
     if (ret) {
-        ERROR("Could not open codec");
+        SFL_ERR("Could not open codec");
         return -1;
     }
 
@@ -210,7 +210,7 @@ VideoDecoder::decode(VideoFrame& result, VideoPacket& video_packet)
     } else if (ret < 0) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        ERROR("Couldn't read frame: %s\n", errbuf);
+        SFL_ERR("Couldn't read frame: %s\n", errbuf);
         return Status::ReadError;
     }
 

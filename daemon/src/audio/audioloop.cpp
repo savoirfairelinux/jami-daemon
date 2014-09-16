@@ -63,7 +63,7 @@ void
 AudioLoop::getNext(AudioBuffer& output, double gain)
 {
     if (!buffer_) {
-        ERROR("buffer is NULL");
+        SFL_ERR("buffer is NULL");
         return;
     }
 
@@ -73,10 +73,10 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
     size_t output_pos = 0;
 
     if (buf_samples == 0) {
-        ERROR("Audio loop size is 0");
+        SFL_ERR("Audio loop size is 0");
         return;
     } else if (pos >= buf_samples) {
-        ERROR("Invalid loop position %d", pos);
+        SFL_ERR("Invalid loop position %d", pos);
         return;
     }
 

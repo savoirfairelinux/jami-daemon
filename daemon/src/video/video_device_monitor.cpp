@@ -155,7 +155,7 @@ static void
 notify()
 {
     if (!ManagerImpl::initialized) {
-        WARN("Manager not initialized yet");
+        SFL_WARN("Manager not initialized yet");
         return;
     }
 
