@@ -60,7 +60,7 @@ bool VideoInput::setup()
 {
     /* Sink setup */
     if (!sink_.start()) {
-        ERROR("Cannot start shared memory sink");
+        LOG_ERROR("Cannot start shared memory sink");
         return false;
     }
     if (not attach(&sink_))
@@ -152,7 +152,7 @@ VideoInput::createDecoder()
     decoder_->setInterruptCallback(interruptCb, this);
 
     if (decoder_->openInput(input_, format_) < 0) {
-        ERROR("Could not open input \"%s\"", input_.c_str());
+        LOG_ERROR("Could not open input \"%s\"", input_.c_str());
         delete decoder_;
         decoder_ = nullptr;
         return;
@@ -160,7 +160,7 @@ VideoInput::createDecoder()
 
     /* Data available, finish the decoding */
     if (decoder_->setupFromVideoData() < 0) {
-        ERROR("decoder IO startup failed");
+        LOG_ERROR("decoder IO startup failed");
         delete decoder_;
         decoder_ = nullptr;
         return;
@@ -228,7 +228,7 @@ VideoInput::initFile(std::string path)
 
     /* File exists? */
     if (access(path.c_str(), R_OK) != 0) {
-        ERROR("file '%s' unavailable\n", path.c_str());
+        LOG_ERROR("file '%s' unavailable\n", path.c_str());
         return false;
     }
 
@@ -257,7 +257,7 @@ VideoInput::switchInput(const std::string& resource)
     DEBUG("MRL: '%s'", resource.c_str());
 
     if (switchPending_) {
-        ERROR("Video switch already requested");
+        LOG_ERROR("Video switch already requested");
         return false;
     }
 
@@ -303,7 +303,7 @@ VideoInput::switchInput(const std::string& resource)
             loop_.start();
     }
     else
-        ERROR("Failed to init input for MRL '%s'\n", resource.c_str());
+        LOG_ERROR("Failed to init input for MRL '%s'\n", resource.c_str());
 
     return valid;
 }
