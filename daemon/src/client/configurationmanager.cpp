@@ -62,7 +62,7 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
     const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
-        ERROR("Could not find IP2IP account");
+        LOG_ERROR("Could not find IP2IP account");
         return std::map<std::string, std::string>();
     } else
         return sipaccount->getIp2IpDetails();
@@ -206,7 +206,7 @@ std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::st
     if (const auto acc = Manager::instance().getAccount(accountID))
         return acc->getActiveAudioCodecs();
     else {
-        ERROR("Could not find account %s, returning default", accountID.c_str());
+        LOG_ERROR("Could not find account %s, returning default", accountID.c_str());
         return Account::getDefaultAudioCodecs();
     }
 }
@@ -217,7 +217,7 @@ void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string
         acc->setActiveAudioCodecs(list);
         Manager::instance().saveConfig();
     } else {
-        ERROR("Could not find account %s", accountID.c_str());
+        LOG_ERROR("Could not find account %s", accountID.c_str());
     }
 }
 
@@ -306,11 +306,16 @@ void ConfigurationManager::setAgcState(bool enabled)
 std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 {
     std::map<std::string, std::string> ringToneList;
+    /* TODO: WINDOWS, Actually move this to GUI, daemon doesn't care. */
+#ifdef __WIN32__
+    return ringToneList;
+#else
+
     std::string r_path(fileutils::get_ringtone_dir());
     struct dirent **namelist;
     int n = scandir(r_path.c_str(), &namelist, 0, alphasort);
     if (n == -1) {
-        ERROR("%s", strerror(errno));
+        LOG_ERROR("%s", strerror(errno));
         return ringToneList;
     }
 
@@ -329,6 +334,7 @@ std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
     }
     free(namelist);
     return ringToneList;
+#endif
 }
 
 int32_t ConfigurationManager::isIax2Enabled()
@@ -386,7 +392,7 @@ void ConfigurationManager::setVolume(const std::string& device, double value)
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        ERROR("Audio layer not valid while updating volume");
+        LOG_ERROR("Audio layer not valid while updating volume");
         return;
     }
 
@@ -407,7 +413,7 @@ ConfigurationManager::getVolume(const std::string& device)
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        ERROR("Audio layer not valid while updating volume");
+        LOG_ERROR("Audio layer not valid while updating volume");
         return 0.0;
     }
 
@@ -436,7 +442,7 @@ bool ConfigurationManager::isCaptureMuted()
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        ERROR("Audio layer not valid");
+        LOG_ERROR("Audio layer not valid");
         return false;
     }
 
@@ -448,7 +454,7 @@ void ConfigurationManager::muteCapture(bool mute)
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        ERROR("Audio layer not valid");
+        LOG_ERROR("Audio layer not valid");
         return;
     }
 
@@ -460,7 +466,7 @@ bool ConfigurationManager::isPlaybackMuted()
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        ERROR("Audio layer not valid");
+        LOG_ERROR("Audio layer not valid");
         return false;
     }
 
@@ -472,7 +478,7 @@ void ConfigurationManager::mutePlayback(bool mute)
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        ERROR("Audio layer not valid");
+        LOG_ERROR("Audio layer not valid");
         return;
     }
 
