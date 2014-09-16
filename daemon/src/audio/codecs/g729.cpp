@@ -30,8 +30,14 @@
 #include "g729.h"
 #include "sfl_types.h"
 #include <iostream>
-#include <dlfcn.h>
 #include <stdexcept>
+
+/* TODO: WINDOWS, fix this for realzeese! */
+#ifdef _WIN32
+	#include "dlfcnWin32.h"
+#else
+	#include <dlfcn.h>
+#endif
 
 #define G729_TYPE_ENCODER        (void (*)(bcg729EncoderChannelContextStruct*, SFLAudioSample[], uint8_t[]))
 #define G729_TYPE_DECODER        (void (*)(bcg729DecoderChannelContextStruct*, uint8_t[], uint8_t, SFLAudioSample[]))
@@ -58,9 +64,11 @@ G729::G729() : sfl::AudioCodec(G729_PAYLOAD_TYPE, "G729", 8000, 160, 1),
     decoder_ = G729_TYPE_DECODER dlsym(handler_, "bcg729Decoder");
     loadError(dlerror());
 
-    bcg729DecoderChannelContextStruct*(*decInit)() = G729_TYPE_DECODER_INIT dlsym(handler_, "initBcg729DecoderChannel");
+    bcg729DecoderChannelContextStruct*(*decInit)() = G729_TYPE_DECODER_INIT
+		dlsym(handler_, "initBcg729DecoderChannel");
     loadError(dlerror());
-    bcg729EncoderChannelContextStruct*(*encInit)() = G729_TYPE_ENCODER_INIT dlsym(handler_, "initBcg729EncoderChannel");
+    bcg729EncoderChannelContextStruct*(*encInit)() = G729_TYPE_ENCODER_INIT
+		dlsym(handler_, "initBcg729EncoderChannel");
     loadError(dlerror());
 
     decoderContext_ = (*decInit)();
