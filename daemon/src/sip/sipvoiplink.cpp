@@ -189,7 +189,7 @@ try_respond_stateless(pjsip_endpoint *endpt, pjsip_rx_data *rdata, int st_code,
     if (!pjsip_rdata_get_tsx(rdata))
         return pjsip_endpt_respond_stateless(endpt, rdata, st_code, st_text, hdr_list, body);
     else
-        ERROR("Transaction has been created for this request, send response "
+        LOG_ERROR("Transaction has been created for this request, send response "
               "statefully instead");
 
     return !PJ_SUCCESS;
@@ -199,14 +199,14 @@ static pj_bool_t
 transaction_request_cb(pjsip_rx_data *rdata)
 {
     if (!rdata or !rdata->msg_info.msg) {
-        ERROR("rx_data is NULL");
+        LOG_ERROR("rx_data is NULL");
         return PJ_FALSE;
     }
 
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
 
     if (!method) {
-        ERROR("method is NULL");
+        LOG_ERROR("method is NULL");
         return PJ_FALSE;
     }
 
@@ -214,7 +214,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
 
     if (!rdata->msg_info.to or !rdata->msg_info.from or !rdata->msg_info.via) {
-        ERROR("Missing From, To or Via fields");
+        LOG_ERROR("Missing From, To or Via fields");
         return PJ_FALSE;
     }
     const pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
@@ -222,7 +222,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const pjsip_host_port& sip_via = rdata->msg_info.via->sent_by;
 
     if (!sip_to_uri or !sip_from_uri or !sip_via.host.ptr) {
-        ERROR("NULL uri");
+        LOG_ERROR("NULL uri");
         return PJ_FALSE;
     }
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
@@ -233,7 +233,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     auto sipaccount(getSIPVoIPLink()->guessAccount(toUsername, viaHostname, remote_hostname));
     if (!sipaccount) {
-        ERROR("NULL account");
+        LOG_ERROR("NULL account");
         return PJ_FALSE;
     }
 
@@ -321,7 +321,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     try {
         call->getAudioRtp().initSession();
     } catch (const ost::Socket::Error &err) {
-        ERROR("AudioRtp socket error");
+        LOG_ERROR("AudioRtp socket error");
         return PJ_FALSE;
     }
 
@@ -351,7 +351,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
                     call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
                     call->getAudioRtp().initLocalCryptoInfo();
                 } catch (const AudioRtpFactoryException &e) {
-                    ERROR("%s", e.what());
+                    LOG_ERROR("%s", e.what());
                     return PJ_FALSE;
                 }
             }
@@ -365,7 +365,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (!ac) {
-        ERROR("Could not instantiate codec");
+        LOG_ERROR("Could not instantiate codec");
         return PJ_FALSE;
     }
 
@@ -382,7 +382,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        ERROR("Could not set transport for dialog");
+        LOG_ERROR("Could not set transport for dialog");
         return PJ_FALSE;
     }
 
@@ -390,7 +390,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP().getLocalSdpSession(), 0, &inv);
 
     if (!inv) {
-        ERROR("Call invite is not initialized");
+        LOG_ERROR("Call invite is not initialized");
         return PJ_FALSE;
     }
 
@@ -402,7 +402,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_tx_data *response;
 
     if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
-        ERROR("Something wrong with Replaces request.");
+        LOG_ERROR("Something wrong with Replaces request.");
         call.reset();
 
         // Something wrong with the Replaces header.
@@ -439,12 +439,12 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     } else { // Proceed with normal call flow
         if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-            ERROR("Could not answer invite");
+            LOG_ERROR("Could not answer invite");
             return PJ_FALSE;
         }
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-            ERROR("Could not send msg for invite");
+            LOG_ERROR("Could not send msg for invite");
             call->inv.reset();
             return PJ_FALSE;
         }
@@ -452,7 +452,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         call->setConnectionState(Call::TRYING);
 
         if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-            ERROR("Could not answer invite");
+            LOG_ERROR("Could not answer invite");
             return PJ_FALSE;
         }
 
@@ -461,7 +461,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         sip_utils::addContactHeader(&contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-            ERROR("Could not send msg for invite");
+            LOG_ERROR("Could not send msg for invite");
             call->inv.reset();
             return PJ_FALSE;
         }
@@ -603,7 +603,7 @@ SIPVoIPLink::~SIPVoIPLink()
     pjsip_endpt_handle_events(endpt_, &tv);
 
     if (!Manager::instance().callFactory.empty<SIPCall>())
-        ERROR("%d SIP calls remains!",
+        LOG_ERROR("%d SIP calls remains!",
               Manager::instance().callFactory.callCount<SIPCall>());
 
     // destroy SIP transport before endpoint
@@ -704,15 +704,15 @@ void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &del
             break;
 
         default:
-            ERROR("Could not schedule new timer in pjsip endpoint");
+            LOG_ERROR("Could not schedule new timer in pjsip endpoint");
 
             /* fallthrough */
         case PJ_EINVAL:
-            ERROR("Invalid timer or delay entry");
+            LOG_ERROR("Invalid timer or delay entry");
             break;
 
         case PJ_EINVALIDOP:
-            ERROR("Invalid timer entry, maybe already scheduled");
+            LOG_ERROR("Invalid timer entry, maybe already scheduled");
             break;
     }
 }
@@ -925,12 +925,12 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     const pjmedia_sdp_session *remoteSDP = 0;
 
     if (pjmedia_sdp_neg_get_active_remote(inv->neg, &remoteSDP) != PJ_SUCCESS) {
-        ERROR("Active remote not present");
+        LOG_ERROR("Active remote not present");
         return;
     }
 
     if (pjmedia_sdp_validate(remoteSDP) != PJ_SUCCESS) {
-        ERROR("Invalid remote SDP session");
+        LOG_ERROR("Invalid remote SDP session");
         return;
     }
 
@@ -938,7 +938,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     pjmedia_sdp_neg_get_active_local(inv->neg, &local_sdp);
 
     if (pjmedia_sdp_validate(local_sdp) != PJ_SUCCESS) {
-        ERROR("Invalid local SDP session");
+        LOG_ERROR("Invalid local SDP session");
         return;
     }
 
@@ -947,7 +947,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     memset(buffer, 0, sizeof buffer);
 
     if (pjmedia_sdp_print(remoteSDP, buffer, sizeof buffer) == -1) {
-        ERROR("SDP was too big for buffer");
+        LOG_ERROR("SDP was too big for buffer");
         return;
     }
 
@@ -956,7 +956,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     memset(buffer, 0, sizeof buffer);
 
     if (pjmedia_sdp_print(local_sdp, buffer, sizeof buffer) == -1) {
-        ERROR("SDP was too big for buffer");
+        LOG_ERROR("SDP was too big for buffer");
         return;
     }
 
@@ -972,7 +972,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     try {
         call->getAudioRtp().updateDestinationIpAddress();
     } catch (const AudioRtpFactoryException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
     }
 
     call->getAudioRtp().setDtmfPayloadType(sdpSession.getTelephoneEventType());
@@ -1007,11 +1007,11 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
                 call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
                 Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
             } catch (const AudioRtpFactoryException &e) {
-                ERROR("%s", e.what());
+                LOG_ERROR("%s", e.what());
                 Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
             }
         } else {
-            ERROR("SDES negotiation failure");
+            LOG_ERROR("SDES negotiation failure");
             Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
         }
     } else {
@@ -1020,7 +1020,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // We did not find any crypto context for this media, RTP fallback
     if (!nego_success && call->getAudioRtp().isSdesEnabled()) {
-        ERROR("Negotiation failed but SRTP is enabled, fallback on RTP");
+        LOG_ERROR("Negotiation failed but SRTP is enabled, fallback on RTP");
         call->getAudioRtp().stop();
         call->getAudioRtp().setSrtpEnabled(false);
 
@@ -1056,7 +1056,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
 
             if (!ac) {
-                ERROR("Could not instantiate codec %d", pl);
+                LOG_ERROR("Could not instantiate codec %d", pl);
             } else {
                 audioCodecs.push_back(ac);
             }
@@ -1065,9 +1065,9 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         if (not audioCodecs.empty())
             call->getAudioRtp().updateSessionMedia(audioCodecs);
     } catch (const SdpException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
     } catch (const std::exception &rtpException) {
-        ERROR("%s", rtpException.what());
+        LOG_ERROR("%s", rtpException.what());
     }
 }
 
@@ -1170,7 +1170,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
                 DEBUG("%s", msg.c_str());
 
                 if (msg.find("Not found") != std::string::npos) {
-                    ERROR("Received 404 Not found");
+                    LOG_ERROR("Received 404 Not found");
                     sendOK(inv->dlg, r_data, tsx);
                     return;
                 } else if (msg.find("Ringing") != std::string::npos and call) {
@@ -1235,7 +1235,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
         sendOK(inv->dlg, r_data, tsx);
 
     } catch (const sfl::InstantMessageException &except) {
-        ERROR("%s", except.what());
+        LOG_ERROR("%s", except.what());
     }
 #endif
 }
@@ -1263,7 +1263,7 @@ onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
                                             currentCall->getAccountId());
         Manager::instance().hangupCall(currentCall->getCallId());
     } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
     }
 }
 
@@ -1281,12 +1281,12 @@ SIPVoIPLink::loadIP2IPSettings()
     try {
         auto account = Manager::instance().getIP2IPAccount();
         if (!account) {
-            ERROR("No existing IP2IP account");
+            LOG_ERROR("No existing IP2IP account");
             return;
         }
         account->doRegister();
         getSIPVoIPLink()->sipTransport->createSipTransport((SIPAccount&)*account);
     } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
     }
 }

@@ -132,7 +132,7 @@ void History::setPath(const std::string &path)
 void History::addCall(Call *call, int limit)
 {
     if (!call) {
-        ERROR("Call is NULL, ignoring");
+        LOG_ERROR("Call is NULL, ignoring");
         return;
     }
     call->time_stop();
