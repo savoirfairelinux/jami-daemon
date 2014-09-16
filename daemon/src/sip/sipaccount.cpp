@@ -62,13 +62,16 @@
 #endif
 
 #include <unistd.h>
-#include <pwd.h>
-
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <sstream>
 #include <cstdlib>
+
+#ifdef _WIN32
+#else
+	#include <pwd.h>
+#endif
 
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;

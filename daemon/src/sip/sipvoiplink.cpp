@@ -79,12 +79,16 @@
 #include "pres_sub_server.h"
 #endif
 
-#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <arpa/inet.h>
-#include <resolv.h>
 #include <istream>
 #include <algorithm>
+
+#ifdef _WIN32
+#else
+	#include <netinet/in.h>
+	#include <arpa/nameser.h>
+	#include <arpa/inet.h>
+	#include <resolv.h>
+#endif
 
 using namespace sfl;
 
