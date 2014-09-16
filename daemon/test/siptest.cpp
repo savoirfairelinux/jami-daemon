@@ -133,7 +133,7 @@ void SIPTest::testSimpleOutgoingIpCall()
     int rc = pthread_create(&thethread, NULL, sippThread, &command);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_create()" << std::endl;
 
     std::string testaccount("IP2IP");
     std::string testcallid("callid1234");
@@ -155,7 +155,7 @@ void SIPTest::testSimpleOutgoingIpCall()
     rc = pthread_join(thethread, NULL);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_join(): " << rc << std::endl;
     else
         std::cout << "SIPTest: completed join with thread" << std::endl;
 }
@@ -171,7 +171,7 @@ void SIPTest::testSimpleIncomingIpCall()
     int rc = pthread_create(&thethread, NULL, sippThread, &command);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_create()" << std::endl;
 
     // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
     // the incoming invite.
@@ -189,7 +189,7 @@ void SIPTest::testSimpleIncomingIpCall()
     rc = pthread_join(thethread, NULL);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_join(): " << rc << std::endl;
     else
         std::cout << "SIPTest: completed join with thread" << std::endl;
 }
@@ -207,13 +207,13 @@ void SIPTest::testTwoOutgoingIpCall()
     int rc = pthread_create(&firstCallThread, NULL, sippThread, &firstCallCommand);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_create()" << std::endl;
 
     pthread_t secondCallThread;
     rc = pthread_create(&secondCallThread, NULL, sippThread, &secondCallCommand);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_create()" << std::endl;
 
     sleep(1);
 
@@ -243,7 +243,7 @@ void SIPTest::testTwoOutgoingIpCall()
     rc = pthread_join(firstCallThread, NULL);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_join(): " << rc << std::endl;
 
     std::cout << "SIPTest: completed join with thread" << std::endl;
 
@@ -252,7 +252,7 @@ void SIPTest::testTwoOutgoingIpCall()
     rc = pthread_join(secondCallThread, NULL);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_join(): " << rc << std::endl;
     else
         std::cout << "SIPTest: completed join with thread" << std::endl;
 }
@@ -276,7 +276,7 @@ void SIPTest::testTwoIncomingIpCall()
     int rc = pthread_create(&firstCallThread, &attr, sippThreadWithCount, &firstCallCommand);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_create()" << std::endl;
 
     // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
     // the incoming invite.
@@ -331,7 +331,7 @@ void SIPTest::testHoldIpCall()
     int rc = pthread_create(&callThread, NULL, sippThread, (void *)(&callCommand));
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_create(): " << rc << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_create(): " << rc << std::endl;
     else
         std::cout << "SIPTest: completed thread creation" << std::endl;
 
@@ -401,7 +401,7 @@ void SIPTest::testIncomingIpCallSdp()
     int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_create()" << std::endl;
 
     // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
     // the incoming invite.
@@ -423,7 +423,7 @@ void SIPTest::testIncomingIpCallSdp()
     rc = pthread_join(thethread, NULL);
 
     if (rc)
-        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+        std::cout << "SIPTest: LOG_ERROR; return code from pthread_join(): " << rc << std::endl;
     else
         std::cout << "SIPTest: completed join with thread" << std::endl;
 }
