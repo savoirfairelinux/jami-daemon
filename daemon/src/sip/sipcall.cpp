@@ -246,7 +246,7 @@ void
 SIPCall::updateSDPFromSTUN()
 {
     auto& account = getSIPAccount();
-    std::vector<long> socketDescriptors(getAudioRtp().getSocketDescriptors());
+    std::vector<pj_sock_t> socketDescriptors(getAudioRtp().getSocketDescriptors());
 
     try {
         std::vector<pj_sockaddr> stunPorts(getSIPVoIPLink()->sipTransport->getSTUNAddresses(account, socketDescriptors));
