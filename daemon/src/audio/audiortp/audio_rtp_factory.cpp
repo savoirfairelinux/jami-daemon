@@ -225,7 +225,7 @@ void AudioRtpFactory::setRemoteCryptoInfo(SdesNegotiator& nego)
             throw AudioRtpFactoryException(e.what());
         }
     } else {
-        ERROR("Should not store remote crypto info for non-SDES sessions");
+        LOG_ERROR("Should not store remote crypto info for non-SDES sessions");
     }
 }
 

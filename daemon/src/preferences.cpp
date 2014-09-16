@@ -348,7 +348,7 @@ AudioLayer* AudioPreference::createAudioLayer()
             try {
                 return new JackLayer(*this);
             } catch (const std::runtime_error &e) {
-                ERROR("%s", e.what());
+                LOG_ERROR("%s", e.what());
 #if HAVE_PULSE
                 WARN("falling back to pulseaudio");
                 audioApi_ = PULSEAUDIO_API_STR;
@@ -432,7 +432,7 @@ AudioPreference::setRecordPath(const std::string &r)
         recordpath_ = path;
         return true;
     } else {
-        ERROR("%s is not writable, cannot be the recording path", path.c_str());
+        LOG_ERROR("%s is not writable, cannot be the recording path", path.c_str());
         return false;
     }
 }
