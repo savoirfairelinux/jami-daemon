@@ -122,7 +122,7 @@ void VideoMixer::process()
 
     VideoFrame& output = getNewFrame();
     if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
-        ERROR("VideoFrame::allocBuffer() failed");
+        LOG_ERROR("VideoFrame::allocBuffer() failed");
         return;
     }
 

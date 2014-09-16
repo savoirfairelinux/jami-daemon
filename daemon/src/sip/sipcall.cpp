@@ -224,7 +224,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     pjsip_tx_data *tdata;
 
     if (pjsip_dlg_create_request(inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
-        ERROR("Could not create dialog");
+        LOG_ERROR("Could not create dialog");
         return;
     }
 
@@ -259,7 +259,7 @@ SIPCall::updateSDPFromSTUN()
         local_sdp_->setPublishedIP(account.getPublishedAddress());
         local_sdp_->updatePorts(stunPorts);
     } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
     }
 }
 
@@ -588,7 +588,7 @@ SIPCall::offhold()
             internalOffHold([] {});
 
     } catch (const SdpException &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         throw VoipLinkException("SDP issue in offhold");
     } catch (const ost::Socket::Error &e) {
         throw VoipLinkException("Socket problem in offhold");
@@ -623,7 +623,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
         sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
         if (ac == NULL) {
-            ERROR("Could not instantiate codec %d", i->getPayloadType());
+            LOG_ERROR("Could not instantiate codec %d", i->getPayloadType());
             throw std::runtime_error("Could not instantiate codec");
         }
 
