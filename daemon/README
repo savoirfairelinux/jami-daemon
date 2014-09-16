@@ -104,8 +104,7 @@ sudo apt-get install mingw-w64
 cd sflphone/daemon/contrib/
 mkdir win64 && cd win64
 ../bootstrap --host=x86_64-w64-mingw32
-make
-# make -j seems to have problems!?
+make -j seems to have problems!?
 
 Cross fingers and pray to the great cross-compiler in the sky!
 ...

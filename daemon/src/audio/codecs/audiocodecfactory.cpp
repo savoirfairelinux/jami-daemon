@@ -36,6 +36,18 @@
 #include "config.h"
 #endif
 
+#ifdef _WIN32
+	#include "dlfcnwin32.h"
+#else
+	#include <dlfcn.h>
+#endif
+
+#include <cstdlib>
+#include <algorithm> // for std::find
+#include <stdexcept>
+#include <sstream>
+
+#include "audiocodec.h"
 #include "audiocodecfactory.h"
 #include "audiocodec.h"
 #include "fileutils.h"
