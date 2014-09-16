@@ -1,42 +1,31 @@
 #!/bin/bash
-#####################################################
-# File Name: launch-build-machine-jenkins.sh
-#
-# Purpose :
-#
-# Author: Julien Bonjean (julien@bonjean.info)
-#
-# Creation Date: 2009-10-20
-# Last Modified: 2010-04-22 16:42:57 -0400
-#####################################################
+# run with --help for documentation
 
 set -x
+set -e
 
 #Check dependencies
 
-# Download the KDE client release script
-if  ! command -v curl ; then
-   echo Please install curl
-   exit 1
-fi
-# Merge the KDE translation files
-if  ! command -v ruby ; then
-   echo Please install ruby
-   exit 1
-fi
-# Download the KDE client and scripts
-if  ! command -v git ; then
-   echo Please install git
-   exit 1
-fi
-# Fetch KDE translations, the gnome client use bzr
-if  ! command -v svn ; then
-   echo Please install svn
-   exit 1
-fi
+for cmd in curl ruby git svn
+do
+    if ! command -v $cmd; then
+        echo "$cmd is missing" >&2
+        exit 1
+    fi
+done
 
+source $(dirname $0)/setenv.sh
 
-. `dirname $0`/setenv.sh
+# Update KDE client
+# $WORKSPACE is declared in setenv.sh
+cd "$WORKSPACE"
+curl -O https://projects.kde.org/projects/playground/network/sflphone-kde/repository/revisions/master/raw/data/config.ini
+curl -O https://projects.kde.org/projects/kde/kdesdk/kde-dev-scripts/repository/revisions/master/raw/createtarball/create_tarball.rb
+ruby create_tarball.rb -n -a sflphone-kde
+rm -rf kde
+rm -rf sflphone-kde-*.tar.*
+rm create_tarball.rb config.ini
+mv sflphone-kde-* kde
 
 IS_RELEASE=
 VERSION_INDEX="1"
@@ -50,11 +39,11 @@ VERSION_NUMBER="1.4.1"
 
 LAUNCHPAD_PACKAGES=("sflphone-daemon" "sflphone-kde" "sflphone-gnome" "sflphone-plugins" "sflphone-daemon-video" "sflphone-gnome-video")
 
-echo
-echo "    /***********************\\"
-echo "    | SFLPhone build system |"
-echo "    \\***********************/"
-echo
+cat << EOF
+_________________________
+| SFLPhone build system |
+-------------------------
+EOF
 
 
 for PARAMETER in $*
@@ -307,16 +296,6 @@ END
 
 	cp ${DEBIAN_DIR}/changelog.generic ${DEBIAN_DIR}/changelog
 done
-
-# if push is activated
-#if [[ ${DO_PUSH} && ${IS_RELEASE} ]];then
-#	echo " Doing commit"
-#	git commit -m "[#1262] Released ${SOFTWARE_VERSION}" .
-#
-#	echo " Pushing commit"
-#	git push origin release
-#fi
-
 
 # Archive source tarball for Debian maintainer
 . ${WORKING_DIR}/build_tarball.sh ${SOFTWARE_VERSION}
