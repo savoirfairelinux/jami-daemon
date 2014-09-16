@@ -390,6 +390,17 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
     out << YAML::EndMap;
 
+    out << YAML::Key << TYPE_KEY << YAML::Value << ACCOUNT_TYPE;
+    out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
+    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
+
+    out << YAML::Key << VIDEO_CODECS_KEY << YAML::Value << videoCodecList_;
+
+    out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
+#ifdef SFL_VIDEO
+    out << YAML::Key << VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
+    out << YAML::Key << VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
+#endif
     // zrtp submap
     out << YAML::Key << ZRTP_KEY << YAML::Value << YAML::BeginMap;
     out << YAML::Key << DISPLAY_SAS_KEY << YAML::Value << zrtpDisplaySas_;
