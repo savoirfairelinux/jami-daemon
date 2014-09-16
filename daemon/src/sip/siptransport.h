@@ -184,7 +184,7 @@ public:
     /**
      * This function returns a list of STUN mapped sockets for
      * a given set of socket file descriptors */
-    std::vector<pj_sockaddr> getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<long> &socks) const;
+    std::vector<pj_sockaddr> getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<pj_sock_t> &socks) const;
 
     /**
      * Get the correct address to use (ie advertised) from
