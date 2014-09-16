@@ -89,7 +89,7 @@ int getDebugMode(void)
 void strErr(void)
 {
 #ifdef __GLIBC__
-    ERROR("%m");
+    SFL_ERR("%m");
 #else
     char buf[1000];
     const char *errstr;
@@ -106,6 +106,6 @@ void strErr(void)
             break;
     }
 
-    ERROR("%s", errstr);
+    SFL_ERR("%s", errstr);
 #endif
 }

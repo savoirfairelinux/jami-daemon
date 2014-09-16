@@ -44,11 +44,11 @@ CallFactory::removeCall(Call& call)
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
     const auto& id = call.getCallId();
-    DEBUG("Removing call %s", id.c_str());
+    SFL_DBG("Removing call %s", id.c_str());
     const auto& account = call.getAccount();
     auto& map = callMaps_.at(account.getAccountType());
     map.erase(id);
-    DEBUG("Remaining %u %s call(s)", map.size(), account.getAccountType());
+    SFL_DBG("Remaining %u %s call(s)", map.size(), account.getAccountType());
 }
 
 void
@@ -59,7 +59,7 @@ CallFactory::removeCall(const std::string& id)
     if (auto call = getCall(id)) {
         removeCall(*call);
     } else
-        ERROR("No call with ID %s", id.c_str());
+        SFL_ERR("No call with ID %s", id.c_str());
 }
 
 //==============================================================================

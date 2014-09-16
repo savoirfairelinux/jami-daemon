@@ -81,7 +81,7 @@ class CallFactory {
         template <class T, class A>
         std::shared_ptr<T> newCall(A& account, const std::string& id, Call::CallType type) {
             if (!allowNewCall_) {
-                WARN("newCall aborted : CallFactory in forbid state");
+                SFL_WARN("newCall aborted : CallFactory in forbid state");
                 return nullptr;
             }
 
@@ -94,7 +94,7 @@ class CallFactory {
             };
 
             if (hasCall(id)) {
-                ERROR("Call %s is already created", id.c_str());
+                SFL_ERR("Call %s is already created", id.c_str());
                 return nullptr;
             }
 

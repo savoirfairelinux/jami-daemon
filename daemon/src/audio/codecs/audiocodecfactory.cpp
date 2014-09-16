@@ -60,11 +60,11 @@ AudioCodecFactory::AudioCodecFactory() :
     AudioCodecVector codecDynamicList(scanCodecDirectory());
 
     if (codecDynamicList.empty())
-        ERROR("No codecs available");
+        SFL_ERR("No codecs available");
     else {
         for (const auto &codec: codecDynamicList) {
             codecsMap_[(int) codec->getPayloadType()] = codec;
-            DEBUG("Loaded codec %s" , codec->getMimeSubtype().c_str());
+            SFL_DBG("Loaded codec %s" , codec->getMimeSubtype().c_str());
         }
     }
 }
@@ -109,7 +109,7 @@ AudioCodecFactory::getCodec(int payload) const
     if (iter != codecsMap_.end())
         return iter->second;
     else {
-        ERROR("Cannot find codec %i", payload);
+        SFL_ERR("Cannot find codec %i", payload);
         return NULL;
     }
 }
@@ -125,14 +125,14 @@ AudioCodecFactory::getCodec(const std::string &name) const
             os << "/" << channels;
 
         const std::string match(iter.second->getMimeSubtype() + os.str());
-        DEBUG("Trying %s", match.c_str());
+        SFL_DBG("Trying %s", match.c_str());
         if (name.find(match) != std::string::npos) {
-            DEBUG("Found match");
+            SFL_DBG("Found match");
             return iter.second;
         }
     }
 
-    ERROR("Cannot find codec %s", name.c_str());
+    SFL_ERR("Cannot find codec %s", name.c_str());
     return NULL;
 }
 
@@ -217,7 +217,7 @@ AudioCodecFactory::scanCodecDirectory()
 
     for (size_t i = 0 ; i < dirToScan.size() ; i++) {
         std::string dirStr = dirToScan[i];
-        DEBUG("Scanning %s to find audio codecs....",  dirStr.c_str());
+        SFL_DBG("Scanning %s to find audio codecs....",  dirStr.c_str());
 
         DIR *dir = opendir(dirStr.c_str());
 
@@ -257,7 +257,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
     void * codecHandle = dlopen(path.c_str(), RTLD_NOW);
 
     if (!codecHandle) {
-        ERROR("%s", dlerror());
+        SFL_ERR("%s", dlerror());
         return NULL;
     }
 
@@ -265,7 +265,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
     const char *error = dlerror();
 
     if (error) {
-        ERROR("%s", error);
+        SFL_ERR("%s", error);
         dlclose(codecHandle);
         return NULL;
     }
@@ -280,7 +280,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
 
         return a;
     } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
+        SFL_ERR("%s", e.what());
         dlclose(codecHandle);
         return nullptr;
     }
@@ -300,7 +300,7 @@ AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
     const char *error = dlerror();
 
     if (error) {
-        ERROR("%s", error);
+        SFL_ERR("%s", error);
         return;
     }
 
@@ -319,7 +319,7 @@ AudioCodecFactory::instantiateCodec(int payload) const
             try {
                 return codec.first->clone();
             } catch (const std::runtime_error &e) {
-                ERROR("%s", e.what());
+                SFL_ERR("%s", e.what());
                 return nullptr;
             }
         }

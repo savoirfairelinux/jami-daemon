@@ -66,7 +66,7 @@ codecToASTFormat(int c)
             return AST_FORMAT_SPEEX;
 
         default:
-            ERROR("Codec %d not supported!", c);
+            SFL_ERR("Codec %d not supported!", c);
             return 0;
     }
 }
@@ -92,7 +92,7 @@ int IAXCall::getSupportedFormat(const std::string &accountID) const
         for (const auto &i : codecs)
             format_mask |= codecToASTFormat(i);
     } else
-        ERROR("No IAx account could be found");
+        SFL_ERR("No IAx account could be found");
 
     return format_mask;
 }
@@ -113,7 +113,7 @@ int IAXCall::getFirstMatchingFormat(int needles, const std::string &accountID) c
                 return format_mask;
         }
     } else
-        ERROR("No IAx account could be found");
+        SFL_ERR("No IAx account could be found");
 
     return 0;
 }
@@ -132,7 +132,7 @@ int IAXCall::getAudioCodec() const
         case AST_FORMAT_SPEEX:
             return PAYLOAD_CODEC_SPEEX_8000;
         default:
-            ERROR("IAX: Format %d not supported!", format);
+            SFL_ERR("IAX: Format %d not supported!", format);
             return -1;
     }
 }

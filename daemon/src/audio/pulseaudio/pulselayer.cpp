@@ -69,7 +69,7 @@ ringtone_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 static void
 stream_moved_callback(pa_stream *s, void *userdata UNUSED)
 {
-    DEBUG("stream %d to %d", pa_stream_get_index(s), pa_stream_get_device_index(s));
+    SFL_DBG("stream %d to %d", pa_stream_get_index(s), pa_stream_get_device_index(s));
 }
 
 PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop), destroyLoop_(false)
@@ -181,11 +181,11 @@ void PulseLayer::context_state_callback(pa_context* c, void *user_data)
         case PA_CONTEXT_CONNECTING:
         case PA_CONTEXT_AUTHORIZING:
         case PA_CONTEXT_SETTING_NAME:
-            DEBUG("Waiting....");
+            SFL_DBG("Waiting....");
             break;
 
         case PA_CONTEXT_READY:
-            DEBUG("Connection to PulseAudio server established");
+            SFL_DBG("Connection to PulseAudio server established");
             pa_threaded_mainloop_signal(pulse->mainloop_, 0);
             pa_context_subscribe(c, mask, nullptr, pulse);
             pa_context_set_subscribe_callback(c, context_changed_callback, pulse);
@@ -199,7 +199,7 @@ void PulseLayer::context_state_callback(pa_context* c, void *user_data)
 
         case PA_CONTEXT_FAILED:
         default:
-            ERROR("%s" , pa_strerror(pa_context_errno(c)));
+            SFL_ERR("%s" , pa_strerror(pa_context_errno(c)));
             pa_threaded_mainloop_signal(pulse->mainloop_, 0);
             break;
     }
@@ -239,7 +239,7 @@ bool PulseLayer::inSinkList(const std::string &deviceName)
 {
     const bool found = std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(deviceName)) != sinkList_.end();
 
-    DEBUG("seeking for %s in sinks. %s found", deviceName.c_str(), found ? "" : "NOT");
+    SFL_DBG("seeking for %s in sinks. %s found", deviceName.c_str(), found ? "" : "NOT");
     return found;
 }
 
@@ -247,7 +247,7 @@ bool PulseLayer::inSourceList(const std::string &deviceName)
 {
     const bool found = std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(deviceName)) != sourceList_.end();
 
-    DEBUG("seeking for %s in sources. %s found", deviceName.c_str(), found ? "" : "NOT");
+    SFL_DBG("seeking for %s in sources. %s found", deviceName.c_str(), found ? "" : "NOT");
     return found;
 }
 
@@ -282,7 +282,7 @@ int PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) c
     case DeviceType::CAPTURE:
         return 1 + std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
     default:
-        ERROR("Unexpected device type");
+        SFL_ERR("Unexpected device type");
         return 0;
     }
 }
@@ -298,7 +298,7 @@ int PulseLayer::getAudioDeviceIndexByName(const std::string& name, DeviceType ty
     case DeviceType::CAPTURE:
         return 1 + std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(name)));
     default:
-        ERROR("Unexpected device type");
+        SFL_ERR("Unexpected device type");
         return 0;
     }
 }
@@ -321,7 +321,7 @@ std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
         case DeviceType::PLAYBACK:
         case DeviceType::RINGTONE:
             if (index < 0 or static_cast<size_t>(index) >= sinkList_.size()) {
-                ERROR("Index %d out of range", index);
+                SFL_ERR("Index %d out of range", index);
                 return "";
             }
 
@@ -329,14 +329,14 @@ std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
 
         case DeviceType::CAPTURE:
             if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
-                ERROR("Index %d out of range", index);
+                SFL_ERR("Index %d out of range", index);
                 return "";
             }
 
             return sourceList_[index].name;
         default:
             // Should never happen
-            ERROR("Unexpected type");
+            SFL_ERR("Unexpected type");
             return "";
     }
 }
@@ -360,7 +360,7 @@ void PulseLayer::createStreams(pa_context* c)
     if (ringtoneDevice.empty())
         ringtoneDevice = defaultSink_;
 
-    DEBUG("playback: %s record: %s ringtone: %s", playbackDevice.c_str(),
+    SFL_DBG("playback: %s record: %s ringtone: %s", playbackDevice.c_str(),
           captureDevice.c_str(), ringtoneDevice.c_str());
 
     // Create playback stream
@@ -368,7 +368,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     if (dev_infos == nullptr) {
         dev_infos = &sinkList_[0];
-        WARN("Prefered playback device %s not found in device list, selecting %s instead.",
+        SFL_WARN("Prefered playback device %s not found in device list, selecting %s instead.",
              playbackDevice.c_str(), dev_infos->name.c_str());
     }
 
@@ -382,7 +382,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     if (dev_infos == nullptr) {
         dev_infos = &sourceList_[0];
-        WARN("Prefered capture device %s not found in device list, selecting %s instead.",
+        SFL_WARN("Prefered capture device %s not found in device list, selecting %s instead.",
              captureDevice.c_str(), dev_infos->name.c_str());
     }
 
@@ -396,7 +396,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     if (dev_infos == nullptr) {
         dev_infos = &sinkList_[0];
-        WARN("Prefered ringtone device %s not found in device list, selecting %s instead.",
+        SFL_WARN("Prefered ringtone device %s not found in device list, selecting %s instead.",
              ringtoneDevice.c_str(), dev_infos->name.c_str());
     }
 
@@ -469,7 +469,7 @@ void PulseLayer::writeToSpeaker()
     int ret = pa_stream_writable_size(s);
 
     if (ret < 0) {
-        ERROR("Playback error : %s", pa_strerror(ret));
+        SFL_ERR("Playback error : %s", pa_strerror(ret));
         return;
     } else if (ret == 0)
         return;
@@ -602,7 +602,7 @@ void PulseLayer::readFromMic()
     mainRingBuffer_->put(*out);
 
     if (pa_stream_drop(record_->pulseStream()) < 0)
-        ERROR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
+        SFL_ERR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
 }
 
 
@@ -617,7 +617,7 @@ void PulseLayer::ringtoneToSpeaker()
     int writable = pa_stream_writable_size(s);
 
     if (writable < 0)
-        ERROR("Ringtone error : %s", pa_strerror(writable));
+        SFL_ERR("Ringtone error : %s", pa_strerror(writable));
 
     if (writable <= 0)
         return;
@@ -654,7 +654,7 @@ PulseLayer::context_changed_callback(pa_context* c,
             switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
                 case PA_SUBSCRIPTION_EVENT_NEW:
                 case PA_SUBSCRIPTION_EVENT_REMOVE:
-                    DEBUG("Updating sink list");
+                    SFL_DBG("Updating sink list");
                     context->sinkList_.clear();
                     op = pa_context_get_sink_info_list(c, sink_input_info_callback, userdata);
 
@@ -671,7 +671,7 @@ PulseLayer::context_changed_callback(pa_context* c,
             switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
                 case PA_SUBSCRIPTION_EVENT_NEW:
                 case PA_SUBSCRIPTION_EVENT_REMOVE:
-                    DEBUG("Updating source list");
+                    SFL_DBG("Updating source list");
                     context->sourceList_.clear();
                     op = pa_context_get_source_info_list(c, source_input_info_callback, userdata);
 
@@ -685,7 +685,7 @@ PulseLayer::context_changed_callback(pa_context* c,
             break;
 
         default:
-            DEBUG("Unhandled event type 0x%x", type);
+            SFL_DBG("Unhandled event type 0x%x", type);
             break;
     }
 }
@@ -694,7 +694,7 @@ void PulseLayer::server_info_callback(pa_context*, const pa_server_info *i, void
 {
     if (!i) return;
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
-    DEBUG("PulseAudio server info:\n"
+    SFL_DBG("PulseAudio server info:\n"
           "    Server name: %s\n"
           "    Server version: %s\n"
           "    Default Sink %s\n"
@@ -733,7 +733,7 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
         return;
     }
 
-    DEBUG("Source %u\n"
+    SFL_DBG("Source %u\n"
           "    Name: %s\n"
           "    Driver: %s\n"
           "    Description: %s\n"
@@ -777,7 +777,7 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
         return;
     }
 
-    DEBUG("Sink %u\n"
+    SFL_DBG("Sink %u\n"
           "    Name: %s\n"
           "    Driver: %s\n"
           "    Description: %s\n"
@@ -813,17 +813,17 @@ void PulseLayer::updatePreference(AudioPreference &preference, int index, Device
 
     switch (type) {
         case DeviceType::PLAYBACK:
-            DEBUG("setting %s for playback", devName.c_str());
+            SFL_DBG("setting %s for playback", devName.c_str());
             preference.setPulseDevicePlayback(devName);
             break;
 
         case DeviceType::CAPTURE:
-            DEBUG("setting %s for capture", devName.c_str());
+            SFL_DBG("setting %s for capture", devName.c_str());
             preference.setPulseDeviceRecord(devName);
             break;
 
         case DeviceType::RINGTONE:
-            DEBUG("setting %s for ringer", devName.c_str());
+            SFL_DBG("setting %s for ringer", devName.c_str());
             preference.setPulseDeviceRingtone(devName);
             break;
     }

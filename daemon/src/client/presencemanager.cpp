@@ -63,14 +63,14 @@ PresenceManager::subscribeBuddy(const std::string& accountID, const std::string&
     const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount) {
-        ERROR("Could not find account %s", accountID.c_str());
+        SFL_ERR("Could not find account %s", accountID.c_str());
         return;
     }
 
     auto pres = sipaccount->getPresence();
 
     if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
-        DEBUG("%subscribePresence (acc:%s, buddy:%s)", flag ? "S" : "Uns",
+        SFL_DBG("%subscribePresence (acc:%s, buddy:%s)", flag ? "S" : "Uns",
               accountID.c_str(), uri.c_str());
         pres->subscribeClient(uri, flag);
     }
@@ -86,14 +86,14 @@ PresenceManager::publish(const std::string& accountID, bool status, const std::s
     const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount) {
-        ERROR("Could not find account %s.", accountID.c_str());
+        SFL_ERR("Could not find account %s.", accountID.c_str());
         return;
     }
 
     auto pres = sipaccount->getPresence();
 
     if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
-        DEBUG("Send Presence (acc:%s, status %s).", accountID.c_str(),
+        SFL_DBG("Send Presence (acc:%s, status %s).", accountID.c_str(),
               status ? "online" : "offline");
         pres->sendPresence(status, note);
     }
@@ -109,17 +109,17 @@ PresenceManager::answerServerRequest(const std::string& uri, bool flag)
     const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
-        ERROR("Could not find account IP2IP");
+        SFL_ERR("Could not find account IP2IP");
         return;
     }
 
-    DEBUG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
+    SFL_DBG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
           flag ? "true" : "false");
 
     auto pres = sipaccount->getPresence();
 
     if (!pres) {
-        ERROR("Presence not initialized");
+        SFL_ERR("Presence not initialized");
         return;
     }
 
@@ -139,7 +139,7 @@ PresenceManager::getSubscriptions(const std::string& accountID)
         const auto pres = sipaccount->getPresence();
 
         if (!pres) {
-            ERROR("Presence not initialized");
+            SFL_ERR("Presence not initialized");
             return ret;
         }
 
@@ -168,7 +168,7 @@ PresenceManager::setSubscriptions(const std::string& accountID, const std::vecto
     auto pres = sipaccount->getPresence();
 
     if (!pres) {
-        ERROR("Presence not initialized");
+        SFL_ERR("Presence not initialized");
         return;
     }
 

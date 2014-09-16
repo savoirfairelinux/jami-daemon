@@ -55,7 +55,7 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
 {
 #endif
     initializeZid();
-    DEBUG("Setting new RTP session with destination %s:%d",
+    SFL_DBG("Setting new RTP session with destination %s:%d",
           localIP.c_str(), call_.getLocalAudioPort());
 }
 
@@ -98,7 +98,7 @@ void AudioZrtpSession::initializeZid()
     }
 #endif
 
-    DEBUG("Initialization from ZID file failed. Trying to remove...");
+    SFL_DBG("Initialization from ZID file failed. Trying to remove...");
 
     if (remove(zidCompleteFilename.c_str()) != 0)
         throw ZrtpZidException("zid file deletion failed");
