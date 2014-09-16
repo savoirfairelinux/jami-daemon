@@ -1289,8 +1289,22 @@ bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endp
 
 std::string SIPAccount::getLoginName()
 {
+#ifdef _WIN32
+	LPTSTR name = new TCHAR[256];
+	DWORD effWin = sizeof(name);
+	LPDWORD size = &effWin;
+	GetUserNameW(name, size);
+
+
+	std::wstring temp(name);
+	std::string ret;
+	ret.assign(temp.begin(), temp.end());
+	return ret;
+
+#else
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
+#endif
 }
 
 std::string SIPAccount::getFromUri() const
