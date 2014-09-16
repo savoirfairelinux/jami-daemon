@@ -59,10 +59,10 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
           localIP.c_str(), call_.getLocalAudioPort());
 }
 
-std::vector<long>
+std::vector<pj_sock_t>
 AudioZrtpSession::getSocketDescriptors() const
 {
-    std::vector<long> result;
+    std::vector<pj_sock_t> result;
     result.push_back(dso->getRecvSocket());
     result.push_back(cso->getRecvSocket());
     return result;
