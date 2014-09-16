@@ -43,6 +43,12 @@
 #include <cstring>
 #include <vector>
 
+#define _USE_MATH_DEFINES // Windows
+
+#ifndef M_PI
+	#define M_PI 3.14159265358979323846
+#endif
+
 Tone::Tone(const std::string& definition, unsigned int sampleRate) :
     AudioLoop(sampleRate), xhigher_(0.0), xlower_(0.0)
 {

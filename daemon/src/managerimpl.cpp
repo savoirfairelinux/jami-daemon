@@ -88,6 +88,10 @@
 #include <sys/stat.h>  // mkdir(2)
 #include <memory>
 
+#ifdef _WIN32
+	#include <direct.h>
+#endif
+
 std::atomic_bool ManagerImpl::initialized = {false};
 
 static void
