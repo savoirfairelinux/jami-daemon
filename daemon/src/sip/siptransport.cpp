@@ -363,7 +363,7 @@ SipTransport::_cleanupTransports()
 
 std::vector<pj_sockaddr>
 SipTransport::getSTUNAddresses(const SIPAccountBase &account,
-        std::vector<long> &socketDescriptors) const
+        std::vector<pj_sock_t> &socketDescriptors) const
 {
     const pj_str_t serverName = account.getStunServerName();
     const pj_uint16_t port = account.getStunPort();
