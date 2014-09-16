@@ -166,7 +166,7 @@ void InstantMessagingTest::testGenerateXmlUriList()
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
 
     if (XML_Parse(parser, buffer.c_str(), buffer.size(), 1) == XML_STATUS_ERROR) {
-        ERROR("%s at line %d", XML_ErrorString(XML_GetErrorCode(parser)), XML_GetCurrentLineNumber(parser));
+        LOG_ERROR("%s at line %d", XML_ErrorString(XML_GetErrorCode(parser)), XML_GetCurrentLineNumber(parser));
         CPPUNIT_ASSERT(false);
     }
 
@@ -255,7 +255,7 @@ void InstantMessagingTest::testGetUriListArea()
     sfl::InstantMessaging::UriEntry::iterator iterAttr = entry.find(sfl::IM_XML_URI);
 
     if (iterAttr == entry.end()) {
-        ERROR("Did not find attribute");
+        LOG_ERROR("Did not find attribute");
         CPPUNIT_ASSERT(false);
     }
 

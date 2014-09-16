@@ -57,7 +57,7 @@ validate(std::string &member, const std::string &param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        ERROR("Invalid parameter \"%s\"", param.c_str());
+        LOG_ERROR("Invalid parameter \"%s\"", param.c_str());
 }
 
 static void
@@ -85,7 +85,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
-        ERROR("Couldn't find key %s", key);
+        LOG_ERROR("Couldn't find key %s", key);
         return;
     }
     i = atoi(iter->second.c_str());

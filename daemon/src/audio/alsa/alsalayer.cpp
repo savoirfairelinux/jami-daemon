@@ -188,7 +188,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
     }
 
     if (err < 0) {
-        ERROR("Alsa: couldn't open device %s : %s",  dev.c_str(),
+        LOG_ERROR("Alsa: couldn't open device %s : %s",  dev.c_str(),
               snd_strerror(err));
         return false;
     }
@@ -248,7 +248,7 @@ AlsaLayer::stopStream()
 #define ALSA_CALL(call, error) ({ \
 			int err_code = call; \
 			if (err_code < 0) \
-				ERROR(error ": %s", snd_strerror(err_code)); \
+				LOG_ERROR(error ": %s", snd_strerror(err_code)); \
 			err_code; \
 		})
 
@@ -382,7 +382,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     DEBUG("Was set buffer_size = %lu", buffer_size);
 
     if (2 * period_size > buffer_size) {
-        ERROR("buffer to small, could not use");
+        LOG_ERROR("buffer to small, could not use");
         return false;
     }
 
@@ -448,12 +448,12 @@ AlsaLayer::write(SFLAudioSample* buffer, int frames, snd_pcm_t * handle)
 
             if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0) {
                 if (snd_pcm_status_get_state(status) == SND_PCM_STATE_SETUP) {
-                    ERROR("Writing in state SND_PCM_STATE_SETUP, should be "
+                    LOG_ERROR("Writing in state SND_PCM_STATE_SETUP, should be "
                           "SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
                     int error = snd_pcm_prepare(handle);
 
                     if (error < 0) {
-                        ERROR("Failed to prepare handle: %s", snd_strerror(error));
+                        LOG_ERROR("Failed to prepare handle: %s", snd_strerror(error));
                         stopPlaybackStream();
                     }
                 }
@@ -463,7 +463,7 @@ AlsaLayer::write(SFLAudioSample* buffer, int frames, snd_pcm_t * handle)
         }
 
         default:
-            ERROR("Unknown write error, dropping frames: %s", snd_strerror(err));
+            LOG_ERROR("Unknown write error, dropping frames: %s", snd_strerror(err));
             stopPlaybackStream();
             break;
     }
@@ -496,12 +496,12 @@ AlsaLayer::read(SFLAudioSample* buffer, int frames)
                     startCaptureStream();
                 }
 
-            ERROR("XRUN capture ignored (%s)", snd_strerror(err));
+            LOG_ERROR("XRUN capture ignored (%s)", snd_strerror(err));
             break;
         }
 
         case -EPERM:
-            ERROR("Can't capture, EPERM (%s)", snd_strerror(err));
+            LOG_ERROR("Can't capture, EPERM (%s)", snd_strerror(err));
             prepareCaptureStream();
             startCaptureStream();
             break;
@@ -533,7 +533,7 @@ safeUpdate(snd_pcm_t *handle, int &samples)
         samples = snd_pcm_recover(handle, samples, 0);
 
         if (samples < 0) {
-            ERROR("Got unrecoverable error from snd_pcm_avail_update: %s", snd_strerror(samples));
+            LOG_ERROR("Got unrecoverable error from snd_pcm_avail_update: %s", snd_strerror(samples));
             return false;
         }
     }
@@ -668,7 +668,7 @@ AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
             return getCaptureDeviceList().at(index);
         default:
             // Should never happen
-            ERROR("Unexpected type");
+            LOG_ERROR("Unexpected type");
             return "";
     }
 }
@@ -680,7 +680,7 @@ void AlsaLayer::capture()
     int toGetFrames = snd_pcm_avail_update(captureHandle_);
 
     if (toGetFrames < 0)
-        ERROR("Audio: Mic error: %s", snd_strerror(toGetFrames));
+        LOG_ERROR("Audio: Mic error: %s", snd_strerror(toGetFrames));
 
     if (toGetFrames <= 0)
         return;
@@ -690,7 +690,7 @@ void AlsaLayer::capture()
     captureIBuff_.resize(toGetFrames * audioFormat_.nb_channels);
 
     if (read(captureIBuff_.data(), toGetFrames) != toGetFrames) {
-        ERROR("ALSA MIC : Couldn't read!");
+        LOG_ERROR("ALSA MIC : Couldn't read!");
         return;
     }
 

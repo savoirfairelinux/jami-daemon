@@ -59,7 +59,7 @@ AudioCodecFactory::AudioCodecFactory() :
     AudioCodecVector codecDynamicList(scanCodecDirectory());
 
     if (codecDynamicList.empty())
-        ERROR("No codecs available");
+        LOG_ERROR("No codecs available");
     else {
         for (const auto &codec: codecDynamicList) {
             codecsMap_[(int) codec->getPayloadType()] = codec;
@@ -108,7 +108,7 @@ AudioCodecFactory::getCodec(int payload) const
     if (iter != codecsMap_.end())
         return iter->second;
     else {
-        ERROR("Cannot find codec %i", payload);
+        LOG_ERROR("Cannot find codec %i", payload);
         return NULL;
     }
 }
@@ -131,7 +131,7 @@ AudioCodecFactory::getCodec(const std::string &name) const
         }
     }
 
-    ERROR("Cannot find codec %s", name.c_str());
+    LOG_ERROR("Cannot find codec %s", name.c_str());
     return NULL;
 }
 
@@ -256,7 +256,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
     void * codecHandle = dlopen(path.c_str(), RTLD_NOW);
 
     if (!codecHandle) {
-        ERROR("%s", dlerror());
+        LOG_ERROR("%s", dlerror());
         return NULL;
     }
 
@@ -264,7 +264,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
     const char *error = dlerror();
 
     if (error) {
-        ERROR("%s", error);
+        LOG_ERROR("%s", error);
         dlclose(codecHandle);
         return NULL;
     }
@@ -279,7 +279,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
 
         return a;
     } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
+        LOG_ERROR("%s", e.what());
         dlclose(codecHandle);
         return nullptr;
     }
@@ -299,7 +299,7 @@ AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
     const char *error = dlerror();
 
     if (error) {
-        ERROR("%s", error);
+        LOG_ERROR("%s", error);
         return;
     }
 
@@ -318,7 +318,7 @@ AudioCodecFactory::instantiateCodec(int payload) const
             try {
                 return codec.first->clone();
             } catch (const std::runtime_error &e) {
-                ERROR("%s", e.what());
+                LOG_ERROR("%s", e.what());
                 return nullptr;
             }
         }
