@@ -94,7 +94,7 @@ class CallFactory {
             };
 
             if (hasCall(id)) {
-                ERROR("Call %s is already created", id.c_str());
+                LOG_ERROR("Call %s is already created", id.c_str());
                 return nullptr;
             }
 

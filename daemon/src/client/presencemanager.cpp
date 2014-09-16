@@ -63,7 +63,7 @@ PresenceManager::subscribeBuddy(const std::string& accountID, const std::string&
     const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount) {
-        ERROR("Could not find account %s", accountID.c_str());
+        LOG_ERROR("Could not find account %s", accountID.c_str());
         return;
     }
 
@@ -86,7 +86,7 @@ PresenceManager::publish(const std::string& accountID, bool status, const std::s
     const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount) {
-        ERROR("Could not find account %s.", accountID.c_str());
+        LOG_ERROR("Could not find account %s.", accountID.c_str());
         return;
     }
 
@@ -109,7 +109,7 @@ PresenceManager::answerServerRequest(const std::string& uri, bool flag)
     const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
-        ERROR("Could not find account IP2IP");
+        LOG_ERROR("Could not find account IP2IP");
         return;
     }
 
@@ -119,7 +119,7 @@ PresenceManager::answerServerRequest(const std::string& uri, bool flag)
     auto pres = sipaccount->getPresence();
 
     if (!pres) {
-        ERROR("Presence not initialized");
+        LOG_ERROR("Presence not initialized");
         return;
     }
 
@@ -139,7 +139,7 @@ PresenceManager::getSubscriptions(const std::string& accountID)
         const auto pres = sipaccount->getPresence();
 
         if (!pres) {
-            ERROR("Presence not initialized");
+            LOG_ERROR("Presence not initialized");
             return ret;
         }
 
@@ -168,7 +168,7 @@ PresenceManager::setSubscriptions(const std::string& accountID, const std::vecto
     auto pres = sipaccount->getPresence();
 
     if (!pres) {
-        ERROR("Presence not initialized");
+        LOG_ERROR("Presence not initialized");
         return;
     }
 
