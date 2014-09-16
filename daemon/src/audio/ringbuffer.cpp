@@ -122,7 +122,7 @@ RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
     if (iter != readoffsets_.end())
         iter->second = offset;
     else
-        ERROR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
+        LOG_ERROR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
 }
 
 

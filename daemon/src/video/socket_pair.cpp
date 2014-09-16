@@ -74,7 +74,7 @@ addrinfo* udp_resolve_host(const char *node, int service)
     hints.ai_flags = AI_PASSIVE;
     if ((error = getaddrinfo(node, sport, &hints, &res))) {
         res = NULL;
-        ERROR("%s\n", gai_strerror(error));
+        LOG_ERROR("%s\n", gai_strerror(error));
     }
 
     return res;
@@ -107,7 +107,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     for (res = res0; res; res=res->ai_next) {
         udp_fd = socket(res->ai_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
         if (udp_fd != -1) break;
-        ERROR("socket error");
+        LOG_ERROR("socket error");
     }
 
     if (udp_fd < 0) {
@@ -122,7 +122,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     // bind socket so that we send from and receive
     // on local port
     if (bind(udp_fd, reinterpret_cast<sockaddr*>(addr), *addr_len) < 0) {
-        ERROR("Bind failed");
+        LOG_ERROR("Bind failed");
         strErr();
         close(udp_fd);
         udp_fd = -1;
@@ -223,7 +223,7 @@ int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 
     for(;;) {
         if (context->interrupted_) {
-            ERROR("interrupted");
+            LOG_ERROR("interrupted");
             return -EINTR;
         }
 
