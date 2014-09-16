@@ -56,7 +56,7 @@ const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 #define PCM_DMIX_DSNOOP "dmix/dsnoop"           /** Audio profile using Alsa dmix/dsnoop */
 
 // Error codes for error handling
-#define NO_ERROR		            0x0000	/** No error - Everything alright */
+#define M_NO_ERROR		            0x0000	/** No error - Everything alright */
 #define ALSA_CAPTURE_DEVICE         0x0001	/** Error while opening capture device */
 #define ALSA_PLAYBACK_DEVICE        0x0010	/** Error while opening playback device */
 #define PULSEAUDIO_NOT_RUNNING      0x0100  /** Pulseaudio is not running */
