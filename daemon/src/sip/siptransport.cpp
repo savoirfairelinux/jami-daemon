@@ -363,7 +363,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 #endif
 
 std::vector<pj_sockaddr>
-SipTransportBroker::getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<long> &socketDescriptors) const
+SipTransportBroker::getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<pj_sock_t> &socketDescriptors) const
 {
     const size_t ip_num = socketDescriptors.size();
     pj_sockaddr_in ipv4[ip_num];
