@@ -42,9 +42,13 @@
 #include "array_size.h"
 #include "logger.h"
 
-#include <dirent.h>
-#include <dlfcn.h>
+#ifdef _WIN32
+	#include "dlfcnwin32.h"
+#else
+	#include <dlfcn.h>
+#endif
 
+#include <dirent.h>
 #include <cstdlib>
 #include <algorithm> // for std::find
 #include <stdexcept>

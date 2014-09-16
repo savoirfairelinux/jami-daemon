@@ -30,8 +30,14 @@
 #include "g729.h"
 #include "sfl_types.h"
 #include <iostream>
-#include <dlfcn.h>
 #include <stdexcept>
+
+/* TODO: WINDOWS, fix this for realzeese! */
+#ifdef _WIN32
+	#include "dlfcnwin32.h"
+#else
+	#include <dlfcn.h>
+#endif
 
 #define G729_TYPE_ENCODER        (void (*)(bcg729EncoderChannelContextStruct*, SFLAudioSample[], uint8_t[]))
 #define G729_TYPE_DECODER        (void (*)(bcg729DecoderChannelContextStruct*, uint8_t[], uint8_t, SFLAudioSample[]))
