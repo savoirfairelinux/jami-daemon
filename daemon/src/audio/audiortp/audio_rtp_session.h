@@ -90,7 +90,7 @@ class AudioRtpSession {
 
         virtual int getIncrementForDTMF() const;
 
-        virtual std::vector<long>
+        virtual std::vector<pj_sock_t>
         getSocketDescriptors() const = 0;
 
         virtual CachedAudioRtpState * saveState() const;

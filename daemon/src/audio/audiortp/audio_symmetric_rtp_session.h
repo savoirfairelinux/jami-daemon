@@ -58,7 +58,7 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
         AudioSymmetricRtpSession(SIPCall &call);
         ~AudioSymmetricRtpSession();
 
-        std::vector<long>
+        std::vector<pj_sock_t>
         getSocketDescriptors() const;
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {

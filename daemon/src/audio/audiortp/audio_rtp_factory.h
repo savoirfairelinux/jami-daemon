@@ -63,7 +63,7 @@ class AudioRtpFactory {
         AudioRtpFactory(SIPCall *ca);
         ~AudioRtpFactory();
 
-        std::vector<long>
+        std::vector<pj_sock_t>
         getSocketDescriptors();
 
         void initConfig();
