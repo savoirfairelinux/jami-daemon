@@ -110,7 +110,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     AVOutputFormat *oformat = av_guess_format(short_name, filename, mime_type);
 
     if (!oformat) {
-        ERROR("Unable to find a suitable output format for %s", filename);
+        SFL_ERR("Unable to find a suitable output format for %s", filename);
         throw VideoEncoderException("No output format");
     }
 
@@ -122,7 +122,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     /* find the video encoder */
     outputEncoder_ = avcodec_find_encoder_by_name(enc_name);
     if (!outputEncoder_) {
-        ERROR("Encoder \"%s\" not found!", enc_name);
+        SFL_ERR("Encoder \"%s\" not found!", enc_name);
         throw VideoEncoderException("No output encoder");
     }
 
@@ -203,7 +203,7 @@ void
 VideoEncoder::startIO()
 {
     if (avformat_write_header(outputCtx_, options_ ? &options_ : NULL)) {
-        ERROR("Could not write header for output file... check codec parameters");
+        SFL_ERR("Could not write header for output file... check codec parameters");
         throw VideoEncoderException("Failed to write output file header");
     }
 
@@ -215,7 +215,7 @@ print_averror(const char *funcname, int err)
 {
     char errbuf[64];
     av_strerror(err, errbuf, sizeof(errbuf));
-    ERROR("%s failed: %s", funcname, errbuf);
+    SFL_ERR("%s failed: %s", funcname, errbuf);
 }
 
 int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_number)
@@ -319,7 +319,7 @@ int VideoEncoder::flush()
 
     ret = avcodec_encode_video2(encoderCtx_, &pkt, NULL, &got_packet);
     if (ret != 0) {
-        ERROR("avcodec_encode_video failed");
+        SFL_ERR("avcodec_encode_video failed");
         av_free_packet(&pkt);
         return -1;
     }
@@ -328,13 +328,13 @@ int VideoEncoder::flush()
         // write the compressed frame
         ret = av_write_frame(outputCtx_, &pkt);
         if (ret < 0)
-            ERROR("write_frame failed");
+            SFL_ERR("write_frame failed");
     }
 #else
     ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
                                encoderBufferSize_, NULL);
     if (ret < 0) {
-        ERROR("avcodec_encode_video failed");
+        SFL_ERR("avcodec_encode_video failed");
         av_free_packet(&pkt);
         return ret;
     }
@@ -345,7 +345,7 @@ int VideoEncoder::flush()
     // write the compressed frame
     ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0)
-        ERROR("write_frame failed");
+        SFL_ERR("write_frame failed");
 #endif
     av_free_packet(&pkt);
 
@@ -367,7 +367,7 @@ void VideoEncoder::print_sdp(std::string &sdp_)
         line = line.substr(0, line.length() - 1);
         sdp_ += line + "\n";
     }
-    DEBUG("Sending SDP: \n%s", sdp_.c_str());
+    SFL_DBG("Sending SDP: \n%s", sdp_.c_str());
 }
 
 void VideoEncoder::prepareEncoderContext()
@@ -383,7 +383,7 @@ void VideoEncoder::prepareEncoderContext()
     // set some encoder settings here
     encoderCtx_->bit_rate = 1000 * atoi(av_dict_get(options_, "bitrate",
                                                     NULL, 0)->value);
-    DEBUG("Using bitrate %d", encoderCtx_->bit_rate);
+    SFL_DBG("Using bitrate %d", encoderCtx_->bit_rate);
 
     // resolution must be a multiple of two
     char *width = av_dict_get(options_, "width", NULL, 0)->value;
@@ -411,10 +411,10 @@ void VideoEncoder::forcePresetX264()
 {
     const char *speedPreset = "ultrafast";
     if (av_opt_set(encoderCtx_->priv_data, "preset", speedPreset, 0))
-        WARN("Failed to set x264 preset '%s'", speedPreset);
+        SFL_WARN("Failed to set x264 preset '%s'", speedPreset);
     const char *tune = "zerolatency";
     if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
-        WARN("Failed to set x264 tune '%s'", tune);
+        SFL_WARN("Failed to set x264 tune '%s'", tune);
 }
 
 void VideoEncoder::extractProfileLevelID(const std::string &parameters,
@@ -462,7 +462,7 @@ void VideoEncoder::extractProfileLevelID(const std::string &parameters,
                 ctx->profile |= FF_PROFILE_H264_INTRA;
             break;
     }
-    DEBUG("Using profile %x and level %d", ctx->profile, ctx->level);
+    SFL_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
 }
 
 }

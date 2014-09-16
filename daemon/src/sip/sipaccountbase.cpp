@@ -57,7 +57,7 @@ validate(std::string &member, const std::string &param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        ERROR("Invalid parameter \"%s\"", param.c_str());
+        SFL_ERR("Invalid parameter \"%s\"", param.c_str());
 }
 
 static void
@@ -85,7 +85,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
-        ERROR("Couldn't find key %s", key);
+        SFL_ERR("Couldn't find key %s", key);
         return;
     }
     i = atoi(iter->second.c_str());
@@ -131,7 +131,7 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 #ifdef SFL_VIDEO
     if (tmp.empty()) {
         // Video codecs are an empty list
-        WARN("Loading default video codecs");
+        SFL_WARN("Loading default video codecs");
         tmp = libav_utils::getDefaultCodecs();
     }
 #endif
@@ -241,7 +241,7 @@ void
 SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info)
 {
     pj_status_t currentStatus = transportStatus_;
-    DEBUG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
+    SFL_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
     if (!SipTransport::isAlive(transport_, state)) {
         if (info) {
             char err_msg[128];
@@ -249,7 +249,7 @@ SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip
             pj_str_t descr = pj_strerror(info->status, err_msg, sizeof(err_msg));
             transportStatus_ = info ? info->status : PJSIP_SC_OK;
             transportError_  = std::string(descr.ptr, descr.slen);
-            ERROR("Transport disconnected: %.*s", descr.slen, descr.ptr);
+            SFL_ERR("Transport disconnected: %.*s", descr.slen, descr.ptr);
         }
         else {
             // This is already the generic error used by pjsip.
@@ -277,7 +277,7 @@ SIPAccountBase::setTransport(const std::shared_ptr<SipTransport>& t)
     if (t == transport_)
         return;
     if (transport_) {
-        DEBUG("Removing transport from account");
+        SFL_DBG("Removing transport from account");
         transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
     }
 

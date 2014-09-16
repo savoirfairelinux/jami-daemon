@@ -97,7 +97,7 @@ void IAXAccount::doRegister()
         link_->init();
         sendRegister();
     } catch (const VoipLinkException &e) {
-        ERROR("IAXAccount: %s", e.what());
+        SFL_ERR("IAXAccount: %s", e.what());
     }
 }
 
@@ -108,7 +108,7 @@ IAXAccount::doUnregister(std::function<void(bool)> cb)
         sendUnregister();
         link_->terminate();
     } catch (const VoipLinkException &e) {
-        ERROR("IAXAccount: %s", e.what());
+        SFL_ERR("IAXAccount: %s", e.what());
     }
     if (cb)
         cb(true);
@@ -176,7 +176,7 @@ void
 IAXAccount::sendRegister()
 {
     if (not isEnabled()) {
-        WARN("Account must be enabled to register, ignoring");
+        SFL_WARN("Account must be enabled to register, ignoring");
         return;
     }
 
@@ -194,7 +194,7 @@ IAXAccount::sendRegister()
     if (regSession_) {
         {
             std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-            DEBUG("register IAXAccount %s", getHostname().c_str());
+            SFL_DBG("register IAXAccount %s", getHostname().c_str());
             iax_register(regSession_.get(), getHostname().data(),
                          getUsername().data(), getPassword().data(), 120);
         }
@@ -207,7 +207,7 @@ IAXAccount::sendRegister()
 void
 IAXAccount::sendUnregister(std::function<void(bool)> cb)
 {
-    DEBUG("unregister IAXAccount %s", getHostname().c_str());
+    SFL_DBG("unregister IAXAccount %s", getHostname().c_str());
     destroyRegSession();
 
     nextRefreshStamp_ = 0;

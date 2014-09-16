@@ -59,7 +59,7 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
     pj_cstr(&pjname, name.c_str());
     auto status = pj_getaddrinfo(family, &pjname, &addr_num, res);
     if (status != PJ_SUCCESS) {
-        ERROR("Error resolving %s :", name.c_str());
+        SFL_ERR("Error resolving %s :", name.c_str());
         sip_utils::sip_strerror(status);
         return ipList;
     }
@@ -118,12 +118,12 @@ ip_utils::getLocalAddr(pj_uint16_t family)
         return ip_addr;
     }
 #if HAVE_IPV6
-    WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
+    SFL_WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
     family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
     status = pj_gethostip(family, ip_addr);
     if (status == PJ_SUCCESS) return ip_addr;
 #endif
-    ERROR("Could not get local IP");
+    SFL_ERR("Could not get local IP");
     return ip_addr;
 }
 
@@ -138,19 +138,26 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 
     int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
-        ERROR("Could not open socket: %m");
+        SFL_ERR("Could not open socket: %m");
         return addr;
     }
 
     if (unix_family == AF_INET6) {
         int val = family != pj_AF_UNSPEC();
-        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &val, sizeof(val)) < 0) {
-            ERROR("Could not setsockopt: %m");
+#ifdef _WIN32
+		char* valPtr = (char *) &val;
+#else
+		void* valPtr = (void *) &val;
+#endif
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, valPtr, sizeof(val)) < 0) {
+            SFL_ERR("Could not setsockopt: %m");
             close(fd);
             return addr;
         }
     }
 
+#ifdef _WIN32 /* TODO: WINDOWS, implement address info. */
+#else
     ifreq ifr;
     strncpy(ifr.ifr_name, interface.c_str(), sizeof ifr.ifr_name);
     // guarantee that ifr_name is NULL-terminated
@@ -165,7 +172,7 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     addr = ifr.ifr_addr;
     if (addr.isUnspecified())
         return getLocalAddr(addr.getFamily());
-
+#endif
     return addr;
 }
 

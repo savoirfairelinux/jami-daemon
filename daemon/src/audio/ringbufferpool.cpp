@@ -56,7 +56,7 @@ RingBufferPool::~RingBufferPool()
     for (const auto& item : ringBufferMap_) {
         const auto& weak = item.second;
         if (not weak.expired())
-            WARN("Leaking RingBuffer '%s'", item.first.c_str());
+            SFL_WARN("Leaking RingBuffer '%s'", item.first.c_str());
     }
 }
 
@@ -116,12 +116,12 @@ RingBufferPool::createRingBuffer(const std::string& id)
 
     auto rbuf = getRingBuffer(id);
     if (rbuf) {
-        DEBUG("Ringbuffer already exists for id '%s'", id.c_str());
+        SFL_DBG("Ringbuffer already exists for id '%s'", id.c_str());
         return rbuf;
     }
 
     rbuf.reset(new RingBuffer(id, SIZEBUF));
-    DEBUG("Ringbuffer created with id '%s'", id.c_str());
+    SFL_DBG("Ringbuffer created with id '%s'", id.c_str());
     ringBufferMap_.insert(std::make_pair(id, std::weak_ptr<RingBuffer>(rbuf)));
     return rbuf;
 }
@@ -144,7 +144,7 @@ void
 RingBufferPool::removeReadBindings(const std::string& call_id)
 {
     if (not readBindingsMap_.erase(call_id))
-        ERROR("CallID set %s does not exist!", call_id.c_str());
+        SFL_ERR("CallID set %s does not exist!", call_id.c_str());
 }
 
 /**
@@ -155,11 +155,11 @@ RingBufferPool::addReaderToRingBuffer(std::shared_ptr<RingBuffer> rbuf,
                                   const std::string& call_id)
 {
     if (call_id != DEFAULT_ID and rbuf->id == call_id)
-        WARN("RingBuffer has a readoffset on itself");
+        SFL_WARN("RingBuffer has a readoffset on itself");
 
     rbuf->createReadOffset(call_id);
     readBindingsMap_[call_id].insert(rbuf); // bindings list created if not existing
-    DEBUG("Bind rbuf '%s' to callid '%s'", rbuf->id.c_str(), call_id.c_str());
+    SFL_DBG("Bind rbuf '%s' to callid '%s'", rbuf->id.c_str(), call_id.c_str());
 }
 
 void
@@ -181,13 +181,13 @@ RingBufferPool::bindCallID(const std::string& call_id1,
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
-        ERROR("No ringbuffer associated to call '%s'", call_id1.c_str());
+        SFL_ERR("No ringbuffer associated to call '%s'", call_id1.c_str());
         return;
     }
 
     const auto& rb_call2 = getRingBuffer(call_id2);
     if (not rb_call2) {
-        ERROR("No ringbuffer associated to call '%s'", call_id2.c_str());
+        SFL_ERR("No ringbuffer associated to call '%s'", call_id2.c_str());
         return;
     }
 
@@ -216,13 +216,13 @@ RingBufferPool::unBindCallID(const std::string& call_id1,
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
-        ERROR("No ringbuffer associated to call '%s'", call_id1.c_str());
+        SFL_ERR("No ringbuffer associated to call '%s'", call_id1.c_str());
         return;
     }
 
     const auto& rb_call2 = getRingBuffer(call_id2);
     if (not rb_call2) {
-        ERROR("No ringbuffer associated to call '%s'", call_id2.c_str());
+        SFL_ERR("No ringbuffer associated to call '%s'", call_id2.c_str());
         return;
     }
 
@@ -247,7 +247,7 @@ RingBufferPool::unBindAll(const std::string& call_id)
 {
     const auto& rb_call = getRingBuffer(call_id);
     if (not rb_call) {
-        ERROR("No ringbuffer associated to call '%s'", call_id.c_str());
+        SFL_ERR("No ringbuffer associated to call '%s'", call_id.c_str());
         return;
     }
 

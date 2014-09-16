@@ -35,7 +35,7 @@ namespace sfl {
 
 Recordable::Recordable() : recAudio_(), recorder_(&recAudio_, Manager::instance().getRingBufferPool())
 {
-    DEBUG("Set recording options: %s", Manager::instance().audioPreference.getRecordPath().c_str());
+    SFL_DBG("Set recording options: %s", Manager::instance().audioPreference.getRecordPath().c_str());
     recAudio_.setRecordingOptions(AudioFormat::MONO(), Manager::instance().audioPreference.getRecordPath());
 }
 

@@ -39,7 +39,7 @@
 
 void AccountTest::TestAddRemove()
 {
-    DEBUG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
+    SFL_DBG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
 
     std::map<std::string, std::string> details(Manager::instance().getClient()->getConfigurationManager()->getAccountTemplate());
     details[CONFIG_ACCOUNT_TYPE] = "SIP";

@@ -60,11 +60,11 @@ bool VideoInput::setup()
 {
     /* Sink setup */
     if (!sink_.start()) {
-        ERROR("Cannot start shared memory sink");
+        SFL_ERR("Cannot start shared memory sink");
         return false;
     }
     if (not attach(&sink_))
-        WARN("Failed to attach sink");
+        SFL_WARN("Failed to attach sink");
 
     return true;
 }
@@ -90,7 +90,7 @@ void VideoInput::process()
         /* Signal the client about the new sink */
         Manager::instance().getVideoManager()->startedDecoding(sinkID_, sink_.openedName(),
                 decoder_->getWidth(), decoder_->getHeight(), false);
-        DEBUG("LOCAL: shm sink <%s> started: size = %dx%d",
+        SFL_DBG("LOCAL: shm sink <%s> started: size = %dx%d",
               sink_.openedName().c_str(), decoder_->getWidth(),
               decoder_->getHeight());
     }
@@ -152,7 +152,7 @@ VideoInput::createDecoder()
     decoder_->setInterruptCallback(interruptCb, this);
 
     if (decoder_->openInput(input_, format_) < 0) {
-        ERROR("Could not open input \"%s\"", input_.c_str());
+        SFL_ERR("Could not open input \"%s\"", input_.c_str());
         delete decoder_;
         decoder_ = nullptr;
         return;
@@ -160,7 +160,7 @@ VideoInput::createDecoder()
 
     /* Data available, finish the decoding */
     if (decoder_->setupFromVideoData() < 0) {
-        ERROR("decoder IO startup failed");
+        SFL_ERR("decoder IO startup failed");
         delete decoder_;
         decoder_ = nullptr;
         return;
@@ -228,7 +228,7 @@ VideoInput::initFile(std::string path)
 
     /* File exists? */
     if (access(path.c_str(), R_OK) != 0) {
-        ERROR("file '%s' unavailable\n", path.c_str());
+        SFL_ERR("file '%s' unavailable\n", path.c_str());
         return false;
     }
 
@@ -242,7 +242,7 @@ VideoInput::initFile(std::string path)
         format_ = "image2";
         decOpts_["framerate"] = "1";
     } else {
-        WARN("Guessing file type for %s", path.c_str());
+        SFL_WARN("Guessing file type for %s", path.c_str());
         // FIXME: proper parsing of FPS etc. should be done in
         // VideoDecoder, not here.
         decOpts_["framerate"] = "25";
@@ -254,10 +254,10 @@ VideoInput::initFile(std::string path)
 bool
 VideoInput::switchInput(const std::string& resource)
 {
-    DEBUG("MRL: '%s'", resource.c_str());
+    SFL_DBG("MRL: '%s'", resource.c_str());
 
     if (switchPending_) {
-        ERROR("Video switch already requested");
+        SFL_ERR("Video switch already requested");
         return false;
     }
 
@@ -303,7 +303,7 @@ VideoInput::switchInput(const std::string& resource)
             loop_.start();
     }
     else
-        ERROR("Failed to init input for MRL '%s'\n", resource.c_str());
+        SFL_ERR("Failed to init input for MRL '%s'\n", resource.c_str());
 
     return valid;
 }

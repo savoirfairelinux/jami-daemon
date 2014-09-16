@@ -69,7 +69,7 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         --forceKeyFrame_;
 
     if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
-        ERROR("encoding failed");
+        SFL_ERR("encoding failed");
 }
 
 void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,

@@ -40,10 +40,10 @@ void ThreadLoop::mainloop()
                 process_();
             cleanup_();
         } else {
-            ERROR("setup failed");
+            SFL_ERR("setup failed");
         }
     } catch (const ThreadLoopException &e) {
-        ERROR("%s", e.what());
+        SFL_ERR("%s", e.what());
     }
 }
 
@@ -56,7 +56,7 @@ ThreadLoop::ThreadLoop(const std::function<bool()> &setup,
 ThreadLoop::~ThreadLoop()
 {
     if (isRunning()) {
-        ERROR("join() should be explicitly called in owner's destructor");
+        SFL_ERR("join() should be explicitly called in owner's destructor");
         join();
     }
 }
@@ -69,7 +69,7 @@ void ThreadLoop::start()
             thread_.join();
         thread_ = std::thread(&ThreadLoop::mainloop, this);
     } else {
-        ERROR("Thread already started");
+        SFL_ERR("Thread already started");
     }
 }
 
