@@ -38,6 +38,10 @@
 #include "dbus/dbusclient.h"
 #include "fileutils.h"
 
+#ifdef _WIN32 /* TODO: WINDOWS, create a signal.c and check all signals. */
+	#define strsignal std::to_string
+#endif
+
 static int sflphFlags = 0;
 static std::unique_ptr<DBusClient> dbusClient;
 
