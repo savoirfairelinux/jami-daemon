@@ -100,7 +100,11 @@ void History::ensurePath()
 #else
         const string userdata = fileutils::get_data_dir();
 
+#ifndef _WIN32 /* TODO: WINDOWS, this is ugly as hell. */
         if (mkdir(userdata.data(), 0755) != 0) {
+#else
+        if (mkdir(userdata.data()) != 0) {
+#endif
             // If directory creation failed
             if (errno != EEXIST) {
                 SFL_DBG("Cannot create directory: %s", userdata.c_str());
