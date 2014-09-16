@@ -121,3 +121,8 @@ libsflphone_la_SOURCES = conference.cpp \
 		rw_mutex.h \
 		sflphone.h \
 		sflphone_api.cpp
+
+if HAVE_WIN32
+libsflphone_la_SOURCES += dlfcnwin32.h \
+		dlfcnwin32.c
+endif
