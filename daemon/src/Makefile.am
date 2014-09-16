@@ -107,3 +107,8 @@ libsflphone_la_SOURCES = conference.cpp \
 		map_utils.h \
 		sflphone.h \
 		sflphone_api.cpp
+
+if HAVE_WIN32
+libsflphone_la_SOURCES += dlfcnwin32.h \
+		dlfcnwin32.c
+endif
