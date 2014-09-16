@@ -391,6 +391,7 @@ void AudioPreference::serialize(YAML::Emitter &out)
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     // alsa submap
+#if HAVE_ALSA
     out << YAML::Key << ALSAMAP_KEY << YAML::Value << YAML::BeginMap;
     out << YAML::Key << CARDIN_KEY << YAML::Value << alsaCardin_;
     out << YAML::Key << CARDOUT_KEY << YAML::Value << alsaCardout_;
@@ -398,6 +399,7 @@ void AudioPreference::serialize(YAML::Emitter &out)
     out << YAML::Key << PLUGIN_KEY << YAML::Value << alsaPlugin_;
     out << YAML::Key << SMPLRATE_KEY << YAML::Value << alsaSmplrate_;
     out << YAML::EndMap;
+#endif
 
     // common options
     out << YAML::Key << ALWAYS_RECORDING_KEY << YAML::Value << alwaysRecording_;
@@ -408,11 +410,13 @@ void AudioPreference::serialize(YAML::Emitter &out)
     out << YAML::Key << PLAYBACK_MUTED_KEY << YAML::Value << playbackMuted_;
 
     // pulse submap
+#if HAVE_PULSE
     out << YAML::Key << PULSEMAP_KEY << YAML::Value << YAML::BeginMap;
     out << YAML::Key << DEVICE_PLAYBACK_KEY << YAML::Value << pulseDevicePlayback_;
     out << YAML::Key << DEVICE_RECORD_KEY << YAML::Value << pulseDeviceRecord_;
     out << YAML::Key << DEVICE_RINGTONE_KEY << YAML::Value << pulseDeviceRingtone_;
     out << YAML::Key << YAML::EndMap;
+#endif
 
     // more common options!
     out << YAML::Key << RECORDPATH_KEY << YAML::Value << recordpath_;
@@ -441,6 +445,7 @@ void AudioPreference::unserialize(const YAML::Node &in)
     const auto &node = in[CONFIG_LABEL];
 
     // alsa submap
+#if HAVE_ALSA
     const auto &alsa = node[ALSAMAP_KEY];
 
     parseValue(alsa, CARDIN_KEY, alsaCardin_);
@@ -448,6 +453,7 @@ void AudioPreference::unserialize(const YAML::Node &in)
     parseValue(alsa, CARDRING_KEY, alsaCardring_);
     parseValue(alsa, PLUGIN_KEY, alsaPlugin_);
     parseValue(alsa, SMPLRATE_KEY, alsaSmplrate_);
+#endif
 
     // common options
     parseValue(node, ALWAYS_RECORDING_KEY, alwaysRecording_);
@@ -458,10 +464,12 @@ void AudioPreference::unserialize(const YAML::Node &in)
     parseValue(node, PLAYBACK_MUTED_KEY, playbackMuted_);
 
     // pulse submap
+#if HAVE_PULSE
     const auto &pulse = node[PULSEMAP_KEY];
     parseValue(pulse, DEVICE_PLAYBACK_KEY, pulseDevicePlayback_);
     parseValue(pulse, DEVICE_RECORD_KEY, pulseDeviceRecord_);
     parseValue(pulse, DEVICE_RINGTONE_KEY, pulseDeviceRingtone_);
+#endif
 
     // more common options!
     parseValue(node, RECORDPATH_KEY, recordpath_);
