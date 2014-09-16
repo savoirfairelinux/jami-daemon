@@ -142,7 +142,7 @@ void
 RingBufferPool::removeReadBindings(const std::string& call_id)
 {
     if (not readBindingsMap_.erase(call_id))
-        ERROR("CallID set %s does not exist!", call_id.c_str());
+        LOG_ERROR("CallID set %s does not exist!", call_id.c_str());
 }
 
 /**
@@ -179,13 +179,13 @@ RingBufferPool::bindCallID(const std::string& call_id1,
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
-        ERROR("No ringbuffer associated to call '%s'", call_id1.c_str());
+        LOG_ERROR("No ringbuffer associated to call '%s'", call_id1.c_str());
         return;
     }
 
     const auto& rb_call2 = getRingBuffer(call_id2);
     if (not rb_call2) {
-        ERROR("No ringbuffer associated to call '%s'", call_id2.c_str());
+        LOG_ERROR("No ringbuffer associated to call '%s'", call_id2.c_str());
         return;
     }
 
@@ -214,13 +214,13 @@ RingBufferPool::unBindCallID(const std::string& call_id1,
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
-        ERROR("No ringbuffer associated to call '%s'", call_id1.c_str());
+        LOG_ERROR("No ringbuffer associated to call '%s'", call_id1.c_str());
         return;
     }
 
     const auto& rb_call2 = getRingBuffer(call_id2);
     if (not rb_call2) {
-        ERROR("No ringbuffer associated to call '%s'", call_id2.c_str());
+        LOG_ERROR("No ringbuffer associated to call '%s'", call_id2.c_str());
         return;
     }
 
@@ -245,7 +245,7 @@ RingBufferPool::unBindAll(const std::string& call_id)
 {
     const auto& rb_call = getRingBuffer(call_id);
     if (not rb_call) {
-        ERROR("No ringbuffer associated to call '%s'", call_id.c_str());
+        LOG_ERROR("No ringbuffer associated to call '%s'", call_id.c_str());
         return;
     }
 

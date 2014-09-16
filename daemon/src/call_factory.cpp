@@ -59,7 +59,7 @@ CallFactory::removeCall(const std::string& id)
     if (auto call = getCall(id)) {
         removeCall(*call);
     } else
-        ERROR("No call with ID %s", id.c_str());
+        LOG_ERROR("No call with ID %s", id.c_str());
 }
 
 //==============================================================================
