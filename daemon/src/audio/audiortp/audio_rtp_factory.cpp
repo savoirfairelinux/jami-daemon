@@ -133,7 +133,7 @@ void AudioRtpFactory::initSession()
     }
 }
 
-std::vector<long>
+std::vector<long long>
 AudioRtpFactory::getSocketDescriptors()
 {
     std::lock_guard<std::mutex> lock(audioRtpThreadMutex_);
