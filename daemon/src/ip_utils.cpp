@@ -31,15 +31,24 @@
 
 #include "ip_utils.h"
 #include "logger.h"
-
 #include "sip/sip_utils.h"
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <net/if.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
+
+#ifdef _WIN32
+	#include <ws2tcpip.h>
+	#include <winsock2.h>
+	#include <inaddr.h>
+
+	#define InetPtonA inet_pton
+	WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pAddr);
+#else
+	#include <arpa/inet.h>
+	#include <netdb.h>
+	#include <net/if.h>
+	#include <sys/ioctl.h>
+#endif
 
 std::vector<IpAddr>
 ip_utils::getAddrList(const std::string &name, pj_uint16_t family)

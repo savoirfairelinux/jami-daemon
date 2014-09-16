@@ -31,7 +31,6 @@
  */
 
 #include <cstring>
-#include <sys/socket.h>
 #include <iax/iax-client.h>
 #include <iax/frame.h>
 
@@ -43,6 +42,11 @@
 #include "iaxvoiplink.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+
+#ifdef _WIN32
+#else
+	#include <sys/socket.h>
+#endif
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
