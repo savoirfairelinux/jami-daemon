@@ -70,7 +70,12 @@ bool check_dir(const char *path)
     DIR *dir = opendir(path);
 
     if (!dir) { // doesn't exist
-        if (mkdir(path, 0755) != 0) {   // couldn't create the dir
+#ifndef _WIN32 /* TODO: WINDOWS, this is ugly as hell. */
+		if (mkdir(path, 0700) != 0) {
+#else
+		if (mkdir(path) != 0) {
+#endif
+			// couldn't create the dir
             perror(path);
             return false;
         }
@@ -104,6 +109,12 @@ get_ringtone_dir()
 }
 
 /* Lock a file region */
+#ifdef _WIN32
+static int lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
+{
+    return -1;
+}
+#else
 static int
 lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
 {
@@ -116,12 +127,20 @@ lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
 
     return fcntl(fd, cmd, &fl);
 }
+#endif
 
+#ifdef _WIN32
+static int lockRegion(int fd, int type, int whence, int start, int len)
+{
+    return -1;
+}
+#else
 static int /* Lock a file region using nonblocking F_SETLK */
 lockRegion(int fd, int type, int whence, int start, int len)
 {
     return lockReg(fd, F_SETLK, type, whence, start, len);
 }
+#endif
 
 FileHandle
 create_pidfile()
@@ -252,6 +271,8 @@ get_home_dir()
 {
 #ifdef __ANDROID__
     return get_program_dir();
+#elif _WIN32
+	return get_program_dir();
 #else
 
     // 1) try getting user's home directory from the environment
