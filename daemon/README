@@ -114,7 +114,7 @@ Profit!
 # Compile the daemon
 export PKG_CONFIG_LIBDIR={your_root_path}/sflphone/daemon/contrib/x86_64-w64-mingw32/lib/pkgconfig
 ./autgen.sh
-./configure --host=x86_64-w64-mingw32 --without-alsa --without-pulse
+./configure --host=x86_64-w64-mingw32 --without-alsa --without-pulse --disable-video
 make
 
 Clang compatibility (developers only)
