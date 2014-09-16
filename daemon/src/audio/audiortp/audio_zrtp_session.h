@@ -62,7 +62,7 @@ class AudioZrtpSession :
     public:
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename, const std::string &localIP);
 
-        std::vector<long>
+        std::vector<pj_sock_t>
         getSocketDescriptors() const;
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
