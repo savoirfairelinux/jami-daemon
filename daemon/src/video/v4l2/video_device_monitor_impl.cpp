@@ -140,7 +140,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
                 try {
                     monitor_->addDevice(string(devpath));
                 } catch (const std::runtime_error &e) {
-                    ERROR("%s", e.what());
+                    LOG_ERROR("%s", e.what());
                 }
             }
         }
@@ -152,7 +152,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
 
 udev_failed:
 
-    ERROR("udev enumeration failed");
+    LOG_ERROR("udev enumeration failed");
 
     if (udev_mon_)
         udev_monitor_unref(udev_mon_);
@@ -168,7 +168,7 @@ udev_failed:
         try {
             monitor_->addDevice(ss.str());
         } catch (const std::runtime_error &e) {
-            ERROR("%s", e.what());
+            LOG_ERROR("%s", e.what());
             return;
         }
     }
@@ -224,7 +224,7 @@ void VideoDeviceMonitorImpl::run()
                         try {
                             monitor_->addDevice(node);
                         } catch (const std::runtime_error &e) {
-                            ERROR("%s", e.what());
+                            LOG_ERROR("%s", e.what());
                         }
                     } else if (!strcmp(action, "remove")) {
                         DEBUG("udev: removing %s", node);
@@ -237,12 +237,12 @@ void VideoDeviceMonitorImpl::run()
             case -1:
                 if (errno == EAGAIN)
                     continue;
-                ERROR("udev monitoring thread: select failed (%m)");
+                LOG_ERROR("udev monitoring thread: select failed (%m)");
                 probing_ = false;
                 return;
 
             default:
-                ERROR("select() returned %d (%m)", ret);
+                LOG_ERROR("select() returned %d (%m)", ret);
                 probing_ = false;
                 return;
         }

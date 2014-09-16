@@ -55,7 +55,7 @@ findInstalledVideoCodecs()
         if (std::find(libav_codecs.begin(), libav_codecs.end(), it.second) != libav_codecs.end())
             installed_video_codecs_.push_back(it.first);
         else
-            ERROR("Didn't find \"%s\" encoder", it.second.c_str());
+            LOG_ERROR("Didn't find \"%s\" encoder", it.second.c_str());
     }
 }
 

@@ -133,7 +133,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
             pjmedia_sdp_attr *rtpMapAttribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, &current->desc.fmt[fmt]);
 
             if (!rtpMapAttribute) {
-                ERROR("Could not find rtpmap attribute");
+                LOG_ERROR("Could not find rtpmap attribute");
                 break;
             }
 
@@ -151,7 +151,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
                         if (codec)
                             sessionAudioMediaLocal_.push_back(codec);
                         else
-                            ERROR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
+                            LOG_ERROR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
                 }
             } else if (!pj_stricmp2(&current->desc.media, "video")) {
@@ -167,7 +167,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 {
     if (!sdp) {
-        ERROR("Remote sdp is NULL");
+        LOG_ERROR("Remote sdp is NULL");
         return;
     }
 
@@ -198,7 +198,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
                 pjmedia_sdp_attr *rtpMapAttribute = pjmedia_sdp_media_find_attr(r_media, &STR_RTPMAP, &r_media->desc.fmt[fmt]);
 
                 if (!rtpMapAttribute) {
-                    ERROR("Could not find rtpmap attribute");
+                    LOG_ERROR("Could not find rtpmap attribute");
                     break;
                 }
 
@@ -217,7 +217,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
                         if (codec)
                             sessionAudioMediaRemote_.push_back(codec);
                         else
-                            ERROR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
+                            LOG_ERROR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
                 }
             }
@@ -371,7 +371,7 @@ Sdp::setPublishedIP(const std::string &addr, pj_uint16_t addr_type)
         localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
         localSession_->conn->addr = localSession_->origin.addr;
         if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
-            ERROR("Could not validate SDP");
+            LOG_ERROR("Could not validate SDP");
     }
 }
 
@@ -405,7 +405,7 @@ Sdp::updatePorts(const std::vector<pj_sockaddr> &sockets)
             localSession_->media[1]->desc.port = localVideoDataPort_;
 
         if (not pjmedia_sdp_validate(localSession_))
-            ERROR("Could not validate SDP");
+            LOG_ERROR("Could not validate SDP");
     }
 }
 
@@ -526,12 +526,12 @@ Sdp::createOffer(const vector<int> &selectedCodecs,
                  const vector<map<string, string> > &videoCodecs)
 {
     if (createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
-        ERROR("Failed to create initial offer");
+        LOG_ERROR("Failed to create initial offer");
         return false;
     }
 
     if (pjmedia_sdp_neg_create_w_local_offer(memPool_, localSession_, &negotiator_) != PJ_SUCCESS) {
-        ERROR("Failed to create an initial SDP negotiator");
+        LOG_ERROR("Failed to create an initial SDP negotiator");
         return false;
     }
     return true;
@@ -542,7 +542,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                        const vector<map<string, string> > &videoCodecs)
 {
     if (!remote) {
-        ERROR("Remote session is NULL");
+        LOG_ERROR("Remote session is NULL");
         return;
     }
 
@@ -550,7 +550,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
     printSession(remote);
 
     if (!localSession_ and createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
-        ERROR("Failed to create initial offer");
+        LOG_ERROR("Failed to create initial offer");
         return;
     }
 
@@ -558,13 +558,13 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
 
     if (pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
             remoteSession_, &negotiator_) != PJ_SUCCESS)
-        ERROR("Failed to initialize negotiator");
+        LOG_ERROR("Failed to initialize negotiator");
 }
 
 void Sdp::startNegotiation()
 {
     if (negotiator_ == NULL) {
-        ERROR("Can't start negotiation with invalid negotiator");
+        LOG_ERROR("Can't start negotiation with invalid negotiator");
         return;
     }
 
@@ -580,12 +580,12 @@ void Sdp::startNegotiation()
         return;
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
-        ERROR("Could not retrieve local active session");
+        LOG_ERROR("Could not retrieve local active session");
     else
         setActiveLocalSdpSession(active_local);
 
     if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS)
-        ERROR("Could not retrieve remote active session");
+        LOG_ERROR("Could not retrieve remote active session");
     else
         setActiveRemoteSdpSession(active_remote);
 }
@@ -623,7 +623,7 @@ string Sdp::getIncomingVideoDescription() const
 {
     pjmedia_sdp_session *videoSession = pjmedia_sdp_session_clone(memPool_, activeLocalSession_);
     if (!videoSession) {
-        ERROR("Could not clone SDP");
+        LOG_ERROR("Could not clone SDP");
         return "";
     }
 
@@ -632,7 +632,7 @@ string Sdp::getIncomingVideoDescription() const
     for (unsigned i = 0; i < videoSession->media_count; i++)
         if (pj_stricmp2(&videoSession->media[i]->desc.media, "video")) {
             if (pjmedia_sdp_media_deactivate(memPool_, videoSession->media[i]) != PJ_SUCCESS)
-                ERROR("Could not deactivate media");
+                LOG_ERROR("Could not deactivate media");
         } else {
             hasVideo = true;
         }
@@ -748,7 +748,7 @@ static int
 getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)
 {
     if (!session) {
-        ERROR("Session is NULL when looking for \"%s\" attribute", type);
+        LOG_ERROR("Session is NULL when looking for \"%s\" attribute", type);
         return -1;
     }
     size_t i = 0;
@@ -807,14 +807,14 @@ Sdp::updateRemoteIP(unsigned index)
     if (conn)
         remoteIpAddr_ = std::string(conn->addr.ptr, conn->addr.slen);
     else
-        ERROR("Could not get remote IP from SDP or SDP Media");
+        LOG_ERROR("Could not get remote IP from SDP or SDP Media");
 }
 
 
 void Sdp::setMediaTransportInfoFromRemoteSdp()
 {
     if (!activeRemoteSession_) {
-        ERROR("Remote sdp is NULL while parsing media");
+        LOG_ERROR("Remote sdp is NULL while parsing media");
         return;
     }
 
