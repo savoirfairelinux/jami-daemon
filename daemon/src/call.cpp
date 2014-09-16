@@ -120,10 +120,10 @@ Call::setState(CallState state)
 {
     std::lock_guard<std::mutex> lock(callMutex_);
     if (not validTransition(state)) {
-        static const char *states[] = {"INACTIVE", "ACTIVE", "HOLD", "BUSY", "ERROR"};
+        static const char *states[] = {"INACTIVE", "ACTIVE", "HOLD", "BUSY", "MERROR"};
         assert(callState_ < ARRAYSIZE(states) and state < ARRAYSIZE(states));
 
-        ERROR("Invalid call state transition from %s to %s",
+        SFL_ERR("Invalid call state transition from %s to %s",
               states[callState_], states[state]);
         return false;
     }
@@ -167,7 +167,7 @@ Call::getStateStr()
                     return "INACTIVE";
             }
 
-        case ERROR:
+        case MERROR:
         default:
             return "FAILURE";
     }

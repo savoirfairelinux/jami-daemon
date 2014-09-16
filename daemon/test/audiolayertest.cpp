@@ -71,7 +71,7 @@ void AudioLayerTest::testAudioLayerSwitch()
     bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver().get()) != 0;
 
     for (int i = 0; i < 2; i++) {
-        DEBUG("iter - %i", i);
+        SFL_DBG("iter - %i", i);
         if (wasAlsa)
             Manager::instance().setAudioManager(PULSEAUDIO_API_STR);
         else

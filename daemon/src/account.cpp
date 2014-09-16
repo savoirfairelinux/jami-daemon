@@ -290,7 +290,7 @@ isCodecValid(const map<string, string> &codec, const vector<map<string, string> 
 {
     const map<string, string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
     if (name == codec.end()) {
-        ERROR("Field \"name\" missing in codec specification");
+        SFL_ERR("Field \"name\" missing in codec specification");
         return false;
     }
 
@@ -302,7 +302,7 @@ isCodecValid(const map<string, string> &codec, const vector<map<string, string> 
                 and isFieldValid(codec, Account::VIDEO_CODEC_ENABLED, isBoolean);
         }
     }
-    ERROR("Codec %s not supported", name->second.c_str());
+    SFL_ERR("Codec %s not supported", name->second.c_str());
     return false;
 }
 
@@ -311,7 +311,7 @@ isCodecListValid(const vector<map<string, string> > &list)
 {
     const auto defaults(libav_utils::getDefaultCodecs());
     if (list.size() != defaults.size()) {
-        ERROR("New codec list has a different length than the list of supported codecs");
+        SFL_ERR("New codec list has a different length than the list of supported codecs");
         return false;
     }
 
@@ -445,7 +445,7 @@ Account::getActiveVideoCodecs() const
 #define find_iter()                             \
         const auto iter = details.find(key);    \
         if (iter == details.end()) {            \
-            ERROR("Couldn't find key \"%s\"", key); \
+            SFL_ERR("Couldn't find key \"%s\"", key); \
             return;                             \
         }
 

@@ -94,7 +94,7 @@ VideoManager::getDefaultDevice()
 void
 VideoManager::setDefaultDevice(const std::string &name)
 {
-    DEBUG("Setting device to %s", name.c_str());
+    SFL_DBG("Setting device to %s", name.c_str());
     videoDeviceMonitor_.setDefaultDevice(name);
 }
 
@@ -130,7 +130,7 @@ VideoManager::switchInput(const std::string &resource)
 {
     auto input = videoInput_.lock();
     if (!input) {
-        WARN("Video input not initialized");
+        SFL_WARN("Video input not initialized");
         return false;
     }
     return input->switchInput(resource);

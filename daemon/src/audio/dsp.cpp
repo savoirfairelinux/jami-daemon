@@ -86,7 +86,7 @@ void DSP::disableDenoise()
 void DSP::process(AudioBuffer& buff, int samples)
 {
     if (samples != smplPerFrame_) {
-        WARN("Unexpected amount of samples");
+        SFL_WARN("Unexpected amount of samples");
         return;
     }
 

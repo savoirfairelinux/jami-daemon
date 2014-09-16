@@ -76,7 +76,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
         call.getAudioRtp().sendDtmfDigit(code);
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
-        WARN("Unknown DTMF type %s, defaulting to %s instead",
+        SFL_WARN("Unknown DTMF type %s, defaulting to %s instead",
              dtmf.c_str(), SIPAccount::SIPINFO_STR);
     } // else : dtmf == SIPINFO
 
@@ -115,9 +115,9 @@ SIPCall::~SIPCall()
     const auto mod_ua_id = getSIPVoIPLink()->getModId();
 
     // prevent this from getting accessed in callbacks
-    // WARN: this is not thread-safe!
+    // SFL_WARN: this is not thread-safe!
     if (inv && inv->mod_data[mod_ua_id]) {
-        WARN("Call was not properly removed from invite callbacks");
+        SFL_WARN("Call was not properly removed from invite callbacks");
         inv->mod_data[mod_ua_id] = nullptr;
     }
 
@@ -213,7 +213,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (not inv or not inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
-    pj_str_t methodName = CONST_PJ_STR("INFO");
+    pj_str_t methodName = CONST_PJ_STR("SFL_INFO");
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
 
@@ -221,7 +221,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     pjsip_tx_data *tdata;
 
     if (pjsip_dlg_create_request(inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
-        ERROR("Could not create dialog");
+        SFL_ERR("Could not create dialog");
         return;
     }
 
@@ -256,7 +256,7 @@ SIPCall::updateSDPFromSTUN()
         local_sdp_->setPublishedIP(account.getPublishedAddress());
         local_sdp_->updatePorts(stunPorts);
     } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
+        SFL_ERR("%s", e.what());
     }
 }
 
@@ -268,7 +268,7 @@ void SIPCall::answer()
         throw VoipLinkException("No invite session for this call");
 
     if (!inv->neg) {
-        WARN("Negotiator is NULL, we've received an INVITE without an SDP");
+        SFL_WARN("Negotiator is NULL, we've received an INVITE without an SDP");
         pjmedia_sdp_session *dummy = 0;
         getSIPVoIPLink()->createSDPOffer(inv.get(), &dummy);
 
@@ -289,7 +289,7 @@ void SIPCall::answer()
 
     // contactStr must stay in scope as long as tdata
     if (contactHeader_.slen) {
-        DEBUG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
+        SFL_DBG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
         sip_utils::addContactHeader(&contactHeader_, tdata);
     }
 
@@ -317,7 +317,7 @@ SIPCall::hangup(int reason)
 
         if (printed >= 0) {
             buf[printed] = '\0';
-            DEBUG("Route header %s", buf);
+            SFL_DBG("Route header %s", buf);
         }
 
         route = route->next;
@@ -508,7 +508,7 @@ SIPCall::transfer(const std::string& to)
 
     toUri = account.getToUri(to);
     pj_cstr(&dst, toUri.c_str());
-    DEBUG("Transferring to %.*s", dst.slen, dst.ptr);
+    SFL_DBG("Transferring to %.*s", dst.slen, dst.ptr);
 
     if (!transferCommon(&dst))
         throw VoipLinkException("Couldn't transfer");
@@ -570,7 +570,7 @@ SIPCall::onhold()
 #endif
 
     if (SIPSessionReinvite() != PJ_SUCCESS)
-        WARN("Reinvite failed");
+        SFL_WARN("Reinvite failed");
 }
 
 void
@@ -585,7 +585,7 @@ SIPCall::offhold()
             internalOffHold([] {});
 
     } catch (const SdpException &e) {
-        ERROR("%s", e.what());
+        SFL_ERR("%s", e.what());
         throw VoipLinkException("SDP issue in offhold");
     } catch (const ost::Socket::Error &e) {
         throw VoipLinkException("Socket problem in offhold");
@@ -605,7 +605,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
     std::vector<sfl::AudioCodec*> sessionMedia(local_sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
-        WARN("Session media is empty");
+        SFL_WARN("Session media is empty");
         return;
     }
 
@@ -620,7 +620,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
         sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
         if (ac == NULL) {
-            ERROR("Could not instantiate codec %d", i->getPayloadType());
+            SFL_ERR("Could not instantiate codec %d", i->getPayloadType());
             throw std::runtime_error("Could not instantiate codec");
         }
 
@@ -653,7 +653,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
 #endif
 
     if (SIPSessionReinvite() != PJ_SUCCESS) {
-        WARN("Reinvite failed, resuming hold");
+        SFL_WARN("Reinvite failed, resuming hold");
         onhold();
     }
 }

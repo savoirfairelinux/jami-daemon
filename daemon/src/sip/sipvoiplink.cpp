@@ -189,7 +189,7 @@ try_respond_stateless(pjsip_endpoint *endpt, pjsip_rx_data *rdata, int st_code,
     if (!pjsip_rdata_get_tsx(rdata))
         return pjsip_endpt_respond_stateless(endpt, rdata, st_code, st_text, hdr_list, body);
     else
-        ERROR("Transaction has been created for this request, send response "
+        SFL_ERR("Transaction has been created for this request, send response "
               "statefully instead");
 
     return !PJ_SUCCESS;
@@ -199,14 +199,14 @@ static pj_bool_t
 transaction_request_cb(pjsip_rx_data *rdata)
 {
     if (!rdata or !rdata->msg_info.msg) {
-        ERROR("rx_data is NULL");
+        SFL_ERR("rx_data is NULL");
         return PJ_FALSE;
     }
 
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
 
     if (!method) {
-        ERROR("method is NULL");
+        SFL_ERR("method is NULL");
         return PJ_FALSE;
     }
 
@@ -214,7 +214,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
 
     if (!rdata->msg_info.to or !rdata->msg_info.from or !rdata->msg_info.via) {
-        ERROR("Missing From, To or Via fields");
+        SFL_ERR("Missing From, To or Via fields");
         return PJ_FALSE;
     }
     const pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
@@ -222,7 +222,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const pjsip_host_port& sip_via = rdata->msg_info.via->sent_by;
 
     if (!sip_to_uri or !sip_from_uri or !sip_via.host.ptr) {
-        ERROR("NULL uri");
+        SFL_ERR("NULL uri");
         return PJ_FALSE;
     }
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
@@ -233,7 +233,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     auto sipaccount(getSIPVoIPLink()->guessAccount(toUsername, viaHostname, remote_hostname));
     if (!sipaccount) {
-        ERROR("NULL account");
+        SFL_ERR("NULL account");
         return PJ_FALSE;
     }
 
@@ -305,17 +305,17 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
 
-    // DEBUG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
+    // SFL_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
     // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
     auto transport = getSIPVoIPLink()->sipTransport->findTransport(rdata->tp_info.transport);
     if (!transport) {
         transport = sipaccount->getTransport();
         if (!transport) {
-            ERROR("No suitable transport to answer this call.");
+            SFL_ERR("No suitable transport to answer this call.");
             return PJ_FALSE;
         } else {
-            WARN("Using transport from account.");
+            SFL_WARN("Using transport from account.");
         }
     }
 
@@ -331,7 +331,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     try {
         call->getAudioRtp().initSession();
     } catch (const ost::Socket::Error &err) {
-        ERROR("AudioRtp socket error");
+        SFL_ERR("AudioRtp socket error");
         return PJ_FALSE;
     }
 
@@ -361,7 +361,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
                     call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
                     call->getAudioRtp().initLocalCryptoInfo();
                 } catch (const AudioRtpFactoryException &e) {
-                    ERROR("%s", e.what());
+                    SFL_ERR("%s", e.what());
                     return PJ_FALSE;
                 }
             }
@@ -375,7 +375,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (!ac) {
-        ERROR("Could not instantiate codec");
+        SFL_ERR("Could not instantiate codec");
         return PJ_FALSE;
     }
 
@@ -393,7 +393,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_tpselector tp_sel  = SipTransportBroker::getTransportSelector(transport->get());
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        ERROR("Could not set transport for dialog");
+        SFL_ERR("Could not set transport for dialog");
         return PJ_FALSE;
     }
 
@@ -401,7 +401,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP().getLocalSdpSession(), 0, &inv);
 
     if (!inv) {
-        ERROR("Call invite is not initialized");
+        SFL_ERR("Call invite is not initialized");
         return PJ_FALSE;
     }
 
@@ -413,7 +413,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_tx_data *response;
 
     if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
-        ERROR("Something wrong with Replaces request.");
+        SFL_ERR("Something wrong with Replaces request.");
         call.reset();
 
         // Something wrong with the Replaces header.
@@ -450,12 +450,12 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     } else { // Proceed with normal call flow
         if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-            ERROR("Could not answer invite");
+            SFL_ERR("Could not answer invite");
             return PJ_FALSE;
         }
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-            ERROR("Could not send msg for invite");
+            SFL_ERR("Could not send msg for invite");
             call->inv.reset();
             return PJ_FALSE;
         }
@@ -463,7 +463,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         call->setConnectionState(Call::TRYING);
 
         if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-            ERROR("Could not answer invite");
+            SFL_ERR("Could not answer invite");
             return PJ_FALSE;
         }
 
@@ -472,7 +472,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         sip_utils::addContactHeader(&contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-            ERROR("Could not send msg for invite");
+            SFL_ERR("Could not send msg for invite");
             call->inv.reset();
             return PJ_FALSE;
         }
@@ -504,7 +504,7 @@ pj_pool_t* SIPVoIPLink::getPool() const
 
 SIPVoIPLink::SIPVoIPLink()
 {
-    DEBUG("creating SIPVoIPLink instance");
+    SFL_DBG("creating SIPVoIPLink instance");
 
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -571,7 +571,7 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
     static const pj_str_t allowed[] = {
-        CONST_PJ_STR("INFO"),
+        CONST_PJ_STR("SFL_INFO"),
         CONST_PJ_STR("OPTIONS"),
         CONST_PJ_STR("MESSAGE"),
         CONST_PJ_STR("PUBLISH"),
@@ -585,7 +585,7 @@ SIPVoIPLink::SIPVoIPLink()
     static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &accepted);
 
-    DEBUG("pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
+    SFL_DBG("pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
 
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY
@@ -598,7 +598,7 @@ SIPVoIPLink::SIPVoIPLink()
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    DEBUG("destroying SIPVoIPLink instance");
+    SFL_DBG("destroying SIPVoIPLink instance");
 
     const int MAX_TIMEOUT_ON_LEAVING = 5;
 
@@ -611,7 +611,7 @@ SIPVoIPLink::~SIPVoIPLink()
     pjsip_endpt_handle_events(endpt_, &tv);
 
     if (!Manager::instance().callFactory.empty<SIPCall>())
-        ERROR("%d SIP calls remains!",
+        SFL_ERR("%d SIP calls remains!",
               Manager::instance().callFactory.callCount<SIPCall>());
 
     // destroy SIP transport before endpoint
@@ -630,7 +630,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
                            const std::string& server,
                            const std::string& fromUri) const
 {
-    DEBUG("username = %s, server = %s, from = %s", userName.c_str(), server.c_str(), fromUri.c_str());
+    SFL_DBG("username = %s, server = %s, from = %s", userName.c_str(), server.c_str(), fromUri.c_str());
     // Try to find the account id from username and server name by full match
 
     auto result = std::static_pointer_cast<SIPAccountBase>(Manager::instance().getIP2IPAccount()); // default result
@@ -685,7 +685,7 @@ SIPVoIPLink::handleEvents()
         static __thread pj_thread_desc desc;
         static __thread pj_thread_t *this_thread;
 #endif
-        DEBUG("Registering thread");
+        SFL_DBG("Registering thread");
         pj_thread_register(NULL, desc, &this_thread);
     }
 
@@ -702,25 +702,25 @@ SIPVoIPLink::handleEvents()
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
 {
-    DEBUG("Register new keep alive timer %d with delay %d", timer.id, delay.sec);
+    SFL_DBG("Register new keep alive timer %d with delay %d", timer.id, delay.sec);
 
     if (timer.id == -1)
-        WARN("Timer already scheduled");
+        SFL_WARN("Timer already scheduled");
 
     switch (pjsip_endpt_schedule_timer(endpt_, &timer, &delay)) {
         case PJ_SUCCESS:
             break;
 
         default:
-            ERROR("Could not schedule new timer in pjsip endpoint");
+            SFL_ERR("Could not schedule new timer in pjsip endpoint");
 
             /* fallthrough */
         case PJ_EINVAL:
-            ERROR("Invalid timer or delay entry");
+            SFL_ERR("Invalid timer or delay entry");
             break;
 
         case PJ_EINVALIDOP:
-            ERROR("Invalid timer entry, maybe already scheduled");
+            SFL_ERR("Invalid timer entry, maybe already scheduled");
             break;
     }
 }
@@ -773,7 +773,7 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
         "<picture_fast_update/>"
         "</to_encoder></vc_primitive></media_control>";
 
-    DEBUG("Sending video keyframe request via SIP INFO");
+    SFL_DBG("Sending video keyframe request via SIP SFL_INFO");
     call->sendSIPInfo(BODY, "media_control+xml");
 }
 #endif
@@ -906,7 +906,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     auto call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
     if (!call) {
-        DEBUG("Call declined by peer, SDP negotiation stopped");
+        SFL_DBG("Call declined by peer, SDP negotiation stopped");
         return;
     }
 
@@ -915,7 +915,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
                            inv->state != PJSIP_INV_STATE_CONFIRMED ?
                            PJSIP_SC_UNSUPPORTED_MEDIA_TYPE : 0;
 
-        WARN("Could not negotiate offer");
+        SFL_WARN("Could not negotiate offer");
         const std::string callID(call->getCallId());
         call->hangup(reason);
         Manager::instance().callFailure(callID);
@@ -923,7 +923,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 
     if (!inv->neg) {
-        WARN("No negotiator for this session");
+        SFL_WARN("No negotiator for this session");
         return;
     }
 
@@ -934,12 +934,12 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     const pjmedia_sdp_session *remoteSDP = 0;
 
     if (pjmedia_sdp_neg_get_active_remote(inv->neg, &remoteSDP) != PJ_SUCCESS) {
-        ERROR("Active remote not present");
+        SFL_ERR("Active remote not present");
         return;
     }
 
     if (pjmedia_sdp_validate(remoteSDP) != PJ_SUCCESS) {
-        ERROR("Invalid remote SDP session");
+        SFL_ERR("Invalid remote SDP session");
         return;
     }
 
@@ -947,7 +947,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     pjmedia_sdp_neg_get_active_local(inv->neg, &local_sdp);
 
     if (pjmedia_sdp_validate(local_sdp) != PJ_SUCCESS) {
-        ERROR("Invalid local SDP session");
+        SFL_ERR("Invalid local SDP session");
         return;
     }
 
@@ -956,20 +956,20 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     memset(buffer, 0, sizeof buffer);
 
     if (pjmedia_sdp_print(remoteSDP, buffer, sizeof buffer) == -1) {
-        ERROR("SDP was too big for buffer");
+        SFL_ERR("SDP was too big for buffer");
         return;
     }
 
-    DEBUG("Remote active SDP Session:\n%s", buffer);
+    SFL_DBG("Remote active SDP Session:\n%s", buffer);
 
     memset(buffer, 0, sizeof buffer);
 
     if (pjmedia_sdp_print(local_sdp, buffer, sizeof buffer) == -1) {
-        ERROR("SDP was too big for buffer");
+        SFL_ERR("SDP was too big for buffer");
         return;
     }
 
-    DEBUG("Local active SDP Session:\n%s", buffer);
+    SFL_DBG("Local active SDP Session:\n%s", buffer);
 
     // Set active SDP sessions
     sdpSession.setActiveLocalSdpSession(local_sdp);
@@ -981,7 +981,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     try {
         call->getAudioRtp().updateDestinationIpAddress();
     } catch (const AudioRtpFactoryException &e) {
-        ERROR("%s", e.what());
+        SFL_ERR("%s", e.what());
     }
 
     call->getAudioRtp().setDtmfPayloadType(sdpSession.getTelephoneEventType());
@@ -1016,20 +1016,20 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
                 call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
                 Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
             } catch (const AudioRtpFactoryException &e) {
-                ERROR("%s", e.what());
+                SFL_ERR("%s", e.what());
                 Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
             }
         } else {
-            ERROR("SDES negotiation failure");
+            SFL_ERR("SDES negotiation failure");
             Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
         }
     } else {
-        DEBUG("No crypto offer available");
+        SFL_DBG("No crypto offer available");
     }
 
     // We did not find any crypto context for this media, RTP fallback
     if (!nego_success && call->getAudioRtp().isSdesEnabled()) {
-        ERROR("Negotiation failed but SRTP is enabled, fallback on RTP");
+        SFL_ERR("Negotiation failed but SRTP is enabled, fallback on RTP");
         call->getAudioRtp().stop();
         call->getAudioRtp().setSrtpEnabled(false);
 
@@ -1047,7 +1047,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     std::vector<sfl::AudioCodec*> sessionMedia(sdpSession.getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
-        WARN("Session media is empty");
+        SFL_WARN("Session media is empty");
         return;
     }
 
@@ -1065,7 +1065,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
 
             if (!ac) {
-                ERROR("Could not instantiate codec %d", pl);
+                SFL_ERR("Could not instantiate codec %d", pl);
             } else {
                 audioCodecs.push_back(ac);
             }
@@ -1074,9 +1074,9 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         if (not audioCodecs.empty())
             call->getAudioRtp().updateSessionMedia(audioCodecs);
     } catch (const SdpException &e) {
-        ERROR("%s", e.what());
+        SFL_ERR("%s", e.what());
     } catch (const std::exception &rtpException) {
-        ERROR("%s", rtpException.what());
+        SFL_ERR("%s", rtpException.what());
     }
 }
 
@@ -1088,7 +1088,7 @@ static bool
 handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_event *event)
 {
     /*
-     * Incoming INFO request for media control.
+     * Incoming SFL_INFO request for media control.
      */
     const pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
     const pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
@@ -1099,13 +1099,13 @@ handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_even
             pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
         pj_str_t control_st;
 
-        /* Apply and answer the INFO request */
+        /* Apply and answer the SFL_INFO request */
         pj_strset(&control_st, (char *) body->data, body->len);
         const pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
 
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
 #ifdef SFL_VIDEO
-            DEBUG("handling picture fast update request");
+            SFL_DBG("handling picture fast update request");
             auto call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
             if (call)
                 call->getVideoRtp().forceKeyFrame();
@@ -1164,10 +1164,10 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
 
         if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
             std::string request(pjsip_rx_data_get_info(r_data));
-            DEBUG("%s", request.c_str());
+            SFL_DBG("%s", request.c_str());
 
             if (request.find("NOTIFY") == std::string::npos and
-                    request.find("INFO") != std::string::npos) {
+                    request.find("SFL_INFO") != std::string::npos) {
                 sendOK(inv->dlg, r_data, tsx);
                 return;
             }
@@ -1176,17 +1176,17 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
 
             if (body and body->len > 0) {
                 const std::string msg(static_cast<char *>(body->data), body->len);
-                DEBUG("%s", msg.c_str());
+                SFL_DBG("%s", msg.c_str());
 
                 if (msg.find("Not found") != std::string::npos) {
-                    ERROR("Received 404 Not found");
+                    SFL_ERR("Received 404 Not found");
                     sendOK(inv->dlg, r_data, tsx);
                     return;
                 } else if (msg.find("Ringing") != std::string::npos and call) {
                     if (call)
                         makeCallRing(*call);
                     else
-                        WARN("Ringing state on non existing call");
+                        SFL_WARN("Ringing state on non existing call");
                     sendOK(inv->dlg, r_data, tsx);
                     return;
                 } else if (msg.find("Ok") != std::string::npos) {
@@ -1244,7 +1244,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
         sendOK(inv->dlg, r_data, tsx);
 
     } catch (const sfl::InstantMessageException &except) {
-        ERROR("%s", except.what());
+        SFL_ERR("%s", except.what());
     }
 #endif
 }
@@ -1272,7 +1272,7 @@ onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
                                             currentCall->getAccountId());
         Manager::instance().hangupCall(currentCall->getCallId());
     } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+        SFL_ERR("%s", e.what());
     }
 }
 

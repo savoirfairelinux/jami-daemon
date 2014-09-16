@@ -109,10 +109,10 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
         // change channel num if needed
         src_state_.reset(new SrcState(nbChans));
         format_.nb_channels = nbChans;
-        DEBUG("SRC channel number changed.");
+        SFL_DBG("SRC channel number changed.");
     }
     if (nbChans != dataOut.channels()) {
-        DEBUG("Output buffer had the wrong number of channels (in: %d, out: %d).", nbChans, dataOut.channels());
+        SFL_DBG("Output buffer had the wrong number of channels (in: %d, out: %d).", nbChans, dataOut.channels());
         dataOut.setChannelNum(nbChans);
     }
 

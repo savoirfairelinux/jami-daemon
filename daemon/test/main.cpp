@@ -44,12 +44,12 @@ namespace {
     void restore()
     {
         if (system("mv " CONFIG_SAMPLE_BAK " " CONFIG_SAMPLE) < 0)
-            ERROR("Restoration of %s failed", CONFIG_SAMPLE);
+            SFL_ERR("Restoration of %s failed", CONFIG_SAMPLE);
     }
     void backup()
     {
         if (system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE_BAK) < 0)
-            ERROR("Backup of %s failed", CONFIG_SAMPLE);
+            SFL_ERR("Backup of %s failed", CONFIG_SAMPLE);
     }
 }
 
@@ -97,13 +97,13 @@ int main(int argc, char* argv[])
             argvIndex++;
 
             setDebugMode(true);
-            INFO("Debug mode activated");
+            SFL_INFO("Debug mode activated");
 
         } else if (strcmp("--xml", argv[1]) == 0) {
             argvIndex++;
 
             xmlOutput = true;
-            INFO("Using XML output");
+            SFL_INFO("Using XML output");
         }
     }
 
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
     CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry(testSuiteName).makeTest();
 
     if (suite->getChildTestCount() == 0) {
-        ERROR("Invalid test suite name: %s", testSuiteName.c_str());
+        SFL_ERR("Invalid test suite name: %s", testSuiteName.c_str());
         restore();
         return 1;
     }
