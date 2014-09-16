@@ -73,7 +73,7 @@ SHMSink::~SHMSink()
 bool SHMSink::start()
 {
     if (fd_ != -1) {
-        ERROR("fd must be -1");
+        SFL_ERR("fd must be -1");
         return false;
     }
 
@@ -83,7 +83,7 @@ bool SHMSink::start()
     if (not shm_name_.empty()) {
         fd_ = shm_open(shm_name_.c_str(), flags, perms);
         if (fd_ < 0) {
-            ERROR("could not open shm area \"%s\"", shm_name_.c_str());
+            SFL_ERR("could not open shm area \"%s\"", shm_name_.c_str());
             strErr();
             return false;
         }
@@ -100,13 +100,13 @@ bool SHMSink::start()
         }
     }
 
-    DEBUG("Using name %s", shm_name_.c_str());
+    SFL_DBG("Using name %s", shm_name_.c_str());
     opened_name_ = shm_name_;
 
     shm_area_len_ = sizeof(SHMHeader);
 
     if (ftruncate(fd_, shm_area_len_)) {
-        ERROR("Could not make shm area large enough for header");
+        SFL_ERR("Could not make shm area large enough for header");
         strErr();
         return false;
     }
@@ -114,17 +114,17 @@ bool SHMSink::start()
     shm_area_ = static_cast<SHMHeader*>(mmap(NULL, shm_area_len_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
 
     if (shm_area_ == MAP_FAILED) {
-        ERROR("Could not map shm area, mmap failed");
+        SFL_ERR("Could not map shm area, mmap failed");
         return false;
     }
 
     memset(shm_area_, 0, shm_area_len_);
     if (sem_init(&shm_area_->notification, 1, 0) != 0) {
-        ERROR("sem_init: notification initialization failed");
+        SFL_ERR("sem_init: notification initialization failed");
         return false;
     }
     if (sem_init(&shm_area_->mutex, 1, 1) != 0) {
-        ERROR("sem_init: mutex initialization failed");
+        SFL_ERR("sem_init: mutex initialization failed");
         return false;
     }
     return true;
@@ -158,13 +158,13 @@ bool SHMSink::resize_area(size_t desired_length)
     shm_unlock();
 
     if (munmap(shm_area_, shm_area_len_)) {
-        ERROR("Could not unmap shared area");
+        SFL_ERR("Could not unmap shared area");
         strErr();
         return false;
     }
 
     if (ftruncate(fd_, desired_length)) {
-        ERROR("Could not resize shared area");
+        SFL_ERR("Could not resize shared area");
         strErr();
         return false;
     }
@@ -174,7 +174,7 @@ bool SHMSink::resize_area(size_t desired_length)
 
     if (shm_area_ == MAP_FAILED) {
         shm_area_ = 0;
-        ERROR("Could not remap shared area");
+        SFL_ERR("Could not remap shared area");
         return false;
     }
 
@@ -209,7 +209,7 @@ void SHMSink::render_frame(VideoFrame& src)
     shm_lock();
 
     if (!resize_area(sizeof(SHMHeader) + bytes)) {
-        ERROR("Could not resize area");
+        SFL_ERR("Could not resize area");
         return;
     }
 
@@ -221,7 +221,7 @@ void SHMSink::render_frame(VideoFrame& src)
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
     frameCount_++;
     if (seconds.count() > 1) {
-        DEBUG("%s: FPS %f", shm_name_.c_str(), frameCount_ / seconds.count());
+        SFL_DBG("%s: FPS %f", shm_name_.c_str(), frameCount_ / seconds.count());
         frameCount_ = 0;
         lastFrameDebug_ = currentTime;
     }
@@ -238,7 +238,7 @@ void SHMSink::render_callback(VideoProvider &provider, size_t bytes)
     shm_lock();
 
     if (!resize_area(sizeof(SHMHeader) + bytes)) {
-        ERROR("Could not resize area");
+        SFL_ERR("Could not resize area");
         return;
     }
 

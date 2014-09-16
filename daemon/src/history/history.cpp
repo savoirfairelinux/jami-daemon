@@ -59,7 +59,7 @@ bool History::load(int limit)
     ensurePath();
     std::ifstream infile(path_.c_str());
     if (!infile) {
-        DEBUG("No history file to load");
+        SFL_DBG("No history file to load");
         return false;
     }
 
@@ -74,7 +74,7 @@ bool History::load(int limit)
 bool History::save()
 {
     std::lock_guard<std::mutex> lock(historyItemsMutex_);
-    DEBUG("Saving history in XDG directory: %s", path_.c_str());
+    SFL_DBG("Saving history in XDG directory: %s", path_.c_str());
     ensurePath();
     std::sort(items_.begin(), items_.end());
     std::ofstream outfile(path_.c_str());
@@ -110,7 +110,7 @@ void History::ensurePath()
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory creation failed
             if (errno != EEXIST) {
-                DEBUG("Cannot create directory: %s", userdata.c_str());
+                SFL_DBG("Cannot create directory: %s", userdata.c_str());
                 strErr();
                 return;
             }
@@ -139,7 +139,7 @@ void History::setPath(const std::string &path)
 void History::addCall(Call *call, int limit)
 {
     if (!call) {
-        ERROR("Call is NULL, ignoring");
+        SFL_ERR("Call is NULL, ignoring");
         return;
     }
     call->time_stop();

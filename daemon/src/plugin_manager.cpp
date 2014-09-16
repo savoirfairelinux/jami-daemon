@@ -65,7 +65,7 @@ int PluginManager::initPlugin(SFLPluginInitFunc initFunc)
     if (!exitFunc) {
         tempExactMatchMap_.clear();
         tempWildCardVec_.clear();
-        DEBUG("plugin: init failed");
+        SFL_DBG("plugin: init failed");
         return -1;
     }
 
@@ -127,21 +127,21 @@ int PluginManager::load(const std::string& path)
 
     // Don't load the same dynamic library twice
     if (dynPluginMap_.find(std::string(path)) != dynPluginMap_.end()) {
-        DEBUG("plugin: already loaded");
+        SFL_DBG("plugin: already loaded");
         return -1;
     }
 
     std::string error;
     Plugin *plugin = Plugin::load(std::string(path), error);
     if (!plugin) {
-        DEBUG("plugin: %s", error.c_str());
+        SFL_DBG("plugin: %s", error.c_str());
         return -1;
     }
 
     SFLPluginInitFunc init_func;
     init_func = (SFLPluginInitFunc)(plugin->getInitFunction());
     if (!init_func) {
-        DEBUG("plugin: no init symbol");
+        SFL_DBG("plugin: no init symbol");
         return -1;
     }
 
@@ -189,7 +189,7 @@ void* PluginManager::createObject(const std::string& type)
             // (but keep also the wild card registration for other object types)
             int32_t res = registerObject_(op.type, &rp);
             if (res < 0) {
-                ERROR("failed to register object %s", op.type);
+                SFL_ERR("failed to register object %s", op.type);
                 rp.destroy(object);
                 return nullptr;
             }

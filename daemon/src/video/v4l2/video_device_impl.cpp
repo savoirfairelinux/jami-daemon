@@ -238,7 +238,7 @@ void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
         rates_.push_back(25);
-        ERROR("could not query frame interval for size");
+        SFL_ERR("could not query frame interval for size");
         return;
     }
 
@@ -252,12 +252,12 @@ void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
         case V4L2_FRMIVAL_TYPE_CONTINUOUS:
             rates_.push_back(25);
             // TODO
-            ERROR("Continuous Frame Intervals not supported");
+            SFL_ERR("Continuous Frame Intervals not supported");
             break;
         case V4L2_FRMIVAL_TYPE_STEPWISE:
             rates_.push_back(25);
             // TODO
-            ERROR("Stepwise Frame Intervals not supported");
+            SFL_ERR("Stepwise Frame Intervals not supported");
             break;
     }
 }
@@ -332,10 +332,10 @@ VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
                 // from 1x1 to 2000x2000
                 // We should limit to a list of known standard sizes
             case V4L2_FRMSIZE_TYPE_CONTINUOUS:
-                ERROR("Continuous Frame sizes not supported");
+                SFL_ERR("Continuous Frame sizes not supported");
                 break;
             case V4L2_FRMSIZE_TYPE_STEPWISE:
-                ERROR("Stepwise Frame sizes not supported");
+                SFL_ERR("Stepwise Frame sizes not supported");
                 break;
         }
     }

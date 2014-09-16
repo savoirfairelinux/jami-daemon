@@ -52,16 +52,16 @@ AccountFactory::AccountFactory()
 {
     auto sipfunc = [](const std::string& id){ return std::make_shared<SIPAccount>(id, true); };
     generators_.insert(std::make_pair(SIPAccount::ACCOUNT_TYPE, sipfunc));
-    DEBUG("registered %s account", SIPAccount::ACCOUNT_TYPE);
+    SFL_DBG("registered %s account", SIPAccount::ACCOUNT_TYPE);
 #if HAVE_IAX
     auto iaxfunc = [](const std::string& id){ return std::make_shared<IAXAccount>(id); };
     generators_.insert(std::make_pair(IAXAccount::ACCOUNT_TYPE, iaxfunc));
-    DEBUG("registered %s account", IAXAccount::ACCOUNT_TYPE);
+    SFL_DBG("registered %s account", IAXAccount::ACCOUNT_TYPE);
 #endif
 #if HAVE_DHT
     auto dhtfunc = [](const std::string& id){ return std::make_shared<DHTAccount>(id, false); };
     generators_.insert(std::make_pair(DHTAccount::ACCOUNT_TYPE, dhtfunc));
-    DEBUG("registered %s account", DHTAccount::ACCOUNT_TYPE);
+    SFL_DBG("registered %s account", DHTAccount::ACCOUNT_TYPE);
 #endif
 }
 
@@ -70,7 +70,7 @@ AccountFactory::createAccount(const char* const accountType,
                               const std::string& id)
 {
      if (hasAccount(id)) {
-         ERROR("Existing account %s", id.c_str());
+         SFL_ERR("Existing account %s", id.c_str());
          return nullptr;
      }
 
@@ -102,10 +102,10 @@ AccountFactory::removeAccount(Account& account)
 
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto& id = account.getAccountID();
-    DEBUG("Removing account %s", id.c_str());
+    SFL_DBG("Removing account %s", id.c_str());
     auto& map = accountMaps_.at(account.getAccountType());
     map.erase(id);
-    DEBUG("Remaining %u %s account(s)", map.size(), account_type);
+    SFL_DBG("Remaining %u %s account(s)", map.size(), account_type);
 }
 
 void
@@ -116,7 +116,7 @@ AccountFactory::removeAccount(const std::string& id)
     if (auto account = getAccount(id)) {
         removeAccount(*account);
     } else
-        ERROR("No account with ID %s", id.c_str());
+        SFL_ERR("No account with ID %s", id.c_str());
 }
 
 template <> bool

@@ -50,14 +50,14 @@ main(int argc, char **argv)
     setConsoleLog(true);
 
     if (argc < 2) {
-        ERROR("Entrez un port");
+        SFL_ERR("Entrez un port");
         std::terminate();
     }
 
     int i = 1;
     int p = atoi(argv[i++]);
     if (p <= 0 || p >= 0x10000) {
-        ERROR("Port invalide : %d", p);
+        SFL_ERR("Port invalide : %d", p);
         std::terminate();
     }
     in_port_t port = p;
@@ -75,7 +75,7 @@ main(int argc, char **argv)
             hints.ai_family = 0;*/
         int rc = getaddrinfo(argv[i], argv[i + 1], &hints, &info);
         if(rc != 0) {
-            ERROR("getaddrinfo: %s", gai_strerror(rc));
+            SFL_ERR("getaddrinfo: %s", gai_strerror(rc));
             std::terminate();
         }
 

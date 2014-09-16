@@ -74,11 +74,11 @@ SecureDht::SecureDht(int s, int s6, crypto::Identity id)
         return;
     int rc = gnutls_global_init();
     if (rc != GNUTLS_E_SUCCESS) {
-        ERROR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
+        SFL_ERR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
         throw DhtException("Error initializing GnuTLS");
     }
     if (certificate_->getPublicKey().getId() != key_->getPublicKey().getId()) {
-        ERROR("SecureDht: provided certificate doesn't match private key.");
+        SFL_ERR("SecureDht: provided certificate doesn't match private key.");
     }
     Dht::registerType(crypto::CERTIFICATE);
     Value cert_val {
@@ -88,9 +88,9 @@ SecureDht::SecureDht(int s, int s6, crypto::Identity id)
     cert_val.owner = getId();
     Dht::put(getId(), std::move(cert_val), [](bool ok) {
         if (ok)
-            DEBUG("SecureDht: public key announced successfully");
+            SFL_DBG("SecureDht: public key announced successfully");
         else
-            ERROR("SecureDht: error while announcing public key!");
+            SFL_ERR("SecureDht: error while announcing public key!");
     });
 }
 
@@ -202,7 +202,7 @@ SecureDht::get(const InfoHash& id, GetCallback cb, DoneCallback donecb, Value::F
                     Value decrypted_val { v->id };
                     decrypted_val.unpackBlob(decrypted_data);
                 } catch (const std::exception& e) {
-                    WARN("Could not decrypt value %s at infohash %s", v->toString().c_str(), id.toString().c_str());
+                    SFL_WARN("Could not decrypt value %s at infohash %s", v->toString().c_str(), id.toString().c_str());
                     continue;
                 }
                 auto dv = std::make_shared<Value>(std::move(decrypted_val));

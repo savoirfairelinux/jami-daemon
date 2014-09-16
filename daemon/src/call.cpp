@@ -123,7 +123,7 @@ Call::setState(CallState state)
         static const char *states[] = {"INACTIVE", "ACTIVE", "HOLD", "BUSY", "ERROR"};
         assert(callState_ < SFL_ARRAYSIZE(states) and state < SFL_ARRAYSIZE(states));
 
-        ERROR("Invalid call state transition from %s to %s",
+        SFL_ERR("Invalid call state transition from %s to %s",
               states[callState_], states[state]);
         return false;
     }
@@ -167,7 +167,7 @@ Call::getStateStr()
                     return "INACTIVE";
             }
 
-        case ERROR:
+        case MERROR:
         default:
             return "FAILURE";
     }

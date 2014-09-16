@@ -89,7 +89,7 @@ struct TlsListener
     TlsListener() {}
     TlsListener(pjsip_tpfactory* f) : listener(f) {}
     virtual ~TlsListener() {
-        DEBUG("Destroying listener");
+        SFL_DBG("Destroying listener");
         listener->destroy(listener);
     }
     pjsip_tpfactory* get() {

@@ -87,7 +87,17 @@ void strErr();
 
 #define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, \
                                                   LOG_FORMAT(M, ##__VA_ARGS__))
-#else /* __ANDROID__ */
+
+/* TODO: WINDOWS, Actually implement logging system. */
+#elif defined _WIN32
+#define LOG_ERR     0
+#define LOG_WARNING 1
+#define LOG_INFO    2
+#define LOG_DEBUG   3
+
+#define LOGGER(M, LEVEL, ...) printf(M, ##__VA_ARGS__)
+
+#else
 
 #include <syslog.h>
 
@@ -95,12 +105,12 @@ void strErr();
 
 #define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
 
-#endif /* __ANDROID__ */
+#endif /* __ANDROID__ _WIN32 */
 
-#define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
-#define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
-#define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
-#define DEBUG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
+#define SFL_ERR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
+#define SFL_WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
+#define SFL_INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
+#define SFL_DBG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
 
 
 #define BLACK "\033[22;30m"

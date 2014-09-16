@@ -74,7 +74,7 @@ addrinfo* udp_resolve_host(const char *node, int service)
     hints.ai_flags = AI_PASSIVE;
     if ((error = getaddrinfo(node, sport, &hints, &res))) {
         res = NULL;
-        ERROR("%s\n", gai_strerror(error));
+        SFL_ERR("%s\n", gai_strerror(error));
     }
 
     return res;
@@ -107,7 +107,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     for (res = res0; res; res=res->ai_next) {
         udp_fd = socket(res->ai_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
         if (udp_fd != -1) break;
-        ERROR("socket error");
+        SFL_ERR("socket error");
     }
 
     if (udp_fd < 0) {
@@ -122,7 +122,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     // bind socket so that we send from and receive
     // on local port
     if (bind(udp_fd, reinterpret_cast<sockaddr*>(addr), *addr_len) < 0) {
-        ERROR("Bind failed");
+        SFL_ERR("Bind failed");
         strErr();
         close(udp_fd);
         udp_fd = -1;
@@ -184,7 +184,7 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
 #if HAVE_SDP_CUSTOM_IO
     const int local_rtcp_port = local_rtp_port + 1;
 #else
-    WARN("libavformat too old for socket reuse, using random source ports");
+    SFL_WARN("libavformat too old for socket reuse, using random source ports");
     local_rtp_port = 0;
     const int local_rtcp_port = 0;
 #endif
@@ -223,7 +223,7 @@ int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 
     for(;;) {
         if (context->interrupted_) {
-            ERROR("interrupted");
+            SFL_ERR("interrupted");
             return -EINTR;
         }
 

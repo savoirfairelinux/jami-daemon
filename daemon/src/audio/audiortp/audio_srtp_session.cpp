@@ -73,7 +73,7 @@ decodeBase64(unsigned char *input, int length)
 static void
 bufferFillMasterKey(std::vector<uint8_t>& dest)
 {
-    DEBUG("Init local master key");
+    SFL_DBG("Init local master key");
     std::uniform_int_distribution<uint8_t> rand_byte(0, 255);
 
     // Fill the key
@@ -87,7 +87,7 @@ bufferFillMasterKey(std::vector<uint8_t>& dest)
 static void
 bufferFillMasterSalt(std::vector<uint8_t>& dest)
 {
-    DEBUG("Init local master salt");
+    SFL_DBG("Init local master salt");
     std::uniform_int_distribution<uint8_t> rand_byte(0, 255);
 
     // Fill the key
@@ -123,7 +123,7 @@ AudioSrtpSession::~AudioSrtpSession()
 
 void AudioSrtpSession::initLocalCryptoInfo()
 {
-    DEBUG("AudioSrtpSession: Set cryptographic info for this rtp session");
+    SFL_DBG("AudioSrtpSession: Set cryptographic info for this rtp session");
 
     // Initialize local Crypto context
     initializeLocalMasterKey();
@@ -138,7 +138,7 @@ void AudioSrtpSession::initLocalCryptoInfo()
 
 void AudioSrtpSession::initLocalCryptoInfoOnOffhold()
 {
-    DEBUG("AudioSrtpSession: Set cryptographic info for this rtp session");
+    SFL_DBG("AudioSrtpSession: Set cryptographic info for this rtp session");
 
     // Initialize local Crypto context
     initializeLocalCryptoContext();
@@ -151,7 +151,7 @@ void AudioSrtpSession::initLocalCryptoInfoOnOffhold()
 
 std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
 {
-    DEBUG("Get Cryptographic info from this rtp session");
+    SFL_DBG("Get Cryptographic info from this rtp session");
 
     std::vector<std::string> crypto_vector;
 
@@ -173,7 +173,7 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
     crypto_attr += crypto_suite.append(" ");
     crypto_attr += srtp_keys;
 
-    DEBUG("%s", crypto_attr.c_str());
+    SFL_DBG("%s", crypto_attr.c_str());
 
     crypto_vector.push_back(crypto_attr);
 
@@ -219,7 +219,7 @@ void AudioSrtpSession::initializeLocalMasterSalt()
 
 std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 {
-    DEBUG("Get base64 concatenated keys");
+    SFL_DBG("Get base64 concatenated keys");
 
     // compute concatenated master and salt length
     std::vector<uint8> concatKeys;
@@ -255,7 +255,7 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 
 void AudioSrtpSession::initializeRemoteCryptoContext()
 {
-    DEBUG("Initialize remote crypto context");
+    SFL_DBG("Initialize remote crypto context");
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
@@ -279,7 +279,7 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 
 void AudioSrtpSession::initializeLocalCryptoContext()
 {
-    DEBUG("Initialize local crypto context");
+    SFL_DBG("Initialize local crypto context");
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
 

@@ -39,7 +39,7 @@ static gnutls_digest_algorithm_t get_dig_for_pub(gnutls_pubkey_t pubkey)
     gnutls_digest_algorithm_t dig;
     int result = gnutls_pubkey_get_preferred_hash_algorithm(pubkey, &dig, nullptr);
     if (result < 0) {
-        ERROR("crt_get_preferred_hash_algorithm: %s\n", gnutls_strerror(result));
+        SFL_ERR("crt_get_preferred_hash_algorithm: %s\n", gnutls_strerror(result));
         return GNUTLS_DIG_UNKNOWN;
     }
     return dig;
@@ -52,7 +52,7 @@ static gnutls_digest_algorithm_t get_dig(gnutls_x509_crt_t crt)
 
     int result = gnutls_pubkey_import_x509(pubkey, crt, 0);
     if (result < 0) {
-        ERROR("gnutls_pubkey_import_x509: %s\n", gnutls_strerror(result));
+        SFL_ERR("gnutls_pubkey_import_x509: %s\n", gnutls_strerror(result));
         return GNUTLS_DIG_UNKNOWN;
     }
 
@@ -235,7 +235,7 @@ Certificate::getPublicKey() const
 crypto::Identity
 generateIdentity()
 {
-    WARN("SecureDht: generating a new identity (2048 bits RSA key pair and self-signed certificate).");
+    SFL_WARN("SecureDht: generating a new identity (2048 bits RSA key pair and self-signed certificate).");
     gnutls_x509_privkey_t key;
     gnutls_privkey_t pkey;
     if (gnutls_x509_privkey_init(&key) != GNUTLS_E_SUCCESS)

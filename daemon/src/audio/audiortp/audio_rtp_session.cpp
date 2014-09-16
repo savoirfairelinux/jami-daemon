@@ -105,13 +105,13 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
     }
 
     transportRate_ = rtpStream_.getTransportRate();
-    DEBUG("Switching to a transport rate of %d ms", transportRate_);
+    SFL_DBG("Switching to a transport rate of %d ms", transportRate_);
 }
 
 void AudioRtpSession::sendDtmfEvent()
 {
     DTMFEvent &dtmf(dtmfQueue_.front());
-    DEBUG("Send RTP Dtmf (%d)", dtmf.payload.event);
+    SFL_DBG("Send RTP Dtmf (%d)", dtmf.payload.event);
 
     const int increment = getIncrementForDTMF();
     if (dtmf.newevent)
@@ -181,7 +181,7 @@ void AudioRtpSession::receiveSpeakerData()
         const double jit_mean = std::accumulate(rxJitters_.begin(), rxJitters_.end(), 0.0) / rxJitters_.size();
         const double jit_sq_sum = std::inner_product(rxJitters_.begin(), rxJitters_.end(), rxJitters_.begin(), 0.0);
         const double jit_stdev = std::sqrt(jit_sq_sum / rxJitters_.size() - jit_mean * jit_mean);
-        DEBUG("Jitter avg: %fms std dev %fms", jit_mean, jit_stdev);
+        SFL_DBG("Jitter avg: %fms std dev %fms", jit_mean, jit_stdev);
         jitterReportInterval_ = 0;
     }
 #endif
@@ -193,13 +193,13 @@ void AudioRtpSession::receiveSpeakerData()
         rxLastSeqNum_ += seqNumDiff;
         seqNumDiff = 1;
     } else if (seqNumDiff < 0) {
-        DEBUG("Dropping out-of-order packet %d (last %d)", rxLastSeqNum_ + seqNumDiff, rxLastSeqNum_);
+        SFL_DBG("Dropping out-of-order packet %d (last %d)", rxLastSeqNum_ + seqNumDiff, rxLastSeqNum_);
         return;
     } else {
         rxLastSeqNum_ += seqNumDiff;
     }
     if (rxLastSeqNum_ && seqNumDiff > 1) {
-        DEBUG("%d packets lost", seqNumDiff-1);
+        SFL_DBG("%d packets lost", seqNumDiff-1);
         for (unsigned i = 0, n = seqNumDiff - 1; i < n; i++)
             rtpStream_.processDataDecode(nullptr, 0, adu->getType());
     }
@@ -241,7 +241,7 @@ void AudioRtpSession::setSessionTimeouts()
 {
     const unsigned schedulingTimeout = 4000;
     const unsigned expireTimeout = 1000000;
-    DEBUG("Set session scheduling timeout (%d) and expireTimeout (%d)",
+    SFL_DBG("Set session scheduling timeout (%d) and expireTimeout (%d)",
           schedulingTimeout, expireTimeout);
 
     queue_.setSchedulingTimeout(schedulingTimeout);
@@ -250,7 +250,7 @@ void AudioRtpSession::setSessionTimeouts()
 
 void AudioRtpSession::updateDestinationIpAddress()
 {
-    DEBUG("Update destination ip address");
+    SFL_DBG("Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
@@ -258,28 +258,28 @@ void AudioRtpSession::updateDestinationIpAddress()
 #if HAVE_IPV6
      && !(remoteIp_.isIpv6() == AF_INET6 && queue_.forgetDestination(static_cast<ost::IPV6Host>(remoteIp_), remoteIp_.getPort()))
 #endif
-    ) DEBUG("Did not remove previous destination");
+    ) SFL_DBG("Did not remove previous destination");
 
     IpAddr remote = {call_.getLocalSDP().getRemoteIP()};
     remote.setPort(call_.getLocalSDP().getRemoteAudioPort());
     if (!remote) {
-        WARN("Target IP address (%s) is not correct!", call_.getLocalSDP().getRemoteIP().c_str());
+        SFL_WARN("Target IP address (%s) is not correct!", call_.getLocalSDP().getRemoteIP().c_str());
         return;
     }
     remoteIp_ = remote;
-    DEBUG("New remote address for session: %s", remote.toString(true).c_str());
+    SFL_DBG("New remote address for session: %s", remote.toString(true).c_str());
 
     if (!(remoteIp_.isIpv4()  && queue_.addDestination(static_cast<ost::IPV4Host>(remoteIp_), remoteIp_.getPort()))
 #if HAVE_IPV6
      && !(remoteIp_.isIpv6() && queue_.addDestination(static_cast<ost::IPV6Host>(remoteIp_), remoteIp_.getPort()))
 #endif
-    ) WARN("Can't add new destination to session!");
+    ) SFL_WARN("Can't add new destination to session!");
 }
 
 
 void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &audioCodecs)
 {
-    DEBUG("Preparing receiving thread");
+    SFL_DBG("Preparing receiving thread");
     isStarted_ = true;
 #ifdef RTP_DEBUG
     rxLast_ = std::chrono::high_resolution_clock::now();
@@ -336,13 +336,13 @@ void AudioRtpSession::putDtmfEvent(char digit)
 CachedAudioRtpState *
 AudioRtpSession::saveState() const
 {
-    ERROR("Not implemented");
+    SFL_ERR("Not implemented");
     return nullptr;
 }
 
 void
 AudioRtpSession::restoreState(const CachedAudioRtpState &state UNUSED)
 {
-    ERROR("Not implemented");
+    SFL_ERR("Not implemented");
 }
 }

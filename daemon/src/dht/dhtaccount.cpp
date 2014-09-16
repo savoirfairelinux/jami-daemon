@@ -105,7 +105,7 @@ DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
 
     int rc = gnutls_global_init();
     if (rc != GNUTLS_E_SUCCESS) {
-        ERROR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
+        SFL_ERR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
         throw VoipLinkException("Can't initialize GnuTLS.");
     }
 }
@@ -131,7 +131,7 @@ DHTAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     auto dhtf = toUrl.find("dht:");
     dhtf = (dhtf == std::string::npos) ? 0 : dhtf+4;
     const std::string toUri = toUrl.substr(dhtf, 40);
-    DEBUG("Calling DHT peer %s", toUri.c_str());
+    SFL_DBG("Calling DHT peer %s", toUri.c_str());
     call->setIPToIP(true);
 
     auto resolved = std::make_shared<bool>(false);
@@ -140,17 +140,17 @@ DHTAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
             if (*resolved)
                 return false;
             for (const auto& v : values) {
-                DEBUG("Resolved value : %s", v->toString().c_str());
+                SFL_DBG("Resolved value : %s", v->toString().c_str());
                 IpAddr peer;
                 try {
                     peer = IpAddr{ dht::ServiceAnnouncement(v->data).getPeerAddr() };
                 } catch (const std::exception& e) {
-                    ERROR("Exception while reading value : %s", e.what());
+                    SFL_ERR("Exception while reading value : %s", e.what());
                     continue;
                 }
                 *resolved = true;
                 std::string toip = getToUri(toUri+"@"+peer.toString(true, true));
-                DEBUG("Got DHT peer IP: %s", toip.c_str());
+                SFL_DBG("Got DHT peer IP: %s", toip.c_str());
                 createOutgoingCall(call, toUri, toip, peer);
                 return false;
             }
@@ -159,7 +159,7 @@ DHTAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         [call,resolved] (bool ok){
             if (not *resolved) {
                 call->setConnectionState(Call::DISCONNECTED);
-                call->setState(Call::ERROR);
+                call->setState(Call::MERROR);
             }
         },
         dht::Value::TypeFilter(dht::ServiceAnnouncement::TYPE));
@@ -169,7 +169,7 @@ DHTAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 void
 DHTAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to, const std::string& toUri, const IpAddr& peer)
 {
-    WARN("DHTAccount::createOutgoingCall to: %s toUri: %s tlsListener: %d", to.c_str(), toUri.c_str(), tlsListener_?1:0);
+    SFL_WARN("DHTAccount::createOutgoingCall to: %s toUri: %s tlsListener: %d", to.c_str(), toUri.c_str(), tlsListener_?1:0);
     std::shared_ptr<SipTransport> t = link_->sipTransport->getTlsTransport(tlsListener_, getToUri(peer.toString(true, true)));
     setTransport(t);
     call->setTransport(t);
@@ -245,13 +245,13 @@ DHTAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call)
     }
 
     const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
-    DEBUG("contact header: %s / %s -> %s",
+    SFL_DBG("contact header: %s / %s -> %s",
           debugContactHeader.c_str(), from.c_str(), toUri.c_str());
 
     pjsip_dialog *dialog = NULL;
 
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
-        ERROR("Unable to create SIP dialogs for user agent client when "
+        SFL_ERR("Unable to create SIP dialogs for user agent client when "
               "calling %s", toUri.c_str());
         return false;
     }
@@ -263,12 +263,12 @@ DHTAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call)
 
     pjsip_inv_session* inv = nullptr;
     if (pjsip_inv_create_uac(dialog, call->getLocalSDP().getLocalSdpSession(), 0, &inv) != PJ_SUCCESS) {
-        ERROR("Unable to create invite session for user agent client");
+        SFL_ERR("Unable to create invite session for user agent client");
         return false;
     }
 
     if (!inv) {
-        ERROR("Call invite is not initialized");
+        SFL_ERR("Call invite is not initialized");
         return PJ_FALSE;
     }
 
@@ -284,19 +284,19 @@ DHTAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call)
     pjsip_tx_data *tdata;
 
     if (pjsip_inv_invite(call->inv.get(), &tdata) != PJ_SUCCESS) {
-        ERROR("Could not initialize invite messager for this call");
+        SFL_ERR("Could not initialize invite messager for this call");
         return false;
     }
 
     const pjsip_tpselector tp_sel = getTransportSelector();
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        ERROR("Unable to associate transport for invite session dialog");
+        SFL_ERR("Unable to associate transport for invite session dialog");
         return false;
     }
 
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
         call->inv.reset();
-        ERROR("Unable to send invite message for this call");
+        SFL_ERR("Unable to send invite message for this call");
         return false;
     }
 
@@ -369,7 +369,7 @@ DHTAccount::loadIdentity() const
         }
     }
     catch (const std::exception& e) {
-        ERROR("Error loading identity: %s", e.what());
+        SFL_ERR("Error loading identity: %s", e.what());
         auto id = dht::crypto::generateIdentity();
         if (!id.first || !id.second) {
             throw VoipLinkException("Can't generate identity for this account.");
@@ -383,12 +383,12 @@ DHTAccount::loadIdentity() const
     gnutls_x509_privkey_init(&x509_key);
     int err = gnutls_x509_privkey_import(x509_key, &dt, GNUTLS_X509_FMT_PEM);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not read PEM key - %s", gnutls_strerror(err));
+        SFL_ERR("Could not read PEM key - %s", gnutls_strerror(err));
         err = gnutls_x509_privkey_import(x509_key, &dt, GNUTLS_X509_FMT_DER);
     }
     if (err != GNUTLS_E_SUCCESS) {
         gnutls_x509_privkey_deinit(x509_key);
-        ERROR("Could not read key - %s", gnutls_strerror(err));
+        SFL_ERR("Could not read key - %s", gnutls_strerror(err));
         return {};
     }
 
@@ -398,13 +398,13 @@ DHTAccount::loadIdentity() const
     gnutls_datum_t crt_dt {reinterpret_cast<uint8_t*>(buffer_crt.data()), static_cast<unsigned>(buffer_crt.size())};
     err = gnutls_x509_crt_import(certificate, &crt_dt, GNUTLS_X509_FMT_PEM);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not read PEM certificate - %s", gnutls_strerror(err));
+        SFL_ERR("Could not read PEM certificate - %s", gnutls_strerror(err));
         err = gnutls_x509_crt_import(certificate, &crt_dt, GNUTLS_X509_FMT_DER);
     }
     if (err != GNUTLS_E_SUCCESS) {
         gnutls_x509_privkey_deinit(x509_key);
         gnutls_x509_crt_deinit(certificate);
-        ERROR("Could not read key - %s", gnutls_strerror(err));
+        SFL_ERR("Could not read key - %s", gnutls_strerror(err));
         return {};
     }
 
@@ -418,7 +418,7 @@ DHTAccount::saveIdentity(const dht::crypto::Identity id) const
         auto buffer = id.first->serialize();
         std::ofstream file(privkeyPath_, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            ERROR("Could not write key to %s", privkeyPath_.c_str());
+            SFL_ERR("Could not write key to %s", privkeyPath_.c_str());
             return;
         }
         file.write((char*)buffer.data(), buffer.size());
@@ -428,7 +428,7 @@ DHTAccount::saveIdentity(const dht::crypto::Identity id) const
         auto buffer = id.second->getPacked();
         std::ofstream file(certPath_, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            ERROR("Could not write key to %s", certPath_.c_str());
+            SFL_ERR("Could not write key to %s", certPath_.c_str());
             return;
         }
         file.write((char*)buffer.data(), buffer.size());
@@ -441,7 +441,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
-        ERROR("Couldn't find key %s", key);
+        SFL_ERR("Couldn't find key %s", key);
         return;
     }
     i = atoi(iter->second.c_str());
@@ -467,17 +467,17 @@ std::map<std::string, std::string> DHTAccount::getAccountDetails() const
 void DHTAccount::doRegister()
 {
     if (not isEnabled()) {
-        WARN("Account must be enabled to register, ignoring");
+        SFL_WARN("Account must be enabled to register, ignoring");
         return;
     }
 
     try {
         if (dht_.isRunning()) {
-            ERROR("DHT already running (stopping it first).");
+            SFL_ERR("DHT already running (stopping it first).");
             dht_.join();
         }
         dht_.run(dhtPort_, loadIdentity(), [=](dht::Dht::Status s4, dht::Dht::Status s6) {
-            WARN("Dht status : %d %d", (int)s4, (int)s6);
+            SFL_WARN("Dht status : %d %d", (int)s4, (int)s6);
             auto status = std::max(s4, s6);
             switch(status) {
             case dht::Dht::Status::Connecting:
@@ -490,7 +490,7 @@ void DHTAccount::doRegister()
                         getTlsSetting());
                     if (!tlsListener_) {
                         setRegistrationState(RegistrationState::ERROR_GENERIC);
-                        ERROR("Error creating TLS listener.");
+                        SFL_ERR("Error creating TLS listener.");
                         return;
                     }
                 }
@@ -506,7 +506,7 @@ void DHTAccount::doRegister()
         dht_.importValues(loadValues());
 
         dht_.put(dht_.getId(), dht::Value{dht::ServiceAnnouncement::TYPE.id, dht::ServiceAnnouncement(getTlsListenerPort())}, [](bool ok) {
-            DEBUG("Peer announce callback ! %d", ok);
+            SFL_DBG("Peer announce callback ! %d", ok);
         });
 
         username_ = dht_.getId().toString();
@@ -524,12 +524,12 @@ void DHTAccount::doRegister()
                 bootstrap.insert(bootstrap.end(), ips.begin(), ips.end());
             }
             for (auto ip : bootstrap)
-                DEBUG("Bootstrap node: %s", IpAddr(ip).toString(true).c_str());
+                SFL_DBG("Bootstrap node: %s", IpAddr(ip).toString(true).c_str());
             dht_.bootstrap(bootstrap);
         }
     }
     catch (const std::exception& e) {
-        ERROR("Error registering DHT account: %s", e.what());
+        SFL_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
@@ -555,7 +555,7 @@ void DHTAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
     {
         std::ofstream file(nodesPath, std::ios::trunc);
         if (!file.is_open()) {
-            ERROR("Could not save nodes to %s", nodesPath.c_str());
+            SFL_ERR("Could not save nodes to %s", nodesPath.c_str());
             return;
         }
         for (auto& n : nodes)
@@ -580,7 +580,7 @@ DHTAccount::loadNodes() const
     {
         std::ifstream file(nodesPath);
         if (!file.is_open()) {
-            ERROR("Could not load nodes from %s", nodesPath.c_str());
+            SFL_ERR("Could not load nodes from %s", nodesPath.c_str());
             return nodes;
         }
         std::string line;
@@ -602,7 +602,7 @@ DHTAccount::loadValues() const
     struct dirent *entry;
     DIR *dp = opendir(dataPath_.c_str());
     if (!dp) {
-        ERROR("Could not load values from %s", dataPath_.c_str());
+        SFL_ERR("Could not load values from %s", dataPath_.c_str());
         return {};
     }
 
@@ -616,7 +616,7 @@ DHTAccount::loadValues() const
             std::istreambuf_iterator<char> begin(ifs), end;
             values.push_back({{fname}, std::vector<uint8_t>{begin, end}});
         } catch (const std::exception& e) {
-            ERROR("Error reading value: %s", e.what());
+            SFL_ERR("Error reading value: %s", e.what());
             continue;
         }
     }
@@ -647,7 +647,7 @@ void DHTAccount::initTlsConfiguration()
 
 void DHTAccount::loadConfig()
 {
-    WARN("DHTAccount::loadConfig()");
+    SFL_WARN("DHTAccount::loadConfig()");
     initTlsConfiguration();
     transportType_ = PJSIP_TRANSPORT_TLS;
 }
@@ -661,7 +661,7 @@ MatchRank
 DHTAccount::matches(const std::string &userName, const std::string &server) const
 {
     if (userMatch(userName)) {
-        DEBUG("Matching account id in request with username %s", userName.c_str());
+        SFL_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::FULL;
     } else {
         return MatchRank::NONE;
@@ -687,7 +687,7 @@ DHTAccount::getContactHeader(pjsip_transport* t)
     if (!t && transport_)
         t = transport_->get();
     if (!t)
-        ERROR("Transport not created yet");
+        SFL_ERR("Transport not created yet");
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
@@ -708,7 +708,7 @@ DHTAccount::getContactHeader(pjsip_transport* t)
     }
 #endif
 
-    WARN("getContactHeader %s@%s:%d", username_.c_str(), address.c_str(), port);
+    SFL_WARN("getContactHeader %s@%s:%d", username_.c_str(), address.c_str(), port);
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                      "<sips:%s%s%s:%d;transport=%s>",
                                      username_.c_str(),

@@ -78,7 +78,7 @@ class Call : public sfl::Recordable {
         /**
          * The Call State.
          */
-        enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, ERROR};
+        enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, MERROR};
 
         virtual ~Call();
 

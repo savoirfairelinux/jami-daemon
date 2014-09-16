@@ -147,7 +147,7 @@ void Preferences::verifyAccountOrder(const std::vector<std::string> &accountIDs)
             if (find(accountIDs.begin(), accountIDs.end(), token) != accountIDs.end())
                 tokens.push_back(token);
             else {
-                DEBUG("Dropping nonexistent account %s", token.c_str());
+                SFL_DBG("Dropping nonexistent account %s", token.c_str());
                 drop = true;
             }
             token.clear();
@@ -328,7 +328,7 @@ static void
 checkSoundCard(int &card, sfl::DeviceType type)
 {
     if (not sfl::AlsaLayer::soundCardIndexExists(card, type)) {
-        WARN(" Card with index %d doesn't exist or is unusable.", card);
+        SFL_WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
 }
@@ -346,9 +346,9 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
             try {
                 return new sfl::JackLayer(*this);
             } catch (const std::runtime_error &e) {
-                ERROR("%s", e.what());
+                SFL_ERR("%s", e.what());
 #if HAVE_PULSE
-                WARN("falling back to pulseaudio");
+                SFL_WARN("falling back to pulseaudio");
                 audioApi_ = PULSEAUDIO_API_STR;
 #elif HAVE_ALSA
                 audioApi_ = ALSA_API_STR;
@@ -366,7 +366,7 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
         try {
             return new sfl::PulseLayer(*this);
         } catch (const std::runtime_error &e) {
-            WARN("Could not create pulseaudio layer, falling back to ALSA");
+            SFL_WARN("Could not create pulseaudio layer, falling back to ALSA");
         }
     }
 
@@ -430,7 +430,7 @@ AudioPreference::setRecordPath(const std::string &r)
         recordpath_ = path;
         return true;
     } else {
-        ERROR("%s is not writable, cannot be the recording path", path.c_str());
+        SFL_ERR("%s is not writable, cannot be the recording path", path.c_str());
         return false;
     }
 }

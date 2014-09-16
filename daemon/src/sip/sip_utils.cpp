@@ -91,7 +91,7 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     pj_strdup2(hdr_pool, &url->host, host.c_str());
     url->port = port;
 
-    DEBUG("Adding route %s", host.c_str());
+    SFL_DBG("Adding route %s", host.c_str());
     pj_list_push_back(route_set, pjsip_hdr_clone(hdr_pool, routing));
 
     return route_set;
@@ -206,5 +206,5 @@ sip_utils::sip_strerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
     pj_strerror(code, err_msg, sizeof err_msg);
-    ERROR("%d: %s", code, err_msg);
+    SFL_ERR("%d: %s", code, err_msg);
 }

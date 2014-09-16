@@ -140,7 +140,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
                 try {
                     monitor_->addDevice(string(devpath));
                 } catch (const std::runtime_error &e) {
-                    ERROR("%s", e.what());
+                    SFL_ERR("%s", e.what());
                 }
             }
         }
@@ -152,7 +152,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
 
 udev_failed:
 
-    ERROR("udev enumeration failed");
+    SFL_ERR("udev enumeration failed");
 
     if (udev_mon_)
         udev_monitor_unref(udev_mon_);
@@ -168,7 +168,7 @@ udev_failed:
         try {
             monitor_->addDevice(ss.str());
         } catch (const std::runtime_error &e) {
-            ERROR("%s", e.what());
+            SFL_ERR("%s", e.what());
             return;
         }
     }
@@ -220,14 +220,14 @@ void VideoDeviceMonitorImpl::run()
                     const char *node = udev_device_get_devnode(dev);
                     const char *action = udev_device_get_action(dev);
                     if (!strcmp(action, "add")) {
-                        DEBUG("udev: adding %s", node);
+                        SFL_DBG("udev: adding %s", node);
                         try {
                             monitor_->addDevice(node);
                         } catch (const std::runtime_error &e) {
-                            ERROR("%s", e.what());
+                            SFL_ERR("%s", e.what());
                         }
                     } else if (!strcmp(action, "remove")) {
-                        DEBUG("udev: removing %s", node);
+                        SFL_DBG("udev: removing %s", node);
                         monitor_->removeDevice(string(node));
                     }
                     udev_device_unref(dev);
@@ -237,12 +237,12 @@ void VideoDeviceMonitorImpl::run()
             case -1:
                 if (errno == EAGAIN)
                     continue;
-                ERROR("udev monitoring thread: select failed (%m)");
+                SFL_ERR("udev monitoring thread: select failed (%m)");
                 probing_ = false;
                 return;
 
             default:
-                ERROR("select() returned %d (%m)", ret);
+                SFL_ERR("select() returned %d (%m)", ret);
                 probing_ = false;
                 return;
         }
