@@ -48,6 +48,12 @@
 # define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
+#ifdef __WIN32__
+   WORD versionWanted = MAKEWORD(1, 1);
+   WSADATA wsaData;
+   WSAStartup(versionWanted, &wsaData);
+#endif
+
 static const int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 
 static int
