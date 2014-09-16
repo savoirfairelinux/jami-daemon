@@ -77,12 +77,17 @@ libcodec_g722_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g722_so_LDADD = libcodecdescriptor.la
 libcodec_g722_so_LDFLAGS = --shared -lc
 
-libcodec_g729_so_SOURCES = g729.cpp g729.h ../../dlfcnwin32.h ../../dlfcnwin32.c
+libcodec_g729_so_SOURCES = g729.cpp g729.h
 libcodec_g729_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g729_so_LDADD = libcodecdescriptor.la
 libcodec_g729_so_LDFLAGS = --shared -lc -lstdc++
 if HAVE_LINUX
 	libcodec_g729_so_LDFLAGS += -ldl
+endif
+
+if HAVE_WIN32
+        libcodec_g729_so_SOURCES += $(top_srcdir)/src/dlfcnwin32.h \
+                $(top_srcdir)/src/dlfcnwin32.c
 endif
 
 install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so $(INSTALL_OPUS_RULE) $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
