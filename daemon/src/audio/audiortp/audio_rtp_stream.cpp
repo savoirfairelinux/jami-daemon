@@ -97,7 +97,7 @@ sfl::AudioCodec *
 AudioRtpStream::getCurrentEncoder() const
 {
     if (audioCodecs_.empty() or currentEncoderIndex_ >= audioCodecs_.size()) {
-        ERROR("No codec found");
+        LOG_ERROR("No codec found");
         return nullptr;
     }
 
@@ -108,7 +108,7 @@ sfl::AudioCodec *
 AudioRtpStream::getCurrentDecoder() const
 {
     if (audioCodecs_.empty() or currentDecoderIndex_ >= audioCodecs_.size()) {
-        ERROR("No codec found");
+        LOG_ERROR("No codec found");
         return nullptr;
     }
 
@@ -144,7 +144,7 @@ bool AudioRtpStream::tryToSwitchDecoder(int newPt)
         DEBUG("Switched payload type to %d", newPt);
         return true;
     }
-    ERROR("Could not switch payload types");
+    LOG_ERROR("Could not switch payload types");
     return false;
 }
 
@@ -243,7 +243,7 @@ void AudioRtpStream::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
     if (audioCodecs.empty()) {
         codecEncMutex_.unlock();
         codecDecMutex_.unlock();
-        ERROR("Audio codecs empty");
+        LOG_ERROR("Audio codecs empty");
         return;
     }
 
@@ -317,7 +317,7 @@ size_t AudioRtpStream::processDataEncode()
     const size_t samples = Manager::instance().getRingBufferPool().getData(micData_, id_);
 
     if (samples != samplesToGet) {
-        ERROR("Asked for %d samples from bindings on call '%s', got %d",
+        LOG_ERROR("Asked for %d samples from bindings on call '%s', got %d",
               samplesToGet, id_.c_str(), samples);
         return 0;
     }
@@ -325,7 +325,7 @@ size_t AudioRtpStream::processDataEncode()
     AudioBuffer *out = &micData_;
     if (encoder_.format_.sample_rate != mainBuffFormat.sample_rate) {
         if (!encoder_.resampler_) {
-            ERROR("Resampler already destroyed");
+            LOG_ERROR("Resampler already destroyed");
             return 0;
         }
         encoder_.resampledData_.setChannelNum(mainBuffFormat.nb_channels);
@@ -344,7 +344,7 @@ size_t AudioRtpStream::processDataEncode()
         std::lock_guard<std::mutex> lock(codecEncMutex_);
         auto codec = getCurrentEncoder();
         if (!codec) {
-            ERROR("Audio codec already destroyed");
+            LOG_ERROR("Audio codec already destroyed");
             return 0;
         }
 
@@ -387,7 +387,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
         std::lock_guard<std::mutex> lock(codecDecMutex_);
         auto codec = getCurrentDecoder();
         if (!codec) {
-            ERROR("Audio codec already destroyed");
+            LOG_ERROR("Audio codec already destroyed");
             return;
         }
         if (spkrData) { // Packet is available
@@ -421,7 +421,7 @@ void AudioRtpStream::processDataDecode(unsigned char *spkrData, size_t size, int
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     if (decFormat.sample_rate != mainBuffFormat.sample_rate) {
         if (!decoder_.resampler_) {
-            ERROR("Resampler already destroyed");
+            LOG_ERROR("Resampler already destroyed");
             return;
         }
         decoder_.resampledData_.setChannelNum(decFormat.nb_channels);
