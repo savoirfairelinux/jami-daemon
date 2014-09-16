@@ -1,0 +1,13 @@
+--- iax/src/iax-client.h.orig	2014-09-11 14:30:21.071007321 -0400
++++ iax/src/iax-client.h	2014-09-11 14:53:50.199028465 -0400
+@@ -19,8 +19,8 @@
+ #pragma warning(disable:4200)
+ #endif
+
+-#ifndef LINUX
+-#define socklen_t int
++#ifdef _WIN32
++	typedef int socklen_t;
+ #endif
+
+ #include "frame.h"
