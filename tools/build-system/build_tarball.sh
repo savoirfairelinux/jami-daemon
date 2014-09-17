@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Script to build the source tarball for distribution on sflphone.org
+# Inclusion of KDE is a requirement. Run get-kde.sh to have it.
 #
 # Author: Francois Marier <francois@debian.org>
 
@@ -12,13 +13,17 @@ set -o errexit
 cd ${WORKSPACE}
 
 if [ ! -e daemon/configure.ac ] ; then
-    echo "This script must be run in the root directory of the sflphone repository"
+    echo "This script must be run in the root directory of the sflphone repository" >&2
     exit 1
 fi
 
 if [ $# -ne 1 ] ; then
-    echo "Usage: $(basename $0) SOFTWARE_VERSION_NUMBER"
+    echo "Usage: $(basename $0) SOFTWARE_VERSION_NUMBER" >&2
     exit 2
+fi
+
+if [ ! -d kde ] ; then
+    echo 'No "kde" directory. Make sure get-kde.sh ran at some point.' >&2
 fi
 
 # Use the version fed by launch-build-machine-jenkins.sh
@@ -26,7 +31,7 @@ SOFTWARE_VERSION=$1
 BUILDDIR=sflphone-$SOFTWARE_VERSION
 
 if [ -e $BUILDDIR ] ; then
-    echo "The build directory ($BUILDDIR) already exists. Delete it first."
+    echo "The build directory ($BUILDDIR) already exists. Delete it first." >&2
     exit 3
 fi
 
