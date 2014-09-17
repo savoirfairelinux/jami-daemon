@@ -4,7 +4,7 @@
 # then extract files from it. The directory is renamed "kde".
 # $WORKSPACE is declared in setenv.sh
 set -o errexit
-source $(basename $0)/setenv.sh
+source $(dirname $0)/setenv.sh
 cd "$WORKSPACE"
 curl -O https://projects.kde.org/projects/playground/network/sflphone-kde/repository/revisions/master/raw/data/config.ini
 curl -O https://projects.kde.org/projects/kde/kdesdk/kde-dev-scripts/repository/revisions/master/raw/createtarball/create_tarball.rb
