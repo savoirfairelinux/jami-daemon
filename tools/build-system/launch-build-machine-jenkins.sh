@@ -290,7 +290,7 @@ done
 
 # Archive source tarball for Debian maintainer
 # and for RPM package building
-./${WORKING_DIR}/build_tarball.sh ${SOFTWARE_VERSION}
+${WORKING_DIR}/build_tarball.sh ${SOFTWARE_VERSION}
 
 # Undo any modifications caused by temporary patches
 if [ "$REQUIRE_RESET" == "1" ]; then
