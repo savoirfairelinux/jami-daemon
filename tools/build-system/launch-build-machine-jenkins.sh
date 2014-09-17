@@ -16,16 +16,7 @@ done
 
 source $(dirname $0)/setenv.sh
 
-# Update KDE client
-# $WORKSPACE is declared in setenv.sh
-cd "$WORKSPACE"
-curl -O https://projects.kde.org/projects/playground/network/sflphone-kde/repository/revisions/master/raw/data/config.ini
-curl -O https://projects.kde.org/projects/kde/kdesdk/kde-dev-scripts/repository/revisions/master/raw/createtarball/create_tarball.rb
-ruby create_tarball.rb -n -a sflphone-kde
-rm -rf kde
-rm -rf sflphone-kde-*.tar.*
-rm create_tarball.rb config.ini
-mv sflphone-kde-* kde
+./$(dirname $0)/get-kde.sh
 
 IS_RELEASE=
 VERSION_INDEX="1"
