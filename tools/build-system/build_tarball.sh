@@ -4,6 +4,10 @@
 #
 # Author: Francois Marier <francois@debian.org>
 
+
+# Exit on error
+set -o errexit
+
 # This is an environment variable provided by Jenkins. It points to the repository's root
 cd ${WORKSPACE}
 
@@ -12,8 +16,8 @@ if [ ! -e daemon/configure.ac ] ; then
     exit 1
 fi
 
-if [ "z$1" = "z" ] ; then
-    echo "Usage: $0 SOFTWARE_VERSION_NUMBER"
+if [ $# -ne 1 ] ; then
+    echo "Usage: $(basename $0) SOFTWARE_VERSION_NUMBER"
     exit 2
 fi
 
@@ -26,26 +30,29 @@ if [ -e $BUILDDIR ] ; then
     exit 3
 fi
 
+# Populate the tarball directory
 mkdir $BUILDDIR
-cp -r * $BUILDDIR/
+SRCITEMS=$(echo *)
+# Exclude existing tarballs from the created tarball
+SRCITEMS=${SRCITEMS//*.tar.gz}
+# ${SRCITEMS//$BUILDDIR} is used to remove $BUILDDIR from $SRCITEMS
+# See bash parameter expansion
+cp -r ${SRCITEMS//$BUILDDIR} $BUILDDIR/
 
 pushd $BUILDDIR
-rm -rf $BUILDDIR
-rm -f *.tar.gz
-
-rm -rf lang/
 # No dash in Version:
 sed /^Version/s/[0-9].*/${SOFTWARE_VERSION%%-*}/ tools/build-system/rpm/sflphone.spec > sflphone.spec
+
+# Remove unwanted files
+rm -rf lang/
 rm -rf tools/
-#rm -rf kde/
-
 rm -rf .git/
-rm -f .gitignore
+find -name .gitignore -delete
+find -name .project -type f -delete
+find -name .cproject -type f -delete
+find -name .settings -type d -exec rm -rf {} +
 
-find -name .project -type f -exec rm {} \;
-find -name .cproject -type f -exec rm {} \;
-find -name .settings -type d -exec rm -rf {} \;
-
+# Generate the configure files
 pushd daemon
 ./autogen.sh
 find -name \*.spec -delete
@@ -55,10 +62,9 @@ pushd gnome
 ./autogen.sh
 popd
 
-find -name autom4te.cache -type d -exec rm -rf {} \;
-find -name *.in~ -type f -exec rm {} \;
+find -name autom4te.cache -type d -exec rm -rf {} +
+find -name *.in~ -type f -delete
 popd # builddir
 
-rm -f sflphone-*.tar.gz
-tar zcf sflphone-$SOFTWARE_VERSION.tar.gz sflphone-$SOFTWARE_VERSION
+tar zcf sflphone-${SOFTWARE_VERSION}.tar.gz sflphone-${SOFTWARE_VERSION}
 rm -rf $BUILDDIR
