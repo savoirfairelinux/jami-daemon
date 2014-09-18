@@ -274,12 +274,17 @@ END
 
 		cd ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
 		if [ "${DIRNAME}"  == "daemon" ]; then
-			mkdir -p contrib/native
-			pushd contrib/native
-			../bootstrap
-			# only fetch it, don't build it
-			make iax
-			popd
+                        if [ -d contrib ]; then
+                            mkdir -p contrib/native
+                            pushd contrib/native
+                            ../bootstrap
+                            # only fetch it, don't build it
+                            make iax
+                        else
+                            pushd libs
+                            ./compile_pjsip.sh
+                        fi
+                        popd
 		fi
 		if [ "${LAUNCHPAD_PACKAGE}"  != "sflphone-kde" ]; then
 			./autogen.sh
