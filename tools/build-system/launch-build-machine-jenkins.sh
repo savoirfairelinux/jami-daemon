@@ -61,7 +61,7 @@ do
                 unset DO_LOGGING;;
         --release)
                 IS_RELEASE=1;;
-        --tag)
+        --tag=*)
                 TAG=(${PARAMETER##*=});;
         --version-index=*)
                 VERSION_INDEX=(${PARAMETER##*=});;
