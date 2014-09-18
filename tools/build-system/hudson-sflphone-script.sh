@@ -114,14 +114,20 @@ function launch_functional_test_daemon {
 }
 
 function build_contrib {
-    pushd contrib
-    mkdir -p native
-    pushd native
-    ../bootstrap
-    # list dependencies which will be added
-    make list
-    make
-    popd
+    if [ -d contrib ] ; then
+        pushd contrib
+        mkdir -p native
+        pushd native
+        ../bootstrap
+        # list dependencies which will be added
+        make list
+        make
+        popd
+    else
+        # We're on 1.4.x
+        pushd libs
+        ./compile_pjsip.sh
+    fi
     popd
 }
 
