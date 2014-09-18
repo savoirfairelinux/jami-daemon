@@ -61,6 +61,8 @@ do
                 unset DO_LOGGING;;
         --release)
                 IS_RELEASE=1;;
+        --tag)
+                TAG=(${PARAMETER##*=});;
         --version-index=*)
                 VERSION_INDEX=(${PARAMETER##*=});;
         *)
@@ -114,14 +116,19 @@ echo "Update reference sources"
 git checkout . && git checkout -f master && git pull
 
 # Get the version
-CURRENT_RELEASE_TAG_NAME=`git describe --tags --abbrev=0`
-PREVIOUS_RELEASE_TAG_NAME=`git describe --tags --abbrev=0 ${CURRENT_RELEASE_TAG_NAME}^`
+if [ -n $TAG ]; then
+    CURRENT_RELEASE_TAG_NAME="tags/$TAG"
+else
+    CURRENT_RELEASE_TAG_NAME=`git describe --tags --abbrev=0`
+fi
 
+PREVIOUS_RELEASE_TAG_NAME=`git describe --tags --abbrev=0 ${CURRENT_RELEASE_TAG_NAME}^`
 CURRENT_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${CURRENT_RELEASE_TAG_NAME} | tail -n 1`
 PREVIOUS_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
 CURRENT_COMMIT=`git show --pretty=format:"%H"  -s | tail -n 1`
 CURRENT_RELEASE_TYPE=${CURRENT_RELEASE_TAG_NAME##*.}
 PREVIOUS_RELEASE_TYPE=${PREVIOUS_RELEASE_TAG_NAME##*.}
+
 if [ ${IS_KDE_CLIENT} ]; then
 	CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_TAG_NAME%.*}
 	CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_VERSION#*.}
