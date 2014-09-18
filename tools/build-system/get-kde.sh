@@ -6,8 +6,14 @@
 set -o errexit
 source $(dirname $0)/setenv.sh
 cd "$WORKSPACE"
-curl -O https://projects.kde.org/projects/playground/network/sflphone-kde/repository/revisions/master/raw/data/config.ini
-curl -O https://projects.kde.org/projects/kde/kdesdk/kde-dev-scripts/repository/revisions/master/raw/createtarball/create_tarball.rb
+while ! curl --fail --remote-name https://projects.kde.org/projects/playground/network/sflphone-kde/repository/revisions/master/raw/data/config.ini;
+do
+    sleep 15
+done
+while ! curl --fail --remote-name https://projects.kde.org/projects/kde/kdesdk/kde-dev-scripts/repository/revisions/master/raw/createtarball/create_tarball.rb
+do
+    sleep 15
+done
 ruby create_tarball.rb --noaccount --application sflphone-kde
 rm -rf kde
 rm -rf sflphone-kde-*.tar.*
