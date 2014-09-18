@@ -35,7 +35,7 @@
 // cppcheck-suppress unusedFunction
 extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
 {
-    return new Speex(111, 16000, 320, 42, false, &speex_wb_mode);
+    return new Speex(111, 16000, 320, 42, true, &speex_wb_mode);
 }
 
 // cppcheck-suppress unusedFunction
