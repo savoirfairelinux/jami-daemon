@@ -37,7 +37,7 @@
 #endif
 
 #ifdef _WIN32
-	#include <dlfcnwin32.h>
+	#include "dlfcnwin32.h"
 #else
 	#include <dlfcn.h>
 #endif
