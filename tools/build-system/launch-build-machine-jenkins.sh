@@ -117,7 +117,7 @@ git checkout . && git checkout -f master && git pull
 
 # Get the version
 if [ -n $TAG ]; then
-    CURRENT_RELEASE_TAG_NAME="tags/$TAG"
+    CURRENT_RELEASE_TAG_NAME="$TAG"
 else
     CURRENT_RELEASE_TAG_NAME=`git describe --tags --abbrev=0`
 fi
@@ -282,7 +282,7 @@ END
                             make iax
                         else
                             pushd libs
-                            ./compile_pjsip.sh
+                            #./compile_pjsip.sh #This script should not attempt to compile
                         fi
                         popd
 		fi
