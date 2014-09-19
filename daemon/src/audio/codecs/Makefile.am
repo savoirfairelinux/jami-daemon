@@ -9,11 +9,6 @@ libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp \
 
 libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 
-if HAVE_WIN32
-libcodecdescriptor_la_SOURCES += $(top_srcdir)/dlfcnwin32.h \
-		$(top_srcdir)/dlfcnwin32.c
-endif
-
 if BUILD_GSM
 GSM_LIB = libcodec_gsm.so
 libcodec_gsm_so_SOURCES = gsmcodec.cpp
@@ -82,7 +77,7 @@ libcodec_g722_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g722_so_LDADD = libcodecdescriptor.la
 libcodec_g722_so_LDFLAGS = --shared -lc
 
-libcodec_g729_so_SOURCES = g729.cpp g729.h
+libcodec_g729_so_SOURCES = g729.cpp g729.h ../../dlfcnwin32.h ../../dlfcnwin32.c
 libcodec_g729_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g729_so_LDADD = libcodecdescriptor.la
 libcodec_g729_so_LDFLAGS = --shared -lc -lstdc++
