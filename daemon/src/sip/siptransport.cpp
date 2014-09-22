@@ -254,7 +254,7 @@ SipTransport::createTlsListener(SIPAccountBase &account, pj_uint16_t family)
 
     listeningAddress.setPort(account.getTlsListenerPort());
 
-    RETURN_IF_FAIL(not listeningAddress, nullptr, "Could not determine IP address for this transport");
+    RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
 
     DEBUG("Creating Listener on %s...", listeningAddress.toString(true).c_str());
     DEBUG("CRT file : %s", account.getTlsSetting()->ca_list_file.ptr);
