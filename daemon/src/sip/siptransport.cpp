@@ -85,14 +85,14 @@ transportMapKey(const std::string &interface, int port, pjsip_transport_type_e t
 
 /** Static tranport state change callback */
 void
-SipTransport::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* /* info */)
+SipTransport::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
 {
     SipTransport& this_ = *getSIPVoIPLink()->sipTransport;
-    this_.transportStateChanged(tp, state);
+    this_.transportStateChanged(tp, state, info);
 }
 
 void
-SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state state)
+SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
 {
     std::lock_guard<std::mutex> lock(transportMapMutex_);
     auto transport_key = map_utils::findByValue(transportMap_, tp);
@@ -103,7 +103,16 @@ SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state s
 #else
     if (tp->is_shutdown || tp->is_destroying) {
 #endif
-        WARN("Transport was destroyed: {%s}", tp->info);
+        char err_msg[128];
+        err_msg[0] = '\0';
+
+        pj_str_t description;
+        if (info) {
+            description = pjsip_strerror(info->status,err_msg,128);
+        }
+
+        WARN("Transport was destroyed: {%s} %.*s",
+            tp->info,info && description.slen>0?description.slen:0, err_msg);
         transportMap_.erase(transport_key++);
         transportDestroyedCv_.notify_all();
     }

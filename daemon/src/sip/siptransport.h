@@ -152,7 +152,7 @@ class SipTransport {
 
         static void tp_state_callback(pjsip_transport *, pjsip_transport_state, const pjsip_transport_state_info *);
 
-        void transportStateChanged(pjsip_transport* tp, pjsip_transport_state state);
+        void transportStateChanged(pjsip_transport* tp, pjsip_transport_state state, const pjsip_transport_state_info* info);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case
