@@ -665,6 +665,15 @@ void SIPAccount::doRegister()
     for (const auto& ip : IPs)
         DEBUG("--- %s ", ip.toString().c_str());
 
+    bool IPv6 = false;
+#if HAVE_IPV6
+    if (isIP2IP()) {
+        DEBUG("doRegister isIP2IP.");
+        IPv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
+    } else if (!IPs.empty())
+        IPv6 = IPs[0].isIpv6();
+#endif
+
 #if HAVE_TLS
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_) {
@@ -675,19 +684,11 @@ void SIPAccount::doRegister()
         freeAccount();
 
         // PJSIP does not currently support TLS over IPv6
-        transportType_ = PJSIP_TRANSPORT_TLS;
+        transportType_ = IPv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     } else
 #endif
     {
-        bool IPv6 = false;
-#if HAVE_IPV6
-        if (isIP2IP()) {
-            DEBUG("doRegister isIP2IP.");
-            IPv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
-        } else if (!IPs.empty())
-            IPv6 = IPs[0].isIpv6();
-#endif
         transportType_ = IPv6 ? PJSIP_TRANSPORT_UDP6  : PJSIP_TRANSPORT_UDP;
     }
 
