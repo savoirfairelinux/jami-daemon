@@ -123,6 +123,7 @@ class PulseLayer : public AudioLayer {
 
         void updateSinkList();
         void updateSourceList();
+        void updateServerInfos();
 
         bool inSinkList(const std::string &deviceName);
         bool inSourceList(const std::string &deviceName);
@@ -148,6 +149,9 @@ class PulseLayer : public AudioLayer {
         static void sink_input_info_callback(pa_context *c,
                                              const pa_sink_info *i,
                                              int eol, void *userdata);
+        static void server_info_callback(pa_context*,
+                                         const pa_server_info *i,
+                                         void *userdata);
 
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
@@ -176,38 +180,47 @@ class PulseLayer : public AudioLayer {
         /**
          * A stream object to handle the pulseaudio playback stream
          */
-        AudioStream* playback_;
+        AudioStream* playback_ {nullptr};
 
         /**
          * A stream object to handle the pulseaudio capture stream
          */
-        AudioStream* record_;
+        AudioStream* record_ {nullptr};
 
         /**
          * A special stream object to handle specific playback stream for ringtone
          */
-        AudioStream* ringtone_;
+        AudioStream* ringtone_ {nullptr};
 
         /**
          * Contains the list of playback devices
          */
-        std::vector<PaDeviceInfos> sinkList_;
+        std::vector<PaDeviceInfos> sinkList_ {};
 
         /**
          * Contains the list of capture devices
          */
-        std::vector<PaDeviceInfos> sourceList_;
+        std::vector<PaDeviceInfos> sourceList_ {};
 
         /*
          * Buffers used to avoid doing malloc/free in the audio thread
          */
-        AudioBuffer micBuffer_;
+        AudioBuffer micBuffer_ {0, AudioFormat::MONO()};
+
+        /** PulseAudio server defaults */
+        AudioFormat defaultAudioFormat_ {AudioFormat::MONO()};
+        std::string defaultSink_;
+        std::string defaultSource_;
 
         /** PulseAudio context and asynchronous loop */
-        pa_context* context_;
-        pa_threaded_mainloop* mainloop_;
-        bool enumeratingSinks_;
-        bool enumeratingSources_;
+        pa_context* context_ {nullptr};
+        pa_threaded_mainloop* mainloop_ {nullptr};
+        bool enumeratingSinks_ {false};
+        bool enumeratingSources_ {false};
+        bool gettingServerInfos_ {false};
+        //std::mutex m;
+        std::condition_variable readyCv_;
+
         AudioPreference &preference_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 
