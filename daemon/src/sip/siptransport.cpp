@@ -32,13 +32,13 @@
 
 #include "siptransport.h"
 #include "sipaccount.h"
-#include "sipvoiplink.h"
 #include "sip_utils.h"
 
 #include "manager.h"
 #include "client/configurationmanager.h"
 #include "map_utils.h"
 #include "ip_utils.h"
+#include "array_size.h"
 
 #include <pjsip.h>
 #include <pjsip_ua.h>
@@ -53,327 +53,246 @@
 
 #include <stdexcept>
 #include <sstream>
+#include <algorithm>
 
 #define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return (VAL); }
 
-SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool) :
-transportMap_(), transportMapMutex_(), transportDestroyedCv_(), cp_(cp), pool_(pool), endpt_(endpt)
+// FIXME: remove this when pjsip_tp_state_callback gives us enough info
+SipTransportBroker* instance = nullptr;
+
+SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool) :
+cp_(cp), pool_(pool), endpt_(endpt)
 {
-    auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), SipTransport::tp_state_callback);
+    instance = this;
+    auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), SipTransportBroker::tp_state_callback);
     if (status != PJ_SUCCESS) {
         ERROR("Can't set transport callback");
         sip_utils::sip_strerror(status);
     }
 }
 
-SipTransport::~SipTransport()
+SipTransportBroker::~SipTransportBroker()
 {
+    instance = nullptr;
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
-}
-
-static std::string
-transportMapKey(const std::string &interface, int port, pjsip_transport_type_e type)
-{
-    std::ostringstream os;
-    auto family = pjsip_transport_type_get_af(type);
-    char af_ver_num = (family == pj_AF_INET6()) ? '6' : '4';
-    if (type == PJSIP_TRANSPORT_START_OTHER) // STUN
-        type = (family == pj_AF_INET6()) ?  PJSIP_TRANSPORT_UDP6 : PJSIP_TRANSPORT_UDP;
-    os << interface << ':' << port << ':' << pjsip_transport_get_type_name(type) << af_ver_num;
-    return os.str();
 }
 
 /** Static tranport state change callback */
 void
-SipTransport::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
+SipTransportBroker::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
 {
-    SipTransport& this_ = *getSIPVoIPLink()->sipTransport;
-    this_.transportStateChanged(tp, state, info);
+    if (!instance)
+        return;
+    instance->transportStateChanged(tp, state, info);
 }
 
 void
-SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
+SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
 {
-    std::lock_guard<std::mutex> lock(transportMapMutex_);
-    auto transport_key = map_utils::findByValue(transportMap_, tp);
-    if (transport_key == transportMap_.cend())
-        return;
-#if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
-    if (state == PJSIP_TP_STATE_SHUTDOWN || state == PJSIP_TP_STATE_DESTROY) {
-#else
-    if (tp->is_shutdown || tp->is_destroying) {
-#endif
-        char err_msg[128];
-        err_msg[0] = '\0';
+    static const char* PJ_TRANSPORT_STATE_STR[] = {
+        "CONNECTED", "DISCONNECTED", "SHUTDOWN", "DESTROY", "UNKOWN STATE"
+    };
+    DEBUG("Transport %s -> %s", tp->info, PJ_TRANSPORT_STATE_STR[std::min((size_t)state, ARRAYSIZE(PJ_TRANSPORT_STATE_STR)-1)]);
 
-        pj_str_t description;
-        if (info) {
-            description = pjsip_strerror(info->status, err_msg, sizeof(err_msg));
+    {
+        std::shared_ptr<SipTransport> transport {};
+        {
+            // The mutex is unlocked so the callback can lock it.
+            std::lock_guard<std::mutex> lock(transportMapMutex_);
+            auto t = transports_.find(tp);
+            if (t != transports_.end()) {
+                transport = t->second.lock();
+            }
         }
+        // Propagate the event to the appropriate transport.
+        if (transport)
+            transport->stateCallback(state, info);
+    }
 
-        WARN("Transport was destroyed: {%s} %.*s",
-             tp->info,
-             info && description.slen > 0 ? description.slen : 0, err_msg);
-        transportMap_.erase(transport_key++);
-        transportDestroyedCv_.notify_all();
+#if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
+    if (state == PJSIP_TP_STATE_DESTROY) {
+#else
+    if (tp->is_destroying) {
+#endif
+        std::lock_guard<std::mutex> lock(transportMapMutex_);
+
+        // Transport map cleanup
+        auto t = transports_.find(tp);
+        if (t != transports_.end() && t->second.expired())
+            transports_.erase(t);
+
+        // If UDP
+        if (std::strlen(tp->type_name) >= 3 && std::strncmp(tp->type_name, "UDP", 3ul) == 0) {
+            auto transport_key = std::find_if(udpTransports_.cbegin(), udpTransports_.cend(), [tp](const std::pair<SipTransportDescr, pjsip_transport*>& i) {
+                return i.second == tp;
+            });
+            if (transport_key != udpTransports_.end()) {
+                transports_.erase(transport_key->second);
+                udpTransports_.erase(transport_key);
+                transportDestroyedCv_.notify_all();
+            }
+        }
     }
 }
 
 void
-SipTransport::waitForReleased(pjsip_transport* tp, std::function<void(bool)> released_cb)
+SipTransportBroker::waitForReleased(const SipTransportDescr& tp, std::function<void(bool)> released_cb)
 {
-    if (!released_cb)
-        return;
-    if (!tp) {
-        released_cb(true);
-        return;
-    }
-    std::vector<pjsip_transport*> to_destroy_all;
+    std::vector<std::pair<SipTransportDescr, pjsip_transport*>> to_destroy_all;
     bool destroyed = false;
     {
         std::unique_lock<std::mutex> lock(transportMapMutex_);
         auto check_destroyed = [&](){
-            std::vector<pjsip_transport*> to_destroy = _cleanupTransports();
-            bool _destr = false;
-            for (auto t : to_destroy) {
-                if (t == tp) {
-                    _destr = true;
-                    break;
-                }
-            }
-            to_destroy_all.insert(to_destroy_all.end(), to_destroy.begin(), to_destroy.end());
-            return _destr;
+            return udpTransports_.find(tp) == udpTransports_.end();
         };
-        destroyed = transportDestroyedCv_.wait_for(lock, std::chrono::milliseconds(50), check_destroyed);
+        destroyed = transportDestroyedCv_.wait_for(lock, std::chrono::seconds(10), check_destroyed);
         if (!destroyed)
             destroyed = check_destroyed();
     }
-    for (auto t : to_destroy_all) {
-        pj_lock_release(t->lock);
-        pjsip_transport_destroy(t);
-    }
-    released_cb(destroyed);
+
+    if (released_cb)
+        released_cb(destroyed);
 }
 
-void
-SipTransport::createSipTransport(SIPAccountBase &account)
+std::shared_ptr<SipTransport>
+SipTransportBroker::getUpdTransport(const SipTransportDescr& descr)
 {
-    // Remove any existing transport from the account
-    account.setTransport();
-    cleanupTransports();
-
-    auto type = account.getTransportType();
-    auto family = pjsip_transport_type_get_af(type);
-    auto interface = account.getLocalInterface();
-    pjsip_transport* new_transport = nullptr;
-
-    {
-        std::lock_guard<std::mutex> lock(transportMapMutex_);
-        std::string key;
-#if HAVE_TLS
-        if (account.isTlsEnabled()) {
-            key = transportMapKey(interface, account.getTlsListenerPort(), type);
-            if (transportMap_.find(key) != transportMap_.end()) {
-                throw std::runtime_error("TLS transport already exists");
+    std::lock_guard<std::mutex> lock(transportMapMutex_);
+    auto itp = udpTransports_.find(descr);
+    if (itp != udpTransports_.end()) {
+        auto it = transports_.find(itp->second);
+        if (it != transports_.end()) {
+            if (auto spt = it->second.lock()) {
+                DEBUG("Reusing transport %s", descr.toString().c_str());
+                return spt;
             }
-            createTlsTransport(account);
+            else {
+                // Transport still exists but have not been destoyed yet.
+                WARN("Recycling transport %s", descr.toString().c_str());
+                auto ret = std::make_shared<SipTransport>(itp->second);
+                transports_[itp->second] = ret;
+                return ret;
+            }
         } else {
-#else
-        {
-#endif
-            auto port = account.getLocalPort();
-            key = transportMapKey(interface, port, type);
-            // if this transport already exists, reuse it
-            auto iter = transportMap_.find(key);
-            if (iter != transportMap_.end()) {
-                auto status = pjsip_transport_add_ref(iter->second);
-                if (status == PJ_SUCCESS)
-                    account.setTransport(iter->second);
-            }
-            if (!account.getTransport()) {
-                account.setTransport(createUdpTransport(interface, port, family));
-            }
+            WARN("Cleaning up UDP transport %s", descr.toString().c_str());
+            udpTransports_.erase(itp);
         }
-
-        new_transport = account.getTransport();
-        if (new_transport)
-            transportMap_[key] = new_transport;
     }
-    cleanupTransports();
-
-    if (!new_transport) {
-#if HAVE_TLS
-        if (account.isTlsEnabled())
-            throw std::runtime_error("Could not create TLS connection");
-        else
-#endif
-            throw std::runtime_error("Could not create new UDP transport");
+    auto ret = createUdpTransport(descr);
+    if (ret) {
+        udpTransports_[descr] = ret->get();
+        transports_[ret->get()] = ret;
     }
+    return ret;
 }
 
-pjsip_transport *
-SipTransport::createUdpTransport(const std::string &interface, pj_uint16_t port, pj_uint16_t family)
+std::shared_ptr<SipTransport>
+SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
 {
-    IpAddr listeningAddress;
-    if (interface == ip_utils::DEFAULT_INTERFACE)
-        listeningAddress = ip_utils::getAnyHostAddr(family);
-    else
-        listeningAddress = ip_utils::getInterfaceAddr(interface, family);
+    RETURN_IF_FAIL(d.listenerPort != 0, nullptr, "Could not determine port for this transport");
+    auto family = pjsip_transport_type_get_af(d.type);
 
-    RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine ip address for this transport");
-    RETURN_IF_FAIL(port != 0, nullptr, "Could not determine port for this transport");
+    IpAddr listeningAddress = (d.interface == ip_utils::DEFAULT_INTERFACE) ?
+        ip_utils::getAnyHostAddr(family) :
+        ip_utils::getInterfaceAddr(d.interface, family);
+    listeningAddress.setPort(d.listenerPort);
 
-    listeningAddress.setPort(port);
-    pj_status_t status;
+    RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
     pjsip_transport *transport = nullptr;
-
     if (listeningAddress.isIpv4()) {
-        status = pjsip_udp_transport_start(endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress), nullptr, 1, &transport);
+        pj_status_t status = pjsip_udp_transport_start(endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress), nullptr, 1, &transport);
         if (status != PJ_SUCCESS) {
-            ERROR("UDP IPV4 Transport did not start");
+            ERROR("UDP IPv4 Transport did not start on %s", listeningAddress.toString(true).c_str());
             sip_utils::sip_strerror(status);
             return nullptr;
         }
     } else if (listeningAddress.isIpv6()) {
-        status = pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress), nullptr, 1, &transport);
+        pj_status_t status = pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress), nullptr, 1, &transport);
         if (status != PJ_SUCCESS) {
-            ERROR("UDP IPV6 Transport did not start");
+            ERROR("UDP IPv6 Transport did not start on %s", listeningAddress.toString(true).c_str());
             sip_utils::sip_strerror(status);
             return nullptr;
         }
     }
 
-    DEBUG("Created UDP transport on %s : %s", interface.c_str(), listeningAddress.toString(true).c_str());
-    // dump debug information to stdout
-    //pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
-    return transport;
+    DEBUG("Created UDP transport on %s : %s", d.interface.c_str(), listeningAddress.toString(true).c_str());
+    auto ret = std::make_shared<SipTransport>(transport);
+    // dec ref because the refcount starts at 1 and SipTransport inscrements it.
+    //pjsip_transport_dec_ref(transport);
+    return ret;
 }
 
 #if HAVE_TLS
-pjsip_tpfactory*
-SipTransport::createTlsListener(SIPAccountBase &account, pj_uint16_t family)
+std::shared_ptr<TlsListener>
+SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_setting* settings)
 {
-    RETURN_IF_FAIL(account.getTlsSetting() != nullptr, nullptr, "TLS settings not specified");
+    RETURN_IF_FAIL(settings, nullptr, "TLS settings not specified");
+    auto family = pjsip_transport_type_get_af(d.type);
 
-    std::string interface(account.getLocalInterface());
-    IpAddr listeningAddress;
-    if (interface == ip_utils::DEFAULT_INTERFACE)
-        listeningAddress = ip_utils::getAnyHostAddr(family);
-    else
-        listeningAddress = ip_utils::getInterfaceAddr(interface, family);
-
-    listeningAddress.setPort(account.getTlsListenerPort());
+    IpAddr listeningAddress = (d.interface == ip_utils::DEFAULT_INTERFACE) ?
+        ip_utils::getAnyHostAddr(family) :
+        ip_utils::getInterfaceAddr(d.interface, family);
+    listeningAddress.setPort(d.listenerPort);
 
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
-
-    DEBUG("Creating Listener on %s...", listeningAddress.toString(true).c_str());
-    DEBUG("CRT file : %s", account.getTlsSetting()->ca_list_file.ptr);
-    DEBUG("PEM file : %s", account.getTlsSetting()->cert_file.ptr);
+    DEBUG("Creating TLS listener %s on %s...", d.toString().c_str(), listeningAddress.toString(true).c_str());
+    DEBUG(" ca_list_file : %s", settings->ca_list_file.ptr);
+    DEBUG(" cert_file    : %s", settings->cert_file.ptr);
 
     pjsip_tpfactory *listener = nullptr;
-    const pj_status_t status = pjsip_tls_transport_start2(endpt_, account.getTlsSetting(), listeningAddress.pjPtr(), nullptr, 1, &listener);
+    const pj_status_t status = pjsip_tls_transport_start2(endpt_, settings, listeningAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
         ERROR("TLS listener did not start");
         sip_utils::sip_strerror(status);
         return nullptr;
     }
-    return listener;
+    return std::make_shared<TlsListener>(listener);
 }
 
-pjsip_transport *
-SipTransport::createTlsTransport(SIPAccountBase &account)
+std::shared_ptr<SipTransport>
+SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const std::string& remoteSipUri)
 {
-    std::string remoteSipUri(account.getServerUri());
+    if (!l)
+        return nullptr;
     static const char SIPS_PREFIX[] = "<sips:";
     size_t sips = remoteSipUri.find(SIPS_PREFIX) + (sizeof SIPS_PREFIX) - 1;
     size_t trns = remoteSipUri.find(";transport");
     IpAddr remoteAddr = {remoteSipUri.substr(sips, trns-sips)};
     if (!remoteAddr)
         return nullptr;
-
-    const pjsip_transport_type_e transportType =
-#if HAVE_IPV6
-        remoteAddr.isIpv6() ? PJSIP_TRANSPORT_TLS6 :
-#endif
-        PJSIP_TRANSPORT_TLS;
-
-    int port = pjsip_transport_get_default_port_for_type(transportType);
     if (remoteAddr.getPort() == 0)
-        remoteAddr.setPort(port);
+        remoteAddr.setPort(pjsip_transport_get_default_port_for_type(l->get()->type));
 
-    DEBUG("Get new tls transport/listener from transport manager to %s", remoteAddr.toString(true).c_str());
-
-    // create listener
-    pjsip_tpfactory *localTlsListener = createTlsListener(account, remoteAddr.getFamily());
-
-    // create transport
+    DEBUG("Get new TLS transport to %s", remoteAddr.toString(true).c_str());
+    pjsip_tpselector sel {PJSIP_TPSELECTOR_LISTENER, {
+        .listener = l->get()
+    }};
     pjsip_transport *transport = nullptr;
     pj_status_t status = pjsip_endpt_acquire_transport(
             endpt_,
-            transportType,
+            l->get()->type,
             remoteAddr.pjPtr(),
-            pj_sockaddr_get_len(remoteAddr.pjPtr()),
-            nullptr,
+            remoteAddr.getLength(),
+            &sel,
             &transport);
 
     if (!transport || status != PJ_SUCCESS) {
-        if (localTlsListener)
-            localTlsListener->destroy(localTlsListener);
-        ERROR("Could not create new TLS transport");
+        ERROR("Could not get new TLS transport");
         sip_utils::sip_strerror(status);
         return nullptr;
     }
-
-    account.setTransport(transport, localTlsListener);
-    return transport;
+    auto ret = std::make_shared<SipTransport>(transport, l);
+    pjsip_transport_dec_ref(transport);
+    {
+        std::lock_guard<std::mutex> lock(transportMapMutex_);
+        transports_[ret->get()] = ret;
+    }
+    return ret;
 }
 #endif
 
-void
-SipTransport::cleanupTransports()
-{
-    std::vector<pjsip_transport*> to_destroy;
-    {
-        std::lock_guard<std::mutex> lock(transportMapMutex_);
-        to_destroy = _cleanupTransports();
-    }
-    for (auto t : to_destroy) {
-        pj_lock_release(t->lock);
-        pjsip_transport_destroy(t);
-    }
-}
-
-std::vector<pjsip_transport*>
-SipTransport::_cleanupTransports()
-{
-    std::vector<pjsip_transport*> to_destroy;
-    for (auto it = transportMap_.cbegin(); it != transportMap_.cend();) {
-        pjsip_transport* t = (*it).second;
-        if (!t) {
-            transportMap_.erase(it++);
-            continue;
-        }
-        pj_lock_acquire(t->lock);
-        auto ref_cnt = pj_atomic_get(t->ref_cnt);
-        if (ref_cnt == 0 || t->is_shutdown || t->is_destroying) {
-            DEBUG("Removing transport for %s", t->info );
-            bool is_shutdown = t->is_shutdown || t->is_destroying;
-            transportMap_.erase(it++);
-            if (!is_shutdown)
-                to_destroy.push_back(t);
-            else
-                pj_lock_release(t->lock);
-        } else {
-            ++it;
-            pj_lock_release(t->lock);
-        }
-    }
-    return to_destroy;
-}
-
 std::vector<pj_sockaddr>
-SipTransport::getSTUNAddresses(const SIPAccountBase &account,
-        std::vector<long> &socketDescriptors) const
+SipTransportBroker::getSTUNAddresses(const SIPAccountBase &account, std::vector<long> &socketDescriptors) const
 {
     const pj_str_t serverName = account.getStunServerName();
     const pj_uint16_t port = account.getStunPort();
@@ -407,7 +326,8 @@ SipTransport::getSTUNAddresses(const SIPAccountBase &account,
 
 #define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { ERROR(M, ##__VA_ARGS__); return; }
 
-void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, const std::string &host, std::string &addr, pj_uint16_t &port) const
+void
+SipTransportBroker::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, const std::string &host, std::string &addr, pj_uint16_t &port) const
 {
     // Initialize the sip port with the default SIP port
     port = pjsip_transport_get_default_port_for_type(transportType);
@@ -440,7 +360,7 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
 }
 
 void
-SipTransport::findLocalAddressFromSTUN(pjsip_transport *transport,
+SipTransportBroker::findLocalAddressFromSTUN(pjsip_transport *transport,
                                        pj_str_t *stunServerName,
                                        int stunPort,
                                        std::string &addr, pj_uint16_t &port) const
