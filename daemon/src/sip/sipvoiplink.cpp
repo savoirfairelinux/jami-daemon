@@ -492,11 +492,6 @@ pj_pool_t* SIPVoIPLink::getPool() const
 }
 
 SIPVoIPLink::SIPVoIPLink()
-    : sipTransport()
-#ifdef SFL_VIDEO
-    , keyframeRequestsMutex_()
-    , keyframeRequests_()
-#endif
 {
     DEBUG("creating SIPVoIPLink instance");
 
@@ -522,7 +517,7 @@ SIPVoIPLink::SIPVoIPLink()
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
-    sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_));
+    sipTransport.reset(new SipTransportBroker(endpt_, *cp_, *pool_));
 
     if (!ip_utils::getLocalAddr())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -835,6 +830,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             case PJSIP_SC_REQUEST_PENDING:
             case PJSIP_SC_ADDRESS_INCOMPLETE:
             default:
+                WARN("PJSIP_INV_STATE_DISCONNECTED: %d %d", inv->cause, ev->type);
                 call->onServerFailure();
                 break;
         }
@@ -1274,19 +1270,3 @@ int SIPVoIPLink::getModId()
 
 void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 { sdp_create_offer_cb(inv, p_offer); }
-
-void
-SIPVoIPLink::loadIP2IPSettings()
-{
-    try {
-        auto account = Manager::instance().getIP2IPAccount();
-        if (!account) {
-            ERROR("No existing IP2IP account");
-            return;
-        }
-        account->doRegister();
-        getSIPVoIPLink()->sipTransport->createSipTransport((SIPAccount&)*account);
-    } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
-    }
-}
