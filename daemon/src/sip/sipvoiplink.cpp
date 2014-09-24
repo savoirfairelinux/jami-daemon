@@ -289,15 +289,13 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     auto call = sipaccount->newIncomingCall(Manager::instance().getNewCallID());
 
-    // FIXME : for now, use the same address family as the SIP tranport
+    // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(sipaccount->getTransportType());
     IpAddr addrToUse = ip_utils::getInterfaceAddr(sipaccount->getLocalInterface(), family);
 
     // May use the published address as well
     IpAddr addrSdp = sipaccount->isStunEnabled() or (not sipaccount->getPublishedSameasLocal())
                     ? sipaccount->getPublishedIpAddress() : addrToUse;
-
-    pjsip_tpselector tp_sel  = sipaccount->getTransportSelector();
 
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
@@ -307,8 +305,12 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
 
-    //DEBUG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
-    //viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
+    DEBUG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
+    viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
+
+    auto transport = getSIPVoIPLink()->sipTransport->findTransport(rdata->tp_info.transport);
+    if (!transport)
+        transport = sipaccount->getTransport();
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
@@ -317,6 +319,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->setCallMediaLocal(addrToUse);
     call->getLocalSDP().setPublishedIP(addrSdp);
     call->getAudioRtp().initConfig();
+    call->setTransport(transport);
 
     try {
         call->getAudioRtp().initSession();
@@ -381,6 +384,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
+    pjsip_tpselector tp_sel  = SipTransportBroker::getTransportSelector(transport->get());
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         ERROR("Could not set transport for dialog");
         return PJ_FALSE;
@@ -492,11 +496,6 @@ pj_pool_t* SIPVoIPLink::getPool() const
 }
 
 SIPVoIPLink::SIPVoIPLink()
-    : sipTransport()
-#ifdef SFL_VIDEO
-    , keyframeRequestsMutex_()
-    , keyframeRequests_()
-#endif
 {
     DEBUG("creating SIPVoIPLink instance");
 
@@ -522,7 +521,7 @@ SIPVoIPLink::SIPVoIPLink()
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
-    sipTransport.reset(new SipTransport(endpt_, *cp_, *pool_));
+    sipTransport.reset(new SipTransportBroker(endpt_, *cp_, *pool_));
 
     if (!ip_utils::getLocalAddr())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -835,6 +834,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             case PJSIP_SC_REQUEST_PENDING:
             case PJSIP_SC_ADDRESS_INCOMPLETE:
             default:
+                WARN("PJSIP_INV_STATE_DISCONNECTED: %d %d", inv->cause, ev->type);
                 call->onServerFailure();
                 break;
         }
@@ -872,7 +872,7 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     const auto& account = call->getSIPAccount();
 
-    // FIXME : for now, use the same address family as the SIP tranport
+    // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(account.getTransportType());
     IpAddr address = account.getPublishedSameasLocal()
                     ? IpAddr(ip_utils::getInterfaceAddr(account.getLocalInterface(), family))
@@ -1274,19 +1274,3 @@ int SIPVoIPLink::getModId()
 
 void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 { sdp_create_offer_cb(inv, p_offer); }
-
-void
-SIPVoIPLink::loadIP2IPSettings()
-{
-    try {
-        auto account = Manager::instance().getIP2IPAccount();
-        if (!account) {
-            ERROR("No existing IP2IP account");
-            return;
-        }
-        account->doRegister();
-        getSIPVoIPLink()->sipTransport->createSipTransport((SIPAccount&)*account);
-    } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
-    }
-}
