@@ -57,6 +57,7 @@ struct pjsip_inv_session;
 
 class Sdp;
 class SIPAccountBase;
+class SipTransport;
 
 /**
  * @file sipcall.h
@@ -116,11 +117,19 @@ class SIPCall : public Call
          * The invite session to be reused in case of transfer
          */
         struct InvSessionDeleter { void operator()(pjsip_inv_session*) {} };
-        std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv{};
+        std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv {};
 
         void setCallMediaLocal(const pj_sockaddr& localIP);
 
         void setContactHeader(pj_str_t *contact);
+
+        void setTransport(const std::shared_ptr<SipTransport>& t) {
+            transport_ = t;
+        }
+
+        inline const std::shared_ptr<SipTransport>& getTransport() {
+            return transport_;
+        }
 
         void sendSIPInfo(const char *const body, const char *const subtype);
 
@@ -200,6 +209,13 @@ class SIPCall : public Call
 #endif
 
         /**
+         * Hold the transport used for SIP communication.
+         * Will be different from the account registration transport for
+         * non-IP2IP calls.
+         */
+        std::shared_ptr<SipTransport> transport_ {};
+
+        /**
          * The pool to allocate memory, released once call hang up
          */
         pj_pool_t *pool_;
@@ -209,7 +225,7 @@ class SIPCall : public Call
          */
         std::unique_ptr<Sdp> local_sdp_;
 
-        char contactBuffer_[PJSIP_MAX_URL_SIZE];
+        char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contactHeader_;
 };
 

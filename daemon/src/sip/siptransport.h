@@ -38,6 +38,7 @@
 #endif
 #include "noncopyable.h"
 #include "logger.h"
+#include "sip_utils.h"
 
 #include <pjsip.h>
 #include <pjsip_ua.h>
@@ -53,24 +54,137 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 
 #define DEFAULT_SIP_PORT    5060
 #define DEFAULT_SIP_TLS_PORT 5061
 
 class SIPAccountBase;
 
+struct SipTransportDescr {
+    SipTransportDescr() {}
+    SipTransportDescr(pjsip_transport_type_e t)
+     : type(t), listenerPort(pjsip_transport_get_default_port_for_type(t)) {}
+    SipTransportDescr(pjsip_transport_type_e t, pj_uint16_t port, std::string i)
+     : type(t), listenerPort(port), interface(i) {}
 
-class SipTransport {
+    pjsip_transport_type_e type {PJSIP_TRANSPORT_UNSPECIFIED};
+    pj_uint16_t listenerPort {DEFAULT_SIP_PORT};
+    std::string interface {"default"};
+
+    static inline pjsip_transport_type_e actualType(pjsip_transport_type_e t) {
+        return (t == PJSIP_TRANSPORT_START_OTHER) ? PJSIP_TRANSPORT_UDP : t;
+    }
+
+    inline bool operator==(SipTransportDescr const& o) const {
+        return actualType(type) == actualType(o.type) && listenerPort == o.listenerPort && interface == o.interface;
+    }
+
+    inline bool operator<(SipTransportDescr const& o) const {
+        return actualType(type) < actualType(o.type) || listenerPort < o.listenerPort || std::hash<std::string>()(interface) < std::hash<std::string>()(o.interface);
+    }
+
+    std::string toString() const {
+        std::stringstream ss;
+        ss << "{" << pjsip_transport_get_type_desc(type) << " on " << interface << ":" << listenerPort  << "}";
+        return ss.str();
+    }
+};
+
+struct SipTransport;
+
+struct TlsListener {
+    TlsListener() {}
+    TlsListener(pjsip_tpfactory* f) : listener(f) {}
+    virtual ~TlsListener() {
+        DEBUG("Destroying listener");
+        listener->destroy(listener);
+    }
+    pjsip_tpfactory* get() {
+        return listener;
+    }
+private:
+    NON_COPYABLE(TlsListener);
+    pjsip_tpfactory* listener {nullptr};
+};
+
+typedef std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)> SipTransportStateCallback;
+
+struct SipTransport {
+    SipTransport() {}
+    SipTransport(pjsip_transport* t, const std::shared_ptr<TlsListener>& l = {}) : transport(t), tlsListener(l) {
+        pjsip_transport_add_ref(transport);
+        auto status = pjsip_transport_add_state_listener(transport, &SipTransport::stateCb, this, &statelistener_key);
+        if (status != PJ_SUCCESS) {
+            WARN("Failed to track transport state !");
+            sip_utils::sip_strerror(status);
+        }
+    }
+
+    virtual ~SipTransport() {
+        if (transport) {
+            if (statelistener_key) {
+                pjsip_transport_remove_state_listener(transport, statelistener_key, this);
+                statelistener_key = nullptr;
+            }
+            pjsip_transport_shutdown(transport);
+            pjsip_transport_dec_ref(transport); // ??
+            DEBUG("Destroying transport (refcount: %u)",  pj_atomic_get(transport->ref_cnt));
+            transport = nullptr;
+        }
+    }
+
+    static void stateCb(pjsip_transport*, pjsip_transport_state state, const pjsip_transport_state_info *info)
+    {
+        if (!info || !info->user_data) return;
+        reinterpret_cast<SipTransport*>(info->user_data)->stateCallback(state, info);
+    }
+
+    void stateCallback(pjsip_transport_state state, const pjsip_transport_state_info *info) {
+        WARN("Transport %s -> %d", transport->info, state);
+        for (auto& l : stateListeners)
+            l.second(state, info);
+    }
+
+    pjsip_transport* get() {
+        return transport;
+    }
+
+    void addStateListener(uintptr_t lid, SipTransportStateCallback cb) {
+        stateListeners[lid] = cb;
+    }
+
+    bool removeStateListener(uintptr_t lid) {
+        auto it = stateListeners.find(lid);
+        if (it != stateListeners.end()) {
+            stateListeners.erase(it);
+            return true;
+        }
+        return false;
+    }
+private:
+    NON_COPYABLE(SipTransport);
+    pjsip_transport* transport {nullptr};
+    pjsip_tp_state_listener_key* statelistener_key {nullptr};
+    std::shared_ptr<TlsListener> tlsListener {};
+    std::map<uintptr_t, SipTransportStateCallback> stateListeners {};
+};
+
+/**
+ * Manages the transports and receive callbacks from PJSIP
+ */
+class SipTransportBroker {
     public:
-        SipTransport(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool);
-        ~SipTransport();
+        SipTransportBroker(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool);
+        ~SipTransportBroker();
 
-        /**
-         * General Sip transport creation method according to the
-         * transport type specified in account settings
-         * @param account The account for which a transport must be created.
-         */
-        void createSipTransport(SIPAccountBase &account);
+        std::shared_ptr<SipTransport> getUpdTransport(const SipTransportDescr&);
+
+#if HAVE_TLS
+        std::shared_ptr<TlsListener> getTlsListener(const SipTransportDescr&, const pjsip_tls_setting*);
+
+        std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&, const std::string& remoteSipUri);
+#endif
 
         /**
          * Initialize the transport selector
@@ -101,42 +215,15 @@ class SipTransport {
                 int stunPort, std::string &address, pj_uint16_t &port) const;
 
         /**
-         * Go through the transport list and remove unused ones.
-         */
-        void cleanupTransports();
-
-        /**
          * Call released_cb(success) when transport tp is destroyed, making the
          * socket available for a new similar transport.
          * success is true if the transport is actually released.
          * TODO: make this call non-blocking.
          */
-        void waitForReleased(pjsip_transport* tp, std::function<void(bool)> released_cb);
+        void waitForReleased(const SipTransportDescr& tp, std::function<void(bool)> released_cb);
 
     private:
-        NON_COPYABLE(SipTransport);
-
-#if HAVE_TLS
-        /**
-         * Create a connection oriented TLS transport and register to the specified remote address.
-         * First, initialize the TLS listener sole instance. This means that, for the momment, only one TLS transport
-         * is allowed to be created in the application. Any subsequent account attempting to
-         * register a new using this transport even if new settings are specified.
-         * @param the account that is creating the TLS transport
-         */
-        pjsip_transport *
-        createTlsTransport(SIPAccountBase &account);
-
-        /**
-         * Create The default TLS listener which is global to the application. This means that
-         * only one TLS connection can be established for the momment.
-         * @param the SIPAccount for which we are creating the TLS listener
-         * @param IP protocol version to use, can be pj_AF_INET() or pj_AF_INET6()
-         * @return a pointer to the new listener
-         */
-        pjsip_tpfactory *
-        createTlsListener(SIPAccountBase &account, pj_uint16_t family = pj_AF_UNSPEC());
-#endif
+        NON_COPYABLE(SipTransportBroker);
 
         /**
         * Create SIP UDP transport from account's setting
@@ -144,30 +231,28 @@ class SipTransport {
         * @param IP protocol version to use, can be pj_AF_INET() or pj_AF_INET6()
         * @return a pointer to the new transport
         */
-        pjsip_transport *createUdpTransport(const std::string &interface,
-                                            pj_uint16_t port, pj_uint16_t family = pj_AF_UNSPEC());
-
-        /**
-         * Go through the transport list and remove unused ones.
-         * Returns a list of LOCKED transports that have to be processed and unlocked.
-         */
-        std::vector<pjsip_transport*> _cleanupTransports();
+        std::shared_ptr<SipTransport> createUdpTransport(const SipTransportDescr&);
 
         static void tp_state_callback(pjsip_transport *, pjsip_transport_state, const pjsip_transport_state_info *);
 
         void transportStateChanged(pjsip_transport* tp, pjsip_transport_state state, const pjsip_transport_state_info* info);
 
         /**
-         * UDP Transports are stored in this map in order to retreive them in case
+         * List of transports so we can bubble the events up.
+         */
+        std::map<pjsip_transport*, std::weak_ptr<SipTransport>> transports_ {};
+
+        /**
+         * Transports are stored in this map in order to retreive them in case
          * several accounts would share the same port number.
          */
-        std::map<std::string, pjsip_transport*> transportMap_;
-        std::mutex transportMapMutex_;
-        std::condition_variable transportDestroyedCv_;
+        std::map<SipTransportDescr, pjsip_transport*> udpTransports_ {};
+
+        std::mutex transportMapMutex_ {};
+        std::condition_variable transportDestroyedCv_ {};
 
         pj_caching_pool& cp_;
         pj_pool_t& pool_;
-
         pjsip_endpoint *endpt_;
 };
 
