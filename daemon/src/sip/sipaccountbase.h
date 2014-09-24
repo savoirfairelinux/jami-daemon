@@ -267,10 +267,12 @@ public:
     static void releasePort(uint16_t port);
 
     inline pjsip_transport* getTransport() {
-        return transport_;
+        if (!transport_)
+            return nullptr;
+        return transport_->get();
     }
 
-    virtual void setTransport(pjsip_transport* transport = nullptr, pjsip_tpfactory* lis = nullptr);
+    virtual void setTransport(const std::shared_ptr<SipTransport>& = nullptr);
 
     inline pjsip_transport_type_e getTransportType() const {
         return transportType_;
@@ -280,9 +282,10 @@ public:
      * Shortcut for SipTransport::getTransportSelector(account.getTransport()).
      */
     inline pjsip_tpselector getTransportSelector() {
-        return SipTransport::getTransportSelector(transport_);
+        if (!transport_)
+            return SipTransportBroker::getTransportSelector(nullptr);
+        return SipTransportBroker::getTransportSelector(transport_->get());
     }
-
 
 protected:
     virtual void serialize(YAML::Emitter &out);
@@ -297,10 +300,9 @@ protected:
      */
     std::shared_ptr<SIPVoIPLink> link_;
 
-    /**
-     * Pointer to the transport used by this acccount
-     */
-    pjsip_transport* transport_ {nullptr};
+    std::shared_ptr<SipTransport> transport_ {};
+
+    std::shared_ptr<TlsListener> tlsListener_ {};
 
     /**
      * Transport type used for this sip account. Currently supported types:
@@ -337,11 +339,6 @@ protected:
      * Published port, used only if defined by the user
      */
     pj_uint16_t publishedPort_ {DEFAULT_SIP_PORT};
-
-    /**
-     * If a TLS tranport, pointer to the tls listener.
-     */
-    pjsip_tpfactory* tlsListener_ {nullptr};
 
     /**
      * The global TLS listener port which can be configured through the IP2IP_PROFILE

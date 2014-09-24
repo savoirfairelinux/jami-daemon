@@ -117,7 +117,7 @@ class SIPVoIPLink {
          */
         void createDefaultSipUdpTransport();
 
-        static void loadIP2IPSettings();
+        //static void loadIP2IPSettings();
 
     public:
         static void createSDPOffer(pjsip_inv_session *inv,
@@ -126,7 +126,7 @@ class SIPVoIPLink {
         /**
          * Instance that maintain and manage transport (UDP, TLS)
          */
-        std::unique_ptr<SipTransport> sipTransport;
+        std::unique_ptr<SipTransportBroker> sipTransport {};
 
 #ifdef SFL_VIDEO
         static void enqueueKeyframeRequest(const std::string &callID);
@@ -157,8 +157,8 @@ class SIPVoIPLink {
 #ifdef SFL_VIDEO
         void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
-        std::mutex keyframeRequestsMutex_;
-        std::queue<std::string> keyframeRequests_;
+        std::mutex keyframeRequestsMutex_ {};
+        std::queue<std::string> keyframeRequests_ {};
 #endif
 
         static pj_caching_pool* cp_;
