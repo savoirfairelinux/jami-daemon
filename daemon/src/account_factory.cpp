@@ -204,5 +204,4 @@ void AccountFactory::initIP2IPAccount()
     // cache this often used account using a weak_ptr
     ip2ip_account_ = createAccount(SIPAccount::ACCOUNT_TYPE,
                                    SIPAccount::IP2IP_PROFILE);
-    SIPVoIPLink::loadIP2IPSettings();
 }

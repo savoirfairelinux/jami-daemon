@@ -236,17 +236,11 @@ SIPAccountBase::getAccountDetails() const
 
 
 void
-SIPAccountBase::setTransport(pjsip_transport* transport, pjsip_tpfactory* lis)
+SIPAccountBase::setTransport(const std::shared_ptr<SipTransport>& t)
 {
-    // release old transport
-    if (transport_ && transport_ != transport) {
-        pjsip_transport_dec_ref(transport_);
-    }
-    if (tlsListener_ && tlsListener_ != lis)
-        tlsListener_->destroy(tlsListener_);
-    // set new transport
-    transport_ = transport;
-    tlsListener_ = lis;
+    if (transport_ && t != transport_)
+        DEBUG("Removing transport from account");
+    transport_ = t;
 }
 
 // returns even number in range [lower, upper]
