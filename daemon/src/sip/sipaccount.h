@@ -174,7 +174,7 @@ class SIPAccount : public SIPAccountBase {
          * Build and send SIP unregistration request
          * @param destroy_transport If true, attempt to destroy the transport.
          */
-        void sendUnregister(std::function<void(bool)> cb = std::function<void(bool)>());
+        void sendUnregister();
 
         const pjsip_cred_info* getCredInfo() const {
             return cred_.data();
@@ -405,7 +405,7 @@ class SIPAccount : public SIPAccountBase {
             return keepAliveEnabled_;
         }
 
-        void setTransport(pjsip_transport* transport = nullptr, pjsip_tpfactory* lis = nullptr);
+        virtual void setTransport(const std::shared_ptr<SipTransport>& = nullptr);
 
         /* Returns true if the username and/or hostname match this account */
         MatchRank matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
