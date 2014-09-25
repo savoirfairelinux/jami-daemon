@@ -135,12 +135,12 @@ JackLayer::playback()
     if (urgentSamplesToGet > 0) {
         fillWithUrgent(playbackBuffer_, urgentSamplesToGet);
     } else {
-		if (samplesToGet > 0) {
+        if (samplesToGet > 0) {
             fillWithVoice(playbackBuffer_, samplesToGet);
         } else {
             fillWithToneOrRingtone(playbackBuffer_);
         }
-	}
+    }
 
     playbackFloatBuffer_.resize(playbackBuffer_.frames());
     write(playbackBuffer_, playbackFloatBuffer_);
@@ -158,7 +158,7 @@ JackLayer::capture()
     captureBuffer_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     if (resample) {
-		int outSamples = captureBuffer_.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
+        int outSamples = captureBuffer_.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
         AudioBuffer out(outSamples, mainBufferFormat);
         resampler_.resample(captureBuffer_, out);
         dcblocker_.process(out);
@@ -250,7 +250,7 @@ JackLayer::ringbuffer_worker()
     flushMain();
     flushUrgent();
 
-	while (true) {
+    while (true) {
 
         std::unique_lock<std::mutex> lock(ringbuffer_thread_mutex_);
 
@@ -434,13 +434,13 @@ JackLayer::process_capture(jack_nframes_t frames, void *arg)
         }
     }
 
-	/* Tell the ringbuffer thread there is work to do.  If it is already
-	 * running, the lock will not be available.  We can't wait
-	 * here in the process() thread, but we don't need to signal
-	 * in that case, because the ringbuffer thread will read all the
-	 * data queued before waiting again. */
-	if (context->ringbuffer_thread_mutex_.try_lock()) {
-	    context->data_ready_.notify_one();
+    /* Tell the ringbuffer thread there is work to do.  If it is already
+     * running, the lock will not be available.  We can't wait
+     * here in the process() thread, but we don't need to signal
+     * in that case, because the ringbuffer thread will read all the
+     * data queued before waiting again. */
+    if (context->ringbuffer_thread_mutex_.try_lock()) {
+        context->data_ready_.notify_one();
         context->ringbuffer_thread_mutex_.unlock();
     }
 
