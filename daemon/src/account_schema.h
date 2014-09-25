@@ -44,9 +44,6 @@ static const char *const CONFIG_ACCOUNT_MAILBOX                 = "Account.mailb
 static const char *const CONFIG_ACCOUNT_ENABLE                  = "Account.enable";
 static const char *const CONFIG_ACCOUNT_AUTOANSWER              = "Account.autoAnswer";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE     = "Account.registrationExpire";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS     = "Account.registrationStatus";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_DESC = "Account.registrationDescription";
 static const char *const CONFIG_ACCOUNT_DTMF_TYPE               = "Account.dtmfType";
 static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringtonePath";
 static const char *const CONFIG_RINGTONE_ENABLED                = "Account.ringtoneEnabled";
@@ -102,5 +99,12 @@ static const char *const CONFIG_TLS_VERIFY_SERVER               = "TLS.verifySer
 static const char *const CONFIG_TLS_VERIFY_CLIENT               = "TLS.verifyClient";
 static const char *const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE  = "TLS.requireClientCertificate";
 static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC     = "TLS.negotiationTimeoutSec";
+
+// Volatile parameters
+static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS     = "Account.registrationStatus";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_DESC = "Account.registrationDescription";
+static const char *const CONFIG_TLS_TRANSPORT_STATE_CODE        = "TLS.transportStatusCode";
+static const char *const CONFIG_TLS_TRANSPORT_STATE_DESC        = "TLS.transportStatusDescription";
 
 #endif // ACCOUNT_SCHEMA_H_

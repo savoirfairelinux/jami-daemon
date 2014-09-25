@@ -183,6 +183,7 @@ int DBusClient::initLibrary(int sflphFlags)
         bind(&DBusConfigurationManager::stunStatusFailure, confM, _1),
         bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2),
         bind(&DBusConfigurationManager::sipRegistrationStateChanged, confM, _1, _2, _3),
+        bind(&DBusConfigurationManager::volatileAccountDetailsChanged, confM, _1, _2),
         bind(&DBusConfigurationManager::errorAlert, confM, _1),
     };
 

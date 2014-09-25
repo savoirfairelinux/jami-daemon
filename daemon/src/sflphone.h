@@ -62,6 +62,7 @@ struct sflph_config_ev_handlers
     std::function<void (const std::string& /*account_id*/)> on_stun_status_fail;
     std::function<void (const std::string& /*account_id*/, int /*state*/)> on_registration_state_change;
     std::function<void (const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/)> on_sip_registration_state_change;
+    std::function<void (const std::string& /*account_id*/, std::map<std::string, std::string> /* details */)> on_volatile_details_change;
     std::function<void (int /*alert*/)> on_error;
 };
 

@@ -635,14 +635,11 @@ void ConfigurationManager::sipRegistrationStateChanged(const std::string& accoun
 }
 
 
-void ConfigurationManager::volatileAccountDetailsChanged(const std::string& accountID,  const std::map< std::string, std::string >& details)
+void ConfigurationManager::volatileAccountDetailsChanged(const std::string& accountID)
 {
-#ifdef SFL_PRESENCE
-    
-#endif
-#if HAVE_TLS
-    
-#endif
+    if (evHandlers_.on_volatile_details_change) {
+        evHandlers_.on_volatile_details_change(accountID, Manager::instance().getVolatileAccountDetails(accountID));
+    }
 }
 
 void ConfigurationManager::errorAlert(int alert)

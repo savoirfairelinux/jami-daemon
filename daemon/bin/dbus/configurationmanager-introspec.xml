@@ -554,6 +554,7 @@
            <tp:docstring>
                <p>Account state changed, SFLphone received a notification from registrar.</p>
            </tp:docstring>
+           <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
            <arg type="s" name="accountID" >
                <tp:docstring>
                    The account ID
@@ -571,7 +572,7 @@
            </arg>
        </signal>
 
-       <signal name="volatileAccountDetailsChanged" tp:name-for-bindings="dynamicAccountDetailsChanged">
+       <signal name="volatileAccountDetailsChanged" tp:name-for-bindings="volatileAccountDetailsChanged">
            <arg type="s" name="accountID">
                <tp:docstring>
                    The account ID
