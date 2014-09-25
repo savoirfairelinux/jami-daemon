@@ -116,7 +116,7 @@ echo "Update reference sources"
 git checkout . && git checkout -f master && git pull
 
 # Get the version
-if [ -n $TAG ]; then
+if [ -n "$TAG" ]; then
     CURRENT_RELEASE_TAG_NAME="$TAG"
 else
     CURRENT_RELEASE_TAG_NAME=`git describe --tags --abbrev=0`
