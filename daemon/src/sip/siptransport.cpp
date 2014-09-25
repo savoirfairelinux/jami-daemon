@@ -108,11 +108,12 @@ SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state s
 
         pj_str_t description;
         if (info) {
-            description = pjsip_strerror(info->status,err_msg,128);
+            description = pjsip_strerror(info->status, err_msg, sizeof(err_msg));
         }
 
         WARN("Transport was destroyed: {%s} %.*s",
-            tp->info,info && description.slen>0?description.slen:0, err_msg);
+             tp->info,
+             info && description.slen > 0 ? description.slen : 0, err_msg);
         transportMap_.erase(transport_key++);
         transportDestroyedCv_.notify_all();
     }
