@@ -106,7 +106,7 @@ SipTransport::transportStateChanged(pjsip_transport* tp, pjsip_transport_state s
         char err_msg[128];
         err_msg[0] = '\0';
 
-        pj_str_t description;
+        pj_str_t description = {};
         if (info) {
             description = pjsip_strerror(info->status,err_msg,128);
         }
