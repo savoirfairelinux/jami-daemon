@@ -1,6 +1,6 @@
 %bcond_with video
 Name:           sflphone
-Version:        1.4.1
+Version:        1.4.2
 %if 0%{?nightly}
 %define rel rc%{nightly}
 %define tarball %{name}-%{version}-rc%{nightly}
@@ -277,6 +277,9 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
+* Thu Sep 25 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.2-1
+- Bump version after release
+
 * Fri Sep 12 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.1-5
 - Enable opus
 

@@ -1,6 +1,6 @@
 AC_PREREQ([2.64])
 
-AC_INIT([sflphone],[1.4.1],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
+AC_INIT([sflphone],[1.4.2],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
