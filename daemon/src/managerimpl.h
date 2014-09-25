@@ -429,6 +429,13 @@ class ManagerImpl {
         std::map<std::string, std::string> getAccountDetails(const std::string& accountID) const;
 
         /**
+         * Retrieve volatile details such as recent registration errors
+         * @param accountID The account identifier
+         * @return std::map< std::string, std::string > The account volatile details
+         */
+        std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID) const;
+
+        /**
          * Retrieve details about a given call
          * @param callID	  The account identifier
          * @return std::map< std::string, std::string > The call details
