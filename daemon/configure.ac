@@ -104,9 +104,11 @@ case "${host_os}" in
     ;;
   linux*)
     SYS=linux
+    LDFLAGS+=" -Wl,-Bsymbolic"
     ;;
   darwin*)
     SYS=darwin
+    LDFLAGS+=" -lstdc++"
     ;;
   mingw32*)
     SYS=mingw32
@@ -127,6 +129,8 @@ case "${host_os}" in
     AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
     AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
 
+dnl Make libgcc and libstdc++ static because MinGW needs it.
+    LDFLAGS+="-static -static-libgcc -static-libstdc++"
     LDFLAGS="${LDFLAGS} -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase"
     ac_default_prefix="`pwd`/_win32"
     DESTDIR="`pwd`/_win32/"
