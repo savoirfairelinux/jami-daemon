@@ -30,9 +30,9 @@
  *  as that of the covered work.
  */
 
-#ifndef UNUSED_H_
-#define UNUSED_H_
+#ifndef INTRIN_H_
+#define INTRIN_H_
 
 #define UNUSED __attribute__((__unused__))
 
-#endif // UNUSED_H_
+#endif // INTRIN_H_
