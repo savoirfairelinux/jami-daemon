@@ -251,7 +251,7 @@ class Account : public Serializable {
         /**
          * Set of call's ID attached to the account.
          */
-        std::set<std::string> callIDSet_ = {};
+        std::set<std::string> callIDSet_ = {{}};
 
     protected:
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
