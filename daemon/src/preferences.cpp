@@ -90,12 +90,8 @@ static const char * const URL_SIP_FIELD_KEY = "urlSipField";
 
 // audio preferences
 constexpr const char * const AudioPreference::CONFIG_LABEL;
-#if HAVE_ALSA
 static const char * const ALSAMAP_KEY = "alsa";
-#endif
-#if HAVE_PULSE
 static const char * const PULSEMAP_KEY = "pulse";
-#endif
 static const char * const CARDIN_KEY = "cardIn";
 static const char * const CARDOUT_KEY = "cardOut";
 static const char * const CARDRING_KEY = "cardRing";
