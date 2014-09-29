@@ -12,6 +12,7 @@ DEPS_yaml-cpp = boost-headers $(DEPS_boost-headers)
 
 YAML_CPP_CMAKECONF := -DBUILD_STATIC:BOOL=ON \
                       -DBUILD_SHARED:BOOL=OFF \
+                      -DYAML_CPP_BUILD_TOOLS:BOOL=OFF \
                       -DBoost_INCLUDE_DIR=../../$(HOST)/include \
                       -DBUILD_SHARED_LIBS:BOOL=OFF
 
