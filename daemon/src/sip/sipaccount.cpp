@@ -157,16 +157,6 @@ SIPAccount::~SIPAccount()
 #endif
 }
 
-static void
-updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
-{
-    if (min > 0 and (max > min) and max <= MAX_PORT - 2) {
-        range.first = min;
-        range.second = max;
-    }
-}
-
-
 std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& id)
 {
@@ -667,6 +657,11 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
 void SIPAccount::doRegister()
 {
+    if (not isEnabled()) {
+        WARN("Account must be enabled to register, ignoring");
+        return;
+    }
+
     if (hostname_.length() >= PJ_MAX_HOSTNAME)
         return;
 

@@ -298,8 +298,13 @@ SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_s
 
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
     DEBUG("Creating TLS listener %s on %s...", d.toString().c_str(), listeningAddress.toString(true).c_str());
+#if 0
     DEBUG(" ca_list_file : %s", settings->ca_list_file.ptr);
     DEBUG(" cert_file    : %s", settings->cert_file.ptr);
+    DEBUG(" ciphers_num    : %d", settings->ciphers_num);
+    DEBUG(" verify server %d client %d client_cert %d", settings->verify_server, settings->verify_client, settings->require_client_cert);
+    DEBUG(" reuse_addr    : %d", settings->reuse_addr);
+#endif
 
     pjsip_tpfactory *listener = nullptr;
     const pj_status_t status = pjsip_tls_transport_start2(endpt_, settings, listeningAddress.pjPtr(), nullptr, 1, &listener);
@@ -318,10 +323,13 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
         ERROR("Can't create TLS transport without listener.");
         return nullptr;
     }
+
     static const char SIPS_PREFIX[] = "<sips:";
     size_t sips = remoteSipUri.find(SIPS_PREFIX) + (sizeof SIPS_PREFIX) - 1;
     size_t trns = remoteSipUri.find(";transport");
-    IpAddr remoteAddr = {remoteSipUri.substr(sips, trns-sips)};
+    const std::string remoteHost {remoteSipUri.substr(sips, trns-sips)};
+    IpAddr remoteAddr = {remoteHost};
+    ERROR("getTlsTransport host %s resolved to -> %s", remoteHost.c_str(), remoteAddr.toString(true).c_str());
     if (!remoteAddr)
         return nullptr;
     if (remoteAddr.getPort() == 0)
