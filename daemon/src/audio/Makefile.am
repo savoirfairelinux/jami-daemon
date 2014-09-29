@@ -71,4 +71,5 @@ endif
 
 if BUILD_OPENSL
 libaudio_la_LIBADD += ./opensl/libopensl.la
+libaudio_la_LDFLAGS = -lOpenSLES
 endif
