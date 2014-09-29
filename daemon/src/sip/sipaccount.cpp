@@ -157,16 +157,6 @@ SIPAccount::~SIPAccount()
 #endif
 }
 
-static void
-updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
-{
-    if (min > 0 and (max > min) and max <= MAX_PORT - 2) {
-        range.first = min;
-        range.second = max;
-    }
-}
-
-
 std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& id)
 {
