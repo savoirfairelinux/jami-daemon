@@ -29,7 +29,6 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
-dnl will have to remove this
 LT_INIT
 
 dnl Define C++ as default language
@@ -57,9 +56,7 @@ AC_HEADER_TIME
 AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
 
-
-dnl Check for GNU ccRTP
-PKG_PROG_PKG_CONFIG
+PKG_PROG_PKG_CONFIG()
 
 dnl Check if we are using clang
 AC_MSG_CHECKING([if compiling with clang])
