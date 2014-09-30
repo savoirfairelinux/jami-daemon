@@ -65,7 +65,7 @@ namespace YAML {
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */
 
-class Account : public Serializable {
+class Account : public Serializable, public std::enable_shared_from_this<Account> {
 
     public:
         constexpr static const char *TRUE_STR = "true";
