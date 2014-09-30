@@ -36,7 +36,6 @@
 #include "manager.h"
 #include "client/configurationmanager.h"
 #include "map_utils.h"
-#include "ip_utils.h"
 #include "array_size.h"
 
 #include <pjsip.h>
@@ -299,16 +298,11 @@ SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_s
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const std::string& remoteSipUri)
+SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const IpAddr& remote)
 {
-    if (!l)
+    if (!l || !remote)
         return nullptr;
-    static const char SIPS_PREFIX[] = "<sips:";
-    size_t sips = remoteSipUri.find(SIPS_PREFIX) + (sizeof SIPS_PREFIX) - 1;
-    size_t trns = remoteSipUri.find(";transport");
-    IpAddr remoteAddr = {remoteSipUri.substr(sips, trns-sips)};
-    if (!remoteAddr)
-        return nullptr;
+    IpAddr remoteAddr {remote};
     if (remoteAddr.getPort() == 0)
         remoteAddr.setPort(pjsip_transport_get_default_port_for_type(l->get()->type));
 
