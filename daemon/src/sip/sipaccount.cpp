@@ -506,7 +506,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
-	SIPAccountBase::setAccountDetails(details);
+    SIPAccountBase::setAccountDetails(details);
 
     // SIP specific account settings
     parseString(details, CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
