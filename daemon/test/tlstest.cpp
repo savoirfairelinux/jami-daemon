@@ -42,9 +42,9 @@ void TlsTest::testKey()
 {
     TITLE();
 
-    const char *validKey = "tlsSample/keyonly.pem";
-    const char *validCertWithKey = "tlsSample/certwithkey.pem";
-    const char *corruptedKey = "tlsSample/corruptedkey.pem";
+    const char *validKey = WORKSPACE "tlsSample/keyonly.pem";
+    const char *validCertWithKey = WORKSPACE "tlsSample/certwithkey.pem";
+    const char *corruptedKey = WORKSPACE "tlsSample/corruptedkey.pem";
 
     CPPUNIT_ASSERT(containsPrivateKey(validKey) == 0);
 
@@ -57,10 +57,10 @@ void TlsTest::testCertificate()
 {
     TITLE();
 
-    const char *validCa = "tlsSample/ca.crt";
-    const char *validCertificate = "tlsSample/cert.crt";
-    const char *fakeCertificate = "tlsSample/fake.crt";
-    const char *expiredCertificate = "tlsSample/expired.crt";
+    const char *validCa = WORKSPACE "tlsSample/ca.crt";
+    const char *validCertificate = WORKSPACE "tlsSample/cert.crt";
+    const char *fakeCertificate = WORKSPACE "tlsSample/fake.crt";
+    const char *expiredCertificate = WORKSPACE "tlsSample/expired.crt";
 
     CPPUNIT_ASSERT(certificateIsValid(NULL, validCa) == 0);
 

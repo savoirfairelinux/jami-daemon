@@ -83,6 +83,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		numbercleaner.cpp \
 		fileutils.cpp \
 		threadloop.cpp \
+		ip_utils.h \
 		ip_utils.cpp \
 		utf8_utils.cpp \
 		threadloop.h \
@@ -100,9 +101,11 @@ libsflphone_la_SOURCES = conference.cpp \
 		noncopyable.h \
 		utf8_utils.h \
 		sfl_types.h \
+		intrin.h \
 		array_size.h \
 		account_schema.h \
 		registration_states.h \
 		map_utils.h \
+		rw_mutex.h \
 		sflphone.h \
 		sflphone_api.cpp

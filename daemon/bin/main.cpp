@@ -36,7 +36,7 @@
 #include <getopt.h>
 
 #include "dbus/dbusclient.h"
-#include "src/fileutils.h"
+#include "fileutils.h"
 
 static int sflphFlags = 0;
 static std::unique_ptr<DBusClient> dbusClient;

@@ -38,7 +38,7 @@ libaudio_la_SOURCES = \
 		$(SFL_SPEEXDSP_SRC) \
 		dcblocker.cpp
 
-libaudio_la_CXXFLAGS = -I$(top_srcdir)
+libaudio_la_CXXFLAGS = -I$(top_srcdir)/src
 
 noinst_HEADERS = \
 		audiobuffer.h \

@@ -39,8 +39,8 @@
 #include <pjsip-simple/presence.h>
 #include <pjsip/sip_module.h>
 
-#include "src/noncopyable.h"
-#include "src/array_size.h"
+#include "noncopyable.h"
+#include "array_size.h"
 
 extern pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
 

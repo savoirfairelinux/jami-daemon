@@ -33,19 +33,22 @@ dbusinstance.adaptor.h: instance-introspec.xml Makefile.am
 
 libclient_dbus_la_SOURCES = \
     dbuscallmanager.cpp \
+    dbuscallmanager.h \
     dbusconfigurationmanager.cpp  \
+    dbusconfigurationmanager.h \
     dbusinstance.cpp  \
     dbusclient.cpp \
+    dbusclient.h \
 	dbusinstance.h \
 	dbus_cpp.h \
 	$(BUILT_SOURCES)
 
 if SFL_PRESENCE
-libclient_dbus_la_SOURCES += dbuspresencemanager.cpp
+libclient_dbus_la_SOURCES += dbuspresencemanager.cpp dbuspresencemanager.h
 endif
 
 if SFL_VIDEO
-libclient_dbus_la_SOURCES += dbusvideomanager.cpp
+libclient_dbus_la_SOURCES += dbusvideomanager.cpp dbusvideomanager.h
 endif
 
 libclient_dbus_la_CXXFLAGS = -I../ \
