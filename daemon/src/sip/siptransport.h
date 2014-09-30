@@ -152,6 +152,8 @@ private:
     std::mutex stateListenersMutex_ {};
 };
 
+class IpAddr;
+
 /**
  * Manages the transports and receive callbacks from PJSIP
  */
@@ -166,7 +168,7 @@ public:
 #if HAVE_TLS
     std::shared_ptr<TlsListener> getTlsListener(const SipTransportDescr&, const pjsip_tls_setting*);
 
-    std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&, const std::string& remoteSipUri);
+    std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote);
 #endif
 
     std::shared_ptr<SipTransport> findTransport(pjsip_transport*);

@@ -271,6 +271,8 @@ namespace ip_utils {
     std::vector<IpAddr> getAddrList(const std::string &name, pj_uint16_t family = pj_AF_UNSPEC());
 
     bool haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b);
+
+    std::vector<IpAddr> getLocalNameservers();
 }
 
 #endif // IP_UTILS_H_

@@ -35,6 +35,9 @@
 #include "sip/sip_utils.h"
 
 #include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
+
 #include <netdb.h>
 #include <net/if.h>
 #include <sys/types.h>
@@ -211,6 +214,16 @@ ip_utils::getAllIpInterface()
     }
 
     return ifaceList;
+}
+
+std::vector<IpAddr>
+ip_utils::getLocalNameservers()
+{
+    if (not (_res.options & RES_INIT))
+        res_init();
+    std::vector<IpAddr> res;
+    res.insert(res.end(), _res.nsaddr_list, _res.nsaddr_list + _res.nscount);
+    return res;
 }
 
 bool
