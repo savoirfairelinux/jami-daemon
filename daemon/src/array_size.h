@@ -32,12 +32,12 @@
 #define ARRAY_SIZE_H_
 
 // Returns the number of elements in a, calculated at compile-time
-#define ARRAYSIZE(a) \
+#define SFL_ARRAYSIZE(a) \
       ((sizeof(a) / sizeof(*(a))) / \
          static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
 
 /* Only use this macro with string literals or character arrays, will not work
  * as expected with char pointers */
-#define CONST_PJ_STR(X) {(char *) (X), ARRAYSIZE(X) - 1}
+#define CONST_PJ_STR(X) {(char *) (X), SFL_ARRAYSIZE(X) - 1}
 
 #endif // ARRAY_SIZE_H_
