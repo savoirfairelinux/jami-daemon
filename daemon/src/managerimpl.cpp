@@ -2339,6 +2339,21 @@ ManagerImpl::getAccountDetails(const std::string& accountID) const
     }
 }
 
+std::map<std::string, std::string>
+ManagerImpl::getVolatileAccountDetails(const std::string& accountID) const
+{
+    const auto account = getAccount(accountID);
+
+    if (account) {
+        return account->getVolatileAccountDetails();
+    } else {
+        ERROR("Could not get volatile account details on a non-existing accountID %s", accountID.c_str());
+        // return an empty map since we can't throw an exception to D-Bus
+        return std::map<std::string, std::string>();
+    }
+}
+
+
 // method to reduce the if/else mess.
 // Even better, switch to XML !
 

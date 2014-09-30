@@ -42,6 +42,11 @@ std::map<std::string, std::string> DBusConfigurationManager::getAccountDetails(c
     return sflph_config_get_account_details(accountID);
 }
 
+std::map<std::string, std::string> DBusConfigurationManager::getVolatileAccountDetails(const std::string& accountID)
+{
+    return sflph_config_get_volatile_account_details(accountID);
+}
+
 void DBusConfigurationManager::setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details)
 {
     sflph_config_set_account_details(accountID, details);

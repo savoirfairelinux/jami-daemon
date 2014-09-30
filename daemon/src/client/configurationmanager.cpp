@@ -75,6 +75,13 @@ std::map<std::string, std::string> ConfigurationManager::getAccountDetails(
     return Manager::instance().getAccountDetails(accountID);
 }
 
+
+std::map<std::string, std::string> ConfigurationManager::getVolatileAccountDetails(
+    const std::string& accountID)
+{
+    return Manager::instance().getVolatileAccountDetails(accountID);
+}
+
 std::map<std::string, std::string>
 ConfigurationManager::getTlsSettingsDefault()
 {
@@ -625,6 +632,11 @@ void ConfigurationManager::sipRegistrationStateChanged(const std::string& accoun
     if (evHandlers_.on_sip_registration_state_change) {
         evHandlers_.on_sip_registration_state_change(accountID, state, code);
     }
+}
+
+
+void ConfigurationManager::volatileAccountDetailsChanged(const std::string& accountID,  const std::map< std::string, std::string >& details)
+{
 }
 
 void ConfigurationManager::errorAlert(int alert)
