@@ -341,7 +341,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             CryptoOffer crypto_offer;
             crypto_offer.push_back(std::string(sdpOffer.substr(start, (sdpOffer.size() - start) - 1)));
 
-            const size_t size = ARRAYSIZE(sfl::CryptoSuites);
+            const size_t size = SFL_ARRAYSIZE(sfl::CryptoSuites);
             std::vector<sfl::CryptoSuiteDefinition> localCapabilities(size);
 
             std::copy(sfl::CryptoSuites, sfl::CryptoSuites + size,
@@ -999,7 +999,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     if (!crypto_offer.empty()) {
         std::vector<sfl::CryptoSuiteDefinition> localCapabilities;
 
-        for (size_t i = 0; i < ARRAYSIZE(sfl::CryptoSuites); ++i)
+        for (size_t i = 0; i < SFL_ARRAYSIZE(sfl::CryptoSuites); ++i)
             localCapabilities.push_back(sfl::CryptoSuites[i]);
 
         sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
