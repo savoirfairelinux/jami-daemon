@@ -167,7 +167,7 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 
 void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> &details)
 {
-	Account::setAccountDetails(details);
+    Account::setAccountDetails(details);
 
     parseBool(details, CONFIG_VIDEO_ENABLED, videoEnabled_);
 
