@@ -209,7 +209,7 @@ AudioCodecFactory::scanCodecDirectory()
 #else
         dirToScan.push_back(std::string(progDir) + DIR_SEPARATOR_STR + "audio/codecs/");
 #endif
-	}
+    }
 
     for (size_t i = 0 ; i < dirToScan.size() ; i++) {
         std::string dirStr = dirToScan[i];
