@@ -19,6 +19,7 @@ ucommon: ucommon-$(UCOMMON_VERSION).tar.gz .sum-ucommon
 	$(UNPACK)
 	$(APPLY) $(SRC)/ucommon/extended.patch
 	$(APPLY) $(SRC)/ucommon/usedefines.patch
+	$(APPLY) $(SRC)/ucommon/any-addr-and-overloads.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && env NOCONFIGURE=1 sh autogen.sh
 	$(MOVE)
 
