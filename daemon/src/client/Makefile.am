@@ -23,5 +23,6 @@ libclient_la_SOURCES = client.cpp                \
                        $(VIDEO_SRC)
 
 libclient_la_CXXFLAGS = -I./ \
+                        -I../ \
                         -DPREFIX=\"$(prefix)\" \
                         -DPROGSHAREDIR=\"${datadir}/sflphone\"

@@ -63,11 +63,10 @@ service_DATA = $(service_in_files:.service.in=.service)
 $(service_DATA): $(service_in_files) Makefile
 	sed -e "s|libexec|$(libdir)/sflphone|" $<> $@
 
-EXTRA_DIST = README $(service_in_files) \
+EXTRA_DIST = $(service_in_files) \
 			 callmanager-introspec.xml \
 			 configurationmanager-introspec.xml \
-			 instance-introspec.xml \
-			 org.freedesktop.NetworkManager.xml
+			 instance-introspec.xml
 
 if SFL_PRESENCE
 EXTRA_DIST += presencemanager-introspec.xml

@@ -87,8 +87,8 @@ libsflphone_la_SOURCES = conference.cpp \
 		utf8_utils.cpp \
 		threadloop.h \
 		conference.h \
-		account factory.h \
-		call factory.h \
+		account_factory.h \
+		call_factory.h \
 		preferences.h \
 		managerimpl.h \
 		manager.h \

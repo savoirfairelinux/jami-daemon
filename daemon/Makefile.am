@@ -30,8 +30,8 @@ EXTRA_DIST = m4/libtool.m4 \
 			 m4/ltoptions.m4 \
 			 m4/ltsugar.m4 \
 			 m4/ltversion.m4 \
-			 ../contrib/bootstrap \
-			 ../contrib/src
+			 contrib/bootstrap \
+			 contrib/src
 
 coverage:
 	$(AM_V_at)lcov --directory $(top_builddir) --capture --output-file sflphone-coverage.info
