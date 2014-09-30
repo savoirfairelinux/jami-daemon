@@ -3,7 +3,7 @@
  *  Author : Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
- * 	Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
+ *  Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
  *  Portions Copyright (c) 2004 Wirlab <kphone@wirlab.net>
  *
  *  This program is free software; you can redistribute it and/or modify
