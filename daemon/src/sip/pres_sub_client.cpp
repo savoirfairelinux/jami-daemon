@@ -435,14 +435,14 @@ bool PresSubClient::lock()
             return true;
 
         if (pjsip_dlg_try_inc_lock(dlg_) != PJ_SUCCESS) {
-	    lock_flag_ = 0;
-	    pres_->unlock();
-	    pj_thread_sleep(i/10);
-	    continue;
-	}
+            lock_flag_ = 0;
+            pres_->unlock();
+            pj_thread_sleep(i/10);
+            continue;
+        }
 
         lock_flag_ = PRESENCE_CLIENT_LOCK_FLAG;
-	pres_->unlock();
+        pres_->unlock();
     }
 
     if (lock_flag_ == 0)
@@ -456,10 +456,10 @@ bool PresSubClient::lock()
 void PresSubClient::unlock()
 {
     if (lock_flag_ & PRESENCE_CLIENT_LOCK_FLAG)
-	pjsip_dlg_dec_lock(dlg_);
+        pjsip_dlg_dec_lock(dlg_);
 
     if (lock_flag_ & PRESENCE_LOCK_FLAG)
-	pres_->unlock();
+        pres_->unlock();
 }
 
 bool PresSubClient::unsubscribe()

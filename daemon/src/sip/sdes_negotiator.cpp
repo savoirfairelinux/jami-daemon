@@ -78,9 +78,9 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
 
         keyParamsPattern.reset(new Pattern(
             "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
-            "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)"	 \
-            "(\\|2\\^(?P<lifetime>[0-9]+)\\|"		 \
-            "(?P<mkiValue>[0-9]+)\\:"			 \
+            "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)"     \
+            "(\\|2\\^(?P<lifetime>[0-9]+)\\|"         \
+            "(?P<mkiValue>[0-9]+)\\:"             \
             "(?P<mkiLength>[0-9]{1,3})\\;?)?", true));
 
     } catch (const CompileError& exception) {

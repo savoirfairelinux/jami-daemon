@@ -310,8 +310,8 @@ bool SIPPresence::tryLock()
     pj_status_t status;
     status = pj_mutex_trylock(mutex_);
     if (status == PJ_SUCCESS) {
-	mutex_owner_ = pj_thread_this();
-	++mutex_nesting_level_;
+        mutex_owner_ = pj_thread_this();
+        ++mutex_nesting_level_;
     }
     return status==PJ_SUCCESS;
 }
