@@ -61,7 +61,7 @@ static SipTransportBroker* instance = nullptr;
 constexpr const char* TRANSPORT_STATE_STR[] = {
     "CONNECTED", "DISCONNECTED", "SHUTDOWN", "DESTROY", "UNKNOWN STATE"
 };
-constexpr const size_t TRANSPORT_STATE_SZ = ARRAYSIZE(TRANSPORT_STATE_STR);
+constexpr const size_t TRANSPORT_STATE_SZ = SFL_ARRAYSIZE(TRANSPORT_STATE_STR);
 
 std::string
 SipTransportDescr::toString() const
