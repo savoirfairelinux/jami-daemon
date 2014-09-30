@@ -147,6 +147,7 @@ class SIPAccount : public SIPAccountBase {
          * Initialize the SIP voip link with the account parameters and send registration
          */
         void doRegister();
+        void doRegister_();
 
         /**
          * Send unregistration.
@@ -537,12 +538,17 @@ class SIPAccount : public SIPAccountBase {
         static std::string getLoginName();
 
         /**
+         * Resolved IP of hostname_ (for registration)
+         */
+        IpAddr hostIp_;
+
+        /**
          * The pjsip client registration information
-	 */
+         */
         pjsip_regc *regc_;
 
         /**
-	 * To check if the account is registered
+         * To check if the account is registered
          */
         bool bRegister_;
 
