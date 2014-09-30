@@ -38,6 +38,7 @@
 #endif
 #include "noncopyable.h"
 #include "logger.h"
+#include "ip_utils.h"
 
 #include <pjsip.h>
 #include <pjnath/stun_config.h>
@@ -154,7 +155,7 @@ public:
 #if HAVE_TLS
     std::shared_ptr<TlsListener> getTlsListener(const SipTransportDescr&, const pjsip_tls_setting*);
 
-    std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&, const std::string& remoteSipUri);
+    std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote);
 #endif
 
     /**
