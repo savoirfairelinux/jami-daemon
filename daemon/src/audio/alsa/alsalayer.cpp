@@ -241,16 +241,16 @@ AlsaLayer::stopStream()
  * GCC extension : statement expression
  *
  * ALSA_CALL(function_call, error_string) will:
- * 		call the function
- * 		display an error if the function failed
- * 		return the function return value
+ *  call the function
+ *  display an error if the function failed
+ *  return the function return value
  */
 #define ALSA_CALL(call, error) ({ \
-			int err_code = call; \
-			if (err_code < 0) \
-				ERROR(error ": %s", snd_strerror(err_code)); \
-			err_code; \
-		})
+        int err_code = call; \
+        if (err_code < 0) \
+            ERROR(error ": %s", snd_strerror(err_code)); \
+            err_code; \
+        })
 
 void AlsaLayer::stopCaptureStream()
 {
@@ -325,9 +325,9 @@ void AlsaLayer::preparePlaybackStream()
 bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 {
 #define TRY(call, error) do { \
-		if (ALSA_CALL(call, error) < 0) \
-			return false; \
-	} while(0)
+    if (ALSA_CALL(call, error) < 0) \
+    return false; \
+} while(0)
 
     snd_pcm_hw_params_t *hwparams;
     snd_pcm_hw_params_alloca(&hwparams);
