@@ -351,7 +351,7 @@ AudioCodecFactory::seemsValid(const std::string &lib)
     };
 
     const std::string name(lib.substr(prefix.length(), len));
-    const std::string *end = validCodecs + ARRAYSIZE(validCodecs);
+    const std::string *end = validCodecs + SFL_ARRAYSIZE(validCodecs);
 
     return find(validCodecs, end, name) != end;
 }
