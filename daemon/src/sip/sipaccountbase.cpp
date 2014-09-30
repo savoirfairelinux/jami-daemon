@@ -217,6 +217,7 @@ SIPAccountBase::getAccountDetails() const
     addRangeToDetails(a, CONFIG_ACCOUNT_VIDEO_PORT_MIN, CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
 #endif
 
+    a[CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
     a[CONFIG_LOCAL_INTERFACE] = interface_;
     a[CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
