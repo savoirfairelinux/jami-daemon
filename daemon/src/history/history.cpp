@@ -96,12 +96,12 @@ void History::ensurePath()
 {
     if (path_.empty()) {
 #ifdef __ANDROID__
-		path_ = fileutils::get_home_dir() + DIR_SEPARATOR_STR  + "history";
+        path_ = fileutils::get_home_dir() + DIR_SEPARATOR_STR  + "history";
 #else
         const string userdata = fileutils::get_data_dir();
 
         if (mkdir(userdata.data(), 0755) != 0) {
-            // If directory	creation failed
+            // If directory creation failed
             if (errno != EEXIST) {
                 DEBUG("Cannot create directory: %s", userdata.c_str());
                 strErr();
