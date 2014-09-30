@@ -1300,3 +1300,56 @@ int SIPVoIPLink::getModId()
 
 void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 { sdp_create_offer_cb(inv, p_offer); }
+
+void
+SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
+{
+    if (name.length() >= PJ_MAX_HOSTNAME) {
+        ERROR("Hostname is too long");
+        cb({});
+        return;
+    }
+
+    pjsip_host_info host_info {
+        0, type, {{(char*)name.data(), name.size()}, 0},
+    };
+
+    auto token = std::hash<std::string>()(name + std::to_string(type));
+    {
+        std::lock_guard<std::mutex> lock(resolveMutex_);
+        resolveCallbacks_[token] = [cb](pj_status_t s, const pjsip_server_addresses* r) {
+            try {
+                if (s != PJ_SUCCESS || !r) {
+                    sip_utils::sip_strerror(s);
+                    throw std::runtime_error("Can't resolve address");
+                } else {
+                    std::vector<IpAddr> ips;
+                    ips.reserve(r->count);
+                    for (unsigned i=0; i < r->count; i++)
+                        ips.push_back(r->entry[i].addr);
+                    cb(ips);
+                }
+            } catch (const std::exception& e) {
+                ERROR("Error resolving address: %s", e.what());
+                cb({});
+            }
+        };
+    }
+
+    pjsip_endpt_resolve(endpt_, pool_, &host_info, (void*)token, resolver_callback);
+}
+
+void
+SIPVoIPLink::resolver_callback(pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
+{
+    auto sthis_ = getSIPVoIPLink();
+    auto& this_ = *sthis_;
+    {
+        std::lock_guard<std::mutex> lock(this_.resolveMutex_);
+        auto it = this_.resolveCallbacks_.find((uintptr_t)token);
+        if (it != this_.resolveCallbacks_.end()) {
+            it->second(status, addr);
+            this_.resolveCallbacks_.erase(it);
+        }
+    }
+}
