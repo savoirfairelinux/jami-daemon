@@ -50,7 +50,7 @@ using std::map;
 using std::string;
 
 VideoRtpSession::VideoRtpSession(const string &callID,
-								 const map<string, string> &txArgs) :
+                                 const map<string, string> &txArgs) :
     txArgs_(txArgs), callID_(callID)
 {}
 
@@ -130,7 +130,7 @@ void VideoRtpSession::updateDestination(const string &destination,
 
 void VideoRtpSession::startSender()
 {
-	if (sending_) {
+    if (sending_) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());

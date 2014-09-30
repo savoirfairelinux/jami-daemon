@@ -449,18 +449,18 @@ void VideoEncoder::extractProfileLevelID(const std::string &parameters,
     const unsigned char profile_iop = ((result >> 8) & 0xff);   // xx80xx -> 80
     ctx->level = result & 0xff;                                 // xxxx0d -> 0d
     switch (profile_idc) {
-		case FF_PROFILE_H264_BASELINE:
-			// check constraint_set_1_flag
-			if ((profile_iop & 0x40) >> 6)
-				ctx->profile |= FF_PROFILE_H264_CONSTRAINED;
-			break;
-		case FF_PROFILE_H264_HIGH_10:
-		case FF_PROFILE_H264_HIGH_422:
-		case FF_PROFILE_H264_HIGH_444_PREDICTIVE:
-			// check constraint_set_3_flag
-			if ((profile_iop & 0x10) >> 4)
-				ctx->profile |= FF_PROFILE_H264_INTRA;
-			break;
+        case FF_PROFILE_H264_BASELINE:
+            // check constraint_set_1_flag
+            if ((profile_iop & 0x40) >> 6)
+                ctx->profile |= FF_PROFILE_H264_CONSTRAINED;
+            break;
+        case FF_PROFILE_H264_HIGH_10:
+        case FF_PROFILE_H264_HIGH_422:
+        case FF_PROFILE_H264_HIGH_444_PREDICTIVE:
+            // check constraint_set_3_flag
+            if ((profile_iop & 0x10) >> 4)
+                ctx->profile |= FF_PROFILE_H264_INTRA;
+            break;
     }
     DEBUG("Using profile %x and level %d", ctx->profile, ctx->level);
 }

@@ -66,7 +66,7 @@ addrinfo* udp_resolve_host(const char *node, int service)
     int error;
     char sport[16];
 
-	memset(&hints, 0, sizeof(hints));
+    memset(&hints, 0, sizeof(hints));
     snprintf(sport, sizeof(sport), "%d", service);
 
     hints.ai_socktype = SOCK_DGRAM;
@@ -219,7 +219,7 @@ int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
     socklen_t from_len;
     int len, n;
     struct pollfd p[2] = { {context->rtpHandle_, POLLIN, 0},
-						   {context->rtcpHandle_, POLLIN, 0}};
+                           {context->rtcpHandle_, POLLIN, 0}};
 
     for(;;) {
         if (context->interrupted_) {
