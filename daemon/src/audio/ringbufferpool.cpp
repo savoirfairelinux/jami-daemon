@@ -293,8 +293,8 @@ RingBufferPool::getData(AudioBuffer& buffer, const std::string& call_id)
 
 bool
 RingBufferPool::waitForDataAvailable(const std::string& call_id,
-									 size_t min_frames,
-                                 	 const std::chrono::microseconds& max_wait) const
+                                     size_t min_frames,
+                                     const std::chrono::microseconds& max_wait) const
 {
     std::unique_lock<std::recursive_mutex> lk(stateLock_);
 
