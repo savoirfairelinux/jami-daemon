@@ -189,57 +189,6 @@ sip_utils::getHostFromUri(const std::string& sipUri)
     return hostname;
 }
 
-std::vector<std::string>
-sip_utils::getIPList(const std::string &name)
-{
-    std::vector<std::string> ipList;
-    if (name.empty())
-        return ipList;
-
-    //ERROR("sip_utils::getIPList %s", name.c_str());
-
-    struct addrinfo *result;
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_ADDRCONFIG;
-    /* resolve the domain name into a list of addresses */
-    const int error = getaddrinfo(name.c_str(), nullptr, &hints, &result);
-    if (error != 0) {
-        DEBUG("getaddrinfo on \"%s\" failed: %s", name.c_str(), gai_strerror(error));
-        return ipList;
-    }
-
-    for (struct addrinfo *res = result; res != nullptr; res = res->ai_next) {
-        void *ptr = 0;
-        std::vector<char> addrstr;
-        switch (res->ai_family) {
-            case AF_INET:
-                addrstr.resize(INET_ADDRSTRLEN);
-                ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
-                break;
-            case AF_INET6:
-                addrstr.resize(INET6_ADDRSTRLEN);
-                ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
-                break;
-            default:
-                ERROR("Unexpected address family type, skipping.");
-                continue;
-        }
-        inet_ntop(res->ai_family, ptr, addrstr.data(), addrstr.size());
-        // don't add duplicates, and don't use an std::set because
-        // we want this order preserved.
-        const std::string tmp(addrstr.begin(), addrstr.end());
-        if (std::find(ipList.begin(), ipList.end(), tmp) == ipList.end()) {
-            ipList.push_back(tmp);
-        }
-    }
-
-    freeaddrinfo(result);
-    return ipList;
-}
-
 void
 sip_utils::addContactHeader(const pj_str_t *contact_str, pjsip_tx_data *tdata)
 {
