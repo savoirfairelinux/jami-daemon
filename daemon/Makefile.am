@@ -25,6 +25,10 @@ if SFL_DBUS
 SUBDIRS += bin
 endif
 
+if USE_DHT
+SUBDIRS += tools
+endif
+
 EXTRA_DIST = m4/libtool.m4 \
 			 m4/lt~obsolete.m4 \
 			 m4/ltoptions.m4 \
