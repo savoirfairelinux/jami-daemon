@@ -182,9 +182,10 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         toUri = getToUri(to);
         family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
 
+		// TODO: resolve remote host using SIPVoIPLink::resolveSrvName
         std::shared_ptr<SipTransport> t =
 #if HAVE_TLS
-            isTlsEnabled() ? link_->sipTransport->getTlsTransport(tlsListener_, toUri) :
+            isTlsEnabled() ? link_->sipTransport->getTlsTransport(tlsListener_, IpAddr(sip_utils::getHostFromUri(to))) :
 #endif
             transport_;
         setTransport(t);
@@ -684,22 +685,39 @@ void SIPAccount::doRegister()
         return;
     }
 
-    if (hostname_.length() >= PJ_MAX_HOSTNAME)
+    DEBUG("doRegister %s", hostname_.c_str());
+
+    if (hostname_.empty() || isIP2IP()) {
+        doRegister_();
         return;
+    }
+    link_->resolveSrvName(hostname_, tlsEnable_ ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP, [this](std::vector<IpAddr> host_ips) {
+        if (host_ips.empty()) {
+            ERROR("Can't resolve hostname %s for registration.", hostname_.c_str());
+            setRegistrationState(RegistrationState::ERROR_GENERIC);
+            return;
+        }
+        hostIp_ = host_ips[0];
+        doRegister_();
+    });
+}
 
-    DEBUG("doRegister %s ", hostname_.c_str());
-
-    auto IPs = ip_utils::getAddrList(hostname_);
-    for (const auto& ip : IPs)
-        DEBUG("--- %s ", ip.toString().c_str());
-
-    bool IPv6 = false;
-#if HAVE_IPV6
+void SIPAccount::doRegister_()
+{
+    bool ipv6 = false;
     if (isIP2IP()) {
         DEBUG("doRegister isIP2IP.");
-        IPv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
-    } else if (!IPs.empty())
-        IPv6 = IPs[0].isIpv6();
+#if HAVE_IPV6
+        ipv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
+#endif
+    } else if (!hostIp_) {
+        setRegistrationState(RegistrationState::ERROR_GENERIC);
+        ERROR("Hostname not resolved.");
+        return;
+    }
+#if HAVE_IPV6
+    else
+        ipv6 = hostIp_.isIpv6();
 #endif
 
 #if HAVE_TLS
@@ -711,7 +729,7 @@ void SIPAccount::doRegister()
         // with TLS.
         freeAccount();
 
-        transportType_ = IPv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
+        transportType_ = ipv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
 
         if (!tlsListener_) {
@@ -728,7 +746,7 @@ void SIPAccount::doRegister()
 #endif
     {
         tlsListener_.reset();
-        transportType_ = IPv6 ? PJSIP_TRANSPORT_UDP6  : PJSIP_TRANSPORT_UDP;
+        transportType_ = ipv6 ? PJSIP_TRANSPORT_UDP6  : PJSIP_TRANSPORT_UDP;
     }
 
     // Init STUN settings for this account if the user selected it
@@ -755,7 +773,7 @@ void SIPAccount::doRegister()
         transport_.reset();
 #if HAVE_TLS
         if (isTlsEnabled()) {
-            setTransport(link_->sipTransport->getTlsTransport(tlsListener_, getServerUri()));
+            setTransport(link_->sipTransport->getTlsTransport(tlsListener_, hostIp_));
         } else
 #endif
         {
