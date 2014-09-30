@@ -57,8 +57,6 @@ namespace sip_utils {
 
     std::string getHostFromUri(const std::string& sipUri);
 
-    std::vector<std::string> getIPList(const std::string &name);
-
     void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
 
     void sip_strerror(pj_status_t code);
