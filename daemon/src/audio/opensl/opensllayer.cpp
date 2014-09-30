@@ -265,7 +265,7 @@ OpenSLLayer::initAudioPlayback() const
                                  SL_IID_PLAY};
     const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
-    const unsigned nbInterface = ARRAYSIZE(ids);
+    const unsigned nbInterface = SFL_ARRAYSIZE(ids);
 
     // create audio player
     DEBUG("Create audio player\n");
