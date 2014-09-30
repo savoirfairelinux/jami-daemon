@@ -83,10 +83,6 @@
 #include "pres_sub_server.h"
 #endif
 
-#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <arpa/inet.h>
-#include <resolv.h>
 #include <istream>
 #include <algorithm>
 
@@ -531,6 +527,21 @@ SIPVoIPLink::SIPVoIPLink()
         throw VoipLinkException("UserAgent: Could not initialize memory pool");
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
+
+    auto ns = ip_utils::getLocalNameservers();
+    if (not ns.empty()) {
+        std::vector<pj_str_t> dns_nameservers(ns.size());
+        for (unsigned i=0, n=ns.size(); i<n; i++) {
+            char hbuf[NI_MAXHOST];
+            getnameinfo((sockaddr*)&ns[i], ns[i].getLength(), hbuf, sizeof(hbuf), nullptr, 0, NI_NUMERICHOST);
+            SFL_DBG("Using SIP nameserver: %s", hbuf);
+            pj_strdup2(pool_, &dns_nameservers[i], hbuf);
+        }
+        pj_dns_resolver* resv;
+        TRY(pjsip_endpt_create_resolver(endpt_, &resv));
+        TRY(pj_dns_resolver_set_ns(resv, ns.size(), dns_nameservers.data(), nullptr));
+        TRY(pjsip_endpt_set_resolver(endpt_, resv));
+    }
 
     sipTransport.reset(new SipTransportBroker(endpt_, *cp_, *pool_));
 
@@ -1304,3 +1315,56 @@ int SIPVoIPLink::getModId()
 
 void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 { sdp_create_offer_cb(inv, p_offer); }
+
+void
+SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
+{
+    if (name.length() >= PJ_MAX_HOSTNAME) {
+        SFL_ERR("Hostname is too long");
+        cb({});
+        return;
+    }
+
+    pjsip_host_info host_info {
+        0, type, {{(char*)name.data(), (pj_ssize_t)name.size()}, 0},
+    };
+
+    auto token = std::hash<std::string>()(name + std::to_string(type));
+    {
+        std::lock_guard<std::mutex> lock(resolveMutex_);
+        resolveCallbacks_[token] = [cb](pj_status_t s, const pjsip_server_addresses* r) {
+            try {
+                if (s != PJ_SUCCESS || !r) {
+                    sip_utils::sip_strerror(s);
+                    throw std::runtime_error("Can't resolve address");
+                } else {
+                    std::vector<IpAddr> ips;
+                    ips.reserve(r->count);
+                    for (unsigned i=0; i < r->count; i++)
+                        ips.push_back(r->entry[i].addr);
+                    cb(ips);
+                }
+            } catch (const std::exception& e) {
+                SFL_ERR("Error resolving address: %s", e.what());
+                cb({});
+            }
+        };
+    }
+
+    pjsip_endpt_resolve(endpt_, pool_, &host_info, (void*)token, resolver_callback);
+}
+
+void
+SIPVoIPLink::resolver_callback(pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
+{
+    auto sthis_ = getSIPVoIPLink();
+    auto& this_ = *sthis_;
+    {
+        std::lock_guard<std::mutex> lock(this_.resolveMutex_);
+        auto it = this_.resolveCallbacks_.find((uintptr_t)token);
+        if (it != this_.resolveCallbacks_.end()) {
+            it->second(status, addr);
+            this_.resolveCallbacks_.erase(it);
+        }
+    }
+}

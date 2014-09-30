@@ -489,6 +489,8 @@ class SIPAccount : public SIPAccountBase {
         void onRegister(pjsip_regc_cbparam *param);
 
     private:
+        void doRegister_();
+
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.
          * @param The map containing the account information.
@@ -568,12 +570,17 @@ class SIPAccount : public SIPAccountBase {
         static std::string getLoginName();
 
         /**
+         * Resolved IP of hostname_ (for registration)
+         */
+        IpAddr hostIp_;
+
+        /**
          * The pjsip client registration information
-	 */
+         */
         pjsip_regc *regc_;
 
         /**
-	 * To check if the account is registered
+         * To check if the account is registered
          */
         bool bRegister_;
 
