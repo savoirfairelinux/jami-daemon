@@ -60,8 +60,6 @@
 #define DEFAULT_SIP_PORT    5060
 #define DEFAULT_SIP_TLS_PORT 5061
 
-class SIPAccountBase;
-
 struct SipTransportDescr {
     SipTransportDescr() {}
     SipTransportDescr(pjsip_transport_type_e t)
@@ -91,8 +89,6 @@ struct SipTransportDescr {
         return ss.str();
     }
 };
-
-struct SipTransport;
 
 struct TlsListener {
     TlsListener() {}
@@ -174,7 +170,8 @@ private:
 /**
  * Manages the transports and receive callbacks from PJSIP
  */
-class SipTransportBroker {
+class SipTransportBroker
+{
     public:
         SipTransportBroker(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool);
         ~SipTransportBroker();
@@ -200,7 +197,7 @@ class SipTransportBroker {
         /**
          * This function returns a list of STUN mapped sockets for
          * a given set of socket file descriptors */
-        std::vector<pj_sockaddr> getSTUNAddresses(const SIPAccountBase &account, std::vector<long> &socks) const;
+        std::vector<pj_sockaddr> getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<long> &socks) const;
 
         /**
          * Get the correct address to use (ie advertised) from
