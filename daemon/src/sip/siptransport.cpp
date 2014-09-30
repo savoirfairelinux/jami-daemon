@@ -31,7 +31,6 @@
  */
 
 #include "siptransport.h"
-#include "sipaccount.h"
 #include "sip_utils.h"
 
 #include "manager.h"
@@ -351,13 +350,10 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 #endif
 
 std::vector<pj_sockaddr>
-SipTransportBroker::getSTUNAddresses(const SIPAccountBase &account, std::vector<long> &socketDescriptors) const
+SipTransportBroker::getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<long> &socketDescriptors) const
 {
-    const pj_str_t serverName = account.getStunServerName();
-    const pj_uint16_t port = account.getStunPort();
     const size_t ip_num = socketDescriptors.size();
     pj_sockaddr_in ipv4[ip_num];
-
     pj_status_t ret;
     if ((ret = pjstun_get_mapped_addr(&cp_.factory, socketDescriptors.size(), &socketDescriptors[0],
                     &serverName, port, &serverName, port, ipv4)) != PJ_SUCCESS) {
