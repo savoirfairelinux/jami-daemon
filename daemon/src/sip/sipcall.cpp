@@ -246,7 +246,7 @@ SIPCall::updateSDPFromSTUN()
     std::vector<long> socketDescriptors(getAudioRtp().getSocketDescriptors());
 
     try {
-        std::vector<pj_sockaddr> stunPorts(getSIPVoIPLink()->sipTransport->getSTUNAddresses(account, socketDescriptors));
+        std::vector<pj_sockaddr> stunPorts(getSIPVoIPLink()->sipTransport->getSTUNAddresses(account.getStunServerName(), account.getStunPort(), socketDescriptors));
 
         // FIXME: get video sockets
         //stunPorts.resize(4);
