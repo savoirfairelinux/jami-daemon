@@ -1268,6 +1268,10 @@ ManagerImpl::addStream(const std::string& call_id)
         getRingBufferPool().bindCallID(call_id, RingBufferPool::DEFAULT_ID);
 
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
+        if (!audiodriver_) {
+            ERROR("Audio driver not initialized");
+            return;
+        }
         audiodriver_->flushUrgent();
         audiodriver_->flushMain();
     }
@@ -1921,6 +1925,8 @@ ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 
     if (audiodriver_ and wasStarted)
         audiodriver_->startStream();
+    else
+        ERROR("No audio layer created, possibly built without audio support");
 }
 
 /**
@@ -2654,6 +2660,10 @@ void
 ManagerImpl::startAudioDriverStream()
 {
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
+    if (!audiodriver_) {
+        ERROR("Audio driver not initialized");
+        return;
+    }
     audiodriver_->startStream();
 }
 
