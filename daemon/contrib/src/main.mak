@@ -99,7 +99,7 @@ EXTRA_LDFLAGS += -L$(ANDROID_NDK)/sources/cxx-stl/gnu-libstdc++/4.8/libs/$(ANDRO
 endif
 
 ifdef HAVE_MACOSX
-MIN_OSX_VERSION=10.6
+MIN_OSX_VERSION=10.8
 CC=xcrun cc
 CXX=xcrun c++
 AR=xcrun ar
@@ -107,6 +107,7 @@ LD=xcrun ld
 STRIP=xcrun strip
 RANLIB=xcrun ranlib
 EXTRA_CFLAGS += -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
+EXTRA_CXXFLAGS += -std=c++11 -stdlib=libc+++
 EXTRA_LDFLAGS += -Wl,-syslibroot,$(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -isysroot $(MACOSX_SDK) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
 ifeq ($(ARCH),x86_64)
 EXTRA_CFLAGS += -m64
@@ -166,7 +167,7 @@ cppcheck = $(shell $(CC) $(CFLAGS) -E -dM - < /dev/null | grep -E $(1))
 EXTRA_CFLAGS += -I$(PREFIX)/include
 CPPFLAGS := $(CPPFLAGS) $(EXTRA_CFLAGS)
 CFLAGS := $(CFLAGS) $(EXTRA_CFLAGS) -g
-CXXFLAGS := $(CXXFLAGS) $(EXTRA_CFLAGS) -g
+CXXFLAGS := $(CXXFLAGS) $(EXTRA_CFLAGS) $(EXTRA_CXXFLAGS) -g
 EXTRA_LDFLAGS += -L$(PREFIX)/lib
 LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
 # Do not export those! Use HOSTVARS.

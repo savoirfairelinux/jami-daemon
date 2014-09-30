@@ -58,6 +58,13 @@ AC_CHECK_TYPES([ptrdiff_t])
 
 PKG_PROG_PKG_CONFIG()
 
+dnl On some OS we need static linking
+AS_IF([test -n "${PKG_CONFIG}" ],[
+    AS_IF([test "${SYS}" = "mingw32" -o "${SYS}" = "darwin"],[
+        PKG_CONFIG="${PKG_CONFIG} --static"
+    ])
+])
+
 dnl Check if we are using clang
 AC_MSG_CHECKING([if compiling with clang])
 AC_COMPILE_IFELSE(
@@ -150,11 +157,6 @@ case $host_os in
     linux*)
         # Necessary for linking .a to a .so
         LDFLAGS+=" -Wl,-Bsymbolic"
-    ;;
-    darwin*)
-        # Link with the old C++ ABI
-        # (equivalent to setting minimum osx target to 10.8)
-        LDFLAGS+=" -lstdc++"
     ;;
 esac
 
