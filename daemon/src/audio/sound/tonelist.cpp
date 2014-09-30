@@ -35,10 +35,10 @@
 static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
     {
         // ZID_NORTH_AMERICA
-        "350+440",				//Tone::TONE_DIALTONE
-        "480+620/500,0/500",	//Tone::TONE_BUSY
-        "440+480/2000,0/4000",	//Tone::TONE_RINGTONE
-        "480+620/250,0/250",	//Tone::TONE_CONGESTION
+        "350+440",                // Tone::TONE_DIALTONE
+        "480+620/500,0/500",      // Tone::TONE_BUSY
+        "440+480/2000,0/4000",    // Tone::TONE_RINGTONE
+        "480+620/250,0/250",      // Tone::TONE_CONGESTION
     },
     {
         //ZID_FRANCE
@@ -88,13 +88,13 @@ static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
 TelephoneTone::COUNTRYID
 TelephoneTone::getCountryId(const std::string& countryName)
 {
-    if (countryName == "North America")		    return ZID_NORTH_AMERICA;
-    else if (countryName == "France")		    return ZID_FRANCE;
-    else if (countryName == "Australia")	    return ZID_AUSTRALIA;
-    else if (countryName == "United Kingdom") 	return ZID_UNITED_KINGDOM;
-    else if (countryName == "Spain")			return ZID_SPAIN;
-    else if (countryName == "Italy")			return ZID_ITALY;
-    else if (countryName == "Japan")			return ZID_JAPAN;
+    if (countryName == "North America")         return ZID_NORTH_AMERICA;
+    else if (countryName == "France")           return ZID_FRANCE;
+    else if (countryName == "Australia")        return ZID_AUSTRALIA;
+    else if (countryName == "United Kingdom")   return ZID_UNITED_KINGDOM;
+    else if (countryName == "Spain")            return ZID_SPAIN;
+    else if (countryName == "Italy")            return ZID_ITALY;
+    else if (countryName == "Japan")            return ZID_JAPAN;
     else                                        return ZID_NORTH_AMERICA; // default
 }
 
