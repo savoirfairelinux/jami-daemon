@@ -71,6 +71,25 @@
             </arg>
         </method>
 
+        <method name="getVolatileAccountDetails" tp:name-for-bindings="getVolatileAccountDetails">
+           <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                   The account ID
+               </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" tp:type="String_String_Map" direction="out">
+               <tp:docstring>
+                   Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
+                   Account.registrationStatus            ( Error code, like 200 (OK) or 408 (Timeout) )
+                   Account.registrationStatusDescription ( A technical error message (from PJSIP)     )
+                   Account.lastSuccessfulRegister        ( Timestamp of the last "REGISTERED" event   )
+                   Account.presenceStatus                ( Published presence status                  )
+                   Account.presenceNote                  ( Published presence note (status string)    )
+               </tp:docstring>
+           </arg>
+       </method>
+
         <method name="setAccountDetails" tp:name-for-bindings="setAccountDetails">
             <tp:docstring>
                 Send new account parameters, or account parameters changes, to the core. The hash table is not required to be complete, only the updated parameters may be specified.
@@ -551,6 +570,24 @@
            </arg>
        </signal>
 
+       <signal name="volatileAccountDetailsChanged" tp:name-for-bindings="dynamicAccountDetailsChanged">
+           <arg type="s" name="accountID">
+               <tp:docstring>
+                   The account ID
+               </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
+           <arg type="a{ss}" name="details" tp:type="String_String_Map">
+               <tp:docstring>
+                   Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
+                   Account.registrationStatus            ( Error code, like 200 (OK) or 408 (Timeout) )
+                   Account.registrationStatusDescription ( A technical error message (from PJSIP)     )
+                   Account.lastSuccessfulRegister        ( Timestamp of the last "REGISTERED" event   )
+                   Account.presenceStatus                ( Published presence status                  )
+                   Account.presenceNote                  ( Published presence note (status string)    )
+               </tp:docstring>
+           </arg>
+       </signal>
 
        <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">
            <arg type="s" name="reason">

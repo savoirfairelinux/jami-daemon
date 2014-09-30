@@ -88,6 +88,8 @@ class Account : public Serializable {
 
         virtual std::map<std::string, std::string> getAccountDetails() const;
 
+        virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
+
         /**
          * Load the settings for this account.
          */
