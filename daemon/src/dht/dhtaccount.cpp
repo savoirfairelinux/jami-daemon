@@ -213,7 +213,11 @@ DHTAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call)
     std::string from(getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
-    pj_str_t pjContact(getContactHeader());
+    pj_str_t pjContact;
+    {
+        auto transport = call->getTransport();
+        pjContact = getContactHeader(transport ? transport->get() : nullptr);
+    }
 
     const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
     DEBUG("contact header: %s / %s -> %s",
@@ -591,9 +595,11 @@ std::string DHTAccount::getToUri(const std::string& to) const
 }
 
 pj_str_t
-DHTAccount::getContactHeader()
+DHTAccount::getContactHeader(pjsip_transport* t)
 {
-    if (transport_ == nullptr)
+    if (!t && transport_)
+        t = transport_->get();
+    if (!t)
         ERROR("Transport not created yet");
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
@@ -606,7 +612,7 @@ DHTAccount::getContactHeader()
     std::string address = "dht.invalid";
     pj_uint16_t port = getTlsListenerPort();
 
-    link_->sipTransport->findLocalAddressFromTransport(transport_->get(), transportType, hostname_, address, port);
+    link_->sipTransport->findLocalAddressFromTransport(t, transportType, hostname_, address, port);
 
 #if HAVE_IPV6
     /* Enclose IPv6 address in square brackets */
