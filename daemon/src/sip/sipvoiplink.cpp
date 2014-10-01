@@ -470,7 +470,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         // contactStr must stay in scope as long as tdata
-        const pj_str_t contactStr(account->getContactHeader());
+        const pj_str_t contactStr(account->getContactHeader(transport->get()));
         sip_utils::addContactHeader(&contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
