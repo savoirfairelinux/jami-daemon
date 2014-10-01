@@ -277,7 +277,7 @@ void SIPCall::answer()
             updateSDPFromSTUN();
     }
 
-    pj_str_t contact(account.getContactHeader());
+    pj_str_t contact(account.getContactHeader(transport_ ? transport_->get() : nullptr));
     setContactHeader(&contact);
 
     pjsip_tx_data *tdata;
