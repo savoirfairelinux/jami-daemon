@@ -241,7 +241,7 @@ public:
      * Get the contact header for
      * @return pj_str_t The contact header based on account information
      */
-    virtual pj_str_t getContactHeader() = 0;
+    virtual pj_str_t getContactHeader(pjsip_transport* = nullptr) = 0;
 
     virtual std::string getToUri(const std::string& username) const = 0;
 
