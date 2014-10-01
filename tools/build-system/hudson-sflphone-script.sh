@@ -119,9 +119,11 @@ function build_contrib {
         mkdir -p native
         pushd native
         ../bootstrap
-        # list dependencies which will be added
+        # list dependencies that aren't detected by contrib
         make list
-        make
+        # XXX: only build iax since it's not packaged, we don't want contrib
+        # for anything else
+        make .iax
         popd
     else
         # We're on 1.4.x
