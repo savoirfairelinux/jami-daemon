@@ -71,42 +71,30 @@ decodeBase64(unsigned char *input, int length)
 
 // Fills the array dest with length random bytes
 static void
-bufferFillMasterKey(std::vector<uint8>& dest)
+bufferFillMasterKey(std::vector<uint8_t>& dest)
 {
     DEBUG("Init local master key");
-
-    // Prepare pseudo random generationusing Mersenne Twister
-    std::mt19937 eng;
-    std::uniform_int_distribution<uint8_t> dist(0, 255);
-
-    // Allocate memory for key
-    std::vector<unsigned char> random_key(dest.size());
+    std::uniform_int_distribution<uint8_t> rand_byte(0, 255);
 
     // Fill the key
-    for (size_t i = 0; i < dest.size(); i++)
-        random_key[i] = dist(eng);
-
-    std::copy(random_key.begin(), random_key.end(), dest.begin());
+    {
+        std::random_device rdev;
+        std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
+    }
 }
 
 // Fills the array dest with length random bytes
 static void
-bufferFillMasterSalt(std::vector<uint8>& dest)
+bufferFillMasterSalt(std::vector<uint8_t>& dest)
 {
     DEBUG("Init local master salt");
-
-    // Prepare pseudo random generation using Mersenne Twister
-    std::mt19937 eng;
-    std::uniform_int_distribution<uint8_t> dist(0, 255);
-
-    // Allocate memory for key
-    std::vector<unsigned char> random_key(dest.size());
+    std::uniform_int_distribution<uint8_t> rand_byte(0, 255);
 
     // Fill the key
-    for (size_t i = 0; i < dest.size(); i++)
-        random_key[i] = dist(eng);
-
-    std::copy(random_key.begin(), random_key.end(), dest.begin());
+    {
+        std::random_device rdev;
+        std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
+    }
 }
 
 static const unsigned MAX_MASTER_KEY_LENGTH = 16;
