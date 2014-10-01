@@ -274,7 +274,11 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     std::string from(getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
-    pj_str_t pjContact(getContactHeader());
+    pj_str_t pjContact;
+    {
+        auto transport = call->getTransport();
+        pjContact = getContactHeader(transport ? transport->get() : nullptr);
+    }
 
     const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
     DEBUG("contact header: %s / %s -> %s",
@@ -1257,9 +1261,11 @@ std::string SIPAccount::getServerUri() const
 
 
 pj_str_t
-SIPAccount::getContactHeader()
+SIPAccount::getContactHeader(pjsip_transport* t)
 {
-    if (!transport_)
+    if (!t && transport_)
+        t = transport_->get();
+    if (!t)
         ERROR("Transport not created yet");
 
     if (contact_.slen and contactOverwritten_)
@@ -1276,7 +1282,7 @@ SIPAccount::getContactHeader()
     pj_uint16_t port;
 
     link_->sipTransport->findLocalAddressFromTransport(
-        transport_ ? transport_->get() : nullptr,
+        t,
         transportType,
         hostname_,
         address, port);
@@ -1287,7 +1293,7 @@ SIPAccount::getContactHeader()
         DEBUG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
         link_->sipTransport->findLocalAddressFromSTUN(
-            transport_ ? transport_->get() : nullptr,
+            t,
             &stunServerName_,
             stunPort_,
             address, port);
