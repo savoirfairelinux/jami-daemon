@@ -365,7 +365,7 @@ class SIPAccount : public SIPAccountBase {
          * Get the contact header for
          * @return pj_str_t The contact header based on account information
          */
-        pj_str_t getContactHeader();
+        pj_str_t getContactHeader(pjsip_transport* = nullptr);
 
 
         std::string getServiceRoute() const {
