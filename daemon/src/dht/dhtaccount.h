@@ -150,7 +150,7 @@ class DHTAccount : public SIPAccountBase {
          * Get the contact header for
          * @return pj_str_t The contact header based on account information
          */
-        pj_str_t getContactHeader();
+        pj_str_t getContactHeader(pjsip_transport* = nullptr);
 
         void setReceivedParameter(const std::string &received) {
             receivedParameter_ = received;
