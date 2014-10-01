@@ -1627,14 +1627,14 @@ Dht::periodic(const uint8_t *buf, size_t buflen,
                 bootstrapSearch(sr);
                 sr.done = false;
             }
-            if (not sr.done and sr.step_time + 5 <= now.tv_sec) {
+            if (not sr.done and sr.step_time + 1 <= now.tv_sec) {
                 searchStep(sr);
             }
         }
 
         search_time = 0;
 
-        std::uniform_int_distribution<time_t> time_dis {15, 25};
+        std::uniform_int_distribution<time_t> time_dis {2, 5};
         for (auto& sr : searches) {
             if (!sr.done) {
                 time_t tm = sr.step_time + time_dis(rd);
