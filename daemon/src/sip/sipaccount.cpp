@@ -239,7 +239,7 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
             toUri = getToUri(to);
 
         call->setTransport(transport_);
-        // FIXME : for now, use the same address family as the SIP tranport
+        // FIXME : for now, use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
 
         DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
@@ -312,8 +312,13 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     std::string from(getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
-    pj_str_t pjContact(getContactHeader());
+    auto transport = call->getTransport();
+    if (!transport) {
+        ERROR("Unable to start call without transport");
+        return false;
+    }
 
+    pj_str_t pjContact = getContactHeader(transport->get());
     const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
     DEBUG("contact header: %s / %s -> %s",
           debugContactHeader.c_str(), from.c_str(), toUri.c_str());
@@ -363,7 +368,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    const pjsip_tpselector tp_sel = SipTransportBroker::getTransportSelector(call->getTransport()->get());
+    const pjsip_tpselector tp_sel = SipTransportBroker::getTransportSelector(transport->get());
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         ERROR("Unable to associate transport for invite session dialog");
         return false;
@@ -1370,9 +1375,11 @@ std::string SIPAccount::getServerUri() const
 
 
 pj_str_t
-SIPAccount::getContactHeader()
+SIPAccount::getContactHeader(pjsip_transport* t)
 {
-    if (!transport_)
+    if (!t && transport_)
+        t = transport_->get();
+    if (!t)
         ERROR("Transport not created yet");
 
     if (contact_.slen and contactOverwritten_)
@@ -1389,7 +1396,7 @@ SIPAccount::getContactHeader()
     pj_uint16_t port;
 
     link_->sipTransport->findLocalAddressFromTransport(
-        transport_ ? transport_->get() : nullptr,
+        t,
         transportType,
         hostname_,
         address, port);
@@ -1400,7 +1407,7 @@ SIPAccount::getContactHeader()
         DEBUG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
         link_->sipTransport->findLocalAddressFromSTUN(
-            transport_ ? transport_->get() : nullptr,
+            t,
             &stunServerName_,
             stunPort_,
             address, port);
