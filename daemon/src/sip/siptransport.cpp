@@ -299,6 +299,9 @@ SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_s
     DEBUG("Creating TLS listener %s on %s...", d.toString().c_str(), listeningAddress.toString(true).c_str());
     DEBUG(" ca_list_file : %s", settings->ca_list_file.ptr);
     DEBUG(" cert_file    : %s", settings->cert_file.ptr);
+    DEBUG(" ciphers_num    : %d", settings->ciphers_num);
+    DEBUG(" verify server %d client %d client_cert %d", settings->verify_server, settings->verify_client, settings->require_client_cert);
+    DEBUG(" reuse_addr    : %d", settings->reuse_addr);
 
     pjsip_tpfactory *listener = nullptr;
     const pj_status_t status = pjsip_tls_transport_start2(endpt_, settings, listeningAddress.pjPtr(), nullptr, 1, &listener);
