@@ -574,6 +574,30 @@
            </arg>
        </method>
 
+        <method name="getSupportedCiphers" tp:name-for-bindings="getSupportedCiphers">
+           <tp:added version="2.0.0"/>
+           <tp:docstring>
+                Return a list of supported encryption cypher used to encrypt the
+                SIP stream. The list content depend on the TLS library being used.
+
+                Only SIP account using a server currently support setting custom
+                ciphers. This method also return an empty list if TLS support
+                is disabled in either pjproject or SFLphone.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+                <tp:docstring>
+                    A SIP account id, other account ID will be rejected.
+                </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+               <tp:docstring>
+                   A list of randomly sorted ciphers names. The order may or may
+                   not be significant depending on the SSL library being used.
+               </tp:docstring>
+           </arg>
+       </method>
+
        <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
                    <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="out">

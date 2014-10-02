@@ -295,6 +295,11 @@ class SIPAccount : public SIPAccountBase {
         }
 
         /**
+         * return the array of supported ciphers
+         */
+        std::vector< std::string > getSupportedCiphers() const;
+
+        /**
          * @return pj_uint8_t structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
          * an alternate UDP transport.
@@ -571,6 +576,11 @@ class SIPAccount : public SIPAccountBase {
          * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
          */
         CipherArray ciphers_;
+
+        /**
+         * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
+         */
+        mutable std::vector<std::string> cipherNames_;
 
         /**
          * Determine if STUN public address resolution is required to register this account. In this case a
