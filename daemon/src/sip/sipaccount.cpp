@@ -665,6 +665,13 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     return a;
 }
 
+std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
+{
+    std::map<std::string, std::string> a = SIPAccountBase::getVolatileAccountDetails();
+
+    return a;
+}
+
 void SIPAccount::doRegister()
 {
     if (hostname_.length() >= PJ_MAX_HOSTNAME)
