@@ -1325,6 +1325,24 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
     return result;
 }
 
+std::vector< std::string >
+SIPAccount::getSupportedCiphers()
+{
+    std::vector<std::string> ret;
+
+    //LIMITATION Assume the size might change, if there is a '0' cipher,
+    //this will cause the cache to be repopulated for nothing.
+    if (ciphers_.size() != ret.size()) {
+        ciphersNames_.clear();
+        ciphersNames_.resize(ciphers_.size());
+        for (const auto &item : ciphers_) {
+            if (item > 0) //0 doesn't have a name
+                ret.push_back(std::string(pj_ssl_cipher_name(item)));
+        }
+    }
+    return ret;
+}
+
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
