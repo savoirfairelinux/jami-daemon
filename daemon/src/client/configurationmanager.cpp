@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -639,8 +639,11 @@ void ConfigurationManager::sipRegistrationStateChanged(const std::string& accoun
 }
 
 
-void ConfigurationManager::volatileAccountDetailsChanged(const std::string& accountID,  const std::map< std::string, std::string >& details)
+void ConfigurationManager::volatileAccountDetailsChanged(const std::string& accountID)
 {
+    if (evHandlers_.on_volatile_details_change) {
+        evHandlers_.on_volatile_details_change(accountID, Manager::instance().getVolatileAccountDetails(accountID));
+    }
 }
 
 void ConfigurationManager::errorAlert(int alert)
