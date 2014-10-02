@@ -63,6 +63,8 @@ class IAXAccount : public Account {
 
         std::map<std::string, std::string> getAccountDetails() const;
 
+        virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
+
         void setNextRefreshStamp(int value) {
             nextRefreshStamp_ = value;
         }
