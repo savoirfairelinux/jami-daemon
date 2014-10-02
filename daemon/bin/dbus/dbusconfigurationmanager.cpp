@@ -97,6 +97,11 @@ std::vector< std::string > DBusConfigurationManager::getSupportedTlsMethod()
     return sflph_config_get_supported_tls_method();
 }
 
+std::vector< std::string > DBusConfigurationManager::getSupportedCiphers(const std::string& accountID)
+{
+    return sflph_config_get_supported_ciphers(accountID);
+}
+
 std::vector< std::string > DBusConfigurationManager::getAudioCodecDetails(const int32_t& payload)
 {
     return sflph_config_get_audio_codec_details(payload);
