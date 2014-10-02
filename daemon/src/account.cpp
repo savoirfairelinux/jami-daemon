@@ -240,6 +240,8 @@ std::map<std::string, std::string> Account::getAccountDetails() const
 
     RegistrationState state(registrationState_);
 
+    //This method should only store user-settable fields
+    //For legacy reasons, the STATUS will be kept for some time
     a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
     a[CONFIG_ACCOUNT_USERAGENT] = hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT;
     a[CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT] = hasCustomUserAgent_ ? TRUE_STR : FALSE_STR;
@@ -247,6 +249,16 @@ std::map<std::string, std::string> Account::getAccountDetails() const
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
 
+    return a;
+}
+
+std::map<std::string, std::string> Account::getVolatileAccountDetails() const
+{
+    std::map<std::string, std::string> a;
+
+    RegistrationState state(registrationState_);
+
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
     return a;
 }
 

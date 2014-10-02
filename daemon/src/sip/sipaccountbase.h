@@ -292,6 +292,12 @@ protected:
     virtual std::map<std::string, std::string> getAccountDetails() const;
 
     /**
+     * Retrieve volatile details such as recent registration errors
+     * @return std::map< std::string, std::string > The account volatile details
+     */
+    virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
+
+    /**
      * Voice over IP Link contains a listener thread and calls
      */
     std::shared_ptr<SIPVoIPLink> link_;

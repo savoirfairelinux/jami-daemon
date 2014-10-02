@@ -123,6 +123,12 @@ class SIPAccount : public SIPAccountBase {
         virtual std::map<std::string, std::string> getAccountDetails() const;
 
         /**
+         * Retrieve volatile details such as recent registration errors
+         * @return std::map< std::string, std::string > The account volatile details
+         */
+        virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
+
+        /**
          * Return the information for the default IP to IP account
          */
         std::map<std::string, std::string> getIp2IpDetails() const;
