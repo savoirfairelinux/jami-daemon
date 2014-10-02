@@ -84,6 +84,13 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
     return a;
 }
 
+std::map<std::string, std::string> IAXAccount::getVolatileAccountDetails() const
+{
+    std::map<std::string, std::string> a = Account::getVolatileAccountDetails();
+
+    return a;
+}
+
 void IAXAccount::doRegister()
 {
     try {

@@ -348,6 +348,11 @@ std::map<std::string, std::string> sflph_config_get_account_details(const std::s
     return getConfigurationManager()->getAccountDetails(account_id);
 }
 
+std::map<std::string, std::string> sflph_config_get_volatile_account_details(const std::string& account_id)
+{
+    return getConfigurationManager()->getVolatileAccountDetails(account_id);
+}
+
 void sflph_config_set_account_details(const std::string& account_id, const std::map<std::string, std::string>& details)
 {
     getConfigurationManager()->setAccountDetails(account_id, details);
