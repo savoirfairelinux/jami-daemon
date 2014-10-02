@@ -1,6 +1,6 @@
 # UCOMMON
 UCOMMON_VERSION := 6.1.8
-UCOMMON_URL := https://github.com/dyfet/ucommon/archive/v$(UCOMMON_VERSION).tar.gz
+UCOMMON_URL := $(GNUTELEPHONY)/ucommon/archive/v$(UCOMMON_VERSION).tar.gz
 
 UCOMMON_OPTIONS := --enable-stdcpp --with-pkg-config
 

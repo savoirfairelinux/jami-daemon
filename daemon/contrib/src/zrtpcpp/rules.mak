@@ -1,6 +1,6 @@
 # ZRTPCPP
-ZRTPCPP_VERSION := 2.3.4
-ZRTPCPP_URL := $(GNUTELEPHONY)/libzrtpcpp-$(ZRTPCPP_VERSION).tar.gz
+ZRTPCPP_VERSION := 2.3.3
+ZRTPCPP_URL := $(GNUTELEPHONY)/ZRTPCPP/archive/v$(ZRTPCPP_VERSION).tar.gz
 
 PKGS += zrtpcpp
 ifeq ($(call need_pkg,'libzrtpcpp >= 2.0.0'),)
@@ -20,6 +20,7 @@ $(TARBALLS)/libzrtpcpp-$(ZRTPCPP_VERSION).tar.gz:
 
 zrtpcpp: libzrtpcpp-$(ZRTPCPP_VERSION).tar.gz .sum-zrtpcpp
 	$(UNPACK)
+	mv ZRTPCPP-$(ZRTPCPP_VERSION) libzrtpcpp-$(ZRTPCPP_VERSION)
 	$(APPLY) $(SRC)/zrtpcpp/forcegcrypt.patch
 	$(APPLY) $(SRC)/zrtpcpp/threadcbsupdate.patch
 	$(APPLY) $(SRC)/zrtpcpp/standardheader.patch

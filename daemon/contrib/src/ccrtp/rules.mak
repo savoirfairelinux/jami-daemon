@@ -1,6 +1,6 @@
 # CCRTP
 CCRTP_VERSION := 2.0.9
-CCRTP_URL := $(GNUTELEPHONY)/ccrtp-$(CCRTP_VERSION).tar.gz
+CCRTP_URL := $(GNUTELEPHONY)/ccrtp/archive/v$(CCRTP_VERSION).tar.gz
 
 PKGS += ccrtp
 ifeq ($(call need_pkg,'libccrtp >= 2.0.3'),)
@@ -17,7 +17,7 @@ $(TARBALLS)/ccrtp-$(CCRTP_VERSION).tar.gz:
 ccrtp: ccrtp-$(CCRTP_VERSION).tar.gz .sum-ccrtp
 	$(UNPACK)
 	$(APPLY) $(SRC)/ccrtp/standardheader.patch
-	$(UPDATE_AUTOCONFIG)
+	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && env NOCONFIGURE=1 sh autogen.sh
 	$(MOVE)
 
 .ccrtp: ccrtp
