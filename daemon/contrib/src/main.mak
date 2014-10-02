@@ -24,7 +24,7 @@ VPATH := $(TARBALLS)
 GNU := http://ftp.gnu.org/gnu
 SF := http://heanet.dl.sourceforge.net/sourceforge
 CONTRIB_VIDEOLAN := http://downloads.videolan.org/pub/contrib
-GNUTELEPHONY := http://dev.gnutelephony.org/dist/tarballs
+GNUTELEPHONY := https://github.com/dyfet
 
 #
 # Machine-dependent variables
