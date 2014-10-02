@@ -250,6 +250,13 @@ std::map<std::string, std::string> Account::getAccountDetails() const
     return a;
 }
 
+CipherArray Account::getSupportedCiphers() const
+{
+    // Every account that support encryption one way or another should
+    // re-implement this method
+    return CipherArray();
+}
+
 #ifdef SFL_VIDEO
 static bool
 isPositiveInteger(const string &s)

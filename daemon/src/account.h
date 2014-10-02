@@ -45,6 +45,8 @@
 #include <set>
 #include <stdexcept>
 
+#include <pjsip/sip_transport_tls.h>
+
 class Call;
 
 class VoipLinkException : public std::runtime_error {
@@ -57,6 +59,8 @@ namespace YAML {
     class Emitter;
     class Node;
 }
+
+typedef std::vector<pj_ssl_cipher> CipherArray;
 
 /**
  * @file account.h
@@ -87,6 +91,12 @@ class Account : public Serializable {
         virtual void setAccountDetails(const std::map<std::string, std::string> &details);
 
         virtual std::map<std::string, std::string> getAccountDetails() const;
+
+        /**
+         * Get the supported ciphers array
+         * @return constant account id
+         */
+        virtual CipherArray getSupportedCiphers() const;
 
         /**
          * Load the settings for this account.

@@ -429,6 +429,13 @@ class ManagerImpl {
         std::map<std::string, std::string> getAccountDetails(const std::string& accountID) const;
 
         /**
+         * Retrieve the list of supported encryption ciphers
+         * @param accountID The account identifier
+         * @return std::list<std::string> The list of supported ciphers
+         */
+        std::vector<std::string> getSupportedCiphers(const std::string& accountID) const;
+
+        /**
          * Retrieve details about a given call
          * @param callID	  The account identifier
          * @return std::map< std::string, std::string > The call details

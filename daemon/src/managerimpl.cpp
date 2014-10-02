@@ -2374,6 +2374,29 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
     });
 }
 
+std::vector<std::string>
+ManagerImpl::getSupportedCiphers(const std::string& accountID) const
+{
+    const auto account = getAccount(accountID);
+
+#if HAVE_TLS
+    if (account) {
+        std::vector<std::string> ret;
+        for (const auto &item : account->getSupportedCiphers()) {
+            if (item > 0) //0 doesn't have a name
+                ret.push_back(std::string(pj_ssl_cipher_name(item)));
+        }
+        return ret;
+    } else {
+        ERROR("Could not get supported ciphers account details on a non-existing accountID %s", accountID.c_str());
+        // return an empty map since we can't throw an exception to D-Bus
+#else
+    {
+#endif
+        return std::vector<std::string>();
+    }
+}
+
 std::string
 ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 {
