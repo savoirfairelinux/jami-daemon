@@ -51,8 +51,6 @@
 #include <vector>
 #include <map>
 
-typedef std::vector<pj_ssl_cipher> CipherArray;
-
 namespace Conf {
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
 }
@@ -292,6 +290,13 @@ class SIPAccount : public SIPAccountBase {
 
         pj_str_t getStunServerName() const {
             return stunServerName_;
+        }
+
+        /**
+         * return the array of supported ciphers
+         */
+        virtual CipherArray getSupportedCiphers() const override {
+            return ciphers_;
         }
 
         /**

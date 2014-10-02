@@ -193,6 +193,11 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
     return method;
 }
 
+std::vector<std::string> ConfigurationManager::getSupportedCiphers(const std::string& accoundID)
+{
+    return Manager::instance().getSupportedCiphers(accoundID);
+}
+
 std::vector<std::string> ConfigurationManager::getAudioCodecDetails(int32_t payload)
 {
     std::vector<std::string> result(Manager::instance().audioCodecFactory.getCodecSpecifications(payload));
