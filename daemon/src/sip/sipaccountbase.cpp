@@ -251,6 +251,15 @@ SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip
     }
 }
 
+std::map<std::string, std::string>
+SIPAccountBase::getVolatileAccountDetails() const
+{
+    std::map<std::string, std::string> a = Account::getVolatileAccountDetails();
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
+
+    return a;
+}
+
 void
 SIPAccountBase::setTransport(const std::shared_ptr<SipTransport>& t)
 {

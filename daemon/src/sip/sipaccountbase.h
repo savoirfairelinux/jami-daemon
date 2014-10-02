@@ -294,6 +294,12 @@ protected:
     virtual std::map<std::string, std::string> getAccountDetails() const;
 
     /**
+     * Retrieve volatile details such as recent registration errors
+     * @return std::map< std::string, std::string > The account volatile details
+     */
+    virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
+
+    /**
      * Callback called by the transport layer when the registration
      * transport state changes.
      */
