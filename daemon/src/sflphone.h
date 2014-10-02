@@ -62,6 +62,7 @@ struct sflph_config_ev_handlers
     std::function<void (const std::string& /*account_id*/)> on_stun_status_fail;
     std::function<void (const std::string& /*account_id*/, int /*state*/)> on_registration_state_change;
     std::function<void (const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/)> on_sip_registration_state_change;
+    std::function<void (const std::string& /*account_id*/, std::map<std::string, std::string> /* details */)> on_volatile_details_change;
     std::function<void (int /*alert*/)> on_error;
 };
 
@@ -198,6 +199,7 @@ void sflph_call_send_text_message(const std::string& call_id, const std::string&
 
 /* configuration API */
 std::map<std::string, std::string> sflph_config_get_account_details(const std::string& account_id);
+std::map<std::string, std::string> sflph_config_get_volatile_account_details(const std::string& account_id);
 void sflph_config_set_account_details(const std::string& account_id, const std::map<std::string, std::string>& details);
 std::map<std::string, std::string> sflph_config_get_account_template(void);
 std::string sflph_config_add_account(const std::map<std::string, std::string>& details);
