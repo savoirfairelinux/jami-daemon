@@ -159,9 +159,9 @@ std::string ConfigurationManager::addAccount(const std::map<std::string, std::st
     return Manager::instance().addAccount(details);
 }
 
-void ConfigurationManager::removeAccount(const std::string& accoundID)
+void ConfigurationManager::removeAccount(const std::string& accountID)
 {
-    return Manager::instance().removeAccount(accoundID);
+    return Manager::instance().removeAccount(accountID);
 }
 
 std::vector<std::string> ConfigurationManager::getAccountList()
@@ -191,6 +191,22 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
     method.push_back("SSLv3");
     method.push_back("SSLv23");
     return method;
+}
+
+std::vector<std::string> ConfigurationManager::getSupportedCiphers(const std::string& accountID) const
+{
+#if HAVE_TLS
+    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
+    if (sipaccount) {
+        return sipaccount->getSupportedCiphers();
+    } else {
+        ERROR("Could not get the supported ciphers for the non-existing SIP account: %s",accountID.c_str());
+#else
+    {
+#endif
+        return {};
+    }
+
 }
 
 std::vector<std::string> ConfigurationManager::getAudioCodecDetails(int32_t payload)
