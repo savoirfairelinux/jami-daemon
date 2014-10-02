@@ -294,6 +294,8 @@ class SIPAccount : public SIPAccountBase {
             return stunServerName_;
         }
 
+        std::vector<std::string> getSupportedCiphers() const;
+
         /**
          * @return pj_uint8_t structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
@@ -571,6 +573,12 @@ class SIPAccount : public SIPAccountBase {
          * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
          */
         CipherArray ciphers_;
+
+        /**
+         * Cache human-readable names of supported ciphers
+         * @see ciphers_
+         */
+        mutable std::vector<std::string> cipherNames_ {};
 
         /**
          * Determine if STUN public address resolution is required to register this account. In this case a

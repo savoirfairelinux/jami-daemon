@@ -398,6 +398,11 @@ std::vector<std::string> sflph_config_get_supported_tls_method(void)
     return getConfigurationManager()->getSupportedTlsMethod();
 }
 
+std::vector<std::string> sflph_config_get_supported_ciphers(const std::string& account_id)
+{
+    return getConfigurationManager()->getSupportedCiphers(account_id);
+}
+
 std::vector<std::string> sflph_config_get_audio_codec_details(int payload)
 {
     return getConfigurationManager()->getAudioCodecDetails(payload);
