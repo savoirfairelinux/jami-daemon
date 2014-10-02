@@ -658,6 +658,21 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getVolatileAccountDetails();
+    std::stringstream codestream;
+    codestream << registrationStateDetailed_.first;
+    a[ CONFIG_ACCOUNT_REGISTRATION_STATE_CODE ] = codestream.str();
+    a[ CONFIG_ACCOUNT_REGISTRATION_STATE_DESC ] = registrationStateDetailed_.second;
+
+#ifdef SFL_PRESENCE
+    if (presence_) {
+        a[ CONFIG_PRESENCE_STATUS                 ] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
+        a[ CONFIG_PRESENCE_NOTE                   ] = presence_ ? presence_->getNote() : " ";
+    }
+#endif
+
+#if HAVE_TLS
+    //TODO
+#endif
 
     return a;
 }
@@ -1004,6 +1019,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
         std::string state(description->ptr, description->slen);
 
         Manager::instance().getClient()->getConfigurationManager()->sipRegistrationStateChanged(getAccountID(), state, param->code);
+        Manager::instance().getClient()->getConfigurationManager()->volatileAccountDetailsChanged(getAccountID());
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         setRegistrationStateDetailed(details);
