@@ -138,6 +138,7 @@ void Account::setRegistrationState(RegistrationState state)
         // Notify the client
         ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
         c->registrationStateChanged(accountID_, static_cast<int32_t>(registrationState_));
+        c->volatileAccountDetailsChanged(getAccountID());
     }
 }
 
@@ -256,9 +257,7 @@ std::map<std::string, std::string> Account::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    RegistrationState state(registrationState_);
-
-    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(registrationState_);
     return a;
 }
 
