@@ -76,6 +76,7 @@ class DBusConfigurationManager :
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
         std::map< std::string, std::string > getTlsSettingsDefault();
+        std::vector< std::string > getSupportedCiphers(const std::string& accountID);
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();
         std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
