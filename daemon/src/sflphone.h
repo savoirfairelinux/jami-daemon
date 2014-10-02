@@ -210,6 +210,7 @@ void sflph_config_register_all_accounts(void);
 std::map<std::string, std::string> sflph_config_get_tls_default_settings(void);
 std::vector<int> sflph_config_get_audio_codec_list(void);
 std::vector<std::string> sflph_config_get_supported_tls_method(void);
+std::vector<std::string> sflph_config_get_supported_ciphers(const std::string& account_id);
 std::vector<std::string> sflph_config_get_audio_codec_details(int payload);
 std::vector<int> sflph_config_get_active_audio_codec_list(const std::string& account_id);
 void sflph_config_set_active_audio_codec_list(const std::vector<std::string>& list, const std::string& account_id);
