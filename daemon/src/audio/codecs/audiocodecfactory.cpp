@@ -36,24 +36,23 @@
 #include "config.h"
 #endif
 
-#include <cstdlib>
-#include <dlfcn.h>
-#include <algorithm> // for std::find
-#include <dlfcn.h>
-#include <stdexcept>
-#include <sstream>
-
-#include "audiocodec.h"
 #include "audiocodecfactory.h"
+#include "audiocodec.h"
 #include "fileutils.h"
 #include "array_size.h"
 #include "logger.h"
 
-AudioCodecFactory::AudioCodecFactory() :
-    codecsMap_(), defaultCodecList_(), libCache_(), codecInMemory_()
+#include <dirent.h>
+#include <dlfcn.h>
+
+#include <cstdlib>
+#include <algorithm> // for std::find
+#include <stdexcept>
+#include <sstream>
+
+AudioCodecFactory::AudioCodecFactory()
 {
-    typedef std::vector<sfl::AudioCodec*> AudioCodecVector;
-    AudioCodecVector codecDynamicList(scanCodecDirectory());
+    std::vector<sfl::AudioCodec*> codecDynamicList(scanCodecDirectory());
 
     if (codecDynamicList.empty())
         ERROR("No codecs available");
@@ -77,8 +76,7 @@ AudioCodecFactory::setDefaultOrder()
 std::string
 AudioCodecFactory::getCodecName(int payload) const
 {
-    AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
-
+    auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second->getMimeSubtype();
     else
@@ -89,7 +87,6 @@ std::vector<int32_t>
 AudioCodecFactory::getCodecList() const
 {
     std::vector<int32_t> list;
-
     for (const auto &codec : codecsMap_)
         if (codec.second)
             list.push_back((int32_t) codec.first);
@@ -100,13 +97,12 @@ AudioCodecFactory::getCodecList() const
 sfl::AudioCodec*
 AudioCodecFactory::getCodec(int payload) const
 {
-    AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
-
+    auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second;
     else {
         ERROR("Cannot find codec %i", payload);
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -129,7 +125,7 @@ AudioCodecFactory::getCodec(const std::string &name) const
     }
 
     ERROR("Cannot find codec %s", name.c_str());
-    return NULL;
+    return nullptr;
 }
 
 double
@@ -211,19 +207,16 @@ AudioCodecFactory::scanCodecDirectory()
 #endif
     }
 
-    for (size_t i = 0 ; i < dirToScan.size() ; i++) {
-        std::string dirStr = dirToScan[i];
+    for (const auto& dirStr : dirToScan) {
         DEBUG("Scanning %s to find audio codecs....",  dirStr.c_str());
 
         DIR *dir = opendir(dirStr.c_str());
-
         if (!dir)
             continue;
 
         dirent *dirStruct;
-
         while ((dirStruct = readdir(dir))) {
-            std::string file = dirStruct->d_name ;
+            std::string file = dirStruct->d_name;
 
             if (file == "." or file == "..")
                 continue;
@@ -250,20 +243,18 @@ AudioCodecFactory::loadCodec(const std::string &path)
     // Clear any existing error
     dlerror();
 
-    void * codecHandle = dlopen(path.c_str(), RTLD_NOW);
-
+    void* codecHandle = dlopen(path.c_str(), RTLD_NOW);
     if (!codecHandle) {
         ERROR("%s", dlerror());
-        return NULL;
+        return nullptr;
     }
 
     create_t* createCodec = (create_t*) dlsym(codecHandle, AUDIO_CODEC_ENTRY_SYMBOL);
     const char *error = dlerror();
-
     if (error) {
         ERROR("%s", error);
         dlclose(codecHandle);
-        return NULL;
+        return nullptr;
     }
 
     try {
