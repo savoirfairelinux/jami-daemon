@@ -90,6 +90,14 @@ STRIP := $(HOST)-strip
 endif
 endif
 
+ifdef HAVE_ANDROID
+CC :=  $(HOST)-gcc --sysroot=$(ANDROID_NDK)/platforms/android-9/arch-$(PLATFORM_SHORT_ARCH)
+CXX := $(HOST)-g++ --sysroot=$(ANDROID_NDK)/platforms/android-9/arch-$(PLATFORM_SHORT_ARCH)
+
+#FIXME: configure.sh should already be doing this, and 4.8 should be a variable
+EXTRA_LDFLAGS += -L$(ANDROID_NDK)/sources/cxx-stl/gnu-libstdc++/4.8/libs/$(ANDROID_ABI) -lgnustl_static
+endif
+
 ifdef HAVE_MACOSX
 MIN_OSX_VERSION=10.8
 CC=xcrun cc
