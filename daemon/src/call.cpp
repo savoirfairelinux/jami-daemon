@@ -43,9 +43,7 @@
 #include "call_factory.h"
 
 Call::Call(Account& account, const std::string& id, Call::CallType type)
-    : callMutex_()
-    , id_(id)
-    , confID_()
+    : id_(id)
     , type_(type)
     , account_(account)
 {

@@ -245,17 +245,36 @@ SIPAccountBase::getVolatileAccountDetails() const
 }
 
 void
-SIPAccountBase::setTransport(pjsip_transport* transport, pjsip_tpfactory* lis)
+SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info)
 {
-    // release old transport
-    if (transport_ && transport_ != transport) {
-        pjsip_transport_dec_ref(transport_);
+    DEBUG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
+    if (!SipTransport::isAlive(transport_, state)) {
+        if (info) {
+            char err_msg[128];
+            err_msg[0] = '\0';
+            pj_str_t descr = pj_strerror(info->status, err_msg, sizeof(err_msg));
+            ERROR("Transport disconnected: %.*s", descr.slen, descr.ptr);
+        }
+        setRegistrationState(RegistrationState::ERROR_GENERIC);
+        setTransport();
     }
-    if (tlsListener_ && tlsListener_ != lis)
-        tlsListener_->destroy(tlsListener_);
-    // set new transport
-    transport_ = transport;
-    tlsListener_ = lis;
+}
+
+void
+SIPAccountBase::setTransport(const std::shared_ptr<SipTransport>& t)
+{
+    using namespace std::placeholders;
+    if (t == transport_)
+        return;
+    if (transport_) {
+        DEBUG("Removing transport from account");
+        transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
+    }
+
+    transport_ = t;
+
+    if (transport_)
+        transport_->addStateListener(reinterpret_cast<uintptr_t>(this), std::bind(&SIPAccountBase::onTransportStateChanged, this, _1, _2));
 }
 
 // returns even number in range [lower, upper]
