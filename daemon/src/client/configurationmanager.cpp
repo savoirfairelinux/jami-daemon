@@ -34,10 +34,6 @@
 #include "config.h"
 #endif
 
-#include <cerrno>
-#include <sstream>
-#include <cstring>
-
 #include "configurationmanager.h"
 #include "account_schema.h"
 #include "manager.h"
@@ -50,6 +46,12 @@
 #include "sip/sipaccount.h"
 #include "history/historynamecache.h"
 #include "audio/audiolayer.h"
+
+#include <dirent.h>
+
+#include <cerrno>
+#include <cstring>
+#include <sstream>
 
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
