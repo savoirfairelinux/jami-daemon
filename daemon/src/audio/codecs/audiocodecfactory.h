@@ -33,11 +33,10 @@
 #ifndef __CODEC_DESCRIPTOR_H__
 #define __CODEC_DESCRIPTOR_H__
 
+#include "audiocodec.h"
+
 #include <map>
 #include <vector>
-#include <dirent.h>
-
-#include "audiocodec.h"
 
 /*
  * @file codecdescriptor.h

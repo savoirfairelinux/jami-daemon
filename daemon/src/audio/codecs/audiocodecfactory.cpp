@@ -36,18 +36,19 @@
 #include "config.h"
 #endif
 
-#include <cstdlib>
-#include <dlfcn.h>
-#include <algorithm> // for std::find
-#include <dlfcn.h>
-#include <stdexcept>
-#include <sstream>
-
-#include "audiocodec.h"
 #include "audiocodecfactory.h"
+#include "audiocodec.h"
 #include "fileutils.h"
 #include "array_size.h"
 #include "logger.h"
+
+#include <dirent.h>
+#include <dlfcn.h>
+
+#include <cstdlib>
+#include <algorithm> // for std::find
+#include <stdexcept>
+#include <sstream>
 
 AudioCodecFactory::AudioCodecFactory() :
     codecsMap_(), defaultCodecList_(), libCache_(), codecInMemory_()
