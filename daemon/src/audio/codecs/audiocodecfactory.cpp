@@ -50,11 +50,9 @@
 #include <stdexcept>
 #include <sstream>
 
-AudioCodecFactory::AudioCodecFactory() :
-    codecsMap_(), defaultCodecList_(), libCache_(), codecInMemory_()
+AudioCodecFactory::AudioCodecFactory()
 {
-    typedef std::vector<sfl::AudioCodec*> AudioCodecVector;
-    AudioCodecVector codecDynamicList(scanCodecDirectory());
+    std::vector<sfl::AudioCodec*> codecDynamicList(scanCodecDirectory());
 
     if (codecDynamicList.empty())
         ERROR("No codecs available");
@@ -78,37 +76,30 @@ AudioCodecFactory::setDefaultOrder()
 std::string
 AudioCodecFactory::getCodecName(int payload) const
 {
-    AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
-
+    auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second->getMimeSubtype();
-    else
-        return "";
+    return "";
 }
 
 std::vector<int32_t>
 AudioCodecFactory::getCodecList() const
 {
     std::vector<int32_t> list;
-
     for (const auto &codec : codecsMap_)
         if (codec.second)
             list.push_back((int32_t) codec.first);
-
     return list;
 }
 
 sfl::AudioCodec*
 AudioCodecFactory::getCodec(int payload) const
 {
-    AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
-
+    auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second;
-    else {
-        ERROR("Cannot find codec %i", payload);
-        return NULL;
-    }
+    ERROR("Cannot find codec %i", payload);
+    return nullptr;
 }
 
 sfl::AudioCodec*
@@ -130,41 +121,34 @@ AudioCodecFactory::getCodec(const std::string &name) const
     }
 
     ERROR("Cannot find codec %s", name.c_str());
-    return NULL;
+    return nullptr;
 }
 
 double
 AudioCodecFactory::getBitRate(int payload) const
 {
-    AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
-
+    auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second->getBitRate();
-    else
-        return 0.0;
+    return 0.0;
 }
-
 
 int
 AudioCodecFactory::getSampleRate(int payload) const
 {
-    AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
-
+    auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second->getClockRate();
-    else
-        return 0;
+    return 0;
 }
 
 unsigned
 AudioCodecFactory::getChannels(int payload) const
 {
-    AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
-
+    auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second->getChannels();
-    else
-        return 0;
+    return 0;
 }
 
 void
@@ -212,19 +196,16 @@ AudioCodecFactory::scanCodecDirectory()
 #endif
     }
 
-    for (size_t i = 0 ; i < dirToScan.size() ; i++) {
-        std::string dirStr = dirToScan[i];
+    for (const auto& dirStr : dirToScan) {
         DEBUG("Scanning %s to find audio codecs....",  dirStr.c_str());
 
         DIR *dir = opendir(dirStr.c_str());
-
         if (!dir)
             continue;
 
         dirent *dirStruct;
-
         while ((dirStruct = readdir(dir))) {
-            std::string file = dirStruct->d_name ;
+            std::string file = dirStruct->d_name;
 
             if (file == "." or file == "..")
                 continue;
@@ -251,20 +232,18 @@ AudioCodecFactory::loadCodec(const std::string &path)
     // Clear any existing error
     dlerror();
 
-    void * codecHandle = dlopen(path.c_str(), RTLD_NOW);
-
+    void* codecHandle = dlopen(path.c_str(), RTLD_NOW);
     if (!codecHandle) {
         ERROR("%s", dlerror());
-        return NULL;
+        return nullptr;
     }
 
     create_t* createCodec = (create_t*) dlsym(codecHandle, AUDIO_CODEC_ENTRY_SYMBOL);
     const char *error = dlerror();
-
     if (error) {
         ERROR("%s", error);
         dlclose(codecHandle);
-        return NULL;
+        return nullptr;
     }
 
     try {
@@ -383,7 +362,6 @@ AudioCodecFactory::isCodecLoaded(int payload) const
     for (const auto &codec : codecsMap_)
         if (codec.first == payload)
             return true;
-
     return false;
 }
 
