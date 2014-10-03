@@ -104,8 +104,10 @@ else # !Windows
 LIBAVCONF += --enable-pthreads
 endif
 
-# Build
+# Only build on Linux for now, since no one else has implemented video
+ifdef HAVE_LINUX
 PKGS += libav
+endif
 ifeq ($(call need_pkg,"libavcodec >= 53.5.0 libavformat >= 53.2.0 libswscale libavdevice >= 53.0.0 libavutil >= 51.0.0"),)
 PKGS_FOUND += libav
 endif
