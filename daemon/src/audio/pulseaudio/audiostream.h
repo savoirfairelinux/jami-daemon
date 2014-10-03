@@ -31,10 +31,11 @@
 #ifndef _AUDIO_STREAM_H
 #define _AUDIO_STREAM_H
 
-#include <pulse/pulseaudio.h>
-#include <string>
 #include "noncopyable.h"
 #include "pulselayer.h"
+
+#include <pulse/pulseaudio.h>
+#include <string>
 
 /**
  * This data structure contains the different king of audio streams available

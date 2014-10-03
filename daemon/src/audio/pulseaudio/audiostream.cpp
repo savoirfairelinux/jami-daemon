@@ -122,11 +122,13 @@ AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 
         case PA_STREAM_READY:
             DEBUG("Stream successfully created, connected to %s", pa_stream_get_device_name(s));
+#if 0
             DEBUG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
             DEBUG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
             DEBUG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
             DEBUG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
             DEBUG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
+#endif
             DEBUG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
             break;
 
