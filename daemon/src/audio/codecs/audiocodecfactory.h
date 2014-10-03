@@ -174,23 +174,23 @@ class AudioCodecFactory {
         /**
          * Map the payload of a codec and the object associated ( AudioCodec * )
          */
-        AudioCodecsMap codecsMap_;
+        AudioCodecsMap codecsMap_ {};
 
         /**
          * Vector containing a default order for the codecs
          */
-        std::vector<int> defaultCodecList_;
+        std::vector<int> defaultCodecList_ {};
 
         /**
          * Vector containing the complete name of the codec shared library scanned
          */
-        std::vector<std::string> libCache_;
+        std::vector<std::string> libCache_ {};
 
         /**
          * Vector containing pairs
          * Pair between pointer on function handle and pointer on audiocodec object
          */
-        std::vector<AudioCodecHandlePointer> codecInMemory_;
+        std::vector<AudioCodecHandlePointer> codecInMemory_ {};
 };
 
 #endif // __CODEC_DESCRIPTOR_H__
