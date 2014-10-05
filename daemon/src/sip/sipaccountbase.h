@@ -66,19 +66,6 @@ namespace Conf {
     const char *const PRESENCE_STATUS_KEY = "presenceStatus";
     const char *const PRESENCE_NOTE_KEY = "presenceNote";
 
-    // TODO: write an object to store credential which implement serializable
-    const char *const SRTP_KEY = "srtp";
-    const char *const SRTP_ENABLE_KEY = "enable";
-    const char *const KEY_EXCHANGE_KEY = "keyExchange";
-    const char *const RTP_FALLBACK_KEY = "rtpFallback";
-
-    // TODO: wirte an object to store zrtp params wich implement serializable
-    const char *const ZRTP_KEY = "zrtp";
-    const char *const DISPLAY_SAS_KEY = "displaySas";
-    const char *const DISPLAY_SAS_ONCE_KEY = "displaySasOnce";
-    const char *const HELLO_HASH_ENABLED_KEY = "helloHashEnabled";
-    const char *const NOT_SUPP_WARNING_KEY = "notSuppWarning";
-
     // TODO: write an object to store tls params which implement serializable
     const char *const TLS_KEY = "tls";
     const char *const TLS_PORT_KEY = "tlsPort";
@@ -152,8 +139,12 @@ public:
         return dtmfType_;
     }
 
-    bool isTlsEnabled() const {
-        return tlsEnable_;
+    /**
+     * Determine if TLS is enabled for this account. TLS provides a secured channel for
+     * SIP signalization. It is independant than the media encription provided by SRTP or ZRTP.
+     */
+    virtual bool isTlsEnabled() const {
+        return false;
     }
 
     virtual pjsip_tls_setting * getTlsSetting() {
@@ -238,17 +229,13 @@ public:
         publishedPort_ = port;
     }
 
-    bool getSrtpEnabled() const {
-        return srtpEnabled_;
+    virtual bool getSrtpEnabled() const {
+        return false;
     }
 
-    std::string getSrtpKeyExchange() const {
-        return srtpKeyExchange_;
-    }
+    virtual std::string getSrtpKeyExchange() const = 0;
 
-    bool getSrtpFallback() const {
-        return srtpFallback_;
-    }
+    virtual bool getSrtpFallback() const = 0;
 
     /**
      * Get the contact header for
@@ -287,6 +274,7 @@ public:
 
 protected:
     virtual void serialize(YAML::Emitter &out);
+    virtual void serializeTls(YAML::Emitter &out);
     virtual void unserialize(const YAML::Node &node);
 
     virtual void setAccountDetails(const std::map<std::string, std::string> &details);
@@ -359,31 +347,6 @@ protected:
      * DTMF type used for this account SIPINFO or RTP
      */
     std::string dtmfType_ {OVERRTP_STR};
-
-    /**
-     * Determine if TLS is enabled for this account. TLS provides a secured channel for
-     * SIP signalization. It is independant than the media encription provided by SRTP or ZRTP.
-     */
-    bool tlsEnable_ {false};
-
-    /**
-     * Determine if SRTP is enabled for this account, SRTP and ZRTP are mutually exclusive
-     * This only determine if the media channel is secured. One could only enable TLS
-     * with no secured media channel.
-     */
-    bool srtpEnabled_ {false};
-
-    /**
-     * Specifies the type of key exchange usd for SRTP (sdes/zrtp)
-     */
-    std::string srtpKeyExchange_ {""};
-
-    /**
-     * Determine if the softphone should fallback on non secured media channel if SRTP negotiation fails.
-     * Make sure other SIP endpoints share the same behavior since it could result in encrypted data to be
-     * played through the audio device.
-     */
-    bool srtpFallback_ {};
 
     pj_status_t transportStatus_ {PJSIP_SC_TRYING};
     std::string transportError_ {};
