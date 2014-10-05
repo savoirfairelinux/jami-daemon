@@ -44,8 +44,6 @@
 
 bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
 
-static const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
-
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID), link_(getSIPVoIPLink())
 {}
@@ -108,19 +106,17 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
     out << YAML::Key << PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
     out << YAML::Key << SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
 
-    // srtp submap
-    out << YAML::Key << SRTP_KEY << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << SRTP_ENABLE_KEY << YAML::Value << srtpEnabled_;
-    out << YAML::Key << KEY_EXCHANGE_KEY << YAML::Value << srtpKeyExchange_;
-    out << YAML::Key << RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
-    out << YAML::EndMap;
-
     out << YAML::Key << VIDEO_CODECS_KEY << YAML::Value << videoCodecList_;
     out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
     out << YAML::Key << VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
     out << YAML::Key << VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
 }
 
+void SIPAccountBase::serializeTls(YAML::Emitter &out)
+{
+    using namespace Conf;
+    out << YAML::Key << TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
+}
 
 void SIPAccountBase::unserialize(const YAML::Node &node)
 {
@@ -153,14 +149,9 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 
     parseValue(node, DTMF_TYPE_KEY, dtmfType_);
 
-    // get srtp submap
-    const auto &srtpMap = node[SRTP_KEY];
-    parseValue(srtpMap, SRTP_ENABLE_KEY, srtpEnabled_);
-
-    std::string tmpKey;
-    parseValue(srtpMap, KEY_EXCHANGE_KEY, tmpKey);
-    validate(srtpKeyExchange_, tmpKey, VALID_SRTP_KEY_EXCHANGES);
-    parseValue(srtpMap, RTP_FALLBACK_KEY, srtpFallback_);
+    // get tls submap
+    const auto &tlsMap = node[TLS_KEY];
+    parseValue(tlsMap, TLS_PORT_KEY, tlsListenerPort_);
 
     unserializeRange(node, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
     unserializeRange(node, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_);
@@ -195,12 +186,8 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
 
-    // srtp settings
-    parseBool(details, CONFIG_SRTP_ENABLE, srtpEnabled_);
-    parseBool(details, CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
-    auto iter = details.find(CONFIG_SRTP_KEY_EXCHANGE);
-    if (iter != details.end())
-        validate(srtpKeyExchange_, iter->second, VALID_SRTP_KEY_EXCHANGES);
+    // TLS
+    parseInt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
 }
 
 std::map<std::string, std::string>
@@ -231,9 +218,9 @@ SIPAccountBase::getAccountDetails() const
     publishedport << publishedPort_;
     a[CONFIG_PUBLISHED_PORT] = publishedport.str();
 
-    a[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
+    std::stringstream tlslistenerport;
+    tlslistenerport << tlsListenerPort_;
+    a[CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
     return a;
 }
 
