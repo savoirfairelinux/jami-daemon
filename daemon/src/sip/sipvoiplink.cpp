@@ -43,6 +43,8 @@
 #include "sipaccount.h"
 #include "sip_utils.h"
 
+#include "dht/dhtaccount.h"
+
 #include "call_factory.h"
 
 #include "manager.h"
@@ -231,13 +233,13 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
 
-    auto sipaccount(getSIPVoIPLink()->guessAccount(toUsername, viaHostname, remote_hostname));
-    if (!sipaccount) {
+    auto account(getSIPVoIPLink()->guessAccount(toUsername, viaHostname, remote_hostname));
+    if (!account) {
         ERROR("NULL account");
         return PJ_FALSE;
     }
 
-    const auto& account_id = sipaccount->getAccountID();
+    const auto& account_id = account->getAccountID();
     std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
     pjsip_msg_body *body = rdata->msg_info.msg->body;
 
@@ -271,7 +273,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
         r_sdp = NULL;
 
-    if (sipaccount->getActiveAudioCodecs().empty()) {
+    if (account->getActiveAudioCodecs().empty()) {
         try_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, NULL);
 
         return PJ_FALSE;
@@ -287,19 +289,19 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = sipaccount->newIncomingCall(Manager::instance().getNewCallID());
+    auto call = account->newIncomingCall(Manager::instance().getNewCallID());
 
     // FIXME : for now, use the same address family as the SIP transport
-    auto family = pjsip_transport_type_get_af(sipaccount->getTransportType());
-    IpAddr addrToUse = ip_utils::getInterfaceAddr(sipaccount->getLocalInterface(), family);
+    auto family = pjsip_transport_type_get_af(account->getTransportType());
+    IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
     // May use the published address as well
-    IpAddr addrSdp = sipaccount->isStunEnabled() or (not sipaccount->getPublishedSameasLocal())
-                    ? sipaccount->getPublishedIpAddress() : addrToUse;
+    IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
+                    ? account->getPublishedIpAddress() : addrToUse;
 
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
-    std::string peerNumber(tmp, std::min(length, sizeof tmp));
+    std::string peerNumber(tmp, length);
     sip_utils::stripSipUriPrefix(peerNumber);
 
     if (not remote_user.empty() and not remote_hostname.empty())
@@ -310,7 +312,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     auto transport = getSIPVoIPLink()->sipTransport->findTransport(rdata->tp_info.transport);
     if (!transport) {
-        transport = sipaccount->getTransport();
+        transport = account->getTransport();
         if (!transport) {
             ERROR("No suitable transport to answer this call.");
             return PJ_FALSE;
@@ -335,7 +337,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    if (sipaccount->isStunEnabled())
+    if (account->isStunEnabled())
         call->updateSDPFromSTUN();
 
     if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
@@ -370,7 +372,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    call->getLocalSDP().receiveOffer(r_sdp, sipaccount->getActiveAudioCodecs(), sipaccount->getActiveVideoCodecs());
+    call->getLocalSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -468,7 +470,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         // contactStr must stay in scope as long as tdata
-        const pj_str_t contactStr(sipaccount->getContactHeader());
+        const pj_str_t contactStr(account->getContactHeader());
         sip_utils::addContactHeader(&contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
@@ -636,18 +638,33 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     auto result = std::static_pointer_cast<SIPAccountBase>(Manager::instance().getIP2IPAccount()); // default result
     MatchRank best = MatchRank::NONE;
 
-    for (const auto& sipaccount : Manager::instance().getAllAccounts<SIPAccount>()) {
-        if (!sipaccount)
+    // DHT accounts
+    for (const auto& account : Manager::instance().getAllAccounts<DHTAccount>()) {
+        if (!account)
             continue;
-
-        const MatchRank match(sipaccount->matches(userName, server, endpt_, pool_));
+        const MatchRank match(account->matches(userName, server));
 
         // return right away if this is a full match
         if (match == MatchRank::FULL) {
-            return std::static_pointer_cast<SIPAccountBase>(sipaccount);
+            return account;
         } else if (match > best) {
             best = match;
-            result = sipaccount;
+            result = account;
+        }
+    }
+
+    // SIP accounts
+    for (const auto& account : Manager::instance().getAllAccounts<SIPAccount>()) {
+        if (!account)
+            continue;
+        const MatchRank match(account->matches(userName, server, endpt_, pool_));
+
+        // return right away if this is a full match
+        if (match == MatchRank::FULL) {
+            return account;
+        } else if (match > best) {
+            best = match;
+            result = account;
         }
     }
 
@@ -820,7 +837,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         // After we sent or received a ACK - The connection is established
         call->onAnswered();
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
-        std::string accId(call->getAccountId());
+        //std::string accId(call->getAccountId());
 
         switch (inv->cause) {
                 // The call terminates normally - BYE / CANCEL
