@@ -459,7 +459,7 @@ void DHTAccount::doRegister()
                 break;
             }
         });
-        dht_.put(dht_.getId(), Dht::Value{Dht::Value::Type::Peer, Dht::ServiceAnnouncement(getLocalPort())}, [](bool ok) {
+        dht_.put(dht_.getId(), Dht::Value{Dht::Value::Type::Peer, Dht::ServiceAnnouncement(getTlsListenerPort())}, [](bool ok) {
             DEBUG("Peer announce callback ! %d", ok);
         });
 
