@@ -75,6 +75,8 @@
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
+static const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
+
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
 
 #if HAVE_TLS
@@ -407,19 +409,26 @@ void SIPAccount::serialize(YAML::Emitter &out)
 
     // tls submap
     out << YAML::Key << TLS_KEY << YAML::Value << YAML::BeginMap;
+    SIPAccountBase::serializeTls(out);
+    out << YAML::Key << TLS_ENABLE_KEY << YAML::Value << tlsEnable_;
+    out << YAML::Key << VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient_;
+    out << YAML::Key << VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
+    out << YAML::Key << REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate_;
+    out << YAML::Key << TIMEOUT_KEY << YAML::Value << tlsNegotiationTimeoutSec_;
     out << YAML::Key << CALIST_KEY << YAML::Value << tlsCaListFile_;
     out << YAML::Key << CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
     out << YAML::Key << CIPHERS_KEY << YAML::Value << tlsCiphers_;
-    out << YAML::Key << TLS_ENABLE_KEY << YAML::Value << tlsEnable_;
     out << YAML::Key << METHOD_KEY << YAML::Value << tlsMethod_;
     out << YAML::Key << TLS_PASSWORD_KEY << YAML::Value << tlsPassword_;
     out << YAML::Key << PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile_;
-    out << YAML::Key << REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate_;
     out << YAML::Key << SERVER_KEY << YAML::Value << tlsServerName_;
-    out << YAML::Key << TIMEOUT_KEY << YAML::Value << tlsNegotiationTimeoutSec_;
-    out << YAML::Key << TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
-    out << YAML::Key << VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient_;
-    out << YAML::Key << VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
+    out << YAML::EndMap;
+
+    // srtp submap
+    out << YAML::Key << SRTP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << SRTP_ENABLE_KEY << YAML::Value << srtpEnabled_;
+    out << YAML::Key << KEY_EXCHANGE_KEY << YAML::Value << srtpKeyExchange_;
+    out << YAML::Key << RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
     out << YAML::EndMap;
 
     // zrtp submap
@@ -505,7 +514,6 @@ void SIPAccount::unserialize(const YAML::Node &node)
     const auto &tlsMap = node[TLS_KEY];
 
     parseValue(tlsMap, TLS_ENABLE_KEY, tlsEnable_);
-    parseValue(tlsMap, TLS_PORT_KEY, tlsListenerPort_);
     parseValue(tlsMap, CERTIFICATE_KEY, tlsCertificateFile_);
     parseValue(tlsMap, CALIST_KEY, tlsCaListFile_);
     parseValue(tlsMap, CIPHERS_KEY, tlsCiphers_);
@@ -516,13 +524,21 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     parseValue(tlsMap, TLS_PASSWORD_KEY, tlsPassword_);
     parseValue(tlsMap, PRIVATE_KEY_KEY, tlsPrivateKeyFile_);
-    parseValue(tlsMap, REQUIRE_CERTIF_KEY, tlsRequireClientCertificate_);
     parseValue(tlsMap, SERVER_KEY, tlsServerName_);
+    parseValue(tlsMap, REQUIRE_CERTIF_KEY, tlsRequireClientCertificate_);
     parseValue(tlsMap, VERIFY_CLIENT_KEY, tlsVerifyClient_);
     parseValue(tlsMap, VERIFY_SERVER_KEY, tlsVerifyServer_);
     // FIXME
     parseValue(tlsMap, TIMEOUT_KEY, tlsNegotiationTimeoutSec_);
 
+    // get srtp submap
+    const auto &srtpMap = node[SRTP_KEY];
+    parseValue(srtpMap, SRTP_ENABLE_KEY, srtpEnabled_);
+
+    std::string tmpKey;
+    parseValue(srtpMap, KEY_EXCHANGE_KEY, tmpKey);
+    validate(srtpKeyExchange_, tmpKey, VALID_SRTP_KEY_EXCHANGES);
+    parseValue(srtpMap, RTP_FALLBACK_KEY, srtpFallback_);
 }
 
 template <typename T>
@@ -584,6 +600,17 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseBool(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
     parseBool(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
     parseString(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    parseBool(details, CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
+    parseBool(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    parseBool(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    parseString(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+
+    // srtp settings
+    parseBool(details, CONFIG_SRTP_ENABLE, srtpEnabled_);
+    parseBool(details, CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
+    iter = details.find(CONFIG_SRTP_KEY_EXCHANGE);
+    if (iter != details.end())
+        validate(srtpKeyExchange_, iter->second, VALID_SRTP_KEY_EXCHANGES);
 
     if (credentials_.empty()) { // credentials not set, construct 1 entry
         WARN("No credentials set, inferring them...");
@@ -664,15 +691,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_STUN_SERVER] = stunServer_;
     a[CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? TRUE_STR : FALSE_STR;
 
-    a[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
-
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
-    std::stringstream tlslistenerport;
-    tlslistenerport << tlsListenerPort_;
-    a[CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
     a[CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
     a[CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
@@ -685,6 +704,15 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+
+    a[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
+
+    a[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
 
     return a;
 }
