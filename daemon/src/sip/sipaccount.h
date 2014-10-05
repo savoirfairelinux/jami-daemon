@@ -311,14 +311,6 @@ class SIPAccount : public SIPAccountBase {
 
         /**
          * @return bool Tells if current transport for that
-         * account is set to TLS.
-         */
-        bool isTlsEnabled() const {
-            return tlsEnable_;
-        }
-
-        /**
-         * @return bool Tells if current transport for that
          * account is set to OTHER.
          */
         bool isStunEnabled() const {

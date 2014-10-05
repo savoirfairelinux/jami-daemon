@@ -152,7 +152,7 @@ public:
         return dtmfType_;
     }
 
-    bool isTlsEnabled() const {
+    virtual bool isTlsEnabled() const {
         return tlsEnable_;
     }
 
@@ -238,11 +238,11 @@ public:
         publishedPort_ = port;
     }
 
-    bool getSrtpEnabled() const {
+    virtual bool getSrtpEnabled() const {
         return srtpEnabled_;
     }
 
-    std::string getSrtpKeyExchange() const {
+    virtual std::string getSrtpKeyExchange() const {
         return srtpKeyExchange_;
     }
 
