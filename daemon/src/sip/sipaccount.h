@@ -55,6 +55,19 @@ typedef std::vector<pj_ssl_cipher> CipherArray;
 
 namespace Conf {
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
+
+    // TODO: write an object to store credential which implement serializable
+    const char *const SRTP_KEY = "srtp";
+    const char *const SRTP_ENABLE_KEY = "enable";
+    const char *const KEY_EXCHANGE_KEY = "keyExchange";
+    const char *const RTP_FALLBACK_KEY = "rtpFallback";
+
+    // TODO: wirte an object to store zrtp params wich implement serializable
+    const char *const ZRTP_KEY = "zrtp";
+    const char *const DISPLAY_SAS_KEY = "displaySas";
+    const char *const DISPLAY_SAS_ONCE_KEY = "displaySasOnce";
+    const char *const HELLO_HASH_ENABLED_KEY = "helloHashEnabled";
+    const char *const NOT_SUPP_WARNING_KEY = "notSuppWarning";
 }
 
 namespace YAML {
@@ -311,14 +324,6 @@ class SIPAccount : public SIPAccountBase {
 
         /**
          * @return bool Tells if current transport for that
-         * account is set to TLS.
-         */
-        bool isTlsEnabled() const {
-            return tlsEnable_;
-        }
-
-        /**
-         * @return bool Tells if current transport for that
          * account is set to OTHER.
          */
         bool isStunEnabled() const {
@@ -369,6 +374,21 @@ class SIPAccount : public SIPAccountBase {
 
         bool hasServiceRoute() const { return not serviceRoute_.empty(); }
 
+        virtual bool isTlsEnabled() const {
+            return tlsEnable_;
+        }
+
+        virtual bool getSrtpEnabled() const {
+            return srtpEnabled_;
+        }
+
+        virtual std::string getSrtpKeyExchange() const {
+            return srtpKeyExchange_;
+        }
+
+        virtual bool getSrtpFallback() const {
+            return srtpFallback_;
+        }
 
         bool getZrtpHelloHash() const {
             return zrtpHelloHash_;
@@ -605,11 +625,7 @@ class SIPAccount : public SIPAccountBase {
          */
         pj_uint16_t stunPort_ {PJ_STUN_PORT};
 
-
-
-        /**
-         * Certificate autority file
-         */
+        bool tlsEnable_ {false};
         std::string tlsCaListFile_;
         std::string tlsCertificateFile_;
         std::string tlsPrivateKeyFile_;
@@ -621,6 +637,25 @@ class SIPAccount : public SIPAccountBase {
         bool tlsVerifyClient_;
         bool tlsRequireClientCertificate_;
         std::string tlsNegotiationTimeoutSec_;
+
+        /**
+         * Determine if SRTP is enabled for this account, SRTP and ZRTP are mutually exclusive
+         * This only determine if the media channel is secured. One could only enable TLS
+         * with no secured media channel.
+         */
+        bool srtpEnabled_ {false};
+
+        /**
+         * Specifies the type of key exchange usd for SRTP (sdes/zrtp)
+         */
+        std::string srtpKeyExchange_ {""};
+
+        /**
+         * Determine if the softphone should fallback on non secured media channel if SRTP negotiation fails.
+         * Make sure other SIP endpoints share the same behavior since it could result in encrypted data to be
+         * played through the audio device.
+         */
+        bool srtpFallback_ {};
 
         /**
          * Determine if the SAS sould be displayed on client side. SAS is a 4-charcter string
