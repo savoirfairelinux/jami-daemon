@@ -7,19 +7,19 @@ AC_INIT([sflphone],[1.4.2],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014]])
 AC_REVISION([$Revision$])
 
+dnl Where to find configure files
+AC_CONFIG_SRCDIR(src/sflphone_api.cpp)
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
+
 AM_INIT_AUTOMAKE([-Wno-portability])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR]) # required by automake 1.12
 AC_CONFIG_HEADERS([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
-
-dnl Improve make variable MAKE
-AC_PROG_MAKE_SET
-
-dnl Where to find configure files
-AC_CONFIG_MACRO_DIR([m4])
 
 dnl Check for programs
 AC_PROG_CC
@@ -28,6 +28,76 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+
+dnl
+dnl  Check the operating system
+dnl
+HAVE_WIN64="0"
+HAVE_OSX="0"
+
+case "${host_os}" in
+  "")
+    SYS=unknown
+    ;;
+  linux*)
+    SYS=linux
+    # Necessary for linking .a to a .so
+    LDFLAGS+=" -Wl,-Bsymbolic"
+    ;;
+  darwin*)
+    SYS=darwin
+    ;;
+  mingw32*)
+    SYS=mingw32
+    AC_CHECK_TOOL(WINDRES, windres, :)
+    AC_CHECK_TOOL(OBJCOPY, objcopy, :)
+    AH_TOP([#if defined(_WIN32) && !defined(_WIN32_WINNT)])
+    AH_TOP([# define _WIN32_WINNT 0x0502 /* Windows XP SP2 */])
+    AH_TOP([#endif])
+    AC_DEFINE([_WIN32_IE], 0x0600, [Define to '0x0600' for IE 6.0 (and shell) APIs.])
+    AC_DEFINE([_UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
+    AC_DEFINE([UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
+    AC_DEFINE([_ISOC99_SOURCE], [1], [Extensions to ISO C89 from ISO C99.])
+    AC_DEFINE([_ISOC11_SOURCE], [1], [Extensions to ISO C99 from ISO C11.])
+    AC_DEFINE([_POSIX_SOURCE], [1], [IEEE Std 1003.1.])
+    AC_DEFINE([_POSIX_C_SOURCE], [200809L], [IEEE Std 1003.1.])
+    AC_DEFINE([_XOPEN_SOURCE], [700], [POSIX and XPG 7th edition])
+    AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [XPG things and X/Open Unix extensions.])
+    AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
+    AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
+
+    LDFLAGS="${LDFLAGS} -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase"
+    ac_default_prefix="`pwd`/_win32"
+    DESTDIR="`pwd`/_win32/"
+    AC_SUBST(WINDOWS_ARCH)
+    AC_SUBST(PROGRAMFILES)
+    ;;
+  *)
+    SYS="${host_os}"
+    ;;
+esac
+AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
+AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
+AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
+AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
+AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
+
+dnl Android is linux, but a bit different
+AS_IF([test "$SYS" = linux],[
+    AC_MSG_CHECKING([for an Android system])
+    AC_PREPROC_IFELSE([AC_LANG_PROGRAM(
+        [[#ifndef __ANDROID__
+         # error Not Android
+         #endif
+        ]],[[;]])
+    ],[
+      HAVE_ANDROID="1"
+      AC_MSG_RESULT([yes])
+    ],[
+      AC_MSG_RESULT([no])
+    ])
+])
+AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
 LT_INIT
 
@@ -76,20 +146,6 @@ AC_COMPILE_IFELSE(
 [CLANG=yes], [CLANG=no])
 
 AC_MSG_RESULT([$CLANG])
-
-
-dnl Check if we are compiling for android
-AC_MSG_CHECKING([if compiling for android])
-AC_COMPILE_IFELSE(
-[AC_LANG_PROGRAM([], [[
-#ifndef __ANDROID__
-       not android
-#endif
-]])],
-[ANDROID=yes], [ANDROID=no])
-
-AC_MSG_RESULT([$ANDROID])
-AM_CONDITIONAL([USE_ANDROID], test "x$ANDROID" = "xyes")
 
 dnl
 dnl  Check for the contrib directory
@@ -157,21 +213,12 @@ AS_IF([test -d "${TOOLS_DIR}"], [
   export PATH="${TOOLS_DIR}":$PATH
 ])
 
-#TODO: convert this in proper autoconf/autotool tests
-AC_CANONICAL_HOST
-case $host_os in
-    linux*)
-        # Necessary for linking .a to a .so
-        LDFLAGS+=" -Wl,-Bsymbolic"
-    ;;
-esac
-
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
 
 PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],, AC_MSG_ERROR([yaml-cpp not found]))
 
-if test "x$ANDROID" = "xyes"; then
+if test "${HAVE_ANDROID}" = "1"; then
     dnl Check for OpenSL
     AC_ARG_WITH([opensl],
                 AS_HELP_STRING([--without-opensl],
