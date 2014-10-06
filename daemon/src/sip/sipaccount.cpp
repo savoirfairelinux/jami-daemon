@@ -192,6 +192,14 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         toUri = getToUri(to);
         family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
 
+        std::shared_ptr<SipTransport> t =
+#if HAVE_TLS
+            isTlsEnabled() ? link_->sipTransport->getTlsTransport(tlsListener_, toUri) :
+#endif
+            transport_;
+        setTransport(t);
+        call->setTransport(t);
+
         DEBUG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
     }
     else {
@@ -204,6 +212,7 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         else
             toUri = getToUri(to);
 
+        call->setTransport(transport_);
         // FIXME : for now, use the same address family as the SIP tranport
         family = pjsip_transport_type_get_af(getTransportType());
 
@@ -328,7 +337,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    const pjsip_tpselector tp_sel = getTransportSelector();
+    const pjsip_tpselector tp_sel = SipTransportBroker::getTransportSelector(call->getTransport()->get());
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         ERROR("Unable to associate transport for invite session dialog");
         return false;
@@ -687,9 +696,21 @@ void SIPAccount::doRegister()
 
         transportType_ = IPv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
+
+        if (!tlsListener_) {
+            tlsListener_ = link_->sipTransport->getTlsListener(
+                SipTransportDescr {getTransportType(), getTlsListenerPort(), getLocalInterface()},
+                getTlsSetting());
+            if (!tlsListener_) {
+                setRegistrationState(RegistrationState::ERROR_GENERIC);
+                ERROR("Error creating TLS listener.");
+                return;
+            }
+        }
     } else
 #endif
     {
+        tlsListener_.reset();
         transportType_ = IPv6 ? PJSIP_TRANSPORT_UDP6  : PJSIP_TRANSPORT_UDP;
     }
 
@@ -703,14 +724,36 @@ void SIPAccount::doRegister()
 
     // In our definition of the ip2ip profile (aka Direct IP Calls),
     // no registration should be performed
-    if (isIP2IP())
+    if (isIP2IP()) {
+        // If we use Tls for IP2IP, transports will be created on connection.
+        if (!tlsEnable_)
+            setTransport(link_->sipTransport->getUdpTransport(
+                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
+            ));
         return;
+    }
 
     try {
+        WARN("Creating transport");
+        transport_.reset();
+#if HAVE_TLS
+        if (isTlsEnabled()) {
+            setTransport(link_->sipTransport->getTlsTransport(tlsListener_, getServerUri()));
+        } else
+#endif
+        {
+            setTransport(link_->sipTransport->getUdpTransport(
+                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
+            ));
+        }
+        if (!transport_)
+            throw VoipLinkException("Can't create transport");
+
         sendRegister();
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
+        return;
     }
 
 #ifdef SFL_PRESENCE
@@ -723,6 +766,7 @@ void SIPAccount::doRegister()
 
 void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
 {
+    tlsListener_.reset();
     if (isIP2IP()) {
         if (released_cb)
             released_cb(false);
@@ -730,18 +774,20 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     try {
-        sendUnregister(released_cb);
+        sendUnregister();
     } catch (const VoipLinkException &e) {
         ERROR("doUnregister %s", e.what());
-        setTransport();
-        if (released_cb)
-            released_cb(false);
     }
+
+    // remove the transport from the account
+    if (transport_)
+        setTransport();
+    if (released_cb)
+        released_cb(true);
 }
 
 void SIPAccount::startKeepAliveTimer()
 {
-
     if (isTlsEnabled())
         return;
 
@@ -794,13 +840,6 @@ SIPAccount::sendRegister()
         return;
     }
 
-    try {
-        link_->sipTransport->createSipTransport(*this);
-    } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
-        throw VoipLinkException("Could not create or acquire SIP transport");
-    }
-
     setRegister(true);
     setRegistrationState(RegistrationState::TRYING);
 
@@ -826,10 +865,10 @@ SIPAccount::sendRegister()
             pjsip_host_port *via = getViaAddr();
             DEBUG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
 
-            if (pjsip_regc_set_via_sent_by(regc, via, transport_) != PJ_SUCCESS)
+            if (pjsip_regc_set_via_sent_by(regc, via, transport_->get()) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
         } else if (isStunEnabled()) {
-            if (pjsip_regc_set_via_sent_by(regc, getViaAddr(), transport_) != PJ_SUCCESS)
+            if (pjsip_regc_set_via_sent_by(regc, getViaAddr(), transport_->get()) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
         }
     }
@@ -861,7 +900,7 @@ SIPAccount::sendRegister()
     if (pjsip_regc_register(regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize transaction data for account registration");
 
-    const pjsip_tpselector tp_sel = SipTransport::getTransportSelector(transport_);
+    const pjsip_tpselector tp_sel = getTransportSelector();
     if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
         throw VoipLinkException("Unable to set transport");
 
@@ -872,7 +911,6 @@ SIPAccount::sendRegister()
     }
 
     setRegistrationInfo(regc);
-    link_->sipTransport->cleanupTransports();
 }
 
 void
@@ -972,13 +1010,11 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
 }
 
 void
-SIPAccount::sendUnregister(std::function<void(bool)> released_cb)
+SIPAccount::sendUnregister()
 {
     // This may occurs if account failed to register and is in state INVALID
     if (!isRegistered()) {
         setRegistrationState(RegistrationState::UNREGISTERED);
-        if (released_cb)
-            released_cb(true);
         return;
     }
 
@@ -1000,13 +1036,6 @@ SIPAccount::sendUnregister(std::function<void(bool)> released_cb)
     }
 
     setRegister(false);
-
-    // remove the transport from the account
-    auto transport = getTransport();
-    setTransport();
-    link_->sipTransport->cleanupTransports();
-    if (released_cb)
-        link_->sipTransport->waitForReleased(transport, released_cb);
 }
 
 #if HAVE_TLS
@@ -1243,7 +1272,7 @@ std::string SIPAccount::getServerUri() const
 pj_str_t
 SIPAccount::getContactHeader()
 {
-    if (transport_ == nullptr)
+    if (!transport_)
         ERROR("Transport not created yet");
 
     if (contact_.slen and contactOverwritten_)
@@ -1259,14 +1288,22 @@ SIPAccount::getContactHeader()
     std::string address;
     pj_uint16_t port;
 
-    link_->sipTransport->findLocalAddressFromTransport(transport_, transportType, hostname_, address, port);
+    link_->sipTransport->findLocalAddressFromTransport(
+        transport_ ? transport_->get() : nullptr,
+        transportType,
+        hostname_,
+        address, port);
 
     if (not publishedSameasLocal_) {
         address = publishedIpAddress_;
         port = publishedPort_;
         DEBUG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
-        link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, address, port);
+        link_->sipTransport->findLocalAddressFromSTUN(
+            transport_ ? transport_->get() : nullptr,
+            &stunServerName_,
+            stunPort_,
+            address, port);
         setPublishedAddress(address);
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
@@ -1317,7 +1354,11 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
     std::string addr;
     pj_uint16_t port;
-    link_->sipTransport->findLocalAddressFromSTUN(transport_, &stunServerName_, stunPort_, addr, port);
+    link_->sipTransport->findLocalAddressFromSTUN(
+        transport_ ? transport_->get() : nullptr,
+        &stunServerName_,
+        stunPort_,
+        addr, port);
     pjsip_host_port result;
     pj_strdup2(pool, &result.host, addr.c_str());
     result.host.slen = addr.length();
@@ -1380,19 +1421,13 @@ computeMd5HashFromCredential(const std::string& username,
 }
 
 void
-SIPAccount::setTransport(pjsip_transport* transport, pjsip_tpfactory* lis)
+SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
 {
-    // release old transport
-    if (transport_ && transport_ != transport) {
-        if (regc_)
-            pjsip_regc_release_transport(regc_);
-        pjsip_transport_dec_ref(transport_);
-    }
-    if (tlsListener_ && tlsListener_ != lis)
-        tlsListener_->destroy(tlsListener_);
-    // set new transport
-    transport_ = transport;
-    tlsListener_ = lis;
+    if (transport_ == t)
+        return;
+    if (transport_ && regc_)
+        pjsip_regc_release_transport(regc_);
+    SIPAccountBase::setTransport(t);
 }
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
@@ -1794,7 +1829,10 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
     pj_assert(contactRewriteMethod_ == 1 or contactRewriteMethod_ == 2);
 
+    std::shared_ptr<SipTransport> tmp_tp {nullptr};
     if (contactRewriteMethod_ == 1) {
+        /* Save transport in case we're gonna reuse it */
+        tmp_tp = transport_;
         /* Unregister current contact */
         sendUnregister();
         destroyRegistrationInfo();
@@ -1841,6 +1879,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
         /*  Unregister old contact */
         try {
+            tmp_tp = transport_;
             sendUnregister();
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());

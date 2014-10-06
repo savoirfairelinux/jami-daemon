@@ -57,6 +57,7 @@ struct pjsip_inv_session;
 
 class Sdp;
 class SIPAccountBase;
+class SipTransport;
 
 /**
  * @file sipcall.h
@@ -121,6 +122,14 @@ class SIPCall : public Call
         void setCallMediaLocal(const pj_sockaddr& localIP);
 
         void setContactHeader(pj_str_t *contact);
+
+        void setTransport(const std::shared_ptr<SipTransport>& t) {
+            transport_ = t;
+        }
+
+        inline const std::shared_ptr<SipTransport>& getTransport() {
+            return transport_;
+        }
 
         void sendSIPInfo(const char *const body, const char *const subtype);
 
@@ -198,6 +207,13 @@ class SIPCall : public Call
          */
         sfl_video::VideoRtpSession videortp_;
 #endif
+
+        /**
+         * Hold the transport used for SIP communication.
+         * Will be different from the account registration transport for
+         * non-IP2IP calls.
+         */
+        std::shared_ptr<SipTransport> transport_ {};
 
         /**
          * The pool to allocate memory, released once call hang up
