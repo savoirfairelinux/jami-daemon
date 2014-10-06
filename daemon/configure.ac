@@ -29,74 +29,6 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
-dnl
-dnl  Check the operating system
-dnl
-HAVE_WIN64="0"
-HAVE_OSX="0"
-
-case "${host_os}" in
-  "")
-    SYS=unknown
-    ;;
-  linux*)
-    SYS=linux
-    ;;
-  darwin*)
-    SYS=darwin
-    ;;
-  mingw32*)
-    SYS=mingw32
-    AC_CHECK_TOOL(WINDRES, windres, :)
-    AC_CHECK_TOOL(OBJCOPY, objcopy, :)
-    AH_TOP([#if defined(_WIN32) && !defined(_WIN32_WINNT)])
-    AH_TOP([# define _WIN32_WINNT 0x0502 /* Windows XP SP2 */])
-    AH_TOP([#endif])
-    AC_DEFINE([_WIN32_IE], 0x0600, [Define to '0x0600' for IE 6.0 (and shell) APIs.])
-    AC_DEFINE([_UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
-    AC_DEFINE([UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
-    AC_DEFINE([_ISOC99_SOURCE], [1], [Extensions to ISO C89 from ISO C99.])
-    AC_DEFINE([_ISOC11_SOURCE], [1], [Extensions to ISO C99 from ISO C11.])
-    AC_DEFINE([_POSIX_SOURCE], [1], [IEEE Std 1003.1.])
-    AC_DEFINE([_POSIX_C_SOURCE], [200809L], [IEEE Std 1003.1.])
-    AC_DEFINE([_XOPEN_SOURCE], [700], [POSIX and XPG 7th edition])
-    AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [XPG things and X/Open Unix extensions.])
-    AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
-    AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
-
-    LDFLAGS="${LDFLAGS} -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase"
-    ac_default_prefix="`pwd`/_win32"
-    DESTDIR="`pwd`/_win32/"
-    AC_SUBST(WINDOWS_ARCH)
-    AC_SUBST(PROGRAMFILES)
-    ;;
-  *)
-    SYS="${host_os}"
-    ;;
-esac
-AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
-AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
-AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
-AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
-AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
-
-dnl Android is linux, but a bit different
-AS_IF([test "$SYS" = linux],[
-    AC_MSG_CHECKING([for an Android system])
-    AC_PREPROC_IFELSE([AC_LANG_PROGRAM(
-        [[#ifndef __ANDROID__
-         # error Not Android
-         #endif
-        ]],[[;]])
-    ],[
-      HAVE_ANDROID="1"
-      AC_MSG_RESULT([yes])
-    ],[
-      AC_MSG_RESULT([no])
-    ])
-])
-AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
-
 LT_INIT
 
 dnl Define C++ as default language
@@ -144,6 +76,75 @@ AC_COMPILE_IFELSE(
 [CLANG=yes], [CLANG=no])
 
 AC_MSG_RESULT([$CLANG])
+dnl
+dnl  Check the operating system
+dnl
+HAVE_WIN64="0"
+HAVE_OSX="0"
+
+case "${host_os}" in
+  "")
+    SYS=unknown
+    ;;
+  linux*)
+    SYS=linux
+    ;;
+  *darwin*)
+    SYS=darwin
+    AC_DEFINE(HAVE_DARWIN,1,[define if compiling for Apple Darwin OSX])
+    have_darwin=yes
+    HAVE_OSX="1"
+    ;;
+  mingw32*)
+    SYS=mingw32
+    AC_CHECK_TOOL(WINDRES, windres, :)
+    AC_CHECK_TOOL(OBJCOPY, objcopy, :)
+    AH_TOP([#if defined(_WIN32) && !defined(_WIN32_WINNT)])
+    AH_TOP([# define _WIN32_WINNT 0x0502 /* Windows XP SP2 */])
+    AH_TOP([#endif])
+    AC_DEFINE([_WIN32_IE], 0x0600, [Define to '0x0600' for IE 6.0 (and shell) APIs.])
+    AC_DEFINE([_UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
+    AC_DEFINE([UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
+    AC_DEFINE([_ISOC99_SOURCE], [1], [Extensions to ISO C89 from ISO C99.])
+    AC_DEFINE([_ISOC11_SOURCE], [1], [Extensions to ISO C99 from ISO C11.])
+    AC_DEFINE([_POSIX_SOURCE], [1], [IEEE Std 1003.1.])
+    AC_DEFINE([_POSIX_C_SOURCE], [200809L], [IEEE Std 1003.1.])
+    AC_DEFINE([_XOPEN_SOURCE], [700], [POSIX and XPG 7th edition])
+    AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [XPG things and X/Open Unix extensions.])
+    AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
+    AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
+
+    LDFLAGS="${LDFLAGS} -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase"
+    ac_default_prefix="`pwd`/_win32"
+    DESTDIR="`pwd`/_win32/"
+    AC_SUBST(WINDOWS_ARCH)
+    AC_SUBST(PROGRAMFILES)
+    ;;
+  *)
+    SYS="${host_os}"
+    ;;
+esac
+AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
+AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
+AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
+AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
+AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
+dnl Android is linux, but a bit different
+AS_IF([test "$SYS" = linux],[
+    AC_MSG_CHECKING([for an Android system])
+    AC_PREPROC_IFELSE([AC_LANG_PROGRAM(
+        [[#ifndef __ANDROID__
+         # error Not Android
+         #endif
+        ]],[[;]])
+    ],[
+      HAVE_ANDROID="1"
+      AC_MSG_RESULT([yes])
+    ],[
+      AC_MSG_RESULT([no])
+    ])
+])
+
 
 dnl
 dnl  Check for the contrib directory
@@ -307,8 +308,7 @@ AC_ARG_WITH([dbus],
     [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"], [
        PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
-       AC_CONFIG_FILES([bin/Makefile \
-                        bin/dbus/Makefile])
+       AC_CONFIG_FILES([bin/dbus/Makefile])
 
        AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
        if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
@@ -576,6 +576,7 @@ dnl What Makefiles to generate
 
 #TODO: split this list across where the relevant check is performed
 AC_CONFIG_FILES([Makefile \
+                 bin/Makefile \
                  src/Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
