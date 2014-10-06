@@ -44,8 +44,11 @@ case "${host_os}" in
     # Necessary for linking .a to a .so
     LDFLAGS+=" -Wl,-Bsymbolic"
     ;;
-  darwin*)
+  *darwin*)
     SYS=darwin
+    AC_DEFINE(HAVE_DARWIN,1,[define if compiling for Apple Darwin OSX])
+    have_darwin=yes
+    HAVE_OSX="1"
     ;;
   mingw32*)
     SYS=mingw32
@@ -79,9 +82,8 @@ esac
 AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
 AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
-AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
+AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
-
 dnl Android is linux, but a bit different
 AS_IF([test "$SYS" = linux],[
     AC_MSG_CHECKING([for an Android system])
@@ -300,8 +302,7 @@ AC_ARG_WITH([dbus],
     [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"], [
        PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
-       AC_CONFIG_FILES([bin/Makefile \
-                        bin/dbus/Makefile])
+       AC_CONFIG_FILES([bin/dbus/Makefile])
 
        AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
        if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
@@ -569,6 +570,7 @@ dnl What Makefiles to generate
 
 #TODO: split this list across where the relevant check is performed
 AC_CONFIG_FILES([Makefile \
+                 bin/Makefile \
                  src/Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
