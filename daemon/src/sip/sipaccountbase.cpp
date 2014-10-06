@@ -39,13 +39,15 @@
 #include "account_schema.h"
 #include <yaml-cpp/yaml.h>
 #include "config/yamlparser.h"
+#include "client/configurationmanager.h"
+#include "manager.h"
 
 bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
 
 static const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
-    : Account(accountID), link_(getSIPVoIPLink())
+    : Account(accountID), link_(getSIPVoIPLink()),transportStatus_(PJSIP_SC_TRYING)
 {}
 
 template <typename T>
@@ -240,22 +242,64 @@ SIPAccountBase::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a = Account::getVolatileAccountDetails();
     a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
+    std::stringstream codestream;
+    codestream << transportStatus_;
+    a[CONFIG_TRANSPORT_STATE_CODE] = codestream.str();
+    a[CONFIG_TRANSPORT_STATE_DESC] = transportError_ ;
 
     return a;
 }
 
 void
-SIPAccountBase::setTransport(pjsip_transport* transport, pjsip_tpfactory* lis)
+SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info)
 {
-    // release old transport
-    if (transport_ && transport_ != transport) {
-        pjsip_transport_dec_ref(transport_);
+    pj_status_t currentStatus = transportStatus_;
+    DEBUG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
+    if (!SipTransport::isAlive(transport_, state)) {
+        if (info) {
+            char err_msg[128];
+            err_msg[0] = '\0';
+            pj_str_t descr = pj_strerror(info->status, err_msg, sizeof(err_msg));
+            transportStatus_ = info?info->status:PJSIP_SC_OK;
+            transportError_  = std::string(descr.ptr,descr.slen);
+            ERROR("Transport disconnected: %.*s", descr.slen, descr.ptr);
+        }
+        else {
+            // This is already the generic error used by pjsip. It nor true nor
+            // perfect, but is an ok placeholder when no additional data is
+            // available
+            transportStatus_ = PJSIP_SC_SERVICE_UNAVAILABLE;
+            transportError_  = "";
+        }
+        setRegistrationState(RegistrationState::ERROR_GENERIC);
+        setTransport();
     }
-    if (tlsListener_ && tlsListener_ != lis)
-        tlsListener_->destroy(tlsListener_);
-    // set new transport
-    transport_ = transport;
-    tlsListener_ = lis;
+    else {
+        //The status can be '0', this is the same as OK
+        transportStatus_ = info && info->status ?(info->status):PJSIP_SC_OK;
+        transportError_  = "";
+    }
+
+    //Notify the client of the new transport state
+    if (currentStatus != transportStatus_)
+        Manager::instance().getClient()->getConfigurationManager()->volatileAccountDetailsChanged(getAccountID());
+}
+
+void
+SIPAccountBase::setTransport(const std::shared_ptr<SipTransport>& t)
+{
+    using namespace std::placeholders;
+    if (t == transport_)
+        return;
+    if (transport_) {
+        DEBUG("Removing transport from account");
+        transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
+    }
+
+    transport_ = t;
+
+    if (transport_)
+        transport_->addStateListener(reinterpret_cast<uintptr_t>(this), std::bind(&SIPAccountBase::onTransportStateChanged, this, _1, _2));
 }
 
 // returns even number in range [lower, upper]
