@@ -98,8 +98,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
     call.sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
-SIPCall::SIPCall(SIPAccountBase& account, const std::string& id,
-                 Call::CallType type)
+SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type)
     : Call(account, id, type)
     , audiortp_(this)
 #ifdef SFL_VIDEO
@@ -109,8 +108,6 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id,
     , pool_(pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory,
                            id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))
-    , contactBuffer_()
-    , contactHeader_{contactBuffer_, 0}
 {}
 
 SIPCall::~SIPCall()

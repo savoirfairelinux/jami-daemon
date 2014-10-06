@@ -117,7 +117,7 @@ class SIPCall : public Call
          * The invite session to be reused in case of transfer
          */
         struct InvSessionDeleter { void operator()(pjsip_inv_session*) {} };
-        std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv{};
+        std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv {};
 
         void setCallMediaLocal(const pj_sockaddr& localIP);
 
@@ -225,8 +225,8 @@ class SIPCall : public Call
          */
         std::unique_ptr<Sdp> local_sdp_;
 
-        char contactBuffer_[PJSIP_MAX_URL_SIZE];
-        pj_str_t contactHeader_;
+        char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
+        pj_str_t contactHeader_ {contactBuffer_, 0};
 };
 
 #endif // __SIPCALL_H__
