@@ -129,12 +129,18 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
     return quit;
 }
 
+static int osxTests()
+{
+    sflph_call_play_dtmf("0");
+    sflph_config_get_audio_output_device_list();
+}
+
 static int run()
 {
 //    if (dbusClient) {
 //        return dbusClient->event_loop();
 //    }
-
+    osxTests();
     return 1;
 }
 

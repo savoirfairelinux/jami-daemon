@@ -17,6 +17,10 @@ $(TARBALLS)/ucommon-$(UCOMMON_VERSION).tar.gz:
 
 ucommon: ucommon-$(UCOMMON_VERSION).tar.gz .sum-ucommon
 	$(UNPACK)
+ifdef HAVE_MACOSX
+	$(APPLY) $(SRC)/ucommon/osx-linked.patch
+	$(APPLY) $(SRC)/ucommon/osx-unicode.patch
+endif
 	$(APPLY) $(SRC)/ucommon/extended.patch
 	$(APPLY) $(SRC)/ucommon/usedefines.patch
 	$(APPLY) $(SRC)/ucommon/any-addr-and-overloads.patch
