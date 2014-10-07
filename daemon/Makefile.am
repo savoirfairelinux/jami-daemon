@@ -21,10 +21,6 @@ endif
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = src ringtones man $(TESTS_DIR) doc bin
 
-if SFL_DBUS
-SUBDIRS += bin
-endif
-
 EXTRA_DIST = m4/libtool.m4 \
 			 m4/lt~obsolete.m4 \
 			 m4/ltoptions.m4 \
