@@ -80,8 +80,7 @@ libaudio_la_LIBADD += ./alsa/libalsalayer.la
 endif
 
 if HAVE_OSX
-#FIXME: not built yet
-#libaudio_la_LIBADD += ./coreaudio/libcoreaudiolayer.la
+libaudio_la_LIBADD += ./coreaudio/libcoreaudiolayer.la
 endif
 
 if BUILD_OPENSL
