@@ -1,0 +1,13 @@
+--- ucommon-6.1.8/inc/ucommon/unicode.orig.h	2014-10-07 15:23:01.000000000 -0400
++++ ucommon-6.1.8/inc/ucommon/unicode.h	2014-10-07 15:23:31.000000000 -0400
+@@ -36,6 +36,10 @@
+ #include <ucommon/string.h>
+ #endif
+
++#ifdef nil
++#undef nil
++#endif
++
+ namespace ucommon {
+
+ /**
