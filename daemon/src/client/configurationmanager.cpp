@@ -640,5 +640,5 @@ void ConfigurationManager::errorAlert(int alert)
 
 std::vector< int32_t > ConfigurationManager::getHardwareAudioFormat()
 {
-    return std::vector<int32_t> {};
+    return std::vector<int32_t> {44100, 64};
 }
