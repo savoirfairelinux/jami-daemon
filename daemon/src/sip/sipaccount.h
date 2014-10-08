@@ -508,6 +508,11 @@ class SIPAccount : public SIPAccountBase {
         std::vector< std::map<std::string, std::string > > credentials_;
 
 #if HAVE_TLS
+
+        static const CipherArray TLSv1_DEFAULT_CIPHER_LIST;
+        static const CipherArray SSLv3_DEFAULT_CIPHER_LIST;
+        static const CipherArray SSLv23_DEFAULT_CIPHER_LIST;
+
         /**
          * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
@@ -576,7 +581,7 @@ class SIPAccount : public SIPAccountBase {
         /**
          * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
          */
-        CipherArray ciphers_;
+        CipherArray ciphers_ {};
 
         /**
          * Determine if STUN public address resolution is required to register this account. In this case a
