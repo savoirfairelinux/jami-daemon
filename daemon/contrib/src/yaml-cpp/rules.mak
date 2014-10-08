@@ -23,6 +23,7 @@ $(TARBALLS)/yaml-cpp-$(YAML_CPP_VERSION).tar.gz:
 
 yaml-cpp: yaml-cpp-$(YAML_CPP_VERSION).tar.gz .sum-yaml-cpp
 	$(UNPACK)
+	$(APPLY) $(SRC)/yaml-cpp/cmake.patch
 	$(MOVE)
 
 .yaml-cpp: yaml-cpp toolchain.cmake
