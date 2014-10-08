@@ -29,7 +29,19 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
-LT_INIT
+dnl LT_INIT
+
+dnl override platform specific check for dependent libraries
+dnl otherwise libtool linking of shared libraries will
+dnl fail on anything other than pass_all.
+AC_CACHE_VAL(lt_cv_deplibs_check_method,
+    [lt_cv_deplibs_check_method=pass_all])
+
+LT_INIT([dlopen win32-dll shared disable-static])
+
+DOLT
+
+lt_cv_deplibs_check_method=pass_all
 
 dnl Define C++ as default language
 AC_LANG(C++)
@@ -77,6 +89,58 @@ AC_COMPILE_IFELSE(
 
 AC_MSG_RESULT([$CLANG])
 
+dnl
+dnl  Check the operating system
+dnl
+HAVE_WIN64="0"
+HAVE_IOS="0"
+HAVE_OSX="0"
+
+case "${host_os}" in
+  "")
+    SYS=unknown
+    ;;
+  linux*)
+    SYS=linux
+    ;;
+  darwin*)
+    SYS=darwin
+    ;;
+  mingw32*)
+    SYS=mingw32
+    AC_CHECK_TOOL(WINDRES, windres, :)
+    AC_CHECK_TOOL(OBJCOPY, objcopy, :)
+    AH_TOP([#if defined(_WIN32) && !defined(_WIN32_WINNT)])
+    AH_TOP([# define _WIN32_WINNT 0x0502 /* Windows XP SP2 */])
+    AH_TOP([#endif])
+    AC_DEFINE([_WIN32_IE], 0x0600, [Define to '0x0600' for IE 6.0 (and shell) APIs.])
+    AC_DEFINE([_UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
+    AC_DEFINE([UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
+    AC_DEFINE([_ISOC99_SOURCE], [1], [Extensions to ISO C89 from ISO C99.])
+    AC_DEFINE([_ISOC11_SOURCE], [1], [Extensions to ISO C99 from ISO C11.])
+    AC_DEFINE([_POSIX_SOURCE], [1], [IEEE Std 1003.1.])
+    AC_DEFINE([_POSIX_C_SOURCE], [200809L], [IEEE Std 1003.1.])
+    AC_DEFINE([_XOPEN_SOURCE], [700], [POSIX and XPG 7th edition])
+    AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [XPG things and X/Open Unix extensions.])
+    AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
+    AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
+
+    CPPFLAGS="${CPPFLAGS} -DBOOST_USE_WINDOWS_H"
+    LDFLAGS="${LDFLAGS} -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase"
+    ac_default_prefix="`pwd`/_win32"
+    DESTDIR="`pwd`/_win32/"
+    AC_SUBST(WINDOWS_ARCH)
+    AC_SUBST(PROGRAMFILES)
+    ;;
+  *)
+    SYS="${host_os}"
+    ;;
+esac
+AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
+AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
+AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
+AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
+AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
 
 dnl Check if we are compiling for android
 AC_MSG_CHECKING([if compiling for android])
@@ -160,6 +224,7 @@ case $host_os in
     ;;
 esac
 
+
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
 
@@ -193,7 +258,6 @@ AS_IF([test "x$with_alsa" = "xyes"], [
 
 AC_DEFINE_UNQUOTED([HAVE_ALSA], `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have alsa])
 AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
-
 
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
