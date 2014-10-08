@@ -660,8 +660,8 @@ std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
     std::map<std::string, std::string> a = SIPAccountBase::getVolatileAccountDetails();
     std::stringstream codestream;
     codestream << registrationStateDetailed_.first;
-    a[ CONFIG_ACCOUNT_REGISTRATION_STATE_CODE ] = codestream.str();
-    a[ CONFIG_ACCOUNT_REGISTRATION_STATE_DESC ] = registrationStateDetailed_.second;
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = codestream.str();
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDetailed_.second;
 
 #ifdef SFL_PRESENCE
     if (presence_) {
