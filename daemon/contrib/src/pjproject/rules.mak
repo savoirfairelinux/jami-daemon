@@ -31,8 +31,10 @@ PKGS_FOUND += pjproject
 endif
 
 DEPS_pjproject += gnutls
+ifndef HAVE_WIN32
 ifndef HAVE_MACOSX
 DEPS_pjproject += uuid
+endif
 endif
 
 $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.bz2:
@@ -42,6 +44,10 @@ $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.bz2:
 
 pjproject: pjproject-$(PJPROJECT_VERSION).tar.bz2 .sum-pjproject
 	$(UNPACK)
+ifdef HAVE_WIN32
+	$(APPLY) $(SRC)/pjproject/intptr_t.patch
+	$(APPLY) $(SRC)/pjproject/pj_win.patch
+endif
 	$(APPLY) $(SRC)/pjproject/aconfigureupdate.patch
 	$(APPLY) $(SRC)/pjproject/endianness.patch
 	$(APPLY) $(SRC)/pjproject/unknowncipher.patch
