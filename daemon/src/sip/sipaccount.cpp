@@ -77,6 +77,41 @@ static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
 
+#if HAVE_TLS
+
+const CipherArray SIPAccount::TLSv1_DEFAULT_CIPHER_LIST = {
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA256,
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA256,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA,
+    PJ_TLS_RSA_WITH_RC4_128_SHA,
+    PJ_TLS_RSA_WITH_RC4_128_MD5
+};
+
+const CipherArray SIPAccount::SSLv3_DEFAULT_CIPHER_LIST = {
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA256,
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA256,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA,
+    PJ_TLS_RSA_WITH_RC4_128_SHA,
+    PJ_TLS_RSA_WITH_RC4_128_MD5
+};
+
+const CipherArray SIPAccount::SSLv23_DEFAULT_CIPHER_LIST = {
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA256,
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA256,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA,
+    PJ_TLS_RSA_WITH_RC4_128_SHA,
+    PJ_TLS_RSA_WITH_RC4_128_MD5,
+    PJ_SSL_CK_DES_192_EDE3_CBC_WITH_MD5,
+    PJ_SSL_CK_RC4_128_WITH_MD5,
+    PJ_SSL_CK_IDEA_128_CBC_WITH_MD5,
+    PJ_SSL_CK_RC2_128_CBC_WITH_MD5,
+};
+
+#endif
+
 static void
 registration_cb(pjsip_regc_cbparam *param)
 {
@@ -104,7 +139,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , serviceRoute_()
     , cred_()
     , tlsSetting_()
-    , ciphers_(100)
     , tlsCaListFile_()
     , tlsCertificateFile_()
     , tlsPrivateKeyFile_()
@@ -1076,15 +1110,13 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 
 void SIPAccount::trimCiphers()
 {
-    int sum = 0;
-    int count = 0;
+    unsigned sum = 0;
+    unsigned count = 0;
 
     // PJSIP aborts if our cipher list exceeds 1000 characters
-    static const int MAX_CIPHERS_STRLEN = 1000;
-
+    static const unsigned MAX_CIPHERS_STRLEN = 1000;
     for (const auto &item : ciphers_) {
         sum += strlen(pj_ssl_cipher_name(item));
-
         if (sum > MAX_CIPHERS_STRLEN)
             break;
 
@@ -1097,26 +1129,47 @@ void SIPAccount::trimCiphers()
 
 void SIPAccount::initTlsConfiguration()
 {
-    unsigned cipherNum;
+    pjsip_tls_setting_default(&tlsSetting_);
+    tlsSetting_.method = sslMethodStringToPjEnum(tlsMethod_);
 
     // Determine the cipher list supported on this machine
-    cipherNum = ciphers_.size();
-
-    if (pj_ssl_cipher_get_availables(&ciphers_.front(), &cipherNum) != PJ_SUCCESS)
+    CipherArray avail_ciphers(256);
+    unsigned cipherNum = avail_ciphers.size();
+    if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
         ERROR("Could not determine cipher list on this system");
+    avail_ciphers.resize(cipherNum);
 
-    ciphers_.resize(cipherNum);
+    ciphers_.clear();
+    if (not tlsCiphers_.empty()) {
+        std::stringstream ss(tlsCiphers_);
+        std::string item;
+        while (std::getline(ss, item, ' ')) {
+            if (item.empty()) continue;
+            auto item_cid = pj_ssl_cipher_id(item.c_str());
+            if (item_cid != PJ_TLS_UNKNOWN_CIPHER) {
+                WARN("Valid cipher: %s", item.c_str());
+                ciphers_.push_back(item_cid);
+            }
+            else
+                ERROR("Invalid cipher: %s", item.c_str());
+        }
+    }
+    if (ciphers_.empty()) {
+        ciphers_ = (tlsSetting_.method == PJSIP_TLSV1_METHOD) ? TLSv1_DEFAULT_CIPHER_LIST : (
+                   (tlsSetting_.method == PJSIP_SSLV3_METHOD) ? SSLv3_DEFAULT_CIPHER_LIST : (
+                   (tlsSetting_.method == PJSIP_SSLV23_METHOD) ? SSLv23_DEFAULT_CIPHER_LIST : CipherArray {} ));
+    }
+    ciphers_.erase(std::remove_if(ciphers_.begin(), ciphers_.end(), [&](pj_ssl_cipher c) {
+        return std::find(avail_ciphers.cbegin(), avail_ciphers.cend(), c) == avail_ciphers.cend();
+    }), ciphers_.end());
 
     trimCiphers();
-
-    // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    pjsip_tls_setting_default(&tlsSetting_);
 
     pj_cstr(&tlsSetting_.ca_list_file, tlsCaListFile_.c_str());
     pj_cstr(&tlsSetting_.cert_file, tlsCertificateFile_.c_str());
     pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
     pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
-    tlsSetting_.method = sslMethodStringToPjEnum(tlsMethod_);
+
     tlsSetting_.ciphers_num = ciphers_.size();
     tlsSetting_.ciphers = &ciphers_.front();
 
