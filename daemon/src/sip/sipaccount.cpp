@@ -1019,7 +1019,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
         std::string state(description->ptr, description->slen);
 
         Manager::instance().getClient()->getConfigurationManager()->sipRegistrationStateChanged(getAccountID(), state, param->code);
-        Manager::instance().getClient()->getConfigurationManager()->volatileAccountDetailsChanged(getAccountID());
+        Manager::instance().getClient()->getConfigurationManager()->volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         setRegistrationStateDetailed(details);
