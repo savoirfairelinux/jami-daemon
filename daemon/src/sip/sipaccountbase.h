@@ -385,6 +385,9 @@ protected:
      */
     bool srtpFallback_ {};
 
+    pj_status_t transportStatus_ {PJSIP_SC_TRYING};
+    std::string transportError_ {};
+
     /*
      * Port range for audio RTP ports
      */
