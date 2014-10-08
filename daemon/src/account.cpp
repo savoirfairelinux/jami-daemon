@@ -138,7 +138,7 @@ void Account::setRegistrationState(RegistrationState state)
         // Notify the client
         ConfigurationManager *c(Manager::instance().getClient()->getConfigurationManager());
         c->registrationStateChanged(accountID_, static_cast<int32_t>(registrationState_));
-        c->volatileAccountDetailsChanged(getAccountID());
+        c->volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
     }
 }
 
