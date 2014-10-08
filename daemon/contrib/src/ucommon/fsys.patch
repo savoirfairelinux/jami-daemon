@@ -1,0 +1,26 @@
+From 5d8f3ea2fab6ea713fae5aaa0f9c0e47c74ba31d Mon Sep 17 00:00:00 2001
+From: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+Date: Tue, 28 Oct 2014 17:20:00 -0400
+Subject: [PATCH] fsys: cached error variable must be mutable
+
+Fixes build on win32:
+
+fsys.cpp: In member function 'bool ucommon::fsys::is_tty() const':
+fsys.cpp:328:11: error: assignment of member 'ucommon::fsys::error' in
+---
+ inc/ucommon/fsys.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/inc/ucommon/fsys.h b/inc/ucommon/fsys.h
+index 470730c..43d0bc3 100644
+--- a/inc/ucommon/fsys.h
++++ b/inc/ucommon/fsys.h
+@@ -125,7 +125,7 @@ class __EXPORT fsys
+ {
+ protected:
+     fd_t    fd;
+-    int     error;
++    mutable int     error;
+ 
+ public:
+     /**
