@@ -156,7 +156,7 @@ class ConfigurationManager
 
         void registrationStateChanged(const std::string& accoundID, int state);
         void sipRegistrationStateChanged(const std::string&, const std::string&, int32_t state);
-        void volatileAccountDetailsChanged(const std::string& accountID);
+        void volatileAccountDetailsChanged(const std::string& accountID, const std::map<std::string, std::string> &details);
         void errorAlert(int alert);
 
         std::vector< int32_t > getHardwareAudioFormat();
