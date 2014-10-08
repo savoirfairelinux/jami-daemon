@@ -639,10 +639,10 @@ void ConfigurationManager::sipRegistrationStateChanged(const std::string& accoun
 }
 
 
-void ConfigurationManager::volatileAccountDetailsChanged(const std::string& accountID)
+void ConfigurationManager::volatileAccountDetailsChanged(const std::string& accountID, const std::map<std::string, std::string> &details)
 {
     if (evHandlers_.on_volatile_details_change) {
-        evHandlers_.on_volatile_details_change(accountID, Manager::instance().getVolatileAccountDetails(accountID));
+        evHandlers_.on_volatile_details_change(accountID, details);
     }
 }
 
