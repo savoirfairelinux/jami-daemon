@@ -64,8 +64,8 @@ Savoir-Faire Linux is a consulting company based in Montreal, Quebec.
 For more information, please check out our website:
 http://www.savoirfairelinux.com/
 
-How to compile
---------------
+How to compile on Linux
+-----------------------
 
 # Compile the dependencies
 cd ../contrib/
@@ -112,6 +112,30 @@ cd ../../daemon
 make
 
 Do a little dance!
+
+How to cross-compile for Windows 64bit (from Linux)
+---------------------------------------------------
+
+# First, make sure you can compile the linux version.
+# Install a few tools.
+sudo apt-get install mingw-w64
+
+# Compile the dependencies
+cd sflphone/daemon/contrib/
+mkdir win64 && cd win64
+../bootstrap --host=x86_64-w64-mingw32
+make
+# make -j seems to have problems!?
+
+Cross fingers and pray to the great cross-compiler in the sky!
+...
+Profit!
+
+# Compile the daemon
+export PKG_CONFIG_LIBDIR={your_root_path}/sflphone/daemon/contrib/x86_64-w64-mingw32/lib/pkgconfig
+./autogen.sh
+./configure --host=x86_64-w64-mingw32 --without-alsa --without-pulse --disable-video
+make
 
 Clang compatibility (developers only)
 -------------------------------------
