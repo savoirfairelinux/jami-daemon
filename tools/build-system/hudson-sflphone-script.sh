@@ -121,9 +121,9 @@ function build_contrib {
         ../bootstrap
         # list dependencies that aren't detected by contrib
         make list
-        # XXX: only build iax since it's not packaged, we don't want contrib
-        # for anything else
-        make .iax
+        # FIXME: this is very slow but it's the best we can do until we migrate
+        # to a builder with more up to date packages
+        make
         popd
     else
         # We're on 1.4.x
