@@ -104,7 +104,7 @@ static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC     = "TLS.negotiati
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS     = "Account.registrationStatus";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_DESC = "Account.registrationDescription";
-static const char *const CONFIG_TLS_TRANSPORT_STATE_CODE        = "TLS.transportStatusCode";
-static const char *const CONFIG_TLS_TRANSPORT_STATE_DESC        = "TLS.transportStatusDescription";
+static const char *const CONFIG_TRANSPORT_STATE_CODE            = "Transport.statusCode";
+static const char *const CONFIG_TRANSPORT_STATE_DESC            = "Transport.statusDescription";
 
 #endif // ACCOUNT_SCHEMA_H_
