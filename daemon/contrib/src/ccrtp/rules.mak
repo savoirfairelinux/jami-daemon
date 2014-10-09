@@ -16,6 +16,9 @@ $(TARBALLS)/ccrtp-$(CCRTP_VERSION).tar.gz:
 
 ccrtp: ccrtp-$(CCRTP_VERSION).tar.gz .sum-ccrtp
 	$(UNPACK)
+ifdef HAVE_MACOSX
+	$(APPLY) $(SRC)/ucommon/osx-autogen.patch
+endif
 	$(APPLY) $(SRC)/ccrtp/standardheader.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && env NOCONFIGURE=1 sh autogen.sh
 	$(MOVE)

@@ -1,0 +1,10 @@
+--- ucommon/gnutls/Makefile.orig.am	2014-10-09 16:44:12.000000000 -0400
++++ ucommon/gnutls/Makefile.am	2014-10-09 16:26:22.000000000 -0400
+@@ -10,7 +10,7 @@
+
+ MAINTAINERCLEANFILES = Makefile.in Makefile
+ RELEASE = -version-info $(LT_VERSION)
+-AM_CXXFLAGS = -I$(top_srcdir)/inc @UCOMMON_FLAGS@
++AM_CXXFLAGS = -I$(top_srcdir)/inc @UCOMMON_FLAGS@ @GNUTLS_CFLAGS@
+
+ noinst_HEADERS = local.h
