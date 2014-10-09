@@ -20,6 +20,7 @@ ucommon: ucommon-$(UCOMMON_VERSION).tar.gz .sum-ucommon
 ifdef HAVE_MACOSX
 	$(APPLY) $(SRC)/ucommon/osx-linked.patch
 	$(APPLY) $(SRC)/ucommon/osx-unicode.patch
+	$(APPLY) $(SRC)/ucommon/osx-gnutls.patch
 endif
 	$(APPLY) $(SRC)/ucommon/extended.patch
 	$(APPLY) $(SRC)/ucommon/usedefines.patch
