@@ -48,6 +48,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.bz2 .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/gnutls.patch
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
+	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
