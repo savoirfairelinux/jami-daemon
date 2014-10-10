@@ -37,7 +37,6 @@
 
 #include "ringbuffer.h"
 #include "dcblocker.h"
-#include "resampler.h"
 #include "noncopyable.h"
 
 #include <sys/time.h>
@@ -59,6 +58,7 @@
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
 
 class AudioPreference;
+class Resampler;
 
 namespace ost {
 class Time;
@@ -256,7 +256,7 @@ class AudioLayer {
         /**
          * Manage sampling rate conversion
          */
-        Resampler resampler_;
+        std::unique_ptr<Resampler> resampler_;
 
     private:
 

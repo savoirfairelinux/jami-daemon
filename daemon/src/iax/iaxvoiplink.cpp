@@ -50,7 +50,7 @@
 
 std::mutex IAXVoIPLink::mutexIAX = {};
 
-IAXVoIPLink::IAXVoIPLink(IAXAccount& account) : account_(account)
+IAXVoIPLink::IAXVoIPLink(IAXAccount& account) : account_(account), resampler_(new Resampler{44100})
 {
     srand(time(NULL));    // to get random number for RANDOM_PORT
 }
@@ -181,7 +181,7 @@ IAXVoIPLink::sendAudioFromMic()
         if (audioRate != mainBufferSampleRate) {
             rawBuffer_.setSampleRate(audioRate);
             resampledData_.setSampleRate(mainBufferSampleRate);
-            resampler_.resample(rawBuffer_, resampledData_);
+            resampler_->resample(rawBuffer_, resampledData_);
             in = &resampledData_;
             outSamples = 0;
         } else {
@@ -355,7 +355,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     if (audioRate != mainBufferSampleRate) {
         rawBuffer_.setSampleRate(mainBufferSampleRate);
         resampledData_.setSampleRate(audioRate);
-        resampler_.resample(rawBuffer_, resampledData_);
+        resampler_->resample(rawBuffer_, resampledData_);
         out = &resampledData_;
     }
 
