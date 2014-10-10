@@ -39,6 +39,12 @@ libaudio_la_SOURCES = \
 		dcblocker.cpp
 
 libaudio_la_CXXFLAGS = -I$(top_srcdir)/src
+libaudio_la_LDFLAGS =
+
+if BUILD_SPEEXDSP
+libaudio_la_CXXFLAGS += @SPEEXDSP_CFLAGS@
+libaudio_la_LDFLAGS += @SPEEXDSP_LIBS@
+endif
 
 noinst_HEADERS = \
 		audiobuffer.h \
@@ -64,7 +70,7 @@ endif
 
 if BUILD_JACK
 libaudio_la_LIBADD += ./jack/libjacklayer.la
-libaudio_la_LDFLAGS = @JACK_LIBS@ -pthread
+libaudio_la_LDFLAGS += @JACK_LIBS@ -pthread
 endif
 
 if BUILD_ALSA
@@ -73,5 +79,5 @@ endif
 
 if BUILD_OPENSL
 libaudio_la_LIBADD += ./opensl/libopensl.la
-libaudio_la_LDFLAGS = -lOpenSLES
+libaudio_la_LDFLAGS += -lOpenSLES
 endif

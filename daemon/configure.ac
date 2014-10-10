@@ -402,12 +402,7 @@ AC_ARG_WITH([speex],
         [],
         [with_speex=yes])
 
-AS_IF([test "x$with_speex" != xno],
-      [AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Missing speex development files. You may use --without-speex to compile without speex codec support.]))]
-        [AC_CHECK_LIB([speex], [speex_decode_int],
-        [],
-        [AC_MSG_FAILURE([libspeex link test failed.   You may use --without-speex to compile without speex codec support.])])
-        ])
+AS_IF([test "x$with_speex" != xno], [PKG_CHECK_MODULES([SPEEX], [speex])])
 
 AC_DEFINE_UNQUOTED([HAVE_SPEEX], `if test "x$with_speex" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeex])
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
@@ -422,14 +417,10 @@ AC_ARG_WITH([speexdsp],
     [],
     [with_speexdsp=yes])
 
-AS_IF([test "x$with_speexdsp" != xno],
-      AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Missing libspeexdsp development files used for Noise Suppression and Automatic Gain Control.]))
-    AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp], [], [AC_MSG_ERROR([Unable to find speexdsp development files])])
-    )
+AS_IF([test "x$with_speexdsp" != xno], [PKG_CHECK_MODULES([SPEEXDSP], [speexdsp])])
 
 AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
-
 
 dnl iLBC is enabled if it's installed
 AC_ARG_WITH([with-libilbc],
