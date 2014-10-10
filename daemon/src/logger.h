@@ -63,7 +63,7 @@ int getDebugMode(void);
  */
 void strErr();
 
-#define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, \
+#define LOG_FORMAT(M, ...) "%s:%d:0x%lx: " M, FILE_NAME, __LINE__, \
                            (unsigned long) pthread_self() & 0xffff, \
                            ##__VA_ARGS__
 
