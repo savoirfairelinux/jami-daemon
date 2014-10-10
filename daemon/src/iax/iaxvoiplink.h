@@ -40,7 +40,6 @@
 #include "audio/audiobuffer.h"
 #include "audio/codecs/audiocodec.h" // for RAW_BUFFER_SIZE
 #include "sfl_types.h"
-#include "audio/resampler.h"
 
 #include <iax/iax-client.h>
 
@@ -51,6 +50,7 @@ class IAXAccount;
 class IAXCall;
 class AudioCodec;
 class AudioLayer;
+class Resampler;
 
 /**
  * @file iaxvoiplink.h
@@ -152,7 +152,7 @@ class IAXVoIPLink {
         AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, AudioFormat::MONO()};
         unsigned char encodedData_[RAW_BUFFER_SIZE] = {};
 
-        Resampler resampler_{44100};
+        std::unique_ptr<Resampler> resampler_;
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to
