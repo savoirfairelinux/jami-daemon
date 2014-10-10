@@ -33,6 +33,7 @@
 #include "client/configurationmanager.h"
 
 #include "manager.h"
+#include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "audio/dcblocker.h"
@@ -727,7 +728,7 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     if (resample) {
         int outSamples = buffer.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
         AudioBuffer out(outSamples, mainBufferFormat);
-        resampler_.resample(buffer, out);
+        resampler_->resample(buffer, out);
         dcblocker_.process(out);
         mainRingBuffer_->put(out);
     } else {
@@ -779,7 +780,7 @@ size_t OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer)
         DEBUG("OpenSLLayer::audioPlaybackFillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
         AudioBuffer out(buffer, false);
         out.setSampleRate(audioFormat_.sample_rate);
-        resampler_.resample(buffer, out);
+        resampler_->resample(buffer, out);
         buffer = out;
     }
     return buffer.size();

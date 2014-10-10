@@ -39,6 +39,7 @@
 #include "pulselayer.h"
 #include "audio/resampler.h"
 #include "audio/dcblocker.h"
+#include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "logger.h"
@@ -552,7 +553,7 @@ void PulseLayer::writeToSpeaker()
 
     if (resample) {
         AudioBuffer rsmpl_out(nResampled, format);
-        resampler_.resample(linearbuff, rsmpl_out);
+        resampler_->resample(linearbuff, rsmpl_out);
         rsmpl_out.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         rsmpl_out.interleave(data);
         pa_stream_write(s, data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);
@@ -593,7 +594,7 @@ void PulseLayer::readFromMic()
 
     if (resample) {
         micBuffer_.setSampleRate(mainBufferSampleRate);
-        resampler_.resample(in, micBuffer_);
+        resampler_->resample(in, micBuffer_);
         out = &micBuffer_;
     }
 

@@ -37,6 +37,7 @@
 #include "client/configurationmanager.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "audio/resampler.h"
 
 #include <thread>
 #include <atomic>
@@ -703,7 +704,7 @@ void AlsaLayer::capture()
     if (audioFormat_.sample_rate != mainBufferFormat.sample_rate) {
         int outFrames = toGetFrames * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
         AudioBuffer rsmpl_in(outFrames, mainBufferFormat);
-        resampler_.resample(captureBuff_, rsmpl_in);
+        resampler_->resample(captureBuff_, rsmpl_in);
         dcblocker_.process(rsmpl_in);
         mainRingBuffer_->put(rsmpl_in);
     } else {
@@ -762,7 +763,7 @@ void AlsaLayer::playback(int maxFrames)
         if (resample) {
             const size_t outFrames = framesToGet * resampleFactor;
             AudioBuffer rsmpl_out(outFrames, audioFormat_);
-            resampler_.resample(playbackBuff_, rsmpl_out);
+            resampler_->resample(playbackBuff_, rsmpl_out);
             rsmpl_out.interleave(playbackIBuff_);
             write(playbackIBuff_.data(), outFrames, playbackHandle_);
         } else {

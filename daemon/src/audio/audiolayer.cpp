@@ -34,6 +34,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "audio/ringbufferpool.h"
+#include "audio/resampler.h"
 
 #include <ctime>
 
@@ -47,7 +48,7 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
     , mutex_()
     , dcblocker_()
-    , resampler_(audioFormat_.sample_rate)
+    , resampler_(new Resampler{audioFormat_.sample_rate})
     , lastNotificationTime_(0)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
@@ -61,7 +62,7 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
     std::lock_guard<std::mutex> lock(mutex_);
     DEBUG("hardwareFormatAvailable : %s", playback.toString().c_str());
     urgentRingBuffer_.setFormat(playback);
-    resampler_.setFormat(playback);
+    resampler_->setFormat(playback);
     Manager::instance().hardwareAudioFormatChanged(playback);
 }
 
