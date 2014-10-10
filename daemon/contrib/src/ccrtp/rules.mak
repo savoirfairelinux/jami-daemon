@@ -17,7 +17,7 @@ $(TARBALLS)/ccrtp-$(CCRTP_VERSION).tar.gz:
 ccrtp: ccrtp-$(CCRTP_VERSION).tar.gz .sum-ccrtp
 	$(UNPACK)
 	$(APPLY) $(SRC)/ccrtp/standardheader.patch
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && env NOCONFIGURE=1 sh autogen.sh
+	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && autoreconf -fi
 	$(MOVE)
 
 .ccrtp: ccrtp
