@@ -40,8 +40,8 @@
 
 namespace sfl_video {
 
-	class SocketPair {
-	public:
+class SocketPair {
+    public:
         SocketPair(const char *uri, int localPort);
         ~SocketPair();
 
@@ -52,8 +52,8 @@ namespace sfl_video {
         static int readCallback(void *opaque, uint8_t *buf, int buf_size);
         static int writeCallback(void *opaque, uint8_t *buf, int buf_size);
 
-	private:
-		NON_COPYABLE(SocketPair);
+    private:
+        NON_COPYABLE(SocketPair);
 
         std::mutex rtcpWriteMutex_;
 
@@ -64,7 +64,7 @@ namespace sfl_video {
         sockaddr_storage rtcpDestAddr_;
         socklen_t rtcpDestAddrLen_;
         bool interrupted_;
-	};
+};
 
 }
 

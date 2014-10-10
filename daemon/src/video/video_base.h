@@ -108,7 +108,7 @@ public:
 private:
     NON_COPYABLE(Observable<T>);
 
-	std::set<Observer<T>*> observers_;
+    std::set<Observer<T>*> observers_;
     std::mutex mutex_; // lock observers_
 };
 
@@ -119,7 +119,7 @@ class Observer
 {
 public:
     virtual ~Observer() {};
-	virtual void update(Observable<T>*, T&) = 0;
+    virtual void update(Observable<T>*, T&) = 0;
     virtual void attached(Observable<T>*) {};
     virtual void detached(Observable<T>*) {};
 };
