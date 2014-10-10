@@ -36,6 +36,7 @@
 #include <cassert>
 #include <climits>
 #include "logger.h"
+#include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "manager.h"
@@ -102,7 +103,7 @@ void JackLayer::fillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
         DEBUG("fillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
         AudioBuffer out(buffer, false);
         out.setSampleRate(audioFormat_.sample_rate);
-        resampler_.resample(buffer, out);
+        resampler_->resample(buffer, out);
         buffer = out;
     }
 }
@@ -160,7 +161,7 @@ JackLayer::capture()
     if (resample) {
         int outSamples = captureBuffer_.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
         AudioBuffer out(outSamples, mainBufferFormat);
-        resampler_.resample(captureBuffer_, out);
+        resampler_->resample(captureBuffer_, out);
         dcblocker_.process(out);
         mainRingBuffer_->put(out);
     } else {
