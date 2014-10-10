@@ -32,22 +32,43 @@
 #include "logger.h"
 #include "sfl_types.h"
 
+#include <samplerate.h>
+
+class SrcState {
+    public:
+        SrcState(int nb_channels)
+        {
+            int err;
+            state_ = src_new(SRC_LINEAR, nb_channels, &err);
+        }
+
+        ~SrcState()
+        {
+            src_delete(state_);
+        }
+
+        void process(SRC_DATA *src_data)
+        {
+            src_process(state_, src_data);
+        }
+
+    private:
+        SRC_STATE *state_ {nullptr};
+};
+
 Resampler::Resampler(AudioFormat format) : floatBufferIn_(),
-    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), src_state_(nullptr)
+    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), src_state_()
 {
     setFormat(format);
 }
 
 Resampler::Resampler(unsigned sample_rate, unsigned channels) : floatBufferIn_(),
-    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(sample_rate, channels), src_state_(nullptr)
+    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(sample_rate, channels), src_state_()
 {
     setFormat(format_);
 }
 
-Resampler::~Resampler()
-{
-    src_delete(src_state_);
-}
+Resampler::~Resampler() = default;
 
 void
 Resampler::setFormat(AudioFormat format)
@@ -58,11 +79,7 @@ Resampler::setFormat(AudioFormat format)
     floatBufferOut_.resize(samples_);
     scratchBuffer_.resize(samples_);
 
-    if (src_state_ != nullptr)
-        src_delete(src_state_);
-
-    int err;
-    src_state_ = src_new(SRC_LINEAR, format.nb_channels, &err);
+    src_state_.reset(new SrcState(format.nb_channels));
 }
 
 void
@@ -90,9 +107,7 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
 
     if (nbChans != format_.nb_channels) {
         // change channel num if needed
-        int err;
-        src_delete(src_state_);
-        src_state_ = src_new(SRC_LINEAR, nbChans, &err);
+        src_state_.reset(new SrcState(nbChans));
         format_.nb_channels = nbChans;
         DEBUG("SRC channel number changed.");
     }
@@ -119,8 +134,7 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
 
     dataIn.interleaveFloat(floatBufferIn_.data());
 
-    src_process(src_state_, &src_data);
-
+    src_state_->process(&src_data);
     /*
     TODO: one-shot deinterleave and float-to-short conversion
     */

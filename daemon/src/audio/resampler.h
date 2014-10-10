@@ -31,13 +31,15 @@
 #ifndef _SAMPLE_RATE_H
 #define _SAMPLE_RATE_H
 
-#include <samplerate.h>
 #include <cmath>
 #include <cstring>
+#include <memory>
 
 #include "audiobuffer.h"
 #include "sfl_types.h"
 #include "noncopyable.h"
+
+struct SrcState;
 
 class Resampler {
     public:
@@ -50,8 +52,7 @@ class Resampler {
         */
         Resampler(AudioFormat outFormat);
         Resampler(unsigned sample_rate, unsigned channels=1);
-
-        /** Destructor */
+        // empty dtor, needed for unique_ptr
         ~Resampler();
 
         /**
@@ -87,7 +88,7 @@ class Resampler {
         size_t samples_; // size in samples of temporary buffers
         AudioFormat format_; // number of channels and max output frequency
 
-        SRC_STATE* src_state_;
+        std::unique_ptr<SrcState> src_state_;
 };
 
 #endif //_SAMPLE_RATE_H
