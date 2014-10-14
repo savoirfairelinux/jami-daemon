@@ -79,6 +79,7 @@ check cmake 2.8.8
 check yasm
 check_tar
 check_sed
+check_ant
 
 [ -n "$NEEDED" ] && mkdir -p build/
 
