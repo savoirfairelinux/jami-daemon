@@ -56,6 +56,8 @@
 #include "logger.h"
 #include "tlsvalidation.h"
 
+namespace TlsValidation {
+
 /**
  * Load the content of a file and return the data pointer to it.
  */
@@ -143,7 +145,7 @@ static int crypto_cert_check_date(gnutls_x509_crt_t cert)
 /**
  * Load the content of a certificate file and return the data pointer to it.
  */
-static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
+static unsigned char *crypto_cert_read(const std::string& path, size_t *out_len)
 {
     gnutls_x509_crt_t cert;
     unsigned char *data = NULL;
@@ -151,7 +153,7 @@ static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
     size_t fsize = 0;
     int err;
 
-    dt.data = crypto_file_read(path, &fsize);
+    dt.data = crypto_file_read(path.c_str(), &fsize);
     if (!dt.data)
         return NULL;
 
@@ -165,7 +167,7 @@ static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
     if (err != GNUTLS_E_SUCCESS)
         err = gnutls_x509_crt_import(cert, &dt, GNUTLS_X509_FMT_DER);
     if (err != GNUTLS_E_SUCCESS) {
-        ERROR("Could not import certificate %s - %s", path, gnutls_strerror(err));
+        ERROR("Could not import certificate %s - %s", path.c_str(), gnutls_strerror(err));
         goto out;
     }
 
@@ -184,7 +186,7 @@ static unsigned char *crypto_cert_read(const char *path, size_t *out_len)
         data = NULL;
         *out_len = 0;
         ERROR("Certificate %s could not be exported - %s.\n",
-              path, gnutls_strerror(err));
+              path.c_str(), gnutls_strerror(err));
     }
 
 out:
@@ -278,14 +280,14 @@ static int crypto_cert_print_issuer(gnutls_x509_crt_t cert,
     return 0;
 }
 
-int containsPrivateKey(const char *pemPath)
+int containsPrivateKey(const std::string& pemPath)
 {
     gnutls_datum_t dt;
     gnutls_x509_privkey_t key;
     size_t bufsize;
     int err, res = -1;
 
-    dt.data = crypto_file_read(pemPath, &bufsize);
+    dt.data = crypto_file_read(pemPath.c_str(), &bufsize);
     if (!dt.data)
         return res;
     dt.size = bufsize;
@@ -314,7 +316,7 @@ int containsPrivateKey(const char *pemPath)
     }
 
     res = 0;
-    DEBUG("Key from %s seems valid.", pemPath);
+    DEBUG("Key from %s seems valid.", pemPath.c_str());
 out:
     free(dt.data);
     gnutls_x509_privkey_deinit(key);
@@ -322,7 +324,7 @@ out:
     return res;
 }
 
-int certificateIsValid(const char *caPath, const char *certPath)
+int certificateIsValid(const std::string& caPath, const std::string& certPath)
 {
     gnutls_x509_crt_t ca = NULL;
     gnutls_x509_crt_t cert = NULL;
@@ -338,7 +340,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
         goto out;
     }
 
-    cert_dt.data = crypto_cert_read(certPath, &bufsize);
+    cert_dt.data = crypto_cert_read(certPath.c_str(), &bufsize);
     cert_dt.size = bufsize;
     if (!cert_dt.data)
         goto out;
@@ -361,12 +363,12 @@ int certificateIsValid(const char *caPath, const char *certPath)
 
     /* check if cert is self signed */
     self_signed = gnutls_x509_crt_check_issuer(cert, cert);
-    if (!self_signed && !caPath) {
+    if (!self_signed && !caPath.size()) {
         ERROR("Certificate is not self-signed, and CA is not provided.");
         goto out;
     }
-    if (caPath) {
-        ca_dt.data = crypto_cert_read(caPath, &bufsize);
+    if (caPath.size()) {
+        ca_dt.data = crypto_cert_read(caPath.c_str(), &bufsize);
         ca_dt.size = bufsize;
         if (!ca_dt.data)
             goto out;
@@ -416,7 +418,7 @@ int certificateIsValid(const char *caPath, const char *certPath)
         }
     }
 
-    DEBUG("Certificate from %s seems valid.", certPath);
+    DEBUG("Certificate from %s seems valid.", certPath.c_str());
     crypto_cert_print_issuer(cert, ca);
     res = 0;
 out:
@@ -434,7 +436,7 @@ out:
 /* mainly based on Fedora Defensive Coding tutorial
  * https://docs.fedoraproject.org/en-US/Fedora_Security_Team/html/Defensive_Coding/sect-Defensive_Coding-TLS-Client-GNUTLS.html
  */
-int verifyHostnameCertificate(const char *host, const uint16_t port)
+int verifyHostnameCertificate(const std::string& host, const uint16_t port)
 {
     int err, arg, res = -1;
     unsigned int status = (unsigned) -1;
@@ -453,8 +455,8 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     fd_set fdset;
     struct timeval tv;
 
-    if (!host || !port) {
-        ERROR("Wrong parameters used - host %s, port %d.", host, port);
+    if (!host.size() || !port) {
+        ERROR("Wrong parameters used - host %s, port %d.", host.c_str(), port);
         return res;
     }
 
@@ -476,9 +478,9 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
     memset(&name, 0, sizeof(name));
     name.sin_family = AF_INET;
     name.sin_port = htons(port);
-    hostinfo = gethostbyname(host);
+    hostinfo = gethostbyname(host.c_str());
     if (hostinfo == NULL) {
-        ERROR("Unknown host %s.", host);
+        ERROR("Unknown host %s.", host.c_str());
         goto out;
     }
     name.sin_addr = *(struct in_addr *)hostinfo->h_addr;
@@ -495,7 +497,7 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
                 err = select(sockfd + 1, NULL, &fdset, NULL, &tv);
                 if (err < 0 && errno != EINTR) {
                     ERROR("Could not connect to hostname %s at port %d",
-                          host, port);
+                          host.c_str(), port);
                     goto out;
                 } else if (err > 0) {
                     /* Select returned, if so_error is clean we are ready. */
@@ -514,7 +516,7 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
                 }
             } while(1);
         } else {
-            ERROR("Could not connect to hostname %s at port %d", host, port);
+            ERROR("Could not connect to hostname %s at port %d", host.c_str(), port);
             goto out;
         }
     }
@@ -573,7 +575,7 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
 
     /* Associate the socket with the session object and set the server name. */
     gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t) (uintptr_t) sockfd);
-    err = gnutls_server_name_set(session, GNUTLS_NAME_DNS, host, strlen(host));
+    err = gnutls_server_name_set(session, GNUTLS_NAME_DNS, host.c_str(), host.size());
     if (err != GNUTLS_E_SUCCESS) {
         ERROR("Could not set server name - %s", gnutls_strerror(err));
         goto out;
@@ -637,14 +639,14 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
         goto out;
     }
     /* Finally check if the hostnames match. */
-    err = gnutls_x509_crt_check_hostname(cert, host);
+    err = gnutls_x509_crt_check_hostname(cert, host.c_str());
     if (err == 0) {
-        ERROR("Hostname %s does not match certificate.", host);
+        ERROR("Hostname %s does not match certificate.", host.c_str());
         goto out;
     }
 
     /* Try sending and receiving some data through. */
-    snprintf(buf, sizeof(buf), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", host);
+    snprintf(buf, sizeof(buf), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", host.c_str());
     err = gnutls_record_send(session, buf, strlen(buf));
     if (err < 0) {
         ERROR("Send failed - %s", gnutls_strerror(err));
@@ -656,7 +658,7 @@ int verifyHostnameCertificate(const char *host, const uint16_t port)
         goto out;
     }
 
-    DEBUG("Hostname %s seems to point to a valid server.", host);
+    DEBUG("Hostname %s seems to point to a valid server.", host.c_str());
     res = 0;
 out:
     if (session) {
@@ -671,3 +673,5 @@ out:
     close(sockfd);
     return res;
 }
+
+}; // TlsValidation

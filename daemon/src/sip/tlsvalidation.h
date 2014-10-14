@@ -22,26 +22,25 @@
 #ifndef SECURITY_EVALUATOR_H
 #define SECURITY_EVALUATOR_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
+#include <string>
+
+namespace TlsValidation {
 
     /**
      * Check if the given .pem contains a valid private key.
      *
      * @return 0 if success, -1 otherwise
      */
-    int containsPrivateKey(const char *pemPath);
+    int containsPrivateKey(const std::string& pemPath);
 
     /**
      * Check if the given .pem contains a valid certificate.
      *
      * @return 0 if success, -1 otherwise
      */
-    int certificateIsValid(const char *caPath,
-                           const char *pemPath);
+    int certificateIsValid(const std::string& caPath,
+                           const std::string& pemPath);
 
     /**
      * Verify that the local hostname points to a valid SSL server by
@@ -50,11 +49,9 @@ extern "C" {
      * @param host the DNS domain address that the certificate should feature
      * @return 0 if success, -1 otherwise
      */
-    int verifyHostnameCertificate(const char *host,
+    int verifyHostnameCertificate(const std::string& host,
                                   const uint16_t port);
 
-#ifdef __cplusplus
-}
-#endif
+}; // TlsValidation
 
 #endif

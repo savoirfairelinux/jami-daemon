@@ -20,7 +20,7 @@ libsiplink_la_SOURCES = \
         sip_utils.h
 
 if BUILD_TLS
-libsiplink_la_SOURCES += tlsvalidation.c \
+libsiplink_la_SOURCES += tlsvalidation.cpp \
                          tlsvalidation.h
 endif
 
