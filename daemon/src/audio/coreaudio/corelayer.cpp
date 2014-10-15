@@ -33,6 +33,7 @@
 #include "noncopyable.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "audiodevice.h"
 
 #include <thread>
 #include <atomic>
@@ -111,7 +112,14 @@ std::vector<std::string> CoreLayer::getCaptureDeviceList() const
 
 std::vector<std::string> CoreLayer::getPlaybackDeviceList() const
 {
-    return {};
+    std::vector<std::string> ret;
+
+    for (auto x : getDeviceList(false))
+    {
+        ret.push_back(x.name_);
+    }
+
+    return ret;
 }
 
 void CoreLayer::startStream()
@@ -160,6 +168,44 @@ void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceT
         default:
             break;
     }
+}
+
+std::vector<AudioDevice> CoreLayer::getDeviceList(bool getCapture) const
+{
+
+    std::vector<AudioDevice> ret;
+    UInt32 propsize;
+
+    AudioObjectPropertyAddress theAddress = {
+        kAudioHardwarePropertyDevices,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMaster };
+
+    verify_noerr(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject,
+                            &theAddress,
+                            0,
+                            NULL,
+                            &propsize));
+
+    size_t nDevices = propsize / sizeof(AudioDeviceID);
+    AudioDeviceID *devids = new AudioDeviceID[nDevices];
+
+    verify_noerr(AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                        &theAddress,
+                        0,
+                        NULL,
+                        &propsize,
+                        devids));
+
+    for (int i = 0; i < nDevices; ++i) {
+        AudioDevice dev(devids[i], getCapture);
+        if (dev.channels_ > 0) { // Channels < 0 if inactive.
+            ret.push_back(dev);
+        }
+    }
+    delete[] devids;
+
+    return ret;
 }
 
 }
