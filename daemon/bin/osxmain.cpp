@@ -144,9 +144,17 @@ static int osxTests()
 
     sflph_init(&evHandlers, static_cast<sflph_init_flag>(sflphFlags));
 
-
+    sflph_call_play_recorded_file("/Users/pgroarke/sflphone/daemon/bin/dontwait.wav");
+    sleep(2);
     sflph_call_play_dtmf("0");
-    sflph_config_get_audio_output_device_list();
+    sleep(2);
+    sflph_call_play_dtmf("1");
+    sleep(1);
+
+    for (auto x : sflph_config_get_audio_output_device_list())
+        std::cout << x << std::endl;
+
+   // sflph_fini();
 
 }
 static int run()
