@@ -39,6 +39,8 @@
 #include <thread>
 #include <atomic>
 
+namespace sfl {
+
 // Actual audio thread.
 class CoreAudioThread {
 public:
@@ -148,4 +150,6 @@ void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceT
         default:
             break;
     }
+}
+
 }

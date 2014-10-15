@@ -39,8 +39,11 @@
  * @brief Main OSX sound class. Manages the data transfers between the application and the hardware.
  */
 
+namespace sfl {
+
 class CoreAudioThread;
 class RingBuffer;
+class AudioDevice;
 
 class CoreLayer : public AudioLayer {
     public:
@@ -130,5 +133,7 @@ class CoreLayer : public AudioLayer {
         CoreAudioThread* audioThread_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
+
+}
 
 #endif // CORE_LAYER_H_

@@ -38,6 +38,8 @@
 
 #include "sfl_types.h"
 
+namespace sfl {
+
 /**
  * Structure to hold sample rate and channel number associated with audio data.
  */
@@ -323,5 +325,7 @@ class AudioBuffer {
         // buffers holding data for each channels
         std::vector<std::vector<SFLAudioSample> > samples_;
 };
+
+}
 
 #endif // _AUDIO_BUFFER_H

@@ -244,7 +244,7 @@ IAXCall::sendTextMessage(const std::string& message, const std::string& /*from*/
 #endif
 
 void
-IAXCall::putAudioData(AudioBuffer& buf)
+IAXCall::putAudioData(sfl::AudioBuffer& buf)
 {
     ringbuffer_->put(buf);
 }

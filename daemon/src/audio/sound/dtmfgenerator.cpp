@@ -38,6 +38,8 @@
 
 #include "dtmfgenerator.h"
 
+namespace sfl {
+
 /*
  * Tone frequencies
  */
@@ -142,4 +144,6 @@ SFLAudioSample* DTMFGenerator::fillToneBuffer(int index)
     SFLAudioSample* ptr = new SFLAudioSample[sampleRate_];
     tone_.genSin(ptr, tones_[index].higher, tones_[index].lower, sampleRate_);
     return ptr;
+}
+
 }

@@ -32,6 +32,8 @@
  */
 #include "tonelist.h"
 
+namespace sfl {
+
 static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
     {
         // ZID_NORTH_AMERICA
@@ -131,4 +133,6 @@ TelephoneTone::getCurrentTone()
         return NULL;
 
     return tone_[currentTone_];
+}
+
 }

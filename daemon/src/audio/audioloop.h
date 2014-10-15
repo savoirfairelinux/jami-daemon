@@ -43,6 +43,8 @@
  * @brief Loop on a sound file
  */
 
+namespace sfl {
+
 class AudioLoop {
     public:
         AudioLoop(unsigned int sampleRate);
@@ -86,6 +88,8 @@ class AudioLoop {
         NON_COPYABLE(AudioLoop);
         virtual void onBufferFinish();
 };
+
+}
 
 #endif // __AUDIOLOOP_H__
 

@@ -50,7 +50,10 @@ class IAXAccount;
 class IAXCall;
 class AudioCodec;
 class AudioLayer;
-class Resampler;
+
+namespace sfl {
+    class Resampler;
+}
 
 /**
  * @file iaxvoiplink.h
@@ -148,11 +151,11 @@ class IAXVoIPLink {
         void sendAudioFromMic();
 
         /** encoder/decoder/resampler buffers */
-        AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, AudioFormat::MONO()};
-        AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, AudioFormat::MONO()};
+        sfl::AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, sfl::AudioFormat::MONO()};
+        sfl::AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, sfl::AudioFormat::MONO()};
         unsigned char encodedData_[RAW_BUFFER_SIZE] = {};
 
-        std::unique_ptr<Resampler> resampler_;
+        std::unique_ptr<sfl::Resampler> resampler_;
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to

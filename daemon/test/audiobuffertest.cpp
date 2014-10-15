@@ -34,6 +34,8 @@
 #include "logger.h"
 #include "test_utils.h"
 
+using namespace sfl;
+
 void AudioBufferTest::testAudioBufferConstructors()
 {
     TITLE();

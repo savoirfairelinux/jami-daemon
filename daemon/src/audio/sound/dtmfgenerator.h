@@ -48,6 +48,9 @@
  * @file dtmfgenerator.h
  * @brief DMTF Generator Exception
  */
+
+namespace sfl {
+
 class DTMFException : public std::runtime_error {
     public:
         DTMFException(const std::string& str) : std::runtime_error(str) {};
@@ -122,5 +125,7 @@ class DTMFGenerator {
          */
         SFLAudioSample* fillToneBuffer(int index);
 };
+
+}
 
 #endif // DTMFGENERATOR_H

@@ -37,6 +37,8 @@
 #include "test_utils.h"
 #include <unistd.h>
 
+using namespace sfl;
+
 AudioLayerTest::AudioLayerTest() : manager_(0), pulselayer_(0), layer_(0)
 {}
 
