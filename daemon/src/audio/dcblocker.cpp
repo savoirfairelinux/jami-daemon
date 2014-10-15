@@ -30,6 +30,8 @@
 
 #include "dcblocker.h"
 
+namespace sfl {
+
 DcBlocker::DcBlocker(unsigned channels /* = 1 */)
     : states(channels, (struct StreamState){0, 0, 0, 0})
 {}
@@ -73,3 +75,4 @@ void DcBlocker::process(AudioBuffer& buf)
     }
 }
 
+}

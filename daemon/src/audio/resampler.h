@@ -39,6 +39,8 @@
 #include "sfl_types.h"
 #include "noncopyable.h"
 
+namespace sfl {
+
 class Resampler {
     public:
         /**
@@ -89,5 +91,7 @@ class Resampler {
 
         SRC_STATE* src_state_;
 };
+
+}
 
 #endif //_SAMPLE_RATE_H

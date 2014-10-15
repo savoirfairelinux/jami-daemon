@@ -32,6 +32,8 @@
 #include "logger.h"
 #include "sfl_types.h"
 
+namespace sfl {
+
 Resampler::Resampler(AudioFormat format) : floatBufferIn_(),
     floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), src_state_(nullptr)
 {
@@ -126,4 +128,6 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
     */
     src_float_to_short_array(floatBufferOut_.data(), scratchBuffer_.data(), outSamples);
     dataOut.deinterleave(scratchBuffer_.data(), src_data.output_frames, nbChans);
+}
+
 }

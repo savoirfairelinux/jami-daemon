@@ -35,6 +35,8 @@
 #include "sfl_types.h"
 #include "audiobuffer.h"
 
+namespace sfl {
+
 class DcBlocker {
     public:
         DcBlocker(unsigned channels = 1);
@@ -56,5 +58,7 @@ class DcBlocker {
 
         std::vector<StreamState> states;
 };
+
+}
 
 #endif

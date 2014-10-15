@@ -44,6 +44,8 @@
 #include <cassert>
 #include "logger.h"
 
+namespace sfl {
+
 AudioLoop::AudioLoop(unsigned int sampleRate) :
     buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1))), pos_(0)
 {}
@@ -99,3 +101,5 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
 }
 
 void AudioLoop::onBufferFinish() {}
+
+}

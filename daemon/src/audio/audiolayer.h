@@ -64,6 +64,8 @@ namespace ost {
 class Time;
 }
 
+namespace sfl {
+
 enum class DeviceType {
     PLAYBACK,      /** To open playback device only */
     CAPTURE,       /** To open capture device only */
@@ -265,5 +267,7 @@ class AudioLayer {
          */
         time_t lastNotificationTime_;
 };
+
+} // namespace sfl
 
 #endif // _AUDIO_LAYER_H_

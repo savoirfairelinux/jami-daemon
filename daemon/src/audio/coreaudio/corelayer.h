@@ -41,8 +41,11 @@
  * @brief Main OSX sound class. Manages the data transfers between the application and the hardware.
  */
 
+namespace sfl {
+
 class CoreAudioThread;
 class RingBuffer;
+class AudioDevice;
 
 class CoreLayer : public AudioLayer {
     public:

@@ -67,12 +67,15 @@ namespace Conf {
     class YamlEmitter;
 }
 
-class DTMF;
-class AudioFile;
-class AudioLayer;
+namespace sfl {
+    class AudioFile;
+    class AudioLayer;
+    class RingBufferPool;
+    class DTMF;
+    class TelephoneTone;
+}
+
 class History;
-class TelephoneTone;
-class RingBufferPool;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -139,7 +142,7 @@ class ManagerImpl {
          * it's multi-thread and use mutex internally
          * @return AudioLayer*  The audio layer object
          */
-        std::shared_ptr<AudioLayer> getAudioDriver();
+        std::shared_ptr<sfl::AudioLayer> getAudioDriver();
 
         void startAudioDriverStream();
 
@@ -504,7 +507,7 @@ class ManagerImpl {
              * @param index The index of the soundcard
              * @param the type of stream, either PLAYBACK, CAPTURE, RINGTONE
              */
-        void setAudioDevice(int index, DeviceType streamType);
+        void setAudioDevice(int index, sfl::DeviceType streamType);
 
         /**
          * Get list of supported audio output device
@@ -648,14 +651,14 @@ class ManagerImpl {
          * Callback called when the audio layer initialised with its
          * preferred format.
          */
-        void hardwareAudioFormatChanged(AudioFormat format);
+        void hardwareAudioFormatChanged(sfl::AudioFormat format);
 
         /**
          * Should be called by any component dealing with an external
          * audio source, indicating the format used so the mixer format
          * can be eventually adapted.
          */
-        void audioFormatUsed(AudioFormat format);
+        void audioFormatUsed(sfl::AudioFormat format);
 
         /**
          * Handle audio sounds heard by a caller while they wait for their
@@ -687,13 +690,13 @@ class ManagerImpl {
          * Retrieve the current telephone tone
          * @return AudioLoop*   The audio tone or 0 if no tone (init before calling this function)
          */
-        AudioLoop* getTelephoneTone();
+        sfl::AudioLoop* getTelephoneTone();
 
         /**
          * Retrieve the current telephone file
          * @return AudioLoop* The audio file or 0 if the wav is stopped
          */
-        AudioLoop* getTelephoneFile();
+        sfl::AudioLoop* getTelephoneFile();
 
         /**
          * @return true is there is one or many incoming call waiting
@@ -771,7 +774,7 @@ class ManagerImpl {
          * Play one tone
          * @return false if the driver is uninitialize
          */
-        void playATone(Tone::TONEID toneId);
+        void playATone(sfl::Tone::TONEID toneId);
 
         Client client_;
 
@@ -782,20 +785,20 @@ class ManagerImpl {
         std::mutex currentCallMutex_;
 
         /** Audio layer */
-        std::shared_ptr<AudioLayer> audiodriver_{nullptr};
+        std::shared_ptr<sfl::AudioLayer> audiodriver_{nullptr};
 
         // Main thread
-        std::unique_ptr<DTMF> dtmfKey_;
+        std::unique_ptr<sfl::DTMF> dtmfKey_;
 
         /** Buffer to generate DTMF */
-        AudioBuffer dtmfBuf_;
+        sfl::AudioBuffer dtmfBuf_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         std::mutex toneMutex_;
-        std::unique_ptr<TelephoneTone> telephoneTone_;
-        std::unique_ptr<AudioFile> audiofile_;
+        std::unique_ptr<sfl::TelephoneTone> telephoneTone_;
+        std::unique_ptr<sfl::AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
@@ -846,14 +849,14 @@ class ManagerImpl {
          * Audio instances must be registered into the RingBufferMananger and bound together via the ManagerImpl.
          *
          */
-        std::unique_ptr<RingBufferPool> ringbufferpool_;
+        std::unique_ptr<sfl::RingBufferPool> ringbufferpool_;
 
     public:
 
         /**
          * Return a pointer to the instance of the RingBufferPool
          */
-        RingBufferPool& getRingBufferPool() { return *ringbufferpool_; }
+        sfl::RingBufferPool& getRingBufferPool() { return *ringbufferpool_; }
 
         /**
          * Tell if there is a current call processed
