@@ -591,7 +591,9 @@ SIPVoIPLink::SIPVoIPLink()
 #undef TRY
 
     // ready to handle events
-    Manager::instance().registerEventHandler((uintptr_t)this, std::bind(&SIPVoIPLink::handleEvents, this));
+    // Implementation note: we don't use std::bind(xxx, this) here
+    // as handleEvents needs a valid instance to be called.
+    Manager::instance().registerEventHandler((uintptr_t)this, []() { getSIPVoIPLink()->handleEvents(); });
 }
 
 SIPVoIPLink::~SIPVoIPLink()
