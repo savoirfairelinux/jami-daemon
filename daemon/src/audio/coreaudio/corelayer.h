@@ -43,6 +43,7 @@ namespace sfl {
 
 class CoreAudioThread;
 class RingBuffer;
+class AudioDevice;
 
 class CoreLayer : public AudioLayer {
     public:
@@ -134,6 +135,8 @@ class CoreLayer : public AudioLayer {
 
         CoreAudioThread* audioThread_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
+
+        std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
 
 }
