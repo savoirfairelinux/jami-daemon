@@ -93,6 +93,26 @@ Done !
 More details available here:
 https://projects.savoirfairelinux.com/projects/sflphone/wiki/How_to_build
 
+How to compile on OSX
+---------------------
+# Use your favorite package manager to install the necessary tools (macports or brew).
+automake libtool check gettext libtoolize ...
+
+# Compile the dependencies
+cd contrib
+mkdir native
+cd native
+../bootstrap
+make -j
+
+# Then the daemon
+cd ../../daemon
+./autogen.sh
+./configure --without-alsa --without-pulse --with-coreaudio --without-dbus --disable-video
+make
+
+Do a little dance!
+
 Clang compatibility (developers only)
 -------------------------------------
 
