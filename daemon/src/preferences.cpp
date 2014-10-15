@@ -47,6 +47,9 @@
 #if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
 #endif
+#if HAVE_COREAUDIO
+#include "audio/coreaudio/corelayer.h"
+#endif
 #endif /* HAVE_OPENSL */
 
 #include <yaml-cpp/yaml.h>
@@ -380,6 +383,15 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
     checkSoundCard(alsaCardring_, sfl::DeviceType::RINGTONE);
 
     return new sfl::AlsaLayer(*this);
+#endif
+
+#if HAVE_COREAUDIO
+    audioApi_ = COREAUDIO_API_STR;
+    try {
+        return new sfl::CoreLayer(*this);
+    } catch (const std::runtime_error &e) {
+        WARN("Could not create coreaudio layer. There will be no sound.");
+    }
 #else
     return NULL;
 #endif
