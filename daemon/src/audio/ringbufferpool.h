@@ -41,6 +41,8 @@
 #include <mutex>
 #include <memory>
 
+namespace sfl {
+
 class RingBuffer;
 
 class RingBufferPool {
@@ -161,5 +163,7 @@ class RingBufferPool {
 
         std::shared_ptr<RingBuffer> defaultRingBuffer_;
 };
+
+}
 
 #endif  // RING_BUFFER_POOL_H_

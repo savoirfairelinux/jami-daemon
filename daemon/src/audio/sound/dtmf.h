@@ -41,6 +41,8 @@
  * @file dtmf.h
  * @brief DMTF library to generate a dtmf sample
  */
+namespace sfl {
+
 class DTMF {
     public:
         /**
@@ -67,5 +69,7 @@ class DTMF {
 
         DTMFGenerator dtmfgenerator_;
 };
+
+}
 
 #endif // __KEY_DTMF_H_

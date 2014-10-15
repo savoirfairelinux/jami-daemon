@@ -41,6 +41,8 @@
 
 class SndfileHandle;
 
+namespace sfl {
+
 class AudioRecord {
 
     public:
@@ -152,5 +154,7 @@ class AudioRecord {
     private:
         NON_COPYABLE(AudioRecord);
 };
+
+}
 
 #endif // _AUDIO_RECORD_H

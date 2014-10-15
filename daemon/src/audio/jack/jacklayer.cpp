@@ -49,6 +49,8 @@ TODO
 * auto connect optional
 #endif
 
+namespace sfl {
+
 namespace
 {
 void connectPorts(jack_client_t *client, int portType, const std::vector<jack_port_t *> &ports)
@@ -530,4 +532,6 @@ JackLayer::stopStream()
 
     flushMain();
     flushUrgent();
+}
+
 }

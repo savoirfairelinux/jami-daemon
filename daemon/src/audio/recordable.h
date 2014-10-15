@@ -33,6 +33,8 @@
 #include "audiorecord.h"
 #include "audiorecorder.h"
 
+namespace sfl {
+
 class Recordable {
 
     public:
@@ -84,5 +86,7 @@ class Recordable {
         AudioRecord recAudio_;
         AudioRecorder recorder_;
 };
+
+}
 
 #endif

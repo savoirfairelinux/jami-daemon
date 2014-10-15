@@ -55,7 +55,7 @@ template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
  * @brief A call is the base class for protocol-based calls
  */
 
-class Call : public Recordable {
+class Call : public sfl::Recordable {
     public:
         static const char * const DEFAULT_ID;
 

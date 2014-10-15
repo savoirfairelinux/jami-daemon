@@ -37,6 +37,8 @@
 #include <stdexcept>
 #include "audio/audioloop.h"
 
+namespace sfl {
+
 class AudioFileException : public std::runtime_error {
     public:
         AudioFileException(const std::string &str) :
@@ -63,5 +65,7 @@ class AudioFile : public AudioLoop {
         void onBufferFinish();
         unsigned updatePlaybackScale_;
 };
+
+}
 
 #endif // __AUDIOFILE_H__

@@ -198,17 +198,17 @@ bool
 Call::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
-    RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
+    sfl::RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
     std::string process_id = Recordable::recorder_.getRecorderID();
 
     if (startRecording) {
         rbPool.bindHalfDuplexOut(process_id, id_);
-        rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
+        rbPool.bindHalfDuplexOut(process_id, sfl::RingBufferPool::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         rbPool.unBindHalfDuplexOut(process_id, id_);
-        rbPool.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
+        rbPool.unBindHalfDuplexOut(process_id, sfl::RingBufferPool::DEFAULT_ID);
     }
 
     return startRecording;
