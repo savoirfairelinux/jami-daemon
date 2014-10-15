@@ -142,7 +142,8 @@ static int osxTests()
 
 
     sflph_call_play_dtmf("0");
-    sflph_config_get_audio_output_device_list();
+    for (auto x : sflph_config_get_audio_output_device_list())
+        std::cout << x << std::endl;
 
 }
 static int run()
