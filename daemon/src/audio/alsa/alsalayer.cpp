@@ -42,6 +42,8 @@
 #include <thread>
 #include <atomic>
 
+namespace sfl {
+
 class AlsaThread {
     public:
         AlsaThread(AlsaLayer *alsa);
@@ -847,4 +849,6 @@ void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceT
         default:
             break;
     }
+}
+
 }

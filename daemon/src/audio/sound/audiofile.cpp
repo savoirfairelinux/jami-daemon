@@ -45,6 +45,8 @@
 
 #include "logger.h"
 
+namespace sfl {
+
 void
 AudioFile::onBufferFinish()
 {
@@ -135,4 +137,6 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         delete buffer_;
         buffer_ = buffer;
     }
+}
+
 }

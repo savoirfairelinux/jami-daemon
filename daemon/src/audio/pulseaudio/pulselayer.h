@@ -46,6 +46,9 @@
 #include <memory>
 
 class AudioPreference;
+
+namespace sfl {
+
 class AudioStream;
 class RingBuffer;
 
@@ -226,6 +229,8 @@ class PulseLayer : public AudioLayer {
 
         friend class AudioLayerTest;
 };
+
+}
 
 #endif // PULSE_LAYER_H_
 

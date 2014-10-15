@@ -39,6 +39,8 @@
 #include "sfl_types.h"
 #include "noncopyable.h"
 
+namespace sfl {
+
 struct SrcState;
 
 class Resampler {
@@ -82,5 +84,7 @@ class Resampler {
 
         std::unique_ptr<SrcState> src_state_;
 };
+
+}
 
 #endif //_SAMPLE_RATE_H

@@ -31,6 +31,8 @@
 #include "audiobuffer.h"
 #include "logger.h"
 
+namespace sfl {
+
 std::ostream& operator <<(std::ostream& stream, const AudioFormat& f) {
     stream << f.toString();
     return stream;
@@ -256,4 +258,6 @@ size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /
         std::copy(in, in + sample_num, samples_[i].begin() + pos_out);
 
     return sample_num;
+}
+
 }

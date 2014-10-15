@@ -51,6 +51,8 @@
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
 
+namespace sfl {
+
 class AlsaThread;
 class RingBuffer;
 
@@ -260,5 +262,7 @@ class AlsaLayer : public AudioLayer {
         AlsaThread *audioThread_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
+
+}
 
 #endif // ALSA_LAYER_H_

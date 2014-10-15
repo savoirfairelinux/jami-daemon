@@ -33,6 +33,8 @@
 #include "logger.h"
 #include <stdexcept>
 
+namespace sfl {
+
 AudioStream::AudioStream(pa_context *c,
                          pa_threaded_mainloop *m,
                          const char *desc,
@@ -149,4 +151,6 @@ bool AudioStream::isReady()
         return false;
 
     return pa_stream_get_state(audiostream_) == PA_STREAM_READY;
+}
+
 }

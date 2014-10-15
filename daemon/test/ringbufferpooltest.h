@@ -39,7 +39,9 @@
 
 #include <memory>
 
-class RingBufferPool;
+namespace sfl {
+    class RingBufferPool;
+}
 
 /*
  * @file audiorecorderTest.cpp
@@ -74,7 +76,7 @@ class RingBufferPoolTest : public CppUnit::TestCase {
 
     private:
 
-        std::unique_ptr<RingBufferPool> rbPool_;
+        std::unique_ptr<sfl::RingBufferPool> rbPool_;
 };
 
 /* Register our test module */

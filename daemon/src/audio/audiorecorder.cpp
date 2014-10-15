@@ -37,6 +37,8 @@
 #include <sstream>
 #include <unistd.h>
 
+namespace sfl {
+
 int AudioRecorder::count_ = 0;
 
 AudioRecorder::AudioRecorder(AudioRecord  *arec, RingBufferPool &rbp)
@@ -97,4 +99,6 @@ void AudioRecorder::run()
 
         std::this_thread::sleep_for(SLEEP_TIME);
     }
+}
+
 }

@@ -48,11 +48,11 @@
 #include <atomic>
 #include <cstddef>
 
+namespace sfl {
+
 class Resampler;
 class DSP;
 class RingBuffer;
-
-namespace sfl {
 
 class AudioRtpContext {
     public:
