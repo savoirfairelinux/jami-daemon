@@ -137,6 +137,10 @@ class CoreLayer : public AudioLayer {
 
         CoreAudioThread* _audioThread;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
+
+        std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
+
+}
 
 #endif // CORE_LAYER_H_
