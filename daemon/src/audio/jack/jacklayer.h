@@ -42,6 +42,8 @@
 
 #include <memory>
 
+namespace sfl {
+
 class RingBuffer;
 
 class JackLayer : public AudioLayer {
@@ -108,5 +110,7 @@ class JackLayer : public AudioLayer {
         JackLayer(const AudioPreference &);
         ~JackLayer();
 };
+
+}
 
 #endif // JACK_LAYER_H_

@@ -48,6 +48,8 @@
 #include <cstdlib>
 #include <fstream>
 
+namespace sfl {
+
 static void
 playback_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
@@ -842,4 +844,6 @@ int PulseLayer::getIndexPlayback() const
 int PulseLayer::getIndexRingtone() const
 {
     return getAudioDeviceIndexByName(preference_.getPulseDeviceRingtone(), DeviceType::RINGTONE);
+}
+
 }

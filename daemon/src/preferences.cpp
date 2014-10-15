@@ -328,9 +328,9 @@ AudioPreference::AudioPreference() :
 static const int ALSA_DFT_CARD_ID = 0; // Index of the default soundcard
 
 static void
-checkSoundCard(int &card, DeviceType type)
+checkSoundCard(int &card, sfl::DeviceType type)
 {
-    if (not AlsaLayer::soundCardIndexExists(card, type)) {
+    if (not sfl::AlsaLayer::soundCardIndexExists(card, type)) {
         WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
@@ -347,7 +347,7 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
     if (audioApi_ == JACK_API_STR) {
         if (system("jack_lsp > /dev/null") == 0) {
             try {
-                return new JackLayer(*this);
+                return new sfl::JackLayer(*this);
             } catch (const std::runtime_error &e) {
                 ERROR("%s", e.what());
 #if HAVE_PULSE
@@ -367,7 +367,7 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
 
     if (audioApi_ == PULSEAUDIO_API_STR) {
         try {
-            return new PulseLayer(*this);
+            return new sfl::PulseLayer(*this);
         } catch (const std::runtime_error &e) {
             WARN("Could not create pulseaudio layer, falling back to ALSA");
         }
@@ -378,11 +378,11 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
 #if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(alsaCardin_, DeviceType::CAPTURE);
-    checkSoundCard(alsaCardout_, DeviceType::PLAYBACK);
-    checkSoundCard(alsaCardring_, DeviceType::RINGTONE);
+    checkSoundCard(alsaCardin_, sfl::DeviceType::CAPTURE);
+    checkSoundCard(alsaCardout_, sfl::DeviceType::PLAYBACK);
+    checkSoundCard(alsaCardring_, sfl::DeviceType::RINGTONE);
 
-    return new AlsaLayer(*this);
+    return new sfl::AlsaLayer(*this);
 #endif
 
 #if HAVE_COREAUDIO
