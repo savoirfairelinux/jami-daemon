@@ -5,3 +5,4 @@ configure
 bin/dbus/*.adaptor.h
 bin/dbus/org.sflphone.SFLphone.service
 bin/sflphoned
+.DS_Store
