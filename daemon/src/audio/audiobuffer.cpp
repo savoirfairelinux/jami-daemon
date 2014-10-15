@@ -63,7 +63,7 @@ AudioBuffer& AudioBuffer::operator=(const AudioBuffer& other) {
     sampleRate_ = other.sampleRate_;
     return *this;
 }
-        
+
 AudioBuffer& AudioBuffer::operator=(AudioBuffer&& other) {
     samples_ = std::move( other.samples_ );
     sampleRate_ = other.sampleRate_;
