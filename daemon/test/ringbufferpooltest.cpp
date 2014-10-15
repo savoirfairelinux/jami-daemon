@@ -37,6 +37,8 @@
 #include "logger.h"
 #include "test_utils.h"
 
+using namespace sfl;
+
 void RingBufferPoolTest::testBindUnbindBuffer()
 {
     TITLE();

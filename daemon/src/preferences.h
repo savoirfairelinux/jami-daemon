@@ -36,7 +36,9 @@
 #include <map>
 #include <vector>
 
-class AudioLayer;
+namespace sfl {
+    class AudioLayer;
+}
 
 namespace YAML {
     class Emitter;
@@ -224,8 +226,8 @@ class HookPreference : public Serializable {
 class AudioPreference : public Serializable {
     public:
         AudioPreference();
-        AudioLayer *createAudioLayer();
-        AudioLayer *switchAndCreateAudioLayer();
+        sfl::AudioLayer *createAudioLayer();
+        sfl::AudioLayer *switchAndCreateAudioLayer();
 
         std::string getAudioApi() const {
             return audioApi_;

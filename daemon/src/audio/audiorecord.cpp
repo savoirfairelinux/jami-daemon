@@ -43,6 +43,8 @@
 #include <cstdio>
 #include <unistd.h>
 
+namespace sfl {
+
 static std::string
 createFilename()
 {
@@ -234,4 +236,6 @@ void AudioRecord::recData(AudioBuffer& buffer)
     } else {
         fileHandle_->writeSync();
     }
+}
+
 }

@@ -35,6 +35,8 @@
 
 typedef std::map<std::string, size_t> ReadOffset;
 
+namespace sfl {
+
 /**
  * A ring buffer for mutichannel audio samples
  */
@@ -178,5 +180,6 @@ class RingBuffer {
         ReadOffset readoffsets_;
 };
 
+}
 
 #endif /*  __RING_BUFFER__ */

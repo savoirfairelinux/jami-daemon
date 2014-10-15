@@ -31,6 +31,8 @@
 #include "manager.h"
 #include "logger.h"
 
+namespace sfl {
+
 Recordable::Recordable() : recAudio_(), recorder_(&recAudio_, Manager::instance().getRingBufferPool())
 {
     DEBUG("Set recording options: %s", Manager::instance().audioPreference.getRecordPath().c_str());
@@ -56,4 +58,6 @@ std::string Recordable::getFilename() const
 void Recordable::setRecordingFormat(AudioFormat format)
 {
     recAudio_.setSndFormat(format);
+}
+
 }
