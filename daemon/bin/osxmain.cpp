@@ -129,8 +129,29 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
     return quit;
 }
 
+static int osxTests()
+{
+    sflph_ev_handlers evHandlers = {
+        .call_ev_handlers = {},
+        .config_ev_handlers = {},
+#ifdef SFL_PRESENCE
+        .pres_ev_handlers = {}
+#endif
+#ifdef SFL_VIDEO
+        .video_ev_handlers = {}
+#endif
+    };
+
+    sflph_init(&evHandlers, static_cast<sflph_init_flag>(sflphFlags));
+
+    sflph_call_play_dtmf("0");
+
+    return 0;
+}
+
 static int run()
 {
+    osxTests();
     return 1;
 }
 
