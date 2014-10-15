@@ -43,6 +43,8 @@
 #include <cstring>
 #include <vector>
 
+namespace sfl {
+
 Tone::Tone(const std::string& definition, unsigned int sampleRate) :
     AudioLoop(sampleRate), xhigher_(0.0), xlower_(0.0)
 {
@@ -186,3 +188,4 @@ Tone::genSin(SFLAudioSample* buffer, int lowFrequency, int highFrequency, int nb
     xlower_ = x_l;
 }
 
+}

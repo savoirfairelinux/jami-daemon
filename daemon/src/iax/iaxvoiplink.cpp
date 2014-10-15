@@ -48,6 +48,8 @@
 #include "call_factory.h"
 #include "sfl_types.h"
 
+using namespace sfl;
+
 std::mutex IAXVoIPLink::mutexIAX = {};
 
 IAXVoIPLink::IAXVoIPLink(IAXAccount& account) : account_(account), resampler_(new Resampler{44100})
@@ -176,7 +178,7 @@ IAXVoIPLink::sendAudioFromMic()
         int compSize;
         unsigned int audioRate = audioCodec->getClockRate();
         int outSamples;
-        AudioBuffer *in;
+        sfl::AudioBuffer *in;
 
         if (audioRate != mainBufferSampleRate) {
             rawBuffer_.setSampleRate(audioRate);
@@ -349,7 +351,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
         size = max;
 
     audioCodec->decode(rawBuffer_.getData(), data , size);
-    AudioBuffer *out = &rawBuffer_;
+    sfl::AudioBuffer *out = &rawBuffer_;
     unsigned int audioRate = audioCodec->getClockRate();
 
     if (audioRate != mainBufferSampleRate) {

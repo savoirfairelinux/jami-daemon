@@ -108,8 +108,8 @@ void Conference::bindParticipant(const std::string &participant_id)
         rbPool.flush(item);
     }
 
-    rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
-    rbPool.flush(RingBufferPool::DEFAULT_ID);
+    rbPool.bindCallID(participant_id, sfl::RingBufferPool::DEFAULT_ID);
+    rbPool.flush(sfl::RingBufferPool::DEFAULT_ID);
 }
 
 std::string Conference::getStateStr() const
@@ -162,14 +162,14 @@ bool Conference::toggleRecording()
         for (const auto &item : participants_)
             rbPool.bindHalfDuplexOut(process_id, item);
 
-        rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
+        rbPool.bindHalfDuplexOut(process_id, sfl::RingBufferPool::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         for (const auto &item : participants_)
             rbPool.unBindHalfDuplexOut(process_id, item);
 
-        rbPool.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
+        rbPool.unBindHalfDuplexOut(process_id, sfl::RingBufferPool::DEFAULT_ID);
     }
 
     return startRecording;

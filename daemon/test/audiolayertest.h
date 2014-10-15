@@ -45,7 +45,10 @@
 #include "noncopyable.h"
 
 class ManagerImpl;
-class PulseLayer;
+
+namespace sfl {
+    class PulseLayer;
+}
 
 class AudioLayerTest: public CppUnit::TestFixture {
 
@@ -66,7 +69,7 @@ class AudioLayerTest: public CppUnit::TestFixture {
         NON_COPYABLE(AudioLayerTest);
 
         ManagerImpl* manager_;
-        PulseLayer* pulselayer_;
+        sfl::PulseLayer* pulselayer_;
         int layer_;
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");

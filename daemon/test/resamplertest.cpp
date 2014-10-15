@@ -35,6 +35,8 @@
 
 #include "resamplertest.h"
 
+using namespace sfl;
+
 ResamplerTest::ResamplerTest() :
     CppUnit::TestCase("Resampler module test"), inputBuffer(MAX_BUFFER_LENGTH, AudioFormat::MONO()), outputBuffer(MAX_BUFFER_LENGTH, AudioFormat::MONO())
 {}

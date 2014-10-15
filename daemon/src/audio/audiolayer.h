@@ -58,11 +58,14 @@
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
 
 class AudioPreference;
-class Resampler;
 
 namespace ost {
 class Time;
 }
+
+namespace sfl {
+
+class Resampler;
 
 enum class DeviceType {
     PLAYBACK,      /** To open playback device only */
@@ -265,5 +268,7 @@ class AudioLayer {
          */
         time_t lastNotificationTime_;
 };
+
+} // namespace sfl
 
 #endif // _AUDIO_LAYER_H_
