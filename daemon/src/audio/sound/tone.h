@@ -40,6 +40,9 @@
  * @file tone.h
  * @brief Tone sample (dial, busy, ring, congestion)
  */
+
+namespace sfl {
+
 class Tone : public AudioLoop {
     public:
         /**
@@ -89,6 +92,8 @@ class Tone : public AudioLoop {
         double xhigher_;
         double xlower_;
 };
+
+}
 
 #endif // __TONE_H__
 

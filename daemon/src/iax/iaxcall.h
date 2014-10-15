@@ -40,8 +40,11 @@
 #include "noncopyable.h"
 
 class IAXAccount;
-class RingBuffer;
-class AudioBuffer;
+
+namespace sfl {
+    class RingBuffer;
+    class AudioBuffer;
+}
 
 /**
  * @file: iaxcall.h
@@ -111,13 +114,13 @@ class IAXCall : public Call
                              const std::string& from);
 #endif
 
-        void putAudioData(AudioBuffer& buf);
+        void putAudioData(sfl::AudioBuffer& buf);
 
     private:
         NON_COPYABLE(IAXCall);
 
         // Incoming audio ring buffer
-        std::shared_ptr<RingBuffer> ringbuffer_{};
+        std::shared_ptr<sfl::RingBuffer> ringbuffer_{};
 };
 
 #endif

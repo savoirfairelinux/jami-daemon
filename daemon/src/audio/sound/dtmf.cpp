@@ -34,6 +34,8 @@
 
 #include "dtmf.h"
 
+namespace sfl {
+
 DTMF::DTMF(unsigned int sampleRate)
     : currentTone_(0), newTone_(0), dtmfgenerator_(sampleRate)
 {}
@@ -80,3 +82,4 @@ bool DTMF::generateDTMF(vector<SFLAudioSample> &buffer)
     }
 }
 
+}

@@ -38,6 +38,8 @@
 
 #include "sfl_types.h"
 
+namespace sfl {
+
 /**
  * Structure to hold sample rate and channel number associated with audio data.
  */
@@ -101,17 +103,17 @@ class AudioBuffer {
          * If copy_content is set to true, the other buffer content is also copied.
          */
         AudioBuffer(const AudioBuffer& other, bool copy_content = false);
-        
+
         /**
          * Move constructor
          */
         AudioBuffer(AudioBuffer&& other) : sampleRate_(other.sampleRate_), samples_( std::move(other.samples_) ) {};
-        
+
         /**
          * Copy operator
          */
         AudioBuffer& operator=(const AudioBuffer& other);
-        
+
         /**
          * Move operator
          */
@@ -323,5 +325,7 @@ class AudioBuffer {
         // buffers holding data for each channels
         std::vector<std::vector<SFLAudioSample> > samples_;
 };
+
+} // namespace ring
 
 #endif // _AUDIO_BUFFER_H

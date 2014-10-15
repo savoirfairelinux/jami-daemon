@@ -38,6 +38,8 @@
 #include <utility> // for std::pair
 #include <cstring>
 
+namespace sfl {
+
 const char * const RingBufferPool::DEFAULT_ID = "audiolayer_id";
 
 RingBufferPool::RingBufferPool()
@@ -418,4 +420,6 @@ RingBufferPool::flushAllBuffers()
         else
             ringBufferMap_.erase(item.first);
     }
+}
+
 }

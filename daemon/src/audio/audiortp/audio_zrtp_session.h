@@ -55,7 +55,7 @@ class ZrtpZidException : public std::runtime_error {
 };
 
 class AudioZrtpSession :
-    public ost::SymmetricZRTPSession,
+    public ::ost::SymmetricZRTPSession,
     public AudioRtpSession {
     public:
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename, const std::string &localIP);
@@ -63,7 +63,7 @@ class AudioZrtpSession :
         std::vector<long>
         getSocketDescriptors() const;
 
-        virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
+        virtual bool onRTPPacketRecv(::ost::IncomingRTPPkt &pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
 
