@@ -37,6 +37,8 @@
 #include <atomic>
 #include <string>
 
+namespace sfl {
+
 class RingBufferPool;
 class AudioRecord;
 
@@ -71,5 +73,7 @@ class AudioRecorder {
         std::atomic<bool> running_;
         std::thread thread_;
 };
+
+}
 
 #endif

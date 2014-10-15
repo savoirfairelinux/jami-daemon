@@ -46,7 +46,7 @@
 #include "logger.h"
 
 void
-AudioFile::onBufferFinish()
+sfl::AudioFile::onBufferFinish()
 {
     // We want to send values in milisecond
     const int divisor = buffer_->getSampleRate() / 1000;
@@ -64,7 +64,7 @@ AudioFile::onBufferFinish()
     updatePlaybackScale_++;
 }
 
-AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
+sfl::AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     AudioLoop(sampleRate), filepath_(fileName), updatePlaybackScale_(0)
 {
     int format;

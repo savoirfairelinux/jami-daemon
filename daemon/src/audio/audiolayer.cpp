@@ -37,6 +37,8 @@
 
 #include <ctime>
 
+namespace sfl {
+
 AudioLayer::AudioLayer(const AudioPreference &pref)
     : isCaptureMuted_(pref.getCaptureMuted())
     , isPlaybackMuted_(pref.getPlaybackMuted())
@@ -110,4 +112,6 @@ void AudioLayer::notifyIncomingCall()
     /* Put the data in the urgent ring buffer */
     flushUrgent();
     putUrgent(buf);
+}
+
 }

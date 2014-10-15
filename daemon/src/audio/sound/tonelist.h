@@ -37,6 +37,8 @@
 
 #include "tone.h"
 
+namespace sfl {
+
 class TelephoneTone {
     public:
         /** Countries */
@@ -65,5 +67,7 @@ class TelephoneTone {
         Tone* tone_[Tone::TONE_NULL];
         Tone::TONEID currentTone_;
 };
+
+}
 
 #endif

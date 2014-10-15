@@ -36,6 +36,8 @@
 #include <memory>
 #include "noncopyable.h"
 
+namespace sfl {
+
 class AudioBuffer;
 
 class DSP {
@@ -56,5 +58,7 @@ class DSP {
         // one state per channel
         std::vector<SpeexStatePtr> dspStates_;
 };
+
+}
 
 #endif // DSP_H_

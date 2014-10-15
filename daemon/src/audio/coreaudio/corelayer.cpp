@@ -39,6 +39,8 @@
 #include <thread>
 #include <atomic>
 
+namespace sfl {
+
 // Actual audio thread.
 class CoreAudioThread {
 public:

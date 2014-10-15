@@ -148,11 +148,11 @@ class IAXVoIPLink {
         void sendAudioFromMic();
 
         /** encoder/decoder/resampler buffers */
-        AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, AudioFormat::MONO()};
-        AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, AudioFormat::MONO()};
+        sfl::AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, sfl::AudioFormat::MONO()};
+        sfl::AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, sfl::AudioFormat::MONO()};
         unsigned char encodedData_[RAW_BUFFER_SIZE] = {};
 
-        Resampler resampler_{44100};
+        sfl::Resampler resampler_{44100};
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to
