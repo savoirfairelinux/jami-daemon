@@ -992,6 +992,7 @@ class ManagerImpl {
          * TODO: move this to ConfigurationManager
          */
         sfl::History history_;
+
         bool finished_;
 
         AccountFactory accountFactory_;

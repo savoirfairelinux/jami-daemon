@@ -63,7 +63,6 @@
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
-#include "history/historynamecache.h"
 #include "history/history.h"
 #include "manager.h"
 
@@ -129,8 +128,8 @@ ManagerImpl::ManagerImpl() :
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()
     , ringbufferpool_(new RingBufferPool)
-    , callFactory(), conferenceMap_(), history_(),
-    finished_(false), accountFactory_()
+    , callFactory(), conferenceMap_(), history_()
+    , finished_(false), accountFactory_()
 {
     // initialize random generator for call id
     srand(time(nullptr));
@@ -358,7 +357,9 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
 
         // try to reverse match the peer name using the cache
         if (call->getDisplayName().empty()) {
-            const std::string pseudo_contact_name(HistoryNameCache::getInstance().getNameFromHistory(call->getPeerNumber(), call->getAccountId()));
+            const auto& name = history_.getNameFromHistory(call->getPeerNumber(),
+                                                           call->getAccountId());
+            const std::string pseudo_contact_name(name);
             if (not pseudo_contact_name.empty())
                 call->setDisplayName(pseudo_contact_name);
         }
