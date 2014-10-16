@@ -121,6 +121,8 @@ function build_contrib {
         ../bootstrap
         # list dependencies that aren't detected by contrib
         make list
+        # FIXME: this is a hack until we remove all libcommoncpp.so linked libs on Jenkins
+        make .zrtpcpp
         # FIXME: this is very slow but it's the best we can do until we migrate
         # to a builder with more up to date packages
         make
