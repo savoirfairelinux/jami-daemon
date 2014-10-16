@@ -1302,7 +1302,9 @@ void ManagerImpl::pollEvents()
     if (finished_)
         return;
 
-    for (const auto& it : eventHandlerMap_)
+    // Make a copy of handlers map as handlers can modify this map
+    const auto handlers = eventHandlerMap_;
+    for (const auto& it : handlers)
         it.second();
 }
 
