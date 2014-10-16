@@ -44,7 +44,6 @@
 #include "fileutils.h"
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
-#include "history/historynamecache.h"
 #include "audio/audiolayer.h"
 
 #include <dirent.h>
