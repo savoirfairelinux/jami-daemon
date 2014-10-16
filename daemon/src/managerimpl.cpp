@@ -63,7 +63,6 @@
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
-#include "history/historynamecache.h"
 #include "history/history.h"
 #include "manager.h"
 
@@ -358,7 +357,9 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
 
         // try to reverse match the peer name using the cache
         if (call->getDisplayName().empty()) {
-            const std::string pseudo_contact_name(HistoryNameCache::getInstance().getNameFromHistory(call->getPeerNumber(), call->getAccountId()));
+            const auto& name = history_.getNameFromHistory(call->getPeerNumber(),
+                                                           call->getAccountId());
+            const std::string pseudo_contact_name(name);
             if (not pseudo_contact_name.empty())
                 call->setDisplayName(pseudo_contact_name);
         }

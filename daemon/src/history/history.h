@@ -65,6 +65,10 @@ class History {
         void addCall(Call *call, int limit);
         void clear();
         void setPath(const std::string &path);
+
+        std::string getNameFromHistory(const std::string &number,
+                                       const std::string &accountid) const;
+
     private:
         /* Mutex to protect the history items */
         std::mutex historyItemsMutex_;
@@ -81,6 +85,11 @@ class History {
          * Vector containing the history items
          */
         std::vector<HistoryItem> items_;
+
+        /*
+         * Reverse mapping of display name for given account id and peer number.
+         */
+        std::map<std::string, std::map<std::string, std::string>> nameCache_ {};
 
         /* The path to the history file */
         std::string path_;
