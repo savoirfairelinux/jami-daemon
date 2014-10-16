@@ -21,6 +21,7 @@ ucommon: ucommon-$(UCOMMON_VERSION).tar.gz .sum-ucommon
 	$(APPLY) $(SRC)/ucommon/usedefines.patch
 	$(APPLY) $(SRC)/ucommon/any-addr-and-overloads.patch
 	$(APPLY) $(SRC)/ucommon/skip_programs.patch
+	$(APPLY) $(SRC)/ucommon/deadlock.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && autoreconf -fi
 	$(MOVE)
 

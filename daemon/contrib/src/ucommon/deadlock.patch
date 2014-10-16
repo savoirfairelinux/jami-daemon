@@ -1,0 +1,37 @@
+From 711879af512b37b5e28f757b2c5bc13a3411b650 Mon Sep 17 00:00:00 2001
+From: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+Date: Thu, 16 Oct 2014 12:28:49 -0400
+Subject: [PATCH] commoncpp: fix deadlock
+
+Remove's a static Mutex which is not needed.
+---
+ commoncpp/socket.cpp   | 2 --
+ inc/commoncpp/socket.h | 2 --
+ 2 files changed, 4 deletions(-)
+
+diff --git a/commoncpp/socket.cpp b/commoncpp/socket.cpp
+index 9dcd975..4a0e71f 100644
+--- a/commoncpp/socket.cpp
++++ b/commoncpp/socket.cpp
+@@ -115,8 +115,6 @@ socket_t Socket::dupSocket(socket_t so, State state)
+ }
+ #endif
+ 
+-Mutex Socket::mutex;
+-
+ void Socket::setSocket(void)
+ {
+     flags.thrown    = false;
+diff --git a/inc/commoncpp/socket.h b/inc/commoncpp/socket.h
+index d6b5ab2..44c47f4 100644
+--- a/inc/commoncpp/socket.h
++++ b/inc/commoncpp/socket.h
+@@ -171,8 +171,6 @@ class __EXPORT Socket : protected ucommon::Socket
+ protected:
+     static socket_t dupSocket(socket_t s,Socket::State state);
+ 
+-    static Mutex mutex;
+-
+     mutable struct {
+         bool thrown: 1;
+         bool broadcast: 1;
