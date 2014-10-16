@@ -88,8 +88,15 @@ bool History::save()
 void History::addEntry(const HistoryItem &item, int oldest)
 {
     std::lock_guard<std::mutex> lock(historyItemsMutex_);
-    if (item.hasPeerNumber() and item.youngerThan(oldest))
+    if (item.hasPeerNumber() and item.youngerThan(oldest)) {
         items_.push_back(item);
+        auto im = item.toMap();
+        string name(im["display_name"]);
+        string account(im["accountid"]);
+        string number(im["peer_number"]);
+        if (nameCache_[account][number].empty() and not name.empty() and not number.empty())
+            nameCache_[account][number] = name;
+    }
 }
 
 void History::ensurePath()
