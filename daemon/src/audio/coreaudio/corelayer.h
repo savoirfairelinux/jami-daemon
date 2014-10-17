@@ -33,6 +33,9 @@
 
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
+#include <CoreFoundation/CoreFoundation.h>
+#include <AudioToolbox/AudioToolbox.h>
+#include <CoreAudio/AudioHardware.h>
 
 /**
  * @file  CoreLayer.h
@@ -101,6 +104,22 @@ class CoreLayer : public AudioLayer {
 
     private:
         friend class CoreAudioThread;
+
+        void initAudioFormat();
+
+        static OSStatus audioCallback(void* inRefCon,
+            AudioUnitRenderActionFlags* ioActionFlags,
+            const AudioTimeStamp* inTimeStamp,
+            UInt32 inBusNumber,
+            UInt32 inNumberFrames,
+            AudioBufferList* ioData);
+
+        void write(AudioUnitRenderActionFlags* ioActionFlags,
+            const AudioTimeStamp* inTimeStamp,
+            UInt32 inBusNumber,
+            UInt32 inNumberFrames,
+            AudioBufferList* ioData);
+
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
         /**
@@ -126,15 +145,16 @@ class CoreLayer : public AudioLayer {
         std::vector<SFLAudioSample> playbackIBuff_;
         std::vector<SFLAudioSample> captureIBuff_;
 
-        bool is_playback_prepared_;
-        bool is_capture_prepared_;
-        bool is_playback_running_;
-        bool is_capture_running_;
-        bool is_playback_open_;
-        bool is_capture_open_;
-
-        CoreAudioThread* audioThread_;
+        CoreAudioThread* audioThread_ {nullptr};
+        AudioUnit outputUnit_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
+
+//        bool is_playback_prepared_;
+//        bool is_capture_prepared_;
+//        bool is_playback_running_;
+//        bool is_capture_running_;
+//        bool is_playback_open_;
+//        bool is_capture_open_;
 
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
