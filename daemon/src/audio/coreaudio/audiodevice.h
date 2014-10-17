@@ -19,27 +19,27 @@ namespace sfl {
 
 class AudioDevice {
 public:
-	AudioDevice() : mID(kAudioDeviceUnknown) { }
+	AudioDevice() : ID(kAudioDeviceUnknown) { }
 	AudioDevice(AudioDeviceID devid, bool isInput) { Init(devid, isInput); }
 
 	void    Init(AudioDeviceID devid, bool isInput);
 
-	bool    Valid() { return mID != kAudioDeviceUnknown; }
+	bool    Valid() { return ID != kAudioDeviceUnknown; }
 
 	void    SetBufferSize(UInt32 size);
 
 public:
-	AudioDeviceID                   mID;
-	std::string			mName;
-	bool                            mIsInput;
-	int				mChannels;
-	UInt32                          mSafetyOffset;
-	UInt32                          mBufferSizeFrames;
-	AudioStreamBasicDescription     mFormat;
+	AudioDeviceID                   ID;
+	std::string						Name;
+	bool                            IsInput;
+	int								Channels;
+	UInt32                          SafetyOffset;
+	UInt32                          BufferSizeFrames;
+	AudioStreamBasicDescription     Format;
 
 private:
-	int     CountChannels();
-	std::string  GetName();
+	int     countChannels();
+	std::string  getName();
 };
 
 }
