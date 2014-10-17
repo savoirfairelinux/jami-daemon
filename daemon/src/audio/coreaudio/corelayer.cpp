@@ -48,8 +48,10 @@ public:
     CoreAudioThread(CoreLayer* coreAudio);
     ~CoreAudioThread();
     void start();
+    bool isRunning() const;
 private:
     void run();
+    void initAudioLayer();
     std::thread thread_;
     CoreLayer* coreAudio_;
     std::atomic_bool running_;
@@ -57,7 +59,9 @@ private:
 
 CoreAudioThread::CoreAudioThread(CoreLayer* coreAudio)
     : thread_(), coreAudio_(coreAudio), running_(false)
-{}
+{
+    DEBUG("Creating new CoreAudioThread");
+}
 
 CoreAudioThread::~CoreAudioThread()
 {
@@ -72,8 +76,56 @@ void CoreAudioThread::start()
     thread_ = std::thread(&CoreAudioThread::run, this);
 }
 
+bool CoreAudioThread::isRunning() const
+{
+    return running_;
+}
+
+void CoreAudioThread::initAudioLayer()
+{
+    // OS X uses Audio Units for output. Steps:
+    // 1) Create a description.
+    // 2) Find the audio unit that fits that.
+    // 3) Set the audio unit callback.
+    // 4) Initialize everything.
+    // 5) Profit...
+
+    AudioComponentDescription outputDesc = {0};
+    outputDesc.componentType = kAudioUnitType_Output;
+    outputDesc.componentSubType = kAudioUnitSubType_DefaultOutput;
+    outputDesc.componentManufacturer = kAudioUnitManufacturer_Apple;
+
+    AudioComponent outComp = AudioComponentFindNext(NULL, &outputDesc);
+    if (outComp == NULL) {
+        ERROR("Can't find default output audio component.");
+        return;
+    }
+
+    AudioComponentInstanceNew(outComp, &coreAudio_->outputUnit_);
+
+    AURenderCallbackStruct callback;
+    callback.inputProc = coreAudio_->audioCallback;
+    callback.inputProcRefCon = coreAudio_;
+
+    AudioUnitSetProperty(coreAudio_->outputUnit_,
+        kAudioUnitProperty_SetRenderCallback,
+        kAudioUnitScope_Input,
+        0,
+        &callback,
+        sizeof(callback));
+
+    AudioUnitInitialize(coreAudio_->outputUnit_);
+    AudioOutputUnitStart(coreAudio_->outputUnit_);
+}
+
 void CoreAudioThread::run()
 {
+    DEBUG("Starting CoreAudio thread...");
+
+    if (!coreAudio_->outputUnit_) {
+        initAudioLayer();
+    }
+
     // Actual playback is here.
     while (running_) {
 
@@ -89,14 +141,12 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexRing_(pref.getAlsaCardring())
     , playbackBuff_(0, audioFormat_)
     , captureBuff_(0, audioFormat_)
-    , playbackIBuff_(1024)
-    , captureIBuff_(1024)
-    , is_playback_prepared_(false)
-    , is_capture_prepared_(false)
-    , is_playback_running_(false)
-    , is_capture_running_(false)
-    , is_playback_open_(false)
-    , is_capture_open_(false)
+//    , is_playback_prepared_(false)
+//    , is_capture_prepared_(false)
+//    , is_playback_running_(false)
+//    , is_capture_running_(false)
+//    , is_playback_open_(false)
+//    , is_capture_open_(false)
     , audioThread_(nullptr)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {}
@@ -108,7 +158,12 @@ CoreLayer::~CoreLayer()
 
 std::vector<std::string> CoreLayer::getCaptureDeviceList() const
 {
+    std::vector<std::string> ret;
 
+    for (auto x : getDeviceList(true))
+        ret.push_back(x.Name);
+
+    return ret;
 }
 
 std::vector<std::string> CoreLayer::getPlaybackDeviceList() const
@@ -116,21 +171,10 @@ std::vector<std::string> CoreLayer::getPlaybackDeviceList() const
     std::vector<std::string> ret;
 
     for (auto x : getDeviceList(false))
-    {
-        ret.push_back(x.mName);
-    }
+        ret.push_back(x.Name);
 
     return ret;
 }
-
-void CoreLayer::startStream()
-{
-    dcblocker_.reset();
-
-    if (is_playback_running_ and is_capture_running_)
-        return;
-}
-
 
 int CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 {
@@ -142,13 +186,103 @@ std::string CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 
 }
 
+void CoreLayer::startStream()
+{
+    dcblocker_.reset();
+
+//    if (is_playback_running_ and is_capture_running_)
+//        return;
+
+
+
+    if (audioThread_ == NULL) {
+        audioThread_ = new CoreAudioThread(this);
+        audioThread_->start();
+    } else if (!audioThread_->isRunning()) {
+        audioThread_->start();
+    }
+}
+
 void CoreLayer::stopStream()
 {
+    DEBUG("Stopping audio stream.");
+
     isStarted_ = false;
+
+    AudioOutputUnitStop(outputUnit_);
+    AudioUnitUninitialize(outputUnit_);
+    AudioComponentInstanceDispose(outputUnit_);
 
     /* Flush the ring buffers */
     flushUrgent();
     flushMain();
+}
+
+void CoreLayer::initAudioFormat()
+{
+    AudioStreamBasicDescription info;
+    UInt32 size = sizeof(info);
+    AudioUnitGetProperty(outputUnit_,
+            kAudioUnitProperty_StreamFormat,
+            kAudioUnitScope_Input,
+            0,
+            &info,
+            &size);
+    DEBUG("Soundcard reports: %dKHz, %d channels.", (unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame);
+
+    std::cout << info.mChannelsPerFrame << std::endl;
+
+    audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
+    hardwareFormatAvailable(audioFormat_);
+
+    DEBUG("audioFormat_ set to: %dKHz, %d channels.", audioFormat_.sample_rate, audioFormat_.nb_channels);
+}
+
+
+OSStatus CoreLayer::audioCallback(void* inRefCon,
+    AudioUnitRenderActionFlags* ioActionFlags,
+    const AudioTimeStamp* inTimeStamp,
+    UInt32 inBusNumber,
+    UInt32 inNumberFrames,
+    AudioBufferList* ioData)
+{
+    static_cast<CoreLayer*>(inRefCon)->write(ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
+}
+
+void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
+    const AudioTimeStamp* inTimeStamp,
+    UInt32 inBusNumber,
+    UInt32 inNumberFrames,
+    AudioBufferList* ioData)
+{
+    unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
+
+    if (framesToGet <= 0) {
+        WARN("Not enough samples to play audio.");
+        for (int i = 0; i < inNumberFrames; ++i) {
+            Float32* outDataL = (Float32*)ioData->mBuffers[0].mData;
+            outDataL[i] = 0.0;
+            Float32* outDataR = (Float32*)ioData->mBuffers[1].mData;
+            outDataR[i] = 0.0;
+        }
+        return;
+    }
+
+    size_t totSample = std::min(inNumberFrames, framesToGet);
+
+    playbackBuff_.setFormat(audioFormat_);
+    playbackBuff_.resize(totSample);
+    urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
+
+    playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+
+    // TODO: Use correct number of channels
+    for (int i = 0; i < audioFormat_.nb_channels; ++i)
+        playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, 0); // Write
+
+    Manager::instance().getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
+
+
 }
 
 void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
@@ -200,7 +334,7 @@ std::vector<AudioDevice> CoreLayer::getDeviceList(bool getCapture) const
 
     for (int i = 0; i < nDevices; ++i) {
         AudioDevice dev(devids[i], getCapture);
-        if (dev.mChannels > 0) { // Channels < 0 if inactive.
+        if (dev.Channels > 0) { // Channels < 0 if inactive.
             ret.push_back(dev);
         }
     }
