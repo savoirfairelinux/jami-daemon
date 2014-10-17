@@ -33,6 +33,19 @@
 
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
+#include <CoreFoundation/CoreFoundation.h>
+#include <AudioToolbox/AudioToolbox.h>
+#include <CoreAudio/AudioHardware.h>
+
+#define checkErr( err) \
+    if(err) {\
+            OSStatus error = static_cast<OSStatus>(err);\
+                fprintf(stdout, "CoreAudio Error: %ld ->  %s:  %d\n",  (long)error,\
+                                       __FILE__, \
+                                       __LINE__\
+                                       );\
+                           fflush(stdout);\
+    }
 
 /**
  * @file  CoreLayer.h
@@ -41,7 +54,6 @@
 
 namespace sfl {
 
-class CoreAudioThread;
 class RingBuffer;
 class AudioDevice;
 
@@ -84,6 +96,9 @@ class CoreLayer : public AudioLayer {
             return indexRing_;
         }
 
+        void initAudioLayerPlayback();
+        void initAudioLayerCapture();
+
         /**
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
@@ -92,6 +107,8 @@ class CoreLayer : public AudioLayer {
 
         virtual void startStream();
 
+        void destroyAudioLayer();
+
         /**
          * Stop the playback and capture streams.
          * Drops the pending frames and put the capture and playback handles to PREPARED state
@@ -99,9 +116,39 @@ class CoreLayer : public AudioLayer {
          */
         virtual void stopStream();
 
+
+
     private:
         NON_COPYABLE(CoreLayer);
-        friend class CoreAudioThread;
+
+        void initAudioFormat();
+
+        static OSStatus outputCallback(void* inRefCon,
+            AudioUnitRenderActionFlags* ioActionFlags,
+            const AudioTimeStamp* inTimeStamp,
+            UInt32 inBusNumber,
+            UInt32 inNumberFrames,
+            AudioBufferList* ioData);
+
+        void write(AudioUnitRenderActionFlags* ioActionFlags,
+            const AudioTimeStamp* inTimeStamp,
+            UInt32 inBusNumber,
+            UInt32 inNumberFrames,
+            AudioBufferList* ioData);
+
+        static OSStatus inputCallback(void* inRefCon,
+            AudioUnitRenderActionFlags* ioActionFlags,
+            const AudioTimeStamp* inTimeStamp,
+            UInt32 inBusNumber,
+            UInt32 inNumberFrames,
+            AudioBufferList* ioData);
+
+        void read(AudioUnitRenderActionFlags* ioActionFlags,
+            const AudioTimeStamp* inTimeStamp,
+            UInt32 inBusNumber,
+            UInt32 inNumberFrames,
+            AudioBufferList* ioData);
+
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
         /**
@@ -121,21 +168,18 @@ class CoreLayer : public AudioLayer {
 
         /** Non-interleaved audio buffers */
         AudioBuffer playbackBuff_;
-        AudioBuffer captureBuff_;
+        ::AudioBufferList* captureBuff_; // CoreAudio buffer.
 
         /** Interleaved buffer */
         std::vector<SFLAudioSample> playbackIBuff_;
         std::vector<SFLAudioSample> captureIBuff_;
 
-        bool is_playback_prepared_;
-        bool is_capture_prepared_;
+        AudioUnit outputUnit_;
+        AudioUnit inputUnit_;
+        std::shared_ptr<RingBuffer> mainRingBuffer_;
+
         bool is_playback_running_;
         bool is_capture_running_;
-        bool is_playback_open_;
-        bool is_capture_open_;
-
-        CoreAudioThread* audioThread_;
-        std::shared_ptr<RingBuffer> mainRingBuffer_;
 
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
