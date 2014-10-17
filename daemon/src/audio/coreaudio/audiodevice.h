@@ -42,11 +42,8 @@ class AudioDevice {
 public:
     AudioDevice() : id_(kAudioDeviceUnknown) { }
     AudioDevice(AudioDeviceID devid, bool isInput);
-
     void init(AudioDeviceID devid, bool isInput);
-
     bool valid() const;
-
     void setBufferSize(UInt32 size);
 
 public:
