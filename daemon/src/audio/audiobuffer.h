@@ -240,6 +240,14 @@ class AudioBuffer {
         }
 
         /**
+         * Convert fixed-point channel to float and write in the out buffer (Float 32-bits).
+         * The out buffer must be at least of size capacity()*sizeof(SFLAudioSample) bytes.
+         *
+         * @returns Number of samples writen.
+         */
+        size_t channelToFloat(float* out, const int& channel) const;
+
+        /**
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
          * The out buffer must be at least of size capacity()*sizeof(SFLAudioSample) bytes.
          *
