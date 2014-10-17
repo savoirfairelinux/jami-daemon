@@ -154,6 +154,15 @@ void AudioBuffer::applyGain(double gain)
             sample *= g;
 }
 
+size_t AudioBuffer::channelToFloat(float* out, const int& channel) const
+{
+
+    for (int i=0, f=frames(); i < f; i++)
+        *out++ = (float) samples_[channel][i] * .000030517578125f;
+
+    return frames() * samples_.size();
+}
+
 size_t AudioBuffer::interleave(SFLAudioSample* out) const
 {
     for (unsigned i=0, f=frames(), c=channels(); i < f; ++i)
