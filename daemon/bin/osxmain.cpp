@@ -34,6 +34,7 @@
 #include <cstring>
 #include <signal.h>
 #include <getopt.h>
+#include <string>
 
 #include "sflphone.h"
 #include "fileutils.h"
@@ -129,10 +130,24 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
     return quit;
 }
 
+void myOnIncomingCall(const std::string& acc_id, const std::string& call_id, const std::string& from)
+{
+    std::cout << std::endl << "INCOMING CALL!" << std::endl <<
+        "Account: " << acc_id <<
+        ", Id: " << call_id <<
+        ", From: " << from << std::endl << std::endl;
+
+    sflph_call_accept(call_id);
+    sflph_call_set_recording(call_id);
+    //sflph_call_join_participant(call_id, "patate");
+}
+
 static int osxTests()
 {
     sflph_ev_handlers evHandlers = {
-        .call_ev_handlers = {},
+        .call_ev_handlers = {
+            .on_incoming_call = myOnIncomingCall
+        },
         .config_ev_handlers = {},
 #ifdef SFL_PRESENCE
         .pres_ev_handlers = {}
@@ -145,15 +160,25 @@ static int osxTests()
     sflph_init(&evHandlers, static_cast<sflph_init_flag>(sflphFlags));
 
     sflph_call_play_dtmf("0");
-    for (auto x : sflph_config_get_audio_output_device_list())
-        std::cout << x << std::endl;
+    sleep(1);
+    sflph_call_play_dtmf("1");
+    sleep(1);
 
+    //sflph_call_place("IP2IP", "patate", "127.0.0.1");
+    //sflph_call_set_recording("patate");
+
+    while (true) {
+        sflph_poll_events();
+        sleep(1);
+    }
+
+    sflph_fini();
 }
 
 static int run()
 {
     osxTests();
-    return 1;
+    return 0;
 }
 
 static void interrupt()
