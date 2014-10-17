@@ -206,7 +206,8 @@ gas: gas-preprocessor-$(GAS_VERSION).tar.gz
 	$(MOVE)
 
 .gas: gas
-	cp gas/gas-preprocessor.pl build/bin/
+	mkdir -p $(PREFIX)/bin
+	cp gas/gas-preprocessor.pl $(PREFIX)/build/bin/
 	touch $@
 
 CLEAN_FILE += .gas
@@ -240,7 +241,8 @@ ant: apache-ant-$(ANT_VERSION).tar.bz2
 	$(MOVE)
 
 .ant: ant
-	(cp $</bin/* build/bin/; cp $</lib/* build/lib/)
+	(mkdir -p $(PREFIX)/bin && cp $</bin/* $(PREFIX)/bin/)
+	(mkdir -p $(PREFIX)/lib && cp $</lib/* $(PREFIX)/lib/)
 	touch $@
 
 CLEAN_PKG += ant
