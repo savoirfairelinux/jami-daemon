@@ -245,6 +245,9 @@ class DHTAccount : public SIPAccountBase {
         }
 
     private:
+
+        static const CipherArray TLS_CIPHER_LIST;
+
         void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to, const std::string& toUrl, const IpAddr& peer);
 
         /**
@@ -309,7 +312,7 @@ class DHTAccount : public SIPAccountBase {
         /**
          * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
          */
-        CipherArray ciphers_ {};
+        CipherArray ciphers_ {TLS_CIPHER_LIST};
 
         /**
          * Optional: "received" parameter from VIA header

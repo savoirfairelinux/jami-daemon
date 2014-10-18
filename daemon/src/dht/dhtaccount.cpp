@@ -74,6 +74,15 @@
 
 constexpr const char * const DHTAccount::ACCOUNT_TYPE;
 
+const CipherArray DHTAccount::TLS_CIPHER_LIST = {
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA256,
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA256,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA,
+    PJ_TLS_RSA_WITH_RC4_128_SHA,
+    PJ_TLS_RSA_WITH_RC4_128_MD5
+};
+
 DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID)
 {
@@ -552,8 +561,6 @@ DHTAccount::loadNodes() const
 
 void DHTAccount::initTlsConfiguration()
 {
-    ciphers_ = {PJ_TLS_RSA_WITH_AES_256_CBC_SHA256};
-
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     pjsip_tls_setting_default(&tlsSetting_);
 
