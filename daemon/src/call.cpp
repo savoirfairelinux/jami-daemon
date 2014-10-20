@@ -300,3 +300,26 @@ Call::getNullDetails()
     details["ACCOUNTID"] = "";
     return details;
 }
+
+void
+Call::initICETransport(bool master)
+{
+    auto& iceTransportPool = Manager::instance().getICETransportPool();
+    const auto& on_initdone = [this, master](sfl::ICETransport& iceTransport) {
+        if (master)
+            iceTransport.setInitiatorSession();
+        else
+            iceTransport.setSlaveSession();
+        {
+            std::unique_lock<std::mutex> lk(iceMutex_);
+            iceTransportReady_ = true;
+        }
+        iceCV_.notify_one();
+    };
+    const auto& on_negodone = [this, master](sfl::ICETransport& iceTransport) {
+    };
+
+    iceTransport_ = iceTransportPool.createTransport(getCallId().c_str(), 2,
+                                                     on_initdone,
+                                                     on_negodone);
+}
