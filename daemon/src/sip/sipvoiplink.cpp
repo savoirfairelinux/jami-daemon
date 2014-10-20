@@ -75,7 +75,6 @@
 
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_uri.h>
-#include <pjnath.h>
 
 #ifdef SFL_PRESENCE
 #include <pjsip-simple/presence.h>
@@ -511,14 +510,7 @@ SIPVoIPLink::SIPVoIPLink()
     throw VoipLinkException(#ret " failed"); \
 } while (0)
 
-    srand(time(NULL)); // to get random number for RANDOM_PORT
-
-    TRY(pj_init());
-
-    TRY(pjlib_util_init());
-
     setSipLogLevel();
-    TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_->factory, PACKAGE, 4096, 4096, nullptr);
@@ -636,8 +628,6 @@ SIPVoIPLink::~SIPVoIPLink()
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
-
-    pj_shutdown();
 }
 
 std::shared_ptr<SIPAccountBase>
@@ -1010,6 +1000,19 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Update internal field for
     sdpSession.setMediaTransportInfoFromRemoteSdp();
+
+    // Obtain remote ICE info and start ICE negociation
+    //call->setupRemoteICE();
+    //call->negociateICE();
+#if 0
+    std::string ice_ufrag, ice_pwd;
+    unsigned rem_cands_count;
+    pj_ice_sess_cand *rem_cands;
+    if (sdpSession.getRemoteICEData(rem_ufrag, rem_pwd, &rem_cands_count, &rem_cands)) {
+        WARN("Remote-ICE: ufrag=%s pwd=%s, cands #=%u", rem_ufrag.c_str(), rem_pwd.c_str(), rem_cands_count);
+        call->startICE(ice_ufrag, ice_pwd, rem_cands_count, rem_cands);
+    }
+#endif
 
     try {
         call->getAudioRtp().updateDestinationIpAddress();

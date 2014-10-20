@@ -52,6 +52,8 @@
 #ifdef SFL_VIDEO
 #include "client/videomanager.h"
 
+#include <chrono>
+
 static sfl_video::VideoSettings
 getSettings()
 {
@@ -731,4 +733,20 @@ SIPCall::onAnswered()
         setState(Call::ACTIVE);
         Manager::instance().peerAnsweredCall(getCallId());
     }
+}
+
+void
+SIPCall::setupLocalSDPFromICE()
+{
+    {
+        std::unique_lock<std::mutex> lk(iceMutex_);
+        if (!iceCV_.wait_for(lk, std::chrono::seconds(7),
+                             [this]{ return iceTransportReady_; })) {
+            ERROR("ICE not ready, feature disabled!");
+            return;
+        }
+    }
+
+    //auto iceAttrs = iceTransport_->getICEAttributes();
+    //local_sdp_->addICEAttributes(iceAttrs[0], iceAttrs[1]);
 }

@@ -300,3 +300,19 @@ Call::getNullDetails()
     details["ACCOUNTID"] = "";
     return details;
 }
+
+void
+Call::initICETransport()
+{
+    auto& iceTransportPool = Manager::instance().getICETransportPool();
+    const auto& callback = [this](sfl::ICETransport& iceTransport) {
+        iceTransport.setInitiatorSession();
+        {
+            std::unique_lock<std::mutex> lk(iceMutex_);
+            iceTransportReady_ = true;
+        }
+        iceCV_.notify_one();
+    };
+
+    iceTransport_ = iceTransportPool.createTransport(getCallId().c_str(), 2, callback);
+}
