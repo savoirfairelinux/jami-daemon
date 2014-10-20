@@ -10,6 +10,6 @@ dhtnode_SOURCES = \
 
 dhtnode_CXXFLAGS=-I$(top_srcdir)/src/dht -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 
-dhtnode_LDFLAGS = @GNUTLS_LIBS@
+dhtnode_LDFLAGS = @GNUTLS_LIBS@ -lpthread
 
 dhtnode_LDADD = $(top_builddir)/src/dht/dhtcpp/libdhtcpp.la
