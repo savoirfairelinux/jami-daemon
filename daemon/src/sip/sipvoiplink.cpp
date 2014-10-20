@@ -76,7 +76,6 @@
 
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_uri.h>
-#include <pjnath.h>
 
 #ifdef SFL_PRESENCE
 #include <pjsip-simple/presence.h>
@@ -372,6 +371,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     call->getLocalSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->startSlaveICEFromSDP();
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -512,14 +512,7 @@ SIPVoIPLink::SIPVoIPLink()
     throw VoipLinkException(#ret " failed"); \
 } while (0)
 
-    srand(time(NULL)); // to get random number for RANDOM_PORT
-
-    TRY(pj_init());
-
-    TRY(pjlib_util_init());
-
     setSipLogLevel();
-    TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_->factory, PACKAGE, 4096, 4096, nullptr);
@@ -637,8 +630,6 @@ SIPVoIPLink::~SIPVoIPLink()
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
-
-    pj_shutdown();
 }
 
 std::shared_ptr<SIPAccountBase>
@@ -1011,6 +1002,9 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Update internal field for
     sdpSession.setMediaTransportInfoFromRemoteSdp();
+
+    // Handle possible ICE transport
+    call->startMasterICEFromSDP();
 
     try {
         call->getAudioRtp().updateDestinationIpAddress();
