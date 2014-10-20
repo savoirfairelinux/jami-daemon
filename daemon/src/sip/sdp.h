@@ -34,6 +34,7 @@
 
 #include "noncopyable.h"
 #include "ip_utils.h"
+#include "ice_transport.h"
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -259,7 +260,16 @@ class Sdp {
         // we are sending video, false otherwise
         bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
 
+        void addICEAttributes(const sfl::ICETransport::Attribute&& ice_attrs);
+        const sfl::ICETransport::Attribute getICEAttributes() const;
+
+        void addICECandidates(unsigned media_index,
+                              const std::vector<std::string>& cands);
+
+        const std::vector<pj_ice_sess_cand> getICECandidates(unsigned media_index) const;
+
     private:
+
         NON_COPYABLE(Sdp);
         friend class SDPTest;
 
