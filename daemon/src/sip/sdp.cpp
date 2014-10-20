@@ -45,6 +45,7 @@
 #endif
 
 #include <algorithm>
+#include <cassert>
 
 using std::string;
 using std::map;
@@ -731,7 +732,6 @@ void Sdp::addSdesAttribute(const vector<std::string>& crypto)
     }
 }
 
-
 void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 {
     /* Format: ":version value" */
@@ -741,6 +741,75 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 
     if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
         throw SdpException("Could not add zrtp attribute to media");
+}
+
+void
+Sdp::addICECandidates(unsigned media_index, const std::vector<std::string>& cands)
+{
+    assert(media_index < localSession_->media_count);
+    auto media = localSession_->media[media_index];
+
+    for (const auto &item : cands) {
+        pj_str_t val = { (char*) item.c_str(), static_cast<pj_ssize_t>(item.size()) };
+        pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "candidate", &val);
+
+        if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
+            throw SdpException("Could not add ICE candidates attribute to media");
+    }
+}
+
+const std::vector<std::string>
+Sdp::getICECandidates(unsigned media_index) const
+{
+    auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
+    assert(session);
+    assert(media_index < session->media_count);
+    auto media = session->media[media_index];
+    std::vector<std::string> candidates;
+
+    for (unsigned i=0; i < media->attr_count; i++) {
+        pjmedia_sdp_attr *attribute = media->attr[i];
+        if (pj_stricmp2(&attribute->name, "candidate") == 0)
+            candidates.push_back(std::string(attribute->value.ptr, attribute->value.slen));
+    }
+
+    return candidates;
+}
+
+void
+Sdp::addICEAttributes(const sfl::ICETransport::Attribute&& ice_attrs)
+{
+    pj_str_t value;
+    pjmedia_sdp_attr *attr;
+
+    value = { (char*)ice_attrs.ufrag.c_str(), static_cast<pj_ssize_t>(ice_attrs.ufrag.size()) };
+    attr = pjmedia_sdp_attr_create(memPool_, "ice-ufrag", &value);
+
+    if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
+        throw SdpException("Could not add ICE.ufrag attribute to local SDP");
+
+    value = { (char*)ice_attrs.pwd.c_str(), static_cast<pj_ssize_t>(ice_attrs.pwd.size()) };
+    attr = pjmedia_sdp_attr_create(memPool_, "ice-pwd", &value);
+
+    if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
+        throw SdpException("Could not add ICE.pwd attribute to local SDP");
+}
+
+const sfl::ICETransport::Attribute
+Sdp::getICEAttributes() const
+{
+    sfl::ICETransport::Attribute ice_attrs;
+    auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
+    assert(session);
+
+    for (unsigned i=0; i < session->attr_count; i++) {
+        pjmedia_sdp_attr *attribute = session->attr[i];
+        if (pj_stricmp2(&attribute->name, "ice-ufrag") == 0)
+            ice_attrs.ufrag.assign(attribute->value.ptr, attribute->value.slen);
+        else if (pj_stricmp2(&attribute->name, "ice-pwd") == 0)
+            ice_attrs.pwd.assign(attribute->value.ptr, attribute->value.slen);
+    }
+    return ice_attrs;
 }
 
 // Returns index of desired media attribute, or -1 if not found */
