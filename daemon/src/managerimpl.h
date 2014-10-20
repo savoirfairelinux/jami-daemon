@@ -78,6 +78,10 @@ namespace sfl {
 
 class PluginManager;
 
+namespace sfl {
+class ICETransportPool;
+}
+
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 
@@ -966,6 +970,8 @@ class ManagerImpl {
          */
         void unregisterEventHandler(uintptr_t handlerId);
 
+        sfl::ICETransportPool& getICETransportPool() { return *ice_tpool_; }
+
     private:
         NON_COPYABLE(ManagerImpl);
 
@@ -1009,6 +1015,9 @@ class ManagerImpl {
 
         void loadAccount(const YAML::Node &item, int &errorCount,
                          const std::string &accountOrder);
+
+        /* ICE support */
+        std::unique_ptr<sfl::ICETransportPool> ice_tpool_;
 };
 
 #endif // MANAGER_IMPL_H_

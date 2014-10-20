@@ -52,6 +52,8 @@
 #ifdef SFL_VIDEO
 #include "client/videomanager.h"
 
+#include <chrono>
+
 static sfl_video::VideoSettings
 getSettings()
 {
@@ -731,4 +733,66 @@ SIPCall::onAnswered()
         setState(Call::ACTIVE);
         Manager::instance().peerAnsweredCall(getCallId());
     }
+}
+
+void
+SIPCall::setupLocalSDPFromICE()
+{
+    {
+        std::unique_lock<std::mutex> lk(iceMutex_);
+        if (!iceCV_.wait_for(lk, std::chrono::seconds(7),
+                             [this]{ return iceTransportReady_; })) {
+            SFL_ERR("ICE not ready, feature disabled!");
+            return;
+        }
+    }
+
+    local_sdp_->addICEAttributes(iceTransport_->getICEAttributes());
+
+    // Add video and audio ports
+    local_sdp_->addICECandidates(0, iceTransport_->getICECandidates(0));
+#ifdef SFL_VIDEO
+    local_sdp_->addICECandidates(1, iceTransport_->getICECandidates(1));
+#endif
+}
+
+bool
+SIPCall::startMasterICEFromSDP()
+{
+    auto rem_ice_attrs = local_sdp_->getICEAttributes();
+    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty())
+        return false;
+
+    SFL_DBG("ICE: remote {ufrag=%s, pwd=%s}", rem_ice_attrs.ufrag.c_str(),
+            rem_ice_attrs.pwd.c_str());
+
+    std::vector<sfl::ICETransport::Candidate> rem_candidates;
+    auto& audio_candidates = local_sdp_->getICECandidates(0);
+    rem_candidates.resize(audio_candidates.size());
+    for (int i=0; i<audio_candidates.size(); ++i) {
+        iceTransport_->getCandidateFromSDP(audio_candidates[i], rem_candidates[i]);
+    }
+#ifdef SFL_VIDEO
+#endif
+
+    return iceTransport_->start(rem_ice_attrs, rem_candidates);
+}
+
+bool
+SIPCall::startSlaveICEFromSDP()
+{
+    auto rem_ice_attrs = local_sdp_->getICEAttributes();
+    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty())
+        return false;
+
+    SFL_DBG("ICE: remote {ufrag=%s, pwd=%s}", rem_ice_attrs.ufrag.c_str(),
+            rem_ice_attrs.pwd.c_str());
+
+    initICETransport(false);
+
+    setupLocalSDPFromICE();
+
+    std::vector<sfl::ICETransport::Candidate> rem_candidates;
+
+    return iceTransport_->start(rem_ice_attrs, rem_candidates);
 }

@@ -178,6 +178,12 @@ class SIPCall : public Call
          */
         void onClosed();
 
+        void setupLocalSDPFromICE();
+
+        bool startMasterICEFromSDP();
+
+        bool startSlaveICEFromSDP();
+
     private:
         NON_COPYABLE(SIPCall);
 
