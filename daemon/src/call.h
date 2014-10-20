@@ -38,12 +38,14 @@
 
 #include "audio/recordable.h"
 #include "ip_utils.h"
+#include "ice_transport.h"
 
 #include <mutex>
 #include <map>
 #include <sstream>
 #include <memory>
 #include <vector>
+#include <condition_variable>
 
 class VoIPLink;
 class Account;
@@ -300,6 +302,10 @@ class Call : public sfl::Recordable {
 
         void removeCall();
 
+        void initICETransport();
+
+        void addRemoteICECandidates(unsigned comp_id, const std::vector<sfl::ICETransport::Candidate> candidates);
+
     protected:
         /**
          * Constructor of a call
@@ -307,6 +313,11 @@ class Call : public sfl::Recordable {
          * @param type set definitely this call as incoming/outgoing
          */
         Call(Account& account, const std::string& id, Call::CallType type);
+
+        std::shared_ptr<sfl::ICETransport> iceTransport_ {};
+        bool iceTransportReady_ {false};
+        std::mutex iceMutex_ {};
+        std::condition_variable iceCV_ {};
 
     private:
         bool validTransition(CallState newState);

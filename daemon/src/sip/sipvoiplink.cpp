@@ -76,7 +76,6 @@
 
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_uri.h>
-#include <pjnath.h>
 
 #ifdef SFL_PRESENCE
 #include <pjsip-simple/presence.h>
@@ -512,14 +511,7 @@ SIPVoIPLink::SIPVoIPLink()
     throw VoipLinkException(#ret " failed"); \
 } while (0)
 
-    srand(time(NULL)); // to get random number for RANDOM_PORT
-
-    TRY(pj_init());
-
-    TRY(pjlib_util_init());
-
     setSipLogLevel();
-    TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_->factory, PACKAGE, 4096, 4096, nullptr);
@@ -637,8 +629,6 @@ SIPVoIPLink::~SIPVoIPLink()
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
-
-    pj_shutdown();
 }
 
 std::shared_ptr<SIPAccountBase>
@@ -1011,6 +1001,21 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Update internal field for
     sdpSession.setMediaTransportInfoFromRemoteSdp();
+
+    // Check for ICE session
+    auto ice_attrs = sdpSession.getICEAttributes();
+    if (not (ice_attrs.ufrag.empty() or ice_attrs.pwd.empty())) {
+        SFL_DBG("ICE: remote {ufrag=%s, pwd=%s}", ice_attrs.ufrag.c_str(),
+                ice_attrs.pwd.c_str());
+
+        std::vector<pj_ice_sess_cand> candidates;
+        auto& audio_candidates = sdpSession.getICECandidates(0);
+        candidates.insert(candidates.end(), audio_candidates.begin(), audio_candidates.end());
+#ifdef SFL_VIDEO
+        auto& video_candidates = sdpSession.getICECandidates(1);
+        candidates.insert(candidates.end(), video_candidates.begin(), video_candidates.end());
+#endif
+    }
 
     try {
         call->getAudioRtp().updateDestinationIpAddress();

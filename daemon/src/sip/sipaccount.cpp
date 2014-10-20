@@ -244,6 +244,8 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         family = pjsip_transport_type_get_af(getTransportType());
 
         SFL_DBG("UserAgent: New registered account call to %s", toUrl.c_str());
+
+        call->initICETransport();
     }
 
     call->setIPToIP(isIP2IP());
@@ -305,6 +307,9 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 bool
 SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 {
+    // Add ICE headers to local SDP
+    call->setupLocalSDPFromICE();
+
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
