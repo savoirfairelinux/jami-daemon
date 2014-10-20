@@ -43,7 +43,8 @@ namespace sfl {
 
 AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename,
                                    const std::string &localIP) :
-    ost::SymmetricZRTPSession(ost::InetHostAddress(localIP.c_str()), call.getLocalAudioPort())
+    SymmetricZRTPOverICESession(ost::InetHostAddress(localIP.c_str()),
+                                call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
     , zidFilename_(zidFilename)
 #if HAVE_ZRTP_CONFIGURE
@@ -114,7 +115,7 @@ int AudioZrtpSession::getIncrementForDTMF() const
 
 void AudioZrtpSession::startRTPLoop()
 {
-    ost::SymmetricZRTPSession::startRunning();
+    SymmetricZRTPOverICESession::startRunning();
 }
 
 }
