@@ -162,7 +162,11 @@ public:
      * Get the list of good nodes for local storage saving purposes
      * The list is ordered to minimize the back-to-work delay.
      */
-    std::vector<NodeExport> getNodes();
+    std::vector<NodeExport> exportNodes();
+
+    typedef std::pair<InfoHash, Blob> ValuesExport;
+    std::vector<ValuesExport> exportValues() const;
+    void importValues(const std::vector<ValuesExport>&);
 
     int getNodesStats(sa_family_t af, unsigned *good_return, unsigned *dubious_return, unsigned *cached_return, unsigned *incoming_return) const;
     void dumpTables() const;
@@ -299,7 +303,7 @@ private:
         sockaddr_storage ss {};
         socklen_t sslen {0};
         time_t request_time {0};    /* the time of the last unanswered request */
-        time_t reply_time {0};      /* the time of the last reply */
+        time_t reply_time {0};      /* the time of the last reply with a token */
         unsigned pinged {0};
         Blob token {};
         //bool replied {false};       /* whether we have received a reply */
@@ -509,7 +513,7 @@ private:
         return const_cast<Dht*>(this)->findStorage(id);
     }
 
-    bool storageStore(const InfoHash& id, const std::shared_ptr<Value>& value);
+    ValueStorage* storageStore(const InfoHash& id, const std::shared_ptr<Value>& value);
     void expireStorage();
 
     // Buckets

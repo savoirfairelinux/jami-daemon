@@ -27,11 +27,9 @@ THE SOFTWARE.
 #include "dht.h"
 #include "crypto.h"
 
-//#include <iostream>
 #include <map>
 #include <vector>
 #include <memory>
-//#include <algorithm>
 
 namespace dht {
 
@@ -55,7 +53,9 @@ public:
     using Dht::periodic;
     using Dht::pingNode;
     using Dht::insertNode;
-    using Dht::getNodes;
+    using Dht::exportNodes;
+    using Dht::exportValues;
+    using Dht::importValues;
     using Dht::getStatus;
     using Dht::getId;
     using Dht::dumpTables;

@@ -1051,7 +1051,7 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
 /* A struct storage stores all the stored peer addresses for a given info
    hash. */
 
-Dht::Storage *
+Dht::Storage*
 Dht::findStorage(const InfoHash& id)
 {
     for (auto& st : store)
@@ -1060,13 +1060,13 @@ Dht::findStorage(const InfoHash& id)
     return nullptr;
 }
 
-bool
+Dht::ValueStorage*
 Dht::storageStore(const InfoHash& id, const std::shared_ptr<Value>& value)
 {
     Storage *st = findStorage(id);
     if (!st) {
         if (store.size() >= MAX_HASHES)
-            return false;
+            return nullptr;
         store.push_back(Storage {id, {}});
         st = &store.back();
     }
@@ -1077,13 +1077,13 @@ Dht::storageStore(const InfoHash& id, const std::shared_ptr<Value>& value)
     if (it != st->values.end()) {
         /* Already there, only need to refresh */
         it->time = now.tv_sec;
-        return true;
+        return &*it;
     } else {
         DEBUG("Storing %s -> %s", id.toString().c_str(), value->toString().c_str());
         if (st->values.size() >= MAX_VALUES)
-            return false;
+            return nullptr;
         st->values.emplace_back(value, now.tv_sec);
-        return true;
+        return &st->values.back();
     }
 }
 
@@ -1736,20 +1736,6 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                     storageStore(info_hash, vc);
                 }
             }
-            /*if (v->type == Value::Type::Peer) {
-                ServiceAnnouncement request {};
-                request.unpackBlob(v->data);
-                if (request.getPort() == 0) {
-                    DEBUG("Announce_values with forbidden port %d.", request.getPort());
-                    sendError(from, fromlen, tid, 203, "Announce_value with forbidden port number");
-                    break;
-                }
-                ServiceAnnouncement sa_addr {from, fromlen};
-                sa_addr.setPort(request.getPort());
-                storageStore(info_hash, std::make_shared<Value>(Value::Type::Peer, sa_addr, v->id));
-            }
-            else
-                storageStore(info_hash, v);*/
 
             /* Note that if storage_store failed, we lie to the requestor.
                This is to prevent them from backtracking, and hence
@@ -1798,14 +1784,6 @@ Dht::periodic(const uint8_t *buf, size_t buflen,
             DEBUG("next search_time : %lu (ASAP)");
         else
             DEBUG("next search_time : %lu (in %lu s)", search_time, search_time-now.tv_sec);
-        /* std::uniform_int_distribution<time_t> time_dis {15, 25};
-        for (auto& sr : searches) {
-            if (!sr.done) {
-                time_t tm = sr.step_time + time_dis(rd);
-                if (search_time == 0 || search_time > tm)
-                    search_time = tm;
-            }
-        } */
     }
 
     if (now.tv_sec >= confirm_nodes_time) {
@@ -1849,8 +1827,59 @@ Dht::periodic(const uint8_t *buf, size_t buflen,
     }
 }
 
+std::vector<Dht::ValuesExport>
+Dht::exportValues() const
+{
+    std::vector<ValuesExport> e {};
+    e.reserve(store.size());
+    for (const auto& h : store) {
+        ValuesExport ve;
+        ve.first = h.id;
+        serialize<uint16_t>(h.values.size(), ve.second);
+        for (const auto& v : h.values) {
+            Blob vde;
+            serialize<time_t>(v.time, ve.second);
+            v.data->pack(ve.second);
+        }
+        e.push_back(std::move(ve));
+    }
+    return e;
+}
+
+void
+Dht::importValues(const std::vector<ValuesExport>& import)
+{
+    for (const auto& h : import) {
+        if (h.second.empty())
+            continue;
+        auto b = h.second.begin(),
+             e = h.second.end();
+        try {
+            const size_t n_vals = deserialize<uint16_t>(b, e);
+            ERROR("Will try to read %lu values at %s", n_vals, h.first.toString().c_str());
+            for (unsigned i=0; i<n_vals; i++) {
+                time_t val_time;
+                Value tmp_val;
+                try {
+                    val_time = deserialize<time_t>(b, e);
+                    tmp_val.unpack(b, e);
+                } catch (const std::exception&) {
+                    ERROR("Error reading value at %s", h.first.toString().c_str());
+                    continue;
+                }
+                auto st = storageStore(h.first, std::make_shared<Value>(std::move(tmp_val)));
+                st->time = val_time;
+            }
+        } catch (const std::exception&) {
+            ERROR("Error reading values at %s", h.first.toString().c_str());
+            continue;
+        }
+    }
+}
+
+
 std::vector<Dht::NodeExport>
-Dht::getNodes()
+Dht::exportNodes()
 {
     std::vector<NodeExport> nodes;
     const auto b4 = buckets.findBucket(myid);
@@ -1979,23 +2008,24 @@ int
 Dht::sendFindNode(const sockaddr *sa, socklen_t salen, TransId tid,
                const InfoHash& target, int want, int confirm)
 {
-    char buf[512];
+    constexpr const size_t BUF_SZ = 512;
+    char buf[BUF_SZ];
     int i = 0, rc;
-    rc = snprintf(buf + i, 512 - i, "d1:ad2:id20:"); INC(i, rc, 512);
-    COPY(buf, i, myid.data(), myid.size(), 512);
-    rc = snprintf(buf + i, 512 - i, "6:target20:"); INC(i, rc, 512);
-    COPY(buf, i, target.data(), target.size(), 512);
+    rc = snprintf(buf + i, BUF_SZ - i, "d1:ad2:id20:"); INC(i, rc, BUF_SZ);
+    COPY(buf, i, myid.data(), myid.size(), BUF_SZ);
+    rc = snprintf(buf + i, BUF_SZ - i, "6:target20:"); INC(i, rc, BUF_SZ);
+    COPY(buf, i, target.data(), target.size(), BUF_SZ);
     if (want > 0) {
-        rc = snprintf(buf + i, 512 - i, "4:wantl%s%se",
+        rc = snprintf(buf + i, BUF_SZ - i, "4:wantl%s%se",
                       (want & WANT4) ? "2:n4" : "",
                       (want & WANT6) ? "2:n6" : "");
-        INC(i, rc, 512);
+        INC(i, rc, BUF_SZ);
     }
-    rc = snprintf(buf + i, 512 - i, "e1:q9:find_node1:t%d:", tid.length);
-    INC(i, rc, 512);
-    COPY(buf, i, tid.data(), tid.length, 512);
-    ADD_V(buf, i, 512);
-    rc = snprintf(buf + i, 512 - i, "1:y1:qe"); INC(i, rc, 512);
+    rc = snprintf(buf + i, BUF_SZ - i, "e1:q9:find_node1:t%d:", tid.length);
+    INC(i, rc, BUF_SZ);
+    COPY(buf, i, tid.data(), tid.length, BUF_SZ);
+    ADD_V(buf, i, BUF_SZ);
+    rc = snprintf(buf + i, BUF_SZ - i, "1:y1:qe"); INC(i, rc, BUF_SZ);
     return send(buf, i, confirm ? MSG_CONFIRM : 0, sa, salen);
 }
 
@@ -2005,7 +2035,7 @@ Dht::sendNodesValues(const sockaddr *sa, socklen_t salen, TransId tid,
                  const uint8_t *nodes6, unsigned nodes6_len,
                  Storage *st, const Blob& token)
 {
-    const size_t BUF_SZ = 2048 * 64;
+    constexpr const size_t BUF_SZ = 2048 * 64;
     char buf[BUF_SZ];
     int i = 0, rc;
 
@@ -2143,7 +2173,7 @@ Dht::sendClosestNodes(const sockaddr *sa, socklen_t salen, TransId tid,
                 numnodes6 = bufferClosestNodes(nodes6, numnodes6, id, *std::prev(b));
         }
     }
-    DEBUG("  (%d+%d nodes.)", numnodes, numnodes6);
+    DEBUG("sending closest nodes (%d+%d nodes.)", numnodes, numnodes6);
 
     try {
         return sendNodesValues(sa, salen, tid,
@@ -2368,13 +2398,6 @@ Dht::parseMessage(const uint8_t *buf, size_t buflen,
                 i = q + 1 + l - (char*)buf;
                 Value v;
                 v.unpackBlob(Blob {q + 1, q + 1 + l});
-                /*if (type == Value::Type::Peer) {
-                    size_t dlen = l - Value::HEADER_LENGTH;
-                    if (dlen != 2 && dlen != 6 && dlen != 18) {
-                        DEBUG("Invalid peer value length: %ld.", dlen);
-                        continue;
-                    }
-                }*/
                 values_return.push_back(std::make_shared<Value>(std::move(v)));
             } else
                 break;
