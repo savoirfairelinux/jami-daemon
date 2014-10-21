@@ -65,6 +65,7 @@
 
 #include <unistd.h>
 #include <pwd.h>
+#include <dirent.h>
 
 #include <algorithm>
 #include <array>
@@ -89,18 +90,19 @@ DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
     nodePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
     fileutils::check_dir(nodePath_.c_str());
-    WARN("node cache path: %s", nodePath_.c_str());
-    if (privkeyPath_.empty()) {
-        fileutils::check_dir(fileutils::get_data_dir().c_str());
-        const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-        fileutils::check_dir(idPath.c_str());
-        privkeyPath_ = idPath+DIR_SEPARATOR_STR+"id_rsa";
-        WARN("privkeyPath : %s", privkeyPath_.c_str());
-    }
-    if (certPath_.empty()) {
-        certPath_ = privkeyPath_+".pub";
-        WARN("certPath : %s", certPath_.c_str());
-    }
+
+    /*  ~/.local/{appname}    */
+    fileutils::check_dir(fileutils::get_data_dir().c_str());
+
+    /*  ~/.local/{appname}/{accountID}    */
+    const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
+    fileutils::check_dir(idPath.c_str());
+
+    privkeyPath_ = idPath+DIR_SEPARATOR_STR+"id_rsa";
+    certPath_ = privkeyPath_+".pub";
+    dataPath_ = idPath+DIR_SEPARATOR_STR+"values";
+    fileutils::check_dir(dataPath_.c_str());
+
     int rc = gnutls_global_init();
     if (rc != GNUTLS_E_SUCCESS) {
         ERROR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
@@ -310,6 +312,7 @@ void DHTAccount::serialize(YAML::Emitter &out)
 
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
+    out << YAML::Key << DHT_PORT_KEY << YAML::Value << dhtPort_;
     out << YAML::Key << DHT_PRIVKEY_PATH_KEY << YAML::Value << privkeyPath_;
     out << YAML::Key << DHT_CERT_PATH_KEY << YAML::Value << certPath_;
 
@@ -447,10 +450,10 @@ void DHTAccount::doRegister()
         return;
     }
 
-    DEBUG("doRegister");
     try {
         if (dht_.isRunning()) {
-            ERROR("DHT already running");
+            ERROR("DHT already running (stopping it first).");
+            dht_.join();
         }
         dht_.run(getLocalPort()+5, loadIdentity(), [=](dht::Dht::Status s4, dht::Dht::Status s6) {
             WARN("Dht status : %d %d", (int)s4, (int)s6);
@@ -478,6 +481,9 @@ void DHTAccount::doRegister()
                 break;
             }
         });
+
+        dht_.importValues(loadValues());
+
         dht_.put(dht_.getId(), dht::Value{dht::ServiceAnnouncement::TYPE.id, dht::ServiceAnnouncement(getTlsListenerPort())}, [](bool ok) {
             DEBUG("Peer announce callback ! %d", ok);
         });
@@ -511,7 +517,8 @@ void DHTAccount::doRegister()
 void DHTAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     Manager::instance().unregisterEventHandler((uintptr_t)this);
-    saveNodes(dht_.getNodes());
+    saveNodes(dht_.exportNodes());
+    saveValues(dht_.exportValues());
     dht_.join();
     tlsListener_.reset();
     setRegistrationState(RegistrationState::UNREGISTERED);
@@ -532,6 +539,15 @@ void DHTAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
         }
         for (auto& n : nodes)
             file << n.id << " " << IpAddr(n.ss).toString(true) << "\n";
+    }
+}
+
+void DHTAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) const
+{
+    for (const auto& v : values) {
+        const std::string fname = dataPath_+DIR_SEPARATOR_STR+v.first.toString().c_str();
+        std::ofstream file(fname, std::ios::trunc | std::ios::out | std::ios::binary);
+        file.write((const char*)v.second.data(), v.second.size());
     }
 }
 
@@ -557,6 +573,35 @@ DHTAccount::loadNodes() const
             nodes.push_back(e);
         }
     }
+}
+
+std::vector<dht::Dht::ValuesExport>
+DHTAccount::loadValues() const
+{
+    struct dirent *entry;
+    DIR *dp = opendir(dataPath_.c_str());
+    if (!dp) {
+        ERROR("Could not load values from %s", dataPath_.c_str());
+        return {};
+    }
+
+    std::vector<dht::Dht::ValuesExport> values;
+    while ((entry = readdir(dp))) {
+        try {
+            const std::string fname {entry->d_name};
+            if (fname == "." || fname == "..")
+                continue;
+            std::ifstream ifs(dataPath_+DIR_SEPARATOR_STR+fname, std::ifstream::in | std::ifstream::binary);
+            std::istreambuf_iterator<char> begin(ifs), end;
+            values.push_back({{fname}, std::vector<uint8_t>{begin, end}});
+        } catch (const std::exception& e) {
+            ERROR("Error reading value: %s", e.what());
+            continue;
+        }
+    }
+    closedir(dp);
+
+    return values;
 }
 
 void DHTAccount::initTlsConfiguration()
