@@ -43,7 +43,9 @@
 #include "sipaccount.h"
 #include "sip_utils.h"
 
+#if HAVE_DHT
 #include "dht/dhtaccount.h"
+#endif
 
 #include "call_factory.h"
 
