@@ -306,14 +306,17 @@ selection_changed_cb(GtkIconView *view, G_GNUC_UNUSED gpointer user_data)
 }
 
 /*
- * Get an 48x48 icon from the default theme or fallback to an application icon.
+ * Get an 48x48 icon from the default theme.
  */
 static GdkPixbuf *get_icon(const gchar *name, GtkWidget *widget)
 {
+    GError *error = NULL;
     GtkIconTheme *theme = gtk_icon_theme_get_default();
-    GdkPixbuf *pixbuf = gtk_icon_theme_load_icon(theme, name, 48, 0, NULL);
-    if (!pixbuf)
-        pixbuf = gtk_widget_render_icon_pixbuf(widget, name, GTK_ICON_SIZE_DIALOG);
+    GdkPixbuf *pixbuf = gtk_icon_theme_load_icon(theme, name, 48, 0, &error);
+    if (!pixbuf) {
+        g_warning ("Couldn’t load icon: %s", error->message);
+        g_error_free (error);
+    }
 
     return pixbuf;
 }
