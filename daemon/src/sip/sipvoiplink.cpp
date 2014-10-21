@@ -638,6 +638,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     auto result = std::static_pointer_cast<SIPAccountBase>(Manager::instance().getIP2IPAccount()); // default result
     MatchRank best = MatchRank::NONE;
 
+#if HAVE_DHT
     // DHT accounts
     for (const auto& account : Manager::instance().getAllAccounts<DHTAccount>()) {
         if (!account)
@@ -652,6 +653,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
             result = account;
         }
     }
+#endif
 
     // SIP accounts
     for (const auto& account : Manager::instance().getAllAccounts<SIPAccount>()) {
