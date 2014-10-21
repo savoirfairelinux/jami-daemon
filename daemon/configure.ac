@@ -308,20 +308,19 @@ AS_IF([test "x$enable_presence" != "xno"], [
     AM_CONDITIONAL(SFL_PRESENCE, true)],
     AM_CONDITIONAL(SFL_PRESENCE, false))
 
-# TLS
-# required dependency(ies): GnuTLS
-dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
+dnl TLS support is enabled if it's installed and up to date
 AC_ARG_WITH([tls],
-    [AS_HELP_STRING([--without-tls], [disable support for tls])],
-    [],
-    [with_tls=yes])
-AS_IF([test "x$with_tls" = "xyes"], [
-       PKG_CHECK_MODULES([GNUTLS], gnutls >= 3.1)
-    ]);
+  [AS_HELP_STRING([--with-tls],
+    [support tls @<:@default=check@:>@])],
+  [],
+  [with_tls=check])
+AS_CASE(["$with_tls"],
+  [yes], [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.1], [HAVE_GNUTLS=1])],
+  [no], [HAVE_GNUTLS=0],
+  [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.1], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])])
 
 AC_DEFINE_UNQUOTED([HAVE_TLS], `if test "x$with_tls" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have tls support])
-AM_CONDITIONAL(BUILD_TLS, test "x$with_tls" = "xyes" )
-
+AM_CONDITIONAL(BUILD_TLS, test "x$with_tls" = "xyes" -a "$HAVE_GNUTLS" -eq 1)
 
 # ZRTP
 # required dependency(ies): libzrtp
@@ -465,13 +464,16 @@ AS_IF([test "x$have_iax" = "xyes"],
        AC_DEFINE([HAVE_IAX], 0, [Define if you have libiax])
        AM_CONDITIONAL(USE_IAX, `false`)])
 
-# DHT
-dnl Check for DHT
-AC_ARG_WITH([dht], [AS_HELP_STRING([--without-dht],
-            [disable support for the dht])], [], [with_dht=yes])
-
-AC_DEFINE_UNQUOTED([HAVE_DHT], `if test "x$with_dht" = "xyes"; then echo 1; else echo 0;fi`, [Define if you use dht])
-AM_CONDITIONAL(USE_DHT, test "x$with_dht" = "xyes" )
+AS_IF([test "x$have_tls" = "xyes"],
+  # DHT
+  dnl Check for DHT
+  AC_ARG_WITH([dht], [AS_HELP_STRING([--without-dht],
+              [disable support for the dht])], [], [with_dht=yes])
+  AC_DEFINE_UNQUOTED([HAVE_DHT], `if test "x$with_dht" = "xyes"; then echo 1; else echo 0;fi`, [Define if you use dht])
+  AM_CONDITIONAL(USE_DHT, test "x$with_dht" = "xyes"),
+  AC_DEFINE([HAVE_DHT], 0)
+  AM_CONDITIONAL(USE_DHT, false)
+)
 
 # NETWORK MANAGER
 # required dependency(ies): libiax2 (static)
