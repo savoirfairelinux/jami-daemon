@@ -167,8 +167,7 @@ DhtRunner::doRun(in_port_t port, const crypto::Identity identity)
         int val = 1;
         int rc = setsockopt(s6, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&val, sizeof(val));
         if(rc < 0) {
-            perror("setsockopt(IPV6_V6ONLY)");
-            return;
+            throw DhtException("setsockopt(IPV6_V6ONLY)");
         }
 
         /* BEP-32 mandates that we should bind this socket to one of our

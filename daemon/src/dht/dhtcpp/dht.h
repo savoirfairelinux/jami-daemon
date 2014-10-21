@@ -299,7 +299,7 @@ private:
         sockaddr_storage ss {};
         socklen_t sslen {0};
         time_t request_time {0};    /* the time of the last unanswered request */
-        time_t reply_time {0};      /* the time of the last reply */
+        time_t reply_time {0};      /* the time of the last reply with a token */
         unsigned pinged {0};
         Blob token {};
         //bool replied {false};       /* whether we have received a reply */

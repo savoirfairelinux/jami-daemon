@@ -27,11 +27,9 @@ THE SOFTWARE.
 #include "dht.h"
 #include "crypto.h"
 
-//#include <iostream>
 #include <map>
 #include <vector>
 #include <memory>
-//#include <algorithm>
 
 namespace dht {
 
