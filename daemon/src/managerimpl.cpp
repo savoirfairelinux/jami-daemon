@@ -147,15 +147,19 @@ ManagerImpl::parseConfiguration()
     bool result = true;
 
     try {
-        YAML::Node parsedFile = YAML::LoadFile(path_);
+        std::ifstream in(path_);
+        YAML::Parser parser(in);
+        YAML::Node parsedFile;
+        parser.GetNextDocument(parsedFile);
+
         const int error_count = loadAccountMap(parsedFile);
 
         if (error_count > 0) {
             WARN("Errors while parsing %s", path_.c_str());
             result = false;
         }
-    } catch (const YAML::BadFile &e) {
-        WARN("Could not open config file: creating default account map");
+    } catch (const YAML::ParserException &e) {
+        WARN("Could not open config file: %s", e.what());
         loadDefaultAccountMap();
     }
 
@@ -1329,7 +1333,8 @@ ManagerImpl::saveConfig()
         YAML::Emitter out;
 
         // FIXME maybe move this into accountFactory?
-        out << YAML::BeginMap << YAML::Key << "accounts" << YAML::BeginSeq;
+        out << YAML::BeginMap << YAML::Key << "accounts";
+        out << YAML::Value << YAML::BeginSeq;
 
         for (const auto& account : accountFactory_.getAllAccounts()) {
             account->serialize(out);
@@ -1349,6 +1354,7 @@ ManagerImpl::saveConfig()
 
         std::ofstream fout(path_);
         fout << out.c_str();
+
     } catch (const YAML::Exception &e) {
         ERROR("%s", e.what());
     } catch (const std::runtime_error &e) {
@@ -2318,7 +2324,7 @@ ManagerImpl::getAccountList() const
             v.push_back(account->getAccountID());
         }
     } else {
-        const auto& ip2ipAccountID = getIP2IPAccount()->getAccountID();
+        const auto ip2ipAccountID = "IP2IP";
         for (const auto& id : account_order) {
             if (id.empty() or id == ip2ipAccountID)
                 continue;
@@ -2515,7 +2521,7 @@ ManagerImpl::loadAccount(const YAML::Node &node, int &errorCount,
     };
 
     if (!accountid.empty() and !accountAlias.empty()) {
-        const auto& ip2ipAccountID = getIP2IPAccount()->getAccountID();
+        const auto& ip2ipAccountID = "IP2IP";
         if (not inAccountOrder(accountid) and accountid != ip2ipAccountID) {
             WARN("Dropping account %s, which is not in account order", accountid.c_str());
         } else if (accountFactory_.isSupportedType(accountType.c_str())) {

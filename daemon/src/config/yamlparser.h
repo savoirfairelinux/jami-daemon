@@ -39,7 +39,7 @@ namespace yaml_utils {
 template <typename T>
 void parseValue(const YAML::Node &node, const char *key, T &value)
 {
-    value = node[key].as<T>(value);
+    node[key] >> value;
 }
 
 std::vector<std::map<std::string, std::string>>
