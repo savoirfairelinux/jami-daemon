@@ -45,7 +45,7 @@
 #include "call_factory.h"
 
 #include "config/yamlparser.h"
-#include <yaml-cpp/yaml.h>
+#include "config/yamlwrapper.h"
 
 constexpr const char * const IAXAccount::ACCOUNT_TYPE;
 

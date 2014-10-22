@@ -37,7 +37,7 @@
 #endif
 
 #include "account_schema.h"
-#include <yaml-cpp/yaml.h>
+#include "config/yamlwrapper.h"
 #include "config/yamlparser.h"
 #include "client/configurationmanager.h"
 #include "manager.h"

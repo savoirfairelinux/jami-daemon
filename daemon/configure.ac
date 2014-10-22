@@ -169,7 +169,10 @@ esac
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
 
-PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],, AC_MSG_ERROR([yaml-cpp not found]))
+PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.3.0],,
+dnl Some distros package a yaml-cpp03.pc instead...and don't specify the include path
+  PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp03], AC_DEFINE([HAVE_YAMLCPP03], 1, [Fix yamlcpp includes]),
+    AC_MSG_ERROR([yaml-cpp not found])))
 
 if test "x$ANDROID" = "xyes"; then
     dnl Check for OpenSL

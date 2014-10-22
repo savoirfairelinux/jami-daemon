@@ -61,7 +61,7 @@
 #include "fileutils.h"
 
 #include "config/yamlparser.h"
-#include <yaml-cpp/yaml.h>
+#include "config/yamlwrapper.h"
 
 #include <unistd.h>
 #include <pwd.h>
