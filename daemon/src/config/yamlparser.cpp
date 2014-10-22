@@ -41,7 +41,7 @@ parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> 
     for (const auto &n : node) {
         std::map<std::string, std::string> t;
         for (const auto &k : keys) {
-            t[k] = n[k].as<std::string>("");
+            n[k] >> t[k];
         }
         result.push_back(t);
     }

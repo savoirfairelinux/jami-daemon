@@ -147,15 +147,19 @@ ManagerImpl::parseConfiguration()
     bool result = true;
 
     try {
-        YAML::Node parsedFile = YAML::LoadFile(path_);
+        std::ifstream in(path_);
+        YAML::Parser parser(in);
+        YAML::Node parsedFile;
+        parser.GetNextDocument(parsedFile);
+
         const int error_count = loadAccountMap(parsedFile);
 
         if (error_count > 0) {
             WARN("Errors while parsing %s", path_.c_str());
             result = false;
         }
-    } catch (const YAML::BadFile &e) {
-        WARN("Could not open config file: creating default account map");
+    } catch (const YAML::ParserException &e) {
+        WARN("Could not open config file: %s", e.what());
         loadDefaultAccountMap();
     }
 
