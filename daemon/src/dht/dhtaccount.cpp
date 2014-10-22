@@ -310,6 +310,7 @@ void DHTAccount::serialize(YAML::Emitter &out)
 
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
+    out << YAML::Key << DHT_PORT_KEY << YAML::Value << dhtPort_;
     out << YAML::Key << DHT_PRIVKEY_PATH_KEY << YAML::Value << privkeyPath_;
     out << YAML::Key << DHT_CERT_PATH_KEY << YAML::Value << certPath_;
 
@@ -325,6 +326,9 @@ void DHTAccount::unserialize(const YAML::Node &node)
 {
     using namespace yaml_utils;
     SIPAccountBase::unserialize(node);
+    in_port_t port {DHT_DEFAULT_PORT};
+    parseValue(node, Conf::DHT_PORT_KEY, port);
+    dhtPort_ = port;
     parseValue(node, Conf::DHT_PRIVKEY_PATH_KEY, privkeyPath_);
     parseValue(node, Conf::DHT_CERT_PATH_KEY, certPath_);
 }
@@ -429,14 +433,32 @@ DHTAccount::saveIdentity(const dht::crypto::Identity id) const
     }
 }
 
+template <typename T>
+static void
+parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
+{
+    const auto iter = details.find(key);
+    if (iter == details.end()) {
+        ERROR("Couldn't find key %s", key);
+        return;
+    }
+    i = atoi(iter->second.c_str());
+}
+
 void DHTAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);
+    parseInt(details, CONFIG_DHT_PORT, dhtPort_);
 }
 
 std::map<std::string, std::string> DHTAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
+
+    std::stringstream dhtport;
+    dhtport << dhtPort_;
+    a[CONFIG_DHT_PORT] = dhtport.str();
+
     return a;
 }
 
@@ -452,7 +474,7 @@ void DHTAccount::doRegister()
         if (dht_.isRunning()) {
             ERROR("DHT already running");
         }
-        dht_.run(getLocalPort()+5, loadIdentity(), [=](dht::Dht::Status s4, dht::Dht::Status s6) {
+        dht_.run(dhtPort_, loadIdentity(), [=](dht::Dht::Status s4, dht::Dht::Status s6) {
             WARN("Dht status : %d %d", (int)s4, (int)s6);
             auto status = std::max(s4, s6);
             switch(status) {
