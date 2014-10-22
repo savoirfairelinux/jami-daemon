@@ -77,15 +77,15 @@ private:
     SFLPluginAPI        pluginApi_ = {
         { SFL_PLUGIN_ABI_VERSION, SFL_PLUGIN_API_VERSION },
         nullptr, registerObject, nullptr };
-    PluginMap           dynPluginMap_ = {}; // Only dynamic loaded plugins
-    ExitFuncVec         exitFuncVec_ = {};
-    RegisterParamsMap   exactMatchMap_ = {};
-    RegisterParamsVec   wildCardVec_ = {};
+    PluginMap           dynPluginMap_ = {{}}; // Only dynamic loaded plugins
+    ExitFuncVec         exitFuncVec_ = {{}};
+    RegisterParamsMap   exactMatchMap_ = {{}};
+    RegisterParamsVec   wildCardVec_ = {{}};
 
     // Storage used during plugin initialisation.
     // Will be copied into previous ones only if the initialisation success.
-    RegisterParamsMap   tempExactMatchMap_ = {};
-    RegisterParamsVec   tempWildCardVec_ = {};
+    RegisterParamsMap   tempExactMatchMap_ = {{}};
+    RegisterParamsVec   tempWildCardVec_ = {{}};
 };
 
 #endif /* PLUGIN_MANAGER_H */
