@@ -54,6 +54,7 @@ namespace Conf {
     const char *const DHT_PORT_KEY = "dhtPort";
     const char *const DHT_PRIVKEY_PATH_KEY = "dhtPrivkeyPath";
     const char *const DHT_CERT_PATH_KEY = "dhtCertificatePath";
+    const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
 }
 
 namespace YAML {
@@ -279,9 +280,10 @@ class DHTAccount : public SIPAccountBase {
 
         dht::DhtRunner dht_ {};
 
-        std::string nodePath_ {};
         std::string privkeyPath_ {};
         std::string certPath_ {};
+        std::string nodePath_ {};
+        std::string dataPath_ {};
 
         /**
          * If identityPath_ is a valid private key file (PEM or DER),
@@ -289,10 +291,13 @@ class DHTAccount : public SIPAccountBase {
          * Check if the given path contains a valid private key.
          * @return the key if a valid private key exists there, nullptr otherwise.
          */
-        dht::crypto::Identity loadIdentity() const;
         void saveIdentity(const dht::crypto::Identity id) const;
-        void saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const;
+        void saveNodes(const std::vector<dht::Dht::NodeExport>&) const;
+        void saveValues(const std::vector<dht::Dht::ValuesExport>&) const;
+
+        dht::crypto::Identity loadIdentity() const;
         std::vector<dht::Dht::NodeExport> loadNodes() const;
+        std::vector<dht::Dht::ValuesExport> loadValues() const;
 
         /**
          * Initializes tls settings from configuration file.
