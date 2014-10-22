@@ -1051,7 +1051,7 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
 /* A struct storage stores all the stored peer addresses for a given info
    hash. */
 
-Dht::Storage *
+Dht::Storage*
 Dht::findStorage(const InfoHash& id)
 {
     for (auto& st : store)
@@ -1060,13 +1060,13 @@ Dht::findStorage(const InfoHash& id)
     return nullptr;
 }
 
-bool
+Dht::ValueStorage*
 Dht::storageStore(const InfoHash& id, const std::shared_ptr<Value>& value)
 {
     Storage *st = findStorage(id);
     if (!st) {
         if (store.size() >= MAX_HASHES)
-            return false;
+            return nullptr;
         store.push_back(Storage {id, {}});
         st = &store.back();
     }
@@ -1077,13 +1077,13 @@ Dht::storageStore(const InfoHash& id, const std::shared_ptr<Value>& value)
     if (it != st->values.end()) {
         /* Already there, only need to refresh */
         it->time = now.tv_sec;
-        return true;
+        return &*it;
     } else {
         DEBUG("Storing %s -> %s", id.toString().c_str(), value->toString().c_str());
         if (st->values.size() >= MAX_VALUES)
-            return false;
+            return nullptr;
         st->values.emplace_back(value, now.tv_sec);
-        return true;
+        return &st->values.back();
     }
 }
 
@@ -1827,8 +1827,58 @@ Dht::periodic(const uint8_t *buf, size_t buflen,
     }
 }
 
+std::vector<Dht::ValuesExport>
+Dht::exportValues() const
+{
+    std::vector<ValuesExport> e {};
+    e.reserve(store.size());
+    for (const auto& h : store) {
+        ValuesExport ve;
+        ve.first = h.id;
+        serialize<uint16_t>(h.values.size(), ve.second);
+        for (const auto& v : h.values) {
+            Blob vde;
+            serialize<time_t>(v.time, ve.second);
+            v.data->pack(ve.second);
+        }
+        e.push_back(std::move(ve));
+    }
+    return e;
+}
+
+void
+Dht::importValues(const std::vector<ValuesExport>& import)
+{
+    for (const auto& h : import) {
+        if (h.second.empty())
+            continue;
+        auto b = h.second.begin(),
+             e = h.second.end();
+        try {
+            const size_t n_vals = deserialize<uint16_t>(b, e);
+            for (unsigned i=0; i<n_vals; i++) {
+                time_t val_time;
+                Value tmp_val;
+                try {
+                    val_time = deserialize<time_t>(b, e);
+                    tmp_val.unpack(b, e);
+                } catch (const std::exception&) {
+                    ERROR("Error reading value at %s", h.first.toString().c_str());
+                    continue;
+                }
+                auto st = storageStore(h.first, std::make_shared<Value>(std::move(tmp_val)));
+                st->time = val_time;
+            }
+        } catch (const std::exception&) {
+            ERROR("Error reading values at %s", h.first.toString().c_str());
+            continue;
+        }
+    }
+}
+
+
 std::vector<Dht::NodeExport>
-Dht::getNodes()
+Dht::exportNodes()
 {
     std::vector<NodeExport> nodes;
     const auto b4 = buckets.findBucket(myid);
