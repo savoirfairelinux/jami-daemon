@@ -429,7 +429,7 @@ AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then ec
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
 
 dnl iLBC is enabled if it's installed
-AC_ARG_WITH([with-libilbc],
+AC_ARG_WITH([libilbc],
   [AS_HELP_STRING([--with-libilbc],
     [support ilbc audio @<:@default=check@:>@])],
   [],
@@ -441,7 +441,7 @@ AS_CASE(["$with_libilbc"],
 AM_CONDITIONAL([BUILD_ILBC], [test "$with_libilbc" != no -a "$HAVE_LIBILBC" -eq 1])
 
 dnl opus is enabled if it's installed
-AC_ARG_WITH([with-opus],
+AC_ARG_WITH([opus],
   [AS_HELP_STRING([--with-opus], [support opus audio @<:@default=check@:>@])], [], [with_opus=check])
 AS_CASE(["$with_opus"],
   [yes], [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1])],
