@@ -44,12 +44,6 @@
 GtkAccelGroup * get_accel_group();
 
 /**
- * Display the main window
- * @return GtkWidget* The main window
- */
-GtkWidget *waitingLayer;
-
-/**
  * Build the main window
  */
 void

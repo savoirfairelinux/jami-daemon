@@ -364,9 +364,6 @@ create_main_window(SFLPhoneClient *client)
     gtk_widget_set_sensitive(seekslider, FALSE);
     main_window_hide_playback_scale();
 
-    /* don't show waiting layer */
-    gtk_widget_hide(waitingLayer);
-
     g_timeout_add_seconds(1, calltree_update_clock, NULL);
 
     // Configuration wizard

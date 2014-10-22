@@ -1733,23 +1733,6 @@ show_edit_number(callable_obj_t *call, SFLPhoneClient *client)
     gtk_dialog_run(GTK_DIALOG(edit_dialog_));
 }
 
-static GtkWidget*
-create_waiting_icon()
-{
-    GtkWidget * waiting_icon = gtk_image_menu_item_new_with_label("");
-    struct stat st;
-
-    if (!stat(ICONS_DIR "/wait-on.gif", &st))
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(waiting_icon),
-                                      gtk_image_new_from_animation(gdk_pixbuf_animation_new_from_file(
-                                              ICONS_DIR "/wait-on.gif", NULL)));
-
-    /* Deprecated:
-     * gtk_menu_item_set_right_justified(GTK_MENU_ITEM(waiting_icon), TRUE); */
-
-    return waiting_icon;
-}
-
 static GtkWidget *
 get_widget(GtkUIManager *ui, const gchar *ui_path)
 {
@@ -1793,10 +1776,6 @@ create_menus(GtkUIManager *ui, SFLPhoneClient *client)
 #ifdef SFL_PRESENCE
     gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Buddies"), TRUE);
 #endif
-
-    /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
-    waitingLayer = create_waiting_icon();
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), waitingLayer);
 
     return menu_bar;
 }

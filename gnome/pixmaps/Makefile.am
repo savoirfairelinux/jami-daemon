@@ -40,7 +40,6 @@ buttons_DATA = current.svg \
 				usersDetached.svg \
 				usersAttachedRec.svg \
 				usersDetachedRec.svg \
-				wait-on.gif \
 				lock_certified.svg \
 				lock_confirmed.svg \
 				lock_error.svg \
