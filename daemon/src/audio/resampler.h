@@ -69,14 +69,6 @@ class Resampler {
          */
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
-        /**
-         * Convert short table to floats for audio processing
-         * @param in the input (short) array
-         * @param out The resulting (float) array
-         * @param len The number of elements in both tables
-         */
-        void Short2FloatArray(const SFLAudioSample *in, float *out, int len);
-
     private:
         NON_COPYABLE(Resampler);
 
