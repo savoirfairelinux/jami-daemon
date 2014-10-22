@@ -51,8 +51,9 @@
 #include <map>
 
 namespace Conf {
+    const char *const DHT_PORT_KEY = "dhtPort";
     const char *const DHT_PRIVKEY_PATH_KEY = "dhtPrivkeyPath";
-    const char *const DHT_CERT_PATH_KEY = "dhtPubkeyPath";
+    const char *const DHT_CERT_PATH_KEY = "dhtCertificatePath";
 }
 
 namespace YAML {
@@ -299,10 +300,9 @@ class DHTAccount : public SIPAccountBase {
         void initTlsConfiguration();
 
         /**
-         * PJSIP aborts if the string length of our cipher list is too
-         * great, so this function forces our cipher list to fit this constraint.
+         * DHT port preference
          */
-        void trimCiphers();
+        in_port_t dhtPort_ {2888};
 
         /**
          * The TLS settings, used only if tls is chosen as a sip transport.
