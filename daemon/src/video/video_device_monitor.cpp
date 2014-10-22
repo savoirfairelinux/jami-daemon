@@ -29,14 +29,17 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <algorithm>
 #include <cassert>
 #include <sstream>
 
-#include <yaml-cpp/yaml.h>
-
 #include "manager.h"
 #include "client/videomanager.h"
+#include "config/yamlwrapper.h"
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "video_device_monitor.h"

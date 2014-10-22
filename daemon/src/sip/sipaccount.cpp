@@ -52,9 +52,8 @@
 #include "client/configurationmanager.h"
 #endif
 
-#include <yaml-cpp/yaml.h>
-
 #include "account_schema.h"
+#include "config/yamlwrapper.h"
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "manager.h"
@@ -480,7 +479,7 @@ void SIPAccount::unserialize(const YAML::Node &node)
     if (not isIP2IP()) parseValue(node, KEEP_ALIVE_ENABLED, keepAliveEnabled_);
 
     bool presEnabled = false;
-    parseValue(node, PRESENCE_ENABLED_KEY, presEnabled);
+    parseValue(node, PRESENCE_MODULE_ENABLED_KEY, presEnabled);
     enablePresence(presEnabled);
     bool publishSupported = false;
     parseValue(node, PRESENCE_PUBLISH_SUPPORTED_KEY, publishSupported);

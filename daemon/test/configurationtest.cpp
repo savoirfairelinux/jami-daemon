@@ -34,7 +34,12 @@
 
 void ConfigurationTest::testNodeParse()
 {
-    YAML::Node node  = YAML::Load("[{a: 0, b: 1, c: 2}, {a: 0, b: 1, c: 2}]");
+    std::stringstream ss;
+    ss << "[{a: 0, b: 1, c: 2}, {a: 0, b: 1, c: 2}]";
+    YAML::Parser parser(ss);
+    YAML::Node node;
+    parser.GetNextDocument(node);
+
     auto result = yaml_utils::parseVectorMap(node, {"a", "b", "c"});
     CPPUNIT_ASSERT(result[1]["b"] == "1");
 }

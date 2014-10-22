@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Copyright (C) 2014 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,22 +28,20 @@
  *  as that of the covered work.
  */
 
-#ifndef __YAMLPARSER_H__
-#define __YAMLPARSER_H__
+#ifndef YAMLWRAPPER_H_
+#define YAMLWRAPPER_H_
 
-#include "yamlwrapper.h"
-
-namespace yaml_utils {
-// set T to the value stored at key, or leaves T unchanged
-// if no value is stored.
-template <typename T>
-void parseValue(const YAML::Node &node, const char *key, T &value)
-{
-    node[key] >> value;
-}
-
-std::vector<std::map<std::string, std::string>>
-parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys);
-}
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+// Work around distribution specific include directory issues as well as
+// conflicts with yaml.h from libyaml. Patches welcome.
+
+#ifdef HAVE_YAMLCPP03
+#include <yaml-cpp03/yaml.h>
+#else
+#include <yaml-cpp/yaml.h>
+#endif
+
+#endif // YAMLWRAPPER_H_

@@ -15,6 +15,9 @@ accounts:
   id: Account:1334389473
   interface: default
   keepAlive: false
+  presenceModuleEnabled: false
+  presencePublishSupported: false
+  presenceSubscribeSupported: false
   mailbox:
   port: 5060
   publishAddr: 0.0.0.0
@@ -87,6 +90,9 @@ accounts:
   id: IP2IP
   interface: default
   keepAlive: false
+  presenceModuleEnabled: false
+  presencePublishSupported: false
+  presenceSubscribeSupported: false
   mailbox:
   port: 5060
   publishAddr:

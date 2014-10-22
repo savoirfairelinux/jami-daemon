@@ -47,9 +47,8 @@
 
 #include "client/configurationmanager.h"
 #include "account_schema.h"
+#include "config/yamlwrapper.h"
 #include "config/yamlparser.h"
-
-#include <yaml-cpp/yaml.h>
 
 const char * const Account::AUDIO_CODECS_KEY            = "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY            = "videoCodecs";
