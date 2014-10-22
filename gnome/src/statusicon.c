@@ -125,7 +125,6 @@ create_menu(SFLPhoneClient *client)
 {
     GtkWidget * menu_widget;
     GtkWidget * menu_items;
-    GtkWidget * image;
 
     menu_widget = gtk_menu_new();
 
@@ -136,9 +135,7 @@ create_menu(SFLPhoneClient *client)
                      G_CALLBACK(show_hide),
                      client);
 
-    hangup_menu_item = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
-    image = gtk_image_new_from_file(ICONS_DIR "/icon_hangup.svg");
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(hangup_menu_item), image);
+    hangup_menu_item = gtk_menu_item_new_with_mnemonic(_("_Hang up"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), hangup_menu_item);
     g_signal_connect(G_OBJECT(hangup_menu_item), "activate",
                      G_CALLBACK(status_hangup),
@@ -147,7 +144,7 @@ create_menu(SFLPhoneClient *client)
     menu_items = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), menu_items);
 
-    menu_items = gtk_image_menu_item_new_from_stock("_Quit",
+    menu_items = gtk_image_menu_item_new_from_stock(_("_Quit"),
                  get_accel_group());
     g_signal_connect_swapped(G_OBJECT(menu_items), "activate",
                              G_CALLBACK(status_quit),
