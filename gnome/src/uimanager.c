@@ -1305,7 +1305,7 @@ static void menu_popup_wrapper(GtkWidget *menu, GtkWidget *my_widget, GdkEventBu
 static void
 append_video_input_to_submenu(GtkWidget *submenu, const gchar *device)
 {
-    GtkWidget *item = gtk_image_menu_item_new_with_mnemonic(_(device));
+    GtkWidget *item = gtk_menu_item_new_with_mnemonic(_(device));
     gtk_menu_shell_append(GTK_MENU_SHELL(submenu), item);
     g_signal_connect(G_OBJECT(item), "activate",
             G_CALLBACK(call_switch_video_input), (gpointer) device);
@@ -1424,10 +1424,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
         }
 
         if (pickup) {
-            GtkWidget *pickup_item = gtk_image_menu_item_new_with_mnemonic(_("_Pick up"));
-            GtkWidget *image = gtk_image_new_from_file(ICONS_DIR "/icon_accept.svg");
-            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(pickup_item), image);
-            gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(pickup_item), TRUE);
+            GtkWidget *pickup_item = gtk_menu_item_new_with_mnemonic(_("_Pick up"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), pickup_item);
             g_signal_connect(G_OBJECT(pickup_item), "activate",
                              G_CALLBACK(call_pick_up),
@@ -1436,9 +1433,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
         }
 
         if (hangup) {
-            GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
-            GtkWidget *image = gtk_image_new_from_file(ICONS_DIR "/icon_hangup.svg");
-            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+            GtkWidget *menu_items = gtk_menu_item_new_with_mnemonic(_("_Hang up"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
             g_signal_connect(G_OBJECT(menu_items), "activate",
                              G_CALLBACK(call_hang_up),
@@ -1458,9 +1453,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
         }
 
         if (record) {
-            GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-            GtkWidget *image = gtk_image_new_from_icon_name("_Record", GTK_ICON_SIZE_MENU);
-            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+            GtkWidget *menu_items = gtk_menu_item_new_with_mnemonic(_("_Record"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
             g_signal_connect(G_OBJECT(menu_items), "activate",
                              G_CALLBACK(call_record),
@@ -1477,9 +1470,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                 gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
                 gtk_widget_show(menu_items);
 
-                menu_items = gtk_image_menu_item_new_with_mnemonic(_("Send _message"));
-                GtkWidget *image = gtk_image_new_from_icon_name(GTK_STOCK_IM, GTK_ICON_SIZE_MENU);
-                gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+                menu_items = gtk_menu_item_new_with_mnemonic(_("Send _message"));
                 gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
                 g_signal_connect(G_OBJECT(menu_items), "activate",
                                  G_CALLBACK(call_im),
@@ -1497,7 +1488,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             gtk_widget_show(video_sep);
 
             /* Add a video sources menu */
-            video_item = gtk_image_menu_item_new_with_mnemonic(_("Video sources"));
+            video_item = gtk_menu_item_new_with_mnemonic(_("Video sources"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), video_item);
             gtk_widget_show(video_item);
 
@@ -1520,9 +1511,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
         g_debug("Build conf menus");
 
         if (hangup_or_hold_conf) {
-            GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
-            GtkWidget *image = gtk_image_new_from_file(ICONS_DIR "/icon_hangup.svg");
-            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+            GtkWidget *menu_items = gtk_menu_item_new_with_mnemonic(_("_Hang up"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
             g_signal_connect(G_OBJECT(menu_items), "activate",
                              G_CALLBACK(conference_hang_up),
@@ -1566,9 +1555,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
     GtkWidget *menu = gtk_menu_new();
 
     if (pickup) {
-        GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Call back"));
-        GtkWidget *image = gtk_image_new_from_file(ICONS_DIR "/icon_accept.svg");
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+        GtkWidget *menu_items = gtk_menu_item_new_with_mnemonic(_("_Call back"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
         g_signal_connect(G_OBJECT(menu_items), "activate", G_CALLBACK(call_back), client);
         gtk_widget_show(menu_items);
@@ -1576,7 +1563,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
 
 #ifdef SFL_PRESENCE
     if (selectedCall) {
-        GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("Follow status"));
+        GtkWidget *menu_items = gtk_menu_item_new_with_mnemonic(_("Follow status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
         if(!presence_buddy_list_get())
             gtk_widget_set_sensitive(menu_items, FALSE);
@@ -1627,15 +1614,13 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
     GtkWidget *menu = gtk_menu_new();
 
     if (selectedCall) {
-        GtkWidget *new_call = gtk_image_menu_item_new_with_mnemonic(_("_New call"));
-        GtkWidget *image = gtk_image_new_from_file(ICONS_DIR "/icon_accept.svg");
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(new_call), image);
+        GtkWidget *new_call = gtk_menu_item_new_with_mnemonic(_("_New call"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), new_call);
         g_signal_connect(new_call, "activate", G_CALLBACK(call_back), client);
         gtk_widget_show(new_call);
 
 #ifdef SFL_PRESENCE
-        GtkWidget *presence = gtk_image_menu_item_new_with_mnemonic(_("Follow status"));
+        GtkWidget *presence = gtk_menu_item_new_with_mnemonic(_("Follow status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), presence);
 
         if(!presence_buddy_list_get())

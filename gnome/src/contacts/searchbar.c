@@ -328,27 +328,19 @@ history_searchbar_new(GSettings *settings)
     menu = gtk_menu_new();
     gtk_menu_attach_to_widget(GTK_MENU(menu), searchbox, NULL);
 
-    GtkWidget *image = gtk_image_new_from_icon_name("edit-find-symbolic", GTK_ICON_SIZE_MENU);
-    GtkWidget *item = gtk_image_menu_item_new_with_label("Search all");
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
+    GtkWidget *item = gtk_menu_item_new_with_label(_("Search all"));
     g_signal_connect(item, "activate", G_CALLBACK(search_all), searchbox);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
-    item = gtk_image_menu_item_new_with_label(_("Search by missed call"));
-    image = gtk_image_new_from_file(ICONS_DIR "/missed.svg");
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
+    item = gtk_menu_item_new_with_label(_("Search by missed call"));
     g_signal_connect(item, "activate", G_CALLBACK(search_by_missed), searchbox);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
-    item = gtk_image_menu_item_new_with_label(_("Search by incoming call"));
-    image = gtk_image_new_from_file(ICONS_DIR "/incoming.svg");
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
+    item = gtk_menu_item_new_with_label(_("Search by incoming call"));
     g_signal_connect(item, "activate", G_CALLBACK(search_by_incoming), searchbox);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
-    item = gtk_image_menu_item_new_with_label(_("Search by outgoing call"));
-    image = gtk_image_new_from_file(ICONS_DIR "/outgoing.svg");
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
+    item = gtk_menu_item_new_with_label(_("Search by outgoing call"));
     g_signal_connect(item, "activate", G_CALLBACK(search_by_outgoing), searchbox);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
