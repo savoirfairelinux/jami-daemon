@@ -53,7 +53,9 @@ public:
     using Dht::periodic;
     using Dht::pingNode;
     using Dht::insertNode;
-    using Dht::getNodes;
+    using Dht::exportNodes;
+    using Dht::exportValues;
+    using Dht::importValues;
     using Dht::getStatus;
     using Dht::getId;
     using Dht::dumpTables;

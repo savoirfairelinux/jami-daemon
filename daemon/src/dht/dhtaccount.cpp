@@ -533,7 +533,7 @@ void DHTAccount::doRegister()
 void DHTAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     Manager::instance().unregisterEventHandler((uintptr_t)this);
-    saveNodes(dht_.getNodes());
+    saveNodes(dht_.exportNodes());
     dht_.join();
     tlsListener_.reset();
     setRegistrationState(RegistrationState::UNREGISTERED);

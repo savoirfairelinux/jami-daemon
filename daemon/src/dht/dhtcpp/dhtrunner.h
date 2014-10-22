@@ -94,11 +94,23 @@ public:
         return dht->getId();
     }
 
-    std::vector<Dht::NodeExport> getNodes() const {
+    std::vector<Dht::NodeExport> exportNodes() const {
         std::unique_lock<std::mutex> lck(dht_mtx);
         if (!dht)
             return {};
-        return dht->getNodes();
+        return dht->exportNodes();
+    }
+
+    std::vector<Dht::ValuesExport> exportValues() const {
+        std::unique_lock<std::mutex> lck(dht_mtx);
+        if (!dht)
+            return {};
+        return dht->exportValues();
+    }
+
+    void importValues(const std::vector<Dht::ValuesExport>& values) {
+        std::unique_lock<std::mutex> lck(dht_mtx);
+        dht->importValues(values);
     }
 
     bool isRunning() const {
