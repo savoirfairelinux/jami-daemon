@@ -82,17 +82,6 @@ Resampler::setFormat(AudioFormat format)
     src_state_.reset(new SrcState(format.nb_channels));
 }
 
-void
-Resampler::Short2FloatArray(const SFLAudioSample *in, float *out, int len)
-{
-    // factor is 1/(2^15), used to rescale the short int range to the
-    // [-1.0 - 1.0] float range.
-    static const float FACTOR = 1.0f / (1 << 15);
-
-    while (len--)
-        out[len] = (float) in[len] * FACTOR;
-}
-
 void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
 {
     const double inputFreq = dataIn.getSampleRate();
