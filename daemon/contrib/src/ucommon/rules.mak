@@ -1,5 +1,5 @@
 # UCOMMON
-UCOMMON_VERSION := 6.1.8
+UCOMMON_VERSION := 6.2.0
 UCOMMON_URL := $(GNUTELEPHONY)/ucommon/archive/v$(UCOMMON_VERSION).tar.gz
 
 UCOMMON_OPTIONS := --enable-stdcpp --with-pkg-config --disable-utils --disable-tests
@@ -17,13 +17,6 @@ $(TARBALLS)/ucommon-$(UCOMMON_VERSION).tar.gz:
 
 ucommon: ucommon-$(UCOMMON_VERSION).tar.gz .sum-ucommon
 	$(UNPACK)
-	$(APPLY) $(SRC)/ucommon/extended.patch
-	$(APPLY) $(SRC)/ucommon/usedefines.patch
-	$(APPLY) $(SRC)/ucommon/any-addr-and-overloads.patch
-	$(APPLY) $(SRC)/ucommon/skip_programs.patch
-	$(APPLY) $(SRC)/ucommon/deadlock.patch
-	$(APPLY) $(SRC)/ucommon/ashmem.patch
-	$(APPLY) $(SRC)/ucommon/gnutls.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && autoreconf -fi
 	$(MOVE)
 
