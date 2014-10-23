@@ -1,0 +1,45 @@
+From 023bdaa427be12ac41794c1a0290a2ab0bc2bf1f Mon Sep 17 00:00:00 2001
+From: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+Date: Thu, 23 Oct 2014 12:31:19 -0400
+Subject: [PATCH] fix exception specifier clash for c++11
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Avoids the following error:
+/usr/include/c++/4.8/new:98:41: error: declaration of ‘void operator
+delete [](void*) noexcept (true)’ has a different exception specifier
+
+include/ucommon/cpr.h:170:13: error: from previous declaration ‘void
+    operator delete [](void*)’
+---
+ inc/ucommon/cpr.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/inc/ucommon/cpr.h b/inc/ucommon/cpr.h
+index b3fa9c5..2e30f0a 100644
+--- a/inc/ucommon/cpr.h
++++ b/inc/ucommon/cpr.h
+@@ -160,14 +160,22 @@ inline void *operator new(size_t size, caddr_t address, size_t known)
+  * Delete an object from the heap.
+  * @param object to delete.
+  */
++#if __cplusplus <= 199711L
+ inline void operator delete(void *object)
++#else
++inline void operator delete(void *object) noexcept (true)
++#endif
+     {free(object);}
+ 
+ /**
+  * Delete an array from the heap.  All array element destructors are called.
+  * @param array to delete.
+  */
++#if __cplusplus <= 199711L
+ inline void operator delete[](void *array)
++#else
++inline void operator delete[](void *array) noexcept(true)
++#endif
+     {free(array);}
+ 
+ #ifdef  __GNUC__
