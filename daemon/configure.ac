@@ -283,6 +283,7 @@ AM_CONDITIONAL(BUILD_JACK, test "x$have_jack" = "xyes")
 dnl Check for core audio
 AC_ARG_WITH([coreaudio],
     AS_HELP_STRING([--without-coreaudio], [Ignore presence of coreaudio and disable it]))
+AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],`if test "x$with_coreaudio" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have core audio])
 AM_CONDITIONAL(BUILD_COREAUDIO, test "x$with_coreaudio" = "xyes")
 
 dnl Check for the samplerate development package - name: libsamplerate0-dev
