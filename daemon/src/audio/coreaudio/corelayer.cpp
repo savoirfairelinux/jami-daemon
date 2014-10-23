@@ -122,6 +122,17 @@ void CoreLayer::startStream()
         return;
 }
 
+
+int CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
+{
+    return 0;
+}
+
+std::string CoreLayer::getAudioDeviceName(int index, DeviceType type) const
+{
+    return "";
+}
+
 void CoreLayer::stopStream()
 {
     isStarted_ = false;
