@@ -35,6 +35,7 @@
 #include "client/configurationmanager.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "audiodevice.h"
 
 #include <thread>
 #include <atomic>
@@ -119,6 +120,17 @@ void CoreLayer::startStream()
 
     if (is_playback_running_ and is_capture_running_)
         return;
+}
+
+
+int CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
+{
+
+}
+
+std::string CoreLayer::getAudioDeviceName(int index, DeviceType type) const
+{
+
 }
 
 void CoreLayer::stopStream()
