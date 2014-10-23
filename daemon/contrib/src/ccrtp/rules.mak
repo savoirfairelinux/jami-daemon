@@ -1,5 +1,5 @@
 # CCRTP
-CCRTP_VERSION := 2.0.9
+CCRTP_VERSION := 2.1.0
 CCRTP_URL := $(GNUTELEPHONY)/ccrtp/archive/v$(CCRTP_VERSION).tar.gz
 
 PKGS += ccrtp
@@ -16,7 +16,6 @@ $(TARBALLS)/ccrtp-$(CCRTP_VERSION).tar.gz:
 
 ccrtp: ccrtp-$(CCRTP_VERSION).tar.gz .sum-ccrtp
 	$(UNPACK)
-	$(APPLY) $(SRC)/ccrtp/standardheader.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && autoreconf -fi
 	$(MOVE)
 
