@@ -510,10 +510,10 @@ update_voicemail_status()
                       current_account_get_message_number());
 
     if (current_account_has_new_message())
-        gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(voicemailToolbar_),
+        gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(voicemailToolbar_),
                                       GTK_STOCK_NEWVOICEMAIL);
     else
-        gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(voicemailToolbar_),
+        gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(voicemailToolbar_),
                                       GTK_STOCK_VOICEMAIL);
 
     gtk_tool_button_set_label(GTK_TOOL_BUTTON(voicemailToolbar_), messages);
@@ -1590,8 +1590,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
     gtk_widget_show(separator);
 
     if (edit) {
-        GtkWidget *menu_items = gtk_image_menu_item_new_from_stock("_Edit",
-                                get_accel_group());
+        GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Edit"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
         EditNumberData *edit_number_data = g_new0(EditNumberData, 1);
         edit_number_data->call = selectedCall;
@@ -1601,8 +1600,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
     }
 
     if (add_remove_button) {
-        GtkWidget *menu_items = gtk_image_menu_item_new_from_stock("_Delete",
-                                get_accel_group());
+        GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Delete"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
 
         EditNumberData *edit_number_data = g_new0(EditNumberData, 1);
@@ -1645,8 +1643,7 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
         gtk_widget_show(presence);
 #endif
 
-        GtkWidget *edit = gtk_image_menu_item_new_from_stock("_Edit",
-                          get_accel_group());
+        GtkWidget *edit = gtk_image_menu_item_new_with_mnemonic(_("_Edit"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), edit);
         EditNumberData *edit_number_data = g_new0(EditNumberData, 1);
         edit_number_data->call = selectedCall;
