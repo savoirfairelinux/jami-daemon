@@ -1331,7 +1331,8 @@ ManagerImpl::saveConfig()
         YAML::Emitter out;
 
         // FIXME maybe move this into accountFactory?
-        out << YAML::BeginMap << YAML::Key << "accounts" << YAML::BeginSeq;
+        out << YAML::BeginMap << YAML::Key << "accounts";
+        out << YAML::Value << YAML::BeginSeq;
 
         for (const auto& account : accountFactory_.getAllAccounts()) {
             account->serialize(out);

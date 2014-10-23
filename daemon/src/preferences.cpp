@@ -412,7 +412,7 @@ void AudioPreference::serialize(YAML::Emitter &out)
     out << YAML::Key << DEVICE_PLAYBACK_KEY << YAML::Value << pulseDevicePlayback_;
     out << YAML::Key << DEVICE_RECORD_KEY << YAML::Value << pulseDeviceRecord_;
     out << YAML::Key << DEVICE_RINGTONE_KEY << YAML::Value << pulseDeviceRingtone_;
-    out << YAML::Key << YAML::EndMap;
+    out << YAML::EndMap;
 
     // more common options!
     out << YAML::Key << RECORDPATH_KEY << YAML::Value << recordpath_;
