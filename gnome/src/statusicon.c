@@ -144,8 +144,7 @@ create_menu(SFLPhoneClient *client)
     menu_items = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), menu_items);
 
-    menu_items = gtk_image_menu_item_new_from_stock(_("_Quit"),
-                 get_accel_group());
+    menu_items = gtk_menu_item_new_with_mnemonic(_("_Quit"));
     g_signal_connect_swapped(G_OBJECT(menu_items), "activate",
                              G_CALLBACK(status_quit),
                              client);
