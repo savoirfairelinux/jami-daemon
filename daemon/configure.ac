@@ -91,6 +91,11 @@ AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
 AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
 
+dnl FIXME this should be deduced automatically
+AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
+                    `if test "${HAVE_OSX}" = "1"; then echo 1; else echo 0; fi`,
+                    [Define if you have CoreAudio])
+
 dnl Android is linux, but a bit different
 AS_IF([test "$SYS" = linux],[
     AC_MSG_CHECKING([for an Android system])
