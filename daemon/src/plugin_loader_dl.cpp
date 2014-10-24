@@ -31,40 +31,47 @@
 #include "plugin_loader.h"
 
 #include <dlfcn.h>
+#include <memory>
 
-Plugin::Plugin(void* handle) : handle_(handle)
-{}
-
-Plugin::~Plugin()
+class DLPlugin : public Plugin
 {
-    if (handle_)
-        ::dlclose(handle_);
-}
+    public:
+        DLPlugin(void* handle) : handle_(handle, ::dlclose) {};
+        void* getSymbol(const char* name) const;
 
-void* Plugin::getSymbol(const std::string& name)
+    private:
+        std::unique_ptr<void, int(*)(void*)> handle_;
+};
+
+void*
+DLPlugin::getSymbol(const char* name) const
 {
     if (!handle_)
-        return NULL;
+        return nullptr;
 
-    return ::dlsym(handle_, name.c_str());
+    return ::dlsym(handle_.get(), name);
 }
 
-Plugin* Plugin::load(const std::string& path, std::string& error)
+Plugin*
+Plugin::load(const std::string& path, std::string& error)
 {
     if (path.empty()) {
         error = "Empty path";
-        return NULL;
+        return nullptr;
     }
 
-    void *handle = ::dlopen(path.c_str(), RTLD_NOW);
+    // Clear any existing error
+    ::dlerror();
+
+    void* handle = ::dlopen(path.c_str(), RTLD_NOW);
     if (!handle) {
         error += "Failed to load \"" + path + '"';
 
         std::string dlError = ::dlerror();
         if(dlError.size())
             error += " (" + dlError + ")";
-        return NULL;
+        return nullptr;
     }
 
-    return new Plugin(handle);
+    return new DLPlugin(handle);
 }
