@@ -1149,7 +1149,7 @@ static const GtkActionEntry menu_entries[] = {
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
     { "HelpContents", "help-browser", N_("Contents"), "F1",
       N_("Open the manual"), G_CALLBACK(help_contents_cb) },
-    { "About", "_About", NULL, NULL,
+    { "About", "_About", N_("_About"), NULL,
       N_("About this application"), G_CALLBACK(help_about) }
 };
 
