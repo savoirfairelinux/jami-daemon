@@ -599,6 +599,7 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/alsa/Makefile \
                  src/audio/opensl/Makefile \
                  src/audio/jack/Makefile \
+                 src/audio/coreaudio/Makefile \
                  src/audio/sound/Makefile \
                  src/audio/codecs/Makefile \
                  src/config/Makefile \
