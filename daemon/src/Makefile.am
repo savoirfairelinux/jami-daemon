@@ -62,6 +62,7 @@ libsflphone_la_LDFLAGS = \
 		@SAMPLERATE_LIBS@ \
 		@SNDFILE_LIBS@ \
 		@YAMLCPP_LIBS@ \
+		@SPEEXDSP_LIBS@ \
 		$(TLS_LIB) \
 		$(IAX_LIB) \
 		$(IM_LIB) \
@@ -74,6 +75,7 @@ libsflphone_la_CFLAGS = \
 		@ALSA_CFLAGS@ \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
+		@SPEEXDSP_CFLAGS@ \
 		$(TLS_CFLAGS)
 
 libsflphone_la_SOURCES = conference.cpp \
