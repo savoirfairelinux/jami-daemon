@@ -28,26 +28,26 @@
  *  as that of the covered work.
  */
 #ifndef PLUGIN_LOADER_H
-#define PLUGIN_LOADER_H 1
+#define PLUGIN_LOADER_H
 
-#include "noncopyable.h"
+#include "ring_plugin.h"
 
 #include <string>
 
 class Plugin
 {
-public:
-    virtual ~Plugin();
-    static Plugin* load(const std::string& path, std::string& error);
-    void* getSymbol(const std::string& name);
-    virtual void* getInitFunction() { return getSymbol("SFL_dynPluginInit"); };
+    public:
+        virtual ~Plugin() = default;
 
-private:
-    NON_COPYABLE(Plugin);
-    Plugin(void* handle);
+        static Plugin* load(const std::string& path, std::string& error);
 
-private:
-    void* handle_;
+        virtual void* getSymbol(const char* name) const = 0;
+        virtual RING_PluginInitFunc getInitFunction() const {
+            return reinterpret_cast<RING_PluginInitFunc>(getSymbol(RING_DYN_INIT_FUNC_NAME));
+        };
+
+    protected:
+        Plugin() = default;
 };
 
 #endif /* PLUGIN_LOADER_H */
