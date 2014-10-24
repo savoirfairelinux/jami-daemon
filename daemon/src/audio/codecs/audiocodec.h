@@ -32,16 +32,10 @@
 #ifndef __AUDIO_CODEC_H__
 #define __AUDIO_CODEC_H__
 
-#include <string>
-#include <vector>
 #include "sfl_types.h"
 
-#define XSTR(s) STR(s)
-#define STR(s) #s
-
-/* bump for each release, and bump the 0.0.0.xth digit for each API change */
-#define AUDIO_CODEC_ENTRY create_1_4_2_0
-#define AUDIO_CODEC_ENTRY_SYMBOL XSTR(AUDIO_CODEC_ENTRY)
+#include <string>
+#include <vector>
 
 // Opus documentation:
 // "If this is less than the maximum packet duration (120ms; 5760 for 48kHz),
@@ -198,9 +192,6 @@ class AudioCodec {
 };
 } // end namespace sfl
 
-
-typedef sfl::AudioCodec* create_t();
-typedef void destroy_t(sfl::AudioCodec* codec);
 
 /** Enumeration that contains known audio payloads */
 enum {

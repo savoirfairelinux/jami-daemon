@@ -33,6 +33,8 @@
 #include "audiocodec.h"
 #include "sfl_types.h"
 #include "noncopyable.h"
+#include "ring_plugin.h"
+
 #include <stdexcept>
 #include <iostream>
 
@@ -91,18 +93,18 @@ private:
 };
 
 // cppcheck-suppress unusedFunction
-extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
-{
-    try {
-        return new Gsm;
-    } catch (const std::runtime_error &e) {
-        std::cerr << e.what() << std::endl;
-        return 0;
-    }
-}
+RING_PLUGIN_EXIT(pluginExit) {}
 
 // cppcheck-suppress unusedFunction
-extern "C" void destroy(sfl::AudioCodec* a)
+RING_PLUGIN_INIT_DYNAMIC(pluginAPI)
 {
-    delete a;
+    std::unique_ptr<Gsm> codec(new Gsm);
+
+    if (!pluginAPI->invokeService(pluginAPI, "registerAudioCodec",
+                                  reinterpret_cast<void*>(codec.get()))) {
+        codec.release();
+        return pluginExit;
+    }
+
+    return nullptr;
 }
