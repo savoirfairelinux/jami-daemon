@@ -65,7 +65,8 @@ libsflphone_la_LDFLAGS = \
 		$(TLS_LIB) \
 		$(IAX_LIB) \
 		$(IM_LIB) \
-		$(PCRE_LIBS)
+		$(PCRE_LIBS) \
+		@SPEEXDSP_LIBS@
 
 libsflphone_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
@@ -74,7 +75,8 @@ libsflphone_la_CFLAGS = \
 		@ALSA_CFLAGS@ \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
-		$(TLS_CFLAGS)
+		$(TLS_CFLAGS) \
+		@SPEEXDSP_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
 		account_factory.cpp \
