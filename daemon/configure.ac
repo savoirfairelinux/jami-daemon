@@ -290,6 +290,11 @@ AS_IF([test "x$have_jack" = "xyes"],,
 AC_DEFINE_UNQUOTED([HAVE_JACK], `if test "x$have_jack" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have jack])
 AM_CONDITIONAL(BUILD_JACK, test "x$have_jack" = "xyes")
 
+dnl Check for core audio
+AC_ARG_WITH([coreaudio],
+    AS_HELP_STRING([--without-coreaudio], [Ignore presence of coreaudio and disable it]))
+AM_CONDITIONAL(BUILD_COREAUDIO, test "x$with_coreaudio" = "xyes")
+
 dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development files]))
@@ -592,6 +597,7 @@ AC_CONFIG_FILES([Makefile \
                  src/audio/alsa/Makefile \
                  src/audio/opensl/Makefile \
                  src/audio/jack/Makefile \
+                 src/audio/coreaudio/Makefile \
                  src/audio/sound/Makefile \
                  src/audio/codecs/Makefile \
                  src/config/Makefile \
