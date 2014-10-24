@@ -47,9 +47,6 @@
 #include <memory>
 #include <mutex>
 
-
-#include "plugin_manager.h"
-
 #include "client/client.h"
 
 #include "conference.h"
@@ -76,6 +73,7 @@ class AudioLayer;
 class History;
 class TelephoneTone;
 class RingBufferPool;
+class PluginManager;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -91,6 +89,9 @@ typedef std::set<std::string> CallIDSet;
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl {
+    private:
+        std::unique_ptr<PluginManager> pluginManager_;
+
     public:
         ManagerImpl();
         ~ManagerImpl();
@@ -1003,8 +1004,6 @@ class ManagerImpl {
 
         void loadAccount(const YAML::Node &item, int &errorCount,
                          const std::string &accountOrder);
-
-        PluginManager pluginManager_ = {};
 };
 
 #endif // MANAGER_IMPL_H_

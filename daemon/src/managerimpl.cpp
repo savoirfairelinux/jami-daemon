@@ -41,6 +41,7 @@
 #include "logger.h"
 #include "managerimpl.h"
 #include "account_schema.h"
+#include "plugin_manager.h"
 
 #include "fileutils.h"
 #include "map_utils.h"
@@ -124,7 +125,8 @@ ManagerImpl::loadDefaultAccountMap()
 }
 
 ManagerImpl::ManagerImpl() :
-    preferences(), voipPreferences(),
+    pluginManager_(new PluginManager)
+    , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), client_(),
     currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),

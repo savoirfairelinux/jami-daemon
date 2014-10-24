@@ -31,61 +31,132 @@
 #ifndef PLUGIN_MANAGER_H
 #define PLUGIN_MANAGER_H 1
 
-#include "plugin.h"
-#include "plugin_loader.h"
+#include "ring_plugin.h"
 #include "noncopyable.h"
 
 #include <map>
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <functional>
+#include <utility>
 
 #include <inttypes.h>
 
+class Plugin;
+
 class PluginManager
 {
-    typedef std::map<std::string, std::shared_ptr<Plugin> > PluginMap;
-    typedef std::vector<SFLPluginExitFunc> ExitFuncVec;
-    typedef std::vector<SFLPluginRegisterParams> RegisterParamsVec;
+    public:
+        using ObjectDeleter = std::function<void(void*)>;
+        using ServiceFunction = std::function<int32_t(void*)>;
 
-public:
-    typedef std::map<std::string, SFLPluginRegisterParams> RegisterParamsMap;
+    private:
+        struct ObjectFactory {
+                RING_PluginObjectFactory data;
+                ObjectDeleter deleter;
+        };
 
-    PluginManager();
-    ~PluginManager();
+        using PluginMap = std::map<std::string, std::shared_ptr<Plugin>>;
+        using ExitFuncVec = std::vector<RING_PluginExitFunc>;
+        using ObjectFactoryVec = std::vector<ObjectFactory>;
+        using ObjectFactoryMap = std::map<std::string, ObjectFactory>;
 
-    int initPlugin(SFLPluginInitFunc initFunc);
-    static int32_t registerObject(const SFLPluginAPI* api,
-                                  const int8_t* type,
-                                  const SFLPluginRegisterParams* params) {
-        static_cast<PluginManager*>(api->context)->registerObject_(type, params);
-    }
+    public:
+        PluginManager();
+        ~PluginManager();
 
-    int load(const std::string& path);
-    void* createObject(const std::string& type);
-    const RegisterParamsMap& getRegisters();
-    SFLPluginAPI& getPluginAPI();
+        /**
+         * Load a dynamic plugin by filename.
+         *
+         * @param path fully qualified pathname on a loadable plugin binary
+         * @return true if success
+         */
+        bool load(const std::string& path);
 
-private:
-    NON_COPYABLE(PluginManager);
+        /**
+         * Register a plugin.
+         *
+         * @param initFunc plugin init function
+         * @return true if success
+         */
+        bool registerPlugin(RING_PluginInitFunc initFunc);
 
-    int32_t shutdown();
-    int32_t registerObject_(const int8_t* type,
-                            const SFLPluginRegisterParams* params);
+        /**
+         * Register a new service for plugin.
+         *
+         * @param name The service name
+         * @param func The function called by Ring_PluginAPI.invokeService
+         * @return true if success
+         */
+        bool registerService(const std::string& name, ServiceFunction&& func);
 
-    std::mutex          mutex_ = {};
-    SFLPluginAPI        pluginApi_ = {
-        { SFL_PLUGIN_ABI_VERSION, SFL_PLUGIN_API_VERSION },
-        nullptr, registerObject, nullptr };
-    PluginMap           dynPluginMap_ = {{}}; // Only dynamic loaded plugins
-    ExitFuncVec         exitFuncVec_ = {};
-    RegisterParamsMap   exactMatchMap_ = {{}};
-    RegisterParamsVec   wildCardVec_ = {};
+        void unRegisterService(const std::string& name);
 
-    // Storage used during plugin initialisation.
-    // Will be copied into previous ones only if the initialisation success.
-    RegisterParamsMap   tempExactMatchMap_ = {{}};
-    RegisterParamsVec   tempWildCardVec_ = {};
+        /**
+         * Register a new public objects factory.
+         *
+         * @param type unique identifier of the object
+         * @param params object factory details
+         * @return true if success
+         *
+         * Note: type can be the string "*" meaning that the factory
+         * will be called if no exact match factories are found for a given type.
+         */
+        bool registerObjectFactory(const char* type,
+                                   const RING_PluginObjectFactory& factory);
+
+        /**
+         * Create a new plugin's exported object.
+         *
+         * @param type unique identifier of the object to create.
+         * @return unique pointer on created object.
+         */
+        std::unique_ptr<void, ObjectDeleter> createObject(const std::string& type);
+
+        const RING_PluginAPI& getPluginAPI() const {
+            return pluginApi_;
+        }
+
+    private:
+        NON_COPYABLE(PluginManager);
+
+        /**
+         * Implements RING_PluginAPI.registerObjectFactory().
+         * Must be C accessible.
+         */
+        static int32_t registerObjectFactory_(const RING_PluginAPI* api,
+                                              const char* type,
+                                              void* data);
+
+        /**
+         * Implements RING_PluginAPI.invokeService().
+         * Must be C accessible.
+         */
+        static int32_t invokeService_(const RING_PluginAPI* api,
+                                      const char* name,
+                                      void* data);
+
+        int32_t invokeService(const std::string& name, void* data);
+
+        std::mutex          mutex_ = {};
+        RING_PluginAPI      pluginApi_ = {
+            { RING_PLUGIN_ABI_VERSION, RING_PLUGIN_API_VERSION },
+            nullptr, // set by PluginManager constructor
+            registerObjectFactory_, invokeService_,
+        };
+        PluginMap           dynPluginMap_ = {{}}; // Only dynamic loaded plugins
+        ExitFuncVec         exitFuncVec_ = {};
+        ObjectFactoryMap    exactMatchMap_ = {{}};
+        ObjectFactoryVec    wildCardVec_ = {};
+
+        // Storage used during plugin initialisation.
+        // Will be copied into previous ones only if the initialisation success.
+        ObjectFactoryMap    tempExactMatchMap_ = {{}};
+        ObjectFactoryVec    tempWildCardVec_ = {};
+
+        // registered services
+        std::map<std::string, ServiceFunction> services_ {};
 };
 
 #endif /* PLUGIN_MANAGER_H */
