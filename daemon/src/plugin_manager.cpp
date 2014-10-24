@@ -29,44 +29,84 @@
  */
 
 #include "plugin_manager.h"
+#include "plugin_loader.h"
 #include "logger.h"
+
+#include <utility>
 
 PluginManager::PluginManager()
 {
-    pluginApi_.context = static_cast<void*>(this);
+    pluginApi_.context = reinterpret_cast<void*>(this);
 }
 
 PluginManager::~PluginManager()
-{ shutdown(); }
-
-int32_t PluginManager::shutdown()
 {
-    int32_t result = 0;
+    int32_t error = 0;
 
     for (auto func : exitFuncVec_) {
         try {
-            result |= (*func)();
+            error |= (*func)();
         } catch (...) {
-            result = -1;
+            error = -1;
         }
     }
+
+    if (error)
+        WARN("Some plugins have reported failure at exit");
 
     dynPluginMap_.clear();
     exactMatchMap_.clear();
     wildCardVec_.clear();
     exitFuncVec_.clear();
-
-    return result;
 }
 
-int PluginManager::initPlugin(SFLPluginInitFunc initFunc)
+bool
+PluginManager::load(const std::string& path)
 {
-    SFLPluginExitFunc exitFunc = initFunc(&pluginApi_);
+    // TODO: Resolve symbolic links and make path absolute
+
+    // Don't load the same dynamic library twice
+    if (dynPluginMap_.find(path) != dynPluginMap_.end()) {
+        WARN("plugin: already loaded");
+        return true;
+    }
+
+    std::string error;
+    std::unique_ptr<Plugin> plugin(Plugin::load(path, error));
+    if (!plugin) {
+        ERROR("plugin: %s", error.c_str());
+        return false;
+    }
+
+    const auto& init_func = plugin->getInitFunction();
+    if (!init_func) {
+        ERROR("plugin: no init symbol");
+        return false;
+    }
+
+    if (!registerPlugin(init_func))
+        return false;
+
+    dynPluginMap_[path] = std::move(plugin);
+    return true;
+}
+
+bool
+PluginManager::registerPlugin(RING_PluginInitFunc initFunc)
+{
+    RING_PluginExitFunc exitFunc = nullptr;
+
+    try {
+        exitFunc = initFunc(&pluginApi_);
+    } catch (const std::runtime_error& e) {
+        ERROR("%s", e.what());
+    }
+
     if (!exitFunc) {
         tempExactMatchMap_.clear();
         tempWildCardVec_.clear();
-        DEBUG("plugin: init failed");
-        return -1;
+        ERROR("plugin: init failed");
+        return false;
     }
 
     exitFuncVec_.push_back(exitFunc);
@@ -75,128 +115,151 @@ int PluginManager::initPlugin(SFLPluginInitFunc initFunc)
     wildCardVec_.insert(wildCardVec_.end(),
                         tempWildCardVec_.begin(),
                         tempWildCardVec_.end());
-    return 0;
-}
-
-static bool isValidObject(const int8_t* type,
-                          const SFLPluginRegisterParams* params)
-{
-    if (!type || !(*type))
-        return false;
-    if (!params ||!params->create || !params->destroy)
-        return false;
     return true;
 }
 
-/* WARNING: exposed to plugin through SFLPluginAPI */
-int32_t PluginManager::registerObject_(const int8_t* type,
-                                       const SFLPluginRegisterParams* params)
+bool
+PluginManager::registerService(const std::string& name,
+                               ServiceFunction&& func)
 {
-    if (!isValidObject(type, params))
-        return -1;
+    services_[name] = std::forward<ServiceFunction>(func);
+    return true;
+}
 
-    SFLPluginVersion pm_version = pluginApi_.version;
+void
+PluginManager::unRegisterService(const std::string& name)
+{
+    services_.erase(name);
+}
+
+int32_t
+PluginManager::invokeService(const std::string& name, void* data)
+{
+    const auto& iterFunc = services_.find(name);
+    if (iterFunc == services_.cend()) {
+        ERROR("Services not found: %s", name.c_str());
+        return -1;
+    }
+
+    const auto& func = iterFunc->second;
+
+    try {
+        return func(data);
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
+        return -1;
+    }
+}
+
+/* WARNING: exposed to plugins through RING_PluginAPI */
+bool
+PluginManager::registerObjectFactory(const char* type,
+                                     const RING_PluginObjectFactory& factoryData)
+{
+    if (!type)
+        return false;
+
+    if (!factoryData.create || !factoryData.destroy)
+        return false;
 
     // Strict compatibility on ABI
-    if (pm_version.abi != params->version.abi)
-        return -1;
+    if (factoryData.version.abi != pluginApi_.version.abi)
+        return false;
 
-    // Backware compatibility on API
-    if (pm_version.api > params->version.api)
-        return -1;
+    // Backward compatibility on API
+    if (factoryData.version.api < pluginApi_.version.api)
+        return false;
 
-    std::string key((const char *)type);
+    const std::string key(type);
+    auto deleter = [factoryData](void* o) {
+        factoryData.destroy(o, factoryData.closure);
+    };
+    ObjectFactory factory = {factoryData, deleter};
 
-    // wild card registration?
-    if (key == std::string("*")) {
-        wildCardVec_.push_back(*params);
-        return 0;
+    // wildcard registration?
+    if (key == "*") {
+        wildCardVec_.push_back(factory);
+        return true;
     }
 
     // fails on duplicate for exactMatch map
     if (exactMatchMap_.find(key) != exactMatchMap_.end())
-        return -1;
+        return false;
 
-    exactMatchMap_[key] = *params;
-    return 0;
+    exactMatchMap_[key] = factory;
+    return true;
 }
 
-int PluginManager::load(const std::string& path)
-{
-    // TODO: Resolve symbolic links and make path absolute
-
-    // Don't load the same dynamic library twice
-    if (dynPluginMap_.find(std::string(path)) != dynPluginMap_.end()) {
-        DEBUG("plugin: already loaded");
-        return -1;
-    }
-
-    std::string error;
-    Plugin *plugin = Plugin::load(std::string(path), error);
-    if (!plugin) {
-        DEBUG("plugin: %s", error.c_str());
-        return -1;
-    }
-
-    SFLPluginInitFunc init_func;
-    init_func = (SFLPluginInitFunc)(plugin->getInitFunction());
-    if (!init_func) {
-        DEBUG("plugin: no init symbol");
-        return -1;
-    }
-
-    if (initPlugin(init_func))
-        return -1;
-
-    dynPluginMap_[path] = std::shared_ptr<Plugin>(plugin);
-    return 0;
-}
-
-const PluginManager::RegisterParamsMap& PluginManager::getRegisters()
-{
-    return exactMatchMap_;
-}
-
-SFLPluginAPI& PluginManager::getPluginAPI()
-{
-    return pluginApi_;
-}
-
-void* PluginManager::createObject(const std::string& type)
+std::unique_ptr<void, PluginManager::ObjectDeleter>
+PluginManager::createObject(const std::string& type)
 {
     if (type == "*")
-        return nullptr;
+        return {nullptr, nullptr};
 
-    SFLPluginObjectParams op;
-    op.type = (const int8_t*)type.c_str();
-    op.pluginApi = &pluginApi_;
+    RING_PluginObjectParams op = {
+        pluginApi : &pluginApi_,
+        type : type.c_str(),
+    };
 
     // Try to find an exact match
-    if (exactMatchMap_.find(type) != exactMatchMap_.end()) {
-        SFLPluginRegisterParams &rp = exactMatchMap_[type];
-        void *object = rp.create(&op);
+    const auto& factoryIter = exactMatchMap_.find(type);
+    if (factoryIter != exactMatchMap_.end()) {
+        const auto& factory = factoryIter->second;
+        auto object = factory.data.create(&op, factory.data.closure);
         if (object)
-            return object;
+            return {object, factory.deleter};
     }
 
     // Try to find a wildcard match
-    for (size_t i = 0; i < wildCardVec_.size(); ++i)
+    for (const auto& factory : wildCardVec_)
     {
-        SFLPluginRegisterParams &rp = wildCardVec_[i];
-        void *object = rp.create(&op);
+        auto object = factory.data.create(&op, factory.data.closure);
         if (object) {
             // promote registration to exactMatch_
-            // (but keep also the wild card registration for other object types)
-            int32_t res = registerObject_(op.type, &rp);
+            // (but keep also wildcard registration for other object types)
+            int32_t res = registerObjectFactory(op.type, factory.data);
             if (res < 0) {
                 ERROR("failed to register object %s", op.type);
-                rp.destroy(object);
-                return nullptr;
+                return {nullptr, nullptr};
             }
 
-            return object;
+            return {object, factory.deleter};
         }
     }
 
-    return nullptr;
+    return {nullptr, nullptr};
+}
+
+/* WARNING: exposed to plugins through RING_PluginAPI */
+int32_t
+PluginManager::registerObjectFactory_(const RING_PluginAPI* api,
+                                      const char* type, void* data)
+{
+    auto manager = reinterpret_cast<PluginManager*>(api->context);
+    if (!manager) {
+        ERROR("registerObjectFactory called with null plugin API");
+        return -1;
+    }
+
+    if (!data) {
+        ERROR("registerObjectFactory called with null factory data");
+        return -1;
+    }
+
+    const auto factory = reinterpret_cast<RING_PluginObjectFactory*>(data);
+    return manager->registerObjectFactory(type, *factory) ? 0 : -1;
+}
+
+/* WARNING: exposed to plugins through RING_PluginAPI */
+int32_t
+PluginManager::invokeService_(const RING_PluginAPI* api, const char* name,
+                              void* data)
+{
+    auto manager = reinterpret_cast<PluginManager*>(api->context);
+    if (!manager) {
+        ERROR("invokeService called with null plugin API");
+        return -1;
+    }
+
+    return manager->invokeService(name, data);
 }
