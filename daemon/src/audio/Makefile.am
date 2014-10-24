@@ -20,6 +20,10 @@ if BUILD_JACK
 SUBDIRS += jack
 endif
 
+if HAVE_OSX
+SUBDIRS += coreaudio
+endif
+
 if BUILD_SPEEXDSP
 SFL_SPEEXDSP_SRC=dsp.cpp
 SFL_SPEEXDSP_HEAD=dsp.h
@@ -75,6 +79,10 @@ endif
 
 if BUILD_ALSA
 libaudio_la_LIBADD += ./alsa/libalsalayer.la
+endif
+
+if HAVE_OSX
+libaudio_la_LIBADD += ./coreaudio/libcoreaudiolayer.la
 endif
 
 if BUILD_OPENSL
