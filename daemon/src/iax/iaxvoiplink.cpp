@@ -153,7 +153,7 @@ IAXVoIPLink::sendAudioFromMic()
             continue;
 
         int codecType = currentCall->getAudioCodec();
-        sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(codecType));
+        auto audioCodec = Manager::instance().audioCodecFactory.getCodec(codecType).get();
 
         if (!audioCodec)
             continue;
@@ -330,7 +330,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     if (!event->datalen)
         return;
 
-    auto audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(call.getAudioCodec()));
+    auto audioCodec = Manager::instance().audioCodecFactory.getCodec(call.getAudioCodec()).get();
     if (!audioCodec)
         return;
 

@@ -38,6 +38,8 @@
 #include <map>
 #include <vector>
 
+class PluginManager;
+
 /*
  * @file codecdescriptor.h
  * @brief Handle audio codecs, load them in memory
@@ -45,32 +47,34 @@
 
 class AudioCodecFactory {
     public:
-        AudioCodecFactory();
+        using Id = int32_t;
+
+        AudioCodecFactory(PluginManager&);
 
         ~AudioCodecFactory();
 
         /**
-         * Get codec name by its payload
-         * @param payload the payload looked for
-         *                same as getPayload()
-         * @return std::string  The name of the codec
+         * Get codec name by its idientifier
+         * @param id the identifier.
+         * @return std::string the name of the codec
          */
-        std::string getCodecName(int payload) const;
+        std::string getCodecName(Id id) const;
 
-        std::vector<int32_t > getCodecList() const;
+        std::vector<Id> getCodecList() const;
+
         /**
          * Get the codec object associated with the payload
          * @param payload The payload looked for
-         * @return AudioCodec* A pointer on a AudioCodec object
+         * @return A shared pointer on a AudioCodec object
          */
-        sfl::AudioCodec* getCodec(int payload) const;
+       std::shared_ptr<sfl::AudioCodec> getCodec(int payload) const;
 
         /**
          * Get the codec object associated with the codec attribute
          * @param string The name to compare, should be in the form speex/16000
-         * @return AudioCodec* A pointer to an AudioCodec object
+         * @return A shared pointer to an AudioCodec object
          */
-        sfl::AudioCodec* getCodec(const std::string &name) const;
+        std::shared_ptr<sfl::AudioCodec> getCodec(const std::string &name) const;
 
         /**
          * Set the default codecs order.
@@ -128,31 +132,18 @@ class AudioCodecFactory {
         bool isCodecLoaded(int payload) const;
 
     private:
-        /** Maps a pointer on an audiocodec object to a payload */
-        typedef std::map<int, sfl::AudioCodec*> AudioCodecsMap;
+        PluginManager& pluginManager_;
 
-        /** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */
-        typedef std::pair<sfl::AudioCodec*, void*> AudioCodecHandlePointer;
+        /** Maps a pointer on an audiocodec object to a payload */
+        typedef std::map<Id, std::shared_ptr<sfl::AudioCodec>> AudioCodecsMap;
 
         /**
          * Scan the installation directory ( --prefix configure option )
-         * And load the dynamic library
-         * @return std::vector<AudioCodec*> The list of the codec object successfully loaded in memory
+         * and load dynamic libraries.
          */
-        std::vector<sfl::AudioCodec *> scanCodecDirectory();
+        void scanCodecDirectory();
 
-        /**
-         * Load a codec
-         * @param std::string	The path of the shared ( dynamic ) library.
-         * @return AudioCodec*  the pointer of the object loaded.
-         */
-        sfl::AudioCodec* loadCodec(const std::string &path);
-
-        /**
-         * Unload a codec
-         * @param AudioCodecHandlePointer The map containing the pointer on the object and the pointer on the handle function
-         */
-        void unloadCodec(AudioCodecHandlePointer &ptr);
+        void registerAudioCodec(sfl::AudioCodec* codec);
 
         /**
          * Check if the files found in searched directories seems valid
@@ -162,14 +153,6 @@ class AudioCodecFactory {
          */
         static bool seemsValid(const std::string &lib);
 
-        /**
-         * Check if the codecs shared library has already been scanned during the session
-         * Useful not to load twice the same codec saved in the different directory
-         * @param std::string	The complete name of the shared directory ( without the path )
-         * @return bool True if the codecs has been scanned
-         *	    false otherwise
-         */
-        bool alreadyInCache(const std::string &lib);
 
         /**
          * Map the payload of a codec and the object associated ( AudioCodec * )
@@ -180,17 +163,6 @@ class AudioCodecFactory {
          * Vector containing a default order for the codecs
          */
         std::vector<int> defaultCodecList_ {};
-
-        /**
-         * Vector containing the complete name of the codec shared library scanned
-         */
-        std::vector<std::string> libCache_ {};
-
-        /**
-         * Vector containing pairs
-         * Pair between pointer on function handle and pointer on audiocodec object
-         */
-        std::vector<AudioCodecHandlePointer> codecInMemory_ {};
 };
 
 #endif // __CODEC_DESCRIPTOR_H__
