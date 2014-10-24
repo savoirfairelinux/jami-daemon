@@ -130,7 +130,7 @@ ManagerImpl::ManagerImpl() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false), audioCodecFactory(), client_(),
+    hasTriedToRegister_(false), audioCodecFactory(*pluginManager_), client_(),
     currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, sfl::AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()

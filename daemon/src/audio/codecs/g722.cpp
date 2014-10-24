@@ -33,10 +33,12 @@
 
 #include "audiocodec.h"
 #include "sfl_types.h"
+#include "ring_plugin.h"
 #include "g722.h"
 
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 
 class G722 : public sfl::AudioCodec {
 
@@ -762,14 +764,18 @@ class G722 : public sfl::AudioCodec {
 
 // the class factories
 // cppcheck-suppress unusedFunction
-extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
-{
-    return new G722;
-}
+RING_PLUGIN_EXIT(pluginExit) {}
 
 // cppcheck-suppress unusedFunction
-extern "C" void destroy(sfl::AudioCodec* a)
+RING_PLUGIN_INIT_DYNAMIC(pluginAPI)
 {
-    delete a;
-}
+    std::unique_ptr<G722> codec(new G722);
 
+    if (!pluginAPI->invokeService(pluginAPI, "registerAudioCodec",
+                                  reinterpret_cast<void*>(codec.get()))) {
+        codec.release();
+        return pluginExit;
+    }
+
+    return nullptr;
+}

@@ -116,7 +116,7 @@ static sfl::AudioCodec *
 findCodecByName(const std::string &codec)
 {
     // try finding by name
-    return Manager::instance().audioCodecFactory.getCodec(codec);
+    return Manager::instance().audioCodecFactory.getCodec(codec).get();
 }
 
 void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
@@ -143,7 +143,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
             if (!pj_stricmp2(&current->desc.media, "audio")) {
                 const unsigned long pt = pj_strtoul(&current->desc.fmt[fmt]);
                 if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaLocal_, pt)) {
-                    sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
+                    auto codec = Manager::instance().audioCodecFactory.getCodec(pt).get();
                     if (codec)
                         sessionAudioMediaLocal_.push_back(codec);
                     else {
@@ -207,7 +207,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 
                 const unsigned long pt = pj_strtoul(&r_media->desc.fmt[fmt]);
                 if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaRemote_, pt)) {
-                    sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
+                    auto codec = Manager::instance().audioCodecFactory.getCodec(pt).get();
                     if (codec) {
                         SFL_DBG("Adding codec with new payload type %d", pt);
                         sessionAudioMediaRemote_.push_back(codec);
@@ -450,7 +450,7 @@ void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
 
     audio_codec_list_.clear();
     for (const auto &i : selectedCodecs) {
-        sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(i);
+        auto codec = Manager::instance().audioCodecFactory.getCodec(i).get();
 
         if (codec)
             audio_codec_list_.push_back(codec);
