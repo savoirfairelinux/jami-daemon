@@ -15,26 +15,12 @@ INSTALL_GSM_RULE = install-libcodec_gsm_so
 endif
 
 if BUILD_SPEEX
-SPEEX_NB_LIB = libcodec_speex_nb.so
-libcodec_speex_nb_so_SOURCES = speexcodec_nb.cpp speexcodec.h
-libcodec_speex_nb_so_CXXFLAGS = -fPIC -g -Wall @SPEEX_CFLAGS@
-libcodec_speex_nb_so_LDFLAGS = --shared -lc @SPEEX_LIBS@
-libcodec_speex_nb_so_LDADD = libcodecdescriptor.la
-INSTALL_SPEEX_NB_RULE = install-libcodec_speex_nb_so
-
-SPEEX_WB_LIB = libcodec_speex_wb.so
-libcodec_speex_wb_so_SOURCES = speexcodec_wb.cpp speexcodec.h
-libcodec_speex_wb_so_CXXFLAGS = -fPIC -g -Wall @SPEEX_CFLAGS@
-libcodec_speex_wb_so_LDFLAGS = --shared -lc @SPEEX_LIBS@
-libcodec_speex_wb_so_LDADD = libcodecdescriptor.la
-INSTALL_SPEEX_WB_RULE = install-libcodec_speex_wb_so
-
-SPEEX_UB_LIB = libcodec_speex_ub.so
-libcodec_speex_ub_so_SOURCES = speexcodec_ub.cpp speexcodec.h
-libcodec_speex_ub_so_CXXFLAGS = -fPIC -g -Wall @SPEEX_CFLAGS@
-libcodec_speex_ub_so_LDFLAGS = --shared -lc @SPEEX_LIBS@
-libcodec_speex_ub_so_LDADD = libcodecdescriptor.la
-INSTALL_SPEEX_UB_RULE = install-libcodec_speex_ub_so
+SPEEX_LIB = libcodec_speex.so
+libcodec_speex_so_SOURCES = speexcodec.cpp speexcodec.h
+libcodec_speex_so_CXXFLAGS = -fPIC -g -Wall @SPEEX_CFLAGS@
+libcodec_speex_so_LDFLAGS = --shared -lc @SPEEX_LIBS@
+libcodec_speex_so_LDADD = libcodecdescriptor.la
+INSTALL_SPEEX_RULE = install-libcodec_speex_so
 endif
 
 if BUILD_OPUS
@@ -56,7 +42,7 @@ libcodec_ilbc_so_LDADD = libcodecdescriptor.la
 INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so $(OPUS_LIB) $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so $(OPUS_LIB) $(GSM_LIB) $(SPEEX_LIB) $(ILBC_LIB)
 
 libcodec_ulaw_so_SOURCES = ulaw.cpp g711.h
 libcodec_ulaw_so_CXXFLAGS = -fPIC -g -Wall

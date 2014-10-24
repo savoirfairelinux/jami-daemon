@@ -34,6 +34,7 @@
 
 #include "audiocodectest.h"
 #include "audio/codecs/audiocodecfactory.h"
+#include "plugin_manager.h"
 
 #include "test_utils.h"
 #include "sfl_types.h" // for SFLAudioSample
@@ -66,10 +67,11 @@ void AudioCodecTest::testCodecs()
 {
     TITLE();
 
-    AudioCodecFactory factory;
+    PluginManager pluginMgr;
+    AudioCodecFactory factory(pluginMgr);
     const auto payloadTypes = factory.getCodecList();
 
-    std::vector<sfl::AudioCodec *> codecs;
+    std::vector<std::shared_ptr<sfl::AudioCodec>> codecs;
 
     for (auto p : payloadTypes)
         codecs.push_back(factory.getCodec(p));

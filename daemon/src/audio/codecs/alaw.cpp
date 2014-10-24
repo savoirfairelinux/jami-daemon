@@ -31,6 +31,7 @@
 
 #include "sfl_types.h"
 #include "audiocodec.h"
+#include "ring_plugin.h"
 #include "g711.h"
 
 class Alaw : public sfl::AudioCodec {
@@ -79,14 +80,18 @@ class Alaw : public sfl::AudioCodec {
 
 // the class factories
 // cppcheck-suppress unusedFunction
-extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
-{
-    return new Alaw;
-}
+RING_PLUGIN_EXIT(pluginExit) {}
 
 // cppcheck-suppress unusedFunction
-extern "C" void destroy(sfl::AudioCodec* a)
+RING_PLUGIN_INIT_DYNAMIC(pluginAPI)
 {
-    delete a;
-}
+    std::unique_ptr<Alaw> codec(new Alaw);
 
+    if (!pluginAPI->invokeService(pluginAPI, "registerAudioCodec",
+                                  reinterpret_cast<void*>(codec.get()))) {
+        codec.release();
+        return pluginExit;
+    }
+
+    return nullptr;
+}

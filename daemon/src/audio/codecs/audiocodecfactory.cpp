@@ -38,6 +38,7 @@
 
 #include "audiocodecfactory.h"
 #include "audiocodec.h"
+#include "plugin_manager.h"
 #include "fileutils.h"
 #include "array_size.h"
 #include "logger.h"
@@ -50,18 +51,33 @@
 #include <stdexcept>
 #include <sstream>
 
-AudioCodecFactory::AudioCodecFactory()
+AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)
+    : pluginManager_(pluginManager)
 {
-    std::vector<sfl::AudioCodec*> codecDynamicList(scanCodecDirectory());
+    pluginManager_.registerService("registerAudioCodec",
+                                   [this](void* data) {
+                                       if (auto codec = reinterpret_cast<sfl::AudioCodec*>(data)) {
+                                           this->registerAudioCodec(codec);
+                                           return 0;
+                                       }
+                                       return -1;
+                                   });
 
-    if (codecDynamicList.empty())
+    scanCodecDirectory();
+    if (codecsMap_.empty())
         ERROR("No codecs available");
-    else {
-        for (const auto &codec: codecDynamicList) {
-            codecsMap_[(int) codec->getPayloadType()] = codec;
-            DEBUG("Loaded codec %s" , codec->getMimeSubtype().c_str());
-        }
-    }
+}
+
+AudioCodecFactory::~AudioCodecFactory()
+{
+    pluginManager_.unRegisterService("registerAudioCodec");
+}
+
+void
+AudioCodecFactory::registerAudioCodec(sfl::AudioCodec* codec)
+{
+    codecsMap_[(int) codec->getPayloadType()] = std::shared_ptr<sfl::AudioCodec>(codec);
+    DEBUG("Loaded codec %s" , codec->getMimeSubtype().c_str());
 }
 
 void
@@ -69,16 +85,18 @@ AudioCodecFactory::setDefaultOrder()
 {
     defaultCodecList_.clear();
 
-    for (const auto &codec : codecsMap_)
+    for (const auto& codec : codecsMap_)
         defaultCodecList_.push_back(codec.first);
 }
 
 std::string
-AudioCodecFactory::getCodecName(int payload) const
+AudioCodecFactory::getCodecName(Id payload) const
 {
-    auto iter = codecsMap_.find(payload);
-    if (iter != codecsMap_.end())
-        return iter->second->getMimeSubtype();
+    for (const auto& item : codecsMap_) {
+        const auto& codec = item.second;
+        if (codec and codec->getPayloadType() == payload)
+            return codec->getMimeSubtype();
+    }
     return "";
 }
 
@@ -92,31 +110,35 @@ AudioCodecFactory::getCodecList() const
     return list;
 }
 
-sfl::AudioCodec*
+std::shared_ptr<sfl::AudioCodec>
 AudioCodecFactory::getCodec(int payload) const
 {
-    auto iter = codecsMap_.find(payload);
+    const auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second;
     ERROR("Cannot find codec %i", payload);
     return nullptr;
 }
 
-sfl::AudioCodec*
+std::shared_ptr<sfl::AudioCodec>
 AudioCodecFactory::getCodec(const std::string &name) const
 {
-    for (const auto iter : codecsMap_) {
+    for (const auto& item : codecsMap_) {
         std::ostringstream os;
-        const std::string channels(iter.second->getSDPChannels());
-        os << "/" << iter.second->getSDPClockRate();
+        const auto& codec = item.second;
+        if (!codec)
+            continue;
+
+        const std::string channels(codec->getSDPChannels());
+        os << "/" << codec->getSDPClockRate();
         if (not channels.empty())
             os << "/" << channels;
 
-        const std::string match(iter.second->getMimeSubtype() + os.str());
+        const std::string match(codec->getMimeSubtype() + os.str());
         DEBUG("Trying %s", match.c_str());
         if (name.find(match) != std::string::npos) {
             DEBUG("Found match");
-            return iter.second;
+            return codec;
         }
     }
 
@@ -166,17 +188,9 @@ AudioCodecFactory::saveActiveCodecs(const std::vector<std::string>& list)
     }
 }
 
-
-AudioCodecFactory::~AudioCodecFactory()
-{
-    for (auto &codec : codecInMemory_)
-        unloadCodec(codec);
-}
-
-std::vector<sfl::AudioCodec*>
+void
 AudioCodecFactory::scanCodecDirectory()
 {
-    std::vector<sfl::AudioCodec*> codecs;
     std::vector<std::string> dirToScan;
 
     dirToScan.push_back(fileutils::get_home_dir() + DIR_SEPARATOR_STR "." PACKAGE "/");
@@ -210,90 +224,22 @@ AudioCodecFactory::scanCodecDirectory()
             if (file == "." or file == "..")
                 continue;
 
-            if (seemsValid(file) && !alreadyInCache(file)) {
-                sfl::AudioCodec *audioCodec(loadCodec(dirStr + file));
-
-                if (audioCodec) {
-                    codecs.push_back(audioCodec);
-                    libCache_.push_back(file);
-                }
-            }
+            if (seemsValid(file))
+                pluginManager_.load(dirStr + file);
         }
 
         closedir(dir);
     }
-
-    return codecs;
-}
-
-sfl::AudioCodec *
-AudioCodecFactory::loadCodec(const std::string &path)
-{
-    // Clear any existing error
-    dlerror();
-
-    void* codecHandle = dlopen(path.c_str(), RTLD_NOW);
-    if (!codecHandle) {
-        ERROR("%s", dlerror());
-        return nullptr;
-    }
-
-    create_t* createCodec = (create_t*) dlsym(codecHandle, AUDIO_CODEC_ENTRY_SYMBOL);
-    const char *error = dlerror();
-    if (error) {
-        ERROR("%s", error);
-        dlclose(codecHandle);
-        return nullptr;
-    }
-
-    try {
-        sfl::AudioCodec *a = createCodec();
-
-        if (a)
-            codecInMemory_.push_back(AudioCodecHandlePointer(a, codecHandle));
-        else
-            dlclose(codecHandle);
-
-        return a;
-    } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
-        dlclose(codecHandle);
-        return nullptr;
-    }
-}
-
-
-void
-AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
-{
-    destroy_t *destroyCodec = 0;
-    // flush last error
-    dlerror();
-
-    if (ptr.second)
-        destroyCodec = (destroy_t*) dlsym(ptr.second, "destroy");
-
-    const char *error = dlerror();
-
-    if (error) {
-        ERROR("%s", error);
-        return;
-    }
-
-    if (ptr.first and destroyCodec)
-        destroyCodec(ptr.first);
-
-    if (ptr.second)
-        dlclose(ptr.second);
 }
 
 sfl::AudioCodec*
 AudioCodecFactory::instantiateCodec(int payload) const
 {
-    for (const auto &codec : codecInMemory_) {
-        if (codec.first->getPayloadType() == payload) {
+    for (const auto& item : codecsMap_) {
+        const auto& codec = item.second;
+        if (codec->getPayloadType() == payload) {
             try {
-                return codec.first->clone();
+                return codec->clone();
             } catch (const std::runtime_error &e) {
                 ERROR("%s", e.what());
                 return nullptr;
@@ -329,9 +275,7 @@ AudioCodecFactory::seemsValid(const std::string &lib)
         "g729", //G729 have to be loaded first, if it is valid or not is checked later
         "opus", //Opus have to be loaded first, if it is valid or not is checked later
 #ifdef HAVE_SPEEX_CODEC
-        "speex_nb",
-        "speex_wb",
-        "speex_ub",
+        "speex",
 #endif
 
 #ifdef HAVE_GSM_CODEC
@@ -348,12 +292,6 @@ AudioCodecFactory::seemsValid(const std::string &lib)
     const std::string *end = validCodecs + ARRAYSIZE(validCodecs);
 
     return find(validCodecs, end, name) != end;
-}
-
-bool
-AudioCodecFactory::alreadyInCache(const std::string &lib)
-{
-    return std::find(libCache_.begin(), libCache_.end(), lib) != libCache_.end();
 }
 
 bool
