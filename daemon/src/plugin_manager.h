@@ -58,7 +58,7 @@ public:
     static int32_t registerObject(const SFLPluginAPI* api,
                                   const int8_t* type,
                                   const SFLPluginRegisterParams* params) {
-        static_cast<PluginManager*>(api->context)->registerObject_(type, params);
+        return static_cast<PluginManager*>(api->context)->registerObject_(type, params);
     }
 
     int load(const std::string& path);
