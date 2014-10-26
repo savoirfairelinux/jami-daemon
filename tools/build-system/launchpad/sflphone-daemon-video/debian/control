@@ -8,7 +8,7 @@ Standards-Version: 3.7.3
 Package: sflphone-daemon-video
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libavcodec54 | libavcodec-extra-54 | libavcodec53 | libavcodec-extra-53, libavdevice53 | libavdevice-extra-53, libavformat54 | libavformat-extra-54 | libavformat53 | libavformat-extra-53, libswscale2 | libswscale-extra-2, libavutil52 | libavutil-extra-52 | libavutil51 | libavutil-extra-51
+Depends: ${shlibs:Depends}, ${misc:Depends}, libavcodec56 (>= 6:11~beta1) | libavcodec-extra-56 (>= 6:11~beta1) | libavcodec54 | libavcodec-extra-54, libavdevice55 (>= 6:11~beta1) | libavdevice53 | libavdevice-extra-53, libavformat56 (>= 6:11~beta1) | libavformat54 | libavformat-extra-54, libswscale3 (>= 6:11~beta1) | libswscale2 | libswscale-extra-2, libavutil54 (>= 6:11~beta1) | libavutil52 | libavutil-extra-52
 Replaces: sflphone, sflphone-common-video
 Conflicts: sflphone-common, sflphone-daemon, sflphone-data
 Provides: sflphone-common-video
