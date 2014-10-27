@@ -494,7 +494,7 @@ AS_CASE(["$with_libilbc"],
   [yes], [PKG_CHECK_MODULES([libilbc], [libilbc], [HAVE_LIBILBC=1])],
   [no], [HAVE_LIBILBC=0],
   [PKG_CHECK_MODULES([libilbc], [libilbc], [HAVE_LIBILBC=1], [HAVE_LIBILBC=0])])
-AM_CONDITIONAL([BUILD_ILBC], [test "$with_libilbc" != no -a "$HAVE_LIBILBC" -eq 1])
+AM_CONDITIONAL([BUILD_ILBC], [test "$HAVE_LIBILBC" -eq 1])
 
 dnl opus is enabled if it's installed
 AC_ARG_WITH([opus],
@@ -503,7 +503,7 @@ AS_CASE(["$with_opus"],
   [yes], [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1])],
   [no], [HAVE_OPUS=0],
   [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1], [HAVE_OPUS=0])])
-AM_CONDITIONAL([BUILD_OPUS], [test "$with_opus" != no -a "$HAVE_OPUS" -eq 1])
+AM_CONDITIONAL([BUILD_OPUS], [test "$HAVE_OPUS" -eq 1])
 
 AC_ARG_WITH([iax],
     AS_HELP_STRING([--without-iax], [Ignore presence of iax and disable it]))
