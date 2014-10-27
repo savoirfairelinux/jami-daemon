@@ -84,3 +84,6 @@ nbproject
 
 # Windows
 *.exe
+
+# Mac
+.DS_Store
