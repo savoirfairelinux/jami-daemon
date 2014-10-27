@@ -44,7 +44,6 @@
 
 namespace sfl {
 
-class CoreAudioThread;
 class RingBuffer;
 class AudioDevice;
 
@@ -87,6 +86,8 @@ class CoreLayer : public AudioLayer {
             return indexRing_;
         }
 
+        void initAudioLayer();
+
         /**
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
@@ -95,6 +96,8 @@ class CoreLayer : public AudioLayer {
 
         virtual void startStream();
 
+        void destroyAudioLayer();
+
         /**
          * Stop the playback and capture streams.
          * Drops the pending frames and put the capture and playback handles to PREPARED state
@@ -102,8 +105,11 @@ class CoreLayer : public AudioLayer {
          */
         virtual void stopStream();
 
+
+
     private:
-        friend class CoreAudioThread;
+
+        void checkError(OSStatus error, const char* operation);
 
         void initAudioFormat();
 
@@ -145,16 +151,11 @@ class CoreLayer : public AudioLayer {
         std::vector<SFLAudioSample> playbackIBuff_;
         std::vector<SFLAudioSample> captureIBuff_;
 
-        CoreAudioThread* audioThread_ {nullptr};
         AudioUnit outputUnit_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 
-//        bool is_playback_prepared_;
-//        bool is_capture_prepared_;
-//        bool is_playback_running_;
-//        bool is_capture_running_;
-//        bool is_playback_open_;
-//        bool is_capture_open_;
+        bool is_playback_running_;
+        bool is_capture_running_;
 
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
