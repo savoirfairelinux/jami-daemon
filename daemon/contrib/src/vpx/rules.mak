@@ -8,7 +8,7 @@ $(TARBALLS)/libvpx-$(VPX_VERSION).tar.bz2:
 
 .sum-vpx: libvpx-$(VPX_VERSION).tar.bz2
 
-vpx: libvpx-$(VPX_VERSION).tar.bz2 .sum-vpx
+libvpx: libvpx-$(VPX_VERSION).tar.bz2 .sum-vpx
 	$(UNPACK)
 	$(APPLY) $(SRC)/vpx/libvpx-sysroot.patch
 	$(APPLY) $(SRC)/vpx/libvpx-no-cross.patch
@@ -75,9 +75,8 @@ VPX_CONF := \
 	--disable-install-bins \
 	--disable-install-docs \
 	--disable-examples \
-	--disable-unit-tests \
-	--disable-vp8-decoder \
-	--disable-vp9-decoder
+	--disable-unit-tests
+
 ifndef HAVE_WIN32
 VPX_CONF += --enable-pic
 endif
@@ -90,12 +89,12 @@ endif
 ifdef HAVE_ANDROID
 # vpx configure.sh overrides our sysroot and it looks for it itself, and
 # uses that path to look for the compiler (which we already know)
-VPX_CONF += --sdk-path=$(ANDROID_NDK)
+VPX_CONF += --sdk-path=$(shell dirname $(shell which $(HOST)-gcc))
 # needed for cpu-features.h
 VPX_CONF += --extra-cflags="-I $(ANDROID_NDK)/sources/cpufeatures/"
 endif
 
-.vpx: vpx
+.vpx: libvpx
 	cd $< && CROSS=$(VPX_CROSS) ./configure --target=$(VPX_TARGET) \
 		$(VPX_CONF) --prefix=$(PREFIX)
 	cd $< && $(MAKE)
