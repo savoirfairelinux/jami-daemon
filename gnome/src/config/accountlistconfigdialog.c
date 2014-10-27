@@ -132,6 +132,15 @@ confirm_account_deletion(GtkWidget *window, const gchar *alias)
     return response == GTK_RESPONSE_OK;
 }
 
+static void delete_account(const gchar *account_id)
+{
+    GtkTreeModel *model = GTK_TREE_MODEL(account_store);
+    GtkTreeIter iter;
+    if (find_account_in_account_store(account_id, model, &iter))
+        gtk_list_store_remove(account_store, &iter);
+
+    dbus_remove_account(account_id);
+}
 
 static void delete_account_cb(GtkButton *button, gpointer data)
 {
@@ -146,13 +155,7 @@ static void delete_account_cb(GtkButton *button, gpointer data)
         return;
 
     gchar *account_id = get_selected_account_column(data, COLUMN_ACCOUNT_ID);
-
-    GtkTreeModel *model = GTK_TREE_MODEL(account_store);
-    GtkTreeIter iter;
-    if (find_account_in_account_store(account_id, model, &iter))
-        gtk_list_store_remove(account_store, &iter);
-
-    dbus_remove_account(account_id);
+    delete_account(account_id);
     g_free(account_id);
 }
 
@@ -165,6 +168,9 @@ run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client, gboo
     if (dialog) {
         update_account_from_dialog(dialog, selected_accountID);
         account_store_fill();
+    } else if (is_new) {
+        // account creation was cancelled, make sure the account is deleted
+        delete_account(selected_accountID);
     }
 }
 
