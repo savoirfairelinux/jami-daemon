@@ -37,6 +37,17 @@
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreAudio/AudioHardware.h>
 
+#define checkErr( err) \
+    if(err) {\
+            OSStatus error = static_cast<OSStatus>(err);\
+                fprintf(stdout, "CoreAudio Error: %ld ->  %s:  %d\n",  (long)error,\
+                                       __FILE__, \
+                                       __LINE__\
+                                       );\
+                           fflush(stdout);\
+                return err; \
+    }
+
 /**
  * @file  CoreLayer.h
  * @brief Main OSX sound class. Manages the data transfers between the application and the hardware.
@@ -86,7 +97,8 @@ class CoreLayer : public AudioLayer {
             return indexRing_;
         }
 
-        void initAudioLayer();
+        void initAudioLayerPlayback();
+        void initAudioLayerCapture();
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -109,11 +121,9 @@ class CoreLayer : public AudioLayer {
 
     private:
 
-        void checkError(OSStatus error, const char* operation);
-
         void initAudioFormat();
 
-        static OSStatus audioCallback(void* inRefCon,
+        static OSStatus outputCallback(void* inRefCon,
             AudioUnitRenderActionFlags* ioActionFlags,
             const AudioTimeStamp* inTimeStamp,
             UInt32 inBusNumber,
@@ -121,6 +131,19 @@ class CoreLayer : public AudioLayer {
             AudioBufferList* ioData);
 
         void write(AudioUnitRenderActionFlags* ioActionFlags,
+            const AudioTimeStamp* inTimeStamp,
+            UInt32 inBusNumber,
+            UInt32 inNumberFrames,
+            AudioBufferList* ioData);
+
+        static OSStatus inputCallback(void* inRefCon,
+            AudioUnitRenderActionFlags* ioActionFlags,
+            const AudioTimeStamp* inTimeStamp,
+            UInt32 inBusNumber,
+            UInt32 inNumberFrames,
+            AudioBufferList* ioData);
+
+        void read(AudioUnitRenderActionFlags* ioActionFlags,
             const AudioTimeStamp* inTimeStamp,
             UInt32 inBusNumber,
             UInt32 inNumberFrames,
@@ -145,13 +168,14 @@ class CoreLayer : public AudioLayer {
 
         /** Non-interleaved audio buffers */
         AudioBuffer playbackBuff_;
-        AudioBuffer captureBuff_;
+        ::AudioBufferList* captureBuff_; // CoreAudio buffer.
 
         /** Interleaved buffer */
         std::vector<SFLAudioSample> playbackIBuff_;
         std::vector<SFLAudioSample> captureIBuff_;
 
         AudioUnit outputUnit_;
+        AudioUnit inputUnit_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 
         bool is_playback_running_;
