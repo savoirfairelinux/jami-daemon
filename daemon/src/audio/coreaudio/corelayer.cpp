@@ -33,6 +33,7 @@
 #include "manager.h"
 #include "noncopyable.h"
 #include "client/configurationmanager.h"
+#include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "audiodevice.h"
@@ -49,7 +50,7 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
     , playbackBuff_(0, audioFormat_)
-    , captureBuff_(0, audioFormat_)
+    , captureBuff_(0)
     , is_playback_running_(false)
     , is_capture_running_(false)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
@@ -58,6 +59,13 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
 CoreLayer::~CoreLayer()
 {
     isStarted_ = false;
+
+    if (captureBuff_) {
+        for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i)
+            free(captureBuff_->mBuffers[i].mData);
+        free(captureBuff_);
+        captureBuff_ = 0;
+    }
 }
 
 std::vector<std::string> CoreLayer::getCaptureDeviceList() const
@@ -92,7 +100,7 @@ std::string CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 
 }
 
-void CoreLayer::initAudioLayer()
+void CoreLayer::initAudioLayerPlayback()
 {
     // OS X uses Audio Units for output. Steps:
     // 1) Create a description.
@@ -101,7 +109,7 @@ void CoreLayer::initAudioLayer()
     // 4) Initialize everything.
     // 5) Profit...
 
-    DEBUG("INIT AUDIO LAYER");
+    DEBUG("INIT AUDIO PLAYBACK");
 
     AudioComponentDescription outputDesc = {0};
     outputDesc.componentType = kAudioUnitType_Output;
@@ -114,28 +122,151 @@ void CoreLayer::initAudioLayer()
         return;
     }
 
-    checkError(AudioComponentInstanceNew(outComp, &outputUnit_),
-        "Couldn't instance audio component outoutUnit_");
+    checkErr(AudioComponentInstanceNew(outComp, &outputUnit_));
 
     AURenderCallbackStruct callback;
-    callback.inputProc = audioCallback;
+    callback.inputProc = outputCallback;
     callback.inputProcRefCon = this;
 
-    checkError(AudioUnitSetProperty(outputUnit_,
+    checkErr(AudioUnitSetProperty(outputUnit_,
                kAudioUnitProperty_SetRenderCallback,
                kAudioUnitScope_Input,
                0,
                &callback,
-               sizeof(callback)),
-        "Couldn't set property RenderCallback");
+               sizeof(callback)));
 
-    AudioUnitInitialize(outputUnit_);
-    AudioOutputUnitStart(outputUnit_);
+    checkErr(AudioUnitInitialize(outputUnit_));
+    checkErr(AudioOutputUnitStart(outputUnit_));
 
     is_playback_running_ = true;
     is_capture_running_ = true;
 
     initAudioFormat();
+}
+
+void CoreLayer::initAudioLayerCapture()
+{
+    // HALUnit description.
+    AudioComponentDescription desc;
+    desc = {0};
+    desc.componentType = kAudioUnitType_Output;
+    desc.componentSubType = kAudioUnitSubType_HALOutput;
+    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+    AudioComponent comp = AudioComponentFindNext(NULL, &desc);
+    if (comp == NULL)
+        ERROR("Can't find an input HAL unit that matches description.");
+    checkErr(AudioComponentInstanceNew(comp, &inputUnit_));
+
+    // HALUnit settings.
+    AudioUnitScope outputBus = 0;
+    AudioUnitScope inputBus = 1;
+    UInt32 enableIO = 1;
+    UInt32 disableIO = 0;
+    UInt32 size = 0;
+
+    checkErr(AudioUnitSetProperty(inputUnit_,
+                kAudioOutputUnitProperty_EnableIO,
+                kAudioUnitScope_Input,
+                inputBus,
+                &enableIO,
+                sizeof(enableIO)));
+
+    checkErr(AudioUnitSetProperty(inputUnit_,
+                kAudioOutputUnitProperty_EnableIO,
+                kAudioUnitScope_Output,
+                outputBus,
+                &disableIO,
+                sizeof(disableIO)));
+
+    AudioDeviceID defaultDevice = kAudioObjectUnknown;
+    size = sizeof(defaultDevice);
+    AudioObjectPropertyAddress defaultDeviceProperty;
+    defaultDeviceProperty.mSelector = kAudioHardwarePropertyDefaultInputDevice;
+    defaultDeviceProperty.mScope = kAudioObjectPropertyScopeGlobal;
+    defaultDeviceProperty.mElement = kAudioObjectPropertyElementMaster;
+
+    checkErr(AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                &defaultDeviceProperty,
+                outputBus,
+                NULL,
+                &size,
+                &defaultDevice));
+
+    checkErr(AudioUnitSetProperty(inputUnit_,
+                kAudioOutputUnitProperty_CurrentDevice,
+                kAudioUnitScope_Global,
+                outputBus,
+                &defaultDevice,
+                sizeof(defaultDevice)));
+
+    // Set format on output *SCOPE* in input *BUS*.
+    AudioStreamBasicDescription info;
+    size = sizeof(AudioStreamBasicDescription);
+    checkErr(AudioUnitGetProperty(inputUnit_,
+                kAudioUnitProperty_StreamFormat,
+                kAudioUnitScope_Output,
+                inputBus,
+                &info,
+                &size));
+
+    const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+
+/*
+    // Set the output format to slfphone.
+    info.mSampleRate = (Float64)mainBufferFormat.sample_rate;
+
+    size = sizeof(AudioStreamBasicDescription);
+    checkErr(AudioUnitSetProperty(inputUnit_,
+                kAudioUnitProperty_StreamFormat,
+                kAudioUnitScope_Output,
+                inputBus,
+                &info,
+                size));
+*/
+
+    audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
+    //hardwareFormatAvailable(audioFormat_);
+    DEBUG("Input format : %d, %d\n\n", audioFormat_.sample_rate, audioFormat_.nb_channels);
+
+    // Input buffer setup. Note that ioData is empty and we have to store data
+    // in another buffer.
+    UInt32 bufferSizeFrames = 0;
+    size = sizeof(UInt32);
+    checkErr(AudioUnitGetProperty(inputUnit_,
+                kAudioDevicePropertyBufferFrameSize,
+                kAudioUnitScope_Global,
+                outputBus,
+                &bufferSizeFrames,
+                &size));
+
+    UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
+    size = offsetof(AudioBufferList, mBuffers[0]) +
+        (sizeof(AudioBuffer) * info.mChannelsPerFrame);
+    captureBuff_ = (AudioBufferList *)malloc(size);
+    captureBuff_->mNumberBuffers = info.mChannelsPerFrame;
+
+    for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i) {
+        captureBuff_->mBuffers[i].mNumberChannels = 1;
+        captureBuff_->mBuffers[i].mDataByteSize = bufferSizeBytes;
+        captureBuff_->mBuffers[i].mData = malloc(bufferSizeBytes);
+    }
+
+    // Input callback setup.
+    AURenderCallbackStruct inputCall;
+    inputCall.inputProc = inputCallback;
+    inputCall.inputProcRefCon = this;
+
+    checkErr(AudioUnitSetProperty(inputUnit_,
+                kAudioOutputUnitProperty_SetInputCallback,
+                kAudioUnitScope_Global,
+                outputBus,
+                &inputCall,
+                sizeof(inputCall)));
+
+    // Start it up.
+    checkErr(AudioUnitInitialize(inputUnit_));
+    checkErr(AudioOutputUnitStart(inputUnit_));
+
 }
 
 void CoreLayer::startStream()
@@ -147,7 +278,8 @@ void CoreLayer::startStream()
     if (is_playback_running_ and is_capture_running_)
         return;
 
-    initAudioLayer();
+    initAudioLayerPlayback();
+    initAudioLayerCapture();
 }
 
 void CoreLayer::destroyAudioLayer()
@@ -155,6 +287,10 @@ void CoreLayer::destroyAudioLayer()
     AudioOutputUnitStop(outputUnit_);
     AudioUnitUninitialize(outputUnit_);
     AudioComponentInstanceDispose(outputUnit_);
+
+    AudioOutputUnitStop(inputUnit_);
+    AudioUnitUninitialize(inputUnit_);
+    AudioComponentInstanceDispose(inputUnit_);
 }
 
 void CoreLayer::stopStream()
@@ -174,40 +310,17 @@ void CoreLayer::stopStream()
 //// PRIVATE /////
 
 
-void CoreLayer::checkError(OSStatus error, const char* operation)
-{
-    if (error == noErr) return;
-
-    char errorString[20];
-    *(UInt32 *)(errorString + 1) = CFSwapInt32HostToBig(error);
-
-    if (isprint(errorString[1]) && isprint(errorString[2]) &&
-        isprint(errorString[3]) && isprint(errorString[4])) {
-
-        errorString[0] = errorString[5] = '\'';
-        errorString[6] = '\0';
-    } else {
-        sprintf(errorString, "%d", (int)error);
-    }
-
-    DEBUG("Error: %s (%s)\n", operation, errorString);
-    exit(1);
-}
-
 void CoreLayer::initAudioFormat()
 {
     AudioStreamBasicDescription info;
     UInt32 size = sizeof(info);
-    checkError(AudioUnitGetProperty(outputUnit_,
+    checkErr(AudioUnitGetProperty(outputUnit_,
             kAudioUnitProperty_StreamFormat,
             kAudioUnitScope_Input,
             0,
             &info,
-            &size),
-        "Couldn't get StreamFormat property");
+            &size));
     DEBUG("Soundcard reports: %dKHz, %d channels.", (unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame);
-
-    std::cout << info.mChannelsPerFrame << std::endl;
 
     audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
     hardwareFormatAvailable(audioFormat_);
@@ -216,7 +329,7 @@ void CoreLayer::initAudioFormat()
 }
 
 
-OSStatus CoreLayer::audioCallback(void* inRefCon,
+OSStatus CoreLayer::outputCallback(void* inRefCon,
     AudioUnitRenderActionFlags* ioActionFlags,
     const AudioTimeStamp* inTimeStamp,
     UInt32 inBusNumber,
@@ -235,7 +348,7 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
 
     if (framesToGet <= 0) {
-        WARN("Not enough samples to play audio.");
+        //WARN("Not enough samples to play audio.");
         for (int i = 0; i < inNumberFrames; ++i) {
             Float32* outDataL = (Float32*)ioData->mBuffers[0].mData;
             outDataL[i] = 0.0;
@@ -253,11 +366,75 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
 
     playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
-    // TODO: Use correct number of channels
     for (int i = 0; i < audioFormat_.nb_channels; ++i)
         playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
 
     Manager::instance().getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
+
+
+}
+
+
+OSStatus CoreLayer::inputCallback(void* inRefCon,
+    AudioUnitRenderActionFlags* ioActionFlags,
+    const AudioTimeStamp* inTimeStamp,
+    UInt32 inBusNumber,
+    UInt32 inNumberFrames,
+    AudioBufferList* ioData)
+{
+    static_cast<CoreLayer*>(inRefCon)->read(ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
+}
+
+void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
+    const AudioTimeStamp* inTimeStamp,
+    UInt32 inBusNumber,
+    UInt32 inNumberFrames,
+    AudioBufferList* ioData)
+{
+    //DEBUG("INPUT CALLBACK");
+
+    if (inNumberFrames <= 0) {
+        WARN("No frames for input.");
+        return;
+    }
+
+    // Write the mic samples in our buffer
+    checkErr(AudioUnitRender(inputUnit_,
+            ioActionFlags,
+            inTimeStamp,
+            inBusNumber,
+            inNumberFrames,
+            captureBuff_));
+
+    // Add them to sflphone ringbuffer.
+    const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+    bool resample = audioFormat_.sample_rate != mainBufferFormat.sample_rate;
+
+    //printf("In: %d, %d. SFLPhone: %d, %d.\n", audioFormat_.sample_rate, audioFormat_.nb_channels, mainBufferFormat.sample_rate, mainBufferFormat.nb_channels);
+
+    // Copy initial data (ex: 44100, float32);
+    // FIXME: Performance! There *must* be a better way. This is testing only.
+    AudioBuffer inBuff(inNumberFrames, audioFormat_);
+
+    for (int i = 0; i < audioFormat_.nb_channels; ++i) {
+        Float32* data = (Float32*)captureBuff_->mBuffers[i].mData;
+        for (int j = 0; j < inNumberFrames; ++j) {
+            (*inBuff.getChannel(i))[j] = (SFLAudioSample)((data)[j] / .000030517578125f);
+            //printf("%d ", (*inBuff.getChannel(i))[j]);
+        }
+    }
+
+    if (resample) {
+        WARN("Resampling Input.");
+        int outSamples = inBuff.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
+        AudioBuffer out(outSamples, mainBufferFormat);
+        resampler_->resample(inBuff, out);
+        dcblocker_.process(out);
+        mainRingBuffer_->put(out);
+    } else {
+        dcblocker_.process(inBuff);
+        mainRingBuffer_->put(inBuff);
+    }
 
 
 }
