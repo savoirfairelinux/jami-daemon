@@ -337,7 +337,7 @@ checkSoundCard(int &card, sfl::DeviceType type)
 sfl::AudioLayer* AudioPreference::createAudioLayer()
 {
 #if HAVE_OPENSL
-    return new OpenSLLayer(*this);
+    return new sfl::OpenSLLayer(*this);
 #else
 
 #if HAVE_JACK
