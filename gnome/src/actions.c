@@ -148,6 +148,12 @@ status_bar_display_account()
     g_free(msg);
 }
 
+static void
+send_response_to_dialogs(gpointer data, G_GNUC_UNUSED gpointer user_data)
+{
+    if (GTK_IS_DIALOG(data))
+        gtk_dialog_response(GTK_DIALOG(data), GTK_RESPONSE_NONE);
+}
 
 void
 sflphone_quit(gboolean force_quit, SFLPhoneClient *client)
@@ -160,6 +166,10 @@ sflphone_quit(gboolean force_quit, SFLPhoneClient *client)
         calllist_clean(contacts_tab);
         calllist_clean(history_tab);
         free_addressbook();
+
+        // make sure all open dialogs get a response signal so that they can close
+        GList* top_level_windows = gtk_window_list_toplevels();
+        g_list_foreach(top_level_windows, (GFunc)send_response_to_dialogs, NULL);
 
 #if GLIB_CHECK_VERSION(2,32,0)
         g_application_quit(G_APPLICATION(client));
