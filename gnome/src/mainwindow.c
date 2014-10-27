@@ -247,7 +247,6 @@ create_main_window(SFLPhoneClient *client)
     if (!stat(LOGO, &st))
         gtk_window_set_default_icon_from_file(LOGO, NULL);
 
-    gtk_window_set_position(GTK_WINDOW(window) , GTK_WIN_POS_MOUSE);
     gtk_widget_set_name(window, "mainwindow");
 
     /* Connect the destroy event of the window with our on_destroy function
@@ -350,6 +349,9 @@ create_main_window(SFLPhoneClient *client)
     /* Add to main window */
     gtk_container_add(GTK_CONTAINER(window), vbox);
 
+    /* Restore position according to the configuration stored in gconf */
+    gtk_window_move(GTK_WINDOW(window), position_x, position_y);
+
     /* make sure that everything, window and label, are visible */
     gtk_widget_show_all(window);
 
@@ -370,8 +372,6 @@ create_main_window(SFLPhoneClient *client)
     if (account_list_get_size() == 1)
         build_wizard();
 
-    // Restore position according to the configuration stored in gconf
-    gtk_window_move(GTK_WINDOW(window), position_x, position_y);
     client->win = window;
 }
 
