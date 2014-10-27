@@ -356,18 +356,3 @@ double DBusConfigurationManager::getVolume(const std::string& device)
 {
     return sflph_config_get_volume(device);
 }
-
-bool DBusConfigurationManager::checkForPrivateKey(const std::string& pemPath)
-{
-    return sflph_config_check_for_private_key(pemPath);
-}
-
-bool DBusConfigurationManager::checkCertificateValidity(const std::string& caPath, const std::string& pemPath)
-{
-    return sflph_config_check_certificate_validity(caPath, pemPath);
-}
-
-bool DBusConfigurationManager::checkHostnameCertificate(const  std::string& host, const std::string& port)
-{
-    return sflph_config_check_hostname_certificate(host, port);
-}

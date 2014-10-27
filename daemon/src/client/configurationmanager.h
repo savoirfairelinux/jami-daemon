@@ -135,15 +135,6 @@ class ConfigurationManager
         void setVolume(const std::string& device, double value);
         double getVolume(const std::string& device);
 
-        /*
-         * Security
-         */
-        bool checkForPrivateKey(const std::string& pemPath);
-        bool checkCertificateValidity(const std::string& caPath,
-                                      const std::string& pemPath);
-        bool checkHostnameCertificate(const std::string& host,
-                                      const std::string& port);
-
     // Signals
     public:
         void volumeChanged(const std::string& device, int value);

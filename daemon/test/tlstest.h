@@ -60,7 +60,7 @@ class TlsTest: public CppUnit::TestFixture {
         void testHostname();
 };
 /* Register our test module */
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TlsTest, "TlsTest");
-CPPUNIT_TEST_SUITE_REGISTRATION(TlsTest);
+// CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TlsTest, "TlsTest");
+// CPPUNIT_TEST_SUITE_REGISTRATION(TlsTest);
 
 #endif // TLS_TEST_

@@ -19,11 +19,6 @@ libsiplink_la_SOURCES = \
         sip_utils.cpp \
         sip_utils.h
 
-if BUILD_TLS
-libsiplink_la_SOURCES += tlsvalidation.c \
-                         tlsvalidation.h
-endif
-
 if SFL_PRESENCE
 libsiplink_la_SOURCES+=sippresence.cpp \
                        sippresence.h \

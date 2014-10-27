@@ -673,21 +673,6 @@ double sflph_config_get_volume(const std::string& device)
     return getConfigurationManager()->getVolume(device);
 }
 
-bool sflph_config_check_for_private_key(const std::string& pem_path)
-{
-    return getConfigurationManager()->checkForPrivateKey(pem_path);
-}
-
-bool sflph_config_check_certificate_validity(const std::string& ca_path, const std::string& pem_path)
-{
-    return getConfigurationManager()->checkCertificateValidity(ca_path, pem_path);
-}
-
-bool sflph_config_check_hostname_certificate(const std::string& host, const std::string& port)
-{
-    return getConfigurationManager()->checkHostnameCertificate(host, port);
-}
-
 #ifdef SFL_PRESENCE
 void sflph_pres_publish(const std::string& account_id, int status, const std::string& note)
 {

@@ -262,9 +262,6 @@ std::map<std::string, std::string> sflph_config_get_shortcuts();
 void sflph_config_set_shortcuts(const std::map<std::string, std::string>& shortcuts);
 void sflph_config_set_volume(const std::string& device, double value);
 double sflph_config_get_volume(const std::string& device);
-bool sflph_config_check_for_private_key(const std::string& pem_path);
-bool sflph_config_check_certificate_validity(const std::string& ca_path, const std::string& pem_path);
-bool sflph_config_check_hostname_certificate(const std::string& host, const std::string& port);
 
 /* presence API */
 #ifdef SFL_PRESENCE
