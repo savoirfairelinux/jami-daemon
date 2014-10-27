@@ -366,8 +366,8 @@ AS_CASE(["$with_tls"],
   [no], [HAVE_GNUTLS=0],
   [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.1], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])])
 
-AC_DEFINE_UNQUOTED([HAVE_TLS], `if test "x$with_tls" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have tls support])
-AM_CONDITIONAL(BUILD_TLS, test "x$with_tls" = "xyes" -a "$HAVE_GNUTLS" -eq 1)
+AC_DEFINE_UNQUOTED([HAVE_TLS], `if test $HAVE_GNUTLS -eq 1; then echo 1; else echo 0; fi`, [Define if you have tls support])
+AM_CONDITIONAL(BUILD_TLS, test "$HAVE_GNUTLS" -eq 1)
 
 # ZRTP
 # required dependency(ies): libzrtp
