@@ -43,6 +43,8 @@ class AudioPreference;
 
 #include <memory>
 
+namespace sfl {
+
 class OpenSLThread;
 class RingBuffer;
 
@@ -266,5 +268,7 @@ class OpenSLLayer : public AudioLayer {
         AudioBufferStack recordBufferStack_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
+
+}
 
 #endif // _OPENSL_LAYER_H_
