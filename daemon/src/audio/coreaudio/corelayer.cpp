@@ -42,97 +42,6 @@
 
 namespace sfl {
 
-// Actual audio thread.
-class CoreAudioThread {
-public:
-    CoreAudioThread(CoreLayer* coreAudio);
-    ~CoreAudioThread();
-    void start();
-    bool isRunning() const;
-private:
-    void run();
-    void initAudioLayer();
-    std::thread thread_;
-    CoreLayer* coreAudio_;
-    std::atomic_bool running_;
-};
-
-CoreAudioThread::CoreAudioThread(CoreLayer* coreAudio)
-    : thread_(), coreAudio_(coreAudio), running_(false)
-{
-    DEBUG("Creating new CoreAudioThread");
-}
-
-CoreAudioThread::~CoreAudioThread()
-{
-    running_ = false;
-    if (thread_.joinable())
-        thread_.join();
-}
-
-void CoreAudioThread::start()
-{
-    running_ = true;
-    thread_ = std::thread(&CoreAudioThread::run, this);
-}
-
-bool CoreAudioThread::isRunning() const
-{
-    return running_;
-}
-
-void CoreAudioThread::initAudioLayer()
-{
-    // OS X uses Audio Units for output. Steps:
-    // 1) Create a description.
-    // 2) Find the audio unit that fits that.
-    // 3) Set the audio unit callback.
-    // 4) Initialize everything.
-    // 5) Profit...
-
-    AudioComponentDescription outputDesc = {0};
-    outputDesc.componentType = kAudioUnitType_Output;
-    outputDesc.componentSubType = kAudioUnitSubType_DefaultOutput;
-    outputDesc.componentManufacturer = kAudioUnitManufacturer_Apple;
-
-    AudioComponent outComp = AudioComponentFindNext(NULL, &outputDesc);
-    if (outComp == NULL) {
-        ERROR("Can't find default output audio component.");
-        return;
-    }
-
-    AudioComponentInstanceNew(outComp, &coreAudio_->outputUnit_);
-
-    AURenderCallbackStruct callback;
-    callback.inputProc = coreAudio_->audioCallback;
-    callback.inputProcRefCon = coreAudio_;
-
-    AudioUnitSetProperty(coreAudio_->outputUnit_,
-        kAudioUnitProperty_SetRenderCallback,
-        kAudioUnitScope_Input,
-        0,
-        &callback,
-        sizeof(callback));
-
-    AudioUnitInitialize(coreAudio_->outputUnit_);
-    AudioOutputUnitStart(coreAudio_->outputUnit_);
-}
-
-void CoreAudioThread::run()
-{
-    DEBUG("Starting CoreAudio thread...");
-
-    if (!coreAudio_->outputUnit_) {
-        initAudioLayer();
-    }
-
-    // Actual playback is here.
-    while (running_) {
-
-    }
-}
-
-
 // AudioLayer implementation.
 CoreLayer::CoreLayer(const AudioPreference &pref)
     : AudioLayer(pref)
@@ -141,13 +50,8 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexRing_(pref.getAlsaCardring())
     , playbackBuff_(0, audioFormat_)
     , captureBuff_(0, audioFormat_)
-//    , is_playback_prepared_(false)
-//    , is_capture_prepared_(false)
-//    , is_playback_running_(false)
-//    , is_capture_running_(false)
-//    , is_playback_open_(false)
-//    , is_capture_open_(false)
-    , audioThread_(nullptr)
+    , is_playback_running_(false)
+    , is_capture_running_(false)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {}
 
@@ -188,48 +92,119 @@ std::string CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 
 }
 
+void CoreLayer::initAudioLayer()
+{
+    // OS X uses Audio Units for output. Steps:
+    // 1) Create a description.
+    // 2) Find the audio unit that fits that.
+    // 3) Set the audio unit callback.
+    // 4) Initialize everything.
+    // 5) Profit...
+
+    DEBUG("INIT AUDIO LAYER");
+
+    AudioComponentDescription outputDesc = {0};
+    outputDesc.componentType = kAudioUnitType_Output;
+    outputDesc.componentSubType = kAudioUnitSubType_DefaultOutput;
+    outputDesc.componentManufacturer = kAudioUnitManufacturer_Apple;
+
+    AudioComponent outComp = AudioComponentFindNext(NULL, &outputDesc);
+    if (outComp == NULL) {
+        ERROR("Can't find default output audio component.");
+        return;
+    }
+
+    checkError(AudioComponentInstanceNew(outComp, &outputUnit_),
+        "Couldn't instance audio component outoutUnit_");
+
+    AURenderCallbackStruct callback;
+    callback.inputProc = audioCallback;
+    callback.inputProcRefCon = this;
+
+    checkError(AudioUnitSetProperty(outputUnit_,
+               kAudioUnitProperty_SetRenderCallback,
+               kAudioUnitScope_Input,
+               0,
+               &callback,
+               sizeof(callback)),
+        "Couldn't set property RenderCallback");
+
+    AudioUnitInitialize(outputUnit_);
+    AudioOutputUnitStart(outputUnit_);
+
+    is_playback_running_ = true;
+    is_capture_running_ = true;
+
+    initAudioFormat();
+}
+
 void CoreLayer::startStream()
 {
+
+    DEBUG("START STREAM");
     dcblocker_.reset();
 
-//    if (is_playback_running_ and is_capture_running_)
-//        return;
+    if (is_playback_running_ and is_capture_running_)
+        return;
 
+    initAudioLayer();
+}
 
-
-    if (audioThread_ == NULL) {
-        audioThread_ = new CoreAudioThread(this);
-        audioThread_->start();
-    } else if (!audioThread_->isRunning()) {
-        audioThread_->start();
-    }
+void CoreLayer::destroyAudioLayer()
+{
+    AudioOutputUnitStop(outputUnit_);
+    AudioUnitUninitialize(outputUnit_);
+    AudioComponentInstanceDispose(outputUnit_);
 }
 
 void CoreLayer::stopStream()
 {
-    DEBUG("Stopping audio stream.");
+    DEBUG("STOP STREAM");
 
-    isStarted_ = false;
+    isStarted_ = is_playback_running_ = is_capture_running_ = false;
 
-    AudioOutputUnitStop(outputUnit_);
-    AudioUnitUninitialize(outputUnit_);
-    AudioComponentInstanceDispose(outputUnit_);
+    destroyAudioLayer();
 
     /* Flush the ring buffers */
     flushUrgent();
     flushMain();
 }
 
+
+//// PRIVATE /////
+
+
+void CoreLayer::checkError(OSStatus error, const char* operation)
+{
+    if (error == noErr) return;
+
+    char errorString[20];
+    *(UInt32 *)(errorString + 1) = CFSwapInt32HostToBig(error);
+
+    if (isprint(errorString[1]) && isprint(errorString[2]) &&
+        isprint(errorString[3]) && isprint(errorString[4])) {
+
+        errorString[0] = errorString[5] = '\'';
+        errorString[6] = '\0';
+    } else {
+        sprintf(errorString, "%d", (int)error);
+    }
+
+    DEBUG("Error: %s (%s)\n", operation, errorString);
+    exit(1);
+}
+
 void CoreLayer::initAudioFormat()
 {
     AudioStreamBasicDescription info;
     UInt32 size = sizeof(info);
-    AudioUnitGetProperty(outputUnit_,
+    checkError(AudioUnitGetProperty(outputUnit_,
             kAudioUnitProperty_StreamFormat,
             kAudioUnitScope_Input,
             0,
             &info,
-            &size);
+            &size),
+        "Couldn't get StreamFormat property");
     DEBUG("Soundcard reports: %dKHz, %d channels.", (unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame);
 
     std::cout << info.mChannelsPerFrame << std::endl;
@@ -280,7 +255,7 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
 
     // TODO: Use correct number of channels
     for (int i = 0; i < audioFormat_.nb_channels; ++i)
-        playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, 0); // Write
+        playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
 
     Manager::instance().getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
 
