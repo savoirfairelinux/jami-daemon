@@ -3,6 +3,7 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libcodecdescriptor.la
 
 libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp audiocodec.h audiocodecfactory.h
+libcodecdescriptor_la_CXXFLAGS = -fPIC
 libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 
 if BUILD_GSM
@@ -48,7 +49,7 @@ endif
 
 if BUILD_ILBC
 ILBC_LIB = libcodec_ilbc.so
-libcodecdescriptor_la_CXXFLAGS = -DBUILD_ILBC
+libcodecdescriptor_la_CXXFLAGS += -DBUILD_ILBC
 libcodec_ilbc_so_SOURCES = ilbc.cpp
 libcodec_ilbc_so_CXXFLAGS = -fPIC -g -Wall $(libilbc_CFLAGS)
 libcodec_ilbc_so_LDFLAGS = --shared -lc $(libilbc_LIBS)
