@@ -226,7 +226,6 @@ create_status_bar()
     return bar;
 }
 
-
 void
 create_main_window(SFLPhoneClient *client)
 {
@@ -269,6 +268,10 @@ create_main_window(SFLPhoneClient *client)
         exit(1);
     }
 
+    /** test GtkBuilder stuff **/
+    GtkBuilder *uibuilder = uibuilder_new(client);
+    create_actions(client);
+
     /* Create an accel group for window's shortcuts */
     gtk_window_add_accel_group(GTK_WINDOW(window), gtk_ui_manager_get_accel_group(ui_manager));
 
@@ -287,8 +290,14 @@ create_main_window(SFLPhoneClient *client)
     GtkWidget *widget = create_menus(ui_manager, client);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
+    /** test add menu bar from model **/
+    gtk_box_pack_start(GTK_BOX(vbox), create_menubar(uibuilder), FALSE, TRUE, 0);
+
     create_toolbar_actions(ui_manager, client);
     pack_main_window_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
+
+    /** test add tool bar from uibuilder **/
+    gtk_box_pack_start(GTK_BOX(vbox), create_toolbar(uibuilder), FALSE, TRUE, 0);
 
     /* Setup call main widget*/
     GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
