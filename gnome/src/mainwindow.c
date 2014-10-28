@@ -226,7 +226,6 @@ create_status_bar()
     return bar;
 }
 
-
 void
 create_main_window(SFLPhoneClient *client)
 {
@@ -263,14 +262,19 @@ create_main_window(SFLPhoneClient *client)
                      G_CALLBACK(window_configure_cb), client);
 
 
-    GtkUIManager *ui_manager = uimanager_new(client);
-    if (!ui_manager) {
-        g_warning("Could not load xml GUI\n");
-        exit(1);
-    }
+    // GtkUIManager *ui_manager = uimanager_new(client);
+    // if (!ui_manager) {
+    //     g_warning("Could not load xml GUI\n");
+    //     exit(1);
+    // }
+
+    /** test GtkBuilder stuff **/
+    GtkBuilder *uibuilder = uibuilder_new();
+    create_actions(client);
 
     /* Create an accel group for window's shortcuts */
-    gtk_window_add_accel_group(GTK_WINDOW(window), gtk_ui_manager_get_accel_group(ui_manager));
+    // TODO: check if this needs to be replaced
+    // gtk_window_add_accel_group(GTK_WINDOW(window), gtk_ui_manager_get_accel_group(ui_manager));
 
     /* Instantiate vbox, subvbox as homogeneous */
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -284,11 +288,18 @@ create_main_window(SFLPhoneClient *client)
     gtk_widget_show (tab_widget);
 
     /* Populate the main window */
-    GtkWidget *widget = create_menus(ui_manager, client);
-    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+    // GtkWidget *widget = create_menus(ui_manager, client);
+    // gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
-    create_toolbar_actions(ui_manager, client);
-    pack_main_window_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
+    /** test add menu bar from model **/
+    gtk_box_pack_start(GTK_BOX(vbox), create_menubar(uibuilder), FALSE, TRUE, 0);
+
+    // create_toolbar_actions(ui_manager, client);
+    // pack_main_window_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
+
+    /** test add tool bar from uibuilder **/
+    client->toolbar = create_toolbar(uibuilder);
+    gtk_box_pack_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
 
     /* Setup call main widget*/
     GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
@@ -373,6 +384,7 @@ create_main_window(SFLPhoneClient *client)
         build_wizard();
 
     client->win = window;
+    client->uibuilder = uibuilder;
 }
 
 GtkAccelGroup *
