@@ -760,10 +760,11 @@ alsa_toggled(GtkToggleButton *alsa_button, SFLPhoneClient *client)
     alsabox = alsa_box();
     show_audio_conf(alsa_conf, alsabox);
 
-    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
+    // FIXME: this should simply toggle the action, the rest should be done in the action's callback
+    if (get_toggle_action_state(volumeToggle_)) {
         main_window_volume_controls(FALSE);
         g_settings_set_boolean(client->settings, "show-volume-controls", FALSE);
-        gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
+        request_toggle_action_state(volumeToggle_, FALSE);
     }
 }
 
@@ -780,10 +781,11 @@ pulse_toggled(GtkToggleButton *pulse_button, SFLPhoneClient *client)
     pulsebox = pulse_box();
     show_audio_conf(pulse_conf, pulsebox);
 
-    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
+    // FIXME: this should simply toggle the action, the rest should be done in the action's callback
+    if (get_toggle_action_state(volumeToggle_)) {
         main_window_volume_controls(FALSE);
         g_settings_set_boolean(client->settings, "show-volume-controls", FALSE);
-        gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
+        request_toggle_action_state(volumeToggle_, FALSE);
     }
 }
 
