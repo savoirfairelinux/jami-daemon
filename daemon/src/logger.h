@@ -63,11 +63,11 @@ int getDebugMode(void);
  */
 void strErr();
 
-#define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, \
-                           (unsigned long) pthread_self() & 0xffff, \
-                           ##__VA_ARGS__
-
 #ifdef __ANDROID__
+
+// FIXME: thread id could be useful but needs to be implemented properly
+#define LOG_FORMAT(M, ...) "%s:%d: " M, FILE_NAME, __LINE__, \
+                           ##__VA_ARGS__
 
 #include <android/log.h>
 
@@ -87,7 +87,11 @@ void strErr();
 
 #define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, \
                                                   LOG_FORMAT(M, ##__VA_ARGS__))
-#else /* __ANDROID__ */
+#else /* not __ANDROID__ */
+
+#define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, \
+                           (unsigned long) pthread_self() & 0xffff, \
+                           ##__VA_ARGS__
 
 #include <syslog.h>
 
