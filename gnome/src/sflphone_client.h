@@ -46,6 +46,8 @@ typedef struct
     GtkApplication parent;
     /* TODO: hide implementation */
     GSettings *settings;
+    /* UI builder */
+    GtkBuilder* uibuilder;
     /* Main window */
     GtkWidget *win;
     /* Main toolbar */

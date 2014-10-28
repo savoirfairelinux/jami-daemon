@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Note: do not load in glade, as it doesn't support all the used features in this doc
+     and it will probably just delete the unsopported features
+ -->
+<interface>
+    <!-- the main menu bar -->
+    <menu id="menu-bar">
+        <!-- Call menu -->
+        <submenu>
+            <attribute name="label" translatable="yes">_Call</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_New call</attribute>
+                    <attribute name="action">app.new-call</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;N</attribute>
+                    <attribute name="icon">gnome-stock-dial</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Pick up</attribute>
+                    <attribute name="action">app.pickup</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Hang up</attribute>
+                    <attribute name="action">app.hangup</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;S</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">O_n hold</attribute>
+                    <attribute name="action">app.hold</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;P</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">Send _message</attribute>
+                    <attribute name="action">app.message</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;M</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">Share screen</attribute>
+                    <attribute name="action">app.screenshare</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;X</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Record</attribute>
+                    <attribute name="action">app.record</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;R</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">Configuration _Assistant</attribute>
+                    <attribute name="action">app.config-assistant</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">Voicemail</attribute>
+                    <attribute name="action">app.voicemail</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Close</attribute>
+                    <attribute name="action">app.minimize</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;W</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Quit</attribute>
+                    <attribute name="action">app.quit</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;Q</attribute>
+                </item>
+            </section>
+        </submenu>
+        <!-- Edit menu -->
+        <submenu>
+            <attribute name="label" translatable="yes">_Edit</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Copy</attribute>
+                    <attribute name="action">app.copy</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;C</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Paste</attribute>
+                    <attribute name="action">app.paste</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;V</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">Clear _history</attribute>
+                    <attribute name="action">app.clear-history</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Accounts</attribute>
+                    <attribute name="action">app.edit-accounts</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Preferences</attribute>
+                    <attribute name="action">app.edit-preferences</attribute>
+                </item>
+            </section>
+        </submenu>
+        <!-- View menu -->
+        <submenu>
+            <attribute name="label" translatable="yes">_View</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Toolbar</attribute>
+                    <attribute name="action">app.show-toolbar</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;T</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Dialpad</attribute>
+                    <attribute name="action">app.show-dialpad</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;D</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Volume controls</attribute>
+                    <attribute name="action">app.show-volume-controls</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;V</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_History</attribute>
+                    <attribute name="action">app.show-history</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Buddy list</attribute>
+                    <attribute name="action">app.show-buddy-list</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Address book</attribute>
+                    <attribute name="action">app.show-address-book</attribute>
+                </item>
+            </section>
+        </submenu>
+        <!-- Help menu -->
+        <submenu>
+            <attribute name="label" translatable="yes">_Help</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">SFLphone _help</attribute>
+                    <attribute name="action">app.show-help-contents</attribute>
+                    <attribute name="accel">F1</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_About SFLphone</attribute>
+                    <attribute name="action">app.show-about</attribute>
+                </item>
+            </section>
+        </submenu>
+    </menu>
+    <!-- the status menu for the system tray -->
+    <menu id="menu-status">
+        <submenu>
+            <attribute name="label" translatable="yes">_Call</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Show main window</attribute>
+                    <attribute name="action">app.show-main-window</attribute>
+                </item>
+<!--                 <item>
+                    <attribute name="label" translatable="yes">_Hang up</attribute>
+                    <attribute name="action">app.hangup</attribute>
+                    <attribute name="icon">gnome-stock-hangup</attribute>
+                </item> -->
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Quit</attribute>
+                    <attribute name="action">app.quit</attribute>
+                    <attribute name="icon">_Quit</attribute>
+                </item>
+            </section>
+        </submenu>
+    </menu>
+    <!-- the main toolbar -->
+    <object class="GtkToolbar" id="toolbar">
+        <property name="visible">True</property>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_newcall">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-dial</property>
+                <property name="tooltip_text" translatable="yes">Place a new call</property>
+                <property name="label" translatable="yes">New call</property>
+                <property name="action-name">app.new-call</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_hangup">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-hangup</property>
+                <property name="tooltip_text" translatable="yes">Finish the call</property>
+                <property name="label" translatable="yes">Hang up</property>
+                <property name="action-name">app.hangup</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_onhold">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-onhold</property>
+                <property name="tooltip_text" translatable="yes">Place the call on hold</property>
+                <property name="label" translatable="yes">On hold</property>
+                <property name="action-name">app.hold</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_offhold">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-offhold</property>
+                <property name="tooltip_text" translatable="yes">Place the call off hold</property>
+                <property name="label" translatable="yes">Off hold</property>
+                <property name="action-name">app.hold</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_addressbook">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-addressbook</property>
+                <property name="tooltip_text" translatable="yes">Open the address book</property>
+                <property name="label" translatable="yes">Address book</property>
+                <property name="action-name">app.show-address-book</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToggleToolButton" id="toolbutton_history">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-history</property>
+                <property name="tooltip_text" translatable="yes">Call history</property>
+                <property name="label" translatable="yes">History</property>
+                <property name="action-name">app.show-history</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_pickup">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-pickup</property>
+                <property name="tooltip_text" translatable="yes">Answer the call</property>
+                <property name="label" translatable="yes">Pick Up</property>
+                <property name="action-name">app.pickup</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToggleToolButton" id="toolbutton_transfer">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-transfer</property>
+                <property name="tooltip_text" translatable="yes">Transfer the call</property>
+                <property name="label" translatable="yes">Transfer</property>
+                <property name="action-name">app.transfer</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_message">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-im</property>
+                <property name="tooltip_text" translatable="yes">Send message</property>
+                <property name="label" translatable="yes">Message</property>
+                <property name="action-name">app.message</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_screenshare">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-screensharing</property>
+                <property name="tooltip_text" translatable="yes">Share screen</property>
+                <property name="label" translatable="yes">Screenshare</property>
+                <property name="action-name">app.screenshare</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToggleToolButton" id="toolbutton_record">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-record</property>
+                <property name="tooltip_text" translatable="yes">Record the current conversation</property>
+                <property name="label" translatable="yes">Record</property>
+                <property name="action-name">app.record</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkToolButton" id="toolbutton_voicemail">
+                <property name="visible">True</property>
+                <property name="icon-name">gnome-stock-voicemail</property>
+                <property name="tooltip_text" translatable="yes">Check voicemail</property>
+                <property name="label" translatable="yes">Voicemail</property>
+                <property name="action-name">app.voicemail</property>
+            </object>
+            <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+            </packing>
+        </child>
+    </object>
+</interface>
