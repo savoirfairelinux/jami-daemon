@@ -41,12 +41,11 @@
 /** @file mainwindow.h
   * @brief The main window of the client.
   */
-GtkAccelGroup * get_accel_group();
 
 /**
  * Build the main window
  */
-void
+gboolean
 create_main_window(SFLPhoneClient *client);
 
 /**

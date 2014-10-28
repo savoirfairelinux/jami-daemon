@@ -87,7 +87,16 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
         return 1;
     }
 
-    create_main_window(client);
+    if (!create_main_window(client)) {
+        g_warning("Could not create main window");
+        /* in this case we should exit the application */
+        #if GLIB_CHECK_VERSION(2,32,0)
+        g_application_quit(G_APPLICATION(client));
+#else
+        g_application_release(G_APPLICATION(client));
+#endif
+        return 1;
+    }
     gtk_application_add_window(GTK_APPLICATION(client), GTK_WINDOW(client->win));
 
     const gboolean show_status = g_settings_get_boolean(client->settings, "show-status-icon");
