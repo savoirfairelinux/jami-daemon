@@ -521,44 +521,63 @@ update_voicemail_status()
 }
 
 static void
-volume_bar_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
+volume_bar_cb(GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
-    gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
+    // this should be a statefull
+    if (!g_variant_type_equal(g_action_get_state_type(G_ACTION(action)), G_VARIANT_TYPE_BOOLEAN)) {
+        g_warning("toggle volume bar: expected a statefull action of type 'boolean'");
+    } else {
+        // get the state
+        const gboolean toggled = g_variant_get_boolean(g_action_get_state(G_ACTION(action)));
 
-    const gboolean show_volume = must_show_volume(client);
+        const gboolean show_volume = must_show_volume(client);
 
-    main_window_volume_controls(toggled);
+        main_window_volume_controls(toggled);
 
-    if (toggled != show_volume)
-        g_settings_set_boolean(client->settings, "show-volume-controls", toggled);
+        if (toggled != show_volume)
+            g_settings_set_boolean(client->settings, "show-volume-controls", toggled);
+    }
 }
 
 static void
-dialpad_bar_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
+dialpad_bar_cb(GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
-    const gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
+    // this should be a statefull
+    if (!g_variant_type_equal(g_action_get_state_type(G_ACTION(action)), G_VARIANT_TYPE_BOOLEAN)) {
+        g_warning("toggle dialpad: expected a statefull action of type 'boolean'");
+    } else {
+        // get the state
+        const gboolean toggled = g_variant_get_boolean(g_action_get_state(G_ACTION(action)));
 
-    main_window_dialpad(toggled, client);
+        main_window_dialpad(toggled, client);
 
-    const gboolean conf_dialpad = g_settings_get_boolean(client->settings, "show-dialpad");
-    if (toggled != conf_dialpad)
-        g_settings_set_boolean(client->settings, "show-dialpad", toggled);
+        const gboolean conf_dialpad = g_settings_get_boolean(client->settings, "show-dialpad");
+        if (toggled != conf_dialpad)
+            g_settings_set_boolean(client->settings, "show-dialpad", toggled);
+    }
 }
 
 #ifdef SFL_PRESENCE
 static void
-toggle_presence_window_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
+toggle_presence_window_cb(GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
-    const gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
-    if (toggled)
-        create_presence_window(client, togglemenuitem);
-    else
-        destroy_presence_window();
+    // this should be a statefull
+    if (!g_variant_type_equal(g_action_get_state_type(G_ACTION(action)), G_VARIANT_TYPE_BOOLEAN)) {
+        g_warning("toggle presence window: expected a statefull action of type 'boolean'");
+    } else {
+        // get the state
+        const gboolean toggled = g_variant_get_boolean(g_action_get_state(G_ACTION(action)));
+
+        if (toggled)
+            create_presence_window(client, action);
+        else
+            destroy_presence_window();
+    }
 }
 #endif
 
 static void
-help_contents_cb(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
+help_contents_cb(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, G_GNUC_UNUSED gpointer data)
 {
     GError *error = NULL;
     gtk_show_uri(NULL, "ghelp:sflphone", GDK_CURRENT_TIME, &error);
@@ -569,7 +588,7 @@ help_contents_cb(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
 }
 
 static void
-help_about(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+help_about(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     static const gchar *authors[] = {
         "Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
@@ -611,20 +630,20 @@ help_about(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 /* ----------------------------------------------------------------- */
 
 static void
-call_new_call(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_new_call(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     g_debug("New call button pressed");
     sflphone_new_call(client);
 }
 
 static void
-call_quit(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_quit(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     sflphone_quit(FALSE, client);
 }
 
 static void
-call_minimize(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_minimize(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     if (g_settings_get_boolean(client->settings, "show-status-icon")) {
         gtk_widget_hide(client->win);
@@ -643,7 +662,7 @@ switch_account(GtkWidget* item, G_GNUC_UNUSED gpointer data)
 }
 
 static void
-call_hold(G_GNUC_UNUSED GtkAction * action, G_GNUC_UNUSED gpointer data)
+call_hold(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, G_GNUC_UNUSED gpointer data)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
@@ -683,7 +702,7 @@ call_hold(G_GNUC_UNUSED GtkAction * action, G_GNUC_UNUSED gpointer data)
 }
 
 static void
-call_im(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_im(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     callable_obj_t *selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls_tab);
@@ -702,7 +721,7 @@ call_im(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 }
 
 static void
-call_screenshare(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED SFLPhoneClient *client)
+call_screenshare(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, G_GNUC_UNUSED SFLPhoneClient *client)
 {
 #ifdef SFL_VIDEO
     sflphone_toggle_screenshare();
@@ -786,7 +805,7 @@ conference_hold(G_GNUC_UNUSED gpointer foo)
 }
 
 static void
-call_pick_up(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_pick_up(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     if (calllist_get_size(current_calls_tab) > 0) {
         sflphone_pick_up(client);
@@ -811,7 +830,7 @@ call_pick_up(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 }
 
 static void
-call_hang_up(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_hang_up(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     g_debug("Hang up button pressed(call)");
     /*
@@ -833,7 +852,7 @@ conference_hang_up(void)
 }
 
 static void
-call_record(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_record(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     g_debug("Record button pressed");
     /* Ensure that button is set to correct state, but suppress signal */
@@ -843,7 +862,7 @@ call_record(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 }
 
 static void
-call_configuration_assistant(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
+call_configuration_assistant(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, G_GNUC_UNUSED gpointer data)
 {
     build_wizard();
 }
@@ -888,20 +907,20 @@ call_back(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 }
 
 static void
-edit_preferences(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+edit_preferences(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     show_preferences_dialog(client);
 }
 
 static void
-edit_accounts(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+edit_accounts(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     show_account_list_config_dialog(client);
 }
 
 // The menu Edit/Copy should copy the current selected call's number
 static void
-edit_copy(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
+edit_copy(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, G_GNUC_UNUSED gpointer data)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
@@ -915,7 +934,7 @@ edit_copy(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
 
 // The menu Edit/Paste should paste the clipboard into the current selected call
 static void
-edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+edit_paste(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
@@ -993,7 +1012,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 }
 
 static void
-clear_history(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED SFLPhoneClient *client)
+clear_history(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, G_GNUC_UNUSED SFLPhoneClient *client)
 {
     calllist_clean_history();
     dbus_clear_history();
@@ -1012,7 +1031,7 @@ call_transfer_cb(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 }
 
 static void
-call_mailbox_cb(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
+call_mailbox_cb(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
     account_t *current = account_list_get_current();
 
@@ -1045,29 +1064,45 @@ reset_scrollwindow_position(calltab_t *tab)
 }
 
 static void
-toggle_history_cb(GtkToggleAction *action, SFLPhoneClient *client)
+toggle_history_cb(GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
-    if (gtk_toggle_action_get_active(action)) {
-        /* Ensure that latest call is visible in history without scrolling */
-        reset_scrollwindow_position(history_tab);
-        calltree_display(history_tab, client);
-        main_window_show_playback_scale();
+    // this should be a statefull
+    if (!g_variant_type_equal(g_action_get_state_type(G_ACTION(action)), G_VARIANT_TYPE_BOOLEAN)) {
+        g_warning("toggle history: expected a statefull action of type 'boolean'");
     } else {
-        calltree_display(current_calls_tab, client);
-        main_window_hide_playback_scale();
+        // get the state
+        gboolean toggled = g_variant_get_boolean(g_action_get_state(G_ACTION(action)));
+        if (toggled) {
+            g_debug("show history");
+            /* Ensure that latest call is visible in history without scrolling */
+            reset_scrollwindow_position(history_tab);
+            calltree_display(history_tab, client);
+            main_window_show_playback_scale();
+        } else {
+            g_debug("hide history");
+            calltree_display(current_calls_tab, client);
+            main_window_hide_playback_scale();
+        }
     }
 }
 
 static void
-toggle_addressbook_cb(GtkToggleAction *action, SFLPhoneClient *client)
+toggle_addressbook_cb(GSimpleAction *action, G_GNUC_UNUSED GVariant *param, SFLPhoneClient *client)
 {
-    if (gtk_toggle_action_get_active(action)) {
-        calltree_display(contacts_tab, client);
-        main_window_hide_playback_scale();
-    }
-    else {
-        calltree_display(current_calls_tab, client);
-        main_window_show_playback_scale();
+    // this should be a statefull
+    if (!g_variant_type_equal(g_action_get_state_type(G_ACTION(action)), G_VARIANT_TYPE_BOOLEAN)) {
+        g_warning("toggle history: expected a statefull action of type 'boolean'");
+    } else {
+        // get the state
+        gboolean toggled = g_variant_get_boolean(g_action_get_state(G_ACTION(action)));
+        if (toggled) {
+            calltree_display(contacts_tab, client);
+            main_window_hide_playback_scale();
+        }
+        else {
+            calltree_display(current_calls_tab, client);
+            main_window_show_playback_scale();
+        }
     }
 }
 
@@ -1076,70 +1111,70 @@ static const GtkActionEntry menu_entries[] = {
     { "Call", NULL, N_("Call"), NULL, NULL, NULL},
     {
         "NewCall", GTK_STOCK_DIAL, N_("_New call"), "<control>N",
-        N_("Place a new call"), G_CALLBACK(call_new_call)
+        N_("Place a new call"), NULL
     },
     {
         "PickUp", GTK_STOCK_PICKUP, N_("_Pick up"), NULL,
-        N_("Answer the call"), G_CALLBACK(call_pick_up)
+        N_("Answer the call"), NULL
     },
     {
         "HangUp", GTK_STOCK_HANGUP, N_("_Hang up"), "<control>S",
-        N_("Finish the call"), G_CALLBACK(call_hang_up)
+        N_("Finish the call"), NULL
     },
     {
         "OnHold", GTK_STOCK_ONHOLD, N_("O_n hold"), "<control>P",
-        N_("Place the call on hold"), G_CALLBACK(call_hold)
+        N_("Place the call on hold"), NULL
     },
     {
         "OffHold", GTK_STOCK_OFFHOLD, N_("O_ff hold"), "<control>P",
-        N_("Place the call off hold"), G_CALLBACK(call_hold)
+        N_("Place the call off hold"), NULL
     },
     {
         "InstantMessaging", GTK_STOCK_IM, N_("Send _message"), "<control>M",
-        N_("Send message"), G_CALLBACK(call_im)
+        N_("Send message"), NULL
     },
     {
         "ScreenSharing", GTK_STOCK_SCREENSHARING, N_("Share screen"), "<control>X",
-        N_("Share screen"), G_CALLBACK(call_screenshare)
+        N_("Share screen"), NULL
     },
     {
         "AccountAssistant", NULL, N_("Configuration _Assistant"), NULL,
-        N_("Run the configuration assistant"), G_CALLBACK(call_configuration_assistant)
+        N_("Run the configuration assistant"), NULL
     },
     {
         "Voicemail", "mail-read", N_("Voicemail"), NULL,
-        N_("Call your voicemail"), G_CALLBACK(call_mailbox_cb)
+        N_("Call your voicemail"), NULL
     },
     {
         "Close", "_Close", N_("_Close"), "<control>W",
-        N_("Minimize to system tray"), G_CALLBACK(call_minimize)
+        N_("Minimize to system tray"), NULL
     },
     {
         "Quit", "_Close", N_("_Quit"), "<control>Q",
-        N_("Quit the program"), G_CALLBACK(call_quit)
+        N_("Quit the program"), NULL
     },
 
     // Edit Menu
     { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },
     {
         "Copy", "_Copy", N_("_Copy"), "<control>C",
-        N_("Copy the selection"), G_CALLBACK(edit_copy)
+        N_("Copy the selection"), NULL
     },
     {
         "Paste", "_Paste", N_("_Paste"), "<control>V",
-        N_("Paste the clipboard"), G_CALLBACK(edit_paste)
+        N_("Paste the clipboard"), NULL
     },
     {
         "ClearHistory", "edit-clear", N_("Clear _history"), NULL,
-        N_("Clear the call history"), G_CALLBACK(clear_history)
+        N_("Clear the call history"), NULL
     },
     {
         "Accounts", NULL, N_("_Accounts"), NULL,
-        N_("Edit your accounts"), G_CALLBACK(edit_accounts)
+        N_("Edit your accounts"), NULL
     },
     {
         "Preferences", "_Preferences", N_("_Preferences"), NULL,
-        N_("Change your preferences"), G_CALLBACK(edit_preferences)
+        N_("Change your preferences"), NULL
     },
 
     // View Menu
@@ -1148,21 +1183,21 @@ static const GtkActionEntry menu_entries[] = {
     // Help menu
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
     { "HelpContents", "help-browser", N_("Contents"), "F1",
-      N_("Open the manual"), G_CALLBACK(help_contents_cb) },
+      N_("Open the manual"), NULL },
     { "About", "_About", N_("_About"), NULL,
-      N_("About this application"), G_CALLBACK(help_about) }
+      N_("About this application"), NULL }
 };
 
 static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL, TRUE },
     { "Record", GTK_STOCK_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, FALSE },
     { "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL, TRUE },
-    { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK(dialpad_bar_cb), TRUE },
-    { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK(volume_bar_cb), TRUE },
-    { "History", GTK_STOCK_HISTORY, N_("_History"), NULL, N_("Call history"), G_CALLBACK(toggle_history_cb), FALSE },
-    { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK(toggle_addressbook_cb), FALSE },
+    { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), NULL, TRUE },
+    { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), NULL, TRUE },
+    { "History", GTK_STOCK_HISTORY, N_("_History"), NULL, N_("Call history"), NULL, FALSE },
+    { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), NULL, FALSE },
 #ifdef SFL_PRESENCE
-    { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), G_CALLBACK(toggle_presence_window_cb), FALSE},
+    { "Buddies", NULL, N_("_Buddy list"), NULL, N_("Display the buddy list"), NULL, FALSE},
 #endif
 };
 
@@ -1222,6 +1257,84 @@ fail:
 
     g_free(path);
     return NULL;
+}
+
+/* Loads the menu ui, aborts the program on failure */
+GtkBuilder *uibuilder_new(SFLPhoneClient *client)
+{
+    // try local dir first
+    gchar *ui_path = g_build_filename(SFLPHONE_UIDIR_UNINSTALLED, "sflphone_menus.ui", NULL);
+
+    if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
+        // try install dir
+        g_free(ui_path);
+        ui_path = g_build_filename(SFLPHONE_UIDIR, "sflphone_menus.ui", NULL);
+
+        // if neither dir exists then we cannot load the UI
+        if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
+            g_warning("Could not find \"sflphone_menus.ui\", aborting program.");
+            exit(1);
+        }
+    }
+
+    // If there is an error opening the file or parsing the description then the program will be aborted.
+    return gtk_builder_new_from_file(ui_path);
+}
+
+GtkWidget *create_menubar(GtkBuilder *uibuilder)
+{
+    GMenuModel *menumodel = G_MENU_MODEL(gtk_builder_get_object(uibuilder, "menu-bar"));
+    return gtk_menu_bar_new_from_model(menumodel);
+}
+
+GtkWidget *create_toolbar(GtkBuilder *uibuilder)
+{
+    return GTK_WIDGET(gtk_builder_get_object(uibuilder, "toolbar"));
+}
+
+/* this struct defines the application actions (GSimpleAction)
+ * and the callbacks in which result */
+static const GActionEntry sflphone_actions[] =
+{
+    { "new-call", call_new_call, NULL, NULL, NULL },
+    { "pickup", call_pick_up, NULL, NULL, NULL},
+    { "hangup", call_hang_up, NULL, NULL, NULL},
+    { "hold", call_hold, NULL, "false", NULL}, // toggle action
+    { "message", call_im, NULL, NULL, NULL},
+    { "screenshare", call_screenshare, NULL, "false", NULL}, //toggle action
+    { "record", NULL, NULL, NULL, NULL}, // callback connected manually to get id
+    { "config-assistant", call_configuration_assistant, NULL, NULL, NULL},
+    { "voicemail", call_mailbox_cb, NULL, NULL, NULL},
+    { "minimize", call_minimize, NULL, NULL, NULL},
+    { "quit", call_quit, NULL, NULL, NULL},
+    { "copy", edit_copy, NULL, NULL, NULL},
+    { "paste", edit_paste, NULL, NULL, NULL},
+    { "clear-history", clear_history, NULL, NULL, NULL},
+    { "edit-accounts", edit_accounts, NULL, NULL, NULL},
+    { "edit-preferences", edit_preferences, NULL, NULL, NULL},
+    { "show-toolbar", NULL, NULL, "true", NULL},  // TODO: no way to hide toolbar currently
+    { "transfer", NULL, NULL, NULL, NULL}, // callback connected manually to get id
+    { "show-about", help_about, NULL, NULL, NULL},
+    { "show-help-contents", help_contents_cb, NULL, NULL, NULL},
+    { "show-address-book", toggle_addressbook_cb, NULL, "false", NULL},
+    { "show-history", toggle_history_cb, NULL, "false", NULL},
+    { "show-volume-controls", volume_bar_cb, NULL, "true", NULL},
+    { "show-dialpad", dialpad_bar_cb, NULL, "true", NULL},
+#ifdef SFL_PRESENCE
+    { "show-buddy-list", toggle_presence_window_cb, "false", NULL, NULL},
+#endif
+};
+
+void create_actions(SFLPhoneClient *client)
+{
+    g_action_map_add_action_entries(
+        G_ACTION_MAP(client), sflphone_actions, G_N_ELEMENTS(sflphone_actions), client);
+
+    /* connect some callbacks manually to get the signal handler id */
+    GAction* action = g_action_map_lookup_action(G_ACTION_MAP(client), "record");
+    recordButtonConnId_ = g_signal_connect(G_OBJECT(action), "activate", G_CALLBACK(call_record), client);
+    action = g_action_map_lookup_action(G_ACTION_MAP(client), "transfer");
+    transferButtonConnId_ = g_signal_connect(G_OBJECT(action), "activate", G_CALLBACK(call_transfer_cb), client);
 }
 
 static void
@@ -1405,16 +1518,13 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
         if (copy) {
             GtkWidget *copy_item = gtk_menu_item_new_with_mnemonic(_("_Copy"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), copy_item);
-            g_signal_connect(G_OBJECT(copy_item), "activate",
-                             G_CALLBACK(edit_copy),
-                             NULL);
+            gtk_actionable_set_action_name(GTK_ACTIONABLE(copy_item), "app.copy");
             gtk_widget_show(copy_item);
         }
 
         GtkWidget *paste = gtk_menu_item_new_with_mnemonic(_("_Paste"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), paste);
-        g_signal_connect(G_OBJECT(paste), "activate", G_CALLBACK(edit_paste),
-                         client);
+        gtk_actionable_set_action_name(GTK_ACTIONABLE(paste), "app.paste");
         gtk_widget_show(paste);
 
         if (pickup || hangup || hold) {
@@ -1426,18 +1536,14 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
         if (pickup) {
             GtkWidget *pickup_item = gtk_menu_item_new_with_mnemonic(_("_Pick up"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), pickup_item);
-            g_signal_connect(G_OBJECT(pickup_item), "activate",
-                             G_CALLBACK(call_pick_up),
-                             client);
+            gtk_actionable_set_action_name(GTK_ACTIONABLE(pickup_item), "app.pickup");
             gtk_widget_show(pickup_item);
         }
 
         if (hangup) {
             GtkWidget *menu_items = gtk_menu_item_new_with_mnemonic(_("_Hang up"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
-            g_signal_connect(G_OBJECT(menu_items), "activate",
-                             G_CALLBACK(call_hang_up),
-                             client);
+            gtk_actionable_set_action_name(GTK_ACTIONABLE(call_hang_up), "app.hangup");
             gtk_widget_show(menu_items);
         }
 
@@ -1446,18 +1552,14 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
             gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
                                            (selectedCall->_state == CALL_STATE_HOLD));
-            g_signal_connect(G_OBJECT(menu_items), "activate",
-                             G_CALLBACK(call_hold),
-                             NULL);
+            gtk_actionable_set_action_name(GTK_ACTIONABLE(menu_items), "app.hold");
             gtk_widget_show(menu_items);
         }
 
         if (record) {
             GtkWidget *menu_items = gtk_menu_item_new_with_mnemonic(_("_Record"));
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
-            g_signal_connect(G_OBJECT(menu_items), "activate",
-                             G_CALLBACK(call_record),
-                             client);
+            gtk_actionable_set_action_name(GTK_ACTIONABLE(menu_items), "app.record");
             gtk_widget_show(menu_items);
         }
 
@@ -1472,9 +1574,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
 
                 menu_items = gtk_menu_item_new_with_mnemonic(_("Send _message"));
                 gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
-                g_signal_connect(G_OBJECT(menu_items), "activate",
-                                 G_CALLBACK(call_im),
-                                 selectedCall);
+                gtk_actionable_set_action_name(GTK_ACTIONABLE(menu_items), "app.message");
                 gtk_widget_show(menu_items);
             }
         }
@@ -1786,8 +1886,8 @@ create_toolbar_actions(GtkUIManager *ui, SFLPhoneClient *client)
 
     // Set the handler ID for the transfer
     g_assert(transferToolbar_);
-    transferButtonConnId_ = g_signal_connect(G_OBJECT(transferToolbar_), "toggled", G_CALLBACK(call_transfer_cb), client);
+    // transferButtonConnId_ = g_signal_connect(G_OBJECT(transferToolbar_), "toggled", G_CALLBACK(call_transfer_cb), client);
     g_assert(recordWidget_);
-    recordButtonConnId_ = g_signal_connect(G_OBJECT(recordWidget_), "toggled", G_CALLBACK(call_record), client);
+    // recordButtonConnId_ = g_signal_connect(G_OBJECT(recordWidget_), "toggled", G_CALLBACK(call_record), client);
     active_calltree_tab = current_calls_tab;
 }
