@@ -41,7 +41,7 @@ gboolean show_buddy_info_dialog(const gchar *title, buddy_t *b);
 void update_presence_statusbar();
 void update_presence_view();
 void destroy_presence_window();
-void create_presence_window(SFLPhoneClient *client, GtkToggleAction *action);
+void create_presence_window(SFLPhoneClient *client, GSimpleAction *action);
 
 /* drag & drop shared info*/
 enum {

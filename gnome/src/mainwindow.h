@@ -41,7 +41,6 @@
 /** @file mainwindow.h
   * @brief The main window of the client.
   */
-GtkAccelGroup * get_accel_group();
 
 /**
  * Build the main window
