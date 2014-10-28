@@ -99,10 +99,18 @@ AS_IF([test "$SYS" = linux],[
 ])
 AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
-LT_INIT
+dnl override platform specific check for dependent libraries
+dnl otherwise libtool linking of shared libraries will
+dnl fail on anything other than pass_all.
+AC_CACHE_VAL(lt_cv_deplibs_check_method,
+    [lt_cv_deplibs_check_method=pass_all])
+
+LT_INIT([dlopen win32-dll shared disable-static])
 
 dnl Define C++ as default language
-AC_LANG(C++)
+LT_LANG(C++)
+
+lt_cv_deplibs_check_method=pass_all
 
 dnl Check for C++11 support
 AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
