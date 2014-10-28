@@ -1,0 +1,156 @@
+<interface>
+    <menu id="menu-bar">
+        <!-- Call menu -->
+        <submenu>
+            <attribute name="label" translatable="yes">_Call</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_New call</attribute>
+                    <attribute name="action">app.call-new</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;N</attribute>
+                    <attribute name="icon">gnome-stock-dial</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Pick up</attribute>
+                    <attribute name="action">app.pickup</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Hang up</attribute>
+                    <attribute name="action">app.hangup</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;S</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">O_n hold</attribute>
+                    <attribute name="action">app.hold</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;P</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">Send _message</attribute>
+                    <attribute name="action">app.message</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;M</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">Share screen</attribute>
+                    <attribute name="action">app.screenshare</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;X</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Record</attribute>
+                    <attribute name="action">app.record</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;R</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">Configuration _Assistant</attribute>
+                    <attribute name="action">app.configassistant</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">Voicemail</attribute>
+                    <attribute name="action">app.voicemail</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Close</attribute>
+                    <attribute name="action">app.minimize</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;W</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Quit</attribute>
+                    <attribute name="action">app.quit</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;Q</attribute>
+                </item>
+            </section>
+        </submenu>
+        <!-- Edit menu -->
+        <submenu>
+            <attribute name="label" translatable="yes">_Edit</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Copy</attribute>
+                    <attribute name="action">app.copy</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;C</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Paste</attribute>
+                    <attribute name="action">app.paste</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;V</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">Clear _history</attribute>
+                    <attribute name="action">app.clearhistory</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Accounts</attribute>
+                    <attribute name="action">app.editaccounts</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Preferences</attribute>
+                    <attribute name="action">app.editpreferences</attribute>
+                </item>
+            </section>
+        </submenu>
+        <!-- View menu -->
+        <submenu>
+            <attribute name="label" translatable="yes">_View</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Toolbar</attribute>
+                    <attribute name="action">app.showtoolbar</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;T</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Dialpad</attribute>
+                    <attribute name="action">app.showdialpad</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;D</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Volume controls</attribute>
+                    <attribute name="action">app.showvolumecontrols</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;V</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Volume controls</attribute>
+                    <attribute name="action">app.showvolumecontrols</attribute>
+                    <attribute name="accel">&lt;Ctrl&gt;V</attribute>
+                </item>
+            </section>
+        </submenu>
+    </menu>
+    <menu id="menu-status">
+        <submenu>
+            <attribute name="label" translatable="yes">_Call</attribute>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Status show</attribute>
+                    <attribute name="action">app.status-show</attribute>
+                </item>
+                <item>
+                    <attribute name="label" translatable="yes">_Hang up</attribute>
+                    <attribute name="action">app.status-hangup</attribute>
+                    <attribute name="icon">gnome-stock-hangup</attribute>
+                </item>
+            </section>
+            <section>
+                <item>
+                    <attribute name="label" translatable="yes">_Quit</attribute>
+                    <attribute name="action">app.status-quit</attribute>
+                    <attribute name="icon">_Quit</attribute>
+                </item>
+            </section>
+        </submenu>
+    </menu>
+</interface>

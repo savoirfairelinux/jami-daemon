@@ -226,6 +226,26 @@ create_status_bar()
     return bar;
 }
 
+static void *
+cb_sflphone_quit(GSimpleAction *action, GVariant *param, gpointer user_data)
+{
+    g_debug("cb_sflphone_quit");
+    return;
+}
+
+static void *
+cb_record(GSimpleAction *action, GVariant *param, gpointer user_data)
+{
+    g_debug("cb_record");
+    return;
+}
+
+static const GActionEntry app_entries[] =
+{
+  { "quit", cb_sflphone_quit, NULL, NULL, NULL },
+  { "record", cb_record, NULL , "false", NULL } //G_VARIANT_TYPE_BOOLEAN, "true", NULL}
+};
+
 
 void
 create_main_window(SFLPhoneClient *client)
@@ -269,6 +289,17 @@ create_main_window(SFLPhoneClient *client)
         exit(1);
     }
 
+    /** test GtkBuilder stuff **/
+    gchar *ui_path = g_build_filename(SFLPHONE_UIDIR_UNINSTALLED, "sflphone_menus.ui", NULL);
+    GtkBuilder *uibuilder = gtk_builder_new_from_file(ui_path);
+    GMenuModel *menumodel = G_MENU_MODEL(gtk_builder_get_object(uibuilder, "menu-bar"));
+    // GtkWidget* menubar = gtk_menu_bar_new_from_model(menumodel);
+    g_action_map_add_action_entries(G_ACTION_MAP(client), app_entries, G_N_ELEMENTS(app_entries), client);
+
+    gtk_application_set_menubar(GTK_APPLICATION(client), menumodel);
+    // GAction* quitaction = g_action_map_lookup_action(G_ACTION_MAP(client), "quit");
+    // g_simple_action_set_enabled(G_SIMPLE_ACTION(quitaction), FALSE);
+
     /* Create an accel group for window's shortcuts */
     gtk_window_add_accel_group(GTK_WINDOW(window), gtk_ui_manager_get_accel_group(ui_manager));
 
@@ -286,6 +317,9 @@ create_main_window(SFLPhoneClient *client)
     /* Populate the main window */
     GtkWidget *widget = create_menus(ui_manager, client);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+
+    // /** test add menu bar from model **/
+    // gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, TRUE, 0);
 
     create_toolbar_actions(ui_manager, client);
     pack_main_window_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
