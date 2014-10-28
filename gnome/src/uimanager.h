@@ -35,10 +35,22 @@
 
 GtkWidget *historyButton_;
 GtkWidget *contactButton_;
-GtkAction *volumeToggle_;
+GSimpleAction *volumeToggle_;
 
-GtkUIManager *
-uimanager_new(SFLPhoneClient *client);
+GtkBuilder *
+uibuilder_new(void);
+
+GtkWidget *
+create_menubar(GtkBuilder *uibuilder, SFLPhoneClient *client);
+
+GtkWidget *
+create_toolbar(GtkBuilder *uibuilder);
+
+void
+create_actions(SFLPhoneClient *client);
+
+void
+create_accelerators(SFLPhoneClient *client);
 
 void
 update_voicemail_status();
@@ -55,10 +67,10 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
 void
 show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *client);
 
-GtkWidget *
-create_menus(GtkUIManager *ui_manager, SFLPhoneClient *client);
+gboolean
+get_toggle_action_state(GSimpleAction *toggle_action);
 
 void
-create_toolbar_actions(GtkUIManager *ui_manager, SFLPhoneClient *client);
+request_toggle_action_state(GSimpleAction *toggle_action, gboolean requested_state);
 
 #endif

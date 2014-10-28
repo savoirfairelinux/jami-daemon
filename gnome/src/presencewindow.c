@@ -58,7 +58,7 @@ static gchar *presence_view_row_get_group(GtkTreeView *treeview, GtkTreePath *pa
 /* main widgets*/
 static GtkWidget *presence_window;
 static GtkTreeView *buddy_list_tree_view;
-static GtkToggleAction *toggle_action;
+static GSimpleAction *toggle_action;
 static GtkWidget *presence_status_combo;
 static GtkWidget *presence_status_bar;
 
@@ -1133,11 +1133,11 @@ destroy_presence_window()
     buddy_list_tree_view = NULL;
     presence_status_bar = NULL;
     gtk_widget_destroy(presence_window);
-    gtk_toggle_action_set_active(toggle_action, FALSE);
+    g_action_change_state(G_ACTION(toggle_action), g_variant_new_boolean(FALSE));
 }
 
 void
-create_presence_window(SFLPhoneClient *client, GtkToggleAction *action)
+create_presence_window(SFLPhoneClient *client, GSimpleAction *action)
 {
     static const gint PRESENCE_WINDOW_WIDTH = 320;
     static const gint PRESENCE_WINDOW_HEIGHT = 480;
