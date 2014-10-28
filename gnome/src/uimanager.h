@@ -40,6 +40,15 @@ GtkAction *volumeToggle_;
 GtkUIManager *
 uimanager_new(SFLPhoneClient *client);
 
+GtkBuilder *
+uibuilder_new(SFLPhoneClient *client);
+
+GtkWidget *
+create_menubar(GtkBuilder *uibuilder);
+
+GtkWidget *
+create_toolbar(GtkBuilder *uibuilder);
+
 void
 update_voicemail_status();
 

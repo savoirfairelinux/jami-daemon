@@ -1224,6 +1224,39 @@ fail:
     return NULL;
 }
 
+/* Loads the menu ui, aborts the program on failure */
+GtkBuilder *uibuilder_new(SFLPhoneClient *client)
+{
+    // try local dir first
+    gchar *ui_path = g_build_filename(SFLPHONE_UIDIR_UNINSTALLED, "sflphone_menus.ui", NULL);
+
+    if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
+        // try install dir
+        g_free(ui_path);
+        ui_path = g_build_filename(SFLPHONE_UIDIR, "sflphone_menus.ui", NULL);
+
+        // if neither dir exists then we cannot load the UI
+        if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
+            g_warning("Could not find \"sflphone_menus.ui\", aborting program.");
+            exit(1);
+        }
+    }
+
+    // If there is an error opening the file or parsing the description then the program will be aborted.
+    return gtk_builder_new_from_file(ui_path);
+}
+
+GtkWidget *create_menubar(GtkBuilder *uibuilder)
+{
+    GMenuModel *menumodel = G_MENU_MODEL(gtk_builder_get_object(uibuilder, "menu-bar"));
+    return gtk_menu_bar_new_from_model(menumodel);
+}
+
+GtkWidget *create_toolbar(GtkBuilder *uibuilder)
+{
+    return GTK_WIDGET(gtk_builder_get_object(uibuilder, "toolbar"));
+}
+
 static void
 edit_number_cb(G_GNUC_UNUSED GtkWidget *widget, EditNumberData *data)
 {
