@@ -521,16 +521,15 @@ AS_IF([test "x$have_iax" = "xyes"],
        AC_DEFINE([HAVE_IAX], 0, [Define if you have libiax])
        AM_CONDITIONAL(USE_IAX, `false`)])
 
-AS_IF([test "x$have_tls" = "xyes"],
-  # DHT
-  dnl Check for DHT
-  AC_ARG_WITH([dht], [AS_HELP_STRING([--without-dht],
-              [disable support for the dht])], [], [with_dht=yes])
-  AC_DEFINE_UNQUOTED([HAVE_DHT], `if test "x$with_dht" = "xyes"; then echo 1; else echo 0;fi`, [Define if you use dht])
-  AM_CONDITIONAL(USE_DHT, test "x$with_dht" = "xyes"),
-  AC_DEFINE([HAVE_DHT], 0)
-  AM_CONDITIONAL(USE_DHT, false)
-)
+# dht is default-enabled, but requires gnutls
+AC_ARG_ENABLE([dht],
+  AS_HELP_STRING([--disable-dht], [disable support for dht]))
+
+AS_IF([test "x$enable_dht" != "xno" -a "$HAVE_GNUTLS" -eq 1],
+      [AC_DEFINE([HAVE_DHT], 1, [Define to enable dht])
+       AM_CONDITIONAL(USE_DHT, true)],
+      [AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
+       AM_CONDITIONAL(USE_DHT, false)])
 
 # NETWORK MANAGER
 # required dependency(ies): libiax2 (static)
