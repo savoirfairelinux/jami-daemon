@@ -523,11 +523,6 @@ void sflph_config_mute_playback(int mute)
     getConfigurationManager()->mutePlayback(mute);
 }
 
-std::map<std::string, std::string> sflph_config_get_ringtone_list(void)
-{
-    return getConfigurationManager()->getRingtoneList();
-}
-
 std::string sflph_config_get_audio_manager(void)
 {
     return getConfigurationManager()->getAudioManager();
