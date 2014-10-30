@@ -445,16 +445,6 @@
            </arg>
        </method>
 
-       <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
-           <tp:added version="1.1.1"/>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <tp:docstring>
-                Get a map [Path,Filename] of available ringtone. Note, set the ringtone with the complete path
-           </tp:docstring>
-           <arg type="a{ss}" name="list" direction="out">
-           </arg>
-       </method>
-
        <!--    General Settings Panel         -->
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
