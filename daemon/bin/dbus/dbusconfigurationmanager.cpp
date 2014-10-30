@@ -217,11 +217,6 @@ void DBusConfigurationManager::mutePlayback(const bool& mute)
     sflph_config_mute_playback(mute);
 }
 
-std::map<std::string, std::string> DBusConfigurationManager::getRingtoneList()
-{
-    return sflph_config_get_ringtone_list();
-}
-
 std::string DBusConfigurationManager::getAudioManager()
 {
     return sflph_config_get_audio_manager();
