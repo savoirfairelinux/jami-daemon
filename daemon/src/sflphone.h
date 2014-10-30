@@ -234,7 +234,6 @@ bool sflph_config_is_capture_muted(void);
 void sflph_config_mute_capture(bool mute);
 bool sflph_config_is_playback_muted(void);
 void sflph_config_mute_playback(int mute);
-std::map<std::string, std::string> sflph_config_get_ringtone_list(void);
 std::string sflph_config_get_audio_manager(void);
 bool sflph_config_set_audio_manager(const std::string& api);
 std::vector<std::string> sflph_config_get_supported_audio_managers(void);
