@@ -222,11 +222,6 @@ void DBusConfigurationManager::mutePlayback(const bool& mute)
     ring_config_mute_playback(mute);
 }
 
-std::map<std::string, std::string> DBusConfigurationManager::getRingtoneList()
-{
-    return ring_config_get_ringtone_list();
-}
-
 std::string DBusConfigurationManager::getAudioManager()
 {
     return ring_config_get_audio_manager();

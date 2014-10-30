@@ -98,8 +98,6 @@ class ConfigurationManager
         bool isPlaybackMuted();
         void mutePlayback(bool mute);
 
-        std::map<std::string, std::string> getRingtoneList();
-
         std::string getAudioManager();
         bool setAudioManager(const std::string& api);
 
