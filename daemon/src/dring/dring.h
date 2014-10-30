@@ -229,7 +229,6 @@ bool ring_config_is_capture_muted(void);
 void ring_config_mute_capture(bool mute);
 bool ring_config_is_playback_muted(void);
 void ring_config_mute_playback(int mute);
-std::map<std::string, std::string> ring_config_get_ringtone_list(void);
 std::string ring_config_get_audio_manager(void);
 bool ring_config_set_audio_manager(const std::string& api);
 std::vector<std::string> ring_config_get_supported_audio_managers(void);
