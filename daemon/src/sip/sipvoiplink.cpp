@@ -575,7 +575,7 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
     static const pj_str_t allowed[] = {
-        CONST_PJ_STR("SFL_INFO"),
+        CONST_PJ_STR("INFO"),
         CONST_PJ_STR("OPTIONS"),
         CONST_PJ_STR("MESSAGE"),
         CONST_PJ_STR("PUBLISH"),
@@ -794,7 +794,7 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
         "<picture_fast_update/>"
         "</to_encoder></vc_primitive></media_control>";
 
-    SFL_DBG("Sending video keyframe request via SIP SFL_INFO");
+    SFL_DBG("Sending video keyframe request via SIP INFO");
     call->sendSIPInfo(BODY, "media_control+xml");
 }
 #endif
@@ -1109,7 +1109,7 @@ static bool
 handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_event *event)
 {
     /*
-     * Incoming SFL_INFO request for media control.
+     * Incoming INFO request for media control.
      */
     const pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
     const pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
@@ -1120,7 +1120,7 @@ handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_even
             pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
         pj_str_t control_st;
 
-        /* Apply and answer the SFL_INFO request */
+        /* Apply and answer the INFO request */
         pj_strset(&control_st, (char *) body->data, body->len);
         const pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
 
@@ -1188,7 +1188,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
             SFL_DBG("%s", request.c_str());
 
             if (request.find("NOTIFY") == std::string::npos and
-                    request.find("SFL_INFO") != std::string::npos) {
+                    request.find("INFO") != std::string::npos) {
                 sendOK(inv->dlg, r_data, tsx);
                 return;
             }

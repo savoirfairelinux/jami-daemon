@@ -168,9 +168,6 @@ expand_path(const std::string &path)
 #ifdef __ANDROID__
     SFL_ERR("Path expansion not implemented, returning original");
     return path;
-#elif _WIN32
-	SFL_ERR("Path expansion not implemented, returning original");
-    return path;
 #else
 
     std::string result;

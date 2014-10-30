@@ -54,10 +54,10 @@ class Gsm : public sfl::AudioCodec {
             hasDynamicPayload_ = false;
 
             if (!(decode_gsmhandle_ = gsm_create()))
-                throw std::runtime_error("SFL_ERR: decode_gsm_create\n");
+                throw std::runtime_error("Error in decode_gsm_create\n");
 
             if (!(encode_gsmhandle_ = gsm_create()))
-                throw std::runtime_error("SFL_ERR: encode_gsm_create\n");
+                throw std::runtime_error("Error in encode_gsm_create\n");
         }
 
         ~Gsm() {
@@ -74,7 +74,7 @@ private:
         int decode(SFLAudioSample *pcm, unsigned char *data, size_t)
         {
             if (gsm_decode(decode_gsmhandle_, (gsm_byte*) data, (gsm_signal*) pcm) < 0)
-                throw std::runtime_error("SFL_ERR: gsm_decode\n");
+                throw std::runtime_error("Error in gsm_decode\n");
 
             return frameSize_;
         }

@@ -316,10 +316,6 @@ void ConfigurationManager::setAgcState(bool enabled)
 std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 {
     std::map<std::string, std::string> ringToneList;
-    /* TODO: WINDOWS, Actually move this to GUI, daemon doesn't care. */
-#ifdef __WIN32__
-    return ringToneList;
-#else
 
     std::string r_path(fileutils::get_ringtone_dir());
     struct dirent **namelist;
@@ -344,7 +340,6 @@ std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
     }
     free(namelist);
     return ringToneList;
-#endif
 }
 
 int32_t ConfigurationManager::isIax2Enabled()

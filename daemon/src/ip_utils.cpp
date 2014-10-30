@@ -144,20 +144,13 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 
     if (unix_family == AF_INET6) {
         int val = family != pj_AF_UNSPEC();
-#ifdef _WIN32
-		char* valPtr = (char *) &val;
-#else
-		void* valPtr = (void *) &val;
-#endif
-        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, valPtr, sizeof(val)) < 0) {
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &val, sizeof(val)) < 0) {
             SFL_ERR("Could not setsockopt: %m");
             close(fd);
             return addr;
         }
     }
 
-#ifdef _WIN32 /* TODO: WINDOWS, implement address info. */
-#else
     ifreq ifr;
     strncpy(ifr.ifr_name, interface.c_str(), sizeof ifr.ifr_name);
     // guarantee that ifr_name is NULL-terminated
@@ -172,7 +165,7 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     addr = ifr.ifr_addr;
     if (addr.isUnspecified())
         return getLocalAddr(addr.getFamily());
-#endif
+
     return addr;
 }
 
