@@ -35,9 +35,6 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
-#include <pthread.h>
-
 /**
  * Print something, coloring it depending on the level
  */
@@ -63,9 +60,19 @@ int getDebugMode(void);
  */
 void strErr();
 
+#ifdef __linux__
+
+#include <unistd.h>
+#include <sys/syscall.h>
+
 #define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, \
-                           (unsigned long) pthread_self() & 0xffff, \
+                            syscall(__NR_gettid) & 0xffff, \
                            ##__VA_ARGS__
+#else
+
+#define LOG_FORMAT(M, ...) "%s:%d: " M, FILE_NAME, __LINE__, \
+                           ##__VA_ARGS__
+#endif
 
 #ifdef __ANDROID__
 
