@@ -864,7 +864,8 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             case PJSIP_SC_REQUEST_PENDING:
             case PJSIP_SC_ADDRESS_INCOMPLETE:
             default:
-                SFL_WARN("PJSIP_INV_STATE_DISCONNECTED: %d %d", inv->cause, ev->type);
+                SFL_WARN("PJSIP_INV_STATE_DISCONNECTED: %d %d",
+                         inv->cause, ev ? ev->type : -1);
                 call->onServerFailure();
                 break;
         }
