@@ -29,3 +29,4 @@ src/statusicon.c
 src/uimanager.c
 src/video/video_callbacks.c
 src/sflphone_menus.ui
+src/sflhpone_account_dialog.ui
