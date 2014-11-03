@@ -1,7 +1,7 @@
-From 73ffecc7f0224e64b0694ddc740f7795757a9fcf Mon Sep 17 00:00:00 2001
+From 5cb3786d107bdea372ab45e6c35f882fd867d5e0 Mon Sep 17 00:00:00 2001
 From: Vittorio Giovara <vittorio.giovara@savoirfairelinux.com>
 Date: Mon, 9 Jun 2014 14:20:55 -0400
-Subject: [PATCH] ssl_sock: add gnutls backend
+Subject: [PATCH 1/1] ssl_sock: add gnutls backend
 
 This backend is mutually exclusive with the OpenSSL one, but completely
 compatible, and conformant to the PJSIP API. Also avoids any license issues
@@ -14,6 +14,9 @@ to identify which backend is in use.
 Written by Vittorio Giovara <vittorio.giovara@savoirfairelinux.com> and
 Philippe Proulx <philippe.proulx@savoirfairelinux.com> on behalf of
 Savoir-Faire Linux.
+
+squashed the following commit:
+ssl_sock_gtls: avoid NULL dereference
 ---
  aconfigure                           |  183 ++-
  aconfigure.ac                        |  100 +-
@@ -21,25 +24,25 @@ Savoir-Faire Linux.
  pjlib/include/pj/compat/os_auto.h.in |    3 +
  pjlib/include/pj/config.h            |    4 +-
  pjlib/src/pj/ssl_sock_common.c       |    5 +
- pjlib/src/pj/ssl_sock_gtls.c         | 2781 ++++++++++++++++++++++++++++++++++
+ pjlib/src/pj/ssl_sock_gtls.c         | 2778 ++++++++++++++++++++++++++++++++++
  pjlib/src/pj/ssl_sock_ossl.c         |    6 +-
- 8 files changed, 3022 insertions(+), 62 deletions(-)
+ 8 files changed, 3019 insertions(+), 62 deletions(-)
  create mode 100644 pjlib/src/pj/ssl_sock_gtls.c
 
 diff --git a/aconfigure b/aconfigure
-index 8fd8c64..d4fc521 100755
+index 24de91d..37e0914 100755
 --- a/aconfigure
 +++ b/aconfigure
-@@ -617,6 +617,8 @@ ac_no_opencore_amrnb
+@@ -637,6 +637,8 @@ ac_no_opencore_amrnb
  libcrypto_present
  libssl_present
  openssl_h_present
 +libgnutls_present
 +gnutls_h_present
  ac_no_ssl
- ac_v4l2_ldflags
- ac_v4l2_cflags
-@@ -1439,8 +1441,8 @@ Optional Features:
+ ac_openh264_ldflags
+ ac_openh264_cflags
+@@ -1462,8 +1464,8 @@ Optional Features:
                            package and samples location using IPPROOT and
                            IPPSAMPLES env var or with --with-ipp and
                            --with-ipp-samples options
@@ -50,7 +53,7 @@ index 8fd8c64..d4fc521 100755
    --disable-opencore-amr  Exclude OpenCORE AMR support from the build
                            (default: autodetect)
  
-@@ -7363,33 +7365,159 @@ fi
+@@ -7482,33 +7484,159 @@ fi
  
  # Check whether --enable-ssl was given.
  if test "${enable_ssl+set}" = set; then :
@@ -106,19 +109,20 @@ index 8fd8c64..d4fc521 100755
 +done
 +  done
 +IFS=$as_save_IFS
-+
+ 
 +fi
 +fi
 +PKG_CONFIG=$ac_cv_prog_PKG_CONFIG
 +if test -n "$PKG_CONFIG"; then
 +  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
 +$as_echo "$PKG_CONFIG" >&6; }
-+else
+ else
 +  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 +$as_echo "no" >&6; }
 +fi
 +
  
+-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for OpenSSL installations.." >&5
 +  test -n "$PKG_CONFIG" && break
 +done
 +test -n "$PKG_CONFIG" || PKG_CONFIG="none"
@@ -166,7 +170,7 @@ index 8fd8c64..d4fc521 100755
 +_ACEOF
 +if ac_fn_c_try_link "$LINENO"; then :
 +  ac_cv_lib_gnutls_gnutls_certificate_set_x509_system_trust=yes
- else
++else
 +  ac_cv_lib_gnutls_gnutls_certificate_set_x509_system_trust=no
 +fi
 +rm -f core conftest.err conftest.$ac_objext \
@@ -192,8 +196,7 @@ index 8fd8c64..d4fc521 100755
 +            # PJSIP_HAS_TLS_TRANSPORT setting follows PJ_HAS_SSL_SOCK
 +            #AC_DEFINE(PJSIP_HAS_TLS_TRANSPORT, 1)
 +            $as_echo "#define PJ_HAS_SSL_SOCK 1" >>confdefs.h
- 
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for OpenSSL installations.." >&5
++
 +            $as_echo "#define PJ_HAS_TLS_SOCK 1" >>confdefs.h
 +
 +        else
@@ -224,7 +227,7 @@ index 8fd8c64..d4fc521 100755
  $as_echo_n "checking for ERR_load_BIO_strings in -lcrypto... " >&6; }
  if ${ac_cv_lib_crypto_ERR_load_BIO_strings+:} false; then :
    $as_echo_n "(cached) " >&6
-@@ -7429,7 +7557,7 @@ if test "x$ac_cv_lib_crypto_ERR_load_BIO_strings" = xyes; then :
+@@ -7548,7 +7676,7 @@ if test "x$ac_cv_lib_crypto_ERR_load_BIO_strings" = xyes; then :
    libcrypto_present=1 && LIBS="$LIBS -lcrypto"
  fi
  
@@ -233,7 +236,7 @@ index 8fd8c64..d4fc521 100755
  $as_echo_n "checking for SSL_library_init in -lssl... " >&6; }
  if ${ac_cv_lib_ssl_SSL_library_init+:} false; then :
    $as_echo_n "(cached) " >&6
-@@ -7469,22 +7597,23 @@ if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
+@@ -7588,22 +7716,23 @@ if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
    libssl_present=1 && LIBS="$LIBS -lssl"
  fi
  
@@ -268,10 +271,10 @@ index 8fd8c64..d4fc521 100755
  if test "${with_opencore_amrnb+set}" = set; then :
    withval=$with_opencore_amrnb; as_fn_error $? "This option is obsolete and replaced by --with-opencore-amr=DIR" "$LINENO" 5
 diff --git a/aconfigure.ac b/aconfigure.ac
-index cd71a7a..465285e 100644
+index 6c35836..3be55c5 100644
 --- a/aconfigure.ac
 +++ b/aconfigure.ac
-@@ -1346,38 +1346,76 @@ fi
+@@ -1418,38 +1418,76 @@ fi
  
  dnl # Include SSL support
  AC_SUBST(ac_no_ssl)
@@ -407,10 +410,10 @@ index 77980d3..6d6a625 100644
  
  #endif	/* __PJ_COMPAT_OS_AUTO_H__ */
 diff --git a/pjlib/include/pj/config.h b/pjlib/include/pj/config.h
-index bfb4b69..b5fdb4a 100644
+index c191ef1..4ace1bc 100644
 --- a/pjlib/include/pj/config.h
 +++ b/pjlib/include/pj/config.h
-@@ -848,13 +848,15 @@
+@@ -854,13 +854,15 @@
  
  /**
   * Enable secure socket. For most platforms, this is implemented using
@@ -446,10 +449,10 @@ index 67a8d63..602a1af 100644
  #endif
 diff --git a/pjlib/src/pj/ssl_sock_gtls.c b/pjlib/src/pj/ssl_sock_gtls.c
 new file mode 100644
-index 0000000..75b3723
+index 0000000..c2a4349
 --- /dev/null
 +++ b/pjlib/src/pj/ssl_sock_gtls.c
-@@ -0,0 +1,2781 @@
+@@ -0,0 +1,2778 @@
 +/* $Id$ */
 +/*
 + * Copyright (C) 2014 Savoir-Faire Linux. (http://www.savoirfairelinux.com)
@@ -1348,12 +1351,9 @@ index 0000000..75b3723
 +        }
 +
 +        /* Load certificate, key and pass if one is specified */
-+        if (cert->cert_file.slen) {
-+            const char *prikey_file = cert->privkey_file.slen
-+                                    ? cert->privkey_file.ptr
-+                                    : NULL;
-+            const char *prikey_pass = (cert->privkey_file.slen &&
-+                                       cert->privkey_pass.slen)
++        if (cert->cert_file.slen && cert->privkey_file.slen) {
++            const char *prikey_file = cert->privkey_file.ptr;
++            const char *prikey_pass = cert->privkey_pass.slen
 +                                    ? cert->privkey_pass.ptr
 +                                    : NULL;
 +            ret = gnutls_certificate_set_x509_key_file2(ssock->xcred,
@@ -3232,7 +3232,7 @@ index 0000000..75b3723
 +
 +#endif /* PJ_HAS_SSL_SOCK */
 diff --git a/pjlib/src/pj/ssl_sock_ossl.c b/pjlib/src/pj/ssl_sock_ossl.c
-index 7129f21..ed57d56 100644
+index 7c7b6d0..e466bb7 100644
 --- a/pjlib/src/pj/ssl_sock_ossl.c
 +++ b/pjlib/src/pj/ssl_sock_ossl.c
 @@ -31,8 +31,10 @@
@@ -3249,5 +3249,5 @@ index 7129f21..ed57d56 100644
  #define THIS_FILE		"ssl_sock_ossl.c"
  
 -- 
-1.8.3.2
+1.9.3
 
