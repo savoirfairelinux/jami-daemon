@@ -4,7 +4,9 @@ SUBDIRS = src pixmaps tests man po doc data
 CFLAGS=-Wall -Werror -Wextra
 
 uidir=$(datadir)/sflphone/ui
-ui_DATA=src/sflphone_menus.ui
+ui_DATA= \
+src/sflphone_menus.ui \
+src/sflphone_account_dialog.ui
 
 dist_noinst_DATA = $(gsettings_in_file)
 

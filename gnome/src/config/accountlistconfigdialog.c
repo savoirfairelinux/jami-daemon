@@ -164,12 +164,31 @@ static void account_store_fill();
 static void
 run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client, gboolean is_new)
 {
+    g_debug("running account dialog");
     GtkWidget *dialog = show_account_window(selected_accountID, account_list_dialog, client, is_new);
     if (dialog) {
         update_account_from_dialog(dialog, selected_accountID);
         account_store_fill();
     } else if (is_new) {
-        // account creation was cancelled, make sure the account is deleted
+        /*account creation was cancelled, make sure the account is deleted */
+        delete_account(selected_accountID);
+    }
+}
+
+static void
+test_run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client, gboolean is_new)
+{
+    g_debug("running test account dialog");
+    GtkWidget *dialog = test_show_account_window(selected_accountID, account_list_dialog, client, is_new);
+    if (dialog) {
+        // for now, just delete the account and the dialog
+        delete_account(selected_accountID);
+        gtk_widget_destroy(dialog);
+        // uncomment when done
+        // update_account_from_dialog(dialog, selected_accountID);
+        // account_store_fill();
+    } else if (is_new) {
+        /* account creation was cancelled, make sure the account is deleted */
         delete_account(selected_accountID);
     }
 }
@@ -249,6 +268,13 @@ static void add_account_cb(SFLPhoneClient *client)
     account_t *new_account = create_default_account();
     account_list_add(new_account);
     run_account_dialog(new_account->accountID, client, TRUE);
+}
+
+static void test_add_account_cb(SFLPhoneClient *client)
+{
+    account_t *new_account = create_default_account();
+    account_list_add(new_account);
+    test_run_account_dialog(new_account->accountID, client, TRUE);
 }
 
 /**
@@ -585,6 +611,12 @@ create_account_list(SFLPhoneClient *client)
     g_signal_connect_swapped(G_OBJECT(add_button), "clicked",
                              G_CALLBACK(add_account_cb), client);
     gtk_box_pack_start(GTK_BOX(button_box), add_button, FALSE, FALSE, 0);
+
+    /* for testing */
+    GtkWidget *test_add_button = gtk_button_new_with_label(_("Test Add"));
+    g_signal_connect_swapped(G_OBJECT(test_add_button), "clicked",
+                             G_CALLBACK(test_add_account_cb), client);
+    gtk_box_pack_start(GTK_BOX(button_box), test_add_button, FALSE, FALSE, 0);
 
     edit_button = gtk_button_new_with_label(_("Edit"));
     gtk_widget_set_sensitive(edit_button, FALSE);

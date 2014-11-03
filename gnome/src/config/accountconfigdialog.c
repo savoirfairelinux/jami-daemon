@@ -109,6 +109,7 @@ static GtkWidget *video_port_max_spin_box;
 #endif
 #ifdef SFL_PRESENCE
 static GtkWidget *presence_check_box;
+static GtkWidget *presence_frame;
 static gboolean is_account_new;
 #endif
 
@@ -166,49 +167,70 @@ static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
     gtk_entry_set_visibility(GTK_ENTRY(data), !gtk_entry_get_visibility(GTK_ENTRY(data)));
 }
 
-/* Signal to type_combo 'changed' */
-static void change_type_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
+/* signal handler which updates the contents of the account parameters grid
+ * when the account type is changed */
+static void update_account_params_cb(GtkComboBox *cbox_accnt_type, GtkGrid *param_grid)
 {
-    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type_combo));
+    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(cbox_accnt_type));
+
+    if (utf8_case_equal(type, "SIP")) {
+
+    } else if (utf8_case_equal(type, "DHT")) {
+
+    } else if (utf8_case_equal(type, "IAX")) {
+
+    }
+
+}
+
+/* Signal to type_combo 'changed' */
+static void change_type_cb(GtkComboBox *cbox_accnt_type, gpointer data)
+{
+    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(cbox_accnt_type));
     account_t * account = data;
 
     if(!account)
         return;
 
-    // Only if tabs are not NULL
+    /* Hide/show tabs based on account type if they are not NULL */
     if (security_tab && advanced_tab) {
         if (utf8_case_equal(type, "IAX")) {
             gtk_widget_hide(security_tab);
             gtk_widget_hide(advanced_tab);
+        } else if (utf8_case_equal(type, "DHT")) {
+            gtk_widget_hide(security_tab);
+            gtk_widget_show(advanced_tab);
         } else {
+            /* SIP */
             gtk_widget_show(security_tab);
             gtk_widget_show(advanced_tab);
         }
     }
 
     gboolean is_dht = utf8_case_equal(type, "DHT")? TRUE : FALSE;
-    gtk_widget_set_sensitive(entry_username, !is_dht);
-    gtk_widget_set_sensitive(entry_password, !is_dht);
-    gtk_widget_set_sensitive(entry_route_set, !is_dht);
-    gtk_widget_set_sensitive(entry_mailbox, !is_dht);
-    gtk_widget_set_sensitive(entry_user_agent,
-            (!is_dht && account_has_custom_user_agent(account)));
-    gtk_widget_set_sensitive(clearTextcheck_box, !is_dht);
-    gtk_widget_set_sensitive(auto_answer_checkbox, !is_dht);
-    gtk_widget_set_sensitive(user_agent_checkbox, !is_dht);
+    is_dht? gtk_widget_hide(entry_username) : gtk_widget_show(entry_username); //gtk_widget_set_sensitive(entry_username, !is_dht);
+    is_dht? gtk_widget_hide(entry_password) : gtk_widget_show(entry_password); //gtk_widget_set_sensitive(entry_password, !is_dht);
+    is_dht? gtk_widget_hide(entry_route_set) : gtk_widget_show(entry_route_set); //gtk_widget_set_sensitive(entry_route_set, !is_dht);
+    is_dht? gtk_widget_hide(entry_mailbox) : gtk_widget_show(entry_mailbox); //gtk_widget_set_sensitive(entry_mailbox, !is_dht);
+    is_dht? gtk_widget_hide(entry_user_agent) : gtk_widget_show(entry_user_agent); //gtk_widget_set_sensitive(entry_user_agent,
+            // (!is_dht && account_has_custom_user_agent(account)));
+    is_dht? gtk_widget_hide(clearTextcheck_box) : gtk_widget_show(clearTextcheck_box); //gtk_widget_set_sensitive(clearTextcheck_box, !is_dht);
+    is_dht? gtk_widget_hide(auto_answer_checkbox) : gtk_widget_show(auto_answer_checkbox); //gtk_widget_set_sensitive(auto_answer_checkbox, !is_dht);
+    is_dht? gtk_widget_hide(user_agent_checkbox) : gtk_widget_show(user_agent_checkbox); //gtk_widget_set_sensitive(user_agent_checkbox, !is_dht);
 
 #ifdef SFL_PRESENCE
     if (utf8_case_equal(type, "SIP")) {
         // the presence can be enabled when at least 1 presence feature is supported by the PBX
         // OR when the account is new
+        gtk_widget_show(presence_frame);
         gtk_widget_set_sensitive(presence_check_box,
                 !g_strcmp0(account_lookup(account, CONFIG_PRESENCE_PUBLISH_SUPPORTED), "true") ||
                 !g_strcmp0(account_lookup(account, CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED), "true") ||
                 is_account_new);
     }
     else{
+        gtk_widget_hide(presence_frame);
         gtk_widget_set_sensitive(presence_check_box, FALSE);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),FALSE);
     }
 #endif
 
@@ -267,19 +289,19 @@ static void update_credential_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 static GtkWidget*
 create_auto_answer_checkbox(const account_t *account)
 {
-    auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
-    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
-    return auto_answer_checkbox;
+    GtkWidget *checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbox), account_has_autoanswer_on(account));
+    g_signal_connect(checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
+    return checkbox;
 }
 
 static GtkWidget*
 create_user_agent_checkbox(const account_t *account)
 {
-    user_agent_checkbox = gtk_check_button_new_with_mnemonic(_("_Use custom user-agent"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(user_agent_checkbox), account_has_custom_user_agent(account));
-    g_signal_connect(user_agent_checkbox, "toggled", G_CALLBACK(user_agent_checkbox_cb), (gpointer) account);
-    return user_agent_checkbox;
+    GtkWidget *checkbox = gtk_check_button_new_with_mnemonic(_("_Use custom user-agent"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbox), account_has_custom_user_agent(account));
+    g_signal_connect(checkbox, "toggled", G_CALLBACK(user_agent_checkbox_cb), (gpointer) account);
+    return checkbox;
 }
 
 static void
@@ -452,11 +474,11 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     gtk_widget_set_sensitive(entry_user_agent, account_has_custom_user_agent(account));
 
     row++;
-    GtkWidget *user_agent_checkbox = create_user_agent_checkbox(account);
+    user_agent_checkbox = create_user_agent_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), user_agent_checkbox, 0, row, 1, 1);
 
     row++;
-    GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
+    auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), auto_answer_checkbox, 0, row, 1, 1);
 
     gtk_widget_show_all(grid);
@@ -471,14 +493,14 @@ create_presence_checkbox(const account_t *account)
 {
     g_assert(account);
 
-    GtkWidget *frame = gnome_main_section_new(_("Presence notifications"));
-    gtk_widget_show(frame);
+    presence_frame = gnome_main_section_new(_("Presence notifications"));
+    gtk_widget_show(presence_frame);
 
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
     gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
     gtk_widget_show(grid);
-    gtk_container_add(GTK_CONTAINER(frame), grid);
+    gtk_container_add(GTK_CONTAINER(presence_frame), grid);
 
     presence_check_box = gtk_check_button_new_with_mnemonic(_("_Enable"));
 
@@ -491,7 +513,7 @@ create_presence_checkbox(const account_t *account)
     gtk_widget_show_all(grid);
     gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
 
-    return frame;
+    return presence_frame;
 }
 #endif
 
@@ -1405,7 +1427,7 @@ static GtkWidget* create_direct_ip_calls_tab(account_t *account)
     gtk_widget_set_size_request(label, 350, -1);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 
-    GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
+    auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_box_pack_start(GTK_BOX(vbox), auto_answer_checkbox, FALSE, FALSE, 0);
 
     gtk_widget_show_all(vbox);
@@ -1590,6 +1612,69 @@ void update_account_from_dialog(GtkWidget *dialog, const gchar *accountID)
 
     g_free(current_type);
     gtk_widget_destroy(dialog);
+}
+
+/* TODO: move to separate file */
+static GtkBuilder *
+uibuilder_new(const gchar* ui_file_name)
+{
+    GtkBuilder* uibuilder = gtk_builder_new();
+    GError *error = NULL;
+    /* try local dir first */
+    gchar *ui_path = g_build_filename(SFLPHONE_UIDIR_UNINSTALLED, ui_file_name, NULL);
+
+    if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
+        /* try install dir */
+        g_free(ui_path);
+        ui_path = g_build_filename(SFLPHONE_UIDIR, ui_file_name, NULL);
+
+        /* if neither dir exists then we cannot load the UI */
+        if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
+            g_warning("Could not find \"%s\"", ui_file_name);
+            g_free(ui_path);
+            ui_path = NULL;
+            g_object_unref(uibuilder);
+            uibuilder = NULL;
+        }
+    }
+
+    /* If there is an error in parsing the UI file, the program must be aborted, as per the documentation:
+     * It’s not really reasonable to attempt to handle failures of this call.
+     * You should not use this function with untrusted files (ie: files that are not part of your application).
+     * Broken GtkBuilder files can easily crash your program,
+     * and it’s possible that memory was leaked leading up to the reported failure. */
+    if (ui_path && !gtk_builder_add_from_file(uibuilder, ui_path, &error)) {
+        g_assert(error);
+        g_warning("Error adding gtk builder UI file, %s: %s", ui_file_name, error->message);
+        g_object_unref(uibuilder);
+        uibuilder = NULL;
+    } else {
+        /* loaded file successfully */
+        g_free(ui_path);
+    }
+    return uibuilder;
+}
+
+GtkWidget *
+test_show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *client, gboolean is_new)
+{
+    GtkBuilder *accnt_builder = uibuilder_new("sflphone_account_dialog.ui");
+    /* if we fail in creating the uibuilder, we must exist the program */
+    if (!accnt_builder) {
+        sflphone_quit(TRUE, client);
+        return NULL;
+    }
+
+    GtkWidget *dialog = GTK_WIDGET(gtk_builder_get_object(accnt_builder, "dialog_account"));
+    gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+    /* Run dialog, this blocks */
+    gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+    if (response == GTK_RESPONSE_APPLY) {
+        return dialog;
+    } else {
+        gtk_widget_destroy(dialog);
+        return NULL;
+    }
 }
 
 GtkWidget *

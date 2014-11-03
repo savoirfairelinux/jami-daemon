@@ -45,6 +45,16 @@
  * @return The dialog with the pertinent account information
  */
 GtkWidget *
+test_show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *client, gboolean is_new);
+
+/**
+ * Display the main account widget
+ * @param a The account you want to display
+ * @param client Our client instance
+ * @param is_new TRUE if this account is being added
+ * @return The dialog with the pertinent account information
+ */
+GtkWidget *
 show_account_window(const gchar *accountID, GtkDialog *parent, SFLPhoneClient *client, gboolean is_new);
 
 /*
