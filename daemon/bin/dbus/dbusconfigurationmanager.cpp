@@ -371,3 +371,18 @@ bool DBusConfigurationManager::checkHostnameCertificate(const  std::string& host
 {
     return sflph_config_check_hostname_certificate(host, port);
 }
+
+std::map<std::string, std::string> DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey)
+{
+   return sflph_config_validate_certificate(accountId, certificate, privateKey);
+}
+
+std::map<std::string, std::string> DBusConfigurationManager::getCertificateDetails(const std::string& certificate, const std::string& privateKey)
+{
+    return sflph_config_get_certificate_details(certificate, privateKey);
+}
+
+std::map<std::string, std::string> DBusConfigurationManager::getServerCertificateDetails(const std::string& accountId)
+{
+    return sflph_config_get_server_certificate_details(accountId);
+}

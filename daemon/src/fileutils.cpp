@@ -281,3 +281,11 @@ get_data_dir()
 }
 
 }
+
+std::string
+get_path_for_file(const std::string &file)
+{
+    char *dirc  = strdup(file.c_str());
+    char *dname = dirname(dirc);
+    return std::string(dname);
+}

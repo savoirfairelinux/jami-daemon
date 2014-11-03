@@ -265,6 +265,10 @@ double sflph_config_get_volume(const std::string& device);
 bool sflph_config_check_for_private_key(const std::string& pem_path);
 bool sflph_config_check_certificate_validity(const std::string& ca_path, const std::string& pem_path);
 bool sflph_config_check_hostname_certificate(const std::string& host, const std::string& port);
+std::map<std::string, std::string> sflph_config_validate_certificate(const std::string& accountId,
+    const std::string& certificate, const std::string& private_key);
+std::map<std::string, std::string> sflph_config_get_certificate_details(const std::string& certificate, const std::string& privateKey);
+std::map<std::string, std::string> sflph_config_get_server_certificate_details(const std::string& accountId);
 
 /* presence API */
 #ifdef SFL_PRESENCE

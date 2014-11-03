@@ -38,7 +38,7 @@
 #include "account_schema.h"
 #include "manager.h"
 #if HAVE_TLS
-#include "sip/tlsvalidation.h"
+#include "sip/tlsvalidator.h"
 #endif
 #include "logger.h"
 #include "fileutils.h"
@@ -564,7 +564,7 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
 bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 {
 #if HAVE_TLS
-    return containsPrivateKey(pemPath.c_str()) == 0;
+    return TlsValidator::containsPrivateKey(pemPath.c_str()) == 0;
 #else
     SFL_WARN("TLS not supported");
     return false;
@@ -575,7 +575,7 @@ bool ConfigurationManager::checkCertificateValidity(const std::string& caPath,
                                                     const std::string& pemPath)
 {
 #if HAVE_TLS
-    return certificateIsValid(caPath.size() > 0 ? caPath.c_str() : NULL,
+    return TlsValidator::certificateIsValid(caPath.size() > 0 ? caPath.c_str() : NULL,
                               pemPath.c_str()) == 0;
 #else
     SFL_WARN("TLS not supported");
@@ -587,7 +587,7 @@ bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
                                                     const std::string& port)
 {
 #if HAVE_TLS
-    return verifyHostnameCertificate(host.c_str(),
+    return TlsValidator::verifyHostnameCertificate(host.c_str(),
                                      strtol(port.c_str(), NULL, 10)) == 0;
 #else
     SFL_WARN("TLS not supported");
@@ -595,6 +595,35 @@ bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
 #endif
 }
 
+std::map<std::string, std::string> ConfigurationManager::validateCertificate(const std::string& accountId,
+                                                                             const std::string& certificate,
+                                                                             const std::string& privateKey)
+{
+#if HAVE_TLS
+    TlsValidator validator(certificate,privateKey);
+    return validator.getSerializeChecks();
+#else
+    WARN("TLS not supported");
+    return std::map<std::string, std::string>();
+#endif
+}
+
+std::map<std::string, std::string> ConfigurationManager::getCertificateDetails(const std::string& certificate, const std::string& privateKey)
+{
+#if HAVE_TLS
+    TlsValidator validator(certificate,privateKey);
+    return validator.getSerializedDetails();
+#else
+    WARN("TLS not supported");
+    return std::map<std::string, std::string>();
+#endif
+}
+
+std::map<std::string, std::string> ConfigurationManager::getServerCertificateDetails(const std::string& accountId)
+{
+    // TODO Fetch the server side (or DHT peer?) certificate
+    return std::map<std::string, std::string>();
+}
 
 void ConfigurationManager::volumeChanged(const std::string& device, int value)
 {

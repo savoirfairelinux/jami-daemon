@@ -55,6 +55,7 @@ namespace fileutils {
     const char *get_program_dir();
     std::string get_ringtone_dir();
     std::string expand_path(const std::string &path);
+    std::string get_path_for_file(const std::string &file);
     bool isDirectoryWritable(const std::string &directory);
     struct FileHandle {
         int fd;

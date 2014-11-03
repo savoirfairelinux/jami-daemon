@@ -36,7 +36,7 @@
 #include "test_utils.h"
 #include "logger.h"
 
-#include "sip/tlsvalidation.h"
+#include "sip/tlsvalidator.h"
 
 void TlsTest::testKey()
 {
@@ -46,11 +46,17 @@ void TlsTest::testKey()
     const char *validCertWithKey = WORKSPACE "tlsSample/certwithkey.pem";
     const char *corruptedKey = WORKSPACE "tlsSample/corruptedkey.pem";
 
-    CPPUNIT_ASSERT(containsPrivateKey(validKey) == 0);
+    TlsValidator validKeyValidator("",validKey);
+    TlsValidator validCertWithKeyValidator(validCertWithKey,"");
+    // TlsValidator corruptedKeyValidator("",corruptedKey);
 
-    CPPUNIT_ASSERT(containsPrivateKey(validCertWithKey) == 0);
+    CPPUNIT_ASSERT(validKeyValidator.exist().first == TlsValidator::ChecksValues::FAILED);
 
-    CPPUNIT_ASSERT(containsPrivateKey(corruptedKey) != 0);
+    CPPUNIT_ASSERT(validCertWithKeyValidator.embedPrivateKey().first == TlsValidator::ChecksValues::FAILED);
+
+    // TODO write a similar test, the current code will trigger CertificateChecks::MISSING_CERTIFICATE first
+    // and quit
+    // CPPUNIT_ASSERT(containsPrivateKey(corruptedKey) == TlsValidator::ChecksValues::FAILED);
 }
 
 void TlsTest::testCertificate()
@@ -62,21 +68,32 @@ void TlsTest::testCertificate()
     const char *fakeCertificate = WORKSPACE "tlsSample/fake.crt";
     const char *expiredCertificate = WORKSPACE "tlsSample/expired.crt";
 
-    CPPUNIT_ASSERT(certificateIsValid(NULL, validCa) == 0);
+    TlsValidator validCaValidator(validCa,"");
+    TlsValidator validCertificateValidator(validCertificate,"");
+    TlsValidator fakeCertificateValidator(fakeCertificate,"");
+    TlsValidator expiredCertificateValidator(expiredCertificate,"");
 
-    CPPUNIT_ASSERT(certificateIsValid(validCa, validCertificate) == 0);
+    // A valid certificate need a CA, this one doesn't have one
+    CPPUNIT_ASSERT(validCertificateValidator.isValid(true) == true);
+
+    validCertificateValidator.setCaTlsValidator(validCaValidator);
+
+    // A valid certificate need a CA, this one have one
+    CPPUNIT_ASSERT(validCertificateValidator.isValid(true) == true);
 
     // This is a png
-    CPPUNIT_ASSERT(certificateIsValid(NULL, fakeCertificate) != 0);
+    CPPUNIT_ASSERT(fakeCertificateValidator.validCertificate().first == TlsValidator::ChecksValues::FAILED);
+    fakeCertificateValidator.setCaTlsValidator(validCaValidator);
+    CPPUNIT_ASSERT(fakeCertificateValidator.validCertificate().first == TlsValidator::ChecksValues::FAILED);
 
     // This would need a CA to be valid
-    CPPUNIT_ASSERT(certificateIsValid(NULL, validCertificate) != 0);
+    // CPPUNIT_ASSERT(certificateIsValid(NULL, validCertificate) != 0);
 
     // This is an invalid CA
-    CPPUNIT_ASSERT(certificateIsValid(validCertificate, validCertificate) != 0);
+    // CPPUNIT_ASSERT(certificateIsValid(validCertificate, validCertificate) != 0);
 
     // This certificate is expired
-    CPPUNIT_ASSERT(certificateIsValid(NULL, expiredCertificate) != 0);
+    CPPUNIT_ASSERT(expiredCertificateValidator.notExpired().first == TlsValidator::ChecksValues::FAILED);
 }
 
 void TlsTest::testHostname()
@@ -86,10 +103,10 @@ void TlsTest::testHostname()
     const char *correctUrl = "www.savoirfairelinux.com";
     const char *wrongUrl = "www..com";
 
-    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 443) == 0);
+    CPPUNIT_ASSERT(TlsValidator::verifyHostnameCertificate(correctUrl, 443) == 0);
 
-    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 80) != 0);
-    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 0) != 0);
-    CPPUNIT_ASSERT(verifyHostnameCertificate(wrongUrl, 443) != 0);
-    CPPUNIT_ASSERT(verifyHostnameCertificate(NULL, 443) != 0);
+    CPPUNIT_ASSERT(TlsValidator::verifyHostnameCertificate(correctUrl, 80 ) != 0);
+    CPPUNIT_ASSERT(TlsValidator::verifyHostnameCertificate(correctUrl, 0  ) != 0);
+    CPPUNIT_ASSERT(TlsValidator::verifyHostnameCertificate(wrongUrl  , 443) != 0);
+    CPPUNIT_ASSERT(TlsValidator::verifyHostnameCertificate(NULL      , 443) != 0);
 }

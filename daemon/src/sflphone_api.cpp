@@ -688,6 +688,21 @@ bool sflph_config_check_hostname_certificate(const std::string& host, const std:
     return getConfigurationManager()->checkHostnameCertificate(host, port);
 }
 
+std::map<std::string, std::string> sflph_config_validate_certificate(const std::string& accountId, const std::string& certificate, const std::string& private_key)
+{
+    return getConfigurationManager()->validateCertificate(accountId,certificate,private_key);
+}
+
+std::map<std::string, std::string> sflph_config_get_certificate_details(const std::string& certificate, const std::string& privateKey);
+{
+    return getConfigurationManager()->getCertificateDetails(certificate, privateKey);
+}
+
+std::map<std::string, std::string> sflph_config_get_server_certificate_details(const std::string& accountId)
+{
+    return getConfigurationManager()->getServerCertificateDetails(accountId);
+}
+
 #ifdef SFL_PRESENCE
 void sflph_pres_publish(const std::string& account_id, int status, const std::string& note)
 {
