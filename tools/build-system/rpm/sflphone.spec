@@ -22,6 +22,7 @@ BuildRequires:      gsm-devel opus-devel speex-devel expat-devel libsamplerate-d
 BuildRequires:      gnome-doc-utils libtool libsexy-devel intltool yelp-tools
 BuildRequires:      libnotify-devel check-devel rarian-compat ilbc-devel
 BuildRequires:      evolution-data-server-devel gnome-common libsndfile-devel
+BuildRequires:      pjproject-devel
 # KDE requires
 BuildRequires:      cmake kdepimlibs-devel
 BuildRequires:      perl-podlators
@@ -46,7 +47,7 @@ protocols.
 mkdir -p daemon/contrib/native
 pushd daemon/contrib/native
 ../bootstrap
-make .iax .pjproject
+make .iax
 popd
 # Compile the daemon
 pushd daemon
@@ -278,8 +279,11 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
-* Fri Nov 14 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.4.2-2
+* Fri Nov 14 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.4.2-3
 - Changed sflphoned path
+
+* Tue Nov 4 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.2-2
+- Use Fedora's pjproject package
 
 * Thu Sep 25 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.2-1
 - Bump version after release
