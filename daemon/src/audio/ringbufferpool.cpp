@@ -414,11 +414,16 @@ RingBufferPool::flushAllBuffers()
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    for (const auto& item : ringBufferMap_) {
-        if (const auto rb = item.second.lock())
+    for (auto item = ringBufferMap_.begin(); item != ringBufferMap_.end(); ) {
+        if (const auto rb = item.second.lock()) {
             rb->flushAll();
-        else
-            ringBufferMap_.erase(item.first);
+            ++item;
+        } else {
+            // Make a copy and then increment to avoid incrementing garbage
+            auto tmp = item;
+            ++item;
+            ringBufferMap_.erase(temp.first);
+        }
     }
 }
 
