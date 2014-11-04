@@ -16,10 +16,11 @@ $(TARBALLS)/ccrtp-$(CCRTP_VERSION).tar.gz:
 
 ccrtp: ccrtp-$(CCRTP_VERSION).tar.gz .sum-ccrtp
 	$(UNPACK)
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && autoreconf -fi
+	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
 
 .ccrtp: ccrtp
+	mkdir -p $</m4 && $(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
