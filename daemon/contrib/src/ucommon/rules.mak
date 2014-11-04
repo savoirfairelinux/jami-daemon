@@ -20,10 +20,11 @@ ucommon: ucommon-$(UCOMMON_VERSION).tar.gz .sum-ucommon
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/ucommon/windows_platform.patch
 endif
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && autoreconf -fi
+	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
 
 .ucommon: ucommon
+	mkdir -p $</m4 && $(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) $(UCOMMON_OPTIONS)
 	cd $< && $(MAKE) install
 	touch $@
