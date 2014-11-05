@@ -419,10 +419,8 @@ RingBufferPool::flushAllBuffers()
             rb->flushAll();
             ++item;
         } else {
-            // Make a copy and then increment to avoid incrementing garbage
-            auto tmp = item;
-            ++item;
-            ringBufferMap_.erase(tmp->first);
+            // Use this version of erase to avoid using invalidated iterator
+            item = ringBufferMap_.erase(item);
         }
     }
 }
