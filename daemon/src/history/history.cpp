@@ -102,22 +102,12 @@ void History::addEntry(const HistoryItem &item, int oldest)
 void History::ensurePath()
 {
     if (path_.empty()) {
-#ifdef __ANDROID__
-        path_ = fileutils::get_home_dir() + DIR_SEPARATOR_STR  + "history";
-#else
         const string userdata = fileutils::get_data_dir();
-
-        if (mkdir(userdata.data(), 0755) != 0) {
-            // If directory creation failed
-            if (errno != EEXIST) {
-                SFL_DBG("Cannot create directory: %s", userdata.c_str());
-                strErr();
-                return;
-            }
+        if (!fileutils::check_dir(userdata.c_str())) {
+            SFL_DBG("Cannot create directory: %s", userdata.c_str());
+            return;
         }
-        // Load user's history
         path_ = userdata + DIR_SEPARATOR_STR + "history";
-#endif
     }
 }
 
