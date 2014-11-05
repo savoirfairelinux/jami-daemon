@@ -702,6 +702,7 @@ call_screenshare(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *pa
 #endif
 }
 
+#ifdef SFL_VIDEO
 static gchar *
 choose_file(void)
 {
@@ -721,7 +722,6 @@ choose_file(void)
     return uri;
 }
 
-#ifdef SFL_VIDEO
 static void
 call_switch_video_input(G_GNUC_UNUSED GtkWidget *widget, gchar *device)
 {
@@ -1224,7 +1224,9 @@ void create_actions(SFLPhoneClient *client)
     g_simple_action_set_enabled(holdAction_, FALSE);
     g_simple_action_set_enabled(recordAction_, FALSE);
     g_simple_action_set_enabled(imAction_, FALSE);
+#ifdef SFL_VIDEO
     g_simple_action_set_enabled(screenshareAction_, FALSE);
+#endif
     g_simple_action_set_enabled(copyAction_, FALSE);
     g_simple_action_set_enabled(pasteAction_, FALSE);
     /* disable tool bar toggle */
