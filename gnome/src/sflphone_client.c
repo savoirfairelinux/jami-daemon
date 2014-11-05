@@ -79,7 +79,7 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
                                 _("Unable to initialize.\nMake sure the daemon is running.\nError: %s"),
                                 error->message);
 
-        gtk_window_set_title(GTK_WINDOW(dialog), _("SFLphone Error"));
+        gtk_window_set_title(GTK_WINDOW(dialog), _("Ring Error"));
         gtk_dialog_run(GTK_DIALOG(dialog));
         gtk_widget_destroy(dialog);
 

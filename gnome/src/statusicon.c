@@ -183,7 +183,7 @@ statusicon_set_tooltip()
         // Add a tooltip to the system tray icon
         int count = account_list_get_registered_accounts();
         gchar *accounts = g_markup_printf_escaped(n_("%i active account", "%i active accounts", count), count);
-        gchar *tip = g_markup_printf_escaped("%s - %s", _("SFLphone"), accounts);
+        gchar *tip = g_markup_printf_escaped("%s - %s", _("Ring"), accounts);
         g_free(accounts);
         gtk_status_icon_set_tooltip_markup(status, tip);
         g_free(tip);

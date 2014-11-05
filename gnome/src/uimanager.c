@@ -587,10 +587,10 @@ help_about(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, g
     gtk_show_about_dialog(GTK_WINDOW(client->win),
             "artists", artists,
             "authors", authors,
-            "comments", _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
+            "comments", _("Ring is a VoIP client compatible with SIP and IAX2 protocols."),
             "copyright", "Copyright © 2004-2014 Savoir-faire Linux Inc.",
             "name", PACKAGE_NAME,
-            "title", _("About SFLphone"),
+            "title", _("About Ring"),
             "version", PACKAGE_VERSION,
             "website", "http://www.sflphone.org",
             NULL);

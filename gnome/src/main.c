@@ -96,7 +96,7 @@ main(int argc, char *argv[])
     bindtextdomain(PACKAGE_NAME, LOCALEDIR);
     textdomain(PACKAGE_NAME);
 
-    g_set_application_name("SFLphone");
+    g_set_application_name("Ring");
     SFLPhoneClient *client = sflphone_client_new();
     GError *err = NULL;
     if (!g_application_register(G_APPLICATION(client), NULL, &err)) {
