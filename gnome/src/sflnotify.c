@@ -62,7 +62,7 @@ create_new_gnome_notification(gchar *title, gchar *body, NotifyUrgency urgency, 
     GnomeNotification notif;
 
     if (g_settings_get_boolean(client->settings, "notify-all")) {
-        notify_init("SFLphone");
+        notify_init("Ring");
 
         // Set struct fields
         notif.notification = notify_notification_new(title, body, NULL);

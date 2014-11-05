@@ -238,7 +238,7 @@ void enable_stun(GtkWidget* widget, account_wizard_t *wiz)
 static void
 build_intro(account_wizard_t *wiz)
 {
-    wiz->intro = create_vbox(wiz->assistant, GTK_ASSISTANT_PAGE_INTRO, "SFLphone GNOME client", _("Welcome to the account registration wizard for SFLphone!"), TRUE);
+    wiz->intro = create_vbox(wiz->assistant, GTK_ASSISTANT_PAGE_INTRO, "Ring GNOME client", _("Welcome to the account registration wizard for Ring!"), TRUE);
     GtkWidget *label = gtk_label_new(_("This wizard will help you configure an existing account."));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
@@ -558,7 +558,7 @@ void build_wizard(void)
 
     wiz->assistant = GTK_ASSISTANT(gtk_assistant_new());
 
-    gtk_window_set_title(GTK_WINDOW(wiz->assistant), _("SFLphone account registration wizard"));
+    gtk_window_set_title(GTK_WINDOW(wiz->assistant), _("Ring account registration wizard"));
     gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200, 200);
 

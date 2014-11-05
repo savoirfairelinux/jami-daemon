@@ -1146,7 +1146,7 @@ create_presence_window(SFLPhoneClient *client, GSimpleAction *action)
     toggle_action = action;
     presence_client = client;
 
-    const gchar * title = _("SFLphone Presence");
+    const gchar * title = _("Ring Presence");
     g_debug("Create window : %s", title);
 
     /*--------------------- Window -------------------------------------*/
