@@ -576,7 +576,14 @@ help_about(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, g
         "Rafaël Carré <rafael.carre@savoirfairelinux.com>",
         "Vivien Didelot <vivien.didelot@savoirfairelinux.com>",
         "Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>",
+        "Adrien Béraud <adrien.beraud@savoirfairelinux.com>",
         "Partick Keroulas <patrick.keroulas@savoirfairelinux.com>",
+        "Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>",
+        "Vittorio Giovara <vittorio.giovara@savoirfairelinux.com>",
+        "Philippe Proulx <philippe.proulx@savoirfairelinux.com>",
+        "Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>",
+        "Philippe Groarke <philippe.groarke@savoirfairelinux.com>",
+        "Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>",
         NULL
     };
     static const gchar *artists[] = {
