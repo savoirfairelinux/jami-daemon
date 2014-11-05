@@ -575,6 +575,7 @@ help_about(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, g
         "Tristan Matthews <tristan.matthews@savoirfairelinux.com>",
         "Rafaël Carré <rafael.carre@savoirfairelinux.com>",
         "Vivien Didelot <vivien.didelot@savoirfairelinux.com>",
+        "Alexandre Lision <alexandre.lision@savoirfairelinux.com>",
         "Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>",
         "Adrien Béraud <adrien.beraud@savoirfairelinux.com>",
         "Partick Keroulas <patrick.keroulas@savoirfairelinux.com>",
