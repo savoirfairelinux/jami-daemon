@@ -89,7 +89,6 @@ DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
 {
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
     nodePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
-    fileutils::check_dir(nodePath_.c_str());
 
     /*  ~/.local/{appname}    */
     fileutils::check_dir(fileutils::get_data_dir().c_str());
@@ -101,7 +100,6 @@ DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
     privkeyPath_ = idPath + DIR_SEPARATOR_STR "id_rsa";
     certPath_ = privkeyPath_ + ".pub";
     dataPath_ = idPath + DIR_SEPARATOR_STR "values";
-    fileutils::check_dir(dataPath_.c_str());
 
     int rc = gnutls_global_init();
     if (rc != GNUTLS_E_SUCCESS) {
@@ -551,6 +549,7 @@ void DHTAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
 {
     if (nodes.empty())
         return;
+    fileutils::check_dir(nodePath_.c_str());
     std::string nodesPath = nodePath_+DIR_SEPARATOR_STR "nodes";
     {
         std::ofstream file(nodesPath, std::ios::trunc);
@@ -565,6 +564,7 @@ void DHTAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
 
 void DHTAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) const
 {
+    fileutils::check_dir(dataPath_.c_str());
     for (const auto& v : values) {
         const std::string fname = dataPath_ + DIR_SEPARATOR_STR + v.first.toString();
         std::ofstream file(fname, std::ios::trunc | std::ios::out | std::ios::binary);
