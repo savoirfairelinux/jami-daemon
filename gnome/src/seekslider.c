@@ -100,7 +100,7 @@ enum
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
-G_DEFINE_TYPE(SFLSeekSlider, sfl_seekslider, GTK_TYPE_HBOX)
+G_DEFINE_TYPE(SFLSeekSlider, sfl_seekslider, GTK_TYPE_BOX)
 
 static void
 sfl_seekslider_class_init(SFLSeekSliderClass *klass)
