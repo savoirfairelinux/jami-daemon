@@ -245,7 +245,9 @@ void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
     switch(frmival.type) {
         case V4L2_FRMIVAL_TYPE_DISCRETE:
             do {
-                rates_.push_back(frmival.discrete.denominator/frmival.discrete.numerator);
+                const float rate = static_cast<float>(frmival.discrete.denominator)
+                    / frmival.discrete.numerator;
+                rates_.push_back(rate);
                 ++frmival.index;
             } while (!ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival));
             break;
