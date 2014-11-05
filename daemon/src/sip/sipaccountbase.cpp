@@ -247,7 +247,7 @@ SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip
             char err_msg[128];
             err_msg[0] = '\0';
             pj_str_t descr = pj_strerror(info->status, err_msg, sizeof(err_msg));
-            transportStatus_ = info ? info->status : PJSIP_SC_OK;
+            transportStatus_ = info->status;
             transportError_  = std::string(descr.ptr, descr.slen);
             SFL_ERR("Transport disconnected: %.*s", descr.slen, descr.ptr);
         }
