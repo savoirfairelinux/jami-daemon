@@ -148,12 +148,12 @@
             <attribute name="label" translatable="yes">_Help</attribute>
             <section>
                 <item>
-                    <attribute name="label" translatable="yes">SFLphone _help</attribute>
+                    <attribute name="label" translatable="yes">Ring _help</attribute>
                     <attribute name="action">app.show-help-contents</attribute>
                     <attribute name="accel">F1</attribute>
                 </item>
                 <item>
-                    <attribute name="label" translatable="yes">_About SFLphone</attribute>
+                    <attribute name="label" translatable="yes">_About Ring</attribute>
                     <attribute name="action">app.show-about</attribute>
                 </item>
             </section>
