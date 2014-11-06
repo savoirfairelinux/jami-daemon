@@ -138,8 +138,11 @@ ManagerImpl::ManagerImpl() :
     , callFactory(), conferenceMap_(), history_(),
     finished_(false), accountFactory_()
 {
-    // initialize random generator for call id
-    srand(time(nullptr));
+    // initialize random generator
+    // mt19937_64 should be seeded with 2 x 32 bits
+    std::random_device rdev;
+    std::seed_seq seed {rdev(), rdev()};
+    rand_.seed(seed);
 }
 
 ManagerImpl::~ManagerImpl()
@@ -2409,15 +2412,15 @@ std::string
 ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 {
     /** @todo Deal with both the accountMap_ and the Configuration */
-
     std::string newAccountID;
+    static std::uniform_int_distribution<uint64_t> rand_acc_id;
 
     const std::vector<std::string> accountList(getAccountList());
 
     do {
-        std::stringstream accountID;
-        accountID << rand();
-        newAccountID = accountID.str();
+        std::ostringstream accId;
+        accId << std::hex << rand_acc_id(rand_);
+        newAccountID = accId.str();
     } while (std::find(accountList.begin(), accountList.end(), newAccountID)
              != accountList.end());
 
@@ -2481,17 +2484,15 @@ ManagerImpl::isValidCall(const std::string& callID)
 std::string
 ManagerImpl::getNewCallID()
 {
-    std::ostringstream random_id("s");
-    random_id << (unsigned) rand();
+    static std::uniform_int_distribution<uint64_t> rand_call_id;
+    std::ostringstream random_id;
 
-    // when it's not found, it return ""
-    // generate, something like s10000s20000s4394040
-
-    while (isValidCall(random_id.str())) {
+    // generate something like s7ea037947eb9fb2f
+    do {
         random_id.clear();
         random_id << "s";
-        random_id << (unsigned) rand();
-    }
+        random_id << rand_call_id(rand_);
+    } while (isValidCall(random_id.str()));
 
     return random_id.str();
 }
