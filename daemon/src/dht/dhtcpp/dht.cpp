@@ -576,7 +576,7 @@ Dht::Search::insertNode(const InfoHash& nid,
     if (!found) {
         if (n == nodes.end() && nodes.size() == SEARCH_NODES)
             return false;
-        n = nodes.insert(n, SearchNode{ .id = nid });
+        n = nodes.insert(n, SearchNode{ nid });
         if (nodes.size() > SEARCH_NODES)
             nodes.pop_back();
     }
