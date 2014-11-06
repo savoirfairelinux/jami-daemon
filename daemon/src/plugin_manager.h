@@ -39,6 +39,7 @@
 #include <memory>
 #include <mutex>
 #include <functional>
+#include <string>
 
 #include <inttypes.h>
 
@@ -146,6 +147,7 @@ class PluginManager
         };
         PluginMap           dynPluginMap_ = {{}}; // Only dynamic loaded plugins
         ExitFuncVec         exitFuncVec_ = {};
+        //std::map<std::string, int> exactMatchMap_ = {{}};
         ObjectFactoryMap    exactMatchMap_ = {{}};
         ObjectFactoryVec    wildCardVec_ = {};
 
