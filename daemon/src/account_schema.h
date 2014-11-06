@@ -102,6 +102,8 @@ static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC     = "TLS.negotiati
 
 // DHT specific parameters
 static const char *const CONFIG_DHT_PORT                        = "DHT.port";
+static const char *const CONFIG_DHT_PRIVKEY_PATH                = "DHT.privkeyPath";
+static const char *const CONFIG_DHT_CERT_PATH                   = "DHT.certificatePath";
 
 // Volatile parameters
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS     = "Account.registrationStatus";
