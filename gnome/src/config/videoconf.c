@@ -686,6 +686,7 @@ attach_combo_box(GtkGrid *grid, const guint row, const gchar *label, GCallback c
     /* Attach the label on left */
     GtkWidget *item = gtk_label_new(_(label));
     gtk_grid_attach(grid, item, 0, row, 1, 1);
+    gtk_widget_set_halign(item, GTK_ALIGN_START);
 
     /* Attach the combo combo on right */
     GtkWidget *combo = gtk_combo_box_text_new();
