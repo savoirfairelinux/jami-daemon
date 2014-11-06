@@ -39,6 +39,7 @@
 #include <memory>
 #include <mutex>
 #include <functional>
+#include <string>
 
 #include <inttypes.h>
 
