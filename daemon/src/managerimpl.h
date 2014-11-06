@@ -46,6 +46,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <random>
 
 #include "client/client.h"
 
@@ -1001,6 +1002,8 @@ class ManagerImpl {
         bool finished_;
 
         AccountFactory accountFactory_;
+
+        std::mt19937_64 rand_;
 
         void loadDefaultAccountMap();
 
