@@ -45,7 +45,6 @@
                                        __LINE__\
                                        );\
                            fflush(stdout);\
-                return err; \
     }
 
 /**
