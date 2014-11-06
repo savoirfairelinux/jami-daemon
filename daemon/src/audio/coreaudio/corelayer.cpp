@@ -109,7 +109,7 @@ void CoreLayer::initAudioLayerPlayback()
     // 4) Initialize everything.
     // 5) Profit...
 
-    DEBUG("INIT AUDIO PLAYBACK");
+    SFL_DBG("INIT AUDIO PLAYBACK");
 
     AudioComponentDescription outputDesc = {0};
     outputDesc.componentType = kAudioUnitType_Output;
@@ -118,7 +118,7 @@ void CoreLayer::initAudioLayerPlayback()
 
     AudioComponent outComp = AudioComponentFindNext(NULL, &outputDesc);
     if (outComp == NULL) {
-        ERROR("Can't find default output audio component.");
+        SFL_ERR("Can't find default output audio component.");
         return;
     }
 
@@ -154,7 +154,7 @@ void CoreLayer::initAudioLayerCapture()
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
     AudioComponent comp = AudioComponentFindNext(NULL, &desc);
     if (comp == NULL)
-        ERROR("Can't find an input HAL unit that matches description.");
+        SFL_ERR("Can't find an input HAL unit that matches description.");
     checkErr(AudioComponentInstanceNew(comp, &inputUnit_));
 
     // HALUnit settings.
@@ -211,22 +211,9 @@ void CoreLayer::initAudioLayerCapture()
 
     const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
 
-/*
-    // Set the output format to slfphone.
-    info.mSampleRate = (Float64)mainBufferFormat.sample_rate;
-
-    size = sizeof(AudioStreamBasicDescription);
-    checkErr(AudioUnitSetProperty(inputUnit_,
-                kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Output,
-                inputBus,
-                &info,
-                size));
-*/
-
     audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
     //hardwareFormatAvailable(audioFormat_);
-    DEBUG("Input format : %d, %d\n\n", audioFormat_.sample_rate, audioFormat_.nb_channels);
+    SFL_DBG("Input format : %d, %d\n\n", audioFormat_.sample_rate, audioFormat_.nb_channels);
 
     // Input buffer setup. Note that ioData is empty and we have to store data
     // in another buffer.
@@ -272,7 +259,7 @@ void CoreLayer::initAudioLayerCapture()
 void CoreLayer::startStream()
 {
 
-    DEBUG("START STREAM");
+    SFL_DBG("START STREAM");
     dcblocker_.reset();
 
     if (is_playback_running_ and is_capture_running_)
@@ -295,7 +282,7 @@ void CoreLayer::destroyAudioLayer()
 
 void CoreLayer::stopStream()
 {
-    DEBUG("STOP STREAM");
+    SFL_DBG("STOP STREAM");
 
     isStarted_ = is_playback_running_ = is_capture_running_ = false;
 
@@ -320,12 +307,9 @@ void CoreLayer::initAudioFormat()
             0,
             &info,
             &size));
-    DEBUG("Soundcard reports: %dKHz, %d channels.", (unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame);
 
     audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
     hardwareFormatAvailable(audioFormat_);
-
-    DEBUG("audioFormat_ set to: %dKHz, %d channels.", audioFormat_.sample_rate, audioFormat_.nb_channels);
 }
 
 
@@ -348,7 +332,7 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
 
     if (framesToGet <= 0) {
-        //WARN("Not enough samples to play audio.");
+        //SFL_WARN("Not enough samples to play audio.");
         for (int i = 0; i < inNumberFrames; ++i) {
             Float32* outDataL = (Float32*)ioData->mBuffers[0].mData;
             outDataL[i] = 0.0;
@@ -391,10 +375,10 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    //DEBUG("INPUT CALLBACK");
+    //SFL_DBG("INPUT CALLBACK");
 
     if (inNumberFrames <= 0) {
-        WARN("No frames for input.");
+        SFL_WARN("No frames for input.");
         return;
     }
 
@@ -406,27 +390,38 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
             inNumberFrames,
             captureBuff_));
 
+
+    AudioStreamBasicDescription info;
+    UInt32 size = sizeof(AudioStreamBasicDescription);
+    checkErr(AudioUnitGetProperty(inputUnit_,
+                kAudioUnitProperty_StreamFormat,
+                kAudioUnitScope_Output,
+                inBusNumber,
+                &info,
+                &size));
+
+
     // Add them to sflphone ringbuffer.
     const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    bool resample = audioFormat_.sample_rate != mainBufferFormat.sample_rate;
+    bool resample = info.mSampleRate != mainBufferFormat.sample_rate;
 
-    //printf("In: %d, %d. SFLPhone: %d, %d.\n", audioFormat_.sample_rate, audioFormat_.nb_channels, mainBufferFormat.sample_rate, mainBufferFormat.nb_channels);
 
-    // Copy initial data (ex: 44100, float32);
     // FIXME: Performance! There *must* be a better way. This is testing only.
     AudioBuffer inBuff(inNumberFrames, audioFormat_);
 
-    for (int i = 0; i < audioFormat_.nb_channels; ++i) {
+    for (int i = 0; i < info.mChannelsPerFrame; ++i) {
         Float32* data = (Float32*)captureBuff_->mBuffers[i].mData;
         for (int j = 0; j < inNumberFrames; ++j) {
             (*inBuff.getChannel(i))[j] = (SFLAudioSample)((data)[j] / .000030517578125f);
-            //printf("%d ", (*inBuff.getChannel(i))[j]);
         }
     }
 
     if (resample) {
-        WARN("Resampling Input.");
-        int outSamples = inBuff.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
+        //SFL_WARN("Resampling Input.");
+
+        //FIXME: May be a multiplication, check alsa vs pulse implementation.
+        int outSamples = inNumberFrames / (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
+
         AudioBuffer out(outSamples, mainBufferFormat);
         resampler_->resample(inBuff, out);
         dcblocker_.process(out);
