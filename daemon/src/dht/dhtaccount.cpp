@@ -96,10 +96,8 @@ DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
     /*  ~/.local/{appname}/{accountID}    */
     const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     fileutils::check_dir(idPath.c_str());
-
-    privkeyPath_ = idPath + DIR_SEPARATOR_STR "id_rsa";
-    certPath_ = privkeyPath_ + ".pub";
     dataPath_ = idPath + DIR_SEPARATOR_STR "values";
+    checkIdentityPath();
 
     int rc = gnutls_global_init();
     if (rc != GNUTLS_E_SUCCESS) {
@@ -331,6 +329,18 @@ void DHTAccount::unserialize(const YAML::Node &node)
     dhtPort_ = port;
     parseValue(node, Conf::DHT_PRIVKEY_PATH_KEY, privkeyPath_);
     parseValue(node, Conf::DHT_CERT_PATH_KEY, certPath_);
+    checkIdentityPath();
+}
+
+void
+DHTAccount::checkIdentityPath()
+{
+    if (not privkeyPath_.empty() and not dataPath_.empty())
+        return;
+
+    const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
+    privkeyPath_ = idPath + DIR_SEPARATOR_STR "id_rsa";
+    certPath_ = privkeyPath_ + ".pub";
 }
 
 dht::crypto::Identity
@@ -449,6 +459,9 @@ void DHTAccount::setAccountDetails(const std::map<std::string, std::string> &det
 {
     SIPAccountBase::setAccountDetails(details);
     parseInt(details, CONFIG_DHT_PORT, dhtPort_);
+    parseString(details, CONFIG_DHT_PRIVKEY_PATH, privkeyPath_);
+    parseString(details, CONFIG_DHT_CERT_PATH, certPath_);
+    checkIdentityPath();
 }
 
 std::map<std::string, std::string> DHTAccount::getAccountDetails() const
@@ -458,7 +471,8 @@ std::map<std::string, std::string> DHTAccount::getAccountDetails() const
     std::stringstream dhtport;
     dhtport << dhtPort_;
     a[CONFIG_DHT_PORT] = dhtport.str();
-
+    a[CONFIG_DHT_PRIVKEY_PATH] = privkeyPath_;
+    a[CONFIG_DHT_CERT_PATH] = certPath_;
     return a;
 }
 

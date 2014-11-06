@@ -287,15 +287,20 @@ class DHTAccount : public SIPAccountBase {
         std::string dataPath_ {};
 
         /**
-         * If identityPath_ is a valid private key file (PEM or DER),
-         * load and returns it. Otherwise, generate one.
-         * Check if the given path contains a valid private key.
-         * @return the key if a valid private key exists there, nullptr otherwise.
+         * Validate the values for privkeyPath_ and certPath_.
+         * If one of these fields is empty, reset them to the default values.
          */
+        void checkIdentityPath();
+
         void saveIdentity(const dht::crypto::Identity id) const;
         void saveNodes(const std::vector<dht::Dht::NodeExport>&) const;
         void saveValues(const std::vector<dht::Dht::ValuesExport>&) const;
 
+        /**
+         * If privkeyPath_ is a valid private key file (PEM or DER),
+         * and certPath_ a valid certificate file, load and returns them.
+         * Otherwise, generate a new identity and returns it.
+         */
         dht::crypto::Identity loadIdentity() const;
         std::vector<dht::Dht::NodeExport> loadNodes() const;
         std::vector<dht::Dht::ValuesExport> loadValues() const;

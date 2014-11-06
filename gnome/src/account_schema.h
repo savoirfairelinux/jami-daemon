@@ -103,4 +103,9 @@ static const char *const CONFIG_TLS_VERIFY_CLIENT               = "TLS.verifyCli
 static const char *const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE  = "TLS.requireClientCertificate";
 static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC     = "TLS.negotiationTimeoutSec";
 
+// DHT specific parameters
+static const char *const CONFIG_DHT_PORT                        = "DHT.port";
+static const char *const CONFIG_DHT_PRIVKEY_PATH                = "DHT.privkeyPath";
+static const char *const CONFIG_DHT_CERT_PATH                   = "DHT.certificatePath";
+
 #endif // ACCOUNT_SCHEMA_H_
