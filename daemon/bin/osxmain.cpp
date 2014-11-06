@@ -137,9 +137,9 @@ void myOnIncomingCall(const std::string& acc_id, const std::string& call_id, con
         ", Id: " << call_id <<
         ", From: " << from << std::endl << std::endl;
 
-    //sflph_call_accept(call_id);
+    sflph_call_accept(call_id);
     sflph_call_set_recording(call_id);
-    sflph_call_join_participant(call_id, "patate");
+    //sflph_call_join_participant(call_id, "patate");
 }
 
 static int osxTests()
@@ -159,34 +159,25 @@ static int osxTests()
 
     sflph_init(&evHandlers, static_cast<sflph_init_flag>(sflphFlags));
 
-    //sflph_call_play_dtmf("0");
-    //sleep(1);
-    //sflph_call_play_dtmf("1");
-    //sleep(1);
+    sflph_call_play_dtmf("0");
+    sleep(1);
+    sflph_call_play_dtmf("1");
+    sleep(1);
 
-    sflph_call_place("IP2IP", "patate", "127.0.0.1");
-    sflph_call_set_recording("patate");
+    //sflph_call_place("IP2IP", "patate", "127.0.0.1");
+    //sflph_call_set_recording("patate");
 
     while (true) {
         sflph_poll_events();
         sleep(1);
     }
 
-    std::cout << "Recording call: " << std::boolalpha
-        << sflph_call_is_recording("patate") << std::endl;
-    std::cout << "Record path: " << sflph_config_get_record_path() << std::endl;
-
-
-    // Debug info
-    //  for (auto x : sflph_config_get_account_details("IP2IP"))
-    //std::cout << x.first << "    " << x.second << std::endl;
-
     sflph_fini();
 }
 static int run()
 {
     osxTests();
-    return 1;
+    return 0;
 }
 
 static void interrupt()
