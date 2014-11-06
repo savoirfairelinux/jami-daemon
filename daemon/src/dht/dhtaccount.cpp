@@ -594,6 +594,7 @@ DHTAccount::loadNodes() const
             nodes.push_back(e);
         }
     }
+    return nodes;
 }
 
 std::vector<dht::Dht::ValuesExport>

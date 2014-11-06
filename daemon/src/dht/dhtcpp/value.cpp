@@ -164,6 +164,7 @@ std::ostream& operator<< (std::ostream& s, const ServiceAnnouncement& v)
             s << " addr " << std::string(hbuf, strlen(hbuf));
         }
     }
+    return s;
 }
 
 void

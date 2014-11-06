@@ -109,7 +109,7 @@ public:
      */
     bool insertNode(const InfoHash& id, const sockaddr*, socklen_t);
     bool insertNode(const NodeExport& n) {
-        insertNode(n.id, reinterpret_cast<const sockaddr*>(&n.ss), n.sslen);
+        return insertNode(n.id, reinterpret_cast<const sockaddr*>(&n.ss), n.sslen);
     }
 
     int pingNode(const sockaddr*, socklen_t);
