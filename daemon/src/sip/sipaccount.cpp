@@ -49,19 +49,19 @@
 
 #ifdef SFL_PRESENCE
 #include "sippresence.h"
-#include "client/configurationmanager.h"
 #endif
-
-#include <yaml-cpp/yaml.h>
 
 #include "account_schema.h"
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "manager.h"
+#include "client/configurationmanager.h"
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
 #endif
+
+#include <yaml-cpp/yaml.h>
 
 #include <unistd.h>
 #include <pwd.h>
@@ -479,14 +479,14 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     if (not isIP2IP()) parseValue(node, KEEP_ALIVE_ENABLED, keepAliveEnabled_);
 
+#ifdef SFL_PRESENCE
     bool presEnabled = false;
     parseValue(node, PRESENCE_MODULE_ENABLED_KEY, presEnabled);
-    enablePresence(presEnabled);
     bool publishSupported = false;
     parseValue(node, PRESENCE_PUBLISH_SUPPORTED_KEY, publishSupported);
     bool subscribeSupported = false;
     parseValue(node, PRESENCE_SUBSCRIBE_SUPPORTED_KEY, subscribeSupported);
-#ifdef SFL_PRESENCE
+    enablePresence(presEnabled);
     if (presence_) {
         presence_->support(PRESENCE_FUNCTION_PUBLISH, publishSupported);
         presence_->support(PRESENCE_FUNCTION_SUBSCRIBE, subscribeSupported);
