@@ -308,7 +308,7 @@ selection_changed_cb(GtkIconView *view, G_GNUC_UNUSED gpointer user_data)
 /*
  * Get an 48x48 icon from the default theme.
  */
-static GdkPixbuf *get_icon(const gchar *name, GtkWidget *widget)
+static GdkPixbuf *get_icon(const gchar *name)
 {
     GError *error = NULL;
     GtkIconTheme *theme = gtk_icon_theme_get_default();
@@ -321,7 +321,7 @@ static GdkPixbuf *get_icon(const gchar *name, GtkWidget *widget)
     return pixbuf;
 }
 
-static GtkTreeModel* create_model(GtkWidget *widget)
+static GtkTreeModel* create_model()
 {
     static const struct {
         gchar* icon_descr;
@@ -352,7 +352,7 @@ static GtkTreeModel* create_model(GtkWidget *widget)
 
     for (gint i = 0; i < nb_entries; ++i) {
         gtk_list_store_append (store, &iter);
-        pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
+        pixbuf = get_icon(browser_entries_full[i].icon_name);
         gtk_list_store_set(store, &iter,
                            PIXBUF_COL, pixbuf,
                            TEXT_COL, _(browser_entries_full[i].icon_descr),
@@ -403,7 +403,7 @@ show_preferences_dialog(SFLPhoneClient *client)
     GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 
     // Create tree view
-    iconview = gtk_icon_view_new_with_model(create_model(hbox));
+    iconview = gtk_icon_view_new_with_model(create_model());
     g_object_set (iconview,
                   "selection-mode", GTK_SELECTION_BROWSE,
                   "text-column", TEXT_COL,
