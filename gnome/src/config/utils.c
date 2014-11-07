@@ -33,28 +33,15 @@
 
 void gnome_main_section_new_with_grid(const gchar *title, GtkWidget **frame, GtkWidget **grid)
 {
-    PangoAttrList *attrs = pango_attr_list_new();
-    PangoAttribute *attr = pango_attr_weight_new(PANGO_WEIGHT_BOLD);
-    attr->start_index = 0;
-    attr->end_index = -1;
-    pango_attr_list_insert(attrs, attr);
-
-    *frame = gtk_frame_new(title);
-    gtk_frame_set_shadow_type(GTK_FRAME(*frame), GTK_SHADOW_NONE);
-    gtk_container_set_border_width(GTK_CONTAINER(*frame), 2);
-
-    GtkWidget *label = gtk_frame_get_label_widget(GTK_FRAME(*frame));
-    gtk_label_set_attributes(GTK_LABEL(label), attrs);
-    pango_attr_list_unref(attrs);
-
-    GtkWidget *align = gtk_alignment_new(0.08, 0.2, 0.1, 0.1);
-    gtk_container_add(GTK_CONTAINER(*frame), align);
+    *frame = gnome_main_section_new(title);
+    gtk_widget_show(*frame);
 
     *grid = gtk_grid_new();
-    gtk_grid_set_row_spacing(GTK_GRID(*grid), 2);
-    gtk_grid_set_column_spacing(GTK_GRID(*grid), 2);
+    gtk_grid_set_row_spacing(GTK_GRID(*grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(*grid), 10);
     gtk_widget_show(*grid);
-    gtk_container_add(GTK_CONTAINER(align), *grid);
+    gtk_container_add(GTK_CONTAINER(*frame), *grid);
+    gtk_container_set_border_width(GTK_CONTAINER(*grid), 10);
 }
 
 

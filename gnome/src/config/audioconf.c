@@ -544,7 +544,8 @@ static GtkWidget* alsa_box()
     gtk_widget_show(alsa_hbox);
 
     GtkWidget *grid = gtk_grid_new();
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 40);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
     gtk_box_pack_start(GTK_BOX(alsa_hbox), grid, TRUE, TRUE, 1);
     gtk_widget_show(grid);
 
@@ -649,7 +650,8 @@ static GtkWidget* pulse_box()
     gtk_widget_show(pulse_hbox);
 
     GtkWidget *grid = gtk_grid_new();
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 40);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
     gtk_box_pack_start(GTK_BOX(pulse_hbox), grid, TRUE, TRUE, 1);
     gtk_widget_show(grid);
 
@@ -883,6 +885,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pulse_button), using_pulse);
     g_signal_connect(G_OBJECT(pulse_button), "toggled", G_CALLBACK(pulse_toggled), client);
     gtk_grid_attach(GTK_GRID(grid), pulse_button, 0, 0, 1, 1);
+    gtk_misc_set_alignment(GTK_MISC(pulse_button), 0, 0.5);
 
     // Box for the Pulse configuration
     pulse_conf = gnome_main_section_new(_("Pulseaudio settings"));
