@@ -67,6 +67,7 @@
 static GtkWidget *entry_alias;
 static GtkWidget *type_combo;
 static GtkWidget *entry_username;
+static GtkWidget *entry_portnumber;
 static GtkWidget *entry_route_set;
 static GtkWidget *entry_hostname;
 static GtkWidget *entry_password;
@@ -136,6 +137,7 @@ static void reset()
     type_combo = NULL;
     entry_hostname = NULL;
     entry_username = NULL;
+    entry_portnumber = NULL;
     entry_password = NULL;
     entry_user_agent = NULL;
     entry_mailbox = NULL;
@@ -452,6 +454,23 @@ create_parameters_frame(account_t *account, GtkWidget* account_combo)
         g_object_set_data(G_OBJECT(entry_username), "column",
                           GINT_TO_POINTER(COLUMN_CREDENTIAL_USERNAME));
     }
+
+    /* again, we can put the port number label and entry in the same
+     * place in the grid as the user name, as only one or the other
+     * will be displayed */
+    label = gtk_label_new_with_mnemonic(_("_Port number"));
+    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    entry_portnumber = gtk_entry_new();
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_portnumber);
+    const gchar *portnumber = account_lookup(account, CONFIG_DHT_PORT);
+    gtk_entry_set_text(GTK_ENTRY(entry_portnumber), portnumber);
+    gtk_grid_attach(GTK_GRID(grid), entry_portnumber, 1, row, 1, 1);
+    /* show for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(show_widget_for_dht), label);
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(show_widget_for_dht), entry_portnumber);
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_Password"));
@@ -1603,6 +1622,9 @@ static void update_account_from_basic_tab(account_t *account)
             account_replace(account, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(entry_username)));
             account_replace(account, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entry_password)));
             account_replace(account, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(entry_mailbox)));
+        } else {
+            /* DHT account */
+            account_replace(account, CONFIG_DHT_PORT, gtk_entry_get_text(GTK_ENTRY(entry_portnumber)));
         }
     }
 
