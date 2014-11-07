@@ -596,7 +596,7 @@ bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
 }
 
 
-void ConfigurationManager::volumeChanged(const std::string& device, int value)
+void ConfigurationManager::volumeChanged(const std::string& device, double value)
 {
     if (evHandlers_.on_volume_change) {
         evHandlers_.on_volume_change(device, value);

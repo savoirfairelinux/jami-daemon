@@ -146,7 +146,7 @@ class ConfigurationManager
 
     // Signals
     public:
-        void volumeChanged(const std::string& device, int value);
+        void volumeChanged(const std::string& device, double value);
 
         void accountsChanged();
 

@@ -56,7 +56,7 @@ struct sflph_pres_ev_handlers
 /* configuration events */
 struct sflph_config_ev_handlers
 {
-    std::function<void (const std::string& /*device*/, int /*value*/)> on_volume_change;
+    std::function<void (const std::string& /*device*/, double /*value*/)> on_volume_change;
     std::function<void ()> on_accounts_change;
     std::function<void ()> on_history_change;
     std::function<void (const std::string& /*account_id*/)> on_stun_status_fail;
