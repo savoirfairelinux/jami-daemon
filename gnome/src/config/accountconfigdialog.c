@@ -166,36 +166,66 @@ static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
     gtk_entry_set_visibility(GTK_ENTRY(data), !gtk_entry_get_visibility(GTK_ENTRY(data)));
 }
 
-/* Signal to type_combo 'changed' */
-static void change_type_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
+/* hide widget when dht account type is selected */
+static void hide_widget_for_dht(GtkComboBox *combo_box, gpointer widget)
 {
-    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type_combo));
+    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_box));
+    if (utf8_case_equal(type, "DHT")) {
+        gtk_widget_hide(GTK_WIDGET(widget));
+    } else {
+        gtk_widget_show(GTK_WIDGET(widget));
+    }
+    g_free(type);
+}
+
+/* show widget when dht account type is selected */
+static void show_widget_for_dht(GtkComboBox *combo_box, gpointer widget)
+{
+    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_box));
+    if (utf8_case_equal(type, "DHT")) {
+        gtk_widget_show(GTK_WIDGET(widget));
+    } else {
+        gtk_widget_hide(GTK_WIDGET(widget));
+    }
+    g_free(type);
+}
+
+/* show widget when sip account type is selected */
+static void show_widget_for_sip(GtkComboBox *combo_box, gpointer widget)
+{
+    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_box));
+    if (utf8_case_equal(type, "SIP")) {
+        gtk_widget_show(GTK_WIDGET(widget));
+    } else {
+        gtk_widget_hide(GTK_WIDGET(widget));
+    }
+    g_free(type);
+}
+
+/* Signal to type_combo 'changed' */
+static void change_type_cb(GtkComboBox *combo_box, gpointer data)
+{
+    gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_box));
     account_t * account = data;
 
     if(!account)
         return;
 
-    // Only if tabs are not NULL
+    /* display tabs based on selected account type */
     if (security_tab && advanced_tab) {
         if (utf8_case_equal(type, "IAX")) {
             gtk_widget_hide(security_tab);
             gtk_widget_hide(advanced_tab);
-        } else {
+        } else if (utf8_case_equal(type, "DHT")) {
+            gtk_widget_hide(security_tab);
+            gtk_widget_show(advanced_tab);
+        } else if (utf8_case_equal(type, "SIP")) {
             gtk_widget_show(security_tab);
             gtk_widget_show(advanced_tab);
         }
     }
 
-    gboolean is_dht = utf8_case_equal(type, "DHT")? TRUE : FALSE;
-    gtk_widget_set_sensitive(entry_username, !is_dht);
-    gtk_widget_set_sensitive(entry_password, !is_dht);
-    gtk_widget_set_sensitive(entry_route_set, !is_dht);
-    gtk_widget_set_sensitive(entry_mailbox, !is_dht);
-    gtk_widget_set_sensitive(entry_user_agent,
-            (!is_dht && account_has_custom_user_agent(account)));
-    gtk_widget_set_sensitive(clearTextcheck_box, !is_dht);
-    gtk_widget_set_sensitive(auto_answer_checkbox, !is_dht);
-    gtk_widget_set_sensitive(user_agent_checkbox, !is_dht);
+    gtk_widget_set_sensitive(entry_user_agent, account_has_custom_user_agent(account));
 
 #ifdef SFL_PRESENCE
     if (utf8_case_equal(type, "SIP")) {
@@ -267,19 +297,19 @@ static void update_credential_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 static GtkWidget*
 create_auto_answer_checkbox(const account_t *account)
 {
-    auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
-    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
-    return auto_answer_checkbox;
+    GtkWidget *checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbox), account_has_autoanswer_on(account));
+    g_signal_connect(checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
+    return checkbox;
 }
 
 static GtkWidget*
 create_user_agent_checkbox(const account_t *account)
 {
-    user_agent_checkbox = gtk_check_button_new_with_mnemonic(_("_Use custom user-agent"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(user_agent_checkbox), account_has_custom_user_agent(account));
-    g_signal_connect(user_agent_checkbox, "toggled", G_CALLBACK(user_agent_checkbox_cb), (gpointer) account);
-    return user_agent_checkbox;
+    GtkWidget *checkbox = gtk_check_button_new_with_mnemonic(_("_Use custom user-agent"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbox), account_has_custom_user_agent(account));
+    g_signal_connect(checkbox, "toggled", G_CALLBACK(user_agent_checkbox_cb), (gpointer) account);
+    return checkbox;
 }
 
 static void
@@ -290,29 +320,40 @@ alias_changed_cb(GtkEditable *editable, gpointer data)
     gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_APPLY, !!strlen(alias));
 }
 
+static GtkWidget*
+create_accout_type_combo_box(const account_t *account, gboolean is_new)
+{
+    GtkWidget *account_combo = gtk_combo_box_text_new();
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(account_combo), "SIP");
+    if (dbus_is_iax2_enabled())
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(account_combo), "IAX");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(account_combo), "DHT");
+
+    if (account_is_SIP(account))
+        gtk_combo_box_set_active(GTK_COMBO_BOX(account_combo), 0);
+    else if (account_is_IAX(account))
+        gtk_combo_box_set_active(GTK_COMBO_BOX(account_combo), 1);
+    else if (account_is_DHT(account))
+        gtk_combo_box_set_active(GTK_COMBO_BOX(account_combo), 2);
+    else {
+        g_warning("Account type not valid");
+        /* Should never come here, add debug message. */
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(account_combo), _("Unknown"));
+        gtk_combo_box_set_active(GTK_COMBO_BOX(account_combo), 3);
+    }
+
+    /* Can't change account type after creation */
+    if (!is_new)
+        gtk_widget_set_sensitive(account_combo, FALSE);
+
+    return account_combo;
+}
 
 static GtkWidget*
-create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog)
+create_account_frame(account_t *account, GtkWidget* account_combo, GtkWidget *dialog)
 {
-    g_assert(account);
-    gchar *password = NULL;
-    if (account_is_SIP(account)) {
-        /* get password from credentials list */
-        if (account->credential_information) {
-            GHashTable * element = g_ptr_array_index(account->credential_information, 0);
-            password = g_hash_table_lookup(element, CONFIG_ACCOUNT_PASSWORD);
-        }
-    } else
-        password = account_lookup(account, CONFIG_ACCOUNT_PASSWORD);
-
-    GtkWidget *frame = gnome_main_section_new(_("Account Parameters"));
-    gtk_widget_show(frame);
-
-    GtkWidget *grid = gtk_grid_new();
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
-    gtk_widget_show(grid);
-    gtk_container_add(GTK_CONTAINER(frame), grid);
+    GtkWidget *frame, *grid;
+    gnome_main_section_new_with_grid(_("Account"), &frame, &grid);
 
     GtkWidget *label = gtk_label_new_with_mnemonic(_("_Alias"));
     gint row = 0;
@@ -332,38 +373,38 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     label = gtk_label_new_with_mnemonic(_("_Type"));
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    type_combo = gtk_combo_box_text_new();
-    gtk_label_set_mnemonic_widget(GTK_LABEL(label), type_combo);
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(type_combo), "SIP");
-    if (dbus_is_iax2_enabled())
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(type_combo), "IAX");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(type_combo), "DHT");
 
-    if (account_is_SIP(account))
-        gtk_combo_box_set_active(GTK_COMBO_BOX(type_combo), 0);
-    else if (account_is_IAX(account))
-        gtk_combo_box_set_active(GTK_COMBO_BOX(type_combo), 1);
-    else if (account_is_DHT(account))
-        gtk_combo_box_set_active(GTK_COMBO_BOX(type_combo), 2);
-    else {
-        g_warning("Account type not valid");
-        /* Should never come here, add debug message. */
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(type_combo), _("Unknown"));
-        gtk_combo_box_set_active(GTK_COMBO_BOX(type_combo), 3);
-    }
-
-    /* Can't change account type after creation */
-    if (!is_new)
-        gtk_widget_set_sensitive(type_combo, FALSE);
-
-    gtk_grid_attach(GTK_GRID(grid), type_combo, 1, row, 1, 1);
+    /* put the account type combo box in */
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), account_combo);
+    gtk_grid_attach(GTK_GRID(grid), account_combo, 1, row, 1, 1);
 
     /* Link signal 'changed' */
-    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(type_combo)), "changed",
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(account_combo)), "changed",
                      G_CALLBACK(change_type_cb), account);
 
-    row++;
-    label = gtk_label_new_with_mnemonic(_("_Host name"));
+    gtk_widget_show_all(grid);
+    return frame;
+}
+
+static GtkWidget*
+create_parameters_frame(account_t *account, GtkWidget* account_combo)
+{
+    g_assert(account);
+    gchar *password = NULL;
+    if (account_is_SIP(account)) {
+        /* get password from credentials list */
+        if (account->credential_information) {
+            GHashTable * element = g_ptr_array_index(account->credential_information, 0);
+            password = g_hash_table_lookup(element, CONFIG_ACCOUNT_PASSWORD);
+        }
+    } else
+        password = account_lookup(account, CONFIG_ACCOUNT_PASSWORD);
+
+    GtkWidget *frame, *grid;
+    gnome_main_section_new_with_grid(_("Parameters"), &frame, &grid);
+
+    gint row = 0;
+    GtkWidget *label = gtk_label_new_with_mnemonic(_("_Host name"));
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entry_hostname = gtk_entry_new();
@@ -371,7 +412,20 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     const gchar *hostname = account_lookup(account, CONFIG_ACCOUNT_HOSTNAME);
     gtk_entry_set_text(GTK_ENTRY(entry_hostname), hostname);
     gtk_grid_attach(GTK_GRID(grid), entry_hostname, 1, row, 1, 1);
+    /* hide (the label) for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), label);
 
+    /* here we simply want to change the label for the DHT account type,
+     * but the entry stays the same; so we put the label in the same spot
+     * as the 'host name' label, and show/hide each one according to the
+     * account type selected via callbacks */
+    label = gtk_label_new_with_mnemonic(_("_Bootstrap"));
+    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    /* show for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(show_widget_for_dht), label);
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_User name"));
@@ -386,6 +440,11 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     gchar *username = account_lookup(account, CONFIG_ACCOUNT_USERNAME);
     gtk_entry_set_text(GTK_ENTRY(entry_username), username);
     gtk_grid_attach(GTK_GRID(grid), entry_username, 1, row, 1, 1);
+    /* hide for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), label);
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), entry_username);
 
     if (account_is_SIP(account)) {
         g_signal_connect(G_OBJECT(entry_username), "changed",
@@ -401,6 +460,11 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     entry_password = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name(GTK_ENTRY(entry_password),
             GTK_ENTRY_ICON_PRIMARY, "dialog-password");
+    /* hide for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), label);
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), entry_password);
 
     gtk_entry_set_visibility(GTK_ENTRY(entry_password), FALSE);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_password);
@@ -417,6 +481,9 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     clearTextcheck_box = gtk_check_button_new_with_mnemonic(_("Show password"));
     g_signal_connect(clearTextcheck_box, "toggled", G_CALLBACK(show_password_cb), entry_password);
     gtk_grid_attach(GTK_GRID(grid), clearTextcheck_box, 1, row, 1, 1);
+    /* hide for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), clearTextcheck_box);
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_Proxy"));
@@ -427,6 +494,11 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     gchar *route_set = account_lookup(account, CONFIG_ACCOUNT_ROUTESET);
     gtk_entry_set_text(GTK_ENTRY(entry_route_set), route_set);
     gtk_grid_attach(GTK_GRID(grid), entry_route_set, 1, row, 1, 1);
+    /* hide for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), label);
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), entry_route_set);
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_Voicemail number"));
@@ -438,6 +510,11 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     mailbox = mailbox ? mailbox : "";
     gtk_entry_set_text(GTK_ENTRY(entry_mailbox), mailbox);
     gtk_grid_attach(GTK_GRID(grid), entry_mailbox, 1, row, 1, 1);
+    /* hide for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), label);
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), entry_mailbox);
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_User-agent"));
@@ -448,20 +525,29 @@ create_account_parameters(account_t *account, gboolean is_new, GtkWidget *dialog
     gchar *user_agent = account_lookup(account, CONFIG_ACCOUNT_USERAGENT);
     gtk_entry_set_text(GTK_ENTRY(entry_user_agent), user_agent);
     gtk_grid_attach(GTK_GRID(grid), entry_user_agent, 1, row, 1, 1);
+    /* hide for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), label);
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), entry_user_agent);
 
     gtk_widget_set_sensitive(entry_user_agent, account_has_custom_user_agent(account));
 
     row++;
-    GtkWidget *user_agent_checkbox = create_user_agent_checkbox(account);
+    user_agent_checkbox = create_user_agent_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), user_agent_checkbox, 0, row, 1, 1);
+    /* hide for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), user_agent_checkbox);
 
     row++;
-    GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
+    auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), auto_answer_checkbox, 0, row, 1, 1);
+    /* hide for DHT account */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(hide_widget_for_dht), auto_answer_checkbox);
 
     gtk_widget_show_all(grid);
-    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
-
     return frame;
 }
 
@@ -471,14 +557,8 @@ create_presence_checkbox(const account_t *account)
 {
     g_assert(account);
 
-    GtkWidget *frame = gnome_main_section_new(_("Presence notifications"));
-    gtk_widget_show(frame);
-
-    GtkWidget *grid = gtk_grid_new();
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
-    gtk_widget_show(grid);
-    gtk_container_add(GTK_CONTAINER(frame), grid);
+    GtkWidget *frame, *grid;
+    gnome_main_section_new_with_grid(_("Presence notifications"), &frame, &grid);
 
     presence_check_box = gtk_check_button_new_with_mnemonic(_("_Enable"));
 
@@ -489,8 +569,6 @@ create_presence_checkbox(const account_t *account)
     gtk_grid_attach(GTK_GRID(grid), presence_check_box, 0, 0, 1, 1);
 
     gtk_widget_show_all(grid);
-    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
-
     return frame;
 }
 #endif
@@ -502,16 +580,27 @@ create_basic_tab(account_t *account, gboolean is_new, GtkWidget *dialog)
     g_debug("Build basic tab");
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
-    GtkWidget *frame = create_account_parameters(account, is_new, dialog);
+    /* text combo box to select account type */
+    type_combo = create_accout_type_combo_box(account, is_new);
+
+    /* Account Type farme */
+    GtkWidget *frame = create_account_frame(account, type_combo, dialog);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+
+    /* Account Parameters frame */
+    frame = create_parameters_frame(account, type_combo);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
 #ifdef SFL_PRESENCE
+    /* Presence notifications frame */
     frame = create_presence_checkbox(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
     is_account_new = is_new; // need a copy for a cb
+    /* show only for SIP account */
+    g_signal_connect(G_OBJECT(type_combo), "changed",
+                     G_CALLBACK(show_widget_for_sip), frame);
 #endif
 
     gtk_widget_show_all(vbox);
@@ -1226,6 +1315,9 @@ GtkWidget* create_advanced_tab(const account_t *account)
     if (!account_is_IP2IP(account)) {
         frame = create_registration_expire(account);
         gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+        /* hide for DHT account type */
+        g_signal_connect(G_OBJECT(type_combo), "changed",
+                         G_CALLBACK(hide_widget_for_dht), frame);
     }
 
     frame = create_network(account);
@@ -1405,7 +1497,7 @@ static GtkWidget* create_direct_ip_calls_tab(account_t *account)
     gtk_widget_set_size_request(label, 350, -1);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 
-    GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
+    auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_box_pack_start(GTK_BOX(vbox), auto_answer_checkbox, FALSE, FALSE, 0);
 
     gtk_widget_show_all(vbox);
