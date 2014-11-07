@@ -1,6 +1,6 @@
 # UCOMMON
-UCOMMON_VERSION := 6.2.1
-UCOMMON_URL := $(GNUTELEPHONY)/ucommon/archive/v$(UCOMMON_VERSION).tar.gz
+UCOMMON_VERSION := static_analysis_fixes
+UCOMMON_URL := https://github.com/tmatth/ucommon/archive/$(UCOMMON_VERSION).tar.gz
 
 UCOMMON_OPTIONS := --enable-stdcpp --with-pkg-config --disable-utils --disable-tests
 
