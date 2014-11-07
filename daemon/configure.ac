@@ -120,10 +120,9 @@ AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 dnl Check for header files
 AC_FUNC_ALLOCA
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h malloc.h memory.h \
-                  netdb.h netinet/in.h stdlib.h string.h strings.h \
-                  sys/ioctl.h sys/socket.h sys/time.h unistd.h utime.h \
-                  ostream getopt.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h \
+                  netdb.h netinet/in.h stdlib.h string.h \
+                  sys/ioctl.h sys/socket.h sys/time.h unistd.h])
 
 dnl Check for typedefs, structures, and compiler characteristics
 AC_HEADER_STAT
