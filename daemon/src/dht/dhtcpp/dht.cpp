@@ -321,7 +321,7 @@ Dht::pinged(Node& n, Bucket *b)
 void
 Dht::blacklistNode(const InfoHash* id, const sockaddr *sa, socklen_t salen)
 {
-    SFL_DBG("Blacklisting broken node.");
+    SFL_WARN("Blacklisting broken node.");
 
     if (id) {
         /* Make the node easy to discard. */
@@ -405,8 +405,6 @@ Dht::newNode(const InfoHash& id, const sockaddr *sa, socklen_t salen, int confir
     if (confirm == 2)
         b->time = now.tv_sec;
 
-    SFL_DBG("Dht::newNode %s", id.toString().c_str());
-
     for (auto& n : b->nodes) {
         if (n.id != id) continue;
         if (confirm || n.time < now.tv_sec - 15 * 60) {
@@ -425,7 +423,6 @@ Dht::newNode(const InfoHash& id, const sockaddr *sa, socklen_t salen, int confir
                     if (s.af != sa->sa_family) continue;
                     if (s.insertNode(id, sa, salen, now.tv_sec, true)) {
                         time_t tm = s.getNextStepTime(types, now.tv_sec);
-                        SFL_WARN("Resurrect node  ! (%lu, in %lu sec)", tm, tm - now.tv_sec);
                         if (tm != 0 && (search_time == 0 || search_time > tm))
                             search_time = tm;
                     }
@@ -436,7 +433,6 @@ Dht::newNode(const InfoHash& id, const sockaddr *sa, socklen_t salen, int confir
     }
 
     /* New node. */
-    SFL_DBG("New node!");
 
     /* Try adding the node to searches */
     for (auto& s : searches) {
@@ -579,14 +575,15 @@ Dht::Search::insertNode(const InfoHash& nid,
         n = nodes.insert(n, SearchNode{ nid });
         if (nodes.size() > SEARCH_NODES)
             nodes.pop_back();
+        SFL_DBG("Search::insertNode %s", nid.toString().c_str());
     }
-
-    SFL_DBG("Search::insertNode %s", nid.toString().c_str());
 
     memcpy(&n->ss, sa, salen);
     n->sslen = salen;
 
     if (confirmed) {
+        if (n->pinged >= 3)
+            SFL_WARN("Resurrecting node  !");
         n->pinged = 0;
  //       n->request_time = 0;
 //        n->token.clear();
@@ -693,7 +690,7 @@ Dht::searchStep(Search& sr)
                 auto at = n.getAnnounceTime(a_status, type);
                 if ( at <= now.tv_sec ) {
                     all_acked = false;
-                    storageStore(sr.id, a.value);
+                    //storageStore(sr.id, a.value);
 
                     {
                         char hbuf[NI_MAXHOST];
@@ -1556,9 +1553,8 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
         break;
     case MessageType::Reply:
         if (tid.length != 4) {
-            SFL_DBG("Broken node truncates transaction ids: ");
+            SFL_ERR("Broken node truncates transaction ids (len: %d): ", tid.length);
             debug_printable(buf, buflen);
-            SFL_DBG("\n");
             /* This is really annoying, as it means that we will
                time-out all our searches that go through this node.
                Kill it. */
@@ -1577,10 +1573,10 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
             }
             SFL_DBG("Nodes found (%u+%u)%s!", nodes_len/26, nodes6_len/38, gp ? " for get_values" : "");
             if (nodes_len % 26 != 0 || nodes6_len % 38 != 0) {
-                SFL_DBG("Unexpected length for node info!");
+                SFL_WARN("Unexpected length for node info!");
                 blacklistNode(&id, from, fromlen);
             } else if (gp && sr == NULL) {
-                SFL_DBG("Unknown search!");
+                SFL_WARN("Unknown search!");
                 newNode(id, from, fromlen, 1);
             } else {
                 newNode(id, from, fromlen, 2);
@@ -1723,7 +1719,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
             }
             auto lv = getLocal(info_hash, v->id);
             if (lv && lv->owner != id) {
-                SFL_DBG("Attempting to store value belonging to another user.");
+                SFL_DBG("Node %s attempting to store value belonging to node %s.", id.toString().c_str(), lv->owner.toString().c_str());
                 sendError(from, fromlen, tid, 203, "Announce_value with wrong permission");
                 continue;
             }
@@ -1731,7 +1727,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                 // Allow the value to be edited by the storage policy
                 std::shared_ptr<Value> vc = v;
                 const auto& type = getType(vc->type);
-                SFL_DBG("Found value of type %s", type.name.c_str());
+                SFL_DBG("Trying to store value of type %s belonging to node %s.", type.name.c_str(), v->owner.toString().c_str());
                 if (type.storePolicy(vc, id, from, fromlen)) {
                     storageStore(info_hash, vc);
                 }
