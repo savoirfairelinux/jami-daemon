@@ -281,8 +281,11 @@ class DHTAccount : public SIPAccountBase {
 
         dht::DhtRunner dht_ {};
 
+        std::string cacertPath_ {};
         std::string privkeyPath_ {};
         std::string certPath_ {};
+        std::string idPath_ {};
+
         std::string nodePath_ {};
         std::string dataPath_ {};
 
@@ -292,7 +295,7 @@ class DHTAccount : public SIPAccountBase {
          */
         void checkIdentityPath();
 
-        void saveIdentity(const dht::crypto::Identity id) const;
+        void saveIdentity(const dht::crypto::Identity id, const std::string& path) const;
         void saveNodes(const std::vector<dht::Dht::NodeExport>&) const;
         void saveValues(const std::vector<dht::Dht::ValuesExport>&) const;
 

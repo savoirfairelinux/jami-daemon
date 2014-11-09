@@ -94,9 +94,9 @@ DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
     fileutils::check_dir(fileutils::get_data_dir().c_str());
 
     /*  ~/.local/{appname}/{accountID}    */
-    const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-    fileutils::check_dir(idPath.c_str());
-    dataPath_ = idPath + DIR_SEPARATOR_STR "values";
+    idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
+    fileutils::check_dir(idPath_.c_str());
+    dataPath_ = idPath_ + DIR_SEPARATOR_STR "values";
     checkIdentityPath();
 
     int rc = gnutls_global_init();
@@ -327,8 +327,8 @@ void DHTAccount::unserialize(const YAML::Node &node)
     in_port_t port {DHT_DEFAULT_PORT};
     parseValue(node, Conf::DHT_PORT_KEY, port);
     dhtPort_ = port;
-    parseValue(node, Conf::DHT_PRIVKEY_PATH_KEY, privkeyPath_);
-    parseValue(node, Conf::DHT_CERT_PATH_KEY, certPath_);
+    //parseValue(node, Conf::DHT_PRIVKEY_PATH_KEY, privkeyPath_);
+    //parseValue(node, Conf::DHT_CERT_PATH_KEY, idPath_);
     checkIdentityPath();
 }
 
@@ -339,108 +339,80 @@ DHTAccount::checkIdentityPath()
         return;
 
     const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-    privkeyPath_ = idPath + DIR_SEPARATOR_STR "id_rsa";
-    certPath_ = privkeyPath_ + ".pub";
+    privkeyPath_ = idPath + DIR_SEPARATOR_STR "dht.pem";
+    certPath_ = idPath + DIR_SEPARATOR_STR "dht.crt";
+    cacertPath_ = idPath + DIR_SEPARATOR_STR "ca.crt";
+}
+
+std::vector<uint8_t>
+loadFile(const std::string& path)
+{
+    std::vector<uint8_t> buffer;
+    std::ifstream file(path, std::ios::binary);
+    if (!file)
+        throw std::runtime_error("Can't read file.");
+    file.seekg(0, std::ios::end);
+    std::streamsize size = file.tellg();
+    if (size > std::numeric_limits<unsigned>::max())
+        throw std::runtime_error("File is too big.");
+    buffer.resize(size);
+    file.seekg(0, std::ios::beg);
+    if (!file.read((char*)buffer.data(), size))
+        throw std::runtime_error("Can't load file.");
+    return buffer;
+}
+
+void
+saveFile(const std::string& path, const std::vector<uint8_t>& data)
+{
+    std::ofstream file(path, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        SFL_ERR("Could not write key to %s", path.c_str());
+        return;
+    }
+    file.write((char*)data.data(), data.size());
 }
 
 dht::crypto::Identity
 DHTAccount::loadIdentity() const
 {
-    std::vector<char> buffer;
-    std::vector<char> buffer_crt;
+    dht::crypto::Certificate ca_cert;
+    //dht::crypto::PrivateKey ca_key;
+
+    dht::crypto::Certificate dht_cert;
+    dht::crypto::PrivateKey dht_key;
+
     try {
-        {
-            std::ifstream file(privkeyPath_, std::ios::binary);
-            if (!file)
-                throw std::runtime_error("Can't read private key file.");
-            file.seekg(0, std::ios::end);
-            std::streamsize size = file.tellg();
-            if (size > std::numeric_limits<unsigned>::max())
-                throw std::runtime_error("Can't read private key file.");
-            buffer.resize(size);
-            file.seekg(0, std::ios::beg);
-            if (!file.read(buffer.data(), size))
-                throw std::runtime_error("Can't load private key.");
-        }
-        {
-            std::ifstream file(certPath_, std::ios::binary);
-            if (!file)
-                throw std::runtime_error("Can't read certificate file.");
-            file.seekg(0, std::ios::end);
-            std::streamsize size = file.tellg();
-            if (size > std::numeric_limits<unsigned>::max())
-                throw std::runtime_error("Can't read certificate file.");
-            buffer_crt.resize(size);
-            file.seekg(0, std::ios::beg);
-            if (!file.read(buffer_crt.data(), size))
-                throw std::runtime_error("Can't load certificate.");
-        }
+        ca_cert = dht::crypto::Certificate(loadFile(cacertPath_));
+        //ca_key = dht::crypto::PrivateKey(loadFile(idPath_ + DIR_SEPARATOR_STR "ca.key"));
+        dht_cert = dht::crypto::Certificate(loadFile(certPath_));
+        dht_key = dht::crypto::PrivateKey(loadFile(privkeyPath_));
     }
     catch (const std::exception& e) {
         SFL_ERR("Error loading identity: %s", e.what());
-        auto id = dht::crypto::generateIdentity();
+        auto ca = dht::crypto::generateIdentity("Ring CA");
+        if (!ca.first || !ca.second) {
+            throw VoipLinkException("Can't generate CA for this account.");
+        }
+        auto id = dht::crypto::generateIdentity("Ring", ca);
         if (!id.first || !id.second) {
             throw VoipLinkException("Can't generate identity for this account.");
         }
-        saveIdentity(id);
+        saveIdentity(ca, idPath_ + DIR_SEPARATOR_STR "ca");
+        saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
         return id;
     }
 
-    gnutls_datum_t dt {reinterpret_cast<uint8_t*>(buffer.data()), static_cast<unsigned>(buffer.size())};
-    gnutls_x509_privkey_t x509_key;
-    gnutls_x509_privkey_init(&x509_key);
-    int err = gnutls_x509_privkey_import(x509_key, &dt, GNUTLS_X509_FMT_PEM);
-    if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not read PEM key - %s", gnutls_strerror(err));
-        err = gnutls_x509_privkey_import(x509_key, &dt, GNUTLS_X509_FMT_DER);
-    }
-    if (err != GNUTLS_E_SUCCESS) {
-        gnutls_x509_privkey_deinit(x509_key);
-        SFL_ERR("Could not read key - %s", gnutls_strerror(err));
-        return {};
-    }
-
-    gnutls_x509_crt_t certificate;
-    gnutls_x509_crt_init(&certificate);
-
-    gnutls_datum_t crt_dt {reinterpret_cast<uint8_t*>(buffer_crt.data()), static_cast<unsigned>(buffer_crt.size())};
-    err = gnutls_x509_crt_import(certificate, &crt_dt, GNUTLS_X509_FMT_PEM);
-    if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not read PEM certificate - %s", gnutls_strerror(err));
-        err = gnutls_x509_crt_import(certificate, &crt_dt, GNUTLS_X509_FMT_DER);
-    }
-    if (err != GNUTLS_E_SUCCESS) {
-        gnutls_x509_privkey_deinit(x509_key);
-        gnutls_x509_crt_deinit(certificate);
-        SFL_ERR("Could not read key - %s", gnutls_strerror(err));
-        return {};
-    }
-
-    return {std::make_shared<dht::crypto::PrivateKey>(x509_key), std::make_shared<dht::crypto::Certificate>(certificate)};
+    return {std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)), std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))};
 }
 
 void
-DHTAccount::saveIdentity(const dht::crypto::Identity id) const
+DHTAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path) const
 {
-    if (id.first) {
-        auto buffer = id.first->serialize();
-        std::ofstream file(privkeyPath_, std::ios::trunc | std::ios::binary);
-        if (!file.is_open()) {
-            SFL_ERR("Could not write key to %s", privkeyPath_.c_str());
-            return;
-        }
-        file.write((char*)buffer.data(), buffer.size());
-    }
-
-    if (id.second) {
-        auto buffer = id.second->getPacked();
-        std::ofstream file(certPath_, std::ios::trunc | std::ios::binary);
-        if (!file.is_open()) {
-            SFL_ERR("Could not write key to %s", certPath_.c_str());
-            return;
-        }
-        file.write((char*)buffer.data(), buffer.size());
-    }
+    if (id.first)
+        saveFile(path+".pem", id.first->serialize());
+    if (id.second)
+        saveFile(path+".crt", id.second->getPacked());
 }
 
 template <typename T>
@@ -645,7 +617,8 @@ void DHTAccount::initTlsConfiguration()
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     pjsip_tls_setting_default(&tlsSetting_);
 
-    pj_cstr(&tlsSetting_.ca_list_file, "");
+    SFL_WARN("cacertPath_ : %s", cacertPath_.c_str());
+    pj_cstr(&tlsSetting_.ca_list_file, cacertPath_.c_str());
     pj_cstr(&tlsSetting_.cert_file, certPath_.c_str());
     pj_cstr(&tlsSetting_.privkey_file, privkeyPath_.c_str());
     pj_cstr(&tlsSetting_.password, "");
