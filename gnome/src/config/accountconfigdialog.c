@@ -544,27 +544,16 @@ create_parameters_frame(account_t *account, GtkWidget* account_combo)
     gchar *user_agent = account_lookup(account, CONFIG_ACCOUNT_USERAGENT);
     gtk_entry_set_text(GTK_ENTRY(entry_user_agent), user_agent);
     gtk_grid_attach(GTK_GRID(grid), entry_user_agent, 1, row, 1, 1);
-    /* hide for DHT account */
-    g_signal_connect(G_OBJECT(account_combo), "changed",
-                     G_CALLBACK(hide_widget_for_dht), label);
-    g_signal_connect(G_OBJECT(account_combo), "changed",
-                     G_CALLBACK(hide_widget_for_dht), entry_user_agent);
 
     gtk_widget_set_sensitive(entry_user_agent, account_has_custom_user_agent(account));
 
     row++;
     user_agent_checkbox = create_user_agent_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), user_agent_checkbox, 0, row, 1, 1);
-    /* hide for DHT account */
-    g_signal_connect(G_OBJECT(account_combo), "changed",
-                     G_CALLBACK(hide_widget_for_dht), user_agent_checkbox);
 
     row++;
     auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), auto_answer_checkbox, 0, row, 1, 1);
-    /* hide for DHT account */
-    g_signal_connect(G_OBJECT(account_combo), "changed",
-                     G_CALLBACK(hide_widget_for_dht), auto_answer_checkbox);
 
     gtk_widget_show_all(grid);
     return frame;
