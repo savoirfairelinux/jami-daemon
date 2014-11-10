@@ -1134,9 +1134,9 @@ index 0000000..c2a4349
 +    case PJ_SSL_SOCK_PROTO_TLS1:
 +        // set lowest compatibility mode, ask for TLS client hello
 +        if (ssock->param.ciphers_num == 0)
-+            priority = "NORMAL:-VERS-SSL3.0:-VERS-TLS1.1:-VERS-TLS1.2:%LATEST_RECORD_VERSION";
++            priority = "NORMAL:-VERS-SSL3.0:%LATEST_RECORD_VERSION";
 +        else
-+            priority = "NONE:+VERS-TLS1.0:%LATEST_RECORD_VERSION";
++            priority = "NONE:+VERS-TLS1.2:+VERS-TLS1.1:+VERS-TLS1.0:%LATEST_RECORD_VERSION";
 +        break;
 +    case PJ_SSL_SOCK_PROTO_SSL3:
 +        if (ssock->param.ciphers_num == 0)
