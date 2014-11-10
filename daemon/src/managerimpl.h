@@ -752,6 +752,12 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+        /**
+         * Play the dtmf-associated sound
+         * @param code  The pressed key
+         */
+        void playDtmf(char code);
+
         void removeAccounts();
 
         bool parseConfiguration();
@@ -983,12 +989,6 @@ class ManagerImpl {
          * Send unregister for all enabled accounts
          */
         void unregisterAccounts();
-
-        /**
-         * Play the dtmf-associated sound
-         * @param code  The pressed key
-         */
-        void playDtmf(char code);
 
 
         // Map containing conference pointers
