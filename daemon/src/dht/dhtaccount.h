@@ -53,7 +53,9 @@
 namespace Conf {
     const char *const DHT_PORT_KEY = "dhtPort";
     const char *const DHT_PRIVKEY_PATH_KEY = "dhtPrivkeyPath";
+    const char *const DHT_PRIVKEY_PASSWORD_KEY = "dhtPrivkeyPassword";
     const char *const DHT_CERT_PATH_KEY = "dhtCertificatePath";
+    const char *const DHT_CA_CERT_PATH_KEY = "dhtCACertificatePath";
     const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
 }
 
@@ -281,8 +283,11 @@ class DHTAccount : public SIPAccountBase {
 
         dht::DhtRunner dht_ {};
 
+        std::string cacertPath_ {};
         std::string privkeyPath_ {};
         std::string certPath_ {};
+        std::string idPath_ {};
+
         std::string nodePath_ {};
         std::string dataPath_ {};
 
@@ -292,7 +297,7 @@ class DHTAccount : public SIPAccountBase {
          */
         void checkIdentityPath();
 
-        void saveIdentity(const dht::crypto::Identity id) const;
+        void saveIdentity(const dht::crypto::Identity id, const std::string& path) const;
         void saveNodes(const std::vector<dht::Dht::NodeExport>&) const;
         void saveValues(const std::vector<dht::Dht::ValuesExport>&) const;
 
@@ -301,7 +306,7 @@ class DHTAccount : public SIPAccountBase {
          * and certPath_ a valid certificate file, load and returns them.
          * Otherwise, generate a new identity and returns it.
          */
-        dht::crypto::Identity loadIdentity() const;
+        dht::crypto::Identity loadIdentity();
         std::vector<dht::Dht::NodeExport> loadNodes() const;
         std::vector<dht::Dht::ValuesExport> loadValues() const;
 
