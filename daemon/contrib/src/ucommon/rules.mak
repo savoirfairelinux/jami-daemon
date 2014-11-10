@@ -1,7 +1,7 @@
 # UCOMMON
 # FIXME: switch to next release when it's out
-UCOMMON_VERSION := 29eae34cf079a98a42cb66e3eed14da75d2cb269
-UCOMMON_URL := $(GNUTELEPHONY)/ucommon/archive/$(UCOMMON_VERSION).tar.gz
+UCOMMON_VERSION := c553fab8a811334ab06b3499c2ecd245fe2993e4
+UCOMMON_URL := https://github.com/tmatth/ucommon/archive/$(UCOMMON_VERSION).tar.gz
 
 UCOMMON_OPTIONS := --enable-stdcpp --with-pkg-config --disable-utils --disable-tests
 
