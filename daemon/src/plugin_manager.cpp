@@ -197,8 +197,8 @@ PluginManager::createObject(const std::string& type)
         return {nullptr, nullptr};
 
     RING_PluginObjectParams op = {
-        pluginApi : &pluginApi_,
-        type : type.c_str(),
+        .pluginApi = &pluginApi_,
+        .type = type.c_str(),
     };
 
     // Try to find an exact match
