@@ -87,6 +87,8 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     fileutils::check_dir(idPath_.c_str());
     dataPath_ = idPath_ + DIR_SEPARATOR_STR "values";
+    caPath_ = idPath_ + DIR_SEPARATOR_STR "certs";
+    caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
     checkIdentityPath();
 
     int rc = gnutls_global_init();
@@ -361,13 +363,13 @@ saveFile(const std::string& path, const std::vector<uint8_t>& data)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        SFL_ERR("Could not write key to %s", path.c_str());
+        SFL_ERR("Could not write data to %s", path.c_str());
         return;
     }
     file.write((char*)data.data(), data.size());
 }
 
-dht::crypto::Identity
+std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::crypto::Identity>
 RingAccount::loadIdentity()
 {
     dht::crypto::Certificate ca_cert;
@@ -400,10 +402,16 @@ RingAccount::loadIdentity()
         certPath_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
         privkeyPath_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
 
-        return id;
+        return {ca.second, id};
     }
 
-    return {std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)), std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))};
+    return {
+        std::make_shared<dht::crypto::Certificate>(std::move(ca_cert)),
+        {
+            std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
+            std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
+        }
+    };
 }
 
 void
@@ -462,7 +470,8 @@ void RingAccount::doRegister()
             SFL_ERR("DHT already running (stopping it first).");
             dht_.join();
         }
-        dht_.run(dhtPort_, loadIdentity(), [=](dht::Dht::Status s4, dht::Dht::Status s6) {
+        auto identity = loadIdentity();
+        dht_.run(dhtPort_, identity.second, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
             SFL_WARN("Dht status : %d %d", (int)s4, (int)s6);
             auto status = std::max(s4, s6);
             switch(status) {
@@ -491,7 +500,17 @@ void RingAccount::doRegister()
 
         dht_.importValues(loadValues());
 
-        dht_.put(dht_.getId(), dht::Value{dht::ServiceAnnouncement::TYPE.id, dht::ServiceAnnouncement(getTlsListenerPort())}, [](bool ok) {
+        // Publish our own CA
+        dht_.put(identity.first->getPublicKey().getId(), dht::Value {
+            dht::crypto::Certificate::TYPE,
+            *identity.first
+        });
+
+        // Publish the SIP service announcement
+        dht_.put(dht_.getId(), dht::Value {
+            dht::ServiceAnnouncement::TYPE,
+            dht::ServiceAnnouncement(getTlsListenerPort())
+        }, [](bool ok) {
             SFL_DBG("Peer announce callback ! %d", ok);
         });
 
@@ -531,6 +550,54 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
     setRegistrationState(RegistrationState::UNREGISTERED);
     if (released_cb)
         released_cb(false);
+}
+
+void
+RingAccount::registerCA(const dht::crypto::Certificate& crt)
+{
+    saveFile(caPath_ + DIR_SEPARATOR_STR + crt.getPublicKey().getId().toString(), crt.getPacked());
+}
+
+bool
+RingAccount::unregisterCA(const dht::InfoHash& crt_id)
+{
+    auto cas = getRegistredCAs();
+    bool deleted = false;
+    for (const auto& ca_path : cas) {
+        try {
+            dht::crypto::Certificate tmp_crt(loadFile(ca_path));
+            if (tmp_crt.getPublicKey().getId() == crt_id)
+                deleted &= remove(ca_path.c_str()) == 0;
+        } catch (const std::exception&) {}
+    }
+    return deleted;
+}
+
+std::vector<std::string>
+RingAccount::getRegistredCAs()
+{
+    return fileutils::readDirectory(caPath_);
+}
+
+void
+RingAccount::regenerateCAList()
+{
+    std::ofstream list(caListPath_, std::ios::trunc | std::ios::binary);
+    if (!list.is_open()) {
+        SFL_ERR("Could open CA list");
+        return;
+    }
+    auto cas = getRegistredCAs();
+    {
+        std::ifstream file(cacertPath_, std::ios::binary);
+        list << file.rdbuf();
+    }
+    for (const auto& ca : cas) {
+        std::ifstream file(ca, std::ios::binary);
+        if (!file)
+            continue;
+        list << file.rdbuf();
+    }
 }
 
 void RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
@@ -608,7 +675,7 @@ void RingAccount::initTlsConfiguration()
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     pjsip_tls_setting_default(&tlsSetting_);
 
-    pj_cstr(&tlsSetting_.ca_list_file, cacertPath_.c_str());
+    pj_cstr(&tlsSetting_.ca_list_file, caListPath_.c_str());
     pj_cstr(&tlsSetting_.cert_file, certPath_.c_str());
     pj_cstr(&tlsSetting_.privkey_file, privkeyPath_.c_str());
     pj_cstr(&tlsSetting_.password, "");
