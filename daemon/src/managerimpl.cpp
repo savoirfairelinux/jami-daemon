@@ -47,7 +47,7 @@
 #include "map_utils.h"
 #include "account.h"
 #if HAVE_DHT
-#include "dht/dhtaccount.h"
+#include "ring/ringaccount.h"
 #endif
 
 #include "call_factory.h"
@@ -2767,9 +2767,9 @@ ManagerImpl::newOutgoingCall(const std::string& id,
     std::string finalToUrl = toUrl;
 
 #if HAVE_DHT
-    if (toUrl.find("dht:") != std::string::npos) {
-        SFL_WARN("DHT call detected");
-        auto dhtAcc = getAllAccounts<DHTAccount>();
+    if (toUrl.find("ring:") != std::string::npos) {
+        SFL_WARN("Ring DHT call detected");
+        auto dhtAcc = getAllAccounts<RingAccount>();
         if (not dhtAcc.empty())
             return dhtAcc.front()->newOutgoingCall(id, finalToUrl);
     }
