@@ -16,7 +16,7 @@ samplerate: libsamplerate-$(SAMPLERATE_VERSION).tar.gz .sum-samplerate
 	$(UNPACK)
 	$(APPLY) $(SRC)/samplerate/soundcard.patch
 	$(APPLY) $(SRC)/samplerate/carbon.patch
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub Cfg
+	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 .samplerate: samplerate
