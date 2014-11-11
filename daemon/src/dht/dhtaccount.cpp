@@ -677,9 +677,7 @@ DHTAccount::matches(const std::string &userName, const std::string &server) cons
 
 std::string DHTAccount::getFromUri() const
 {
-    std::string username(username_);
-    std::string transport {pjsip_transport_get_type_name(transportType_)};
-    return username + "<dht:" + dht_.getId().toString() + "@dht.invalid;transport=" + transport + ">";
+    return "dht:" + dht_.getId().toString() + "@dht.invalid";
 }
 
 std::string DHTAccount::getToUri(const std::string& to) const
