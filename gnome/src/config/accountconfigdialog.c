@@ -172,7 +172,7 @@ static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
 static void hide_widget_for_dht(GtkComboBox *combo_box, gpointer widget)
 {
     gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_box));
-    if (utf8_case_equal(type, "DHT")) {
+    if (utf8_case_equal(type, "RING")) {
         gtk_widget_hide(GTK_WIDGET(widget));
     } else {
         gtk_widget_show(GTK_WIDGET(widget));
@@ -184,7 +184,7 @@ static void hide_widget_for_dht(GtkComboBox *combo_box, gpointer widget)
 static void show_widget_for_dht(GtkComboBox *combo_box, gpointer widget)
 {
     gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_box));
-    if (utf8_case_equal(type, "DHT")) {
+    if (utf8_case_equal(type, "RING")) {
         gtk_widget_show(GTK_WIDGET(widget));
     } else {
         gtk_widget_hide(GTK_WIDGET(widget));
@@ -218,7 +218,7 @@ static void change_type_cb(GtkComboBox *combo_box, gpointer data)
         if (utf8_case_equal(type, "IAX")) {
             gtk_widget_hide(security_tab);
             gtk_widget_hide(advanced_tab);
-        } else if (utf8_case_equal(type, "DHT")) {
+        } else if (utf8_case_equal(type, "RING")) {
             gtk_widget_hide(security_tab);
             gtk_widget_show(advanced_tab);
         } else if (utf8_case_equal(type, "SIP")) {
@@ -329,7 +329,7 @@ create_accout_type_combo_box(const account_t *account, gboolean is_new)
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(account_combo), "SIP");
     if (dbus_is_iax2_enabled())
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(account_combo), "IAX");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(account_combo), "DHT");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(account_combo), "RING");
 
     if (account_is_SIP(account))
         gtk_combo_box_set_active(GTK_COMBO_BOX(account_combo), 0);
@@ -1539,9 +1539,9 @@ static void update_account_from_basic_tab(account_t *account)
     else
         proto = g_strdup("SIP");
 
-    if (g_strcmp0(proto, "SIP") == 0 || g_strcmp0(proto, "DHT") == 0) {
+    if (g_strcmp0(proto, "SIP") == 0 || g_strcmp0(proto, "RING") == 0) {
 
-        if (!IS_IP2IP && g_strcmp0(proto, "DHT") != 0) {
+        if (!IS_IP2IP && g_strcmp0(proto, "RING") != 0) {
             account_replace(account, CONFIG_ACCOUNT_REGISTRATION_EXPIRE,
                     gtk_entry_get_text(GTK_ENTRY(expire_spin_box)));
 
@@ -1571,7 +1571,7 @@ static void update_account_from_basic_tab(account_t *account)
 #endif
 
 #ifdef SFL_PRESENCE
-        if (!IS_IP2IP && g_strcmp0(proto, "DHT") != 0) {
+        if (!IS_IP2IP && g_strcmp0(proto, "RING") != 0) {
             v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
             account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
             // TODO enable/disable the presence window view
@@ -1618,7 +1618,7 @@ static void update_account_from_basic_tab(account_t *account)
         account_replace(account, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(entry_alias)));
         account_replace(account, CONFIG_ACCOUNT_TYPE, proto);
         account_replace(account, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(entry_hostname)));
-        if (g_strcmp0(proto, "DHT") != 0) {
+        if (g_strcmp0(proto, "RING") != 0) {
             account_replace(account, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(entry_username)));
             account_replace(account, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entry_password)));
             account_replace(account, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(entry_mailbox)));
