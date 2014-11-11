@@ -75,20 +75,6 @@
 
 constexpr const char * const DHTAccount::ACCOUNT_TYPE;
 
-const CipherArray DHTAccount::TLS_CIPHER_LIST = {
-    PJ_TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,
-    PJ_TLS_DH_RSA_WITH_AES_256_CBC_SHA256,
-    PJ_TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,
-    PJ_TLS_DH_RSA_WITH_AES_128_CBC_SHA256,
-    PJ_TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
-    PJ_TLS_DH_RSA_WITH_AES_256_CBC_SHA,
-    PJ_TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
-    PJ_TLS_RSA_WITH_AES_256_CBC_SHA256,
-    PJ_TLS_RSA_WITH_AES_256_CBC_SHA,
-    PJ_TLS_RSA_WITH_AES_128_CBC_SHA256,
-    PJ_TLS_RSA_WITH_AES_128_CBC_SHA
-};
-
 DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID)
 {
@@ -634,16 +620,13 @@ void DHTAccount::initTlsConfiguration()
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     pjsip_tls_setting_default(&tlsSetting_);
 
-    SFL_WARN("cacertPath_ : %s", cacertPath_.c_str());
-    SFL_WARN("certPath_ : %s", certPath_.c_str());
-    SFL_WARN("privkeyPath_ : %s", privkeyPath_.c_str());
-    pj_cstr(&tlsSetting_.ca_list_file, "");//cacertPath_.c_str()
+    pj_cstr(&tlsSetting_.ca_list_file, cacertPath_.c_str());
     pj_cstr(&tlsSetting_.cert_file, certPath_.c_str());
     pj_cstr(&tlsSetting_.privkey_file, privkeyPath_.c_str());
     pj_cstr(&tlsSetting_.password, "");
     tlsSetting_.method = PJSIP_TLSV1_METHOD;
-    tlsSetting_.ciphers_num = 0;//ciphers_.size();
-    tlsSetting_.ciphers = nullptr;//&ciphers_.front();
+    tlsSetting_.ciphers_num = 0;
+    tlsSetting_.ciphers = nullptr;
     tlsSetting_.verify_server = false;
     tlsSetting_.verify_client = false;
     tlsSetting_.require_client_cert = false;
