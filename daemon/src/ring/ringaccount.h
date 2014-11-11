@@ -249,6 +249,10 @@ class RingAccount : public SIPAccountBase {
             return false;
         }
 
+        void registerCA(const dht::crypto::Certificate&);
+        bool unregisterCA(const dht::InfoHash&);
+        std::vector<std::string> getRegistredCAs();
+
     private:
 
         static const CipherArray TLS_CIPHER_LIST;
@@ -272,6 +276,8 @@ class RingAccount : public SIPAccountBase {
 
         bool userMatch(const std::string &username) const;
 
+        void regenerateCAList();
+
         /**
          * @return pjsip_tls_setting structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
@@ -290,6 +296,8 @@ class RingAccount : public SIPAccountBase {
 
         std::string nodePath_ {};
         std::string dataPath_ {};
+        std::string caPath_ {};
+        std::string caListPath_ {};
 
         /**
          * Validate the values for privkeyPath_ and certPath_.
@@ -306,7 +314,7 @@ class RingAccount : public SIPAccountBase {
          * and certPath_ a valid certificate file, load and returns them.
          * Otherwise, generate a new identity and returns it.
          */
-        dht::crypto::Identity loadIdentity();
+        std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::crypto::Identity> loadIdentity();
         std::vector<dht::Dht::NodeExport> loadNodes() const;
         std::vector<dht::Dht::ValuesExport> loadValues() const;
 
