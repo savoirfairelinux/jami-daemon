@@ -39,7 +39,7 @@
 #include "iax/iaxaccount.h"
 #endif
 #if HAVE_DHT
-#include "dht/dhtaccount.h"
+#include "ring/ringaccount.h"
 #endif
 
 #include "sip/sipvoiplink.h" // for SIPVoIPLink::loadIP2IPSettings
@@ -59,9 +59,9 @@ AccountFactory::AccountFactory()
     SFL_DBG("registered %s account", IAXAccount::ACCOUNT_TYPE);
 #endif
 #if HAVE_DHT
-    auto dhtfunc = [](const std::string& id){ return std::make_shared<DHTAccount>(id, false); };
-    generators_.insert(std::make_pair(DHTAccount::ACCOUNT_TYPE, dhtfunc));
-    SFL_DBG("registered %s account", DHTAccount::ACCOUNT_TYPE);
+    auto dhtfunc = [](const std::string& id){ return std::make_shared<RingAccount>(id, false); };
+    generators_.insert(std::make_pair(RingAccount::ACCOUNT_TYPE, dhtfunc));
+    SFL_DBG("registered %s account", RingAccount::ACCOUNT_TYPE);
 #endif
 }
 
