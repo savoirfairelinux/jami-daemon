@@ -95,7 +95,13 @@ https://projects.savoirfairelinux.com/projects/sflphone/wiki/How_to_build
 
 How to compile on OSX
 ---------------------
-# Use your favorite package manager to install the necessary tools (macports or brew).
+# These first steps are only necessary if you don't use a package manager.
+cd sflphone/daemon/extras/tools
+./bootstrap
+make
+PATH=$PATH:/location/of/sflphone/daemon/extras/tools/build/bin
+
+# Or, use your favorite package manager to install the necessary tools (macports or brew).
 automake libtool check gettext libtoolize ...
 
 # Compile the dependencies
