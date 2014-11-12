@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+ *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,42 +28,35 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_WIDGET_H__
-#define __VIDEO_WIDGET_H__
+#ifndef __VIDEO_WINDOW_H__
+#define __VIDEO_WINDOW_H__
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
-#define VIDEO_WIDGET_TYPE              (video_widget_get_type())
-#define VIDEO_WIDGET(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_WIDGET_TYPE, VideoWidget))
-#define VIDEO_WIDGET_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_WIDGET_TYPE, VideoWidgetClass))
-#define IS_VIDEO_WIDGET(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_WIDGET_TYPE))
-#define IS_VIDEO_WIDGET_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_WIDGET_TYPE))
+#define VIDEO_WINDOW_TYPE              (video_window_get_type())
+#define VIDEO_WINDOW(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_WINDOW_TYPE, VideoWindow))
+#define VIDEO_WINDOW_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_WINDOW_TYPE, VideoWindowClass))
+#define IS_VIDEO_WINDOW(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_WINDOW_TYPE))
+#define IS_VIDEO_WINDOW_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_WINDOW_TYPE))
+#define VIDEO_WINDOW_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), VIDEO_WINDOW_TYPE, VideoWindowClass))
 
-typedef struct _VideoWidgetPrivate VideoWidgetPrivate;
-typedef struct _VideoWidgetClass VideoWidgetClass;
-typedef struct _VideoWidget VideoWidget;
+typedef struct _VideoWindowPrivate VideoWindowPrivate;
+typedef struct _VideoWindowClass VideoWindowClass;
+typedef struct _VideoWindow VideoWindow;
 
-typedef enum {
-    VIDEO_AREA_REMOTE,
-    VIDEO_AREA_LOCAL,
-    VIDEO_AREA_LAST
-} VIDEO_AREA_ID;
-
-struct _VideoWidgetClass {
-    GtkBinClass parent_class;
+struct _VideoWindowClass {
+    GtkWindowClass parent_class;
 };
 
-struct _VideoWidget {
-    GtkBin parent;
+struct _VideoWindow {
+    GtkWindow parent;
     /* Private */
-    VideoWidgetPrivate *priv;
+    VideoWindowPrivate *priv;
 };
 
 /* Public interface */
-GType           video_widget_get_type           (void) G_GNUC_CONST;
-GtkWidget*      video_widget_new                (void);
-void            video_widget_camera_start       (GtkWidget *, VIDEO_AREA_ID, gchar *, gchar *, guint, guint, gboolean);
-void            video_widget_camera_stop        (GtkWidget *self, VIDEO_AREA_ID, gchar *);
+GType           video_window_get_type           (void) G_GNUC_CONST;
+GtkWidget*      video_window_new                (void);
 
-#endif // __VIDEO_WIDGET_H__
+#endif // __VIDEO_WINDOW_H__

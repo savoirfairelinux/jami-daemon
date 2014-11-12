@@ -75,7 +75,7 @@ struct _VideoWidgetPrivate {
 };
 
 /* Define the VideoWidget type and inherit from GtkWindow */
-G_DEFINE_TYPE(VideoWidget, video_widget, GTK_TYPE_WINDOW);
+G_DEFINE_TYPE(VideoWidget, video_widget, GTK_TYPE_BIN);
 
 #define VIDEO_WIDGET_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
             VIDEO_WIDGET_TYPE, VideoWidgetPrivate))
@@ -240,7 +240,6 @@ video_widget_draw_screen(GtkWidget *self)
     g_return_val_if_fail(IS_VIDEO_WIDGET(self), NULL);
 
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
-
     GtkWidget *screen;
     ClutterActor *stage;
     ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
@@ -299,14 +298,14 @@ video_widget_redraw_screen(GtkWidget *self)
     Video *camera_local  = video_widget_retrieve_camera(self, VIDEO_AREA_LOCAL);
 
     /* retrieve the previous windows settings */
-    pos_x  = g_settings_get_int(priv->settings, "video-widget-position-x");
-    pos_y  = g_settings_get_int(priv->settings, "video-widget-position-y");
-    width  = g_settings_get_int(priv->settings, "video-widget-width");
-    height = g_settings_get_int(priv->settings, "video-widget-height");
+    // pos_x  = g_settings_get_int(priv->settings, "video-widget-position-x");
+    // pos_y  = g_settings_get_int(priv->settings, "video-widget-position-y");
+    // width  = g_settings_get_int(priv->settings, "video-widget-width");
+    // height = g_settings_get_int(priv->settings, "video-widget-height");
 
-    /* place  and resize the window according the users preferences */
-    gtk_window_move(GTK_WINDOW(self), pos_x, pos_y);
-    gtk_window_resize(GTK_WINDOW(self), width, height);
+    // /* place  and resize the window according the users preferences */
+    // gtk_window_move(GTK_WINDOW(self), pos_x, pos_y);
+    // gtk_window_resize(GTK_WINDOW(self), width, height);
 
     /* Handle the remote camera behaviour */
     if (video_area_remote && video_area_remote->show && camera_remote) {
@@ -703,21 +702,22 @@ on_button_press_in_screen_event_cb(G_GNUC_UNUSED GtkWidget *widget,
         priv->fullscreen = !priv->fullscreen;
 
         if (priv->fullscreen) {
+            g_debug("toggle video fullscreen on");
 
-            gtk_window_fullscreen(GTK_WINDOW(self));
+            // gtk_window_fullscreen(GTK_WINDOW(self));
 
             /* if there is a toolbar we don't want it in the fullscreen,
              * we only care about the video_screen */
-            if(priv->toolbar)
-                gtk_widget_hide(priv->toolbar);
+            // if(priv->toolbar)
+            //     gtk_widget_hide(priv->toolbar);
 
         } else {
-
-            gtk_window_unfullscreen(GTK_WINDOW(self));
+            g_debug("toggle video fullscreen off");
+            // gtk_window_unfullscreen(GTK_WINDOW(self));
 
             /* re-show the toolbar */
-            if(priv->toolbar)
-                gtk_widget_show(priv->toolbar);
+            // if(priv->toolbar)
+                // gtk_widget_show(priv->toolbar);
 
         }
 
@@ -787,6 +787,11 @@ video_widget_camera_start(GtkWidget *self,
 
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
+    if (clutter_feature_available(CLUTTER_FEATURE_STAGE_MULTIPLE))
+        g_debug("!!!!!!!!!!!!!!multiple clutter stages available");
+    else
+        g_debug("!!!!!!!!!1!!!!single clutter stages available");
+
     if (!priv->video_handles)
         priv->video_handles = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, cleanup_video_handle);
 
@@ -850,10 +855,10 @@ video_widget_camera_stop(GtkWidget *self,
     /* if video is draw on screen */
     if (is_video_in_screen(self, video_id)) {
 
-        gint pos_x, pos_y;
-        gtk_window_get_position(GTK_WINDOW(self), &pos_x, &pos_y);
-        g_settings_set_int(priv->settings, "video-widget-position-x", pos_x);
-        g_settings_set_int(priv->settings, "video-widget-position-y", pos_y);
+        // gint pos_x, pos_y;
+        // gtk_window_get_position(GTK_WINDOW(self), &pos_x, &pos_y);
+        // g_settings_set_int(priv->settings, "video-widget-position-x", pos_x);
+        // g_settings_set_int(priv->settings, "video-widget-position-y", pos_y);
 
         /* we remove it */
         video_widget_remove_camera_in_screen(self, video_area_id);
@@ -866,6 +871,6 @@ video_widget_camera_stop(GtkWidget *self,
     g_hash_table_remove(priv->video_handles, video_id);
 
     /* hide the widget when there no video left */
-    if (!g_hash_table_size(priv->video_handles))
-        gtk_widget_hide(self);
+    // if (!g_hash_table_size(priv->video_handles))
+    //     gtk_widget_hide(self);
 }
