@@ -348,32 +348,8 @@ DHTAccount::loadIdentity() const
     std::vector<char> buffer;
     std::vector<char> buffer_crt;
     try {
-        {
-            std::ifstream file(privkeyPath_, std::ios::binary);
-            if (!file)
-                throw std::runtime_error("Can't read private key file.");
-            file.seekg(0, std::ios::end);
-            std::streamsize size = file.tellg();
-            if (size > std::numeric_limits<unsigned>::max())
-                throw std::runtime_error("Can't read private key file.");
-            buffer.resize(size);
-            file.seekg(0, std::ios::beg);
-            if (!file.read(buffer.data(), size))
-                throw std::runtime_error("Can't load private key.");
-        }
-        {
-            std::ifstream file(certPath_, std::ios::binary);
-            if (!file)
-                throw std::runtime_error("Can't read certificate file.");
-            file.seekg(0, std::ios::end);
-            std::streamsize size = file.tellg();
-            if (size > std::numeric_limits<unsigned>::max())
-                throw std::runtime_error("Can't read certificate file.");
-            buffer_crt.resize(size);
-            file.seekg(0, std::ios::beg);
-            if (!file.read(buffer_crt.data(), size))
-                throw std::runtime_error("Can't load certificate.");
-        }
+    	buffer = fileutils::loadFile(privkeyPath_);
+    	buffer_crt = fileutils::loadFile(certPath_);
     }
     catch (const std::exception& e) {
         SFL_ERR("Error loading identity: %s", e.what());
@@ -421,25 +397,10 @@ DHTAccount::loadIdentity() const
 void
 DHTAccount::saveIdentity(const dht::crypto::Identity id) const
 {
-    if (id.first) {
-        auto buffer = id.first->serialize();
-        std::ofstream file(privkeyPath_, std::ios::trunc | std::ios::binary);
-        if (!file.is_open()) {
-            SFL_ERR("Could not write key to %s", privkeyPath_.c_str());
-            return;
-        }
-        file.write((char*)buffer.data(), buffer.size());
-    }
-
-    if (id.second) {
-        auto buffer = id.second->getPacked();
-        std::ofstream file(certPath_, std::ios::trunc | std::ios::binary);
-        if (!file.is_open()) {
-            SFL_ERR("Could not write key to %s", certPath_.c_str());
-            return;
-        }
-        file.write((char*)buffer.data(), buffer.size());
-    }
+    if (id.first)
+        fileutils::saveFile(privkeyPath_, id.first->serialize());
+    if (id.second)
+        fileutils::saveFile(certPath_, id.second->getPacked());
 }
 
 template <typename T>
