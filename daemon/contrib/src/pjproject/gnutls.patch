@@ -985,6 +985,7 @@ index 0000000..c2a4349
 +        ssock->verify_status |= PJ_SSL_CERT_EUNKNOWN;
 +        return GNUTLS_E_CERTIFICATE_ERROR;
 +    }
++    if (ssock->param.verify_peer) {
 +    if (status & GNUTLS_CERT_INVALID) {
 +        if (status & GNUTLS_CERT_SIGNER_NOT_FOUND)
 +            ssock->verify_status |= PJ_SSL_CERT_EISSUER_NOT_FOUND;
@@ -1007,7 +1008,6 @@ index 0000000..c2a4349
 +
 +    /* When verification is not requested just return ok here, however
 +     * applications can still get the verification status. */
-+    if (ssock->param.verify_peer) {
 +        gnutls_x509_crt_t cert;
 +        unsigned int cert_list_size;
 +        const gnutls_datum_t *cert_list;
