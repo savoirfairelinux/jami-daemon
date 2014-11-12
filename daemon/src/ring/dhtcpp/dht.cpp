@@ -26,8 +26,6 @@ THE SOFTWARE.
 
 #include "dht.h"
 
-#include "logger.h"
-
 extern "C" {
 #include <gnutls/gnutls.h>
 }
@@ -108,15 +106,6 @@ to_hex(const uint8_t *buf, unsigned buflen)
     return s.str();
 }
 
-static void
-debug_printable(const uint8_t *buf, unsigned buflen)
-{
-    std::string buf_clean(buflen, '\0');
-    for (unsigned i=0; i<buflen; i++)
-        buf_clean[i] = buf[i] >= 32 && buf[i] <= 126 ? buf[i] : '.';
-    SFL_DBG("%s", buf_clean.c_str());
-}
-
 namespace dht {
 
 const Dht::TransPrefix Dht::TransPrefix::PING = {"pn"};
@@ -132,6 +121,14 @@ static constexpr InfoHash ones = {std::array<uint8_t, HASH_LEN>{
 }};
 
 const long unsigned Dht::MAX_REQUESTS_PER_SEC = 400;
+
+void
+Dht::setLoggers(LogMethod&& error, LogMethod&& warn, LogMethod&& debug)
+{
+    DHT_DEBUG = std::move(debug);
+    DHT_WARN = std::move(warn);
+    DHT_ERROR = std::move(error);
+}
 
 Dht::Status
 Dht::getStatus(sa_family_t af) const
@@ -298,7 +295,7 @@ Dht::sendCachedPing(Bucket& b)
     if (b.cached.ss_family == 0)
         return 0;
 
-    SFL_DBG("Sending ping to cached node.");
+    DHT_DEBUG("Sending ping to cached node.");
     int rc = sendPing((sockaddr*)&b.cached, b.cachedlen, TransId{TransPrefix::PING});
     b.cached.ss_family = 0;
     b.cachedlen = 0;
@@ -321,7 +318,7 @@ Dht::pinged(Node& n, Bucket *b)
 void
 Dht::blacklistNode(const InfoHash* id, const sockaddr *sa, socklen_t salen)
 {
-    SFL_WARN("Blacklisting broken node.");
+    DHT_WARN("Blacklisting broken node.");
 
     if (id) {
         /* Make the node easy to discard. */
@@ -439,7 +436,7 @@ Dht::newNode(const InfoHash& id, const sockaddr *sa, socklen_t salen, int confir
         if (s.af != sa->sa_family) continue;
         if (s.insertNode(id, sa, salen, now.tv_sec)) {
             time_t tm = s.getNextStepTime(types, now.tv_sec);
-            SFL_DBG("Inserted node the new way ! (%lu, in %lu sec)", tm, tm - now.tv_sec);
+            DHT_DEBUG("Inserted node the new way ! (%lu, in %lu sec)", tm, tm - now.tv_sec);
             if (tm != 0 && (search_time == 0 || search_time > tm))
                 search_time = tm;
         }
@@ -476,7 +473,7 @@ Dht::newNode(const InfoHash& id, const sockaddr *sa, socklen_t salen, int confir
             if (!n.isGood(now.tv_sec)) {
                 dubious = true;
                 if (n.pinged_time < now.tv_sec - 15) {
-                    SFL_DBG("Sending ping to dubious node.");
+                    DHT_DEBUG("Sending ping to dubious node.");
                     sendPing((sockaddr*)&n.ss, n.sslen, TransId {TransPrefix::PING});
                     n.pinged++;
                     n.pinged_time = now.tv_sec;
@@ -486,7 +483,7 @@ Dht::newNode(const InfoHash& id, const sockaddr *sa, socklen_t salen, int confir
         }
 
         if (mybucket && (!dubious || list.size() == 1)) {
-            SFL_DBG("Splitting.");
+            DHT_DEBUG("Splitting.");
             sendCachedPing(*b);
             list.split(b);
             dumpTables();
@@ -503,7 +500,7 @@ Dht::newNode(const InfoHash& id, const sockaddr *sa, socklen_t salen, int confir
     }
 
     /* Create a new node. */
-    //SFL_DBG("New node! - allocation");
+    //DHT_DEBUG("New node! - allocation");
     b->nodes.emplace_front(id, sa, salen, confirm ? now.tv_sec : 0, confirm >= 2 ? now.tv_sec : 0);
     return &b->nodes.front();
 }
@@ -553,7 +550,7 @@ Dht::Search::insertNode(const InfoHash& nid,
     time_t now, bool confirmed, const Blob& token)
 {
     if (sa->sa_family != af) {
-        SFL_DBG("Attempted to insert node in the wrong family.");
+        //DHT_DEBUG("Attempted to insert node in the wrong family.");
         return false;
     }
 
@@ -575,15 +572,15 @@ Dht::Search::insertNode(const InfoHash& nid,
         n = nodes.insert(n, SearchNode{ nid });
         if (nodes.size() > SEARCH_NODES)
             nodes.pop_back();
-        SFL_DBG("Search::insertNode %s", nid.toString().c_str());
+        //DHT_DEBUG("Search::insertNode %s", nid.toString().c_str());
     }
 
     memcpy(&n->ss, sa, salen);
     n->sslen = salen;
 
     if (confirmed) {
-        if (n->pinged >= 3)
-            SFL_WARN("Resurrecting node  !");
+        /*if (n->pinged >= 3)
+            DHT_WARN("Resurrecting node  !");*/
         n->pinged = 0;
  //       n->request_time = 0;
 //        n->token.clear();
@@ -592,9 +589,10 @@ Dht::Search::insertNode(const InfoHash& nid,
         n->reply_time = now;
         n->request_time = 0;
       /*  n->pinged = 0;*/
-        if (token.size() > 64)
-            SFL_DBG("Eek!  Overlong token.");
-        else
+        /*if (token.size() > 64)
+            DHT_DEBUG("Eek!  Overlong token.");
+        else*/
+        if (token.size() <= 64)
             n->token = token;
     }
 
@@ -629,7 +627,7 @@ Dht::searchSendGetValues(Search& sr, SearchNode *n)
         char hbuf[NI_MAXHOST];
         char sbuf[NI_MAXSERV];
         getnameinfo((sockaddr*)&n->ss, n->sslen, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
-        SFL_WARN("Sending get_values to %s:%s for %s.", hbuf, sbuf, n->id.toString().c_str());
+        DHT_WARN("Sending get_values to %s:%s for %s.", hbuf, sbuf, n->id.toString().c_str());
     }
     sendGetValues((sockaddr*)&n->ss, n->sslen, TransId {TransPrefix::GET_VALUES, sr.tid}, sr.id, -1, n->reply_time >= t - 15);
     n->pinged++;
@@ -654,7 +652,7 @@ Dht::searchStep(Search& sr)
         if (sr.step_time == 0)
             sr.step_time = now.tv_sec;
         if (now.tv_sec - sr.step_time > SEARCH_TIMEOUT) {
-            SFL_WARN("Search timed out.");
+            DHT_WARN("Search timed out.");
             if (sr.done_callback)
                 sr.done_callback(false);
             if (sr.announce.empty())
@@ -666,11 +664,11 @@ Dht::searchStep(Search& sr)
 
     /* Check if the first 8 live nodes have replied. */
     if (sr.isSynced(now.tv_sec)) {
-        SFL_DBG("searchStep (synced).");
+        DHT_DEBUG("searchStep (synced).");
         for (auto& a : sr.announce) {
             if (!a.value) {
                 continue;
-                SFL_ERR("Trying to announce a null value !");
+                DHT_ERROR("Trying to announce a null value !");
             }
             unsigned i = 0;
             bool all_acked = true;
@@ -696,7 +694,7 @@ Dht::searchStep(Search& sr)
                         char hbuf[NI_MAXHOST];
                         char sbuf[NI_MAXSERV];
                         getnameinfo((sockaddr*)&n.ss, n.sslen, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
-                        SFL_WARN("Sending announce_value to %s:%s (%s).", hbuf, sbuf, n.id.toString().c_str());
+                        DHT_WARN("Sending announce_value to %s:%s (%s).", hbuf, sbuf, n.id.toString().c_str());
                     }
                     sendAnnounceValue((sockaddr*)&n.ss, sizeof(sockaddr_storage),
                                        TransId {TransPrefix::ANNOUNCE_VALUES, sr.tid}, sr.id, *a.value,
@@ -725,7 +723,7 @@ Dht::searchStep(Search& sr)
                     pinged(*node);
             }
         }
-        SFL_DBG("Search done.");
+        DHT_DEBUG("Search done.");
         if (sr.done_callback) {
             sr.done_callback(true);
             sr.done_callback = nullptr;
@@ -733,7 +731,7 @@ Dht::searchStep(Search& sr)
         if (sr.announce.empty())
             sr.done = true;
     } else {
-        SFL_DBG("searchStep.");
+        DHT_DEBUG("searchStep.");
         if (sr.step_time + SEARCH_GET_STEP >= now.tv_sec)
             return;
         if (sr.nodes.empty() && sr.announce.empty()) {
@@ -752,7 +750,7 @@ Dht::searchStep(Search& sr)
     {
         std::stringstream out;
         dumpSearch(sr, out);
-        SFL_DBG("%s", out.str().c_str());
+        DHT_DEBUG("%s", out.str().c_str());
     }
 }
 
@@ -845,7 +843,7 @@ Dht::bootstrapSearch(Dht::Search& sr)
     auto& list = (sr.af == AF_INET) ? buckets : buckets6;
     if (list.empty() || (list.size() == 1 && list.front().nodes.empty()))
         return;
-    SFL_DBG("bootstrapSearch.");
+    DHT_DEBUG("bootstrapSearch.");
     auto b = list.findBucket(sr.id);
     if (b == list.end())
         return;
@@ -869,7 +867,7 @@ Dht::Search*
 Dht::search(const InfoHash& id, sa_family_t af, GetCallback callback, DoneCallback done_callback, Value::Filter filter)
 {
     if (!isRunning(af)) {
-        SFL_ERR("Unsupported protocol IPv%s bucket for %s", (af == AF_INET) ? "4" : "6", id.toString().c_str());
+        DHT_ERROR("Unsupported protocol IPv%s bucket for %s", (af == AF_INET) ? "4" : "6", id.toString().c_str());
         if (done_callback)
             done_callback(false);
         return nullptr;
@@ -911,7 +909,7 @@ Dht::search(const InfoHash& id, sa_family_t af, GetCallback callback, DoneCallba
         sr->id = id;
         sr->done = false;
         sr->nodes = {};
-        SFL_DBG("New IPv%s search for %s", (af == AF_INET) ? "4" : "6", id.toString().c_str());
+        DHT_DEBUG("New IPv%s search for %s", (af == AF_INET) ? "4" : "6", id.toString().c_str());
     }
 
     if (callback)
@@ -965,7 +963,7 @@ Dht::put(const InfoHash& id, Value&& value, DoneCallback callback)
         value.owner = getId();
 
     auto val = std::make_shared<Value>(std::move(value));
-    SFL_DBG("put: adding %s -> %s", id.toString().c_str(), val->toString().c_str());
+    DHT_DEBUG("put: adding %s -> %s", id.toString().c_str(), val->toString().c_str());
 
     auto ok = std::make_shared<bool>(false);
     auto done = std::make_shared<bool>(false);
@@ -979,13 +977,13 @@ Dht::put(const InfoHash& id, Value&& value, DoneCallback callback)
         }
     };
     announce(id, AF_INET, val, [=](bool ok4) {
-        SFL_DBG("search done IPv4 %d", ok4);
+        DHT_DEBUG("search done IPv4 %d", ok4);
         *done4 = true;
         *ok |= ok4;
         donecb();
     });
     announce(id, AF_INET6, val, [=](bool ok6) {
-        SFL_DBG("search done IPv6 %d", ok6);
+        DHT_DEBUG("search done IPv6 %d", ok6);
         *done6 = true;
         *ok |= ok6;
         donecb();
@@ -999,7 +997,7 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
     if (getcb) {
         auto locVals = getLocal(id, filter);
         if (not locVals.empty()) {
-            SFL_DBG("Found local data (%d values).", locVals.size());
+            DHT_DEBUG("Found local data (%d values).", locVals.size());
             getcb(locVals);
         }
     }
@@ -1076,7 +1074,7 @@ Dht::storageStore(const InfoHash& id, const std::shared_ptr<Value>& value)
         it->time = now.tv_sec;
         return &*it;
     } else {
-        SFL_DBG("Storing %s -> %s", id.toString().c_str(), value->toString().c_str());
+        DHT_DEBUG("Storing %s -> %s", id.toString().c_str(), value->toString().c_str());
         if (st->values.size() >= MAX_VALUES)
             return nullptr;
         st->values.emplace_back(value, now.tv_sec);
@@ -1098,13 +1096,13 @@ Dht::expireStorage()
                     const auto& type = getType(v.data->type);
                     bool expired = v.time + type.expiration < now.tv_sec;
                     if (expired)
-                        SFL_DBG("Discarding expired value %s", v.data->toString().c_str());
+                        DHT_DEBUG("Discarding expired value %s", v.data->toString().c_str());
                     return !expired;
                 }),
             i->values.end());
 
         if (i->values.size() == 0) {
-            SFL_DBG("Discarding expired value %s", i->id.toString().c_str());
+            DHT_DEBUG("Discarding expired value %s", i->id.toString().c_str());
             i = store.erase(i);
         }
         else
@@ -1304,7 +1302,7 @@ Dht::dumpTables() const
     }
 
     //out << std::endl << std::endl;
-    SFL_DBG("%s", out.str().c_str());
+    DHT_DEBUG("%s", out.str().c_str());
 }
 
 
@@ -1358,7 +1356,7 @@ Dht::Dht(int s, int s6, const InfoHash& id, const unsigned char *v)
     expireBuckets(buckets);
     expireBuckets(buckets6);
 
-    SFL_DBG("DHT initialised with node ID %s", myid.toString().c_str());
+    DHT_DEBUG("DHT initialised with node ID %s", myid.toString().c_str());
 }
 
 
@@ -1385,7 +1383,7 @@ Dht::rateLimit()
 bool
 Dht::neighbourhoodMaintenance(RoutingTable& list)
 {
-    SFL_DBG("neighbourhoodMaintenance");
+    DHT_DEBUG("neighbourhoodMaintenance");
 
     auto b = list.findBucket(myid);
     if (b == list.end())
@@ -1409,7 +1407,7 @@ Dht::neighbourhoodMaintenance(RoutingTable& list)
     int want = dht_socket >= 0 && dht_socket6 >= 0 ? (WANT4 | WANT6) : -1;
     Node *n = q->randomNode();
     if (n) {
-        SFL_DBG("Sending find_node for%s neighborhood maintenance.", q->af == AF_INET6 ? " IPv6" : "");
+        DHT_DEBUG("Sending find_node for%s neighborhood maintenance.", q->af == AF_INET6 ? " IPv6" : "");
         sendFindNode((sockaddr*)&n->ss, n->sslen,
                        TransId {TransPrefix::FIND_NODE}, id, want,
                        n->reply_time >= now.tv_sec - 15);
@@ -1461,7 +1459,7 @@ Dht::bucketMaintenance(RoutingTable& list)
                         want = WANT4 | WANT6;
                 }
 
-                SFL_DBG("Sending find_node for%s bucket maintenance.", q->af == AF_INET6 ? " IPv6" : "");
+                DHT_DEBUG("Sending find_node for%s bucket maintenance.", q->af == AF_INET6 ? " IPv6" : "");
                 sendFindNode((sockaddr*)&n->ss, n->sslen,
                                TransId {TransPrefix::FIND_NODE}, id, want,
                                n->reply_time >= now.tv_sec - 15);
@@ -1470,7 +1468,7 @@ Dht::bucketMaintenance(RoutingTable& list)
                    give up for now and reschedule us soon. */
                 return true;
             } else {
-                //SFL_DBG("Bucket maintenance %s: no suitable node", q->af == AF_INET ? "IPv4" : "IPv6");
+                //DHT_DEBUG("Bucket maintenance %s: no suitable node", q->af == AF_INET ? "IPv4" : "IPv6");
             }
         }
     }
@@ -1483,7 +1481,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
     if (buflen == 0)
         return;
 
-    //SFL_DBG("processMessage %p %lu %p %lu", buf, buflen, from, fromlen);
+    //DHT_DEBUG("processMessage %p %lu %p %lu", buf, buflen, from, fromlen);
 
     MessageType message;
     InfoHash id, info_hash, target;
@@ -1504,7 +1502,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
         return;
 
     if (isNodeBlacklisted(from, fromlen)) {
-        SFL_DBG("Received packet from blacklisted node.");
+        DHT_DEBUG("Received packet from blacklisted node.");
         return;
     }
 
@@ -1519,21 +1517,22 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
         if (message != MessageType::Error && id == zeroes)
             throw DhtException("no or invalid InfoHash");
     } catch (const std::exception& e) {
-        SFL_DBG("Can't process message of size %lu: %s.", buflen, e.what());
-        debug_printable(buf, buflen);
-        //SFL_DBG("");
+        DHT_DEBUG("Can't process message of size %lu: %s.", buflen, e.what());
+        DHT_DEBUG.logPrintable(buf, buflen);
+        //debug_printable(buf, buflen);
+        //DHT_DEBUG("");
         return;
     }
 
     if (id == myid) {
-        SFL_DBG("Received message from self.");
+        DHT_DEBUG("Received message from self.");
         return;
     }
 
     if (message > MessageType::Reply) {
         /* Rate limit requests. */
         if (!rateLimit()) {
-            SFL_DBG("Dropping request due to rate limiting.");
+            DHT_DEBUG("Dropping request due to rate limiting.");
             return;
         }
     }
@@ -1541,11 +1540,13 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
     switch (message) {
     case MessageType::Error:
         if (tid.length != 4) return;
-        SFL_DBG("Received error message:");
-        debug_printable(buf, buflen);
+        DHT_WARN("Received error message:");
+        DHT_WARN.logPrintable(buf, buflen);
+        //debug_printable(buf, buflen);
         if (error_code == 401 && id != zeroes && tid.matches(TransPrefix::ANNOUNCE_VALUES, &ttid)) {
             auto sr = findSearch(ttid, from->sa_family);
             if (!sr) return;
+            DHT_WARN("Received wrong token error for known search %s", sr->id.toString().c_str());
             for (auto& n : sr->nodes) {
                 if (n.id != id) continue;
                 newNode(id, from, fromlen, 2);
@@ -1558,8 +1559,9 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
         break;
     case MessageType::Reply:
         if (tid.length != 4) {
-            SFL_ERR("Broken node truncates transaction ids (len: %d): ", tid.length);
-            debug_printable(buf, buflen);
+            DHT_ERROR("Broken node truncates transaction ids (len: %d): ", tid.length);
+            DHT_ERROR.logPrintable(buf, buflen);
+            //debug_printable(buf, buflen);
             /* This is really annoying, as it means that we will
                time-out all our searches that go through this node.
                Kill it. */
@@ -1567,7 +1569,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
             return;
         }
         if (tid.matches(TransPrefix::PING)) {
-            SFL_DBG("Pong!");
+            DHT_DEBUG("Pong!");
             newNode(id, from, fromlen, 2);
         } else if (tid.matches(TransPrefix::FIND_NODE) or tid.matches(TransPrefix::GET_VALUES)) {
             bool gp = false;
@@ -1576,12 +1578,12 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                 gp = true;
                 sr = findSearch(ttid, from->sa_family);
             }
-            SFL_DBG("Nodes found (%u+%u)%s!", nodes_len/26, nodes6_len/38, gp ? " for get_values" : "");
+            DHT_DEBUG("Nodes found (%u+%u)%s!", nodes_len/26, nodes6_len/38, gp ? " for get_values" : "");
             if (nodes_len % 26 != 0 || nodes6_len % 38 != 0) {
-                SFL_WARN("Unexpected length for node info!");
+                DHT_WARN("Unexpected length for node info!");
                 blacklistNode(&id, from, fromlen);
             } else if (gp && sr == NULL) {
-                SFL_WARN("Unknown search!");
+                DHT_WARN("Unknown search!");
                 newNode(id, from, fromlen, 1);
             } else {
                 newNode(id, from, fromlen, 2);
@@ -1616,7 +1618,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                        requests in flight has decreased.  Let's push
                        another request. */
                     /*if (sr->isSynced(now.tv_sec)) {
-                        SFL_DBG("Trying to accelerate search!");
+                        DHT_DEBUG("Trying to accelerate search!");
                         search_time = now.tv_sec;
                         //sr->step_time = 0;
                     } else {*/
@@ -1627,7 +1629,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
             if (sr) {
                 sr->insertNode(id, from, fromlen, now.tv_sec, true, token);
                 if (!values.empty()) {
-                    SFL_DBG("Got %d values !", values.size());
+                    DHT_DEBUG("Got %d values !", values.size());
                     for (auto& cb : sr->callbacks) {
                         if (!cb.second) continue;
                         std::vector<std::shared_ptr<Value>> tmp;
@@ -1644,10 +1646,10 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                 }
             }
         } else if (tid.matches(TransPrefix::ANNOUNCE_VALUES, &ttid)) {
-            SFL_DBG("Got reply to announce_values.");
+            DHT_DEBUG("Got reply to announce_values.");
             Search *sr = findSearch(ttid, from->sa_family);
             if (!sr || value_id == Value::INVALID_ID) {
-                SFL_DBG("Unknown search or announce!");
+                DHT_DEBUG("Unknown search or announce!");
                 newNode(id, from, fromlen, 1);
             } else {
                 newNode(id, from, fromlen, 2);
@@ -1667,64 +1669,65 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                 searchSendGetValues(*sr);
             }
         } else {
-            SFL_DBG("Unexpected reply: ");
-            debug_printable(buf, buflen);
-            SFL_DBG("\n");
+            DHT_WARN("Unexpected reply: ");
+            DHT_WARN.logPrintable(buf, buflen);
+            //debug_printable(buf, buflen);
+            //DHT_DEBUG("\n");
         }
         break;
     case MessageType::Ping:
-        SFL_DBG("Got ping (%d)!", tid.length);
+        DHT_DEBUG("Got ping (%d)!", tid.length);
         newNode(id, from, fromlen, 1);
-        SFL_DBG("Sending pong.");
+        DHT_DEBUG("Sending pong.");
         sendPong(from, fromlen, tid);
         break;
     case MessageType::FindNode:
-        SFL_DBG("Got \"find node\" request");
+        DHT_DEBUG("Got \"find node\" request");
         newNode(id, from, fromlen, 1);
-        SFL_DBG("Sending closest nodes (%d).", want);
+        DHT_DEBUG("Sending closest nodes (%d).", want);
         sendClosestNodes(from, fromlen, tid, target, want);
         break;
     case MessageType::GetValues:
-        SFL_DBG("Got \"get values\" request");
+        DHT_DEBUG("Got \"get values\" request");
         newNode(id, from, fromlen, 1);
         if (info_hash == zeroes) {
-            SFL_DBG("Eek!  Got get_values with no info_hash.");
+            DHT_DEBUG("Eek!  Got get_values with no info_hash.");
             sendError(from, fromlen, tid, 203, "Get_values with no info_hash");
             break;
         } else {
             Storage* st = findStorage(info_hash);
             Blob ntoken = makeToken(from, false);
             if (st && st->values.size() > 0) {
-                 SFL_DBG("Sending found%s values.", from->sa_family == AF_INET6 ? " IPv6" : "");
+                 DHT_DEBUG("Sending found%s values.", from->sa_family == AF_INET6 ? " IPv6" : "");
                  sendClosestNodes(from, fromlen, tid, info_hash, want, ntoken, st);
             } else {
-                SFL_DBG("Sending nodes for get_values.");
+                DHT_DEBUG("Sending nodes for get_values.");
                 sendClosestNodes(from, fromlen, tid, info_hash, want, ntoken);
             }
         }
         break;
     case MessageType::AnnounceValue:
-        SFL_DBG("Got \"announce value\" request!");
+        DHT_DEBUG("Got \"announce value\" request!");
         newNode(id, from, fromlen, 1);
         if (info_hash == zeroes) {
-            SFL_DBG("Announce_value with no info_hash.");
+            DHT_DEBUG("Announce_value with no info_hash.");
             sendError(from, fromlen, tid, 203, "Announce_value with no info_hash");
             break;
         }
         if (!tokenMatch(token, from)) {
-            SFL_DBG("Incorrect token %s for announce_values.", to_hex(token.data(), token.size()).c_str());
+            DHT_DEBUG("Incorrect token %s for announce_values.", to_hex(token.data(), token.size()).c_str());
             sendError(from, fromlen, tid, 401, "Announce_value with wrong token");
             break;
         }
         for (const auto& v : values) {
             if (v->id == Value::INVALID_ID) {
-                SFL_DBG("Incorrect value id ");
+                DHT_DEBUG("Incorrect value id ");
                 sendError(from, fromlen, tid, 203, "Announce_value with invalid id");
                 continue;
             }
             auto lv = getLocal(info_hash, v->id);
             if (lv && lv->owner != id) {
-                SFL_DBG("Node %s attempting to store value belonging to node %s.", id.toString().c_str(), lv->owner.toString().c_str());
+                DHT_DEBUG("Node %s attempting to store value belonging to node %s.", id.toString().c_str(), lv->owner.toString().c_str());
                 sendError(from, fromlen, tid, 203, "Announce_value with wrong permission");
                 continue;
             }
@@ -1732,7 +1735,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                 // Allow the value to be edited by the storage policy
                 std::shared_ptr<Value> vc = v;
                 const auto& type = getType(vc->type);
-                SFL_DBG("Trying to store value of type %s belonging to node %s.", type.name.c_str(), v->owner.toString().c_str());
+                DHT_DEBUG("Trying to store value of type %s belonging to node %s.", type.name.c_str(), v->owner.toString().c_str());
                 if (type.storePolicy(vc, id, from, fromlen)) {
                     storageStore(info_hash, vc);
                 }
@@ -1741,7 +1744,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
             /* Note that if storage_store failed, we lie to the requestor.
                This is to prevent them from backtracking, and hence
                polluting the DHT. */
-            SFL_DBG("Sending announceValue confirmation.");
+            DHT_DEBUG("Sending announceValue confirmation.");
             sendValueAnnounced(from, fromlen, tid, v->id);
         }
     }
@@ -1767,7 +1770,7 @@ Dht::periodic(const uint8_t *buf, size_t buflen,
     }
 
     if (search_time > 0 && now.tv_sec >= search_time) {
-        SFL_DBG("search_time");
+        DHT_DEBUG("search_time");
         search_time = 0;
         for (auto& sr : searches) {
             time_t tm = sr.getNextStepTime(types, now.tv_sec);
@@ -1780,22 +1783,22 @@ Dht::periodic(const uint8_t *buf, size_t buflen,
                 search_time = tm;
         }
         if (search_time == 0)
-            SFL_DBG("next search_time : (none)");
+            DHT_DEBUG("next search_time : (none)");
         else if (search_time < now.tv_sec)
-            SFL_DBG("next search_time : %lu (ASAP)");
+            DHT_DEBUG("next search_time : %lu (ASAP)");
         else
-            SFL_DBG("next search_time : %lu (in %lu s)", search_time, search_time-now.tv_sec);
+            DHT_DEBUG("next search_time : %lu (in %lu s)", search_time, search_time-now.tv_sec);
     }
 
     if (now.tv_sec >= confirm_nodes_time) {
-        //SFL_DBG("confirm_nodes_time");
+        //DHT_DEBUG("confirm_nodes_time");
         bool soon = false;
 
         soon |= bucketMaintenance(buckets);
         soon |= bucketMaintenance(buckets6);
 
         if (!soon) {
-//            SFL_DBG("!soon");
+//            DHT_DEBUG("!soon");
             if (mybucket_grow_time >= now.tv_sec - 150)
                 soon |= neighbourhoodMaintenance(buckets);
             if (mybucket6_grow_time >= now.tv_sec - 150)
@@ -1864,14 +1867,14 @@ Dht::importValues(const std::vector<ValuesExport>& import)
                     val_time = deserialize<time_t>(b, e);
                     tmp_val.unpack(b, e);
                 } catch (const std::exception&) {
-                    SFL_ERR("Error reading value at %s", h.first.toString().c_str());
+                    DHT_ERROR("Error reading value at %s", h.first.toString().c_str());
                     continue;
                 }
                 auto st = storageStore(h.first, std::make_shared<Value>(std::move(tmp_val)));
                 st->time = val_time;
             }
         } catch (const std::exception&) {
-            SFL_ERR("Error reading values at %s", h.first.toString().c_str());
+            DHT_ERROR("Error reading values at %s", h.first.toString().c_str());
             continue;
         }
     }
@@ -1923,7 +1926,7 @@ Dht::insertNode(const InfoHash& id, const sockaddr *sa, socklen_t salen)
 int
 Dht::pingNode(const sockaddr *sa, socklen_t salen)
 {
-    SFL_DBG("Sending ping.");
+    DHT_DEBUG("Sending ping.");
     return sendPing(sa, salen, TransId {TransPrefix::PING});
 }
 
@@ -1955,7 +1958,7 @@ Dht::send(const void *buf, size_t len, int flags, const sockaddr *sa, socklen_t 
         abort();
 
     if (isNodeBlacklisted(sa, salen)) {
-        SFL_DBG("Attempting to send to blacklisted node.");
+        DHT_DEBUG("Attempting to send to blacklisted node.");
         errno = EPERM;
         return -1;
     }
@@ -2173,7 +2176,7 @@ Dht::sendClosestNodes(const sockaddr *sa, socklen_t salen, TransId tid,
                 numnodes6 = bufferClosestNodes(nodes6, numnodes6, id, *std::prev(b));
         }
     }
-    SFL_DBG("sending closest nodes (%d+%d nodes.)", numnodes, numnodes6);
+    DHT_DEBUG("sending closest nodes (%d+%d nodes.)", numnodes, numnodes6);
 
     try {
         return sendNodesValues(sa, salen, tid,
@@ -2181,7 +2184,7 @@ Dht::sendClosestNodes(const sockaddr *sa, socklen_t salen, TransId tid,
                                 nodes6, numnodes6 * 38,
                                 st, token);
     } catch (const std::overflow_error& e) {
-        SFL_ERR("Can't send value: buffer not large enough !");
+        DHT_ERROR("Can't send value: buffer not large enough !");
         return -1;
     }
 }
@@ -2403,7 +2406,7 @@ Dht::parseMessage(const uint8_t *buf, size_t buflen,
                 break;
         }
         if (i >= buflen || buf[i] != 'e')
-            SFL_DBG("eek... unexpected end for values.");
+            DHT_DEBUG("eek... unexpected end for values.");
     }
 
     p = (uint8_t*)dht_memmem(buf, buflen, "3:vid8:", 7);
@@ -2427,11 +2430,11 @@ Dht::parseMessage(const uint8_t *buf, size_t buflen,
                 else if (buf[i] == '2' && memcmp(buf + i + 2, "n6", 2) == 0)
                     *want_return |= WANT6;
                 else
-                    SFL_DBG("eek... unexpected want flag (%c)", buf[i]);
+                    DHT_DEBUG("eek... unexpected want flag (%c)", buf[i]);
                 i += 2 + buf[i] - '0';
             }
             if (i >= buflen || buf[i] != 'e')
-                SFL_DBG("eek... unexpected end for want.");
+                DHT_DEBUG("eek... unexpected end for want.");
         } else {
             *want_return = -1;
         }

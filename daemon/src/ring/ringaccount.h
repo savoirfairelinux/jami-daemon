@@ -255,7 +255,7 @@ class RingAccount : public SIPAccountBase {
 
     private:
 
-        static const CipherArray TLS_CIPHER_LIST;
+        const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", 60 * 60 * 24 * 7};
 
         void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to, const std::string& toUrl, const IpAddr& peer);
 

@@ -37,6 +37,12 @@ THE SOFTWARE.
 
 namespace dht {
 
+/**
+ * Provides a thread-safe interface to run the (secure) DHT.
+ * The class will open sockets on the provided port and will
+ * either wait for (expectedly frequent) calls to loop() or start an internal
+ * thread that will update the DHT when appropriate.
+ */
 class DhtRunner {
 
 public:
@@ -106,6 +112,16 @@ public:
         if (!dht)
             return {};
         return dht->exportValues();
+    }
+
+    void setLoggers(LogMethod&& error = NOLOG, LogMethod&& warn = NOLOG, LogMethod&& debug = NOLOG) {
+        std::unique_lock<std::mutex> lck(dht_mtx);
+        dht->setLoggers(std::forward<LogMethod>(error), std::forward<LogMethod>(warn), std::forward<LogMethod>(debug));
+    }
+
+    void registerType(const ValueType& type) {
+        std::unique_lock<std::mutex> lck(dht_mtx);
+        dht->registerType(type);
     }
 
     void importValues(const std::vector<Dht::ValuesExport>& values) {
