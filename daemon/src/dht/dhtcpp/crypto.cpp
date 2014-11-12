@@ -33,6 +33,8 @@ extern "C" {
 }
 
 #include <random>
+#include <sstream>
+#include <random>
 
 static gnutls_digest_algorithm_t get_dig_for_pub(gnutls_pubkey_t pubkey)
 {
@@ -64,10 +66,31 @@ static gnutls_digest_algorithm_t get_dig(gnutls_x509_crt_t crt)
 namespace dht {
 namespace crypto {
 
-PrivateKey::PrivateKey(gnutls_x509_privkey_t k) : x509_key(k) {
+PrivateKey::PrivateKey(gnutls_x509_privkey_t k) : x509_key(k)
+{
     gnutls_privkey_init(&key);
     if (gnutls_privkey_import_x509(key, k, GNUTLS_PRIVKEY_IMPORT_COPY) != GNUTLS_E_SUCCESS) {
         key = nullptr;
+        throw DhtException("Can't load private key !");
+    }
+}
+
+PrivateKey::PrivateKey(const Blob& import)
+{
+    const gnutls_datum_t dt {(unsigned char*)import.data(), static_cast<unsigned>(import.size())};
+    gnutls_x509_privkey_init(&x509_key);
+    int err = gnutls_x509_privkey_import(x509_key, &dt, GNUTLS_X509_FMT_PEM);
+    if (err != GNUTLS_E_SUCCESS) {
+        SFL_ERR("Could not read PEM key - %s", gnutls_strerror(err));
+        err = gnutls_x509_privkey_import(x509_key, &dt, GNUTLS_X509_FMT_DER);
+    }
+    if (err != GNUTLS_E_SUCCESS) {
+        gnutls_x509_privkey_deinit(x509_key);
+        SFL_ERR("Could not read key - %s", gnutls_strerror(err));
+        throw DhtException("Can't load private key !");
+    }
+    gnutls_privkey_init(&key);
+    if (gnutls_privkey_import_x509(key, x509_key, GNUTLS_PRIVKEY_IMPORT_COPY) != GNUTLS_E_SUCCESS) {
         throw DhtException("Can't load private key !");
     }
 }
@@ -82,6 +105,22 @@ PrivateKey::~PrivateKey()
         gnutls_x509_privkey_deinit(x509_key);
         x509_key = nullptr;
     }
+}
+
+PrivateKey&
+PrivateKey::operator=(PrivateKey&& o) noexcept
+{
+    if (key) {
+        gnutls_privkey_deinit(key);
+        key = nullptr;
+    }
+    if (x509_key) {
+        gnutls_x509_privkey_deinit(x509_key);
+        x509_key = nullptr;
+    }
+    key = o.key; x509_key = o.x509_key;
+    o.key = nullptr; o.x509_key = nullptr;
+    return *this;
 }
 
 Blob
@@ -185,6 +224,16 @@ Certificate::Certificate(const Blob& certData) : cert(nullptr)
     unpackBlob(certData);
 }
 
+Certificate&
+Certificate::operator=(Certificate&& o) noexcept
+{
+    if (cert)
+        gnutls_x509_crt_deinit(cert);
+    cert = o.cert;
+    o.cert = nullptr;
+    return *this;
+}
+
 void
 Certificate::unpack(Blob::const_iterator& begin, Blob::const_iterator& end)
 {
@@ -231,58 +280,75 @@ Certificate::getPublicKey() const
     return PublicKey {pk};
 }
 
+PrivateKey
+PrivateKey::generate()
+{
+    gnutls_x509_privkey_t key;
+    if (gnutls_x509_privkey_init(&key) != GNUTLS_E_SUCCESS)
+        throw std::runtime_error("Can't initialize private key.");
+    if (gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0) != GNUTLS_E_SUCCESS) {
+        gnutls_x509_privkey_deinit(key);
+        throw std::runtime_error("Can't initialize RSA key pair.");
+    }
+    return PrivateKey{key};
+}
 
 crypto::Identity
-generateIdentity()
+generateIdentity(const std::string& name, crypto::Identity ca)
 {
     SFL_WARN("SecureDht: generating a new identity (2048 bits RSA key pair and self-signed certificate).");
-    gnutls_x509_privkey_t key;
-    gnutls_privkey_t pkey;
-    if (gnutls_x509_privkey_init(&key) != GNUTLS_E_SUCCESS)
-        return {};
-    if (gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0) != GNUTLS_E_SUCCESS)
-        return {};
-    gnutls_privkey_init(&pkey);
-    gnutls_privkey_import_x509(pkey, key, 0);
+    auto shared_key = std::make_shared<PrivateKey>(PrivateKey::generate());
 
     gnutls_x509_crt_t cert;
-    gnutls_x509_crt_init(&cert);
+    if (gnutls_x509_crt_init(&cert) != GNUTLS_E_SUCCESS)
+        return {};
+    auto shared_crt = std::make_shared<Certificate>(cert);
+
     gnutls_x509_crt_set_activation_time(cert, time(NULL));
     gnutls_x509_crt_set_expiration_time(cert, time(NULL) + (700 * 24 * 60 * 60));
-    if (gnutls_x509_crt_set_key(cert, key) != GNUTLS_E_SUCCESS) {
+    if (gnutls_x509_crt_set_key(cert, shared_key->x509_key) != GNUTLS_E_SUCCESS) {
         std::cerr << "Error when setting certificate key" << std::endl;
-        gnutls_x509_crt_deinit (cert);
-        gnutls_x509_privkey_deinit(key);
         return {};
     }
-    if (gnutls_x509_crt_set_version(cert, 1) != GNUTLS_E_SUCCESS) {
+    if (gnutls_x509_crt_set_version(cert, 3) != GNUTLS_E_SUCCESS) {
         std::cerr << "Error when setting certificate version" << std::endl;
-        gnutls_x509_crt_deinit (cert);
-        gnutls_x509_privkey_deinit(key);
         return {};
     }
-    /*uint8_t keyid[128];
-    size_t keyidsize = sizeof(keyid);
-    gnutls_x509_crt_get_key_id(cert, 0, keyid, &keyidsize);
-    gnutls_x509_crt_set_subject_key_id(cert, keyid, keyidsize);*/
 
-    const char* name = "dhtclient";
-    gnutls_x509_crt_set_dn_by_oid(cert, GNUTLS_OID_X520_COMMON_NAME, 0, name, strlen(name));
-    gnutls_x509_crt_set_issuer_dn_by_oid(cert, GNUTLS_OID_X520_COMMON_NAME, 0, name, strlen(name));
-    //gnutls_x509_crt_set_key_usage (cert, GNUTLS_KEY_KEY_CERT_SIGN | GNUTLS_KEY_CRL_SIGN);
+    // TODO: compute the subject key using the recommended RFC method
+    auto pk_id = shared_key->getPublicKey().getId();
+    gnutls_x509_crt_set_subject_key_id(cert, &pk_id, sizeof(pk_id));
 
-    std::mt19937 rd {std::random_device{}()};
-    std::uniform_int_distribution<uint8_t> dist {};
-    uint8_t cert_version = 1;//dist(rd);
-    gnutls_x509_crt_set_serial(cert, &cert_version, sizeof(cert_version));
-    //if (gnutls_x509_crt_sign2(cert, cert, key, GNUTLS_DIG_SHA512, 0) != GNUTLS_E_SUCCESS) {
-    if (gnutls_x509_crt_privkey_sign(cert, cert, pkey, get_dig(cert), 0) != GNUTLS_E_SUCCESS) {
-        std::cerr << "Error when signing certificate" << std::endl;
-        gnutls_x509_crt_deinit (cert);
-        gnutls_x509_privkey_deinit(key);
-        return {};
+    gnutls_x509_crt_set_dn_by_oid(cert, GNUTLS_OID_X520_COMMON_NAME, 0, name.data(), name.length());
+
+    const std::string& uid_str = shared_key->getPublicKey().getId().toString();
+    gnutls_x509_crt_set_dn_by_oid(cert, GNUTLS_OID_LDAP_UID, 0, uid_str.data(), uid_str.length());
+
+    {
+        std::random_device rdev;
+        uint64_t cert_serial = 1;
+        std::uniform_int_distribution<uint8_t> dist{};
+        cert_serial = dist(rdev);
+        gnutls_x509_crt_set_serial(cert, &cert_serial, sizeof(cert_serial));
     }
-    return {std::make_shared<PrivateKey>(key), std::make_shared<Certificate>(cert)};
+
+    if (ca.first && ca.second) {
+        gnutls_x509_crt_set_key_usage (cert, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_DATA_ENCIPHERMENT);
+        //if (gnutls_x509_crt_sign2(cert, ca.second->cert, ca.first->x509_key, get_dig(cert), 0) != GNUTLS_E_SUCCESS) {
+        if (gnutls_x509_crt_privkey_sign(cert, ca.second->cert, ca.first->key, get_dig(cert), 0) != GNUTLS_E_SUCCESS) {
+            std::cerr << "Error when signing certificate" << std::endl;
+            return {};
+        }
+    } else {
+        gnutls_x509_crt_set_ca_status(cert, 1);
+        gnutls_x509_crt_set_key_usage (cert, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_CERT_SIGN);
+        //if (gnutls_x509_crt_sign2(cert, cert, key, get_dig(cert), 0) != GNUTLS_E_SUCCESS) {
+        if (gnutls_x509_crt_privkey_sign(cert, cert, shared_key->key, get_dig(cert), 0) != GNUTLS_E_SUCCESS) {
+            std::cerr << "Error when signing certificate" << std::endl;
+            return {};
+        }
+    }
+    return {shared_key, shared_crt};
 }
 
 }
