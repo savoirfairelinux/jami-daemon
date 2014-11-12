@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef DHTACCOUNT_H
-#define DHTACCOUNT_H
+#ifndef RINGACCOUNT_H
+#define RINGACCOUNT_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -68,9 +68,9 @@ namespace YAML {
  * @file sipaccount.h
  * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
  */
-class DHTAccount : public SIPAccountBase {
+class RingAccount : public SIPAccountBase {
     public:
-        constexpr static const char * const ACCOUNT_TYPE = "DHT";
+        constexpr static const char * const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
 
         const char* getAccountType() const {
@@ -81,9 +81,9 @@ class DHTAccount : public SIPAccountBase {
          * Constructor
          * @param accountID The account identifier
          */
-        DHTAccount(const std::string& accountID, bool presenceEnabled);
+        RingAccount(const std::string& accountID, bool presenceEnabled);
 
-        ~DHTAccount();
+        ~RingAccount();
 
         /**
          * Serialize internal state of this account for configuration
@@ -261,7 +261,7 @@ class DHTAccount : public SIPAccountBase {
          */
         virtual void setAccountDetails(const std::map<std::string, std::string> &details);
 
-        NON_COPYABLE(DHTAccount);
+        NON_COPYABLE(RingAccount);
 
         /**
          * Start a SIP Call

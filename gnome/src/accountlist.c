@@ -366,7 +366,7 @@ gboolean account_is_IAX(const account_t *account)
 
 gboolean account_is_DHT(const account_t *account)
 {
-    return is_type(account, "DHT");
+    return is_type(account, "RING");
 }
 
 account_t *create_default_account()
