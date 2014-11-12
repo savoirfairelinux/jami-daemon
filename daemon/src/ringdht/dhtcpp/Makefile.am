@@ -1,5 +1,3 @@
-include $(top_srcdir)/globals.mak
-
 noinst_LTLIBRARIES = libdhtcpp.la
 libdhtcpp_la_CXXFLAGS = @CXXFLAGS@
 
