@@ -113,6 +113,7 @@ DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
 
 DHTAccount::~DHTAccount()
 {
+    Manager::instance().unregisterEventHandler((uintptr_t)this);
     setTransport();
     dht_.join();
     gnutls_global_deinit();
@@ -359,15 +360,15 @@ loadFile(const std::string& path)
     std::vector<uint8_t> buffer;
     std::ifstream file(path, std::ios::binary);
     if (!file)
-        throw std::runtime_error("Can't read file.");
+        throw std::runtime_error("Can't read file: "+path);
     file.seekg(0, std::ios::end);
     std::streamsize size = file.tellg();
     if (size > std::numeric_limits<unsigned>::max())
-        throw std::runtime_error("File is too big.");
+        throw std::runtime_error("File is too big: "+path);
     buffer.resize(size);
     file.seekg(0, std::ios::beg);
     if (!file.read((char*)buffer.data(), size))
-        throw std::runtime_error("Can't load file.");
+        throw std::runtime_error("Can't load file: "+path);
     return buffer;
 }
 

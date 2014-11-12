@@ -34,37 +34,6 @@ extern "C" {
 
 #include <random>
 
-static gnutls_digest_algorithm_t get_dig_for_pub(gnutls_pubkey_t pubkey)
-{
-    gnutls_digest_algorithm_t dig;
-    int result = gnutls_pubkey_get_preferred_hash_algorithm(pubkey, &dig, nullptr);
-    if (result < 0) {
-        fprintf(stderr,
-            "crt_get_preferred_hash_algorithm: %s\n",
-            gnutls_strerror(result));
-        return GNUTLS_DIG_UNKNOWN;
-    }
-    return dig;
-}
-
-static gnutls_digest_algorithm_t get_dig(gnutls_x509_crt_t crt)
-{
-    gnutls_pubkey_t pubkey;
-    gnutls_pubkey_init(&pubkey);
-
-    int result = gnutls_pubkey_import_x509(pubkey, crt, 0);
-    if (result < 0) {
-        fprintf(stderr, "gnutls_pubkey_import_x509: %s\n",
-            gnutls_strerror(result));
-        return GNUTLS_DIG_UNKNOWN;
-    }
-
-    gnutls_digest_algorithm_t dig = get_dig_for_pub(pubkey);
-    gnutls_pubkey_deinit(pubkey);
-    return dig;
-}
-
-
 namespace dht {
 
 SecureDht::SecureDht(int s, int s6, crypto::Identity id)
