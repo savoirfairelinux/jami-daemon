@@ -49,9 +49,9 @@ SecureDht::SecureDht(int s, int s6, crypto::Identity id)
     if (certificate_->getPublicKey().getId() != key_->getPublicKey().getId()) {
         SFL_ERR("SecureDht: provided certificate doesn't match private key.");
     }
-    Dht::registerType(crypto::CERTIFICATE);
+    Dht::registerType(crypto::Certificate::TYPE);
     Value cert_val {
-        crypto::CERTIFICATE,
+        crypto::Certificate::TYPE,
         *certificate_
     };
     cert_val.owner = getId();
@@ -130,7 +130,7 @@ SecureDht::findCertificate(const InfoHash& node, std::function<void(const std::s
     }, [cb,found](bool) {
         if (!*found)
             cb(nullptr);
-    }, Value::TypeFilter(crypto::CERTIFICATE));
+    }, Value::TypeFilter(crypto::Certificate::TYPE));
 }
 
 void
@@ -141,7 +141,7 @@ SecureDht::get(const InfoHash& id, GetCallback cb, DoneCallback donecb, Value::F
     Dht::get(id,
     [=](const std::vector<std::shared_ptr<Value>>& values) {
         for (const auto& v : values) {
-            if (!v->flags.isEncrypted() && v->type == crypto::CERTIFICATE.id)
+            if (!v->flags.isEncrypted() && v->type == crypto::Certificate::TYPE.id)
                 registerCertificate(id, v->data);
         }
         if (*done) return false;
