@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "dhtaccount.h"
+#include "ringaccount.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -73,9 +73,9 @@
 #include <sstream>
 #include <cstdlib>
 
-constexpr const char * const DHTAccount::ACCOUNT_TYPE;
+constexpr const char * const RingAccount::ACCOUNT_TYPE;
 
-DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
+RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID)
 {
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
@@ -97,7 +97,7 @@ DHTAccount::DHTAccount(const std::string& accountID, bool /* presenceEnabled */)
     }
 }
 
-DHTAccount::~DHTAccount()
+RingAccount::~RingAccount()
 {
     setTransport();
     dht_.join();
@@ -105,18 +105,18 @@ DHTAccount::~DHTAccount()
 }
 
 std::shared_ptr<SIPCall>
-DHTAccount::newIncomingCall(const std::string& id)
+RingAccount::newIncomingCall(const std::string& id)
 {
-    return Manager::instance().callFactory.newCall<SIPCall, DHTAccount>(*this, id, Call::INCOMING);
+    return Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::INCOMING);
 }
 
 template <>
 std::shared_ptr<SIPCall>
-DHTAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
-    auto call = Manager::instance().callFactory.newCall<SIPCall, DHTAccount>(*this, id, Call::OUTGOING);
-    auto dhtf = toUrl.find("dht:");
-    dhtf = (dhtf == std::string::npos) ? 0 : dhtf+4;
+    auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::OUTGOING);
+    auto dhtf = toUrl.find("ring:");
+    dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
     const std::string toUri = toUrl.substr(dhtf, 40);
     SFL_DBG("Calling DHT peer %s", toUri.c_str());
     call->setIPToIP(true);
@@ -154,9 +154,9 @@ DHTAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 }
 
 void
-DHTAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to, const std::string& toUri, const IpAddr& peer)
+RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to, const std::string& toUri, const IpAddr& peer)
 {
-    SFL_WARN("DHTAccount::createOutgoingCall to: %s toUri: %s tlsListener: %d", to.c_str(), toUri.c_str(), tlsListener_?1:0);
+    SFL_WARN("RingAccount::createOutgoingCall to: %s toUri: %s tlsListener: %d", to.c_str(), toUri.c_str(), tlsListener_?1:0);
     std::shared_ptr<SipTransport> t = link_->sipTransport->getTlsTransport(tlsListener_, getToUri(peer.toString(true, true)));
     setTransport(t);
     call->setTransport(t);
@@ -209,13 +209,13 @@ DHTAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 }
 
 std::shared_ptr<Call>
-DHTAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
     return newOutgoingCall<SIPCall>(id, toUrl);
 }
 
 bool
-DHTAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call)
+RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call)
 {
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 
@@ -293,7 +293,7 @@ DHTAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call)
     return true;
 }
 
-void DHTAccount::serialize(YAML::Emitter &out)
+void RingAccount::serialize(YAML::Emitter &out)
 {
     using namespace Conf;
 
@@ -312,7 +312,7 @@ void DHTAccount::serialize(YAML::Emitter &out)
     out << YAML::EndMap;
 }
 
-void DHTAccount::unserialize(const YAML::Node &node)
+void RingAccount::unserialize(const YAML::Node &node)
 {
     using namespace yaml_utils;
     SIPAccountBase::unserialize(node);
@@ -328,7 +328,7 @@ void DHTAccount::unserialize(const YAML::Node &node)
 }
 
 void
-DHTAccount::checkIdentityPath()
+RingAccount::checkIdentityPath()
 {
     if (not privkeyPath_.empty() and not dataPath_.empty())
         return;
@@ -369,7 +369,7 @@ saveFile(const std::string& path, const std::vector<uint8_t>& data)
 }
 
 dht::crypto::Identity
-DHTAccount::loadIdentity()
+RingAccount::loadIdentity()
 {
     dht::crypto::Certificate ca_cert;
 
@@ -408,7 +408,7 @@ DHTAccount::loadIdentity()
 }
 
 void
-DHTAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path) const
+RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path) const
 {
     if (id.first)
         saveFile(path+".pem", id.first->serialize());
@@ -428,7 +428,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
     i = atoi(iter->second.c_str());
 }
 
-void DHTAccount::setAccountDetails(const std::map<std::string, std::string> &details)
+void RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);
     parseInt(details, CONFIG_DHT_PORT, dhtPort_);
@@ -439,7 +439,7 @@ void DHTAccount::setAccountDetails(const std::map<std::string, std::string> &det
     checkIdentityPath();
 }
 
-std::map<std::string, std::string> DHTAccount::getAccountDetails() const
+std::map<std::string, std::string> RingAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
 
@@ -451,7 +451,7 @@ std::map<std::string, std::string> DHTAccount::getAccountDetails() const
     return a;
 }
 
-void DHTAccount::doRegister()
+void RingAccount::doRegister()
 {
     if (not isEnabled()) {
         SFL_WARN("Account must be enabled to register, ignoring");
@@ -522,7 +522,7 @@ void DHTAccount::doRegister()
 }
 
 
-void DHTAccount::doUnregister(std::function<void(bool)> released_cb)
+void RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     saveNodes(dht_.exportNodes());
@@ -534,7 +534,7 @@ void DHTAccount::doUnregister(std::function<void(bool)> released_cb)
         released_cb(false);
 }
 
-void DHTAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
+void RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
 {
     if (nodes.empty())
         return;
@@ -551,7 +551,7 @@ void DHTAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
     }
 }
 
-void DHTAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) const
+void RingAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) const
 {
     fileutils::check_dir(dataPath_.c_str());
     for (const auto& v : values) {
@@ -562,7 +562,7 @@ void DHTAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) c
 }
 
 std::vector<dht::Dht::NodeExport>
-DHTAccount::loadNodes() const
+RingAccount::loadNodes() const
 {
     std::vector<dht::Dht::NodeExport> nodes;
     std::string nodesPath = nodePath_+DIR_SEPARATOR_STR "nodes";
@@ -587,7 +587,7 @@ DHTAccount::loadNodes() const
 }
 
 std::vector<dht::Dht::ValuesExport>
-DHTAccount::loadValues() const
+RingAccount::loadValues() const
 {
     struct dirent *entry;
     DIR *dp = opendir(dataPath_.c_str());
@@ -615,7 +615,7 @@ DHTAccount::loadValues() const
     return values;
 }
 
-void DHTAccount::initTlsConfiguration()
+void RingAccount::initTlsConfiguration()
 {
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     pjsip_tls_setting_default(&tlsSetting_);
@@ -635,20 +635,20 @@ void DHTAccount::initTlsConfiguration()
     tlsSetting_.qos_ignore_error = PJ_TRUE;
 }
 
-void DHTAccount::loadConfig()
+void RingAccount::loadConfig()
 {
-    SFL_WARN("DHTAccount::loadConfig()");
+    SFL_WARN("RingAccount::loadConfig()");
     initTlsConfiguration();
     transportType_ = PJSIP_TRANSPORT_TLS;
 }
 
-bool DHTAccount::userMatch(const std::string& username) const
+bool RingAccount::userMatch(const std::string& username) const
 {
     return !username.empty() and username == dht_.getId().toString();
 }
 
 MatchRank
-DHTAccount::matches(const std::string &userName, const std::string &server) const
+RingAccount::matches(const std::string &userName, const std::string &server) const
 {
     if (userMatch(userName)) {
         SFL_DBG("Matching account id in request with username %s", userName.c_str());
@@ -658,19 +658,19 @@ DHTAccount::matches(const std::string &userName, const std::string &server) cons
     }
 }
 
-std::string DHTAccount::getFromUri() const
+std::string RingAccount::getFromUri() const
 {
-    return "dht:" + dht_.getId().toString() + "@dht.invalid";
+    return "ring:" + dht_.getId().toString() + "@ring.dht";
 }
 
-std::string DHTAccount::getToUri(const std::string& to) const
+std::string RingAccount::getToUri(const std::string& to) const
 {
     const std::string transport {pjsip_transport_get_type_name(transportType_)};
     return "<sips:" + to + ";transport=" + transport + ">";
 }
 
 pj_str_t
-DHTAccount::getContactHeader(pjsip_transport* t)
+RingAccount::getContactHeader(pjsip_transport* t)
 {
     if (!t && transport_)
         t = transport_->get();
@@ -684,7 +684,7 @@ DHTAccount::getContactHeader(pjsip_transport* t)
         transportType = PJSIP_TRANSPORT_UDP;
 
     // Else we determine this infor based on transport information
-    std::string address = "dht.invalid";
+    std::string address = "ring.dht";
     pj_uint16_t port = getTlsListenerPort();
 
     link_->sipTransport->findLocalAddressFromTransport(t, transportType, hostname_, address, port);
@@ -712,7 +712,7 @@ DHTAccount::getContactHeader(pjsip_transport* t)
  *  Enable the presence module
  */
 void
-DHTAccount::enablePresence(const bool& /* enabled */)
+RingAccount::enablePresence(const bool& /* enabled */)
 {
 }
 
@@ -721,13 +721,13 @@ DHTAccount::enablePresence(const bool& /* enabled */)
  *  and process the change.
  */
 void
-DHTAccount::supportPresence(int /* function */, bool /* enabled*/)
+RingAccount::supportPresence(int /* function */, bool /* enabled*/)
 {
 }
 #endif
 
 /*
-void DHTAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
+void RingAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
 {
     if (allowViaRewrite_ && via_addr_.host.slen > 0)
         pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
