@@ -340,35 +340,6 @@ RingAccount::checkIdentityPath()
     cacertPath_ = idPath + DIR_SEPARATOR_STR "ca.crt";
 }
 
-std::vector<uint8_t>
-loadFile(const std::string& path)
-{
-    std::vector<uint8_t> buffer;
-    std::ifstream file(path, std::ios::binary);
-    if (!file)
-        throw std::runtime_error("Can't read file: "+path);
-    file.seekg(0, std::ios::end);
-    std::streamsize size = file.tellg();
-    if (size > std::numeric_limits<unsigned>::max())
-        throw std::runtime_error("File is too big: "+path);
-    buffer.resize(size);
-    file.seekg(0, std::ios::beg);
-    if (!file.read((char*)buffer.data(), size))
-        throw std::runtime_error("Can't load file: "+path);
-    return buffer;
-}
-
-void
-saveFile(const std::string& path, const std::vector<uint8_t>& data)
-{
-    std::ofstream file(path, std::ios::trunc | std::ios::binary);
-    if (!file.is_open()) {
-        SFL_ERR("Could not write data to %s", path.c_str());
-        return;
-    }
-    file.write((char*)data.data(), data.size());
-}
-
 std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::crypto::Identity>
 RingAccount::loadIdentity()
 {
@@ -378,9 +349,9 @@ RingAccount::loadIdentity()
     dht::crypto::PrivateKey dht_key;
 
     try {
-        ca_cert = dht::crypto::Certificate(loadFile(cacertPath_));
-        dht_cert = dht::crypto::Certificate(loadFile(certPath_));
-        dht_key = dht::crypto::PrivateKey(loadFile(privkeyPath_));
+        ca_cert = dht::crypto::Certificate(fileutils::loadFile(cacertPath_));
+        dht_cert = dht::crypto::Certificate(fileutils::loadFile(certPath_));
+        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(privkeyPath_));
     }
     catch (const std::exception& e) {
         SFL_ERR("Error loading identity: %s", e.what());
@@ -418,9 +389,9 @@ void
 RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path) const
 {
     if (id.first)
-        saveFile(path+".pem", id.first->serialize());
+        fileutils::saveFile(path+".pem", id.first->serialize());
     if (id.second)
-        saveFile(path+".crt", id.second->getPacked());
+        fileutils::saveFile(path+".crt", id.second->getPacked());
 }
 
 template <typename T>
@@ -555,7 +526,8 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
 void
 RingAccount::registerCA(const dht::crypto::Certificate& crt)
 {
-    saveFile(caPath_ + DIR_SEPARATOR_STR + crt.getPublicKey().getId().toString(), crt.getPacked());
+    fileutils::check_dir(caPath_.c_str());
+    fileutils::saveFile(caPath_ + DIR_SEPARATOR_STR + crt.getPublicKey().getId().toString(), crt.getPacked());
 }
 
 bool
@@ -565,7 +537,7 @@ RingAccount::unregisterCA(const dht::InfoHash& crt_id)
     bool deleted = false;
     for (const auto& ca_path : cas) {
         try {
-            dht::crypto::Certificate tmp_crt(loadFile(ca_path));
+            dht::crypto::Certificate tmp_crt(fileutils::loadFile(ca_path));
             if (tmp_crt.getPublicKey().getId() == crt_id)
                 deleted &= remove(ca_path.c_str()) == 0;
         } catch (const std::exception&) {}
