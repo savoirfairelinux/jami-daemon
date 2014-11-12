@@ -35,10 +35,13 @@
 extern "C" {
 #endif
 
+#include <stdarg.h>
+
 /**
  * Print something, coloring it depending on the level
  */
 void logger(const int level, const char *format, ...);
+void vlogger(const int level, const char *format, va_list);
 
 /**
  * Allow writing on the console
