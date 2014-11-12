@@ -34,6 +34,7 @@
 #include "actions.h"
 
 #include "sflphone_client.h"    /* gsettings schema path */
+#include "video_window.h"       /* for the window its contained in */
 
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
@@ -68,14 +69,14 @@ typedef struct _VideoScreen {
 struct _VideoWidgetPrivate {
     ClutterActor     *video_aspect_frame;
     VideoScreen      video_screen;
-    GtkWidget        *toolbar;
     GHashTable       *video_handles;
     GSettings        *settings;
     gboolean         fullscreen;
+    GtkWidget        *video_window;
 };
 
 /* Define the VideoWidget type and inherit from GtkWindow */
-G_DEFINE_TYPE(VideoWidget, video_widget, GTK_TYPE_WINDOW);
+G_DEFINE_TYPE(VideoWidget, video_widget, GTK_TYPE_BIN);
 
 #define VIDEO_WIDGET_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
             VIDEO_WIDGET_TYPE, VideoWidgetPrivate))
@@ -92,12 +93,44 @@ static void       video_widget_remove_camera_in_screen  (GtkWidget *, VIDEO_AREA
 static void       video_widget_show_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
 static void       video_widget_hide_camera_in_screen    (GtkWidget *, VIDEO_AREA_ID);
 static void       cleanup_video_handle                  (gpointer);
-static gboolean   on_configure_event_cb                 (GtkWidget *, GdkEventConfigure *, gpointer);
 static gboolean   on_button_press_in_screen_event_cb    (GtkWidget *, GdkEventButton *, gpointer);
 static gboolean   on_pointer_enter_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
 static gboolean   on_pointer_leave_preview_cb           (ClutterActor *, ClutterEvent *, gpointer);
 static void       on_drag_data_received_cb              (GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint32, gpointer);
 
+/*
+ * video_widget_dispose()
+ *
+ * The dispose function for the video_widget class.
+ */
+static void
+video_widget_dispose(GObject *gobject)
+{
+    VideoWidget *self = VIDEO_WIDGET(gobject);
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+
+    /* In dispose(), you are supposed to free all types referenced from this
+     * object which might themselves hold a reference to self. Generally,
+     * the most simple solution is to unref all members on which you own a
+     * reference.
+     */
+
+    /* destory the video window */
+    if (priv->video_window) {
+        gtk_widget_destroy(priv->video_window);
+    }
+    /* dispose() might be called multiple times, so we must guard against
+     * calling g_object_unref() on an invalid GObject by setting the member
+     * NULL; g_clear_object() does this for us, atomically.
+     */
+    g_clear_object(&priv->video_window);
+
+    /* Always chain up to the parent class; there is no need to check if
+     * the parent class implements the dispose() virtual function: it is
+     * always guaranteed to do so
+     */
+    G_OBJECT_CLASS(video_widget_parent_class)->dispose(gobject);
+}
 
 
 /*
@@ -133,6 +166,7 @@ video_widget_class_init(VideoWidgetClass *klass)
     g_type_class_add_private(klass, sizeof(VideoWidgetPrivate));
 
     /* override method */
+    object_class->dispose = video_widget_dispose;
     object_class->finalize = video_widget_finalize;
 }
 
@@ -156,10 +190,12 @@ video_widget_init(VideoWidget *self)
     }
 
     /* init widget */
-    priv->toolbar = NULL;
     priv->video_handles = NULL;
     priv->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
     priv->fullscreen = FALSE;
+
+    /* init video window where the the video widget will be contained */
+    priv->video_window = video_window_new();
 
     /* init video_screen */
     priv->video_screen.screen = NULL;
@@ -191,10 +227,11 @@ video_widget_new(void)
 {
     GtkWidget *self = g_object_new(VIDEO_WIDGET_TYPE, NULL);
 
-    g_signal_connect(self, "delete-event",
-                     G_CALLBACK(gtk_widget_hide_on_delete), NULL);
-
     video_widget_draw(self);
+
+    /* put the video widget into it's window */
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+    gtk_container_add(GTK_CONTAINER(priv->video_window), self);
 
     return self;
 }
@@ -221,11 +258,6 @@ video_widget_draw(GtkWidget *self)
     gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(priv->video_screen.screen), 0, 0, 1, 1);
 
     gtk_container_add(GTK_CONTAINER(self), grid);
-
-    /* handle configure event */
-    g_signal_connect(self, "configure-event",
-            G_CALLBACK(on_configure_event_cb),
-            NULL);
 }
 
 
@@ -240,7 +272,6 @@ video_widget_draw_screen(GtkWidget *self)
     g_return_val_if_fail(IS_VIDEO_WIDGET(self), NULL);
 
     VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
-
     GtkWidget *screen;
     ClutterActor *stage;
     ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
@@ -291,22 +322,11 @@ video_widget_redraw_screen(GtkWidget *self)
 
     ClutterConstraint *constraint = NULL;
     gfloat aspect_ratio = 0.0f;
-    guint width = 0, height = 0, pos_x = 0, pos_y = 0;
 
     VideoArea *video_area_remote = video_widget_video_area_get(self, VIDEO_AREA_REMOTE);
     VideoArea *video_area_local = video_widget_video_area_get(self, VIDEO_AREA_LOCAL);
     Video *camera_remote = video_widget_retrieve_camera(self, VIDEO_AREA_REMOTE);
     Video *camera_local  = video_widget_retrieve_camera(self, VIDEO_AREA_LOCAL);
-
-    /* retrieve the previous windows settings */
-    pos_x  = g_settings_get_int(priv->settings, "video-widget-position-x");
-    pos_y  = g_settings_get_int(priv->settings, "video-widget-position-y");
-    width  = g_settings_get_int(priv->settings, "video-widget-width");
-    height = g_settings_get_int(priv->settings, "video-widget-height");
-
-    /* place  and resize the window according the users preferences */
-    gtk_window_move(GTK_WINDOW(self), pos_x, pos_y);
-    gtk_window_resize(GTK_WINDOW(self), width, height);
 
     /* Handle the remote camera behaviour */
     if (video_area_remote && video_area_remote->show && camera_remote) {
@@ -653,34 +673,6 @@ on_drag_data_received_cb(G_GNUC_UNUSED GtkWidget *self,
 
 
 /*
- * on_configure_event_cb()
- *
- * Handle resizing and moving event in the video windows.
- * This is usefull to store the previous behaviour and restore the user
- * preferences using gsettings.
- */
-static gboolean
-on_configure_event_cb(GtkWidget *self,
-                      GdkEventConfigure *event,
-                      G_GNUC_UNUSED gpointer data)
-{
-    g_return_val_if_fail(IS_VIDEO_WIDGET(self), FALSE);
-
-    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
-
-    /* we store the window size and position on each resize when the remote camera is show */
-    VideoArea *video_area = video_widget_video_area_get(self, VIDEO_AREA_REMOTE);
-    if (video_area->show) {
-        g_settings_set_int(priv->settings, "video-widget-width",  event->width);
-        g_settings_set_int(priv->settings, "video-widget-height", event->height);
-    }
-
-    /* let the event propagate otherwise the video will not be re-scaled */
-    return FALSE;
-}
-
-
-/*
  * on_button_press_in_screen_event_cb()
  *
  * Handle button event in the video screen.
@@ -698,29 +690,16 @@ on_button_press_in_screen_event_cb(G_GNUC_UNUSED GtkWidget *widget,
 
     /* on double click */
     if (event->type == GDK_2BUTTON_PRESS) {
-
         /* Fullscreen switch on/off */
         priv->fullscreen = !priv->fullscreen;
 
         if (priv->fullscreen) {
-
-            gtk_window_fullscreen(GTK_WINDOW(self));
-
-            /* if there is a toolbar we don't want it in the fullscreen,
-             * we only care about the video_screen */
-            if(priv->toolbar)
-                gtk_widget_hide(priv->toolbar);
-
+            g_debug("toggle video fullscreen on");
+            gtk_window_fullscreen(GTK_WINDOW(priv->video_window));
         } else {
-
-            gtk_window_unfullscreen(GTK_WINDOW(self));
-
-            /* re-show the toolbar */
-            if(priv->toolbar)
-                gtk_widget_show(priv->toolbar);
-
+            g_debug("toggle video fullscreen off");
+            gtk_window_unfullscreen(GTK_WINDOW(priv->video_window));
         }
-
     }
 
     /* the event has been fully handled */
@@ -819,8 +798,8 @@ video_widget_camera_start(GtkWidget *self,
     /* when a new camera start, the screen must be redraw consequently */
     video_widget_redraw_screen(self);
 
-    /* show the widget when at least one camera is started */
-    gtk_widget_show_all(self);
+    /* show the window and its contents */
+    gtk_widget_show_all(priv->video_window);
 }
 
 
@@ -850,11 +829,6 @@ video_widget_camera_stop(GtkWidget *self,
     /* if video is draw on screen */
     if (is_video_in_screen(self, video_id)) {
 
-        gint pos_x, pos_y;
-        gtk_window_get_position(GTK_WINDOW(self), &pos_x, &pos_y);
-        g_settings_set_int(priv->settings, "video-widget-position-x", pos_x);
-        g_settings_set_int(priv->settings, "video-widget-position-y", pos_y);
-
         /* we remove it */
         video_widget_remove_camera_in_screen(self, video_area_id);
 
@@ -866,6 +840,7 @@ video_widget_camera_stop(GtkWidget *self,
     g_hash_table_remove(priv->video_handles, video_id);
 
     /* hide the widget when there no video left */
-    if (!g_hash_table_size(priv->video_handles))
-        gtk_widget_hide(self);
+    if (!g_hash_table_size(priv->video_handles)){
+        gtk_widget_hide(priv->video_window);
+    }
 }
