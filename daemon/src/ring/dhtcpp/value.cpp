@@ -62,18 +62,14 @@ const ValueType ValueType::USER_DATA = {0, "User Data"};
 bool
 ServiceAnnouncement::storePolicy(std::shared_ptr<Value>& v, InfoHash, const sockaddr* from, socklen_t fromlen)
 {
-    SFL_WARN("ServiceAnnouncement::storePolicy %s", v->toString().c_str());
     ServiceAnnouncement request {};
     request.unpackBlob(v->data);
-    if (request.getPort() == 0) {
-        SFL_ERR("Announce_values with forbidden port %d.", request.getPort());
+    if (request.getPort() == 0)
         return false;
-    }
     ServiceAnnouncement sa_addr {from, fromlen};
     sa_addr.setPort(request.getPort());
     // argument v is modified (not the value).
     v = std::make_shared<Value>(ServiceAnnouncement::TYPE, sa_addr, v->id);
-    SFL_WARN("ServiceAnnouncement::storePolicy ->  %s", v->toString().c_str());
     return true;
 }
 

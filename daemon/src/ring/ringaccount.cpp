@@ -470,6 +470,13 @@ void RingAccount::doRegister()
             }
         });
 
+        dht_.setLoggers(
+            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
+            [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
+            [](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
+        );
+
+        dht_.registerType(USER_PROFILE_TYPE);
         dht_.importValues(loadValues());
 
         // Publish our own CA

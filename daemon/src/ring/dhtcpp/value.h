@@ -27,7 +27,8 @@ THE SOFTWARE.
 #include "infohash.h"
 #include "serialize.h"
 
-#include "logger.h"
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <string>
 #include <sstream>
@@ -38,10 +39,40 @@ THE SOFTWARE.
 #include <functional>
 #include <memory>
 
-#include <sys/socket.h>
-#include <netdb.h>
+#include <cstdarg>
 
 namespace dht {
+
+/**
+ * Wrapper for logging methods
+ */
+struct LogMethod {
+    LogMethod() = default;
+
+    template<typename T>
+    LogMethod( T&& t) : func(std::forward<T>(t)) {}
+
+    void operator()(char const* format, ...) const {
+        va_list args;
+        va_start(args, format);
+        func(format, args);
+        va_end(args);
+    }
+
+    void logPrintable(const uint8_t *buf, unsigned buflen) const {
+        std::string buf_clean(buflen, '\0');
+        for (unsigned i=0; i<buflen; i++)
+            buf_clean[i] = buf[i] >= 32 && buf[i] <= 126 ? buf[i] : '.';
+        (*this)("%s", buf_clean.c_str());
+    }
+private:
+    std::function<void(char const*, va_list)> func;
+};
+
+/**
+ * Dummy function used to disable logging
+ */
+constexpr int NOLOG(char const*, va_list) { return 0; }
 
 typedef std::vector<uint8_t> Blob;
 

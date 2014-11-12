@@ -60,6 +60,8 @@ public:
     using Dht::getId;
     using Dht::dumpTables;
     using Dht::put;
+    using Dht::registerType;
+    using Dht::setLoggers;
 
     /**
      * "Secure" get(), that will check the signature of signed data, and decrypt encrypted data.
