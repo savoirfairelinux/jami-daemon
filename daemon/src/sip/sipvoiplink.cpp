@@ -44,7 +44,7 @@
 #include "sip_utils.h"
 
 #if HAVE_DHT
-#include "dht/dhtaccount.h"
+#include "ring/ringaccount.h"
 #endif
 
 #include "call_factory.h"
@@ -653,7 +653,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
 
 #if HAVE_DHT
     // DHT accounts
-    for (const auto& account : Manager::instance().getAllAccounts<DHTAccount>()) {
+    for (const auto& account : Manager::instance().getAllAccounts<RingAccount>()) {
         if (!account)
             continue;
         const MatchRank match(account->matches(userName, server));
