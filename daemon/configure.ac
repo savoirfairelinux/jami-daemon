@@ -600,8 +600,8 @@ AC_CONFIG_FILES([Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
                  src/iax/Makefile \
-                 src/dht/Makefile \
-                 src/dht/dhtcpp/Makefile \
+                 src/ringdht/Makefile \
+                 src/ringdht/dhtcpp/Makefile \
                  src/audio/Makefile \
                  src/audio/audiortp/Makefile \
                  src/audio/pulseaudio/Makefile \
