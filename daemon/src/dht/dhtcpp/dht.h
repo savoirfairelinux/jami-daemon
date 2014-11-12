@@ -306,7 +306,6 @@ private:
         time_t reply_time {0};      /* the time of the last reply with a token */
         unsigned pinged {0};
         Blob token {};
-        //bool replied {false};       /* whether we have received a reply */
 
         AnnounceStatusMap acked {};  /* announcement status for a given value id */
 
@@ -415,7 +414,6 @@ private:
         }
 
         bool matches(const TransPrefix prefix, uint16_t *seqno_return = nullptr) const {
-            //if ((*this)[0] == prefix[0] && (*this)[1] == prefix[1]) {
             if (std::equal(begin(), begin()+1, prefix.begin())) {
                 if (seqno_return)
                     *seqno_return = *reinterpret_cast<const uint16_t*>(&(*this)[2]);
