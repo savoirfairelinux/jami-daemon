@@ -65,6 +65,9 @@ namespace fileutils {
      */
     std::vector<std::string> readDirectory(const std::string &dir);
 
+    std::vector<uint8_t> loadFile(const std::string& path);
+    void saveFile(const std::string& path, const std::vector<uint8_t>& data);
+
     struct FileHandle {
         int fd;
         const std::string name;
