@@ -191,8 +191,8 @@ namespace detail {
     struct deserialize_helper {
         static T apply(StreamType::const_iterator& begin,
                             StreamType::const_iterator end) {
-
             assert(begin+sizeof(T)<=end);
+            (void)end;
             T val;
             uint8_t* ptr = reinterpret_cast<uint8_t*>(&val);
             std::copy(begin, begin+sizeof(T), ptr);
