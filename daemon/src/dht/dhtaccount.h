@@ -326,11 +326,6 @@ class DHTAccount : public SIPAccountBase {
         pjsip_tls_setting tlsSetting_ {};
 
         /**
-         * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
-         */
-        CipherArray ciphers_ {TLS_CIPHER_LIST};
-
-        /**
          * Optional: "received" parameter from VIA header
          */
         std::string receivedParameter_ {};
