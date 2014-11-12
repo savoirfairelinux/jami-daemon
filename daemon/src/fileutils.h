@@ -32,6 +32,7 @@
 #define FILEUTILS_H_
 
 #include <string>
+#include <vector>
 
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
                                                    envvar_ ? envvar_ : "";})
@@ -56,6 +57,14 @@ namespace fileutils {
     std::string get_ringtone_dir();
     std::string expand_path(const std::string &path);
     bool isDirectoryWritable(const std::string &directory);
+
+    /**
+     * Read content of the directory.
+     * The result is a list of full paths of files in the directory,
+     * without "." and "..".
+     */
+    std::vector<std::string> readDirectory(const std::string &dir);
+
     struct FileHandle {
         int fd;
         const std::string name;
