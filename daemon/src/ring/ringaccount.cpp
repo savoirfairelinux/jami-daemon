@@ -65,7 +65,6 @@
 
 #include <unistd.h>
 #include <pwd.h>
-#include <dirent.h>
 
 #include <algorithm>
 #include <array>
@@ -589,19 +588,10 @@ RingAccount::loadNodes() const
 std::vector<dht::Dht::ValuesExport>
 RingAccount::loadValues() const
 {
-    struct dirent *entry;
-    DIR *dp = opendir(dataPath_.c_str());
-    if (!dp) {
-        SFL_ERR("Could not load values from %s", dataPath_.c_str());
-        return {};
-    }
-
     std::vector<dht::Dht::ValuesExport> values;
-    while ((entry = readdir(dp))) {
+    const auto dircontent(fileutils::readDirectory(dataPath_));
+    for (const auto& fname : dircontent) {
         try {
-            const std::string fname {entry->d_name};
-            if (fname == "." || fname == "..")
-                continue;
             std::ifstream ifs(dataPath_+DIR_SEPARATOR_STR+fname, std::ifstream::in | std::ifstream::binary);
             std::istreambuf_iterator<char> begin(ifs), end;
             values.push_back({{fname}, std::vector<uint8_t>{begin, end}});
@@ -610,8 +600,6 @@ RingAccount::loadValues() const
             continue;
         }
     }
-    closedir(dp);
-
     return values;
 }
 
