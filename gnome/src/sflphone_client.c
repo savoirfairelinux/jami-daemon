@@ -133,7 +133,10 @@ sflphone_client_init(SFLPhoneClient *self)
     self->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
 
 #ifdef SFL_VIDEO
+    // self->video_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     self->video = video_widget_new();
+    // gtk_container_add(GTK_CONTAINER(self->video_window), self->video);
+    // gtk_widget_show(self->video_window);
 #endif
 
     self->win = 0;
