@@ -722,7 +722,7 @@ v4l2_box()
 }
 
 GtkWidget *
-create_video_configuration()
+create_video_configuration(SFLPhoneClient *client)
 {
     // Main widget
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -752,6 +752,9 @@ create_video_configuration()
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(camera_button), TRUE);
     g_signal_connect(G_OBJECT(camera_button), "toggled",
                      G_CALLBACK(camera_button_toggled), NULL);
+
+    // test
+    gtk_grid_attach_next_to(GTK_GRID(grid), client->video, camera_button, GTK_POS_BOTTOM, 2, 1);
 
     gboolean active_call = FALSE;
     gchar **list = dbus_get_call_list();

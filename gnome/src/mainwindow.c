@@ -348,7 +348,9 @@ create_main_window(SFLPhoneClient *client)
 
     /* make sure that everything, window and label, are visible */
     gtk_widget_show_all(window);
-
+// #ifdef SFL_VIDEO
+//     gtk_widget_show_all(client->video_window);
+// #endif
     /* dont't show the history */
     gtk_widget_hide(history_vbox);
 

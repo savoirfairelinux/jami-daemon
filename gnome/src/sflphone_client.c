@@ -42,6 +42,7 @@
 #include "mainwindow.h"
 #ifdef SFL_VIDEO
 #include "video/video_widget.h"
+#include "video/video_window.h"
 #endif
 
 G_DEFINE_TYPE(SFLPhoneClient, sflphone_client, GTK_TYPE_APPLICATION);
@@ -133,7 +134,10 @@ sflphone_client_init(SFLPhoneClient *self)
     self->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
 
 #ifdef SFL_VIDEO
+    self->video_window = video_window_new();
     self->video = video_widget_new();
+    // gtk_container_add(GTK_CONTAINER(self->video_window), self->video);
+    gtk_widget_show(self->video_window);
 #endif
 
     self->win = 0;

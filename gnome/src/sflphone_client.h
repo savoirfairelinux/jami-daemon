@@ -55,6 +55,7 @@ typedef struct
 #ifdef SFL_VIDEO
     /* Video window */
     GtkWidget *video;
+    GtkWidget *video_window;
 #endif
 
 } SFLPhoneClient;

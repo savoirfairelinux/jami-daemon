@@ -51,11 +51,11 @@ typedef enum {
 } VIDEO_AREA_ID;
 
 struct _VideoWidgetClass {
-    GtkWindowClass parent_class;
+    GtkBinClass parent_class;
 };
 
 struct _VideoWidget {
-    GtkWindow parent;
+    GtkBin parent;
     /* Private */
     VideoWidgetPrivate *priv;
 };
