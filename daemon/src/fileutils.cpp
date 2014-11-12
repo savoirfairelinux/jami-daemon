@@ -35,29 +35,29 @@
 #include "config.h"
 #endif
 
+#include "fileutils.h"
+#include "logger.h"
+
 #include <sys/types.h>
-#include <unistd.h>
+#include <sys/stat.h>
+
 #include <libgen.h>
 #include <dirent.h>
-#include <sys/stat.h>
-#include <fstream>
-#include <cstdlib>
 #include <signal.h>
-#include <string>
-#include <sstream>
-#include <iostream>
 #include <unistd.h>
-#include <cstring>
 #include <fcntl.h>
 #include <pwd.h>
-#include <cerrno>
-
 #ifndef __ANDROID__
 #   include <wordexp.h>
 #endif
 
-#include "fileutils.h"
-#include "logger.h"
+#include <sstream>
+#include <fstream>
+#include <iostream>
+
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
 
 namespace fileutils {
 // returns true if directory exists
