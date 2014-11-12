@@ -37,7 +37,7 @@ std::ostream& operator<< (std::ostream& s, const Value& v)
     else {
         if (v.type == ServiceAnnouncement::TYPE.id) {
             s << ServiceAnnouncement(v.data);
-        } else if (v.type == crypto::CERTIFICATE.id) {
+        } else if (v.type == crypto::Certificate::TYPE.id) {
             s << "Certificate";
             try {
                 InfoHash h = crypto::Certificate(v.data).getPublicKey().getId();
