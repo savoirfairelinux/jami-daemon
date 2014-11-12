@@ -219,6 +219,8 @@ PublicKey::getId() const
     return id;
 }
 
+const ValueType Certificate::TYPE = {8, "Certificate", 60 * 60 * 24 * 7};
+
 Certificate::Certificate(const Blob& certData) : cert(nullptr)
 {
     unpackBlob(certData);
