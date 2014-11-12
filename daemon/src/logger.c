@@ -44,6 +44,15 @@ void logger(const int level, const char* format, ...)
         return;
 
     va_list ap;
+    va_start(ap, format);
+    vlogger(level, format, ap);
+    va_end(ap);
+}
+
+void vlogger(const int level, const char *format, va_list ap)
+{
+    if (!debugMode && level == LOG_DEBUG)
+        return;
 
     if (consoleLog) {
         const char *color_prefix = "";
@@ -58,16 +67,10 @@ void logger(const int level, const char* format, ...)
         }
 
         fputs(color_prefix, stderr);
-
-        va_start(ap, format);
         vfprintf(stderr, format, ap);
-        va_end(ap);
-
         fputs(END_COLOR"\n", stderr);
     } else {
-        va_start(ap, format);
         vsyslog(level, format, ap);
-        va_end(ap);
     }
 }
 
