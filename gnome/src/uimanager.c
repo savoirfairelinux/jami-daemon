@@ -1336,7 +1336,7 @@ void create_actions(SFLPhoneClient *client)
     g_simple_action_set_enabled(screenshareAction_, FALSE);
 #endif
     g_simple_action_set_enabled(copyAction_, FALSE);
-    g_simple_action_set_enabled(pasteAction_, FALSE);
+    //g_simple_action_set_enabled(pasteAction_, FALSE);
     /* disable tool bar toggle */
     g_simple_action_set_enabled(
         G_SIMPLE_ACTION(g_action_map_lookup_action(G_ACTION_MAP(client), "show-toolbar")), FALSE);
