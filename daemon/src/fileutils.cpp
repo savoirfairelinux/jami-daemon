@@ -54,6 +54,8 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
+#include <limits>
 
 #include <cstdlib>
 #include <cstring>
@@ -208,6 +210,35 @@ expand_path(const std::string &path)
 bool isDirectoryWritable(const std::string &directory)
 {
     return access(directory.c_str(), W_OK) == 0;
+}
+
+std::vector<uint8_t>
+loadFile(const std::string& path)
+{
+    std::vector<uint8_t> buffer;
+    std::ifstream file(path, std::ios::binary);
+    if (!file)
+        throw std::runtime_error("Can't read file: "+path);
+    file.seekg(0, std::ios::end);
+    std::streamsize size = file.tellg();
+    if (size > std::numeric_limits<unsigned>::max())
+        throw std::runtime_error("File is too big: "+path);
+    buffer.resize(size);
+    file.seekg(0, std::ios::beg);
+    if (!file.read((char*)buffer.data(), size))
+        throw std::runtime_error("Can't load file: "+path);
+    return buffer;
+}
+
+void
+saveFile(const std::string& path, const std::vector<uint8_t>& data)
+{
+    std::ofstream file(path, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        SFL_ERR("Could not write data to %s", path.c_str());
+        return;
+    }
+    file.write((char*)data.data(), data.size());
 }
 
 std::vector<std::string>
