@@ -58,6 +58,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+#include <cstddef>
 
 namespace fileutils {
 // returns true if directory exists
@@ -208,6 +209,55 @@ expand_path(const std::string &path)
 bool isDirectoryWritable(const std::string &directory)
 {
     return access(directory.c_str(), W_OK) == 0;
+}
+
+static size_t
+dirent_buf_size(DIR * dirp)
+{
+    long name_max;
+#if defined(HAVE_FPATHCONF) && defined(HAVE_DIRFD) && defined(_PC_NAME_MAX)
+    name_max = fpathconf(dirfd(dirp), _PC_NAME_MAX);
+    if (name_max == -1)
+#if defined(NAME_MAX)
+        name_max = (NAME_MAX > 255) ? NAME_MAX : 255;
+#else
+        return (size_t)(-1);
+#endif
+#else
+#if defined(NAME_MAX)
+    name_max = (NAME_MAX > 255) ? NAME_MAX : 255;
+#else
+#error "buffer size for readdir_r cannot be determined"
+#endif
+#endif
+    size_t name_end = (size_t) offsetof(struct dirent, d_name) + name_max + 1;
+    return name_end > sizeof(struct dirent) ? name_end : sizeof(struct dirent);
+}
+
+std::vector<std::string>
+readDirectory(const std::string& dir)
+{
+    DIR *dp = opendir(dir.c_str());
+    if (!dp) {
+        SFL_ERR("Could not open %s", dir.c_str());
+        return {};
+    }
+
+    size_t size = dirent_buf_size(dp);
+    if (size == -1)
+        return {};
+    std::vector<uint8_t> buf(size);
+    dirent* entry;
+
+    std::vector<std::string> files;
+    while (!readdir_r(dp, reinterpret_cast<dirent*>(buf.data()), &entry) && entry) {
+        const std::string fname {entry->d_name};
+        if (fname == "." || fname == "..")
+            continue;
+        files.push_back(std::move(fname));
+    }
+    closedir(dp);
+    return files;
 }
 
 FileHandle::FileHandle(const std::string &n) : fd(-1), name(n)
