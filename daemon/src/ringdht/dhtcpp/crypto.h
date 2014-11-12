@@ -113,6 +113,8 @@ struct Certificate : public Serializable {
     void pack(Blob& b) const override;
     void unpack(Blob::const_iterator& begin, Blob::const_iterator& end) override;
 
+    static const ValueType TYPE;
+
 private:
     Certificate(const Certificate&) = delete;
     Certificate& operator=(const Certificate&) = delete;
@@ -121,7 +123,6 @@ private:
     friend dht::crypto::Identity dht::crypto::generateIdentity(const std::string&, dht::crypto::Identity);
 };
 
-static const ValueType CERTIFICATE = {8, "Certificate", 60 * 60 * 24 * 7};
 
 }
 }
