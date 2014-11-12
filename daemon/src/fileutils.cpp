@@ -210,6 +210,26 @@ bool isDirectoryWritable(const std::string &directory)
     return access(directory.c_str(), W_OK) == 0;
 }
 
+std::vector<std::string>
+readDirectory(const std::string& dir)
+{
+    DIR *dp = opendir(dir.c_str());
+    if (!dp) {
+        SFL_ERR("Could not open %s", dir.c_str());
+        return {};
+    }
+
+    std::vector<std::string> files;
+    while (struct dirent* entry = readdir(dp)) {
+        const std::string fname {entry->d_name};
+        if (fname == "." || fname == "..")
+            continue;
+        files.push_back(std::move(fname));
+    }
+    closedir(dp);
+    return files;
+}
+
 FileHandle::FileHandle(const std::string &n) : fd(-1), name(n)
 {}
 
