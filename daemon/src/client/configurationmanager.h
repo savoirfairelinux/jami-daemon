@@ -143,6 +143,10 @@ class ConfigurationManager
                                       const std::string& pemPath);
         bool checkHostnameCertificate(const std::string& host,
                                       const std::string& port);
+        std::map<std::string, std::string> validateCertificate(const std::string& accountId,
+            const std::string& certificate, const std::string& privateKey);
+        std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
+
 
     // Signals
     public:

@@ -38,6 +38,7 @@
 #include "account_schema.h"
 #include "manager.h"
 #if HAVE_TLS
+#include "sip/tlsvalidator.h"
 #include "sip/tlsvalidation.h"
 #endif
 #include "logger.h"
@@ -139,6 +140,29 @@ void ConfigurationManager::setTlsSettings(const std::map<std::string, std::strin
     accountsChanged();
 }
 
+std::map<std::string, std::string> ConfigurationManager::validateCertificate(const std::string& accountId,
+                                                                             const std::string& certificate,
+                                                                             const std::string& privateKey)
+{
+#if HAVE_TLS
+    TlsValidator validator(certificate,privateKey);
+    return validator.getSerializedChecks();
+#else
+    SFL_WARN("TLS not supported");
+    return std::map<std::string, std::string>();
+#endif
+}
+
+std::map<std::string, std::string> ConfigurationManager::getCertificateDetails(const std::string& certificate)
+{
+#if HAVE_TLS
+    TlsValidator validator(certificate,"");
+    return validator.getSerializedDetails();
+#else
+    SFL_WARN("TLS not supported");
+    return std::map<std::string, std::string>();
+#endif
+}
 
 void ConfigurationManager::setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {

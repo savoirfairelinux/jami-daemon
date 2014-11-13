@@ -251,6 +251,9 @@ std::map<std::string, std::string> sflph_config_get_hook_settings(void);
 void sflph_config_set_hook_settings(const std::map<std::string, std::string>& settings);
 std::vector<std::map<std::string, std::string>> sflph_config_get_history(void);
 std::map<std::string, std::string> sflph_config_get_tls_settings();
+std::map<std::string, std::string> sflph_config_validate_certificate(const std::string& accountId,
+    const std::string& certificate, const std::string& private_key);
+std::map<std::string, std::string> sflph_config_get_certificate_details(const std::string& certificate);
 void sflph_config_set_tls_settings(const std::map< std::string, std::string >& settings);
 std::map<std::string, std::string> sflph_config_get_ip2ip_details(void);
 std::vector<std::map<std::string, std::string>> sflph_config_get_credentials(const std::string& account_id);

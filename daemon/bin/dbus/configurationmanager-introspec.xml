@@ -630,6 +630,40 @@
            </arg>
        </method>
 
+       <method name="validateCertificate" tp:name-for-bindings="validateCertificate">
+           <arg type="s" name="accountId" direction="in"></arg>
+           <arg type="s" name="certificatePath" direction="in">
+              <tp:docstring>
+               <p>A certificate path</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="privateKeyPath" direction="in">
+              <tp:docstring>
+               <p>An optional path a the private key for the certificate</p>
+              </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out">
+              <tp:docstring>
+               <p>A key-value list of all certificate validation</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getCertificateDetails" tp:name-for-bindings="getCertificateDetails">
+           <arg type="s" name="certificatePath" direction="in">
+              <tp:docstring>
+               <p>A certificate path</p>
+              </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out">
+              <tp:docstring>
+               <p>A key-value list of all certificate details</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
        <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
            <arg type="s" name="interface" direction="in">
            </arg>

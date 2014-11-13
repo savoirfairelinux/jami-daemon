@@ -302,6 +302,16 @@ std::map<std::string, std::string> DBusConfigurationManager::getTlsSettings()
     return sflph_config_get_tls_settings();
 }
 
+std::map<std::string, std::string> DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey)
+{
+   return sflph_config_validate_certificate(accountId, certificate, privateKey);
+}
+
+std::map<std::string, std::string> DBusConfigurationManager::getCertificateDetails(const std::string& certificate)
+{
+    return sflph_config_get_certificate_details(certificate);
+}
+
 void DBusConfigurationManager::setTlsSettings(const std::map< std::string, std::string >& details)
 {
     sflph_config_set_tls_settings(details);
