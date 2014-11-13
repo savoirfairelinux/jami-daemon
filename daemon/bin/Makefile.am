@@ -8,7 +8,6 @@ endif
 if SFL_DBUS
 SUBDIRS=dbus
 
-libexecdir=$(libdir)/sflphone
 libexec_PROGRAMS = sflphoned
 
 sflphoned_SOURCES = main.cpp
