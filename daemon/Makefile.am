@@ -19,10 +19,12 @@ unittest:
 endif
 
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = src ringtones man $(TESTS_DIR) doc
 
-if SFL_DBUS
-SUBDIRS += bin
+SUBDIRS = bin
+
+#FIXME: this will change when libsflphone is fixed
+if !HAVE_WIN32
+SUBDIRS += src ringtones man $(TESTS_DIR) doc
 endif
 
 if USE_DHT
