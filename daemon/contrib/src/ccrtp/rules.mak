@@ -1,6 +1,7 @@
 # CCRTP
-CCRTP_VERSION := 2.1.0
-CCRTP_URL := $(GNUTELEPHONY)/ccrtp/archive/v$(CCRTP_VERSION).tar.gz
+# FIXME: switch to next release when it's out
+CCRTP_VERSION := 6d4f1b9ebe9a9b93ec45927b7d8bcda497cc19f6
+CCRTP_URL := $(GNUTELEPHONY)/ccrtp/archive/$(CCRTP_VERSION).tar.gz
 
 PKGS += ccrtp
 ifeq ($(call need_pkg,'libccrtp >= 2.0.3'),)
