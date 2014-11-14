@@ -41,18 +41,13 @@ PluginManager::PluginManager()
 
 PluginManager::~PluginManager()
 {
-    int32_t error = 0;
-
     for (auto func : exitFuncVec_) {
         try {
-            error |= (*func)();
+            (*func)();
         } catch (...) {
-            error = -1;
+            SFL_WARN("Exception caught during plugin exit");
         }
     }
-
-    if (error)
-        SFL_WARN("Some plugins have reported failure at exit");
 
     dynPluginMap_.clear();
     exactMatchMap_.clear();
