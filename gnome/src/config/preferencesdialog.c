@@ -54,6 +54,7 @@
 #include "audioconf.h"
 #ifdef SFL_VIDEO
 #include "videoconf.h"
+#include "video/video_widget.h"
 #endif
 #include "uimanager.h"
 #include "mainwindow.h"
@@ -444,7 +445,7 @@ show_preferences_dialog(SFLPhoneClient *client)
 
 #ifdef SFL_VIDEO
     // Video tab
-    tab = create_video_configuration();
+    tab = create_video_configuration(client);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Video")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 #endif

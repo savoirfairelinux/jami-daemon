@@ -134,6 +134,8 @@ sflphone_client_init(SFLPhoneClient *self)
 
 #ifdef SFL_VIDEO
     self->video = video_widget_new();
+    /* increase ref count until the end, since it is not a top level widget */
+    // g_object_ref(self->video);
 #endif
 
     self->win = 0;
