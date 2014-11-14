@@ -116,9 +116,8 @@ video_widget_dispose(GObject *gobject)
      */
 
     /* destory the video window */
-    if (priv->video_window) {
+    if (priv->video_window)
         gtk_widget_destroy(priv->video_window);
-    }
     /* dispose() might be called multiple times, so we must guard against
      * calling g_object_unref() on an invalid GObject by setting the member
      * NULL; g_clear_object() does this for us, atomically.
@@ -690,15 +689,24 @@ on_button_press_in_screen_event_cb(G_GNUC_UNUSED GtkWidget *widget,
 
     /* on double click */
     if (event->type == GDK_2BUTTON_PRESS) {
-        /* Fullscreen switch on/off */
-        priv->fullscreen = !priv->fullscreen;
 
-        if (priv->fullscreen) {
-            g_debug("toggle video fullscreen on");
-            gtk_window_fullscreen(GTK_WINDOW(priv->video_window));
+        /* if the video widget is in its window, make it fullscreen */
+        GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(self));
+        if ((gpointer)parent == (gpointer)priv->video_window){
+            /* Fullscreen switch on/off */
+            priv->fullscreen = !priv->fullscreen;
+
+            if (priv->fullscreen) {
+                g_debug("toggle video fullscreen on");
+                gtk_window_fullscreen(GTK_WINDOW(priv->video_window));
+            } else {
+                g_debug("toggle video fullscreen off");
+                gtk_window_unfullscreen(GTK_WINDOW(priv->video_window));
+            }
         } else {
-            g_debug("toggle video fullscreen off");
-            gtk_window_unfullscreen(GTK_WINDOW(priv->video_window));
+            /* ignore for now */
+            /* TODO: instead, we can put it in the video window
+             * and make it fullscreen */
         }
     }
 
@@ -798,8 +806,20 @@ video_widget_camera_start(GtkWidget *self,
     /* when a new camera start, the screen must be redraw consequently */
     video_widget_redraw_screen(self);
 
-    /* show the window and its contents */
-    gtk_widget_show_all(priv->video_window);
+    /* show the widget */
+    gtk_widget_show(self);
+
+    /* TODO: emit a signal when the video widget should be shown
+     * sot that the parent can decide what to do? */
+
+    /* show the parent in certain cases */
+    GtkWidget* parent = gtk_widget_get_parent(self);
+    if (parent == priv->video_window){
+        /* show the video window and its contents */
+        gtk_widget_show_all(priv->video_window);
+    } else if (parent == NULL) {
+        g_debug("video widget has no parent, but video is being rendered");
+    }
 }
 
 
@@ -839,8 +859,88 @@ video_widget_camera_stop(GtkWidget *self,
     /* remove the video from the video handle list */
     g_hash_table_remove(priv->video_handles, video_id);
 
-    /* hide the widget when there no video left */
+    /* check if there are any videos left */
     if (!g_hash_table_size(priv->video_handles)){
-        gtk_widget_hide(priv->video_window);
+        /* let the parent of the vide widget take care of
+         * hiding it when there is no video*/
+
+        /* TODO: emit a signal when the video should be hidden
+         * so that the parent can decide what to do? */
+
+        /* hide the parent in certain cases */
+        GtkWidget* parent = gtk_widget_get_parent(self);
+        if (parent == priv->video_window){
+            /* hide the video window */
+            gtk_widget_hide(priv->video_window);
+        } else if (parent == NULL) {
+            g_debug("video widget has no parent");
+        }
+    }
+}
+
+
+/*
+ * video_widget_move_to_preview()
+ *
+ * This function changes the parent of the video widget to the
+ * given preview container. It will be placed into the container
+ * via a call to gtk_container_add().
+ *
+ */
+void
+video_widget_move_to_preview(GtkWidget *self,
+                             GtkContainer *container)
+{
+    g_return_if_fail(IS_VIDEO_WIDGET(self));
+
+    /* remove video widget from its current container, if it has one */
+    GtkWidget* parent = gtk_widget_get_parent(self);
+    if ((gpointer)parent == (gpointer)container) {
+        g_debug("video widget already contained in the given container");
+    } else if (parent) {
+        g_object_ref(self);
+        gtk_container_remove(GTK_CONTAINER(parent), self);
+
+        gtk_container_add(container, self);
+
+        /* changet the margins */
+        gtk_widget_set_margin_left(self, 5);
+        gtk_widget_set_margin_right(self, 5);
+        gtk_widget_set_margin_top(self, 0);
+        gtk_widget_set_margin_bottom(self, 5);
+    }
+}
+
+
+/*
+ * video_widget_move_to_window()
+ *
+ * This function changes the parent of the video widget to be
+ * the standalone video window.
+ *
+ * The window will be destroyed by the video widget
+ */
+void
+video_widget_move_to_window(GtkWidget *self)
+{
+    g_return_if_fail(IS_VIDEO_WIDGET(self));
+
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
+
+    /* remove video widget from its current container, if it has one */
+    GtkWidget* parent = gtk_widget_get_parent(self);
+    if (parent == priv->video_window) {
+        g_debug("video widget already contained in the video window");
+    } else if (parent) {
+        g_object_ref(self);
+        gtk_container_remove(GTK_CONTAINER(parent), self);
+
+        gtk_container_add(GTK_CONTAINER(priv->video_window), self);
+
+        /* changet the margins */
+        gtk_widget_set_margin_left(self, 0);
+        gtk_widget_set_margin_right(self, 0);
+        gtk_widget_set_margin_top(self, 0);
+        gtk_widget_set_margin_bottom(self, 0);
     }
 }

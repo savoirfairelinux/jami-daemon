@@ -167,7 +167,7 @@ sflphone_quit(gboolean force_quit, SFLPhoneClient *client)
         calllist_clean(history_tab);
         free_addressbook();
 
-        // make sure all open dialogs get a response signal so that they can close
+        /* make sure all open dialogs get a response signal so that they can close */
         GList* top_level_windows = gtk_window_list_toplevels();
         g_list_foreach(top_level_windows, (GFunc)send_response_to_dialogs, NULL);
 
