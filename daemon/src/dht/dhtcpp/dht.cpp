@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "dht.h"
 
 #include "logger.h"
+#include "string_utils.h"
 
 extern "C" {
 #include <gnutls/gnutls.h>
@@ -1228,7 +1229,7 @@ Dht::dumpBucket(const Bucket& b, std::ostream& out) const
             inet_ntop(AF_INET6, &sin6->sin6_addr, (char*)buf.data(), buf.size());
             port = ntohs(sin6->sin6_port);
         } else {
-            out << "unknown("+std::to_string(n.ss.ss_family)+")";
+            out << "unknown("+sfl::to_string(n.ss.ss_family)+")";
             port = 0;
         }
         buf.resize(std::char_traits<char>::length(buf.c_str()));
