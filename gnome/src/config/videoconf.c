@@ -725,15 +725,10 @@ v4l2_box()
 GtkWidget *
 create_video_configuration(SFLPhoneClient *client)
 {
-    // Main widget
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
-    // Sub boxes
     GtkWidget *frame, *grid;
-    gnome_main_section_new_with_grid(_("Video Manager"), &frame, &grid);
-    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
-
     gnome_main_section_new_with_grid(_("Video4Linux2"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
