@@ -237,6 +237,7 @@ fi
 %defattr(-,root,root,-)
 %doc daemon/AUTHORS COPYING NEWS README
 %{_libdir}/%{name}/*
+%{_libexecdir}/sflphoned
 %{_datadir}/dbus-1/services/org.%{name}.SFLphone.service
 %{_mandir}/man1/sflphoned.1.gz*
 %{_datadir}/pixmaps/%{name}.svg
@@ -277,6 +278,9 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
+* Fri Nov 14 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.4.2-2
+- Changed sflphoned path
+
 * Thu Sep 25 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.2-1
 - Bump version after release
 
