@@ -64,6 +64,8 @@ struct _VideoWidget {
 GType           video_widget_get_type           (void) G_GNUC_CONST;
 GtkWidget*      video_widget_new                (void);
 void            video_widget_camera_start       (GtkWidget *, VIDEO_AREA_ID, gchar *, gchar *, guint, guint, gboolean);
-void            video_widget_camera_stop        (GtkWidget *self, VIDEO_AREA_ID, gchar *);
+void            video_widget_camera_stop        (GtkWidget *, VIDEO_AREA_ID, gchar *);
+void            video_widget_move_to_preview    (GtkWidget *, GtkContainer *);
+void            video_widget_move_to_window     (GtkWidget *);
 
 #endif // __VIDEO_WIDGET_H__

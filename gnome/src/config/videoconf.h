@@ -34,7 +34,7 @@
 #include <gtk/gtk.h>
 #include "dbus.h"
 
-GtkWidget* create_video_configuration();
+GtkWidget* create_video_configuration(SFLPhoneClient *client);
 GtkWidget* videocodecs_box();
 void video_device_event_cb(DBusGProxy *proxy, void * foo);
 void update_camera_button_label();
