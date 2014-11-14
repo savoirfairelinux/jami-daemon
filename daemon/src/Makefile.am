@@ -118,6 +118,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		account_schema.h \
 		registration_states.h \
 		map_utils.h \
+		string_utils.h \
 		rw_mutex.h \
 		sflphone.h \
 		sflphone_api.cpp
