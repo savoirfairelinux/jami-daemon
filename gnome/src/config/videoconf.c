@@ -36,6 +36,7 @@
 #include "dbus.h"
 #include "codeclist.h"
 #include "video/video_capabilities.h"
+#include "video/video_widget.h"
 
 typedef struct {
     VideoCapabilities *cap;
@@ -722,7 +723,7 @@ v4l2_box()
 }
 
 GtkWidget *
-create_video_configuration()
+create_video_configuration(SFLPhoneClient *client)
 {
     // Main widget
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -739,15 +740,25 @@ create_video_configuration()
     GtkWidget *v4l2box = v4l2_box();
     gtk_grid_attach(GTK_GRID(grid), v4l2box, 0, 1, 1, 1);
 
-    gnome_main_section_new_with_grid(_("Camera"), &frame, &grid);
-    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+    frame = gnome_main_section_new(_("Camera"));
+    gtk_box_pack_start(GTK_BOX(vbox), frame, TRUE, TRUE, 0);
+    GtkWidget *vbox_camera = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox_camera), 10);
+    gtk_container_add(GTK_CONTAINER(frame), vbox_camera);
 
     const gboolean started = dbus_has_video_camera_started();
 
     camera_button = gtk_toggle_button_new_with_mnemonic(started ? _(CAMERA_STOP_STR) : _(CAMERA_START_STR));
     gtk_widget_set_size_request(camera_button, 80, 30);
-    gtk_grid_attach(GTK_GRID(grid), camera_button, 0, 0, 1, 1);
-    gtk_widget_show(GTK_WIDGET(camera_button));
+    gtk_box_pack_start(GTK_BOX(vbox_camera), camera_button, FALSE, FALSE, 0);
+    gtk_widget_set_halign(camera_button, GTK_ALIGN_START);
+
+    GtkWidget* preview_frame = gtk_frame_new(_("Preview"));
+    gtk_frame_set_shadow_type(GTK_FRAME(preview_frame), GTK_SHADOW_IN);
+    /* alight label to the right */
+    gtk_frame_set_label_align(GTK_FRAME(preview_frame), 1.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(vbox_camera), preview_frame, TRUE, TRUE, 0);
+
     if (started)
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(camera_button), TRUE);
     g_signal_connect(G_OBJECT(camera_button), "toggled",
@@ -761,13 +772,22 @@ create_video_configuration()
         g_strfreev(list);
     }
 
-    if (active_call)
+    if (active_call) {
+        /* active call, so don't allow preview */
         gtk_widget_set_sensitive(GTK_WIDGET(camera_button), FALSE);
+    } else {
+        /* allow preview, and put videw widget in preview container
+         * when the container is deleted, make sure to move the video widget
+         */
+        g_signal_connect_swapped(G_OBJECT(preview_frame), "destroy", G_CALLBACK(video_widget_move_to_window), client->video);
+        video_widget_move_to_preview(client->video, GTK_CONTAINER(preview_frame));
+    }
 
     gtk_widget_show_all(vbox);
 
-    // get devices list from daemon *after* showing all widgets
-    // that way we can show either the list, either the "no devices found" label
+    /* get devices list from daemon *after* showing all widgets
+     * that way we can show either the list, either the "no devices found" label
+     */
     fill_devices();
 
     return vbox;
