@@ -219,10 +219,14 @@ ip_utils::getAllIpInterface()
 std::vector<IpAddr>
 ip_utils::getLocalNameservers()
 {
+    std::vector<IpAddr> res;
+#ifdef __ANDROID__
+#warning "Not implemented"
+#else
     if (not (_res.options & RES_INIT))
         res_init();
-    std::vector<IpAddr> res;
     res.insert(res.end(), _res.nsaddr_list, _res.nsaddr_list + _res.nscount);
+#endif
     return res;
 }
 
