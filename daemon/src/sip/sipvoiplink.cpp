@@ -42,6 +42,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "sip_utils.h"
+#include "string_utils.h"
 
 #if HAVE_DHT
 #include "dht/dhtaccount.h"
@@ -1330,7 +1331,7 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
         0, type, {{(char*)name.data(), (pj_ssize_t)name.size()}, 0},
     };
 
-    auto token = std::hash<std::string>()(name + std::to_string(type));
+    auto token = std::hash<std::string>()(name + sfl::to_string(type));
     {
         std::lock_guard<std::mutex> lock(resolveMutex_);
         resolveCallbacks_[token] = [cb](pj_status_t s, const pjsip_server_addresses* r) {
