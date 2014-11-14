@@ -95,7 +95,7 @@ typedef struct RING_PluginAPI {
     RING_PluginFunc                     invokeService;
 } RING_PluginAPI;
 
-typedef int32_t (*RING_PluginExitFunc)(void);
+typedef void (*RING_PluginExitFunc)(void);
 
 typedef RING_PluginExitFunc (*RING_PluginInitFunc)(const RING_PluginAPI *api);
 
@@ -114,6 +114,6 @@ C_INTERFACE_END;
 #define RING_PLUGIN_INIT(fname, pname) \
     EXTERNAL_C_LINKAGE RING_PluginExitFunc fname(const RING_PluginAPI *pname)
 #define RING_PLUGIN_EXIT(fname)                  \
-    EXTERNAL_C_LINKAGE int32_t fname(void)
+    EXTERNAL_C_LINKAGE void fname(void)
 
 #endif /* RING_PLUGIN_H */
