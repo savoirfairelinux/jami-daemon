@@ -226,11 +226,18 @@ video_widget_new(void)
 {
     GtkWidget *self = g_object_new(VIDEO_WIDGET_TYPE, NULL);
 
-    video_widget_draw(self);
+    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
 
     /* put the video widget into it's window */
-    VideoWidgetPrivate *priv = VIDEO_WIDGET_GET_PRIVATE(self);
     gtk_container_add(GTK_CONTAINER(priv->video_window), self);
+
+    /* This function must be called *after* the video widget is
+     * added to its (window) container or else it will result in
+     * very high CPU usage; the other alternative is to call
+     * gtk_widget_hide() on the video widget before it is added
+     * to its container.
+     */
+    video_widget_draw(self);
 
     return self;
 }
