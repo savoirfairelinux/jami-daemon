@@ -33,6 +33,7 @@ dnl
 dnl  Check the operating system
 dnl
 HAVE_WIN64="0"
+HAVE_IOS="0"
 HAVE_OSX="0"
 
 case "${host_os}" in
@@ -46,6 +47,14 @@ case "${host_os}" in
     ;;
   darwin*)
     SYS=darwin
+
+    AC_EGREP_CPP(yes,
+            [#import <TargetConditionals.h>
+             #if TARGET_OS_IPHONE
+             yes
+             #endif],
+             [HAVE_IOS="1"],
+             [HAVE_OSX="1"])
     ;;
   mingw32*)
     SYS=mingw32
