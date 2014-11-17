@@ -5,6 +5,14 @@ ringcli_SOURCES = winmain.cpp
 ringcli_LDADD = $(SPEEX_LIBS)
 endif
 
+if HAVE_OSX
+libexec_PROGRAMS = ringcli
+ringcli_SOURCES = osxmain.cpp
+ringcli_CXXFLAGS = -I$(top_srcdir)/src \
+                   -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+ringcli_LDADD = $(top_builddir)/src/libsflphone.la
+endif
+
 if SFL_DBUS
 SUBDIRS=dbus
 
