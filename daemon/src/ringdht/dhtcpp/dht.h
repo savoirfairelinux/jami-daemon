@@ -94,6 +94,11 @@ public:
      */
     bool isRunning(sa_family_t af) const;
 
+    /**
+     * Enable or disable logging of DHT internal messages
+     */
+    void setLoggers(LogMethod&& error = NOLOG, LogMethod&& warn = NOLOG, LogMethod&& debug = NOLOG);
+
     void registerType(const ValueType& type) {
         types[type.id] = type;
     }
@@ -173,6 +178,11 @@ public:
 
     /* This must be provided by the user. */
     static bool isBlacklisted(const sockaddr*, socklen_t) { return false; }
+
+protected:
+    LogMethod DHT_DEBUG = NOLOG;
+    LogMethod DHT_WARN = NOLOG;
+    LogMethod DHT_ERROR = NOLOG;
 
 private:
 
