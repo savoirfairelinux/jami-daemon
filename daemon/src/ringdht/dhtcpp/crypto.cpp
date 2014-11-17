@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 
 #include "securedht.h"
-#include "logger.h"
 
 extern "C" {
 #include <gnutls/gnutls.h>
@@ -40,10 +39,8 @@ static gnutls_digest_algorithm_t get_dig_for_pub(gnutls_pubkey_t pubkey)
 {
     gnutls_digest_algorithm_t dig;
     int result = gnutls_pubkey_get_preferred_hash_algorithm(pubkey, &dig, nullptr);
-    if (result < 0) {
-        SFL_ERR("crt_get_preferred_hash_algorithm: %s\n", gnutls_strerror(result));
+    if (result < 0)
         return GNUTLS_DIG_UNKNOWN;
-    }
     return dig;
 }
 
@@ -53,10 +50,8 @@ static gnutls_digest_algorithm_t get_dig(gnutls_x509_crt_t crt)
     gnutls_pubkey_init(&pubkey);
 
     int result = gnutls_pubkey_import_x509(pubkey, crt, 0);
-    if (result < 0) {
-        SFL_ERR("gnutls_pubkey_import_x509: %s\n", gnutls_strerror(result));
+    if (result < 0)
         return GNUTLS_DIG_UNKNOWN;
-    }
 
     gnutls_digest_algorithm_t dig = get_dig_for_pub(pubkey);
     gnutls_pubkey_deinit(pubkey);
@@ -81,12 +76,10 @@ PrivateKey::PrivateKey(const Blob& import)
     gnutls_x509_privkey_init(&x509_key);
     int err = gnutls_x509_privkey_import(x509_key, &dt, GNUTLS_X509_FMT_PEM);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not read PEM key - %s", gnutls_strerror(err));
         err = gnutls_x509_privkey_import(x509_key, &dt, GNUTLS_X509_FMT_DER);
     }
     if (err != GNUTLS_E_SUCCESS) {
         gnutls_x509_privkey_deinit(x509_key);
-        SFL_ERR("Could not read key - %s", gnutls_strerror(err));
         throw DhtException("Can't load private key !");
     }
     gnutls_privkey_init(&key);
@@ -298,7 +291,6 @@ PrivateKey::generate()
 crypto::Identity
 generateIdentity(const std::string& name, crypto::Identity ca)
 {
-    SFL_WARN("SecureDht: generating a new identity (2048 bits RSA key pair and self-signed certificate).");
     auto shared_key = std::make_shared<PrivateKey>(PrivateKey::generate());
 
     gnutls_x509_crt_t cert;
