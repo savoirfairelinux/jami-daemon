@@ -75,7 +75,7 @@ public:
      * Initialise the Dht with two open sockets (for IPv4 and IP6)
      * and an ID for the node.
      */
-    Dht(int s, int s6, const InfoHash& id, const unsigned char *v = nullptr);
+    Dht(int s, int s6, const InfoHash& id);
     virtual ~Dht();
 
     /**
@@ -99,7 +99,7 @@ public:
      */
     void setLoggers(LogMethod&& error = NOLOG, LogMethod&& warn = NOLOG, LogMethod&& debug = NOLOG);
 
-    void registerType(const ValueType& type) {
+    virtual void registerType(const ValueType& type) {
         types[type.id] = type;
     }
     const ValueType& getType(ValueType::Id type_id) const {
@@ -134,26 +134,12 @@ public:
     /**
      * Get locally stored data for the given hash.
      */
-    std::vector<std::shared_ptr<Value>> getLocal(const InfoHash& id, Value::Filter f = Value::AllFilter()) const {
-        auto s = findStorage(id);
-        if (!s) return {};
-        std::vector<std::shared_ptr<Value>> vals;
-        vals.reserve(s->values.size());
-        for (auto& v : s->values)
-            if (f(*v.data)) vals.push_back(v.data);
-        return vals;
-    }
+    std::vector<std::shared_ptr<Value>> getLocal(const InfoHash& id, Value::Filter f = Value::AllFilter()) const;
 
     /**
      * Get locally stored data for the given hash and value id.
      */
-    std::shared_ptr<Value> getLocal(const InfoHash& id, const Value::Id& vid) const {
-        if (auto s = findStorage(id)) {
-            for (auto& v : s->values)
-                if (v.data->id == vid) return v.data;
-        }
-        return {};
-    }
+    std::shared_ptr<Value> getLocal(const InfoHash& id, const Value::Id& vid) const;
 
     /**
      * Announce a value on all available protocols (IPv4, IPv6), and
@@ -162,6 +148,22 @@ public:
      * The done callback will be called once when the first announce succeeds, or fails.
      */
     void put(const InfoHash&, Value&&, DoneCallback cb=nullptr);
+
+    /**
+     * Get data currently being put at the given hash.
+     */
+    std::vector<std::shared_ptr<Value>> getPut(const InfoHash&);
+
+    /**
+     * Get data currently being put at the given hash with the given id.
+     */
+    std::shared_ptr<Value> getPut(const InfoHash&, const Value::Id&);
+
+    /**
+     * Stop any put/announce operation at the given location,
+     * for values with the given id.
+     */
+    bool cancelPut(const InfoHash&, const Value::Id&);
 
     /**
      * Get the list of good nodes for local storage saving purposes
@@ -447,8 +449,7 @@ private:
     time_t rotate_secrets_time {0};
 
     InfoHash myid {};
-    bool have_v {false};
-    uint8_t my_v[9];
+    static const uint8_t my_v[9];
     std::array<uint8_t, 8> secret {};
     std::array<uint8_t, 8> oldsecret {};
 
