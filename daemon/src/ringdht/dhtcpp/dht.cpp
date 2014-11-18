@@ -113,6 +113,8 @@ const Dht::TransPrefix Dht::TransPrefix::FIND_NODE  = {"fn"};
 const Dht::TransPrefix Dht::TransPrefix::GET_VALUES  = {"gp"};
 const Dht::TransPrefix Dht::TransPrefix::ANNOUNCE_VALUES  = {"ap"};
 
+const uint8_t Dht::my_v[9] = "1:v4:RNG";
+
 static constexpr InfoHash zeroes {};
 static constexpr InfoHash ones = {std::array<uint8_t, HASH_LEN>{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -941,12 +943,18 @@ Dht::announce(const InfoHash& id, sa_family_t af, const std::shared_ptr<Value>& 
     }
     sr->done = false;
     auto a_sr = std::find_if(sr->announce.begin(), sr->announce.end(), [&](const Announce& a){
-        return a.value == value;
+        return a.value->id == value->id;
     });
     if (a_sr == sr->announce.end())
         sr->announce.emplace_back(Announce {value, callback});
-    else
+    else {
+        if (a_sr->value != value) {
+            a_sr->value = value;
+            for (auto& n : sr->nodes)
+                n.acked[value->id] = {0, 0};
+        }
         a_sr->callback = callback;
+    }
 }
 
 void
@@ -957,10 +965,6 @@ Dht::put(const InfoHash& id, Value&& value, DoneCallback callback)
         std::uniform_int_distribution<Value::Id> rand_id {};
         value.id = rand_id(rdev);
     }
-
-    // If the value is encrypted, the owner is unknown.
-    if (not value.isEncrypted() && value.owner == zeroes)
-        value.owner = getId();
 
     auto val = std::make_shared<Value>(std::move(value));
     DHT_DEBUG("put: adding %s -> %s", id.toString().c_str(), val->toString().c_str());
@@ -1043,6 +1047,74 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
 
 }
 
+std::vector<std::shared_ptr<Value>>
+Dht::getLocal(const InfoHash& id, Value::Filter f) const
+{
+    auto s = findStorage(id);
+    if (!s) return {};
+    std::vector<std::shared_ptr<Value>> vals;
+    vals.reserve(s->values.size());
+    for (auto& v : s->values)
+        if (f(*v.data)) vals.push_back(v.data);
+    return vals;
+}
+
+std::shared_ptr<Value>
+Dht::getLocal(const InfoHash& id, const Value::Id& vid) const
+{
+    if (auto s = findStorage(id)) {
+        for (auto& v : s->values)
+            if (v.data->id == vid) return v.data;
+    }
+    return {};
+}
+
+std::vector<std::shared_ptr<Value>>
+Dht::getPut(const InfoHash& id)
+{
+    std::vector<std::shared_ptr<Value>> ret;
+    for (const auto& search: searches) {
+        if (search.id != id)
+            continue;
+        ret.reserve(ret.size() + search.announce.size());
+        for (const auto& a : search.announce)
+            ret.push_back(a.value);
+    }
+    return ret;
+}
+
+std::shared_ptr<Value>
+Dht::getPut(const InfoHash& id, const Value::Id& vid)
+{
+    for (const auto& search : searches) {
+        if (search.id != id)
+            continue;
+        for (const auto& a : search.announce) {
+            if (a.value->id == vid)
+                return a.value;
+        }
+    }
+    return nullptr;
+}
+
+bool
+Dht::cancelPut(const InfoHash& id, const Value::Id& vid)
+{
+    bool canceled {false};
+    for (auto& search: searches) {
+        if (search.id != id)
+            continue;
+        for (auto it = search.announce.begin(); it != search.announce.end();) {
+            if (it->value->id == vid) {
+                canceled = true;
+                it = search.announce.erase(it);
+            }
+            else
+                ++it;
+        }
+    }
+}
+
 /* A struct storage stores all the stored peer addresses for a given info
    hash. */
 
@@ -1067,11 +1139,15 @@ Dht::storageStore(const InfoHash& id, const std::shared_ptr<Value>& value)
     }
 
     auto it = std::find_if (st->values.begin(), st->values.end(), [&](const ValueStorage& vr) {
-        return vr.data == value || *vr.data == *value;
+        return vr.data == value || vr.data->id == value->id;
     });
     if (it != st->values.end()) {
         /* Already there, only need to refresh */
         it->time = now.tv_sec;
+        if (it->data != value) {
+            DHT_DEBUG("Updating %s -> %s", id.toString().c_str(), value->toString().c_str());
+            it->data = value;
+        }
         return &*it;
     } else {
         DHT_DEBUG("Storing %s -> %s", id.toString().c_str(), value->toString().c_str());
@@ -1306,7 +1382,7 @@ Dht::dumpTables() const
 }
 
 
-Dht::Dht(int s, int s6, const InfoHash& id, const unsigned char *v)
+Dht::Dht(int s, int s6, const InfoHash& id)
  : dht_socket(s), dht_socket6(s6), myid(id)
 {
     if (s < 0 && s6 < 0)
@@ -1324,19 +1400,8 @@ Dht::Dht(int s, int s6, const InfoHash& id, const unsigned char *v)
             throw DhtException("Can't set socket to non-blocking mode");
     }
 
-    registerType(ValueType::USER_DATA);
-    registerType(ServiceAnnouncement::TYPE);
-
     std::uniform_int_distribution<decltype(search_id)> searchid_dis {};
     search_id = searchid_dis(rd);
-
-    if (v) {
-        memcpy(my_v, "1:v4:", 5);
-        memcpy(my_v + 5, v, 4);
-        have_v = true;
-    } else {
-        have_v = false;
-    }
 
     gettimeofday(&now, nullptr);
 
@@ -1726,18 +1791,23 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                 continue;
             }
             auto lv = getLocal(info_hash, v->id);
-            if (lv && lv->owner != id) {
-                DHT_DEBUG("Node %s attempting to store value belonging to node %s.", id.toString().c_str(), lv->owner.toString().c_str());
-                sendError(from, fromlen, tid, 203, "Announce_value with wrong permission");
-                continue;
-            }
-            {
-                // Allow the value to be edited by the storage policy
-                std::shared_ptr<Value> vc = v;
-                const auto& type = getType(vc->type);
-                DHT_DEBUG("Trying to store value of type %s belonging to node %s.", type.name.c_str(), v->owner.toString().c_str());
-                if (type.storePolicy(vc, id, from, fromlen)) {
+            std::shared_ptr<Value> vc = v;
+            if (lv) {
+                const auto& type = getType(lv->type);
+                if (type.editPolicy(info_hash, lv, vc, id, from, fromlen)) {
+                    DHT_DEBUG("Editing value of type %s belonging to %s at %s.", type.name.c_str(), v->owner.getId().toString().c_str(), info_hash.toString().c_str());
                     storageStore(info_hash, vc);
+                } else {
+                    DHT_WARN("Rejecting edition of type %s belonging to %s at %s because of storage policy.", type.name.c_str(), v->owner.getId().toString().c_str(), info_hash.toString().c_str());
+                }
+            } else {
+                // Allow the value to be edited by the storage policy
+                const auto& type = getType(vc->type);
+                if (type.storePolicy(info_hash, vc, id, from, fromlen)) {
+                    DHT_DEBUG("Storing value of type %s belonging to %s at %s.", type.name.c_str(), v->owner.getId().toString().c_str(), info_hash.toString().c_str());
+                    storageStore(info_hash, vc);
+                } else {
+                    DHT_WARN("Rejecting storage of type %s belonging to %s at %s because of storage policy.", type.name.c_str(), v->owner.getId().toString().c_str(), info_hash.toString().c_str());
                 }
             }
 
@@ -1946,10 +2016,8 @@ Dht::pingNode(const sockaddr *sa, socklen_t salen)
     memcpy(buf + offset, src, delta);                   \
     offset += delta;
 
-#define ADD_V(buf, offset, size)                        \
-    if (have_v) {                                       \
-        COPY(buf, offset, my_v, sizeof(my_v), size);    \
-    }
+#define ADD_V(buf, offset, size)                    \
+    COPY(buf, offset, my_v, sizeof(my_v), size);
 
 int
 Dht::send(const void *buf, size_t len, int flags, const sockaddr *sa, socklen_t salen)

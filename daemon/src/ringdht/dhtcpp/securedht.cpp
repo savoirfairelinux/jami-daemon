@@ -36,25 +36,27 @@ extern "C" {
 namespace dht {
 
 SecureDht::SecureDht(int s, int s6, crypto::Identity id)
-: Dht(s, s6, id.second->getPublicKey().getId(), (unsigned char*)"RNG\0"), key_(id.first), certificate_(id.second)
+: Dht(s, s6, InfoHash::get("node:"+id.second->getPublicKey().getId().toString())), key_(id.first), certificate_(id.second)
 {
     if (s < 0 && s6 < 0)
         return;
+
     int rc = gnutls_global_init();
-    if (rc != GNUTLS_E_SUCCESS) {
-        DHT_ERROR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
-        throw DhtException("Error initializing GnuTLS");
-    }
-    if (certificate_->getPublicKey().getId() != key_->getPublicKey().getId()) {
-        DHT_ERROR("SecureDht: provided certificate doesn't match private key.");
-    }
-    Dht::registerType(crypto::Certificate::TYPE);
-    Value cert_val {
-        crypto::Certificate::TYPE,
+    if (rc != GNUTLS_E_SUCCESS)
+        throw DhtException(std::string("Error initializing GnuTLS: ")+gnutls_strerror(rc));
+
+    auto certId = certificate_->getPublicKey().getId();
+    if (certId != key_->getPublicKey().getId())
+        throw DhtException("SecureDht: provided certificate doesn't match private key.");
+
+    registerType(ValueType::USER_DATA);
+    registerInsecureType(ServiceAnnouncement::TYPE);
+    registerInsecureType(CERTIFICATE_TYPE);
+
+    Dht::put(certId, Value {
+        CERTIFICATE_TYPE,
         *certificate_
-    };
-    cert_val.owner = getId();
-    Dht::put(getId(), std::move(cert_val), [this](bool ok) {
+    }, [this](bool ok) {
         if (ok)
             DHT_DEBUG("SecureDht: public key announced successfully");
         else
@@ -67,6 +69,44 @@ SecureDht::~SecureDht()
     gnutls_global_deinit();
 }
 
+ValueType
+SecureDht::secureType(ValueType&& type)
+{
+    type.storePolicy = [this,type](InfoHash id, std::shared_ptr<Value>& v, InfoHash nid, const sockaddr* a, socklen_t al) {
+        if (v->isSigned()) {
+            if (!v->owner.checkSignature(v->getToSign(), v->signature)) {
+                DHT_WARN("Signature verification failed");
+                return false;
+            }
+            else
+                DHT_WARN("Signature verification succeded");
+        }
+        return type.storePolicy(id, v, nid, a, al);
+    };
+    type.editPolicy = [this,type](InfoHash id, const std::shared_ptr<Value>& o, std::shared_ptr<Value>& n, InfoHash nid, const sockaddr* a, socklen_t al) {
+        if (!o->isSigned())
+            return type.editPolicy(id, o, n, nid, a, al);
+        if (o->owner != n->owner) {
+            DHT_WARN("Edition forbidden: owner changed.");
+            return false;
+        }
+        if (!o->owner.checkSignature(n->getToSign(), n->signature)) {
+            DHT_WARN("Edition forbidden: signature verification failed.");
+            return false;
+        }
+        DHT_WARN("Edition old seq: %d, new seq: %d.", o->seq, n->seq);
+        if (o->seq == n->seq) {
+            // If the data is exactly the same,
+            // it can be reannounced, possibly by someone else.
+            if (o->getToSign() != n->getToSign())
+                return false;
+        }
+        else if (n->seq < o->seq)
+            return false;
+        return true;
+    };
+    return type;
+}
 
 const std::shared_ptr<crypto::Certificate>
 SecureDht::getCertificate(const InfoHash& node) const
@@ -91,10 +131,10 @@ SecureDht::registerCertificate(const InfoHash& node, const Blob& data)
     }
     InfoHash h = crt->getPublicKey().getId();
     if (node == h) {
-        std::cout << "Registering public key for " << h << std::endl;
+        DHT_DEBUG("Registering public key for %s", h.toString().c_str());
         nodesCertificates_[h] = crt;
     } else {
-        std::cerr << "Certificate " << h << " for node " << node << " does not match node id !" << std::endl;
+        DHT_DEBUG("Certificate %s for node %s does not match node id !", h.toString().c_str(), node.toString().c_str());
         return nullptr;
     }
     auto it = nodesCertificates_.find(h);
@@ -129,86 +169,62 @@ SecureDht::findCertificate(const InfoHash& node, std::function<void(const std::s
     }, [cb,found](bool) {
         if (!*found)
             cb(nullptr);
-    }, Value::TypeFilter(crypto::Certificate::TYPE));
+    }, Value::TypeFilter(CERTIFICATE_TYPE));
 }
+
 
 void
 SecureDht::get(const InfoHash& id, GetCallback cb, DoneCallback donecb, Value::Filter filter)
 {
-    auto done = std::make_shared<bool>(false);
-    auto check_sig = std::make_shared<std::vector<std::shared_ptr<Value>>>();
     Dht::get(id,
-    [=](const std::vector<std::shared_ptr<Value>>& values) {
-        for (const auto& v : values) {
-            if (!v->flags.isEncrypted() && v->type == crypto::Certificate::TYPE.id)
-                registerCertificate(id, v->data);
-        }
-        if (*done) return false;
-        std::vector<std::shared_ptr<Value>> tmpvals {};
-        for (const auto& v : values) {
-            if (v->flags.isSigned()) {
-                check_sig->push_back(v);
-                verifySigned(v, [=](bool ok) {
-                    auto cs_ptr = check_sig.get();
-                    auto it = std::find(cs_ptr->begin(), cs_ptr->end(), v);
-                    if (it != cs_ptr->end()) {
-                        cs_ptr->erase(it);
-                        if (cb && ok) { // Signed data have been verified
-                            std::vector<std::shared_ptr<Value>> tmpvals_ {*it};
-                            *done |= !cb(tmpvals_);
+        [=](const std::vector<std::shared_ptr<Value>>& values) {
+            std::vector<std::shared_ptr<Value>> tmpvals {};
+            for (const auto& v : values) {
+                if (v->isEncrypted()) {
+                    try {
+                        Value decrypted_val = std::move(decrypt(*v));
+                        if (decrypted_val.recipient == getId()) {
+                            auto dv = std::make_shared<Value>(std::move(decrypted_val));
+                            if (dv->owner.checkSignature(dv->getToSign(), dv->signature))
+                                tmpvals.push_back(v);
+                            else
+                                DHT_WARN("Signature verification failed for %s", id.toString().c_str());
                         }
+                    } catch (const std::exception& e) {
+                        DHT_WARN("Could not decrypt value %s at infohash %s", v->toString().c_str(), id.toString().c_str());
+                        continue;
                     }
-                    if (donecb && *done && cs_ptr->empty()) {
-                        donecb(true);
-                    }
-                });
-            } else if (v->flags.isEncrypted()) {
-                Blob decrypted_data;
-                Value decrypted_val;
-                try {
-                    decrypted_data = key_->decrypt(v->data);
-                    Value decrypted_val { v->id };
-                    decrypted_val.unpackBlob(decrypted_data);
-                } catch (const std::exception& e) {
-                    DHT_WARN("Could not decrypt value %s at infohash %s", v->toString().c_str(), id.toString().c_str());
-                    continue;
+                } else if (v->isSigned()) {
+                    if (v->owner.checkSignature(v->getToSign(), v->signature))
+                        tmpvals.push_back(v);
+                    else
+                        DHT_WARN("Signature verification failed for %s", id.toString().c_str());
+                } else {
+                    tmpvals.push_back(v);
                 }
-                auto dv = std::make_shared<Value>(std::move(decrypted_val));
-                check_sig->push_back(dv);
-                verifySigned(dv, [=](bool ok) {
-                    auto cs_ptr = check_sig.get();
-                    auto it = std::find(cs_ptr->begin(), cs_ptr->end(), dv);
-                    if (it != cs_ptr->end()) {
-                        cs_ptr->erase(it);
-                        if (cb && ok) { // Signed data have been verified
-                            std::vector<std::shared_ptr<Value>> tmpvals_ {*it};
-                            *done |= !cb(tmpvals_);
-                        }
-                    }
-                    if (donecb && *done && cs_ptr->empty()) {
-                        donecb(true);
-                    }
-                });
-            } else {
-                tmpvals.push_back(v);
             }
-        }
-        if (!tmpvals.empty())
-            return cb ? cb(tmpvals) : true;
-        else
+            if (not tmpvals.empty())
+                cb(tmpvals);
             return true;
-    },
-    [=](bool ok) {
-        *done = true;
-        if (donecb && check_sig->empty())
-            donecb(ok);
-    },
-    filter);
+        },
+        donecb,
+        filter);
 }
 
 void
 SecureDht::putSigned(const InfoHash& hash, Value&& val, DoneCallback callback)
 {
+    if (val.id == Value::INVALID_ID) {
+        auto id = getId();
+        static_assert(sizeof(Value::Id) <= sizeof(InfoHash), "Value::Id can't be larger than InfoHash");
+        val.id = *reinterpret_cast<Value::Id*>(id.data());
+    }
+    // TODO search the DHT instead of using the local value
+    auto p = getPut(hash, val.id);
+    if (p) {
+        DHT_WARN("Found previous value being announced.");
+        val.seq = p->seq + 1;
+    }
     sign(val);
     put(hash, std::move(val), callback);
 }
@@ -222,9 +238,11 @@ SecureDht::putEncrypted(const InfoHash& hash, const InfoHash& to, const std::sha
                 callback(false);
             return;
         }
+        DHT_WARN("Encrypting data for PK: %s", crt->getPublicKey().getId().toString().c_str());
         try {
             put(hash, encrypt(*val, crt->getPublicKey()), callback);
         } catch (const std::exception& e) {
+            DHT_WARN("Error putting encrypted data: %s", e.what());
             if (callback)
                 callback(false);
         }
@@ -236,10 +254,9 @@ SecureDht::sign(Value& v) const
 {
     if (v.flags.isEncrypted())
         throw DhtException("Can't sign encrypted data.");
-    if (v.flags.isSigned() && v.owner == getId())
-        return;
-    v.owner = getId();
-    v.setSignature(key_->sign(v.getToSign()));
+    v.owner = key_->getPublicKey();
+    v.flags = Value::ValueFlags(true, false);
+    v.signature = key_->sign(v.getToSign());
 }
 
 Value
@@ -259,31 +276,12 @@ Value
 SecureDht::decrypt(const Value& v)
 {
     if (not v.flags.isEncrypted())
-        return v;
+        throw DhtException("Data is not encrypted.");
     auto decrypted = key_->decrypt(v.cypher);
     Value ret {v.id};
     auto pb = decrypted.cbegin(), pe = decrypted.cend();
     ret.unpackBody(pb, pe);
     return ret;
 }
-
-void
-SecureDht::verifySigned(const std::shared_ptr<Value>& data, SignatureCheckCallback callback)
-{
-    if (!data || data->flags.isEncrypted() || !data->flags.isSigned() || data->signature.empty()) {
-        if (callback)
-            callback(false);
-    }
-    findCertificate(data->owner, [data,callback,this](const std::shared_ptr<crypto::Certificate> crt) {
-        if (!crt || !*crt) {
-            if (callback)
-                callback(false);
-            return;
-        }
-        if (callback)
-            callback(crt->getPublicKey().checkSignature(data->getToSign(), data->signature));
-    });
-}
-
 
 }
