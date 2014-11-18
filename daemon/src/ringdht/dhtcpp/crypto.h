@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 #pragma once
 
-#include "value.h"
+#include "serialize.h"
 
 extern "C" {
 #include <gnutls/gnutls.h>
@@ -50,18 +50,25 @@ typedef std::pair<std::shared_ptr<PrivateKey>, std::shared_ptr<Certificate>> Ide
  */
 Identity generateIdentity(const std::string& name = "dhtnode", Identity ca = {});
 
-struct PublicKey
+struct PublicKey : public Serializable
 {
     PublicKey() {}
     PublicKey(gnutls_pubkey_t k) : pk(k) {}
+    PublicKey(const Blob& pk);
     PublicKey(PublicKey&& o) noexcept : pk(o.pk) { o.pk = nullptr; };
 
     ~PublicKey();
     operator bool() const { return pk; }
 
+    PublicKey& operator=(PublicKey&& o) noexcept;
+
     InfoHash getId() const;
     bool checkSignature(const Blob& data, const Blob& signature) const;
     Blob encrypt(const Blob&) const;
+
+    void pack(Blob& b) const override;
+
+    void unpack(Blob::const_iterator& begin, Blob::const_iterator& end) override;
 
     gnutls_pubkey_t pk {};
 private:
@@ -112,8 +119,6 @@ struct Certificate : public Serializable {
     PublicKey getPublicKey() const;
     void pack(Blob& b) const override;
     void unpack(Blob::const_iterator& begin, Blob::const_iterator& end) override;
-
-    static const ValueType TYPE;
 
 private:
     Certificate(const Certificate&) = delete;
