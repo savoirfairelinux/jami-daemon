@@ -125,7 +125,7 @@ public:
      * Get a value by searching on all available protocols (IPv4, IPv6),
      * and call the callback when some values are found.
      * The operation will start as soon as the node is connected to the network.
-     * GetCallback will be called every time a new value is found, until
+     * GetCallback will be called every time new values are found, until
      * GetCallback returns false or the search completes.
      * Then, DoneCallback is called.
      */
@@ -145,7 +145,11 @@ public:
      * Announce a value on all available protocols (IPv4, IPv6), and
      * automatically re-announce when it's about to expire.
      * The operation will start as soon as the node is connected to the network.
-     * The done callback will be called once when the first announce succeeds, or fails.
+     * The done callback will be called once, when the first announce succeeds, or fails.
+     *
+     * A "put" operation will never end by itself because the value will need to be
+     * reannounced on a regular basis.
+     * User can call #cancelPut(InfoHash, Value::Id) to cancel a put operation.
      */
     void put(const InfoHash&, Value&&, DoneCallback cb=nullptr);
 
@@ -379,6 +383,7 @@ private:
     struct ValueStorage {
         std::shared_ptr<Value> data {};
         time_t time {0};
+
         ValueStorage() {}
         ValueStorage(const std::shared_ptr<Value>& v, time_t t) : data(v), time(t) {}
     };

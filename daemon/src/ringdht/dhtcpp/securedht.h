@@ -147,7 +147,6 @@ private:
     std::shared_ptr<crypto::Certificate> certificate_ {};
 
     std::map<InfoHash, std::shared_ptr<crypto::Certificate>> nodesCertificates_ {};
-
 };
 
 }
