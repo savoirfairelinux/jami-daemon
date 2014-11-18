@@ -60,17 +60,17 @@ public:
         cv.notify_all();
     }
 
-    void put (InfoHash hash, const Value& value, Dht::DoneCallback cb=nullptr)
+    void put (InfoHash hash, Value&& value, Dht::DoneCallback cb=nullptr)
     {
         std::unique_lock<std::mutex> lck(storage_mtx);
-        dht_puts.emplace_back(hash, value, cb);
+        dht_puts.emplace_back(hash, std::move(value), cb);
         cv.notify_all();
     }
 
-    void putEncrypted (InfoHash hash, InfoHash to, const Value& value, Dht::DoneCallback cb=nullptr)
+    void putEncrypted (InfoHash hash, InfoHash to, Value&& value, Dht::DoneCallback cb=nullptr)
     {
         std::unique_lock<std::mutex> lck(storage_mtx);
-        dht_eputs.emplace_back(hash, to, value, cb);
+        dht_eputs.emplace_back(hash, to, std::move(value), cb);
         cv.notify_all();
     }
 

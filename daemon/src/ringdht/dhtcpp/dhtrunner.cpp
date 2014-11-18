@@ -117,7 +117,6 @@ DhtRunner::loop_()
             auto& id = std::get<0>(put);
             auto& val = std::get<1>(put);
             std::cout << "Processing put " << id << " -> " << val << std::endl;
-            val.owner = getId();
             if (val.type == ServiceAnnouncement::TYPE.id)
                 dht->put(id, std::move(val), std::get<2>(put));
             else

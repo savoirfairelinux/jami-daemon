@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2013, Simone Pellegrini All rights reserved.
+ * Copyright (c) 2014 Savoir-Faire Linux. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,13 +31,12 @@
 #include <string>
 #include <tuple>
 #include <numeric>
+#include <limits>
 
-#include <cassert>
-
-typedef std::vector<uint8_t> StreamType;
+typedef std::vector<uint8_t> Blob;
 
 template <class T>
-inline void serialize(const T&, StreamType&);
+inline void serialize(const T&, Blob&);
 
 namespace detail {
 
@@ -50,13 +50,15 @@ size_t get_size(const T& obj);
 
 namespace detail {
 
+    typedef uint16_t serialized_size_t;
+
     template <class T>
     struct get_size_helper;
 
     template <class T>
     struct get_size_helper<std::vector<T>> {
         static size_t value(const std::vector<T>& obj) {
-        return std::accumulate(obj.begin(), obj.end(), sizeof(size_t),
+        return std::accumulate(obj.begin(), obj.end(), sizeof(serialized_size_t),
                 [](const size_t& acc, const T& cur) { return acc+get_size(cur); });
         }
     };
@@ -64,7 +66,7 @@ namespace detail {
     template <>
     struct get_size_helper<std::string> {
         static size_t value(const std::string& obj) {
-            return sizeof(size_t) + obj.length()*sizeof(uint8_t);
+            return sizeof(serialized_size_t) + obj.length()*sizeof(uint8_t);
         }
     };
 
@@ -108,16 +110,16 @@ namespace detail {
     class serialize_helper;
 
     template <class T>
-    void serializer(const T& obj, StreamType::iterator&);
+    void serializer(const T& obj, Blob::iterator&);
 
     template <class tuple_type>
-    inline void serialize_tuple(const tuple_type& obj, StreamType::iterator& res, int_<0>) {
+    inline void serialize_tuple(const tuple_type& obj, Blob::iterator& res, int_<0>) {
         constexpr size_t idx = std::tuple_size<tuple_type>::value-1;
         serializer(std::get<idx>(obj), res);
     }
 
     template <class tuple_type, size_t pos>
-    inline void serialize_tuple(const tuple_type& obj, StreamType::iterator& res, int_<pos>) {
+    inline void serialize_tuple(const tuple_type& obj, Blob::iterator& res, int_<pos>) {
         constexpr size_t idx = std::tuple_size<tuple_type>::value-pos-1;
         serializer(std::get<idx>(obj), res);
 
@@ -127,7 +129,7 @@ namespace detail {
 
     template <class... T>
     struct serialize_helper<std::tuple<T...>> {
-        static void apply(const std::tuple<T...>& obj, StreamType::iterator& res) {
+        static void apply(const std::tuple<T...>& obj, Blob::iterator& res) {
             detail::serialize_tuple(obj, res, detail::int_<sizeof...(T)-1>());
         }
 
@@ -135,9 +137,11 @@ namespace detail {
 
     template <>
     struct serialize_helper<std::string> {
-        static void apply(const std::string& obj, StreamType::iterator& res) {
+        static void apply(const std::string& obj, Blob::iterator& res) {
             // store the number of elements of this vector at the beginning
-            serializer(obj.length(), res);
+            if (obj.length() > std::numeric_limits<serialized_size_t>::max())
+                throw std::length_error("string is too long");
+            serializer(static_cast<serialized_size_t>(obj.length()), res);
             for(const auto& cur : obj) { serializer(cur, res); }
         }
 
@@ -145,9 +149,11 @@ namespace detail {
 
     template <class T>
     struct serialize_helper<std::vector<T>> {
-        static void apply(const std::vector<T>& obj, StreamType::iterator& res) {
+        static void apply(const std::vector<T>& obj, Blob::iterator& res) {
             // store the number of elements of this vector at the beginning
-            serializer(obj.size(), res);
+            if (obj.size() > std::numeric_limits<serialized_size_t>::max())
+                throw std::length_error("vector is too large");
+            serializer(static_cast<serialized_size_t>(obj.size()), res);
             for(const auto& cur : obj) { serializer(cur, res); }
         }
 
@@ -155,7 +161,7 @@ namespace detail {
 
     template <class T>
     struct serialize_helper {
-        static void apply(const T& obj, StreamType::iterator& res) {
+        static void apply(const T& obj, Blob::iterator& res) {
             const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&obj);
             std::copy(ptr,ptr+sizeof(T),res);
             res+=sizeof(T);
@@ -164,22 +170,23 @@ namespace detail {
     };
 
     template <class T>
-    inline void serializer(const T& obj, StreamType::iterator& res) {
+    inline void serializer(const T& obj, Blob::iterator& res) {
         serialize_helper<T>::apply(obj,res);
     }
 
 } // end detail namespace
 
 template <class T>
-inline void serialize(const T& obj, StreamType& res) {
+inline void serialize(const T& obj, Blob& res) {
 
     size_t offset = res.size();
     size_t size = get_size(obj);
     res.resize(res.size() + size);
 
-    StreamType::iterator it = res.begin()+offset;
+    Blob::iterator it = res.begin()+offset;
     detail::serializer(obj,it);
-    assert(res.begin() + offset + size == it);
+    if (res.begin() + offset + size != it)
+        throw std::logic_error("error serializing object");
 }
 
 namespace detail {
@@ -189,13 +196,12 @@ namespace detail {
 
     template <class T>
     struct deserialize_helper {
-        static T apply(StreamType::const_iterator& begin,
-                            StreamType::const_iterator end) {
-            assert(begin+sizeof(T)<=end);
-            (void)end;
+        static T apply(Blob::const_iterator& begin,
+                            Blob::const_iterator end) {
+            if (begin+sizeof(T)>end)
+                throw std::length_error("error deserializing object");
             T val;
-            uint8_t* ptr = reinterpret_cast<uint8_t*>(&val);
-            std::copy(begin, begin+sizeof(T), ptr);
+            std::copy(begin, begin+sizeof(T), reinterpret_cast<uint8_t*>(&val));
             begin+=sizeof(T);
             return val;
         }
@@ -203,11 +209,11 @@ namespace detail {
 
     template <class T>
     struct deserialize_helper<std::vector<T>> {
-        static std::vector<T> apply(StreamType::const_iterator& begin,
-                                             StreamType::const_iterator end)
+        static std::vector<T> apply(Blob::const_iterator& begin,
+                                             Blob::const_iterator end)
         {
             // retrieve the number of elements
-            size_t size = deserialize_helper<size_t>::apply(begin,end);
+            serialized_size_t size = deserialize_helper<serialized_size_t>::apply(begin,end);
 
             std::vector<T> vect(size);
             for(size_t i=0; i<size; ++i) {
@@ -219,11 +225,11 @@ namespace detail {
 
     template <>
     struct deserialize_helper<std::string> {
-        static std::string apply(StreamType::const_iterator& begin,
-                                         StreamType::const_iterator end)
+        static std::string apply(Blob::const_iterator& begin,
+                                         Blob::const_iterator end)
         {
             // retrieve the number of elements
-            size_t size = deserialize_helper<size_t>::apply(begin,end);
+            serialized_size_t size = deserialize_helper<serialized_size_t>::apply(begin,end);
 
             if (size == 0u) return std::string();
             std::string str(size,'\0');
@@ -236,8 +242,8 @@ namespace detail {
 
     template <class tuple_type>
     inline void deserialize_tuple(tuple_type& obj,
-                                  StreamType::const_iterator& begin,
-                                  StreamType::const_iterator end, int_<0>) {
+                                  Blob::const_iterator& begin,
+                                  Blob::const_iterator end, int_<0>) {
         constexpr size_t idx = std::tuple_size<tuple_type>::value-1;
         typedef typename std::tuple_element<idx,tuple_type>::type T;
 
@@ -246,8 +252,8 @@ namespace detail {
 
     template <class tuple_type, size_t pos>
     inline void deserialize_tuple(tuple_type& obj,
-                                  StreamType::const_iterator& begin,
-                                  StreamType::const_iterator end, int_<pos>) {
+                                  Blob::const_iterator& begin,
+                                  Blob::const_iterator end, int_<pos>) {
         constexpr size_t idx = std::tuple_size<tuple_type>::value-pos-1;
         typedef typename std::tuple_element<idx,tuple_type>::type T;
         std::get<idx>(obj) = std::move(deserialize_helper<T>::apply(begin, end));
@@ -258,8 +264,8 @@ namespace detail {
 
     template <class... T>
     struct deserialize_helper<std::tuple<T...>> {
-        static std::tuple<T...> apply(StreamType::const_iterator& begin,
-                                                StreamType::const_iterator end)
+        static std::tuple<T...> apply(Blob::const_iterator& begin,
+                                                Blob::const_iterator end)
         {
             //return std::make_tuple(deserialize(begin,begin+sizeof(T),T())...);
             std::tuple<T...> ret;
@@ -272,12 +278,39 @@ namespace detail {
 }
 
 template <class T>
-inline T deserialize(StreamType::const_iterator& begin, const StreamType::const_iterator& end) {
+inline T deserialize(Blob::const_iterator& begin, const Blob::const_iterator& end) {
     return detail::deserialize_helper<T>::apply(begin, end);
 }
 
 template <class T>
-inline T deserialize(const StreamType& res) {
-    StreamType::const_iterator it = res.begin();
+inline T deserialize(const Blob& res) {
+    Blob::const_iterator it = res.begin();
     return deserialize<T>(it, res.end());
+}
+
+namespace dht {
+
+    struct Serializable {
+    /**
+     * Append serialized object to res.
+     */
+    virtual void pack(Blob& res) const = 0;
+    Blob getPacked() const {
+        Blob ret;
+        pack(ret);
+        return ret;
+    }
+
+    /**
+     * Read serialized object from {begin, end}.
+     */
+    virtual void unpack(Blob::const_iterator& begin, Blob::const_iterator& end) = 0;
+    void unpackBlob(const Blob& data) {
+        auto cib = data.cbegin(), cie = data.cend();
+        unpack(cib, cie);
+    }
+
+    virtual ~Serializable() = default;
+};
+
 }

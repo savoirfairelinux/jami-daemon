@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "infohash.h"
+#include "crypto.h"
 #include "serialize.h"
 
 #include <sys/socket.h>
@@ -74,41 +75,23 @@ private:
  */
 constexpr int NOLOG(char const*, va_list) { return 0; }
 
-typedef std::vector<uint8_t> Blob;
-
-struct Serializable {
-    /**
-     * Append serialized object to res.
-     */
-    virtual void pack(Blob& res) const = 0;
-    Blob getPacked() const {
-        Blob ret;
-        pack(ret);
-        return ret;
-    }
-
-    /**
-     * Read serialized object from {begin, end}.
-     */
-    virtual void unpack(Blob::const_iterator& begin, Blob::const_iterator& end) = 0;
-    void unpackBlob(const Blob& data) {
-        auto cib = data.cbegin(), cie = data.cend();
-        unpack(cib, cie);
-    }
-
-    virtual ~Serializable() = default;
-};
 
 class Value;
 
-typedef std::function<bool(std::shared_ptr<Value>&, InfoHash, const sockaddr*, socklen_t)> StorePolicy;
+typedef std::function<bool(InfoHash, std::shared_ptr<Value>&, InfoHash, const sockaddr*, socklen_t)> StorePolicy;
+typedef std::function<bool(InfoHash, const std::shared_ptr<Value>&, std::shared_ptr<Value>&, InfoHash, const sockaddr*, socklen_t)> EditPolicy;
 
 struct ValueType {
     typedef uint16_t Id;
     ValueType () {}
 
-    ValueType (Id id, std::string name, time_t e = 60 * 60, const StorePolicy& sp = {DEFAULT_STORE_POLICY})
-     : id(id), name(name), expiration(e), storePolicy(sp) {}
+    ValueType (Id id, std::string name, time_t e = 60 * 60)
+    : id(id), name(name), expiration(e) {}
+
+    ValueType (Id id, std::string name, time_t e, StorePolicy&& sp, EditPolicy&& ep)
+     : id(id), name(name), expiration(e), storePolicy(std::move(sp)), editPolicy(std::move(ep)) {}
+
+    virtual ~ValueType() {}
 
     bool operator==(const ValueType& o) {
        return id == o.id;
@@ -117,15 +100,18 @@ struct ValueType {
     // Generic value type
     static const ValueType USER_DATA;
 
-    static bool DEFAULT_STORE_POLICY(std::shared_ptr<Value>&, InfoHash, const sockaddr*, socklen_t) {
+    static bool DEFAULT_STORE_POLICY(InfoHash, std::shared_ptr<Value>&, InfoHash, const sockaddr*, socklen_t) {
         return true;
+    }
+    static bool DEFAULT_EDIT_POLICY(InfoHash, const std::shared_ptr<Value>&, std::shared_ptr<Value>&, InfoHash, const sockaddr*, socklen_t) {
+        return false;
     }
 
     Id id {0};
     std::string name {};
     time_t expiration {60 * 60};
     StorePolicy storePolicy {DEFAULT_STORE_POLICY};
-
+    EditPolicy editPolicy {DEFAULT_EDIT_POLICY};
 };
 
 /**
@@ -202,6 +188,11 @@ struct Value : public Serializable
 
     /** Custom user data constructor */
     Value(const Blob& userdata) : data(userdata) {}
+    Value(Blob&& userdata) : data(std::move(userdata)) {}
+
+    Value(Value&& o) noexcept
+     : id(o.id), flags(o.flags), owner(std::move(o.owner)), recipient(o.recipient),
+     type(o.type), data(std::move(o.data)), seq(o.seq), signature(std::move(o.signature)), cypher(std::move(o.cypher)) {}
 
     inline bool operator== (const Value& o) {
         return id == o.id &&
@@ -212,11 +203,6 @@ struct Value : public Serializable
     void setRecipient(const InfoHash& r) {
         recipient = r;
         flags[2] = true;
-    }
-
-    void setSignature(Blob&& sig) {
-        signature = std::move(sig);
-        flags[0] = true;
     }
 
     void setCypher(Blob&& c) {
@@ -257,22 +243,27 @@ struct Value : public Serializable
     ValueFlags flags {};
 
     /**
-     * Hash of the signer.
+     * Public key of the signer.
      */
-    InfoHash owner {};
+    crypto::PublicKey owner {};
 
     /**
-     * Hash of the recipient.
-     * Should only be present for signed or encrypted values.
-     * Must be present if encrypted.
+     * Hash of the recipient (optional).
+     * Should only be present for encrypted values.
+     * Can optionally be present for signed values.
      */
-    InfoHash recipient {}; // optional
+    InfoHash recipient {};
 
     /**
      * Type of data.
      */
     ValueType::Id type {ValueType::USER_DATA.id};
     Blob data {};
+
+    /**
+     * Sequence number to avoid replay attacks
+     */
+    uint16_t seq {0};
 
     /**
      * Optional signature.
@@ -319,7 +310,7 @@ struct ServiceAnnouncement : public Serializable
     }
 
     static const ValueType TYPE;
-    static bool storePolicy(std::shared_ptr<Value>&, InfoHash, const sockaddr*, socklen_t);
+    static bool storePolicy(InfoHash, std::shared_ptr<Value>&, InfoHash, const sockaddr*, socklen_t);
 
     /** print value for debugging */
     friend std::ostream& operator<< (std::ostream&, const ServiceAnnouncement&);
