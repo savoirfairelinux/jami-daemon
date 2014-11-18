@@ -1295,17 +1295,6 @@ static const GActionEntry sflphone_actions[] =
 
 #endif
 
-static void
-enable_paste(GtkClipboard *clipboard, const gchar *text, G_GNUC_UNUSED gpointer data)
-{
-    /* if we got text, enable the paste action, otherwise request text again */
-    if (text){
-        g_simple_action_set_enabled(pasteAction_, TRUE);
-    } else {
-        gtk_clipboard_request_text(clipboard, enable_paste, NULL);
-    }
-}
-
 void create_actions(SFLPhoneClient *client)
 {
     g_action_map_add_action_entries(
@@ -1345,12 +1334,8 @@ void create_actions(SFLPhoneClient *client)
     g_simple_action_set_enabled(screenshareAction_, FALSE);
 #endif
     g_simple_action_set_enabled(copyAction_, FALSE);
-    /* disable paste action until there is something in the clipboard */
-    g_simple_action_set_enabled(pasteAction_, FALSE);
-    gtk_clipboard_request_text(
-        gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
-        enable_paste,
-        NULL);
+    /* enable paste action */
+    g_simple_action_set_enabled(pasteAction_, TRUE);
     /* disable tool bar toggle */
     g_simple_action_set_enabled(
         G_SIMPLE_ACTION(g_action_map_lookup_action(G_ACTION_MAP(client), "show-toolbar")), FALSE);
