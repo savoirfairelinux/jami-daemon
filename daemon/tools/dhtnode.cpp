@@ -29,10 +29,12 @@
  *  as that of the covered work.
  */
 
-#include "dhtcpp/dhtrunner.h"
-#include "dhtcpp/dht.h"
+#include "dhtrunner.h"
+#include "dht.h"
 
-#include "logger.h"
+extern "C" {
+#include <gnutls/gnutls.h>
+}
 
 #include <sys/socket.h>
 
@@ -43,23 +45,54 @@
 
 using namespace dht;
 
+namespace Color {
+    enum Code {
+        FG_RED      = 31,
+        FG_GREEN    = 32,
+        FG_YELLOW   = 33,
+        FG_BLUE     = 34,
+        FG_DEFAULT  = 39,
+        BG_RED      = 41,
+        BG_GREEN    = 42,
+        BG_BLUE     = 44,
+        BG_DEFAULT  = 49
+    };
+    class Modifier {
+        Code code;
+    public:
+        Modifier(Code pCode) : code(pCode) {}
+        friend std::ostream&
+        operator<<(std::ostream& os, const Modifier& mod) {
+            return os << "\033[" << mod.code << "m";
+        }
+    };
+}
+
+const Color::Modifier def(Color::FG_DEFAULT);
+const Color::Modifier red(Color::FG_RED);
+const Color::Modifier yellow(Color::FG_YELLOW);
+
+void printLog(std::ostream& s, char const* m, va_list args) {
+    char buffer[4096];
+    int ret = vsnprintf(buffer, sizeof(buffer), m, args);
+    if (ret < 0)
+        return;
+    s.write(buffer, std::min<size_t>(ret, sizeof(buffer)));
+    if (ret >= sizeof(buffer))
+        s << "[[TRUNCATED]]";
+    s.put('\n');
+}
+
 int
 main(int argc, char **argv)
 {
-    setDebugMode(true);
-    setConsoleLog(true);
-
-    if (argc < 2) {
-        SFL_ERR("Entrez un port");
-        std::terminate();
-    }
+    if (argc < 2)
+        throw std::invalid_argument("Entrez un port");
 
     int i = 1;
     int p = atoi(argv[i++]);
-    if (p <= 0 || p >= 0x10000) {
-        SFL_ERR("Port invalide : %d", p);
-        std::terminate();
-    }
+    if (p <= 0 || p >= 0x10000)
+        throw std::invalid_argument("Port invalide: " + std::to_string(p));
     in_port_t port = p;
 
     std::vector<sockaddr_storage> bootstrap_nodes {};
@@ -74,17 +107,15 @@ main(int argc, char **argv)
         else
             hints.ai_family = 0;*/
         int rc = getaddrinfo(argv[i], argv[i + 1], &hints, &info);
-        if(rc != 0) {
-            SFL_ERR("getaddrinfo: %s", gai_strerror(rc));
-            std::terminate();
-        }
+        if(rc != 0)
+            throw std::invalid_argument(std::string("getaddrinfo: ") + gai_strerror(rc));
 
         i++;
         if(i >= argc)
             break;
 
         infop = info;
-        while(infop) {
+        while (infop) {
             sockaddr_storage tmp;
             memcpy(&tmp, infop->ai_addr, infop->ai_addrlen);
             bootstrap_nodes.push_back(tmp);
@@ -95,12 +126,23 @@ main(int argc, char **argv)
         i++;
     }
 
-    gnutls_global_init();
+    int rc = gnutls_global_init();
+    if (rc != GNUTLS_E_SUCCESS)
+        throw std::runtime_error(std::string("Error initializing GnuTLS: ")+gnutls_strerror(rc));
+
+    auto ca_tmp = dht::crypto::generateIdentity("DHT Node CA");
+    auto crt_tmp = dht::crypto::generateIdentity("DHT Node", ca_tmp);
 
     DhtRunner dht;
-    dht.run(port, dht::crypto::generateIdentity(), true, [](dht::Dht::Status ipv4, dht::Dht::Status ipv6) {
+    dht.run(port, crt_tmp, true, [](dht::Dht::Status ipv4, dht::Dht::Status ipv6) {
         std::cout << (int)ipv4 << (int)ipv6 << std::endl;
     });
+
+    dht.setLoggers(
+        [](char const* m, va_list args){ std::cerr << red; printLog(std::cerr, m, args); std::cerr << def; },
+        [](char const* m, va_list args){ std::cout << yellow; printLog(std::cout, m, args); std::cout << def; },
+        [](char const* m, va_list args){ printLog(std::cout, m, args); }
+    );
 
     dht.bootstrap(bootstrap_nodes);
 
@@ -156,7 +198,7 @@ main(int argc, char **argv)
             std::string tostr;
             std::string v;
             iss >> tostr >> v;
-            dht.putEncrypted(dht.getId(), tostr, dht::Value {
+            dht.putEncrypted(id, tostr, dht::Value {
                 dht::ValueType::USER_DATA.id,
                 std::vector<uint8_t> {v.begin(), v.end()}
             }, [](bool ok) {
