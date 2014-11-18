@@ -161,7 +161,6 @@ void
 Value::unpack(Blob::const_iterator& begin, Blob::const_iterator& end)
 {
     id = deserialize<Id>(begin, end);
-    std::cout << "Value unpack id " << id << std::endl;
     unpackBody(begin, end);
 }
 

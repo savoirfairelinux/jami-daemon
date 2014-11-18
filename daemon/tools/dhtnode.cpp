@@ -98,9 +98,9 @@ main(int argc, char **argv)
     gnutls_global_init();
 
     DhtRunner dht;
-    dht.run(port, dht::crypto::generateIdentity(), [](dht::Dht::Status ipv4, dht::Dht::Status ipv6) {
+    dht.run(port, dht::crypto::generateIdentity(), true, [](dht::Dht::Status ipv4, dht::Dht::Status ipv6) {
         std::cout << (int)ipv4 << (int)ipv6 << std::endl;
-    }, true);
+    });
 
     dht.bootstrap(bootstrap_nodes);
 

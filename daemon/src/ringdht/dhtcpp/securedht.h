@@ -33,26 +33,6 @@ THE SOFTWARE.
 
 namespace dht {
 
-const ValueType CERTIFICATE_TYPE = {8, "Certificate", 60 * 60 * 24 * 7,
-    // A certificate can only be stored at it's public key ID.
-    [](InfoHash id, std::shared_ptr<Value>& v, InfoHash, const sockaddr*, socklen_t) {
-        try {
-            crypto::Certificate crt(v->data);
-            // TODO check certificate signature
-            return crt.getPublicKey().getId() == id;
-        } catch (const std::exception& e) {}
-        return false;
-    },
-    [](InfoHash id, const std::shared_ptr<Value>& o, std::shared_ptr<Value>& n, InfoHash, const sockaddr*, socklen_t) {
-        try {
-            crypto::Certificate crt_old(o->data);
-            crypto::Certificate crt_new(n->data);
-            return crt_old.getPublicKey().getId() == crt_new.getPublicKey().getId();
-        } catch (const std::exception& e) {}
-        return false;
-    }
-};
-
 class SecureDht : private Dht {
 public:
 
@@ -147,7 +127,26 @@ private:
     std::shared_ptr<crypto::Certificate> certificate_ {};
 
     std::map<InfoHash, std::shared_ptr<crypto::Certificate>> nodesCertificates_ {};
+};
 
+const ValueType CERTIFICATE_TYPE = {8, "Certificate", 60 * 60 * 24 * 7,
+    // A certificate can only be stored at it's public key ID.
+    [](InfoHash id, std::shared_ptr<Value>& v, InfoHash, const sockaddr*, socklen_t) {
+        try {
+            crypto::Certificate crt(v->data);
+            // TODO check certificate signature
+            return crt.getPublicKey().getId() == id;
+        } catch (const std::exception& e) {}
+        return false;
+    },
+    [](InfoHash id, const std::shared_ptr<Value>& o, std::shared_ptr<Value>& n, InfoHash, const sockaddr*, socklen_t) {
+        try {
+            crypto::Certificate crt_old(o->data);
+            crypto::Certificate crt_new(n->data);
+            return crt_old.getPublicKey().getId() == crt_new.getPublicKey().getId();
+        } catch (const std::exception& e) {}
+        return false;
+    }
 };
 
 }

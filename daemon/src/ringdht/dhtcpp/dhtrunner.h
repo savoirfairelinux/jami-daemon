@@ -136,7 +136,7 @@ public:
     /**
      * If threaded is false, loop() must be called periodically.
      */
-    void run(in_port_t port, const crypto::Identity identity, StatusCallback cb, bool threaded = false);
+    void run(in_port_t port, const crypto::Identity identity, bool threaded = false, StatusCallback cb = nullptr);
 
     void loop() {
         std::unique_lock<std::mutex> lck(dht_mtx);

@@ -470,7 +470,7 @@ void RingAccount::doRegister()
             dht_.join();
         }
         auto identity = loadIdentity();
-        dht_.run(dhtPort_, identity.second, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
+        dht_.run(dhtPort_, identity.second, false, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
             SFL_WARN("Dht status : %d %d", (int)s4, (int)s6);
             auto status = std::max(s4, s6);
             switch(status) {
