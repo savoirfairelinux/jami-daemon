@@ -95,7 +95,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		utf8_utils.cpp \
 		plugin_manager.cpp \
 		plugin_loader_dl.cpp \
-		plugin.h \
+		ring_plugin.h \
 		plugin_loader.h \
 		plugin_manager.h \
 		threadloop.h \
