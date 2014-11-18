@@ -31,13 +31,13 @@ std::ostream& operator<< (std::ostream& s, const Value& v)
 {
     s << "Value[id:" << std::hex << v.id << std::dec << " ";
     if (v.flags.isSigned())
-        s << "signed ";
+        s << "signed (v" << v.seq << ") ";
     if (v.flags.isEncrypted())
         s << "encrypted ";
     else {
         if (v.type == ServiceAnnouncement::TYPE.id) {
             s << ServiceAnnouncement(v.data);
-        } else if (v.type == crypto::Certificate::TYPE.id) {
+        } else if (v.type == CERTIFICATE_TYPE.id) {
             s << "Certificate";
             try {
                 InfoHash h = crypto::Certificate(v.data).getPublicKey().getId();
@@ -46,7 +46,7 @@ std::ostream& operator<< (std::ostream& s, const Value& v)
                 s << " (invalid)";
             }
         } else {
-            s << "Data: ";
+            s << "Data (type: " << v.type << " ): ";
             s << std::hex;
             for (size_t i=0; i<v.data.size(); i++)
                 s << std::setfill('0') << std::setw(2) << (unsigned)v.data[i];
@@ -60,7 +60,7 @@ std::ostream& operator<< (std::ostream& s, const Value& v)
 const ValueType ValueType::USER_DATA = {0, "User Data"};
 
 bool
-ServiceAnnouncement::storePolicy(std::shared_ptr<Value>& v, InfoHash, const sockaddr* from, socklen_t fromlen)
+ServiceAnnouncement::storePolicy(InfoHash, std::shared_ptr<Value>& v, InfoHash, const sockaddr* from, socklen_t fromlen)
 {
     ServiceAnnouncement request {};
     request.unpackBlob(v->data);
@@ -73,7 +73,7 @@ ServiceAnnouncement::storePolicy(std::shared_ptr<Value>& v, InfoHash, const sock
     return true;
 }
 
-const ValueType ServiceAnnouncement::TYPE = {1, "Service Announcement", 15 * 60, ServiceAnnouncement::storePolicy};
+const ValueType ServiceAnnouncement::TYPE = {1, "Service Announcement", 15 * 60, ServiceAnnouncement::storePolicy, ValueType::DEFAULT_EDIT_POLICY};
 
 void
 Value::packToSign(Blob& res) const
@@ -82,9 +82,13 @@ Value::packToSign(Blob& res) const
     if (flags.isEncrypted()) {
         res.insert(res.end(), cypher.begin(), cypher.end());
     } else {
-        res.insert(res.end(), owner.begin(), owner.end());
-        if (flags.haveRecipient())
-            res.insert(res.end(), recipient.begin(), recipient.end());
+        if (flags.isSigned()) {
+            serialize<decltype(seq)>(seq, res);
+            owner.pack(res);
+            //res.insert(res.end(), owner.begin(), owner.end());
+            if (flags.haveRecipient())
+                res.insert(res.end(), recipient.begin(), recipient.end());
+        }
         serialize<ValueType::Id>(type, res);
         serialize<Blob>(data, res);
     }
@@ -127,14 +131,25 @@ Value::pack(Blob& res) const
 void
 Value::unpackBody(Blob::const_iterator& begin, Blob::const_iterator& end)
 {
+    // clear optional fields
+    owner = {};
+    recipient = {};
+    cypher.clear();
+    signature.clear();
+    data.clear();
+    type = 0;
+
     flags = {deserialize<uint8_t>(begin, end)};
     if (flags.isEncrypted()) {
         cypher = {begin, end};
         begin = end;
     } else {
-        owner = deserialize<InfoHash>(begin, end);
-        if (flags.haveRecipient())
-            recipient = deserialize<InfoHash>(begin, end);
+        if(flags.isSigned()) {
+            seq = deserialize<decltype(seq)>(begin, end);
+            owner.unpack(begin, end);
+            if (flags.haveRecipient())
+               recipient = deserialize<InfoHash>(begin, end);
+        }
         type = deserialize<ValueType::Id>(begin, end);
         data = deserialize<Blob>(begin, end);
         if (flags.isSigned())
@@ -146,6 +161,7 @@ void
 Value::unpack(Blob::const_iterator& begin, Blob::const_iterator& end)
 {
     id = deserialize<Id>(begin, end);
+    std::cout << "Value unpack id " << id << std::endl;
     unpackBody(begin, end);
 }
 

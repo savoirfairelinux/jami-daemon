@@ -166,9 +166,15 @@ PrivateKey::getPublicKey() const
 {
     gnutls_pubkey_t pk;
     gnutls_pubkey_init(&pk);
+    PublicKey pk_ret {pk};
     if (gnutls_pubkey_import_privkey(pk, key, GNUTLS_KEY_KEY_CERT_SIGN | GNUTLS_KEY_CRL_SIGN, 0) != GNUTLS_E_SUCCESS)
         return {};
-    return PublicKey {pk};
+    return pk_ret;
+}
+
+PublicKey::PublicKey(const Blob& dat) : pk(nullptr)
+{
+    unpackBlob(dat);
 }
 
 PublicKey::~PublicKey()
@@ -177,6 +183,41 @@ PublicKey::~PublicKey()
         gnutls_pubkey_deinit(pk);
         pk = nullptr;
     }
+}
+
+PublicKey&
+PublicKey::operator=(PublicKey&& o) noexcept
+{
+    if (pk)
+        gnutls_pubkey_deinit(pk);
+    pk = o.pk;
+    o.pk = nullptr;
+    return *this;
+}
+
+void
+PublicKey::pack(Blob& b) const
+{
+    std::vector<uint8_t> tmp(2048);
+    size_t sz = tmp.size();
+    int err = gnutls_pubkey_export(pk, GNUTLS_X509_FMT_DER, tmp.data(), &sz);
+    if (err != GNUTLS_E_SUCCESS)
+        throw std::invalid_argument(std::string("Could not export public key: ") + gnutls_strerror(err));
+    tmp.resize(sz);
+    serialize<Blob>(tmp, b);
+}
+
+void
+PublicKey::unpack(Blob::const_iterator& begin, Blob::const_iterator& end)
+{
+    Blob tmp = deserialize<Blob>(begin, end);
+    if (pk)
+        gnutls_pubkey_deinit(pk);
+    gnutls_pubkey_init(&pk);
+    const gnutls_datum_t dat {(uint8_t*)tmp.data(), (unsigned)tmp.size()};
+    int err = gnutls_pubkey_import(pk, &dat, GNUTLS_X509_FMT_DER);
+    if (err != GNUTLS_E_SUCCESS)
+        throw std::invalid_argument(std::string("Could not read public key: ") + gnutls_strerror(err));
 }
 
 bool
@@ -196,8 +237,9 @@ PublicKey::encrypt(const Blob& data) const
         throw DhtException("Can't read public key !");
     const gnutls_datum_t dat {(uint8_t*)data.data(), (unsigned)data.size()};
     gnutls_datum_t encrypted;
-    if (gnutls_pubkey_encrypt_data(pk, 0, &dat, &encrypted) != GNUTLS_E_SUCCESS)
-        throw DhtException("Can't encrypt data using public key !");
+    int err = gnutls_pubkey_encrypt_data(pk, 0, &dat, &encrypted);
+    if (err != GNUTLS_E_SUCCESS)
+        throw DhtException(std::string("Can't encrypt data: ") + gnutls_strerror(err));
     Blob ret {encrypted.data, encrypted.data+encrypted.size};
     gnutls_free(encrypted.data);
     return ret;
@@ -211,8 +253,6 @@ PublicKey::getId() const
     gnutls_pubkey_get_key_id(pk, 0, id.data(), &sz);
     return id;
 }
-
-const ValueType Certificate::TYPE = {8, "Certificate", 60 * 60 * 24 * 7};
 
 Certificate::Certificate(const Blob& certData) : cert(nullptr)
 {
@@ -320,9 +360,8 @@ generateIdentity(const std::string& name, crypto::Identity ca)
 
     {
         std::random_device rdev;
-        uint64_t cert_serial = 1;
-        std::uniform_int_distribution<uint8_t> dist{};
-        cert_serial = dist(rdev);
+        std::uniform_int_distribution<uint64_t> dist{};
+        uint64_t cert_serial = dist(rdev);
         gnutls_x509_crt_set_serial(cert, &cert_serial, sizeof(cert_serial));
     }
 
