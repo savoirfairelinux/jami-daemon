@@ -479,7 +479,7 @@ void RingAccount::doRegister()
 
         // Publish our own CA
         dht_.put(identity.first->getPublicKey().getId(), dht::Value {
-            dht::crypto::Certificate::TYPE,
+            dht::CERTIFICATE_TYPE,
             *identity.first
         });
 
