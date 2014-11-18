@@ -3,12 +3,9 @@ include ../globals.mak
 libexecdir=$(libdir)/dht
 libexec_PROGRAMS = dhtnode
 
-dhtnode_SOURCES = \
-		  $(top_srcdir)/src/logger.h \
-		  $(top_srcdir)/src/logger.c \
-		  dhtnode.cpp
+dhtnode_SOURCES = dhtnode.cpp
 
-dhtnode_CXXFLAGS=-I$(top_srcdir)/src/ringdht -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+dhtnode_CXXFLAGS=-I$(top_srcdir)/src/ringdht/dhtcpp
 
 dhtnode_LDFLAGS = @GNUTLS_LIBS@ -lpthread
 
