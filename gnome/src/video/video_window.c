@@ -143,7 +143,6 @@ on_configure_event_cb(GtkWidget *self,
     G_GNUC_UNUSED GdkEventConfigure *event,
                  G_GNUC_UNUSED gpointer data)
 {
-    g_debug("save position/size of video window");
     g_return_val_if_fail(IS_VIDEO_WINDOW(self), FALSE);
 
     /* ignore the position and size after the window is hidden */
@@ -174,7 +173,6 @@ static void
 on_show_event_cb(GtkWidget *self,
                  G_GNUC_UNUSED gpointer data)
 {
-    g_debug("restore position/size of video window");
     g_return_val_if_fail(IS_VIDEO_WINDOW(self), FALSE);
 
     VideoWindowPrivate *priv = VIDEO_WINDOW_GET_PRIVATE(self);
