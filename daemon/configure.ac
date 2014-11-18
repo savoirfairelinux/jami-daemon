@@ -318,7 +318,12 @@ AC_ARG_WITH([dbus],
     [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"], [
        PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
-       AC_CONFIG_FILES([bin/dbus/Makefile])
+
+       AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
+       AC_SUBST(LIBEXECDIR)
+
+       AC_CONFIG_FILES([bin/dbus/Makefile
+                        bin/dbus/org.sflphone.SFLphone.service])
 
        AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
        if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
