@@ -96,11 +96,11 @@ static const uint8_t v4prefix[16] = {
 };
 
 static std::string
-to_hex(const uint8_t *buf, unsigned buflen)
+to_hex(const uint8_t *buf, size_t buflen)
 {
     std::stringstream s;
     s << std::hex;
-    for (unsigned i = 0; i < buflen; i++)
+    for (size_t i = 0; i < buflen; i++)
         s << std::setfill('0') << std::setw(2) << (unsigned)buf[i];
     s << std::dec;
     return s.str();
@@ -345,7 +345,7 @@ bool
 Dht::isNodeBlacklisted(const sockaddr *sa, socklen_t salen) const
 {
     if (salen > sizeof(sockaddr_storage))
-        abort();
+        return true;
 
     if (isBlacklisted(sa, salen))
         return true;
@@ -863,8 +863,7 @@ Dht::bootstrapSearch(Dht::Search& sr)
         sr.insertBucket(*list.findBucket(myid), t);
 }
 
-/* Start a search.  If announce is set, perform an announce when the
-   search is complete. */
+/* Start a search. */
 Dht::Search*
 Dht::search(const InfoHash& id, sa_family_t af, GetCallback callback, DoneCallback done_callback, Value::Filter filter)
 {
@@ -881,24 +880,11 @@ Dht::search(const InfoHash& id, sa_family_t af, GetCallback callback, DoneCallba
 
     time_t t = now.tv_sec;
     if (sr != searches.end()) {
-        /* We're reusing data from an old search.  Reusing the same tid
-           means that we can merge replies for both searches. */
         sr->done = false;
         // Discard any doubtful nodes.
         sr->nodes.erase(std::remove_if (sr->nodes.begin(), sr->nodes.end(), [t](const SearchNode& n) {
             return n.pinged >= 3 || n.reply_time < t - 7200;
         }), sr->nodes.end());
-/*
-        for (auto& n : sr->nodes) {
-            // preserve recent nodes for which the token is still valid.
-            if (n.reply_time > t - TOKEN_EXPIRE_TIME)
-                continue;
-            n.pinged = 0;
-            n.replied = false;
-            n.token = {};
-            n.acked.clear();
-            //n.acked = false;
-        }*/
     } else {
         sr = newSearch();
         if (sr == searches.end()) {
@@ -1021,10 +1007,10 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
             return false;
         std::vector<std::shared_ptr<Value>> newvals {};
         for (const auto& v : values) {
-            auto it = std::find_if(vals->begin(), vals->end(), [&](const std::shared_ptr<Value>& sv) {
+            auto it = std::find_if(vals->cbegin(), vals->cend(), [&](const std::shared_ptr<Value>& sv) {
                 return sv == v || *sv == *v;
             });
-            if (it == vals->end()) {
+            if (it == vals->cend()) {
                 if (filter(*v))
                     newvals.push_back(v);
             }
@@ -1282,14 +1268,14 @@ Dht::getNodesStats(sa_family_t af, unsigned *good_return, unsigned *dubious_retu
 void
 Dht::dumpBucket(const Bucket& b, std::ostream& out) const
 {
-    out << b.first.toString() << " count " << b.nodes.size() << " age " << (int)(now.tv_sec - b.time);
+    out << b.first << " count " << b.nodes.size() << " age " << (int)(now.tv_sec - b.time);
     if (b.cached.ss_family)
         out << " (cached)";
     out  << std::endl;
     for (auto& n : b.nodes) {
         std::string buf(INET6_ADDRSTRLEN, '\0');
         unsigned short port;
-        out << "    Node " << n.id.toString() << " ";
+        out << "    Node " << n.id << " ";
         if (n.ss.ss_family == AF_INET) {
             sockaddr_in *sin = (sockaddr_in*)&n.ss;
             inet_ntop(AF_INET, &sin->sin_addr, (char*)buf.data(), buf.size());
@@ -1323,7 +1309,7 @@ Dht::dumpBucket(const Bucket& b, std::ostream& out) const
 void
 Dht::dumpSearch(const Search& sr, std::ostream& out) const
 {
-    out << std::endl << "Search (IPv" << (sr.af == AF_INET6 ? "6" : "4") << ") " << sr.id.toString().c_str();
+    out << std::endl << "Search (IPv" << (sr.af == AF_INET6 ? "6" : "4") << ") " << sr.id;
     out << " age " << (now.tv_sec - sr.step_time) << " s";
     if (sr.done)
         out << " [done]";
@@ -1337,9 +1323,14 @@ Dht::dumpSearch(const Search& sr, std::ostream& out) const
             out << " announce at " << at << ", in " << (at-now.tv_sec) << " s.";
     }
     out << std::endl;
+
+    for (const auto& n : sr.announce) {
+        out << "   Announcement: " << *n.value << std::endl;
+    }
+
     unsigned i = 0;
     for (const auto& n : sr.nodes) {
-        out << "Node " << i++ << " id " << n.id.toString().c_str() << " bits " << InfoHash::commonBits(sr.id, n.id);
+        out << "   Node " << i++ << " id " << n.id << " bits " << InfoHash::commonBits(sr.id, n.id);
         if (n.request_time)
             out << " req: " << (now.tv_sec - n.request_time) << " s,";
         out << " age:" << (now.tv_sec - n.reply_time) << " s";
@@ -1358,7 +1349,7 @@ void
 Dht::dumpTables() const
 {
     std::stringstream out;
-    out << "My id " << myid.toString().c_str() << std::endl;
+    out << "My id " << myid << std::endl;
 
     out << "Buckets IPv4 :" << std::endl;
     for (const auto& b : buckets)
@@ -1372,12 +1363,11 @@ Dht::dumpTables() const
     out << std::endl;
 
     for (const auto& st : store) {
-        out << "Storage " << st.id.toString().c_str() << " " << st.values.size() << " values:" << std::endl;
+        out << "Storage " << st.id << " " << st.values.size() << " values:" << std::endl;
         for (const auto& v : st.values)
             out << "   " << *v.data << " (" << (now.tv_sec - v.time) << "s)" << std::endl;
     }
 
-    //out << std::endl << std::endl;
     DHT_DEBUG("%s", out.str().c_str());
 }
 
@@ -1584,8 +1574,6 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
     } catch (const std::exception& e) {
         DHT_DEBUG("Can't process message of size %lu: %s.", buflen, e.what());
         DHT_DEBUG.logPrintable(buf, buflen);
-        //debug_printable(buf, buflen);
-        //DHT_DEBUG("");
         return;
     }
 
@@ -2003,17 +1991,17 @@ Dht::pingNode(const sockaddr *sa, socklen_t salen)
 /* We could use a proper bencoding printer and parser, but the format of
    DHT messages is fairly stylised, so this seemed simpler. */
 
-#define CHECK(offset, delta, size)                      \
-    if (offset + delta > size) throw std::overflow_error("Provided buffer is not large enough.");
+#define CHECK(offset, delta, size)                  \
+    if (offset + delta > size) throw std::length_error("Provided buffer is not large enough.");
 
-#define INC(offset, delta, size)                        \
-    if (delta < 0) throw std::overflow_error("Provided buffer is not large enough."); \
-    CHECK(offset, (size_t)delta, size);                         \
+#define INC(offset, delta, size)                    \
+    if (delta < 0) throw std::length_error("Provided buffer is not large enough."); \
+    CHECK(offset, (size_t)delta, size);             \
     offset += delta
 
-#define COPY(buf, offset, src, delta, size)             \
-    CHECK(offset, delta, size);                         \
-    memcpy(buf + offset, src, delta);                   \
+#define COPY(buf, offset, src, delta, size)         \
+    CHECK(offset, delta, size);                     \
+    memcpy(buf + offset, src, delta);               \
     offset += delta;
 
 #define ADD_V(buf, offset, size)                    \
@@ -2023,7 +2011,7 @@ int
 Dht::send(const void *buf, size_t len, int flags, const sockaddr *sa, socklen_t salen)
 {
     if (salen == 0)
-        abort();
+        return -1;
 
     if (isNodeBlacklisted(sa, salen)) {
         DHT_DEBUG("Attempting to send to blacklisted node.");
