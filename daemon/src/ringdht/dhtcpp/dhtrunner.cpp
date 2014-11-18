@@ -108,7 +108,7 @@ DhtRunner::loop_()
         for (auto& put : dht_eputs) {
             auto& id = std::get<0>(put);
             auto& val = std::get<2>(put);
-            std::cout << "Processing encrypted put from " << id << " to " << std::get<1>(put) << " -> " << val << std::endl;
+            std::cout << "Processing encrypted put at " << id << " for " << std::get<1>(put) << " -> " << val << std::endl;
             dht->putEncrypted(id, std::get<1>(put), std::move(val), std::get<3>(put));
         }
         dht_eputs.clear();
