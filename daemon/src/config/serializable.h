@@ -34,14 +34,14 @@
 namespace YAML {
     class Emitter;
     class Node;
+
+	class Serializable {
+	    public:
+	        virtual ~Serializable() {};
+	        virtual void serialize(Emitter &out) = 0;
+	        virtual void unserialize(const Node &node) = 0;
+	};
+
 }
-
-class Serializable {
-
-    public:
-        virtual ~Serializable() {};
-        virtual void serialize(YAML::Emitter &out) = 0;
-        virtual void unserialize(const YAML::Node &node) = 0;
-};
 
 #endif
