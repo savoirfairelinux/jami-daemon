@@ -33,6 +33,26 @@ THE SOFTWARE.
 
 namespace dht {
 
+const ValueType CERTIFICATE_TYPE = {8, "Certificate", 60 * 60 * 24 * 7,
+    // A certificate can only be stored at it's public key ID.
+    [](InfoHash id, std::shared_ptr<Value>& v, InfoHash, const sockaddr*, socklen_t) {
+        try {
+            crypto::Certificate crt(v->data);
+            // TODO check certificate signature
+            return crt.getPublicKey().getId() == id;
+        } catch (const std::exception& e) {}
+        return false;
+    },
+    [](InfoHash id, const std::shared_ptr<Value>& o, std::shared_ptr<Value>& n, InfoHash, const sockaddr*, socklen_t) {
+        try {
+            crypto::Certificate crt_old(o->data);
+            crypto::Certificate crt_new(n->data);
+            return crt_old.getPublicKey().getId() == crt_new.getPublicKey().getId();
+        } catch (const std::exception& e) {}
+        return false;
+    }
+};
+
 class SecureDht : private Dht {
 public:
 
@@ -57,11 +77,30 @@ public:
     using Dht::exportValues;
     using Dht::importValues;
     using Dht::getStatus;
-    using Dht::getId;
     using Dht::dumpTables;
     using Dht::put;
-    using Dht::registerType;
     using Dht::setLoggers;
+
+    InfoHash getId() const {
+        return key_->getPublicKey().getId();
+    }
+
+    ValueType secureType(ValueType&& type);
+
+    ValueType secureType(const ValueType& type) {
+        ValueType tmp_type = type;
+        return secureType(std::move(tmp_type));
+    }
+
+    virtual void registerType(const ValueType& type) {
+        Dht::registerType(secureType(type));
+    }
+    virtual void registerType(ValueType&& type) {
+        Dht::registerType(secureType(std::forward<ValueType>(type)));
+    }
+    virtual void registerInsecureType(const ValueType& type) {
+        Dht::registerType(type);
+    }
 
     /**
      * "Secure" get(), that will check the signature of signed data, and decrypt encrypted data.
@@ -93,8 +132,6 @@ public:
     Value encrypt(Value& v, const crypto::PublicKey& to) const;
 
     Value decrypt(const Value& v);
-
-    void verifySigned(const std::shared_ptr<Value>& data, SignatureCheckCallback callback);
 
     void findCertificate(const InfoHash& node, std::function<void(const std::shared_ptr<crypto::Certificate>)> cb);
 
