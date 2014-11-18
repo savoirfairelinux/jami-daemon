@@ -50,7 +50,7 @@ namespace sfl_video {
 
 class VideoDeviceMonitorImpl;
 
-class VideoDeviceMonitor : public Serializable
+class VideoDeviceMonitor : public YAML::Serializable
 {
     public:
         VideoDeviceMonitor();

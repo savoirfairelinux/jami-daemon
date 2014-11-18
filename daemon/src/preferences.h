@@ -45,7 +45,7 @@ namespace YAML {
     class Node;
 }
 
-class Preferences : public Serializable {
+class Preferences : public YAML::Serializable {
     public:
         static const char * const DFT_ZONE;
         static const char * const REGISTRATION_EXPIRE_KEY;
@@ -136,7 +136,7 @@ class Preferences : public Serializable {
         constexpr static const char * const CONFIG_LABEL = "preferences";
 };
 
-class VoipPreference : public Serializable {
+class VoipPreference : public YAML::Serializable {
     public:
         VoipPreference();
 
@@ -192,7 +192,7 @@ class VoipPreference : public Serializable {
 
 struct pjsip_msg;
 
-class HookPreference : public Serializable {
+class HookPreference : public YAML::Serializable {
     public:
         HookPreference();
         HookPreference(const std::map<std::string, std::string> &settings);
@@ -223,7 +223,7 @@ class HookPreference : public Serializable {
         constexpr static const char * const CONFIG_LABEL = "hooks";
 };
 
-class AudioPreference : public Serializable {
+class AudioPreference : public YAML::Serializable {
     public:
         AudioPreference();
         sfl::AudioLayer *createAudioLayer();
@@ -393,7 +393,7 @@ class AudioPreference : public Serializable {
         constexpr static const char * const CONFIG_LABEL = "audio";
 };
 
-class ShortcutPreferences : public Serializable {
+class ShortcutPreferences : public YAML::Serializable {
     public:
         ShortcutPreferences();
         void serialize(YAML::Emitter &out);
