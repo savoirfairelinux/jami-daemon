@@ -58,13 +58,7 @@ libclient_dbus_la_CXXFLAGS = -I../ \
             $(DBUSCPP_CFLAGS)
 
 # Dbus service file
-servicedir = $(datadir)/dbus-1/services
 service_in_files = org.sflphone.SFLphone.service.in
-service_DATA = $(service_in_files:.service.in=.service)
-
-# Rule to make the service file with bindir expanded
-$(service_DATA): $(service_in_files) Makefile
-	sed -e "s|libexec|$(libdir)/sflphone|" $<> $@
 
 EXTRA_DIST = $(service_in_files) \
 			 callmanager-introspec.xml \
