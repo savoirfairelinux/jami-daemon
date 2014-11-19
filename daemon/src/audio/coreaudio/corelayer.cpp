@@ -36,6 +36,7 @@
 #include "audio/ringbuffer.h"
 #include "audiodevice.h"
 
+#include <cmath>
 #include <thread>
 #include <atomic>
 
@@ -122,6 +123,7 @@ void CoreLayer::initAudioLayerPlayback()
 
     checkErr(AudioComponentInstanceNew(outComp, &outputUnit_));
 
+    // Setup Callback.
     AURenderCallbackStruct callback;
     callback.inputProc = outputCallback;
     callback.inputProcRefCon = this;
@@ -133,6 +135,35 @@ void CoreLayer::initAudioLayerPlayback()
                &callback,
                sizeof(callback)));
 
+
+    // Set stream format
+    AudioStreamBasicDescription info;
+    UInt32 size = sizeof(info);
+    checkErr(AudioUnitGetProperty(outputUnit_,
+            kAudioUnitProperty_StreamFormat,
+            kAudioUnitScope_Output,
+            0,
+            &info,
+            &size));
+    audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
+    checkErr(AudioUnitGetProperty(outputUnit_,
+            kAudioUnitProperty_StreamFormat,
+            kAudioUnitScope_Input,
+            0,
+            &info,
+            &size));
+
+    info.mSampleRate = audioFormat_.sample_rate; // Only change sample rate.
+    checkErr(AudioUnitSetProperty(outputUnit_,
+            kAudioUnitProperty_StreamFormat,
+            kAudioUnitScope_Input,
+            0,
+            &info,
+            size));
+
+    hardwareFormatAvailable(audioFormat_);
+
+    // Initialize
     checkErr(AudioUnitInitialize(outputUnit_));
     checkErr(AudioOutputUnitStart(outputUnit_));
 
@@ -144,6 +175,7 @@ void CoreLayer::initAudioLayerPlayback()
 
 void CoreLayer::initAudioLayerCapture()
 {
+    SFL_DBG("INIT AUDIO INPUT");
     // HALUnit description.
     AudioComponentDescription desc;
     desc = {0};
@@ -197,9 +229,20 @@ void CoreLayer::initAudioLayerCapture()
                 &defaultDevice,
                 sizeof(defaultDevice)));
 
-    // Set format on output *SCOPE* in input *BUS*.
+    // Setup audio formats
     AudioStreamBasicDescription info;
     size = sizeof(AudioStreamBasicDescription);
+    checkErr(AudioUnitGetProperty(inputUnit_,
+                kAudioUnitProperty_StreamFormat,
+                kAudioUnitScope_Input,
+                inputBus,
+                &info,
+                &size));
+
+    audioInputFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
+    hardwareInputFormatAvailable(audioInputFormat_);
+
+    // Set format on output *SCOPE* in input *BUS*.
     checkErr(AudioUnitGetProperty(inputUnit_,
                 kAudioUnitProperty_StreamFormat,
                 kAudioUnitScope_Output,
@@ -207,11 +250,15 @@ void CoreLayer::initAudioLayerCapture()
                 &info,
                 &size));
 
-    const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+    // Keep everything else and change only sample rate (or else SPLOSION!!!)
+    info.mSampleRate = audioInputFormat_.sample_rate;
+    checkErr(AudioUnitSetProperty(inputUnit_,
+                kAudioUnitProperty_StreamFormat,
+                kAudioUnitScope_Output,
+                inputBus,
+                &info,
+                size));
 
-    audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
-    //hardwareFormatAvailable(audioFormat_);
-    SFL_DBG("Input format : %d, %d\n\n", audioFormat_.sample_rate, audioFormat_.nb_channels);
 
     // Input buffer setup. Note that ioData is empty and we have to store data
     // in another buffer.
@@ -296,17 +343,6 @@ void CoreLayer::stopStream()
 
 void CoreLayer::initAudioFormat()
 {
-    AudioStreamBasicDescription info;
-    UInt32 size = sizeof(info);
-    checkErr(AudioUnitGetProperty(outputUnit_,
-            kAudioUnitProperty_StreamFormat,
-            kAudioUnitScope_Input,
-            0,
-            &info,
-            &size));
-
-    audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
-    hardwareFormatAvailable(audioFormat_);
 }
 
 
@@ -327,32 +363,88 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
 
-    if (framesToGet <= 0) {
-        for (int i = 0; i < inNumberFrames; ++i) {
-            Float32* outDataL = (Float32*)ioData->mBuffers[0].mData;
-            outDataL[i] = 0.0;
-            Float32* outDataR = (Float32*)ioData->mBuffers[1].mData;
-            outDataR[i] = 0.0;
-        }
-        return;
+    // Checks for resampling
+    AudioFormat mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+    bool resample = audioFormat_.sample_rate != mainBufferAudioFormat.sample_rate;
+
+    unsigned urgentFramesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
+
+    if (urgentFramesToGet > 0) {
+        SFL_WARN("Getting urgent frames.");
+        size_t totSample = std::min(inNumberFrames, urgentFramesToGet);
+
+        playbackBuff_.setFormat(audioFormat_);
+        playbackBuff_.resize(totSample);
+        urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
+
+        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+
+        for (int i = 0; i < audioFormat_.nb_channels; ++i)
+            playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
+
+        Manager::instance().getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
     }
 
-    size_t totSample = std::min(inNumberFrames, framesToGet);
+    unsigned normalFramesToGet = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
 
-    playbackBuff_.setFormat(audioFormat_);
-    playbackBuff_.resize(totSample);
-    urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
+    if (normalFramesToGet > 0) {
 
-    playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+        double resampleFactor = 1.0;
+        unsigned readableSamples = inNumberFrames;
 
-    for (int i = 0; i < audioFormat_.nb_channels; ++i)
-        playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
+        if (resample) {
+            resampleFactor = static_cast<double>(audioFormat_.sample_rate) / mainBufferAudioFormat.sample_rate;
+            readableSamples = std::ceil(inNumberFrames / resampleFactor);
+        }
+        readableSamples = std::min(readableSamples, normalFramesToGet);
+        size_t nResampled = (double) readableSamples * resampleFactor;
 
-    Manager::instance().getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
+        playbackBuff_.setFormat(mainBufferAudioFormat);
+        playbackBuff_.resize(readableSamples);
+        Manager::instance().getRingBufferPool().getData(
+                playbackBuff_, RingBufferPool::DEFAULT_ID);
+        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+
+        if (resample) {
+            AudioBuffer resampledOutput(readableSamples, audioFormat_);
+            resampler_->resample(playbackBuff_, resampledOutput);
+
+            for (int i = 0; i < audioFormat_.nb_channels; ++i)
+                resampledOutput.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
+
+        } else {
+            for (int i = 0; i < audioFormat_.nb_channels; ++i)
+                playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
+        }
+    }
 
 
+
+    if (normalFramesToGet <= 0) {
+        AudioLoop* tone = Manager::instance().getTelephoneTone();
+        AudioLoop* file_tone = Manager::instance().getTelephoneFile();
+
+        playbackBuff_.setFormat(audioFormat_);
+        playbackBuff_.resize(inNumberFrames);
+
+        if (tone) {
+            SFL_WARN("TONE");
+            tone->getNext(playbackBuff_, playbackGain_);
+
+        }
+        else if (file_tone) {
+            SFL_WARN("FILE TONE");
+            file_tone->getNext(playbackBuff_, playbackGain_);
+        }
+        else {
+            SFL_WARN("No tone or file_tone!");
+            playbackBuff_.reset();
+        }
+        for (int i = 0; i < audioFormat_.nb_channels; ++i) {
+            playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
+        }
+    }
 }
 
 
@@ -373,8 +465,6 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    //SFL_DBG("INPUT CALLBACK");
-
     if (inNumberFrames <= 0) {
         SFL_WARN("No frames for input.");
         return;
@@ -403,9 +493,8 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     bool resample = info.mSampleRate != mainBufferFormat.sample_rate;
 
-
     // FIXME: Performance! There *must* be a better way. This is testing only.
-    AudioBuffer inBuff(inNumberFrames, audioFormat_);
+    AudioBuffer inBuff(inNumberFrames, audioInputFormat_);
 
     for (int i = 0; i < info.mChannelsPerFrame; ++i) {
         Float32* data = (Float32*)captureBuff_->mBuffers[i].mData;
@@ -418,10 +507,10 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
         //SFL_WARN("Resampling Input.");
 
         //FIXME: May be a multiplication, check alsa vs pulse implementation.
-        int outSamples = inNumberFrames / (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
 
+        int outSamples = inNumberFrames / (static_cast<double>(audioInputFormat_.sample_rate) / mainBufferFormat.sample_rate);
         AudioBuffer out(outSamples, mainBufferFormat);
-        resampler_->resample(inBuff, out);
+        inputResampler_->resample(inBuff, out);
         dcblocker_.process(out);
         mainRingBuffer_->put(out);
     } else {
