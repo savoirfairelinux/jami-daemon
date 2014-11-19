@@ -185,8 +185,6 @@ void sflphone_fill_call_list(void);
  */
 void sflphone_fill_codec_list_per_account(account_t *);
 
-void sflphone_add_participant();
-
 gboolean sflphone_rec_call(SFLPhoneClient *client);
 
 void status_bar_display_account();
