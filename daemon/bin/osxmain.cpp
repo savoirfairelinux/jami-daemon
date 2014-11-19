@@ -159,10 +159,10 @@ static int osxTests()
 
     sflph_init(&evHandlers, static_cast<sflph_init_flag>(sflphFlags));
 
-    sflph_call_play_dtmf("0");
-    sleep(1);
-    sflph_call_play_dtmf("1");
-    sleep(1);
+    //sflph_call_play_dtmf("0");
+    //sleep(1);
+    //sflph_call_play_dtmf("1");
+    //sleep(1);
 
     //sflph_call_place("IP2IP", "patate", "127.0.0.1");
     //sflph_call_set_recording("patate");
