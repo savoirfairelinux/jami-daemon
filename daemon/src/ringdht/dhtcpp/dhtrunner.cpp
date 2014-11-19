@@ -117,12 +117,17 @@ DhtRunner::loop_()
             auto& id = std::get<0>(put);
             auto& val = std::get<1>(put);
             std::cout << "Processing put " << id << " -> " << val << std::endl;
-            if (val.type == ServiceAnnouncement::TYPE.id)
-                dht->put(id, std::move(val), std::get<2>(put));
-            else
-                dht->putSigned(id, std::move(val), std::get<2>(put));
+            dht->put(id, std::move(val), std::get<2>(put));
         }
         dht_puts.clear();
+
+        for (auto& put : dht_sputs) {
+            auto& id = std::get<0>(put);
+            auto& val = std::get<1>(put);
+            std::cout << "Processing signed put " << id << " -> " << val << std::endl;
+            dht->putSigned(id, std::move(val), std::get<2>(put));
+        }
+        dht_sputs.clear();
 
         for (auto& node : bootstrap_nodes)
             dht->insertNode(node);
@@ -240,6 +245,78 @@ DhtRunner::doRun(in_port_t port, const crypto::Identity identity)
         if (s6 >= 0)
             close(s6);
     });
+}
+
+void
+DhtRunner::get(InfoHash hash, Dht::GetCallback vcb, Dht::DoneCallback dcb, Value::Filter f)
+{
+    std::unique_lock<std::mutex> lck(storage_mtx);
+    dht_gets.emplace_back(hash, vcb, dcb, f);
+    cv.notify_all();
+}
+
+void
+DhtRunner::get(const std::string& key, Dht::GetCallback vcb, Dht::DoneCallback dcb, Value::Filter f)
+{
+    get(InfoHash::get(key), vcb, dcb, f);
+}
+
+void
+DhtRunner::put(InfoHash hash, Value&& value, Dht::DoneCallback cb)
+{
+    std::unique_lock<std::mutex> lck(storage_mtx);
+    dht_puts.emplace_back(hash, std::move(value), cb);
+    cv.notify_all();
+}
+
+void
+DhtRunner::put(const std::string& key, Value&& value, Dht::DoneCallback cb)
+{
+    put(InfoHash::get(key), std::forward<Value>(value), cb);
+}
+
+void
+DhtRunner::putSigned(InfoHash hash, Value&& value, Dht::DoneCallback cb)
+{
+    std::unique_lock<std::mutex> lck(storage_mtx);
+    dht_sputs.emplace_back(hash, std::move(value), cb);
+    cv.notify_all();
+}
+
+void
+DhtRunner::putSigned(const std::string& key, Value&& value, Dht::DoneCallback cb)
+{
+    putSigned(InfoHash::get(key), std::forward<Value>(value), cb);
+}
+
+void
+DhtRunner::putEncrypted(InfoHash hash, InfoHash to, Value&& value, Dht::DoneCallback cb)
+{
+    std::unique_lock<std::mutex> lck(storage_mtx);
+    dht_eputs.emplace_back(hash, to, std::move(value), cb);
+    cv.notify_all();
+}
+
+void
+DhtRunner::putEncrypted(const std::string& key, InfoHash to, Value&& value, Dht::DoneCallback cb)
+{
+    putEncrypted(key, to, std::forward<Value>(value), cb);
+}
+
+void
+DhtRunner::bootstrap(const std::vector<sockaddr_storage>& nodes)
+{
+    std::unique_lock<std::mutex> lck(storage_mtx);
+    bootstrap_ips.insert(bootstrap_ips.end(), nodes.begin(), nodes.end());
+    cv.notify_all();
+}
+
+void
+DhtRunner::bootstrap(const std::vector<Dht::NodeExport>& nodes)
+{
+    std::unique_lock<std::mutex> lck(storage_mtx);
+    bootstrap_nodes.insert(bootstrap_nodes.end(), nodes.begin(), nodes.end());
+    cv.notify_all();
 }
 
 
