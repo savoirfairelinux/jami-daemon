@@ -53,40 +53,20 @@ public:
         join();
     }
 
-    void get (InfoHash hash, Dht::GetCallback vcb, Dht::DoneCallback dcb=nullptr, Value::Filter f = Value::AllFilter())
-    {
-        std::unique_lock<std::mutex> lck(storage_mtx);
-        dht_gets.emplace_back(hash, vcb, dcb, f);
-        cv.notify_all();
-    }
+    void get(InfoHash hash, Dht::GetCallback vcb, Dht::DoneCallback dcb=nullptr, Value::Filter f = Value::AllFilter());
+    void get(const std::string& key, Dht::GetCallback vcb, Dht::DoneCallback dcb=nullptr, Value::Filter f = Value::AllFilter());
 
-    void put (InfoHash hash, Value&& value, Dht::DoneCallback cb=nullptr)
-    {
-        std::unique_lock<std::mutex> lck(storage_mtx);
-        dht_puts.emplace_back(hash, std::move(value), cb);
-        cv.notify_all();
-    }
+    void put(InfoHash hash, Value&& value, Dht::DoneCallback cb=nullptr);
+    void put(const std::string& key, Value&& value, Dht::DoneCallback cb=nullptr);
 
-    void putEncrypted (InfoHash hash, InfoHash to, Value&& value, Dht::DoneCallback cb=nullptr)
-    {
-        std::unique_lock<std::mutex> lck(storage_mtx);
-        dht_eputs.emplace_back(hash, to, std::move(value), cb);
-        cv.notify_all();
-    }
+    void putSigned(InfoHash hash, Value&& value, Dht::DoneCallback cb=nullptr);
+    void putSigned(const std::string& key, Value&& value, Dht::DoneCallback cb=nullptr);
 
-    void bootstrap(const std::vector<sockaddr_storage>& nodes)
-    {
-        std::unique_lock<std::mutex> lck(storage_mtx);
-        bootstrap_ips.insert(bootstrap_ips.end(), nodes.begin(), nodes.end());
-        cv.notify_all();
-    }
+    void putEncrypted(InfoHash hash, InfoHash to, Value&& value, Dht::DoneCallback cb=nullptr);
+    void putEncrypted(const std::string& key, InfoHash to, Value&& value, Dht::DoneCallback cb=nullptr);
 
-    void bootstrap(const std::vector<Dht::NodeExport>& nodes)
-    {
-        std::unique_lock<std::mutex> lck(storage_mtx);
-        bootstrap_nodes.insert(bootstrap_nodes.end(), nodes.begin(), nodes.end());
-        cv.notify_all();
-    }
+    void bootstrap(const std::vector<sockaddr_storage>& nodes);
+    void bootstrap(const std::vector<Dht::NodeExport>& nodes);
 
     void dumpTables() const
     {
@@ -163,6 +143,7 @@ private:
     // IPC temporary storage
     std::vector<std::tuple<InfoHash, Dht::GetCallback, Dht::DoneCallback, Value::Filter>> dht_gets {};
     std::vector<std::tuple<InfoHash, Value, Dht::DoneCallback>> dht_puts {};
+    std::vector<std::tuple<InfoHash, Value, Dht::DoneCallback>> dht_sputs {};
     std::vector<std::tuple<InfoHash, InfoHash, Value, Dht::DoneCallback>> dht_eputs {};
     std::vector<sockaddr_storage> bootstrap_ips {};
     std::vector<Dht::NodeExport> bootstrap_nodes {};
