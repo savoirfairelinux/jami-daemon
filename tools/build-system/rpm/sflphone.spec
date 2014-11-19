@@ -22,7 +22,7 @@ BuildRequires:      gsm-devel opus-devel speex-devel expat-devel libsamplerate-d
 BuildRequires:      gnome-doc-utils libtool libsexy-devel intltool yelp-tools
 BuildRequires:      libnotify-devel check-devel rarian-compat ilbc-devel
 BuildRequires:      evolution-data-server-devel gnome-common libsndfile-devel
-BuildRequires:      pjproject-devel
+BuildRequires:      pjproject-devel libsrtp-devel
 # KDE requires
 BuildRequires:      cmake kdepimlibs-devel
 BuildRequires:      perl-podlators
@@ -279,6 +279,9 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
+* Wed Nov 19 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.4.2-4
+- add libstrp build require
+
 * Fri Nov 14 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.4.2-3
 - Changed sflphoned path
 
