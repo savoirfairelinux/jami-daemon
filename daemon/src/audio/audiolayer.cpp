@@ -47,10 +47,12 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , playbackGain_(pref.getVolumespkr())
     , isStarted_(false)
     , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
+    , audioInputFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
     , mutex_()
     , dcblocker_()
     , resampler_(new Resampler{audioFormat_.sample_rate})
+    , inputResampler_(new Resampler{audioInputFormat_.sample_rate})
     , lastNotificationTime_(0)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
@@ -66,6 +68,11 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
     urgentRingBuffer_.setFormat(playback);
     resampler_->setFormat(playback);
     Manager::instance().hardwareAudioFormatChanged(playback);
+}
+
+void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
+{
+    inputResampler_->setFormat(capture);
 }
 
 void AudioLayer::flushMain()

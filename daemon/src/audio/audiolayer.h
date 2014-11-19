@@ -213,6 +213,11 @@ class AudioLayer {
         void hardwareFormatAvailable(AudioFormat playback);
 
         /**
+         * Set the input format on necessary objects.
+         */
+        void hardwareInputFormatAvailable(AudioFormat capture);
+
+        /**
          * True if capture is not to be used
          */
         bool isCaptureMuted_;
@@ -243,6 +248,11 @@ class AudioLayer {
         AudioFormat audioFormat_;
 
         /**
+         * Sample Rate for input.
+         */
+        AudioFormat audioInputFormat_;
+
+        /**
          * Urgent ring buffer used for ringtones
          */
         RingBuffer urgentRingBuffer_;
@@ -261,6 +271,11 @@ class AudioLayer {
          * Manage sampling rate conversion
          */
         std::unique_ptr<Resampler> resampler_;
+
+        /**
+         * Manage input sampling rate conversions
+         */
+        std::unique_ptr<Resampler> inputResampler_;
 
     private:
 
