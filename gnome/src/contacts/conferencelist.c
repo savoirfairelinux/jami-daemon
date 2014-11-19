@@ -93,7 +93,7 @@ void conferencelist_add(calltab_t *tab, const conference_obj_t* conf)
 }
 
 
-void conferencelist_remove(calltab_t *tab, const gchar* const conf_id)
+void conferencelist_remove(calltab_t *tab, const gchar* conf_id)
 {
     g_debug("Remove conference %s", conf_id);
 

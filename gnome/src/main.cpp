@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "actions.h"
 #include "uimanager.h"
 #include "calllist.h"
@@ -41,6 +45,10 @@
 
 #include "sflphone_client.h"
 #include "history.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 static volatile sig_atomic_t interrupted;
 
@@ -60,7 +68,7 @@ static gboolean
 check_interrupted(gpointer data)
 {
     if (interrupted) {
-        sflphone_quit(TRUE, data);
+        sflphone_quit(TRUE, (SFLPhoneClient *) data);
         return FALSE;
     }
     return TRUE;

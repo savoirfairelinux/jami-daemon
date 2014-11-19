@@ -70,9 +70,8 @@ libsflphone_client_la_CFLAGS = @CLUTTER_CFLAGS@ @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFL
                                @CLUTTERGTK_CFLAGS@
 
 
-sflphone_client_gnome_SOURCES = main.c
-sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
-                               @GTK_CFLAGS@
+sflphone_client_gnome_SOURCES = main.cpp
+sflphone_client_gnome_CXXFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ @GTK_CFLAGS@
 
 sflphone_client_gnome_LDADD = libsflphone_client.la
 

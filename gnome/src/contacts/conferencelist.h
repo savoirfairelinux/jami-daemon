@@ -52,7 +52,7 @@ void conferencelist_add (calltab_t *, const conference_obj_t *);
 /** This function remove a conference from list.
   * @param callID The callID of the conference you want to remove
   */
-void conferencelist_remove (calltab_t *, const gchar * const conf_id);
+void conferencelist_remove (calltab_t *, const gchar * conf_id);
 
 /** Return the number of calls in the list
   * @return The number of calls in the list */
@@ -66,7 +66,7 @@ conference_obj_t* conferencelist_get_nth (calltab_t *, guint);
 /** Return the call corresponding to the callID
   * @param n The callID of the call  want
   * @return A call or NULL */
-conference_obj_t* conferencelist_get(calltab_t *, const gchar const *);
+conference_obj_t* conferencelist_get(calltab_t *, const gchar *);
 
 conference_obj_t* conferencelist_pop_head(calltab_t *);
 
