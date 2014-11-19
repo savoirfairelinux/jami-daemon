@@ -1,0 +1,652 @@
+<?xml version="1.0" ?>
+<node name="/configurationmanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+    <interface name="org.sflphone.SFLphone.ConfigurationManager">
+
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+            Used to handle the configuration stuff: accounts settings, account registration, user preferences, ...
+        </tp:docstring>
+
+        <method name="getAccountTemplate" tp:name-for-bindings="getAccountTemplate">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+            </arg>
+        </method>
+
+        <method name="getAccountDetails" tp:name-for-bindings="getAccountDetails">
+            <tp:docstring>
+                Get all parameters of the specified account.
+            </tp:docstring>
+            <arg type="s" name="accountID" direction="in">
+                <tp:docstring>
+                    The account ID
+                </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+                <tp:docstring>
+                    The available keys / parameters are:
+                    <ul>
+                        <li>CONFIG_ACCOUNT_ENABLE:    True or False (Default: True)</li>
+                        <li>CONFIG_ACCOUNT_RESOLVE_ONCE</li>
+                        <li>CONFIG_ACCOUNT_TYPE: SIP or IAX2 (Default: SIP)</li>
+                        <li>HOSTNAME: The IP adress or hostname of the registrar</li>
+                        <li>USERNAME: The username (or extension) of the account</li>
+                        <li>PASSWORD: The password associated to the account</li>
+                        <li>REALM</li>
+                        <li>CONFIG_ACCOUNT_MAILBOX: Number to dial to access the voicemail box</li>
+                        <li>CONFIG_ACCOUNT_REGISTRATION_EXPIRE: SIP header expiration value (Default: 1600)</li>
+                        <li>LOCAL_INTERFACE: The network interface (Default: eth0)</li>
+                        <li>PUBLISHED_SAMEAS_LOCAL: If False, the published address equals the local address. This is the default.</li>
+                        <li>PUBLISHED_ADDRESS: The SIP published address</li>
+                        <li>LOCAL_PORT: The SIP listening port (Default: 5060)</li>
+                        <li>PUBLISHED_PORT: The SIP published port</li>
+                        <li>DISPLAY_NAMEL: The display name</li>
+                        <li>STUN_ENABLE: True or False (Default: False)</li>
+                        <li>STUN_SERVER: The STUN server address</li>
+                        <li>ACCOUNT_REGISTRATION_STATUS: The account registration status. Should be Registered to make calls.</li>
+                        <li>ACCOUNT_REGISTRATION_STATE_CODE</li>
+                        <li>ACCOUNT_REGISTRATION_STATE_DESC</li>
+                        <li>CONFIG_DEFAULT_PRESENCE_ENABLED: enable/disable presence support - true or false</li>
+                        <li>SRTP_KEY_EXCHANGE</li>
+                        <li>SRTP_ENABLE: Whether or not voice communication are encrypted - True or False (Default: False)</li>
+                        <li>SRTP_RTP_FALLBACK</li>
+                        <li>ZRTP_DISPLAY_SAS</li>
+                        <li>ZRTP_DISPLAY_SAS_ONCE</li>
+                        <li>ZRTP_HELLO_HASH</li>
+                        <li>ZRTP_NOT_SUPP_WARNING</li>
+                        <li>TLS_LISTENER_PORT: TLS listening port (Default: 5061)</li>
+                        <li>TLS_ENABLE: Whether or not signalling is encrypted - True or False (Default: False)</li>
+                        <li>TLS_CA_LIST_FILE</li>
+                        <li>TLS_CERTIFICATE_FILE</li>
+                        <li>TLS_PRIVATE_KEY_FILE</li>
+                        <li>TLS_METHOD</li>
+                        <li>TLS_CIPHERS</li>
+                        <li>TLS_SERVER_NAME</li>
+                        <li>TLS_VERIFY_SERVER</li>
+                        <li>TLS_VERIFY_CLIENT</li>
+                        <li>TLS_REQUIRE_CLIENT_CERTIFICATE</li>
+                        <li>TLS_NEGOTIATION_TIMEOUT_SEC</li>
+                    </ul>
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setAccountDetails" tp:name-for-bindings="setAccountDetails">
+            <tp:docstring>
+                Send new account parameters, or account parameters changes, to the core. The hash table is not required to be complete, only the updated parameters may be specified.
+                <tp:rationale>Account settings are written to the configuration file when sflphone properly quits.</tp:rationale>
+                <tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <arg type="s" name="accountID" direction="in">
+            </arg>
+            <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
+            </arg>
+        </method>
+
+        <method name="setCredentials" tp:name-for-bindings="setCredentials">
+            <arg type="s" name="accountID" direction="in">
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
+            </arg>
+        </method>
+
+        <method name="getIp2IpDetails" tp:name-for-bindings="getIp2IpDetails">
+            <tp:docstring>
+            Get configuration settings of the IP2IP_PROFILE. They are sligthly different from account settings since no VoIP accounts are involved.
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+            <tp:docstring>
+            Available parameters are:
+            <ul>
+            <li>ACCOUNT_ID</li>
+            <li>SRTP_KEY_EXCHANGE</li>
+            <li>SRTP_ENABLE</li>
+            <li>SRTP_RTP_FALLBACK</li>
+            <li>ZRTP_DISPLAY_SAS</li>
+            <li>ZRTP_HELLO_HASH</li>
+            <li>ZRTP_NOT_SUPP_WARNING</li>
+            <li>ZRTP_DISPLAY_SAS_ONCE</li>
+            <li>LOCAL_INTERFACE</li>
+            <li>LOCAL_PORT</li>
+            <li>TLS_LISTENER_PORT</li>
+            <li>TLS_CA_LIST_FILE</li>
+            <li>TLS_CERTIFICATE_FILE</li>
+            <li>TLS_PRIVATE_KEY_FILE</li>
+            <li>TLS_PASSWORD</li>
+            <li>TLS_METHOD</li>
+            <li>TLS_CIPHERS</li>
+            <li>TLS_SERVER_NAME</li>
+            <li>TLS_VERIFY_SERVER</li>
+            <li>TLS_VERIFY_CLIENT</li>
+            <li>TLS_REQUIRE_CLIENT_CERTIFICATE</li>
+            <li>TLS_NEGOTIATION_TIMEOUT_SEC</li>
+            </ul>
+            </tp:docstring>
+            </arg>
+        </method>
+
+       <method name="getCredentials" tp:name-for-bindings="getCredentials">
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+           <arg type="aa{ss}" name="credentialInformation" direction="out">
+           </arg>
+       </method>
+
+       <method name="addAccount" tp:name-for-bindings="addAccount">
+           <tp:docstring>
+               Add a new account. When created, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
+               <tp:rationale>If no details are specified, the default parameters are used.</tp:rationale>
+               <tp:rationale>The core tries to register the account as soon it is created.</tp:rationale>
+           </tp:docstring>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="in"  tp:type="String_String_Map">
+               <tp:docstring>
+                    The new account settings
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="createdAccountId" direction="out">
+               <tp:docstring>
+                    A new account ID
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="setAccountsOrder" tp:name-for-bindings="setAccountsOrder">
+           <tp:docstring>
+                Update the accounts order.
+                <tp:rationale>When placing a call, the first registered account in the list is used.</tp:rationale>
+           </tp:docstring>
+           <arg type="s" name="order" direction="in">
+               <tp:docstring>
+                   An ordered list of account IDs, delimited by '/'
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="removeAccount" tp:name-for-bindings="removeAccount">
+           <tp:docstring>
+               Remove an existing account. When removed, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
+           </tp:docstring>
+           <arg type="s" name="accoundID" direction="in">
+               <tp:docstring>
+                    The account to remove, identified by its ID
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getAccountList" tp:name-for-bindings="getAccountList">
+           <tp:docstring>
+                Get a list of all created accounts, as stored by the core.
+           </tp:docstring>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+               <tp:docstring>
+                   A list of account IDs
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="registerAllAccounts" tp:name-for-bindings="registerAllAccounts">
+           <tp:docstring>
+                Send account registration (REGISTER) for all accounts, even if they are not enabled.
+           </tp:docstring>
+       </method>
+
+       <method name="sendRegister" tp:name-for-bindings="sendRegister">
+           <tp:docstring>
+                Send account registration (REGISTER) to the registrar.
+                Register the account if enable=true, unregister if enable=false.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                    The account ID
+               </tp:docstring>
+           </arg>
+           <arg type="b" name="enable" direction="in">
+               <tp:docstring>
+                    <p>To register, enable must be true.</p>
+                    <p>To un-register, enable must be false.</p>
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="setVolume" tp:name-for-bindings="setVolume">
+           <tp:docstring>
+             <p>Sets the volume using a linear scale [0,100].</p>
+             <tp:rationale>Pulseaudio has its own mechanism to modify application volume. This method is enabled only if the ALSA API is used.</tp:rationale>
+           </tp:docstring>
+           <arg type="s" name="device" direction="in">
+             <tp:docstring>
+               The device: mic or speaker
+             </tp:docstring>
+           </arg>
+           <arg type="d" name="value" direction="in">
+             <tp:docstring>
+               The volume value (between 0 and 100)
+             </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getVolume" tp:name-for-bindings="getVolume">
+           <tp:docstring>
+             <p>Return the volume value of the given device on a linear scale [0,100].</p>
+             <tp:rationale>Only enabled if the ALSA API is used, Pulseaudio has its own mechanism to modify application volume.</tp:rationale>
+           </tp:docstring>
+           <arg type="s" name="device" direction="in">
+             <tp:docstring>
+               The device: mic or speaker
+             </tp:docstring>
+           </arg>
+           <arg type="d" name="value" direction="out">
+             <tp:docstring>
+               The volume value (between 0 and 100)
+             </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="volumeChanged" tp:name-for-bindings="volumeChanged">
+               <tp:docstring>
+             <p>Notify clients of a volume level change.</p>
+             <p>This signal occurs only if ALSA is enabled since Pulseaudio streams are managed externally. </p>
+           </tp:docstring>
+           <arg type="s" name="device">
+             <tp:docstring>
+               The device: mic or speaker
+             </tp:docstring>
+           </arg>
+           <arg type="d" name="value">
+             <tp:docstring>
+               The new volume value
+             </tp:docstring>
+           </arg>
+       </signal>
+
+       <!-- For now only expose these two options to clients -->
+       <method name="muteDtmf" tp:name-for-bindings="muteDtmf">
+           <arg type="b" name="mute" direction="in"/>
+       </method>
+       <method name="isDtmfMuted" tp:name-for-bindings="isDtmfMuted">
+           <arg type="b" name="muted" direction="out"/>
+       </method>
+
+       <method name="muteCapture" tp:name-for-bindings="muteCapture">
+           <arg type="b" name="mute" direction="in">
+               <tp:docstring>
+                   True to mute audio capture, false to unmute.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="isCaptureMuted" tp:name-for-bindings="isCaptureMuted">
+           <arg type="b" name="muted" direction="out">
+               <tp:docstring>
+                   Returns true if audio capture is muted, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="mutePlayback" tp:name-for-bindings="mutePlayback">
+           <arg type="b" name="mute" direction="in">
+               <tp:docstring>
+                   True to mute audio playback, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="isPlaybackMuted" tp:name-for-bindings="isPlaybackMuted">
+           <arg type="b" name="muted" direction="out">
+               <tp:docstring>
+                   Returns true if audio playback is muted, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getAudioManager" tp:name-for-bindings="getAudioManager">
+           <arg type="s" name="api" direction="out">
+           </arg>
+       </method>
+
+       <method name="setAudioManager" tp:name-for-bindings="setAudioManager">
+           <arg type="s" name="api" direction="in">
+           </arg>
+           <arg type="b" name="successful" direction="out">
+           </arg>
+       </method>
+
+       <method name="getSupportedAudioManagers" tp:name-for-bindings="getSupportedAudioManagers">
+           <tp:docstring>
+               Returns a list of compiled audio backends.
+           </tp:docstring>
+           <arg type="as" name="api" direction="out">
+           </arg>
+       </method>
+
+       <method name="getRecordPath" tp:name-for-bindings="getRecordPath">
+           <arg type="s" name="rec" direction="out">
+           </arg>
+       </method>
+
+       <method name="setRecordPath" tp:name-for-bindings="setRecordPath">
+           <arg type="s" name="rec" direction="in">
+           </arg>
+       </method>
+
+       <method name="getIsAlwaysRecording" tp:name-for-bindings="getIsAlwaysRecording">
+           <arg type="b" name="res" direction="out">
+           </arg>
+       </method>
+
+       <method name="setIsAlwaysRecording" tp:name-for-bindings="setIsAlwaysRecording">
+           <arg type="b" name="enabled" direction="in">
+           </arg>
+       </method>
+
+       <!--      ///////////////////////               -->
+
+       <!-- Codecs-related methods -->
+
+       <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+           <arg type="ai" name="list" direction="out">
+           </arg>
+       </method>
+
+       <method name="getAudioCodecDetails" tp:name-for-bindings="getAudioCodecDetails">
+           <arg type="i" name="payload" direction="in">
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="details" direction="out">
+           </arg>
+       </method>
+
+       <method name="getActiveAudioCodecList" tp:name-for-bindings="getActiveAudioCodecList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="ai" name="list" direction="out">
+           </arg>
+       </method>
+
+       <method name="setActiveAudioCodecList" tp:name-for-bindings="setActiveAudioCodecList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="VectorString"/>
+           <arg type="as" name="list" direction="in">
+           </arg>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+       </method>
+
+       <!-- Audio devices methods -->
+
+       <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+           </arg>
+       </method>
+
+       <method name="setAudioPlugin" tp:name-for-bindings="setAudioPlugin">
+           <arg type="s" name="audioPlugin" direction="in">
+           </arg>
+       </method>
+
+       <method name="getAudioOutputDeviceList" tp:name-for-bindings="getAudioOutputDeviceList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+           </arg>
+       </method>
+
+       <method name="setAudioOutputDevice" tp:name-for-bindings="setAudioOutputDevice">
+           <arg type="i" name="index" direction="in">
+           </arg>
+       </method>
+
+       <method name="setAudioInputDevice" tp:name-for-bindings="setAudioInputDevice">
+           <arg type="i" name="index" direction="in">
+           </arg>
+       </method>
+
+       <method name="setAudioRingtoneDevice" tp:name-for-bindings="setAudioRingtoneDevice">
+           <arg type="i" name="index" direction="in">
+           </arg>
+       </method>
+
+       <method name="getAudioInputDeviceList" tp:name-for-bindings="getAudioInputDeviceList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+           </arg>
+       </method>
+
+
+       <method name="getCurrentAudioDevicesIndex" tp:name-for-bindings="getCurrentAudioDevicesIndex">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+           </arg>
+       </method>
+
+       <method name="getAudioInputDeviceIndex" tp:name-for-bindings="getAudioInputDeviceIndex">
+           <arg type="s" name="devname" direction="in">
+           </arg>
+           <arg type="i" name="index" direction="out">
+           </arg>
+       </method>
+
+       <method name="getAudioOutputDeviceIndex" tp:name-for-bindings="getAudioOutputDeviceIndex">
+           <arg type="s" name="devname" direction="in">
+           </arg>
+           <arg type="i" name="index" direction="out">
+           </arg>
+       </method>
+
+       <method name="getCurrentAudioOutputPlugin" tp:name-for-bindings="getCurrentAudioOutputPlugin">
+           <arg type="s" name="plugin" direction="out">
+           </arg>
+       </method>
+
+       <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
+           <tp:added version="1.1.1"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <tp:docstring>
+                Get a map [Path,Filename] of available ringtone. Note, set the ringtone with the complete path
+           </tp:docstring>
+           <arg type="a{ss}" name="list" direction="out">
+           </arg>
+       </method>
+
+       <!--    General Settings Panel         -->
+
+       <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
+           <arg type="b" name="state" direction="out">
+           </arg>
+       </method>
+
+       <method name="setNoiseSuppressState" tp:name-for-bindings="setNoiseSuppressState">
+               <arg type="b" name="state" direction="in">
+               </arg>
+       </method>
+
+       <method name="isAgcEnabled" tp:name-for-bindings="isAgcEnabled">
+           <arg type="b" name="enabled" direction="out">
+           </arg>
+       </method>
+
+       <method name="setAgcState" tp:name-for-bindings="setAgcState">
+               <arg type="b" name="enabled" direction="in">
+               </arg>
+       </method>
+
+       <!--    General Settings Panel         -->
+
+       <method name="isIax2Enabled" tp:name-for-bindings="isIax2Enabled">
+           <arg type="i" name="res" direction="out">
+           </arg>
+       </method>
+
+       <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
+           <arg type="i" name="days" direction="out">
+           </arg>
+       </method>
+
+       <method name="setHistoryLimit" tp:name-for-bindings="setHistoryLimit">
+           <arg type="i" name="days" direction="in">
+           </arg>
+       </method>
+
+       <!-- Hook configuration -->
+       <method name="getHookSettings" tp:name-for-bindings="getHookSettings">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="settings" direction="out">
+           </arg>
+       </method>
+
+       <method name="setHookSettings" tp:name-for-bindings="setHookSettings">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
+           <arg type="a{ss}" name="settings" direction="in">
+           </arg>
+       </method>
+
+       <method name="getHistory" tp:name-for-bindings="getHistory">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+           <!-- Return a List of type Dict<string, string> >...a List of Dicts -->
+           <arg type="aa{ss}" name="entries" direction="out"/>
+       </method>
+
+       <method name="clearHistory" tp:name-for-bindings="clearHistory">
+       </method>
+
+       <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
+       </signal>
+
+       <signal name="historyChanged" tp:name-for-bindings="historyChanged">
+       </signal>
+
+       <!-- FIXME: we should rethink these two signals -->
+       <!-- Used by IAX and SIP accounts -->
+       <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
+           <arg type="s" name="accountID"/>
+           <arg type="i" name="registration_state"/>
+       </signal>
+
+       <!-- Only used by SIP accounts, data is directly from pjsip -->
+       <signal name="sipRegistrationStateChanged" tp:name-for-bindings="sipRegistrationStateChanged">
+           <tp:docstring>
+               <p>Account state changed, SFLphone received a notification from registrar.</p>
+           </tp:docstring>
+           <arg type="s" name="accountID" >
+               <tp:docstring>
+                   The account ID
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="state">
+               <tp:docstring>
+                   Description string
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="code">
+               <tp:docstring>
+                   The SIP message code
+               </tp:docstring>
+           </arg>
+       </signal>
+
+
+       <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">
+           <arg type="s" name="reason">
+           </arg>
+       </signal>
+
+       <signal name="stunStatusSuccess" tp:name-for_bindings="stunStatusSuccess">
+           <arg type="s" name="message">
+           </arg>
+       </signal>
+
+       <signal name="errorAlert" tp:name-for-bindings="errorAlert">
+           <arg type="i" name="code">
+           </arg>
+       </signal>
+
+       <!-- TLS Methods -->
+       <method name="getSupportedTlsMethod" tp:name-for-bindings="getSupportedTlsMethod">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+           </arg>
+       </method>
+
+       <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
+                   <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out">
+           </arg>
+       </method>
+
+       <method name="getTlsSettings" tp:name-for-bindings="getTlsSettings">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out">
+           </arg>
+       </method>
+
+       <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="in">
+           </arg>
+       </method>
+
+       <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
+           <arg type="s" name="interface" direction="in">
+           </arg>
+           <arg type="s" name="address" direction="out">
+           </arg>
+       </method>
+
+       <method name="getAllIpInterface" tp:name-for-bindings="getAllIpInterface">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+           </arg>
+       </method>
+
+       <method name="getAllIpInterfaceByName" tp:name-for-bindings="getAllIpInterfaceByName">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+           </arg>
+       </method>
+
+       <method name="getShortcuts" tp:name-for-bindings="getShortcuts">
+                   <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="shortcutsMap" direction="out">
+           </arg>
+       </method>
+
+       <method name="setShortcuts" tp:name-for-bindings="setShortcuts">
+                   <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
+           <arg type="a{ss}" name="shortcutsMap" direction="in">
+           </arg>
+       </method>
+
+       <!-- Security Methods -->
+       <method name="checkForPrivateKey" tp:name-for-bindings="checkForPrivateKey">
+           <arg type="s" name="pemPath" direction="in">
+           </arg>
+           <arg type="b" name="containPrivateKey" direction="out">
+           </arg>
+       </method>
+
+       <method name="checkCertificateValidity" tp:name-for-bindings="checkCertificateValidity">
+           <arg type="s" name="caPath" direction="in">
+           </arg>
+           <arg type="s" name="pemPath" direction="in">
+           </arg>
+           <arg type="b" name="isValid" direction="out">
+           </arg>
+       </method>
+
+       <method name="checkHostnameCertificate" tp:name-for-bindings="checkHostnameCertificate">
+           <arg type="s" name="host" direction="in">
+           </arg>
+           <arg type="s" name="port" direction="in">
+           </arg>
+           <arg type="b" name="isValid" direction="out">
+           </arg>
+       </method>
+   </interface>
+</node>
