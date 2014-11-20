@@ -55,9 +55,7 @@ libsflphone_client_la_SOURCES = \
   sflphone_options.c \
   sflphone_options.h
 
-if SFL_PRESENCE
 libsflphone_client_la_SOURCES+=presence.c presence.h presencewindow.c presencewindow.h
-endif
 
 libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)
 libsflphone_client_la_LDFLAGS = @CLUTTER_LDFLAGS@ @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \

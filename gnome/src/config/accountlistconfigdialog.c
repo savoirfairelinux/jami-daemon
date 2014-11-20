@@ -668,10 +668,8 @@ void update_account_list_status_bar(account_t *account)
 
 void dialog_destroy_cb()
 {
-#ifdef SFL_PRESENCE
     // update ui
     update_presence_statusbar();
-#endif
 }
 
 void show_account_list_config_dialog(SFLPhoneClient *client)

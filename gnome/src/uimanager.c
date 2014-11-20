@@ -64,10 +64,8 @@
 
 #include "sliders.h"
 
-#ifdef SFL_PRESENCE
 #include "presencewindow.h"
 #include "presence.h"
-#endif
 
 typedef struct
 {
@@ -530,7 +528,6 @@ dialpad_bar_cb(GSimpleAction *action, GVariant *state, gpointer data)
         g_settings_set_boolean(client->settings, "show-dialpad", requested);
 }
 
-#ifdef SFL_PRESENCE
 static void
 toggle_presence_window_cb(GSimpleAction *action, GVariant *state, gpointer client)
 {
@@ -542,7 +539,6 @@ toggle_presence_window_cb(GSimpleAction *action, GVariant *state, gpointer clien
     else
         destroy_presence_window();
 }
-#endif
 
 static void
 help_contents_cb(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, G_GNUC_UNUSED gpointer data)
@@ -1197,9 +1193,7 @@ static const GActionEntry sflphone_actions[] =
     { "show-history", NULL, NULL, "false", toggle_history_cb, {0} },
     { "show-volume-controls", NULL, NULL, "true", volume_bar_cb, {0} },
     { "show-dialpad", NULL, NULL, "true", dialpad_bar_cb, {0} },
-#ifdef SFL_PRESENCE
     { "show-buddy-list", NULL, NULL, "false", toggle_presence_window_cb, {0} }
-#endif
 };
 
 #else
@@ -1288,9 +1282,7 @@ static const GActionEntry sflphone_actions[] =
     { "show-history", g_simple_action_toggle, NULL, "false", toggle_history_cb, {0} },
     { "show-volume-controls", g_simple_action_toggle, NULL, "true", volume_bar_cb, {0} },
     { "show-dialpad", g_simple_action_toggle, NULL, "true", dialpad_bar_cb, {0} },
-#ifdef SFL_PRESENCE
     { "show-buddy-list", g_simple_action_toggle, NULL, "false", toggle_presence_window_cb, {0} }
-#endif
 };
 
 #endif
@@ -1339,11 +1331,6 @@ void create_actions(SFLPhoneClient *client)
     /* disable tool bar toggle */
     g_simple_action_set_enabled(
         G_SIMPLE_ACTION(g_action_map_lookup_action(G_ACTION_MAP(client), "show-toolbar")), FALSE);
-    /* disable buddy list if SFL_PRESENCE is not defined */
-#ifndef SFL_PRESENCE
-    g_simple_action_set_enabled(
-        G_SIMPLE_ACTION(g_action_map_lookup_action(G_ACTION_MAP(client), "show-buddy-list")), FALSE);
-#endif
     /* disable address book action if it is not available */
     if (!addrbook)
         g_simple_action_set_enabled(
@@ -1370,7 +1357,6 @@ edit_number_cb(G_GNUC_UNUSED GtkWidget *widget, EditNumberData *data)
     g_free(data);
 }
 
-#ifdef SFL_PRESENCE
 void
 add_presence_subscription_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED calltab_t * tab)
 {
@@ -1390,7 +1376,6 @@ add_presence_subscription_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED cal
     else
         presence_buddy_delete(b);
 }
-#endif
 
 void
 add_registered_accounts_to_menu(GtkWidget *menu)
@@ -1686,7 +1671,6 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
         gtk_widget_show(menu_items);
     }
 
-#ifdef SFL_PRESENCE
     if (selectedCall) {
         GtkWidget *menu_items = gtk_menu_item_new_with_mnemonic(_("Follow status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
@@ -1695,7 +1679,6 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
         g_signal_connect(G_OBJECT(menu_items), "activate", G_CALLBACK(add_presence_subscription_cb), history_tab);
         gtk_widget_show(menu_items);
     }
-#endif
 
     GtkWidget *separator = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), separator);
@@ -1742,7 +1725,6 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
         g_signal_connect(new_call, "activate", G_CALLBACK(call_back), client);
         gtk_widget_show(new_call);
 
-#ifdef SFL_PRESENCE
         GtkWidget *presence = gtk_menu_item_new_with_mnemonic(_("Follow status"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), presence);
 
@@ -1751,7 +1733,6 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
 
         g_signal_connect(G_OBJECT(presence), "activate", G_CALLBACK(add_presence_subscription_cb), contacts_tab);
         gtk_widget_show(presence);
-#endif
 
         GtkWidget *edit = gtk_menu_item_new_with_mnemonic(_("_Edit"));
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), edit);

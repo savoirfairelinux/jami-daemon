@@ -55,10 +55,8 @@
 #include "searchbar.h"
 #include "sflphone_client.h"
 
-#ifdef SFL_PRESENCE
 #include "presencewindow.h"
 #include "presence.h"
-#endif
 
 #if !GLIB_CHECK_VERSION(2, 30, 0)
 #define G_VALUE_INIT  { 0, { { 0 } } }
@@ -382,7 +380,6 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type)
     return msg;
 }
 
-#ifdef SFL_PRESENCE
 void on_call_drag_data_get(GtkWidget *widget,
         G_GNUC_UNUSED GdkDragContext *drag_context,
         GtkSelectionData *sdata,
@@ -407,7 +404,6 @@ void on_call_drag_data_get(GtkWidget *widget,
             (void *)&b,  // The actual pointer that we just made
             sizeof (b)); // The size of the pointer
 }
-#endif
 
 void
 calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
@@ -460,11 +456,9 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
                      G_CALLBACK(button_pressed),
                      client);
 
-#ifdef SFL_PRESENCE
     gtk_drag_source_set(tab->view, GDK_BUTTON1_MASK,
          &presence_drag_targets, 1, GDK_ACTION_COPY|GDK_ACTION_MOVE);
     g_signal_connect(tab->view, "drag-data-get", G_CALLBACK(on_call_drag_data_get), NULL);
-#endif
 
     if (calltab_has_name(tab, CURRENT_CALLS)) {
 
