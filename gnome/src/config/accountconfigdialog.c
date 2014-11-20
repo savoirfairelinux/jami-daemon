@@ -108,10 +108,8 @@ static GtkWidget *enable_video_button;
 static GtkWidget *video_port_min_spin_box;
 static GtkWidget *video_port_max_spin_box;
 #endif
-#ifdef SFL_PRESENCE
 static GtkWidget *presence_check_box;
 static gboolean is_account_new;
-#endif
 
 typedef struct OptionsData {
     account_t *account;
@@ -229,7 +227,6 @@ static void change_type_cb(GtkComboBox *combo_box, gpointer data)
 
     gtk_widget_set_sensitive(entry_user_agent, account_has_custom_user_agent(account));
 
-#ifdef SFL_PRESENCE
     if (utf8_case_equal(type, "SIP")) {
         // the presence can be enabled when at least 1 presence feature is supported by the PBX
         // OR when the account is new
@@ -242,7 +239,6 @@ static void change_type_cb(GtkComboBox *combo_box, gpointer data)
         gtk_widget_set_sensitive(presence_check_box, FALSE);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(presence_check_box),FALSE);
     }
-#endif
 
     g_free(type);
 }
@@ -559,7 +555,6 @@ create_parameters_frame(account_t *account, GtkWidget* account_combo)
     return frame;
 }
 
-#ifdef SFL_PRESENCE
 static GtkWidget*
 create_presence_checkbox(const account_t *account)
 {
@@ -579,7 +574,6 @@ create_presence_checkbox(const account_t *account)
     gtk_widget_show_all(grid);
     return frame;
 }
-#endif
 
 static GtkWidget*
 create_basic_tab(account_t *account, gboolean is_new, GtkWidget *dialog)
@@ -601,7 +595,6 @@ create_basic_tab(account_t *account, gboolean is_new, GtkWidget *dialog)
     frame = create_parameters_frame(account, type_combo);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-#ifdef SFL_PRESENCE
     /* Presence notifications frame */
     frame = create_presence_checkbox(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
@@ -609,7 +602,6 @@ create_basic_tab(account_t *account, gboolean is_new, GtkWidget *dialog)
     /* show only for SIP account */
     g_signal_connect(G_OBJECT(type_combo), "changed",
                      G_CALLBACK(show_widget_for_sip), frame);
-#endif
 
     gtk_widget_show_all(vbox);
 
@@ -1559,13 +1551,11 @@ static void update_account_from_basic_tab(account_t *account)
                 gtk_entry_get_text(GTK_ENTRY(video_port_max_spin_box)));
 #endif
 
-#ifdef SFL_PRESENCE
         if (!IS_IP2IP && g_strcmp0(proto, "RING") != 0) {
             v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(presence_check_box));
             account_replace(account, CONFIG_PRESENCE_ENABLED, bool_to_string(v));
             // TODO enable/disable the presence window view
         }
-#endif
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
             g_debug("Set dtmf over rtp");

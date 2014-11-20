@@ -9,11 +9,9 @@ BUILT_SOURCES=                      \
     marshaller.c                    \
     marshaller.h
 
-if SFL_PRESENCE
 BUILT_SOURCES+=presencemanager-glue.h
 presencemanager-glue.h: presencemanager-introspec.xml Makefile.am
 	dbus-binding-tool --mode=glib-client $< > $@
-endif
 
 if SFL_VIDEO
 BUILT_SOURCES+=videomanager-glue.h

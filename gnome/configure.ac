@@ -47,15 +47,6 @@ AS_IF([test "x$enable_video" != "xno"], [
 
 AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" != "xno")
 
-dnl Presence is a default-enabled feature
-AC_ARG_ENABLE([presence],
-              AS_HELP_STRING([--disable-presence], [Disable SIP presence support]))
-
-AS_IF([test "x$enable_presence" != "xno"], [
-    AC_DEFINE(SFL_PRESENCE, [], [Presence support enabled])
-    AM_CONDITIONAL(SFL_PRESENCE, true)],
-    AM_CONDITIONAL(SFL_PRESENCE, false))
-
 dnl --enable-debug is the default
 AC_ARG_ENABLE([debug], AS_HELP_STRING([--disable-debug],
               [Disable assertions/debug symbols]))
