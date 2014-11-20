@@ -544,7 +544,11 @@ AC_ARG_ENABLE([dht],
 
 AS_IF([test "x$enable_dht" != "xno" -a "$HAVE_GNUTLS" -eq 1],
       [AC_DEFINE([HAVE_DHT], 1, [Define to enable dht])
-       AM_CONDITIONAL(USE_DHT, true)],
+       AM_CONDITIONAL(USE_DHT, true)
+       PKG_CHECK_MODULES([DHTCPP], dhtcpp,,
+                         AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
+                         AM_CONDITIONAL(USE_DHT, false)
+                         AC_MSG_WARN([Missing dhtcpp]))],
       [AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
        AM_CONDITIONAL(USE_DHT, false)])
 
@@ -601,7 +605,6 @@ AC_CONFIG_FILES([Makefile \
                  src/im/Makefile \
                  src/iax/Makefile \
                  src/ringdht/Makefile \
-                 src/ringdht/dhtcpp/Makefile \
                  src/audio/Makefile \
                  src/audio/audiortp/Makefile \
                  src/audio/pulseaudio/Makefile \

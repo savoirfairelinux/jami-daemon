@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "dhtrunner.h"
+#include <dhtcpp/dhtrunner.h>
 #include "dht.h"
 
 extern "C" {
