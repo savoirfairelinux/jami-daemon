@@ -40,7 +40,7 @@
 #include "sip/sipcall.h"
 #include "sip/sip_utils.h"
 
-#include "dhtcpp/securedht.h"
+#include <opendht/securedht.h>
 
 #include "array_size.h"
 
