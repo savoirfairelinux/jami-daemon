@@ -41,7 +41,8 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "sfl_types.h" // enable_if_base_of
-#include "dhtcpp/dhtrunner.h"
+
+#include <opendht/dhtrunner.h>
 
 #include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
