@@ -50,8 +50,10 @@ static gnutls_digest_algorithm_t get_dig(gnutls_x509_crt_t crt)
     gnutls_pubkey_init(&pubkey);
 
     int result = gnutls_pubkey_import_x509(pubkey, crt, 0);
-    if (result < 0)
+    if (result < 0) {
+        gnutls_pubkey_deinit(pubkey);
         return GNUTLS_DIG_UNKNOWN;
+    }
 
     gnutls_digest_algorithm_t dig = get_dig_for_pub(pubkey);
     gnutls_pubkey_deinit(pubkey);
@@ -310,9 +312,10 @@ Certificate::getPublicKey() const
 {
     gnutls_pubkey_t pk;
     gnutls_pubkey_init(&pk);
+    PublicKey pk_ret(pk);
     if (gnutls_pubkey_import_x509(pk, cert, 0) != GNUTLS_E_SUCCESS)
         return {};
-    return PublicKey {pk};
+    return pk_ret;
 }
 
 PrivateKey
@@ -331,6 +334,10 @@ PrivateKey::generate()
 crypto::Identity
 generateIdentity(const std::string& name, crypto::Identity ca)
 {
+    int rc = gnutls_global_init();
+    if (rc != GNUTLS_E_SUCCESS)
+        return {};
+
     auto shared_key = std::make_shared<PrivateKey>(PrivateKey::generate());
 
     gnutls_x509_crt_t cert;
@@ -381,6 +388,9 @@ generateIdentity(const std::string& name, crypto::Identity ca)
             return {};
         }
     }
+
+    gnutls_global_deinit();
+
     return {shared_key, shared_crt};
 }
 
