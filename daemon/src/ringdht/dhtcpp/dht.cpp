@@ -695,7 +695,7 @@ Dht::searchStep(Search& sr)
                                        TransId {TransPrefix::ANNOUNCE_VALUES, sr.tid}, sr.id, *a.value,
                                        n.token, n.reply_time >= now.tv_sec - 15);
                     if (a_status == n.acked.end()) {
-                        n.acked[vid] = { .request_time = now.tv_sec };
+                        n.acked[vid] = { .request_time = now.tv_sec, .reply_time = 0 };
                     } else {
                         a_status->second.request_time = now.tv_sec;
                     }
@@ -1072,13 +1072,11 @@ Dht::getPut(const InfoHash& id, const Value::Id& vid)
 bool
 Dht::cancelPut(const InfoHash& id, const Value::Id& vid)
 {
-    bool canceled {false};
     for (auto& search: searches) {
         if (search.id != id)
             continue;
         for (auto it = search.announce.begin(); it != search.announce.end();) {
             if (it->value->id == vid) {
-                canceled = true;
                 it = search.announce.erase(it);
             }
             else
@@ -1627,7 +1625,9 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                     const InfoHash& ni_id = *reinterpret_cast<InfoHash*>(ni);
                     if (ni_id == myid)
                         continue;
-                    sockaddr_in sin { .sin_family = AF_INET };
+                    sockaddr_in sin;
+                    memset(&sin, 0, sizeof(sin));
+                    sin.sin_family = AF_INET;
                     memcpy(&sin.sin_addr, ni + ni_id.size(), 4);
                     memcpy(&sin.sin_port, ni + ni_id.size() + 4, 2);
                     newNode(ni_id, (sockaddr*)&sin, sizeof(sin), 0);
@@ -1640,7 +1640,9 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                     InfoHash* ni_id = reinterpret_cast<InfoHash*>(ni);
                     if (*ni_id == myid)
                         continue;
-                    sockaddr_in6 sin6 {.sin6_family = AF_INET6};
+                    sockaddr_in6 sin6;
+                    memset(&sin6, 0, sizeof(sin6));
+                    sin6.sin6_family = AF_INET6;
                     memcpy(&sin6.sin6_addr, ni + HASH_LEN, 16);
                     memcpy(&sin6.sin6_port, ni + HASH_LEN + 16, 2);
                     newNode(*ni_id, (sockaddr*)&sin6, sizeof(sin6), 0);
@@ -1689,9 +1691,7 @@ Dht::processMessage(const uint8_t *buf, size_t buflen, const sockaddr *from, soc
                 newNode(id, from, fromlen, 2);
                 for (auto& sn : sr->nodes)
                     if (sn.id == id) {
-                        auto it = sn.acked.insert({value_id, {}});
-                        it.first->second.request_time = 0;
-                        it.first->second.reply_time = now.tv_sec;
+                        sn.acked.insert({value_id, {.request_time = 0, .reply_time = now.tv_sec}});
                         sn.request_time = 0;
                         //sn.reply_time = now.tv_sec;
                         //sn.acked[value_id] = now.tv_sec;
