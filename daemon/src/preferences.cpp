@@ -355,6 +355,8 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
                 audioApi_ = PULSEAUDIO_API_STR;
 #elif HAVE_ALSA
                 audioApi_ = ALSA_API_STR;
+#elif HAVE_COREAUDIO
+                audioApi_ = COREAUDIO_API_STR;
 #else
                 throw;
 #endif
@@ -392,7 +394,6 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
     } catch (const std::runtime_error &e) {
         SFL_WARN("Could not create coreaudio layer. There will be no sound.");
     }
-#else
     return NULL;
 #endif
 
