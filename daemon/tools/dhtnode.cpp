@@ -78,7 +78,7 @@ void printLog(std::ostream& s, char const* m, va_list args) {
     if (ret < 0)
         return;
     s.write(buffer, std::min<size_t>(ret, sizeof(buffer)));
-    if (ret >= sizeof(buffer))
+    if (ret >= (int)sizeof(buffer))
         s << "[[TRUNCATED]]";
     s.put('\n');
 }
@@ -97,7 +97,8 @@ main(int argc, char **argv)
 
     std::vector<sockaddr_storage> bootstrap_nodes {};
     while (i < argc) {
-        addrinfo hints{};
+        addrinfo hints;
+        memset(&hints, 0, sizeof(hints));
         addrinfo *info = nullptr, *infop = nullptr;
         hints.ai_socktype = SOCK_DGRAM;
         /*if(!ipv6)

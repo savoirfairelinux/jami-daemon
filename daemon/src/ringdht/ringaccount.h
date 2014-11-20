@@ -331,7 +331,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * The TLS settings, used only if tls is chosen as a sip transport.
          */
-        pjsip_tls_setting tlsSetting_ {};
+        pjsip_tls_setting tlsSetting_;
 
         /**
          * Optional: "received" parameter from VIA header
@@ -346,7 +346,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * Optional: via_addr construct from received parameters
          */
-        pjsip_host_port via_addr_ {};
+        pjsip_host_port via_addr_;
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contact_ {contactBuffer_, 0};

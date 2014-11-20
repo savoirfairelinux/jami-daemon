@@ -75,7 +75,7 @@
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
-    : SIPAccountBase(accountID)
+    : SIPAccountBase(accountID), tlsSetting_(), via_addr_()
 {
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
     nodePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
@@ -145,7 +145,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
             }
             return true;
         },
-        [call,resolved] (bool ok){
+        [call,resolved] (bool /*ok*/){
             if (not *resolved) {
                 call->setConnectionState(Call::DISCONNECTED);
                 call->setState(Call::MERROR);
@@ -710,7 +710,7 @@ bool RingAccount::userMatch(const std::string& username) const
 }
 
 MatchRank
-RingAccount::matches(const std::string &userName, const std::string &server) const
+RingAccount::matches(const std::string &userName, const std::string &/*server*/) const
 {
     if (userMatch(userName)) {
         SFL_DBG("Matching account id in request with username %s", userName.c_str());
