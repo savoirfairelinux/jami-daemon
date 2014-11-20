@@ -7,11 +7,9 @@ BUILT_SOURCES=                      \
     dbusconfigurationmanager.adaptor.h \
     dbusinstance.adaptor.h
 
-if SFL_PRESENCE
 BUILT_SOURCES+=dbuspresencemanager.adaptor.h
 dbuspresencemanager.adaptor.h: presencemanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
-endif
 
 if SFL_VIDEO
 BUILT_SOURCES+=dbusvideomanager.adaptor.h
@@ -39,13 +37,11 @@ libclient_dbus_la_SOURCES = \
     dbusinstance.cpp  \
     dbusclient.cpp \
     dbusclient.h \
-	dbusinstance.h \
-	dbus_cpp.h \
-	$(BUILT_SOURCES)
-
-if SFL_PRESENCE
-libclient_dbus_la_SOURCES += dbuspresencemanager.cpp dbuspresencemanager.h
-endif
+    dbusinstance.h \
+    dbus_cpp.h \
+    dbuspresencemanager.cpp \
+    dbuspresencemanager.h \
+    $(BUILT_SOURCES)
 
 if SFL_VIDEO
 libclient_dbus_la_SOURCES += dbusvideomanager.cpp dbusvideomanager.h
@@ -63,11 +59,8 @@ service_DATA = org.sflphone.SFLphone.service
 
 EXTRA_DIST = callmanager-introspec.xml \
 			 configurationmanager-introspec.xml \
-			 instance-introspec.xml
-
-if SFL_PRESENCE
-EXTRA_DIST += presencemanager-introspec.xml
-endif
+			 instance-introspec.xml \
+			 presencemanager-introspec.xml
 
 if SFL_VIDEO
 EXTRA_DIST += videomanager-introspec.xml

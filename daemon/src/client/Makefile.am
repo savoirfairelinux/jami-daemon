@@ -6,10 +6,8 @@ noinst_HEADERS = callmanager.h           \
                  configurationmanager.h  \
                  client.h
 
-if SFL_PRESENCE
 PRESENCE_SRC = presencemanager.cpp
 noinst_HEADERS += presencemanager.h
-endif
 
 if SFL_VIDEO
 VIDEO_SRC = videomanager.cpp

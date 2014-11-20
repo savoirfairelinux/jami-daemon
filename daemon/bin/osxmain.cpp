@@ -149,9 +149,7 @@ static int osxTests()
             .on_incoming_call = myOnIncomingCall
         },
         .config_ev_handlers = {},
-#ifdef SFL_PRESENCE
         .pres_ev_handlers = {}
-#endif
 #ifdef SFL_VIDEO
         .video_ev_handlers = {}
 #endif

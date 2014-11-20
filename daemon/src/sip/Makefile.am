@@ -24,15 +24,12 @@ libsiplink_la_SOURCES += tlsvalidation.c \
                          tlsvalidation.h
 endif
 
-if SFL_PRESENCE
 libsiplink_la_SOURCES+=sippresence.cpp \
                        sippresence.h \
                        pres_sub_server.cpp\
                        pres_sub_server.h\
                        pres_sub_client.cpp\
                        pres_sub_client.h
-endif
-
 
 if BUILD_SDES
 libsiplink_la_SOURCES+= sdes_negotiator.cpp \

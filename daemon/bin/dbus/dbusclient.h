@@ -38,10 +38,7 @@ class DBusConfigurationManager;
 class DBusCallManager;
 class DBusNetworkManager;
 class DBusInstance;
-
-#ifdef SFL_PRESENCE
 class DBusPresenceManager;
-#endif
 
 #ifdef SFL_VIDEO
 class DBusVideoManager;
@@ -69,10 +66,7 @@ class DBusClient {
         DBusCallManager*          callManager_;
         DBusConfigurationManager* configurationManager_;
 
-#ifdef SFL_PRESENCE
         DBusPresenceManager*      presenceManager_;
-#endif
-
         DBusInstance*             instanceManager_;
         DBus::BusDispatcher*  dispatcher_;
 
