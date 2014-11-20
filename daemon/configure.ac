@@ -373,15 +373,6 @@ PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
                    PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development files]))
         ])
 
-dnl Presence is a default-enabled feature
-AC_ARG_ENABLE([presence],
-              AS_HELP_STRING([--disable-presence], [Disable SIP presence support]))
-
-AS_IF([test "x$enable_presence" != "xno"], [
-    AC_DEFINE(SFL_PRESENCE, [], [Presence support enabled])
-    AM_CONDITIONAL(SFL_PRESENCE, true)],
-    AM_CONDITIONAL(SFL_PRESENCE, false))
-
 dnl TLS support is enabled if it's installed and up to date
 AC_ARG_WITH([tls],
   [AS_HELP_STRING([--with-tls],

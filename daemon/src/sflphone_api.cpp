@@ -42,10 +42,7 @@
 #include "sflphone.h"
 #include "client/callmanager.h"
 #include "client/configurationmanager.h"
-
-#ifdef SFL_PRESENCE
 #include "client/presencemanager.h"
-#endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
 #include "client/videomanager.h"
@@ -61,12 +58,10 @@ static ConfigurationManager* getConfigurationManager()
     return Manager::instance().getClient()->getConfigurationManager();
 }
 
-#ifdef SFL_PRESENCE
 static PresenceManager* getPresenceManager()
 {
     return Manager::instance().getClient()->getPresenceManager();
 }
-#endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
 static VideoManager* getVideoManager()
@@ -108,10 +103,7 @@ int sflph_init(sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags)
     // Register user event handlers
     getCallManager()->registerEvHandlers(&evHandlers_.call_ev_handlers);
     getConfigurationManager()->registerEvHandlers(&evHandlers_.config_ev_handlers);
-
-#ifdef SFL_PRESENCE
     getPresenceManager()->registerEvHandlers(&evHandlers_.pres_ev_handlers);
-#endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
     getVideoManager()->registerEvHandlers(&evHandlers_.video_ev_handlers);
@@ -688,7 +680,6 @@ bool sflph_config_check_hostname_certificate(const std::string& host, const std:
     return getConfigurationManager()->checkHostnameCertificate(host, port);
 }
 
-#ifdef SFL_PRESENCE
 void sflph_pres_publish(const std::string& account_id, int status, const std::string& note)
 {
     getPresenceManager()->publish(account_id, status, note);
@@ -713,7 +704,6 @@ void sflph_pres_set_subscriptions(const std::string& account_id, const std::vect
 {
     getPresenceManager()->setSubscriptions(account_id, uris);
 }
-#endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
 std::vector<std::map<std::string, std::string>> sflph_video_get_codecs(const std::string& account_id)

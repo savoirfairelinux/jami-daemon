@@ -436,7 +436,6 @@ class SIPAccount : public SIPAccountBase {
         /* Returns true if the username and/or hostname match this account */
         MatchRank matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
-#ifdef SFL_PRESENCE
         /**
          * Presence management
          */
@@ -453,7 +452,6 @@ class SIPAccount : public SIPAccountBase {
          * @param enable Flag
          */
         void supportPresence(int function, bool enable);
-#endif
 
         void scheduleReregistration(pjsip_endpoint *endpt);
 
@@ -726,12 +724,10 @@ class SIPAccount : public SIPAccountBase {
         bool contactOverwritten_;
         pjsip_transport *via_tp_;
 
-#ifdef SFL_PRESENCE
         /**
          * Presence data structure
          */
         SIPPresence * presence_;
-#endif
 };
 
 #endif

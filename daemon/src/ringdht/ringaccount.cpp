@@ -46,10 +46,7 @@
 
 #include "call_factory.h"
 
-#ifdef SFL_PRESENCE
-//#include "sippresence.h"
 #include "client/configurationmanager.h"
-#endif
 
 #include "account_schema.h"
 #include "logger.h"
@@ -769,7 +766,6 @@ RingAccount::getContactHeader(pjsip_transport* t)
     return contact_;
 }
 
-#ifdef SFL_PRESENCE
 /**
  *  Enable the presence module
  */
@@ -786,7 +782,6 @@ void
 RingAccount::supportPresence(int /* function */, bool /* enabled*/)
 {
 }
-#endif
 
 /*
 void RingAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
