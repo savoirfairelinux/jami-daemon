@@ -68,6 +68,10 @@ libsflphone_la_LDFLAGS = \
 		$(IM_LIB) \
 		$(PCRE_LIBS)
 
+if USE_DHT
+libsflphone_la_LDFLAGS += $(OPENDHT_LIBS)
+endif
+
 libsflphone_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
 		@PJPROJECT_CFLAGS@ \
@@ -77,6 +81,10 @@ libsflphone_la_CFLAGS = \
 		@SAMPLERATE_CFLAGS@ \
 		@SPEEXDSP_CFLAGS@ \
 		$(TLS_CFLAGS)
+
+if USE_DHT
+libsflphone_la_CFLAGS += $(OPENDHT_CFLAGS)
+endif
 
 libsflphone_la_SOURCES = conference.cpp \
 		account_factory.cpp \
