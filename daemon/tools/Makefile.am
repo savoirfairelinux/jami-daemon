@@ -5,8 +5,6 @@ libexec_PROGRAMS = dhtnode
 
 dhtnode_SOURCES = dhtnode.cpp
 
-dhtnode_CXXFLAGS=-I$(top_srcdir)/src/ringdht/dhtcpp
+dhtnode_CXXFLAGS= @DHTCPP_CFLAGS@
 
-dhtnode_LDFLAGS = @GNUTLS_LIBS@ -lpthread
-
-dhtnode_LDADD = $(top_builddir)/src/ringdht/dhtcpp/libdhtcpp.la
+dhtnode_LDFLAGS = @GNUTLS_LIBS@ -lpthread @DHTCPP_LIBS@
