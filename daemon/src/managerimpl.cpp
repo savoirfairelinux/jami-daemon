@@ -2490,7 +2490,6 @@ ManagerImpl::getNewCallID()
     // generate something like s7ea037947eb9fb2f
     do {
         random_id.clear();
-        random_id << "s";
         random_id << rand_call_id(rand_);
     } while (isValidCall(random_id.str()));
 
