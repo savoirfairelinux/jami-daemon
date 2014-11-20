@@ -39,10 +39,7 @@
 #include "dbusinstance.h"
 #include "dbuscallmanager.h"
 #include "dbusconfigurationmanager.h"
-
-#ifdef SFL_PRESENCE
 #include "dbuspresencemanager.h"
-#endif
 
 #ifdef SFL_VIDEO
 #include "dbusvideomanager.h"
@@ -66,9 +63,7 @@ private:
 DBusClient::DBusClient(int sflphFlags, bool persistent) :
     callManager_(nullptr)
     , configurationManager_(nullptr)
-#ifdef SFL_PRESENCE
     , presenceManager_(nullptr)
-#endif
     , instanceManager_(nullptr)
     , dispatcher_(new DBus::BusDispatcher)
 #ifdef SFL_VIDEO
@@ -92,9 +87,7 @@ DBusClient::DBusClient(int sflphFlags, bool persistent) :
         callManager_ = new DBusCallManager(sessionConnection);
         configurationManager_ = new DBusConfigurationManager(sessionConnection);
 
-#ifdef SFL_PRESENCE
         presenceManager_ = new DBusPresenceManager(sessionConnection);
-#endif
 
         DBusInstance::OnNoMoreClientFunc onNoMoreClientFunc;
 
@@ -130,9 +123,7 @@ DBusClient::~DBusClient()
 
     delete instanceManager_;
 
-#ifdef SFL_PRESENCE
     delete presenceManager_;
-#endif
 
     delete configurationManager_;
     delete callManager_;
@@ -187,7 +178,6 @@ int DBusClient::initLibrary(int sflphFlags)
         bind(&DBusConfigurationManager::errorAlert, confM, _1),
     };
 
-#ifdef SFL_PRESENCE
     auto presM = presenceManager_;
     // Presence event handlers
     sflph_pres_ev_handlers presEvHandlers = {
@@ -196,7 +186,6 @@ int DBusClient::initLibrary(int sflphFlags)
         bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4),
         bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)
     };
-#endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
     auto videoM = videoManager_;
@@ -213,11 +202,7 @@ int DBusClient::initLibrary(int sflphFlags)
     sflph_ev_handlers evHandlers = {
         .call_ev_handlers = callEvHandlers,
         .config_ev_handlers = configEvHandlers,
-
-#ifdef SFL_PRESENCE
         .pres_ev_handlers = presEvHandlers,
-#endif // SFL_PRESENCE
-
 #ifdef SFL_VIDEO
         .video_ev_handlers = videoEvHandlers
 #endif // SFL_VIDEO

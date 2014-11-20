@@ -43,7 +43,6 @@ const char *
 sflph_version();
 
 /* presence events */
-#ifdef SFL_PRESENCE
 struct sflph_pres_ev_handlers
 {
     std::function<void (const std::string& /*remote*/)> on_new_server_subscription_request;
@@ -51,7 +50,6 @@ struct sflph_pres_ev_handlers
     std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/)> on_new_buddy_notification;
     std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/)> on_subscription_state_change;
 };
-#endif /* SFL_PRESENCE */
 
 /* configuration events */
 struct sflph_config_ev_handlers
@@ -111,10 +109,7 @@ struct sflph_ev_handlers
 {
     sflph_call_ev_handlers call_ev_handlers;
     sflph_config_ev_handlers config_ev_handlers;
-
-#ifdef SFL_PRESENCE
     sflph_pres_ev_handlers pres_ev_handlers;
-#endif /* SFL_PRESENCE */
 
 #ifdef SFL_VIDEO
     sflph_video_ev_handlers video_ev_handlers;
@@ -267,13 +262,11 @@ bool sflph_config_check_certificate_validity(const std::string& ca_path, const s
 bool sflph_config_check_hostname_certificate(const std::string& host, const std::string& port);
 
 /* presence API */
-#ifdef SFL_PRESENCE
 void sflph_pres_publish(const std::string& account_id, int status, const std::string& note);
 void sflph_pres_answer_server_request(const std::string& uri, int flag);
 void sflph_pres_subscribe_buddy(const std::string& account_id, const std::string& uri, int flag);
 std::vector<std::map<std::string, std::string>> sflph_pres_get_subscriptions(const std::string& account_id);
 void sflph_pres_set_subscriptions(const std::string& account_id, const std::vector<std::string>& uris);
-#endif /* SFL_PRESENCE */
 
 /* video API */
 #ifdef SFL_VIDEO

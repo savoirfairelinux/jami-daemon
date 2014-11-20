@@ -47,10 +47,8 @@
 
 #include "call_factory.h"
 
-#ifdef SFL_PRESENCE
 #include "sippresence.h"
 #include "client/configurationmanager.h"
-#endif
 
 #include <yaml-cpp/yaml.h>
 
@@ -144,9 +142,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , allowContactRewrite_(1)
     , contactOverwritten_(false)
     , via_tp_(nullptr)
-#ifdef SFL_PRESENCE
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
-#endif
 {
     via_addr_.host.ptr = 0;
     via_addr_.host.slen = 0;
@@ -162,9 +158,7 @@ SIPAccount::~SIPAccount()
     destroyRegistrationInfo();
     setTransport();
 
-#ifdef SFL_PRESENCE
     delete presence_;
-#endif
 }
 
 std::shared_ptr<SIPCall>
@@ -372,15 +366,10 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << CRED_KEY << YAML::Value << credentials_;
     out << YAML::Key << KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
 
-#ifdef SFL_PRESENCE
     out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value << (presence_ and presence_->isEnabled());
     out << YAML::Key << PRESENCE_PUBLISH_SUPPORTED_KEY << YAML::Value << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH));
     out << YAML::Key << PRESENCE_SUBSCRIBE_SUPPORTED_KEY << YAML::Value << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE));
-#else
-    out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value << false;
-    out << YAML::Key << PRESENCE_PUBLISH_SUPPORTED_KEY << YAML::Value << false;
-    out << YAML::Key << PRESENCE_SUBSCRIBE_SUPPORTED_KEY << YAML::Value << false;
-#endif
+
     out << YAML::Key << Preferences::REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
     out << YAML::Key << SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
 
@@ -461,12 +450,10 @@ void SIPAccount::unserialize(const YAML::Node &node)
     parseValue(node, PRESENCE_PUBLISH_SUPPORTED_KEY, publishSupported);
     bool subscribeSupported = false;
     parseValue(node, PRESENCE_SUBSCRIBE_SUPPORTED_KEY, subscribeSupported);
-#ifdef SFL_PRESENCE
     if (presence_) {
         presence_->support(PRESENCE_FUNCTION_PUBLISH, publishSupported);
         presence_->support(PRESENCE_FUNCTION_SUBSCRIBE, subscribeSupported);
     }
-#endif
 
     if (not isIP2IP()) parseValue(node, SERVICE_ROUTE_KEY, serviceRoute_);
 
@@ -551,11 +538,9 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
         registrationExpire_ = MIN_REGISTRATION_TIME;
 
     parseBool(details, CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
-#ifdef SFL_PRESENCE
     bool presenceEnabled = false;
     parseBool(details, CONFIG_PRESENCE_ENABLED, presenceEnabled);
     enablePresence(presenceEnabled);
-#endif
 
     // srtp settings
     parseBool(details, CONFIG_ZRTP_DISPLAY_SAS, zrtpDisplaySas_);
@@ -651,14 +636,12 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
     a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
 
-#ifdef SFL_PRESENCE
     a[CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR;
     a[CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? TRUE_STR : FALSE_STR;
     a[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? TRUE_STR : FALSE_STR;
     // initialize status values
     a[CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
     a[CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
-#endif
 
     // Add sip specific details
     a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
@@ -705,12 +688,10 @@ std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
     a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = codestream.str();
     a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDetailed_.second;
 
-#ifdef SFL_PRESENCE
     if (presence_) {
         a[CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
         a[CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
     }
-#endif
 
 #if HAVE_TLS
     //TODO
@@ -839,12 +820,10 @@ void SIPAccount::doRegister_()
         return;
     }
 
-#ifdef SFL_PRESENCE
     if (presence_ and presence_->isEnabled()) {
         presence_->subscribeClient(getFromUri(), true); // self presence subscription
         presence_->sendPresence(true, ""); // try to publish whatever the status is.
     }
-#endif
 }
 
 void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
@@ -1715,7 +1694,6 @@ bool SIPAccount::isIP2IP() const
     return accountID_ == IP2IP_PROFILE;
 }
 
-#ifdef SFL_PRESENCE
 SIPPresence * SIPAccount::getPresence() const
 {
     return presence_;
@@ -1767,7 +1745,6 @@ SIPAccount::supportPresence(int function, bool enabled)
     Manager::instance().saveConfig();
     Manager::instance().getClient()->getConfigurationManager()->accountsChanged();
 }
-#endif
 
 MatchRank
 SIPAccount::matches(const std::string &userName, const std::string &server,

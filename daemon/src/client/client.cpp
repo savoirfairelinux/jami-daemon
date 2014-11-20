@@ -35,10 +35,7 @@
 #include "client.h"
 #include "callmanager.h"
 #include "configurationmanager.h"
-
-#ifdef SFL_PRESENCE
 #include "presencemanager.h"
-#endif // SFL_PRESENCE
 
 #ifdef SFL_VIDEO
 #include "videomanager.h"
@@ -47,9 +44,7 @@
 Client::Client() :
     callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
-#ifdef SFL_PRESENCE
     , presenceManager_(new PresenceManager)
-#endif
 #ifdef SFL_VIDEO
     , videoManager_(new VideoManager)
 #endif
@@ -67,9 +62,7 @@ Client::~Client()
     delete videoManager_;
 #endif
     delete configurationManager_;
-#ifdef SFL_PRESENCE
     delete presenceManager_;
-#endif
     delete callManager_;
 }
 
@@ -83,12 +76,10 @@ ConfigurationManager * Client::getConfigurationManager()
     return configurationManager_;
 }
 
-#ifdef SFL_PRESENCE
 PresenceManager * Client::getPresenceManager()
 {
     return presenceManager_;
 }
-#endif
 
 #ifdef SFL_VIDEO
 VideoManager * Client::getVideoManager()

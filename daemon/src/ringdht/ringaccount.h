@@ -187,7 +187,6 @@ class RingAccount : public SIPAccountBase {
         /* Returns true if the username and/or hostname match this account */
         MatchRank matches(const std::string &username, const std::string &hostname) const;
 
-#ifdef SFL_PRESENCE
         /**
          * Presence management
          */
@@ -204,7 +203,6 @@ class RingAccount : public SIPAccountBase {
          * @param enable Flag
          */
         void supportPresence(int function, bool enable);
-#endif
 
         /**
          * Implementation of Account::newOutgoingCall()
