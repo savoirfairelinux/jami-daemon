@@ -6,7 +6,6 @@ ringcli_CXXFLAGS = -I$(top_srcdir)/src \
                    -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 ringcli_LDADD = $(top_builddir)/src/libsflphone.la \
 		$(SPEEX_LIBS)
-
 endif
 
 if HAVE_OSX
