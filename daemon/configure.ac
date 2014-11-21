@@ -549,7 +549,7 @@ AS_IF([test "x$enable_dht" != "xno" -a "$HAVE_GNUTLS" -eq 1],
                          AM_CONDITIONAL(USE_DHT, true),
                          AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
                          AM_CONDITIONAL(USE_DHT, false)
-                         AC_MSG_WARN([Missing OpenDTH]))],
+                         AC_MSG_WARN([Missing OpenDHT]))],
       [AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
        AM_CONDITIONAL(USE_DHT, false)])
 
