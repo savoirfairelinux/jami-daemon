@@ -124,7 +124,11 @@ How to cross-compile for Windows 64bit (from Linux)
 
 # First, make sure you can compile the linux version.
 # Install a few tools.
-sudo apt-get install mingw-w64
+sudo apt-get install mingw-w64 cmake build-essential g++ automake autoconf gnu-standards autoconf-doc libtool gettext autoconf-archive pkg-config
+
+# On certain distributions, mingw-w64 doesn't select POSIX threads by default. You need to use the POSIX version. To do so, run the following commands and select POSIX threads.
+sudo update-alternatives --config x86_64-w64-mingw32-gcc
+sudo update-alternatives --config x86_64-w64-mingw32-g++
 
 # Compile the dependencies
 cd sflphone/daemon/contrib/
@@ -138,9 +142,8 @@ Cross fingers and pray to the great cross-compiler in the sky!
 Profit!
 
 # Compile the daemon
-export PKG_CONFIG_LIBDIR={your_root_path}/sflphone/daemon/contrib/x86_64-w64-mingw32/lib/pkgconfig
 ./autogen.sh
-./configure --host=x86_64-w64-mingw32 --without-alsa --without-pulse --disable-video
+./configure --host=x86_64-w64-mingw32 --without-alsa --without-pulse --without-dbus --disable-video
 make
 
 Clang compatibility (developers only)
