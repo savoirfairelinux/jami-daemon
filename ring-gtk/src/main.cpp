@@ -38,14 +38,153 @@
 #include "lib/callmodel.h"
 #include "sflphone_client.h"
 
+static Call *curr_call;
+
 static void
 call_clicked_cb(G_GNUC_UNUSED GtkWidget *call_button, GtkWidget *call_entry)
 {
     // get entry text and place call
-    Call* newCall = CallModel::instance()->dialingCall();
-    newCall->setDialNumber(gtk_entry_get_text(GTK_ENTRY(call_entry)));
-    newCall->performAction(Call::Action::ACCEPT);
+    // Call* newCall
+    Call::State state;
+    if (curr_call) {
+        state = curr_call->state();
+    } else {
+        curr_call = CallModel::instance()->dialingCall();
+        curr_call->setDialNumber(gtk_entry_get_text(GTK_ENTRY(call_entry)));
+        state = curr_call->state();
+    }
+
+    curr_call->performAction(Call::Action::ACCEPT);
 }
+
+static void
+update_call_state(GtkWidget *label_callstate, GtkWidget *button_call, GtkWidget *button_hangup)
+{
+    Call::State state = curr_call->state();
+    switch (state) {
+        case Call::State::INCOMING:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "incoming");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, TRUE);
+            gtk_button_set_label(GTK_BUTTON(button_call), "answer");
+            break;
+        case Call::State::RINGING:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "ringing");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::INITIALIZATION:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "init");
+            gtk_widget_set_sensitive(button_hangup, FALSE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::CURRENT:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "current");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::DIALING:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "dialing");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, TRUE);
+            break;
+        case Call::State::HOLD:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "hold");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::FAILURE:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "failure");
+            gtk_widget_set_sensitive(button_hangup, FALSE);
+            gtk_widget_set_sensitive(button_call, TRUE);
+            gtk_button_set_label(GTK_BUTTON(button_call), "call");
+            break;
+        case Call::State::BUSY:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "busy");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::TRANSFERRED:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "transfered");
+            gtk_widget_set_sensitive(button_hangup, FALSE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::TRANSF_HOLD:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "transfer hold");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::OVER:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "over");
+            gtk_widget_set_sensitive(button_hangup, FALSE);
+            gtk_widget_set_sensitive(button_call, TRUE);
+            gtk_button_set_label(GTK_BUTTON(button_call), "call");
+            break;
+        case Call::State::ERROR:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "error");
+            gtk_widget_set_sensitive(button_hangup, FALSE);
+            gtk_widget_set_sensitive(button_call, TRUE);
+            break;
+        case Call::State::CONFERENCE:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "conference");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::CONFERENCE_HOLD:
+            gtk_label_set_text(GTK_LABEL(label_callstate), "conference hold");
+            gtk_widget_set_sensitive(button_hangup, TRUE);
+            gtk_widget_set_sensitive(button_call, FALSE);
+            break;
+        case Call::State::__COUNT:
+            break;
+        default:
+            gtk_widget_set_sensitive(button_hangup, FALSE);
+            gtk_widget_set_sensitive(button_call, TRUE);
+            g_debug("unknown call state");
+    }
+    g_debug("state changed");
+    printf("\n\nstate changed\n\n");
+}
+
+static void
+hangup_cb(G_GNUC_UNUSED GtkWidget *button_hangup, G_GNUC_UNUSED gpointer *user_data)
+{
+    curr_call->performAction(Call::Action::REFUSE);
+}
+
+/* Loads the menu ui, aborts the program on failure */
+static GtkBuilder *uibuilder_new(const gchar *file_name)
+{
+    GtkBuilder* uibuilder = gtk_builder_new();
+    GError *error = NULL;
+    /* try local dir first */
+    gchar *ui_path = g_build_filename("../../src/", file_name, NULL);
+
+    if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
+        g_warning("Could not find \"%s\"", ui_path);
+        g_free(ui_path);
+        ui_path = NULL;
+        g_object_unref(uibuilder);
+        uibuilder = NULL;
+    }
+
+    /* If there is an error in parsing the UI file, the program must be aborted, as per the documentation:
+     * It’s not really reasonable to attempt to handle failures of this call.
+     * You should not use this function with untrusted files (ie: files that are not part of your application).
+     * Broken GtkBuilder files can easily crash your program,
+     * and it’s possible that memory was leaked leading up to the reported failure. */
+    if (ui_path && !gtk_builder_add_from_file(uibuilder, ui_path, &error)) {
+        g_assert(error);
+        g_warning("Error adding \"%s\" file to gtk builder: %s", ui_path, error->message);
+        g_object_unref(uibuilder);
+        uibuilder = NULL;
+    } else {
+        /* loaded file successfully */
+        g_free(ui_path);
+    }
+    return uibuilder;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -68,35 +207,56 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    // create test window
-    client->win = gtk_application_window_new(GTK_APPLICATION(client));
-    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    GtkWidget *number_entry = gtk_entry_new();
-    gtk_box_pack_start(GTK_BOX(vbox), number_entry, FALSE, FALSE, 0);
-    GtkWidget *call_button = gtk_button_new_with_label("call");
-    g_signal_connect(G_OBJECT(call_button), "clicked", G_CALLBACK(call_clicked_cb), number_entry);
-    gtk_box_pack_start(GTK_BOX(vbox), call_button, FALSE, FALSE, 0);
-    gtk_container_add(GTK_CONTAINER(client->win), vbox);
-    gtk_widget_show_all(client->win);
-    gtk_application_add_window(GTK_APPLICATION(client), GTK_WINDOW(client->win));
+    GtkBuilder *uibuilder = uibuilder_new("ring_main.ui");
+    if (!uibuilder) {
+        g_object_unref(client);
+        return 1;
+    }
+
+    client->win = GTK_WIDGET(gtk_builder_get_object(uibuilder, "applicationwindow_main"));
+    GtkWidget *entry_call_uri = GTK_WIDGET(gtk_builder_get_object(uibuilder, "entry_call_uri"));
+    GtkWidget *button_call = GTK_WIDGET(gtk_builder_get_object(uibuilder, "button_call"));
+    GtkWidget *button_hangup = GTK_WIDGET(gtk_builder_get_object(uibuilder, "button_hangup"));
+    g_signal_connect(G_OBJECT(button_hangup), "clicked", G_CALLBACK(hangup_cb), NULL);
+    GtkWidget *label_callstate = GTK_WIDGET(gtk_builder_get_object(uibuilder, "label_callstate"));
+    g_signal_connect(G_OBJECT(button_call), "clicked", G_CALLBACK(call_clicked_cb), entry_call_uri);
+
     gtk_window_present(GTK_WINDOW(client->win));
 
-    QCoreApplication *app = new QCoreApplication(argc, argv);
+    QCoreApplication *app = NULL;
 
     gint status = 0;
 
+    curr_call = NULL;
+
     try
     {
+        app = new QCoreApplication(argc, argv);
         //dbus configuration
         CallModel::instance();
+
+        // connect signals
+        QObject::connect(
+            CallModel::instance(),
+            &CallModel::callStateChanged,
+            [=](void) { update_call_state(label_callstate, button_call, button_hangup);}
+        );
+        // start app and main loop
+        status = app->exec();
     }
     catch(const char * msg)
     {
         printf("caught error: %s\n", msg);
+        g_object_unref(client);
+        return 1;
     }
 
+    // update_call_state();
+
+    // QObject::connect(CallModel::instance(), SIGNAL(callStateChanged(Call*,Call::State)), NULL, SLOT(update_call_state()));
+
     // start app and main loop
-    status = app->exec();
+    // status = app->exec();
     // gint status = g_application_run(G_APPLICATION(client), argc, argv);
 
     g_object_unref(client);

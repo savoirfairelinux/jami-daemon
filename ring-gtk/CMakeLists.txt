@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11)
 
 PROJECT(ring-client)
 
@@ -28,7 +28,8 @@ if (CMAKE_COMPILER_IS_GNUCC)
 endif()
 
 IF(${ENABLE_QT5} MATCHES true)
-   add_subdirectory( src/lib )
+   add_subdirectory( src     )
+#   add_subdirectory( src/lib )
 ELSE()
    MESSAGE("cmake install prefix is : ${CMAKE_INSTALL_PREFIX}")
 

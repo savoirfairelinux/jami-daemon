@@ -17,8 +17,6 @@ PROJECT(qtsflphone)
 
 set(CMAKE_AUTOMOC TRUE)
 
-#target_link_libraries(qtsflphone ${QT_QTCORE_LIBRARY} ${KDE4_KDEUI_LIBS})
-
 SET(LOCAL_CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 SET(CMAKE_MODULE_PATH "${LOCAL_CMAKE_MODULE_PATH}")
 
@@ -31,6 +29,7 @@ ENDIF(NOT ${ENABLE_VIDEO} MATCHES false)
 IF(${ENABLE_QT5} MATCHES true)
    FIND_PACKAGE(Qt5Core)
    FIND_PACKAGE(Qt5DBus)
+   FIND_PACKAGE(Qt5Gui)
    ADD_DEFINITIONS(-DQT_DISABLE_DEPRECATED_BEFORE=0)
 ELSE()
    FIND_PACKAGE ( Qt4  REQUIRED )
@@ -306,7 +305,7 @@ add_library( qtsflphone  SHARED ${qtsflphone_LIB_SRCS})
 # REMOVE_DEFINITIONS("-w")
 
 IF(${ENABLE_QT5} MATCHES true)
-   QT5_USE_MODULES(qtsflphone Core DBus)
+   QT5_USE_MODULES(qtsflphone Core DBus Gui)
 ENDIF(${ENABLE_QT5} MATCHES true)
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -318,6 +317,7 @@ target_link_libraries( qtsflphone
   -lpthread
   ${QT_QTDBUS_LIBRARY}
   ${QT_QTCORE_LIBRARY}
+  ${QT_QTGUI_LIBRARY}
 )
 
 set_target_properties( qtsflphone

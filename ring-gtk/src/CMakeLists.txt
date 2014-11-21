@@ -11,13 +11,17 @@ endif(POLICY CMP0022)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
+IF(${ENABLE_QT5} MATCHES true)
+   FIND_PACKAGE(Qt5Core)
+ENDIF(${ENABLE_QT5} MATCHES true)
+
 ADD_DEFINITIONS(
    ${QT_DEFINITIONS}
    -fexceptions
    -Wno-deprecated-declarations
    -DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\""
    -DSHARE_INSTALL_PREFIX="\\\"${SHARE_INSTALL_PREFIX}\\\""
-   -Werror
+#   -Werror
    -Wall
    -Wextra
 #    -Wmissing-declarations
@@ -92,4 +96,4 @@ SET(
 
 ADD_EXECUTABLE(ring-client ${SRC_FILES})
 
-TARGET_LINK_LIBRARIES(ring-client qtsflphone ${GTK3_LIBRARIES})
+TARGET_LINK_LIBRARIES(ring-client qtsflphone ${GTK3_LIBRARIES} ${QT_QTCORE_LIBRARY})
