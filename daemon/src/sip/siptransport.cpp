@@ -88,7 +88,7 @@ SipTransport::~SipTransport()
 }
 
 bool
-SipTransport::isAlive(const std::shared_ptr<SipTransport>& t, pjsip_transport_state state)
+SipTransport::isAlive(__attribute__((unused)) const std::shared_ptr<SipTransport>& t, pjsip_transport_state state)
 {
     return state != PJSIP_TP_STATE_DISCONNECTED
 #if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
