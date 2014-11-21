@@ -358,8 +358,8 @@ SipTransportBroker::getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port
     const size_t ip_num = socketDescriptors.size();
     pj_sockaddr_in ipv4[ip_num];
     pj_status_t ret = pjstun_get_mapped_addr(&cp_.factory,
-		socketDescriptors.size(), &socketDescriptors[0],
-		&serverName, port, &serverName, port, ipv4);
+            socketDescriptors.size(), &socketDescriptors[0],
+            &serverName, port, &serverName, port, ipv4);
 
     if (ret != PJ_SUCCESS) {
         SFL_ERR("STUN query to server \"%.*s\" failed", serverName.slen, serverName.ptr);
