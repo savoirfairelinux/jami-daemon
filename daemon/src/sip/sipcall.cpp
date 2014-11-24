@@ -107,7 +107,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #endif
     , pool_(pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory,
                            id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
-    , local_sdp_(new Sdp(pool_))
+    , sdp_(new Sdp(pool_))
 {}
 
 SIPCall::~SIPCall()
@@ -122,7 +122,7 @@ SIPCall::~SIPCall()
     }
 
     // local sdp must be destroyed before pool
-    local_sdp_.reset();
+    sdp_.reset();
     pj_pool_release(pool_);
 }
 
@@ -153,7 +153,7 @@ SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
     if (getLocalAudioPort() == 0) {
         const unsigned callLocalAudioPort = account.generateAudioPort();
         setLocalAudioPort(callLocalAudioPort);
-        local_sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
+        sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
     }
 
     setLocalIp(localIP);
@@ -166,7 +166,7 @@ SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
         assert(getLocalAudioPort() != callLocalVideoPort);
 
         setLocalVideoPort(callLocalVideoPort);
-        local_sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
+        sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
     }
 #endif
 }
@@ -193,7 +193,7 @@ SIPCall::createHistoryEntry() const
 int
 SIPCall::SIPSessionReinvite()
 {
-    pjmedia_sdp_session *local_sdp = local_sdp_->getLocalSdpSession();
+    pjmedia_sdp_session *local_sdp = sdp_->getLocalSdpSession();
     pjsip_tx_data *tdata;
 
     if (local_sdp and inv and inv->pool_prov
@@ -253,8 +253,8 @@ SIPCall::updateSDPFromSTUN()
 
         account.setPublishedAddress(stunPorts[0]);
         // published IP MUST be updated first, since RTCP depends on it
-        local_sdp_->setPublishedIP(account.getPublishedAddress());
-        local_sdp_->updatePorts(stunPorts);
+        sdp_->setPublishedIP(account.getPublishedAddress());
+        sdp_->updatePorts(stunPorts);
     } catch (const std::runtime_error &e) {
         SFL_ERR("%s", e.what());
     }
@@ -284,7 +284,7 @@ void SIPCall::answer()
         throw std::runtime_error("Should only be called for initial answer");
 
     // answer with SDP if no SDP was given in initial invite (i.e. inv->neg is NULL)
-    if (pjsip_inv_answer(inv.get(), PJSIP_SC_OK, NULL, !inv->neg ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
+    if (pjsip_inv_answer(inv.get(), PJSIP_SC_OK, NULL, !inv->neg ? sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     // contactStr must stay in scope as long as tdata
@@ -559,14 +559,14 @@ SIPCall::onhold()
     videortp_.stop();
 #endif
 
-    local_sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
-    local_sdp_->removeAttributeFromLocalAudioMedia("sendonly");
-    local_sdp_->addAttributeToLocalAudioMedia("sendonly");
+    sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
+    sdp_->removeAttributeFromLocalAudioMedia("sendonly");
+    sdp_->addAttributeToLocalAudioMedia("sendonly");
 
 #ifdef SFL_VIDEO
-    local_sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
-    local_sdp_->removeAttributeFromLocalVideoMedia("inactive");
-    local_sdp_->addAttributeToLocalVideoMedia("inactive");
+    sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
+    sdp_->removeAttributeFromLocalVideoMedia("inactive");
+    sdp_->addAttributeToLocalVideoMedia("inactive");
 #endif
 
     if (SIPSessionReinvite() != PJ_SUCCESS)
@@ -602,7 +602,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
     if (not setState(Call::ACTIVE))
         return;
 
-    std::vector<sfl::AudioCodec*> sessionMedia(local_sdp_->getSessionAudioMedia());
+    std::vector<sfl::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
         SFL_WARN("Session media is empty");
@@ -641,15 +641,15 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
     audiortp_.initLocalCryptoInfoOnOffHold();
     audiortp_.start(audioCodecs);
 
-    local_sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
-    local_sdp_->removeAttributeFromLocalAudioMedia("sendonly");
-    local_sdp_->addAttributeToLocalAudioMedia("sendrecv");
+    sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
+    sdp_->removeAttributeFromLocalAudioMedia("sendonly");
+    sdp_->addAttributeToLocalAudioMedia("sendrecv");
 
 #ifdef SFL_VIDEO
-    local_sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
-    local_sdp_->removeAttributeFromLocalVideoMedia("sendonly");
-    local_sdp_->removeAttributeFromLocalVideoMedia("inactive");
-    local_sdp_->addAttributeToLocalVideoMedia("sendrecv");
+    sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
+    sdp_->removeAttributeFromLocalVideoMedia("sendonly");
+    sdp_->removeAttributeFromLocalVideoMedia("inactive");
+    sdp_->addAttributeToLocalVideoMedia("sendrecv");
 #endif
 
     if (SIPSessionReinvite() != PJ_SUCCESS) {

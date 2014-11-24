@@ -76,7 +76,6 @@
 
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_uri.h>
-#include <pjnath.h>
 
 #include <pjsip-simple/presence.h>
 #include <pjsip-simple/publish.h>
@@ -323,7 +322,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->setDisplayName(displayName);
     call->initRecFilename(peerNumber);
     call->setCallMediaLocal(addrToUse);
-    call->getLocalSDP().setPublishedIP(addrSdp);
+    call->getSDP().setPublishedIP(addrSdp);
     call->getAudioRtp().initConfig();
     call->setTransport(transport);
 
@@ -369,7 +368,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    call->getLocalSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -397,7 +396,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     pjsip_inv_session* inv = nullptr;
-    pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP().getLocalSdpSession(), 0, &inv);
+    pjsip_inv_create_uas(dialog, rdata, call->getSDP().getLocalSdpSession(), 0, &inv);
 
     if (!inv) {
         SFL_ERR("Call invite is not initialized");
@@ -891,7 +890,7 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
         return;
 
     const auto& account = call->getSIPAccount();
-    auto& localSDP = call->getLocalSDP();
+    auto& localSDP = call->getSDP();
 
     localSDP.receiveOffer(offer, account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
     localSDP.startNegotiation();
@@ -919,12 +918,63 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     call->setCallMediaLocal(address);
 
-    auto& localSDP = call->getLocalSDP();
+    auto& localSDP = call->getSDP();
     localSDP.setPublishedIP(address);
     const bool created = localSDP.createOffer(account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
 
     if (created)
         *p_offer = localSDP.getLocalSdpSession();
+}
+
+static void
+dump_sdp_session(const pjmedia_sdp_session* sdp_session, const char* header)
+{
+    char buffer[4096] {};
+
+    if (pjmedia_sdp_print(sdp_session, buffer, sizeof buffer) == -1) {
+        SFL_ERR("%sSDP too big for dump", header);
+        return;
+    }
+
+    SFL_DBG("%s%s", header, buffer);
+}
+
+static const pjmedia_sdp_session*
+get_active_remote_sdp(pjsip_inv_session *inv)
+{
+    const pjmedia_sdp_session* sdp_session {};
+
+    if (pjmedia_sdp_neg_get_active_remote(inv->neg, &sdp_session) != PJ_SUCCESS) {
+        SFL_ERR("Active remote not present");
+        return nullptr;
+    }
+
+    if (pjmedia_sdp_validate(sdp_session) != PJ_SUCCESS) {
+        SFL_ERR("Invalid remote SDP session");
+        return nullptr;
+    }
+
+    dump_sdp_session(sdp_session, "Remote active SDP Session:\n");
+    return sdp_session;
+}
+
+static const pjmedia_sdp_session*
+get_active_local_sdp(pjsip_inv_session *inv)
+{
+    const pjmedia_sdp_session* sdp_session {};
+
+    if (pjmedia_sdp_neg_get_active_local(inv->neg, &sdp_session) != PJ_SUCCESS) {
+        SFL_ERR("Active local not present");
+        return nullptr;
+    }
+
+    if (pjmedia_sdp_validate(sdp_session) != PJ_SUCCESS) {
+        SFL_ERR("Invalid local SDP session");
+        return nullptr;
+    }
+
+    dump_sdp_session(sdp_session, "Local active SDP Session:\n");
+    return sdp_session;
 }
 
 // This callback is called after SDP offer/answer session has completed.
@@ -957,76 +1007,38 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         return;
     }
 
-    // Retreive SDP session for this call
-    auto& sdpSession = call->getLocalSDP();
+    const auto localSDP = get_active_local_sdp(inv);
+    const auto remoteSDP = get_active_remote_sdp(inv);
 
-    // Get active session sessions
-    const pjmedia_sdp_session *remoteSDP = 0;
-
-    if (pjmedia_sdp_neg_get_active_remote(inv->neg, &remoteSDP) != PJ_SUCCESS) {
-        SFL_ERR("Active remote not present");
-        return;
-    }
-
-    if (pjmedia_sdp_validate(remoteSDP) != PJ_SUCCESS) {
-        SFL_ERR("Invalid remote SDP session");
-        return;
-    }
-
-    const pjmedia_sdp_session *local_sdp;
-    pjmedia_sdp_neg_get_active_local(inv->neg, &local_sdp);
-
-    if (pjmedia_sdp_validate(local_sdp) != PJ_SUCCESS) {
-        SFL_ERR("Invalid local SDP session");
-        return;
-    }
-
-    // Print SDP session
-    char buffer[4096];
-    memset(buffer, 0, sizeof buffer);
-
-    if (pjmedia_sdp_print(remoteSDP, buffer, sizeof buffer) == -1) {
-        SFL_ERR("SDP was too big for buffer");
-        return;
-    }
-
-    SFL_DBG("Remote active SDP Session:\n%s", buffer);
-
-    memset(buffer, 0, sizeof buffer);
-
-    if (pjmedia_sdp_print(local_sdp, buffer, sizeof buffer) == -1) {
-        SFL_ERR("SDP was too big for buffer");
-        return;
-    }
-
-    SFL_DBG("Local active SDP Session:\n%s", buffer);
+    // Update our sdp manager
+    auto& sdp = call->getSDP();
 
     // Set active SDP sessions
-    sdpSession.setActiveLocalSdpSession(local_sdp);
-    sdpSession.setActiveRemoteSdpSession(remoteSDP);
+    sdp.setActiveLocalSdpSession(localSDP);
+    sdp.setActiveRemoteSdpSession(remoteSDP);
 
-    // Update internal field for
-    sdpSession.setMediaTransportInfoFromRemoteSdp();
+    // Update connection information
+    sdp.setMediaTransportInfoFromRemoteSdp();
 
+    auto& audioRTP = call->getAudioRtp();
     try {
-        call->getAudioRtp().updateDestinationIpAddress();
+        audioRTP.updateDestinationIpAddress();
     } catch (const AudioRtpFactoryException &e) {
         SFL_ERR("%s", e.what());
     }
 
-    call->getAudioRtp().setDtmfPayloadType(sdpSession.getTelephoneEventType());
+    audioRTP.setDtmfPayloadType(sdp.getTelephoneEventType());
+
 #ifdef SFL_VIDEO
-    call->getVideoRtp().updateSDP(sdpSession);
-    call->getVideoRtp().updateDestination(call->getLocalSDP().getRemoteIP(), sdpSession.getRemoteVideoPort());
-    auto localPort = sdpSession.getLocalVideoPort();
-    if (!localPort)
-        localPort = sdpSession.getRemoteVideoPort();
-    call->getVideoRtp().start(localPort);
+    auto& videoRTP = call->getVideoRtp();
+    videoRTP.updateSDP(sdp);
+    videoRTP.updateDestination(sdp.getRemoteIP(), sdp.getRemoteVideoPort());
+    videoRTP.start(sdp.getLocalVideoPort() or sdp.getRemoteVideoPort());
 #endif
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
-    call->getLocalSDP().getRemoteSdpCryptoFromOffer(remoteSDP, crypto_offer);
+    call->getSDP().getRemoteSdpCryptoFromOffer(remoteSDP, crypto_offer);
 
 #if HAVE_SDES
     bool nego_success = false;
@@ -1043,7 +1055,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             nego_success = true;
 
             try {
-                call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
+                audioRTP.setRemoteCryptoInfo(sdesnego);
                 Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
             } catch (const AudioRtpFactoryException &e) {
                 SFL_ERR("%s", e.what());
@@ -1058,23 +1070,22 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 
     // We did not find any crypto context for this media, RTP fallback
-    if (!nego_success && call->getAudioRtp().isSdesEnabled()) {
+    if (!nego_success && audioRTP.isSdesEnabled()) {
         SFL_ERR("Negotiation failed but SRTP is enabled, fallback on RTP");
-        call->getAudioRtp().stop();
-        call->getAudioRtp().setSrtpEnabled(false);
+        audioRTP.stop();
+        audioRTP.setSrtpEnabled(false);
 
         const auto& account = call->getSIPAccount();
         if (account.getSrtpFallback()) {
-            call->getAudioRtp().initSession();
+            audioRTP.initSession();
 
             if (account.isStunEnabled())
                 call->updateSDPFromSTUN();
         }
     }
-
 #endif // HAVE_SDES
 
-    std::vector<sfl::AudioCodec*> sessionMedia(sdpSession.getSessionAudioMedia());
+    std::vector<sfl::AudioCodec*> sessionMedia(sdp.getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
         SFL_WARN("Session media is empty");
