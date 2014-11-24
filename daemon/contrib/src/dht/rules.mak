@@ -1,5 +1,5 @@
 # DHT
-DHT_VERSION := adaf1e77d34d1edbf50f27c96a70839ff7f2da25
+DHT_VERSION := 93fa3ada57d2eca72af36163b6f8b1bec182fa19
 DHT_URL := https://github.com/aberaud/dht/archive/$(DHT_VERSION).tar.gz
 
 # Only build on Linux for now, needs to be ported to Android et al
