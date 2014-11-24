@@ -78,9 +78,7 @@ VideoDecoder::setOptions(const std::map<std::string, std::string>& options)
     extract(options, "video_size");
     extract(options, "channel");
     extract(options, "loop");
-#if HAVE_SDP_CUSTOM_IO
     extract(options, "sdp_flags");
-#endif
 }
 
 int VideoDecoder::openInput(const std::string &source_str,

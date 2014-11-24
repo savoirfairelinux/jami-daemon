@@ -55,8 +55,6 @@
     ( (LIBAVUTIL_VERSION_MICRO <  100 && LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
       (LIBAVUTIL_VERSION_MICRO >= 100 && LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
 
-#define HAVE_SDP_CUSTOM_IO LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
-
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -74,6 +72,10 @@ extern "C" {
 }
 
 #include "libav_utils.h"
+
+#if !LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
+#error "Used libavformat doesn't support sdp custom_io"
+#endif
 
 #if !LIBAVUTIL_VERSION_CHECK(51, 42, 0, 74, 100) && !defined(FF_API_PIX_FMT)
 #define AVPixelFormat PixelFormat
