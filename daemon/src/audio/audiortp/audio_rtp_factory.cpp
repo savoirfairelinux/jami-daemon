@@ -108,7 +108,7 @@ void AudioRtpFactory::initSession()
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                 // not even available at that point.
                 if (helloHashEnabled_)
-                    call_->getLocalSDP().setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_.get())->getHelloHash());
+                    call_->getSDP().setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_.get())->getHelloHash());
                 break;
             }
 #endif
@@ -194,7 +194,7 @@ void AudioRtpFactory::initLocalCryptoInfo()
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_.get());
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
         srtp->initLocalCryptoInfo();
-        call_->getLocalSDP().setLocalSdpCrypto(srtp->getLocalCryptoInfo());
+        call_->getSDP().setLocalSdpCrypto(srtp->getLocalCryptoInfo());
     }
 }
 
@@ -206,7 +206,7 @@ void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_.get());
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
         srtp->initLocalCryptoInfoOnOffhold();
-        call_->getLocalSDP().setLocalSdpCrypto(srtp->getLocalCryptoInfo());
+        call_->getSDP().setLocalSdpCrypto(srtp->getLocalCryptoInfo());
     }
 }
 
