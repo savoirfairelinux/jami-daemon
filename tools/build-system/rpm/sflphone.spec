@@ -252,8 +252,6 @@ fi
 %defattr(-,root,root,-)
 %{_bindir}/sflphone
 %{_bindir}/sflphone-client-gnome
-%{_libdir}/libsflphone.so*
-%exclude %{_includedir}/sflphone.h
 %exclude %{_libdir}/libsflphone.a
 %exclude %{_libdir}/libsflphone.la
 %{_datadir}/glib-2.0/schemas/org.sflphone.SFLphone.gschema.xml
@@ -279,6 +277,9 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
+* Mon Nov 24 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.2-5
+- drop .h and .so that are no longer built
+
 * Wed Nov 19 2014 Simon Piette <simon.piette@savoirfairelinux.com> - 1.4.2-4
 - add libstrp build require
 
