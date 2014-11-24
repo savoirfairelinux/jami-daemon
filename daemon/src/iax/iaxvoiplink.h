@@ -150,6 +150,8 @@ class IAXVoIPLink {
          */
         void sendAudioFromMic();
 
+        IAXAccount& account_;
+
         /** encoder/decoder/resampler buffers */
         sfl::AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, sfl::AudioFormat::MONO()};
         sfl::AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, sfl::AudioFormat::MONO()};
@@ -162,8 +164,6 @@ class IAXVoIPLink {
          * indicate that init() was called, or reset by terminate().
          */
         bool initDone_{false};
-
-        IAXAccount& account_;
 };
 
 #endif

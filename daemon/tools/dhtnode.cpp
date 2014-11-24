@@ -72,12 +72,13 @@ const Color::Modifier red(Color::FG_RED);
 const Color::Modifier yellow(Color::FG_YELLOW);
 
 void printLog(std::ostream& s, char const* m, va_list args) {
-    char buffer[4096];
+    static constexpr int BUF_SZ = 4096;
+    char buffer[BUF_SZ];
     int ret = vsnprintf(buffer, sizeof(buffer), m, args);
     if (ret < 0)
         return;
-    s.write(buffer, std::min<size_t>(ret, sizeof(buffer)));
-    if (ret >= sizeof(buffer))
+    s.write(buffer, std::min(ret, BUF_SZ));
+    if (ret >= BUF_SZ)
         s << "[[TRUNCATED]]";
     s.put('\n');
 }
@@ -96,7 +97,8 @@ main(int argc, char **argv)
 
     std::vector<sockaddr_storage> bootstrap_nodes {};
     while (i < argc) {
-        addrinfo hints{};
+        addrinfo hints;
+        memset(&hints, 0, sizeof(hints));
         addrinfo *info = nullptr, *infop = nullptr;
         hints.ai_socktype = SOCK_DGRAM;
         /*if(!ipv6)

@@ -243,7 +243,7 @@ saveFile(const std::string& path, const std::vector<uint8_t>& data)
 }
 
 static size_t
-dirent_buf_size(DIR * dirp)
+dirent_buf_size(__attribute__((unused)) DIR* dirp)
 {
     long name_max;
 #if defined(HAVE_FPATHCONF) && defined(HAVE_DIRFD) && defined(_PC_NAME_MAX)
@@ -275,7 +275,7 @@ readDirectory(const std::string& dir)
     }
 
     size_t size = dirent_buf_size(dp);
-    if (size == -1)
+    if (size == (size_t)(-1))
         return {};
     std::vector<uint8_t> buf(size);
     dirent* entry;
