@@ -2,13 +2,7 @@
 DHT_VERSION := 93fa3ada57d2eca72af36163b6f8b1bec182fa19
 DHT_URL := https://github.com/aberaud/dht/archive/$(DHT_VERSION).tar.gz
 
-# Only build on Linux for now, needs to be ported to Android et al
-ifdef HAVE_LINUX
-ifndef HAVE_ANDROID
 PKGS += dht
-endif
-endif
-
 ifeq ($(call need_pkg,'opendht'),)
 PKGS_FOUND += dht
 endif
