@@ -23,6 +23,7 @@
 #include "callmodel.h"
 #include "abstractitembackend.h"
 #include "visitors/profilepersistervisitor.h"
+#include "visitors/pixmapmanipulationvisitor.h"
 #include "vcardutils.h"
 
 //Qt
@@ -38,6 +39,53 @@ class QObject;
 class Contact;
 class Account;
 struct Node;
+
+struct VCardMapper {
+   VCardMapper() {
+      m_hHash[VCardUtils::Property::UID] = &VCardMapper::setUid;
+      m_hHash[VCardUtils::Property::NAME] = &VCardMapper::setNames;
+      m_hHash[VCardUtils::Property::FORMATTED_NAME] = &VCardMapper::setFormattedName;
+      m_hHash[VCardUtils::Property::ORGANIZATION] = &VCardMapper::setOrganization;
+      m_hHash[VCardUtils::Property::PHOTO] = &VCardMapper::setPhoto;
+   }
+
+   void setFormattedName(Contact* c, const QByteArray& fn) {
+      c->setFormattedName(QString::fromUtf8(fn));
+   }
+
+   void setNames(Contact* c, const QByteArray& fn) {
+      QList<QByteArray> splitted = fn.split(';');
+      c->setFamilyName(splitted[0].trimmed());
+      c->setFirstName(splitted[1].trimmed());
+   }
+
+   void setUid(Contact* c, const QByteArray& fn) {
+      c->setUid(fn);
+   }
+
+   void setEmail(Contact* c, const QByteArray& fn) {
+      c->setPreferredEmail(fn);
+   }
+
+   void setOrganization(Contact* c, const QByteArray& fn) {
+      c->setOrganization(QString::fromUtf8(fn));
+   }
+
+   void setPhoto(Contact* c, const QByteArray& fn) {
+      qDebug() << fn;
+      QVariant photo = PixmapManipulationVisitor::instance()->profilePhoto(fn);
+      c->setPhoto(photo);
+   }
+
+   QHash<QByteArray, mapToProperty> m_hHash;
+   bool metacall(Contact* c, const QByteArray& key, const QByteArray& value) {
+      if (!m_hHash[key])
+         return false;
+      (this->*(m_hHash[key]))(c,value);
+      return true;
+   }
+};
+static VCardMapper* vc_mapper = new VCardMapper;
 
 ///ProfileContentBackend: Implement a backend for Profiles
 class ProfileContentBackend : public AbstractContactBackend {
@@ -75,7 +123,6 @@ public:
 
    //Helper
    Node* getProfileById(const QByteArray& id);
-   void linkToAccounts();
 
 public Q_SLOTS:
    void contactChanged();
@@ -104,7 +151,6 @@ ProfileModel* ProfileModel::m_spInstance = nullptr;
 
 ProfileContentBackend::ProfileContentBackend(QObject* parent) : AbstractContactBackend(this, parent)
 {
-
 }
 
 QString ProfileContentBackend::name () const
@@ -188,6 +234,7 @@ bool ProfileContentBackend::load()
       QStringList entries = profilesDir.entryList(extensions, QDir::Files);
 
       for (QString item : entries) {
+         qDebug() << "Loading profile: " << item;
          QFile file(profilesDir.absolutePath()+"/"+item);
          if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             qDebug() << "Error opening vcard: " << item;
@@ -200,20 +247,19 @@ bool ProfileContentBackend::load()
          pro->contact = profile;
          pro->m_Index = m_lProfiles.size();
 
-         //FIXME this should be changed to a contact constructor taking a ByteArray parameter
-         while (!file.atEnd()) {
-            QByteArray line = file.readLine();
-            qDebug() << QString::fromUtf8(line);
-            QList<QByteArray> splitted = line.split(':');
-            if(splitted.at(0) == VCardUtils::Property::VC_UID) {
-               qDebug() << "Setting UID:" << splitted.at(1);
-               profile->setUid(splitted.at(1).trimmed());
+         QByteArray all = file.readAll();
+         QList<QByteArray> splittedProperties = all.split('\n');
+         for (QByteArray property : splittedProperties){
+            qDebug() << "property: " << property;
+            QList<QByteArray> splitted = property.split(':');
+            if(splitted.size() < 2){
+               qDebug() << "Property malformed!";
+               continue;
             }
-            if(splitted.at(0) == VCardUtils::Property::VC_FORMATTED_NAME)
-               profile->setFormattedName(splitted.at(1).trimmed());
+            vc_mapper->metacall(profile,splitted[0],splitted[1].trimmed());
 
-            if(splitted.at(0) == VCardUtils::Property::VC_X_RINGACCOUNT) {
-
+            //Link with accounts
+            if(splitted.at(0) == VCardUtils::Property::X_RINGACCOUNT) {
                Account* acc = AccountListModel::instance()->getAccountById(splitted.at(1).trimmed());
                if(!acc) {
                   qDebug() << "Could not find account: " << splitted.at(1).trimmed();
@@ -238,16 +284,9 @@ bool ProfileContentBackend::load()
    }
    else {
       qDebug() << "No ProfilePersister loaded!";
+      return false;
    }
    return true;
-}
-
-void ProfileContentBackend::linkToAccounts()
-{
-   //FIXME: Accounts are linked statically to profiles we need a proper way
-   for (int var = 0; var < AccountListModel::instance()->getAccounts().size(); ++var) {
-
-   }
 }
 
 bool ProfileContentBackend::reload()
@@ -257,7 +296,6 @@ bool ProfileContentBackend::reload()
 
 bool ProfileContentBackend::save(const Contact* contact)
 {
-   qDebug() << "Saving" << contact->uid();
    QDir profilesDir = ProfilePersisterVisitor::instance()->getProfilesDir();
    qDebug() << "Saving vcf in:" << profilesDir.absolutePath()+"/"+contact->uid()+".vcf";
    const QByteArray result = contact->toVCard(getAccountsForProfile(contact->uid()));
@@ -322,7 +360,6 @@ QList<Account*> ProfileContentBackend::getAccountsForProfile(const QString& id)
 Node* ProfileContentBackend::getProfileById(const QByteArray& id)
 {
    for (Node* p : m_lProfiles) {
-      qDebug() << "Comparing " << p->contact->uid() << " and " << id;
       if(p->contact->uid() == id)
          return p;
    }
@@ -372,6 +409,7 @@ ProfileModel::ProfileModel(QObject* parent) : QAbstractItemModel(parent)
    //Creating the profile contact backend
    m_pProfileBackend = new ProfileContentBackend(this);
    ContactModel::instance()->addBackend(m_pProfileBackend,LoadOptions::FORCE_ENABLED);
+
 }
 
 ProfileModel::~ProfileModel()

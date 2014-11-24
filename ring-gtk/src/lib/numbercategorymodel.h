@@ -22,8 +22,6 @@
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QVector>
 
-class QPixmap;
-
 class NumberCategoryVisitor;
 class PhoneNumber;
 class NumberCategory;
@@ -44,8 +42,8 @@ public:
    virtual bool setData(const QModelIndex& index, const QVariant &value, int role);
 
    //Mutator
-   NumberCategory* addCategory(const QString& name, QPixmap* icon, int index = -1, bool enabled = true);
-   void setIcon(int index, QPixmap* icon);
+   NumberCategory* addCategory(const QString& name, QVariant icon, int index = -1, bool enabled = true);
+   void setIcon(int index, QVariant icon);
    void save();
 
    //Singleton

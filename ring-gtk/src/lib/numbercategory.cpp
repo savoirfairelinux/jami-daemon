@@ -22,7 +22,7 @@
 #include "visitors/pixmapmanipulationvisitor.h"
 
 
-NumberCategory::NumberCategory(QObject* parent, const QString& name) : QObject(parent), m_pIcon(nullptr),m_Name(name)
+NumberCategory::NumberCategory(QObject* parent, const QString& name) : QObject(parent),m_Name(name)
 {
 
 }
@@ -37,7 +37,7 @@ QString  NumberCategory::name() const
    return m_Name;
 }
 
-void NumberCategory::setIcon(QPixmap*pixmap)
+void NumberCategory::setIcon(QVariant pixmap)
 {
    m_pIcon = pixmap;
 }

@@ -71,7 +71,7 @@ bool NumberCategoryModel::setData(const QModelIndex& idx, const QVariant &value,
    return false;
 }
 
-NumberCategory* NumberCategoryModel::addCategory(const QString& name, QPixmap* icon, int index, bool enabled)
+NumberCategory* NumberCategoryModel::addCategory(const QString& name, QVariant icon, int index, bool enabled)
 {
    InternalTypeRepresentation* rep = m_hByName[name];
    if (!rep) {
@@ -97,7 +97,7 @@ NumberCategoryModel* NumberCategoryModel::instance()
    return m_spInstance;
 }
 
-void NumberCategoryModel::setIcon(int idx, QPixmap* icon)
+void NumberCategoryModel::setIcon(int idx, QVariant icon)
 {
    InternalTypeRepresentation* rep = m_hByIdx[idx];
    if (rep) {
@@ -140,7 +140,7 @@ void NumberCategoryModel::registerNumber(PhoneNumber* number)
 {
    InternalTypeRepresentation* rep = m_hByName[number->category()->name()];
    if (!rep) {
-      addCategory(number->category()->name(),nullptr,-1,true);
+      addCategory(number->category()->name(),QVariant(),-1,true);
       rep = m_hByName[number->category()->name()];
    }
    rep->counter++;
@@ -158,7 +158,7 @@ NumberCategory* NumberCategoryModel::getCategory(const QString& type)
    InternalTypeRepresentation* internal = m_hByName[type];
    if (internal)
       return internal->category;
-   return addCategory(type,nullptr);
+   return addCategory(type,QVariant());
 }
 
 

@@ -26,6 +26,9 @@
 
 class ProfileContentBackend;
 class ProfilePersisterVisitor;
+class VCardMapper;
+
+typedef void (VCardMapper:: *mapToProperty)(Contact*, const QByteArray&);
 
 class LIB_EXPORT ProfileModel : public QAbstractItemModel {
    Q_OBJECT

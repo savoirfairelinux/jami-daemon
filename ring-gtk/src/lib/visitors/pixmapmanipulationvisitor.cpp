@@ -33,13 +33,19 @@ QVariant PixmapManipulationVisitor::contactPhoto(Contact* c, const QSize& size, 
    return QVariant();
 }
 
-QByteArray PixmapManipulationVisitor::toByteArray(const QPixmap* pxm)
+QByteArray PixmapManipulationVisitor::toByteArray(const QVariant pxm)
 {
    Q_UNUSED(pxm)
-   return *(new QByteArray());
+   return QByteArray();
 }
 
-QVariant PixmapManipulationVisitor::numberCategoryIcon(const QPixmap* p, const QSize& size, bool displayPresence, bool isPresent)
+QVariant PixmapManipulationVisitor::profilePhoto(const QByteArray& data)
+{
+   Q_UNUSED(data)
+   return QVariant();
+}
+
+QVariant PixmapManipulationVisitor::numberCategoryIcon(const QVariant p, const QSize& size, bool displayPresence, bool isPresent)
 {
    Q_UNUSED(p)
    Q_UNUSED(size)

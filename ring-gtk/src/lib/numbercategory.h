@@ -22,8 +22,6 @@
 
 #include "typedefs.h"
 
-class QPixmap;
-
 /**
  * This class represent a PhoneNumber category. Categories usually
  * come from the contact provider, but can be added dynamically too
@@ -39,7 +37,7 @@ public:
    QString  name() const;
 
    //Setter
-   void setIcon(QPixmap*       pixmap );
+   void setIcon(QVariant       icon   );
    void setName(const QString& name   );
 
 private:
@@ -47,7 +45,7 @@ private:
 
    //Attributes
    QString m_Name;
-   QPixmap* m_pIcon;
+   QVariant m_pIcon;
 };
 
 #endif //NUMBERCATEGORY_H

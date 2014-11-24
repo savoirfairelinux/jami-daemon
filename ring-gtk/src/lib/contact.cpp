@@ -20,9 +20,6 @@
 //Parent
 #include "contact.h"
 
-//Qt
-#include <QtGui/QPixmap>
-
 //SFLPhone library
 #include "sflphone_const.h"
 #include "phonenumber.h"
@@ -41,7 +38,7 @@ public:
    QString                 m_FirstName      ;
    QString                 m_SecondName     ;
    QString                 m_NickName       ;
-   QPixmap*                m_pPhoto         ;
+   QVariant                m_pPhoto         ;
    QString                 m_FormattedName  ;
    QString                 m_PreferredEmail ;
    QString                 m_Organization   ;
@@ -127,14 +124,14 @@ void ContactPrivate::phoneNumberCountAboutToChange(int n,int o)
    }
 }
 
-ContactPrivate::ContactPrivate(Contact* contact, AbstractContactBackend* parent):m_pPhoto(nullptr),
-   m_Numbers(contact),m_DisplayPhoto(nullptr),m_Active(true),
+ContactPrivate::ContactPrivate(Contact* contact, AbstractContactBackend* parent):m_Numbers(contact),
+   m_DisplayPhoto(nullptr),m_Active(true),
    m_pBackend(parent?parent:TransitionalContactBackend::instance())
 {}
 
 ContactPrivate::~ContactPrivate()
 {
-   delete m_pPhoto;
+
 }
 
 Contact::PhoneNumbers::PhoneNumbers(Contact* parent) : QVector<PhoneNumber*>(),CategorizedCompositeNode(CategorizedCompositeNode::Type::NUMBER),
@@ -210,7 +207,7 @@ const QString& Contact::secondName() const
 }
 
 ///Get the photo
-const QPixmap* Contact::photo() const
+const QVariant Contact::photo() const
 {
    return d->m_pPhoto;
 }
@@ -290,7 +287,7 @@ void Contact::setFamilyName(const QString& name)
 }
 
 ///Set the Photo/Avatar
-void Contact::setPhoto(QPixmap* photo)
+void Contact::setPhoto(const QVariant& photo)
 {
    d->m_pPhoto = photo;
    d->changed();
@@ -468,24 +465,23 @@ const QByteArray Contact::toVCard(QList<Account*> accounts) const
    //serializing here
    VCardUtils* maker = new VCardUtils();
    maker->startVCard("2.1");
-   maker->addProperty(VCardUtils::Property::VC_UID, uid());
-   maker->addProperty(VCardUtils::Property::VC_NAME, QString(secondName()
-                                                   + VCardUtils::Delimiter::VC_SEPARATOR_TOKEN
+   maker->addProperty(VCardUtils::Property::UID, uid());
+   maker->addProperty(VCardUtils::Property::NAME, QString(secondName()
+                                                   + VCardUtils::Delimiter::SEPARATOR_TOKEN
                                                    + firstName()));
-   maker->addProperty(VCardUtils::Property::VC_FORMATTED_NAME, formattedName());
-   maker->addProperty(VCardUtils::Property::VC_MAILER, preferredEmail());
-   maker->addProperty(VCardUtils::Property::VC_ORGANIZATION, organization());
+   maker->addProperty(VCardUtils::Property::FORMATTED_NAME, formattedName());
+   maker->addProperty(VCardUtils::Property::MAILER, preferredEmail());
+   maker->addProperty(VCardUtils::Property::ORGANIZATION, organization());
 
    for (PhoneNumber* phone : phoneNumbers()) {
       maker->addPhoneNumber(phone->category()->name(), phone->uri());
    }
 
-   qDebug() << uid() << " : " << accounts.size() << "accounts";
    for(Account* acc : accounts) {
-      maker->addProperty(VCardUtils::Property::VC_X_RINGACCOUNT, acc->id());
+      maker->addProperty(VCardUtils::Property::X_RINGACCOUNT, acc->id());
    }
 
-   //maker->addPhoto(PixmapManipulationVisitor::instance()->toByteArray(photo()));
+   maker->addPhoto(PixmapManipulationVisitor::instance()->toByteArray(photo()).simplified());
    return maker->endVCard();
 }
 

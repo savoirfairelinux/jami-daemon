@@ -29,45 +29,43 @@ class VCardUtils
 public:
 
    struct Delimiter {
-      constexpr static const char* VC_SEPARATOR_TOKEN    =  ";";
-      constexpr static const char* VC_END_LINE_TOKEN     =  "\n";
-      constexpr static const char* VC_BEGIN_TOKEN        =  "BEGIN:VCARD";
-      constexpr static const char* VC_END_TOKEN          =  "END:VCARD";
+      constexpr static const char* SEPARATOR_TOKEN    =  ";";
+      constexpr static const char* END_LINE_TOKEN     =  "\n";
+      constexpr static const char* BEGIN_TOKEN        =  "BEGIN:VCARD";
+      constexpr static const char* END_TOKEN          =  "END:VCARD";
    };
 
-
-   // struc
    struct Property {
-      constexpr static const char* VC_UID                 = "UID";
-      constexpr static const char* VC_VERSION             = "VERSION";
-      constexpr static const char* VC_ADDRESS             = "TOP";
-      constexpr static const char* VC_AGENT               = "AGENT";
-      constexpr static const char* VC_BIRTHDAY            = "BDAY";
-      constexpr static const char* VC_CATEGORIES          = "CATEGORIES";
-      constexpr static const char* VC_CLASS               = "CLASS";
-      constexpr static const char* VC_DELIVERY_LABEL      = "LABEL";
-      constexpr static const char* VC_EMAIL               = "EMAIL";
-      constexpr static const char* VC_FORMATTED_NAME      = "FN";
-      constexpr static const char* VC_GEOGRAPHIC_POSITION = "GEO";
-      constexpr static const char* VC_KEY                 = "KEY";
-      constexpr static const char* VC_LOGO                = "LOGO";
-      constexpr static const char* VC_MAILER              = "MAILER";
-      constexpr static const char* VC_NAME                = "N";
-      constexpr static const char* VC_NICKNAME            = "NICKNAME";
-      constexpr static const char* VC_NOTE                = "NOTE";
-      constexpr static const char* VC_ORGANIZATION        = "ORG";
-      constexpr static const char* VC_PHOTO               = "PHOTO";
-      constexpr static const char* VC_PRODUCT_IDENTIFIER  = "PRODID";
-      constexpr static const char* VC_REVISION            = "REV";
-      constexpr static const char* VC_ROLE                = "ROLE";
-      constexpr static const char* VC_SORT_STRING         = "SORT-STRING";
-      constexpr static const char* VC_SOUND               = "SOUND";
-      constexpr static const char* VC_TELEPHONE           = "TEL";
-      constexpr static const char* VC_TIME_ZONE           = "TZ";
-      constexpr static const char* VC_TITLE               = "TITLE";
-      constexpr static const char* VC_URL                 = "URL";
+      constexpr static const char* UID                 = "UID";
+      constexpr static const char* VERSION             = "VERSION";
+      constexpr static const char* ADDRESS             = "TOP";
+      constexpr static const char* AGENT               = "AGENT";
+      constexpr static const char* BIRTHDAY            = "BDAY";
+      constexpr static const char* CATEGORIES          = "CATEGORIES";
+      constexpr static const char* CLASS               = "CLASS";
+      constexpr static const char* DELIVERY_LABEL      = "LABEL";
+      constexpr static const char* EMAIL               = "EMAIL";
+      constexpr static const char* FORMATTED_NAME      = "FN";
+      constexpr static const char* GEOGRAPHIC_POSITION = "GEO";
+      constexpr static const char* KEY                 = "KEY";
+      constexpr static const char* LOGO                = "LOGO";
+      constexpr static const char* MAILER              = "MAILER";
+      constexpr static const char* NAME                = "N";
+      constexpr static const char* NICKNAME            = "NICKNAME";
+      constexpr static const char* NOTE                = "NOTE";
+      constexpr static const char* ORGANIZATION        = "ORG";
+      constexpr static const char* PHOTO               = "PHOTO";
+      constexpr static const char* PRODUCT_IDENTIFIER  = "PRODID";
+      constexpr static const char* REVISION            = "REV";
+      constexpr static const char* ROLE                = "ROLE";
+      constexpr static const char* SORT_STRING         = "SORT-STRING";
+      constexpr static const char* SOUND               = "SOUND";
+      constexpr static const char* TELEPHONE           = "TEL";
+      constexpr static const char* TIME_ZONE           = "TZ";
+      constexpr static const char* TITLE               = "TITLE";
+      constexpr static const char* URL                 = "URL";
 
-      constexpr static const char* VC_X_RINGACCOUNT       = "X-RINGACCOUNTID";
+      constexpr static const char* X_RINGACCOUNT       = "X-RINGACCOUNTID";
    };
 
    VCardUtils();

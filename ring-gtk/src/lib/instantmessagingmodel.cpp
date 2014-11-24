@@ -111,8 +111,8 @@ QVariant InstantMessagingModel::data( const QModelIndex& idx, int role) const
             if (m_lImages.find(idx) != m_lImages.end())
                return m_lImages[idx];
             const Contact* c = m_pCall->peerPhoneNumber()->contact();
-            if (c && c->photo()) {
-               return QVariant::fromValue<void*>((void*)c->photo());
+            if (c && c->photo().isValid()) {
+               return c->photo();
             }
             return QVariant();
             break;

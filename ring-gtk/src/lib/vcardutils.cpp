@@ -18,7 +18,6 @@
 
 #include "vcardutils.h"
 #include <QBuffer>
-#include <QPixmap>
 
 //BEGIN:VCARD
 //VERSION:3.0
@@ -36,6 +35,19 @@
 //EMAIL;TYPE=PREF,INTERNET:forrestgump@example.com
 //REV:20080424T195243Z
 //END:VCARD
+
+//4.6 Image Restrictions
+//The following rules apply to images:
+//1. The image SHOULD use less than eight kilobytes (8k) of data; this restriction
+//   is to be enforced by the publishing client.
+//2. The image height and width SHOULD be between thirty-two (32) and ninety-six (96) pixels;
+//   the recommended size is sixty-four (64) pixels high and sixty-four (64) pixels wide.
+//3. The image SHOULD be square.
+//4. The image content type SHOULD be image/gif, image/jpeg, or image/png;
+//   support for the "image/png" content type is REQUIRED,
+//   support for the "image/gif" and "image/jpeg" content types is RECOMMENDED,
+//   and support for any other content type is OPTIONAL.
+
 VCardUtils::VCardUtils()
 {
 
@@ -43,8 +55,8 @@ VCardUtils::VCardUtils()
 
 void VCardUtils::startVCard(const QString& version)
 {
-   m_vCard << Delimiter::VC_BEGIN_TOKEN;
-   addProperty(Property::VC_VERSION, version);
+   m_vCard << Delimiter::BEGIN_TOKEN;
+   addProperty(Property::VERSION, version);
 }
 
 void VCardUtils::addProperty(const char* prop, const QString& value)
@@ -57,7 +69,7 @@ void VCardUtils::addProperty(const char* prop, const QString& value)
 void VCardUtils::addPhoneNumber(QString type, QString num)
 {
    // This will need some formatting
-   addProperty(Property::VC_TELEPHONE, type + num);
+   addProperty(Property::TELEPHONE, type + num);
 //   char* prop = VCProperty::VC_TELEPHONE;
 //   strcat(prop, VCDelimiter::VC_SEPARATOR_TOKEN);
 //   strcat(prop, "TYPE=" + type);
@@ -66,24 +78,17 @@ void VCardUtils::addPhoneNumber(QString type, QString num)
 
 void VCardUtils::addPhoto(const QByteArray img)
 {
-   Q_UNUSED(img)
-   //Preparation of our QPixmap
-//   QByteArray bArray;
-//   QBuffer buffer(&bArray);
-//   buffer.open(QIODevice::WriteOnly);
-
-//   //PNG ?
-//   pixmap->save(&buffer, "PNG");
-//   m_vCard << QString(QString::fromUtf8(VCProperty::VC_PHOTO) +
-//                      QString::fromUtf8(VCDelimiter::VC_SEPARATOR_TOKEN) +
-//                      "ENCODING=BASE64" +
-//                      "TYPE=PNG:" +
-//                      bArray);
+   m_vCard << QString(QString::fromUtf8(Property::PHOTO) +
+                      QString::fromUtf8(Delimiter::SEPARATOR_TOKEN) +
+                      "ENCODING=BASE64" +
+                      QString::fromUtf8(Delimiter::SEPARATOR_TOKEN) +
+                      "TYPE=PNG:" +
+                      img.toBase64());
 }
 
 const QByteArray VCardUtils::endVCard()
 {
-   m_vCard << Delimiter::VC_END_TOKEN;
-   const QString result = m_vCard.join(QString::fromUtf8(Delimiter::VC_END_LINE_TOKEN));
+   m_vCard << Delimiter::END_TOKEN;
+   const QString result = m_vCard.join(QString::fromUtf8(Delimiter::END_LINE_TOKEN));
    return result.toUtf8();
 }
