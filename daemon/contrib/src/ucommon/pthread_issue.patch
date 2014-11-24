@@ -1,0 +1,18 @@
+--- ucommon/inc/ucommon/platform.h	2014-11-24 10:23:05.503897737 -0500
++++ ucommon/inc/ucommon/platform.h.orig	2014-11-24 10:22:53.759898056 -0500
+@@ -188,6 +188,7 @@
+ #include <io.h>
+
+ // gcc c++11 support on mingw requires pthread support library
++/*
+ #if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 7)) && defined(_UCOMMON_EXTENDED_) && defined(__MINGW_WINPTHREAD__)
+ #include <pthread.h>   // gnu libstdc++ now requires a win pthread
+ #ifdef OLD_STDCPP
+@@ -200,6 +201,7 @@
+ typedef DWORD pthread_t;
+ typedef CRITICAL_SECTION pthread_mutex_t;
+ #endif
++*/
+ typedef char *caddr_t;
+ typedef HANDLE fd_t;
+ typedef SOCKET socket_t;

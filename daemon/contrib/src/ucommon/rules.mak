@@ -20,6 +20,7 @@ ucommon: ucommon-$(UCOMMON_VERSION).tar.gz .sum-ucommon
 	$(UNPACK)
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/ucommon/windows_platform.patch
+	$(APPLY) $(SRC)/ucommon/pthread_issue.patch
 endif
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
