@@ -260,10 +260,10 @@ void AudioRtpSession::updateDestinationIpAddress()
 #endif
     ) SFL_DBG("Did not remove previous destination");
 
-    IpAddr remote = {call_.getLocalSDP().getRemoteIP()};
-    remote.setPort(call_.getLocalSDP().getRemoteAudioPort());
+    IpAddr remote = {call_.getSDP().getRemoteIP()};
+    remote.setPort(call_.getSDP().getRemoteAudioPort());
     if (!remote) {
-        SFL_WARN("Target IP address (%s) is not correct!", call_.getLocalSDP().getRemoteIP().c_str());
+        SFL_WARN("Target IP address (%s) is not correct!", call_.getSDP().getRemoteIP().c_str());
         return;
     }
     remoteIp_ = remote;
