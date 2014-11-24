@@ -317,6 +317,10 @@ std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 {
     std::map<std::string, std::string> ringToneList;
 
+#ifdef _WIN32 // Will eventually be replaced anyways. I need this DONT REMOVE PLEASE.
+    return ringToneList;
+#else
+
     std::string r_path(fileutils::get_ringtone_dir());
     struct dirent **namelist;
     int n = scandir(r_path.c_str(), &namelist, 0, alphasort);
@@ -340,6 +344,7 @@ std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
     }
     free(namelist);
     return ringToneList;
+#endif
 }
 
 int32_t ConfigurationManager::isIax2Enabled()
