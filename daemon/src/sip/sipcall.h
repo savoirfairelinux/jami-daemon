@@ -84,10 +84,10 @@ class SIPCall : public Call
         ~SIPCall();
 
         /**
-         * Return the local SDP session
+         * Return the SDP's manager of this call
          */
-        Sdp& getLocalSDP() {
-            return *local_sdp_;
+        Sdp& getSDP() {
+            return *sdp_;
         }
 
         /**
@@ -223,7 +223,7 @@ class SIPCall : public Call
         /**
          * The SDP session
          */
-        std::unique_ptr<Sdp> local_sdp_;
+        std::unique_ptr<Sdp> sdp_;
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contactHeader_ {contactBuffer_, 0};
