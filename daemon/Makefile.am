@@ -23,7 +23,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 #FIXME: this will change when libsflphone is fixed
 if HAVE_WIN32
-SUBDIRS = bin
+SUBDIRS = src ringtones man $(TESTS_DIR) doc bin
 else
 SUBDIRS = src ringtones man $(TESTS_DIR) doc bin
 endif
