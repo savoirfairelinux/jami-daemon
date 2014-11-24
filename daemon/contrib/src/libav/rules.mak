@@ -110,7 +110,8 @@ ifndef HAVE_ANDROID
 PKGS += libav
 endif
 endif
-ifeq ($(call need_pkg,"libavcodec >= 53.5.0 libavformat >= 53.2.0 libswscale libavdevice >= 53.0.0 libavutil >= 51.0.0"),)
+
+ifeq ($(call need_pkg,"libavcodec >= 53.5.0 libavformat >= 54.20.3 libswscale libavdevice >= 53.0.0 libavutil >= 51.0.0"),)
 PKGS_FOUND += libav
 endif
 

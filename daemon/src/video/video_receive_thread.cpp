@@ -102,12 +102,9 @@ bool VideoReceiveThread::setup()
     videoDecoder_->setInterruptCallback(interruptCb, this);
 
     if (input == SDP_FILENAME) {
-#if HAVE_SDP_CUSTOM_IO
-        // custom_io so the SDP demuxer will not open any UDP connections
+        // Force custom_io so the SDP demuxer will not open any UDP connections
+        // We need it to use ICE transport.
         args_["sdp_flags"] = "custom_io";
-#else
-        SFL_WARN("libavformat too old for custom SDP demuxing");
-#endif
 
         EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
         videoDecoder_->setIOContext(&sdpContext_);
@@ -119,10 +116,8 @@ bool VideoReceiveThread::setup()
                  "Could not open input \"%s\"", input.c_str());
 
     if (input == SDP_FILENAME) {
-#if HAVE_SDP_CUSTOM_IO
         // Now replace our custom AVIOContext with one that will read packets
         videoDecoder_->setIOContext(demuxContext_);
-#endif
     }
 
     // FIXME: this is a hack because our peer sends us RTP before
@@ -182,9 +177,7 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
 
 void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 {
-#if HAVE_SDP_CUSTOM_IO
     demuxContext_ = socketPair.createIOContext();
-#endif
 }
 
 bool VideoReceiveThread::decodeFrame()

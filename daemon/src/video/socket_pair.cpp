@@ -118,7 +118,6 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     memcpy(addr, res->ai_addr, res->ai_addrlen);
     *addr_len = res->ai_addrlen;
 
-#if HAVE_SDP_CUSTOM_IO
     // bind socket so that we send from and receive
     // on local port
     if (bind(udp_fd, reinterpret_cast<sockaddr*>(addr), *addr_len) < 0) {
@@ -127,7 +126,6 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
         close(udp_fd);
         udp_fd = -1;
     }
-#endif
 
     freeaddrinfo(res0);
 
@@ -180,14 +178,7 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
                   sizeof(path));
 
     const int rtcp_port = rtp_port + 1;
-
-#if HAVE_SDP_CUSTOM_IO
     const int local_rtcp_port = local_rtp_port + 1;
-#else
-    SFL_WARN("libavformat too old for socket reuse, using random source ports");
-    local_rtp_port = 0;
-    const int local_rtcp_port = 0;
-#endif
 
     sockaddr_storage rtp_addr, rtcp_addr;
     socklen_t rtp_len, rtcp_len;
