@@ -38,6 +38,7 @@
 #include "client/configurationmanager.h"
 #include "map_utils.h"
 #include "array_size.h"
+#include "intrin.h"
 
 #include <pjsip.h>
 #include <pjsip/sip_types.h>
@@ -88,7 +89,7 @@ SipTransport::~SipTransport()
 }
 
 bool
-SipTransport::isAlive(const std::shared_ptr<SipTransport>& t, pjsip_transport_state state)
+SipTransport::isAlive(UNUSED const std::shared_ptr<SipTransport>& t, pjsip_transport_state state)
 {
     return state != PJSIP_TP_STATE_DISCONNECTED
 #if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
