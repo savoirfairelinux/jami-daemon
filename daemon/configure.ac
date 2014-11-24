@@ -354,7 +354,7 @@ AS_IF([test "x$enable_video" != "xno"],
         PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
         LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
 
-        PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat development files]))
+        PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 54.20.3,, AC_MSG_ERROR([Missing libavformat development files]))
 
         PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale development files]))
 
