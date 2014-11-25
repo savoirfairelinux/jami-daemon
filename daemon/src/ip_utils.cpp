@@ -256,7 +256,7 @@ IpAddr::isUnspecified() const
     case AF_INET:
         return IN_IS_ADDR_UNSPECIFIED(&addr.ipv4.sin_addr);
     case AF_INET6:
-        return IN6_IS_ADDR_UNSPECIFIED(&addr.ipv6.sin6_addr);
+        return IN6_IS_ADDR_UNSPECIFIED(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));
     default:
         return true;
     }
