@@ -52,6 +52,8 @@
 #ifdef SFL_VIDEO
 #include "client/videomanager.h"
 
+#include <chrono>
+
 static sfl_video::VideoSettings
 getSettings()
 {
@@ -731,4 +733,55 @@ SIPCall::onAnswered()
         setState(Call::ACTIVE);
         Manager::instance().peerAnsweredCall(getCallId());
     }
+}
+
+void
+SIPCall::setupLocalSDPFromIce()
+{
+    waitForIceInitialization(7);
+    sdp_->addIceAttributes(iceTransport_->getIceAttributes());
+
+    // Add video and audio ports
+    sdp_->addIceCandidates(0, iceTransport_->getIceCandidates(0));
+#ifdef SFL_VIDEO
+    sdp_->addIceCandidates(1, iceTransport_->getIceCandidates(1));
+#endif
+}
+
+std::vector<sfl::IceCandidate>
+SIPCall::getAllRemoteCandidates()
+{
+    std::vector<sfl::IceCandidate> rem_candidates;
+
+    auto& audio_candidates = sdp_->getIceCandidates(0);
+    rem_candidates.resize(audio_candidates.size());
+    for (unsigned i=0; i<audio_candidates.size(); ++i) {
+        iceTransport_->getCandidateFromSDP(audio_candidates[i], rem_candidates[i]);
+    }
+
+#ifdef SFL_VIDEO
+    const auto base = rem_candidates.size();
+    auto& video_candidates = sdp_->getIceCandidates(1);
+    rem_candidates.resize(base + video_candidates.size());
+    for (unsigned i=0; i<video_candidates.size(); ++i) {
+        iceTransport_->getCandidateFromSDP(video_candidates[i], rem_candidates[base + i]);
+    }
+#endif
+
+    return rem_candidates;
+}
+
+bool
+SIPCall::startIce()
+{
+    auto rem_ice_attrs = sdp_->getIceAttributes();
+    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
+        SFL_ERR("ICE: empty attributes");
+        return false;
+    }
+
+    if (!iceTransport_->start(rem_ice_attrs, getAllRemoteCandidates()))
+        return false;
+
+    return waitForIceNegociation(20) > 0;
 }

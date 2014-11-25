@@ -369,6 +369,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->initIceTransport(false);
+    call->setupLocalSDPFromIce();
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -1020,6 +1022,11 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update connection information
     sdp.setMediaTransportInfoFromRemoteSdp();
 
+    // Handle possible ICE transport
+    auto useIce = call->startIce();
+    if (!useIce)
+        SFL_WARN("ICE not started");
+
     auto& audioRTP = call->getAudioRtp();
     try {
         audioRTP.updateDestinationIpAddress();
@@ -1033,8 +1040,12 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     auto& videoRTP = call->getVideoRtp();
     videoRTP.updateSDP(sdp);
     videoRTP.updateDestination(sdp.getRemoteIP(), sdp.getRemoteVideoPort());
-    const auto localVideoPort = sdp.getLocalVideoPort();
-    videoRTP.start(localVideoPort ? localVideoPort : sdp.getRemoteVideoPort());
+    if (useIce)
+        videoRTP.start(call->getIceSocket(1));
+    else {
+	    const auto localVideoPort = sdp.getLocalVideoPort();
+        videoRTP.start(localVideoPort ? localVideoPort : sdp.getRemoteVideoPort());
+    }
 #endif
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
