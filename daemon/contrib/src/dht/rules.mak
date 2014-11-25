@@ -7,7 +7,7 @@ ifeq ($(call need_pkg,'opendht'),)
 PKGS_FOUND += dht
 endif
 
-DEPS_dht = gnutls
+DEPS_dht = gnutls $(DEPS_gnutls)
 
 $(TARBALLS)/dht-$(DHT_VERSION).tar.gz:
 	$(call download,$(DHT_URL))
