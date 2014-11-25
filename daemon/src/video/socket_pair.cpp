@@ -32,6 +32,7 @@
 
 #include "libav_deps.h"
 #include "socket_pair.h"
+#include "ice_socket.h"
 #include "libav_utils.h"
 #include "logger.h"
 
@@ -136,23 +137,33 @@ namespace sfl_video {
 
 static const int RTP_BUFFER_SIZE = 1472;
 
-SocketPair::SocketPair(const char *uri, int localPort) :
-           rtcpWriteMutex_(),
-           rtpHandle_(0),
-           rtcpHandle_(0),
-           rtpDestAddr_(),
-           rtpDestAddrLen_(),
-           rtcpDestAddr_(),
-           rtcpDestAddrLen_(),
-           interrupted_(false)
+SocketPair::SocketPair(const char *uri, int localPort)
+    : rtp_sock_()
+    , rtcp_sock_()
+    , rtcpWriteMutex_()
+    , rtpDestAddr_()
+    , rtpDestAddrLen_()
+    , rtcpDestAddr_()
+    , rtcpDestAddrLen_()
 {
     openSockets(uri, localPort);
 }
 
+SocketPair::SocketPair(sfl::IceSocket* rtp_sock, sfl::IceSocket* rtcp_sock)
+    : rtp_sock_(rtp_sock)
+    , rtcp_sock_(rtcp_sock)
+    , rtcpWriteMutex_()
+    , rtpDestAddr_()
+    , rtpDestAddrLen_()
+    , rtcpDestAddr_()
+    , rtcpDestAddrLen_()
+{}
+
 SocketPair::~SocketPair()
 {
     interrupted_ = true;
-    closeSockets();
+    if (rtpHandle_ >= 0)
+        closeSockets();
 }
 
 void SocketPair::interrupt()
