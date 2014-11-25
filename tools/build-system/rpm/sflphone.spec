@@ -48,6 +48,7 @@ mkdir -p daemon/contrib/native
 pushd daemon/contrib/native
 ../bootstrap
 make .iax
+make .dht
 popd
 # Compile the daemon
 pushd daemon
@@ -277,6 +278,9 @@ fi
 %exclude %{_includedir}/qtsflphone/*.h
 
 %changelog
+* Tue Nov 25 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.2-6
+- Build dht from contrib
+
 * Mon Nov 24 2014 Tristan Matthews <tristan.matthews@savoirfairelinux.com> - 1.4.2-5
 - drop .h and .so that are no longer built
 
