@@ -1,5 +1,5 @@
 # DHT
-DHT_VERSION := 93fa3ada57d2eca72af36163b6f8b1bec182fa19
+DHT_VERSION := c9405c5ae4a6308090b8644038887b8570c0aae8
 DHT_URL := https://github.com/aberaud/dht/archive/$(DHT_VERSION).tar.gz
 
 PKGS += dht
