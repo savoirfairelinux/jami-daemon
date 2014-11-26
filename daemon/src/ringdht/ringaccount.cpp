@@ -529,7 +529,19 @@ void RingAccount::doRegister()
             std::string node_addr;
             while (std::getline(ss, node_addr, ';')) {
                 auto ips = ip_utils::getAddrList(node_addr);
-                bootstrap.insert(bootstrap.end(), ips.begin(), ips.end());
+                if (ips.empty()) {
+                    IpAddr resolved(node_addr);
+                    if (resolved) {
+                        if (resolved.getPort() == 0)
+                            resolved.setPort(DHT_DEFAULT_PORT);
+                        bootstrap.push_back(resolved);
+                    }
+                } else {
+                    for (auto& ip : ips)
+                        if (ip.getPort() == 0)
+                            ip.setPort(DHT_DEFAULT_PORT);
+                    bootstrap.insert(bootstrap.end(), ips.begin(), ips.end());
+                }
             }
             for (auto ip : bootstrap)
                 SFL_DBG("Bootstrap node: %s", IpAddr(ip).toString(true).c_str());
