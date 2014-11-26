@@ -198,13 +198,18 @@ pixbuf_from_contact(EContact *contact)
     if (!photo)
         return NULL;
 
-    GdkPixbufLoader *loader;
-
-    loader = gdk_pixbuf_loader_new();
 
     if (photo->type == E_CONTACT_PHOTO_TYPE_INLINED) {
+        GdkPixbufLoader *loader = gdk_pixbuf_loader_new();
         if (gdk_pixbuf_loader_write(loader, (guchar *) photo->data.inlined.data, photo->data.inlined.length, NULL)) {
             pixbuf = gdk_pixbuf_loader_get_pixbuf(loader);
+        }
+        gdk_pixbuf_loader_close(loader, NULL);
+    } else if (photo->type == E_CONTACT_PHOTO_TYPE_URI) {
+        gchar *filename = g_filename_from_uri(photo->data.uri, NULL, NULL);
+        if (filename) {
+            pixbuf = gdk_pixbuf_new_from_file(filename, NULL);
+            g_free(filename);
         }
     }
 
