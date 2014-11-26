@@ -46,7 +46,7 @@ GNUTLS_CONF := \
 	--without-libintl-prefix \
 	$(HOSTCONF)
 
-DEPS_gnutls = nettle $(DEPS_nettle)
+DEPS_gnutls = nettle $(DEPS_nettle) iconv $(DEPS_iconv)
 
 .gnutls: gnutls
 	$(RECONF)
