@@ -60,6 +60,7 @@ void
 Call::removeCall()
 {
     Manager::instance().callFactory.removeCall(*this);
+    iceTransport_.reset();
 }
 
 const std::string&
@@ -299,4 +300,71 @@ Call::getNullDetails()
     details["TIMESTAMP_START"] = "";
     details["ACCOUNTID"] = "";
     return details;
+}
+
+void
+Call::initIceTransport(bool master)
+{
+    auto& iceTransportPool = Manager::instance().getIceTransportPool();
+    const auto& on_initdone = [this, master](sfl::IceTransport& iceTransport, bool done) {
+        if (done) {
+            if (master)
+                iceTransport.setInitiatorSession();
+            else
+                iceTransport.setSlaveSession();
+        }
+
+        {
+            std::unique_lock<std::mutex> lk(iceMutex_);
+            iceTransportInitDone_ = done;
+        }
+
+        iceCV_.notify_one();
+    };
+    const auto& on_negodone = [this, master](sfl::IceTransport& /*iceTransport*/, bool done) {
+        iceTransportNegoDone_ = done;
+        iceCV_.notify_one();
+    };
+    iceTransport_ = iceTransportPool.createTransport(getCallId().c_str(), 4,
+                                                     on_initdone,
+                                                     on_negodone);
+}
+
+int
+Call::waitForIceInitialization(unsigned timeout)
+{
+    std::unique_lock<std::mutex> lk(iceMutex_);
+    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+                         [this]{ return iceTransportInitDone_; })) {
+        SFL_WARN("waitForIceInitialization: timeout");
+        return -1;
+    }
+    SFL_DBG("waitForIceInitialization: %u", iceTransportInitDone_);
+    return iceTransportInitDone_ ? 1 : 0;
+}
+
+int
+Call::waitForIceNegociation(unsigned timeout)
+{
+    std::unique_lock<std::mutex> lk(iceMutex_);
+    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+                         [this]{ return iceTransportNegoDone_; })) {
+        SFL_WARN("waitForIceNegociation: timeout");
+        return -1;
+    }
+    SFL_DBG("waitForIceNegociation: %u", iceTransportNegoDone_);
+    return iceTransportNegoDone_ ? 1 : 0;
+}
+
+bool
+Call::isIceRunning()
+{
+    std::unique_lock<std::mutex> lk(iceMutex_);
+    return iceTransportNegoDone_;
+}
+
+sfl::IceSocket*
+Call::getIceSocket(unsigned compId) const
+{
+    return new sfl::IceSocket(iceTransport_, compId);
 }

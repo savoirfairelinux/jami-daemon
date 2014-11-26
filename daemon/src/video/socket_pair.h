@@ -38,32 +38,47 @@
 #include <mutex>
 #include <stdint.h>
 
+namespace sfl {
+class IceSocket;
+};
+
 namespace sfl_video {
 
 class SocketPair {
     public:
         SocketPair(const char *uri, int localPort);
+        SocketPair(sfl::IceSocket* rtp_sock, sfl::IceSocket* rtcp_sock);
         ~SocketPair();
 
         void interrupt();
         VideoIOHandle* createIOContext();
         void openSockets(const char *uri, int localPort);
         void closeSockets();
-        static int readCallback(void *opaque, uint8_t *buf, int buf_size);
-        static int writeCallback(void *opaque, uint8_t *buf, int buf_size);
 
     private:
         NON_COPYABLE(SocketPair);
 
+        static int readCallback(void *opaque, uint8_t *buf, int buf_size);
+        static int writeCallback(void *opaque, uint8_t *buf, int buf_size);
+
+        int waitForData();
+        int readRtpData(void *buf, int buf_size);
+        int readRtcpData(void *buf, int buf_size);
+        int writeRtpData(void *buf, int buf_size);
+        int writeRtcpData(void *buf, int buf_size);
+
+        std::unique_ptr<sfl::IceSocket> rtp_sock_;
+        std::unique_ptr<sfl::IceSocket> rtcp_sock_;
+
         std::mutex rtcpWriteMutex_;
 
-        int rtpHandle_;
-        int rtcpHandle_;
+        int rtpHandle_ {-1};
+        int rtcpHandle_ {-1};
         sockaddr_storage rtpDestAddr_;
         socklen_t rtpDestAddrLen_;
         sockaddr_storage rtcpDestAddr_;
         socklen_t rtcpDestAddrLen_;
-        bool interrupted_;
+        bool interrupted_ {false};
 };
 
 }
