@@ -34,9 +34,12 @@
 
 #include <QtCore/QString>
 #include <QCoreApplication>
+#include <QVariant>
 
 #include "lib/callmodel.h"
+#include "lib/accountlistmodel.h"
 #include "sflphone_client.h"
+#include "gtkqmodel.h"
 
 static Call *curr_call;
 
@@ -143,7 +146,6 @@ update_call_state(GtkWidget *label_callstate, GtkWidget *button_call, GtkWidget 
             g_debug("unknown call state");
     }
     g_debug("state changed");
-    printf("\n\nstate changed\n\n");
 }
 
 static void
@@ -193,6 +195,10 @@ main(int argc, char *argv[])
     gtk_init(&argc, &argv);
     srand(time(NULL));
 
+    // enable debug
+    g_setenv("G_MESSAGES_DEBUG", "all", TRUE);
+    g_debug("debug enabled");
+
     // Internationalization
     // bindtextdomain(PACKAGE_NAME, LOCALEDIR);
     // textdomain(PACKAGE_NAME);
@@ -220,8 +226,9 @@ main(int argc, char *argv[])
     g_signal_connect(G_OBJECT(button_hangup), "clicked", G_CALLBACK(hangup_cb), NULL);
     GtkWidget *label_callstate = GTK_WIDGET(gtk_builder_get_object(uibuilder, "label_callstate"));
     g_signal_connect(G_OBJECT(button_call), "clicked", G_CALLBACK(call_clicked_cb), entry_call_uri);
-
-    gtk_window_present(GTK_WINDOW(client->win));
+    GtkWidget *treeview_accountlist = GTK_WIDGET(gtk_builder_get_object(uibuilder, "treeview_accountlist"));
+    GtkWidget *treeview_call = GTK_WIDGET(gtk_builder_get_object(uibuilder, "treeview_call"));
+    // gtk_window_present(GTK_WINDOW(client->win));
 
     QCoreApplication *app = NULL;
 
@@ -241,12 +248,57 @@ main(int argc, char *argv[])
             &CallModel::callStateChanged,
             [=](void) { update_call_state(label_callstate, button_call, button_hangup);}
         );
+
+        // account list
+        // int num_accounts = AccountListModel::instance()->rowCount();
+        // g_debug("number accounts: %d", num_accounts);
+        // qDebug() << "account alias: " << (AccountListModel::instance()->data(AccountListModel::instance()->index(0, Account::Role::Alias))).toString();
+
+        // account model
+        GtkQModel *model = gtk_q_model_new(AccountListModel::instance(), 2, Account::Role::Alias, G_TYPE_STRING, Account::Role::Id, G_TYPE_STRING);
+
+        // put in treeview
+        gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_accountlist), GTK_TREE_MODEL(model) );
+        GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
+        GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes ("Alias",
+                                                   renderer,
+                                                   "text", 0,
+                                                   NULL);
+        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_accountlist), column);
+
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes ("ID",
+                                                   renderer,
+                                                   "text", 1,
+                                                   NULL);
+
+        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_accountlist), column);
+
+        // call model
+        model = gtk_q_model_new(CallModel::instance(), 2, Call::Role::Name, G_TYPE_STRING, Call::Role::Number, G_TYPE_STRING);
+        gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_call), GTK_TREE_MODEL(model) );
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes ("Name",
+                                                   renderer,
+                                                   "text", 0,
+                                                   NULL);
+        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_call), column);
+
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes ("Number",
+                                                   renderer,
+                                                   "text", 1,
+                                                   NULL);
+
+        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_call), column);
+        gtk_window_present(GTK_WINDOW(client->win));
+
         // start app and main loop
         status = app->exec();
     }
     catch(const char * msg)
     {
-        printf("caught error: %s\n", msg);
+        g_debug("caught error: %s\n", msg);
         g_object_unref(client);
         return 1;
     }
