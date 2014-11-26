@@ -34,8 +34,10 @@
 
 #include <QtCore/QString>
 #include <QCoreApplication>
+#include <QVariant>
 
 #include "lib/callmodel.h"
+#include "lib/accountlistmodel.h"
 #include "sflphone_client.h"
 
 static Call *curr_call;
@@ -143,7 +145,6 @@ update_call_state(GtkWidget *label_callstate, GtkWidget *button_call, GtkWidget 
             g_debug("unknown call state");
     }
     g_debug("state changed");
-    printf("\n\nstate changed\n\n");
 }
 
 static void
@@ -193,6 +194,10 @@ main(int argc, char *argv[])
     gtk_init(&argc, &argv);
     srand(time(NULL));
 
+    // enable debug
+    g_setenv("G_MESSAGES_DEBUG", "all", TRUE);
+    g_debug("debug enabled");
+
     // Internationalization
     // bindtextdomain(PACKAGE_NAME, LOCALEDIR);
     // textdomain(PACKAGE_NAME);
@@ -241,12 +246,18 @@ main(int argc, char *argv[])
             &CallModel::callStateChanged,
             [=](void) { update_call_state(label_callstate, button_call, button_hangup);}
         );
+
+        // account list
+        int num_accounts = AccountListModel::instance()->rowCount();
+        g_debug("number accounts: %d", num_accounts);
+        qDebug() << "account alias: " << AccountListModel::instance()->data(AccountListModel::instance()->index(0, Account::Role::Alias).toString();
+
         // start app and main loop
         status = app->exec();
     }
     catch(const char * msg)
     {
-        printf("caught error: %s\n", msg);
+        g_debug("caught error: %s\n", msg);
         g_object_unref(client);
         return 1;
     }
