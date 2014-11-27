@@ -7,7 +7,10 @@ ifeq ($(call need_pkg,'opendht'),)
 PKGS_FOUND += dht
 endif
 
+# Avoid building distro-provided dependencies in case dht was built manually
+ifneq ($(call need_pkg,"gnutls >= 3.0.20"),)
 DEPS_dht = gnutls $(DEPS_gnutls)
+endif
 
 $(TARBALLS)/dht-$(DHT_VERSION).tar.gz:
 	$(call download,$(DHT_URL))
