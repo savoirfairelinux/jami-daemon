@@ -200,6 +200,83 @@ gtk_q_model_new (QAbstractItemModel *model, gint n_columns, ...)
 
   gtk_q_model_length(retval);
 
+  /* connect signals */
+  QObject::connect(
+      model,
+      &QAbstractItemModel::rowsInserted,
+      [=](const QModelIndex & parent, int first, int last) {
+        g_debug("rows inserted, first: %d, last: %d", first, last);
+        for( int row = first; row <= last; row++) {
+          GtkTreeIter *iter = g_new0(GtkTreeIter, 1);
+          GtkTreePath *path = gtk_tree_path_new();
+          int_ptr_t row_ptr;
+          row_ptr.value = row;
+          iter->stamp = retval->priv->stamp;
+          iter->user_data = row_ptr.ptr;
+          gtk_tree_path_append_index(path, row);
+          gtk_tree_model_row_inserted(GTK_TREE_MODEL(retval), path, iter);
+        }
+      }
+  );
+
+  QObject::connect(
+      model,
+      &QAbstractItemModel::rowsMoved,
+      [=](const QModelIndex & sourceParent, int sourceStart, int sourceEnd, const QModelIndex & destinationParent, int destinationRow) {
+        g_debug("rows moved, start: %d, end: %d, moved to: %d", sourceStart, sourceEnd, destinationRow);
+        for( int row = sourceStart; row <= sourceEnd; row++) {
+          /* first remove the row from old location */
+          GtkTreePath *path_old = gtk_tree_path_new();
+          gtk_tree_path_append_index(path_old, row);
+          gtk_tree_model_row_deleted(GTK_TREE_MODEL(retval), path_old);
+          /* then insert it at new location */
+          GtkTreeIter *iter_new = g_new0(GtkTreeIter, 1);
+          GtkTreePath *path_new = gtk_tree_path_new();
+          int_ptr_t row_ptr;
+          row_ptr.value = destinationRow;
+          iter_new->stamp = retval->priv->stamp;
+          iter_new->user_data = row_ptr.ptr;
+          gtk_tree_path_append_index(path_new, destinationRow);
+          gtk_tree_model_row_inserted(GTK_TREE_MODEL(retval), path_new, iter_new);
+          destinationRow++;
+        }
+      }
+  );
+
+  QObject::connect(
+      model,
+      &QAbstractItemModel::rowsRemoved,
+      [=](const QModelIndex & parent, int first, int last) {
+        g_debug("rows removed");
+        for( int row = first; row <= last; row++) {
+          GtkTreePath *path = gtk_tree_path_new();
+          gtk_tree_path_append_index(path, row);
+          gtk_tree_model_row_deleted(GTK_TREE_MODEL(retval), path);
+        }
+      }
+  );
+
+  QObject::connect(
+      model,
+      &QAbstractItemModel::dataChanged,
+      [=](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles = QVector<int> ()) {
+        g_debug("data changed");
+        /* for now assume only 1 column and no children, so get the rows */
+        int first = topLeft.row();
+        int last = bottomRight.row();
+        for( int row = first; row <= last; row++) {
+          GtkTreeIter *iter = g_new0(GtkTreeIter, 1);
+          GtkTreePath *path = gtk_tree_path_new();
+          int_ptr_t row_ptr;
+          row_ptr.value = row;
+          iter->stamp = retval->priv->stamp;
+          iter->user_data = row_ptr.ptr;
+          gtk_tree_path_append_index(path, row);
+          gtk_tree_model_row_changed(GTK_TREE_MODEL(retval), path, iter);
+        }
+      }
+  );
+
   return retval;
 }
 
@@ -219,7 +296,7 @@ static gint
 gtk_q_model_length (GtkQModel *q_model)
 {
   GtkQModelPrivate *priv = q_model->priv;
-  g_debug("q model length: %d", priv->model->rowCount());
+  // g_debug("q model length: %d", priv->model->rowCount());
   return priv->model->rowCount();
 }
 
@@ -305,11 +382,11 @@ iter_is_valid (GtkTreeIter *iter,
   //        row.value < gtk_q_model_length(q_model);
   retval = q_model->priv->model->index(row.value, 0).isValid();
 
-  if (retval) {
-    g_debug("got valid iter for model");
-  } else {
-    g_debug("invlaide model iter, retval: %d", (int)retval);
-  }
+  // if (retval) {
+  //   g_debug("got valid iter for model");
+  // } else {
+  //   g_debug("invlaide model iter, retval: %d", (int)retval);
+  // }
   return retval;
 }
 
@@ -333,7 +410,7 @@ gtk_q_model_get_n_columns (GtkTreeModel *tree_model)
 
   // priv->columns_dirty = TRUE;
 
-  g_debug("getting model column number: %d", priv->model->columnCount());
+  // g_debug("getting model column number: %d", priv->model->columnCount());
   return priv->model->columnCount();
 }
 
@@ -350,7 +427,7 @@ gtk_q_model_get_column_type (GtkTreeModel *tree_model,
 
   // priv->columns_dirty = TRUE;
 
-  g_debug("getting column type: %s", g_type_name(priv->column_headers[index]));
+  // g_debug("getting column type: %s", g_type_name(priv->column_headers[index]));
   return priv->column_headers[index];
 }
 
@@ -362,7 +439,7 @@ gtk_q_model_get_iter (GtkTreeModel *tree_model,
 			 GtkTreeIter  *iter,
 			 GtkTreePath  *path)
 {
-  g_debug("getting model iter");
+  // g_debug("getting model iter");
   GtkQModel *q_model = GTK_Q_MODEL (tree_model);
   GtkQModelPrivate *priv = q_model->priv;
   // GSequence *seq;
@@ -415,7 +492,7 @@ static GtkTreePath *
 gtk_q_model_get_path (GtkTreeModel *tree_model,
 			 GtkTreeIter  *iter)
 {
-  g_debug("getting model path");
+  // g_debug("getting model path");
   GtkQModel *q_model = GTK_Q_MODEL (tree_model);
   GtkQModelPrivate *priv = q_model->priv;
   GtkTreePath *path;
@@ -462,7 +539,7 @@ gtk_q_model_get_value (GtkTreeModel *tree_model,
 			  gint          column,
 			  GValue       *value)
 {
-  g_debug("getting model iter value");
+  // g_debug("getting model iter value");
 
   GtkQModel *q_model = GTK_Q_MODEL (tree_model);
   GtkQModelPrivate *priv = q_model->priv;
@@ -539,8 +616,8 @@ gtk_q_model_get_value (GtkTreeModel *tree_model,
     //   break;
     case G_TYPE_STRING:
       g_value_set_string (value, (gchar *) var.toString().toLocal8Bit().data());
-      qDebug() << "got account alias: " << var.toString();
-      g_debug("GGGGG, got account alias: %s", var.toString().toLocal8Bit().data());
+      // qDebug() << "got account alias: " << var.toString();
+      // g_debug("GGGGG, got account alias: %s", var.toString().toLocal8Bit().data());
       break;
     // case G_TYPE_POINTER:
     //   g_value_set_pointer (value, (gpointer) list->data.v_pointer);
@@ -571,7 +648,7 @@ static gboolean
 gtk_q_model_iter_next (GtkTreeModel  *tree_model,
 			  GtkTreeIter   *iter)
 {
-  g_debug("getting iter next");
+  // g_debug("getting iter next");
   GtkQModel *q_model = GTK_Q_MODEL (tree_model);
   // GtkQModelPrivate *priv = q_model->priv;
   gboolean retval;
@@ -594,9 +671,9 @@ gtk_q_model_iter_next (GtkTreeModel  *tree_model,
   retval = iter_is_valid(iter, q_model);
 
   if (retval) {
-    g_debug("got next iter");
+    // g_debug("got next iter");
   } else {
-    g_debug("no next iter");
+    // g_debug("no next iter");
     iter->stamp = 0;
   }
 
@@ -612,7 +689,7 @@ static gboolean
 gtk_q_model_iter_previous (GtkTreeModel *tree_model,
                               GtkTreeIter  *iter)
 {
-  g_debug("getting prev iter");
+  // g_debug("getting prev iter");
 
   GtkQModel *q_model = GTK_Q_MODEL (tree_model);
   // GtkQModelPrivate *priv = q_model->priv;
@@ -657,7 +734,7 @@ gtk_q_model_iter_children (GtkTreeModel *tree_model,
 			      GtkTreeIter  *iter,
 			      GtkTreeIter  *parent)
 {
-  g_debug("getting model children");
+  // g_debug("getting model children");
 
   GtkQModel *q_model = (GtkQModel *) tree_model;
   GtkQModelPrivate *priv = q_model->priv;
@@ -698,7 +775,7 @@ static gboolean
 gtk_q_model_iter_has_child (GtkTreeModel *tree_model,
 			       GtkTreeIter  *iter)
 {
-  g_debug("checking if iter has children");
+  // g_debug("checking if iter has children");
   return FALSE;
 }
 
@@ -711,7 +788,7 @@ static gint
 gtk_q_model_iter_n_children (GtkTreeModel *tree_model,
 				GtkTreeIter  *iter)
 {
-  g_debug("getting number of children of iter");
+  // g_debug("getting number of children of iter");
   GtkQModel *q_model = GTK_Q_MODEL (tree_model);
   GtkQModelPrivate *priv = q_model->priv;
 
@@ -739,7 +816,7 @@ gtk_q_model_iter_nth_child (GtkTreeModel *tree_model,
 			       GtkTreeIter  *parent,
 			       gint          n)
 {
-  g_debug("getting nth child of itter");
+  // g_debug("getting nth child of itter");
   GtkQModel *q_model = GTK_Q_MODEL (tree_model);
   GtkQModelPrivate *priv = q_model->priv;
   GSequenceIter *child;
@@ -786,7 +863,7 @@ gtk_q_model_iter_parent (GtkTreeModel *tree_model,
 			    GtkTreeIter  *iter,
 			    GtkTreeIter  *child)
 {
-  g_debug("getting parent of iter of child iter");
+  // g_debug("getting parent of iter of child iter");
   iter->stamp = 0;
   return FALSE;
 }
