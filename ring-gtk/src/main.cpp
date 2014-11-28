@@ -41,7 +41,8 @@
 #include "lib/historymodel.h"
 #include "lib/legacyhistorybackend.h"
 #include "sflphone_client.h"
-#include "gtkqmodel.h"
+#include "gtkqlistmodel.h"
+#include "gtkaccessproxymodel.h"
 
 static Call *curr_call;
 
@@ -255,13 +256,22 @@ main(int argc, char *argv[])
             [=](void) { update_call_state(label_callstate, button_call, button_hangup);}
         );
 
-        // account list
+        // account test
         // int num_accounts = AccountListModel::instance()->rowCount();
         // g_debug("number accounts: %d", num_accounts);
         // qDebug() << "account alias: " << (AccountListModel::instance()->data(AccountListModel::instance()->index(0, Account::Role::Alias))).toString();
+        // GtkAccessProxyModel* proxy_model = new GtkAccessProxyModel();
+        // proxy_model->setSourceModel(AccountListModel::instance());
+        // QModelIndex idx = proxy_model->index(0, 0);
+        // qDebug() << "account alias from original QModelIndex: " << proxy_model->data(idx, Account::Role::Alias).toString();
+        // quintptr idx_ptr = idx.internalId();
+        // int idx_row = idx.row();
+        // int idx_column = idx.column();
+        // idx = proxy_model->indexFromId(idx_row, idx_column, idx_ptr);
+        // qDebug() << "account alias from internal id: " << proxy_model->data(idx, Account::Role::Alias).toString();
 
         // account model
-        GtkQModel *model = gtk_q_model_new(AccountListModel::instance(), 3,
+        GtkQListModel *model = gtk_q_list_model_new(AccountListModel::instance(), 3,
             Account::Role::Alias, G_TYPE_STRING,
             Account::Role::Id, G_TYPE_STRING,
             Account::Role::Enabled, G_TYPE_BOOLEAN);
@@ -282,7 +292,7 @@ main(int argc, char *argv[])
         gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_accountlist), column);
 
         // call model
-        model = gtk_q_model_new(CallModel::instance(), 4,
+        model = gtk_q_list_model_new(CallModel::instance(), 4,
             Call::Role::Name, G_TYPE_STRING,
             Call::Role::Number, G_TYPE_STRING,
             Call::Role::Length, G_TYPE_STRING,
@@ -306,7 +316,7 @@ main(int argc, char *argv[])
         gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_call), column);
 
         // history model
-        // model = gtk_q_model_new(HistoryModel::instance(), 4,
+        // model = gtk_q_list_model_new(HistoryModel::instance(), 4,
         //     Call::Role::Name, G_TYPE_STRING,
         //     Call::Role::Number, G_TYPE_STRING,
         //     Call::Role::Date, G_TYPE_STRING,

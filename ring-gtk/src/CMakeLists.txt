@@ -92,7 +92,8 @@ SET(
    SRC_FILES
    main.cpp
    sflphone_client.cpp
-   gtkqmodel.cpp
+   gtkqlistmodel.cpp
+   gtkaccessproxymodel.cpp
 )
 
 ADD_EXECUTABLE(ring-client ${SRC_FILES})
