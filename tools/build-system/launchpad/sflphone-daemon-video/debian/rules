@@ -21,7 +21,7 @@ configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
 	# build iax and opendht with contrib since they are not packaged
-	cd contrib && mkdir -p native && cd native && ../bootstrap && make .iax && make .dht cd ../..
+	cd contrib && mkdir -p native && cd native && ../bootstrap && make .iax && make .dht && cd ../..
 	./autogen.sh
 	./configure --prefix=/usr
 	touch configure-stamp
