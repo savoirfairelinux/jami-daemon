@@ -66,6 +66,7 @@ extern "C" {
 #endif
 #include <libavutil/pixdesc.h>
 #include <libavutil/opt.h>
+#include <libavutil/channel_layout.h>
 #include <libavutil/mathematics.h> // for av_rescale_q (old libav support)
 #include <libavutil/imgutils.h>
 #include <libavutil/intreadwrite.h>
