@@ -31,10 +31,12 @@
 
 #include "libav_deps.h"
 #include "video_encoder.h"
+#include "audio/audiobuffer.h"
 #include "logger.h"
 
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 
 
 namespace sfl_video {
@@ -78,17 +80,28 @@ void VideoEncoder::setOptions(const std::map<std::string, std::string>& options)
     const char *value;
 
     value = extract(options, "width");
-    if (!value)
-        throw VideoEncoderException("width option not set");
-    av_dict_set(&options_, "width", value, 0);
+    if (value)
+        av_dict_set(&options_, "width", value, 0);
 
     value = extract(options, "height");
-    if (!value)
-        throw VideoEncoderException("height option not set");
-    av_dict_set(&options_, "height", value, 0);
+    if (value)
+        av_dict_set(&options_, "height", value, 0);
 
     value = extract(options, "bitrate") ? : "";
-    av_dict_set(&options_, "bitrate", value, 0);
+    if (value)
+        av_dict_set(&options_, "bitrate", value, 0);
+
+    value = extract(options, "sample_rate") ? : "";
+    if (value)
+        av_dict_set(&options_, "sample_rate", value, 0);
+
+    value = extract(options, "channels") ? : "";
+    if (value)
+        av_dict_set(&options_, "channels", value, 0);
+
+    value = extract(options, "frame_size") ? : "";
+    if (value)
+        av_dict_set(&options_, "frame_size", value, 0);
 
     value = extract(options, "framerate");
     if (value)
@@ -105,7 +118,7 @@ void VideoEncoder::setOptions(const std::map<std::string, std::string>& options)
 
 void
 VideoEncoder::openOutput(const char *enc_name, const char *short_name,
-                             const char *filename, const char *mime_type)
+                         const char *filename, const char *mime_type, bool is_video)
 {
     AVOutputFormat *oformat = av_guess_format(short_name, filename, mime_type);
 
@@ -126,7 +139,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
         throw VideoEncoderException("No output encoder");
     }
 
-    prepareEncoderContext();
+    prepareEncoderContext(is_video);
 
     /* let x264 preset override our encoder settings */
     if (!strcmp(enc_name, "libx264")) {
@@ -161,26 +174,28 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
 
     stream_->codec = encoderCtx_;
 
-    // allocate buffers for both scaled (pre-encoder) and encoded frames
-    const int width = encoderCtx_->width;
-    const int height = encoderCtx_->height;
-    const int format = libav_utils::sfl_pixel_format((int)encoderCtx_->pix_fmt);
-    scaledFrameBufferSize_ = scaledFrame_.getSize(width, height, format);
-    if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
-        throw VideoEncoderException("buffer too small");
+    if (is_video) {
+        // allocate buffers for both scaled (pre-encoder) and encoded frames
+        const int width = encoderCtx_->width;
+        const int height = encoderCtx_->height;
+        const int format = libav_utils::sfl_pixel_format((int)encoderCtx_->pix_fmt);
+        scaledFrameBufferSize_ = scaledFrame_.getSize(width, height, format);
+        if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
+            throw VideoEncoderException("buffer too small");
 
 #if (LIBAVCODEC_VERSION_MAJOR < 54)
-    encoderBufferSize_ = scaledFrameBufferSize_; // seems to be ok
-    encoderBuffer_ = (uint8_t*) av_malloc(encoderBufferSize_);
-    if (!encoderBuffer_)
-        throw VideoEncoderException("Could not allocate encoder buffer");
+        encoderBufferSize_ = scaledFrameBufferSize_; // seems to be ok
+        encoderBuffer_ = (uint8_t*) av_malloc(encoderBufferSize_);
+        if (!encoderBuffer_)
+            throw VideoEncoderException("Could not allocate encoder buffer");
 #endif
 
-    scaledFrameBuffer_ = (uint8_t*) av_malloc(scaledFrameBufferSize_);
-    if (!scaledFrameBuffer_)
-        throw VideoEncoderException("Could not allocate scaled frame buffer");
+        scaledFrameBuffer_ = (uint8_t*) av_malloc(scaledFrameBufferSize_);
+        if (!scaledFrameBuffer_)
+            throw VideoEncoderException("Could not allocate scaled frame buffer");
 
-    scaledFrame_.setDestination(scaledFrameBuffer_, width, height, format);
+        scaledFrame_.setDestination(scaledFrameBuffer_, width, height, format);
+    }
 }
 
 void VideoEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
@@ -306,6 +321,96 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
     return ret;
 }
 
+int VideoEncoder::encode_audio(const sfl::AudioBuffer &buffer)
+{
+    const int needed_bytes = av_samples_get_buffer_size(NULL, buffer.channels(), buffer.frames(), AV_SAMPLE_FMT_S16, 0);
+    if (needed_bytes < 0) {
+        SFL_ERR("Couldn't calculate buffer size");
+        return -1;
+    }
+
+    SFLAudioSample *sample_data = reinterpret_cast<SFLAudioSample*>(av_malloc(needed_bytes));
+    if (!sample_data)
+        return -1;
+
+    SFLAudioSample *offset_ptr = sample_data;
+    int nb_frames = buffer.frames();
+
+    buffer.interleave(sample_data);
+    const auto layout = buffer.channels() == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+    const auto sample_rate = buffer.getSampleRate();
+
+    while (nb_frames > 0) {
+        AVFrame *frame = avcodec_alloc_frame();
+        if (!frame) {
+            av_freep(&sample_data);
+            return -1;
+        }
+
+        if (encoderCtx_->frame_size)
+            frame->nb_samples = std::min<int>(nb_frames, encoderCtx_->frame_size);
+        else
+            frame->nb_samples = nb_frames;
+
+        frame->format = AV_SAMPLE_FMT_S16;
+        frame->channel_layout = layout;
+        frame->sample_rate = sample_rate;
+
+        const auto buffer_size = av_samples_get_buffer_size(NULL, buffer.channels(), frame->nb_samples, AV_SAMPLE_FMT_S16, 0);
+
+        int err = avcodec_fill_audio_frame(frame, buffer.channels(), AV_SAMPLE_FMT_S16,
+                    reinterpret_cast<const uint8_t *>(offset_ptr), buffer_size, 0);
+        if (err < 0) {
+            char errbuf[128];
+            av_strerror(err, errbuf, sizeof(errbuf));
+            SFL_ERR("Couldn't fill audio frame: %s: %d %d", errbuf, frame->nb_samples, buffer_size);
+            av_freep(&sample_data);
+            av_frame_free(&frame);
+            return -1;
+        }
+        nb_frames -= frame->nb_samples;
+        offset_ptr += frame->nb_samples * buffer.channels();
+
+        AVPacket pkt;
+        av_init_packet(&pkt);
+        pkt.data = NULL; // packet data will be allocated by the encoder
+        pkt.size = 0;
+
+        int got_packet;
+        int ret = avcodec_encode_audio2(encoderCtx_, &pkt, frame, &got_packet);
+        if (ret < 0) {
+            print_averror("avcodec_encode_audio2", ret);
+            av_free_packet(&pkt);
+            av_freep(&sample_data);
+            av_frame_free(&frame);
+            return ret;
+        }
+
+        if (pkt.size and got_packet) {
+            if (pkt.pts != AV_NOPTS_VALUE)
+                pkt.pts = av_rescale_q(pkt.pts, encoderCtx_->time_base, stream_->time_base);
+            if (pkt.dts != AV_NOPTS_VALUE)
+                pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base, stream_->time_base);
+
+            pkt.stream_index = stream_->index;
+
+            // write the compressed frame
+            ret = av_write_frame(outputCtx_, &pkt);
+            if (ret < 0)
+                print_averror("av_write_frame", ret);
+        }
+
+        av_free_packet(&pkt);
+        av_frame_free(&frame);
+    }
+
+    //SFL_WARN("%d", *std::max_element(sample_data, sample_data + needed_bytes / 2));
+
+    av_freep(&sample_data);
+
+    return 0;
+}
+
 int VideoEncoder::flush()
 {
     AVPacket pkt;
@@ -370,7 +475,7 @@ void VideoEncoder::print_sdp(std::string &sdp_)
     SFL_DBG("Sending SDP: \n%s", sdp_.c_str());
 }
 
-void VideoEncoder::prepareEncoderContext()
+void VideoEncoder::prepareEncoderContext(bool is_video)
 {
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
     encoderCtx_ = avcodec_alloc_context();
@@ -385,26 +490,61 @@ void VideoEncoder::prepareEncoderContext()
                                                     NULL, 0)->value);
     SFL_DBG("Using bitrate %d", encoderCtx_->bit_rate);
 
-    // resolution must be a multiple of two
-    char *width = av_dict_get(options_, "width", NULL, 0)->value;
-    dstWidth_ = encoderCtx_->width = width ? atoi(width) : 0;
-    char *height = av_dict_get(options_, "height", NULL, 0)->value;
-    dstHeight_ = encoderCtx_->height = height ? atoi(height) : 0;
+    if (is_video) {
+        // resolution must be a multiple of two
+        char *width = av_dict_get(options_, "width", NULL, 0)->value;
+        dstWidth_ = encoderCtx_->width = width ? atoi(width) : 0;
+        char *height = av_dict_get(options_, "height", NULL, 0)->value;
+        dstHeight_ = encoderCtx_->height = height ? atoi(height) : 0;
 
-    const char *framerate = av_dict_get(options_, "framerate",
-                                        NULL, 0)->value;
-    const int DEFAULT_FPS = 30;
-    const int fps = framerate ? atoi(framerate) : DEFAULT_FPS;
-    encoderCtx_->time_base = (AVRational) {1, fps};
-    // emit one intra frame every gop_size frames
-    encoderCtx_->max_b_frames = 0;
-    encoderCtx_->pix_fmt = PIXEL_FORMAT(YUV420P); // TODO: option me !
+        const char *framerate = av_dict_get(options_, "framerate",
+                                            NULL, 0)->value;
+        const int DEFAULT_FPS = 30;
+        const int fps = framerate ? atoi(framerate) : DEFAULT_FPS;
+        encoderCtx_->time_base = (AVRational) {1, fps};
+        // emit one intra frame every gop_size frames
+        encoderCtx_->max_b_frames = 0;
+        encoderCtx_->pix_fmt = PIXEL_FORMAT(YUV420P); // TODO: option me !
 
-    // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
-    // pps and sps to be sent in-band for RTP
-    // This is to place global headers in extradata instead of every
-    // keyframe.
-    // encoderCtx_->flags |= CODEC_FLAG_GLOBAL_HEADER;
+        // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
+        // pps and sps to be sent in-band for RTP
+        // This is to place global headers in extradata instead of every
+        // keyframe.
+        // encoderCtx_->flags |= CODEC_FLAG_GLOBAL_HEADER;
+
+    } else {
+        encoderCtx_->sample_fmt = AV_SAMPLE_FMT_S16;
+        auto v = av_dict_get(options_, "sample_rate", NULL, 0);
+        if (v) {
+            encoderCtx_->sample_rate = atoi(v->value);
+        } else {
+            SFL_WARN("No sample rate set");
+            encoderCtx_->sample_rate = 8000;
+        }
+
+        v = av_dict_get(options_, "channels", NULL, 0);
+        if (v) {
+            auto c = std::atoi(v->value);
+            if (c > 2 or c < 1) {
+                SFL_WARN("Clamping invalid channel value %d", c);
+                c = 1;
+            }
+            encoderCtx_->channels = c;
+        } else {
+            SFL_WARN("Channels not set");
+            encoderCtx_->channels = 1;
+        }
+
+        encoderCtx_->channel_layout = encoderCtx_->channels == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+
+        v = av_dict_get(options_, "frame_size", NULL, 0);
+        if (v) {
+            encoderCtx_->frame_size = atoi(v->value);
+            SFL_WARN("Frame size %d", encoderCtx_->frame_size);
+        } else {
+            SFL_WARN("Frame size not set");
+        }
+    }
 }
 
 void VideoEncoder::forcePresetX264()
