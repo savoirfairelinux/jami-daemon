@@ -366,6 +366,7 @@ AS_IF([test "x$enable_video" != "xno"],
     ],
     [
      AM_CONDITIONAL(SFL_VIDEO, false)
+     AC_DEFINE_UNQUOTED([USE_CCRTP], 1, [Use ccrtp instead of libavformat])
      ]);
 
 LIBCCRTP_MIN_VERSION=1.3.0

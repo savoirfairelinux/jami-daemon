@@ -289,7 +289,8 @@ Sdp::setMediaDescriptorLines(bool audio)
             enc_name = codec->getMimeSubtype();
             clock_rate = codec->getSDPClockRate();
             channels = codec->getSDPChannels();
-            // G722 require G722/8000 media description even if it is 16000 codec
+            // G722 requires G722/8000 media description even though it's @ 16000 Hz
+            // See http://tools.ietf.org/html/rfc3551#section-4.5.2
             if (codec->getPayloadType () == 9)
                 clock_rate = 8000;
         } else {
@@ -656,6 +657,47 @@ string Sdp::getIncomingVideoDescription() const
     return sessionStr;
 }
 
+// FIXME:
+// Here we filter out parts of the SDP that libavformat doesn't need to
+// know about...we should probably give the audio decoder thread the original
+// SDP and deal with the streams properly at that level
+string Sdp::getIncomingAudioDescription() const
+{
+    pjmedia_sdp_session *audioSession = pjmedia_sdp_session_clone(memPool_, activeLocalSession_);
+    if (!audioSession) {
+        SFL_ERR("Could not clone SDP");
+        return "";
+    }
+
+    // deactivate non-audio media
+    bool hasAudio = false;
+    for (unsigned i = 0; i < audioSession->media_count; i++)
+        if (pj_stricmp2(&audioSession->media[i]->desc.media, "audio")) {
+            if (pjmedia_sdp_media_deactivate(memPool_, audioSession->media[i]) != PJ_SUCCESS)
+                SFL_ERR("Could not deactivate media");
+        } else {
+            hasAudio = true;
+        }
+
+    if (not hasAudio) {
+        SFL_DBG("No audio present in active local SDP");
+        return "";
+    }
+
+    char buffer[4096];
+    size_t size = pjmedia_sdp_print(audioSession, buffer, sizeof(buffer));
+    string sessionStr(buffer, std::min(size, sizeof(buffer)));
+
+    // FIXME: find a way to get rid of the "m=video..." line with PJSIP
+
+    const size_t videoPos = sessionStr.find("m=video");
+    const size_t newline2 = sessionStr.find('\n', videoPos);
+    const size_t newline1 = sessionStr.rfind('\n', videoPos);
+
+    sessionStr.erase(newline1, newline2 - newline1);
+    return sessionStr;
+}
+
 std::string Sdp::getOutgoingVideoCodec() const
 {
     string str("a=rtpmap:");
@@ -667,6 +709,64 @@ std::string Sdp::getOutgoingVideoCodec() const
     codec_buf[0] = '\0';
     sscanf(vCodecLine.c_str(), "a=rtpmap:%*d %31[^/]", codec_buf);
     return string(codec_buf);
+}
+
+// FIXME: merge these into a single parsing function, lot of repetition here
+std::string Sdp::getOutgoingAudioCodec() const
+{
+    string str("a=rtpmap:");
+    std::stringstream os;
+    os << getOutgoingAudioPayload();
+    str += os.str();
+    string aCodecLine(getLineFromSession(activeRemoteSession_, str));
+    char codec_buf[32];
+    codec_buf[0] = '\0';
+    sscanf(aCodecLine.c_str(), "a=rtpmap:%*d %31[^/]", codec_buf);
+    return string(codec_buf);
+}
+
+std::string Sdp::getOutgoingAudioRate() const
+{
+    // e.g. opus/48000/2, g722/16000
+    string str("a=rtpmap:");
+    std::stringstream os;
+    os << getOutgoingAudioPayload();
+    str += os.str();
+    string aCodecLine(getLineFromSession(activeRemoteSession_, str));
+    const auto pos = aCodecLine.find_first_of("/");
+    if (pos < aCodecLine.size() - 1) {
+        const auto tmp = aCodecLine.substr(pos + 1);
+        // strip channel if present
+        const auto end = tmp.find_first_of("/");
+        if (end != string::npos)
+            return tmp.substr(0, end);
+        else
+            return tmp;
+    } else {
+        const char *DEFAULT_RATE = "8000";
+        SFL_ERR("No rate found in SDP, defaulting to %s", DEFAULT_RATE);
+        return DEFAULT_RATE;
+    }
+}
+
+std::string Sdp::getOutgoingAudioChannels() const
+{
+    // e.g. opus/48000/2, g722/16000
+    string str("a=rtpmap:");
+    std::stringstream os;
+    os << getOutgoingAudioPayload();
+    str += os.str();
+    string aCodecLine(getLineFromSession(activeRemoteSession_, str));
+
+    const auto nb_slashes = std::count(aCodecLine.begin(), aCodecLine.end(), '/');
+    const auto pos = aCodecLine.find_last_of("/");
+    if (nb_slashes > 1 and pos < aCodecLine.size() - 1) {
+        return aCodecLine.substr(pos + 1);
+    } else {
+        const char *DEFAULT_CHANNELS = "1";
+        SFL_ERR("No channels found in SDP, defaulting to %s", DEFAULT_CHANNELS);
+        return DEFAULT_CHANNELS;
+    }
 }
 
 static vector<map<string, string> >::const_iterator
@@ -698,6 +798,16 @@ Sdp::getOutgoingVideoPayload() const
     string videoLine(getLineFromSession(activeRemoteSession_, "m=video"));
     int payload_num;
     if (sscanf(videoLine.c_str(), "m=video %*d %*s %d", &payload_num) != 1)
+        payload_num = 0;
+    return payload_num;
+}
+
+int
+Sdp::getOutgoingAudioPayload() const
+{
+    string audioLine(getLineFromSession(activeRemoteSession_, "m=audio"));
+    int payload_num;
+    if (sscanf(audioLine.c_str(), "m=audio %*d %*s %d", &payload_num) != 1)
         payload_num = 0;
     return payload_num;
 }
@@ -870,3 +980,47 @@ bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
 #endif
     return false;
 }
+
+#ifndef USE_CCRTP
+bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
+{
+    string codec(getOutgoingAudioCodec());
+    if (not codec.empty()) {
+        const string encoder(libav_utils::encodersMap()[codec]);
+        if (encoder.empty()) {
+            SFL_DBG("Couldn't find encoder for \"%s\"\n", codec.c_str());
+            return false;
+        } else {
+            args["codec"] = encoder;
+            const int payload = getOutgoingAudioPayload();
+            std::ostringstream os;
+            os << payload;
+            args["payload_type"] = os.str();
+        }
+
+        const string rate(getOutgoingAudioRate());
+        if (rate.empty()) {
+            SFL_DBG("Couldn't find rate for \"%s\"\n", codec.c_str());
+            return false;
+        } else {
+            // G722 requires G722/8000 media description even though it's @ 16000 Hz
+            // See http://tools.ietf.org/html/rfc3551#section-4.5.2
+            if (codec == "G722")
+                args["sample_rate"] = "16000";
+            else
+                args["sample_rate"] = rate;
+        }
+
+        const string channels(getOutgoingAudioChannels());
+        if (channels.empty()) {
+            SFL_DBG("Couldn't find channels for \"%s\"\n", codec.c_str());
+            return false;
+        } else {
+            args["channels"] = channels;
+        }
+
+        return true;
+    }
+    return false;
+}
+#endif

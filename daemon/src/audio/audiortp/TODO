@@ -1,0 +1,32 @@
+Tested and Working
+-------
+* Opus
+* PCMU
+* PCMA
+* speex narrowband
+* G722
+* Mono and stereo input
+
+Needs to be implemented
+-----------------------
+* SRTP
+* DTMF over RTP
+* RTP + STUN
+* Rename Video{Encoder,Decoder} to AV{Encoder,Decoder}
+* Drop CCRTP and its dependencies and its dependents for real
+
+Needs to be fixed:
+------------------
+* speex wideband fails with "Invalid data found when processing input"
+* speex ultraband fails with "Invalid data found when processing input"
+
+Might work if libavcodec is built with support for it (untested):
+-----------------------------------------------------------------
+* ILBC
+* g726
+
+Can't work:
+-----------
+* gsm
+* g729
+* libavformat is MISSING RTP mux/demux for gsm and g729, see is_supported(enum AVCodecID id) in libavformat/rtpenc.c
