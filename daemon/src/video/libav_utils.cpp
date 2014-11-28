@@ -125,6 +125,12 @@ static void init_once()
     encoders_["VP8"]         = "libvpx";
     encoders_["MP4V-ES"]     = "mpeg4";
 
+    encoders_["PCMA"]        = "pcm_alaw";
+    encoders_["PCMU"]        = "pcm_mulaw";
+    encoders_["opus"]        = "libopus";
+    encoders_["G722"]        = "g722";
+    encoders_["speex"]       = "libspeex";
+
     //FFmpeg needs to be modified to allow us to send configuration
     //inline, with CODEC_FLAG_GLOBAL_HEADER
     //encoders["THEORA"]        = "libtheora";

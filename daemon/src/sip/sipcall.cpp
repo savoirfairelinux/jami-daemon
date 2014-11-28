@@ -43,7 +43,11 @@
 #include "manager.h"
 #include "array_size.h"
 
+#if USE_CCRTP
 #include "audio/audiortp/audio_rtp_factory.h" // for AudioRtpFactoryException
+#else
+#include "audio/audiortp/avformat_rtp_session.h"
+#endif
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -73,7 +77,9 @@ static void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
     if (dtmf == SIPAccount::OVERRTP_STR) {
+#if USE_CCRTP
         call.getAudioRtp().sendDtmfDigit(code);
+#endif
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
         SFL_WARN("Unknown DTMF type %s, defaulting to %s instead",
@@ -100,7 +106,11 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 
 SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type)
     : Call(account, id, type)
+#if USE_CCRTP
     , audiortp_(this)
+#else
+    , avformatrtp_(new sfl::AVFormatRtpSession(id, /* FIXME: These are video! */ getSettings()))
+#endif
 #ifdef SFL_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(id, getSettings())
@@ -130,7 +140,11 @@ void
 SIPCall::stopRtpIfCurrent()
 {
     if (Manager::instance().isCurrentCall(*this)) {
+#if USE_CCRTP
         getAudioRtp().stop();
+#else
+        avformatrtp_->stop();
+#endif
 #ifdef SFL_VIDEO
         getVideoRtp().stop();
 #endif
@@ -242,6 +256,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 void
 SIPCall::updateSDPFromSTUN()
 {
+#if USE_CCRTP
     auto& account = getSIPAccount();
     std::vector<long> socketDescriptors(getAudioRtp().getSocketDescriptors());
 
@@ -258,6 +273,7 @@ SIPCall::updateSDPFromSTUN()
     } catch (const std::runtime_error &e) {
         SFL_ERR("%s", e.what());
     }
+#endif
 }
 
 void SIPCall::answer()
@@ -359,7 +375,11 @@ SIPCall::refuse()
     if (!isIncoming() or getConnectionState() == Call::CONNECTED or !inv)
         return;
 
+#if USE_CCRTP
     getAudioRtp().stop();
+#else
+    avformatrtp_->stop();
+#endif
 
     pjsip_tx_data *tdata;
 
@@ -553,8 +573,12 @@ SIPCall::onhold()
     if (not setState(Call::HOLD))
         return;
 
+#if USE_CCRTP
     audiortp_.saveLocalContext();
     audiortp_.stop();
+#else
+    avformatrtp_->stop();
+#endif
 #ifdef SFL_VIDEO
     videortp_.stop();
 #endif
@@ -576,6 +600,7 @@ SIPCall::onhold()
 void
 SIPCall::offhold()
 {
+#if USE_CCRTP
     auto& account = getSIPAccount();
 
     try {
@@ -594,6 +619,7 @@ SIPCall::offhold()
     } catch (const sfl::AudioRtpFactoryException &) {
         throw VoipLinkException("Socket problem in offhold");
     }
+#endif
 }
 
 void
@@ -631,6 +657,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
         throw std::runtime_error("Could not instantiate any codecs");
     }
 
+#if USE_CCRTP
     audiortp_.initConfig();
     audiortp_.initSession();
 
@@ -640,6 +667,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
     audiortp_.restoreLocalContext();
     audiortp_.initLocalCryptoInfoOnOffHold();
     audiortp_.start(audioCodecs);
+#endif
 
     sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
     sdp_->removeAttributeFromLocalAudioMedia("sendonly");

@@ -235,6 +235,7 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     std::vector<sfl::AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
+#if USE_CCRTP
     try {
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
@@ -247,6 +248,7 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     } catch (...) {
         throw VoipLinkException("Could not start rtp session for early media");
     }
+#endif
 
     // Building the local SDP offer
     auto& sdp = call->getSDP();

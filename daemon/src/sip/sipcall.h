@@ -39,7 +39,9 @@
 #endif
 
 #include "call.h"
+#if USE_CCRTP
 #include "audio/audiortp/audio_rtp_factory.h"
+#endif
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
 #endif
@@ -58,6 +60,10 @@ struct pjsip_inv_session;
 class Sdp;
 class SIPAccountBase;
 class SipTransport;
+
+namespace sfl {
+class AVFormatRtpSession;
+}
 
 /**
  * @file sipcall.h
@@ -90,18 +96,28 @@ class SIPCall : public Call
             return *sdp_;
         }
 
+#if USE_CCRTP
         /**
          * Returns a pointer to the AudioRtp object
          */
-        sfl::AudioRtpFactory & getAudioRtp() {
+        sfl::AudioRtpFactory& getAudioRtp() {
             return audiortp_;
         }
+#else
+
+        /**
+         * Returns a pointer to the AVFormatRtpSession object
+         */
+        sfl::AVFormatRtpSession& getAVFormatRTP() const {
+            return *avformatrtp_;
+        }
+#endif
 
 #ifdef SFL_VIDEO
         /**
          * Returns a pointer to the VideoRtp object
          */
-        sfl_video::VideoRtpSession &getVideoRtp () {
+        sfl_video::VideoRtpSession& getVideoRtp () {
             return videortp_;
         }
 #endif
@@ -196,10 +212,14 @@ class SIPCall : public Call
 
         int SIPSessionReinvite();
 
+#if USE_CCRTP
         /**
          * Audio Rtp Session factory
          */
         sfl::AudioRtpFactory audiortp_;
+#else
+        std::unique_ptr<sfl::AVFormatRtpSession> avformatrtp_;
+#endif
 
 #ifdef SFL_VIDEO
         /**
