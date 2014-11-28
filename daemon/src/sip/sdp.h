@@ -118,6 +118,12 @@ class Sdp {
          */
         std::string getIncomingVideoDescription() const;
 
+        /**
+         * Returns a string version of the negotiated SDP fields which pertain
+         * to audio.
+         */
+        std::string getIncomingAudioDescription() const;
+
         /*
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
@@ -217,6 +223,10 @@ class Sdp {
             return localVideoDataPort_;
         }
 
+        unsigned int getLocalAudioPort() const {
+            return localAudioDataPort_;
+        }
+
         void addAttributeToLocalAudioMedia(const char *attr);
         void removeAttributeFromLocalAudioMedia(const char *attr);
         void addAttributeToLocalVideoMedia(const char *attr);
@@ -258,6 +268,7 @@ class Sdp {
         // Sets @param settings with appropriate values and returns true if
         // we are sending video, false otherwise
         bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
+        bool getOutgoingAudioSettings(std::map<std::string, std::string> &settings) const;
 
     private:
         NON_COPYABLE(Sdp);
@@ -265,8 +276,12 @@ class Sdp {
 
         std::string getLineFromSession(const pjmedia_sdp_session *sess, const std::string &keyword) const;
         std::string getOutgoingVideoCodec() const;
+        std::string getOutgoingAudioCodec() const;
+        std::string getOutgoingAudioRate() const;
+        std::string getOutgoingAudioChannels() const;
         std::string getOutgoingVideoField(const std::string &codec, const char *key) const;
         int getOutgoingVideoPayload() const;
+        int getOutgoingAudioPayload() const;
         void getProfileLevelID(const pjmedia_sdp_session *session, std::string &dest, int payload) const;
         void updateRemoteIP(unsigned index);
 

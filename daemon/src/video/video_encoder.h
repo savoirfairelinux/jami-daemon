@@ -44,6 +44,10 @@ class AVStream;
 class AVFormatContext;
 class AVCodec;
 
+namespace sfl {
+    class AudioBuffer;
+}
+
 namespace sfl_video {
 
 class VideoEncoderException : public std::runtime_error {
@@ -61,9 +65,10 @@ public:
     void setInterruptCallback(int (*cb)(void*), void *opaque);
     void setIOContext(const std::unique_ptr<VideoIOHandle> &ioctx);
     void openOutput(const char *enc_name, const char *short_name,
-                   const char *filename, const char *mime_type);
+                   const char *filename, const char *mime_type, bool is_video);
     void startIO();
     int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
+    int encode_audio(const sfl::AudioBuffer &input);
     int flush();
     void print_sdp(std::string &sdp_);
 
@@ -76,7 +81,7 @@ public:
 private:
     NON_COPYABLE(VideoEncoder);
     void setScaleDest(void *data, int width, int height, int pix_fmt);
-    void prepareEncoderContext();
+    void prepareEncoderContext(bool is_video);
     void forcePresetX264();
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
 
