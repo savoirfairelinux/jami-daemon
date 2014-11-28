@@ -66,6 +66,7 @@ extern "C" {
 #endif
 #include <libavutil/pixdesc.h>
 #include <libavutil/opt.h>
+#include <libavutil/channel_layout.h>
 #include <libavutil/mathematics.h> // for av_rescale_q (old libav support)
 #include <libavutil/imgutils.h>
 #include <libavutil/intreadwrite.h>
@@ -95,5 +96,18 @@ static inline const AVPixFmtDescriptor *av_pix_fmt_desc_get(enum AVPixelFormat p
 #if !LIBAVCODEC_VERSION_CHECK(54, 28, 0, 59, 100)
 #define avcodec_free_frame(x) av_freep(x)
 #endif
+
+// Especially for Fedora < 20 and UBUNTU < 14.10
+#define USE_OLD_AVU ! LIBAVUTIL_VERSION_CHECK(52, 8, 0, 19, 100)
+
+#if USE_OLD_AVU
+#define av_frame_alloc avcodec_alloc_frame
+#define av_frame_free avcodec_free_frame
+#define av_frame_unref avcodec_get_frame_defaults
+#define av_frame_get_buffer(x, y) avpicture_alloc((AVPicture *)(x), \
+                                                  (AVPixelFormat)(x)->format, \
+                                                  (x)->width, (x)->height)
+#endif
+
 
 #endif // __LIBAV_DEPS_H__
