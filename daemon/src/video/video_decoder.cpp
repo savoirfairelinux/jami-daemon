@@ -33,6 +33,9 @@
 #include "libav_deps.h"
 #include "video_decoder.h"
 #include "logger.h"
+#include "audio/audiobuffer.h"
+#include "audio/ringbuffer.h"
+#include "audio/resampler.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -115,6 +118,82 @@ void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 
 void VideoDecoder::setIOContext(VideoIOHandle *ioctx)
 { inputCtx_->pb = ioctx->getContext(); }
+
+int VideoDecoder::setupFromAudioData()
+{
+    int ret;
+
+    if (decoderCtx_)
+        avcodec_close(decoderCtx_);
+
+    // Increase analyze time to solve synchronization issues between callers.
+    static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
+
+    inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
+
+    SFL_DBG("Finding stream info");
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+    ret = av_find_stream_info(inputCtx_);
+#else
+    ret = avformat_find_stream_info(inputCtx_, NULL);
+#endif
+
+    if (ret < 0) {
+        // workaround for this bug:
+        // http://patches.libav.org/patch/22541/
+        if (ret == -1)
+            ret = AVERROR_INVALIDDATA;
+        char errBuf[64] = {0};
+        // print nothing for unknown errors
+        if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
+            errBuf[0] = '\0';
+
+        // always fail here
+        SFL_ERR("Could not find stream info: %s", errBuf);
+        return -1;
+    }
+
+    // find the first audio stream from the input
+    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
+        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO)
+            streamIndex_ = i;
+
+    if (streamIndex_ == -1) {
+        SFL_ERR("Could not find audio stream");
+        return -1;
+    }
+
+    // Get a pointer to the codec context for the video stream
+    decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
+    if (decoderCtx_ == 0) {
+        SFL_ERR("Decoder context is NULL");
+        return -1;
+    }
+
+    // find the decoder for the video stream
+    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
+    if (!inputDecoder_) {
+        SFL_ERR("Unsupported codec");
+        return -1;
+    }
+
+    decoderCtx_->thread_count = 1;
+    if (emulateRate_) {
+        SFL_DBG("Using framerate emulation");
+        startTime_ = av_gettime();
+    }
+
+#if LIBAVCODEC_VERSION_MAJOR >= 55
+    decoderCtx_->refcounted_frames = 1;
+#endif
+    ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
+    if (ret) {
+        SFL_ERR("Could not open codec");
+        return -1;
+    }
+
+    return 0;
+}
 
 int VideoDecoder::setupFromVideoData()
 {
@@ -249,6 +328,63 @@ VideoDecoder::decode(VideoFrame& result, VideoPacket& video_packet)
 }
 
 VideoDecoder::Status
+VideoDecoder::decode_audio(AVFrame *decoded_frame)
+{
+    AVPacket inpacket;
+    memset(&inpacket, 0, sizeof(inpacket));
+    av_init_packet(&inpacket);
+    inpacket.data = NULL;
+    inpacket.size = 0;
+
+   int ret = av_read_frame(inputCtx_, &inpacket);
+    if (ret == AVERROR(EAGAIN)) {
+        return Status::Success;
+    } else if (ret == AVERROR_EOF) {
+        return Status::EOFError;
+    } else if (ret < 0) {
+        char errbuf[64];
+        av_strerror(ret, errbuf, sizeof(errbuf));
+        SFL_ERR("Couldn't read frame: %s\n", errbuf);
+        return Status::ReadError;
+    }
+
+    // is this a packet from the audio stream?
+    if (inpacket.stream_index != streamIndex_)
+        return Status::Success;
+
+    int frameFinished = 0;
+    int len = avcodec_decode_audio4(decoderCtx_, decoded_frame,
+                                    &frameFinished, &inpacket);
+    if (len <= 0) {
+        return Status::DecodeError;
+    }
+
+    if (frameFinished) {
+        if (emulateRate_) {
+            if (decoded_frame->pkt_dts != AV_NOPTS_VALUE) {
+                const auto now = std::chrono::system_clock::now();
+                const std::chrono::duration<double> seconds = now - lastFrameClock_;
+                const double dTB = av_q2d(inputCtx_->streams[streamIndex_]->time_base);
+                const double dts_diff = dTB * (decoded_frame->pkt_dts - lastDts_);
+                const double usDelay = 1e6 * (dts_diff - seconds.count());
+                if (usDelay > 0.0) {
+#if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
+                    av_usleep(usDelay);
+#else
+                    usleep(usDelay);
+#endif
+                }
+                lastFrameClock_ = now;
+                lastDts_ = decoded_frame->pkt_dts;
+            }
+        }
+        return Status::FrameFinished;
+    }
+
+    return Status::Success;
+}
+
+VideoDecoder::Status
 VideoDecoder::flush(VideoFrame& result)
 {
     AVPacket inpacket;
@@ -277,5 +413,27 @@ int VideoDecoder::getHeight() const
 
 int VideoDecoder::getPixelFormat() const
 { return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }
+
+void VideoDecoder::writeToRingBuffer(AVFrame *decoded_frame, std::shared_ptr<sfl::RingBuffer> &rb, const sfl::AudioFormat outFormat)
+{
+    const auto data_size = av_samples_get_buffer_size(NULL, decoderCtx_->channels, decoded_frame->nb_samples, AV_SAMPLE_FMT_S16, 1);
+    const sfl::AudioFormat decoderFormat = {decoded_frame->sample_rate, decoderCtx_->channels};
+
+    sfl::AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
+
+    out.deinterleave(reinterpret_cast<const SFLAudioSample*>(decoded_frame->data[0]),
+                     decoded_frame->nb_samples, decoderCtx_->channels);
+    if (decoded_frame->sample_rate != outFormat.sample_rate) {
+        if (!resampler_) {
+            SFL_ERR("Creating resampler");
+            resampler_.reset(new sfl::Resampler(outFormat));
+        }
+        sfl::AudioBuffer resampledData(decoded_frame->nb_samples, {outFormat.sample_rate, decoderCtx_->channels});
+        resampler_->resample(out, resampledData);
+        rb->put(resampledData);
+    } else {
+        rb->put(out);
+    }
+}
 
 }

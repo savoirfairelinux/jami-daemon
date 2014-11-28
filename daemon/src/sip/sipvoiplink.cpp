@@ -65,6 +65,10 @@
 
 #include "audio/audiolayer.h"
 
+#ifndef USE_CCRTP
+#include "audio/audiortp/avformat_rtp_session.h"
+#endif
+
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
 #include "client/videomanager.h"
@@ -323,19 +327,24 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->initRecFilename(peerNumber);
     call->setCallMediaLocal(addrToUse);
     call->getSDP().setPublishedIP(addrSdp);
+#if USE_CCRTP
     call->getAudioRtp().initConfig();
+#endif
     call->setTransport(transport);
 
+#if USE_CCRTP
     try {
         call->getAudioRtp().initSession();
     } catch (const ost::Socket::Error &err) {
         SFL_ERR("AudioRtp socket error");
         return PJ_FALSE;
     }
+#endif
 
     if (account->isStunEnabled())
         call->updateSDPFromSTUN();
 
+#if USE_CCRTP
     if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
         std::string sdpOffer(static_cast<const char*>(body->data), body->len);
         size_t start = sdpOffer.find("a=crypto:");
@@ -367,6 +376,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 #endif
         }
     }
+#endif
 
     call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
@@ -379,7 +389,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     std::vector<sfl::AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
+#if USE_CCRTP
     call->getAudioRtp().start(audioCodecs);
+#endif
 
     pjsip_dialog *dialog = 0;
 
@@ -1020,14 +1032,22 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update connection information
     sdp.setMediaTransportInfoFromRemoteSdp();
 
+#if USE_CCRTP
     auto& audioRTP = call->getAudioRtp();
     try {
         audioRTP.updateDestinationIpAddress();
     } catch (const AudioRtpFactoryException &e) {
         SFL_ERR("%s", e.what());
     }
-
     audioRTP.setDtmfPayloadType(sdp.getTelephoneEventType());
+#else
+    call->getAVFormatRTP().updateSDP(sdp);
+    call->getAVFormatRTP().updateDestination(call->getSDP().getRemoteIP(), sdp.getRemoteAudioPort());
+    auto localAudioPort = sdp.getLocalAudioPort();
+    if (!localAudioPort)
+        localAudioPort = sdp.getRemoteAudioPort();
+    call->getAVFormatRTP().start(localAudioPort);
+#endif
 
 #ifdef SFL_VIDEO
     auto& videoRTP = call->getVideoRtp();
@@ -1041,7 +1061,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     CryptoOffer crypto_offer;
     call->getSDP().getRemoteSdpCryptoFromOffer(remoteSDP, crypto_offer);
 
-#if HAVE_SDES
+#if USE_CCRTP && HAVE_SDES
     bool nego_success = false;
 
     if (!crypto_offer.empty()) {
@@ -1113,8 +1133,10 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             }
         }
 
+#if USE_CCRTP
         if (not audioCodecs.empty())
             call->getAudioRtp().updateSessionMedia(audioCodecs);
+#endif
     } catch (const SdpException &e) {
         SFL_ERR("%s", e.what());
     } catch (const std::exception &rtpException) {

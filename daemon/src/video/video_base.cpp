@@ -34,18 +34,6 @@
 #include "video_base.h"
 #include "logger.h"
 
-// Especially for Fedora < 20 and UBUNTU < 14.10
-#define USE_OLD_AVU ! LIBAVUTIL_VERSION_CHECK(52, 8, 0, 19, 100)
-
-#if USE_OLD_AVU
-#define av_frame_alloc avcodec_alloc_frame
-#define av_frame_free avcodec_free_frame
-#define av_frame_unref avcodec_get_frame_defaults
-#define av_frame_get_buffer(x, y) avpicture_alloc((AVPicture *)(x), \
-                                                  (AVPixelFormat)(x)->format, \
-                                                  (x)->width, (x)->height)
-#endif
-
 namespace sfl_video {
 
 /*=== VideoPacket  ===========================================================*/

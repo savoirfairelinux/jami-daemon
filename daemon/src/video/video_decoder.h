@@ -38,6 +38,14 @@
 
 #include <map>
 #include <string>
+#include <memory>
+
+namespace sfl {
+    class AudioBuffer;
+    class AudioFormat;
+    class RingBuffer;
+    class Resampler;
+}
 
 class AVCodecContext;
 class AVStream;
@@ -65,7 +73,10 @@ namespace sfl_video {
         int openInput(const std::string &source_str,
                       const std::string &format_str);
         int setupFromVideoData();
+        int setupFromAudioData();
         Status decode(VideoFrame&, VideoPacket&);
+        Status decode_audio(AVFrame *frame);
+        void writeToRingBuffer(AVFrame *frame, std::shared_ptr<sfl::RingBuffer> &rb, const sfl::AudioFormat outFormat);
         Status flush(VideoFrame&);
 
         int getWidth() const;
@@ -80,6 +91,7 @@ namespace sfl_video {
         AVCodec *inputDecoder_ = nullptr;
         AVCodecContext *decoderCtx_ = nullptr;
         AVFormatContext *inputCtx_ = nullptr;
+        std::unique_ptr<sfl::Resampler> resampler_;
         int streamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
