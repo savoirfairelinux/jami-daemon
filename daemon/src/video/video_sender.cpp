@@ -54,7 +54,7 @@ VideoSender::VideoSender(std::map<string, string> args,
 
     /* Encoder setup (may throw VideoEncoderException) */
     videoEncoder_->setOptions(args);
-    videoEncoder_->openOutput(enc_name, "rtp", dest, NULL);
+    videoEncoder_->openOutput(enc_name, "rtp", dest, NULL, true);
     videoEncoder_->setIOContext(muxContext_);
     videoEncoder_->startIO();
 

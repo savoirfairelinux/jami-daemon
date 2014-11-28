@@ -8,6 +8,17 @@ endif
 
 libaudiortp_la_SOURCES = \
 		$(SFL_ZRTP_SRC) \
+		base64.c base64.h
+
+if SFL_VIDEO
+libaudiortp_la_SOURCES += \
+		avformat_rtp_session.cpp \
+		avformat_rtp_session.h
+
+AM_CXXFLAGS = @LIBAVFORMAT_CFLAGS@
+
+else
+libaudiortp_la_SOURCES += \
 		audio_rtp_session.cpp \
 		audio_symmetric_rtp_session.cpp \
 		audio_rtp_stream.cpp \
@@ -19,5 +30,8 @@ libaudiortp_la_SOURCES = \
 		audio_rtp_stream.h \
 		audio_rtp_factory.h \
 		audio_symmetric_rtp_session.h \
-		audio_srtp_session.h \
-		base64.c base64.h
+		audio_srtp_session.h
+endif
+
+# FIXME
+AM_CPPFLAGS += -I$(top_srcdir)/src

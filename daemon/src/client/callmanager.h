@@ -156,7 +156,7 @@ class CallManager
 
     private:
 
-#if HAVE_ZRTP
+#if USE_CCRTP && HAVE_ZRTP
         sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
 #endif
 

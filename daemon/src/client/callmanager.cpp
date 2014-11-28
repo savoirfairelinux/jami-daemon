@@ -278,7 +278,7 @@ CallManager::startTone(int32_t start, int32_t type)
 // for conferencing in order to get
 // the right pointer for the given
 // callID.
-#if HAVE_ZRTP
+#if USE_CCRTP && HAVE_ZRTP
 sfl::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
@@ -299,7 +299,7 @@ CallManager::getAudioZrtpSession(const std::string& callID)
 void
 CallManager::setSASVerified(const std::string& callID)
 {
-#if HAVE_ZRTP
+#if USE_CCRTP && HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
@@ -314,7 +314,7 @@ CallManager::setSASVerified(const std::string& callID)
 void
 CallManager::resetSASVerified(const std::string& callID)
 {
-#if HAVE_ZRTP
+#if USE_CCRTP && HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
@@ -329,7 +329,7 @@ CallManager::resetSASVerified(const std::string& callID)
 void
 CallManager::setConfirmGoClear(const std::string& callID)
 {
-#if HAVE_ZRTP
+#if USE_CCRTP && HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
@@ -344,7 +344,7 @@ CallManager::setConfirmGoClear(const std::string& callID)
 void
 CallManager::requestGoClear(const std::string& callID)
 {
-#if HAVE_ZRTP
+#if USE_CCRTP && HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
@@ -359,7 +359,7 @@ CallManager::requestGoClear(const std::string& callID)
 void
 CallManager::acceptEnrollment(const std::string& callID, bool accepted)
 {
-#if HAVE_ZRTP
+#if USE_CCRTP && HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
