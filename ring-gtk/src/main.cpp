@@ -42,6 +42,7 @@
 #include "lib/legacyhistorybackend.h"
 #include "sflphone_client.h"
 #include "gtkqlistmodel.h"
+#include "gtkqtreemodel.h"
 #include "gtkaccessproxymodel.h"
 
 static Call *curr_call;
@@ -271,7 +272,7 @@ main(int argc, char *argv[])
         // qDebug() << "account alias from internal id: " << proxy_model->data(idx, Account::Role::Alias).toString();
 
         // account model
-        GtkQListModel *model = gtk_q_list_model_new(AccountListModel::instance(), 3,
+        GtkQTreeModel *model = gtk_q_tree_model_new(AccountListModel::instance(), 3,
             Account::Role::Alias, G_TYPE_STRING,
             Account::Role::Id, G_TYPE_STRING,
             Account::Role::Enabled, G_TYPE_BOOLEAN);
@@ -292,12 +293,12 @@ main(int argc, char *argv[])
         gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_accountlist), column);
 
         // call model
-        model = gtk_q_list_model_new(CallModel::instance(), 4,
+        GtkQListModel *model_list = gtk_q_list_model_new(CallModel::instance(), 4,
             Call::Role::Name, G_TYPE_STRING,
             Call::Role::Number, G_TYPE_STRING,
             Call::Role::Length, G_TYPE_STRING,
             Call::Role::CallState, G_TYPE_STRING);
-        gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_call), GTK_TREE_MODEL(model) );
+        gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_call), GTK_TREE_MODEL(model_list) );
 
         renderer = gtk_cell_renderer_text_new ();
         column = gtk_tree_view_column_new_with_attributes ("Name", renderer, "text", 0, NULL);
@@ -316,28 +317,28 @@ main(int argc, char *argv[])
         gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_call), column);
 
         // history model
-        // model = gtk_q_list_model_new(HistoryModel::instance(), 4,
-        //     Call::Role::Name, G_TYPE_STRING,
-        //     Call::Role::Number, G_TYPE_STRING,
-        //     Call::Role::Date, G_TYPE_STRING,
-        //     Call::Role::Direction2, G_TYPE_INT);
-        // gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_history), GTK_TREE_MODEL(model) );
+        model = gtk_q_tree_model_new(HistoryModel::instance(), 4,
+            Call::Role::Name, G_TYPE_STRING,
+            Call::Role::Number, G_TYPE_STRING,
+            Call::Role::Date, G_TYPE_STRING,
+            Call::Role::Direction2, G_TYPE_INT);
+        gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_history), GTK_TREE_MODEL(model) );
 
-        // renderer = gtk_cell_renderer_text_new ();
-        // column = gtk_tree_view_column_new_with_attributes ("Name", renderer, "text", 0, NULL);
-        // gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes ("Name", renderer, "text", 0, NULL);
+        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
 
-        // renderer = gtk_cell_renderer_text_new ();
-        // column = gtk_tree_view_column_new_with_attributes ("Number", renderer, "text", 1, NULL);
-        // gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes ("Number", renderer, "text", 1, NULL);
+        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
 
-        // renderer = gtk_cell_renderer_text_new ();
-        // column = gtk_tree_view_column_new_with_attributes ("Date", renderer, "text", 2, NULL);
-        // gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes ("Date", renderer, "text", 2, NULL);
+        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
 
-        // renderer = gtk_cell_renderer_text_new ();
-        // column = gtk_tree_view_column_new_with_attributes ("Direction", renderer, "text", 3, NULL);
-        // gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes ("Direction", renderer, "text", 3, NULL);
+        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
 
         gtk_window_present(GTK_WINDOW(client->win));
 

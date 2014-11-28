@@ -13,43 +13,43 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GTK_Q_MODEL_H__
-#define __GTK_Q_MODEL_H__
+#ifndef __GTK_Q_TREE_MODEL_H__
+#define __GTK_Q_TREE_MODEL_H__
 
 #include <gtk/gtk.h>
 #include <QtCore/QAbstractItemModel>
 
 G_BEGIN_DECLS
 
-#define GTK_TYPE_Q_MODEL	       (gtk_q_model_get_type ())
-#define GTK_Q_MODEL(obj)	       (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_Q_MODEL, GtkQModel))
-#define GTK_Q_MODEL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_Q_MODEL, GtkQModelClass))
-#define GTK_IS_Q_MODEL(obj)	       (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_Q_MODEL))
-#define GTK_IS_Q_MODEL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_Q_MODEL))
-#define GTK_Q_MODEL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_Q_MODEL, GtkQModelClass))
+#define GTK_TYPE_Q_TREE_MODEL	        (gtk_q_tree_model_get_type ())
+#define GTK_Q_TREE_MODEL(obj)	        (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_Q_TREE_MODEL, GtkQTreeModel))
+#define GTK_Q_TREE_MODEL_CLASS(klass)   (G_TYPE_CHECK_CLASS_CAST ((klass),  GTK_TYPE_Q_TREE_MODEL, GtkQTreeModelClass))
+#define GTK_IS_Q_TREE_MODEL(obj)	    (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_Q_TREE_MODEL))
+#define GTK_IS_Q_TREE_MODEL_CLASS(klass)(G_TYPE_CHECK_CLASS_TYPE ((klass),  GTK_TYPE_Q_TREE_MODEL))
+#define GTK_Q_TREE_MODEL_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj),  GTK_TYPE_Q_TREE_MODEL, GtkQTreeModelClass))
 
-typedef struct _GtkQModel              GtkQModel;
-typedef struct _GtkQModelPrivate       GtkQModelPrivate;
-typedef struct _GtkQModelClass         GtkQModelClass;
+typedef struct _GtkQTreeModel              GtkQTreeModel;
+typedef struct _GtkQTreeModelPrivate       GtkQTreeModelPrivate;
+typedef struct _GtkQTreeModelClass         GtkQTreeModelClass;
 
-struct _GtkQModel
+struct _GtkQTreeModel
 {
   GObject parent;
 
   /*< private >*/
-  GtkQModelPrivate *priv;
+  GtkQTreeModelPrivate *priv;
 };
 
-struct _GtkQModelClass
+struct _GtkQTreeModelClass
 {
   GObjectClass parent_class;
 };
 
 
-GType         gtk_q_model_get_type         (void) G_GNUC_CONST;
-GtkQModel *gtk_q_model_new              (QAbstractItemModel *, gint, ...);
+GType         gtk_q_tree_model_get_type          (void) G_GNUC_CONST;
+GtkQTreeModel *gtk_q_tree_model_new              (QAbstractItemModel *, size_t, ...);
 
 G_END_DECLS
 
 
-#endif /* __GTK_Q_MODEL_H__ */
+#endif /* __GTK_Q_TREE_MODEL_H__ */

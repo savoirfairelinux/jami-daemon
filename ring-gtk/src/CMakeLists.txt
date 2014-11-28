@@ -93,6 +93,7 @@ SET(
    main.cpp
    sflphone_client.cpp
    gtkqlistmodel.cpp
+   gtkqtreemodel.cpp
    gtkaccessproxymodel.cpp
 )
 

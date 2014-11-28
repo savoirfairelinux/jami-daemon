@@ -99,8 +99,6 @@
           <object class="GtkTreeView" id="treeview_accountlist">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="hexpand">False</property>
-            <property name="vexpand">True</property>
             <child internal-child="selection">
               <object class="GtkTreeSelection" id="treeview-selection1"/>
             </child>
@@ -116,7 +114,6 @@
           <object class="GtkTreeView" id="treeview_call">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="vexpand">True</property>
             <child internal-child="selection">
               <object class="GtkTreeSelection" id="treeview-selection2"/>
             </child>
@@ -133,6 +130,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="vexpand">True</property>
+            <property name="hscroll_policy">natural</property>
             <child internal-child="selection">
               <object class="GtkTreeSelection" id="treeview-selection4"/>
             </child>
