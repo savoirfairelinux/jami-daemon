@@ -34,22 +34,6 @@ struct _GtkQTreeModelPrivate
   GtkAccessProxyModel *model;
 };
 
-typedef union _int_ptr_t
-{
-  gint value;
-  gpointer ptr;
-} int_ptr_t;
-
-typedef struct _QIter {
-  gint stamp;
-  int_ptr_t row;
-  int_ptr_t column;
-  quintptr id;
-  gpointer user_data;
-} QIter;
-
-#define Q_ITER(iter) ((QIter *)iter)
-
 /* static prototypes */
 
 /* GtkTreeModel prototypes */
@@ -152,6 +136,68 @@ gtk_q_tree_model_init (GtkQTreeModel *q_tree_model)
 }
 
 /**
+ * gtk_q_tree_model_get_qmodel
+ * returns the original model from which this GtkQTreeModel is created
+ */
+QAbstractItemModel *
+gtk_q_tree_model_get_qmodel (GtkQTreeModel *q_tree_model)
+{
+  GtkQTreeModelPrivate *priv;
+  priv = (GtkQTreeModelPrivate *)gtk_q_tree_model_get_instance_private(q_tree_model);
+  return priv->model->sourceModel();
+}
+
+/**
+ * gtk_q_tree_model_get_source_idx
+ * Returns the index of the original model used to create this GtkQTreeModel from
+ * the given iter, if there is one.
+ */
+QModelIndex
+gtk_q_tree_model_get_source_idx(GtkQTreeModel *q_tree_model, GtkTreeIter *iter)
+{
+  GtkQTreeModelPrivate *priv;
+  priv = (GtkQTreeModelPrivate *)gtk_q_tree_model_get_instance_private(q_tree_model);
+  /* get the call */
+  QIter *qiter = Q_ITER(iter);
+  GtkAccessProxyModel *proxy_model = priv->model;
+  QModelIndex proxy_idx = proxy_model->indexFromId(qiter->row.value, qiter->column.value, qiter->id);
+  if (proxy_idx.isValid()) {
+    /* we have the proxy model idx, now get the actual idx so we can get the call object */
+    g_debug("got valid model index");
+    return proxy_model->mapToSource(proxy_idx);
+  } else {
+    g_debug("returning invlaid model index");
+    return QModelIndex();
+  }
+}
+
+/**
+ * Takes a QModelIndex from the original QAbstractItemModel and returns a valid GtkTreeIter in the corresponding
+ * GtkQTreeModel
+ */
+gboolean
+gtk_q_tree_model_source_index_to_iter(GtkQTreeModel *q_tree_model, const QModelIndex &idx, GtkTreeIter *iter)
+{
+  GtkQTreeModelPrivate *priv;
+  priv = (GtkQTreeModelPrivate *)gtk_q_tree_model_get_instance_private(q_tree_model);
+
+  /* make sure its an iter from the right model */
+  g_return_val_if_fail(idx.model() == priv->model->sourceModel(), FALSE);
+
+  /* make sure iter is valid */
+  iter->stamp = priv->stamp;
+
+  /* the the proxy_idx from the source idx */
+  QModelIndex proxy_idx = priv->model->mapFromSource(idx);
+
+  /* map the proxy idx to iter */
+  Q_ITER(iter)->row.value = proxy_idx.row();
+  Q_ITER(iter)->column.value = proxy_idx.row();
+  Q_ITER(iter)->id = proxy_idx.internalId();
+  return TRUE;
+}
+
+/**
  * gtk_q_tree_model_new:
  * @n_columns: number of columns in the list store
  * @...: all #GType types for the columns, from first to last
@@ -182,13 +228,14 @@ gtk_q_tree_model_new (QAbstractItemModel *model, size_t n_columns, ...)
   GtkAccessProxyModel* proxy_model = new GtkAccessProxyModel();
   proxy_model->setSourceModel(model);
   retval->priv->model = proxy_model;
+  gint stamp = retval->priv->stamp;
 
   n_columns = 2*n_columns;
   va_start (args, n_columns);
 
   for (i = 0; i < (gint)(n_columns/2); i++)
     {
-      g_debug("adding column %d", i);
+      // g_debug("adding column %d", i);
       // first get the role
       // TODO: check if its a valid type?
       gint role = va_arg(args, gint);
@@ -215,11 +262,11 @@ gtk_q_tree_model_new (QAbstractItemModel *model, size_t n_columns, ...)
       model,
       &QAbstractItemModel::rowsInserted,
       [=](const QModelIndex & parent, int first, int last) {
-        g_debug("rows inserted, first: %d, last: %d", first, last);
+        // g_debug("rows inserted, first: %d, last: %d", first, last);
         for( int row = first; row <= last; row++) {
           GtkTreeIter *iter = g_new0(GtkTreeIter, 1);
-          QModelIndex idx = parent.child(row, 0);
-          iter->stamp = retval->priv->stamp;
+          QModelIndex idx = retval->priv->model->index(row, 0, parent);
+          iter->stamp = stamp; //retval->priv->stamp;
           qmodelindex_to_iter(idx, iter);
           GtkTreePath *path = gtk_q_tree_model_get_path(GTK_TREE_MODEL(retval), iter);
           gtk_tree_model_row_inserted(GTK_TREE_MODEL(retval), path, iter);
@@ -229,22 +276,34 @@ gtk_q_tree_model_new (QAbstractItemModel *model, size_t n_columns, ...)
 
   QObject::connect(
       model,
+      &QAbstractItemModel::rowsAboutToBeMoved,
+      [=](const QModelIndex & sourceParent, int sourceStart, int sourceEnd, const QModelIndex & destinationParent, int destinationRow) {
+        g_debug("rows about to be moved, start: %d, end: %d, moved to: %d", sourceStart, sourceEnd, destinationRow);
+        /* first remove the row from old location
+         * then insert them at the new location on the "rowsMoved signal */
+        for( int row = sourceStart; row <= sourceEnd; row++) {
+          QModelIndex idx = retval->priv->model->index(row, 0, sourceParent); //sourceParent.child(row, 0);
+          GtkTreeIter iter_old;
+          qmodelindex_to_iter(idx, &iter_old);
+          GtkTreePath *path_old = gtk_q_tree_model_get_path(GTK_TREE_MODEL(retval), &iter_old);
+          gtk_tree_model_row_deleted(GTK_TREE_MODEL(retval), path_old);
+        }
+      }
+  );
+
+  QObject::connect(
+      model,
       &QAbstractItemModel::rowsMoved,
       [=](const QModelIndex & sourceParent, int sourceStart, int sourceEnd, const QModelIndex & destinationParent, int destinationRow) {
         g_debug("rows moved, start: %d, end: %d, moved to: %d", sourceStart, sourceEnd, destinationRow);
+        /* these rows should have been removed in the "rowsAboutToBeMoved" handler
+         * now insert them in the new location */
         for( int row = sourceStart; row <= sourceEnd; row++) {
-          QModelIndex idx = sourceParent.child(row, 0);
-          GtkTreeIter iter_old;
-          qmodelindex_to_iter(idx, &iter_old);
-          /* first remove the row from old location */
-          GtkTreePath *path_old = gtk_q_tree_model_get_path(GTK_TREE_MODEL(retval), &iter_old);
-          gtk_tree_model_row_deleted(GTK_TREE_MODEL(retval), path_old);
-          /* then insert it at new location */
           GtkTreeIter *iter_new = g_new0(GtkTreeIter, 1);
-          idx = destinationParent.child(destinationRow, 0);
-          iter_new->stamp = retval->priv->stamp;
+          QModelIndex idx = retval->priv->model->index(destinationRow, 0, destinationParent); //destinationParent.child(destinationRow, 0);
+          iter_new->stamp = stamp; //retval->priv->stamp;
           qmodelindex_to_iter(idx, iter_new);
-          GtkTreePath *path_new = gtk_q_tree_model_get_path(GTK_TREE_MODEL(retval), &iter_old);
+          GtkTreePath *path_new = gtk_q_tree_model_get_path(GTK_TREE_MODEL(retval), iter_new);
           gtk_tree_model_row_inserted(GTK_TREE_MODEL(retval), path_new, iter_new);
           destinationRow++;
         }
@@ -253,12 +312,13 @@ gtk_q_tree_model_new (QAbstractItemModel *model, size_t n_columns, ...)
 
   QObject::connect(
       model,
-      &QAbstractItemModel::rowsRemoved,
+      &QAbstractItemModel::rowsAboutToBeRemoved,
       [=](const QModelIndex & parent, int first, int last) {
-        g_debug("rows removed");
+        // g_debug("rows about to be removed");
         for( int row = first; row <= last; row++) {
-          QModelIndex idx = parent.child(row, 0);
+          QModelIndex idx = retval->priv->model->index(row, 0, parent); //parent.child(row, 0);
           GtkTreeIter iter;
+          iter.stamp = stamp;
           qmodelindex_to_iter(idx, &iter);
           GtkTreePath *path = gtk_q_tree_model_get_path(GTK_TREE_MODEL(retval), &iter);
           gtk_tree_model_row_deleted(GTK_TREE_MODEL(retval), path);
@@ -270,7 +330,7 @@ gtk_q_tree_model_new (QAbstractItemModel *model, size_t n_columns, ...)
       model,
       &QAbstractItemModel::dataChanged,
       [=](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles = QVector<int> ()) {
-        g_debug("data changed");
+        // g_debug("data changed");
         /* we have to assume only one column */
         int first = topLeft.row();
         int last = bottomRight.row();
@@ -280,14 +340,14 @@ gtk_q_tree_model_new (QAbstractItemModel *model, size_t n_columns, ...)
         /* the first idx IS topLeft, the reset are his siblings */
         GtkTreeIter *iter = g_new0(GtkTreeIter, 1);
         QModelIndex idx = topLeft;
-        iter->stamp = retval->priv->stamp;
+        iter->stamp = stamp; //retval->priv->stamp;
         qmodelindex_to_iter(idx, iter);
         GtkTreePath *path = gtk_q_tree_model_get_path(GTK_TREE_MODEL(retval), iter);
         gtk_tree_model_row_changed(GTK_TREE_MODEL(retval), path, iter);
         for( int row = first + 1; row <= last; row++) {
           iter = g_new0(GtkTreeIter, 1);
           idx = topLeft.sibling(row, 0);
-          iter->stamp = retval->priv->stamp;
+          iter->stamp = stamp; //retval->priv->stamp;
           qmodelindex_to_iter(idx, iter);
           path = gtk_q_tree_model_get_path(GTK_TREE_MODEL(retval), iter);
           gtk_tree_model_row_changed(GTK_TREE_MODEL(retval), path, iter);
@@ -363,8 +423,8 @@ gtk_q_tree_model_finalize (GObject *object)
   // is there anything to do?
 
 
-  // GtkQTreeModel *q_tree_model = GTK_Q_TREE_MODEL (object);
-  // GtkQTreeModelPrivate *priv = q_tree_model->priv;
+  GtkQTreeModel *q_tree_model = GTK_Q_TREE_MODEL (object);
+  GtkQTreeModelPrivate *priv = q_tree_model->priv;
 
   // g_sequence_foreach (priv->seq,
 		//       (GFunc) _gtk_tree_data_list_free, priv->column_headers);
@@ -372,7 +432,8 @@ gtk_q_tree_model_finalize (GObject *object)
   // g_sequence_free (priv->seq);
 
   // _gtk_tree_data_list_header_free (priv->sort_list);
-  // g_free (priv->column_headers);
+  g_free(priv->column_headers);
+  g_free(priv->column_roles);
 
   // if (priv->default_sort_destroy)
   //   {
@@ -382,6 +443,8 @@ gtk_q_tree_model_finalize (GObject *object)
   //     d (priv->default_sort_data);
   //     priv->default_sort_data = NULL;
   //   }
+
+  delete priv->model;
 
   G_OBJECT_CLASS (gtk_q_tree_model_parent_class)->finalize (object);
 }
@@ -658,11 +721,11 @@ gtk_q_tree_model_iter_next (GtkTreeModel  *tree_model,
   /* validate */
   if (validate_index(priv->stamp, idx, iter) ) {
     GtkTreePath *path = gtk_q_tree_model_get_path(tree_model, iter);
-    g_debug("next iter path: %s", gtk_tree_path_to_string(path));
+    // g_debug("next iter path: %s", gtk_tree_path_to_string(path));
     gtk_tree_path_free(path);
     return TRUE;
   } else {
-    g_debug("next iter is invalid");
+    // g_debug("next iter is invalid");
     return FALSE;
   }
 }
