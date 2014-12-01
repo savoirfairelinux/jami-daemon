@@ -45,151 +45,153 @@
 #include "gtkqtreemodel.h"
 #include "gtkaccessproxymodel.h"
 
+#include "ringapplicationwindow.h"
+
 static Call *curr_call;
 
-static void
-call_clicked_cb(G_GNUC_UNUSED GtkWidget *call_button, GtkWidget *call_entry)
-{
-    // get entry text and place call
-    // Call* newCall
-    Call::State state;
-    if (curr_call) {
-        state = curr_call->state();
-    } else {
-        curr_call = CallModel::instance()->dialingCall();
-        curr_call->setDialNumber(gtk_entry_get_text(GTK_ENTRY(call_entry)));
-        state = curr_call->state();
-    }
+// static void
+// call_clicked_cb(G_GNUC_UNUSED GtkWidget *call_button, GtkWidget *call_entry)
+// {
+//     // get entry text and place call
+//     // Call* newCall
+//     Call::State state;
+//     if (curr_call) {
+//         state = curr_call->state();
+//     } else {
+//         curr_call = CallModel::instance()->dialingCall();
+//         curr_call->setDialNumber(gtk_entry_get_text(GTK_ENTRY(call_entry)));
+//         state = curr_call->state();
+//     }
 
-    curr_call->performAction(Call::Action::ACCEPT);
-}
+//     curr_call->performAction(Call::Action::ACCEPT);
+// }
 
-static void
-update_call_state(GtkWidget *label_callstate, GtkWidget *button_call, GtkWidget *button_hangup)
-{
-    Call::State state = curr_call->state();
-    switch (state) {
-        case Call::State::INCOMING:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "incoming");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, TRUE);
-            gtk_button_set_label(GTK_BUTTON(button_call), "answer");
-            break;
-        case Call::State::RINGING:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "ringing");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::INITIALIZATION:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "init");
-            gtk_widget_set_sensitive(button_hangup, FALSE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::CURRENT:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "current");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::DIALING:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "dialing");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, TRUE);
-            break;
-        case Call::State::HOLD:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "hold");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::FAILURE:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "failure");
-            gtk_widget_set_sensitive(button_hangup, FALSE);
-            gtk_widget_set_sensitive(button_call, TRUE);
-            gtk_button_set_label(GTK_BUTTON(button_call), "call");
-            break;
-        case Call::State::BUSY:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "busy");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::TRANSFERRED:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "transfered");
-            gtk_widget_set_sensitive(button_hangup, FALSE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::TRANSF_HOLD:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "transfer hold");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::OVER:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "over");
-            gtk_widget_set_sensitive(button_hangup, FALSE);
-            gtk_widget_set_sensitive(button_call, TRUE);
-            gtk_button_set_label(GTK_BUTTON(button_call), "call");
-            break;
-        case Call::State::ERROR:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "error");
-            gtk_widget_set_sensitive(button_hangup, FALSE);
-            gtk_widget_set_sensitive(button_call, TRUE);
-            break;
-        case Call::State::CONFERENCE:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "conference");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::CONFERENCE_HOLD:
-            gtk_label_set_text(GTK_LABEL(label_callstate), "conference hold");
-            gtk_widget_set_sensitive(button_hangup, TRUE);
-            gtk_widget_set_sensitive(button_call, FALSE);
-            break;
-        case Call::State::__COUNT:
-            break;
-        default:
-            gtk_widget_set_sensitive(button_hangup, FALSE);
-            gtk_widget_set_sensitive(button_call, TRUE);
-            g_debug("unknown call state");
-    }
-    g_debug("state changed");
-}
+// static void
+// update_call_state(GtkWidget *label_callstate, GtkWidget *button_call, GtkWidget *button_hangup)
+// {
+//     Call::State state = curr_call->state();
+//     switch (state) {
+//         case Call::State::INCOMING:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "incoming");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, TRUE);
+//             gtk_button_set_label(GTK_BUTTON(button_call), "answer");
+//             break;
+//         case Call::State::RINGING:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "ringing");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::INITIALIZATION:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "init");
+//             gtk_widget_set_sensitive(button_hangup, FALSE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::CURRENT:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "current");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::DIALING:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "dialing");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, TRUE);
+//             break;
+//         case Call::State::HOLD:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "hold");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::FAILURE:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "failure");
+//             gtk_widget_set_sensitive(button_hangup, FALSE);
+//             gtk_widget_set_sensitive(button_call, TRUE);
+//             gtk_button_set_label(GTK_BUTTON(button_call), "call");
+//             break;
+//         case Call::State::BUSY:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "busy");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::TRANSFERRED:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "transfered");
+//             gtk_widget_set_sensitive(button_hangup, FALSE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::TRANSF_HOLD:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "transfer hold");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::OVER:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "over");
+//             gtk_widget_set_sensitive(button_hangup, FALSE);
+//             gtk_widget_set_sensitive(button_call, TRUE);
+//             gtk_button_set_label(GTK_BUTTON(button_call), "call");
+//             break;
+//         case Call::State::ERROR:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "error");
+//             gtk_widget_set_sensitive(button_hangup, FALSE);
+//             gtk_widget_set_sensitive(button_call, TRUE);
+//             break;
+//         case Call::State::CONFERENCE:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "conference");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::CONFERENCE_HOLD:
+//             gtk_label_set_text(GTK_LABEL(label_callstate), "conference hold");
+//             gtk_widget_set_sensitive(button_hangup, TRUE);
+//             gtk_widget_set_sensitive(button_call, FALSE);
+//             break;
+//         case Call::State::__COUNT:
+//             break;
+//         default:
+//             gtk_widget_set_sensitive(button_hangup, FALSE);
+//             gtk_widget_set_sensitive(button_call, TRUE);
+//             g_debug("unknown call state");
+//     }
+//     g_debug("state changed");
+// }
 
-static void
-hangup_cb(G_GNUC_UNUSED GtkWidget *button_hangup, G_GNUC_UNUSED gpointer *user_data)
-{
-    curr_call->performAction(Call::Action::REFUSE);
-}
+// static void
+// hangup_cb(G_GNUC_UNUSED GtkWidget *button_hangup, G_GNUC_UNUSED gpointer *user_data)
+// {
+//     curr_call->performAction(Call::Action::REFUSE);
+// }
 
-/* Loads the menu ui, aborts the program on failure */
-static GtkBuilder *uibuilder_new(const gchar *file_name)
-{
-    GtkBuilder* uibuilder = gtk_builder_new();
-    GError *error = NULL;
-    /* try local dir first */
-    gchar *ui_path = g_build_filename("../../src/", file_name, NULL);
+// /* Loads the menu ui, aborts the program on failure */
+// static GtkBuilder *uibuilder_new(const gchar *file_name)
+// {
+//     GtkBuilder* uibuilder = gtk_builder_new();
+//     GError *error = NULL;
+//     /* try local dir first */
+//     gchar *ui_path = g_build_filename("../../src/", file_name, NULL);
 
-    if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
-        g_warning("Could not find \"%s\"", ui_path);
-        g_free(ui_path);
-        ui_path = NULL;
-        g_object_unref(uibuilder);
-        uibuilder = NULL;
-    }
+//     if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
+//         g_warning("Could not find \"%s\"", ui_path);
+//         g_free(ui_path);
+//         ui_path = NULL;
+//         g_object_unref(uibuilder);
+//         uibuilder = NULL;
+//     }
 
-    /* If there is an error in parsing the UI file, the program must be aborted, as per the documentation:
-     * It’s not really reasonable to attempt to handle failures of this call.
-     * You should not use this function with untrusted files (ie: files that are not part of your application).
-     * Broken GtkBuilder files can easily crash your program,
-     * and it’s possible that memory was leaked leading up to the reported failure. */
-    if (ui_path && !gtk_builder_add_from_file(uibuilder, ui_path, &error)) {
-        g_assert(error);
-        g_warning("Error adding \"%s\" file to gtk builder: %s", ui_path, error->message);
-        g_object_unref(uibuilder);
-        uibuilder = NULL;
-    } else {
-        /* loaded file successfully */
-        g_free(ui_path);
-    }
-    return uibuilder;
-}
+//     /* If there is an error in parsing the UI file, the program must be aborted, as per the documentation:
+//      * It’s not really reasonable to attempt to handle failures of this call.
+//      * You should not use this function with untrusted files (ie: files that are not part of your application).
+//      * Broken GtkBuilder files can easily crash your program,
+//      * and it’s possible that memory was leaked leading up to the reported failure. */
+//     if (ui_path && !gtk_builder_add_from_file(uibuilder, ui_path, &error)) {
+//         g_assert(error);
+//         g_warning("Error adding \"%s\" file to gtk builder: %s", ui_path, error->message);
+//         g_object_unref(uibuilder);
+//         uibuilder = NULL;
+//     } else {
+//         /* loaded file successfully */
+//         g_free(ui_path);
+//     }
+//     return uibuilder;
+// }
 
 
 int
@@ -217,22 +219,22 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    GtkBuilder *uibuilder = uibuilder_new("ring_main.ui");
-    if (!uibuilder) {
-        g_object_unref(client);
-        return 1;
-    }
+    // GtkBuilder *uibuilder = uibuilder_new("ring_main.ui");
+    // if (!uibuilder) {
+    //     g_object_unref(client);
+    //     return 1;
+    // }
 
-    client->win = GTK_WIDGET(gtk_builder_get_object(uibuilder, "applicationwindow_main"));
-    GtkWidget *entry_call_uri = GTK_WIDGET(gtk_builder_get_object(uibuilder, "entry_call_uri"));
-    GtkWidget *button_call = GTK_WIDGET(gtk_builder_get_object(uibuilder, "button_call"));
-    GtkWidget *button_hangup = GTK_WIDGET(gtk_builder_get_object(uibuilder, "button_hangup"));
-    g_signal_connect(G_OBJECT(button_hangup), "clicked", G_CALLBACK(hangup_cb), NULL);
-    GtkWidget *label_callstate = GTK_WIDGET(gtk_builder_get_object(uibuilder, "label_callstate"));
-    g_signal_connect(G_OBJECT(button_call), "clicked", G_CALLBACK(call_clicked_cb), entry_call_uri);
-    GtkWidget *treeview_accountlist = GTK_WIDGET(gtk_builder_get_object(uibuilder, "treeview_accountlist"));
-    GtkWidget *treeview_call = GTK_WIDGET(gtk_builder_get_object(uibuilder, "treeview_call"));
-    GtkWidget *treeview_history = GTK_WIDGET(gtk_builder_get_object(uibuilder, "treeview_history"));
+    // client->win = GTK_WIDGET(gtk_builder_get_object(uibuilder, "applicationwindow_main"));
+    // GtkWidget *entry_call_uri = GTK_WIDGET(gtk_builder_get_object(uibuilder, "entry_call_uri"));
+    // GtkWidget *button_call = GTK_WIDGET(gtk_builder_get_object(uibuilder, "button_call"));
+    // GtkWidget *button_hangup = GTK_WIDGET(gtk_builder_get_object(uibuilder, "button_hangup"));
+    // g_signal_connect(G_OBJECT(button_hangup), "clicked", G_CALLBACK(hangup_cb), NULL);
+    // GtkWidget *label_callstate = GTK_WIDGET(gtk_builder_get_object(uibuilder, "label_callstate"));
+    // g_signal_connect(G_OBJECT(button_call), "clicked", G_CALLBACK(call_clicked_cb), entry_call_uri);
+    // GtkWidget *treeview_accountlist = GTK_WIDGET(gtk_builder_get_object(uibuilder, "treeview_accountlist"));
+    // GtkWidget *treeview_call = GTK_WIDGET(gtk_builder_get_object(uibuilder, "treeview_call"));
+    // GtkWidget *treeview_history = GTK_WIDGET(gtk_builder_get_object(uibuilder, "treeview_history"));
     // gtk_window_present(GTK_WINDOW(client->win));
 
     QCoreApplication *app = NULL;
@@ -251,11 +253,13 @@ main(int argc, char *argv[])
         HistoryModel::instance()->addBackend(new LegacyHistoryBackend(app),LoadOptions::FORCE_ENABLED);
 
         // connect signals
-        QObject::connect(
-            CallModel::instance(),
-            &CallModel::callStateChanged,
-            [=](void) { update_call_state(label_callstate, button_call, button_hangup);}
-        );
+        // QObject::connect(
+        //     CallModel::instance(),
+        //     &CallModel::callStateChanged,
+        //     [=](void) { update_call_state(label_callstate, button_call, button_hangup);}
+        // );
+
+        client->win = ring_application_window_new(GTK_APPLICATION(client));
 
         // account test
         // int num_accounts = AccountListModel::instance()->rowCount();
@@ -271,74 +275,7 @@ main(int argc, char *argv[])
         // idx = proxy_model->indexFromId(idx_row, idx_column, idx_ptr);
         // qDebug() << "account alias from internal id: " << proxy_model->data(idx, Account::Role::Alias).toString();
 
-        // account model
-        GtkQTreeModel *model = gtk_q_tree_model_new(AccountListModel::instance(), 3,
-            Account::Role::Alias, G_TYPE_STRING,
-            Account::Role::Id, G_TYPE_STRING,
-            Account::Role::Enabled, G_TYPE_BOOLEAN);
 
-        // put in treeview
-        gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_accountlist), GTK_TREE_MODEL(model) );
-
-        GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
-        GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes ("Alias", renderer, "text", 0, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_accountlist), column);
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("ID", renderer, "text", 1, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_accountlist), column);
-
-        renderer = gtk_cell_renderer_toggle_new ();
-        column = gtk_tree_view_column_new_with_attributes ("Enabled", renderer, "active", 2, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_accountlist), column);
-
-        // call model
-        GtkQListModel *model_list = gtk_q_list_model_new(CallModel::instance(), 4,
-            Call::Role::Name, G_TYPE_STRING,
-            Call::Role::Number, G_TYPE_STRING,
-            Call::Role::Length, G_TYPE_STRING,
-            Call::Role::CallState, G_TYPE_STRING);
-        gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_call), GTK_TREE_MODEL(model_list) );
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("Name", renderer, "text", 0, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_call), column);
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("Number", renderer, "text", 1, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_call), column);
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("Duration", renderer, "text", 2, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_call), column);
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("State", renderer, "text", 3, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_call), column);
-
-        // history model
-        model = gtk_q_tree_model_new(HistoryModel::instance(), 4,
-            Call::Role::Name, G_TYPE_STRING,
-            Call::Role::Number, G_TYPE_STRING,
-            Call::Role::Date, G_TYPE_STRING,
-            Call::Role::Direction2, G_TYPE_INT);
-        gtk_tree_view_set_model( GTK_TREE_VIEW(treeview_history), GTK_TREE_MODEL(model) );
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("Name", renderer, "text", 0, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("Number", renderer, "text", 1, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("Date", renderer, "text", 2, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
-
-        renderer = gtk_cell_renderer_text_new ();
-        column = gtk_tree_view_column_new_with_attributes ("Direction", renderer, "text", 3, NULL);
-        gtk_tree_view_append_column (GTK_TREE_VIEW (treeview_history), column);
 
         gtk_window_present(GTK_WINDOW(client->win));
 

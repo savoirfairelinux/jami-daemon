@@ -95,6 +95,8 @@ SET(
    gtkqlistmodel.cpp
    gtkqtreemodel.cpp
    gtkaccessproxymodel.cpp
+   ringapplicationwindow.cpp
+   resources.c
 )
 
 ADD_EXECUTABLE(ring-client ${SRC_FILES})
