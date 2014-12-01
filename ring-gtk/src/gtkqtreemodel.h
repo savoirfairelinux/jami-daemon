@@ -18,8 +18,25 @@
 
 #include <gtk/gtk.h>
 #include <QtCore/QAbstractItemModel>
+#include "gtkaccessproxymodel.h"
 
 G_BEGIN_DECLS
+
+typedef union _int_ptr_t
+{
+  gint value;
+  gpointer ptr;
+} int_ptr_t;
+
+typedef struct _QIter {
+  gint stamp;
+  int_ptr_t row;
+  int_ptr_t column;
+  quintptr id;
+  gpointer user_data;
+} QIter;
+
+#define Q_ITER(iter) ((QIter *)iter)
 
 #define GTK_TYPE_Q_TREE_MODEL	        (gtk_q_tree_model_get_type ())
 #define GTK_Q_TREE_MODEL(obj)	        (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_Q_TREE_MODEL, GtkQTreeModel))
@@ -46,8 +63,11 @@ struct _GtkQTreeModelClass
 };
 
 
-GType         gtk_q_tree_model_get_type          (void) G_GNUC_CONST;
-GtkQTreeModel *gtk_q_tree_model_new              (QAbstractItemModel *, size_t, ...);
+GType               gtk_q_tree_model_get_type            (void) G_GNUC_CONST;
+GtkQTreeModel      *gtk_q_tree_model_new                 (QAbstractItemModel *, size_t, ...);
+QAbstractItemModel *gtk_q_tree_model_get_qmodel          (GtkQTreeModel *);
+QModelIndex         gtk_q_tree_model_get_source_idx      (GtkQTreeModel *, GtkTreeIter *);
+gboolean            gtk_q_tree_model_source_index_to_iter(GtkQTreeModel *, const QModelIndex &, GtkTreeIter *);
 
 G_END_DECLS
 
