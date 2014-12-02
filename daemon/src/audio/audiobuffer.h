@@ -128,7 +128,7 @@ class AudioBuffer {
             return ss.str();
         }
 
-        inline size_t size() {
+        inline size_t size() const {
             return frames() * channels() * sizeof(SFLAudioSample);
         }
 
