@@ -553,6 +553,7 @@ SIPVoIPLink::SIPVoIPLink()
             SFL_DBG("Using SIP nameserver: %s", hbuf);
             pj_strdup2(pool_, &dns_nameservers[i], hbuf);
         }
+        SFL_DBG("About to open a socket...");
         pj_dns_resolver* resv;
         TRY(pjsip_endpt_create_resolver(endpt_, &resv));
         TRY(pj_dns_resolver_set_ns(resv, ns.size(), dns_nameservers.data(), nullptr));
