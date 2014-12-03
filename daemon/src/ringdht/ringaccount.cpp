@@ -501,8 +501,6 @@ void RingAccount::doRegister()
         );
 
         dht_.registerType(USER_PROFILE_TYPE);
-        dht_.registerType(ICE_ANNOUCEMENT_TYPE);
-
         dht_.importValues(loadValues());
 
         // Publish our own CA
