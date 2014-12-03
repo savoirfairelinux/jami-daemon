@@ -34,7 +34,6 @@
 
 #include "noncopyable.h"
 #include "ip_utils.h"
-#include "ice_transport.h"
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -90,10 +89,6 @@ class Sdp {
             return localSession_;
         }
 
-        const pjmedia_sdp_session *getActiveLocalSdpSession() const {
-            return activeLocalSession_;
-        }
-
         /**
          * Read accessor. Get the remote passive sdp session information before negotiation
          *
@@ -101,10 +96,6 @@ class Sdp {
          */
         pjmedia_sdp_session *getRemoteSdpSession() {
             return remoteSession_;
-        }
-
-        const pjmedia_sdp_session *getActiveRemoteSdpSession() const {
-            return activeRemoteSession_;
         }
 
         /**
@@ -268,16 +259,7 @@ class Sdp {
         // we are sending video, false otherwise
         bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
 
-        void addIceAttributes(const sfl::IceTransport::Attribute&& ice_attrs);
-        const sfl::IceTransport::Attribute getIceAttributes() const;
-
-        void addIceCandidates(unsigned media_index,
-                              const std::vector<std::string>& cands);
-
-        const std::vector<std::string> getIceCandidates(unsigned media_index) const;
-
     private:
-
         NON_COPYABLE(Sdp);
         friend class SDPTest;
 

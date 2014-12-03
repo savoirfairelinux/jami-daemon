@@ -78,7 +78,6 @@
 #endif
 
 #include "conference.h"
-#include "ice_transport.h"
 
 #include <cerrno>
 #include <algorithm>
@@ -94,8 +93,6 @@
 using namespace sfl;
 
 std::atomic_bool ManagerImpl::initialized = {false};
-
-using namespace sfl;
 
 static void
 copy_over(const std::string &srcPath, const std::string &destPath)
@@ -129,11 +126,6 @@ ManagerImpl::loadDefaultAccountMap()
     accountFactory_.initIP2IPAccount();
 }
 
-#define TRY(ret) do {      \
-        if (ret != PJ_SUCCESS)                               \
-            throw std::runtime_error(#ret " failed");        \
-    } while (0)
-
 ManagerImpl::ManagerImpl() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
@@ -144,7 +136,7 @@ ManagerImpl::ManagerImpl() :
     waitingCalls_(), waitingCallsMutex_(), path_()
     , ringbufferpool_(new sfl::RingBufferPool)
     , callFactory(), conferenceMap_(), history_(),
-    finished_(false), accountFactory_(), ice_tf_()
+    finished_(false), accountFactory_()
 {
     // initialize random generator
     // mt19937_64 should be seeded with 2 x 32 bits
@@ -182,13 +174,6 @@ ManagerImpl::init(const std::string &config_file)
 {
     // FIXME: this is no good
     initialized = true;
-
-    // Our PJSIP dependency (SIP and ICE)
-    TRY(pj_init());
-    TRY(pjlib_util_init());
-    TRY(pjnath_init());
-
-    ice_tf_.reset(new IceTransportFactory());
 
     path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     SFL_DBG("Configuration file path: %s", path_.c_str());
@@ -279,9 +264,6 @@ ManagerImpl::finish()
 
             audiodriver_.reset();
         }
-
-        ice_tf_.reset();
-        pj_shutdown();
     } catch (const VoipLinkException &err) {
         SFL_ERR("%s", err.what());
     }

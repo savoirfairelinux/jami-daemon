@@ -197,33 +197,6 @@ void VideoRtpSession::start(int localPort)
     }
 }
 
-void VideoRtpSession::start(sfl::IceSocket* rtp_sock, sfl::IceSocket* rtcp_sock)
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    if (not sending_ and not receiving_) {
-        stop();
-        return;
-    }
-
-    socketPair_.reset(new SocketPair(rtp_sock, rtcp_sock));
-
-    startSender();
-    startReceiver();
-
-    // Setup video pipeline
-    if (conference_)
-        setupConferenceVideoPipeline(conference_);
-    else if (sender_) {
-        auto videoCtrl = Manager::instance().getVideoManager();
-        videoLocal_ = videoCtrl->getVideoCamera();
-        if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            videoCtrl->switchToCamera();
-    } else {
-        videoLocal_.reset();
-    }
-}
-
 void VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);

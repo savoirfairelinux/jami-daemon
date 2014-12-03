@@ -178,12 +178,6 @@ class SIPCall : public Call
          */
         void onClosed();
 
-        void setupLocalSDPFromIce();
-
-        bool startIce();
-
-        void startAllMedia();
-
     private:
         NON_COPYABLE(SIPCall);
 
@@ -201,8 +195,6 @@ class SIPCall : public Call
         void internalOffHold(const std::function<void()> &SDPUpdateFunc);
 
         int SIPSessionReinvite();
-
-        std::vector<sfl::IceCandidate> getAllRemoteCandidates();
 
         /**
          * Audio Rtp Session factory

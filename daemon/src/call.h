@@ -38,14 +38,12 @@
 
 #include "audio/recordable.h"
 #include "ip_utils.h"
-#include "ice_transport.h"
 
 #include <mutex>
 #include <map>
 #include <sstream>
 #include <memory>
 #include <vector>
-#include <condition_variable>
 
 class VoIPLink;
 class Account;
@@ -302,20 +300,6 @@ class Call : public sfl::Recordable {
 
         void removeCall();
 
-        void initIceTransport(bool master, unsigned channel_num=4);
-
-        void addRemoteIceCandidates(unsigned comp_id, const std::vector<sfl::IceCandidate> candidates);
-
-        int waitForIceInitialization(unsigned timeout);
-        int waitForIceNegociation(unsigned timeout);
-
-        bool isIceUsed() const;
-        bool isIceRunning() const;
-        sfl::IceSocket* newIceSocket(unsigned compId) const;
-        std::shared_ptr<sfl::IceTransport> getIceTransport() const {
-            return iceTransport_;
-        }
-
     protected:
         /**
          * Constructor of a call
@@ -323,8 +307,6 @@ class Call : public sfl::Recordable {
          * @param type set definitely this call as incoming/outgoing
          */
         Call(Account& account, const std::string& id, Call::CallType type);
-
-        std::shared_ptr<sfl::IceTransport> iceTransport_ {};
 
     private:
         bool validTransition(CallState newState);
@@ -373,11 +355,6 @@ class Call : public sfl::Recordable {
 
         time_t timestamp_start_ {0};
         time_t timestamp_stop_ {0};
-
-        /** ICE support */
-        std::condition_variable iceCV_ {};
-        bool iceTransportInitDone_ {false};
-        bool iceTransportNegoDone_ {false};
 };
 
 #endif // __CALL_H__

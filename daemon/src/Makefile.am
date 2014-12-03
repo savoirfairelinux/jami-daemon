@@ -101,8 +101,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		ip_utils.h \
 		ip_utils.cpp \
 		utf8_utils.cpp \
-		ice_transport.cpp \
-		ice_transport.h \
 		plugin_manager.cpp \
 		plugin_loader_dl.cpp \
 		ring_plugin.h \
