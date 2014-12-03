@@ -9,8 +9,6 @@ libringacc_la_LIBADD = $(DHT_LIBS)
 
 libringacc_la_SOURCES = \
         ringaccount.cpp \
-        ringaccount.h \
-        sip_transport_ice.cpp \
-        sip_transport_ice.h
+        ringaccount.h
 
 endif
