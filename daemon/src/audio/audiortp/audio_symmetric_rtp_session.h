@@ -37,7 +37,6 @@
 #include "audio_rtp_session.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
-#include "ice_socket.h"
 
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
@@ -50,9 +49,7 @@ class SIPCall;
 
 namespace sfl {
 
-typedef ost::SingleThreadRTPSession<RTPOverIceChannel, RTPOverIceChannel> SymmetricIceRTPSession;
-
-class AudioSymmetricRtpSession : public SymmetricIceRTPSession, public AudioRtpSession {
+class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRtpSession {
     public:
         /**
         * Constructor

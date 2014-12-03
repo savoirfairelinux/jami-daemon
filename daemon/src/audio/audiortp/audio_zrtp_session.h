@@ -43,8 +43,6 @@ using std::ptrdiff_t;
 
 #include "audio_rtp_session.h"
 
-#include "ice_socket.h"
-
 class SIPCall;
 class AudioCodec;
 
@@ -56,14 +54,8 @@ class ZrtpZidException : public std::runtime_error {
             std::runtime_error(str) {}
 };
 
-
-
-typedef ::ost::SingleThreadRTPSession<RTPOverIceChannel,
-                                    RTPOverIceChannel,
-                                    ::ost::ZrtpQueue> SymmetricZRTPOverIceSession;
-
 class AudioZrtpSession :
-    public SymmetricZRTPOverIceSession,
+    public ::ost::SymmetricZRTPSession,
     public AudioRtpSession {
     public:
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename, const std::string &localIP);

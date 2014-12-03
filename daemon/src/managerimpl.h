@@ -74,11 +74,9 @@ namespace sfl {
     class RingBufferPool;
     class DTMF;
     class TelephoneTone;
-    class IceTransportFactory;
 }
 
 class PluginManager;
-
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -974,8 +972,6 @@ class ManagerImpl {
          */
         void unregisterEventHandler(uintptr_t handlerId);
 
-        sfl::IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
-
     private:
         NON_COPYABLE(ManagerImpl);
 
@@ -1013,9 +1009,6 @@ class ManagerImpl {
 
         void loadAccount(const YAML::Node &item, int &errorCount,
                          const std::string &accountOrder);
-
-        /* ICE support */
-        std::unique_ptr<sfl::IceTransportFactory> ice_tf_;
 };
 
 #endif // MANAGER_IMPL_H_
