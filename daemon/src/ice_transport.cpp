@@ -233,6 +233,48 @@ IceTransport::start(const Attribute& rem_attrs,
     return true;
 }
 
+std::string
+IceTransport::unpackLine(std::vector<uint8_t>::const_iterator& begin, std::vector<uint8_t>::const_iterator& end)
+{
+    if (std::distance(begin, end) <= 0)
+        throw std::length_error("End of string");
+    std::vector<uint8_t>::const_iterator line_end(begin);
+    while (line_end != end && *line_end != NEW_LINE && *line_end)
+        ++line_end;
+    if (std::distance(begin, line_end) <= 0)
+        throw std::length_error("Empty string");
+    std::string str(begin, line_end);
+    // Consume the new line character
+    if (std::distance(line_end, end) > 0)
+        ++line_end;
+    begin = line_end;
+    return str;
+}
+
+bool
+IceTransport::start(const std::vector<uint8_t>& rem_data)
+{
+    std::vector<uint8_t>::const_iterator begin = rem_data.begin();
+    std::vector<uint8_t>::const_iterator end = rem_data.end();
+    std::string rem_ufrag, rem_pwd;
+    std::vector<IceCandidate> rem_candidates;
+    try {
+        rem_ufrag = unpackLine(begin, end);
+        rem_pwd = unpackLine(begin, end);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Can't parse ICE attributes.");
+    }
+    try {
+        while (true) {
+            IceCandidate candidate;
+            const auto& line = unpackLine(begin, end);
+            if (getCandidateFromSDP(line, candidate))
+                rem_candidates.push_back(candidate);
+        }
+    } catch (const std::exception& e) {}
+    start({rem_ufrag, rem_pwd}, rem_candidates);
+}
+
 IpAddr
 IceTransport::getLocalAddress() const
 {
@@ -308,6 +350,22 @@ IceTransport::getIceCandidates(unsigned comp_id) const
     }
 
     return res;
+}
+
+std::vector<uint8_t>
+IceTransport::getIceAttributesCandidates() const
+{
+    std::stringstream ss;
+    ss << local_ufrag_ << NEW_LINE;
+    ss << local_pwd_ << NEW_LINE;
+    for  (unsigned i=0; i<component_count_; i++) {
+        const auto& candidates = getIceCandidates(i);
+        for (const auto& c : candidates)
+            ss << c << NEW_LINE;
+    }
+    auto str(ss.str());
+    std::vector<uint8_t> ret(str.begin(), str.end());
+    return ret;
 }
 
 void
