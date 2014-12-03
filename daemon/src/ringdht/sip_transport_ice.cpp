@@ -39,6 +39,9 @@
 
 #include <algorithm>
 
+#define POOL_TP_INIT    512
+#define POOL_TP_INC 512
+
 SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& pool, long t_type, const std::shared_ptr<sfl::IceTransport>& ice, int comp_id)
  : ice_(ice), comp_id_(comp_id)
 {
@@ -47,8 +50,12 @@ SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& pool, long t_
 
     base.endpt = endpt;
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
+    base.pool = pjsip_endpt_create_pool(endpt, "ice", POOL_TP_INIT, POOL_TP_INC);
+    if (!base.pool)
+        throw std::bad_alloc();
 
-    base.pool = &pool; //pjsip_endpt_create_pool(endpt, "ice", POOL_TP_INIT, POOL_TP_INC);
+    rdata.tp_info.pool = base.pool;
+
     pj_ansi_snprintf(base.obj_name, PJ_MAX_OBJ_NAME, "ice");
     auto status = pj_atomic_create(base.pool, 0, &base.ref_cnt);
     if (status != PJ_SUCCESS) {
@@ -137,6 +144,9 @@ SipIceTransport::~SipIceTransport()
         pj_atomic_destroy(base.ref_cnt);
         base.ref_cnt = nullptr;
     }
+
+    pj_pool_release(base.pool);
+    base.pool = nullptr;
 }
 
 pj_status_t
