@@ -542,6 +542,9 @@ std::vector<std::string> sflph_config_get_supported_audio_managers(void)
 #if HAVE_JACK
         JACK_API_STR,
 #endif
+#if HAVE_COREAUDIO
+        COREAUDIO_API_STR,
+#endif
     };
 }
 
