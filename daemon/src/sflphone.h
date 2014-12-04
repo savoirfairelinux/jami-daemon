@@ -34,6 +34,10 @@
 #include "config.h"
 #endif
 
+#ifdef ENABLE_VIDEO
+#define SFL_VIDEO
+#endif
+
 #include <vector>
 #include <functional>
 #include <string>
