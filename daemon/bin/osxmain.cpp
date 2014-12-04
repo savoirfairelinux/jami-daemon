@@ -130,6 +130,18 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
     return quit;
 }
 
+
+
+//// CALLBACKS ////
+
+
+
+void myOnStateChange(const std::string& call_id, const std::string& state)
+{
+    std::cout << "myOnStateChange" << std::endl;
+
+}
+
 void myOnIncomingCall(const std::string& acc_id, const std::string& call_id, const std::string& from)
 {
     std::cout << std::endl << "INCOMING CALL!" << std::endl <<
@@ -137,16 +149,28 @@ void myOnIncomingCall(const std::string& acc_id, const std::string& call_id, con
         ", Id: " << call_id <<
         ", From: " << from << std::endl << std::endl;
 
-    sflph_call_accept(call_id);
-    sflph_call_set_recording(call_id);
-    //sflph_call_join_participant(call_id, "patate");
+    //sflph_call_accept(call_id);
+    //sflph_call_set_recording(call_id);
 }
+
+void myOnNewCall(const std::string& account_id, const std::string& call_id, const std::string& to)
+{
+    std::cout << "myOnNewCall" << std::endl;
+
+}
+
+
+//// MAIN ////
+
+
 
 static int osxTests()
 {
     sflph_ev_handlers evHandlers = {
         .call_ev_handlers = {
-            .on_incoming_call = myOnIncomingCall
+            .on_state_change = myOnStateChange,
+            .on_incoming_call = myOnIncomingCall,
+            .on_new_call = myOnNewCall
         },
         .config_ev_handlers = {},
         .pres_ev_handlers = {}
@@ -162,8 +186,8 @@ static int osxTests()
     //sflph_call_play_dtmf("1");
     //sleep(1);
 
-    //sflph_call_place("IP2IP", "patate", "127.0.0.1");
-    //sflph_call_set_recording("patate");
+    sflph_call_place("IP2IP", "patate", "192.168.49.103");
+    sflph_call_set_recording("patate");
 
     while (true) {
         sflph_poll_events();
