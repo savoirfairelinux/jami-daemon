@@ -562,8 +562,20 @@ IceTransportFactory::IceTransportFactory() :
     ice_cfg_.opt.aggressive = PJ_FALSE;
 
     // TODO: STUN server candidate
+    pj_cstr(&ice_cfg_.stun.server, "sflphone-asterisk.savoirfairelinux.com");
+    ice_cfg_.stun.port = 3478;
+    //ice_cfg_.stun.cfg.ka_interval = 300;
 
     // TODO: TURN server candidate
+    pj_cstr(&ice_cfg_.turn.server, "sflphone-asterisk.savoirfairelinux.com");
+    ice_cfg_.turn.port = 3478;
+    ice_cfg_.turn.conn_type = PJ_TURN_TP_UDP;
+
+    // TURN credential
+    ice_cfg_.turn.auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
+    pj_cstr(&ice_cfg_.turn.auth_cred.data.static_cred.username, "test");
+    ice_cfg_.turn.auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
+    pj_cstr(&ice_cfg_.turn.auth_cred.data.static_cred.data, "test_1");
 }
 
 IceTransportFactory::~IceTransportFactory()
