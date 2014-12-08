@@ -37,12 +37,13 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 
-#include <functional>
 #include <string>
 #include <vector>
 #include <memory>
 #include <map>
 #include <set>
+#include <random>
+#include <functional>
 #include <stdexcept>
 
 class Call;
@@ -369,6 +370,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Account mail box
          */
         std::string mailBox_;
+
+        /**
+         */
+        std::mt19937_64 rand_;
 };
 
 #endif
