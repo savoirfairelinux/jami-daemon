@@ -236,8 +236,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         void detachCall(const std::string& id);
 
-        static std::vector<std::string> split_string(std::string s);
-
         static const char * const VIDEO_CODEC_ENABLED;
         static const char * const VIDEO_CODEC_NAME;
         static const char * const VIDEO_CODEC_PARAMETERS;
