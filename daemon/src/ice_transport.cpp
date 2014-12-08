@@ -140,10 +140,12 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
         SFL_ERR("ICE %s failed: %s", opname, errmsg);
     }
     SFL_DBG("ICE %s with %s", opname, done?"success":"error");
-    if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_)
+    if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_) {
         on_initdone_cb_(*this, done);
-    else if (op == PJ_ICE_STRANS_OP_NEGOTIATION and on_negodone_cb_)
+    } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION and on_negodone_cb_) {
         on_negodone_cb_(*this, done);
+        running = done;
+    }
 }
 
 void
@@ -199,6 +201,8 @@ IceTransport::setSlaveSession()
 void
 IceTransport::unsetSession()
 {
+    running = false;
+
     if (not pj_ice_strans_has_sess(icest_.get())) {
         SFL_ERR("Session not created yet");
         return;
@@ -303,8 +307,12 @@ IceTransport::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
         return;
     auto& io = compIO_[comp_id-1];
     std::unique_lock<std::mutex> lk(io.mutex);
-    io.queue.emplace_back(pkt, size);
-    io.cv.notify_one();
+    if (io.cb) {
+        io.cb((uint8_t*)pkt, size);
+    } else {
+        io.queue.emplace_back(Packet(pkt, size));
+        io.cv.notify_one();
+    }
 }
 
 bool
@@ -377,6 +385,21 @@ IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
     io.queue.pop_front();
 
     return count;
+}
+
+void
+IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
+{
+    auto& io = compIO_[comp_id];
+    std::unique_lock<std::mutex> lk(io.mutex);
+    io.cb = cb;
+
+    if (cb) {
+        // Flush existing queue using the callback
+        for (const auto& packet : io.queue)
+            io.cb((uint8_t*)packet.data.get(), packet.datalen);
+        io.queue.clear();
+    }
 }
 
 ssize_t
