@@ -24,6 +24,8 @@ ifdef HAVE_ANDROID
 PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
 endif
 
+PJPROJECT_EXTRA_CFLAGS = -DPJ_ICE_MAX_CHECKS=150
+
 PKGS += pjproject
 # FIXME: nominally 2.2.0 is enough, but it has to be patched for gnutls
 ifeq ($(call need_pkg,'libpjproject'),)
@@ -60,5 +62,5 @@ endif
 
 .pjproject: pjproject
 	cd $< && $(HOSTVARS) ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
-	cd $< && $(MAKE) && $(MAKE) install
+	cd $< && CFLAGS="$(PJPROJECT_EXTRA_CFLAGS)" $(MAKE) && $(MAKE) install
 	touch $@
