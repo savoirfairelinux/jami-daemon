@@ -51,6 +51,9 @@ namespace sfl {
 class IceTransport;
 
 using IceTransportCompleteCb = std::function<void(IceTransport&, bool)>;
+
+using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
+
 using IceCandidate = pj_ice_sess_cand;
 
 class IceTransport {
@@ -83,9 +86,15 @@ class IceTransport {
         IpAddr getRemote(unsigned comp_id) const;
 
         ssize_t recv(int comp_id, unsigned char* buf, size_t len);
+        void setOnRecv(unsigned comp_id, IceRecvCb cb);
+
         ssize_t send(int comp_id, const unsigned char* buf, size_t len);
         ssize_t getNextPacketSize(int comp_id);
         ssize_t waitForData(int comp_id, unsigned int timeout);
+
+        bool isRunning() const {
+            return running;
+        }
 
     private:
         constexpr static const int MAX_CANDIDATES = 32;
@@ -126,6 +135,9 @@ class IceTransport {
         std::string local_pwd_ {};
         pj_sockaddr remoteAddr_ {};
 
+        // set to true when on_negodone_cb_ was called.
+        std::atomic_bool running {false};
+
         struct Packet {
                 Packet(void *pkt, pj_size_t size);
                 std::unique_ptr<char> data;
@@ -135,7 +147,7 @@ class IceTransport {
                 std::mutex mutex {};
                 std::condition_variable cv {};
                 std::deque<Packet> queue {};
-
+                IceRecvCb cb {};
         };
         std::vector<ComponentIO> compIO_;
 };
