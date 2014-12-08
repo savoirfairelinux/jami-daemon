@@ -45,6 +45,8 @@ SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& pool, long t_
     if (not ice->isRunning())
         throw std::logic_error("ice transport must be running");
 
+    SFL_DBG("Creating SipIceTransport");
+
     base.endpt = endpt;
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
 
@@ -62,6 +64,8 @@ SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& pool, long t_
     base.key.type = t_type;
 
     auto remote = ice->getRemote(comp_id);
+    SFL_DBG("SipIceTransport: remote is %s", remote.toString(true).c_str());
+
     pj_sockaddr_cp(&base.key.rem_addr, remote.pjPtr());
     base.type_name = (char*)pjsip_transport_get_type_name((pjsip_transport_type_e)base.key.type);
     base.flag = pjsip_transport_get_flag_from_type((pjsip_transport_type_e)base.key.type);
@@ -114,6 +118,7 @@ SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& pool, long t_
     pj_sockaddr_print(rem_addr, rdata.pkt_info.src_name, sizeof(rdata.pkt_info.src_name), 0);
     rdata.pkt_info.src_port = pj_sockaddr_get_port(rem_addr);
 
+
     pjsip_transport_register(base.tpmgr, &base);
     is_registered_ = true;
 
@@ -145,6 +150,7 @@ SipIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
                 void *token,
                 pjsip_transport_callback callback)
 {
+    SFL_WARN("SipIceTransport::send");
     /* Sanity check */
     PJ_ASSERT_RETURN(tdata, PJ_EINVAL);
 
@@ -163,7 +169,7 @@ SipIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
 
     auto size = ice_->send(comp_id_, (uint8_t*)tdata->buf.start, tdata->buf.cur - tdata->buf.start);
     if (size > 0) {
-
+        // TODO
     }
     return PJ_SUCCESS;
 }
@@ -171,6 +177,7 @@ SipIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
 ssize_t
 SipIceTransport::onRecv(uint8_t* buf, size_t len)
 {
+    SFL_WARN("SipIceTransport::onRecv");
     auto max_size = std::min(sizeof(rdata.pkt_info.packet) - rdata.pkt_info.len, len);
     std::copy_n(buf, max_size, (uint8_t*)rdata.pkt_info.packet + rdata.pkt_info.len);
     rdata.pkt_info.len += max_size;
