@@ -99,6 +99,10 @@ Account::Account(const string &accountID)
     , hasCustomUserAgent_(false)
     , mailBox_()
 {
+    std::random_device rdev;
+    std::seed_seq seed {rdev(), rdev()};
+    rand_.seed(seed);
+
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
     #ifdef __ANDROID__

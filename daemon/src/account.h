@@ -43,6 +43,7 @@
 #include <memory>
 #include <map>
 #include <set>
+#include <random>
 #include <stdexcept>
 
 class Call;
@@ -369,6 +370,11 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Account mail box
          */
         std::string mailBox_;
+
+        /**
+         * Random generator engine
+         */
+        std::mt19937_64 rand_ {};
 };
 
 #endif
