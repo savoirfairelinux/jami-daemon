@@ -48,6 +48,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <list>
 #include <memory>
 
 #define DEFAULT_SIP_PORT    5060
@@ -102,6 +103,9 @@ private:
 
 typedef std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)> SipTransportStateCallback;
 
+/**
+ * SIP transport wraps pjsip_transport.
+ */
 struct SipTransport
 {
     SipTransport() {}
@@ -153,7 +157,10 @@ private:
 };
 
 class IpAddr;
-
+class SipIceTransport;
+namespace sfl {
+    class IceTransport;
+}
 /**
  * Manages the transports and receive callbacks from PJSIP
  */
@@ -170,6 +177,8 @@ public:
 
     std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote);
 #endif
+
+    std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<sfl::IceTransport>&);
 
     std::shared_ptr<SipTransport> findTransport(pjsip_transport*);
 
@@ -235,12 +244,19 @@ private:
      */
     std::map<SipTransportDescr, pjsip_transport*> udpTransports_ {};
 
+    /**
+     * Storage for SIP/ICE transport instances.
+     */
+    std::list<SipIceTransport> iceTransports_;
+
     std::mutex transportMapMutex_ {};
     std::condition_variable transportDestroyedCv_ {};
 
     pj_caching_pool& cp_;
     pj_pool_t& pool_;
     pjsip_endpoint *endpt_;
+
+    int ice_pj_transport_type_ {PJSIP_TRANSPORT_START_OTHER};
 };
 
 #endif // SIPTRANSPORT_H_
