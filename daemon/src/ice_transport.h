@@ -73,9 +73,15 @@ class IceTransport {
 
         bool start(const Attribute& rem_attrs,
                    const std::vector<IceCandidate>& rem_candidates);
+        bool start(const std::vector<uint8_t>& attrs_candiates);
 
         IpAddr getLocalAddress() const;
         std::vector<IpAddr> getLocalPorts() const;
+
+        /**
+         * Returns serialized ICE attributes and candidates.
+         */
+        std::vector<uint8_t> getIceAttributesCandidates() const;
 
         /* 2-string vector containing ufrag and pwd Ice attributes */
         const Attribute getIceAttributes() const;
@@ -98,6 +104,9 @@ class IceTransport {
         }
 
     private:
+        // New line character used for (de)serialisation
+        static constexpr char NEW_LINE = '\n';
+
         static void cb_on_rx_data(pj_ice_strans *ice_st,
                                   unsigned comp_id,
                                   void *pkt, pj_size_t size,
@@ -107,6 +116,8 @@ class IceTransport {
         static void cb_on_ice_complete(pj_ice_strans *ice_st,
                                        pj_ice_strans_op op,
                                        pj_status_t status);
+
+        static std::string unpackLine(std::vector<uint8_t>::const_iterator& begin, std::vector<uint8_t>::const_iterator& end);
 
         struct IceSTransDeleter {
                 void operator ()(pj_ice_strans* ptr) {
