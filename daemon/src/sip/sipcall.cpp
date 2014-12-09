@@ -58,6 +58,8 @@ using namespace sfl;
 #include "im/instant_messaging.h"
 #endif
 
+#include "upnp/upnp.h"
+
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
 #include "client/videomanager.h"
@@ -336,6 +338,26 @@ void SIPCall::answer()
 }
 
 void
+SIPCall::removePortsUPnP()
+{
+    auto& account = getSIPAccount();
+    if (account.getUseUPnP()) {
+        SFL_DBG("Remove mapped ports for SDP session via UPnP");
+        //remove calls after call has ended
+
+        upnp::UPnP upnp = upnp::UPnP();
+
+        upnp.removeRedirection(sdp_->getLocalAudioPort());
+        upnp.removeRedirection(sdp_->getLocalAudioControlPort());
+
+    #ifdef SFL_VIDEO
+        upnp.removeRedirection(sdp_->getLocalVideoPort());
+        upnp.removeRedirection(sdp_->getLocalVideoControlPort());
+    #endif
+    }
+}
+
+void
 SIPCall::hangup(int reason)
 {
     if (not inv or not inv->dlg)
@@ -382,6 +404,8 @@ SIPCall::hangup(int reason)
 
     // Stop all RTP streams
     stopRtpIfCurrent();
+
+    removePortsUPnP();
 
     removeCall();
 }
@@ -757,6 +781,7 @@ SIPCall::onServerFailure()
 {
     const std::string id(getCallId());
     Manager::instance().callFailure(id);
+    removePortsUPnP();
     removeCall();
 }
 
@@ -765,6 +790,7 @@ SIPCall::onClosed()
 {
     const std::string id(getCallId());
     Manager::instance().peerHungupCall(id);
+    removePortsUPnP();
     removeCall();
     Manager::instance().checkAudio();
 }

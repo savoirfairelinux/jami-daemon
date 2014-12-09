@@ -33,6 +33,10 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "noncopyable.h"
 #include "config/serializable.h"
 #include "registration_states.h"
@@ -241,6 +245,19 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const VIDEO_CODEC_PARAMETERS;
         static const char * const VIDEO_CODEC_BITRATE;
 
+        /**
+         * Set whether or not to use UPnP
+         */
+        virtual void setUseUPnP(bool useUPnP) = 0;
+
+        /**
+         * Get whether UPnP is used.
+         * @return bool Flag which determines if UPnP is used or not.
+         */
+        bool getUseUPnP() const {
+            return useUPnP_;
+        }
+
     private:
         NON_COPYABLE(Account);
 
@@ -373,6 +390,11 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Random generator engine
          */
         std::mt19937_64 rand_ {};
+
+        /**
+         * Flag which determines whether or not to use UPnP
+         */
+        bool useUPnP_ {false};
 };
 
 #endif
