@@ -42,6 +42,7 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
+#include "upnp/upnp.h"
 
 using namespace ring;
 
@@ -335,6 +336,26 @@ void SIPCall::answer()
 }
 
 void
+SIPCall::removePortsUPnP()
+{
+    auto& account = getSIPAccount();
+    if (account.getUseUPnP()) {
+        RING_DBG("Remove mapped ports for SDP session via UPnP");
+        //remove calls after call has ended
+
+        upnp::UPnP upnp = upnp::UPnP();
+
+        upnp.removeRedirection(sdp_->getLocalAudioPort());
+        upnp.removeRedirection(sdp_->getLocalAudioControlPort());
+
+    #ifdef SFL_VIDEO
+        upnp.removeRedirection(sdp_->getLocalVideoPort());
+        upnp.removeRedirection(sdp_->getLocalVideoControlPort());
+    #endif
+    }
+}
+
+void
 SIPCall::hangup(int reason)
 {
     if (not inv or not inv->dlg)
@@ -381,6 +402,8 @@ SIPCall::hangup(int reason)
 
     // Stop all RTP streams
     stopRtpIfCurrent();
+
+    // removePortsUPnP();
 
     removeCall();
 }
