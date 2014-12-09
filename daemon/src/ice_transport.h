@@ -32,6 +32,7 @@
 
 #include "ice_socket.h"
 #include "ip_utils.h"
+#include "upnp/upnp.h"
 
 #include <pjnath.h>
 #include <pjlib.h>
@@ -66,7 +67,8 @@ class IceTransport {
          */
         IceTransport(const char* name, int component_count,
                      IceTransportCompleteCb on_initdone_cb={},
-                     IceTransportCompleteCb on_negodone_cb={});
+                     IceTransportCompleteCb on_negodone_cb={},
+                     bool upnp_enabled = false);
 
         /**
          * Set/change transport role as initiator.
@@ -143,6 +145,8 @@ class IceTransport {
 
         ssize_t waitForData(int comp_id, unsigned int timeout);
 
+        unsigned getComponentCount() const {return component_count_;};
+
     private:
         static constexpr int MAX_CANDIDATES {32};
 
@@ -206,6 +210,25 @@ class IceTransport {
                 IceRecvCb cb;
         };
         std::vector<ComponentIO> compIO_;
+
+        /**
+         * Returns the IP of each candidate for a given component in the ICE session
+         */
+        std::vector<IpAddr> getLocalCandidatesAddr(unsigned comp_id) const;
+
+        /**
+         * Adds candidate to ICE session
+         */
+        void addCandidate(int comp_id, const IpAddr& addr);
+
+        /**
+         * Creates UPnP port mappings and adds ICE candidates based on those mappings
+         */
+        void selectUPnPIceCandidates();
+
+        bool upnp_enabled_ {false};
+
+        upnp::Controller upnp_;
 };
 
 class IceTransportFactory {
@@ -216,7 +239,8 @@ class IceTransportFactory {
         std::shared_ptr<IceTransport> createTransport(const char* name,
                                                       int component_count,
                                                       IceTransportCompleteCb&& on_initdone_cb={},
-                                                      IceTransportCompleteCb&& on_negodone_cb={});
+                                                      IceTransportCompleteCb&& on_negodone_cb={},
+                                                      bool upnp_enabled = false);
 
         int processThread();
 
