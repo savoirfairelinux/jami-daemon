@@ -42,6 +42,8 @@
 #include "map_utils.h"
 #include "call_factory.h"
 
+#include "upnp/upnp.h"
+
 Call::Call(Account& account, const std::string& id, Call::CallType type)
     : id_(id)
     , type_(type)
@@ -53,6 +55,7 @@ Call::Call(Account& account, const std::string& id, Call::CallType type)
 
 Call::~Call()
 {
+    /* destroying the upnp object will remove any port mappings it added */
     account_.detachCall(id_);
 }
 
@@ -303,6 +306,34 @@ Call::getNullDetails()
 }
 
 void
+Call::selectUPnPIceCandidates(ring::IceTransport& iceTransport)
+{
+    // use upnp to open ports and add the proper candidates
+    if ( account_.getUseUPnP() ) {
+        upnp_ = upnp::UPnP(true);
+        /* for every component, get the candidate(s)
+         * try to open that port
+         * add candidate with the same port, but public IP
+         *
+         * TODO: if port is already used, select a different one
+         *       and add a candidate with public IP and that port
+         *       This should probably in the UPnP function
+         */
+        for(unsigned comp_id = 0; comp_id < iceTransport.getComponentCount(); comp_id++) {
+            RING_DBG("UPnP : Opening port(s) for Ice comp %d and adding candidate with public IP.", comp_id);
+            std::vector<IpAddr> candidates = iceTransport.getLocalCandidatesAddr(comp_id);
+            for(IpAddr addr : candidates) {
+                uint16_t port = addr.getPort();
+                upnp_.addRedirection(port, port);
+                IpAddr publicIP = upnp_.getExternalIP();
+                publicIP.setPort(port);
+                iceTransport.addCandidate(comp_id, publicIP);
+            }
+        }
+    }
+}
+
+void
 Call::initIceTransport(bool master, unsigned channel_num)
 {
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
@@ -312,6 +343,8 @@ Call::initIceTransport(bool master, unsigned channel_num)
                 iceTransport.setInitiatorSession();
             else
                 iceTransport.setSlaveSession();
+
+            selectUPnPIceCandidates(iceTransport);
         }
 
         {

@@ -39,6 +39,7 @@
 #include "audio/recordable.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
+#include "upnp/upnp.h"
 
 #include <mutex>
 #include <map>
@@ -324,6 +325,10 @@ class Call : public ring::Recordable, public std::enable_shared_from_this<Call> 
         Call(Account& account, const std::string& id, Call::CallType type);
 
         std::shared_ptr<ring::IceTransport> iceTransport_ {};
+
+        upnp::UPnP upnp_;
+
+        void selectUPnPIceCandidates(ring::IceTransport& iceTransport);
 
     private:
         bool validTransition(CallState newState);
