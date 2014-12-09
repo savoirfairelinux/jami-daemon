@@ -35,8 +35,10 @@
 #include "config.h"
 #endif
 #include "account.h"
+
 #include <algorithm>
 #include <iterator>
+#include <mutex>
 
 #ifdef RING_VIDEO
 #include "libav_utils.h"
@@ -51,6 +53,9 @@
 #include "config/yamlparser.h"
 
 #include <yaml-cpp/yaml.h>
+
+#include "upnp/upnp.h"
+#include "ip_utils.h"
 
 namespace ring {
 
@@ -453,5 +458,27 @@ Account::parseBool(const std::map<std::string, std::string> &details, const char
 }
 
 #undef find_iter
+
+void
+Account::setUseUPnP(bool useUPnP)
+{
+    std::unique_lock<std::mutex> lk(upnp_mtx);
+
+    if (useUPnP == static_cast<bool>(upnp_))
+        return;
+
+    if (useUPnP){
+        upnp_.reset(new upnp::Controller());
+        upnpIp_ = upnp_->getExternalIP();
+    } else
+        upnp_.reset();
+}
+
+bool
+Account::getUseUPnP() const
+{
+    std::unique_lock<std::mutex> lk(upnp_mtx);
+    return static_cast<bool>(upnp_);
+}
 
 } // namespace ring

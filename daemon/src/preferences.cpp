@@ -77,6 +77,7 @@ static const char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
 static const char * const PORT_NUM_KEY = "portNum";
 static const char * const SEARCH_BAR_DISPLAY_KEY = "searchBarDisplay";
 static const char * const MD5_HASH_KEY = "md5Hash";
+static const char * const USE_UPNP = "useUPnP";
 
 // voip preferences
 constexpr const char * const VoipPreference::CONFIG_LABEL;
@@ -137,6 +138,7 @@ Preferences::Preferences() :
     , portNum_(5060)
     , searchBarDisplay_(true)
     , md5Hash_(false)
+    , useUPnP_(false)
 {}
 
 void Preferences::verifyAccountOrder(const std::vector<std::string> &accountIDs)
@@ -195,6 +197,7 @@ void Preferences::serialize(YAML::Emitter &out)
     out << YAML::Key << REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
     out << YAML::Key << SEARCH_BAR_DISPLAY_KEY << YAML::Value << searchBarDisplay_;
     out << YAML::Key << ZONE_TONE_CHOICE_KEY << YAML::Value << zoneToneChoice_;
+    out << YAML::Key << USE_UPNP << YAML::Value << useUPnP_;
     out << YAML::EndMap;
 }
 
@@ -210,6 +213,7 @@ void Preferences::unserialize(const YAML::Node &in)
     parseValue(node, PORT_NUM_KEY, portNum_);
     parseValue(node, SEARCH_BAR_DISPLAY_KEY, searchBarDisplay_);
     parseValue(node, MD5_HASH_KEY, md5Hash_);
+    parseValue(node, USE_UPNP, useUPnP_);
 }
 
 VoipPreference::VoipPreference() :
