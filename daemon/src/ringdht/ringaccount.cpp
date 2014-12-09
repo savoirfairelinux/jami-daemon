@@ -61,6 +61,8 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
+#include "upnp/upnp.h"
+
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -152,7 +154,8 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     auto ice = iceTransportFactory.createTransport(
         ("sip:"+call->getCallId()).c_str(),
         ICE_COMPONENTS,
-        true
+        true,
+        getUseUPnP()
     );
     if (not ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
         call->setConnectionState(Call::DISCONNECTED);
@@ -222,12 +225,18 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     call->setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
     call->initRecFilename(to_id);
 
-    //const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), peer.getFamily());
+    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
     call->setCallMediaLocal(call->getIceTransport()->getDefaultLocalAddress());
 
-    // May use the published address as well
-    //const auto addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ? getPublishedIpAddress() : localAddress;
-
+    IpAddr addrSdp;
+    if (getUseUPnP()) {
+        /* use UPnP addr, or published addr if its set */
+        addrSdp = getPublishedSameasLocal() ?
+            getUPnPIpAddress() : getPublishedIpAddress();
+    } else {
+        addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ?
+            getPublishedIpAddress() : localAddress;
+    }
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
@@ -257,12 +266,7 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     // Building the local SDP offer
     auto& sdp = call->getSDP();
 
-    /*if (getPublishedSameasLocal())
-        sdp.setPublishedIP(addrSdp);
-    else
-        sdp.setPublishedIP(getPublishedAddress());
-*/
-    sdp.setPublishedIP(ip_utils::getInterfaceAddr(getLocalInterface()));
+    sdp.setPublishedIP(addrSdp);
     const bool created = sdp.createOffer(getActiveAudioCodecs(), getActiveVideoCodecs());
 
     if (not created or not SIPStartCall(call, target))
@@ -383,6 +387,7 @@ void RingAccount::unserialize(const YAML::Node &node)
     in_port_t port {DHT_DEFAULT_PORT};
     parseValue(node, Conf::DHT_PORT_KEY, port);
     dhtPort_ = port ? port : DHT_DEFAULT_PORT;
+    dhtPortUsed_ = dhtPort_;
     parseValue(node, Conf::DHT_PRIVKEY_PATH_KEY, privkeyPath_);
     parseValue(node, Conf::DHT_CERT_PATH_KEY, certPath_);
     parseValue(node, Conf::DHT_CA_CERT_PATH_KEY, cacertPath_);
@@ -504,6 +509,7 @@ void RingAccount::setAccountDetails(const std::map<std::string, std::string> &de
     parseInt(details, CONFIG_DHT_PORT, dhtPort_);
     if (dhtPort_ == 0)
         dhtPort_ = DHT_DEFAULT_PORT;
+    dhtPortUsed_ = dhtPort_;
     parseString(details, CONFIG_DHT_PRIVKEY_PATH, privkeyPath_);
     parseString(details, CONFIG_DHT_CERT_PATH, certPath_);
     checkIdentityPath();
@@ -555,12 +561,41 @@ RingAccount::handleEvents()
     }
 }
 
+bool RingAccount::mapPortUPnP()
+{
+    if (useUPnP_) {
+        /* create port mapping from published port to local port to the local IP
+         * note that since different RING accounts can use the same port,
+         * it may already be open, thats OK
+         *
+         * if the desired port is taken by another client, then it will try to map
+         * a different port, if succesfull, then we have to use that port for DHT
+         */
+        uint16_t port_used;
+        if (upnp_.addAnyMapping(dhtPort_, upnp::PortType::UDP, false, &port_used)) {
+            if (port_used != dhtPort_)
+                RING_DBG("UPnP could not map port %u for DHT, using %u instead", dhtPort_, port_used);
+            dhtPortUsed_ = port_used;
+            return true;
+        } else {
+            /* failed to map any port */
+            return false;
+        }
+    } else {
+        /* not using UPnP, so return true */
+        return true;
+    }
+}
+
 void RingAccount::doRegister()
 {
     if (not isEnabled()) {
         RING_WARN("Account must be enabled to register, ignoring");
         return;
     }
+
+    if (not mapPortUPnP())
+        RING_WARN("Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
 
     try {
         loadTreatedCalls();
@@ -569,7 +604,7 @@ void RingAccount::doRegister()
             dht_.join();
         }
         auto identity = loadIdentity();
-        dht_.run(dhtPort_, identity.second, false, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
+        dht_.run(dhtPortUsed_, identity.second, false, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
             RING_WARN("Dht status : %d %d", (int)s4, (int)s6);
             auto status = std::max(s4, s6);
             switch(status) {
@@ -677,7 +712,8 @@ void RingAccount::doRegister()
                         auto ice = iceTransportFactory.createTransport(
                             ("sip:"+call->getCallId()).c_str(),
                             ICE_COMPONENTS,
-                            false
+                            false,
+                            this_.getUseUPnP()
                         );
                         if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
                             throw std::runtime_error("Can't initialize ICE..");
@@ -719,7 +755,6 @@ void RingAccount::doRegister()
                 return true;
             }
         );
-
     }
     catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
@@ -743,6 +778,9 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
     setRegistrationState(RegistrationState::UNREGISTERED);
     if (released_cb)
         released_cb(false);
+
+    RING_DBG("UPnP : removing port mapping for DHT account.");
+    upnp_.removeMappings();
 }
 
 void
