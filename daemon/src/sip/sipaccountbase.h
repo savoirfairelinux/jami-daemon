@@ -46,6 +46,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include <memory>
 
 namespace ring {
 
@@ -113,9 +114,7 @@ public:
      */
     SIPAccountBase(const std::string& accountID);
 
-    virtual ~SIPAccountBase() {
-        setTransport();
-    }
+    virtual ~SIPAccountBase();
 
     /**
      * Create incoming SIPCall.
