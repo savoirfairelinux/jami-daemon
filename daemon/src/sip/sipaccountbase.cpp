@@ -39,6 +39,7 @@
 #include "account_schema.h"
 #include "client/configurationmanager.h"
 #include "manager.h"
+#include "upnp/upnp.h"
 
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
@@ -48,6 +49,10 @@ bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID), link_(getSIPVoIPLink())
 {}
+
+SIPAccountBase::~SIPAccountBase() {
+    setTransport();
+}
 
 template <typename T>
 static void
@@ -328,3 +333,16 @@ SIPAccountBase::generateVideoPort() const
     return getRandomEvenNumber(videoPortRange_);
 }
 #endif
+
+void
+SIPAccountBase::setUseUPnP(bool useUPnP) {
+    if (useUPnP == useUPnP_)
+        return;
+
+    useUPnP_ = useUPnP;
+    if (useUPnP_){
+        upnp_.reset(new upnp::Controller(useUPnP_));
+        upnpIp_ = upnp_->getExternalIP();
+    } else
+        upnp_.reset(nullptr);
+}
