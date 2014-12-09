@@ -126,6 +126,13 @@ class Preferences : public Serializable {
             md5Hash_ = md5;
         }
 
+        bool getUseUPnP() const {
+            return useUPnP_;
+        }
+        void setUseUPnP(bool upnp) {
+            useUPnP_ = upnp;
+        }
+
     private:
         std::string accountOrder_;
         int historyLimit_;
@@ -135,6 +142,7 @@ class Preferences : public Serializable {
         int portNum_;
         bool searchBarDisplay_;
         bool md5Hash_;
+        bool useUPnP_;
         constexpr static const char * const CONFIG_LABEL = "preferences";
 };
 

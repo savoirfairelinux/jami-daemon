@@ -186,9 +186,19 @@ class Sdp {
             localAudioControlPort_ = port + 1;
         }
 
+        void setLocalPublishedAudioPorts(int audio_port, int control_port) {
+            localAudioDataPort_ = audio_port;
+            localAudioControlPort_ = control_port;
+        }
+
         void setLocalPublishedVideoPort (int port) {
             localVideoDataPort_ = port;
             localVideoControlPort_ = port + 1;
+        }
+
+        void setLocalPublishedVideoPorts(int video_port, int control_port) {
+            localVideoDataPort_ = video_port;
+            localVideoControlPort_ = control_port;
         }
 
         void updatePorts(const std::vector<pj_sockaddr> &sockets);
@@ -229,8 +239,16 @@ class Sdp {
             return localVideoDataPort_;
         }
 
+        unsigned int getLocalVideoControlPort() const {
+            return localVideoControlPort_;
+        }
+
         unsigned int getLocalAudioPort() const {
             return localAudioDataPort_;
+        }
+
+        unsigned int getLocalAudioControlPort() const {
+            return localAudioControlPort_;
         }
 
         void addAttributeToLocalAudioMedia(const char *attr);
