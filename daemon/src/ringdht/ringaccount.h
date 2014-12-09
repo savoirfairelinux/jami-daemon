@@ -279,6 +279,11 @@ class RingAccount : public SIPAccountBase {
         void regenerateCAList();
 
         /**
+         * Maps require port via UPnP
+         */
+        bool mapPortUPnP();
+
+        /**
          * @return pjsip_tls_setting structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
@@ -347,6 +352,14 @@ class RingAccount : public SIPAccountBase {
          * DHT port preference
          */
         in_port_t dhtPort_ {DHT_DEFAULT_PORT};
+
+        /**
+         * DHT port actually used,
+         * this holds the actual port used for DHT, which may not be the port
+         * selected in the configuration in the case that UPnP is used and the
+         * configured port is already used by another client
+         */
+        in_port_t dhtPortUsed_ {DHT_DEFAULT_PORT};
 
         /**
          * The TLS settings, used only if tls is chosen as a sip transport.

@@ -47,6 +47,8 @@
 #include <map>
 #include <sstream>
 
+#include "upnp/upnp.h"
+
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
 namespace Conf {
@@ -270,6 +272,27 @@ public:
         return SipTransportBroker::getTransportSelector(transport_->get());
     }
 
+    /**
+     * Get whether UPnP is used.
+     * @return bool Flag which determines if UPnP is used or not.
+     */
+    bool getUseUPnP() const {
+        return useUPnP_;
+    }
+
+    /**
+     * Set whether or not to use UPnP
+     */
+    void setUseUPnP(bool useUPnP);
+
+    /**
+     * Get the UPnP IP (external router) address.
+     * If use UPnP is set to false, the address will be empty.
+     */
+    IpAddr getUPnPIpAddress() const {
+        return upnpIp_;
+    }
+
 protected:
     virtual void serialize(YAML::Emitter &out);
     virtual void serializeTls(YAML::Emitter &out);
@@ -372,6 +395,13 @@ protected:
         os << range.second;
         a[maxKey] = os.str();
     }
+
+    /**
+     * UPnP IP address (external router address),
+     * used only if use UPnP is set to true
+     */
+    IpAddr upnpIp_ {};
+    upnp::Controller upnp_;
 
 private:
     NON_COPYABLE(SIPAccountBase);
