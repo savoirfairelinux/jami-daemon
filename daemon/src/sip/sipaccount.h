@@ -568,6 +568,11 @@ class SIPAccount : public SIPAccountBase {
         static std::string getLoginName();
 
         /**
+         * Maps require port via UPnP
+         */
+        void mapPortUPnP();
+
+        /**
          * Resolved IP of hostname_ (for registration)
          */
         IpAddr hostIp_;
