@@ -315,7 +315,7 @@ Call::initIceTransport(bool master, unsigned channel_num)
         }
     };
     iceTransport_ = iceTransportFactory.createTransport(getCallId().c_str(), channel_num,
-                                                        on_initdone);
+                                                        account_.getUseUPnP(), on_initdone);
 }
 
 int
