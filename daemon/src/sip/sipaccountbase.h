@@ -272,6 +272,35 @@ public:
         return SipTransportBroker::getTransportSelector(transport_->get());
     }
 
+#if HAVE_UPNP
+    /**
+     * Get whether UPnP is used.
+     * @return bool Flag which determines if UPnP is used or not.
+     */
+    bool getUseUPnP() const {
+        return useUPnP_;
+    }
+
+    /**
+     * Set whether or not to use UPnP
+     */
+    void setUseUPnP(bool useUPnP);
+
+    /**
+     * Get the UPnP IP (external router) address.
+     * If use UPnP is set to false, the address will be empty.
+     * @return std::string The UPnP IPv4 or IPv6 address formatted in standard notation.
+     */
+    std::string getUPnPAddress() const {
+        return upnpIpAddress_;
+    }
+
+    IpAddr getUPnPIpAddress() const {
+        return upnpIp_;
+    }
+
+#endif
+
 protected:
     virtual void serialize(YAML::Emitter &out);
     virtual void serializeTls(YAML::Emitter &out);
@@ -374,6 +403,15 @@ protected:
         os << range.second;
         a[maxKey] = os.str();
     }
+
+#if HAVE_UPNP
+    /**
+     * UPnP IP address (external router address),
+     * used only if use UPnP is set to true
+     */
+    IpAddr upnpIp_ {};
+    std::string upnpIpAddress_ {};
+#endif
 
 private:
     NON_COPYABLE(SIPAccountBase);

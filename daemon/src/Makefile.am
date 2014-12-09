@@ -35,7 +35,12 @@ TLS_LIB = @GNUTLS_LIBS@
 TLS_CFLAGS = @GNUTLS_CFLAGS@
 endif
 
-SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
+if BUILD_UPNP
+UPNP_SUBDIR=upnp
+UPNP_LIBA=./upnp/libupnp.la
+endif
+
+SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR) $(UPNP_SUBDIR)
 
 # libsflphone
 
@@ -51,7 +56,8 @@ libsflphone_la_LIBADD = \
 	$(RINGACC_LIBA) \
 	$(IAX_LIBA) \
 	$(IM_LIBA) \
-	$(SFL_VIDEO_LIBS)
+	$(SFL_VIDEO_LIBS) \
+	$(UPNP_LIBA)
 
 libsflphone_la_LDFLAGS = \
 		@ZRTPCPP_LIBS@ \
