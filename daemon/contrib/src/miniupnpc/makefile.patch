@@ -1,0 +1,16 @@
+--- a/Makefile	2015-01-05 15:45:40.426809962 -0500
++++ b/Makefile	2015-01-05 15:48:24.470817044 -0500
+@@ -212,6 +212,13 @@
+ endif
+ endif
+ 
++install-static:	updateversion $(FILESTOINSTALL)
++	$(INSTALL) -d $(DESTDIR)$(INSTALLDIRINC)
++	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INSTALLDIRINC)
++	$(INSTALL) -d $(DESTDIR)$(INSTALLDIRLIB)
++	$(INSTALL) -m 644 $(LIBRARY) $(DESTDIR)$(INSTALLDIRLIB)
++	$(INSTALL) -d $(DESTDIR)$(INSTALLDIRBIN)
++	$(INSTALL) -m 755 external-ip.sh $(DESTDIR)$(INSTALLDIRBIN)/external-ip
+ 
+ cleaninstall:
+ 	$(RM) -r $(DESTDIR)$(INSTALLDIRINC)

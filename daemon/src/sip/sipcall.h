@@ -211,6 +211,8 @@ class SIPCall : public Call
 
         std::vector<sfl::IceCandidate> getAllRemoteCandidates();
 
+        void removePortsUPnP();
+
 #if USE_CCRTP
         /**
          * Audio Rtp Session factory
