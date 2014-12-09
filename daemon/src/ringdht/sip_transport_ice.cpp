@@ -39,8 +39,21 @@
 
 #include <algorithm>
 
-SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& pool, long t_type, const std::shared_ptr<sfl::IceTransport>& ice, int comp_id)
- : ice_(ice), comp_id_(comp_id)
+#define POOL_TP_INIT 512
+#define POOL_TP_INC  512
+
+static void sockaddr_to_host_port( pj_pool_t *pool,
+                   pjsip_host_port *host_port,
+                   const pj_sockaddr *addr )
+{
+    host_port->host.ptr = (char*) pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN+4);
+    pj_sockaddr_print(addr, host_port->host.ptr, PJ_INET6_ADDRSTRLEN+4, 0);
+    host_port->host.slen = pj_ansi_strlen(host_port->host.ptr);
+    host_port->port = pj_sockaddr_get_port(addr);
+}
+
+SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& /* pool */, long t_type, const std::shared_ptr<sfl::IceTransport>& ice, int comp_id)
+ : base(), ice_(ice), comp_id_(comp_id)
 {
     if (not ice->isRunning())
         throw std::logic_error("ice transport must be running");
@@ -49,8 +62,12 @@ SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& pool, long t_
 
     base.endpt = endpt;
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
+    base.pool = pjsip_endpt_create_pool(endpt, "ice", POOL_TP_INIT, POOL_TP_INC);
+    if (!base.pool)
+        throw std::bad_alloc();
 
-    base.pool = &pool; //pjsip_endpt_create_pool(endpt, "ice", POOL_TP_INIT, POOL_TP_INC);
+    rdata.tp_info.pool = base.pool;
+
     pj_ansi_snprintf(base.obj_name, PJ_MAX_OBJ_NAME, "ice");
     auto status = pj_atomic_create(base.pool, 0, &base.ref_cnt);
     if (status != PJ_SUCCESS) {
@@ -78,10 +95,14 @@ SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& pool, long t_
                                        sizeof(print_addr), 3));
     base.addr_len = remote.getLength();
     base.dir = PJSIP_TP_DIR_NONE;//is_server? PJSIP_TP_DIR_INCOMING : PJSIP_TP_DIR_OUTGOING;
+    base.data = nullptr;
 
     /* Set initial local address */
     auto local = ice->getLocalAddress();
     pj_sockaddr_cp(&base.local_addr, local.pjPtr());
+
+    sockaddr_to_host_port(base.pool, &base.local_name, &base.local_addr);
+    sockaddr_to_host_port(base.pool, &base.remote_name, remote.pjPtr());
 
     base.send_msg = [](pjsip_transport *transport,
                     pjsip_tx_data *tdata,
@@ -142,6 +163,9 @@ SipIceTransport::~SipIceTransport()
         pj_atomic_destroy(base.ref_cnt);
         base.ref_cnt = nullptr;
     }
+
+    pj_pool_release(base.pool);
+    base.pool = nullptr;
 }
 
 pj_status_t
