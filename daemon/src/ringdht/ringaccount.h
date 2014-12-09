@@ -279,6 +279,11 @@ class RingAccount : public SIPAccountBase {
         void regenerateCAList();
 
         /**
+         * Maps require port via UPnP
+         */
+        void mapPortUPnP();
+
+        /**
          * @return pjsip_tls_setting structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
