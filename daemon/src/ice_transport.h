@@ -48,6 +48,10 @@
 
 namespace ring {
 
+namespace upnp {
+    class Controller;
+}
+
 class IceTransport;
 
 using IceTransportCompleteCb = std::function<void(IceTransport&, bool)>;
@@ -66,8 +70,14 @@ class IceTransport {
          */
         IceTransport(const char* name, int component_count,
                      bool master,
+                     bool upnp_enabled = false,
                      IceTransportCompleteCb on_initdone_cb={},
                      IceTransportCompleteCb on_negodone_cb={});
+
+        /**
+         * Destructor
+         */
+        ~IceTransport();
 
         /**
          * Set/change transport role as initiator.
@@ -147,6 +157,8 @@ class IceTransport {
 
         ssize_t waitForData(int comp_id, unsigned int timeout);
 
+        unsigned getComponentCount() const {return component_count_;};
+
     private:
         static constexpr int MAX_CANDIDATES {32};
 
@@ -212,6 +224,25 @@ class IceTransport {
         std::vector<ComponentIO> compIO_;
 
         bool initiator_session_ {true};
+
+        /**
+         * Returns the IP of each candidate for a given component in the ICE session
+         */
+        std::vector<IpAddr> getLocalCandidatesAddr(unsigned comp_id) const;
+
+        /**
+         * Adds candidate to ICE session
+         */
+        void addCandidate(int comp_id, const IpAddr& addr);
+
+        /**
+         * Creates UPnP port mappings and adds ICE candidates based on those mappings
+         */
+        void selectUPnPIceCandidates();
+
+        bool upnp_enabled_ {false};
+
+        std::unique_ptr<upnp::Controller> upnp_;
 };
 
 class IceTransportFactory {
@@ -222,6 +253,7 @@ class IceTransportFactory {
         std::shared_ptr<IceTransport> createTransport(const char* name,
                                                       int component_count,
                                                       bool master,
+                                                      bool upnp_enabled = false,
                                                       IceTransportCompleteCb&& on_initdone_cb={},
                                                       IceTransportCompleteCb&& on_negodone_cb={});
 

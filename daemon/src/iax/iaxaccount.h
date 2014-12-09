@@ -130,6 +130,13 @@ class IAXAccount : public Account {
         std::shared_ptr<enable_if_base_of<T, IAXCall> >
         newIncomingCall(const std::string& id);
 
+        /**
+         * Set whether or not to use UPnP
+         */
+        void setUseUPnP(bool) {
+            /* do nothing for now as UPnP isn't implemented for IAX */
+        }
+
     private:
 
         void setAccountDetails(const std::map<std::string, std::string> &details);

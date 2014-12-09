@@ -46,6 +46,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include <memory>
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
@@ -111,9 +112,7 @@ public:
      */
     SIPAccountBase(const std::string& accountID);
 
-    virtual ~SIPAccountBase() {
-        setTransport();
-    }
+    virtual ~SIPAccountBase();
 
     /**
      * Create incoming SIPCall.

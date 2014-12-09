@@ -58,7 +58,11 @@ class SIPAccountBase;
 class SipTransport;
 
 namespace ring {
-class AVFormatRtpSession;
+    class AVFormatRtpSession;
+
+    namespace upnp {
+        class Controller;
+    }
 }
 
 /**
@@ -179,6 +183,8 @@ class SIPCall : public Call
 
         void startAllMedia();
 
+        void openPortsUPnP();
+
     private:
         NON_COPYABLE(SIPCall);
 
@@ -222,6 +228,8 @@ class SIPCall : public Call
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contactHeader_ {contactBuffer_, 0};
+
+        std::unique_ptr<ring::upnp::Controller> upnp_;
 };
 
 #endif // __SIPCALL_H__

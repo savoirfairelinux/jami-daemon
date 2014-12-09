@@ -49,6 +49,10 @@ SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID), link_(getSIPVoIPLink())
 {}
 
+SIPAccountBase::~SIPAccountBase() {
+    setTransport();
+}
+
 template <typename T>
 static void
 validate(std::string &member, const std::string &param, const T& valid)

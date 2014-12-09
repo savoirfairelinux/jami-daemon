@@ -33,9 +33,14 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "noncopyable.h"
 #include "config/serializable.h"
 #include "registration_states.h"
+#include "ip_utils.h"
 
 #include <functional>
 #include <string>
@@ -45,6 +50,14 @@
 #include <set>
 #include <random>
 #include <stdexcept>
+#include <atomic>
+#include <mutex>
+
+namespace ring {
+    namespace upnp {
+        class Controller;
+    }
+}
 
 class Call;
 
@@ -241,6 +254,25 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const VIDEO_CODEC_PARAMETERS;
         static const char * const VIDEO_CODEC_BITRATE;
 
+        /**
+         * Set whether or not to use UPnP
+         */
+        void setUseUPnP(bool useUPnP);
+
+        /**
+         * Get whether UPnP is used.
+         * @return bool Flag which determines if UPnP is used or not.
+         */
+        bool getUseUPnP() const;
+
+        /**
+         * Get the UPnP IP (external router) address.
+         * If use UPnP is set to false, the address will be empty.
+         */
+        IpAddr getUPnPIpAddress() const {
+            return upnpIp_;
+        }
+
     private:
         NON_COPYABLE(Account);
 
@@ -373,6 +405,14 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Random generator engine
          */
         std::mt19937_64 rand_ {};
+
+        /**
+         * UPnP IP address (external router address),
+         * used only if use UPnP is set to true
+         */
+        IpAddr upnpIp_ {};
+        std::unique_ptr<ring::upnp::Controller> upnp_;
+        mutable std::mutex upnp_mtx {};
 };
 
 #endif
