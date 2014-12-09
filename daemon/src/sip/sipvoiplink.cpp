@@ -76,6 +76,8 @@
 #include "string_utils.h"
 #include "logger.h"
 
+#include "upnp/upnp.h"
+
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_uri.h>
 
@@ -295,9 +297,15 @@ transaction_request_cb(pjsip_rx_data *rdata)
     auto family = pjsip_transport_type_get_af(account->getTransportType());
     IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
-    // May use the published address as well
-    IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
+    IpAddr addrSdp;
+    if (account->getUseUPnP()) {
+        /* use UPnP addr, or published addr if its set */
+        addrSdp = account->getPublishedSameasLocal() ?
+            account->getUPnPIpAddress() : account->getPublishedIpAddress();
+    } else {
+        addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                     ? account->getPublishedIpAddress() : addrToUse;
+    }
 
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
@@ -932,9 +940,17 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(account.getTransportType());
-    IpAddr address = account.getPublishedSameasLocal()
+
+    IpAddr address;
+    if (account.getUseUPnP()) {
+        /* use UPnP addr, or published addr if its set */
+        address = account.getPublishedSameasLocal() ?
+            account.getUPnPIpAddress() : account.getPublishedIpAddress();
+    } else {
+        address = account.getPublishedSameasLocal()
                     ? IpAddr(ip_utils::getInterfaceAddr(account.getLocalInterface(), family))
                     : account.getPublishedIpAddress();
+    }
 
     call->setCallMediaLocal(address);
 
@@ -1039,6 +1055,21 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Update connection information
     sdp.setMediaTransportInfoFromRemoteSdp();
+
+    // const auto& account = call->getSIPAccount();
+    // if (account.getUseUPnP()) {
+    //     RING_DBG("Map ports for SDP session via UPnP");
+    //     // open up ports before we start the audio/video streams
+    //     upnp::UPnP upnp = upnp::UPnP();
+
+    //     upnp.addRedirection(sdp.getLocalAudioPort(), sdp.getLocalAudioPort());
+    //     upnp.addRedirection(sdp.getLocalAudioControlPort(), sdp.getLocalAudioControlPort());
+
+    // #ifdef SFL_VIDEO
+    //     upnp.addRedirection(sdp.getLocalVideoPort(), sdp.getLocalVideoPort());
+    //     upnp.addRedirection(sdp.getLocalVideoControlPort(), sdp.getLocalVideoControlPort());
+    // #endif
+    // }
 
     // Handle possible ICE transport
     if (!call->startIce())

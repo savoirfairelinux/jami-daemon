@@ -58,6 +58,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
 	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
+	$(APPLY) $(SRC)/pjproject/pj_ice_sess.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
