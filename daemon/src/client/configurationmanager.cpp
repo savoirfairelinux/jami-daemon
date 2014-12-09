@@ -144,7 +144,7 @@ std::map<std::string, std::string> ConfigurationManager::validateCertificate(con
                                                                              const std::string& certificate,
                                                                              const std::string& privateKey)
 {
-#if HAVE_TLS
+#if HAVE_TLS && HAVE_DHT
     TlsValidator validator(certificate,privateKey);
     return validator.getSerializedChecks();
 #else
@@ -155,7 +155,7 @@ std::map<std::string, std::string> ConfigurationManager::validateCertificate(con
 
 std::map<std::string, std::string> ConfigurationManager::getCertificateDetails(const std::string& certificate)
 {
-#if HAVE_TLS
+#if HAVE_TLS && HAVE_DHT
     TlsValidator validator(certificate,"");
     return validator.getSerializedDetails();
 #else
@@ -587,7 +587,7 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
 
 bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 {
-#if HAVE_TLS
+#if HAVE_TLS && HAVE_DHT
     return containsPrivateKey(pemPath.c_str()) == 0;
 #else
     SFL_WARN("TLS not supported");
@@ -598,7 +598,7 @@ bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 bool ConfigurationManager::checkCertificateValidity(const std::string& caPath,
                                                     const std::string& pemPath)
 {
-#if HAVE_TLS
+#if HAVE_TLS && HAVE_DHT
     return certificateIsValid(caPath.size() > 0 ? caPath.c_str() : NULL,
                               pemPath.c_str()) == 0;
 #else
@@ -610,7 +610,7 @@ bool ConfigurationManager::checkCertificateValidity(const std::string& caPath,
 bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
                                                     const std::string& port)
 {
-#if HAVE_TLS
+#if HAVE_TLS && HAVE_DHT
     return verifyHostnameCertificate(host.c_str(),
                                      strtol(port.c_str(), NULL, 10)) == 0;
 #else
