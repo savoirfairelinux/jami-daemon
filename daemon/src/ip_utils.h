@@ -133,6 +133,10 @@ public:
         return ss;
     }
 
+    inline const pj_sockaddr* pjPtr() const {
+        return &addr;
+    }
+
     inline pj_sockaddr* pjPtr() {
         return &addr;
     }
