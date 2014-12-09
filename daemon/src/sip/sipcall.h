@@ -50,6 +50,8 @@
 
 #include "pjsip/sip_config.h"
 
+#include "upnp/upnp.h"
+
 #include <memory>
 
 struct pjsip_evsub;
@@ -191,6 +193,8 @@ class SIPCall : public Call
 
         void startAllMedia();
 
+        void openPortsUPnP();
+
     private:
         NON_COPYABLE(SIPCall);
 
@@ -210,6 +214,8 @@ class SIPCall : public Call
         int SIPSessionReinvite();
 
         std::vector<ring::IceCandidate> getAllRemoteCandidates();
+
+        void removePortsUPnP();
 
 #if USE_CCRTP
         /**
@@ -241,6 +247,8 @@ class SIPCall : public Call
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contactHeader_ {contactBuffer_, 0};
+
+        upnp::Controller upnp_;
 };
 
 #endif // __SIPCALL_H__
