@@ -70,6 +70,9 @@
 #include <sstream>
 #include <cstdlib>
 
+#include "upnp/upnp.h"
+#include "ip_utils.h"
+
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
@@ -221,9 +224,15 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
     call->setCallMediaLocal(localAddress);
 
-    // May use the published address as well
-    const auto addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ?
-        getPublishedIpAddress() : localAddress;
+    IpAddr addrSdp;
+    if (getUseUPnP()) {
+        /* use UPnP addr, or published addr if its set */
+        addrSdp = getPublishedSameasLocal() ?
+            getUPnPIpAddress() : getPublishedIpAddress();
+    } else {
+        addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ?
+            getPublishedIpAddress() : localAddress;
+    }
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
@@ -705,6 +714,19 @@ std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
     return a;
 }
 
+void SIPAccount::mapPortUPnP()
+{
+    if (useUPnP_) {
+        /* create port mapping from published port to local port to the local IP
+         * note that since different SIP account can use the same port,
+         * it may already be open, thats OK
+         */
+        RING_DBG("Mapping SIP port %u", publishedPort_);
+        uint16_t port_used;
+        upnp_.addAnyMapping(publishedPort_, upnp::PortType::UDP, false, &port_used);
+    }
+}
+
 void SIPAccount::doRegister()
 {
     if (not isEnabled()) {
@@ -716,6 +738,7 @@ void SIPAccount::doRegister()
 
     if (hostname_.empty() || isIP2IP()) {
         doRegister_();
+        mapPortUPnP();
         return;
     }
 
@@ -734,6 +757,8 @@ void SIPAccount::doRegister()
             this_->doRegister_();
         }
     );
+
+    mapPortUPnP();
 }
 
 void SIPAccount::doRegister_()

@@ -306,16 +306,8 @@ void
 Call::initIceTransport(bool master, unsigned channel_num)
 {
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    const auto& on_initdone = [this, master](ring::IceTransport& iceTransport, bool done) {
-        if (done) {
-            if (master)
-                iceTransport.setInitiatorSession();
-            else
-                iceTransport.setSlaveSession();
-        }
-    };
     iceTransport_ = iceTransportFactory.createTransport(getCallId().c_str(), channel_num,
-                                                        on_initdone);
+                                                        master, account_.getUseUPnP());
 }
 
 int
