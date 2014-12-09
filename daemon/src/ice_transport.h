@@ -120,6 +120,17 @@ class IceTransport {
          */
         std::vector<std::string> getLocalCandidates(unsigned comp_id) const;
 
+
+        /**
+         * Returns the IP of each candidate for a given component in the ICE session
+         */
+        std::vector<IpAddr> getLocalCandidatesAddr(unsigned comp_id) const;
+
+        /**
+         * Adds candidate to ICE session
+         */
+        void addCandidate(int comp_id, const IpAddr& addr);
+
         /**
          * Returns serialized ICE attributes and candidates.
          */
@@ -138,6 +149,8 @@ class IceTransport {
         ssize_t getNextPacketSize(int comp_id);
 
         ssize_t waitForData(int comp_id, unsigned int timeout);
+
+        unsigned getComponentCount() const {return component_count_;};
 
     private:
         static constexpr int MAX_CANDIDATES {32};

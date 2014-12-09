@@ -39,6 +39,7 @@
 #include "account_schema.h"
 #include "client/configurationmanager.h"
 #include "manager.h"
+#include "upnp/upnp.h"
 
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
@@ -328,3 +329,15 @@ SIPAccountBase::generateVideoPort() const
     return getRandomEvenNumber(videoPortRange_);
 }
 #endif
+
+void
+SIPAccountBase::setUseUPnP(bool useUPnP) {
+    useUPnP_ = useUPnP;
+    if (useUPnP_) {
+        upnp_ = new upnp::UPnP();
+        upnpIp_ = upnp_->getExternalIP();
+        upnpIpAddress_ = upnpIp_.toString();
+    } else {
+        delete upnp_;
+    }
+}
