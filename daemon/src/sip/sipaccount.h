@@ -508,6 +508,7 @@ class SIPAccount : public SIPAccountBase {
         bool SIPStartCall(std::shared_ptr<SIPCall>& call);
 
         void usePublishedAddressPortInVIA();
+        void useUPnPAddressPortInVIA();
         bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool userMatch(const std::string &username) const;
         bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
@@ -566,6 +567,11 @@ class SIPAccount : public SIPAccountBase {
          * @return std::string The login name under which SFLPhone is running.
          */
         static std::string getLoginName();
+
+        /**
+         * Maps require port via UPnP
+         */
+        bool mapPortUPnP();
 
         /**
          * Resolved IP of hostname_ (for registration)
@@ -728,6 +734,14 @@ class SIPAccount : public SIPAccountBase {
          * Presence data structure
          */
         SIPPresence * presence_;
+
+        /**
+         * SIP port actually used,
+         * this holds the actual port used for SIP, which may not be the port
+         * selected in the configuration in the case that UPnP is used and the
+         * configured port is already used by another client
+         */
+        pj_uint16_t publishedPortUsed_ {DEFAULT_SIP_PORT};
 };
 
 #endif
