@@ -84,6 +84,9 @@
 #include <istream>
 #include <algorithm>
 
+
+#include "upnp/upnp.h"
+
 using namespace sfl;
 
 /** Environment variable used to set pjsip's logging level */
@@ -511,6 +514,11 @@ SIPVoIPLink::SIPVoIPLink()
 
     srand(time(NULL)); // to get random number for RANDOM_PORT
 
+    /* TEST UPNP */
+    // try init upnp
+    init_upnp();
+    upnp_add_redir("10.10.1.146", 5060, 5060);
+
     TRY(pj_init());
 
     TRY(pjlib_util_init());
@@ -610,6 +618,9 @@ SIPVoIPLink::SIPVoIPLink()
 SIPVoIPLink::~SIPVoIPLink()
 {
     SFL_DBG("destroying SIPVoIPLink instance");
+
+    /* TEST */
+    upnp_remove_all_entries("ring");
 
     const int MAX_TIMEOUT_ON_LEAVING = 5;
 
@@ -1019,6 +1030,18 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Update connection information
     sdp.setMediaTransportInfoFromRemoteSdp();
+
+    /* TEST */
+    // open up ports
+    upnp_add_redir("10.10.1.146", sdp.getLocalAudioPort(), sdp.getLocalAudioPort());
+    upnp_add_redir("10.10.1.146", sdp.getLocalVideoPort(), sdp.getLocalVideoPort());
+    upnp_add_redir("10.10.1.146", sdp.getLocalAudioControlPort(), sdp.getLocalAudioControlPort());
+    upnp_add_redir("10.10.1.146", sdp.getLocalVideoControlPort(), sdp.getLocalVideoControlPort());
+    // asume rtcp is +1
+    // upnp_add_redir("10.10.1.146", sdp.getRemoteAudioPort()+1, sdp.getLocalAudioPort()+1);
+    // upnp_add_redir("10.10.1.146", sdp.getRemoteVideoPort()+1, sdp.getLocalVideoPort()+1);
+    while(0 != upnp_get_entry(sdp.getLocalAudioPort()));
+    while(0 != upnp_get_entry(sdp.getLocalVideoPort()));
 
     auto& audioRTP = call->getAudioRtp();
     try {
