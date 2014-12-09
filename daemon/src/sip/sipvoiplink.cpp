@@ -84,6 +84,10 @@
 #include <istream>
 #include <algorithm>
 
+#if HAVE_UPNP
+#include "upnp/upnp.h"
+#endif
+
 using namespace sfl;
 
 /** Environment variable used to set pjsip's logging level */
@@ -1019,6 +1023,28 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Update connection information
     sdp.setMediaTransportInfoFromRemoteSdp();
+
+#if HAVE_UPNP
+    const auto& account = call->getSIPAccount();
+    if (account.getUseUPnP()) {
+        SFL_DBG("Map ports for SDP session via UPnP");
+        // open up ports before we start the audio/video streams
+        // get local IPv4 addr
+        IpAddr local_ip = ip_utils::getLocalAddr(pj_AF_INET());
+        if (!local_ip)
+            throw VoipLinkException("Unable to determine network capabilities");
+
+        upnp_add_redir(local_ip.toString().c_str(), sdp.getLocalAudioPort(), sdp.getLocalAudioPort());
+        upnp_add_redir(local_ip.toString().c_str(), sdp.getLocalAudioControlPort(), sdp.getLocalAudioControlPort());
+
+    #ifdef SFL_VIDEO
+        upnp_add_redir(local_ip.toString().c_str(), sdp.getLocalVideoPort(), sdp.getLocalVideoPort());
+        upnp_add_redir(local_ip.toString().c_str(), sdp.getLocalVideoControlPort(), sdp.getLocalVideoControlPort());
+    #endif
+    } else {
+        SFL_DBG("Not using UPnP");
+    }
+#endif
 
     auto& audioRTP = call->getAudioRtp();
     try {

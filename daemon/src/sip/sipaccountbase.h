@@ -272,6 +272,22 @@ public:
         return SipTransportBroker::getTransportSelector(transport_->get());
     }
 
+#if HAVE_UPNP
+    /**
+     * Get whether UPnP is used.
+     * @return bool Flag which determines if UPnP is used or not.
+     */
+    bool getUseUPnP() const {
+        return useUPnP_;
+    }
+
+    /**
+     * Set whether or not to use UPnP
+     */
+    void setUseUPnP(bool useUPnP);
+
+#endif
+
 protected:
     virtual void serialize(YAML::Emitter &out);
     virtual void serializeTls(YAML::Emitter &out);

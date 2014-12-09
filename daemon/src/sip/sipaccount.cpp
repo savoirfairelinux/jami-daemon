@@ -70,6 +70,11 @@
 #include <sstream>
 #include <cstdlib>
 
+#if HAVE_UPNP
+#include "upnp/upnp.h"
+#include <pjlib.h>
+#endif
+
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
@@ -700,6 +705,27 @@ std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
     return a;
 }
 
+#if HAVE_UPNP
+void SIPAccount::mapPortUPnP()
+{
+    if (useUPnP_) {
+        /* create port mapping from published port to local port to the local IP
+         * note that since different SIP account can use the same port,
+         * it may already be open, thats OK
+         * note: upnp must be initialized already
+         */
+        IpAddr local_ip = ip_utils::getLocalAddr(pj_AF_INET());
+        if (!local_ip)
+            throw VoipLinkException("Unable to determine network capabilities");
+
+        SFL_DBG("Mapping SIP port %u to %u", publishedPort_, localPort_);
+        upnp_add_redir(local_ip.toString().c_str(), publishedPort_, localPort_);
+    } else {
+        SFL_DBG("Not using UPnP");
+    }
+}
+#endif
+
 void SIPAccount::doRegister()
 {
     if (not isEnabled()) {
@@ -711,6 +737,9 @@ void SIPAccount::doRegister()
 
     if (hostname_.empty() || isIP2IP()) {
         doRegister_();
+#if HAVE_UPNP
+        mapPortUPnP();
+#endif
         return;
     }
 
@@ -729,6 +758,10 @@ void SIPAccount::doRegister()
             this_->doRegister_();
         }
     );
+
+#if HAVE_UPNP
+    mapPortUPnP();
+#endif
 }
 
 void SIPAccount::doRegister_()

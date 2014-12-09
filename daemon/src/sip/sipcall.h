@@ -196,6 +196,10 @@ class SIPCall : public Call
 
         int SIPSessionReinvite();
 
+#ifdef HAVE_UPNP
+        void removePortsUPnP();
+#endif
+
         /**
          * Audio Rtp Session factory
          */
