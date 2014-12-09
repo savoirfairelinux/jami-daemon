@@ -225,8 +225,16 @@ class Sdp {
             return localVideoDataPort_;
         }
 
+        unsigned int getLocalVideoControlPort() const {
+            return localVideoControlPort_;
+        }
+
         unsigned int getLocalAudioPort() const {
             return localAudioDataPort_;
+        }
+
+        unsigned int getLocalAudioControlPort() const {
+            return localAudioControlPort_;
         }
 
         void addAttributeToLocalAudioMedia(const char *attr);
