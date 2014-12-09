@@ -70,6 +70,9 @@
 #include <sstream>
 #include <cstdlib>
 
+#include "upnp/upnp.h"
+#include "ip_utils.h"
+
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
@@ -221,9 +224,15 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
     call->setCallMediaLocal(localAddress);
 
-    // May use the published address as well
-    const auto addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ?
-        getPublishedIpAddress() : localAddress;
+    IpAddr addrSdp;
+    if (getUseUPnP()) {
+        /* use UPnP addr, or published addr if its set */
+        addrSdp = getPublishedSameasLocal() ?
+            getUPnPIpAddress() : getPublishedIpAddress();
+    } else {
+        addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ?
+            getPublishedIpAddress() : localAddress;
+    }
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
@@ -421,6 +430,13 @@ void SIPAccount::usePublishedAddressPortInVIA()
     via_addr_.host.ptr = (char *) publishedIpAddress_.c_str();
     via_addr_.host.slen = publishedIpAddress_.size();
     via_addr_.port = publishedPort_;
+}
+
+void SIPAccount::useUPnPAddressPortInVIA()
+{
+    via_addr_.host.ptr = (char *) getUPnPIpAddress().toString().c_str();
+    via_addr_.host.slen = getUPnPIpAddress().toString().size();
+    via_addr_.port = publishedPortUsed_;
 }
 
 template <typename T>
@@ -705,6 +721,32 @@ std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
     return a;
 }
 
+bool SIPAccount::mapPortUPnP()
+{
+    if (useUPnP_) {
+        /* create port mapping from published port to local port to the local IP
+         * note that since different accounts can use the same port,
+         * it may already be open, thats OK
+         *
+         * if the desired port is taken by another client, then it will try to map
+         * a different port, if succesfull, then we have to use that port for SIP
+         */
+        uint16_t port_used;
+        if (upnp_.addAnyMapping(publishedPort_, localPort_, upnp::PortType::UDP, false, false, &port_used)) {
+            if (port_used != publishedPort_)
+                RING_DBG("UPnP could not map published port %u for SIP, using %u instead", publishedPort_, port_used);
+            publishedPortUsed_ = port_used;
+            return true;
+        } else {
+            /* failed to map any port */
+            return false;
+        }
+    } else {
+        /* not using UPnP, so return true */
+        return true;
+    }
+}
+
 void SIPAccount::doRegister()
 {
     if (not isEnabled()) {
@@ -713,6 +755,9 @@ void SIPAccount::doRegister()
     }
 
     RING_DBG("doRegister %s", hostname_.c_str());
+
+    if (not mapPortUPnP())
+        RING_WARN("Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
 
     if (hostname_.empty() || isIP2IP()) {
         doRegister_();
@@ -851,6 +896,9 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
         setTransport();
     if (released_cb)
         released_cb(true);
+
+    RING_DBG("UPnP : removing port mapping for SIP account.");
+    upnp_.removeMappings();
 }
 
 void SIPAccount::startKeepAliveTimer()
@@ -928,7 +976,7 @@ SIPAccount::sendRegister()
     const pj_str_t pjContact(getContactHeader());
 
     if (transport_) {
-        if (not getPublishedSameasLocal() or (not received.empty() and received != getPublishedAddress())) {
+        if (useUPnP_ or not getPublishedSameasLocal() or (not received.empty() and received != getPublishedAddress())) {
             pjsip_host_port *via = getViaAddr();
             RING_DBG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
 
@@ -1384,7 +1432,12 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         hostname_,
         address, port);
 
-    if (not publishedSameasLocal_) {
+    if (useUPnP_) {
+        address = getUPnPIpAddress().toString();
+        port = publishedPortUsed_;
+        useUPnPAddressPortInVIA();
+        RING_DBG("Using UPnP address %s and port %d", address.c_str(), port);
+    } else if (not publishedSameasLocal_) {
         address = publishedIpAddress_;
         port = publishedPort_;
         RING_DBG("Using published address %s and port %d", address.c_str(), port);
