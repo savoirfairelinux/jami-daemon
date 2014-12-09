@@ -42,6 +42,7 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
+#include "upnp/upnp.h"
 
 using namespace ring;
 
@@ -360,6 +361,8 @@ SIPCall::hangup(int reason)
 
     // Make sure user data is NULL in callbacks
     inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
+
+    // removePortsUPnP();
 
     removeCall();
 }
@@ -934,4 +937,36 @@ SIPCall::stopAllMedias()
 #ifdef RING_VIDEO
     videortp_.stop();
 #endif
+}
+
+void
+SIPCall::openPortsUPnP()
+{
+    auto& account = getSIPAccount();
+    if (account.getUseUPnP()) {
+        /**
+         * Try to open the desired ports with UPnP,
+         * if they are used, use the alternative port and update the SDP session with the newly chosen port(s)
+         *
+         * TODO: the inital ports were chosen from the list of available ports and were marked as used
+         *       the newly selected port should possibly be checked against the list of used ports and marked
+         *       as used, the old port should be "released"
+         */
+        uint16_t audio_port_used;
+        if (upnp_.addAnyMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP, true, &audio_port_used)) {
+            uint16_t control_port_used;
+            if (upnp_.addAnyMapping(sdp_->getLocalAudioControlPort(), upnp::PortType::UDP, true, &control_port_used)) {
+                sdp_->setLocalPublishedAudioPorts(audio_port_used, control_port_used);
+            }
+        }
+#ifdef RING_VIDEO
+        uint16_t video_port_used;
+        if (upnp_.addAnyMapping(sdp_->getLocalVideoPort(), upnp::PortType::UDP, true, &video_port_used)) {
+            uint16_t control_port_used;
+            if (upnp_.addAnyMapping(sdp_->getLocalVideoControlPort(), upnp::PortType::UDP, true, &control_port_used)) {
+                sdp_->setLocalPublishedVideoPorts(video_port_used, control_port_used);
+            }
+        }
+#endif
+    }
 }

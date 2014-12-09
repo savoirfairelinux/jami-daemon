@@ -537,6 +537,57 @@ AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
 AC_DEFINE_UNQUOTED([HAVE_IPV6], `if test "x$enable_ipv6" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have IPv6])
 AM_CONDITIONAL(BUILD_IPV6, test "x$enable_ipv6" = "xyes" )
 
+# miniupnpc
+# required dependency(ies): libminiupc
+dnl check for libminiupnpc (doesn't use pkg-config)
+AC_ARG_WITH([upnp], [AS_HELP_STRING([--without-upnp],
+            [disable support for upnp])], [], [with_upnp=yes])
+
+LIBMINIUPNPC=
+AS_IF([test "x$with_upnp" != xno],
+      [AC_CHECK_HEADER([miniupnpc/miniupnpc.h], , AC_MSG_FAILURE([Unable to find libminiupnpc headers (you may need to install the dev package).  You may use --without-upnp to compile without upnp support.]))]
+      [AC_CHECK_LIB([miniupnpc], [simpleUPnPcommand], [
+          UPNP_LIBS=-lminiupnpc
+          AC_SUBST(UPNP_LIBS)
+          miniupnp_version="unknown"],
+        [AC_MSG_FAILURE([libminiupnpc link test failed. You may use --without-upnp to compile without upnp support.])
+          miniupnp_version="none"
+          AC_DEFINE([HAVE_UPNP], 0, [Define if you have miniupnpc])]
+      )],
+      [AC_DEFINE([HAVE_UPNP], 0, [Define if you have miniupnpc])])
+
+# need to determine API version
+# if libminiupnpc is v1.7 or higher, then the API version should be defined
+if test "x$miniupnp_version" = "xunknown" ; then
+  AC_MSG_CHECKING("if libminiupnpc is v1.7 or higher to determine API version")
+  AC_PREPROC_IFELSE(
+    [AC_LANG_PROGRAM(
+      [#include <miniupnpc/miniupnpc.h>],
+      [#ifndef MINIUPNPC_API_VERSION
+         error, must be version 1.6 or lower
+       #endif]
+    )],
+    [miniupnp_version=">= 1.7"
+      AC_MSG_RESULT("found v1.7 or higher")
+      AC_DEFINE([HAVE_UPNP], 1, [Define if you have miniupnpc])],
+    [AC_MSG_RESULT("found v1.6 or lower")])
+fi
+
+# otherwise it must be v1.6 or lower; we don't support lower than v1.6, which is API v8
+# v1.6 introduced IPv6 commands, so we check for one of them
+if test "x$miniupnp_version" = "xunknown" ; then
+  AC_MSG_CHECKING("if libminiupnpc is at least v1.6")
+  AC_CHECK_LIB([miniupnpc], [UPNP_GetFirewallStatus],[
+      miniupnp_version="1.6"
+      AC_DEFINE(MINIUPNPC_API_VERSION, 8, [libminiupnpc 1.6 has API version 8])
+      AC_MSG_RESULT("detected libminiupnpc is v1.6")
+      AC_DEFINE([HAVE_UPNP], 1, [Define if you have miniupnpc])],
+    [AC_DEFINE([HAVE_UPNP], 0, [Define if you have miniupnpc])
+      AC_MSG_RESULT("detected libminiupnpc is lower than v1.6")
+      AC_MSG_FAILURE([libminiupnpc less than v1.6 is not supported])])
+fi
+
+AM_CONDITIONAL(BUILD_UPNP, test "x$with_upnp" = "xyes" )
 
 # DOXYGEN
 # required dependency(ies): doxygen
@@ -592,6 +643,7 @@ AC_CONFIG_FILES([Makefile \
                  src/media/video/Makefile \
                  src/media/video/v4l2/Makefile \
                  src/media/video/test/Makefile \
+                 src/upnp/Makefile \
                  test/Makefile \
                  ringtones/Makefile \
                  man/Makefile \
