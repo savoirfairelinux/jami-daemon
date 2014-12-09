@@ -46,6 +46,11 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include <memory>
+
+namespace upnp {
+    class Controller;
+}
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
@@ -111,9 +116,7 @@ public:
      */
     SIPAccountBase(const std::string& accountID);
 
-    virtual ~SIPAccountBase() {
-        setTransport();
-    }
+    virtual ~SIPAccountBase();
 
     /**
      * Create incoming SIPCall.
@@ -270,6 +273,19 @@ public:
         return SipTransportBroker::getTransportSelector(transport_->get());
     }
 
+    /**
+     * Set whether or not to use UPnP
+     */
+    void setUseUPnP(bool useUPnP);
+
+    /**
+     * Get the UPnP IP (external router) address.
+     * If use UPnP is set to false, the address will be empty.
+     */
+    IpAddr getUPnPIpAddress() const {
+        return upnpIp_;
+    }
+
 protected:
     virtual void serialize(YAML::Emitter &out);
     virtual void serializeTls(YAML::Emitter &out);
@@ -372,6 +388,13 @@ protected:
         os << range.second;
         a[maxKey] = os.str();
     }
+
+    /**
+     * UPnP IP address (external router address),
+     * used only if use UPnP is set to true
+     */
+    IpAddr upnpIp_ {};
+    std::unique_ptr<upnp::Controller> upnp_;
 
 private:
     NON_COPYABLE(SIPAccountBase);
