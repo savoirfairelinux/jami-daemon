@@ -32,6 +32,7 @@
 
 #include "ice_socket.h"
 #include "ip_utils.h"
+#include "upnp/upnp.h"
 
 #include <pjnath.h>
 #include <pjlib.h>
@@ -65,7 +66,8 @@ class IceTransport {
          * Constructor
          */
         IceTransport(const char* name, int component_count,
-                     bool master,
+                     bool master = true,
+                     bool upnp_enabled = false,
                      IceTransportCompleteCb on_initdone_cb={},
                      IceTransportCompleteCb on_negodone_cb={});
 
@@ -144,6 +146,8 @@ class IceTransport {
 
         ssize_t waitForData(int comp_id, unsigned int timeout);
 
+        unsigned getComponentCount() const {return component_count_;};
+
     private:
         static constexpr int MAX_CANDIDATES {32};
 
@@ -209,6 +213,25 @@ class IceTransport {
         std::vector<ComponentIO> compIO_;
 
         bool initiator_session_ {true};
+
+        /**
+         * Returns the IP of each candidate for a given component in the ICE session
+         */
+        std::vector<IpAddr> getLocalCandidatesAddr(unsigned comp_id) const;
+
+        /**
+         * Adds candidate to ICE session
+         */
+        void addCandidate(int comp_id, const IpAddr& addr);
+
+        /**
+         * Creates UPnP port mappings and adds ICE candidates based on those mappings
+         */
+        void selectUPnPIceCandidates();
+
+        bool upnp_enabled_ {false};
+
+        upnp::Controller upnp_;
 };
 
 class IceTransportFactory {
@@ -218,7 +241,8 @@ class IceTransportFactory {
 
         std::shared_ptr<IceTransport> createTransport(const char* name,
                                                       int component_count,
-                                                      bool master,
+                                                      bool master = true,
+                                                      bool upnp_enabled = false,
                                                       IceTransportCompleteCb&& on_initdone_cb={},
                                                       IceTransportCompleteCb&& on_negodone_cb={});
 

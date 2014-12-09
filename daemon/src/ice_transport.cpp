@@ -94,7 +94,7 @@ IceTransport::cb_on_ice_complete(pj_ice_strans* ice_st,
 }
 
 IceTransport::IceTransport(const char* name, int component_count,
-                           bool master,
+                           bool master, bool upnp_enabled,
                            IceTransportCompleteCb on_initdone_cb,
                            IceTransportCompleteCb on_negodone_cb)
     : pool_(nullptr, pj_pool_release)
@@ -103,6 +103,8 @@ IceTransport::IceTransport(const char* name, int component_count,
     , component_count_(component_count)
     , compIO_(component_count)
     , initiator_session_(master)
+    , upnp_enabled_(upnp_enabled)
+    , upnp_(upnp_enabled)
 {
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
 
@@ -156,6 +158,8 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
             }
             if (on_initdone_cb_)
                 on_initdone_cb_(*this, done);
+            if (iceTransportInitDone_)
+                selectUPnPIceCandidates();
         } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
             iceTransportNegoDone_ = done;
             if (on_negodone_cb_)
@@ -386,6 +390,80 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     }
 
     return res;
+}
+
+std::vector<IpAddr>
+IceTransport::getLocalCandidatesAddr(unsigned comp_id) const
+{
+    std::vector<IpAddr> cand_addrs;
+    pj_ice_sess_cand cand[PJ_ARRAY_SIZE(cand_)];
+    unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
+
+    if (pj_ice_strans_enum_cands(icest_.get(), comp_id+1, &cand_cnt, cand) != PJ_SUCCESS) {
+        RING_ERR("pj_ice_strans_enum_cands() failed");
+        return cand_addrs;
+    }
+
+    for (unsigned i=0; i<cand_cnt; ++i) {
+        cand_addrs.push_back(cand[i].addr);
+    }
+}
+
+void
+IceTransport::addCandidate(int comp_id, const IpAddr& addr)
+{
+    pj_ice_sess_cand cand;
+
+    cand.type = PJ_ICE_CAND_TYPE_HOST;
+    cand.status = PJ_SUCCESS;
+    cand.comp_id = comp_id + 1; /* starts at 1, not 0 */
+    cand.transport_id = 1; /* 1 = STUN */
+    cand.local_pref = 65535; /* host */
+    /* cand.foundation = ? */
+    /* cand.prio = calculated by ice session */
+    /* make base and addr the same since we're not going through a server */
+    pj_sockaddr_cp(&cand.base_addr, addr.pjPtr());
+    pj_sockaddr_cp(&cand.addr, addr.pjPtr());
+    pj_bzero(&cand.rel_addr, sizeof(cand.rel_addr)); /* not usring rel_addr */
+    pj_ice_calc_foundation(pool_.get(), &cand.foundation, cand.type, &cand.base_addr);
+
+    pj_ice_sess_add_cand(pj_ice_strans_get_ice_sess(icest_.get()),
+        cand.comp_id,
+        cand.transport_id,
+        cand.type,
+        cand.local_pref,
+        &cand.foundation,
+        &cand.addr,
+        &cand.base_addr,
+        &cand.rel_addr,
+        pj_sockaddr_get_len(&cand.addr),
+        NULL);
+}
+
+void
+IceTransport::selectUPnPIceCandidates()
+{
+    /* use upnp to open ports and add the proper candidates */
+    if ( upnp_enabled_ ) {
+        /* for every component, get the candidate(s)
+         * create a port mapping either with that port, or with an available port
+         * add candidate with that port and public IP
+         */
+        for(unsigned comp_id = 0; comp_id < component_count_; comp_id++) {
+            RING_DBG("UPnP : Opening port(s) for Ice comp %d and adding candidate with public IP.", comp_id);
+            std::vector<IpAddr> candidates = getLocalCandidatesAddr(comp_id);
+            for(IpAddr addr : candidates) {
+                uint16_t port = addr.getPort();
+                uint16_t port_used;
+                if (upnp_.addAnyMapping(port, upnp::PortType::UDP, true, &port_used)) {
+                    IpAddr publicIP = upnp_.getExternalIP();
+                    publicIP.setPort(port_used);
+                    addCandidate(comp_id, publicIP);
+                } else
+                    RING_WARN("UPnP : Could not create a port mapping for the ICE candidae.");
+            }
+        }
+    }
 }
 
 std::vector<uint8_t>
@@ -695,10 +773,11 @@ std::shared_ptr<IceTransport>
 IceTransportFactory::createTransport(const char* name,
                                      int component_count,
                                      bool master,
+                                     bool upnp_enabled,
                                      IceTransportCompleteCb&& on_initdone_cb,
                                      IceTransportCompleteCb&& on_negodone_cb)
 {
-    return std::make_shared<IceTransport>(name, component_count, master,
+    return std::make_shared<IceTransport>(name, component_count, master, upnp_enabled,
                                           std::forward<IceTransportCompleteCb>(on_initdone_cb),
                                           std::forward<IceTransportCompleteCb>(on_negodone_cb));
 }
