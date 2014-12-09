@@ -357,6 +357,7 @@ IceTransport::getIceAttributesCandidates() const
 void
 IceTransport::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
 {
+    SFL_WARN("IceTransport::onReceiveData");
     if (!comp_id or comp_id > component_count_) {
         SFL_ERR("rx: invalid comp_id (%u)", comp_id);
         return;
