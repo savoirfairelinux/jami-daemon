@@ -229,6 +229,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
 
+    SFL_WARN("transaction_request_cb %s %s %s.", toUsername.c_str(), toHost.c_str(), viaHostname.c_str());
+
     auto account(getSIPVoIPLink()->guessAccount(toUsername, viaHostname, remote_hostname));
     if (!account) {
         SFL_ERR("NULL account");
