@@ -42,15 +42,21 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
-
+#include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h" // for AudioRtpFactoryException
+#include "client/callmanager.h"
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
 #endif
 
 #ifdef SFL_VIDEO
+#include "video/video_rtp_session.h"
 #include "client/videomanager.h"
+
+#include <chrono>
+
+using namespace sfl;
 
 static sfl_video::VideoSettings
 getSettings()
@@ -62,6 +68,15 @@ getSettings()
 
 static const int INITIAL_SIZE = 16384;
 static const int INCREMENT_SIZE = INITIAL_SIZE;
+static constexpr int DEFAULT_ICE_INIT_TIMEOUT {10}; // seconds
+static constexpr int DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
+
+// ICE components Id used on SIP
+static constexpr int ICE_AUDIO_RTP_COMPID {0};
+static constexpr int ICE_AUDIO_RTCP_COMPID {1};
+static constexpr int ICE_VIDEO_RTP_COMPID {2};
+static constexpr int ICE_VIDEO_RTCP_COMPID {3};
+
 
 /** A map to retreive SFLphone internal call id
  *  Given a SIP call ID (usefull for transaction sucha as transfer)*/
@@ -130,9 +145,9 @@ void
 SIPCall::stopRtpIfCurrent()
 {
     if (Manager::instance().isCurrentCall(*this)) {
-        getAudioRtp().stop();
+        audiortp_.stop();
 #ifdef SFL_VIDEO
-        getVideoRtp().stop();
+        videortp_.stop();
 #endif
     }
 }
@@ -297,6 +312,9 @@ void SIPCall::answer()
         inv.reset();
         throw std::runtime_error("Could not send invite request answer (200 OK)");
     }
+
+    waitForIceNegociation(DEFAULT_ICE_NEGO_TIMEOUT);
+    startAllMedia();
 
     setConnectionState(CONNECTED);
     setState(ACTIVE);
@@ -727,8 +745,191 @@ void
 SIPCall::onAnswered()
 {
     if (getConnectionState() != Call::CONNECTED) {
+        waitForIceNegociation(DEFAULT_ICE_NEGO_TIMEOUT);
+        startAllMedia();
         setConnectionState(Call::CONNECTED);
         setState(Call::ACTIVE);
         Manager::instance().peerAnsweredCall(getCallId());
+    }
+}
+
+void
+SIPCall::setupLocalSDPFromIce()
+{
+    if (waitForIceInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
+        SFL_ERR("ICE init failed, ICE will not be used for medias");
+        return;
+    }
+
+    sdp_->addIceAttributes(iceTransport_->getLocalAttributes());
+
+    // Add video and audio channels
+    sdp_->addIceCandidates(0, iceTransport_->getLocalCandidates(ICE_AUDIO_RTP_COMPID));
+    sdp_->addIceCandidates(0, iceTransport_->getLocalCandidates(ICE_AUDIO_RTCP_COMPID));
+#ifdef SFL_VIDEO
+    sdp_->addIceCandidates(1, iceTransport_->getLocalCandidates(ICE_VIDEO_RTP_COMPID));
+    sdp_->addIceCandidates(1, iceTransport_->getLocalCandidates(ICE_VIDEO_RTCP_COMPID));
+#endif
+}
+
+std::vector<sfl::IceCandidate>
+SIPCall::getAllRemoteCandidates()
+{
+    std::vector<sfl::IceCandidate> rem_candidates;
+
+    auto addSDPCandidates = [this](unsigned compid,
+                                   std::vector<sfl::IceCandidate>& out) {
+        IceCandidate cand;
+        for (auto& line : sdp_->getIceCandidates(compid)) {
+            if (iceTransport_->getCandidateFromSDP(line, cand))
+                out.emplace_back(cand);
+        }
+    };
+
+    addSDPCandidates(ICE_AUDIO_RTP_COMPID, rem_candidates);
+    addSDPCandidates(ICE_AUDIO_RTCP_COMPID, rem_candidates);
+
+#ifdef SFL_VIDEO
+    addSDPCandidates(ICE_VIDEO_RTP_COMPID, rem_candidates);
+    addSDPCandidates(ICE_VIDEO_RTCP_COMPID, rem_candidates);
+#endif
+
+    return rem_candidates;
+}
+
+bool
+SIPCall::startIce()
+{
+    if (iceTransport_->isStarted())
+        return true;
+    auto rem_ice_attrs = sdp_->getIceAttributes();
+    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
+        SFL_ERR("ICE empty attributes");
+        return false;
+    }
+    return iceTransport_->start(rem_ice_attrs, getAllRemoteCandidates());
+}
+
+void
+SIPCall::startAllMedia()
+{
+    auto& remoteIP = sdp_->getRemoteIP();
+    try {
+        audiortp_.updateDestinationIpAddress();
+    } catch (const AudioRtpFactoryException &e) {
+        SFL_ERR("%s", e.what());
+    }
+
+    audiortp_.setDtmfPayloadType(sdp_->getTelephoneEventType());
+
+#ifdef SFL_VIDEO
+    auto remoteVideoPort = sdp_->getRemoteVideoPort();
+    videortp_.updateSDP(*sdp_);
+    videortp_.updateDestination(remoteIP, remoteVideoPort);
+    if (isIceRunning()) {
+        std::unique_ptr<sfl::IceSocket> sockRTP(newIceSocket(2));
+        std::unique_ptr<sfl::IceSocket> sockRTCP(newIceSocket(3));
+        sockRTP->connect(remoteIP, remoteVideoPort);
+        sockRTCP->connect(remoteIP, remoteVideoPort + 1);
+        try {
+            videortp_.start(sockRTP.get(), sockRTCP.get());
+            sockRTP.release();
+            sockRTCP.release();
+        } catch (const std::runtime_error &e) {
+            SFL_ERR("videortp_.start() with ICE failed, %s", e.what());
+        }
+    } else {
+	    const auto localVideoPort = sdp_->getLocalVideoPort();
+        try {
+            videortp_.start(localVideoPort ? localVideoPort : remoteVideoPort);
+        } catch (const std::runtime_error &e) {
+            SFL_ERR("videortp_.start() failed, %s", e.what());
+        }
+    }
+#endif
+
+    // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
+    CryptoOffer crypto_offer;
+    getSDP().getRemoteSdpCryptoFromOffer(sdp_->getActiveRemoteSdpSession(), crypto_offer);
+
+#if HAVE_SDES
+    bool nego_success = false;
+
+    if (!crypto_offer.empty()) {
+        std::vector<sfl::CryptoSuiteDefinition> localCapabilities;
+
+        for (size_t i = 0; i < SFL_ARRAYSIZE(sfl::CryptoSuites); ++i)
+            localCapabilities.push_back(sfl::CryptoSuites[i]);
+
+        sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+        auto callMgr = Manager::instance().getClient()->getCallManager();
+
+        if (sdesnego.negotiate()) {
+            nego_success = true;
+
+            try {
+                audiortp_.setRemoteCryptoInfo(sdesnego);
+                callMgr->secureSdesOn(getCallId());
+            } catch (const AudioRtpFactoryException &e) {
+                SFL_ERR("%s", e.what());
+                callMgr->secureSdesOff(getCallId());
+            }
+        } else {
+            SFL_ERR("SDES negotiation failure");
+            callMgr->secureSdesOff(getCallId());
+        }
+    } else {
+        SFL_DBG("No crypto offer available");
+    }
+
+    // We did not find any crypto context for this media, RTP fallback
+    if (!nego_success && audiortp_.isSdesEnabled()) {
+        SFL_ERR("Negotiation failed but SRTP is enabled, fallback on RTP");
+        audiortp_.stop();
+        audiortp_.setSrtpEnabled(false);
+
+        const auto& account = getSIPAccount();
+        if (account.getSrtpFallback()) {
+            audiortp_.initSession();
+
+            if (account.isStunEnabled())
+                updateSDPFromSTUN();
+        }
+    }
+#endif // HAVE_SDES
+
+    std::vector<sfl::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
+
+    if (sessionMedia.empty()) {
+        SFL_WARN("Session media is empty");
+        return;
+    }
+
+    try {
+        Manager::instance().startAudioDriverStream();
+
+        std::vector<AudioCodec*> audioCodecs;
+
+        for (const auto & i : sessionMedia) {
+            if (!i)
+                continue;
+
+            const int pl = i->getPayloadType();
+
+            sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
+
+            if (!ac) {
+                SFL_ERR("Could not instantiate codec %d", pl);
+            } else {
+                audioCodecs.push_back(ac);
+            }
+        }
+
+        if (not audioCodecs.empty())
+            getAudioRtp().updateSessionMedia(audioCodecs);
+    } catch (const SdpException &e) {
+        SFL_ERR("%s", e.what());
+    } catch (const std::exception &rtpException) {
+        SFL_ERR("%s", rtpException.what());
     }
 }
