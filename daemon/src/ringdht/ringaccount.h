@@ -257,7 +257,7 @@ class RingAccount : public SIPAccountBase {
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", 60 * 60 * 24 * 7};
         const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", 15 * 60};
 
-        void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to, const std::string& toUrl, const IpAddr& peer);
+        void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target);
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.
@@ -272,7 +272,7 @@ class RingAccount : public SIPAccountBase {
          * @param call  The current call
          * @return true if all is correct
          */
-        bool SIPStartCall(const std::shared_ptr<SIPCall>& call);
+        bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
 
         bool userMatch(const std::string &username) const;
 
