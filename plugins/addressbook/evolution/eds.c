@@ -202,9 +202,11 @@ pixbuf_from_contact(EContact *contact)
     if (photo->type == E_CONTACT_PHOTO_TYPE_INLINED) {
         GdkPixbufLoader *loader = gdk_pixbuf_loader_new();
         if (gdk_pixbuf_loader_write(loader, (guchar *) photo->data.inlined.data, photo->data.inlined.length, NULL)) {
+            /* Force remaining parse operations to complete */
+            gdk_pixbuf_loader_close(loader, NULL);
             pixbuf = gdk_pixbuf_loader_get_pixbuf(loader);
         }
-        gdk_pixbuf_loader_close(loader, NULL);
+        g_object_unref(loader);
     } else if (photo->type == E_CONTACT_PHOTO_TYPE_URI) {
         gchar *filename = g_filename_from_uri(photo->data.uri, NULL, NULL);
         if (filename) {
