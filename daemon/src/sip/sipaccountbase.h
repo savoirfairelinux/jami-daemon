@@ -125,7 +125,7 @@ public:
      *      This type can be any base class of SIPCall class (included).
      */
     virtual std::shared_ptr<SIPCall>
-    newIncomingCall(const std::string& id) = 0;
+    newIncomingCall(const std::string& from) = 0;
 
     virtual bool isStunEnabled() const {
         return false;

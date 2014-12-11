@@ -285,7 +285,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = account->newIncomingCall(Manager::instance().getNewCallID());
+    auto call = account->newIncomingCall(remote_user);
+    if (!call) {
+        return PJ_FALSE;
+    }
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(account->getTransportType());
