@@ -120,7 +120,7 @@ iceTransports_(), cp_(cp), pool_(pool), endpt_(endpt)
         sip_utils::sip_strerror(status);
     }
 
-    pjsip_transport_register_type(PJSIP_TRANSPORT_RELIABLE, "ICE", pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP), &ice_pj_transport_type_);
+    pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE", pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP), &ice_pj_transport_type_);
 }
 
 SipTransportBroker::~SipTransportBroker()
