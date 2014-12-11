@@ -306,10 +306,11 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
 
-    // SFL_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
-    // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
+     SFL_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
+    viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
     if (not call->getTransport()) {
+        SFL_WARN("No transport in call, finding one");
         auto transport = getSIPVoIPLink()->sipTransport->findTransport(rdata->tp_info.transport);
         if (!transport) {
             transport = account->getTransport();

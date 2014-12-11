@@ -1485,6 +1485,7 @@ ManagerImpl::removeWaitingCall(const std::string& id)
 void
 ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 {
+    SFL_WARN("ManagerImpl::incomingCall");
     stopTone();
     const std::string callID(call.getCallId());
 
