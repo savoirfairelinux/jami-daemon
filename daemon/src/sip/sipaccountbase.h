@@ -40,9 +40,7 @@
 #include "account.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
-//#include "sfl_types.h" // enable_if_base_of
 
-#include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
 
 #include <vector>

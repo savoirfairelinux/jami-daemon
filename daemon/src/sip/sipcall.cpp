@@ -42,7 +42,6 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
-#include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h" // for AudioRtpFactoryException
 #include "client/callmanager.h"
 
