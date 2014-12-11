@@ -78,7 +78,7 @@ SipIceTransport::SipIceTransport(pjsip_endpoint *endpt, pj_pool_t& /* pool */, l
         throw std::runtime_error("Can't create PJSIP mutex.");
     }
 
-    base.key.type = t_type;
+    base.key.type = PJSIP_TRANSPORT_UDP;//t_type;
 
     auto remote = ice->getRemoteAddress(comp_id);
     SFL_DBG("SipIceTransport: remote is %s", remote.toString(true).c_str());
