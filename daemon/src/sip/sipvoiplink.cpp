@@ -285,7 +285,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = account->newIncomingCall(Manager::instance().getNewCallID());
+    auto call = account->newIncomingCall(remote_user);
+    if (!call) {
+        return PJ_FALSE;
+    }
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(account->getTransportType());
@@ -316,6 +319,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             SFL_WARN("Using transport from account.");
         }
     }
+    call->setTransport(transport);
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
@@ -324,7 +328,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->setCallMediaLocal(addrToUse);
     call->getSDP().setPublishedIP(addrSdp);
     call->getAudioRtp().initConfig();
-    call->setTransport(transport);
 
     try {
         call->getAudioRtp().initSession();
@@ -369,7 +372,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-    call->initIceTransport(false);
+    if (not call->getIceTransport()) {
+        SFL_DBG("Initializing ICE transport");
+        call->initIceTransport(false);
+    }
     call->setupLocalSDPFromIce();
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
@@ -386,6 +392,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_dialog *dialog = 0;
 
     if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
+        SFL_ERR("Could not create uas");
         call.reset();
         try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, nullptr, nullptr, nullptr);
         return PJ_FALSE;
