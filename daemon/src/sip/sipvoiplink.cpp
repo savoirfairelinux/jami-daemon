@@ -48,8 +48,6 @@
 #include "ringdht/ringaccount.h"
 #endif
 
-#include "call_factory.h"
-
 #include "manager.h"
 #if HAVE_SDES
 #include "sdes_negotiator.h"
@@ -62,8 +60,6 @@
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
 #endif
-
-#include "audio/audiolayer.h"
 
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
