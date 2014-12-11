@@ -205,9 +205,9 @@ pixbuf_from_contact(EContact *contact)
             /* Force remaining parse operations to complete */
             gdk_pixbuf_loader_close(loader, NULL);
             pixbuf = gdk_pixbuf_loader_get_pixbuf(loader);
+            /* Ensure that pixbuf isn't destroyed with loader */
+            g_object_ref(pixbuf);
         }
-        /* Ensure that pixbuf isn't destroyed with loader */
-        g_object_ref(pixbuf);
         g_object_unref(loader);
     } else if (photo->type == E_CONTACT_PHOTO_TYPE_URI) {
         gchar *filename = g_filename_from_uri(photo->data.uri, NULL, NULL);
