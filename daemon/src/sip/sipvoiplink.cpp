@@ -229,6 +229,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
 
+    SFL_WARN("transaction_request_cb %s %s %s %s %s.", toUsername.c_str(), toHost.c_str(), viaHostname.c_str(), remote_user.c_str(), remote_hostname.c_str());
+
     auto account(getSIPVoIPLink()->guessAccount(toUsername, viaHostname, remote_hostname));
     if (!account) {
         SFL_ERR("NULL account");
@@ -306,8 +308,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
 
-    // SFL_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
-    // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
+     SFL_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
+    viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
     if (not call->getTransport()) {
         auto transport = getSIPVoIPLink()->sipTransport->findTransport(rdata->tp_info.transport);
