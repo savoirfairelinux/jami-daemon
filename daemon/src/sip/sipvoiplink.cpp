@@ -285,7 +285,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = account->newIncomingCall(Manager::instance().getNewCallID());
+    auto call = account->newIncomingCall(remote_user);
+    if (!call) {
+        return PJ_FALSE;
+    }
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(account->getTransportType());
@@ -306,16 +309,22 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // SFL_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
     // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
-    auto transport = getSIPVoIPLink()->sipTransport->findTransport(rdata->tp_info.transport);
-    if (!transport) {
-        transport = account->getTransport();
+    if (not call->getTransport()) {
+        auto transport = getSIPVoIPLink()->sipTransport->findTransport(rdata->tp_info.transport);
         if (!transport) {
-            SFL_ERR("No suitable transport to answer this call.");
-            return PJ_FALSE;
-        } else {
-            SFL_WARN("Using transport from account.");
-        }
-    }
+            transport = account->getTransport();
+            if (!transport) {
+                SFL_ERR("No suitable transport to answer this call.");
+                return PJ_FALSE;
+            } else {
+                SFL_WARN("Using transport from account.");
+            }
+        } else
+            SFL_WARN("Creating new transport");
+        call->setTransport(transport);
+    } else
+        SFL_WARN("Keeping existing stransport from call");
+    auto transport = call->getTransport();
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
@@ -324,7 +333,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->setCallMediaLocal(addrToUse);
     call->getSDP().setPublishedIP(addrSdp);
     call->getAudioRtp().initConfig();
-    call->setTransport(transport);
 
     try {
         call->getAudioRtp().initSession();
@@ -386,6 +394,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_dialog *dialog = 0;
 
     if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
+        SFL_ERR("Could not create uas");
         call.reset();
         try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, nullptr, nullptr, nullptr);
         return PJ_FALSE;
