@@ -29,42 +29,25 @@
  *  as that of the covered work.
  */
 
-#ifndef STRING_UTILS_H
-#define STRING_UTILS_H
-
-#include <string>
-#include <vector>
-
-#ifdef __ANDROID__
-#include <sstream>
-#endif
+#include "string_utils.h"
 
 namespace sfl {
 
-#ifdef __ANDROID__
-
-template <typename T>
-std::string to_string(T &&value)
-{
-    std::ostringstream os;
-
-    os << value;
-    return os.str();
-}
-
-#else
-
-template <typename T>
-std::string to_string(T &&value)
-{
-    return std::to_string(std::forward<T>(value));
-}
-
-#endif
-
 std::vector<std::string>
-split_string(const std::string& s, const std::string& sep);
+split_string(const std::string& s, const std::string& sep)
+{
+    std::vector<std::string> list;
+    std::string::size_type pos = 0;
 
+    while (not s.empty()) {
+        std::string::size_type n = s.find(sep, pos);
+        if (n == std::string::npos)
+            break;
+        list.push_back(s.substr(pos, n - pos));
+        pos = n + 1;
+    }
+
+    return list;
 }
 
-#endif
+}

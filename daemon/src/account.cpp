@@ -47,6 +47,7 @@
 
 #include "client/configurationmanager.h"
 #include "account_schema.h"
+#include "string_utils.h"
 #include "config/yamlparser.h"
 
 #include <yaml-cpp/yaml.h>
@@ -203,7 +204,7 @@ void Account::unserialize(const YAML::Node &node)
     parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveAudioCodecs(split_string(audioCodecStr_));
+    setActiveAudioCodecs(sfl::split_string(audioCodecStr_, "/"));
     parseValue(node, DISPLAY_NAME_KEY, displayName_);
     parseValue(node, HOSTNAME_KEY, hostname_);
 
@@ -348,23 +349,6 @@ join_string(const std::vector<std::string> &v)
     std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
     return os.str();
 }
-
-std::vector<std::string>
-Account::split_string(std::string s)
-{
-    std::vector<std::string> list;
-    std::string temp;
-
-    while (s.find("/", 0) != std::string::npos) {
-        size_t pos = s.find("/", 0);
-        temp = s.substr(0, pos);
-        s.erase(0, pos + 1);
-        list.push_back(temp);
-    }
-
-    return list;
-}
-
 
 void Account::setActiveAudioCodecs(const vector<string> &list)
 {
