@@ -46,6 +46,7 @@
 #include "fileutils.h"
 #include "map_utils.h"
 #include "account.h"
+#include "string_utils.h"
 #if HAVE_DHT
 #include "ringdht/ringaccount.h"
 #endif
@@ -2499,7 +2500,7 @@ ManagerImpl::getNewCallID()
 std::vector<std::string>
 ManagerImpl::loadAccountOrder() const
 {
-    return Account::split_string(preferences.getAccountOrder());
+    return split_string(preferences.getAccountOrder(), '/');
 }
 
 void
