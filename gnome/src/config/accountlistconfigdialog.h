@@ -33,7 +33,7 @@
 #define ACCOUNTLISTDIALOG_H_
 
 #include "accountlist.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 void show_account_list_config_dialog(SFLPhoneClient *client);
 void update_account_list_status_bar(account_t *account);
