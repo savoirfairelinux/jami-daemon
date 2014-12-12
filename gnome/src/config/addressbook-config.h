@@ -34,7 +34,7 @@
 #include <gtk/gtk.h>
 
 #include "addressbook.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 /**
  * Save the parameters through D-BUS
