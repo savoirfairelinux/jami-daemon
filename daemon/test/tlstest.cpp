@@ -83,7 +83,7 @@ void TlsTest::testHostname()
 {
     TITLE();
 
-    const char *correctUrl = "www.savoirfairelinux.com";
+    const char *correctUrl = "casecurity.org";
     const char *wrongUrl = "www..com";
 
     CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 443) == 0);
