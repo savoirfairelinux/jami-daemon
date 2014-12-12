@@ -33,7 +33,7 @@
 #include "video_renderer.h"
 #include "actions.h"
 
-#include "sflphone_client.h"    /* gsettings schema path */
+#include "ring_client.h"    /* gsettings schema path */
 #include "video_window.h"       /* for the window its contained in */
 
 #include <clutter/clutter.h>
