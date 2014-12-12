@@ -32,7 +32,7 @@
 #define VIDEO_CALLBACKS_H_
 
 #include "dbus.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 void started_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
                                gint width, gint height, gboolean is_mixer,

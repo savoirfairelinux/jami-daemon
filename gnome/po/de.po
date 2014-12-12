@@ -1,4 +1,4 @@
-# German translation of SFLphone.
+# German translation of Ring.
 # Copyright (C) 2008 The Free Software Foundation, Inc.
 # This file is distributed under the GNU General Public License Version 3.
 #
@@ -524,7 +524,7 @@ msgid "None"
 msgstr "Nichts"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -592,7 +592,7 @@ msgid "Congratulations!"
 msgstr "Gratulation!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -735,8 +735,8 @@ msgid "Window Behaviour"
 msgstr "Fensterverhalten"
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
-msgstr "SFLphone bei eingehenden Anrufen in den Vordergrund holen"
+msgid "Bring Ring to foreground on incoming calls"
+msgstr "Ring bei eingehenden Anrufen in den Vordergrund holen"
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:202
@@ -744,8 +744,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr "Systemleistensymbol (veraltet)"
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "SFLphone im Infobereich anzeigen"
+msgid "Show Ring in the system tray"
+msgstr "Ring im Infobereich anzeigen"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1113,8 +1113,8 @@ msgid "Status:"
 msgstr "Status:"
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
-msgstr "SFLphone Anwesenheit"
+msgid "Ring Presence"
+msgstr "Ring Anwesenheit"
 
 #: ../src/sflphone_client.c:60
 #, c-format
@@ -1135,16 +1135,16 @@ msgid ""
 msgstr ""
 
 #: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "SFLphone-Fehler"
+msgid "Ring Error"
+msgstr "Ring-Fehler"
 
 #: ../src/sflphone_options.c:60
 msgid "Enable debug"
 msgstr "Debug aktivieren"
 
 #: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
-msgstr "- GNOME Anwendung für SFLphone"
+msgid "- GNOME client for Ring"
+msgstr "- GNOME Anwendung für Ring"
 
 #: ../src/sflnotify.c:94
 #, c-format
@@ -1241,8 +1241,8 @@ msgid "_Hang up"
 msgstr "A_uflegen"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1258,12 +1258,12 @@ msgid "Voicemail(%i)"
 msgstr "Voicemail (%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "SFLphone ist ein VoIP-Client kompatibel zu SIP und IAX2."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
+msgstr "Ring ist ein VoIP-Client kompatibel zu SIP und IAX2."
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "Über SFLphone"
+msgid "About Ring"
+msgstr "Über Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

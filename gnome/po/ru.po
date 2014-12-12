@@ -5,7 +5,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: SFLphone 0.9.6\n"
+"Project-Id-Version: Ring 0.9.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-07-14 21:27-0400\n"
 "PO-Revision-Date: 2014-01-09 21:07+0000\n"
@@ -524,7 +524,7 @@ msgid "None"
 msgstr "Нет"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -592,7 +592,7 @@ msgid "Congratulations!"
 msgstr "Поздравляем!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -735,8 +735,8 @@ msgid "Window Behaviour"
 msgstr "Настройки окна"
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
-msgstr "Запустить SFLphone при входящих звонках"
+msgid "Bring Ring to foreground on incoming calls"
+msgstr "Запустить Ring при входящих звонках"
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:202
@@ -744,8 +744,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr "Иконка в панели задач"
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "Показывать SFLphone в системном трее"
+msgid "Show Ring in the system tray"
+msgstr "Показывать Ring в системном трее"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1112,8 +1112,8 @@ msgid "Status:"
 msgstr "Статус:"
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
-msgstr "Наличие SFLphone"
+msgid "Ring Presence"
+msgstr "Наличие Ring"
 
 #: ../src/sflphone_client.c:60
 #, c-format
@@ -1133,16 +1133,16 @@ msgid ""
 msgstr ""
 
 #: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "Ошибка SFLphone."
+msgid "Ring Error"
+msgstr "Ошибка Ring."
 
 #: ../src/sflphone_options.c:60
 msgid "Enable debug"
 msgstr "Включить отладку"
 
 #: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
-msgstr "Клиент GNOME для SFLPhone"
+msgid "- GNOME client for Ring"
+msgstr "Клиент GNOME для Ring"
 
 #: ../src/sflnotify.c:94
 #, c-format
@@ -1239,8 +1239,8 @@ msgid "_Hang up"
 msgstr "_Положить трубку"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1256,12 +1256,12 @@ msgid "Voicemail(%i)"
 msgstr "Голосовое сообщение(%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "SFLphone - SIP и IAX2-совместимый VoIP-клиент"
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
+msgstr "Ring - SIP и IAX2-совместимый VoIP-клиент"
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "О программе SFLphone"
+msgid "About Ring"
+msgstr "О программе Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

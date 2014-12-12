@@ -523,7 +523,7 @@ msgid "None"
 msgstr "Không có"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -590,7 +590,7 @@ msgid "Congratulations!"
 msgstr "Xin chúc mừng!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -733,8 +733,8 @@ msgid "Window Behaviour"
 msgstr "Hành vi cửa sổ"
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
-msgstr "Đưa SFLphone lên trên nếu có cuộc gọi đến"
+msgid "Bring Ring to foreground on incoming calls"
+msgstr "Đưa Ring lên trên nếu có cuộc gọi đến"
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:202
@@ -742,8 +742,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr "System Tray Icon (Legacy)"
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "Hiện SFLphone trong system tray"
+msgid "Show Ring in the system tray"
+msgstr "Hiện Ring trong system tray"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1110,8 +1110,8 @@ msgid "Status:"
 msgstr "Trạng thái:"
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
-msgstr "Hiện diện SFLphone"
+msgid "Ring Presence"
+msgstr "Hiện diện Ring"
 
 #: ../src/sflphone_client.c:60
 #, c-format
@@ -1131,16 +1131,16 @@ msgid ""
 msgstr ""
 
 #: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "Lỗi SFLphone"
+msgid "Ring Error"
+msgstr "Lỗi Ring"
 
 #: ../src/sflphone_options.c:60
 msgid "Enable debug"
 msgstr "Bật gỡ lỗi"
 
 #: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
-msgstr "- Chương trình khách GNOME cho SFLphone"
+msgid "- GNOME client for Ring"
+msgstr "- Chương trình khách GNOME cho Ring"
 
 #: ../src/sflnotify.c:94
 #, c-format
@@ -1237,8 +1237,8 @@ msgid "_Hang up"
 msgstr "_Ngừng"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1254,14 +1254,14 @@ msgid "Voicemail(%i)"
 msgstr "Thư thoại(%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
-"SFLphone là một chương trình khách VoIP tương thích với các giao thức SIP và "
+"Ring là một chương trình khách VoIP tương thích với các giao thức SIP và "
 "IAX2"
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "Nói về SFLphone"
+msgid "About Ring"
+msgstr "Nói về Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

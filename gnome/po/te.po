@@ -518,7 +518,7 @@ msgid "None"
 msgstr ""
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -585,7 +585,7 @@ msgid "Congratulations!"
 msgstr "అభినందనలు!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -728,7 +728,7 @@ msgid "Window Behaviour"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
+msgid "Bring Ring to foreground on incoming calls"
 msgstr ""
 
 #. System Tray option frame
@@ -737,7 +737,7 @@ msgid "System Tray Icon (Legacy)"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
+msgid "Show Ring in the system tray"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:215
@@ -1096,7 +1096,7 @@ msgid "Status:"
 msgstr ""
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
+msgid "Ring Presence"
 msgstr ""
 
 #: ../src/sflphone_client.c:60
@@ -1115,7 +1115,7 @@ msgid ""
 msgstr ""
 
 #: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
+msgid "Ring Error"
 msgstr ""
 
 #: ../src/sflphone_options.c:60
@@ -1123,7 +1123,7 @@ msgid "Enable debug"
 msgstr ""
 
 #: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
+msgid "- GNOME client for Ring"
 msgstr ""
 
 #: ../src/sflnotify.c:94
@@ -1221,7 +1221,7 @@ msgid "_Hang up"
 msgstr ""
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
+msgid "Ring"
 msgstr ""
 
 #: ../src/uimanager.c:457
@@ -1238,12 +1238,12 @@ msgid "Voicemail(%i)"
 msgstr ""
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "SFLphone గురించి"
+msgid "About Ring"
+msgstr "Ring గురించి"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

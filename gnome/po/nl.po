@@ -1,6 +1,6 @@
-# SFLphone Dutch translation
+# Ring Dutch translation
 # Copyright (C) 2011 Savoir-Faire Linux
-# This file is distributed under the same license as the SFLphone package.
+# This file is distributed under the same license as the Ring package.
 #
 # Jan Middelkoop <jan@recreatie-zorg.nl>, 2011.
 msgid ""
@@ -524,7 +524,7 @@ msgid "None"
 msgstr "Geen"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -592,7 +592,7 @@ msgid "Congratulations!"
 msgstr "Gefeliciteerd!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -735,8 +735,8 @@ msgid "Window Behaviour"
 msgstr "Venstergedrag"
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
-msgstr "Breng SFLphone naar de voorgrond bij inkomende oproepen"
+msgid "Bring Ring to foreground on incoming calls"
+msgstr "Breng Ring naar de voorgrond bij inkomende oproepen"
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:202
@@ -744,8 +744,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr "Icoon in systeemvak (legacy)"
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "Geef SFLphone weer in het systeemvak"
+msgid "Show Ring in the system tray"
+msgstr "Geef Ring weer in het systeemvak"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1114,7 +1114,7 @@ msgid "Status:"
 msgstr "Status:"
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
+msgid "Ring Presence"
 msgstr ""
 
 #: ../src/sflphone_client.c:60
@@ -1135,16 +1135,16 @@ msgid ""
 msgstr ""
 
 #: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "SFLphone fout"
+msgid "Ring Error"
+msgstr "Ring fout"
 
 #: ../src/sflphone_options.c:60
 msgid "Enable debug"
 msgstr "Debuggen inschakelen"
 
 #: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
-msgstr "- GNOME client voor SFLphone"
+msgid "- GNOME client for Ring"
+msgstr "- GNOME client voor Ring"
 
 #: ../src/sflnotify.c:94
 #, c-format
@@ -1241,8 +1241,8 @@ msgid "_Hang up"
 msgstr "_Ophangen"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1258,13 +1258,13 @@ msgid "Voicemail(%i)"
 msgstr "Voicemail(%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
-"SFLphone is een VoIP telefoon compatibel met SIP en IAX2 protocollen."
+"Ring is een VoIP telefoon compatibel met SIP en IAX2 protocollen."
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "Over SFLphone"
+msgid "About Ring"
+msgstr "Over Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

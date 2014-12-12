@@ -526,7 +526,7 @@ msgid "None"
 msgstr "Cap"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -593,7 +593,7 @@ msgid "Congratulations!"
 msgstr "Enhorabona!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -736,7 +736,7 @@ msgid "Window Behaviour"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
+msgid "Bring Ring to foreground on incoming calls"
 msgstr ""
 
 #. System Tray option frame
@@ -745,8 +745,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "Mostra l'SFLPhone a l'àrea de notificació"
+msgid "Show Ring in the system tray"
+msgstr "Mostra l'Ring a l'àrea de notificació"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1115,7 +1115,7 @@ msgid "Status:"
 msgstr ""
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
+msgid "Ring Presence"
 msgstr ""
 
 #: ../src/sflphone_client.c:60
@@ -1134,15 +1134,15 @@ msgid ""
 msgstr ""
 
 #: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "Error de l'SFLphone"
+msgid "Ring Error"
+msgstr "Error de l'Ring"
 
 #: ../src/sflphone_options.c:60
 msgid "Enable debug"
 msgstr ""
 
 #: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
+msgid "- GNOME client for Ring"
 msgstr ""
 
 #: ../src/sflnotify.c:94
@@ -1240,8 +1240,8 @@ msgid "_Hang up"
 msgstr "_Penja"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1257,13 +1257,13 @@ msgid "Voicemail(%i)"
 msgstr ""
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
-"L'SFLphone és un client de VoIP compatible amb els protocols SIP i IAX2."
+"L'Ring és un client de VoIP compatible amb els protocols SIP i IAX2."
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "Quant al SFLphone"
+msgid "About Ring"
+msgstr "Quant al Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

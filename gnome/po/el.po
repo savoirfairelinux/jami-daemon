@@ -518,7 +518,7 @@ msgid "None"
 msgstr ""
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -585,7 +585,7 @@ msgid "Congratulations!"
 msgstr ""
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -728,7 +728,7 @@ msgid "Window Behaviour"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
+msgid "Bring Ring to foreground on incoming calls"
 msgstr ""
 
 #. System Tray option frame
@@ -737,7 +737,7 @@ msgid "System Tray Icon (Legacy)"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
+msgid "Show Ring in the system tray"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:215
@@ -1101,7 +1101,7 @@ msgid "Status:"
 msgstr ""
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
+msgid "Ring Presence"
 msgstr ""
 
 #: ../src/sflphone_client.c:60
@@ -1120,15 +1120,15 @@ msgid ""
 msgstr ""
 
 #: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "Σφάλμα SFLphone"
+msgid "Ring Error"
+msgstr "Σφάλμα Ring"
 
 #: ../src/sflphone_options.c:60
 msgid "Enable debug"
 msgstr ""
 
 #: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
+msgid "- GNOME client for Ring"
 msgstr ""
 
 #: ../src/sflnotify.c:94
@@ -1226,8 +1226,8 @@ msgid "_Hang up"
 msgstr "Κλείστο _Η"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1243,14 +1243,14 @@ msgid "Voicemail(%i)"
 msgstr ""
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
-"Το SFLphone ειναι ένα προγραμμα πελάτης VoIP συμβατό με SIP και ΙΑΧ2 "
+"Το Ring ειναι ένα προγραμμα πελάτης VoIP συμβατό με SIP και ΙΑΧ2 "
 "πρωτόκολλα"
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "Σχετικά με το SFLphone"
+msgid "About Ring"
+msgstr "Σχετικά με το Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

@@ -518,7 +518,7 @@ msgid "None"
 msgstr "None"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -585,7 +585,7 @@ msgid "Congratulations!"
 msgstr "コングラチュレーション！"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -728,7 +728,7 @@ msgid "Window Behaviour"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
+msgid "Bring Ring to foreground on incoming calls"
 msgstr ""
 
 #. System Tray option frame
@@ -737,8 +737,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "システムトレイに SFLphone を表示"
+msgid "Show Ring in the system tray"
+msgstr "システムトレイに Ring を表示"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1096,7 +1096,7 @@ msgid "Status:"
 msgstr ""
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
+msgid "Ring Presence"
 msgstr ""
 
 #: ../src/sflphone_client.c:60
@@ -1115,15 +1115,15 @@ msgid ""
 msgstr ""
 
 #: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "SFLphone エラー"
+msgid "Ring Error"
+msgstr "Ring エラー"
 
 #: ../src/sflphone_options.c:60
 msgid "Enable debug"
 msgstr ""
 
 #: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
+msgid "- GNOME client for Ring"
 msgstr ""
 
 #: ../src/sflnotify.c:94
@@ -1221,8 +1221,8 @@ msgid "_Hang up"
 msgstr "通話を切る(_H)"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1238,12 +1238,12 @@ msgid "Voicemail(%i)"
 msgstr "ボイスメール(%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "SFLphone は SIP と IAX2 プロトコルに互換性があるVoIPクライアントです"
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
+msgstr "Ring は SIP と IAX2 プロトコルに互換性があるVoIPクライアントです"
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "SFLphone について"
+msgid "About Ring"
+msgstr "Ring について"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"
