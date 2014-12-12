@@ -44,7 +44,6 @@
 namespace sfl_video {
 
 using std::string;
-const int SDP_BUFFER_SIZE = 8192;
 
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::map<string, string>& args) :
@@ -55,7 +54,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , dstHeight_(0)
     , id_(id)
     , stream_(args_["receiving_sdp"])
-    , sdpContext_(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this)
+    , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , demuxContext_()
     , sink_(id)
     , requestKeyFrameCallback_(0)
