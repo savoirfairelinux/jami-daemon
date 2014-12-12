@@ -105,6 +105,7 @@
 /po/Makefile.in.in
 /po/Makevars.template
 /po/POTFILES
+/po/Ring.pot
 /po/Rules-quot
 /po/boldquot.sed
 /po/en@boldquot.header
@@ -112,8 +113,8 @@
 /po/insert-header.sin
 /po/quot.sed
 /po/remove-potcdate.sin
-/po/sflphone.pot
 /po/stamp-it
+/ring.desktop
 /sflphone.desktop
 /so_locations
 /src/Makefile.in
