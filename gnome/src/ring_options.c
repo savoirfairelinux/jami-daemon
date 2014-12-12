@@ -33,7 +33,7 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
-#include "sflphone_options.h"
+#include "ring_options.h"
 
 G_GNUC_NORETURN static gboolean
 option_version_cb(G_GNUC_UNUSED const gchar *option_name,

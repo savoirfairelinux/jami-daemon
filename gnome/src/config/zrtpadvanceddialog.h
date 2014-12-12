@@ -38,7 +38,7 @@
 /**
  * Display the advanced options window for zrtp
  */
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 void show_advanced_zrtp_options(account_t *account, SFLPhoneClient *client);
 
