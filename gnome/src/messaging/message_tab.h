@@ -38,7 +38,7 @@
 #include <gtk/gtk.h>
 #include "callable_obj.h"
 #include "conference_obj.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 /** An IM conversation */
 typedef struct {
