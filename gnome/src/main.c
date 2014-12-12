@@ -39,7 +39,7 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-#include "sflphone_client.h"
+#include "ring_client.h"
 #include "history.h"
 
 static volatile sig_atomic_t interrupted;
