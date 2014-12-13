@@ -34,6 +34,7 @@
 #include "video_sender.h"
 #include "video_receive_thread.h"
 #include "video_mixer.h"
+#include "ice_socket.h"
 #include "socket_pair.h"
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -180,6 +181,34 @@ void VideoRtpSession::start(int localPort)
         SFL_ERR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
     }
+
+    startSender();
+    startReceiver();
+
+    // Setup video pipeline
+    if (conference_)
+        setupConferenceVideoPipeline(conference_);
+    else if (sender_) {
+        auto videoCtrl = Manager::instance().getVideoManager();
+        videoLocal_ = videoCtrl->getVideoCamera();
+        if (videoLocal_ and videoLocal_->attach(sender_.get()))
+            videoCtrl->switchToCamera();
+    } else {
+        videoLocal_.reset();
+    }
+}
+
+void VideoRtpSession::start(std::unique_ptr<sfl::IceSocket> rtp_sock,
+                            std::unique_ptr<sfl::IceSocket> rtcp_sock)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    if (not sending_ and not receiving_) {
+        stop();
+        return;
+    }
+
+    socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
 
     startSender();
     startReceiver();
