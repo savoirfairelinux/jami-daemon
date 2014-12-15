@@ -617,6 +617,23 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
     return "";
 }
 
+static void remove_suffix(std::string &text, const std::string &token)
+{
+    const std::string::size_type tokenPos = text.find(token.c_str());
+
+    if (tokenPos != std::string::npos)
+        text.erase(tokenPos, token.length());
+}
+
+static void remove_line_with_token(std::string &text, const char *token)
+{
+    const size_t tokenPos = text.find(token);
+    const size_t post = text.find('\n', tokenPos);
+    const size_t pre = text.rfind('\n', tokenPos);
+
+    text.erase(pre, post - pre);
+}
+
 // FIXME:
 // Here we filter out parts of the SDP that libavformat doesn't need to
 // know about...we should probably give the video decoder thread the original
@@ -649,12 +666,8 @@ string Sdp::getIncomingVideoDescription() const
     string sessionStr(buffer, std::min(size, sizeof(buffer)));
 
     // FIXME: find a way to get rid of the "m=audio..." line with PJSIP
+    remove_line_with_token(sessionStr, "m=audio");
 
-    const size_t audioPos = sessionStr.find("m=audio");
-    const size_t newline2 = sessionStr.find('\n', audioPos);
-    const size_t newline1 = sessionStr.rfind('\n', audioPos);
-
-    sessionStr.erase(newline1, newline2 - newline1);
     return sessionStr;
 }
 
@@ -690,12 +703,13 @@ std::string Sdp::getIncomingAudioDescription() const
     std::string sessionStr(buffer, std::min(size, sizeof(buffer)));
 
     // FIXME: find a way to get rid of the "m=video..." line with PJSIP
+    remove_line_with_token(sessionStr, "m=video");
 
-    const size_t videoPos = sessionStr.find("m=video");
-    const size_t newline2 = sessionStr.find('\n', videoPos);
-    const size_t newline1 = sessionStr.rfind('\n', videoPos);
+    // remove telephone-event as libavformat will barf on it (e.g. with speex wb and ub)
+    remove_suffix(sessionStr, " 101");
+    remove_line_with_token(sessionStr, "a=rtpmap:101");
+    remove_line_with_token(sessionStr, "a=fmtp:101");
 
-    sessionStr.erase(newline1, newline2 - newline1);
     return sessionStr;
 }
 
