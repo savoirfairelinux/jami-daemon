@@ -600,7 +600,6 @@ SIPCall::onhold()
 void
 SIPCall::offhold()
 {
-#if USE_CCRTP
     auto& account = getSIPAccount();
 
     try {
@@ -614,7 +613,9 @@ SIPCall::offhold()
         throw VoipLinkException("SDP issue in offhold");
     } catch (const ost::Socket::Error &e) {
         throw VoipLinkException("Socket problem in offhold");
-    } catch (const ost::Socket *) {
+    }
+#if USE_CCRTP
+    catch (const ost::Socket *) {
         throw VoipLinkException("Socket problem in offhold");
     } catch (const sfl::AudioRtpFactoryException &) {
         throw VoipLinkException("Socket problem in offhold");
