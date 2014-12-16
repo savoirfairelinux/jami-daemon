@@ -43,6 +43,10 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
+#if HAVE_UPNP
+#include "upnp/upnp.h"
+#endif
+
 bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
@@ -320,5 +324,24 @@ uint16_t
 SIPAccountBase::generateVideoPort() const
 {
     return getRandomEvenNumber(videoPortRange_);
+}
+#endif
+
+#if HAVE_UPNP
+void
+SIPAccountBase::setUseUPnP(bool useUPnP) {
+    useUPnP_ = useUPnP;
+    if (useUPnP_) {
+        /* FIXME: should not really override the published IP, in case
+         * the user wants to set it to something specific
+         *
+         * If using UPnP, set the published IP to the external address
+         * and use the published IP instead of the local
+         */
+        char externalIPAddress[40];
+        upnp_get_external_ip(externalIPAddress);
+        upnpIpAddress_ = std::string(externalIPAddress);
+        upnpIp_ = IpAddr(upnpIpAddress_);
+    }
 }
 #endif
