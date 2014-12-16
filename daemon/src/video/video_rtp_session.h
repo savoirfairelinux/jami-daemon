@@ -47,6 +47,10 @@
 class Sdp;
 class Conference;
 
+namespace sfl {
+class IceSocket;
+};
+
 namespace sfl_video {
 
 class VideoRtpSession {
@@ -56,6 +60,8 @@ public:
     ~VideoRtpSession();
 
     void start(int localPort);
+    void start(std::unique_ptr<sfl::IceSocket> rtp_sock,
+               std::unique_ptr<sfl::IceSocket> rtcp_sock);
     void stop();
     void updateDestination(const std::string &destination,
                            unsigned int port);
