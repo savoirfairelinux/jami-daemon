@@ -474,6 +474,23 @@ AVFormatRtpSession::start(int localPort)
 }
 
 void
+AVFormatRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
+                          std::unique_ptr<IceSocket> rtcp_sock)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    if (not sending_ and not receiving_) {
+        stop();
+        return;
+    }
+
+    socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
+
+    startSender();
+    startReceiver();
+}
+
+void
 AVFormatRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
