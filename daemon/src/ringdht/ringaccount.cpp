@@ -38,13 +38,11 @@
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
-#include "sip/sip_utils.h"
+#include "sip/siptransport.h"
 
 #include <opendht/securedht.h>
 
 #include "array_size.h"
-
-#include "call_factory.h"
 
 #include "client/configurationmanager.h"
 
@@ -59,9 +57,6 @@
 
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
-
-#include <unistd.h>
-#include <pwd.h>
 
 #include <algorithm>
 #include <array>
