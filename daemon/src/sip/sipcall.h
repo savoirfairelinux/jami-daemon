@@ -218,6 +218,10 @@ class SIPCall : public Call
 
         int SIPSessionReinvite();
 
+#ifdef HAVE_UPNP
+        void removePortsUPnP();
+#endif
+
         std::vector<sfl::IceCandidate> getAllRemoteCandidates();
 
 #if USE_CCRTP
