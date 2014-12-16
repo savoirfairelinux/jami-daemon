@@ -227,14 +227,16 @@ class RingAccount : public SIPAccountBase {
          *      This type can be any base class of SIPCall class (included).
          */
         virtual std::shared_ptr<SIPCall>
-        newIncomingCall(const std::string& id);
+        newIncomingCall(const std::string& from = {});
 
         virtual bool isTlsEnabled() const {
-            return true;
+            //return true;
+            return false;
         }
 
         virtual bool getSrtpEnabled() const {
-            return true;
+            //return true;
+            return false;
         }
 
         virtual std::string getSrtpKeyExchange() const {
@@ -254,7 +256,7 @@ class RingAccount : public SIPAccountBase {
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", 60 * 60 * 24 * 7};
         const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", 15 * 60};
 
-        void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to, const std::string& toUrl, const IpAddr& peer);
+        void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target);
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.
@@ -269,9 +271,9 @@ class RingAccount : public SIPAccountBase {
          * @param call  The current call
          * @return true if all is correct
          */
-        bool SIPStartCall(const std::shared_ptr<SIPCall>& call);
+        bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
 
-        bool userMatch(const std::string &username) const;
+        //bool userMatch(const std::string &username) const;
 
         void regenerateCAList();
 
@@ -286,12 +288,18 @@ class RingAccount : public SIPAccountBase {
 
         dht::DhtRunner dht_ {};
 
+        /**
+         * Incomming DHT calls that are not yet actual SIP calls.
+         */
+        std::vector<std::shared_ptr<SIPCall>> pendingCalls_ {};
+        std::set<dht::Value::Id> treatedCalls_ {};
+
         std::string cacertPath_ {};
         std::string privkeyPath_ {};
         std::string certPath_ {};
         std::string idPath_ {};
 
-        std::string nodePath_ {};
+        std::string cachePath_ {};
         std::string dataPath_ {};
         std::string caPath_ {};
         std::string caListPath_ {};
@@ -305,6 +313,9 @@ class RingAccount : public SIPAccountBase {
         void saveIdentity(const dht::crypto::Identity id, const std::string& path) const;
         void saveNodes(const std::vector<dht::Dht::NodeExport>&) const;
         void saveValues(const std::vector<dht::Dht::ValuesExport>&) const;
+
+        void loadTreatedCalls();
+        void saveTreatedCalls() const;
 
         /**
          * If privkeyPath_ is a valid private key file (PEM or DER),
