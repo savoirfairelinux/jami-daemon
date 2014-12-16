@@ -560,6 +560,25 @@ AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
 AC_DEFINE_UNQUOTED([HAVE_IPV6], `if test "x$enable_ipv6" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have IPv6])
 AM_CONDITIONAL(BUILD_IPV6, test "x$enable_ipv6" = "xyes" )
 
+# miniupnpc
+# required dependency(ies): libminiupc
+dnl check for libminiupc8 (doesn't use pkg-config)
+dnl Check for libminiupc
+AC_ARG_WITH([upnp], [AS_HELP_STRING([--without-upnp],
+            [disable support for upnp])], [], [with_upnp=yes])
+
+LIBMINIUPNPC=
+AS_IF([test "x$with_upnp" != xno],
+        [AC_CHECK_HEADER([miniupnpc/miniupnpc.h], , AC_MSG_FAILURE([Unable to find the libminiupnpc8 headers (you may need to install the dev package).  You may use --without-upnp to compile without upnp support.]))]
+        [AC_CHECK_LIB([miniupnpc], [simpleUPnPcommand], [
+            UPNP_LIBS=-lminiupnpc
+            AC_SUBST(UPNP_LIBS)],
+          [AC_MSG_FAILURE([libminiupnpc link test failed. You may use --without-upnp to compile without upnp support.])
+        ])
+    ])
+
+AC_DEFINE_UNQUOTED([HAVE_UPNP], `if test "x$with_upnp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libminiupnpc])
+AM_CONDITIONAL(BUILD_UPNP, test "x$with_upnp" = "xyes" )
 
 # DOXYGEN
 # required dependency(ies): doxygen
@@ -614,6 +633,7 @@ AC_CONFIG_FILES([Makefile \
                  src/video/Makefile \
                  src/video/v4l2/Makefile \
                  src/video/test/Makefile \
+                 src/upnp/Makefile \
                  test/Makefile \
                  ringtones/Makefile \
                  man/Makefile \

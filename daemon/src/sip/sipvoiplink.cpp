@@ -80,6 +80,10 @@
 #include <istream>
 #include <algorithm>
 
+#if HAVE_UPNP
+#include "upnp/upnp.h"
+#endif
+
 using namespace sfl;
 
 /** Environment variable used to set pjsip's logging level */
@@ -290,9 +294,22 @@ transaction_request_cb(pjsip_rx_data *rdata)
     auto family = pjsip_transport_type_get_af(account->getTransportType());
     IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
+#if HAVE_UPNP
+    IpAddr addrSdp;
+    if (account->getUseUPnP()) {
+        /* use UPnP addr, or published addr if its set */
+        addrSdp = account->getPublishedSameasLocal() ?
+            account->getUPnPIpAddress() : account->getPublishedIpAddress();
+    } else {
+        addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
+                    ? account->getPublishedIpAddress() : addrToUse;
+    }
+
+#else
     // May use the published address as well
     IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                     ? account->getPublishedIpAddress() : addrToUse;
+#endif
 
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
@@ -925,9 +942,23 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(account.getTransportType());
+
+#if HAVE_UPNP
+    IpAddr address;
+    if (account.getUseUPnP()) {
+        /* use UPnP addr, or published addr if its set */
+        address = account.getPublishedSameasLocal() ?
+            account.getUPnPIpAddress() : account.getPublishedIpAddress();
+    } else {
+        address = account.getPublishedSameasLocal()
+                    ? IpAddr(ip_utils::getInterfaceAddr(account.getLocalInterface(), family))
+                    : account.getPublishedIpAddress();
+    }
+#else
     IpAddr address = account.getPublishedSameasLocal()
                     ? IpAddr(ip_utils::getInterfaceAddr(account.getLocalInterface(), family))
                     : account.getPublishedIpAddress();
+#endif
 
     call->setCallMediaLocal(address);
 
@@ -1037,6 +1068,28 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Handle possible ICE transport
     if (!call->startIce())
         SFL_WARN("ICE not started");
+
+#if HAVE_UPNP
+    const auto& account = call->getSIPAccount();
+    if (account.getUseUPnP()) {
+        SFL_DBG("Map ports for SDP session via UPnP");
+        // open up ports before we start the audio/video streams
+        // get local IPv4 addr
+        IpAddr local_ip = ip_utils::getLocalAddr(pj_AF_INET());
+        if (!local_ip)
+            throw VoipLinkException("Unable to determine network capabilities");
+
+        upnp_add_redir(local_ip.toString().c_str(), sdp.getLocalAudioPort(), sdp.getLocalAudioPort());
+        upnp_add_redir(local_ip.toString().c_str(), sdp.getLocalAudioControlPort(), sdp.getLocalAudioControlPort());
+
+    #ifdef SFL_VIDEO
+        upnp_add_redir(local_ip.toString().c_str(), sdp.getLocalVideoPort(), sdp.getLocalVideoPort());
+        upnp_add_redir(local_ip.toString().c_str(), sdp.getLocalVideoControlPort(), sdp.getLocalVideoControlPort());
+    #endif
+    } else {
+        SFL_DBG("Not using UPnP");
+    }
+#endif
 }
 
 static void

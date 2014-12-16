@@ -92,6 +92,10 @@
 #include <sys/stat.h>  // mkdir(2)
 #include <memory>
 
+#if HAVE_UPNP
+#include "upnp/upnp.h"
+#endif
+
 using namespace sfl;
 
 std::atomic_bool ManagerImpl::initialized = {false};
@@ -240,6 +244,16 @@ ManagerImpl::init(const std::string &config_file)
     }
 
     history_.load(preferences.getHistoryLimit());
+
+#if HAVE_UPNP
+    if (preferences.getUseUPnP()) {
+        /* init UPnP
+         * this must be done before the accounts are registered
+         */
+        init_upnp();
+    }
+#endif
+
     registerAccounts();
 }
 
@@ -286,6 +300,15 @@ ManagerImpl::finish()
     } catch (const VoipLinkException &err) {
         SFL_ERR("%s", err.what());
     }
+
+#if HAVE_UPNP
+    if (preferences.getUseUPnP()) {
+        if (is_upnp_initialized()) {
+            SFL_DBG("Remove any remaning ports mapped for Ring");
+            upnp_remove_all_entries("ring");
+        }
+    }
+#endif
 }
 
 bool
@@ -2725,6 +2748,12 @@ ManagerImpl::registerAccounts()
 
         a->loadConfig();
 
+#if HAVE_UPNP
+        if (preferences.getUseUPnP()) {
+            /* use upnp if it was initialized */
+            a->setUseUPnP(is_upnp_initialized());
+        }
+#endif
         if (a->isEnabled())
             a->doRegister();
     }

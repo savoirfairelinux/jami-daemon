@@ -53,6 +53,10 @@
 #include "im/instant_messaging.h"
 #endif
 
+#if HAVE_UPNP
+#include "upnp/upnp.h"
+#endif
+
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
 #include "client/videomanager.h"
@@ -339,6 +343,32 @@ void SIPCall::answer()
     setState(ACTIVE);
 }
 
+#ifdef HAVE_UPNP
+void
+SIPCall::removePortsUPnP()
+{
+    auto& account = getSIPAccount();
+    if (account.getUseUPnP()) {
+        SFL_DBG("Remove mapped ports for SDP session via UPnP");
+        // open up ports before we start the audio/video streams
+        // get local IPv4 addr
+        IpAddr local_ip = ip_utils::getLocalAddr(pj_AF_INET());
+        if (!local_ip)
+            throw VoipLinkException("Unable to determine network capabilities");
+
+        upnp_rem_redir(sdp_->getLocalAudioPort());
+        upnp_rem_redir(sdp_->getLocalAudioControlPort());
+
+    #ifdef SFL_VIDEO
+        upnp_rem_redir(sdp_->getLocalVideoPort());
+        upnp_rem_redir(sdp_->getLocalVideoControlPort());
+    #endif
+    } else {
+        SFL_DBG("Not using UPnP");
+    }
+}
+#endif
+
 void
 SIPCall::hangup(int reason)
 {
@@ -386,6 +416,10 @@ SIPCall::hangup(int reason)
 
     // Stop all RTP streams
     stopRtpIfCurrent();
+
+#if HAVE_UPNP
+    removePortsUPnP();
+#endif
 
     removeCall();
 }
@@ -760,6 +794,9 @@ SIPCall::onServerFailure()
 {
     const std::string id(getCallId());
     Manager::instance().callFailure(id);
+#if HAVE_UPNP
+    removePortsUPnP();
+#endif
     removeCall();
 }
 
@@ -768,6 +805,9 @@ SIPCall::onClosed()
 {
     const std::string id(getCallId());
     Manager::instance().peerHungupCall(id);
+#if HAVE_UPNP
+    removePortsUPnP();
+#endif
     removeCall();
     Manager::instance().checkAudio();
 }
