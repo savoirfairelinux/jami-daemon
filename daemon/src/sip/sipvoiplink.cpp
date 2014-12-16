@@ -379,6 +379,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
 #endif
 
     call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->initIceTransport(false);
+    call->setupLocalSDPFromIce();
 
     sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -835,9 +837,10 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
     if (!inv)
         return;
 
-    auto call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call)
+    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    if (!call_ptr)
         return;
+    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     if (ev and inv->state != PJSIP_INV_STATE_CONFIRMED) {
         // Update UI with the current status code and description
@@ -897,9 +900,10 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
     if (!inv)
         return;
 
-    auto call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call)
+    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    if (!call_ptr)
         return;
+    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     const auto& account = call->getSIPAccount();
     auto& localSDP = call->getSDP();
@@ -916,9 +920,10 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     if (!inv or !p_offer)
         return;
 
-    auto call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call)
+    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    if (!call_ptr)
         return;
+    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     const auto& account = call->getSIPAccount();
 
@@ -996,11 +1001,12 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     if (!inv)
         return;
 
-    auto call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call) {
+    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    if (!call_ptr) {
         SFL_DBG("Call declined by peer, SDP negotiation stopped");
         return;
     }
+    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     if (status != PJ_SUCCESS) {
         const int reason = inv->state != PJSIP_INV_STATE_NULL and
@@ -1032,116 +1038,9 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update connection information
     sdp.setMediaTransportInfoFromRemoteSdp();
 
-#if USE_CCRTP
-    auto& audioRTP = call->getAudioRtp();
-    try {
-        audioRTP.updateDestinationIpAddress();
-    } catch (const AudioRtpFactoryException &e) {
-        SFL_ERR("%s", e.what());
-    }
-    audioRTP.setDtmfPayloadType(sdp.getTelephoneEventType());
-#else
-    call->getAVFormatRTP().updateSDP(sdp);
-    call->getAVFormatRTP().updateDestination(sdp.getRemoteIP(), sdp.getRemoteAudioPort());
-    auto localAudioPort = sdp.getLocalAudioPort();
-    if (!localAudioPort)
-        localAudioPort = sdp.getRemoteAudioPort();
-    call->getAVFormatRTP().start(localAudioPort);
-#endif
-
-#ifdef SFL_VIDEO
-    auto& videoRTP = call->getVideoRtp();
-    videoRTP.updateSDP(sdp);
-    videoRTP.updateDestination(sdp.getRemoteIP(), sdp.getRemoteVideoPort());
-    const auto localVideoPort = sdp.getLocalVideoPort();
-    videoRTP.start(localVideoPort ? localVideoPort : sdp.getRemoteVideoPort());
-#endif
-
-    // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
-    CryptoOffer crypto_offer;
-    sdp.getRemoteSdpCryptoFromOffer(remoteSDP, crypto_offer);
-
-#if USE_CCRTP && HAVE_SDES
-    bool nego_success = false;
-
-    if (!crypto_offer.empty()) {
-        std::vector<sfl::CryptoSuiteDefinition> localCapabilities;
-
-        for (size_t i = 0; i < SFL_ARRAYSIZE(sfl::CryptoSuites); ++i)
-            localCapabilities.push_back(sfl::CryptoSuites[i]);
-
-        sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
-
-        if (sdesnego.negotiate()) {
-            nego_success = true;
-
-            try {
-                audioRTP.setRemoteCryptoInfo(sdesnego);
-                Manager::instance().getClient()->getCallManager()->secureSdesOn(call->getCallId());
-            } catch (const AudioRtpFactoryException &e) {
-                SFL_ERR("%s", e.what());
-                Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
-            }
-        } else {
-            SFL_ERR("SDES negotiation failure");
-            Manager::instance().getClient()->getCallManager()->secureSdesOff(call->getCallId());
-        }
-    } else {
-        SFL_DBG("No crypto offer available");
-    }
-
-    // We did not find any crypto context for this media, RTP fallback
-    if (!nego_success && audioRTP.isSdesEnabled()) {
-        SFL_ERR("Negotiation failed but SRTP is enabled, fallback on RTP");
-        audioRTP.stop();
-        audioRTP.setSrtpEnabled(false);
-
-        const auto& account = call->getSIPAccount();
-        if (account.getSrtpFallback()) {
-            audioRTP.initSession();
-
-            if (account.isStunEnabled())
-                call->updateSDPFromSTUN();
-        }
-    }
-#endif // HAVE_SDES
-
-    std::vector<sfl::AudioCodec*> sessionMedia(sdp.getSessionAudioMedia());
-
-    if (sessionMedia.empty()) {
-        SFL_WARN("Session media is empty");
-        return;
-    }
-
-    try {
-        Manager::instance().startAudioDriverStream();
-
-        std::vector<AudioCodec*> audioCodecs;
-
-        for (const auto & i : sessionMedia) {
-            if (!i)
-                continue;
-
-            const int pl = i->getPayloadType();
-
-            sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
-
-            if (!ac) {
-                SFL_ERR("Could not instantiate codec %d", pl);
-            } else {
-                audioCodecs.push_back(ac);
-            }
-        }
-
-#if USE_CCRTP
-        if (not audioCodecs.empty())
-            call->getAudioRtp().updateSessionMedia(audioCodecs);
-#endif
-    } catch (const SdpException &e) {
-        SFL_ERR("%s", e.what());
-    } catch (const std::exception &rtpException) {
-        SFL_ERR("%s", rtpException.what());
-    }
+    // Handle possible ICE transport
+    if (!call->startIce())
+        SFL_WARN("ICE not started");
 }
 
 static void
@@ -1221,7 +1120,10 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
             return;
     }
 
-    auto call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    if (!call_ptr)
+        return;
+    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     if (event->body.rx_msg.rdata) {
         pjsip_rx_data *r_data = event->body.rx_msg.rdata;
@@ -1316,9 +1218,10 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
 static void
 onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 {
-    auto currentCall = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!currentCall)
+    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    if (!call_ptr)
         return;
+    auto currentCall = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     static const pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
     pjsip_generic_string_hdr *refer_to = static_cast<pjsip_generic_string_hdr*>

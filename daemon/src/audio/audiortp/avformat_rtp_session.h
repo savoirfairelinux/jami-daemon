@@ -54,6 +54,7 @@ class RingBuffer;
 class Resampler;
 class AudioSender;
 class AudioReceiveThread;
+class IceSocket;
 
 class AVFormatRtpSession {
     public:
@@ -62,6 +63,8 @@ class AVFormatRtpSession {
         ~AVFormatRtpSession();
 
         void start(int localPort);
+        void start(std::unique_ptr<IceSocket> rtp_sock,
+                   std::unique_ptr<IceSocket> rtcp_sock);
         void stop();
         void updateDestination(const std::string& destination, unsigned int port);
         void updateSDP(const Sdp &sdp);
