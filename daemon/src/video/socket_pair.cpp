@@ -32,6 +32,7 @@
 
 #include "libav_deps.h"
 #include "socket_pair.h"
+#include "ice_socket.h"
 #include "libav_utils.h"
 #include "logger.h"
 
@@ -136,23 +137,34 @@ namespace sfl_video {
 
 static const int RTP_BUFFER_SIZE = 1472;
 
-SocketPair::SocketPair(const char *uri, int localPort) :
-           rtcpWriteMutex_(),
-           rtpHandle_(0),
-           rtcpHandle_(0),
-           rtpDestAddr_(),
-           rtpDestAddrLen_(),
-           rtcpDestAddr_(),
-           rtcpDestAddrLen_(),
-           interrupted_(false)
+SocketPair::SocketPair(const char *uri, int localPort)
+    : rtp_sock_()
+    , rtcp_sock_()
+    , rtcpWriteMutex_()
+    , rtpDestAddr_()
+    , rtpDestAddrLen_()
+    , rtcpDestAddr_()
+    , rtcpDestAddrLen_()
 {
     openSockets(uri, localPort);
 }
 
+SocketPair::SocketPair(std::unique_ptr<sfl::IceSocket> rtp_sock,
+                       std::unique_ptr<sfl::IceSocket> rtcp_sock)
+    : rtp_sock_(std::move(rtp_sock))
+    , rtcp_sock_(std::move(rtcp_sock))
+    , rtcpWriteMutex_()
+    , rtpDestAddr_()
+    , rtpDestAddrLen_()
+    , rtcpDestAddr_()
+    , rtcpDestAddrLen_()
+{}
+
 SocketPair::~SocketPair()
 {
     interrupted_ = true;
-    closeSockets();
+    if (rtpHandle_ >= 0)
+        closeSockets();
 }
 
 void SocketPair::interrupt()
@@ -193,6 +205,9 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
         closeSockets();
         throw std::runtime_error("Socket creation failed");
     }
+
+    SFL_WARN("SocketPair: local{%d,%d}, remote{%d,%d}",
+             local_rtp_port, local_rtcp_port, rtp_port, rtcp_port);
 }
 
 VideoIOHandle* SocketPair::createIOContext()
@@ -202,67 +217,131 @@ VideoIOHandle* SocketPair::createIOContext()
                              reinterpret_cast<void*>(this));
 }
 
+int
+SocketPair::waitForData()
+{
+    if (rtpHandle_ >= 0) {
+        // work with system socket
+        struct pollfd p[2] = { {rtpHandle_, POLLIN, 0},
+                               {rtcpHandle_, POLLIN, 0} };
+        return poll(p, 2, NET_POLL_TIMEOUT);
+    }
+
+    // work with IceSocket
+    auto result = rtp_sock_->waitForData(NET_POLL_TIMEOUT);
+    if (result < 0) {
+        errno = EIO;
+        return -1;
+    }
+
+    return result;
+}
+
+int
+SocketPair::readRtpData(void *buf, int buf_size)
+{
+    if (rtpHandle_ >= 0) {
+        // work with system socket
+        struct sockaddr_storage from;
+        socklen_t from_len = sizeof(from);
+        auto result = recvfrom(rtpHandle_, buf, buf_size, 0,
+                               (struct sockaddr *)&from, &from_len);
+        return result;
+    }
+
+    // work with IceSocket
+    auto result = rtp_sock_->recv(static_cast<unsigned char*>(buf), buf_size);
+    if (result < 0) {
+        errno = EIO;
+        return -1;
+    }
+    if (result == 0) {
+        errno = EAGAIN;
+        return -1;
+    }
+    return result;
+}
+
+int
+SocketPair::readRtcpData(void *buf, int buf_size)
+{
+    if (rtcpHandle_ >= 0) {
+        // work with system socket
+        struct sockaddr_storage from;
+        socklen_t from_len = sizeof(from);
+        return recvfrom(rtcpHandle_, buf, buf_size, 0,
+                        (struct sockaddr *)&from, &from_len);
+    }
+
+    // work with IceSocket
+    auto result = rtcp_sock_->recv(static_cast<unsigned char*>(buf), buf_size);
+    if (result < 0) {
+        errno = EIO;
+        return -1;
+    }
+    if (result == 0) {
+        errno = EAGAIN;
+        return -1;
+    }
+    return result;
+}
+
+int
+SocketPair::writeRtpData(void *buf, int buf_size)
+{
+    if (rtpHandle_ >= 0) {
+        auto ret = ff_network_wait_fd(rtpHandle_);
+        if (ret < 0)
+            return ret;
+        return sendto(rtpHandle_, buf, buf_size, 0,
+                      (sockaddr*) &rtcpDestAddr_, rtcpDestAddrLen_);
+    }
+
+    // work with IceSocket
+    return rtp_sock_->send(static_cast<unsigned char*>(buf), buf_size);
+}
+
+int
+SocketPair::writeRtcpData(void *buf, int buf_size)
+{
+    std::lock_guard<std::mutex> lock(rtcpWriteMutex_);
+
+    if (rtcpHandle_ >= 0) {
+        auto ret = ff_network_wait_fd(rtcpHandle_);
+        if (ret < 0)
+            return ret;
+        return sendto(rtcpHandle_, buf, buf_size, 0,
+                      (sockaddr*) &rtcpDestAddr_, rtcpDestAddrLen_);
+    }
+
+    // work with IceSocket
+    return rtcp_sock_->send(static_cast<unsigned char*>(buf), buf_size);
+}
+
 int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 {
     SocketPair *context = static_cast<SocketPair*>(opaque);
 
-    struct sockaddr_storage from;
-    socklen_t from_len;
-    int len, n;
-    struct pollfd p[2] = { {context->rtpHandle_, POLLIN, 0},
-                           {context->rtcpHandle_, POLLIN, 0}};
-
-    for(;;) {
-        if (context->interrupted_) {
-            SFL_ERR("interrupted");
-            return -EINTR;
-        }
-
-        /* build fdset to listen to RTP and RTCP packets */
-        // FIXME:WORKAROUND: reduce to RTP handle until RTCP is fixed
-        n = poll(p, 1, NET_POLL_TIMEOUT);
-        if (n > 0) {
-// FIXME:WORKAROUND: prevent excessive packet loss
-#if 0
-            /* first try RTCP */
-            if (p[1].revents & POLLIN) {
-                from_len = sizeof(from);
-
-                {
-                    len = recvfrom(context->rtcpHandle_, buf, buf_size, 0,
-                            (struct sockaddr *)&from, &from_len);
-                }
-
-                if (len < 0) {
-                    if (errno == EAGAIN or errno == EINTR)
-                        continue;
-                    return -EIO;
-                }
-                break;
-            }
-#endif
-            /* then RTP */
-            if (p[0].revents & POLLIN) {
-                from_len = sizeof(from);
-
-                {
-                    len = recvfrom(context->rtpHandle_, buf, buf_size, 0,
-                            (struct sockaddr *)&from, &from_len);
-                }
-
-                if (len < 0) {
-                    if (errno == EAGAIN or errno == EINTR)
-                        continue;
-                    return -EIO;
-                }
-                break;
-            }
-        } else if (n < 0) {
-            if (errno == EINTR)
-                continue;
-            return -EIO;
-        }
+retry:
+    if (context->interrupted_) {
+        SFL_ERR("interrupted");
+        return -EINTR;
     }
+
+    if (context->waitForData() < 0) {
+        if (errno == EINTR)
+            goto retry;
+        return -EIO;
+    }
+
+    /* RTP */
+    int len = context->readRtpData(buf, buf_size);
+    if (len < 0) {
+        if (errno == EAGAIN or errno == EINTR)
+            goto retry;
+        return -EIO;
+    }
+
     return len;
 }
 
@@ -280,33 +359,26 @@ enum RTCPType {
 int SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
 {
     SocketPair *context = static_cast<SocketPair*>(opaque);
-
     int ret;
 
 retry:
     if (RTP_PT_IS_RTCP(buf[1])) {
+        return buf_size;
         /* RTCP payload type */
-        std::lock_guard<std::mutex> lock(context->rtcpWriteMutex_);
-        ret = ff_network_wait_fd(context->rtcpHandle_);
+        ret = context->writeRtcpData(buf, buf_size);
         if (ret < 0) {
             if (ret == -EAGAIN)
                 goto retry;
             return ret;
         }
-
-        ret = sendto(context->rtcpHandle_, buf, buf_size, 0,
-                     (sockaddr*) &context->rtcpDestAddr_, context->rtcpDestAddrLen_);
     } else {
         /* RTP payload type */
-        ret = ff_network_wait_fd(context->rtpHandle_);
+        ret = context->writeRtpData(buf, buf_size);
         if (ret < 0) {
             if (ret == -EAGAIN)
                 goto retry;
             return ret;
         }
-
-        ret = sendto(context->rtpHandle_, buf, buf_size, 0,
-                     (sockaddr*) &context->rtpDestAddr_, context->rtpDestAddrLen_);
     }
 
     return ret < 0 ? errno : ret;
