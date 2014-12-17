@@ -82,7 +82,7 @@ make
 make install
 
 # And the GNOME client
-cd sflphone-client-gnome
+cd ring-client-gnome
 ./autogen.sh
 ./configure
 make
