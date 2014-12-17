@@ -1037,6 +1037,12 @@ create_presence_statusbar()
     return bar;
 }
 
+static void
+toggle_presence_window_state_false()
+{
+    g_action_change_state(G_ACTION(toggle_action), g_variant_new_boolean(FALSE));
+}
+
 
 /*************************** Menu bar callback *******************************/
 
@@ -1098,7 +1104,7 @@ create_presence_menubar()
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
     menu_item = gtk_menu_item_new_with_label("Close");
     g_signal_connect(G_OBJECT(menu_item), "activate",
-            G_CALLBACK(destroy_presence_window), NULL);
+            G_CALLBACK(toggle_presence_window_state_false), NULL);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
 
 
@@ -1133,7 +1139,6 @@ destroy_presence_window()
     buddy_list_tree_view = NULL;
     presence_status_bar = NULL;
     gtk_widget_destroy(presence_window);
-    g_action_change_state(G_ACTION(toggle_action), g_variant_new_boolean(FALSE));
 }
 
 void
@@ -1193,7 +1198,7 @@ create_presence_window(SFLPhoneClient *client, GSimpleAction *action)
     g_signal_connect(G_OBJECT(presence_window), "button-press-event",
             G_CALLBACK(presence_view_onButtonPressed), NULL);
     g_signal_connect_after(presence_window, "destroy",
-            G_CALLBACK(destroy_presence_window), NULL);
+            G_CALLBACK(toggle_presence_window_state_false), NULL);
 
     /*------------------------- Load presence -------------------------*/
     presence_buddy_list_init(presence_client);
