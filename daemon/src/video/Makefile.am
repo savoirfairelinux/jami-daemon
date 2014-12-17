@@ -11,6 +11,7 @@ libvideo_la_SOURCES = \
 	video_decoder.cpp video_decoder.h \
 	video_encoder.cpp video_encoder.h \
 	video_mixer.cpp video_mixer.h \
+	srtp.c srtp.h \
 	socket_pair.cpp socket_pair.h \
 	shm_sink.cpp shm_sink.h \
 	video_input.cpp video_input.h \

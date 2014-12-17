@@ -42,6 +42,8 @@ namespace sfl {
 class IceSocket;
 };
 
+class SRTPProtoContext;
+
 namespace sfl_video {
 
 class SocketPair {
@@ -55,6 +57,24 @@ class SocketPair {
         VideoIOHandle* createIOContext();
         void openSockets(const char *uri, int localPort);
         void closeSockets();
+
+        /*
+           Supported suites are:
+
+           AES_CM_128_HMAC_SHA1_80
+           SRTP_AES128_CM_HMAC_SHA1_80
+           AES_CM_128_HMAC_SHA1_32
+           SRTP_AES128_CM_HMAC_SHA1_3
+
+           Example (unsecure) usage:
+           createSRTP("AES_CM_128_HMAC_SHA1_80",
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn",
+                      "AES_CM_128_HMAC_SHA1_80",
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn");
+
+           Will throw an std::runtime_error on failure, should be handled at a higher level
+        */
+        void createSRTP(const char *out_suite, const char *out_params, const char *in_suite, const char *in_params);
 
     private:
         NON_COPYABLE(SocketPair);
@@ -80,6 +100,7 @@ class SocketPair {
         sockaddr_storage rtcpDestAddr_;
         socklen_t rtcpDestAddrLen_;
         bool interrupted_ {false};
+        std::unique_ptr<SRTPProtoContext> srtpContext_;
 };
 
 }

@@ -360,7 +360,7 @@ AS_IF([test "x$enable_video" != "xno"],
 
         PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice development files]))
 
-        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.0.0,, AC_MSG_ERROR([Missing libavutil development files]))
+        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 52.5.0,, AC_MSG_ERROR([Missing libavutil development files]))
 
         PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
     ],
