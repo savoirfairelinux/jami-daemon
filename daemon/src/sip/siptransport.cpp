@@ -112,7 +112,10 @@ SipTransport::stateToStr(pjsip_transport_state state)
 }
 
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool) :
-iceTransports_(), cp_(cp), pool_(pool), endpt_(endpt)
+#if HAVE_DHT
+iceTransports_(),
+#endif
+cp_(cp), pool_(pool), endpt_(endpt)
 {
     instance = this;
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), SipTransportBroker::tp_state_callback);
@@ -121,7 +124,9 @@ iceTransports_(), cp_(cp), pool_(pool), endpt_(endpt)
         sip_utils::sip_strerror(status);
     }
 
+#if HAVE_DHT
     pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE", pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP), &ice_pj_transport_type_);
+#endif
 }
 
 SipTransportBroker::~SipTransportBroker()
@@ -186,7 +191,9 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
                 udpTransports_.erase(transport_key);
                 transportDestroyedCv_.notify_all();
             }
-        } else if (type == ice_pj_transport_type_) {
+        }
+#if HAVE_DHT
+        else if (type == ice_pj_transport_type_) {
             SFL_WARN("ICE transport destroy");
             std::unique_lock<std::mutex> lock(iceMutex_);
             const auto transport_key = std::find_if(iceTransports_.begin(), iceTransports_.end(), [tp](const SipIceTransport& i) {
@@ -195,6 +202,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
             if (transport_key != iceTransports_.end())
                 iceTransports_.erase(transport_key);
         }
+#endif
     }
 }
 
@@ -369,6 +377,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 }
 #endif
 
+#if HAVE_DHT
 std::shared_ptr<SipTransport>
 SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport>& ice)
 {
@@ -383,6 +392,7 @@ SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport>& ic
     sip_ice_tr.start();
     return ret;
 }
+#endif
 
 std::vector<pj_sockaddr>
 SipTransportBroker::getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<long> &socketDescriptors) const
