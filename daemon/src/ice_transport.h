@@ -176,6 +176,7 @@ class IceTransport {
 
         void getDefaultCanditates();
 
+        std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
         IceTransportCompleteCb on_initdone_cb_;
         IceTransportCompleteCb on_negodone_cb_;
         std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
@@ -211,13 +212,19 @@ class IceTransportFactory {
 
         int processThread();
 
+        /**
+         * PJSIP specifics
+         */
         const pj_ice_strans_cfg* getIceCfg() const { return &ice_cfg_; }
+        pj_pool_factory* getPoolFactory() { return &cp_.factory; }
 
     private:
         int handleEvents(unsigned max_msec, unsigned *p_count);
 
+        pj_caching_pool cp_;
+        std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
+        std::unique_ptr<pj_thread_t, decltype(pj_thread_destroy)&> thread_;
         pj_ice_strans_cfg ice_cfg_;
-        std::unique_ptr<pj_thread_t, decltype(*pj_thread_destroy)> thread_;
         pj_bool_t thread_quit_flag_ {PJ_FALSE};
 };
 

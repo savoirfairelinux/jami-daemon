@@ -45,11 +45,6 @@
 
 namespace sfl {
 
-// GLOBALS (blame PJSIP)
-
-static pj_caching_pool g_cp_;
-static pj_pool_t*      g_pool_ = nullptr;
-
 static void
 register_thread()
 {
@@ -101,19 +96,25 @@ IceTransport::cb_on_ice_complete(pj_ice_strans* ice_st,
 IceTransport::IceTransport(const char* name, int component_count,
                            IceTransportCompleteCb on_initdone_cb,
                            IceTransportCompleteCb on_negodone_cb)
-    : on_initdone_cb_(on_initdone_cb)
+    : pool_(nullptr, pj_pool_release)
+    , on_initdone_cb_(on_initdone_cb)
     , on_negodone_cb_(on_negodone_cb)
     , component_count_(component_count)
     , compIO_(component_count)
 {
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    pj_ice_strans_cb icecb;
 
+    pool_.reset(pj_pool_create(iceTransportFactory.getPoolFactory(),
+                               "IceTransport.pool", 512, 512, NULL));
+    if (not pool_)
+        throw std::runtime_error("pj_pool_create() failed");
+
+    pj_ice_strans_cb icecb;
     pj_bzero(&icecb, sizeof(icecb));
     icecb.on_rx_data = cb_on_rx_data;
     icecb.on_ice_complete = cb_on_ice_complete;
 
-    pj_ice_strans *icest = nullptr;
+    pj_ice_strans* icest = nullptr;
     pj_status_t status = pj_ice_strans_create(name,
                                               iceTransportFactory.getIceCfg(),
                                               component_count, this, &icecb,
@@ -454,7 +455,8 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
     }
 
     pj_sockaddr_set_port(&cand.addr, (pj_uint16_t)port);
-    pj_strdup2(g_pool_, &cand.foundation, foundation);
+    pj_strdup2(pool_.get(), &cand.foundation, foundation);
+
     return true;
 }
 
@@ -532,27 +534,30 @@ IceTransport::waitForData(int comp_id, unsigned int timeout)
     return io.queue.front().datalen;
 }
 
-IceTransportFactory::IceTransportFactory() :
-    ice_cfg_(), thread_(nullptr, pj_thread_destroy)
+IceTransportFactory::IceTransportFactory()
+    : cp_()
+    , pool_(nullptr, pj_pool_release)
+    , thread_(nullptr, pj_thread_destroy)
+    , ice_cfg_()
 {
-    pj_caching_pool_init(&g_cp_, NULL, 0);
-    g_pool_ = pj_pool_create(&g_cp_.factory, "icetransportpool",
-                              512, 512, NULL);
-    if (not g_pool_)
+    pj_caching_pool_init(&cp_, NULL, 0);
+    pool_.reset(pj_pool_create(&cp_.factory, "IceTransportFactory.pool",
+                               512, 512, NULL));
+    if (not pool_)
         throw std::runtime_error("pj_pool_create() failed");
 
     pj_ice_strans_cfg_default(&ice_cfg_);
-    ice_cfg_.stun_cfg.pf = &g_cp_.factory;
+    ice_cfg_.stun_cfg.pf = &cp_.factory;
 
-    TRY( pj_timer_heap_create(g_pool_, 100, &ice_cfg_.stun_cfg.timer_heap) );
-    TRY( pj_ioqueue_create(g_pool_, 16, &ice_cfg_.stun_cfg.ioqueue) );
+    TRY( pj_timer_heap_create(pool_.get(), 100, &ice_cfg_.stun_cfg.timer_heap) );
+    TRY( pj_ioqueue_create(pool_.get(), 16, &ice_cfg_.stun_cfg.ioqueue) );
 
     pj_thread_t* thread = nullptr;
     const auto& thread_work = [](void* udata) {
         register_thread();
         return static_cast<IceTransportFactory*>(udata)->processThread();
     };
-    TRY( pj_thread_create(g_pool_, "icetransportpool",
+    TRY( pj_thread_create(pool_.get(), "icetransportpool",
                           thread_work, this, 0, 0, &thread) );
     thread_.reset(thread);
 
@@ -582,8 +587,8 @@ IceTransportFactory::~IceTransportFactory()
     if (ice_cfg_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(ice_cfg_.stun_cfg.timer_heap);
 
-    pj_pool_release(g_pool_);
-    pj_caching_pool_destroy(&g_cp_);
+    pool_.reset();
+    pj_caching_pool_destroy(&cp_);
 }
 
 int
