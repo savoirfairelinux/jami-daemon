@@ -35,7 +35,7 @@
 #include <libintl.h>
 #include <locale.h>
 
-#include "sflphone_client.h"
+#include "ring_client.h"
 #include "accountlist.h"
 #include "codeclist.h"
 #include "sflphone_const.h"

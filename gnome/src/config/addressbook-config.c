@@ -34,7 +34,7 @@
 #include "dbus.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 #include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
