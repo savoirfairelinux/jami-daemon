@@ -178,7 +178,9 @@ public:
     std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote);
 #endif
 
+#if HAVE_DHT
     std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<sfl::IceTransport>&);
+#endif
 
     std::shared_ptr<SipTransport> findTransport(pjsip_transport*);
 
@@ -247,8 +249,12 @@ private:
     /**
      * Storage for SIP/ICE transport instances.
      */
+#if HAVE_DHT
+    int ice_pj_transport_type_ {PJSIP_TRANSPORT_START_OTHER};
+
     std::list<SipIceTransport> iceTransports_;
     std::mutex iceMutex_ {};
+#endif
 
     std::mutex transportMapMutex_ {};
     std::condition_variable transportDestroyedCv_ {};
@@ -257,7 +263,6 @@ private:
     pj_pool_t& pool_;
     pjsip_endpoint *endpt_;
 
-    int ice_pj_transport_type_ {PJSIP_TRANSPORT_START_OTHER};
 };
 
 #endif // SIPTRANSPORT_H_
