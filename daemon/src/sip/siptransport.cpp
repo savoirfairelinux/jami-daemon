@@ -382,7 +382,7 @@ std::shared_ptr<SipTransport>
 SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport>& ice)
 {
     std::unique_lock<std::mutex> lock(iceMutex_);
-    iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, 0);
+    iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, 4);
     auto& sip_ice_tr = iceTransports_.front();
     auto ret = std::make_shared<SipTransport>(&sip_ice_tr.base);
     {
