@@ -523,7 +523,7 @@ msgid "None"
 msgstr "Denguna"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -590,7 +590,7 @@ msgid "Congratulations!"
 msgstr "¡Norabona!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -733,8 +733,8 @@ msgid "Window Behaviour"
 msgstr "Comportamientu de la ventana"
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
-msgstr "Traer SFLphone a primer planu al recibir llamaes"
+msgid "Bring Ring to foreground on incoming calls"
+msgstr "Traer Ring a primer planu al recibir llamaes"
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:202
@@ -742,8 +742,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr "Iconu de la Bandexa del Sistema (Anticuáu)"
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "Amosar SFLphone na bandexa del sistema"
+msgid "Show Ring in the system tray"
+msgstr "Amosar Ring na bandexa del sistema"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1111,10 +1111,10 @@ msgid "Status:"
 msgstr "Estáu:"
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
-msgstr "Presencia SFLphone"
+msgid "Ring Presence"
+msgstr "Presencia Ring"
 
-#: ../src/sflphone_client.c:60
+#: ../src/ring_client.c:60
 #, c-format
 msgid ""
 "%s\n"
@@ -1124,7 +1124,7 @@ msgstr ""
 "Executar '%s --help' pa ver una llista completa de les opciones de comandu "
 "disponibles.\n"
 
-#: ../src/sflphone_client.c:79
+#: ../src/ring_client.c:79
 #, c-format
 msgid ""
 "Unable to initialize.\n"
@@ -1132,17 +1132,17 @@ msgid ""
 "Error: %s"
 msgstr ""
 
-#: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "Error SFLphone"
+#: ../src/ring_client.c:82
+msgid "Ring Error"
+msgstr "Error Ring"
 
-#: ../src/sflphone_options.c:60
+#: ../src/ring_options.c:60
 msgid "Enable debug"
 msgstr "Activar depuración"
 
-#: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
-msgstr "- cliente GNOME pa SFLPhone"
+#: ../src/ring_options.c:67
+msgid "- GNOME client for Ring"
+msgstr "- cliente GNOME pa Ring"
 
 #: ../src/sflnotify.c:94
 #, c-format
@@ -1239,8 +1239,8 @@ msgid "_Hang up"
 msgstr "_Colgar"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1256,13 +1256,13 @@ msgid "Voicemail(%i)"
 msgstr "Voicemail(%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
-"SFLphone ye un programa de VoIP compatible colos protocolos SIP ya IAX2."
+"Ring ye un programa de VoIP compatible colos protocolos SIP ya IAX2."
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "Tocante a SFLphone"
+msgid "About Ring"
+msgstr "Tocante a Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

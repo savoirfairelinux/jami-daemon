@@ -32,7 +32,7 @@
 #define __CALLTREE_H__
 
 #include "calltab.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
