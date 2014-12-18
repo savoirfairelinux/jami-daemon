@@ -379,10 +379,10 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 
 #if HAVE_DHT
 std::shared_ptr<SipTransport>
-SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport>& ice)
+SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport>& ice, unsigned comp_id)
 {
     std::unique_lock<std::mutex> lock(iceMutex_);
-    iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, 0);
+    iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, comp_id);
     auto& sip_ice_tr = iceTransports_.front();
     auto ret = std::make_shared<SipTransport>(&sip_ice_tr.base);
     {
