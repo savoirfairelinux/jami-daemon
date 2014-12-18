@@ -35,7 +35,7 @@
   */
 
 #include "accountlist.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 /**
  * Display the advanced options window for zrtp
