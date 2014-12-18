@@ -856,7 +856,11 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 void
 Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cands)
 {
-    assert(media_index < localSession_->media_count);
+    if (media_index >= localSession_->media_count) {
+        SFL_ERR("addIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
+        return;
+    }
+
     auto media = localSession_->media[media_index];
 
     for (const auto &item : cands) {
@@ -872,8 +876,14 @@ std::vector<std::string>
 Sdp::getIceCandidates(unsigned media_index) const
 {
     auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
-    assert(session);
-    assert(media_index < session->media_count);
+    if (not session) {
+        SFL_ERR("getIceCandidates failed: no remote session");
+        return {};
+    }
+    if (media_index >= session->media_count) {
+        SFL_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
+        return {};
+    }
     auto media = session->media[media_index];
     std::vector<std::string> candidates;
 
