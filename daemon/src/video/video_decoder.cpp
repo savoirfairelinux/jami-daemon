@@ -177,6 +177,8 @@ int VideoDecoder::setupFromAudioData()
         return -1;
     }
 
+    SFL_DBG("Using %s", inputDecoder_->name);
+
     decoderCtx_->thread_count = 1;
     if (emulateRate_) {
         SFL_DBG("Using framerate emulation");
