@@ -8,7 +8,7 @@ import sys
 from subprocess import call
 
 # check if template is present
-if "sflphone.pot" not in os.listdir(".."):
+if "ring.pot" not in os.listdir(".."):
     print "Theres is no template file, add one and try again."
     sys.exit()
 
@@ -19,7 +19,7 @@ num_errors = len(os.listdir("../errors"))
 call([
     "pomerge",
     # template
-    "-t", "../sflphone.pot",
+    "-t", "../ring.pot",
     # input directory
     "../errors",
     # output directory
