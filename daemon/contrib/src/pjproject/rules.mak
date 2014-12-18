@@ -56,6 +56,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/gnutls.patch
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
+	$(APPLY) $(SRC)/pjproject/ice_config.patch
 	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
