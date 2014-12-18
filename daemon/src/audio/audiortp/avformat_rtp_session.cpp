@@ -196,7 +196,6 @@ class AudioReceiveThread
     private:
         NON_COPYABLE(AudioReceiveThread);
 
-        static constexpr int SDP_BUFFER_SIZE = 8192;
         static constexpr auto SDP_FILENAME = "dummyFilename";
 
         std::map<std::string, std::string> args_;
@@ -226,7 +225,7 @@ class AudioReceiveThread
 AudioReceiveThread::AudioReceiveThread(const std::string& id, const std::string& sdp)
     : id_(id)
     , stream_(sdp)
-    , sdpContext_(new VideoIOHandle(SDP_BUFFER_SIZE, false, &readFunction, 0, 0, this))
+    , sdpContext_(new VideoIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
     , loop_(std::bind(&AudioReceiveThread::setup, this),
             std::bind(&AudioReceiveThread::process, this),
             std::bind(&AudioReceiveThread::cleanup, this))
