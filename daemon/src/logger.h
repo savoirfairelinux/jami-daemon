@@ -82,7 +82,7 @@ void strErr();
 #include <android/log.h>
 
 #ifndef APP_NAME
-#define APP_NAME "libsflphone"
+#define APP_NAME "libdring"
 #endif /* APP_NAME */
 
 // Avoid printing whole path on android
