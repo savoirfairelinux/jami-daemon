@@ -627,21 +627,33 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
     return "";
 }
 
-static void remove_suffix(std::string &text, const std::string &token)
+// removes token from line starting with prefix
+static void
+remove_token(std::string &text, const char *prefix, const std::string &token)
 {
-    const auto tokenPos = text.find(token.c_str());
+    const auto line_pos = text.find(prefix);
+    if (line_pos == std::string::npos)
+        return;
 
-    if (tokenPos != std::string::npos)
-        text.erase(tokenPos, token.length());
+    const auto token_pos = text.find(token, line_pos);
+
+    if (token_pos != std::string::npos)
+        text.erase(token_pos, token.length());
 }
 
-static void remove_line_with_token(std::string &text, const char *token)
+static void remove_line_with_token(std::string &text, const std::string &token)
 {
     const auto tokenPos = text.find(token);
-    const auto post = text.find('\n', tokenPos);
-    const auto pre = text.rfind('\n', tokenPos);
+    if (tokenPos == std::string::npos) {
+        SFL_ERR("Couldn't find %s", token.c_str());
+        return;
+    }
 
-    text.erase(pre, post - pre);
+    const auto post = text.find('\n', tokenPos);
+    const auto pre  = text.rfind('\n', tokenPos);
+
+    if (post > pre)
+        text.erase(pre, post - pre);
 }
 
 // FIXME:
@@ -681,6 +693,36 @@ string Sdp::getIncomingVideoDescription() const
     return sessionStr;
 }
 
+static std::vector<std::string>
+get_payloads(const char *prefix, const std::string &sdp)
+{
+    const auto line_start = sdp.find(prefix);
+    if (line_start == std::string::npos)
+        return {};
+    // XXX: SDP lines end with \r\n
+    const auto line_end = sdp.find('\r', line_start);
+    if (line_end == std::string::npos)
+        return {};
+
+    // payload types are after the profile
+    const auto profile_pos = sdp.find("RTP/AVP ", line_start);
+    if (profile_pos == std::string::npos)
+        return {};
+
+    std::stringstream ss;
+    ss << sdp.substr(profile_pos, line_end - profile_pos);
+
+    std::vector<std::string> result;
+    std::string tmp;
+    int p;
+
+    while (std::getline(ss, tmp, ' '))
+        if (std::stringstream(tmp) >> p)
+            result.emplace_back(tmp);
+
+    return result;
+}
+
 // FIXME:
 // Here we filter out parts of the SDP that libavformat doesn't need to
 // know about...we should probably give the audio decoder thread the original
@@ -715,10 +757,22 @@ std::string Sdp::getIncomingAudioDescription() const
     // FIXME: find a way to get rid of the "m=video..." line with PJSIP
     remove_line_with_token(sessionStr, "m=video");
 
-    // remove telephone-event as libavformat will barf on it (e.g. with speex wb and ub)
-    remove_suffix(sessionStr, " 101");
-    remove_line_with_token(sessionStr, "a=rtpmap:101");
-    remove_line_with_token(sessionStr, "a=fmtp:101");
+    // drop all but first audio payload
+    // FIXME: technically we should be able to decode any payload previously
+    // announced by checking the payload type on the fly and switching codecs
+    // appropriately
+    const auto payloads = get_payloads("m=audio", sessionStr);
+
+    bool extra = false;
+    for (const auto &p : payloads) {
+        if (extra) {
+            SFL_WARN("Dropping payload %s", p.c_str());
+            remove_token(sessionStr, "m=audio", " " + p);
+            remove_line_with_token(sessionStr, "a=rtpmap:" + p);
+            remove_line_with_token(sessionStr, "a=fmtp:" + p);
+        }
+        extra = true;
+    }
 
     return sessionStr;
 }
