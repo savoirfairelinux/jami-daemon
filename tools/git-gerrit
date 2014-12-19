@@ -39,7 +39,7 @@ test -n "$GERRIT_USER" -a -n "$GERRIT_HOST" -a -n "$GERRIT_PORT" || {
   echo "You must configure your Gerrit host, e.g.:"
   echo
   echo "  git config gerrit.user vivien"
-  echo "  git config gerrit.host gerrit-sflphone.savoirfairelinux.com"
+  echo "  git config gerrit.host gerrit-ring.savoirfairelinux.com"
   echo "  git config gerrit.port 29420"
   echo
   exit 1
