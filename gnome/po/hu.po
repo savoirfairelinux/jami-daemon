@@ -520,7 +520,7 @@ msgid "None"
 msgstr "Egyik sem"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -587,7 +587,7 @@ msgid "Congratulations!"
 msgstr "Gratulálunk!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -730,8 +730,8 @@ msgid "Window Behaviour"
 msgstr "Ablak tulajdonságok"
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
-msgstr "Az SFLphone ablak megjelenítése bejövő hívás esetén"
+msgid "Bring Ring to foreground on incoming calls"
+msgstr "Az Ring ablak megjelenítése bejövő hívás esetén"
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:202
@@ -739,8 +739,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr "Rendszer tálca ikon (Régebbi rendszereknél)"
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "SFLphone megjelenítése Rendszertálcán"
+msgid "Show Ring in the system tray"
+msgstr "Ring megjelenítése Rendszertálcán"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1102,10 +1102,10 @@ msgid "Status:"
 msgstr "Állapot:"
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
+msgid "Ring Presence"
 msgstr ""
 
-#: ../src/sflphone_client.c:60
+#: ../src/ring_client.c:60
 #, c-format
 msgid ""
 "%s\n"
@@ -1115,7 +1115,7 @@ msgstr ""
 "Adja ki a(z) „%s --help” parancsot az elérhető parancssori kapcsolók teljes "
 "listájáért.\n"
 
-#: ../src/sflphone_client.c:79
+#: ../src/ring_client.c:79
 #, c-format
 msgid ""
 "Unable to initialize.\n"
@@ -1123,16 +1123,16 @@ msgid ""
 "Error: %s"
 msgstr ""
 
-#: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "SFLphone Hiba"
+#: ../src/ring_client.c:82
+msgid "Ring Error"
+msgstr "Ring Hiba"
 
-#: ../src/sflphone_options.c:60
+#: ../src/ring_options.c:60
 msgid "Enable debug"
 msgstr "Hibakeresés engedélyezése"
 
-#: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
+#: ../src/ring_options.c:67
+msgid "- GNOME client for Ring"
 msgstr ""
 
 #: ../src/sflnotify.c:94
@@ -1230,8 +1230,8 @@ msgid "_Hang up"
 msgstr "_Vonal bontása"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1247,12 +1247,12 @@ msgid "Voicemail(%i)"
 msgstr "Hangposta(%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "Az SFLphone egy SIP és IAX2 kompatibilis VoIP kliens."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
+msgstr "Az Ring egy SIP és IAX2 kompatibilis VoIP kliens."
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "Az SFLphone-ról"
+msgid "About Ring"
+msgstr "Az Ring-ról"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"
