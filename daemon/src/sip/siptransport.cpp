@@ -111,6 +111,39 @@ SipTransport::stateToStr(pjsip_transport_state state)
     return TRANSPORT_STATE_STR[std::min<size_t>(state, TRANSPORT_STATE_SZ-1)];
 }
 
+void
+SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_state_info *info)
+{
+    std::vector<SipTransportStateCallback> cbs {};
+    {
+        std::lock_guard<std::mutex> lock(stateListenersMutex_);
+        cbs.reserve(stateListeners.size());
+        for (auto& l : stateListeners)
+            cbs.push_back(l.second);
+    }
+    for (auto& cb : cbs)
+        cb(state, info);
+}
+
+void
+SipTransport::addStateListener(uintptr_t lid, SipTransportStateCallback cb)
+{
+    std::lock_guard<std::mutex> lock(stateListenersMutex_);
+    stateListeners[lid] = cb;
+}
+
+bool
+SipTransport::removeStateListener(uintptr_t lid)
+{
+    std::lock_guard<std::mutex> lock(stateListenersMutex_);
+    auto it = stateListeners.find(lid);
+    if (it != stateListeners.end()) {
+        stateListeners.erase(it);
+        return true;
+    }
+    return false;
+}
+
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool) :
 #if HAVE_DHT
 iceTransports_(),
