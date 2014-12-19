@@ -180,29 +180,29 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
         // If UDP
         const auto type = tp->key.type;
         //if (std::strlen(tp->type_name) >= 3 && std::strncmp(tp->type_name, "UDP", 3ul) == 0) {
-        if (type == PJSIP_TRANSPORT_UDP || type == PJSIP_TRANSPORT_UDP6) {
-            SFL_WARN("UDP transport destroy");
-
+        if (type == PJSIP_TRANSPORT_UDP || type == PJSIP_TRANSPORT_UDP6 || type == ice_pj_transport_type_) {
             auto transport_key = std::find_if(udpTransports_.cbegin(), udpTransports_.cend(), [tp](const std::pair<SipTransportDescr, pjsip_transport*>& i) {
                 return i.second == tp;
             });
             if (transport_key != udpTransports_.end()) {
+                SFL_WARN("UDP transport destroy");
                 transports_.erase(transport_key->second);
                 udpTransports_.erase(transport_key);
                 transportDestroyedCv_.notify_all();
             }
-        }
 #if HAVE_DHT
-        else if (type == ice_pj_transport_type_) {
-            SFL_WARN("ICE transport destroy");
+        //else if (type == ice_pj_transport_type_) {
             std::unique_lock<std::mutex> lock(iceMutex_);
-            const auto transport_key = std::find_if(iceTransports_.begin(), iceTransports_.end(), [tp](const SipIceTransport& i) {
+            const auto ice_transport_key = std::find_if(iceTransports_.begin(), iceTransports_.end(), [tp](const SipIceTransport& i) {
                 return reinterpret_cast<const pjsip_transport*>(&i) == tp;
             });
-            if (transport_key != iceTransports_.end())
-                iceTransports_.erase(transport_key);
-        }
+            if (ice_transport_key != iceTransports_.end()) {
+                SFL_WARN("ICE transport destroy");
+                iceTransports_.erase(ice_transport_key);
+            }
+        //}
 #endif
+        }
     }
 }
 
