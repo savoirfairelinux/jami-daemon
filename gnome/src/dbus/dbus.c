@@ -52,7 +52,7 @@
 #include "accountlistconfigdialog.h"
 #include "accountconfigdialog.h"
 #include "messaging/message_tab.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 #include "dbus.h"
 #include "actions.h"
 

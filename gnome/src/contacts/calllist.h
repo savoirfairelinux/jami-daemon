@@ -34,7 +34,7 @@
 #include <gtk/gtk.h>
 #include "callable_obj.h"
 #include "conference_obj.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 static const gchar * const CURRENT_CALLS = "current_calls";
 static const gchar * const HISTORY = "history";
