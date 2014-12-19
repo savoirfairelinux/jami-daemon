@@ -33,7 +33,7 @@
 
 #include "calllist.h"
 #include "conferencelist.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 #include <gtk/gtk.h>
 
 calltab_t* active_calltree_tab;
