@@ -32,7 +32,7 @@
 #define __CONFIGWINDOW_H__
 
 #include "calllist.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 /**
  * @file preferencesdialog.h
