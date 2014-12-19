@@ -57,13 +57,14 @@ sockaddr_to_host_port(pj_pool_t* pool,
 SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
                                  long /* t_type */,
                                  const std::shared_ptr<sfl::IceTransport>& ice,
-                                 int comp_id)
+                                 int comp_id, std::function<void()> destroy_cb)
     : base()
     , pool_(nullptr, pj_pool_release)
     , rxPool_(nullptr, pj_pool_release)
     , rdata()
     , ice_(ice)
     , comp_id_(comp_id)
+    , destroy_cb_(destroy_cb)
 {
     if (not ice->isCompleted())
         throw std::logic_error("ice transport must be completed");
@@ -159,7 +160,6 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
 
 SipIceTransport::~SipIceTransport()
 {
-    destroy();
     pj_lock_destroy(base.lock);
     pj_atomic_destroy(base.ref_cnt);
 }
@@ -248,6 +248,8 @@ SipIceTransport::destroy()
 
     auto status = pjsip_transport_destroy(&base);
     is_registered_ = status != PJ_SUCCESS;
+
+    destroy_cb_();
 
     return status;
 }
