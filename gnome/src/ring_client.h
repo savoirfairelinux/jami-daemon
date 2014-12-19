@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,45 +28,40 @@
  *  as that of the covered work.
  */
 
+#ifndef RING_CLIENT_H_
+#define RING_CLIENT_H_
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
-#include <glib/gi18n.h>
 #include <gtk/gtk.h>
-#include <stdlib.h>
-#include "sflphone_options.h"
 
-G_GNUC_NORETURN static gboolean
-option_version_cb(G_GNUC_UNUSED const gchar *option_name,
-                  G_GNUC_UNUSED const gchar *value,
-                  G_GNUC_UNUSED gpointer data,
-                  G_GNUC_UNUSED GError **error)
+#define SFLPHONE_GSETTINGS_SCHEMA "org.sflphone.SFLphone"
+#define SFLPHONE_TYPE_CLIENT (sflphone_client_get_type())
+#define SFLPHONE_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), SFLPHONE_TYPE_CLIENT, SFLPhoneClient))
+
+typedef struct
 {
-    g_print("%s\n", PACKAGE_STRING);
-    exit(EXIT_SUCCESS);
-}
+    GtkApplication parent;
+    /* TODO: hide implementation */
+    GSettings *settings;
+    /* UI builder */
+    GtkBuilder* uibuilder;
+    /* Main window */
+    GtkWidget *win;
+    /* Main toolbar */
+    GtkWidget *toolbar;
+#ifdef SFL_VIDEO
+    /* Video window */
+    GtkWidget *video;
+#endif
 
-static gboolean
-option_debug_cb(G_GNUC_UNUSED const gchar *option_name,
-                G_GNUC_UNUSED const gchar *value,
-                G_GNUC_UNUSED gpointer data,
-                G_GNUC_UNUSED GError **error)
-{
-    g_setenv("G_MESSAGES_DEBUG", "all", TRUE);
-    return TRUE;
-}
+} SFLPhoneClient;
 
-static const GOptionEntry all_options[] = {
-    {"version", 0, G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, option_version_cb, NULL, NULL},
-    {"debug", 0, G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, option_debug_cb, N_("Enable debug"), NULL},
-    {NULL} /* list must be NULL-terminated */
-};
+typedef GtkApplicationClass SFLPhoneClientClass;
 
-GOptionContext *
-sflphone_options_get_context()
-{
-    GOptionContext *context = g_option_context_new(_("- GNOME client for SFLPhone"));
-    g_option_context_add_main_entries(context, all_options, GETTEXT_PACKAGE);
-    g_option_context_set_translation_domain(context, GETTEXT_PACKAGE);
-    g_option_context_add_group(context, gtk_get_option_group(FALSE));
-    return context;
-}
+SFLPhoneClient *
+sflphone_client_new();
+
+#endif

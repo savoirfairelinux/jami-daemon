@@ -31,7 +31,7 @@
 #ifndef UI_MANAGER_H
 #define UI_MANAGER_H
 
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 GtkWidget *historyButton_;
 GtkWidget *contactButton_;
