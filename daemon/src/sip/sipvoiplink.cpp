@@ -41,29 +41,19 @@
 #include "sdp.h"
 #include "sipcall.h"
 #include "sipaccount.h"
-#include "sip_utils.h"
-#include "string_utils.h"
 
 #if HAVE_DHT
 #include "ringdht/ringaccount.h"
 #endif
-
-#include "call_factory.h"
 
 #include "manager.h"
 #if HAVE_SDES
 #include "sdes_negotiator.h"
 #endif
 
-#include "logger.h"
-#include "array_size.h"
-#include "ip_utils.h"
-
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
 #endif
-
-#include "audio/audiolayer.h"
 
 #ifndef USE_CCRTP
 #include "audio/audiortp/avformat_rtp_session.h"
@@ -78,12 +68,19 @@
 #include "client/callmanager.h"
 #include "client/configurationmanager.h"
 
+#include "pres_sub_server.h"
+
+#include "array_size.h"
+#include "ip_utils.h"
+#include "sip_utils.h"
+#include "string_utils.h"
+#include "logger.h"
+
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_uri.h>
 
 #include <pjsip-simple/presence.h>
 #include <pjsip-simple/publish.h>
-#include "pres_sub_server.h"
 
 #include <istream>
 #include <algorithm>
