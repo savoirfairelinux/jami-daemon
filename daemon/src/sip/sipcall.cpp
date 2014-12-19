@@ -762,6 +762,7 @@ void
 SIPCall::onClosed()
 {
     const std::string id(getCallId());
+    stopRtpIfCurrent();
     Manager::instance().peerHungupCall(id);
     removeCall();
     Manager::instance().checkAudio();
