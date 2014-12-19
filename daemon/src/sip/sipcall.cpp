@@ -70,8 +70,6 @@ getSettings()
 }
 #endif
 
-static const int INITIAL_SIZE = 16384;
-static const int INCREMENT_SIZE = INITIAL_SIZE;
 static constexpr int DEFAULT_ICE_INIT_TIMEOUT {10}; // seconds
 static constexpr int DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
 
@@ -134,11 +132,8 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
     // The ID is used to associate video streams to calls
     , videortp_(id, getSettings())
 #endif
-    , pool_(pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory,
-                           id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , sdp_(new Sdp(id))
-{
-}
+{}
 
 SIPCall::~SIPCall()
 {
@@ -150,8 +145,6 @@ SIPCall::~SIPCall()
         SFL_WARN("Call was not properly removed from invite callbacks");
         inv->mod_data[mod_ua_id] = nullptr;
     }
-
-    pj_pool_release(pool_);
 }
 
 void
