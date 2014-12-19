@@ -53,7 +53,7 @@
 #include "uimanager.h"
 #include "actions.h"
 #include "searchbar.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 #include "presencewindow.h"
 #include "presence.h"

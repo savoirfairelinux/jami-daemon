@@ -28,12 +28,45 @@
  *  as that of the covered work.
  */
 
-#ifndef SFLPHONE_OPTIONS_H_
-#define SFLPHONE_OPTIONS_H_
+#include "config.h"
 
-#include <glib.h>
+#include <glib/gi18n.h>
+#include <gtk/gtk.h>
+#include <stdlib.h>
+#include "ring_options.h"
+
+G_GNUC_NORETURN static gboolean
+option_version_cb(G_GNUC_UNUSED const gchar *option_name,
+                  G_GNUC_UNUSED const gchar *value,
+                  G_GNUC_UNUSED gpointer data,
+                  G_GNUC_UNUSED GError **error)
+{
+    g_print("%s\n", PACKAGE_STRING);
+    exit(EXIT_SUCCESS);
+}
+
+static gboolean
+option_debug_cb(G_GNUC_UNUSED const gchar *option_name,
+                G_GNUC_UNUSED const gchar *value,
+                G_GNUC_UNUSED gpointer data,
+                G_GNUC_UNUSED GError **error)
+{
+    g_setenv("G_MESSAGES_DEBUG", "all", TRUE);
+    return TRUE;
+}
+
+static const GOptionEntry all_options[] = {
+    {"version", 0, G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, option_version_cb, NULL, NULL},
+    {"debug", 0, G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, option_debug_cb, N_("Enable debug"), NULL},
+    {NULL} /* list must be NULL-terminated */
+};
 
 GOptionContext *
-sflphone_options_get_context();
-
-#endif /* SFLPHONE_OPTIONS_H_ */
+sflphone_options_get_context()
+{
+    GOptionContext *context = g_option_context_new(_("- GNOME client for SFLPhone"));
+    g_option_context_add_main_entries(context, all_options, GETTEXT_PACKAGE);
+    g_option_context_set_translation_domain(context, GETTEXT_PACKAGE);
+    g_option_context_add_group(context, gtk_get_option_group(FALSE));
+    return context;
+}

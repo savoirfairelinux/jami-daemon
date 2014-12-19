@@ -30,7 +30,7 @@
 
 #include "video_window.h"
 
-#include "sflphone_client.h"    /* gsettings schema path */
+#include "ring_client.h"    /* gsettings schema path */
 
 struct _VideoWindowPrivate {
     GtkWidget        *video;
