@@ -37,10 +37,11 @@
 #endif
 
 #include "account_schema.h"
-#include <yaml-cpp/yaml.h>
-#include "config/yamlparser.h"
 #include "client/configurationmanager.h"
 #include "manager.h"
+
+#include "config/yamlparser.h"
+#include <yaml-cpp/yaml.h>
 
 bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
 
