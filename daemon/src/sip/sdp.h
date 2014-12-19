@@ -70,16 +70,9 @@ class Sdp {
          *
          * @param memory pool
          */
-        Sdp(pj_pool_t *pool);
+        Sdp(const std::string& id);
 
         ~Sdp();
-
-        /**
-         * Accessor for the internal memory pool
-         */
-        pj_pool_t *getMemoryPool() const {
-            return memPool_;
-        }
 
         /**
          *  Read accessor. Get the local passive sdp session information before negotiation
@@ -304,10 +297,9 @@ class Sdp {
         void updateRemoteIP(unsigned index);
 
         /**
-         * The pool to allocate memory, ownership to SipCall
-         * SDP should not release the pool itself
+         * The pool to allocate memory
          */
-        pj_pool_t *memPool_;
+        std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> memPool_;
 
         /** negotiator */
         pjmedia_sdp_neg *negotiator_;

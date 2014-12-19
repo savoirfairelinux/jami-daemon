@@ -136,8 +136,9 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #endif
     , pool_(pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory,
                            id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
-    , sdp_(new Sdp(pool_))
-{}
+    , sdp_(new Sdp(id))
+{
+}
 
 SIPCall::~SIPCall()
 {
@@ -150,8 +151,6 @@ SIPCall::~SIPCall()
         inv->mod_data[mod_ua_id] = nullptr;
     }
 
-    // local sdp must be destroyed before pool
-    sdp_.reset();
     pj_pool_release(pool_);
 }
 

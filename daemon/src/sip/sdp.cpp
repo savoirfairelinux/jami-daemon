@@ -37,6 +37,7 @@
 #endif
 
 #include "sipaccount.h"
+#include "sipvoiplink.h"
 #include "manager.h"
 #include "logger.h"
 
@@ -52,8 +53,11 @@ using std::map;
 using std::vector;
 using std::stringstream;
 
-Sdp::Sdp(pj_pool_t *pool)
-    : memPool_(pool)
+static constexpr int POOL_INITIAL_SIZE = 16384;
+static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;
+
+Sdp::Sdp(const std::string& id)
+    : memPool_(nullptr, pj_pool_release)
     , negotiator_(nullptr)
     , localSession_(nullptr)
     , remoteSession_(nullptr)
@@ -76,7 +80,13 @@ Sdp::Sdp(pj_pool_t *pool)
     , zrtpHelloHash_()
     , srtpCrypto_()
     , telephoneEventPayload_(101) // same as asterisk
-{}
+{
+    memPool_.reset(pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory,
+                                  id.c_str(), POOL_INITIAL_SIZE,
+                                  POOL_INCREMENT_SIZE, NULL));
+    if (not memPool_)
+        throw std::runtime_error("pj_pool_create() failed");
+}
 
 Sdp::~Sdp()
 {
@@ -139,7 +149,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
             }
 
             pjmedia_sdp_rtpmap *rtpmap;
-            pjmedia_sdp_attr_to_rtpmap(memPool_, rtpMapAttribute, &rtpmap);
+            pjmedia_sdp_attr_to_rtpmap(memPool_.get(), rtpMapAttribute, &rtpmap);
 
             if (!pj_stricmp2(&current->desc.media, "audio")) {
                 const unsigned long pt = pj_strtoul(&current->desc.fmt[fmt]);
@@ -187,7 +197,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 
                 if (telephoneEvent != NULL) {
                     pjmedia_sdp_rtpmap *rtpmap;
-                    pjmedia_sdp_attr_to_rtpmap(memPool_, telephoneEvent, &rtpmap);
+                    pjmedia_sdp_attr_to_rtpmap(memPool_.get(), telephoneEvent, &rtpmap);
                     telephoneEventPayload_ = pj_strtoul(&rtpmap->pt);
                     parsedTelelphoneEvent = true;
                 }
@@ -204,7 +214,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
                 }
 
                 pjmedia_sdp_rtpmap *rtpmap;
-                pjmedia_sdp_attr_to_rtpmap(memPool_, rtpMapAttribute, &rtpmap);
+                pjmedia_sdp_attr_to_rtpmap(memPool_.get(), rtpMapAttribute, &rtpmap);
 
                 const unsigned long pt = pj_strtoul(&r_media->desc.fmt[fmt]);
                 if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaRemote_, pt)) {
@@ -266,7 +276,7 @@ Sdp::getSessionAudioMedia() const
 pjmedia_sdp_media *
 Sdp::setMediaDescriptorLines(bool audio)
 {
-    pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_media);
+    pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_media);
 
     med->desc.media = audio ? pj_str((char*) "audio") : pj_str((char*) "video");
     med->desc.port_count = 1;
@@ -303,7 +313,7 @@ Sdp::setMediaDescriptorLines(bool audio)
 
         std::ostringstream s;
         s << payload;
-        pj_strdup2(memPool_, &med->desc.fmt[i], s.str().c_str());
+        pj_strdup2(memPool_.get(), &med->desc.fmt[i], s.str().c_str());
 
         // Add a rtpmap field for each codec
         // We could add one only for dynamic payloads because the codecs with static RTP payloads
@@ -318,7 +328,7 @@ Sdp::setMediaDescriptorLines(bool audio)
         rtpmap.param.slen = strlen(channels); // don't include NULL terminator
 
         pjmedia_sdp_attr *attr;
-        pjmedia_sdp_rtpmap_to_attr(memPool_, &rtpmap, &attr);
+        pjmedia_sdp_rtpmap_to_attr(memPool_.get(), &rtpmap, &attr);
 
         med->attr[med->attr_count++] = attr;
 
@@ -331,14 +341,14 @@ Sdp::setMediaDescriptorLines(bool audio)
             if (profileLevelID.empty())
                 profileLevelID = libav_utils::MAX_H264_PROFILE_LEVEL_ID;
             os << "fmtp:" << dynamic_payload << " " << profileLevelID;
-            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
+            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), os.str().c_str(), NULL);
         }
 #endif
         if (not audio)
             dynamic_payload++;
     }
 
-    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, "sendrecv", NULL);
+    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), "sendrecv", NULL);
     if (!zrtpHelloHash_.empty())
         addZrtpAttribute(med, zrtpHelloHash_);
 
@@ -355,7 +365,7 @@ void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 {
     IpAddr outputAddr = publishedIpAddr_;
     outputAddr.setPort(localAudioControlPort_);
-    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create_rtcp(memPool_, outputAddr.pjPtr());
+    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create_rtcp(memPool_.get(), outputAddr.pjPtr());
     if (attr)
         pjmedia_sdp_attr_add(&med->attr_count, med->attr, attr);
 }
@@ -417,15 +427,15 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
     std::ostringstream s;
     s << telephoneEventPayload_;
     ++med->desc.fmt_count;
-    pj_strdup2(memPool_, &med->desc.fmt[med->desc.fmt_count - 1], s.str().c_str());
+    pj_strdup2(memPool_.get(), &med->desc.fmt[med->desc.fmt_count - 1], s.str().c_str());
 
-    pjmedia_sdp_attr *attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+    pjmedia_sdp_attr *attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_.get(), sizeof(pjmedia_sdp_attr)));
     attr_rtpmap->name = pj_str((char *) "rtpmap");
     attr_rtpmap->value = pj_str((char *) "101 telephone-event/8000");
 
     med->attr[med->attr_count++] = attr_rtpmap;
 
-    pjmedia_sdp_attr *attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+    pjmedia_sdp_attr *attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_.get(), sizeof(pjmedia_sdp_attr)));
     attr_fmtp->name = pj_str((char *) "fmtp");
     attr_fmtp->value = pj_str((char *) "101 0-15");
 
@@ -475,8 +485,8 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     setLocalMediaAudioCapabilities(selectedAudioCodecs);
     setLocalMediaVideoCapabilities(selectedVideoCodecs);
 
-    localSession_ = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_session);
-    localSession_->conn = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_conn);
+    localSession_ = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_session);
+    localSession_->conn = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_conn);
 
     /* Initialize the fields of the struct */
     localSession_->origin.version = 0;
@@ -532,7 +542,7 @@ Sdp::createOffer(const vector<int> &selectedCodecs,
         return false;
     }
 
-    if (pjmedia_sdp_neg_create_w_local_offer(memPool_, localSession_, &negotiator_) != PJ_SUCCESS) {
+    if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_) != PJ_SUCCESS) {
         SFL_ERR("Failed to create an initial SDP negotiator");
         return false;
     }
@@ -556,9 +566,9 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
         return;
     }
 
-    remoteSession_ = pjmedia_sdp_session_clone(memPool_, remote);
+    remoteSession_ = pjmedia_sdp_session_clone(memPool_.get(), remote);
 
-    if (pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
+    if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(), localSession_,
             remoteSession_, &negotiator_) != PJ_SUCCESS)
         SFL_ERR("Failed to initialize negotiator");
 }
@@ -578,7 +588,7 @@ void Sdp::startNegotiation()
         return;
     }
 
-    if (pjmedia_sdp_neg_negotiate(memPool_, negotiator_, 0) != PJ_SUCCESS)
+    if (pjmedia_sdp_neg_negotiate(memPool_.get(), negotiator_, 0) != PJ_SUCCESS)
         return;
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
@@ -640,7 +650,7 @@ static void remove_line_with_token(std::string &text, const char *token)
 // SDP and deal with the streams properly at that level
 string Sdp::getIncomingVideoDescription() const
 {
-    pjmedia_sdp_session *videoSession = pjmedia_sdp_session_clone(memPool_, activeLocalSession_);
+    pjmedia_sdp_session *videoSession = pjmedia_sdp_session_clone(memPool_.get(), activeLocalSession_);
     if (!videoSession) {
         SFL_ERR("Could not clone SDP");
         return "";
@@ -650,7 +660,7 @@ string Sdp::getIncomingVideoDescription() const
     bool hasVideo = false;
     for (unsigned i = 0; i < videoSession->media_count; i++)
         if (pj_stricmp2(&videoSession->media[i]->desc.media, "video")) {
-            if (pjmedia_sdp_media_deactivate(memPool_, videoSession->media[i]) != PJ_SUCCESS)
+            if (pjmedia_sdp_media_deactivate(memPool_.get(), videoSession->media[i]) != PJ_SUCCESS)
                 SFL_ERR("Could not deactivate media");
         } else {
             hasVideo = true;
@@ -677,7 +687,7 @@ string Sdp::getIncomingVideoDescription() const
 // SDP and deal with the streams properly at that level
 std::string Sdp::getIncomingAudioDescription() const
 {
-    pjmedia_sdp_session *audioSession = pjmedia_sdp_session_clone(memPool_, activeLocalSession_);
+    pjmedia_sdp_session *audioSession = pjmedia_sdp_session_clone(memPool_.get(), activeLocalSession_);
     if (!audioSession) {
         SFL_ERR("Could not clone SDP");
         return "";
@@ -687,7 +697,7 @@ std::string Sdp::getIncomingAudioDescription() const
     bool hasAudio = false;
     for (unsigned i = 0; i < audioSession->media_count; i++)
         if (pj_stricmp2(&audioSession->media[i]->desc.media, "audio")) {
-            if (pjmedia_sdp_media_deactivate(memPool_, audioSession->media[i]) != PJ_SUCCESS)
+            if (pjmedia_sdp_media_deactivate(memPool_.get(), audioSession->media[i]) != PJ_SUCCESS)
                 SFL_ERR("Could not deactivate media");
         } else {
             hasAudio = true;
@@ -848,7 +858,7 @@ void Sdp::addSdesAttribute(const vector<std::string>& crypto)
 {
     for (const auto &item : crypto) {
         pj_str_t val = { (char*) item.c_str(), static_cast<pj_ssize_t>(item.size()) };
-        pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "crypto", &val);
+        pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
 
         for (unsigned i = 0; i < localSession_->media_count; i++)
             if (pjmedia_sdp_media_add_attr(localSession_->media[i], attr) != PJ_SUCCESS)
@@ -861,7 +871,7 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
     /* Format: ":version value" */
     std::string val = "1.10 " + hash;
     pj_str_t value = { (char*)val.c_str(), static_cast<pj_ssize_t>(val.size()) };
-    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "zrtp-hash", &value);
+    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_.get(), "zrtp-hash", &value);
 
     if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
         throw SdpException("Could not add zrtp attribute to media");
@@ -879,7 +889,7 @@ Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cand
 
     for (const auto &item : cands) {
         pj_str_t val = { (char*) item.c_str(), static_cast<pj_ssize_t>(item.size()) };
-        pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "candidate", &val);
+        pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_.get(), "candidate", &val);
 
         if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
             throw SdpException("Could not add ICE candidates attribute to media");
@@ -917,13 +927,13 @@ Sdp::addIceAttributes(const sfl::IceTransport::Attribute&& ice_attrs)
     pjmedia_sdp_attr *attr;
 
     value = { (char*)ice_attrs.ufrag.c_str(), static_cast<pj_ssize_t>(ice_attrs.ufrag.size()) };
-    attr = pjmedia_sdp_attr_create(memPool_, "ice-ufrag", &value);
+    attr = pjmedia_sdp_attr_create(memPool_.get(), "ice-ufrag", &value);
 
     if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
         throw SdpException("Could not add ICE.ufrag attribute to local SDP");
 
     value = { (char*)ice_attrs.pwd.c_str(), static_cast<pj_ssize_t>(ice_attrs.pwd.size()) };
-    attr = pjmedia_sdp_attr_create(memPool_, "ice-pwd", &value);
+    attr = pjmedia_sdp_attr_create(memPool_.get(), "ice-pwd", &value);
 
     if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
         throw SdpException("Could not add ICE.pwd attribute to local SDP");
@@ -969,7 +979,7 @@ void Sdp::addAttributeToLocalAudioMedia(const char *attr)
     const int i = getIndexOfAttribute(localSession_, "audio");
     if (i == -1)
         return;
-    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_, attr, NULL);
+    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_.get(), attr, NULL);
     pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
 
@@ -994,7 +1004,7 @@ void Sdp::addAttributeToLocalVideoMedia(const char *attr)
     const int i = getIndexOfAttribute(localSession_, "video");
     if (i == -1)
         return;
-    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_, attr, NULL);
+    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_.get(), attr, NULL);
     pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
 
