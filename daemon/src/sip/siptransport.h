@@ -115,36 +115,14 @@ struct SipTransport
 
     static const char* stateToStr(pjsip_transport_state state);
 
-    void stateCallback(pjsip_transport_state state, const pjsip_transport_state_info *info) {
-        std::vector<SipTransportStateCallback> cbs {};
-        {
-            std::lock_guard<std::mutex> lock(stateListenersMutex_);
-            cbs.reserve(stateListeners.size());
-            for (auto& l : stateListeners)
-                cbs.push_back(l.second);
-        }
-        for (auto& cb : cbs)
-            cb(state, info);
-    }
+    void stateCallback(pjsip_transport_state state, const pjsip_transport_state_info *info);
 
     pjsip_transport* get() {
         return transport;
     }
 
-    void addStateListener(uintptr_t lid, SipTransportStateCallback cb) {
-        std::lock_guard<std::mutex> lock(stateListenersMutex_);
-        stateListeners[lid] = cb;
-    }
-
-    bool removeStateListener(uintptr_t lid) {
-        std::lock_guard<std::mutex> lock(stateListenersMutex_);
-        auto it = stateListeners.find(lid);
-        if (it != stateListeners.end()) {
-            stateListeners.erase(it);
-            return true;
-        }
-        return false;
-    }
+    void addStateListener(uintptr_t lid, SipTransportStateCallback cb);
+    bool removeStateListener(uintptr_t lid);
 
     static bool isAlive(const std::shared_ptr<SipTransport>&, pjsip_transport_state state);
 
@@ -239,6 +217,8 @@ private:
      * List of transports so we can bubble the events up.
      */
     std::map<pjsip_transport*, std::weak_ptr<SipTransport>> transports_ {};
+    std::mutex transportMapMutex_ {};
+    std::condition_variable transportDestroyedCv_ {};
 
     /**
      * Transports are stored in this map in order to retreive them in case
@@ -255,9 +235,6 @@ private:
     std::list<SipIceTransport> iceTransports_;
     std::mutex iceMutex_ {};
 #endif
-
-    std::mutex transportMapMutex_ {};
-    std::condition_variable transportDestroyedCv_ {};
 
     pj_caching_pool& cp_;
     pj_pool_t& pool_;
