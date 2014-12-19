@@ -46,6 +46,7 @@
 
 #include <exception>
 #include <string>
+#include <memory>
 
 #include <pj/pool.h>
 #include <pjmedia/sdp.h>
@@ -88,8 +89,7 @@ class SDPTest : public CppUnit::TestCase {
         CPPUNIT_TEST_SUITE_END();
 
     public:
-        SDPTest() : CppUnit::TestCase("SDP module Tests"), session_(0),
-        testPool_(0), poolCache_() {}
+        SDPTest() : CppUnit::TestCase("SDP module Tests") {}
 
         /**
          * Code factoring - Common resources can be initialized here.
@@ -117,9 +117,7 @@ class SDPTest : public CppUnit::TestCase {
         NON_COPYABLE(SDPTest);
         void receiveAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
 
-        Sdp *session_;
-        pj_pool_t *testPool_;
-        pj_caching_pool poolCache_;
+        std::unique_ptr<Sdp> session_;
 };
 
 /* Register our test module */
