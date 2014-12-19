@@ -1,6 +1,6 @@
 AC_PREREQ([2.64])
 
-AC_INIT([sflphone],[1.4.2],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
+AC_INIT([Ring],[1.4.2],[sflphoneteam@savoirfairelinux.com],[ring-client-gnome])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -27,7 +27,7 @@ CFLAGS="$CFLAGS -Wall -Wextra -Wshadow"
 
 dnl uninstalled gsr ui dir
 AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
-  [path to uninstalled SFLphone UI dir])
+  [path to uninstalled Ring UI dir])
 
 PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1 >= 0.75);
 
@@ -89,7 +89,7 @@ src/video/Makefile
 src/icons/Makefile
 src/messaging/Makefile
 pixmaps/Makefile
-sflphone.desktop
+ring.desktop
 tests/Makefile
 man/Makefile
 doc/Makefile
