@@ -211,7 +211,7 @@ SipIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
 ssize_t
 SipIceTransport::onRecv(uint8_t* buf, size_t len)
 {
-    auto max_size = std::min(sizeof(rdata.pkt_info.packet) - rdata.pkt_info.len, len);
+    auto max_size = std::min<size_t>(sizeof(rdata.pkt_info.packet) - rdata.pkt_info.len, len);
     std::copy_n(buf, max_size, (uint8_t*)rdata.pkt_info.packet + rdata.pkt_info.len);
     rdata.pkt_info.len += max_size;
     rdata.pkt_info.zero = 0;
