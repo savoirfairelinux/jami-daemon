@@ -173,7 +173,7 @@ static void
 on_show_event_cb(GtkWidget *self,
                  G_GNUC_UNUSED gpointer data)
 {
-    g_return_val_if_fail(IS_VIDEO_WINDOW(self), FALSE);
+    g_return_if_fail(IS_VIDEO_WINDOW(self));
 
     VideoWindowPrivate *priv = VIDEO_WINDOW_GET_PRIVATE(self);
 
