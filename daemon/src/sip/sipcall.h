@@ -53,8 +53,6 @@
 #include <memory>
 
 struct pjsip_evsub;
-struct pj_caching_pool;
-struct pj_pool_t;
 struct pjsip_inv_session;
 
 class Sdp;
@@ -121,13 +119,6 @@ class SIPCall : public Call
             return videortp_;
         }
 #endif
-
-        /**
-         * Return the local memory pool for this call
-         */
-        pj_pool_t *getMemoryPool() {
-            return pool_;
-        }
 
         /**
          * The invite session to be reused in case of transfer
@@ -242,11 +233,6 @@ class SIPCall : public Call
          * non-IP2IP calls.
          */
         std::shared_ptr<SipTransport> transport_ {};
-
-        /**
-         * The pool to allocate memory, released once call hang up
-         */
-        pj_pool_t *pool_;
 
         /**
          * The SDP session
