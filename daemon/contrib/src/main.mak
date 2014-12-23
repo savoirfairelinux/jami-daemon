@@ -23,7 +23,7 @@ VPATH := $(TARBALLS)
 # Common download locations
 GNU := http://ftp.gnu.org/gnu
 SF := http://heanet.dl.sourceforge.net/sourceforge
-CONTRIB_VIDEOLAN := ftp://ftp.videolan.org/pub/contrib
+CONTRIB_VIDEOLAN := http://downloads.videolan.org/pub/contrib
 GNUTELEPHONY := https://github.com/dyfet
 
 #
