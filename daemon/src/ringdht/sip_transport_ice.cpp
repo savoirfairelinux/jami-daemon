@@ -171,6 +171,12 @@ SipIceTransport::start()
     ice_->setOnRecv(comp_id_, std::bind(&SipIceTransport::onRecv, this, _1, _2));
 }
 
+IpAddr
+SipIceTransport::getLocalAddress() const
+{
+    return ice_->getLocalAddress(comp_id_);
+}
+
 pj_status_t
 SipIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
                       int addr_len, void *token,
