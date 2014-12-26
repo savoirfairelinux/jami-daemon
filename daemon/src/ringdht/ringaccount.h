@@ -50,6 +50,7 @@
 
 #include <vector>
 #include <map>
+#include <chrono>
 
 namespace Conf {
     const char *const DHT_PORT_KEY = "dhtPort";
@@ -254,8 +255,8 @@ class RingAccount : public SIPAccountBase {
 
     private:
 
-        const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", 60 * 60 * 24 * 7};
-        const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", 15 * 60};
+        const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
+        const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", std::chrono::minutes(15)};
 
         void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target);
 
