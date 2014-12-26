@@ -32,7 +32,7 @@
 #define SHORTCUTS_H_
 
 #include <gdk/gdkx.h>
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 typedef struct {
     gchar *action;

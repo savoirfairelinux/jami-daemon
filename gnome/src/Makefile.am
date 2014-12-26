@@ -2,9 +2,9 @@ include ../globals.mak
 
 SUBDIRS = config contacts dbus widget icons video messaging
 
-bin_PROGRAMS = sflphone-client-gnome
+bin_PROGRAMS = ring-client-gnome
 
-SFLPHONE_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
+RING_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
               ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la \
               ./messaging/libmessaging.la
 
@@ -12,12 +12,12 @@ DL_LIBS = -ldl
 RT_LIBS = -lrt
 
 if SFL_VIDEO
-SFLPHONE_LIBS+=./video/libvideo.la
+RING_LIBS+=./video/libvideo.la
 endif
 
-noinst_LTLIBRARIES = libsflphone_client.la
+noinst_LTLIBRARIES = libring_client.la
 
-libsflphone_client_la_SOURCES = \
+libring_client_la_SOURCES = \
   uimanager.c \
   sflnotify.c \
   mainwindow.c \
@@ -50,36 +50,36 @@ libsflphone_client_la_SOURCES = \
   account_schema.h \
   history_loader.c \
   history_loader.h \
-  sflphone_client.h \
-  sflphone_client.c \
-  sflphone_options.c \
-  sflphone_options.h
+  ring_client.h \
+  ring_client.c \
+  ring_options.c \
+  ring_options.h
 
-libsflphone_client_la_SOURCES+=presence.c presence.h presencewindow.c presencewindow.h
+libring_client_la_SOURCES+=presence.c presence.h presencewindow.c presencewindow.h
 
-libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)
-libsflphone_client_la_LDFLAGS = @CLUTTER_LDFLAGS@ @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
+libring_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(RING_LIBS)
+libring_client_la_LDFLAGS = @CLUTTER_LDFLAGS@ @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
                                 @X11_LIBS@ @GTK_LIBS@ @GLIB_LIBS@ \
                                 $(DL_LIBS) $(RT_LIBS) \
                                 @CLUTTERGTK_LDFLAGS@
 
-libsflphone_client_la_CFLAGS = @CLUTTER_CFLAGS@ @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
+libring_client_la_CFLAGS = @CLUTTER_CFLAGS@ @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ \
                                @CLUTTERGTK_CFLAGS@
 
 
-sflphone_client_gnome_SOURCES = main.c
-sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
+ring_client_gnome_SOURCES = main.c
+ring_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@
 
-sflphone_client_gnome_LDADD = libsflphone_client.la
+ring_client_gnome_LDADD = libring_client.la
 
 # add symbolic link
 install-exec-local:
 	echo $(prefix); echo $(bindir); echo $(datadir); echo $(libdir)
-	cd $(DESTDIR)$(bindir); ln -sf sflphone-client-gnome sflphone
+	cd $(DESTDIR)$(bindir); ln -sf ring-client-gnome ring
 
 uninstall-local:
-	-test -h $(DESTDIR)$(bindir)/sflphone && rm $(DESTDIR)$(bindir)/sflphone
+	-test -h $(DESTDIR)$(bindir)/ring && rm $(DESTDIR)$(bindir)/ring
 
 -include $(top_srcdir)/git.mk
