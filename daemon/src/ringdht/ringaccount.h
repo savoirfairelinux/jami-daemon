@@ -36,7 +36,6 @@
 #include "config.h"
 #endif
 
-#include "sip/siptransport.h"
 #include "sip/sipaccountbase.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -44,9 +43,7 @@
 
 #include <opendht/dhtrunner.h>
 
-#include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
-#include <pjsip-ua/sip_regc.h>
 
 #include <vector>
 #include <map>
