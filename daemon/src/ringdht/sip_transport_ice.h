@@ -31,6 +31,8 @@
 
 #pragma once
 
+#include "ip_utils.h"
+
 #include <pjsip.h>
 #include <pj/pool.h>
 #include <memory>
@@ -50,6 +52,8 @@ struct SipIceTransport
          * To be called once to start receiving packets
          */
         void start();
+
+        IpAddr getLocalAddress() const;
 
         std::shared_ptr<sfl::IceTransport> getIceTransport() const {
             return ice_;
