@@ -31,7 +31,7 @@
 #ifndef __PRESENCEWINDOW_H__
 #define __PRESENCEWINDOW_H__
 
-#include "sflphone_client.h"
+#include "ring_client.h"
 #include "presence.h"
 
 /** @file presencewindow.h

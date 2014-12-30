@@ -1087,16 +1087,16 @@ GtkBuilder *uibuilder_new(void)
     GtkBuilder* uibuilder = gtk_builder_new();
     GError *error = NULL;
     /* try local dir first */
-    gchar *ui_path = g_build_filename(SFLPHONE_UIDIR_UNINSTALLED, "sflphone_menus.ui", NULL);
+    gchar *ui_path = g_build_filename(SFLPHONE_UIDIR_UNINSTALLED, "ring_menus.ui", NULL);
 
     if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
         /* try install dir */
         g_free(ui_path);
-        ui_path = g_build_filename(SFLPHONE_UIDIR, "sflphone_menus.ui", NULL);
+        ui_path = g_build_filename(SFLPHONE_UIDIR, "ring_menus.ui", NULL);
 
         /* if neither dir exists then we cannot load the UI */
         if (!g_file_test(ui_path, G_FILE_TEST_EXISTS)) {
-            g_warning("Could not find \"sflphone_menus.ui\"");
+            g_warning("Could not find \"ring_menus.ui\"");
             g_free(ui_path);
             ui_path = NULL;
             g_object_unref(uibuilder);
