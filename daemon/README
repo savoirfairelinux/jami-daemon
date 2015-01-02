@@ -101,7 +101,8 @@ cd daemon/extras/tools
 make
 export PATH=$PATH:/location/of/ring/daemon/extras/tools/build/bin
 
-# Or, use your favorite package manager to install the necessary tools (macports or brew).
+# Or, use your favorite package manager to install the necessary tools
+(macports or brew).
 automake libtool check gettext libtoolize ...
 
 # Compile the dependencies
@@ -114,19 +115,32 @@ make -j
 # Then the daemon
 cd ../../daemon
 ./autogen.sh
-./configure --without-alsa --without-pulse --with-coreaudio --without-dbus --disable-video
+./configure --without-alsa --without-pulse --without-dbus --disable-video
 make
 
+If you want to link against libringclient and native client easiest way is to
+add to ./configure: --prefix=<prefix_path>
+
 Do a little dance!
+
+Common Issues
+------------
+
+autopoint not found: When using Homebrew, autopoint is not find even when
+gettext is installed, because symlinks are not created.
+Run: 'brew link --force gettext' to fix it.
 
 How to cross-compile for Windows 64bit (from Linux)
 ---------------------------------------------------
 
 # First, make sure you can compile the linux version.
 # Install a few tools.
-sudo apt-get install mingw-w64 cmake build-essential g++ automake autoconf gnu-standards autoconf-doc libtool gettext autoconf-archive pkg-config
+sudo apt-get install mingw-w64 cmake build-essential g++ automake autoconf
+gnu-standards autoconf-doc libtool gettext autoconf-archive pkg-config
 
-# On certain distributions, mingw-w64 doesn't select POSIX threads by default. You need to use the POSIX version. To do so, run the following commands and select POSIX threads.
+# On certain distributions, mingw-w64 doesn't select POSIX threads by default.
+You need to use the POSIX version. To do so, run the following commands and
+select POSIX threads.
 sudo update-alternatives --config x86_64-w64-mingw32-gcc
 sudo update-alternatives --config x86_64-w64-mingw32-g++
 
@@ -143,7 +157,11 @@ Profit!
 
 # Compile the daemon
 ./autogen.sh
-./configure --host=x86_64-w64-mingw32 --without-alsa --without-pulse --without-dbus --disable-video
+./configure --host=x86_64-w64-mingw32
+            --without-alsa
+            --without-pulse
+            --without-dbus
+            --disable-video
 make
 
 Clang compatibility (developers only)
@@ -163,7 +181,8 @@ compiled against it to use clang.
 SIP/IAx2 accounts
 ---------------------
 
-You may register an existing SIP/IAX2 account through the account wizard in both clients (KDE and GNOME).
+You may register an existing SIP/IAX2 account through the account wizard in both
+clients (KDE and GNOME).
 By doing this, you will be able to call other accounts known to this server.
 
 
