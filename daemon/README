@@ -114,10 +114,19 @@ make -j
 # Then the daemon
 cd ../../daemon
 ./autogen.sh
-./configure --without-alsa --without-pulse --with-coreaudio --without-dbus --disable-video
+./configure --without-alsa --without-pulse --without-dbus --disable-video
 make
 
+If you want to link against libringclient and native client easiest way is to
+add to ./configure: --prefix=<prefix_path>
+
 Do a little dance!
+
+Common Issues
+------------
+
+autopoint not found: When using Homebrew, autopoint is not find even when gettext is installed, because symlinks are not created.
+Run: 'brew link --force gettext' to fix it.
 
 How to cross-compile for Windows 64bit (from Linux)
 ---------------------------------------------------
