@@ -806,7 +806,7 @@ SIPCall::getAllRemoteCandidates()
 
     auto addSDPCandidates = [this](unsigned sdpMediaId,
                                    std::vector<sfl::IceCandidate>& out) {
-        IceCandidate cand;
+        sfl::IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(sdpMediaId)) {
             if (iceTransport_->getCandidateFromSDP(line, cand))
                 out.emplace_back(cand);
@@ -841,7 +841,7 @@ SIPCall::startAllMedia()
 #if USE_CCRTP
     try {
         audiortp_.updateDestinationIpAddress();
-    } catch (const AudioRtpFactoryException &e) {
+    } catch (const sfl::AudioRtpFactoryException &e) {
         SFL_ERR("%s", e.what());
     }
 
@@ -903,7 +903,7 @@ SIPCall::startAllMedia()
             try {
                 audiortp_.setRemoteCryptoInfo(sdesnego);
                 callMgr->secureSdesOn(getCallId());
-            } catch (const AudioRtpFactoryException &e) {
+            } catch (const sfl::AudioRtpFactoryException &e) {
                 SFL_ERR("%s", e.what());
                 callMgr->secureSdesOff(getCallId());
             }
@@ -941,7 +941,7 @@ SIPCall::startAllMedia()
     try {
         Manager::instance().startAudioDriverStream();
 
-        std::vector<AudioCodec*> audioCodecs;
+        std::vector<sfl::AudioCodec*> audioCodecs;
 
         for (const auto & i : sessionMedia) {
             if (!i)
