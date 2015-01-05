@@ -13,9 +13,9 @@ if [ -f "$RESFILE" ]; then
 
 # Test if a SFLphone client is already open, if not open a new one
 # Opening a new client will start sflphoned if not already running
-SFLPHONEC=`ps -A | grep sflphone-client`
+SFLPHONEC=`ps -A | grep ring-client`
 if [ "$SFLPHONEC" = "" ]; then
-    sflphone-client-gnome&
+    ring-client-gnome&
 fi
 
 # FIXME: this doesn't check if account is enabled, and is unreadable/unmaintainable.
