@@ -2556,8 +2556,7 @@ ManagerImpl::loadAccount(const YAML::Node &node, int &errorCount,
                 ++errorCount;
             }
         } else {
-            SFL_ERR("Ignoring unknown account type \"%s\"", accountType.c_str());
-            ++errorCount;
+            SFL_WARN("Ignoring unknown account type \"%s\"", accountType.c_str());
         }
     }
 }
