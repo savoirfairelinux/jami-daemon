@@ -70,7 +70,7 @@
 #include <array>
 #include <memory>
 #include <sstream>
-#include <cstdlib>
+#include <cctype>
 
 static constexpr int ICE_COMPONENTS {5};
 static constexpr int ICE_COMP_SIP_TRANSPORT {4};
@@ -129,10 +129,18 @@ std::shared_ptr<SIPCall>
 RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
     auto dhtf = toUrl.find("ring:");
-    dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
+    if (dhtf != std::string::npos) {
+        dhtf = dhtf+5;
+    } else {
+        dhtf = toUrl.find("sip:");
+        dhtf = (dhtf == std::string::npos) ? 0 : dhtf+4;
+    }
     if (toUrl.length() - dhtf < 40)
         throw std::invalid_argument("id must be a ring infohash");
     const std::string toUri = toUrl.substr(dhtf, 40);
+    if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
+        throw std::invalid_argument("id must be a ring infohash");
+
     SFL_DBG("Calling DHT peer %s", toUri.c_str());
 
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::OUTGOING);
@@ -146,6 +154,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         return call;
     }
 
+    call->setState(Call::INACTIVE);
     call->setConnectionState(Call::TRYING);
 
     auto shared = shared_from_this();
@@ -165,7 +174,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
             this_.dht_.cancelPut(callkey, callvid);
             if (ok)
-                call->setConnectionState(Call::PROGRESSING);
+                call->setConnectionState(Call::TRYING);
             else
                 call->setConnectionState(Call::DISCONNECTED);
         }
