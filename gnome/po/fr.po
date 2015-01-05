@@ -1,4 +1,4 @@
-# French translation of SFLphone.
+# French translation of Ring.
 # Copyright (C) 2008 2009 The Free Software Foundation, Inc.
 # This file is distributed under the GNU General Public License Version 3.
 #
@@ -7,7 +7,7 @@
 # POT-Creation-Date: 2008-01-13 01:39+0100\n
 msgid ""
 msgstr ""
-"Project-Id-Version: SFLphone 0.9.8\n"
+"Project-Id-Version: Ring 0.9.8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-07-14 21:27-0400\n"
 "PO-Revision-Date: 2014-07-02 20:01+0000\n"
@@ -526,8 +526,8 @@ msgid "None"
 msgstr "Aucun"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
-msgstr "Bienvenue dans l'assistant de configuration de compte de SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
+msgstr "Bienvenue dans l'assistant de configuration de compte de Ring!"
 
 #: ../src/config/assistant.c:242
 msgid "This wizard will help you configure an existing account."
@@ -596,8 +596,8 @@ msgid "Congratulations!"
 msgstr "Félicitations!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
-msgstr "Assistant de configuration de compte de SFLphone!"
+msgid "Ring account registration wizard"
+msgstr "Assistant de configuration de compte de Ring!"
 
 #: ../src/config/audioconf.c:504
 msgid "Frequency"
@@ -739,8 +739,8 @@ msgid "Window Behaviour"
 msgstr "Comportement de la fenêtre"
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
-msgstr "Amener SFLphone au premier plan sur un appel entrant"
+msgid "Bring Ring to foreground on incoming calls"
+msgstr "Amener Ring au premier plan sur un appel entrant"
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:202
@@ -748,8 +748,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr "Icône dans la barre des tâches"
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "Montrer SFLphone dans la barre des tâches"
+msgid "Show Ring in the system tray"
+msgstr "Montrer Ring dans la barre des tâches"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1122,10 +1122,10 @@ msgid "Status:"
 msgstr "État :"
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
-msgstr "Présence SFLPhone"
+msgid "Ring Presence"
+msgstr "Présence Ring"
 
-#: ../src/sflphone_client.c:60
+#: ../src/ring_client.c:60
 #, c-format
 msgid ""
 "%s\n"
@@ -1135,7 +1135,7 @@ msgstr ""
 "Exécutez « %s --help » pour voir une liste complète des options "
 "disponibles.\n"
 
-#: ../src/sflphone_client.c:79
+#: ../src/ring_client.c:79
 #, c-format
 msgid ""
 "Unable to initialize.\n"
@@ -1146,17 +1146,17 @@ msgstr ""
 "Assurez-vous que le démon est en cours d'exécution.\n"
 "Erreur: %s"
 
-#: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "Erreur SFLphone"
+#: ../src/ring_client.c:82
+msgid "Ring Error"
+msgstr "Erreur Ring"
 
-#: ../src/sflphone_options.c:60
+#: ../src/ring_options.c:60
 msgid "Enable debug"
 msgstr "Activer le débogage"
 
-#: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
-msgstr "- Client Gnome pour SFLphone"
+#: ../src/ring_options.c:67
+msgid "- GNOME client for Ring"
+msgstr "- Client Gnome pour Ring"
 
 #: ../src/sflnotify.c:94
 #, c-format
@@ -1253,8 +1253,8 @@ msgid "_Hang up"
 msgstr "_Raccrocher"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1270,13 +1270,13 @@ msgid "Voicemail(%i)"
 msgstr "Boite vocale(%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
-"SFLphone est un client VoIP compatible avec les protocoles SIP et IAX2."
+"Ring est un client VoIP compatible avec les protocoles SIP et IAX2."
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "A propos de SFLphone"
+msgid "About Ring"
+msgstr "A propos de Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

@@ -1,9 +1,9 @@
 SECTION="1"
 
-TEMPLATES=sflphone-client-gnome.pod
+TEMPLATES=ring-client-gnome.pod
 
-man_MANS = sflphone-client-gnome.1 \
-           sflphone.1
+man_MANS = ring-client-gnome.1 \
+           ring.1
 
 POD2MAN=pod2man
 

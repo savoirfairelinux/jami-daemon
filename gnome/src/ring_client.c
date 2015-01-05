@@ -34,8 +34,8 @@
 #endif
 
 #include <glib/gi18n.h>
-#include "sflphone_client.h"
-#include "sflphone_options.h"
+#include "ring_client.h"
+#include "ring_options.h"
 #include "actions.h"
 #include "statusicon.h"
 #include "shortcuts.h"
