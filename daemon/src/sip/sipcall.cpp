@@ -148,21 +148,6 @@ SIPCall::~SIPCall()
     }
 }
 
-void
-SIPCall::stopRtpIfCurrent()
-{
-    if (Manager::instance().isCurrentCall(*this)) {
-#if USE_CCRTP
-        audiortp_.stop();
-#else
-        avformatrtp_->stop();
-#endif
-#ifdef SFL_VIDEO
-        videortp_.stop();
-#endif
-    }
-}
-
 SIPAccountBase&
 SIPCall::getSIPAccount() const
 {
@@ -337,6 +322,9 @@ void SIPCall::answer()
 void
 SIPCall::hangup(int reason)
 {
+    // Stop all RTP streams
+    stopAllMedias();
+
     if (not inv or not inv->dlg)
         throw VoipLinkException("No invite session for this call");
 
@@ -372,15 +360,13 @@ SIPCall::hangup(int reason)
     sip_utils::addContactHeader(&contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
+        SFL_ERR("Error sending hangup message");
         inv.reset();
         return;
     }
 
     // Make sure user data is NULL in callbacks
     inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
-
-    // Stop all RTP streams
-    stopRtpIfCurrent();
 
     removeCall();
 }
@@ -706,6 +692,9 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
 void
 SIPCall::peerHungup()
 {
+    // Stop all RTP streams
+    stopAllMedias();
+
     if (not inv)
         throw VoipLinkException("No invite session for this call");
 
@@ -722,9 +711,6 @@ SIPCall::peerHungup()
         inv.reset();
         sip_utils::sip_strerror(ret);
     }
-
-    // Stop all RTP streams
-    stopRtpIfCurrent();
 }
 
 void
@@ -968,4 +954,18 @@ SIPCall::startAllMedia()
     } catch (const std::exception &rtpException) {
         SFL_ERR("%s", rtpException.what());
     }
+}
+
+void
+SIPCall::stopAllMedias()
+{
+    SFL_DBG("SIPCall %s: stopping all medias", getCallId().c_str());
+#if USE_CCRTP
+    audiortp_.stop();
+#else
+    avformatrtp_->stop();
+#endif
+#ifdef SFL_VIDEO
+    videortp_.stop();
+#endif
 }

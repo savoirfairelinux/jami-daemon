@@ -198,7 +198,7 @@ class SIPCall : public Call
         std::map<std::string, std::string>
         createHistoryEntry() const;
 
-        void stopRtpIfCurrent();
+        void stopAllMedias();
 
         /**
          * Transfer method used for both type of transfer
