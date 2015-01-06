@@ -523,7 +523,7 @@ msgid "None"
 msgstr "لا شيئ"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -590,7 +590,7 @@ msgid "Congratulations!"
 msgstr "تهانينا!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -733,8 +733,8 @@ msgid "Window Behaviour"
 msgstr "تصرف النافذة"
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
-msgstr "جلب SFLphone للصدارة عند ورود مكالمات"
+msgid "Bring Ring to foreground on incoming calls"
+msgstr "جلب Ring للصدارة عند ورود مكالمات"
 
 #. System Tray option frame
 #: ../src/config/preferencesdialog.c:202
@@ -742,8 +742,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr "أيقونة شريط المهام (موروث)"
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "إظهار SFLphone في شريط المهام"
+msgid "Show Ring in the system tray"
+msgstr "إظهار Ring في شريط المهام"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1109,10 +1109,10 @@ msgid "Status:"
 msgstr "الحالة:"
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
-msgstr "حالة التواجد على SFLphone"
+msgid "Ring Presence"
+msgstr "حالة التواجد على Ring"
 
-#: ../src/sflphone_client.c:60
+#: ../src/ring_client.c:60
 #, c-format
 msgid ""
 "%s\n"
@@ -1122,7 +1122,7 @@ msgstr ""
 "شغّل الأمر '‎%s --help ' لرؤية القائمة الكاملة لخيارات الأوامر السطرية "
 "المتاحة.\n"
 
-#: ../src/sflphone_client.c:79
+#: ../src/ring_client.c:79
 #, c-format
 msgid ""
 "Unable to initialize.\n"
@@ -1130,17 +1130,17 @@ msgid ""
 "Error: %s"
 msgstr ""
 
-#: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "خطأ SFLphone"
+#: ../src/ring_client.c:82
+msgid "Ring Error"
+msgstr "خطأ Ring"
 
-#: ../src/sflphone_options.c:60
+#: ../src/ring_options.c:60
 msgid "Enable debug"
 msgstr "تفعيل التنقيح"
 
-#: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
-msgstr "- مستخدم GNOME لدى SFLphone"
+#: ../src/ring_options.c:67
+msgid "- GNOME client for Ring"
+msgstr "- مستخدم GNOME لدى Ring"
 
 #: ../src/sflnotify.c:94
 #, c-format
@@ -1241,8 +1241,8 @@ msgid "_Hang up"
 msgstr "إ_نهاء المكالمة"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1258,14 +1258,14 @@ msgid "Voicemail(%i)"
 msgstr "البريد الصوتي (‎%i)"
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
-"‏SFLphone‎ يستخدم الصوت عبر بروتوكول الإنترنت (‎VOIP)‏ وهو متلائم مع "
+"‏Ring‎ يستخدم الصوت عبر بروتوكول الإنترنت (‎VOIP)‏ وهو متلائم مع "
 "البروتوكول ‎SIP و IAX2"
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "حول ‏SFLphone"
+msgid "About Ring"
+msgstr "حول ‏Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"

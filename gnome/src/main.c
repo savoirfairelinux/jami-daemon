@@ -39,7 +39,7 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-#include "sflphone_client.h"
+#include "ring_client.h"
 #include "history.h"
 
 static volatile sig_atomic_t interrupted;
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
     textdomain(PACKAGE_NAME);
 
     g_set_application_name("Ring");
-    SFLPhoneClient *client = sflphone_client_new();
+    SFLPhoneClient *client = ring_client_new();
     GError *err = NULL;
     if (!g_application_register(G_APPLICATION(client), NULL, &err)) {
         g_warning("Could not register application: %s", err->message);
