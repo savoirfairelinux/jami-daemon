@@ -524,7 +524,7 @@ msgid "None"
 msgstr "Nessuno"
 
 #: ../src/config/assistant.c:241
-msgid "Welcome to the account registration wizard for SFLphone!"
+msgid "Welcome to the account registration wizard for Ring!"
 msgstr ""
 
 #: ../src/config/assistant.c:242
@@ -591,7 +591,7 @@ msgid "Congratulations!"
 msgstr "Congratulazioni!"
 
 #: ../src/config/assistant.c:561
-msgid "SFLphone account registration wizard"
+msgid "Ring account registration wizard"
 msgstr ""
 
 #: ../src/config/audioconf.c:504
@@ -734,7 +734,7 @@ msgid "Window Behaviour"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:195
-msgid "Bring SFLphone to foreground on incoming calls"
+msgid "Bring Ring to foreground on incoming calls"
 msgstr ""
 
 #. System Tray option frame
@@ -743,8 +743,8 @@ msgid "System Tray Icon (Legacy)"
 msgstr ""
 
 #: ../src/config/preferencesdialog.c:209
-msgid "Show SFLphone in the system tray"
-msgstr "Mostra SFLphone nel tray"
+msgid "Show Ring in the system tray"
+msgstr "Mostra Ring nel tray"
 
 #: ../src/config/preferencesdialog.c:215
 msgid "_Popup main window on incoming call"
@@ -1112,17 +1112,17 @@ msgid "Status:"
 msgstr ""
 
 #: ../src/presencewindow.c:1168
-msgid "SFLphone Presence"
+msgid "Ring Presence"
 msgstr ""
 
-#: ../src/sflphone_client.c:60
+#: ../src/ring_client.c:60
 #, c-format
 msgid ""
 "%s\n"
 "Run '%s --help' to see a full list of available command line options.\n"
 msgstr ""
 
-#: ../src/sflphone_client.c:79
+#: ../src/ring_client.c:79
 #, c-format
 msgid ""
 "Unable to initialize.\n"
@@ -1130,16 +1130,16 @@ msgid ""
 "Error: %s"
 msgstr ""
 
-#: ../src/sflphone_client.c:82
-msgid "SFLphone Error"
-msgstr "Errore SFLphone"
+#: ../src/ring_client.c:82
+msgid "Ring Error"
+msgstr "Errore Ring"
 
-#: ../src/sflphone_options.c:60
+#: ../src/ring_options.c:60
 msgid "Enable debug"
 msgstr ""
 
-#: ../src/sflphone_options.c:67
-msgid "- GNOME client for SFLPhone"
+#: ../src/ring_options.c:67
+msgid "- GNOME client for Ring"
 msgstr ""
 
 #: ../src/sflnotify.c:94
@@ -1237,8 +1237,8 @@ msgid "_Hang up"
 msgstr "_Chiudi"
 
 #: ../src/statusicon.c:190
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: ../src/uimanager.c:457
 msgid "No address book selected"
@@ -1254,12 +1254,12 @@ msgid "Voicemail(%i)"
 msgstr ""
 
 #: ../src/uimanager.c:602
-msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "SFLphone è un client VoIP compatibile con i protocolli SIP e IAX2."
+msgid "Ring is a VoIP client compatible with SIP and IAX2 protocols."
+msgstr "Ring è un client VoIP compatibile con i protocolli SIP e IAX2."
 
 #: ../src/uimanager.c:605
-msgid "About SFLphone"
-msgstr "Informazioni su SFLphone"
+msgid "About Ring"
+msgstr "Informazioni su Ring"
 
 #: ../src/uimanager.c:718
 msgid "_Cancel"
@@ -1423,7 +1423,7 @@ msgstr "Apri il manuale"
 
 #: ../src/uimanager.c:1153
 msgid "About this application"
-msgstr "Informazioni su SFLphone"
+msgstr "Informazioni su Ring"
 
 #: ../src/uimanager.c:1157
 msgid "_Transfer"

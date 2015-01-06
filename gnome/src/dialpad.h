@@ -32,7 +32,7 @@
 #define __DIALPAD_H__
 
 #include <gtk/gtk.h>
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 /** @file dialpad.h
   * @brief The dialpad widgets.

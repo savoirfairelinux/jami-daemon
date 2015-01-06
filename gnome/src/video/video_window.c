@@ -30,7 +30,7 @@
 
 #include "video_window.h"
 
-#include "sflphone_client.h"    /* gsettings schema path */
+#include "ring_client.h"    /* gsettings schema path */
 
 struct _VideoWindowPrivate {
     GtkWidget        *video;
@@ -100,7 +100,7 @@ video_window_init(VideoWindow *self)
     /* init widget */
     priv->video = NULL;
     priv->toolbar = NULL;
-    priv->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
+    priv->settings = g_settings_new(RING_GSETTINGS_SCHEMA);
     // priv->fullscreen = FALSE;
 }
 

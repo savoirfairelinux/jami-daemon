@@ -33,7 +33,7 @@
 #include "video_renderer.h"
 #include "actions.h"
 
-#include "sflphone_client.h"    /* gsettings schema path */
+#include "ring_client.h"    /* gsettings schema path */
 #include "video_window.h"       /* for the window its contained in */
 
 #include <clutter/clutter.h>
@@ -190,7 +190,7 @@ video_widget_init(VideoWidget *self)
 
     /* init widget */
     priv->video_handles = NULL;
-    priv->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
+    priv->settings = g_settings_new(RING_GSETTINGS_SCHEMA);
     priv->fullscreen = FALSE;
 
     /* init video window where the the video widget will be contained */

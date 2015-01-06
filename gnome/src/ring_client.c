@@ -34,8 +34,8 @@
 #endif
 
 #include <glib/gi18n.h>
-#include "sflphone_client.h"
-#include "sflphone_options.h"
+#include "ring_client.h"
+#include "ring_options.h"
 #include "actions.h"
 #include "statusicon.h"
 #include "shortcuts.h"
@@ -44,10 +44,10 @@
 #include "video/video_widget.h"
 #endif
 
-G_DEFINE_TYPE(SFLPhoneClient, sflphone_client, GTK_TYPE_APPLICATION);
+G_DEFINE_TYPE(SFLPhoneClient, ring_client, GTK_TYPE_APPLICATION);
 
 static int
-sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
+ring_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
                                      GApplicationCommandLine *cmdline,
                                      SFLPhoneClient *client)
 {
@@ -119,31 +119,31 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
 }
 
 SFLPhoneClient *
-sflphone_client_new()
+ring_client_new()
 {
-    SFLPhoneClient *client = g_object_new(sflphone_client_get_type(),
+    SFLPhoneClient *client = g_object_new(ring_client_get_type(),
             "application-id", "org.sfl.SFLphone",
             "flags", G_APPLICATION_HANDLES_COMMAND_LINE, NULL);
     return client;
 }
 
 static void
-sflphone_client_init(SFLPhoneClient *self)
+ring_client_init(SFLPhoneClient *self)
 {
-    self->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
+    self->settings = g_settings_new(RING_GSETTINGS_SCHEMA);
 
 #ifdef SFL_VIDEO
     self->video = video_widget_new();
 #endif
 
     self->win = 0;
-    g_signal_connect(G_OBJECT(self), "command-line", G_CALLBACK(sflphone_client_command_line_handler), self);
+    g_signal_connect(G_OBJECT(self), "command-line", G_CALLBACK(ring_client_command_line_handler), self);
 }
 
 static void
-sflphone_client_dispose(GObject *object)
+ring_client_dispose(GObject *object)
 {
-    SFLPhoneClient *self = SFLPHONE_CLIENT(object);
+    SFLPhoneClient *self = RING_CLIENT(object);
     /*
      * Unref all members to which self owns a reference.
      */
@@ -157,22 +157,22 @@ sflphone_client_dispose(GObject *object)
       }
 
       /* Chain up to the parent class */
-      G_OBJECT_CLASS(sflphone_client_parent_class)->dispose(object);
+      G_OBJECT_CLASS(ring_client_parent_class)->dispose(object);
 }
 
 static void
-sflphone_client_finalize(GObject *object)
+ring_client_finalize(GObject *object)
 {
     /* Chain up to the parent class */
-    G_OBJECT_CLASS(sflphone_client_parent_class)->finalize(object);
+    G_OBJECT_CLASS(ring_client_parent_class)->finalize(object);
 }
 
 static void
-sflphone_client_class_init(SFLPhoneClientClass *klass)
+ring_client_class_init(SFLPhoneClientClass *klass)
 {
     GObjectClass *object_class = (GObjectClass *) klass;
 
-    object_class->dispose = sflphone_client_dispose;
-    object_class->finalize = sflphone_client_finalize;
+    object_class->dispose = ring_client_dispose;
+    object_class->finalize = ring_client_finalize;
     /* TODO: add properties, signals, and signal handlers */
 }
