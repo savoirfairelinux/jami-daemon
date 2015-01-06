@@ -82,7 +82,7 @@ DBusClient::DBusClient(int sflphFlags, bool persistent) :
         timeout_->expired = new EventCallback(sflph_poll_events);
 
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
-        sessionConnection.request_name("org.sflphone.SFLphone");
+        sessionConnection.request_name("org.ring.Ring");
 
         callManager_ = new DBusCallManager(sessionConnection);
         configurationManager_ = new DBusConfigurationManager(sessionConnection);
@@ -109,7 +109,7 @@ DBusClient::DBusClient(int sflphFlags, bool persistent) :
     auto ret = initLibrary(sflphFlags);
 
     if (ret < 0) {
-        throw std::runtime_error("cannot initialize libsflphone");
+        throw std::runtime_error("cannot initialize libring");
     }
 
     instanceManager_->started();

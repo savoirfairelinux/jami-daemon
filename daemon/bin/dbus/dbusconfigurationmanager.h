@@ -59,7 +59,7 @@
 #include <stdexcept>
 
 class DBusConfigurationManager :
-    public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+    public org::ring::Ring::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {

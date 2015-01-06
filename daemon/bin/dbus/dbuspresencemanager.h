@@ -56,7 +56,7 @@
 #include <stdexcept>
 
 class DBusPresenceManager :
-    public org::sflphone::SFLphone::PresenceManager_adaptor,
+    public org::ring::Ring::PresenceManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {

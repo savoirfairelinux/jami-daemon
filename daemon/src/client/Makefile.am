@@ -23,4 +23,4 @@ libclient_la_SOURCES = client.cpp                \
 libclient_la_CXXFLAGS = -I./ \
                         -I../ \
                         -DPREFIX=\"$(prefix)\" \
-                        -DPROGSHAREDIR=\"${datadir}/sflphone\"
+                        -DPROGSHAREDIR=\"${datadir}/ring\"

@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <node name="/configurationmanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
-    <interface name="org.sflphone.SFLphone.ConfigurationManager">
+    <interface name="org.ring.Ring.ConfigurationManager">
 
         <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
             Used to handle the configuration stuff: accounts settings, account registration, user preferences, ...

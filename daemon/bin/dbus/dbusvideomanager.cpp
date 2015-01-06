@@ -32,7 +32,7 @@
 #include "dbusvideomanager.h"
 
 DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/VideoManager")
+    : DBus::ObjectAdaptor(connection, "/org/ring/Ring/VideoManager")
 {
 }
 

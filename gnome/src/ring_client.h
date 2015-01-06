@@ -37,7 +37,7 @@
 
 #include <gtk/gtk.h>
 
-#define RING_GSETTINGS_SCHEMA "org.sflphone.SFLphone"
+#define RING_GSETTINGS_SCHEMA "org.ring.Ring"
 #define RING_TYPE_CLIENT (ring_client_get_type())
 #define RING_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), RING_TYPE_CLIENT, SFLPhoneClient))
 

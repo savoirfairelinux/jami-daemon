@@ -173,7 +173,7 @@ void SIPTest::testSimpleIncomingIpCall()
     if (rc)
         std::cout << "SIPTest: SFL_ERR; return code from pthread_create()" << std::endl;
 
-    // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
+    // sleep a while to make sure that sipp insdtance is initialized and dring received
     // the incoming invite.
     sleep(2);
 
@@ -278,7 +278,7 @@ void SIPTest::testTwoIncomingIpCall()
     if (rc)
         std::cout << "SIPTest: SFL_ERR; return code from pthread_create()" << std::endl;
 
-    // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
+    // sleep a while to make sure that sipp insdtance is initialized and dring received
     // the incoming invite.
     sleep(1);
 
@@ -403,7 +403,7 @@ void SIPTest::testIncomingIpCallSdp()
     if (rc)
         std::cout << "SIPTest: SFL_ERR; return code from pthread_create()" << std::endl;
 
-    // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
+    // sleep a while to make sure that sipp insdtance is initialized and dring received
     // the incoming invite.
     sleep(2);
 

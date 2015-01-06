@@ -48,7 +48,7 @@
 #endif
 
 class DBusInstance :
-    public org::sflphone::SFLphone::Instance_adaptor,
+    public org::ring::Ring::Instance_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
