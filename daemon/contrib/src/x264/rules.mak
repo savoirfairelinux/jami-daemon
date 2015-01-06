@@ -1,8 +1,6 @@
 # x264
 
-X264_GITURL := git://git.videolan.org/x264.git
-X264_SNAPURL := http://git.videolan.org/?p=x264.git;a=snapshot;h=HEAD;sf=tgz
-X262_GITURL := git://git.videolan.org/x262.git
+X264_SNAPURL := http://download.videolan.org/contrib/x264-git.tar.gz
 
 ifeq ($(call need_pkg,"x264 >= 0.86"),)
 PKGS_FOUND += x264
@@ -25,9 +23,6 @@ endif
 ifdef HAVE_CROSS_COMPILE
 X264CONF += --cross-prefix="$(HOST)-"
 endif
-
-$(TARBALLS)/x264-git.tar.xz:
-	$(call download_git,$(X264_GITURL))
 
 $(TARBALLS)/x264-git.tar.gz:
 	$(call download,$(X264_SNAPURL))
