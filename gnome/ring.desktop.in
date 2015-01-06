@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=SFLphone
+Name=Ring
 GenericName=VoIP Client
-X-GNOME-FullName=SFLphone VoIP Client
+X-GNOME-FullName=Ring VoIP Client
 Comment=Call and receive calls with SIP or IAX protocols
-Exec=sflphone-client-gnome
-Icon=sflphone
+Exec=ring-client-gnome
+Icon=ring
 StartupNotify=true
 Terminal=false
 Type=Application

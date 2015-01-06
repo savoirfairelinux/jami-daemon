@@ -179,8 +179,8 @@ msgstr ""
 "md5=eb4a5545f137b825dcdaf0396a9f1a7d"
 
 #: sflphone.xml:12(title)
-msgid "SFLphone Manual v1.0"
-msgstr "Manual v1.0 de SFLphone"
+msgid "Ring Manual v1.0"
+msgstr "Manual v1.0 de Ring"
 
 #: sflphone.xml:15(year)
 msgid "2006"
@@ -204,10 +204,10 @@ msgstr "Savoir-faire Linux"
 
 #: sflphone.xml:26(para)
 msgid ""
-"SFLphone is an enterprise-class SIP/IAX2 compatible softphone for GNU/Linux, "
+"Ring is an enterprise-class SIP/IAX2 compatible softphone for GNU/Linux, "
 "published under the GPLv3 license."
 msgstr ""
-"SFLphone es un softphone de clase empresarial compatible con SIP y IAX2 para "
+"Ring es un softphone de clase empresarial compatible con SIP y IAX2 para "
 "GNU/Linux, publicado bajo la licencia GPLv3."
 
 #: sflphone.xml:36(para)
@@ -288,24 +288,24 @@ msgid "alexandre.savard@savoirfairelinux.com"
 msgstr "alexandre.savard@savoirfairelinux.com"
 
 #: sflphone.xml:76(revnumber)
-msgid "SFLphone Manual V1.0"
-msgstr "Manual v. 1.0 de SFLphone"
+msgid "Ring Manual V1.0"
+msgstr "Manual v. 1.0 de Ring"
 
 #: sflphone.xml:77(date)
 msgid "September 2009"
 msgstr "Septiembre del 2009"
 
 #: sflphone.xml:79(para)
-msgid "SFLphone team"
-msgstr "Equipo de SFLphone"
+msgid "Ring team"
+msgstr "Equipo de Ring"
 
 #: sflphone.xml:85(releaseinfo)
-msgid "This manual describes version 0.9.7 of SFLphone."
-msgstr "Este manual describe la versión 0.9.7 de SFLphone."
+msgid "This manual describes version 0.9.7 of Ring."
+msgstr "Este manual describe la versión 0.9.7 de Ring."
 
 #: sflphone.xml:90(primary)
-msgid "SFLphone"
-msgstr "SFLphone"
+msgid "Ring"
+msgstr "Ring"
 
 #: sflphone.xml:94(title)
 msgid "Introduction"
@@ -313,22 +313,22 @@ msgstr "Introducción"
 
 #: sflphone.xml:95(para)
 msgid ""
-"<application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client "
+"<application>Ring</application> is a SIP/IAX2 softphone and VoIP client "
 "for GNU/Linux. It aims at being a robust enterprise-class desktop phone and "
 "has been designed with a hundred-calls-a-day receptionist in mind."
 msgstr ""
-"<application>SFLphone</application> es un softphone SIP y IAX2 y cliente "
+"<application>Ring</application> es un softphone SIP y IAX2 y cliente "
 "VoIP para GNU/Linux. Està dirigido a ser un telefono robusto de clase "
 "empresarial y fue diseñado por una recepcionista de cien llamadas al dia."
 
 #: sflphone.xml:98(para)
 msgid ""
-"<application>SFLphone</application> is a free software and is distributed "
+"<application>Ring</application> is a free software and is distributed "
 "under the GNU General Public License version 3. It is developed by Savoir-"
 "Faire Linux, a Canadian Linux consulting company, in partnership with the "
 "global community."
 msgstr ""
-"<application>SFLphone</application> es un software libre distribuido bajo la "
+"<application>Ring</application> es un software libre distribuido bajo la "
 "Licencia Pública General de GNU versión 3. Esta desarrollando por Savoir-"
 "Faire Linux, una empresa canadiense de consultorio Linux, en colaboración "
 "con la comunidad global."
@@ -338,7 +338,7 @@ msgid ""
 "Among the many features we developed for you, we could highlight the high "
 "definition sound (wide-band audio codecs - speex, G722, Celt), multiple "
 "conference call, audio recording, voicemail notification, and call history. "
-"More than a simple softphone, <application>SFLphone</application> supports "
+"More than a simple softphone, <application>Ring</application> supports "
 "advanced enterprise-class call features: unlimited number of calls, call "
 "transfer, and on/off hold option."
 msgstr ""
@@ -346,7 +346,7 @@ msgstr ""
 "podría destacar el alto sonido de la definición (codificadores-decodificador "
 "audios de la banda ancha - speex, G722, Celt), la audioconferencia múltiple, "
 "la grabación audio, la notificación del buzón de voz, y la historia de "
-"llamada. Más que un softphone simple, <application>SFLphone</application> "
+"llamada. Más que un softphone simple, <application>Ring</application> "
 "soporta características de llamadas avanzadas de clase empresarial : número "
 "ilimitado de llamadas, transferencia de llamadas, y opción de llamadas en "
 "espera."
@@ -360,11 +360,11 @@ msgstr ""
 
 #: sflphone.xml:112(para)
 msgid ""
-"Besides the native ALSA interface, <application>SFLphone</application> now "
+"Besides the native ALSA interface, <application>Ring</application> now "
 "fully supports PulseAudio sound server so you could experience the great "
 "possibilities it offers (sound mixing, per application volume control, ...)."
 msgstr ""
-"Además del interfaz nativo ALSA, <application>SFLphone</application> ahora "
+"Además del interfaz nativo ALSA, <application>Ring</application> ahora "
 "soporta completamente el servidor de sonidos PulseAudio así que usted podría "
 "experimentar las grandes posibilidades que ofrece (mezcla de sonidos, "
 "control de volumen por aplicación,…)."
@@ -406,13 +406,13 @@ msgstr "Registrar una cuenta SIP o IAX2 existente"
 #: sflphone.xml:130(para)
 msgid ""
 "Click there if you already have an account and you want to use it with "
-"SFLphone. You will be prompted to select the account type (SIP or IAX2) and "
-"to fill out your account information. <application>SFLphone</application> "
+"Ring. You will be prompted to select the account type (SIP or IAX2) and "
+"to fill out your account information. <application>Ring</application> "
 "will then try to register it so you could start using it."
 msgstr ""
-"Chasque allí si usted tiene ya una cuenta y quiere utilizarla con SFLphone. "
+"Chasque allí si usted tiene ya una cuenta y quiere utilizarla con Ring. "
 "Le preguntarán a seleccionar el tipo de la cuenta (SIP o IAX2) y completar "
-"su información de cuenta. <application>SFLphone</application> intentará "
+"su información de cuenta. <application>Ring</application> intentará "
 "registrarla así que usted podría comenzar a usarla."
 
 #: sflphone.xml:119(para)
@@ -441,8 +441,8 @@ msgstr "Administrar sus cuentas"
 
 #: sflphone.xml:142(para)
 msgid ""
-"<application>SFLphone</application> supports both IAX2 and SIP accounts."
-msgstr "<application>SFLphone</application> soporta cuentas IAX2 y SIP."
+"<application>Ring</application> supports both IAX2 and SIP accounts."
+msgstr "<application>Ring</application> soporta cuentas IAX2 y SIP."
 
 #: sflphone.xml:148(title)
 msgid "Basic features"
@@ -608,11 +608,11 @@ msgstr ""
 #: sflphone.xml:212(para)
 msgid ""
 "The first account in the account in list will be used as the default account "
-"to make calls with. If it is not registered, SFLphone will try to use the "
+"to make calls with. If it is not registered, Ring will try to use the "
 "second in the list, if still not registered, the third, and so one ..."
 msgstr ""
 "La primera cuenta en la lista será utilizada como la cuenta por defecto para "
-"hacer llamadas. Si no se registra, SFLphone intentará utilizar la segunda en "
+"hacer llamadas. Si no se registra, Ring intentará utilizar la segunda en "
 "la lista, si tampoco se registra, la tercera, etc…"
 
 #: sflphone.xml:213(para)
@@ -719,11 +719,11 @@ msgstr "Fije la dirección publicada y el puerto"
 msgid ""
 "If enabled, the core will try to initialize an UDP transport on the mapped "
 "address/port number that the NAT (Network Address Translator) has allocated "
-"to <application>SFLphone</application>."
+"to <application>Ring</application>."
 msgstr ""
 "Si está activada, la base intentará inicializar un transporte UDP con la "
 "dirección y puerto que el NAT (traductor de dirección de red) ha asignado a "
-"<application>SFLphone</application>."
+"<application>Ring</application>."
 
 #: sflphone.xml:259(listitem)
 msgid "Using STUN <placeholder-1/>"
@@ -924,10 +924,10 @@ msgstr ""
 
 #: sflphone.xml:514(para)
 msgid ""
-"SFLphone now supports conference call hosting integrating server like "
+"Ring now supports conference call hosting integrating server like "
 "features in a simple GUI."
 msgstr ""
-"SFLphone ahora apoya el recibimiento de la audioconferencia, integrando "
+"Ring ahora apoya el recibimiento de la audioconferencia, integrando "
 "características de servidor en un GUI fácil."
 
 #: sflphone.xml:520(guilabel)
@@ -949,12 +949,12 @@ msgstr "Salir de la conferencia"
 
 #: sflphone.xml:529(para)
 msgid ""
-"SFLphone conference model let you leave a conference that you are currently "
+"Ring conference model let you leave a conference that you are currently "
 "hosting to answer any other incoming communication or even initiate new "
 "ones. The conference is not interupted Double clicking the conference icon "
 "let you reintroduce the conference."
 msgstr ""
-"El modelo de la conferencia de SFLphone le dejó dejar una conferencia que "
+"El modelo de la conferencia de Ring le dejó dejar una conferencia que "
 "usted está recibiendo actualmente para contestar a cualquier otras nuevas "
 "llamadas o iniciar otras. La conferencia no es cortada, doble chasca el "
 "icono de la conferencia le dejó regresar a la conferencia."
@@ -965,11 +965,11 @@ msgstr "Conferencia múltiple"
 
 #: sflphone.xml:539(para)
 msgid ""
-"SFLphone supports multiple conferences running simultaneously. Two "
+"Ring supports multiple conferences running simultaneously. Two "
 "conferences can be joined the same way they are created, dragging one on the "
 "other."
 msgstr ""
-"SFLphone apoya múltiples conferencias que funcionan simultáneamente. Dos "
+"Ring apoya múltiples conferencias que funcionan simultáneamente. Dos "
 "conferencias se pueden ensamblar de la misma manera que se crean, "
 "arrastrando una en la otra."
 
@@ -999,9 +999,9 @@ msgid "Codecs overview"
 msgstr "Descripción de los codificadores-decodificador"
 
 #: sflphone.xml:583(para)
-msgid "SFLphone supports several widely used audio codec:"
+msgid "Ring supports several widely used audio codec:"
 msgstr ""
-"SFLphone apoya varios codificador-decodificador audio ampliamente utilizado:"
+"Ring apoya varios codificador-decodificador audio ampliamente utilizado:"
 
 #: sflphone.xml:587(guilabel)
 msgid "PCMU/PCMA"
@@ -1092,11 +1092,11 @@ msgstr ""
 #: sflphone.xml:645(para)
 msgid ""
 "Every address books you configured in Evolution will be now available in "
-"<application>SFLphone</application>. Please be sure you selected at least "
+"<application>Ring</application>. Please be sure you selected at least "
 "one address book."
 msgstr ""
 "Cada libreta de contactos configurada en Evolución estara disponible en "
-"<application>SFLphone</application>. Por favor de asegurarse de seleccionar "
+"<application>Ring</application>. Por favor de asegurarse de seleccionar "
 "por lo menos una libreta."
 
 #: sflphone.xml:649(title)
@@ -1255,10 +1255,10 @@ msgstr "Mostrar ventana principal al recibir una llamada"
 
 #: sflphone.xml:785(para)
 msgid ""
-"If SFLphone is closed on the system tray, pops the main window up on "
+"If Ring is closed on the system tray, pops the main window up on "
 "foreground when receiving an incoming call."
 msgstr ""
-"Si SFLphone esta cerrado en la bandeja del sistema, exhibe la ventana "
+"Si Ring esta cerrado en la bandeja del sistema, exhibe la ventana "
 "principal emergente en primero plano para recibir una llamada entrante."
 
 #: sflphone.xml:790(guilabel)
@@ -1267,19 +1267,19 @@ msgstr "Nuncà exhibe la ventana principal emergente"
 
 #: sflphone.xml:791(para)
 msgid ""
-"If SFLphone is closed on the system tray, never pops the main window up on "
+"If Ring is closed on the system tray, never pops the main window up on "
 "foreground when receiving an incoming call."
 msgstr ""
-"Si SFLphone esta cerrado en la bandeja del sistema, nunca exhibe la ventana "
+"Si Ring esta cerrado en la bandeja del sistema, nunca exhibe la ventana "
 "principal emergente en primero plano para recibir una llamada entrante."
 
 #: sflphone.xml:796(guilabel)
-msgid "Hide SFLphone window on startup"
-msgstr "Esconder la pantalla de SFLphone al principio"
+msgid "Hide Ring window on startup"
+msgstr "Esconder la pantalla de Ring al principio"
 
 #: sflphone.xml:797(para)
-msgid "On startup, SFLphone will go directly on the system tray."
-msgstr "Al principio, SFLphone ira directamente a la bandeja del sistema."
+msgid "On startup, Ring will go directly on the system tray."
+msgstr "Al principio, Ring ira directamente a la bandeja del sistema."
 
 #: sflphone.xml:810(title)
 msgid "Calls history options"
