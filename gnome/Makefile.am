@@ -3,17 +3,17 @@ SUBDIRS = src pixmaps tests man po doc data
 
 CFLAGS=-Wall -Werror -Wextra
 
-uidir=$(datadir)/sflphone/ui
-ui_DATA=src/sflphone_menus.ui
+uidir=$(datadir)/ring/ui
+ui_DATA=src/ring_menus.ui
 
 dist_noinst_DATA = $(gsettings_in_file)
 
-EXTRA_DIST  = sflphone.desktop.in m4 $(ui_DATA) $(apps_DATA)
+EXTRA_DIST  = ring.desktop.in m4 $(ui_DATA) $(apps_DATA)
 appsdir = $(datadir)/applications
-apps_in_files = sflphone.desktop.in
+apps_in_files = ring.desktop.in
 apps_DATA = $(apps_in_files:.desktop.in=.desktop)
 
-DISTCLEANFILES= sflphone.desktop
+DISTCLEANFILES= ring.desktop
 
 MAINTAINERCLEANFILES = \
 						$(srcdir)/INSTALL \

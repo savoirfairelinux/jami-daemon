@@ -21,11 +21,11 @@ src/dbus/dbus.c
 src/main.c
 src/mainwindow.c
 src/presencewindow.c
-src/sflphone_client.c
-src/sflphone_options.c
+src/ring_client.c
+src/ring_options.c
 src/sflnotify.c
 src/sliders.c
 src/statusicon.c
 src/uimanager.c
 src/video/video_callbacks.c
-src/sflphone_menus.ui
+src/ring_menus.ui

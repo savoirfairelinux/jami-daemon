@@ -33,7 +33,7 @@
 #define __STATUSICON_H__
 
 #include <gtk/gtk.h>
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 /**
  * @file statusicon.h
