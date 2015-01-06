@@ -396,16 +396,15 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
         }
         switchCall(call);
         call->setConfId(conf_id);
-    } catch (const VoipLinkException &e) {
-        callFailure(call_id);
-        SFL_ERR("%s", e.what());
-        return false;
     } catch (ost::Socket *) {
         callFailure(call_id);
         SFL_ERR("Could not bind socket");
         return false;
+    } catch (const std::exception &e) {
+        callFailure(call_id);
+        SFL_ERR("%s", e.what());
+        return false;
     }
-
     return true;
 }
 
