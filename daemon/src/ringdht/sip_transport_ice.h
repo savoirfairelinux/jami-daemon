@@ -49,9 +49,9 @@ struct SipIceTransport
         ~SipIceTransport();
 
         /**
-         * To be called once to start receiving packets
+         * To be called on a regular basis to receive packets
          */
-        void start();
+        void loop();
 
         IpAddr getLocalAddress() const;
 
@@ -76,7 +76,7 @@ struct SipIceTransport
                          int addr_len, void *token,
                          pjsip_transport_callback callback);
 
-        ssize_t onRecv(uint8_t* buf, size_t len);
+        ssize_t onRecv();
 
         pj_status_t shutdown();
 
