@@ -37,7 +37,7 @@
 
 #include "accountlist.h"
 #include "calllist.h"
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 /**
  * Notify an incoming call
