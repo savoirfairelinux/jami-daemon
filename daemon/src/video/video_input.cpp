@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
@@ -41,7 +41,7 @@
 #include <cassert>
 #include <unistd.h>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 VideoInput::VideoInput() :
     VideoGenerator::VideoGenerator()
@@ -317,4 +317,4 @@ int VideoInput::getHeight() const
 int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

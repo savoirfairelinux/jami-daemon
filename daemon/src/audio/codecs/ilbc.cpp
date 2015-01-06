@@ -36,10 +36,10 @@ extern "C" {
 #include <ilbc.h>
 }
 
-class Ilbc: public sfl::AudioCodec {
+class Ilbc: public ring::AudioCodec {
     public:
         Ilbc() :
-            sfl::AudioCodec(ILBC_PAYLOAD, "iLBC", 8000, ILBC_FRAME_SIZE, 1),
+            ring::AudioCodec(ILBC_PAYLOAD, "iLBC", 8000, ILBC_FRAME_SIZE, 1),
             ilbc_dec_(),
             ilbc_enc_() {
             bitrate_ = 13.3;
@@ -74,12 +74,12 @@ class Ilbc: public sfl::AudioCodec {
 };
 
 // the class factories
-extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
+extern "C" ring::AudioCodec* AUDIO_CODEC_ENTRY()
 {
     return new Ilbc;
 }
 
-extern "C" void destroy(sfl::AudioCodec* a)
+extern "C" void destroy(ring::AudioCodec* a)
 {
     delete a;
 }

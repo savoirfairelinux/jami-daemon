@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Copyright (c) 2002 Fabrice Bellard
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
@@ -133,7 +133,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     return udp_fd;
 }
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 static const int RTP_BUFFER_SIZE = 1472;
 
@@ -149,8 +149,8 @@ SocketPair::SocketPair(const char *uri, int localPort)
     openSockets(uri, localPort);
 }
 
-SocketPair::SocketPair(std::unique_ptr<sfl::IceSocket> rtp_sock,
-                       std::unique_ptr<sfl::IceSocket> rtcp_sock)
+SocketPair::SocketPair(std::unique_ptr<ring::IceSocket> rtp_sock,
+                       std::unique_ptr<ring::IceSocket> rtcp_sock)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
     , rtcpWriteMutex_()
@@ -384,4 +384,4 @@ retry:
     return ret < 0 ? errno : ret;
 }
 
-}
+}}

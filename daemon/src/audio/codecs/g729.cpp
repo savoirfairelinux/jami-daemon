@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@
 
 static const int G729_PAYLOAD_TYPE = 18;
 
-G729::G729() : sfl::AudioCodec(G729_PAYLOAD_TYPE, "G729", 8000, 160, 1),
+G729::G729() : ring::AudioCodec(G729_PAYLOAD_TYPE, "G729", 8000, 160, 1),
     decoderContext_(0),
     encoderContext_(0),
     handler_(0),
@@ -75,7 +75,7 @@ G729::~G729()
         dlclose(handler_);
 }
 
-sfl::AudioCodec *
+ring::AudioCodec *
 G729::clone()
 {
     return new G729;

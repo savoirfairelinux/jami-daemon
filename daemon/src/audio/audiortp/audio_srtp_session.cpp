@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
@@ -43,7 +43,7 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define THROW_ERROR(EXCEPTION_CLASS, M) throw EXCEPTION_CLASS(__FILE__ ":" TOSTRING(__LINE__) ":" M)
 
-namespace sfl {
+namespace ring {
 
 static std::string
 encodeBase64(unsigned char *input, int length)
@@ -159,7 +159,7 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
     // cryptographic context tagged 1, 2, 3...
     std::string tag = "1";
 
-    std::string crypto_suite(sfl::CryptoSuites[localCryptoSuite_].name);
+    std::string crypto_suite(ring::CryptoSuites[localCryptoSuite_].name);
 
     // srtp keys formated as the following  as the following
     // inline:keyParameters|keylifetime|MasterKeyIdentifier
@@ -180,7 +180,7 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
     return crypto_vector;
 }
 
-void AudioSrtpSession::setRemoteCryptoInfo(const sfl::SdesNegotiator& nego)
+void AudioSrtpSession::setRemoteCryptoInfo(const ring::SdesNegotiator& nego)
 {
     if (not remoteOfferIsSet_) {
         // Use second crypto suite if key length is 32 bit, default is 80;
@@ -207,13 +207,13 @@ static const size_t BITS_PER_BYTE = 8;
 
 void AudioSrtpSession::initializeLocalMasterKey()
 {
-    localMasterKey_.resize(sfl::CryptoSuites[localCryptoSuite_].masterKeyLength / BITS_PER_BYTE);
+    localMasterKey_.resize(ring::CryptoSuites[localCryptoSuite_].masterKeyLength / BITS_PER_BYTE);
     bufferFillMasterKey(localMasterKey_);
 }
 
 void AudioSrtpSession::initializeLocalMasterSalt()
 {
-    localMasterSalt_.resize(sfl::CryptoSuites[localCryptoSuite_].masterSaltLength / BITS_PER_BYTE);
+    localMasterSalt_.resize(ring::CryptoSuites[localCryptoSuite_].masterSaltLength / BITS_PER_BYTE);
     bufferFillMasterSalt(localMasterSalt_);
 }
 
@@ -235,8 +235,8 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 
 void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 {
-    remoteMasterKey_.resize(sfl::CryptoSuites[remoteCryptoSuite_].masterKeyLength / BITS_PER_BYTE);
-    remoteMasterSalt_.resize(sfl::CryptoSuites[remoteCryptoSuite_].masterSaltLength / BITS_PER_BYTE);
+    remoteMasterKey_.resize(ring::CryptoSuites[remoteCryptoSuite_].masterKeyLength / BITS_PER_BYTE);
+    remoteMasterSalt_.resize(ring::CryptoSuites[remoteCryptoSuite_].masterSaltLength / BITS_PER_BYTE);
 
     // decode concatenated binary keys
     std::string output(decodeBase64((uint8_t *)base64keys.data(), base64keys.size()));
@@ -257,7 +257,7 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 {
     SFL_DBG("Initialize remote crypto context");
 
-    const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
+    const CryptoSuiteDefinition &crypto = ring::CryptoSuites[remoteCryptoSuite_];
 
     if (remoteCryptoCtx_)
         removeInQueueCryptoContext(remoteCryptoCtx_);
@@ -281,7 +281,7 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 {
     SFL_DBG("Initialize local crypto context");
 
-    const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
+    const CryptoSuiteDefinition &crypto = ring::CryptoSuites[localCryptoSuite_];
 
     if (localCryptoCtx_)
         removeOutQueueCryptoContext(localCryptoCtx_);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 
 #include <memory>
 
-namespace sfl {
+namespace ring {
     class RingBufferPool;
 }
 
@@ -76,7 +76,7 @@ class RingBufferPoolTest : public CppUnit::TestCase {
 
     private:
 
-        std::unique_ptr<sfl::RingBufferPool> rbPool_;
+        std::unique_ptr<ring::RingBufferPool> rbPool_;
 };
 
 /* Register our test module */

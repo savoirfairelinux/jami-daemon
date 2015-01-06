@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -32,7 +32,7 @@
  */
 #include "tonelist.h"
 
-namespace sfl {
+namespace ring {
 
 static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
     {

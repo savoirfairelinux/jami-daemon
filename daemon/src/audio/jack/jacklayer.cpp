@@ -50,7 +50,7 @@ TODO
 * auto connect optional
 #endif
 
-namespace sfl {
+namespace ring {
 
 namespace
 {

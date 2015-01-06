@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author : Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -41,7 +41,7 @@
  * @file dtmf.h
  * @brief DMTF library to generate a dtmf sample
  */
-namespace sfl {
+namespace ring {
 
 class DTMF {
     public:

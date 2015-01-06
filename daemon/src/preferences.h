@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@
 #include <map>
 #include <vector>
 
-namespace sfl {
+namespace ring {
     class AudioLayer;
 }
 
@@ -226,8 +226,8 @@ class HookPreference : public Serializable {
 class AudioPreference : public Serializable {
     public:
         AudioPreference();
-        sfl::AudioLayer *createAudioLayer();
-        sfl::AudioLayer *switchAndCreateAudioLayer();
+        ring::AudioLayer *createAudioLayer();
+        ring::AudioLayer *switchAndCreateAudioLayer();
 
         std::string getAudioApi() const {
             return audioApi_;

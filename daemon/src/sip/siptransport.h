@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
@@ -136,7 +136,7 @@ private:
 
 class IpAddr;
 class SipIceTransport;
-namespace sfl {
+namespace ring {
     class IceTransport;
 }
 /**
@@ -157,7 +157,7 @@ public:
 #endif
 
 #if HAVE_DHT
-    std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<sfl::IceTransport>, unsigned comp_id);
+    std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<ring::IceTransport>, unsigned comp_id);
 #endif
 
     std::shared_ptr<SipTransport> findTransport(pjsip_transport*);

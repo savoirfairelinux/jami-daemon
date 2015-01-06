@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -328,26 +328,26 @@ AudioPreference::AudioPreference() :
 static const int ALSA_DFT_CARD_ID = 0; // Index of the default soundcard
 
 static void
-checkSoundCard(int &card, sfl::DeviceType type)
+checkSoundCard(int &card, ring::DeviceType type)
 {
-    if (not sfl::AlsaLayer::soundCardIndexExists(card, type)) {
+    if (not ring::AlsaLayer::soundCardIndexExists(card, type)) {
         SFL_WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
 }
 #endif
 
-sfl::AudioLayer* AudioPreference::createAudioLayer()
+ring::AudioLayer* AudioPreference::createAudioLayer()
 {
 #if HAVE_OPENSL
-    return new sfl::OpenSLLayer(*this);
+    return new ring::OpenSLLayer(*this);
 #else
 
 #if HAVE_JACK
     if (audioApi_ == JACK_API_STR) {
         if (system("jack_lsp > /dev/null") == 0) {
             try {
-                return new sfl::JackLayer(*this);
+                return new ring::JackLayer(*this);
             } catch (const std::runtime_error &e) {
                 SFL_ERR("%s", e.what());
 #if HAVE_PULSE
@@ -369,7 +369,7 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
 
     if (audioApi_ == PULSEAUDIO_API_STR) {
         try {
-            return new sfl::PulseLayer(*this);
+            return new ring::PulseLayer(*this);
         } catch (const std::runtime_error &e) {
             SFL_WARN("Could not create pulseaudio layer, falling back to ALSA");
         }
@@ -380,17 +380,17 @@ sfl::AudioLayer* AudioPreference::createAudioLayer()
 #if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(alsaCardin_, sfl::DeviceType::CAPTURE);
-    checkSoundCard(alsaCardout_, sfl::DeviceType::PLAYBACK);
-    checkSoundCard(alsaCardring_, sfl::DeviceType::RINGTONE);
+    checkSoundCard(alsaCardin_, ring::DeviceType::CAPTURE);
+    checkSoundCard(alsaCardout_, ring::DeviceType::PLAYBACK);
+    checkSoundCard(alsaCardring_, ring::DeviceType::RINGTONE);
 
-    return new sfl::AlsaLayer(*this);
+    return new ring::AlsaLayer(*this);
 #endif
 
 #if HAVE_COREAUDIO
     audioApi_ = COREAUDIO_API_STR;
     try {
-        return new sfl::CoreLayer(*this);
+        return new ring::CoreLayer(*this);
     } catch (const std::runtime_error &e) {
         SFL_WARN("Could not create coreaudio layer. There will be no sound.");
     }

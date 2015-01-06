@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
@@ -41,7 +41,7 @@
 #include <unistd.h>
 #include <map>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -256,4 +256,4 @@ int VideoReceiveThread::getHeight() const
 int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

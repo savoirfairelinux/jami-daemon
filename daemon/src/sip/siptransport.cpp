@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
@@ -422,7 +422,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 
 #if HAVE_DHT
 std::shared_ptr<SipTransport>
-SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport> ice, unsigned comp_id)
+SipTransportBroker::getIceTransport(const std::shared_ptr<ring::IceTransport> ice, unsigned comp_id)
 {
     std::unique_lock<std::mutex> lock(iceMutex_);
     iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, comp_id, [=]() -> int {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -58,7 +58,7 @@ AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)
      * with our C++ binding by providing 'this' access.
      */
     const auto callback = [this](void* data) {
-        if (auto codec = reinterpret_cast<sfl::AudioCodec*>(data)) {
+        if (auto codec = reinterpret_cast<ring::AudioCodec*>(data)) {
             this->registerAudioCodec(codec);
             return 0;
         }
@@ -78,9 +78,9 @@ AudioCodecFactory::~AudioCodecFactory()
 }
 
 void
-AudioCodecFactory::registerAudioCodec(sfl::AudioCodec* codec)
+AudioCodecFactory::registerAudioCodec(ring::AudioCodec* codec)
 {
-    codecsMap_[(int) codec->getPayloadType()] = std::shared_ptr<sfl::AudioCodec>(codec);
+    codecsMap_[(int) codec->getPayloadType()] = std::shared_ptr<ring::AudioCodec>(codec);
     SFL_DBG("Loaded codec %s" , codec->getMimeSubtype().c_str());
 }
 
@@ -114,7 +114,7 @@ AudioCodecFactory::getCodecList() const
     return list;
 }
 
-std::shared_ptr<sfl::AudioCodec>
+std::shared_ptr<ring::AudioCodec>
 AudioCodecFactory::getCodec(int payload) const
 {
     const auto iter = codecsMap_.find(payload);
@@ -124,7 +124,7 @@ AudioCodecFactory::getCodec(int payload) const
     return nullptr;
 }
 
-std::shared_ptr<sfl::AudioCodec>
+std::shared_ptr<ring::AudioCodec>
 AudioCodecFactory::getCodec(const std::string &name) const
 {
     for (const auto& item : codecsMap_) {
@@ -236,7 +236,7 @@ AudioCodecFactory::scanCodecDirectory()
     }
 }
 
-sfl::AudioCodec*
+ring::AudioCodec*
 AudioCodecFactory::instantiateCodec(int payload) const
 {
     for (const auto& item : codecsMap_) {

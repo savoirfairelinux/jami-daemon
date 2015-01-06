@@ -21,7 +21,7 @@ endif
 ACLOCAL_AMFLAGS = -I m4
 
 
-#FIXME: this will change when libsflphone is fixed
+#FIXME: this will change when libring is fixed
 if HAVE_WIN32
 SUBDIRS = bin
 else

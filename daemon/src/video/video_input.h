@@ -43,7 +43,7 @@
 #include <atomic>
 #include <string>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class VideoInput : public VideoGenerator
 {
@@ -97,6 +97,6 @@ private:
     bool captureFrame();
 };
 
-}
+}}
 
 #endif // __VIDEO_INPUT_H__

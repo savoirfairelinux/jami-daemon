@@ -736,15 +736,15 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
 
 gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 {
-    const char *dbus_message_bus_name = "org.sflphone.SFLphone";
-    const char *dbus_object_instance = "/org/sflphone/SFLphone/Instance";
-    const char *dbus_interface = "org.sflphone.SFLphone.Instance";
-    const char *callmanager_object_instance = "/org/sflphone/SFLphone/CallManager";
-    const char *callmanager_interface = "org.sflphone.SFLphone.CallManager";
-    const char *configurationmanager_object_instance = "/org/sflphone/SFLphone/ConfigurationManager";
-    const char *configurationmanager_interface = "org.sflphone.SFLphone.ConfigurationManager";
-    const char *presencemanager_object_instance = "/org/sflphone/SFLphone/PresenceManager";
-    const char *presencemanager_interface = "org.sflphone.SFLphone.PresenceManager";
+    const char *dbus_message_bus_name = "cx.ring.Ring";
+    const char *dbus_object_instance = "/cx/ring/Ring/Instance";
+    const char *dbus_interface = "cx.ring.Ring.Instance";
+    const char *callmanager_object_instance = "/cx/ring/Ring/CallManager";
+    const char *callmanager_interface = "cx.ring.Ring.CallManager";
+    const char *configurationmanager_object_instance = "/cx/ring/Ring/ConfigurationManager";
+    const char *configurationmanager_interface = "cx.ring.Ring.ConfigurationManager";
+    const char *presencemanager_object_instance = "/cx/ring/Ring/PresenceManager";
+    const char *presencemanager_interface = "cx.ring.Ring.PresenceManager";
 
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
     if (connection == NULL) {
@@ -1019,8 +1019,8 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
                                 G_CALLBACK(sip_presence_new_subscription_request_cb), NULL, NULL);
 
 #ifdef SFL_VIDEO
-    const gchar *videomanager_object_instance = "/org/sflphone/SFLphone/VideoManager";
-    const gchar *videomanager_interface = "org.sflphone.SFLphone.VideoManager";
+    const gchar *videomanager_object_instance = "/cx/ring/Ring/VideoManager";
+    const gchar *videomanager_interface = "cx.ring.Ring.VideoManager";
     video_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name,
             videomanager_object_instance, videomanager_interface);
     if (video_proxy == NULL) {
@@ -1078,7 +1078,7 @@ void dbus_hold(const callable_obj_t *c)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_hold(call_proxy, c->_callID, &result, &error);
+    cx_ring_Ring_CallManager_hold(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1087,7 +1087,7 @@ dbus_unhold(const callable_obj_t *c)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_unhold(call_proxy, c->_callID, &result, &error);
+    cx_ring_Ring_CallManager_unhold(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1096,7 +1096,7 @@ dbus_hold_conference(const conference_obj_t *c)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_hold_conference(call_proxy, c->_confID,
+    cx_ring_Ring_CallManager_hold_conference(call_proxy, c->_confID,
             &result, &error);
     check_error(error);
 }
@@ -1106,7 +1106,7 @@ dbus_unhold_conference(const conference_obj_t *c)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_unhold_conference(call_proxy, c->_confID,
+    cx_ring_Ring_CallManager_unhold_conference(call_proxy, c->_confID,
             &result, &error);
     check_error(error);
 }
@@ -1117,7 +1117,7 @@ dbus_start_recorded_file_playback(const gchar *filepath)
     GError *error = NULL;
     gboolean result;
 
-    org_sflphone_SFLphone_CallManager_start_recorded_file_playback(call_proxy, filepath, &result, &error);
+    cx_ring_Ring_CallManager_start_recorded_file_playback(call_proxy, filepath, &result, &error);
     check_error(error);
     return result;
 }
@@ -1126,7 +1126,7 @@ void
 dbus_stop_recorded_file_playback(const gchar *filepath)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_stop_recorded_file_playback(call_proxy, filepath, &error);
+    cx_ring_Ring_CallManager_stop_recorded_file_playback(call_proxy, filepath, &error);
     check_error(error);
 }
 
@@ -1142,13 +1142,13 @@ hang_up_reply_cb(G_GNUC_UNUSED DBusGProxy *proxy,
 void
 dbus_hang_up(const callable_obj_t *c)
 {
-    org_sflphone_SFLphone_CallManager_hang_up_async(call_proxy, c->_callID, hang_up_reply_cb, NULL);
+    cx_ring_Ring_CallManager_hang_up_async(call_proxy, c->_callID, hang_up_reply_cb, NULL);
 }
 
 void
 dbus_hang_up_conference(const conference_obj_t *c)
 {
-    org_sflphone_SFLphone_CallManager_hang_up_conference_async(call_proxy, c->_confID, hang_up_reply_cb, NULL);
+    cx_ring_Ring_CallManager_hang_up_conference_async(call_proxy, c->_confID, hang_up_reply_cb, NULL);
 }
 
 void
@@ -1156,7 +1156,7 @@ dbus_transfer(const callable_obj_t *c)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_transfer(call_proxy, c->_callID,
+    cx_ring_Ring_CallManager_transfer(call_proxy, c->_callID,
             c->_trsft_to, &result, &error);
     check_error(error);
 }
@@ -1166,7 +1166,7 @@ dbus_attended_transfer(const callable_obj_t *transfer, const callable_obj_t *tar
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_attended_transfer(call_proxy, transfer->_callID,
+    cx_ring_Ring_CallManager_attended_transfer(call_proxy, transfer->_callID,
                            target->_callID, &result, &error);
     check_error(error);
 }
@@ -1177,7 +1177,7 @@ dbus_accept(const callable_obj_t *c)
     status_tray_icon_blink(FALSE);
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_accept(call_proxy, c->_callID, &result, &error);
+    cx_ring_Ring_CallManager_accept(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1187,7 +1187,7 @@ dbus_refuse(const callable_obj_t *c)
     status_tray_icon_blink(FALSE);
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_refuse(call_proxy, c->_callID, &result, &error);
+    cx_ring_Ring_CallManager_refuse(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1196,7 +1196,7 @@ dbus_place_call(const callable_obj_t *c)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_place_call(call_proxy, c->_accountID,
+    cx_ring_Ring_CallManager_place_call(call_proxy, c->_accountID,
             c->_callID, c->_peer_number, &result, &error);
     check_error(error);
 }
@@ -1207,7 +1207,7 @@ dbus_account_list()
     GError *error = NULL;
     char **array = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_account_list(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_account_list(config_proxy, &array, &error);
     check_error(error);
 
     return array;
@@ -1219,7 +1219,7 @@ dbus_get_account_template()
     GError *error = NULL;
     GHashTable *details = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_account_template(config_proxy, &details, &error);
+    cx_ring_Ring_ConfigurationManager_get_account_template(config_proxy, &details, &error);
     check_error(error);
 
     return details;
@@ -1231,7 +1231,7 @@ dbus_get_account_details(const gchar *accountID)
     GError *error = NULL;
     GHashTable *details = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_account_details(config_proxy, accountID, &details, &error);
+    cx_ring_Ring_ConfigurationManager_get_account_details(config_proxy, accountID, &details, &error);
     check_error(error);
 
     return details;
@@ -1242,7 +1242,7 @@ dbus_set_credentials(account_t *a)
 {
     g_assert(a);
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_credentials(config_proxy, a->accountID,
+    cx_ring_Ring_ConfigurationManager_set_credentials(config_proxy, a->accountID,
                            a->credential_information, &error);
     check_error(error);
 }
@@ -1252,7 +1252,7 @@ dbus_get_credentials(account_t *a)
 {
     g_assert(a);
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_credentials(config_proxy,
+    cx_ring_Ring_ConfigurationManager_get_credentials(config_proxy,
             a->accountID, &a->credential_information, &error);
     check_error(error);
 }
@@ -1263,7 +1263,7 @@ dbus_get_ip2ip_details(void)
     GError *error = NULL;
     GHashTable *details = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_ip2_ip_details(config_proxy, &details, &error);
+    cx_ring_Ring_ConfigurationManager_get_ip2_ip_details(config_proxy, &details, &error);
     check_error(error);
 
     return details;
@@ -1273,7 +1273,7 @@ void
 dbus_send_register(const gchar *accountID, gboolean enable)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_send_register(config_proxy, accountID, enable, &error);
+    cx_ring_Ring_ConfigurationManager_send_register(config_proxy, accountID, enable, &error);
     check_error(error);
 }
 
@@ -1281,7 +1281,7 @@ void
 dbus_remove_account(const gchar *accountID)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_remove_account(config_proxy, accountID, &error);
+    cx_ring_Ring_ConfigurationManager_remove_account(config_proxy, accountID, &error);
     account_list_remove(accountID);
     check_error(error);
 }
@@ -1291,7 +1291,7 @@ dbus_set_account_details(const account_t *a)
 {
     g_assert(a);
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_account_details(config_proxy, a->accountID, a->properties,
+    cx_ring_Ring_ConfigurationManager_set_account_details(config_proxy, a->accountID, a->properties,
                                &error);
     check_error(error);
 }
@@ -1305,7 +1305,7 @@ dbus_add_account(account_t *a)
     g_free(a->accountID);
     GError *error = NULL;
     a->accountID = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_add_account(config_proxy, a->properties, &a->accountID,
+    cx_ring_Ring_ConfigurationManager_add_account(config_proxy, a->properties, &a->accountID,
                        &error);
     check_error(error);
 }
@@ -1314,7 +1314,7 @@ void
 dbus_set_volume(const gchar *device, gdouble value)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_volume(config_proxy, device, value, &error);
+    cx_ring_Ring_ConfigurationManager_set_volume(config_proxy, device, value, &error);
     check_error(error);
 }
 
@@ -1322,7 +1322,7 @@ void
 dbus_mute_capture(gboolean muted)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_mute_capture(config_proxy, muted, &error);
+    cx_ring_Ring_ConfigurationManager_mute_capture(config_proxy, muted, &error);
     check_error(error);
 }
 
@@ -1330,7 +1330,7 @@ void
 dbus_mute_dtmf(gboolean muted)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_mute_dtmf(config_proxy, muted, &error);
+    cx_ring_Ring_ConfigurationManager_mute_dtmf(config_proxy, muted, &error);
     check_error(error);
 }
 
@@ -1338,7 +1338,7 @@ void
 dbus_mute_playback(gboolean muted)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_mute_playback(config_proxy, muted, &error);
+    cx_ring_Ring_ConfigurationManager_mute_playback(config_proxy, muted, &error);
     check_error(error);
 }
 
@@ -1347,7 +1347,7 @@ dbus_is_dtmf_muted()
 {
     GError *error = NULL;
     gboolean muted;
-    org_sflphone_SFLphone_ConfigurationManager_is_dtmf_muted(config_proxy, &muted, &error);
+    cx_ring_Ring_ConfigurationManager_is_dtmf_muted(config_proxy, &muted, &error);
     check_error(error);
     return muted;
 }
@@ -1357,7 +1357,7 @@ dbus_is_capture_muted()
 {
     GError *error = NULL;
     gboolean muted;
-    org_sflphone_SFLphone_ConfigurationManager_is_capture_muted(config_proxy, &muted, &error);
+    cx_ring_Ring_ConfigurationManager_is_capture_muted(config_proxy, &muted, &error);
     check_error(error);
     return muted;
 }
@@ -1367,7 +1367,7 @@ dbus_is_playback_muted()
 {
     GError *error = NULL;
     gboolean muted;
-    org_sflphone_SFLphone_ConfigurationManager_is_playback_muted(config_proxy, &muted, &error);
+    cx_ring_Ring_ConfigurationManager_is_playback_muted(config_proxy, &muted, &error);
     check_error(error);
     return muted;
 }
@@ -1377,7 +1377,7 @@ dbus_get_volume(const gchar *device)
 {
     gdouble value;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_volume(config_proxy, device, &value, &error);
+    cx_ring_Ring_ConfigurationManager_get_volume(config_proxy, device, &value, &error);
     check_error(error);
     return value;
 }
@@ -1386,7 +1386,7 @@ void
 dbus_play_dtmf(const gchar *key)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_play_dt_mf(call_proxy, key, &error);
+    cx_ring_Ring_CallManager_play_dt_mf(call_proxy, key, &error);
     check_error(error);
 }
 
@@ -1394,14 +1394,14 @@ void
 dbus_start_tone(int start, guint type)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_start_tone(call_proxy, start, type, &error);
+    cx_ring_Ring_CallManager_start_tone(call_proxy, start, type, &error);
     check_error(error);
 }
 
 gboolean
 dbus_register(int pid, const gchar *name, GError **error)
 {
-    return org_sflphone_SFLphone_Instance_register(instance_proxy, pid, name,
+    return cx_ring_Ring_Instance_register(instance_proxy, pid, name,
                                                    error);
 }
 
@@ -1409,7 +1409,7 @@ void
 dbus_unregister(int pid)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_Instance_unregister_async(instance_proxy, pid, NULL, NULL);
+    cx_ring_Ring_Instance_unregister_async(instance_proxy, pid, NULL, NULL);
     check_error(error);
 }
 
@@ -1418,7 +1418,7 @@ dbus_audio_codec_list()
 {
     GError *error = NULL;
     GArray *array = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_codec_list(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_audio_codec_list(config_proxy, &array, &error);
     check_error(error);
     return array;
 }
@@ -1429,7 +1429,7 @@ dbus_get_video_codecs(const gchar *accountID)
 {
     GError *error = NULL;
     GPtrArray *array = NULL;
-    org_sflphone_SFLphone_VideoManager_get_codecs(video_proxy, accountID, &array, &error);
+    cx_ring_Ring_VideoManager_get_codecs(video_proxy, accountID, &array, &error);
     check_error(error);
     return array;
 }
@@ -1438,7 +1438,7 @@ void
 dbus_set_video_codecs(const gchar *accountID, const GPtrArray *list)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_set_codecs(video_proxy, accountID, list, &error);
+    cx_ring_Ring_VideoManager_set_codecs(video_proxy, accountID, list, &error);
     check_error(error);
 }
 
@@ -1447,7 +1447,7 @@ dbus_switch_video_input(const gchar *resource)
 {
     GError *error = NULL;
     gboolean switched;
-    org_sflphone_SFLphone_VideoManager_switch_input(video_proxy, resource, &switched, &error);
+    cx_ring_Ring_VideoManager_switch_input(video_proxy, resource, &switched, &error);
     check_error(error);
     return switched;
 }
@@ -1458,7 +1458,7 @@ dbus_audio_codec_details(int payload)
 {
     GError *error = NULL;
     gchar **array;
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_codec_details(config_proxy, payload, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_audio_codec_details(config_proxy, payload, &array, &error);
     check_error(error);
     return array;
 }
@@ -1468,7 +1468,7 @@ dbus_get_active_audio_codec_list(const gchar *accountID)
 {
     GArray *array = NULL;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_active_audio_codec_list(config_proxy, accountID, &array,
+    cx_ring_Ring_ConfigurationManager_get_active_audio_codec_list(config_proxy, accountID, &array,
                                        &error);
     check_error(error);
 
@@ -1479,7 +1479,7 @@ void
 dbus_set_active_audio_codec_list(const gchar **list, const gchar *accountID)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_active_audio_codec_list(config_proxy, list, accountID, &error);
+    cx_ring_Ring_ConfigurationManager_set_active_audio_codec_list(config_proxy, list, accountID, &error);
     check_error(error);
 }
 
@@ -1492,7 +1492,7 @@ dbus_get_audio_plugin_list()
     gchar **array = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_plugin_list(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_audio_plugin_list(config_proxy, &array, &error);
     check_error(error);
 
     return array;
@@ -1502,7 +1502,7 @@ void
 dbus_set_audio_plugin(const gchar *audioPlugin)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_audio_plugin(config_proxy, audioPlugin, &error);
+    cx_ring_Ring_ConfigurationManager_set_audio_plugin(config_proxy, audioPlugin, &error);
     check_error(error);
 }
 
@@ -1514,7 +1514,7 @@ dbus_get_audio_output_device_list()
 {
     gchar **array = NULL;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_output_device_list(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_audio_output_device_list(config_proxy, &array, &error);
     check_error(error);
     return array;
 }
@@ -1526,7 +1526,7 @@ void
 dbus_set_audio_output_device(int device)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_audio_output_device(config_proxy, device, &error);
+    cx_ring_Ring_ConfigurationManager_set_audio_output_device(config_proxy, device, &error);
     check_error(error);
 }
 
@@ -1537,7 +1537,7 @@ void
 dbus_set_audio_input_device(int device)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_audio_input_device(config_proxy, device, &error);
+    cx_ring_Ring_ConfigurationManager_set_audio_input_device(config_proxy, device, &error);
     check_error(error);
 }
 
@@ -1548,7 +1548,7 @@ void
 dbus_set_audio_ringtone_device(int device)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_audio_ringtone_device(config_proxy, device, &error);
+    cx_ring_Ring_ConfigurationManager_set_audio_ringtone_device(config_proxy, device, &error);
     check_error(error);
 }
 
@@ -1560,7 +1560,7 @@ dbus_get_audio_input_device_list()
 {
     gchar **array = NULL;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_input_device_list(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_audio_input_device_list(config_proxy, &array, &error);
     check_error(error);
 
     return array;
@@ -1574,7 +1574,7 @@ dbus_get_current_audio_devices_index()
 {
     gchar **array = NULL;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_current_audio_devices_index(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_current_audio_devices_index(config_proxy, &array, &error);
     check_error(error);
 
     return array;
@@ -1588,7 +1588,7 @@ dbus_get_audio_output_device_index(const gchar *name)
 {
     int device_index = 0;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_output_device_index(config_proxy, name, &device_index, &error);
+    cx_ring_Ring_ConfigurationManager_get_audio_output_device_index(config_proxy, name, &device_index, &error);
     check_error(error);
 
     return device_index;
@@ -1602,7 +1602,7 @@ dbus_get_audio_input_device_index(const gchar *name)
 {
     int device_index = 0;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_input_device_index(config_proxy, name, &device_index, &error);
+    cx_ring_Ring_ConfigurationManager_get_audio_input_device_index(config_proxy, name, &device_index, &error);
     check_error(error);
 
     return device_index;
@@ -1616,7 +1616,7 @@ dbus_get_current_audio_output_plugin()
 {
     gchar *plugin;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin(config_proxy, &plugin, &error);
+    cx_ring_Ring_ConfigurationManager_get_current_audio_output_plugin(config_proxy, &plugin, &error);
     if (check_error(error))
         plugin = g_strdup("");
 
@@ -1632,7 +1632,7 @@ dbus_get_noise_suppress_state()
 {
     gboolean state;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_noise_suppress_state(config_proxy, &state, &error);
+    cx_ring_Ring_ConfigurationManager_get_noise_suppress_state(config_proxy, &state, &error);
 
     if (check_error(error))
         state = FALSE;
@@ -1647,7 +1647,7 @@ void
 dbus_set_noise_suppress_state(gboolean state)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_noise_suppress_state(config_proxy, state, &error);
+    cx_ring_Ring_ConfigurationManager_set_noise_suppress_state(config_proxy, state, &error);
     check_error(error);
 }
 
@@ -1659,7 +1659,7 @@ dbus_get_agc_state()
 {
     gboolean state;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_is_agc_enabled(config_proxy, &state, &error);
+    cx_ring_Ring_ConfigurationManager_is_agc_enabled(config_proxy, &state, &error);
 
     if (check_error(error))
         state = FALSE;
@@ -1674,7 +1674,7 @@ void
 dbus_set_agc_state(gboolean state)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_agc_state(config_proxy, state, &error);
+    cx_ring_Ring_ConfigurationManager_set_agc_state(config_proxy, state, &error);
     check_error(error);
 }
 
@@ -1683,7 +1683,7 @@ dbus_is_iax2_enabled()
 {
     int res = 0;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_is_iax2_enabled(config_proxy, &res, &error);
+    cx_ring_Ring_ConfigurationManager_is_iax2_enabled(config_proxy, &res, &error);
     check_error(error);
 
     return res;
@@ -1703,7 +1703,7 @@ dbus_join_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
 void
 dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 {
-    org_sflphone_SFLphone_CallManager_join_participant_async(call_proxy, sel_callID,
+    cx_ring_Ring_CallManager_join_participant_async(call_proxy, sel_callID,
             drag_callID, dbus_join_participant_async_cb, NULL);
 }
 
@@ -1721,7 +1721,7 @@ dbus_add_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
 void
 dbus_add_participant(const gchar *callID, const gchar *confID)
 {
-    org_sflphone_SFLphone_CallManager_add_participant_async(call_proxy, callID,
+    cx_ring_Ring_CallManager_add_participant_async(call_proxy, callID,
             confID, dbus_add_participant_async_cb, NULL);
 }
 
@@ -1739,7 +1739,7 @@ dbus_add_main_participant_async_cb(G_GNUC_UNUSED DBusGProxy *proxy,
 void
 dbus_add_main_participant(const gchar *confID)
 {
-    org_sflphone_SFLphone_CallManager_add_main_participant_async(call_proxy,
+    cx_ring_Ring_CallManager_add_main_participant_async(call_proxy,
             confID, dbus_add_main_participant_async_cb, NULL);
 }
 
@@ -1748,7 +1748,7 @@ dbus_detach_participant(const gchar *callID)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_detach_participant(call_proxy, callID,
+    cx_ring_Ring_CallManager_detach_participant(call_proxy, callID,
             &result, &error);
     check_error(error);
 }
@@ -1758,7 +1758,7 @@ dbus_join_conference(const gchar *sel_confID, const gchar *drag_confID)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_CallManager_join_conference(call_proxy, sel_confID,
+    cx_ring_Ring_CallManager_join_conference(call_proxy, sel_confID,
             drag_confID, &result, &error);
     check_error(error);
 }
@@ -1768,7 +1768,7 @@ dbus_toggle_recording(const gchar *id)
 {
     GError *error = NULL;
     gboolean isRecording;
-    org_sflphone_SFLphone_CallManager_toggle_recording(call_proxy, id, &isRecording, &error);
+    cx_ring_Ring_CallManager_toggle_recording(call_proxy, id, &isRecording, &error);
     check_error(error);
     return isRecording;
 }
@@ -1778,7 +1778,7 @@ dbus_get_is_recording(const callable_obj_t *c)
 {
     GError *error = NULL;
     gboolean isRecording;
-    org_sflphone_SFLphone_CallManager_get_is_recording(call_proxy, c->_callID, &isRecording, &error);
+    cx_ring_Ring_CallManager_get_is_recording(call_proxy, c->_callID, &isRecording, &error);
     check_error(error);
 
     return isRecording;
@@ -1788,7 +1788,7 @@ void
 dbus_set_record_path(const gchar *path)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_record_path(config_proxy, path, &error);
+    cx_ring_Ring_ConfigurationManager_set_record_path(config_proxy, path, &error);
     check_error(error);
 }
 
@@ -1797,7 +1797,7 @@ dbus_get_record_path(void)
 {
     GError *error = NULL;
     gchar *path;
-    org_sflphone_SFLphone_ConfigurationManager_get_record_path(config_proxy, &path, &error);
+    cx_ring_Ring_ConfigurationManager_get_record_path(config_proxy, &path, &error);
     check_error(error);
 
     return path;
@@ -1805,14 +1805,14 @@ dbus_get_record_path(void)
 
 void dbus_set_record_playback_seek(gdouble value) {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_record_playback_seek(call_proxy, value, &error);
+    cx_ring_Ring_CallManager_record_playback_seek(call_proxy, value, &error);
     check_error(error);
 }
 
 void dbus_set_is_always_recording(const gboolean alwaysRec)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_is_always_recording(config_proxy, alwaysRec, &error);
+    cx_ring_Ring_ConfigurationManager_set_is_always_recording(config_proxy, alwaysRec, &error);
     check_error(error);
 }
 
@@ -1820,7 +1820,7 @@ gboolean dbus_get_is_always_recording(void)
 {
     GError *error = NULL;
     gboolean alwaysRec;
-    org_sflphone_SFLphone_ConfigurationManager_get_is_always_recording(config_proxy, &alwaysRec, &error);
+    cx_ring_Ring_ConfigurationManager_get_is_always_recording(config_proxy, &alwaysRec, &error);
     check_error(error);
 
     return alwaysRec;
@@ -1830,7 +1830,7 @@ void
 dbus_set_history_limit(guint days)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_history_limit(config_proxy, days, &error);
+    cx_ring_Ring_ConfigurationManager_set_history_limit(config_proxy, days, &error);
     check_error(error);
 }
 
@@ -1839,7 +1839,7 @@ dbus_get_history_limit(void)
 {
     GError *error = NULL;
     gint days = 30;
-    org_sflphone_SFLphone_ConfigurationManager_get_history_limit(config_proxy, &days, &error);
+    cx_ring_Ring_ConfigurationManager_get_history_limit(config_proxy, &days, &error);
     check_error(error);
 
     return days;
@@ -1849,7 +1849,7 @@ void
 dbus_clear_history(void)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_clear_history(config_proxy, &error);
+    cx_ring_Ring_ConfigurationManager_clear_history(config_proxy, &error);
     check_error(error);
 }
 
@@ -1858,7 +1858,7 @@ dbus_set_audio_manager(const gchar *api)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_ConfigurationManager_set_audio_manager(config_proxy, api, &result, &error);
+    cx_ring_Ring_ConfigurationManager_set_audio_manager(config_proxy, api, &result, &error);
     check_error(error);
     return result;
 }
@@ -1868,7 +1868,7 @@ dbus_get_audio_manager(void)
 {
     gchar *api;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_audio_manager(config_proxy, &api, &error);
+    cx_ring_Ring_ConfigurationManager_get_audio_manager(config_proxy, &api, &error);
     check_error(error);
 
     return api;
@@ -1879,7 +1879,7 @@ dbus_get_supported_audio_managers()
 {
     GError *error = NULL;
     gchar **array = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_supported_audio_managers(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_supported_audio_managers(config_proxy, &array, &error);
     check_error(error);
 
     return array;
@@ -1892,7 +1892,7 @@ dbus_video_get_default_device()
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoManager_get_default_device(video_proxy, &str, &error);
+    cx_ring_Ring_VideoManager_get_default_device(video_proxy, &str, &error);
     check_error(error);
 
     return str;
@@ -1902,7 +1902,7 @@ void
 dbus_video_set_default_device(const gchar *name)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_set_default_device(video_proxy, name, &error);
+    cx_ring_Ring_VideoManager_set_default_device(video_proxy, name, &error);
     check_error(error);
 }
 
@@ -1912,7 +1912,7 @@ dbus_video_get_settings(const gchar *name)
     GError *error = NULL;
     GHashTable *settings = NULL;
 
-    org_sflphone_SFLphone_VideoManager_get_settings(video_proxy, name, &settings, &error);
+    cx_ring_Ring_VideoManager_get_settings(video_proxy, name, &settings, &error);
     check_error(error);
 
     return settings;
@@ -1922,7 +1922,7 @@ void
 dbus_video_apply_settings(const gchar *name, GHashTable *settings)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoManager_apply_settings(video_proxy, name, settings, &error);
+    cx_ring_Ring_VideoManager_apply_settings(video_proxy, name, settings, &error);
     check_error(error);
 }
 
@@ -1932,7 +1932,7 @@ dbus_video_get_device_list()
     gchar **array = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoManager_get_device_list(video_proxy, &array, &error);
+    cx_ring_Ring_VideoManager_get_device_list(video_proxy, &array, &error);
     check_error(error);
     return array;
 }
@@ -1943,7 +1943,7 @@ dbus_video_get_capabilities(const gchar *name)
     GError *error = NULL;
     GHashTable *cap = NULL;
 
-    org_sflphone_SFLphone_VideoManager_get_capabilities(video_proxy, name, &cap, &error);
+    cx_ring_Ring_VideoManager_get_capabilities(video_proxy, name, &cap, &error);
     check_error(error);
 
     return cap;
@@ -1957,7 +1957,7 @@ dbus_get_hook_settings(void)
     GError *error = NULL;
     GHashTable *results = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_hook_settings(config_proxy, &results, &error);
+    cx_ring_Ring_ConfigurationManager_get_hook_settings(config_proxy, &results, &error);
     check_error(error);
 
     return results;
@@ -1967,7 +1967,7 @@ void
 dbus_set_hook_settings(GHashTable *settings)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_hook_settings(config_proxy, settings, &error);
+    cx_ring_Ring_ConfigurationManager_set_hook_settings(config_proxy, settings, &error);
     check_error(error);
 }
 
@@ -1976,7 +1976,7 @@ dbus_get_call_details(const gchar *callID)
 {
     GError *error = NULL;
     GHashTable *details = NULL;
-    org_sflphone_SFLphone_CallManager_get_call_details(call_proxy, callID, &details, &error);
+    cx_ring_Ring_CallManager_get_call_details(call_proxy, callID, &details, &error);
     check_error(error);
 
     return details;
@@ -1987,7 +1987,7 @@ dbus_get_call_list(void)
 {
     GError *error = NULL;
     gchar **list = NULL;
-    org_sflphone_SFLphone_CallManager_get_call_list(call_proxy, &list, &error);
+    cx_ring_Ring_CallManager_get_call_list(call_proxy, &list, &error);
     check_error(error);
 
     return list;
@@ -1998,7 +1998,7 @@ dbus_get_conference_list(void)
 {
     GError *error = NULL;
     gchar **list = NULL;
-    org_sflphone_SFLphone_CallManager_get_conference_list(call_proxy, &list, &error);
+    cx_ring_Ring_CallManager_get_conference_list(call_proxy, &list, &error);
     check_error(error);
 
     return list;
@@ -2010,7 +2010,7 @@ dbus_get_display_names(const gchar *confID)
     GError *error = NULL;
     gchar **list = NULL;
 
-    org_sflphone_SFLphone_CallManager_get_display_names(call_proxy, confID, &list, &error);
+    cx_ring_Ring_CallManager_get_display_names(call_proxy, confID, &list, &error);
     check_error(error);
 
     return list;
@@ -2022,7 +2022,7 @@ dbus_get_participant_list(const gchar *confID)
     GError *error = NULL;
     gchar **list = NULL;
 
-    org_sflphone_SFLphone_CallManager_get_participant_list(call_proxy, confID, &list, &error);
+    cx_ring_Ring_CallManager_get_participant_list(call_proxy, confID, &list, &error);
     check_error(error);
 
     return list;
@@ -2033,7 +2033,7 @@ dbus_get_conference_id(const gchar *callID)
 {
     gchar *confID = NULL;
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_get_conference_id(call_proxy, callID, &confID, &error);
+    cx_ring_Ring_CallManager_get_conference_id(call_proxy, callID, &confID, &error);
     check_error(error);
     return confID;
 }
@@ -2043,7 +2043,7 @@ dbus_get_conference_details(const gchar *confID)
 {
     GError *error = NULL;
     GHashTable *details = NULL;
-    org_sflphone_SFLphone_CallManager_get_conference_details(call_proxy, confID, &details, &error);
+    cx_ring_Ring_CallManager_get_conference_details(call_proxy, confID, &details, &error);
     check_error(error);
 
     return details;
@@ -2053,7 +2053,7 @@ void
 dbus_set_accounts_order(const gchar *order)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_accounts_order(config_proxy, order, &error);
+    cx_ring_Ring_ConfigurationManager_set_accounts_order(config_proxy, order, &error);
     check_error(error);
 }
 
@@ -2069,14 +2069,14 @@ get_history_async_cb(G_GNUC_UNUSED DBusGProxy *proxy, GPtrArray *items, GError *
 void
 dbus_get_history(IdleData *id)
 {
-    org_sflphone_SFLphone_ConfigurationManager_get_history_async(config_proxy, get_history_async_cb, id);
+    cx_ring_Ring_ConfigurationManager_get_history_async(config_proxy, get_history_async_cb, id);
 }
 
 void
 dbus_confirm_sas(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_set_sa_sverified(call_proxy, c->_callID, &error);
+    cx_ring_Ring_CallManager_set_sa_sverified(call_proxy, c->_callID, &error);
     check_error(error);
 }
 
@@ -2084,7 +2084,7 @@ void
 dbus_reset_sas(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_reset_sa_sverified(call_proxy, c->_callID, &error);
+    cx_ring_Ring_CallManager_reset_sa_sverified(call_proxy, c->_callID, &error);
     check_error(error);
 }
 
@@ -2092,7 +2092,7 @@ void
 dbus_set_confirm_go_clear(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_set_confirm_go_clear(call_proxy, c->_callID, &error);
+    cx_ring_Ring_CallManager_set_confirm_go_clear(call_proxy, c->_callID, &error);
     check_error(error);
 }
 
@@ -2100,7 +2100,7 @@ void
 dbus_request_go_clear(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_request_go_clear(call_proxy, c->_callID, &error);
+    cx_ring_Ring_CallManager_request_go_clear(call_proxy, c->_callID, &error);
     check_error(error);
 }
 
@@ -2109,7 +2109,7 @@ dbus_get_supported_tls_method()
 {
     GError *error = NULL;
     gchar **array = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_supported_tls_method(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_supported_tls_method(config_proxy, &array, &error);
     check_error(error);
 
     return array;
@@ -2120,7 +2120,7 @@ dbus_get_tls_settings_default(void)
 {
     GError *error = NULL;
     GHashTable *results = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_tls_settings_default(config_proxy, &results, &error);
+    cx_ring_Ring_ConfigurationManager_get_tls_settings_default(config_proxy, &results, &error);
     check_error(error);
 
     return results;
@@ -2131,7 +2131,7 @@ dbus_check_certificate(const gchar *capath, const gchar *certpath)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_ConfigurationManager_check_certificate_validity(config_proxy, capath, certpath, &result, &error);
+    cx_ring_Ring_ConfigurationManager_check_certificate_validity(config_proxy, capath, certpath, &result, &error);
     check_error(error);
 
     return result;
@@ -2142,7 +2142,7 @@ dbus_certificate_contains_private_key(const gchar *filepath)
 {
     GError *error = NULL;
     gboolean result;
-    org_sflphone_SFLphone_ConfigurationManager_check_for_private_key(config_proxy, filepath, &result, &error);
+    cx_ring_Ring_ConfigurationManager_check_for_private_key(config_proxy, filepath, &result, &error);
     check_error(error);
 
     return result;
@@ -2153,7 +2153,7 @@ dbus_get_address_from_interface_name(const gchar *interface)
 {
     GError *error = NULL;
     gchar *address = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_addr_from_interface_name(config_proxy, interface, &address, &error);
+    cx_ring_Ring_ConfigurationManager_get_addr_from_interface_name(config_proxy, interface, &address, &error);
     check_error(error);
 
     return address;
@@ -2165,7 +2165,7 @@ dbus_get_all_ip_interface(void)
     GError *error = NULL;
     gchar **array = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_all_ip_interface(config_proxy, &array, &error);
     check_error(error);
 
     return array;
@@ -2177,7 +2177,7 @@ dbus_get_all_ip_interface_by_name(void)
     GError *error = NULL;
     gchar **array = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface_by_name(config_proxy, &array, &error);
+    cx_ring_Ring_ConfigurationManager_get_all_ip_interface_by_name(config_proxy, &array, &error);
     check_error(error);
 
     return array;
@@ -2189,7 +2189,7 @@ dbus_get_shortcuts(void)
     GError *error = NULL;
     GHashTable *shortcuts = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_shortcuts(config_proxy, &shortcuts, &error);
+    cx_ring_Ring_ConfigurationManager_get_shortcuts(config_proxy, &shortcuts, &error);
     check_error(error);
 
     return shortcuts;
@@ -2199,7 +2199,7 @@ void
 dbus_set_shortcuts(GHashTable *shortcuts)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_shortcuts(config_proxy, shortcuts, &error);
+    cx_ring_Ring_ConfigurationManager_set_shortcuts(config_proxy, shortcuts, &error);
     check_error(error);
 }
 
@@ -2207,7 +2207,7 @@ void
 dbus_send_text_message(const gchar *callID, const gchar *message)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_send_text_message(call_proxy, callID, message, &error);
+    cx_ring_Ring_CallManager_send_text_message(call_proxy, callID, message, &error);
     check_error(error);
 }
 
@@ -2224,14 +2224,14 @@ void
 dbus_start_video_camera()
 {
     set_camera_button_sensitivity(FALSE);
-    org_sflphone_SFLphone_VideoManager_start_camera_async(video_proxy, video_camera_async_cb, NULL);
+    cx_ring_Ring_VideoManager_start_camera_async(video_proxy, video_camera_async_cb, NULL);
 }
 
 void
 dbus_stop_video_camera()
 {
     set_camera_button_sensitivity(FALSE);
-    org_sflphone_SFLphone_VideoManager_stop_camera_async(video_proxy, video_camera_async_cb, NULL);
+    cx_ring_Ring_VideoManager_stop_camera_async(video_proxy, video_camera_async_cb, NULL);
 }
 
 gboolean
@@ -2239,7 +2239,7 @@ dbus_has_video_camera_started()
 {
     GError *error = NULL;
     gboolean started = FALSE;
-    org_sflphone_SFLphone_VideoManager_has_camera_started(video_proxy, &started, &error);
+    cx_ring_Ring_VideoManager_has_camera_started(video_proxy, &started, &error);
     check_error(error);
     return started;
 }
@@ -2334,7 +2334,7 @@ void
 dbus_presence_publish(const gchar *accountID, gboolean status)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_PresenceManager_publish(presence_proxy, accountID,status, "Tout va bien.", NULL);
+    cx_ring_Ring_PresenceManager_publish(presence_proxy, accountID,status, "Tout va bien.", NULL);
     check_error(error);
 }
 
@@ -2342,6 +2342,6 @@ void
 dbus_presence_subscribe(const gchar *accountID, const gchar *uri, gboolean flag)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_PresenceManager_subscribe_buddy(presence_proxy, accountID, uri, flag, NULL);
+    cx_ring_Ring_PresenceManager_subscribe_buddy(presence_proxy, accountID, uri, flag, NULL);
     check_error(error);
 }

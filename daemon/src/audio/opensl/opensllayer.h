@@ -43,7 +43,7 @@ class AudioPreference;
 
 #include <memory>
 
-namespace sfl {
+namespace ring {
 
 class OpenSLThread;
 class RingBuffer;

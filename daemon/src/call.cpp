@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -199,17 +199,17 @@ bool
 Call::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
-    sfl::RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
+    ring::RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
     std::string process_id = Recordable::recorder_.getRecorderID();
 
     if (startRecording) {
         rbPool.bindHalfDuplexOut(process_id, id_);
-        rbPool.bindHalfDuplexOut(process_id, sfl::RingBufferPool::DEFAULT_ID);
+        rbPool.bindHalfDuplexOut(process_id, ring::RingBufferPool::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         rbPool.unBindHalfDuplexOut(process_id, id_);
-        rbPool.unBindHalfDuplexOut(process_id, sfl::RingBufferPool::DEFAULT_ID);
+        rbPool.unBindHalfDuplexOut(process_id, ring::RingBufferPool::DEFAULT_ID);
     }
 
     return startRecording;
@@ -244,7 +244,7 @@ timestamp_to_string(const time_t &timestamp)
 
 std::map<std::string, std::string> Call::createHistoryEntry() const
 {
-    using sfl::HistoryItem;
+    using ring::HistoryItem;
     std::map<std::string, std::string> result;
 
     result[HistoryItem::ACCOUNT_ID_KEY] = getAccountId();
@@ -306,7 +306,7 @@ void
 Call::initIceTransport(bool master, unsigned channel_num)
 {
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    const auto& on_initdone = [this, master](sfl::IceTransport& iceTransport, bool done) {
+    const auto& on_initdone = [this, master](ring::IceTransport& iceTransport, bool done) {
         if (done) {
             if (master)
                 iceTransport.setInitiatorSession();
@@ -321,7 +321,7 @@ Call::initIceTransport(bool master, unsigned channel_num)
 
         iceCV_.notify_one();
     };
-    const auto& on_negodone = [this, master](sfl::IceTransport& /*iceTransport*/, bool done) {
+    const auto& on_negodone = [this, master](ring::IceTransport& /*iceTransport*/, bool done) {
         {
             std::unique_lock<std::mutex> lk(callMutex_);
             iceTransportNegoDone_ = done;
@@ -375,8 +375,8 @@ Call::isIceRunning() const
     return iceTransportNegoDone_;
 }
 
-sfl::IceSocket*
+ring::IceSocket*
 Call::newIceSocket(unsigned compId) const
 {
-    return new sfl::IceSocket(iceTransport_, compId);
+    return new ring::IceSocket(iceTransport_, compId);
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Philippe Groarke <philippe.groarke@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -52,7 +52,7 @@
  * @brief Main OSX sound class. Manages the data transfers between the application and the hardware.
  */
 
-namespace sfl {
+namespace ring {
 
 class RingBuffer;
 class AudioDevice;

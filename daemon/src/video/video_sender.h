@@ -41,7 +41,7 @@
 #include <memory>
 #include <atomic>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class SocketPair;
 
@@ -72,6 +72,6 @@ private:
     std::string sdp_ = "";
 };
 
-}
+}}
 
 #endif // __VIDEO_SENDER_H__

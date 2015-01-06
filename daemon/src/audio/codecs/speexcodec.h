@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
@@ -36,11 +36,11 @@
 #include <speex/speex.h>
 #include <cassert>
 
-class Speex : public sfl::AudioCodec {
+class Speex : public ring::AudioCodec {
 public:
         Speex(int payload, unsigned clockRate, unsigned frameSize,
               unsigned bitRate, bool dynamicPayload, const SpeexMode *mode) :
-            sfl::AudioCodec(payload, "speex", clockRate, frameSize, 1),
+            ring::AudioCodec(payload, "speex", clockRate, frameSize, 1),
             speex_dec_bits_(),
             speex_enc_bits_(),
             speex_dec_state_(0),

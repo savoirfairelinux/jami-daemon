@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Adrien Beraud <adrienberaud@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 #include "logger.h"
 #include "test_utils.h"
 
-using namespace sfl;
+using namespace ring;
 
 void AudioBufferTest::testAudioBufferConstructors()
 {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
@@ -40,7 +40,7 @@
 #include <unistd.h>
 
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -83,4 +83,4 @@ void VideoSender::forceKeyFrame()
     ++forceKeyFrame_;
 }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

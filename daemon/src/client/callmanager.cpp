@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *
@@ -45,7 +45,7 @@
 #include "logger.h"
 #include "manager.h"
 
-void CallManager::registerEvHandlers(struct sflph_call_ev_handlers* evHandlers)
+void CallManager::registerEvHandlers(struct ring_call_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }
@@ -279,7 +279,7 @@ CallManager::startTone(int32_t start, int32_t type)
 // the right pointer for the given
 // callID.
 #if USE_CCRTP && HAVE_ZRTP
-sfl::AudioZrtpSession *
+ring::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
     // TODO: remove SIP dependency
@@ -287,7 +287,7 @@ CallManager::getAudioZrtpSession(const std::string& callID)
     if (!call)
         throw CallManagerException("Call id " + callID + " is not valid");
 
-    sfl::AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
+    ring::AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
 
     if (!zSession)
         throw CallManagerException("Failed to get AudioZrtpSession");
@@ -301,7 +301,7 @@ CallManager::setSASVerified(const std::string& callID)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->SASVerified();
     } catch (...) {
@@ -316,7 +316,7 @@ CallManager::resetSASVerified(const std::string& callID)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->resetSASVerified();
     } catch (...) {
@@ -331,7 +331,7 @@ CallManager::setConfirmGoClear(const std::string& callID)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->goClearOk();
     } catch (...) {
@@ -346,7 +346,7 @@ CallManager::requestGoClear(const std::string& callID)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->requestGoClear();
     } catch (...) {
@@ -361,7 +361,7 @@ CallManager::acceptEnrollment(const std::string& callID, bool accepted)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->acceptEnrollment(accepted);
     } catch (...) {

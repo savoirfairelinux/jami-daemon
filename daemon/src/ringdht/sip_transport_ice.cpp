@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
@@ -56,7 +56,7 @@ sockaddr_to_host_port(pj_pool_t* pool,
 
 SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
                                  long /* t_type */,
-                                 const std::shared_ptr<sfl::IceTransport>& ice,
+                                 const std::shared_ptr<ring::IceTransport>& ice,
                                  int comp_id, std::function<int()> destroy_cb)
     : base()
     , pool_(nullptr, pj_pool_release)

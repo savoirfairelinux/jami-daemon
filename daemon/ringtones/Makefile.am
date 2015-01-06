@@ -1,5 +1,5 @@
-sflphoneringsdir = $(datadir)/sflphone/ringtones
-dist_sflphonerings_DATA = \
+ringringtonesdir = $(datadir)/ring/ringtones
+dist_ringringtones_DATA = \
 	konga.ul\
 	phone.au\
 	phone2.au

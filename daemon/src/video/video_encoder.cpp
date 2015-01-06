@@ -39,7 +39,7 @@
 #include <algorithm>
 
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -321,7 +321,7 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
     return ret;
 }
 
-int VideoEncoder::encode_audio(const sfl::AudioBuffer &buffer)
+int VideoEncoder::encode_audio(const ring::AudioBuffer &buffer)
 {
     const int needed_bytes = av_samples_get_buffer_size(NULL, buffer.channels(), buffer.frames(), AV_SAMPLE_FMT_S16, 0);
     if (needed_bytes < 0) {
@@ -607,4 +607,4 @@ void VideoEncoder::extractProfileLevelID(const std::string &parameters,
     SFL_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
 }
 
-}
+}}

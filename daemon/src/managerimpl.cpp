@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -92,11 +92,11 @@
 #include <sys/stat.h>  // mkdir(2)
 #include <memory>
 
-using namespace sfl;
+using namespace ring;
 
 std::atomic_bool ManagerImpl::initialized = {false};
 
-using namespace sfl;
+using namespace ring;
 
 static void
 copy_over(const std::string &srcPath, const std::string &destPath)
@@ -135,10 +135,10 @@ ManagerImpl::ManagerImpl() :
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(*pluginManager_), client_(),
-    currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, sfl::AudioFormat::MONO()),
+    currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, ring::AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()
-    , ringbufferpool_(new sfl::RingBufferPool)
+    , ringbufferpool_(new ring::RingBufferPool)
     , callFactory(), conferenceMap_(), history_(),
     finished_(false), accountFactory_(), ice_tf_()
 {
@@ -235,9 +235,9 @@ ManagerImpl::init(const std::string &config_file)
         if (audiodriver_) {
             {
                 std::lock_guard<std::mutex> toneLock(toneMutex_);
-                telephoneTone_.reset(new sfl::TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
+                telephoneTone_.reset(new ring::TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
             }
-            dtmfKey_.reset(new sfl::DTMF(getRingBufferPool().getInternalSamplingRate()));
+            dtmfKey_.reset(new ring::DTMF(getRingBufferPool().getInternalSamplingRate()));
         }
     }
 
@@ -376,7 +376,7 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
         if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id))
             onHoldCall(current_call_id);
         else if (isConference(current_call_id) and not isConferenceParticipant(call_id))
-            detachParticipant(sfl::RingBufferPool::DEFAULT_ID);
+            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
     }
 
     try {
@@ -420,7 +420,7 @@ ManagerImpl::answerCall(const std::string& call_id)
         return false;
     }
 
-    // If sflphone is ringing
+    // If ring is ringing
     stopTone();
 
     // store the current call id
@@ -437,7 +437,7 @@ ManagerImpl::answerCall(const std::string& call_id)
         } else if (isConference(current_call_id) and not isConferenceParticipant(call_id)) {
             // if we are talking to a conference and we are answering an incoming call
             SFL_DBG("Detach main participant from conference");
-            detachParticipant(sfl::RingBufferPool::DEFAULT_ID);
+            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
         }
     }
 
@@ -605,7 +605,7 @@ ManagerImpl::offHoldCall(const std::string& callId)
         } else if (isConference(currentCallId) && callId != currentCallId) {
             holdConference(currentCallId);
         } else if (isConference(currentCallId) and not isConferenceParticipant(callId))
-            detachParticipant(sfl::RingBufferPool::DEFAULT_ID);
+            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
     }
 
     std::shared_ptr<Call> call;
@@ -743,7 +743,7 @@ ManagerImpl::removeConference(const std::string& conference_id)
     // We now need to bind the audio to the remain participant
 
     // Unbind main participant audio from conference
-    getRingBufferPool().unBindAll(sfl::RingBufferPool::DEFAULT_ID);
+    getRingBufferPool().unBindAll(ring::RingBufferPool::DEFAULT_ID);
 
     ParticipantSet participants(conf->getParticipantList());
 
@@ -751,7 +751,7 @@ ManagerImpl::removeConference(const std::string& conference_id)
     ParticipantSet::iterator iter_p = participants.begin();
 
     if (iter_p != participants.end())
-        getRingBufferPool().bindCallID(*iter_p, sfl::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().bindCallID(*iter_p, ring::RingBufferPool::DEFAULT_ID);
 
     // Then remove the conference from the conference map
     if (conferenceMap_.erase(conference_id))
@@ -877,7 +877,7 @@ ManagerImpl::addParticipant(const std::string& callId,
     // detach from prior communication and switch to this conference
     if (current_call_id != callId) {
         if (isConference(current_call_id))
-            detachParticipant(sfl::RingBufferPool::DEFAULT_ID);
+            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
         else
             onHoldCall(current_call_id);
     }
@@ -929,7 +929,7 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
         std::string current_call_id(getCurrentCallId());
 
         if (isConference(current_call_id))
-            detachParticipant(sfl::RingBufferPool::DEFAULT_ID);
+            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
         else
             onHoldCall(current_call_id);
     }
@@ -947,12 +947,12 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
         ParticipantSet participants(conf->getParticipantList());
 
         for (const auto &item_p : participants) {
-            getRingBufferPool().bindCallID(item_p, sfl::RingBufferPool::DEFAULT_ID);
+            getRingBufferPool().bindCallID(item_p, ring::RingBufferPool::DEFAULT_ID);
             // Reset ringbuffer's readpointers
             getRingBufferPool().flush(item_p);
         }
 
-        getRingBufferPool().flush(sfl::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().flush(ring::RingBufferPool::DEFAULT_ID);
 
         if (conf->getState() == Conference::ACTIVE_DETACHED)
             conf->setState(Conference::ACTIVE_ATTACHED);
@@ -1013,7 +1013,7 @@ ManagerImpl::joinParticipant(const std::string& callId1,
     if ((current_call_id != callId1) and (current_call_id != callId2)) {
         // If currently in a conference
         if (isConference(current_call_id))
-            detachParticipant(sfl::RingBufferPool::DEFAULT_ID);
+            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
         else
             onHoldCall(current_call_id); // currently in a call
     }
@@ -1123,7 +1123,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
 {
     const std::string current_call_id(getCurrentCallId());
 
-    if (call_id != sfl::RingBufferPool::DEFAULT_ID) {
+    if (call_id != ring::RingBufferPool::DEFAULT_ID) {
         auto call = getCallFromCallID(call_id);
         if (!call) {
             SFL_ERR("Could not find call %s", call_id.c_str());
@@ -1153,7 +1153,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
 
     } else {
         SFL_DBG("Unbind main participant from conference %d");
-        getRingBufferPool().unBindAll(sfl::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().unBindAll(ring::RingBufferPool::DEFAULT_ID);
 
         if (not isConference(current_call_id)) {
             SFL_ERR("Current call id (%s) is not a conference", current_call_id.c_str());
@@ -1228,7 +1228,7 @@ ManagerImpl::processRemainingParticipants(Conference &conf)
         for (const auto &p : participants)
             getRingBufferPool().flush(p);
 
-        getRingBufferPool().flush(sfl::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().flush(ring::RingBufferPool::DEFAULT_ID);
     } else if (n == 1) {
         // this call is the last participant, hence
         // the conference is over
@@ -1296,7 +1296,7 @@ ManagerImpl::addStream(const std::string& call_id)
         SFL_DBG("Add stream to call");
 
         // bind to main
-        getRingBufferPool().bindCallID(call_id, sfl::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().bindCallID(call_id, ring::RingBufferPool::DEFAULT_ID);
 
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
         if (!audiodriver_) {
@@ -1696,7 +1696,7 @@ ManagerImpl::callBusy(const std::string& id)
     client_.getCallManager()->callStateChanged(id, "BUSY");
 
     if (isCurrentCall(*call)) {
-        playATone(sfl::Tone::TONE_BUSY);
+        playATone(ring::Tone::TONE_BUSY);
         unsetCurrentCall();
     }
 
@@ -1922,7 +1922,7 @@ std::string
 ManagerImpl::retrieveConfigPath() const
 {
 #ifdef __ANDROID__
-    std::string configdir = "/data/data/org.sflphone";
+    std::string configdir = "/data/data/cx.ring";
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
@@ -1938,7 +1938,7 @@ ManagerImpl::retrieveConfigPath() const
             SFL_DBG("Cannot create directory: %s!", configdir.c_str());
     }
 
-    static const char * const PROGNAME = "sflphoned";
+    static const char * const PROGNAME = "dring";
     return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 

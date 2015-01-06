@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,7 @@ void AudioCodecTest::testCodecs()
     AudioCodecFactory factory(pluginMgr);
     const auto payloadTypes = factory.getCodecList();
 
-    std::vector<std::shared_ptr<sfl::AudioCodec>> codecs;
+    std::vector<std::shared_ptr<ring::AudioCodec>> codecs;
 
     for (auto p : payloadTypes)
         codecs.push_back(factory.getCodec(p));

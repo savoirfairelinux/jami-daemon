@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -62,12 +62,12 @@ void cleanup()
 int main(int argc, char* argv[])
 {
     atexit(cleanup);
-    printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2014\n\n");
+    printf("\nRing Daemon Test Suite, by Savoir-Faire Linux 2004-2015\n\n");
     setConsoleLog(true);
     setDebugMode(true);
     fileutils::FileHandle f(fileutils::create_pidfile());
     if (f.fd == -1) {
-        fprintf(stderr, "An sflphoned instance is already running, quitting...\n");
+        fprintf(stderr, "An dring instance is already running, quitting...\n");
         return 1;
     }
 

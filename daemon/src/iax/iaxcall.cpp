@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -239,12 +239,12 @@ void
 IAXCall::sendTextMessage(const std::string& message, const std::string& /*from*/)
 {
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-    sfl::InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
+    ring::InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
 }
 #endif
 
 void
-IAXCall::putAudioData(sfl::AudioBuffer& buf)
+IAXCall::putAudioData(ring::AudioBuffer& buf)
 {
     ringbuffer_->put(buf);
 }

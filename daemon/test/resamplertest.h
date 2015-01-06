@@ -123,22 +123,22 @@ private:
     /*
      * Perform upsampling on the whole input buffer
      */
-    void performUpsampling(sfl::Resampler &resampler);
+    void performUpsampling(ring::Resampler &resampler);
 
     /*
      * Perform downsampling on the whold input buffer
      */
-    void performDownsampling(sfl::Resampler &resampler);
+    void performDownsampling(ring::Resampler &resampler);
 
     /**
      * Used to store input samples
      */
-    sfl::AudioBuffer inputBuffer;
+    ring::AudioBuffer inputBuffer;
 
     /**
      * Used to receive output samples
      */
-    sfl::AudioBuffer outputBuffer;
+    ring::AudioBuffer outputBuffer;
 };
 
 /* Register the test module */

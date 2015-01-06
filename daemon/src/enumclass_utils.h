@@ -27,7 +27,7 @@
 #include <vector>
 #include <cassert>
 
-namespace sfl {
+namespace ring {
 
 /**
  * This function adds a safe way to get an enum class size
@@ -97,7 +97,7 @@ private:
  * This is useful to use enum class in C++11 foreach loops
  *
  * @usage
- *   for (const MyEnum& value : sfl::Matrix0D<MyEnum>()) {
+ *   for (const MyEnum& value : ring::Matrix0D<MyEnum>()) {
  *       std::cout << "Name: " << MyEnumNames[value] << std::endl;
  *   }
  */
@@ -210,7 +210,7 @@ template <class E, class T, class A> std::map<A,E> Matrix1D<E,T,A>::reverseMappi
 template<class Row, typename Value, typename Accessor>
 void Matrix1D<Row,Value,Accessor>::setReverseMapping(Matrix1D<Row,const char*> names)
 {
-    for ( const Row row : sfl::Matrix0D<Row>() )
+    for ( const Row row : ring::Matrix0D<Row>() )
         reverseMapping_[names[row]] = row;
 }
 
