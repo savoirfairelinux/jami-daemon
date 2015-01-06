@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -38,13 +38,13 @@
 #include "dbus/dbusclient.h"
 #include "fileutils.h"
 
-static int sflphFlags = 0;
+static int ringFlags = 0;
 static std::unique_ptr<DBusClient> dbusClient;
 
 static void print_title()
 {
-    std::cout << "SFLphone Daemon " << sflph_version() <<
-        ", by Savoir-Faire Linux 2004-2014" << std::endl <<
+    std::cout << "Ring Daemon " << ring_version() <<
+        ", by Savoir-Faire Linux 2004-2015" << std::endl <<
         "http://www.sflphone.org/" << std::endl;
 }
 
@@ -121,10 +121,10 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
         quit = true;
     } else {
         if (consoleFlag) {
-            sflphFlags |= SFLPH_FLAG_CONSOLE_LOG;
+            ringFlags |= RING_FLAG_CONSOLE_LOG;
         }
         if (debugFlag) {
-            sflphFlags |= SFLPH_FLAG_DEBUG;
+            ringFlags |= RING_FLAG_DEBUG;
         }
     }
     return quit;
@@ -185,7 +185,7 @@ int main(int argc, char *argv [])
 
     // initialize client/library
     try {
-        dbusClient = std::unique_ptr<DBusClient>(new DBusClient(sflphFlags, persistent));
+        dbusClient = std::unique_ptr<DBusClient>(new DBusClient(ringFlags, persistent));
     } catch (const std::exception& ex) {
         std::cerr << "One does not simply initialize the DBus client: " << ex.what() << std::endl;
         return 1;

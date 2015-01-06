@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -42,12 +42,12 @@
 #include <map>
 #include <string>
 
-#include "sflphone.h"
+#include "ring.h"
 
 class ConfigurationManager
 {
     public:
-        void registerEvHandlers(struct sflph_config_ev_handlers* evHandlers);
+        void registerEvHandlers(struct ring_config_ev_handlers* evHandlers);
 
     // Methods
     public:
@@ -168,7 +168,7 @@ class ConfigurationManager
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
-        sflph_config_ev_handlers evHandlers_{};
+        ring_config_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 

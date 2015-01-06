@@ -50,12 +50,12 @@ endif
 libclient_dbus_la_CXXFLAGS = -I../ \
 							 -I$(top_srcdir)/src \
             -DPREFIX=\"$(prefix)\" \
-            -DPROGSHAREDIR=\"${datadir}/sflphone\" \
+            -DPROGSHAREDIR=\"${datadir}/ring\" \
             $(DBUSCPP_CFLAGS)
 
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services
-service_DATA = org.sflphone.SFLphone.service
+service_DATA = cx.ring.Ring.service
 
 EXTRA_DIST = callmanager-introspec.xml \
 			 configurationmanager-introspec.xml \
@@ -68,4 +68,4 @@ endif
 
 CLEANFILES= \
     $(BUILT_SOURCES) \
-	org.sflphone.SFLphone.service
+	cx.ring.Ring.service

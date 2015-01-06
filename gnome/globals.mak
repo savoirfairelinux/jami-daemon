@@ -4,7 +4,7 @@ src = $(top_srcdir)
 ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
 
-sfllibdir=$(DESTDIR)$(libdir)/sflphone
+sfllibdir=$(DESTDIR)$(libdir)/ring
 sflplugindir=$(sfllibdir)/plugins
 
 # Preprocessor flags
@@ -13,9 +13,9 @@ AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
 					-I$(src)/src/config									\
 					-I$(src)/src/dbus									\
 					-I$(src)/src/contacts								\
-					-DDATA_DIR=\""$(prefix)/share/sflphone"\"			\
-					-DICONS_DIR=\""$(prefix)/share/sflphone"\"			\
-					-DCODECS_DIR=\""$(prefix)/lib/sflphone/codecs"\"	\
+					-DDATA_DIR=\""$(prefix)/share/ring"\"			\
+					-DICONS_DIR=\""$(prefix)/share/ring"\"			\
+					-DCODECS_DIR=\""$(prefix)/lib/ring/codecs"\"	\
 					-DPREFIX=\"$(prefix)\"								\
 					-DENABLE_TRACE										\
 					-DPREFIX=\""$(prefix)"\"							\
@@ -23,7 +23,7 @@ AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
 					-DDATADIR=\""$(datadir)"\"							\
 					-DLIBDIR=\""$(libdir)"\"							\
 					-DLOCALEDIR=\""$(localedir)"\"							\
-					-DSFLPHONE_UIDIR=\""$(datadir)/sflphone/ui"\" \
+					-DSFLPHONE_UIDIR=\""$(datadir)/ring/ui"\" \
 					-DPLUGINS_DIR=\""$(sflplugindir)"\"
 indent:
 	@echo "Indenting code:"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <node name="/callmanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
-    <interface name="org.sflphone.SFLphone.CallManager">
+    <interface name="cx.ring.Ring.CallManager">
 
         <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
             <p>The CallManager interface is used to manage call and conference related actions.</p>

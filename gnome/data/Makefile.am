@@ -1,5 +1,5 @@
 # gsettings_SCHEMAS is a list of all the schemas you want to install
-gsettings_SCHEMAS = org.sflphone.SFLphone.gschema.xml
+gsettings_SCHEMAS = cx.ring.Ring.gschema.xml
 # include the appropriate makefile rules for schema handling
 @GSETTINGS_RULES@
 

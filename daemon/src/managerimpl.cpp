@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -420,7 +420,7 @@ ManagerImpl::answerCall(const std::string& call_id)
         return false;
     }
 
-    // If sflphone is ringing
+    // If ring is ringing
     stopTone();
 
     // store the current call id
@@ -1922,7 +1922,7 @@ std::string
 ManagerImpl::retrieveConfigPath() const
 {
 #ifdef __ANDROID__
-    std::string configdir = "/data/data/org.sflphone";
+    std::string configdir = "/data/data/cx.ring";
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
@@ -1938,7 +1938,7 @@ ManagerImpl::retrieveConfigPath() const
             SFL_DBG("Cannot create directory: %s!", configdir.c_str());
     }
 
-    static const char * const PROGNAME = "sflphoned";
+    static const char * const PROGNAME = "dring";
     return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 

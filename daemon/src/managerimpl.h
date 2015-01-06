@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -745,7 +745,7 @@ class ManagerImpl {
         void initAudioDriver();
 
         /**
-         * Load the accounts order set by the user from the sflphonedrc config file
+         * Load the accounts order set by the user from the dringrc config file
          * @return std::vector<std::string> A vector containing the account ID's
          */
         std::vector<std::string> loadAccountOrder() const;

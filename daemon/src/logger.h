@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -82,7 +82,7 @@ void strErr();
 #include <android/log.h>
 
 #ifndef APP_NAME
-#define APP_NAME "libsflphone"
+#define APP_NAME "libdring"
 #endif /* APP_NAME */
 
 // Avoid printing whole path on android

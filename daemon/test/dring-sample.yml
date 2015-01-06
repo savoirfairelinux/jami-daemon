@@ -21,7 +21,7 @@ accounts:
   publishPort: 5060
   registrationexpire: 600
   ringtoneEnabled: true
-  ringtonePath: /usr/share/sflphone/ringtones/konga.ul
+  ringtonePath: /usr/share/ring/ringtones/konga.ul
   sameasLocal: true
   serviceRoute:
   srtp:
@@ -93,7 +93,7 @@ accounts:
   publishPort: 5060
   registrationexpire: 60
   ringtoneEnabled: true
-  ringtonePath: /usr/share/sflphone/ringtones/konga.ul
+  ringtonePath: /usr/share/ring/ringtones/konga.ul
   sameasLocal: true
   serviceRoute:
   srtp:

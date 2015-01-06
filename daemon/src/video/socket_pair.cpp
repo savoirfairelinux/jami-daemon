@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Copyright (c) 2002 Fabrice Bellard
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
