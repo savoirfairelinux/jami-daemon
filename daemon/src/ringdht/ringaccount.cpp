@@ -70,7 +70,7 @@
 #include <array>
 #include <memory>
 #include <sstream>
-#include <cstdlib>
+#include <cctype>
 
 static constexpr int ICE_COMPONENTS {5};
 static constexpr int ICE_COMP_SIP_TRANSPORT {4};
@@ -129,10 +129,18 @@ std::shared_ptr<SIPCall>
 RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
     auto dhtf = toUrl.find("ring:");
-    dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
+    if (dhtf != std::string::npos) {
+        dhtf = dhtf+5;
+    } else {
+        dhtf = toUrl.find("sip:");
+        dhtf = (dhtf == std::string::npos) ? 0 : dhtf+4;
+    }
     if (toUrl.length() - dhtf < 40)
         throw std::invalid_argument("id must be a ring infohash");
     const std::string toUri = toUrl.substr(dhtf, 40);
+    if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
+        throw std::invalid_argument("id must be a ring infohash");
+
     SFL_DBG("Calling DHT peer %s", toUri.c_str());
 
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::OUTGOING);
@@ -146,6 +154,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         return call;
     }
 
+    call->setState(Call::INACTIVE);
     call->setConnectionState(Call::TRYING);
 
     auto shared = shared_from_this();
@@ -163,11 +172,11 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         },
         [callkey, callvid, call, shared](bool ok){
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
-            this_.dht_.cancelPut(callkey, callvid);
-            if (ok)
-                call->setConnectionState(Call::PROGRESSING);
-            else
+            if (!ok) {
                 call->setConnectionState(Call::DISCONNECTED);
+                Manager::instance().callFailure(call->getCallId());
+            }
+            this_.dht_.cancelPut(callkey, callvid);
         }
     );
 
@@ -189,6 +198,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
                 ice->start(v->data);
                 if (call->waitForIceNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
                     call->setConnectionState(Call::DISCONNECTED);
+                    Manager::instance().callFailure(call->getCallId());
                     return false;
                 }
                 call->setConnectionState(Call::PROGRESSING);
@@ -612,7 +622,7 @@ void RingAccount::doRegister()
                 for (const auto& v : vals) {
                     try {
                         if (v->recipient != this_.dht_.getId() || v->type != this_.ICE_ANNOUCEMENT_TYPE.id) {
-                            SFL_WARN("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
+                            SFL_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
                             continue;
                         }
                         if (v->owner.getId() == this_.dht_.getId())
@@ -647,6 +657,7 @@ void RingAccount::doRegister()
                                 if (!ok || call->waitForIceNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
                                     SFL_WARN("nego failed");
                                     call->setConnectionState(Call::DISCONNECTED);
+                                    Manager::instance().callFailure(call->getCallId());
                                 } else {
                                     SFL_WARN("nego succeeded");
                                     call->setConnectionState(Call::PROGRESSING);
