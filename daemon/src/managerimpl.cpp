@@ -1708,10 +1708,10 @@ ManagerImpl::callBusy(const std::string& id)
 void
 ManagerImpl::callFailure(const std::string& call_id)
 {
+    client_.getCallManager()->callStateChanged(call_id, "FAILURE");
+
     auto call = getCallFromCallID(call_id);
     if (!call) return;
-
-    client_.getCallManager()->callStateChanged(call_id, "FAILURE");
 
     if (isCurrentCall(*call)) {
         playATone(Tone::TONE_BUSY);
