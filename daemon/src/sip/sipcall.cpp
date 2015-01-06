@@ -42,7 +42,6 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
-#include "audio/audiolayer.h"
 
 using namespace sfl;
 
