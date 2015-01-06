@@ -629,10 +629,8 @@ void RingAccount::doRegister()
                             continue;
                         auto res = this_.treatedCalls_.insert(v->id);
                         this_.saveTreatedCalls();
-                        if (!res.second) {
-                            SFL_DBG("Ignoring already treated incomming call");
+                        if (!res.second)
                             continue;
-                        }
                         auto from = v->owner.getId().toString();
                         auto from_vid = v->id;
                         auto reply_vid = from_vid+1;
@@ -670,7 +668,6 @@ void RingAccount::doRegister()
                         call->getIceTransport()->start(v->data);
                         call->setPeerNumber(from);
                         call->initRecFilename(from);
-                        SFL_WARN("Pushing pending call with peer %s", from.c_str());
                         this_.pendingCalls_.push_back(call);
                         return true;
                     } catch (const std::exception& e) {

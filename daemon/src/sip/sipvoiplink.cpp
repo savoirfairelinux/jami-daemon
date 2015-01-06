@@ -842,8 +842,10 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         return;
 
     auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call_ptr)
+    if (!call_ptr) {
+        SFL_WARN("invite_session_state_changed_cb: can't find related call");
         return;
+    }
     auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     if (ev and inv->state != PJSIP_INV_STATE_CONFIRMED) {
