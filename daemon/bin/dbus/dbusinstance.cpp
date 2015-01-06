@@ -32,7 +32,7 @@
 
 DBusInstance::DBusInstance(DBus::Connection& connection,
                            const OnNoMoreClientFunc& onNoMoreClientFunc) :
-    DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/Instance"),
+    DBus::ObjectAdaptor(connection, "/org/ring/Ring/Instance"),
     onNoMoreClientFunc_(onNoMoreClientFunc),
     count_(0)
 {}

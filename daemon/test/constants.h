@@ -34,7 +34,7 @@
 #define HISTORY_SAMPLE WORKSPACE "history-sample.tpl"
 #define HISTORY_SAMPLE_BAK HISTORY_SAMPLE ".bak"
 
-#define CONFIG_SAMPLE WORKSPACE "sflphoned-sample.yml"
+#define CONFIG_SAMPLE WORKSPACE "dring-sample.yml"
 #define CONFIG_SAMPLE_BAK CONFIG_SAMPLE ".bak"
 
 #define HISTORY_SAMPLE_SIZE 3

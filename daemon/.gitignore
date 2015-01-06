@@ -3,5 +3,5 @@ aclocal.m4
 build-aux
 configure
 bin/dbus/*.adaptor.h
-bin/dbus/org.sflphone.SFLphone.service
-bin/sflphoned
+bin/dbus/org.ring.Ring.service
+bin/dring

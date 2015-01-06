@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
     setDebugMode(true);
     fileutils::FileHandle f(fileutils::create_pidfile());
     if (f.fd == -1) {
-        fprintf(stderr, "An sflphoned instance is already running, quitting...\n");
+        fprintf(stderr, "An dring instance is already running, quitting...\n");
         return 1;
     }
 

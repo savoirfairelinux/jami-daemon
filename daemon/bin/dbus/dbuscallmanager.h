@@ -56,7 +56,7 @@
 #include <stdexcept>
 
 class DBusCallManager :
-    public org::sflphone::SFLphone::CallManager_adaptor,
+    public org::ring::Ring::CallManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {

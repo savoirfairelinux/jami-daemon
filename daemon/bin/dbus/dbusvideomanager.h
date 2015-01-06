@@ -55,7 +55,7 @@
 #include <stdexcept>
 
 class DBusVideoManager :
-    public org::sflphone::SFLphone::VideoManager_adaptor,
+    public org::ring::Ring::VideoManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
