@@ -43,7 +43,7 @@ struct SipIceTransport
 {
         SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& pool, long t_type,
                         const std::shared_ptr<sfl::IceTransport>& ice,
-                        int comp_id);
+                        int comp_id, std::function<int()> destroy_cb);
         ~SipIceTransport();
 
         /**
@@ -60,10 +60,13 @@ struct SipIceTransport
     private:
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> rxPool_;
+
         pjsip_rx_data rdata;
         bool is_registered_ {false};
         const std::shared_ptr<sfl::IceTransport> ice_;
         const int comp_id_;
+
+        std::function<int()> destroy_cb_ {};
 
         pj_status_t send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
                          int addr_len, void *token,
