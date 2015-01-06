@@ -33,7 +33,7 @@
 
 #include <glib.h>
 
-#include "sflphone_client.h"
+#include "ring_client.h"
 #include "accountlist.h"
 #include "callable_obj.h"
 
