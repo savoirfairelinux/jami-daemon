@@ -179,7 +179,7 @@ public:
 #endif
 
 #if HAVE_DHT
-    std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<sfl::IceTransport>&, unsigned comp_id);
+    std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<sfl::IceTransport>, unsigned comp_id);
 #endif
 
     std::shared_ptr<SipTransport> findTransport(pjsip_transport*);

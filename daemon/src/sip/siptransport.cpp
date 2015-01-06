@@ -131,8 +131,20 @@ cp_(cp), pool_(pool), endpt_(endpt)
 
 SipTransportBroker::~SipTransportBroker()
 {
+    SFL_DBG("Destroying SipTransportBroker");
+
+    {
+        std::lock_guard<std::mutex> lock(transportMapMutex_);
+        udpTransports_.clear();
+        transports_.clear();
+    }
     instance = nullptr;
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
+    {
+        std::unique_lock<std::mutex> lock(iceMutex_);
+        if (not iceTransports_.empty())
+            SFL_WARN("Remaining %u registred ICE transports", iceTransports_.size());
+    }
 }
 
 /** Static tranport state change callback */
@@ -166,10 +178,11 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
     }
 
 #if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
-    if (state == PJSIP_TP_STATE_DESTROY) {
+    if (state == PJSIP_TP_STATE_DESTROY)
 #else
-    if (tp->is_destroying) {
+    if (tp->is_destroying)
 #endif
+     {
         std::lock_guard<std::mutex> lock(transportMapMutex_);
 
         // Transport map cleanup
@@ -179,30 +192,17 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
 
         // If UDP
         const auto type = tp->key.type;
-        //if (std::strlen(tp->type_name) >= 3 && std::strncmp(tp->type_name, "UDP", 3ul) == 0) {
         if (type == PJSIP_TRANSPORT_UDP || type == PJSIP_TRANSPORT_UDP6) {
-            SFL_WARN("UDP transport destroy");
-
             auto transport_key = std::find_if(udpTransports_.cbegin(), udpTransports_.cend(), [tp](const std::pair<SipTransportDescr, pjsip_transport*>& i) {
                 return i.second == tp;
             });
             if (transport_key != udpTransports_.end()) {
+                SFL_WARN("UDP transport destroy");
                 transports_.erase(transport_key->second);
                 udpTransports_.erase(transport_key);
                 transportDestroyedCv_.notify_all();
             }
         }
-#if HAVE_DHT
-        else if (type == ice_pj_transport_type_) {
-            SFL_WARN("ICE transport destroy");
-            std::unique_lock<std::mutex> lock(iceMutex_);
-            const auto transport_key = std::find_if(iceTransports_.begin(), iceTransports_.end(), [tp](const SipIceTransport& i) {
-                return reinterpret_cast<const pjsip_transport*>(&i) == tp;
-            });
-            if (transport_key != iceTransports_.end())
-                iceTransports_.erase(transport_key);
-        }
-#endif
     }
 }
 
@@ -379,10 +379,20 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 
 #if HAVE_DHT
 std::shared_ptr<SipTransport>
-SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport>& ice, unsigned comp_id)
+SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport> ice, unsigned comp_id)
 {
     std::unique_lock<std::mutex> lock(iceMutex_);
-    iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, comp_id);
+    iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, comp_id, [=]() -> int {
+        std::unique_lock<std::mutex> lock(iceMutex_);
+        const auto ice_transport_key = std::find_if(iceTransports_.begin(), iceTransports_.end(), [&](const SipIceTransport& i) {
+            return i.getIceTransport() == ice;
+        });
+        if (ice_transport_key != iceTransports_.end()) {
+            iceTransports_.erase(ice_transport_key);
+            return PJ_SUCCESS;
+        }
+        return PJ_ENOTFOUND;
+    });
     auto& sip_ice_tr = iceTransports_.front();
     auto ret = std::make_shared<SipTransport>(&sip_ice_tr.base);
     {
