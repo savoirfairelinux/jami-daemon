@@ -492,13 +492,18 @@ void VideoEncoder::prepareEncoderContext(bool is_video)
 
     if (is_video) {
         // resolution must be a multiple of two
-        char *width = av_dict_get(options_, "width", NULL, 0)->value;
+        auto width_param = av_dict_get(options_, "width", NULL, 0);
+        char *width = width_param ?
+            av_dict_get(options_, "width", NULL, 0)->value : nullptr;
         dstWidth_ = encoderCtx_->width = width ? atoi(width) : 0;
-        char *height = av_dict_get(options_, "height", NULL, 0)->value;
+        auto height_param = av_dict_get(options_, "height", NULL, 0);
+        char *height = height_param ?
+            av_dict_get(options_, "height", NULL, 0)->value : nullptr;
         dstHeight_ = encoderCtx_->height = height ? atoi(height) : 0;
 
-        const char *framerate = av_dict_get(options_, "framerate",
-                                            NULL, 0)->value;
+        auto framerate_param = av_dict_get(options_, "framerate", NULL, 0);
+        const char *framerate =  framerate_param ?
+            av_dict_get(options_, "framerate", NULL, 0)->value : nullptr;
         const int DEFAULT_FPS = 30;
         const int fps = framerate ? atoi(framerate) : DEFAULT_FPS;
         encoderCtx_->time_base = (AVRational) {1, fps};
