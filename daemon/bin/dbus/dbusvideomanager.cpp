@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Philippe Proulx <philippe.proulx@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,76 +27,76 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "sflphone.h"
+#include "ring.h"
 
 #include "dbusvideomanager.h"
 
 DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/VideoManager")
+    : DBus::ObjectAdaptor(connection, "/org/ring/Ring/VideoManager")
 {
 }
 
 std::vector<std::map<std::string, std::string>> DBusVideoManager::getCodecs(const std::string& accountID)
 {
-    return sflph_video_get_codecs(accountID);
+    return ring_video_get_codecs(accountID);
 }
 
 void DBusVideoManager::setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string> > &details)
 {
-    sflph_video_set_codecs(accountID, details);
+    ring_video_set_codecs(accountID, details);
 }
 
 std::vector<std::string> DBusVideoManager::getDeviceList()
 {
-    return sflph_video_get_device_list();
+    return ring_video_get_device_list();
 }
 
 std::map<std::string, std::map<std::string, std::vector<std::string>>> DBusVideoManager::getCapabilities(const std::string& name)
 {
-    return sflph_video_get_capabilities(name);
+    return ring_video_get_capabilities(name);
 }
 
 std::map<std::string, std::string> DBusVideoManager::getSettings(const std::string& name)
 {
-    return sflph_video_get_settings(name);
+    return ring_video_get_settings(name);
 }
 
 void DBusVideoManager::applySettings(const std::string& name, const std::map<std::string, std::string>& settings)
 {
-    sflph_video_apply_settings(name, settings);
+    ring_video_apply_settings(name, settings);
 }
 
 void DBusVideoManager::setDefaultDevice(const std::string &dev)
 {
-    sflph_video_set_default_device(dev);
+    ring_video_set_default_device(dev);
 }
 
 std::string DBusVideoManager::getDefaultDevice()
 {
-    return sflph_video_get_default_device();
+    return ring_video_get_default_device();
 }
 
 std::string DBusVideoManager::getCurrentCodecName(const std::string &callID)
 {
-    return sflph_video_get_current_codec_name(callID);
+    return ring_video_get_current_codec_name(callID);
 }
 
 void DBusVideoManager::startCamera()
 {
-    sflph_video_start_camera();
+    ring_video_start_camera();
 }
 
 void DBusVideoManager::stopCamera()
 {
-    sflph_video_stop_camera();
+    ring_video_stop_camera();
 }
 
 bool DBusVideoManager::switchInput(const std::string& resource)
 {
-    return sflph_video_switch_input(resource);
+    return ring_video_switch_input(resource);
 }
 
 bool DBusVideoManager::hasCameraStarted()
 {
-    return sflph_video_is_camera_started();
+    return ring_video_is_camera_started();
 }

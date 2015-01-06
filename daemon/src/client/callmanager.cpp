@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *
@@ -45,7 +45,7 @@
 #include "logger.h"
 #include "manager.h"
 
-void CallManager::registerEvHandlers(struct sflph_call_ev_handlers* evHandlers)
+void CallManager::registerEvHandlers(struct ring_call_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }

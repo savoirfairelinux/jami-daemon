@@ -1,8 +1,8 @@
 SECTION="1"
 
-TEMPLATES=sflphoned.pod
+TEMPLATES=dring.pod
 
-man_MANS=sflphoned.1
+man_MANS=dring.1
 
 POD2MAN=pod2man
 

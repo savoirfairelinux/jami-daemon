@@ -1,6 +1,6 @@
 COPYRIGHT NOTICE
 
-Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ make
 make install
 
 # And the GNOME client
-cd sflphone-client-gnome
+cd ring-client-gnome
 ./autogen.sh
 ./configure
 make
@@ -96,10 +96,10 @@ https://projects.savoirfairelinux.com/projects/sflphone/wiki/How_to_build
 How to compile on OSX
 ---------------------
 # These first steps are only necessary if you don't use a package manager.
-cd sflphone/daemon/extras/tools
+cd daemon/extras/tools
 ./bootstrap
 make
-export PATH=$PATH:/location/of/sflphone/daemon/extras/tools/build/bin
+export PATH=$PATH:/location/of/ring/daemon/extras/tools/build/bin
 
 # Or, use your favorite package manager to install the necessary tools (macports or brew).
 automake libtool check gettext libtoolize ...
@@ -131,7 +131,7 @@ sudo update-alternatives --config x86_64-w64-mingw32-gcc
 sudo update-alternatives --config x86_64-w64-mingw32-g++
 
 # Compile the dependencies
-cd sflphone/daemon/contrib/
+cd ring/daemon/contrib/
 mkdir win64 && cd win64
 ../bootstrap --host=x86_64-w64-mingw32
 make

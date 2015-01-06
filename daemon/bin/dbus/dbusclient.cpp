@@ -31,7 +31,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
-#include "sflphone.h"
+#include "ring.h"
 
 #include "dbusclient.h"
 #include "dbus_cpp.h"
@@ -79,10 +79,10 @@ DBusClient::DBusClient(int sflphFlags, bool persistent) :
         // destructor, so we must NOT delete them ourselves.
         timeout_ = new DBus::DefaultTimeout(10 /* ms */, true, dispatcher_);
         // Poll for SIP/IAX events
-        timeout_->expired = new EventCallback(sflph_poll_events);
+        timeout_->expired = new EventCallback(ring_poll_events);
 
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
-        sessionConnection.request_name("org.sflphone.SFLphone");
+        sessionConnection.request_name("org.ring.Ring");
 
         callManager_ = new DBusCallManager(sessionConnection);
         configurationManager_ = new DBusConfigurationManager(sessionConnection);
@@ -109,7 +109,7 @@ DBusClient::DBusClient(int sflphFlags, bool persistent) :
     auto ret = initLibrary(sflphFlags);
 
     if (ret < 0) {
-        throw std::runtime_error("cannot initialize libsflphone");
+        throw std::runtime_error("cannot initialize libring");
     }
 
     instanceManager_->started();
@@ -138,7 +138,7 @@ int DBusClient::initLibrary(int sflphFlags)
     auto callM = callManager_; // just an alias
 
     // Call event handlers
-    sflph_call_ev_handlers callEvHandlers = {
+    ring_call_ev_handlers callEvHandlers = {
         bind(&DBusCallManager::callStateChanged, callM, _1, _2),
         bind(&DBusCallManager::transferFailed, callM),
         bind(&DBusCallManager::transferSucceeded, callM),
@@ -167,7 +167,7 @@ int DBusClient::initLibrary(int sflphFlags)
     auto confM = configurationManager_; // just an alias
 
     // Configuration event handlers
-    sflph_config_ev_handlers configEvHandlers = {
+    ring_config_ev_handlers configEvHandlers = {
         bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2),
         bind(&DBusConfigurationManager::accountsChanged, confM),
         bind(&DBusConfigurationManager::historyChanged, confM),
@@ -180,7 +180,7 @@ int DBusClient::initLibrary(int sflphFlags)
 
     auto presM = presenceManager_;
     // Presence event handlers
-    sflph_pres_ev_handlers presEvHandlers = {
+    ring_pres_ev_handlers presEvHandlers = {
         bind(&DBusPresenceManager::newServerSubscriptionRequest, presM, _1),
         bind(&DBusPresenceManager::serverError, presM, _1, _2, _3),
         bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4),
@@ -191,7 +191,7 @@ int DBusClient::initLibrary(int sflphFlags)
     auto videoM = videoManager_;
 
     // Video event handlers
-    sflph_video_ev_handlers videoEvHandlers = {
+    ring_video_ev_handlers videoEvHandlers = {
         bind(&DBusVideoManager::deviceEvent, videoM),
         bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5),
         bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)
@@ -199,7 +199,7 @@ int DBusClient::initLibrary(int sflphFlags)
 #endif // SFL_VIDEO
 
     // All event handlers
-    sflph_ev_handlers evHandlers = {
+    ring_ev_handlers evHandlers = {
         .call_ev_handlers = callEvHandlers,
         .config_ev_handlers = configEvHandlers,
         .pres_ev_handlers = presEvHandlers,
@@ -209,12 +209,12 @@ int DBusClient::initLibrary(int sflphFlags)
     };
 
     // Initialize now
-    return sflph_init(&evHandlers, static_cast<sflph_init_flag>(sflphFlags));
+    return ring_init(&evHandlers, static_cast<ring_init_flag>(sflphFlags));
 }
 
 void DBusClient::finiLibrary()
 {
-    sflph_fini();
+    ring_fini();
 }
 
 int DBusClient::event_loop()

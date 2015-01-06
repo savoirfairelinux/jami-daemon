@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 
 DBusInstance::DBusInstance(DBus::Connection& connection,
                            const OnNoMoreClientFunc& onNoMoreClientFunc) :
-    DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/Instance"),
+    DBus::ObjectAdaptor(connection, "/org/ring/Ring/Instance"),
     onNoMoreClientFunc_(onNoMoreClientFunc),
     count_(0)
 {}

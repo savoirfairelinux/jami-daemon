@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -107,9 +107,9 @@ Account::Account(const string &accountID)
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
     #ifdef __ANDROID__
-        ringtonePath_ = "/data/data/org.sflphone/files/ringtones/konga.ul";
+        ringtonePath_ = "/data/data/org.ring/files/ringtones/konga.ul";
     #else
-        ringtonePath_ = "/usr/share/sflphone/ringtones/konga.ul";
+        ringtonePath_ = "/usr/share/ring/ringtones/konga.ul";
     #endif
 }
 

@@ -17,7 +17,7 @@ doc/spec.html: $(XMLS) tools/doc-generator.xsl
 
 doc/spec/index.html: $(XMLS) tools/doc-generator.py tools/specparser.py $(TEMPLATES)
 	@install -d tmp/doc
-	$(PYTHON) tools/doc-generator.py spec/all.xml doc/spec sflphone-spec org.sflphone.SFLphone
+	$(PYTHON) tools/doc-generator.py spec/all.xml doc/spec sflphone-spec org.ring.Ring
 
 doc:	$(GENERATED_FILES)
 

@@ -43,7 +43,7 @@
 #include "video/video_base.h"
 #include "video/video_input.h"
 
-#include "sflphone.h"
+#include "ring.h"
 
 class VideoManager
 {
@@ -62,7 +62,7 @@ class VideoManager
 
     public:
         VideoManager();
-        void registerEvHandlers(struct sflph_video_ev_handlers* evHandlers);
+        void registerEvHandlers(struct ring_video_ev_handlers* evHandlers);
         sfl_video::VideoDeviceMonitor& getVideoDeviceMonitor();
 
     // Methods
@@ -111,7 +111,7 @@ class VideoManager
 
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        sflph_video_ev_handlers evHandlers_{};
+        ring_video_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 

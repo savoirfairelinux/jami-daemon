@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -43,7 +43,7 @@ VideoManager::VideoManager()
     libav_utils::sfl_avcodec_init();
 }
 
-void VideoManager::registerEvHandlers(struct sflph_video_ev_handlers* evHandlers)
+void VideoManager::registerEvHandlers(struct ring_video_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }

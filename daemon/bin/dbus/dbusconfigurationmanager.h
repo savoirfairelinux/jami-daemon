@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -59,7 +59,7 @@
 #include <stdexcept>
 
 class DBusConfigurationManager :
-    public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+    public org::ring::Ring::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
