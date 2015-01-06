@@ -43,9 +43,13 @@
 #include "manager.h"
 #include "array_size.h"
 #include "audio/audiolayer.h"
+
+using namespace sfl;
+
 #if USE_CCRTP
 #include "audio/audiortp/audio_rtp_factory.h" // for AudioRtpFactoryException
 #else
+
 #include "audio/audiortp/avformat_rtp_session.h"
 #endif
 #include "client/callmanager.h"
@@ -59,8 +63,6 @@
 #include "client/videomanager.h"
 
 #include <chrono>
-
-using namespace sfl;
 
 static sfl_video::VideoSettings
 getSettings()
