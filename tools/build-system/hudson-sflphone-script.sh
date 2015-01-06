@@ -197,7 +197,8 @@ if [ "$#" -eq 0 ]; then   # Script needs at least one command-line argument.
     -v enable video support
     -c use clang compiler
     -a run static code analysis after build
-    -t run unit tests after build"
+    -t run unit tests after build
+    -m disable most optional options"
     exit $E_OPTERR
 fi
 
@@ -226,6 +227,10 @@ while getopts ":b: t a v c" opt; do
         v)
             echo "-v is set, video support is disabled" >&2
             DOPTS="--disable-video $DOPTS"
+            ;;
+        m)
+            echo "-m is set, disabling dbus, video, iax, nm and pulse" >&2
+            DOPTS="--disable-video --without-iax --without-dbus --without-pulse --without-networkmanager $DOPTS"
             ;;
         c)
             echo "-c is set, clang compiler is used" >&2
