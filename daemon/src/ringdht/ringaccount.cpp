@@ -920,7 +920,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
         return contact_;
     }
 
-    auto ice = reinterpret_cast<SipIceTransport*>(t)->getIceTransport();
+    auto ice = reinterpret_cast<SipIceTransport*>(t);
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     /*pjsip_transport_type_e transportType = transportType_;
@@ -933,7 +933,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
     //pj_uint16_t port = getTlsListenerPort();
 
     //link_->sipTransport->findLocalAddressFromTransport(t, transportType, hostname_, address, port);
-    auto address = ice->getDefaultLocalAddress();
+    auto address = ice->getLocalAddress();
     /*if (addr) {
         address = addr;
         port =
