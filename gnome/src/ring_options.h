@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,40 +28,12 @@
  *  as that of the covered work.
  */
 
-#ifndef SFLPHONE_CLIENT_H_
-#define SFLPHONE_CLIENT_H_
+#ifndef RING_OPTIONS_H_
+#define RING_OPTIONS_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <glib.h>
 
-#include <gtk/gtk.h>
+GOptionContext *
+sflphone_options_get_context();
 
-#define SFLPHONE_GSETTINGS_SCHEMA "org.sflphone.SFLphone"
-#define SFLPHONE_TYPE_CLIENT (sflphone_client_get_type())
-#define SFLPHONE_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), SFLPHONE_TYPE_CLIENT, SFLPhoneClient))
-
-typedef struct
-{
-    GtkApplication parent;
-    /* TODO: hide implementation */
-    GSettings *settings;
-    /* UI builder */
-    GtkBuilder* uibuilder;
-    /* Main window */
-    GtkWidget *win;
-    /* Main toolbar */
-    GtkWidget *toolbar;
-#ifdef SFL_VIDEO
-    /* Video window */
-    GtkWidget *video;
-#endif
-
-} SFLPhoneClient;
-
-typedef GtkApplicationClass SFLPhoneClientClass;
-
-SFLPhoneClient *
-sflphone_client_new();
-
-#endif
+#endif /* RING_OPTIONS_H_ */

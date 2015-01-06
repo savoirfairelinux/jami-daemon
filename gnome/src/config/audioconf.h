@@ -32,7 +32,7 @@
 #define AUDIO_CONF_H_
 
 #include <gtk/gtk.h>
-#include "sflphone_client.h"
+#include "ring_client.h"
 
 GtkWidget* create_audio_configuration(SFLPhoneClient *client);
 
