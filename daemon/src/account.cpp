@@ -107,9 +107,9 @@ Account::Account(const string &accountID)
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
     #ifdef __ANDROID__
-        ringtonePath_ = "/data/data/org.sflphone/files/ringtones/konga.ul";
+        ringtonePath_ = "/data/data/org.ring/files/ringtones/konga.ul";
     #else
-        ringtonePath_ = "/usr/share/sflphone/ringtones/konga.ul";
+        ringtonePath_ = "/usr/share/ring/ringtones/konga.ul";
     #endif
 }
 

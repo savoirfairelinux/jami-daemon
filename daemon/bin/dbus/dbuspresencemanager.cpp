@@ -32,7 +32,7 @@
 #include "dbuspresencemanager.h"
 
 DBusPresenceManager::DBusPresenceManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/PresenceManager")
+    : DBus::ObjectAdaptor(connection, "/org/ring/Ring/PresenceManager")
 {
 }
 

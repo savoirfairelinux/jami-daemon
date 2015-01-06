@@ -131,7 +131,7 @@ enum sflph_init_flag {
 };
 
 /**
- * Initializes libsflphone.
+ * Initializes libring.
  *
  * @param ev_handlers Event handlers
  * @param flags       Flags to customize this initialization
@@ -140,7 +140,7 @@ enum sflph_init_flag {
 int sflph_init(struct sflph_ev_handlers* ev_handlers, enum sflph_init_flag flags);
 
 /**
- * Finalizes libsflphone, freeing any resource allocated by the library.
+ * Finalizes libring, freeing any resource allocated by the library.
  */
 void sflph_fini(void);
 

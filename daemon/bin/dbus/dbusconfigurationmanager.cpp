@@ -33,7 +33,7 @@
 #include "dbusconfigurationmanager.h"
 
 DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/ConfigurationManager")
+    : DBus::ObjectAdaptor(connection, "/org/ring/Ring/ConfigurationManager")
 {
 }
 

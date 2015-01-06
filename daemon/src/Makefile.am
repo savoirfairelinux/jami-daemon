@@ -37,11 +37,11 @@ endif
 
 SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
 
-# libsflphone
+# libring
 
-lib_LTLIBRARIES = libsflphone.la
+lib_LTLIBRARIES = libring.la
 
-libsflphone_la_LIBADD = \
+libring_la_LIBADD = \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
 	./client/libclient.la \
@@ -53,7 +53,7 @@ libsflphone_la_LIBADD = \
 	$(IM_LIBA) \
 	$(SFL_VIDEO_LIBS)
 
-libsflphone_la_LDFLAGS = \
+libring_la_LDFLAGS = \
 		@ZRTPCPP_LIBS@ \
 		@PJPROJECT_LIBS@ \
 		@CCRTP_LIBS@ \
@@ -69,10 +69,10 @@ libsflphone_la_LDFLAGS = \
 		$(PCRE_LIBS)
 
 if USE_DHT
-libsflphone_la_LDFLAGS += $(OPENDHT_LIBS)
+libring_la_LDFLAGS += $(OPENDHT_LIBS)
 endif
 
-libsflphone_la_CFLAGS = \
+libring_la_CFLAGS = \
 		@ZRTPCPP_CFLAGS@ \
 		@PJPROJECT_CFLAGS@ \
 		@CCRTP_CFLAGS@ \
@@ -83,10 +83,10 @@ libsflphone_la_CFLAGS = \
 		$(TLS_CFLAGS)
 
 if USE_DHT
-libsflphone_la_CFLAGS += $(OPENDHT_CFLAGS)
+libring_la_CFLAGS += $(OPENDHT_CFLAGS)
 endif
 
-libsflphone_la_SOURCES = conference.cpp \
+libring_la_SOURCES = conference.cpp \
 		account_factory.cpp \
 		call_factory.cpp \
 		preferences.cpp \

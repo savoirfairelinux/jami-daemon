@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
-<node name="/org/sflphone/SFLphone">
-  <interface name="org.sflphone.SFLphone.ContactManager">
+<node name="/org/ring/Ring">
+  <interface name="org.ring.Ring.ContactManager">
 
   <!-- Contacts related methods -->
 

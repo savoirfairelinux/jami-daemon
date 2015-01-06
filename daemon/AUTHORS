@@ -6,7 +6,7 @@ Emmanuel Milou <emmanuel dot milou at savoirfairelinux dot com>
 	- Dynamic loading of audio codecs ( shared libraries )
 	- Debian packages
 	- GTK client error handling
-	- Plus many portions of code in sflphoned and sflphone-gtk
+	- Plus many portions of code in dring and sflphone-gtk
 	- Test and debugging
 
 Alexandre Savard <alexandre dot savard at savoirfairelinux dot com>
@@ -49,7 +49,7 @@ Pierre-Luc Beaudoin <pierre-luc.beaudoin at savoirfairelinux dot com>
 
 Yan Morin <yan dot morin at savoirfairelinux dot com>
 	- zeroconf integration
-	- sflphoned deamon
+	- dring deamon
 	- add and improve sip core feature
 	- tests and debugging
 

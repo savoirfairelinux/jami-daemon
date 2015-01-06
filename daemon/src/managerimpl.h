@@ -745,7 +745,7 @@ class ManagerImpl {
         void initAudioDriver();
 
         /**
-         * Load the accounts order set by the user from the sflphonedrc config file
+         * Load the accounts order set by the user from the dringrc config file
          * @return std::vector<std::string> A vector containing the account ID's
          */
         std::vector<std::string> loadAccountOrder() const;

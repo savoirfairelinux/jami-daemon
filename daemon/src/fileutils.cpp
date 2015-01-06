@@ -81,7 +81,7 @@ bool check_dir(const char *path)
 }
 
 #ifdef __ANDROID__
-static char *program_dir = "/data/data/org.sflphone";
+static char *program_dir = "/data/data/org.ring";
 #else
 static char *program_dir = NULL;
 #endif
@@ -100,7 +100,7 @@ const char *get_program_dir()
 std::string
 get_ringtone_dir()
 {
-    return std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
+    return std::string(get_program_dir()) + "/../../share/ring/ringtones/";
 }
 
 /* Lock a file region */
