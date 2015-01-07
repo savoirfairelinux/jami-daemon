@@ -174,7 +174,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
             if (!ok) {
                 call->setConnectionState(Call::DISCONNECTED);
-                Manager::instance().callFailure(call->getCallId());
+                Manager::instance().callFailure(*call);
             }
             this_.dht_.cancelPut(callkey, callvid);
         }
@@ -198,7 +198,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
                 ice->start(v->data);
                 if (call->waitForIceNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
                     call->setConnectionState(Call::DISCONNECTED);
-                    Manager::instance().callFailure(call->getCallId());
+                    Manager::instance().callFailure(*call);
                     return false;
                 }
                 call->setConnectionState(Call::PROGRESSING);
@@ -655,7 +655,7 @@ void RingAccount::doRegister()
                                 if (!ok || call->waitForIceNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
                                     SFL_WARN("nego failed");
                                     call->setConnectionState(Call::DISCONNECTED);
-                                    Manager::instance().callFailure(call->getCallId());
+                                    Manager::instance().callFailure(*call);
                                 } else {
                                     SFL_WARN("nego succeeded");
                                     call->setConnectionState(Call::PROGRESSING);
