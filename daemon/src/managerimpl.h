@@ -322,9 +322,9 @@ class ManagerImpl {
          */
         bool joinConference(const std::string& conf_id1, const std::string& conf_id2);
 
-        void addStream(const std::string& call_id);
+        void addStream(Call& call);
 
-        void removeStream(const std::string& call_id);
+        void removeStream(Call& call);
 
         /**
          * Save config to file
@@ -335,13 +335,6 @@ class ManagerImpl {
          * @return true if we tried to register once
          */
         bool hasTriedToRegister_;
-
-        /**
-         * Handle choice of the DTMF-send-way
-         * @param   id: callid of the line.
-         * @param   code: pressed key.
-         */
-        void sendDtmf(const std::string& id, char code);
 
         /**
          * Play a ringtone
@@ -370,20 +363,20 @@ class ManagerImpl {
          * call in Current state
          * @param id  The call identifier
          */
-        void peerAnsweredCall(const std::string& id);
+        void peerAnsweredCall(Call& call);
 
         /**
          * Rings back because the outgoing call is ringing and the put the
          * call in Ringing state
          * @param id  The call identifier
          */
-        void peerRingingCall(const std::string& id);
+        void peerRingingCall(Call& call);
 
         /**
          * Put the call in Hungup state, remove the call from the list
          * @param id  The call identifier
          */
-        void peerHungupCall(const std::string& id);
+        void peerHungupCall(Call& call);
 
 #if HAVE_INSTANT_MESSAGING
         /**
@@ -690,14 +683,20 @@ class ManagerImpl {
         void congestion();
 
         /**
+         * Play the dtmf-associated sound
+         * @param code  The pressed key
+         */
+        void playDtmf(char code);
+
+        /**
          * Handle played sound when a call can not be conpleted because of a busy recipient
          */
-        void callBusy(const std::string& id);
+        void callBusy(Call& call);
 
         /**
          * Handle played sound when a failure occurs
          */
-        void callFailure(const std::string& id);
+        void callFailure(Call& call);
 
         /**
          * Retrieve the current telephone tone
@@ -754,12 +753,6 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
-        /**
-         * Play the dtmf-associated sound
-         * @param code  The pressed key
-         */
-        void playDtmf(char code);
-
         void removeAccounts();
 
         bool parseConfiguration();
