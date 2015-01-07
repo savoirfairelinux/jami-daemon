@@ -142,10 +142,16 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     int port = DEFAULT_SIP_PORT;
     parseValue(node, PORT_KEY, port);
     localPort_ = port;
-    parseValue(node, PUBLISH_ADDR_KEY, publishedIpAddress_);
+
+    parseValue(node, SAME_AS_LOCAL_KEY, publishedSameasLocal_);
+    std::string publishedIpAddress;
+    parseValue(node, PUBLISH_ADDR_KEY, publishedIpAddress);
+    IpAddr publishedIp = publishedIpAddress;
+    if (publishedIp and not publishedSameasLocal_)
+        setPublishedAddress(publishedIp);
+
     parseValue(node, PUBLISH_PORT_KEY, port);
     publishedPort_ = port;
-    parseValue(node, SAME_AS_LOCAL_KEY, publishedSameasLocal_);
 
     parseValue(node, DTMF_TYPE_KEY, dtmfType_);
 
