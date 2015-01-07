@@ -207,7 +207,7 @@ IAXVoIPLink::handleReject(IAXCall& call)
 {
     call.setConnectionState(Call::CONNECTED);
     call.setState(Call::MERROR);
-    Manager::instance().callFailure(call.getCallId());
+    Manager::instance().callFailure(call);
     call.removeCall();
 }
 
@@ -230,9 +230,8 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
     if (event->ies.format)
         call.format = event->ies.format;
 
-    const auto& id = call.getCallId();
-    Manager::instance().addStream(id);
-    Manager::instance().peerAnsweredCall(id);
+    Manager::instance().addStream(call);
+    Manager::instance().peerAnsweredCall(call);
     Manager::instance().startAudioDriverStream();
     Manager::instance().getRingBufferPool().flushAllBuffers();
 }
@@ -243,7 +242,7 @@ IAXVoIPLink::handleBusy(IAXCall& call)
     call.setConnectionState(Call::CONNECTED);
     call.setState(Call::BUSY);
 
-    Manager::instance().callBusy(call.getCallId());
+    Manager::instance().callBusy(call);
     call.removeCall();
 }
 
@@ -260,13 +259,13 @@ void
 IAXVoIPLink::handleRinging(IAXCall& call)
 {
     call.setConnectionState(Call::RINGING);
-    Manager::instance().peerRingingCall(call.getCallId());
+    Manager::instance().peerRingingCall(call);
 }
 
 void
 IAXVoIPLink::handleHangup(IAXCall& call)
 {
-    Manager::instance().peerHungupCall(call.getCallId());
+    Manager::instance().peerHungupCall(call);
     call.removeCall();
 }
 
@@ -426,8 +425,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 
         case IAX_EVENT_HANGUP:
             if (auto raw_call_ptr = iaxGetCallFromSession(event->session)) {
-                id = raw_call_ptr->getCallId();
-                Manager::instance().peerHungupCall(id);
+                Manager::instance().peerHungupCall(*raw_call_ptr);
                 raw_call_ptr->removeCall();
             }
 
