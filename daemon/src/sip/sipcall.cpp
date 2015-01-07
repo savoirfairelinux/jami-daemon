@@ -755,8 +755,7 @@ SIPCall::sendTextMessage(const std::string &message, const std::string &from)
 void
 SIPCall::onServerFailure()
 {
-    const std::string id(getCallId());
-    Manager::instance().callFailure(id);
+    Manager::instance().callFailure(*this);
     removeCall();
 }
 

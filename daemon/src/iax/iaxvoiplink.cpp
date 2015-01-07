@@ -207,7 +207,7 @@ IAXVoIPLink::handleReject(IAXCall& call)
 {
     call.setConnectionState(Call::CONNECTED);
     call.setState(Call::MERROR);
-    Manager::instance().callFailure(call.getCallId());
+    Manager::instance().callFailure(call);
     call.removeCall();
 }
 
