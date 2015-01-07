@@ -259,7 +259,11 @@ CallManager::getCallList()
 void
 CallManager::playDTMF(const std::string& key)
 {
-    Manager::instance().sendDtmf(Manager::instance().getCurrentCallId(), key.data()[0]);
+    auto code = key.data()[0];
+    Manager::instance().playDtmf(code);
+
+    if (auto current_call = Manager::instance().getCurrentCall())
+        current_call->carryingDTMFdigits(code);
 }
 
 void

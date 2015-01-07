@@ -754,16 +754,14 @@ SIPCall::sendTextMessage(const std::string &message, const std::string &from)
 void
 SIPCall::onServerFailure()
 {
-    const std::string id(getCallId());
-    Manager::instance().callFailure(id);
+    Manager::instance().callFailure(*this);
     removeCall();
 }
 
 void
 SIPCall::onClosed()
 {
-    const std::string id(getCallId());
-    Manager::instance().peerHungupCall(id);
+    Manager::instance().peerHungupCall(*this);
     removeCall();
     Manager::instance().checkAudio();
 }
@@ -777,7 +775,7 @@ SIPCall::onAnswered()
         startAllMedia();
         setConnectionState(Call::CONNECTED);
         setState(Call::ACTIVE);
-        Manager::instance().peerAnsweredCall(getCallId());
+        Manager::instance().peerAnsweredCall(*this);
     }
 }
 
