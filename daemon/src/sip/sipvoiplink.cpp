@@ -832,7 +832,7 @@ static void
 makeCallRing(SIPCall &call)
 {
     call.setConnectionState(Call::RINGING);
-    Manager::instance().peerRingingCall(call.getCallId());
+    Manager::instance().peerRingingCall(call);
 }
 
 static void
@@ -1020,9 +1020,8 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
                            PJSIP_SC_UNSUPPORTED_MEDIA_TYPE : 0;
 
         SFL_WARN("Could not negotiate offer");
-        const std::string callID(call->getCallId());
         call->hangup(reason);
-        Manager::instance().callFailure(callID);
+        Manager::instance().callFailure(*call);
         return;
     }
 
