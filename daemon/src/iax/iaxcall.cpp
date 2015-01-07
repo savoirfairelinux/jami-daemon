@@ -140,7 +140,7 @@ int IAXCall::getAudioCodec() const
 void
 IAXCall::answer()
 {
-    Manager::instance().addStream(getCallId());
+    Manager::instance().addStream(*this);
 
     {
         std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
@@ -207,7 +207,7 @@ IAXCall::onhold()
 void
 IAXCall::offhold()
 {
-    Manager::instance().addStream(getCallId());
+    Manager::instance().addStream(*this);
 
     {
         std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);

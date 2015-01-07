@@ -379,32 +379,35 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
             detachParticipant(sfl::RingBufferPool::DEFAULT_ID);
     }
 
+    std::shared_ptr<Call> call;
+
     try {
         /* SFL_WARN: after this call the account_id is obsolete
          * as the factory may decide to use another account (like IP2IP).
          */
         SFL_DBG("New outgoing call to %s", to_cleaned.c_str());
-        auto call = newOutgoingCall(call_id, to_cleaned, preferred_account_id);
-
-        // try to reverse match the peer name using the cache
-        if (call->getDisplayName().empty()) {
-            const auto& name = history_.getNameFromHistory(call->getPeerNumber(),
-                                                           call->getAccountId());
-            const std::string pseudo_contact_name(name);
-            if (not pseudo_contact_name.empty())
-                call->setDisplayName(pseudo_contact_name);
-        }
-        switchCall(call);
-        call->setConfId(conf_id);
+        call = newOutgoingCall(call_id, to_cleaned, preferred_account_id);
     } catch (ost::Socket *) {
-        callFailure(call_id);
         SFL_ERR("Could not bind socket");
         return false;
     } catch (const std::exception &e) {
-        callFailure(call_id);
         SFL_ERR("%s", e.what());
         return false;
     }
+
+    if (not call)
+        return false;
+
+    // try to reverse match the peer name using the cache
+    if (call->getDisplayName().empty()) {
+        const auto& name = history_.getNameFromHistory(call->getPeerNumber(),
+                                                       call->getAccountId());
+        const std::string pseudo_contact_name(name);
+        if (not pseudo_contact_name.empty())
+            call->setDisplayName(pseudo_contact_name);
+    }
+    switchCall(call);
+    call->setConfId(conf_id);
     return true;
 }
 
@@ -458,7 +461,7 @@ ManagerImpl::answerCall(const std::string& call_id)
         switchCall(call);
 
     // Connect streams
-    addStream(call_id);
+    addStream(*call);
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
@@ -500,7 +503,7 @@ ManagerImpl::hangupCall(const std::string& callId)
     }
 
     // Disconnect streams
-    removeStream(callId);
+    removeStream(*call);
 
     if (isConferenceParticipant(callId)) {
         removeParticipant(callId);
@@ -559,20 +562,18 @@ ManagerImpl::onHoldCall(const std::string& callId)
 
     std::string current_call_id(getCurrentCallId());
 
-    try {
-        if (auto call = getCallFromCallID(callId)) {
+    if (auto call = getCallFromCallID(callId)) {
+        try {
             call->onhold();
-        } else {
-            SFL_DBG("CallID %s doesn't exist in call onHold", callId.c_str());
-            return false;
+            removeStream(*call); // Unbind calls in main buffer
+        } catch (const VoipLinkException &e) {
+            SFL_ERR("%s", e.what());
+            result = false;
         }
-    } catch (const VoipLinkException &e) {
-        SFL_ERR("%s", e.what());
-        result = false;
+    } else {
+        SFL_DBG("CallID %s doesn't exist in call onHold", callId.c_str());
+        return false;
     }
-
-    // Unbind calls in main buffer
-    removeStream(callId);
 
     // Remove call from teh queue if it was still there
     removeWaitingCall(callId);
@@ -627,7 +628,7 @@ ManagerImpl::offHoldCall(const std::string& callId)
     else
         switchCall(call);
 
-    addStream(callId);
+    addStream(*call);
 
     return result;
 }
@@ -698,7 +699,7 @@ ManagerImpl::refuseCall(const std::string& id)
     client_.getCallManager()->callStateChanged(id, "HUNGUP");
 
     // Disconnect streams
-    removeStream(id);
+    removeStream(*call);
 
     return true;
 }
@@ -918,7 +919,7 @@ ManagerImpl::addParticipant(const std::string& callId,
         SFL_ERR("Participant list is empty for this conference");
 
     // Connect stream
-    addStream(callId);
+    addStream(*call);
     return true;
 }
 
@@ -1207,7 +1208,7 @@ ManagerImpl::removeParticipant(const std::string& call_id)
     conf->remove(call_id);
     call->setConfId("");
 
-    removeStream(call_id);
+    removeStream(*call);
 
     client_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 
@@ -1276,22 +1277,20 @@ ManagerImpl::joinConference(const std::string& conf_id1,
 }
 
 void
-ManagerImpl::addStream(const std::string& call_id)
+ManagerImpl::addStream(Call& call)
 {
+    const auto call_id = call.getCallId();
     SFL_DBG("Add audio stream %s", call_id.c_str());
-    auto call = getCallFromCallID(call_id);
-    if (call and isConferenceParticipant(call_id)) {
+
+    if (isConferenceParticipant(call_id)) {
         SFL_DBG("Add stream to conference");
 
         // bind to conference participant
-        ConferenceMap::iterator iter = conferenceMap_.find(call->getConfId());
-
+        ConferenceMap::iterator iter = conferenceMap_.find(call_id);
         if (iter != conferenceMap_.end() and iter->second) {
             auto conf = iter->second;
-
             conf->bindParticipant(call_id);
         }
-
     } else {
         SFL_DBG("Add stream to call");
 
@@ -1309,8 +1308,9 @@ ManagerImpl::addStream(const std::string& call_id)
 }
 
 void
-ManagerImpl::removeStream(const std::string& call_id)
+ManagerImpl::removeStream(Call& call)
 {
+    const auto call_id = call.getCallId();
     SFL_DBG("Remove audio stream %s", call_id.c_str());
     getRingBufferPool().unBindAll(call_id);
 }
@@ -1386,16 +1386,10 @@ ManagerImpl::saveConfig()
 
 //THREAD=Main
 void
-ManagerImpl::sendDtmf(const std::string& id, char code)
+ManagerImpl::sendDtmf(Call& call, char code)
 {
     playDtmf(code);
-
-    // return if we're not "in" a call
-    if (id.empty())
-        return;
-
-    if (auto call = getCallFromCallID(id))
-        call->carryingDTMFdigits(code);
+    call.carryingDTMFdigits(code);
 }
 
 //THREAD=Main | VoIPLink
@@ -1617,18 +1611,17 @@ ManagerImpl::sendTextMessage(const std::string& callID,
 
 //THREAD=VoIP CALL=Outgoing
 void
-ManagerImpl::peerAnsweredCall(const std::string& id)
+ManagerImpl::peerAnsweredCall(Call& call)
 {
-    auto call = getCallFromCallID(id);
-    if (!call) return;
-    SFL_DBG("Peer answered call %s", id.c_str());
+    const auto call_id = call.getCallId();
+    SFL_DBG("Peer answered call %s", call_id.c_str());
 
     // The if statement is usefull only if we sent two calls at the same time.
-    if (isCurrentCall(*call))
+    if (isCurrentCall(call))
         stopTone();
 
     // Connect audio streams
-    addStream(id);
+    addStream(call);
 
     if (audiodriver_) {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
@@ -1637,43 +1630,40 @@ ManagerImpl::peerAnsweredCall(const std::string& id)
     }
 
     if (audioPreference.getIsAlwaysRecording())
-        toggleRecordingCall(id);
+        toggleRecordingCall(call_id);
 
-    client_.getCallManager()->callStateChanged(id, "CURRENT");
+    client_.getCallManager()->callStateChanged(call_id, "CURRENT");
 }
 
 //THREAD=VoIP Call=Outgoing
 void
-ManagerImpl::peerRingingCall(const std::string& id)
+ManagerImpl::peerRingingCall(Call& call)
 {
-    auto call = getCallFromCallID(id);
-    if (!call) return;
-    SFL_DBG("Peer call %s ringing", id.c_str());
+    const auto call_id = call.getCallId();
+    SFL_DBG("Peer call %s ringing", call_id.c_str());
 
-    if (isCurrentCall(*call))
+    if (isCurrentCall(call))
         ringback();
 
-    client_.getCallManager()->callStateChanged(id, "RINGING");
+    client_.getCallManager()->callStateChanged(call_id, "RINGING");
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
 void
-ManagerImpl::peerHungupCall(const std::string& call_id)
+ManagerImpl::peerHungupCall(Call& call)
 {
-    auto call = getCallFromCallID(call_id);
-    if (!call) return;
-
+    const auto call_id = call.getCallId();
     SFL_DBG("Peer hungup call %s", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
         removeParticipant(call_id);
-    } else if (isCurrentCall(*call)) {
+    } else if (isCurrentCall(call)) {
         stopTone();
         unsetCurrentCall();
     }
 
-    history_.addCall(call.get(), preferences.getHistoryLimit());
-    call->peerHungup();
+    history_.addCall(&call, preferences.getHistoryLimit());
+    call.peerHungup();
     saveHistory();
 
     client_.getCallManager()->callStateChanged(call_id, "HUNGUP");
@@ -1683,37 +1673,35 @@ ManagerImpl::peerHungupCall(const std::string& call_id)
     if (not incomingCallsWaiting())
         stopTone();
 
-    removeStream(call_id);
+    removeStream(call);
 }
 
 //THREAD=VoIP
 void
-ManagerImpl::callBusy(const std::string& id)
+ManagerImpl::callBusy(Call& call)
 {
-    auto call = getCallFromCallID(id);
-    if (!call) return;
+    const auto call_id = call.getCallId();
 
-    client_.getCallManager()->callStateChanged(id, "BUSY");
+    client_.getCallManager()->callStateChanged(call_id, "BUSY");
 
-    if (isCurrentCall(*call)) {
+    if (isCurrentCall(call)) {
         playATone(sfl::Tone::TONE_BUSY);
         unsetCurrentCall();
     }
 
     checkAudio();
-    removeWaitingCall(id);
+    removeWaitingCall(call_id);
 }
 
 //THREAD=VoIP
 void
-ManagerImpl::callFailure(const std::string& call_id)
+ManagerImpl::callFailure(Call& call)
 {
+    const auto call_id = call.getCallId();
+
     client_.getCallManager()->callStateChanged(call_id, "FAILURE");
 
-    auto call = getCallFromCallID(call_id);
-    if (!call) return;
-
-    if (isCurrentCall(*call)) {
+    if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
         unsetCurrentCall();
     }
