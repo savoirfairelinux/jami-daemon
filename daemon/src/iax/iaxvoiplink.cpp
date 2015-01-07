@@ -243,7 +243,7 @@ IAXVoIPLink::handleBusy(IAXCall& call)
     call.setConnectionState(Call::CONNECTED);
     call.setState(Call::BUSY);
 
-    Manager::instance().callBusy(call.getCallId());
+    Manager::instance().callBusy(call);
     call.removeCall();
 }
 

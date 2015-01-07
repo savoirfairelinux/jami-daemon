@@ -1691,20 +1691,19 @@ ManagerImpl::peerHungupCall(const std::string& call_id)
 
 //THREAD=VoIP
 void
-ManagerImpl::callBusy(const std::string& id)
+ManagerImpl::callBusy(const Call& call)
 {
-    auto call = getCallFromCallID(id);
-    if (!call) return;
+    const auto call_id = call.getCallId();
 
-    client_.getCallManager()->callStateChanged(id, "BUSY");
+    client_.getCallManager()->callStateChanged(call_id, "BUSY");
 
-    if (isCurrentCall(*call)) {
+    if (isCurrentCall(call)) {
         playATone(sfl::Tone::TONE_BUSY);
         unsetCurrentCall();
     }
 
     checkAudio();
-    removeWaitingCall(id);
+    removeWaitingCall(call_id);
 }
 
 //THREAD=VoIP

@@ -692,7 +692,7 @@ class ManagerImpl {
         /**
          * Handle played sound when a call can not be conpleted because of a busy recipient
          */
-        void callBusy(const std::string& id);
+        void callBusy(const Call& call);
 
         /**
          * Handle played sound when a failure occurs
