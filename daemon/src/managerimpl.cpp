@@ -379,32 +379,35 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
             detachParticipant(sfl::RingBufferPool::DEFAULT_ID);
     }
 
+    std::shared_ptr<Call> call;
+
     try {
         /* SFL_WARN: after this call the account_id is obsolete
          * as the factory may decide to use another account (like IP2IP).
          */
         SFL_DBG("New outgoing call to %s", to_cleaned.c_str());
-        auto call = newOutgoingCall(call_id, to_cleaned, preferred_account_id);
-
-        // try to reverse match the peer name using the cache
-        if (call->getDisplayName().empty()) {
-            const auto& name = history_.getNameFromHistory(call->getPeerNumber(),
-                                                           call->getAccountId());
-            const std::string pseudo_contact_name(name);
-            if (not pseudo_contact_name.empty())
-                call->setDisplayName(pseudo_contact_name);
-        }
-        switchCall(call);
-        call->setConfId(conf_id);
+        call = newOutgoingCall(call_id, to_cleaned, preferred_account_id);
     } catch (ost::Socket *) {
-        callFailure(call_id);
         SFL_ERR("Could not bind socket");
         return false;
     } catch (const std::exception &e) {
-        callFailure(call_id);
         SFL_ERR("%s", e.what());
         return false;
     }
+
+    if (not call)
+        return false;
+
+    // try to reverse match the peer name using the cache
+    if (call->getDisplayName().empty()) {
+        const auto& name = history_.getNameFromHistory(call->getPeerNumber(),
+                                                       call->getAccountId());
+        const std::string pseudo_contact_name(name);
+        if (not pseudo_contact_name.empty())
+            call->setDisplayName(pseudo_contact_name);
+    }
+    switchCall(call);
+    call->setConfId(conf_id);
     return true;
 }
 
@@ -1706,14 +1709,13 @@ ManagerImpl::callBusy(const std::string& id)
 
 //THREAD=VoIP
 void
-ManagerImpl::callFailure(const std::string& call_id)
+ManagerImpl::callFailure(const Call& call)
 {
+    const auto call_id = call.getCallId();
+
     client_.getCallManager()->callStateChanged(call_id, "FAILURE");
 
-    auto call = getCallFromCallID(call_id);
-    if (!call) return;
-
-    if (isCurrentCall(*call)) {
+    if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
         unsetCurrentCall();
     }
