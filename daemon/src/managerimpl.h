@@ -377,7 +377,7 @@ class ManagerImpl {
          * call in Ringing state
          * @param id  The call identifier
          */
-        void peerRingingCall(const std::string& id);
+        void peerRingingCall(const Call& call);
 
         /**
          * Put the call in Hungup state, remove the call from the list

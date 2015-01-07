@@ -260,7 +260,7 @@ void
 IAXVoIPLink::handleRinging(IAXCall& call)
 {
     call.setConnectionState(Call::RINGING);
-    Manager::instance().peerRingingCall(call.getCallId());
+    Manager::instance().peerRingingCall(call);
 }
 
 void

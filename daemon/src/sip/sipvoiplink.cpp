@@ -832,7 +832,7 @@ static void
 makeCallRing(SIPCall &call)
 {
     call.setConnectionState(Call::RINGING);
-    Manager::instance().peerRingingCall(call.getCallId());
+    Manager::instance().peerRingingCall(call);
 }
 
 static void

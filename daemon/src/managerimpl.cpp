@@ -1647,16 +1647,15 @@ ManagerImpl::peerAnsweredCall(const std::string& id)
 
 //THREAD=VoIP Call=Outgoing
 void
-ManagerImpl::peerRingingCall(const std::string& id)
+ManagerImpl::peerRingingCall(const Call& call)
 {
-    auto call = getCallFromCallID(id);
-    if (!call) return;
-    SFL_DBG("Peer call %s ringing", id.c_str());
+    const auto call_id = call.getCallId();
+    SFL_DBG("Peer call %s ringing", call_id.c_str());
 
-    if (isCurrentCall(*call))
+    if (isCurrentCall(call))
         ringback();
 
-    client_.getCallManager()->callStateChanged(id, "RINGING");
+    client_.getCallManager()->callStateChanged(call_id, "RINGING");
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
