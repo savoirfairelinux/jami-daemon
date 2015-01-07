@@ -266,7 +266,7 @@ IAXVoIPLink::handleRinging(IAXCall& call)
 void
 IAXVoIPLink::handleHangup(IAXCall& call)
 {
-    Manager::instance().peerHungupCall(call.getCallId());
+    Manager::instance().peerHungupCall(call);
     call.removeCall();
 }
 
@@ -426,8 +426,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 
         case IAX_EVENT_HANGUP:
             if (auto raw_call_ptr = iaxGetCallFromSession(event->session)) {
-                id = raw_call_ptr->getCallId();
-                Manager::instance().peerHungupCall(id);
+                Manager::instance().peerHungupCall(*raw_call_ptr);
                 raw_call_ptr->removeCall();
             }
 

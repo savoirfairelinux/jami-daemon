@@ -762,8 +762,7 @@ SIPCall::onServerFailure()
 void
 SIPCall::onClosed()
 {
-    const std::string id(getCallId());
-    Manager::instance().peerHungupCall(id);
+    Manager::instance().peerHungupCall(*this);
     removeCall();
     Manager::instance().checkAudio();
 }

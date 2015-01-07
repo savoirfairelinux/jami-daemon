@@ -383,7 +383,7 @@ class ManagerImpl {
          * Put the call in Hungup state, remove the call from the list
          * @param id  The call identifier
          */
-        void peerHungupCall(const std::string& id);
+        void peerHungupCall(Call& call);
 
 #if HAVE_INSTANT_MESSAGING
         /**

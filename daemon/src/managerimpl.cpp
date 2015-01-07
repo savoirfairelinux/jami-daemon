@@ -1661,22 +1661,20 @@ ManagerImpl::peerRingingCall(const std::string& id)
 
 //THREAD=VoIP Call=Outgoing/Ingoing
 void
-ManagerImpl::peerHungupCall(const std::string& call_id)
+ManagerImpl::peerHungupCall(Call& call)
 {
-    auto call = getCallFromCallID(call_id);
-    if (!call) return;
-
+    const auto call_id = call.getCallId();
     SFL_DBG("Peer hungup call %s", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
         removeParticipant(call_id);
-    } else if (isCurrentCall(*call)) {
+    } else if (isCurrentCall(call)) {
         stopTone();
         unsetCurrentCall();
     }
 
-    history_.addCall(call.get(), preferences.getHistoryLimit());
-    call->peerHungup();
+    history_.addCall(&call, preferences.getHistoryLimit());
+    call.peerHungup();
     saveHistory();
 
     client_.getCallManager()->callStateChanged(call_id, "HUNGUP");
