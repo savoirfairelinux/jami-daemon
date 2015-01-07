@@ -697,7 +697,7 @@ class ManagerImpl {
         /**
          * Handle played sound when a failure occurs
          */
-        void callFailure(const std::string& id);
+        void callFailure(const Call& call);
 
         /**
          * Retrieve the current telephone tone
