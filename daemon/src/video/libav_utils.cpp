@@ -38,6 +38,9 @@
 #include <algorithm>
 #include <string>
 #include <iostream>
+#include <thread>
+#include <mutex>
+#include <exception>
 
 std::map<std::string, std::string> encoders_;
 std::vector<std::string> installed_video_codecs_;
@@ -68,28 +71,29 @@ std::vector<std::string> getVideoCodecList()
     return installed_video_codecs_;
 }
 
-// protect libav/ffmpeg access with pthreads
+// protect libav/ffmpeg access
 static int
 avcodecManageMutex(void **data, enum AVLockOp op)
 {
-    pthread_mutex_t **mutex = reinterpret_cast<pthread_mutex_t**>(data);
+    auto mutex = reinterpret_cast<std::mutex**>(data);
     int ret = 0;
     switch (op) {
         case AV_LOCK_CREATE:
-            *mutex = static_cast<pthread_mutex_t*>(av_malloc(sizeof(pthread_mutex_t)));
-            if (!*mutex)
+            try {
+                *mutex = new std::mutex;
+            } catch (const std::bad_alloc& e) {
                 return AVERROR(ENOMEM);
-            ret = pthread_mutex_init(*mutex, NULL);
+            }
             break;
         case AV_LOCK_OBTAIN:
-            ret = pthread_mutex_lock(*mutex);
+            (*mutex)->lock();
             break;
         case AV_LOCK_RELEASE:
-            ret = pthread_mutex_unlock(*mutex);
+            (*mutex)->unlock();
             break;
         case AV_LOCK_DESTROY:
-            ret = pthread_mutex_destroy(*mutex);
-            av_freep(mutex);
+            delete *mutex;
+            *mutex = nullptr;
             break;
         default:
 #ifdef AVERROR_BUG
@@ -145,11 +149,11 @@ static void init_once()
     findInstalledVideoCodecs();
 }
 
-static pthread_once_t already_called = PTHREAD_ONCE_INIT;
+static std::once_flag already_called;
 
 void sfl_avcodec_init()
 {
-    (void) pthread_once(&already_called, init_once);
+    std::call_once(already_called, init_once);
 }
 
 std::vector<std::map<std::string, std::string> >
