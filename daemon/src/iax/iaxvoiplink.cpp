@@ -232,7 +232,7 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
 
     const auto& id = call.getCallId();
     Manager::instance().addStream(id);
-    Manager::instance().peerAnsweredCall(id);
+    Manager::instance().peerAnsweredCall(call);
     Manager::instance().startAudioDriverStream();
     Manager::instance().getRingBufferPool().flushAllBuffers();
 }

@@ -1620,18 +1620,17 @@ ManagerImpl::sendTextMessage(const std::string& callID,
 
 //THREAD=VoIP CALL=Outgoing
 void
-ManagerImpl::peerAnsweredCall(const std::string& id)
+ManagerImpl::peerAnsweredCall(const Call& call)
 {
-    auto call = getCallFromCallID(id);
-    if (!call) return;
-    SFL_DBG("Peer answered call %s", id.c_str());
+    const auto call_id = call.getCallId();
+    SFL_DBG("Peer answered call %s", call_id.c_str());
 
     // The if statement is usefull only if we sent two calls at the same time.
-    if (isCurrentCall(*call))
+    if (isCurrentCall(call))
         stopTone();
 
     // Connect audio streams
-    addStream(id);
+    addStream(call_id);
 
     if (audiodriver_) {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
@@ -1640,9 +1639,9 @@ ManagerImpl::peerAnsweredCall(const std::string& id)
     }
 
     if (audioPreference.getIsAlwaysRecording())
-        toggleRecordingCall(id);
+        toggleRecordingCall(call_id);
 
-    client_.getCallManager()->callStateChanged(id, "CURRENT");
+    client_.getCallManager()->callStateChanged(call_id, "CURRENT");
 }
 
 //THREAD=VoIP Call=Outgoing

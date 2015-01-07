@@ -370,7 +370,7 @@ class ManagerImpl {
          * call in Current state
          * @param id  The call identifier
          */
-        void peerAnsweredCall(const std::string& id);
+        void peerAnsweredCall(const Call& call);
 
         /**
          * Rings back because the outgoing call is ringing and the put the

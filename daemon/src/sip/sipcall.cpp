@@ -776,7 +776,7 @@ SIPCall::onAnswered()
         startAllMedia();
         setConnectionState(Call::CONNECTED);
         setState(Call::ACTIVE);
-        Manager::instance().peerAnsweredCall(getCallId());
+        Manager::instance().peerAnsweredCall(*this);
     }
 }
 
