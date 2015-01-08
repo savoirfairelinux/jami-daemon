@@ -81,7 +81,7 @@ bool check_dir(const char *path)
 }
 
 #ifdef __ANDROID__
-static char *program_dir = "/data/data/org.sflphone";
+static char *program_dir = "/data/data/cx.ring";
 #else
 static char *program_dir = NULL;
 #endif
@@ -100,7 +100,7 @@ const char *get_program_dir()
 std::string
 get_ringtone_dir()
 {
-    return std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
+    return std::string(get_program_dir()) + "/../../share/ring/ringtones/";
 }
 
 /* Lock a file region */
@@ -131,23 +131,23 @@ create_pidfile()
     char buf[100];
     f.fd = open(f.name.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (f.fd == -1) {
-        SFL_ERR("Could not open PID file %s", f.name.c_str());
+        RING_ERR("Could not open PID file %s", f.name.c_str());
         return f;
     }
 
     if (lockRegion(f.fd, F_WRLCK, SEEK_SET, 0, 0) == -1) {
         if (errno  == EAGAIN or errno == EACCES)
-            SFL_ERR("PID file '%s' is locked; probably "
+            RING_ERR("PID file '%s' is locked; probably "
                     "'%s' is already running", f.name.c_str(), PACKAGE_NAME);
         else
-            SFL_ERR("Unable to lock PID file '%s'", f.name.c_str());
+            RING_ERR("Unable to lock PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
     }
 
     if (ftruncate(f.fd, 0) == -1) {
-        SFL_ERR("Could not truncate PID file '%s'", f.name.c_str());
+        RING_ERR("Could not truncate PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
@@ -157,7 +157,7 @@ create_pidfile()
 
     const int buf_strlen = strlen(buf);
     if (write(f.fd, buf, buf_strlen) != buf_strlen) {
-        SFL_ERR("Problem writing to PID file '%s'", f.name.c_str());
+        RING_ERR("Problem writing to PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
@@ -170,7 +170,7 @@ std::string
 expand_path(const std::string &path)
 {
 #ifdef __ANDROID__
-    SFL_ERR("Path expansion not implemented, returning original");
+    RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
 
@@ -181,20 +181,20 @@ expand_path(const std::string &path)
 
     switch (ret) {
         case WRDE_BADCHAR:
-            SFL_ERR("Illegal occurrence of newline or one of |, &, ;, <, >, "
+            RING_ERR("Illegal occurrence of newline or one of |, &, ;, <, >, "
                   "(, ), {, }.");
             return result;
         case WRDE_BADVAL:
-            SFL_ERR("An undefined shell variable was referenced");
+            RING_ERR("An undefined shell variable was referenced");
             return result;
         case WRDE_CMDSUB:
-            SFL_ERR("Command substitution occurred");
+            RING_ERR("Command substitution occurred");
             return result;
         case WRDE_SYNTAX:
-            SFL_ERR("Shell syntax error");
+            RING_ERR("Shell syntax error");
             return result;
         case WRDE_NOSPACE:
-            SFL_ERR("Out of memory.");
+            RING_ERR("Out of memory.");
             // This is the only error where we must call wordfree
             break;
         default:
@@ -237,7 +237,7 @@ saveFile(const std::string& path, const std::vector<uint8_t>& data)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        SFL_ERR("Could not write data to %s", path.c_str());
+        RING_ERR("Could not write data to %s", path.c_str());
         return;
     }
     file.write((char*)data.data(), data.size());
@@ -271,7 +271,7 @@ readDirectory(const std::string& dir)
 {
     DIR *dp = opendir(dir.c_str());
     if (!dp) {
-        SFL_ERR("Could not open %s", dir.c_str());
+        RING_ERR("Could not open %s", dir.c_str());
         return {};
     }
 
@@ -301,7 +301,7 @@ FileHandle::~FileHandle()
     if (fd != -1) {
         close(fd);
         if (unlink(name.c_str()) == -1)
-            SFL_ERR("%s", strerror(errno));
+            RING_ERR("%s", strerror(errno));
     }
 }
 

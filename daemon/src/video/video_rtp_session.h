@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
@@ -47,11 +47,11 @@
 class Sdp;
 class Conference;
 
-namespace sfl {
+namespace ring {
 class IceSocket;
 };
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class VideoRtpSession {
 public:
@@ -60,8 +60,8 @@ public:
     ~VideoRtpSession();
 
     void start(int localPort);
-    void start(std::unique_ptr<sfl::IceSocket> rtp_sock,
-               std::unique_ptr<sfl::IceSocket> rtcp_sock);
+    void start(std::unique_ptr<ring::IceSocket> rtp_sock,
+               std::unique_ptr<ring::IceSocket> rtcp_sock);
     void stop();
     void updateDestination(const std::string &destination,
                            unsigned int port);
@@ -95,6 +95,6 @@ private:
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
 };
 
-}
+}}
 
 #endif // __VIDEO_RTP_SESSION_H__

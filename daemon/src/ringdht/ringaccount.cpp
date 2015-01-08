@@ -53,7 +53,7 @@
 #include "logger.h"
 #include "manager.h"
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "video/libav_utils.h"
 #endif
 #include "fileutils.h"
@@ -93,7 +93,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
 
     int rc = gnutls_global_init();
     if (rc != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
+        RING_ERR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
         throw VoipLinkException("Can't initialize GnuTLS.");
     }
 }
@@ -111,11 +111,11 @@ RingAccount::newIncomingCall(const std::string& from)
 {
     for (auto& c : pendingCalls_) {
         if (c->getPeerNumber() == from) {
-            SFL_WARN("Found matching call for %s", from.c_str());
+            RING_WARN("Found matching call for %s", from.c_str());
             return c;
         }
     }
-    SFL_ERR("Can't find matching call for %s", from.c_str());
+    RING_ERR("Can't find matching call for %s", from.c_str());
     return nullptr;
 }
 
@@ -136,7 +136,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
         throw std::invalid_argument("id must be a ring infohash");
 
-    SFL_DBG("Calling DHT peer %s", toUri.c_str());
+    RING_DBG("Calling DHT peer %s", toUri.c_str());
 
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::OUTGOING);
     call->setIPToIP(true);
@@ -178,18 +178,18 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     dht_.listen(
         callkey,
         [shared, call, callkey, ice, toUri, replyvid] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
-            SFL_WARN("Got a DHT reply from %s !", toUri.c_str());
+            RING_WARN("Got a DHT reply from %s !", toUri.c_str());
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
             for (const auto& v : vals) {
                 if (v->recipient != this_.dht_.getId() || v->type != this_.ICE_ANNOUCEMENT_TYPE.id) {
-                    SFL_WARN("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
+                    RING_WARN("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
                     continue;
                 }
                 if (v->id != replyvid) {
-                    SFL_WARN("Ignoring value ID %llx (expected %llx)", v->id, replyvid);
+                    RING_WARN("Ignoring value ID %llx (expected %llx)", v->id, replyvid);
                     continue;
                 }
-                SFL_WARN("Performing ICE negotiation.");
+                RING_WARN("Performing ICE negotiation.");
                 ice->start(v->data);
                 if (call->waitForIceNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
                     call->setConnectionState(Call::DISCONNECTED);
@@ -210,7 +210,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 void
 RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target)
 {
-    SFL_WARN("RingAccount::createOutgoingCall to: %s target: %s tlsListener: %d", to_id.c_str(), target.toString(true).c_str(), tlsListener_?1:0);
+    RING_WARN("RingAccount::createOutgoingCall to: %s target: %s tlsListener: %d", to_id.c_str(), target.toString(true).c_str(), tlsListener_?1:0);
     auto t = link_->sipTransport->getIceTransport(call->getIceTransport(), ICE_COMP_SIP_TRANSPORT);
     setTransport(t);
     call->setTransport(t);
@@ -228,11 +228,11 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<sfl::AudioCodec *> audioCodecs;
+    std::vector<ring::AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
 #if USE_CCRTP
@@ -291,12 +291,12 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
         pjContact = getContactHeader(transport ? transport->get() : nullptr);
     }
 
-    SFL_DBG("contact header: %.*s / %s -> %s / %.*s",
+    RING_DBG("contact header: %.*s / %s -> %s / %.*s",
           pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str(), pjTarget.slen, pjTarget.ptr);
 
     pjsip_dialog *dialog = NULL;
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, &pjTarget, &dialog) != PJ_SUCCESS) {
-        SFL_ERR("Unable to create SIP dialogs for user agent client when "
+        RING_ERR("Unable to create SIP dialogs for user agent client when "
               "calling %s", toUri.c_str());
         return false;
     }
@@ -308,12 +308,12 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
 
     pjsip_inv_session* inv = nullptr;
     if (pjsip_inv_create_uac(dialog, call->getSDP().getLocalSdpSession(), 0, &inv) != PJ_SUCCESS) {
-        SFL_ERR("Unable to create invite session for user agent client");
+        RING_ERR("Unable to create invite session for user agent client");
         return false;
     }
 
     if (!inv) {
-        SFL_ERR("Call invite is not initialized");
+        RING_ERR("Call invite is not initialized");
         return PJ_FALSE;
     }
 
@@ -329,20 +329,20 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
     pjsip_tx_data *tdata;
 
     if (pjsip_inv_invite(call->inv.get(), &tdata) != PJ_SUCCESS) {
-        SFL_ERR("Could not initialize invite messager for this call");
+        RING_ERR("Could not initialize invite messager for this call");
         return false;
     }
 
     //const pjsip_tpselector tp_sel = getTransportSelector();
     const pjsip_tpselector tp_sel = {PJSIP_TPSELECTOR_TRANSPORT, {call->getTransport()->get()}};
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        SFL_ERR("Unable to associate transport for invite session dialog");
+        RING_ERR("Unable to associate transport for invite session dialog");
         return false;
     }
 
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
         call->inv.reset();
-        SFL_ERR("Unable to send invite message for this call");
+        RING_ERR("Unable to send invite message for this call");
         return false;
     }
 
@@ -419,7 +419,7 @@ saveFile(const std::string& path, const std::vector<uint8_t>& data)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        SFL_ERR("Could not write data to %s", path.c_str());
+        RING_ERR("Could not write data to %s", path.c_str());
         return;
     }
     file.write((char*)data.data(), data.size());
@@ -439,7 +439,7 @@ RingAccount::loadIdentity()
         dht_key = dht::crypto::PrivateKey(fileutils::loadFile(privkeyPath_));
     }
     catch (const std::exception& e) {
-        SFL_ERR("Error loading identity: %s", e.what());
+        RING_ERR("Error loading identity: %s", e.what());
         auto ca = dht::crypto::generateIdentity("Ring CA");
         if (!ca.first || !ca.second) {
             throw VoipLinkException("Can't generate CA for this account.");
@@ -485,7 +485,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
-        SFL_ERR("Couldn't find key %s", key);
+        RING_ERR("Couldn't find key %s", key);
         return;
     }
     i = atoi(iter->second.c_str());
@@ -517,19 +517,19 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
 void RingAccount::doRegister()
 {
     if (not isEnabled()) {
-        SFL_WARN("Account must be enabled to register, ignoring");
+        RING_WARN("Account must be enabled to register, ignoring");
         return;
     }
 
     try {
         loadTreatedCalls();
         if (dht_.isRunning()) {
-            SFL_ERR("DHT already running (stopping it first).");
+            RING_ERR("DHT already running (stopping it first).");
             dht_.join();
         }
         auto identity = loadIdentity();
         dht_.run(dhtPort_, identity.second, false, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
-            SFL_WARN("Dht status : %d %d", (int)s4, (int)s6);
+            RING_WARN("Dht status : %d %d", (int)s4, (int)s6);
             auto status = std::max(s4, s6);
             switch(status) {
             case dht::Dht::Status::Connecting:
@@ -542,7 +542,7 @@ void RingAccount::doRegister()
                         getTlsSetting());
                     if (!tlsListener_) {
                         setRegistrationState(RegistrationState::ERROR_GENERIC);
-                        SFL_ERR("Error creating TLS listener.");
+                        RING_ERR("Error creating TLS listener.");
                         return;
                     }
                 }*/
@@ -602,14 +602,14 @@ void RingAccount::doRegister()
                 }
             }
             for (auto ip : bootstrap)
-                SFL_DBG("Bootstrap node: %s", IpAddr(ip).toString(true).c_str());
+                RING_DBG("Bootstrap node: %s", IpAddr(ip).toString(true).c_str());
             dht_.bootstrap(bootstrap);
         }
 
         // Listen for incoming calls
         auto shared = shared_from_this();
         auto listenKey = "callto:"+dht_.getId().toString();
-        SFL_WARN("Listening on %s : %s", listenKey.c_str(), dht::InfoHash::get(listenKey).toString().c_str());
+        RING_WARN("Listening on %s : %s", listenKey.c_str(), dht::InfoHash::get(listenKey).toString().c_str());
         dht_.listen (
             listenKey,
             [shared,listenKey] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
@@ -617,7 +617,7 @@ void RingAccount::doRegister()
                 for (const auto& v : vals) {
                     try {
                         if (v->recipient != this_.dht_.getId() || v->type != this_.ICE_ANNOUCEMENT_TYPE.id) {
-                            SFL_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
+                            RING_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
                             continue;
                         }
                         if (v->owner.getId() == this_.dht_.getId())
@@ -629,7 +629,7 @@ void RingAccount::doRegister()
                         auto from = v->owner.getId().toString();
                         auto from_vid = v->id;
                         auto reply_vid = from_vid+1;
-                        SFL_WARN("Received incomming DHT call request from %s (vid %llx) !!", from.c_str(), from_vid);
+                        RING_WARN("Received incomming DHT call request from %s (vid %llx) !!", from.c_str(), from_vid);
                         auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(this_, Manager::instance().getNewCallID(), Call::INCOMING);
                         call->initIceTransport(false, ICE_COMPONENTS);
                         if (call->waitForIceInitialization(ICE_INIT_TIMEOUT) <= 0)
@@ -643,16 +643,16 @@ void RingAccount::doRegister()
                                 reply_vid
                             },
                             [call,shared,listenKey,reply_vid](bool ok) {
-                                SFL_WARN("ICE exchange put %d", ok);
+                                RING_WARN("ICE exchange put %d", ok);
                                 auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
                                 this_.dht_.cancelPut(listenKey, reply_vid);
-                                SFL_WARN("waitForIceNegociation");
+                                RING_WARN("waitForIceNegociation");
                                 if (!ok || call->waitForIceNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
-                                    SFL_WARN("nego failed");
+                                    RING_WARN("nego failed");
                                     call->setConnectionState(Call::DISCONNECTED);
                                     Manager::instance().callFailure(call->getCallId());
                                 } else {
-                                    SFL_WARN("nego succeeded");
+                                    RING_WARN("nego succeeded");
                                     call->setConnectionState(Call::PROGRESSING);
                                     auto t = this_.link_->sipTransport->getIceTransport(call->getIceTransport(), ICE_COMP_SIP_TRANSPORT);
                                     this_.setTransport(t);
@@ -666,7 +666,7 @@ void RingAccount::doRegister()
                         this_.pendingCalls_.push_back(call);
                         return true;
                     } catch (const std::exception& e) {
-                        SFL_ERR("ICE/DHT error: %s", e.what());
+                        RING_ERR("ICE/DHT error: %s", e.what());
                     }
                 }
                 return true;
@@ -675,7 +675,7 @@ void RingAccount::doRegister()
 
     }
     catch (const std::exception& e) {
-        SFL_ERR("Error registering DHT account: %s", e.what());
+        RING_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
@@ -722,7 +722,7 @@ RingAccount::loadTreatedCalls()
     {
         std::ifstream file(treatedcallPath);
         if (!file.is_open()) {
-            SFL_WARN("Could not load treated calls from %s", treatedcallPath.c_str());
+            RING_WARN("Could not load treated calls from %s", treatedcallPath.c_str());
             return;
         }
         std::string line;
@@ -743,7 +743,7 @@ RingAccount::saveTreatedCalls() const
     {
         std::ofstream file(treatedcallPath, std::ios::trunc);
         if (!file.is_open()) {
-            SFL_ERR("Could not save treated calls to %s", treatedcallPath.c_str());
+            RING_ERR("Could not save treated calls to %s", treatedcallPath.c_str());
             return;
         }
         for (auto& c : treatedCalls_)
@@ -762,7 +762,7 @@ RingAccount::regenerateCAList()
 {
     std::ofstream list(caListPath_, std::ios::trunc | std::ios::binary);
     if (!list.is_open()) {
-        SFL_ERR("Could write CA list");
+        RING_ERR("Could write CA list");
         return;
     }
     auto cas = getRegistredCAs();
@@ -787,7 +787,7 @@ void RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) cons
     {
         std::ofstream file(nodesPath, std::ios::trunc);
         if (!file.is_open()) {
-            SFL_ERR("Could not save nodes to %s", nodesPath.c_str());
+            RING_ERR("Could not save nodes to %s", nodesPath.c_str());
             return;
         }
         for (auto& n : nodes)
@@ -813,7 +813,7 @@ RingAccount::loadNodes() const
     {
         std::ifstream file(nodesPath);
         if (!file.is_open()) {
-            SFL_ERR("Could not load nodes from %s", nodesPath.c_str());
+            RING_ERR("Could not load nodes from %s", nodesPath.c_str());
             return nodes;
         }
         std::string line;
@@ -841,7 +841,7 @@ RingAccount::loadValues() const
             std::istreambuf_iterator<char> begin(ifs), end;
             values.push_back({{fname}, std::vector<uint8_t>{begin, end}});
         } catch (const std::exception& e) {
-            SFL_ERR("Error reading value: %s", e.what());
+            RING_ERR("Error reading value: %s", e.what());
             continue;
         }
     }
@@ -871,7 +871,7 @@ void RingAccount::initTlsConfiguration()
 
 void RingAccount::loadConfig()
 {
-    SFL_WARN("RingAccount::loadConfig()");
+    RING_WARN("RingAccount::loadConfig()");
     initTlsConfiguration();
     transportType_ = PJSIP_TRANSPORT_TLS;
 }
@@ -881,10 +881,10 @@ RingAccount::matches(const std::string &userName, const std::string &server) con
 {
     auto dhtId = dht_.getId().toString();
     if (userName == dhtId || server == dhtId) {
-        SFL_DBG("Matching account id in request with username %s", userName.c_str());
+        RING_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::FULL;
     } else {
-        SFL_DBG("No match for account %s in request with username %s", dht_.getId().toString().c_str(), userName.c_str());
+        RING_DBG("No match for account %s in request with username %s", dht_.getId().toString().c_str(), userName.c_str());
         return MatchRank::NONE;
     }
 }
@@ -907,7 +907,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
     if (!t && transport_)
         t = transport_->get();
     if (!t) {
-        SFL_ERR("Transport not created yet");
+        RING_ERR("Transport not created yet");
         pj_cstr(&contact_, "<sip:>");
         return contact_;
     }
@@ -941,7 +941,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
     }
 #endif
 */
-    SFL_WARN("getContactHeader %s@%s", username_.c_str(), address.toString(true).c_str());
+    RING_WARN("getContactHeader %s@%s", username_.c_str(), address.toString(true).c_str());
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                      "<sip:%s%s%s>",
                                      username_.c_str(),

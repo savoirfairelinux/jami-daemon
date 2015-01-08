@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
@@ -56,7 +56,7 @@ sockaddr_to_host_port(pj_pool_t* pool,
 
 SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
                                  long /* t_type */,
-                                 const std::shared_ptr<sfl::IceTransport>& ice,
+                                 const std::shared_ptr<ring::IceTransport>& ice,
                                  int comp_id, std::function<int()> destroy_cb)
     : base()
     , pool_(nullptr, pj_pool_release)
@@ -69,7 +69,7 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
     if (not ice->isCompleted())
         throw std::logic_error("ice transport must be completed");
 
-    SFL_DBG("Creating SipIceTransport");
+    RING_DBG("Creating SipIceTransport");
 
     pool_.reset(pjsip_endpt_create_pool(endpt, "SipIceTransport.pool", POOL_TP_INIT, POOL_TP_INC));
     if (not pool_)
@@ -92,7 +92,7 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
         throw std::runtime_error("Can't create PJSIP mutex.");
 
     auto remote = ice->getRemoteAddress(comp_id);
-    SFL_DBG("SipIceTransport: remote is %s", remote.toString(true).c_str());
+    RING_DBG("SipIceTransport: remote is %s", remote.toString(true).c_str());
     pj_sockaddr_cp(&base.key.rem_addr, remote.pjPtr());
     base.key.type = PJSIP_TRANSPORT_UDP;//t_type;
     base.type_name = (char*)pjsip_transport_get_type_name((pjsip_transport_type_e)base.key.type);
@@ -241,7 +241,7 @@ SipIceTransport::onRecv()
 pj_status_t
 SipIceTransport::shutdown()
 {
-    SFL_WARN("SIP transport ICE: shutdown");
+    RING_WARN("SIP transport ICE: shutdown");
 }
 
 pj_status_t
@@ -249,6 +249,6 @@ SipIceTransport::destroy()
 {
     if (not is_registered_ or not destroy_cb_)
         return PJ_SUCCESS;
-    SFL_WARN("SIP transport ICE: destroy");
+    RING_WARN("SIP transport ICE: destroy");
     return destroy_cb_();
 }

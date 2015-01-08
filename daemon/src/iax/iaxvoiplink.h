@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
@@ -51,7 +51,7 @@ class IAXCall;
 class AudioCodec;
 class AudioLayer;
 
-namespace sfl {
+namespace ring {
     class Resampler;
 }
 
@@ -153,11 +153,11 @@ class IAXVoIPLink {
         IAXAccount& account_;
 
         /** encoder/decoder/resampler buffers */
-        sfl::AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, sfl::AudioFormat::MONO()};
-        sfl::AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, sfl::AudioFormat::MONO()};
+        ring::AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, ring::AudioFormat::MONO()};
+        ring::AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, ring::AudioFormat::MONO()};
         unsigned char encodedData_[RAW_BUFFER_SIZE] = {};
 
-        std::unique_ptr<sfl::Resampler> resampler_;
+        std::unique_ptr<ring::Resampler> resampler_;
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to

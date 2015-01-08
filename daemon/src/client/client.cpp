@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,15 +37,15 @@
 #include "configurationmanager.h"
 #include "presencemanager.h"
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "videomanager.h"
-#endif // SFL_VIDEO
+#endif // RING_VIDEO
 
 Client::Client() :
     callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
     , presenceManager_(new PresenceManager)
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     , videoManager_(new VideoManager)
 #endif
 #ifdef USE_NETWORKMANAGER
@@ -58,7 +58,7 @@ Client::~Client()
 #ifdef USE_NETWORKMANAGER
     delete networkManager_;
 #endif
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     delete videoManager_;
 #endif
     delete configurationManager_;
@@ -81,7 +81,7 @@ PresenceManager * Client::getPresenceManager()
     return presenceManager_;
 }
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 VideoManager * Client::getVideoManager()
 {
     return videoManager_;

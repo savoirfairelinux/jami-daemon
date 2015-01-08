@@ -40,15 +40,15 @@
 #include <memory>
 #include <mutex>
 
-namespace sfl_video {
+namespace ring { namespace video {
 class SocketPair;
 class VideoEncoder;
-}
+}}
 
 class Sdp;
 class ThreadLoop;
 
-namespace sfl {
+namespace ring {
 
 class RingBuffer;
 class Resampler;
@@ -78,10 +78,10 @@ class AVFormatRtpSession {
         std::string id_;
         std::map<std::string, std::string> txArgs_;
         std::string receivingSDP_;
-        std::unique_ptr<sfl_video::SocketPair> socketPair_;
+        std::unique_ptr<ring::video::SocketPair> socketPair_;
         std::unique_ptr<AudioSender> sender_;
         std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<sfl::RingBuffer> ringbuffer_;
+        std::shared_ptr<ring::RingBuffer> ringbuffer_;
         std::recursive_mutex mutex_;
         bool sending_;
         bool receiving_;

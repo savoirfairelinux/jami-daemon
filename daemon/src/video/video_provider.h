@@ -31,7 +31,7 @@
 #ifndef VIDEO_PROVIDER_H_
 #define VIDEO_PROVIDER_H_
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class VideoProvider {
     public:
@@ -39,6 +39,6 @@ class VideoProvider {
         virtual ~VideoProvider() {}
 };
 
-}
+}}
 
 #endif // VIDEO_PROVIDER_H_

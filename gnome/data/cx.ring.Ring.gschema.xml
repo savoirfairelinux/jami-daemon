@@ -1,5 +1,5 @@
 <schemalist>
-    <schema id="org.sflphone.SFLphone" path="/org/sflphone/sflphone-client-gnome/">
+    <schema id="cx.ring.Ring" path="/cx/ring/ring-client-gnome/">
         <key name="window-width" type="i">
             <default>240</default>
             <summary>Main window width</summary>

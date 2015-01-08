@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <iterator>
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "video/libav_utils.h"
 #endif
 
@@ -107,9 +107,9 @@ Account::Account(const string &accountID)
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
     #ifdef __ANDROID__
-        ringtonePath_ = "/data/data/org.sflphone/files/ringtones/konga.ul";
+        ringtonePath_ = "/data/data/cx.ring/files/ringtones/konga.ul";
     #else
-        ringtonePath_ = "/usr/share/sflphone/ringtones/konga.ul";
+        ringtonePath_ = "/usr/share/ring/ringtones/konga.ul";
     #endif
 }
 
@@ -164,7 +164,7 @@ void Account::loadDefaultCodecs()
     result.push_back("112");
 
     setActiveAudioCodecs(result);
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     // we don't need to validate via setVideoCodecs, since these are defaults
     videoCodecList_ = libav_utils::getDefaultCodecs();
 #endif
@@ -204,7 +204,7 @@ void Account::unserialize(const YAML::Node &node)
     parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveAudioCodecs(sfl::split_string(audioCodecStr_, '/'));
+    setActiveAudioCodecs(ring::split_string(audioCodecStr_, '/'));
     parseValue(node, DISPLAY_NAME_KEY, displayName_);
     parseValue(node, HOSTNAME_KEY, hostname_);
 
@@ -266,7 +266,7 @@ std::map<std::string, std::string> Account::getVolatileAccountDetails() const
     return a;
 }
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 static bool
 isPositiveInteger(const string &s)
 {
@@ -295,7 +295,7 @@ isCodecValid(const map<string, string> &codec, const vector<map<string, string> 
 {
     const map<string, string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
     if (name == codec.end()) {
-        SFL_ERR("Field \"name\" missing in codec specification");
+        RING_ERR("Field \"name\" missing in codec specification");
         return false;
     }
 
@@ -307,7 +307,7 @@ isCodecValid(const map<string, string> &codec, const vector<map<string, string> 
                 and isFieldValid(codec, Account::VIDEO_CODEC_ENABLED, isBoolean);
         }
     }
-    SFL_ERR("Codec %s not supported", name->second.c_str());
+    RING_ERR("Codec %s not supported", name->second.c_str());
     return false;
 }
 
@@ -316,7 +316,7 @@ isCodecListValid(const vector<map<string, string> > &list)
 {
     const auto defaults(libav_utils::getDefaultCodecs());
     if (list.size() != defaults.size()) {
-        SFL_ERR("New codec list has a different length than the list of supported codecs");
+        RING_ERR("New codec list has a different length than the list of supported codecs");
         return false;
     }
 
@@ -331,7 +331,7 @@ isCodecListValid(const vector<map<string, string> > &list)
 
 void Account::setVideoCodecs(const vector<map<string, string> > &list)
 {
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     if (isCodecListValid(list))
         videoCodecList_ = list;
 #else
@@ -433,7 +433,7 @@ Account::getActiveVideoCodecs() const
 #define find_iter()                             \
         const auto iter = details.find(key);    \
         if (iter == details.end()) {            \
-            SFL_ERR("Couldn't find key \"%s\"", key); \
+            RING_ERR("Couldn't find key \"%s\"", key); \
             return;                             \
         }
 

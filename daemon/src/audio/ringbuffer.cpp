@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -41,7 +41,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace sfl {
+namespace ring {
 
 // corresponds to 160 ms (about 5 rtp packets)
 static const size_t MIN_BUFFER_SIZE = 1024;
@@ -94,7 +94,7 @@ size_t RingBuffer::getLength(const std::string &call_id) const
 void
 RingBuffer::debug()
 {
-    SFL_DBG("Start=%d; End=%d; BufferSize=%d", getSmallestReadOffset(), endPos_, buffer_.frames());
+    RING_DBG("Start=%d; End=%d; BufferSize=%d", getSmallestReadOffset(), endPos_, buffer_.frames());
 }
 
 size_t RingBuffer::getReadOffset(const std::string &call_id) const
@@ -124,7 +124,7 @@ RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
     if (iter != readoffsets_.end())
         iter->second = offset;
     else
-        SFL_ERR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
+        RING_ERR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
 }
 
 
@@ -230,7 +230,7 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
     const size_t sample_num = buf.frames();
     size_t toCopy = std::min(sample_num, len);
     if (toCopy and toCopy != sample_num) {
-        SFL_DBG("Partial get: %d/%d", toCopy, sample_num);
+        RING_DBG("Partial get: %d/%d", toCopy, sample_num);
     }
 
     const size_t copied = toCopy;
@@ -306,7 +306,7 @@ RingBuffer::discard(size_t toDiscard)
     for (auto & r : readoffsets_) {
         size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
         if (dst < toDiscard) {
-            SFL_DBG("%s : discarding: %d frames", r.first.c_str(), toDiscard - dst);
+            RING_DBG("%s : discarding: %d frames", r.first.c_str(), toDiscard - dst);
             r.second = (r.second + toDiscard - dst) % buffer_size;
         }
     }

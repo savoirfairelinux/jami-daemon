@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -34,7 +34,7 @@
 
 #include <samplerate.h>
 
-namespace sfl {
+namespace ring {
 
 class SrcState {
     public:
@@ -100,10 +100,10 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
         // change channel num if needed
         src_state_.reset(new SrcState(nbChans));
         format_.nb_channels = nbChans;
-        SFL_DBG("SRC channel number changed.");
+        RING_DBG("SRC channel number changed.");
     }
     if (nbChans != dataOut.channels()) {
-        SFL_DBG("Output buffer had the wrong number of channels (in: %d, out: %d).", nbChans, dataOut.channels());
+        RING_DBG("Output buffer had the wrong number of channels (in: %d, out: %d).", nbChans, dataOut.channels());
         dataOut.setChannelNum(nbChans);
     }
 

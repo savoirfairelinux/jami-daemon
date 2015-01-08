@@ -53,7 +53,7 @@ enum VideoPixelFormat {
     VIDEO_PIXFMT_YUV420P = -2,
 };
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 template <typename T> class Observer;
 template <typename T> class Observable;
@@ -217,6 +217,6 @@ private:
     std::mutex mutex_ = {}; // lock writableFrame_/lastFrame_ access
 };
 
-}
+}}
 
 #endif // __VIDEO_BASE_H__

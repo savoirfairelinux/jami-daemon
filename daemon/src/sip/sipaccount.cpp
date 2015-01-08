@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -57,7 +57,7 @@
 #include "logger.h"
 #include "manager.h"
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "video/libav_utils.h"
 #endif
 
@@ -90,13 +90,13 @@ static void
 registration_cb(pjsip_regc_cbparam *param)
 {
     if (!param) {
-        SFL_ERR("registration callback parameter is null");
+        RING_ERR("registration callback parameter is null");
         return;
     }
 
     auto account = static_cast<SIPAccount *>(param->token);
     if (!account) {
-        SFL_ERR("account doesn't exist in registration callback");
+        RING_ERR("account doesn't exist in registration callback");
         return;
     }
 
@@ -196,7 +196,7 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         setTransport(t);
         call->setTransport(t);
 
-        SFL_DBG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
+        RING_DBG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
     }
     else {
         to = toUrl;
@@ -212,7 +212,7 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         // FIXME : for now, use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
 
-        SFL_DBG("UserAgent: New registered account call to %s", toUrl.c_str());
+        RING_DBG("UserAgent: New registered account call to %s", toUrl.c_str());
     }
 
     call->initIceTransport(true);
@@ -231,11 +231,11 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<sfl::AudioCodec *> audioCodecs;
+    std::vector<ring::AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
 #if USE_CCRTP
@@ -291,19 +291,19 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     auto transport = call->getTransport();
     if (!transport) {
-        SFL_ERR("Unable to start call without transport");
+        RING_ERR("Unable to start call without transport");
         return false;
     }
 
     pj_str_t pjContact = getContactHeader(transport->get());
     const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
-    SFL_DBG("contact header: %s / %s -> %s",
+    RING_DBG("contact header: %s / %s -> %s",
           debugContactHeader.c_str(), from.c_str(), toUri.c_str());
 
     pjsip_dialog *dialog = NULL;
 
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
-        SFL_ERR("Unable to create SIP dialogs for user agent client when "
+        RING_ERR("Unable to create SIP dialogs for user agent client when "
               "calling %s", toUri.c_str());
         return false;
     }
@@ -315,12 +315,12 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     pjsip_inv_session* inv = nullptr;
     if (pjsip_inv_create_uac(dialog, call->getSDP().getLocalSdpSession(), 0, &inv) != PJ_SUCCESS) {
-        SFL_ERR("Unable to create invite session for user agent client");
+        RING_ERR("Unable to create invite session for user agent client");
         return false;
     }
 
     if (!inv) {
-        SFL_ERR("Call invite is not initialized");
+        RING_ERR("Call invite is not initialized");
         return PJ_FALSE;
     }
 
@@ -332,7 +332,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(), call->inv->pool));
 
     if (hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo()) != PJ_SUCCESS) {
-        SFL_ERR("Could not initialize credentials for invite session authentication");
+        RING_ERR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
@@ -341,19 +341,19 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     pjsip_tx_data *tdata;
 
     if (pjsip_inv_invite(call->inv.get(), &tdata) != PJ_SUCCESS) {
-        SFL_ERR("Could not initialize invite messager for this call");
+        RING_ERR("Could not initialize invite messager for this call");
         return false;
     }
 
     const pjsip_tpselector tp_sel = SipTransportBroker::getTransportSelector(transport->get());
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        SFL_ERR("Unable to associate transport for invite session dialog");
+        RING_ERR("Unable to associate transport for invite session dialog");
         return false;
     }
 
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
         call->inv.reset();
-        SFL_ERR("Unable to send invite message for this call");
+        RING_ERR("Unable to send invite message for this call");
         return false;
     }
 
@@ -435,7 +435,7 @@ validate(std::string &member, const std::string &param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        SFL_ERR("Invalid parameter \"%s\"", param.c_str());
+        RING_ERR("Invalid parameter \"%s\"", param.c_str());
 }
 
 void SIPAccount::unserialize(const YAML::Node &node)
@@ -522,7 +522,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
-        SFL_ERR("Couldn't find key %s", key);
+        RING_ERR("Couldn't find key %s", key);
         return;
     }
     i = atoi(iter->second.c_str());
@@ -586,7 +586,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
         validate(srtpKeyExchange_, iter->second, VALID_SRTP_KEY_EXCHANGES);
 
     if (credentials_.empty()) { // credentials not set, construct 1 entry
-        SFL_WARN("No credentials set, inferring them...");
+        RING_WARN("No credentials set, inferring them...");
         std::vector<std::map<std::string, std::string> > v;
         std::map<std::string, std::string> map;
         map[CONFIG_ACCOUNT_USERNAME] = username_;
@@ -711,11 +711,11 @@ std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
 void SIPAccount::doRegister()
 {
     if (not isEnabled()) {
-        SFL_WARN("Account must be enabled to register, ignoring");
+        RING_WARN("Account must be enabled to register, ignoring");
         return;
     }
 
-    SFL_DBG("doRegister %s", hostname_.c_str());
+    RING_DBG("doRegister %s", hostname_.c_str());
 
     if (hostname_.empty() || isIP2IP()) {
         doRegister_();
@@ -729,7 +729,7 @@ void SIPAccount::doRegister()
         [shared](std::vector<IpAddr> host_ips) {
             auto this_ = std::static_pointer_cast<SIPAccount>(shared).get();
             if (host_ips.empty()) {
-                SFL_ERR("Can't resolve hostname for registration.");
+                RING_ERR("Can't resolve hostname for registration.");
                 this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
                 return;
             }
@@ -743,13 +743,13 @@ void SIPAccount::doRegister_()
 {
     bool ipv6 = false;
     if (isIP2IP()) {
-        SFL_DBG("doRegister isIP2IP.");
+        RING_DBG("doRegister isIP2IP.");
 #if HAVE_IPV6
         ipv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
 #endif
     } else if (!hostIp_) {
         setRegistrationState(RegistrationState::ERROR_GENERIC);
-        SFL_ERR("Hostname not resolved.");
+        RING_ERR("Hostname not resolved.");
         return;
     }
 #if HAVE_IPV6
@@ -760,7 +760,7 @@ void SIPAccount::doRegister_()
 #if HAVE_TLS
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_) {
-        SFL_DBG("TLS is enabled for account %s", accountID_.c_str());
+        RING_DBG("TLS is enabled for account %s", accountID_.c_str());
 
         // Dropping current calls already using the transport is currently required
         // with TLS.
@@ -775,7 +775,7 @@ void SIPAccount::doRegister_()
                 getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
-                SFL_ERR("Error creating TLS listener.");
+                RING_ERR("Error creating TLS listener.");
                 return;
             }
         }
@@ -806,7 +806,7 @@ void SIPAccount::doRegister_()
     }
 
     try {
-        SFL_WARN("Creating transport");
+        RING_WARN("Creating transport");
         transport_.reset();
 #if HAVE_TLS
         if (isTlsEnabled()) {
@@ -823,7 +823,7 @@ void SIPAccount::doRegister_()
 
         sendRegister();
     } catch (const VoipLinkException &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
         return;
     }
@@ -846,7 +846,7 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     try {
         sendUnregister();
     } catch (const VoipLinkException &e) {
-        SFL_ERR("doUnregister %s", e.what());
+        RING_ERR("doUnregister %s", e.what());
     }
 
     // remove the transport from the account
@@ -867,7 +867,7 @@ void SIPAccount::startKeepAliveTimer()
     if (keepAliveTimerActive_)
         return;
 
-    SFL_DBG("Start keep alive timer for account %s", getAccountID().c_str());
+    RING_DBG("Start keep alive timer for account %s", getAccountID().c_str());
 
     // make sure here we have an entirely new timer
     memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
@@ -879,10 +879,10 @@ void SIPAccount::startKeepAliveTimer()
 
     // expiration may be undetermined during the first registration request
     if (registrationExpire_ == 0) {
-        SFL_DBG("Registration Expire: 0, taking 60 instead");
+        RING_DBG("Registration Expire: 0, taking 60 instead");
         keepAliveDelay_.sec = 3600;
     } else {
-        SFL_DBG("Registration Expire: %d", registrationExpire_);
+        RING_DBG("Registration Expire: %d", registrationExpire_);
         keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
 
@@ -896,7 +896,7 @@ void SIPAccount::startKeepAliveTimer()
 void SIPAccount::stopKeepAliveTimer()
 {
     if (keepAliveTimerActive_) {
-        SFL_DBG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
+        RING_DBG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
         keepAliveTimerActive_ = false;
         link_->cancelKeepAliveTimer(keepAliveTimer_);
     }
@@ -906,7 +906,7 @@ void
 SIPAccount::sendRegister()
 {
     if (not isEnabled()) {
-        SFL_WARN("Account must be enabled to register, ignoring");
+        RING_WARN("Account must be enabled to register, ignoring");
         return;
     }
 
@@ -933,7 +933,7 @@ SIPAccount::sendRegister()
     if (transport_) {
         if (not getPublishedSameasLocal() or (not received.empty() and received != getPublishedAddress())) {
             pjsip_host_port *via = getViaAddr();
-            SFL_DBG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
+            RING_DBG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
 
             if (pjsip_regc_set_via_sent_by(regc, via, transport_->get()) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
@@ -945,7 +945,7 @@ SIPAccount::sendRegister()
 
     pj_status_t status;
 
-    //SFL_DBG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
+    //RING_DBG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
     if ((status = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, getRegistrationExpire())) != PJ_SUCCESS) {
         sip_utils::sip_strerror(status);
         throw VoipLinkException("Unable to initialize account registration structure");
@@ -990,11 +990,11 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
         return;
 
     if (param->status != PJ_SUCCESS) {
-        SFL_ERR("SIP registration error %d", param->status);
+        RING_ERR("SIP registration error %d", param->status);
         destroyRegistrationInfo();
         stopKeepAliveTimer();
     } else if (param->code < 0 || param->code >= 300) {
-        SFL_ERR("SIP registration failed, status=%d (%.*s)",
+        RING_ERR("SIP registration failed, status=%d (%.*s)",
               param->code, (int)param->reason.slen, param->reason.ptr);
         destroyRegistrationInfo();
         stopKeepAliveTimer();
@@ -1023,7 +1023,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             destroyRegistrationInfo();
             /* Stop keep-alive timer if any. */
             stopKeepAliveTimer();
-            SFL_DBG("Unregistration success");
+            RING_DBG("Unregistration success");
             setRegistrationState(RegistrationState::UNREGISTERED);
         } else {
             /* TODO Check and update SIP outbound status first, since the result
@@ -1032,7 +1032,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             // update_rfc5626_status(acc, param->rdata);
 
             if (checkNATAddress(param, link_->getPool()))
-                SFL_WARN("Contact overwritten");
+                RING_WARN("Contact overwritten");
 
             /* TODO Check and update Service-Route header */
             if (hasServiceRoute())
@@ -1153,7 +1153,7 @@ void SIPAccount::initTlsConfiguration()
     CipherArray avail_ciphers(256);
     unsigned cipherNum = avail_ciphers.size();
     if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
-        SFL_ERR("Could not determine cipher list on this system");
+        RING_ERR("Could not determine cipher list on this system");
     avail_ciphers.resize(cipherNum);
 
     ciphers_.clear();
@@ -1165,11 +1165,11 @@ void SIPAccount::initTlsConfiguration()
             if (item.empty()) continue;
             auto item_cid = pj_ssl_cipher_id(item.c_str());
             if (item_cid != PJ_TLS_UNKNOWN_CIPHER) {
-                SFL_WARN("Valid cipher: %s", item.c_str());
+                RING_WARN("Valid cipher: %s", item.c_str());
                 ciphers_.push_back(item_cid);
             }
             else
-                SFL_ERR("Invalid cipher: %s", item.c_str());
+                RING_ERR("Invalid cipher: %s", item.c_str());
         }
     }
 #endif
@@ -1189,7 +1189,7 @@ void SIPAccount::initTlsConfiguration()
     pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
     pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
 
-    SFL_DBG("Using %u ciphers", ciphers_.size());
+    RING_DBG("Using %u ciphers", ciphers_.size());
     tlsSetting_.ciphers_num = ciphers_.size();
     tlsSetting_.ciphers = &ciphers_.front();
 
@@ -1366,7 +1366,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     if (!t && transport_)
         t = transport_->get();
     if (!t)
-        SFL_ERR("Transport not created yet");
+        RING_ERR("Transport not created yet");
 
     if (contact_.slen and contactOverwritten_)
         return contact_;
@@ -1390,7 +1390,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     if (not publishedSameasLocal_) {
         address = publishedIpAddress_;
         port = publishedPort_;
-        SFL_DBG("Using published address %s and port %d", address.c_str(), port);
+        RING_DBG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
         link_->sipTransport->findLocalAddressFromSTUN(
             t,
@@ -1403,12 +1403,12 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     } else {
         if (!receivedParameter_.empty()) {
             address = receivedParameter_;
-            SFL_DBG("Using received address %s", address.c_str());
+            RING_DBG("Using received address %s", address.c_str());
         }
 
         if (rPort_ != -1 and rPort_ != 0) {
             port = rPort_;
-            SFL_DBG("Using received port %d", port);
+            RING_DBG("Using received port %d", port);
         }
     }
 
@@ -1464,11 +1464,11 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
     if (sipAccount == nullptr) {
-        SFL_ERR("SIP account is nullptr while registering a new keep alive timer");
+        RING_ERR("SIP account is nullptr while registering a new keep alive timer");
         return;
     }
 
-    SFL_ERR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
+    RING_ERR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
 
     // IP2IP default does not require keep-alive
     if (sipAccount->isIP2IP())
@@ -1527,7 +1527,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
 {
     // we can not authenticate without credentials
     if (creds.empty()) {
-        SFL_ERR("Cannot authenticate with empty credentials list");
+        RING_ERR("Cannot authenticate with empty credentials list");
         return;
     }
 
@@ -1714,11 +1714,11 @@ void
 SIPAccount::enablePresence(const bool& enabled)
 {
     if (!presence_) {
-        SFL_ERR("Presence not initialized");
+        RING_ERR("Presence not initialized");
         return;
     }
 
-    SFL_DBG("Presence enabled for %s : %s.",
+    RING_DBG("Presence enabled for %s : %s.",
           accountID_.c_str(),
           enabled? TRUE_STR : FALSE_STR);
 
@@ -1733,14 +1733,14 @@ void
 SIPAccount::supportPresence(int function, bool enabled)
 {
     if (!presence_) {
-        SFL_ERR("Presence not initialized");
+        RING_ERR("Presence not initialized");
         return;
     }
 
     if (presence_->isSupported(function) == enabled)
         return;
 
-    SFL_DBG("Presence support for %s (%s: %s).", accountID_.c_str(),
+    RING_DBG("Presence support for %s (%s: %s).", accountID_.c_str(),
           function == PRESENCE_FUNCTION_PUBLISH ? "publish" : "subscribe",
           enabled ? TRUE_STR : FALSE_STR);
     presence_->support(function, enabled);
@@ -1759,16 +1759,16 @@ SIPAccount::matches(const std::string &userName, const std::string &server,
                     pjsip_endpoint *endpt, pj_pool_t *pool) const
 {
     if (fullMatch(userName, server, endpt, pool)) {
-        SFL_DBG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
+        RING_DBG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
         return MatchRank::FULL;
     } else if (hostnameMatch(server, endpt, pool)) {
-        SFL_DBG("Matching account id in request with hostname %s", server.c_str());
+        RING_DBG("Matching account id in request with hostname %s", server.c_str());
         return MatchRank::PARTIAL;
     } else if (userMatch(userName)) {
-        SFL_DBG("Matching account id in request with username %s", userName.c_str());
+        RING_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::PARTIAL;
     } else if (proxyMatch(server, endpt, pool)) {
-        SFL_DBG("Matching account id in request with proxy %s", server.c_str());
+        RING_DBG("Matching account id in request with proxy %s", server.c_str());
         return MatchRank::PARTIAL;
     } else {
         return MatchRank::NONE;
@@ -1907,7 +1907,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         via_addrstr = IpAddr(via_addrstr).toString(false, true);
 #endif
 
-    SFL_WARN("IP address change detected for account %s "
+    RING_WARN("IP address change detected for account %s "
          "(%.*s:%d --> %s:%d). Updating registration "
          "(using method %d)",
          accountID_.c_str(),
@@ -1957,7 +1957,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
                 rport,
                 transport_param);
         if (len < 1) {
-            SFL_ERR("URI too long");
+            RING_ERR("URI too long");
             return false;
         }
 
@@ -1973,7 +1973,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
             tmp_tp = transport_;
             sendUnregister();
         } catch (const VoipLinkException &e) {
-            SFL_ERR("%s", e.what());
+            RING_ERR("%s", e.what());
         }
 
         pjsip_regc_update_contact(regc_, 1, &contact_);
@@ -1982,7 +1982,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         try {
             sendRegister();
         } catch (const VoipLinkException &e) {
-            SFL_ERR("%s", e.what());
+            RING_ERR("%s", e.what());
         }
     }
 
@@ -2011,7 +2011,7 @@ SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
     try {
         acc->sendRegister();
     } catch (const VoipLinkException &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
         acc->scheduleReregistration(endpt);
     }
     delete context;
@@ -2057,7 +2057,7 @@ SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
 
     pj_time_val_normalize(&delay);
 
-    SFL_WARN("Scheduling re-registration retry in %u seconds..", delay.sec);
+    RING_WARN("Scheduling re-registration retry in %u seconds..", delay.sec);
     auto_rereg_.timer.id = PJ_TRUE;
     if (pjsip_endpt_schedule_timer(endpt, &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;

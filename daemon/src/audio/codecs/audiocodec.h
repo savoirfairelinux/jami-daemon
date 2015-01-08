@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  Mostly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
@@ -42,7 +42,7 @@
 // opus_decode will not be capable of decoding some packets."
 #define RAW_BUFFER_SIZE (120 * 48000 / 1000)
 
-namespace sfl {
+namespace ring {
 
 class AudioCodec {
     public:
@@ -190,7 +190,7 @@ class AudioCodec {
         AudioCodec& operator=(const AudioCodec&);
 
 };
-} // end namespace sfl
+} // end namespace ring
 
 
 /** Enumeration that contains known audio payloads */

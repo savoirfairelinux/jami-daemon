@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 class bcg729DecoderChannelContextStruct;
 class bcg729EncoderChannelContextStruct;
 
-class G729 : public sfl::AudioCodec {
+class G729 : public ring::AudioCodec {
 public:
    G729();
    ~G729();

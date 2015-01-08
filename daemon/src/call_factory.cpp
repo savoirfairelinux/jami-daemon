@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,11 +44,11 @@ CallFactory::removeCall(Call& call)
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
     const auto& id = call.getCallId();
-    SFL_DBG("Removing call %s", id.c_str());
+    RING_DBG("Removing call %s", id.c_str());
     const auto& account = call.getAccount();
     auto& map = callMaps_.at(account.getAccountType());
     map.erase(id);
-    SFL_DBG("Remaining %u %s call(s)", map.size(), account.getAccountType());
+    RING_DBG("Remaining %u %s call(s)", map.size(), account.getAccountType());
 }
 
 void
@@ -59,7 +59,7 @@ CallFactory::removeCall(const std::string& id)
     if (auto call = getCall(id)) {
         removeCall(*call);
     } else
-        SFL_ERR("No call with ID %s", id.c_str());
+        RING_ERR("No call with ID %s", id.c_str());
 }
 
 //==============================================================================

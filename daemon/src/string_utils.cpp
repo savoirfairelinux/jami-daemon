@@ -32,7 +32,7 @@
 #include "string_utils.h"
 #include <sstream>
 
-namespace sfl {
+namespace ring {
 
 std::vector<std::string>
 split_string(const std::string &s, char delim)

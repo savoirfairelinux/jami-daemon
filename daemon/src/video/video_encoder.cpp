@@ -39,7 +39,7 @@
 #include <algorithm>
 
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -123,7 +123,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     AVOutputFormat *oformat = av_guess_format(short_name, filename, mime_type);
 
     if (!oformat) {
-        SFL_ERR("Unable to find a suitable output format for %s", filename);
+        RING_ERR("Unable to find a suitable output format for %s", filename);
         throw VideoEncoderException("No output format");
     }
 
@@ -135,7 +135,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     /* find the video encoder */
     outputEncoder_ = avcodec_find_encoder_by_name(enc_name);
     if (!outputEncoder_) {
-        SFL_ERR("Encoder \"%s\" not found!", enc_name);
+        RING_ERR("Encoder \"%s\" not found!", enc_name);
         throw VideoEncoderException("No output encoder");
     }
 
@@ -218,7 +218,7 @@ void
 VideoEncoder::startIO()
 {
     if (avformat_write_header(outputCtx_, options_ ? &options_ : NULL)) {
-        SFL_ERR("Could not write header for output file... check codec parameters");
+        RING_ERR("Could not write header for output file... check codec parameters");
         throw VideoEncoderException("Failed to write output file header");
     }
 
@@ -230,7 +230,7 @@ print_averror(const char *funcname, int err)
 {
     char errbuf[64];
     av_strerror(err, errbuf, sizeof(errbuf));
-    SFL_ERR("%s failed: %s", funcname, errbuf);
+    RING_ERR("%s failed: %s", funcname, errbuf);
 }
 
 int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_number)
@@ -321,11 +321,11 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
     return ret;
 }
 
-int VideoEncoder::encode_audio(const sfl::AudioBuffer &buffer)
+int VideoEncoder::encode_audio(const ring::AudioBuffer &buffer)
 {
     const int needed_bytes = av_samples_get_buffer_size(NULL, buffer.channels(), buffer.frames(), AV_SAMPLE_FMT_S16, 0);
     if (needed_bytes < 0) {
-        SFL_ERR("Couldn't calculate buffer size");
+        RING_ERR("Couldn't calculate buffer size");
         return -1;
     }
 
@@ -363,7 +363,7 @@ int VideoEncoder::encode_audio(const sfl::AudioBuffer &buffer)
         if (err < 0) {
             char errbuf[128];
             av_strerror(err, errbuf, sizeof(errbuf));
-            SFL_ERR("Couldn't fill audio frame: %s: %d %d", errbuf, frame->nb_samples, buffer_size);
+            RING_ERR("Couldn't fill audio frame: %s: %d %d", errbuf, frame->nb_samples, buffer_size);
             av_freep(&sample_data);
             av_frame_free(&frame);
             return -1;
@@ -404,7 +404,7 @@ int VideoEncoder::encode_audio(const sfl::AudioBuffer &buffer)
         av_frame_free(&frame);
     }
 
-    //SFL_WARN("%d", *std::max_element(sample_data, sample_data + needed_bytes / 2));
+    //RING_WARN("%d", *std::max_element(sample_data, sample_data + needed_bytes / 2));
 
     av_freep(&sample_data);
 
@@ -424,7 +424,7 @@ int VideoEncoder::flush()
 
     ret = avcodec_encode_video2(encoderCtx_, &pkt, NULL, &got_packet);
     if (ret != 0) {
-        SFL_ERR("avcodec_encode_video failed");
+        RING_ERR("avcodec_encode_video failed");
         av_free_packet(&pkt);
         return -1;
     }
@@ -433,13 +433,13 @@ int VideoEncoder::flush()
         // write the compressed frame
         ret = av_write_frame(outputCtx_, &pkt);
         if (ret < 0)
-            SFL_ERR("write_frame failed");
+            RING_ERR("write_frame failed");
     }
 #else
     ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
                                encoderBufferSize_, NULL);
     if (ret < 0) {
-        SFL_ERR("avcodec_encode_video failed");
+        RING_ERR("avcodec_encode_video failed");
         av_free_packet(&pkt);
         return ret;
     }
@@ -450,7 +450,7 @@ int VideoEncoder::flush()
     // write the compressed frame
     ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0)
-        SFL_ERR("write_frame failed");
+        RING_ERR("write_frame failed");
 #endif
     av_free_packet(&pkt);
 
@@ -472,7 +472,7 @@ void VideoEncoder::print_sdp(std::string &sdp_)
         line = line.substr(0, line.length() - 1);
         sdp_ += line + "\n";
     }
-    SFL_DBG("Sending SDP: \n%s", sdp_.c_str());
+    RING_DBG("Sending SDP: \n%s", sdp_.c_str());
 }
 
 void VideoEncoder::prepareEncoderContext(bool is_video)
@@ -488,7 +488,7 @@ void VideoEncoder::prepareEncoderContext(bool is_video)
     // set some encoder settings here
     encoderCtx_->bit_rate = 1000 * atoi(av_dict_get(options_, "bitrate",
                                                     NULL, 0)->value);
-    SFL_DBG("Using bitrate %d", encoderCtx_->bit_rate);
+    RING_DBG("Using bitrate %d", encoderCtx_->bit_rate);
 
     if (is_video) {
         // resolution must be a multiple of two
@@ -520,7 +520,7 @@ void VideoEncoder::prepareEncoderContext(bool is_video)
         if (v) {
             encoderCtx_->sample_rate = atoi(v->value);
         } else {
-            SFL_WARN("No sample rate set");
+            RING_WARN("No sample rate set");
             encoderCtx_->sample_rate = 8000;
         }
 
@@ -528,12 +528,12 @@ void VideoEncoder::prepareEncoderContext(bool is_video)
         if (v) {
             auto c = std::atoi(v->value);
             if (c > 2 or c < 1) {
-                SFL_WARN("Clamping invalid channel value %d", c);
+                RING_WARN("Clamping invalid channel value %d", c);
                 c = 1;
             }
             encoderCtx_->channels = c;
         } else {
-            SFL_WARN("Channels not set");
+            RING_WARN("Channels not set");
             encoderCtx_->channels = 1;
         }
 
@@ -542,9 +542,9 @@ void VideoEncoder::prepareEncoderContext(bool is_video)
         v = av_dict_get(options_, "frame_size", NULL, 0);
         if (v) {
             encoderCtx_->frame_size = atoi(v->value);
-            SFL_WARN("Frame size %d", encoderCtx_->frame_size);
+            RING_WARN("Frame size %d", encoderCtx_->frame_size);
         } else {
-            SFL_WARN("Frame size not set");
+            RING_WARN("Frame size not set");
         }
     }
 }
@@ -553,10 +553,10 @@ void VideoEncoder::forcePresetX264()
 {
     const char *speedPreset = "ultrafast";
     if (av_opt_set(encoderCtx_->priv_data, "preset", speedPreset, 0))
-        SFL_WARN("Failed to set x264 preset '%s'", speedPreset);
+        RING_WARN("Failed to set x264 preset '%s'", speedPreset);
     const char *tune = "zerolatency";
     if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
-        SFL_WARN("Failed to set x264 tune '%s'", tune);
+        RING_WARN("Failed to set x264 tune '%s'", tune);
 }
 
 void VideoEncoder::extractProfileLevelID(const std::string &parameters,
@@ -604,7 +604,7 @@ void VideoEncoder::extractProfileLevelID(const std::string &parameters,
                 ctx->profile |= FF_PROFILE_H264_INTRA;
             break;
     }
-    SFL_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
+    RING_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
 }
 
-}
+}}

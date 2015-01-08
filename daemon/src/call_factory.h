@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -81,7 +81,7 @@ class CallFactory {
         template <class T, class A>
         std::shared_ptr<T> newCall(A& account, const std::string& id, Call::CallType type) {
             if (!allowNewCall_) {
-                SFL_WARN("newCall aborted : CallFactory in forbid state");
+                RING_WARN("newCall aborted : CallFactory in forbid state");
                 return nullptr;
             }
 
@@ -94,7 +94,7 @@ class CallFactory {
             };
 
             if (hasCall(id)) {
-                SFL_ERR("Call %s is already created", id.c_str());
+                RING_ERR("Call %s is already created", id.c_str());
                 return nullptr;
             }
 

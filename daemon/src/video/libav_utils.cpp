@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Luca Barbato <lu_zero@gentoo.org>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
@@ -55,7 +55,7 @@ findInstalledVideoCodecs()
         if (std::find(libav_codecs.begin(), libav_codecs.end(), it.second) != libav_codecs.end())
             installed_video_codecs_.push_back(it.first);
         else
-            SFL_ERR("Didn't find \"%s\" encoder", it.second.c_str());
+            RING_ERR("Didn't find \"%s\" encoder", it.second.c_str());
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -68,7 +68,7 @@ namespace Conf {
     class YamlEmitter;
 }
 
-namespace sfl {
+namespace ring {
     class AudioFile;
     class AudioLayer;
     class RingBufferPool;
@@ -148,7 +148,7 @@ class ManagerImpl {
          * it's multi-thread and use mutex internally
          * @return AudioLayer*  The audio layer object
          */
-        std::shared_ptr<sfl::AudioLayer> getAudioDriver();
+        std::shared_ptr<ring::AudioLayer> getAudioDriver();
 
         void startAudioDriverStream();
 
@@ -520,7 +520,7 @@ class ManagerImpl {
              * @param index The index of the soundcard
              * @param the type of stream, either PLAYBACK, CAPTURE, RINGTONE
              */
-        void setAudioDevice(int index, sfl::DeviceType streamType);
+        void setAudioDevice(int index, ring::DeviceType streamType);
 
         /**
          * Get list of supported audio output device
@@ -664,14 +664,14 @@ class ManagerImpl {
          * Callback called when the audio layer initialised with its
          * preferred format.
          */
-        void hardwareAudioFormatChanged(sfl::AudioFormat format);
+        void hardwareAudioFormatChanged(ring::AudioFormat format);
 
         /**
          * Should be called by any component dealing with an external
          * audio source, indicating the format used so the mixer format
          * can be eventually adapted.
          */
-        void audioFormatUsed(sfl::AudioFormat format);
+        void audioFormatUsed(ring::AudioFormat format);
 
         /**
          * Handle audio sounds heard by a caller while they wait for their
@@ -703,13 +703,13 @@ class ManagerImpl {
          * Retrieve the current telephone tone
          * @return AudioLoop*   The audio tone or 0 if no tone (init before calling this function)
          */
-        sfl::AudioLoop* getTelephoneTone();
+        ring::AudioLoop* getTelephoneTone();
 
         /**
          * Retrieve the current telephone file
          * @return AudioLoop* The audio file or 0 if the wav is stopped
          */
-        sfl::AudioLoop* getTelephoneFile();
+        ring::AudioLoop* getTelephoneFile();
 
         /**
          * @return true is there is one or many incoming call waiting
@@ -745,7 +745,7 @@ class ManagerImpl {
         void initAudioDriver();
 
         /**
-         * Load the accounts order set by the user from the sflphonedrc config file
+         * Load the accounts order set by the user from the dringrc config file
          * @return std::vector<std::string> A vector containing the account ID's
          */
         std::vector<std::string> loadAccountOrder() const;
@@ -793,7 +793,7 @@ class ManagerImpl {
          * Play one tone
          * @return false if the driver is uninitialize
          */
-        void playATone(sfl::Tone::TONEID toneId);
+        void playATone(ring::Tone::TONEID toneId);
 
         Client client_;
 
@@ -804,20 +804,20 @@ class ManagerImpl {
         std::mutex currentCallMutex_;
 
         /** Audio layer */
-        std::shared_ptr<sfl::AudioLayer> audiodriver_{nullptr};
+        std::shared_ptr<ring::AudioLayer> audiodriver_{nullptr};
 
         // Main thread
-        std::unique_ptr<sfl::DTMF> dtmfKey_;
+        std::unique_ptr<ring::DTMF> dtmfKey_;
 
         /** Buffer to generate DTMF */
-        sfl::AudioBuffer dtmfBuf_;
+        ring::AudioBuffer dtmfBuf_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         std::mutex toneMutex_;
-        std::unique_ptr<sfl::TelephoneTone> telephoneTone_;
-        std::unique_ptr<sfl::AudioFile> audiofile_;
+        std::unique_ptr<ring::TelephoneTone> telephoneTone_;
+        std::unique_ptr<ring::AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
@@ -868,14 +868,14 @@ class ManagerImpl {
          * Audio instances must be registered into the RingBufferMananger and bound together via the ManagerImpl.
          *
          */
-        std::unique_ptr<sfl::RingBufferPool> ringbufferpool_;
+        std::unique_ptr<ring::RingBufferPool> ringbufferpool_;
 
     public:
 
         /**
          * Return a pointer to the instance of the RingBufferPool
          */
-        sfl::RingBufferPool& getRingBufferPool() { return *ringbufferpool_; }
+        ring::RingBufferPool& getRingBufferPool() { return *ringbufferpool_; }
 
         /**
          * Tell if there is a current call processed
@@ -888,7 +888,7 @@ class ManagerImpl {
          * @return A pointer to the Client instance
          */
         Client* getClient();
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         VideoManager * getVideoManager();
 #endif
 
@@ -974,7 +974,7 @@ class ManagerImpl {
          */
         void unregisterEventHandler(uintptr_t handlerId);
 
-        sfl::IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
+        ring::IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
 
     private:
         NON_COPYABLE(ManagerImpl);
@@ -1002,7 +1002,7 @@ class ManagerImpl {
          * To handle the persistent history
          * TODO: move this to ConfigurationManager
          */
-        sfl::History history_;
+        ring::History history_;
         bool finished_;
 
         AccountFactory accountFactory_;
@@ -1015,7 +1015,7 @@ class ManagerImpl {
                          const std::string &accountOrder);
 
         /* ICE support */
-        std::unique_ptr<sfl::IceTransportFactory> ice_tf_;
+        std::unique_ptr<ring::IceTransportFactory> ice_tf_;
 };
 
 #endif // MANAGER_IMPL_H_

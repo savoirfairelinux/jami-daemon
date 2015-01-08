@@ -40,7 +40,7 @@
 #include <iostream>
 #include <unistd.h>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -90,7 +90,7 @@ int VideoDecoder::openInput(const std::string &source_str,
     AVInputFormat *iformat = av_find_input_format(format_str.c_str());
 
     if (!iformat)
-        SFL_WARN("Cannot find format \"%s\"", format_str.c_str());
+        RING_WARN("Cannot find format \"%s\"", format_str.c_str());
 
     int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
                                   options_ ? &options_ : NULL);
@@ -98,9 +98,9 @@ int VideoDecoder::openInput(const std::string &source_str,
     if (ret) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        SFL_ERR("avformat_open_input failed: %s", errbuf);
+        RING_ERR("avformat_open_input failed: %s", errbuf);
     } else {
-        SFL_DBG("Using format %s", format_str.c_str());
+        RING_DBG("Using format %s", format_str.c_str());
     }
 
     return ret;
@@ -131,7 +131,7 @@ int VideoDecoder::setupFromAudioData()
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
-    SFL_DBG("Finding stream info");
+    RING_DBG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
@@ -149,7 +149,7 @@ int VideoDecoder::setupFromAudioData()
             errBuf[0] = '\0';
 
         // always fail here
-        SFL_ERR("Could not find stream info: %s", errBuf);
+        RING_ERR("Could not find stream info: %s", errBuf);
         return -1;
     }
 
@@ -159,29 +159,29 @@ int VideoDecoder::setupFromAudioData()
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
-        SFL_ERR("Could not find audio stream");
+        RING_ERR("Could not find audio stream");
         return -1;
     }
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
     if (decoderCtx_ == 0) {
-        SFL_ERR("Decoder context is NULL");
+        RING_ERR("Decoder context is NULL");
         return -1;
     }
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
     if (!inputDecoder_) {
-        SFL_ERR("Unsupported codec");
+        RING_ERR("Unsupported codec");
         return -1;
     }
 
-    SFL_DBG("Using %s", inputDecoder_->name);
+    RING_DBG("Using %s", inputDecoder_->name);
 
     decoderCtx_->thread_count = 1;
     if (emulateRate_) {
-        SFL_DBG("Using framerate emulation");
+        RING_DBG("Using framerate emulation");
         startTime_ = av_gettime();
     }
 
@@ -190,7 +190,7 @@ int VideoDecoder::setupFromAudioData()
 #endif
     ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
     if (ret) {
-        SFL_ERR("Could not open codec");
+        RING_ERR("Could not open codec");
         return -1;
     }
 
@@ -209,7 +209,7 @@ int VideoDecoder::setupFromVideoData()
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
-    SFL_DBG("Finding stream info");
+    RING_DBG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
@@ -227,7 +227,7 @@ int VideoDecoder::setupFromVideoData()
             errBuf[0] = '\0';
 
         // always fail here
-        SFL_ERR("Could not find stream info: %s", errBuf);
+        RING_ERR("Could not find stream info: %s", errBuf);
         return -1;
     }
 
@@ -237,27 +237,27 @@ int VideoDecoder::setupFromVideoData()
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
-        SFL_ERR("Could not find video stream");
+        RING_ERR("Could not find video stream");
         return -1;
     }
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
     if (decoderCtx_ == 0) {
-        SFL_ERR("Decoder context is NULL");
+        RING_ERR("Decoder context is NULL");
         return -1;
     }
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
     if (!inputDecoder_) {
-        SFL_ERR("Unsupported codec");
+        RING_ERR("Unsupported codec");
         return -1;
     }
 
     decoderCtx_->thread_count = 1;
     if (emulateRate_) {
-        SFL_DBG("Using framerate emulation");
+        RING_DBG("Using framerate emulation");
         startTime_ = av_gettime();
     }
 
@@ -270,7 +270,7 @@ int VideoDecoder::setupFromVideoData()
     ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
 #endif
     if (ret) {
-        SFL_ERR("Could not open codec");
+        RING_ERR("Could not open codec");
         return -1;
     }
 
@@ -289,7 +289,7 @@ VideoDecoder::decode(VideoFrame& result, VideoPacket& video_packet)
     } else if (ret < 0) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        SFL_ERR("Couldn't read frame: %s\n", errbuf);
+        RING_ERR("Couldn't read frame: %s\n", errbuf);
         return Status::ReadError;
     }
 
@@ -346,7 +346,7 @@ VideoDecoder::decode_audio(AVFrame *decoded_frame)
     } else if (ret < 0) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        SFL_ERR("Couldn't read frame: %s\n", errbuf);
+        RING_ERR("Couldn't read frame: %s\n", errbuf);
         return Status::ReadError;
     }
 
@@ -417,24 +417,24 @@ int VideoDecoder::getPixelFormat() const
 { return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }
 
 void VideoDecoder::writeToRingBuffer(AVFrame* decoded_frame,
-                                     sfl::RingBuffer& rb,
-                                     const sfl::AudioFormat outFormat)
+                                     ring::RingBuffer& rb,
+                                     const ring::AudioFormat outFormat)
 {
-    const sfl::AudioFormat decoderFormat = {
+    const ring::AudioFormat decoderFormat = {
         (unsigned) decoded_frame->sample_rate,
         (unsigned) decoderCtx_->channels
     };
 
-    sfl::AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
+    ring::AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
 
     out.deinterleave(reinterpret_cast<const SFLAudioSample*>(decoded_frame->data[0]),
                      decoded_frame->nb_samples, decoderCtx_->channels);
     if ((unsigned)decoded_frame->sample_rate != outFormat.sample_rate) {
         if (!resampler_) {
-            SFL_DBG("Creating audio resampler");
-            resampler_.reset(new sfl::Resampler(outFormat));
+            RING_DBG("Creating audio resampler");
+            resampler_.reset(new ring::Resampler(outFormat));
         }
-        sfl::AudioBuffer resampledData(decoded_frame->nb_samples,
+        ring::AudioBuffer resampledData(decoded_frame->nb_samples,
                                        {(unsigned) outFormat.sample_rate,
                                         (unsigned) decoderCtx_->channels});
         resampler_->resample(out, resampledData);
@@ -444,4 +444,4 @@ void VideoDecoder::writeToRingBuffer(AVFrame* decoded_frame,
     }
 }
 
-}
+}}

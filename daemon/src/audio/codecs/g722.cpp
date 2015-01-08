@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  Mostly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
@@ -40,10 +40,10 @@
 #include <cstring>
 #include <iostream>
 
-class G722 : public sfl::AudioCodec {
+class G722 : public ring::AudioCodec {
 
     public:
-        G722() : sfl::AudioCodec(9, "G722", 16000, 320, 1), decode_state_(),
+        G722() : ring::AudioCodec(9, "G722", 16000, 320, 1), decode_state_(),
             encode_state_() {
             bitrate_ = 64;
             hasDynamicPayload_ = false;

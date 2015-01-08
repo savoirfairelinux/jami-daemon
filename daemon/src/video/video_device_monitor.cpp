@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
@@ -41,7 +41,7 @@
 #include "logger.h"
 #include "video_device_monitor.h"
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 constexpr const char * const VideoDeviceMonitor::CONFIG_LABEL;
 
@@ -155,7 +155,7 @@ static void
 notify()
 {
     if (!ManagerImpl::initialized) {
-        SFL_WARN("Manager not initialized yet");
+        RING_WARN("Manager not initialized yet");
         return;
     }
 
@@ -309,4 +309,4 @@ VideoDeviceMonitor::unserialize(const YAML::Node &in)
         defaultDevice_ = first;
 }
 
-} // namespace sfl_video
+}} //namespace ring //namespace video

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -38,13 +38,13 @@
 #include "manager.h"
 #include "client/callmanager.h"
 
-namespace sfl {
+namespace ring {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     ost::SymmetricRTPSession(static_cast<ost::IPV4Host>(call.getLocalIp()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
 {
-    SFL_DBG("Setting new RTP session with destination %s:%d",
+    RING_DBG("Setting new RTP session with destination %s:%d",
           call_.getLocalIp().toString().c_str(), call_.getLocalAudioPort());
 }
 
@@ -78,17 +78,17 @@ void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoun
 {
     ost::SymmetricRTPSession::onGotRR(source, RR, blocks);
 #ifdef RTP_DEBUG
-    SFL_DBG("onGotRR");
-    SFL_DBG("Unpacking %d blocks",blocks);
+    RING_DBG("onGotRR");
+    RING_DBG("Unpacking %d blocks",blocks);
     for (int i = 0; i < blocks; ++i)
     {
-        SFL_DBG("fractionLost : %hhu", RR.blocks[i].rinfo.fractionLost);
-        SFL_DBG("lostMSB : %hhu", RR.blocks[i].rinfo.lostMSB);
-        SFL_DBG("lostLSW : %hu", RR.blocks[i].rinfo.lostLSW);
-        SFL_DBG("highestSeqNum : %u", RR.blocks[i].rinfo.highestSeqNum);
-        SFL_DBG("jitter : %u", RR.blocks[i].rinfo.jitter);
-        SFL_DBG("lsr : %u", RR.blocks[i].rinfo.lsr);
-        SFL_DBG("dlsr : %u", RR.blocks[i].rinfo.dlsr);
+        RING_DBG("fractionLost : %hhu", RR.blocks[i].rinfo.fractionLost);
+        RING_DBG("lostMSB : %hhu", RR.blocks[i].rinfo.lostMSB);
+        RING_DBG("lostLSW : %hu", RR.blocks[i].rinfo.lostLSW);
+        RING_DBG("highestSeqNum : %u", RR.blocks[i].rinfo.highestSeqNum);
+        RING_DBG("jitter : %u", RR.blocks[i].rinfo.jitter);
+        RING_DBG("lsr : %u", RR.blocks[i].rinfo.lsr);
+        RING_DBG("dlsr : %u", RR.blocks[i].rinfo.dlsr);
      }
 #endif
 }
@@ -97,7 +97,7 @@ void AudioSymmetricRtpSession::onGotRR(ost::SyncSource& source, ost::RTCPCompoun
 void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoundHandler::SendReport& SR, uint8 blocks)
 {
 #ifdef RTP_DEBUG
-    SFL_DBG("onGotSR");
+    RING_DBG("onGotSR");
     std::cout << "I got an SR RTCP report from "
             << std::hex << (int)source.getID() << "@"
             << std::dec
@@ -148,19 +148,19 @@ void AudioSymmetricRtpSession::onGotSR(ost::SyncSource& source, ost::RTCPCompoun
         stats["DLSR"] = receiver_report.getDelayLastSR();
 
 #ifdef RTP_DEBUG
-        SFL_DBG("lastSR NTPTimestamp : %lu", receiver_report.getLastSRNTPTimestampFrac() << 16);
-        SFL_DBG("NTPTimestampFrac : %lu", timestampFrac);
-        SFL_DBG("rttMSW : %u", rttMSW);
-        SFL_DBG("rttLSW : %u", rttLSW);
-        SFL_DBG("RTT recomposed: %lu", rtt);
-        SFL_DBG("LDSR: %lu", receiver_report.getDelayLastSR());
-        SFL_DBG("Packet count : %u", stats["PACKET_COUNT"]);
-        SFL_DBG("Fraction packet loss : %.2f", (double) stats["PACKET_LOSS"] * 100 / 256);
-        SFL_DBG("Cumulative packet loss : %d", stats["CUMUL_PACKET_LOSS"]);
-        SFL_DBG("HighestSeqNum : %u", stats["HIGH_SEC_NUM"]);
-        SFL_DBG("Jitter : %u", stats["JITTER"]);
-        SFL_DBG("RTT : %.2f", (double) stats["RTT"] / 65536);
-        SFL_DBG("Delay since last report %.2f seconds", (double) stats["DLSR"] / 65536.0);
+        RING_DBG("lastSR NTPTimestamp : %lu", receiver_report.getLastSRNTPTimestampFrac() << 16);
+        RING_DBG("NTPTimestampFrac : %lu", timestampFrac);
+        RING_DBG("rttMSW : %u", rttMSW);
+        RING_DBG("rttLSW : %u", rttLSW);
+        RING_DBG("RTT recomposed: %lu", rtt);
+        RING_DBG("LDSR: %lu", receiver_report.getDelayLastSR());
+        RING_DBG("Packet count : %u", stats["PACKET_COUNT"]);
+        RING_DBG("Fraction packet loss : %.2f", (double) stats["PACKET_LOSS"] * 100 / 256);
+        RING_DBG("Cumulative packet loss : %d", stats["CUMUL_PACKET_LOSS"]);
+        RING_DBG("HighestSeqNum : %u", stats["HIGH_SEC_NUM"]);
+        RING_DBG("Jitter : %u", stats["JITTER"]);
+        RING_DBG("RTT : %.2f", (double) stats["RTT"] / 65536);
+        RING_DBG("Delay since last report %.2f seconds", (double) stats["DLSR"] / 65536.0);
 #endif
         Manager::instance().getClient()->getCallManager()->onRtcpReportReceived(call_.getCallId(), stats);
     }
@@ -172,7 +172,7 @@ AudioSymmetricRtpSessionIPv6::AudioSymmetricRtpSessionIPv6(SIPCall &call) :
     ost::SymmetricRTPSessionIPV6(static_cast<ost::IPV6Host>(call.getLocalIp()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
 {
-    SFL_DBG("Setting new RTP/IPv6 session with destination %s:%d",
+    RING_DBG("Setting new RTP/IPv6 session with destination %s:%d",
           call_.getLocalIp().toString().c_str(), call_.getLocalAudioPort());
 }
 
@@ -224,9 +224,9 @@ size_t
 AudioSymmetricRtpSessionIPv6::recvData(unsigned char* buffer, size_t len, ost::IPV4Host&, ost::tpport_t& port)
 {
     ost::IPV6Host hostv6 = call_.getLocalIp();
-    SFL_ERR("recvData %d ", hostv6.getAddressCount());
+    RING_ERR("recvData %d ", hostv6.getAddressCount());
     size_t r = ost::SymmetricRTPSessionIPV6::recvData(buffer, len, hostv6, port);
-    SFL_ERR("recvData from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
+    RING_ERR("recvData from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
     return r;
 }
 
@@ -235,7 +235,7 @@ AudioSymmetricRtpSessionIPv6::recvControl(unsigned char* buffer, size_t len, ost
 {
     ost::IPV6Host hostv6 = call_.getLocalIp();
     size_t r = ost::SymmetricRTPSessionIPV6::recvControl(buffer, len, hostv6, port);
-    SFL_ERR("recvControl from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
+    RING_ERR("recvControl from %s %d called in ipv6 stack, size %d", IpAddr(hostv6.getAddress()).toString().c_str(), port, len);
     return r;
 }
 

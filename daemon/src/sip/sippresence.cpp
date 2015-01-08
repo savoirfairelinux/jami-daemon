@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ * Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Patrick Keroulas  <patrick.keroulas@savoirfairelinux.com>
  *
@@ -93,7 +93,7 @@ SIPPresence::~SIPPresence()
     sub_server_list_.clear();
 
     if (mutex_ and pj_mutex_destroy(mutex_) != PJ_SUCCESS)
-        SFL_ERR("Error destroying mutex");
+        RING_ERR("Error destroying mutex");
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(&cp_);
@@ -160,7 +160,7 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
         rpid.activity = PJRPID_ACTIVITY_BUSY;
     /*
     else // TODO: is there any other possibilities
-        SFL_DBG("Presence : no activity");
+        RING_DBG("Presence : no activity");
     */
 
     pj_bzero(&status_data_, sizeof(status_data_));
@@ -196,7 +196,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
     const std::string acc_ID = acc_->getAccountID();
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
-    SFL_DBG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s", uri.c_str(), acc_ID.c_str(), basic.c_str(), note.c_str());
+    RING_DBG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s", uri.c_str(), acc_ID.c_str(), basic.c_str(), note.c_str());
 
     if (uri == acc_->getFromUri()) {
         // save the status of our own account
@@ -222,7 +222,7 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
     /* Check if the buddy was already subscribed */
     for (const auto & c : sub_client_list_) {
         if (c->getURI() == uri) {
-            //SFL_DBG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
+            //RING_DBG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
             if (flag)
                 c->subscribe();
             else
@@ -232,14 +232,14 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
     }
 
     if (sub_client_list_.size() >= MAX_N_SUB_CLIENT) {
-        SFL_WARN("Can't add PresSubClient, max number reached.");
+        RING_WARN("Can't add PresSubClient, max number reached.");
         return;
     }
 
     if (flag) {
         PresSubClient *c = new PresSubClient(uri, this);
         if (!(c->subscribe())) {
-            SFL_WARN("Failed send subscribe.");
+            RING_WARN("Failed send subscribe.");
             delete c;
         }
         // the buddy has to be accepted before being added in the list
@@ -250,16 +250,16 @@ void SIPPresence::addPresSubClient(PresSubClient *c)
 {
     if (sub_client_list_.size() < MAX_N_SUB_CLIENT) {
         sub_client_list_.push_back(c);
-        SFL_DBG("New Presence_subscription_client added (list[%i]).", sub_client_list_.size());
+        RING_DBG("New Presence_subscription_client added (list[%i]).", sub_client_list_.size());
     } else {
-        SFL_WARN("Max Presence_subscription_client is reach.");
+        RING_WARN("Max Presence_subscription_client is reach.");
         // let the client alive //delete c;
     }
 }
 
 void SIPPresence::removePresSubClient(PresSubClient *c)
 {
-    SFL_DBG("Remove Presence_subscription_client from the buddy list.");
+    RING_DBG("Remove Presence_subscription_client from the buddy list.");
     sub_client_list_.remove(c);
 }
 
@@ -279,7 +279,7 @@ void SIPPresence::addPresSubServer(PresSubServer *s)
     if (sub_server_list_.size() < MAX_N_SUB_SERVER) {
         sub_server_list_.push_back(s);
     } else {
-        SFL_WARN("Max Presence_subscription_server is reach.");
+        RING_WARN("Max Presence_subscription_server is reach.");
         // let de server alive // delete s;
     }
 }
@@ -287,12 +287,12 @@ void SIPPresence::addPresSubServer(PresSubServer *s)
 void SIPPresence::removePresSubServer(PresSubServer *s)
 {
     sub_server_list_.remove(s);
-    SFL_DBG("Presence_subscription_server removed");
+    RING_DBG("Presence_subscription_server removed");
 }
 
 void SIPPresence::notifyPresSubServer()
 {
-    SFL_DBG("Iterating through IP2IP Presence_subscription_server:");
+    RING_DBG("Iterating through IP2IP Presence_subscription_server:");
 
     for (const auto & s : sub_server_list_)
         s->notify();
@@ -344,7 +344,7 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
     while (hdr && hdr != &msg_data->hdr_list) {
         pjsip_hdr *new_hdr;
         new_hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, hdr);
-        SFL_DBG("adding header", new_hdr->name.ptr);
+        RING_DBG("adding header", new_hdr->name.ptr);
         pjsip_msg_add_hdr(tdata->msg, new_hdr);
         hdr = hdr->next;
     }
@@ -379,7 +379,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
         if (param->status != PJ_SUCCESS) {
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));
-            SFL_ERR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
+            RING_ERR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
             Manager::instance().getClient()->getPresenceManager()->serverError(
                     pres->getAccount()->getAccountID(),
                     error,
@@ -389,10 +389,10 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
             /* 412 (Conditional Request Failed)
              * The PUBLISH refresh has failed, retry with new one.
              */
-            SFL_WARN("Publish retry.");
+            RING_WARN("Publish retry.");
             publish(pres);
         } else if ((param->code == PJSIP_SC_BAD_EVENT) || (param->code == PJSIP_SC_NOT_IMPLEMENTED)){ //489 or 501
-            SFL_WARN("Client (PUBLISH) failed (%s)",error.c_str());
+            RING_WARN("Client (PUBLISH) failed (%s)",error.c_str());
 
             Manager::instance().getClient()->getPresenceManager()->serverError(
                     pres->getAccount()->getAccountID(),
@@ -424,7 +424,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     pjsip_tx_data *tdata;
     pj_status_t status;
 
-    SFL_DBG("Send PUBLISH (%s).", pres->getAccount()->getAccountID().c_str());
+    RING_DBG("Send PUBLISH (%s).", pres->getAccount()->getAccountID().c_str());
 
     SIPAccount * acc = pres->getAccount();
     std::string contactWithAngles =  acc->getFromUri();
@@ -442,7 +442,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     pj_str_t from = pj_strdup3(pres->pool_, acc->getFromUri().c_str());
 
     if (status != PJ_SUCCESS) {
-        SFL_ERR("Error creating PUBLISH request", status);
+        RING_ERR("Error creating PUBLISH request", status);
         goto on_error;
     }
 
@@ -468,7 +468,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     pres_msg_data msg_data;
 
     if (status != PJ_SUCCESS) {
-        SFL_ERR("Error creating PIDF for PUBLISH request");
+        RING_ERR("Error creating PIDF for PUBLISH request");
         pjsip_tx_data_dec_ref(tdata);
         goto on_error;
     }
@@ -484,9 +484,9 @@ SIPPresence::send_publish(SIPPresence * pres)
     status = pjsip_publishc_send(pres->publish_sess_, tdata);
 
     if (status == PJ_EPENDING) {
-        SFL_WARN("Previous request is in progress, ");
+        RING_WARN("Previous request is in progress, ");
     } else if (status != PJ_SUCCESS) {
-        SFL_ERR("Error sending PUBLISH request");
+        RING_ERR("Error sending PUBLISH request");
         goto on_error;
     }
 
@@ -521,7 +521,7 @@ SIPPresence::publish(SIPPresence *pres)
 
     if (status != PJ_SUCCESS) {
         pres->publish_sess_ = NULL;
-        SFL_ERR("Failed to create a publish seesion.");
+        RING_ERR("Failed to create a publish seesion.");
         return status;
     }
 
@@ -530,14 +530,14 @@ SIPPresence::publish(SIPPresence *pres)
     status = pjsip_publishc_init(pres->publish_sess_, &STR_PRESENCE, &from, &from, &from, 0xFFFF);
 
     if (status != PJ_SUCCESS) {
-        SFL_ERR("Failed to init a publish session");
+        RING_ERR("Failed to init a publish session");
         pres->publish_sess_ = NULL;
         return status;
     }
 
     /* Add credential for authentication */
     if (acc->hasCredentials() and pjsip_publishc_set_credentials(pres->publish_sess_, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
-        SFL_ERR("Could not initialize credentials for invite session authentication");
+        RING_ERR("Could not initialize credentials for invite session authentication");
         return status;
     }
 

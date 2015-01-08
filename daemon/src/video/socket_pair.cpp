@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Copyright (c) 2002 Fabrice Bellard
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
@@ -75,7 +75,7 @@ addrinfo* udp_resolve_host(const char *node, int service)
     hints.ai_flags = AI_PASSIVE;
     if ((error = getaddrinfo(node, sport, &hints, &res))) {
         res = NULL;
-        SFL_ERR("%s\n", gai_strerror(error));
+        RING_ERR("%s\n", gai_strerror(error));
     }
 
     return res;
@@ -108,7 +108,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     for (res = res0; res; res=res->ai_next) {
         udp_fd = socket(res->ai_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
         if (udp_fd != -1) break;
-        SFL_ERR("socket error");
+        RING_ERR("socket error");
     }
 
     if (udp_fd < 0) {
@@ -122,7 +122,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     // bind socket so that we send from and receive
     // on local port
     if (bind(udp_fd, reinterpret_cast<sockaddr*>(addr), *addr_len) < 0) {
-        SFL_ERR("Bind failed");
+        RING_ERR("Bind failed");
         strErr();
         close(udp_fd);
         udp_fd = -1;
@@ -133,7 +133,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     return udp_fd;
 }
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 static const int RTP_BUFFER_SIZE = 1472;
 
@@ -149,8 +149,8 @@ SocketPair::SocketPair(const char *uri, int localPort)
     openSockets(uri, localPort);
 }
 
-SocketPair::SocketPair(std::unique_ptr<sfl::IceSocket> rtp_sock,
-                       std::unique_ptr<sfl::IceSocket> rtcp_sock)
+SocketPair::SocketPair(std::unique_ptr<ring::IceSocket> rtp_sock,
+                       std::unique_ptr<ring::IceSocket> rtcp_sock)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
     , rtcpWriteMutex_()
@@ -206,7 +206,7 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
         throw std::runtime_error("Socket creation failed");
     }
 
-    SFL_WARN("SocketPair: local{%d,%d}, remote{%d,%d}",
+    RING_WARN("SocketPair: local{%d,%d}, remote{%d,%d}",
              local_rtp_port, local_rtcp_port, rtp_port, rtcp_port);
 }
 
@@ -324,7 +324,7 @@ int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 
 retry:
     if (context->interrupted_) {
-        SFL_ERR("interrupted");
+        RING_ERR("interrupted");
         return -EINTR;
     }
 
@@ -384,4 +384,4 @@ retry:
     return ret < 0 ? errno : ret;
 }
 
-}
+}}

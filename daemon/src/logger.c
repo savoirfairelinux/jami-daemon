@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -92,7 +92,7 @@ int getDebugMode(void)
 void strErr(void)
 {
 #ifdef __GLIBC__
-    SFL_ERR("%m");
+    RING_ERR("%m");
 #else
     char buf[1000];
     const char *errstr;
@@ -109,6 +109,6 @@ void strErr(void)
             break;
     }
 
-    SFL_ERR("%s", errstr);
+    RING_ERR("%s", errstr);
 #endif
 }

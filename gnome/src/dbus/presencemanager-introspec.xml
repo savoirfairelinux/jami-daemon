@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <node name="/presencemanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
-    <interface name="org.sflphone.SFLphone.PresenceManager">
+    <interface name="cx.ring.Ring.PresenceManager">
         <!-- METHODS !-->
         <method name="publish" tp:name-for-bindings="publish">
             <tp:added version="1.3.0"/>

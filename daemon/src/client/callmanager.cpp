@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *
@@ -45,7 +45,7 @@
 #include "logger.h"
 #include "manager.h"
 
-void CallManager::registerEvHandlers(struct sflph_call_ev_handlers* evHandlers)
+void CallManager::registerEvHandlers(struct ring_call_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }
@@ -56,7 +56,7 @@ bool CallManager::placeCall(const std::string& accountID,
 {
     // Check if a destination number is available
     if (to.empty()) {
-        SFL_DBG("No number entered - Call stopped");
+        RING_DBG("No number entered - Call stopped");
         return false;
     } else {
         return Manager::instance().outgoingCall(accountID, callID, to);
@@ -240,7 +240,7 @@ CallManager::getIsRecording(const std::string& callID)
 
 std::string CallManager::getCurrentAudioCodecName(const std::string& /*callID*/)
 {
-    SFL_WARN("Deprecated");
+    RING_WARN("Deprecated");
     return "";
 }
 
@@ -279,7 +279,7 @@ CallManager::startTone(int32_t start, int32_t type)
 // the right pointer for the given
 // callID.
 #if USE_CCRTP && HAVE_ZRTP
-sfl::AudioZrtpSession *
+ring::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
     // TODO: remove SIP dependency
@@ -287,7 +287,7 @@ CallManager::getAudioZrtpSession(const std::string& callID)
     if (!call)
         throw CallManagerException("Call id " + callID + " is not valid");
 
-    sfl::AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
+    ring::AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
 
     if (!zSession)
         throw CallManagerException("Failed to get AudioZrtpSession");
@@ -301,13 +301,13 @@ CallManager::setSASVerified(const std::string& callID)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->SASVerified();
     } catch (...) {
     }
 #else
-    SFL_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -316,13 +316,13 @@ CallManager::resetSASVerified(const std::string& callID)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->resetSASVerified();
     } catch (...) {
     }
 #else
-    SFL_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -331,13 +331,13 @@ CallManager::setConfirmGoClear(const std::string& callID)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->goClearOk();
     } catch (...) {
     }
 #else
-    SFL_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -346,13 +346,13 @@ CallManager::requestGoClear(const std::string& callID)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->requestGoClear();
     } catch (...) {
     }
 #else
-    SFL_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -361,13 +361,13 @@ CallManager::acceptEnrollment(const std::string& callID, bool accepted)
 {
 #if USE_CCRTP && HAVE_ZRTP
     try {
-        sfl::AudioZrtpSession * zSession;
+        ring::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->acceptEnrollment(accepted);
     } catch (...) {
     }
 #else
-    SFL_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+    RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
 #endif
 }
 
@@ -385,7 +385,7 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
     if (!Manager::instance().sendTextMessage(callID, message, "Me"))
         throw CallManagerException();
 #else
-    SFL_ERR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
+    RING_ERR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
 #endif
 }
 

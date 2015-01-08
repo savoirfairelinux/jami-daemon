@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 #define HISTORY_SAMPLE WORKSPACE "history-sample.tpl"
 #define HISTORY_SAMPLE_BAK HISTORY_SAMPLE ".bak"
 
-#define CONFIG_SAMPLE WORKSPACE "sflphoned-sample.yml"
+#define CONFIG_SAMPLE WORKSPACE "dring-sample.yml"
 #define CONFIG_SAMPLE_BAK CONFIG_SAMPLE ".bak"
 
 #define HISTORY_SAMPLE_SIZE 3

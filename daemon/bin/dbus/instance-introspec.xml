@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <node name="/instance-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
-	<interface name="org.sflphone.SFLphone.Instance">
+	<interface name="cx.ring.Ring.Instance">
 		<tp:docstring xmlns="http://www.w3.org/1999/xhtml">
 		<p>Count the number of clients actually registered to the core. When initializing your client, you need to register it against the core by using this interface.</p>
 		</tp:docstring>

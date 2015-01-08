@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author : Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ ManagerImpl& Manager::instance()
     // This will give a warning that can be ignored the first time instance()
     // is called...subsequent warnings are more serious
     if (not ManagerImpl::initialized)
-        SFL_WARN("Not initialized");
+        RING_WARN("Not initialized");
 
     return instance_;
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -39,7 +39,7 @@
 
 class Call;
 
-namespace sfl {
+namespace ring {
 
 class History {
 

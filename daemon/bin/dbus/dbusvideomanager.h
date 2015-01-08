@@ -27,8 +27,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_DBUSVIDEOMANAGER_H__
-#define __SFL_DBUSVIDEOMANAGER_H__
+#ifndef __RING_DBUSVIDEOMANAGER_H__
+#define __RING_DBUSVIDEOMANAGER_H__
 
 #include <vector>
 #include <map>
@@ -55,7 +55,7 @@
 #include <stdexcept>
 
 class DBusVideoManager :
-    public org::sflphone::SFLphone::VideoManager_adaptor,
+    public cx::ring::Ring::VideoManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
@@ -78,4 +78,4 @@ class DBusVideoManager :
         bool hasCameraStarted();
 };
 
-#endif // __SFL_DBUSVIDEOMANAGER_H__
+#endif // __RING_DBUSVIDEOMANAGER_H__

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -48,7 +48,7 @@
 #include "call_factory.h"
 #include "sfl_types.h"
 
-using namespace sfl;
+using namespace ring;
 
 std::mutex IAXVoIPLink::mutexIAX = {};
 
@@ -178,7 +178,7 @@ IAXVoIPLink::sendAudioFromMic()
         int compSize;
         unsigned int audioRate = audioCodec->getClockRate();
         int outSamples;
-        sfl::AudioBuffer *in;
+        ring::AudioBuffer *in;
 
         if (audioRate != mainBufferSampleRate) {
             rawBuffer_.setSampleRate(audioRate);
@@ -197,7 +197,7 @@ IAXVoIPLink::sendAudioFromMic()
             std::lock_guard<std::mutex> lock(mutexIAX);
 
             if (iax_send_voice(currentCall->session, currentCall->format, encodedData_, compSize, outSamples) == -1)
-                SFL_ERR("IAX: Error sending voice data.");
+                RING_ERR("IAX: Error sending voice data.");
         }
     }
 }
@@ -351,7 +351,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
         size = max;
 
     audioCodec->decode(rawBuffer_.getData(), data , size);
-    sfl::AudioBuffer *out = &rawBuffer_;
+    ring::AudioBuffer *out = &rawBuffer_;
     unsigned int audioRate = audioCodec->getClockRate();
 
     if (audioRate != mainBufferSampleRate) {
@@ -392,7 +392,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 
             call = account_.newIncomingCall<IAXCall>(id);
             if (!call) {
-                SFL_ERR("failed to create an incoming IAXCall from account %s",
+                RING_ERR("failed to create an incoming IAXCall from account %s",
                       accountID.c_str());
                 return;
             }

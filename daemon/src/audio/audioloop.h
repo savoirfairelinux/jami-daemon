@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -43,7 +43,7 @@
  * @brief Loop on a sound file
  */
 
-namespace sfl {
+namespace ring {
 
 class AudioLoop {
     public:

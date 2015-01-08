@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef SFL_TYPES_H_
-#define SFL_TYPES_H_
+#ifndef RING_TYPES_H_
+#define RING_TYPES_H_
 
 #include <cstddef> // for size_t
 #include <stdint.h>
@@ -37,7 +37,7 @@
 #include <memory>
 
 typedef int16_t SFLAudioSample;
-#define SFL_DATA_FORMAT_MAX SHRT_MAX
+#define RING_DATA_FORMAT_MAX SHRT_MAX
 
 static const size_t SIZEBUF = 32000; /** About 1s of buffering at 48kHz */
 
@@ -69,4 +69,4 @@ getGlobalInstance()
     return wlink.lock();
 }
 
-#endif // SFL_TYPES_H_
+#endif // RING_TYPES_H_

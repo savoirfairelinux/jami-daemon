@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,7 @@
 
 #include "sfl_types.h"
 
-namespace sfl {
+namespace ring {
 
 /**
  * Structure to hold sample rate and channel number associated with audio data.

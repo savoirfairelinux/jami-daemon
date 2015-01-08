@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
@@ -38,7 +38,7 @@
 
 constexpr uint32_t Opus::VALID_SAMPLING_RATE[];
 
-Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
+Opus::Opus() : ring::AudioCodec(PAYLOAD_TYPE, "opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
     encoder_(nullptr),
     decoder_(nullptr),
     lastDecodedFrameSize_(0)
@@ -55,7 +55,7 @@ Opus::~Opus()
         opus_decoder_destroy(decoder_);
 }
 
-sfl::AudioCodec *
+ring::AudioCodec *
 Opus::clone()
 {
     return new Opus;

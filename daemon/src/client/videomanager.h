@@ -43,7 +43,7 @@
 #include "video/video_base.h"
 #include "video/video_input.h"
 
-#include "sflphone.h"
+#include "ring.h"
 
 class VideoManager
 {
@@ -56,14 +56,14 @@ class VideoManager
          * this video input instance: this instance is destroyed when the last
          * external user has released its shared pointer.
          */
-        std::weak_ptr<sfl_video::VideoInput> videoInput_ = {};
-        std::shared_ptr<sfl_video::VideoFrameActiveWriter> videoPreview_ = nullptr;
-        sfl_video::VideoDeviceMonitor videoDeviceMonitor_ = {};
+        std::weak_ptr<ring::video::VideoInput> videoInput_ = {};
+        std::shared_ptr<ring::video::VideoFrameActiveWriter> videoPreview_ = nullptr;
+        ring::video::VideoDeviceMonitor videoDeviceMonitor_ = {};
 
     public:
         VideoManager();
-        void registerEvHandlers(struct sflph_video_ev_handlers* evHandlers);
-        sfl_video::VideoDeviceMonitor& getVideoDeviceMonitor();
+        void registerEvHandlers(struct ring_video_ev_handlers* evHandlers);
+        ring::video::VideoDeviceMonitor& getVideoDeviceMonitor();
 
     // Methods
     public:
@@ -77,7 +77,7 @@ class VideoManager
         std::vector<std::string>
         getDeviceList();
 
-        sfl_video::VideoCapabilities
+        ring::video::VideoCapabilities
         getCapabilities(const std::string& name);
 
         std::map<std::string, std::string>
@@ -101,7 +101,7 @@ class VideoManager
         bool hasCameraStarted();
         bool switchInput(const std::string& resource);
         bool switchToCamera();
-        std::shared_ptr<sfl_video::VideoFrameActiveWriter> getVideoCamera();
+        std::shared_ptr<ring::video::VideoFrameActiveWriter> getVideoCamera();
 
     // Signals
     public:
@@ -111,7 +111,7 @@ class VideoManager
 
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        sflph_video_ev_handlers evHandlers_{};
+        ring_video_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 

@@ -11,7 +11,7 @@ BUILT_SOURCES+=dbuspresencemanager.adaptor.h
 dbuspresencemanager.adaptor.h: presencemanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
-if SFL_VIDEO
+if RING_VIDEO
 BUILT_SOURCES+=dbusvideomanager.adaptor.h
 dbusvideomanager.adaptor.h: videomanager-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
@@ -43,29 +43,29 @@ libclient_dbus_la_SOURCES = \
     dbuspresencemanager.h \
     $(BUILT_SOURCES)
 
-if SFL_VIDEO
+if RING_VIDEO
 libclient_dbus_la_SOURCES += dbusvideomanager.cpp dbusvideomanager.h
 endif
 
 libclient_dbus_la_CXXFLAGS = -I../ \
 							 -I$(top_srcdir)/src \
             -DPREFIX=\"$(prefix)\" \
-            -DPROGSHAREDIR=\"${datadir}/sflphone\" \
+            -DPROGSHAREDIR=\"${datadir}/ring\" \
             $(DBUSCPP_CFLAGS)
 
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services
-service_DATA = org.sflphone.SFLphone.service
+service_DATA = cx.ring.Ring.service
 
 EXTRA_DIST = callmanager-introspec.xml \
 			 configurationmanager-introspec.xml \
 			 instance-introspec.xml \
 			 presencemanager-introspec.xml
 
-if SFL_VIDEO
+if RING_VIDEO
 EXTRA_DIST += videomanager-introspec.xml
 endif
 
 CLEANFILES= \
     $(BUILT_SOURCES) \
-	org.sflphone.SFLphone.service
+	cx.ring.Ring.service

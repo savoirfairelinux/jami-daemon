@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 #include "dsp.h"
 #include "audiobuffer.h"
 
-namespace sfl {
+namespace ring {
 
 void
 DSP::speexStateDeleter(SpeexPreprocessState *state)
@@ -88,7 +88,7 @@ void DSP::disableDenoise()
 void DSP::process(AudioBuffer& buff, int samples)
 {
     if (samples != smplPerFrame_) {
-        SFL_WARN("Unexpected amount of samples");
+        RING_WARN("Unexpected amount of samples");
         return;
     }
 

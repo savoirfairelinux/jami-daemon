@@ -3,14 +3,14 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libaudiortp.la
 
 if BUILD_ZRTP
-SFL_ZRTP_SRC=audio_zrtp_session.h audio_zrtp_session.cpp zrtp_session_callback.cpp zrtp_session_callback.h
+RING_ZRTP_SRC=audio_zrtp_session.h audio_zrtp_session.cpp zrtp_session_callback.cpp zrtp_session_callback.h
 endif
 
 libaudiortp_la_SOURCES = \
-		$(SFL_ZRTP_SRC) \
+		$(RING_ZRTP_SRC) \
 		base64.c base64.h
 
-if SFL_VIDEO
+if RING_VIDEO
 libaudiortp_la_SOURCES += \
 		avformat_rtp_session.cpp \
 		avformat_rtp_session.h

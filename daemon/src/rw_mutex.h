@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
@@ -40,7 +40,7 @@
 #include <string>
 #include <sstream>
 
-namespace sfl {
+namespace ring {
 
 /**
  * rw_mutex is a shared mutex meant to protect

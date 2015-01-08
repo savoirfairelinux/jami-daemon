@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
@@ -52,7 +52,7 @@
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include <queue>
 #endif
 #include <map>
@@ -127,7 +127,7 @@ class SIPVoIPLink {
          */
         std::unique_ptr<SipTransportBroker> sipTransport {};
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         static void enqueueKeyframeRequest(const std::string &callID);
 #endif
 
@@ -157,7 +157,7 @@ class SIPVoIPLink {
 
         NON_COPYABLE(SIPVoIPLink);
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
         std::mutex keyframeRequestsMutex_ {};

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
@@ -41,7 +41,7 @@
 #include <cassert>
 #include <unistd.h>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 VideoInput::VideoInput() :
     VideoGenerator::VideoGenerator()
@@ -60,11 +60,11 @@ bool VideoInput::setup()
 {
     /* Sink setup */
     if (!sink_.start()) {
-        SFL_ERR("Cannot start shared memory sink");
+        RING_ERR("Cannot start shared memory sink");
         return false;
     }
     if (not attach(&sink_))
-        SFL_WARN("Failed to attach sink");
+        RING_WARN("Failed to attach sink");
 
     return true;
 }
@@ -90,7 +90,7 @@ void VideoInput::process()
         /* Signal the client about the new sink */
         Manager::instance().getVideoManager()->startedDecoding(sinkID_, sink_.openedName(),
                 decoder_->getWidth(), decoder_->getHeight(), false);
-        SFL_DBG("LOCAL: shm sink <%s> started: size = %dx%d",
+        RING_DBG("LOCAL: shm sink <%s> started: size = %dx%d",
               sink_.openedName().c_str(), decoder_->getWidth(),
               decoder_->getHeight());
     }
@@ -152,7 +152,7 @@ VideoInput::createDecoder()
     decoder_->setInterruptCallback(interruptCb, this);
 
     if (decoder_->openInput(input_, format_) < 0) {
-        SFL_ERR("Could not open input \"%s\"", input_.c_str());
+        RING_ERR("Could not open input \"%s\"", input_.c_str());
         delete decoder_;
         decoder_ = nullptr;
         return;
@@ -160,7 +160,7 @@ VideoInput::createDecoder()
 
     /* Data available, finish the decoding */
     if (decoder_->setupFromVideoData() < 0) {
-        SFL_ERR("decoder IO startup failed");
+        RING_ERR("decoder IO startup failed");
         delete decoder_;
         decoder_ = nullptr;
         return;
@@ -228,7 +228,7 @@ VideoInput::initFile(std::string path)
 
     /* File exists? */
     if (access(path.c_str(), R_OK) != 0) {
-        SFL_ERR("file '%s' unavailable\n", path.c_str());
+        RING_ERR("file '%s' unavailable\n", path.c_str());
         return false;
     }
 
@@ -242,7 +242,7 @@ VideoInput::initFile(std::string path)
         format_ = "image2";
         decOpts_["framerate"] = "1";
     } else {
-        SFL_WARN("Guessing file type for %s", path.c_str());
+        RING_WARN("Guessing file type for %s", path.c_str());
         // FIXME: proper parsing of FPS etc. should be done in
         // VideoDecoder, not here.
         decOpts_["framerate"] = "25";
@@ -254,10 +254,10 @@ VideoInput::initFile(std::string path)
 bool
 VideoInput::switchInput(const std::string& resource)
 {
-    SFL_DBG("MRL: '%s'", resource.c_str());
+    RING_DBG("MRL: '%s'", resource.c_str());
 
     if (switchPending_) {
-        SFL_ERR("Video switch already requested");
+        RING_ERR("Video switch already requested");
         return false;
     }
 
@@ -303,7 +303,7 @@ VideoInput::switchInput(const std::string& resource)
             loop_.start();
     }
     else
-        SFL_ERR("Failed to init input for MRL '%s'\n", resource.c_str());
+        RING_ERR("Failed to init input for MRL '%s'\n", resource.c_str());
 
     return valid;
 }
@@ -317,4 +317,4 @@ int VideoInput::getHeight() const
 int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

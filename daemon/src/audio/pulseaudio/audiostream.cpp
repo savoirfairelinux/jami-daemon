@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@
 #include "logger.h"
 #include <stdexcept>
 
-namespace sfl {
+namespace ring {
 
 AudioStream::AudioStream(pa_context *c,
                          pa_threaded_mainloop *m,
@@ -51,7 +51,7 @@ AudioStream::AudioStream(pa_context *c,
         channel_map.channels
     };
 
-    SFL_DBG("%s: trying to create stream with device %s (%dHz, %d channels)", desc, infos->name.c_str(), samplrate, channel_map.channels);
+    RING_DBG("%s: trying to create stream with device %s (%dHz, %d channels)", desc, infos->name.c_str(), samplrate, channel_map.channels);
 
     assert(pa_sample_spec_valid(&sample_spec));
     assert(pa_channel_map_valid(&channel_map));
@@ -59,7 +59,7 @@ AudioStream::AudioStream(pa_context *c,
     audiostream_ = pa_stream_new(c, desc, &sample_spec, &channel_map);
 
     if (!audiostream_) {
-        SFL_ERR("%s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
+        RING_ERR("%s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
         throw std::runtime_error("Could not create stream\n");
     }
 
@@ -115,32 +115,32 @@ AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 
     switch (pa_stream_get_state(s)) {
         case PA_STREAM_CREATING:
-            SFL_DBG("Stream is creating...");
+            RING_DBG("Stream is creating...");
             break;
 
         case PA_STREAM_TERMINATED:
-            SFL_DBG("Stream is terminating...");
+            RING_DBG("Stream is terminating...");
             break;
 
         case PA_STREAM_READY:
-            SFL_DBG("Stream successfully created, connected to %s", pa_stream_get_device_name(s));
+            RING_DBG("Stream successfully created, connected to %s", pa_stream_get_device_name(s));
 #if 0
-            SFL_DBG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
-            SFL_DBG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
-            SFL_DBG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
-            SFL_DBG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
-            SFL_DBG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
+            RING_DBG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
+            RING_DBG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
+            RING_DBG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
+            RING_DBG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
+            RING_DBG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
 #endif
-            SFL_DBG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
+            RING_DBG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
             break;
 
         case PA_STREAM_UNCONNECTED:
-            SFL_DBG("Stream unconnected");
+            RING_DBG("Stream unconnected");
             break;
 
         case PA_STREAM_FAILED:
         default:
-            SFL_ERR("Sink/Source doesn't exists: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+            RING_ERR("Sink/Source doesn't exists: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
             break;
     }
 }

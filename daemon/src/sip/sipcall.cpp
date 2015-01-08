@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
@@ -43,7 +43,7 @@
 #include "manager.h"
 #include "array_size.h"
 
-using namespace sfl;
+using namespace ring;
 
 #if USE_CCRTP
 #include "audio/audiortp/audio_rtp_factory.h" // for AudioRtpFactoryException
@@ -57,13 +57,13 @@ using namespace sfl;
 #include "im/instant_messaging.h"
 #endif
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "video/video_rtp_session.h"
 #include "client/videomanager.h"
 
 #include <chrono>
 
-static sfl_video::VideoSettings
+static ring::video::VideoSettings
 getSettings()
 {
     const auto videoman = Manager::instance().getClient()->getVideoManager();
@@ -100,7 +100,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 #endif
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
-        SFL_WARN("Unknown DTMF type %s, defaulting to %s instead",
+        RING_WARN("Unknown DTMF type %s, defaulting to %s instead",
              dtmf.c_str(), SIPAccount::SIPINFO_STR);
     } // else : dtmf == SIPINFO
 
@@ -127,9 +127,9 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #if USE_CCRTP
     , audiortp_(this)
 #else
-    , avformatrtp_(new sfl::AVFormatRtpSession(id, /* FIXME: These are video! */ getSettings()))
+    , avformatrtp_(new ring::AVFormatRtpSession(id, /* FIXME: These are video! */ getSettings()))
 #endif
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(id, getSettings())
 #endif
@@ -141,9 +141,9 @@ SIPCall::~SIPCall()
     const auto mod_ua_id = getSIPVoIPLink()->getModId();
 
     // prevent this from getting accessed in callbacks
-    // SFL_WARN: this is not thread-safe!
+    // RING_WARN: this is not thread-safe!
     if (inv && inv->mod_data[mod_ua_id]) {
-        SFL_WARN("Call was not properly removed from invite callbacks");
+        RING_WARN("Call was not properly removed from invite callbacks");
         inv->mod_data[mod_ua_id] = nullptr;
     }
 }
@@ -157,7 +157,7 @@ SIPCall::stopRtpIfCurrent()
 #else
         avformatrtp_->stop();
 #endif
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         videortp_.stop();
 #endif
     }
@@ -184,7 +184,7 @@ SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
 
     setLocalIp(localIP);
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     if (getLocalVideoPort() == 0) {
         // https://projects.savoirfairelinux.com/issues/17498
         const unsigned int callLocalVideoPort = account.generateVideoPort();
@@ -205,7 +205,7 @@ void SIPCall::setContactHeader(pj_str_t *contact)
 std::map<std::string, std::string>
 SIPCall::createHistoryEntry() const
 {
-    using sfl::HistoryItem;
+    using ring::HistoryItem;
 
     std::map<std::string, std::string> entry(Call::createHistoryEntry());
     return entry;
@@ -239,7 +239,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (not inv or not inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
-    pj_str_t methodName = CONST_PJ_STR("SFL_INFO");
+    pj_str_t methodName = CONST_PJ_STR("RING_INFO");
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
 
@@ -247,7 +247,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     pjsip_tx_data *tdata;
 
     if (pjsip_dlg_create_request(inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
-        SFL_ERR("Could not create dialog");
+        RING_ERR("Could not create dialog");
         return;
     }
 
@@ -283,7 +283,7 @@ SIPCall::updateSDPFromSTUN()
         sdp_->setPublishedIP(account.getPublishedAddress());
         sdp_->updatePorts(stunPorts);
     } catch (const std::runtime_error &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
     }
 #endif
 }
@@ -296,7 +296,7 @@ void SIPCall::answer()
         throw VoipLinkException("No invite session for this call");
 
     if (!inv->neg) {
-        SFL_WARN("Negotiator is NULL, we've received an INVITE without an SDP");
+        RING_WARN("Negotiator is NULL, we've received an INVITE without an SDP");
         pjmedia_sdp_session *dummy = 0;
         getSIPVoIPLink()->createSDPOffer(inv.get(), &dummy);
 
@@ -317,7 +317,7 @@ void SIPCall::answer()
 
     // contactStr must stay in scope as long as tdata
     if (contactHeader_.slen) {
-        SFL_DBG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
+        RING_DBG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
         sip_utils::addContactHeader(&contactHeader_, tdata);
     }
 
@@ -349,7 +349,7 @@ SIPCall::hangup(int reason)
 
         if (printed >= 0) {
             buf[printed] = '\0';
-            SFL_DBG("Route header %s", buf);
+            RING_DBG("Route header %s", buf);
         }
 
         route = route->next;
@@ -544,7 +544,7 @@ SIPCall::transfer(const std::string& to)
 
     toUri = account.getToUri(to);
     pj_cstr(&dst, toUri.c_str());
-    SFL_DBG("Transferring to %.*s", dst.slen, dst.ptr);
+    RING_DBG("Transferring to %.*s", dst.slen, dst.ptr);
 
     if (!transferCommon(&dst))
         throw VoipLinkException("Couldn't transfer");
@@ -595,7 +595,7 @@ SIPCall::onhold()
 #else
     avformatrtp_->stop();
 #endif
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     videortp_.stop();
 #endif
 
@@ -603,14 +603,14 @@ SIPCall::onhold()
     sdp_->removeAttributeFromLocalAudioMedia("sendonly");
     sdp_->addAttributeToLocalAudioMedia("sendonly");
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
     sdp_->removeAttributeFromLocalVideoMedia("inactive");
     sdp_->addAttributeToLocalVideoMedia("inactive");
 #endif
 
     if (SIPSessionReinvite() != PJ_SUCCESS)
-        SFL_WARN("Reinvite failed");
+        RING_WARN("Reinvite failed");
 }
 
 void
@@ -625,7 +625,7 @@ SIPCall::offhold()
             internalOffHold([] {});
 
     } catch (const SdpException &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
         throw VoipLinkException("SDP issue in offhold");
     } catch (const ost::Socket::Error &e) {
         throw VoipLinkException("Socket problem in offhold");
@@ -633,7 +633,7 @@ SIPCall::offhold()
 #if USE_CCRTP
     catch (const ost::Socket *) {
         throw VoipLinkException("Socket problem in offhold");
-    } catch (const sfl::AudioRtpFactoryException &) {
+    } catch (const ring::AudioRtpFactoryException &) {
         throw VoipLinkException("Socket problem in offhold");
     }
 #endif
@@ -645,14 +645,14 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
     if (not setState(Call::ACTIVE))
         return;
 
-    std::vector<sfl::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
+    std::vector<ring::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
-        SFL_WARN("Session media is empty");
+        RING_WARN("Session media is empty");
         return;
     }
 
-    std::vector<sfl::AudioCodec*> audioCodecs;
+    std::vector<ring::AudioCodec*> audioCodecs;
 
     for (auto & i : sessionMedia) {
 
@@ -660,10 +660,10 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
             continue;
 
         // Create a new instance for this codec
-        sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
+        ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
         if (ac == NULL) {
-            SFL_ERR("Could not instantiate codec %d", i->getPayloadType());
+            RING_ERR("Could not instantiate codec %d", i->getPayloadType());
             throw std::runtime_error("Could not instantiate codec");
         }
 
@@ -690,7 +690,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
     sdp_->removeAttributeFromLocalAudioMedia("sendonly");
     sdp_->addAttributeToLocalAudioMedia("sendrecv");
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
     sdp_->removeAttributeFromLocalVideoMedia("sendonly");
     sdp_->removeAttributeFromLocalVideoMedia("inactive");
@@ -698,7 +698,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
 #endif
 
     if (SIPSessionReinvite() != PJ_SUCCESS) {
-        SFL_WARN("Reinvite failed, resuming hold");
+        RING_WARN("Reinvite failed, resuming hold");
         onhold();
     }
 }
@@ -737,7 +737,7 @@ SIPCall::carryingDTMFdigits(char code)
 void
 SIPCall::sendTextMessage(const std::string &message, const std::string &from)
 {
-    using namespace sfl::InstantMessaging;
+    using namespace ring::InstantMessaging;
 
     if (not inv)
         throw VoipLinkException("No invite session for this call");
@@ -745,7 +745,7 @@ SIPCall::sendTextMessage(const std::string &message, const std::string &from)
     /* Send IM message */
     UriList list;
     UriEntry entry;
-    entry[sfl::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
+    entry[ring::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
     list.push_front(entry);
     send_sip_message(inv.get(), getCallId(), appendUriList(message, list));
 }
@@ -785,7 +785,7 @@ void
 SIPCall::setupLocalSDPFromIce()
 {
     if (waitForIceInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
-        SFL_ERR("ICE init failed, ICE will not be used for medias");
+        RING_ERR("ICE init failed, ICE will not be used for medias");
         return;
     }
 
@@ -794,19 +794,19 @@ SIPCall::setupLocalSDPFromIce()
     // Add video and audio channels
     sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, iceTransport_->getLocalCandidates(ICE_AUDIO_RTP_COMPID));
     sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, iceTransport_->getLocalCandidates(ICE_AUDIO_RTCP_COMPID));
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, iceTransport_->getLocalCandidates(ICE_VIDEO_RTP_COMPID));
     sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, iceTransport_->getLocalCandidates(ICE_VIDEO_RTCP_COMPID));
 #endif
 }
 
-std::vector<sfl::IceCandidate>
+std::vector<ring::IceCandidate>
 SIPCall::getAllRemoteCandidates()
 {
-    std::vector<sfl::IceCandidate> rem_candidates;
+    std::vector<ring::IceCandidate> rem_candidates;
 
     auto addSDPCandidates = [this](unsigned sdpMediaId,
-                                   std::vector<sfl::IceCandidate>& out) {
+                                   std::vector<ring::IceCandidate>& out) {
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(sdpMediaId)) {
             if (iceTransport_->getCandidateFromSDP(line, cand))
@@ -815,7 +815,7 @@ SIPCall::getAllRemoteCandidates()
     };
 
     addSDPCandidates(SDP_AUDIO_MEDIA_ID, rem_candidates);
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     addSDPCandidates(SDP_VIDEO_MEDIA_ID, rem_candidates);
 #endif
 
@@ -829,7 +829,7 @@ SIPCall::startIce()
         return true;
     auto rem_ice_attrs = sdp_->getIceAttributes();
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
-        SFL_ERR("ICE empty attributes");
+        RING_ERR("ICE empty attributes");
         return false;
     }
     return iceTransport_->start(rem_ice_attrs, getAllRemoteCandidates());
@@ -843,7 +843,7 @@ SIPCall::startAllMedia()
     try {
         audiortp_.updateDestinationIpAddress();
     } catch (const AudioRtpFactoryException &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
     }
 
     audiortp_.setDtmfPayloadType(sdp_->getTelephoneEventType());
@@ -851,8 +851,8 @@ SIPCall::startAllMedia()
     avformatrtp_->updateSDP(*sdp_);
     avformatrtp_->updateDestination(remoteIP, sdp_->getRemoteAudioPort());
     if (isIceRunning()) {
-        std::unique_ptr<sfl::IceSocket> sockRTP(newIceSocket(0));
-        std::unique_ptr<sfl::IceSocket> sockRTCP(newIceSocket(1));
+        std::unique_ptr<ring::IceSocket> sockRTP(newIceSocket(0));
+        std::unique_ptr<ring::IceSocket> sockRTCP(newIceSocket(1));
         avformatrtp_->start(std::move(sockRTP), std::move(sockRTCP));
     } else {
         const auto localAudioPort = sdp_->getLocalAudioPort();
@@ -860,24 +860,24 @@ SIPCall::startAllMedia()
     }
 #endif
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     auto remoteVideoPort = sdp_->getRemoteVideoPort();
     videortp_.updateSDP(*sdp_);
     videortp_.updateDestination(remoteIP, remoteVideoPort);
     if (isIceRunning()) {
-        std::unique_ptr<sfl::IceSocket> sockRTP(newIceSocket(2));
-        std::unique_ptr<sfl::IceSocket> sockRTCP(newIceSocket(3));
+        std::unique_ptr<ring::IceSocket> sockRTP(newIceSocket(2));
+        std::unique_ptr<ring::IceSocket> sockRTCP(newIceSocket(3));
         try {
             videortp_.start(std::move(sockRTP), std::move(sockRTCP));
         } catch (const std::runtime_error &e) {
-            SFL_ERR("videortp_.start() with ICE failed, %s", e.what());
+            RING_ERR("videortp_.start() with ICE failed, %s", e.what());
         }
     } else {
         const auto localVideoPort = sdp_->getLocalVideoPort();
         try {
             videortp_.start(localVideoPort ? localVideoPort : remoteVideoPort);
         } catch (const std::runtime_error &e) {
-            SFL_ERR("videortp_.start() failed, %s", e.what());
+            RING_ERR("videortp_.start() failed, %s", e.what());
         }
     }
 #endif
@@ -890,12 +890,12 @@ SIPCall::startAllMedia()
     bool nego_success = false;
 
     if (!crypto_offer.empty()) {
-        std::vector<sfl::CryptoSuiteDefinition> localCapabilities;
+        std::vector<ring::CryptoSuiteDefinition> localCapabilities;
 
-        for (size_t i = 0; i < SFL_ARRAYSIZE(sfl::CryptoSuites); ++i)
-            localCapabilities.push_back(sfl::CryptoSuites[i]);
+        for (size_t i = 0; i < RING_ARRAYSIZE(ring::CryptoSuites); ++i)
+            localCapabilities.push_back(ring::CryptoSuites[i]);
 
-        sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+        ring::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
         auto callMgr = Manager::instance().getClient()->getCallManager();
 
         if (sdesnego.negotiate()) {
@@ -905,20 +905,20 @@ SIPCall::startAllMedia()
                 audiortp_.setRemoteCryptoInfo(sdesnego);
                 callMgr->secureSdesOn(getCallId());
             } catch (const AudioRtpFactoryException &e) {
-                SFL_ERR("%s", e.what());
+                RING_ERR("%s", e.what());
                 callMgr->secureSdesOff(getCallId());
             }
         } else {
-            SFL_ERR("SDES negotiation failure");
+            RING_ERR("SDES negotiation failure");
             callMgr->secureSdesOff(getCallId());
         }
     } else {
-        SFL_DBG("No crypto offer available");
+        RING_DBG("No crypto offer available");
     }
 
     // We did not find any crypto context for this media, RTP fallback
     if (!nego_success && audiortp_.isSdesEnabled()) {
-        SFL_ERR("Negotiation failed but SRTP is enabled, fallback on RTP");
+        RING_ERR("Negotiation failed but SRTP is enabled, fallback on RTP");
         audiortp_.stop();
         audiortp_.setSrtpEnabled(false);
 
@@ -932,10 +932,10 @@ SIPCall::startAllMedia()
     }
 #endif // USE_CCRTP && HAVE_SDES
 
-    std::vector<sfl::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
+    std::vector<ring::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
-        SFL_WARN("Session media is empty");
+        RING_WARN("Session media is empty");
         return;
     }
 
@@ -950,10 +950,10 @@ SIPCall::startAllMedia()
 
             const int pl = i->getPayloadType();
 
-            sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
+            ring::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
 
             if (!ac) {
-                SFL_ERR("Could not instantiate codec %d", pl);
+                RING_ERR("Could not instantiate codec %d", pl);
             } else {
                 audioCodecs.push_back(ac);
             }
@@ -964,8 +964,8 @@ SIPCall::startAllMedia()
             getAudioRtp().updateSessionMedia(audioCodecs);
 #endif
     } catch (const SdpException &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
     } catch (const std::exception &rtpException) {
-        SFL_ERR("%s", rtpException.what());
+        RING_ERR("%s", rtpException.what());
     }
 }

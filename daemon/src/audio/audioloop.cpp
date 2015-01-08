@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -44,7 +44,7 @@
 #include <cassert>
 #include "logger.h"
 
-namespace sfl {
+namespace ring {
 
 AudioLoop::AudioLoop(unsigned int sampleRate) :
     buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1))), pos_(0)
@@ -65,7 +65,7 @@ void
 AudioLoop::getNext(AudioBuffer& output, double gain)
 {
     if (!buffer_) {
-        SFL_ERR("buffer is NULL");
+        RING_ERR("buffer is NULL");
         return;
     }
 
@@ -75,10 +75,10 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
     size_t output_pos = 0;
 
     if (buf_samples == 0) {
-        SFL_ERR("Audio loop size is 0");
+        RING_ERR("Audio loop size is 0");
         return;
     } else if (pos >= buf_samples) {
-        SFL_ERR("Invalid loop position %d", pos);
+        RING_ERR("Invalid loop position %d", pos);
         return;
     }
 

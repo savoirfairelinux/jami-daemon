@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -41,7 +41,7 @@
 
 class IAXAccount;
 
-namespace sfl {
+namespace ring {
     class RingBuffer;
     class AudioBuffer;
 }
@@ -114,13 +114,13 @@ class IAXCall : public Call
                              const std::string& from);
 #endif
 
-        void putAudioData(sfl::AudioBuffer& buf);
+        void putAudioData(ring::AudioBuffer& buf);
 
     private:
         NON_COPYABLE(IAXCall);
 
         // Incoming audio ring buffer
-        std::shared_ptr<sfl::RingBuffer> ringbuffer_{};
+        std::shared_ptr<ring::RingBuffer> ringbuffer_{};
 };
 
 #endif

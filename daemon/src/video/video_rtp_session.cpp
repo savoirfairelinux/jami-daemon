@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
@@ -45,7 +45,7 @@
 #include <map>
 #include <string>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::map;
 using std::string;
@@ -66,35 +66,35 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     // if port has changed
     if (not desc.empty() and desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
-        SFL_DBG("Updated incoming SDP to:\n%s",
+        RING_DBG("Updated incoming SDP to:\n%s",
               rxArgs_["receiving_sdp"].c_str());
     }
 
     if (desc.empty()) {
-        SFL_DBG("Video is inactive");
+        RING_DBG("Video is inactive");
         receiving_ = false;
         sending_ = false;
     } else if (desc.find("sendrecv") != string::npos) {
-        SFL_DBG("Sending and receiving video");
+        RING_DBG("Sending and receiving video");
         receiving_ = true;
         sending_ = true;
     } else if (desc.find("inactive") != string::npos) {
-        SFL_DBG("Video is inactive");
+        RING_DBG("Video is inactive");
         receiving_ = false;
         sending_ = false;
     } else if (desc.find("sendonly") != string::npos) {
-        SFL_DBG("Receiving video disabled, video set to sendonly");
+        RING_DBG("Receiving video disabled, video set to sendonly");
         receiving_ = false;
         sending_ = true;
     } else if (desc.find("recvonly") != string::npos) {
-        SFL_DBG("Sending video disabled, video set to recvonly");
+        RING_DBG("Sending video disabled, video set to recvonly");
         sending_ = false;
         receiving_ = true;
     }
     // even if it says sendrecv or recvonly, our peer may disable video by
     // setting the port to 0
     if (desc.find("m=video 0") != string::npos) {
-        SFL_DBG("Receiving video disabled, port was set to 0");
+        RING_DBG("Receiving video disabled, port was set to 0");
         receiving_ = false;
     }
 
@@ -107,7 +107,7 @@ void VideoRtpSession::updateDestination(const string &destination,
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (destination.empty()) {
-        SFL_ERR("Destination is empty, ignoring");
+        RING_ERR("Destination is empty, ignoring");
         return;
     }
 
@@ -116,15 +116,15 @@ void VideoRtpSession::updateDestination(const string &destination,
     // if destination has changed
     if (tmp.str() != txArgs_["destination"]) {
         if (sender_) {
-            SFL_ERR("Video is already being sent");
+            RING_ERR("Video is already being sent");
             return;
         }
         txArgs_["destination"] = tmp.str();
-        SFL_DBG("updated dest to %s",  txArgs_["destination"].c_str());
+        RING_DBG("updated dest to %s",  txArgs_["destination"].c_str());
     }
 
     if (port == 0) {
-        SFL_DBG("Sending video disabled, port was set to 0");
+        RING_DBG("Sending video disabled, port was set to 0");
         sending_ = false;
     }
 }
@@ -137,13 +137,13 @@ void VideoRtpSession::startSender()
                 videoLocal_->detach(sender_.get());
             if (videoMixer_)
                 videoMixer_->detach(sender_.get());
-            SFL_WARN("Restarting video sender");
+            RING_WARN("Restarting video sender");
         }
 
         try {
             sender_.reset(new VideoSender(txArgs_, *socketPair_));
         } catch (const VideoEncoderException &e) {
-            SFL_ERR("%s", e.what());
+            RING_ERR("%s", e.what());
             sending_ = false;
         }
     }
@@ -153,13 +153,13 @@ void VideoRtpSession::startReceiver()
 {
     if (receiving_) {
         if (receiveThread_)
-            SFL_WARN("restarting video receiver");
+            RING_WARN("restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
     } else {
-        SFL_DBG("Video receiving disabled");
+        RING_DBG("Video receiving disabled");
         if (receiveThread_)
             receiveThread_->detach(videoMixer_.get());
         receiveThread_.reset();
@@ -178,7 +178,7 @@ void VideoRtpSession::start(int localPort)
     try {
         socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
     } catch (const std::runtime_error &e) {
-        SFL_ERR("Socket creation failed on port %d: %s", localPort, e.what());
+        RING_ERR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
     }
 
@@ -198,8 +198,8 @@ void VideoRtpSession::start(int localPort)
     }
 }
 
-void VideoRtpSession::start(std::unique_ptr<sfl::IceSocket> rtp_sock,
-                            std::unique_ptr<sfl::IceSocket> rtcp_sock)
+void VideoRtpSession::start(std::unique_ptr<ring::IceSocket> rtp_sock,
+                            std::unique_ptr<ring::IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
@@ -312,4 +312,4 @@ void VideoRtpSession::exitConference()
     conference_ = nullptr;
 }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

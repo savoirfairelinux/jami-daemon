@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -43,7 +43,7 @@
 #include <algorithm>
 #endif
 
-namespace sfl {
+namespace ring {
 AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     isStarted_(false)
     , queue_(queue)
@@ -105,13 +105,13 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
     }
 
     transportRate_ = rtpStream_.getTransportRate();
-    SFL_DBG("Switching to a transport rate of %d ms", transportRate_);
+    RING_DBG("Switching to a transport rate of %d ms", transportRate_);
 }
 
 void AudioRtpSession::sendDtmfEvent()
 {
     DTMFEvent &dtmf(dtmfQueue_.front());
-    SFL_DBG("Send RTP Dtmf (%d)", dtmf.payload.event);
+    RING_DBG("Send RTP Dtmf (%d)", dtmf.payload.event);
 
     const int increment = getIncrementForDTMF();
     if (dtmf.newevent)
@@ -181,7 +181,7 @@ void AudioRtpSession::receiveSpeakerData()
         const double jit_mean = std::accumulate(rxJitters_.begin(), rxJitters_.end(), 0.0) / rxJitters_.size();
         const double jit_sq_sum = std::inner_product(rxJitters_.begin(), rxJitters_.end(), rxJitters_.begin(), 0.0);
         const double jit_stdev = std::sqrt(jit_sq_sum / rxJitters_.size() - jit_mean * jit_mean);
-        SFL_DBG("Jitter avg: %fms std dev %fms", jit_mean, jit_stdev);
+        RING_DBG("Jitter avg: %fms std dev %fms", jit_mean, jit_stdev);
         jitterReportInterval_ = 0;
     }
 #endif
@@ -193,13 +193,13 @@ void AudioRtpSession::receiveSpeakerData()
         rxLastSeqNum_ += seqNumDiff;
         seqNumDiff = 1;
     } else if (seqNumDiff < 0) {
-        SFL_DBG("Dropping out-of-order packet %d (last %d)", rxLastSeqNum_ + seqNumDiff, rxLastSeqNum_);
+        RING_DBG("Dropping out-of-order packet %d (last %d)", rxLastSeqNum_ + seqNumDiff, rxLastSeqNum_);
         return;
     } else {
         rxLastSeqNum_ += seqNumDiff;
     }
     if (rxLastSeqNum_ && seqNumDiff > 1) {
-        SFL_DBG("%d packets lost", seqNumDiff-1);
+        RING_DBG("%d packets lost", seqNumDiff-1);
         for (unsigned i = 0, n = seqNumDiff - 1; i < n; i++)
             rtpStream_.processDataDecode(nullptr, 0, adu->getType());
     }
@@ -241,7 +241,7 @@ void AudioRtpSession::setSessionTimeouts()
 {
     const unsigned schedulingTimeout = 4000;
     const unsigned expireTimeout = 1000000;
-    SFL_DBG("Set session scheduling timeout (%d) and expireTimeout (%d)",
+    RING_DBG("Set session scheduling timeout (%d) and expireTimeout (%d)",
           schedulingTimeout, expireTimeout);
 
     queue_.setSchedulingTimeout(schedulingTimeout);
@@ -250,7 +250,7 @@ void AudioRtpSession::setSessionTimeouts()
 
 void AudioRtpSession::updateDestinationIpAddress()
 {
-    SFL_DBG("Update destination ip address");
+    RING_DBG("Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
@@ -258,28 +258,28 @@ void AudioRtpSession::updateDestinationIpAddress()
 #if HAVE_IPV6
      && !(remoteIp_.isIpv6() == AF_INET6 && queue_.forgetDestination(static_cast<ost::IPV6Host>(remoteIp_), remoteIp_.getPort()))
 #endif
-    ) SFL_DBG("Did not remove previous destination");
+    ) RING_DBG("Did not remove previous destination");
 
     IpAddr remote = {call_.getSDP().getRemoteIP()};
     remote.setPort(call_.getSDP().getRemoteAudioPort());
     if (!remote) {
-        SFL_WARN("Target IP address (%s) is not correct!", call_.getSDP().getRemoteIP().c_str());
+        RING_WARN("Target IP address (%s) is not correct!", call_.getSDP().getRemoteIP().c_str());
         return;
     }
     remoteIp_ = remote;
-    SFL_DBG("New remote address for session: %s", remote.toString(true).c_str());
+    RING_DBG("New remote address for session: %s", remote.toString(true).c_str());
 
     if (!(remoteIp_.isIpv4()  && queue_.addDestination(static_cast<ost::IPV4Host>(remoteIp_), remoteIp_.getPort()))
 #if HAVE_IPV6
      && !(remoteIp_.isIpv6() && queue_.addDestination(static_cast<ost::IPV6Host>(remoteIp_), remoteIp_.getPort()))
 #endif
-    ) SFL_WARN("Can't add new destination to session!");
+    ) RING_WARN("Can't add new destination to session!");
 }
 
 
 void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &audioCodecs)
 {
-    SFL_DBG("Preparing receiving thread");
+    RING_DBG("Preparing receiving thread");
     isStarted_ = true;
 #ifdef RTP_DEBUG
     rxLast_ = std::chrono::high_resolution_clock::now();
@@ -336,13 +336,13 @@ void AudioRtpSession::putDtmfEvent(char digit)
 CachedAudioRtpState *
 AudioRtpSession::saveState() const
 {
-    SFL_ERR("Not implemented");
+    RING_ERR("Not implemented");
     return nullptr;
 }
 
 void
 AudioRtpSession::restoreState(const CachedAudioRtpState &state UNUSED)
 {
-    SFL_ERR("Not implemented");
+    RING_ERR("Not implemented");
 }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -66,7 +66,7 @@ codecToASTFormat(int c)
             return AST_FORMAT_SPEEX;
 
         default:
-            SFL_ERR("Codec %d not supported!", c);
+            RING_ERR("Codec %d not supported!", c);
             return 0;
     }
 }
@@ -92,7 +92,7 @@ int IAXCall::getSupportedFormat(const std::string &accountID) const
         for (const auto &i : codecs)
             format_mask |= codecToASTFormat(i);
     } else
-        SFL_ERR("No IAx account could be found");
+        RING_ERR("No IAx account could be found");
 
     return format_mask;
 }
@@ -113,7 +113,7 @@ int IAXCall::getFirstMatchingFormat(int needles, const std::string &accountID) c
                 return format_mask;
         }
     } else
-        SFL_ERR("No IAx account could be found");
+        RING_ERR("No IAx account could be found");
 
     return 0;
 }
@@ -132,7 +132,7 @@ int IAXCall::getAudioCodec() const
         case AST_FORMAT_SPEEX:
             return PAYLOAD_CODEC_SPEEX_8000;
         default:
-            SFL_ERR("IAX: Format %d not supported!", format);
+            RING_ERR("IAX: Format %d not supported!", format);
             return -1;
     }
 }
@@ -239,12 +239,12 @@ void
 IAXCall::sendTextMessage(const std::string& message, const std::string& /*from*/)
 {
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-    sfl::InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
+    ring::InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
 }
 #endif
 
 void
-IAXCall::putAudioData(sfl::AudioBuffer& buf)
+IAXCall::putAudioData(ring::AudioBuffer& buf)
 {
     ringbuffer_->put(buf);
 }

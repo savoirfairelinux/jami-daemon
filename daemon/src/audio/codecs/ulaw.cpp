@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author:  Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -34,10 +34,10 @@
 #include "ring_plugin.h"
 #include "g711.h"
 
-class Ulaw : public sfl::AudioCodec {
+class Ulaw : public ring::AudioCodec {
     public:
         // 0 PCMU A 8000 1 [RFC3551]
-        Ulaw() : sfl::AudioCodec(0, "PCMU", 8000, 160, 1) {
+        Ulaw() : ring::AudioCodec(0, "PCMU", 8000, 160, 1) {
             bitrate_ =  64;
             hasDynamicPayload_ = false;
         }

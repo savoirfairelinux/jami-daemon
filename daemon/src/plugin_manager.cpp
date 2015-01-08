@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ PluginManager::~PluginManager()
         try {
             (*func)();
         } catch (...) {
-            SFL_WARN("Exception caught during plugin exit");
+            RING_WARN("Exception caught during plugin exit");
         }
     }
 
@@ -62,20 +62,20 @@ PluginManager::load(const std::string& path)
 
     // Don't load the same dynamic library twice
     if (dynPluginMap_.find(path) != dynPluginMap_.end()) {
-        SFL_WARN("plugin: already loaded");
+        RING_WARN("plugin: already loaded");
         return true;
     }
 
     std::string error;
     std::unique_ptr<Plugin> plugin(Plugin::load(path, error));
     if (!plugin) {
-        SFL_ERR("plugin: %s", error.c_str());
+        RING_ERR("plugin: %s", error.c_str());
         return false;
     }
 
     const auto& init_func = plugin->getInitFunction();
     if (!init_func) {
-        SFL_ERR("plugin: no init symbol");
+        RING_ERR("plugin: no init symbol");
         return false;
     }
 
@@ -94,13 +94,13 @@ PluginManager::registerPlugin(RING_PluginInitFunc initFunc)
     try {
         exitFunc = initFunc(&pluginApi_);
     } catch (const std::runtime_error& e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
     }
 
     if (!exitFunc) {
         tempExactMatchMap_.clear();
         tempWildCardVec_.clear();
-        SFL_ERR("plugin: init failed");
+        RING_ERR("plugin: init failed");
         return false;
     }
 
@@ -132,7 +132,7 @@ PluginManager::invokeService(const std::string& name, void* data)
 {
     const auto& iterFunc = services_.find(name);
     if (iterFunc == services_.cend()) {
-        SFL_ERR("Services not found: %s", name.c_str());
+        RING_ERR("Services not found: %s", name.c_str());
         return -1;
     }
 
@@ -141,7 +141,7 @@ PluginManager::invokeService(const std::string& name, void* data)
     try {
         return func(data);
     } catch (const std::runtime_error &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
         return -1;
     }
 }
@@ -214,7 +214,7 @@ PluginManager::createObject(const std::string& type)
             // (but keep also wildcard registration for other object types)
             int32_t res = registerObjectFactory(op.type, factory.data);
             if (res < 0) {
-                SFL_ERR("failed to register object %s", op.type);
+                RING_ERR("failed to register object %s", op.type);
                 return {nullptr, nullptr};
             }
 
@@ -232,12 +232,12 @@ PluginManager::registerObjectFactory_(const RING_PluginAPI* api,
 {
     auto manager = reinterpret_cast<PluginManager*>(api->context);
     if (!manager) {
-        SFL_ERR("registerObjectFactory called with null plugin API");
+        RING_ERR("registerObjectFactory called with null plugin API");
         return -1;
     }
 
     if (!data) {
-        SFL_ERR("registerObjectFactory called with null factory data");
+        RING_ERR("registerObjectFactory called with null factory data");
         return -1;
     }
 
@@ -252,7 +252,7 @@ PluginManager::invokeService_(const RING_PluginAPI* api, const char* name,
 {
     auto manager = reinterpret_cast<PluginManager*>(api->context);
     if (!manager) {
-        SFL_ERR("invokeService called with null plugin API");
+        RING_ERR("invokeService called with null plugin API");
         return -1;
     }
 
