@@ -627,8 +627,6 @@ SIPCall::offhold()
     } catch (const SdpException &e) {
         SFL_ERR("%s", e.what());
         throw VoipLinkException("SDP issue in offhold");
-    } catch (const ost::Socket::Error &e) {
-        throw VoipLinkException("Socket problem in offhold");
     }
 #if USE_CCRTP
     catch (const ost::Socket *) {
