@@ -1,22 +1,30 @@
 Current authors
 ---------------
 
+Guillaume Roguez <guillaume dot roguez at savoirfairelinux dot com>
+
+Adrien Béraud <adrien dot beraud at savoirfairelinux dot com>
+
+Emmanuel Lepage <emmanuel dot lepage at savoirfairelinux dot com>
+
+Alexandre Lision <alexandre dot lision at savoirfairelinux dot com>
+
+Stepan Salenikovich <stepan dot salenikovich at savoirfairelinux dot com>
+
+Former authors
+--------------
+
+Tristan Matthews <tristan dot matthews at savoirfairelinux dot com>
+
 Emmanuel Milou <emmanuel dot milou at savoirfairelinux dot com>
 	- ALSA implementation ( replaces portaudio )
 	- Dynamic loading of audio codecs ( shared libraries )
 	- Debian packages
 	- GTK client error handling
-	- Plus many portions of code in sflphoned and sflphone-gtk
+	- Plus many portions of code in dring and sflphone-gtk
 	- Test and debugging
 
 Alexandre Savard <alexandre dot savard at savoirfairelinux dot com>
-
-Tristan Matthews <tristan dot matthews at savoirfairelinux dot com>
-
-Emmanuel Lepage <emmanuel dot lepage at savoirfairelinux dot com>
-
-Former authors
---------------
 
 Rafaël Carré <rafael dot carre at savoirfairelinux dot com>
 
@@ -49,7 +57,7 @@ Pierre-Luc Beaudoin <pierre-luc.beaudoin at savoirfairelinux dot com>
 
 Yan Morin <yan dot morin at savoirfairelinux dot com>
 	- zeroconf integration
-	- sflphoned deamon
+	- dring deamon
 	- add and improve sip core feature
 	- tests and debugging
 

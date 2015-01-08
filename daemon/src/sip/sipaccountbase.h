@@ -246,7 +246,7 @@ public:
     virtual std::string getServerUri() const = 0;
 
     uint16_t generateAudioPort() const;
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     uint16_t generateVideoPort() const;
 #endif
     static void releasePort(uint16_t port);

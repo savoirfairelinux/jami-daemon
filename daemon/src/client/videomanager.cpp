@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -43,12 +43,12 @@ VideoManager::VideoManager()
     libav_utils::sfl_avcodec_init();
 }
 
-void VideoManager::registerEvHandlers(struct sflph_video_ev_handlers* evHandlers)
+void VideoManager::registerEvHandlers(struct ring_video_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }
 
-sfl_video::VideoDeviceMonitor &
+ring::video::VideoDeviceMonitor &
 VideoManager::getVideoDeviceMonitor()
 {
     return videoDeviceMonitor_;
@@ -79,7 +79,7 @@ VideoManager::getDeviceList()
     return videoDeviceMonitor_.getDeviceList();
 }
 
-sfl_video::VideoCapabilities
+ring::video::VideoCapabilities
 VideoManager::getCapabilities(const std::string& name)
 {
     return videoDeviceMonitor_.getCapabilities(name);
@@ -94,7 +94,7 @@ VideoManager::getDefaultDevice()
 void
 VideoManager::setDefaultDevice(const std::string &name)
 {
-    SFL_DBG("Setting device to %s", name.c_str());
+    RING_DBG("Setting device to %s", name.c_str());
     videoDeviceMonitor_.setDefaultDevice(name);
 }
 
@@ -130,7 +130,7 @@ VideoManager::switchInput(const std::string &resource)
 {
     auto input = videoInput_.lock();
     if (!input) {
-        SFL_WARN("Video input not initialized");
+        RING_WARN("Video input not initialized");
         return false;
     }
     return input->switchInput(resource);
@@ -142,13 +142,13 @@ VideoManager::switchToCamera()
     return switchInput("v4l2://" + videoDeviceMonitor_.getDefaultDevice());
 }
 
-std::shared_ptr<sfl_video::VideoFrameActiveWriter>
+std::shared_ptr<ring::video::VideoFrameActiveWriter>
 VideoManager::getVideoCamera()
 {
     auto input = videoInput_.lock();
     if (!input) {
         started_ = false;
-        input.reset(new sfl_video::VideoInput());
+        input.reset(new ring::video::VideoInput());
         videoInput_ = input;
     }
     return input;

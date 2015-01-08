@@ -41,7 +41,7 @@
 #define XDG_CONFIG_HOME         (PROTECTED_GETENV("XDG_CONFIG_HOME"))
 #define XDG_CACHE_HOME          (PROTECTED_GETENV("XDG_CACHE_HOME"))
 
-#define PIDFILE ".sfl.pid"
+#define PIDFILE ".ring.pid"
 
 
 #define DIR_SEPARATOR_STR "/"   // Directory separator char

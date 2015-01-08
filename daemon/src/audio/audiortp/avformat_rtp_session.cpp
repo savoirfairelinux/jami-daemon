@@ -43,31 +43,31 @@
 #include "manager.h"
 #include <sstream>
 
-namespace sfl {
-using sfl_video::SocketPair;
-using sfl_video::VideoEncoder;
-using sfl_video::VideoIOHandle;
-using sfl_video::VideoEncoderException;
+namespace ring {
+using ring::video::SocketPair;
+using ring::video::VideoEncoder;
+using ring::video::VideoIOHandle;
+using ring::video::VideoEncoderException;
 
 class AudioSender {
     public:
         AudioSender(const std::string& id,
                     std::map<std::string, std::string> txArgs,
-                    sfl_video::SocketPair& socketPair);
+                    ring::video::SocketPair& socketPair);
         ~AudioSender();
 
     private:
         NON_COPYABLE(AudioSender);
 
         bool waitForDataEncode(const std::chrono::milliseconds& max_wait) const;
-        bool setup(sfl_video::SocketPair& socketPair);
+        bool setup(ring::video::SocketPair& socketPair);
 
         std::string id_;
         std::map<std::string, std::string> args_;
         const AudioFormat format_;
-        std::unique_ptr<sfl_video::VideoEncoder> audioEncoder_;
-        std::unique_ptr<sfl_video::VideoIOHandle> muxContext_;
-        std::unique_ptr<sfl::Resampler> resampler_;
+        std::unique_ptr<ring::video::VideoEncoder> audioEncoder_;
+        std::unique_ptr<ring::video::VideoIOHandle> muxContext_;
+        std::unique_ptr<ring::Resampler> resampler_;
         const double secondsPerPacket_ {0.02}; // 20 ms
 
         ThreadLoop loop_;
@@ -111,13 +111,13 @@ AudioSender::setup(SocketPair& socketPair)
         audioEncoder_->setIOContext(muxContext_);
         audioEncoder_->startIO();
     } catch (const VideoEncoderException &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
         return false;
     }
 
     std::string sdp;
     audioEncoder_->print_sdp(sdp);
-    SFL_WARN("\n%s", sdp.c_str());
+    RING_WARN("\n%s", sdp.c_str());
 
     return true;
 }
@@ -148,7 +148,7 @@ AudioSender::process()
     micData.setChannelNum(format_.nb_channels, true); // down/upmix as needed
 
     if (samples != samplesToGet) {
-        SFL_ERR("Asked for %d samples from bindings on call '%s', got %d",
+        RING_ERR("Asked for %d samples from bindings on call '%s', got %d",
                 samplesToGet, id_.c_str(), samples);
         return;
     }
@@ -156,16 +156,16 @@ AudioSender::process()
     if (mainBuffFormat.sample_rate != format_.sample_rate)
     {
         if (not resampler_) {
-            SFL_DBG("Creating audio resampler");
+            RING_DBG("Creating audio resampler");
             resampler_.reset(new Resampler(format_));
         }
         AudioBuffer resampledData(samplesToGet, format_);
         resampler_->resample(micData, resampledData);
         if (audioEncoder_->encode_audio(resampledData) < 0)
-            SFL_ERR("encoding failed");
+            RING_ERR("encoding failed");
     } else {
         if (audioEncoder_->encode_audio(micData) < 0)
-            SFL_ERR("encoding failed");
+            RING_ERR("encoding failed");
     }
 
     const int millisecondsPerPacket = secondsPerPacket_ * 1000;
@@ -190,7 +190,7 @@ class AudioReceiveThread
     public:
         AudioReceiveThread(const std::string &id, const std::string &sdp);
         ~AudioReceiveThread();
-        void addIOContext(sfl_video::SocketPair &socketPair);
+        void addIOContext(ring::video::SocketPair &socketPair);
         void startLoop();
 
     private:
@@ -211,10 +211,10 @@ class AudioReceiveThread
         /*-----------------------------------------------------------------*/
         const std::string id_;
         std::istringstream stream_;
-        std::unique_ptr<sfl_video::VideoDecoder> audioDecoder_;
-        std::unique_ptr<sfl_video::VideoIOHandle> sdpContext_;
-        std::unique_ptr<sfl_video::VideoIOHandle> demuxContext_;
-        std::shared_ptr<sfl::RingBuffer> ringbuffer_;
+        std::unique_ptr<ring::video::VideoDecoder> audioDecoder_;
+        std::unique_ptr<ring::video::VideoIOHandle> sdpContext_;
+        std::unique_ptr<ring::video::VideoIOHandle> demuxContext_;
+        std::shared_ptr<ring::RingBuffer> ringbuffer_;
 
         ThreadLoop loop_;
         bool setup();
@@ -240,7 +240,7 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
-    audioDecoder_.reset(new sfl_video::VideoDecoder());
+    audioDecoder_.reset(new ring::video::VideoDecoder());
     audioDecoder_->setInterruptCallback(interruptCb, this);
     // custom_io so the SDP demuxer will not open any UDP connections
     args_["sdp_flags"] = "custom_io";
@@ -262,32 +262,32 @@ AudioReceiveThread::setup()
 void
 AudioReceiveThread::process()
 {
-    sfl::AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+    ring::AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     std::unique_ptr<AVFrame, void(*)(AVFrame*)> decodedFrame(av_frame_alloc(), [](AVFrame*p){av_frame_free(&p);});
 
     switch (audioDecoder_->decode_audio(decodedFrame.get())) {
 
-        case sfl_video::VideoDecoder::Status::FrameFinished:
+        case ring::video::VideoDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame.get(), *ringbuffer_,
                                              mainBuffFormat);
             return;
 
-        case sfl_video::VideoDecoder::Status::DecodeError:
-            SFL_WARN("decoding failure, trying to reset decoder...");
+        case ring::video::VideoDecoder::Status::DecodeError:
+            RING_WARN("decoding failure, trying to reset decoder...");
             if (not setup()) {
-                SFL_ERR("fatal error, rx thread re-setup failed");
+                RING_ERR("fatal error, rx thread re-setup failed");
                 loop_.stop();
                 break;
             }
             if (not audioDecoder_->setupFromAudioData()) {
-                SFL_ERR("fatal error, a-decoder setup failed");
+                RING_ERR("fatal error, a-decoder setup failed");
                 loop_.stop();
                 break;
             }
             break;
 
-        case sfl_video::VideoDecoder::Status::ReadError:
-            SFL_ERR("fatal error, read failed");
+        case ring::video::VideoDecoder::Status::ReadError:
+            RING_ERR("fatal error, read failed");
             loop_.stop();
             break;
 
@@ -353,35 +353,35 @@ AVFormatRtpSession::updateSDP(const Sdp& sdp)
     // if port has changed
     if (not desc.empty() and desc != receivingSDP_) {
         receivingSDP_ = desc;
-        SFL_WARN("Updated incoming SDP to:\n%s",
+        RING_WARN("Updated incoming SDP to:\n%s",
                 receivingSDP_.c_str());
     }
 
     if (desc.empty()) {
-        SFL_DBG("Audio is inactive");
+        RING_DBG("Audio is inactive");
         receiving_ = false;
         sending_ = false;
     } else if (desc.find("sendrecv") != std::string::npos) {
-        SFL_DBG("Sending and receiving audio");
+        RING_DBG("Sending and receiving audio");
         receiving_ = true;
         sending_ = true;
     } else if (desc.find("inactive") != std::string::npos) {
-        SFL_DBG("Audio is inactive");
+        RING_DBG("Audio is inactive");
         receiving_ = false;
         sending_ = false;
     } else if (desc.find("sendonly") != std::string::npos) {
-        SFL_DBG("Receiving audio disabled, audio set to sendonly");
+        RING_DBG("Receiving audio disabled, audio set to sendonly");
         receiving_ = false;
         sending_ = true;
     } else if (desc.find("recvonly") != std::string::npos) {
-        SFL_DBG("Sending audio disabled, audio set to recvonly");
+        RING_DBG("Sending audio disabled, audio set to recvonly");
         sending_ = false;
         receiving_ = true;
     }
     // even if it says sendrecv or recvonly, our peer may disable audio by
     // setting the port to 0
     if (desc.find("m=audio 0") != std::string::npos) {
-        SFL_DBG("Receiving audio disabled, port was set to 0");
+        RING_DBG("Receiving audio disabled, port was set to 0");
         receiving_ = false;
     }
 
@@ -396,7 +396,7 @@ AVFormatRtpSession::updateDestination(const std::string& destination,
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     if (destination.empty()) {
-        SFL_WARN("Destination is empty, ignoring");
+        RING_WARN("Destination is empty, ignoring");
         return;
     }
 
@@ -406,15 +406,15 @@ AVFormatRtpSession::updateDestination(const std::string& destination,
     // if destination has changed
     if (tmp.str() != txArgs_["destination"]) {
         if (sender_) {
-            SFL_WARN("Audio is already being sent");
+            RING_WARN("Audio is already being sent");
             return;
         }
         txArgs_["destination"] = tmp.str();
-        SFL_DBG("updated dest to %s", txArgs_["destination"].c_str());
+        RING_DBG("updated dest to %s", txArgs_["destination"].c_str());
     }
 
     if (port == 0) {
-        SFL_DBG("Sending audio disabled, port was set to 0");
+        RING_DBG("Sending audio disabled, port was set to 0");
         sending_ = false;
     }
 }
@@ -426,12 +426,12 @@ AVFormatRtpSession::startSender()
         return;
 
     if (sender_)
-        SFL_WARN("Restarting audio sender");
+        RING_WARN("Restarting audio sender");
 
     try {
         sender_.reset(new AudioSender(id_, txArgs_, *socketPair_));
     } catch (const VideoEncoderException &e) {
-        SFL_ERR("%s", e.what());
+        RING_ERR("%s", e.what());
         sending_ = false;
     }
 }
@@ -441,12 +441,12 @@ AVFormatRtpSession::startReceiver()
 {
     if (receiving_) {
         if (receiveThread_)
-            SFL_WARN("restarting video receiver");
+            RING_WARN("restarting video receiver");
         receiveThread_.reset(new AudioReceiveThread(id_, receivingSDP_));
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
     } else {
-        SFL_DBG("Audio receiving disabled");
+        RING_DBG("Audio receiving disabled");
         receiveThread_.reset();
     }
 }
@@ -464,7 +464,7 @@ AVFormatRtpSession::start(int localPort)
     try {
         socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
     } catch (const std::runtime_error &e) {
-        SFL_ERR("Socket creation failed on port %d: %s", localPort, e.what());
+        RING_ERR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
     }
 
@@ -502,4 +502,4 @@ AVFormatRtpSession::stop()
     socketPair_.reset();
 }
 
-} // end namespace sfl
+} // end namespace ring

@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_DBUSPRESENCEMANAGER_H__
-#define __SFL_DBUSPRESENCEMANAGER_H__
+#ifndef __RING_DBUSPRESENCEMANAGER_H__
+#define __RING_DBUSPRESENCEMANAGER_H__
 
 #include <vector>
 #include <map>
@@ -56,7 +56,7 @@
 #include <stdexcept>
 
 class DBusPresenceManager :
-    public org::sflphone::SFLphone::PresenceManager_adaptor,
+    public cx::ring::Ring::PresenceManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
@@ -71,4 +71,4 @@ class DBusPresenceManager :
         void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 };
 
-#endif // __SFL_DBUSPRESENCEMANAGER_H__
+#endif // __RING_DBUSPRESENCEMANAGER_H__

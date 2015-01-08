@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -58,7 +58,7 @@ AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)
      * with our C++ binding by providing 'this' access.
      */
     const auto callback = [this](void* data) {
-        if (auto codec = reinterpret_cast<sfl::AudioCodec*>(data)) {
+        if (auto codec = reinterpret_cast<ring::AudioCodec*>(data)) {
             this->registerAudioCodec(codec);
             return 0;
         }
@@ -69,7 +69,7 @@ AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)
 
     scanCodecDirectory();
     if (codecsMap_.empty())
-        SFL_ERR("No codecs available");
+        RING_ERR("No codecs available");
 }
 
 AudioCodecFactory::~AudioCodecFactory()
@@ -78,10 +78,10 @@ AudioCodecFactory::~AudioCodecFactory()
 }
 
 void
-AudioCodecFactory::registerAudioCodec(sfl::AudioCodec* codec)
+AudioCodecFactory::registerAudioCodec(ring::AudioCodec* codec)
 {
-    codecsMap_[(int) codec->getPayloadType()] = std::shared_ptr<sfl::AudioCodec>(codec);
-    SFL_DBG("Loaded codec %s" , codec->getMimeSubtype().c_str());
+    codecsMap_[(int) codec->getPayloadType()] = std::shared_ptr<ring::AudioCodec>(codec);
+    RING_DBG("Loaded codec %s" , codec->getMimeSubtype().c_str());
 }
 
 void
@@ -114,17 +114,17 @@ AudioCodecFactory::getCodecList() const
     return list;
 }
 
-std::shared_ptr<sfl::AudioCodec>
+std::shared_ptr<ring::AudioCodec>
 AudioCodecFactory::getCodec(int payload) const
 {
     const auto iter = codecsMap_.find(payload);
     if (iter != codecsMap_.end())
         return iter->second;
-    SFL_ERR("Cannot find codec %i", payload);
+    RING_ERR("Cannot find codec %i", payload);
     return nullptr;
 }
 
-std::shared_ptr<sfl::AudioCodec>
+std::shared_ptr<ring::AudioCodec>
 AudioCodecFactory::getCodec(const std::string &name) const
 {
     for (const auto& item : codecsMap_) {
@@ -139,14 +139,14 @@ AudioCodecFactory::getCodec(const std::string &name) const
             os << "/" << channels;
 
         const std::string match(codec->getMimeSubtype() + os.str());
-        SFL_DBG("Trying %s", match.c_str());
+        RING_DBG("Trying %s", match.c_str());
         if (name.find(match) != std::string::npos) {
-            SFL_DBG("Found match");
+            RING_DBG("Found match");
             return codec;
         }
     }
 
-    SFL_ERR("Cannot find codec %s", name.c_str());
+    RING_ERR("Cannot find codec %s", name.c_str());
     return nullptr;
 }
 
@@ -215,7 +215,7 @@ AudioCodecFactory::scanCodecDirectory()
     }
 
     for (const auto& dirStr : dirToScan) {
-        SFL_DBG("Scanning %s to find audio codecs....",  dirStr.c_str());
+        RING_DBG("Scanning %s to find audio codecs....",  dirStr.c_str());
 
         DIR *dir = opendir(dirStr.c_str());
         if (!dir)
@@ -236,7 +236,7 @@ AudioCodecFactory::scanCodecDirectory()
     }
 }
 
-sfl::AudioCodec*
+ring::AudioCodec*
 AudioCodecFactory::instantiateCodec(int payload) const
 {
     for (const auto& item : codecsMap_) {
@@ -245,7 +245,7 @@ AudioCodecFactory::instantiateCodec(int payload) const
             try {
                 return codec->clone();
             } catch (const std::runtime_error &e) {
-                SFL_ERR("%s", e.what());
+                RING_ERR("%s", e.what());
                 return nullptr;
             }
         }
@@ -268,7 +268,7 @@ AudioCodecFactory::seemsValid(const std::string &lib)
         return false;
 
     // Second: check the extension of the file name.
-    // If it is different than SFL_CODEC_VALID_EXTEN , not a SFL shared library
+    // If it is different than RING_CODEC_VALID_EXTEN , not a SFL shared library
     if (lib.substr(lib.length() - suffix.length(), lib.length()) != suffix)
         return false;
 
@@ -293,7 +293,7 @@ AudioCodecFactory::seemsValid(const std::string &lib)
     };
 
     const std::string name(lib.substr(prefix.length(), len));
-    const std::string *end = validCodecs + SFL_ARRAYSIZE(validCodecs);
+    const std::string *end = validCodecs + RING_ARRAYSIZE(validCodecs);
 
     return find(validCodecs, end, name) != end;
 }

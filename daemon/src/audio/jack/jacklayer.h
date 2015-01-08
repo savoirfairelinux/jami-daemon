@@ -42,7 +42,7 @@
 
 #include <memory>
 
-namespace sfl {
+namespace ring {
 
 class RingBuffer;
 

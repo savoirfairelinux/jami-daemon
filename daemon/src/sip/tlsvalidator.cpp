@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
  *          Vittorio Giovara <vittorio.giovara@savoirfairelinux.com>
@@ -61,7 +61,7 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
-const sfl::EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNames = {{
+const ring::EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNames = {{
     /* CheckValues        Name     */
     /* PASSED      */ "PASSED"      ,
     /* FAILED      */ "FAILED"      ,
@@ -71,7 +71,7 @@ const sfl::EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNa
     /* CUSTOM      */ "DATE"        ,
 }};
 
-const sfl::CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult> TlsValidator::checkCallback = {{
+const ring::CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult> TlsValidator::checkCallback = {{
     /*      CertificateCheck                       Callback                            */
     /*HAS_PRIVATE_KEY                  */ &TlsValidator::hasPrivateKey                  ,
     /*EXPIRED                          */ &TlsValidator::notExpired                     ,
@@ -98,7 +98,7 @@ const sfl::CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsVal
 }};
 
 
-const sfl::CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
+const ring::CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
     /* EXPIRATION_DATE              */  &TlsValidator::getExpirationDate         ,
     /* ACTIVATION_DATE              */  &TlsValidator::getActivationDate         ,
     /* REQUIRE_PRIVATE_KEY_PASSWORD */  &TlsValidator::requirePrivateKeyPassword ,
@@ -118,7 +118,7 @@ const sfl::CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsV
     /* NEXT_EXPECTED_UPDATE_DATE    */  &TlsValidator::getIssuerDN               , // TODO
 }};
 
-const sfl::Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
+const ring::Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
     /*      CertificateCheck                    Callback        */
     /*HAS_PRIVATE_KEY                  */ CheckValuesType::BOOLEAN ,
     /*EXPIRED                          */ CheckValuesType::BOOLEAN ,
@@ -147,7 +147,7 @@ const sfl::Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesTyp
     /*NOT_ACTIVATED                    */ CheckValuesType::BOOLEAN ,
 }};
 
-const sfl::EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
+const ring::EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
     /*      CertificateCheck                       Name                 */
     /*HAS_PRIVATE_KEY                  */ "HAS_PRIVATE_KEY"                ,
     /*EXPIRED                          */ "EXPIRED"                        ,
@@ -176,7 +176,7 @@ const sfl::EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::Certific
     /*NOT_ACTIVATED                    */ "NOT_ACTIVATED"                  ,
 }};
 
-const sfl::EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::CertificateDetailsNames = {{
+const ring::EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::CertificateDetailsNames = {{
     /* EXPIRATION_DATE              */ "EXPIRATION_DATE"              ,
     /* ACTIVATION_DATE              */ "ACTIVATION_DATE"              ,
     /* REQUIRE_PRIVATE_KEY_PASSWORD */ "REQUIRE_PRIVATE_KEY_PASSWORD" ,
@@ -196,7 +196,7 @@ const sfl::EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::Certif
     /* NEXT_EXPECTED_UPDATE_DATE    */ "NEXT_EXPECTED_UPDATE_DATE"    ,
 }};
 
-const sfl::EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
+const ring::EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
     /*   Type        Name    */
     /* BOOLEAN  */ "BOOLEAN"  ,
     /* ISO_DATE */ "ISO_DATE" ,
@@ -204,7 +204,7 @@ const sfl::EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::Che
     /* NUMBER   */ "NUMBER"   ,
 }};
 
-const sfl::Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool> TlsValidator::acceptedCheckValuesResult = {{
+const ring::Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool> TlsValidator::acceptedCheckValuesResult = {{
     /*   Type          PASSED    FAILED   UNSUPPORTED   ISO_DATE    CUSTOM    NUMBER */
     /* BOOLEAN  */  {{  true   ,  true  ,    true     ,  false    ,  false   ,false }},
     /* ISO_DATE */  {{  false  ,  false ,    true     ,  true     ,  false  , false }},
@@ -277,11 +277,11 @@ std::string TlsValidator::getStringValue(const TlsValidator::CertificateCheck ch
  */
 bool TlsValidator::isValid(bool verbose)
 {
-    for (const CertificateCheck check : sfl::Matrix0D<CertificateCheck>()) {
+    for (const CertificateCheck check : ring::Matrix0D<CertificateCheck>()) {
         if (enforcedCheckType[check] == CheckValuesType::BOOLEAN) {
             if (((this->*(checkCallback[check]))()).first == CheckValues::FAILED) {
                 if (verbose)
-                    SFL_WARN("Check failed: %s", CertificateCheckNames[check]);
+                    RING_WARN("Check failed: %s", CertificateCheckNames[check]);
                 return false;
             }
         }
@@ -301,7 +301,7 @@ std::map<std::string,std::string> TlsValidator::getSerializedChecks()
             = getStringValue(CertificateCheck::EXIST, exist());
     }
     else {
-        for (const CertificateCheck check : sfl::Matrix0D<CertificateCheck>())
+        for (const CertificateCheck check : ring::Matrix0D<CertificateCheck>())
             ret[CertificateCheckNames[check]] = getStringValue(check,(this->*(checkCallback[check]))());
     }
 
@@ -315,7 +315,7 @@ std::map<std::string,std::string> TlsValidator::getSerializedDetails()
 {
     std::map<std::string,std::string> ret;
     if (certificateFound_) {
-        for (const CertificateDetails det : sfl::Matrix0D<CertificateDetails>()) {
+        for (const CertificateDetails det : ring::Matrix0D<CertificateDetails>()) {
             const CheckResult r = (this->*(getterCallback[det]))();
             std::string val;
             // TODO move this to a fuction
@@ -369,14 +369,14 @@ static int crypto_cert_print_issuer(gnutls_x509_crt_t cert,
     name_size = sizeof(name);
     gnutls_x509_crt_get_dn(cert, name, &name_size);
 
-    SFL_DBG("Subject: %s", name);
-    SFL_DBG("Issuer: %s", issuer_name);
+    RING_DBG("Subject: %s", name);
+    RING_DBG("Issuer: %s", issuer_name);
 
     if (issuer != nullptr) {
         issuer_name_size = sizeof(issuer_name);
         gnutls_x509_crt_get_dn(issuer, issuer_name, &issuer_name_size);
 
-        SFL_DBG("Verified against: %s", issuer_name);
+        RING_DBG("Verified against: %s", issuer_name);
     }
 
     return 0;
@@ -482,14 +482,14 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     struct timeval tv;
 
     if (!host.size() || !port) {
-        SFL_ERR("Wrong parameters used - host %s, port %d.", host.c_str(), port);
+        RING_ERR("Wrong parameters used - host %s, port %d.", host.c_str(), port);
         return res;
     }
 
     /* Create the socket. */
     sockfd = socket (PF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        SFL_ERR("Could not create socket.");
+        RING_ERR("Could not create socket.");
         return res;
     }
     /* Set non-blocking so we can dected timeouts. */
@@ -506,7 +506,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     name.sin_port = htons(port);
     hostinfo = gethostbyname(host.c_str());
     if (hostinfo == nullptr) {
-        SFL_ERR("Unknown host %s.", host.c_str());
+        RING_ERR("Unknown host %s.", host.c_str());
         goto out;
     }
     name.sin_addr = *(struct in_addr *)hostinfo->h_addr;
@@ -522,7 +522,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
                 tv.tv_usec = 0;
                 err = select(sockfd + 1, nullptr, &fdset, nullptr, &tv);
                 if (err < 0 && errno != EINTR) {
-                    SFL_ERR("Could not connect to hostname %s at port %d",
+                    RING_ERR("Could not connect to hostname %s at port %d",
                           host.c_str(), port);
                     goto out;
                 } else if (err > 0) {
@@ -532,17 +532,17 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
                     getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
                     if (so_error) {
-                        SFL_ERR("Connection delayed.");
+                        RING_ERR("Connection delayed.");
                         goto out;
                     }
                     break;  // exit do-while loop
                 } else {
-                    SFL_ERR("Connection timeout.");
+                    RING_ERR("Connection timeout.");
                     goto out;
                 }
             } while(1);
         } else {
-            SFL_ERR("Could not connect to hostname %s at port %d", host.c_str(), port);
+            RING_ERR("Could not connect to hostname %s at port %d", host.c_str(), port);
             goto out;
         }
     }
@@ -557,7 +557,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     /* Disable Nagle algorithm that slows down the SSL handshake. */
     err = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
     if (err < 0) {
-        SFL_ERR("Could not set TCP_NODELAY.");
+        RING_ERR("Could not set TCP_NODELAY.");
         goto out;
     }
 
@@ -565,33 +565,33 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     /* Load the trusted CA certificates. */
     err = gnutls_certificate_allocate_credentials(&cred);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not allocate credentials - %s", gnutls_strerror(err));
+        RING_ERR("Could not allocate credentials - %s", gnutls_strerror(err));
         goto out;
     }
     err = gnutls_certificate_set_x509_system_trust(cred);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not load credentials.");
+        RING_ERR("Could not load credentials.");
         goto out;
     }
 
     /* Create the session object. */
     err = gnutls_init(&session, GNUTLS_CLIENT);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not init session -%s\n", gnutls_strerror(err));
+        RING_ERR("Could not init session -%s\n", gnutls_strerror(err));
         goto out;
     }
 
     /* Configure the cipher preferences. The default set should be good enough. */
     err = gnutls_priority_set_direct(session, "NORMAL", &errptr);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not set up ciphers - %s (%s)", gnutls_strerror(err), errptr);
+        RING_ERR("Could not set up ciphers - %s (%s)", gnutls_strerror(err), errptr);
         goto out;
     }
 
     /* Install the trusted certificates. */
     err = gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, cred);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not set up credentials - %s", gnutls_strerror(err));
+        RING_ERR("Could not set up credentials - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -599,28 +599,28 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t) (uintptr_t) sockfd);
     err = gnutls_server_name_set(session, GNUTLS_NAME_DNS, host.c_str(), host.size());
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not set server name - %s", gnutls_strerror(err));
+        RING_ERR("Could not set server name - %s", gnutls_strerror(err));
         goto out;
     }
 
     /* Establish the connection. */
     err = gnutls_handshake(session);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Handshake failed - %s", gnutls_strerror(err));
+        RING_ERR("Handshake failed - %s", gnutls_strerror(err));
         goto out;
     }
     /* Obtain the server certificate chain. The server certificate
      * itself is stored in the first element of the array. */
     certs = gnutls_certificate_get_peers(session, &certslen);
     if (certs == nullptr || certslen == 0) {
-        SFL_ERR("Could not obtain peer certificate - %s", gnutls_strerror(err));
+        RING_ERR("Could not obtain peer certificate - %s", gnutls_strerror(err));
         goto out;
     }
 
     /* Validate the certificate chain. */
     err = gnutls_certificate_verify_peers2(session, &status);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not verify the certificate chain - %s", gnutls_strerror(err));
+        RING_ERR("Could not verify the certificate chain - %s", gnutls_strerror(err));
         goto out;
     }
     if (status != 0) {
@@ -632,11 +632,11 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
         err = -1;
 #endif
         if (err == 0) {
-            SFL_ERR("Certificate validation failed - %s\n", msg.data);
+            RING_ERR("Certificate validation failed - %s\n", msg.data);
             gnutls_free(msg.data);
             goto out;
         } else {
-            SFL_ERR("Certificate validation failed with code 0x%x.", status);
+            RING_ERR("Certificate validation failed with code 0x%x.", status);
             goto out;
         }
     }
@@ -648,7 +648,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
 
     err = gnutls_x509_crt_init(&cert);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not init certificate - %s", gnutls_strerror(err));
+        RING_ERR("Could not init certificate - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -657,13 +657,13 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     if (err != GNUTLS_E_SUCCESS)
         err = gnutls_x509_crt_import(cert, certs, GNUTLS_X509_FMT_DER);
     if (err != GNUTLS_E_SUCCESS) {
-        SFL_ERR("Could not read peer certificate - %s", gnutls_strerror(err));
+        RING_ERR("Could not read peer certificate - %s", gnutls_strerror(err));
         goto out;
     }
     /* Finally check if the hostnames match. */
     err = gnutls_x509_crt_check_hostname(cert, host.c_str());
     if (err == 0) {
-        SFL_ERR("Hostname %s does not match certificate.", host.c_str());
+        RING_ERR("Hostname %s does not match certificate.", host.c_str());
         goto out;
     }
 
@@ -671,16 +671,16 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     snprintf(buf, sizeof(buf), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", host.c_str());
     err = gnutls_record_send(session, buf, strlen(buf));
     if (err < 0) {
-        SFL_ERR("Send failed - %s", gnutls_strerror(err));
+        RING_ERR("Send failed - %s", gnutls_strerror(err));
         goto out;
     }
     err = gnutls_record_recv(session, buf, sizeof(buf));
     if (err < 0) {
-        SFL_ERR("Recv failed - %s", gnutls_strerror(err));
+        RING_ERR("Recv failed - %s", gnutls_strerror(err));
         goto out;
     }
 
-    SFL_DBG("Hostname %s seems to point to a valid server.", host.c_str());
+    RING_DBG("Hostname %s seems to point to a valid server.", host.c_str());
     res = 0;
 out:
     if (session) {
@@ -709,7 +709,7 @@ TlsValidator::CheckResult TlsValidator::hasPrivateKey()
         return CheckResult(CheckValues::FAILED, e.what());
     }
 
-    SFL_DBG("Key from %s seems valid.", certificatePath_.c_str());
+    RING_DBG("Key from %s seems valid.", certificatePath_.c_str());
     return CheckResult(CheckValues::PASSED, "");
 }
 

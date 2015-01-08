@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
 typedef std::map<std::string, std::string> VideoSettings;
@@ -111,6 +111,6 @@ private:
     std::shared_ptr<VideoDeviceImpl> deviceImpl_;
 };
 
-} // namespace sfl_video
+}} //namespace ring //namespace video
 
 #endif // __VIDEO_DEVICE_H__

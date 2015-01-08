@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -52,16 +52,16 @@ AccountFactory::AccountFactory()
 {
     auto sipfunc = [](const std::string& id){ return std::make_shared<SIPAccount>(id, true); };
     generators_.insert(std::make_pair(SIPAccount::ACCOUNT_TYPE, sipfunc));
-    SFL_DBG("registered %s account", SIPAccount::ACCOUNT_TYPE);
+    RING_DBG("registered %s account", SIPAccount::ACCOUNT_TYPE);
 #if HAVE_IAX
     auto iaxfunc = [](const std::string& id){ return std::make_shared<IAXAccount>(id); };
     generators_.insert(std::make_pair(IAXAccount::ACCOUNT_TYPE, iaxfunc));
-    SFL_DBG("registered %s account", IAXAccount::ACCOUNT_TYPE);
+    RING_DBG("registered %s account", IAXAccount::ACCOUNT_TYPE);
 #endif
 #if HAVE_DHT
     auto dhtfunc = [](const std::string& id){ return std::make_shared<RingAccount>(id, false); };
     generators_.insert(std::make_pair(RingAccount::ACCOUNT_TYPE, dhtfunc));
-    SFL_DBG("registered %s account", RingAccount::ACCOUNT_TYPE);
+    RING_DBG("registered %s account", RingAccount::ACCOUNT_TYPE);
 #endif
 }
 
@@ -70,7 +70,7 @@ AccountFactory::createAccount(const char* const accountType,
                               const std::string& id)
 {
      if (hasAccount(id)) {
-         SFL_ERR("Existing account %s", id.c_str());
+         RING_ERR("Existing account %s", id.c_str());
          return nullptr;
      }
 
@@ -102,10 +102,10 @@ AccountFactory::removeAccount(Account& account)
 
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto& id = account.getAccountID();
-    SFL_DBG("Removing account %s", id.c_str());
+    RING_DBG("Removing account %s", id.c_str());
     auto& map = accountMaps_.at(account.getAccountType());
     map.erase(id);
-    SFL_DBG("Remaining %u %s account(s)", map.size(), account_type);
+    RING_DBG("Remaining %u %s account(s)", map.size(), account_type);
 }
 
 void
@@ -116,7 +116,7 @@ AccountFactory::removeAccount(const std::string& id)
     if (auto account = getAccount(id)) {
         removeAccount(*account);
     } else
-        SFL_ERR("No account with ID %s", id.c_str());
+        RING_ERR("No account with ID %s", id.c_str());
 }
 
 template <> bool

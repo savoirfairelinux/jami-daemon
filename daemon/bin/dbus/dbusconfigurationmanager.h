@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -31,8 +31,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_DBUSCONFIGURATIONMANAGER_H__
-#define __SFL_DBUSCONFIGURATIONMANAGER_H__
+#ifndef __RING_DBUSCONFIGURATIONMANAGER_H__
+#define __RING_DBUSCONFIGURATIONMANAGER_H__
 
 #include <vector>
 #include <map>
@@ -59,7 +59,7 @@
 #include <stdexcept>
 
 class DBusConfigurationManager :
-    public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+    public cx::ring::Ring::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
@@ -140,4 +140,4 @@ class DBusConfigurationManager :
 
 };
 
-#endif // __SFL_DBUSCONFIGURATIONMANAGER_H__
+#endif // __RING_DBUSCONFIGURATIONMANAGER_H__

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -97,7 +97,7 @@ void IAXAccount::doRegister()
         link_->init();
         sendRegister();
     } catch (const VoipLinkException &e) {
-        SFL_ERR("IAXAccount: %s", e.what());
+        RING_ERR("IAXAccount: %s", e.what());
     }
 }
 
@@ -108,7 +108,7 @@ IAXAccount::doUnregister(std::function<void(bool)> cb)
         sendUnregister();
         link_->terminate();
     } catch (const VoipLinkException &e) {
-        SFL_ERR("IAXAccount: %s", e.what());
+        RING_ERR("IAXAccount: %s", e.what());
     }
     if (cb)
         cb(true);
@@ -176,7 +176,7 @@ void
 IAXAccount::sendRegister()
 {
     if (not isEnabled()) {
-        SFL_WARN("Account must be enabled to register, ignoring");
+        RING_WARN("Account must be enabled to register, ignoring");
         return;
     }
 
@@ -194,7 +194,7 @@ IAXAccount::sendRegister()
     if (regSession_) {
         {
             std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-            SFL_DBG("register IAXAccount %s", getHostname().c_str());
+            RING_DBG("register IAXAccount %s", getHostname().c_str());
             iax_register(regSession_.get(), getHostname().data(),
                          getUsername().data(), getPassword().data(), 120);
         }
@@ -207,7 +207,7 @@ IAXAccount::sendRegister()
 void
 IAXAccount::sendUnregister(std::function<void(bool)> cb)
 {
-    SFL_DBG("unregister IAXAccount %s", getHostname().c_str());
+    RING_DBG("unregister IAXAccount %s", getHostname().c_str());
     destroyRegSession();
 
     nextRefreshStamp_ = 0;

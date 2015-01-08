@@ -9,7 +9,7 @@ noinst_HEADERS = callmanager.h           \
 PRESENCE_SRC = presencemanager.cpp
 noinst_HEADERS += presencemanager.h
 
-if SFL_VIDEO
+if RING_VIDEO
 VIDEO_SRC = videomanager.cpp
 noinst_HEADERS += videomanager.h
 endif
@@ -23,4 +23,4 @@ libclient_la_SOURCES = client.cpp                \
 libclient_la_CXXFLAGS = -I./ \
                         -I../ \
                         -DPREFIX=\"$(prefix)\" \
-                        -DPROGSHAREDIR=\"${datadir}/sflphone\"
+                        -DPROGSHAREDIR=\"${datadir}/ring\"

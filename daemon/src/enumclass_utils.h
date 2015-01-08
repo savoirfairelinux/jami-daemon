@@ -27,7 +27,7 @@
 #include <vector>
 #include <cassert>
 
-namespace sfl {
+namespace ring {
 
 /**
  * This function adds a safe way to get an enum class size
@@ -97,7 +97,7 @@ private:
  * This is useful to use enum class in C++11 foreach loops
  *
  * @usage
- *   for (const MyEnum& value : sfl::Matrix0D<MyEnum>()) {
+ *   for (const MyEnum& value : ring::Matrix0D<MyEnum>()) {
  *       std::cout << "Name: " << MyEnumNames[value] << std::endl;
  *   }
  */
@@ -187,7 +187,7 @@ template<class Row, typename Value, typename Accessor>
 Value Matrix1D<Row,Value,Accessor>::operator[](Row v) {
     //ASSERT(size_t(v) >= size_t(Row::COUNT__),"State Machine Out of Bounds\n");
     if (size_t(v) >= enum_class_size<Row>() || static_cast<int>(v) < 0) {
-        SFL_ERR("State Machine Out of Bounds %d\n", size_t(v));
+        RING_ERR("State Machine Out of Bounds %d\n", size_t(v));
         assert(false);
         throw v;
     }
@@ -198,7 +198,7 @@ template<class Row, typename Value, typename Accessor>
 const Value Matrix1D<Row,Value,Accessor>::operator[](Row v) const {
     assert(size_t(v) <= enum_class_size<Row>()+1 && size_t(v)>=0); //COUNT__ is also valid
     if (size_t(v) >= enum_class_size<Row>()) {
-        SFL_ERR("State Machine Out of Bounds %d\n", size_t(v));
+        RING_ERR("State Machine Out of Bounds %d\n", size_t(v));
         assert(false);
         throw v;
     }
@@ -210,7 +210,7 @@ template <class E, class T, class A> std::map<A,E> Matrix1D<E,T,A>::reverseMappi
 template<class Row, typename Value, typename Accessor>
 void Matrix1D<Row,Value,Accessor>::setReverseMapping(Matrix1D<Row,const char*> names)
 {
-    for ( const Row row : sfl::Matrix0D<Row>() )
+    for ( const Row row : ring::Matrix0D<Row>() )
         reverseMapping_[names[row]] = row;
 }
 

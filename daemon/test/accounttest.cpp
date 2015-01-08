@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 
 void AccountTest::TestAddRemove()
 {
-    SFL_DBG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
+    RING_DBG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
 
     std::map<std::string, std::string> details(Manager::instance().getClient()->getConfigurationManager()->getAccountTemplate());
     details[CONFIG_ACCOUNT_TYPE] = "SIP";

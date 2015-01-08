@@ -1,4 +1,4 @@
-/*  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+/*  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -45,7 +45,7 @@
 
 #include "logger.h"
 
-namespace sfl {
+namespace ring {
 
 void
 AudioFile::onBufferFinish()
@@ -54,7 +54,7 @@ AudioFile::onBufferFinish()
     const int divisor = buffer_->getSampleRate() / 1000;
 
     if (divisor == 0) {
-        SFL_ERR("Error cannot update playback slider, sampling rate is 0");
+        RING_ERR("Error cannot update playback slider, sampling rate is 0");
         return;
     }
 
@@ -87,7 +87,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     } else if (filepath_.find(".ogg") != std::string::npos) {
         format = SF_FORMAT_OGG;
     } else {
-        SFL_WARN("No file extension, guessing WAV");
+        RING_WARN("No file extension, guessing WAV");
         format = SF_FORMAT_WAV;
     }
 
@@ -97,7 +97,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     if (!fileHandle)
         throw AudioFileException("File handle " + fileName + " could not be created");
     if (fileHandle.error()) {
-        SFL_ERR("%s", fileHandle.strError());
+        RING_ERR("%s", fileHandle.strError());
         throw AudioFileException("File " + fileName + " doesn't exist");
     }
 

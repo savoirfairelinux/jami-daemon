@@ -32,7 +32,7 @@
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "video/libav_utils.h"
 #endif
 
@@ -58,7 +58,7 @@ validate(std::string &member, const std::string &param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        SFL_ERR("Invalid parameter \"%s\"", param.c_str());
+        RING_ERR("Invalid parameter \"%s\"", param.c_str());
 }
 
 static void
@@ -86,7 +86,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 {
     const auto iter = details.find(key);
     if (iter == details.end()) {
-        SFL_ERR("Couldn't find key %s", key);
+        RING_ERR("Couldn't find key %s", key);
         return;
     }
     i = atoi(iter->second.c_str());
@@ -129,10 +129,10 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     parseValue(node, VIDEO_ENABLED_KEY, videoEnabled_);
     const auto &vCodecNode = node[VIDEO_CODECS_KEY];
     auto tmp = parseVectorMap(vCodecNode, {VIDEO_CODEC_BITRATE, VIDEO_CODEC_ENABLED, VIDEO_CODEC_NAME, VIDEO_CODEC_PARAMETERS});
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     if (tmp.empty()) {
         // Video codecs are an empty list
-        SFL_WARN("Loading default video codecs");
+        RING_WARN("Loading default video codecs");
         tmp = libav_utils::getDefaultCodecs();
     }
 #endif
@@ -185,7 +185,7 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     int tmpMax = -1;
     parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, audioPortRange_);
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     tmpMin = -1;
     parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
     tmpMax = -1;
@@ -209,7 +209,7 @@ SIPAccountBase::getAccountDetails() const
     // Add sip specific details
 
     addRangeToDetails(a, CONFIG_ACCOUNT_AUDIO_PORT_MIN, CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     addRangeToDetails(a, CONFIG_ACCOUNT_VIDEO_PORT_MIN, CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
 #endif
 
@@ -248,7 +248,7 @@ void
 SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info)
 {
     pj_status_t currentStatus = transportStatus_;
-    SFL_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
+    RING_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
     if (!SipTransport::isAlive(transport_, state)) {
         if (info) {
             char err_msg[128];
@@ -256,7 +256,7 @@ SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip
             pj_str_t descr = pj_strerror(info->status, err_msg, sizeof(err_msg));
             transportStatus_ = info->status;
             transportError_  = std::string(descr.ptr, descr.slen);
-            SFL_ERR("Transport disconnected: %.*s", descr.slen, descr.ptr);
+            RING_ERR("Transport disconnected: %.*s", descr.slen, descr.ptr);
         }
         else {
             // This is already the generic error used by pjsip.
@@ -284,7 +284,7 @@ SIPAccountBase::setTransport(const std::shared_ptr<SipTransport>& t)
     if (t == transport_)
         return;
     if (transport_) {
-        SFL_DBG("Removing transport from account");
+        RING_DBG("Removing transport from account");
         transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
     }
 
@@ -321,7 +321,7 @@ SIPAccountBase::generateAudioPort() const
     return getRandomEvenNumber(audioPortRange_);
 }
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 uint16_t
 SIPAccountBase::generateVideoPort() const
 {

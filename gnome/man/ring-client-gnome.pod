@@ -24,7 +24,7 @@ This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.
 
 =head1 SEE ALSO
 
-B<ringd>(1)
+B<dring>(1)
 
 =head1 COPYRIGHT
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
@@ -62,7 +62,7 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
     pj_cstr(&pjname, name.c_str());
     auto status = pj_getaddrinfo(family, &pjname, &addr_num, res);
     if (status != PJ_SUCCESS) {
-        SFL_ERR("Error resolving %s :", name.c_str());
+        RING_ERR("Error resolving %s :", name.c_str());
         sip_utils::sip_strerror(status);
         return ipList;
     }
@@ -121,12 +121,12 @@ ip_utils::getLocalAddr(pj_uint16_t family)
         return ip_addr;
     }
 #if HAVE_IPV6
-    SFL_WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
+    RING_WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
     family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
     status = pj_gethostip(family, ip_addr);
     if (status == PJ_SUCCESS) return ip_addr;
 #endif
-    SFL_ERR("Could not get local IP");
+    RING_ERR("Could not get local IP");
     return ip_addr;
 }
 
@@ -141,14 +141,14 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 
     int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
-        SFL_ERR("Could not open socket: %m");
+        RING_ERR("Could not open socket: %m");
         return addr;
     }
 
     if (unix_family == AF_INET6) {
         int val = family != pj_AF_UNSPEC();
         if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &val, sizeof(val)) < 0) {
-            SFL_ERR("Could not setsockopt: %m");
+            RING_ERR("Could not setsockopt: %m");
             close(fd);
             return addr;
         }

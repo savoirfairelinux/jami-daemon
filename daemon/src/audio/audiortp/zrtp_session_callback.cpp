@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ using namespace GnuZrtpCodes;
 
 using namespace ost;
 
-namespace sfl {
+namespace ring {
 
 ZrtpSessionCallback::ZrtpSessionCallback(SIPCall &call) : call_(call)
 {
@@ -103,28 +103,28 @@ ZrtpSessionCallback::ZrtpSessionCallback(SIPCall &call) : call_(call)
 void
 ZrtpSessionCallback::secureOn(std::string cipher)
 {
-    SFL_DBG("Secure mode is on with cipher %s", cipher.c_str());
+    RING_DBG("Secure mode is on with cipher %s", cipher.c_str());
     Manager::instance().getClient()->getCallManager()->secureZrtpOn(call_.getCallId(), cipher);
 }
 
 void
 ZrtpSessionCallback::secureOff()
 {
-    SFL_DBG("Secure mode is off");
+    RING_DBG("Secure mode is off");
     Manager::instance().getClient()->getCallManager()->secureZrtpOff(call_.getCallId());
 }
 
 void
 ZrtpSessionCallback::showSAS(std::string sas, bool verified)
 {
-    SFL_DBG("SAS is: %s", sas.c_str());
+    RING_DBG("SAS is: %s", sas.c_str());
     Manager::instance().getClient()->getCallManager()->showSAS(call_.getCallId(), sas, verified);
 }
 
 void
 ZrtpSessionCallback::zrtpNotSuppOther()
 {
-    SFL_DBG("Callee does not support ZRTP");
+    RING_DBG("Callee does not support ZRTP");
     Manager::instance().getClient()->getCallManager()->zrtpNotSuppOther(call_.getCallId());
 }
 
@@ -133,9 +133,9 @@ ZrtpSessionCallback::showMessage(GnuZrtpCodes::MessageSeverity sev, int32_t subC
 {
     if (sev == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
-            SFL_DBG("Received an error packet from peer:");
+            RING_DBG("Received an error packet from peer:");
         } else
-            SFL_DBG("Sent error packet to peer:");
+            RING_DBG("Sent error packet to peer:");
     }
 }
 
@@ -145,21 +145,21 @@ ZrtpSessionCallback::zrtpNegotiationFailed(MessageSeverity severity, int subCode
     if (severity == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
             subCode *= -1;
-            SFL_DBG("Received error packet: ");
+            RING_DBG("Received error packet: ");
         } else
-            SFL_DBG("Sent error packet: ");
+            RING_DBG("Sent error packet: ");
 
         std::map<int32, std::string>::const_iterator iter = zrtpMap_.find(subCode);
 
         if (iter != zrtpMap_.end()) {
-            SFL_DBG("%s", iter->second.c_str());
+            RING_DBG("%s", iter->second.c_str());
             Manager::instance().getClient()->getCallManager()->zrtpNegotiationFailed(call_.getCallId(), iter->second, "ZRTP");
         }
     } else {
         std::map<int32, std::string>::const_iterator iter = severeMap_.find(subCode);
 
         if (iter != severeMap_.end()) {
-            SFL_DBG("%s", iter->second.c_str());
+            RING_DBG("%s", iter->second.c_str());
             Manager::instance().getClient()->getCallManager()->zrtpNegotiationFailed(call_.getCallId(), iter->second, "severe");
         }
     }
@@ -168,7 +168,7 @@ ZrtpSessionCallback::zrtpNegotiationFailed(MessageSeverity severity, int subCode
 void
 ZrtpSessionCallback::confirmGoClear()
 {
-    SFL_DBG("Received go clear message. Until confirmation, ZRTP won't send any data");
+    RING_DBG("Received go clear message. Until confirmation, ZRTP won't send any data");
     Manager::instance().getClient()->getCallManager()->zrtpNotSuppOther(call_.getCallId());
 }
 

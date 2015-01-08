@@ -40,7 +40,7 @@
 #include <string>
 #include <memory>
 
-namespace sfl {
+namespace ring {
     class AudioBuffer;
     class AudioFormat;
     class RingBuffer;
@@ -52,7 +52,7 @@ class AVStream;
 class AVFormatContext;
 class AVCodec;
 
-namespace sfl_video {
+namespace ring { namespace video {
 
     class VideoDecoder {
     public:
@@ -76,8 +76,8 @@ namespace sfl_video {
         int setupFromAudioData();
         Status decode(VideoFrame&, VideoPacket&);
         Status decode_audio(AVFrame* frame);
-        void writeToRingBuffer(AVFrame* frame, sfl::RingBuffer& rb,
-                               const sfl::AudioFormat outFormat);
+        void writeToRingBuffer(AVFrame* frame, ring::RingBuffer& rb,
+                               const ring::AudioFormat outFormat);
         Status flush(VideoFrame&);
 
         int getWidth() const;
@@ -92,7 +92,7 @@ namespace sfl_video {
         AVCodec *inputDecoder_ = nullptr;
         AVCodecContext *decoderCtx_ = nullptr;
         AVFormatContext *inputCtx_ = nullptr;
-        std::unique_ptr<sfl::Resampler> resampler_;
+        std::unique_ptr<ring::Resampler> resampler_;
         int streamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
@@ -104,6 +104,6 @@ namespace sfl_video {
     protected:
         AVDictionary *options_ = nullptr;
     };
-}
+}}
 
 #endif // __VIDEO_DECODER_H__

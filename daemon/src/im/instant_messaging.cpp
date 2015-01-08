@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -39,19 +39,19 @@ startElementCallback(void *userData, const char *name, const char **atts)
     if (strcmp(name, "entry"))
         return;
 
-    sfl::InstantMessaging::UriEntry entry = sfl::InstantMessaging::UriEntry();
+    ring::InstantMessaging::UriEntry entry = ring::InstantMessaging::UriEntry();
 
     for (const char **att = atts; *att; att += 2)
         entry.insert(std::pair<std::string, std::string> (*att, *(att+1)));
 
-    static_cast<sfl::InstantMessaging::UriList *>(userData)->push_back(entry);
+    static_cast<ring::InstantMessaging::UriList *>(userData)->push_back(entry);
 }
 
 static void XMLCALL
 endElementCallback(void * /*userData*/, const char * /*name*/)
 {}
 
-namespace sfl {
+namespace ring {
 bool InstantMessaging::saveMessage(const std::string &message, const std::string &author, const std::string &id, int mode)
 {
     std::ofstream File;
@@ -135,7 +135,7 @@ std::string InstantMessaging::generateXmlUriList(UriList &list)
                                   "<list>";
 
     for (auto &item : list)
-        xmlbuffer += "<entry uri=" + item[sfl::IM_XML_URI] + " cp:copyControl=\"to\" />";
+        xmlbuffer += "<entry uri=" + item[ring::IM_XML_URI] + " cp:copyControl=\"to\" />";
 
     return xmlbuffer + "</list></resource-lists>";
 }
@@ -151,7 +151,7 @@ InstantMessaging::parseXmlUriList(const std::string &urilist)
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
 
     if (XML_Parse(parser, urilist.c_str(), urilist.size(), 1) == XML_STATUS_ERROR) {
-        SFL_ERR("%s at line %lu\n", XML_ErrorString(XML_GetErrorCode(parser)),
+        RING_ERR("%s at line %lu\n", XML_ErrorString(XML_GetErrorCode(parser)),
                XML_GetCurrentLineNumber(parser));
         throw InstantMessageException("Error while parsing uri-list xml content");
     }

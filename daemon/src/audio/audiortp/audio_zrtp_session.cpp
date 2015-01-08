@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
@@ -39,7 +39,7 @@
 #include "manager.h"
 #include "fileutils.h"
 
-namespace sfl {
+namespace ring {
 
 AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename,
                                    const std::string &localIP) :
@@ -55,7 +55,7 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
 {
 #endif
     initializeZid();
-    SFL_DBG("Setting new RTP session with destination %s:%d",
+    RING_DBG("Setting new RTP session with destination %s:%d",
           localIP.c_str(), call_.getLocalAudioPort());
 }
 
@@ -98,7 +98,7 @@ void AudioZrtpSession::initializeZid()
     }
 #endif
 
-    SFL_DBG("Initialization from ZID file failed. Trying to remove...");
+    RING_DBG("Initialization from ZID file failed. Trying to remove...");
 
     if (remove(zidCompleteFilename.c_str()) != 0)
         throw ZrtpZidException("zid file deletion failed");

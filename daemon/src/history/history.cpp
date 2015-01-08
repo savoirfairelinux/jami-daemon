@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -41,7 +41,7 @@
 #include "logger.h"
 #include "call.h"
 
-namespace sfl {
+namespace ring {
 
 History::History() : historyItemsMutex_(), items_(), path_() {}
 
@@ -59,7 +59,7 @@ bool History::load(int limit)
     ensurePath();
     std::ifstream infile(path_.c_str());
     if (!infile) {
-        SFL_DBG("No history file to load");
+        RING_DBG("No history file to load");
         return false;
     }
 
@@ -74,7 +74,7 @@ bool History::load(int limit)
 bool History::save()
 {
     std::lock_guard<std::mutex> lock(historyItemsMutex_);
-    SFL_DBG("Saving history in XDG directory: %s", path_.c_str());
+    RING_DBG("Saving history in XDG directory: %s", path_.c_str());
     ensurePath();
     std::sort(items_.begin(), items_.end());
     std::ofstream outfile(path_.c_str());
@@ -104,7 +104,7 @@ void History::ensurePath()
     if (path_.empty()) {
         const string userdata = fileutils::get_data_dir();
         if (!fileutils::check_dir(userdata.c_str())) {
-            SFL_DBG("Cannot create directory: %s", userdata.c_str());
+            RING_DBG("Cannot create directory: %s", userdata.c_str());
             return;
         }
         path_ = userdata + DIR_SEPARATOR_STR + "history";
@@ -129,7 +129,7 @@ void History::setPath(const std::string &path)
 void History::addCall(Call *call, int limit)
 {
     if (!call) {
-        SFL_ERR("Call is NULL, ignoring");
+        RING_ERR("Call is NULL, ignoring");
         return;
     }
     call->time_stop();

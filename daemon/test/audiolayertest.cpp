@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,7 @@
 #include "test_utils.h"
 #include <unistd.h>
 
-using namespace sfl;
+using namespace ring;
 
 AudioLayerTest::AudioLayerTest() : manager_(0), pulselayer_(0), layer_(0)
 {}
@@ -73,7 +73,7 @@ void AudioLayerTest::testAudioLayerSwitch()
     bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver().get()) != 0;
 
     for (int i = 0; i < 2; i++) {
-        SFL_DBG("iter - %i", i);
+        RING_DBG("iter - %i", i);
         if (wasAlsa)
             Manager::instance().setAudioManager(PULSEAUDIO_API_STR);
         else

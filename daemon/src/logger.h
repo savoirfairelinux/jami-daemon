@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -82,7 +82,7 @@ void strErr();
 #include <android/log.h>
 
 #ifndef APP_NAME
-#define APP_NAME "libsflphone"
+#define APP_NAME "libdring"
 #endif /* APP_NAME */
 
 // Avoid printing whole path on android
@@ -117,10 +117,10 @@ void strErr();
 
 #endif /* __ANDROID__ _WIN32 */
 
-#define SFL_ERR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
-#define SFL_WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
-#define SFL_INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
-#define SFL_DBG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
+#define RING_ERR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
+#define RING_WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
+#define RING_INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
+#define RING_DBG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
 
 
 #define BLACK "\033[22;30m"

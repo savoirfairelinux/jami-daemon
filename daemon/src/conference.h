@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard  <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -40,13 +40,13 @@
 
 #include "audio/recordable.h"
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "video/video_mixer.h"
 #endif
 
 typedef std::set<std::string> ParticipantSet;
 
-class Conference : public sfl::Recordable {
+class Conference : public ring::Recordable {
     public:
         enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, HOLD, HOLD_REC};
 
@@ -111,8 +111,8 @@ class Conference : public sfl::Recordable {
          */
         virtual bool toggleRecording();
 
-#ifdef SFL_VIDEO
-        std::shared_ptr<sfl_video::VideoMixer> getVideoMixer();
+#ifdef RING_VIDEO
+        std::shared_ptr<ring::video::VideoMixer> getVideoMixer();
 #endif
 
     private:
@@ -120,8 +120,8 @@ class Conference : public sfl::Recordable {
         ConferenceState confState_;
         ParticipantSet participants_;
 
-#ifdef SFL_VIDEO
-        std::shared_ptr<sfl_video::VideoMixer> videoMixer_;
+#ifdef RING_VIDEO
+        std::shared_ptr<ring::video::VideoMixer> videoMixer_;
 #endif
 };
 

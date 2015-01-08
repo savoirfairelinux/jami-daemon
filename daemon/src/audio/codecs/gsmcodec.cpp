@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -46,11 +46,11 @@ extern "C" {
  * GSM audio codec C++ class (over gsm/gsm.h)
  */
 
-class Gsm : public sfl::AudioCodec {
+class Gsm : public ring::AudioCodec {
 
     public:
         // _payload should be 3
-        Gsm() : sfl::AudioCodec(3, "GSM", 8000, 160, 1),
+        Gsm() : ring::AudioCodec(3, "GSM", 8000, 160, 1),
             decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
             bitrate_ = 13.3;
             hasDynamicPayload_ = false;

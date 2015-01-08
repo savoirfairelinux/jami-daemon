@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,12 +44,12 @@ namespace {
     void restore()
     {
         if (system("mv " CONFIG_SAMPLE_BAK " " CONFIG_SAMPLE) < 0)
-            SFL_ERR("Restoration of %s failed", CONFIG_SAMPLE);
+            RING_ERR("Restoration of %s failed", CONFIG_SAMPLE);
     }
     void backup()
     {
         if (system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE_BAK) < 0)
-            SFL_ERR("Backup of %s failed", CONFIG_SAMPLE);
+            RING_ERR("Backup of %s failed", CONFIG_SAMPLE);
     }
 }
 
@@ -62,12 +62,12 @@ void cleanup()
 int main(int argc, char* argv[])
 {
     atexit(cleanup);
-    printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2014\n\n");
+    printf("\nRing Daemon Test Suite, by Savoir-Faire Linux 2004-2015\n\n");
     setConsoleLog(true);
     setDebugMode(true);
     fileutils::FileHandle f(fileutils::create_pidfile());
     if (f.fd == -1) {
-        fprintf(stderr, "An sflphoned instance is already running, quitting...\n");
+        fprintf(stderr, "An dring instance is already running, quitting...\n");
         return 1;
     }
 
@@ -97,13 +97,13 @@ int main(int argc, char* argv[])
             argvIndex++;
 
             setDebugMode(true);
-            SFL_INFO("Debug mode activated");
+            RING_INFO("Debug mode activated");
 
         } else if (strcmp("--xml", argv[1]) == 0) {
             argvIndex++;
 
             xmlOutput = true;
-            SFL_INFO("Using XML output");
+            RING_INFO("Using XML output");
         }
     }
 
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
     CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry(testSuiteName).makeTest();
 
     if (suite->getChildTestCount() == 0) {
-        SFL_ERR("Invalid test suite name: %s", testSuiteName.c_str());
+        RING_ERR("Invalid test suite name: %s", testSuiteName.c_str());
         restore();
         return 1;
     }

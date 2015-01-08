@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@
 #include "dtmf_event.h"
 #include "logger.h"
 
-namespace sfl {
+namespace ring {
 
 DTMFEvent::DTMFEvent(char digit) : payload(), newevent(true), length(1000)
 {
@@ -68,7 +68,7 @@ DTMFEvent::DTMFEvent(char digit) : payload(), newevent(true), length(1000)
             break;
 
         default:
-            SFL_ERR("Unexpected DTMF %c", digit);
+            RING_ERR("Unexpected DTMF %c", digit);
     }
 
     payload.event = digit;

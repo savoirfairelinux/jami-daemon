@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
@@ -46,7 +46,7 @@ namespace YAML {
     class Node;
 }
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class VideoDeviceMonitorImpl;
 
@@ -102,6 +102,6 @@ class VideoDeviceMonitor : public Serializable
         constexpr static const char *CONFIG_LABEL = "video";
 };
 
-} // namespace sfl_video
+}} //namespace ring //namespace video
 
 #endif /* VIDEO_DEVICE_MONITOR_H__ */

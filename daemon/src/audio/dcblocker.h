@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Adrien Beraud <adrien.beraud@gmail.com>
  *
@@ -35,7 +35,7 @@
 #include "sfl_types.h"
 #include "audiobuffer.h"
 
-namespace sfl {
+namespace ring {
 
 class DcBlocker {
     public:

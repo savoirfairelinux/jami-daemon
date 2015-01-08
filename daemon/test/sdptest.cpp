@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -120,7 +120,7 @@ namespace {
 std::vector<std::map<std::string, std::string> >
     createVideoCodecs() {
         std::vector<std::map<std::string, std::string> > videoCodecs;
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         std::map<std::string, std::string> codec;
         codec["name"] = "H264";
         codec["enabled"] = "true";
@@ -282,8 +282,8 @@ void SDPTest::testReinvite()
 
     CPPUNIT_ASSERT(session_->getPublishedIP() == LOCALHOST);
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
-    std::vector<sfl::AudioCodec*> codecs(session_->getSessionAudioMedia());
-    sfl::AudioCodec *codec = codecs[0];
+    std::vector<ring::AudioCodec*> codecs(session_->getSessionAudioMedia());
+    ring::AudioCodec *codec = codecs[0];
     CPPUNIT_ASSERT(codec and codec->getMimeSubtype() == "PCMU");
 
     pjmedia_sdp_session *reinviteOffer;

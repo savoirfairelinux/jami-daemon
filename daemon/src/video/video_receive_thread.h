@@ -42,7 +42,7 @@
 #include <sstream>
 #include <memory>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class SocketPair;
 
@@ -94,6 +94,7 @@ private:
     void process();
     void cleanup();
 };
-}
+
+}}
 
 #endif // _VIDEO_RECEIVE_THREAD_H_

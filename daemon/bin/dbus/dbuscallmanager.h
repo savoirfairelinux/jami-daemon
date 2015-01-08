@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_CALLMANAGER_H__
-#define __SFL_CALLMANAGER_H__
+#ifndef __RING_CALLMANAGER_H__
+#define __RING_CALLMANAGER_H__
 
 #include <vector>
 #include <map>
@@ -56,7 +56,7 @@
 #include <stdexcept>
 
 class DBusCallManager :
-    public org::sflphone::SFLphone::CallManager_adaptor,
+    public cx::ring::Ring::CallManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
@@ -107,4 +107,4 @@ class DBusCallManager :
         void sendTextMessage(const std::string& callID, const std::string& message);
 };
 
-#endif // __SFL_CALLMANAGER_H__
+#endif // __RING_CALLMANAGER_H__

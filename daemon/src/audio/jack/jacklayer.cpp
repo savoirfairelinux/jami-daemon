@@ -50,7 +50,7 @@ TODO
 * auto connect optional
 #endif
 
-namespace sfl {
+namespace ring {
 
 namespace
 {
@@ -61,12 +61,12 @@ void connectPorts(jack_client_t *client, int portType, const std::vector<jack_po
         const char *port = jack_port_name(ports[i]);
         if (portType & JackPortIsInput) {
             if (jack_connect(client, port, physical_ports[i])) {
-                SFL_ERR("Can't connect %s to %s", port, physical_ports[i]);
+                RING_ERR("Can't connect %s to %s", port, physical_ports[i]);
                 break;
             }
         } else {
             if (jack_connect(client, physical_ports[i], port)) {
-                SFL_ERR("Can't connect port %s to %s", physical_ports[i], port);
+                RING_ERR("Can't connect port %s to %s", physical_ports[i], port);
                 break;
             }
         }
@@ -102,7 +102,7 @@ void JackLayer::fillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
     buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
     if (audioFormat_.sample_rate != (unsigned) mainBuffer.getInternalSamplingRate()) {
-        SFL_DBG("fillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
+        RING_DBG("fillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
         AudioBuffer out(buffer, false);
         out.setSampleRate(audioFormat_.sample_rate);
         resampler_->resample(buffer, out);
@@ -177,7 +177,7 @@ convertToFloat(const std::vector<SFLAudioSample> &src, std::vector<float> &dest)
 {
     static const float INV_SHORT_MAX = 1 / (float) SHRT_MAX;
     if (dest.size() != src.size()) {
-        SFL_ERR("MISMATCH");
+        RING_ERR("MISMATCH");
         return;
     }
     for (size_t i = 0; i < dest.size(); ++i)
@@ -188,7 +188,7 @@ static void
 convertFromFloat(std::vector<float> &src, std::vector<SFLAudioSample> &dest)
 {
     if (dest.size() != src.size()) {
-        SFL_ERR("MISMATCH");
+        RING_ERR("MISMATCH");
         return;
     }
     for (size_t i = 0; i < dest.size(); ++i)
@@ -209,7 +209,7 @@ JackLayer::write(AudioBuffer &buffer, std::vector<float> &floatBuffer)
         const size_t written_bytes = jack_ringbuffer_write(out_ringbuffers_[i],
                 (const char *) floatBuffer.data(), write_bytes);
         if (written_bytes < write_bytes)
-            SFL_WARN("Dropped %zu bytes for channel %u", write_bytes - written_bytes, i);
+            RING_WARN("Dropped %zu bytes for channel %u", write_bytes - written_bytes, i);
     }
 }
 
@@ -232,7 +232,7 @@ JackLayer::read(AudioBuffer &buffer)
         const size_t read_bytes = jack_ringbuffer_read(in_ringbuffers_[i],
                 (char *) captureFloatBuffer_.data(), expected_bytes);
         if (read_bytes < expected_bytes) {
-            SFL_WARN("Dropped %zu bytes", expected_bytes - read_bytes);
+            RING_WARN("Dropped %zu bytes", expected_bytes - read_bytes);
             break;
         }
 
@@ -350,7 +350,7 @@ JackLayer::JackLayer(const AudioPreference &p) :
     const auto playRate = jack_get_sample_rate(playbackClient_);
     const auto captureRate = jack_get_sample_rate(captureClient_);
     if (playRate != captureRate)
-        SFL_ERR("Mismatch between capture rate %u and playback rate %u", playRate, captureRate);
+        RING_ERR("Mismatch between capture rate %u and playback rate %u", playRate, captureRate);
 
     hardwareBufferSize_ = jack_get_buffer_size(playbackClient_);
 
@@ -376,9 +376,9 @@ JackLayer::~JackLayer()
         jack_port_unregister(captureClient_, p);
 
     if (jack_client_close(playbackClient_))
-        SFL_ERR("JACK client could not close");
+        RING_ERR("JACK client could not close");
     if (jack_client_close(captureClient_))
-        SFL_ERR("JACK client could not close");
+        RING_ERR("JACK client could not close");
 
     for (auto r : out_ringbuffers_)
         jack_ringbuffer_free(r);
@@ -433,7 +433,7 @@ JackLayer::process_capture(jack_nframes_t frames, void *arg)
         // fill the rest with silence
         if (bytes_to_rb < bytes_to_read) {
             // TODO: set some flag for underrun?
-            SFL_WARN("Dropped %lu bytes", bytes_to_read - bytes_to_rb);
+            RING_WARN("Dropped %lu bytes", bytes_to_read - bytes_to_rb);
         }
     }
 
@@ -490,7 +490,7 @@ JackLayer::startStream()
     ringbuffer_thread_ = std::thread(&JackLayer::ringbuffer_worker, this);
 
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
-        SFL_ERR("Could not activate JACK client");
+        RING_ERR("Could not activate JACK client");
         workerAlive_ = false;
         ringbuffer_thread_.join();
         isStarted_ = false;
@@ -506,7 +506,7 @@ JackLayer::startStream()
 void
 JackLayer::onShutdown(void * /* data */)
 {
-    SFL_WARN("JACK server shutdown");
+    RING_WARN("JACK server shutdown");
     // FIXME: handle this safely
 }
 
@@ -523,7 +523,7 @@ JackLayer::stopStream()
     }
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
-        SFL_ERR("JACK client could not deactivate");
+        RING_ERR("JACK client could not deactivate");
     }
 
     isStarted_ = false;

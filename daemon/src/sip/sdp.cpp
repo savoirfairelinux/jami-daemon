@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -41,7 +41,7 @@
 #include "manager.h"
 #include "logger.h"
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "video/libav_utils.h"
 #endif
 
@@ -91,13 +91,13 @@ Sdp::Sdp(const std::string& id)
 Sdp::~Sdp()
 {
     SIPAccount::releasePort(localAudioDataPort_);
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     SIPAccount::releasePort(localVideoDataPort_);
 #endif
 }
 
 static bool
-hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)
+hasPayload(const std::vector<ring::AudioCodec*> &codecs, int pt)
 {
     for (const auto &i : codecs)
         if (i and i->getPayloadType() == pt)
@@ -123,7 +123,7 @@ rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
     return os.str();
 }
 
-static sfl::AudioCodec *
+static ring::AudioCodec *
 findCodecByName(const std::string &codec)
 {
     // try finding by name
@@ -144,7 +144,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
             pjmedia_sdp_attr *rtpMapAttribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, &current->desc.fmt[fmt]);
 
             if (!rtpMapAttribute) {
-                SFL_ERR("Could not find rtpmap attribute");
+                RING_ERR("Could not find rtpmap attribute");
                 break;
             }
 
@@ -162,7 +162,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
                         if (codec)
                             sessionAudioMediaLocal_.push_back(codec);
                         else
-                            SFL_ERR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
+                            RING_ERR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
                 }
             } else if (!pj_stricmp2(&current->desc.media, "video")) {
@@ -178,7 +178,7 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 {
     if (!sdp) {
-        SFL_ERR("Remote sdp is NULL");
+        RING_ERR("Remote sdp is NULL");
         return;
     }
 
@@ -209,7 +209,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
                 pjmedia_sdp_attr *rtpMapAttribute = pjmedia_sdp_media_find_attr(r_media, &STR_RTPMAP, &r_media->desc.fmt[fmt]);
 
                 if (!rtpMapAttribute) {
-                    SFL_ERR("Could not find rtpmap attribute");
+                    RING_ERR("Could not find rtpmap attribute");
                     break;
                 }
 
@@ -220,7 +220,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
                 if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaRemote_, pt)) {
                     auto codec = Manager::instance().audioCodecFactory.getCodec(pt).get();
                     if (codec) {
-                        SFL_DBG("Adding codec with new payload type %d", pt);
+                        RING_DBG("Adding codec with new payload type %d", pt);
                         sessionAudioMediaRemote_.push_back(codec);
                     } else {
                         // Search by codec name, clock rate and param (channel count)
@@ -228,7 +228,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
                         if (codec)
                             sessionAudioMediaRemote_.push_back(codec);
                         else
-                            SFL_ERR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
+                            RING_ERR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
                 }
             }
@@ -239,23 +239,23 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 string Sdp::getSessionVideoCodec() const
 {
     if (sessionVideoMedia_.empty()) {
-        SFL_DBG("Session video media is empty");
+        RING_DBG("Session video media is empty");
         return "";
     }
     return sessionVideoMedia_[0];
 }
 
-std::vector<sfl::AudioCodec*>
+std::vector<ring::AudioCodec*>
 Sdp::getSessionAudioMedia() const
 {
-    vector<sfl::AudioCodec*> codecs;
+    vector<ring::AudioCodec*> codecs;
 
     // Common codecs first
     for (auto c : sessionAudioMediaLocal_) {
         if (std::find(sessionAudioMediaRemote_.begin(), sessionAudioMediaRemote_.end(), c) != sessionAudioMediaRemote_.end())
             codecs.push_back(c);
     }
-    SFL_DBG("%u common audio codecs", codecs.size());
+    RING_DBG("%u common audio codecs", codecs.size());
 
     // Next, the other codecs we declared to be able to encode
     for (auto c : sessionAudioMediaLocal_) {
@@ -267,7 +267,7 @@ Sdp::getSessionAudioMedia() const
         if (std::find(codecs.begin(), codecs.end(), c) == codecs.end())
             codecs.push_back(c);
     }
-    SFL_DBG("Ready to decode %u audio codecs", codecs.size());
+    RING_DBG("Ready to decode %u audio codecs", codecs.size());
 
     return codecs;
 }
@@ -295,7 +295,7 @@ Sdp::setMediaDescriptorLines(bool audio)
         const char *channels = "";
 
         if (audio) {
-            sfl::AudioCodec *codec = audio_codec_list_[i];
+            ring::AudioCodec *codec = audio_codec_list_[i];
             payload = codec->getPayloadType();
             enc_name = codec->getMimeSubtype();
             clock_rate = codec->getSDPClockRate();
@@ -332,7 +332,7 @@ Sdp::setMediaDescriptorLines(bool audio)
 
         med->attr[med->attr_count++] = attr;
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         if (enc_name == "H264") {
             std::ostringstream os;
             // FIXME: this should not be hardcoded, it will determine what profile and level
@@ -383,7 +383,7 @@ Sdp::setPublishedIP(const std::string &addr, pj_uint16_t addr_type)
         localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
         localSession_->conn->addr = localSession_->origin.addr;
         if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
-            SFL_ERR("Could not validate SDP");
+            RING_ERR("Could not validate SDP");
     }
 }
 
@@ -417,7 +417,7 @@ Sdp::updatePorts(const std::vector<pj_sockaddr> &sockets)
             localSession_->media[1]->desc.port = localVideoDataPort_;
 
         if (not pjmedia_sdp_validate(localSession_))
-            SFL_ERR("Could not validate SDP");
+            RING_ERR("Could not validate SDP");
     }
 }
 
@@ -445,9 +445,9 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 void Sdp::setLocalMediaVideoCapabilities(const vector<map<string, string> > &codecs)
 {
     video_codec_list_.clear();
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     if (codecs.empty())
-        SFL_WARN("No selected video codec while building local SDP offer");
+        RING_WARN("No selected video codec while building local SDP offer");
     else
         video_codec_list_ = codecs;
 #else
@@ -458,7 +458,7 @@ void Sdp::setLocalMediaVideoCapabilities(const vector<map<string, string> > &cod
 void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
 {
     if (selectedCodecs.empty())
-        SFL_WARN("No selected codec while building local SDP offer");
+        RING_WARN("No selected codec while building local SDP offer");
 
     audio_codec_list_.clear();
     for (const auto &i : selectedCodecs) {
@@ -467,7 +467,7 @@ void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
         if (codec)
             audio_codec_list_.push_back(codec);
         else
-            SFL_WARN("Couldn't find audio codec");
+            RING_WARN("Couldn't find audio codec");
     }
 }
 
@@ -477,7 +477,7 @@ printSession(const pjmedia_sdp_session *session)
     char buffer[2048];
     size_t size = pjmedia_sdp_print(session, buffer, sizeof(buffer));
     string sessionStr(buffer, std::min(size, sizeof(buffer)));
-    SFL_DBG("%s", sessionStr.c_str());
+    RING_DBG("%s", sessionStr.c_str());
 }
 
 int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector<map<string, string> > &selectedVideoCodecs)
@@ -527,7 +527,7 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     if (!srtpCrypto_.empty())
         addSdesAttribute(srtpCrypto_);
 
-    SFL_DBG("SDP: Local SDP Session:");
+    RING_DBG("SDP: Local SDP Session:");
     printSession(localSession_);
 
     return pjmedia_sdp_validate(localSession_);
@@ -538,12 +538,12 @@ Sdp::createOffer(const vector<int> &selectedCodecs,
                  const vector<map<string, string> > &videoCodecs)
 {
     if (createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
-        SFL_ERR("Failed to create initial offer");
+        RING_ERR("Failed to create initial offer");
         return false;
     }
 
     if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_) != PJ_SUCCESS) {
-        SFL_ERR("Failed to create an initial SDP negotiator");
+        RING_ERR("Failed to create an initial SDP negotiator");
         return false;
     }
     return true;
@@ -554,15 +554,15 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                        const vector<map<string, string> > &videoCodecs)
 {
     if (!remote) {
-        SFL_ERR("Remote session is NULL");
+        RING_ERR("Remote session is NULL");
         return;
     }
 
-    SFL_DBG("Remote SDP Session:");
+    RING_DBG("Remote SDP Session:");
     printSession(remote);
 
     if (!localSession_ and createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
-        SFL_ERR("Failed to create initial offer");
+        RING_ERR("Failed to create initial offer");
         return;
     }
 
@@ -570,13 +570,13 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
 
     if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(), localSession_,
             remoteSession_, &negotiator_) != PJ_SUCCESS)
-        SFL_ERR("Failed to initialize negotiator");
+        RING_ERR("Failed to initialize negotiator");
 }
 
 void Sdp::startNegotiation()
 {
     if (negotiator_ == NULL) {
-        SFL_ERR("Can't start negotiation with invalid negotiator");
+        RING_ERR("Can't start negotiation with invalid negotiator");
         return;
     }
 
@@ -584,7 +584,7 @@ void Sdp::startNegotiation()
     const pjmedia_sdp_session *active_remote;
 
     if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
-        SFL_WARN("Negotiator not in right state for negotiation");
+        RING_WARN("Negotiator not in right state for negotiation");
         return;
     }
 
@@ -592,12 +592,12 @@ void Sdp::startNegotiation()
         return;
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
-        SFL_ERR("Could not retrieve local active session");
+        RING_ERR("Could not retrieve local active session");
     else
         setActiveLocalSdpSession(active_local);
 
     if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS)
-        SFL_ERR("Could not retrieve remote active session");
+        RING_ERR("Could not retrieve remote active session");
     else
         setActiveRemoteSdpSession(active_remote);
 }
@@ -645,7 +645,7 @@ remove_line_with_token(std::string& text, const std::string& token)
 {
     const auto tokenPos = text.find(token);
     if (tokenPos == std::string::npos) {
-        SFL_ERR("Couldn't find %s", token.c_str());
+        RING_ERR("Couldn't find %s", token.c_str());
         return;
     }
 
@@ -663,7 +663,7 @@ string Sdp::getIncomingVideoDescription() const
 {
     pjmedia_sdp_session *videoSession = pjmedia_sdp_session_clone(memPool_.get(), activeLocalSession_);
     if (!videoSession) {
-        SFL_ERR("Could not clone SDP");
+        RING_ERR("Could not clone SDP");
         return "";
     }
 
@@ -672,13 +672,13 @@ string Sdp::getIncomingVideoDescription() const
     for (unsigned i = 0; i < videoSession->media_count; i++)
         if (pj_stricmp2(&videoSession->media[i]->desc.media, "video")) {
             if (pjmedia_sdp_media_deactivate(memPool_.get(), videoSession->media[i]) != PJ_SUCCESS)
-                SFL_ERR("Could not deactivate media");
+                RING_ERR("Could not deactivate media");
         } else {
             hasVideo = true;
         }
 
     if (not hasVideo) {
-        SFL_DBG("No video present in active local SDP");
+        RING_DBG("No video present in active local SDP");
         return "";
     }
 
@@ -731,7 +731,7 @@ std::string Sdp::getIncomingAudioDescription() const
 {
     pjmedia_sdp_session *audioSession = pjmedia_sdp_session_clone(memPool_.get(), activeLocalSession_);
     if (!audioSession) {
-        SFL_ERR("Could not clone SDP");
+        RING_ERR("Could not clone SDP");
         return "";
     }
 
@@ -740,13 +740,13 @@ std::string Sdp::getIncomingAudioDescription() const
     for (unsigned i = 0; i < audioSession->media_count; i++)
         if (pj_stricmp2(&audioSession->media[i]->desc.media, "audio")) {
             if (pjmedia_sdp_media_deactivate(memPool_.get(), audioSession->media[i]) != PJ_SUCCESS)
-                SFL_ERR("Could not deactivate media");
+                RING_ERR("Could not deactivate media");
         } else {
             hasAudio = true;
         }
 
     if (not hasAudio) {
-        SFL_DBG("No audio present in active local SDP");
+        RING_DBG("No audio present in active local SDP");
         return "";
     }
 
@@ -766,7 +766,7 @@ std::string Sdp::getIncomingAudioDescription() const
     bool extra = false;
     for (const auto& p : payloads) {
         if (extra) {
-            SFL_WARN("Dropping payload %s", p.c_str());
+            RING_WARN("Dropping payload %s", p.c_str());
             remove_token(sessionStr, "m=audio", " " + p);
             remove_line_with_token(sessionStr, "a=rtpmap:" + p);
             remove_line_with_token(sessionStr, "a=fmtp:" + p);
@@ -823,7 +823,7 @@ std::string Sdp::getOutgoingAudioRate() const
             return tmp;
     } else {
         const char *DEFAULT_RATE = "8000";
-        SFL_ERR("No rate found in SDP, defaulting to %s", DEFAULT_RATE);
+        RING_ERR("No rate found in SDP, defaulting to %s", DEFAULT_RATE);
         return DEFAULT_RATE;
     }
 }
@@ -843,7 +843,7 @@ std::string Sdp::getOutgoingAudioChannels() const
         return aCodecLine.substr(pos + 1);
     } else {
         const char *DEFAULT_CHANNELS = "1";
-        SFL_ERR("No channels found in SDP, defaulting to %s", DEFAULT_CHANNELS);
+        RING_ERR("No channels found in SDP, defaulting to %s", DEFAULT_CHANNELS);
         return DEFAULT_CHANNELS;
     }
 }
@@ -904,7 +904,7 @@ Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
     const size_t pos = fmtpLine.find(needle);
     if (pos != std::string::npos and fmtpLine.size() >= (pos + needleLength)) {
         profile = fmtpLine.substr(pos, needleLength);
-        SFL_DBG("Using %s", profile.c_str());
+        RING_DBG("Using %s", profile.c_str());
     }
 }
 
@@ -935,7 +935,7 @@ void
 Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cands)
 {
     if (media_index >= localSession_->media_count) {
-        SFL_ERR("addIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
+        RING_ERR("addIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
         return;
     }
 
@@ -955,11 +955,11 @@ Sdp::getIceCandidates(unsigned media_index) const
 {
     auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
     if (not session) {
-        SFL_ERR("getIceCandidates failed: no remote session");
+        RING_ERR("getIceCandidates failed: no remote session");
         return {};
     }
     if (media_index >= session->media_count) {
-        SFL_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
+        RING_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
         return {};
     }
     auto media = session->media[media_index];
@@ -975,7 +975,7 @@ Sdp::getIceCandidates(unsigned media_index) const
 }
 
 void
-Sdp::addIceAttributes(const sfl::IceTransport::Attribute&& ice_attrs)
+Sdp::addIceAttributes(const ring::IceTransport::Attribute&& ice_attrs)
 {
     pj_str_t value;
     pjmedia_sdp_attr *attr;
@@ -993,10 +993,10 @@ Sdp::addIceAttributes(const sfl::IceTransport::Attribute&& ice_attrs)
         throw SdpException("Could not add ICE.pwd attribute to local SDP");
 }
 
-sfl::IceTransport::Attribute
+ring::IceTransport::Attribute
 Sdp::getIceAttributes() const
 {
-    sfl::IceTransport::Attribute ice_attrs;
+    ring::IceTransport::Attribute ice_attrs;
     auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
     assert(session);
 
@@ -1015,7 +1015,7 @@ static int
 getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)
 {
     if (!session) {
-        SFL_ERR("Session is NULL when looking for \"%s\" attribute", type);
+        RING_ERR("Session is NULL when looking for \"%s\" attribute", type);
         return -1;
     }
     size_t i = 0;
@@ -1074,14 +1074,14 @@ Sdp::updateRemoteIP(unsigned index)
     if (conn)
         remoteIpAddr_ = std::string(conn->addr.ptr, conn->addr.slen);
     else
-        SFL_ERR("Could not get remote IP from SDP or SDP Media");
+        RING_ERR("Could not get remote IP from SDP or SDP Media");
 }
 
 
 void Sdp::setMediaTransportInfoFromRemoteSdp()
 {
     if (!activeRemoteSession_) {
-        SFL_ERR("Remote sdp is NULL while parsing media");
+        RING_ERR("Remote sdp is NULL while parsing media");
         return;
     }
 
@@ -1113,12 +1113,12 @@ void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, Cry
 
 bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
 {
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     string codec(getOutgoingVideoCodec());
     if (not codec.empty()) {
         const string encoder(libav_utils::encodersMap()[codec]);
         if (encoder.empty()) {
-            SFL_DBG("Couldn't find encoder for \"%s\"\n", codec.c_str());
+            RING_DBG("Couldn't find encoder for \"%s\"\n", codec.c_str());
             return false;
         } else {
             args["codec"] = encoder;
@@ -1145,7 +1145,7 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
     if (not codec.empty()) {
         const string encoder(libav_utils::encodersMap()[codec]);
         if (encoder.empty()) {
-            SFL_DBG("Couldn't find encoder for \"%s\"\n", codec.c_str());
+            RING_DBG("Couldn't find encoder for \"%s\"\n", codec.c_str());
             return false;
         } else {
             args["codec"] = encoder;
@@ -1157,7 +1157,7 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
 
         const string rate(getOutgoingAudioRate());
         if (rate.empty()) {
-            SFL_DBG("Couldn't find rate for \"%s\"\n", codec.c_str());
+            RING_DBG("Couldn't find rate for \"%s\"\n", codec.c_str());
             return false;
         } else {
             // G722 requires G722/8000 media description even though it's @ 16000 Hz
@@ -1170,7 +1170,7 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
 
         const string channels(getOutgoingAudioChannels());
         if (channels.empty()) {
-            SFL_DBG("Couldn't find channels for \"%s\"\n", codec.c_str());
+            RING_DBG("Couldn't find channels for \"%s\"\n", codec.c_str());
             return false;
         } else {
             args["channels"] = channels;

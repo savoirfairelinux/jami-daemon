@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Philippe Groarke <philippe.groarke@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@
 #include <thread>
 #include <atomic>
 
-namespace sfl {
+namespace ring {
 
 // AudioLayer implementation.
 CoreLayer::CoreLayer(const AudioPreference &pref)
@@ -108,7 +108,7 @@ void CoreLayer::initAudioLayerPlayback()
     // 4) Initialize everything.
     // 5) Profit...
 
-    SFL_DBG("INIT AUDIO PLAYBACK");
+    RING_DBG("INIT AUDIO PLAYBACK");
 
     AudioComponentDescription outputDesc = {0};
     outputDesc.componentType = kAudioUnitType_Output;
@@ -117,7 +117,7 @@ void CoreLayer::initAudioLayerPlayback()
 
     AudioComponent outComp = AudioComponentFindNext(NULL, &outputDesc);
     if (outComp == NULL) {
-        SFL_ERR("Can't find default output audio component.");
+        RING_ERR("Can't find default output audio component.");
         return;
     }
 
@@ -175,7 +175,7 @@ void CoreLayer::initAudioLayerPlayback()
 
 void CoreLayer::initAudioLayerCapture()
 {
-    SFL_DBG("INIT AUDIO INPUT");
+    RING_DBG("INIT AUDIO INPUT");
     // HALUnit description.
     AudioComponentDescription desc;
     desc = {0};
@@ -184,7 +184,7 @@ void CoreLayer::initAudioLayerCapture()
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
     AudioComponent comp = AudioComponentFindNext(NULL, &desc);
     if (comp == NULL)
-        SFL_ERR("Can't find an input HAL unit that matches description.");
+        RING_ERR("Can't find an input HAL unit that matches description.");
     checkErr(AudioComponentInstanceNew(comp, &inputUnit_));
 
     // HALUnit settings.
@@ -303,7 +303,7 @@ void CoreLayer::initAudioLayerCapture()
 
 void CoreLayer::startStream()
 {
-    SFL_DBG("START STREAM");
+    RING_DBG("START STREAM");
     dcblocker_.reset();
 
     if (is_playback_running_ and is_capture_running_)
@@ -326,7 +326,7 @@ void CoreLayer::destroyAudioLayer()
 
 void CoreLayer::stopStream()
 {
-    SFL_DBG("STOP STREAM");
+    RING_DBG("STOP STREAM");
 
     isStarted_ = is_playback_running_ = is_capture_running_ = false;
 
@@ -371,7 +371,7 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     unsigned urgentFramesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
 
     if (urgentFramesToGet > 0) {
-        SFL_WARN("Getting urgent frames.");
+        RING_WARN("Getting urgent frames.");
         size_t totSample = std::min(inNumberFrames, urgentFramesToGet);
 
         playbackBuff_.setFormat(audioFormat_);
@@ -429,16 +429,16 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
         playbackBuff_.resize(inNumberFrames);
 
         if (tone) {
-            SFL_WARN("TONE");
+            RING_WARN("TONE");
             tone->getNext(playbackBuff_, playbackGain_);
 
         }
         else if (file_tone) {
-            SFL_WARN("FILE TONE");
+            RING_WARN("FILE TONE");
             file_tone->getNext(playbackBuff_, playbackGain_);
         }
         else {
-            SFL_WARN("No tone or file_tone!");
+            RING_WARN("No tone or file_tone!");
             playbackBuff_.reset();
         }
         for (int i = 0; i < audioFormat_.nb_channels; ++i) {
@@ -466,7 +466,7 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     AudioBufferList* ioData)
 {
     if (inNumberFrames <= 0) {
-        SFL_WARN("No frames for input.");
+        RING_WARN("No frames for input.");
         return;
     }
 
@@ -504,7 +504,7 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     }
 
     if (resample) {
-        //SFL_WARN("Resampling Input.");
+        //RING_WARN("Resampling Input.");
 
         //FIXME: May be a multiplication, check alsa vs pulse implementation.
 

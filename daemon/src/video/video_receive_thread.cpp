@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
@@ -41,7 +41,7 @@
 #include <unistd.h>
 #include <map>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -190,15 +190,15 @@ bool VideoReceiveThread::decodeFrame()
             return true;
 
         case VideoDecoder::Status::DecodeError:
-            SFL_WARN("decoding failure, trying to reset decoder...");
+            RING_WARN("decoding failure, trying to reset decoder...");
             delete videoDecoder_;
             if (!setup()) {
-                SFL_ERR("fatal error, rx thread re-setup failed");
+                RING_ERR("fatal error, rx thread re-setup failed");
                 loop_.stop();
                 break;
             }
             if (!videoDecoder_->setupFromVideoData()) {
-                SFL_ERR("fatal error, v-decoder setup failed");
+                RING_ERR("fatal error, v-decoder setup failed");
                 loop_.stop();
                 break;
             }
@@ -207,7 +207,7 @@ bool VideoReceiveThread::decodeFrame()
             break;
 
         case VideoDecoder::Status::ReadError:
-            SFL_ERR("fatal error, read failed");
+            RING_ERR("fatal error, read failed");
             loop_.stop();
 
         default:
@@ -225,7 +225,7 @@ void VideoReceiveThread::enterConference()
 
     if (detach(&sink_)) {
         Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), false);
-        SFL_DBG("RX: shm sink <%s> detached", sink_.openedName().c_str());
+        RING_DBG("RX: shm sink <%s> detached", sink_.openedName().c_str());
     }
 }
 
@@ -237,7 +237,7 @@ void VideoReceiveThread::exitConference()
     if (dstWidth_ > 0 && dstHeight_ > 0) {
         if (attach(&sink_)) {
             Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_, false);
-            SFL_DBG("RX: shm sink <%s> started: size = %dx%d",
+            RING_DBG("RX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), dstWidth_, dstHeight_);
         }
     }
@@ -256,4 +256,4 @@ int VideoReceiveThread::getHeight() const
 int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

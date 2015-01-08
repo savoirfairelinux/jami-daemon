@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@
             throw std::runtime_error(#ret " failed");      \
     } while (0)
 
-namespace sfl {
+namespace ring {
 
 static void
 register_thread()
@@ -57,7 +57,7 @@ register_thread()
         static __thread pj_thread_desc desc;
         static __thread pj_thread_t *this_thread;
 #endif
-        SFL_DBG("Registering thread");
+        RING_DBG("Registering thread");
         pj_thread_register(NULL, desc, &this_thread);
     }
 }
@@ -79,7 +79,7 @@ IceTransport::cb_on_rx_data(pj_ice_strans* ice_st,
     if (auto tr = static_cast<IceTransport*>(pj_ice_strans_get_user_data(ice_st)))
         tr->onReceiveData(comp_id, pkt, size);
     else
-        SFL_WARN("null IceTransport");
+        RING_WARN("null IceTransport");
 }
 
 void
@@ -90,7 +90,7 @@ IceTransport::cb_on_ice_complete(pj_ice_strans* ice_st,
     if (auto tr = static_cast<IceTransport*>(pj_ice_strans_get_user_data(ice_st)))
         tr->onComplete(ice_st, op, status);
     else
-        SFL_WARN("null IceTransport");
+        RING_WARN("null IceTransport");
 }
 
 IceTransport::IceTransport(const char* name, int component_count,
@@ -139,9 +139,9 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
     if (!done) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        SFL_ERR("ICE %s failed: %s", opname, errmsg);
+        RING_ERR("ICE %s failed: %s", opname, errmsg);
     }
-    SFL_DBG("ICE %s with %s", opname, done?"success":"error");
+    RING_DBG("ICE %s with %s", opname, done?"success":"error");
     if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_) {
         on_initdone_cb_(*this, done);
     } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION and on_negodone_cb_) {
@@ -169,25 +169,25 @@ bool
 IceTransport::createIceSession(pj_ice_sess_role role)
 {
     if (pj_ice_strans_init_ice(icest_.get(), role, NULL, NULL) != PJ_SUCCESS) {
-        SFL_ERR("pj_ice_strans_init_ice() failed");
+        RING_ERR("pj_ice_strans_init_ice() failed");
         return false;
     }
 
     // Fetch some information on local configuration
     getUFragPwd();
     getDefaultCanditates();
-    SFL_DBG("ICE [local] ufrag=%s, pwd=%s", local_ufrag_.c_str(), local_pwd_.c_str());
+    RING_DBG("ICE [local] ufrag=%s, pwd=%s", local_ufrag_.c_str(), local_pwd_.c_str());
     return true;
 }
 
 bool
 IceTransport::setInitiatorSession()
 {
-    SFL_DBG("ICE as master");
+    RING_DBG("ICE as master");
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
-            SFL_ERR("ICE role change failed");
+            RING_ERR("ICE role change failed");
             sip_utils::sip_strerror(status);
             return false;
         }
@@ -199,11 +199,11 @@ IceTransport::setInitiatorSession()
 bool
 IceTransport::setSlaveSession()
 {
-    SFL_DBG("ICE as slave");
+    RING_DBG("ICE as slave");
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
-            SFL_ERR("ICE role change failed");
+            RING_ERR("ICE role change failed");
             sip_utils::sip_strerror(status);
             return false;
         }
@@ -217,14 +217,14 @@ IceTransport::start(const Attribute& rem_attrs,
                     const std::vector<IceCandidate>& rem_candidates)
 {
     pj_str_t ufrag, pwd;
-    SFL_DBG("ICE negotiation starting (%u remote candidates)", rem_candidates.size());
+    RING_DBG("ICE negotiation starting (%u remote candidates)", rem_candidates.size());
     auto status = pj_ice_strans_start_ice(icest_.get(),
                                           pj_cstr(&ufrag, rem_attrs.ufrag.c_str()),
                                           pj_cstr(&pwd, rem_attrs.pwd.c_str()),
                                           rem_candidates.size(),
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
-        SFL_ERR("ICE start failed");
+        RING_ERR("ICE start failed");
         sip_utils::sip_strerror(status);
         return false;
     }
@@ -264,7 +264,7 @@ IceTransport::start(const std::vector<uint8_t>& rem_data)
     auto rem_ufrag = unpackLine(begin, end);
     auto rem_pwd = unpackLine(begin, end);
     if (rem_pwd.empty() or rem_pwd.empty()) {
-        SFL_ERR("ICE remote attributes parsing error");
+        RING_ERR("ICE remote attributes parsing error");
         return false;
     }
     std::vector<IceCandidate> rem_candidates;
@@ -278,7 +278,7 @@ IceTransport::start(const std::vector<uint8_t>& rem_data)
                 rem_candidates.push_back(candidate);
         }
     } catch (std::exception& e) {
-        SFL_ERR("ICE remote candidates parsing error");
+        RING_ERR("ICE remote candidates parsing error");
         return false;
     }
     return start({rem_ufrag, rem_pwd}, rem_candidates);
@@ -288,13 +288,13 @@ bool
 IceTransport::stop()
 {
     if (not pj_ice_strans_has_sess(icest_.get())) {
-        SFL_ERR("Session not created yet");
+        RING_ERR("Session not created yet");
         return false;
     }
 
     auto status = pj_ice_strans_stop_ice(icest_.get());
     if (status != PJ_SUCCESS) {
-        SFL_ERR("ICE start failed");
+        RING_ERR("ICE start failed");
         sip_utils::sip_strerror(status);
         return false;
     }
@@ -350,7 +350,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
     if (pj_ice_strans_enum_cands(icest_.get(), comp_id+1, &cand_cnt, cand) != PJ_SUCCESS) {
-        SFL_ERR("pj_ice_strans_enum_cands() failed");
+        RING_ERR("pj_ice_strans_enum_cands() failed");
         return res;
     }
 
@@ -390,7 +390,7 @@ void
 IceTransport::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
 {
     if (!comp_id or comp_id > component_count_) {
-        SFL_ERR("rx: invalid comp_id (%u)", comp_id);
+        RING_ERR("rx: invalid comp_id (%u)", comp_id);
         return;
     }
     if (!size)
@@ -421,7 +421,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
                      type);
 
     if (cnt != 7) {
-        SFL_WARN("ICE: invalid remote candidate line");
+        RING_WARN("ICE: invalid remote candidate line");
         return false;
     }
 
@@ -434,7 +434,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
     else if (strcmp(type, "relay")==0)
         cand.type = PJ_ICE_CAND_TYPE_RELAYED;
     else {
-        SFL_WARN("ICE: invalid remote candidate type '%s'", type);
+        RING_WARN("ICE: invalid remote candidate type '%s'", type);
         return false;
     }
 
@@ -450,7 +450,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
     pj_sockaddr_init(af, &cand.addr, NULL, 0);
     auto status = pj_sockaddr_set_str_addr(af, &cand.addr, &tmpaddr);
     if (status != PJ_SUCCESS) {
-        SFL_ERR("ICE: invalid remote IP address '%s'", ipaddr);
+        RING_ERR("ICE: invalid remote IP address '%s'", ipaddr);
         return false;
     }
 
@@ -499,13 +499,13 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
-        SFL_ERR("Can't find remote address for component %d", comp_id);
+        RING_ERR("Can't find remote address for component %d", comp_id);
         return -1;
     }
     auto status = pj_ice_strans_sendto(icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
     if (status != PJ_SUCCESS) {
         sip_utils::sip_strerror(status);
-        SFL_ERR("send failed");
+        RING_ERR("send failed");
         return -1;
     }
     return len;

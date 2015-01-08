@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -55,7 +55,7 @@
 
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
-void ConfigurationManager::registerEvHandlers(struct sflph_config_ev_handlers* evHandlers)
+void ConfigurationManager::registerEvHandlers(struct ring_config_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }
@@ -66,7 +66,7 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
     const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
-        SFL_ERR("Could not find IP2IP account");
+        RING_ERR("Could not find IP2IP account");
         return std::map<std::string, std::string>();
     } else
         return sipaccount->getIp2IpDetails();
@@ -128,7 +128,7 @@ void ConfigurationManager::setTlsSettings(const std::map<std::string, std::strin
     const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
-        SFL_DBG("No valid account in set TLS settings");
+        RING_DBG("No valid account in set TLS settings");
         return;
     }
 
@@ -148,7 +148,7 @@ std::map<std::string, std::string> ConfigurationManager::validateCertificate(con
     TlsValidator validator(certificate,privateKey);
     return validator.getSerializedChecks();
 #else
-    SFL_WARN("TLS not supported");
+    RING_WARN("TLS not supported");
     return std::map<std::string, std::string>();
 #endif
 }
@@ -159,7 +159,7 @@ std::map<std::string, std::string> ConfigurationManager::getCertificateDetails(c
     TlsValidator validator(certificate,"");
     return validator.getSerializedDetails();
 #else
-    SFL_WARN("TLS not supported");
+    RING_WARN("TLS not supported");
     return std::map<std::string, std::string>();
 #endif
 }
@@ -240,7 +240,7 @@ std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::st
     if (const auto acc = Manager::instance().getAccount(accountID))
         return acc->getActiveAudioCodecs();
     else {
-        SFL_ERR("Could not find account %s, returning default", accountID.c_str());
+        RING_ERR("Could not find account %s, returning default", accountID.c_str());
         return Account::getDefaultAudioCodecs();
     }
 }
@@ -251,7 +251,7 @@ void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string
         acc->setActiveAudioCodecs(list);
         Manager::instance().saveConfig();
     } else {
-        SFL_ERR("Could not find account %s", accountID.c_str());
+        RING_ERR("Could not find account %s", accountID.c_str());
     }
 }
 
@@ -282,17 +282,17 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
 
 void ConfigurationManager::setAudioOutputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, sfl::DeviceType::PLAYBACK);
+    return Manager::instance().setAudioDevice(index, ring::DeviceType::PLAYBACK);
 }
 
 void ConfigurationManager::setAudioInputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, sfl::DeviceType::CAPTURE);
+    return Manager::instance().setAudioDevice(index, ring::DeviceType::CAPTURE);
 }
 
 void ConfigurationManager::setAudioRingtoneDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, sfl::DeviceType::RINGTONE);
+    return Manager::instance().setAudioDevice(index, ring::DeviceType::RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()
@@ -312,7 +312,7 @@ int32_t ConfigurationManager::getAudioOutputDeviceIndex(const std::string& name)
 
 std::string ConfigurationManager::getCurrentAudioOutputPlugin()
 {
-    SFL_DBG("Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
+    RING_DBG("Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
 
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
@@ -345,7 +345,7 @@ std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
     struct dirent **namelist;
     int n = scandir(r_path.c_str(), &namelist, 0, alphasort);
     if (n == -1) {
-        SFL_ERR("%s", strerror(errno));
+        RING_ERR("%s", strerror(errno));
         return ringToneList;
     }
 
@@ -421,11 +421,11 @@ void ConfigurationManager::setVolume(const std::string& device, double value)
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        SFL_ERR("Audio layer not valid while updating volume");
+        RING_ERR("Audio layer not valid while updating volume");
         return;
     }
 
-    SFL_DBG("set volume for %s: %f", device.c_str(), value);
+    RING_DBG("set volume for %s: %f", device.c_str(), value);
 
     if (device == "speaker") {
         audiolayer->setPlaybackGain(value);
@@ -442,7 +442,7 @@ ConfigurationManager::getVolume(const std::string& device)
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        SFL_ERR("Audio layer not valid while updating volume");
+        RING_ERR("Audio layer not valid while updating volume");
         return 0.0;
     }
 
@@ -471,7 +471,7 @@ bool ConfigurationManager::isCaptureMuted()
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        SFL_ERR("Audio layer not valid");
+        RING_ERR("Audio layer not valid");
         return false;
     }
 
@@ -483,7 +483,7 @@ void ConfigurationManager::muteCapture(bool mute)
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        SFL_ERR("Audio layer not valid");
+        RING_ERR("Audio layer not valid");
         return;
     }
 
@@ -495,7 +495,7 @@ bool ConfigurationManager::isPlaybackMuted()
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        SFL_ERR("Audio layer not valid");
+        RING_ERR("Audio layer not valid");
         return false;
     }
 
@@ -507,7 +507,7 @@ void ConfigurationManager::mutePlayback(bool mute)
     auto audiolayer = Manager::instance().getAudioDriver();
 
     if (!audiolayer) {
-        SFL_ERR("Audio layer not valid");
+        RING_ERR("Audio layer not valid");
         return;
     }
 
@@ -590,7 +590,7 @@ bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
 #if HAVE_TLS && HAVE_DHT
     return containsPrivateKey(pemPath.c_str()) == 0;
 #else
-    SFL_WARN("TLS not supported");
+    RING_WARN("TLS not supported");
     return false;
 #endif
 }
@@ -602,7 +602,7 @@ bool ConfigurationManager::checkCertificateValidity(const std::string& caPath,
     return certificateIsValid(caPath.size() > 0 ? caPath.c_str() : NULL,
                               pemPath.c_str()) == 0;
 #else
-    SFL_WARN("TLS not supported");
+    RING_WARN("TLS not supported");
     return false;
 #endif
 }
@@ -614,7 +614,7 @@ bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
     return verifyHostnameCertificate(host.c_str(),
                                      strtol(port.c_str(), NULL, 10)) == 0;
 #else
-    SFL_WARN("TLS not supported");
+    RING_WARN("TLS not supported");
     return false;
 #endif
 }

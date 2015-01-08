@@ -43,7 +43,7 @@
 #include <chrono>
 #include <memory>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
     struct VideoMixerSource {
         Observable<std::shared_ptr<VideoFrame> >* source = nullptr;
@@ -90,7 +90,7 @@ private:
     int width_ = 0;
     int height_ = 0;
     std::list<VideoMixerSource *> sources_ = {};
-    sfl::rw_mutex rwMutex_ = {};
+    ring::rw_mutex rwMutex_ = {};
     SHMSink sink_;
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
@@ -98,6 +98,6 @@ private:
     VideoScaler scaler_ = {};
 };
 
-}
+}}
 
 #endif // __VIDEO_MIXER_H__

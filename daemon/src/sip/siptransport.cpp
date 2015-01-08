@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
@@ -55,7 +55,7 @@
 #include <sstream>
 #include <algorithm>
 
-#define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { SFL_ERR(M, ##__VA_ARGS__); return (VAL); }
+#define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { RING_ERR(M, ##__VA_ARGS__); return (VAL); }
 
 // FIXME: remove this when pjsip_tp_state_callback gives us enough info
 static SipTransportBroker* instance = nullptr;
@@ -63,7 +63,7 @@ static SipTransportBroker* instance = nullptr;
 constexpr const char* TRANSPORT_STATE_STR[] = {
     "CONNECTED", "DISCONNECTED", "SHUTDOWN", "DESTROY", "UNKNOWN STATE"
 };
-constexpr const size_t TRANSPORT_STATE_SZ = SFL_ARRAYSIZE(TRANSPORT_STATE_STR);
+constexpr const size_t TRANSPORT_STATE_SZ = RING_ARRAYSIZE(TRANSPORT_STATE_STR);
 
 std::string
 SipTransportDescr::toString() const
@@ -84,7 +84,7 @@ SipTransport::~SipTransport()
     if (transport) {
         pjsip_transport_shutdown(transport);
         pjsip_transport_dec_ref(transport); // ??
-        SFL_DBG("Destroying transport (refcount: %u)",  pj_atomic_get(transport->ref_cnt));
+        RING_DBG("Destroying transport (refcount: %u)",  pj_atomic_get(transport->ref_cnt));
         transport = nullptr;
     }
 }
@@ -152,7 +152,7 @@ cp_(cp), pool_(pool), endpt_(endpt)
     instance = this;
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), SipTransportBroker::tp_state_callback);
     if (status != PJ_SUCCESS) {
-        SFL_ERR("Can't set transport callback");
+        RING_ERR("Can't set transport callback");
         sip_utils::sip_strerror(status);
     }
 
@@ -165,7 +165,7 @@ cp_(cp), pool_(pool), endpt_(endpt)
 
 SipTransportBroker::~SipTransportBroker()
 {
-    SFL_DBG("Destroying SipTransportBroker");
+    RING_DBG("Destroying SipTransportBroker");
     Manager::instance().unregisterEventHandler((uintptr_t)this);
 
     {
@@ -178,7 +178,7 @@ SipTransportBroker::~SipTransportBroker()
     {
         std::unique_lock<std::mutex> lock(iceMutex_);
         if (not iceTransports_.empty())
-            SFL_WARN("Remaining %u registred ICE transports", iceTransports_.size());
+            RING_WARN("Remaining %u registred ICE transports", iceTransports_.size());
     }
 }
 
@@ -187,7 +187,7 @@ void
 SipTransportBroker::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
 {
     if (!instance) {
-        SFL_ERR("Can't bubble event: SipTransportBroker instance is null !");
+        RING_ERR("Can't bubble event: SipTransportBroker instance is null !");
         return;
     }
     instance->transportStateChanged(tp, state, info);
@@ -196,7 +196,7 @@ SipTransportBroker::tp_state_callback(pjsip_transport *tp, pjsip_transport_state
 void
 SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
 {
-    SFL_WARN("Transport %s -> %s", tp->info, SipTransport::stateToStr(state));
+    RING_WARN("Transport %s -> %s", tp->info, SipTransport::stateToStr(state));
     {
         std::shared_ptr<SipTransport> transport {};
         {
@@ -232,7 +232,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
                 return i.second == tp;
             });
             if (transport_key != udpTransports_.end()) {
-                SFL_WARN("UDP transport destroy");
+                RING_WARN("UDP transport destroy");
                 transports_.erase(transport_key->second);
                 udpTransports_.erase(transport_key);
                 transportDestroyedCv_.notify_all();
@@ -297,18 +297,18 @@ SipTransportBroker::getUdpTransport(const SipTransportDescr& descr)
         auto it = transports_.find(itp->second);
         if (it != transports_.end()) {
             if (auto spt = it->second.lock()) {
-                SFL_DBG("Reusing transport %s", descr.toString().c_str());
+                RING_DBG("Reusing transport %s", descr.toString().c_str());
                 return spt;
             }
             else {
                 // Transport still exists but have not been destroyed yet.
-                SFL_WARN("Recycling transport %s", descr.toString().c_str());
+                RING_WARN("Recycling transport %s", descr.toString().c_str());
                 auto ret = std::make_shared<SipTransport>(itp->second);
                 it->second = ret;
                 return ret;
             }
         } else {
-            SFL_WARN("Cleaning up UDP transport %s", descr.toString().c_str());
+            RING_WARN("Cleaning up UDP transport %s", descr.toString().c_str());
             udpTransports_.erase(itp);
         }
     }
@@ -337,14 +337,14 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
         ? pjsip_udp_transport_start (endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress),  nullptr, 1, &transport)
         : pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress), nullptr, 1, &transport);
     if (status != PJ_SUCCESS) {
-        SFL_ERR("UDP IPv%s Transport did not start on %s",
+        RING_ERR("UDP IPv%s Transport did not start on %s",
             listeningAddress.isIpv4() ? "4" : "6",
             listeningAddress.toString(true).c_str());
         sip_utils::sip_strerror(status);
         return nullptr;
     }
 
-    SFL_DBG("Created UDP transport on %s : %s", d.interface.c_str(), listeningAddress.toString(true).c_str());
+    RING_DBG("Created UDP transport on %s : %s", d.interface.c_str(), listeningAddress.toString(true).c_str());
     auto ret = std::make_shared<SipTransport>(transport);
     // dec ref because the refcount starts at 1 and SipTransport increments it ?
     // pjsip_transport_dec_ref(transport);
@@ -364,19 +364,19 @@ SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_s
     listeningAddress.setPort(d.listenerPort);
 
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
-    SFL_DBG("Creating TLS listener %s on %s...", d.toString().c_str(), listeningAddress.toString(true).c_str());
+    RING_DBG("Creating TLS listener %s on %s...", d.toString().c_str(), listeningAddress.toString(true).c_str());
 #if 0
-    SFL_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
-    SFL_DBG(" cert_file    : %s", settings->cert_file.ptr);
-    SFL_DBG(" ciphers_num    : %d", settings->ciphers_num);
-    SFL_DBG(" verify server %d client %d client_cert %d", settings->verify_server, settings->verify_client, settings->require_client_cert);
-    SFL_DBG(" reuse_addr    : %d", settings->reuse_addr);
+    RING_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
+    RING_DBG(" cert_file    : %s", settings->cert_file.ptr);
+    RING_DBG(" ciphers_num    : %d", settings->ciphers_num);
+    RING_DBG(" verify server %d client %d client_cert %d", settings->verify_server, settings->verify_client, settings->require_client_cert);
+    RING_DBG(" reuse_addr    : %d", settings->reuse_addr);
 #endif
 
     pjsip_tpfactory *listener = nullptr;
     const pj_status_t status = pjsip_tls_transport_start2(endpt_, settings, listeningAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
-        SFL_ERR("TLS listener did not start");
+        RING_ERR("TLS listener did not start");
         sip_utils::sip_strerror(status);
         return nullptr;
     }
@@ -392,7 +392,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
     if (remoteAddr.getPort() == 0)
         remoteAddr.setPort(pjsip_transport_get_default_port_for_type(l->get()->type));
 
-    SFL_DBG("Get new TLS transport to %s", remoteAddr.toString(true).c_str());
+    RING_DBG("Get new TLS transport to %s", remoteAddr.toString(true).c_str());
     pjsip_tpselector sel {PJSIP_TPSELECTOR_LISTENER, {
         .listener = l->get()
     }};
@@ -406,7 +406,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
             &transport);
 
     if (!transport || status != PJ_SUCCESS) {
-        SFL_ERR("Could not get new TLS transport");
+        RING_ERR("Could not get new TLS transport");
         sip_utils::sip_strerror(status);
         return nullptr;
     }
@@ -422,7 +422,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 
 #if HAVE_DHT
 std::shared_ptr<SipTransport>
-SipTransportBroker::getIceTransport(const std::shared_ptr<sfl::IceTransport> ice, unsigned comp_id)
+SipTransportBroker::getIceTransport(const std::shared_ptr<ring::IceTransport> ice, unsigned comp_id)
 {
     std::unique_lock<std::mutex> lock(iceMutex_);
     iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, comp_id, [=]() -> int {
@@ -456,13 +456,13 @@ SipTransportBroker::getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port
             &serverName, port, &serverName, port, ipv4);
 
     if (ret != PJ_SUCCESS) {
-        SFL_ERR("STUN query to server \"%.*s\" failed", serverName.slen, serverName.ptr);
+        RING_ERR("STUN query to server \"%.*s\" failed", serverName.slen, serverName.ptr);
         switch (ret) {
             case PJLIB_UTIL_ESTUNNOTRESPOND:
-                SFL_ERR("No response from STUN server(s)");
+                RING_ERR("No response from STUN server(s)");
                 break;
             case PJLIB_UTIL_ESTUNSYMMETRIC:
-                SFL_ERR("Different mapped addresses are returned by servers.");
+                RING_ERR("Different mapped addresses are returned by servers.");
                 break;
             default:
                 break;
@@ -473,12 +473,12 @@ SipTransportBroker::getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port
     std::vector<pj_sockaddr> result(ip_num);
     for(size_t i=0; i<ip_num; i++) {
         result[i].ipv4 = ipv4[i];
-        SFL_WARN("STUN PORTS: %ld", pj_sockaddr_get_port(&result[i]));
+        RING_WARN("STUN PORTS: %ld", pj_sockaddr_get_port(&result[i]));
     }
     return result;
 }
 
-#define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { SFL_ERR(M, ##__VA_ARGS__); return; }
+#define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { RING_ERR(M, ##__VA_ARGS__); return; }
 
 void
 SipTransportBroker::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, const std::string &host, std::string &addr, pj_uint16_t &port) const
@@ -502,7 +502,7 @@ SipTransportBroker::findLocalAddressFromTransport(pjsip_transport *transport, pj
     pjsip_tpselector tp_sel = getTransportSelector(transport);
     pjsip_tpmgr_fla2_param param = {transportType, &tp_sel, pjstring, PJ_FALSE, {nullptr, 0}, 0, nullptr};
     if (pjsip_tpmgr_find_local_addr2(tpmgr, &pool_, &param) != PJ_SUCCESS) {
-        SFL_WARN("Could not retrieve local address and port from transport, using %s :%d", addr.c_str(), port);
+        RING_WARN("Could not retrieve local address and port from transport, using %s :%d", addr.c_str(), port);
         return;
     }
 
@@ -536,10 +536,10 @@ SipTransportBroker::findLocalAddressFromSTUN(pjsip_transport *transport,
 
     switch (stunStatus) {
         case PJLIB_UTIL_ESTUNNOTRESPOND:
-           SFL_ERR("No response from STUN server %.*s", stunServerName->slen, stunServerName->ptr);
+           RING_ERR("No response from STUN server %.*s", stunServerName->slen, stunServerName->ptr);
            return;
         case PJLIB_UTIL_ESTUNSYMMETRIC:
-           SFL_ERR("Different mapped addresses are returned by servers.");
+           RING_ERR("Different mapped addresses are returned by servers.");
            return;
         case PJ_SUCCESS:
             port = mapped_addr.getPort();
@@ -548,7 +548,7 @@ SipTransportBroker::findLocalAddressFromSTUN(pjsip_transport *transport,
            break;
     }
 
-    SFL_WARN("Using address %s provided by STUN server %.*s",
+    RING_WARN("Using address %s provided by STUN server %.*s",
          IpAddr(mapped_addr).toString(true).c_str(), stunServerName->slen, stunServerName->ptr);
 }
 

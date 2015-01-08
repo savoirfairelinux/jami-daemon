@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
  *          Vittorio Giovara <vittorio.giovara@savoirfairelinux.com>
@@ -197,30 +197,30 @@ public:
 private:
 
     // Enum class names
-    static const sfl::EnumClassNames<CertificateCheck> CertificateCheckNames;
+    static const ring::EnumClassNames<CertificateCheck> CertificateCheckNames;
 
-    static const sfl::EnumClassNames<CertificateDetails> CertificateDetailsNames;
+    static const ring::EnumClassNames<CertificateDetails> CertificateDetailsNames;
 
-    static const sfl::EnumClassNames<const CheckValuesType> CheckValuesTypeNames;
+    static const ring::EnumClassNames<const CheckValuesType> CheckValuesTypeNames;
 
-    static const sfl::EnumClassNames<CheckValues> CheckValuesNames;
+    static const ring::EnumClassNames<CheckValues> CheckValuesNames;
 
     /**
      * Map check to their check method
      */
-    static const sfl::CallbackMatrix1D<CertificateCheck, TlsValidator, CheckResult> checkCallback;
+    static const ring::CallbackMatrix1D<CertificateCheck, TlsValidator, CheckResult> checkCallback;
 
     /**
      * Map check to their getter method
      */
-    static const sfl::CallbackMatrix1D<CertificateDetails, TlsValidator, CheckResult> getterCallback;
+    static const ring::CallbackMatrix1D<CertificateDetails, TlsValidator, CheckResult> getterCallback;
 
     /**
      * Valid values for each categories
      */
-    static const sfl::Matrix2D<CheckValuesType , CheckValues , bool> acceptedCheckValuesResult;
+    static const ring::Matrix2D<CheckValuesType , CheckValues , bool> acceptedCheckValuesResult;
 
-    static const sfl::Matrix1D<CertificateCheck, CheckValuesType> enforcedCheckType;
+    static const ring::Matrix1D<CertificateCheck, CheckValuesType> enforcedCheckType;
 
     std::string certificatePath_;
     std::string privateKeyPath_;

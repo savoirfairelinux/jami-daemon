@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 #include "audiobuffer.h"
 #include "logger.h"
 
-namespace sfl {
+namespace ring {
 
 std::ostream& operator <<(std::ostream& stream, const AudioFormat& f) {
     stream << f.toString();
@@ -112,7 +112,7 @@ void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
         return;
     }
 
-    SFL_WARN("Unsupported channel mixing: %dch->%dch", c, n);
+    RING_WARN("Unsupported channel mixing: %dch->%dch", c, n);
     samples_.resize(n, samples_[0]);
 }
 
@@ -137,7 +137,7 @@ std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
     if (chan < samples_.size())
         return &samples_[chan];
 
-    SFL_ERR("Audio channel %u out of range", chan);
+    RING_ERR("Audio channel %u out of range", chan);
     return nullptr;
 }
 
@@ -147,7 +147,7 @@ void AudioBuffer::applyGain(double gain)
 
     const double g = std::max(std::min(1.0, gain), -1.0);
     if (g != gain)
-        SFL_DBG("Normalizing %f to [-1.0, 1.0]", gain);
+        RING_DBG("Normalizing %f to [-1.0, 1.0]", gain);
 
     for (auto &channel : samples_)
         for (auto &sample : channel)

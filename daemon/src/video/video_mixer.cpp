@@ -41,7 +41,7 @@
 
 static const double FRAME_DURATION = 1/30.;
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 VideoMixer::VideoMixer(const std::string &id) :
     VideoGenerator::VideoGenerator()
@@ -122,7 +122,7 @@ void VideoMixer::process()
 
     VideoFrame& output = getNewFrame();
     if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
-        SFL_ERR("VideoFrame::allocBuffer() failed");
+        RING_ERR("VideoFrame::allocBuffer() failed");
         return;
     }
 
@@ -190,11 +190,11 @@ void VideoMixer::start_sink()
     if (sink_.start()) {
         if (this->attach(&sink_)) {
             Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), width_, height_, true);
-            SFL_DBG("MX: shm sink <%s> started: size = %dx%d",
+            RING_DBG("MX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), width_, height_);
         }
     } else
-        SFL_WARN("MX: sink startup failed");
+        RING_WARN("MX: sink startup failed");
 }
 
 void VideoMixer::stop_sink()
@@ -214,4 +214,4 @@ int VideoMixer::getHeight() const
 int VideoMixer::getPixelFormat() const
 { return VIDEO_PIXFMT_YUV420P; }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

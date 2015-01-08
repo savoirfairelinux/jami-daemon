@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 #ifndef __DBUSCLIENT_H__
 #define __DBUSCLIENT_H__
 
-#include "sflphone.h"
+#include "ring.h"
 #include "noncopyable.h"
 
 class DBusConfigurationManager;
@@ -40,7 +40,7 @@ class DBusNetworkManager;
 class DBusInstance;
 class DBusPresenceManager;
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 class DBusVideoManager;
 #endif
 
@@ -70,7 +70,7 @@ class DBusClient {
         DBusInstance*             instanceManager_;
         DBus::BusDispatcher*  dispatcher_;
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         DBusVideoManager *videoManager_;
 #endif
         DBus::DefaultTimeout *timeout_;

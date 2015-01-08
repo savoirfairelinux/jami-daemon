@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -35,7 +35,7 @@
 #include <cstdlib>
 #include <istream>
 
-namespace sfl {
+namespace ring {
 
 const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
 const char * const HistoryItem::CALLID_KEY =            "callid";

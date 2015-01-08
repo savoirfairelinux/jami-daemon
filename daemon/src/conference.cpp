@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
@@ -36,7 +36,7 @@
 #include "audio/audiolayer.h"
 #include "audio/ringbufferpool.h"
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
 #include "sip/sipcall.h"
 #include "client/videomanager.h"
 #include "video/video_input.h"
@@ -51,7 +51,7 @@ Conference::Conference()
     : id_(Manager::instance().getNewCallID())
     , confState_(ACTIVE_ATTACHED)
     , participants_()
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     , videoMixer_(nullptr)
 #endif
 {
@@ -60,12 +60,12 @@ Conference::Conference()
 
 Conference::~Conference()
 {
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     for (const auto &participant_id : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().exitConference();
     }
-#endif // SFL_VIDEO
+#endif // RING_VIDEO
 }
 
 Conference::ConferenceState Conference::getState() const
@@ -81,20 +81,20 @@ void Conference::setState(ConferenceState state)
 void Conference::add(const std::string &participant_id)
 {
     if (participants_.insert(participant_id).second) {
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().enterConference(this);
-#endif // SFL_VIDEO
+#endif // RING_VIDEO
     }
 }
 
 void Conference::remove(const std::string &participant_id)
 {
     if (participants_.erase(participant_id)) {
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().exitConference();
-#endif // SFL_VIDEO
+#endif // RING_VIDEO
     }
 }
 
@@ -108,8 +108,8 @@ void Conference::bindParticipant(const std::string &participant_id)
         rbPool.flush(item);
     }
 
-    rbPool.bindCallID(participant_id, sfl::RingBufferPool::DEFAULT_ID);
-    rbPool.flush(sfl::RingBufferPool::DEFAULT_ID);
+    rbPool.bindCallID(participant_id, ring::RingBufferPool::DEFAULT_ID);
+    rbPool.flush(ring::RingBufferPool::DEFAULT_ID);
 }
 
 std::string Conference::getStateStr() const
@@ -162,14 +162,14 @@ bool Conference::toggleRecording()
         for (const auto &item : participants_)
             rbPool.bindHalfDuplexOut(process_id, item);
 
-        rbPool.bindHalfDuplexOut(process_id, sfl::RingBufferPool::DEFAULT_ID);
+        rbPool.bindHalfDuplexOut(process_id, ring::RingBufferPool::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         for (const auto &item : participants_)
             rbPool.unBindHalfDuplexOut(process_id, item);
 
-        rbPool.unBindHalfDuplexOut(process_id, sfl::RingBufferPool::DEFAULT_ID);
+        rbPool.unBindHalfDuplexOut(process_id, ring::RingBufferPool::DEFAULT_ID);
     }
 
     return startRecording;
@@ -179,11 +179,11 @@ std::string Conference::getConfID() const {
     return id_;
 }
 
-#ifdef SFL_VIDEO
-std::shared_ptr<sfl_video::VideoMixer> Conference::getVideoMixer()
+#ifdef RING_VIDEO
+std::shared_ptr<ring::video::VideoMixer> Conference::getVideoMixer()
 {
     if (!videoMixer_)
-        videoMixer_.reset(new sfl_video::VideoMixer(id_));
+        videoMixer_.reset(new ring::video::VideoMixer(id_));
     return videoMixer_;
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
@@ -63,7 +63,7 @@ class SIPCall;
    +---------------------+-------------+--------------+---------------+
 */
 
-namespace sfl {
+namespace ring {
 
 struct AudioSrtpException : public std::runtime_error {
     AudioSrtpException(const char *msg) : std::runtime_error(msg) {}
@@ -91,7 +91,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * Set remote crypto header from incoming sdp offer. It is expected that the
          * local cryptographic context is initialized with mehod
          */
-        void setRemoteCryptoInfo(const sfl::SdesNegotiator &nego);
+        void setRemoteCryptoInfo(const ring::SdesNegotiator &nego);
 
         /**
          * Init local crypto context for outgoing data

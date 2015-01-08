@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Copyright (C) 2012 VLC authors and VideoLAN
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
@@ -38,17 +38,17 @@
 #include <mutex>
 #include <stdint.h>
 
-namespace sfl {
+namespace ring {
 class IceSocket;
 };
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class SocketPair {
     public:
         SocketPair(const char *uri, int localPort);
-        SocketPair(std::unique_ptr<sfl::IceSocket> rtp_sock,
-                   std::unique_ptr<sfl::IceSocket> rtcp_sock);
+        SocketPair(std::unique_ptr<ring::IceSocket> rtp_sock,
+                   std::unique_ptr<ring::IceSocket> rtcp_sock);
         ~SocketPair();
 
         void interrupt();
@@ -68,8 +68,8 @@ class SocketPair {
         int writeRtpData(void *buf, int buf_size);
         int writeRtcpData(void *buf, int buf_size);
 
-        std::unique_ptr<sfl::IceSocket> rtp_sock_;
-        std::unique_ptr<sfl::IceSocket> rtcp_sock_;
+        std::unique_ptr<ring::IceSocket> rtp_sock_;
+        std::unique_ptr<ring::IceSocket> rtcp_sock_;
 
         std::mutex rtcpWriteMutex_;
 
@@ -82,6 +82,6 @@ class SocketPair {
         bool interrupted_ {false};
 };
 
-}
+}}
 
 #endif  // SOCKET_PAIR_H_

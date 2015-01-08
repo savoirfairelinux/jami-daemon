@@ -35,7 +35,7 @@
 
 #include <cassert>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_FAST_BILINEAR), tmp_data_() {}
 
@@ -56,7 +56,7 @@ void VideoScaler::scale(const VideoFrame &input, VideoFrame &output)
                                 mode_,
                                 NULL, NULL, NULL);
     if (!ctx_) {
-        SFL_ERR("Unable to create a scaler context");
+        RING_ERR("Unable to create a scaler context");
         return;
     }
 
@@ -127,7 +127,7 @@ void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
                                 mode_,
                                 NULL, NULL, NULL);
     if (!ctx_) {
-        SFL_ERR("Unable to create a scaler context");
+        RING_ERR("Unable to create a scaler context");
         return;
     }
 
@@ -158,4 +158,4 @@ void VideoScaler::reset()
     }
 }
 
-}
+}}

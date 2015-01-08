@@ -23,8 +23,8 @@ endif
 SUBDIRS += coreaudio
 
 if BUILD_SPEEXDSP
-SFL_SPEEXDSP_SRC=dsp.cpp
-SFL_SPEEXDSP_HEAD=dsp.h
+RING_SPEEXDSP_SRC=dsp.cpp
+RING_SPEEXDSP_HEAD=dsp.h
 endif
 
 libaudio_la_SOURCES = \
@@ -37,7 +37,7 @@ libaudio_la_SOURCES = \
 		recordable.cpp \
 		audiolayer.cpp \
 		resampler.cpp \
-		$(SFL_SPEEXDSP_SRC) \
+		$(RING_SPEEXDSP_SRC) \
 		dcblocker.cpp
 
 libaudio_la_CXXFLAGS = -I$(top_srcdir)/src
@@ -57,7 +57,7 @@ noinst_HEADERS = \
 		audiorecorder.h \
 		audiolayer.h \
 	 	recordable.h \
-		$(SFL_SPEEXDSP_HEAD) \
+		$(RING_SPEEXDSP_HEAD) \
 		dcblocker.h \
 		resampler.h
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -57,7 +57,7 @@
 #define MODE_APPEND			std::ios::out || std::ios::app
 #define MODE_TEST			std::ios::out
 
-namespace sfl {
+namespace ring {
 
 const std::string IM_XML_URI("uri");
 const std::string BOUNDARY("--boundary");

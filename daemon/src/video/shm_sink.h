@@ -45,7 +45,7 @@
 
 class SHMHeader;
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class SHMSink : public VideoFramePassiveReader
 {
@@ -82,6 +82,6 @@ private:
 #endif
 };
 
-}
+}}
 
 #endif // SHM_SINK_H_

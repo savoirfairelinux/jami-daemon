@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -36,15 +36,15 @@
 #include <getopt.h>
 #include <string>
 
-#include "sflphone.h"
+#include "ring.h"
 #include "fileutils.h"
 
 static int sflphFlags = 0;
 
 static void print_title()
 {
-    std::cout << "SFLphone Daemon " << sflph_version() <<
-        ", by Savoir-Faire Linux 2004-2014" << std::endl <<
+    std::cout << "Ring Daemon " << ring_version() <<
+        ", by Savoir-Faire Linux 2004-2015" << std::endl <<
         "http://www.sflphone.org/" << std::endl;
 }
 
@@ -121,10 +121,10 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
         quit = true;
     } else {
         if (consoleFlag) {
-            sflphFlags |= SFLPH_FLAG_CONSOLE_LOG;
+            sflphFlags |= RING_FLAG_CONSOLE_LOG;
         }
         if (debugFlag) {
-            sflphFlags |= SFLPH_FLAG_DEBUG;
+            sflphFlags |= RING_FLAG_DEBUG;
         }
     }
     return quit;
@@ -137,40 +137,40 @@ void myOnIncomingCall(const std::string& acc_id, const std::string& call_id, con
         ", Id: " << call_id <<
         ", From: " << from << std::endl << std::endl;
 
-    sflph_call_accept(call_id);
-    sflph_call_set_recording(call_id);
-    //sflph_call_join_participant(call_id, "patate");
+    ring_call_accept(call_id);
+    ring_call_set_recording(call_id);
+    //ring_call_join_participant(call_id, "patate");
 }
 
 static int osxTests()
 {
-    sflph_ev_handlers evHandlers = {
+    ring_ev_handlers evHandlers = {
         .call_ev_handlers = {
             .on_incoming_call = myOnIncomingCall
         },
         .config_ev_handlers = {},
         .pres_ev_handlers = {}
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
         .video_ev_handlers = {}
 #endif
     };
 
-    sflph_init(&evHandlers, static_cast<sflph_init_flag>(sflphFlags));
+    ring_init(&evHandlers, static_cast<ring_init_flag>(sflphFlags));
 
-    //sflph_call_play_dtmf("0");
+    //ring_call_play_dtmf("0");
     //sleep(1);
-    //sflph_call_play_dtmf("1");
+    //ring_call_play_dtmf("1");
     //sleep(1);
 
-    //sflph_call_place("IP2IP", "patate", "127.0.0.1");
-    //sflph_call_set_recording("patate");
+    //ring_call_place("IP2IP", "patate", "127.0.0.1");
+    //ring_call_set_recording("patate");
 
     while (true) {
-        sflph_poll_events();
+        ring_poll_events();
         sleep(1);
     }
 
-    sflph_fini();
+    ring_fini();
 }
 
 static int run()
@@ -226,7 +226,7 @@ int main(int argc, char *argv [])
     signal(SIGHUP, signal_handler);
     signal(SIGTERM, signal_handler);
 
-#ifdef SFL_VIDEO
+#ifdef RING_VIDEO
     std::cerr << "Warning: built with video support" << std::endl;
 #endif
 

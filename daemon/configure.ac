@@ -2,13 +2,13 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([sflphone],[1.4.2],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_INIT([ring],[2.0.0],[sflphoneteam@savoirfairelinux.com],[ring])
 
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014]])
 AC_REVISION([$Revision$])
 
 dnl Where to find configure files
-AC_CONFIG_SRCDIR(src/sflphone_api.cpp)
+AC_CONFIG_SRCDIR(src/ring_api.cpp)
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_BUILD
@@ -328,7 +328,7 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AC_SUBST(LIBEXECDIR)
 
        AC_CONFIG_FILES([bin/dbus/Makefile
-                        bin/dbus/org.sflphone.SFLphone.service])
+                        bin/dbus/cx.ring.Ring.service])
 
        AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
        if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
@@ -339,8 +339,8 @@ AS_IF([test "x$with_dbus" = "xyes"], [
              AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
        ]);
 
-       AM_CONDITIONAL(SFL_DBUS, true)],
-       AM_CONDITIONAL(SFL_DBUS, false));
+       AM_CONDITIONAL(RING_DBUS, true)],
+       AM_CONDITIONAL(RING_DBUS, false));
 
 
 dnl Video is default-enabled
@@ -348,8 +348,8 @@ AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
 AS_IF([test "x$enable_video" != "xno"],
       [
-        AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
-        AM_CONDITIONAL(SFL_VIDEO, true)
+        AC_DEFINE(RING_VIDEO, [], [Video support enabled])
+        AM_CONDITIONAL(RING_VIDEO, true)
 
         PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
         LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
@@ -365,7 +365,7 @@ AS_IF([test "x$enable_video" != "xno"],
         PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
     ],
     [
-     AM_CONDITIONAL(SFL_VIDEO, false)
+     AM_CONDITIONAL(RING_VIDEO, false)
      AC_DEFINE_UNQUOTED([USE_CCRTP], 1, [Use ccrtp instead of libavformat])
      ]);
 

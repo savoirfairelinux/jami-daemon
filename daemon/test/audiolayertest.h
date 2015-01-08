@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@
 
 class ManagerImpl;
 
-namespace sfl {
+namespace ring {
     class PulseLayer;
 }
 
@@ -69,7 +69,7 @@ class AudioLayerTest: public CppUnit::TestFixture {
         NON_COPYABLE(AudioLayerTest);
 
         ManagerImpl* manager_;
-        sfl::PulseLayer* pulselayer_;
+        ring::PulseLayer* pulselayer_;
         int layer_;
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -41,7 +41,7 @@
 class SdesNegotiator;
 class SIPCall;
 
-namespace sfl {
+namespace ring {
 
 #if HAVE_ZRTP
 class AudioZrtpSession;
@@ -118,7 +118,7 @@ class AudioRtpFactory {
          * if the current rtp thread is null, or if it's not of the correct type.
          * @return The current AudioZrtpSession thread.
          */
-        sfl::AudioZrtpSession* getAudioZrtpSession();
+        ring::AudioZrtpSession* getAudioZrtpSession();
 #endif
 
         void initLocalCryptoInfo();
@@ -128,7 +128,7 @@ class AudioRtpFactory {
          * Set remote cryptographic info. Should be called after negotiation in SDP
          * offer/answer session.
          */
-        void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
+        void setRemoteCryptoInfo(ring::SdesNegotiator& nego);
 
         void setDtmfPayloadType(unsigned int);
 

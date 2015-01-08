@@ -38,7 +38,7 @@
 
 class SwsContext;
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class VideoScaler {
 public:
@@ -59,6 +59,6 @@ private:
     uint8_t *tmp_data_[4]; // used by scale_and_pad
 };
 
-}
+}}
 
 #endif // __VIDEO_SCALER_H__
