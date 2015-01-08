@@ -387,9 +387,6 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
          */
         RING_DBG("New outgoing call to %s", to_cleaned.c_str());
         call = newOutgoingCall(call_id, to_cleaned, preferred_account_id);
-    } catch (ost::Socket *) {
-        RING_ERR("Could not bind socket");
-        return false;
     } catch (const std::exception &e) {
         RING_ERR("%s", e.what());
         return false;
