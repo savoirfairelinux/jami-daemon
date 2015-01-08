@@ -239,7 +239,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (not inv or not inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
-    pj_str_t methodName = CONST_PJ_STR("SFL_INFO");
+    pj_str_t methodName = CONST_PJ_STR("INFO");
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
 
