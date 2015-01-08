@@ -33,7 +33,6 @@
 #define IP_UTILS_H_
 
 #include <pjlib.h>
-#include <ccrtp/channel.h> // For ost::IPV*Address
 
 #include <netinet/ip.h>
 
@@ -135,23 +134,6 @@ public:
 
     inline pj_sockaddr* pjPtr() {
         return &addr;
-    }
-
-    inline operator ost::IPV4Host () const {
-        assert(addr.addr.sa_family == AF_INET);
-        const sockaddr_in& ipv4_addr = *reinterpret_cast<const sockaddr_in*>(&addr);
-        return ost::IPV4Host(ipv4_addr.sin_addr);
-    }
-
-    inline operator ost::IPV6Host () const {
-        assert(addr.addr.sa_family == AF_INET6);
-#ifndef __ANDROID__ // hack for the ucommoncpp bug (fixed in our Android repo)
-        ost::IPV6Host host = ost::IPV6Host(toString().c_str());
-        return host;
-#else
-        const sockaddr_in6& ipv6_addr = *reinterpret_cast<const sockaddr_in6*>(&addr);
-        return ost::IPV6Host(ipv6_addr.sin6_addr);
-#endif
     }
 
     inline operator std::string () const {

@@ -49,7 +49,6 @@ class IpTest : public CppUnit::TestCase {
          */
         CPPUNIT_TEST_SUITE(IpTest);
         CPPUNIT_TEST(testIpAddr);
-        CPPUNIT_TEST(testIpAddrOst);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -57,7 +56,6 @@ class IpTest : public CppUnit::TestCase {
         IpTest();
 
         void testIpAddr();
-        void testIpAddrOst();
 };
 
 /* Register our test module */
